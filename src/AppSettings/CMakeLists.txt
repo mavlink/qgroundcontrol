@@ -60,6 +60,7 @@ else()
         CommLinksSettings.qml
         FlyViewSettings.qml
         GeneralSettings.qml
+        GPSSettings.qml
         LoggingSettings.qml
         MapsSettings.qml
         NTRIPSettings.qml
@@ -114,9 +115,20 @@ qt_add_qml_module(AppSettingsModule
         BluetoothSettings.qml
         DebugWindow.qml
         GcsPositionStatus.qml
+        GpsConnectionControls.qml
+        GpsConnectionType.qml
+        GpsSourceStatus.qml
         HelpSettings.qml
         LinkConfigurationManager.qml
         LogReplaySettings.qml
+        LocalRtkSettings.qml
+        CorrectionRoutingSettings.qml
+        CorrectionDiagnostics.qml
+        ReceiverConfigurationSettings.qml
+        PositionSourceSettings.qml
+        ReceiverConfigurationStatus.qml
+        ReceiverObservationDiagnostics.qml
+        GPSRecordingSettings.qml
         MapProviderSettings.qml
         MavlinkActionSettings.qml
         MavlinkLinkStatus.qml
@@ -134,7 +146,7 @@ qt_add_qml_module(AppSettingsModule
         PX4LogFileManager.qml
         PX4LogUploadSettings.qml
         QmlTest.qml
-        RemoteIDGpsLocation.qml
+        RemoteIDGpsSourceButton.qml
         SerialSettings.qml
         SettingsPage.qml
         TcpSettings.qml

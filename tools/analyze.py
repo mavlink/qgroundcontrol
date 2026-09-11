@@ -82,6 +82,11 @@ class FileCollector:
         log_warn("Default branch not available, analyzing all files")
         return self._find_files(self.repo_root / "src", extensions)
 
+    def _is_vendored(self, path: Path) -> bool:
+        return path.is_relative_to(self.repo_root / "src/GPS/Driver/PX4") or path.is_relative_to(
+            self.repo_root / "test/GPS/Driver/PX4"
+        )
+
     def _find_files(self, search_path: Path, extensions: tuple[str, ...]) -> list[Path]:
         """Find all files with given extensions under search_path."""
         if not search_path.exists():
@@ -90,7 +95,7 @@ class FileCollector:
         files: list[Path] = []
         for ext in extensions:
             files.extend(search_path.rglob(f"*{ext}"))
-        return sorted(files)
+        return sorted(path for path in files if not self._is_vendored(path))
 
     def _get_changed_files(self, extensions: tuple[str, ...], compare_ref: str) -> list[Path]:
         """Get files changed compared to an available upstream ref."""
@@ -107,7 +112,7 @@ class FileCollector:
             if not line:
                 continue
             full_path = self.repo_root / line
-            if full_path.is_file():
+            if full_path.is_file() and not self._is_vendored(full_path):
                 files.append(full_path)
         return sorted(files)
 

@@ -1,0 +1,5 @@
+# Optional fixture oracle only; normal builds and tests do not install these.
+pyubx2 @ git+https://github.com/semuconsulting/pyubx2.git@9eadeeefc25162206a9200eea1a90bbb8ca315b9
+pysbf2 @ git+https://github.com/semuconsulting/pysbf2.git@7ea5e3aecb1349396d47f80938cfe20c461af95b
+pynmeagps @ git+https://github.com/semuconsulting/pynmeagps.git@0dd3a69752b6df4172e31255748bf794082845cb
+pyrtcm @ git+https://github.com/semuconsulting/pyrtcm.git@620833ee9031207d6181c4818f32b20bab31f9b5

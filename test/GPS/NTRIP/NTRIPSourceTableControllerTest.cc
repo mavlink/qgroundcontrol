@@ -1,19 +1,27 @@
 #include "NTRIPSourceTableControllerTest.h"
 
 #include <QtCore/QAbstractItemModel>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QEvent>
 #include <QtCore/QUrl>
+#include <QtHttpServer/QHttpServer>
+#include <QtHttpServer/QHttpServerResponse>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QSslCertificate>
 #include <QtNetwork/QSslConfiguration>
 #include <QtNetwork/QSslKey>
 #include <QtNetwork/QSslServer>
 #include <QtNetwork/QSslSocket>
-#include <QtHttpServer/QHttpServer>
-#include <QtHttpServer/QHttpServerResponse>
+#include <QtNetwork/QTcpServer>
+#include <QtNetwork/QTcpSocket>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include <memory>
+
 #include "LocalHttpTestServer.h"
+#include "ManualScheduler.h"
+#include "NTRIPHttpResponse.h"
 #include "NTRIPSettings.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
@@ -191,9 +199,7 @@ void NTRIPSourceTableControllerTest::testFetchAllowsSelfSignedSourceTableWhenCon
     server.setSslConfiguration(sslConfig);
     QVERIFY(server.listen(QHostAddress::LocalHost));
 
-    httpServer.route("/", []() {
-        return QHttpServerResponse("text/plain", kValidTable.toUtf8());
-    });
+    httpServer.route("/", []() { return QHttpServerResponse("text/plain", kValidTable.toUtf8()); });
     QVERIFY(httpServer.bind(&server));
 
     NTRIPTransportConfig config;
@@ -207,8 +213,7 @@ void NTRIPSourceTableControllerTest::testFetchAllowsSelfSignedSourceTableWhenCon
 
     QTRY_VERIFY_WITH_TIMEOUT(ctrl.fetchStatus() != NTRIPSourceTableController::FetchStatus::InProgress,
                              TestTimeout::mediumMs());
-    QVERIFY2(ctrl.fetchStatus() == NTRIPSourceTableController::FetchStatus::Success,
-             qPrintable(ctrl.fetchError()));
+    QVERIFY2(ctrl.fetchStatus() == NTRIPSourceTableController::FetchStatus::Success, qPrintable(ctrl.fetchError()));
     QCOMPARE(ctrl.mountpointModel()->rowCount(), 1);
 }
 
@@ -262,3 +267,196 @@ void NTRIPSourceTableControllerTest::testSelectMountpointEmitsSignal()
 }
 
 UT_REGISTER_TEST(NTRIPSourceTableControllerTest, TestLabel::Unit)
+
+void NTRIPSourceTableControllerTest::testInvalidReplacementRetiresPendingFetch()
+{
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    NTRIPSourceTableController controller;
+    NTRIPTransportConfig config;
+    config.host = QStringLiteral("127.0.0.1");
+    config.port = server.serverPort();
+    controller.fetch(config);
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QVERIFY(controller._reply);
+    config.host.clear();
+    controller.fetch(config);
+    QVERIFY(!controller._reply);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
+    QVERIFY(controller.fetchError().contains(QStringLiteral("host")));
+}
+
+void NTRIPSourceTableControllerTest::testStatusObserverCanReplaceBeforeRequest()
+{
+    NTRIPSourceTableController controller;
+    connect(&controller, &NTRIPSourceTableController::fetchStatusChanged, &controller, [&]() {
+        if (controller.fetchStatus() == NTRIPSourceTableController::FetchStatus::InProgress) {
+            controller.fetch(NTRIPTransportConfig{});
+        }
+    });
+    NTRIPTransportConfig config;
+    config.host = QStringLiteral("127.0.0.1");
+    controller.fetch(config);
+    QVERIFY(!controller._reply);
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
+}
+
+void NTRIPSourceTableControllerTest::testFetchUsesSharedRequest_data()
+{
+    QTest::addColumn<QByteArray>("status");
+    QTest::newRow("http") << QByteArray("HTTP/1.1 200 OK");
+    QTest::newRow("legacy") << QByteArray("SOURCETABLE 200 OK");
+}
+
+void NTRIPSourceTableControllerTest::testFetchUsesSharedRequest()
+{
+    QFETCH(QByteArray, status);
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    auto config = casterConfig(QStringLiteral("127.0.0.1"), server.serverPort());
+    config.username = QStringLiteral("user");
+    config.password = QStringLiteral("password");
+    config.mountpoint = QStringLiteral("stream-only name");
+    NTRIPSourceTableController controller;
+    QSignalSpy warning(&controller, &NTRIPSourceTableController::plaintextCredentialsWarning);
+    controller.fetch(config);
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QByteArray request;
+    QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).contains("\r\n\r\n"), TestTimeout::mediumMs());
+    QVERIFY(request.startsWith("GET / HTTP/1.1\r\n"));
+    QVERIFY(request.contains("host: 127.0.0.1:" + QByteArray::number(server.serverPort()) + "\r\n"));
+    QVERIFY(request.contains("ntrip-version: Ntrip/2.0\r\n"));
+    QVERIFY(request.contains("authorization: Basic dXNlcjpwYXNzd29yZA==\r\n"));
+    QCOMPARE(warning.size(), 1);
+    const QByteArray body = kValidTable.toUtf8();
+    peer->write(status + "\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\n\r\n" + body);
+    QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
+    QCOMPARE(controller.mountpointModel()->rowCount(), 1);
+}
+
+void NTRIPSourceTableControllerTest::testCachedProjectionFollowsPosition()
+{
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    const auto config = casterConfig(QStringLiteral("127.0.0.1"), server.serverPort());
+    NTRIPSourceTableController controller;
+    controller.fetch(config, QGeoCoordinate(0, 0));
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
+    peer->readAll();
+    // A repeat while downloading updates the projection reference without restarting the request.
+    controller.fetch(config, QGeoCoordinate(0, 10));
+    const QByteArray table =
+        "STR;A;Id;RTCM;details;2;GPS;NET;USA;0;0;0;1;gen;none;B;N;4800\r\n"
+        "STR;B;Id;RTCM;details;2;GPS;NET;USA;0;10;0;1;gen;none;B;N;4800\r\nENDSOURCETABLE\r\n";
+    peer->write("HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(table.size()) + "\r\n\r\n" + table);
+    QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
+    auto* model = controller.mountpointModel();
+    const auto firstMount = [&]() {
+        return model->data(model->index(0, 0), NTRIPSourceTableModel::MountpointRole).toString();
+    };
+    QCOMPARE(firstMount(), QStringLiteral("B"));
+    QSignalSpy reset(model, &QAbstractItemModel::modelReset);
+    const auto fetchedAt = controller._fetchedAtMs;
+    controller.fetch(config, QGeoCoordinate(0, 0));
+    QCOMPARE(firstMount(), QStringLiteral("A"));
+    QCOMPARE(reset.size(), 1);
+    QVERIFY(!controller._reply);
+    QCOMPARE(controller._fetchedAtMs, fetchedAt);
+    controller.fetch(config, {});
+    QCOMPARE(model->data(model->index(0, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble(), -1.0);
+    QVERIFY(!controller._reply);
+    QVERIFY(!server.hasPendingConnections());
+}
+
+void NTRIPSourceTableControllerTest::testEmptyCatalogIsCached()
+{
+    NTRIPSourceTableController controller;
+    const auto config = casterConfig(QStringLiteral("caster.example.com"));
+    controller.fetch(config);
+    controller.injectSourceTableForTest(QStringLiteral("ENDSOURCETABLE\r\n"));
+    QCOMPARE(controller.mountpointModel()->rowCount(), 0);
+    controller.fetch(config, QGeoCoordinate(0, 0));
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    QVERIFY(!controller._reply);
+}
+
+void NTRIPSourceTableControllerTest::testFetchDeadlineAndErrorNotification()
+{
+    ManualScheduler scheduler;
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    NTRIPSourceTableController controller(nullptr, &scheduler);
+    controller.injectFetchErrorForTest(QStringLiteral("Previous error"));
+    QSignalSpy errorChanged(&controller, &NTRIPSourceTableController::fetchErrorChanged);
+    controller.fetch(casterConfig(QStringLiteral("127.0.0.1"), server.serverPort()));
+    QCOMPARE(errorChanged.size(), 1);
+    QVERIFY(controller.fetchError().isEmpty());
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
+    peer->readAll();
+    QSignalSpy connected(controller._reply, &NTRIPHttpResponse::connected);
+    QSignalSpy failures(controller._reply, &NTRIPHttpResponse::failed);
+    peer->write("HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\n");
+    QTRY_COMPARE_WITH_TIMEOUT(connected.size(), 1, TestTimeout::mediumMs());
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds{NTRIPSourceTableController::kFetchTimeoutMs}));
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
+    QCOMPARE(failures.size(), 1);
+    QCOMPARE(qvariant_cast<NTRIPFailure>(failures.first().first()).code, NTRIPError::DataWatchdog);
+    QVERIFY(controller.fetchError().contains(QStringLiteral("transfer timed out")));
+    QCOMPARE(errorChanged.size(), 2);
+    QCOMPARE(scheduler.pendingCount(), 0);
+}
+
+void NTRIPSourceTableControllerTest::testCacheUsesInjectedClock()
+{
+    ManualScheduler scheduler(nullptr, 0);
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    const auto config = casterConfig(QStringLiteral("127.0.0.1"), server.serverPort());
+    NTRIPSourceTableController controller(nullptr, &scheduler);
+    controller.fetch(config);
+    controller.injectSourceTableForTest(kValidTable);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds{NTRIPSourceTableController::kCacheTtlMs - 1}));
+    controller.fetch(config);
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds{1}));
+    controller.fetch(config);
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
+}
+
+void NTRIPSourceTableControllerTest::testBodyProgressRenewsFetchDeadline()
+{
+    ManualScheduler scheduler;
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    NTRIPSourceTableController controller(nullptr, &scheduler);
+    controller.fetch(casterConfig(QStringLiteral("127.0.0.1"), server.serverPort()));
+    QSignalSpy connected(controller._reply, &NTRIPHttpResponse::connected);
+    QSignalSpy bodyReceived(controller._reply, &NTRIPHttpResponse::bodyReceived);
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
+    peer->readAll();
+    const auto body = kValidTable.toUtf8();
+    peer->write("HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\n\r\n");
+    QTRY_COMPARE_WITH_TIMEOUT(connected.size(), 1, TestTimeout::mediumMs());
+    const auto gap = std::chrono::milliseconds{NTRIPSourceTableController::kFetchTimeoutMs - 1};
+    QVERIFY(scheduler.advanceBy(gap));
+    peer->write(body.first(10));
+    QTRY_COMPARE_WITH_TIMEOUT(bodyReceived.size(), 1, TestTimeout::mediumMs());
+    QVERIFY(scheduler.advanceBy(gap));
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
+    peer->write(body.sliced(10));
+    QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
+    QCOMPARE(controller.mountpointModel()->rowCount(), 1);
+    QCOMPARE(scheduler.pendingCount(), 0);
+}

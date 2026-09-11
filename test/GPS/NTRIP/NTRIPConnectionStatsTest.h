@@ -14,5 +14,6 @@ private slots:
     void testCorrectionAgeInitial();
     void testCorrectionAgeAfterMessage();
     void testMessageCountsByIdSortedAndReset();
+    void testDataStaleAfterNoRecentMessages_data();
     void testDataStaleAfterNoRecentMessages();
 };

@@ -3,8 +3,6 @@
 #include <QtCore/QString>
 #include <QtCore/QVector>
 
-class NTRIPSettings;
-
 struct NTRIPTransportConfig
 {
     QString host;
@@ -15,11 +13,6 @@ struct NTRIPTransportConfig
     QString whitelist;
     bool useTls = false;
     bool allowSelfSignedCerts = false;
-
-    // UDP forwarding
-    bool udpForwardEnabled = false;
-    QString udpTargetAddress;
-    quint16 udpTargetPort = 0;
 
     bool operator==(const NTRIPTransportConfig&) const = default;
 
@@ -32,16 +25,8 @@ struct NTRIPTransportConfig
 
     bool isValid() const { return validationError().isEmpty(); }
 
-    // The three differ-checks below must jointly cover every field (union == operator!=);
-    // a new field assigned to none silently breaks reconnect.
-
-    /// Hot fields: a change forces a transport reconnect (TCP/TLS handshake,
-    /// HTTP GET line, auth). Excludes whitelist (parser-only) and UDP sink.
+    /// Connection fields exclude the live-applied message filter.
     bool transportDiffers(const NTRIPTransportConfig& other) const;
-
-    /// Warm fields: the UDP sidecar can be reconfigured without tearing down
-    /// the caster connection.
-    bool udpForwardDiffers(const NTRIPTransportConfig& other) const;
 
     /// Cold field: RTCM whitelist is applied in the parser and does not
     /// require a reconnect or any sink reconfiguration.
@@ -53,10 +38,8 @@ struct NTRIPTransportConfig
     /// so it cannot drift from this config's own notion of "same caster".
     QString casterIdentity() const;
 
-    static NTRIPTransportConfig fromSettings(NTRIPSettings& settings);
-
     /// Parse a comma-separated RTCM message-id list (e.g. "1005,1077,1087")
-    /// into the QVector<int> expected by RTCMParser::setWhitelist. Empty or
+    /// into the QVector<int> expected by RTCMFrameDecoder::setWhitelist. Empty or
     /// non-numeric tokens are ignored.
     static QVector<int> parseWhitelist(const QString& csv);
 };

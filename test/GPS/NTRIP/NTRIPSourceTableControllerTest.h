@@ -7,6 +7,15 @@ class NTRIPSourceTableControllerTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void testBodyProgressRenewsFetchDeadline();
+    void testFetchDeadlineAndErrorNotification();
+    void testCacheUsesInjectedClock();
+    void testFetchUsesSharedRequest_data();
+    void testCachedProjectionFollowsPosition();
+    void testEmptyCatalogIsCached();
+    void testFetchUsesSharedRequest();
+    void testInvalidReplacementRetiresPendingFetch();
+    void testStatusObserverCanReplaceBeforeRequest();
     void testInitialState();
     void testFetchEmptyHostTriggersError();
     void testFetchInvalidConfigTriggersError();

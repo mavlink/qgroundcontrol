@@ -205,36 +205,6 @@ void QSerialPortPrivate::_posixReadActivated()
     }
 }
 
-qint64 QSerialPortPrivate::_posixWrite(const char* data, qint64 maxSize, int timeoutMs)
-{
-    qint64 totalWritten = 0;
-    QDeadlineTimer deadline(timeoutMs);
-
-    while (totalWritten < maxSize) {
-        const ssize_t written = ::write(descriptor, data + totalWritten, static_cast<size_t>(maxSize - totalWritten));
-        if (written > 0) {
-            totalWritten += written;
-            continue;
-        }
-
-        if ((written < 0) && (errno != EAGAIN) && (errno != EWOULDBLOCK) && (errno != EINTR)) {
-            qCWarning(AndroidSerialPortLog) << "Write error on" << systemLocation << ":" << strerror(errno);
-            return -1;
-        }
-
-        if (deadline.hasExpired()) {
-            qCWarning(AndroidSerialPortLog) << "Write timeout on" << systemLocation;
-            return -1;
-        }
-
-        struct pollfd pfd = {descriptor, POLLOUT, 0};
-        const int pollTimeout = deadline.isForever() ? -1 : static_cast<int>(qMax<qint64>(0, deadline.remainingTime()));
-        (void) ::poll(&pfd, 1, pollTimeout);
-    }
-
-    return totalWritten;
-}
-
 bool QSerialPortPrivate::_posixApplyPortSettings(qint32 baudRate, QSerialPort::DataBits dataBits_,
                                                  QSerialPort::StopBits stopBits_, QSerialPort::Parity parity_,
                                                  QSerialPort::FlowControl flowControl_)

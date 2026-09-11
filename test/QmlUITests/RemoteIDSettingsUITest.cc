@@ -119,10 +119,70 @@ bool RemoteIDSettingsUITest::_typeIntoField(QQuickItem* field, const QString& te
     return true;
 }
 
+void RemoteIDSettingsUITest::_testConfigureGpsSource()
+{
+    SettingsManager::instance()->remoteIDSettings()->locationType()->setRawValue(
+        static_cast<int>(RemoteIDSettings::LocationType::LIVE));
+    startUI();
+    if (QTest::currentTestFailed())
+        return;
+
+    _window->resize(1280, 800);
+    QVERIFY(_navigateToRemoteIDPage());
+    QQuickItem* button = findVisibleItem(_rootItem, QStringLiteral("remoteIdConfigureGpsSourceButton"));
+    QVERIFY(button);
+    QQuickItem* locationGroup = findVisibleItem(_rootItem, QStringLiteral("settingsGroup_GroundStationLocation"));
+    QVERIFY(locationGroup);
+    QVERIFY(locationGroup->isAncestorOf(button));
+
+    auto* locationType = SettingsManager::instance()->remoteIDSettings()->locationType();
+    locationType->setRawValue(static_cast<int>(RemoteIDSettings::LocationType::FIXED));
+    QTRY_VERIFY_WITH_TIMEOUT(!button->isVisible(), 2000);
+    locationType->setRawValue(static_cast<int>(RemoteIDSettings::LocationType::TAKEOFF));
+    QTRY_VERIFY_WITH_TIMEOUT(!button->isVisible(), 2000);
+    locationType->setRawValue(static_cast<int>(RemoteIDSettings::LocationType::LIVE));
+    QTRY_VERIFY_WITH_TIMEOUT(button->isVisible(), 2000);
+
+    QVERIFY(scrollIntoView(button, QStringLiteral("settingsPageFlickable")));
+    const QPointF center = button->mapToScene(QPointF(button->width() / 2, button->height() / 2));
+    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, center.toPoint());
+
+    QQuickItem* page = nullptr;
+    QTRY_VERIFY_WITH_TIMEOUT((page = findVisibleItem(_rootItem, QStringLiteral("settingsPage_GPS"), 0)), 2000);
+    QVERIFY(page->property("sectionFilter").toInt() >= 0);
+    QVERIFY(findVisibleItem(_rootItem, QStringLiteral("nmeaGpsSettings")));
+    QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("networkRtkConnectButton"), 0));
+    QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsCheckBox_rtcmUdpInputEnabled"), 0));
+
+    QQuickItem* gpsPageButton = findVisibleItem(_rootItem, QStringLiteral("settingsButton_GPS"));
+    QVERIFY(gpsPageButton);
+    QVERIFY(scrollIntoView(gpsPageButton, QStringLiteral("settings_buttonList")));
+    const QPointF gpsPageCenter =
+        gpsPageButton->mapToScene(QPointF(gpsPageButton->width() / 2, gpsPageButton->height() / 2));
+    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, gpsPageCenter.toPoint());
+
+    QTRY_COMPARE_WITH_TIMEOUT(page->property("sectionFilter").toInt(), -1, 2000);
+    QVERIFY(findVisibleItem(_rootItem, QStringLiteral("nmeaGpsSettings")));
+    QVERIFY(findVisibleItem(_rootItem, QStringLiteral("networkRtkConnectButton")));
+    QVERIFY(findVisibleItem(_rootItem, QStringLiteral("settingsCheckBox_rtcmUdpInputEnabled")));
+    QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("ntripConnectButton"), 0));
+
+    QQuickItem* flickable = findVisibleItem(page, QStringLiteral("settingsPageFlickable"));
+    QVERIFY(flickable);
+    QTRY_VERIFY2_WITH_TIMEOUT(flickable->property("contentWidth").toReal() <= flickable->width(),
+                              qPrintable(QStringLiteral("GPS content width %1 exceeds viewport %2")
+                                             .arg(flickable->property("contentWidth").toReal())
+                                             .arg(flickable->width())),
+                              2000);
+
+    stopUI();
+}
+
 void RemoteIDSettingsUITest::_testInvalidOperatorIDShowsError()
 {
     startUI();
-    if (QTest::currentTestFailed()) return;
+    if (QTest::currentTestFailed())
+        return;
 
     QVERIFY(_navigateToRemoteIDPage());
 

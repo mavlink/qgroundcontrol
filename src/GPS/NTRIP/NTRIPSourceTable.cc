@@ -1,11 +1,12 @@
 #include "NTRIPSourceTable.h"
 
-#include <QtCore/qnumeric.h>
+#include <QtCore/QPointer>
+
 #include <algorithm>
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(NTRIPSourceTableLog, "GPS.NTRIPSourceTable")
+QGC_LOGGING_CATEGORY(NTRIPSourceTableLog, "GPS.NTRIP.NTRIPSourceTable")
 
 bool NTRIPMountpoint::fromSourceTableLine(const QString& line, NTRIPMountpoint& out)
 {
@@ -25,15 +26,14 @@ bool NTRIPMountpoint::fromSourceTableLine(const QString& line, NTRIPMountpoint& 
     mp.navSystem = fields.at(6).trimmed();
     mp.network = fields.at(7).trimmed();
     mp.country = fields.at(8).trimmed();
-    // Caster-supplied coordinates are untrusted; out-of-range/non-finite values
-    // collapse to 0.0, which updateDistance() treats as "unknown" and skips.
-    const auto parseCoord = [](const QString& s, double limit) -> double {
-        bool ok = false;
-        const double v = s.trimmed().toDouble(&ok);
-        return (ok && qIsFinite(v) && qAbs(v) <= limit) ? v : 0.0;
-    };
-    mp.latitude = parseCoord(fields.at(9), 90.0);
-    mp.longitude = parseCoord(fields.at(10), 180.0);
+    bool latitudeOk = false;
+    bool longitudeOk = false;
+    const double latitude = fields.at(9).trimmed().toDouble(&latitudeOk);
+    const double longitude = fields.at(10).trimmed().toDouble(&longitudeOk);
+    const QGeoCoordinate coordinate(latitude, longitude);
+    if (latitudeOk && longitudeOk && coordinate.isValid()) {
+        mp.coordinate = coordinate;
+    }
     mp.nmea = fields.at(11).trimmed() == QStringLiteral("1");
     mp.solution = fields.at(12).trimmed() == QStringLiteral("1");
     mp.generator = fields.at(13).trimmed();
@@ -46,20 +46,24 @@ bool NTRIPMountpoint::fromSourceTableLine(const QString& line, NTRIPMountpoint& 
     return true;
 }
 
-void NTRIPMountpoint::updateDistance(const QGeoCoordinate& from)
+double NTRIPMountpoint::distanceFrom(const QGeoCoordinate& from) const
 {
-    if (!from.isValid() || (latitude == 0.0 && longitude == 0.0)) {
-        return;
-    }
-    const QGeoCoordinate mountCoord(latitude, longitude);
-    distanceKm = from.distanceTo(mountCoord) / 1000.0;
+    return from.isValid() && coordinate.isValid() ? from.distanceTo(coordinate) / 1000.0 : -1.0;
 }
 
 // ---------------------------------------------------------------------------
 // NTRIPSourceTableModel
 // ---------------------------------------------------------------------------
 
-NTRIPSourceTableModel::NTRIPSourceTableModel(QObject* parent) : QAbstractListModel(parent) {}
+NTRIPSourceTableModel::NTRIPSourceTableModel(QObject* parent) : QAbstractListModel(parent)
+{
+    qCDebug(NTRIPSourceTableLog) << this;
+}
+
+NTRIPSourceTableModel::~NTRIPSourceTableModel()
+{
+    qCDebug(NTRIPSourceTableLog) << this;
+}
 
 int NTRIPSourceTableModel::rowCount(const QModelIndex& parent) const
 {
@@ -68,10 +72,11 @@ int NTRIPSourceTableModel::rowCount(const QModelIndex& parent) const
 
 QVariant NTRIPSourceTableModel::data(const QModelIndex& index, int role) const
 {
-    if (index.row() < 0 || index.row() >= _mountpoints.size()) {
+    if (!index.isValid() || index.model() != this || index.column() != 0 || index.row() >= count()) {
         return {};
     }
-    const NTRIPMountpoint& mp = _mountpoints.at(index.row());
+    const ProjectedRow& row = _current.projection.at(index.row());
+    const NTRIPMountpoint& mp = _current.catalog.at(row.catalogIndex);
     switch (role) {
         case MountpointRole:
             return mp.mountpoint;
@@ -90,9 +95,9 @@ QVariant NTRIPSourceTableModel::data(const QModelIndex& index, int role) const
         case CountryRole:
             return mp.country;
         case LatitudeRole:
-            return mp.latitude;
+            return mp.coordinate.isValid() ? QVariant(mp.coordinate.latitude()) : QVariant();
         case LongitudeRole:
-            return mp.longitude;
+            return mp.coordinate.isValid() ? QVariant(mp.coordinate.longitude()) : QVariant();
         case NmeaRole:
             return mp.nmea;
         case SolutionRole:
@@ -108,7 +113,7 @@ QVariant NTRIPSourceTableModel::data(const QModelIndex& index, int role) const
         case BitrateRole:
             return mp.bitrate;
         case DistanceKmRole:
-            return mp.distanceKm;
+            return row.distanceKm;
         default:
             return {};
     }
@@ -140,63 +145,95 @@ QHash<int, QByteArray> NTRIPSourceTableModel::roleNames() const
 
 void NTRIPSourceTableModel::parseSourceTable(const QString& raw)
 {
-    beginResetModel();
-    _mountpoints.clear();
-
+    QList<NTRIPMountpoint> catalog;
     const QStringList lines = raw.split('\n');
     for (const QString& line : lines) {
-        const QString trimmed = line.trimmed();
-        if (trimmed.isEmpty() || trimmed.startsWith(QStringLiteral("ENDSOURCETABLE"))) {
-            continue;
-        }
         NTRIPMountpoint mp;
-        if (NTRIPMountpoint::fromSourceTableLine(trimmed, mp)) {
-            _mountpoints.append(mp);
+        if (NTRIPMountpoint::fromSourceTableLine(line.trimmed(), mp)) {
+            catalog.append(mp);
         }
     }
-
-    endResetModel();
-    emit countChanged();
+    _pending.catalog = std::move(catalog);
+    ++_pending.catalogRevision;
+    _pending.projection.clear();
+    for (int i = 0; i < _pending.catalog.size(); ++i) {
+        _pending.projection.append({i, -1.0});
+    }
+    _publish();
 }
 
 void NTRIPSourceTableModel::updateDistances(const QGeoCoordinate& from)
 {
-    for (NTRIPMountpoint& mp : _mountpoints) {
-        mp.updateDistance(from);
+    QList<ProjectedRow> projection;
+    for (int i = 0; i < _pending.catalog.size(); ++i) {
+        projection.append({i, _pending.catalog.at(i).distanceFrom(from)});
     }
-    sortByDistance();
-}
-
-void NTRIPSourceTableModel::sortByDistance()
-{
-    if (_mountpoints.size() < 2) {
-        return;
-    }
-
-    // Distance ordering: known distances ascending, unknown (negative) last.
-    const auto less = [](const NTRIPMountpoint& a, const NTRIPMountpoint& b) {
-        if (a.distanceKm < 0 && b.distanceKm < 0)
+    std::stable_sort(projection.begin(), projection.end(), [](const ProjectedRow& a, const ProjectedRow& b) {
+        if (a.distanceKm < 0) {
             return false;
-        if (a.distanceKm < 0)
-            return false;  // a unknown → sorts after known b
-        if (b.distanceKm < 0)
-            return true;   // b unknown → known a sorts before
-        return a.distanceKm < b.distanceKm;
-    };
-
-    beginResetModel();
-    std::stable_sort(_mountpoints.begin(), _mountpoints.end(), less);
-    endResetModel();
-    // No countChanged() here: a sort reorders rows but never changes the count.
+        }
+        return b.distanceKm < 0 || a.distanceKm < b.distanceKm;
+    });
+    _pending.projection = std::move(projection);
+    _publish();
 }
 
 void NTRIPSourceTableModel::clear()
 {
-    if (_mountpoints.isEmpty()) {
+    if (!_pending.catalog.isEmpty()) {
+        parseSourceTable({});
+    }
+}
+
+void NTRIPSourceTableModel::_publish()
+{
+    if (_publishing) {
+        // Keep catalog and projection updates together across reentrant model notifications.
+        if (!_publicationQueued) {
+            _publicationQueued = true;
+            QMetaObject::invokeMethod(
+                this,
+                [this]() {
+                    _publicationQueued = false;
+                    _publish();
+                },
+                Qt::QueuedConnection);
+        }
         return;
     }
-    beginResetModel();
-    _mountpoints.clear();
-    endResetModel();
-    emit countChanged();
+    const Snapshot next = _pending;
+    const bool countDiffers = _current.projection.size() != next.projection.size();
+    bool reset = _current.catalogRevision != next.catalogRevision || countDiffers;
+    bool distanceChanged = false;
+    for (qsizetype i = 0; !reset && i < next.projection.size(); ++i) {
+        reset = next.projection.at(i).catalogIndex != _current.projection.at(i).catalogIndex;
+        distanceChanged |= next.projection.at(i).distanceKm != _current.projection.at(i).distanceKm;
+    }
+    if (!reset && !distanceChanged) {
+        return;
+    }
+    const QPointer<NTRIPSourceTableModel> guard(this);
+    _publishing = true;
+    if (reset) {
+        beginResetModel();
+        if (!guard) {
+            return;
+        }
+    }
+    _current = next;
+    if (reset) {
+        endResetModel();
+    } else if (distanceChanged) {
+        emit dataChanged(index(0), index(count() - 1), {DistanceKmRole});
+    }
+    if (!guard) {
+        return;
+    }
+    if (countDiffers) {
+        emit countChanged();
+        if (!guard) {
+            return;
+        }
+    }
+    _publishing = false;
 }

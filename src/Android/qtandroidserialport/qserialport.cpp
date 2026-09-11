@@ -450,6 +450,7 @@ bool QSerialPort::open(OpenMode mode)
     }
 
     clearError();
+    d->_inputOverflow.store(false, std::memory_order_release);
     if (!d->open(mode))
         return false;
 
@@ -930,6 +931,7 @@ bool QSerialPort::clear(Directions directions)
         d->buffer.clear();
         d->_pendingData.clear();
         d->_bufferBytesEstimate.store(0, std::memory_order_relaxed);
+        d->_inputOverflow.store(false, std::memory_order_release);
     }
     if (directions & Output)
         d->writeBuffer.clear();
@@ -973,6 +975,11 @@ QBindable<QSerialPort::SerialPortError> QSerialPort::bindableError() const
 
     \sa QSerialPort::error
 */
+
+bool QSerialPort::inputOverflowed() const
+{
+    return d_func()->_inputOverflow.load(std::memory_order_acquire);
+}
 
 /*!
     Returns the size of the internal read buffer. This limits the
@@ -1193,6 +1200,22 @@ qint64 QSerialPort::readData(char* data, qint64 maxSize)
 qint64 QSerialPort::readLineData(char* data, qint64 maxSize)
 {
     return QIODevice::readLineData(data, maxSize);
+}
+
+AndroidSerialWrite::Result QSerialPort::writeBounded(const char* data, int length, QDeadlineTimer deadline,
+                                                     const AndroidSerialWrite::Cancelled& cancelled)
+{
+    Q_D(QSerialPort);
+    if (!isOpen() || !isWritable() || bytesToWrite() != 0) {
+        return {AndroidSerialWrite::Status::Error};
+    }
+    const auto result = d->writeBounded(data, length, deadline, cancelled);
+    if (result.status == AndroidSerialWrite::Status::Error) {
+        d->setError(QSerialPortErrorInfo(QSerialPort::WriteError, tr("Bounded serial write failed")));
+    } else if (result.status == AndroidSerialWrite::Status::TimedOut) {
+        d->setError(QSerialPortErrorInfo(QSerialPort::TimeoutError, tr("Bounded serial write timed out")));
+    }
+    return result;
 }
 
 /*!

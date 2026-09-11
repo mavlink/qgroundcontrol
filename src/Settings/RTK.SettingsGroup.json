@@ -3,6 +3,74 @@
     "fileType": "FactMetaData",
     "QGC.MetaData.Facts": [
         {
+            "name": "receiverRole",
+            "shortDesc": "Local GNSS receiver role",
+            "longDesc": "Use the receiver for ordinary positioning or configure it as an RTK base station that sends corrections to vehicles.",
+            "type": "uint8",
+            "enumStrings": "RTK base station,GNSS position receiver",
+            "enumValues": "0,1",
+            "default": 0,
+            "label": "Role"
+        },
+        {
+            "name": "useReceiverPosition",
+            "shortDesc": "Use receiver for ground-station position",
+            "label": "Use receiver for ground-station position",
+            "longDesc": "Use live fixes from the connected GNSS receiver. On disconnect, return to the configured NMEA or device position source.",
+            "type": "bool",
+            "default": false
+        },
+        {
+            "name": "connectionType",
+            "shortDesc": "GNSS receiver connection",
+            "type": "uint8",
+            "enumStrings": "Serial,TCP,UDP",
+            "enumValues": "0,1,2",
+            "default": 0,
+            "label": "Connection"
+        },
+        {
+            "name": "serialDevice",
+            "shortDesc": "Serial device; empty selects automatic RTK receiver discovery.",
+            "type": "string",
+            "default": "",
+            "label": "Device"
+        },
+        {
+            "name": "networkBaseHost",
+            "shortDesc": "Network receiver host",
+            "type": "string",
+            "default": "",
+            "label": "Host"
+        },
+        {
+            "name": "networkBasePort",
+            "shortDesc": "Network receiver port",
+            "type": "uint16",
+            "default": 2101,
+            "min": 1,
+            "max": 65535,
+            "label": "Port"
+        },
+        {
+            "name": "udpLocalPort",
+            "shortDesc": "Local UDP port; 0 selects an available port automatically.",
+            "type": "uint16",
+            "default": 0,
+            "min": 0,
+            "max": 65535,
+            "label": "Local port"
+        },
+        {
+            "name": "networkReceiverType",
+            "shortDesc": "Receiver protocol",
+            "type": "uint8",
+            "enumStrings": "U-blox,Trimble,Septentrio,Femtomes",
+            "enumValues": "0,1,2,3",
+            "default": 0,
+            "label": "Receiver"
+        },
+        {
             "name": "baseReceiverManufacturers",
             "shortDesc": "GPS manufacturers for settings",
             "type": "uint8",
@@ -95,6 +163,43 @@
             "decimalPlaces": 2,
             "qgcRebootRequired": true,
             "label": "Base Position Accuracy"
+        },
+        {
+            "name": "constellationMask",
+            "shortDesc": "Receiver constellation selection",
+            "longDesc": "Choose supported constellations. Zero preserves the driver default. Changes apply on the next connection.",
+            "type": "uint32",
+            "default": 0,
+            "label": "Constellations"
+        },
+        {
+            "name": "dynamicModel",
+            "shortDesc": "Receiver dynamic model",
+            "longDesc": "Choose a supported motion model. Zero preserves the driver default. Changes apply on the next connection.",
+            "type": "uint8",
+            "default": 0,
+            "label": "Dynamic model"
+        },
+        {
+            "name": "outputRateHz",
+            "shortDesc": "Receiver position output rate",
+            "longDesc": "Choose a supported position update rate. Zero preserves the driver default. Changes apply on the next connection.",
+            "type": "uint16",
+            "default": 0,
+            "units": "Hz",
+            "label": "Output rate"
+        },
+        {
+            "name": "headingOffsetDeg",
+            "shortDesc": "Dual-antenna heading offset",
+            "longDesc": "Heading offset for receivers that support antenna orientation configuration. Changes apply on the next connection.",
+            "type": "float",
+            "default": 5.0,
+            "min": -180,
+            "max": 180,
+            "units": "deg",
+            "decimalPlaces": 1,
+            "label": "Heading offset"
         }
     ]
 }

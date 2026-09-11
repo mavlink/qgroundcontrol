@@ -6,7 +6,7 @@
 
 QGC_LOGGING_CATEGORY(FactGroupLog, "FactSystem.FactGroup")
 
-FactGroup::FactGroup(int updateRateMsecs, const QString &metaDataFile, QObject *parent, bool ignoreCamelCase)
+FactGroup::FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* parent, bool ignoreCamelCase)
     : QObject(parent)
     , _updateRateMSecs(updateRateMsecs)
     , _ignoreCamelCase(ignoreCamelCase)
@@ -16,7 +16,7 @@ FactGroup::FactGroup(int updateRateMsecs, const QString &metaDataFile, QObject *
     _nameToFactMetaDataMap = FactMetaData::createMapFromJsonFile(metaDataFile, this);
 }
 
-FactGroup::FactGroup(int updateRateMsecs, QObject *parent, bool ignoreCamelCase)
+FactGroup::FactGroup(int updateRateMsecs, QObject* parent, bool ignoreCamelCase)
     : QObject(parent)
     , _updateRateMSecs(updateRateMsecs)
     , _ignoreCamelCase(ignoreCamelCase)
@@ -30,7 +30,7 @@ FactGroup::~FactGroup()
     // qCDebug(FactGroupLog) << Q_FUNC_INFO << this;
 }
 
-void FactGroup::_loadFromJsonArray(const QJsonArray &jsonArray)
+void FactGroup::_loadFromJsonArray(const QJsonArray& jsonArray)
 {
     QMap<QString, QString> defineMap;
     _nameToFactMetaDataMap = FactMetaData::createMapFromJsonArray(jsonArray, defineMap, this);
@@ -46,7 +46,7 @@ void FactGroup::_setupTimer()
     }
 }
 
-bool FactGroup::factExists(const QString &name) const
+bool FactGroup::factExists(const QString& name) const
 {
     if (name.contains(".")) {
         const QStringList parts = name.split(".");
@@ -55,7 +55,7 @@ bool FactGroup::factExists(const QString &name) const
             return false;
         }
 
-        FactGroup *const factGroup = getFactGroup(parts[0]);
+        FactGroup* const factGroup = getFactGroup(parts[0]);
         if (!factGroup) {
             qCWarning(FactGroupLog) << "Unknown FactGroup" << parts[0];
             return false;
@@ -69,7 +69,7 @@ bool FactGroup::factExists(const QString &name) const
     return _nameToFactMap.contains(camelCaseName);
 }
 
-Fact *FactGroup::getFact(const QString &name) const
+Fact* FactGroup::getFact(const QString& name) const
 {
     if (name.contains(".")) {
         const QStringList parts = name.split(".");
@@ -78,7 +78,7 @@ Fact *FactGroup::getFact(const QString &name) const
             return nullptr;
         }
 
-        FactGroup *const factGroup = getFactGroup(parts[0]);
+        FactGroup* const factGroup = getFactGroup(parts[0]);
         if (!factGroup) {
             qCWarning(FactGroupLog) << "Unknown FactGroup" << parts[0];
             return nullptr;
@@ -87,7 +87,7 @@ Fact *FactGroup::getFact(const QString &name) const
         return factGroup->getFact(parts[1]);
     }
 
-    Fact *fact = nullptr;
+    Fact* fact = nullptr;
     const QString camelCaseName = _ignoreCamelCase ? name : _camelCase(name);
 
     if (_nameToFactMap.contains(camelCaseName)) {
@@ -99,9 +99,9 @@ Fact *FactGroup::getFact(const QString &name) const
     return fact;
 }
 
-FactGroup *FactGroup::getFactGroup(const QString &name) const
+FactGroup* FactGroup::getFactGroup(const QString& name) const
 {
-    FactGroup * factGroup = nullptr;
+    FactGroup* factGroup = nullptr;
     const QString camelCaseName = _ignoreCamelCase ? name : _camelCase(name);
 
     if (_nameToFactGroupMap.contains(camelCaseName)) {
@@ -113,7 +113,7 @@ FactGroup *FactGroup::getFactGroup(const QString &name) const
     return factGroup;
 }
 
-void FactGroup::_addFact(Fact *fact, const QString &name)
+void FactGroup::_addFact(Fact* fact, const QString& name)
 {
     if (_nameToFactMap.contains(name)) {
         qCWarning(FactGroupLog) << "Duplicate Fact" << name;
@@ -130,7 +130,28 @@ void FactGroup::_addFact(Fact *fact, const QString &name)
     emit factNamesChanged();
 }
 
-void FactGroup::_addFactGroup(FactGroup *factGroup, const QString &name)
+void FactGroup::_addFactAlias(Fact* fact, const QString& name)
+{
+    if (!fact || name.isEmpty()) {
+        return;
+    }
+    if (_nameToFactMap.contains(name)) {
+        qCWarning(FactGroupLog) << "Duplicate Fact" << name;
+        return;
+    }
+    _nameToFactMap.insert(name, fact);
+    _factAliases.insert(name);
+    _factNames.append(name);
+    connect(fact, &QObject::destroyed, this, [this, name]() {
+        _factAliases.remove(name);
+        _nameToFactMap.remove(name);
+        _factNames.removeAll(name);
+        emit factNamesChanged();
+    });
+    emit factNamesChanged();
+}
+
+void FactGroup::_addFactGroup(FactGroup* factGroup, const QString& name)
 {
     if (_nameToFactGroupMap.contains(name)) {
         qCWarning(FactGroupLog) << "Duplicate FactGroup" << name;
@@ -142,10 +163,27 @@ void FactGroup::_addFactGroup(FactGroup *factGroup, const QString &name)
     emit factGroupNamesChanged();
 }
 
+QList<QPointer<Fact>> FactGroup::_ownedFacts() const
+{
+    QList<QPointer<Fact>> facts;
+    for (auto it = _nameToFactMap.cbegin(); it != _nameToFactMap.cend(); ++it) {
+        if (!_factAliases.contains(it.key())) {
+            facts.append(it.value());
+        }
+    }
+    return facts;
+}
+
 void FactGroup::_updateAllValues()
 {
-    for (Fact *fact: _nameToFactMap) {
-        fact->sendDeferredValueChangedSignal();
+    const QPointer<FactGroup> guard(this);
+    for (const auto& fact : _ownedFacts()) {
+        if (!guard) {
+            return;
+        }
+        if (fact) {
+            fact->sendDeferredValueChangedSignal();
+        }
     }
 }
 
@@ -161,18 +199,23 @@ void FactGroup::setLiveUpdates(bool liveUpdates)
         _updateTimer.start();
     }
 
-    for (Fact *fact: _nameToFactMap) {
-        fact->setSendValueChangedSignals(liveUpdates);
+    const QPointer<FactGroup> guard(this);
+    for (const auto& fact : _ownedFacts()) {
+        if (!guard) {
+            return;
+        }
+        if (fact) {
+            fact->setSendValueChangedSignals(liveUpdates);
+        }
     }
 }
 
-
-QString FactGroup::_camelCase(const QString &text)
+QString FactGroup::_camelCase(const QString& text)
 {
     return (text[0].toLower() + text.right(text.length() - 1));
 }
 
-void FactGroup::_setTelemetryAvailable (bool telemetryAvailable)
+void FactGroup::_setTelemetryAvailable(bool telemetryAvailable)
 {
     if (telemetryAvailable != _telemetryAvailable) {
         _telemetryAvailable = telemetryAvailable;

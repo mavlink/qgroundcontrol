@@ -4890,58 +4890,58 @@
     </message>
   </context>
   <context>
-    <name>GPSRTKFact.json</name>
+    <name>GPSBaseStationFact.json</name>
     <message>
       <extracomment>.QGC.MetaData.Facts[connected].shortDesc</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Connected</source>
       <translation type="unfinished">Connected</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentAccuracy].shortDesc</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Current Survey-In Accuracy</source>
       <translation type="unfinished">Current Survey-In Accuracy</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentLatitude].shortDesc</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Current Survey-In Latitude</source>
       <translation type="unfinished">Current Survey-In Latitude</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentLongitude].shortDesc</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Current Survey-In Longitude</source>
       <translation type="unfinished">Current Survey-In Longitude</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentAltitude].shortDesc</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Current Survey-In Altitude</source>
       <translation type="unfinished">Current Survey-In Altitude</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[currentDuration].shortDesc</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Current Survey-In Duration</source>
       <translation type="unfinished">Current Survey-In Duration</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[valid].shortDesc</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Survey-In Valid</source>
       <translation type="unfinished">Survey-In Valid</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[active].shortDesc</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Survey-In Active</source>
       <translation type="unfinished">Survey-In Active</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[numSatellites].shortDesc</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/GPSRTKFact.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/GPS/BaseStation/GPSBaseStationFact.json"/>
       <source>Number of Satellites</source>
       <translation type="unfinished">Number of Satellites</translation>
     </message>

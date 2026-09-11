@@ -19,17 +19,13 @@ private slots:
     void testInitialStateIsDisconnected();
     void testStopFromIdleIsNoop();
     void testPlaintextCredentialWarningIsVisibleState();
-    void testErrorStateStopsUdpForwarder();
 
-    // Reconnect backoff (migrated from NTRIPReconnectPolicyTest after the policy
-    // was inlined into NTRIPManager). Driven through the friend test seam.
-    void testReconnectInitialBackoff();
-    void testReconnectExponentialBackoff();
-    void testReconnectMaxBackoff();
-    void testReconnectCancelStopsTimer();
-    void testReconnectResetAttempts();
-    void testReconnectSignalFires();
     void testDuplicateTransportErrorsScheduleOneRetry();
     void testRetiredTransportErrorCannotAffectNewSession();
     void testMissingMountpointDoesNotStartTransport();
+    void testCorrectionsAreIndependentOfSink_data();
+    void testCorrectionsAreIndependentOfSink();
+    void testCorrectionObserverCanStopSession();
+    void testSessionStartObserverCanStop_data();
+    void testSessionStartObserverCanStop();
 };

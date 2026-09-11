@@ -1,0 +1,13 @@
+if(TARGET QGCGPSNativeContracts)
+    return()
+endif()
+add_library(QGCGPSNativeContracts INTERFACE)
+add_library(QGC::GPSNativeContracts ALIAS QGCGPSNativeContracts)
+target_compile_features(QGCGPSNativeContracts INTERFACE cxx_std_20)
+target_include_directories(QGCGPSNativeContracts INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+foreach(family UBX ASHTECH SBF FEMTO)
+    option(QGC_GPS_ENABLE_${family} "Build the ${family} GPS receiver protocol" ON)
+endforeach()
+configure_file(GPSProtocolFeatures.h.in GPSProtocolFeatures.h)
+target_include_directories(QGCGPSNativeContracts INTERFACE ${CMAKE_CURRENT_BINARY_DIR})

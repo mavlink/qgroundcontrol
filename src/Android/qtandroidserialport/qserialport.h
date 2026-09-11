@@ -6,6 +6,7 @@
 
 #include <QtCore/qiodevice.h>
 
+#include "AndroidSerialWrite.h"
 #include "qserialportglobal.h"
 
 QT_BEGIN_NAMESPACE
@@ -168,6 +169,11 @@ public:
     SerialPortError error() const;
     void clearError();
     QBindable<SerialPortError> bindableError() const;
+
+    /// Sticky evidence of dropped input; reset only by opening or explicitly clearing input.
+    bool inputOverflowed() const;
+    AndroidSerialWrite::Result writeBounded(const char* data, int length, QDeadlineTimer deadline,
+                                            const AndroidSerialWrite::Cancelled& cancelled);
 
     qint64 readBufferSize() const;
     void setReadBufferSize(qint64 size);

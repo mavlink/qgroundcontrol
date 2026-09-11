@@ -1,0 +1,498 @@
+#include "GPSPositionFactGroupTest.h"
+
+#include <memory>
+
+#include "GPSPositionFactGroup.h"
+#include "ManualScheduler.h"
+#include "VehicleGPS2FactGroup.h"
+#include "VehicleGPSAggregateFactGroup.h"
+#include "VehicleGPSObservation.h"
+#include "development/mavlink_msg_gnss_integrity.h"
+
+void GPSPositionFactGroupTest::_vehicleMessages_data()
+{
+    QTest::addColumn<bool>("secondary");
+    QTest::addColumn<bool>("unknown");
+    QTest::newRow("gps1") << false << false;
+    QTest::newRow("gps2") << true << false;
+    QTest::newRow("gps1-unknown") << false << true;
+    QTest::newRow("gps2-unknown") << true << true;
+}
+
+void GPSPositionFactGroupTest::_vehicleMessages()
+{
+    QFETCH(bool, secondary);
+    QFETCH(bool, unknown);
+    std::unique_ptr<VehicleGPSFactGroup> vehicleGps;
+    if (secondary) {
+        vehicleGps = std::make_unique<VehicleGPS2FactGroup>();
+    } else {
+        vehicleGps = std::make_unique<VehicleGPSFactGroup>();
+    }
+    const auto populate = [unknown](auto& raw) {
+        raw.lat = 473000000;
+        raw.lon = 85400000;
+        raw.eph = unknown ? UINT16_MAX : 160;
+        raw.epv = unknown ? UINT16_MAX : 210;
+        raw.cog = unknown ? UINT16_MAX : 9000;
+        raw.yaw = unknown ? UINT16_MAX : 18000;
+        raw.fix_type = 6;
+        raw.satellites_visible = unknown ? UINT8_MAX : 17;
+    };
+    mavlink_message_t message{};
+    if (secondary) {
+        mavlink_gps2_raw_t raw{};
+        populate(raw);
+        mavlink_msg_gps2_raw_encode(1, 1, &message, &raw);
+    } else {
+        mavlink_gps_raw_int_t raw{};
+        populate(raw);
+        mavlink_msg_gps_raw_int_encode(1, 1, &message, &raw);
+    }
+    vehicleGps->handleMessage(nullptr, message);
+    GPSPositionFactGroup* common = vehicleGps.get();
+    QCOMPARE(common->lat()->rawValue().toDouble(), 47.3);
+    QCOMPARE(common->lon()->rawValue().toDouble(), 8.54);
+    QVERIFY(!common->mgrs()->rawValue().toString().isEmpty());
+    QCOMPARE(common->count()->rawValue().toInt(), unknown ? -1 : 17);
+    QCOMPARE(common->lock()->rawValue().toInt(), 6);
+    QVERIFY(common->telemetryAvailable());
+    if (unknown) {
+        QVERIFY(qIsNaN(common->hdop()->rawValue().toDouble()));
+        QVERIFY(qIsNaN(common->vdop()->rawValue().toDouble()));
+        QVERIFY(qIsNaN(common->courseOverGround()->rawValue().toDouble()));
+        QVERIFY(qIsNaN(common->yaw()->rawValue().toDouble()));
+    } else {
+        QCOMPARE(common->hdop()->rawValue().toDouble(), 1.6);
+        QCOMPARE(common->vdop()->rawValue().toDouble(), 2.1);
+        QCOMPARE(common->courseOverGround()->rawValue().toDouble(), 90.0);
+        QCOMPARE(common->yaw()->rawValue().toDouble(), 180.0);
+    }
+    QCOMPARE(common->lock()->enumValues().size(), 8);
+    const auto authenticationValues = vehicleGps->authenticationState()->enumValues();
+    QCOMPARE(authenticationValues.size(), 6);
+    for (const int value : {0, 1, 2, 3, 4, 255}) {
+        QVERIFY(authenticationValues.contains(value));
+    }
+    QCOMPARE(vehicleGps->authenticationState()->rawValue().toInt(), 255);
+    QCOMPARE(vehicleGps->authenticationState()->enumStringValue(), QStringLiteral("Unknown"));
+}
+
+void GPSPositionFactGroupTest::_vehicleSentinels_data()
+{
+    QTest::addColumn<bool>("secondary");
+    QTest::addColumn<int>("yaw");
+    QTest::addColumn<bool>("missingExtension");
+    for (bool secondary : {false, true}) {
+        const QByteArray source = secondary ? "gps2" : "gps1";
+        for (int yaw : {0, 65535, 36000, 12345}) {
+            QTest::newRow((source + '-' + QByteArray::number(yaw)).constData()) << secondary << yaw << false;
+        }
+        QTest::newRow((source + "-missing-extension").constData()) << secondary << 12345 << true;
+    }
+}
+
+void GPSPositionFactGroupTest::_vehicleSentinels()
+{
+    QFETCH(bool, secondary);
+    QFETCH(int, yaw);
+    QFETCH(bool, missingExtension);
+    std::unique_ptr<VehicleGPSFactGroup> facts;
+    if (secondary) {
+        facts = std::make_unique<VehicleGPS2FactGroup>();
+    } else {
+        facts = std::make_unique<VehicleGPSFactGroup>();
+    }
+    const auto populate = [yaw](auto& raw) {
+        raw.lat = 0;
+        raw.lon = 0;
+        raw.eph = 0;
+        raw.epv = 0;
+        raw.cog = 0;
+        raw.yaw = yaw;
+        raw.fix_type = 7;
+        raw.satellites_visible = 0;
+    };
+    mavlink_message_t message{};
+    if (secondary) {
+        mavlink_gps2_raw_t raw{};
+        populate(raw);
+        mavlink_msg_gps2_raw_encode(1, 1, &message, &raw);
+        if (missingExtension) {
+            message.len = MAVLINK_MSG_ID_GPS2_RAW_MIN_LEN;
+        }
+    } else {
+        mavlink_gps_raw_int_t raw{};
+        populate(raw);
+        mavlink_msg_gps_raw_int_encode(1, 1, &message, &raw);
+        if (missingExtension) {
+            message.len = MAVLINK_MSG_ID_GPS_RAW_INT_MIN_LEN;
+        }
+    }
+    facts->handleMessage(nullptr, message);
+    QCOMPARE(facts->lat()->rawValue().toDouble(), 0.0);
+    QCOMPARE(facts->lon()->rawValue().toDouble(), 0.0);
+    QCOMPARE(facts->hdop()->rawValue().toDouble(), 0.0);
+    QCOMPARE(facts->vdop()->rawValue().toDouble(), 0.0);
+    QCOMPARE(facts->courseOverGround()->rawValue().toDouble(), 0.0);
+    QCOMPARE(facts->count()->rawValue().toInt(), 0);
+    QCOMPARE(facts->lock()->rawValue().toInt(), 7);
+    if (missingExtension || yaw == 0 || yaw == 65535) {
+        QVERIFY(qIsNaN(facts->yaw()->rawValue().toDouble()));
+    } else {
+        QCOMPARE(facts->yaw()->rawValue().toDouble(), yaw == 36000 ? 0.0 : yaw / 100.0);
+    }
+    QVERIFY(facts->telemetryAvailable());
+}
+
+void GPSPositionFactGroupTest::_localObservation()
+{
+    GPSPositionFactGroup facts;
+    GPSObservation fix;
+    fix.position = QGeoPositionInfo(QGeoCoordinate(47.3, 8.54), QDateTime::currentDateTimeUtc());
+    fix.position.setAttribute(QGeoPositionInfo::Direction, 90);
+    fix.trueHeadingDegrees = 180;
+    fix.horizontalDop = 1.6;
+    fix.verticalDop = 2.1;
+    fix.fixQuality = GPSObservation::FixQuality::RTKFixed;
+    facts.updatePosition(fix);
+    QCOMPARE(facts.lat()->rawValue().toDouble(), 47.3);
+    QCOMPARE(facts.lon()->rawValue().toDouble(), 8.54);
+    QCOMPARE(facts.hdop()->rawValue().toDouble(), 1.6);
+    QCOMPARE(facts.vdop()->rawValue().toDouble(), 2.1);
+    QCOMPARE(facts.courseOverGround()->rawValue().toDouble(), 90.0);
+    QCOMPARE(facts.yaw()->rawValue().toDouble(), 180.0);
+    QCOMPARE(facts.lock()->rawValue().toInt(), 6);
+    fix.horizontalDop.reset();
+    fix.trueHeadingDegrees.reset();
+    fix.position.removeAttribute(QGeoPositionInfo::Direction);
+    fix.fixQuality = GPSObservation::FixQuality::Extrapolated;
+    facts.updatePosition(fix);
+    QVERIFY(qIsNaN(facts.hdop()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.courseOverGround()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.yaw()->rawValue().toDouble()));
+    QCOMPARE(facts.lock()->rawValue().toInt(), 0);
+    facts.resetPosition();
+    QVERIFY(qIsNaN(facts.lat()->rawValue().toDouble()));
+    QVERIFY(!facts.telemetryAvailable());
+}
+
+void GPSPositionFactGroupTest::_resetDuringUpdate()
+{
+    GPSPositionFactGroup facts;
+    bool reset = false;
+    connect(facts.lat(), &Fact::rawValueChanged, this, [&]() {
+        if (!reset) {
+            reset = true;
+            facts.resetPosition();
+        }
+    });
+    GPSObservation fix;
+    fix.position = QGeoPositionInfo(QGeoCoordinate(47.3, 8.54), QDateTime::currentDateTimeUtc());
+    fix.fixQuality = GPSObservation::FixQuality::RTKFixed;
+    facts.updatePosition(fix);
+    QVERIFY(reset);
+    QVERIFY(qIsNaN(facts.lat()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.lon()->rawValue().toDouble()));
+    QCOMPARE(facts.lock()->rawValue().toInt(), 0);
+    QVERIFY(!facts.telemetryAvailable());
+}
+
+void GPSPositionFactGroupTest::_integrityProjection()
+{
+    GPSPositionFactGroup native;
+    VehicleGPSFactGroup vehicle;
+    VehicleGPSAggregateFactGroup aggregate;
+    aggregate.bindToGps(&vehicle, nullptr);
+    GPSIntegrityObservation observation;
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    observation.jammingState = 3;
+    observation.spoofingState = 1;
+    observation.authenticationState = 4;
+    observation.correctionsProtocol = 1;
+    observation.correctionsUsed = 2;
+    native.integrity()->update(observation);
+    mavlink_gnss_integrity_t raw{};
+    raw.jamming_state = 3;
+    raw.spoofing_state = 1;
+    raw.authentication_state = 4;
+    raw.corrections_quality = 255;
+    raw.system_status_summary = 255;
+    raw.gnss_signal_quality = 255;
+    raw.post_processing_quality = 255;
+    mavlink_message_t message{};
+    mavlink_msg_gnss_integrity_encode(1, 1, &message, &raw);
+    vehicle.handleMessage(nullptr, message);
+    QCOMPARE(native.integrity()->jammingState()->rawValue(), vehicle.jammingState()->rawValue());
+    QCOMPARE(native.integrity()->spoofingState()->rawValue(), vehicle.spoofingState()->rawValue());
+    QCOMPARE(native.integrity()->authenticationState()->rawValue(), vehicle.authenticationState()->rawValue());
+    QCOMPARE(vehicle.getFact(QStringLiteral("jammingState")), vehicle.integrity()->jammingState());
+    QVERIFY(native.integrity()->available());
+    QVERIFY(!native.integrity()->systemErrorsKnown());
+    QVERIFY(vehicle.integrity()->systemErrorsKnown());
+    QCOMPARE(native.integrity()->correctionsUsed()->rawValue().toInt(), 2);
+    QCOMPARE(vehicle.integrity()->correctionsUsed()->rawValue().toInt(), 255);
+    vehicle.updatePosition({});
+    QCOMPARE(vehicle.jammingState()->rawValue().toInt(), 3);
+    QCOMPARE(aggregate.jammingState()->rawValue().toInt(), 3);
+    vehicle.integrity()->reset();
+    QCOMPARE(aggregate.jammingState()->rawValue().toInt(), 255);
+    native.integrity()->reset();
+    QVERIFY(!native.integrity()->available());
+    QCOMPARE(native.integrity()->correctionsProtocol()->rawValue().toInt(), 255);
+}
+
+void GPSPositionFactGroupTest::_integrityExpiryAndReentrancy()
+{
+    GPSIntegrityFactGroup facts;
+    GPSIntegrityObservation observation;
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs() - 4900000;
+    observation.jammingState = 3;
+    facts.update(observation);
+    QVERIFY(facts.available());
+    QTRY_VERIFY_WITH_TIMEOUT(!facts.available(), 2000);
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 255);
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs() - 6000000;
+    facts.update(observation);
+    QVERIFY(!facts.available());
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    observation.spoofingState = 3;
+    bool reset = false;
+    connect(facts.spoofingState(), &Fact::rawValueChanged, this, [&]() {
+        if (!reset) {
+            reset = true;
+            facts.reset();
+        }
+    });
+    facts.update(observation);
+    QVERIFY(reset);
+    QVERIFY(!facts.available());
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 255);
+}
+
+void GPSPositionFactGroupTest::_independentIntegrityReports()
+{
+    GPSIntegrityFactGroup facts;
+    GPSIntegrityObservation observation;
+    observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+    observation.jammingState = 3;
+    observation.spoofingState = 1;
+    observation.correctionsUsed = 2;
+    observation.provenance = GPSIntegrityProvenance{
+        .jammingTimestampUs = observation.monotonicTimestampUs - 6000000,
+        .spoofingTimestampUs = observation.monotonicTimestampUs,
+        .correctionsTimestampUs = observation.monotonicTimestampUs - 6000000,
+    };
+    facts.update(observation);
+    QVERIFY(facts.available());
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 255);
+    QCOMPARE(facts.spoofingState()->rawValue().toInt(), 1);
+    QCOMPARE(facts.correctionsUsed()->rawValue().toInt(), 255);
+    for (int i = 0; i < 10; ++i) {
+        observation.monotonicTimestampUs = GPSObservation::monotonicNowUs();
+        facts.update(observation);
+        QCOMPARE(facts.jammingState()->rawValue().toInt(), 255);
+        QCOMPARE(facts.correctionsUsed()->rawValue().toInt(), 255);
+    }
+    observation.provenance->jammingTimestampUs = GPSObservation::monotonicNowUs() - 4900000;
+    facts.update(observation);
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 3);
+    QTRY_COMPARE_WITH_TIMEOUT(facts.jammingState()->rawValue().toInt(), 255, 2000);
+    QCOMPARE(facts.spoofingState()->rawValue().toInt(), 1);
+    observation.provenance->jammingTimestampUs = GPSObservation::monotonicNowUs();
+    // An unchanged report renews its own freshness even when another diagnostic group is stale.
+    observation.monotonicTimestampUs -= 6000000;
+    facts.update(observation);
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 3);
+    QCOMPARE(facts.correctionsUsed()->rawValue().toInt(), 255);
+    facts.reset();
+    QVERIFY(!facts.available());
+}
+
+UT_REGISTER_TEST(GPSPositionFactGroupTest, TestLabel::Unit)
+
+void GPSPositionFactGroupTest::_highLatencyTransitions_data()
+{
+    QTest::addColumn<bool>("version2");
+    QTest::addColumn<bool>("noFix");
+    QTest::addColumn<bool>("unknownError");
+    QTest::newRow("hl-fix") << false << false << false;
+    QTest::newRow("hl-no-fix") << false << true << false;
+    QTest::newRow("hl2-fix") << true << false << false;
+    QTest::newRow("hl2-no-fix") << true << true << false;
+    QTest::newRow("hl2-unknown-errors") << true << false << true;
+}
+
+void GPSPositionFactGroupTest::_highLatencyTransitions()
+{
+    QFETCH(bool, version2);
+    QFETCH(bool, noFix);
+    QFETCH(bool, unknownError);
+    VehicleGPSFactGroup facts;
+    mavlink_gps_raw_int_t raw{};
+    raw.lat = 470000000;
+    raw.lon = 80000000;
+    raw.fix_type = 6;
+    raw.eph = 150;
+    raw.epv = 200;
+    raw.cog = 12000;
+    raw.yaw = 18000;
+    raw.satellites_visible = 17;
+    mavlink_message_t message{};
+    mavlink_msg_gps_raw_int_encode(1, 1, &message, &raw);
+    facts.handleMessage(nullptr, message);
+    QCOMPARE(facts.lock()->rawValue().toInt(), 6);
+    VehicleGPSObservation observation;
+    if (version2) {
+        mavlink_high_latency2_t highLatency{};
+        highLatency.latitude = 481000000;
+        highLatency.longitude = 95000000;
+        highLatency.altitude = 450;
+        highLatency.eph = unknownError ? UINT8_MAX : 15;
+        highLatency.epv = unknownError ? UINT8_MAX : 25;
+        highLatency.failure_flags = noFix ? HL_FAILURE_FLAG_GPS : 0;
+        observation = VehicleGPSObservation::fromMessage(highLatency);
+        mavlink_msg_high_latency2_encode(1, 1, &message, &highLatency);
+    } else {
+        mavlink_high_latency_t highLatency{};
+        highLatency.latitude = 481000000;
+        highLatency.longitude = 95000000;
+        highLatency.altitude_amsl = 450;
+        highLatency.gps_fix_type = noFix ? GPS_FIX_TYPE_NO_FIX : GPS_FIX_TYPE_3D_FIX;
+        observation = VehicleGPSObservation::fromMessage(highLatency);
+        mavlink_msg_high_latency_encode(1, 1, &message, &highLatency);
+    }
+    facts.handleMessage(nullptr, message);
+    QCOMPARE(facts.lat()->rawValue().toDouble(), observation.position.position.coordinate().latitude());
+    QCOMPARE(facts.lon()->rawValue().toDouble(), observation.position.position.coordinate().longitude());
+    QCOMPARE(facts.lock()->rawValue().toInt(), observation.fixType);
+    QCOMPARE(facts.count()->rawValue().toInt(), -1);
+    QVERIFY(qIsNaN(facts.hdop()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.vdop()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.courseOverGround()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(facts.yaw()->rawValue().toDouble()));
+    QVERIFY(!observation.position.horizontalDop);
+    QVERIFY(!observation.position.verticalDop);
+    QCOMPARE(observation.position.fixQuality == GPSObservation::FixQuality::NoFix, noFix);
+    QVERIFY(qIsNaN(observation.position.position.coordinate().altitude()));
+    QCOMPARE(observation.fusedPosition.position.coordinate().altitude(), 450.0);
+    QCOMPARE(observation.fusedPosition.altitudeDatum, GPSObservation::AltitudeDatum::MeanSeaLevel);
+    QCOMPARE(observation.fusedPosition.monotonicTimestampUs, observation.position.monotonicTimestampUs);
+    QCOMPARE(observation.position.position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy),
+             version2 && !unknownError);
+    if (version2 && !unknownError) {
+        QCOMPARE(observation.position.position.attribute(QGeoPositionInfo::HorizontalAccuracy), 1.5);
+        QCOMPARE(observation.position.position.attribute(QGeoPositionInfo::VerticalAccuracy), 2.5);
+    }
+}
+
+void GPSPositionFactGroupTest::_metadataOwnershipAndVirtualIntegrity()
+{
+    VehicleGPSFactGroup vehicle;
+    QCOMPARE(vehicle.getFact(QStringLiteral("jammingState")), vehicle.integrity()->jammingState());
+    QCOMPARE(vehicle.getFact(QStringLiteral("integrity.jammingState")), vehicle.integrity()->jammingState());
+    QCOMPARE(vehicle.jammingState()->metaData()->parent(), vehicle.integrity());
+    QCOMPARE(vehicle.lat()->metaData()->parent(), &vehicle);
+    QCOMPARE(vehicle.jammingState()->rawValue().toInt(), 255);
+    vehicle.setLiveUpdates(true);
+    QVERIFY(!vehicle.integrity()->jammingState()->sendValueChangedSignals());
+    vehicle.integrity()->setLiveUpdates(true);
+    vehicle.setLiveUpdates(false);
+    QVERIFY(vehicle.integrity()->jammingState()->sendValueChangedSignals());
+
+    ManualScheduler scheduler;
+    GPSPositionFactGroup position(nullptr, &scheduler);
+    GPSIntegrityObservation report;
+    report.monotonicTimestampUs = scheduler.nowUs();
+    report.jammingState = 0;
+    report.correctionsCrcFailed = false;
+    position.integrity()->update(report);
+    QCOMPARE(position.integrity()->jammingState()->rawValue().toInt(), 0);
+    QCOMPARE(position.integrity()->correctionsCrcFailed()->rawValue().toInt(), 0);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(5)));
+    QVERIFY(!position.integrity()->available());
+    QCOMPARE(position.integrity()->jammingState()->rawValue().toInt(), 255);
+    QCOMPARE(position.integrity()->correctionsCrcFailed()->rawValue().toInt(), -1);
+}
+
+void GPSPositionFactGroupTest::_sharedVehicleObservations()
+{
+    VehicleGPSObservationStream stream;
+    VehicleGPSFactGroup first(nullptr, &stream);
+    VehicleGPS2FactGroup second(nullptr, &stream);
+    QSignalSpy updates(&stream, &VehicleGPSObservationStream::gpsReceived);
+    mavlink_gps_raw_int_t raw = {};
+    raw.lat = 470000000;
+    raw.lon = 80000000;
+    raw.alt = 500000;
+    raw.fix_type = GPS_FIX_TYPE_3D_FIX;
+    mavlink_message_t message = {};
+    mavlink_msg_gps_raw_int_encode(2, 1, &message, &raw);
+    stream.handleMessage(message, 1, 1);
+    QVERIFY(updates.isEmpty());
+    mavlink_msg_gps_raw_int_encode(1, 1, &message, &raw);
+    stream.handleMessage(message, 1, 1);
+    QCOMPARE(updates.size(), 1);
+    const auto observed = qvariant_cast<VehicleGPSObservation>(updates.first().at(1));
+    QCOMPARE(observed.position.monotonicTimestampUs, stream.gps().position.monotonicTimestampUs);
+    QCOMPARE(first.lat()->rawValue().toDouble(), 47.0);
+    QVERIFY(qIsNaN(second.lat()->rawValue().toDouble()));
+    first.handleMessage(nullptr, message);
+    QCOMPARE(updates.size(), 1);
+
+    mavlink_gps2_raw_t secondary = {};
+    secondary.lat = 480000000;
+    secondary.lon = 90000000;
+    secondary.fix_type = GPS_FIX_TYPE_3D_FIX;
+    mavlink_msg_gps2_raw_encode(1, 1, &message, &secondary);
+    stream.handleMessage(message, 1, 1);
+    QCOMPARE(second.lat()->rawValue().toDouble(), 48.0);
+    QCOMPARE(first.lat()->rawValue().toDouble(), 47.0);
+    mavlink_global_position_int_t fused = {};
+    fused.lat = 490000000;
+    fused.lon = 100000000;
+    fused.alt = 600000;
+    mavlink_msg_global_position_int_encode(1, 2, &message, &fused);
+    stream.handleMessage(message, 1, 1);
+    QVERIFY(!stream.fusedPosition().position.isValid());
+    mavlink_msg_global_position_int_encode(1, 1, &message, &fused);
+    stream.handleMessage(message, 1, 1);
+    QCOMPARE(stream.fusedPosition().position.coordinate(), QGeoCoordinate(49, 10, 600));
+    QCOMPARE(stream.gps().position.position.coordinate(), QGeoCoordinate(47, 8, 500));
+    stream.reset();
+    QVERIFY(!stream.fusedPosition().position.isValid());
+    QVERIFY(qIsNaN(first.lat()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(second.lat()->rawValue().toDouble()));
+}
+
+void GPSPositionFactGroupTest::_independentReceiverIntegrityExpiry()
+{
+    ManualScheduler scheduler;
+    VehicleGPSObservationStream stream(nullptr, &scheduler);
+    VehicleGPSFactGroup first(nullptr, &stream);
+    VehicleGPS2FactGroup second(nullptr, &stream);
+    VehicleGPSAggregateFactGroup aggregate;
+    aggregate.bindToGps(&first, &second);
+    mavlink_gnss_integrity_t observation = {};
+    observation.jamming_state = 3;
+    observation.authentication_state = VehicleGPSAggregateFactGroup::AUTH_ERROR;
+    mavlink_message_t message = {};
+    mavlink_msg_gnss_integrity_encode(1, 1, &message, &observation);
+    stream.handleMessage(message, 1, 1);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(3)));
+    observation.id = 1;
+    observation.jamming_state = 1;
+    observation.authentication_state = VehicleGPSAggregateFactGroup::AUTH_OK;
+    mavlink_msg_gnss_integrity_encode(1, 1, &message, &observation);
+    stream.handleMessage(message, 1, 1);
+    QCOMPARE(aggregate.jammingState()->rawValue().toInt(), 3);
+    QCOMPARE(aggregate.authenticationState()->rawValue().toInt(), VehicleGPSAggregateFactGroup::AUTH_ERROR);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
+    QCOMPARE(first.jammingState()->rawValue().toInt(), 255);
+    QCOMPARE(aggregate.jammingState()->rawValue().toInt(), 1);
+    QCOMPARE(aggregate.authenticationState()->rawValue().toInt(), VehicleGPSAggregateFactGroup::AUTH_OK);
+    QVERIFY(!aggregate.isStale()->rawValue().toBool());
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(3)));
+    QCOMPARE(aggregate.jammingState()->rawValue().toInt(), 255);
+    QVERIFY(aggregate.isStale()->rawValue().toBool());
+}

@@ -126,6 +126,40 @@ UT_REGISTER_TEST(LinkManagerTest, TestLabel::Integration, TestLabel::Comms)
 #include "SerialLink.h"
 #include "SerialPortManager.h"
 
+void LinkManagerTest::_testSerialAutoConnectRetainsBackoff()
+{
+    linkManager()->init();
+    const QString portName = QStringLiteral("/test/autoconnect-backoff");
+    const QList<SerialPortManager::Port> ports = {
+        {portName, QStringLiteral("autoconnect-backoff"), QGCSerialPortInfo::BoardTypePixhawk, QStringLiteral("Test")}};
+    auto config = _addMockConfig(QStringLiteral("Serial reconnect"), true, true);
+    QVERIFY(config);
+    linkManager()->_autoconnectSerialConfigs.insert(portName, config);
+    config->link()->disconnect();
+    QTRY_VERIFY_WITH_TIMEOUT(!config->link(), TestTimeout::mediumMs());
+    config->noteReconnectAttempt();
+
+    linkManager()->_addSerialAutoConnectLink(ports);
+    QVERIFY(!config->link());
+    QCOMPARE(linkManager()->_autoconnectSerialConfigs.value(portName), config);
+
+    config->resetReconnectBackoff();
+    linkManager()->_addSerialAutoConnectLink(ports);
+    QVERIFY(config->link());
+
+    linkManager()->disconnectLink(config->link());
+    QTRY_VERIFY_WITH_TIMEOUT(!config->link(), TestTimeout::mediumMs());
+    config->resetReconnectBackoff();
+    linkManager()->_addSerialAutoConnectLink(ports);
+    QVERIFY(!config->link());
+
+    linkManager()->_autoconnectPortWaitList.insert(portName, 1);
+    linkManager()->_addSerialAutoConnectLink({});
+    QVERIFY(!linkManager()->_autoconnectSerialConfigs.contains(portName));
+    QVERIFY(!linkManager()->_autoconnectPortWaitList.contains(portName));
+    linkManager()->removeConfiguration(config.get());
+}
+
 void LinkManagerTest::_testReservedSerialPortNotOpened()
 {
     const QString port = QStringLiteral("/test/gps-reserved");

@@ -1,0 +1,130 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "groups": [
+        {
+            "component": "PositionSourceSettings",
+            "sectionName": "Ground-Station Position",
+            "keywords": [
+                "position source",
+                "fallback",
+                "device location",
+                "permission"
+            ]
+        },
+        {
+            "component": "NmeaGpsSettings",
+            "sectionName": "NMEA GPS",
+            "keywords": [
+                "nmea",
+                "gps",
+                "serial",
+                "baud rate",
+                "external gps"
+            ]
+        },
+        {
+            "component": "LocalRtkSettings",
+            "sectionName": "Local GNSS Receiver",
+            "keywords": [
+                "gps",
+                "gnss",
+                "position",
+                "role",
+                "rtk",
+                "receiver",
+                "base",
+                "usb",
+                "serial",
+                "tcp",
+                "udp",
+                "network",
+                "auto connect"
+            ]
+        },
+        {
+            "component": "ReceiverConfigurationSettings",
+            "sectionName": "Receiver Configuration",
+            "keywords": [
+                "gps",
+                "constellations",
+                "dynamic model",
+                "output rate",
+                "heading offset"
+            ]
+        },
+        {
+            "component": "CorrectionRoutingSettings",
+            "sectionName": "Correction Routing",
+            "keywords": [
+                "rtcm",
+                "corrections",
+                "source",
+                "rover",
+                "ntrip",
+                "udp"
+            ]
+        },
+        {
+            "heading": "UDP RTCM Input",
+            "keywords": [
+                "udp rtcm"
+            ],
+            "controls": [
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpInputEnabled"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpInputPort",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpInputEnabled.rawValue"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpValidate",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpInputEnabled.rawValue"
+                }
+            ]
+        },
+        {
+            "component": "CorrectionDiagnostics",
+            "sectionName": "Correction Diagnostics",
+            "keywords": [
+                "gps",
+                "rtcm",
+                "corrections",
+                "diagnostics",
+                "delivery",
+                "events"
+            ]
+        },
+        {
+            "component": "ReceiverConfigurationStatus",
+            "sectionName": "Receiver Configuration Status",
+            "keywords": [
+                "readback",
+                "acknowledgment",
+                "configuration"
+            ]
+        },
+        {
+            "component": "ReceiverObservationDiagnostics",
+            "sectionName": "Receiver Observations",
+            "keywords": [
+                "satellites",
+                "signal",
+                "baseline",
+                "heading",
+                "accuracy"
+            ]
+        },
+        {
+            "component": "GPSRecordingSettings",
+            "sectionName": "Receiver Recording",
+            "keywords": [
+                "recording",
+                "capture",
+                "replay",
+                "diagnostics"
+            ]
+        }
+    ]
+}

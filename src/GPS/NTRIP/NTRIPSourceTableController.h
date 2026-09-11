@@ -3,17 +3,18 @@
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "NTRIPTransportConfig.h"
+#include "RuntimeScheduler.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableControllerLog)
 
 class NTRIPSourceTableModel;
 class NTRIPSourceTableControllerTest;
-class QNetworkAccessManager;
-class QNetworkReply;
+class NTRIPHttpResponse;
 
 class NTRIPSourceTableController : public QObject
 {
@@ -37,9 +38,8 @@ public:
 
     static constexpr int kCacheTtlMs = 60000;
     static constexpr int kFetchTimeoutMs = 10000;
-    static constexpr qint64 kMaxSourceTableBytes = 8 * 1024 * 1024;
 
-    explicit NTRIPSourceTableController(QObject* parent = nullptr);
+    explicit NTRIPSourceTableController(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~NTRIPSourceTableController() override;
 
     FetchStatus fetchStatus() const { return _fetchStatus; }
@@ -52,6 +52,7 @@ public:
     Q_INVOKABLE void selectMountpoint(const QString& mountpoint);
 
 signals:
+    void plaintextCredentialsWarning();
     void fetchStatusChanged();
     void fetchErrorChanged();
     void mountpointModelChanged();
@@ -72,15 +73,16 @@ private:
     void _abortReply();
 
     NTRIPSourceTableModel* _model = nullptr;
-    QNetworkAccessManager* _networkManager = nullptr;
-    QNetworkReply* _reply = nullptr;
-    bool _replyTooLarge = false;
+    QPointer<RuntimeScheduler> _scheduler;
+    NTRIPHttpResponse* _reply = nullptr;
+    QByteArray _body;
     QGeoCoordinate _sortCoord;
     FetchStatus _fetchStatus = FetchStatus::Idle;
     QString _fetchError;
-    qint64 _fetchedAtMs = 0;
+    qint64 _fetchedAtMs = -1;
 
     // Cache key for the most recent fetch — NTRIPTransportConfig::casterIdentity()
     // so it stays in lockstep with the config's own notion of "same caster".
     QString _lastFetchKey;
+    quint64 _generation = 0;
 };

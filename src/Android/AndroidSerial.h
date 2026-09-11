@@ -71,7 +71,7 @@ int open(const QString& portName, QSerialPortPrivate* classPtr);
 bool close(int deviceId);
 bool isOpen(const QString& portName);
 QByteArray read(int deviceId, int length, int timeout);
-int write(int deviceId, const char* data, int length, int timeout, bool async);
+AndroidSerialWrite::Result writeResult(int deviceId, const char* data, int length, int timeout);
 bool setParameters(int deviceId, int baudRate, int dataBits, int stopBits, int parity);
 bool getCarrierDetect(int deviceId);
 bool getClearToSend(int deviceId);

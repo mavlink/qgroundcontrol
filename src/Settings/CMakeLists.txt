@@ -43,6 +43,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         RemoteIDSettings.h
         RTKSettings.cc
         RTKSettings.h
+        GPSCorrectionSettings.cc
+        GPSCorrectionSettings.h
+        GPSPositionSettings.cc
+        GPSPositionSettings.h
         NTRIPSettings.cc
         NTRIPSettings.h
         SettingsGroup.cc

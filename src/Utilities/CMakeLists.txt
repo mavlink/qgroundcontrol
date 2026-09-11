@@ -3,27 +3,21 @@
 # Core utilities, logging, file system helpers, and platform abstractions
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        AppMessages.cc
-        AppMessages.h
-        DataRateTracker.cc
-        DataRateTracker.h
-        QGCCommandLineParser.cc
-        QGCCommandLineParser.h
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE AppMessages.cc AppMessages.h QGCCommandLineParser.cc
+                                             QGCCommandLineParser.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        Compression
-)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} Compression)
 
 # ============================================================================
 # Utility Subdirectories
 # ============================================================================
 
+add_subdirectory(IO)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCIO)
 add_subdirectory(Logging)
+add_subdirectory(Timing)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCTiming)
 add_subdirectory(Audio)
 add_subdirectory(Compression)
 add_subdirectory(Concurrency)

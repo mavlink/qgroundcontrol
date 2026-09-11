@@ -7,21 +7,29 @@ class NTRIPHttpTransportTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    // HTTP status line parsing
-    void _testParseHttpStatus200();
-    void _testParseHttpStatusICY();
-    void _testParseHttpStatus401();
-    void _testParseHttpStatus404();
-    void _testParseHttpStatusInvalid();
-    void _testParseHttpStatus201();
-    void _testParseHttpStatus500();
-    void _testParseHttpStatusNoReason();
+    void testSourceTableRejectsMountpoint_data();
+    void testSourceTableRejectsMountpoint();
+    void testBodyBeforeMalformedChunk_data();
+    void testBodyBeforeMalformedChunk();
+    void testEofFinalization_data();
+    void testEofFinalization();
+    void testBodyObserverRetiresAttempt_data();
+    void testBodyObserverRetiresAttempt();
+    void testChunkedCorrectionsYieldBetweenReadBatches();
+    void testPublicObserverCanStop_data();
+    void testPublicObserverCanStop();
+    void testResponseDecoder_data();
+    void testResponseDecoder();
+    void testNormalizedRequest_data();
+    void testNormalizedRequest();
+    void testEncodedRequestReachesCaster();
+    void testAddressValidation_data();
+    void testAddressValidation();
 
     // Whitelist parsing
-    void _testWhitelistEmpty();
-    void _testWhitelistSingle();
-    void _testWhitelistMultiple();
-    void _testWhitelistInvalidEntries();
+    void _testWhitelistParsing_data();
+    void _testWhitelistParsing();
+    void _testFragmentedReceiptTime();
 
     // RTCM filtering
     void _testFilterNoWhitelist();
@@ -35,7 +43,7 @@ private slots:
     void testConfigRejectsColonUsername();
     void testConfigRejectsControlChars();
     void testConfigDiffClassifiersCoverIndependentFields();
-    void testConfigCasterIdentityExcludesMountpointAndSinks();
+    void testConfigCasterIdentityExcludesMountpointAndFilter();
 
     // Live TLS error path
     void testTlsFatalErrorEmitsSingleError();
@@ -43,6 +51,8 @@ private slots:
     void testConnectionWaitsForHttpResponse();
     void testHandshakeTimeoutClosesSocket();
     void testRemoteCloseEmitsSingleError();
+    void testCorrectionWatchdog_data();
+    void testCorrectionWatchdog();
 
     // HTTP request building
     void _testBuildRequestPlaintextCredentialsWarns();

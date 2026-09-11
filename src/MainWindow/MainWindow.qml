@@ -174,10 +174,10 @@ ApplicationWindow {
         }
     }
 
-    function showSettingsTool(settingsPage = "") {
+    function showSettingsTool(settingsPage = "", settingsSection = "") {
         showTool(qsTr("Application Settings"), "qrc:/qml/QGroundControl/Controls/AppSettings.qml", "/res/QGCLogoWhite")
         if (settingsPage !== "") {
-            toolDrawerLoader.item.showSettingsPage(settingsPage)
+            toolDrawerLoader.item.showSettingsPage(settingsPage, settingsSection)
         }
     }
 

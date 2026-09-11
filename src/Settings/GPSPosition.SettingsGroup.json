@@ -1,0 +1,16 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "sourceMode",
+            "shortDesc": "Ground-station position source selection",
+            "longDesc": "Connection priority preserves the existing receiver, NMEA, then device order. Automatic fallback selects a healthy source and delays returning to a recovered preferred source. A pinned source never falls back to another source.",
+            "type": "uint8",
+            "enumStrings": "Connection priority,Automatic healthy source,Local receiver only,NMEA only,Device positioning only",
+            "enumValues": "0,1,2,3,4",
+            "default": 0,
+            "label": "Position source"
+        }
+    ]
+}

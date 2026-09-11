@@ -53,7 +53,13 @@
             "pageDefinition": "Maps.SettingsUI.json"
         },
         {
-            "name": "NTRIP/RTK",
+            "name": "GPS",
+            "qml": "GPSSettings.qml",
+            "icon": "qrc:/qmlimages/Gps.svg",
+            "pageDefinition": "GPS.SettingsUI.json"
+        },
+        {
+            "name": "NTRIP",
             "qml": "NTRIPSettings.qml",
             "icon": "qrc:/InstrumentValueIcons/globe.svg",
             "visible": "QGroundControl.settingsManager && QGroundControl.settingsManager.ntripSettings !== undefined",

@@ -1043,56 +1043,26 @@ public class QGCUsbSerialManager {
         }
     }
 
-    /**
-     * Writes data to the USB serial device.
-     *
-     * @param deviceId    The device ID.
-     * @param data        The byte array of data to write.
-     * @param length      The number of bytes to write.
-     * @param timeoutMSec The timeout in milliseconds.
-     * @return The number of bytes written, or -1 if failed.
-     */
-    public static int write(final int deviceId, final byte[] data, final int length, final int timeoutMSec) {
-        final UsbSerialPort port = getOpenPortOrWarn(deviceId, "write");
-        if (port == null) {
-            return -1;
-        }
-
-        try {
-            port.write(data, length, timeoutMSec);
-            return length;
-        } catch (final SerialTimeoutException e) {
-            QGCLogger.e(TAG, "Write timeout occurred", e);
-            return -1;
-        } catch (final IOException e) {
-            QGCLogger.e(TAG, "Error writing data", e);
-            return -1;
-        }
+    public static int[] writeResult(final int deviceId, final byte[] data, final int length, final int timeoutMSec) {
+        return writeResultForPort(getOpenPortOrWarn(deviceId, "writeResult"), data, length, timeoutMSec);
     }
 
-    /**
-     * Writes data asynchronously to the USB serial device.
-     *
-     * @param deviceId    The device ID.
-     * @param data        The byte array of data to write.
-     * @param timeoutMSec The timeout in milliseconds.
-     * @return The number of bytes written, or -1 if failed.
-     */
-    public static int writeAsync(final int deviceId, final byte[] data, final int timeoutMSec) {
-        UsbDeviceResources resources = deviceResourcesMap.get(deviceId);
-        if (resources == null || resources.ioManager == null) {
-            QGCLogger.w(TAG, "IO Manager not found for device ID " + deviceId);
-            return -1;
+    // JNI result: status (0 complete, 1 timeout, 2 error), confirmed bytes, uncertain bytes.
+    static int[] writeResultForPort(final UsbSerialPort port, final byte[] data, final int length,
+                                   final int timeoutMSec) {
+        if (port == null || data == null || length <= 0 || length > data.length || timeoutMSec <= 0) {
+            return new int[] {2, 0, 0};
         }
-
-        if (resources.ioManager.getReadTimeout() == 0) {
-            QGCLogger.w(TAG, "Read Timeout is 0 for writeAsync");
+        try {
+            port.write(data, length, timeoutMSec);
+            return new int[] {0, length, 0};
+        } catch (final SerialTimeoutException e) {
+            final int written = Math.max(0, Math.min(length, e.bytesTransferred));
+            // Never retry a suffix whose delivery the USB implementation did not establish.
+            return new int[] {1, written, length - written};
+        } catch (final IOException e) {
+            return new int[] {2, 0, length};
         }
-
-        resources.ioManager.setWriteTimeout(timeoutMSec);
-        resources.ioManager.writeAsync(data);
-
-        return data.length;
     }
 
     /**

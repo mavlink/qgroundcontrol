@@ -2,152 +2,55 @@
 
 #include <QtCore/QDateTime>
 
-#include "Fact.h"
-#include "FactGroup.h"
-#include "GPSManager.h"
-#include "GPSRtk.h"
-#include "MultiVehicleManager.h"
+#include "GPSSourceHealth.h"
 #include "NMEAUtils.h"
-#include "NTRIPSettings.h"
-#include "NTRIPTransport.h"
-#include "PositionManager.h"
-#include "Vehicle.h"
+#include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
-namespace {
+QGC_LOGGING_CATEGORY(NTRIPGgaProviderLog, "GPS.NTRIP.NTRIPGgaProvider")
 
-/// Rejects "zero island" (0,0) as well as out-of-range and non-finite values.
-/// QGeoCoordinate::isValid() alone accepts (0,0), which is how vehicles report
-/// "no fix yet" — we must treat that as invalid for GGA upstream.
-bool isSaneCoord(double lat, double lon)
+bool PositionResult::isValid(quint64 nowUs) const
 {
-    return qIsFinite(lat) && qIsFinite(lon) && !(lat == 0.0 && lon == 0.0) && qAbs(lat) <= 90.0 && qAbs(lon) <= 180.0;
-}
-
-PositionResult getVehicleGPSPosition()
-{
-    MultiVehicleManager* mvm = MultiVehicleManager::instance();
-    if (!mvm)
-        return {};
-    Vehicle* veh = mvm->activeVehicle();
-    if (!veh)
-        return {};
-
-    FactGroup* gps = veh->gpsFactGroup();
-    if (!gps)
-        return {};
-
-    Fact* latF = gps->getFact(QStringLiteral("lat"));
-    Fact* lonF = gps->getFact(QStringLiteral("lon"));
-    if (!latF || !lonF)
-        return {};
-
-    const double lat = latF->rawValue().toDouble();
-    const double lon = lonF->rawValue().toDouble();
-
-    if (isSaneCoord(lat, lon)) {
-        return {QGeoCoordinate(lat, lon, veh->coordinate().altitude()), QStringLiteral("Vehicle GPS")};
+    if (!observation.acceptedPosition(GPSObservation::PositionUse::Gga).isValid()) {
+        return false;
     }
-    return {};
+    const qint64 age = nowUs >= observation.monotonicTimestampUs
+                           ? static_cast<qint64>((nowUs - observation.monotonicTimestampUs) / 1000)
+                           : -1;
+    return fixedReference ||
+           (observation.monotonicTimestampUs != 0 && age >= 0 && age < GPSSourceHealth::FRESHNESS_TIMEOUT_MS);
 }
 
-PositionResult getVehicleEKFPosition()
+NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent, RuntimeScheduler* scheduler)
+    : QObject(parent)
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
+    , _task(_scheduler, this)
 {
-    MultiVehicleManager* mvm = MultiVehicleManager::instance();
-    if (!mvm)
-        return {};
-    Vehicle* veh = mvm->activeVehicle();
-    if (!veh)
-        return {};
-
-    const QGeoCoordinate coord = veh->coordinate();
-    if (coord.isValid() && isSaneCoord(coord.latitude(), coord.longitude())) {
-        return {coord, QStringLiteral("Vehicle EKF")};
-    }
-    return {};
+    qCDebug(NTRIPGgaProviderLog) << this;
 }
 
-PositionResult getRTKBasePosition()
+NTRIPGgaProvider::~NTRIPGgaProvider()
 {
-    GPSManager* gpsManager = GPSManager::instance();
-    if (!gpsManager)
-        return {};
-    GPSRtk* rtk = gpsManager->gpsRtk();
-    if (!rtk)
-        return {};
-
-    FactGroup* rtkGroup = rtk->gpsRtkFactGroup();
-    if (!rtkGroup)
-        return {};
-
-    Fact* validF = rtkGroup->getFact(QStringLiteral("valid"));
-    if (!validF || !validF->rawValue().toBool())
-        return {};
-
-    Fact* latF = rtkGroup->getFact(QStringLiteral("currentLatitude"));
-    Fact* lonF = rtkGroup->getFact(QStringLiteral("currentLongitude"));
-    if (!latF || !lonF)
-        return {};
-
-    Fact* altF = rtkGroup->getFact(QStringLiteral("currentAltitude"));
-    const double lat = latF->rawValue().toDouble();
-    const double lon = lonF->rawValue().toDouble();
-    const double alt = altF ? altF->rawValue().toDouble() : 0.0;
-
-    if (isSaneCoord(lat, lon)) {
-        return {QGeoCoordinate(lat, lon, alt), QStringLiteral("RTK Base")};
-    }
-    return {};
+    qCDebug(NTRIPGgaProviderLog) << this;
 }
 
-PositionResult getGCSPosition()
+void NTRIPGgaProvider::configure(const Configuration& config)
 {
-    QGCPositionManager* posMgr = QGCPositionManager::instance();
-    if (!posMgr)
-        return {};
-
-    const QGeoCoordinate coord = posMgr->gcsPosition();
-    if (coord.isValid() && isSaneCoord(coord.latitude(), coord.longitude())) {
-        return {coord, QStringLiteral("GCS Position")};
-    }
-    return {};
+    _cachedSource = config.source;
+    _normalInterval = config.interval.count() > 0 ? config.interval : kDefaultInterval;
+    if (_writer)
+        _scheduleNext();
 }
 
-}  // anonymous namespace
-
-NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent) : QObject(parent)
+void NTRIPGgaProvider::_scheduleNext()
 {
-    _timer.setInterval(_normalInterval);
-    connect(&_timer, &QChronoTimer::timeout, this, &NTRIPGgaProvider::_sendGGA);
-}
-
-void NTRIPGgaProvider::init(NTRIPSettings* settings)
-{
-    // Cache the user-selected source and interval so the hot path (_sendGGA)
-    // avoids a SettingsManager::instance()->ntripSettings()->...->rawValue()
-    // chain per tick.
-    if (!settings) {
-        return;
-    }
-
-    auto* sourceFact = settings->ntripGgaPositionSource();
-    auto refreshSource = [this, sourceFact]() {
-        _cachedSource = static_cast<PositionSource>(sourceFact->rawValue().toUInt());
-    };
-    refreshSource();
-    connect(sourceFact, &Fact::rawValueChanged, this, refreshSource);
-
-    auto* intervalFact = settings->ntripGgaIntervalSec();
-    auto refreshInterval = [this, intervalFact]() {
-        const uint seconds = intervalFact->rawValue().toUInt();
-        // Guard against 0 from a stale config — fall back to the default.
-        _normalInterval =
-            (seconds > 0) ? std::chrono::milliseconds{static_cast<qint64>(seconds) * 1000} : kDefaultInterval;
-        if (_retryPhase == RetryPhase::Normal) {
-            _timer.setInterval(_normalInterval);
-        }
-    };
-    refreshInterval();
-    connect(intervalFact, &Fact::rawValueChanged, this, refreshInterval);
+    const auto generation = _generation;
+    _task.schedule(_retryPhase == RetryPhase::Fast ? kFastRetryInterval : _normalInterval, [this, generation] {
+        const QPointer<NTRIPGgaProvider> guard(this);
+        _sendGGA();
+        if (guard && generation == _generation && _writer)
+            _scheduleNext();
+    });
 }
 
 void NTRIPGgaProvider::setPositionProvider(PositionSource source, PositionProvider provider)
@@ -155,27 +58,35 @@ void NTRIPGgaProvider::setPositionProvider(PositionSource source, PositionProvid
     _providers[source] = std::move(provider);
 }
 
-void NTRIPGgaProvider::start(NTRIPTransport* transport)
+void NTRIPGgaProvider::start(SentenceWriter writer)
 {
-    _transport = transport;
+    const QPointer<NTRIPGgaProvider> guard(this);
+    const auto generation = ++_generation;
+    _task.cancel();
+    _writer = std::move(writer);
     _fastRetryCount = 0;
     _clearSource();
+    if (!guard || generation != _generation || !_writer) {
+        return;
+    }
     _setRetryPhase(RetryPhase::Fast);
     _sendGGA();
-    _timer.start();
+    if (guard && generation == _generation) {
+        _scheduleNext();
+    }
 }
 
 void NTRIPGgaProvider::stop()
 {
-    _timer.stop();
-    _transport = nullptr;
+    ++_generation;
+    _task.cancel();
+    _writer = {};
     _clearSource();
 }
 
 void NTRIPGgaProvider::_setRetryPhase(RetryPhase phase)
 {
     _retryPhase = phase;
-    _timer.setInterval(phase == RetryPhase::Fast ? kFastRetryInterval : _normalInterval);
 }
 
 void NTRIPGgaProvider::_clearSource()
@@ -189,15 +100,24 @@ void NTRIPGgaProvider::_clearSource()
 
 void NTRIPGgaProvider::_sendGGA()
 {
-    if (!_transport) {
+    if (!_writer || !_scheduler) {
         return;
     }
 
-    _ensureDefaultProviders();
+    const QPointer<NTRIPGgaProvider> guard(this);
+    const auto generation = _generation;
+    const auto writer = _writer;
 
     const auto position = _getBestPosition();
+    if (!guard || generation != _generation || !_scheduler) {
+        return;
+    }
 
-    if (!position.isValid()) {
+    if (!position.isValid(_scheduler->nowUs())) {
+        _clearSource();
+        if (!guard || generation != _generation) {
+            return;
+        }
         if (++_fastRetryCount >= 5 && _retryPhase == RetryPhase::Fast) {
             _setRetryPhase(RetryPhase::Normal);
         }
@@ -209,13 +129,11 @@ void NTRIPGgaProvider::_sendGGA()
         _setRetryPhase(RetryPhase::Normal);
     }
 
-    double alt_msl = position.coordinate.altitude();
-    if (!qIsFinite(alt_msl)) {
-        alt_msl = 0.0;
+    const QByteArray gga = NMEAUtils::makeGGA(position.observation);
+    writer(gga);
+    if (!guard || generation != _generation) {
+        return;
     }
-
-    const QByteArray gga = NMEAUtils::makeGGA(position.coordinate, alt_msl);
-    _transport->sendNMEA(gga);
 
     if (!position.source.isEmpty() && position.source != _source) {
         _source = position.source;
@@ -223,34 +141,18 @@ void NTRIPGgaProvider::_sendGGA()
     }
 }
 
-void NTRIPGgaProvider::_ensureDefaultProviders()
-{
-    // Lazily install the singleton-reaching default providers so construction
-    // touches no singletons and tests can override any source via
-    // setPositionProvider() before the first GGA tick. Only absent slots are
-    // filled, so partial overrides are preserved.
-    static const std::pair<PositionSource, PositionProvider> kDefaults[] = {
-        {PositionSource::VehicleGPS, &getVehicleGPSPosition},
-        {PositionSource::VehicleEKF, &getVehicleEKFPosition},
-        {PositionSource::RTKBase, &getRTKBasePosition},
-        {PositionSource::GCSPosition, &getGCSPosition},
-    };
-    for (const auto& [source, provider] : kDefaults) {
-        if (!_providers.contains(source)) {
-            _providers.insert(source, provider);
-        }
-    }
-}
-
 PositionResult NTRIPGgaProvider::_getBestPosition() const
 {
+    const QPointer<const NTRIPGgaProvider> guard(this);
+    const auto generation = _generation;
     const PositionSource source = _cachedSource;
 
     // If a specific source is requested, try only that one
     if (source != PositionSource::Auto) {
         auto it = _providers.find(source);
         if (it != _providers.end()) {
-            return it.value()();
+            const auto provider = it.value();
+            return provider();
         }
         return {};
     }
@@ -266,8 +168,12 @@ PositionResult NTRIPGgaProvider::_getBestPosition() const
     for (PositionSource s : kPriority) {
         auto it = _providers.find(s);
         if (it != _providers.end()) {
-            auto result = it.value()();
-            if (result.isValid()) {
+            const auto provider = it.value();
+            auto result = provider();
+            if (!guard || generation != _generation || !_scheduler) {
+                return {};
+            }
+            if (result.isValid(_scheduler->nowUs())) {
                 return result;
             }
         }

@@ -31,12 +31,21 @@
         },
         {
             "name": "autoConnectRTKGPS",
-            "shortDesc": "Automatically connect to RTK GPS receivers detected on USB.",
-            "longDesc": "If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.",
+            "shortDesc": "Automatically connect to supported GNSS receivers detected on USB.",
+            "longDesc": "Automatically connect to a supported USB GNSS receiver using the selected receiver role.",
             "type": "bool",
             "default": true,
-            "label": "Automatically connect to an RTK GPS",
+            "label": "Automatically connect to a GNSS receiver",
             "keywords": "auto connect,rtk gps"
+        },
+        {
+            "name": "autoConnectNetworkRTKGPS",
+            "shortDesc": "Automatically connect to the configured TCP or UDP GNSS receiver.",
+            "longDesc": "Connect at startup and retry when the receiver is unavailable. Disconnect pauses automatic connection until Connect is clicked, this option is re-enabled, or the application restarts. Turning this option off disconnects the network receiver.",
+            "type": "bool",
+            "default": false,
+            "label": "Automatically connect to the network GNSS receiver",
+            "keywords": "auto connect,rtk gps,tcp,udp,network"
         },
         {
             "name": "autoConnectLibrePilot",
@@ -52,10 +61,43 @@
             "shortDesc": "NMEA GPS source for GCS position",
             "longDesc": "NMEA GPS source for GCS position",
             "type": "uint32",
-            "enumStrings": "Disabled,UDP Port,Serial Port",
-            "enumValues": "0,1,2",
+            "enumStrings": "Disabled,UDP,Serial,TCP",
+            "enumValues": "0,1,2,3",
             "default": 0,
             "label": "NMEA GPS source for GCS position"
+        },
+        {
+            "name": "nmeaReceiverMode",
+            "shortDesc": "Serial NMEA receiver configuration",
+            "longDesc": "Read an existing NMEA stream, or configure a u-blox receiver for positioning and NMEA output on each connection.",
+            "type": "uint32",
+            "enumStrings": "Read existing NMEA,Configure u-blox for NMEA",
+            "enumValues": "0,1",
+            "default": 0,
+            "label": "Receiver configuration"
+        },
+        {
+            "name": "nmeaAutoConnect",
+            "shortDesc": "Connect to the selected NMEA source at startup and reconnect when needed.",
+            "type": "bool",
+            "default": true,
+            "label": "Connect automatically"
+        },
+        {
+            "name": "nmeaTcpHost",
+            "shortDesc": "NMEA TCP server host",
+            "type": "string",
+            "default": "",
+            "label": "Host"
+        },
+        {
+            "name": "nmeaTcpPort",
+            "shortDesc": "NMEA TCP server port",
+            "type": "uint16",
+            "default": 10110,
+            "min": 1,
+            "max": 65535,
+            "label": "Port"
         },
         {
             "name": "autoConnectNmeaPort",

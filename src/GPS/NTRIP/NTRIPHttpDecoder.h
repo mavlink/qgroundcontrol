@@ -1,0 +1,77 @@
+#pragma once
+
+#include <QtCore/QByteArray>
+#include <QtCore/QByteArrayView>
+#include <QtCore/QDateTime>
+#include <QtNetwork/QHttpHeaders>
+
+#include <functional>
+#include <optional>
+
+#include "NTRIPError.h"
+
+/// Incremental HTTP/ICY response framing. Never interprets RTCM or owns a socket.
+class NTRIPHttpDecoder
+{
+public:
+    enum class Mode
+    {
+        Corrections,
+        SourceTable
+    };
+
+    static constexpr qsizetype MAX_HEADER_BYTES = 32768;
+    static constexpr qsizetype MAX_LINE_BYTES = 8192;
+    static constexpr quint64 MAX_CHUNK_BYTES = 16 * 1024 * 1024;
+
+    struct Result
+    {
+        // A valid prefix remains deliverable even when later framing in this feed fails.
+        QByteArray body;
+        bool connected = false;
+        bool complete = false;
+        std::optional<NTRIPFailure> failure;
+    };
+
+    using UtcClock = std::function<QDateTime()>;
+    explicit NTRIPHttpDecoder(UtcClock utcClock = QDateTime::currentDateTimeUtc);
+    ~NTRIPHttpDecoder();
+    void reset(Mode mode = Mode::Corrections);
+    Result feed(QByteArrayView bytes);
+    Result finish();
+
+    qsizetype bufferedBytes() const { return _line.size(); }
+
+private:
+    enum class State
+    {
+        Status,
+        Headers,
+        IcyHeaders,
+        Identity,
+        ChunkSize,
+        ChunkData,
+        ChunkEnd,
+        Trailers,
+        Complete,
+        Failed
+    };
+    void _lineReceived(Result& result);
+    void _beginBody(Result& result);
+    void _fail(Result& result, const QString& detail, NTRIPError code = NTRIPError::InvalidHttpResponse);
+
+    UtcClock _utcClock;
+    QHttpHeaders _headers;
+    Mode _mode = Mode::Corrections;
+    State _state = State::Status;
+    QByteArray _line;
+    qsizetype _headerBytes = 0;
+    quint64 _remaining = 0;
+    int _status = 0;
+    int _chunkEndBytes = 0;
+    int _informationalResponses = 0;
+    bool _chunked = false;
+    bool _contentLengthSet = false;
+    quint64 _contentLength = 0;
+    std::chrono::milliseconds _retryAfter{0};
+};

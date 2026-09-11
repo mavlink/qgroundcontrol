@@ -13,7 +13,7 @@ Item {
     anchors.bottom: parent.bottom
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _rtkConnected:  QGroundControl.gpsRtk.connected.value
+    property bool   _rtkConnected:  QGroundControl.gpsReceiver.connected.value
 
     QGCPalette { id: qgcPal }
 
@@ -31,7 +31,7 @@ Item {
             QGCLabel {
                 id:                     gpsLabel
                 rotation:               90
-                text:                   qsTr("RTK")
+                text:                   QGroundControl.settingsManager.rtkSettings.receiverRole.rawValue === RTKSettings.RTKBase ? qsTr("RTK") : qsTr("GNSS")
                 color:                  qgcPal.text
                 anchors.verticalCenter: parent.verticalCenter
                 visible:                _rtkConnected

@@ -1071,6 +1071,9 @@ class TestGeneratePagesModelQml:
         qml = generate_pages_model_qml(pages_setup)
         assert 'name: qsTranslate("Test.SettingsUI.json", "Section A")' in qml
         assert 'name: qsTranslate("Test.SettingsUI.json", "Section B")' in qml
+        assert 'nameKey: "Section A"' in qml
+        assert 'nameKey: "Section B"' in qml
+        assert 'nameKey: "Section C"' in qml
 
     def test_section_visibility_generated(self, pages_setup: Path):
         qml = generate_pages_model_qml(pages_setup)

@@ -56,6 +56,7 @@ public:
     /// Routing exclusions survive reconnects without marking the hardware occupied.
     ReservationPtr excludeFromAutoConnect(const QString& systemLocation);
     bool canAutoConnectPort(const QString& systemLocation) const;
+    bool isAutoConnectExcluded(const QString& systemLocation) const;
 
     void setSinglePortOnly(bool enabled) { _singlePortOnly = enabled; }
 

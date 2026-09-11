@@ -123,7 +123,7 @@ SerialPortManager::ReservationPtr SerialPortManager::excludeFromAutoConnect(cons
 
 bool SerialPortManager::canAutoConnectPort(const QString& systemLocation) const
 {
-    return _autoConnectExclusions.value(systemLocation.trimmed()).expired() && canReservePort(systemLocation);
+    return !isAutoConnectExcluded(systemLocation) && canReservePort(systemLocation);
 }
 
 QStringList SerialPortManager::supportedBaudRates()
@@ -179,4 +179,9 @@ QStringList SerialPortManager::supportedBaudRates()
     }
 
     return supportBaudRateStrings;
+}
+
+bool SerialPortManager::isAutoConnectExcluded(const QString& systemLocation) const
+{
+    return !_autoConnectExclusions.value(systemLocation.trimmed()).expired();
 }

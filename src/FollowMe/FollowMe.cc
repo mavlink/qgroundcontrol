@@ -88,12 +88,12 @@ void FollowMe::_disableFollowSend()
 
 void FollowMe::_sendGCSMotionReport()
 {
-    const QGeoPositionInfo geoPositionInfo = QGCPositionManager::instance()->geoPositionInfo();
-    const QGeoCoordinate gcsCoordinate = geoPositionInfo.coordinate();
-
-    if (!geoPositionInfo.isValid()) {
+    const auto observation = QGCPositionManager::instance()->acceptedObservation(GPSObservation::PositionUse::Motion);
+    if (!observation) {
         return;
     }
+    const QGeoPositionInfo& geoPositionInfo = observation->position;
+    const QGeoCoordinate gcsCoordinate = geoPositionInfo.coordinate();
 
     // First check to see if any vehicles need follow me updates
     bool needFollowMe = false;

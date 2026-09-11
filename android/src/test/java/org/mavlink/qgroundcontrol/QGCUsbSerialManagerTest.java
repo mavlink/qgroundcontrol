@@ -1,6 +1,12 @@
 package org.mavlink.qgroundcontrol;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
+
+import java.io.IOException;
+import java.lang.reflect.Proxy;
+import com.hoho.android.usbserial.driver.UsbSerialPort;
+import com.hoho.android.usbserial.driver.SerialTimeoutException;
 import static org.junit.Assert.assertNotEquals;
 
 import org.junit.After;
@@ -56,5 +62,51 @@ public class QGCUsbSerialManagerTest {
         final int next = QGCUsbSerialManager.getOrCreateResourceIdForTesting(7, 2);
 
         assertNotEquals(first, next);
+    }
+
+    @Test
+    public void writeResult_preservesTimeoutPrefixAndUnknownSuffix() {
+        final UsbSerialPort port = (UsbSerialPort) Proxy.newProxyInstance(
+                UsbSerialPort.class.getClassLoader(), new Class<?>[] {UsbSerialPort.class},
+                (proxy, method, args) -> { throw new SerialTimeoutException("partial", 3); });
+        assertArrayEquals(new int[] {1, 3, 5},
+                QGCUsbSerialManager.writeResultForPort(port, new byte[8], 8, 25));
+    }
+
+    @Test
+    public void writeResult_retainsUncertaintyForIoFailure() {
+        final UsbSerialPort port = (UsbSerialPort) Proxy.newProxyInstance(
+                UsbSerialPort.class.getClassLoader(), new Class<?>[] {UsbSerialPort.class},
+                (proxy, method, args) -> { throw new IOException("disconnected"); });
+        assertArrayEquals(new int[] {2, 0, 8},
+                QGCUsbSerialManager.writeResultForPort(port, new byte[8], 8, 25));
+    }
+
+    @Test
+    public void writeResult_forwardsFiniteInitialTimeout() {
+        final int[] timeout = {0};
+        final UsbSerialPort port = (UsbSerialPort) Proxy.newProxyInstance(
+                UsbSerialPort.class.getClassLoader(), new Class<?>[] {UsbSerialPort.class},
+                (proxy, method, args) -> { timeout[0] = (int) args[2]; return null; });
+        assertArrayEquals(new int[] {0, 8, 0},
+                QGCUsbSerialManager.writeResultForPort(port, new byte[8], 8, 25));
+        assertEquals(25, timeout[0]);
+        assertArrayEquals(new int[] {2, 0, 0},
+                QGCUsbSerialManager.writeResultForPort(port, new byte[8], 8, 0));
+        assertEquals(25, timeout[0]);
+    }
+    @Test
+    public void writeResult_missingDeviceHasNoUncertainBytes() {
+        assertArrayEquals(new int[] {2, 0, 0},
+                QGCUsbSerialManager.writeResultForPort(null, new byte[8], 8, 25));
+    }
+
+    @Test
+    public void writeResult_completedPrefixOnTimeoutHasNoUnknownSuffix() {
+        final UsbSerialPort port = (UsbSerialPort) Proxy.newProxyInstance(
+                UsbSerialPort.class.getClassLoader(), new Class<?>[] {UsbSerialPort.class},
+                (proxy, method, args) -> { throw new SerialTimeoutException("late", 8); });
+        assertArrayEquals(new int[] {1, 8, 0},
+                QGCUsbSerialManager.writeResultForPort(port, new byte[8], 8, 25));
     }
 }

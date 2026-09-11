@@ -1,0 +1,180 @@
+# GPS deterministic replay
+
+`GPSReplayTest` compiles the production GPSDriver facade and native drivers, NMEA stream splitter,
+NTRIP session, and correction router into a small Qt test executable. Its transport
+advances a virtual monotonic clock when consuming events; no receiver, socket, or
+wall-clock delay is needed.
+
+The checked-in traces are synthetic and contain no device recordings or credentials.
+The UBX trace fixes the expected configuration writes and NAV-PVT result. Changes to
+receiver configuration should be reviewed against that contract before updating the
+trace; regenerating expected writes automatically would hide regressions.
+
+The runtime uses the production component definitions in
+`src/GPS/Libraries.cmake`; the harness injects native clock
+injection. Codec-only checks live in `test/GPS/Recording`.
+
+## Run
+
+The normal test build registers `GPSReplayTest` with the `Unit`, `GPS`, and `Replay`
+labels. It can also be built independently of QGroundControl:
+
+```sh
+cmake -S test/GPS/Replay -B build/gps-replay -G Ninja \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/6.11.1/gcc_64
+cmake --build build/gps-replay
+ctest --test-dir build/gps-replay --output-on-failure
+```
+
+The tests cover native configuration and decoding at three fragmentation sizes,
+exact outgoing writes, partial delivery, typed errors, cancellation, and capture
+roundtrips. `ManualScheduler` drives the same scheduled retry callbacks as
+production NTRIP sessions. Retry deadlines advance automatically; stopping the
+session cancels pending recovery. `GPSReplayDevice` schedules captured connection
+and RX events into the real `NMEADecoderSession`, including its position source,
+satellite assembler and health store. Tests verify publication cadence, original
+receipt age and suppression of publications after a close/reopen transition.
+
+The public NMEA cadence and request deadlines use the injected scheduler. Qt's
+private NMEA epoch-merging timer remains internal to Qt; deterministic tests trigger
+its normal flush by supplying the next timestamped epoch. A final epoch at EOF
+still requires Qt's event loop. These tests do not claim to virtualize that private
+timer or the native receiver worker thread.
+
+For sanitizer coverage, configure a separate Clang build:
+
+```sh
+cmake -S test/GPS/Replay -B build/gps-replay-asan -G Ninja \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/6.11.1/gcc_64 -DCMAKE_CXX_COMPILER=clang++ \
+  -DCMAKE_BUILD_TYPE=Debug \
+  '-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all' \
+  '-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined'
+cmake --build build/gps-replay-asan
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+  ctest --test-dir build/gps-replay-asan --output-on-failure
+```
+
+## Trace format
+
+The shared `GPSRecordingDocument` codec writes version 4 and reads versions 1–4.
+New files require `fileType: "GPSRecording"`. This minimal version 1 synthetic trace
+remains supported (real capture profile mappings are documented in the recorder guide):
+
+```json
+{
+  "version": 1,
+  "description": "Example transport transaction",
+  "events": [
+    {"at_us": 1, "kind": "open"},
+    {"at_us": 2, "kind": "baud", "value": 115200},
+    {"at_us": 3, "kind": "tx", "hex": "b562"},
+    {"at_us": 1000, "kind": "rx", "hex": "010203"},
+    {"at_us": 2000, "kind": "disconnect"}
+  ]
+}
+```
+
+`at_us` is an integer monotonic microsecond offset, in nondecreasing order. `rx`
+and `tx` contain nonempty exact hexadecimal bytes. The remaining event kinds are
+`timeout`, `read_error`, `write_error`, and `cancel`. An error's `value` is a
+negative host error code; a write error can instead specify a short-write byte
+count. `open` starts a connection epoch, and `baud` verifies the requested rate.
+A `cancel` event sets the same atomic stop flag used by the transport contract.
+Timeouts advance the clock; native driver deadlines may be recorded one microsecond
+past their timeout because the driver tests for a strictly elapsed deadline.
+
+Reads may further fragment an RX event while preserving its arrival timestamp.
+Writes can split or combine adjacent TX events but must match every byte. Missing,
+extra, or mismatched operations latch an event-indexed diagnostic. Tests should
+assert both decoded outputs and `complete()` so unread data or unsent commands fail.
+Loading is bounded to 4 MiB and 100,000 events.
+
+For a real capture, export both directions with monotonic timestamps, explicit
+connection and baud events, and replace identifying data before adding a fixture.
+Keep the original RX arrival times when varying read fragmentation. For native
+replay, wire `GPSReplayClock` to the driver's injected clock as in
+`nativePosition`; this also makes configuration sleeps deterministic. Real hardware
+acceptance remains separate from synthetic replay.
+
+## Live captures
+
+The opt-in [receiver recorder](../../../src/GPS/Recording/README.md) exports this
+format directly. Pass a `streamId` to `GPSReplayTrace::load`/`fromJson` to select a
+specific connection; the default selects the first stream. The parsed trace exposes
+its selected typed `profile` metadata. `recordedEvents` retains all selected raw
+markers, operation start/completion timing and resumed flags. The executable
+`events` view omits informative session/configuration markers and preserves Close.
+`open_error` and `baud_error` reproduce failed calls. A failed
+write can include its expected attempted bytes as well as the reported result.
+
+An `open` marked `resumed` represents capture starting on an existing connection,
+so earlier configuration is missing. Start capture before reconnecting when a full
+native-driver transaction is required. The tests record and export actual native
+UBX transactions, reload them, and verify identical decoded positions at three
+fragment sizes. They also roundtrip passive NMEA, receipt timestamp preservation,
+configuration metadata, failed operations, and bounded concurrent capture.
+
+## Driver construction and write evidence
+
+```cpp
+GPSReplayTrace trace;
+QString error;
+GPSReplayTrace::load(path, trace, error, streamId);
+GPSReplayClock clock(&gps_test_time);
+std::atomic_bool stop = false;
+GPSReplayTransport transport(clock, stop, std::move(trace));
+if (transport.open().status == GPSOpenStatus::Opened) {
+    auto driver = createGPSReplayDriver(transport, sinks, error);
+    if (driver && driver->configure()) {
+        driver->receive(1000);
+    }
+}
+```
+
+Check each return value and `transport.failure()` in a test. The factory uses the
+captured role, protocol, driver family, settings, and fixed transport baud. It
+rejects passive or incomplete captures and legacy unknown transport metadata.
+Native replay injects typed `GPSProtocolIO` clock/wait callbacks into the same
+production native library, without platform macros or a separate ABI definition. Capture tests cover
+Septentrio and Femto in position and fixed-base modes, then reconstruct the actual
+facade solely from their exported profiles.
+
+Version 2 `bounded_write` events retain accepted, written and uncertain byte counts,
+a stable status name, fatal state and start/completion time. Replay requires the
+exact attempted buffer and returns that evidence unchanged. It refuses an earlier
+deadline instead of guessing intermediate transmission progress. Other checks cover
+wrong JSON types, fractional or unsupported versions, invalid stream identifiers,
+unknown or credential-bearing metadata fields, invalid operation timing, exact
+hex payloads, v1 profile conversion and impossible partial-delivery counts.
+
+Version 3 adds optional `open_status` and `read_status` with stable enum names.
+Transport diagnostic text is excluded because it can contain device paths or
+endpoints. Native transports currently provide read completion timestamps; passive
+QIODevice sources that implement `ReadTimestamp` additionally preserve original
+receipt in `received_us`. This signed offset uses the same origin as `at_us` and
+can be negative when data arrived before recording began. A missing receipt falls
+back to `at_us` for older traces and native reads. Replay shifts the virtual origin
+when necessary, preserving the exact receipt age without unsigned underflow.
+Passive TCP/UDP profiles have unknown fixed baud (`0`); the native driver fixed-baud
+convention is retained only for configured receivers.
+
+## Recorded lifecycle
+
+`GPSReplayLifecycle` interprets terminal events for both blocking transport and
+event-loop device replay. Its typed result preserves the recording-relative time,
+read/open/write status, and legacy reason value. The first termination wins until
+the next recorded Open; a destructor Close after cancellation or overflow does not
+replace the original reason or emit a second termination. Recoverable short writes
+do not close a connection.
+
+Exhausting a capture is distinct from a recorded receiver termination. Device replay
+emits `terminated(CaptureExhausted)` without fabricating `streamClosed`; transport
+replay reports `InvalidData` and a fatal replay boundary when read beyond the capture.
+Repeated reads retain that result and do not advance time as synthetic timeouts.
+Native tests must consume an exported Close before asserting `complete()`.
+
+Version 4 adds optional allowlisted `producer`, `build`, and `configuration_revision`
+fields to session metadata. These identify capture provenance separately from the
+JSON schema. Missing provenance in older files means unknown. Strict driver replay
+still checks every expected write; a known configuration revision mismatch is
+reported alongside the byte mismatch rather than bypassing validation.

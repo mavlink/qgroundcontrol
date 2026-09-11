@@ -1,13 +1,14 @@
 #include "WaitStateBase.h"
-#include "QGCStateMachine.h"
-#include "QGCLoggingCategory.h"
 
-WaitStateBase::WaitStateBase(const QString& stateName, QState* parent, int timeoutMsecs)
+#include "QGCLoggingCategory.h"
+#include "QGCStateMachine.h"
+#include "QtRuntimeScheduler.h"
+
+WaitStateBase::WaitStateBase(const QString& stateName, QState* parent, int timeoutMsecs, RuntimeScheduler* scheduler)
     : QGCState(stateName, parent)
     , _timeoutMsecs(timeoutMsecs > 0 ? timeoutMsecs : 0)
+    , _timeoutTask(scheduler ? scheduler : new QtRuntimeScheduler(this), this)
 {
-    _timeoutTimer.setSingleShot(true);
-    connect(&_timeoutTimer, &QTimer::timeout, this, &WaitStateBase::_onTimeout);
     connect(this, &QState::entered, this, &WaitStateBase::_onEntered);
     connect(this, &QState::exited, this, &WaitStateBase::_onExited);
 }
@@ -29,13 +30,14 @@ void WaitStateBase::_onEntered()
     }
 
     if (effectiveTimeout > 0) {
-        _timeoutTimer.start(effectiveTimeout);
+        _effectiveTimeout = effectiveTimeout;
+        _timeoutTask.schedule(std::chrono::milliseconds(effectiveTimeout), [this] { _onTimeout(); });
     }
 }
 
 void WaitStateBase::_onExited()
 {
-    _timeoutTimer.stop();
+    _timeoutTask.cancel();
     disconnectWaitSignal();
     onWaitExited();
 }
@@ -46,7 +48,7 @@ void WaitStateBase::_onTimeout()
         return;
     }
 
-    qCWarning(QGCStateMachineLog) << "Timeout" << stateName() << "after" << _timeoutTimer.interval() << "ms";
+    qCWarning(QGCStateMachineLog) << "Timeout" << stateName() << "after" << _effectiveTimeout << "ms";
 
     // Record timeout for statistics
     if (machine()) {
@@ -80,7 +82,7 @@ void WaitStateBase::waitComplete()
     }
     _completed = true;
 
-    _timeoutTimer.stop();
+    _timeoutTask.cancel();
     disconnectWaitSignal();
 
     emit completed();
@@ -94,7 +96,7 @@ void WaitStateBase::waitFailed()
     }
     _completed = true;
 
-    _timeoutTimer.stop();
+    _timeoutTask.cancel();
     disconnectWaitSignal();
 
     emit error();
@@ -120,6 +122,7 @@ void WaitStateBase::restartWait()
     }
 
     if (effectiveTimeout > 0) {
-        _timeoutTimer.start(effectiveTimeout);
+        _effectiveTimeout = effectiveTimeout;
+        _timeoutTask.schedule(std::chrono::milliseconds(effectiveTimeout), [this] { _onTimeout(); });
     }
 }

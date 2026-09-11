@@ -1,6 +1,23 @@
 #include "NTRIPSettings.h"
 
-DECLARE_SETTINGGROUP(NTRIP, "NTRIP") {}
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(NTRIPSettingsLog, "GPS.Settings.NTRIPSettings")
+
+const char* NTRIPSettings::name = "NTRIP";
+const char* NTRIPSettings::settingsGroup = "NTRIP";
+
+NTRIPSettings::NTRIPSettings(GPSCorrectionSettings& correctionSettings, QObject* parent)
+    : SettingsGroup(name, settingsGroup, parent)
+    , _correctionSettings(correctionSettings)
+{
+    qCDebug(NTRIPSettingsLog) << this;
+}
+
+NTRIPSettings::~NTRIPSettings()
+{
+    qCDebug(NTRIPSettingsLog) << this;
+}
 
 DECLARE_SETTINGSFACT(NTRIPSettings, ntripServerConnectEnabled)
 DECLARE_SETTINGSFACT(NTRIPSettings, ntripServerHostAddress)
@@ -16,6 +33,9 @@ DECLARE_SETTINGSFACT(NTRIPSettings, ntripGgaIntervalSec)
 DECLARE_SETTINGSFACT(NTRIPSettings, ntripUdpForwardEnabled)
 DECLARE_SETTINGSFACT(NTRIPSettings, ntripUdpTargetAddress)
 DECLARE_SETTINGSFACT(NTRIPSettings, ntripUdpTargetPort)
-DECLARE_SETTINGSFACT(NTRIPSettings, rtcmUdpInputEnabled)
-DECLARE_SETTINGSFACT(NTRIPSettings, rtcmUdpInputPort)
-DECLARE_SETTINGSFACT(NTRIPSettings, rtcmUdpValidate)
+const char* NTRIPSettings::rtcmUdpInputEnabledName = "rtcmUdpInputEnabled";
+const char* NTRIPSettings::rtcmUdpInputPortName = "rtcmUdpInputPort";
+const char* NTRIPSettings::rtcmUdpValidateName = "rtcmUdpValidate";
+const char* NTRIPSettings::correctionSourceName = "correctionSource";
+const char* NTRIPSettings::correctionSourceInstanceName = "correctionSourceInstance";
+const char* NTRIPSettings::injectLocalReceiverName = "injectLocalReceiver";

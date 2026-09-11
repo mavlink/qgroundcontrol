@@ -7,6 +7,7 @@ class FactGroupTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _aliasOwnership_test();
     void _addFactAndLookup_test();
     void _factExistsNonExistent_test();
     void _getFactNonExistent_test();

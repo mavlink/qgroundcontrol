@@ -1,30 +1,33 @@
 #pragma once
 
-#include <QtCore/QChronoTimer>
+#include <QtCore/QByteArray>
 #include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtPositioning/QGeoCoordinate>
+
 #include <chrono>
 #include <functional>
 
-class Fact;
-class FactGroup;
-class NTRIPSettings;
-class NTRIPTransport;
+#include "GPSObservation.h"
+#include "ScheduledTask.h"
+
+class RuntimeScheduler;
 
 struct PositionResult
 {
-    QGeoCoordinate coordinate;
+    GPSObservation observation;
     QString source;
+    bool fixedReference = false;
 
-    bool isValid() const { return coordinate.isValid(); }
+    bool isValid(quint64 nowUs = GPSObservation::monotonicNowUs()) const;
 };
 
 class NTRIPGgaProvider : public QObject
 {
     Q_OBJECT
+    friend class NTRIPGgaProviderTest;
 
 public:
     enum class PositionSource
@@ -37,22 +40,27 @@ public:
     };
     Q_ENUM(PositionSource)
 
-    /// Fallback when no NTRIPSettings are available (unit tests, early init).
+    /// Default interval when the requested duration is invalid.
     static constexpr std::chrono::milliseconds kDefaultInterval{5000};
     /// Short interval used while we still lack a valid fix — lets the caster
     /// receive a first GGA quickly after the position becomes available.
     static constexpr std::chrono::milliseconds kFastRetryInterval{1000};
 
     using PositionProvider = std::function<PositionResult()>;
+    using SentenceWriter = std::function<void(const QByteArray&)>;
 
-    explicit NTRIPGgaProvider(QObject* parent = nullptr);
+    struct Configuration
+    {
+        PositionSource source = PositionSource::Auto;
+        std::chrono::milliseconds interval = kDefaultInterval;
+    };
 
-    /// Post-construction wiring. Observes the NTRIP position-source / interval
-    /// settings and caches them for the GGA hot path. Must be called after
-    /// SettingsManager is ready — no singleton access happens at construction.
-    void init(NTRIPSettings* settings);
+    explicit NTRIPGgaProvider(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
+    ~NTRIPGgaProvider() override;
 
-    void start(NTRIPTransport* transport);
+    void configure(const Configuration& config);
+
+    void start(SentenceWriter writer);
     void stop();
 
     QString currentSource() const { return _source; }
@@ -74,22 +82,20 @@ private:
     };
 
     void _sendGGA();
+    void _scheduleNext();
     void _setRetryPhase(RetryPhase phase);
-    void _ensureDefaultProviders();
     void _clearSource();
 
     PositionResult _getBestPosition() const;
 
-    QPointer<NTRIPTransport> _transport;
-    QChronoTimer _timer;
+    SentenceWriter _writer;
+    quint64 _generation = 0;
+    QPointer<RuntimeScheduler> _scheduler;
+    ScheduledTask _task;
     QString _source;
     QHash<PositionSource, PositionProvider> _providers;
     RetryPhase _retryPhase = RetryPhase::Normal;
     int _fastRetryCount = 0;
-    // Cached ntripSettings()->ntripGgaPositionSource(); refreshed via rawValueChanged
-    // so we don't dereference SettingsManager on every GGA tick.
     PositionSource _cachedSource = PositionSource::Auto;
-    // Cached ntripSettings()->ntripGgaIntervalSec() converted to ms; refreshed on
-    // rawValueChanged so the hot path avoids SettingsManager dereference.
     std::chrono::milliseconds _normalInterval = kDefaultInterval;
 };

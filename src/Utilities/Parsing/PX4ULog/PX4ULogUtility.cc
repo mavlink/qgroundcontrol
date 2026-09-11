@@ -1,9 +1,10 @@
 #include "PX4ULogUtility.h"
-#include "QGCLoggingCategory.h"
 
 #include <cstring>
-
 #include <ulog_cpp/reader.hpp>
+
+#include "LittleEndian.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(PX4ULogUtilityLog, "Utilities.PX4ULogUtility")
 
@@ -43,9 +44,8 @@ uint64_t getHeaderTimestamp(const char *data, qint64 size)
     }
 
     // Timestamp is at offset 8 (after magic[4] + version[1] + compat[1] + flags[2])
-    uint64_t timestamp;
-    memcpy(&timestamp, data + 8, sizeof(timestamp));
-    return timestamp;
+    return LittleEndian::read<uint64_t>({reinterpret_cast<const uint8_t*>(data), static_cast<size_t>(size)}, 8)
+        .value_or(0);
 }
 
 // ============================================================================

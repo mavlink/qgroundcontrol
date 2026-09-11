@@ -1,0 +1,76 @@
+#pragma once
+
+#include <QtCore/QByteArray>
+#include <QtCore/QVector>
+
+#include <chrono>
+
+#include "NTRIPError.h"
+#include "NTRIPStream.h"
+
+class MockNTRIPStream : public NTRIPStream
+{
+    Q_OBJECT
+
+public:
+    using NTRIPStream::NTRIPStream;
+
+    void start() override
+    {
+        _started = true;
+        _stopped = false;
+        startCount++;
+
+        if (autoConnect) {
+            emit connected();
+        }
+    }
+
+    void stop() override
+    {
+        _started = false;
+        _stopped = true;
+        stopCount++;
+        emit finished();
+    }
+
+    void sendNMEA(const QByteArray& nmea) override { sentNmea.append(nmea); }
+
+    void setRtcmWhitelist(const QVector<int>& messageIds) override { lastWhitelist = messageIds; }
+
+    // --- Test control ---
+
+    void simulateConnect() { emit connected(); }
+
+    void simulateError(NTRIPError code, const QString& detail) { emit failed(NTRIPFailure::fromError(code, detail)); }
+
+    void simulateRtcmData(const QByteArray& data, int messageId = 0, qint64 receivedAtMs = -1)
+    {
+        if (receivedAtMs < 0) {
+            receivedAtMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                               std::chrono::steady_clock::now().time_since_epoch())
+                               .count();
+        }
+        emit correctionReceivedAt(data, messageId, false, receivedAtMs);
+    }
+
+    void simulateDisconnect() { emit finished(); }
+
+    void simulatePlaintextWarning() { emit plaintextCredentialsWarning(); }
+
+    // --- Test inspection ---
+
+    bool isStarted() const { return _started; }
+
+    bool isStopped() const { return _stopped; }
+
+    bool autoConnect = true;
+    int startCount = 0;
+    int stopCount = 0;
+    QVector<QByteArray> sentNmea;
+    QVector<int> lastWhitelist;
+
+private:
+    bool _started = false;
+    bool _stopped = false;
+};

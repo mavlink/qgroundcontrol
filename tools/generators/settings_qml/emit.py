@@ -339,6 +339,7 @@ def generate_pages_model_qml(pages_json_path: Path, custom_pages_dir: Path | Non
                     sections.append({
                         "index": grp_idx,
                         "name": _qml_translate(page_def_name, section_name),
+                        "name_key": json.dumps(section_name),
                         "search_terms": f'[{", ".join(search_terms)}]',
                         "visible": visible,
                     })

@@ -1,5 +1,6 @@
 #include "NTRIPConnectionStatsTest.h"
 
+#include <QtCore/QTimer>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -46,12 +47,12 @@ void NTRIPConnectionStatsTest::testDataRate()
     NTRIPConnectionStats stats;
     QSignalSpy rateSpy(&stats, &NTRIPConnectionStats::dataRateChanged);
 
-    stats.recordMessage(1024);
-    QTest::qWait(1100);
-    stats.recordMessage(1024);
-
-    QVERIFY(rateSpy.count() >= 1);
-    QVERIFY(stats.dataRateBytesPerSec() > 0.0);
+    QTimer producer;
+    producer.setInterval(100);
+    connect(&producer, &QTimer::timeout, &stats, [&stats]() { stats.recordMessage(1024); });
+    producer.start();
+    QTRY_VERIFY_WITH_TIMEOUT(rateSpy.count() >= 1 && stats.dataRateBytesPerSec() > 0.0, TestTimeout::mediumMs());
+    producer.stop();
 
     stats.stop();
     QCOMPARE(stats.dataRateBytesPerSec(), 0.0);
@@ -103,20 +104,35 @@ void NTRIPConnectionStatsTest::testMessageCountsByIdSortedAndReset()
     QVERIFY(stats.messageCountsById().isEmpty());
 }
 
+void NTRIPConnectionStatsTest::testDataStaleAfterNoRecentMessages_data()
+{
+    QTest::addColumn<int>("initialFrame");
+    QTest::newRow("no-valid-data") << 0;
+    QTest::newRow("accepted") << 1;
+    QTest::newRow("filtered-valid") << 2;
+}
+
 void NTRIPConnectionStatsTest::testDataStaleAfterNoRecentMessages()
 {
+    QFETCH(int, initialFrame);
     NTRIPConnectionStats stats;
     QSignalSpy staleSpy(&stats, &NTRIPConnectionStats::dataStaleChanged);
 
     stats.start();
-    stats.recordMessage(100, 1005);
+    if (initialFrame == 1) {
+        stats.recordMessage(100, 1005);
+    } else if (initialFrame == 2) {
+        stats.recordValidatedFrame(true);
+    }
+    stats.recordNetworkBytes(200);
     QVERIFY(!stats.dataStale());
 
     QVERIFY(staleSpy.wait(6500));
     QVERIFY(stats.dataStale());
 
-    stats.recordMessage(100, 1005);
+    stats.recordValidatedFrame(true);
     QVERIFY(!stats.dataStale());
+    QCOMPARE(stats.filteredFrames(), quint64(initialFrame == 2 ? 2 : 1));
 }
 
 UT_REGISTER_TEST(NTRIPConnectionStatsTest, TestLabel::Unit)

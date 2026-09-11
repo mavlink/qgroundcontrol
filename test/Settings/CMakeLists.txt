@@ -9,6 +9,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         AppSettingsTest.h
         AutoConnectSettingsTest.cc
         AutoConnectSettingsTest.h
+        GPSCorrectionSettingsTest.cc
+        GPSCorrectionSettingsTest.h
         FlyViewSettingsTest.cc
         FlyViewSettingsTest.h
         RemoteIDSettingsTest.cc
@@ -24,3 +26,5 @@ add_qgc_test(AutoConnectSettingsTest LABELS Unit)
 add_qgc_test(FlyViewSettingsTest LABELS Unit)
 add_qgc_test(RemoteIDSettingsTest LABELS Unit)
 add_qgc_test(SettingsManagerTest LABELS Unit)
+
+add_qgc_test(GPSCorrectionSettingsTest LABELS Unit RESOURCE_LOCK Settings)

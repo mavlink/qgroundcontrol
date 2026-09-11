@@ -11,7 +11,7 @@
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
 #ifndef QGC_NO_SERIAL_LINK
-    #include "QGCSerialPortInfo.h"
+    #include "SerialPortManager.h"
 #endif
 
 class AutoConnectSettings;
@@ -75,10 +75,10 @@ public:
 
     /// Sets the flag to suspend the all new connections
     ///     @param reason User visible reason to suspend connections
-    void setConnectionsSuspended(const QString &reason) { _connectionsSuspended = true; _connectionsSuspendedReason = reason; }
+    void setConnectionsSuspended(const QString& reason);
 
     /// Sets the flag to allow new connections to be made
-    void setConnectionsAllowed() { _connectionsSuspended = false; }
+    void setConnectionsAllowed();
 
     bool connectionsSuspended() const { return _connectionsSuspended; }
 
@@ -115,6 +115,7 @@ public:
     static constexpr uint8_t invalidMavlinkChannel() { return std::numeric_limits<uint8_t>::max(); }
 
 signals:
+    void connectionsSuspendedChanged(bool suspended);
     void mavlinkSupportForwardingEnabledChanged();
     void isBluetoothAvailableChanged();
 
@@ -180,8 +181,10 @@ private:
     void _updateSerialPorts();
     bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType) const;
     void _addSerialAutoConnectLink();
+    void _addSerialAutoConnectLink(const QList<SerialPortManager::Port>& ports);
 
     QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count
+    QMap<QString, SharedLinkConfigurationPtr> _autoconnectSerialConfigs;
     QList<SerialLink*> _activeLinkCheckList;       ///< List of links we are waiting for a vehicle to show up on
     QStringList _commPortList;
     QStringList _commPortDisplayList;

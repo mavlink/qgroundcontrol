@@ -8,8 +8,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableLog)
 
-/// Parsed NTRIP source-table STR row. Plain value type — all fields are immutable
-/// after parse except distanceKm, which is recomputed by updateDistances().
+/// Parsed catalog entry. Reference-position distances belong to the model projection.
 struct NTRIPMountpoint
 {
     QString mountpoint;
@@ -20,8 +19,7 @@ struct NTRIPMountpoint
     QString navSystem;
     QString network;
     QString country;
-    double latitude = 0.0;
-    double longitude = 0.0;
+    QGeoCoordinate coordinate;
     bool nmea = false;
     bool solution = false;
     QString generator;
@@ -29,15 +27,13 @@ struct NTRIPMountpoint
     QString authentication;
     bool fee = false;
     int bitrate = 0;
-    double distanceKm = -1.0;
 
     /// Parse one source-table line ("STR;..."). Returns true and fills out on a
     /// valid STR row; returns false (out untouched) otherwise.
     static bool fromSourceTableLine(const QString& line, NTRIPMountpoint& out);
 
-    /// Recompute distanceKm from a reference coordinate. No-op for invalid
-    /// references or unknown (0,0) mountpoint coordinates.
-    void updateDistance(const QGeoCoordinate& from);
+    /// Unknown catalog or reference coordinates return -1.
+    double distanceFrom(const QGeoCoordinate& from) const;
 };
 
 /// Single QAbstractListModel over the parsed source table. Replaces the former
@@ -72,8 +68,9 @@ public:
     };
 
     explicit NTRIPSourceTableModel(QObject* parent = nullptr);
+    ~NTRIPSourceTableModel() override;
 
-    int count() const { return static_cast<int>(_mountpoints.size()); }
+    int count() const { return static_cast<int>(_current.projection.size()); }
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role) const override;
@@ -81,12 +78,28 @@ public:
 
     void parseSourceTable(const QString& raw);
     void updateDistances(const QGeoCoordinate& from);
-    void sortByDistance();
     void clear();
 
 signals:
     void countChanged();
 
 private:
-    QList<NTRIPMountpoint> _mountpoints;
+    struct ProjectedRow
+    {
+        int catalogIndex;
+        double distanceKm;
+    };
+
+    struct Snapshot
+    {
+        QList<NTRIPMountpoint> catalog;
+        QList<ProjectedRow> projection;
+        quint64 catalogRevision = 0;
+    };
+
+    void _publish();
+    Snapshot _current;
+    Snapshot _pending;
+    bool _publishing = false;
+    bool _publicationQueued = false;
 };

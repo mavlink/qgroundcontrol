@@ -8,5 +8,5 @@ GPSIndicator {
     property bool showIndicator: !_activeVehicle && _rtkConnected
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _rtkConnected:  QGroundControl.gpsRtk.connected.value
+    property bool   _rtkConnected:  QGroundControl.gpsReceiver.connected.value
 }

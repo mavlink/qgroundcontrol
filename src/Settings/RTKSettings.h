@@ -21,6 +21,8 @@ private:
     explicit BaseModeDefinition(QObject* parent = nullptr) : QObject(parent) {}
 };
 
+struct GPSReceiverConfig;
+
 class RTKSettings : public SettingsGroup
 {
     Q_OBJECT
@@ -28,7 +30,24 @@ class RTKSettings : public SettingsGroup
     QML_UNCREATABLE("")
 public:
     RTKSettings(QObject* parent = nullptr);
+    bool saveFixedBasePosition(const GPSReceiverConfig& configuration);
+
+    enum ConnectionType
+    {
+        Serial = 0,
+        Tcp,
+        Udp
+    };
+    Q_ENUM(ConnectionType)
+
+    enum ReceiverRole
+    {
+        RTKBase = 0,
+        Position
+    };
+    Q_ENUM(ReceiverRole)
     DEFINE_SETTING_NAME_GROUP()
+    DEFINE_SETTINGFACT(receiverRole)
     DEFINE_SETTINGFACT(baseReceiverManufacturers)
     DEFINE_SETTINGFACT(surveyInAccuracyLimit)
     DEFINE_SETTINGFACT(surveyInMinObservationDuration)
@@ -37,4 +56,15 @@ public:
     DEFINE_SETTINGFACT(fixedBasePositionLongitude)
     DEFINE_SETTINGFACT(fixedBasePositionAltitude)
     DEFINE_SETTINGFACT(fixedBasePositionAccuracy)
+    DEFINE_SETTINGFACT(useReceiverPosition)
+    DEFINE_SETTINGFACT(connectionType)
+    DEFINE_SETTINGFACT(serialDevice)
+    DEFINE_SETTINGFACT(networkBaseHost)
+    DEFINE_SETTINGFACT(networkBasePort)
+    DEFINE_SETTINGFACT(udpLocalPort)
+    DEFINE_SETTINGFACT(networkReceiverType)
+    DEFINE_SETTINGFACT(constellationMask)
+    DEFINE_SETTINGFACT(dynamicModel)
+    DEFINE_SETTINGFACT(outputRateHz)
+    DEFINE_SETTINGFACT(headingOffsetDeg)
 };

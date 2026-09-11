@@ -12,6 +12,7 @@ class LinkManagerTest : public CommsTest
 private slots:
 #ifndef QGC_NO_SERIAL_LINK
     void _testReservedSerialPortNotOpened();
+    void _testSerialAutoConnectRetainsBackoff();
 #endif
     void _testReconnectsDroppedAutoConnectLink();
     void _testSuppressedLinkNotReconnected();

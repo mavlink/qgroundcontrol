@@ -1,0 +1,59 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "correctionSource",
+            "shortDesc": "Correction source",
+            "longDesc": "Automatic keeps one fresh correction stream and prefers the local base station, then NTRIP, then UDP. All forwards every stream.",
+            "type": "uint8",
+            "enumStrings": "Automatic,Local base station,NTRIP,UDP,All sources",
+            "enumValues": "0,1,2,3,4",
+            "default": 0,
+            "label": "Correction source"
+        },
+        {
+            "name": "correctionSourceInstance",
+            "shortDesc": "Correction stream",
+            "longDesc": "Selected correction endpoint. Leave empty to select an available stream from the chosen source.",
+            "type": "string",
+            "default": "",
+            "label": "Correction stream"
+        },
+        {
+            "name": "injectLocalReceiver",
+            "shortDesc": "Send corrections to local receiver",
+            "longDesc": "Send selected corrections to the connected local GNSS receiver when it supports correction input in Position mode. Connected vehicles continue receiving corrections.",
+            "type": "bool",
+            "default": false,
+            "label": "Send corrections to local receiver"
+        },
+        {
+            "name": "rtcmUdpInputEnabled",
+            "shortDesc": "Enable UDP RTCM input",
+            "longDesc": "Listen on a UDP port for incoming RTCM3 correction data and forward it to connected vehicles via MAVLink GPS_RTCM_DATA.",
+            "type": "bool",
+            "default": false,
+            "label": "Enable UDP RTCM input"
+        },
+        {
+            "name": "rtcmUdpInputPort",
+            "shortDesc": "UDP RTCM input port",
+            "longDesc": "UDP port to listen on for incoming RTCM3 correction data.",
+            "type": "uint32",
+            "default": 13320,
+            "min": 1024,
+            "max": 65535,
+            "decimalPlaces": 0,
+            "label": "UDP RTCM input port"
+        },
+        {
+            "name": "rtcmUdpValidate",
+            "shortDesc": "UDP RTCM enable validation",
+            "longDesc": "Enable validation of incoming data as RTCM and drop garbage (improves security).",
+            "type": "bool",
+            "default": true,
+            "label": "UDP RTCM enable validation"
+        }
+    ]
+}
