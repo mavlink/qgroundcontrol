@@ -994,12 +994,12 @@ Item {
             function populateFields() {
                 if (isNewProfile) {
                     profileName = ''
-                    streamName = ''
-                    ipAddress = ''
-                    port = ''
+                    streamName = SVSettings.defaultNetworkProfileStreamName
+                    ipAddress = SVSettings.networkIPAdress
+                    port = SVSettings.defaultNetworkProfileRouterPort.toString()
                     legacyTcpControlPort = SVSettings.defaultNetworkProfileLegacyTcpControlPort.toString()
-                    videoPort = ''
-                    listenPort = ''
+                    videoPort = '8556'
+                    listenPort = '14571'
                     return
                 }
 
