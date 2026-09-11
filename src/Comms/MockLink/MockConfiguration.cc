@@ -40,6 +40,7 @@ MockConfiguration::MockConfiguration(const MockConfiguration *copy, QObject *par
     , _gimbalHasYawLock(copy->gimbalHasYawLock())
     , _gimbalHasRetract(copy->gimbalHasRetract())
     , _gimbalHasNeutral(copy->gimbalHasNeutral())
+    , _gimbalDeviceId(copy->gimbalDeviceId())
 {
     qCDebug(MockConfigurationLog) << this;
 }
@@ -81,6 +82,7 @@ void MockConfiguration::copyFrom(const LinkConfiguration *source)
     setGimbalHasYawLock(mockLinkSource->gimbalHasYawLock());
     setGimbalHasRetract(mockLinkSource->gimbalHasRetract());
     setGimbalHasNeutral(mockLinkSource->gimbalHasNeutral());
+    setGimbalDeviceId(mockLinkSource->gimbalDeviceId());
     setStartArmed(mockLinkSource->startArmed());
     setPreloadMission(mockLinkSource->preloadMission());
     setStayMavlinkV1(mockLinkSource->stayMavlinkV1());
@@ -116,6 +118,7 @@ void MockConfiguration::loadSettings(QSettings &settings, const QString &root)
     setGimbalHasYawLock(settings.value(_gimbalHasYawLockKey, true).toBool());
     setGimbalHasRetract(settings.value(_gimbalHasRetractKey, true).toBool());
     setGimbalHasNeutral(settings.value(_gimbalHasNeutralKey, true).toBool());
+    setGimbalDeviceId(settings.value(_gimbalDeviceIdKey, static_cast<int>(MAV_COMP_ID_GIMBAL)).toInt());
 
     settings.endGroup();
 }
@@ -150,6 +153,7 @@ void MockConfiguration::saveSettings(QSettings &settings, const QString &root) c
     settings.setValue(_gimbalHasYawLockKey, gimbalHasYawLock());
     settings.setValue(_gimbalHasRetractKey, gimbalHasRetract());
     settings.setValue(_gimbalHasNeutralKey, gimbalHasNeutral());
+    settings.setValue(_gimbalDeviceIdKey, gimbalDeviceId());
 
     settings.endGroup();
 }
