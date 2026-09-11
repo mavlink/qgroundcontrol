@@ -138,7 +138,7 @@ Item {
 
             Item {
                 id:     rightPanel
-                width:  flyViewIndicators.width
+                width:  overlayButtonWrapper.width + flyViewIndicators.width + (_margins * 2)
                 height: parent.height
 
                 Rectangle {
@@ -146,15 +146,9 @@ Item {
                     color:          qgcPal.windowTransparent
                 }
 
-                FlyViewToolBarIndicators {
-                    id:     flyViewIndicators
-                    height: parent.height
-                }
-
                 Item {
                     id:     overlayButtonWrapper
-                    anchors.right: flyViewIndicators.right
-                    anchors.rightMargin: _margins * 2
+                    anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     width:  overlayButton.width
                     height: overlayButton.height
@@ -240,6 +234,13 @@ Item {
                             }
                         }
                     }
+                }
+
+                FlyViewToolBarIndicators {
+                    id:     flyViewIndicators
+                    anchors.left: overlayButtonWrapper.right
+                    anchors.leftMargin: _margins * 2
+                    height: parent.height
                 }
                 
             }
