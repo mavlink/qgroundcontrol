@@ -385,7 +385,7 @@ QtObject {
                 legacyTcpControlPort: networkProfilePort(profileData && profileData.legacyTcpControlPort,
                     defaultProfile.legacyTcpControlPort !== undefined
                         ? defaultProfile.legacyTcpControlPort : defaultNetworkProfileLegacyTcpControlPort),
-                videoPort: networkProfilePort(profileData && profileData.videoPort, defaultProfile.videoPort !== undefined ? defaultProfile.videoPort : 5600),
+                videoPort: networkProfilePort(profileData && profileData.videoPort, defaultProfile.videoPort !== undefined ? defaultProfile.videoPort : 8556),
                 listenPort: networkProfilePort(profileData && profileData.listenPort, defaultProfile.listenPort !== undefined ? defaultProfile.listenPort : 14571),
                 streamName: networkProfileStreamName(profileData && profileData.streamName, defaultProfile.streamName)
             }
