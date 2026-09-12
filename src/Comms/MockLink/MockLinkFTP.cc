@@ -22,10 +22,14 @@ MockLinkFTP::MockLinkFTP(uint8_t systemIdServer, uint8_t componentIdServer, Mock
 
 MockLinkFTP::~MockLinkFTP()
 {
+    _currentFile.close();
     if (!_paramPckTempFile.isEmpty()) {
         QFile::remove(_paramPckTempFile);
     }
     for (const QString &tempPath : std::as_const(_logFileTempPaths)) {
+        QFile::remove(tempPath);
+    }
+    for (const QString &tempPath : std::as_const(_uploadedFileTempPaths)) {
         QFile::remove(tempPath);
     }
 }
@@ -136,7 +140,10 @@ void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId
     const uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
     const size_t cchPath = strnlen(reinterpret_cast<char*>(request->data), sizeof(request->data));
-    Q_ASSERT(cchPath != sizeof(request->data));
+    if (cchPath == sizeof(request->data)) {
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, MavlinkFTP::kCmdOpenFileRO);
+        return;
+    }
     Q_UNUSED(cchPath); // Fix initialized-but-not-referenced warning on release builds
 
     _currentFile.close();
@@ -163,6 +170,8 @@ void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId
         tmpFilename = _generateParamPck(withDefaults);
     } else if (path.startsWith(QStringLiteral("@MAV_LOG/"))) {
         tmpFilename = _logFileTempPath(path.mid(QStringLiteral("@MAV_LOG/").length()));
+    } else if (_uploadedFiles.contains(path)) {
+        tmpFilename = _uploadedFileTempPath(path);
     }
 
     if (!tmpFilename.isEmpty()) {
@@ -274,8 +283,10 @@ void MockLinkFTP::_readCommand(uint8_t senderSystemId, uint8_t senderComponentId
     const QByteArray bytes = _currentFile.read(cBytesToRead);
     (void) memcpy(response.data, bytes.constData(), cBytesToRead);
 
-    // We should always have written something, otherwise there is something wrong with the code above
-    Q_ASSERT(cBytesToRead);
+    if (cBytesToRead == 0) {
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, MavlinkFTP::kCmdReadFile);
+        return;
+    }
 
     response.hdr.session = _sessionId;
     response.hdr.size = cBytesToRead;
@@ -311,7 +322,54 @@ void MockLinkFTP::_removeFileCommand(uint8_t senderSystemId, uint8_t senderCompo
         }
     }
 
+    if (_uploadedFiles.remove(path) > 0) {
+        const QString tempPath = _uploadedFileTempPaths.take(path);
+        if (!tempPath.isEmpty()) {
+            QFile::remove(tempPath);
+        }
+        _sendAck(senderSystemId, senderComponentId, outgoingSeqNumber, MavlinkFTP::kCmdRemoveFile);
+        return;
+    }
+
     _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFailFileNotFound, outgoingSeqNumber, MavlinkFTP::kCmdRemoveFile);
+}
+
+void MockLinkFTP::_renameCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+{
+    const uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
+    if (request->hdr.size > sizeof(request->data)) {
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrInvalidDataSize, outgoingSeqNumber, MavlinkFTP::kCmdRename);
+        return;
+    }
+    const QByteArray paths(reinterpret_cast<const char*>(request->data), request->hdr.size);
+    const qsizetype separator = paths.indexOf('\0');
+    if ((separator <= 0) || (separator >= (paths.size() - 1))) {
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrInvalidDataSize, outgoingSeqNumber, MavlinkFTP::kCmdRename);
+        return;
+    }
+    const QString fromPath = QString::fromUtf8(paths.first(separator));
+    const QByteArray toPathBytes = paths.sliced(separator + 1);
+    const qsizetype toPathEnd = toPathBytes.indexOf('\0');
+    if (toPathEnd <= 0) {
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrInvalidDataSize, outgoingSeqNumber, MavlinkFTP::kCmdRename);
+        return;
+    }
+    const QString toPath = QString::fromUtf8(toPathBytes.first(toPathEnd));
+    if (!_uploadedFiles.contains(fromPath)) {
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFailFileNotFound, outgoingSeqNumber, MavlinkFTP::kCmdRename);
+        return;
+    }
+    const QString fromTempPath = _uploadedFileTempPaths.take(fromPath);
+    if (!fromTempPath.isEmpty()) {
+        QFile::remove(fromTempPath);
+    }
+    const QString toTempPath = _uploadedFileTempPaths.take(toPath);
+    if (!toTempPath.isEmpty()) {
+        QFile::remove(toTempPath);
+    }
+    _uploadedFiles.remove(toPath);
+    _uploadedFiles.insert(toPath, _uploadedFiles.take(fromPath));
+    _sendAck(senderSystemId, senderComponentId, outgoingSeqNumber, MavlinkFTP::kCmdRename);
 }
 
 void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
@@ -337,7 +395,10 @@ void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderCompon
 
         const uint8_t cBytes = static_cast<uint8_t>(qMin(static_cast<qint64>(sizeof(response.data)), _currentFile.size() - burstOffset));
         const QByteArray bytes = _currentFile.read(cBytes);
-        Q_ASSERT(cBytes); // We should always have written something, otherwise there is something wrong with the code above
+        if (cBytes == 0) {
+            _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, MavlinkFTP::kCmdBurstReadFile);
+            return;
+        }
 
         (void) memcpy(response.data, bytes.constData(), cBytes);
 
@@ -451,6 +512,10 @@ void MockLinkFTP::_finalizeActiveUpload()
     }
 
     if (!_uploadSession.remotePath.isEmpty()) {
+        const QString tempPath = _uploadedFileTempPaths.take(_uploadSession.remotePath);
+        if (!tempPath.isEmpty()) {
+            QFile::remove(tempPath);
+        }
         _uploadedFiles.insert(_uploadSession.remotePath, _uploadSession.buffer);
     }
 
@@ -536,6 +601,9 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t &message)
         break;
     case MavlinkFTP::kCmdRemoveFile:
         _removeFileCommand(message.sysid, message.compid, request, incomingSeqNumber);
+        break;
+    case MavlinkFTP::kCmdRename:
+        _renameCommand(message.sysid, message.compid, request, incomingSeqNumber);
         break;
     case MavlinkFTP::kCmdWriteFile:
         _writeCommand(message.sysid, message.compid, request, incomingSeqNumber);
@@ -656,6 +724,32 @@ QByteArray MockLinkFTP::logFileContents(const QString &name) const
         }
     }
     return QByteArray();
+}
+
+void MockLinkFTP::clearUploadedFiles()
+{
+    for (const QString &tempPath : std::as_const(_uploadedFileTempPaths)) {
+        QFile::remove(tempPath);
+    }
+    _uploadedFileTempPaths.clear();
+    _uploadedFiles.clear();
+}
+
+QString MockLinkFTP::_uploadedFileTempPath(const QString &path)
+{
+    if (_uploadedFileTempPaths.contains(path)) {
+        return _uploadedFileTempPaths.value(path);
+    }
+
+    QTemporaryFile tempFile(QDir::tempPath() + QStringLiteral("/MockLinkFTPUploadXXXXXX"));
+    const QByteArray contents = _uploadedFiles.value(path);
+    if (!tempFile.open() || (tempFile.write(contents) != contents.size())) {
+        return QString();
+    }
+    tempFile.close();
+    tempFile.setAutoRemove(false);
+    _uploadedFileTempPaths.insert(path, tempFile.fileName());
+    return tempFile.fileName();
 }
 
 QByteArray MockLinkFTP::_generateLogFileContents(const QString &name, int size)
