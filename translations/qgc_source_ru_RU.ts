@@ -8347,12 +8347,12 @@ VTOL</translation>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="211"/>
       <source>Empty Filename.</source>
-      <translation type="unfinished">Empty Filename.</translation>
+      <translation>Пустое имя файла.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="217"/>
       <source>Invalid Filename.</source>
-      <translation type="unfinished">Invalid Filename.</translation>
+      <translation>Недопустимое имя файла.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="234"/>
@@ -8360,32 +8360,32 @@ VTOL</translation>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="265"/>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="271"/>
       <source>Invalid Directory.</source>
-      <translation type="unfinished">Invalid Directory.</translation>
+      <translation>Недопустимый каталог.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="252"/>
       <source>Images have already been tagged. Existing images will be removed.</source>
-      <translation type="unfinished">Images have already been tagged. Existing images will be removed.</translation>
+      <translation>Изображения уже размечены. Существующие изображения будут удалены.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="285"/>
       <source>The save folder already contains images.</source>
-      <translation type="unfinished">The save folder already contains images.</translation>
+      <translation>Папка сохранения уже содержит изображения.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="361"/>
       <source>Please select an image directory.</source>
-      <translation type="unfinished">Please select an image directory.</translation>
+      <translation>Выберите каталог изображений.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="366"/>
       <source>Please select a log file.</source>
-      <translation type="unfinished">Please select a log file.</translation>
+      <translation>Выберите файл лога.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="371"/>
       <source>Cannot find the image directory.</source>
-      <translation type="unfinished">Cannot find the image directory.</translation>
+      <translation>Не удаётся найти каталог изображений.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="406"/>
@@ -8395,114 +8395,114 @@ VTOL</translation>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="736"/>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="959"/>
       <source>Tagging cancelled</source>
-      <translation type="unfinished">Tagging cancelled</translation>
+      <translation>Разметка отменена</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="475"/>
       <source>%1 image(s) failed to tag</source>
-      <translation type="unfinished">%1 image(s) failed to tag</translation>
+      <translation>Не удалось разметить изображений: %1</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="545"/>
       <source>Could not read EXIF timestamp</source>
-      <translation type="unfinished">Could not read EXIF timestamp</translation>
+      <translation>Не удалось прочитать метку времени EXIF</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="551"/>
       <source>Could not read EXIF data from any images</source>
-      <translation type="unfinished">Could not read EXIF data from any images</translation>
+      <translation>Не удалось прочитать данные EXIF ни из одного изображения</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="663"/>
       <source>All images failed to tag</source>
-      <translation type="unfinished">All images failed to tag</translation>
+      <translation>Не удалось разметить ни одно изображение</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="697"/>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="714"/>
       <source>The image directory doesn&apos;t contain supported images. Supported formats: JPEG, TIFF, DNG</source>
-      <translation type="unfinished">The image directory doesn&apos;t contain supported images. Supported formats: JPEG, TIFF, DNG</translation>
+      <translation>Каталог изображений не содержит поддерживаемых изображений. Поддерживаемые форматы: JPEG, TIFF, DNG</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="743"/>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="966"/>
       <source>Geotagging failed. Couldn&apos;t open image: %1</source>
-      <translation type="unfinished">Geotagging failed. Couldn&apos;t open image: %1</translation>
+      <translation>Не удалось выполнить геотегирование. Не удалось открыть изображение: %1</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="749"/>
       <source>Geotagging failed. Couldn&apos;t extract time from image: %1</source>
-      <translation type="unfinished">Geotagging failed. Couldn&apos;t extract time from image: %1</translation>
+      <translation>Не удалось выполнить геотегирование. Не удалось извлечь время из изображения: %1</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="764"/>
       <source>Geotagging failed. Couldn&apos;t open log file.</source>
-      <translation type="unfinished">Geotagging failed. Couldn&apos;t open log file.</translation>
+      <translation>Не удалось выполнить геотегирование. Не удалось открыть файл лога.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="770"/>
       <source>Geotagging failed. Log file is empty.</source>
-      <translation type="unfinished">Geotagging failed. Log file is empty.</translation>
+      <translation>Не удалось выполнить геотегирование. Файл лога пуст.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="788"/>
       <source>Geotagging failed. Couldn&apos;t read log file.</source>
-      <translation type="unfinished">Geotagging failed. Couldn&apos;t read log file.</translation>
+      <translation>Не удалось выполнить геотегирование. Не удалось прочитать файл лога.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="823"/>
       <source>Log parsing failed</source>
-      <translation type="unfinished">Log parsing failed</translation>
+      <translation>Не удалось разобрать файл лога</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="847"/>
       <source>Calibration failed: No triggers or images available.</source>
-      <translation type="unfinished">Calibration failed: No triggers or images available.</translation>
+      <translation>Ошибка калибровки: нет доступных триггеров или изображений.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="870"/>
       <source>No matching trigger</source>
-      <translation type="unfinished">No matching trigger</translation>
+      <translation>Нет подходящего триггера</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="876"/>
       <source>Calibration failed: No matching triggers found for images.</source>
-      <translation type="unfinished">Calibration failed: No matching triggers found for images.</translation>
+      <translation>Ошибка калибровки: не найдено подходящих триггеров для изображений.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="887"/>
       <source>Geotagging failed. Insufficient disk space. Need approximately %1 MB.</source>
-      <translation type="unfinished">Geotagging failed. Insufficient disk space. Need approximately %1 MB.</translation>
+      <translation>Не удалось выполнить геотегирование. Недостаточно места на диске. Требуется примерно %1 МБ.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="893"/>
       <source>Geotagging failed. Couldn&apos;t create output directory: %1</source>
-      <translation type="unfinished">Geotagging failed. Couldn&apos;t create output directory: %1</translation>
+      <translation>Не удалось выполнить геотегирование. Не удалось создать папку результата: %1</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="912"/>
       <source>Geotagging failed. Requesting image #%1, but only %2 images present.</source>
-      <translation type="unfinished">Geotagging failed. Requesting image #%1, but only %2 images present.</translation>
+      <translation>Не удалось выполнить геотегирование. Запрошено изображение #%1, но доступно только %2.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="918"/>
       <source>Geotagging failed. Requesting trigger #%1, but only %2 triggers present.</source>
-      <translation type="unfinished">Geotagging failed. Requesting trigger #%1, but only %2 triggers present.</translation>
+      <translation>Не удалось выполнить геотегирование. Запрошен триггер #%1, но доступно только %2.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="976"/>
       <source>Geotagging failed. Couldn&apos;t write EXIF to image: %1</source>
-      <translation type="unfinished">Geotagging failed. Couldn&apos;t write EXIF to image: %1</translation>
+      <translation>Не удалось выполнить геотегирование. Не удалось записать EXIF в изображение: %1</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="982"/>
       <source>Geotagging failed. Couldn&apos;t save image: %1</source>
-      <translation type="unfinished">Geotagging failed. Couldn&apos;t save image: %1</translation>
+      <translation>Не удалось выполнить геотегирование. Не удалось сохранить изображение: %1</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagController.cc" line="376"/>
       <source>Cannot find the save directory.</source>
-      <translation type="unfinished">Cannot find the save directory.</translation>
+      <translation>Не удаётся найти каталог сохранения.</translation>
     </message>
   </context>
   <context>
@@ -8510,27 +8510,27 @@ VTOL</translation>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagImageModel.cc" line="149"/>
       <source>Pending</source>
-      <translation type="unfinished">Pending</translation>
+      <translation>Ожидание</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagImageModel.cc" line="151"/>
       <source>Processing</source>
-      <translation type="unfinished">Processing</translation>
+      <translation>Обработка</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagImageModel.cc" line="153"/>
       <source>Tagged</source>
-      <translation type="unfinished">Tagged</translation>
+      <translation>Размечено</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagImageModel.cc" line="155"/>
       <source>Skipped</source>
-      <translation type="unfinished">Skipped</translation>
+      <translation>Пропущено</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagImageModel.cc" line="157"/>
       <source>Failed</source>
-      <translation type="unfinished">Failed</translation>
+      <translation>Не удалось</translation>
     </message>
   </context>
   <context>
@@ -8538,161 +8538,161 @@ VTOL</translation>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="12"/>
       <source>Tag images from a survey mission with GPS coordinates from your flight log.</source>
-      <translation type="unfinished">Tag images from a survey mission with GPS coordinates from your flight log.</translation>
+      <translation>Добавить к снимкам аэрофотосъёмки GPS-координаты из лога полёта.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="57"/>
       <source>Geotagging in progress...</source>
-      <translation type="unfinished">Geotagging in progress...</translation>
+      <translation>Геотегирование...</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="84"/>
       <source>Successfully tagged %1 images</source>
-      <translation type="unfinished">Successfully tagged %1 images</translation>
+      <translation>Успешно размечено изображений: %1</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="87"/>
       <source>%1 skipped</source>
-      <translation type="unfinished">%1 skipped</translation>
+      <translation>Пропущено: %1</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="90"/>
       <source>%1 failed</source>
-      <translation type="unfinished">%1 failed</translation>
+      <translation>Не удалось: %1</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="141"/>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="157"/>
       <source>Select Flight Log</source>
-      <translation type="unfinished">Select Flight Log</translation>
+      <translation>Выбрать лог полёта</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="151"/>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="221"/>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="290"/>
       <source>Browse...</source>
-      <translation type="unfinished">Browse...</translation>
+      <translation>Обзор...</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="158"/>
       <source>All Files (*)</source>
-      <translation type="unfinished">All Files (*)</translation>
+      <translation>Все файлы (*)</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="158"/>
       <source>Flight logs (*.ulg *.bin)</source>
-      <translation type="unfinished">Flight logs (*.ulg *.bin)</translation>
+      <translation>Логи полёта (*.ulg *.bin)</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="158"/>
       <source>ULog (*.ulg)</source>
-      <translation type="unfinished">ULog (*.ulg)</translation>
+      <translation>ULog (*.ulg)</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="158"/>
       <source>DataFlash (*.bin)</source>
-      <translation type="unfinished">DataFlash (*.bin)</translation>
+      <translation>DataFlash (*.bin)</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="169"/>
       <source>No file selected</source>
-      <translation type="unfinished">No file selected</translation>
+      <translation>Файл не выбран</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="211"/>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="227"/>
       <source>Select Image Folder</source>
-      <translation type="unfinished">Select Image Folder</translation>
+      <translation>Выбрать папку с изображениями</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="238"/>
       <source>No folder selected</source>
-      <translation type="unfinished">No folder selected</translation>
+      <translation>Папка не выбрана</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="280"/>
       <source>Output Folder (Optional)</source>
-      <translation type="unfinished">Output Folder (Optional)</translation>
+      <translation>Папка результата (необязательно)</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="296"/>
       <source>Select Output Folder</source>
-      <translation type="unfinished">Select Output Folder</translation>
+      <translation>Выбрать папку результата</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="313"/>
       <source>Default: /TAGGED subfolder</source>
-      <translation type="unfinished">Default: /TAGGED subfolder</translation>
+      <translation>По умолчанию: подпапка /TAGGED</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="338"/>
       <source>Advanced Options</source>
-      <translation type="unfinished">Advanced Options</translation>
+      <translation>Дополнительные параметры</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="347"/>
       <source>Time Offset (seconds):</source>
-      <translation type="unfinished">Time Offset (seconds):</translation>
+      <translation>Смещение времени (секунды):</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="362"/>
       <source>Adjust if camera clock differs from flight log</source>
-      <translation type="unfinished">Adjust if camera clock differs from flight log</translation>
+      <translation>Настройте, если время камеры отличается от времени в логе полёта</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="374"/>
       <source>Preview mode (don&apos;t write files)</source>
-      <translation type="unfinished">Preview mode (don&apos;t write files)</translation>
+      <translation>Режим предпросмотра (без записи файлов)</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="382"/>
       <source>Verify time offset before committing</source>
-      <translation type="unfinished">Verify time offset before committing</translation>
+      <translation>Проверить смещение времени перед применением</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="396"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>Отмена</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="398"/>
       <source>Preview</source>
-      <translation type="unfinished">Preview</translation>
+      <translation>Предпросмотр</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="432"/>
       <source>Images (%1)</source>
-      <translation type="unfinished">Images (%1)</translation>
+      <translation>Изображения (%1)</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="445"/>
       <source>Pending</source>
-      <translation type="unfinished">Pending</translation>
+      <translation>Ожидание</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="450"/>
       <source>Processing</source>
-      <translation type="unfinished">Processing</translation>
+      <translation>Обработка</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="455"/>
       <source>Tagged</source>
-      <translation type="unfinished">Tagged</translation>
+      <translation>Размечено</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="460"/>
       <source>Skipped</source>
-      <translation type="unfinished">Skipped</translation>
+      <translation>Пропущено</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="465"/>
       <source>Failed</source>
-      <translation type="unfinished">Failed</translation>
+      <translation>Не удалось</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTag/GeoTagPage.qml" line="400"/>
       <source>Start Tagging</source>
-      <translation type="unfinished">Start Tagging</translation>
+      <translation>Начать георазметку</translation>
     </message>
   </context>
   <context>
@@ -8700,27 +8700,27 @@ VTOL</translation>
     <message>
       <location filename="../src/Toolbar/GimbalIndicator.qml" line="177"/>
       <source>Center</source>
-      <translation>Центр</translation>
+      <translation type="unfinished">Center</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/GimbalIndicator.qml" line="186"/>
       <source>Tilt 90</source>
-      <translation>Наклон 90°</translation>
+      <translation type="unfinished">Tilt 90</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/GimbalIndicator.qml" line="204"/>
       <source>Retract</source>
-      <translation>Втянуть</translation>
+      <translation type="unfinished">Retract</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/GimbalIndicator.qml" line="250"/>
       <source>Horizontal FOV</source>
-      <translation>Горизонтальный угол обзора</translation>
+      <translation type="unfinished">Horizontal FOV</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/GimbalIndicator.qml" line="256"/>
       <source>Vertical FOV</source>
-      <translation>Вертикальный угол обзора</translation>
+      <translation type="unfinished">Vertical FOV</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/GimbalIndicator.qml" line="286"/>
@@ -9217,77 +9217,77 @@ VTOL</translation>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="9"/>
       <source>Preferences</source>
-      <translation type="unfinished">Preferences</translation>
+      <translation>Настройки</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="17"/>
       <source>Horizontal Distance</source>
-      <translation type="unfinished">Horizontal Distance</translation>
+      <translation>Горизонтальное расстояние</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="17"/>
       <source>Vertical Distance</source>
-      <translation type="unfinished">Vertical Distance</translation>
+      <translation>Вертикальное расстояние</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="17"/>
       <source>Area</source>
-      <translation type="unfinished">Area</translation>
+      <translation>Площадь</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="17"/>
       <source>Speed</source>
-      <translation type="unfinished">Speed</translation>
+      <translation>Скорость</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="17"/>
       <source>Temperature</source>
-      <translation type="unfinished">Temperature</translation>
+      <translation>Температура</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="56"/>
       <source>Vehicle Preferences</source>
-      <translation type="unfinished">Vehicle Preferences</translation>
+      <translation>Настройки борта</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="57"/>
       <source>Select the firmware and vehicle type you typically use.</source>
-      <translation type="unfinished">Select the firmware and vehicle type you typically use.</translation>
+      <translation>Выберите прошивку и тип борта, который вы обычно используете.</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="61"/>
       <source>Preferred Firmware</source>
-      <translation type="unfinished">Preferred Firmware</translation>
+      <translation>Предпочитаемая прошивка</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="69"/>
       <source>Preferred Vehicle</source>
-      <translation type="unfinished">Preferred Vehicle</translation>
+      <translation>Предпочитаемый борт</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="79"/>
       <source>Measurement Units</source>
-      <translation type="unfinished">Measurement Units</translation>
+      <translation>Единицы измерения</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="80"/>
       <source>Choose the measurement units you want to use. You can also change it later in General Settings.</source>
-      <translation type="unfinished">Choose the measurement units you want to use. You can also change it later in General Settings.</translation>
+      <translation>Выберите единицы измерения, которые хотите использовать. Это можно изменить позже в общих настройках.</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="88"/>
       <source>System of units</source>
-      <translation type="unfinished">System of units</translation>
+      <translation>Система единиц измерения</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="93"/>
       <source>Metric System</source>
-      <translation type="unfinished">Metric System</translation>
+      <translation>Метрическая система</translation>
     </message>
     <message>
       <location filename="../src/FirstRunPromptDialogs/InitialSetupPrompt.qml" line="93"/>
       <source>Imperial System</source>
-      <translation type="unfinished">Imperial System</translation>
+      <translation>Имперская система</translation>
     </message>
   </context>
   <context>
@@ -9611,108 +9611,108 @@ VTOL</translation>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="68"/>
       <source>Enable</source>
-      <translation type="unfinished">Enable</translation>
+      <translation>Включить</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="77"/>
       <source>Not currently available</source>
-      <translation type="unfinished">Not currently available</translation>
+      <translation>Сейчас недоступно</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="83"/>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="60"/>
       <source>Calibrated</source>
-      <translation type="unfinished">Calibrated</translation>
+      <translation>Откалибровано</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="83"/>
       <source>Requires Calibration</source>
-      <translation type="unfinished">Requires Calibration</translation>
+      <translation>Требуется калибровка</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="129"/>
       <source>Enable Joystick</source>
-      <translation type="unfinished">Enable Joystick</translation>
+      <translation>Включить джойстик</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="130"/>
       <source>%1 calibration is complete. Enable it now?</source>
-      <translation type="unfinished">%1 calibration is complete. Enable it now?</translation>
+      <translation>Калибровка %1 завершена. Включить сейчас?</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="148"/>
       <source>Buttons</source>
-      <translation type="unfinished">Buttons</translation>
+      <translation>Кнопки</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="153"/>
       <source>Settings</source>
-      <translation type="unfinished">Settings</translation>
+      <translation>Настройки</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponent.qml" line="191"/>
       <source>No joysticks or gamepads detected.</source>
-      <translation type="unfinished">No joysticks or gamepads detected.</translation>
+      <translation>Джойстики или геймпады не обнаружены.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="11"/>
       <source>Joystick</source>
-      <translation type="unfinished">Joystick</translation>
+      <translation>Джойстик</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="28"/>
       <source>Configure axis calibration, button assignments, and input settings.</source>
-      <translation type="unfinished">Configure axis calibration, button assignments, and input settings.</translation>
+      <translation>Настройка калибровки осей, назначения кнопок и параметров ввода.</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="49"/>
       <source>No joystick detected</source>
-      <translation type="unfinished">No joystick detected</translation>
+      <translation>Джойстик не обнаружен</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="53"/>
       <source>Buttons only</source>
-      <translation type="unfinished">Buttons only</translation>
+      <translation>Только кнопки</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="57"/>
       <source>Ready</source>
-      <translation type="unfinished">Ready</translation>
+      <translation>Готово</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="60"/>
       <source>Needs calibration</source>
-      <translation type="unfinished">Needs calibration</translation>
+      <translation>Требуется калибровка</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="72"/>
       <source>Rumble</source>
-      <translation type="unfinished">Rumble</translation>
+      <translation>Вибрация</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="75"/>
       <source>Trigger Rumble</source>
-      <translation type="unfinished">Trigger Rumble</translation>
+      <translation>Вибрация триггеров</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="78"/>
       <source>LED</source>
-      <translation type="unfinished">LED</translation>
+      <translation>LED</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="81"/>
       <source>Gyro</source>
-      <translation type="unfinished">Gyro</translation>
+      <translation>Гироскоп</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="84"/>
       <source>Accel</source>
-      <translation type="unfinished">Accel</translation>
+      <translation>Акселерометр</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponent.cc" line="87"/>
       <source>Touchpad</source>
-      <translation type="unfinished">Touchpad</translation>
+      <translation>Тачпад</translation>
     </message>
   </context>
   <context>
@@ -9720,12 +9720,12 @@ VTOL</translation>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentButtons.qml" line="22"/>
       <source>Multiple buttons that have the same action must be pressed simultaneously to invoke the action.</source>
-      <translation type="unfinished">Multiple buttons that have the same action must be pressed simultaneously to invoke the action.</translation>
+      <translation>Если нескольким кнопкам назначено одно и то же действие, для его выполнения нужно нажать их одновременно.</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentButtons.qml" line="76"/>
       <source>Repeat</source>
-      <translation type="unfinished">Repeat</translation>
+      <translation>Повтор</translation>
     </message>
   </context>
   <context>
@@ -9733,128 +9733,128 @@ VTOL</translation>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="38"/>
       <source>Center stick is zero throttle</source>
-      <translation type="unfinished">Center stick is zero throttle</translation>
+      <translation>Центр стика соответствует нулевому газу</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="45"/>
       <source>Spring loaded throttle smoothing</source>
-      <translation type="unfinished">Spring loaded throttle smoothing</translation>
+      <translation>Сглаживание для пружинящей ручки газа</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="58"/>
       <source>Negative Thrust</source>
-      <translation type="unfinished">Negative Thrust</translation>
+      <translation>Отрицательная тяга</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="66"/>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="73"/>
       <source>Advanced Settings</source>
-      <translation type="unfinished">Advanced Settings</translation>
+      <translation>Дополнительные настройки</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="78"/>
       <source>Circle Correction</source>
-      <translation type="unfinished">Circle Correction</translation>
+      <translation>Коррекция круга</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="102"/>
       <source>Deadband</source>
-      <translation type="unfinished">Deadband</translation>
+      <translation>Мёртвая зона</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="112"/>
       <source>Deadband can be set during the first step of calibration by gently wiggling each axis. </source>
-      <translation type="unfinished">Deadband can be set during the first step of calibration by gently wiggling each axis. </translation>
+      <translation>Мёртвую зону можно задать на первом этапе калибровки, слегка покачивая каждую ось.</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="120"/>
       <source>MANUAL_CONTROL Extensions</source>
-      <translation type="unfinished">MANUAL_CONTROL Extensions</translation>
+      <translation>Расширения MANUAL_CONTROL</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="129"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>Тангаж</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="136"/>
       <source>Roll</source>
-      <translation type="unfinished">Roll</translation>
+      <translation>Крен</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="147"/>
       <source>Additional Axes</source>
-      <translation type="unfinished">Additional Axes</translation>
+      <translation>Дополнительные оси</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="159"/>
       <source>Send using MANUAL_CONTROL</source>
-      <translation type="unfinished">Send using MANUAL_CONTROL</translation>
+      <translation>Отправлять через MANUAL_CONTROL</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="166"/>
       <source>Send using RC_CHANNELS_OVERRIDE</source>
-      <translation type="unfinished">Send using RC_CHANNELS_OVERRIDE</translation>
+      <translation>Отправлять через RC_CHANNELS_OVERRIDE</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="174"/>
       <source>Aux1</source>
-      <translation type="unfinished">Aux1</translation>
+      <translation>Aux1</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="174"/>
       <source>Channel 5</source>
-      <translation type="unfinished">Channel 5</translation>
+      <translation>Канал 5</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="181"/>
       <source>Aux2</source>
-      <translation type="unfinished">Aux2</translation>
+      <translation>Aux2</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="181"/>
       <source>Channel 6</source>
-      <translation type="unfinished">Channel 6</translation>
+      <translation>Канал 6</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="188"/>
       <source>Aux3</source>
-      <translation type="unfinished">Aux3</translation>
+      <translation>Aux3</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="188"/>
       <source>Channel 7</source>
-      <translation type="unfinished">Channel 7</translation>
+      <translation>Канал 7</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="195"/>
       <source>Aux4</source>
-      <translation type="unfinished">Aux4</translation>
+      <translation>Aux4</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="195"/>
       <source>Channel 8</source>
-      <translation type="unfinished">Channel 8</translation>
+      <translation>Канал 8</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="202"/>
       <source>Aux5</source>
-      <translation type="unfinished">Aux5</translation>
+      <translation>Aux5</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="202"/>
       <source>Channel 9</source>
-      <translation type="unfinished">Channel 9</translation>
+      <translation>Канал 9</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="209"/>
       <source>Aux6</source>
-      <translation type="unfinished">Aux6</translation>
+      <translation>Aux6</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/VehicleSetup/JoystickComponentSettings.qml" line="209"/>
       <source>Channel 10</source>
-      <translation type="unfinished">Channel 10</translation>
+      <translation>Канал 10</translation>
     </message>
   </context>
   <context>
@@ -9862,137 +9862,137 @@ VTOL</translation>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="21"/>
       <source>Status</source>
-      <translation type="unfinished">Status</translation>
+      <translation>Статус</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="23"/>
       <source>No joystick detected</source>
-      <translation type="unfinished">No joystick detected</translation>
+      <translation>Джойстик не обнаружен</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="24"/>
       <source>Buttons only</source>
-      <translation type="unfinished">Buttons only</translation>
+      <translation>Только кнопки</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="25"/>
       <source>Ready</source>
-      <translation type="unfinished">Ready</translation>
+      <translation>Готово</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="26"/>
       <source>Calibrated</source>
-      <translation type="unfinished">Calibrated</translation>
+      <translation>Откалибровано</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="26"/>
       <source>Needs calibration</source>
-      <translation type="unfinished">Needs calibration</translation>
+      <translation>Требуется калибровка</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="32"/>
       <source>Type</source>
-      <translation type="unfinished">Type</translation>
+      <translation>Тип</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="36"/>
       <source>Gamepad</source>
-      <translation type="unfinished">Gamepad</translation>
+      <translation>Геймпад</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="38"/>
       <source>Joystick</source>
-      <translation type="unfinished">Joystick</translation>
+      <translation>Джойстик</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="44"/>
       <source>Connection</source>
-      <translation type="unfinished">Connection</translation>
+      <translation>Подключение</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="50"/>
       <source>Inputs</source>
-      <translation type="unfinished">Inputs</translation>
+      <translation>Входы</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="54"/>
       <source>%1 axes</source>
-      <translation type="unfinished">%1 axes</translation>
+      <translation>Осей: %1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="55"/>
       <source>%1 buttons</source>
-      <translation type="unfinished">%1 buttons</translation>
+      <translation>Кнопок: %1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="56"/>
       <source>%1 balls</source>
-      <translation type="unfinished">%1 balls</translation>
+      <translation>Шаров: %1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="57"/>
       <source>%1 touchpads</source>
-      <translation type="unfinished">%1 touchpads</translation>
+      <translation>Тачпадов: %1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="64"/>
       <source>Battery</source>
-      <translation type="unfinished">Battery</translation>
+      <translation>Аккумулятор</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="67"/>
       <source>%1%</source>
-      <translation type="unfinished">%1%</translation>
+      <translation>%1%</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="76"/>
       <source>Features</source>
-      <translation type="unfinished">Features</translation>
+      <translation>Функции</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="80"/>
       <source>Rumble</source>
-      <translation type="unfinished">Rumble</translation>
+      <translation>Вибрация</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="81"/>
       <source>Triggers</source>
-      <translation type="unfinished">Triggers</translation>
+      <translation>Триггеры</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="82"/>
       <source>LED</source>
-      <translation type="unfinished">LED</translation>
+      <translation>LED</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="83"/>
       <source>Gyro</source>
-      <translation type="unfinished">Gyro</translation>
+      <translation>Гироскоп</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="84"/>
       <source>Accel</source>
-      <translation type="unfinished">Accel</translation>
+      <translation>Акселерометр</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="91"/>
       <source>Device ID</source>
-      <translation type="unfinished">Device ID</translation>
+      <translation>ID устройства</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="97"/>
       <source>Player</source>
-      <translation type="unfinished">Player</translation>
+      <translation>Игрок</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="103"/>
       <source>Virtual</source>
-      <translation type="unfinished">Virtual</translation>
+      <translation>Виртуальный</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/JoystickComponentSummary.qml" line="104"/>
       <source>Yes</source>
-      <translation type="unfinished">Yes</translation>
+      <translation>Да</translation>
     </message>
   </context>
   <context>
@@ -11823,137 +11823,137 @@ VTOL</translation>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="62"/>
       <source>Inspect real time MAVLink messages.</source>
-      <translation type="unfinished">Inspect real time MAVLink messages.</translation>
+      <translation>Проверять сообщения MAVLink в реальном времени.</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="159"/>
       <source>Message:</source>
-      <translation type="unfinished">Message:</translation>
+      <translation>Сообщение:</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="167"/>
       <source>Component:</source>
-      <translation type="unfinished">Component:</translation>
+      <translation>Компонент:</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="170"/>
       <source>Count:</source>
-      <translation type="unfinished">Count:</translation>
+      <translation>Счётчик:</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="173"/>
       <source>Actual Rate:</source>
-      <translation type="unfinished">Actual Rate:</translation>
+      <translation>Фактическая частота:</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="174"/>
       <source>Hz</source>
-      <translation type="unfinished">Hz</translation>
+      <translation>Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="176"/>
       <source>Set Rate:</source>
-      <translation type="unfinished">Set Rate:</translation>
+      <translation>Задать частоту:</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="182"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>Отключено</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="183"/>
       <source>Default</source>
-      <translation type="unfinished">Default</translation>
+      <translation>По умолчанию</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="184"/>
       <source>1Hz</source>
-      <translation type="unfinished">1Hz</translation>
+      <translation>1Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="185"/>
       <source>2Hz</source>
-      <translation type="unfinished">2Hz</translation>
+      <translation>2Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="186"/>
       <source>3Hz</source>
-      <translation type="unfinished">3Hz</translation>
+      <translation>3Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="187"/>
       <source>4Hz</source>
-      <translation type="unfinished">4Hz</translation>
+      <translation>4Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="188"/>
       <source>5Hz</source>
-      <translation type="unfinished">5Hz</translation>
+      <translation>5Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="189"/>
       <source>6Hz</source>
-      <translation type="unfinished">6Hz</translation>
+      <translation>6Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="190"/>
       <source>7Hz</source>
-      <translation type="unfinished">7Hz</translation>
+      <translation>7Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="191"/>
       <source>8Hz</source>
-      <translation type="unfinished">8Hz</translation>
+      <translation>8Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="192"/>
       <source>9Hz</source>
-      <translation type="unfinished">9Hz</translation>
+      <translation>9Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="193"/>
       <source>10Hz</source>
-      <translation type="unfinished">10Hz</translation>
+      <translation>10Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="194"/>
       <source>25Hz</source>
-      <translation type="unfinished">25Hz</translation>
+      <translation>25Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="195"/>
       <source>50Hz</source>
-      <translation type="unfinished">50Hz</translation>
+      <translation>50Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="196"/>
       <source>100Hz</source>
-      <translation type="unfinished">100Hz</translation>
+      <translation>100Гц</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="227"/>
       <source>Name</source>
-      <translation type="unfinished">Name</translation>
+      <translation>Название</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="230"/>
       <source>Value</source>
-      <translation type="unfinished">Value</translation>
+      <translation>Значение</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="233"/>
       <source>Type</source>
-      <translation type="unfinished">Type</translation>
+      <translation>Тип</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="236"/>
       <source>Plot 1</source>
-      <translation type="unfinished">Plot 1</translation>
+      <translation>График 1</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml" line="239"/>
       <source>Plot 2</source>
-      <translation type="unfinished">Plot 2</translation>
+      <translation>График 2</translation>
     </message>
   </context>
   <context>
