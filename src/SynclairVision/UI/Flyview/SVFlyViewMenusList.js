@@ -90,16 +90,16 @@ function getTrackingModel(uiInteractionEnabled) {
     return [
         {
             id: 'singleTarget',
-            text: 'STT',
-            description: "Single Target Tracking",
+            text: 'Pixel',
+            description: "Track a target by selecting a pixel in the video",
             checkable: true,
             iconSource: '/qmlimages/tracking_single.svg',
             enabled: uiInteractionEnabled
         },
         {
             id: 'cursorTrack',
-            text: 'Cursor-GNSS',
-            description: "Track GNSS target from cursor",
+            text: 'GNSS',
+            description: "Track a GNSS position by selecting a point in the video",
             checkable: true,
             iconSource: '/qmlimages/tracking_cursor.svg',
             enabled: uiInteractionEnabled
