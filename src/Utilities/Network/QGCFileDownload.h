@@ -13,7 +13,7 @@
 class QNetworkAccessManager;
 class QAbstractNetworkCache;
 class QGCCompressionJob;
-class QFile;
+class QSaveFile;
 
 /// \brief File download with progress, decompression, and hash verification
 ///
@@ -222,7 +222,7 @@ private:
     QNetworkAccessManager *_networkManager = nullptr;
     QNetworkReply *_currentReply = nullptr;
     QGCCompressionJob *_decompressionJob = nullptr;
-    QFile *_outputFile = nullptr;
+    QSaveFile *_outputFile = nullptr;
 
     QUrl _url;
     QString _localPath;

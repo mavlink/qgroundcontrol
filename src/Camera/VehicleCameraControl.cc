@@ -2238,10 +2238,10 @@ void VehicleCameraControl::_httpRequest(const QString &url)
     }
     QGCNetworkHelper::configureProxy(_netManager);
     QNetworkRequest request(QUrl::fromUserInput(url));
-    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
-    QSslConfiguration conf = request.sslConfiguration();
-    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
+    // cam_definition_uri comes from an unauthenticated vehicle: validate the peer and do
+    // not follow a redirect that downgrades the connection.
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::NoLessSafeRedirectPolicy);
     QNetworkReply* reply = _netManager->get(request);
     connect(reply, &QNetworkReply::finished,  this, &VehicleCameraControl::_downloadFinished);
 }
