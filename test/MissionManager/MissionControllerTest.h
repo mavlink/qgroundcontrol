@@ -39,6 +39,7 @@ private slots:
     void _testVTOLTakeoffModes();
     void _testArduPilotVTOLOrdinaryTakeoffCompatibility();
     void _testUnsupportedVTOLMulticopterTakeoff();
+    void _testVTOLMulticopterTakeoffAfterFixedWingTransition();
     void _testVTOLTakeoffJsonRoundTrip_data();
     void _testVTOLTakeoffJsonRoundTrip();
 

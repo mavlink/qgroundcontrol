@@ -24,7 +24,6 @@
 #include "TakeoffMissionItem.h"
 #include "PlanViewSettings.h"
 #include "MissionCommandTree.h"
-#include "AppMessages.h"
 #include "QGCMath.h"
 #include "QGCLoggingCategory.h"
 
@@ -324,13 +323,8 @@ VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordin
 VisualMissionItem* MissionController::insertVTOLMulticopterTakeoffItem(
     QGeoCoordinate /*coordinate*/, int visualItemIndex, bool makeCurrentItem)
 {
-    const FirmwarePlugin* firmwarePlugin = _controllerVehicle->firmwarePlugin();
-    const QList<MAV_CMD> supportedCommands = firmwarePlugin->supportedMissionCommands(_controllerVehicle->vehicleClass());
-    const bool commandSupported = supportedCommands.isEmpty() || supportedCommands.contains(MAV_CMD_NAV_TAKEOFF);
-    if (!_controllerVehicle->vtol()
-        || !firmwarePlugin->isCapable(_controllerVehicle, FirmwarePlugin::VTOLMulticopterTakeoffCapability)
-        || !commandSupported) {
-        QGC::showAppMessage(tr("Multicopter takeoff is not supported for this vehicle and firmware."));
+    if (!TakeoffMissionItem::isVTOLMulticopterTakeoff(_controllerVehicle, MAV_CMD_NAV_TAKEOFF)) {
+        qCWarning(MissionControllerLog) << "Multicopter takeoff requested for an unsupported vehicle";
         return nullptr;
     }
 
@@ -1061,12 +1055,9 @@ void MissionController::_recalcFlightPathSegments(void)
             MAV_CMD command = simpleItem->mavCommand();
             switch (command) {
             case MAV_CMD_NAV_TAKEOFF:
-                if (firstCoordinateNotFound
-                    && _controllerVehicle->firmwarePlugin()->isCapable(
-                        _controllerVehicle, FirmwarePlugin::VTOLMulticopterTakeoffCapability)) {
-                    _missionStartsInVTOLMulticopterMode = true;
-                }
                 if (!linkEndToHome && firstCoordinateNotFound) {
+                    _missionStartsInVTOLMulticopterMode =
+                        TakeoffMissionItem::isVTOLMulticopterTakeoff(_controllerVehicle, command);
                     linkStartToHome = true;
                 }
                 break;

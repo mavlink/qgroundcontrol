@@ -111,15 +111,32 @@ bool TakeoffMissionItem::isTakeoffCommand(MAV_CMD command)
     return MissionCommandTree::instance()->isTakeoffCommand(command);
 }
 
+bool TakeoffMissionItem::isVTOLMulticopterTakeoff(const Vehicle* vehicle, MAV_CMD command)
+{
+    return vehicle
+        && command == MAV_CMD_NAV_TAKEOFF
+        && vehicle->firmwarePlugin()->isCapable(vehicle, FirmwarePlugin::VTOLMulticopterTakeoffCapability);
+}
+
+QString TakeoffMissionItem::commandDescription(void) const
+{
+    return isVTOLMulticopterTakeoff(_controllerVehicle, mavCommand())
+        ? tr("Take off vertically and continue the mission in multicopter mode.")
+        : SimpleMissionItem::commandDescription();
+}
+
+QString TakeoffMissionItem::commandName(void) const
+{
+    return isVTOLMulticopterTakeoff(_controllerVehicle, mavCommand())
+        ? tr("Multicopter takeoff")
+        : SimpleMissionItem::commandName();
+}
+
 void TakeoffMissionItem::_initLaunchTakeoffAtSameLocation(void)
 {
     if (specifiesCoordinate()) {
-        const bool isVTOLMulticopterTakeoff =
-            _controllerVehicle->vtol()
-            && mavCommand() == MAV_CMD_NAV_TAKEOFF
-            && _controllerVehicle->firmwarePlugin()->isCapable(
-                _controllerVehicle, FirmwarePlugin::VTOLMulticopterTakeoffCapability);
-        if (_controllerVehicle->fixedWing() || (_controllerVehicle->vtol() && !isVTOLMulticopterTakeoff)) {
+        if (_controllerVehicle->fixedWing()
+            || (_controllerVehicle->vtol() && !isVTOLMulticopterTakeoff(_controllerVehicle, mavCommand()))) {
             _setLaunchTakeoffAtSameLocation(false);
         } else {
             // PX4 specifies a coordinate for takeoff even for multi-rotor. But it makes more sense to not have a coordinate
