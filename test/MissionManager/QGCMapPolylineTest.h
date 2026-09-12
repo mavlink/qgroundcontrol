@@ -20,6 +20,7 @@ private slots:
     void _testVertexManipulation();
     void _testShapeLoad();
     void _testSelectVertex();
+    void _testOffset();
 
 private:
     QString _copyRes(const QString& dirPath, const QString& name);

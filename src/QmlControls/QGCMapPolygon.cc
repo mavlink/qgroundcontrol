@@ -1,16 +1,17 @@
 #include "QGCMapPolygon.h"
-#include "QGCGeo.h"
+
+#include <QMetaMethod>
+
+#include "AppMessages.h"
 #include "GeoJsonHelper.h"
 #include "JsonParsing.h"
-#include "QGCQGeoCoordinate.h"
-#include "AppMessages.h"
-#include "QGCApplication.h"
-#include "QGCLoggingCategory.h"
-#include "ShapeFileHelper.h"
 #include "KMLDomDocument.h"
-
-#include <QtCore/QLineF>
-#include <QMetaMethod>
+#include "QGCApplication.h"
+#include "QGCGeo.h"
+#include "QGCLoggingCategory.h"
+#include "QGCPolygonClipper.h"
+#include "QGCQGeoCoordinate.h"
+#include "ShapeFileHelper.h"
 
 QGC_LOGGING_CATEGORY(QGCMapPolygonLog, "QMLControls.QGCMapPolygon")
 
@@ -513,58 +514,42 @@ QList<QPointF> QGCMapPolygon::nedPolygon(void) const
     return nedPolygon;
 }
 
-
 void QGCMapPolygon::offset(double distance)
 {
-    QList<QGeoCoordinate> rgNewPolygon;
+    if (count() <= 2) {
+        return;
+    }
 
-    // I'm sure there is some beautiful famous algorithm to do this, but here is a brute force method
+    QPolygonF planarPolygon;
+    const QList<QPointF> nedVertices = nedPolygon();
+    planarPolygon.reserve(nedVertices.size());
+    for (const QPointF& vertex : nedVertices) {
+        planarPolygon.append(vertex);
+    }
 
-    if (count() > 2) {
-        // Convert the polygon to NED
-        QList<QPointF> rgNedVertices = nedPolygon();
+    const QList<QPolygonF> offsetPolygons = QGCPolygonClipper::offsetPolygon(planarPolygon, distance);
+    if (offsetPolygons.isEmpty()) {
+        qCWarning(QGCMapPolygonLog) << "Polygon offset produced no geometry";
+        return;
+    }
+    if (offsetPolygons.size() > 1) {
+        qCWarning(QGCMapPolygonLog) << "Polygon offset produced multiple disjoint polygons";
+        return;
+    }
 
-        // Walk the edges, offsetting by the specified distance
-        QList<QLineF> rgOffsetEdges;
-        for (int i=0; i<rgNedVertices.count(); i++) {
-            int     lastIndex = i == rgNedVertices.count() - 1 ? 0 : i + 1;
-            QLineF  offsetEdge;
-            QLineF  originalEdge(rgNedVertices[i], rgNedVertices[lastIndex]);
-
-            QLineF workerLine = originalEdge;
-            workerLine.setLength(distance);
-            workerLine.setAngle(workerLine.angle() - 90.0);
-            offsetEdge.setP1(workerLine.p2());
-
-            workerLine.setPoints(originalEdge.p2(), originalEdge.p1());
-            workerLine.setLength(distance);
-            workerLine.setAngle(workerLine.angle() + 90.0);
-            offsetEdge.setP2(workerLine.p2());
-
-            rgOffsetEdges.append(offsetEdge);
-        }
-
-        // Intersect the offset edges to generate new vertices
-        QPointF         newVertex;
-        QGeoCoordinate  tangentOrigin = vertexCoordinate(0);
-        for (int i=0; i<rgOffsetEdges.count(); i++) {
-            int prevIndex = i == 0 ? rgOffsetEdges.count() - 1 : i - 1;
-            auto intersect = rgOffsetEdges[prevIndex].intersects(rgOffsetEdges[i], &newVertex);
-            if (intersect == QLineF::NoIntersection) {
-                // FIXME: Better error handling?
-                qCWarning(QGCMapPolygonLog, "Intersection failed");
-                return;
-            }
-            QGeoCoordinate coord;
-            QGCGeo::convertNedToGeo(newVertex.y(), newVertex.x(), 0, tangentOrigin, coord);
-            rgNewPolygon.append(coord);
-        }
+    QList<QGeoCoordinate> newPolygon;
+    const QGeoCoordinate tangentOrigin = vertexCoordinate(0);
+    newPolygon.reserve(offsetPolygons.first().size());
+    for (const QPointF& vertex : offsetPolygons.first()) {
+        QGeoCoordinate coordinate;
+        QGCGeo::convertNedToGeo(vertex.y(), vertex.x(), 0, tangentOrigin, coordinate);
+        newPolygon.append(coordinate);
     }
 
     // Update internals
     beginReset();
     clear();
-    appendVertices(rgNewPolygon);
+    appendVertices(newPolygon);
     endReset();
 }
 
