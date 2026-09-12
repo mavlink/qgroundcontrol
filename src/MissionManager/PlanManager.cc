@@ -199,9 +199,21 @@ void PlanManager::_ackTimeout(void)
     case AckMissionRequest:
         // MISSION_REQUEST is expected, or MISSION_ACK to end sequence
         if (_itemIndicesToWrite.count() == 0) {
-            // Vehicle did not send final MISSION_ACK at end of sequence
-            _sendError(ProtocolError, tr("Mission write failed, vehicle failed to send final ack."));
-            _finishTransaction(false);
+            if (_lastMissionRequest < 0) {
+                // No item was ever requested (e.g. writing an empty mission), so there is nothing to resend.
+                _sendError(ProtocolError, tr("Mission write failed, vehicle failed to send final ack."));
+                _finishTransaction(false);
+            } else if (_retryCount > _maxRetryCount) {
+                _sendError(MaxRetryExceeded, tr("Mission write failed, maximum retries exceeded waiting for final ack."));
+                _finishTransaction(false);
+            } else {
+                // Vehicle did not send final MISSION_ACK at end of sequence. It may have stored the mission
+                // successfully and just lost the ack on the way back, so nudge it by resending the last item -
+                // the vehicle is expected to treat this as a duplicate and resend its ack in response.
+                _retryCount++;
+                qCDebug(PlanManagerLog) << QStringLiteral("Retrying %1 final ack by resending last item, retry Count").arg(_planTypeString()) << _retryCount;
+                _sendMissionItem(_lastMissionRequest);
+            }
         } else if (_itemIndicesToWrite[0] == 0) {
             // Vehicle did not respond to MISSION_COUNT, try again
             if (_retryCount > _maxRetryCount) {
@@ -524,8 +536,16 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
         _itemIndicesToWrite.removeOne(missionRequestSeq);
     }
 
-    MissionItem* item = _writeMissionItems[missionRequestSeq];
-    qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionRequest %1 sequenceNumber:command").arg(_planTypeString()) << missionRequestSeq << item->command();
+    _sendMissionItem(missionRequestSeq);
+}
+
+/// Sends a single mission item to the vehicle as part of a write transaction and (re-)starts the ack timeout.
+/// Used both for the initial send in response to MISSION_REQUEST(_INT), and to resend the last item if the
+/// final MISSION_ACK times out (the vehicle may have stored it but the ack got dropped on the way back).
+void PlanManager::_sendMissionItem(int seq)
+{
+    MissionItem* item = _writeMissionItems[seq];
+    qCDebug(PlanManagerLog) << QStringLiteral("_sendMissionItem %1 sequenceNumber:command").arg(_planTypeString()) << seq << item->command();
 
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (sharedLink) {
@@ -537,10 +557,10 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message)
                                                &messageOut,
                                                _vehicle->id(),
                                                MAV_COMP_ID_AUTOPILOT1,
-                                               missionRequestSeq,
+                                               seq,
                                                item->frame(),
                                                item->command(),
-                                               missionRequestSeq == 0,
+                                               seq == 0,
                                                item->autoContinue(),
                                                item->param1(),
                                                item->param2(),
