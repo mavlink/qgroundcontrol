@@ -6,6 +6,7 @@
 #include "SimpleMissionItem.h"
 #include "ComplexMissionItem.h"
 #include "MissionSettingsItem.h"
+#include "TakeoffMissionItem.h"
 #include "AppSettings.h"
 #include "PlanViewSettings.h"
 #include "SettingsManager.h"
@@ -246,10 +247,10 @@ void MissionFlightStatusCalculator::recalc(QmlObjectListModel* visualItems,
         if (simpleItem && controllerVehicle->vtol()) {
             switch (simpleItem->command()) {
             case MAV_CMD_NAV_TAKEOFF:
-                if (!controllerVehicle->firmwarePlugin()->isCapable(
-                        controllerVehicle, FirmwarePlugin::VTOLMulticopterTakeoffCapability)) {
-                    _status.vtolMode = QGCMAVLink::VehicleClassFixedWing;
-                }
+                _status.vtolMode = TakeoffMissionItem::isVTOLMulticopterTakeoff(
+                                       controllerVehicle, simpleItem->mavCommand())
+                    ? QGCMAVLink::VehicleClassMultiRotor
+                    : QGCMAVLink::VehicleClassFixedWing;
                 break;
             case MAV_CMD_NAV_VTOL_TAKEOFF:  // Vehicle goes straight up and then transitions to FW
             case MAV_CMD_NAV_LAND:

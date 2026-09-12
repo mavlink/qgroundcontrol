@@ -134,6 +134,11 @@ void MissionControllerTest::_testVTOLTakeoffModes()
     QVERIFY(takeoffItem);
     QCOMPARE(takeoffItem->mavCommand(), static_cast<MAV_CMD>(expectedCommand));
     QCOMPARE(takeoffItem->launchTakeoffAtSameLocation(), expectedSameLocation);
+    if (useMulticopterTakeoff) {
+        QCOMPARE(takeoffItem->commandName(), QStringLiteral("Multicopter takeoff"));
+        QCOMPARE(takeoffItem->commandDescription(),
+                 QStringLiteral("Take off vertically and continue the mission in multicopter mode."));
+    }
 
     SimpleMissionItem* waypoint = qobject_cast<SimpleMissionItem*>(
         _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100.0, 0.0), 2));
@@ -181,10 +186,44 @@ void MissionControllerTest::_testUnsupportedVTOLMulticopterTakeoff()
     _missionController->setHomePosition(Coord::zurich());
     const int initialCount = _missionController->visualItems()->count();
 
-    expectAppMessage(QRegularExpression(QStringLiteral("Multicopter takeoff is not supported")));
+    expectLogMessage("PlanManager.MissionController", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Multicopter takeoff requested for an unsupported vehicle")));
     QVERIFY(!_missionController->insertVTOLMulticopterTakeoffItem(Coord::zurich(), 1));
     verifyExpectedLogMessage();
     QCOMPARE(_missionController->visualItems()->count(), initialCount);
+}
+
+void MissionControllerTest::_testVTOLMulticopterTakeoffAfterFixedWingTransition()
+{
+    _initForVehicleType(MAV_AUTOPILOT_PX4, MAV_TYPE_VTOL_TAILSITTER_QUADROTOR);
+
+    const QGeoCoordinate home = Coord::zurich();
+    _missionController->setHomePosition(home);
+
+    QVERIFY(_missionController->insertVTOLMulticopterTakeoffItem(home, 1));
+
+    SimpleMissionItem* transitionItem = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(QGeoCoordinate(), 2));
+    QVERIFY(transitionItem);
+    transitionItem->setCommand(MAV_CMD_DO_VTOL_TRANSITION);
+    transitionItem->missionItem().setParam1(MAV_VTOL_STATE_FW);
+
+    TakeoffMissionItem* takeoffItem = qobject_cast<TakeoffMissionItem*>(
+        _missionController->insertVTOLMulticopterTakeoffItem(home, 3));
+    QVERIFY(takeoffItem);
+
+    SimpleMissionItem* waypoint = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100.0, 0.0), 4));
+    QVERIFY(waypoint);
+
+    QCOMPARE_TRUE_WAIT(
+        takeoffItem->property("previousVTOLMode").toInt(),
+        int(QGCMAVLink::VehicleClassFixedWing),
+        TestTimeout::mediumMs());
+    QCOMPARE_TRUE_WAIT(
+        waypoint->property("previousVTOLMode").toInt(),
+        int(QGCMAVLink::VehicleClassMultiRotor),
+        TestTimeout::mediumMs());
 }
 
 void MissionControllerTest::_testVTOLTakeoffJsonRoundTrip_data()

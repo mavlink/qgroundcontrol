@@ -18,7 +18,6 @@ private slots:
 
     void testJsonLoad();
     void testOverride();
-    void testPX4VTOLTakeoffOverride();
     void testAllTrees();
     void testUnknownCommandFallbacks();
 

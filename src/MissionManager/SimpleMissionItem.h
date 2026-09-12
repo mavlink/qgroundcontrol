@@ -108,8 +108,8 @@ public:
     bool            isLandCommand               (void) const final;
     bool            specifiesCoordinate         (void) const final;
     bool            specifiesAltitudeOnly       (void) const final;
-    QString         commandDescription          (void) const final;
-    QString         commandName                 (void) const final;
+    QString         commandDescription          (void) const override;
+    QString         commandName                 (void) const override;
     QString         abbreviation                (void) const final;
     QGeoCoordinate  coordinate                  (void) const final;
     QGeoCoordinate  entryCoordinate             (void) const final { return coordinate(); }

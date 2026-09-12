@@ -30,7 +30,7 @@ public:
     Q_PROPERTY(bool guidedTakeoffWithAltitude       READ guidedTakeoffWithAltitude      CONSTANT)
     Q_PROPERTY(bool guidedTakeoffWithoutAltitude    READ guidedTakeoffWithoutAltitude   CONSTANT)
     Q_PROPERTY(bool changeHeading                   READ changeHeading                  CONSTANT)
-    Q_PROPERTY(bool vtolMulticopterTakeoff          READ vtolMulticopterTakeoff         CONSTANT)
+    Q_PROPERTY(bool vtolMulticopterTakeoff          READ vtolMulticopterTakeoff         NOTIFY vtolMulticopterTakeoffChanged)
 
     bool throttleModeCenterZero() const;
     bool negativeThrust() const;
@@ -51,6 +51,7 @@ public:
 
 signals:
     void terrainFrameChanged();
+    void vtolMulticopterTakeoffChanged();
 
 private:
     Vehicle *_vehicle = nullptr;

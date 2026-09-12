@@ -6,17 +6,21 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "AppSettings.h"
 #include "Fact.h"
 #include "MissionController.h"
+#include "PlanMasterController.h"
 #include "PlanViewSettings.h"
 #include "QGCFileDialogController.h"
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
+#include "Vehicle.h"
+#include "VehicleSupports.h"
 
 UT_REGISTER_TEST(PlanViewUITest, TestLabel::Integration, TestLabel::MissionManager)
 
@@ -184,13 +188,30 @@ void PlanViewUITest::_testVTOLTakeoffChoices()
 
     AppSettings* appSettings = SettingsManager::instance()->appSettings();
     appSettings->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::FirmwareClassPX4);
-    appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::VehicleClassVTOL);
+    appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::VehicleClassMultiRotor);
 
     startUI();
     if (QTest::currentTestFailed()) return;
 
     _navigateToPlanAndCenterMap();
     if (QTest::currentTestFailed()) return;
+
+    QQuickItem* planView = findVisibleItem(_rootItem, QStringLiteral("mainView_plan"));
+    QVERIFY(planView);
+    PlanMasterController* masterController = qvariant_cast<PlanMasterController*>(
+        planView->property("_planMasterController"));
+    QVERIFY(masterController);
+    Vehicle* controllerVehicle = masterController->controllerVehicle();
+    QVERIFY(controllerVehicle);
+    QCOMPARE(controllerVehicle->supports()->vtolMulticopterTakeoff(), false);
+
+    QSignalSpy takeoffSupportSpy(controllerVehicle->supports(), &VehicleSupports::vtolMulticopterTakeoffChanged);
+    appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::VehicleClassVTOL);
+    QCOMPARE_TRUE_WAIT(
+        controllerVehicle->supports()->vtolMulticopterTakeoff(),
+        true,
+        TestTimeout::shortMs());
+    QCOMPARE(takeoffSupportSpy.count(), 1);
 
     _clickMap(0.5, 0.5);
     if (QTest::currentTestFailed()) return;
@@ -204,6 +225,8 @@ void PlanViewUITest::_testVTOLTakeoffChoices()
     QVERIFY2(vtolButton, "VTOL takeoff choice was not shown");
     QVERIFY2(multicopterButton, "Multicopter takeoff choice was not shown");
     QCOMPARE(vtolButton->property("primary").toBool(), true);
+    QCOMPARE(multicopterButton->property("primary").toBool(), false);
+    QVERIFY(vtolButton->y() < multicopterButton->y());
 
     QVERIFY2(clickButton(choiceButton), "Failed to select the VTOL takeoff mode");
     QVERIFY2(waitForCondition([&] { return _missionItemCount() == 2; }, 2000,
