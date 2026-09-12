@@ -26,7 +26,7 @@ public:
     bool launchTakeoffAtSameLocation(void) const { return _launchTakeoffAtSameLocation; }
 
     static bool isTakeoffCommand(MAV_CMD command);
-    static bool isVTOLMulticopterTakeoff(const Vehicle* vehicle, MAV_CMD command);
+    static bool isVTOLMulticopterTakeoff(Vehicle* vehicle, MAV_CMD command);
 
     ~TakeoffMissionItem();
 

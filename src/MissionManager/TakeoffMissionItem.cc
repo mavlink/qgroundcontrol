@@ -111,7 +111,7 @@ bool TakeoffMissionItem::isTakeoffCommand(MAV_CMD command)
     return MissionCommandTree::instance()->isTakeoffCommand(command);
 }
 
-bool TakeoffMissionItem::isVTOLMulticopterTakeoff(const Vehicle* vehicle, MAV_CMD command)
+bool TakeoffMissionItem::isVTOLMulticopterTakeoff(Vehicle* vehicle, MAV_CMD command)
 {
     return vehicle
         && command == MAV_CMD_NAV_TAKEOFF
