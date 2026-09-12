@@ -53,7 +53,7 @@ static void loadGamepadMappings()
     const QString userMappingsPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
                                    + QStringLiteral("/gamecontrollerdb.txt");
     if (loadMappingsFromFile(userMappingsPath, "user config")) {
-        qCInfo(SDLJoystickLog) << "Loaded user gamepad mappings from" << userMappingsPath;
+        qCDebug(SDLJoystickLog) << "Loaded user gamepad mappings from" << userMappingsPath;
     }
 }
 
