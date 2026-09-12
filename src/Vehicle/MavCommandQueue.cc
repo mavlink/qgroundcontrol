@@ -17,6 +17,8 @@
 
 QGC_LOGGING_CATEGORY(MavCommandQueueLog, "Vehicle.MavCommandQueue")
 
+std::optional<int> MavCommandQueue::_testAckTimeoutOverride;
+
 MavCommandQueue::MavCommandQueue(Vehicle* vehicle)
     : QObject(vehicle)
     , _vehicle(vehicle)
@@ -193,8 +195,25 @@ int MavCommandQueue::_responseCheckIntervalMSecs()
 
 int MavCommandQueue::_ackTimeoutMSecs()
 {
-    // Use shorter ack timeout during unit tests for faster test execution
-    return QGC::runningUnitTests() ? kTestAckTimeoutMs : 1200;
+    return _testAckTimeoutOverride.value_or(_ackTimeoutMSecsDefault);
+}
+
+void MavCommandQueue::setTestAckTimeoutOverride(std::optional<int> msecs)
+{
+    if (!QGC::runningUnitTests()) {
+        qCWarning(MavCommandQueueLog) << "setTestAckTimeoutOverride called outside unit tests, ignoring";
+        return;
+    }
+    if (msecs.has_value() && *msecs <= 0) {
+        qCWarning(MavCommandQueueLog) << "setTestAckTimeoutOverride rejecting non-positive timeout:" << *msecs;
+        return;
+    }
+    _testAckTimeoutOverride = msecs;
+}
+
+std::optional<int> MavCommandQueue::testAckTimeoutOverride()
+{
+    return _testAckTimeoutOverride;
 }
 
 bool MavCommandQueue::_shouldRetry(MAV_CMD command)

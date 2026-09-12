@@ -1,5 +1,9 @@
 #include "RequestMessageTest.h"
 
+#include <optional>
+
+#include "Fixtures/RAIIFixtures.h"
+#include "MavCommandQueue.h"
 #include "MultiVehicleManager.h"
 
 #include <QtCore/QRegularExpression>
@@ -10,7 +14,7 @@ RequestMessageTest::TestCase_t RequestMessageTest::_rgTestCases[] = {
     {MockLink::FailRequestMessageCommandUnsupported, MAV_RESULT_UNSUPPORTED, Vehicle::RequestMessageFailureCommandError,
      1, MAVLINK_MSG_ID_DEBUG, false, 0},
     {MockLink::FailRequestMessageCommandNoResponse, MAV_RESULT_FAILED, Vehicle::RequestMessageFailureCommandNotAcked,
-     Vehicle::_mavCommandMaxRetryCount, MAVLINK_MSG_ID_DEBUG, false, 0},
+     MavCommandQueue::kMaxRetryCount, MAVLINK_MSG_ID_DEBUG, false, 0, true},
 };
 
 void RequestMessageTest::_requestMessageResultHandler(void* resultHandlerData, MAV_RESULT commandResult,
@@ -29,6 +33,11 @@ void RequestMessageTest::_requestMessageResultHandler(void* resultHandlerData, M
 
 void RequestMessageTest::_testCaseWorker(TestCase_t& testCase)
 {
+    std::optional<TestFixtures::MavCommandAckTimeoutFixture> shortAckTimeout;
+    if (testCase.expectAckTimeout) {
+        shortAckTimeout.emplace();
+    }
+
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     // Gimbal controller sends message requests when receiving heartbeats, trying to find a gimbal, and it messes with

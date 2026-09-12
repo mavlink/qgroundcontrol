@@ -27,6 +27,7 @@ private:
         bool expectInProgressResult;
         Vehicle::MavCmdResultFailureCode_t expectedFailureCode;
         int expectedSendCount;
+        bool expectAckTimeout = false;  ///< Outcome depends on the ack timeout expiring at least once
     };
 
     void _testCaseWorker(TestCase_t& testCase);

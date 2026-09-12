@@ -6,6 +6,7 @@
 
 #include "AppSettings.h"
 #include "Fact.h"
+#include "MavCommandQueue.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
 #include "RunGuard.h"
@@ -287,6 +288,21 @@ QJsonDocument TempJsonFileFixture::readJson(QJsonParseError* error)
     }
 
     return QJsonDocument::fromJson(_file.readAll(), error);
+}
+
+// ============================================================================
+// MavCommandAckTimeoutFixture Implementation
+// ============================================================================
+
+MavCommandAckTimeoutFixture::MavCommandAckTimeoutFixture(int timeoutMs)
+    : _previousOverride(MavCommandQueue::testAckTimeoutOverride())
+{
+    MavCommandQueue::setTestAckTimeoutOverride(timeoutMs);
+}
+
+MavCommandAckTimeoutFixture::~MavCommandAckTimeoutFixture()
+{
+    MavCommandQueue::setTestAckTimeoutOverride(_previousOverride);
 }
 
 // ============================================================================
