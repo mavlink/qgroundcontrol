@@ -740,10 +740,22 @@ QString Fact::group() const
 
 void Fact::setMetaData(FactMetaData *metaData, bool setDefaultFromMetaData)
 {
+    if (_metaData) {
+        disconnect(_metaData, &FactMetaData::appSettingsUnitsChanged, this, &Fact::_appSettingsUnitsChanged);
+    }
     _metaData = metaData;
+    if (_metaData) {
+        connect(_metaData, &FactMetaData::appSettingsUnitsChanged, this, &Fact::_appSettingsUnitsChanged);
+    }
     if (setDefaultFromMetaData && metaData->defaultValueAvailable()) {
         setRawValue(rawDefaultValue());
     }
+    emit valueChanged(cookedValue());
+}
+
+void Fact::_appSettingsUnitsChanged()
+{
+    emit cookedValuesChanged();
     emit valueChanged(cookedValue());
 }
 
