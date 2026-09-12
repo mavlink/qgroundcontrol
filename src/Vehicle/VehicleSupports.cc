@@ -8,6 +8,8 @@ VehicleSupports::VehicleSupports(Vehicle *vehicle)
     , _vehicle(vehicle)
 {
     connect(_vehicle, &Vehicle::firmwareTypeChanged, this, &VehicleSupports::terrainFrameChanged);
+    connect(_vehicle, &Vehicle::firmwareTypeChanged, this, &VehicleSupports::vtolMulticopterTakeoffChanged);
+    connect(_vehicle, &Vehicle::vehicleTypeChanged, this, &VehicleSupports::vtolMulticopterTakeoffChanged);
 }
 
 bool VehicleSupports::throttleModeCenterZero() const
@@ -85,4 +87,9 @@ bool VehicleSupports::guidedTakeoffWithoutAltitude() const
 bool VehicleSupports::changeHeading() const
 {
     return _vehicle->firmwarePlugin()->isCapable(_vehicle, FirmwarePlugin::ChangeHeadingCapability);
+}
+
+bool VehicleSupports::vtolMulticopterTakeoff() const
+{
+    return _vehicle->firmwarePlugin()->isCapable(_vehicle, FirmwarePlugin::VTOLMulticopterTakeoffCapability);
 }

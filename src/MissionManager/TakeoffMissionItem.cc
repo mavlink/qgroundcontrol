@@ -1,11 +1,13 @@
 #include "TakeoffMissionItem.h"
+
+#include "FirmwarePlugin.h"
 #include "MissionCommandTree.h"
-#include "QGroundControlQmlGlobal.h"
-#include "SettingsManager.h"
-#include "PlanViewSettings.h"
-#include "PlanMasterController.h"
 #include "MissionSettingsItem.h"
 #include "MultiVehicleManager.h"
+#include "PlanMasterController.h"
+#include "PlanViewSettings.h"
+#include "QGroundControlQmlGlobal.h"
+#include "SettingsManager.h"
 #include "Vehicle.h"
 
 TakeoffMissionItem::TakeoffMissionItem(PlanMasterController* masterController, bool flyView, MissionSettingsItem* settingsItem, bool forLoad)
@@ -109,10 +111,32 @@ bool TakeoffMissionItem::isTakeoffCommand(MAV_CMD command)
     return MissionCommandTree::instance()->isTakeoffCommand(command);
 }
 
+bool TakeoffMissionItem::isVTOLMulticopterTakeoff(Vehicle* vehicle, MAV_CMD command)
+{
+    return vehicle
+        && command == MAV_CMD_NAV_TAKEOFF
+        && vehicle->firmwarePlugin()->isCapable(vehicle, FirmwarePlugin::VTOLMulticopterTakeoffCapability);
+}
+
+QString TakeoffMissionItem::commandDescription(void) const
+{
+    return isVTOLMulticopterTakeoff(_controllerVehicle, mavCommand())
+        ? tr("Take off vertically and continue the mission in multicopter mode.")
+        : SimpleMissionItem::commandDescription();
+}
+
+QString TakeoffMissionItem::commandName(void) const
+{
+    return isVTOLMulticopterTakeoff(_controllerVehicle, mavCommand())
+        ? tr("Multicopter takeoff")
+        : SimpleMissionItem::commandName();
+}
+
 void TakeoffMissionItem::_initLaunchTakeoffAtSameLocation(void)
 {
     if (specifiesCoordinate()) {
-        if (_controllerVehicle->fixedWing() || _controllerVehicle->vtol()) {
+        if (_controllerVehicle->fixedWing()
+            || (_controllerVehicle->vtol() && !isVTOLMulticopterTakeoff(_controllerVehicle, mavCommand()))) {
             _setLaunchTakeoffAtSameLocation(false);
         } else {
             // PX4 specifies a coordinate for takeoff even for multi-rotor. But it makes more sense to not have a coordinate

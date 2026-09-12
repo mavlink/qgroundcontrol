@@ -87,6 +87,7 @@ public:
         ROIModeCapability =         1 << 5, ///< Vehicle supports ROI (both in Fly guided mode and from Plan creation)
         ChangeHeadingCapability =   1 << 6, ///< Vehicle supports changing heading at current location
         GuidedTakeoffCapability =   1 << 7, ///< Vehicle supports guided takeoff
+        VTOLMulticopterTakeoffCapability = 1 << 8, ///< VTOL supports MAV_CMD_NAV_TAKEOFF while remaining in multicopter mode
     };
 
     /// Parameter name remapping support:

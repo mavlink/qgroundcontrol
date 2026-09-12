@@ -118,6 +118,14 @@ public:
     /// @return Newly created item
     Q_INVOKABLE VisualMissionItem* insertTakeoffItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem = false);
 
+    /// Add a multicopter takeoff item for a VTOL which supports remaining in multicopter mode
+    ///     @param coordinate: Coordinate for item
+    ///     @param visualItemIndex: index to insert at, -1 for end of list
+    ///     @param makeCurrentItem: true: Make this item the current item
+    /// @return Newly created item, or nullptr if the vehicle does not support this command behavior
+    Q_INVOKABLE VisualMissionItem* insertVTOLMulticopterTakeoffItem(
+        QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem = false);
+
     /// Add a new land item to the list
     ///     @param coordinate: Coordinate for item
     ///     @param visualItemIndex: index to insert at, -1 for end of list
@@ -385,6 +393,7 @@ private:
     void                    _initLoadedVisualItems              (QmlObjectListModel* loadedVisualItems);
     FlightPathSegment*      _addFlightPathSegment               (FlightPathSegmentHashTable& prevItemPairHashTable, VisualItemPair& pair, bool mavlinkTerrainFrame);
     VisualMissionItem*      _insertSimpleMissionItemWorker      (QGeoCoordinate coordinate, MAV_CMD command, int visualItemIndex, bool makeCurrentItem);
+    VisualMissionItem*      _insertTakeoffItemWorker            (MAV_CMD command, int visualItemIndex, bool makeCurrentItem);
     void                    _insertComplexMissionItemWorker     (const QGeoCoordinate& mapCenterCoordinate, ComplexMissionItem* complexItem, int visualItemIndex, bool makeCurrentItem);
     bool                    _isROIBeginItem                     (SimpleMissionItem* simpleItem);
     bool                    _isROICancelItem                    (SimpleMissionItem* simpleItem);
@@ -450,7 +459,7 @@ private:
     bool                        _isROIBeginCurrentItem =        false;
     double                      _minAMSLAltitude =              0;
     double                      _maxAMSLAltitude =              0;
-    bool                        _missionContainsVTOLTakeoff =   false;
+    bool                        _missionStartsInVTOLMulticopterMode = false;
 
     QGroundControlQmlGlobal::AltitudeFrame _globalAltFrame = QGroundControlQmlGlobal::AltitudeFrameRelative;
 
