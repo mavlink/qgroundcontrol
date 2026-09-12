@@ -36,6 +36,7 @@ signals:
 private slots:
     void _readAvailableRecords();
     void _socketErrorOccurred(QAbstractSocket::SocketError socketError);
+    void _connectionRetry();
     void _restartSocketConnected();
     void _restartSocketDisconnected();
     void _restartSocketErrorOccurred(QAbstractSocket::SocketError socketError);
@@ -46,6 +47,10 @@ private:
     QTcpSocket _socket;
     QByteArray _receiveBuffer;
     DigiviewLegacyTcpAdapter _adapter;
+    QTimer _connectionRetryTimer;
+    QString _connectionHost;
+    quint16 _connectionPort = 0;
+    bool _connectionRequested = false;
     bool _disconnectRequested = false;
     bool _parked = false;
     QTcpSocket _restartSocket;
