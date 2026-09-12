@@ -19,6 +19,7 @@
 #include "QGCQVideoSinkController.h"
 
 #include <QtCore/QDateTime>
+#include <QtCore/QFileInfo>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QUrl>
 #include <QtQuick/QQuickItem>
@@ -340,6 +341,7 @@ void GstVideoReceiver::stop()
     }
 
     if (_pipeline) {
+        bool recordingFinalized = _recordingFragmentClosed.load();
         GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
         if (bus) {
             gst_bus_disable_sync_message_emission(bus);
@@ -348,13 +350,14 @@ void GstVideoReceiver::stop()
             gboolean recordingValveClosed = TRUE;
             g_object_get(_recorderValve, "drop", &recordingValveClosed, nullptr);
 
-            if (!recordingValveClosed) {
-                (void) gst_element_send_event(_pipeline, gst_event_new_eos());
+            if (_fileSink && !recordingFinalized) {
+                if (!recordingValveClosed) {
+                    (void) gst_element_send_event(_pipeline, gst_event_new_eos());
+                }
 
-                // Wait for splitmuxsink to actually finalize its current fragment. async-finalize
-                // pushes muxer teardown off the streaming thread; the splitmuxsink-fragment-closed
-                // element message is posted (via message-forward=TRUE) exactly when the muxer's
-                // state has gone NULL. EOS is the fallback for older builds / unexpected paths;
+                // Wait for splitmuxsink to finalize its current fragment. The fragment-closed
+                // message follows the sink's EOS; we still wait for NULL below before closing
+                // a borrowed descriptor. EOS is the fallback for older builds / unexpected paths;
                 // ERROR breaks out so we don't burn the full budget on a known failure. Track
                 // elapsed time so unrelated ELEMENT messages don't abort the wait early.
                 const GstClockTime deadline = kEosTimeoutNs;
@@ -374,12 +377,14 @@ void GstVideoReceiver::stop()
                         if (s && gst_structure_has_name(s, "splitmuxsink-fragment-closed")) {
                             qCDebug(GstVideoReceiverLog) << "splitmuxsink fragment finalized";
                             finalized = true;
+                            recordingFinalized = true;
                         }
                         break;
                     }
                     case GST_MESSAGE_EOS:
                         qCDebug(GstVideoReceiverLog) << "End of stream received (fallback path)";
                         finalized = true;
+                        recordingFinalized = true;
                         break;
                     case GST_MESSAGE_ERROR:
                         qCCritical(GstVideoReceiverLog) << "Error stopping pipeline!";
@@ -392,10 +397,9 @@ void GstVideoReceiver::stop()
                     if (finalized) break;
                 }
                 if (!finalized) {
-                    qCWarning(GstVideoReceiverLog) << "splitmuxsink finalize signal not received within"
-                                                   << (kEosTimeoutNs / GST_MSECOND)
-                                                   << "ms — forcing pipeline NULL (recording may be truncated; "
-                                                   << "faststart + reserved-moov-update-period keep the file playable)";
+                    qCWarning(GstVideoReceiverLog)
+                        << "splitmuxsink finalize signal not received within" << (kEosTimeoutNs / GST_MSECOND)
+                        << "ms — forcing pipeline NULL (recording may be incomplete)";
                 }
             }
 
@@ -409,7 +413,7 @@ void GstVideoReceiver::stop()
 
         // FIXME: check if branch is connected and remove all elements from branch
         if (_fileSink) {
-           _shutdownRecordingBranch();
+            _shutdownRecordingBranch(recordingFinalized);
         }
 
         if (_videoSink) {
@@ -601,8 +605,24 @@ void GstVideoReceiver::startRecording(const QString &videoFile, FILE_FORMAT form
             }
             gst_clear_object(&_fileSink);
         }
+#ifdef Q_OS_ANDROID
+        (void) _mediaStore.finish(false);
+#endif
         emit onStartRecordingComplete(STATUS_FAIL);
     };
+
+    int fileDescriptor = -1;
+    _recordingFragmentClosed = false;
+#ifdef Q_OS_ANDROID
+    if (AndroidMediaStore::isSupported()) {
+        if (!_mediaStore.openVideo(QFileInfo(videoFile).fileName())) {
+            qCWarning(GstVideoReceiverLog) << "Cannot open MediaStore recording";
+            failRecordingStart();
+            return;
+        }
+        fileDescriptor = _mediaStore.fileDescriptor();
+    }
+#endif
 
     // forward-sticky-events preserves the exact negotiated caps while the valve is closed. Fall
     // back to a proxied caps query during the narrow startup window before negotiation completes.
@@ -610,7 +630,7 @@ void GstVideoReceiver::startRecording(const QString &videoFile, FILE_FORMAT form
     if (!inputCaps) {
         inputCaps = gst_pad_query_caps(probepad, nullptr);
     }
-    _fileSink = _makeFileSink(videoFile, format, inputCaps);
+    _fileSink = _makeFileSink(videoFile, format, inputCaps, fileDescriptor);
     gst_clear_caps(&inputCaps);
     if (!_fileSink) {
         qCCritical(GstVideoReceiverLog) << "_makeFileSink() failed" << _redactedUri();
@@ -641,6 +661,10 @@ void GstVideoReceiver::startRecording(const QString &videoFile, FILE_FORMAT form
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-with-filesink");
 
+    _recordingOutput = videoFile;  // Keep the local basename for the telemetry subtitle sidecar.
+    _recordingHasKeyframe = false;
+    _recordingStopRequested = false;
+
     // Install a probe on the recording branch to drop buffers until we hit our first keyframe
     // When we hit our first keyframe, we can offset the timestamps appropriately according to the first keyframe time
     // This will ensure the first frame is a keyframe at t=0, and decoding can begin immediately on playback
@@ -656,7 +680,6 @@ void GstVideoReceiver::startRecording(const QString &videoFile, FILE_FORMAT form
                  "drop", FALSE,
                  nullptr);
 
-    _recordingOutput = videoFile;
     _recording = true;
     qCDebug(GstVideoReceiverLog) << "Recording started" << _redactedUri();
     emit onStartRecordingComplete(STATUS_OK);
@@ -840,7 +863,7 @@ void GstVideoReceiver::_handleEOS()
     } else if (_decoding && _removingDecoder) {
         _shutdownDecodingBranch();
     } else if (_recording && _removingRecorder) {
-        _shutdownRecordingBranch();
+        _shutdownRecordingBranch(_recordingFragmentClosed.load());
     } /*else {
         qCWarning(GstVideoReceiverLog) << "Unexpected EOS!";
         stop();
@@ -856,7 +879,8 @@ GstElement *GstVideoReceiver::_makeDecoder()
     return decoder;
 }
 
-GstElement* GstVideoReceiver::_makeFileSink(const QString& videoFile, FILE_FORMAT format, const GstCaps* inputCaps)
+GstElement* GstVideoReceiver::_makeFileSink(const QString& videoFile, FILE_FORMAT format, const GstCaps* inputCaps,
+                                            int fileDescriptor)
 {
     GstElement *fileSink = nullptr;
     GstElement *splitmux = nullptr;
@@ -906,9 +930,16 @@ GstElement* GstVideoReceiver::_makeFileSink(const QString& videoFile, FILE_FORMA
                      "message-forward", TRUE,
                      nullptr);
 
-        // Crash-safe MP4/MOV: faststart writes moov up-front; reserved-moov-update-period
-        // refreshes the moov on a 1 s cadence so an abrupt kill still leaves a playable file.
-        // matroskamux is naturally streamable; skip the GstStructure dance.
+        if (fileDescriptor >= 0) {
+            // A content URI is not a filesystem path. The caller owns this seekable descriptor
+            // until the muxer/sink have reached NULL; fdsink only borrows it.
+            GstStructure* sinkProperties = gst_structure_new("properties", "fd", G_TYPE_INT, fileDescriptor, nullptr);
+            g_object_set(splitmux, "sink-factory", "fdsink", "sink-properties", sinkProperties, nullptr);
+            gst_structure_free(sinkProperties);
+        }
+
+        // Preserve the existing muxing policy. Faststart needs normal finalization and uses
+        // temporary storage; MediaStore does not make interrupted MP4/MOV recordings crash-safe.
         if (format == FILE_FORMAT_MP4 || format == FILE_FORMAT_MOV) {
             GstStructure *muxerProps = gst_structure_new("properties",
                 "faststart", G_TYPE_BOOLEAN, TRUE,
@@ -1380,7 +1411,7 @@ void GstVideoReceiver::_shutdownDecodingBranch()
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-decoding-stopped");
 }
 
-void GstVideoReceiver::_shutdownRecordingBranch()
+void GstVideoReceiver::_shutdownRecordingBranch(bool finalized)
 {
     if (_keyframeWatchId != 0 && _recorderValve) {
         GstPad *probepad = gst_element_get_static_pad(_recorderValve, "src");
@@ -1396,6 +1427,15 @@ void GstVideoReceiver::_shutdownRecordingBranch()
     (void) gst_element_get_state(_fileSink, nullptr, nullptr, GST_CLOCK_TIME_NONE);
     gst_clear_object(&_fileSink);
 
+    bool saved = true;
+#ifdef Q_OS_ANDROID
+    if (_mediaStore.fileDescriptor() >= 0) {
+        saved = _mediaStore.finish(finalized && _recordingHasKeyframe.load());
+    }
+#else
+    Q_UNUSED(finalized);
+#endif
+
     _removingRecorder = false;
 
     if (_recording) {
@@ -1404,9 +1444,9 @@ void GstVideoReceiver::_shutdownRecordingBranch()
         emit recordingChanged(_recording);
     }
 
-    if (_recordingStopRequested) {
+    if (_recordingStopRequested || !saved) {
         _recordingStopRequested = false;
-        emit onStopRecordingComplete(STATUS_OK);
+        emit onStopRecordingComplete(saved ? STATUS_OK : STATUS_FAIL);
     }
 
     GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-recording-stopped");
@@ -1549,6 +1589,12 @@ gboolean GstVideoReceiver::_onBusMessage(GstBus * /* bus */, GstMessage *msg, gp
     }
     case GST_MESSAGE_ELEMENT: {
         const GstStructure *structure = gst_message_get_structure(msg);
+        if (structure && gst_structure_has_name(structure, "splitmuxsink-fragment-closed")) {
+            // Remember completion even if EOS subsequently enters stop() after the bus message
+            // has been consumed. Publication must not depend on receiving a second EOS.
+            pThis->_recordingFragmentClosed = true;
+            break;
+        }
         if (structure && gst_structure_has_name(structure, "qgc-caps-info")) {
             gint w = 0, h = 0;
             const gchar *fmt = gst_structure_get_string(structure, "format");
@@ -1738,6 +1784,7 @@ GstPadProbeReturn GstVideoReceiver::_keyframeWatch(GstPad *pad, GstPadProbeInfo 
     qCDebug(GstVideoReceiverLog) << "Got keyframe, stop dropping buffers";
 
     GstVideoReceiver *pThis = static_cast<GstVideoReceiver*>(user_data);
+    pThis->_recordingHasKeyframe = true;
     emit pThis->recordingStarted(pThis->recordingOutput());
 
     return GST_PAD_PROBE_REMOVE;

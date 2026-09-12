@@ -4,6 +4,8 @@ import QtMultimedia
 import QGroundControl
 
 VideoOutput {
+    id: root
+
     objectName: "videoContent"
 
     // Do NOT set `orientation` here — VideoOutput composes orientation on top of the
@@ -19,8 +21,11 @@ VideoOutput {
     Connections {
         target: QGroundControl.videoManager
         function onImageFileChanged(filename) {
-            grabToImage(function(result) {
-                if (!result.saveToFile(filename)) {
+            if (root.objectName !== "videoContent") {
+                return;
+            }
+            root.grabToImage(function(result) {
+                if (!QGroundControl.videoManager.saveImage(filename, result.image)) {
                     console.error('Error capturing video frame');
                 }
             });

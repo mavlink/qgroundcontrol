@@ -15,6 +15,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         AndroidInit.cc
         AndroidInterface.cc
         AndroidInterface.h
+        AndroidMediaStore.cc
+        AndroidMediaStore.h
         AndroidSerial.cc
         AndroidSerial.h
 )
