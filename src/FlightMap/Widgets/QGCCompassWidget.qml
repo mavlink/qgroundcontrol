@@ -122,10 +122,25 @@ Rectangle {
         }
     }
 
-    QGCLabel {
+    Rectangle {
+        id:                         headingReadout
         anchors.horizontalCenter:   parent.horizontalCenter
-        y:                          size * 0.74
-        text:                       (Number.isFinite(headingOverride) || vehicle) && !usedByMultipleVehicleList ? _heading.toFixed(0) + "°" : ""
-        horizontalAlignment:        Text.AlignHCenter
+        y:                          size * 0.58
+        width:                      headingLabel.implicitWidth + ScreenTools.defaultFontPixelWidth
+        height:                     headingLabel.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.15
+        radius:                     height / 2
+        color:                      qgcPal.window
+        visible:                    (Number.isFinite(headingOverride) || vehicle) && !usedByMultipleVehicleList
+        z:                          2
+
+        QGCLabel {
+            id:                     headingLabel
+            anchors.centerIn:       parent
+            text:                   _heading.toFixed(0) + "°"
+            font.pointSize:         root._fontSize
+            font.bold:              true
+            color:                  qgcPal.text
+            horizontalAlignment:    Text.AlignHCenter
+        }
     }
 }
