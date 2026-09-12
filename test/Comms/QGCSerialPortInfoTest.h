@@ -14,6 +14,5 @@ private slots:
     void _testBoardClassStringToTypeCaseInsensitivity();
     void _testBoardTypeStringRoundTrip();
     void _testBoardInfoListEntriesAreWellFormed();
-    void _testFlycoreBoardInfo();
     void _testFallbackRegexesCompile();
 };

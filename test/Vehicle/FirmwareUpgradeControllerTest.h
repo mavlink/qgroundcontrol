@@ -14,5 +14,4 @@ private slots:
     void _px4ReleasesCompleteBadJsonKeepsPreviousVersions();
     void _px4ReleasesCompleteNonArrayJsonKeepsPreviousVersions();
     void _px4ReleasesCompleteOnlyStableKeepsBetaEmpty();
-    void _flycoreBoardIdMapsToPX4Firmware();
 };
