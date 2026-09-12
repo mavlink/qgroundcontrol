@@ -637,8 +637,8 @@ function getShortcutsSections() {
                     id: 'shortcut_stt',
                     property: 'shortcutSTT',
                     type: 'shortcut',
-                    label: 'STT',
-                    description: 'Shortcut to start single-target tracking on the active view'
+                    label: 'Pixel',
+                    description: 'Shortcut to start pixel tracking on the active view'
                 },
                 {
                     id: 'shortcut_lock_target',
@@ -651,8 +651,8 @@ function getShortcutsSections() {
                     id: 'shortcut_cursor_tracking',
                     property: 'shortcutCursorTracking',
                     type: 'shortcut',
-                    label: 'Cursor',
-                    description: 'Shortcut to select a tracking target using the cursor'
+                    label: 'GNSS',
+                    description: 'Shortcut to select a GNSS tracking position from the active view'
                 },
                 {
                     id: 'shortcut_manual_tracking',
@@ -719,7 +719,7 @@ function getDevSections() {
                     description: 'Scan Confidence Threshold',
                     digiviewParameterGroup: 'detection',
                     min: 0.0,
-                    max: 1.0,
+                    max: 1,
                     step: 0.01,
                     value: 0.8
                 },
