@@ -26,6 +26,9 @@ Rectangle {
     property var    sliderMax:          undefined ///< explicit slider maximum, overrides fact.userMax/max
     property color  backgroundColor:    _ftfsBackgroundColor
 
+    // this bool determines whether we apply changes while the slider is moving or once the user has finished moving the slider
+    property bool liveUpdate: true
+
     signal enableCheckboxClicked
 
     id:             control
@@ -113,8 +116,16 @@ Rectangle {
                 to:                 control._sliderMax
                 showBoundaryValues: true
 
+                // do not apply changes while the slider is moving unless live update is enabled
                 onMoved: {
-                    if (control._loadComplete) {
+                    if (control._loadComplete && control.liveUpdate) {
+                        control.fact.value = slider.value
+                    }
+                }
+
+                // apply changes on press change if live update is disabled
+                onPressedChanged: {
+                    if (control._loadComplete && !control.liveUpdate && !slider.pressed) {
                         control.fact.value = slider.value
                     }
                 }

@@ -87,6 +87,9 @@ Rectangle {
             Layout.fillWidth: true
             label: qsTr("Waypoints Altitude")
             fact: QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
+
+            // this prevents dialog popup spams while the slider is moving
+            liveUpdate: false
         }
 
         FactTextFieldSlider {
