@@ -1,6 +1,7 @@
 #include "OnboardLogDownloadTest.h"
 
 #include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTimeZone>
 #include <QtCore/QTimer>
@@ -350,6 +351,81 @@ void OnboardLogFtpDownloadTest::_ftpListNoTimeFallbackTest()
     QFile file(QDir(tempDir.path()).filePath(downloadedFiles.first()));
     QVERIFY(file.open(QIODevice::ReadOnly));
     QCOMPARE(file.readAll(), _mockLink->mockLinkFTP()->logFileContents(QStringLiteral("log_2.ulg")));
+}
+
+void OnboardLogFtpDownloadTest::_messagesZeroByteLogTest()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionFtpCapability);
+    if (QTest::currentTestFailed()) return;
+
+    // A 0 byte log has nothing to request over the message transport, so it must be
+    // completed immediately and not stall the rest of the queue (issue #15068).
+    const QList<MockLinkFTP::LogFile> logFiles = {
+        { QStringLiteral("log_1.ulg"), 5000, 1700000000 },
+        { QStringLiteral("log_2.ulg"), 0,    1700086400 },
+        { QStringLiteral("log_3.ulg"), 3000, 1700172800 },
+    };
+    _mockLink->mockLinkFTP()->setLogFiles(logFiles);
+    _mockLink->mockLinkFTP()->setListDirectoryWithTimeSupported(false);
+
+    OnboardLogController* const controller = new OnboardLogController(this);
+    MultiSignalSpy* multiSpy = new MultiSignalSpy(this);
+    QVERIFY(multiSpy->init(controller));
+
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+    QCOMPARE(controller->transport(), QStringLiteral("messages"));
+
+    QmlObjectListModel* const model = controller->_getModel();
+    QVERIFY(model);
+    QCOMPARE(model->count(), 3);
+
+    QGCOnboardLogEntry* zeroByteEntry = nullptr;
+    for (int i = 0; i < model->count(); i++) {
+        QGCOnboardLogEntry* const entry = model->value<QGCOnboardLogEntry*>(i);
+        QVERIFY(entry);
+        if (entry->size() == 0) {
+            zeroByteEntry = entry;
+        }
+    }
+    QVERIFY(zeroByteEntry);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QDir downloadDir(tempDir.path());
+
+    // Only the 0 byte log selected: the whole download cycle completes synchronously inside download()
+    zeroByteEntry->setSelected(true);
+    QVERIFY(downloadAndWaitForComplete(controller, multiSpy, tempDir.path()));
+    QCOMPARE(zeroByteEntry->status(), QStringLiteral("Downloaded"));
+    QCOMPARE(controller->selectedCount(), 0);
+    const QStringList zeroByteFiles =
+        downloadDir.entryList({ QStringLiteral("log_%1_*").arg(zeroByteEntry->id()) }, QDir::Files);
+    QCOMPARE(zeroByteFiles.count(), 1);
+    QCOMPARE(QFileInfo(downloadDir.filePath(zeroByteFiles.first())).size(), qint64(0));
+    QVERIFY(QFile::remove(downloadDir.filePath(zeroByteFiles.first())));
+
+    // 0 byte log in the middle of a multi-select must not stall the rest of the queue
+    controller->selectAll(true);
+    QVERIFY(downloadAndWaitForComplete(controller, multiSpy, tempDir.path()));
+
+    QCOMPARE(controller->selectedCount(), 0);
+
+    // Every entry completed and its file holds the exact per-id contents, including an
+    // empty file for the 0 byte log. Filenames embed the local-time formatted log date so
+    // match each entry's file by its "log_<id>_" prefix.
+    QCOMPARE(downloadDir.entryList(QDir::Files).count(), 3);
+    for (int i = 0; i < model->count(); i++) {
+        const QGCOnboardLogEntry* const entry = model->value<const QGCOnboardLogEntry*>(i);
+        QVERIFY(entry);
+        QCOMPARE(entry->status(), QStringLiteral("Downloaded"));
+
+        const QStringList matches =
+            downloadDir.entryList({ QStringLiteral("log_%1_*").arg(entry->id()) }, QDir::Files);
+        QCOMPARE(matches.count(), 1);
+        QFile file(downloadDir.filePath(matches.first()));
+        QVERIFY2(file.open(QIODevice::ReadOnly), qPrintable(matches.first()));
+        QCOMPARE(file.readAll(), _mockLink->mockLinkFTP()->logFileContents(logFiles[entry->id()].name));
+    }
 }
 
 void OnboardLogFtpDownloadTest::_ftpCancelListNoFallbackTest()
