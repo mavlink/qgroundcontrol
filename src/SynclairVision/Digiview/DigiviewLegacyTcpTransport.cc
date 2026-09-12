@@ -5,6 +5,7 @@
 QGC_LOGGING_CATEGORY(DigiviewLegacyTcpTransportLog, "Digiview.LegacyTcp.Transport")
 
 namespace {
+constexpr int kConnectionRetryIntervalMs = 1000;
 constexpr int kRestartConnectTimeoutMs = 1000;
 constexpr int kRestartRetryIntervalMs = 250;
 constexpr int kRestartMaxAttempts = 8;
@@ -14,6 +15,7 @@ DigiviewLegacyTcpTransport::DigiviewLegacyTcpTransport(QObject* parent)
     : QObject(parent)
 {
     connect(&_socket, &QTcpSocket::connected, this, [this] {
+        _connectionRetryTimer.stop();
         _disconnectRequested = false;
         _parked = false;
         emit connectedToEndpoint();
@@ -23,9 +25,15 @@ DigiviewLegacyTcpTransport::DigiviewLegacyTcpTransport(QObject* parent)
             emit errorOccurred(tr("DigiView legacy TCP control connection disconnected"));
         }
         emit disconnectedFromEndpoint();
+        if (_connectionRequested && !_disconnectRequested && !_parked && !_connectionRetryTimer.isActive()) {
+            _connectionRetryTimer.start();
+        }
     });
     connect(&_socket, &QTcpSocket::readyRead, this, &DigiviewLegacyTcpTransport::_readAvailableRecords);
     connect(&_socket, &QTcpSocket::errorOccurred, this, &DigiviewLegacyTcpTransport::_socketErrorOccurred);
+    connect(&_connectionRetryTimer, &QTimer::timeout, this, &DigiviewLegacyTcpTransport::_connectionRetry);
+    _connectionRetryTimer.setSingleShot(true);
+    _connectionRetryTimer.setInterval(kConnectionRetryIntervalMs);
     connect(&_restartSocket, &QTcpSocket::connected, this, &DigiviewLegacyTcpTransport::_restartSocketConnected);
     connect(&_restartSocket, &QTcpSocket::disconnected, this, &DigiviewLegacyTcpTransport::_restartSocketDisconnected);
     connect(&_restartSocket, &QTcpSocket::errorOccurred, this,
@@ -41,6 +49,7 @@ bool DigiviewLegacyTcpTransport::connectToEndpoint(const QString& host, quint16 
     if (connected() && _parked) {
         _parked = false;
         _disconnectRequested = false;
+        _connectionRequested = true;
         emit connectedToEndpoint();
         return true;
     }
@@ -55,17 +64,21 @@ bool DigiviewLegacyTcpTransport::connectToEndpoint(const QString& host, quint16 
     }
 
     _receiveBuffer.clear();
+    _connectionHost = endpointHost;
+    _connectionPort = port;
+    _connectionRequested = true;
     _disconnectRequested = false;
     _parked = false;
-    _socket.connectToHost(endpointHost, port);
-    qCDebug(DigiviewLegacyTcpTransportLog)
-        << "Connecting to legacy DigiView TCP control endpoint" << endpointHost << port;
+    _connectionRetryTimer.stop();
+    _connectionRetry();
     return true;
 }
 
 void DigiviewLegacyTcpTransport::disconnectFromEndpoint()
 {
     _receiveBuffer.clear();
+    _connectionRequested = false;
+    _connectionRetryTimer.stop();
     _disconnectRequested = true;
     // Closing the socket is sufficient. A legacy QUIT record would stop DigiView itself.
     _socket.abort();
@@ -80,9 +93,23 @@ void DigiviewLegacyTcpTransport::parkConnection()
     }
 
     _receiveBuffer.clear();
+    _connectionRequested = false;
+    _connectionRetryTimer.stop();
     _disconnectRequested = true;
     _parked = true;
     qCDebug(DigiviewLegacyTcpTransportLog) << "Parked DigiView legacy TCP control connection";
+}
+
+void DigiviewLegacyTcpTransport::_connectionRetry()
+{
+    if (!_connectionRequested || _disconnectRequested || _parked || connected() || connecting()) {
+        return;
+    }
+
+    _socket.abort();
+    _socket.connectToHost(_connectionHost, _connectionPort);
+    qCDebug(DigiviewLegacyTcpTransportLog)
+        << "Connecting to legacy DigiView TCP control endpoint" << _connectionHost << _connectionPort;
 }
 
 bool DigiviewLegacyTcpTransport::restartDigiView(const QString& host, quint16 port, quint64 generation)
@@ -279,4 +306,7 @@ void DigiviewLegacyTcpTransport::_socketErrorOccurred(QAbstractSocket::SocketErr
 {
     Q_UNUSED(socketError);
     emit errorOccurred(_socket.errorString());
+    if (_connectionRequested && !_disconnectRequested && !_parked && !_connectionRetryTimer.isActive()) {
+        _connectionRetryTimer.start();
+    }
 }
