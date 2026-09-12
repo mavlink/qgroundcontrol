@@ -1,9 +1,13 @@
 #include "SendMavCommandWithSignallingTest.h"
 
+#include <optional>
+
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
+#include "Fixtures/RAIIFixtures.h"
+#include "MavCommandQueue.h"
 #include "MultiVehicleManager.h"
 
 namespace {
@@ -38,23 +42,28 @@ SendMavCommandWithSignallingTest::TestCase_t SendMavCommandWithSignallingTest::_
     {MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED, MAV_RESULT_ACCEPTED, Vehicle::MavCmdResultCommandResultOnly, 1},
     {MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED, MAV_RESULT_FAILED, Vehicle::MavCmdResultCommandResultOnly, 1},
     {MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED, MAV_RESULT_ACCEPTED,
-     Vehicle::MavCmdResultCommandResultOnly, 2},
+     Vehicle::MavCmdResultCommandResultOnly, 2, true},
     {MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED, MAV_RESULT_FAILED, Vehicle::MavCmdResultCommandResultOnly,
-     2},
+     2, true},
     {MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, MAV_RESULT_FAILED, Vehicle::MavCmdResultFailureNoResponseToCommand,
-     Vehicle::_mavCommandMaxRetryCount},
+     MavCommandQueue::kMaxRetryCount, true},
     {MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY, MAV_RESULT_FAILED,
-     Vehicle::MavCmdResultFailureNoResponseToCommand, 1},
+     Vehicle::MavCmdResultFailureNoResponseToCommand, 1, true},
     {MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_ACCEPTED, MAV_RESULT_ACCEPTED,
      Vehicle::MavCmdResultCommandResultOnly, 1},
     {MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_FAILED, MAV_RESULT_FAILED, Vehicle::MavCmdResultCommandResultOnly,
      1},
     {MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_NO_ACK, MAV_RESULT_FAILED,
-     Vehicle::MavCmdResultFailureNoResponseToCommand, 1},
+     Vehicle::MavCmdResultFailureNoResponseToCommand, 1, true},
 };
 
 void SendMavCommandWithSignallingTest::_testCaseWorker(TestCase_t& testCase)
 {
+    std::optional<TestFixtures::MavCommandAckTimeoutFixture> shortAckTimeout;
+    if (testCase.expectAckTimeout) {
+        shortAckTimeout.emplace();
+    }
+
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     QSignalSpy spyResult(vehicle, &Vehicle::mavCommandResult);

@@ -1,8 +1,11 @@
 #include "GimbalControllerDiscoveryTest.h"
 
+#include <optional>
+
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include "Fixtures/RAIIFixtures.h"
 #include "Gimbal.h"
 #include "GimbalController.h"
 #include "MockConfiguration.h"
@@ -148,7 +151,9 @@ void GimbalControllerDiscoveryTest::_testManagerInformationUnavailable()
 {
     QFETCH(MockLinkGimbal::InformationResponse, response);
 
+    std::optional<TestFixtures::MavCommandAckTimeoutFixture> shortAckTimeout;
     if (response == MockLinkGimbal::InformationResponse::Silent) {
+        shortAckTimeout.emplace();
         // Every unanswered request exhausts the command queue's resends
         ignoreLogMessage(
             "Vehicle.MavCommandQueue", QtWarningMsg,
@@ -184,6 +189,7 @@ void GimbalControllerDiscoveryTest::_testManagerInformationUnavailable()
 
 void GimbalControllerDiscoveryTest::_testStatusBeforeInformation()
 {
+    TestFixtures::MavCommandAckTimeoutFixture shortAckTimeout;
     // Unsolicited GIMBAL_MANAGER_STATUS before any GIMBAL_MANAGER_INFORMATION must seed the gimbal, not be dropped,
     // and discovery must still complete once information finally arrives
     ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,

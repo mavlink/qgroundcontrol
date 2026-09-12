@@ -1,9 +1,11 @@
 #include "InitialConnectTest.h"
 
 #include <memory>
+#include <optional>
 
 #include <QtTest/QSignalSpy>
 
+#include "Fixtures/RAIIFixtures.h"
 #include "GeoFenceManager.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
@@ -321,6 +323,12 @@ void InitialConnectTest::_subsystemFailureFallsThrough()
     QFETCH(bool, blockMissionProtocolImmediately);
     QFETCH(bool, blockMissionProtocolAfterMissionLoad);
     QFETCH(bool, expectParametersReady);
+
+    // Blocked REQUEST_MESSAGE ids are never acked; don't wait the production timeout for them.
+    std::optional<TestFixtures::MavCommandAckTimeoutFixture> shortAckTimeout;
+    if (!blockedMessageIds.isEmpty()) {
+        shortAckTimeout.emplace();
+    }
 
     // Per-row expected noise from the injected subsystem failure.
     if (blockedMessageIds.contains(MAVLINK_MSG_ID_AVAILABLE_MODES) || blockedMessageIds.contains(MAVLINK_MSG_ID_COMPONENT_METADATA)) {
