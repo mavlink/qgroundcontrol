@@ -2534,85 +2534,85 @@
       <extracomment>.sections[Storage].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Storage</source>
-      <translation type="unfinished">Storage</translation>
+      <translation>Хранилище</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>logging</source>
-      <translation type="unfinished">logging</translation>
+      <translation>логирование</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>log</source>
-      <translation type="unfinished">log</translation>
+      <translation>лог</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>backend</source>
-      <translation type="unfinished">backend</translation>
+      <translation>бэкенд</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>bitmask</source>
-      <translation type="unfinished">bitmask</translation>
+      <translation>битовая маска</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>sd card</source>
-      <translation type="unfinished">sd card</translation>
+      <translation>sd-карта</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>onboard flash</source>
-      <translation type="unfinished">onboard flash</translation>
+      <translation>встроенная флеш-память</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>mavlink stream</source>
-      <translation type="unfinished">mavlink stream</translation>
+      <translation>поток mavlink</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>max files</source>
-      <translation type="unfinished">max files</translation>
+      <translation>макс. файлов</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[8]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>free space</source>
-      <translation type="unfinished">free space</translation>
+      <translation>свободное место</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Logging backends</source>
-      <translation type="unfinished">Logging backends</translation>
+      <translation>Источники логирования</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Logged data groups</source>
-      <translation type="unfinished">Logged data groups</translation>
+      <translation>Группы логируемых данных</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Maximum retained log files</source>
-      <translation type="unfinished">Maximum retained log files</translation>
+      <translation>Максимум сохраняемых файлов лога</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Minimum free space (MB)</source>
-      <translation type="unfinished">Minimum free space (MB)</translation>
+      <translation>Минимум свободного места (МБ)</translation>
     </message>
     <message>
       <extracomment>.sections[Rate Limits].title</extracomment>
@@ -2630,13 +2630,13 @@
       <extracomment>.sections[Rate Limits].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>hz</source>
-      <translation type="unfinished">hz</translation>
+      <translation>гц</translation>
     </message>
     <message>
       <extracomment>.sections[Rate Limits].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>limit</source>
-      <translation type="unfinished">limit</translation>
+      <translation>ограничение</translation>
     </message>
     <message>
       <extracomment>.sections[Rate Limits].keywords[3]</extracomment>
@@ -2666,115 +2666,115 @@
       <extracomment>.sections[Rate Limits].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Maximum file logging rate (Hz)</source>
-      <translation type="unfinished">Maximum file logging rate (Hz)</translation>
+      <translation>Максимальная частота логирования в файл (Гц)</translation>
     </message>
     <message>
       <extracomment>.sections[Rate Limits].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Maximum block logging rate (Hz)</source>
-      <translation type="unfinished">Maximum block logging rate (Hz)</translation>
+      <translation>Максимальная частота логирования в блочное устройство (Гц)</translation>
     </message>
     <message>
       <extracomment>.sections[Rate Limits].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Maximum MAVLink stream rate (Hz)</source>
-      <translation type="unfinished">Maximum MAVLink stream rate (Hz)</translation>
+      <translation>Максимальная частота потока MAVLink (Гц)</translation>
     </message>
     <message>
       <extracomment>.sections[Options].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Options</source>
-      <translation type="unfinished">Options</translation>
+      <translation>Параметры</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>disarmed</source>
-      <translation type="unfinished">disarmed</translation>
+      <translation>disarm</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>pre-arm</source>
-      <translation type="unfinished">pre-arm</translation>
+      <translation>pre-arm</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>rotate</source>
-      <translation type="unfinished">rotate</translation>
+      <translation>ротация</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>replay</source>
-      <translation type="unfinished">replay</translation>
+      <translation>воспроизведение</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>ekf</source>
-      <translation type="unfinished">ekf</translation>
+      <translation>ekf</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>ekf3</source>
-      <translation type="unfinished">ekf3</translation>
+      <translation>ekf3</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>log options</source>
-      <translation type="unfinished">log options</translation>
+      <translation>параметры лога</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Log while disarmed</source>
-      <translation type="unfinished">Log while disarmed</translation>
+      <translation>Логировать при disarm</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Rotate log file on disarm/rearm</source>
-      <translation type="unfinished">Rotate log file on disarm/rearm</translation>
+      <translation>Ротация файла лога при disarm/повторном arm</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Log extra data for EKF replay</source>
-      <translation type="unfinished">Log extra data for EKF replay</translation>
+      <translation>Логировать дополнительные данные для воспроизведения EKF</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>EKF3 logging verbosity</source>
-      <translation type="unfinished">EKF3 logging verbosity</translation>
+      <translation>Подробность логирования EKF3</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[3].enumValues[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Full logging</source>
-      <translation type="unfinished">Full logging</translation>
+      <translation>Полное логирование</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[3].enumValues[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>XKF4 scaled innovations only</source>
-      <translation type="unfinished">XKF4 scaled innovations only</translation>
+      <translation>Только масштабированные невязки XKF4</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[3].enumValues[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>XKF4 and GSF</source>
-      <translation type="unfinished">XKF4 and GSF</translation>
+      <translation>XKF4 и GSF</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[3].enumValues[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>Отключено</translation>
     </message>
   </context>
   <context>
@@ -2879,205 +2879,205 @@
       <extracomment>.sections[Return to Launch].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Loiter radius</source>
-      <translation type="unfinished">Loiter radius</translation>
+      <translation>Радиус облёта</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>0 = use Waypoint Loiter Radius (WP_LOITER_RAD), negative = counter-clockwise</source>
-      <translation type="unfinished">0 = use Waypoint Loiter Radius (WP_LOITER_RAD), negative = counter-clockwise</translation>
+      <translation>0 = использовать радиус облёта путевой точки (WP_LOITER_RAD), отрицательное значение = против часовой стрелки</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Auto land after RTL</source>
-      <translation type="unfinished">Auto land after RTL</translation>
+      <translation>Автопосадка после RTL</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].title, .sections[GeoFence].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>GeoFence</source>
-      <translation type="unfinished">GeoFence</translation>
+      <translation>Геозона</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[0], .sections[GeoFence].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>geofence</source>
-      <translation type="unfinished">geofence</translation>
+      <translation>геозона</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[1], .sections[GeoFence].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>boundary</source>
-      <translation type="unfinished">boundary</translation>
+      <translation>граница</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[2], .sections[GeoFence].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>fence</source>
-      <translation type="unfinished">fence</translation>
+      <translation>ограждение</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[3], .sections[GeoFence].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>containment</source>
-      <translation type="unfinished">containment</translation>
+      <translation>удержание</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[4], .sections[GeoFence].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>rally</source>
-      <translation type="unfinished">rally</translation>
+      <translation>точка сбора</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[5], .sections[GeoFence].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>breach</source>
-      <translation type="unfinished">breach</translation>
+      <translation>нарушение</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[6], .sections[GeoFence].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>radius</source>
-      <translation type="unfinished">radius</translation>
+      <translation>радиус</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[7], .sections[GeoFence].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>inclusion</source>
-      <translation type="unfinished">inclusion</translation>
+      <translation>включение</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[8], .sections[GeoFence].keywords[8]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>exclusion</source>
-      <translation type="unfinished">exclusion</translation>
+      <translation>исключение</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[0].label, .sections[GeoFence].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>Включено</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[1].label, .sections[GeoFence].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Maximum Altitude</source>
-      <translation type="unfinished">Maximum Altitude</translation>
+      <translation>Максимальная высота</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[2].label, .sections[GeoFence].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Maximum altitude</source>
-      <translation type="unfinished">Maximum altitude</translation>
+      <translation>Максимальная высота</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[3].label, .sections[GeoFence].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Minimum Altitude</source>
-      <translation type="unfinished">Minimum Altitude</translation>
+      <translation>Минимальная высота</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[4].label, .sections[GeoFence].controls[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Minimum altitude</source>
-      <translation type="unfinished">Minimum altitude</translation>
+      <translation>Минимальная высота</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[5].label, .sections[GeoFence].controls[5].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Circle centered on Home</source>
-      <translation type="unfinished">Circle centered on Home</translation>
+      <translation>Круг с центром в точке старта</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[6].label, .sections[GeoFence].controls[6].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Circle radius</source>
-      <translation type="unfinished">Circle radius</translation>
+      <translation>Радиус круга</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[7].label, .sections[GeoFence].controls[7].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Inclusion/Exclusion Circles+Polygons</source>
-      <translation type="unfinished">Inclusion/Exclusion Circles+Polygons</translation>
+      <translation>Круги/полигоны включения/исключения</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[8].label, .sections[GeoFence].controls[8].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Fence margin</source>
-      <translation type="unfinished">Fence margin</translation>
+      <translation>Запас геозоны</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[9].label, .sections[GeoFence].controls[9].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Auto-enable</source>
-      <translation type="unfinished">Auto-enable</translation>
+      <translation>Автовключение</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[10].label, .sections[GeoFence].controls[10].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Breach action</source>
-      <translation type="unfinished">Breach action</translation>
+      <translation>Действие при нарушении</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[11].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Custom return altitude</source>
-      <translation type="unfinished">Custom return altitude</translation>
+      <translation>Пользовательская высота возврата</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[13].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Return to nearest rally point</source>
-      <translation type="unfinished">Return to nearest rally point</translation>
+      <translation>Возврат к ближайшей точке сбора</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Arming Checks</source>
-      <translation type="unfinished">Arming Checks</translation>
+      <translation>Проверки Arm</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>arming</source>
-      <translation type="unfinished">arming</translation>
+      <translation>arm</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>pre-arm</source>
-      <translation type="unfinished">pre-arm</translation>
+      <translation>pre-arm</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>preflight</source>
-      <translation type="unfinished">preflight</translation>
+      <translation>предполётный</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>safety check</source>
-      <translation type="unfinished">safety check</translation>
+      <translation>проверка безопасности</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Warning: Skipping arming checks can lead to loss of Vehicle control.</source>
-      <translation type="unfinished">Warning: Skipping arming checks can lead to loss of Vehicle control.</translation>
+      <translation>Внимание: пропуск проверок arm может привести к потере управления бортом.</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Arming checks</source>
-      <translation type="unfinished">Arming checks</translation>
+      <translation>Проверки Arm</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Skip arming checks</source>
-      <translation type="unfinished">Skip arming checks</translation>
+      <translation>Пропустить проверки Arm</translation>
     </message>
   </context>
   <context>
