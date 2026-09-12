@@ -7,6 +7,7 @@
 #include "PowerComponent.h"
 #include "SafetyComponent.h"
 #include "SensorsComponent.h"
+#include "FailureInjectionComponent.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
 #include "Actuators.h"
@@ -23,6 +24,7 @@ PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _airframeComponent(nullptr)
     , _radioComponent(nullptr)
     , _esp8266Component(nullptr)
+    , _failureInjectionComponent(nullptr)
     , _flightModesComponent(nullptr)
     , _sensorsComponent(nullptr)
     , _safetyComponent(nullptr)
@@ -113,6 +115,13 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 _safetyComponent = new SafetyComponent(_vehicle, this, this);
                 _safetyComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_safetyComponent)));
+
+                //-- Failure Injection, gated on SYS_FAILURE_EN existing
+                if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "SYS_FAILURE_EN")) {
+                    _failureInjectionComponent = new FailureInjectionComponent(_vehicle, this, this);
+                    _failureInjectionComponent->setupTriggerSignals();
+                    _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_failureInjectionComponent)));
+                }
 
                 _tuningComponent = new PX4TuningComponent(_vehicle, this, this);
                 _tuningComponent->setupTriggerSignals();
