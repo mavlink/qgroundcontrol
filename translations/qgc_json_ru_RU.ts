@@ -2246,187 +2246,187 @@
       <extracomment>.sections[Flight Response].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Flight Response</source>
-      <translation type="unfinished">Flight Response</translation>
+      <translation>Отклик на управление</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>tuning</source>
-      <translation type="unfinished">tuning</translation>
+      <translation>настройка</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>pid</source>
-      <translation type="unfinished">pid</translation>
+      <translation>pid</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>roll</source>
-      <translation type="unfinished">roll</translation>
+      <translation>крен</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>pitch</source>
-      <translation type="unfinished">pitch</translation>
+      <translation>тангаж</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>climb</source>
-      <translation type="unfinished">climb</translation>
+      <translation>набор высоты</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>sensitivity</source>
-      <translation type="unfinished">sensitivity</translation>
+      <translation>чувствительность</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>thrust</source>
-      <translation type="unfinished">thrust</translation>
+      <translation>тяга</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>motor</source>
-      <translation type="unfinished">motor</translation>
+      <translation>мотор</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Roll/Pitch Sensitivity</source>
-      <translation type="unfinished">Roll/Pitch Sensitivity</translation>
+      <translation>Чувствительность крена/тангажа</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Climb Sensitivity</source>
-      <translation type="unfinished">Climb Sensitivity</translation>
+      <translation>Чувствительность набора высоты</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>RC Roll/Pitch Feel</source>
-      <translation type="unfinished">RC Roll/Pitch Feel</translation>
+      <translation>Реакция RC на крен/тангаж</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Spin While Armed</source>
-      <translation type="unfinished">Spin While Armed</translation>
+      <translation>Вращение моторов при Arm</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].controls[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Minimum Thrust</source>
-      <translation type="unfinished">Minimum Thrust</translation>
+      <translation>Минимальная тяга</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>AutoTune</source>
-      <translation type="unfinished">AutoTune</translation>
+      <translation>AutoTune</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>autotune</source>
-      <translation type="unfinished">autotune</translation>
+      <translation>autotune</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>auto tune</source>
-      <translation type="unfinished">auto tune</translation>
+      <translation>auto tune</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>axes</source>
-      <translation type="unfinished">axes</translation>
+      <translation>оси</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>channel</source>
-      <translation type="unfinished">channel</translation>
+      <translation>канал</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>switch</source>
-      <translation type="unfinished">switch</translation>
+      <translation>переключатель</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Axes to AutoTune</source>
-      <translation type="unfinished">Axes to AutoTune</translation>
+      <translation>Оси для AutoTune</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Aggressiveness</source>
-      <translation type="unfinished">Aggressiveness</translation>
+      <translation>Агрессивность</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Minimum D gain</source>
-      <translation type="unfinished">Minimum D gain</translation>
+      <translation>Минимальный коэффициент D</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>In Flight Tuning</source>
-      <translation type="unfinished">In Flight Tuning</translation>
+      <translation>Настройка в полёте</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>in flight tuning</source>
-      <translation type="unfinished">in flight tuning</translation>
+      <translation>настройка в полёте</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>tune</source>
-      <translation type="unfinished">tune</translation>
+      <translation>настройка</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>channel 6</source>
-      <translation type="unfinished">channel 6</translation>
+      <translation>канал 6</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>rc tuning</source>
-      <translation type="unfinished">rc tuning</translation>
+      <translation>настройка rc</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>RC Channel 6 Option (Tuning)</source>
-      <translation type="unfinished">RC Channel 6 Option (Tuning)</translation>
+      <translation>Опция канала 6 RC (настройка)</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Min</source>
-      <translation type="unfinished">Min</translation>
+      <translation>Мин.</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Max</source>
-      <translation type="unfinished">Max</translation>
+      <translation>Макс.</translation>
     </message>
   </context>
   <context>
@@ -4046,73 +4046,73 @@
       <extracomment>.sections[Battery].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Battery</source>
-      <translation type="unfinished">Battery</translation>
+      <translation>Аккумулятор</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>battery</source>
-      <translation type="unfinished">battery</translation>
+      <translation>аккумулятор</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>voltage</source>
-      <translation type="unfinished">voltage</translation>
+      <translation>напряжение</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>current</source>
-      <translation type="unfinished">current</translation>
+      <translation>ток</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>power module</source>
-      <translation type="unfinished">power module</translation>
+      <translation>модуль питания</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>sensor</source>
-      <translation type="unfinished">sensor</translation>
+      <translation>датчик</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>cells</source>
-      <translation type="unfinished">cells</translation>
+      <translation>элементы</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>lipo</source>
-      <translation type="unfinished">lipo</translation>
+      <translation>lipo</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Source</source>
-      <translation type="unfinished">Source</translation>
+      <translation>Источник</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Number of cells (in series)</source>
-      <translation type="unfinished">Number of cells (in series)</translation>
+      <translation>Количество элементов (последовательно)</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Battery capacity (mAh)</source>
-      <translation type="unfinished">Battery capacity (mAh)</translation>
+      <translation>Ёмкость аккумулятора (мА·ч)</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Empty voltage (per cell)</source>
-      <translation type="unfinished">Empty voltage (per cell)</translation>
+      <translation>Напряжение разряженного элемента</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[4].label</extracomment>
@@ -5584,316 +5584,316 @@
       <extracomment>.QGC.MetaData.Facts[operatorID].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Pilot registration code or identification number (max 20 characters).</source>
-      <translation type="unfinished">Pilot registration code or identification number (max 20 characters).</translation>
+      <translation>Регистрационный код или идентификационный номер пилота (макс. 20 символов).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorID].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Operator ID. Maximum 20 characters.</source>
-      <translation type="unfinished">Operator ID. Maximum 20 characters.</translation>
+      <translation>Номер оператора. До 20 символов.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorID].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Operator ID</source>
-      <translation type="unfinished">Operator ID</translation>
+      <translation>Номер оператора</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorID].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>operator,pilot,registration</source>
-      <translation type="unfinished">operator,pilot,registration</translation>
+      <translation>оператор,пилот,регистрация</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDValid].shortDesc, .QGC.MetaData.Facts[operatorIDValid].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Operator ID is valid</source>
-      <translation type="unfinished">Operator ID is valid</translation>
+      <translation>Номер оператора допустим</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDValid].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Operator ID has been checked using checksum.</source>
-      <translation type="unfinished">Operator ID has been checked using checksum.</translation>
+      <translation>Номер оператора проверен контрольной суммой</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDType].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Format of the operator ID (currently CAA only).</source>
-      <translation type="unfinished">Format of the operator ID (currently CAA only).</translation>
+      <translation>Формат номера оператора (сейчас только CAA).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDType].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>CAA</source>
-      <translation type="unfinished">CAA</translation>
+      <translation>CAA</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDType].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Operator ID type</source>
-      <translation type="unfinished">Operator ID type</translation>
+      <translation>Тип номера оператора</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDType].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>operator,registration</source>
-      <translation type="unfinished">operator,registration</translation>
+      <translation>оператор,регистрация</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendOperatorID].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Broadcast the operator identification information via Remote ID.</source>
-      <translation type="unfinished">Broadcast the operator identification information via Remote ID.</translation>
+      <translation>Транслировать идентификационные данные оператора через Remote ID.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendOperatorID].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>When enabled, sends operator ID message</source>
-      <translation type="unfinished">When enabled, sends operator ID message</translation>
+      <translation>При активации отправляет сообщение с номером оператора</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendOperatorID].label, .QGC.MetaData.Facts[sendSelfID].label, .QGC.MetaData.Facts[sendBasicID].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Broadcast</source>
-      <translation type="unfinished">Broadcast</translation>
+      <translation>Трансляция</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendOperatorID].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>operator,pilot</source>
-      <translation type="unfinished">operator,pilot</translation>
+      <translation>оператор,пилот</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDFree].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Flight purpose description to broadcast (max 23 characters).</source>
-      <translation type="unfinished">Flight purpose description to broadcast (max 23 characters).</translation>
+      <translation>Описание цели полёта для трансляции (макс. 23 символа).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDFree].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Optional plain text for operator to specify operations data (Free Text). Maximum 23 characters.</source>
-      <translation type="unfinished">Optional plain text for operator to specify operations data (Free Text). Maximum 23 characters.</translation>
+      <translation>Данные о полете (обычные) (до 23 символов)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDFree].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Flight Purpose</source>
-      <translation type="unfinished">Flight Purpose</translation>
+      <translation>Цель полета</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDFree].keywords, .QGC.MetaData.Facts[selfIDExtended].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>self id,description</source>
-      <translation type="unfinished">self id,description</translation>
+      <translation>self id,описание</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDEmergency].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Emergency status text to broadcast (max 23 characters).</source>
-      <translation type="unfinished">Emergency status text to broadcast (max 23 characters).</translation>
+      <translation>Текст статуса чрезвычайной ситуации для трансляции (макс. 23 символа).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDEmergency].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.</source>
-      <translation type="unfinished">Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.</translation>
+      <translation>Данные о полете (экстренные) (до 23 символов)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDEmergency].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Emergency Text</source>
-      <translation type="unfinished">Emergency Text</translation>
+      <translation>Текст экстренного сообщения</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDEmergency].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>self id,emergency</source>
-      <translation type="unfinished">self id,emergency</translation>
+      <translation>self id,чрезвычайная ситуация</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDExtended].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Extended operational status information to broadcast (max 23 characters).</source>
-      <translation type="unfinished">Extended operational status information to broadcast (max 23 characters).</translation>
+      <translation>Расширенная информация об эксплуатационном статусе для трансляции (макс. 23 символа).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDExtended].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.</source>
-      <translation type="unfinished">Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.</translation>
+      <translation>Данные о полете (расширенные) (до 23 символов)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDExtended].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Extended Status</source>
-      <translation type="unfinished">Extended Status</translation>
+      <translation>Расширенный статус</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDType].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Type of self-ID message to broadcast (flight purpose, emergency, or extended).</source>
-      <translation type="unfinished">Type of self-ID message to broadcast (flight purpose, emergency, or extended).</translation>
+      <translation>Тип сообщения self-ID для трансляции (цель полёта, чрезвычайная ситуация или расширенный статус).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDType].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Flight Purpose,Emergency,Extended Status</source>
-      <translation type="unfinished">Flight Purpose,Emergency,Extended Status</translation>
+      <translation>Цель полёта,Экстренная ситуация,Расширенный статус</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDType].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Broadcast Message</source>
-      <translation type="unfinished">Broadcast Message</translation>
+      <translation>Широковещательное сообщение</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDType].keywords, .QGC.MetaData.Facts[sendSelfID].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>self id</source>
-      <translation type="unfinished">self id</translation>
+      <translation>self id</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendSelfID].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Broadcast flight purpose or emergency status information via Remote ID.</source>
-      <translation type="unfinished">Broadcast flight purpose or emergency status information via Remote ID.</translation>
+      <translation>Транслировать цель полёта или статус чрезвычайной ситуации через Remote ID.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendSelfID].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>When enabled, sends self ID message</source>
-      <translation type="unfinished">When enabled, sends self ID message</translation>
+      <translation>При активации отправляет сообщение с собственным номером</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicID].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Drone serial number or registration code to transmit (max 20 characters).</source>
-      <translation type="unfinished">Drone serial number or registration code to transmit (max 20 characters).</translation>
+      <translation>Серийный номер дрона или регистрационный код для передачи (макс. 20 символов).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicID].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Basic ID</source>
-      <translation type="unfinished">Basic ID</translation>
+      <translation>Базовый номер</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicID].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>basic id,serial number,drone id</source>
-      <translation type="unfinished">basic id,serial number,drone id</translation>
+      <translation>basic id,серийный номер,id дрона</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Format of the drone ID (CAA registration, serial number, or UTM assigned).</source>
-      <translation type="unfinished">Format of the drone ID (CAA registration, serial number, or UTM assigned).</translation>
+      <translation>Формат id дрона (регистрация CAA, серийный номер или ID, назначенный UTM).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</source>
-      <translation type="unfinished">None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</translation>
+      <translation>Отсутствует, серийный номер (ANSI/CTA-2063),CAA,UTM (RFC4122), Особый</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Basic ID Type</source>
-      <translation type="unfinished">Basic ID Type</translation>
+      <translation>Базовый ID Type</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].keywords, .QGC.MetaData.Facts[basicIDUaType].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>basic id,ua type</source>
-      <translation type="unfinished">basic id,ua type</translation>
+      <translation>basic id,тип ua</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDUaType].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Classification of the unmanned aircraft (multirotor, fixed-wing, etc.).</source>
-      <translation type="unfinished">Classification of the unmanned aircraft (multirotor, fixed-wing, etc.).</translation>
+      <translation>Классификация беспилотного воздушного судна (мультиротор, самолёт и т.д.).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDUaType].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</source>
-      <translation type="unfinished">Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</translation>
+      <translation>Не определено,Самолёт,Вертолёт/Мультиротор,Автожир,VTOL,Орнитоптер,Планер,Воздушный змей,Свободный аэростат,Привязной аэростат,Дирижабль,Парашют,Ракета,Привязной моторизованный аппарат,Наземное препятствие,Другое</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDUaType].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>UA type</source>
-      <translation type="unfinished">UA type</translation>
+      <translation>Тип БПЛА</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendBasicID].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Broadcast the drone identification information via Remote ID.</source>
-      <translation type="unfinished">Broadcast the drone identification information via Remote ID.</translation>
+      <translation>Транслировать идентификационные данные дрона через Remote ID.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendBasicID].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>When enabled, sends basic ID message</source>
-      <translation type="unfinished">When enabled, sends basic ID message</translation>
+      <translation>При активации отправляет сообщение с базовым номером</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendBasicID].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>basic id</source>
-      <translation type="unfinished">basic id</translation>
+      <translation>basic id</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Regulatory region for Remote ID compliance (FAA or EU).</source>
-      <translation type="unfinished">Regulatory region for Remote ID compliance (FAA or EU).</translation>
+      <translation>Регион регулирования для соответствия Remote ID (FAA или EU).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>The region of operation the mission will take place in</source>
-      <translation type="unfinished">The region of operation the mission will take place in</translation>
+      <translation>Регион проведения полётного задания</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>FAA,EU</source>
-      <translation type="unfinished">FAA,EU</translation>
+      <translation>FAA,EU</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Region of operation</source>
-      <translation type="unfinished">Region of operation</translation>
+      <translation>Регион деятельности</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>region,faa,eu,remote id</source>
-      <translation type="unfinished">region,faa,eu,remote id</translation>
+      <translation>регион,faa,eu,remote id</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[locationType].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Source for operator location data (live GNSS or fixed coordinates).</source>
-      <translation type="unfinished">Source for operator location data (live GNSS or fixed coordinates).</translation>
+      <translation>Источник данных о местоположении оператора (данные GNSS в реальном времени или фиксированные координаты).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[locationType].longDesc</extracomment>
@@ -10318,247 +10318,247 @@
       <extracomment>.groups[Region].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>Region</source>
-      <translation type="unfinished">Region</translation>
+      <translation>Регион</translation>
     </message>
     <message>
       <extracomment>.groups[Region].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>region</source>
-      <translation type="unfinished">region</translation>
+      <translation>регион</translation>
     </message>
     <message>
       <extracomment>.groups[Region].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>faa</source>
-      <translation type="unfinished">faa</translation>
+      <translation>faa</translation>
     </message>
     <message>
       <extracomment>.groups[Region].keywords[2], .groups[EU Vehicle Info].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>eu</source>
-      <translation type="unfinished">eu</translation>
+      <translation>eu</translation>
     </message>
     <message>
       <extracomment>.groups[Region].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>remote id</source>
-      <translation type="unfinished">remote id</translation>
+      <translation>remote id</translation>
     </message>
     <message>
       <extracomment>.groups[Region].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>regulation</source>
-      <translation type="unfinished">regulation</translation>
+      <translation>регулирование</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>Basic ID</source>
-      <translation type="unfinished">Basic ID</translation>
+      <translation>Basic ID</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>basic id</source>
-      <translation type="unfinished">basic id</translation>
+      <translation>basic id</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>serial number</source>
-      <translation type="unfinished">serial number</translation>
+      <translation>серийный номер</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>drone id</source>
-      <translation type="unfinished">drone id</translation>
+      <translation>id дрона</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>ua type</source>
-      <translation type="unfinished">ua type</translation>
+      <translation>тип ua</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].keywords[4], .groups[Operator ID].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>registration</source>
-      <translation type="unfinished">registration</translation>
+      <translation>регистрация</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].keywords[5], .groups[Operator ID].keywords[3], .groups[Self ID].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>broadcast</source>
-      <translation type="unfinished">broadcast</translation>
+      <translation>трансляция</translation>
     </message>
     <message>
       <extracomment>.groups[Operator ID].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>Operator ID</source>
-      <translation type="unfinished">Operator ID</translation>
+      <translation>Operator ID</translation>
     </message>
     <message>
       <extracomment>.groups[Operator ID].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>operator</source>
-      <translation type="unfinished">operator</translation>
+      <translation>оператор</translation>
     </message>
     <message>
       <extracomment>.groups[Operator ID].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>pilot</source>
-      <translation type="unfinished">pilot</translation>
+      <translation>пилот</translation>
     </message>
     <message>
       <extracomment>.groups[Self ID].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>Self ID</source>
-      <translation type="unfinished">Self ID</translation>
+      <translation>Self ID</translation>
     </message>
     <message>
       <extracomment>.groups[Self ID].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>self id</source>
-      <translation type="unfinished">self id</translation>
+      <translation>self id</translation>
     </message>
     <message>
       <extracomment>.groups[Self ID].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>flight purpose</source>
-      <translation type="unfinished">flight purpose</translation>
+      <translation>цель полёта</translation>
     </message>
     <message>
       <extracomment>.groups[Self ID].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>emergency</source>
-      <translation type="unfinished">emergency</translation>
+      <translation>чрезвычайная ситуация</translation>
     </message>
     <message>
       <extracomment>.groups[Self ID].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>description</source>
-      <translation type="unfinished">description</translation>
+      <translation>описание</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>GroundStation Location</source>
-      <translation type="unfinished">GroundStation Location</translation>
+      <translation>Местоположение наземной станции</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>ground station</source>
-      <translation type="unfinished">ground station</translation>
+      <translation>наземная станция</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>gcs location</source>
-      <translation type="unfinished">gcs location</translation>
+      <translation>местоположение наземной станции</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[2], .groups[GCS Position].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>latitude</source>
-      <translation type="unfinished">latitude</translation>
+      <translation>широта</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[3], .groups[GCS Position].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>longitude</source>
-      <translation type="unfinished">longitude</translation>
+      <translation>долгота</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>altitude</source>
-      <translation type="unfinished">altitude</translation>
+      <translation>высота</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>fixed position</source>
-      <translation type="unfinished">fixed position</translation>
+      <translation>фиксированная позиция</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>gnss</source>
-      <translation type="unfinished">gnss</translation>
+      <translation>gnss</translation>
     </message>
     <message>
       <extracomment>.groups[GCS Position].sectionName</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>GCS Position</source>
-      <translation type="unfinished">GCS Position</translation>
+      <translation>Позиция наземной станции</translation>
     </message>
     <message>
       <extracomment>.groups[GCS Position].keywords[2], .groups[GPS Location].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>hdop</source>
-      <translation type="unfinished">hdop</translation>
+      <translation>hdop</translation>
     </message>
     <message>
       <extracomment>.groups[GCS Position].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>gcs position</source>
-      <translation type="unfinished">gcs position</translation>
+      <translation>позиция наземной станции</translation>
     </message>
     <message>
       <extracomment>.groups[GPS Location].sectionName</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>GPS Location</source>
-      <translation type="unfinished">GPS Location</translation>
+      <translation>Местоположение GPS</translation>
     </message>
     <message>
       <extracomment>.groups[GPS Location].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>gps</source>
-      <translation type="unfinished">gps</translation>
+      <translation>gps</translation>
     </message>
     <message>
       <extracomment>.groups[GPS Location].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>nmea</source>
-      <translation type="unfinished">nmea</translation>
+      <translation>nmea</translation>
     </message>
     <message>
       <extracomment>.groups[GPS Location].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>position</source>
-      <translation type="unfinished">position</translation>
+      <translation>позиция</translation>
     </message>
     <message>
       <extracomment>.groups[EU Vehicle Info].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>EU Vehicle Info</source>
-      <translation type="unfinished">EU Vehicle Info</translation>
+      <translation>Информация о борте (EU)</translation>
     </message>
     <message>
       <extracomment>.groups[EU Vehicle Info].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>classification</source>
-      <translation type="unfinished">classification</translation>
+      <translation>классификация</translation>
     </message>
     <message>
       <extracomment>.groups[EU Vehicle Info].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>category</source>
-      <translation type="unfinished">category</translation>
+      <translation>категория</translation>
     </message>
     <message>
       <extracomment>.groups[EU Vehicle Info].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>class</source>
-      <translation type="unfinished">class</translation>
+      <translation>класс</translation>
     </message>
     <message>
       <extracomment>.groups[EU Vehicle Info].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>ce marking</source>
-      <translation type="unfinished">ce marking</translation>
+      <translation>маркировка ce</translation>
     </message>
   </context>
   <context>
