@@ -73,7 +73,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
                                         << componentId
                                         << vehicleFirmwareType
                                         << vehicleType;
-        //return;
+        return;
     }
 
     // When you flash a new ArduCopter it does not set a FRAME_CLASS for some reason. This is the only ArduPilot variant which
@@ -84,7 +84,7 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     }
 
     switch (vehicleType) {
-    //case MAV_TYPE_GCS:
+    case MAV_TYPE_GCS:
     case MAV_TYPE_ONBOARD_CONTROLLER:
     case MAV_TYPE_GIMBAL:
     case MAV_TYPE_ADSB:

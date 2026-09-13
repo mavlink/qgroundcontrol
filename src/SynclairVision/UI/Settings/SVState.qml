@@ -560,28 +560,31 @@ QtObject {
     }
 
     function startRecording() {
-        record = true
         if(SVSettings.recordDestination === "digiview") {
-            digiview.startRecording()
-            return
-        }
+            if (!digiviewActive) {
+                return
+            }
 
-        if(SVSettings.recordDestination === "local") {
+            digiview.startRecording()
+        } else if(SVSettings.recordDestination === "local") {
             QGroundControl.videoManager.startRecording(recordingFileName());
         }
+
+        record = true
     }
 
     function stopRecording() {
         if(record === true) {
             if(SVSettings.recordDestination === "digiview") {
-                digiview.stopRecording()
-                SVNotificationManager.add(
-                    "Recording Stopped",
-                    "Digiview: Saving recording to Jetson",
-                    "info",
-                    "recording_stopped"
-                ) 
-                return
+                if (digiviewActive) {
+                    digiview.stopRecording()
+                    SVNotificationManager.add(
+                        "Recording Stopped",
+                        "Digiview: Saving recording to Jetson",
+                        "info",
+                        "recording_stopped"
+                    )
+                }
             }
             
             if(SVSettings.recordDestination === 'local') {
