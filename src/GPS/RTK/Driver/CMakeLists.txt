@@ -44,8 +44,8 @@ qgc_disable_dependency_warnings(px4-gpsdrivers)
 
 target_link_libraries(
     QGCGPSDriver
-    PUBLIC QGCGPSCore QGCGPSContracts
-    PRIVATE QGCLogging px4-gpsdrivers
+    PUBLIC QGCGPSCore
+    PRIVATE QGCLoggingCategory px4-gpsdrivers
 )
 target_compile_definitions(QGCGPSDriver PRIVATE GPS_DEFINITIONS_HEADER=<${CMAKE_CURRENT_SOURCE_DIR}/definitions.h>)
 target_include_directories(QGCGPSDriver SYSTEM PRIVATE ${px4-gpsdrivers_SOURCE_DIR}/src)

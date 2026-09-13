@@ -1,17 +1,12 @@
 #include <QtTest/QTest>
 
-#include <array>
-#include <limits>
 #include <memory>
 
-#include "CRC32.h"
 #include "DataRateTracker.h"
 #include "JsonValidation.h"
-#include "LittleEndian.h"
 #include "ManualScheduler.h"
 #include "QGCLoggingCategory.h"
 #include "ScheduledTask.h"
-#include "TimestampedByteBuffer.h"
 #include "UdpForwarder.h"
 #include "UdpIODevice.h"
 
@@ -20,28 +15,6 @@ class UtilityLibraryTest : public QObject
     Q_OBJECT
 
 private slots:
-
-    void unalignedWireAndBounds()
-    {
-        const std::array<uint8_t, 5> encoded{0xaa, 0x00, 0x00, 0x44, 0xc1};
-        QCOMPARE(LittleEndian::read<float>(encoded, 1).value(), -12.25f);
-        std::array<uint8_t, 5> output{0xaa};
-        QVERIFY(LittleEndian::write<float>(output, 1, -12.25f));
-        QVERIFY(output == encoded);
-        QVERIFY(!LittleEndian::read<uint64_t>(encoded, 1));
-        QVERIFY(!LittleEndian::write<uint32_t>(output, SIZE_MAX, 1));
-        QVERIFY(output == encoded);
-    }
-
-    void incrementalCrc()
-    {
-        const std::array<uint8_t, 9> input{'1', '2', '3', '4', '5', '6', '7', '8', '9'};
-        const auto initial = std::numeric_limits<uint32_t>::max();
-        const auto bytes = std::span(input);
-        const auto prefix = QGC::crc32Update(bytes.first(4), initial);
-        QCOMPARE(QGC::crc32Update(bytes.subspan(4), prefix) ^ initial, uint32_t{0xcbf43926});
-        QCOMPARE(QGC::crc32Update({}, prefix), prefix);
-    }
 
     void contextDestructionAndReplacement()
     {
@@ -69,6 +42,68 @@ private slots:
         QVERIFY(!error.isEmpty());
         QVERIFY(!JsonParsing::validateKeysStrict({{"value", "wrong type"}}, keys, error));
         QVERIFY(!JsonParsing::validateKeysStrict({}, keys, error));
+    }
+
+    void requiredEmptyJsonKey()
+    {
+        QString error;
+        QVERIFY(!JsonParsing::validateRequiredKeys({}, {QString()}, error));
+        QCOMPARE(error, QStringLiteral("The following required keys are missing: "));
+        const QList<JsonParsing::KeyValidateInfo> keys{{"", QJsonValue::String, true}};
+        QVERIFY(!JsonParsing::validateKeys({}, keys, error));
+        QVERIFY(!JsonParsing::validateKeysStrict({}, keys, error));
+        QVERIFY(JsonParsing::validateKeysStrict({{QString(), QStringLiteral("present")}}, keys, error));
+    }
+
+    void validationDiagnosticOrder()
+    {
+        const QList<JsonParsing::KeyValidateInfo> keys{{"value", QJsonValue::Double, true},
+                                                       {"second", QJsonValue::Bool, true},
+                                                       {"first", QJsonValue::String, true}};
+        QJsonObject object{{"value", QStringLiteral("wrong")}, {"extra", true}};
+        QString error;
+        QVERIFY(!JsonParsing::validateKeysStrict(object, keys, error));
+        QCOMPARE(error, QStringLiteral("The following required keys are missing: second, first"));
+        object.insert(QStringLiteral("second"), true);
+        object.insert(QStringLiteral("first"), QStringLiteral("present"));
+        QVERIFY(!JsonParsing::validateKeysStrict(object, keys, error));
+        QCOMPARE(error, QStringLiteral("Incorrect value type - key:type:expected value:String:Double"));
+        object.insert(QStringLiteral("value"), 1);
+        QVERIFY(JsonParsing::validateKeys(object, keys, error));
+        QVERIFY(!JsonParsing::validateKeysStrict(object, keys, error));
+        QCOMPARE(error, QStringLiteral("Unknown key: extra"));
+    }
+
+    void validationSpecialTypes_data()
+    {
+        QTest::addColumn<QJsonValue>("value");
+        QTest::addColumn<bool>("valid");
+        QTest::newRow("null") << QJsonValue(QJsonValue::Null) << true;
+        QTest::newRow("double") << QJsonValue(1.5) << true;
+        QTest::newRow("bool") << QJsonValue(true) << false;
+        QTest::newRow("object") << QJsonValue(QJsonObject{{"key", 1}}) << false;
+    }
+
+    void validationSpecialTypes()
+    {
+        QFETCH(QJsonValue, value);
+        QFETCH(bool, valid);
+        QString error;
+        const QJsonObject object{{"value", value}};
+        QCOMPARE(JsonParsing::validateKeyTypes(object, {"value"}, {QJsonValue::Null}, error), valid);
+        QCOMPARE(JsonParsing::validateKeysStrict(object, {{"value", QJsonValue::Null, true}}, error), valid);
+        QVERIFY(JsonParsing::validateKeyTypes(object, {"value"}, {QJsonValue::Undefined}, error));
+        QVERIFY(JsonParsing::validateKeysStrict(object, {{"value", QJsonValue::Undefined, true}}, error));
+    }
+
+    void validationUtf8Keys()
+    {
+        const char* key = "\xC3\xA9";
+        const QList<JsonParsing::KeyValidateInfo> keys{{key, QJsonValue::Double, true}};
+        const QJsonObject object{{QString::fromUtf8(key), 1}};
+        QString error;
+        QVERIFY(JsonParsing::validateKeys(object, keys, error));
+        QVERIFY(JsonParsing::validateKeysStrict(object, keys, error));
     }
 
     void loggingWithoutManager()

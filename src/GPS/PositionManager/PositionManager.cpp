@@ -44,13 +44,13 @@ void QGCPositionManager::init()
 
 void QGCPositionManager::_setupPositionSources()
 {
-    _platformSource = QGCCorePlugin::instance()->createPositionSource(this);
-    const bool custom = !_platformSource.isNull();
+    auto* platformSource = QGCCorePlugin::instance()->createPositionSource(this);
+    const bool custom = platformSource != nullptr;
     if (!custom) {
-        _platformSource = QGeoPositionInfoSource::createDefaultSource(this);
+        platformSource = QGeoPositionInfoSource::createDefaultSource(this);
     }
-    setInternalPositionSource(_platformSource,
-                              _platformSource ? SourceStatus::WaitingForFix : SourceStatus::BackendUnavailable, custom);
+    setInternalPositionSource(platformSource,
+                              platformSource ? SourceStatus::WaitingForFix : SourceStatus::BackendUnavailable, custom);
 }
 
 void QGCPositionManager::_handlePermissionStatus(Qt::PermissionStatus permissionStatus)

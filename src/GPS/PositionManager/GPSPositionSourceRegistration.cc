@@ -1,7 +1,5 @@
 #include "GPSPositionSourceRegistration.h"
 
-#include <QtCore/QThread>
-
 #include <utility>
 
 #include "GPSPositionService.h"
@@ -55,17 +53,7 @@ void GPSPositionSourceRegistration::reset()
     const int kind = std::exchange(_kind, 0);
     const quint64 token = std::exchange(_token, 0);
     if (manager && token) {
-        if (QThread::currentThread() == manager->thread()) {
-            manager->_retireRegistration(kind, token);
-        } else {
-            QMetaObject::invokeMethod(
-                manager,
-                [manager, kind, token]() {
-                    if (manager) {
-                        manager->_retireRegistration(kind, token);
-                    }
-                },
-                Qt::QueuedConnection);
-        }
+        QMetaObject::invokeMethod(manager.data(), &GPSPositionService::_retireRegistration, Qt::AutoConnection, kind,
+                                  token);
     }
 }

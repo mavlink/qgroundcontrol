@@ -1,44 +1,57 @@
 #include "SimulatedPosition.h"
-#include "MultiVehicleManager.h"
-#include "Vehicle.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QDateTime>
-#include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(SimulatedPositionLog, "PositionManager.SimulatedPosition")
+#include <algorithm>
+#include <chrono>
 
-SimulatedPosition::SimulatedPosition(QObject* parent)
-    : QGeoPositionInfoSource(parent)
-    , _updateTimer(new QTimer(this))
+#include "MultiVehicleManager.h"
+#include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
+#include "Vehicle.h"
+
+QGC_LOGGING_CATEGORY(SimulatedPositionLog, "GPS.PositionManager.SimulatedPosition")
+
+SimulatedPosition::SimulatedPosition(QObject* parent, RuntimeScheduler* scheduler)
+    : QGeoPositionInfoSource(parent),
+      _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this)),
+      _updateTask(_scheduler, this)
 {
-    // qCDebug(SimulatedPositionLog) << Q_FUNC_INFO << this;
+    qCDebug(SimulatedPositionLog) << this;
 
-    _lastPosition.setTimestamp(QDateTime::currentDateTime());
+    _lastPosition.setTimestamp(QDateTime::currentDateTimeUtc());
     _lastPosition.setCoordinate(QGeoCoordinate(47.3977420, 8.5455941, 488.));
+    _lastPosition.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1.0);
+    _lastPosition.setAttribute(QGeoPositionInfo::VerticalAccuracy, 1.0);
     _lastPosition.setAttribute(QGeoPositionInfo::Attribute::Direction, kHeading);
     _lastPosition.setAttribute(QGeoPositionInfo::Attribute::GroundSpeed, kHorizontalVelocityMetersPerSec);
     _lastPosition.setAttribute(QGeoPositionInfo::Attribute::VerticalSpeed, kVerticalVelocityMetersPerSec);
 
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &SimulatedPosition::_vehicleAdded);
 
-    _updateTimer->setSingleShot(false);
-    (void) connect(_updateTimer, &QTimer::timeout, this, &SimulatedPosition::_updatePosition);
+    if (_scheduler->thread() != thread()) {
+        qCWarning(SimulatedPositionLog) << "Scheduler must share the simulated source thread";
+        _scheduler = nullptr;
+    }
 }
 
 SimulatedPosition::~SimulatedPosition()
 {
-    // qCDebug(SimulatedPositionLog) << Q_FUNC_INFO << this;
+    qCDebug(SimulatedPositionLog) << this;
 }
 
 void SimulatedPosition::startUpdates()
 {
-    _updateTimer->start(qMax(updateInterval(), minimumUpdateInterval()));
+    if (!_scheduler || _updateTask.active()) {
+        return;
+    }
+    _lastUpdateUs = _scheduler->nowUs();
+    _scheduleUpdate();
 }
 
 void SimulatedPosition::stopUpdates()
 {
-    _updateTimer->stop();
+    _updateTask.cancel();
 }
 
 void SimulatedPosition::requestUpdate(int /*timeout*/)
@@ -46,15 +59,26 @@ void SimulatedPosition::requestUpdate(int /*timeout*/)
     emit errorOccurred(QGeoPositionInfoSource::UpdateTimeoutError);
 }
 
+void SimulatedPosition::_scheduleUpdate()
+{
+    _updateTask.schedule(std::chrono::milliseconds((std::max) (updateInterval(), minimumUpdateInterval())),
+                         [this]() { _updatePosition(); });
+}
+
 void SimulatedPosition::_updatePosition()
 {
-    const int intervalMsecs = _updateTimer->interval();
-
-    const QGeoCoordinate coord = _lastPosition.coordinate();
-    const qreal horizontalDistance = kHorizontalVelocityMetersPerSec * (1000. / static_cast<qreal>(intervalMsecs));
-    const qreal verticalDistance = kVerticalVelocityMetersPerSec * (1000. / static_cast<qreal>(intervalMsecs));
-
-    _lastPosition.setCoordinate(coord.atDistanceAndAzimuth(horizontalDistance, kHeading, verticalDistance));
+    if (!_scheduler) {
+        return;
+    }
+    const quint64 nowUs = _scheduler->nowUs();
+    const auto elapsed = std::chrono::microseconds(nowUs - _lastUpdateUs);
+    _lastUpdateUs = nowUs;
+    const double seconds = std::chrono::duration<double>(elapsed).count();
+    const auto coordinate = _lastPosition.coordinate();
+    _lastPosition.setCoordinate(coordinate.atDistanceAndAzimuth(kHorizontalVelocityMetersPerSec * seconds, kHeading,
+                                                                kVerticalVelocityMetersPerSec * seconds));
+    _lastPosition.setTimestamp(QDateTime::currentDateTimeUtc());
+    _scheduleUpdate();
     emit positionUpdated(_lastPosition);
 }
 

@@ -1,15 +1,10 @@
 #include "GPSObservation.h"
 
-#include <algorithm>
-
-#include "MonotonicClock.h"
-
 bool GPSObservation::usable() const
 {
     const double accuracy = position.attribute(QGeoPositionInfo::HorizontalAccuracy);
     return receiverFixValid.value_or(true) && fixQuality != FixQuality::NoFix && position.isValid() &&
-           position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy) && qIsFinite(accuracy) && accuracy > 0 &&
-           accuracy <= 100;
+           qIsFinite(accuracy) && accuracy > 0 && accuracy <= 100;
 }
 
 QGeoCoordinate GPSObservation::coordinate() const
@@ -19,8 +14,7 @@ QGeoCoordinate GPSObservation::coordinate() const
     }
     QGeoCoordinate coordinate(position.coordinate().latitude(), position.coordinate().longitude());
     const double accuracy = position.attribute(QGeoPositionInfo::VerticalAccuracy);
-    if (position.hasAttribute(QGeoPositionInfo::VerticalAccuracy) && qIsFinite(accuracy) && accuracy > 0 &&
-        accuracy <= 10 && qIsFinite(position.coordinate().altitude())) {
+    if (qIsFinite(accuracy) && accuracy > 0 && accuracy <= 10 && qIsFinite(position.coordinate().altitude())) {
         coordinate.setAltitude(position.coordinate().altitude());
     }
     return coordinate;
@@ -34,108 +28,22 @@ double GPSObservation::heading() const
     const bool accuracyAcceptable = !position.hasAttribute(QGeoPositionInfo::DirectionAccuracy) ||
                                     (qIsFinite(accuracy) && accuracy >= 0 && accuracy <= 30);
     // Both decoders report course over ground, which is unreliable when nearly stationary.
-    if (!usable() || !position.hasAttribute(QGeoPositionInfo::Direction) || !qIsFinite(direction) || direction < 0 ||
-        direction > 360 || !position.hasAttribute(QGeoPositionInfo::GroundSpeed) || !qIsFinite(speed) || speed < 0.5 ||
+    if (!usable() || !qIsFinite(direction) || direction < 0 || direction > 360 || !qIsFinite(speed) || speed < 0.5 ||
         !accuracyAcceptable) {
         return qQNaN();
     }
     return direction == 360 ? 0 : direction;
 }
 
-QGeoPositionInfo GPSObservation::acceptedPosition(PositionUse use) const
+QGeoPositionInfo GPSObservation::acceptedPosition() const
 {
-    if (use == PositionUse::Diagnostics) {
-        return position.isValid() ? position : QGeoPositionInfo();
-    }
-    if (use == PositionUse::Gga) {
-        return receiverFixValid.value_or(true) && fixQuality != FixQuality::NoFix && position.isValid()
-                   ? position
-                   : QGeoPositionInfo();
-    }
     if (!usable()) {
         return {};
     }
     QGeoPositionInfo accepted = position;
-    switch (use) {
-        case PositionUse::Diagnostics:
-        case PositionUse::Gga:
-            break;
-        case PositionUse::GroundStation:
-        case PositionUse::Motion:
-        case PositionUse::NTRIP:
-            accepted.setCoordinate(coordinate());
-            if (accepted.coordinate().type() != QGeoCoordinate::Coordinate3D) {
-                accepted.removeAttribute(QGeoPositionInfo::VerticalAccuracy);
-            }
-            break;
-        case PositionUse::RemoteID:
-            // Operator reports may use a measured altitude even when its accuracy is unknown.
-            // Preserve legacy source altitude when no measured ellipsoid altitude is available.
-            if (altitudeEllipsoidMeters && qIsFinite(*altitudeEllipsoidMeters)) {
-                QGeoCoordinate coordinate = accepted.coordinate();
-                coordinate.setAltitude(*altitudeEllipsoidMeters);
-                accepted.setCoordinate(coordinate);
-            }
-            break;
-    }
-    if (use == PositionUse::Motion) {
-        const double course = heading();
-        if (qIsFinite(course)) {
-            accepted.setAttribute(QGeoPositionInfo::Direction, course);
-        } else {
-            accepted.removeAttribute(QGeoPositionInfo::Direction);
-            accepted.removeAttribute(QGeoPositionInfo::DirectionAccuracy);
-        }
+    accepted.setCoordinate(coordinate());
+    if (accepted.coordinate().type() != QGeoCoordinate::Coordinate3D) {
+        accepted.removeAttribute(QGeoPositionInfo::VerticalAccuracy);
     }
     return accepted;
-}
-
-quint64 GPSObservation::monotonicNowUs()
-{
-    return MonotonicClock::nowUs();
-}
-
-qint64 GPSObservation::ageMilliseconds(quint64 timestampUs)
-{
-    return MonotonicClock::ageMilliseconds(timestampUs, monotonicNowUs());
-}
-
-qint64 GPSObservation::ageMilliseconds() const
-{
-    return ageMilliseconds(monotonicTimestampUs);
-}
-
-int GPSSatelliteObservation::usedCount() const
-{
-    return static_cast<int>(std::count_if(satellites.cbegin(), satellites.cend(), [](const GPSSatellite& satellite) {
-        return satellite.used.value_or(false);
-    }));
-}
-
-std::optional<double> GPSSatellite::azimuthDegrees() const
-{
-    if (normalizedAzimuthDegrees && qIsFinite(*normalizedAzimuthDegrees) && *normalizedAzimuthDegrees >= 0 &&
-        *normalizedAzimuthDegrees <= 360) {
-        return *normalizedAzimuthDegrees == 360 ? 0 : *normalizedAzimuthDegrees;
-    }
-    return std::nullopt;
-}
-
-int GPSSatelliteObservation::satellitesInViewCount() const
-{
-    return std::any_of(provenance.cbegin(), provenance.cend(),
-                       [](const auto& report) { return report.inViewTimestampUs != 0; })
-               ? static_cast<int>(satellites.size())
-               : -1;
-}
-
-int GPSSatelliteObservation::satellitesInUseCount() const
-{
-    int count = -1;
-    for (const auto& report : provenance) {
-        if (report.inUseTimestampUs && report.satellitesUsed) {
-            count = std::max(0, count) + *report.satellitesUsed;
-        }
-    }
-    return count;
 }

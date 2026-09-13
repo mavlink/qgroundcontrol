@@ -1,7 +1,11 @@
 #include "RemoteIDManagerTest.h"
 
+#include <QtCore/QScopeGuard>
+
+#include "GpsTestHelpers.h"
 #include "MAVLinkLib.h"
 #include "MockLink.h"
+#include "PositionManager.h"
 #include "RemoteIDManager.h"
 #include "RemoteIDSettings.h"
 #include "SettingsManager.h"
@@ -11,6 +15,8 @@ namespace {
 
 constexpr const char* kValidFullOperatorID = "FIN87astrdge12k8-xyz";
 constexpr const char* kValidPublicOperatorID = "FIN87astrdge12k8";
+
+using GpsTestHelpers::PositionSource;
 
 }  // namespace
 
@@ -120,6 +126,103 @@ void RemoteIDManagerTest::_operatorIDBroadcastNullPadded()
     for (size_t i = expectedPublicID.size(); i < sizeof(operatorIdMsg.operator_id); i++) {
         QCOMPARE(operatorIdMsg.operator_id[i], '\0');
     }
+}
+
+void RemoteIDManagerTest::_liveGpsFailureDiagnostics_data()
+{
+    QTest::addColumn<int>("error");
+    QTest::addColumn<GPSPositionService::SourceStatus>("status");
+    QTest::addColumn<QString>("diagnostic");
+    QTest::newRow("stale") << int(QGeoPositionInfoSource::NoError) << GPSPositionService::SourceStatus::Stale
+                           << QStringLiteral("Position data is stale");
+    QTest::newRow("inaccurate") << int(QGeoPositionInfoSource::NoError) << GPSPositionService::SourceStatus::InvalidFix
+                                << QStringLiteral("Position fix does not meet accuracy requirements");
+    QTest::newRow("permission-denied")
+        << int(QGeoPositionInfoSource::AccessError) << GPSPositionService::SourceStatus::PermissionDenied
+        << QStringLiteral("GCS GPS data error: %1").arg(QGeoPositionInfoSource::AccessError);
+    QTest::newRow("backend-unavailable")
+        << int(QGeoPositionInfoSource::ClosedError) << GPSPositionService::SourceStatus::BackendUnavailable
+        << QStringLiteral("GCS GPS data error: %1").arg(QGeoPositionInfoSource::ClosedError);
+}
+
+void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
+{
+    QFETCH(int, error);
+    QFETCH(GPSPositionService::SourceStatus, status);
+    QFETCH(QString, diagnostic);
+
+    auto* settings = SettingsManager::instance()->remoteIDSettings();
+    auto* manager = vehicle()->remoteIDManager();
+    auto* positioning = QGCPositionManager::instance();
+    PositionSource source;
+    const auto savedMode = positioning->sourceMode();
+    const auto restore = qScopeGuard([&]() {
+        settings->locationType()->setRawValue(_savedLocationType);
+        positioning->setInternalPositionSource(nullptr, GPSPositionService::SourceStatus::NoSource);
+        positioning->setSourceMode(savedMode);
+    });
+    positioning->setSourceMode(GPSPositionService::SourceMode::InternalOnly);
+    positioning->setInternalPositionSource(&source, GPSPositionService::SourceStatus::WaitingForFix);
+    settings->region()->setRawValue(static_cast<int>(RemoteIDSettings::RegionOperation::FAA));
+    settings->locationType()->setRawValue(RemoteIDManager::LocationTypes::LiveGNSS);
+
+    QCOMPARE(positioning->sourceStatus(), GPSPositionService::SourceStatus::WaitingForFix);
+    QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
+    QVERIFY(!manager->gcsPositionUsable());
+
+    QGeoPositionInfo fix(QGeoCoordinate(47, 8, 500), QDateTime::currentDateTimeUtc());
+    fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+    fix.setAttribute(QGeoPositionInfo::VerticalAccuracy, 1);
+    source.publish(fix);
+    QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
+    QVERIFY(manager->gcsPositionUsable());
+
+    mavlink_message_t message{};
+    mavlink_open_drone_id_system_t system{};
+    QTRY_VERIFY_WITH_TIMEOUT(
+        ([&]() {
+            if (!mockLink()->lastReceivedMavlinkMessage(MAVLINK_MSG_ID_OPEN_DRONE_ID_SYSTEM, message)) {
+                return false;
+            }
+            mavlink_msg_open_drone_id_system_decode(&message, &system);
+            return system.operator_latitude == 470000000 && system.operator_longitude == 80000000;
+        })(),
+        5000);
+
+    expectLogMessage("Vehicle.RemoteIDManager", QtWarningMsg,
+                     QRegularExpression(QRegularExpression::escape(diagnostic)));
+    if (error != QGeoPositionInfoSource::NoError) {
+        source.fail(static_cast<QGeoPositionInfoSource::Error>(error));
+    } else if (status == GPSPositionService::SourceStatus::Stale) {
+        positioning->sourceHealth()->setFreshnessTimeoutMs(1);
+    } else {
+        fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 101);
+        source.publish(fix);
+    }
+    QTRY_COMPARE_WITH_TIMEOUT(positioning->sourceStatus(), status, 1000);
+    QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
+    verifyExpectedLogMessage();
+    QVERIFY(!manager->gcsPositionUsable());
+    QVERIFY(!positioning->geoPositionInfo().isValid());
+    QVERIFY(!positioning->gcsPositionTimestamp().isValid());
+
+    QTRY_VERIFY_WITH_TIMEOUT(
+        ([&]() {
+            if (!mockLink()->lastReceivedMavlinkMessage(MAVLINK_MSG_ID_OPEN_DRONE_ID_SYSTEM, message)) {
+                return false;
+            }
+            mavlink_msg_open_drone_id_system_decode(&message, &system);
+            return system.operator_latitude == 0 && system.operator_longitude == 0;
+        })(),
+        5000);
+
+    positioning->sourceHealth()->setFreshnessTimeoutMs(5000);
+    fix.setTimestamp(QDateTime::currentDateTimeUtc());
+    fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+    source.publish(fix);
+    QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
+    QVERIFY(manager->gcsPositionUsable());
+    QCOMPARE(positioning->gcsPosition(), fix.coordinate());
 }
 
 UT_REGISTER_TEST(RemoteIDManagerTest, TestLabel::Integration, TestLabel::Vehicle)

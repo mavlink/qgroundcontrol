@@ -33,8 +33,9 @@ void GPSPositionSourceAdapter::_disconnectSource()
         QObject::disconnect(connection);
     }
     _connections.clear();
-    const bool wasActive = std::exchange(_active, false);
-    if (_source && wasActive && !_providedHealth) {
+    _active = false;
+    const bool updatesStarted = std::exchange(_updatesStarted, false);
+    if (_source && updatesStarted) {
         _source->stopUpdates();
     }
 }
@@ -84,7 +85,7 @@ void GPSPositionSourceAdapter::configure(QObject* producer, GPSSourceHealth* hea
     _connections.append(connect(_source, &QGeoPositionInfoSource::positionUpdated, this,
                                 [this, generation](const QGeoPositionInfo& position) {
                                     if (_generation == generation && _active && !_providedHealth) {
-                                        updatePosition(position);
+                                        _updatePosition(position);
                                     }
                                 }));
     _connections.append(connect(
@@ -93,8 +94,11 @@ void GPSPositionSourceAdapter::configure(QObject* producer, GPSSourceHealth* hea
                 return;
             }
             const QPointer<GPSPositionSourceAdapter> errorGuard(this);
+            const quint64 revision = ++_backendRevision;
             emit backendError(error);
-            if (errorGuard && _generation == generation && error != QGeoPositionInfoSource::NoError) {
+            if (errorGuard && _generation == generation && revision == _backendRevision && _active && _source &&
+                !_providedHealth && error != QGeoPositionInfoSource::NoError &&
+                error != QGeoPositionInfoSource::UpdateTimeoutError) {
                 _fallbackHealth.invalidatePosition();
             }
         }));
@@ -106,13 +110,16 @@ void GPSPositionSourceAdapter::setActive(bool active)
         return;
     }
     _active = active;
+    ++_backendRevision;
     if (_providedHealth || !_source) {
         return;
     }
     const QPointer<GPSPositionSourceAdapter> guard(this);
     const quint64 generation = _generation;
     if (!active) {
-        _source->stopUpdates();
+        if (std::exchange(_updatesStarted, false)) {
+            _source->stopUpdates();
+        }
         if (guard && generation == _generation && !_active) {
             _fallbackHealth.reset();
         }
@@ -130,6 +137,7 @@ void GPSPositionSourceAdapter::setActive(bool active)
     _source->setUpdateInterval(updateInterval());
 #endif
     if (guard && generation == _generation && _source && _active) {
+        _updatesStarted = true;
         _source->startUpdates();
     }
 }
@@ -139,12 +147,14 @@ int GPSPositionSourceAdapter::updateInterval() const
     return _platform && _source ? _source->minimumUpdateInterval() : 0;
 }
 
-void GPSPositionSourceAdapter::updatePosition(const QGeoPositionInfo& position)
+void GPSPositionSourceAdapter::_updatePosition(const QGeoPositionInfo& position)
 {
     const QPointer<GPSPositionSourceAdapter> guard(this);
     const quint64 generation = _generation;
+    const quint64 revision = ++_backendRevision;
     emit backendError(QGeoPositionInfoSource::NoError);
-    if (!guard || generation != _generation) {
+    if (!guard || generation != _generation || revision != _backendRevision || !_active || !_source ||
+        _providedHealth) {
         return;
     }
     GPSObservation observation;

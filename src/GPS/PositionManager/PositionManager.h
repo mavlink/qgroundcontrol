@@ -31,7 +31,6 @@ private:
     void _handlePermissionStatus(Qt::PermissionStatus permissionStatus);
     void _checkPermission();
 
-    QPointer<QGeoPositionInfoSource> _platformSource;
     std::unique_ptr<QNmeaPositionInfoSource> _nmeaSource;
     GPSPositionSourceRegistration _nmeaRegistration;
     QMetaObject::Connection _nmeaDeviceDestroyedConnection;

@@ -3,7 +3,6 @@
 # EXIF, APMDataFlash (ArduPilot DataFlash binary log), PX4ULog (PX4 ULog), JSON
 # ============================================================================
 
-add_subdirectory(Wire)
 add_subdirectory(Json)
 
 qt_add_library(QGCParsing STATIC

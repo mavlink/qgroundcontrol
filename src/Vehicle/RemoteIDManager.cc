@@ -311,20 +311,26 @@ void RemoteIDManager::_sendSystem()
             gcsPosition.setAltitude(fixCoordinate.altitude());
         }
 
-        if (!geoPositionInfo.isValid()) {
-            // Only warn if we've previously received a valid fix; otherwise the source is
-            // still initializing and the absence of data is expected, not an error.
-            _updateGcsPositionStatus(false, gcsPositionTimestamp.isValid()
-                                            ? QStringLiteral("GCS GPS data is not valid.")
-                                            : QString());
-        } else if (positionManager->gcsPositioningError() != QGeoPositionInfoSource::NoError && positionManager->gcsPositioningError() != QGeoPositionInfoSource::UpdateTimeoutError) {
-            _updateGcsPositionStatus(false, QString("GCS GPS data error: %1").arg(positionManager->gcsPositioningError()));
+        const auto sourceStatus = positionManager->sourceStatus();
+        const auto positioningError = positionManager->gcsPositioningError();
+        if (positioningError != QGeoPositionInfoSource::NoError &&
+            positioningError != QGeoPositionInfoSource::UpdateTimeoutError) {
+            _updateGcsPositionStatus(false, QString("GCS GPS data error: %1").arg(positioningError));
+        } else if (sourceStatus != GPSPositionService::SourceStatus::Active) {
+            const bool waiting = sourceStatus == GPSPositionService::SourceStatus::WaitingForFix ||
+                                 sourceStatus == GPSPositionService::SourceStatus::PermissionRequired;
+            _updateGcsPositionStatus(false, waiting ? QString() : positionManager->sourceStatusText());
+        } else if (!geoPositionInfo.isValid()) {
+            _updateGcsPositionStatus(false, QStringLiteral("GCS GPS data is not valid."));
         } else if (!gcsPosition.isValid() || gcsPosition.type() == QGeoCoordinate::InvalidCoordinate) {
             _updateGcsPositionStatus(false, "GCS GPS data error: Invalid coordinate type.");
-        } else if (_settings->region()->rawValue().toInt() == static_cast<int>(RemoteIDSettings::RegionOperation::FAA) && gcsPosition.type() != QGeoCoordinate::Coordinate3D) {
+        } else if (_settings->region()->rawValue().toInt() ==
+                       static_cast<int>(RemoteIDSettings::RegionOperation::FAA) &&
+                   gcsPosition.type() != QGeoCoordinate::Coordinate3D) {
             // FAA requires altitude data, or else the GPS data is not good
             _updateGcsPositionStatus(false, "GCS GPS data error: Altitude data is mandatory for FAA regions.");
-        } else if (!gcsPositionTimestamp.isValid() || (gcsPositionTimestamp.msecsTo(QDateTime::currentDateTimeUtc()) > ALLOWED_GPS_DELAY)) {
+        } else if (!gcsPositionTimestamp.isValid() ||
+                   (gcsPositionTimestamp.msecsTo(QDateTime::currentDateTimeUtc()) > ALLOWED_GPS_DELAY)) {
             _updateGcsPositionStatus(false, "GCS GPS data is older than 5 seconds");
         } else {
             _updateGcsPositionStatus(true);

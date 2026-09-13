@@ -1,16 +1,17 @@
 #pragma once
 
 #include <QtPositioning/QGeoPositionInfoSource>
+
+#include "ScheduledTask.h"
 class Vehicle;
-class QTimer;
 
 class SimulatedPosition : public QGeoPositionInfoSource
 {
    Q_OBJECT
 
 public:
-    SimulatedPosition(QObject* parent = nullptr);
-    ~SimulatedPosition();
+    explicit SimulatedPosition(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
+    ~SimulatedPosition() override;
 
     QGeoPositionInfo lastKnownPosition(bool /*fromSatellitePositioningMethodsOnly = false*/) const final { return _lastPosition; }
 
@@ -29,7 +30,11 @@ private slots:
     void _vehicleHomePositionChanged(QGeoCoordinate homePosition);
 
 private:
-    QTimer *_updateTimer = nullptr;
+    void _scheduleUpdate();
+
+    QPointer<RuntimeScheduler> _scheduler;
+    ScheduledTask _updateTask;
+    quint64 _lastUpdateUs = 0;
     QGeoPositionInfo _lastPosition;
     QMetaObject::Connection _homePositionChangedConnection;
 

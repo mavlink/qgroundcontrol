@@ -1,18 +1,8 @@
-if(NOT TARGET QGCWire)
-    add_subdirectory(../Parsing/Wire "${CMAKE_CURRENT_BINARY_DIR}/Wire")
-endif()
+qt_add_library(QGCMath STATIC QGCMath.cc QGCMath.h CRC32.h)
 
-qt_add_library(QGCMath STATIC
-    QGCMath.cc
-    QGCMath.h
-)
+target_link_libraries(QGCMath PUBLIC Qt6::Core)
 
-target_link_libraries(QGCMath
-    PUBLIC
-        Qt6::Core
-    PRIVATE
-        QGCWire
-)
+target_compile_features(QGCMath PUBLIC cxx_std_20)
 
 target_include_directories(QGCMath PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

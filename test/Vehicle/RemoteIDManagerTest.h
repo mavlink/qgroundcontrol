@@ -21,6 +21,8 @@ private slots:
     void _operatorIDBroadcastGating();
     void _operatorIDBroadcastNullPadded();
     void _basicIDMissingFlagFollowsArmStatusError();
+    void _liveGpsFailureDiagnostics_data();
+    void _liveGpsFailureDiagnostics();
 
 private:
     QVariant _savedOperatorIDEU;

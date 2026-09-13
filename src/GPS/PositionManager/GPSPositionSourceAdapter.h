@@ -18,7 +18,6 @@ public:
     void configure(QObject* producer, GPSSourceHealth* health, const QString& identity, bool platform,
                    quint64 sessionId = 0);
     void setActive(bool active);
-    void updatePosition(const QGeoPositionInfo& position);
 
     QObject* source() const { return _producer; }
 
@@ -26,8 +25,6 @@ public:
     {
         return _producer ? (_providedHealth ? _providedHealth.data() : &_fallbackHealth) : nullptr;
     }
-
-    GPSSourceHealth& fallbackHealth() { return _fallbackHealth; }
 
     int updateInterval() const;
 
@@ -38,6 +35,7 @@ signals:
 
 private:
     void _disconnectSource();
+    void _updatePosition(const QGeoPositionInfo& position);
     QPointer<QObject> _producer;
     QPointer<QGeoPositionInfoSource> _source;
     QPointer<GPSSourceHealth> _providedHealth;
@@ -48,5 +46,7 @@ private:
     quint64 _sessionId = 0;
     bool _platform = false;
     bool _active = false;
+    bool _updatesStarted = false;
     quint64 _generation = 0;
+    quint64 _backendRevision = 0;
 };

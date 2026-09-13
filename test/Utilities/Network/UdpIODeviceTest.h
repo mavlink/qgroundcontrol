@@ -8,7 +8,14 @@ class UdpIODeviceTest : public UnitTest
 
 private slots:
     void _selectedPeerIsolation();
+    void _readOnlyBinding();
+    void _boundedDrainPublishesAllData();
+    void _readyReadCanRetireDevice_data();
+    void _readyReadCanRetireDevice();
     void _byteAccountingAndPeek();
+    void _peekedFragmentBeforeNewline();
+    void _skipBufferedData_data();
+    void _skipBufferedData();
     void _fragmentedAndPartialLines();
     void _nmeaStartDiscardsBufferedData();
     void _overflowKeepsNewestLines();
@@ -17,5 +24,7 @@ private slots:
     void _overflowAfterBufferedRead();
     void _repeatedPeekRemainsBounded();
     void _transactionAcrossDatagrams();
+    void _textTransactionAcrossDatagrams();
+    void _textOverflowPreservesLines();
     void _closeClearsBufferedData();
 };

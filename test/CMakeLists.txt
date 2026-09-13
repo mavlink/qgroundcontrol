@@ -60,6 +60,9 @@ endif()
 # Test Subdirectories
 # ============================================================================
 
+add_subdirectory(Utilities/Timing/Support)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCTestTiming)
+
 add_subdirectory(UnitTestFramework)
 add_subdirectory(ADSB)
 add_subdirectory(AnalyzeView)

@@ -28,29 +28,41 @@ QString jsonValueTypeToString(QJsonValue::Type type)
     return QObject::tr("Unknown type: %1").arg(type);
 }
 
+bool validateMissingKeys(const QStringList& missingKeys, QString& errorString)
+{
+    if (missingKeys.isEmpty()) {
+        return true;
+    }
+    errorString =
+        QObject::tr("The following required keys are missing: %1").arg(missingKeys.join(QStringLiteral(", ")));
+    return false;
+}
+
+bool validateValueType(const QString& key, QJsonValue::Type actual, QJsonValue::Type expected, QString& errorString)
+{
+    // Undefined accepts any type; Null allows a double or a JSON null representing NaN.
+    if (expected == QJsonValue::Undefined || actual == expected ||
+        (actual == QJsonValue::Double && expected == QJsonValue::Null)) {
+        return true;
+    }
+    errorString = QObject::tr("Incorrect value type - key:type:expected %1:%2:%3")
+                      .arg(key, jsonValueTypeToString(actual), jsonValueTypeToString(expected));
+    return false;
+}
+
 }  // namespace
 
 namespace JsonParsing {
 
 bool validateRequiredKeys(const QJsonObject& jsonObject, const QStringList& keys, QString& errorString)
 {
-    QString missingKeys;
-
+    QStringList missingKeys;
     for (const QString& key : keys) {
         if (!jsonObject.contains(key)) {
-            if (!missingKeys.isEmpty()) {
-                missingKeys += QStringLiteral(", ");
-            }
-            missingKeys += key;
+            missingKeys.append(key);
         }
     }
-
-    if (!missingKeys.isEmpty()) {
-        errorString = QObject::tr("The following required keys are missing: %1").arg(missingKeys);
-        return false;
-    }
-
-    return true;
+    return validateMissingKeys(missingKeys, errorString);
 }
 
 bool validateKeyTypes(const QJsonObject& jsonObject, const QStringList& keys, const QList<QJsonValue::Type>& types,
@@ -62,51 +74,35 @@ bool validateKeyTypes(const QJsonObject& jsonObject, const QStringList& keys, co
         return false;
     }
 
-    for (qsizetype i = 0; i < types.count(); i++) {
-        const QString& valueKey = keys[i];
-        if (jsonObject.contains(valueKey)) {
-            const QJsonValue& jsonValue = jsonObject[valueKey];
-            if (types[i] == QJsonValue::Undefined) {
-                // Undefined signals any type is acceptable (e.g. "default" whose type follows the fact type).
-                continue;
-            }
-            if ((jsonValue.type() == QJsonValue::Double) && (types[i] == QJsonValue::Null)) {
-                // Null type signals a possible NaN on a double value.
-                continue;
-            }
-            if (jsonValue.type() != types[i]) {
-                errorString =
-                    QObject::tr("Incorrect value type - key:type:expected %1:%2:%3")
-                        .arg(valueKey, jsonValueTypeToString(jsonValue.type()), jsonValueTypeToString(types[i]));
-                return false;
-            }
+    for (qsizetype i = 0; i < types.size(); ++i) {
+        const auto value = jsonObject.constFind(keys[i]);
+        if (value != jsonObject.constEnd() && !validateValueType(keys[i], value->type(), types[i], errorString)) {
+            return false;
         }
     }
-
     return true;
 }
 
 bool validateKeys(const QJsonObject& jsonObject, const QList<KeyValidateInfo>& keyInfo, QString& errorString)
 {
-    QStringList keyList;
-    QList<QJsonValue::Type> typeList;
-
+    QStringList missingKeys;
     for (const KeyValidateInfo& info : keyInfo) {
-        if (info.required) {
-            keyList.append(info.key);
+        const QString key = QString::fromUtf8(info.key);
+        if (info.required && !jsonObject.contains(key)) {
+            missingKeys.append(key);
         }
     }
-    if (!validateRequiredKeys(jsonObject, keyList, errorString)) {
+    if (!validateMissingKeys(missingKeys, errorString)) {
         return false;
     }
-
-    keyList.clear();
     for (const KeyValidateInfo& info : keyInfo) {
-        keyList.append(info.key);
-        typeList.append(info.type);
+        const QString key = QString::fromUtf8(info.key);
+        const auto value = jsonObject.constFind(key);
+        if (value != jsonObject.constEnd() && !validateValueType(key, value->type(), info.type, errorString)) {
+            return false;
+        }
     }
-
-    return validateKeyTypes(jsonObject, keyList, typeList, errorString);
+    return true;
 }
 
 bool validateKeysStrict(const QJsonObject& jsonObject, const QList<KeyValidateInfo>& keyInfo, QString& errorString)
@@ -118,12 +114,12 @@ bool validateKeysStrict(const QJsonObject& jsonObject, const QList<KeyValidateIn
     QSet<QString> expectedKeys;
     expectedKeys.reserve(keyInfo.size());
     for (const KeyValidateInfo& info : keyInfo) {
-        expectedKeys.insert(QLatin1String(info.key));
+        expectedKeys.insert(QString::fromUtf8(info.key));
     }
 
-    for (const QString& key : jsonObject.keys()) {
-        if (!expectedKeys.contains(key)) {
-            errorString = QObject::tr("Unknown key: %1").arg(key);
+    for (auto it = jsonObject.constBegin(); it != jsonObject.constEnd(); ++it) {
+        if (!expectedKeys.contains(it.key())) {
+            errorString = QObject::tr("Unknown key: %1").arg(it.key());
             return false;
         }
     }

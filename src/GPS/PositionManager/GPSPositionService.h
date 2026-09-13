@@ -105,7 +105,7 @@ public:
 
     QGeoPositionInfo geoPositionInfo() const { return _geoPositionInfo; }
 
-    std::optional<GPSObservation> acceptedObservation(GPSObservation::PositionUse use) const;
+    std::optional<GPSObservation> acceptedObservation() const;
 
     QGeoPositionInfoSource::Error gcsPositioningError() const { return _gcsPositioningError; }
 
@@ -118,6 +118,7 @@ public:
 
     int updateInterval() const { return _updateInterval; }
 
+    /// Raw Qt positioning sources require an exclusive binding; shared producers must supply health.
     GPSPositionSourceRegistration registerPositionSource(SelectedSource kind, QObject* source, GPSSourceHealth* health,
                                                          quint64 sessionId = 0);
 
@@ -149,6 +150,7 @@ private:
     const SourceBinding& _binding(SelectedSource kind) const { return _bindings[static_cast<size_t>(kind)]; }
 
     void _retireRegistration(int kind, quint64 token);
+    bool _canBindSource(SelectedSource kind, QObject* source, GPSSourceHealth* health = nullptr) const;
     void _setBinding(SelectedSource kind, QObject* source, GPSSourceHealth* health = nullptr, quint64 sessionId = 0);
     void _setPositionSource(SelectedSource source);
     void _selectPositionSource();
@@ -178,8 +180,7 @@ private:
     bool _forceSourceRefresh = false;
     bool _usingPluginSource = false;
     int _updateInterval = 0;
-    std::optional<GPSObservation> _acceptedSourceObservation(SelectedSource source,
-                                                             GPSObservation::PositionUse use) const;
+    std::optional<GPSObservation> _acceptedSourceObservation(SelectedSource source) const;
     QPointer<GPSSourceHealth> _currentHealth;
     QMetaObject::Connection _healthConnection;
     QMetaObject::Connection _healthDestroyedConnection;
@@ -190,6 +191,7 @@ private:
     QGeoCoordinate _gcsPosition;
     QGeoCoordinate _notifiedPosition;
     qreal _notifiedHeading = qQNaN();
+    qreal _notifiedHorizontalAccuracy = std::numeric_limits<qreal>::infinity();
     QDateTime _gcsPositionTimestamp;
     qreal _gcsHeading = qQNaN();
     qreal _gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();

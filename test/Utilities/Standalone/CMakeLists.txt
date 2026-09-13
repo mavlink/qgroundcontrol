@@ -25,10 +25,23 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(QGCUtilityLibraryTests LANGUAGES CXX)
     enable_testing()
     set(_qgc_utilities_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities")
-    option(QGC_UTILITY_WIRE_ONLY "Build only the Qt-free wire/checksum consumer" OFF)
-    add_subdirectory("${_qgc_utilities_root}/Parsing/Wire" Wire)
-    if(QGC_UTILITY_WIRE_ONLY)
-        qgc_check_utility_consumer(QGCWire)
+    option(QGC_UTILITY_CRC_ONLY "Build only the Qt-free CRC consumer" OFF)
+endif()
+
+add_executable(CRC32Consumer Consumers/CRC32.cc)
+set_target_properties(
+    CRC32Consumer
+    PROPERTIES AUTOMOC OFF
+               AUTOUIC OFF
+               AUTORCC OFF
+)
+target_compile_features(CRC32Consumer PRIVATE cxx_std_20)
+target_include_directories(CRC32Consumer PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities/Math")
+add_test(NAME CRC32Consumer COMMAND CRC32Consumer)
+set_tests_properties(CRC32Consumer PROPERTIES LABELS "Unit;Utilities" TIMEOUT 30)
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    if(QGC_UTILITY_CRC_ONLY)
         return()
     endif()
     find_package(Qt6 6.8 REQUIRED COMPONENTS Core Network Test)
@@ -39,29 +52,18 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     add_subdirectory("${_qgc_utilities_root}/Parsing/Json" JsonValidation)
 endif()
 
+if(NOT TARGET QGCTestTiming)
+    add_subdirectory(../Timing/Support TestTiming)
+endif()
+
 add_executable(QGCUtilityLibraryTest UtilityLibraryTest.cc)
 set_target_properties(QGCUtilityLibraryTest PROPERTIES AUTOMOC ON)
-target_link_libraries(
-    QGCUtilityLibraryTest
-    PRIVATE QGCIO
-            QGCTiming
-            QGCNetworkIO
-            QGCWire
-            QGCJsonValidation
-            QGCLoggingCategory
-            Qt6::Test
+target_link_libraries(QGCUtilityLibraryTest PRIVATE QGCIO QGCTestTiming QGCNetworkIO QGCJsonValidation
+                                                    QGCLoggingCategory Qt6::Test
 )
 add_test(NAME UtilityLibraryTest COMMAND QGCUtilityLibraryTest)
 set_tests_properties(UtilityLibraryTest PROPERTIES LABELS "Unit;Utilities" TIMEOUT 30)
 
-foreach(target QGCWire QGCIO QGCTiming QGCNetworkIO QGCLoggingCategory QGCJsonValidation)
+foreach(target QGCIO QGCTiming QGCNetworkIO QGCLoggingCategory QGCJsonValidation)
     qgc_check_utility_consumer(${target})
 endforeach()
-
-find_package(Threads REQUIRED)
-add_executable(TimestampedByteBufferTest TimestampedByteBufferTest.cc)
-set_target_properties(TimestampedByteBufferTest PROPERTIES AUTOMOC ON)
-target_compile_features(TimestampedByteBufferTest PRIVATE cxx_std_20)
-target_link_libraries(TimestampedByteBufferTest PRIVATE QGCIO Qt6::Test Threads::Threads)
-add_test(NAME TimestampedByteBufferTest COMMAND TimestampedByteBufferTest)
-set_tests_properties(TimestampedByteBufferTest PROPERTIES LABELS "Unit;Utilities" TIMEOUT 30)

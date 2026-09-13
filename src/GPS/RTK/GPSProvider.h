@@ -11,9 +11,8 @@
 #include <functional>
 #include <memory>
 
-#include "GPSConnectionError.h"
-#include "GPSDriver.h"  // facade; also publishes GPSReceiverConfig + the GNSS data structs relayed below
-#include "GPSType.h"
+#include "GPSDriver.h"
+#include "GPSReceiverTypes.h"
 
 class GPSTransport;
 
@@ -25,7 +24,7 @@ public:
     /// Consumed by run(), so transport construction, I/O and destruction share the worker thread.
     using TransportFactory = std::function<std::unique_ptr<GPSTransport>(const std::atomic_bool&)>;
 
-    GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
+    GPSProvider(TransportFactory transportFactory, GPSReceiverType type, const GPSReceiverConfig& config,
                 QObject* parent = nullptr);
 
     void stop() { _requestStop = true; }
@@ -42,7 +41,7 @@ private:
     void run() final;
 
     TransportFactory _transportFactory;
-    GPSType _type;
+    GPSReceiverType _type;
     std::atomic_bool _requestStop = false;
     GPSReceiverConfig _config{};
 

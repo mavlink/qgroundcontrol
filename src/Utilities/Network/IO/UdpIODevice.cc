@@ -1,24 +1,72 @@
 #include "UdpIODevice.h"
 
+#include <QtCore/QPointer>
+#include <QtCore/QScopeGuard>
 #include <QtNetwork/QNetworkDatagram>
 
 #include <algorithm>
 
 #include "QGCLoggingCategory.h"
-#include "UdpPeer.h"
 
 QGC_LOGGING_CATEGORY(UdpIODeviceLog, "Utilities.UdpIODevice")
 
-UdpIODevice::UdpIODevice(QObject* parent) : QUdpSocket(parent)
+namespace {
+QString udpPeerKey(const QHostAddress& address, quint16 port)
+{
+    return address.toString() + QLatin1Char(':') + QString::number(port);
+}
+
+struct UdpDrainBudget
+{
+    static constexpr qsizetype MAX_DATAGRAMS = 16;
+    static constexpr qsizetype MAX_BYTES = 64 * 1024;
+    qsizetype datagrams = 0;
+    qsizetype bytes = 0;
+
+    bool available() const { return datagrams < MAX_DATAGRAMS && bytes < MAX_BYTES; }
+
+    void consume(qsizetype size)
+    {
+        ++datagrams;
+        bytes += size;
+    }
+};
+}  // namespace
+
+UdpIODevice::UdpIODevice(QObject* parent) : QIODevice(parent), _socket(this)
 {
     qCDebug(UdpIODeviceLog) << this;
 
-    (void) connect(this, &QUdpSocket::readyRead, this, &UdpIODevice::_readAvailableData);
+    connect(&_socket, &QUdpSocket::readyRead, this, &UdpIODevice::_readAvailableData);
+    connect(&_socket, &QUdpSocket::errorOccurred, this, [this]() { setErrorString(_socket.errorString()); });
 }
 
 UdpIODevice::~UdpIODevice()
 {
     qCDebug(UdpIODeviceLog) << this;
+}
+
+bool UdpIODevice::bind(const QHostAddress& address, quint16 port)
+{
+    const QPointer<UdpIODevice> guard(this);
+    close();
+    if (!guard) {
+        return false;
+    }
+    if (!_socket.bind(address, port)) {
+        setErrorString(_socket.errorString());
+        return false;
+    }
+    return open(ReadOnly);
+}
+
+bool UdpIODevice::open(OpenMode mode)
+{
+    if (_socket.state() != QAbstractSocket::BoundState || !(mode & ReadOnly) || (mode & WriteOnly)) {
+        setErrorString(tr("UDP stream requires a bound socket and read-only mode"));
+        return false;
+    }
+    return QIODevice::open(mode);
 }
 
 qint64 UdpIODevice::bytesAvailable() const
@@ -54,14 +102,19 @@ void UdpIODevice::close()
     _selectedPeer.clear();
     _buffer.clear();
     _discardUntilNewline = false;
-    QUdpSocket::close();
+    _socket.close();
+    QIODevice::close();
 }
 
 void UdpIODevice::_readAvailableData()
 {
+    if (!isOpen()) {
+        return;
+    }
     UdpDrainBudget budget;
-    while (hasPendingDatagrams() && budget.available()) {
-        const QNetworkDatagram datagram = receiveDatagram();
+    bool receivedData = false;
+    while (_socket.hasPendingDatagrams() && budget.available()) {
+        const QNetworkDatagram datagram = _socket.receiveDatagram();
         if (!datagram.isValid()) {
             break;
         }
@@ -88,6 +141,10 @@ void UdpIODevice::_readAvailableData()
             start = newline + 1;
             _discardUntilNewline = false;
         }
+        // QIODevice counts retained bytes before Text mode removes carriage returns.
+        const bool textMode = isTextModeEnabled();
+        setTextModeEnabled(false);
+        const auto restoreTextMode = qScopeGuard([this, textMode]() { setTextModeEnabled(textMode); });
         qint64 transactionBytes = -1;
         if (isTransactionStarted()) {
             // Consumed transaction bytes are retained by Qt but excluded from
@@ -97,6 +154,7 @@ void UdpIODevice::_readAvailableData()
             transactionBytes = QIODevice::bytesAvailable() - unreadBytes;
         }
         _buffer.append(data.constData() + start, data.size() - start);
+        receivedData |= data.size() > start;
         if (bytesAvailable() > kMaxBufferedBytes) {
             // peek() and short reads retain a prefix in QIODevice. Include it in
             // the same overflow decision so dropped input cannot join two lines.
@@ -116,7 +174,7 @@ void UdpIODevice::_readAvailableData()
             (void) skip(transactionBytes);
         }
     }
-    if (hasPendingDatagrams() && !_drainScheduled) {
+    if (_socket.hasPendingDatagrams() && !_drainScheduled) {
         _drainScheduled = true;
         const auto generation = _generation;
         QMetaObject::invokeMethod(
@@ -124,9 +182,17 @@ void UdpIODevice::_readAvailableData()
             [this, generation]() {
                 if (generation == _generation) {
                     _drainScheduled = false;
-                    emit readyRead();
+                    _readAvailableData();
                 }
             },
             Qt::QueuedConnection);
+    }
+    if (receivedData && bytesAvailable() > 0 && !_emittingReadyRead) {
+        _emittingReadyRead = true;
+        const QPointer<UdpIODevice> guard(this);
+        emit readyRead();
+        if (guard) {
+            _emittingReadyRead = false;
+        }
     }
 }

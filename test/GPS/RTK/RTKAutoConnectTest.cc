@@ -164,7 +164,7 @@ void RTKAutoConnectTest::_failedOpenRetriesWithoutUnplug()
     discovery._connectDelayMs = 0;
     QSignalSpy attempts(&discovery, &RTKAutoConnect::connectRequested);
     connect(&discovery, &RTKAutoConnect::connectRequested, &receiver,
-            [&]() { receiver.connectReceiver(GPSType::u_blox, {}); });
+            [&]() { receiver.connectReceiver(GPSReceiverType::ublox, {}); });
     expectLogMessage("GPS.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
     discovery.update();

@@ -12,6 +12,7 @@
 #include "ManualScheduler.h"
 #include "NMEAUtils.h"
 #include "PositionManager.h"
+#include "SimulatedPosition.h"
 
 namespace {
 
@@ -217,4 +218,54 @@ void PositionManagerTest::_deviceDestructionRetiresNmea()
     device.reset();
     QCOMPARE(service.selectedSource(), GPSPositionService::SelectedSource::None);
     QVERIFY(!service.gcsPosition().isValid());
+}
+
+void PositionManagerTest::_simulatedPosition_data()
+{
+    QTest::addColumn<int>("intervalMs");
+    QTest::newRow("one-second") << 1000;
+    QTest::newRow("two-seconds") << 2000;
+}
+
+void PositionManagerTest::_simulatedPosition()
+{
+    QFETCH(int, intervalMs);
+    ManualScheduler scheduler;
+    SimulatedPosition source(nullptr, &scheduler);
+    GPSPositionService service(nullptr, &scheduler);
+    service.setSimulatedPositionSource(&source);
+    source.stopUpdates();
+    source.setUpdateInterval(intervalMs);
+    source.startUpdates();
+    const auto origin = source.lastKnownPosition(false).coordinate();
+    const auto before = QDateTime::currentDateTimeUtc();
+    QSignalSpy positions(&source, &QGeoPositionInfoSource::positionUpdated);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(intervalMs)));
+    QCOMPARE(positions.size(), 1);
+    QVERIFY(service.acceptedObservation());
+    QCOMPARE(service.selectedSource(), GPSPositionService::SelectedSource::Simulated);
+    QCOMPARE(service.gcsPosition().type(), QGeoCoordinate::Coordinate3D);
+    QVERIFY(qAbs(origin.distanceTo(service.gcsPosition()) - 0.5 * intervalMs / 1000.0) < 0.001);
+    QVERIFY(qAbs(service.gcsPosition().altitude() - origin.altitude() - 0.1 * intervalMs / 1000.0) < 0.001);
+    const auto timestamp = service.geoPositionInfo().timestamp();
+    QCOMPARE(timestamp.timeSpec(), Qt::UTC);
+    QVERIFY(timestamp >= before);
+    QVERIFY(timestamp <= QDateTime::currentDateTimeUtc());
+
+    source.stopUpdates();
+    const auto stopped = service.gcsPosition();
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(10)));
+    QCOMPARE(positions.size(), 1);
+    QVERIFY(!service.acceptedObservation());
+    source.startUpdates();
+    source.startUpdates();
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(intervalMs)));
+    QCOMPARE(positions.size(), 2);
+    QVERIFY(service.acceptedObservation());
+    QVERIFY(qAbs(stopped.distanceTo(service.gcsPosition()) - 0.5 * intervalMs / 1000.0) < 0.001);
+    connect(&source, &QGeoPositionInfoSource::positionUpdated, &source, &SimulatedPosition::stopUpdates);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(intervalMs)));
+    QCOMPARE(positions.size(), 3);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(10)));
+    QCOMPARE(positions.size(), 3);
 }

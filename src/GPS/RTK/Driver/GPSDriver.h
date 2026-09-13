@@ -7,9 +7,7 @@
 #include <functional>
 #include <memory>
 
-#include "GPSReceiverConfig.h"
-#include "GPSSurveyInStatus.h"
-#include "GPSType.h"
+#include "GPSReceiverTypes.h"
 #include "satellite_info.h"
 #include "sensor_gps.h"
 
@@ -32,7 +30,7 @@ struct GPSDriverSinks
 class GPSDriver
 {
 public:
-    GPSDriver(GPSType type, GPSTransport &transport, const GPSReceiverConfig &config, GPSDriverSinks sinks);
+    GPSDriver(GPSReceiverType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks);
     ~GPSDriver();
 
     GPSDriver(const GPSDriver &) = delete;
@@ -51,7 +49,7 @@ public:
     int handleCallback(int type, void *data1, int data2);
 
 private:
-    GPSType _type;
+    GPSReceiverType _type;
     GPSTransport &_transport;
     GPSReceiverConfig _config;
     GPSDriverSinks _sinks;
