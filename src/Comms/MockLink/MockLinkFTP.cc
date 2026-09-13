@@ -49,7 +49,7 @@ void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId
 
     if (withTime && !_listDirectoryWithTimeSupported) {
         // Simulate a server which doesn't implement the command. The client should fall back to kCmdListDirectory.
-        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrUnknownCommand, outgoingSeqNumber, listOpCode);
+        _sendNak(senderSystemId, senderComponentId, _listDirectoryWithTimeNakError, outgoingSeqNumber, listOpCode);
         return;
     }
 

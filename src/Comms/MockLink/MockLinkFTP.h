@@ -78,8 +78,12 @@ public:
     void setErrorMode(ErrorMode_t errMode) { _errMode = errMode; };
 
     /// Controls whether the server implements the kCmdListDirectoryWithTime command. When false the
-    /// server Naks it with kErrUnknownCommand so the client fallback to kCmdListDirectory can be tested.
+    /// server Naks it (see setListDirectoryWithTimeNakError) so the client fallback to kCmdListDirectory can be tested.
     void setListDirectoryWithTimeSupported(bool supported) { _listDirectoryWithTimeSupported = supported; }
+
+    /// Error code used to Nak kCmdListDirectoryWithTime when unsupported. PX4 replies kErrUnknownCommand,
+    /// ArduPilot replies kErrFail.
+    void setListDirectoryWithTimeNakError(MavlinkFTP::ErrorCode_t error) { _listDirectoryWithTimeNakError = error; }
 
     /// Array of failure modes you can cycle through for testing. By looping through this array you can avoid
     /// hardcoding the specific error modes in your unit test. This way when new error modes are added your unit test
@@ -148,6 +152,7 @@ private:
     int _burstReadDelayMs = 0;                  ///< Per-burst delay to simulate a slow link
     ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
     bool _listDirectoryWithTimeSupported = true; ///< Whether the server implements kCmdListDirectoryWithTime
+    MavlinkFTP::ErrorCode_t _listDirectoryWithTimeNakError = MavlinkFTP::kErrUnknownCommand;
     bool _paramPckEnabled = true;               ///< Serve @PARAM/param.pck; false NAKs errno ENOENT
     mavlink_message_t _lastReply{};
     QFile _currentFile;

@@ -999,11 +999,14 @@ void FTPManager::_listDirectoryAckOrNak(const MavlinkFTP::Request* ackOrNak)
                 }
                 _advanceStateMachine();
             }
-        } else if (errorCode == MavlinkFTP::kErrUnknownCommand && _listDirectoryState.opCode == MavlinkFTP::kCmdListDirectoryWithTime) {
+        } else if (_listDirectoryState.opCode == MavlinkFTP::kCmdListDirectoryWithTime &&
+                   (errorCode == MavlinkFTP::kErrUnknownCommand ||
+                    (errorCode == MavlinkFTP::kErrFail && _listDirWithTimeSupport == WithTimeSupport_t::Unknown))) {
             // Server doesn't implement kCmdListDirectoryWithTime. Remember that, fall back to the
-            // plain listing and restart from the beginning. The UnknownCommand Nak is a definitive
-            // capability statement so we act on it without a strict sequence check; the restart is
-            // idempotent (offset and accumulated entries are reset).
+            // plain listing and restart from the beginning. ArduPilot Naks unknown opcodes with a
+            // generic kErrFail rather than kErrUnknownCommand, so kErrFail is also treated as
+            // unsupported while probing. We act on it without a strict sequence check; the restart
+            // is idempotent (offset and accumulated entries are reset).
             qCDebug(FTPManagerLog) << "_listDirectoryAckOrNak: kCmdListDirectoryWithTime unsupported, falling back to kCmdListDirectory";
             _listDirWithTimeSupport             = WithTimeSupport_t::Unsupported;
             _listDirectoryState.opCode          = MavlinkFTP::kCmdListDirectory;
