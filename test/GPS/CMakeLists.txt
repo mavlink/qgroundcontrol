@@ -13,3 +13,8 @@ add_subdirectory(NTRIP)
 add_subdirectory(PositionManager)
 add_subdirectory(RTCM)
 add_subdirectory(RTK)
+
+add_subdirectory(Contracts)
+add_subdirectory(Core)
+add_subdirectory(Models)
+add_subdirectory(Standalone)

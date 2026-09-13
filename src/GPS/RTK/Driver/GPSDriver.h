@@ -1,9 +1,5 @@
 #pragma once
 
-#include "GPSType.h"
-#include "satellite_info.h"
-#include "sensor_gps.h"
-
 #include <QtCore/QByteArray>
 #include <QtCore/QMetaType>
 
@@ -11,34 +7,14 @@
 #include <functional>
 #include <memory>
 
+#include "GPSReceiverConfig.h"
+#include "GPSSurveyInStatus.h"
+#include "GPSType.h"
+#include "satellite_info.h"
+#include "sensor_gps.h"
+
 class GPSTransport;
 class GPSBaseStationSupport;
-
-/// RTK base-station configuration, decoupled from QGC settings types.
-struct GPSReceiverConfig
-{
-    bool useFixedBase = false;
-    double surveyInAccMeters = 0.0;
-    int surveyInDurationSecs = 0;
-    double fixedBaseLatitude = 0.0;
-    double fixedBaseLongitude = 0.0;
-    float fixedBaseAltitudeMeters = 0.0f;
-    float fixedBaseAccuracyMeters = 0.0f;
-    float headingOffsetDeg = 5.0f;  // dual-antenna heading offset; consumed only by the Septentrio (SBF) driver
-};
-
-/// Survey-in progress, translated from the px4 SurveyInStatus.
-struct GPSSurveyInStatus
-{
-    double latitude = 0.0;
-    double longitude = 0.0;
-    float altitude = 0.0f;
-    uint32_t meanAccuracyMM = 0;
-    uint32_t durationSecs = 0;
-    bool valid = false;
-    bool active = false;
-};
-Q_DECLARE_METATYPE(GPSSurveyInStatus)
 
 /// Sinks the driver pushes decoded data into, invoked on the caller thread from
 /// within configure()/receive().

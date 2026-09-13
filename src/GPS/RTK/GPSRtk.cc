@@ -95,7 +95,8 @@ void GPSRtk::_onGPSConnectionError(GPSConnectionError error)
 void GPSRtk::_onGPSSurveyInStatus(const GPSSurveyInStatus& status)
 {
     _gpsRtkFactGroup->currentDuration()->setRawValue(status.durationSecs);
-    _gpsRtkFactGroup->currentAccuracy()->setRawValue(static_cast<double>(status.meanAccuracyMM) / 1000.0);
+    _gpsRtkFactGroup->currentAccuracy()->setRawValue(
+        status.meanAccuracyMM ? static_cast<double>(*status.meanAccuracyMM) / 1000.0 : qQNaN());
     _gpsRtkFactGroup->currentLatitude()->setRawValue(status.latitude);
     _gpsRtkFactGroup->currentLongitude()->setRawValue(status.longitude);
     _gpsRtkFactGroup->currentAltitude()->setRawValue(status.altitude);
@@ -141,13 +142,16 @@ void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
         static_cast<BaseModeDefinition::Mode>(rtkSettings->useFixedBasePosition()->rawValue().toInt()) ==
         BaseModeDefinition::Mode::BaseFixed;
     const GPSReceiverConfig rtkConfig = {
-        .useFixedBase = useFixedBase,
-        .surveyInAccMeters = rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),
-        .surveyInDurationSecs = rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(),
-        .fixedBaseLatitude = rtkSettings->fixedBasePositionLatitude()->rawValue().toDouble(),
-        .fixedBaseLongitude = rtkSettings->fixedBasePositionLongitude()->rawValue().toDouble(),
-        .fixedBaseAltitudeMeters = rtkSettings->fixedBasePositionAltitude()->rawValue().toFloat(),
-        .fixedBaseAccuracyMeters = rtkSettings->fixedBasePositionAccuracy()->rawValue().toFloat(),
+        .base =
+            {
+                .useFixedBase = useFixedBase,
+                .surveyInAccMeters = rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),
+                .surveyInDurationSecs = rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(),
+                .fixedBaseLatitude = rtkSettings->fixedBasePositionLatitude()->rawValue().toDouble(),
+                .fixedBaseLongitude = rtkSettings->fixedBasePositionLongitude()->rawValue().toDouble(),
+                .fixedBaseAltitudeMeters = rtkSettings->fixedBasePositionAltitude()->rawValue().toFloat(),
+                .fixedBaseAccuracyMeters = rtkSettings->fixedBasePositionAccuracy()->rawValue().toFloat(),
+            },
     };
     _gpsProvider = new GPSProvider(std::move(transportFactory), type, rtkConfig, this);
     const QPointer<GPSProvider> provider = _gpsProvider;

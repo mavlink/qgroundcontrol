@@ -36,6 +36,14 @@ GPSDriver::~GPSDriver() = default;
 
 bool GPSDriver::configure()
 {
+    // The current PX4 facade configures RTCM base output; the shared contract also serves future position drivers.
+    if (_config.role != GPSReceiverConfig::Role::RTKBase ||
+        _config.outputProtocol != GPSReceiverConfig::OutputProtocol::Native || _config.constellationMask != 0 ||
+        _config.dynamicModel != 0 || _config.outputRateHz != 0) {
+        qCWarning(GPSDriverLog) << "Unsupported configuration for the RTK base driver";
+        return false;
+    }
+
     unsigned baudrate = 0;
     switch (_type) {
     case GPSType::trimble:
@@ -71,12 +79,12 @@ bool GPSDriver::configure()
         return false;
     }
 
-    if (_config.useFixedBase) {
-        _driver->setBasePosition(_config.fixedBaseLatitude, _config.fixedBaseLongitude,
-                                 _config.fixedBaseAltitudeMeters, _config.fixedBaseAccuracyMeters * 1000.0f);
+    if (_config.base.useFixedBase) {
+        _driver->setBasePosition(_config.base.fixedBaseLatitude, _config.base.fixedBaseLongitude,
+                                 _config.base.fixedBaseAltitudeMeters, _config.base.fixedBaseAccuracyMeters * 1000.0f);
     } else {
-        _driver->setSurveyInSpecs(static_cast<uint32_t>(_config.surveyInAccMeters * 10000.0),
-                                  static_cast<uint32_t>(_config.surveyInDurationSecs));
+        _driver->setSurveyInSpecs(static_cast<uint32_t>(_config.base.surveyInAccMeters * 10000.0),
+                                  static_cast<uint32_t>(_config.base.surveyInDurationSecs));
     }
 
     GPSHelper::GPSConfig gpsConfig{};

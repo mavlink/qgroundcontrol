@@ -15,8 +15,9 @@ I/O, wire-decoding and JSON-validation targets without QML, application settings
 or external GPS dependencies.
 
 Each utility declares its public headers with a CMake `HEADERS` file set. The
-build compiles every header in isolation and builds a separate consumer that
-links only its owning target, preventing accidental dependencies between tests.
+default build runs CMake's `VERIFY_INTERFACE_HEADER_SETS` checks and builds a
+separate consumer that links only its owning target, preventing accidental
+dependencies between tests.
 
 `UtilityLibraryTest` covers wire values, CRC, scheduling, JSON validation and
 logging registration. `TimestampedByteBufferTest` covers partial reads, retained

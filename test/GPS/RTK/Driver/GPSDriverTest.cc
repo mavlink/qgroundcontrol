@@ -243,3 +243,38 @@ void GPSDriverTest::_testUnknownCallbackIgnored()
 }
 
 UT_REGISTER_TEST(GPSDriverTest, TestLabel::Unit)
+
+void GPSDriverTest::_testUnsupportedConfigurationDoesNotTouchReceiver_data()
+{
+    QTest::addColumn<GPSReceiverConfig>("config");
+    GPSReceiverConfig config;
+    config.role = GPSReceiverConfig::Role::Position;
+    QTest::newRow("position") << config;
+    config = {};
+    config.outputProtocol = GPSReceiverConfig::OutputProtocol::NMEA;
+    QTest::newRow("nmea-output") << config;
+    config = {};
+    config.constellationMask = 1;
+    QTest::newRow("constellations") << config;
+    config = {};
+    config.dynamicModel = 4;
+    QTest::newRow("dynamic-model") << config;
+    config = {};
+    config.outputRateHz = 5;
+    QTest::newRow("output-rate") << config;
+}
+
+void GPSDriverTest::_testUnsupportedConfigurationDoesNotTouchReceiver()
+{
+    QFETCH(GPSReceiverConfig, config);
+    FakeGPSTransport transport;
+    GPSDriver driver(GPSType::u_blox, transport, config, {});
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Unsupported configuration for the RTK base driver")));
+    QVERIFY(!driver.configure());
+    verifyExpectedLogMessage();
+    QCOMPARE(transport.lastReadLength, -1);
+    QCOMPARE(transport.lastBaudrate, 0u);
+    QVERIFY(transport.lastWrite.isEmpty());
+    QCOMPARE(driver.receive(10), -1);
+}

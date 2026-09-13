@@ -7,6 +7,12 @@
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+add_subdirectory(Contracts)
+add_subdirectory(Core)
+add_subdirectory(Models)
+add_subdirectory(Presentation)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSModels)
+
 add_subdirectory(RTCM)
 add_subdirectory(NTRIP)
 add_subdirectory(PositionManager)

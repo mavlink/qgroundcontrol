@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QtRuntimeSchedulerLog, "Utilities.Timing.QtRuntimeScheduler")
@@ -21,8 +22,7 @@ QtRuntimeScheduler::~QtRuntimeScheduler()
 
 quint64 QtRuntimeScheduler::nowUs() const
 {
-    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch())
-        .count();
+    return MonotonicClock::nowUs();
 }
 
 RuntimeScheduler::TaskId QtRuntimeScheduler::schedule(QObject* context, std::chrono::microseconds delay,

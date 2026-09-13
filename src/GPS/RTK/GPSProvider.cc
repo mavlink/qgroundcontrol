@@ -13,7 +13,9 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
                          QObject* parent)
     : QThread(parent), _transportFactory(std::move(transportFactory)), _type(type), _config(config)
 {
-    qCDebug(GPSProviderLog) << QStringLiteral("Survey in accuracy: %1 | duration: %2").arg(_config.surveyInAccMeters).arg(_config.surveyInDurationSecs);
+    qCDebug(GPSProviderLog) << QStringLiteral("Survey in accuracy: %1 | duration: %2")
+                                   .arg(_config.base.surveyInAccMeters)
+                                   .arg(_config.base.surveyInDurationSecs);
 }
 
 void GPSProvider::run()
@@ -54,7 +56,11 @@ void GPSProvider::run()
     sinks.onSurveyIn = [this, &gotData](const GPSSurveyInStatus &status) {
         gotData = true;
         qCDebug(GPSProviderLog) << QStringLiteral("Survey-in: %1s accuracy: %2mm valid: %3 active: %4")
-                                       .arg(status.durationSecs).arg(status.meanAccuracyMM).arg(status.valid).arg(status.active);
+                                       .arg(status.durationSecs)
+                                       .arg(status.meanAccuracyMM ? QString::number(*status.meanAccuracyMM)
+                                                                  : QStringLiteral("unknown"))
+                                       .arg(status.valid)
+                                       .arg(status.active);
         emit surveyInStatus(status);
     };
 

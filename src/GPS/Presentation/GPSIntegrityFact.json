@@ -1,0 +1,93 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "systemErrors",
+            "shortDesc": "General System Errors",
+            "type": "uint32"
+        },
+        {
+            "name": "spoofingState",
+            "shortDesc": "Signal Spoofing State",
+            "type": "uint8",
+            "enumStrings": "Unknown,Not spoofed,Mitigated,Ongoing,Unknown",
+            "enumValues": "0,1,2,3,255",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "jammingState",
+            "shortDesc": "Signal Jamming State",
+            "type": "uint8",
+            "enumStrings": "Unknown,Not jammed,Mitigated,Ongoing,Unknown",
+            "enumValues": "0,1,2,3,255",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "authenticationState",
+            "shortDesc": "Signal Authentication State",
+            "type": "uint8",
+            "enumStrings": "Unknown,Initializing,Error,Ok,Disabled,Unknown",
+            "enumValues": "0,1,2,3,4,255",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "correctionsQuality",
+            "shortDesc": "Corrections Quality",
+            "type": "uint8"
+        },
+        {
+            "name": "systemQuality",
+            "shortDesc": "System Status Quality",
+            "type": "uint8"
+        },
+        {
+            "name": "gnssSignalQuality",
+            "shortDesc": "Gnss Signal Quality",
+            "type": "uint8"
+        },
+        {
+            "name": "postProcessingQuality",
+            "shortDesc": "Post Processing Quality",
+            "type": "uint8"
+        },
+        {
+            "name": "correctionsProtocol",
+            "shortDesc": "Receiver Corrections Protocol",
+            "type": "uint8",
+            "enumStrings": "Unknown,RTCM3,SPARTN,HAS,PMP,QZSS L6",
+            "enumValues": "255,1,2,3,4,5"
+        },
+        {
+            "name": "correctionsUsed",
+            "shortDesc": "Receiver Corrections Use",
+            "type": "uint8",
+            "enumStrings": "Unknown,Not Used,Used",
+            "enumValues": "255,1,2"
+        },
+        {
+            "name": "noisePerMillisecond",
+            "shortDesc": "Noise per millisecond",
+            "type": "int32",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "automaticGainControl",
+            "shortDesc": "Automatic gain control",
+            "type": "int32",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "jammingIndicator",
+            "shortDesc": "Jamming indicator",
+            "type": "int32",
+            "decimalPlaces": 0
+        },
+        {
+            "name": "correctionsCrcFailed",
+            "shortDesc": "Correction CRC failed",
+            "type": "int32",
+            "decimalPlaces": 0
+        }
+    ]
+}

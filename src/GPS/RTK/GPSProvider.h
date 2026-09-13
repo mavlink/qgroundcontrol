@@ -11,19 +11,11 @@
 #include <functional>
 #include <memory>
 
+#include "GPSConnectionError.h"
 #include "GPSDriver.h"  // facade; also publishes GPSReceiverConfig + the GNSS data structs relayed below
 #include "GPSType.h"
 
 class GPSTransport;
-
-enum class GPSConnectionError
-{
-    None,
-    OpenFailed,   ///< receiver transport could not be opened
-    ConfigFailed, ///< receiver did not accept configuration
-    DeviceError,  ///< fatal transport error after a working connection
-};
-Q_DECLARE_METATYPE(GPSConnectionError)
 
 class GPSProvider : public QThread
 {
