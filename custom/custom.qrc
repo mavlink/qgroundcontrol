@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/res">
-        <file alias="svlogo.png">../resources/svlogo.png</file>
-        <file alias="svlogo.svg">../resources/svlogo.svg</file>
-        <file alias="svlogo(2).svg">../resources/svlogo(2).svg</file>
+        <file alias="svlogo.png">res/svlogo.png</file>
+        <file alias="svlogo.svg">res/svlogo.svg</file>
+        <file alias="svlogo(2).svg">res/svlogo(2).svg</file>
     </qresource>
 </RCC>
