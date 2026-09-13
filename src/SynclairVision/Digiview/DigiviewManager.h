@@ -44,7 +44,8 @@ class DigiviewManager : public QObject
     Q_PROPERTY(QString streamName READ streamName WRITE setStreamName NOTIFY streamNameChanged)
     Q_PROPERTY(int senderSystemId READ senderSystemId WRITE setSenderSystemId NOTIFY senderIdentityChanged)
     Q_PROPERTY(int senderComponentId READ senderComponentId WRITE setSenderComponentId NOTIFY senderIdentityChanged)
-    Q_PROPERTY(bool connected READ connected NOTIFY connectedChanged)
+    Q_PROPERTY(bool connected READ uiConnected NOTIFY sessionActiveChanged)
+    Q_PROPERTY(bool transportConnected READ connected NOTIFY connectedChanged)
     Q_PROPERTY(bool sessionActive READ sessionActive NOTIFY sessionActiveChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
     Q_PROPERTY(quint32 lastReceivedMessageId READ lastReceivedMessageId NOTIFY lastReceivedMessageIdChanged)
@@ -125,6 +126,7 @@ public:
     QString restartFailure() const { return _restartFailure; }
     quint64 restartGeneration() const { return _restartGeneration; }
     bool connected() const;
+    bool uiConnected() const { return _connection->usingLegacyTcpControl() ? sessionActive() : connected(); }
     bool sessionActive() const { return _logicalSessionActive; }
     QString lastError() const;
     quint32 lastReceivedMessageId() const { return _lastReceivedMessageId; }
