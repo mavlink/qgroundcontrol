@@ -17,6 +17,8 @@ qt_add_qml_module(SynclairVisionUIModule
     RESOURCE_PREFIX /qml
     SOURCES
         ../Digiview/DigiviewProtocolEnums.h
+        SVBackend.cc
+        SVBackend.h
     QML_FILES
         Flyview/SVFlyView.qml
         Flyview/SVFlyViewMenus.qml
