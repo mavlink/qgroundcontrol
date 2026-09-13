@@ -16,8 +16,7 @@ QtObject {
     // apart from "was still connecting, then cancelled/failed".
     property bool _reachedConnectedState: false
     // Guards against reporting "Connection Lost" twice for the same drop — decoding usually stops
-    // (uiInteractionEnabled -> false) well before the socket itself notices (digiviewActive -> false),
-    // since that can rely on an OS-level TCP timeout that may take a long time or never fire cleanly.
+    // before the logical connection session ends, especially while TCP is retrying.
     property bool _connectionLostReported: false
     readonly property string synclairOverlayVideoUri: {
         const profile = SVSettings.selectedNetworkProfile()
@@ -728,13 +727,13 @@ QtObject {
         }
     }
 
-    onDigiviewActiveChanged: {
+    onDigiviewSessionActiveChanged: {
         var profile = SVSettings.selectedNetworkProfile()
         var profileName = profile ? profile.name : "Stream"
         var profileHost = profile ? profile.host : "Unknown Host"
 
-        if (digiviewActive) {
-            // State 1: Connecting (Socket open, but waiting for video)
+        if (digiviewSessionActive) {
+            // State 1: Connecting (logical session is active, waiting for video)
             _reachedConnectedState = false
             _connectionLostReported = false
 
@@ -745,7 +744,7 @@ QtObject {
                 "network_connecting"
             )
         } else {
-            // State 3: Disconnected
+            // State 3: Disconnected (the logical session has ended)
             cameraTrackingIds = ["", "", "", "", "", ""]
             cameraTrackingAwaitingConfirmation = [false, false, false, false, false, false]
 
@@ -772,8 +771,8 @@ QtObject {
                 stopRecording()
                 cancelCursorTrackingSelection()
             } else {
-                // Socket finally noticed the drop. If decoding already reported it (the common case
-                // when wifi just vanishes), this is a no-op — _reportConnectionLost only fires once.
+                // The logical session ended unexpectedly. If decoding already reported the loss,
+                // this remains a no-op because _reportConnectionLost only fires once.
                 _reportConnectionLost(profileName, profileHost)
                 _reachedConnectedState = false
             }
@@ -798,10 +797,9 @@ QtObject {
                 "success",
                 "network_connected"
             )
-        } else if (!uiInteractionEnabled && digiviewActive && _reachedConnectedState && !userInitiatedDisconnect) {
-            // Decoding stopped while the socket still thinks it's connected — e.g. wifi was cut.
-            // This is usually the first (and sometimes only) signal we get that the stream died,
-            // since the socket-level "connected" flag can lag far behind (or never flip on its own).
+        } else if (!uiInteractionEnabled && digiviewSessionActive && _reachedConnectedState && !userInitiatedDisconnect) {
+            // Decoding stopped while the user's connection session is still active. This covers
+            // both UDP stream loss and transient TCP disconnects while the transport keeps retrying.
             var lostProfile = SVSettings.selectedNetworkProfile()
             var lostProfileName = lostProfile ? lostProfile.name : "Stream"
             var lostProfileHost = lostProfile ? lostProfile.host : "Unknown Host"
