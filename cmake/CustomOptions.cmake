@@ -14,8 +14,7 @@ set(QGC_CUSTOM_DIR "custom" CACHE STRING "Custom build overlay directory, relati
 # Application Metadata
 # ============================================================================
 
-# set(QGC_APP_NAME "QGroundControl" CACHE STRING "Application name")
-set(QGC_APP_NAME "SynclairQGC" CACHE STRING "App Name" FORCE)
+set(QGC_APP_NAME "QGroundControl" CACHE STRING "Application name")
 string(TIMESTAMP _copyright_year "%Y")
 set(QGC_APP_COPYRIGHT "Copyright (c) ${_copyright_year} QGroundControl. All rights reserved." CACHE STRING "Copyright notice")
 set(QGC_APP_DESCRIPTION "Open Source Ground Control App" CACHE STRING "Application description")
@@ -31,7 +30,7 @@ set(QGC_SETTINGS_VERSION "9" CACHE STRING "Settings schema version")
 # ============================================================================
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
-option(QGC_STABLE_BUILD "Stable release build (disables daily build features)" ON)
+option(QGC_STABLE_BUILD "Stable release build (disables daily build features)" OFF)
 option(QGC_USE_CACHE "Enable compiler caching (ccache/sccache)" ON)
 option(QGC_USE_MOCCACHE "Cache moc output across clean builds" ON)
 option(QGC_UNITY_BUILD "Enable unity builds for faster compilation" OFF)
