@@ -15,6 +15,7 @@ class LoggingCategoryModelTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _testWorkerRegistrationUpdatesManagerModels();
     void _testItemConstructionDisabled();
     void _testItemConstructionEnabled();
     void _testSetEnabledFromManagerEmitsSignal();

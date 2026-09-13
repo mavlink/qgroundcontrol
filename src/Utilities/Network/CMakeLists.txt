@@ -1,3 +1,5 @@
+add_subdirectory(IO)
+
 qt_add_library(QGCNetwork STATIC
     QGCCachedFileDownload.cc
     QGCCachedFileDownload.h
@@ -5,16 +7,13 @@ qt_add_library(QGCNetwork STATIC
     QGCFileDownload.h
     QGCNetworkHelper.cc
     QGCNetworkHelper.h
-    UdpIODevice.cc
-    UdpIODevice.h
-    UdpForwarder.cc
-    UdpForwarder.h
 )
 
 target_include_directories(QGCNetwork PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(QGCNetwork
     PUBLIC
+        QGCNetworkIO
         Qt6::Core
         Qt6::Network
     PRIVATE

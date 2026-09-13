@@ -17,7 +17,7 @@ public:
     ~UdpForwarder() override;
 
     bool configure(const QString& address, quint16 port);
-    void forward(const QByteArray& data);
+    qint64 forward(const QByteArray& data);
     void stop();
 
     bool isEnabled() const { return _enabled; }
