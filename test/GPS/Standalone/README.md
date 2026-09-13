@@ -4,6 +4,9 @@ The protocol reports and I/O contracts use standard C++ only. The Qt contracts
 require Qt Core. Observations and stores depend directly on the native contracts,
 Qt Positioning, and the shared timing and logging libraries. The common monotonic
 clock is a Qt-free utility used by both native contracts and Qt adapters. The satellite and relative models depend on those stores.
+The positioning service reuses these health stores for source selection, registration,
+and recovery; QGC retains permissions and platform/custom/NMEA source creation.
+Its standalone consumer checks session ownership, publication, and expiry.
 Fact projections are built with the application because they use QGC's Fact System.
 
 CMake's `VERIFY_INTERFACE_HEADER_SETS` compiles each public header independently

@@ -1,6 +1,7 @@
 target_sources(
     ${CMAKE_PROJECT_NAME}
-    PRIVATE GPSPositionFactGroup.cc
+    PRIVATE GPSPositionQmlTypes.h
+            GPSPositionFactGroup.cc
             GPSPositionFactGroup.h
             GPSIntegrityFactGroup.cc
             GPSIntegrityFactGroup.h
