@@ -2246,187 +2246,187 @@
       <extracomment>.sections[Flight Response].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Flight Response</source>
-      <translation type="unfinished">Flight Response</translation>
+      <translation>Отклик на управление</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>tuning</source>
-      <translation type="unfinished">tuning</translation>
+      <translation>настройка</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>pid</source>
-      <translation type="unfinished">pid</translation>
+      <translation>pid</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>roll</source>
-      <translation type="unfinished">roll</translation>
+      <translation>крен</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>pitch</source>
-      <translation type="unfinished">pitch</translation>
+      <translation>тангаж</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>climb</source>
-      <translation type="unfinished">climb</translation>
+      <translation>набор высоты</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>sensitivity</source>
-      <translation type="unfinished">sensitivity</translation>
+      <translation>чувствительность</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>thrust</source>
-      <translation type="unfinished">thrust</translation>
+      <translation>тяга</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>motor</source>
-      <translation type="unfinished">motor</translation>
+      <translation>мотор</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Roll/Pitch Sensitivity</source>
-      <translation type="unfinished">Roll/Pitch Sensitivity</translation>
+      <translation>Чувствительность крена/тангажа</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Climb Sensitivity</source>
-      <translation type="unfinished">Climb Sensitivity</translation>
+      <translation>Чувствительность набора высоты</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>RC Roll/Pitch Feel</source>
-      <translation type="unfinished">RC Roll/Pitch Feel</translation>
+      <translation>Реакция RC на крен/тангаж</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Spin While Armed</source>
-      <translation type="unfinished">Spin While Armed</translation>
+      <translation>Вращение моторов при Arm</translation>
     </message>
     <message>
       <extracomment>.sections[Flight Response].controls[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Minimum Thrust</source>
-      <translation type="unfinished">Minimum Thrust</translation>
+      <translation>Минимальная тяга</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>AutoTune</source>
-      <translation type="unfinished">AutoTune</translation>
+      <translation>AutoTune</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>autotune</source>
-      <translation type="unfinished">autotune</translation>
+      <translation>autotune</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>auto tune</source>
-      <translation type="unfinished">auto tune</translation>
+      <translation>auto tune</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>axes</source>
-      <translation type="unfinished">axes</translation>
+      <translation>оси</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>channel</source>
-      <translation type="unfinished">channel</translation>
+      <translation>канал</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>switch</source>
-      <translation type="unfinished">switch</translation>
+      <translation>переключатель</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Axes to AutoTune</source>
-      <translation type="unfinished">Axes to AutoTune</translation>
+      <translation>Оси для AutoTune</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Aggressiveness</source>
-      <translation type="unfinished">Aggressiveness</translation>
+      <translation>Агрессивность</translation>
     </message>
     <message>
       <extracomment>.sections[AutoTune].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Minimum D gain</source>
-      <translation type="unfinished">Minimum D gain</translation>
+      <translation>Минимальный коэффициент D</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>In Flight Tuning</source>
-      <translation type="unfinished">In Flight Tuning</translation>
+      <translation>Настройка в полёте</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>in flight tuning</source>
-      <translation type="unfinished">in flight tuning</translation>
+      <translation>настройка в полёте</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>tune</source>
-      <translation type="unfinished">tune</translation>
+      <translation>настройка</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>channel 6</source>
-      <translation type="unfinished">channel 6</translation>
+      <translation>канал 6</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>rc tuning</source>
-      <translation type="unfinished">rc tuning</translation>
+      <translation>настройка rc</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>RC Channel 6 Option (Tuning)</source>
-      <translation type="unfinished">RC Channel 6 Option (Tuning)</translation>
+      <translation>Опция канала 6 RC (настройка)</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Min</source>
-      <translation type="unfinished">Min</translation>
+      <translation>Мин.</translation>
     </message>
     <message>
       <extracomment>.sections[In Flight Tuning].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
       <source>Max</source>
-      <translation type="unfinished">Max</translation>
+      <translation>Макс.</translation>
     </message>
   </context>
   <context>
@@ -2534,85 +2534,85 @@
       <extracomment>.sections[Storage].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Storage</source>
-      <translation type="unfinished">Storage</translation>
+      <translation>Хранилище</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>logging</source>
-      <translation type="unfinished">logging</translation>
+      <translation>логирование</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>log</source>
-      <translation type="unfinished">log</translation>
+      <translation>лог</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>backend</source>
-      <translation type="unfinished">backend</translation>
+      <translation>бэкенд</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>bitmask</source>
-      <translation type="unfinished">bitmask</translation>
+      <translation>битовая маска</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>sd card</source>
-      <translation type="unfinished">sd card</translation>
+      <translation>sd-карта</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>onboard flash</source>
-      <translation type="unfinished">onboard flash</translation>
+      <translation>встроенная флеш-память</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>mavlink stream</source>
-      <translation type="unfinished">mavlink stream</translation>
+      <translation>поток mavlink</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>max files</source>
-      <translation type="unfinished">max files</translation>
+      <translation>макс. файлов</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].keywords[8]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>free space</source>
-      <translation type="unfinished">free space</translation>
+      <translation>свободное место</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Logging backends</source>
-      <translation type="unfinished">Logging backends</translation>
+      <translation>Источники логирования</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Logged data groups</source>
-      <translation type="unfinished">Logged data groups</translation>
+      <translation>Группы логируемых данных</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Maximum retained log files</source>
-      <translation type="unfinished">Maximum retained log files</translation>
+      <translation>Максимум сохраняемых файлов лога</translation>
     </message>
     <message>
       <extracomment>.sections[Storage].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Minimum free space (MB)</source>
-      <translation type="unfinished">Minimum free space (MB)</translation>
+      <translation>Минимум свободного места (МБ)</translation>
     </message>
     <message>
       <extracomment>.sections[Rate Limits].title</extracomment>
@@ -2630,13 +2630,13 @@
       <extracomment>.sections[Rate Limits].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>hz</source>
-      <translation type="unfinished">hz</translation>
+      <translation>гц</translation>
     </message>
     <message>
       <extracomment>.sections[Rate Limits].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>limit</source>
-      <translation type="unfinished">limit</translation>
+      <translation>ограничение</translation>
     </message>
     <message>
       <extracomment>.sections[Rate Limits].keywords[3]</extracomment>
@@ -2666,115 +2666,115 @@
       <extracomment>.sections[Rate Limits].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Maximum file logging rate (Hz)</source>
-      <translation type="unfinished">Maximum file logging rate (Hz)</translation>
+      <translation>Максимальная частота логирования в файл (Гц)</translation>
     </message>
     <message>
       <extracomment>.sections[Rate Limits].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Maximum block logging rate (Hz)</source>
-      <translation type="unfinished">Maximum block logging rate (Hz)</translation>
+      <translation>Максимальная частота логирования в блочное устройство (Гц)</translation>
     </message>
     <message>
       <extracomment>.sections[Rate Limits].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Maximum MAVLink stream rate (Hz)</source>
-      <translation type="unfinished">Maximum MAVLink stream rate (Hz)</translation>
+      <translation>Максимальная частота потока MAVLink (Гц)</translation>
     </message>
     <message>
       <extracomment>.sections[Options].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Options</source>
-      <translation type="unfinished">Options</translation>
+      <translation>Параметры</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>disarmed</source>
-      <translation type="unfinished">disarmed</translation>
+      <translation>disarm</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>pre-arm</source>
-      <translation type="unfinished">pre-arm</translation>
+      <translation>pre-arm</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>rotate</source>
-      <translation type="unfinished">rotate</translation>
+      <translation>ротация</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>replay</source>
-      <translation type="unfinished">replay</translation>
+      <translation>воспроизведение</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>ekf</source>
-      <translation type="unfinished">ekf</translation>
+      <translation>ekf</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>ekf3</source>
-      <translation type="unfinished">ekf3</translation>
+      <translation>ekf3</translation>
     </message>
     <message>
       <extracomment>.sections[Options].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>log options</source>
-      <translation type="unfinished">log options</translation>
+      <translation>параметры лога</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Log while disarmed</source>
-      <translation type="unfinished">Log while disarmed</translation>
+      <translation>Логировать при disarm</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Rotate log file on disarm/rearm</source>
-      <translation type="unfinished">Rotate log file on disarm/rearm</translation>
+      <translation>Ротация файла лога при disarm/повторном arm</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Log extra data for EKF replay</source>
-      <translation type="unfinished">Log extra data for EKF replay</translation>
+      <translation>Логировать дополнительные данные для воспроизведения EKF</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>EKF3 logging verbosity</source>
-      <translation type="unfinished">EKF3 logging verbosity</translation>
+      <translation>Подробность логирования EKF3</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[3].enumValues[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Full logging</source>
-      <translation type="unfinished">Full logging</translation>
+      <translation>Полное логирование</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[3].enumValues[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>XKF4 scaled innovations only</source>
-      <translation type="unfinished">XKF4 scaled innovations only</translation>
+      <translation>Только масштабированные невязки XKF4</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[3].enumValues[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>XKF4 and GSF</source>
-      <translation type="unfinished">XKF4 and GSF</translation>
+      <translation>XKF4 и GSF</translation>
     </message>
     <message>
       <extracomment>.sections[Options].controls[3].enumValues[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMLogging.VehicleConfig.json"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>Отключено</translation>
     </message>
   </context>
   <context>
@@ -2783,301 +2783,301 @@
       <extracomment>.sections[Return to Launch].title, .sections[Return to Launch].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Return to Launch</source>
-      <translation type="unfinished">Return to Launch</translation>
+      <translation>Return to Launch</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].keywords[0], .sections[Return to Launch].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>rtl</source>
-      <translation type="unfinished">rtl</translation>
+      <translation>rtl</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].keywords[1], .sections[Return to Launch].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>return home</source>
-      <translation type="unfinished">return home</translation>
+      <translation>возврат домой</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].keywords[2], .sections[Return to Launch].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>return to launch</source>
-      <translation type="unfinished">return to launch</translation>
+      <translation>возврат на точку старта</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].keywords[3], .sections[Return to Launch].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>loiter</source>
-      <translation type="unfinished">loiter</translation>
+      <translation>loiter</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].keywords[4], .sections[Return to Launch].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>land</source>
-      <translation type="unfinished">land</translation>
+      <translation>land</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].keywords[5], .sections[Return to Launch].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>altitude</source>
-      <translation type="unfinished">altitude</translation>
+      <translation>высота</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Return at specified altitude:</source>
-      <translation type="unfinished">Return at specified altitude:</translation>
+      <translation>Возврат на заданной высоте:</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[0].options[0].label, .sections[Return to Launch].controls[0].options[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Return at current altitude</source>
-      <translation type="unfinished">Return at current altitude</translation>
+      <translation>Возврат на текущей высоте</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[0].options[1].label, .sections[Return to Launch].controls[0].options[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Return at specified altitude</source>
-      <translation type="unfinished">Return at specified altitude</translation>
+      <translation>Возврат на заданной высоте</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[1].label, .sections[Return to Launch].controls[1].label, .sections[GeoFence].controls[12].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Return altitude</source>
-      <translation type="unfinished">Return altitude</translation>
+      <translation>Высота возврата</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Loiter above Home</source>
-      <translation type="unfinished">Loiter above Home</translation>
+      <translation>Зависание над точкой старта</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Loiter time</source>
-      <translation type="unfinished">Loiter time</translation>
+      <translation>Время зависания</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Final land stage altitude</source>
-      <translation type="unfinished">Final land stage altitude</translation>
+      <translation>Высота финального этапа посадки</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[5].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Final land stage descent speed</source>
-      <translation type="unfinished">Final land stage descent speed</translation>
+      <translation>Скорость снижения на финальном этапе посадки</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Return altitude:</source>
-      <translation type="unfinished">Return altitude:</translation>
+      <translation>Высота возврата:</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Loiter radius</source>
-      <translation type="unfinished">Loiter radius</translation>
+      <translation>Радиус облёта</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>0 = use Waypoint Loiter Radius (WP_LOITER_RAD), negative = counter-clockwise</source>
-      <translation type="unfinished">0 = use Waypoint Loiter Radius (WP_LOITER_RAD), negative = counter-clockwise</translation>
+      <translation>0 = использовать радиус облёта путевой точки (WP_LOITER_RAD), отрицательное значение = против часовой стрелки</translation>
     </message>
     <message>
       <extracomment>.sections[Return to Launch].controls[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Auto land after RTL</source>
-      <translation type="unfinished">Auto land after RTL</translation>
+      <translation>Автопосадка после RTL</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].title, .sections[GeoFence].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>GeoFence</source>
-      <translation type="unfinished">GeoFence</translation>
+      <translation>Геозона</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[0], .sections[GeoFence].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>geofence</source>
-      <translation type="unfinished">geofence</translation>
+      <translation>геозона</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[1], .sections[GeoFence].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>boundary</source>
-      <translation type="unfinished">boundary</translation>
+      <translation>граница</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[2], .sections[GeoFence].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>fence</source>
-      <translation type="unfinished">fence</translation>
+      <translation>ограждение</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[3], .sections[GeoFence].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>containment</source>
-      <translation type="unfinished">containment</translation>
+      <translation>удержание</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[4], .sections[GeoFence].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>rally</source>
-      <translation type="unfinished">rally</translation>
+      <translation>точка сбора</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[5], .sections[GeoFence].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>breach</source>
-      <translation type="unfinished">breach</translation>
+      <translation>нарушение</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[6], .sections[GeoFence].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>radius</source>
-      <translation type="unfinished">radius</translation>
+      <translation>радиус</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[7], .sections[GeoFence].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>inclusion</source>
-      <translation type="unfinished">inclusion</translation>
+      <translation>включение</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].keywords[8], .sections[GeoFence].keywords[8]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>exclusion</source>
-      <translation type="unfinished">exclusion</translation>
+      <translation>исключение</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[0].label, .sections[GeoFence].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>Включено</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[1].label, .sections[GeoFence].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Maximum Altitude</source>
-      <translation type="unfinished">Maximum Altitude</translation>
+      <translation>Максимальная высота</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[2].label, .sections[GeoFence].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Maximum altitude</source>
-      <translation type="unfinished">Maximum altitude</translation>
+      <translation>Максимальная высота</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[3].label, .sections[GeoFence].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Minimum Altitude</source>
-      <translation type="unfinished">Minimum Altitude</translation>
+      <translation>Минимальная высота</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[4].label, .sections[GeoFence].controls[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Minimum altitude</source>
-      <translation type="unfinished">Minimum altitude</translation>
+      <translation>Минимальная высота</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[5].label, .sections[GeoFence].controls[5].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Circle centered on Home</source>
-      <translation type="unfinished">Circle centered on Home</translation>
+      <translation>Круг с центром в точке старта</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[6].label, .sections[GeoFence].controls[6].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Circle radius</source>
-      <translation type="unfinished">Circle radius</translation>
+      <translation>Радиус круга</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[7].label, .sections[GeoFence].controls[7].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Inclusion/Exclusion Circles+Polygons</source>
-      <translation type="unfinished">Inclusion/Exclusion Circles+Polygons</translation>
+      <translation>Круги/полигоны включения/исключения</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[8].label, .sections[GeoFence].controls[8].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Fence margin</source>
-      <translation type="unfinished">Fence margin</translation>
+      <translation>Запас геозоны</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[9].label, .sections[GeoFence].controls[9].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Auto-enable</source>
-      <translation type="unfinished">Auto-enable</translation>
+      <translation>Автовключение</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[10].label, .sections[GeoFence].controls[10].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Breach action</source>
-      <translation type="unfinished">Breach action</translation>
+      <translation>Действие при нарушении</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[11].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Custom return altitude</source>
-      <translation type="unfinished">Custom return altitude</translation>
+      <translation>Пользовательская высота возврата</translation>
     </message>
     <message>
       <extracomment>.sections[GeoFence].controls[13].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Return to nearest rally point</source>
-      <translation type="unfinished">Return to nearest rally point</translation>
+      <translation>Возврат к ближайшей точке сбора</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Arming Checks</source>
-      <translation type="unfinished">Arming Checks</translation>
+      <translation>Проверки Arm</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>arming</source>
-      <translation type="unfinished">arming</translation>
+      <translation>arm</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>pre-arm</source>
-      <translation type="unfinished">pre-arm</translation>
+      <translation>pre-arm</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>preflight</source>
-      <translation type="unfinished">preflight</translation>
+      <translation>предполётный</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>safety check</source>
-      <translation type="unfinished">safety check</translation>
+      <translation>проверка безопасности</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Warning: Skipping arming checks can lead to loss of Vehicle control.</source>
-      <translation type="unfinished">Warning: Skipping arming checks can lead to loss of Vehicle control.</translation>
+      <translation>Внимание: пропуск проверок arm может привести к потере управления бортом.</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Arming checks</source>
-      <translation type="unfinished">Arming checks</translation>
+      <translation>Проверки Arm</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Skip arming checks</source>
-      <translation type="unfinished">Skip arming checks</translation>
+      <translation>Пропустить проверки Arm</translation>
     </message>
   </context>
   <context>
@@ -3086,565 +3086,565 @@
       <extracomment>.sections[Battery Failsafe].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Battery Failsafe</source>
-      <translation type="unfinished">Battery Failsafe</translation>
+      <translation>Failsafe при разряде аккумулятора</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>voltage</source>
-      <translation type="unfinished">voltage</translation>
+      <translation>напряжение</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>mah</source>
-      <translation type="unfinished">mah</translation>
+      <translation>mah</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>capacity</source>
-      <translation type="unfinished">capacity</translation>
+      <translation>ёмкость</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>low battery</source>
-      <translation type="unfinished">low battery</translation>
+      <translation>низкий заряд аккумулятора</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>critical battery</source>
-      <translation type="unfinished">critical battery</translation>
+      <translation>критический заряд аккумулятора</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>lipo</source>
-      <translation type="unfinished">lipo</translation>
+      <translation>lipo</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>power</source>
-      <translation type="unfinished">power</translation>
+      <translation>питание</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Low action</source>
-      <translation type="unfinished">Low action</translation>
+      <translation>Действие при низком уровне</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Critical action</source>
-      <translation type="unfinished">Critical action</translation>
+      <translation>Действие при критическом уровне</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Low voltage threshold</source>
-      <translation type="unfinished">Low voltage threshold</translation>
+      <translation>Порог низкого напряжения</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Critical voltage threshold</source>
-      <translation type="unfinished">Critical voltage threshold</translation>
+      <translation>Порог критического напряжения</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].controls[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Low mAh threshold</source>
-      <translation type="unfinished">Low mAh threshold</translation>
+      <translation>Порог низкой ёмкости (mAh)</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].controls[5].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Critical mAh threshold</source>
-      <translation type="unfinished">Critical mAh threshold</translation>
+      <translation>Порог критической ёмкости (mAh)</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].title, .sections[Ground Station Failsafe].title, .sections[Ground Station Failsafe].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Ground Station Failsafe</source>
-      <translation type="unfinished">Ground Station Failsafe</translation>
+      <translation>Failsafe при потере связи с наземной станцией</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].keywords[0], .sections[Ground Station Failsafe].keywords[0], .sections[Ground Station Failsafe].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>gcs</source>
-      <translation type="unfinished">gcs</translation>
+      <translation>gcs</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].keywords[1], .sections[Ground Station Failsafe].keywords[1], .sections[Ground Station Failsafe].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>ground station</source>
-      <translation type="unfinished">ground station</translation>
+      <translation>наземная станция</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].keywords[2], .sections[Ground Station Failsafe].keywords[2], .sections[Ground Station Failsafe].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>heartbeat</source>
-      <translation type="unfinished">heartbeat</translation>
+      <translation>heartbeat</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].keywords[3], .sections[Ground Station Failsafe].keywords[3], .sections[Ground Station Failsafe].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>telemetry</source>
-      <translation type="unfinished">telemetry</translation>
+      <translation>телеметрия</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].keywords[4], .sections[Ground Station Failsafe].keywords[4], .sections[Ground Station Failsafe].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>link loss</source>
-      <translation type="unfinished">link loss</translation>
+      <translation>потеря соединения</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].keywords[5], .sections[Ground Station Failsafe].keywords[5], .sections[Ground Station Failsafe].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>disconnect</source>
-      <translation type="unfinished">disconnect</translation>
+      <translation>отключение</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].keywords[6], .sections[Ground Station Failsafe].keywords[6], .sections[Ground Station Failsafe].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>rssi</source>
-      <translation type="unfinished">rssi</translation>
+      <translation>rssi</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[0].label, .sections[Ground Station Failsafe].controls[0].label, .sections[Ground Station Failsafe].controls[0].label, .sections[Throttle Failsafe].controls[0].label, .sections[Throttle Failsafe].controls[0].label, .sections[EKF Failsafe].controls[0].label, .sections[EKF Failsafe].controls[0].label, .sections[Dead Reckoning Failsafe].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Enabled</source>
-      <translation type="unfinished">Enabled</translation>
+      <translation>Включено</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[1].label, .sections[Ground Station Failsafe].controls[1].label, .sections[Throttle Failsafe].controls[2].label, .sections[Dead Reckoning Failsafe].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Timeout</source>
-      <translation type="unfinished">Timeout</translation>
+      <translation>Таймаут</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].label, .sections[Throttle Failsafe].controls[2].label, .sections[Throttle Failsafe].controls[3].label, .sections[EKF Failsafe].controls[2].label, .sections[EKF Failsafe].controls[2].label, .sections[Dead Reckoning Failsafe].controls[2].label, .sections[Other Failsafe Options].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Action:</source>
-      <translation type="unfinished">Action:</translation>
+      <translation>Действие:</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].options[0].label, .sections[Throttle Failsafe].controls[3].options[1].label, .sections[Dead Reckoning Failsafe].controls[2].options[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>RTL</source>
-      <translation type="unfinished">RTL</translation>
+      <translation>RTL</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].options[1].label, .sections[Dead Reckoning Failsafe].controls[2].options[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>Land</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].options[2].label, .sections[Throttle Failsafe].controls[3].options[3].label, .sections[Dead Reckoning Failsafe].controls[2].options[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>SmartRTL or RTL</source>
-      <translation type="unfinished">SmartRTL or RTL</translation>
+      <translation>SmartRTL или RTL</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].options[3].label, .sections[Dead Reckoning Failsafe].controls[2].options[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>SmartRTL or Land</source>
-      <translation type="unfinished">SmartRTL or Land</translation>
+      <translation>SmartRTL или Land</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].options[4].label, .sections[Throttle Failsafe].controls[2].options[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Auto DO_LAND_START or RTL</source>
-      <translation type="unfinished">Auto DO_LAND_START or RTL</translation>
+      <translation>Auto DO_LAND_START или RTL</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].options[5].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Brake or Land</source>
-      <translation type="unfinished">Brake or Land</translation>
+      <translation>Brake или Land</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[3].label, .sections[Ground Station Failsafe].controls[2].label, .sections[RC Failsafe].controls[1].label, .sections[Throttle Failsafe].controls[3].label, .sections[Throttle Failsafe].controls[4].label, .sections[EKF Failsafe].controls[3].label, .sections[Dead Reckoning Failsafe].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Ignore failsafe if:</source>
-      <translation type="unfinished">Ignore failsafe if:</translation>
+      <translation>Игнорировать failsafe, если:</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[4].label, .sections[Ground Station Failsafe].controls[3].label, .sections[RC Failsafe].controls[2].label, .sections[Throttle Failsafe].controls[4].label, .sections[Throttle Failsafe].controls[5].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>In Auto mode</source>
-      <translation type="unfinished">In Auto mode</translation>
+      <translation>В режиме Auto</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[5].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>In pilot control</source>
-      <translation type="unfinished">In pilot control</translation>
+      <translation>Под управлением пилота</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Trigger:</source>
-      <translation type="unfinished">Trigger:</translation>
+      <translation>Триггер:</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[1].options[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Heartbeat</source>
-      <translation type="unfinished">Heartbeat</translation>
+      <translation>Heartbeat</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[1].options[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Heartbeat and Remote RSSI</source>
-      <translation type="unfinished">Heartbeat and Remote RSSI</translation>
+      <translation>Heartbeat и удалённый RSSI</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[1].options[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Heartbeat and AUTO</source>
-      <translation type="unfinished">Heartbeat and AUTO</translation>
+      <translation>Heartbeat и AUTO</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[4].label, .sections[Throttle Failsafe].controls[6].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>In Hold mode</source>
-      <translation type="unfinished">In Hold mode</translation>
+      <translation>В режиме Hold</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Failsafe Triggers</source>
-      <translation type="unfinished">Failsafe Triggers</translation>
+      <translation>Триггеры Failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].keywords[0], .sections[Throttle Failsafe].keywords[0], .sections[Throttle Failsafe].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>throttle</source>
-      <translation type="unfinished">throttle</translation>
+      <translation>газ</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].keywords[1], .sections[Throttle Failsafe].keywords[1], .sections[Throttle Failsafe].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>pwm</source>
-      <translation type="unfinished">pwm</translation>
+      <translation>pwm</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>short failsafe</source>
-      <translation type="unfinished">short failsafe</translation>
+      <translation>короткий failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>long failsafe</source>
-      <translation type="unfinished">long failsafe</translation>
+      <translation>длинный failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>vtol transition</source>
-      <translation type="unfinished">vtol transition</translation>
+      <translation>переход vtol</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Throttle PWM threshold</source>
-      <translation type="unfinished">Throttle PWM threshold</translation>
+      <translation>Порог PWM газа</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[1].label, .sections[Throttle Failsafe].controls[1].label, .sections[Throttle Failsafe].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>PWM threshold</source>
-      <translation type="unfinished">PWM threshold</translation>
+      <translation>Порог PWM</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Short failsafe action</source>
-      <translation type="unfinished">Short failsafe action</translation>
+      <translation>Действие короткого failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Long failsafe action</source>
-      <translation type="unfinished">Long failsafe action</translation>
+      <translation>Действие длинного failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Long failsafe timeout</source>
-      <translation type="unfinished">Long failsafe timeout</translation>
+      <translation>Таймаут длинного failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[5].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>VTOL transition failure action</source>
-      <translation type="unfinished">VTOL transition failure action</translation>
+      <translation>Действие при сбое перехода VTOL</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[6].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>VTOL transition failure timeout</source>
-      <translation type="unfinished">VTOL transition failure timeout</translation>
+      <translation>Таймаут сбоя перехода VTOL</translation>
     </message>
     <message>
       <extracomment>.sections[RC Failsafe].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>RC Failsafe</source>
-      <translation type="unfinished">RC Failsafe</translation>
+      <translation>Failsafe RC</translation>
     </message>
     <message>
       <extracomment>.sections[RC Failsafe].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>radio</source>
-      <translation type="unfinished">radio</translation>
+      <translation>радио</translation>
     </message>
     <message>
       <extracomment>.sections[RC Failsafe].keywords[1], .sections[Throttle Failsafe].keywords[2], .sections[Throttle Failsafe].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>receiver</source>
-      <translation type="unfinished">receiver</translation>
+      <translation>приёмник</translation>
     </message>
     <message>
       <extracomment>.sections[RC Failsafe].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>transmitter</source>
-      <translation type="unfinished">transmitter</translation>
+      <translation>передатчик</translation>
     </message>
     <message>
       <extracomment>.sections[RC Failsafe].keywords[3], .sections[Throttle Failsafe].keywords[3], .sections[Throttle Failsafe].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>rc loss</source>
-      <translation type="unfinished">rc loss</translation>
+      <translation>потеря rc</translation>
     </message>
     <message>
       <extracomment>.sections[RC Failsafe].keywords[4], .sections[Throttle Failsafe].keywords[4], .sections[Throttle Failsafe].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>signal loss</source>
-      <translation type="unfinished">signal loss</translation>
+      <translation>потеря сигнала</translation>
     </message>
     <message>
       <extracomment>.sections[RC Failsafe].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Always enabled</source>
-      <translation type="unfinished">Always enabled</translation>
+      <translation>Всегда включено</translation>
     </message>
     <message>
       <extracomment>.sections[RC Failsafe].controls[3].label, .sections[Throttle Failsafe].controls[5].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>In Guided mode</source>
-      <translation type="unfinished">In Guided mode</translation>
+      <translation>В режиме Guided</translation>
     </message>
     <message>
       <extracomment>.sections[RC Failsafe].controls[4].label, .sections[Throttle Failsafe].controls[6].label, .sections[EKF Failsafe].controls[4].label, .sections[Dead Reckoning Failsafe].controls[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Landing</source>
-      <translation type="unfinished">Landing</translation>
+      <translation>Посадка</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].title, .sections[Throttle Failsafe].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Throttle Failsafe</source>
-      <translation type="unfinished">Throttle Failsafe</translation>
+      <translation>Failsafe газа</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[2].options[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Always RTL</source>
-      <translation type="unfinished">Always RTL</translation>
+      <translation>Всегда RTL</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[2].options[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Always Land</source>
-      <translation type="unfinished">Always Land</translation>
+      <translation>Всегда Land</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[2].options[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Always SmartRTL or RTL</source>
-      <translation type="unfinished">Always SmartRTL or RTL</translation>
+      <translation>Всегда SmartRTL или RTL</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[2].options[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Always SmartRTL or Land</source>
-      <translation type="unfinished">Always SmartRTL or Land</translation>
+      <translation>Всегда SmartRTL или Land</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[2].options[5].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Always Brake or Land</source>
-      <translation type="unfinished">Always Brake or Land</translation>
+      <translation>Всегда Brake или Land</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[3].options[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Nothing</source>
-      <translation type="unfinished">Nothing</translation>
+      <translation>Ничего</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[3].options[2].label, .sections[EKF Failsafe].controls[2].options[0].label, .sections[Other Failsafe Options].controls[1].options[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Hold</source>
-      <translation type="unfinished">Hold</translation>
+      <translation>Hold</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[3].options[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>SmartRTL or Hold</source>
-      <translation type="unfinished">SmartRTL or Hold</translation>
+      <translation>SmartRTL или Hold</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[3].options[5].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Terminate</source>
-      <translation type="unfinished">Terminate</translation>
+      <translation>Прекращение полёта</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[3].options[6].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Loiter or Hold</source>
-      <translation type="unfinished">Loiter or Hold</translation>
+      <translation>Loiter или Hold</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].title, .sections[EKF Failsafe].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>EKF Failsafe</source>
-      <translation type="unfinished">EKF Failsafe</translation>
+      <translation>Failsafe EKF</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].keywords[0], .sections[EKF Failsafe].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>ekf</source>
-      <translation type="unfinished">ekf</translation>
+      <translation>ekf</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].keywords[1], .sections[EKF Failsafe].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>extended kalman filter</source>
-      <translation type="unfinished">extended kalman filter</translation>
+      <translation>расширенный фильтр калмана</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].keywords[2], .sections[EKF Failsafe].keywords[2], .sections[Dead Reckoning Failsafe].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>position estimate</source>
-      <translation type="unfinished">position estimate</translation>
+      <translation>оценка местоположения</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].keywords[3], .sections[EKF Failsafe].keywords[3], .sections[Dead Reckoning Failsafe].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>navigation</source>
-      <translation type="unfinished">navigation</translation>
+      <translation>навигация</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].keywords[4], .sections[EKF Failsafe].keywords[4], .sections[Dead Reckoning Failsafe].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>gps loss</source>
-      <translation type="unfinished">gps loss</translation>
+      <translation>потеря gps</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].controls[1].label, .sections[EKF Failsafe].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Threshold</source>
-      <translation type="unfinished">Threshold</translation>
+      <translation>Порог</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].controls[2].options[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Land if position required</source>
-      <translation type="unfinished">Land if position required</translation>
+      <translation>Land, если требуется позиция</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].controls[2].options[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>AltHold if position required</source>
-      <translation type="unfinished">AltHold if position required</translation>
+      <translation>AltHold, если требуется позиция</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].controls[2].options[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Land from all modes</source>
-      <translation type="unfinished">Land from all modes</translation>
+      <translation>Land из всех режимов</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].controls[2].options[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Report only</source>
-      <translation type="unfinished">Report only</translation>
+      <translation>Только отчёт</translation>
     </message>
     <message>
       <extracomment>.sections[Dead Reckoning Failsafe].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Dead Reckoning Failsafe</source>
-      <translation type="unfinished">Dead Reckoning Failsafe</translation>
+      <translation>Failsafe счисления пути</translation>
     </message>
     <message>
       <extracomment>.sections[Dead Reckoning Failsafe].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>dead reckoning</source>
-      <translation type="unfinished">dead reckoning</translation>
+      <translation>dead reckoning</translation>
     </message>
     <message>
       <extracomment>.sections[Dead Reckoning Failsafe].controls[2].options[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Auto Land/Return or RTL</source>
-      <translation type="unfinished">Auto Land/Return or RTL</translation>
+      <translation>Auto Land/Return или RTL</translation>
     </message>
     <message>
       <extracomment>.sections[Other Failsafe Options].title, .sections[Other Failsafe Options].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Other Failsafe Options</source>
-      <translation type="unfinished">Other Failsafe Options</translation>
+      <translation>Другие параметры Failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Other Failsafe Options].keywords[0], .sections[Other Failsafe Options].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>crash</source>
-      <translation type="unfinished">crash</translation>
+      <translation>крушение</translation>
     </message>
     <message>
       <extracomment>.sections[Other Failsafe Options].keywords[1], .sections[Other Failsafe Options].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>vibration</source>
-      <translation type="unfinished">vibration</translation>
+      <translation>вибрация</translation>
     </message>
     <message>
       <extracomment>.sections[Other Failsafe Options].keywords[2], .sections[Other Failsafe Options].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>gripper</source>
-      <translation type="unfinished">gripper</translation>
+      <translation>захват</translation>
     </message>
     <message>
       <extracomment>.sections[Other Failsafe Options].controls[0].label, .sections[Other Failsafe Options].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Crash check failsafe</source>
-      <translation type="unfinished">Crash check failsafe</translation>
+      <translation>Failsafe проверки на падение</translation>
     </message>
     <message>
       <extracomment>.sections[Other Failsafe Options].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Vibration failsafe</source>
-      <translation type="unfinished">Vibration failsafe</translation>
+      <translation>Failsafe по вибрации</translation>
     </message>
     <message>
       <extracomment>.sections[Other Failsafe Options].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Release gripper on any failsafe</source>
-      <translation type="unfinished">Release gripper on any failsafe</translation>
+      <translation>Отпускать захват при любом failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Other Failsafe Options].controls[1].options[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Hold and Disarm</source>
-      <translation type="unfinished">Hold and Disarm</translation>
+      <translation>Hold и Disarm</translation>
     </message>
   </context>
   <context>
@@ -3653,391 +3653,391 @@
       <extracomment>.sections[Low Battery Failsafe].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Low Battery Failsafe</source>
-      <translation type="unfinished">Low Battery Failsafe</translation>
+      <translation>Failsafe при низком заряде аккумулятора</translation>
     </message>
     <message>
       <extracomment>.sections[Low Battery Failsafe].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>battery</source>
-      <translation type="unfinished">battery</translation>
+      <translation>аккумулятор</translation>
     </message>
     <message>
       <extracomment>.sections[Low Battery Failsafe].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>voltage</source>
-      <translation type="unfinished">voltage</translation>
+      <translation>напряжение</translation>
     </message>
     <message>
       <extracomment>.sections[Low Battery Failsafe].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>low battery</source>
-      <translation type="unfinished">low battery</translation>
+      <translation>низкий заряд аккумулятора</translation>
     </message>
     <message>
       <extracomment>.sections[Low Battery Failsafe].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>critical battery</source>
-      <translation type="unfinished">critical battery</translation>
+      <translation>критический заряд аккумулятора</translation>
     </message>
     <message>
       <extracomment>.sections[Low Battery Failsafe].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>emergency</source>
-      <translation type="unfinished">emergency</translation>
+      <translation>аварийный</translation>
     </message>
     <message>
       <extracomment>.sections[Low Battery Failsafe].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>power</source>
-      <translation type="unfinished">power</translation>
+      <translation>питание</translation>
     </message>
     <message>
       <extracomment>.sections[Low Battery Failsafe].controls[0].label, .sections[RC/Joystick Loss Failsafe].controls[0].label, .sections[Data Link Loss Failsafe].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Failsafe action</source>
-      <translation type="unfinished">Failsafe action</translation>
+      <translation>Действие Failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Low Battery Failsafe].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Battery warn level</source>
-      <translation type="unfinished">Battery warn level</translation>
+      <translation>Уровень предупреждения аккумулятора</translation>
     </message>
     <message>
       <extracomment>.sections[Low Battery Failsafe].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Battery failsafe level</source>
-      <translation type="unfinished">Battery failsafe level</translation>
+      <translation>Уровень failsafe аккумулятора</translation>
     </message>
     <message>
       <extracomment>.sections[Low Battery Failsafe].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Battery emergency level</source>
-      <translation type="unfinished">Battery emergency level</translation>
+      <translation>Аварийный уровень аккумулятора</translation>
     </message>
     <message>
       <extracomment>.sections[Object Detection].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Object Detection</source>
-      <translation type="unfinished">Object Detection</translation>
+      <translation>Обнаружение препятствий</translation>
     </message>
     <message>
       <extracomment>.sections[Object Detection].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>collision</source>
-      <translation type="unfinished">collision</translation>
+      <translation>столкновение</translation>
     </message>
     <message>
       <extracomment>.sections[Object Detection].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>avoidance</source>
-      <translation type="unfinished">avoidance</translation>
+      <translation>избегание</translation>
     </message>
     <message>
       <extracomment>.sections[Object Detection].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>obstacle</source>
-      <translation type="unfinished">obstacle</translation>
+      <translation>препятствие</translation>
     </message>
     <message>
       <extracomment>.sections[Object Detection].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>proximity</source>
-      <translation type="unfinished">proximity</translation>
+      <translation>близость</translation>
     </message>
     <message>
       <extracomment>.sections[Object Detection].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>distance</source>
-      <translation type="unfinished">distance</translation>
+      <translation>расстояние</translation>
     </message>
     <message>
       <extracomment>.sections[Object Detection].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Collision prevention minimum distance</source>
-      <translation type="unfinished">Collision prevention minimum distance</translation>
+      <translation>Минимальная дистанция предотвращения столкновений</translation>
     </message>
     <message>
       <extracomment>.sections[Object Detection].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Show obstacle distance overlay</source>
-      <translation type="unfinished">Show obstacle distance overlay</translation>
+      <translation>Показывать наложение дистанции до препятствий</translation>
     </message>
     <message>
       <extracomment>.sections[RC/Joystick Loss Failsafe].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>RC/Joystick Loss Failsafe</source>
-      <translation type="unfinished">RC/Joystick Loss Failsafe</translation>
+      <translation>Failsafe при потере RC/джойстика</translation>
     </message>
     <message>
       <extracomment>.sections[RC/Joystick Loss Failsafe].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>radio</source>
-      <translation type="unfinished">radio</translation>
+      <translation>радио</translation>
     </message>
     <message>
       <extracomment>.sections[RC/Joystick Loss Failsafe].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>receiver</source>
-      <translation type="unfinished">receiver</translation>
+      <translation>приёмник</translation>
     </message>
     <message>
       <extracomment>.sections[RC/Joystick Loss Failsafe].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>transmitter</source>
-      <translation type="unfinished">transmitter</translation>
+      <translation>передатчик</translation>
     </message>
     <message>
       <extracomment>.sections[RC/Joystick Loss Failsafe].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>rc loss</source>
-      <translation type="unfinished">rc loss</translation>
+      <translation>потеря rc</translation>
     </message>
     <message>
       <extracomment>.sections[RC/Joystick Loss Failsafe].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>joystick</source>
-      <translation type="unfinished">joystick</translation>
+      <translation>джойстик</translation>
     </message>
     <message>
       <extracomment>.sections[RC/Joystick Loss Failsafe].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>signal loss</source>
-      <translation type="unfinished">signal loss</translation>
+      <translation>потеря сигнала</translation>
     </message>
     <message>
       <extracomment>.sections[RC/Joystick Loss Failsafe].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>RC/joystick loss timeout</source>
-      <translation type="unfinished">RC/joystick loss timeout</translation>
+      <translation>Таймаут потери RC/джойстика</translation>
     </message>
     <message>
       <extracomment>.sections[Data Link Loss Failsafe].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Data Link Loss Failsafe</source>
-      <translation type="unfinished">Data Link Loss Failsafe</translation>
+      <translation>Failsafe при потере соединения</translation>
     </message>
     <message>
       <extracomment>.sections[Data Link Loss Failsafe].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>telemetry</source>
-      <translation type="unfinished">telemetry</translation>
+      <translation>телеметрия</translation>
     </message>
     <message>
       <extracomment>.sections[Data Link Loss Failsafe].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>link loss</source>
-      <translation type="unfinished">link loss</translation>
+      <translation>потеря соединения</translation>
     </message>
     <message>
       <extracomment>.sections[Data Link Loss Failsafe].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>ground station</source>
-      <translation type="unfinished">ground station</translation>
+      <translation>наземная станция</translation>
     </message>
     <message>
       <extracomment>.sections[Data Link Loss Failsafe].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>gcs</source>
-      <translation type="unfinished">gcs</translation>
+      <translation>gcs</translation>
     </message>
     <message>
       <extracomment>.sections[Data Link Loss Failsafe].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>disconnect</source>
-      <translation type="unfinished">disconnect</translation>
+      <translation>отключение</translation>
     </message>
     <message>
       <extracomment>.sections[Data Link Loss Failsafe].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Data link loss timeout</source>
-      <translation type="unfinished">Data link loss timeout</translation>
+      <translation>Таймаут потери соединения</translation>
     </message>
     <message>
       <extracomment>.sections[Geofence Failsafe].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Geofence Failsafe</source>
-      <translation type="unfinished">Geofence Failsafe</translation>
+      <translation>Failsafe геозоны</translation>
     </message>
     <message>
       <extracomment>.sections[Geofence Failsafe].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>geofence</source>
-      <translation type="unfinished">geofence</translation>
+      <translation>геозона</translation>
     </message>
     <message>
       <extracomment>.sections[Geofence Failsafe].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>boundary</source>
-      <translation type="unfinished">boundary</translation>
+      <translation>граница</translation>
     </message>
     <message>
       <extracomment>.sections[Geofence Failsafe].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>fence</source>
-      <translation type="unfinished">fence</translation>
+      <translation>ограждение</translation>
     </message>
     <message>
       <extracomment>.sections[Geofence Failsafe].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>containment</source>
-      <translation type="unfinished">containment</translation>
+      <translation>удержание</translation>
     </message>
     <message>
       <extracomment>.sections[Geofence Failsafe].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>radius</source>
-      <translation type="unfinished">radius</translation>
+      <translation>радиус</translation>
     </message>
     <message>
       <extracomment>.sections[Geofence Failsafe].keywords[5], .sections[Return to launch settings].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>altitude</source>
-      <translation type="unfinished">altitude</translation>
+      <translation>высота</translation>
     </message>
     <message>
       <extracomment>.sections[Geofence Failsafe].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>breach</source>
-      <translation type="unfinished">breach</translation>
+      <translation>нарушение</translation>
     </message>
     <message>
       <extracomment>.sections[Geofence Failsafe].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Action on breach</source>
-      <translation type="unfinished">Action on breach</translation>
+      <translation>Действие при нарушении</translation>
     </message>
     <message>
       <extracomment>.sections[Geofence Failsafe].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Max radius</source>
-      <translation type="unfinished">Max radius</translation>
+      <translation>Макс. радиус</translation>
     </message>
     <message>
       <extracomment>.sections[Geofence Failsafe].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Max altitude</source>
-      <translation type="unfinished">Max altitude</translation>
+      <translation>Макс. высота</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Return to launch settings</source>
-      <translation type="unfinished">Return to launch settings</translation>
+      <translation>Настройки возврата на точку старта</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>rtl</source>
-      <translation type="unfinished">rtl</translation>
+      <translation>rtl</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>return home</source>
-      <translation type="unfinished">return home</translation>
+      <translation>возврат домой</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>return to launch</source>
-      <translation type="unfinished">return to launch</translation>
+      <translation>возврат на точку старта</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>loiter</source>
-      <translation type="unfinished">loiter</translation>
+      <translation>loiter</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>land</source>
-      <translation type="unfinished">land</translation>
+      <translation>land</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Climb to altitude of</source>
-      <translation type="unfinished">Climb to altitude of</translation>
+      <translation>Набор высоты до</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Return to launch, then:</source>
-      <translation type="unfinished">Return to launch, then:</translation>
+      <translation>Возврат на точку старта, затем:</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].controls[1].options[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Land immediately</source>
-      <translation type="unfinished">Land immediately</translation>
+      <translation>Land немедленно</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].controls[1].options[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Loiter and do not land</source>
-      <translation type="unfinished">Loiter and do not land</translation>
+      <translation>Loiter и не садиться</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].controls[1].options[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Loiter and land after specified time</source>
-      <translation type="unfinished">Loiter and land after specified time</translation>
+      <translation>Loiter и сесть через заданное время</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Loiter time</source>
-      <translation type="unfinished">Loiter time</translation>
+      <translation>Время Loiter</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Loiter altitude</source>
-      <translation type="unfinished">Loiter altitude</translation>
+      <translation>Высота Loiter</translation>
     </message>
     <message>
       <extracomment>.sections[Land Mode Settings].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Land Mode Settings</source>
-      <translation type="unfinished">Land Mode Settings</translation>
+      <translation>Настройки режима Land</translation>
     </message>
     <message>
       <extracomment>.sections[Land Mode Settings].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>landing</source>
-      <translation type="unfinished">landing</translation>
+      <translation>посадка</translation>
     </message>
     <message>
       <extracomment>.sections[Land Mode Settings].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>descent</source>
-      <translation type="unfinished">descent</translation>
+      <translation>снижение</translation>
     </message>
     <message>
       <extracomment>.sections[Land Mode Settings].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>disarm</source>
-      <translation type="unfinished">disarm</translation>
+      <translation>disarm</translation>
     </message>
     <message>
       <extracomment>.sections[Land Mode Settings].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>touchdown</source>
-      <translation type="unfinished">touchdown</translation>
+      <translation>касание земли</translation>
     </message>
     <message>
       <extracomment>.sections[Land Mode Settings].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Landing descent rate</source>
-      <translation type="unfinished">Landing descent rate</translation>
+      <translation>Скорость снижения при посадке</translation>
     </message>
     <message>
       <extracomment>.sections[Land Mode Settings].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Disarm after</source>
-      <translation type="unfinished">Disarm after</translation>
+      <translation>Disarm через</translation>
     </message>
   </context>
   <context>
@@ -4046,73 +4046,73 @@
       <extracomment>.sections[Battery].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Battery</source>
-      <translation type="unfinished">Battery</translation>
+      <translation>Аккумулятор</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>battery</source>
-      <translation type="unfinished">battery</translation>
+      <translation>аккумулятор</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>voltage</source>
-      <translation type="unfinished">voltage</translation>
+      <translation>напряжение</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>current</source>
-      <translation type="unfinished">current</translation>
+      <translation>ток</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>power module</source>
-      <translation type="unfinished">power module</translation>
+      <translation>модуль питания</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>sensor</source>
-      <translation type="unfinished">sensor</translation>
+      <translation>датчик</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>cells</source>
-      <translation type="unfinished">cells</translation>
+      <translation>элементы</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>lipo</source>
-      <translation type="unfinished">lipo</translation>
+      <translation>lipo</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Source</source>
-      <translation type="unfinished">Source</translation>
+      <translation>Источник</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Number of cells (in series)</source>
-      <translation type="unfinished">Number of cells (in series)</translation>
+      <translation>Количество элементов (последовательно)</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Battery capacity (mAh)</source>
-      <translation type="unfinished">Battery capacity (mAh)</translation>
+      <translation>Ёмкость аккумулятора (мА·ч)</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Empty voltage (per cell)</source>
-      <translation type="unfinished">Empty voltage (per cell)</translation>
+      <translation>Напряжение разряженного элемента</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[4].label</extracomment>
@@ -4574,95 +4574,95 @@
       <extracomment>.QGC.MetaData.Facts[displayPresetsTabFirst].shortDesc, .QGC.MetaData.Facts[displayPresetsTabFirst].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Display the presets tab at start</source>
-      <translation type="unfinished">Display the presets tab at start</translation>
+      <translation>Отображать вкладку пресетов при запуске</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showMissionItemStatus].shortDesc, .QGC.MetaData.Facts[showMissionItemStatus].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Show/Hide the mission item status display</source>
-      <translation type="unfinished">Show/Hide the mission item status display</translation>
+      <translation>Показать/Скрыть отображение статуса элементов миссии</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[takeoffItemNotRequired].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Allow missions to begin without a dedicated takeoff waypoint.</source>
-      <translation type="unfinished">Allow missions to begin without a dedicated takeoff waypoint.</translation>
+      <translation>Разрешить начинать полётные задания без выделенной точки Takeoff.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[takeoffItemNotRequired].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Missions do not require takeoff item</source>
-      <translation type="unfinished">Missions do not require takeoff item</translation>
+      <translation>Полётные задания не требуют точки Takeoff</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[takeoffItemNotRequired].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>takeoff</source>
-      <translation type="unfinished">takeoff</translation>
+      <translation>takeoff</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[allowMultipleLandingPatterns].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Enable creating multiple landing sequences for Return-to-Launch contingency selection.</source>
-      <translation type="unfinished">Enable creating multiple landing sequences for Return-to-Launch contingency selection.</translation>
+      <translation>Разрешить создание нескольких схем посадки для выбора в случае возврата на точку старта (Return-to-Launch).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[allowMultipleLandingPatterns].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Allow configuring multiple landing sequences</source>
-      <translation type="unfinished">Allow configuring multiple landing sequences</translation>
+      <translation>Разрешить настройку нескольких схем посадки</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[allowMultipleLandingPatterns].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>landing pattern</source>
-      <translation type="unfinished">landing pattern</translation>
+      <translation>схема посадки</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[useConditionGate].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Use MAV_CMD_CONDITION_GATE for mission pattern transitions instead of standard waypoints.</source>
-      <translation type="unfinished">Use MAV_CMD_CONDITION_GATE for mission pattern transitions instead of standard waypoints.</translation>
+      <translation>Использовать MAV_CMD_CONDITION_GATE для переходов в шаблоне полётного задания вместо стандартных путевых точек.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[useConditionGate].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Use MAV_CMD_CONDITION_GATE for pattern generation</source>
-      <translation type="unfinished">Use MAV_CMD_CONDITION_GATE for pattern generation</translation>
+      <translation>Использовать MAV_CMD_CONDITION_GATE для генерации шаблонов</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[useConditionGate].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>condition gate</source>
-      <translation type="unfinished">condition gate</translation>
+      <translation>условный рубеж</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showGimbalOnlyWhenSet].shortDesc, .QGC.MetaData.Facts[showGimbalOnlyWhenSet].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Show gimbal yaw visual only when set explicitly for the waypoint</source>
-      <translation type="unfinished">Show gimbal yaw visual only when set explicitly for the waypoint</translation>
+      <translation>Отображать ориентацию подвеса только если она явно задана для точки маршрута</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vtolTransitionDistance].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>Distance required for VTOL vehicles to complete altitude and speed transitions.</source>
-      <translation type="unfinished">Distance required for VTOL vehicles to complete altitude and speed transitions.</translation>
+      <translation>Расстояние, необходимое аппаратам VTOL для завершения перехода по высоте и скорости.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vtolTransitionDistance].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>VTOL Transition Distance</source>
-      <translation type="unfinished">VTOL Transition Distance</translation>
+      <translation>Расстояние перехода VTOL</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vtolTransitionDistance].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/PlanView.SettingsGroup.json"/>
       <source>vtol transition</source>
-      <translation type="unfinished">vtol transition</translation>
+      <translation>переход vtol</translation>
     </message>
   </context>
   <context>
@@ -5584,316 +5584,316 @@
       <extracomment>.QGC.MetaData.Facts[operatorID].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Pilot registration code or identification number (max 20 characters).</source>
-      <translation type="unfinished">Pilot registration code or identification number (max 20 characters).</translation>
+      <translation>Регистрационный код или идентификационный номер пилота (макс. 20 символов).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorID].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Operator ID. Maximum 20 characters.</source>
-      <translation type="unfinished">Operator ID. Maximum 20 characters.</translation>
+      <translation>Номер оператора. До 20 символов.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorID].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Operator ID</source>
-      <translation type="unfinished">Operator ID</translation>
+      <translation>Номер оператора</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorID].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>operator,pilot,registration</source>
-      <translation type="unfinished">operator,pilot,registration</translation>
+      <translation>оператор,пилот,регистрация</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDValid].shortDesc, .QGC.MetaData.Facts[operatorIDValid].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Operator ID is valid</source>
-      <translation type="unfinished">Operator ID is valid</translation>
+      <translation>Номер оператора допустим</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDValid].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Operator ID has been checked using checksum.</source>
-      <translation type="unfinished">Operator ID has been checked using checksum.</translation>
+      <translation>Номер оператора проверен контрольной суммой</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDType].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Format of the operator ID (currently CAA only).</source>
-      <translation type="unfinished">Format of the operator ID (currently CAA only).</translation>
+      <translation>Формат номера оператора (сейчас только CAA).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDType].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>CAA</source>
-      <translation type="unfinished">CAA</translation>
+      <translation>CAA</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDType].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Operator ID type</source>
-      <translation type="unfinished">Operator ID type</translation>
+      <translation>Тип номера оператора</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[operatorIDType].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>operator,registration</source>
-      <translation type="unfinished">operator,registration</translation>
+      <translation>оператор,регистрация</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendOperatorID].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Broadcast the operator identification information via Remote ID.</source>
-      <translation type="unfinished">Broadcast the operator identification information via Remote ID.</translation>
+      <translation>Транслировать идентификационные данные оператора через Remote ID.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendOperatorID].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>When enabled, sends operator ID message</source>
-      <translation type="unfinished">When enabled, sends operator ID message</translation>
+      <translation>При активации отправляет сообщение с номером оператора</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendOperatorID].label, .QGC.MetaData.Facts[sendSelfID].label, .QGC.MetaData.Facts[sendBasicID].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Broadcast</source>
-      <translation type="unfinished">Broadcast</translation>
+      <translation>Трансляция</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendOperatorID].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>operator,pilot</source>
-      <translation type="unfinished">operator,pilot</translation>
+      <translation>оператор,пилот</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDFree].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Flight purpose description to broadcast (max 23 characters).</source>
-      <translation type="unfinished">Flight purpose description to broadcast (max 23 characters).</translation>
+      <translation>Описание цели полёта для трансляции (макс. 23 символа).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDFree].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Optional plain text for operator to specify operations data (Free Text). Maximum 23 characters.</source>
-      <translation type="unfinished">Optional plain text for operator to specify operations data (Free Text). Maximum 23 characters.</translation>
+      <translation>Данные о полете (обычные) (до 23 символов)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDFree].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Flight Purpose</source>
-      <translation type="unfinished">Flight Purpose</translation>
+      <translation>Цель полета</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDFree].keywords, .QGC.MetaData.Facts[selfIDExtended].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>self id,description</source>
-      <translation type="unfinished">self id,description</translation>
+      <translation>self id,описание</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDEmergency].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Emergency status text to broadcast (max 23 characters).</source>
-      <translation type="unfinished">Emergency status text to broadcast (max 23 characters).</translation>
+      <translation>Текст статуса чрезвычайной ситуации для трансляции (макс. 23 символа).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDEmergency].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.</source>
-      <translation type="unfinished">Optional plain text for operator to specify operations data (Emergency Text). Maximum 23 characters.</translation>
+      <translation>Данные о полете (экстренные) (до 23 символов)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDEmergency].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Emergency Text</source>
-      <translation type="unfinished">Emergency Text</translation>
+      <translation>Текст экстренного сообщения</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDEmergency].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>self id,emergency</source>
-      <translation type="unfinished">self id,emergency</translation>
+      <translation>self id,чрезвычайная ситуация</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDExtended].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Extended operational status information to broadcast (max 23 characters).</source>
-      <translation type="unfinished">Extended operational status information to broadcast (max 23 characters).</translation>
+      <translation>Расширенная информация об эксплуатационном статусе для трансляции (макс. 23 символа).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDExtended].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.</source>
-      <translation type="unfinished">Optional plain text for operator to specify operations data (Extended Text). Maximum 23 characters.</translation>
+      <translation>Данные о полете (расширенные) (до 23 символов)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDExtended].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Extended Status</source>
-      <translation type="unfinished">Extended Status</translation>
+      <translation>Расширенный статус</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDType].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Type of self-ID message to broadcast (flight purpose, emergency, or extended).</source>
-      <translation type="unfinished">Type of self-ID message to broadcast (flight purpose, emergency, or extended).</translation>
+      <translation>Тип сообщения self-ID для трансляции (цель полёта, чрезвычайная ситуация или расширенный статус).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDType].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Flight Purpose,Emergency,Extended Status</source>
-      <translation type="unfinished">Flight Purpose,Emergency,Extended Status</translation>
+      <translation>Цель полёта,Экстренная ситуация,Расширенный статус</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDType].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Broadcast Message</source>
-      <translation type="unfinished">Broadcast Message</translation>
+      <translation>Широковещательное сообщение</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[selfIDType].keywords, .QGC.MetaData.Facts[sendSelfID].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>self id</source>
-      <translation type="unfinished">self id</translation>
+      <translation>self id</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendSelfID].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Broadcast flight purpose or emergency status information via Remote ID.</source>
-      <translation type="unfinished">Broadcast flight purpose or emergency status information via Remote ID.</translation>
+      <translation>Транслировать цель полёта или статус чрезвычайной ситуации через Remote ID.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendSelfID].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>When enabled, sends self ID message</source>
-      <translation type="unfinished">When enabled, sends self ID message</translation>
+      <translation>При активации отправляет сообщение с собственным номером</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicID].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Drone serial number or registration code to transmit (max 20 characters).</source>
-      <translation type="unfinished">Drone serial number or registration code to transmit (max 20 characters).</translation>
+      <translation>Серийный номер дрона или регистрационный код для передачи (макс. 20 символов).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicID].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Basic ID</source>
-      <translation type="unfinished">Basic ID</translation>
+      <translation>Базовый номер</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicID].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>basic id,serial number,drone id</source>
-      <translation type="unfinished">basic id,serial number,drone id</translation>
+      <translation>basic id,серийный номер,id дрона</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Format of the drone ID (CAA registration, serial number, or UTM assigned).</source>
-      <translation type="unfinished">Format of the drone ID (CAA registration, serial number, or UTM assigned).</translation>
+      <translation>Формат id дрона (регистрация CAA, серийный номер или ID, назначенный UTM).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</source>
-      <translation type="unfinished">None,SerialNumber (ANSI/CTA-2063),CAA,UTM (RFC4122),Specific</translation>
+      <translation>Отсутствует, серийный номер (ANSI/CTA-2063),CAA,UTM (RFC4122), Особый</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Basic ID Type</source>
-      <translation type="unfinished">Basic ID Type</translation>
+      <translation>Базовый ID Type</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDType].keywords, .QGC.MetaData.Facts[basicIDUaType].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>basic id,ua type</source>
-      <translation type="unfinished">basic id,ua type</translation>
+      <translation>basic id,тип ua</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDUaType].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Classification of the unmanned aircraft (multirotor, fixed-wing, etc.).</source>
-      <translation type="unfinished">Classification of the unmanned aircraft (multirotor, fixed-wing, etc.).</translation>
+      <translation>Классификация беспилотного воздушного судна (мультиротор, самолёт и т.д.).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDUaType].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</source>
-      <translation type="unfinished">Undefined,Airplane/FixedWing,Helicopter/Multirrotor,Gyroplane,VTOL,Ornithopter,Glider,Kite,Free Ballon,Captive Ballon,Airship,Parachute,Rocket,Tethered powered aircraft,Ground Obstacle,Other</translation>
+      <translation>Не определено,Самолёт,Вертолёт/Мультиротор,Автожир,VTOL,Орнитоптер,Планер,Воздушный змей,Свободный аэростат,Привязной аэростат,Дирижабль,Парашют,Ракета,Привязной моторизованный аппарат,Наземное препятствие,Другое</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[basicIDUaType].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>UA type</source>
-      <translation type="unfinished">UA type</translation>
+      <translation>Тип БПЛА</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendBasicID].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Broadcast the drone identification information via Remote ID.</source>
-      <translation type="unfinished">Broadcast the drone identification information via Remote ID.</translation>
+      <translation>Транслировать идентификационные данные дрона через Remote ID.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendBasicID].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>When enabled, sends basic ID message</source>
-      <translation type="unfinished">When enabled, sends basic ID message</translation>
+      <translation>При активации отправляет сообщение с базовым номером</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[sendBasicID].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>basic id</source>
-      <translation type="unfinished">basic id</translation>
+      <translation>basic id</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Regulatory region for Remote ID compliance (FAA or EU).</source>
-      <translation type="unfinished">Regulatory region for Remote ID compliance (FAA or EU).</translation>
+      <translation>Регион регулирования для соответствия Remote ID (FAA или EU).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>The region of operation the mission will take place in</source>
-      <translation type="unfinished">The region of operation the mission will take place in</translation>
+      <translation>Регион проведения полётного задания</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>FAA,EU</source>
-      <translation type="unfinished">FAA,EU</translation>
+      <translation>FAA,EU</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Region of operation</source>
-      <translation type="unfinished">Region of operation</translation>
+      <translation>Регион деятельности</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[region].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>region,faa,eu,remote id</source>
-      <translation type="unfinished">region,faa,eu,remote id</translation>
+      <translation>регион,faa,eu,remote id</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[locationType].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/RemoteID.SettingsGroup.json"/>
       <source>Source for operator location data (live GNSS or fixed coordinates).</source>
-      <translation type="unfinished">Source for operator location data (live GNSS or fixed coordinates).</translation>
+      <translation>Источник данных о местоположении оператора (данные GNSS в реальном времени или фиксированные координаты).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[locationType].longDesc</extracomment>
@@ -6723,821 +6723,821 @@
       <extracomment>.QGC.MetaData.Facts[preferredFirmwareClass].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Tailors the interface to a specific firmware for a simpler experience.</source>
-      <translation type="unfinished">Tailors the interface to a specific firmware for a simpler experience.</translation>
+      <translation>Настраивает интерфейс под конкретную прошивку для более простого использования.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[preferredFirmwareClass].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>When set to a specific firmware type, the interface is streamlined for that firmware.</source>
-      <translation type="unfinished">When set to a specific firmware type, the interface is streamlined for that firmware.</translation>
+      <translation>При выборе конкретного типа прошивки интерфейс упрощается под неё.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[preferredFirmwareClass].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>No preference,ArduPilot,PX4 Pro</source>
-      <translation type="unfinished">No preference,ArduPilot,PX4 Pro</translation>
+      <translation>Без предпочтения,ArduPilot,PX4 Pro</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[preferredFirmwareClass].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Preferred Firmware</source>
-      <translation type="unfinished">Preferred Firmware</translation>
+      <translation>Предпочитаемая прошивка</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[preferredFirmwareClass].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>firmware,ardupilot,px4</source>
-      <translation type="unfinished">firmware,ardupilot,px4</translation>
+      <translation>прошивка,ardupilot,px4</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[preferredVehicleClass].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Tailors the interface to a specific vehicle type for a simpler experience.</source>
-      <translation type="unfinished">Tailors the interface to a specific vehicle type for a simpler experience.</translation>
+      <translation>Настраивает интерфейс под конкретный тип борта для более простого использования.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[preferredVehicleClass].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>When set to a specific vehicle class, the interface is streamlined for that vehicle type.</source>
-      <translation type="unfinished">When set to a specific vehicle class, the interface is streamlined for that vehicle type.</translation>
+      <translation>При выборе конкретного класса борта интерфейс упрощается под этот тип.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[preferredVehicleClass].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>No preference,Fixed Wing,Multi-Rotor,VTOL,Rover,Sub</source>
-      <translation type="unfinished">No preference,Fixed Wing,Multi-Rotor,VTOL,Rover,Sub</translation>
+      <translation>Без предпочтения,Самолёт,Мультикоптер,VTOL,Ровер,Подводный аппарат</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[preferredVehicleClass].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Preferred Vehicle</source>
-      <translation type="unfinished">Preferred Vehicle</translation>
+      <translation>Предпочитаемый борт</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[preferredVehicleClass].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>vehicle,multirotor,fixed wing,vtol,rover,sub</source>
-      <translation type="unfinished">vehicle,multirotor,fixed wing,vtol,rover,sub</translation>
+      <translation>борт,мультиротор,самолёт,vtol,ровер,подводный аппарат</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].shortDesc, .QGC.MetaData.Facts[offlineEditingFirmwareClass].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Offline editing firmware class</source>
-      <translation type="unfinished">Offline editing firmware class</translation>
+      <translation>Класс прошивки для офлайн-редактирования</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>ArduPilot,PX4 Pro,MAVLink</source>
-      <translation type="unfinished">ArduPilot,PX4 Pro,MAVLink</translation>
+      <translation>ArduPilot,PX4 Pro,MAVLink</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].shortDesc, .QGC.MetaData.Facts[offlineEditingVehicleClass].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Offline editing vehicle class</source>
-      <translation type="unfinished">Offline editing vehicle class</translation>
+      <translation>Класс борта для офлайн-редактирования</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingVehicleClass].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Unknown</source>
-      <translation type="unfinished">Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Unknown</translation>
+      <translation>Самолёт,Мультикоптер,VTOL,Ровер,Подводный аппарат,Неизвестно</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingCruiseSpeed].shortDesc, .QGC.MetaData.Facts[offlineEditingCruiseSpeed].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Offline editing cruise speed</source>
-      <translation type="unfinished">Offline editing cruise speed</translation>
+      <translation>Крейсерская скорость для офлайн-редактирования</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingCruiseSpeed].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.</source>
-      <translation type="unfinished">This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.</translation>
+      <translation>Это значение задаёт скорость по умолчанию для расчёта статистики полётного задания для бортов, которые не поддерживают зависание, или для VTOL в режиме самолёта с фиксированным крылом. Оно не изменяет скорость полёта для конкретного плана полёта.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingHoverSpeed].shortDesc, .QGC.MetaData.Facts[offlineEditingHoverSpeed].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Offline editing hover speed</source>
-      <translation type="unfinished">Offline editing hover speed</translation>
+      <translation>Скорость зависания для офлайн-редактирования</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingHoverSpeed].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.</source>
-      <translation type="unfinished">This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.</translation>
+      <translation>Это значение задаёт скорость по умолчанию для расчёта статистики полётного задания для многороторных бортов или VTOL в режиме многороторного полёта. Оно не изменяет скорость полёта для конкретного плана полёта.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingAscentSpeed].shortDesc, .QGC.MetaData.Facts[offlineEditingAscentSpeed].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Offline editing ascent speed</source>
-      <translation type="unfinished">Offline editing ascent speed</translation>
+      <translation>Скорость подъёма для офлайн-редактирования</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingAscentSpeed].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.</source>
-      <translation type="unfinished">This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.</translation>
+      <translation>Это значение задаёт скорость подъёма для многороторных аппаратов для расчёта продолжительности миссии.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingDescentSpeed].shortDesc, .QGC.MetaData.Facts[offlineEditingDescentSpeed].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Offline editing descent speed</source>
-      <translation type="unfinished">Offline editing descent speed</translation>
+      <translation>Скорость снижения для офлайн-редактирования</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingDescentSpeed].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.</source>
-      <translation type="unfinished">This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.</translation>
+      <translation>Это значение задаёт крейсерскую скорость для многороторных бортов для расчёта продолжительности полётного задания.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[batteryPercentRemainingAnnounce].shortDesc, .QGC.MetaData.Facts[batteryPercentRemainingAnnounce].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Announce battery remaining percent</source>
-      <translation type="unfinished">Announce battery remaining percent</translation>
+      <translation>Сообщать оставшийся заряд аккумулятора в процентах</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[batteryPercentRemainingAnnounce].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Announce the remaining battery percent when it falls below the specified percentage.</source>
-      <translation type="unfinished">Announce the remaining battery percent when it falls below the specified percentage.</translation>
+      <translation>Оповещать, если оставшийся заряд аккумулятора ниже заданного процента.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[defaultMissionItemAltitude].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Default altitude automatically assigned to new waypoints during mission planning.</source>
-      <translation type="unfinished">Default altitude automatically assigned to new waypoints during mission planning.</translation>
+      <translation>Высота по умолчанию, которая автоматически присваивается новым путевым точкам при планировании полётного задания.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[defaultMissionItemAltitude].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>This value specifies the default altitude for new items added to a mission.</source>
-      <translation type="unfinished">This value specifies the default altitude for new items added to a mission.</translation>
+      <translation>Высота по умолчанию для новых элементов полётного задания.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[defaultMissionItemAltitude].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Default Mission Altitude</source>
-      <translation type="unfinished">Default Mission Altitude</translation>
+      <translation>Высота полётного задания по умолчанию</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[defaultMissionItemAltitude].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>mission altitude,default altitude</source>
-      <translation type="unfinished">mission altitude,default altitude</translation>
+      <translation>высота полётного задания, высота по умолчанию</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[audioMuted].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Mute audio output</source>
-      <translation type="unfinished">Mute audio output</translation>
+      <translation>Отключить звук</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[audioMuted].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Mutes all audio output without changing the volume level.</source>
-      <translation type="unfinished">Mutes all audio output without changing the volume level.</translation>
+      <translation>Отключает весь звук без изменения уровня громкости.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[audioMuted].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Mute Audio Output</source>
-      <translation type="unfinished">Mute Audio Output</translation>
+      <translation>Отключить звук</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[audioMuted].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>audio,mute,sound</source>
-      <translation type="unfinished">audio,mute,sound</translation>
+      <translation>звук,отключить,mute</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[audioVolume].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Controls the volume level for audio alerts and notifications.</source>
-      <translation type="unfinished">Controls the volume level for audio alerts and notifications.</translation>
+      <translation>Управляет уровнем громкости звуковых оповещений и уведомлений.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[audioVolume].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Sets the audio output volume percentage.</source>
-      <translation type="unfinished">Sets the audio output volume percentage.</translation>
+      <translation>Задаёт громкость звука в процентах.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[audioVolume].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Audio Output Volume</source>
-      <translation type="unfinished">Audio Output Volume</translation>
+      <translation>Громкость звука</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[audioVolume].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>audio,volume,sound</source>
-      <translation type="unfinished">audio,volume,sound</translation>
+      <translation>звук,громкость,volume</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[virtualJoystick].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Displays an on-screen virtual joystick in the Fly view for manual vehicle control.</source>
-      <translation type="unfinished">Displays an on-screen virtual joystick in the Fly view for manual vehicle control.</translation>
+      <translation>Отображает экранный виртуальный джойстик на экране «Полёт» для ручного управления бортом.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[virtualJoystick].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>If this option is enabled the virtual joystick will be shown on the Fly view.</source>
-      <translation type="unfinished">If this option is enabled the virtual joystick will be shown on the Fly view.</translation>
+      <translation>При включении эта опция отображает виртуальный джойстик в режиме полёта.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[virtualJoystick].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Virtual Joystick</source>
-      <translation type="unfinished">Virtual Joystick</translation>
+      <translation>Виртуальный джойстик</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[virtualJoystick].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>joystick,virtual stick</source>
-      <translation type="unfinished">joystick,virtual stick</translation>
+      <translation>джойстик,виртуальный стик</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[virtualJoystickAutoCenterThrottle].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Returns the throttle stick to center when released instead of holding position.</source>
-      <translation type="unfinished">Returns the throttle stick to center when released instead of holding position.</translation>
+      <translation>Возвращает ручку газа в центр при отпускании вместо удержания положения.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[virtualJoystickAutoCenterThrottle].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>If enabled the throttle stick will snap back to center when released.</source>
-      <translation type="unfinished">If enabled the throttle stick will snap back to center when released.</translation>
+      <translation>Если включено, ручка газа будет автоматически возвращаться в центр при отпускании.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[virtualJoystickAutoCenterThrottle].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Auto-Center Throttle</source>
-      <translation type="unfinished">Auto-Center Throttle</translation>
+      <translation>Автоцентрирование ручки газа</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[virtualJoystickAutoCenterThrottle].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>joystick,throttle</source>
-      <translation type="unfinished">joystick,throttle</translation>
+      <translation>джойстик,газ</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[virtualJoystickLeftHandedMode].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Swaps the virtual joystick layout so throttle/yaw is on the left.</source>
-      <translation type="unfinished">Swaps the virtual joystick layout so throttle/yaw is on the left.</translation>
+      <translation>Меняет расположение виртуального джойстика так, чтобы газ/рыскание были слева.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[virtualJoystickLeftHandedMode].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>If this option is enabled the virtual joystick layout will be reversed</source>
-      <translation type="unfinished">If this option is enabled the virtual joystick layout will be reversed</translation>
+      <translation>При включении расположение виртуального джойстика меняется на противоположное.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[virtualJoystickLeftHandedMode].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Left-Handed Mode</source>
-      <translation type="unfinished">Left-Handed Mode</translation>
+      <translation>Режим для левшей</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[virtualJoystickLeftHandedMode].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>joystick,left handed</source>
-      <translation type="unfinished">joystick,left handed</translation>
+      <translation>джойстик,для левшей</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gstDebugLevel].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Sets the verbosity of GStreamer debug logging.</source>
-      <translation type="unfinished">Sets the verbosity of GStreamer debug logging.</translation>
+      <translation>Задаёт уровень подробности отладочного лога GStreamer.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gstDebugLevel].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Controls the GStreamer debug threshold for all pipeline elements. Changes take effect immediately.</source>
-      <translation type="unfinished">Controls the GStreamer debug threshold for all pipeline elements. Changes take effect immediately.</translation>
+      <translation>Управляет порогом отладки GStreamer для всех элементов конвейера. Изменения применяются немедленно.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</source>
-      <translation type="unfinished">Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace</translation>
+      <translation>Отключено,Ошибка,Предупреждение,Исправь меня,Информация,Отладка,Журнал,Трассировка</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gstDebugLevel].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>GStreamer debug level</source>
-      <translation type="unfinished">GStreamer debug level</translation>
+      <translation>Уровень отладки GStreamer</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gstDebugLevel].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>gstreamer,debug level</source>
-      <translation type="unfinished">gstreamer,debug level</translation>
+      <translation>gstreamer,уровень отладки</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[useChecklist].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Enables the preflight checklist to help verify system status before flight.</source>
-      <translation type="unfinished">Enables the preflight checklist to help verify system status before flight.</translation>
+      <translation>Включает предполётный чек-лист для проверки состояния систем перед полётом.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[useChecklist].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>If this option is enabled the preflight checklist will be used.</source>
-      <translation type="unfinished">If this option is enabled the preflight checklist will be used.</translation>
+      <translation>Если эта опция включена, будет использоваться предполётный чек-лист.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[useChecklist].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Use Preflight Checklist</source>
-      <translation type="unfinished">Use Preflight Checklist</translation>
+      <translation>Использовать предполётный чек-лист</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[useChecklist].keywords, .QGC.MetaData.Facts[enforceChecklist].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>checklist,preflight</source>
-      <translation type="unfinished">checklist,preflight</translation>
+      <translation>чек-лист,предполётный</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enforceChecklist].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Prevents the vehicle from arming until all preflight checklist items pass.</source>
-      <translation type="unfinished">Prevents the vehicle from arming until all preflight checklist items pass.</translation>
+      <translation>Не позволяет выполнить arm борта, пока не пройдены все пункты предполётного чек-листа.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enforceChecklist].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>If this option is enabled the preflight checklist must pass before arming.</source>
-      <translation type="unfinished">If this option is enabled the preflight checklist must pass before arming.</translation>
+      <translation>При включении чек-лист должен быть пройден перед взлётом.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enforceChecklist].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Enforce Preflight Checklist</source>
-      <translation type="unfinished">Enforce Preflight Checklist</translation>
+      <translation>Требовать прохождения предполётного чек-листа</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enableMultiVehiclePanel].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Shows a panel for managing multiple connected vehicles simultaneously.</source>
-      <translation type="unfinished">Shows a panel for managing multiple connected vehicles simultaneously.</translation>
+      <translation>Показывает панель для управления несколькими подключёнными бортами одновременно.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enableMultiVehiclePanel].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Enable Multi-Vehicle Panel when multiple vehicles are connected.</source>
-      <translation type="unfinished">Enable Multi-Vehicle Panel when multiple vehicles are connected.</translation>
+      <translation>Включает панель управления несколькими бортами, если подключено несколько бортов.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enableMultiVehiclePanel].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Enable Multi-Vehicle Panel</source>
-      <translation type="unfinished">Enable Multi-Vehicle Panel</translation>
+      <translation>Включить панель управления несколькими бортами</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[enableMultiVehiclePanel].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>multi vehicle</source>
-      <translation type="unfinished">multi vehicle</translation>
+      <translation>несколько бортов</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[uiScalePercent].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Scales the entire user interface including fonts and controls.</source>
-      <translation type="unfinished">Scales the entire user interface including fonts and controls.</translation>
+      <translation>Масштабирует весь интерфейс, включая шрифты и элементы управления.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[uiScalePercent].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Scales the entire user interface relative to the platform default. 100% is the default size.</source>
-      <translation type="unfinished">Scales the entire user interface relative to the platform default. 100% is the default size.</translation>
+      <translation>Масштабирует весь интерфейс относительно стандартного размера платформы. 100% — размер по умолчанию.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[uiScalePercent].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>UI Scaling</source>
-      <translation type="unfinished">UI Scaling</translation>
+      <translation>Масштаб интерфейса</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[uiScalePercent].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>ui scale,font size,zoom</source>
-      <translation type="unfinished">ui scale,font size,zoom</translation>
+      <translation>масштаб интерфейса,размер шрифта,zoom</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[indoorPalette].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Switches between light and dark color schemes for different lighting conditions.</source>
-      <translation type="unfinished">Switches between light and dark color schemes for different lighting conditions.</translation>
+      <translation>Переключает между светлой и тёмной цветовыми схемами в зависимости от условий освещения.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[indoorPalette].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>The color scheme for the user interface.</source>
-      <translation type="unfinished">The color scheme for the user interface.</translation>
+      <translation>Цветовая схема пользовательского интерфейса.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[indoorPalette].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Indoor,Outdoor</source>
-      <translation type="unfinished">Indoor,Outdoor</translation>
+      <translation>В помещении,На улице</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[indoorPalette].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Color Scheme</source>
-      <translation type="unfinished">Color Scheme</translation>
+      <translation>Цветовая схема</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[indoorPalette].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>palette,dark mode,theme,color scheme</source>
-      <translation type="unfinished">palette,dark mode,theme,color scheme</translation>
+      <translation>палитра,тёмная тема,тема,цветовая схема</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[savePath].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Directory where mission files, logs, and other application data are saved.</source>
-      <translation type="unfinished">Directory where mission files, logs, and other application data are saved.</translation>
+      <translation>Каталог, куда сохраняются файлы полётных заданий, логи и другие данные приложения.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[savePath].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Directory to which all data files are saved/loaded from</source>
-      <translation type="unfinished">Directory to which all data files are saved/loaded from</translation>
+      <translation>Каталог, в который сохраняются/загружаются все файлы данных.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[savePath].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Application Load/Save Path</source>
-      <translation type="unfinished">Application Load/Save Path</translation>
+      <translation>Путь загрузки/сохранения приложения</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[savePath].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>save path,storage</source>
-      <translation type="unfinished">save path,storage</translation>
+      <translation>путь сохранения,хранилище</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[androidDontSaveToSDCard].shortDesc, .QGC.MetaData.Facts[androidDontSaveToSDCard].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Don't save to SD card, even if available</source>
-      <translation type="unfinished">Don't save to SD card, even if available</translation>
+      <translation>Не сохранять на SD-карту, даже если она доступна</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[androidDontSaveToSDCard].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>If this option is enabled, application data will not be saved to the SD card.</source>
-      <translation type="unfinished">If this option is enabled, application data will not be saved to the SD card.</translation>
+      <translation>При включении этой опции данные приложения не будут сохраняться на SD-карту.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[androidDontSaveToSDCard].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>sd card,storage,android,save path</source>
-      <translation type="unfinished">sd card,storage,android,save path</translation>
+      <translation>sd-карта,хранилище,android,путь сохранения</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[tiandituToken].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Personal API token for accessing TianDiTu map tiles.</source>
-      <translation type="unfinished">Personal API token for accessing TianDiTu map tiles.</translation>
+      <translation>Персональный API-токен для доступа к тайлам карт TianDiTu.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[tiandituToken].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Your personal access token for TianDiTu maps</source>
-      <translation type="unfinished">Your personal access token for TianDiTu maps</translation>
+      <translation>Ваш персональный токен доступа к картам TianDiTu</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[tiandituToken].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>TianDiTu</source>
-      <translation type="unfinished">TianDiTu</translation>
+      <translation>TianDiTu</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[tiandituToken].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>token,api key,tianditu</source>
-      <translation type="unfinished">token,api key,tianditu</translation>
+      <translation>токен,ключ api,tianditu</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxToken].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Personal API token for accessing Mapbox map tiles and styling.</source>
-      <translation type="unfinished">Personal API token for accessing Mapbox map tiles and styling.</translation>
+      <translation>Персональный API-токен для доступа к тайлам и стилям карт Mapbox.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxToken].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Your personal access token for Mapbox maps</source>
-      <translation type="unfinished">Your personal access token for Mapbox maps</translation>
+      <translation>Ваш персональный токен доступа к картам Mapbox</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxToken].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Mapbox</source>
-      <translation type="unfinished">Mapbox</translation>
+      <translation>Mapbox</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxToken].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>token,api key,mapbox</source>
-      <translation type="unfinished">token,api key,mapbox</translation>
+      <translation>токен,ключ api,mapbox</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxAccount].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Mapbox account username for accessing account-specific map resources.</source>
-      <translation type="unfinished">Mapbox account username for accessing account-specific map resources.</translation>
+      <translation>Имя учётной записи Mapbox для доступа к персональным картографическим ресурсам.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxAccount].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Your personal account name for Mapbox maps</source>
-      <translation type="unfinished">Your personal account name for Mapbox maps</translation>
+      <translation>Ваше персональное имя учетной записи для карт Mapbox</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxAccount].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Account</source>
-      <translation type="unfinished">Account</translation>
+      <translation>Учётная запись</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxAccount].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>mapbox,account</source>
-      <translation type="unfinished">mapbox,account</translation>
+      <translation>mapbox,учётная запись</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxStyle].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Mapbox map design style ID controlling the appearance of map tiles.</source>
-      <translation type="unfinished">Mapbox map design style ID controlling the appearance of map tiles.</translation>
+      <translation>Идентификатор стиля оформления карты Mapbox, управляющий внешним видом тайлов.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxStyle].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Map design style ID for Mapbox maps</source>
-      <translation type="unfinished">Map design style ID for Mapbox maps</translation>
+      <translation>Номер стиля оформления карты для карт Mapbox</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxStyle].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Map Style</source>
-      <translation type="unfinished">Map Style</translation>
+      <translation>Стиль карты</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[mapboxStyle].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>mapbox,style</source>
-      <translation type="unfinished">mapbox,style</translation>
+      <translation>mapbox,стиль</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[esriToken].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Personal API token for accessing Esri map services.</source>
-      <translation type="unfinished">Personal API token for accessing Esri map services.</translation>
+      <translation>Персональный API-токен для доступа к картографическим сервисам Esri.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[esriToken].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Your personal access token for Esri maps</source>
-      <translation type="unfinished">Your personal access token for Esri maps</translation>
+      <translation>Ваш персональный токен доступа к картам Esri</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[esriToken].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Esri</source>
-      <translation type="unfinished">Esri</translation>
+      <translation>Esri</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[esriToken].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>token,api key,esri</source>
-      <translation type="unfinished">token,api key,esri</translation>
+      <translation>токен,ключ api,esri</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[customURL].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>URL pattern with {x}, {y}, {z} substitutions for a custom map tile server.</source>
-      <translation type="unfinished">URL pattern with {x}, {y}, {z} substitutions for a custom map tile server.</translation>
+      <translation>Шаблон URL с подстановками {x}, {y}, {z} для пользовательского сервера тайлов карты.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[customURL].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka</source>
-      <translation type="unfinished">URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka</translation>
+      <translation>URL-адрес для X Y Z карты с подстановками {x} {y} {z} или {zoom}. Например: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[customURL].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Server URL</source>
-      <translation type="unfinished">Server URL</translation>
+      <translation>URL сервера</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[customURL].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>custom map,wms,tile url</source>
-      <translation type="unfinished">custom map,wms,tile url</translation>
+      <translation>пользовательская карта,wms,url тайлов</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vworldToken].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Personal API token for accessing VWorld map tiles.</source>
-      <translation type="unfinished">Personal API token for accessing VWorld map tiles.</translation>
+      <translation>Персональный API-токен для доступа к тайлам карт VWorld.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vworldToken].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Your personal access token for VWorld maps</source>
-      <translation type="unfinished">Your personal access token for VWorld maps</translation>
+      <translation>Ваш персональный токен доступа к картам VWorld</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vworldToken].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>VWorld</source>
-      <translation type="unfinished">VWorld</translation>
+      <translation>VWorld</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[vworldToken].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>token,api key,vworld</source>
-      <translation type="unfinished">token,api key,vworld</translation>
+      <translation>токен,ключ api,vworld</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[openaipToken].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Personal API key for displaying OpenAIP airspace and aeronautical data.</source>
-      <translation type="unfinished">Personal API key for displaying OpenAIP airspace and aeronautical data.</translation>
+      <translation>Персональный API-ключ для отображения воздушного пространства и авиационных данных OpenAIP.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[openaipToken].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Your personal API key for OpenAIP aviation maps. Get one at https://www.openaip.net</source>
-      <translation type="unfinished">Your personal API key for OpenAIP aviation maps. Get one at https://www.openaip.net</translation>
+      <translation>Ваш персональный API-ключ для авиационных карт OpenAIP. Получить его можно на https://www.openaip.net</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[openaipToken].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>OpenAIP</source>
-      <translation type="unfinished">OpenAIP</translation>
+      <translation>OpenAIP</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[openaipToken].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>token,api key,openaip</source>
-      <translation type="unfinished">token,api key,openaip</translation>
+      <translation>токен,ключ api,openaip</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[followTarget].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Streams the ground station GPS location to the vehicle for Follow Me mode.</source>
-      <translation type="unfinished">Streams the ground station GPS location to the vehicle for Follow Me mode.</translation>
+      <translation>Передаёт борту GPS-координаты наземной станции для режима Follow Me.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[followTarget].enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Never,Always,When in Follow Me Flight Mode</source>
-      <translation type="unfinished">Never,Always,When in Follow Me Flight Mode</translation>
+      <translation>Никогда,Всегда,В режиме Follow Me</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[followTarget].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Stream GCS Position</source>
-      <translation type="unfinished">Stream GCS Position</translation>
+      <translation>Передавать позицию наземной станции</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[followTarget].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>follow me</source>
-      <translation type="unfinished">follow me</translation>
+      <translation>follow me</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Determines the language used for the application interface. Requires restart.</source>
-      <translation type="unfinished">Determines the language used for the application interface. Requires restart.</translation>
+      <translation>Определяет язык интерфейса приложения. Требуется перезапуск.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Language</source>
-      <translation type="unfinished">Language</translation>
+      <translation>Язык</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[qLocaleLanguage].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>language,locale</source>
-      <translation type="unfinished">language,locale</translation>
+      <translation>язык,локаль</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[clearSettingsNextBoot].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Resets all application preferences to their defaults on the next launch.</source>
-      <translation type="unfinished">Resets all application preferences to their defaults on the next launch.</translation>
+      <translation>Сбрасывает все настройки приложения к значениям по умолчанию при следующем запуске.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[clearSettingsNextBoot].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>When enabled, all application settings will be reset to defaults on the next start.</source>
-      <translation type="unfinished">When enabled, all application settings will be reset to defaults on the next start.</translation>
+      <translation>При включении все настройки приложения будут сброшены к значениям по умолчанию при следующем запуске.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[clearSettingsNextBoot].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Clear all settings on next start</source>
-      <translation type="unfinished">Clear all settings on next start</translation>
+      <translation>Сбросить все настройки при следующем запуске</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[clearSettingsNextBoot].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>reset,clear settings,factory reset</source>
-      <translation type="unfinished">reset,clear settings,factory reset</translation>
+      <translation>сброс,сброс настроек,заводские настройки</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[disableAllPersistence].shortDesc, .QGC.MetaData.Facts[disableAllPersistence].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Disable all data persistence</source>
-      <translation type="unfinished">Disable all data persistence</translation>
+      <translation>Отключить сохранение всех данных</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[disableAllPersistence].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>If this option is set, nothing will be saved to disk.</source>
-      <translation type="unfinished">If this option is set, nothing will be saved to disk.</translation>
+      <translation>При активации данные не будут сохраняться на диск.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[firstRunPromptIdsShown].shortDesc, .QGC.MetaData.Facts[firstRunPromptIdsShown].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Comma separated list of first run prompt ids which have already been shown.</source>
-      <translation type="unfinished">Comma separated list of first run prompt ids which have already been shown.</translation>
+      <translation>Показанные подсказки при первом запуске (через запятую)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[favoriteParameters].shortDesc, .QGC.MetaData.Facts[favoriteParameters].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Comma separated list of favorite parameter names.</source>
-      <translation type="unfinished">Comma separated list of favorite parameter names.</translation>
+      <translation>Список имён избранных параметров (через запятую)</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showAppLogTimestampAsElapsedTime].shortDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Show log timestamps as elapsed time since app start</source>
-      <translation type="unfinished">Show log timestamps as elapsed time since app start</translation>
+      <translation>Показывать метки времени в логе как время с момента запуска приложения</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showAppLogTimestampAsElapsedTime].longDesc</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>When enabled, the log console shows time as seconds since application start (e.g. 3.727). When disabled, shows wall-clock time (HH:MM:SS.mmm).</source>
-      <translation type="unfinished">When enabled, the log console shows time as seconds since application start (e.g. 3.727). When disabled, shows wall-clock time (HH:MM:SS.mmm).</translation>
+      <translation>При включении консоль лога показывает время в секундах с момента запуска приложения (например, 3.727). При отключении показывается астрономическое время (ЧЧ:ММ:СС.ммм).</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showAppLogTimestampAsElapsedTime].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Elapsed Timestamps</source>
-      <translation type="unfinished">Elapsed Timestamps</translation>
+      <translation>Метки прошедшего времени</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[showAppLogTimestampAsElapsedTime].keywords</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>log,time,elapsed,timestamp,console</source>
-      <translation type="unfinished">log,time,elapsed,timestamp,console</translation>
+      <translation>лог,время,прошедшее,метка времени,консоль</translation>
     </message>
   </context>
   <context>
@@ -9478,19 +9478,19 @@
       <extracomment>.groups[Ground Station].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>Ground Station</source>
-      <translation type="unfinished">Ground Station</translation>
+      <translation>Наземная станция</translation>
     </message>
     <message>
       <extracomment>.groups[Ground Station].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>system id</source>
-      <translation type="unfinished">system id</translation>
+      <translation>id системы</translation>
     </message>
     <message>
       <extracomment>.groups[Ground Station].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>mavlink id</source>
-      <translation type="unfinished">mavlink id</translation>
+      <translation>id mavlink</translation>
     </message>
     <message>
       <extracomment>.groups[Ground Station].keywords[2]</extracomment>
@@ -9502,19 +9502,19 @@
       <extracomment>.groups[Ground Station].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>initial download</source>
-      <translation type="unfinished">initial download</translation>
+      <translation>первоначальная загрузка</translation>
     </message>
     <message>
       <extracomment>.groups[Ground Station].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>gcs</source>
-      <translation type="unfinished">gcs</translation>
+      <translation>gcs</translation>
     </message>
     <message>
       <extracomment>.groups[MAVLink Forwarding].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>MAVLink Forwarding</source>
-      <translation type="unfinished">MAVLink Forwarding</translation>
+      <translation>MAVLink Forwarding</translation>
     </message>
     <message>
       <extracomment>.groups[MAVLink Forwarding].keywords[0]</extracomment>
@@ -9526,7 +9526,7 @@
       <extracomment>.groups[MAVLink Forwarding].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>relay</source>
-      <translation type="unfinished">relay</translation>
+      <translation>ретрансляция</translation>
     </message>
     <message>
       <extracomment>.groups[MAVLink Forwarding].keywords[2]</extracomment>
@@ -9538,67 +9538,67 @@
       <extracomment>.groups[MAVLink Forwarding].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>host</source>
-      <translation type="unfinished">host</translation>
+      <translation>хост</translation>
     </message>
     <message>
       <extracomment>.groups[Logging].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>Logging</source>
-      <translation type="unfinished">Logging</translation>
+      <translation>Журналирование</translation>
     </message>
     <message>
       <extracomment>.groups[Logging].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>telemetry log</source>
-      <translation type="unfinished">telemetry log</translation>
+      <translation>лог телеметрии</translation>
     </message>
     <message>
       <extracomment>.groups[Logging].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>tlog</source>
-      <translation type="unfinished">tlog</translation>
+      <translation>tlog</translation>
     </message>
     <message>
       <extracomment>.groups[Logging].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>save log</source>
-      <translation type="unfinished">save log</translation>
+      <translation>сохранение лога</translation>
     </message>
     <message>
       <extracomment>.groups[Logging].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>recording</source>
-      <translation type="unfinished">recording</translation>
+      <translation>запись</translation>
     </message>
     <message>
       <extracomment>.groups[Logging].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>csv</source>
-      <translation type="unfinished">csv</translation>
+      <translation>csv</translation>
     </message>
     <message>
       <extracomment>.groups[Stream Rates (ArduPilot Only)].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>Stream Rates (ArduPilot Only)</source>
-      <translation type="unfinished">Stream Rates (ArduPilot Only)</translation>
+      <translation>Скорость потока (только ArduPilot)</translation>
     </message>
     <message>
       <extracomment>.groups[Stream Rates (ArduPilot Only)].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>stream rate</source>
-      <translation type="unfinished">stream rate</translation>
+      <translation>скорость потока</translation>
     </message>
     <message>
       <extracomment>.groups[Stream Rates (ArduPilot Only)].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>ardupilot</source>
-      <translation type="unfinished">ardupilot</translation>
+      <translation>ardupilot</translation>
     </message>
     <message>
       <extracomment>.groups[Stream Rates (ArduPilot Only)].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>apm</source>
-      <translation type="unfinished">apm</translation>
+      <translation>apm</translation>
     </message>
     <message>
       <extracomment>.groups[Stream Rates (ArduPilot Only)].keywords[3]</extracomment>
@@ -9610,85 +9610,85 @@
       <extracomment>.groups[Stream Rates (ArduPilot Only)].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>rc channels</source>
-      <translation type="unfinished">rc channels</translation>
+      <translation>каналы rc</translation>
     </message>
     <message>
       <extracomment>.groups[Stream Rates (ArduPilot Only)].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>position rate</source>
-      <translation type="unfinished">position rate</translation>
+      <translation>частота обновления позиции</translation>
     </message>
     <message>
       <extracomment>.groups[Signing Key].sectionName</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>Signing Key</source>
-      <translation type="unfinished">Signing Key</translation>
+      <translation>Ключ подписи</translation>
     </message>
     <message>
       <extracomment>.groups[Signing Key].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>signing</source>
-      <translation type="unfinished">signing</translation>
+      <translation>подпись</translation>
     </message>
     <message>
       <extracomment>.groups[Signing Key].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>encryption</source>
-      <translation type="unfinished">encryption</translation>
+      <translation>шифрование</translation>
     </message>
     <message>
       <extracomment>.groups[Signing Key].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>key</source>
-      <translation type="unfinished">key</translation>
+      <translation>ключ</translation>
     </message>
     <message>
       <extracomment>.groups[Signing Key].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>security</source>
-      <translation type="unfinished">security</translation>
+      <translation>безопасность</translation>
     </message>
     <message>
       <extracomment>.groups[Signing Key].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>mavlink2</source>
-      <translation type="unfinished">mavlink2</translation>
+      <translation>mavlink2</translation>
     </message>
     <message>
       <extracomment>.groups[Link Status].sectionName</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>Link Status</source>
-      <translation type="unfinished">Link Status</translation>
+      <translation>Статус соединения</translation>
     </message>
     <message>
       <extracomment>.groups[Link Status].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>link status</source>
-      <translation type="unfinished">link status</translation>
+      <translation>статус соединения</translation>
     </message>
     <message>
       <extracomment>.groups[Link Status].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>packet loss</source>
-      <translation type="unfinished">packet loss</translation>
+      <translation>потеря пакетов</translation>
     </message>
     <message>
       <extracomment>.groups[Link Status].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>received</source>
-      <translation type="unfinished">received</translation>
+      <translation>получено</translation>
     </message>
     <message>
       <extracomment>.groups[Link Status].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>sent</source>
-      <translation type="unfinished">sent</translation>
+      <translation>отправлено</translation>
     </message>
     <message>
       <extracomment>.groups[Link Status].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>latency</source>
-      <translation type="unfinished">latency</translation>
+      <translation>задержка</translation>
     </message>
   </context>
   <context>
@@ -9781,7 +9781,7 @@
       <extracomment>.groups[Link Management].sectionName</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/CommLinks.SettingsUI.json"/>
       <source>Link Management</source>
-      <translation>Каналы связи</translation>
+      <translation>Управление подключениями</translation>
     </message>
     <message>
       <extracomment>.groups[Link Management].keywords[0]</extracomment>
@@ -10318,247 +10318,247 @@
       <extracomment>.groups[Region].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>Region</source>
-      <translation type="unfinished">Region</translation>
+      <translation>Регион</translation>
     </message>
     <message>
       <extracomment>.groups[Region].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>region</source>
-      <translation type="unfinished">region</translation>
+      <translation>регион</translation>
     </message>
     <message>
       <extracomment>.groups[Region].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>faa</source>
-      <translation type="unfinished">faa</translation>
+      <translation>faa</translation>
     </message>
     <message>
       <extracomment>.groups[Region].keywords[2], .groups[EU Vehicle Info].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>eu</source>
-      <translation type="unfinished">eu</translation>
+      <translation>eu</translation>
     </message>
     <message>
       <extracomment>.groups[Region].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>remote id</source>
-      <translation type="unfinished">remote id</translation>
+      <translation>remote id</translation>
     </message>
     <message>
       <extracomment>.groups[Region].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>regulation</source>
-      <translation type="unfinished">regulation</translation>
+      <translation>регулирование</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>Basic ID</source>
-      <translation type="unfinished">Basic ID</translation>
+      <translation>Basic ID</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>basic id</source>
-      <translation type="unfinished">basic id</translation>
+      <translation>basic id</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>serial number</source>
-      <translation type="unfinished">serial number</translation>
+      <translation>серийный номер</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>drone id</source>
-      <translation type="unfinished">drone id</translation>
+      <translation>id дрона</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>ua type</source>
-      <translation type="unfinished">ua type</translation>
+      <translation>тип ua</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].keywords[4], .groups[Operator ID].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>registration</source>
-      <translation type="unfinished">registration</translation>
+      <translation>регистрация</translation>
     </message>
     <message>
       <extracomment>.groups[Basic ID].keywords[5], .groups[Operator ID].keywords[3], .groups[Self ID].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>broadcast</source>
-      <translation type="unfinished">broadcast</translation>
+      <translation>трансляция</translation>
     </message>
     <message>
       <extracomment>.groups[Operator ID].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>Operator ID</source>
-      <translation type="unfinished">Operator ID</translation>
+      <translation>Operator ID</translation>
     </message>
     <message>
       <extracomment>.groups[Operator ID].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>operator</source>
-      <translation type="unfinished">operator</translation>
+      <translation>оператор</translation>
     </message>
     <message>
       <extracomment>.groups[Operator ID].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>pilot</source>
-      <translation type="unfinished">pilot</translation>
+      <translation>пилот</translation>
     </message>
     <message>
       <extracomment>.groups[Self ID].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>Self ID</source>
-      <translation type="unfinished">Self ID</translation>
+      <translation>Self ID</translation>
     </message>
     <message>
       <extracomment>.groups[Self ID].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>self id</source>
-      <translation type="unfinished">self id</translation>
+      <translation>self id</translation>
     </message>
     <message>
       <extracomment>.groups[Self ID].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>flight purpose</source>
-      <translation type="unfinished">flight purpose</translation>
+      <translation>цель полёта</translation>
     </message>
     <message>
       <extracomment>.groups[Self ID].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>emergency</source>
-      <translation type="unfinished">emergency</translation>
+      <translation>чрезвычайная ситуация</translation>
     </message>
     <message>
       <extracomment>.groups[Self ID].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>description</source>
-      <translation type="unfinished">description</translation>
+      <translation>описание</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>GroundStation Location</source>
-      <translation type="unfinished">GroundStation Location</translation>
+      <translation>Местоположение наземной станции</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>ground station</source>
-      <translation type="unfinished">ground station</translation>
+      <translation>наземная станция</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>gcs location</source>
-      <translation type="unfinished">gcs location</translation>
+      <translation>местоположение наземной станции</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[2], .groups[GCS Position].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>latitude</source>
-      <translation type="unfinished">latitude</translation>
+      <translation>широта</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[3], .groups[GCS Position].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>longitude</source>
-      <translation type="unfinished">longitude</translation>
+      <translation>долгота</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>altitude</source>
-      <translation type="unfinished">altitude</translation>
+      <translation>высота</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>fixed position</source>
-      <translation type="unfinished">fixed position</translation>
+      <translation>фиксированная позиция</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>gnss</source>
-      <translation type="unfinished">gnss</translation>
+      <translation>gnss</translation>
     </message>
     <message>
       <extracomment>.groups[GCS Position].sectionName</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>GCS Position</source>
-      <translation type="unfinished">GCS Position</translation>
+      <translation>Позиция наземной станции</translation>
     </message>
     <message>
       <extracomment>.groups[GCS Position].keywords[2], .groups[GPS Location].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>hdop</source>
-      <translation type="unfinished">hdop</translation>
+      <translation>hdop</translation>
     </message>
     <message>
       <extracomment>.groups[GCS Position].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>gcs position</source>
-      <translation type="unfinished">gcs position</translation>
+      <translation>позиция наземной станции</translation>
     </message>
     <message>
       <extracomment>.groups[GPS Location].sectionName</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>GPS Location</source>
-      <translation type="unfinished">GPS Location</translation>
+      <translation>Местоположение GPS</translation>
     </message>
     <message>
       <extracomment>.groups[GPS Location].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>gps</source>
-      <translation type="unfinished">gps</translation>
+      <translation>gps</translation>
     </message>
     <message>
       <extracomment>.groups[GPS Location].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>nmea</source>
-      <translation type="unfinished">nmea</translation>
+      <translation>nmea</translation>
     </message>
     <message>
       <extracomment>.groups[GPS Location].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>position</source>
-      <translation type="unfinished">position</translation>
+      <translation>позиция</translation>
     </message>
     <message>
       <extracomment>.groups[EU Vehicle Info].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>EU Vehicle Info</source>
-      <translation type="unfinished">EU Vehicle Info</translation>
+      <translation>Информация о борте (EU)</translation>
     </message>
     <message>
       <extracomment>.groups[EU Vehicle Info].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>classification</source>
-      <translation type="unfinished">classification</translation>
+      <translation>классификация</translation>
     </message>
     <message>
       <extracomment>.groups[EU Vehicle Info].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>category</source>
-      <translation type="unfinished">category</translation>
+      <translation>категория</translation>
     </message>
     <message>
       <extracomment>.groups[EU Vehicle Info].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>class</source>
-      <translation type="unfinished">class</translation>
+      <translation>класс</translation>
     </message>
     <message>
       <extracomment>.groups[EU Vehicle Info].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>ce marking</source>
-      <translation type="unfinished">ce marking</translation>
+      <translation>маркировка ce</translation>
     </message>
   </context>
   <context>
@@ -11065,253 +11065,253 @@
       <extracomment>.groups[General].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>General</source>
-      <translation type="unfinished">General</translation>
+      <translation>Общие</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>language</source>
-      <translation type="unfinished">language</translation>
+      <translation>язык</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>locale</source>
-      <translation type="unfinished">locale</translation>
+      <translation>локаль</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>color scheme</source>
-      <translation type="unfinished">color scheme</translation>
+      <translation>цветовая схема</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>dark mode</source>
-      <translation type="unfinished">dark mode</translation>
+      <translation>тёмная тема</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>theme</source>
-      <translation type="unfinished">theme</translation>
+      <translation>тема</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>palette</source>
-      <translation type="unfinished">palette</translation>
+      <translation>палитра</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>follow me</source>
-      <translation type="unfinished">follow me</translation>
+      <translation>follow me</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>audio</source>
-      <translation type="unfinished">audio</translation>
+      <translation>звук</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[8]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>volume</source>
-      <translation type="unfinished">volume</translation>
+      <translation>громкость</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[9]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>sound</source>
-      <translation type="unfinished">sound</translation>
+      <translation>звук</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[10]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>gstreamer</source>
-      <translation type="unfinished">gstreamer</translation>
+      <translation>gstreamer</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[11]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>debug level</source>
-      <translation type="unfinished">debug level</translation>
+      <translation>уровень отладки</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[12]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>ui scale</source>
-      <translation type="unfinished">ui scale</translation>
+      <translation>масштаб интерфейса</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[13]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>font size</source>
-      <translation type="unfinished">font size</translation>
+      <translation>размер шрифта</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[14]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>zoom</source>
-      <translation type="unfinished">zoom</translation>
+      <translation>zoom</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[15]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>save path</source>
-      <translation type="unfinished">save path</translation>
+      <translation>путь сохранения</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[16]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>storage</source>
-      <translation type="unfinished">storage</translation>
+      <translation>хранилище</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[17]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>reset</source>
-      <translation type="unfinished">reset</translation>
+      <translation>сброс</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[18]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>clear settings</source>
-      <translation type="unfinished">clear settings</translation>
+      <translation>сброс настроек</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[19]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>factory reset</source>
-      <translation type="unfinished">factory reset</translation>
+      <translation>заводские настройки</translation>
     </message>
     <message>
       <extracomment>.groups[General].controls[3].button.text</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>Test</source>
-      <translation type="unfinished">Test</translation>
+      <translation>Проверить</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>Vehicle Preferences</source>
-      <translation type="unfinished">Vehicle Preferences</translation>
+      <translation>Настройки борта</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>firmware</source>
-      <translation type="unfinished">firmware</translation>
+      <translation>прошивка</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>ardupilot</source>
-      <translation type="unfinished">ardupilot</translation>
+      <translation>ardupilot</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>px4</source>
-      <translation type="unfinished">px4</translation>
+      <translation>px4</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>vehicle</source>
-      <translation type="unfinished">vehicle</translation>
+      <translation>борт</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>multirotor</source>
-      <translation type="unfinished">multirotor</translation>
+      <translation>мультикоптер</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>fixed wing</source>
-      <translation type="unfinished">fixed wing</translation>
+      <translation>самолёт</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>vtol</source>
-      <translation type="unfinished">vtol</translation>
+      <translation>vtol</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>rover</source>
-      <translation type="unfinished">rover</translation>
+      <translation>ровер</translation>
     </message>
     <message>
       <extracomment>.groups[Vehicle Preferences].keywords[8]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>sub</source>
-      <translation type="unfinished">sub</translation>
+      <translation>подводный аппарат</translation>
     </message>
     <message>
       <extracomment>.groups[Units].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>Units</source>
-      <translation type="unfinished">Units</translation>
+      <translation>Единицы измерения</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>units</source>
-      <translation type="unfinished">units</translation>
+      <translation>единицы измерения</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>metric</source>
-      <translation type="unfinished">metric</translation>
+      <translation>метрическая</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>imperial</source>
-      <translation type="unfinished">imperial</translation>
+      <translation>имперская</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>distance</source>
-      <translation type="unfinished">distance</translation>
+      <translation>расстояние</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>speed</source>
-      <translation type="unfinished">speed</translation>
+      <translation>скорость</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>area</source>
-      <translation type="unfinished">area</translation>
+      <translation>площадь</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>temperature</source>
-      <translation type="unfinished">temperature</translation>
+      <translation>температура</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[7]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>feet</source>
-      <translation type="unfinished">feet</translation>
+      <translation>футы</translation>
     </message>
     <message>
       <extracomment>.groups[Units].keywords[8]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/General.SettingsUI.json"/>
       <source>meters</source>
-      <translation type="unfinished">meters</translation>
+      <translation>метры</translation>
     </message>
   </context>
   <context>
@@ -11320,49 +11320,49 @@
       <extracomment>.groups[General].heading</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>General</source>
-      <translation type="unfinished">General</translation>
+      <translation>Общие</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>mission altitude</source>
-      <translation type="unfinished">mission altitude</translation>
+      <translation>высота полётного задания</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>default altitude</source>
-      <translation type="unfinished">default altitude</translation>
+      <translation>высота по умолчанию</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>vtol transition</source>
-      <translation type="unfinished">vtol transition</translation>
+      <translation>переход vtol</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>condition gate</source>
-      <translation type="unfinished">condition gate</translation>
+      <translation>условные ворота</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>takeoff</source>
-      <translation type="unfinished">takeoff</translation>
+      <translation>takeoff</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[5]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>landing pattern</source>
-      <translation type="unfinished">landing pattern</translation>
+      <translation>схема посадки</translation>
     </message>
     <message>
       <extracomment>.groups[General].keywords[6]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>waypoint</source>
-      <translation type="unfinished">waypoint</translation>
+      <translation>путевая точка</translation>
     </message>
   </context>
 </TS>
