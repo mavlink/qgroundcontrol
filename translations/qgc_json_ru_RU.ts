@@ -4118,133 +4118,133 @@
       <extracomment>.sections[Battery].controls[4].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Full voltage (per cell)</source>
-      <translation type="unfinished">Full voltage (per cell)</translation>
+      <translation>Напряжение заряженного элемента</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[5].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Voltage divider</source>
-      <translation type="unfinished">Voltage divider</translation>
+      <translation>Делитель напряжения</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[5].dialogButton.text, .sections[Battery].controls[6].dialogButton.text</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Calculate</source>
-      <translation type="unfinished">Calculate</translation>
+      <translation>Рассчитать</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].controls[6].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Amps per volt</source>
-      <translation type="unfinished">Amps per volt</translation>
+      <translation>Ампер на вольт</translation>
     </message>
     <message>
       <extracomment>.sections[ESC PWM Calibration].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>ESC PWM Calibration</source>
-      <translation type="unfinished">ESC PWM Calibration</translation>
+      <translation>Калибровка PWM ESC</translation>
     </message>
     <message>
       <extracomment>.sections[ESC PWM Calibration].keywords[0], .sections[UAVCAN Bus Configuration].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>esc</source>
-      <translation type="unfinished">esc</translation>
+      <translation>esc</translation>
     </message>
     <message>
       <extracomment>.sections[ESC PWM Calibration].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>calibration</source>
-      <translation type="unfinished">calibration</translation>
+      <translation>калибровка</translation>
     </message>
     <message>
       <extracomment>.sections[ESC PWM Calibration].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>motor</source>
-      <translation type="unfinished">motor</translation>
+      <translation>мотор</translation>
     </message>
     <message>
       <extracomment>.sections[ESC PWM Calibration].keywords[3]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>pwm</source>
-      <translation type="unfinished">pwm</translation>
+      <translation>pwm</translation>
     </message>
     <message>
       <extracomment>.sections[ESC PWM Calibration].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>electronic speed controller</source>
-      <translation type="unfinished">electronic speed controller</translation>
+      <translation>электронный регулятор оборотов</translation>
     </message>
     <message>
       <extracomment>.sections[ESC PWM Calibration].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.</source>
-      <translation type="unfinished">WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.</translation>
+      <translation>ВНИМАНИЕ: перед калибровкой ESC необходимо снять пропеллеры с борта.</translation>
     </message>
     <message>
       <extracomment>.sections[ESC PWM Calibration].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>You must use USB connection for this operation.</source>
-      <translation type="unfinished">You must use USB connection for this operation.</translation>
+      <translation>Для этой операции необходимо USB-подключение.</translation>
     </message>
     <message>
       <extracomment>.sections[ESC PWM Calibration].controls[2].dialogButton.text</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Calibrate</source>
-      <translation type="unfinished">Calibrate</translation>
+      <translation>Калибровка</translation>
     </message>
     <message>
       <extracomment>.sections[UAVCAN Bus Configuration].title</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>UAVCAN Bus Configuration</source>
-      <translation type="unfinished">UAVCAN Bus Configuration</translation>
+      <translation>Настройка шины UAVCAN</translation>
     </message>
     <message>
       <extracomment>.sections[UAVCAN Bus Configuration].keywords[0]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>uavcan</source>
-      <translation type="unfinished">uavcan</translation>
+      <translation>uavcan</translation>
     </message>
     <message>
       <extracomment>.sections[UAVCAN Bus Configuration].keywords[1]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>can bus</source>
-      <translation type="unfinished">can bus</translation>
+      <translation>шина can</translation>
     </message>
     <message>
       <extracomment>.sections[UAVCAN Bus Configuration].keywords[2]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>dronecan</source>
-      <translation type="unfinished">dronecan</translation>
+      <translation>dronecan</translation>
     </message>
     <message>
       <extracomment>.sections[UAVCAN Bus Configuration].keywords[4]</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>node</source>
-      <translation type="unfinished">node</translation>
+      <translation>узел</translation>
     </message>
     <message>
       <extracomment>.sections[UAVCAN Bus Configuration].controls[0].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>UAVCAN</source>
-      <translation type="unfinished">UAVCAN</translation>
+      <translation>UAVCAN</translation>
     </message>
     <message>
       <extracomment>.sections[UAVCAN Bus Configuration].controls[1].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.</source>
-      <translation type="unfinished">WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.</translation>
+      <translation>ВНИМАНИЕ: перед настройкой ESC по UAVCAN необходимо снять пропеллеры с борта.</translation>
     </message>
     <message>
       <extracomment>.sections[UAVCAN Bus Configuration].controls[2].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>ESC parameters will only be accessible in the editor after assignment.</source>
-      <translation type="unfinished">ESC parameters will only be accessible in the editor after assignment.</translation>
+      <translation>Параметры ESC станут доступны в редакторе только после назначения.</translation>
     </message>
     <message>
       <extracomment>.sections[UAVCAN Bus Configuration].controls[3].label</extracomment>
       <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Start the process, then turn each motor into its turn direction, in the order of their motor indices.</source>
-      <translation type="unfinished">Start the process, then turn each motor into its turn direction, in the order of their motor indices.</translation>
+      <translation>Запустите процесс, затем поверните каждый мотор в его правильном направлении вращения, в порядке номеров моторов.</translation>
     </message>
     <message>
       <extracomment>.sections[UAVCAN Bus Configuration].controls[4].actionButton.text</extracomment>
