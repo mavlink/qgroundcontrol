@@ -434,30 +434,30 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="16"/>
       <source>Low Voltage Failsafe</source>
-      <translation type="unfinished">Low Voltage Failsafe</translation>
+      <translation>Failsafe при низком напряжении</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="20"/>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="50"/>
       <source>Vehicle Action</source>
-      <translation type="unfinished">Vehicle Action</translation>
+      <translation>Действие борта</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="27"/>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="57"/>
       <source>Voltage Trigger</source>
-      <translation type="unfinished">Voltage Trigger</translation>
+      <translation>Триггер напряжения</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="36"/>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="66"/>
       <source>mAh Trigger</source>
-      <translation type="unfinished">mAh Trigger</translation>
+      <translation>Триггер mAh</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMBatteryIndicator.qml" line="46"/>
       <source>Critical Voltage Failsafe</source>
-      <translation type="unfinished">Critical Voltage Failsafe</translation>
+      <translation>Failsafe при критическом напряжении</translation>
     </message>
   </context>
   <context>
@@ -1309,127 +1309,127 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="52"/>
       <source>Requires vehicle reboot</source>
-      <translation type="unfinished">Requires vehicle reboot</translation>
+      <translation>Требуется перезагрузка борта</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="59"/>
       <source>Configuration</source>
-      <translation type="unfinished">Configuration</translation>
+      <translation>Конфигурация</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="66"/>
       <source>Output type</source>
-      <translation type="unfinished">Output type</translation>
+      <translation>Тип выхода</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="78"/>
       <source>Output PWM min</source>
-      <translation type="unfinished">Output PWM min</translation>
+      <translation>Мин. PWM на выходе</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="85"/>
       <source>Output PWM max</source>
-      <translation type="unfinished">Output PWM max</translation>
+      <translation>Макс. PWM на выходе</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="92"/>
       <source>Spin when armed</source>
-      <translation type="unfinished">Spin when armed</translation>
+      <translation>Вращение при Arm</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="99"/>
       <source>Spin minimum</source>
-      <translation type="unfinished">Spin minimum</translation>
+      <translation>Минимальное вращение</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="106"/>
       <source>Spin maximum</source>
-      <translation type="unfinished">Spin maximum</translation>
+      <translation>Максимальное вращение</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="114"/>
       <source>DShot ESC type</source>
-      <translation type="unfinished">DShot ESC type</translation>
+      <translation>Тип DShot ESC</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="122"/>
       <source>DShot output rate</source>
-      <translation type="unfinished">DShot output rate</translation>
+      <translation>Частота вывода DShot</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="132"/>
       <source>Calibration</source>
-      <translation type="unfinished">Calibration</translation>
+      <translation>Калибровка</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="139"/>
       <source>WARNING: Remove props prior to calibration!</source>
-      <translation type="unfinished">WARNING: Remove props prior to calibration!</translation>
+      <translation>ВНИМАНИЕ: снимите пропеллеры перед калибровкой!</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="147"/>
       <source>Calibrate</source>
-      <translation type="unfinished">Calibrate</translation>
+      <translation>Калибровка</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="154"/>
       <source>Now perform these steps:</source>
-      <translation type="unfinished">Now perform these steps:</translation>
+      <translation>Теперь выполните следующие шаги:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="154"/>
       <source>Click Calibrate to start, then:</source>
-      <translation type="unfinished">Click Calibrate to start, then:</translation>
+      <translation>Нажмите «Калибровка», чтобы начать, затем:</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="155"/>
       <source>- Disconnect USB and battery so flight controller powers down</source>
-      <translation type="unfinished">- Disconnect USB and battery so flight controller powers down</translation>
+      <translation>- Отключите USB и аккумулятор, чтобы полётный контроллер выключился</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="156"/>
       <source>- Connect the battery</source>
-      <translation type="unfinished">- Connect the battery</translation>
+      <translation>- Подключите аккумулятор</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="157"/>
       <source>- The arming tone will be played (if the vehicle has a buzzer attached)</source>
-      <translation type="unfinished">- The arming tone will be played (if the vehicle has a buzzer attached)</translation>
+      <translation>- Прозвучит тон arm (если к борту подключён зуммер)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="158"/>
       <source>- If using a flight controller with a safety button press it until it displays solid red</source>
-      <translation type="unfinished">- If using a flight controller with a safety button press it until it displays solid red</translation>
+      <translation>- Если используется полётный контроллер с кнопкой безопасности, удерживайте её, пока индикатор не станет постоянно красным</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="159"/>
       <source>- You will hear a musical tone then two beeps</source>
-      <translation type="unfinished">- You will hear a musical tone then two beeps</translation>
+      <translation>- Прозвучит мелодичный тон, затем два коротких сигнала</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="160"/>
       <source>- A few seconds later you should hear a number of beeps (one for each battery cell you&apos;re using)</source>
-      <translation type="unfinished">- A few seconds later you should hear a number of beeps (one for each battery cell you&apos;re using)</translation>
+      <translation>- Через несколько секунд прозвучит серия сигналов (по одному на каждый используемый элемент аккумулятора)</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="161"/>
       <source>- And finally a single long beep indicating the end points have been set and the ESC is calibrated</source>
-      <translation type="unfinished">- And finally a single long beep indicating the end points have been set and the ESC is calibrated</translation>
+      <translation>- И наконец, один длинный сигнал означает, что конечные точки установлены и ESC откалиброван</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.qml" line="162"/>
       <source>- Disconnect the battery and power up again normally</source>
-      <translation type="unfinished">- Disconnect the battery and power up again normally</translation>
+      <translation>- Отключите аккумулятор и снова включите питание в обычном режиме</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.h" line="15"/>
       <source>Configure and calibrate Electronic Speed Controllers.</source>
-      <translation type="unfinished">Configure and calibrate Electronic Speed Controllers.</translation>
+      <translation>Настройка и калибровка электронных регуляторов оборотов (ESC).</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponent.h" line="24"/>
       <source>ESC</source>
-      <translation type="unfinished">ESC</translation>
+      <translation>ESC</translation>
     </message>
   </context>
   <context>
@@ -1437,17 +1437,17 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponentSummary.qml" line="33"/>
       <source>Output type</source>
-      <translation type="unfinished">Output type</translation>
+      <translation>Тип выхода</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponentSummary.qml" line="39"/>
       <source>DShot ESC type</source>
-      <translation type="unfinished">DShot ESC type</translation>
+      <translation>Тип DShot ESC</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMESCComponentSummary.qml" line="45"/>
       <source>DShot output rate</source>
-      <translation type="unfinished">DShot output rate</translation>
+      <translation>Частота вывода DShot</translation>
     </message>
   </context>
   <context>
@@ -1566,88 +1566,88 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="849"/>
       <source>Unable to change altitude, vehicle altitude not known.</source>
-      <translation type="unfinished">Unable to change altitude, vehicle altitude not known.</translation>
+      <translation>Невозможно сменить высоту — высота борта неизвестна.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="854"/>
       <source>Unable to pause vehicle.</source>
-      <translation type="unfinished">Unable to pause vehicle.</translation>
+      <translation>Невозможно приостановить борт.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="940"/>
       <source>Vehicle does not support guided rotate</source>
-      <translation type="unfinished">Vehicle does not support guided rotate</translation>
+      <translation>Борт не поддерживает изменение курса в режиме Guided</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1011"/>
       <source>Vehicle does not support guided takeoff</source>
-      <translation type="unfinished">Vehicle does not support guided takeoff</translation>
+      <translation>Борт не поддерживает автоматический взлёт</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1017"/>
       <source>Unable to takeoff, vehicle position not known.</source>
-      <translation type="unfinished">Unable to takeoff, vehicle position not known.</translation>
+      <translation>Невозможно выполнить взлёт — позиция борта неизвестна.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1027"/>
       <source>Unable to takeoff: Vehicle failed to change to Guided mode.</source>
-      <translation type="unfinished">Unable to takeoff: Vehicle failed to change to Guided mode.</translation>
+      <translation>Невозможно выполнить взлёт: борт не перешёл в режим Guided.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1032"/>
       <source>Unable to takeoff: Vehicle failed to arm.</source>
-      <translation type="unfinished">Unable to takeoff: Vehicle failed to arm.</translation>
+      <translation>Невозможно взлететь: не удалось выполнить arm борта.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1050"/>
       <source>Unable to start takeoff: Vehicle is already in the air.</source>
-      <translation type="unfinished">Unable to start takeoff: Vehicle is already in the air.</translation>
+      <translation>Невозможно начать взлёт: борт уже в воздухе.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1056"/>
       <source>Unable to start takeoff: Vehicle failed to change to Takeoff mode.</source>
-      <translation type="unfinished">Unable to start takeoff: Vehicle failed to change to Takeoff mode.</translation>
+      <translation>Невозможно начать взлёт: борт не перешёл в режим Takeoff.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1061"/>
       <source>Unable to start takeoff: Vehicle failed to arm.</source>
-      <translation type="unfinished">Unable to start takeoff: Vehicle failed to arm.</translation>
+      <translation>Невозможно взлететь: не удалось выполнить arm борта.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1072"/>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1083"/>
       <source>Unable to start mission: Vehicle failed to change to Auto mode.</source>
-      <translation type="unfinished">Unable to start mission: Vehicle failed to change to Auto mode.</translation>
+      <translation>Невозможно начать полётное задание: борт не перешёл в режим Auto.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1088"/>
       <source>Unable to start mission: Vehicle failed to change to Guided mode.</source>
-      <translation type="unfinished">Unable to start mission: Vehicle failed to change to Guided mode.</translation>
+      <translation>Невозможно начать полётное задание: борт не перешёл в режим Guided.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1094"/>
       <source>Unable to start mission: Vehicle failed to arm.</source>
-      <translation type="unfinished">Unable to start mission: Vehicle failed to arm.</translation>
+      <translation>Невозможно начать полётное задание: не удалось выполнить arm борта.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="88"/>
       <source>Guided</source>
-      <translation type="unfinished">Guided</translation>
+      <translation>Guided</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="89"/>
       <source>RTL</source>
-      <translation type="unfinished">RTL</translation>
+      <translation>RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="90"/>
       <source>Smart RTL</source>
-      <translation type="unfinished">Smart RTL</translation>
+      <translation>Smart RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.h" line="91"/>
       <source>Auto</source>
-      <translation type="unfinished">Auto</translation>
+      <translation>Auto</translation>
     </message>
   </context>
   <context>
@@ -2221,28 +2221,28 @@
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="37"/>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="46"/>
       <source>Disabled</source>
-      <translation type="unfinished">Disabled</translation>
+      <translation>Отключено</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="40"/>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="49"/>
       <source>Channel </source>
-      <translation type="unfinished">Channel </translation>
+      <translation>Канал </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="62"/>
       <source>Gimbal Type</source>
-      <translation type="unfinished">Gimbal Type</translation>
+      <translation>Тип подвеса</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="69"/>
       <source>Default Mode</source>
-      <translation type="unfinished">Default Mode</translation>
+      <translation>Режим по умолчанию</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="88"/>
       <source>Neutral Position</source>
-      <translation type="unfinished">Neutral Position</translation>
+      <translation>Нейтральное положение</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="95"/>
@@ -2251,7 +2251,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="195"/>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="274"/>
       <source>Pitch</source>
-      <translation type="unfinished">Pitch</translation>
+      <translation>Тангаж</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="101"/>
@@ -2260,7 +2260,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="196"/>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="275"/>
       <source>Yaw</source>
-      <translation type="unfinished">Yaw</translation>
+      <translation>Рыскание</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="107"/>
@@ -2269,82 +2269,82 @@
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="197"/>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="276"/>
       <source>Roll</source>
-      <translation type="unfinished">Roll</translation>
+      <translation>Крен</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="114"/>
       <source>Retracted Position</source>
-      <translation type="unfinished">Retracted Position</translation>
+      <translation>Убранное положение</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="140"/>
       <source>Axis Constraints</source>
-      <translation type="unfinished">Axis Constraints</translation>
+      <translation>Ограничения по осям</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="173"/>
       <source>Min Angle</source>
-      <translation type="unfinished">Min Angle</translation>
+      <translation>Мин. угол</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="179"/>
       <source>Max Angle</source>
-      <translation type="unfinished">Max Angle</translation>
+      <translation>Макс. угол</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="188"/>
       <source>RC Targetting</source>
-      <translation type="unfinished">RC Targetting</translation>
+      <translation>Наведение по RC</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="248"/>
       <source>Angle Control</source>
-      <translation type="unfinished">Angle Control</translation>
+      <translation>Управление по углу</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="254"/>
       <source>Rate Control</source>
-      <translation type="unfinished">Rate Control</translation>
+      <translation>Управление по скорости</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="261"/>
       <source>Rate</source>
-      <translation type="unfinished">Rate</translation>
+      <translation>Скорость</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="269"/>
       <source>Servo Controlled Gimbal</source>
-      <translation type="unfinished">Servo Controlled Gimbal</translation>
+      <translation>Подвес с сервоприводом</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="296"/>
       <source>Servo Reversed</source>
-      <translation type="unfinished">Servo Reversed</translation>
+      <translation>Реверс сервопривода</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="309"/>
       <source>Output Channel</source>
-      <translation type="unfinished">Output Channel</translation>
+      <translation>Канал вывода</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="348"/>
       <source>Stabilization Lead</source>
-      <translation type="unfinished">Stabilization Lead</translation>
+      <translation>Опережение стабилизации</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="363"/>
       <source>Min PWM</source>
-      <translation type="unfinished">Min PWM</translation>
+      <translation>Мин. PWM</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="369"/>
       <source>Max PWM</source>
-      <translation type="unfinished">Max PWM</translation>
+      <translation>Макс. PWM</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMGimbalInstance.qml" line="383"/>
       <source>Gimbal settings will be available after rebooting the vehicle.</source>
-      <translation type="unfinished">Gimbal settings will be available after rebooting the vehicle.</translation>
+      <translation>Настройки подвеса станут доступны после перезагрузки борта.</translation>
     </message>
   </context>
   <context>
@@ -3986,132 +3986,132 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="70"/>
       <source>Stabilize</source>
-      <translation type="unfinished">Stabilize</translation>
+      <translation>Stabilize</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="71"/>
       <source>Acro</source>
-      <translation type="unfinished">Acro</translation>
+      <translation>Acro</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="72"/>
       <source>Altitude Hold</source>
-      <translation type="unfinished">Altitude Hold</translation>
+      <translation>Altitude Hold</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="73"/>
       <source>Auto</source>
-      <translation type="unfinished">Auto</translation>
+      <translation>Auto</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="74"/>
       <source>Guided</source>
-      <translation type="unfinished">Guided</translation>
+      <translation>Guided</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="75"/>
       <source>Loiter</source>
-      <translation type="unfinished">Loiter</translation>
+      <translation>Loiter</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="76"/>
       <source>RTL</source>
-      <translation type="unfinished">RTL</translation>
+      <translation>RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="77"/>
       <source>Circle</source>
-      <translation type="unfinished">Circle</translation>
+      <translation>Circle</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="78"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>Land</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="79"/>
       <source>Drift</source>
-      <translation type="unfinished">Drift</translation>
+      <translation>Drift</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="80"/>
       <source>Sport</source>
-      <translation type="unfinished">Sport</translation>
+      <translation>Sport</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="81"/>
       <source>Flip</source>
-      <translation type="unfinished">Flip</translation>
+      <translation>Flip</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="82"/>
       <source>Autotune</source>
-      <translation type="unfinished">Autotune</translation>
+      <translation>Autotune</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="83"/>
       <source>Position Hold</source>
-      <translation type="unfinished">Position Hold</translation>
+      <translation>Position Hold</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="84"/>
       <source>Brake</source>
-      <translation type="unfinished">Brake</translation>
+      <translation>Brake</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="85"/>
       <source>Throw</source>
-      <translation type="unfinished">Throw</translation>
+      <translation>Throw</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="86"/>
       <source>Avoid ADSB</source>
-      <translation type="unfinished">Avoid ADSB</translation>
+      <translation>Avoid ADSB</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="87"/>
       <source>Guided No GPS</source>
-      <translation type="unfinished">Guided No GPS</translation>
+      <translation>Guided No GPS</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="88"/>
       <source>Smart RTL</source>
-      <translation type="unfinished">Smart RTL</translation>
+      <translation>Smart RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="89"/>
       <source>Flow Hold</source>
-      <translation type="unfinished">Flow Hold</translation>
+      <translation>Flow Hold</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="90"/>
       <source>Follow</source>
-      <translation type="unfinished">Follow</translation>
+      <translation>Follow</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="91"/>
       <source>ZigZag</source>
-      <translation type="unfinished">ZigZag</translation>
+      <translation>ZigZag</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="92"/>
       <source>SystemID</source>
-      <translation type="unfinished">SystemID</translation>
+      <translation>SystemID</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="93"/>
       <source>AutoRotate</source>
-      <translation type="unfinished">AutoRotate</translation>
+      <translation>AutoRotate</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="94"/>
       <source>AutoRTL</source>
-      <translation type="unfinished">AutoRTL</translation>
+      <translation>AutoRTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h" line="95"/>
       <source>Turtle</source>
-      <translation type="unfinished">Turtle</translation>
+      <translation>Turtle</translation>
     </message>
   </context>
   <context>
@@ -4119,132 +4119,132 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="58"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>Manual</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="59"/>
       <source>Circle</source>
-      <translation type="unfinished">Circle</translation>
+      <translation>Circle</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="60"/>
       <source>Stabilize</source>
-      <translation type="unfinished">Stabilize</translation>
+      <translation>Stabilize</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="61"/>
       <source>Training</source>
-      <translation type="unfinished">Training</translation>
+      <translation>Training</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="62"/>
       <source>Acro</source>
-      <translation type="unfinished">Acro</translation>
+      <translation>Acro</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="63"/>
       <source>FBW A</source>
-      <translation type="unfinished">FBW A</translation>
+      <translation>FBW A</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="64"/>
       <source>FBW B</source>
-      <translation type="unfinished">FBW B</translation>
+      <translation>FBW B</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="65"/>
       <source>Cruise</source>
-      <translation type="unfinished">Cruise</translation>
+      <translation>Cruise</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="66"/>
       <source>Autotune</source>
-      <translation type="unfinished">Autotune</translation>
+      <translation>Autotune</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="67"/>
       <source>Auto</source>
-      <translation type="unfinished">Auto</translation>
+      <translation>Auto</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="68"/>
       <source>RTL</source>
-      <translation type="unfinished">RTL</translation>
+      <translation>RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="69"/>
       <source>Loiter</source>
-      <translation type="unfinished">Loiter</translation>
+      <translation>Loiter</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="70"/>
       <source>Takeoff</source>
-      <translation type="unfinished">Takeoff</translation>
+      <translation>Takeoff</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="71"/>
       <source>Avoid ADSB</source>
-      <translation type="unfinished">Avoid ADSB</translation>
+      <translation>Avoid ADSB</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="72"/>
       <source>Guided</source>
-      <translation type="unfinished">Guided</translation>
+      <translation>Guided</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="73"/>
       <source>Initializing</source>
-      <translation type="unfinished">Initializing</translation>
+      <translation>Инициализация</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="74"/>
       <source>QuadPlane Stabilize</source>
-      <translation type="unfinished">QuadPlane Stabilize</translation>
+      <translation>QuadPlane Stabilize</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="75"/>
       <source>QuadPlane Hover</source>
-      <translation type="unfinished">QuadPlane Hover</translation>
+      <translation>QuadPlane Hover</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="76"/>
       <source>QuadPlane Loiter</source>
-      <translation type="unfinished">QuadPlane Loiter</translation>
+      <translation>QuadPlane Loiter</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="77"/>
       <source>QuadPlane Land</source>
-      <translation type="unfinished">QuadPlane Land</translation>
+      <translation>QuadPlane Land</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="78"/>
       <source>QuadPlane RTL</source>
-      <translation type="unfinished">QuadPlane RTL</translation>
+      <translation>QuadPlane RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="79"/>
       <source>QuadPlane AutoTune</source>
-      <translation type="unfinished">QuadPlane AutoTune</translation>
+      <translation>QuadPlane AutoTune</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="80"/>
       <source>QuadPlane Acro</source>
-      <translation type="unfinished">QuadPlane Acro</translation>
+      <translation>QuadPlane Acro</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="81"/>
       <source>Thermal</source>
-      <translation type="unfinished">Thermal</translation>
+      <translation>Thermal</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="82"/>
       <source>Loiter to QLand</source>
-      <translation type="unfinished">Loiter to QLand</translation>
+      <translation>Loiter to QLand</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.h" line="83"/>
       <source>Autoland</source>
-      <translation type="unfinished">Autoland</translation>
+      <translation>Autoland</translation>
     </message>
   </context>
   <context>
@@ -4252,77 +4252,77 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="49"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>Manual</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="50"/>
       <source>Acro</source>
-      <translation type="unfinished">Acro</translation>
+      <translation>Acro</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="51"/>
       <source>Learning</source>
-      <translation type="unfinished">Learning</translation>
+      <translation>Learning</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="52"/>
       <source>Steering</source>
-      <translation type="unfinished">Steering</translation>
+      <translation>Steering</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="53"/>
       <source>Hold</source>
-      <translation type="unfinished">Hold</translation>
+      <translation>Hold</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="54"/>
       <source>Loiter</source>
-      <translation type="unfinished">Loiter</translation>
+      <translation>Loiter</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="55"/>
       <source>Follow</source>
-      <translation type="unfinished">Follow</translation>
+      <translation>Follow</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="56"/>
       <source>Simple</source>
-      <translation type="unfinished">Simple</translation>
+      <translation>Simple</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="57"/>
       <source>Dock</source>
-      <translation type="unfinished">Dock</translation>
+      <translation>Dock</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="58"/>
       <source>Circle</source>
-      <translation type="unfinished">Circle</translation>
+      <translation>Circle</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="59"/>
       <source>Auto</source>
-      <translation type="unfinished">Auto</translation>
+      <translation>Auto</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="60"/>
       <source>RTL</source>
-      <translation type="unfinished">RTL</translation>
+      <translation>RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="61"/>
       <source>Smart RTL</source>
-      <translation type="unfinished">Smart RTL</translation>
+      <translation>Smart RTL</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="62"/>
       <source>Guided</source>
-      <translation type="unfinished">Guided</translation>
+      <translation>Guided</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h" line="63"/>
       <source>Initializing</source>
-      <translation type="unfinished">Initializing</translation>
+      <translation>Инициализация</translation>
     </message>
   </context>
   <context>
@@ -4330,57 +4330,57 @@ Please place your vehicle in water, click the button, and wait. Note that the th
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="111"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>Manual</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="112"/>
       <source>Stabilize</source>
-      <translation type="unfinished">Stabilize</translation>
+      <translation>Stabilize</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="113"/>
       <source>Acro</source>
-      <translation type="unfinished">Acro</translation>
+      <translation>Acro</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="114"/>
       <source>Depth Hold</source>
-      <translation type="unfinished">Depth Hold</translation>
+      <translation>Depth Hold</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="115"/>
       <source>Auto</source>
-      <translation type="unfinished">Auto</translation>
+      <translation>Auto</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="116"/>
       <source>Guided</source>
-      <translation type="unfinished">Guided</translation>
+      <translation>Guided</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="117"/>
       <source>Circle</source>
-      <translation type="unfinished">Circle</translation>
+      <translation>Circle</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="118"/>
       <source>Surface</source>
-      <translation type="unfinished">Surface</translation>
+      <translation>Surface</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="119"/>
       <source>Position Hold</source>
-      <translation type="unfinished">Position Hold</translation>
+      <translation>Position Hold</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="120"/>
       <source>Motor Detection</source>
-      <translation type="unfinished">Motor Detection</translation>
+      <translation>Motor Detection</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/ArduSubFirmwarePlugin.h" line="121"/>
       <source>Surftrak</source>
-      <translation type="unfinished">Surftrak</translation>
+      <translation>Surftrak</translation>
     </message>
   </context>
   <context>
@@ -12152,12 +12152,12 @@ VTOL</translation>
     <message>
       <location filename="../src/Toolbar/MainStatusIndicator.qml" line="41"/>
       <source>Armed</source>
-      <translation type="unfinished">Armed</translation>
+      <translation>Armed</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/MainStatusIndicator.qml" line="42"/>
       <source>Flying</source>
-      <translation type="unfinished">Flying</translation>
+      <translation>Полёт</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/MainStatusIndicator.qml" line="43"/>
@@ -12177,12 +12177,12 @@ VTOL</translation>
     <message>
       <location filename="../src/Toolbar/MainStatusIndicator.qml" line="265"/>
       <source>Sensor Status</source>
-      <translation type="unfinished">Sensor Status</translation>
+      <translation>Состояние датчиков</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/MainStatusIndicator.qml" line="199"/>
       <source>Disarm</source>
-      <translation type="unfinished">Disarm</translation>
+      <translation>Disarm</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/MainStatusIndicator.qml" line="37"/>
@@ -12203,12 +12203,12 @@ VTOL</translation>
       <location filename="../src/Toolbar/MainStatusIndicator.qml" line="199"/>
       <location filename="../src/Toolbar/MainStatusIndicator.qml" line="396"/>
       <source>Force Arm</source>
-      <translation type="unfinished">Force Arm</translation>
+      <translation>Принудительный Arm</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/MainStatusIndicator.qml" line="199"/>
       <source>Arm</source>
-      <translation type="unfinished">Arm</translation>
+      <translation>Arm</translation>
     </message>
     <message>
       <location filename="../src/Toolbar/MainStatusIndicator.qml" line="219"/>
@@ -14186,27 +14186,27 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4BatteryIndicator.qml" line="10"/>
       <source>Low Battery Failsafe</source>
-      <translation type="unfinished">Low Battery Failsafe</translation>
+      <translation>Failsafe при низком заряде аккумулятора</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4BatteryIndicator.qml" line="15"/>
       <source>Vehicle Action</source>
-      <translation type="unfinished">Vehicle Action</translation>
+      <translation>Действие борта</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4BatteryIndicator.qml" line="22"/>
       <source>Warning Level</source>
-      <translation type="unfinished">Warning Level</translation>
+      <translation>Уровень предупреждения</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4BatteryIndicator.qml" line="29"/>
       <source>Critical Level</source>
-      <translation type="unfinished">Critical Level</translation>
+      <translation>Критический уровень</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4BatteryIndicator.qml" line="36"/>
       <source>Emergency Level</source>
-      <translation type="unfinished">Emergency Level</translation>
+      <translation>Аварийный уровень</translation>
     </message>
   </context>
   <context>
@@ -14214,7 +14214,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="27"/>
       <source>Manual</source>
-      <translation type="unfinished">Manual</translation>
+      <translation>Manual</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="28"/>
@@ -14249,117 +14249,117 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="34"/>
       <source>Ready</source>
-      <translation type="unfinished">Ready</translation>
+      <translation>Ready</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="35"/>
       <source>Takeoff</source>
-      <translation type="unfinished">Takeoff</translation>
+      <translation>Takeoff</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="36"/>
       <source>Hold</source>
-      <translation type="unfinished">Hold</translation>
+      <translation>Hold</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="37"/>
       <source>Mission</source>
-      <translation type="unfinished">Mission</translation>
+      <translation>Mission</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="38"/>
       <source>Return</source>
-      <translation type="unfinished">Return</translation>
+      <translation>Return</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="39"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>Land</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="40"/>
       <source>Precision Land</source>
-      <translation type="unfinished">Precision Land</translation>
+      <translation>Precision Land</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="41"/>
       <source>Return to Groundstation</source>
-      <translation type="unfinished">Return to Groundstation</translation>
+      <translation>Return to Groundstation</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="42"/>
       <source>Follow Me</source>
-      <translation type="unfinished">Follow Me</translation>
+      <translation>Follow Me</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="43"/>
       <source>Simple</source>
-      <translation type="unfinished">Simple</translation>
+      <translation>Simple</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="44"/>
       <source>Orbit</source>
-      <translation type="unfinished">Orbit</translation>
+      <translation>Orbit</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="124"/>
       <source>Unknown %1:%2</source>
-      <translation type="unfinished">Unknown %1:%2</translation>
+      <translation>Неизвестный %1:%2</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="308"/>
       <source>Unable to takeoff, vehicle position not known.</source>
-      <translation type="unfinished">Unable to takeoff, vehicle position not known.</translation>
+      <translation>Невозможно выполнить взлёт — позиция борта неизвестна.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="376"/>
       <source>Unable to go to location, vehicle position not known.</source>
-      <translation type="unfinished">Unable to go to location, vehicle position not known.</translation>
+      <translation>Не удалось отправиться в указанное местоположение — координаты борта неизвестны.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="449"/>
       <source>Unable to pause vehicle.</source>
-      <translation type="unfinished">Unable to pause vehicle.</translation>
+      <translation>Невозможно приостановить борт.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="458"/>
       <source>Unable to change altitude, home position unknown.</source>
-      <translation type="unfinished">Unable to change altitude, home position unknown.</translation>
+      <translation>Не удаётся изменить высоту — точка старта неизвестна.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="462"/>
       <source>Unable to change altitude, home position altitude unknown.</source>
-      <translation type="unfinished">Unable to change altitude, home position altitude unknown.</translation>
+      <translation>Невозможно изменить высоту — неизвестна высота точки старта.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="523"/>
       <source>Vehicle does not support guided rotate</source>
-      <translation type="unfinished">Vehicle does not support guided rotate</translation>
+      <translation>Борт не поддерживает изменение курса в режиме Guided</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="545"/>
       <source>Unable to start takeoff: Vehicle rejected arming.</source>
-      <translation type="unfinished">Unable to start takeoff: Vehicle rejected arming.</translation>
+      <translation>Невозможно начать взлёт: борт отклонил arm.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="549"/>
       <source>Unable to start takeoff: Vehicle not changing to %1 flight mode.</source>
-      <translation type="unfinished">Unable to start takeoff: Vehicle not changing to %1 flight mode.</translation>
+      <translation>Невозможно начать взлёт: борт не переходит в режим %1.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="557"/>
       <source>Unable to start mission: Vehicle rejected arming.</source>
-      <translation type="unfinished">Unable to start mission: Vehicle rejected arming.</translation>
+      <translation>Невозможно начать полётное задание: борт отклонил arm.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="561"/>
       <source>Unable to start mission: Vehicle not changing to %1 flight mode.</source>
-      <translation type="unfinished">Unable to start mission: Vehicle not changing to %1 flight mode.</translation>
+      <translation>Невозможно начать полётное задание: борт не переходит в режим %1.</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="677"/>
       <source>QGroundControl supports PX4 Pro firmware Version %1.%2.%3 and above. You are using a version prior to that which will lead to unpredictable results. Please upgrade your firmware.</source>
-      <translation type="unfinished">QGroundControl supports PX4 Pro firmware Version %1.%2.%3 and above. You are using a version prior to that which will lead to unpredictable results. Please upgrade your firmware.</translation>
+      <translation>QGroundControl поддерживает прошивку PX4 Pro версии %1.%2.%3 и выше. Вы используете более раннюю версию, что может привести к непредсказуемым результатам. Пожалуйста, обновите прошивку.</translation>
     </message>
   </context>
   <context>
@@ -14753,17 +14753,17 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4MainStatusIndicator.qml" line="15"/>
       <source>Ground Control Comm Loss Failsafe</source>
-      <translation type="unfinished">Ground Control Comm Loss Failsafe</translation>
+      <translation>Failsafe при потере связи с наземной станцией</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4MainStatusIndicator.qml" line="24"/>
       <source>Vehicle Action</source>
-      <translation type="unfinished">Vehicle Action</translation>
+      <translation>Действие борта</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4MainStatusIndicator.qml" line="36"/>
       <source>Loss Timeout</source>
-      <translation type="unfinished">Loss Timeout</translation>
+      <translation>Таймаут потери</translation>
     </message>
   </context>
   <context>
@@ -16472,7 +16472,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="118"/>
       <source>Plan Upload</source>
-      <translation type="unfinished">Plan Upload</translation>
+      <translation>Загрузка плана</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="130"/>
@@ -16492,12 +16492,12 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="464"/>
       <source>Waypoint</source>
-      <translation type="unfinished">Waypoint</translation>
+      <translation>Путевая точка</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="474"/>
       <source>ROI</source>
-      <translation type="unfinished">ROI</translation>
+      <translation>Точка интереса</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="450"/>
@@ -16507,32 +16507,32 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="474"/>
       <source>Cancel ROI</source>
-      <translation type="unfinished">Cancel ROI</translation>
+      <translation>Отменить точку интереса</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="496"/>
       <source>Stats</source>
-      <translation type="unfinished">Stats</translation>
+      <translation>Статистика</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="787"/>
       <source>Plan View - Vehicle Disconnected</source>
-      <translation type="unfinished">Plan View - Vehicle Disconnected</translation>
+      <translation>Просмотр плана — борт отключён</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="787"/>
       <source>Plan View - Vehicle Changed</source>
-      <translation type="unfinished">Plan View - Vehicle Changed</translation>
+      <translation>Просмотр плана — борт изменён</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="795"/>
       <source>The vehicle associated with the plan in the Plan View is no longer available. What would you like to do with that plan?</source>
-      <translation type="unfinished">The vehicle associated with the plan in the Plan View is no longer available. What would you like to do with that plan?</translation>
+      <translation>Борт, связанный с планом в Plan View, больше не доступен. Что вы хотите сделать с этим планом?</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="795"/>
       <source>The plan being worked on in the Plan View is not from the current vehicle. What would you like to do with that plan?</source>
-      <translation type="unfinished">The plan being worked on in the Plan View is not from the current vehicle. What would you like to do with that plan?</translation>
+      <translation>План, над которым ведётся работа в Plan View, не относится к текущему борту. Что бы вы хотели сделать с этим планом?</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="802"/>
@@ -16542,12 +16542,12 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="802"/>
       <source>Discard Unsaved Changes, Load New Plan From Vehicle</source>
-      <translation type="unfinished">Discard Unsaved Changes, Load New Plan From Vehicle</translation>
+      <translation>Отменить несохранённые изменения, загрузить новый план с борта</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="802"/>
       <source>Load New Plan From Vehicle</source>
-      <translation type="unfinished">Load New Plan From Vehicle</translation>
+      <translation>Загрузить новый план с борта</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="813"/>
@@ -16562,41 +16562,41 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="838"/>
       <source>Insert ROI</source>
-      <translation type="unfinished">Insert ROI</translation>
+      <translation>Вставить точку интереса</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="848"/>
       <source>Insert Cancel ROI</source>
-      <translation type="unfinished">Insert Cancel ROI</translation>
+      <translation>Вставить отмену точки интереса</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="119"/>
       <source>This Plan was created for a different firmware or vehicle type than the firmware/vehicle type of vehicle you are uploading to. This can lead to errors or incorrect behavior. It is recommended to recreate the Plan for the correct firmware/vehicle type.
 
 Click &apos;Ok&apos; to upload the Plan anyway.</source>
-      <translation type="unfinished">This Plan was created for a different firmware or vehicle type than the firmware/vehicle type of vehicle you are uploading to. This can lead to errors or incorrect behavior. It is recommended to recreate the Plan for the correct firmware/vehicle type.
+      <translation>Этот план был создан для прошивки или типа борта, отличного от прошивки/типа борта, на который вы его загружаете. Это может привести к ошибкам или неправильному поведению. Рекомендуется воссоздать план для правильной прошивки/типа борта.
 
-Click &apos;Ok&apos; to upload the Plan anyway.</translation>
+Нажмите «Ok», чтобы загрузить план в любом случае.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="116"/>
       <source>Send To Vehicle</source>
-      <translation type="unfinished">Send To Vehicle</translation>
+      <translation>Отправить на борт</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="116"/>
       <source>Current mission must be paused prior to uploading a new Plan</source>
-      <translation type="unfinished">Current mission must be paused prior to uploading a new Plan</translation>
+      <translation>Текущее полётное задание должно быть приостановлено до загрузки нового плана</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="440"/>
       <source>Takeoff</source>
-      <translation type="unfinished">Takeoff</translation>
+      <translation>Takeoff</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="484"/>
       <source>Return</source>
-      <translation type="unfinished">Return</translation>
+      <translation>Return</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="486"/>
@@ -16606,7 +16606,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="487"/>
       <source>Land</source>
-      <translation type="unfinished">Land</translation>
+      <translation>Land</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="760"/>
@@ -16623,12 +16623,12 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
       <location filename="../src/PlanView/PlanView.qml" line="90"/>
       <location filename="../src/PlanView/PlanView.qml" line="95"/>
       <source>Unable to %1</source>
-      <translation type="unfinished">Unable to %1</translation>
+      <translation>Не удаётся %1</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="90"/>
       <source>Plan has incomplete items. Complete all items and %1 again.</source>
-      <translation type="unfinished">Plan has incomplete items. Complete all items and %1 again.</translation>
+      <translation>В плане есть незаполненные элементы. Заполните все элементы и повторите %1.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="89"/>
@@ -17605,7 +17605,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="29"/>
       <location filename="../src/Vehicle/Vehicle.cc" line="98"/>
       <source>Guided mode not supported by Vehicle.</source>
-      <translation type="unfinished">Guided mode not supported by Vehicle.</translation>
+      <translation>Режим Guided не поддерживается бортом.</translation>
     </message>
     <message>
       <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="61"/>
@@ -17615,12 +17615,12 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="86"/>
       <source>Incorrect value type - key:type:expected %1:%2:%3</source>
-      <translation type="unfinished">Incorrect value type - key:type:expected %1:%2:%3</translation>
+      <translation>Неправильный тип значения — ключ:тип:ожидалось %1:%2:%3</translation>
     </message>
     <message>
       <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="72"/>
       <source>Mismatched key and type list sizes: keys=%1 types=%2</source>
-      <translation type="unfinished">Mismatched key and type list sizes: keys=%1 types=%2</translation>
+      <translation>Несовпадение размеров списков ключей и типов: ключи=%1 типы=%2</translation>
     </message>
     <message>
       <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="298"/>
@@ -17640,17 +17640,17 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="348"/>
       <source>Unable to parse json file: %1 error: %2 offset: %3</source>
-      <translation type="unfinished">Unable to parse json file: %1 error: %2 offset: %3</translation>
+      <translation>Не удалось разобрать json-файл: %1 ошибка: %2 смещение: %3</translation>
     </message>
     <message>
       <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="355"/>
       <source>Root of json file is not object: %1</source>
-      <translation type="unfinished">Root of json file is not object: %1</translation>
+      <translation>Корень json-файла не является объектом: %1</translation>
     </message>
     <message>
       <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="363"/>
       <source>Json file: &apos;%1&apos;. %2</source>
-      <translation type="unfinished">Json file: &apos;%1&apos;. %2</translation>
+      <translation>Json-файл: '%1'. %2</translation>
     </message>
     <message>
       <location filename="../src/Utilities/Parsing/Json/JsonParsing.cc" line="40"/>
@@ -17660,27 +17660,27 @@ Click &apos;Ok&apos; to upload the Plan anyway.</translation>
     <message>
       <location filename="../src/QtLocationPlugin/Providers/TianDiTuProvider.h" line="30"/>
       <source>TianDiTu Road</source>
-      <translation type="unfinished">TianDiTu Road</translation>
+      <translation>TianDiTu Road</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/Providers/TianDiTuProvider.h" line="42"/>
       <source>TianDiTu Satellite</source>
-      <translation type="unfinished">TianDiTu Satellite</translation>
+      <translation>TianDiTu Satellite</translation>
     </message>
     <message>
       <location filename="../src/Utilities/Compression/QGCCompression.cc" line="1013"/>
       <source>Failed to open compressed file: %1</source>
-      <translation type="unfinished">Failed to open compressed file: %1</translation>
+      <translation>Не удалось открыть сжатый файл: %1</translation>
     </message>
     <message>
       <location filename="../src/Utilities/FileSystem/QGCFileHelper.cc" line="23"/>
       <source>File path is empty</source>
-      <translation type="unfinished">File path is empty</translation>
+      <translation>Путь к файлу пуст</translation>
     </message>
     <message>
       <location filename="../src/Utilities/FileSystem/QGCFileHelper.cc" line="31"/>
       <source>Failed to open file: %1 - %2</source>
-      <translation type="unfinished">Failed to open file: %1 - %2</translation>
+      <translation>Не удалось открыть файл: %1 — %2</translation>
     </message>
   </context>
   <context>
