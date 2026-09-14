@@ -3,7 +3,7 @@
 #include "AppMessages.h"
 #include "GPSRtk.h"
 #include "LinkManager.h"
-#include "NmeaSourceManager.h"
+#include "NMEASourceManager.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
@@ -18,7 +18,7 @@ QGC_LOGGING_CATEGORY(GPSManagerLog, "GPS.GPSManager")
 
 Q_APPLICATION_STATIC(GPSManager, _gpsManager);
 
-GPSManager::GPSManager(QObject *parent)
+GPSManager::GPSManager(QObject* parent)
     : QObject(parent)
     , _gpsRtk(new GPSRtk(this))
 {
@@ -31,7 +31,7 @@ GPSManager::~GPSManager()
     qCDebug(GPSManagerLog) << this;
 }
 
-GPSManager *GPSManager::instance()
+GPSManager* GPSManager::instance()
 {
     return _gpsManager();
 }
@@ -42,7 +42,7 @@ void GPSManager::init()
         return;
     }
     auto* settings = SettingsManager::instance()->autoConnectSettings();
-    _nmeaSources = new NmeaSourceManager(settings, QGCPositionManager::instance(), this);
+    _nmeaSources = new NMEASourceManager(settings, QGCPositionManager::instance(), this);
 #ifndef QGC_NO_SERIAL_LINK
     _rtkAutoConnect = new RTKAutoConnect(settings, _gpsRtk, SerialPortManager::instance(), this);
     connect(_rtkAutoConnect, &RTKAutoConnect::connectRequested, this,

@@ -7,7 +7,12 @@ class UdpIODeviceTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _receiptTimestampsSurviveBuffering();
     void _selectedPeerIsolation();
+    void _peerReplacementClearsBuffers_data();
+    void _peerReplacementClearsBuffers();
+    void _peerReplacementCanRetireDevice_data();
+    void _peerReplacementCanRetireDevice();
     void _readOnlyBinding();
     void _boundedDrainPublishesAllData();
     void _readyReadCanRetireDevice_data();

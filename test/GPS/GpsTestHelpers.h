@@ -13,7 +13,9 @@ namespace GpsTestHelpers {
 class PositionSource : public QGeoPositionInfoSource
 {
 public:
-    PositionSource() : QGeoPositionInfoSource(nullptr) {}
+    PositionSource()
+        : QGeoPositionInfoSource(nullptr)
+    {}
 
     QGeoPositionInfo lastKnownPosition(bool = false) const override { return {}; }
 
@@ -69,28 +71,6 @@ inline QByteArray buildRtcmFrame(uint16_t messageId, int extraPayloadBytes = 0)
     frame.append(static_cast<char>(crc & 0xFF));
 
     return frame;
-}
-
-// Verify NMEA checksum: XOR of bytes between '$' and '*'
-inline bool verifyNmeaChecksum(const QByteArray& sentence)
-{
-    if (sentence.size() < 6 || sentence.at(0) != '$') {
-        return false;
-    }
-
-    int star = sentence.lastIndexOf('*');
-    if (star < 2 || star + 3 > sentence.size()) {
-        return false;
-    }
-
-    quint8 calc = 0;
-    for (int i = 1; i < star; ++i) {
-        calc ^= static_cast<quint8>(sentence.at(i));
-    }
-
-    QByteArray expected = QByteArray::number(calc, 16).rightJustified(2, '0').toUpper();
-    QByteArray actual = sentence.mid(star + 1, 2).toUpper();
-    return actual == expected;
 }
 
 }  // namespace GpsTestHelpers

@@ -4,16 +4,12 @@
 #include <QtPositioning/QGeoCoordinate>
 
 namespace NMEAUtils {
-
-/// Compute XOR checksum over NMEA body (between '$' and '*').
-quint8 computeChecksum(const QByteArray& body);
-
 /// Validate an NMEA sentence's checksum. Accepts sentences of the form
-/// `$BODY*XX` (with or without CRLF suffix). Returns false if the sentence
+/// `$BODY*XX` (with no terminator, LF, or CRLF). Returns false if the sentence
 /// is malformed or the checksum does not match.
 bool verifyChecksum(const QByteArray& sentence);
 
-/// Repair or append a valid NMEA checksum and ensure CRLF termination.
+/// Rebuild a valid frame with its checksum and CRLF; short or malformed bodies are only terminated.
 QByteArray repairChecksum(const QByteArray& sentence);
 
 /// Build a GGA sentence from a coordinate and altitude.

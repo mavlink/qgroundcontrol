@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include "MonotonicClock.h"
 #include "UdpIODevice.h"
 
 namespace {
@@ -387,4 +388,124 @@ void UdpIODeviceTest::_readyReadCanRetireDevice()
         QVERIFY(deliver(*device, "new\n"));
         QCOMPARE(device->readAll(), QByteArray("new\n"));
     }
+}
+
+void UdpIODeviceTest::_receiptTimestampsSurviveBuffering()
+{
+    UdpIODevice device;
+    QVERIFY(device.bind(QHostAddress::LocalHost, 0));
+    QVERIFY(device.open(QIODevice::ReadOnly | QIODevice::Unbuffered));
+    const auto beforeFirst = ReadTimestamp::nowUs();
+    QVERIFY(deliver(device, "first\n"));
+    const auto afterFirst = ReadTimestamp::nowUs();
+    QVERIFY(deliver(device, "second\n"));
+    const auto afterSecond = ReadTimestamp::nowUs();
+    QCOMPARE(device.read(64), QByteArray("first\n"));
+    const auto firstReceipt = device.lastReadTimestampUs();
+    QVERIFY(firstReceipt >= beforeFirst);
+    QVERIFY(firstReceipt <= afterFirst);
+    QCOMPARE(device.read(64), QByteArray("second\n"));
+    QVERIFY(device.lastReadTimestampUs() >= afterFirst);
+    QVERIFY(device.lastReadTimestampUs() <= afterSecond);
+    QVERIFY(deliver(device, QByteArray(40 * 1024, 'x')));
+    QVERIFY(deliver(device, QByteArray(30 * 1024, 'x'), false));
+    QVERIFY(deliver(device, "\nretained\n"));
+    QCOMPARE(device.read(64), QByteArray("retained\n"));
+    QVERIFY(device.lastReadTimestampUs() >= afterSecond);
+    device.close();
+    QCOMPARE(device.lastReadTimestampUs(), 0);
+}
+
+void UdpIODeviceTest::_peerReplacementClearsBuffers_data()
+{
+    QTest::addColumn<int>("readMode");
+    QTest::newRow("unread") << 0;
+    QTest::newRow("peek") << 1;
+    QTest::newRow("transaction") << 2;
+    QTest::newRow("text-transaction") << 3;
+    QTest::newRow("reentrant-read") << 4;
+}
+
+void UdpIODeviceTest::_peerReplacementClearsBuffers()
+{
+    QFETCH(int, readMode);
+    UdpIODevice device;
+    device.setSelectFirstPeer(true);
+    const auto idleTimeout = std::chrono::milliseconds(20);
+    device.setPeerIdleTimeout(idleTimeout);
+    QVERIFY(device.bind(QHostAddress::LocalHost, 0));
+    if (readMode == 3)
+        device.setTextModeEnabled(true);
+    QUdpSocket first;
+    QUdpSocket second;
+    QSignalSpy ready(&device, &QIODevice::readyRead);
+    const QByteArray oldData("old\r\npartial");
+    QCOMPARE(first.writeDatagram(oldData, QHostAddress::LocalHost, device.localPort()), oldData.size());
+    QVERIFY(ready.wait(TestTimeout::shortMs()));
+    if (readMode == 2 || readMode == 3) {
+        device.startTransaction();
+        QCOMPARE(device.read(2), QByteArray("ol"));
+    } else if (readMode == 1) {
+        QCOMPARE(device.peek(2), QByteArray("ol"));
+    }
+    const auto previous = device.selectedPeer();
+    const auto receivedAtUs = ReadTimestamp::nowUs();
+    QTRY_VERIFY_WITH_TIMEOUT(
+        MonotonicClock::ageMilliseconds(receivedAtUs, ReadTimestamp::nowUs()) >= idleTimeout.count(),
+        TestTimeout::shortMs());
+    QSignalSpy replaced(&device, &UdpIODevice::peerReplaced);
+    connect(&device, &UdpIODevice::peerReplaced, this, [&]() {
+        QCOMPARE(device.bytesAvailable(), 0);
+        QVERIFY(!device.isTransactionStarted());
+        QCOMPARE(device.lastReadTimestampUs(), quint64(0));
+        if (readMode == 4) {
+            QCOMPARE(second.writeDatagram("later\n", QHostAddress::LocalHost, device.localPort()), qint64(6));
+            QVERIFY(QMetaObject::invokeMethod(&device, "_readAvailableData", Qt::DirectConnection));
+            QCOMPARE(device.bytesAvailable(), 0);
+        }
+    });
+    ready.clear();
+    QCOMPARE(second.writeDatagram("new\n", QHostAddress::LocalHost, device.localPort()), qint64(4));
+    QVERIFY(ready.wait(TestTimeout::shortMs()));
+    QCOMPARE(replaced.size(), 1);
+    QCOMPARE(replaced.first().at(0).toString(), previous);
+    QCOMPARE(replaced.first().at(1).toString(), device.selectedPeer());
+    QCOMPARE(device.readAll(), readMode == 4 ? QByteArray("new\nlater\n") : QByteArray("new\n"));
+    QCOMPARE(device.isTextModeEnabled(), readMode == 3);
+}
+
+void UdpIODeviceTest::_peerReplacementCanRetireDevice_data()
+{
+    QTest::addColumn<bool>("destroy");
+    QTest::newRow("close") << false;
+    QTest::newRow("destroy") << true;
+}
+
+void UdpIODeviceTest::_peerReplacementCanRetireDevice()
+{
+    QFETCH(bool, destroy);
+    auto device = std::make_unique<UdpIODevice>();
+    device->setSelectFirstPeer(true);
+    device->setPeerIdleTimeout(std::chrono::milliseconds(20));
+    QVERIFY(device->bind(QHostAddress::LocalHost, 0));
+    const auto port = device->localPort();
+    QUdpSocket first;
+    QUdpSocket second;
+    QSignalSpy ready(device.get(), &QIODevice::readyRead);
+    QCOMPARE(first.writeDatagram("old", QHostAddress::LocalHost, port), qint64(3));
+    QVERIFY(ready.wait(TestTimeout::shortMs()));
+    const auto receivedAtUs = ReadTimestamp::nowUs();
+    QTRY_VERIFY_WITH_TIMEOUT(MonotonicClock::ageMilliseconds(receivedAtUs, ReadTimestamp::nowUs()) >= 20,
+                             TestTimeout::shortMs());
+    bool retired = false;
+    connect(device.get(), &UdpIODevice::peerReplaced, this, [&]() {
+        if (destroy)
+            device.reset();
+        else
+            device->close();
+        retired = true;
+    });
+    QCOMPARE(second.writeDatagram("new", QHostAddress::LocalHost, port), qint64(3));
+    QTRY_VERIFY_WITH_TIMEOUT(retired, TestTimeout::shortMs());
+    QVERIFY(!device || !device->isOpen());
 }

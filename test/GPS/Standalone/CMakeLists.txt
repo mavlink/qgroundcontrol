@@ -8,7 +8,9 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     find_package(Qt6 6.8 REQUIRED COMPONENTS Core Positioning)
     add_subdirectory("${_utilities_root}/Logging/Category" LoggingCategory)
     add_subdirectory("${_utilities_root}/Timing" Timing)
+    add_subdirectory("${_utilities_root}/IO" IO)
     add_subdirectory("${_gps_root}/Core" Core)
+    add_subdirectory("${_gps_root}/NMEA" NMEA)
     add_subdirectory("${_gps_root}/PositionManager" Positioning)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Timing/Support" TestTiming)
 endif()
@@ -19,7 +21,7 @@ add_custom_target(
     DEPENDS QGCClock_verify_interface_header_sets
     COMMENT "Verify Qt-free clock public headers in isolation"
 )
-foreach(target QGCGPSCore QGCGPSPositioning)
+foreach(target QGCGPSCore QGCGPSPositioning QGCGPSNMEA)
     set_target_properties(${target} PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
     add_custom_target(
         ${target}HeaderChecks ALL
@@ -31,3 +33,21 @@ foreach(target QGCGPSCore QGCGPSPositioning)
     add_test(NAME ${target}Consumer COMMAND ${target}Consumer)
     set_tests_properties(${target}Consumer PROPERTIES LABELS "Unit;GPS" TIMEOUT 10)
 endforeach()
+
+set_target_properties(QGCGPSNMEAProtocol PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
+add_custom_target(
+    QGCGPSNMEAProtocolHeaderChecks ALL
+    DEPENDS QGCGPSNMEAProtocol_verify_interface_header_sets
+    COMMENT "Verify Qt-free NMEA protocol headers in isolation"
+)
+
+add_executable(QGCGPSNMEAProtocolConsumer QGCGPSNMEAProtocolConsumer.cc)
+set_target_properties(
+    QGCGPSNMEAProtocolConsumer
+    PROPERTIES AUTOMOC OFF
+               AUTOUIC OFF
+               AUTORCC OFF
+)
+target_link_libraries(QGCGPSNMEAProtocolConsumer PRIVATE QGCGPSNMEAProtocol)
+add_test(NAME QGCGPSNMEAProtocolConsumer COMMAND QGCGPSNMEAProtocolConsumer)
+set_tests_properties(QGCGPSNMEAProtocolConsumer PROPERTIES LABELS "Unit;GPS" TIMEOUT 10)

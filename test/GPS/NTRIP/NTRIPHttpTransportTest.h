@@ -48,12 +48,4 @@ private slots:
     void _testBuildRequestPlaintextCredentialsWarns();
     void _testBuildRequestTlsCredentialsNoWarn();
     void _testBuildRequestNoCredentialsNoWarn();
-
-    // NMEA checksum repair
-    void _testRepairNmeaChecksumCorrect();
-    void _testRepairNmeaChecksumWrong();
-    void _testRepairNmeaChecksumMissing();
-    void _testRepairNmeaChecksumTruncated();
-    void _testRepairNmeaChecksumAppendsCrLf();
-    void _testRepairNmeaChecksumShortSentence();
 };

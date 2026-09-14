@@ -4,9 +4,9 @@
 #include <QtCore/QIODevice>
 #include <QtCore/QPermissions>
 #include <QtCore/QThread>
-#include <QtPositioning/QNmeaPositionInfoSource>
 
 #include "AppMessages.h"
+#include "NMEADecoderSession.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "SimulatedPosition.h"
@@ -16,6 +16,7 @@ Q_APPLICATION_STATIC(QGCPositionManager, _positionManager);
 
 QGCPositionManager::QGCPositionManager(QObject* parent, RuntimeScheduler* scheduler)
     : GPSPositionService(parent, scheduler)
+    , _nmeaScheduler(scheduler)
 {
     qCDebug(QGCPositionManagerLog) << this;
 }
@@ -96,17 +97,30 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
     if (!guard || _nmeaRevision != revision || !deviceGuard) {
         return;
     }
-    _nmeaSource = std::make_unique<QNmeaPositionInfoSource>(QNmeaPositionInfoSource::RealTimeMode);
-    _nmeaSource->setDevice(device);
-    _nmeaSource->setUserEquivalentRangeError(5.1);
+    _nmeaSource = std::make_unique<NMEADecoderSession>(nullptr, _nmeaScheduler);
+    if (!_nmeaSource->start(device)) {
+        _nmeaSource.reset();
+        return;
+    }
+    connect(_nmeaSource.get(), &NMEADecoderSession::activityChanged, this, &QGCPositionManager::nmeaActivityChanged);
+    _nmeaDeviceClosedConnection = connect(
+        device, &QIODevice::aboutToClose, this,
+        [this, revision]() {
+            if (_nmeaRevision == revision) {
+                resetNmeaSourceDevice();
+            }
+        },
+        Qt::QueuedConnection);
     _nmeaDeviceDestroyedConnection = connect(device, &QObject::destroyed, this, [this, revision]() {
         if (_nmeaRevision == revision) {
             resetNmeaSourceDevice();
         }
     });
-    auto registration = registerPositionSource(SelectedSource::Nmea, _nmeaSource.get(), nullptr);
+    auto registration =
+        registerPositionSource(SelectedSource::Nmea, _nmeaSource->positionSource(), _nmeaSource->health());
     if (guard && _nmeaRevision == revision) {
         _nmeaRegistration = std::move(registration);
+        emit nmeaSourceChanged();
     }
 }
 
@@ -117,8 +131,32 @@ void QGCPositionManager::resetNmeaSourceDevice()
     }
     ++_nmeaRevision;
     QObject::disconnect(_nmeaDeviceDestroyedConnection);
+    QObject::disconnect(_nmeaDeviceClosedConnection);
     // Keep the old source alive through retirement signals, even if they replace it or delete this manager.
     auto source = std::move(_nmeaSource);
     auto registration = std::move(_nmeaRegistration);
+    const QPointer<QGCPositionManager> guard(this);
+    const quint64 revision = _nmeaRevision;
     registration.reset();
+    if (guard && revision == _nmeaRevision) {
+        emit nmeaSourceChanged();
+        if (guard && revision == _nmeaRevision) {
+            emit nmeaActivityChanged();
+        }
+    }
+}
+
+GPSSourceHealth* QGCPositionManager::nmeaHealth() const
+{
+    return _nmeaSource ? _nmeaSource->health() : nullptr;
+}
+
+bool QGCPositionManager::nmeaReceiving() const
+{
+    return _nmeaSource && _nmeaSource->receiving();
+}
+
+bool QGCPositionManager::nmeaHasData() const
+{
+    return _nmeaSource && _nmeaSource->hasReceivedData();
 }

@@ -1,6 +1,7 @@
-#include "NmeaSourceManager.h"
+#include "NMEASourceManager.h"
 
 #include "AutoConnectSettings.h"
+#include "GPSSourceHealth.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "UdpIODevice.h"
@@ -13,24 +14,25 @@
 #endif
 #endif
 
-QGC_LOGGING_CATEGORY(NmeaSourceManagerLog, "GPS.NmeaSourceManager")
+QGC_LOGGING_CATEGORY(NMEASourceManagerLog, "GPS.NMEA.NMEASourceManager")
 
-NmeaSourceManager::NmeaSourceManager(AutoConnectSettings* settings, QGCPositionManager* positionManager,
+NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionManager* positionManager,
                                      QObject* parent)
     : QObject(parent), _settings(settings), _positionManager(positionManager)
 {
+    qCDebug(NMEASourceManagerLog) << this;
 #ifndef QGC_NO_SERIAL_LINK
     if (_settings) {
-        connect(_settings->nmeaSource(), &Fact::rawValueChanged, this, &NmeaSourceManager::_updateSerialRouting);
+        connect(_settings->nmeaSource(), &Fact::rawValueChanged, this, &NMEASourceManager::_updateSerialRouting);
         connect(_settings->autoConnectNmeaPort(), &Fact::rawValueChanged, this,
-                &NmeaSourceManager::_updateSerialRouting);
+                &NMEASourceManager::_updateSerialRouting);
         _updateSerialRouting();
     }
 #endif
 }
 
 #ifndef QGC_NO_SERIAL_LINK
-void NmeaSourceManager::_updateSerialRouting()
+void NMEASourceManager::_updateSerialRouting()
 {
     const QString port = _settings->nmeaSource()->rawValue().toInt() == AutoConnectSettings::NmeaSourceSerial
                              ? _settings->autoConnectNmeaPort()->rawValue().toString().trimmed()
@@ -39,12 +41,13 @@ void NmeaSourceManager::_updateSerialRouting()
 }
 #endif
 
-NmeaSourceManager::~NmeaSourceManager()
+NMEASourceManager::~NMEASourceManager()
 {
+    qCDebug(NMEASourceManagerLog) << this;
     stop();
 }
 
-void NmeaSourceManager::stop()
+void NMEASourceManager::stop()
 {
     // Detach the decoder before destroying the device it reads from.
     if (_sourceInstalled && _positionManager) {
@@ -61,7 +64,7 @@ void NmeaSourceManager::stop()
     _source = -1;
 }
 
-void NmeaSourceManager::update()
+void NMEASourceManager::update()
 {
     if (!_settings || !_positionManager) {
         stop();
@@ -81,9 +84,19 @@ void NmeaSourceManager::update()
         _source = source;
         auto socket = std::make_unique<UdpIODevice>();
         if (!socket->bind(QHostAddress::AnyIPv4, port)) {
-            qCDebug(NmeaSourceManagerLog) << "Cannot bind NMEA UDP port" << port << socket->errorString();
+            qCDebug(NMEASourceManagerLog) << "Cannot bind NMEA UDP port" << port << socket->errorString();
             return;
         }
+        socket->setSelectFirstPeer(true);
+        socket->setPeerIdleTimeout(std::chrono::milliseconds(GPSSourceHealth::FRESHNESS_TIMEOUT_MS));
+        connect(socket.get(), &UdpIODevice::peerReplaced, this,
+                [this, current = QPointer<UdpIODevice>(socket.get())]() {
+                    if (current && _udp.get() == current && _positionManager) {
+                        // Retire partial sentences, Qt epoch state, and satellite assembly together.
+                        _positionManager->setNmeaSourceDevice(current);
+                    }
+                });
+        socket->open(QIODevice::ReadOnly | QIODevice::Unbuffered);
         _udp = std::move(socket);
         _positionManager->setNmeaSourceDevice(_udp.get());
         _sourceInstalled = true;
@@ -114,7 +127,7 @@ void NmeaSourceManager::update()
         auto serial = std::make_unique<QSerialPort>();
         serial->setPortName(device);
         if (!serial->setBaudRate(baud) || !serial->open(QIODevice::ReadOnly)) {
-            qCDebug(NmeaSourceManagerLog) << "Cannot open NMEA serial port" << device << serial->errorString();
+            qCDebug(NMEASourceManagerLog) << "Cannot open NMEA serial port" << device << serial->errorString();
             return;
         }
         _serialDevice = device;

@@ -15,14 +15,14 @@ class QGCPositionManager;
 class UdpIODevice;
 
 /// Owns the NMEA input device; PositionManager owns decoding and GCS fix state.
-class NmeaSourceManager : public QObject
+class NMEASourceManager : public QObject
 {
     Q_OBJECT
-    friend class NmeaSourceManagerTest;
+    friend class NMEASourceManagerTest;
 
 public:
-    NmeaSourceManager(AutoConnectSettings* settings, QGCPositionManager* positionManager, QObject* parent = nullptr);
-    ~NmeaSourceManager() override;
+    NMEASourceManager(AutoConnectSettings* settings, QGCPositionManager* positionManager, QObject* parent = nullptr);
+    ~NMEASourceManager() override;
     void update();
     void stop();
 
