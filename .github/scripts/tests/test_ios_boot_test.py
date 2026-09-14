@@ -40,6 +40,12 @@ def test_app_must_report_boot_success_and_device_is_deleted(tmp_path, output, er
         else:
             boot_test(app, tmp_path / "log")
     assert simctl.call_args_list[5].kwargs["timeout"] == 300
+    assert simctl.call_args_list[5].args[-4:] == (
+        "--simple-boot-test",
+        "--logging",
+        "Main",
+        "--log-output",
+    )
     assert simctl.call_args_list[-1].args == ("delete", "uuid")
     assert (tmp_path / "log").read_text() == output
 

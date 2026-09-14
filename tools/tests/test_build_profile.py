@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/build_profile.py."""
 
 from __future__ import annotations

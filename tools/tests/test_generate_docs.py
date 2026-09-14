@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/generate_docs.py."""
 
 from __future__ import annotations

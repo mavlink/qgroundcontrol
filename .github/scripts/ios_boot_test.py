@@ -50,6 +50,9 @@ def boot_test(app: Path, log: Path, *, timeout: int = 300) -> None:
             device,
             bundle,
             "--simple-boot-test",
+            "--logging",
+            "Main",
+            "--log-output",
             timeout=timeout,
         )
         log.write_text(output, encoding="utf-8")

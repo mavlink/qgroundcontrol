@@ -1,4 +1,5 @@
 #include "MAVLinkConsoleController.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"

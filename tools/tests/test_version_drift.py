@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Drift guards for the tools venv.
 
 uv.lock vs pyproject.toml: a dep added without regenerating the lockfile makes

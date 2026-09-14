@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/run_tests.py."""
 
 from __future__ import annotations

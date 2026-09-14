@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for docker_helper.py."""
 
 from __future__ import annotations

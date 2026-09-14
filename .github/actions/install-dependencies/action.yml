@@ -100,7 +100,9 @@ runs:
       uses: actions/cache@v5
       with:
         path: ~/.cache/qgc-apt-archives
-        key: apt-debs-${{ steps.apt-cache-stamp.outputs.distro }}-${{ runner.arch }}-${{ steps.apt-cache-stamp.outputs.month }}-${{ hashFiles('tools/setup/install_dependencies/_packages.py', 'tools/setup/install_dependencies/_debian.py') }}
+        key: >-
+          apt-debs-${{ steps.apt-cache-stamp.outputs.distro }}-${{ runner.arch }}-${{ steps.apt-cache-stamp.outputs.month }}-${{ hashFiles(
+          'tools/setup/install_dependencies/_packages.py', 'tools/setup/install_dependencies/_debian.py') }}
         restore-keys: |
           apt-debs-${{ steps.apt-cache-stamp.outputs.distro }}-${{ runner.arch }}-${{ steps.apt-cache-stamp.outputs.month }}-
           apt-debs-${{ steps.apt-cache-stamp.outputs.distro }}-${{ runner.arch }}-

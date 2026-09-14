@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/setup/install_dependencies."""
 
 from __future__ import annotations

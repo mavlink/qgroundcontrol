@@ -143,7 +143,8 @@ jobs:
             python3-venv git autoconf automake libtool \
             pkg-config gettext bison flex cmake ninja-build
 
-      # Android/iOS GStreamer builds don't link against host Qt — skip build-setup there. The desktop platforms run through build-setup so we get qt-install + setup-python + platform compiler toolchain in one shot.
+      # Android/iOS builds do not link host Qt. Desktop builds use build-setup
+      # for the Qt SDK, Python environment, and compiler toolchain.
       - name: Build Setup
         if: inputs.platform == 'linux' || inputs.platform == 'macos' || inputs.platform == 'windows'
         uses: ./.github/actions/build-setup

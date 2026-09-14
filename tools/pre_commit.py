@@ -53,7 +53,9 @@ def strip_ansi(value: str) -> str:
 
 def summarize_output(output: str) -> tuple[int, int, int]:
     passed = failed = skipped = 0
-    for line in output.splitlines():
+    for line in strip_ansi(output).splitlines():
+        if ".........." not in line:
+            continue
         match = HOOK_RESULT_RE.search(line)
         if not match:
             continue
@@ -80,7 +82,9 @@ def build_precommit_args(args: argparse.Namespace) -> list[str]:
             ref = None
         if ref:
             log_info(f"Running on files changed vs {ref}...")
-            result.extend(["--from-ref", ref, "--to-ref", "HEAD"])
+            # The PR merge checkout can include newer base-branch changes.
+            head = os.environ.get("PR_HEAD_SHA") or "HEAD"
+            result.extend(["--from-ref", ref, "--to-ref", head])
         else:
             log_warn("Default branch not available, running on all files")
             result.append("--all-files")
