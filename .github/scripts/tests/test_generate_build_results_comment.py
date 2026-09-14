@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
+import pytest
 from generate_build_results_comment import generate_comment
 
 if TYPE_CHECKING:
@@ -212,3 +213,65 @@ def test_generate_comment_handles_malformed_size_entries(tmp_path: Path) -> None
     )
 
     assert "| QGroundControl.dmg | 1.00 MB |" in out
+
+
+def test_android_abi_variants_are_not_reported_as_size_reductions(tmp_path: Path) -> None:
+    mib = 1024 * 1024
+    base_sha = "a" * 40
+    (tmp_path / "pr-sizes.json").write_text(
+        json.dumps(
+            {
+                "artifacts": [
+                    {"name": "QGroundControl-linux-arm64-v8a", "size_bytes": 85 * mib},
+                    {"name": "QGroundControl-mac-arm64-v8a", "size_bytes": 85 * mib},
+                ]
+            }
+        )
+    )
+    (tmp_path / "baseline-sizes.json").write_text(
+        json.dumps(
+            {
+                "head_sha": base_sha,
+                "artifacts": [
+                    {
+                        "name": "QGroundControl-linux-arm64-v8a-armeabi-v7a",
+                        "size_bytes": 162 * mib,
+                    },
+                    {"name": "QGroundControl-mac-arm64-v8a", "size_bytes": 87 * mib},
+                ],
+            }
+        )
+    )
+    out = generate_comment({"BASELINE_SHA": base_sha}, tmp_path)
+    assert "| QGroundControl-linux-arm64-v8a | 85.00 MB | N/A (no matching artifact) |" in out
+    assert "| QGroundControl-mac-arm64-v8a | 85.00 MB | -2.00 MB (decrease) |" in out
+    assert "Total size decreased by 2.00 MB" in out
+    assert "77.00 MB" not in out
+    assert "PR base `aaaaaaa`" in out
+    assert "Δ from master" not in out
+
+
+@pytest.mark.parametrize("cached_sha", ["older-master", None])
+def test_size_delta_rejects_stale_or_unidentified_baseline(
+    tmp_path: Path, cached_sha: str | None, caplog: pytest.LogCaptureFixture
+) -> None:
+    (tmp_path / "pr-sizes.json").write_text(
+        json.dumps({"artifacts": [{"name": "QGroundControl", "size_bytes": 1024 * 1024}]})
+    )
+    baseline: dict[str, object] = {
+        "artifacts": [{"name": "QGroundControl", "size_bytes": 78 * 1024 * 1024}]
+    }
+    if cached_sha is not None:
+        baseline["head_sha"] = cached_sha
+    (tmp_path / "baseline-sizes.json").write_text(json.dumps(baseline))
+    out = generate_comment({"BASELINE_SHA": "a" * 40}, tmp_path)
+    assert "Ignoring size baseline" in caplog.text
+    assert "| QGroundControl | 1.00 MB | N/A (no matching artifact) |" in out
+    assert "No comparable artifact baseline available for PR base `aaaaaaa`" in out
+    assert "Total size decreased" not in out
+
+
+def test_empty_size_snapshot_does_not_render_stale_artifacts(tmp_path: Path) -> None:
+    (tmp_path / "pr-sizes.json").write_text(json.dumps({"head_sha": "new", "artifacts": []}))
+    out = generate_comment({}, tmp_path)
+    assert "### Artifact Sizes" not in out

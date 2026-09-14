@@ -14165,7 +14165,7 @@ Is this really what you want?</translation>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="334"/>
       <source>Switches to &apos;%1&apos; when you click Stop.</source>
-      <translation>중지를 클릭하면 '% 1'(으)로 전환합니다. </translation>
+      <translation>중지를 클릭하면 '%1'(으)로 전환합니다. </translation>
     </message>
     <message>
       <location filename="../src/QmlControls/PIDTuning.qml" line="350"/>

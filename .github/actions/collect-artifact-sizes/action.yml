@@ -25,6 +25,9 @@ inputs:
     description: Optional path to run artifact metadata JSON (skips per-run artifact API calls)
     required: false
     default: ''
+  require-artifacts:
+    description: Fail if no distributable artifacts are available for a baseline
+    default: 'false'
 
 runs:
   using: composite
@@ -42,6 +45,7 @@ runs:
         OUTPUT_FILE: ${{ inputs.output-file }}
         RUNS_FILE: ${{ inputs.runs-file }}
         ARTIFACTS_FILE: ${{ inputs.artifacts-file }}
+        REQUIRE_ARTIFACTS: ${{ inputs.require-artifacts }}
       run: |
         set -euo pipefail
         cmd=(python3 "${GITHUB_WORKSPACE}/.github/scripts/collect_artifact_sizes.py"
@@ -52,4 +56,5 @@ runs:
         [[ -n "$EVENT" ]] && cmd+=(--event "$EVENT")
         [[ -n "$RUNS_FILE" && -f "$RUNS_FILE" ]] && cmd+=(--runs-file "$RUNS_FILE")
         [[ -n "$ARTIFACTS_FILE" && -f "$ARTIFACTS_FILE" ]] && cmd+=(--artifacts-file "$ARTIFACTS_FILE")
+        [[ "$REQUIRE_ARTIFACTS" == "true" ]] && cmd+=(--require-artifacts)
         "${cmd[@]}"

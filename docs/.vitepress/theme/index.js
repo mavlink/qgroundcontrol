@@ -1,27 +1,42 @@
 // https://vitepress.dev/guide/custom-theme
-import { h } from "vue";
+import { computed, h, onMounted, provide, ref } from "vue";
+import { dataSymbol, useData, useRoute } from "vitepress";
 import DefaultTheme from "vitepress/theme";
+import { refreshNavigation, resolveNavigation } from "./dynamic-nav.mjs";
 import "./style.css";
 
-// Toast shown once per page load, announcing the current docs version
 import VersionToast from "./components/VersionToast.vue";
-
-import { createDynamicNav, DynamicNav } from "vp-dynamic-nav";
 
 /** @type {import('vitepress').Theme} */
 export default {
-  // createDynamicNav(DefaultTheme).Layout is a parameterless function that
-  // doesn't forward slots passed to it, so its nav-bar slots are reproduced
-  // here directly against DefaultTheme.Layout instead of nesting through it
-  // (nesting silently drops any slot we'd add, e.g. layout-top for the toast).
-  extends: createDynamicNav(DefaultTheme),
+  extends: DefaultTheme,
+  setup() {
+    const data = useData();
+    const route = useRoute();
+    const nav = ref(data.theme.value.nav);
+    const mounted = ref(false);
+
+    provide(dataSymbol, {
+      ...data,
+      theme: computed(() => ({
+        ...data.theme.value,
+        nav: resolveNavigation(
+          nav.value,
+          mounted.value ? new URL(route.path + route.hash, location.href) : null,
+        ),
+      })),
+    });
+
+    onMounted(() => {
+      // Defer browser-specific links until after hydration.
+      mounted.value = true;
+      void refreshNavigation(data.theme.value.dynamicNavUrl, (items) => {
+        nav.value = items;
+      });
+    });
+  },
   Layout: () =>
     h(DefaultTheme.Layout, null, {
-      "nav-bar-content-before": () => h(DynamicNav),
-      "nav-screen-content-after": () => h(DynamicNav, { screen: true }),
       "layout-top": () => h(VersionToast),
     }),
-  enhanceApp({ app, router, siteData }) {
-    // ...
-  },
 };

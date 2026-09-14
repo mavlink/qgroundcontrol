@@ -6,6 +6,7 @@ import json
 from typing import TYPE_CHECKING
 
 import collect_artifact_sizes as mod
+import pytest
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -251,6 +252,7 @@ def test_main_writes_output_json(tmp_path: Path, monkeypatch) -> None:
     )
     assert rc == 0
     data = json.loads(output_file.read_text(encoding="utf-8"))
+    assert data["head_sha"] == "abc123"
     assert len(data["artifacts"]) == 2
     assert data["artifacts"][0]["name"] == "QGroundControl-installer-AMD64"
     assert data["artifacts"][1]["name"] == "QGroundControl-x86_64"
@@ -305,6 +307,31 @@ def test_main_reads_artifacts_file_when_provided(tmp_path: Path, monkeypatch) ->
     data = json.loads(output_file.read_text(encoding="utf-8"))
     assert len(data["artifacts"]) == 1
     assert data["artifacts"][0]["name"] == "QGroundControl-x86_64"
+
+
+@pytest.mark.parametrize("require_artifacts", [False, True])
+def test_main_replaces_stale_sizes_when_no_artifacts_exist(
+    tmp_path: Path, monkeypatch, require_artifacts: bool
+) -> None:
+    output_file = tmp_path / "sizes.json"
+    output_file.write_text(
+        json.dumps(
+            {"head_sha": "old", "artifacts": [{"name": "QGroundControl", "size_bytes": 100}]}
+        )
+    )
+    monkeypatch.setattr(mod, "list_workflow_runs_for_sha", lambda *args: [])
+    assert mod.main(
+        [
+            "--repo",
+            "owner/repo",
+            "--head-sha",
+            "abc123",
+            "--output-file",
+            str(output_file),
+            *(["--require-artifacts"] if require_artifacts else []),
+        ]
+    ) == int(require_artifacts)
+    assert json.loads(output_file.read_text()) == {"head_sha": "abc123", "artifacts": []}
 
 
 def test_collect_artifacts_deduplicates_same_name_keeps_largest() -> None:

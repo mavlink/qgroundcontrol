@@ -180,11 +180,21 @@ def _collect_artifact_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, 
         return None
 
     baseline_path = base_dir / _env(env, "BASELINE_SIZES_JSON", "baseline-sizes.json")
+    expected_base_sha = _env(env, "BASELINE_SHA")
     baseline: dict[str, int] = {}
     if baseline_path.exists():
         try:
             baseline_data = json.loads(baseline_path.read_text(encoding="utf-8"))
-            for artifact in baseline_data.get("artifacts", []):
+            if expected_base_sha and baseline_data.get("head_sha") != expected_base_sha:
+                logger.warning(
+                    "Ignoring size baseline for %s; PR base is %s",
+                    baseline_data.get("head_sha", "unknown revision"),
+                    expected_base_sha,
+                )
+                baseline_artifacts = []
+            else:
+                baseline_artifacts = baseline_data.get("artifacts", [])
+            for artifact in baseline_artifacts:
                 if not isinstance(artifact, dict):
                     continue
                 name = str(artifact.get("name", "")).strip()
@@ -216,7 +226,11 @@ def _collect_artifact_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, 
             continue
         size_human = str(artifact.get("size_human", "")).strip() or format_bytes(new_size)
 
-        entry: dict[str, Any] = {"name": name, "size_human": size_human}
+        entry: dict[str, Any] = {
+            "name": name,
+            "size_human": size_human,
+            "delta_human": "N/A (no matching artifact)",
+        }
         if baseline and name in baseline:
             delta = new_size - baseline[name]
             total_delta += delta
@@ -224,9 +238,12 @@ def _collect_artifact_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, 
             entry["delta_human"] = format_delta_bytes(delta)
         items.append(entry)
 
+    if not items:
+        return None
     return {
         "entries": items,
-        "has_baseline": bool(baseline),
+        "has_baseline": any("delta" in item for item in items),
+        "baseline_sha": expected_base_sha[:7],
         "total_delta": total_delta,
         "total_delta_mb": abs(total_delta) / 1024.0 / 1024.0,
     }

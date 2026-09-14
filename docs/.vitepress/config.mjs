@@ -28,12 +28,6 @@ export default defineConfig({
   srcExclude: checkEnglish ? ["ko/**", "tr/**", "zh/**"] : [],
   base: process.env.BRANCH_NAME ? "/" + process.env.BRANCH_NAME + "/" : "",
 
-  vite: {
-    ssr: {
-      noExternal: ["vp-dynamic-nav"],
-    },
-  },
-
   head: [
     [
       "script",
@@ -104,7 +98,7 @@ export default defineConfig({
 
     dynamicNavUrl:
       "https://raw.githubusercontent.com/mavlink/qgroundcontrol/master/docs/.vitepress/navbar.json",
-    dynamicNavInitial: navbarData.nav,
+    nav: navbarData.nav,
 
     socialLinks: [
       { icon: "github", link: "https://github.com/mavlink/qgroundcontrol" },

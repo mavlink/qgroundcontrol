@@ -62,27 +62,18 @@ Coverage: **{% if coverage.current is not none %}{{ "%.1f"|format(coverage.curre
 {% if artifacts -%}
 ### Artifact Sizes
 
-{% if artifacts.has_baseline -%}
-| Artifact | Size | Δ from master |
+| Artifact | Size | Δ from PR base |
 |----------|------|---------------|
 {% for a in artifacts.entries -%}
-{% if a.delta is defined -%}
 | {{ a.name }} | {{ a.size_human }} | {{ a.delta_human }} |
-{% else -%}
-| {{ a.name }} | {{ a.size_human }} |
-{% endif -%}
 {% endfor %}
-{% else -%}
-| Artifact | Size |
-|----------|------|
-{% for a in artifacts.entries -%}
-| {{ a.name }} | {{ a.size_human }} |
-{% endfor %}
+{% if artifacts.has_baseline and artifacts.baseline_sha -%}
+*Baseline: PR base `{{ artifacts.baseline_sha }}`. Only matching artifact variants are compared.*
 {% endif -%}
 {% if artifacts.has_baseline and artifacts.total_delta != 0 -%}
 **Total size {{ "increased" if artifacts.total_delta > 0 else "decreased" }} by {{ "%.2f"|format(artifacts.total_delta_mb) }} MB**
 {% elif not artifacts.has_baseline %}
-*No baseline available for comparison*
+*No comparable artifact baseline available{% if artifacts.baseline_sha %} for PR base `{{ artifacts.baseline_sha }}`{% endif %}.*
 {% endif %}
 {% endif %}
 

@@ -13,6 +13,12 @@ repos:
         files: ^(\.github/build-config.*\.json|\.lychee\.toml|\.pre-commit-config\.yaml|tools/(validate_configs\.py|uv\.lock|pyproject\.toml))$
         pass_filenames: false
 
+      - id: qt-translation-placeholders
+        name: Check changed Qt translation placeholders
+        entry: uv run --frozen --directory tools --group scripts python -m translations.check_placeholders
+        language: system
+        files: ^translations/.*\.ts$
+
   # Basic file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

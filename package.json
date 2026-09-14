@@ -4,13 +4,14 @@
     "description": "QGC vitepress docs build dependencies.",
     "scripts": {
         "docs:dev": "vitepress dev docs",
-        "docs:build": "vitepress build docs",
+        "docs:build": "npm run docs:test && vitepress build docs",
         "docs:preview": "vitepress preview docs",
+        "docs:test": "node --test docs/.vitepress/theme/dynamic-nav.test.mjs",
         "start": "npm run docs:dev"
     },
     "dependencies": {
-        "vitepress": "^1.6.4",
-        "vp-dynamic-nav": "^0.2.0"
+        "vitepress": "2.0.0-alpha.20",
+        "vue": "^3.5.41"
     },
     "license": "CC-BY-4.0",
     "repository": {

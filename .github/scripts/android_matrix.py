@@ -74,7 +74,22 @@ def build_matrix(is_pr: bool) -> list[Leg]:
     legs = [LINUX_JOB, MAC_JOB, WINDOWS_JOB, LINUX_EMULATOR_JOB]
     if is_pr:
         legs.remove(WINDOWS_JOB)
-    return legs
+    matrix = []
+    for leg in legs:
+        if leg["emulator"]:
+            abis = ["x86_64"]
+        elif leg["primary"] and not is_pr:
+            abis = ["arm64-v8a", "armeabi-v7a"]
+        else:
+            abis = ["arm64-v8a"]
+        matrix.append(
+            {
+                **leg,
+                "android_abis": ";".join(abis),
+                "artifact_abi_suffix": "-".join(sorted(abis)),
+            }
+        )
+    return matrix
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -174,6 +174,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--strict-runs", action="store_true", help="Require exact successful snapshot identities"
     )
+    parser.add_argument(
+        "--allow-missing",
+        action="store_true",
+        help="Allow absent diagnostic artifacts selected by prefix (not valid for strict runs)",
+    )
     return parser.parse_args(argv)
 
 
@@ -190,6 +195,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if not head_sha:
         print("Error: --head-sha is required", file=sys.stderr)
+        return 1
+    if args.allow_missing and (args.strict_runs or not artifact_prefixes):
+        print(
+            "Error: --allow-missing requires artifact prefixes and cannot be used with --strict-runs",
+            file=sys.stderr,
+        )
         return 1
 
     print(f"Finding completed workflow runs for commit {head_sha}...")
@@ -253,6 +264,14 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     if not runs:
+        if args.allow_missing:
+            print(
+                f"No diagnostic artifacts match prefixes {artifact_prefixes!r} for SHA {head_sha}; "
+                "continuing with build status only"
+            )
+            if artifact_metadata_out is not None:
+                write_run_artifact_metadata(artifact_metadata_out, preloaded_artifacts)
+            return 0
         if artifact_prefixes and had_successful_runs:
             print(
                 f"No successful workflow runs with artifacts matching prefixes {artifact_prefixes!r} "
@@ -360,7 +379,7 @@ def main(argv: list[str] | None = None) -> int:
             size_mb = path.stat().st_size / 1024 / 1024
             print(f"  - {path.name}: {size_mb:.1f} MB")
 
-    if failed and not files:
+    if failed:
         return 1
     if artifact_prefixes and not files:
         return 2

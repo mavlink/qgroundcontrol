@@ -146,6 +146,7 @@ jobs:
         uses: ./.github/actions/download-all-artifacts
         with:
           include-failed: 'true'
+          allow-missing: 'true'
           head-sha: ${{ github.event.workflow_run.head_sha }}
           workflows: ${{ needs.load-config.outputs.platform_workflows }}
           event: pull_request
@@ -220,6 +221,7 @@ jobs:
           BASELINE_COVERAGE_XML: baseline-coverage.xml
           PR_SIZES_JSON: pr-sizes.json
           BASELINE_SIZES_JSON: baseline-sizes.json
+          BASELINE_SHA: ${{ steps.baseline.outputs.sha }}
           TRIGGERED_BY: ${{ github.event.workflow_run.name }}
           COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
@@ -350,6 +352,7 @@ jobs:
           workflows: ${{ needs.load-config.outputs.platform_workflows }}
           event: push
           output-file: baseline-sizes.json
+          require-artifacts: 'true'
           runs-file: ${{ runner.temp }}/workflow-runs-cache.json
           artifacts-file: workflow-artifacts.json
 
