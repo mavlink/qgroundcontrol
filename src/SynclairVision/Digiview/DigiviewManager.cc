@@ -400,6 +400,11 @@ void DigiviewManager::disconnectFromHost()
     _connection->disconnectFromEndpoint();
 }
 
+void DigiviewManager::receiveMavlinkMessage(const mavlink_message_t& message)
+{
+    _handleMessage(message);
+}
+
 void DigiviewManager::_reapplyEndpointIfSessionRequested()
 {
     if (_sessionRequested) {

@@ -167,6 +167,7 @@ public:
 
     Q_INVOKABLE bool connectToHost();
     Q_INVOKABLE void disconnectFromHost();
+    void receiveMavlinkMessage(const mavlink_message_t& message);
 
     Q_INVOKABLE void sendSystemStatusParameters(uint8_t status, uint8_t error, float jetson_temp);
     Q_INVOKABLE bool sendAIParameters(uint8_t run_ai, QString scan_model_name);

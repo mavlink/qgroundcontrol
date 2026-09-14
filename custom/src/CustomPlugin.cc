@@ -6,7 +6,9 @@
 #include <QtQml/QQmlApplicationEngine>
 
 #include "DigiviewManager.h"
+#include "MultiVehicleManager.h"
 #include "SVBackend.h"
+#include "Vehicle.h"
 
 Q_APPLICATION_STATIC(CustomPlugin, _customPluginInstance);
 
@@ -18,6 +20,15 @@ CustomPlugin::CustomPlugin(QObject* parent)
 {
     _toolBarIndicators.prepend(QVariant::fromValue(
         QUrl(QStringLiteral("qrc:/qml/QGroundControl/SynclairVisionUI/Flyview/SVFlyViewToolbarIndicator.qml"))));
+
+    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded,
+                   this, &CustomPlugin::_connectVehicle);
+    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleRemoved, this, [this](Vehicle* vehicle) {
+        if (vehicle) {
+            const auto connection = _vehicleConnections.take(vehicle);
+            QObject::disconnect(connection);
+        }
+    });
 }
 
 QGCCorePlugin* CustomPlugin::instance()
@@ -60,6 +71,51 @@ void CustomPlugin::destroyQmlApplicationEngine(QQmlApplicationEngine* qmlEngine)
     }
 
     QGCCorePlugin::destroyQmlApplicationEngine(qmlEngine);
+}
+
+void CustomPlugin::prepareForClose()
+{
+    if (_closePreparationStarted) {
+        return;
+    }
+
+    _closePreparationStarted = true;
+    (void) connect(_digiviewManager, &DigiviewManager::transportConnectedChanged, this, [this] {
+        if (!_digiviewManager->transportConnected() && !_digiviewManager->sessionRequested()) {
+            _completePrepareForClose();
+        }
+    });
+    (void) connect(_digiviewManager, &DigiviewManager::sessionRequestedChanged, this, [this] {
+        if (!_digiviewManager->transportConnected() && !_digiviewManager->sessionRequested()) {
+            _completePrepareForClose();
+        }
+    });
+
+    _digiviewManager->stopRecording();
+    _digiviewManager->disconnectFromHost();
+    if (!_digiviewManager->transportConnected() && !_digiviewManager->sessionRequested()) {
+        _completePrepareForClose();
+    }
+}
+
+void CustomPlugin::_connectVehicle(Vehicle* vehicle)
+{
+    if (!vehicle || _vehicleConnections.contains(vehicle)) {
+        return;
+    }
+
+    _vehicleConnections.insert(vehicle, connect(vehicle, &Vehicle::mavlinkMessageReceived,
+                                                _digiviewManager, &DigiviewManager::receiveMavlinkMessage));
+}
+
+void CustomPlugin::_completePrepareForClose()
+{
+    if (_closePreparationCompleted) {
+        return;
+    }
+
+    _closePreparationCompleted = true;
+    emit prepareForCloseCompleted();
 }
 
 QUrl CustomOverrideInterceptor::intercept(const QUrl& url, DataType type)
