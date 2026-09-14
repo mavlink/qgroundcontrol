@@ -53,6 +53,7 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         INPUTS_BRANCH: ${{ inputs.branch }}
         INPUTS_DRY_RUN: ${{ inputs.dry-run }}
         INPUTS_SUMMARY: ${{ inputs.summary }}

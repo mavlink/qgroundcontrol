@@ -214,15 +214,16 @@ repos:
         language: system
         files: \.qml$
         exclude: ^build/
-        pass_filenames: false
+        pass_filenames: true
 
       - id: clang-tidy
         name: Clang-Tidy static analysis
         entry: python3 ./tools/analyze.py --tool clang-tidy
+        stages: [manual]
         language: system
         types_or: [c++, c]
         exclude: ^(build/|libs/|test/)
-        pass_filenames: false
+        pass_filenames: true
 
       - id: cmake-format
         name: cmake-format (check)
@@ -243,10 +244,11 @@ repos:
       - id: clazy
         name: Qt static analysis (clazy)
         entry: python3 ./tools/analyze.py --tool clazy
+        stages: [manual]
         language: system
         types: [c++]
         exclude: ^(build/|libs/|test/)
-        pass_filenames: false
+        pass_filenames: true
 
       - id: check-no-qassert
         name: Check for Q_ASSERT in production code

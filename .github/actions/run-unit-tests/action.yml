@@ -5,6 +5,12 @@ inputs:
   build-dir:
     description: Path to CMake build directory
     required: true
+  build-type:
+    description: CTest configuration for multi-config generators
+    default: ''
+  tests-regex:
+    description: Optional CTest test-name filter
+    default: ''
   junit-output:
     description: JUnit XML output filename
     required: false
@@ -58,6 +64,8 @@ runs:
           --junit-output "${INPUTS_JUNIT_OUTPUT}"
           --ctest-output "${INPUTS_CTEST_OUTPUT}"
           --jobs "${STEPS_JOBS_OUTPUTS_JOBS}"
+          --build-type "${INPUTS_BUILD_TYPE}"
+          --tests-regex "${INPUTS_TESTS_REGEX}"
           --include-labels "${INPUTS_INCLUDE_LABELS}"
           --exclude-labels "${INPUTS_EXCLUDE_LABELS}"
         )
@@ -73,6 +81,8 @@ runs:
         STEPS_JOBS_OUTPUTS_JOBS: ${{ steps.jobs.outputs.jobs }}
         INPUTS_INCLUDE_LABELS: ${{ inputs.include-labels }}
         INPUTS_EXCLUDE_LABELS: ${{ inputs.exclude-labels }}
+        INPUTS_BUILD_TYPE: ${{ inputs.build-type }}
+        INPUTS_TESTS_REGEX: ${{ inputs.tests-regex }}
         INPUTS_REPEAT: ${{ inputs.repeat }}
         INPUTS_SHARD_COUNT: ${{ inputs.shard-count }}
         INPUTS_SHARD_INDEX: ${{ inputs.shard-index }}

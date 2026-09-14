@@ -501,3 +501,10 @@ env vars / CI outputs derive from the path (`android.ndk_full_version` →
 `ANDROID_NDK_FULL_VERSION` / `android_ndk_full_version`).
 
 Scripts read from this file to ensure consistent versions across local development and CI.
+
+Compiler analysis uses `python tools/analyze.py --tool clazy|clang-tidy [paths...]`
+with a configured compilation database and generated build prerequisites. Individual
+files and directories are accepted. `--advisory` keeps findings informational while
+failing tool/compiler invocation errors; empty selections are explicitly skipped.
+These compiler-aware pre-commit hooks use `--hook-stage manual`; fast hooks remain
+part of the required PR gate.

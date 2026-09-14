@@ -169,3 +169,29 @@ class TestAttestHelper:
             self._run_main(["checksum", "--source-path", str(artifact)])
 
         assert excinfo.value.code == 1
+
+
+def test_package_manifest_records_producer_and_checksum_without_arbitrary_cache_values(
+    tmp_path, monkeypatch
+):
+    import argparse
+    import hashlib
+    import json
+
+    from attest_helper import cmd_metadata
+
+    package = tmp_path / "QGC.zip"
+    package.write_bytes(b"package")
+    (tmp_path / "CMakeCache.txt").write_text(
+        "CMAKE_BUILD_TYPE:STRING=Release\nMY_TOKEN:STRING=secret\n"
+    )
+    monkeypatch.setenv("GITHUB_RUN_ID", "123")
+    monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
+    monkeypatch.setenv("GITHUB_SHA", "abc")
+    cmd_metadata(argparse.Namespace(source_path=str(package), build_dir=str(tmp_path)))
+    manifest = json.loads((tmp_path / "QGC.zip.build.json").read_text())
+    assert manifest["artifact"]["sha256"] == hashlib.sha256(b"package").hexdigest()
+    assert manifest["commit"] == "abc"
+    assert manifest["run_id"] == "123"
+    assert manifest["run_attempt"] == "2"
+    assert manifest["configuration"] == {"CMAKE_BUILD_TYPE": "Release"}

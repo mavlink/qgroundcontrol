@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 
 import pytest
 import yaml
 from _helpers import REPO_ROOT
-from common.io import ensure_sha256_sidecar
+from common.io import ensure_sha256_sidecar, sha256_file
 from release_assets import (
     REQUIRED_DEPENDENCY_SBOMS,
     REQUIRED_PLATFORM_SBOMS,
@@ -42,6 +43,15 @@ def _create_complete_release(tmp_path: Path) -> tuple[Path, list[Path]]:
         package.parent.mkdir(parents=True, exist_ok=True)
         package.write_bytes(relative_path.encode())
         ensure_sha256_sidecar(package)
+        package.with_name(package.name + ".build.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "commit": "abc",
+                    "artifact": {"name": package.name, "sha256": sha256_file(package)},
+                }
+            )
+        )
         if package.suffix == ".AppImage":
             package.with_name(f"{package.name}.zsync").write_text("zsync\n", encoding="utf-8")
 
@@ -66,7 +76,7 @@ def test_collect_release_assets_requires_complete_validated_set(tmp_path: Path) 
 
     assets = collect_release_assets(artifacts, source_sboms)
 
-    assert len(assets) == 36
+    assert len(assets) == 44
     assert assets == sorted(assets, key=lambda path: path.as_posix())
     assert all(path.is_file() for path in assets)
 
@@ -131,6 +141,8 @@ def test_release_uses_platform_sboms_without_reattesting() -> None:
         "head-sha": "${{ github.sha }}",
         "workflows": "Linux,Windows,MacOS,Android,iOS",
         "event": "workflow_dispatch",
+        "runs-file": "release-build-runs.json",
+        "strict-runs": "true",
         "output-dir": "artifacts",
         "artifact-prefixes": "QGroundControl,sbom-",
     }
@@ -153,8 +165,8 @@ def test_attestation_actions_publish_checksum_and_resolved_sbom_output() -> None
     ci_steps = ci_workflow["jobs"]["test-ci-scripts"]["steps"]
     checkout = next(step for step in ci_steps if step["name"] == "Checkout")
     sparse_checkout = set(checkout["with"]["sparse-checkout"].splitlines())
-    assert ".github/actions/attest-and-upload" in sparse_checkout
-    assert ".github/actions/attest-sbom" in sparse_checkout
+    assert ".github" in sparse_checkout or ".github/actions/attest-and-upload" in sparse_checkout
+    assert ".github" in sparse_checkout or ".github/actions/attest-sbom" in sparse_checkout
 
     upload_action = yaml.safe_load(
         (REPO_ROOT / ".github/actions/attest-and-upload/action.yml").read_text()
@@ -186,3 +198,20 @@ def test_attestation_actions_publish_checksum_and_resolved_sbom_output() -> None
 
     sbom_action = yaml.safe_load((REPO_ROOT / ".github/actions/attest-sbom/action.yml").read_text())
     assert sbom_action["outputs"]["sbom-path"]["value"] == "${{ steps.check.outputs.sbom-path }}"
+
+
+def test_release_rejects_manifest_from_another_commit(tmp_path):
+    artifacts, sboms = _create_complete_release(tmp_path)
+    with pytest.raises(ValueError, match="commit does not match"):
+        collect_release_assets(artifacts, sboms, head_sha="different")
+
+
+def test_release_rejects_manifest_for_another_payload(tmp_path):
+    artifacts, sboms = _create_complete_release(tmp_path)
+    package = artifacts / PACKAGE_PATHS[0]
+    manifest = package.with_name(package.name + ".build.json")
+    data = json.loads(manifest.read_text())
+    data["artifact"]["sha256"] = "a" * 64
+    manifest.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="does not match package"):
+        collect_release_assets(artifacts, sboms)

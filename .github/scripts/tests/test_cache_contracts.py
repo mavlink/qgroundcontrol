@@ -69,8 +69,43 @@ def test_dependency_caches_use_shared_backend() -> None:
     assert "useCloudCache: true" in prerequisites
     assert "useLocalCache: false" in prerequisites
     assert "RUNS_ON_S3_BUCKET_CACHE" in setup_python
-    assert "cache-python: ${{ steps.cache-policy.outputs.enabled }}" in setup_python
+    assert "cache-python: ${{ env.RUNS_ON_S3_BUCKET_CACHE != '' }}" in setup_python
     assert "cache-dependency-glob: tools/uv.lock" in setup_python
+
+
+def test_nested_cache_save_inputs_survive_post_job_cleanup() -> None:
+    action = _read(".github/actions/cache/action.yml")
+    python = _read(".github/actions/setup-python/action.yml")
+
+    assert action.count("path: ${{ env.CPM_SOURCE_CACHE }}") == 2
+    assert "path: ${{ steps.cpm-cache.outputs.path }}" not in action
+    assert "enable-cache: ${{ env.RUNS_ON_S3_BUCKET_CACHE != '' }}" in python
+    assert "steps.cache-policy.outputs" not in python
+
+
+def test_ios_matrix_forwards_distinct_cache_write_suffixes() -> None:
+    workflow = _read(".github/workflows/ios.yml")
+    setup = _read(".github/actions/build-setup/action.yml").split("- name: Install Qt for iOS")[1]
+    ios = _read(".github/actions/qt-ios/action.yml")
+
+    assert "cache-key-suffix: ${{ matrix.target }}" in workflow
+    assert "cache-key-suffix: ${{ inputs.cache-key-suffix }}" in setup
+    assert "key-suffix: ${{ inputs.cache-key-suffix }}" in ios
+
+
+def test_macos_installed_cache_binary_is_selected_explicitly() -> None:
+    action = _read(".github/actions/cache/action.yml")
+    assert 'echo QGC_CACHE_PROGRAM=/usr/local/bin/ccache >> "$GITHUB_ENV"' in action
+    assert 'echo /usr/local/bin >> "$GITHUB_PATH"' in action
+
+
+def test_link_cache_has_restore_and_save_with_fork_read_only_policy() -> None:
+    workflow = _read(".github/workflows/check-links.yml")
+    assert "uses: actions/cache/restore@" in workflow
+    assert "uses: actions/cache/save@" in workflow
+    assert workflow.count("path: .lycheecache") == 2
+    assert "key: ${{ steps.link-cache.outputs.cache-primary-key }}" in workflow
+    assert "github.event.pull_request.head.repo.full_name == github.repository" in workflow
 
 
 def test_runs_on_jobs_reject_fork_pull_requests() -> None:

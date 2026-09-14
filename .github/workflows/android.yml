@@ -57,9 +57,7 @@ jobs:
             .github/scripts/android_matrix.py
             .github/scripts/ci_bootstrap.py
             tools/_bootstrap.py
-            tools/common/__init__.py
-            tools/common/file_traversal.py
-            tools/common/gh_actions.py
+            tools/common
           sparse-checkout-cone-mode: false
           fetch-depth: 1
           persist-credentials: false
@@ -272,8 +270,6 @@ jobs:
           apk-path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
           package: org.mavlink.qgroundcontrol
           android-platform: ${{ steps.setup.outputs.android_platform }}
-          qt-version: ${{ steps.setup.outputs.qt_version }}
-          ndk-version: ${{ steps.setup.outputs.android_ndk_full_version }}
           diagnostics-name: ${{ matrix.host }}
 
       - name: Attest and Upload

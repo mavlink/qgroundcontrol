@@ -60,7 +60,7 @@ def test_ci_scripts_checks_every_workflow() -> None:
     steps = workflow["jobs"]["test-ci-scripts"]["steps"]
     checkout = next(step for step in steps if step.get("uses", "").startswith("actions/checkout@"))
     sparse_checkout = checkout["with"]["sparse-checkout"].splitlines()
-    assert ".github/workflows" in sparse_checkout
+    assert ".github" in sparse_checkout or ".github/workflows" in sparse_checkout
 
 
 def test_workflows_have_explicit_permissions() -> None:

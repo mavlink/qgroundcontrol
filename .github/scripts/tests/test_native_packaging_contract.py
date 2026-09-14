@@ -120,9 +120,10 @@ def test_windows_installer_uses_only_the_cpack_nsis_path() -> None:
     assert "-DQGC_CPACK_GENERATOR=NSIS" in workflow
     assert "target: qgc-package" in workflow
     assert "uses: ./.github/actions/cmake-install" not in workflow
+    installer_test = (REPO_ROOT / "deploy/windows/verify-installer.ps1").read_text()
     assert "Install, upgrade, and verify installer" in workflow
     assert "Uninstall and verify cleanup" in workflow
-    assert "[Environment+SpecialFolder]::ApplicationData" in workflow
+    assert "[Environment+SpecialFolder]::ApplicationData" in installer_test
     assert "APPDATA: ${{ runner.temp }}\\qgc-appdata" not in workflow
     assert "Verify installer checksum" in workflow
     assert "Get-FileHash -LiteralPath $installerPath -Algorithm SHA256" in workflow
@@ -134,10 +135,10 @@ def test_windows_installer_uses_only_the_cpack_nsis_path() -> None:
     assert "Upload checksum to AWS" in upload_action
     assert "artifact-name: ${{ inputs.artifact-name }}.sha256" in upload_action
     assert "artifact-path: ${{ steps.checksum.outputs.path }}" in upload_action
-    assert "InstallLocation mismatch" in workflow
-    assert "Windows Error Reporting registry key not found" in workflow
-    assert "QGroundControl (GPU Safe Mode).lnk" in workflow
-    assert "Start Menu directory remains after uninstall" in workflow
+    assert "InstallLocation mismatch" in installer_test
+    assert "Windows Error Reporting registry key not found" in installer_test
+    assert "QGroundControl (GPU Safe Mode).lnk" in installer_test
+    assert "Start Menu directory remains after uninstall" in installer_test
 
 
 def test_windows_nsis_module_generates_cpack_config(tmp_path) -> None:

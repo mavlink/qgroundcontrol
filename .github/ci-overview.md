@@ -155,7 +155,6 @@ Configure these repository secrets:
 | `playstore` | Upload Android APK to Google Play Store |
 | `qt-install` | Reuse a compatible managed-image Qt SDK or install Qt via aqtinstall with caching |
 | `qt-android`, `qt-ios` | Mobile Qt setup |
-| `replace-cache-entry` | Delete a stale GitHub Actions cache entry, then save the file at the same key |
 | `setup-python` | Python + uv + dependency installation |
 | `size-analysis` | Binary size tracking (bloaty) |
 | `test-duration-report` | Analyze JUnit test durations and summarize slow tests |
@@ -197,11 +196,13 @@ Python helpers in `.github/scripts/` invoked by workflows and composite actions.
 | `gh_pr_size_label.py` | Read and prune `size/*` labels on a pull request |
 | `gstreamer_archive.py` | Package GStreamer builds and optionally upload to S3 |
 | `install_dependencies_helper.py` | Post-install fixups for CI dependency caching on Linux |
-| `linux_debug_matrix.py` | Emit the `linux.yml` debug-validation matrix as a JSON `include` list |
+| `ios_boot_test.py` | Run the QGC smoke test in a disposable iOS simulator |
 | `mirror_gstreamer.py` | Mirror official upstream GStreamer release artifacts to the QGC S3 bucket |
 | `mold_helper.py` | Download and install a pinned, SHA256-verified `mold` linker binary (Linux) |
 | `plan_docker_builds.py` | Generate Docker workflow build matrices from changed files |
 | `precommit_results.py` | Normalize pre-commit outputs into uploaded CI artifacts |
+| `release_builds.py` | Dispatch and freeze exact release workflow run identities |
+| `report_context.py` | Reject stale PR/default-branch reporting contexts |
 | `resolve_gstreamer_config.py` | Pick the platform-specific GStreamer version from build-config outputs |
 | `size_analysis.py` | Analyze binary size changes |
 | `test_duration_report.py` | Generate test-duration reports and regressions |
@@ -227,6 +228,26 @@ Dependency updates are split between two bots to avoid overlapping PRs:
   the bots do not open overlapping action updates.
 
 ## CI Conventions
+
+### Cache lifecycle
+
+CPM saves and uv/Python cache enablement use environment values that remain available
+during nested composite post-job cleanup; step outputs do not survive that phase.
+Compiler and moc caches use rolling write keys, with a distinct suffix per matrix leg.
+macOS explicitly passes the installed ccache binary to CMake so Homebrew discovery
+cannot select another version.
+
+Scheduled cache cleanup protects the latest default-branch generation of each build
+and dependency cache family, including the latest published `build-baseline-v2`
+snapshot. PR and other branch caches remain evictable under storage pressure. Deletions
+are scoped to the selected ref; failed deletions and an unreachable size target are
+reported. Cleanup affects GitHub storage, not the RunsOn S3 backend.
+
+Lychee restores and saves `.lycheecache` with a three-day entry lifetime; fork PRs only
+restore. Android emulator tests create a fresh AVD; no AVD snapshots are cached.
+Gradle, Flatpak, iOS target Qt SDK, and GitHub-hosted uv/Python caching remain disabled.
+
+### Build helpers
 
 - **CMake entrypoint**: Platform workflows configure through `cmake-configure`, which requires
   `qt-cmake` by default. Android is the explicit exception and supplies its target Qt toolchain and
@@ -258,3 +279,34 @@ Run the full set locally with the same locked dependency groups CI installs (als
 ```bash
 uv run --project tools --extra scripts --extra test pytest -q tools/tests .github/scripts/tests
 ```
+
+## Validation tiers and build identity
+
+- `pre-commit.yml` enforces fast hooks on changed files against the event's base SHA.
+  Compiler-aware Clazy and clang-tidy hooks are manual locally; `analysis.yml` builds
+  generated prerequisites and runs both for relevant PRs and weekly. Diagnostics are
+  advisory, but missing tools, invalid databases, timeouts and compiler failures fail
+  analysis. Full scheduled analysis prevents unchanged-code findings from disappearing.
+- C++ CodeQL is built and uploaded only by Linux (`/language:c-cpp/build:linux`).
+  `codeql.yml` handles Actions, Java/Kotlin and Python.
+- `test-phase` shares Linux/custom unit and integration execution. Call it only after
+  a successful build. Failures preserve JUnit, logs and durations and do not suppress
+  the other suite. There are no blanket until-pass retries; empty test selections fail.
+- `extended-tests.yml` runs a focused portable utility suite on native Windows and
+  macOS Debug builds. Weekly/manual Linux runs exercise `Network|Flaky` tests normally
+  excluded from PR jobs. iOS simulator builds run `--simple-boot-test` and require
+  QGC's success marker. Windows installer verification lives in
+  `deploy/windows/verify-installer.ps1`.
+- Ordinary Docker PRs build Ubuntu 24.04 plus Android when affected. Toolchain,
+  dependency and packaging changes, unknown diffs, pushes, dispatches and weekly
+  schedules retain every configured variant.
+- Reporting uses one workflow-run snapshot and treats every `completed` conclusion
+  as terminal. Before posting or saving, it checks the current PR/master SHA.
+  Baseline sizes, coverage and source run identities share an immutable commit/run
+  cache key. Exact PR base snapshots are preferred before the most recent baseline.
+- Each uploaded package includes `.build.json` producer identity, checksum and selected
+  CMake configuration. Artifact API metadata retains IDs and available digests.
+  Releases dispatch builds at the tag, poll exact run IDs and freeze their identities;
+  artifact downloads reject changed run attempts or missing platform artifacts.
+- `build-action` remains available. Platform workflows continue to compose the smaller
+  setup/configure/build/test/package actions where they need distinct phases.

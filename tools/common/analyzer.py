@@ -30,6 +30,16 @@ class AnalysisResult:
     output: str = ""
     files_checked: int = 0
     files_with_issues: list[str] = field(default_factory=list)
+    execution_error: bool = False
+    skipped: bool = False
+
+    @property
+    def status(self) -> str:
+        if self.execution_error:
+            return "error"
+        if self.skipped:
+            return "skipped"
+        return "passed" if self.passed else "findings"
 
 
 class AnalyzerBase(ABC):

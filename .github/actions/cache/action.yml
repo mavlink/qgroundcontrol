@@ -96,6 +96,8 @@ runs:
           --version "${CCACHE_VERSION}" \
           --sha256 "${CCACHE_MAC_SHA256}"
         ccache --version
+        echo /usr/local/bin >> "$GITHUB_PATH"
+        echo QGC_CACHE_PROGRAM=/usr/local/bin/ccache >> "$GITHUB_ENV"
 
     - name: Determine Windows ccache arch
       if: runner.os == 'Windows'
@@ -269,7 +271,8 @@ runs:
       if: inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release'
       uses: actions/cache@v5
       with:
-        path: ${{ steps.cpm-cache.outputs.path }}
+        # Nested composite step outputs are unavailable during post-job saves.
+        path: ${{ env.CPM_SOURCE_CACHE }}
         key: ${{ steps.cache-keys.outputs.cpm_key }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
           ${{ steps.cache-keys.outputs.cpm_key }}-
@@ -282,7 +285,7 @@ runs:
       if: inputs.cpm-modules != '' && (steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release')
       uses: actions/cache/restore@v5
       with:
-        path: ${{ steps.cpm-cache.outputs.path }}
+        path: ${{ env.CPM_SOURCE_CACHE }}
         key: ${{ steps.cache-keys.outputs.cpm_key }}-${{ github.run_id }}-${{ github.run_attempt }}
         restore-keys: |
           ${{ steps.cache-keys.outputs.cpm_key }}-

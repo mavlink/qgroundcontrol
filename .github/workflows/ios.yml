@@ -79,6 +79,7 @@ jobs:
         with:
           mode: ios
           build-type: ${{ matrix.build_type }}
+          cache-key-suffix: ${{ matrix.target }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
       - name: Import App Store signing certificate
@@ -160,6 +161,19 @@ jobs:
           test ! -f "$APP_PATH/QGCLaunchScreen.storyboard"
           test -d "$APP_PATH/Frameworks/gstreamer_mobile.framework"
           lipo "$APP_PATH/$PACKAGE" -verify_arch x86_64
+
+      - name: Run simulator boot test
+        if: matrix.target == 'simulator'
+        env:
+          APP_PATH: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
+        run: python3 .github/scripts/ios_boot_test.py --app "$APP_PATH" --log "$RUNNER_TEMP/ios-boot-test.log"
+
+      - name: Upload simulator boot log
+        if: ${{ !cancelled() && matrix.target == 'simulator' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-boot-test
+          path: ${{ runner.temp }}/ios-boot-test.log
 
       - name: Package IPA
         if: matrix.target == 'device' && matrix.build_type == 'Release'

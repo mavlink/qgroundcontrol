@@ -15,3 +15,11 @@ commit SHA are accepted under this repository policy and do not require a code c
 this section when dismissing or responding to those findings. This exception does not apply to
 unversioned actions, branch references such as `@main`, unknown actions, or any warning that reports
 an additional security problem.
+
+`test-phase` runs the shared Unit/Integration sequence and preserves reports and
+execution durations after failures. Callers must gate it on a successful build.
+`run-unit-tests` also accepts `build-type` and `tests-regex` for portable subsets;
+empty selections are errors. `test-report` uses the Actions job summary and does
+not require `checks: write` (Codecov upload separately requires `id-token: write`).
+`download-all-artifacts` supports failed-build diagnostics and strict frozen release
+snapshots. `build-action` is retained for consumers needing the combined build flow.

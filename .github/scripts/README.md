@@ -35,12 +35,14 @@ with multiple consumers in [`tools/common/`](../../tools/common/README.md).
 | `gh_pr_size_label.py` | Reporting | Read and prune pull-request `size/*` labels |
 | `gstreamer_archive.py` | GStreamer | Package GStreamer builds and optionally upload them to S3 |
 | `install_dependencies_helper.py` | Bootstrap | Apply dependency-cache fixups before project dependencies exist |
-| `linux_debug_matrix.py` | Planning | Emit the Linux debug-validation matrix |
+| `ios_boot_test.py` | Testing | Run the QGC smoke test in a disposable iOS simulator |
 | `mirror_gstreamer.py` | GStreamer | Verify and mirror upstream GStreamer release artifacts to S3 |
 | `mold_helper.py` | Build | Install a pinned and checksum-verified mold linker |
 | `plan_docker_builds.py` | Planning | Generate Docker build matrices from changed files |
 | `precommit_results.py` | Reporting | Normalize pre-commit output into CI artifacts |
 | `release_assets.py` | Release | Validate checksums and enumerate release packages and SBOMs |
+| `release_builds.py` | Release | Dispatch and freeze exact release workflow run identities |
+| `report_context.py` | Reporting | Reject stale PR/default-branch reporting contexts |
 | `resolve_gstreamer_config.py` | GStreamer | Select the platform-specific GStreamer version |
 | `size_analysis.py` | Reporting | Analyze and report binary-size changes |
 | `test_duration_report.py` | Reporting | Report slow tests and duration regressions from JUnit XML |

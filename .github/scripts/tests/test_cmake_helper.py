@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for cmake_helper.py."""
 
 from __future__ import annotations
@@ -43,8 +42,12 @@ class TestDetectJobs:
             detect_jobs("-1")
 
 
-def test_configure_forwards_explicit_preset(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("cache_program", ["", "/installed tools/bin/ccache"])
+def test_configure_forwards_explicit_preset_and_cache_binary(
+    monkeypatch: pytest.MonkeyPatch, cache_program: str
+) -> None:
     invocation: list[str] = []
+    monkeypatch.setenv("QGC_CACHE_PROGRAM", cache_program)
 
     def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[list[str]]:
         invocation.extend(command)
@@ -69,7 +72,10 @@ def test_configure_forwards_explicit_preset(monkeypatch: pytest.MonkeyPatch) -> 
         main()
 
     assert exc.value.code == 0
-    assert invocation[-2:] == ["--preset", "Linux-debug"]
+    tail = ["--preset", "Linux-debug"]
+    if cache_program:
+        tail += ["--", f"-DQGC_CACHE_PROGRAM:FILEPATH={cache_program}"]
+    assert invocation[-len(tail) :] == tail
 
 
 _SAMPLE_CACHE = """\
@@ -155,3 +161,29 @@ class TestCmdCacheVar:
         with pytest.raises(SystemExit) as exc:
             main()
         assert exc.value.code == 1
+
+
+def test_empty_ctest_selection_fails(tmp_path):
+    import sys
+
+    from _helpers import REPO_ROOT
+
+    (tmp_path / "CTestTestfile.cmake").touch()
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / ".github/scripts/cmake_helper.py"),
+            "ctest",
+            "--junit-output",
+            "junit.xml",
+            "--ctest-output",
+            "output.txt",
+            "--jobs",
+            "1",
+        ],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "No tests were found" in result.stdout + result.stderr

@@ -9,6 +9,7 @@ this planner stays a thin selector over that source.
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import os
 import sys
@@ -31,7 +32,9 @@ def build_args_str(build_args: dict[str, str]) -> str:
     return "\n".join(f"{key}={value}" for key, value in build_args.items())
 
 
-def plan_builds(event_name: str, linux_changed: bool, android_changed: bool) -> dict[str, Any]:
+def plan_builds(
+    event_name: str, linux_changed: bool, android_changed: bool, *, full_matrix: bool = False
+) -> dict[str, Any]:
     """Return workflow matrix and a has_jobs flag.
 
     Returns {"matrix": {"include": [...]}, "has_jobs": bool}. Typed as
@@ -55,9 +58,27 @@ def plan_builds(event_name: str, linux_changed: bool, android_changed: bool) -> 
         }
         for v in load_variants()
         if selected.get(v["selector"], False)
+        and (event_name != "pull_request" or full_matrix or v["id"] in {"ubuntu", "android"})
     ]
 
     return {"matrix": {"include": include}, "has_jobs": bool(include)}
+
+
+def needs_full_matrix(files: list[str] | None) -> bool:
+    """Unknown diffs and toolchain/package changes require every variant."""
+    patterns = (
+        ".github/**",
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "cmake/**",
+        "deploy/**",
+        "tools/**",
+        "libs/**",
+        "android/**",
+    )
+    return files is None or any(
+        fnmatch.fnmatchcase(path, pattern) for path in files for pattern in patterns
+    )
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -72,10 +93,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     """Compute the Docker build matrix and emit outputs."""
     args = parse_args(argv)
+    from detect_changes import get_changed_files
+
     plan = plan_builds(
         args.event_name,
         parse_bool(args.linux),
         parse_bool(args.android),
+        full_matrix=needs_full_matrix(get_changed_files())
+        if args.event_name == "pull_request"
+        else True,
     )
     matrix_json = json.dumps(plan["matrix"], separators=(",", ":"))
     print(matrix_json)

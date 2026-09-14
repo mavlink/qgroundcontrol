@@ -166,8 +166,8 @@ to absorb instrumentation overhead. `TIMEOUT <seconds>` on `add_qgc_test()` alwa
 | `MissionManager` | Mission planning tests                                                                    |
 | `Comms`          | Communication/link tests                                                                  |
 | `Utilities`      | Utility class tests                                                                       |
-| `Network`        | Requires network access — excluded from CI (`check-ci`, `just test`)                      |
-| `Flaky`          | Reserved for intermittently-failing tests, excluded from CI; no test currently carries it |
+| `Network`        | Needs network; excluded from PR suites, covered by scheduled extended tests               |
+| `Flaky`          | Intermittent failures; excluded from PR suites, covered by scheduled extended tests       |
 | `Serial`         | Must run alone (no parallel) — set automatically by `SERIAL`                              |
 | `Joystick`       | Joystick/controller tests                                                                 |
 | `AnalyzeView`    | Log analysis and geo-tagging tests                                                        |

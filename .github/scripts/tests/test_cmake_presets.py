@@ -26,6 +26,7 @@ PRESET_CATEGORIES = {
 }
 CI_PLATFORM_WORKFLOWS = (
     "analysis.yml",
+    "extended-tests.yml",
     "android.yml",
     "build-profile.yml",
     "custom-build.yml",
@@ -327,7 +328,7 @@ def test_developer_build_entrypoints_use_presets() -> None:
     assert "qt-cmake not found; pass --no-qt-cmake" in configure_tool
     assert '"--preset"' in vscode_tasks
     assert '"python.defaultInterpreterPath": "${workspaceFolder}/.venv"' in vscode_settings
-    for path in ("CMakePresets.json", "cmake/presets", "justfile", ".vscode"):
+    for path in ("CMakePresets.json", "cmake", "justfile", ".vscode"):
         assert path in ci_scripts
 
     multipass = REPO_ROOT / "deploy" / "multipass" / "build-in-vm.sh"

@@ -173,6 +173,37 @@ def test_select_prune_victims_noop_under_high_water() -> None:
     assert total == projected == 4000 * 1024 * 1024
 
 
+def test_pr_and_feature_caches_do_not_prevent_reaching_target() -> None:
+    caches = [
+        _usage("qt-linux", 3000, ref="refs/heads/main"),
+        _usage("qt-linux", 3000, ref="refs/pull/42/merge"),
+        _usage("ccache-linux-branch-test", 3000, ref="refs/heads/test"),
+        _usage("qt-linux", 3000, ref="refs/pull/43/merge"),
+    ]
+    victims, _, projected = mod.select_prune_victims(
+        caches,
+        keep_mb=6500,
+        high_water_mb=9000,
+        protect=mod.DEFAULT_PROTECT,
+        default_branch="main",
+    )
+    assert caches[0] not in victims
+    assert len(victims) == 2
+    assert projected == 6000 * 1024 * 1024
+
+
+def test_baseline_retention_uses_publication_order_not_recent_reads() -> None:
+    old = _usage(f"build-baseline-v2-{'a' * 40}-99-2", 1000, accessed="2026-09-02")
+    latest = _usage(f"build-baseline-v2-{'b' * 40}-100-1", 1000, accessed="2026-09-01")
+    caches = [old, latest, _usage("ccache-linux", 5000), _usage("other", 4000)]
+    victims, _, projected = mod.select_prune_victims(
+        caches, keep_mb=6500, high_water_mb=9000, protect=mod.DEFAULT_PROTECT
+    )
+    assert old in victims
+    assert latest not in victims
+    assert projected == 6000 * 1024 * 1024
+
+
 def test_select_prune_victims_never_evicts_protected() -> None:
     caches = [
         _usage("ccache-linux", 6000),
@@ -325,3 +356,32 @@ def test_main_prune_delete_evicts_unprotected(monkeypatch, gh_output: Path) -> N
     assert mod.main(["--prune", "--delete"]) == 0
     assert seen == [["avd"]]
     assert "deleted=1" in gh_output.read_text()
+
+
+def test_prune_deletes_only_selected_ref_and_reports_failures(
+    monkeypatch, gh_output: Path, tmp_path: Path, capsys
+) -> None:
+    monkeypatch.setenv("GH_REPO", "owner/repo")
+    summary = tmp_path / "summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
+    shared = _usage("qt-linux", 4000)
+    first_pr = _usage("qt-linux", 4000, ref="refs/pull/42/merge")
+    second_pr = _usage("qt-linux", 4000, ref="refs/pull/43/merge")
+    monkeypatch.setattr(mod, "list_caches_usage", lambda *a, **kw: [shared, first_pr, second_pr])
+    calls = []
+
+    def delete(repo, branch, keys):
+        calls.append((repo, branch, keys))
+        return (1, 0) if branch == first_pr.ref else (0, 1)
+
+    monkeypatch.setattr(mod, "delete_caches", delete)
+    assert mod.main(["--prune", "--delete", "--summary"]) == 0
+    assert calls == [
+        ("owner/repo", first_pr.ref, ["qt-linux"]),
+        ("owner/repo", second_pr.ref, ["qt-linux"]),
+    ]
+    assert "failed=1" in gh_output.read_text()
+    assert "deleted=1" in gh_output.read_text()
+    assert "8000 MiB" in summary.read_text()
+    assert "Failed: 1" in summary.read_text()
+    assert "above target" in capsys.readouterr().out

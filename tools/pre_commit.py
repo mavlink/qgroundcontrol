@@ -75,7 +75,9 @@ def extract_hook_lines(output: str, *, limit: int = 40) -> list[str]:
 def build_precommit_args(args: argparse.Namespace) -> list[str]:
     result = ["pre-commit", "run", "--show-diff-on-failure", "--color=always"]
     if args.changed:
-        ref = get_default_branch_ref()
+        ref = os.environ.get("PR_BASE_SHA") or get_default_branch_ref()
+        if ref == "0" * 40:
+            ref = None
         if ref:
             log_info(f"Running on files changed vs {ref}...")
             result.extend(["--from-ref", ref, "--to-ref", "HEAD"])

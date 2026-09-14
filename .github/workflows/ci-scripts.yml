@@ -2,68 +2,23 @@ name: CI Scripts
 
 on:
   pull_request:
-    paths:
-      - '.github/scripts/**'
-      - '.github/actions/**'
-      - '.github/runner-images/**'
-      - '.github/runs-on.yml'
-      - '.github/workflows/**'
-      - '.github/build-config.json'
-      - '.github/COPYING.md'
-      - '.vscode/*.default.json'
+    paths: &tooling-paths
+      - '.github/**'
+      - '.vscode/**'
+      - 'CMakeLists.txt'
       - 'CMakePresets.json'
-      - 'cmake/Helpers.cmake'
-      - 'cmake/modules/CPMPatchCache.cmake'
-      - 'cmake/install/**'
-      - 'cmake/presets/**'
+      - 'cmake/**'
       - 'justfile'
-      - 'tools/setup/**'
-      - 'tools/*.py'
-      - 'tools/uv.lock'
-      - 'tools/tests/**'
-      - 'tools/common/**'
-      - 'tools/generators/**'
-      - 'tools/analyzers/**'
-      - 'tools/simulation/**'
-      - 'tools/translations/**'
-      - 'deploy/docker/**'
-      - 'deploy/linux/PKGBUILD.in'
-      - 'deploy/installer/**'
-      - 'deploy/macos/**'
-      - 'deploy/multipass/**'
+      - 'tools/**'
+      - 'deploy/**'
+      - 'src/Settings/**'
+      - 'src/AppSettings/pages/**'
+      - 'src/Vehicle/FactGroups/VehicleGPSFactGroup.h'
   push:
     branches:
       - master
       - 'Stable*'
-    paths:
-      - '.github/scripts/**'
-      - '.github/actions/**'
-      - '.github/runner-images/**'
-      - '.github/runs-on.yml'
-      - '.github/workflows/**'
-      - '.github/build-config.json'
-      - '.github/COPYING.md'
-      - '.vscode/*.default.json'
-      - 'CMakePresets.json'
-      - 'cmake/Helpers.cmake'
-      - 'cmake/modules/CPMPatchCache.cmake'
-      - 'cmake/install/**'
-      - 'cmake/presets/**'
-      - 'justfile'
-      - 'tools/setup/**'
-      - 'tools/*.py'
-      - 'tools/uv.lock'
-      - 'tools/tests/**'
-      - 'tools/common/**'
-      - 'tools/generators/**'
-      - 'tools/analyzers/**'
-      - 'tools/simulation/**'
-      - 'tools/translations/**'
-      - 'deploy/docker/**'
-      - 'deploy/linux/PKGBUILD.in'
-      - 'deploy/installer/**'
-      - 'deploy/macos/**'
-      - 'deploy/multipass/**'
+    paths: *tooling-paths
   workflow_dispatch:
 
 concurrency:
@@ -163,63 +118,17 @@ jobs:
         with:
           fetch-depth: 1
           sparse-checkout: |
-            .github/actions/setup-python
-            .github/actions/cmake-build
-            .github/actions/cmake-configure
-            .github/actions/build-prerequisites
-            .github/actions/attest-and-upload
-            .github/actions/attest-sbom
-            .github/actions/cache
-            .github/actions/docker
-            .github/actions/free-disk-space
-            .github/actions/qt-android
-            .github/actions/qt-ios
-            .github/actions/qt-install
-            .github/actions/replace-cache-entry
-            .github/actions/test-report
-            .github/actions/verify-executable
-            .github/build-config.json
-            .github/COPYING.md
-            .github/runner-images
-            .github/runs-on.yml
-            .github/scripts
-            .github/workflows
+            .github
             .vscode
             CMakeLists.txt
             CMakePresets.json
-            cmake/BuildConfig.cmake
-            cmake/CustomOptions.cmake
-            cmake/install
-            cmake/modules/AppleXCFramework.cmake
-            cmake/modules/Hardening.cmake
-            cmake/modules/LinuxDistro.cmake
-            cmake/modules/CPMPatchCache.cmake
-            cmake/modules/PythonVenv.cmake
-            cmake/Helpers.cmake
-            cmake/Toolchain.cmake
-            cmake/platform/Apple.cmake
-            cmake/presets
+            cmake
             justfile
             src/AppSettings/pages
             src/Settings
             src/Vehicle/FactGroups/VehicleGPSFactGroup.h
-            tools/pyproject.toml
-            tools/uv.lock
-            tools/*.py
-            tools/setup
-            tools/tests
-            tools/common
-            tools/generators
-            tools/analyzers
-            tools/simulation
-            tools/translations
-            deploy/docker
-            deploy/ios
-            deploy/installer
-            deploy/linux/PKGBUILD.in
-            deploy/macos
-            deploy/multipass
-            deploy/vagrant/Vagrantfile
+            tools
+            deploy
           sparse-checkout-cone-mode: false
           persist-credentials: false
 

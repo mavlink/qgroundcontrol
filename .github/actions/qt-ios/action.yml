@@ -30,6 +30,10 @@ inputs:
     description: Build Type (Debug or Release)
     required: false
     default: Release
+  cache-key-suffix:
+    description: Per-matrix-leg build cache discriminator
+    required: false
+    default: ''
   save-cache:
     description: "Whether to save cache (auto = save for pushes and same-repo PRs, skip for fork PRs)"
     required: false
@@ -50,6 +54,7 @@ runs:
         build-type: ${{ inputs.build-type }}
         cpm-modules: ${{ inputs.cpm-modules }}
         save-cache: ${{ inputs.save-cache }}
+        key-suffix: ${{ inputs.cache-key-suffix }}
 
     - name: Install Qt (Host macOS)
       id: qt-host

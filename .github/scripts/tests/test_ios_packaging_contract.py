@@ -214,7 +214,7 @@ def test_ios_contract_dependencies_are_sparse_checked_out() -> None:
         "cmake/modules/AppleXCFramework.cmake",
         "cmake/platform/Apple.cmake",
         "deploy/ios",
-    } <= sparse_checkout
+    } <= sparse_checkout or {".github", "cmake", "deploy"} <= sparse_checkout
 
 
 def test_ios_packaging_uses_consolidated_bundle_sources() -> None:

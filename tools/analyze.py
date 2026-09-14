@@ -44,7 +44,7 @@ class FileCollector:
 
     def get_compare_ref(self) -> str | None:
         """Get the best available ref to compare against."""
-        return get_default_branch_ref(self.repo_root)
+        return os.environ.get("PR_BASE_SHA") or get_default_branch_ref(self.repo_root)
 
     def get_cpp_files(
         self,
@@ -87,6 +87,9 @@ class FileCollector:
         if not search_path.exists():
             return []
 
+        if search_path.is_file():
+            return [search_path] if search_path.suffix in extensions else []
+
         files: list[Path] = []
         for ext in extensions:
             files.extend(search_path.rglob(f"*{ext}"))
@@ -100,7 +103,7 @@ class FileCollector:
         )
 
         if result.returncode != 0:
-            return []
+            raise RuntimeError(f"Unable to determine changed files: {result.stderr}")
 
         files: list[Path] = []
         for line in result.stdout.strip().splitlines():
@@ -197,8 +200,8 @@ Examples:
 
     parser.add_argument(
         "path",
-        nargs="?",
-        help="Path to analyze (relative to repo root)",
+        nargs="*",
+        help="Files or directories to analyze (relative to repo root)",
     )
     parser.add_argument(
         "-t",
@@ -248,6 +251,12 @@ Examples:
     )
 
     parser.add_argument(
+        "--advisory",
+        action="store_true",
+        help="Report findings without failing; execution errors still fail",
+    )
+
+    parser.add_argument(
         "--check-deps",
         action="store_true",
         help="Check that required external tools are available, then exit",
@@ -281,13 +290,11 @@ def main() -> int:
 
     build_dir = repo_root / args.build_dir
 
-    target_path: Path | None = None
-    if args.path:
-        try:
-            target_path = validate_path(args.path, repo_root)
-        except ValueError as e:
-            log_error(str(e))
-            return 1
+    try:
+        targets = [validate_path(path, repo_root) for path in args.path]
+    except ValueError as e:
+        log_error(str(e))
+        return 1
 
     try:
         jobs = args.jobs if args.jobs > 0 else os.cpu_count() or 1
@@ -298,14 +305,23 @@ def main() -> int:
 
     collector = FileCollector(repo_root)
 
-    if args.tool == "qmllint":
-        files = collector.get_qml_files(target_path, args.all)
-    else:
-        files = collector.get_cpp_files(target_path, args.all)
+    collect = collector.get_qml_files if args.tool == "qmllint" else collector.get_cpp_files
+    try:
+        files = (
+            sorted({file for target in targets for file in collect(target)})
+            if targets
+            else collect(analyze_all=args.all)
+        )
+    except RuntimeError as e:
+        log_error(str(e))
+        return 2
 
     result = analyzer.run(files, fix=args.fix)
 
-    if result.passed:
+    print(f"{result.tool}: {result.status} ({result.files_checked} files)")
+    if result.execution_error:
+        return 2
+    if result.passed or args.advisory:
         log_ok("Analysis complete")
         return 0
     else:

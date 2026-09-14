@@ -12,6 +12,8 @@ on:
   pull_request:
     paths-ignore:
       - 'docs/**'
+  schedule:
+    - cron: '23 5 * * 1'
   workflow_dispatch:
 
 concurrency:
@@ -46,19 +48,15 @@ jobs:
       - name: Checkout planner
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
-          # Bootstrap shim (ci_bootstrap.py + tools/_bootstrap.py + common/__init__.py + common/gh_actions.py)
-          # also appears in linux.yml (debug-matrix), pr-checks.yml (size), _cache-cleanup.yml. Keep aligned —
-          # GHA composite actions can't run before checkout, so this list can't be deduplicated structurally.
+          fetch-depth: 0
           sparse-checkout: |
             .github/scripts/plan_docker_builds.py
+            .github/scripts/detect_changes.py
             .github/scripts/ci_bootstrap.py
             deploy/docker/variants.json
             deploy/docker/_variants.py
             tools/_bootstrap.py
-            tools/common/__init__.py
-            tools/common/file_traversal.py
-            tools/common/gh_actions.py
+            tools/common
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
@@ -66,6 +64,8 @@ jobs:
         id: plan
         env:
           EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           LINUX: ${{ needs.changes.outputs.docker_linux }}
           ANDROID: ${{ needs.changes.outputs.docker_android }}
         run: python3 "${GITHUB_WORKSPACE}/.github/scripts/plan_docker_builds.py"

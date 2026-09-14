@@ -17,6 +17,7 @@ For complete worked examples, see the reference files:
 - [C++ Style](#c-style)
   - [Headers](#headers)
   - [Class Declaration Order](#class-declaration-order)
+  - [Constructor Initializer Lists](#constructor-initializer-lists)
   - [Modern C++ (C++20)](#modern-c-c20)
   - [Defensive Coding](#defensive-coding)
   - [Logging](#logging)
@@ -114,6 +115,26 @@ private:
     // Private methods (prefixed with _)
     // Private members (prefixed with _)
 };
+```
+
+### Constructor Initializer Lists
+
+Put each base-class or member initializer on its own line, even when several would fit on one line.
+Start the list on the line after the constructor signature with `:`, indented four spaces. Start each
+subsequent initializer with `,` aligned with the colon, as in
+[`CameraMetaData::CameraMetaData`](src/Camera/CameraMetaData.cc). Keep initializers in declaration order.
+When the constructor parameter list spans multiple lines, put one parameter on each line and align
+continuation parameters with the first parameter.
+
+```cpp
+MyClass::MyClass(const QString& name,
+                 int timeout,
+                 QObject* parent)
+    : QObject(parent)
+    , _name(name)
+    , _timeout(timeout)
+{
+}
 ```
 
 ### Modern C++ (C++20)

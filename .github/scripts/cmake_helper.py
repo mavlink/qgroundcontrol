@@ -114,9 +114,12 @@ def cmd_configure(args: argparse.Namespace) -> None:
         cmd.append("--no-qt-cmake")
     if args.unity_build:
         cmd += ["--unity", "--unity-batch", args.unity_batch_size]
-    if args.extra_args:
+    cache_program = os.environ.get("QGC_CACHE_PROGRAM")
+    if args.extra_args or cache_program:
         cmd.append("--")
         cmd.extend(args.extra_args.split())
+        if cache_program:
+            cmd.append(f"-DQGC_CACHE_PROGRAM:FILEPATH={cache_program}")
 
     start = time.monotonic()
     result = subprocess.run(cmd, check=False)
@@ -142,11 +145,16 @@ def cmd_ctest(args: argparse.Namespace) -> None:
     cmd = [
         "ctest",
         "--output-on-failure",
+        "--no-tests=error",
         "--output-junit",
         args.junit_output,
         "--parallel",
         str(args.jobs),
     ]
+    if getattr(args, "build_type", ""):
+        cmd += ["-C", args.build_type]
+    if getattr(args, "tests_regex", ""):
+        cmd += ["-R", args.tests_regex]
     if args.include_labels:
         cmd += ["-L", args.include_labels]
     if args.exclude_labels:
@@ -218,6 +226,8 @@ def main() -> None:
     p_ctest = sub.add_parser("ctest")
     p_ctest.add_argument("--junit-output", required=True)
     p_ctest.add_argument("--ctest-output", required=True)
+    p_ctest.add_argument("--build-type", default="")
+    p_ctest.add_argument("--tests-regex", default="")
     p_ctest.add_argument("--jobs", type=int, required=True)
     p_ctest.add_argument("--include-labels", default="")
     p_ctest.add_argument("--exclude-labels", default="")

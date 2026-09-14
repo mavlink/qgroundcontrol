@@ -14,21 +14,12 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Resolve dependency cache backend
-      id: cache-policy
-      shell: bash
-      run: |
-        enabled=false
-        if [[ -n "${RUNS_ON_S3_BUCKET_CACHE:-}" ]]; then
-          enabled=true
-        fi
-        echo "enabled=${enabled}" >> "$GITHUB_OUTPUT"
-
     - name: Setup uv and Python ${{ inputs.python-version }}
       uses: astral-sh/setup-uv@v8.1.0
       with:
-        enable-cache: ${{ steps.cache-policy.outputs.enabled }}
-        cache-python: ${{ steps.cache-policy.outputs.enabled }}
+        # These inputs are evaluated again during nested post-job cleanup.
+        enable-cache: ${{ env.RUNS_ON_S3_BUCKET_CACHE != '' }}
+        cache-python: ${{ env.RUNS_ON_S3_BUCKET_CACHE != '' }}
         cache-dependency-glob: tools/uv.lock
         python-version: ${{ inputs.python-version }}
 

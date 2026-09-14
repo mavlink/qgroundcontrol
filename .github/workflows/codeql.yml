@@ -34,8 +34,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - language: c-cpp
-            build-mode: none
           - language: actions
             build-mode: none
           - language: java-kotlin

@@ -245,6 +245,7 @@ runs:
         version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
         modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
         ios-modules: ${{ inputs.ios-modules || steps.prereq.outputs.qt_modules_ios }}
+        cache-key-suffix: ${{ inputs.cache-key-suffix }}
         xcode-version: ${{ steps.prereq.outputs.apple_xcode_ios_version }}
         cpm-modules: ${{ inputs.cpm-modules }}
         build-type: ${{ inputs.build-type }}

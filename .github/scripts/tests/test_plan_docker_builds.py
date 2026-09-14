@@ -75,7 +75,7 @@ _LINUX_ARCH_BUILD_ARGS = "\n".join(
 
 
 def test_plan_builds_pull_request_filters_by_changes():
-    plan = plan_builds("pull_request", linux_changed=True, android_changed=False)
+    plan = plan_builds("pull_request", linux_changed=True, android_changed=False, full_matrix=True)
     assert plan["has_jobs"] is True
     assert plan["matrix"]["include"] == [
         {
@@ -281,3 +281,27 @@ def test_run_docker_sh_has_no_hardcoded_build_args():
     text = (_DOCKER_DIR / "run-docker.sh").read_text()
     assert "--build-arg" not in text
     assert json.loads((_DOCKER_DIR / "variants.json").read_text())["variants"]
+
+
+def test_application_pr_uses_representative_docker_variants():
+    plan = plan_builds("pull_request", True, True)
+    assert [row["platform"] for row in plan["matrix"]["include"]] == [
+        "Linux-Ubuntu-24.04",
+        "Android",
+    ]
+
+
+@pytest.mark.parametrize(
+    "files",
+    [None, ["deploy/docker/Dockerfile"], ["cmake/CPack.cmake"], [".github/build-config.json"]],
+)
+def test_toolchain_and_unknown_diffs_use_full_matrix(files):
+    from plan_docker_builds import needs_full_matrix
+
+    assert needs_full_matrix(files)
+
+
+def test_application_changes_do_not_require_full_matrix():
+    from plan_docker_builds import needs_full_matrix
+
+    assert not needs_full_matrix(["src/Vehicle/Vehicle.cc"])

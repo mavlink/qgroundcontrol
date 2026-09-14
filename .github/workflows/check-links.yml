@@ -7,6 +7,7 @@ on:
     paths:
       - '**.md'
       - '.lychee.toml'
+      - '.github/workflows/check-links.yml'
       - '!docs/ko/**'
       - '!docs/tr/**'
       - '!docs/zh/**'
@@ -14,6 +15,7 @@ on:
     paths:
       - '**.md'
       - '.lychee.toml'
+      - '.github/workflows/check-links.yml'
       - '!docs/ko/**'
       - '!docs/tr/**'
       - '!docs/zh/**'
@@ -43,6 +45,15 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Restore link cache
+        id: link-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: .lycheecache
+          key: lychee-v1-${{ runner.os }}-${{ hashFiles('.lychee.toml', '.github/workflows/check-links.yml') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            lychee-v1-${{ runner.os }}-${{ hashFiles('.lychee.toml', '.github/workflows/check-links.yml') }}-
+
       - name: Check links
         uses: lycheeverse/lychee-action@v2
         with:
@@ -50,6 +61,15 @@ jobs:
           lycheeVersion: v0.22.0
           failIfEmpty: false
           fail: ${{ github.event_name == 'pull_request' }}
+
+      - name: Save link cache
+        if: >-
+          !cancelled() && hashFiles('.lycheecache') != '' &&
+          (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: actions/cache/save@v5
+        with:
+          path: .lycheecache
+          key: ${{ steps.link-cache.outputs.cache-primary-key }}
 
       - name: Upload report
         uses: actions/upload-artifact@v7

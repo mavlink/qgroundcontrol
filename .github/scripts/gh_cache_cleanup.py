@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from dataclasses import dataclass
 
@@ -19,10 +20,17 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import gh, require_repository, write_github_output, write_step_summary
+from common.gh_actions import (
+    gh,
+    gh_warning,
+    require_repository,
+    write_github_output,
+    write_step_summary,
+)
 from common.markdown import md_table
 
-DEFAULT_PROTECT = r"^(apt-debs|ccache|cpm-modules|moccache|qt)-"
+DEFAULT_PROTECT = r"^(apt-debs|ccache|cpm-modules|moccache|qt|build-baseline-v2)-"
+_BASELINE_RE = re.compile(r"^build-baseline-v2-[0-9a-f]{40,64}-(\d+)-(\d+)$")
 _ROLLING_SUFFIX_RE = re.compile(r"-\d+-\d+$")
 _DIGEST_RE = re.compile(r"(?<=-)[0-9a-f]{64}(?=-|$)")
 _APT_GENERATION_RE = re.compile(r"^(apt-debs-.+)-\d{4}-\d{2}-<digest>$")
@@ -124,12 +132,17 @@ def list_caches_usage(repo: str, limit: int = 200) -> list[CacheUsage]:
 
 
 def select_prune_victims(
-    caches: list[CacheUsage], *, keep_mb: int, high_water_mb: int, protect: str
+    caches: list[CacheUsage],
+    *,
+    keep_mb: int,
+    high_water_mb: int,
+    protect: str,
+    default_branch: str = "master",
 ) -> tuple[list[CacheUsage], int, int]:
     """Pick evictable caches to delete; return (victims, total_bytes, projected_bytes).
 
     No-op below high_water_mb. Above it, keeps the newest rolling generation for
-    each protected cache family and evicts other entries largest-first.
+    each protected default-branch family and evicts other entries largest-first.
     """
     protect_re = re.compile(protect)
     total = sum(cache.size_bytes for cache in caches)
@@ -137,7 +150,7 @@ def select_prune_victims(
         return [], total, total
 
     keep = keep_mb * _MIB
-    protected = _protected_cache_entries(caches, protect_re)
+    protected = _protected_cache_entries(caches, protect_re, default_branch)
     evictable = sorted(
         (cache for cache in caches if cache not in protected),
         key=lambda cache: (-cache.size_bytes, cache.last_accessed),
@@ -153,27 +166,33 @@ def select_prune_victims(
 
 
 def _protected_cache_entries(
-    caches: list[CacheUsage], protect_re: re.Pattern[str]
+    caches: list[CacheUsage], protect_re: re.Pattern[str], default_branch: str
 ) -> set[CacheUsage]:
     families: dict[tuple[str, str], list[CacheUsage]] = {}
     for cache in caches:
-        if protect_re.search(cache.key):
+        if cache.ref == f"refs/heads/{default_branch}" and protect_re.search(cache.key):
             families.setdefault((cache.ref, _cache_family(cache.key)), []).append(cache)
 
-    return {
-        max(group, key=lambda cache: (cache.last_accessed, cache.key))
-        for group in families.values()
-    }
+    return {max(group, key=_retention_order) for group in families.values()}
+
+
+def _retention_order(cache: CacheUsage) -> tuple[str, int, int]:
+    if match := _BASELINE_RE.fullmatch(cache.key):
+        # Reading an older PR base must not displace the latest published baseline.
+        return "", int(match[1]), int(match[2])
+    return cache.last_accessed, 0, 0
 
 
 def _cache_family(key: str) -> str:
+    if _BASELINE_RE.fullmatch(key):
+        return "build-baseline-v2"
     family = _ROLLING_SUFFIX_RE.sub("", key)
     family = _DIGEST_RE.sub("<digest>", family)
     return _APT_GENERATION_RE.sub(r"\1-<generation>", family)
 
 
 def _prune_summary(victims: list[CacheUsage], total: int, projected: int, *, deleted: bool) -> str:
-    verb = "Deleted" if deleted else "Would delete"
+    verb = "Deleted" if deleted else "Selected"
     lines = [
         "## Cache GC\n",
         f"\nPool: {total // _MIB} MiB → {projected // _MIB} MiB "
@@ -186,7 +205,7 @@ def _prune_summary(victims: list[CacheUsage], total: int, projected: int, *, del
         )
         lines.append(f"\n{table}\n")
     else:
-        lines.append("\nUnder high-water mark — nothing to evict.\n")
+        lines.append("\nNo eviction candidates.\n")
     return "".join(lines)
 
 
@@ -194,19 +213,40 @@ def run_prune(repo: str, args: argparse.Namespace) -> dict[str, str]:
     """Evict stale cache generations when the pool exceeds the high-water mark."""
     caches = list_caches_usage(repo, args.limit)
     victims, total, projected = select_prune_victims(
-        caches, keep_mb=args.keep_mb, high_water_mb=args.high_water_mb, protect=args.protect
+        caches,
+        keep_mb=args.keep_mb,
+        high_water_mb=args.high_water_mb,
+        protect=args.protect,
+        default_branch=args.default_branch,
     )
     deleted = 0
+    failed = 0
     if victims and args.delete:
-        deleted, _ = delete_caches(repo, "", [cache.key for cache in victims])
-    print(f"Pool {total // _MIB} MiB; {len(victims)} eviction candidate(s); deleted {deleted}")
+        projected = total
+        for cache in victims:
+            removed, errors = delete_caches(repo, cache.ref, [cache.key])
+            deleted += removed
+            failed += errors
+            if removed:
+                projected -= cache.size_bytes
+    print(
+        f"Pool {total // _MIB} MiB; {len(victims)} eviction candidate(s); deleted {deleted}; failed {failed}"
+    )
+    if failed:
+        gh_warning(f"Failed to delete {failed} cache entries")
+    if total > args.high_water_mb * _MIB and projected > args.keep_mb * _MIB:
+        gh_warning(
+            f"Cache pool remains above target: {projected // _MIB} MiB; protected entries or deletion failures prevent further cleanup"
+        )
 
     if args.summary:
-        summary = _prune_summary(victims, total, projected, deleted=args.delete)
+        summary = _prune_summary(victims, total, projected, deleted=args.delete and failed == 0)
+        if args.delete:
+            summary += _deletion_summary(deleted, failed)
         if victims and not args.delete:
             summary += _DRY_RUN_NOTICE
         write_step_summary(summary)
-    return {"count": str(len(caches)), "deleted": str(deleted)}
+    return {"count": str(len(caches)), "deleted": str(deleted), "failed": str(failed)}
 
 
 def _list_summary(rows: list[CacheRow], branch: str) -> str:
@@ -269,8 +309,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--protect",
         default=DEFAULT_PROTECT,
-        help="Regex of cache families whose newest entry is retained",
+        help="Regex of default-branch cache families whose newest entry is retained",
     )
+    parser.add_argument("--default-branch", default=os.environ.get("DEFAULT_BRANCH") or "master")
     args = parser.parse_args(argv)
 
     repo = require_repository()
