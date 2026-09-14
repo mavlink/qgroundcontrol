@@ -19,6 +19,7 @@
 #include "AudioOutput.h"
 #include "ColoredSvgImageProvider.h"
 #include "FollowMe.h"
+#include "GPSManager.h"
 #include "GraphicsSetup.h"
 #include "JoystickManager.h"
 #include "JsonParsing.h"
@@ -306,6 +307,7 @@ void QGCApplication::_initForNormalAppBoot()
     QGCPositionManager::instance()->init();
     NTRIPManager::instance()->init();
     LinkManager::instance()->init();
+    GPSManager::instance()->init();
     VideoManager::instance()->init(mainRootWindow());
 
     // Set the window icon now that custom plugin has a chance to override it
@@ -761,6 +763,7 @@ QGCImageProvider* QGCApplication::qgcImageProvider()
 
 void QGCApplication::shutdown()
 {
+    GPSManager::instance()->shutdown();
     qCDebug(QGCApplicationLog) << "Exit";
 
     if (_videoManagerInitialized) {

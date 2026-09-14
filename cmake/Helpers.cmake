@@ -110,6 +110,73 @@ function(qgc_config_caching)
 endfunction()
 
 # ----------------------------------------------------------------------------
+# _qgc_write_moccache_stats_script
+# Writes a post-build script that prints moccache hit/miss stats for the
+# ninja build currently running (entries newer than the build start derived
+# from .ninja_log, from this build dir). It is a no-op unless MOCCACHE_STATS
+# is set in the build environment.
+# ----------------------------------------------------------------------------
+function(_qgc_write_moccache_stats_script python moccache_py out_var)
+    set(_default_dir "${CMAKE_SOURCE_DIR}/.cache/moccache")
+    if(CMAKE_HOST_WIN32)
+        set(_script "${CMAKE_BINARY_DIR}/moccache-stats.cmd")
+        set(_body "@echo off\r\nsetlocal\r\n")
+        string(APPEND _body "if not defined MOCCACHE_STATS exit /b 0\r\n")
+        string(APPEND _body "if not defined MOCCACHE_DIR set \"MOCCACHE_DIR=${_default_dir}\"\r\n")
+        string(APPEND _body "if not defined MOCCACHE_BASEDIR set \"MOCCACHE_BASEDIR=${CMAKE_BINARY_DIR}\"\r\n")
+        string(APPEND _body
+               "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\"\r\n"
+        )
+        string(APPEND _body "exit /b 0\r\n")
+        file(WRITE "${_script}" "${_body}")
+    else()
+        set(_script "${CMAKE_BINARY_DIR}/moccache-stats")
+        set(_body "#!/bin/sh\n")
+        string(APPEND _body "[ -n \"\${MOCCACHE_STATS}\" ] || exit 0\n")
+        string(APPEND _body "export MOCCACHE_DIR=\"\${MOCCACHE_DIR:-${_default_dir}}\"\n")
+        string(APPEND _body "export MOCCACHE_BASEDIR=\"\${MOCCACHE_BASEDIR:-${CMAKE_BINARY_DIR}}\"\n")
+        string(APPEND _body
+               "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\" || true\n"
+        )
+        file(WRITE "${_script}" "${_body}")
+        file(
+            CHMOD
+            "${_script}"
+            PERMISSIONS
+            OWNER_READ
+            OWNER_WRITE
+            OWNER_EXECUTE
+            GROUP_READ
+            GROUP_EXECUTE
+            WORLD_READ
+            WORLD_EXECUTE
+        )
+    endif()
+    set(${out_var}
+        "${_script}"
+        PARENT_SCOPE
+    )
+endfunction()
+
+# ----------------------------------------------------------------------------
+# _qgc_verify_moccache_python
+# find_program VALIDATOR: moccache.py targets Python 3.10 (ruff.toml); an older
+# interpreter would fail on every moc invocation, so reject it and let
+# qgc_config_moccache fall back to plain moc.
+# ----------------------------------------------------------------------------
+function(_qgc_verify_moccache_python _ok _path)
+    execute_process(
+        COMMAND "${_path}" -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)"
+        RESULT_VARIABLE _res
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    if(NOT _res EQUAL 0)
+        set(${_ok} FALSE PARENT_SCOPE)
+    endif()
+endfunction()
+
+# ----------------------------------------------------------------------------
 # qgc_config_moccache
 # Routes AUTOMOC through tools/moccache.py so moc output is cached across
 # clean builds. Must be called after find_package(Qt6).
@@ -129,9 +196,17 @@ function(qgc_config_moccache)
         return()
     endif()
 
-    find_program(QGC_MOCCACHE_PYTHON NAMES python3 python)
+    # find_program skips VALIDATOR for a cached result; recheck one left by an older configure.
+    if(QGC_MOCCACHE_PYTHON)
+        set(_python_ok TRUE)
+        _qgc_verify_moccache_python(_python_ok "${QGC_MOCCACHE_PYTHON}")
+        if(NOT _python_ok)
+            unset(QGC_MOCCACHE_PYTHON CACHE)
+        endif()
+    endif()
+    find_program(QGC_MOCCACHE_PYTHON NAMES python3 python VALIDATOR _qgc_verify_moccache_python)
     if(NOT QGC_MOCCACHE_PYTHON)
-        message(STATUS "QGC: python3 not found - building without moc caching")
+        message(STATUS "QGC: python3 >= 3.10 not found - building without moc caching")
         return()
     endif()
 
@@ -183,7 +258,10 @@ function(qgc_config_moccache)
         )
     endif()
 
+    _qgc_write_moccache_stats_script("${QGC_MOCCACHE_PYTHON}" "${_moccache_py}" _moccache_stats)
+
     set_property(GLOBAL PROPERTY QGC_MOCCACHE_EXECUTABLE "${_moccache_wrapper}")
+    set_property(GLOBAL PROPERTY QGC_MOCCACHE_STATS_EXECUTABLE "${_moccache_stats}")
     message(STATUS "QGC: Using moccache for AUTOMOC (${_real_moc})")
 endfunction()
 
@@ -222,11 +300,24 @@ function(_qgc_apply_moccache_to_directory directory)
     endforeach()
 endfunction()
 
-# Apply the configured moccache launcher to every AUTOMOC target.
+# Apply the configured moccache launcher to every AUTOMOC target and print
+# this build's hit/miss stats after the main executable links (when
+# MOCCACHE_STATS is set). Ninja only: the per-build scoping needs .ninja_log.
 function(qgc_apply_moccache)
     get_property(_moccache_wrapper GLOBAL PROPERTY QGC_MOCCACHE_EXECUTABLE)
     if(_moccache_wrapper)
         _qgc_apply_moccache_to_directory("${CMAKE_SOURCE_DIR}")
+    endif()
+
+    get_property(_moccache_stats GLOBAL PROPERTY QGC_MOCCACHE_STATS_EXECUTABLE)
+    if(_moccache_stats AND TARGET ${CMAKE_PROJECT_NAME} AND CMAKE_GENERATOR MATCHES "Ninja")
+        add_custom_command(
+            TARGET ${CMAKE_PROJECT_NAME}
+            POST_BUILD
+            COMMAND "${_moccache_stats}"
+            COMMENT "moccache stats"
+            VERBATIM
+        )
     endif()
 endfunction()
 

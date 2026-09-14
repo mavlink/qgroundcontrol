@@ -72,7 +72,8 @@ jobs:
               ${{
                 github.repository_owner == 'mavlink' &&
                 (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
-                format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) ||
+                format('runs-on={0}/runner={1}', github.run_id,
+                  vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder-60gb') ||
                 'ubuntu-24.04'
               }}
             package: QGroundControl-x86_64
@@ -246,6 +247,7 @@ jobs:
     permissions:
       contents: read
       checks: write
+      id-token: write
 
     strategy:
       fail-fast: false
@@ -361,6 +363,8 @@ jobs:
         uses: ./.github/actions/test-report
         with:
           name: Unit Tests (${{ matrix.mode }})
+          upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
+          codecov-flags: linux-${{ matrix.mode }}-unit
           build-dir: ${{ runner.temp }}/build
           junit-file: junit-results-linux-${{ matrix.mode }}-unit.xml
           output-file: test-output-linux-${{ matrix.mode }}-unit.txt
@@ -372,6 +376,8 @@ jobs:
         uses: ./.github/actions/test-report
         with:
           name: Integration Tests (${{ matrix.mode }})
+          upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
+          codecov-flags: linux-${{ matrix.mode }}-integration
           build-dir: ${{ runner.temp }}/build
           junit-file: junit-results-linux-${{ matrix.mode }}-integration.xml
           output-file: test-output-linux-${{ matrix.mode }}-integration.txt

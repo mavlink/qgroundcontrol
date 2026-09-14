@@ -61,6 +61,7 @@ public:
 
     Q_PROPERTY(QString              appName                 READ    appName                 CONSTANT)
     Q_PROPERTY(LinkManager*         linkManager             READ    linkManager             CONSTANT)
+    Q_PROPERTY(QObject* serialPortManager READ serialPortManager CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager     READ    multiVehicleManager     CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager        READ    mapEngineManager        CONSTANT)
     Q_PROPERTY(QGCPositionManager*  qgcPositionManger       READ    qgcPositionManger       CONSTANT)
@@ -71,9 +72,7 @@ public:
     Q_PROPERTY(QGCCorePlugin*       corePlugin              READ    corePlugin              CONSTANT)
     Q_PROPERTY(MissionCommandTree*  missionCommandTree      READ    missionCommandTree      CONSTANT)
     Q_PROPERTY(MAVLinkSigningKeys*   mavlinkSigningKeys      READ    mavlinkSigningKeys      CONSTANT)
-#ifndef QGC_NO_SERIAL_LINK
     Q_PROPERTY(FactGroup*           gpsRtk                  READ    gpsRtkFactGroup         CONSTANT)
-#endif
     Q_PROPERTY(QGCPalette*          globalPalette           MEMBER  _globalPalette          CONSTANT)   ///< This palette will always return enabled colors
     Q_PROPERTY(QmlUnitsConversion*  unitsConversion         READ    unitsConversion         CONSTANT)
     Q_PROPERTY(bool                 singleFirmwareSupport   READ    singleFirmwareSupport   CONSTANT)
@@ -152,6 +151,7 @@ public:
     // Property accessors
 
     static QString appName();
+    QObject* serialPortManager() const;
     LinkManager*            linkManager         ()  { return _linkManager; }
     MultiVehicleManager*    multiVehicleManager ()  { return _multiVehicleManager; }
     QGCMapEngineManager*    mapEngineManager    ()  { return _mapEngineManager; }
@@ -161,9 +161,7 @@ public:
     VideoManager*           videoManager        ()  { return _videoManager; }
     QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
     SettingsManager*        settingsManager     ()  { return _settingsManager; }
-#ifndef QGC_NO_SERIAL_LINK
     FactGroup*              gpsRtkFactGroup     ()  { return _gpsRtkFactGroup; }
-#endif
     ADSBVehicleManager*     adsbVehicleManager  ()  { return _adsbVehicleManager; }
     NTRIPManager*           ntripManager        ()  { return _ntripManager; }
     QmlUnitsConversion*     unitsConversion     ()  { return &_unitsConversion; }
@@ -220,9 +218,7 @@ private:
     SettingsManager*        _settingsManager        = nullptr;
     QGCCorePlugin*          _corePlugin             = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
-#ifndef QGC_NO_SERIAL_LINK
     FactGroup*              _gpsRtkFactGroup        = nullptr;
-#endif
 
     double                  _flightMapInitialZoom   = 17.0;
     QmlUnitsConversion      _unitsConversion;

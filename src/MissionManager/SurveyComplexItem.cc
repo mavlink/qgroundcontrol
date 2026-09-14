@@ -95,7 +95,7 @@ void SurveyComplexItem::loadPreset(const QString& presetName)
 
     QJsonObject presetObject = _loadPresetJson(presetName);
     if (!_loadV4V5(presetObject, 0, errorString, 5, true /* forPresets */)) {
-        QGC::showAppMessage(QStringLiteral("Internal Error: Preset load failed. Name: %1 Error: %2").arg(presetName).arg(errorString));
+        QGC::showAppMessage(tr("Internal Error: Preset load failed. Name: %1 Error: %2").arg(presetName).arg(errorString));
     }
     _rebuildTransects();
 }

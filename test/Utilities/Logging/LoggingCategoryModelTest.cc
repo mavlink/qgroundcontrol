@@ -175,7 +175,7 @@ void LoggingCategoryModelTest::_testTreeModelInsertSingleLevel()
 
     auto* item = new QGCLoggingCategoryItem(QStringLiteral("Leaf"),
                                             QStringLiteral("Leaf"), false, &model);
-    model.insertCategory(QStringList{QStringLiteral("Leaf")}, QStringLiteral("Leaf"), item);
+    model.insertCategory(QStringList{QStringLiteral("Leaf")}, item);
 
     QCOMPARE(rowsInsertedSpy.count(), 1);
     QCOMPARE(model.rowCount(), 1);
@@ -195,8 +195,7 @@ void LoggingCategoryModelTest::_testTreeModelInsertNestedCreatesIntermediate()
     LoggingCategoryTreeModel model;
     auto* leaf = new QGCLoggingCategoryItem(QStringLiteral("Baz"),
                                             QStringLiteral("Foo.Bar.Baz"), false, &model);
-    model.insertCategory(QStringList{QStringLiteral("Foo"), QStringLiteral("Bar"), QStringLiteral("Baz")},
-                         QStringLiteral("Foo.Bar.Baz"), leaf);
+    model.insertCategory(QStringList{QStringLiteral("Foo"), QStringLiteral("Bar"), QStringLiteral("Baz")}, leaf);
 
     QCOMPARE(model.rowCount(), 1);
     const QModelIndex fooIdx = model.index(0, 0);
@@ -222,7 +221,7 @@ void LoggingCategoryModelTest::_testTreeModelDataRoles()
     LoggingCategoryTreeModel model;
     auto* item = new QGCLoggingCategoryItem(QStringLiteral("L"), QStringLiteral("Full.L"),
                                             true, &model);
-    model.insertCategory(QStringList{QStringLiteral("L")}, QStringLiteral("Full.L"), item);
+    model.insertCategory(QStringList{QStringLiteral("L")}, item);
 
     using Roles = LoggingCategoryTreeModel::Roles;
     const QModelIndex idx = model.index(0, 0);

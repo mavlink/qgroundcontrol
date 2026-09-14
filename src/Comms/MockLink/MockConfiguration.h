@@ -21,6 +21,7 @@ class MockConfiguration : public LinkConfiguration
     Q_PROPERTY(bool gimbalHasYawLock                    READ gimbalHasYawLock                    WRITE setGimbalHasYawLock                    NOTIFY gimbalHasYawLockChanged)
     Q_PROPERTY(bool gimbalHasRetract                    READ gimbalHasRetract                    WRITE setGimbalHasRetract                    NOTIFY gimbalHasRetractChanged)
     Q_PROPERTY(bool gimbalHasNeutral                    READ gimbalHasNeutral                    WRITE setGimbalHasNeutral                    NOTIFY gimbalHasNeutralChanged)
+    Q_PROPERTY(int  gimbalDeviceId                      READ gimbalDeviceId                      WRITE setGimbalDeviceId                      NOTIFY gimbalDeviceIdChanged)
     Q_PROPERTY(bool incrementVehicleId                   READ incrementVehicleId                  WRITE setIncrementVehicleId                  NOTIFY incrementVehicleIdChanged)
     Q_PROPERTY(bool cameraCaptureVideo                   READ cameraCaptureVideo                  WRITE setCameraCaptureVideo                  NOTIFY cameraCaptureVideoChanged)
     Q_PROPERTY(bool cameraCaptureImage                   READ cameraCaptureImage                  WRITE setCameraCaptureImage                  NOTIFY cameraCaptureImageChanged)
@@ -110,6 +111,9 @@ public:
     void setGimbalHasRetract(bool value) { _gimbalHasRetract = value; emit gimbalHasRetractChanged(); }
     bool gimbalHasNeutral() const { return _gimbalHasNeutral; }
     void setGimbalHasNeutral(bool value) { _gimbalHasNeutral = value; emit gimbalHasNeutralChanged(); }
+    /// Gimbal device id: 1-6 for an autopilot-attached gimbal (messages come from the manager compid), else the gimbal's own compid
+    int gimbalDeviceId() const { return _gimbalDeviceId; }
+    void setGimbalDeviceId(int value) { _gimbalDeviceId = value; emit gimbalDeviceIdChanged(); }
 
     bool cameraCaptureVideo() const { return _cameraCaptureVideo; }
     void setCameraCaptureVideo(bool value) { _cameraCaptureVideo = value; emit cameraCaptureVideoChanged(); }
@@ -186,6 +190,7 @@ signals:
     void gimbalHasYawLockChanged();
     void gimbalHasRetractChanged();
     void gimbalHasNeutralChanged();
+    void gimbalDeviceIdChanged();
     void incrementVehicleIdChanged();
     void cameraCaptureVideoChanged();
     void cameraCaptureImageChanged();
@@ -235,6 +240,7 @@ private:
     bool _gimbalHasYawLock = true;
     bool _gimbalHasRetract = true;
     bool _gimbalHasNeutral = true;
+    int _gimbalDeviceId = MAV_COMP_ID_GIMBAL;
 
     static constexpr const char *_firmwareTypeKey = "FirmwareType";
     static constexpr const char *_vehicleTypeKey = "VehicleType";
@@ -250,6 +256,7 @@ private:
     static constexpr const char *_gimbalHasYawLockKey = "GimbalHasYawLock";
     static constexpr const char *_gimbalHasRetractKey = "GimbalHasRetract";
     static constexpr const char *_gimbalHasNeutralKey = "GimbalHasNeutral";
+    static constexpr const char *_gimbalDeviceIdKey = "GimbalDeviceId";
     static constexpr const char *_incrementVehicleIdKey = "IncrementVehicleId";
     static constexpr const char *_failureModeKey = "FailureMode";
     static constexpr const char *_cameraCaptureVideoKey = "CameraCaptureVideo";

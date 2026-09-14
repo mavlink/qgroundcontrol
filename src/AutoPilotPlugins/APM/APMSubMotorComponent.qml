@@ -224,7 +224,7 @@ SetupPage {
 
                     QGCButton {
                         id: startAutoDetection
-                        text: "Auto-Detect Directions"
+                        text: qsTr("Auto-Detect Directions")
                         enabled: controller.vehicle.flightMode !== controller.vehicle.motorDetectionFlightMode
 
                         onClicked: function() {

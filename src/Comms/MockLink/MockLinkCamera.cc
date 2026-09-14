@@ -107,7 +107,26 @@ void MockLinkCamera::run10HzTasks()
 
             qCDebug(MockLinkCameraLog) << "Camera" << cam->compId << "single-shot complete, total:" << cam->imagesCaptured;
             _sendCameraImageCaptured(cam->compId);
-            _sendCameraCaptureStatus(cam->compId);
+        }
+
+        // Interval capture: one image per interval
+        if (cam->image_status == ImageCaptureInterval || cam->image_status == ImageCaptureIntervalCapture) {
+            const qint64 intervalMs = static_cast<qint64>(cam->image_interval * 1000.0f);
+            if ((now - cam->intervalLastCaptureMs) >= intervalMs) {
+                cam->intervalLastCaptureMs = now;
+                cam->imagesCaptured++;
+                cam->image_status = ImageCaptureIntervalCapture;
+                qCDebug(MockLinkCameraLog) << "Camera" << cam->compId << "interval capture, total:" << cam->imagesCaptured;
+                _sendCameraImageCaptured(cam->compId);
+
+                if (cam->intervalRemaining > 0 && --cam->intervalRemaining == 0) {
+                    cam->image_status = ImageCaptureIdle;
+                    cam->image_interval = 0.0f;
+                    qCDebug(MockLinkCameraLog) << "Camera" << cam->compId << "interval capture complete";
+                }
+            } else {
+                cam->image_status = ImageCaptureInterval;
+            }
         }
 
         // Send periodic tracking image status (with simulated drift)
@@ -272,12 +291,12 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
             const float interval = request.param2;
             const int count = static_cast<int>(request.param3);
 
-            // Set capture status based on interval
             if (interval > 0) {
-                // Interval capture mode
-                cam->image_status = ImageCaptureIntervalCapture;
+                // First interval image is captured on the next 10Hz tick
+                cam->image_status = ImageCaptureInterval;
                 cam->image_interval = interval;
-                cam->imagesCaptured += (count > 0) ? count : 1;
+                cam->intervalRemaining = count;
+                cam->intervalLastCaptureMs = 0;
                 cam->singleShotStartMs = 0;
             } else {
                 // Single shot - start capture, count will increment after 0.5s
@@ -289,8 +308,6 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
             qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "image capture started"
                                     << "interval:" << interval << "count:" << count;
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-            // Send capture status update
-            _sendCameraCaptureStatus(targetCompId);
         } else {
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
         }
@@ -300,10 +317,10 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
         if (cam->capFlags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE) {
             cam->image_status = ImageCaptureIdle;
             cam->image_interval = 0.0f;
+            cam->intervalRemaining = 0;
             cam->singleShotStartMs = 0;
             qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "image capture stopped";
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-            _sendCameraCaptureStatus(targetCompId);
         } else {
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
         }
@@ -321,7 +338,6 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
             cam->recording = true;
             qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "video recording started";
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-            _sendCameraCaptureStatus(targetCompId);
         } else {
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
         }
@@ -332,7 +348,6 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
             cam->recording = false;
             qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "video recording stopped";
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
-            _sendCameraCaptureStatus(targetCompId);
         } else {
             _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
         }
@@ -343,6 +358,7 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
         cam->imagesCaptured = 0;
         cam->image_status = ImageCaptureIdle;
         cam->image_interval = 0.0f;
+        cam->intervalRemaining = 0;
         cam->singleShotStartMs = 0;
         _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
         _sendStorageInformation(targetCompId);
@@ -350,11 +366,19 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
 
     case MAV_CMD_SET_CAMERA_ZOOM:
         if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM) {
-             // param2 is an absolute level only for ZOOM_TYPE_RANGE. For step/continuous
-             // zoom it is a direction, which this simple simulation does not model.
-             if (static_cast<int>(request.param1) == ZOOM_TYPE_RANGE) {
+             // param2 is an absolute level for ZOOM_TYPE_RANGE and a direction for
+             // ZOOM_TYPE_STEP. Continuous zoom is not modeled.
+             switch (static_cast<int>(request.param1)) {
+             case ZOOM_TYPE_RANGE:
                  cam->zoomLevel = request.param2;
                  qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "zoom set to" << cam->zoomLevel;
+                 break;
+             case ZOOM_TYPE_STEP:
+                 cam->zoomLevel = std::clamp(cam->zoomLevel + (request.param2 * kZoomStepPercent), kZoomMinPercent, kZoomMaxPercent);
+                 qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "zoom stepped to" << cam->zoomLevel;
+                 break;
+             default:
+                 break;
              }
              // Spec-minimal: CAMERA_SETTINGS is not broadcast after a zoom change.
              // The GCS must re-request it (MAVLink camera protocol v2).
@@ -374,6 +398,7 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
         cam->focusLevel = 0.0f;
         cam->image_status = ImageCaptureIdle;
         cam->image_interval = 0.0f;
+        cam->intervalRemaining = 0;
         cam->singleShotStartMs = 0;
         qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "settings reset";
         _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);

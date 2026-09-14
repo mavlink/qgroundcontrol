@@ -2,6 +2,7 @@
 
 #include <QtCore/QRegularExpression>
 
+#include "Fixtures/RAIIFixtures.h"
 #include "MultiVehicleManager.h"
 
 void MavCommandQueueReentrancyTest::_closeVehicleResultHandler(void* resultHandlerData, int compId,
@@ -23,6 +24,7 @@ void MavCommandQueueReentrancyTest::_closeVehicleResultHandler(void* resultHandl
 
 void MavCommandQueueReentrancyTest::_testCloseVehicleFromGiveUpHandler()
 {
+    TestFixtures::MavCommandAckTimeoutFixture shortAckTimeout;
     ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
                      QRegularExpression("Giving up sending command after max retries:"));
 

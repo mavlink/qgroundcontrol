@@ -64,7 +64,7 @@ Item {
 
             sourceItem: MissionItemIndexLabel {
                 index:      _missionItem.sequenceNumber
-                label:      "Entry"
+                label:      qsTr("Entry")
                 checked:    _missionItem.isCurrentItem
                 onClicked:  _root.clicked(_missionItem.sequenceNumber)
             }
@@ -84,7 +84,7 @@ Item {
 
             sourceItem: MissionItemIndexLabel {
                 index:      _missionItem.lastSequenceNumber
-                label:      "Exit"
+                label:      qsTr("Exit")
                 checked:    _missionItem.isCurrentItem
                 onClicked:  _root.clicked(_missionItem.sequenceNumber)
             }

@@ -8,8 +8,10 @@ include(CreateCPackCommon)
 # ----------------------------------------------------------------------------
 # ProductBuild Generator Configuration
 # ----------------------------------------------------------------------------
-list(APPEND CPACK_GENERATOR "PRODUCTBUILD")
+set(CPACK_GENERATOR "productbuild")
 set(CPACK_BINARY_PRODUCTBUILD ON)
+set(CPACK_PRODUCTBUILD_IDENTIFIER "${QGC_PACKAGE_NAME}")
+set(CPACK_PACKAGING_INSTALL_PREFIX "/Applications")
 
 set(QGC_INSTALLER_SOURCE "${CMAKE_SOURCE_DIR}/deploy/macos")
 

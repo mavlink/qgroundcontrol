@@ -15,8 +15,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         LogReplayLinkTest.h
         MAVLinkV1TrafficTest.cc
         MAVLinkV1TrafficTest.h
-        QGCSerialPortInfoTest.cc
-        QGCSerialPortInfoTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -28,4 +26,9 @@ add_qgc_test(LinkManagerTest LABELS Integration Comms SERIAL)
 add_qgc_test(LogReplayLinkControllerTest LABELS Unit Comms)
 add_qgc_test(LogReplayLinkTest LABELS Unit Comms)
 add_qgc_test(MAVLinkV1TrafficTest LABELS Integration Comms)
-add_qgc_test(QGCSerialPortInfoTest LABELS Unit Comms)
+if(NOT QGC_NO_SERIAL_LINK)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE QGCSerialPortInfoTest.cc QGCSerialPortInfoTest.h)
+    add_qgc_test(QGCSerialPortInfoTest LABELS Unit Comms)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE SerialPortManagerTest.cc SerialPortManagerTest.h)
+    add_qgc_test(SerialPortManagerTest LABELS Unit Comms)
+endif()

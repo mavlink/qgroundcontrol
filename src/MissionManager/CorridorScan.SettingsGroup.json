@@ -22,7 +22,7 @@
 },
 {
     "name":             "Trigger distance",
-    "shortDesc": "Distance between each triggering of the camera. 0 specifies not camera trigger.",
+    "shortDesc": "Distance between each triggering of the camera. 0 specifies no camera trigger.",
     "type":             "double",
     "decimalPlaces":    2,
     "min":              0,

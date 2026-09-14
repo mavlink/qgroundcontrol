@@ -7,12 +7,28 @@
 Platform workflows (`linux.yml`, `macos.yml`, `windows.yml`, `android.yml`, `ios.yml`) share logic
 via composite actions and reusable workflows. Python helpers in `scripts/` are invoked by both.
 
+Set the repository variable `CODECOV_TEST_ANALYTICS=true` to opt into JUnit uploads from Linux
+and custom-build test jobs. Uploads use Codecov OIDC authentication and remain informational;
+JUnit artifacts and existing test reporters remain available with the variable unset.
+
+Docker publishes builder-image CycloneDX SBOMs and vulnerability scans alongside its existing CPM
+reports. Trusted upstream push jobs attach provenance and SBOM attestations to the published image
+digest; pull requests cannot run those publishing jobs. Master pushes also submit the Ubuntu
+builder's CPM SPDX snapshot to the dependency graph. CPM metadata is read inside the builder so
+container-local dependency paths resolve to the correct repositories.
+
+ClusterFuzzLite PR runs use the bundled seed corpus without querying historical GitHub artifacts
+(`NO_CLUSTERFUZZ_DEPLOYMENT=true`). This also disables previous-build crash comparison: reproducible
+crashes fail the PR regardless of whether they predate it. Crash files and SARIF diagnostics are
+uploaded separately. The master-only continuous build still publishes fuzzer binaries.
+
 ## Contents
 
 - [Layout](#layout)
 - [Workflows](#workflows)
 - [Composite Actions](#composite-actions)
 - [Scripts](#scripts)
+- [Managed Runner Images](#managed-runner-images)
 - [Build Configuration](#build-configuration)
 - [Dependency Management](#dependency-management)
 - [CI Conventions](#ci-conventions)
@@ -27,6 +43,8 @@ via composite actions and reusable workflows. Python helpers in `scripts/` are i
 ├── scripts/                   # Python helpers invoked by workflows and actions
 │   ├── templates/             # Jinja2 templates (build_results.md.j2)
 │   └── tests/                 # pytest suite for scripts/ (see #tests)
+├── runner-images/             # Packer definitions and managed-runner provisioning
+├── runs-on.yml                # Repository-level RunsOn images and runner shapes
 ├── build-config.json          # Centralized version numbers and build settings
 ├── build-config.schema.json   # JSON Schema for build-config.json
 ├── dependabot.yml             # Dependabot config (GitHub Actions only)
@@ -47,7 +65,7 @@ via composite actions and reusable workflows. Python helpers in `scripts/` are i
 | `docker.yml` | Docker image builds |
 | `pre-commit.yml` | Linting and formatting checks |
 | `check-links.yml` | Markdown link validation |
-| `ci-scripts.yml` | Lints workflows (actionlint) and runs the CI Python script tests (see [Tests](#tests)) |
+| `ci-scripts.yml` | Lints workflows, validates runner images, and runs the CI Python script tests (see [Tests](#tests)) |
 | `analysis.yml` | Static analysis |
 | `codeql.yml` | CodeQL security scanning |
 | `pr-checks.yml` | PR validation checks |
@@ -57,11 +75,27 @@ via composite actions and reusable workflows. Python helpers in `scripts/` are i
 | `crowdin.yml`, `lupdate.yml` | Translation workflows |
 | `dependency-review.yml` | Dependency security review |
 | `scorecard.yml` | OpenSSF Scorecard |
+| `stale.yml` | Nightly stale-issue labeling and closing (feature requests get their own close message) |
 | `flatpak.yml` | Flatpak builds |
 | `mirror-gstreamer.yml` | Mirror upstream GStreamer releases to the QGC S3 bucket |
 | `px4-metadata.yml` | PX4 metadata sync |
+| `runner-images.yml` | Manually build QGC's managed RunsOn AMI |
 | `vm-builds.yml` | VM-based builds |
 | `welcome.yml` | New contributor welcome |
+
+## Managed Runner Images
+
+The manual `runner-images.yml` workflow builds a QGC-specific Ubuntu 24 x64 AMI from the current
+RunsOn base image and then boots it for a focused smoke test. It only publishes from the default
+branch. The workflow uses the same dependency and Qt setup helpers as ordinary CI, and the
+`qt-install` action reuses the preinstalled SDK only when its Qt version, architecture, and module
+manifest satisfy the job's request. `ci-scripts.yml` also runs Packer formatting and validation on
+pull requests without requiring AWS credentials.
+
+The managed image and Windows warm-pool routes are opt-in repository settings. Without
+`RUNS_ON_LINUX_BUILDER` or `RUNS_ON_WINDOWS_POOL`, every affected workflow keeps its existing
+standard RunsOn runner. See the [runner image guide](runner-images/README.md) for AWS prerequisites,
+activation, rebuild cadence, and the organization-level warm-pool example.
 
 ### TestFlight releases
 
@@ -114,7 +148,7 @@ Configure these repository secrets:
 | `install-dependencies` | Platform dependency installation (GStreamer, etc.) |
 | `android-emulator-test` | APK install + launch smoke test against an x86_64 Android emulator |
 | `playstore` | Upload Android APK to Google Play Store |
-| `qt-install` | Install Qt via aqtinstall with caching |
+| `qt-install` | Reuse a compatible managed-image Qt SDK or install Qt via aqtinstall with caching |
 | `qt-android`, `qt-ios` | Mobile Qt setup |
 | `replace-cache-entry` | Delete a stale GitHub Actions cache entry, then save the file at the same key |
 | `setup-python` | Python + uv + dependency installation |
@@ -204,8 +238,9 @@ Dependency updates are split between two bots to avoid overlapping PRs:
 
 ## Tests
 
-`ci-scripts.yml` runs two jobs on changes under `.github/` and `tools/`: `actionlint` (workflow
-linting) and a pytest job covering both `tools/tests` and `.github/scripts/tests`.
+`ci-scripts.yml` runs workflow linting, credential-free Packer validation, and pytest jobs on
+changes under `.github/` and `tools/`. The pytest jobs cover both `tools/tests` and
+`.github/scripts/tests`.
 
 Run the CI script tests locally:
 

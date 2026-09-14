@@ -7,6 +7,7 @@
 #include "QGCCameraManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
+#include "QGCNetworkHelper.h"
 #include "QGCVideoStreamInfo.h"
 #include "SettingsManager.h"
 #include "SubtitleWriter.h"
@@ -362,7 +363,7 @@ void VideoManager::startRecording(const QString &videoFile)
 
     const QString savePath = SettingsManager::instance()->appSettings()->videoSavePath();
     if (savePath.isEmpty()) {
-        QGC::showAppMessage(tr("Unabled to record video. Video save path must be specified in Settings."));
+        QGC::showAppMessage(tr("Unable to record video. Video save path must be specified in Settings."));
         return;
     }
 
@@ -595,7 +596,8 @@ bool VideoManager::_updateAutoStream(VideoReceiver *receiver)
         return false;
     }
 
-    qCDebug(VideoManagerLog) << QString("Configure stream (%1):").arg(receiver->name()) << pInfo->uri();
+    qCDebug(VideoManagerLog) << QString("Configure stream (%1):").arg(receiver->name())
+                            << QGCNetworkHelper::redactedUrlForLogging(pInfo->uri());
 
     QString source, url;
     switch (pInfo->type()) {
@@ -653,7 +655,7 @@ bool VideoManager::_updateVideoUri(VideoReceiver *receiver, const QString &uri)
         return false;
     }
 
-    qCDebug(VideoManagerLog) << "New Video URI" << uri;
+    qCDebug(VideoManagerLog) << "New Video URI" << QGCNetworkHelper::redactedUrlForLogging(uri);
 
     receiver->setUri(uri);
 
@@ -906,13 +908,16 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
     });
 
     (void) connect(receiver, &VideoReceiver::onStopComplete, this, [this, receiver](VideoReceiver::STATUS status) {
-        qCDebug(VideoManagerLog) << "Stop complete" << receiver->name() << receiver->uri()  << ", status:" << status;
+        qCDebug(VideoManagerLog) << "Stop complete" << receiver->name()
+                                << QGCNetworkHelper::redactedUrlForLogging(receiver->uri())
+                                << ", status:" << status;
         receiver->setStarted(false);
         if (status == VideoReceiver::STATUS_INVALID_URL) {
             qCDebug(VideoManagerLog) << "Invalid video URL. Not restarting";
         } else {
             QTimer::singleShot(1000, receiver, [this, receiver]() {
-                qCDebug(VideoManagerLog) << "Restarting video receiver" << receiver->name() << receiver->uri();
+                qCDebug(VideoManagerLog) << "Restarting video receiver" << receiver->name()
+                                        << QGCNetworkHelper::redactedUrlForLogging(receiver->uri());
                 _startReceiver(receiver);
             });
         }

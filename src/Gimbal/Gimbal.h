@@ -12,6 +12,7 @@ class Gimbal : public FactGroup
     Q_PROPERTY(Fact     *absolutePitch          READ absolutePitch              CONSTANT)
     Q_PROPERTY(Fact     *bodyYaw                READ bodyYaw                    CONSTANT)
     Q_PROPERTY(Fact     *absoluteYaw            READ absoluteYaw                CONSTANT)
+    Q_PROPERTY(Fact     *deltaYaw               READ deltaYaw                   CONSTANT)
     Q_PROPERTY(Fact     *deviceId               READ deviceId                   CONSTANT)
     Q_PROPERTY(Fact     *managerCompid          READ managerCompid              CONSTANT)
     Q_PROPERTY(float    pitchRate               READ pitchRate                  NOTIFY pitchRateChanged)
@@ -35,6 +36,7 @@ public:
     Fact *absolutePitch() { return &_absolutePitchFact; }
     Fact *bodyYaw() { return &_bodyYawFact; }
     Fact *absoluteYaw() { return &_absoluteYawFact; }
+    Fact *deltaYaw() { return &_deltaYawFact; }
     Fact *deviceId() { return &_deviceIdFact; }
     Fact *managerCompid() { return &_managerCompidFact; }
 
@@ -49,6 +51,7 @@ public:
     void setAbsolutePitch(float absPitch) { absolutePitch()->setRawValue(absPitch); }
     void setBodyYaw(float yaw) { bodyYaw()->setRawValue(yaw); }
     void setAbsoluteYaw(float absYaw) { absoluteYaw()->setRawValue(absYaw); }
+    void setDeltaYaw(float delta) { deltaYaw()->setRawValue(delta); }
     void setDeviceId(uint id) { deviceId()->setRawValue(id); }
     void setManagerCompid(uint id) { managerCompid()->setRawValue(id); }
 
@@ -78,9 +81,12 @@ private:
     unsigned _requestInformationRetries = 3;
     unsigned _requestStatusRetries = 6;
     unsigned _requestAttitudeRetries = 3;
+    qint64 _lastStatusRequestMs = 0;
     bool _receivedGimbalManagerInformation = false;
     bool _receivedGimbalManagerStatus = false;
     bool _receivedGimbalDeviceAttitudeStatus = false;
+    bool _deltaYawValid = false;
+    bool _yawFrameFlagsInvalid = false;
     bool _isComplete = false;
     bool _neutral = false;
     uint32_t _capabilityFlags = 0; // GIMBAL_MANAGER_CAP_FLAGS
@@ -89,6 +95,7 @@ private:
     Fact _absolutePitchFact = Fact(0, QStringLiteral("gimbalPitch"), FactMetaData::valueTypeFloat);
     Fact _bodyYawFact = Fact(0, QStringLiteral("gimbalYaw"), FactMetaData::valueTypeFloat);
     Fact _absoluteYawFact = Fact(0, QStringLiteral("gimbalAzimuth"), FactMetaData::valueTypeFloat);
+    Fact _deltaYawFact = Fact(0, QStringLiteral("gimbalDeltaYaw"), FactMetaData::valueTypeFloat); ///< Gimbal's own vehicle-heading estimate, NaN when not supplied
     Fact _deviceIdFact = Fact(0, QStringLiteral("deviceId"), FactMetaData::valueTypeUint8); ///< Component ID of gimbal device (or 1-6 for non-MAVLink gimbal)
     Fact _managerCompidFact = Fact(0, QStringLiteral("managerCompid"), FactMetaData::valueTypeUint8);
 

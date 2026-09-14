@@ -11,6 +11,23 @@ from _helpers import REPO_ROOT
 CPACK_DIR = REPO_ROOT / "cmake/install/CPack"
 
 
+def test_optional_generators_use_cpack_names_and_runtime_component() -> None:
+    for module, generator in (
+        ("Bundle", "Bundle"),
+        ("ProductBuild", "productbuild"),
+        ("IFW", "IFW"),
+    ):
+        content = (CPACK_DIR / f"CreateCPack{module}.cmake").read_text()
+        assert f'set(CPACK_GENERATOR "{generator}")' in content
+    ifw = (CPACK_DIR / "CreateCPackIFW.cmake").read_text()
+    assert "cpack_ifw_configure_component(Runtime" in ifw
+    script = re.search(r'SCRIPT "\$\{CMAKE_SOURCE_DIR\}/([^"]+)"', ifw)
+    assert script and (REPO_ROOT / script.group(1)).is_file()
+    assert 'NOT "$ENV{QT_ROOT_DIR}" STREQUAL ""' in ifw
+    assert "NOT DEFINED CPACK_IFW_ROOT" in ifw
+    assert not (REPO_ROOT / "cmake/install/CreateQGCInstaller.cmake").exists()
+
+
 def test_cpack_generators_share_runtime_only_metadata_and_checksums() -> None:
     common = (CPACK_DIR / "CreateCPackCommon.cmake").read_text()
     assert "set(CPACK_COMPONENTS_ALL Runtime)" in common

@@ -394,7 +394,7 @@ void NTRIPManager::_startTransport()
 
     _applyUdpForwarderConfig(config);
 
-    if (const QString err = config.validationError(); !err.isEmpty()) {
+    if (const QString err = config.streamValidationError(); !err.isEmpty()) {
         qCWarning(NTRIPManagerLog) << "NTRIP config invalid:" << err << "host=" << config.host
                                    << " port=" << config.port;
         _dispatch(Event::ConfigInvalid, err);
@@ -423,16 +423,37 @@ void NTRIPManager::_startTransport()
 
     // QueuedConnection: _onTransportError may tear the transport down — Direct
     // would destroy it while still inside its own signal emission (use-after-free).
-    connect(_transport, &NTRIPTransport::error, this, &NTRIPManager::_onTransportError, Qt::QueuedConnection);
+    const QPointer<NTRIPTransport> transport = _transport;
+    connect(
+        _transport, &NTRIPTransport::error, this,
+        [this, transport](NTRIPError code, const QString& detail) {
+            if (transport && _transport == transport) {
+                _onTransportError(code, detail);
+            }
+        },
+        Qt::QueuedConnection);
 
     // Must stay non-queued: TransportConnected is dispatched synchronously so a
     // queued `error` that tore the transport down cannot interleave a stale
     // TransportConnected into the Disconnected state. Do not make this queued.
-    connect(_transport, &NTRIPTransport::connected, this, [this]() { _dispatch(Event::TransportConnected); });
+    connect(_transport, &NTRIPTransport::connected, this, [this, transport]() {
+        if (transport && _transport == transport) {
+            _dispatch(Event::TransportConnected);
+        }
+    });
 
-    connect(_transport, &NTRIPTransport::RTCMDataUpdate, this, &NTRIPManager::_rtcmDataReceived);
+    connect(_transport, &NTRIPTransport::RTCMDataUpdate, this,
+            [this, transport](const QByteArray& data, int messageId) {
+                if (transport && _transport == transport) {
+                    _rtcmDataReceived(data, messageId);
+                }
+            });
 
-    connect(_transport, &NTRIPTransport::plaintextCredentialsWarning, this, &NTRIPManager::_onPlaintextCredentialsWarning);
+    connect(_transport, &NTRIPTransport::plaintextCredentialsWarning, this, [this, transport]() {
+        if (transport && _transport == transport) {
+            _onPlaintextCredentialsWarning();
+        }
+    });
 
     _transport->start();
     qCDebug(NTRIPManagerLog) << "NTRIP transport started";
@@ -444,6 +465,9 @@ void NTRIPManager::_startTransport()
 
 void NTRIPManager::_onTransportError(NTRIPError code, const QString& detail)
 {
+    if (_connectionStatus != ConnectionStatus::Connecting && _connectionStatus != ConnectionStatus::Connected) {
+        return;
+    }
     qCWarning(NTRIPManagerLog) << "NTRIP error:" << static_cast<int>(code) << detail;
 
     const CasterStatus caster =

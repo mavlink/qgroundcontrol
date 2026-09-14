@@ -5,6 +5,8 @@ qt_add_library(QGCNetwork STATIC
     QGCFileDownload.h
     QGCNetworkHelper.cc
     QGCNetworkHelper.h
+    UdpIODevice.cc
+    UdpIODevice.h
     UdpForwarder.cc
     UdpForwarder.h
 )

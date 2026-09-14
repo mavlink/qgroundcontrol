@@ -121,3 +121,21 @@ void LinkManagerTest::_testLinkActiveStableAcrossReconnect()
 }
 
 UT_REGISTER_TEST(LinkManagerTest, TestLabel::Integration, TestLabel::Comms)
+
+#ifndef QGC_NO_SERIAL_LINK
+#include "SerialLink.h"
+#include "SerialPortManager.h"
+
+void LinkManagerTest::_testReservedSerialPortNotOpened()
+{
+    const QString port = QStringLiteral("/test/gps-reserved");
+    auto reservation = SerialPortManager::instance()->reservePort(port);
+    QVERIFY(reservation);
+    auto config = std::make_shared<SerialConfiguration>(QStringLiteral("Reserved GPS port"));
+    config->setPortName(port);
+    SharedLinkConfigurationPtr sharedConfig = config;
+    QVERIFY(!linkManager()->createConnectedLink(sharedConfig));
+    QVERIFY(!config->link());
+    QVERIFY(SerialPortManager::instance()->isPortReserved(port));
+}
+#endif

@@ -193,8 +193,13 @@ ColumnLayout {
                     }
 
                     RowLayout {
+                        id: stickDisplayRow
                         Layout.fillWidth: true
                         spacing: stickDisplayContainer._margins * 2
+
+                        property color stickColor: controller.calibrating ? stickPal.buttonHighlight : stickPal.text
+
+                        QGCPalette { id: stickPal; colorGroupEnabled: controller.calibrating }
 
                         Rectangle {
                             id: leftStickDisplay
@@ -202,7 +207,7 @@ ColumnLayout {
                             implicitWidth: ScreenTools.defaultFontPixelHeight * 5
                             implicitHeight: implicitWidth
                             radius: implicitWidth / 2
-                            border.color: qgcPal.buttonHighlight
+                            border.color: stickDisplayRow.stickColor
                             border.width: 1
                             color: qgcPal.window
 
@@ -212,7 +217,7 @@ ColumnLayout {
                                 width: ScreenTools.defaultFontPixelHeight
                                 height: width
                                 radius: width / 2
-                                color: qgcPal.buttonHighlight
+                                color: stickDisplayRow.stickColor
                             }
                         }
 
@@ -221,7 +226,7 @@ ColumnLayout {
                             implicitWidth: leftStickDisplay.implicitWidth
                             implicitHeight: implicitWidth
                             radius: implicitWidth / 2
-                            border.color: qgcPal.buttonHighlight
+                            border.color: stickDisplayRow.stickColor
                             border.width: 1
                             color: qgcPal.window
                             visible: !controller.singleStickDisplay
@@ -232,7 +237,7 @@ ColumnLayout {
                                 width: ScreenTools.defaultFontPixelHeight
                                 height: width
                                 radius: width / 2
-                                color: qgcPal.buttonHighlight
+                                color: stickDisplayRow.stickColor
                             }
                         }
                     }

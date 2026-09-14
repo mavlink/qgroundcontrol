@@ -1,6 +1,11 @@
 name: Docker Build
 description: Build QGC using Docker
 
+outputs:
+  image-digest:
+    description: Immutable digest of the built image
+    value: ${{ steps.build.outputs.digest }}
+
 inputs:
   target:
     description: Dockerfile build stage to target (linux, linux-cross, android)
@@ -87,6 +92,7 @@ runs:
           type=sha,prefix=${{ inputs.variant }}-,format=short,enable=${{ inputs.push-image != '' }}
 
     - name: Build Docker image
+      id: build
       if: contains(fromJSON('["linux", "linux-cross", "android"]'), inputs.target)
       uses: docker/build-push-action@v7
       with:

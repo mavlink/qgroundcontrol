@@ -15,3 +15,10 @@ It is disabled by default — see [GeoMap Engine (Tech Preview)](../fly_view/geo
 
 The **ROI at location** map click action now supports setting the ROI altitude.
 An altitude slider (meters above home, defaulting to 0 = ground level) is shown before you confirm the ROI, so the vehicle can point at an elevated target instead of only ground points.
+
+## Custom Builds
+
+### Custom Settings Pages
+
+Custom builds can now add their own pages to Application Settings, and replace, reposition, or remove the stock pages, using the same JSON-driven page generation as regular QGC — no hand-written settings QML required.
+See [Generated Settings Pages](../../qgc-dev-guide/views/settings_generation.md#custom-build-settings-pages) in the developer guide for details.

@@ -1943,7 +1943,7 @@ Vehicle::guidedModeChangeEquivalentAirspeedMetersSecond(double airspeed)
 void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double amslAltitude)
 {
     if (!_vehicleSupports->orbitMode()) {
-        QGC::showAppMessage(QStringLiteral("Orbit mode not supported by Vehicle."));
+        QGC::showAppMessage(tr("Orbit mode not supported by Vehicle."));
         return;
     }
     if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
@@ -1978,7 +1978,7 @@ bool Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord, double relativeAl
         return false;
     }
     if (!_vehicleSupports->roiMode()) {
-        QGC::showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
+        QGC::showAppMessage(tr("ROI mode not supported by Vehicle."));
         return false;
     }
 
@@ -2003,7 +2003,7 @@ bool Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord, double relativeAl
 void Vehicle::stopGuidedModeROI()
 {
     if (!_vehicleSupports->roiMode()) {
-        QGC::showAppMessage(QStringLiteral("ROI mode not supported by Vehicle."));
+        QGC::showAppMessage(tr("ROI mode not supported by Vehicle."));
         return;
     }
     if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
@@ -2047,7 +2047,7 @@ void Vehicle::guidedModeChangeHeading(const QGeoCoordinate &headingCoord)
 void Vehicle::pauseVehicle()
 {
     if (!_vehicleSupports->pauseVehicle()) {
-        QGC::showAppMessage(QStringLiteral("Pause not supported by vehicle."));
+        QGC::showAppMessage(tr("Pause not supported by vehicle."));
         return;
     }
     _firmwarePlugin->pauseVehicle(this);

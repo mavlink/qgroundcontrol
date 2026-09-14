@@ -56,6 +56,36 @@ Rectangle {
         return false
     }
 
+    // A divider shows only between two available pages. When consecutive dividers have no
+    // available page between them, only the first one shows.
+    function _dividerVisible(pageIndex) {
+        if (_searchQuery.trim() !== "") {
+            return false
+        }
+
+        let hasPageBefore = false
+        for (let i = pageIndex - 1; i >= 0; i--) {
+            let entry = settingsPagesModel.get(i)
+            if (entry.name === "Divider") {
+                return false
+            }
+            if (_pageAvailable(entry)) {
+                hasPageBefore = true
+                break
+            }
+        }
+        if (!hasPageBefore) {
+            return false
+        }
+
+        for (let j = pageIndex + 1; j < settingsPagesModel.count; j++) {
+            if (_pageAvailable(settingsPagesModel.get(j))) {
+                return true
+            }
+        }
+        return false
+    }
+
     // Search: returns array of matching section indices for a page, or empty if no match
     function _matchingSections(pageIndex) {
         var query = _searchQuery.toLowerCase().trim()
@@ -136,18 +166,9 @@ Rectangle {
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
-        // Find and select the default page
-        var targetUrl = globals.commingFromRIDIndicator
-            ? "qrc:/qml/QGroundControl/AppSettings/RemoteIDSettings.qml"
-            : "qrc:/qml/QGroundControl/AppSettings/GeneralSettings.qml"
-        globals.commingFromRIDIndicator = false
-
-        for (var i = 0; i < settingsPagesModel.count; i++) {
-            var entry = settingsPagesModel.get(i)
-            if (entry && entry.url === targetUrl) {
-                _navigateTo(i, -1)
-                break
-            }
+        if (globals.commingFromRIDIndicator) {
+            globals.commingFromRIDIndicator = false
+            showSettingsPage("Remote ID")
         }
 
         if (_selectedPageIndex === -1) {
@@ -246,17 +267,15 @@ Rectangle {
                     }
 
                     visible: {
-                        if (pageName === "Divider") return !isSearching
+                        if (pageName === "Divider") return settingsView._dividerVisible(index)
                         if (!pageAvailable) return false
                         if (isSearching) return matchesSearch
                         return true
                     }
 
-                    // Divider
-                    Item {
-                        Layout.fillWidth: true
-                        height: ScreenTools.defaultFontPixelHeight / 2
-                        visible: pageName === "Divider"
+                    SidebarDivider {
+                        objectName: pageName === "Divider" ? "settingsDivider_" + index : ""
+                        visible:    pageName === "Divider"
                     }
 
                     // Page button

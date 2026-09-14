@@ -3,11 +3,49 @@
 
 from __future__ import annotations
 
+import pytest
 from detect_changes import (
     build_patterns,
     has_relevant_changes,
     workflow_name_for_platform,
 )
+
+
+@pytest.mark.parametrize(
+    "platform",
+    [
+        "linux",
+        "windows",
+        "macos",
+        "ios",
+        "android",
+        "custom-build",
+        "docker-linux",
+        "docker-android",
+    ],
+)
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "CMakePresets.json",
+        ".github/workflows/_detect-changes.yml",
+        "tools/moccache.py",
+        "tools/common/config.py",
+        "tools/setup/install_qt.py",
+        "tools/setup/install_dependencies/_common.py",
+    ],
+)
+def test_shared_build_inputs_trigger_all_platforms(platform: str, filename: str) -> None:
+    assert has_relevant_changes([filename], platform)
+
+
+@pytest.mark.parametrize(
+    "filename", ["variants.json", "_variants.py", "_variant_info.py", "docker_helper.py"]
+)
+def test_variant_inputs_trigger_docker_builds(filename: str) -> None:
+    for platform in ("docker-linux", "docker-android"):
+        assert has_relevant_changes([f"deploy/docker/{filename}"], platform)
+    assert not has_relevant_changes([f"deploy/docker/{filename}"], "linux")
 
 
 class TestWorkflowNameForPlatform:

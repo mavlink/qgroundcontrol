@@ -13,6 +13,7 @@ from setup.install_qt import (
     compute_cache_digest,
     resolve_android_qt_root,
     resolve_arch_dir,
+    resolve_preinstalled_qt,
     resolve_qt_root,
     resolve_windows_host_arch,
     validate_aqt_source,
@@ -82,6 +83,36 @@ class TestResolveQtRoot:
     def test_missing_path_exits(self, tmp_path: Path) -> None:
         with pytest.raises(SystemExit):
             resolve_qt_root(tmp_path, "6.8.3", "gcc_64")
+
+
+class TestResolvePreinstalledQt:
+    @staticmethod
+    def _create_sdk(tmp_path: Path, modules: str = "qtgraphs qtlocation") -> Path:
+        qt_root = tmp_path / "Qt" / "6.8.3" / "gcc_64"
+        (qt_root / "bin").mkdir(parents=True)
+        (qt_root / ".qgc-modules").write_text(modules, encoding="utf-8")
+        return qt_root
+
+    def test_compatible_sdk_is_reused(self, tmp_path: Path) -> None:
+        qt_root = self._create_sdk(tmp_path)
+
+        assert resolve_preinstalled_qt(tmp_path, "6.8.3", "gcc_64", "qtlocation") == qt_root
+
+    def test_missing_requested_module_is_rejected(self, tmp_path: Path) -> None:
+        self._create_sdk(tmp_path, "qtgraphs")
+
+        assert resolve_preinstalled_qt(tmp_path, "6.8.3", "gcc_64", "qtlocation") is None
+
+    def test_archive_subset_is_rejected(self, tmp_path: Path) -> None:
+        self._create_sdk(tmp_path)
+
+        assert resolve_preinstalled_qt(tmp_path, "6.8.3", "gcc_64", archives="qtbase") is None
+
+    def test_unmanaged_sdk_is_rejected(self, tmp_path: Path) -> None:
+        qt_root = tmp_path / "Qt" / "6.8.3" / "gcc_64"
+        (qt_root / "bin").mkdir(parents=True)
+
+        assert resolve_preinstalled_qt(tmp_path, "6.8.3", "gcc_64") is None
 
 
 class TestResolveAndroidQtRoot:

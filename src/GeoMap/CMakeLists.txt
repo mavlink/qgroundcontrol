@@ -30,12 +30,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 qt_add_library(GeoMapModule STATIC)
 
-# Debug-only test harness (matches the ScreenTools.isDebug loader in MainWindow)
-set(GEOMAP_DEBUG_QML_FILES "")
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    list(APPEND GEOMAP_DEBUG_QML_FILES GeoMapTestView.qml)
-endif()
-
 qt_add_qml_module(GeoMapModule
     URI QGroundControl.GeoMap
     VERSION 1.0
@@ -93,7 +87,6 @@ qt_add_qml_module(GeoMapModule
         GeoMapVehicleItem.qml
         GeoMapVTOLLandingPatternVisual.qml
         GeoMapWaypointItem.qml
-        ${GEOMAP_DEBUG_QML_FILES}
     RESOURCES
         shaders/flightpath.frag
         shaders/flightpath.vert

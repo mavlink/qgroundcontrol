@@ -7,8 +7,9 @@ retry() {
     while [ "${attempt}" -le 3 ]; do
         if "$@"; then
             return 0
+        else
+            rc=$?
         fi
-        rc=$?
         if [ "${attempt}" -lt 3 ]; then
             echo "==> attempt ${attempt}/3 failed (rc=${rc}); retrying in ${attempt}0s" >&2
             sleep "${attempt}0"

@@ -97,7 +97,7 @@ ColumnLayout {
                 }
             }
         }
-        title: "Velocity"
+        title: qsTr("Velocity")
         tuningMode: Vehicle.ModeVelocityAndPosition
         unit: "m/s"
         axis: [ horizontal, vertical ]

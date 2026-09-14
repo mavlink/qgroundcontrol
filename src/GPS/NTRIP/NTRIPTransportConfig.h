@@ -27,6 +27,8 @@ struct NTRIPTransportConfig
     /// string if valid. Covers required fields plus control-character / RFC 7617
     /// injection guards so the manager can reject before any socket is allocated.
     QString validationError() const;
+    /// Streaming requires a mountpoint; source-table discovery does not.
+    QString streamValidationError() const;
 
     bool isValid() const { return validationError().isEmpty(); }
 

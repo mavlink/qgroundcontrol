@@ -193,7 +193,8 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
                                                         _mockConfig->gimbalHasYawFollow(),
                                                         _mockConfig->gimbalHasYawLock(),
                                                         _mockConfig->gimbalHasRetract(),
-                                                        _mockConfig->gimbalHasNeutral())
+                                                        _mockConfig->gimbalHasNeutral(),
+                                                        static_cast<uint8_t>(_mockConfig->gimbalDeviceId()))
                                     : nullptr)
     , _mockLinkPX4Calibration(new MockLinkPX4Calibration(this))
     , _mockLinkFTP(new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this))
@@ -2376,10 +2377,17 @@ void MockLink::_sendAttitudeQuaternion()
     const uint32_t timeBootMs = static_cast<uint32_t>(_runningTime.elapsed());
     const float t = timeBootMs / 1000.0f;
 
-    // Synthesize sinusoidal Euler angles (rad)
-    const float roll  = 0.20f * std::sin(2.0f * static_cast<float>(M_PI) * 0.50f * t);
-    const float pitch = 0.10f * std::sin(2.0f * static_cast<float>(M_PI) * 0.40f * t);
-    const float yaw   = 0.30f * std::sin(2.0f * static_cast<float>(M_PI) * 0.10f * t);
+    AttitudeOverride override;
+    {
+        QMutexLocker locker(&_attitudeOverrideMutex);
+        override = _attitudeOverride;
+    }
+    const bool overridden = override.enabled;
+
+    // Synthesize sinusoidal Euler angles (rad) unless a test pinned the attitude
+    const float roll  = overridden ? override.rollRad  : 0.20f * std::sin(2.0f * static_cast<float>(M_PI) * 0.50f * t);
+    const float pitch = overridden ? override.pitchRad : 0.10f * std::sin(2.0f * static_cast<float>(M_PI) * 0.40f * t);
+    const float yaw   = overridden ? override.yawRad   : 0.30f * std::sin(2.0f * static_cast<float>(M_PI) * 0.10f * t);
 
     // ZYX Euler → quaternion
     const float cr = std::cos(roll  / 2.0f), sr = std::sin(roll  / 2.0f);
@@ -2391,9 +2399,9 @@ void MockLink::_sendAttitudeQuaternion()
     const float q4 = cr * cp * sy - sr * sp * cy; // z
 
     // Body rates = time-derivatives of the Euler angles
-    const float rollspeed  = 0.20f * (2.0f * static_cast<float>(M_PI) * 0.50f) * std::cos(2.0f * static_cast<float>(M_PI) * 0.50f * t);
-    const float pitchspeed = 0.10f * (2.0f * static_cast<float>(M_PI) * 0.40f) * std::cos(2.0f * static_cast<float>(M_PI) * 0.40f * t);
-    const float yawspeed   = 0.30f * (2.0f * static_cast<float>(M_PI) * 0.10f) * std::cos(2.0f * static_cast<float>(M_PI) * 0.10f * t);
+    const float rollspeed  = overridden ? 0.0f : 0.20f * (2.0f * static_cast<float>(M_PI) * 0.50f) * std::cos(2.0f * static_cast<float>(M_PI) * 0.50f * t);
+    const float pitchspeed = overridden ? 0.0f : 0.10f * (2.0f * static_cast<float>(M_PI) * 0.40f) * std::cos(2.0f * static_cast<float>(M_PI) * 0.40f * t);
+    const float yawspeed   = overridden ? 0.0f : 0.30f * (2.0f * static_cast<float>(M_PI) * 0.10f) * std::cos(2.0f * static_cast<float>(M_PI) * 0.10f * t);
 
     const float reprOffsetQ[4] = {1.0f, 0.0f, 0.0f, 0.0f}; // identity
 
@@ -3257,6 +3265,21 @@ void MockLink::simulateConnectionRemoved()
 MockLinkFTP *MockLink::mockLinkFTP() const
 {
     return _mockLinkFTP;
+}
+
+void MockLink::setVehicleAttitudeOverrideDeg(float rollDeg, float pitchDeg, float yawDeg)
+{
+    QMutexLocker locker(&_attitudeOverrideMutex);
+    _attitudeOverride.enabled = true;
+    _attitudeOverride.rollRad = qDegreesToRadians(rollDeg);
+    _attitudeOverride.pitchRad = qDegreesToRadians(pitchDeg);
+    _attitudeOverride.yawRad = qDegreesToRadians(yawDeg);
+}
+
+void MockLink::clearVehicleAttitudeOverride()
+{
+    QMutexLocker locker(&_attitudeOverrideMutex);
+    _attitudeOverride.enabled = false;
 }
 
 void MockLink::_sendAvailableMode(uint8_t modeIndexOneBased)
