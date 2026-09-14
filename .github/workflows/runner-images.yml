@@ -1,0 +1,145 @@
+name: Runner Images
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: runner-images
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ubuntu24-x64:
+    name: Ubuntu 24 x64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Validate source branch
+        shell: bash
+        env:
+          CURRENT_REF: ${{ github.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          expected_ref="refs/heads/${DEFAULT_BRANCH}"
+          if [[ "${CURRENT_REF}" != "${expected_ref}" ]]; then
+            echo "::error::Runner images must be built from ${expected_ref}; got ${CURRENT_REF}"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            .github/actions/aws-credentials
+            .github/build-config.json
+            .github/runner-images
+            .github/scripts/aws_upload.py
+            .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
+            tools/common
+            tools/setup/read_config.py
+          sparse-checkout-cone-mode: false
+
+      - name: Validate settings
+        shell: bash
+        env:
+          ROLE_ARN: ${{ secrets.RUNS_ON_AMI_ROLE_ARN }}
+          SUBNET_ID: ${{ vars.RUNS_ON_AMI_SUBNET_ID }}
+        run: |
+          if [[ -z "${ROLE_ARN}" || -z "${SUBNET_ID}" ]]; then
+            echo "::error::Configure RUNS_ON_AMI_ROLE_ARN and RUNS_ON_AMI_SUBNET_ID before dispatching this workflow"
+            exit 1
+          fi
+
+      - name: Configure AWS Credentials
+        uses: ./.github/actions/aws-credentials
+        with:
+          aws-role-arn: ${{ secrets.RUNS_ON_AMI_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
+
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@v3
+        with:
+          version: '1.16.0'
+
+      - name: Resolve build configuration
+        id: build-config
+        shell: bash
+        run: |
+          {
+            echo "qt_version=$(python3 tools/setup/read_config.py --get qt.version)"
+            echo "qt_modules=$(python3 tools/setup/read_config.py --get qt.modules)"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Build runner image
+        working-directory: .github/runner-images
+        env:
+          PKR_VAR_aws_region: ${{ vars.AWS_REGION || 'us-west-2' }}
+          PKR_VAR_subnet_id: ${{ vars.RUNS_ON_AMI_SUBNET_ID }}
+          PKR_VAR_source_repository: ${{ github.server_url }}/${{ github.repository }}.git
+          PKR_VAR_source_ref: ${{ github.sha }}
+          PKR_VAR_qt_version: ${{ steps.build-config.outputs.qt_version }}
+          PKR_VAR_qt_modules: ${{ steps.build-config.outputs.qt_modules }}
+        run: |
+          packer fmt -check qgc-ubuntu24-x64.pkr.hcl
+          packer init qgc-ubuntu24-x64.pkr.hcl
+          packer validate qgc-ubuntu24-x64.pkr.hcl
+          packer build qgc-ubuntu24-x64.pkr.hcl
+
+      - name: Upload Packer manifest
+        uses: actions/upload-artifact@v7
+        with:
+          name: qgc-ubuntu24-x64-packer-manifest
+          path: .github/runner-images/packer-manifest.json
+          if-no-files-found: error
+          retention-days: 30
+
+  smoke-test:
+    name: Smoke Test Ubuntu 24 x64
+    needs: ubuntu24-x64
+    if: github.repository_owner == 'mavlink'
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+        format('runs-on={0}/runner=linux-x64-builder-prebaked', github.run_id) ||
+        'ubuntu-24.04'
+      }}
+    timeout-minutes: 10
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Verify runner image
+        shell: bash
+        run: |
+          shopt -s nullglob
+          qt_roots=(/opt/qgc-sdk/Qt/*/gcc_64)
+          if (( ${#qt_roots[@]} != 1 )); then
+            echo "::error::Expected exactly one preinstalled Qt SDK, found ${#qt_roots[@]}"
+            exit 1
+          fi
+
+          qt_root="${qt_roots[0]}"
+          test -x "${qt_root}/bin/qt-cmake"
+          test -f "${qt_root}/.qgc-modules"
+          "${qt_root}/bin/qt-cmake" --version
+          cmake --version
+          ninja --version
+          dpkg-query -W libgstreamer1.0-dev libxcb-cursor-dev patchelf

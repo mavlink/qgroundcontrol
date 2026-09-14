@@ -29,3 +29,12 @@
 -
 +
  # Unfortunately, the dependencies don't work for INTERFACE libraries.
+--- a/pymavlink/generator/mavgen_c.py
++++ b/pymavlink/generator/mavgen_c.py
+@@ -24,6 +24,5 @@ def generate_version_h(directory, xml):
+ #ifndef MAVLINK_VERSION_H
+ #define MAVLINK_VERSION_H
+
+-#define MAVLINK_BUILD_DATE "${parse_time}"
+ #define MAVLINK_WIRE_PROTOCOL_VERSION "${wire_protocol_version}"
+ #define MAVLINK_MAX_DIALECT_PAYLOAD_SIZE ${largest_payload}

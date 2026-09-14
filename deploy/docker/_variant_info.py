@@ -8,16 +8,14 @@ flags. With no argument (or an unknown id) it lists the valid ids and exits 1.
 
 from __future__ import annotations
 
-import json
 import shlex
 import sys
-from pathlib import Path
 
-VARIANTS_JSON = Path(__file__).resolve().parent / "variants.json"
+from _variants import load_variants
 
 
 def main(argv: list[str]) -> int:
-    variants = json.loads(VARIANTS_JSON.read_text())["variants"]
+    variants = load_variants()
     by_id = {v["id"]: v for v in variants}
 
     requested = argv[1] if len(argv) > 1 else ""

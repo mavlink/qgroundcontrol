@@ -10,7 +10,9 @@
 #include "LogManager.h"
 #include "MissionCommandList.h"
 #include "PowerModulePresetController.h"
+#ifndef QGC_NO_SERIAL_LINK
 #include "QGCSerialPortInfo.h"
+#endif
 
 void JsonResourceAuditTest::_verifyNoWarnings(const QString& jsonPath, const QString& category)
 {
@@ -78,8 +80,10 @@ void JsonResourceAuditTest::_allResourceJsonParsesClean_test()
             qDeleteAll(CameraMetaData::parseCameraMetaData());
             _verifyNoWarnings(jsonPath, QStringLiteral("Camera.CameraMetaData"));
         } else if (fileType == QLatin1String("USBBoardInfo")) {
+#ifndef QGC_NO_SERIAL_LINK
             QVERIFY2(QGCSerialPortInfo::_loadJsonData(), "USBBoardInfo.json failed to load");
             _verifyNoWarnings(jsonPath, QStringLiteral("Comms.QGCSerialPortInfo"));
+#endif
         } else if (fileType == QLatin1String("PowerModulePresets")) {
             PowerModulePresetController controller;
             QVERIFY2(!controller.powerModulePresets().isEmpty(), "No power module presets parsed");

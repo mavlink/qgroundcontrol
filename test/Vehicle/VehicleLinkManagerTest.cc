@@ -113,12 +113,15 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest()
     // Losing comms while the AVAILABLE_MODES enumeration is still in flight fails the request.
     ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg,
                      QRegularExpression("Failed to retrieve available modes"));
-    SharedLinkConfigurationPtr mockConfig1;
-    SharedLinkInterfacePtr mockLink1;
-    SharedLinkConfigurationPtr mockConfig2;
-    SharedLinkInterfacePtr mockLink2;
-    _startMockLink(1, false /*highLatency*/, false /*incrementVehicleId*/, mockConfig1, mockLink1);
-    _startMockLink(2, false /*highLatency*/, false /*incrementVehicleId*/, mockConfig2, mockLink2);
+    struct MockLinkInfo {
+        SharedLinkConfigurationPtr config;
+        SharedLinkInterfacePtr link;
+        MockLink* mock = nullptr;
+    };
+    MockLinkInfo primary;
+    MockLinkInfo secondary;
+    _startMockLink(1, false /*highLatency*/, false /*incrementVehicleId*/, primary.config, primary.link);
+    _startMockLink(2, false /*highLatency*/, false /*incrementVehicleId*/, secondary.config, secondary.link);
 
     Vehicle* const vehicle = waitForVehicleConnect(TestTimeout::shortMs());
     QVERIFY(vehicle);
@@ -132,84 +135,91 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest()
                       TestTimeout::mediumMs());
 
     // The first link to start sending a heartbeat will be the primary link.
-    // Depending on how the thread scheduling works, that could be the mockLink2.
+    // Depending on how the thread scheduling works, that could be the second link started.
     const SharedLinkInterfacePtr primaryLink = vehicleLinkManager->primaryLink().lock();
-    QVERIFY(primaryLink == mockLink1 || primaryLink == mockLink2);
-
-    MockLink* pMockLink1 = qobject_cast<MockLink*>(mockLink1.get());
-    MockLink* pMockLink2 = qobject_cast<MockLink*>(mockLink2.get());
-    QVERIFY(pMockLink1);
-    QVERIFY(pMockLink2);
-    if (primaryLink == mockLink2) {
-        std::swap(pMockLink1, pMockLink2);
+    QVERIFY(primaryLink == primary.link || primaryLink == secondary.link);
+    if (primaryLink == secondary.link) {
+        std::swap(primary, secondary);
     }
+
+    primary.mock = qobject_cast<MockLink*>(primary.link.get());
+    secondary.mock = qobject_cast<MockLink*>(secondary.link.get());
+    QVERIFY(primary.mock);
+    QVERIFY(secondary.mock);
 
     const QStringList rgNames = vehicleLinkManager->linkNames();
     QStringList rgStatus = vehicleLinkManager->linkStatuses();
     QCOMPARE(rgNames.count(), 2);
-    QCOMPARE(rgNames[0], mockConfig1->name());
-    QCOMPARE(rgNames[1], mockConfig2->name());
+    // linkNames()/linkStatuses() are ordered by link add order, not primary-first,
+    // so look up indices by name
+    const qsizetype primaryIdx = rgNames.indexOf(primary.config->name());
+    const qsizetype secondaryIdx = rgNames.indexOf(secondary.config->name());
+    QVERIFY(primaryIdx != -1);
+    QVERIFY(secondaryIdx != -1);
+    QVERIFY(primaryIdx != secondaryIdx);
     QCOMPARE(rgStatus.count(), 2);
-    QVERIFY(rgStatus[0].isEmpty());
-    QVERIFY(rgStatus[1].isEmpty());
+    QVERIFY(rgStatus[primaryIdx].isEmpty());
+    QVERIFY(rgStatus[secondaryIdx].isEmpty());
 
     MultiSignalSpy multiSpy;
     QVERIFY(multiSpy.init(vehicleLinkManager));
 
-    // Comm lost on 2: 1 is primary, 2 is secondary so comm loss/regain on 2 should only update status text
-    pMockLink2->setCommLost(true);
+    // Comm loss/regain on the secondary link should only update status text
+    secondary.mock->setCommLost(true);
     QCOMPARE(multiSpy.waitForSignal(_linkStatusesChangedSignalName, VehicleLinkManager::kTestCommLostDetectionTimeoutMs),
              true);
     QVERIFY(multiSpy.onlyEmitted(_linkStatusesChangedSignalName));
 
     rgStatus = vehicleLinkManager->linkStatuses();
     QCOMPARE(rgStatus.count(), 2);
-    QVERIFY(rgStatus[0].isEmpty());
-    QVERIFY(!rgStatus[1].isEmpty());
+    QVERIFY(rgStatus[primaryIdx].isEmpty());
+    QVERIFY(!rgStatus[secondaryIdx].isEmpty());
 
     multiSpy.clearAllSignals();
 
-    pMockLink2->setCommLost(false);
+    secondary.mock->setCommLost(false);
     QCOMPARE(multiSpy.waitForSignal(_linkStatusesChangedSignalName, VehicleLinkManager::kTestCommLostDetectionTimeoutMs),
              true);
     QVERIFY(multiSpy.onlyEmitted(_linkStatusesChangedSignalName));
 
     rgStatus = vehicleLinkManager->linkStatuses();
     QCOMPARE(rgStatus.count(), 2);
-    QVERIFY(rgStatus[0].isEmpty());
-    QVERIFY(rgStatus[1].isEmpty());
+    QVERIFY(rgStatus[primaryIdx].isEmpty());
+    QVERIFY(rgStatus[secondaryIdx].isEmpty());
 
     multiSpy.clearAllSignals();
 
-    // Comm loss on 1: 1 is primary so should trigger switch of primary to 2
+    // Comm loss on the primary link should switch primary to the secondary
     // Switching primary produces a showAppMessage debug log.
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression("Switching communication to secondary link"));
-    pMockLink1->setCommLost(true);
+    primary.mock->setCommLost(true);
     QCOMPARE(multiSpy.waitForSignal(_primaryLinkChangedSignalName, VehicleLinkManager::kTestCommLostDetectionTimeoutMs),
              true);
     QVERIFY(
         multiSpy.onlyEmittedOnce(_primaryLinkChangedSignalName, _linkStatusesChangedSignalName));
 
-    QCOMPARE(pMockLink2, vehicleLinkManager->primaryLink().lock().get());
+    QCOMPARE(secondary.mock, vehicleLinkManager->primaryLink().lock().get());
+    // Primary switch must not reorder the link list, otherwise the cached indices are invalid
+    QCOMPARE(vehicleLinkManager->linkNames(), rgNames);
     rgStatus = vehicleLinkManager->linkStatuses();
     QCOMPARE(rgStatus.count(), 2);
-    QVERIFY(!rgStatus[0].isEmpty());
-    QVERIFY(rgStatus[1].isEmpty());
+    QVERIFY(!rgStatus[primaryIdx].isEmpty());
+    QVERIFY(rgStatus[secondaryIdx].isEmpty());
 
     multiSpy.clearAllSignals();
 
-    // Comm regained on 1 should leave 2 as primary and only update status
-    pMockLink1->setCommLost(false);
+    // Comm regained on the original primary should leave the secondary as primary and only update status
+    primary.mock->setCommLost(false);
     QCOMPARE(multiSpy.waitForSignal(_linkStatusesChangedSignalName, VehicleLinkManager::kTestCommLostDetectionTimeoutMs),
              true);
     QVERIFY(multiSpy.onlyEmitted(_linkStatusesChangedSignalName));
 
-    QCOMPARE(pMockLink2, vehicleLinkManager->primaryLink().lock().get());
+    QCOMPARE(secondary.mock, vehicleLinkManager->primaryLink().lock().get());
     rgStatus = vehicleLinkManager->linkStatuses();
     QCOMPARE(rgStatus.count(), 2);
-    QVERIFY(rgStatus[0].isEmpty());
-    QVERIFY(rgStatus[1].isEmpty());
+    QVERIFY(rgStatus[primaryIdx].isEmpty());
+    QVERIFY(rgStatus[secondaryIdx].isEmpty());
 
     multiSpy.clearAllSignals();
 }
@@ -276,6 +286,8 @@ void VehicleLinkManagerTest::_connectionRemovedTest()
     // Connection removal makes MavCommandQueue give up pending commands, same as the comm-loss tests.
     ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
                      QRegularExpression("Giving up sending command after max retries:"));
+    // AVAILABLE_MODES may still be pending when the connection is removed.
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
 
     SharedLinkConfigurationPtr mockConfig;
     SharedLinkInterfacePtr mockLink;

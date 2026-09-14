@@ -22,8 +22,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         MAVLinkProtocol.h
         TCPLink.cc
         TCPLink.h
-        UdpIODevice.cc
-        UdpIODevice.h
         UDPLink.cc
         UDPLink.h
 )
@@ -54,6 +52,8 @@ else()
         PRIVATE
             QGCSerialPortInfo.cc
             QGCSerialPortInfo.h
+            SerialPortManager.cc
+            SerialPortManager.h
             SerialLink.cc
             SerialLink.h
     )

@@ -4,10 +4,8 @@
 
 #include "Fact.h"
 #include "FactGroup.h"
-#ifndef QGC_NO_SERIAL_LINK
 #include "GPSManager.h"
 #include "GPSRtk.h"
-#endif
 #include "MultiVehicleManager.h"
 #include "NMEAUtils.h"
 #include "NTRIPSettings.h"
@@ -68,7 +66,6 @@ PositionResult getVehicleEKFPosition()
     return {};
 }
 
-#ifndef QGC_NO_SERIAL_LINK
 PositionResult getRTKBasePosition()
 {
     GPSManager* gpsManager = GPSManager::instance();
@@ -101,7 +98,6 @@ PositionResult getRTKBasePosition()
     }
     return {};
 }
-#endif // QGC_NO_SERIAL_LINK
 
 PositionResult getGCSPosition()
 {
@@ -236,9 +232,7 @@ void NTRIPGgaProvider::_ensureDefaultProviders()
     static const std::pair<PositionSource, PositionProvider> kDefaults[] = {
         {PositionSource::VehicleGPS, &getVehicleGPSPosition},
         {PositionSource::VehicleEKF, &getVehicleEKFPosition},
-#ifndef QGC_NO_SERIAL_LINK
         {PositionSource::RTKBase, &getRTKBasePosition},
-#endif
         {PositionSource::GCSPosition, &getGCSPosition},
     };
     for (const auto& [source, provider] : kDefaults) {

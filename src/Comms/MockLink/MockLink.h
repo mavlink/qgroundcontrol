@@ -67,6 +67,12 @@ public:
     void setCalibrationPose(MockLinkPX4Calibration::Pose pose) const { _mockLinkPX4Calibration->setPose(pose); }
 
     MockLinkFTP *mockLinkFTP() const;
+    MockLinkGimbal *mockLinkGimbal() const { return _mockLinkGimbal; }
+
+    /// Test API: pins the simulated vehicle attitude (degrees) in place of the default sinusoid.
+    /// Heading reported by Vehicle::heading() is truncated to whole degrees, so pass integral yaw.
+    void setVehicleAttitudeOverrideDeg(float rollDeg, float pitchDeg, float yawDeg);
+    void clearVehicleAttitudeOverride();
 
     /// Set the armed state of the simulated vehicle
     void setArmed(bool armed) { if (armed) _mavBaseMode |= MAV_MODE_FLAG_SAFETY_ARMED; else _mavBaseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED; }
@@ -201,6 +207,8 @@ public:
     void setRemoteIDArmStatus(uint8_t status, const QString& error);
 
     static MockLink *startPX4MockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone, MockConfiguration::VideoStreamType videoStreamType = MockConfiguration::VideoStreamNone);
+    /// Starts a MockLink from a fully caller-configured MockConfiguration (ownership transfers to LinkManager)
+    static MockLink *startMockLink(MockConfiguration *mockConfig) { return _startMockLink(mockConfig); }
     static MockLink *startPX4MockLinkWithMission(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink *startGenericMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone, MockConfiguration::VideoStreamType videoStreamType = MockConfiguration::VideoStreamNone);
     static MockLink *startNoInitialConnectMockLink(MockConfiguration::Options options = MockConfiguration::OptionNone, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
@@ -369,6 +377,16 @@ private:
     MockLinkGimbal *const _mockLinkGimbal = nullptr;
     MockLinkPX4Calibration *const _mockLinkPX4Calibration = nullptr;
     MockLinkFTP *const _mockLinkFTP = nullptr;
+
+    // Written by test thread, read by worker thread in _sendAttitudeQuaternion; one lock so a frame never mixes old and new angles
+    struct AttitudeOverride {
+        bool enabled = false;
+        float rollRad = 0.0f;
+        float pitchRad = 0.0f;
+        float yawRad = 0.0f;
+    };
+    mutable QMutex _attitudeOverrideMutex;
+    AttitudeOverride _attitudeOverride;
 
     const MockConfiguration::VideoStreamType _requestedVideoStreamType = MockConfiguration::VideoStreamNone;
     MockVideoStreamServer *_videoStreamServer = nullptr;

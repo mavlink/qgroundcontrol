@@ -85,9 +85,9 @@ The `just configure` and `just build` recipes use the matching `default*` config
 presets for `BUILD_TYPE`. `just test` always uses the `default` test preset and passes `BUILD_TYPE`
 through `--build-config`. `tools/configure.py` selects a configure preset by build type and accepts
 an explicit `--preset`; `--no-preset` is reserved for unsupported custom toolchains. Coverage uses
-`Linux-coverage`. Docker and Multipass builders invoke `qt-cmake` directly because their mounted
-paths and cross-toolchains are assembled at runtime; Vagrant uses the `Linux` preset with a build
-directory override.
+`Linux-coverage`. Docker uses the platform presets with mounted build-directory overrides;
+unsupported build types and its dynamic ARM64 sysroot keep explicit `qt-cmake` configuration.
+Multipass invokes `qt-cmake` directly; Vagrant uses the `Linux` preset with a build-directory override.
 
 | Preset family | Required environment | Notes |
 | --- | --- | --- |

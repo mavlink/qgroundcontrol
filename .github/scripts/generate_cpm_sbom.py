@@ -154,9 +154,89 @@ def generate_sbom(build_dir: Path) -> dict:
     return sbom
 
 
+def generate_spdx(build_dir: Path) -> dict:
+    """Return an SPDX dependency snapshot suitable for GitHub submission."""
+    cyclonedx = generate_sbom(build_dir)
+    root_id = "SPDXRef-Package-QGroundControl"
+    packages: list[dict] = [
+        {
+            "SPDXID": root_id,
+            "name": "QGroundControl",
+            "downloadLocation": "https://github.com/mavlink/qgroundcontrol",
+            "filesAnalyzed": False,
+            "licenseConcluded": "NOASSERTION",
+            "licenseDeclared": "NOASSERTION",
+            "copyrightText": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:github/mavlink/qgroundcontrol",
+                }
+            ],
+        }
+    ]
+    relationships = [
+        {
+            "spdxElementId": "SPDXRef-DOCUMENT",
+            "relationshipType": "DESCRIBES",
+            "relatedSpdxElement": root_id,
+        }
+    ]
+
+    for index, component in enumerate(cyclonedx["components"], start=1):
+        safe_name = re.sub(r"[^A-Za-z0-9.-]", "-", component["name"])
+        package_id = f"SPDXRef-Package-{safe_name}-{index}"
+        external_references = component.get("externalReferences", [])
+        package = {
+            "SPDXID": package_id,
+            "name": component["name"],
+            "versionInfo": component["version"],
+            "downloadLocation": (
+                external_references[0]["url"] if external_references else "NOASSERTION"
+            ),
+            "filesAnalyzed": False,
+            "licenseConcluded": "NOASSERTION",
+            "licenseDeclared": "NOASSERTION",
+            "copyrightText": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": component["purl"],
+                }
+            ],
+        }
+        packages.append(package)
+        relationships.append(
+            {
+                "spdxElementId": root_id,
+                "relationshipType": "DEPENDS_ON",
+                "relatedSpdxElement": package_id,
+            }
+        )
+
+    return {
+        "spdxVersion": "SPDX-2.2",
+        "dataLicense": "CC0-1.0",
+        "SPDXID": "SPDXRef-DOCUMENT",
+        "name": "QGroundControl CPM dependencies",
+        "documentNamespace": (
+            f"https://github.com/mavlink/qgroundcontrol/dependency-sbom/{uuid.uuid4()}"
+        ),
+        "creationInfo": {
+            "created": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "creators": ["Tool: generate_cpm_sbom-1.0.0"],
+        },
+        "packages": packages,
+        "relationships": relationships,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build-dir", type=Path, required=True, help="CMake build directory")
+    parser.add_argument("--format", choices=("cyclonedx", "spdx"), default="cyclonedx")
     parser.add_argument("--output", "-o", type=Path, help="Output file (default: stdout)")
     parser.add_argument(
         "--require-components",
@@ -165,8 +245,9 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    sbom = generate_sbom(args.build_dir)
-    if args.require_components and not sbom["components"]:
+    sbom = generate_spdx(args.build_dir) if args.format == "spdx" else generate_sbom(args.build_dir)
+    count = len(sbom["packages"]) - 1 if args.format == "spdx" else len(sbom["components"])
+    if args.require_components and not count:
         print("Error: CPM dependency SBOM contains no components", file=sys.stderr)
         return 1
 
@@ -174,7 +255,7 @@ def main() -> int:
 
     if args.output:
         args.output.write_text(output, encoding="utf-8")
-        print(f"SBOM written to {args.output} ({len(sbom['components'])} components)")
+        print(f"SBOM written to {args.output} ({count} components)")
     else:
         print(output)
 

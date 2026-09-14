@@ -71,6 +71,10 @@ protected:
     /// failure stays in the offending test.
     void _verifyFileDialogTestHookConsumed();
 
+    /// Finds a QQuickItem by objectName in the visual tree regardless of visibility.
+    /// Use when asserting that an item is hidden. Returns nullptr if not found.
+    static QQuickItem* findItem(QQuickItem* root, const QString& objectName);
+
     /// Finds a visible QQuickItem by objectName in the visual tree, polling with
     /// 50ms intervals up to timeoutMs. Returns nullptr if not found within the timeout.
     static QQuickItem* findVisibleItem(QQuickItem* root, const QString& objectName, int timeoutMs = 1000);

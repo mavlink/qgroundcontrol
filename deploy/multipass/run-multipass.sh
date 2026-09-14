@@ -20,12 +20,33 @@ OUTPUT_DIR="${OUTPUT_DIR:-${PWD}}"
 SRC="${QGC_SOURCE_DIR:-}"
 GUEST_REPO="qgroundcontrol"                 # relative to the VM user's home
 
-cleanup() { multipass delete --purge "${NAME}" >/dev/null 2>&1 || true; }
+TARBALL=""
+VM_CREATED=0
+
+cleanup() {
+    if [[ -n "${TARBALL}" ]]; then
+        rm -f "${TARBALL}"
+    fi
+    if [[ "${VM_CREATED}" == 1 ]]; then
+        multipass delete --purge "${NAME}" >/dev/null 2>&1 || true
+    fi
+}
 trap cleanup EXIT
+
+if [[ -n "${SRC}" && ! -d "${SRC}" ]]; then
+    echo "Source directory does not exist: ${SRC}" >&2
+    exit 1
+fi
+if multipass info "${NAME}" >/dev/null 2>&1; then
+    echo "Multipass instance already exists: ${NAME}" >&2
+    exit 1
+fi
+mkdir -p "${OUTPUT_DIR}"
 
 # shellcheck disable=SC2086  # IMAGE is an optional positional arg; intentional split.
 multipass launch ${IMAGE:+"${IMAGE}"} \
     --name "${NAME}" --cpus "${CPUS}" --memory "${MEM}" --disk "${DISK}"
+VM_CREATED=1
 
 if [[ -n "${SRC}" ]]; then
     # Tarball + `multipass transfer`: `multipass mount` needs the multipass-sshfs snap (often
@@ -36,6 +57,7 @@ if [[ -n "${SRC}" ]]; then
     tar -C "${SRC}" -czf "${TARBALL}" .
     multipass transfer "${TARBALL}" "${NAME}:/tmp/qgc-src.tar.gz"
     rm -f "${TARBALL}"
+    TARBALL=""
     multipass exec "${NAME}" -- mkdir -p "${GUEST_REPO}"
     multipass exec "${NAME}" -- tar -C "${GUEST_REPO}" -xzf /tmp/qgc-src.tar.gz
 else

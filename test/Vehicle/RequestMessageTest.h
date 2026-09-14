@@ -33,6 +33,7 @@ private:
         int expectedMessageId;
         bool resultHandlerCalled;
         int callbackCount;
+        bool expectAckTimeout = false;  ///< Outcome depends on the ack timeout expiring at least once
     };
 
     void _testCaseWorker(TestCase_t& testCase);

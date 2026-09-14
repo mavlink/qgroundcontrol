@@ -63,13 +63,14 @@ MissionItemMapVisualBase {
         id: indicatorComponent
 
         MissionItemIndicator {
-            coordinate:     _missionItem.coordinate
-            visible:        _missionItem.specifiesCoordinate
-            z:              QGroundControl.zOrderMapItems
-            missionItem:    _missionItem
-            sequenceNumber: _missionItem.sequenceNumber
-            onClicked:      if(_root.interactive)  _root.clicked(_missionItem.sequenceNumber)
-            opacity:        _root.opacity
+            coordinate:       _missionItem.coordinate
+            indicatorGroup:   _root.indicatorGroup
+            indicatorVisible: _missionItem.specifiesCoordinate
+            interactive:      _root.interactive
+            missionItem:      _missionItem
+            sequenceNumber:   _missionItem.sequenceNumber
+            onClicked:        _root.clicked(_missionItem.sequenceNumber)
+            opacity:          _root.opacity
         }
     }
 

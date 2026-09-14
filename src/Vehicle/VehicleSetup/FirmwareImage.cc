@@ -421,7 +421,7 @@ bool FirmwareImage::_binLoad(const QString& imageFilename)
 {
     QFile binFile(imageFilename);
     if (!binFile.open(QIODevice::ReadOnly)) {
-        emit statusMessage(tr("Unabled to open firmware file %1, %2").arg(imageFilename, binFile.errorString()));
+        emit statusMessage(tr("Unable to open firmware file %1, %2").arg(imageFilename, binFile.errorString()));
         return false;
     }
 

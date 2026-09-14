@@ -133,6 +133,7 @@ private:
     const SerialConfiguration *_serialConfig = nullptr;
     QSerialPort *_port = nullptr;
     QTimer *_timer = nullptr;
+    std::atomic<bool> _isConnected{false};
     bool _errorEmitted = false;
 };
 

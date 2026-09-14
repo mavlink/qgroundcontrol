@@ -22,11 +22,8 @@ ensure_tools_dir(__file__)
 from common.gh_actions import parse_bool, write_github_output
 
 VARIANTS_JSON = Path(__file__).resolve().parents[2] / "deploy" / "docker" / "variants.json"
-
-
-def load_variants() -> list[dict[str, Any]]:
-    """Load the shared Docker variant definitions."""
-    return json.loads(VARIANTS_JSON.read_text())["variants"]
+sys.path.insert(0, str(VARIANTS_JSON.parents[2]))
+from deploy.docker._variants import load_variants
 
 
 def build_args_str(build_args: dict[str, str]) -> str:

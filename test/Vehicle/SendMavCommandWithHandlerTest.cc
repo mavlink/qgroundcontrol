@@ -1,5 +1,9 @@
 #include "SendMavCommandWithHandlerTest.h"
 
+#include <optional>
+
+#include "Fixtures/RAIIFixtures.h"
+#include "MavCommandQueue.h"
 #include "MultiVehicleManager.h"
 
 #include <QtCore/QRegularExpression>
@@ -10,19 +14,19 @@ SendMavCommandWithHandlerTest::TestCase_t SendMavCommandWithHandlerTest::_rgTest
     {MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_FAILED, MAV_RESULT_FAILED, false, Vehicle::MavCmdResultCommandResultOnly,
      1},
     {MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_ACCEPTED, MAV_RESULT_ACCEPTED, false,
-     Vehicle::MavCmdResultCommandResultOnly, 2},
+     Vehicle::MavCmdResultCommandResultOnly, 2, true},
     {MockLink::MAV_CMD_MOCKLINK_SECOND_ATTEMPT_RESULT_FAILED, MAV_RESULT_FAILED, false,
-     Vehicle::MavCmdResultCommandResultOnly, 2},
+     Vehicle::MavCmdResultCommandResultOnly, 2, true},
     {MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, MAV_RESULT_FAILED, false, Vehicle::MavCmdResultFailureNoResponseToCommand,
-     Vehicle::_mavCommandMaxRetryCount},
+     MavCommandQueue::kMaxRetryCount, true},
     {MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE_NO_RETRY, MAV_RESULT_FAILED, false,
-     Vehicle::MavCmdResultFailureNoResponseToCommand, 1},
+     Vehicle::MavCmdResultFailureNoResponseToCommand, 1, true},
     {MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_ACCEPTED, MAV_RESULT_ACCEPTED, true,
      Vehicle::MavCmdResultCommandResultOnly, 1},
     {MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_FAILED, MAV_RESULT_FAILED, true,
      Vehicle::MavCmdResultCommandResultOnly, 1},
     {MockLink::MAV_CMD_MOCKLINK_RESULT_IN_PROGRESS_NO_ACK, MAV_RESULT_FAILED, true,
-     Vehicle::MavCmdResultFailureNoResponseToCommand, 1},
+     Vehicle::MavCmdResultFailureNoResponseToCommand, 1, true},
 };
 bool SendMavCommandWithHandlerTest::_resultHandlerCalled = false;
 bool SendMavCommandWithHandlerTest::_progressHandlerCalled = false;
@@ -54,6 +58,11 @@ void SendMavCommandWithHandlerTest::_mavCmdProgressHandler(void* progressHandler
 
 void SendMavCommandWithHandlerTest::_testCaseWorker(TestCase_t& testCase)
 {
+    std::optional<TestFixtures::MavCommandAckTimeoutFixture> shortAckTimeout;
+    if (testCase.expectAckTimeout) {
+        shortAckTimeout.emplace();
+    }
+
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};

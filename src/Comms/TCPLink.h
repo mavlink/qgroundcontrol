@@ -82,6 +82,7 @@ private slots:
 private:
     const TCPConfiguration *_config = nullptr;
     QTcpSocket *_socket = nullptr;
+    std::atomic<bool> _isConnected{false};
     std::atomic<bool> _errorEmitted{false};
 };
 

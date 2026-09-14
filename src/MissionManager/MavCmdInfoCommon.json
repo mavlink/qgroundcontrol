@@ -462,7 +462,7 @@
         {
             "id":                       113,
             "rawName":                  "MAV_CMD_CONDITION_CHANGE_ALT",
-            "description":              "Delay the mission until the specified altitide is reached.",
+            "description":              "Delay the mission until the specified altitude is reached.",
             "friendlyName":             "Wait for altitude",
             "category":                 "Conditionals",
             "specifiesCoordinate":      false,

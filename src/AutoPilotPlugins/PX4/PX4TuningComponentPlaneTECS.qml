@@ -20,7 +20,7 @@ ColumnLayout {
             property var plot: [
                 { name: "Airspeed", value: globals.activeVehicle.airSpeed.value },
                 { name: "Airspeed Setpoint", value: globals.activeVehicle.airSpeedSetpoint.value },
-                { name: "Altitide (Rel)", value: globals.activeVehicle.altitudeTuning.value },
+                { name: "Altitude (Rel)", value: globals.activeVehicle.altitudeTuning.value },
                 { name: "Altitude Setpoint", value: globals.activeVehicle.altitudeTuningSetpoint.value }
             ]
             property var params: ListModel {

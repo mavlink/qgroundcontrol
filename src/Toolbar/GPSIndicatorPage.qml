@@ -134,7 +134,8 @@ ToolIndicatorPage {
 
                 LabelledLabel {
                     label:      qsTr("Duration")
-                    labelText:  QGroundControl.gpsRtk.currentDuration.value + ' s'
+                    //: %1 is Survey-In duration in seconds
+                    labelText:  qsTr("%1 s").arg(QGroundControl.gpsRtk.currentDuration.value)
                 }
 
                 LabelledLabel {

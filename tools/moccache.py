@@ -12,7 +12,7 @@ or set MOCCACHE_MOC=/path/to/moc and invoke:
 or trim the cache to a size limit (LRU eviction):
     moccache.py --trim [--max-size 256M]
 or report / reset recorded stats (requires MOCCACHE_STATS during the build):
-    moccache.py --show-stats
+    moccache.py --show-stats --build-dir DIR [--verbose]
     moccache.py --zero-stats
 
 Environment:
@@ -26,7 +26,31 @@ Environment:
                       LRU-trimmed opportunistically after misses (at most once
                       per hour). Unset = unlimited.
     MOCCACHE_DISABLE  If set, always pass through to real moc.
-    MOCCACHE_STATS    If set, append hit/miss lines to $MOCCACHE_DIR/stats.log.
+    MOCCACHE_STATS    If set, append "<kind>\t<input>\t<epoch>\t<basedir>\t<detail>"
+                      lines to $MOCCACHE_DIR/stats.log. --show-stats reports
+                      only the ninja build in DIR (entries newer than the
+                      build start derived from DIR/.ninja_log, from this
+                      MOCCACHE_BASEDIR) and then prunes that build dir's older
+                      entries, so the log stays about one build long (other
+                      build dirs' entries are left for their own reports; when
+                      the build start cannot be derived it reports everything).
+                      The log is always capped at _STATS_LOG_MAX_LINES. The
+                      CMake-generated moccache-stats post-build script runs it
+                      after linking.
+
+Stats kinds. Misses carry a reason so legitimate misses can be told apart
+from cache-design problems (a per-input index of recent keys under
+$MOCCACHE_DIR/index makes the comparison possible). --show-stats prints each
+kind's count with the explanation from _KIND_DESCRIPTIONS; in short:
+    expected      miss-first-seen, miss-header-changed, miss-include-changed
+                  (detail = the include), miss-predefs-changed (after a
+                  compiler-flag change), miss-moc-version-changed (Qt upgrade)
+    investigate   miss-args-changed (detail = first differing arg; -I/-D churn
+                  between build trees defeats sharing), miss-output-depth-differs
+    cache size    miss-cache-evicted, miss-history-evicted -> raise MOCCACHE_MAX_SIZE
+    other         miss-uncacheable (moc gave no dep file), miss-cache-unreadable
+                  (entry incomplete or could not be copied out), cache-trimmed
+                  (detail = entries evicted)
 """
 
 from __future__ import annotations
@@ -219,10 +243,11 @@ def _atomic_copy(src: Path, dst: Path) -> None:
 
 
 def _atomic_write(dst: Path, data: str) -> None:
+    """Replace dst with data as UTF-8/LF, independent of the platform locale."""
     dst.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=str(dst.parent), prefix=".moccache-")
     try:
-        with os.fdopen(fd, "w") as f:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
             f.write(data)
         os.replace(tmp, dst)
     except BaseException:
@@ -233,6 +258,23 @@ def _atomic_write(dst: Path, data: str) -> None:
 
 def _make_escape(path: str) -> str:
     return path.replace(" ", "\\ ")
+
+
+def _append_line(path: Path, line: str) -> None:
+    """Append one line as a single write(2) on an O_APPEND descriptor.
+
+    The OS performs each such write atomically on local filesystems, so
+    concurrent processes cannot interleave or clobber each other's lines;
+    buffered text I/O gives no such guarantee. (Lines over PIPE_BUF, 4 KiB
+    on POSIX, lose it too.)
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    flags = os.O_WRONLY | os.O_APPEND | os.O_CREAT | getattr(os, "O_BINARY", 0)
+    fd = os.open(path, flags, 0o600)
+    try:
+        os.write(fd, (line + "\n").encode("utf-8"))
+    finally:
+        os.close(fd)
 
 
 _BASEDIR_TOKEN = "<<MOCCACHE_BASEDIR>>"
@@ -278,14 +320,141 @@ def _write_dep_file(dst: Path, target: str, deps: list[str]) -> None:
     _atomic_write(dst, f"{_make_escape(target)}: \\\n  {body}\n")
 
 
-def _log_stat(cache_dir: Path, what: str, input_file: str) -> None:
+_STAT_FIELD_BREAKERS = str.maketrans({"\t": " ", "\n": " ", "\r": " "})
+_SHA256_HEX = re.compile(r"[0-9a-f]{64}")
+
+
+def _log_stat(cache_dir: Path, what: str, input_file: str, detail: str = "") -> None:
+    """Append a stats line; input_file is a moc input path or "" for non-input events."""
     if not os.environ.get("MOCCACHE_STATS"):
         return
+    basedir = os.environ.get("MOCCACHE_BASEDIR", "")
+    # Free-text fields must not be able to break the tab-separated record.
+    input_file, basedir, detail = (
+        s.translate(_STAT_FIELD_BREAKERS) for s in (input_file, basedir, detail)
+    )
+    with contextlib.suppress(OSError):
+        _append_line(
+            cache_dir / "stats.log",
+            f"{what}\t{input_file}\t{time.time():.3f}\t{basedir}\t{detail}",
+        )
+
+
+# Per-input index of recent cache keys, used only to explain misses.
+_INDEX_MAX_KEYS = 8
+
+# Shown next to each kind in --show-stats so the report is self-explanatory.
+_KIND_DESCRIPTIONS = {
+    "miss-first-seen": "first time this header was moc'd",
+    "miss-header-changed": "the header itself changed",
+    "miss-include-changed": "a header it includes changed",
+    "miss-predefs-changed": "moc_predefs.h changed: compiler flags or SDK differ",
+    "miss-moc-version-changed": "moc version changed",
+    "miss-args-changed": "moc arguments differ: build trees not sharing, investigate",
+    "miss-output-depth-differs": "autogen output dir depth differs between build trees",
+    "miss-cache-evicted": "entry was trimmed from the cache: raise MOCCACHE_MAX_SIZE",
+    "miss-cache-unreadable": "entry exists but is incomplete or could not be copied out",
+    "miss-history-evicted": "all previous entries trimmed, cannot diff: raise MOCCACHE_MAX_SIZE",
+    "miss-uncacheable": "moc produced no dep file, result not cached",
+    "cache-trimmed": "auto-trim ran, detail = entries evicted",
+    "bad-max-size": "MOCCACHE_MAX_SIZE is not a valid size, detail = the value",
+}
+
+
+def _index_path(cache_dir: Path, input_file: str, basedir_prefixes: list[str]) -> Path:
+    ident = hashlib.sha256(
+        _normalize_basedir(os.path.abspath(input_file), basedir_prefixes).encode()
+    ).hexdigest()
+    return cache_dir / "index" / ident[:2] / ident
+
+
+def _index_read(path: Path) -> list[str]:
+    """The newest _INDEX_MAX_KEYS distinct keys, oldest first."""
     try:
-        with (cache_dir / "stats.log").open("a", encoding="utf-8") as f:
-            f.write(f"{what}\t{input_file}\n")
-    except OSError:
-        pass
+        raw = path.read_text(encoding="utf-8").split()
+    except (OSError, UnicodeDecodeError):
+        return []
+    newest_first = list(dict.fromkeys(reversed(raw)))
+    return newest_first[:_INDEX_MAX_KEYS][::-1]
+
+
+# Compact once the append-only file grows well past what _index_read keeps.
+_INDEX_COMPACT_LINES = _INDEX_MAX_KEYS * 8
+
+
+def _index_add(path: Path, mkey: str) -> None:
+    """Record mkey for this input.
+
+    Append-only (see _append_line) so concurrent misses on the same header
+    (parallel builds of sibling trees) never lose each other's keys the way
+    a read-modify-write would. Compaction rewrites rarely enough that its
+    small race window is acceptable for a diagnostics aid.
+    """
+    with contextlib.suppress(OSError):
+        _append_line(path, mkey)
+        if path.stat().st_size > _INDEX_COMPACT_LINES * (len(mkey) + 1):
+            _atomic_write(path, "\n".join(_index_read(path)) + "\n")
+
+
+def _diff_key_parts(old: list[str], new: list[str]) -> tuple[str, str]:
+    """Classify how a previous key differs from the current one.
+
+    Layout is [moc identity, *args, input sha, relpath]; args are compared
+    after the fixed parts so the most legitimate cause wins.
+    """
+    if len(old) < 3 or len(new) < 3:
+        return "miss-args-changed", "key layout changed"
+    if old[0] != new[0]:
+        return "miss-moc-version-changed", f"{old[0]} -> {new[0]}"
+    if old[-2] != new[-2]:
+        return "miss-header-changed", ""
+    if old[-1] != new[-1]:
+        return "miss-output-depth-differs", f"{old[-1]} -> {new[-1]}"
+    old_args, new_args = old[1:-2], new[1:-2]
+    for i, (a, b) in enumerate(zip(old_args, new_args, strict=False)):
+        if a != b:
+            if i > 0 and old_args[i - 1] == "--include":
+                return "miss-predefs-changed", ""
+            return "miss-args-changed", f"{a} -> {b}"
+    if len(old_args) != len(new_args):
+        extra = (
+            new_args[len(old_args) :]
+            if len(new_args) > len(old_args)
+            else old_args[len(new_args) :]
+        )
+        sign = "+" if len(new_args) > len(old_args) else "-"
+        return "miss-args-changed", sign + " ".join(extra)
+    return "miss-args-changed", "identical key parts"  # should not happen: same key would have hit
+
+
+def _explain_key_miss(
+    cache_dir: Path, index: Path, mkey: str, key_parts: list[str]
+) -> tuple[str, str]:
+    """Reason for finding no entry at mkey, using the input's previous keys."""
+    previous = _index_read(index)
+    if not previous:
+        return "miss-first-seen", ""
+    if mkey in previous:
+        return "miss-cache-evicted", ""
+    best: tuple[int, str, str] | None = None
+    for old_key in reversed(previous):
+        try:
+            old_parts = (
+                (cache_dir / old_key[:2] / old_key / "keyinfo")
+                .read_text(encoding="utf-8")
+                .splitlines()
+            )
+        except (OSError, UnicodeDecodeError):
+            continue
+        kind, detail = _diff_key_parts(old_parts, key_parts)
+        ndiff = sum(1 for a, b in zip(old_parts, key_parts, strict=False) if a != b) + abs(
+            len(old_parts) - len(key_parts)
+        )
+        if best is None or ndiff < best[0]:
+            best = (ndiff, kind, detail)
+    if best is None:
+        return "miss-history-evicted", "previous entries evicted"
+    return best[1], best[2]
 
 
 _SIZE_SUFFIXES = {"k": 1024, "m": 1024**2, "g": 1024**3, "t": 1024**4}
@@ -353,7 +522,9 @@ def _maybe_auto_trim(cache_dir: Path) -> None:
     try:
         max_bytes = _parse_size(limit)
     except ValueError:
-        _log_stat(cache_dir, "bad-max-size", limit)  # misconfig breadcrumb; cache stays untrimmed
+        _log_stat(
+            cache_dir, "bad-max-size", "", limit
+        )  # misconfig breadcrumb; cache stays untrimmed
         return
     stamp = cache_dir / "trim.stamp"
     lock = cache_dir / "trim.lock"
@@ -373,7 +544,9 @@ def _maybe_auto_trim(cache_dir: Path) -> None:
                 lock.unlink()
             return
         try:
-            _trim(cache_dir, max_bytes)
+            removed = _trim(cache_dir, max_bytes)
+            if removed:
+                _log_stat(cache_dir, "cache-trimmed", "", str(removed))
             stamp.touch()  # only after a completed trim; a crash must not suppress retries
         finally:
             with contextlib.suppress(OSError):
@@ -419,20 +592,173 @@ def _cache_dir() -> Path:
     return Path(__file__).resolve().parent.parent / ".cache" / "moccache"
 
 
-def _show_stats_main() -> int:
+# Subtracted from the estimated build start so clock/mtime granularity never
+# drops a moc run that happened in the build's first moments.
+_BUILD_START_SLACK_SECONDS = 2.0
+
+# ninja on Windows logs mtimes as FILETIME ticks (100 ns since 1601-01-01)
+# minus its own 12622770400 s rebase (src/disk_interface.cc), which is *not*
+# exactly 400 years; the Unix offset below is that constant minus 1601->1970.
+_NINJA_LOG_MTIME_IS_FILETIME = sys.platform == "win32"
+_NINJA_FILETIME_UNIX_OFFSET = 12_622_770_400 - 11_644_473_600
+
+# A build start further back than this (or in the future) means the log isn't
+# telling us about the current build; report all stats rather than misfilter.
+_BUILD_START_MAX_AGE_SECONDS = 24 * 3600
+_BUILD_START_MAX_FUTURE_SECONDS = 60
+
+# Edges examined for the build start: enough to always include a real compile
+# alongside any restat command that logged a stale output mtime.
+_BUILD_START_EDGES = 32
+
+
+def _ninja_mtime_to_epoch(mtime: int) -> float:
+    if _NINJA_LOG_MTIME_IS_FILETIME:
+        return mtime / 1e7 + _NINJA_FILETIME_UNIX_OFFSET
+    return mtime / 1e9
+
+
+def _build_start(build_dir: Path) -> float | None:
+    """Approximate start of the ninja build running in build_dir, or None.
+
+    .ninja_log records each finished edge as "start_ms end_ms mtime output
+    hash" with the times relative to the build start and mtime absolute, so
+    a recent edge gives start ~= mtime - end. Restat edges whose output was
+    left untouched log a stale mtime that only ever makes that estimate too
+    early, so the max over the last few edges is taken. (.ninja_lock's mtime
+    is unusable: ninja rewrites it as edges complete.)
+    """
+    # Whole-file read is fine: ninja recompacts .ninja_log itself, keeping it
+    # to a few records per edge (well under a few MB even for large trees).
+    try:
+        lines = (
+            (build_dir / ".ninja_log").read_text(encoding="utf-8", errors="replace").splitlines()
+        )
+    except OSError:
+        return None
+    start: float | None = None
+    examined = 0
+    for line in reversed(lines):
+        if examined >= _BUILD_START_EDGES:
+            break
+        fields = line.split("\t")
+        if line.startswith("#") or len(fields) < 4:
+            continue
+        try:
+            end_ms = int(fields[1])
+            mtime = int(fields[2])
+        except ValueError:
+            continue
+        if mtime <= 0:
+            continue
+        examined += 1
+        candidate = _ninja_mtime_to_epoch(mtime) - end_ms / 1000.0
+        if start is None or candidate > start:
+            start = candidate
+    if start is None:
+        return None
+    now = time.time()
+    if start > now + _BUILD_START_MAX_FUTURE_SECONDS or start < now - _BUILD_START_MAX_AGE_SECONDS:
+        return None
+    return start - _BUILD_START_SLACK_SECONDS
+
+
+def _stat_time(fields: list[str]) -> float | None:
+    """Epoch time of a stats line, or None for legacy lines without one."""
+    if len(fields) < 4:
+        return None
+    try:
+        return float(fields[2])
+    except ValueError:
+        return None
+
+
+# Growth cap for stats.log when no build boundary is available to prune at;
+# comfortably more than one full QGC build's worth of moc runs.
+_STATS_LOG_MAX_LINES = 50_000
+
+
+def _show_stats_main(argv: list[str]) -> int:
+    build_dir: Path | None = None
+    verbose = False
+    i = 0
+    while i < len(argv):
+        if argv[i] == "--build-dir":
+            if i + 1 >= len(argv):
+                print("moccache: --build-dir requires a path", file=sys.stderr)
+                return 2
+            build_dir = Path(argv[i + 1])
+            i += 2
+        elif argv[i] == "--verbose":
+            verbose = True
+            i += 1
+        else:
+            print(f"moccache: --show-stats: unknown argument: {argv[i]}", file=sys.stderr)
+            return 2
+    if build_dir is None:
+        print("moccache: --show-stats requires --build-dir", file=sys.stderr)
+        return 2
+
+    since = _build_start(build_dir)
+    scope = "this build"
+    note = ""
+    if since is None:
+        scope = "all recorded"
+        note = f"  (build start unknown: no usable {build_dir / '.ninja_log'}; showing all recorded stats)"
+    basedir = os.environ.get("MOCCACHE_BASEDIR", "") if since is not None else ""
+    basedir = basedir.translate(_STAT_FIELD_BREAKERS)  # match what _log_stat recorded
+
     cache_dir = _cache_dir()
     log = cache_dir / "stats.log"
     counts: dict[str, int] = {}
+    details: list[tuple[str, str, str]] = []  # (kind, input, detail) for non-hit events
+    keep: list[str] = []  # this build's lines from its start onward, plus every other build dir's
     try:
-        for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
-            what = line.split("\t", 1)[0]
-            counts[what] = counts.get(what, 0) + 1
+        with log.open(encoding="utf-8", errors="replace") as f:
+            for raw in f:
+                line = raw.rstrip("\n")
+                fields = line.split("\t")
+                if since is not None:
+                    when = _stat_time(fields)
+                    if when is None:
+                        continue  # legacy line: prune
+                    if basedir and fields[3] != basedir:
+                        # Another build dir's record; a still-running sibling
+                        # build may need it, so only its own report prunes it.
+                        keep.append(line)
+                        continue
+                    if when < since:
+                        continue  # older than this build: prune
+                    keep.append(line)
+                else:
+                    keep.append(line)
+                kind = fields[0]
+                counts[kind] = counts.get(kind, 0) + 1
+                if kind != "hit":
+                    details.append(
+                        (
+                            kind,
+                            fields[1] if len(fields) > 1 else "",
+                            fields[4] if len(fields) > 4 else "",
+                        )
+                    )
     except OSError:
         pass
+    # Only per-build reports are ever wanted, so this build's older entries are
+    # dead weight; drop them to keep the log about one build long. The cap
+    # bounds records left behind by build dirs that never report again. A
+    # concurrent build appending during this rewrite can lose a few lines;
+    # acceptable for a diagnostics aid.
+    if since is not None or len(keep) > _STATS_LOG_MAX_LINES:
+        with contextlib.suppress(OSError):
+            _atomic_write(log, "".join(line + "\n" for line in keep[-_STATS_LOG_MAX_LINES:]))
     hits = counts.pop("hit", 0)
-    misses = counts.pop("miss", 0)
+    # Pre-reason logs used a bare "miss"; fold it in with the miss-* reasons.
+    misses = counts.pop("miss", 0) + sum(n for k, n in counts.items() if k.startswith("miss-"))
     total = hits + misses
-    print(f"moccache stats ({cache_dir}):")
+    print(f"moccache stats ({scope}, {cache_dir}):")
+    if note:
+        print(note)
     if total == 0 and not counts:
         print("  no stats recorded")
         return 0
@@ -440,12 +766,22 @@ def _show_stats_main() -> int:
     print(f"  misses   {misses}")
     if total:
         print(f"  hit rate {100.0 * hits / total:.1f}%")
+    width = max((len(k) for k in counts), default=0)
     for what in sorted(counts):
-        print(f"  {what}  {counts[what]}")
+        why = _KIND_DESCRIPTIONS.get(what)
+        suffix = f"  ({why})" if why else ""
+        print(f"  {what:<{width}}  {counts[what]:>5}{suffix}")
+    if verbose and details:
+        print("details:")
+        for kind, input_file, detail in details:
+            print(f"  {kind}  {input_file}  {detail}".rstrip())
     return 0
 
 
-def _zero_stats_main() -> int:
+def _zero_stats_main(argv: list[str]) -> int:
+    if argv:
+        print(f"moccache: --zero-stats: unknown argument: {argv[0]}", file=sys.stderr)
+        return 2
     with contextlib.suppress(OSError):
         (_cache_dir() / "stats.log").unlink()
     return 0
@@ -455,11 +791,10 @@ def main() -> int:
     argv = sys.argv[1:]
     if argv and argv[0] == "--trim":
         return _trim_main(argv[1:])
-    if argv and argv[0] in ("--show-stats", "--zero-stats"):
-        if len(argv) > 1:
-            print(f"moccache: {argv[0]} takes no arguments: {argv[1]}", file=sys.stderr)
-            return 2
-        return _show_stats_main() if argv[0] == "--show-stats" else _zero_stats_main()
+    if argv and argv[0] == "--show-stats":
+        return _show_stats_main(argv[1:])
+    if argv and argv[0] == "--zero-stats":
+        return _zero_stats_main(argv[1:])
     real_moc = None
     if argv and argv[0] == "--real-moc":
         if len(argv) < 2:
@@ -515,20 +850,27 @@ def main() -> int:
     json_out = Path(str(out_path) + ".json")
 
     # --- Try for a hit ------------------------------------------------------
+    miss_reason: tuple[str, str] | None = None
     if manifest.is_file() and cached_out.is_file() and (not wants_json or cached_json.is_file()):
         hit = True
         manifest_deps: list[str] = []
         try:
-            for line in manifest.read_text().splitlines():
+            for line in manifest.read_text(encoding="utf-8").splitlines():
                 dep, _, dep_hash = line.partition("\t")
+                if not dep or not _SHA256_HEX.fullmatch(dep_hash):
+                    hit = False
+                    miss_reason = ("miss-cache-unreadable", "manifest malformed")
+                    break
                 dep = _denormalize_basedir(dep)
                 p = Path(dep)
                 if not p.is_file() or _sha256_file(p) != dep_hash:
                     hit = False
+                    miss_reason = ("miss-include-changed", dep)
                     break
                 manifest_deps.append(dep)
-        except OSError:
+        except (OSError, UnicodeDecodeError):
             hit = False
+            miss_reason = ("miss-cache-unreadable", "manifest unreadable")
         if hit:
             try:
                 out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -545,9 +887,18 @@ def main() -> int:
                 _log_stat(cache_dir, "hit", input_file)
                 return 0
             except OSError:
-                pass  # fall through to a real run
+                miss_reason = ("miss-cache-unreadable", "")  # fall through to a real run
+    elif mdir.is_dir():
+        miss_reason = ("miss-cache-unreadable", "entry incomplete")
 
     # --- Miss: run real moc with dep-file capture ---------------------------
+    index = _index_path(cache_dir, input_file, basedir_prefixes)
+    if miss_reason is None:
+        # Explaining costs up to _INDEX_MAX_KEYS keyinfo reads; skip when nobody is listening.
+        if os.environ.get("MOCCACHE_STATS"):
+            miss_reason = _explain_key_miss(cache_dir, index, mkey, key_parts)
+        else:
+            miss_reason = ("miss", "")
     tmp_dep = None
     cmd = [str(real_moc), *argv]
     if not wants_dep_file:
@@ -561,9 +912,9 @@ def main() -> int:
 
         dep_src = Path(tmp_dep) if tmp_dep else dep_out
         try:
-            dep_text = dep_src.read_text()
-        except OSError:
-            _log_stat(cache_dir, "miss-nodep", input_file)
+            dep_text = dep_src.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            _log_stat(cache_dir, "miss-uncacheable", input_file)
             return 0  # moc succeeded; just can't cache
 
         # Force-included files are keyed by content, so their (build-dir
@@ -581,9 +932,10 @@ def main() -> int:
                 _atomic_copy(json_out, cached_json)
             _atomic_write(manifest, "\n".join(lines) + "\n")
             _atomic_write(mdir / "keyinfo", "\n".join(key_parts) + "\n")
+            _index_add(index, mkey)
         except OSError:
             pass  # cache write failure must not fail the build
-        _log_stat(cache_dir, "miss", input_file)
+        _log_stat(cache_dir, miss_reason[0], input_file, miss_reason[1])
         _maybe_auto_trim(cache_dir)
         return 0
     finally:

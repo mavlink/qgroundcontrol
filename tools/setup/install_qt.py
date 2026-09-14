@@ -99,6 +99,29 @@ def resolve_qt_root(outdir: Path, version: str, arch_dir: str) -> Path:
     return qt_root
 
 
+def resolve_preinstalled_qt(
+    prefix: Path,
+    version: str,
+    arch_dir: str,
+    modules: str = "",
+    archives: str = "",
+) -> Path | None:
+    """Return a compatible preinstalled Qt root, or ``None`` when it cannot be reused."""
+    if archives:
+        return None
+
+    qt_root = prefix / "Qt" / version / arch_dir
+    modules_file = qt_root / ".qgc-modules"
+    if not (qt_root / "bin").is_dir() or not modules_file.is_file():
+        return None
+
+    installed_modules = set(modules_file.read_text(encoding="utf-8").split())
+    if not set(modules.split()).issubset(installed_modules):
+        return None
+
+    return qt_root
+
+
 _AQT_MAX_ATTEMPTS = 3
 _AQT_RETRY_DELAY_SECONDS = 15
 
@@ -231,6 +254,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     paths_p.add_argument("--version", required=True)
     paths_p.add_argument("--arch-dir", required=True)
 
+    preinstalled_p = sub.add_parser(
+        "resolve-preinstalled", help="Resolve a compatible preinstalled Qt SDK"
+    )
+    preinstalled_p.add_argument("--prefix", default="")
+    preinstalled_p.add_argument("--version", required=True)
+    preinstalled_p.add_argument("--arch-dir", required=True)
+    preinstalled_p.add_argument("--modules", default="")
+    preinstalled_p.add_argument("--archives", default="")
+
     android_p = sub.add_parser(
         "resolve-android-root", help="Pick primary Android Qt root from installed ABIs"
     )
@@ -269,6 +301,30 @@ def main(argv: list[str] | None = None) -> int:
             }
         )
         print(f"qt_root_dir={qt_root}")
+        return 0
+
+    if args.command == "resolve-preinstalled":
+        qt_root = (
+            resolve_preinstalled_qt(
+                Path(args.prefix),
+                args.version,
+                args.arch_dir,
+                args.modules,
+                args.archives,
+            )
+            if args.prefix
+            else None
+        )
+        outputs = {"available": "true" if qt_root else "false"}
+        if qt_root:
+            outputs.update(
+                {
+                    "qt_root_dir": str(qt_root),
+                    "qt_bin_dir": str(qt_root / "bin"),
+                }
+            )
+        write_github_output(outputs)
+        print(f"available={outputs['available']}")
         return 0
 
     if args.command == "resolve-android-root":

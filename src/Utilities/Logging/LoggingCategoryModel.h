@@ -111,7 +111,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
     bool hasChildren(const QModelIndex& parent = QModelIndex()) const override;
 
-    void insertCategory(const QStringList& pathSegments, const QString& fullCategory, QGCLoggingCategoryItem* item);
+    void insertCategory(const QStringList& pathSegments, QGCLoggingCategoryItem* item);
     void forEachItem(const std::function<void(QGCLoggingCategoryItem*)>& fn);
 
 private:

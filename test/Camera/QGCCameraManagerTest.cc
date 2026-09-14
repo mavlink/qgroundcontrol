@@ -5,6 +5,7 @@
 #include <QtCore/QScopeGuard>
 
 #include "CameraMetaData.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "MAVLinkLib.h"
 #include "QGCCameraManager.h"
 #include "Vehicle.h"
@@ -33,6 +34,7 @@ void QGCCameraManagerTest::_testCameraList()
 /// (CI ASan job). Without ASan the test exercises the path but may pass silently.
 void QGCCameraManagerTest::_testLostCameraCleanupWithPendingRequest()
 {
+    TestFixtures::MavCommandAckTimeoutFixture shortAckTimeout;
     ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
                      QRegularExpression("Giving up sending command after max retries:"));
 

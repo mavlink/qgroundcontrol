@@ -50,6 +50,23 @@ static QQuickItem* findVisibleItemImmediate(QQuickItem* root, const QString& obj
     return nullptr;
 }
 
+QQuickItem* QmlUITestBase::findItem(QQuickItem* root, const QString& objectName)
+{
+    if (!root) {
+        return nullptr;
+    }
+    if (root->objectName() == objectName) {
+        return root;
+    }
+    const auto children = root->childItems();
+    for (auto* child : children) {
+        if (auto* found = findItem(child, objectName)) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
 QQuickItem* QmlUITestBase::findVisibleItem(QQuickItem* root, const QString& objectName, int timeoutMs)
 {
     constexpr int pollIntervalMs = 50;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <optional>
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QList>
@@ -60,10 +61,13 @@ public:
     static QString failureCodeToString(MavCmdResultFailureCode_t failureCode);
     static void showCommandAckError(const mavlink_command_ack_t& ack);
 
-    // Test tuning knobs.
-    static constexpr int kTestAckTimeoutMs = 500;
     static constexpr int kMaxRetryCount = 3;
-    static constexpr int kTestMaxWaitMs = kTestAckTimeoutMs * kMaxRetryCount * 2;
+
+    /// Test-only: shorten the ack timeout for tests whose outcome depends on at least one ack window
+    /// expiring (no ack, or ack only after a retry). Tests where every command is acked on first send
+    /// must leave this unset so they run against the production timeout.
+    static void setTestAckTimeoutOverride(std::optional<int> msecs);
+    static std::optional<int> testAckTimeoutOverride();
 
 signals:
     /// Emitted for every terminal ack that has no user-provided resultHandler.
@@ -107,5 +111,7 @@ private:
     QTimer                           _responseCheckTimer;
     bool                             _stopped = false;  // set by stop(), gates all send paths
 
+    static constexpr int _ackTimeoutMSecsDefault     = 1200;
     static constexpr int _ackTimeoutMSecsHighLatency = 120000;
+    static std::optional<int>        _testAckTimeoutOverride;
 };

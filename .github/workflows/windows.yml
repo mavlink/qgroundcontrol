@@ -63,7 +63,9 @@ jobs:
             runs_on: >-
               ${{ github.repository_owner == 'mavlink' &&
                   (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
-                  format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
+                  format('runs-on={0}/{1}', github.run_id,
+                    vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
+                    'runner=windows-x64-builder') || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_64
             preset: Windows
@@ -82,7 +84,9 @@ jobs:
             runs_on: >-
               ${{ github.repository_owner == 'mavlink' &&
                   (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
-                  format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
+                  format('runs-on={0}/{1}', github.run_id,
+                    vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
+                    'runner=windows-x64-builder') || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
             preset: Windows-arm64

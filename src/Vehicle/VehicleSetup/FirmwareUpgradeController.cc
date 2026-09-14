@@ -85,6 +85,7 @@ static QMap<int, QString> px4_board_name_map {
     {1110, "jfb_jfb110_default"},
     {1200, "jfb_jfb200_default"},
     {1209, "gearup_airbrainh743_default"},
+    {1218, "amovlab_flycore_default"},
     {1198, "aedrox_aedroxh7_default"},
     {1123, "siyi_n7_default"},
     {1124, "3dr_ctrl-zero-h7-oem-revg_default"},
@@ -326,7 +327,7 @@ void FirmwareUpgradeController::_foundBoardInfo(int bootloaderVersion, int board
 ///         machine to the appropriate error state.
 void FirmwareUpgradeController::_bootloaderSyncFailed(void)
 {
-    _errorCancel("Unable to sync with bootloader.");
+    _errorCancel(tr("Unable to sync with bootloader."));
 }
 
 QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeController::_firmwareHashForBoardId(int boardId)
@@ -493,7 +494,7 @@ void FirmwareUpgradeController::_error(const QString& errorString)
     delete _image;
     _image = nullptr;
 
-    _errorCancel(QString("Error: %1").arg(errorString));
+    _errorCancel(tr("Error: %1").arg(errorString));
 }
 
 void FirmwareUpgradeController::_status(const QString& statusString)

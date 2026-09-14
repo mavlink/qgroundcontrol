@@ -49,6 +49,7 @@ Rectangle {
             }
 
             QGCSlider {
+                objectName: "photoVideoControl_zoomSlider"
                 Layout.alignment: Qt.AlignHCenter
                 Layout.fillHeight: true
                 orientation: Qt.Vertical
@@ -56,7 +57,7 @@ Rectangle {
                 from: 0
                 value: _camera.zoomLevel
                 live: true
-                onValueChanged: _camera.zoomLevel = value
+                onMoved: _camera.zoomLevel = value
             }
         }
 
@@ -219,6 +220,7 @@ Rectangle {
                 // Take Photo button
                 Rectangle {
                     id: photoCaptureButton
+                    objectName: "photoVideoControl_photoCaptureButton"
                     Layout.alignment: Qt.AlignHCenter
                     color: photoCaptureButtonPalette.button
                     width: ScreenTools.defaultFontPixelWidth * 6

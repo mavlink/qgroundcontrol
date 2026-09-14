@@ -75,14 +75,14 @@ ColumnLayout {
 
                 QGCRadioButton {
                     width:          _editFieldWidth
-                    text:           "Landscape"
+                    text:           qsTr("Landscape")
                     checked:        !!cameraCalc.landscape.value
                     onClicked:      cameraCalc.landscape.value = 1
                 }
 
                 QGCRadioButton {
                     id:             cameraOrientationPortrait
-                    text:           "Portrait"
+                    text:           qsTr("Portrait")
                     checked:        !cameraCalc.landscape.value
                     onClicked:      cameraCalc.landscape.value = 0
                 }

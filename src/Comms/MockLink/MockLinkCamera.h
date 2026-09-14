@@ -32,6 +32,10 @@ class MockLink;
 ///
 /// Simulated storage: 16 GiB total, 8 GiB free, SD card.
 ///
+/// Spec-minimal (MAVLink camera protocol v2): CAMERA_CAPTURE_STATUS is only sent
+/// on request, never pushed after a command ack; the GCS must poll for it.
+/// CAMERA_IMAGE_CAPTURED is broadcast per captured image, as the protocol requires.
+///
 class MockLinkCamera
 {
 public:
@@ -55,6 +59,8 @@ public:
         uint8_t  image_status        = ImageCaptureIdle;     ///< ImageCaptureStatus enum
         float    image_interval      = 0.0f;                 ///< Interval between image captures (seconds)
         qint64   singleShotStartMs   = 0;                    ///< Timestamp when single-shot capture started (0 = not active)
+        int      intervalRemaining   = 0;                    ///< Images left in interval capture (0 = unlimited)
+        qint64   intervalLastCaptureMs = 0;                  ///< Timestamp of last interval capture
 
         // Tracking state
         uint8_t  trackingMode        = CAMERA_TRACKING_MODE_NONE; ///< CAMERA_TRACKING_MODE enum
@@ -120,6 +126,9 @@ private:
     static constexpr uint8_t  kNumStreams        = 2;    ///< Streams per camera
     static constexpr uint32_t kStorageTotalMiB   = 16384; ///< 16 GiB simulated SD card
     static constexpr uint32_t kStorageFreeMiB    = 8192;  ///< 8 GiB free
+    static constexpr float    kZoomMinPercent    = 0.0f;  ///< CAMERA_SETTINGS.zoomLevel range
+    static constexpr float    kZoomMaxPercent    = 100.0f;
+    static constexpr float    kZoomStepPercent   = 10.0f; ///< Zoom range change per ZOOM_TYPE_STEP
 
     MockLink   *_mockLink = nullptr;
     CameraState _cameras[kNumCameras];           ///< Simulated cameras

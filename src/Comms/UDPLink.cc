@@ -293,7 +293,8 @@ UDPWorker::~UDPWorker()
 
 bool UDPWorker::isConnected() const
 {
-    return (_socket && _socket->isValid() && _isConnected);
+    // Called cross-thread from UDPLink; must not touch the thread-affine _socket
+    return _isConnected;
 }
 
 void UDPWorker::setupSocket()
