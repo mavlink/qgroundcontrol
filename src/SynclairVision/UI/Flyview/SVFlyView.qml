@@ -41,7 +41,7 @@ Item {
     property bool _isMode_NO_CROP: _fitMode === 3
     readonly property var digiview: SVState.digiview
     readonly property bool digiviewOutputGeometryAvailable: !!digiview
-        && digiview.connected
+        && digiview.sessionActive
         && digiview.hasVideoOutputParameters
         && digiview.videoOutputStreamName === digiview.streamName
         && digiview.videoOutputWidth > 0
@@ -170,7 +170,7 @@ Item {
     }
 
     function autoconnectDigiview() {
-        if (!SVSettings.networkAutoconnectOnStart || !digiview || digiview.connected) {
+        if (!SVSettings.networkAutoconnectOnStart || !digiview || digiview.sessionRequested) {
             return
         }
 
@@ -221,8 +221,8 @@ Item {
     Connections {
         target: digiview
 
-        function onConnectedChanged() {
-            if (!digiview.connected) {
+        function onSessionActiveChanged() {
+            if (!digiview.sessionActive) {
                 SVState.clearCamera()
             }
         }

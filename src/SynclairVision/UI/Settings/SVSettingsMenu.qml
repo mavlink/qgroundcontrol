@@ -13,13 +13,12 @@ Item {
     property string activeSettingsId: ""
     property int selectedSectionIndex: 0
     property int pendingProgrammaticSectionIndex: -1
-    property bool networkConnectionPending: false
     readonly property int settingsResetToken: SVSettings.resetToken
     readonly property var digiview: SVState.digiview
-    readonly property bool networkConnectionActive: SVState.digiviewActive
+    readonly property bool networkConnectionActive: SVState.digiviewSessionRequested
     property var sensorParameterValues: ({})
     property var detectionParameterValues: ({})
-    readonly property bool aiAuthoritativeReady: !!root.digiview && root.digiview.connected
+    readonly property bool aiAuthoritativeReady: !!root.digiview && root.digiview.sessionActive
         && root.digiview.hasAIParameters && root.digiview.aiModelDiscoveryReady
         && root.digiview.availableScanModels.length > 0
     readonly property bool aiAuthoritativeModelValid: aiAuthoritativeReady
@@ -101,7 +100,7 @@ Item {
     }
 
     function remoteParameterValues(parameterGroup) {
-        if (!root.digiview || !root.digiview.connected) {
+        if (!root.digiview || !root.digiview.sessionActive) {
             return null
         }
 
@@ -219,7 +218,7 @@ Item {
     function settingDescription(settingData) {
         if (settingData.id === 'aiEnabled' || settingData.id === 'aiScanModel'
                 || settingData.id === 'aiDetectionOverlay' || settingData.id === 'restart_digiview') {
-            if (!root.digiview || !root.digiview.connected) return qsTr('Unavailable until DigiView is connected.')
+            if (!root.digiview || !root.digiview.sessionActive) return qsTr('Unavailable until DigiView is connected.')
             if (!root.digiview.hasAIParameters) return qsTr('Waiting for authoritative AI settings from DigiView.')
             if (root.digiview.restartBusy) {
                 return qsTr('DigiView restart: %1').arg(restartPhaseText(root.digiview.restartProgress))
@@ -330,7 +329,7 @@ Item {
 
         SVSettings.resetSettings()
 
-        if (!selectedProfileSnapshot || !root.digiview || !root.digiview.connected) {
+        if (!selectedProfileSnapshot || !root.digiview || !root.digiview.sessionRequested) {
             return
         }
 
@@ -339,7 +338,6 @@ Item {
         }
 
         networkConnectTimer.stop()
-        root.networkConnectionPending = false
         root.digiview.disconnectFromHost()
     }
 
@@ -350,14 +348,12 @@ Item {
 
         if (settingData.buttonRole === 'connectToggle') {
             if (!root.digiview) {
-                root.networkConnectionPending = false
                 return
             }
 
-            if (root.digiview.connected) {
+            if (root.digiview.sessionRequested) {
                 SVState.userInitiatedDisconnect = true
                 networkConnectTimer.stop()
-                root.networkConnectionPending = false
                 root.digiview.disconnectFromHost()
                 return
             }
@@ -365,11 +361,9 @@ Item {
             SVState.userInitiatedDisconnect = false
 
             if (!applySelectedNetworkProfile()) {
-                root.networkConnectionPending = false
                 return
             }
 
-            root.networkConnectionPending = true
             networkConnectTimer.restart()
             return
         }
@@ -463,7 +457,7 @@ Item {
     }
 
     function sendSensorSettings() {
-        if (!root.digiview || !root.digiview.connected || !root.digiview.hasSensorParameters) {
+        if (!root.digiview || !root.digiview.sessionActive || !root.digiview.hasSensorParameters) {
             return
         }
 
@@ -476,7 +470,7 @@ Item {
     }
 
     function sendDetectionSettings() {
-        if (!root.digiview || !root.digiview.connected || !root.digiview.hasDetectionParameters) {
+        if (!root.digiview || !root.digiview.sessionActive || !root.digiview.hasDetectionParameters) {
             return
         }
 
@@ -521,7 +515,7 @@ Item {
     }
 
     function syncSensorSettingsFromDigiview() {
-        if (!root.digiview || !root.digiview.connected || !root.digiview.hasSensorParameters) {
+        if (!root.digiview || !root.digiview.sessionActive || !root.digiview.hasSensorParameters) {
             root.sensorParameterValues = ({})
             return
         }
@@ -536,7 +530,7 @@ Item {
     }
 
     function syncDetectionSettingsFromDigiview() {
-        if (!root.digiview || !root.digiview.connected || !root.digiview.hasDetectionParameters) {
+        if (!root.digiview || !root.digiview.sessionActive || !root.digiview.hasDetectionParameters) {
             root.detectionParameterValues = ({})
             return
         }
@@ -561,17 +555,14 @@ Item {
 
         onTriggered: {
             if (!root.digiview) {
-                root.networkConnectionPending = false
                 return
             }
 
-            if (root.digiview.connected) {
+            if (root.digiview.sessionRequested) {
                 return
             }
 
-            if (!root.digiview.connectToHost()) {
-                root.networkConnectionPending = false
-            }
+            root.digiview.connectToHost()
         }
     }
 
@@ -581,18 +572,11 @@ Item {
         rebaseAiDraftFromAuthoritative()
     }
 
-    onNetworkConnectionActiveChanged: {
-        if (networkConnectionActive) {
-            root.networkConnectionPending = false
-        }
-    }
-
     Connections {
         target: root.digiview
 
-        function onConnectedChanged() {
-            if (!root.digiview || !root.digiview.connected) {
-                root.networkConnectionPending = false
+        function onSessionActiveChanged() {
+            if (!root.digiview || !root.digiview.sessionActive) {
                 root.sensorParameterValues = ({})
                 root.detectionParameterValues = ({})
             } else {
@@ -615,12 +599,6 @@ Item {
                 root.rebaseAiDraftFromAuthoritative()
                 SVNotificationManager.add(qsTr('DigiView restarted'), qsTr('Staged settings were applied.'),
                     'info', 'network_connecting')
-            }
-        }
-
-        function onLastErrorChanged() {
-            if (!root.digiview || !root.digiview.connected) {
-                root.networkConnectionPending = false
             }
         }
 

@@ -100,11 +100,11 @@ DigiviewManager::DigiviewManager(QObject* parent)
     connect(_connection, &DigiviewConnection::legacyTcpControlPortChanged,
             this, &DigiviewManager::legacyTcpControlPortChanged);
     connect(_connection, &DigiviewConnection::connectedChanged, this, [this] {
-        emit connectedChanged();
+        emit transportConnectedChanged();
         if (_restartBusy && _expectedRestartArmed && _restartQuitSent && _connection->connected()) {
             _restartReconnectTimer.stop();
         }
-        if (!_connection->connected() && _logicalSessionActive && _remoteIdentityValid) {
+        if (!_connection->connected() && _remoteIdentityValid) {
             _resetRemoteSession();
         }
     });
@@ -119,7 +119,7 @@ DigiviewManager::DigiviewManager(QObject* parent)
         _restartObservationTimer.start(kRestartUpTimeoutMs);
         if (_connection->usingLegacyTcpControl()) {
             ++_restartReconnectAttempts;
-            _logicalSessionActive = _connection->connectToEndpoint();
+            (void) _connection->connectToEndpoint();
             if (!_connection->connected()) _restartReconnectTimer.start(kRestartReconnectInitialDelayMs);
         }
     });
@@ -202,11 +202,6 @@ quint16 DigiviewManager::legacyTcpControlPort() const
     return _connection->legacyTcpControlPort();
 }
 
-bool DigiviewManager::connected() const
-{
-    return _trafficEligible();
-}
-
 QString DigiviewManager::lastError() const
 {
     return _connection->lastError();
@@ -220,7 +215,7 @@ void DigiviewManager::setHost(const QString& host)
     }
 
     _connection->setHost(host);
-    _reapplyEndpointIfSessionActive();
+    _reapplyEndpointIfSessionRequested();
 }
 
 void DigiviewManager::setPort(quint16 port)
@@ -231,7 +226,7 @@ void DigiviewManager::setPort(quint16 port)
     }
 
     _connection->setPort(port);
-    _reapplyEndpointIfSessionActive();
+    _reapplyEndpointIfSessionRequested();
 }
 
 void DigiviewManager::setListenPort(quint16 listenPort)
@@ -242,7 +237,7 @@ void DigiviewManager::setListenPort(quint16 listenPort)
     }
 
     _connection->setListenPort(listenPort);
-    _reapplyEndpointIfSessionActive();
+    _reapplyEndpointIfSessionRequested();
 }
 
 void DigiviewManager::setLegacyTcpControlPort(quint16 port)
@@ -253,7 +248,7 @@ void DigiviewManager::setLegacyTcpControlPort(quint16 port)
     }
 
     _connection->setLegacyTcpControlPort(port);
-    _reapplyEndpointIfSessionActive();
+    _reapplyEndpointIfSessionRequested();
 }
 
 void DigiviewManager::setLegacyTcpControlEnabled(bool enabled)
@@ -264,7 +259,7 @@ void DigiviewManager::setLegacyTcpControlEnabled(bool enabled)
     }
 
     _connection->setLegacyTcpControlEnabled(enabled);
-    _reapplyEndpointIfSessionActive();
+    _reapplyEndpointIfSessionRequested();
 }
 
 void DigiviewManager::setStreamName(const QString& streamName)
@@ -316,14 +311,21 @@ void DigiviewManager::setSenderComponentId(int senderComponentId)
 
 bool DigiviewManager::connectToHost()
 {
-    const bool wasConnected = connected();
-    const bool wasActive = _logicalSessionActive;
-    _automaticReconnectAllowed = true;
+    if (_sessionRequested) {
+        return true;
+    }
+
     _resetRemoteSession();
-    _logicalSessionActive = _connection->connectToEndpoint();
-    if (_logicalSessionActive != wasActive) emit sessionActiveChanged();
-    if (connected() != wasConnected) emit connectedChanged();
-    return _logicalSessionActive;
+    _sessionRequested = true;
+    emit sessionRequestedChanged();
+
+    if (_connection->connectToEndpoint()) {
+        return true;
+    }
+
+    _sessionRequested = false;
+    emit sessionRequestedChanged();
+    return false;
 }
 
 bool DigiviewManager::applyAndRestart(
@@ -333,7 +335,7 @@ bool DigiviewManager::applyAndRestart(
         emit commandRejected(tr("DigiView is already applying a restart."));
         return false;
     }
-    if (!connected() || !_hasVideoOutputParameters || !_hasAIParameters
+    if (!sessionActive() || !_hasVideoOutputParameters || !_hasAIParameters
         || !_aiModelDiscoveryReady || model.trimmed().isEmpty() || !_availableScanModels.contains(model)) {
         _finishRestart(false, tr("Authoritative DigiView video, AI, and model discovery is not ready."));
         return false;
@@ -387,21 +389,20 @@ bool DigiviewManager::applyAndRestart(
 
 void DigiviewManager::disconnectFromHost()
 {
-    _automaticReconnectAllowed = false;
+    if (_sessionRequested) {
+        _sessionRequested = false;
+        emit sessionRequestedChanged();
+    }
     if (_restartBusy) _finishRestart(false, tr("DigiView restart was cancelled."));
     ++_restartGeneration;
     emit restartGenerationChanged();
-    const bool wasConnected = connected();
-    _logicalSessionActive = false;
-    emit sessionActiveChanged();
     _resetRemoteSession();
     _connection->disconnectFromEndpoint();
-    if (connected() != wasConnected) emit connectedChanged();
 }
 
-void DigiviewManager::_reapplyEndpointIfSessionActive()
+void DigiviewManager::_reapplyEndpointIfSessionRequested()
 {
-    if (_logicalSessionActive && _automaticReconnectAllowed) {
+    if (_sessionRequested) {
         (void) _connection->connectToEndpoint();
     }
 }
@@ -1415,7 +1416,7 @@ bool DigiviewManager::takePhoto()
 
 void DigiviewManager::_handleMessage(const mavlink_message_t& message)
 {
-    if (!_trafficEligible()) {
+    if (!_sessionRequested || !_connection->connected()) {
         return;
     }
 
@@ -2372,7 +2373,7 @@ void DigiviewManager::_restartReconnect()
     }
 
     ++_restartReconnectAttempts;
-    _logicalSessionActive = _connection->connectToEndpoint();
+    (void) _connection->connectToEndpoint();
     if (_connection->connected()) {
         _restartReconnectTimer.stop();
         return;
@@ -2441,7 +2442,7 @@ void DigiviewManager::_cancelRestartForSessionChange()
 
 void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componentId)
 {
-    if (!_trafficEligible()) {
+    if (!_sessionRequested || !_connection->connected()) {
         return;
     }
     if ((systemId != kDigiviewSystemId) || (componentId != kDigiviewComponentId)) {
@@ -2452,6 +2453,9 @@ void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componen
     _remoteSystemId = systemId;
     _remoteComponentId = componentId;
     _remoteIdentityValid = true;
+    if (initialSubscription) {
+        emit sessionActiveChanged();
+    }
 
     if (_restartBusy && _expectedRestartArmed && _restartQuitSent && _restartDownObserved) {
         _setRestartProgress(6);
@@ -2545,10 +2549,14 @@ void DigiviewManager::_establishRemoteSession(uint8_t systemId, uint8_t componen
 
 void DigiviewManager::_resetRemoteSession()
 {
+    const bool sessionWasActive = _remoteIdentityValid;
     ++_remoteSessionGeneration;
     _remoteSystemId = 0;
     _remoteComponentId = 0;
     _remoteIdentityValid = false;
+    if (sessionWasActive) {
+        emit sessionActiveChanged();
+    }
     _pendingVideoOutputParametersRequest = false;
     _pendingSensorParametersRequest = true;
     _pendingDetectionParametersRequest = true;

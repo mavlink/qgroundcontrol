@@ -8,8 +8,8 @@ QtObject {
 
 
     readonly property var digiview: SVBackend.digiview
-    readonly property bool digiviewActive: !!(digiview && digiview.connected)
-    readonly property bool digiviewSessionActive: !!(digiview && digiview.sessionActive)
+    readonly property bool digiviewActive: !!(digiview && digiview.sessionActive)
+    readonly property bool digiviewSessionRequested: !!(digiview && digiview.sessionRequested)
     property bool userInitiatedDisconnect: false
     // True once the current connection attempt has actually reached the "connected" (decoding) state.
     // Reset every time a new connection attempt starts, so we can tell "was connected, then dropped"
@@ -653,7 +653,7 @@ QtObject {
     property int photoCooldownMs: 500
     property real lastPhotoRequestTimeMs: 0
     readonly property bool hasCurrentVideoOutputState: !!digiview
-        && digiview.connected
+        && digiview.sessionActive
         && digiview.hasVideoOutputParameters
         && digiview.videoOutputStreamName === digiview.streamName
     readonly property bool aiOverlay: hasCurrentVideoOutputState
@@ -744,13 +744,13 @@ QtObject {
         }
     }
 
-    onDigiviewSessionActiveChanged: {
+    onDigiviewSessionRequestedChanged: {
         var profile = SVSettings.selectedNetworkProfile()
         var profileName = profile ? profile.name : "Stream"
         var profileHost = profile ? profile.host : "Unknown Host"
 
-        if (digiviewSessionActive) {
-            // State 1: Connecting (logical session is active, waiting for video)
+        if (digiviewSessionRequested) {
+            // State 1: Connecting (the requested session remains active across transport retries)
             _reachedConnectedState = false
             _connectionLostReported = false
 
@@ -787,9 +787,7 @@ QtObject {
                 _connectionLostReported = false
                 stopRecording()
                 cancelCursorTrackingSelection()
-            } else {
-                // The logical session ended unexpectedly. If decoding already reported the loss,
-                // this remains a no-op because _reportConnectionLost only fires once.
+            } else if (_reachedConnectedState) {
                 _reportConnectionLost(profileName, profileHost)
                 _reachedConnectedState = false
             }
@@ -803,6 +801,7 @@ QtObject {
         // We ensure devBypassDisconnectedUiDisable isn't the reason it turned true
         if (uiInteractionEnabled && digiviewActive) {
             _reachedConnectedState = true
+            _connectionLostReported = false
 
             var profile = SVSettings.selectedNetworkProfile()
             var profileName = profile ? profile.name : "Stream"
@@ -814,7 +813,7 @@ QtObject {
                 "success",
                 "network_connected"
             )
-        } else if (!uiInteractionEnabled && digiviewSessionActive && _reachedConnectedState && !userInitiatedDisconnect) {
+        } else if (!uiInteractionEnabled && digiviewSessionRequested && _reachedConnectedState && !userInitiatedDisconnect) {
             // Decoding stopped while the user's connection session is still active. This covers
             // both UDP stream loss and transient TCP disconnects while the transport keeps retrying.
             var lostProfile = SVSettings.selectedNetworkProfile()

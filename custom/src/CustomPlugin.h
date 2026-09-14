@@ -18,6 +18,7 @@ public:
     static QGCCorePlugin* instance();
 
     SVBackend* backend() const { return _backend; }
+    QList<int> firstRunPromptCustomIds() final { return {}; }
     QString firstRunPromptResource(int id) const final;
     QQmlApplicationEngine* createQmlApplicationEngine(QObject* parent) final;
     void destroyQmlApplicationEngine(QQmlApplicationEngine* qmlEngine) final;
@@ -25,8 +26,8 @@ public:
     static constexpr int kSVInitialWelcomePromptId = kFirstRunPromptIdsFirstCustomId + 1;
 
 private:
-    DigiviewManager* _digiviewManager = nullptr;
-    SVBackend* _backend = nullptr;
+    DigiviewManager* const _digiviewManager;
+    SVBackend* const _backend;
     QQmlApplicationEngine* _qmlEngine = nullptr;
     class CustomOverrideInterceptor* _urlInterceptor = nullptr;
 };

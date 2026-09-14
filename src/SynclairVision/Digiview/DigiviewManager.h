@@ -44,8 +44,8 @@ class DigiviewManager : public QObject
     Q_PROPERTY(QString streamName READ streamName WRITE setStreamName NOTIFY streamNameChanged)
     Q_PROPERTY(int senderSystemId READ senderSystemId WRITE setSenderSystemId NOTIFY senderIdentityChanged)
     Q_PROPERTY(int senderComponentId READ senderComponentId WRITE setSenderComponentId NOTIFY senderIdentityChanged)
-    Q_PROPERTY(bool connected READ uiConnected NOTIFY sessionActiveChanged)
-    Q_PROPERTY(bool transportConnected READ connected NOTIFY connectedChanged)
+    Q_PROPERTY(bool transportConnected READ transportConnected NOTIFY transportConnectedChanged)
+    Q_PROPERTY(bool sessionRequested READ sessionRequested NOTIFY sessionRequestedChanged)
     Q_PROPERTY(bool sessionActive READ sessionActive NOTIFY sessionActiveChanged)
     Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
     Q_PROPERTY(quint32 lastReceivedMessageId READ lastReceivedMessageId NOTIFY lastReceivedMessageIdChanged)
@@ -123,9 +123,9 @@ public:
     int restartProgress() const { return _restartProgress; }
     QString restartFailure() const { return _restartFailure; }
     quint64 restartGeneration() const { return _restartGeneration; }
-    bool connected() const;
-    bool uiConnected() const { return _connection->usingLegacyTcpControl() ? sessionActive() : connected(); }
-    bool sessionActive() const { return _logicalSessionActive; }
+    bool transportConnected() const { return _connection->connected(); }
+    bool sessionRequested() const { return _sessionRequested; }
+    bool sessionActive() const { return _remoteIdentityValid && transportConnected(); }
     QString lastError() const;
     quint32 lastReceivedMessageId() const { return _lastReceivedMessageId; }
     bool hasVideoOutputParameters() const { return _hasVideoOutputParameters; }
@@ -258,7 +258,8 @@ signals:
     void legacyTcpControlPortChanged();
     void streamNameChanged();
     void senderIdentityChanged();
-    void connectedChanged();
+    void transportConnectedChanged();
+    void sessionRequestedChanged();
     void sessionActiveChanged();
     void lastErrorChanged();
     void lastReceivedMessageIdChanged();
@@ -405,8 +406,8 @@ private:
     void _setRestartProgress(int progress);
     void _finishRestart(bool success, const QString& failure = {});
     void _cancelRestartForSessionChange();
-    bool _trafficEligible() const { return _logicalSessionActive && _connection->connected(); }
-    void _reapplyEndpointIfSessionActive();
+    bool _trafficEligible() const { return sessionActive(); }
+    void _reapplyEndpointIfSessionRequested();
 
     struct VideoOutputLayoutSnapshot {
         std::optional<uint16_t> width;
@@ -455,8 +456,7 @@ private:
     uint8_t _senderComponentId = kDefaultSenderComponentId;
     uint8_t _remoteSystemId = 0;
     uint8_t _remoteComponentId = 0;
-    bool _logicalSessionActive = false;
-    bool _automaticReconnectAllowed = true;
+    bool _sessionRequested = false;
     bool _remoteIdentityValid = false;
     bool _pendingVideoOutputParametersRequest = false;
     bool _pendingSensorParametersRequest = true;

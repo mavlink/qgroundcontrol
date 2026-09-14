@@ -58,7 +58,7 @@ Item {
         sessionCommandObserved = false
         stopCommandObserved = false
 
-        if (!digiview || !digiview.connected) {
+        if (!digiview || !digiview.sessionActive) {
             resultText = qsTr("DigiView is not connected.")
             return
         }
@@ -79,7 +79,7 @@ Item {
     }
 
     function stopCalibration() {
-        if (!localMonitorActive || stopPending || !digiview || !digiview.connected) {
+        if (!localMonitorActive || stopPending || !digiview || !digiview.sessionActive) {
             return
         }
 
@@ -169,7 +169,7 @@ Item {
         }
 
         function onConnectedChanged() {
-            if (root.localMonitorActive && (!root.digiview || !root.digiview.connected)) {
+            if (root.localMonitorActive && (!root.digiview || !root.digiview.sessionActive)) {
                 root.stopMonitoring()
                 root.resultSucceeded = false
                 root.resultText = qsTr("Calibration monitoring stopped because DigiView disconnected.")
@@ -183,7 +183,7 @@ Item {
         interval: 500
         repeat: true
         onTriggered: {
-            if (!root.digiview || !root.digiview.connected) {
+            if (!root.digiview || !root.digiview.sessionActive) {
                 root.stopMonitoring()
                 return
             }
@@ -301,7 +301,7 @@ Item {
                         QGCButton {
                             text: root.localMonitorActive ? qsTr("Stop") : qsTr("Start")
                             primary: true
-                            enabled: !!root.digiview && root.digiview.connected && !root.stopPending
+                            enabled: !!root.digiview && root.digiview.sessionActive && !root.stopPending
                             onClicked: root.localMonitorActive ? root.stopCalibration() : root.startCalibration()
                         }
 
