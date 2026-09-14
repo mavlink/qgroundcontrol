@@ -1,10 +1,6 @@
-# Troubleshooting QGC Setup
+# Installation, Display and Video problems
 
-This topic lists troubleshooting information related to _QGroundControl_ setup and installation on the host computer.
-
-::: tip
-Problems when **using** _QGroundControl_ to interact with a vehicle are covered in: [QGC Vehicle Interaction Problems](../troubleshooting/qgc_usage.md).
-:::
+This topic covers problems with _QGroundControl_ itself failing to start, render, or show video on the host computer.
 
 ## Windows: UI Rendering/Video Driver Issues {#opengl_troubleshooting}
 

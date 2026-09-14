@@ -112,7 +112,7 @@ void JoystickManager::_checkForAddedOrRemovedJoysticks()
     }
 
     if (_activeJoystick && (activeJoystickName.isEmpty() || !newJoystickMap.contains(activeJoystickName))) {
-        qCInfo(JoystickManagerLog) << "Active joystick removed:" << (activeJoystickName.isEmpty() ? QStringLiteral("<stale>") : activeJoystickName);
+        qCDebug(JoystickManagerLog) << "Active joystick removed:" << (activeJoystickName.isEmpty() ? QStringLiteral("<stale>") : activeJoystickName);
         _setActiveJoystick(nullptr);
     }
 
@@ -122,7 +122,7 @@ void JoystickManager::_checkForAddedOrRemovedJoysticks()
         if (!newJoystickMap.contains(it->first)) {
             auto key = it->first;
             auto joystick = it->second;
-            qCInfo(JoystickManagerLog) << "Joystick disconnected, releasing:" << key;
+            qCDebug(JoystickManagerLog) << "Joystick disconnected, releasing:" << key;
             joystick->_stopAllPollingForVehicle();
             joystick->stop();
             joystick->deleteLater();
@@ -131,7 +131,7 @@ void JoystickManager::_checkForAddedOrRemovedJoysticks()
 
     for (const auto &key : newJoystickMap.keys()) {
         if (!_name2JoystickMap.contains(key)) {
-            qCInfo(JoystickManagerLog) << "New joystick added:" << key;
+            qCDebug(JoystickManagerLog) << "New joystick added:" << key;
         }
     }
 

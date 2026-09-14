@@ -5,7 +5,7 @@
 #include <QtQuick/QQuickItem>
 
 #include "FactPanelController.h"
-#include "QGCMAVLink.h"
+#include "QGCMAVLinkTypes.h"
 
 /// \brief Abstract base class for calibrating RC and Joystick controller.
 ///
@@ -261,7 +261,7 @@ public slots:
 
 protected:
     /// A set of information associated with a radio channel.
-    static constexpr int _chanMax = QGCMAVLink::maxRcChannels; ///< Maximum number of supported channels by this implementation
+    static constexpr int _chanMax = QGCMAVLinkTypes::maxRcChannels; ///< Maximum number of supported channels by this implementation
     struct ChannelInfo {
         enum StickFunction stickFunction; ///< Function mapped to this channel, stickFunctionMax for none
         bool channelReversed;
@@ -388,6 +388,8 @@ private:
     int _stickDetectValue = 0;
     bool _stickDetectSettleStarted = false;
     QElapsedTimer _stickDetectSettleElapsed;
+    int _stepObservedMin[_chanMax]{};   ///< Per-channel min/max seen during the current step, for diagnosing stuck steps
+    int _stepObservedMax[_chanMax]{};
 
     QQuickItem *_statusText = nullptr;
     QQuickItem *_cancelButton = nullptr;

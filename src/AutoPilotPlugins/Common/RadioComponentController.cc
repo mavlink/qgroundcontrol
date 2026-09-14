@@ -2,6 +2,7 @@
 #include "Fact.h"
 #include "ParameterManager.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
 #include "Vehicle.h"
 
 #include <QtCore/QSettings>

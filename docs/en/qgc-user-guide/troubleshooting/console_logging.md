@@ -18,7 +18,11 @@ The most commonly used logging categories are listed below.
 | `FactSystem.ParameterManager`                                                                                           | Debug parameter load problems.                                                                 |
 | `FactSystem.ParameterManager:debugCacheFailure`                                                                         | Debug parameter cache crc misses.                                                              |
 | `PlanManager.PlanManager`, `PlanManager.MissionManager`, `PlanManager.GeoFenceManager`, `PlanManager.RallyPointManager` | Debug Plan upload/download issues.                                                             |
-| `AutoPilotPlugins.RadioComponentController`                                                                             | Debug Radio calibration issues.                                                                |
+| `AutoPilotPlugins.RadioComponentController`                                                                             | Debug reading/writing RC calibration parameters.                                               |
+| `RemoteControl.RemoteControlCalibrationController`                                                                      | Debug the RC and joystick calibration state machine (stick detection, min/max, trims).         |
+| `Joystick.JoystickSDL`                                                                                                  | Debug joystick detection and SDL axis mapping.                                                 |
+
+See [Joystick Calibration failures](../troubleshooting/joystick_calibration.md) for how to use the joystick categories.
 
 ## Logging from the Command Line
 
