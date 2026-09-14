@@ -239,6 +239,7 @@ Item {
 
                 SVCameraCompass {
                     anchors.fill: parent
+                    size: combinedWidget.width
                     heading: cameraVehicle.heading.rawValue
                     showBorder: !SVSettings.simplifiedUserInterface
                 }
