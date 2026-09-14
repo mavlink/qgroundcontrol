@@ -140,5 +140,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 target_include_directories(SynclairVisionUIModule PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../Digiview
+    ${CMAKE_SOURCE_DIR}/message-definitions
     ${CMAKE_SOURCE_DIR}/src/VideoManager
 )
