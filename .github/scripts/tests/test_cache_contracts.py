@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -89,9 +91,43 @@ def test_disk_cleanup_avoids_bulk_package_removal() -> None:
     assert "remove_packages_one_command:" not in action
 
 
-def test_fork_prs_can_restore_public_docker_cache() -> None:
-    action = _read(".github/actions/docker/action.yml")
+def test_docker_cache_uses_magic_cache_compatible_backend() -> None:
+    action = yaml.safe_load(_read(".github/actions/docker/action.yml"))
+    steps = action["runs"]["steps"]
+    build = next(step for step in steps if step.get("id") == "build")["with"]
 
-    assert "cache-from: ${{ format('type=registry" in action
-    assert "event.pull_request.head.repo.fork != true && format('type=registry" not in action
-    assert "github.event_name != 'pull_request'" in action
+    assert build["cache-from"] == (
+        "type=gha,version=2,scope=qgc-docker-${{ inputs.variant }}-${{ inputs.target }}"
+    )
+    assert build["cache-to"] == (
+        "${{ github.event_name != 'pull_request' && "
+        "format('type=gha,version=2,scope=qgc-docker-{0}-{1},mode=max', "
+        "inputs.variant, inputs.target) || '' }}"
+    )
+    assert "type=registry" not in _read(".github/actions/docker/action.yml")
+    login = next(step for step in steps if step.get("name") == "Login to GHCR")
+    assert login["if"] == "startsWith(inputs.push-image, 'ghcr.io/')"
+    assert build["push"] == "${{ inputs.push-image != '' }}"
+    assert build["load"] is True
+
+
+def test_docker_build_enables_magic_cache_on_trusted_aws_runners() -> None:
+    workflow = yaml.safe_load(_read(".github/workflows/docker.yml"))
+    job = workflow["jobs"]["build"]
+    assert "format('runs-on={0}/runner={1}'" in job["runs-on"]
+    assert "github.event.pull_request.head.repo.full_name == github.repository" in job["runs-on"]
+    assert "'ubuntu-latest'" in job["runs-on"]
+    steps = job["steps"]
+    magic = next(
+        index for index, step in enumerate(steps) if step.get("uses") == "runs-on/action@v2"
+    )
+    build = next(
+        index for index, step in enumerate(steps) if step.get("uses") == "./.github/actions/docker"
+    )
+    assert magic < build
+    assert (
+        "github.event.pull_request.head.repo.full_name == github.repository" in steps[magic]["if"]
+    )
+    config = yaml.safe_load(_read(".github/runs-on.yml"))
+    for pool in ("linux-x64-builder", "linux-x64-builder-prebaked"):
+        assert config["runners"][pool]["extras"] == "s3-cache"

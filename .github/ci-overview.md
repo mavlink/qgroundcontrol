@@ -17,6 +17,15 @@ digest; pull requests cannot run those publishing jobs. Master pushes also submi
 builder's CPM SPDX snapshot to the dependency graph. CPM metadata is read inside the builder so
 container-local dependency paths resolve to the correct repositories.
 
+Docker's BuildKit cache uses `type=gha,version=2`, scoped by variant and target. Trusted upstream
+builds already run on RunsOn with `extras: s3-cache` and initialize `runs-on/action@v2` before
+Buildx, so [Magic Cache](https://runs-on.com/docs/performance/caching/docker/) stores these layers
+in the stack's S3 bucket instead of exporting a separate GHCR registry cache. Only non-PR jobs
+export caches. Fork PRs retain GitHub-hosted runners and use the ordinary GHA cache backend;
+they cannot restore the private S3 cache and may build cold. Existing image publishing and
+artifact uploads are unchanged and can still incur internet transfer charges. The first build
+after this cache-backend migration is cold; no old registry cache is deleted automatically.
+
 ClusterFuzzLite PR runs use the bundled seed corpus without querying historical GitHub artifacts
 (`NO_CLUSTERFUZZ_DEPLOYMENT=true`). This also disables previous-build crash comparison: reproducible
 crashes fail the PR regardless of whether they predate it. Crash files and SARIF diagnostics are
