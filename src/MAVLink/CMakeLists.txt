@@ -96,6 +96,12 @@ add_custom_command(
 )
 add_custom_target(mavlink_enums DEPENDS "${MAVLINK_ENUMS_H}" "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}")
 add_dependencies(${CMAKE_PROJECT_NAME} mavlink_enums)
+foreach(_mavlink_provider_consumer IN LISTS QGC_MAVLINK_PROVIDER_CONSUMERS)
+    if(NOT TARGET ${_mavlink_provider_consumer})
+        message(FATAL_ERROR "QGC: MAVLink provider consumer target does not exist: ${_mavlink_provider_consumer}")
+    endif()
+    add_dependencies(${_mavlink_provider_consumer} mavlink_enums)
+endforeach()
 # Ensure AUTOMOC runs after the generator
 set_property(
     TARGET ${CMAKE_PROJECT_NAME}

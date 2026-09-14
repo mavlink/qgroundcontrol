@@ -1,5 +1,11 @@
 # Synclair Vision custom-build composition and resources.
 
+include("${QGC_MAVLINK_PROVIDER}")
+set(QGC_MAVLINK_GENERATED_DIR "${QGC_MAVLINK_GENERATED_DIR}" PARENT_SCOPE)
+set(QGC_MAVLINK_XML_DIR "${QGC_MAVLINK_XML_DIR}" PARENT_SCOPE)
+set(QGC_MAVLINK_COMPONENT_METADATA_DIR "${QGC_MAVLINK_COMPONENT_METADATA_DIR}" PARENT_SCOPE)
+set(QGC_MAVLINK_PROVIDER_CONSUMERS SynclairVisionUIModule PARENT_SCOPE)
+
 add_subdirectory("${CMAKE_SOURCE_DIR}/src/SynclairVision" "${CMAKE_BINARY_DIR}/SynclairVision")
 target_link_libraries(SynclairVisionUIModule PRIVATE mavlink)
 target_include_directories(SynclairVisionUIModule PRIVATE "${CMAKE_BINARY_DIR}")

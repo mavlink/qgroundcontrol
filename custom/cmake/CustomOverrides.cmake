@@ -3,3 +3,4 @@
 
 set(QGC_APP_NAME "SynclairQGC" CACHE STRING "Application name" FORCE)
 set(QGC_STABLE_BUILD ON CACHE BOOL "Stable release build" FORCE)
+set(QGC_MAVLINK_PROVIDER "${CMAKE_SOURCE_DIR}/src/SynclairVision/custom/MAVLinkProvider.cmake")
