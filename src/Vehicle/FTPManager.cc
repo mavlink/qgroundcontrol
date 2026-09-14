@@ -73,7 +73,10 @@ bool FTPManager::download(uint8_t fromCompId, const QString& fromURI, const QStr
     if (fileName.isEmpty()) {
         _downloadState.fileName = _downloadState.fullPathOnVehicle.right(_downloadState.fullPathOnVehicle.size() - lastDirSlashIndex);
     } else {
-        _downloadState.fileName = fileName;
+        // fileName can originate from the vehicle: a MAVLink-FTP ListDirectory entry is
+        // surfaced to QML and handed straight back here as the local name. Reduce it the
+        // same way the derived branch above already does, so it cannot act as a path.
+        _downloadState.fileName = QFileInfo(fileName).fileName();
     }
 
     qCDebug(FTPManagerLog) << "_downloadState.fullPathOnVehicle:_downloadState.fileName" << _downloadState.fullPathOnVehicle << _downloadState.fileName;
