@@ -1,14 +1,4 @@
 #include "ExclusionZoneController.h"
-#include "StagedExclusionZone.h"
-
-#include "AppSettings.h"
-#include "GeoFenceManager.h"
-#include "QGCFencePolygon.h"
-#include "QGCLoggingCategory.h"
-#include "QmlObjectListModel.h"
-#include "SettingsManager.h"
-#include "ShapeFileHelper.h"
-#include "Vehicle.h"
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
@@ -18,19 +8,25 @@
 #include <QtCore/QJsonObject>
 #include <QtPositioning/QGeoCoordinate>
 
+#include "AppSettings.h"
+#include "GeoFenceManager.h"
+#include "QGCFencePolygon.h"
+#include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
+#include "SettingsManager.h"
+#include "ShapeFileHelper.h"
+#include "StagedExclusionZone.h"
+#include "Vehicle.h"
+
 QGC_LOGGING_CATEGORY(ExclusionZoneLog, "Custom.ExclusionZone")
 
-ExclusionZoneController::ExclusionZoneController(QObject *parent)
-    : QObject(parent)
-    , _stagedZones(new QmlObjectListModel(this))
-{
-}
+ExclusionZoneController::ExclusionZoneController(QObject* parent)
+    : QObject(parent), _stagedZones(new QmlObjectListModel(this))
+{}
 
-ExclusionZoneController::~ExclusionZoneController()
-{
-}
+ExclusionZoneController::~ExclusionZoneController() {}
 
-void ExclusionZoneController::setTargetVehicle(Vehicle *vehicle)
+void ExclusionZoneController::setTargetVehicle(Vehicle* vehicle)
 {
     if (_targetVehicle != vehicle) {
         _targetVehicle = vehicle;
@@ -42,14 +38,14 @@ int ExclusionZoneController::approvedCount() const
 {
     int count = 0;
     for (int i = 0; i < _stagedZones->count(); i++) {
-        if (qobject_cast<StagedExclusionZone *>(_stagedZones->get(i))->approved()) {
+        if (qobject_cast<StagedExclusionZone*>(_stagedZones->get(i))->approved()) {
             count++;
         }
     }
     return count;
 }
 
-bool ExclusionZoneController::importFromFile(const QString &file)
+bool ExclusionZoneController::importFromFile(const QString& file)
 {
     QList<QList<QGeoCoordinate>> polygons;
     QString errorString;
@@ -62,10 +58,10 @@ bool ExclusionZoneController::importFromFile(const QString &file)
         return false;
     }
 
-    for (const QList<QGeoCoordinate> &vertices : polygons) {
-        auto *polygon = new QGCFencePolygon(false /* inclusion */, this);
+    for (const QList<QGeoCoordinate>& vertices : polygons) {
+        auto* polygon = new QGCFencePolygon(false /* inclusion */, this);
         polygon->appendVertices(vertices);
-        auto *zone = new StagedExclusionZone(polygon, this);
+        auto* zone = new StagedExclusionZone(polygon, this);
         connect(zone, &StagedExclusionZone::approvedChanged, this, &ExclusionZoneController::approvedCountChanged);
         _stagedZones->append(zone);
     }
@@ -76,7 +72,7 @@ bool ExclusionZoneController::importFromFile(const QString &file)
 
 void ExclusionZoneController::setApproved(int index, bool approved)
 {
-    if (auto *zone = qobject_cast<StagedExclusionZone *>(_stagedZones->get(index))) {
+    if (auto* zone = qobject_cast<StagedExclusionZone*>(_stagedZones->get(index))) {
         zone->setApproved(approved);
     }
 }
@@ -88,9 +84,9 @@ bool ExclusionZoneController::pushApproved()
         return false;
     }
 
-    QList<StagedExclusionZone *> approvedZones;
+    QList<StagedExclusionZone*> approvedZones;
     for (int i = 0; i < _stagedZones->count(); i++) {
-        auto *zone = qobject_cast<StagedExclusionZone *>(_stagedZones->get(i));
+        auto* zone = qobject_cast<StagedExclusionZone*>(_stagedZones->get(i));
         if (zone && zone->approved()) {
             approvedZones.append(zone);
         }
@@ -100,7 +96,7 @@ bool ExclusionZoneController::pushApproved()
         return false;
     }
 
-    GeoFenceManager *fenceMgr = _targetVehicle->geoFenceManager();
+    GeoFenceManager* fenceMgr = _targetVehicle->geoFenceManager();
     if (!fenceMgr) {
         emit pushFinished(false, tr("Target vehicle has no geofence support."));
         return false;
@@ -113,7 +109,7 @@ bool ExclusionZoneController::pushApproved()
     // 1. Build the audit JSON using the same per-item save method GeoFenceController::save()
     // itself delegates to for each polygon - same schema, no live GeoFenceController required.
     QJsonArray polygonArray;
-    for (StagedExclusionZone *zone : approvedZones) {
+    for (StagedExclusionZone* zone : approvedZones) {
         QJsonObject polygonJson;
         zone->polygon()->saveToJson(polygonJson);
         polygonArray.append(polygonJson);
@@ -124,11 +120,12 @@ bool ExclusionZoneController::pushApproved()
     fenceJson[QStringLiteral("circles")] = QJsonArray();
 
     // 2. Write the audit-trail file.
-    const QString dirPath = SettingsManager::instance()->appSettings()->missionSavePath()
-        + QStringLiteral("/ExclusionZoneApprovals");
+    const QString dirPath =
+        SettingsManager::instance()->appSettings()->missionSavePath() + QStringLiteral("/ExclusionZoneApprovals");
     QDir().mkpath(dirPath);
-    const QString filePath = dirPath + QStringLiteral("/exclusion-zone-approval-%1.json")
-        .arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-hhmmss")));
+    const QString filePath =
+        dirPath + QStringLiteral("/exclusion-zone-approval-%1.json")
+                      .arg(QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-hhmmss")));
     QFile auditFile(filePath);
     if (!auditFile.open(QIODevice::WriteOnly)) {
         qCWarning(ExclusionZoneLog) << "Failed to open audit file for write:" << filePath;
@@ -141,11 +138,11 @@ bool ExclusionZoneController::pushApproved()
 
     // 3. Round-trip: re-parse the just-written JSON into fresh polygons, proving the audit file
     // is faithfully reconstructable rather than trusting the in-memory staged objects.
-    auto *sendPolygons = new QmlObjectListModel(this);
-    auto *sendCircles = new QmlObjectListModel(this);
+    auto* sendPolygons = new QmlObjectListModel(this);
+    auto* sendCircles = new QmlObjectListModel(this);
     QString loadError;
-    for (const QJsonValue &value : polygonArray) {
-        auto *polygon = new QGCFencePolygon(false, sendPolygons);
+    for (const QJsonValue& value : polygonArray) {
+        auto* polygon = new QGCFencePolygon(false, sendPolygons);
         if (!polygon->loadFromJson(value.toObject(), true, loadError)) {
             qCWarning(ExclusionZoneLog) << "Audit round-trip failed:" << loadError;
             sendPolygons->deleteLater();
@@ -162,21 +159,22 @@ bool ExclusionZoneController::pushApproved()
     // sendPolygons/sendCircles don't need to outlive this call.
     disconnect(_fenceErrorConnection);
     disconnect(_fenceSendCompleteConnection);
-    _fenceErrorConnection = connect(fenceMgr, &GeoFenceManager::error, this, [this](int, const QString &msg) {
-        _lastFenceError = msg;
-    });
-    _fenceSendCompleteConnection = connect(fenceMgr, &GeoFenceManager::sendComplete, this, [this, approvedZones](bool error) {
-        if (!error) {
-            for (StagedExclusionZone *zone : approvedZones) {
-                _stagedZones->removeOne(zone);
-                zone->deleteLater();
+    _fenceErrorConnection =
+        connect(fenceMgr, &GeoFenceManager::error, this, [this](int, const QString& msg) { _lastFenceError = msg; });
+    _fenceSendCompleteConnection =
+        connect(fenceMgr, &GeoFenceManager::sendComplete, this, [this, approvedZones](bool error) {
+            if (!error) {
+                for (StagedExclusionZone* zone : approvedZones) {
+                    _stagedZones->removeOne(zone);
+                    zone->deleteLater();
+                }
+                emit approvedCountChanged();
             }
-            emit approvedCountChanged();
-        }
-        emit pushFinished(!error, error ? _lastFenceError : QString());
-    });
+            emit pushFinished(!error, error ? _lastFenceError : QString());
+        });
 
-    fenceMgr->sendToVehicle(QGeoCoordinate() /* no breach return for exclusion-only push */, *sendPolygons, *sendCircles);
+    fenceMgr->sendToVehicle(QGeoCoordinate() /* no breach return for exclusion-only push */, *sendPolygons,
+                            *sendCircles);
 
     sendPolygons->deleteLater();
     sendCircles->deleteLater();

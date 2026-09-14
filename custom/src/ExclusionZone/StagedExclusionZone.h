@@ -13,22 +13,23 @@ class StagedExclusionZone : public QObject
     QML_UNCREATABLE("Created by ExclusionZoneController")
     Q_MOC_INCLUDE("QGCFencePolygon.h")
 
-    Q_PROPERTY(QGCFencePolygon *polygon READ polygon                     CONSTANT)
-    Q_PROPERTY(bool             approved READ approved WRITE setApproved NOTIFY approvedChanged)
+    Q_PROPERTY(QGCFencePolygon* polygon READ polygon CONSTANT)
+    Q_PROPERTY(bool approved READ approved WRITE setApproved NOTIFY approvedChanged)
 
 public:
     /// \param polygon Owned by this object (parented to it).
-    explicit StagedExclusionZone(QGCFencePolygon *polygon, QObject *parent = nullptr);
+    explicit StagedExclusionZone(QGCFencePolygon* polygon, QObject* parent = nullptr);
 
-    QGCFencePolygon *polygon() const { return _polygon; }
+    QGCFencePolygon* polygon() const { return _polygon; }
 
     bool approved() const { return _approved; }
+
     void setApproved(bool approved);
 
 signals:
     void approvedChanged(bool approved);
 
 private:
-    QGCFencePolygon *_polygon = nullptr;
+    QGCFencePolygon* _polygon = nullptr;
     bool _approved = false;
 };

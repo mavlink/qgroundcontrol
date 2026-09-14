@@ -25,24 +25,25 @@ class ExclusionZoneController : public QObject
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("Vehicle.h")
 
-    Q_PROPERTY(QmlObjectListModel *stagedZones   READ stagedZones                                     CONSTANT)
-    Q_PROPERTY(Vehicle            *targetVehicle READ targetVehicle WRITE setTargetVehicle NOTIFY targetVehicleChanged)
-    Q_PROPERTY(int                 approvedCount READ approvedCount                        NOTIFY approvedCountChanged)
+    Q_PROPERTY(QmlObjectListModel* stagedZones READ stagedZones CONSTANT)
+    Q_PROPERTY(Vehicle* targetVehicle READ targetVehicle WRITE setTargetVehicle NOTIFY targetVehicleChanged)
+    Q_PROPERTY(int approvedCount READ approvedCount NOTIFY approvedCountChanged)
 
 public:
-    explicit ExclusionZoneController(QObject *parent = nullptr);
+    explicit ExclusionZoneController(QObject* parent = nullptr);
     ~ExclusionZoneController();
 
-    QmlObjectListModel *stagedZones() const { return _stagedZones; }
+    QmlObjectListModel* stagedZones() const { return _stagedZones; }
 
-    Vehicle *targetVehicle() const { return _targetVehicle; }
-    void setTargetVehicle(Vehicle *vehicle);
+    Vehicle* targetVehicle() const { return _targetVehicle; }
+
+    void setTargetVehicle(Vehicle* vehicle);
 
     int approvedCount() const;
 
     /// Imports polygons from a KML/SHP file, staging one exclusion zone per polygon found.
     /// @return true if at least one polygon was imported.
-    Q_INVOKABLE bool importFromFile(const QString &file);
+    Q_INVOKABLE bool importFromFile(const QString& file);
 
     /// Marks a staged zone's approval state by its index in stagedZones.
     Q_INVOKABLE void setApproved(int index, bool approved);
@@ -53,15 +54,15 @@ public:
     Q_INVOKABLE bool pushApproved();
 
 signals:
-    void targetVehicleChanged  (Vehicle *targetVehicle);
-    void approvedCountChanged  ();
+    void targetVehicleChanged(Vehicle* targetVehicle);
+    void approvedCountChanged();
     /// Fired once the push attempt concludes, successfully or not.
-    void pushFinished          (bool success, QString message);
+    void pushFinished(bool success, QString message);
 
 private:
-    QmlObjectListModel *_stagedZones    = nullptr;
-    Vehicle             *_targetVehicle = nullptr;
-    QString              _lastFenceError;
+    QmlObjectListModel* _stagedZones = nullptr;
+    Vehicle* _targetVehicle = nullptr;
+    QString _lastFenceError;
 
     // Re-bound on every pushApproved() call so at most one push's completion handlers are ever
     // live on a GeoFenceManager, regardless of how many times pushApproved() has been called or
