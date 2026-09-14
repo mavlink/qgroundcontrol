@@ -2,8 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
 
-import QGroundControl
-
 Item {
     id: root
 
@@ -61,8 +59,7 @@ Item {
     readonly property var actionPolicies: ({
         [root.actionSynclair]: {
             allowWhenShortcutsDisabled: true,
-            requiresVisibleToolbar: true,
-            requiresSynclairOverlayOff: true
+            requiresVisibleToolbar: true
         }
     })
 
@@ -328,7 +325,14 @@ Item {
 
     Component.onDestruction: clearVisualHeldState()
 
-    focus: root.shortcutInputEligible
+    focus: true
+    activeFocusOnTab: false
+
+    onActiveFocusChanged: {
+        if (!activeFocus) {
+            clearVisualHeldState()
+        }
+    }
 
     Keys.onPressed: (event) => {
         if (event.isAutoRepeat) {
@@ -349,171 +353,175 @@ Item {
 
     MouseArea {
         anchors.fill: parent
-        enabled: root.shortcutInputEligible && SVState.synclairOverlay
+        enabled: root.shortcutInputEligible
         acceptedButtons: Qt.AllButtons
-        onReleased: (mouse) => root.dispatch(SVSettings.mouseButtonShortcutBase - mouse.button)
+        onPressed: (mouse) => {
+            mouse.accepted = root.isShortcutEnabled(root.mouseButtonShortcut(mouse.button))
+        }
+        onReleased: (mouse) => {
+            mouse.accepted = root.dispatch(root.mouseButtonShortcut(mouse.button))
+        }
         onWheel: (wheel) => {
-            root.dispatch(wheel.angleDelta.y > 0 ? SVSettings.scrollUp : SVSettings.scrollDown)
-            wheel.accepted = true
+            wheel.accepted = root.dispatch(wheel.angleDelta.y > 0 ? SVSettings.scrollUp : SVSettings.scrollDown)
         }
     }
 
     Shortcut {
         sequence: SVSettings.shortcutHUD
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutHUD] === root.actionHUD
+        enabled: root.isShortcutEnabled(SVSettings.shortcutHUD)
         onActivated: root.dispatch(SVSettings.shortcutHUD, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutToolbar
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutToolbar] === root.actionToolbar
+        enabled: root.isShortcutEnabled(SVSettings.shortcutToolbar)
         onActivated: root.dispatch(SVSettings.shortcutToolbar, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutSynclair
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutSynclair] === root.actionSynclair
+        enabled: root.isShortcutEnabled(SVSettings.shortcutSynclair)
         onActivated: root.dispatch(SVSettings.shortcutSynclair, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutCamera1
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutCamera1] === root.actionCamera1
+        enabled: root.isShortcutEnabled(SVSettings.shortcutCamera1)
         onActivated: root.dispatch(SVSettings.shortcutCamera1, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutCamera2
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutCamera2] === root.actionCamera2
+        enabled: root.isShortcutEnabled(SVSettings.shortcutCamera2)
         onActivated: root.dispatch(SVSettings.shortcutCamera2, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutCamera3
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutCamera3] === root.actionCamera3
+        enabled: root.isShortcutEnabled(SVSettings.shortcutCamera3)
         onActivated: root.dispatch(SVSettings.shortcutCamera3, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutCamera4
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutCamera4] === root.actionCamera4
+        enabled: root.isShortcutEnabled(SVSettings.shortcutCamera4)
         onActivated: root.dispatch(SVSettings.shortcutCamera4, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutCamera5
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutCamera5] === root.actionCamera5
+        enabled: root.isShortcutEnabled(SVSettings.shortcutCamera5)
         onActivated: root.dispatch(SVSettings.shortcutCamera5, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutNextCamera
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutNextCamera] === root.actionNextCamera
+        enabled: root.isShortcutEnabled(SVSettings.shortcutNextCamera)
         onActivated: root.dispatch(SVSettings.shortcutNextCamera, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutDeselectCamera
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutDeselectCamera] === root.actionDeselectCamera
+        enabled: root.isShortcutEnabled(SVSettings.shortcutDeselectCamera)
         onActivated: root.dispatch(SVSettings.shortcutDeselectCamera, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutRecord
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutRecord] === root.actionRecord
+        enabled: root.isShortcutEnabled(SVSettings.shortcutRecord)
         onActivated: root.dispatch(SVSettings.shortcutRecord, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutPhoto
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutPhoto] === root.actionPhoto
+        enabled: root.isShortcutEnabled(SVSettings.shortcutPhoto)
         onActivated: root.dispatch(SVSettings.shortcutPhoto, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutLockControls
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutLockControls] === root.actionLockControls
+        enabled: root.isShortcutEnabled(SVSettings.shortcutLockControls)
         onActivated: root.dispatch(SVSettings.shortcutLockControls, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutPreviousCamera
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutPreviousCamera] === root.actionPreviousCamera
+        enabled: root.isShortcutEnabled(SVSettings.shortcutPreviousCamera)
         onActivated: root.dispatch(SVSettings.shortcutPreviousCamera, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutAiDetection
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutAiDetection] === root.actionAiDetection
+        enabled: root.isShortcutEnabled(SVSettings.shortcutAiDetection)
         onActivated: root.dispatch(SVSettings.shortcutAiDetection, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutNextLayout
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutNextLayout] === root.actionNextLayout
+        enabled: root.isShortcutEnabled(SVSettings.shortcutNextLayout)
         onActivated: root.dispatch(SVSettings.shortcutNextLayout, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutGrid
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutGrid] === root.actionGrid
+        enabled: root.isShortcutEnabled(SVSettings.shortcutGrid)
         onActivated: root.dispatch(SVSettings.shortcutGrid, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutCrosshair
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutCrosshair] === root.actionCrosshair
+        enabled: root.isShortcutEnabled(SVSettings.shortcutCrosshair)
         onActivated: root.dispatch(SVSettings.shortcutCrosshair, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutSTT
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutSTT] === root.actionSTT
+        enabled: root.isShortcutEnabled(SVSettings.shortcutSTT)
         onActivated: root.dispatch(SVSettings.shortcutSTT, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutCursorTracking
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutCursorTracking] === root.actionCursorTracking
+        enabled: root.isShortcutEnabled(SVSettings.shortcutCursorTracking)
         onActivated: root.dispatch(SVSettings.shortcutCursorTracking, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutManualTracking
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutManualTracking] === root.actionManualTracking
+        enabled: root.isShortcutEnabled(SVSettings.shortcutManualTracking)
         onActivated: root.dispatch(SVSettings.shortcutManualTracking, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutDeselectTracking
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutDeselectTracking] === root.actionDeselectTracking
+        enabled: root.isShortcutEnabled(SVSettings.shortcutDeselectTracking)
         onActivated: root.dispatch(SVSettings.shortcutDeselectTracking, [])
     }
 
     Shortcut {
         sequence: SVSettings.shortcutLockTarget
-        enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutLockTarget] === root.actionLockTarget
+        enabled: root.isShortcutEnabled(SVSettings.shortcutLockTarget)
         onActivated: root.dispatch(SVSettings.shortcutLockTarget, [])
     }
 
-    function dispatch(shortcut, visualRoles) {
+    function mouseButtonShortcut(button) {
+        return SVSettings.mouseButtonShortcutBase - button
+    }
+
+    function isShortcutEnabled(shortcut) {
         const action = root.shortcutRegistry[shortcut]
         const policy = root.actionPolicies[action]
 
+        return root.shortcutInputEligible && action !== undefined
+            && (SVState.shortcutsEnabled || (policy && policy.allowWhenShortcutsDisabled
+                && (!policy.requiresVisibleToolbar || root.toolbarVisible)))
+    }
 
+    function dispatch(shortcut) {
+        const action = root.shortcutRegistry[shortcut]
 
-        if (!root.shortcutInputEligible) {
-            return
-        }
-
-        if (policy && policy.requiresSynclairOverlayOff && SVState.synclairOverlay) {
-            return
-        }
-
-        if (!SVState.shortcutsEnabled
-                && (!policy || !policy.allowWhenShortcutsDisabled
-                    || (policy.requiresVisibleToolbar && !root.toolbarVisible))) {
-            return
+        if (!root.isShortcutEnabled(shortcut)) {
+            return false
         }
 
         switch (action) {
@@ -593,6 +601,8 @@ Item {
         default:
             break
         }
+
+        return true
     }
 
 }
