@@ -325,7 +325,6 @@ Item {
 
     Component.onDestruction: clearVisualHeldState()
 
-    focus: true
     activeFocusOnTab: false
 
     onActiveFocusChanged: {
