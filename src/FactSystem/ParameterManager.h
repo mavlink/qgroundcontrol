@@ -2,6 +2,7 @@
 
 #include <QtCore/QMap>
 #include <QtCore/QObject>
+#include <QtCore/QSet>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -80,6 +81,11 @@ public:
     /// Returns all parameter names
     QStringList parameterNames(int componentId) const;
 
+    /// Returns true if the specified parameter is served by the extended parameter protocol
+    ///     @param componentId: Component id or ParameterManager::defaultComponentId
+    ///     @param name: Parameter name
+    bool extParameterExists(int componentId, const QString &paramName) const;
+
     /// Returns the specified Parameter. Returns a default empty fact is parameter does not exists. Also will pop
     /// a missing parameter error to user if parameter does not exist.
     ///     @param componentId: Component id or ParameterManager::defaultComponentId
@@ -102,6 +108,8 @@ public:
 
     static MAV_PARAM_TYPE factTypeToMavType(FactMetaData::ValueType_t factType);
     static FactMetaData::ValueType_t mavTypeToFactType(MAV_PARAM_TYPE mavType);
+    static MAV_PARAM_EXT_TYPE factTypeToMavExtType(FactMetaData::ValueType_t factType);
+    static FactMetaData::ValueType_t mavExtTypeToFactType(MAV_PARAM_EXT_TYPE mavExtType);
 
     static constexpr int defaultComponentId = -1;
 
@@ -116,6 +124,8 @@ public:
     static constexpr int kTestInitialRequestIntervalMs = 500;       ///< Timer interval for initial request in test mode
     /// Maximum time to wait for initial request retries to exhaust in tests
     static constexpr int kTestMaxInitialRequestTimeMs = (kMaxInitialRequestListRetry + 1) * kTestInitialRequestIntervalMs + 1000;
+    static constexpr int kExtParamReadRetryCount = 2;               ///< Retries for a missing PARAM_EXT_VALUE index
+    static constexpr int kExtParamTimeoutMs = 3000;                 ///< Quiet time after which missing ext params are re-requested
 
 signals:
     void parametersReadyChanged(bool parametersReady);
@@ -140,6 +150,16 @@ private slots:
 private:
     /// Called whenever a parameter is updated or first seen.
     void _handleParamValue(int componentId, const QString &parameterName, int parameterCount, int parameterIndex, MAV_PARAM_TYPE mavParamType, const QVariant &parameterValue);
+    /// Called whenever an extended parameter is updated or first seen.
+    void _handleParamExtValue(int componentId, const mavlink_param_ext_value_t &paramExtValue);
+    /// Keeps the local ext parameter value in sync with writes made from anywhere, including the camera UI.
+    void _handleParamExtAck(int componentId, const mavlink_param_ext_ack_t &paramExtAck);
+    /// Sends PARAM_EXT_REQUEST_LIST to a component which has not been queried yet.
+    void _startExtParameterDownload(int componentId);
+    void _extParamTimeout();
+    void _mavlinkParamExtSet(int componentId, const QString &paramName, MAV_PARAM_EXT_TYPE paramExtType, const QVariant &rawValue);
+    void _mavlinkParamExtRequestRead(int componentId, const QString &paramName, int paramIndex);
+    Fact *_extFact(int componentId, const QString &paramName) const;
      /// Writes the parameter update to mavlink, sets up for write wait
     void _mavlinkParamSet(int componentId, const QString &name, FactMetaData::ValueType_t valueType, const QVariant &rawValue);
     void _waitingParamTimeout();
@@ -191,6 +211,15 @@ private:
     Vehicle *_vehicle = nullptr;
 
     QMap<int /* comp id */, QMap<QString /* parameter name */, Fact*>> _mapCompId2FactMap;
+
+    // Extended parameter protocol (PARAM_EXT_*). Kept separate from the classic protocol facts since
+    // ext parameters take no part in the initial load/progress/cache machinery and must be written
+    // with PARAM_EXT_SET. They are merged into the public accessors so the parameter editor shows both.
+    QMap<int /* comp id */, QMap<QString /* parameter name */, Fact*>> _mapCompId2ExtFactMap;
+    QSet<int> _seenComponentIds;                                    ///< Non-autopilot components heard from via HEARTBEAT
+    QSet<int> _extParamRequestedCompIds;                            ///< Components PARAM_EXT_REQUEST_LIST has been sent to
+    QMap<int /* comp id */, QMap<int /* index */, int /* retry count */>> _extWaitingReadParamIndexMap;
+    QTimer _extParamTimeoutTimer;
 
     double _loadProgress = 0;                   ///< Parameter load progess, [0.0,1.0]
     bool _parametersReady = false;              ///< true: parameter load complete

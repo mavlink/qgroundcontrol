@@ -3,6 +3,7 @@
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QString>
+#include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkEnums.h"
@@ -106,6 +107,19 @@ public:
         };
         uint8_t type;
     }) param_ext_union_t;
+
+    /// Decodes the 128 byte PARAM_EXT_VALUE/PARAM_EXT_ACK value blob according to its MAV_PARAM_EXT_TYPE.
+    ///     @param value: Raw value bytes, MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN long, not null terminated
+    ///     @param paramExtType: MAV_PARAM_EXT_TYPE of the value
+    /// @return Decoded value, or an invalid QVariant if the type is not supported
+    static QVariant paramExtValueToVariant(const char *value, uint8_t paramExtType);
+
+    /// Encodes a value into the 128 byte PARAM_EXT_SET value blob according to its MAV_PARAM_EXT_TYPE.
+    ///     @param value: Value to encode
+    ///     @param paramExtType: MAV_PARAM_EXT_TYPE to encode as
+    ///     @param outValue: Receives the encoded bytes, must be MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN long
+    /// @return true: Value was encoded, false: type not supported or value not convertible
+    static bool variantToParamExtValue(const QVariant &value, uint8_t paramExtType, char *outValue);
 
     static bool isValidChannel(uint8_t channel) { return (channel < MAVLINK_COMM_NUM_BUFFERS); }
     static bool isValidChannel(mavlink_channel_t channel) { return isValidChannel(static_cast<uint8_t>(channel)); }

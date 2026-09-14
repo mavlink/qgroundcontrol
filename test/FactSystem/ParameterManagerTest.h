@@ -2,6 +2,8 @@
 
 #include "BaseClasses/VehicleTestManualConnect.h"
 
+class Fact;
+
 class ParameterManagerTest : public VehicleTestManualConnect
 {
     Q_OBJECT
@@ -28,9 +30,19 @@ private slots:
     void _bulkRefreshUnknownNameSkipped();
     void _bulkRefreshRetrySucceeds();
     void _bulkRefreshAllRetriesExhausted();
+    void _extParamsDownloaded();
+    void _extParamWrite();
+    void _extParamWriteRejected();
+    void _extParamWriteNoAck();
+    void _extParamWriteInProgress();
+    void _extParamMissingIndexRetry();
 
 private:
+    /// Connects a camera-enabled MockLink and waits for the ext params to arrive.
+    /// @return The CAM_EXPMODE fact, nullptr on failure
+    Fact *_connectAndWaitForExtParams();
     void _ignoreParamResponseTimeouts();
+    void _ignoreExtParamAckTimeouts();
     void _noFailureWorker(MockConfiguration::FailureMode_t failureMode);
     void _setParamWithFailureMode(MockLink::ParamSetFailureMode_t failureMode, bool expectSuccess,
                                   const QString &paramName, MAV_AUTOPILOT autopilot);
