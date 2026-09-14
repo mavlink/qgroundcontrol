@@ -8,6 +8,7 @@
 #include <QtCore/private/qthread_p.h>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QIcon>
+#include <QtGui/QKeyEvent>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickImageProvider>
@@ -755,6 +756,24 @@ bool QGCApplication::event(QEvent* e)
     }
 
     return QGuiApplication::event(e);
+}
+
+bool QGCApplication::notify(QObject* receiver, QEvent* event)
+{
+    const bool result = QGuiApplication::notify(receiver, event);
+
+    if (!event->isAccepted()) {
+        if (const auto* keyEvent = dynamic_cast<const QKeyEvent*>(event)) {
+            const bool pressed = keyEvent->type() == QEvent::KeyPress;
+            const bool released = keyEvent->type() == QEvent::KeyRelease;
+            if (pressed || released) {
+                emit unacceptedKeyEvent(keyEvent->key(), keyEvent->modifiers().toInt(), pressed,
+                                        keyEvent->isAutoRepeat());
+            }
+        }
+    }
+
+    return result;
 }
 
 QGCImageProvider* QGCApplication::qgcImageProvider()

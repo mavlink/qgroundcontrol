@@ -70,6 +70,7 @@ public:
     void removeCompressedSignal(const QMetaMethod &method);
 
     bool event(QEvent *e) final;
+    bool notify(QObject *receiver, QEvent *event) final;
 
     static QString cachedParameterMetaDataFile();
     static QString cachedAirframeMetaDataFile();
@@ -95,6 +96,7 @@ public:
 
 signals:
     void languageChanged(const QLocale &locale);
+    void unacceptedKeyEvent(int key, int modifiers, bool pressed, bool autoRepeat);
 
 public slots:
     void qmlAttemptWindowClose();
