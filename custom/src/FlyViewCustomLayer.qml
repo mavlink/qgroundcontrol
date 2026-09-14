@@ -274,8 +274,12 @@ Item {
         interval:   relayRecommendationDelaySecs * 1000
         repeat:     false
         onTriggered: {
+            // Wording intentionally doesn't say "launch" - Stallion's normal operating state is
+            // already airborne on routine patrol, not parked waiting to be launched. The actual
+            // trigger condition-set for this feature is still open (see program scope doc) - this
+            // is a wording fix only, not a rework of when/why this fires.
             QGroundControl.showMessageDialog(_root, qsTr("Rover Communications Lost"),
-                qsTr("The rover has had no telemetry for over %1 seconds. Consider launching the aircraft to relay communications.").arg(relayRecommendationDelaySecs))
+                qsTr("The rover has had no telemetry for over %1 seconds. Review aircraft status and consider a relay-related action if needed.").arg(relayRecommendationDelaySecs))
         }
     }
 
