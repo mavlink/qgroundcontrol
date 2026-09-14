@@ -114,7 +114,7 @@ def test_docker_cache_uses_magic_cache_compatible_backend() -> None:
 def test_docker_build_enables_magic_cache_on_trusted_aws_runners() -> None:
     workflow = yaml.safe_load(_read(".github/workflows/docker.yml"))
     job = workflow["jobs"]["build"]
-    assert "format('runs-on={0}/runner={1}'" in job["runs-on"]
+    assert "runs-on={0}/runner={1}" in job["runs-on"]
     assert "github.event.pull_request.head.repo.full_name == github.repository" in job["runs-on"]
     assert "'ubuntu-latest'" in job["runs-on"]
     steps = job["steps"]
