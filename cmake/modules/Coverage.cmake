@@ -69,26 +69,26 @@ else()
 endif()
 
 # Static and object libraries need compile-time instrumentation; final binaries link the runtime.
-function(qgc_apply_coverage_to_target target)
-    if(NOT target OR NOT TARGET ${target})
-        message(FATAL_ERROR "QGC: qgc_apply_coverage_to_target: Target '${target}' does not exist")
+function(qgc_apply_coverage_to_target target_name)
+    if(NOT target_name OR NOT TARGET ${target_name})
+        message(FATAL_ERROR "QGC: qgc_apply_coverage_to_target: Target '${target_name}' does not exist")
     endif()
 
-    get_target_property(_target_type ${target} TYPE)
-    get_target_property(_imported ${target} IMPORTED)
+    get_target_property(_target_type ${target_name} TYPE)
+    get_target_property(_imported ${target_name} IMPORTED)
     if(_imported OR _target_type STREQUAL "INTERFACE_LIBRARY" OR _target_type STREQUAL "UTILITY")
         message(FATAL_ERROR
-            "QGC: qgc_apply_coverage_to_target: '${target}' must be a non-imported compiled target")
+            "QGC: qgc_apply_coverage_to_target: '${target_name}' must be a non-imported compiled target")
     endif()
 
-    set_property(TARGET ${target} PROPERTY C_COMPILER_LAUNCHER "")
-    set_property(TARGET ${target} PROPERTY CXX_COMPILER_LAUNCHER "")
+    set_property(TARGET ${target_name} PROPERTY C_COMPILER_LAUNCHER "")
+    set_property(TARGET ${target_name} PROPERTY CXX_COMPILER_LAUNCHER "")
     foreach(_option IN LISTS _qgc_coverage_compile_options)
-        target_compile_options(${target} PRIVATE "$<$<CONFIG:Debug>:${_option}>")
+        target_compile_options(${target_name} PRIVATE "$<$<CONFIG:Debug>:${_option}>")
     endforeach()
     if(_target_type MATCHES "^(EXECUTABLE|SHARED_LIBRARY|MODULE_LIBRARY)$")
         foreach(_option IN LISTS _qgc_coverage_link_options)
-            target_link_options(${target} PRIVATE "$<$<CONFIG:Debug>:${_option}>")
+            target_link_options(${target_name} PRIVATE "$<$<CONFIG:Debug>:${_option}>")
         endforeach()
     endif()
 endfunction()
@@ -97,7 +97,8 @@ find_program(GCOVR_EXECUTABLE gcovr)
 
 if(GCOVR_EXECUTABLE)
     message(STATUS "Found gcovr: ${GCOVR_EXECUTABLE}")
-    message(STATUS "Coverage thresholds: lines=${QGC_COVERAGE_LINE_THRESHOLD}%, branches=${QGC_COVERAGE_BRANCH_THRESHOLD}%")
+    message(STATUS
+        "Coverage thresholds: lines=${QGC_COVERAGE_LINE_THRESHOLD}%, branches=${QGC_COVERAGE_BRANCH_THRESHOLD}%")
 
     # gcovr 8.x prepends CWD to relative filters, which breaks out-of-source builds
     set(GCOVR_COMMON_ARGS
@@ -153,7 +154,7 @@ if(GCOVR_EXECUTABLE)
                 --fail-under-line ${QGC_COVERAGE_LINE_THRESHOLD}
                 --fail-under-branch ${QGC_COVERAGE_BRANCH_THRESHOLD}
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            COMMENT "Verifying coverage thresholds (lines>=${QGC_COVERAGE_LINE_THRESHOLD}%, branches>=${QGC_COVERAGE_BRANCH_THRESHOLD}%) — run 'coverage' target first"
+            COMMENT "Verifying coverage thresholds — run 'coverage' target first"
             VERBATIM
         )
     endif()

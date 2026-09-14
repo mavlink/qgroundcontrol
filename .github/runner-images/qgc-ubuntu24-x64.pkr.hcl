@@ -32,7 +32,7 @@ variable "qt_modules" {
 }
 
 source "amazon-ebs" "qgc_ubuntu24_x64" {
-  ami_name                    = "qgc-runs-on-ubuntu24-x64-${formatdate("YYYYMMDD-hhmmss", timestamp())}"
+  ami_name                    = "qgc-candidate-ubuntu24-x64-${formatdate("YYYYMMDD-hhmmss", timestamp())}"
   ami_description             = "QGroundControl Ubuntu 24 x64 CI image from ${var.source_ref}"
   associate_public_ip_address = true
   instance_type               = "c8i.xlarge"

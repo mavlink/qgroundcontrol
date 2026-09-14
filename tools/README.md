@@ -528,7 +528,24 @@ Scripts read from this file to ensure consistent versions across local developme
 
 Compiler analysis uses `python tools/analyze.py --tool clazy|clang-tidy [paths...]`
 with a configured compilation database and generated build prerequisites. Individual
-files and directories are accepted. `--advisory` keeps findings informational while
-failing tool/compiler invocation errors; empty selections are explicitly skipped.
+files and directories are accepted. `--advisory` keeps warnings informational while
+failing error-level diagnostics and tool/compiler invocation errors; empty selections are explicitly skipped.
 These compiler-aware pre-commit hooks use `--hook-stage manual`; fast hooks remain
 part of the required PR gate.
+
+Run `just validate-configs` after changing build versions, schemas, or link exceptions.
+It validates required fields, minimum versions, SDK ordering, checksum coverage, and exception expiry.
+The pre-commit gate triggers on schema-only edits too. Release dependencies live in
+`tools/release/package.json` with their own lockfile; `python tools/release.py --install`
+uses `npm ci` without changing the documentation package. `npm test --prefix tools/release`
+checks version decisions using the actual semantic-release commit analyzer.
+
+`just lint-qml-build` checks QML against generated `build/qml` type information after a build.
+Missing imports, properties, and types are errors; the fast source-only hook retains its
+limited checks. Use `tools/analyze.py --tool qmllint --qml-build --build-dir <dir> <files>`
+for another build directory or selected files.
+
+The documentation workflow checks English internal links without exceptions before building
+all locales. The full locale build allows a finite list of existing translation links in
+`docs/.vitepress/config.mjs`; translated sources remain maintained separately. External link
+exceptions in `.lychee.toml` are exact URLs with a review deadline enforced by config validation.

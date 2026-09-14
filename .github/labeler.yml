@@ -25,24 +25,25 @@ github_actions:
       - any-glob-to-any-file:
           - 'deploy/linux/**'
           - 'deploy/docker/**'
-          - 'tools/setup/*debian*'
-          - 'tools/setup/*linux*'
+          - 'tools/setup/install_dependencies/_debian.py'
+          - 'tools/setup/install_dependencies/_arch.py'
+          - 'tools/setup/install_dependencies/_fedora.py'
 
 "Platform: Windows":
   - changed-files:
       - any-glob-to-any-file:
           - 'deploy/windows/**'
-          - 'tools/setup/*windows*'
+          - 'tools/setup/install_dependencies/_windows.py'
 
 "Platform: macOS":
   - changed-files:
       - any-glob-to-any-file:
           - 'deploy/macos/**'
-          - 'tools/setup/*macos*'
+          - 'tools/setup/install_dependencies/_macos.py'
 
 Tests:
   - changed-files:
-      - any-glob-to-any-file: 'test/**'
+      - any-glob-to-any-file: ['test/**', 'tools/tests/**', '.github/scripts/tests/**']
 
 CMake:
   - changed-files:

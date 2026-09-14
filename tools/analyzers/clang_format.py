@@ -8,7 +8,7 @@ from common.analyzer import AnalysisResult, AnalyzerBase
 from common.git import run_git
 from common.logging import log_error, log_info, log_ok
 from common.proc import run_captured
-from common.tool_version import probe_version
+from common.tool_version import probe_version, uv_lock_version
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -18,13 +18,23 @@ class ClangFormatAnalyzer(AnalyzerBase):
     """Clang-format code formatter."""
 
     name: ClassVar[str] = "clang-format"
-    install_hint: ClassVar[str] = "Install with: sudo apt install clang-format"
+    install_hint: ClassVar[str] = "Install with: python tools/setup/install_python.py lint"
 
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
         if not self.require_tool("clang-format"):
-            return AnalysisResult(tool=self.name, passed=False, output="Tool not found")
+            return AnalysisResult(
+                tool=self.name, passed=False, execution_error=True, output="Tool not found"
+            )
 
         version = probe_version("clang-format")
+        expected = uv_lock_version("clang-format")
+        if version is None or ".".join(map(str, version)) != expected:
+            return AnalysisResult(
+                tool=self.name,
+                passed=False,
+                execution_error=True,
+                output=f"clang-format {expected} required; activate tools/.venv or install the lint group",
+            )
         version_str = ".".join(map(str, version)) if version else "unknown"
         log_info(f"Using clang-format version {version_str}")
 

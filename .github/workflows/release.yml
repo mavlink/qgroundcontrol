@@ -39,7 +39,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 'lts/*'
+          node-version-file: .nvmrc
 
       - name: Run semantic-release
         id: release
@@ -48,14 +48,14 @@ jobs:
         run: |
           set -euo pipefail
           ./tools/release.py --install
-          # @semantic-release/exec verifyReleaseCmd writes .release-version
+          # @semantic-release/exec verifyReleaseCmd writes tools/release/.release-version
           # iff a release was actually published. Reading from a file is
           # immune to log-format drift across SR major versions.
-          rm -f .release-version
+          rm -f tools/release/.release-version
           ./tools/release.py --run
 
-          if [[ -f .release-version ]]; then
-            version=$(tr -d '[:space:]' < .release-version)
+          if [[ -f tools/release/.release-version ]]; then
+            version=$(tr -d '[:space:]' < tools/release/.release-version)
             if [[ -z "${version}" ]]; then
               echo "::error::semantic-release wrote an empty version file"
               exit 1

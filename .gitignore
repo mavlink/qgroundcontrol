@@ -69,6 +69,7 @@ tmp/
 obj/
 debug/
 release/
+!tools/release/
 /qgroundcontrol
 bin/*.exe
 bin/*.txt
@@ -188,3 +189,9 @@ pytest-of-*/
 .tool-versions
 .python-version
 !tools/.python-version
+
+# semantic-release output belongs to its isolated tooling directory.
+/tools/release/.release-version
+
+# Local and CI link-check results.
+.lycheecache

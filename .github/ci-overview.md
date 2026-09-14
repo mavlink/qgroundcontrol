@@ -322,3 +322,19 @@ CI Scripts runs the full Python suite on Python 3.10 and 3.12, with environment,
 subprocess, network, Qt setup, and cache tests on Windows. A separate job checks
 Ruff formatting, Pyright, and the `common` / `qgc_tools` / entrypoint import boundaries.
 Local equivalents are `just test-python` and `just lint` after installing `dev`.
+
+### Configuration and documentation checks
+
+CI Scripts validates build schema relationships and release decisions using locked Node tooling.
+Schema-only edits run validation. CodeQL C++ extraction stays in the Linux release build;
+the standalone workflow scans Actions, Java/Kotlin, and Python, including deployment and tests.
+Runner image candidates are smoke-tested by AMI ID before production promotion, with weekly
+rebuilds and bounded retention; see [runner-images/README.md](runner-images/README.md).
+
+Docs checks English internal links without exemptions before building all locales. Docs Lint
+runs Markdown, spelling, and prose hooks for changed English pages without installing Qt.
+External checks run weekly as well as on PRs; exact legacy URL exceptions expire on their
+recorded review date. Translation files are maintained independently.
+
+Code Analysis also accepts `qmllint` on manual dispatch. It builds generated modules first,
+then enables missing-import/property/type errors against the SDK and build import directories.

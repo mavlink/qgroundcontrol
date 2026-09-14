@@ -17,7 +17,7 @@
       "externalConsole": false,
       "name": "Launch QGroundControl",
       "preLaunchTask": "CMake: Build",
-      "program": "${workspaceFolder}/build/Debug/QGroundControl",
+      "program": "${command:cmake.launchTargetPath}",
       "request": "launch",
       "setupCommands": [
         {
@@ -38,9 +38,17 @@
       },
       "name": "Launch QGroundControl (LLDB)",
       "preLaunchTask": "CMake: Build",
-      "program": "${workspaceFolder}/build/Debug/QGroundControl",
+      "program": "${command:cmake.launchTargetPath}",
       "request": "launch",
       "type": "lldb"
+    },
+    {
+      "name": "Launch QGroundControl (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${command:cmake.launchTargetPath}",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "CMake: Build"
     },
     {
       "MIMode": "gdb",
@@ -52,7 +60,7 @@
       "externalConsole": false,
       "name": "Run Unit Tests (Debug)",
       "preLaunchTask": "CMake: Build",
-      "program": "${workspaceFolder}/build/Debug/QGroundControl",
+      "program": "${command:cmake.launchTargetPath}",
       "request": "launch",
       "setupCommands": [
         {
@@ -74,7 +82,7 @@
       "externalConsole": false,
       "name": "Debug Specific Test",
       "preLaunchTask": "CMake: Build",
-      "program": "${workspaceFolder}/build/Debug/QGroundControl",
+      "program": "${command:cmake.launchTargetPath}",
       "request": "launch",
       "setupCommands": [
         {
@@ -90,7 +98,7 @@
       "MIMode": "gdb",
       "name": "Attach to QGroundControl",
       "processId": "${command:pickProcess}",
-      "program": "${workspaceFolder}/build/Debug/QGroundControl",
+      "program": "${command:cmake.launchTargetPath}",
       "request": "attach",
       "setupCommands": [
         {

@@ -35,7 +35,9 @@ def test_runner_image_workflow_uses_current_commit_and_dedicated_role() -> None:
     workflow = _load_yaml(".github/workflows/runner-images.yml")
     workflow_text = _read(".github/workflows/runner-images.yml")
 
-    assert workflow["on"] == {"workflow_dispatch": None}
+    assert "workflow_dispatch" in workflow["on"]
+    assert workflow["on"]["schedule"]
+    assert workflow["jobs"]["promote"]["needs"] == ["ubuntu24-x64", "smoke-test"]
     assert workflow["permissions"] == {"contents": "read"}
     assert workflow["jobs"]["ubuntu24-x64"]["permissions"] == {
         "contents": "read",
@@ -56,6 +58,8 @@ def test_runner_image_workflow_smoke_tests_the_managed_image() -> None:
 
     assert smoke_job["needs"] == "ubuntu24-x64"
     assert "linux-x64-builder-prebaked" in str(smoke_job["runs-on"])
+    assert "ami={1}" in smoke_job["runs-on"]
+    assert "needs.ubuntu24-x64.outputs.image" in smoke_job["runs-on"]
     assert "qt-cmake" in smoke_steps
     assert ".qgc-modules" in smoke_steps
     assert "libgstreamer1.0-dev" in smoke_steps
@@ -96,3 +100,32 @@ def test_managed_runner_routes_are_opt_in() -> None:
     pool = warm_pool["pools"]["qgc-windows-x64-builder"]
     assert pool["runner"] == "windows-x64-builder"
     assert pool["schedule"]
+
+
+def test_cpp_codeql_wraps_native_build():
+    workflow = _load_yaml(".github/workflows/linux.yml")
+    jobs = [
+        job
+        for job in workflow["jobs"].values()
+        if any(
+            step.get("uses", "").startswith("github/codeql-action/init@")
+            for step in job.get("steps", [])
+        )
+    ]
+    assert len(jobs) == 1
+    steps = jobs[0]["steps"]
+    init = next(
+        i
+        for i, step in enumerate(steps)
+        if step.get("uses", "").startswith("github/codeql-action/init@")
+    )
+    analyze = next(
+        i
+        for i, step in enumerate(steps)
+        if step.get("uses", "").startswith("github/codeql-action/analyze@")
+    )
+    build = next(
+        i for i, step in enumerate(steps) if step.get("uses") == "./.github/actions/cmake-build"
+    )
+    assert init < build < analyze
+    assert steps[init]["with"]["languages"] == "c-cpp"

@@ -251,9 +251,13 @@ Examples:
     )
 
     parser.add_argument(
+        "--qml-build", action="store_true", help="Use generated QML imports and enforce type errors"
+    )
+
+    parser.add_argument(
         "--advisory",
         action="store_true",
-        help="Report findings without failing; execution errors still fail",
+        help="Report warnings without failing; errors still fail",
     )
 
     parser.add_argument(
@@ -303,6 +307,14 @@ def main() -> int:
         log_error(str(e))
         return 1
 
+    if args.qml_build:
+        from analyzers.qmllint import QmlLintAnalyzer
+
+        if not isinstance(analyzer, QmlLintAnalyzer):
+            log_error("--qml-build requires --tool qmllint")
+            return 2
+        analyzer.build_aware = True
+
     collector = FileCollector(repo_root)
 
     collect = collector.get_qml_files if args.tool == "qmllint" else collector.get_cpp_files
@@ -319,7 +331,7 @@ def main() -> int:
     result = analyzer.run(files, fix=args.fix)
 
     print(f"{result.tool}: {result.status} ({result.files_checked} files)")
-    if result.execution_error:
+    if result.execution_error or result.error_findings:
         return 2
     if result.passed or args.advisory:
         log_ok("Analysis complete")

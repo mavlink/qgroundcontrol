@@ -19,6 +19,7 @@ precommit = [
 test = [
   {include-group = "scripts"},
   "pytest",
+  "jsonschema>=4.23",
   "jinja2",
   "pyyaml",
   "tomli>=2.0; python_version < '3.11'",
@@ -59,6 +60,9 @@ lint = [
   "ruff==0.16.5",
   "pyright==1.1.411",
   "import-linter>=2.0",
+  "jsonschema>=4.23",
+  "pyyaml>=6",
+  "clang-format==23.1.0",
 ]
 
 [tool.uv]

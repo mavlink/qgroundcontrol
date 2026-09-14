@@ -17,11 +17,4 @@
         <ignore regexp=".*/java/com/falsinsoft/qtandroidtools/.*" />
     </issue>
 
-    <!-- Third-party manifest contributions (Qt, SDL, GStreamer) that we cannot fix -->
-    <issue id="InvalidWakeLockTag" severity="warning" />
-    <issue id="MissingPermission" severity="warning" />
-    <issue id="UnusedAttribute" severity="warning" />
-    <issue id="Deprecated" severity="warning" />
-    <issue id="ExportedReceiver" severity="warning" />
-    <issue id="QueryAllPackagesPermission" severity="warning" />
 </lint>

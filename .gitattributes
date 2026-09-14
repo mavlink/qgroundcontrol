@@ -96,8 +96,10 @@
 #    Exclude from `git archive` (useful for building tarballs)
 # ─────────────────────────────────────────────────────────────────
 docs/**         export-ignore
-tests/**        export-ignore
 .github/**      export-ignore
+.github/build-config.json -export-ignore
+.github/build-config.schema.json -export-ignore
+.github/COPYING.md -export-ignore
 
 # ──────────────────────────────────────────────────────────────
 # 6. GitHub Linguist overrides

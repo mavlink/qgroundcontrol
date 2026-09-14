@@ -75,7 +75,10 @@ add_custom_command(
     COMMENT "Generating MAVLinkEnums.h + MAVLinkEnumsQml.{h,cc}"
     VERBATIM
 )
-add_custom_target(mavlink_enums DEPENDS "${MAVLINK_ENUMS_H}" "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}")
+add_custom_target(mavlink_enums
+    DEPENDS "${MAVLINK_ENUMS_H}" "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}"
+    COMMENT "Checking generated MAVLink enum bindings"
+)
 add_dependencies(${CMAKE_PROJECT_NAME} mavlink_enums)
 # Ensure AUTOMOC runs after the generator
 set_property(
@@ -102,7 +105,10 @@ add_custom_command(
     COMMENT "Generating MAVLinkInstanceFields.h"
     VERBATIM
 )
-add_custom_target(mavlink_instance_fields DEPENDS "${MAVLINK_INSTANCE_FIELDS_H}")
+add_custom_target(mavlink_instance_fields
+    DEPENDS "${MAVLINK_INSTANCE_FIELDS_H}"
+    COMMENT "Checking generated MAVLink instance fields"
+)
 add_dependencies(${CMAKE_PROJECT_NAME} mavlink_instance_fields)
 
 # Bundle the upstream component_metadata JSON schemas (referenced from the CPM dir, never

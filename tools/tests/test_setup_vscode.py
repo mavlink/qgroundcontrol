@@ -31,3 +31,18 @@ def test_install_vscode_templates_copies_missing_files_without_overwriting(tmp_p
     (vscode_dir / "launch.json").unlink()
     assert setup_vscode.install_vscode_templates(vscode_dir, {"launch"}) == []
     assert not (vscode_dir / "launch.json").exists()
+
+
+def test_container_interpreter_only_updates_new_settings(tmp_path):
+    import json
+
+    from setup.setup_vscode import TEMPLATES, install_vscode_templates
+
+    for template, _destination in TEMPLATES:
+        (tmp_path / template).write_text('{"cmake.useCMakePresets": "always"}')
+    install_vscode_templates(tmp_path, python_interpreter="/opt/qgc-venv/bin/python")
+    settings = json.loads((tmp_path / "settings.json").read_text())
+    assert settings["cmake.useCMakePresets"] == "always"
+    assert settings["python.defaultInterpreterPath"] == "/opt/qgc-venv/bin/python"
+    install_vscode_templates(tmp_path, python_interpreter="different")
+    assert json.loads((tmp_path / "settings.json").read_text()) == settings

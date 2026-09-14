@@ -6,7 +6,7 @@ Examples:
     ./tools/release.py --run        # Actually create release (CI only)
     ./tools/release.py --install    # Install semantic-release dependencies locally
 
-Requires: Node.js 18+, npm.
+Requires: Node.js 24+, npm.
 
 Environment:
     GITHUB_TOKEN - required for --run mode (set automatically in CI)
@@ -30,14 +30,8 @@ from common.io import chdir
 from common.logging import log_error, log_info, log_ok
 from common.tool_version import probe_version
 
-# Pin versions for reproducibility + supply chain (bumped via Dependabot npm ecosystem)
-SR_VERSION = "24.2.5"
-SR_PACKAGES: tuple[str, ...] = (
-    f"semantic-release@{SR_VERSION}",
-    "@semantic-release/exec@7.1.0",
-    "conventional-changelog-conventionalcommits@8.0.0",
-)
-MIN_NODE_MAJOR = 18
+RELEASE_DIR = Path(__file__).resolve().parent / "release"
+MIN_NODE_MAJOR = 24
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -78,13 +72,13 @@ def handle_install() -> int:
         log_error("npm not found")
         return 1
     log_info("Installing semantic-release dependencies locally...")
-    subprocess.run(["npm", "install", "--save-dev", *SR_PACKAGES], check=True)
+    subprocess.run(["npm", "ci", "--prefix", str(RELEASE_DIR)], check=True)
     log_ok("Dependencies installed")
     return 0
 
 
 def run_semantic_release(*, dry_run: bool) -> int:
-    cmd = ["npx", "--yes", f"semantic-release@{SR_VERSION}"]
+    cmd = ["npm", "run", "release", "--prefix", str(RELEASE_DIR), "--"]
     if dry_run:
         cmd.append("--dry-run")
         log_info("Running semantic-release in dry-run mode...")

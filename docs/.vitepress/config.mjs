@@ -2,6 +2,21 @@ const getSidebar = require("./get_sidebar.js");
 import { defineConfig } from "vitepress";
 import navbarData from "./navbar.json";
 
+const checkEnglish = process.env.QGC_DOCS_CHECK_ENGLISH === "1";
+
+// Existing translated links are maintained separately. English CI disables all exceptions.
+const translationLinkExceptions = [
+  "./../../../../cmake/CustomOptions.cmake",
+  "./../../../../src/AppSettings/pages",
+  "./../../../../src/QmlControls/AppSettings.qml",
+  "./../../../../tools/generators/config_qml/README",
+  "./../../../../tools/generators/settings_qml/README",
+  "./../../../../tools/generators/settings_qml/generate_pages.py",
+  "./../../../../tools/generators/settings_qml/page_generator.py",
+  "./getting_started/ui_overview",
+  "./qgc-user-guide/getting_started/ui_overview"
+];
+
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: process.env.BRANCH_NAME
@@ -9,7 +24,8 @@ export default defineConfig({
     : "QGC Guide",
   description:
     "How to use and develop QGroundControl for PX4 or ArduPilot powered vehicles.",
-  ignoreDeadLinks: true, // Do this for stable, where we don't yet have all translations
+  ignoreDeadLinks: checkEnglish ? false : translationLinkExceptions,
+  srcExclude: checkEnglish ? ["ko/**", "tr/**", "zh/**"] : [],
   base: process.env.BRANCH_NAME ? "/" + process.env.BRANCH_NAME + "/" : "",
 
   vite: {

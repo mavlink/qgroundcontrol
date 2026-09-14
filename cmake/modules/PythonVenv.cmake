@@ -14,6 +14,7 @@ else()
     set(_qgc_venv_python "${_qgc_venv_dir}/bin/python")
 endif()
 
+# Restore generator dependencies if another tooling profile removed them.
 function(_qgc_sync_venv_if_stale _py)
     if(NOT QGC_AUTO_PYTHON_VENV)
         return()
@@ -45,6 +46,8 @@ endfunction()
 # Pin Python3_EXECUTABLE and Python_EXECUTABLE to the venv: upstream deps (mavlink) call
 # find_package(Python), which otherwise picks system Python (3.14 on Windows CI crashes pymavlink mavgen).
 macro(_qgc_pin_python _py)
+    # FindPython and FindPython3 define these mixed-case cache variables.
+    # cmake-lint: disable=C0103
     set(Python3_EXECUTABLE
         "${_py}"
         CACHE FILEPATH "Python interpreter (workspace .venv)" FORCE

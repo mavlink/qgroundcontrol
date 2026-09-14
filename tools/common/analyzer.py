@@ -31,11 +31,12 @@ class AnalysisResult:
     files_checked: int = 0
     files_with_issues: list[str] = field(default_factory=list)
     execution_error: bool = False
+    error_findings: bool = False
     skipped: bool = False
 
     @property
     def status(self) -> str:
-        if self.execution_error:
+        if self.execution_error or self.error_findings:
             return "error"
         if self.skipped:
             return "skipped"

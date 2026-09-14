@@ -36,6 +36,7 @@ def test_diagnostics_survive_success_and_error_exits(
         result = analyzer.run([source])
     assert not result.passed
     assert result.execution_error == error
+    assert result.error_findings == ("error:" in diagnostic and "[" in diagnostic)
     assert result.files_checked == 1
     assert diagnostic in result.output
     assert diagnostic in capsys.readouterr().out

@@ -149,3 +149,11 @@ translations:
 distclean:
     {{ python }} ./tools/clean.py --all
     {{ python }} -c "import shutil; shutil.rmtree('node_modules', ignore_errors=True)"
+
+# Validate schema and cross-field build settings
+validate-configs:
+    uv run --frozen --project tools --group lint python tools/validate_configs.py
+
+# Lint QML with generated module type information (requires a build)
+lint-qml-build:
+    {{ python }} tools/analyze.py --tool qmllint --qml-build --all --advisory

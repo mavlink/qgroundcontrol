@@ -22,14 +22,14 @@ class CompilerAnalyzer(AnalyzerBase):
         super().__init__(repo_root, build_dir)
         self.jobs = jobs
 
-    def _analyze_file(self, file: Path) -> tuple[str, str, bool, bool]:
+    def _analyze_file(self, file: Path) -> tuple[str, str, bool, bool, bool]:
         try:
             result = run_captured(
                 [self.executable, "-p", str(self.build_dir), *self.arguments, str(file)],
                 timeout=300,
             )
         except (OSError, subprocess.TimeoutExpired) as exc:
-            return self.relative_path(file), str(exc), False, True
+            return self.relative_path(file), str(exc), False, True, False
         output = result.stdout + result.stderr
         findings = bool(re.search(r"\b(?:warning|error):", output))
         # A failed compiler invocation is an analysis failure, not a clean scan.
@@ -41,7 +41,8 @@ class CompilerAnalyzer(AnalyzerBase):
             )
         )
         error = compiler_error or (result.returncode != 0 and not findings)
-        return self.relative_path(file), output, findings, error
+        error_findings = bool(re.search(r"\berror:.*\[[^\]]+\]", output))
+        return self.relative_path(file), output, findings, error, error_findings
 
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
         if not files:
@@ -52,8 +53,11 @@ class CompilerAnalyzer(AnalyzerBase):
         outputs: list[str] = []
         affected: list[str] = []
         errors = False
+        error_findings = False
         with ThreadPoolExecutor(max_workers=self.jobs) as pool:
-            for name, output, findings, error in pool.map(self._analyze_file, files):
+            for name, output, findings, error, fatal_findings in pool.map(
+                self._analyze_file, files
+            ):
                 print(f"{name}: {'error' if error else 'findings' if findings else 'passed'}")
                 if output:
                     print(output, end="" if output.endswith("\n") else "\n")
@@ -61,6 +65,7 @@ class CompilerAnalyzer(AnalyzerBase):
                 if findings or error:
                     affected.append(name)
                 errors |= error
+                error_findings |= fatal_findings
         return AnalysisResult(
             tool=self.name,
             passed=not affected,
@@ -69,4 +74,5 @@ class CompilerAnalyzer(AnalyzerBase):
             files_with_issues=affected,
             output="\n".join(outputs),
             execution_error=errors,
+            error_findings=error_findings,
         )

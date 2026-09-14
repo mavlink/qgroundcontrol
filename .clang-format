@@ -57,10 +57,10 @@ SortIncludes: CaseSensitive
 IncludeBlocks: Regroup
 IncludeCategories:
   - Regex: '^<Q.*>'      # Qt headers
-    Priority: 1
+    Priority: 2
   - Regex: '^<[a-z].*>'  # System/STL headers
     CaseSensitive: true
-    Priority: 2
+    Priority: 1
   - Regex: '.*'          # Project headers
     Priority: 3
 
@@ -78,7 +78,8 @@ AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: true
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: true
-BreakConstructorInitializers: BeforeColon
+BreakConstructorInitializers: BeforeComma
+PackConstructorInitializers: Never
 BreakInheritanceList: BeforeColon
 ConstructorInitializerIndentWidth: 4
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/analyze.py."""
 
 from __future__ import annotations
@@ -121,3 +120,62 @@ def test_missing_qmllint_is_execution_failure(tmp_path):
         result = QmlLintAnalyzer(tmp_path, tmp_path).run([tmp_path / "file.qml"])
     assert not result.passed
     assert result.execution_error
+
+
+def test_advisory_preserves_error_findings(tmp_path, monkeypatch):
+    import sys
+
+    import analyze
+    from common.analyzer import AnalysisResult
+
+    monkeypatch.setattr(sys, "argv", ["analyze.py", "--tool", "clazy", "--advisory"])
+    monkeypatch.setattr(analyze, "find_repo_root", lambda: tmp_path)
+    monkeypatch.setattr(analyze.FileCollector, "get_cpp_files", lambda *a, **kw: [])
+    analyzer = MagicMock()
+    monkeypatch.setattr(analyze, "get_analyzer", lambda *a, **kw: analyzer)
+    for error_findings, execution_error, expected in [
+        (False, False, 0),
+        (True, False, 2),
+        (False, True, 2),
+    ]:
+        analyzer.run.return_value = AnalysisResult(
+            tool="clazy",
+            passed=False,
+            error_findings=error_findings,
+            execution_error=execution_error,
+        )
+        assert analyze.main() == expected
+
+
+def test_build_aware_qml_keeps_sdk_imports_and_fails_errors(tmp_path, monkeypatch):
+    from subprocess import CompletedProcess
+
+    from analyzers.qmllint import QmlLintAnalyzer
+
+    imports = tmp_path / "qml"
+    imports.mkdir()
+    (imports / "fixture.qmltypes").touch()
+    analyzer = QmlLintAnalyzer(tmp_path, tmp_path)
+    analyzer.build_aware = True
+    monkeypatch.setattr("analyzers.qmllint.shutil.which", lambda _: "/qt/bin/qmllint")
+    commands = []
+
+    def run(command):
+        commands.append(command)
+        return CompletedProcess(command, 1, "Error: unknown property [missing-property]", "")
+
+    monkeypatch.setattr("analyzers.qmllint.run_captured", run)
+    result = analyzer.run([tmp_path / "fixture.qml"])
+    assert result.error_findings
+    assert "--bare" not in commands[0]
+    assert str(imports) in commands[0]
+    assert commands[0][commands[0].index("--missing-property") + 1] == "error"
+
+
+def test_build_aware_qml_requires_generated_types(tmp_path, monkeypatch):
+    from analyzers.qmllint import QmlLintAnalyzer
+
+    analyzer = QmlLintAnalyzer(tmp_path, tmp_path)
+    analyzer.build_aware = True
+    monkeypatch.setattr("analyzers.qmllint.shutil.which", lambda _: "/qt/bin/qmllint")
+    assert analyzer.run([tmp_path / "fixture.qml"]).execution_error

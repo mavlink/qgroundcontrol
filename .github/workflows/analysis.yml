@@ -2,7 +2,15 @@ name: Code Analysis
 
 on:
   pull_request:
-    paths: ['src/**', 'cmake/**', 'CMakeLists.txt', 'tools/analyzers/**', 'tools/analyze.py', '.clang-tidy', '.github/workflows/analysis.yml']
+    paths:
+      - 'src/**'
+      - 'cmake/**'
+      - 'CMakeLists.txt'
+      - 'tools/analyzers/**'
+      - 'tools/analyze.py'
+      - '.qmllint.ini'
+      - '.clang-tidy'
+      - '.github/workflows/analysis.yml'
   schedule:
     - cron: '17 4 * * 1'
   workflow_dispatch:
@@ -16,6 +24,7 @@ on:
           - clazy
           - clang-tidy
           - iwyu
+          - qmllint
           - asan
           - ubsan
           - tsan
@@ -56,7 +65,7 @@ jobs:
           persist-credentials: false
 
       - name: Build Setup (clazy/iwyu)
-        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu"]'), (inputs.tool || 'clazy'))
+        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), (inputs.tool || 'clazy'))
         uses: ./.github/actions/build-setup
         with:
           qt-host: linux
@@ -66,7 +75,7 @@ jobs:
           save-cache: true
 
       - name: Install analysis dependencies
-        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu"]'), (inputs.tool || 'clazy'))
+        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), (inputs.tool || 'clazy'))
         uses: ./.github/actions/install-dependencies
         with:
           extra-packages: clazy clang clang-tidy iwyu ninja-build
@@ -86,7 +95,7 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Configure (clazy/iwyu)
-        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu"]'), (inputs.tool || 'clazy'))
+        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), (inputs.tool || 'clazy'))
         uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
@@ -118,6 +127,20 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
+
+      - name: Run QML analysis with generated types
+        if: inputs.tool == 'qmllint'
+        env:
+          INPUT_PATH: ${{ inputs.path }}
+          ANALYZE_ALL: ${{ inputs.analyze_all }}
+        run: |
+          args=(--build-dir "${RUNNER_TEMP}/build" --qml-build --advisory)
+          if [[ "$ANALYZE_ALL" == 'true' ]]; then
+            args+=(--all)
+          elif [[ -n "$INPUT_PATH" ]]; then
+            args+=("$INPUT_PATH")
+          fi
+          python3 tools/analyze.py --tool qmllint "${args[@]}" 2>&1 | tee "${RUNNER_TEMP}/build/analysis-output.txt"
 
       - name: Run compiler analysis
         if: contains(fromJSON('["clazy", "clang-tidy"]'), (inputs.tool || 'clazy'))

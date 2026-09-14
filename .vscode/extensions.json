@@ -4,9 +4,6 @@
     "ms-vscode.cmake-tools",
     "twxs.cmake",
     "llvm-vs-code-extensions.vscode-clangd",
-    "AoiHosizora.vscode-qt-qmake",
-    "theqtcompany.qt-qml",
-    "nicothin.qt-qml",
     "streetsidesoftware.code-spell-checker",
     "DavidAnson.vscode-markdownlint",
     "EditorConfig.EditorConfig",
@@ -14,7 +11,9 @@
     "mhutchie.git-graph",
     "ms-vscode.hexeditor",
     "redhat.vscode-yaml",
-    "tamasfe.even-better-toml"
+    "tamasfe.even-better-toml",
+    "QML.qml-official",
+    "vadimcn.vscode-lldb"
   ],
   "unwantedRecommendations": []
 }

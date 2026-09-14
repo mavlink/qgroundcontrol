@@ -8,33 +8,53 @@
   ],
   "tasks": [
     {
-      "args": ["configure"],
+      "args": [
+        "configure"
+      ],
       "command": "just",
       "group": "build",
       "label": "CMake: Configure (Debug)",
-      "options": { "env": { "BUILD_TYPE": "Debug" } },
+      "options": {
+        "env": {
+          "BUILD_TYPE": "Debug"
+        }
+      },
       "problemMatcher": [],
       "type": "shell"
     },
     {
-      "args": ["configure"],
+      "args": [
+        "configure"
+      ],
       "command": "just",
       "group": "build",
       "label": "CMake: Configure (Release)",
-      "options": { "env": { "BUILD_TYPE": "Release" } },
+      "options": {
+        "env": {
+          "BUILD_TYPE": "Release"
+        }
+      },
       "problemMatcher": [],
       "type": "shell"
     },
     {
-      "args": ["build"],
-      "command": "just",
-      "group": { "isDefault": true, "kind": "build" },
+      "command": "build",
+      "group": {
+        "isDefault": true,
+        "kind": "build"
+      },
       "label": "CMake: Build",
-      "problemMatcher": "$gcc",
-      "type": "shell"
+      "problemMatcher": [],
+      "type": "cmake",
+      "targets": [
+        "QGroundControl"
+      ],
+      "preset": "${command:cmake.activeBuildPresetName}"
     },
     {
-      "args": ["clean"],
+      "args": [
+        "clean"
+      ],
       "command": "just",
       "group": "build",
       "label": "CMake: Clean",
@@ -42,10 +62,15 @@
       "type": "shell"
     },
     {
-      "args": ["test"],
+      "args": [
+        "test"
+      ],
       "command": "just",
       "dependsOn": "CMake: Build",
-      "group": { "isDefault": true, "kind": "test" },
+      "group": {
+        "isDefault": true,
+        "kind": "test"
+      },
       "label": "Run Tests",
       "problemMatcher": [],
       "type": "shell"
@@ -67,7 +92,9 @@
       "type": "shell"
     },
     {
-      "args": ["format"],
+      "args": [
+        "format"
+      ],
       "command": "just",
       "group": "none",
       "label": "Format: Check Changed Files",
@@ -75,7 +102,9 @@
       "type": "shell"
     },
     {
-      "args": ["format-fix"],
+      "args": [
+        "format-fix"
+      ],
       "command": "just",
       "group": "none",
       "label": "Format: Fix Changed Files",
@@ -83,7 +112,9 @@
       "type": "shell"
     },
     {
-      "args": ["analyze"],
+      "args": [
+        "analyze"
+      ],
       "command": "just",
       "group": "none",
       "label": "Static Analysis",
@@ -91,7 +122,9 @@
       "type": "shell"
     },
     {
-      "args": ["lint"],
+      "args": [
+        "lint"
+      ],
       "command": "just",
       "group": "none",
       "label": "Pre-commit: Run All",
@@ -99,7 +132,9 @@
       "type": "shell"
     },
     {
-      "args": ["translations"],
+      "args": [
+        "translations"
+      ],
       "command": "just",
       "group": "none",
       "label": "Update Translations",

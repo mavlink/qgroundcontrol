@@ -1,9 +1,13 @@
 name: "QGroundControl CodeQL Config"
+# C++ extraction runs with the native build in workflows/linux.yml.
+# The standalone CodeQL workflow handles Actions, Java/Kotlin, and Python.
 
 paths:
   - src
   - android/src
   - tools
+  - deploy
+  - test
   - .github
 
 paths-ignore:

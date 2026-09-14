@@ -1,18 +1,9 @@
-# CODEOWNERS - Auto-assign reviewers to pull requests
-# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
-
-# Default owners for everything
-# * @mavlink/qgc-maintainers
-
-# Documentation
-# /docs/ @hamishwillee
-
-# QML/UI
-# *.qml @DonLakeFlyer
-
-# Build system
-# CMakeLists.txt @HTRamsey
-# /cmake/ @HTRamsey
-
-# CI/CD
-# /.github/ @HTRamsey
+# Ownership for the maintained build and automation surface.
+# Other components retain their existing reviewer selection.
+/CMakeLists.txt @HTRamsey
+/CMakePresets.json @HTRamsey
+/cmake/ @HTRamsey
+/tools/ @HTRamsey
+/.github/ @HTRamsey
+/.devcontainer/ @HTRamsey
+/deploy/ @HTRamsey

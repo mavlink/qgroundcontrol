@@ -28,6 +28,7 @@ endfunction()
 # Configures compiler caching using ccache or sccache if available
 # ----------------------------------------------------------------------------
 function(qgc_config_caching)
+    # Reject unusable cache executables found on PATH.
     function(_qgc_verify_cache_tool _ok _path)
         execute_process(
             COMMAND "${_path}" --version
@@ -62,18 +63,12 @@ function(qgc_config_caching)
         if(_cache_tool STREQUAL "ccache")
             set(_ccache_conf "${CMAKE_SOURCE_DIR}/tools/configs/ccache.conf")
             if(CMAKE_HOST_WIN32)
-                # Windows: set env vars at configure time (inherited by Ninja).
-                # Only set defaults so external cache setups (CI/IDE) are not clobbered.
-                if(EXISTS "${_ccache_conf}" AND (NOT DEFINED ENV{CCACHE_CONFIGPATH} OR "$ENV{CCACHE_CONFIGPATH}" STREQUAL ""))
-                    set(ENV{CCACHE_CONFIGPATH} "${_ccache_conf}")
-                endif()
-                if(NOT DEFINED ENV{CCACHE_DIR} OR "$ENV{CCACHE_DIR}" STREQUAL "")
-                    set(ENV{CCACHE_DIR} "${CMAKE_SOURCE_DIR}/.ccache")
-                endif()
-                if(NOT DEFINED ENV{CCACHE_BASEDIR} OR "$ENV{CCACHE_BASEDIR}" STREQUAL "")
-                    set(ENV{CCACHE_BASEDIR} "${CMAKE_SOURCE_DIR}")
-                endif()
-                set(_cache_launcher "${QGC_CACHE_PROGRAM}")
+                set(_ccache_wrapper "${CMAKE_BINARY_DIR}/ccache-launcher.cmd")
+                configure_file(
+                    "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ccache-launcher.cmd.in"
+                    "${_ccache_wrapper}" @ONLY NEWLINE_STYLE DOS
+                )
+                set(_cache_launcher "${_ccache_wrapper}")
             else()
                 # Unix: wrapper script to set env vars at build time.
                 # Use defaults so external cache setups (CI/IDE) can override.
@@ -86,6 +81,8 @@ function(qgc_config_caching)
                 string(APPEND _wrapper "export CCACHE_BASEDIR=\"\${CCACHE_BASEDIR:-${CMAKE_SOURCE_DIR}}\"\n")
                 string(APPEND _wrapper "exec \"${QGC_CACHE_PROGRAM}\" \"$@\"\n")
                 file(WRITE "${_ccache_wrapper}" "${_wrapper}")
+                # cmakelang 0.6.13 does not recognize file(CHMOD).
+                # cmake-lint: disable=E1126
                 file(CHMOD "${_ccache_wrapper}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
                 set(_cache_launcher "${_ccache_wrapper}")
             endif()
@@ -139,6 +136,8 @@ function(_qgc_write_moccache_stats_script python moccache_py out_var)
                "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\" || true\n"
         )
         file(WRITE "${_script}" "${_body}")
+        # cmakelang 0.6.13 does not recognize file(CHMOD).
+        # cmake-lint: disable=E1126
         file(
             CHMOD
             "${_script}"
@@ -182,6 +181,9 @@ endfunction()
 # clean builds. Must be called after find_package(Qt6).
 # ----------------------------------------------------------------------------
 function(qgc_config_moccache)
+    # Keep both platform launchers alongside their shared tool validation.
+    # cmakelang 0.6.13 also does not recognize file(CHMOD).
+    # cmake-lint: disable=R0915,E1126
     if(DEFINED CMAKE_AUTOMOC_EXECUTABLE AND NOT CMAKE_AUTOMOC_EXECUTABLE STREQUAL "")
         return()
     endif()
@@ -466,6 +468,7 @@ function(qgc_require_cpm_added package_name)
     endif()
 endfunction()
 
+# Bundle matching JSON files while keeping paths inside the source directory.
 function(qgc_add_json_resources name)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "NO_RECURSE" "PREFIX;PATTERN" "")
     if(NOT name OR NOT name MATCHES "^[A-Za-z_][A-Za-z0-9_]*$")
@@ -497,6 +500,8 @@ function(qgc_add_json_resources name)
     if(ARG_NO_RECURSE)
         set(_glob GLOB)
     endif()
+    # Both permitted file() forms are selected immediately above.
+    # cmake-lint: disable=C0114
     file(${_glob} _json CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
          "${CMAKE_CURRENT_SOURCE_DIR}/${ARG_PATTERN}")
     if(NOT _json)

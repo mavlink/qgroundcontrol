@@ -5,6 +5,18 @@ on:
     paths: &tooling-paths
       - '.github/**'
       - '.vscode/**'
+      - '.devcontainer/**'
+      - '.clang*'
+      - '.gitattributes'
+      - '.editorconfig'
+      - '.releaserc.json'
+      - '.nvmrc'
+      - '.pre-commit-config.yaml'
+      - '.qmllint.ini'
+      - '.lychee.toml'
+      - '.vale.ini'
+      - 'ruff.toml'
+      - 'pyrightconfig.json'
       - 'CMakeLists.txt'
       - 'CMakePresets.json'
       - 'cmake/**'
@@ -120,6 +132,9 @@ jobs:
           sparse-checkout: |
             .github
             .vscode
+            .gitattributes
+            .releaserc.json
+            .pre-commit-config.yaml
             CMakeLists.txt
             CMakePresets.json
             cmake
@@ -160,6 +175,8 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             .github/actions/setup-python
+            cmake/Helpers.cmake
+            cmake/ccache-launcher.cmd.in
             tools
           sparse-checkout-cone-mode: false
           persist-credentials: false
@@ -174,7 +191,7 @@ jobs:
         run: >-
           pytest -q tools/tests/test_moccache.py tools/tests/test_install_python.py
           tools/tests/test_deps.py tools/tests/test_tool_version.py tools/tests/test_net.py
-          tools/tests/test_proc.py tools/tests/test_install_qt.py
+          tools/tests/test_proc.py tools/tests/test_install_qt.py tools/tests/test_ccache_launcher.py
 
   lint-python:
     name: Lint Python
@@ -194,6 +211,16 @@ jobs:
         with:
           groups: dev
           python-version: '3.10'
+      - name: Validate configuration
+        run: python tools/validate_configs.py
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - name: Validate release rules
+        run: |
+          npm ci --prefix tools/release --ignore-scripts
+          npm test --prefix tools/release
       - name: Ruff
         run: |
           ruff check tools .github/scripts deploy/docker test/ADSB/ADSB_Simulator.py
