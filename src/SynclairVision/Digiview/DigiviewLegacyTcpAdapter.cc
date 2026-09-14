@@ -12,7 +12,7 @@
 
 #include "QGCLoggingCategory.h"
 #include "msg_defs.hpp"
-#include "sv_mavlink_dialect/sv_mavlink_dialect.h"
+#include "sv_mavlink_dialect/mavlink.h"
 
 QGC_LOGGING_CATEGORY(DigiviewLegacyTcpAdapterLog, "Digiview.LegacyTcp.Adapter")
 

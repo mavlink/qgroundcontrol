@@ -12,8 +12,6 @@ Rectangle {
 
     property real extraInset:           0
     property real extraValuesWidth:     _outerRadius
-    property real headingOverride:      NaN
-    property real pitchOverride:        NaN
 
     property real   _defaultWidth:      mainWindow.width * 0.2
     property real   _maxWidth:          ScreenTools.defaultFontPixelHeight * 15
@@ -32,7 +30,6 @@ Rectangle {
         anchors.left:           parent.left
         size:                   control._innerRadius * 2
         vehicle:                globals.activeVehicle
-        pitchOverride:          control.pitchOverride
         anchors.verticalCenter: parent.verticalCenter
     }
 
@@ -42,7 +39,6 @@ Rectangle {
         anchors.left:           attitude.right
         size:                   control._innerRadius * 2
         vehicle:                globals.activeVehicle
-        headingOverride:        control.headingOverride
         anchors.verticalCenter: parent.verticalCenter
     }
 }

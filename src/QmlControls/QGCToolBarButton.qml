@@ -17,8 +17,6 @@ Button {
     property bool logo: false
 
     property real _horizontalMargin: ScreenTools.defaultFontPixelWidth
-    readonly property string _iconSourceString: button.icon.source ? button.icon.source.toString() : ""
-    readonly property bool _vectorLogoSource: _iconSourceString.toLowerCase().endsWith(".svg")
 
     onCheckedChanged: checkable = false
 
@@ -35,20 +33,10 @@ Button {
         // Logo buttons render the multi-color SVG natively via VectorImage; non-logo buttons
         // tint their monochrome icon through QGCColoredImage. Plain `Row` skips visible:false items.
         QGCVectorImage {
-            visible:                button.logo && button._vectorLogoSource
+            visible:                button.logo
             height:                 ScreenTools.defaultFontPixelHeight * 2
             width:                  height
-            source:                 visible ? button._iconSourceString : ""
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        Image {
-            visible:                button.logo && !button._vectorLogoSource
-            height:                 ScreenTools.defaultFontPixelHeight * 2
-            width:                  height
-            fillMode:               Image.PreserveAspectFit
-            mipmap:                 true
-            smooth:                 true
-            source:                 visible ? button._iconSourceString : ""
+            source:                 visible ? button.icon.source : ""
             anchors.verticalCenter: parent.verticalCenter
         }
         QGCColoredImage {

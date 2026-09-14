@@ -2,7 +2,6 @@ import QtQuick
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.SynclairVisionUI
 
 Item {
     id: _root
@@ -45,7 +44,7 @@ Item {
         id:             videoStreaming
         anchors.fill:   parent
         useSmallFont:   _root.pipState.state !== _root.pipState.fullState
-        visible:        QGroundControl.videoManager.isStreamSource || QGroundControl.videoManager.isUvc || SVState.synclairOverlay
+        visible:        QGroundControl.videoManager.isStreamSource || QGroundControl.videoManager.isUvc
     }
 
     QGCLabel {

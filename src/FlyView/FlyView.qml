@@ -15,27 +15,18 @@ import QGroundControl.FlightMap
 import QGroundControl.Toolbar
 import QGroundControl.Viewer3D
 
-import QGroundControl.SynclairVisionUI
-
 Item {
     id: _root
 
+    readonly property alias customLayerVideoControl: videoControl
+    readonly property alias customLayerPipView: _pipView
+    readonly property alias customLayerWidgetLayer: widgetLayer
+    readonly property alias customLayerToolbar: toolbar
+    readonly property alias customLayerMainWindowIsMap: _root._mainWindowIsMap
+    readonly property alias customLayerWidgetMargin: _root._widgetMargin
+
     readonly property bool _is3DMode:       QGCViewer3DManager.displayMode === QGCViewer3DManager.View3D
     readonly property bool _keepSceneAlive: QGroundControl.settingsManager.viewer3DSettings.keepSceneAlive.rawValue
-
-    property bool adjustHud: SVSettings.alignHud && QGroundControl.videoManager.decoding && SVState.synclairOverlay
-    property var detectionPosition: SVSettings.aiDetectionOverlayPosition
-    readonly property var digiview: QGroundControl.digiviewManager
-    readonly property bool digiviewOutputGeometryAvailable: !!digiview
-        && digiview.connected
-        && digiview.hasVideoOutputParameters
-        && digiview.videoOutputStreamName === digiview.streamName
-        && digiview.videoOutputWidth > 0
-        && digiview.videoOutputHeight > 0
-    property real detectionWidth: digiview.videoOutputDetectionOverlayRect.width * digiviewScaleX    
-    property real detectionHeight: digiview.videoOutputDetectionOverlayRect.height * digiviewScaleY
-    readonly property real digiviewScaleX: digiviewOutputGeometryAvailable ? videoContentArea.width / digiview.videoOutputWidth : 0
-    readonly property real digiviewScaleY: digiviewOutputGeometryAvailable ? videoContentArea.height / digiview.videoOutputHeight : 0
 
     // These should only be used by MainRootWindow
     property var planController:    _planController
@@ -65,7 +56,6 @@ Item {
 
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
-    readonly property bool _showVideoView: QGroundControl.videoManager.hasVideo || SVState.synclairOverlay
 
     function _calcCenterViewPort() {
         var newToolInset = Qt.rect(0, 0, width, height)
@@ -75,8 +65,6 @@ Item {
     function dropMainStatusIndicatorTool() {
         toolbar.dropMainStatusIndicatorTool();
     }
-
-    
 
     QGCToolInsets {
         id:                     _toolInsets
@@ -138,109 +126,39 @@ Item {
         FlyViewVideo {
             id:         videoControl
             pipView:    _pipView
-
-            SVFlyView {
-                id:                 synclairVisionLayer
-                anchors.fill:       parent
-                _widgetMargin:      _root._widgetMargin
-                _toolBarHeight:     SVState.toolbar ? toolbar.height : 0
-                pipViewWidth:       (_pipView._isExpanded) ? _pipView.width : ScreenTools.defaultFontPixelHeight * 2
-                leftToolStripBottom: widgetLayer.leftToolStripBottom
-                previewMode:        videoControl.pipState.state === videoControl.pipState.pipState
-                z:                  1
-
-                //parentToolInsets:   _toolInsets
-                visible:            SVState.synclairOverlay
-                                         && videoControl.pipState.state !== videoControl.pipState.windowState
-            }
         }
 
         PipView {
             id:                     _pipView
-            anchors.left:           adjustHud ? videoContentArea.left : parent.left
-            anchors.bottom:         adjustHud ? videoContentArea.bottom : parent.bottom
-            anchors.leftMargin:     _widgetMargin + ((adjustHud && detectionPosition === "ColumnLeft") ? detectionWidth : 0)
-            anchors.bottomMargin:   _widgetMargin + ((adjustHud && detectionPosition === "RowBottom") ? detectionHeight : 0)
+            anchors.left:           parent.left
+            anchors.bottom:         parent.bottom
+            anchors.margins:        _toolsMargin
             item1IsFullSettingsKey: "MainFlyWindowIsMap"
             item1:                  _mapControl
-            item2:                  _showVideoView ? videoControl : null
-            show:                   _showVideoView && !QGroundControl.videoManager.fullScreen &&
+            item2:                  QGroundControl.videoManager.hasVideo ? videoControl : null
+            show:                   QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen &&
                                         (videoControl.pipState.state === videoControl.pipState.pipState ||
                                          (_mapControl && _mapControl.pipState.state === _mapControl.pipState.pipState))
             z:                      QGroundControl.zOrderWidgets
 
-            property real leftEdgeBottomInset: visible ? width + anchors.leftMargin : 0
-            property real bottomEdgeLeftInset: visible ? height + anchors.bottomMargin : 0
-
-            visible: SVState.hud && !SVState.cursorTrackingSessionActive
-        }
-
-        Item {
-            id: videoContentArea
-
-            property var _ar: QGroundControl.videoManager.gstreamerEnabled
-                ? QGroundControl.videoManager.videoSize.width / QGroundControl.videoManager.videoSize.height
-                : QGroundControl.videoManager.aspectRatio
-
-            visible: QGroundControl.videoManager.decoding
-
-            width: {
-                if (SVState.synclairOverlay) {
-                    return Math.min(_root.width, _root.height * _ar)
-                }
-
-                return _root.width
-            }
-            height: {
-                if (SVState.synclairOverlay) {
-                    return Math.min(_root.height, _root.width * (1 / _ar))
-                }
-
-                return _root.height
-            }
-            anchors.centerIn: parent
+            property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
+            property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
         }
 
         FlyViewWidgetLayer {
-            id: widgetLayer
-
-            
-            //property bool adjustHud:  && QGroundControl.videoManager.decoding + SVState.aiOverlay
-            readonly property real toolbarInset: SVState.toolbar ? toolbar.height : 0
-
-            property real heightOffset: (_root.height - videoContentArea.height) / 2
-            property real widthOffset: (_root.width - videoContentArea.width) / 2
-
-            /*
-            
+            id:                     widgetLayer
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
-            anchors.left:           videoContentAreaProxy.left
-            anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : videoContentAreaProxy.right
+            anchors.left:           parent.left
+            anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
             anchors.margins:        _widgetMargin
-            anchors.topMargin:      (SVState.toolbar) ? toolbar.height + _widgetMargin : _widgetMargin
-
-            
-            */
-            
-            anchors.left: adjustHud ? videoContentArea.left : parent.left
-            anchors.right: adjustHud ? videoContentArea.right : parent.right
-            anchors.top: adjustHud ? videoContentArea.top : parent.top
-            anchors.bottom: adjustHud ? videoContentArea.bottom : parent.bottom
-            
-            anchors.leftMargin: _widgetMargin + ((adjustHud && detectionPosition === "ColumnLeft") ? detectionWidth : 0)
-            anchors.rightMargin: _widgetMargin + ((adjustHud && (detectionPosition === "ColumnRight" || detectionPosition === "Single")) ? detectionWidth : 0)
-            anchors.bottomMargin: _widgetMargin + ((adjustHud && detectionPosition === "RowBottom") ? detectionHeight : 0)
-            anchors.topMargin: _widgetMargin + (adjustHud ? (Math.max(Math.max(0, toolbarInset - heightOffset), adjustHud && detectionPosition === "RowTop" ? detectionHeight : 0)) : toolbarInset)
-
-
+            anchors.topMargin:      toolbar.height + _widgetMargin
             z:                      _fullItemZorder + 2
             parentToolInsets:       _toolInsets
             mapControl:             _mapControl
             viewer3DCameraController: viewer3DLoader.item ? viewer3DLoader.item.cameraController : null
-            visible:                !QGroundControl.videoManager.fullScreen && SVState.hud && !SVState.cursorTrackingSessionActive
+            visible:                !QGroundControl.videoManager.fullScreen
         }
-
 
         FlyViewCustomLayer {
             id:                 customOverlay
@@ -248,7 +166,7 @@ Item {
             z:                  _fullItemZorder + 2
             parentToolInsets:   widgetLayer.totalToolInsets
             mapControl:         _mapControl
-            visible:            false
+            visible:            !QGroundControl.videoManager.fullScreen
         }
 
         // Development tool for visualizing the insets for a paticular layer, show if needed
@@ -302,23 +220,9 @@ Item {
         }
     }
 
-    function showVideoFullScreen() {
-        if (_pipView && _pipView.item2) {
-            _pipView.showItemFull(_pipView.item2)
-        }
-    }
-
     FlyViewToolBar {
         id:                 toolbar
-        flyView:            _root
         guidedValueSlider:  _guidedValueSlider
-        visible:            !QGroundControl.videoManager.fullScreen && SVState.toolbar && !SVState.cursorTrackingSessionActive
-    }
-
-    SVShortcutHandler {
-        anchors.fill: parent
-        flyView: synclairVisionLayer
-        toolbarVisible: toolbar.visible
-        z: 999
+        visible:            !QGroundControl.videoManager.fullScreen
     }
 }

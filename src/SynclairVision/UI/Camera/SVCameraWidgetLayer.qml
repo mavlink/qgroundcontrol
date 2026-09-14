@@ -27,6 +27,39 @@ Item {
 
     QGCPalette { id: qgcPalette }
 
+    QtObject {
+        id: cameraVehicle
+
+        readonly property bool armed: root.vehicle ? root.vehicle.armed : false
+        readonly property QtObject roll: QtObject {
+            readonly property real rawValue: root._rollAngle
+        }
+        readonly property QtObject pitch: QtObject {
+            readonly property real rawValue: Number.isFinite(root._pitch)
+                ? root._pitch
+                : root.vehicle ? root.vehicle.pitch.rawValue : 0
+        }
+        readonly property QtObject heading: QtObject {
+            readonly property real rawValue: Number.isFinite(root._heading)
+                ? root._heading
+                : root.vehicle ? root.vehicle.heading.rawValue : 0
+        }
+        readonly property QtObject headingToHome: QtObject {
+            readonly property real rawValue: NaN
+        }
+        readonly property QtObject groundSpeed: QtObject {
+            readonly property real rawValue: 0
+        }
+        readonly property QtObject headingToNextWP: QtObject {
+            readonly property real rawValue: NaN
+        }
+        readonly property QtObject gps: QtObject {
+            readonly property QtObject courseOverGround: QtObject {
+                readonly property real rawValue: 0
+            }
+        }
+    }
+
     function wrapPitchFull(pitch) {
         var normalizedPitch = Math.abs(pitch % 360)          // 0..360
         var segment = Math.floor(normalizedPitch / 90)   // segment: 0,1,2,3
@@ -93,9 +126,7 @@ Item {
             QGCAttitudeWidget {
                 id:                     attitude
                 size:                   SVUnits.objectWidth * 1.4
-                vehicle:                globals.activeVehicle
-                pitchOverride:          root._pitch
-                _rollAngle:             root._rollAngle
+                vehicle:                cameraVehicle
                 anchors.left:           parent.left
                 anchors.leftMargin:     SVUnits.bigMargin
                 anchors.verticalCenter: parent.verticalCenter
@@ -106,10 +137,10 @@ Item {
                 anchors.left:           attitude.right
                 anchors.leftMargin:     SVUnits.bigMargin
                 size:                   SVUnits.objectWidth * 1.4
-                vehicle:                globals.activeVehicle
-                headingOverride:        root._heading
+                vehicle:                cameraVehicle
                 border.width:             SVSettings.simplifiedUserInterface ? 0 : 1
                 _lockNoseUpCompass:     true
+                _showAdditionalIndicators: false
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -135,9 +166,7 @@ Item {
             QGCAttitudeWidget {
                 id:                       attitude
                 size:                     SVUnits.objectWidth * 1.4
-                vehicle:                  globals.activeVehicle
-                pitchOverride:            root._pitch
-                _rollAngle:               root._rollAngle
+                vehicle:                  cameraVehicle
                 anchors.top:              parent.top
                 anchors.topMargin:        SVUnits.bigMargin
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -148,10 +177,10 @@ Item {
                 anchors.top:              attitude.bottom
                 anchors.topMargin:        SVUnits.bigMargin
                 size:                     SVUnits.objectWidth * 1.4
-                vehicle:                  globals.activeVehicle
-                headingOverride:          root._heading
+                vehicle:                  cameraVehicle
                 border.width:             SVSettings.simplifiedUserInterface ? 0 : 1
                 _lockNoseUpCompass:     true
+                _showAdditionalIndicators: false
                 anchors.horizontalCenter: parent.horizontalCenter
             }
         }
@@ -188,10 +217,7 @@ Item {
                 // Keep your max radius constraint
                 maxCompassRadius: SVUnits.objectWidth * 1.0
 
-                // Pass the overrides
-                headingOverride: root._heading
-                pitchOverride:   root._pitch
-                rollOverride:    root._rollAngle
+                vehicle: cameraVehicle
 
                 // Center inside the container padding box, taking child negative offsets into account
                 anchors.right: parent.right

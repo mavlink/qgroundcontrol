@@ -3,7 +3,7 @@
 #include "DigiviewLegacyTcpTransport.h"
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
-#include "sv_mavlink_dialect/sv_mavlink_dialect.h"
+#include "sv_mavlink_dialect/mavlink.h"
 
 #include <QtCore/QByteArray>
 #include <QtCore/QSettings>

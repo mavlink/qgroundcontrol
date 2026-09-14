@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtQml/QQmlAbstractUrlInterceptor>
+
 #include "QGCCorePlugin.h"
 
 class DigiviewManager;
@@ -17,10 +19,20 @@ public:
 
     SVBackend* backend() const { return _backend; }
     QString firstRunPromptResource(int id) const final;
+    QQmlApplicationEngine* createQmlApplicationEngine(QObject* parent) final;
+    void destroyQmlApplicationEngine(QQmlApplicationEngine* qmlEngine) final;
 
     static constexpr int kSVInitialWelcomePromptId = kFirstRunPromptIdsFirstCustomId + 1;
 
 private:
     DigiviewManager* _digiviewManager = nullptr;
     SVBackend* _backend = nullptr;
+    QQmlApplicationEngine* _qmlEngine = nullptr;
+    class CustomOverrideInterceptor* _urlInterceptor = nullptr;
+};
+
+class CustomOverrideInterceptor final : public QQmlAbstractUrlInterceptor
+{
+public:
+    QUrl intercept(const QUrl& url, DataType type) final;
 };

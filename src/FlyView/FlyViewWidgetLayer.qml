@@ -15,17 +15,19 @@ import QGroundControl.FlightMap
 import QGroundControl.GeoMap
 import QGroundControl.Viewer3D
 
-import QGroundControl.SynclairVisionUI
-
-
+// This is the ui overlay layer for the widgets/tools for Fly View
 Item {
     id: _root
+
+    readonly property alias customLayerTopRightPanel: topRightPanel
+    readonly property alias customLayerTopRightColumn: topRightColumnLayout
+    readonly property alias customLayerBottomRightRow: bottomRightRowLayout
+    readonly property alias customLayerToolStrip: toolStrip
 
     property var    parentToolInsets
     property var    totalToolInsets:        _totalToolInsets
     property var    mapControl
     property var    viewer3DCameraController
-    property real   leftToolStripBottom:    toolStrip.topEdgeLeftInset
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property var    _planMasterController:  globals.planMasterControllerFlyView
@@ -73,7 +75,7 @@ Item {
         anchors.top:        parent.top
         anchors.right:      parent.right
         spacing:            _layoutSpacing
-        visible:           !topRightPanel.visible && !SVState.synclairOverlay
+        visible:           !topRightPanel.visible
 
         property real topEdgeRightInset:    childrenRect.height + _layoutMargin
         property real rightEdgeTopInset:    width + _layoutMargin
@@ -85,7 +87,6 @@ Item {
         anchors.bottom:     parent.bottom
         anchors.right:      parent.right
         spacing:            _layoutSpacing
-        visible:            !SVState.synclairOverlay || _mainWindowIsMap
 
         property real bottomEdgeRightInset:     height + _layoutMargin
         property real bottomEdgeCenterInset:    bottomEdgeRightInset
@@ -157,7 +158,7 @@ Item {
         anchors.top:            parent.top
         z:                      QGroundControl.zOrderWidgets
         maxHeight:              parent.height - y - parentToolInsets.bottomEdgeLeftInset - _toolsMargin
-        visible:                !QGroundControl.videoManager.fullScreen 
+        visible:                !QGroundControl.videoManager.fullScreen
 
         onDisplayPreFlightChecklist: {
             if (!preFlightChecklistLoader.active) {

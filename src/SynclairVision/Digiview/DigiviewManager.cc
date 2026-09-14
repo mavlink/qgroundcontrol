@@ -2,7 +2,6 @@
 
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
-#include "sv_mavlink_dialect/sv_mavlink_dialect.h"
 
 #include <QtCore/QByteArray>
 #include <QtCore/QCoreApplication>

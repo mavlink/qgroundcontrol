@@ -3,7 +3,7 @@
 #include "DigiviewConnection.h"
 #include "MAVLinkEnums.h"
 #include "digiview_commons/public_enums.hpp"
-#include "sv_mavlink_dialect/sv_mavlink_dialect.h"
+#include "sv_mavlink_dialect/mavlink.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QDeadlineTimer>
