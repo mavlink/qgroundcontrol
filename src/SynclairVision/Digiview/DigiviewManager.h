@@ -106,8 +106,6 @@ public:
     explicit DigiviewManager(QObject* parent = nullptr);
     ~DigiviewManager() override;
 
-    static DigiviewManager* instance();
-
     QString host() const;
     quint16 port() const;
     quint16 listenPort() const;

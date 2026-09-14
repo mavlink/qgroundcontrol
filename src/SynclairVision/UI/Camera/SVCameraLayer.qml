@@ -19,7 +19,7 @@ Item {
 
     property int _widgetMargin: 0
     property bool cameraActive: SVState.synclairOverlay
-    && !(QGroundControl.digiviewManager.connected && QGroundControl.videoManager.decoding)
+    && !(SVState.digiview.connected && QGroundControl.videoManager.decoding)
 
     property int cameraSlot
     property bool previewMode: false

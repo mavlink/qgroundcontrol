@@ -350,12 +350,6 @@ QList<int> QGCCorePlugin::firstRunPromptStdIds()
     return {};
 }
 
-QList<int> QGCCorePlugin::firstRunPromptCustomIds()
-{
-    // Return empty so QGC doesn't show it automatically at startup
-    return QList<int>();
-}
-
 QVariantList QGCCorePlugin::firstRunPromptsToShow()
 {
     QList<int> rgIdsToShow;
@@ -381,8 +375,6 @@ QString QGCCorePlugin::firstRunPromptResource(int id) const
     switch (id) {
     case kInitialSetupPromptId:
         return QStringLiteral("/qml/QGroundControl/FirstRunPromptDialogs/InitialSetupPrompt.qml");
-    case kSVInitialWelcomePromptId:
-        return QStringLiteral("qrc:/qml/QGroundControl/SynclairVisionUI/Flyview/SVWelcomePrompt.qml");
     default:
         return QString();
     }

@@ -7,7 +7,7 @@ QtObject {
     id: root
 
 
-    readonly property var digiview: QGroundControl.digiviewManager
+    readonly property var digiview: SVBackend.digiview
     readonly property bool digiviewActive: !!(digiview && digiview.connected)
     readonly property bool digiviewSessionActive: !!(digiview && digiview.sessionActive)
     property bool userInitiatedDisconnect: false

@@ -22,7 +22,7 @@ Item {
     signal layoutSelected(string layoutId)
     signal trackingSelected(string trackingId)
 
-    readonly property var digiview: QGroundControl.digiviewManager
+    readonly property var digiview: SVState.digiview
     readonly property bool digiviewActive: SVState.digiviewActive
     readonly property bool hasCurrentVideoOutputParameters: digiviewActive
         && digiview.hasVideoOutputParameters

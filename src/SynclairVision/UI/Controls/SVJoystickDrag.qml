@@ -31,7 +31,7 @@ Item {
 
     QGCPalette { id: qgcPalette }
 
-    readonly property var digiview: QGroundControl.digiviewManager
+    readonly property var digiview: SVState.digiview
     readonly property real eulerScale: 0.10
 
 

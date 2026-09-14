@@ -56,7 +56,6 @@ add_subdirectory(MissionManager)
 add_subdirectory(PlanView)
 add_subdirectory(QmlControls)
 add_subdirectory(Settings)
-add_subdirectory(SynclairVision)
 add_subdirectory(Terrain)
 add_subdirectory(AppSettings)
 add_subdirectory(FirstRunPromptDialogs)
@@ -145,7 +144,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         QGroundControlModule
         ToolbarModule
         VehicleSetupModule
-        $<LINK_LIBRARY:WHOLE_ARCHIVE,SynclairVisionUIModule>
 )
 
 # ----------------------------------------------------------------------------

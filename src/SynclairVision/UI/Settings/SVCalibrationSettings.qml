@@ -15,7 +15,7 @@ Item {
         AwaitingStop
     }
 
-    readonly property var digiview: QGroundControl.digiviewManager
+    readonly property var digiview: SVState.digiview
     property bool localMonitorActive: false
     property int monitoredCamera: 0
     property int monitoredCommand: DigiviewProtocol.CalibrationCommandStartMag

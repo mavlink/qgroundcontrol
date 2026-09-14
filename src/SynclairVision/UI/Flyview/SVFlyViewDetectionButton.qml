@@ -9,7 +9,7 @@ Item {
     property int detectionViewId
     property var immediateSttHandler
 
-    readonly property var digiview: QGroundControl.digiviewManager
+    readonly property var digiview: SVState.digiview
     readonly property bool detectionEnabled: !!digiview
         && digiview.hasVideoOutputParameters
         && digiview.videoOutputStreamName === digiview.streamName

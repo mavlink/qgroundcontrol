@@ -11,7 +11,6 @@
 #include "QGCMapEngineManager.h"
 #include "ADSBVehicleManager.h"
 #include "AudioOutput.h"
-#include "DigiviewManager.h"
 #include "NTRIPManager.h"
 #include "MAVLinkSigningKeys.h"
 #include "MissionCommandTree.h"
@@ -55,7 +54,6 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     , _missionCommandTree(MissionCommandTree::instance())
     , _mavlinkSigningKeys(MAVLinkSigningKeys::instance())
     , _videoManager(VideoManager::instance())
-    , _digiviewManager(DigiviewManager::instance())
     , _linkManager(LinkManager::instance())
     , _multiVehicleManager(MultiVehicleManager::instance())
     , _settingsManager(SettingsManager::instance())

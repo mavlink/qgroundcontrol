@@ -212,11 +212,11 @@ Item {
         index: root.cameraSlot
 
         // 1. Safely grab the state for this specific camera slot
-        property var camState: (QGroundControl.digiviewManager && 
-                                QGroundControl.digiviewManager.cameraStates && 
+        property var camState: (SVState.digiview &&
+                                SVState.digiview.cameraStates &&
                                 root.cameraSlot >= 0 && 
-                                root.cameraSlot < QGroundControl.digiviewManager.cameraStates.length)
-                               ? QGroundControl.digiviewManager.cameraStates[root.cameraSlot]
+                                root.cameraSlot < SVState.digiview.cameraStates.length)
+                               ? SVState.digiview.cameraStates[root.cameraSlot]
                                : null
 
         // 2. Make visible for backend or local tracking/selection state.
@@ -235,14 +235,14 @@ Item {
     }
 
     Connections {
-        target: QGroundControl.digiviewManager
+        target: SVState.digiview
 
         function onStreamNameChanged() {
             root.resetCameraOverrides()
         }
 
         function onCamTargetingParametersReceived(streamName, camId, _targetingMode, eulerDelta, yaw, pitch) {
-            if (streamName !== QGroundControl.digiviewManager.streamName || camId !== root.cameraSlot) {
+            if (streamName !== SVState.digiview.streamName || camId !== root.cameraSlot) {
                 return
             }
 

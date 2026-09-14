@@ -15,7 +15,7 @@ Item {
 
     property int index
 
-    readonly property var digiview: QGroundControl.digiviewManager
+    readonly property var digiview: SVState.digiview
 
 
     Canvas {

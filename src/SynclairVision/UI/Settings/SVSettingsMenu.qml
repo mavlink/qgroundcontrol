@@ -15,7 +15,7 @@ Item {
     property int pendingProgrammaticSectionIndex: -1
     property bool networkConnectionPending: false
     readonly property int settingsResetToken: SVSettings.resetToken
-    readonly property var digiview: QGroundControl.digiviewManager
+    readonly property var digiview: SVState.digiview
     readonly property bool networkConnectionActive: SVState.digiviewActive
     property var sensorParameterValues: ({})
     property var detectionParameterValues: ({})

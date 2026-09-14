@@ -4,7 +4,6 @@
 #include "QGCLoggingCategory.h"
 #include "sv_mavlink_dialect/sv_mavlink_dialect.h"
 
-#include <QtCore/QApplicationStatic>
 #include <QtCore/QByteArray>
 #include <QtCore/QCoreApplication>
 
@@ -13,8 +12,6 @@
 #include <limits>
 
 QGC_LOGGING_CATEGORY(DigiviewManagerLog, "Digiview.Manager")
-
-Q_APPLICATION_STATIC(DigiviewManager, _digiviewManagerInstance);
 
 namespace {
 
@@ -93,11 +90,6 @@ uint8_t userViewCountForLayout(uint8_t layout)
 }
 
 } // namespace
-
-DigiviewManager* DigiviewManager::instance()
-{
-    return _digiviewManagerInstance();
-}
 
 DigiviewManager::DigiviewManager(QObject* parent)
     : QObject(parent)
