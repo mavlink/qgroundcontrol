@@ -39,8 +39,22 @@ QtObject {
     readonly property bool synclairOverlayVideoActive: synclairOverlay
         && digiviewActive
         && synclairOverlayVideoUri !== ""
+    readonly property bool forceRtspVideoOverTcp: SVSettings.networkForceRtspVideoOverTcp
     readonly property bool uiInteractionEnabled: digiviewActive && QGroundControl.videoManager.decoding
     readonly property bool cameraSelectionEnabled: uiInteractionEnabled
+
+    function _applyNetworkVideoConfiguration() {
+        SVBackend.configureNetworkVideo(
+            synclairOverlayVideoActive,
+            synclairOverlayVideoUri,
+            forceRtspVideoOverTcp)
+    }
+
+    onSynclairOverlayVideoActiveChanged: _applyNetworkVideoConfiguration()
+    onSynclairOverlayVideoUriChanged: _applyNetworkVideoConfiguration()
+    onForceRtspVideoOverTcpChanged: _applyNetworkVideoConfiguration()
+
+    Component.onCompleted: _applyNetworkVideoConfiguration()
 
     signal cursorTargetRequested(int cameraSlot, real normalizedX, real normalizedY)
     signal cursorTrackingSelectionCancelled()

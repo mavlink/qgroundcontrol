@@ -24,6 +24,8 @@ public:
 
     DigiviewManager* digiview() const { return _digiview; }
 
+    Q_INVOKABLE void configureNetworkVideo(bool enabled, const QString& uri, bool forceRtspTcp);
+
 private:
     DigiviewManager* const _digiview;
 };

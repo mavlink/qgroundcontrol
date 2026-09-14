@@ -256,6 +256,17 @@ void DigiviewManager::setLegacyTcpControlPort(quint16 port)
     _reapplyEndpointIfSessionActive();
 }
 
+void DigiviewManager::setLegacyTcpControlEnabled(bool enabled)
+{
+    _cancelRestartForSessionChange();
+    if (enabled != _connection->legacyTcpControlEnabled()) {
+        _resetRemoteSession();
+    }
+
+    _connection->setLegacyTcpControlEnabled(enabled);
+    _reapplyEndpointIfSessionActive();
+}
+
 void DigiviewManager::setStreamName(const QString& streamName)
 {
     _cancelRestartForSessionChange();

@@ -160,6 +160,7 @@ public:
     void setPort(quint16 port);
     void setListenPort(quint16 listenPort);
     void setLegacyTcpControlPort(quint16 port);
+    void setLegacyTcpControlEnabled(bool enabled);
     void setStreamName(const QString& streamName);
     void setSenderSystemId(int senderSystemId);
     void setSenderComponentId(int senderComponentId);

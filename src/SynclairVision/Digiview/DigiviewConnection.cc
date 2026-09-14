@@ -6,7 +6,6 @@
 #include "sv_mavlink_dialect/mavlink.h"
 
 #include <QtCore/QByteArray>
-#include <QtCore/QSettings>
 #include <QtCore/QTimer>
 #include <QtNetwork/QHostInfo>
 
@@ -16,19 +15,10 @@ QGC_LOGGING_CATEGORY(DigiviewConnectionLog, "Digiview.Connection")
 
 namespace {
 
-constexpr char kSynclairSettingsGroup[] = "SynclairVisionSettings";
-constexpr char kLegacyTcpControlSetting[] = "networkForceRtspVideoOverTcp";
 constexpr uint8_t kDigiviewSystemId = 252;
 constexpr uint8_t kDigiviewComponentId = 66;
 constexpr quint16 kDigiviewRouterPort = 14570;
 constexpr int kRestartHeartbeatLossTimeoutMs = 1500;
-
-bool legacyTcpControlEnabled()
-{
-    QSettings settings;
-    settings.beginGroup(QLatin1String(kSynclairSettingsGroup));
-    return settings.value(QLatin1String(kLegacyTcpControlSetting), false).toBool();
-}
 
 } // namespace
 
@@ -125,12 +115,27 @@ void DigiviewConnection::setLegacyTcpControlPort(quint16 port)
     emit legacyTcpControlPortChanged();
 }
 
+void DigiviewConnection::setLegacyTcpControlEnabled(bool enabled)
+{
+    if (enabled == _legacyTcpControlEnabled) {
+        return;
+    }
+
+    if (_legacyTcpActive) {
+        _legacyTcpTransport->disconnectFromEndpoint();
+    } else {
+        _socket.close();
+    }
+    _legacyTcpControlEnabled = enabled;
+    _setConnected(false);
+}
+
 bool DigiviewConnection::connectToEndpoint()
 {
     _mavlinkParserStatus = {};
     _mavlinkMessageBuffer = {};
 
-    if (legacyTcpControlEnabled()) {
+    if (_legacyTcpControlEnabled) {
         _socket.close();
         if (!_legacyTcpActive) {
             _setConnected(false);

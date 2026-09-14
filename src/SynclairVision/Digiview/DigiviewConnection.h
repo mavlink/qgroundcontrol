@@ -38,12 +38,14 @@ public:
     quint16 legacyTcpControlPort() const { return _legacyTcpControlPort; }
     bool connected() const { return _connected; }
     bool usingLegacyTcpControl() const { return _legacyTcpActive; }
+    bool legacyTcpControlEnabled() const { return _legacyTcpControlEnabled; }
     QString lastError() const { return _lastError; }
 
     void setHost(const QString& host);
     void setPort(quint16 port);
     void setListenPort(quint16 listenPort);
     void setLegacyTcpControlPort(quint16 port);
+    void setLegacyTcpControlEnabled(bool enabled);
 
     bool connectToEndpoint();
     void disconnectFromEndpoint();
@@ -87,6 +89,7 @@ private:
     quint16 _legacyTcpControlPort = kDefaultLegacyTcpControlPort;
     bool _connected = false;
     bool _legacyTcpActive = false;
+    bool _legacyTcpControlEnabled = false;
     std::optional<quint64> _restartObservationGeneration;
     QTimer _restartHeartbeatLossTimer;
     bool _restartHeartbeatObserved = false;
