@@ -193,12 +193,36 @@ qt_add_qml_module(CustomPlanModule
 )
 
 # ============================================================================
+# Custom Exclusion Zone Page (review/approve/push panel)
+# ============================================================================
+# The C++ controller classes below need QML_ELEMENT/QML_SINGLETON registered under
+# the same "QGC" module the rest of QGroundControl's C++ types use, which only
+# happens for sources compiled directly into ${CMAKE_PROJECT_NAME} (the qt_add_qml_module
+# target declared at the top-level CMakeLists.txt) - see CUSTOM_SOURCES below. The QML
+# page itself just needs a resolvable qrc:// path, like the CUSTOM_QML_OVERRIDES
+# resources above; it's referenced by URL, not QML type import (see
+# QGCCorePlugin::analyzePages()), and files compiled into the same module see each
+# other's registered types without a cross-module import.
+
+qgc_set_qt_resource_alias(
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ExclusionZone/ExclusionZoneReviewPage.qml
+)
+qt_add_resources(${CMAKE_PROJECT_NAME} custom_exclusion_zone_qml
+    PREFIX "/qml/Custom/ExclusionZone"
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/ExclusionZone/ExclusionZoneReviewPage.qml
+)
+
+# ============================================================================
 # Custom Plugin Sources
 # ============================================================================
 
 set(CUSTOM_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/CustomPlugin.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/CustomPlugin.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ExclusionZone/ExclusionZoneController.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ExclusionZone/ExclusionZoneController.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ExclusionZone/StagedExclusionZone.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ExclusionZone/StagedExclusionZone.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager/PerimeterScanComplexItem.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager/PerimeterScanComplexItem.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager/PerimeterScanPlanCreator.cc
@@ -220,6 +244,7 @@ set(CUSTOM_LIBRARIES
 
 set(CUSTOM_INCLUDE_DIRECTORIES
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ExclusionZone
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Settings
     PARENT_SCOPE

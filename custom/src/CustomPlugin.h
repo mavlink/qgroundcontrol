@@ -26,9 +26,10 @@ public:
 
     /// This custom build has it's own custom instrument panel. Don't show regular one.
     bool showInstrumentPanel() const final { return false; }
-    /// This custom build does not support conecting multiple vehicles to it.
-    /// This in turn simplifies various parts of the QGC ui.
-    bool showMultiVehicleList() const final { return false; }
+    /// This program runs two vehicles simultaneously connected (rover + fixed-wing), both on
+    /// ArduPilot, so unlike custom-example's single-vehicle assumption, the multi-vehicle list
+    /// stays enabled.
+    bool showMultiVehicleList() const final { return true; }
 };
 
 /*===========================================================================*/
@@ -85,6 +86,8 @@ public:
     QList<PlanCreator *> planCreators(PlanMasterController *planMasterController) final;
     /// Registers the CustomSettings group so the generated Custom settings page can access it.
     void registerCustomSettings(SettingsManager *settingsManager) final;
+    /// Adds the Exclusion Zones review/approve/push page to the Analyze view.
+    const QVariantList &analyzePages() final;
 
 private slots:
     void _advancedChanged(bool advanced);

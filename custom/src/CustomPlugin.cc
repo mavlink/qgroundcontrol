@@ -5,6 +5,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCPalette.h"
 #include "QGCMAVLink.h"
+#include "QmlComponentInfo.h"
 #include "AppSettings.h"
 #include "SettingsManager.h"
 
@@ -328,4 +329,22 @@ QList<PlanCreator *> CustomPlugin::planCreators(PlanMasterController *planMaster
     QList<PlanCreator *> creators = QGCCorePlugin::planCreators(planMasterController);
     creators.append(new PerimeterScanPlanCreator(planMasterController));
     return creators;
+}
+
+const QVariantList &CustomPlugin::analyzePages()
+{
+    // Start with the standard pages, then append ours. Cached in a static so the appended list
+    // (and its QmlComponentInfo entries) are built once, same lifetime pattern as the base class.
+    static const QVariantList customAnalyzeList = [this]() {
+        QVariantList pages = QGCCorePlugin::analyzePages();
+        pages.append(QVariant::fromValue(new QmlComponentInfo(
+            tr("Exclusion Zones"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/Custom/ExclusionZone/ExclusionZoneReviewPage.qml")),
+            QUrl(),
+            nullptr,
+            false /* requiresVehicle - the vehicle picker needs to list all connected vehicles even if none is active */)));
+        return pages;
+    }();
+
+    return customAnalyzeList;
 }
