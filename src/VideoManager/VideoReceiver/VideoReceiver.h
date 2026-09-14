@@ -7,6 +7,8 @@
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "VideoSourceConfiguration.h"
+
 class QGCVideoStreamInfo;
 class QQuickItem;
 
@@ -35,6 +37,7 @@ public:
     bool autoReconnect() const { return _autoReconnect; }
     QGCVideoStreamInfo *videoStreamInfo() { return _videoStreamInfo; }
     QString recordingOutput() const { return _recordingOutput; }
+    const VideoSourceConfiguration &sourceConfiguration() const { return _sourceConfiguration; }
 
     virtual void setSink(VideoSinkHandle sink) { if (sink != _sink) { _sink = sink; emit sinkChanged(_sink); } }
     virtual void setWidget(QQuickItem *widget) { if (widget != _widget) { _widget = widget; emit widgetChanged(_widget); } }
@@ -45,6 +48,7 @@ public:
     void setRtpJitterLatencyMs(int ms) { if (ms != _rtpJitterLatencyMs) { _rtpJitterLatencyMs = ms; emit rtpJitterLatencyMsChanged(_rtpJitterLatencyMs); } }
     void setAutoReconnect(bool enabled) { if (enabled != _autoReconnect) { _autoReconnect = enabled; emit autoReconnectChanged(_autoReconnect); } }
     void setVideoStreamInfo(QGCVideoStreamInfo *videoStreamInfo) { if (videoStreamInfo != _videoStreamInfo) { _videoStreamInfo = videoStreamInfo; emit videoStreamInfoChanged(); } }
+    void setSourceConfiguration(const VideoSourceConfiguration &configuration) { _sourceConfiguration = configuration; }
 
     // QMediaFormat::FileFormat
     enum FILE_FORMAT {
@@ -135,6 +139,7 @@ protected:
     QTimer _watchdogTimer;
     uint32_t _timeout = 0;
     QString _recordingOutput;
+    VideoSourceConfiguration _sourceConfiguration;
 
     // bool _initialized = false;
     // bool _fullScreen = false;

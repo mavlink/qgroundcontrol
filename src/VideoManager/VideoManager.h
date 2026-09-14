@@ -4,11 +4,14 @@
 #include <chrono>
 
 #include <QtCore/QFuture>
+#include <QtCore/QHash>
 #include <QtCore/QMutex>
 #include <QtCore/QPromise>
 #include <QtCore/QObject>
 #include <QtCore/QSize>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+#include "VideoSourceConfiguration.h"
 
 #ifdef QGC_UNITTEST_BUILD
 #include <functional>
@@ -57,8 +60,6 @@ public:
     Q_INVOKABLE void startVideo();
     Q_INVOKABLE void stopRecording();
     Q_INVOKABLE void stopVideo();
-    Q_INVOKABLE void setVideoUriOverride(bool enabled, const QString &uri);
-
     void init(QQuickWindow *mainWindow);
     void startVideoBackendInit();
     bool waitForVideoBackendReady(std::chrono::milliseconds timeout = std::chrono::minutes(1));
@@ -80,6 +81,8 @@ public:
     QString imageFile() const { return _imageFile; }
     QString uvcVideoSourceID() const { return _uvcVideoSourceID; }
     void setfullScreen(bool on);
+    void setSourceConfiguration(const QString &sourceName, const VideoSourceConfiguration &configuration);
+    void setVideoUriOverride(bool enabled, const QString &uri);
 
 signals:
     void aspectRatioChanged();
@@ -120,6 +123,7 @@ private:
     bool _updateUVC(VideoReceiver *receiver);
     bool _updateSettings(VideoReceiver *receiver);
     bool _updateVideoUri(VideoReceiver *receiver, const QString &uri);
+    void _applyVideoSourceChange(bool forceRestart);
     void _restartAllVideos();
     void _restartVideo(VideoReceiver *receiver);
     void _startReceiver(VideoReceiver *receiver);
@@ -139,15 +143,13 @@ private:
     bool _initialized = false;
     bool _backendDisabledForTests = false;
     bool _fullScreen = false;
-    bool _videoUriOverrideEnabled = false;
-
     QAtomicInteger<bool> _decoding = false;
     QAtomicInteger<bool> _recording = false;
     QAtomicInteger<bool> _streaming = false;
     QSize _videoSize;
     QString _imageFile;
     QString _uvcVideoSourceID;
-    QString _videoUriOverride;
+    QHash<QString, VideoSourceConfiguration> _sourceConfigurations;
 
 #ifdef QGC_UNITTEST_BUILD
     std::function<void()> _createVideoReceiversForTest;

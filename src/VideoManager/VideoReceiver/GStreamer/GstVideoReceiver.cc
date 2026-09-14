@@ -233,6 +233,7 @@ void GstVideoReceiver::start(uint32_t timeout)
         // do-retransmission needs ≥40 ms latency headroom over the default 20 ms rtx-delay;
         // forcibly disable for sub-frame latency configurations to avoid retransmit storms.
         sourceConfig.doRetransmission = (_rtpJitterLatencyMs >= 40) && (sourceConfig.jitterBuffer != GStreamer::SourceFactory::JitterBuffer::None);
+        sourceConfig.forceRtspTcp = _sourceConfiguration.forceRtspTcp;
         _source = GStreamer::SourceFactory::create(_uri, sourceConfig);
         if (!_source) {
             qCCritical(GstVideoReceiverLog) << "SourceFactory::create() failed";

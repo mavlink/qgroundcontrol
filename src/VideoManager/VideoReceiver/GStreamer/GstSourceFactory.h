@@ -22,6 +22,7 @@ struct Config
     JitterBuffer jitterBuffer = JitterBuffer::DropOnLatency;
     int latencyMs = 80;
     bool doRetransmission = true;
+    bool forceRtspTcp = false;
 };
 
 /// Build a source bin (`source` [+ `tsdemux`] [+ `rtpjitterbuffer`] + `parsebin`)

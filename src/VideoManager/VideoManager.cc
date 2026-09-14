@@ -29,6 +29,7 @@
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QRunnable>
 #include <QtCore/QTimer>
+#include <QtCore/QUrl>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
@@ -42,6 +43,12 @@ static constexpr const char *kFileExtension[VideoReceiver::FILE_FORMAT_MAX + 1] 
 };
 
 Q_APPLICATION_STATIC(VideoManager, _videoManagerInstance);
+
+namespace {
+
+const QString kPrimaryVideoSourceName = QStringLiteral("videoContent");
+
+}
 
 VideoManager::VideoManager(QObject *parent)
     : QObject(parent)
@@ -301,6 +308,7 @@ void VideoManager::_createVideoReceivers()
             continue;
         }
         receiver->setName(streamName);
+        receiver->setSourceConfiguration(_sourceConfigurations.value(streamName));
 
         _initVideoReceiver(receiver, _mainWindow);
     }
@@ -473,8 +481,9 @@ bool VideoManager::hasThermal() const
 
 bool VideoManager::hasVideo() const
 {
-    if (_videoUriOverrideEnabled) {
-        return !_videoUriOverride.isEmpty();
+    const VideoSourceConfiguration configuration = _sourceConfigurations.value(kPrimaryVideoSourceName);
+    if (configuration.uriOverrideEnabled) {
+        return !configuration.uri.isEmpty();
     }
 
     return (_videoSettings->streamEnabled()->rawValue().toBool() && _videoSettings->streamConfigured());
@@ -501,7 +510,7 @@ void VideoManager::setfullScreen(bool on)
 
 bool VideoManager::isStreamSource() const
 {
-    if (_videoUriOverrideEnabled) {
+    if (_sourceConfigurations.value(kPrimaryVideoSourceName).uriOverrideEnabled) {
         return true;
     }
 
@@ -521,19 +530,45 @@ bool VideoManager::isStreamSource() const
     return (videoSourceList.contains(videoSource) || autoStreamConfigured());
 }
 
-void VideoManager::setVideoUriOverride(bool enabled, const QString &uri)
+void VideoManager::setSourceConfiguration(const QString &sourceName, const VideoSourceConfiguration &configuration)
 {
-    const QString overrideUri = enabled ? uri : QString();
-    if ((_videoUriOverrideEnabled == enabled) && (_videoUriOverride == overrideUri)) {
+    if (sourceName.isEmpty()) {
         return;
     }
 
-    _videoUriOverrideEnabled = enabled;
-    _videoUriOverride = overrideUri;
-    _videoSourceChanged();
+    const VideoSourceConfiguration oldConfiguration = _sourceConfigurations.value(sourceName);
+    if (oldConfiguration == configuration) {
+        return;
+    }
+
+    _sourceConfigurations.insert(sourceName, configuration);
+    for (VideoReceiver *receiver : std::as_const(_videoReceivers)) {
+        if (receiver->name() == sourceName) {
+            receiver->setSourceConfiguration(configuration);
+        }
+    }
+
+    _applyVideoSourceChange(true);
+}
+
+void VideoManager::setVideoUriOverride(bool enabled, const QString &uri)
+{
+    VideoSourceConfiguration thermalConfiguration;
+    thermalConfiguration.uriOverrideEnabled = enabled;
+    setSourceConfiguration(QStringLiteral("thermalVideo"), thermalConfiguration);
+
+    VideoSourceConfiguration primaryConfiguration;
+    primaryConfiguration.uriOverrideEnabled = enabled;
+    primaryConfiguration.uri = enabled ? uri : QString();
+    setSourceConfiguration(kPrimaryVideoSourceName, primaryConfiguration);
 }
 
 void VideoManager::_videoSourceChanged()
+{
+    _applyVideoSourceChange(false);
+}
+
+void VideoManager::_applyVideoSourceChange(bool forceRestart)
 {
     bool changed = false;
     if (_activeVehicle) {
@@ -555,7 +590,7 @@ void VideoManager::_videoSourceChanged()
         }
     }
 
-    if (changed) {
+    if (changed || forceRestart) {
         emit hasVideoChanged();
         emit isStreamSourceChanged();
         emit isAutoStreamChanged();
@@ -566,8 +601,10 @@ void VideoManager::_videoSourceChanged()
             stopVideo();
         }
 
+        const VideoSourceConfiguration configuration = _sourceConfigurations.value(kPrimaryVideoSourceName);
         qCDebug(VideoManagerLog) << "New Video Source:"
-                                << (_videoUriOverrideEnabled ? _videoUriOverride : _videoSettings->videoSource()->rawValue().toString());
+                                << (configuration.uriOverrideEnabled ? configuration.uri
+                                                                    : _videoSettings->videoSource()->rawValue().toString());
     }
 }
 
@@ -709,8 +746,9 @@ bool VideoManager::_updateSettings(VideoReceiver *receiver)
     }
 
     if (receiver->isThermal()) {
-        if (_videoUriOverrideEnabled) {
-            settingsChanged |= _updateVideoUri(receiver, QString());
+        const VideoSourceConfiguration &configuration = receiver->sourceConfiguration();
+        if (configuration.uriOverrideEnabled) {
+            settingsChanged |= _updateVideoUri(receiver, configuration.uri);
         } else {
             settingsChanged |= _updateAutoStream(receiver);
         }
@@ -720,8 +758,9 @@ bool VideoManager::_updateSettings(VideoReceiver *receiver)
 
     settingsChanged |= _updateUVC(receiver);
 
-    if (_videoUriOverrideEnabled) {
-        settingsChanged |= _updateVideoUri(receiver, _videoUriOverride);
+    const VideoSourceConfiguration &configuration = receiver->sourceConfiguration();
+    if (configuration.uriOverrideEnabled) {
+        settingsChanged |= _updateVideoUri(receiver, configuration.uri);
         return settingsChanged;
     }
 
@@ -876,11 +915,8 @@ void VideoManager::_startReceiver(VideoReceiver *receiver)
         return;
     }
 
-    const QString source = _videoSettings->videoSource()->rawValue().toString();
-    /* The gstreamer rtsp source will switch to tcp if udp is not available after 5 seconds.
-       So we should allow for some negotiation time for rtsp */
-
-    const bool isRtsp = _videoUriOverrideEnabled || (source == VideoSettings::videoSourceRTSP);
+    const QUrl receiverUrl(receiver->uri());
+    const bool isRtsp = receiverUrl.scheme().startsWith(QStringLiteral("rtsp"), Qt::CaseInsensitive);
     const uint32_t timeout = isRtsp ? _videoSettings->rtspTimeout()->rawValue().toUInt() : 3;
 
     receiver->start(timeout);
@@ -1008,7 +1044,7 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
         const QGCVideoStreamInfo *videoStreamInfo = receiver->videoStreamInfo();
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "stream info:" << (videoStreamInfo ? "received" : "lost");
 
-        if (!_videoUriOverrideEnabled) {
+        if (!receiver->sourceConfiguration().uriOverrideEnabled) {
             (void) _updateAutoStream(receiver);
         }
     });

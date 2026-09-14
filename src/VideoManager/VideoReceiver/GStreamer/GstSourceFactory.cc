@@ -1,7 +1,6 @@
 #include "GstSourceFactory.h"
 
 #include <QtCore/QFile>
-#include <QtCore/QSettings>
 #include <QtCore/QUrl>
 #include <gst/gst.h>
 #include <gst/rtsp/gstrtsptransport.h>
@@ -14,11 +13,9 @@ QGC_LOGGING_CATEGORY(GstSourceFactoryLog, "Video.GStreamer.GstSourceFactory")
 
 namespace {
 
-constexpr guint64 kRtspTcpTimeoutUs = G_GUINT64_CONSTANT(1000000);
+constexpr guint64 kRtspTcpTimeoutUs = G_GUINT64_CONSTANT(5000000);
 constexpr int kRtspRetry = 3;
 constexpr int kUdpBufferSizeBytes = 8 * 1024 * 1024;
-constexpr char kSynclairSettingsGroup[] = "SynclairVisionSettings";
-constexpr char kForceRtspVideoOverTcpKey[] = "networkForceRtspVideoOverTcp";
 
 void configureH26xParser(GstElement* element)
 {
@@ -317,9 +314,7 @@ GstElement* buildRtspSource(const QString& uri, const QUrl& sourceUrl, const Con
     // firewalled networks hang until tcp-timeout instead of negotiating TCP.
     constexpr GstRTSPLowerTrans kDefaultRtspProtocols =
         static_cast<GstRTSPLowerTrans>(GST_RTSP_LOWER_TRANS_UDP | GST_RTSP_LOWER_TRANS_TCP);
-    QSettings settings;
-    settings.beginGroup(QLatin1String(kSynclairSettingsGroup));
-    const GstRTSPLowerTrans rtspProtocols = settings.value(QLatin1String(kForceRtspVideoOverTcpKey), false).toBool()
+    const GstRTSPLowerTrans rtspProtocols = config.forceRtspTcp
         ? GST_RTSP_LOWER_TRANS_TCP
         : kDefaultRtspProtocols;
 
