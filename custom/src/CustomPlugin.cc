@@ -343,6 +343,12 @@ const QVariantList &CustomPlugin::analyzePages()
             QUrl(),
             nullptr,
             false /* requiresVehicle - the vehicle picker needs to list all connected vehicles even if none is active */)));
+        pages.append(QVariant::fromValue(new QmlComponentInfo(
+            tr("Vehicle Roles"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/Custom/VehicleRoles/VehicleRoleSettingsPage.qml")),
+            QUrl(),
+            nullptr,
+            false /* requiresVehicle - roles should be assignable before any vehicle connects */)));
         return pages;
     }();
 

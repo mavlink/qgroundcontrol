@@ -213,6 +213,21 @@ qt_add_resources(${CMAKE_PROJECT_NAME} custom_exclusion_zone_qml
 )
 
 # ============================================================================
+# Custom Vehicle Roles Page (sysid -> role/nickname mapping)
+# ============================================================================
+# Same reasoning as the Exclusion Zone page above: the C++ controller needs to compile into
+# ${CMAKE_PROJECT_NAME} directly (see CUSTOM_SOURCES below) for QML_ELEMENT/QML_SINGLETON to
+# register under the "QGC" module; the QML page is just a resource referenced by URL.
+
+qgc_set_qt_resource_alias(
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/VehicleRoles/VehicleRoleSettingsPage.qml
+)
+qt_add_resources(${CMAKE_PROJECT_NAME} custom_vehicle_roles_qml
+    PREFIX "/qml/Custom/VehicleRoles"
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/VehicleRoles/VehicleRoleSettingsPage.qml
+)
+
+# ============================================================================
 # Custom Plugin Sources
 # ============================================================================
 
@@ -229,6 +244,8 @@ set(CUSTOM_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager/PerimeterScanPlanCreator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Settings/CustomSettings.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Settings/CustomSettings.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/VehicleRoles/VehicleRoleController.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/VehicleRoles/VehicleRoleController.h
     PARENT_SCOPE
 )
 
@@ -247,6 +264,7 @@ set(CUSTOM_INCLUDE_DIRECTORIES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ExclusionZone
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Settings
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/VehicleRoles
     PARENT_SCOPE
 )
 
