@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
 
+import QGroundControl
+
 Item {
     id: root
 
@@ -333,21 +335,18 @@ Item {
         }
     }
 
-    Keys.onPressed: (event) => {
-        if (event.isAutoRepeat) {
-            event.accepted = false
-            return
-        }
+    Connections {
+        target: QGroundControl.application
 
-        const roles = root.trackVisualKeyPress(event.key)
-        event.accepted = roles.length > 0
-    }
-
-    Keys.onReleased: (event) => {
-        if (!event.isAutoRepeat) {
-            root.trackVisualKeyRelease(event.key)
+        function onUnacceptedKeyEvent(key, _modifiers, pressed, autoRepeat) {
+            if (pressed) {
+                if (!autoRepeat) {
+                    root.trackVisualKeyPress(key)
+                }
+            } else if (!autoRepeat) {
+                root.trackVisualKeyRelease(key)
+            }
         }
-        event.accepted = false
     }
 
     MouseArea {
