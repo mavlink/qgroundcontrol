@@ -74,6 +74,7 @@ jobs:
             .github/scripts/deploy_docs.py
             tools/_bootstrap.py
             tools/common
+            tools/qgc_tools
           sparse-checkout-cone-mode: false
           persist-credentials: false
 

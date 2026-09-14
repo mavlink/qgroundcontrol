@@ -63,11 +63,13 @@ class TestValidatePath:
 
     def test_rejects_parent_traversal(self, tmp_path: Path) -> None:
         import pytest
+
         with pytest.raises(ValueError, match="must not contain"):
             validate_path("../etc/passwd", tmp_path)
 
     def test_rejects_absolute_path(self, tmp_path: Path) -> None:
         import pytest
+
         with pytest.raises(ValueError, match="must be relative"):
             validate_path("/etc/passwd", tmp_path)
 
@@ -89,5 +91,33 @@ class TestGetAnalyzer:
 
     def test_unknown_tool_raises(self, tmp_path: Path) -> None:
         import pytest
+
         with pytest.raises(ValueError, match="Unknown tool"):
             get_analyzer("nonexistent", tmp_path, tmp_path / "build")
+
+
+def test_format_execution_failure_is_not_success(tmp_path):
+    import subprocess
+    from unittest.mock import patch
+
+    from analyzers.clang_format import ClangFormatAnalyzer
+
+    failure = subprocess.CompletedProcess([], 1, "", "permission denied")
+    with (
+        patch("analyzers.clang_format.run_captured", return_value=failure),
+        patch("analyzers.clang_format.run_git", return_value=failure),
+    ):
+        result = ClangFormatAnalyzer(tmp_path, tmp_path)._run_fix([tmp_path / "file.cc"])
+    assert not result.passed
+    assert result.execution_error
+
+
+def test_missing_qmllint_is_execution_failure(tmp_path):
+    from unittest.mock import patch
+
+    from analyzers.qmllint import QmlLintAnalyzer
+
+    with patch("analyzers.qmllint.shutil.which", return_value=None):
+        result = QmlLintAnalyzer(tmp_path, tmp_path).run([tmp_path / "file.qml"])
+    assert not result.passed
+    assert result.execution_error

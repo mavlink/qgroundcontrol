@@ -26,7 +26,6 @@ from common.proc import run_captured
 | `format.py` | Human-readable byte and size-delta formatting |
 | `gh_actions.py` | GitHub CLI calls, annotations, outputs, environment, and step summaries |
 | `git.py` | Captured Git commands and default-branch discovery |
-| `github_runs.py` | Workflow-run loading, filtering, and latest-run selection |
 | `io.py` | JSON/TOML I/O, checksums, atomic writes, and safe archive extraction |
 | `logging.py` | Color-aware terminal logging |
 | `markdown.py` | Escaped GitHub-Flavored Markdown tables |

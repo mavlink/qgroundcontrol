@@ -319,7 +319,7 @@ def test_developer_build_entrypoints_use_presets() -> None:
     assert "ctest --preset default" in justfile
     assert "--parallel {{ jobs }} --no-tests=error" in justfile
     assert "host_os := os()" in justfile
-    assert 'python := if host_os == "windows"' in justfile
+    assert 'python := "uv run --frozen --project tools --group scripts python"' in justfile
     assert "msvc2022" not in justfile
     assert 'qt_root_arg := if qt_dir == ""' in justfile
     assert 'app_path := if host_os == "windows"' in justfile
@@ -327,7 +327,7 @@ def test_developer_build_entrypoints_use_presets() -> None:
     assert "preset = select_preset(config)" in configure_tool
     assert "qt-cmake not found; pass --no-qt-cmake" in configure_tool
     assert '"--preset"' in vscode_tasks
-    assert '"python.defaultInterpreterPath": "${workspaceFolder}/.venv"' in vscode_settings
+    assert '"python.defaultInterpreterPath": "${workspaceFolder}/tools/.venv"' in vscode_settings
     for path in ("CMakePresets.json", "cmake", "justfile", ".vscode"):
         assert path in ci_scripts
 

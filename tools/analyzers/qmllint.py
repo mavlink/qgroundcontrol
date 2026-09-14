@@ -23,9 +23,11 @@ class QmlLintAnalyzer(AnalyzerBase):
 
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
         if shutil.which("qmllint") is None:
-            log_warn("qmllint not found - skipping")
+            log_warn("qmllint not found")
             log_info(self.install_hint)
-            return AnalysisResult(tool=self.name, passed=True, output="Skipped")
+            return AnalysisResult(
+                tool=self.name, passed=False, execution_error=True, output="qmllint not found"
+            )
 
         if not files:
             log_info("No QML files to lint")

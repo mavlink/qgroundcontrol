@@ -62,6 +62,7 @@ def _coerce_property_value(value: object) -> str:
 @dataclass
 class ControlDef(BaseControlDef):
     """A single control referencing a setting."""
+
     placeholder: str = ""
     value: str = ""
     properties: dict[str, str] = field(default_factory=dict)
@@ -78,6 +79,7 @@ class ControlDef(BaseControlDef):
 @dataclass
 class GroupDef:
     """A group of controls with an optional heading."""
+
     heading: str = ""
     showWhen: str = ""
     enableWhen: str = ""
@@ -96,6 +98,7 @@ class GroupDef:
 @dataclass
 class PageDef:
     """A complete settings page definition."""
+
     imports: list[str] = field(default_factory=list)
     bindings: dict[str, str] = field(default_factory=dict)
     groups: list[GroupDef] = field(default_factory=list)
@@ -115,18 +118,46 @@ def parse_keywords(raw: list[str] | str) -> list[str]:
     return []
 
 
-_ALLOWED_ROOT_KEYS = frozenset({
-    "fileType", "version", "comment", "imports", "bindings", "groups",
-})
-_ALLOWED_GROUP_KEYS = frozenset({
-    "comment", "heading", "showWhen", "enableWhen", "headingDescription",
-    "component", "sectionName", "keywords", "missing", "controls",
-})
-_ALLOWED_CONTROL_KEYS = frozenset({
-    "comment", "setting", "label", "control", "showWhen", "enableWhen",
-    "placeholder", "value", "component", "properties",
-    "enableCheckbox", "button",
-})
+_ALLOWED_ROOT_KEYS = frozenset(
+    {
+        "fileType",
+        "version",
+        "comment",
+        "imports",
+        "bindings",
+        "groups",
+    }
+)
+_ALLOWED_GROUP_KEYS = frozenset(
+    {
+        "comment",
+        "heading",
+        "showWhen",
+        "enableWhen",
+        "headingDescription",
+        "component",
+        "sectionName",
+        "keywords",
+        "missing",
+        "controls",
+    }
+)
+_ALLOWED_CONTROL_KEYS = frozenset(
+    {
+        "comment",
+        "setting",
+        "label",
+        "control",
+        "showWhen",
+        "enableWhen",
+        "placeholder",
+        "value",
+        "component",
+        "properties",
+        "enableCheckbox",
+        "button",
+    }
+)
 
 
 def load_page_def(json_path: Path) -> PageDef:
@@ -175,7 +206,9 @@ def load_page_def(json_path: Path) -> PageDef:
                 ),
                 value=ctrl_data.get("value", ""),
                 component=ctrl_data.get("component", ""),
-                properties=require_dict(ctrl_data.get("properties", {}), "control 'properties'", json_path),
+                properties=require_dict(
+                    ctrl_data.get("properties", {}), "control 'properties'", json_path
+                ),
                 enableCheckbox=parse_enable_checkbox(ctrl_data.get("enableCheckbox")),
                 button=parse_button(ctrl_data.get("button")),
             )
@@ -198,11 +231,15 @@ def load_page_def(json_path: Path) -> PageDef:
                 try:
                     ctrl.properties[prop_name] = _coerce_property_value(prop_value)
                 except ValueError as exc:
-                    raise ValueError(f"{json_path}: {exc} (control: {clamped_repr(ctrl_data)})") from None
+                    raise ValueError(
+                        f"{json_path}: {exc} (control: {clamped_repr(ctrl_data)})"
+                    ) from None
             # component/info controls have no fact; every other kind derives its fact
             # reference and objectName from setting, so a bad one must fail here with
             # context, not deep inside the emitter with an IndexError
-            if ctrl.control not in ("component", "info") and not _SETTING_RE.fullmatch(ctrl.setting):
+            if ctrl.control not in ("component", "info") and not _SETTING_RE.fullmatch(
+                ctrl.setting
+            ):
                 raise ValueError(
                     f"{json_path}: control setting must be 'settingsGroupAccessor.factName', "
                     f"got: {ctrl.setting!r} (control: {clamped_repr(ctrl_data)})"
@@ -213,9 +250,18 @@ def load_page_def(json_path: Path) -> PageDef:
 
 
 _ALLOWED_PAGES_ROOT_KEYS = frozenset({"fileType", "version", "comment", "pages"})
-_ALLOWED_PAGE_ENTRY_KEYS = frozenset({
-    "comment", "divider", "name", "url", "qml", "icon", "visible", "pageDefinition",
-})
+_ALLOWED_PAGE_ENTRY_KEYS = frozenset(
+    {
+        "comment",
+        "divider",
+        "name",
+        "url",
+        "qml",
+        "icon",
+        "visible",
+        "pageDefinition",
+    }
+)
 _OVERLAY_POSITION_KEYS = frozenset({"insertAfter", "insertBefore"})
 _ALLOWED_OVERLAY_ENTRY_KEYS = _ALLOWED_PAGE_ENTRY_KEYS | _OVERLAY_POSITION_KEYS | {"remove"}
 
@@ -233,14 +279,12 @@ def _load_pages_file(pages_json_path: Path, allowed_entry_keys: frozenset[str]) 
             value = entry[key]
             if not isinstance(value, str) or not value:
                 raise ValueError(
-                    f"{pages_json_path}: {key!r} must be a non-empty string, "
-                    f"got: {value!r}"
+                    f"{pages_json_path}: {key!r} must be a non-empty string, got: {value!r}"
                 )
             # Reject both separators: '\\' is not a separator on POSIX but is on Windows
             if "/" in value or "\\" in value:
                 raise ValueError(
-                    f"{pages_json_path}: {key!r} must be a bare file name, "
-                    f"got: {value!r}"
+                    f"{pages_json_path}: {key!r} must be a bare file name, got: {value!r}"
                 )
     return entries
 
@@ -252,7 +296,9 @@ def _entry_index(entries: list[dict], name: str) -> int:
     return -1
 
 
-def _merge_overlay(entries: list[dict], overlay_entries: list[dict], overlay_path: Path) -> list[dict]:
+def _merge_overlay(
+    entries: list[dict], overlay_entries: list[dict], overlay_path: Path
+) -> list[dict]:
     # Entries already inserted after each anchor, so repeated insertAfter keeps overlay order
     inserted_after: dict[str, list[dict]] = {}
     for raw in overlay_entries:
@@ -288,8 +334,7 @@ def _merge_overlay(entries: list[dict], overlay_entries: list[dict], overlay_pat
         if not entry.get("divider"):
             if not entry.get("name"):
                 raise ValueError(
-                    f"{overlay_path}: page entry must have a 'name' "
-                    f"(entry: {clamped_repr(raw)})"
+                    f"{overlay_path}: page entry must have a 'name' (entry: {clamped_repr(raw)})"
                 )
             existing = _entry_index(entries, entry["name"])
             if existing != -1:
@@ -360,7 +405,9 @@ def load_pages_data(pages_json_path: Path, custom_pages_dir: Path | None = None)
     return entries
 
 
-def resolve_page_def_path(page_def_name: str, pages_dir: Path, custom_pages_dir: Path | None) -> Path:
+def resolve_page_def_path(
+    page_def_name: str, pages_dir: Path, custom_pages_dir: Path | None
+) -> Path:
     """Resolve a pageDefinition file: custom dir shadows the stock pages dir."""
     if custom_pages_dir is not None:
         candidate = custom_pages_dir / page_def_name

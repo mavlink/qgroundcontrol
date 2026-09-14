@@ -7,7 +7,7 @@ import json
 from typing import TYPE_CHECKING
 
 import pytest
-from common.github_runs import (
+from qgc_tools.workflow_runs import (
     WorkflowRunsFileError,
     add_workflow_run_query_args,
     load_workflow_runs,
@@ -92,3 +92,20 @@ def test_add_workflow_run_query_args_supports_shared_variants() -> None:
     assert args.workflows == "Linux,Windows"
     assert args.runs_file == "runs.json"
     assert args.runs_cache == "cache.json"
+
+
+def test_cached_run_rejects_invalid_fields_before_selection(tmp_path: Path) -> None:
+    path = tmp_path / "runs.json"
+    path.write_text(json.dumps([{"name": "Linux", "status": ["completed"]}]), encoding="utf-8")
+    with pytest.raises(WorkflowRunsFileError, match=r"status.*string"):
+        load_workflow_runs(path)
+
+
+def test_run_order_uses_instants_across_timezones() -> None:
+    from qgc_tools.workflow_runs import group_runs_by_name
+
+    runs = [
+        {"name": "Linux", "id": 1, "created_at": "2026-01-01T02:00:00+03:00"},
+        {"name": "Linux", "id": 2, "created_at": "2026-01-01T00:00:00Z"},
+    ]
+    assert [run["id"] for run in group_runs_by_name(runs, ["Linux"])["Linux"]] == [2, 1]

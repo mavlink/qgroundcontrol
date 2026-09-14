@@ -16,20 +16,21 @@ fi
 
 sudo apt-get -o Acquire::Retries=3 update -qq
 sudo apt-get -o Acquire::Retries=3 install -y -qq --no-install-recommends \
-    ca-certificates git python3 python3-venv
+    ca-certificates curl git python3 python3-venv
 
 git clone --filter=blob:none --no-checkout "${QGC_SOURCE_REPOSITORY}" "${source_dir}"
 git -C "${source_dir}" fetch --depth 1 origin "${QGC_SOURCE_REF}"
 git -C "${source_dir}" checkout --detach FETCH_HEAD
 
-python3 "${source_dir}/tools/setup/install_dependencies" --platform debian
-
-python3 -m venv "${source_dir}/.venv"
+sh "${source_dir}/tools/setup/install_uv.sh"
+export PATH="${HOME}/.local/bin:${PATH}"
+python3 "${source_dir}/tools/setup/install_python.py" build,qt
+"${source_dir}/tools/.venv/bin/python" "${source_dir}/tools/setup/install_dependencies" --platform debian
 sudo mkdir -p "${qt_prefix}/Qt"
 sudo chown -R "$(id -u):$(id -g)" "${qt_prefix}"
 
-PATH="${source_dir}/.venv/bin:${PATH}" \
-    "${source_dir}/.venv/bin/python" "${source_dir}/tools/setup/install_qt.py" install \
+PATH="${source_dir}/tools/.venv/bin:${PATH}" \
+    "${source_dir}/tools/.venv/bin/python" "${source_dir}/tools/setup/install_qt.py" install \
     --version "${QGC_QT_VERSION}" \
     --host linux \
     --target desktop \

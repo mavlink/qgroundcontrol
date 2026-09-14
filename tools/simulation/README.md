@@ -6,7 +6,7 @@ Tools for testing QGroundControl without physical hardware.
 
 | Tool | Use Case | Setup |
 | --- | --- | --- |
-| `mock_vehicle.py` | UI testing, quick checks | `pip install pymavlink` |
+| `mock_vehicle.py` | UI testing, quick checks | `python tools/setup/install_python.py dev` |
 | `run-arducopter-sitl.sh` | Full simulation, mission testing | Docker required |
 
 ## Mock Vehicle (Lightweight)
@@ -15,7 +15,7 @@ A minimal MAVLink simulator for UI testing. Does not simulate flight dynamics.
 
 ```bash
 # Install
-pip install pymavlink
+python tools/setup/install_python.py dev
 
 # Run (QGC connects to UDP 14550)
 ./mock_vehicle.py

@@ -13,4 +13,3 @@ def test_build_doxyfile_text_overrides_output_and_pdf(tmp_path) -> None:
     assert 'OUTPUT_DIRECTORY       = "' in rendered
     assert (tmp_path / "api").as_posix() in rendered
     assert "GENERATE_LATEX         = YES" in rendered
-

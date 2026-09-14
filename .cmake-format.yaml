@@ -1,6 +1,6 @@
 # QGroundControl CMake Format Configuration
 # Used by cmake-format for consistent CMake file formatting
-# Install: pip install cmakelang
+# Install: uv tool install cmakelang
 # Usage: cmake-format -i CMakeLists.txt
 
 # -----------------------------------------------------------------------------

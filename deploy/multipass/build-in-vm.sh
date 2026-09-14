@@ -17,17 +17,11 @@ QT_OUT="${QT_OUT:-${HOME}/Qt}"
 
 cd "${REPO}"
 
-python3 tools/setup/install_dependencies --platform debian
-
-# pipx installs cmake/ninja/gcovr into ~/.local/bin; put it on PATH for this
-# non-interactive shell (pipx ensurepath only edits interactive rc files).
 export PATH="${HOME}/.local/bin:${PATH}"
-
-# aqtinstall in an isolated venv to dodge PEP 668 (externally-managed) on 24.04+.
-# Put the venv on PATH so install_qt.py's `aqt` lookup (shutil.which) resolves.
-python3 -m venv "${HOME}/qgc-venv"
-export PATH="${HOME}/qgc-venv/bin:${PATH}"
-pip install --quiet --upgrade pip aqtinstall
+sh tools/setup/install_uv.sh
+python3 tools/setup/install_python.py build,qt
+export PATH="${REPO}/tools/.venv/bin:${PATH}"
+python tools/setup/install_dependencies --platform debian
 
 QT_VERSION="$(python tools/setup/read_config.py --get qt.version)"
 QT_MODULES="$(python tools/setup/read_config.py --get qt.modules)"

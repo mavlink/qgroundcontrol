@@ -12,8 +12,8 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.gh_actions import list_workflow_runs_for_sha, parse_csv_list, write_github_output
-from common.github_runs import evaluate_runs, select_latest_runs_by_name
 from common.io import read_json, write_json
+from qgc_tools.workflow_runs import evaluate_runs, select_latest_runs_by_name
 
 
 def evaluate_readiness(

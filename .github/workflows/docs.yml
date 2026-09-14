@@ -78,6 +78,7 @@ jobs:
             .github/actions
             .github/scripts
             tools/common
+            tools/qgc_tools
           persist-credentials: false
 
       - name: Deploy docs

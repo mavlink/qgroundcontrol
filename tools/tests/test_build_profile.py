@@ -30,7 +30,13 @@ def test_parse_ninja_log_reads_edges_and_skips_header(tmp_path: Path) -> None:
     edges = parse_ninja_log(log)
 
     assert edges == [
-        BuildEdge(output="CMakeFiles/app.dir/src/main.cc.o", start_ms=10, end_ms=60, mtime=0, command_hash="abc"),
+        BuildEdge(
+            output="CMakeFiles/app.dir/src/main.cc.o",
+            start_ms=10,
+            end_ms=60,
+            mtime=0,
+            command_hash="abc",
+        ),
         BuildEdge(output="qml/Foo.qmlc", start_ms=80, end_ms=130, mtime=0, command_hash="def"),
     ]
     assert edges[0].duration_ms == 50
@@ -74,8 +80,18 @@ def test_parse_time_trace_reads_compile_duration_and_expensive_events(tmp_path: 
         json.dumps(
             {
                 "traceEvents": [
-                    {"ph": "X", "name": "ExecuteCompiler", "dur": 250000, "args": {"detail": "main.cc"}},
-                    {"ph": "X", "name": "Source", "dur": 90000, "args": {"detail": "QtCore/QObject"}},
+                    {
+                        "ph": "X",
+                        "name": "ExecuteCompiler",
+                        "dur": 250000,
+                        "args": {"detail": "main.cc"},
+                    },
+                    {
+                        "ph": "X",
+                        "name": "Source",
+                        "dur": 90000,
+                        "args": {"detail": "QtCore/QObject"},
+                    },
                     {"ph": "X", "name": "ParseClass", "dur": 50000, "args": {"detail": "Vehicle"}},
                 ]
             }
@@ -113,7 +129,9 @@ def test_build_report_includes_all_sections() -> None:
         ],
         limit=5,
     )
-    trace = TimeTrace(path=Path("build/main.json"), total_ms=250.0, top_events=[("Source: QtCore/QObject", 90.0)])
+    trace = TimeTrace(
+        path=Path("build/main.json"), total_ms=250.0, top_events=[("Source: QtCore/QObject", 90.0)]
+    )
 
     report = build_report(summary, [trace], limit=5)
 

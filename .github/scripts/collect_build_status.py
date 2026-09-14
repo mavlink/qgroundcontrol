@@ -12,14 +12,14 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.gh_actions import list_workflow_runs_for_sha, parse_csv_list, write_github_output
-from common.github_runs import (
+from common.io import write_json
+from common.markdown import md_table
+from qgc_tools.workflow_runs import (
     add_workflow_run_query_args,
     evaluate_runs,
     resolve_workflow_runs,
     select_latest_runs_by_name,
 )
-from common.io import write_json
-from common.markdown import md_table
 
 
 def platform_status(

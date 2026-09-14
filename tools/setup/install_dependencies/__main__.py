@@ -9,14 +9,35 @@ directory onto sys.path so absolute imports resolve in both contexts:
 
 from __future__ import annotations
 
+import subprocess
 import sys
 from pathlib import Path
 
-_pkg_parent = Path(__file__).resolve().parents[1]
-if str(_pkg_parent) not in sys.path:
-    sys.path.insert(0, str(_pkg_parent))
+_tools = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(_tools))
 
-from install_dependencies._cli import main  # noqa: E402
+from qgc_tools.python_env import executable, sync_groups  # noqa: E402
 
 if __name__ == "__main__":
-    sys.exit(main())
+    if not any(
+        arg in sys.argv[1:]
+        for arg in (
+            "--help",
+            "-h",
+            "--list",
+            "--dry-run",
+            "--print-packages",
+            "--print-available-packages",
+            "--validate-extra-packages",
+        )
+    ):
+        environment = sync_groups("scripts")
+        if Path(sys.prefix).resolve() != environment.resolve():
+            raise SystemExit(
+                subprocess.run(
+                    [str(executable("python", environment)), __file__, *sys.argv[1:]]
+                ).returncode
+            )
+    from setup.install_dependencies._cli import main
+
+    raise SystemExit(main())

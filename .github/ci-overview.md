@@ -255,7 +255,7 @@ Gradle, Flatpak, iOS target Qt SDK, and GitHub-hosted uv/Python caching remain d
 - **Windows Qt architecture**: aqt architecture names are explicit package identifiers; CI tests
   require every workflow matrix to use the same MSVC generation when that identifier changes.
 - **Dependencies**: CI Python scripts use `httpx` for GitHub API access and `jinja2` for
-  templating. Deps managed in `tools/pyproject.toml` under `[project.optional-dependencies] scripts`.
+  templating. Deps managed in `tools/pyproject.toml` under `[dependency-groups] scripts`.
 - **Shared helpers**: `gh_actions.py` provides GitHub API pagination (httpx) with `gh` CLI
   fallback. Import as `from common.gh_actions import ...`.
 - **Bootstrap scripts** (`install_dependencies_helper.py`, `ccache_helper.py`): use stdlib only —
@@ -271,13 +271,13 @@ changes under `.github/` and `tools/`. The pytest jobs cover both `tools/tests` 
 Run the CI script tests locally:
 
 ```bash
-uv run --project tools --extra scripts --extra test pytest -q .github/scripts/tests
+uv run --project tools --group scripts --group test pytest -q .github/scripts/tests
 ```
 
 Run the full set locally with the same locked dependency groups CI installs (also covers `tools/`):
 
 ```bash
-uv run --project tools --extra scripts --extra test pytest -q tools/tests .github/scripts/tests
+uv run --project tools --group scripts --group test pytest -q tools/tests .github/scripts/tests
 ```
 
 ## Validation tiers and build identity
@@ -310,3 +310,15 @@ uv run --project tools --extra scripts --extra test pytest -q tools/tests .githu
   artifact downloads reject changed run attempts or missing platform artifacts.
 - `build-action` remains available. Platform workflows continue to compose the smaller
   setup/configure/build/test/package actions where they need distinct phases.
+
+### Python environment contract
+
+`setup-python` synchronizes frozen dependency groups from `tools/uv.lock` into
+`tools/.venv` and exposes that environment's commands on PATH. Narrower setup calls
+preserve installed groups. CMake uses the same interpreter and MAVLink generation
+uses its preinstalled dependencies, without installing packages during a build.
+
+CI Scripts runs the full Python suite on Python 3.10 and 3.12, with environment,
+subprocess, network, Qt setup, and cache tests on Windows. A separate job checks
+Ruff formatting, Pyright, and the `common` / `qgc_tools` / entrypoint import boundaries.
+Local equivalents are `just test-python` and `just lint` after installing `dev`.

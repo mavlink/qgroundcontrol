@@ -71,7 +71,7 @@ def test_evaluate_readiness_filters_by_event() -> None:
 
 
 def test_terminal_failures_are_complete_but_not_successful():
-    from common.github_runs import evaluate_runs
+    from qgc_tools.workflow_runs import evaluate_runs
 
     for conclusion in (
         "timed_out",

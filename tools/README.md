@@ -28,13 +28,19 @@ Common commands are wrapped in a `justfile` (requires `just` >=1.30 for `home_di
 `apt install just` on Ubuntu ships 1.21, which is too old):
 
 ```bash
-# One-time: install `just` (pulls rust-just into .venv via uv)
+# Install uv first (Linux/macOS); Windows: https://docs.astral.sh/uv/getting-started/installation/
+sh tools/setup/install_uv.sh
+export PATH="$HOME/.local/bin:$PATH"
+
+# Install the locked developer profile and activate its commands
 python3 tools/setup/install_python.py dev
+. tools/.venv/bin/activate
 
 # Windows PowerShell/cmd
 python tools/setup/install_python.py dev
+# PowerShell: . tools/.venv/Scripts/Activate.ps1
 
-# or: brew install just / cargo install just / pipx install rust-just
+# or: brew install just / cargo install just
 ```
 
 Everyday loop:
@@ -43,7 +49,7 @@ Everyday loop:
 just             # List all recipes
 just setup       # First-time: deps + submodules + configure + build
 just build       # Incremental build
-just check       # lint + test — run before declaring done
+just check       # lint + Python tooling tests + application tests — run before declaring done
 ```
 
 Full recipe list, grouped by purpose: [Just Command Reference](#just-command-reference). `just`
@@ -166,7 +172,7 @@ supplying an explicit target toolchain, as Android CI does.
 
 ```bash
 # Run tools/ Python tests
-cd tools && uv run --extra scripts --extra test pytest tests/ -q
+cd tools && uv run --group scripts --group test pytest tests/ -q
 ```
 
 ## Development Scripts
@@ -250,7 +256,7 @@ python3 ./tools/coverage.py --open       # Generate and open in browser
 python3 ./tools/coverage.py --clean      # Clean coverage data
 ```
 
-Requires: `gcovr` (`pip install gcovr`, or `python3 tools/setup/install_python.py coverage`)
+Requires: `gcovr` (`python3 tools/setup/install_python.py coverage`)
 
 **Direct CMake usage:**
 
@@ -316,7 +322,7 @@ Scripts in `setup/` help configure development environments. They read configura
 | `install_dependencies --platform arch`    | Linux (Arch)          | Install build dependencies via pacman                                         |
 | `install_dependencies --platform macos`   | macOS                 | Install dependencies via Homebrew + GStreamer                                 |
 | `install_dependencies --platform windows` | Windows               | Install GStreamer (Vulkan SDK optional)                                       |
-| `install_python.py`                       | All                   | Install Python tools via uv or pip (see groups below)                         |
+| `install_python.py`                       | All                   | Install locked Python tools via uv (see groups below)                         |
 | `install_qt.py`                           | All                   | Install Qt SDK via aqtinstall with QGC arch-directory resolution (used by CI) |
 | `setup_vscode.py`                         | All                   | Install missing VS Code workspace files from tracked templates                |
 | `build-gstreamer.py`                      | All                   | Build GStreamer from source (optional)                                        |
@@ -325,7 +331,25 @@ Scripts in `setup/` help configure development environments. They read configura
 | `read_config.py`                          | All                   | Read `.github/build-config.json` (Python, cross-platform)                     |
 
 `install_python.py` installs dependency groups defined in `tools/pyproject.toml`:
-`scripts`, `precommit`, `test`, `ci` (default), `qt`, `coverage`, `dev`, `lint`, `all`.
+`scripts`, `precommit`, `test`, `ci`, `qt`, `coverage`, `build`, `dev` (default), `lint`, `all`.
+Groups compose smaller profiles: `dev` includes the build, Qt, lint, test, and pre-commit tools.
+
+All Python dependencies are resolved in `tools/uv.lock`. Setup requires uv and uses
+`uv sync --frozen --inexact` into `tools/.venv`. Repeating setup with a smaller group
+preserves installed tools. Use `--replace` only to deliberately replace the profile;
+`--check` validates installed versions and Python/platform markers without installing.
+CMake, VS Code, and CI use the same environment. Activate it for direct script commands,
+or use `uv run --frozen --project tools --group dev <command>`. `just test-python` runs
+the full tooling suite.
+
+For an image-owned environment, set `QGC_TOOLS_PROJECT` to the directory containing
+`pyproject.toml` and `uv.lock`, and `QGC_PYTHON_ENV` to the environment directory.
+Docker uses `/opt/qgc-tools` and `/opt/qgc-venv`. Qt source overrides run through an
+isolated `uv tool run`; normal Qt installs use the locked `qt` group.
+
+`common/` contains low-level utilities; `qgc_tools/` owns Python environment setup,
+workflow-run records, and Docker variant policy. CLI entrypoints stay in `setup/`,
+`.github/scripts/`, and `deploy/`. Import-linter enforces these dependency boundaries.
 
 ### Usage Examples
 
@@ -414,7 +438,7 @@ Vehicle simulators for testing QGC without hardware.
 ### Mock Vehicle (Lightweight)
 
 ```bash
-pip install pymavlink
+python tools/setup/install_python.py dev
 ./tools/simulation/mock_vehicle.py              # QGC connects to UDP 14550
 ./tools/simulation/mock_vehicle.py --tcp --port 5760  # TCP mode
 ```

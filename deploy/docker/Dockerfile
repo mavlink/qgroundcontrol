@@ -15,6 +15,7 @@ FROM ${BASE_REF} AS base
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 ENV PATH="/opt/qgc-venv/bin:${PATH}"
+ENV QGC_PYTHON_ENV=/opt/qgc-venv QGC_TOOLS_PROJECT=/opt/qgc-tools
 
 # Shared shell helpers (retry, setup-base*, setup-venv, build-type validation).
 COPY deploy/docker/lib/ /usr/local/lib/qgc/
@@ -39,13 +40,10 @@ RUN if [ -n "${CC_PIN}" ]; then \
             > /etc/profile.d/qgc-toolchain.sh; \
     fi
 
-# Build-time Python deps for CMake generators + aqt. PIP_CMAKE pulls a modern
-# cmake into the venv when the distro's apt cmake is too old (22.04: 3.22 < 3.25).
-ARG PIP_CMAKE=""
+# Locked Python environment for generators, Qt installation, and build tools.
 COPY --from=ghcr.io/astral-sh/uv:0.11.12 /uv /usr/local/bin/uv
-COPY tools/pyproject.toml tools/uv.lock /tmp/qgc-tools/
-RUN PIP_CMAKE="${PIP_CMAKE}" sh /usr/local/lib/qgc/setup-venv.sh && \
-    rm -rf /tmp/qgc-tools /usr/local/bin/uv
+COPY tools/pyproject.toml tools/uv.lock /opt/qgc-tools/
+RUN sh /usr/local/lib/qgc/setup-venv.sh
 
 # Version config only (read_config + _bootstrap import need a dir named "tools").
 # Copied before the slow Qt layer so editing package lists doesn't bust Qt cache.
@@ -53,6 +51,7 @@ COPY .github/build-config.json /tmp/tools/setup/
 COPY tools/setup/read_config.py /tmp/tools/setup/
 COPY tools/_bootstrap.py /tmp/tools/
 COPY tools/common/ /tmp/tools/common/
+COPY tools/qgc_tools/ /tmp/tools/qgc_tools/
 
 # --system so it applies to the mapped runtime UID (containers run --user).
 RUN git config --system --add safe.directory /project/source && \

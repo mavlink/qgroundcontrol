@@ -71,8 +71,13 @@ def find_toolchain(ndk: Path) -> Path:
 def run(cmd: list[str], cwd: Path, env: dict[str, str], stdin: int | None = None) -> None:
     log_info(f"  $ {' '.join(cmd)}")
     proc = subprocess.run(
-        cmd, cwd=cwd, env=env, stdin=stdin,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+        cmd,
+        cwd=cwd,
+        env=env,
+        stdin=stdin,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
     )
     if proc.returncode != 0:
         sys.stderr.write(proc.stdout or "")

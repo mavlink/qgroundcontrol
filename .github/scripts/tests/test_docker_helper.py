@@ -37,18 +37,29 @@ class TestResolvePushTarget:
     UPSTREAM = "mavlink/qgroundcontrol"
 
     def test_upstream_release_tag_pushes_dockerhub(self) -> None:
-        assert resolve_push_target("push", self.UPSTREAM, "refs/tags/v5.0.0") == "dronecode/qgroundcontrol"
+        assert (
+            resolve_push_target("push", self.UPSTREAM, "refs/tags/v5.0.0")
+            == "dronecode/qgroundcontrol"
+        )
 
     def test_upstream_master_pushes_ghcr_not_dockerhub(self) -> None:
-        assert resolve_push_target("push", self.UPSTREAM, "refs/heads/master") == "ghcr.io/mavlink/qgroundcontrol"
+        assert (
+            resolve_push_target("push", self.UPSTREAM, "refs/heads/master")
+            == "ghcr.io/mavlink/qgroundcontrol"
+        )
 
     def test_upstream_stable_pushes_ghcr_not_dockerhub(self) -> None:
-        assert resolve_push_target("push", self.UPSTREAM, "refs/heads/Stable_V4.4") == "ghcr.io/mavlink/qgroundcontrol"
+        assert (
+            resolve_push_target("push", self.UPSTREAM, "refs/heads/Stable_V4.4")
+            == "ghcr.io/mavlink/qgroundcontrol"
+        )
 
     def test_upstream_feature_branch_no_push(self) -> None:
         assert resolve_push_target("push", self.UPSTREAM, "refs/heads/feature-x") == ""
 
-    @pytest.mark.parametrize("ref", ["refs/tags/v5.0.0", "refs/heads/master", "refs/heads/Stable_V4.4"])
+    @pytest.mark.parametrize(
+        "ref", ["refs/tags/v5.0.0", "refs/heads/master", "refs/heads/Stable_V4.4"]
+    )
     def test_fork_never_pushes(self, ref: str) -> None:
         assert resolve_push_target("push", "someuser/qgroundcontrol", ref) == ""
 

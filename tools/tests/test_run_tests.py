@@ -62,8 +62,10 @@ class TestQtTestRunner:
 
     def test_needs_virtual_display_linux_no_display(self) -> None:
         runner = QtTestRunner(Path("/tmp/build"))
-        with patch.object(runner, "detect_platform", return_value="linux"), \
-             patch.dict("os.environ", {}, clear=True):
+        with (
+            patch.object(runner, "detect_platform", return_value="linux"),
+            patch.dict("os.environ", {}, clear=True),
+        ):
             assert runner.needs_virtual_display() is True
 
     def test_needs_virtual_display_macos(self) -> None:

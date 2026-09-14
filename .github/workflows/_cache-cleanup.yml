@@ -57,6 +57,7 @@ jobs:
             tools/_bootstrap.py
             .github/scripts/gh_cache_cleanup.py
             tools/common
+            tools/qgc_tools
           sparse-checkout-cone-mode: false
           fetch-depth: 1
           persist-credentials: false

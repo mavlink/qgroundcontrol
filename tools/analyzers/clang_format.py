@@ -40,10 +40,14 @@ class ClangFormatAnalyzer(AnalyzerBase):
 
     def _run_fix(self, files: list[Path]) -> AnalysisResult:
         formatted = 0
+        failed: list[str] = []
         for file in files:
             result = run_captured(["clang-format", "-i", str(file)])
             if result.returncode == 0:
                 formatted += 1
+            else:
+                failed.append(self.relative_path(file))
+                log_error(result.stderr or f"clang-format failed: {file}")
 
         log_ok(f"Formatted {formatted} files")
 
@@ -55,7 +59,13 @@ class ClangFormatAnalyzer(AnalyzerBase):
             modified = run_git("diff", "--name-only", cwd=self.repo_root)
             print(modified.stdout)
 
-        return AnalysisResult(tool=self.name, passed=True, files_checked=len(files))
+        return AnalysisResult(
+            tool=self.name,
+            passed=not failed,
+            execution_error=bool(failed),
+            files_checked=len(files),
+            files_with_issues=failed,
+        )
 
     def _run_check(self, files: list[Path]) -> AnalysisResult:
         needs_format: list[str] = []

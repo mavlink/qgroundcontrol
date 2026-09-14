@@ -139,13 +139,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Python syntax smoke test
-        run: python3 -m compileall .github/scripts tools/*.py tools/setup tools/common tools/generators tools/analyzers tools/simulation tools/translations
+        run: python3 -m compileall .github/scripts tools/*.py tools/setup tools/common tools/qgc_tools tools/generators tools/analyzers tools/simulation tools/translations
 
       - name: Run CI script tests
         run: pytest -q tools/tests .github/scripts/tests
 
-  test-moccache-windows:
-    name: Test moccache (Windows)
+  test-tools-windows:
+    name: Test Python Tools (Windows)
     runs-on: windows-latest
     timeout-minutes: 10
     steps:
@@ -160,13 +160,7 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             .github/actions/setup-python
-            tools/_bootstrap.py
-            tools/common
-            tools/moccache.py
-            tools/pyproject.toml
-            tools/setup
-            tools/tests/test_moccache.py
-            tools/uv.lock
+            tools
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
@@ -176,5 +170,36 @@ jobs:
           groups: test
           python-version: '3.12'
 
-      - name: Run moccache tests
-        run: pytest -q tools/tests/test_moccache.py
+      - name: Run environment, process, download, and cache tests
+        run: >-
+          pytest -q tools/tests/test_moccache.py tools/tests/test_install_python.py
+          tools/tests/test_deps.py tools/tests/test_tool_version.py tools/tests/test_net.py
+          tools/tests/test_proc.py tools/tests/test_install_qt.py
+
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        with:
+          groups: dev
+          python-version: '3.10'
+      - name: Ruff
+        run: |
+          ruff check tools .github/scripts deploy/docker test/ADSB/ADSB_Simulator.py
+          ruff format --check tools .github/scripts deploy/docker test/ADSB/ADSB_Simulator.py
+      - name: Pyright
+        run: pyright
+      - name: Import boundaries
+        working-directory: tools
+        run: lint-imports --config pyproject.toml

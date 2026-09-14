@@ -67,7 +67,9 @@ def parse_ninja_log(path: Path) -> list[BuildEdge]:
 
         parts = line.split("\t")
         if len(parts) < 5:
-            raise ValueError(f"Malformed Ninja log line {line_number}: expected at least 5 tab-separated fields")
+            raise ValueError(
+                f"Malformed Ninja log line {line_number}: expected at least 5 tab-separated fields"
+            )
 
         start, end, mtime, output, command_hash = parts[:5]
         try:
@@ -81,7 +83,9 @@ def parse_ninja_log(path: Path) -> list[BuildEdge]:
                 )
             )
         except ValueError as exc:
-            raise ValueError(f"Malformed Ninja log line {line_number}: invalid numeric field") from exc
+            raise ValueError(
+                f"Malformed Ninja log line {line_number}: invalid numeric field"
+            ) from exc
 
     return edges
 
@@ -100,7 +104,11 @@ def classify_output(output: str) -> str:
         return "autogen/moc"
     if "/.qt/rcc/" in lower or "/.rcc/" in lower or name.startswith("qrc_"):
         return "rcc"
-    if name.endswith((".a", ".lib", ".so", ".dylib", ".dll", ".exe")) or "/release/" in lower or "/debug/" in lower:
+    if (
+        name.endswith((".a", ".lib", ".so", ".dylib", ".dll", ".exe"))
+        or "/release/" in lower
+        or "/debug/" in lower
+    ):
         return "link/archive"
     if name.endswith((".o", ".obj")):
         return "compile"
@@ -267,7 +275,10 @@ def build_json(summary: NinjaSummary, traces: list[TimeTrace], *, limit: int) ->
             {
                 "path": str(trace.path),
                 "total_ms": trace.total_ms,
-                "top_events": [{"label": label, "duration_ms": duration_ms} for label, duration_ms in trace.top_events],
+                "top_events": [
+                    {"label": label, "duration_ms": duration_ms}
+                    for label, duration_ms in trace.top_events
+                ],
             }
             for trace in traces[:limit]
         ],
@@ -312,7 +323,9 @@ Enable Clang traces with CMake option QGC_TIME_TRACE=ON, then rebuild.
         type=Path,
         help="Directory to scan for Clang -ftime-trace JSON files (default: build dir)",
     )
-    parser.add_argument("--limit", type=int, default=15, help="Rows to show per section (default: 15)")
+    parser.add_argument(
+        "--limit", type=int, default=15, help="Rows to show per section (default: 15)"
+    )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     return parser.parse_args(argv)
 

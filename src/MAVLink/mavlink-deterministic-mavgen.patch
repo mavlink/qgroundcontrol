@@ -1,34 +1,44 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -30,14 +30,22 @@ set(EXAMPLE_HEADER ${CMAKE_CURRENT_BINARY_DIR}/include/mavlink/${MAVLINK_DIALECT}/mavlink.h)
+@@ -3,17 +3,6 @@
+ project(mavlink)
+
+ find_package(Python COMPONENTS Interpreter REQUIRED)
+-
+-# We automatically install the pip dependencies locally below.
+-# Therefore, we check whether pip is available here.
+-execute_process(
+-    COMMAND ${Python_EXECUTABLE} -m pip -V
+-    RESULT_VARIABLE EXIT_CODE
+-    OUTPUT_QUIET
+-)
+-if (NOT ${EXIT_CODE} EQUAL 0)
+-    message(FATAL_ERROR "Python pip not found, pip is required")
+-endif()
+
+ if (NOT MAVLINK_DIALECT)
+     set(MAVLINK_DIALECT common)
+@@ -28,9 +17,7 @@
+ set(EXAMPLE_HEADER ${CMAKE_CURRENT_BINARY_DIR}/include/mavlink/${MAVLINK_DIALECT}/mavlink.h)
+
  add_custom_command(OUTPUT ${EXAMPLE_HEADER}
 -    COMMAND ${Python_EXECUTABLE}
-+    COMMAND "${Python_EXECUTABLE}"
 -        -m pip install -r pymavlink/requirements.txt --upgrade -t ${CMAKE_CURRENT_BINARY_DIR}/pip-dependencies/
 -        COMMAND ${CMAKE_COMMAND} -E env "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}/pip-dependencies/" ${Python_EXECUTABLE}
-+        "${CMAKE_SOURCE_DIR}/tools/setup/run_with_retry.py"
-+        --
-+        "${Python_EXECUTABLE}"
-+        -m pip install -r pymavlink/requirements.txt --upgrade
-+        -t "${CMAKE_CURRENT_BINARY_DIR}/pip-dependencies/"
-+    COMMAND "${CMAKE_COMMAND}" -E env "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}/pip-dependencies/" "PYTHONHASHSEED=0" "${Python_EXECUTABLE}"
++    COMMAND "${CMAKE_COMMAND}" -E env "PYTHONHASHSEED=0" "${Python_EXECUTABLE}"
          -m pymavlink.tools.mavgen
          --lang=C
          --wire-protocol=${MAVLINK_VERSION}
-         --output ${CMAKE_CURRENT_BINARY_DIR}/include/mavlink/
+@@ -38,7 +25,8 @@
          message_definitions/v1.0/${MAVLINK_DIALECT}.xml
          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
--    DEPENDS message_definitions/v1.0/${MAVLINK_DIALECT}.xml
+     DEPENDS message_definitions/v1.0/${MAVLINK_DIALECT}.xml
 -    COMMENT "Generating C headers")
-+    DEPENDS
-+        message_definitions/v1.0/${MAVLINK_DIALECT}.xml
-+        "${CMAKE_SOURCE_DIR}/tools/setup/run_with_retry.py"
-+        "${CMAKE_SOURCE_DIR}/tools/common/proc.py"
 +    COMMENT "Generating C headers"
 +    VERBATIM)
--
-+
+
  # Unfortunately, the dependencies don't work for INTERFACE libraries.
+ # The only way I could make it work is to add ALL which means it
 --- a/pymavlink/generator/mavgen_c.py
 +++ b/pymavlink/generator/mavgen_c.py
 @@ -24,6 +24,5 @@ def generate_version_h(directory, xml):

@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import re
 import shutil
+import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from .io import read_toml
 from .proc import run_captured
 
 if TYPE_CHECKING:
@@ -43,17 +45,17 @@ def uv_lock_version(package: str, *, lock_path: Path | None = None) -> str | Non
     scripts out of the repo), leaving the caller to apply its own fallback.
     """
     path = lock_path or _UV_LOCK
-    try:
-        text = path.read_text(encoding="utf-8")
-    except OSError:
+    if not path.exists():
         return None
-    match = re.search(
-        r'\[\[package\]\]\s*\nname\s*=\s*"'
-        + re.escape(package)
-        + r'"\s*\nversion\s*=\s*"([\d.]+)"',
-        text,
-    )
-    return match.group(1) if match else None
+    packages = read_toml(path).get("package", [])
+    versions = {
+        str(entry["version"])
+        for entry in packages
+        if entry.get("name") == package and "version" in entry
+    }
+    if len(versions) > 1:
+        raise ValueError(f"Multiple locked versions of {package}: {', '.join(sorted(versions))}")
+    return next(iter(versions), None)
 
 
 def probe_version(
@@ -74,7 +76,7 @@ def probe_version(
 
     try:
         result = run_captured([tool, *args], timeout=timeout)
-    except (TimeoutError, OSError):
+    except (subprocess.TimeoutExpired, OSError):
         return None
 
     if result.returncode != 0:

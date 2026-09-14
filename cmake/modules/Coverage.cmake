@@ -8,7 +8,7 @@
 #   coverage-clean   - Remove coverage data files
 #
 # Prerequisites:
-#   - gcovr (pip install gcovr)
+#   - gcovr (python tools/setup/install_python.py coverage)
 #   - For GCC: gcov (usually installed with gcc)
 #   - For Clang: llvm-cov (usually installed with clang)
 
@@ -160,7 +160,7 @@ if(GCOVR_EXECUTABLE)
 
 else()
     message(STATUS "gcovr not found - coverage report targets not available")
-    message(STATUS "  Install with: pip install gcovr")
+    message(STATUS "  Install with: python tools/setup/install_python.py coverage")
 endif()
 
 add_custom_target(coverage-clean

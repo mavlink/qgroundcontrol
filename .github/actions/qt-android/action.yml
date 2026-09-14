@@ -55,7 +55,7 @@ inputs:
     required: false
     default: ''
   aqt-source:
-    description: Optional pip spec used to install aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>)
+    description: Optional isolated uv source for aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>)
     required: false
     default: ''
 runs:

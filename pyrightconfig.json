@@ -1,5 +1,6 @@
 {
-  "$schema": "https://json.schemastore.org/pyrightconfig.json",
+  "venvPath": "tools",
+  "venv": ".venv",
   "exclude": [
     "build",
     "**/__pycache__",

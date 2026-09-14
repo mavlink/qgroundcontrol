@@ -41,7 +41,9 @@ def _wrap_with_description(control_qml: str, fact_ref: str, vis_expr: str, inden
     )
 
 
-def _qml_control(ctrl: ControlDef, settings_dirs: Path | tuple[Path, ...], json_context: str = "") -> str:
+def _qml_control(
+    ctrl: ControlDef, settings_dirs: Path | tuple[Path, ...], json_context: str = ""
+) -> str:
     """Generate QML for a single control."""
     indent = "        "
     fact_ref = f"QGroundControl.settingsManager.{ctrl.setting}"
@@ -83,7 +85,8 @@ def _qml_control(ctrl: ControlDef, settings_dirs: Path | tuple[Path, ...], json_
         )
     elif ctrl.control == "slider":
         control_qml = render_slider(
-            fact_ref, indent,
+            fact_ref,
+            indent,
             label=ctrl.label,
             enable_checkbox=ctrl.enableCheckbox,
             button=ctrl.button,
@@ -117,7 +120,8 @@ def _qml_control(ctrl: ControlDef, settings_dirs: Path | tuple[Path, ...], json_
 
     if use_checkbox:
         control_qml = render_checkbox(
-            fact_ref, indent,
+            fact_ref,
+            indent,
             label=ctrl.label,
             enable_when=ctrl.enableWhen,
             label_property="text",
@@ -129,7 +133,8 @@ def _qml_control(ctrl: ControlDef, settings_dirs: Path | tuple[Path, ...], json_
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     if use_combobox:
         control_qml = render_combobox(
-            fact_ref, indent,
+            fact_ref,
+            indent,
             label=ctrl.label,
             enable_when=ctrl.enableWhen,
             label_source="fact.label",
@@ -143,7 +148,8 @@ def _qml_control(ctrl: ControlDef, settings_dirs: Path | tuple[Path, ...], json_
     if fact_type == "string":
         extra.append("textFieldPreferredWidth: _stringFieldWidth")
     control_qml = render_textfield(
-        fact_ref, indent,
+        fact_ref,
+        indent,
         label=ctrl.label,
         enable_when=ctrl.enableWhen,
         placeholder=ctrl.placeholder,
@@ -180,11 +186,7 @@ def _binding_qml_type(expr: str) -> str:
 
 
 def _group_auto_vis(grp) -> str:
-    fact_refs = [
-        f"QGroundControl.settingsManager.{c.setting}"
-        for c in grp.controls
-        if c.setting
-    ]
+    fact_refs = [f"QGroundControl.settingsManager.{c.setting}" for c in grp.controls if c.setting]
     return " || ".join(f"{ref}.userVisible" for ref in fact_refs)
 
 
@@ -227,10 +229,12 @@ def generate_page_qml(
         visible_expr = " && ".join([section_vis, *_group_visibility_parts(grp)])
 
         if grp.component:
-            group_blocks.append(_env.get_template("group_component.qml.j2").render(
-                visible=visible_expr,
-                component=grp.component,
-            ))
+            group_blocks.append(
+                _env.get_template("group_component.qml.j2").render(
+                    visible=visible_expr,
+                    component=grp.component,
+                )
+            )
             continue
 
         # The sanitizer is lossy, so guard the objectName invariants at generation time:
@@ -253,14 +257,16 @@ def generate_page_qml(
 
         blocks = [_qml_control(ctrl, settings_dirs, json_context) for ctrl in grp.controls]
         blocks.extend(_qml_missing_placeholder(desc) for desc in grp.missing)
-        group_blocks.append(_env.get_template("group_settings.qml.j2").render(
-            object_name=group_object_name,
-            heading=_tr(grp.heading) if grp.heading else None,
-            heading_description=grp.headingDescription,
-            visible=visible_expr,
-            enable_when=grp.enableWhen,
-            blocks=blocks,
-        ))
+        group_blocks.append(
+            _env.get_template("group_settings.qml.j2").render(
+                object_name=group_object_name,
+                heading=_tr(grp.heading) if grp.heading else None,
+                heading_description=grp.headingDescription,
+                visible=visible_expr,
+                enable_when=grp.enableWhen,
+                blocks=blocks,
+            )
+        )
 
     page_object_name = None
     if page_name:
@@ -271,13 +277,16 @@ def generate_page_qml(
                 f"Use a name with ASCII letters or digits."
             )
 
-    return _env.get_template("page.qml.j2").render(
-        imports=page.imports,
-        object_name=page_object_name,
-        has_string_fields=_needs_string_field_width(page, settings_dirs),
-        bindings=bindings,
-        groups=group_blocks,
-    ) + "\n"
+    return (
+        _env.get_template("page.qml.j2").render(
+            imports=page.imports,
+            object_name=page_object_name,
+            has_string_fields=_needs_string_field_width(page, settings_dirs),
+            bindings=bindings,
+            groups=group_blocks,
+        )
+        + "\n"
+    )
 
 
 def generate_pages_model_qml(pages_json_path: Path, custom_pages_dir: Path | None = None) -> str:
@@ -308,7 +317,9 @@ def generate_pages_model_qml(pages_json_path: Path, custom_pages_dir: Path | Non
                 page_def = load_page_def(page_def_path)
                 if page_def.bindings or any(group.showWhen for group in page_def.groups):
                     imports.extend(
-                        page_import for page_import in page_def.imports if page_import not in imports
+                        page_import
+                        for page_import in page_def.imports
+                        if page_import not in imports
                     )
                 section_bindings = [
                     {
@@ -336,25 +347,32 @@ def generate_pages_model_qml(pages_json_path: Path, custom_pages_dir: Path | Non
                         for term in dict.fromkeys(tr_parts)
                     )
 
-                    sections.append({
-                        "index": grp_idx,
-                        "name": _qml_translate(page_def_name, section_name),
-                        "search_terms": f'[{", ".join(search_terms)}]',
-                        "visible": visible,
-                    })
+                    sections.append(
+                        {
+                            "index": grp_idx,
+                            "name": _qml_translate(page_def_name, section_name),
+                            "search_terms": f"[{', '.join(search_terms)}]",
+                            "visible": visible,
+                        }
+                    )
 
-        entries.append({
-            "divider": False,
-            "name": name,
-            "url": url,
-            "icon": require_qml_safe_string(entry["icon"], "page icon", pages_json_path),
-            "sections": sections,
-            "section_bindings": section_bindings,
-            "section_state_name": section_state_name,
-            "visible": entry.get("visible", ""),
-        })
+        entries.append(
+            {
+                "divider": False,
+                "name": name,
+                "url": url,
+                "icon": require_qml_safe_string(entry["icon"], "page icon", pages_json_path),
+                "sections": sections,
+                "section_bindings": section_bindings,
+                "section_state_name": section_state_name,
+                "visible": entry.get("visible", ""),
+            }
+        )
 
-    return _env.get_template("pages_model.qml.j2").render(
-        entries=entries,
-        imports=imports,
-    ) + "\n"
+    return (
+        _env.get_template("pages_model.qml.j2").render(
+            entries=entries,
+            imports=imports,
+        )
+        + "\n"
+    )

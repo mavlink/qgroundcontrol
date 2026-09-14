@@ -71,7 +71,7 @@ def use_color(stream: TextIO | None = None) -> bool:
         return True
     if stream is None:
         stream = sys.stdout
-    return hasattr(stream, "isatty") and stream.isatty()
+    return stream is not None and stream.isatty()
 
 
 def colorize(text: str, color: Color, stream: TextIO | None = None) -> str:

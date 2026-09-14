@@ -13,21 +13,15 @@ import re
 
 # Match: Fact _speedFact = Fact(0, ...)
 # Captures: fact name (without Fact suffix)
-FACT_MEMBER_PATTERN = re.compile(
-    r'Fact\s+_(\w+)Fact\s*='
-)
+FACT_MEMBER_PATTERN = re.compile(r"Fact\s+_(\w+)Fact\s*=")
 
 # Match: class VehicleGPSFactGroup : public FactGroup
 # Captures: full class name
-FACTGROUP_CLASS_PATTERN = re.compile(
-    r'class\s+(\w+FactGroup)\s*:'
-)
+FACTGROUP_CLASS_PATTERN = re.compile(r"class\s+(\w+FactGroup)\s*:")
 
 # Match: "name": "latitude" in JSON
 # Captures: parameter name
-PARAM_NAME_PATTERN = re.compile(
-    r'"name"\s*:\s*"(\w+)"'
-)
+PARAM_NAME_PATTERN = re.compile(r'"name"\s*:\s*"(\w+)"')
 
 
 # =============================================================================
@@ -36,15 +30,11 @@ PARAM_NAME_PATTERN = re.compile(
 
 # Match: MAVLINK_MSG_ID_HEARTBEAT, MAVLINK_MSG_ID_GPS_RAW_INT
 # Captures: message name (without MAVLINK_MSG_ID_ prefix)
-MAVLINK_MSG_ID_PATTERN = re.compile(
-    r'MAVLINK_MSG_ID_(\w+)'
-)
+MAVLINK_MSG_ID_PATTERN = re.compile(r"MAVLINK_MSG_ID_(\w+)")
 
 # Match: mavlink_heartbeat_t, mavlink_gps_raw_int_t
 # Captures: message name (lowercase)
-MAVLINK_STRUCT_PATTERN = re.compile(
-    r'mavlink_(\w+)_t'
-)
+MAVLINK_STRUCT_PATTERN = re.compile(r"mavlink_(\w+)_t")
 
 
 # =============================================================================
@@ -53,35 +43,32 @@ MAVLINK_STRUCT_PATTERN = re.compile(
 
 # Match: activeVehicle()->method()
 # Captures: method name
-ACTIVE_VEHICLE_DIRECT_PATTERN = re.compile(
-    r'activeVehicle\(\)\s*->\s*(\w+)\s*\('
-)
+ACTIVE_VEHICLE_DIRECT_PATTERN = re.compile(r"activeVehicle\(\)\s*->\s*(\w+)\s*\(")
 
 # Match: vehicle = activeVehicle() or vehicle = MultiVehicleManager::instance()->activeVehicle()
 # Captures: variable name
 ACTIVE_VEHICLE_ASSIGN_PATTERN = re.compile(
-    r'(\w+)\s*=\s*(?:MultiVehicleManager::instance\(\)->)?activeVehicle\(\)'
+    r"(\w+)\s*=\s*(?:MultiVehicleManager::instance\(\)->)?activeVehicle\(\)"
 )
 
 # Match: getParameter(...)->method()
 # Captures: method name
-GET_PARAMETER_DIRECT_PATTERN = re.compile(
-    r'getParameter\s*\([^)]*\)\s*->\s*(\w+)\s*\('
-)
+GET_PARAMETER_DIRECT_PATTERN = re.compile(r"getParameter\s*\([^)]*\)\s*->\s*(\w+)\s*\(")
 
 # Patterns that indicate a null check has been performed
 NULL_CHECK_PATTERNS = [
-    r'if\s*\(\s*!\s*\w+\s*\)',            # if (!var)
-    r'if\s*\(\s*\w+\s*==\s*nullptr\s*\)',  # if (var == nullptr)
-    r'if\s*\(\s*\w+\s*!=\s*nullptr\s*\)',  # if (var != nullptr)
-    r'if\s*\(\s*\w+\s*\)',                 # if (var)
-    r'\?\s*:',                             # ternary operator
+    r"if\s*\(\s*!\s*\w+\s*\)",  # if (!var)
+    r"if\s*\(\s*\w+\s*==\s*nullptr\s*\)",  # if (var == nullptr)
+    r"if\s*\(\s*\w+\s*!=\s*nullptr\s*\)",  # if (var != nullptr)
+    r"if\s*\(\s*\w+\s*\)",  # if (var)
+    r"\?\s*:",  # ternary operator
 ]
 
 
 # =============================================================================
 # Query Helpers
 # =============================================================================
+
 
 def make_query_pattern(base_pattern: re.Pattern, query: str) -> re.Pattern:
     """
@@ -98,8 +85,8 @@ def make_query_pattern(base_pattern: re.Pattern, query: str) -> re.Pattern:
     pattern_str = base_pattern.pattern
     # Replace \w+ or \w* in first capture group with query-filtered version
     filtered = pattern_str.replace(
-        r'(\w+)',
-        rf'(\w*{re.escape(query)}\w*)',
-        1  # Only first occurrence
+        r"(\w+)",
+        rf"(\w*{re.escape(query)}\w*)",
+        1,  # Only first occurrence
     )
     return re.compile(filtered, re.IGNORECASE)

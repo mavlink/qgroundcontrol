@@ -23,8 +23,10 @@ FILE_TYPE_DEFAULTS: dict[str, tuple[str, str]] = {
 
 COMMA_SEPARATED_FIELDS = {"enumStrings", "keywords"}
 
+
 def _record_loc(loc_dict: dict[str, list[str]], loc_str: str, hierarchy: str) -> None:
     loc_dict.setdefault(loc_str, []).append(hierarchy)
+
 
 def parse_json_object_for_translate_keys(
     hierarchy: str,
@@ -55,6 +57,7 @@ def parse_json_object_for_translate_keys(
                 child_hierarchy, value, translate_keys, array_id_keys, loc_dict
             )
 
+
 def parse_json_array_for_translate_keys(
     hierarchy: str,
     json_array: list,
@@ -78,6 +81,7 @@ def parse_json_array_for_translate_keys(
             loc_dict,
         )
 
+
 def add_loc_keys_based_on_qgc_file_type(json_dict: dict) -> None:
     """Inject translateKeys/arrayIDKeys defaults based on fileType, if not set."""
     file_type = json_dict.get(QGC_FILE_TYPE_KEY)
@@ -88,6 +92,7 @@ def add_loc_keys_based_on_qgc_file_type(json_dict: dict) -> None:
         json_dict[TRANSLATE_KEYS_KEY] = translate_default
     if ARRAY_ID_KEYS_KEY not in json_dict and array_id_default:
         json_dict[ARRAY_ID_KEYS_KEY] = array_id_default
+
 
 def parse_json(json_path: Path, loc_dict: dict[str, list[str]]) -> None:
     with open(json_path, "rb") as fh:
@@ -101,9 +106,8 @@ def parse_json(json_path: Path, loc_dict: dict[str, list[str]]) -> None:
     array_id_keys = json_dict.get(ARRAY_ID_KEYS_KEY, "").split(",")
     parse_json_object_for_translate_keys("", json_dict, translate_keys, array_id_keys, loc_dict)
 
-def walk_directory_tree_for_json_files(
-    directory: Path, multi_file_loc_array: list[list]
-) -> None:
+
+def walk_directory_tree_for_json_files(directory: Path, multi_file_loc_array: list[list]) -> None:
     for path in directory.iterdir():
         if path.is_file() and path.suffix == ".json":
             single_file_loc_dict: dict[str, list[str]] = {}
@@ -117,16 +121,18 @@ def walk_directory_tree_for_json_files(
         elif path.is_dir():
             walk_directory_tree_for_json_files(path, multi_file_loc_array)
 
+
 def _split_disambiguation(source_str: str, context_name: str) -> tuple[str, str]:
     """Return (disambiguation, source). Raises SystemExit if marker is malformed."""
     if not source_str.startswith(DISAMBIGUATION_PREFIX):
         return "", source_str
-    work_str = source_str[len(DISAMBIGUATION_PREFIX):]
+    work_str = source_str[len(DISAMBIGUATION_PREFIX) :]
     terminator = work_str.find("#")
     if terminator == -1:
         print(f"Bad disambiguation {context_name} '{source_str}'")
         sys.exit(1)
-    return work_str[:terminator], work_str[terminator + 1:]
+    return work_str[:terminator], work_str[terminator + 1 :]
+
 
 def write_json_ts_file(output_path: Path, multi_file_loc_array: list[list]) -> None:
     ts_root = ET.Element("TS", version="2.1")
@@ -160,12 +166,14 @@ def write_json_ts_file(output_path: Path, multi_file_loc_array: list[list]) -> N
         fh.write(ET.tostring(ts_root, encoding="unicode"))
         fh.write("\n")
 
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     multi_file_loc_array: list[list] = []
     walk_directory_tree_for_json_files(repo_root / "src", multi_file_loc_array)
     write_json_ts_file(repo_root / "translations" / "qgc-json.ts", multi_file_loc_array)
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

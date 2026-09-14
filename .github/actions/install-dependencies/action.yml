@@ -127,15 +127,13 @@ runs:
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" install-optional
 
-    - name: Install pipx packages (Linux)
+    - name: Install locked Python build tools (Linux)
       if: runner.os == 'Linux'
       shell: bash
       run: |
-        if ! python3 tools/setup/install_dependencies --platform debian --skip-system-packages; then
-          echo "::warning::pipx package installation failed; using apt-provided build tools"
-        fi
-        cmake --version
-        ninja --version
+        python3 tools/setup/install_dependencies --platform debian --skip-system-packages
+        "${GITHUB_WORKSPACE}/tools/.venv/bin/cmake" --version
+        "${GITHUB_WORKSPACE}/tools/.venv/bin/ninja" --version
 
     - name: Install extra packages (Linux)
       if: runner.os == 'Linux' && inputs.extra-packages != ''

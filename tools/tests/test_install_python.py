@@ -1,134 +1,119 @@
-#!/usr/bin/env python3
-"""Tests for tools/setup/install_python.py."""
+"""Environment integration tests shared by the Python 3.10/3.12 CI matrix."""
 
 from __future__ import annotations
 
-from pathlib import Path  # noqa: TC003
-from subprocess import CalledProcessError
+import subprocess
+import sys
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-from common import proc
-from setup import install_python
-from setup.install_python import get_packages_for_groups, sync_groups_with_uv
+from qgc_tools import python_env
+from setup.install_python import main
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
-def test_test_group_contains_pytest() -> None:
-    packages = get_packages_for_groups("test")
+def test_requirements_honor_markers_and_versions() -> None:
+    assert python_env.check_requirements(["absent-package; python_version < '2'"]) == 0
+    assert python_env.check_requirements(["jinja2>=9999"]) == 1
+    assert python_env.check_requirements(["jinja2>=3"]) == 0
+
+
+def test_unknown_group_rejected() -> None:
+    with pytest.raises(ValueError, match="Unknown group"):
+        python_env.requirements_for("nope")
+
+
+def test_nested_profile_contains_generator_and_test_dependencies() -> None:
+    packages = python_env.requirements_for("dev")
     assert "pytest" in packages
-    assert "jinja2" in packages
-    assert "pyyaml" in packages
-
-
-def test_scripts_group_contains_defusedxml() -> None:
-    packages = get_packages_for_groups("scripts")
-    assert "defusedxml>=0.7.1" in packages
-
-
-def test_multiple_groups_are_merged() -> None:
-    packages = get_packages_for_groups("precommit,test")
-    assert "pre-commit" in packages
-    assert "pytest" in packages
+    assert "packaging>=24" in packages
+    assert "aqtinstall" in packages
     assert len(packages) == len(set(packages))
 
 
-def test_all_group_includes_test_and_ci_tools() -> None:
-    packages = get_packages_for_groups("all")
-    assert "pytest" in packages
-    assert "pre-commit" in packages
-    assert "meson" in packages
-    assert "ninja" in packages
-
-
-def test_unknown_group_raises() -> None:
-    with pytest.raises(ValueError, match="Unknown group"):
-        get_packages_for_groups("nope")
-
-
-def test_sync_groups_with_uv_uses_locked_active_env(tmp_path: Path) -> None:
-    venv = tmp_path / ".venv"
-    (tmp_path / "tools").mkdir()
-    lockfile = tmp_path / "tools" / "uv.lock"
-    lockfile.write_text("", encoding="utf-8")
+def test_missing_uv_never_falls_back_to_system_install() -> None:
     with (
-        patch("setup.install_python.find_repo_root", return_value=tmp_path),
-        patch("setup.install_python.run_checked_with_retry") as mock_run,
+        patch("qgc_tools.python_env.shutil.which", return_value=None),
+        pytest.raises(FileNotFoundError, match="uv is required"),
     ):
-        sync_groups_with_uv(venv, "scripts,test")
-
-    args = mock_run.call_args.args[0]
-    assert args[:5] == ["uv", "sync", "--project", str(tmp_path / "tools"), "--active"]
-    assert "--frozen" in args
-    assert args.count("--extra") == 2
+        python_env.sync_groups("scripts")
 
 
-def test_list_packages_uses_uv_for_synced_environment(tmp_path: Path) -> None:
-    venv = tmp_path / ".venv"
-    with (
-        patch.object(install_python, "has_uv", return_value=True),
-        patch.object(install_python.subprocess, "run") as mock_run,
-    ):
-        install_python.list_packages(venv)
+def test_explicit_override_is_isolated() -> None:
+    with patch("qgc_tools.python_env.require_uv", return_value="uv"):
+        assert python_env.tool_command("aqt", "qt", source="aqtinstall==3.3.0") == [
+            "uv",
+            "tool",
+            "run",
+            "--isolated",
+            "--from",
+            "aqtinstall==3.3.0",
+            "aqt",
+        ]
 
-    mock_run.assert_called_once_with(
-        ["uv", "pip", "list", "--python", str(install_python.get_python_executable(venv))],
-        check=False,
+
+def test_tool_uses_resolved_environment_not_path(tmp_path: Path) -> None:
+    tool = python_env.executable("aqt", tmp_path)
+    tool.parent.mkdir(parents=True)
+    tool.touch()
+    with patch("qgc_tools.python_env.sync_groups", return_value=tmp_path):
+        assert python_env.tool_command("aqt", "qt") == [str(tool)]
+
+
+def test_fresh_environment_and_repeated_setup_preserve_tools(tmp_path: Path) -> None:
+    environment = tmp_path / "venv"
+    python_env.sync_groups("scripts,test", environment=environment, python=sys.executable)
+    interpreter = python_env.executable("python", environment)
+    setup_script = python_env.project_path() / "setup/install_python.py"
+    result = subprocess.run(
+        [str(interpreter), str(setup_script), "scripts", "--check"], capture_output=True, text=True
     )
+    assert result.returncode == 0, result.stderr
+    python_env.sync_groups("scripts", environment=environment)
+    result = subprocess.run(
+        [str(interpreter), "-m", "pytest", "--version"], capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr
+    python_env.sync_groups("scripts", environment=environment, replace=True)
+    result = subprocess.run(
+        [
+            str(interpreter),
+            "-c",
+            "import importlib.util; assert importlib.util.find_spec('pytest') is None",
+        ]
+    )
+    assert result.returncode == 0
 
 
-def test_list_packages_uses_pip_without_uv(tmp_path: Path) -> None:
-    venv = tmp_path / ".venv"
-    python = install_python.get_python_executable(venv)
-    with (
-        patch.object(install_python, "has_uv", return_value=False),
-        patch.object(install_python.subprocess, "run") as mock_run,
-    ):
-        install_python.list_packages(venv)
-
-    mock_run.assert_called_once_with([str(python), "-m", "pip", "list"], check=False)
+def test_check_does_not_mutate_environment() -> None:
+    with patch("setup.install_python.sync_groups") as sync:
+        assert main(["scripts", "--check"]) == 0
+    sync.assert_not_called()
 
 
-def test_create_venv_removes_partial_environment_before_retry(tmp_path: Path) -> None:
-    venv = tmp_path / ".venv"
-    command = ["uv", "venv", "--seed", str(venv)]
-    attempts = 0
+@pytest.mark.parametrize("flag", ["--help", "--list", "--print-packages", "--dry-run"])
+def test_system_setup_queries_do_not_install_site_packages(tmp_path: Path, flag: str) -> None:
+    import os
 
-    def create_partial_then_succeed(*_args: object, **_kwargs: object) -> None:
-        nonlocal attempts
-        attempts += 1
-        if attempts == 1:
-            venv.mkdir()
-            (venv / "partial").touch()
-            raise CalledProcessError(1, command)
-        assert not venv.exists()
-        venv.mkdir()
-
-    with (
-        patch.object(install_python, "has_uv", return_value=True),
-        patch.object(proc.subprocess, "run", side_effect=create_partial_then_succeed),
-        patch.object(proc.time, "sleep"),
-    ):
-        install_python.create_venv(venv)
-
-    assert attempts == 2
-    assert venv.is_dir()
-    assert not (venv / "partial").exists()
-
-
-def test_create_venv_removes_partial_environment_after_final_failure(tmp_path: Path) -> None:
-    venv = tmp_path / ".venv"
-    command = ["uv", "venv", "--seed", str(venv)]
-
-    def always_fail(*_args: object, **_kwargs: object) -> None:
-        venv.mkdir(exist_ok=True)
-        raise CalledProcessError(1, command)
-
-    with (
-        patch.object(install_python, "has_uv", return_value=True),
-        patch.object(proc.subprocess, "run", side_effect=always_fail),
-        patch.object(proc.time, "sleep"),
-        pytest.raises(CalledProcessError),
-    ):
-        install_python.create_venv(venv)
-
-    assert not venv.exists()
+    environment = {
+        **os.environ,
+        "PATH": os.environ.get("PATH", "") if flag == "--dry-run" else "",
+        "QGC_PYTHON_ENV": str(tmp_path / "absent"),
+    }
+    command = [
+        sys.executable,
+        "-S",
+        str(python_env.project_path() / "setup/install_dependencies"),
+        flag,
+        "--platform",
+        "debian",
+    ]
+    # Preview Python setup without querying host package managers.
+    if flag == "--dry-run":
+        command.append("--skip-system-packages")
+    result = subprocess.run(command, capture_output=True, text=True, env=environment)
+    assert result.returncode == 0, result.stderr
+    assert not (tmp_path / "absent").exists()

@@ -17,7 +17,9 @@ def clamped_repr(value: object) -> str:
     return _repr.repr(value)
 
 
-def reject_unknown_keys(data: object, allowed: frozenset[str], context: str, source: object) -> None:
+def reject_unknown_keys(
+    data: object, allowed: frozenset[str], context: str, source: object
+) -> None:
     """Fail the build loudly on unknown keys so typos can't silently drop generated UI.
 
     `source` identifies the offending JSON file in the error (path or filename).
@@ -62,8 +64,7 @@ def require_qml_safe_string(value: object, context: str, source: object) -> str:
     """
     if not isinstance(value, str):
         raise ValueError(
-            f"{source}: {context} must be a string, "
-            f"got {type(value).__name__}: {_repr.repr(value)}"
+            f"{source}: {context} must be a string, got {type(value).__name__}: {_repr.repr(value)}"
         )
     if any(c in value for c in ('"', "\\", "\n", "\r")):
         raise ValueError(

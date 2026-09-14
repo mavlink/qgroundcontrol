@@ -57,6 +57,7 @@ jobs:
             deploy/docker/_variants.py
             tools/_bootstrap.py
             tools/common
+            tools/qgc_tools
           sparse-checkout-cone-mode: false
           persist-credentials: false
 

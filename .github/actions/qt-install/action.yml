@@ -42,8 +42,8 @@ inputs:
     default: 'true'
   aqt-source:
     description: >-
-      Optional pip spec used to install aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>).
-      Blank uses the PyPI `aqtinstall` package. Forces a reinstall so any preinstalled aqt is replaced.
+      Optional isolated uv source for aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>).
+      Blank uses the locked `qt` profile. An override runs in an isolated uv tool environment.
     required: false
     default: ''
 runs:

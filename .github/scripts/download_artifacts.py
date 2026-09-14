@@ -28,7 +28,7 @@ ensure_tools_dir(__file__)
 
 from common.artifact_metadata import write_run_artifact_metadata
 from common.gh_actions import gh, list_run_artifacts, list_workflow_runs_for_sha
-from common.github_runs import (
+from qgc_tools.workflow_runs import (
     add_workflow_run_query_args,
     group_runs_by_name,
     resolve_workflow_runs,

@@ -50,6 +50,7 @@ jobs:
             .github/scripts/ci_bootstrap.py
             tools/_bootstrap.py
             tools/common
+            tools/qgc_tools
             tools/setup/read_config.py
           sparse-checkout-cone-mode: false
 

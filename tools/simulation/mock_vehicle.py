@@ -19,7 +19,7 @@ Environment variables:
     MOCK_VEHICLE_ALT    Initial altitude in meters (default: 100)
 
 Requirements:
-    pip install pymavlink
+    python tools/setup/install_python.py dev
 
 Based on MAVLink protocol v2.0
 """
@@ -36,7 +36,7 @@ try:
     from pymavlink.dialects.v20 import common as mavlink
 except ImportError:
     print("Error: pymavlink not installed")
-    print("Install with: pip install pymavlink")
+    print("Install with: python tools/setup/install_python.py dev")
     sys.exit(1)
 
 # Default location (Zurich, Switzerland)
@@ -75,7 +75,7 @@ class VehicleState:
     airspeed: float = 0.0
     climb_rate: float = 0.0
     battery_voltage: float = 12.6
-    battery_remaining: int = 100
+    battery_remaining: float = 100.0
     armed: bool = False
     mode: str = "STABILIZE"
     gps_fix: int = 3  # 3D fix
@@ -90,7 +90,7 @@ class MockVehicle:
         self.component_id = component_id
         self.state = VehicleState()
         self.running = False
-        self.connection = None
+        self._connection: mavutil.mavfile | None = None
         self.start_time = time.time()
 
         # Mode mapping
@@ -104,6 +104,18 @@ class MockVehicle:
             "RTL": 6,
             "LAND": 9,
         }
+
+    @property
+    def connection(self) -> mavutil.mavfile:
+        if self._connection is None:
+            raise RuntimeError("Connect the simulator before sending or receiving messages")
+        return self._connection
+
+    @connection.setter
+    def connection(self, value: object) -> None:
+        if not isinstance(value, mavutil.mavfile):
+            raise ValueError("Simulator requires a live MAVLink connection")
+        self._connection = value
 
     def connect_udp(self, host="127.0.0.1", port=14550):
         """Connect via UDP."""
@@ -149,7 +161,7 @@ class MockVehicle:
             500,  # load (50%)
             voltage,  # voltage_battery (mV)
             -1,  # current_battery
-            self.state.battery_remaining,
+            int(self.state.battery_remaining),
             0,
             0,
             0,
@@ -231,7 +243,7 @@ class MockVehicle:
             -1,  # current
             -1,  # current consumed
             -1,  # energy consumed
-            self.state.battery_remaining,
+            int(self.state.battery_remaining),
         )
 
     def send_home_position(self):

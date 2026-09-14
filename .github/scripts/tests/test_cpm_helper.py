@@ -28,7 +28,9 @@ class TestConfigureCache:
         github_env = tmp_path / "env.txt"
         github_output = tmp_path / "output.txt"
         cache = tmp_path / "cpm-cache"
-        with patch.dict(os.environ, {"GITHUB_ENV": str(github_env), "GITHUB_OUTPUT": str(github_output)}):
+        with patch.dict(
+            os.environ, {"GITHUB_ENV": str(github_env), "GITHUB_OUTPUT": str(github_output)}
+        ):
             configured = configure_cpm_cache(str(cache))
         assert configured == cache
         assert "CPM_SOURCE_CACHE=" in github_env.read_text()

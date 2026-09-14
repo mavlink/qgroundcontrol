@@ -39,6 +39,7 @@ BASE_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
     {
         "tools/_bootstrap.py",
         "tools/common/__init__.py",
+        "tools/qgc_tools/__init__.py",
     }
 )
 
@@ -78,13 +79,13 @@ def _iter_common_imports(source: Path) -> Iterator[str]:
         if isinstance(node, ast.ImportFrom):
             if node.module is None:
                 continue
-            if node.level == 0 and node.module.split(".")[0] == "common":
+            if node.level == 0 and node.module.split(".")[0] in {"common", "qgc_tools"}:
                 yield node.module
             elif node.level >= 1 and inside_common:
                 yield f"common.{node.module}"
         elif isinstance(node, ast.Import):
             for alias in node.names:
-                if alias.name.split(".")[0] == "common":
+                if alias.name.split(".")[0] in {"common", "qgc_tools"}:
                     yield alias.name
 
 
@@ -235,13 +236,15 @@ EXPECTED_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
         ".github/scripts/generate_build_results_comment.py",
         ".github/scripts/templates/build_results.md.j2",
         "tools/common/__init__.py",
+        "tools/qgc_tools/__init__.py",
         "tools/common/artifact_metadata.py",
         "tools/common/build_config.py",
         "tools/common/cobertura.py",
         "tools/common/file_traversal.py",
         "tools/common/format.py",
         "tools/common/gh_actions.py",
-        "tools/common/github_runs.py",
+        "tools/qgc_tools/workflow_runs.py",
+        "tools/qgc_tools/python_env.py",
         "tools/common/io.py",
         "tools/common/markdown.py",
         "tools/common/platform.py",

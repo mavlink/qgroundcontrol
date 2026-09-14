@@ -58,9 +58,9 @@ runs:
       run: |
         # Pin Python3_EXECUTABLE to the workspace venv so CMake-invoked jinja generators see project deps.
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          VENV_PYTHON="${GITHUB_WORKSPACE}/.venv/Scripts/python.exe"
+          VENV_PYTHON="${GITHUB_WORKSPACE}/tools/.venv/Scripts/python.exe"
         else
-          VENV_PYTHON="${GITHUB_WORKSPACE}/.venv/bin/python"
+          VENV_PYTHON="${GITHUB_WORKSPACE}/tools/.venv/bin/python"
         fi
         EXTRA_ARGS="${INPUTS_EXTRA_ARGS}"
         if [[ -x "$VENV_PYTHON" ]]; then

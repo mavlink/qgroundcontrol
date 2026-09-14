@@ -49,7 +49,7 @@ CPMAddPackage(
     OPTIONS
         "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}"
         "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
-    # Retry upstream's build-time pip install and make mavgen hashes deterministic.
+    # Use the locked generator environment and make mavgen hashes deterministic.
     PATCHES "${_mavlink_patch}"
 )
 

@@ -49,7 +49,6 @@ _LINUX_2204_BUILD_ARGS = "\n".join(
     [
         "BASE_REF=ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d",
         "APT_EXTRA=gcc-12 g++-12",
-        "PIP_CMAKE=cmake>=3.25,<4",
         "CC_PIN=gcc-12",
         "CXX_PIN=g++-12",
     ]

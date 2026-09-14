@@ -30,6 +30,7 @@ runs:
           .github/scripts/generate_build_results_comment.py
           .github/scripts/templates/build_results.md.j2
           tools/common
+          tools/qgc_tools
           tools/pyproject.toml
           tools/uv.lock
           tools/setup/install_python.py
