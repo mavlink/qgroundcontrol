@@ -87,6 +87,71 @@ Auto-downloaded during CMake configure. No manual setup required.
 
 > **Windows users building for Android**: Enable Developer Mode (Settings > System > For developers) to support symbolic links during the build.
 
+#### Android videos and photos in Gallery
+
+On Android 10 (API 29) and newer, this backend records directly to a pending
+`MediaStore.Video` item in `Movies/QGroundControl/`. Stop recording normally to
+publish the video. A Gallery app can then find it in the QGroundControl device
+album (for example, Google Photos: Collections > On this device). Gallery codec
+support still varies: check H.264/H.265 MP4 playback on the actual controller.
+
+Local snapshots of the main video stream are JPEGs in `Pictures/QGroundControl/`,
+created through `MediaStore.Images`. The existing QML frame grab writes directly
+to the pending item's descriptor and publishes only after encoding and flushing.
+A failed JPEG write removes that request's pending item. There is no additional
+private JPEG copy. This is a snapshot of the displayed stream, not an onboard
+camera still-photo command; native MAVLink camera capture is unchanged.
+
+The native sink borrows a seekable file descriptor, which stays open until the
+recording branch reaches NULL. There is one retained video, not an app-private
+video plus an exported copy. The existing MP4/MOV faststart muxer can still use
+temporary disk space while recording; this change does not add crash recovery.
+Empty attempts are removed; nonempty recordings without successful finalization
+stay pending, subject to Android's pending-item expiry, rather than appearing as
+successful Gallery videos. A failed save is reported in QGC and the application log.
+
+No new storage, photo-library, or all-files permission is required for QGC to
+create its own media. Published recordings survive app uninstall, are accessible
+to appropriately authorized media apps, and may be backed up if the user has
+enabled backup of this album in a Gallery/cloud app.
+
+The existing **Auto-Delete Saved Recordings** / **Max Storage Usage** settings still apply:
+cleanup considers only published videos owned by this package in this album,
+never other apps' videos or pending recordings. Auto-delete is enabled by default
+on mobile; disable it to retain all published recordings. Old app-private clips
+are not migrated or deleted by this MediaStore cleanup. Telemetry `.ass` sidecars
+remain in the original private Video directory under the matching basename;
+Gallery players do not automatically load them. Other QGC data paths are
+unchanged. Older Android versions, UVC, and the QtMultimedia-only backend
+continue using their existing destinations. MediaStore uses primary shared
+storage, not the legacy private/SD-card video path.
+
+Manual Android acceptance checks (use disposable test recordings):
+
+1. Record and normally stop H.264 and H.265 MP4 clips. Check Gallery thumbnails,
+   duration, playback, and seeking; confirm one MediaStore item per stream and no
+   new private video copy. Repeat with MOV/MKV, noting player support separately.
+2. Check that a still-recording item is pending/hidden, and that the descriptor
+   remains open through finalization. Stop/start quickly and record thermal and
+   primary streams together; verify distinct names and subtitle sidecars.
+3. Test no-keyframe startup, low space, failed open, stream loss, and interrupted
+   finalization. Do not publish an empty/header-only or unfinalized item, and do
+   not silently fall back to an invisible private recording on MediaStore error.
+4. Disable auto-delete and confirm all published clips remain. On sacrificial
+   data, enable it and exceed the limit: only this app's oldest completed videos
+   in this album may be removed, not unrelated/user-imported or other-app media.
+5. Verify no new permission prompt for owned-media creation on API 29+, check the
+   API 28 fallback, and verify a release build preserves the JNI helper.
+6. Test app kill/restart without mistaking MediaStore publication for crash
+   resilience. Pending data recovery and historical private-video migration are
+   separate features, not guarantees of this implementation.
+7. Take repeated local photos of changing video. Check one decodable JPEG per tap
+   in Gallery/Files and no corresponding private copy, including while thermal
+   video is visible. Test empty/failed captures without publishing partial JPEGs.
+   The existing photo counter counts vehicle MAVLink capture reports, not local
+   snapshots; counter and backend screenshot-completion feedback are separate
+   from this storage change.
+
 ### Caching downloaded SDKs
 
 Auto-downloaded SDK archives are cached to `${CPM_SOURCE_CACHE}/gstreamer-*` when `CPM_SOURCE_CACHE` is set, otherwise to `${CMAKE_BINARY_DIR}/_deps/gstreamer-*` (lost on `rm -rf build`). Set `CPM_SOURCE_CACHE` to a stable location (e.g. `~/.cache/CPM`) to avoid re-downloading the 200-700 MB archives on every clean build:

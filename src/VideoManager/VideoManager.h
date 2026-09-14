@@ -8,6 +8,7 @@
 #include <QtCore/QPromise>
 #include <QtCore/QObject>
 #include <QtCore/QSize>
+#include <QtGui/QImage>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #ifdef QGC_UNITTEST_BUILD
@@ -53,6 +54,7 @@ public:
     static VideoManager *instance();
 
     Q_INVOKABLE void grabImage(const QString &imageFile = QString());
+    Q_INVOKABLE bool saveImage(const QString& imageFile, const QImage& image);
     Q_INVOKABLE void startRecording(const QString &videoFile = QString());
     Q_INVOKABLE void startVideo();
     Q_INVOKABLE void stopRecording();
@@ -123,7 +125,7 @@ private:
     void _restartVideo(VideoReceiver *receiver);
     void _startReceiver(VideoReceiver *receiver);
     void _stopReceiver(VideoReceiver *receiver);
-    static void _cleanupOldVideos();
+    void _cleanupOldVideos();
 
     QList<VideoReceiver*> _videoReceivers;
     SubtitleWriter *_subtitleWriter = nullptr;
