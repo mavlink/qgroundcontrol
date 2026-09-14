@@ -42,8 +42,8 @@ inputs:
     default: 'true'
   aqt-source:
     description: >-
-      Optional pip spec used to install aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>).
-      Blank uses the PyPI `aqtinstall` package. Forces a reinstall so any preinstalled aqt is replaced.
+      Optional isolated uv source for aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>).
+      Blank uses the locked `qt` profile. An override runs in an isolated uv tool environment.
     required: false
     default: ''
 runs:
@@ -56,7 +56,8 @@ runs:
         QT_ARCH: ${{ inputs.arch }}
         QT_MODULES: ${{ inputs.modules }}
         QT_ARCHIVES: ${{ inputs.archives }}
-      run: python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" cache-key --arch "${QT_ARCH}" --modules "${QT_MODULES}" --archives "${QT_ARCHIVES}"
+        QT_CACHE_DIR: ${{ inputs.dir }}
+      run: python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" cache-key --cache-dir "${QT_CACHE_DIR}" --arch "${QT_ARCH}" --modules "${QT_MODULES}" --archives "${QT_ARCHIVES}"
 
     - name: Resolve preinstalled Qt
       id: qt-preinstalled
@@ -82,7 +83,7 @@ runs:
       uses: actions/cache/restore@v5
       continue-on-error: true
       with:
-        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
+        path: ${{ steps.qt-meta.outputs.cache_dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
         # `runner.os` is implied by `inputs.host` (linux/mac/windows...) so it's omitted.
         key: qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ inputs.version }}-${{ steps.qt-meta.outputs.digest }}
 
@@ -120,7 +121,7 @@ runs:
       uses: actions/cache/restore@v5
       continue-on-error: true
       with:
-        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
+        path: ${{ steps.qt-meta.outputs.cache_dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
         key: ${{ steps.qt-cache.outputs.cache-primary-key }}
         lookup-only: true
 
@@ -133,7 +134,7 @@ runs:
         (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
       uses: actions/cache/save@v5
       with:
-        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
+        path: ${{ steps.qt-meta.outputs.cache_dir }}/Qt/${{ inputs.version }}/${{ steps.qt-meta.outputs.arch_dir }}
         key: ${{ steps.qt-cache.outputs.cache-primary-key }}
 
     - name: Resolve Qt paths (cache hit)

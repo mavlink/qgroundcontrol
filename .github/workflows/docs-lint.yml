@@ -1,0 +1,55 @@
+name: Docs Lint
+
+on:
+  pull_request:
+    paths:
+      - 'docs/en/**'
+      - '.pre-commit-config.yaml'
+      - '.vale.ini'
+      - '.markdownlint*'
+      - '.typos.toml'
+      - '.github/workflows/docs-lint.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        with:
+          groups: precommit
+      - name: Lint English documentation
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [[ -n "$BASE_SHA" ]] && git diff --quiet "$BASE_SHA" HEAD -- \
+            '.pre-commit-config.yaml' '.vale.ini' '.markdownlint*' '.typos.toml' \
+            '.github/workflows/docs-lint.yml'; then
+            mapfile -d '' files < <(git diff --name-only -z --diff-filter=ACMR "$BASE_SHA" HEAD -- 'docs/en/*.md' 'docs/en/**/*.md')
+          else
+            mapfile -d '' files < <(git ls-files -z 'docs/en/*.md' 'docs/en/**/*.md')
+          fi
+          if (( ${#files[@]} == 0 )); then
+            echo 'No changed English Markdown files'
+            exit 0
+          fi
+          for hook in markdownlint typos vale-sync vale; do
+            pre-commit run "$hook" --files "${files[@]}"
+          done

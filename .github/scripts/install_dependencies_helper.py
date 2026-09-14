@@ -5,7 +5,7 @@ Handles:
 - Enabling the Ubuntu universe repository
 - Repairing apt alternatives after cache-apt-pkgs-action restore
 - Installing optional packages
-- Detecting Python version for pipx cache keys
+- Detecting Python version for dependency cache keys
 """
 
 from __future__ import annotations

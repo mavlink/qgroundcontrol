@@ -1,0 +1,101 @@
+name: Test Phase
+description: Run unit and integration suites and preserve results after failures
+inputs:
+  build-dir:
+    required: true
+    description: Configured and successfully built test directory
+  suite:
+    required: true
+    description: Unique suite name used in artifacts and reports
+  parallel:
+    default: auto
+    description: Unit test parallelism
+  integration-parallel:
+    default: '2'
+    description: Integration test parallelism; CTest resource locks remain enforced
+  exclude-labels:
+    default: 'Flaky|Network'
+    description: Excluded CTest labels
+  integration-exclude-labels:
+    default: ''
+    description: Optional integration-specific exclusions
+  upload-codecov:
+    default: 'false'
+    description: Enable informational Codecov test analytics
+runs:
+  using: composite
+  steps:
+    - name: Run Unit Tests (parallel)
+      id: unit_tests
+      uses: ./.github/actions/run-unit-tests
+      with:
+        build-dir: ${{ inputs.build-dir }}
+        junit-output: junit-results-${{ inputs.suite }}-unit.xml
+        ctest-output: test-output-${{ inputs.suite }}-unit.txt
+        include-labels: 'Unit'
+        exclude-labels: ${{ inputs.exclude-labels }}
+        parallel: ${{ inputs.parallel }}
+
+    - name: Run Integration Tests
+      id: integration_tests
+      if: ${{ !cancelled() }}
+      uses: ./.github/actions/run-unit-tests
+      with:
+        build-dir: ${{ inputs.build-dir }}
+        junit-output: junit-results-${{ inputs.suite }}-integration.xml
+        ctest-output: test-output-${{ inputs.suite }}-integration.txt
+        include-labels: 'Integration'
+        exclude-labels: ${{ inputs.integration-exclude-labels || inputs.exclude-labels }}
+        parallel: ${{ inputs.integration-parallel }}
+
+    - name: Analyze Unit Test Durations (unit)
+      if: always() && !cancelled() && steps.unit_tests.conclusion != 'skipped'
+      uses: ./.github/actions/test-duration-report
+      with:
+        junit-path: ${{ inputs.build-dir }}/junit-results-${{ inputs.suite }}-unit.xml
+        report-json-path: ${{ inputs.build-dir }}/test-duration-${{ inputs.suite }}-unit.json
+        top-n: '20'
+        slow-threshold-seconds: '60'
+
+    - name: Analyze Unit Test Durations (integration)
+      if: always() && !cancelled() && steps.integration_tests.conclusion != 'skipped'
+      uses: ./.github/actions/test-duration-report
+      with:
+        junit-path: ${{ inputs.build-dir }}/junit-results-${{ inputs.suite }}-integration.xml
+        report-json-path: ${{ inputs.build-dir }}/test-duration-${{ inputs.suite }}-integration.json
+        top-n: '20'
+        slow-threshold-seconds: '60'
+
+    - name: Report Test Results (unit)
+      if: always() && !cancelled() && steps.unit_tests.conclusion != 'skipped'
+      uses: ./.github/actions/test-report
+      with:
+        name: Unit Tests (${{ inputs.suite }})
+        upload-codecov: ${{ inputs.upload-codecov }}
+        codecov-flags: ${{ inputs.suite }}-unit
+        build-dir: ${{ inputs.build-dir }}
+        junit-file: junit-results-${{ inputs.suite }}-unit.xml
+        output-file: test-output-${{ inputs.suite }}-unit.txt
+        artifact-name: test-results-${{ inputs.suite }}-unit
+        retention-days: 7
+
+    - name: Report Test Results (integration)
+      if: always() && !cancelled() && steps.integration_tests.conclusion != 'skipped'
+      uses: ./.github/actions/test-report
+      with:
+        name: Integration Tests (${{ inputs.suite }})
+        upload-codecov: ${{ inputs.upload-codecov }}
+        codecov-flags: ${{ inputs.suite }}-integration
+        build-dir: ${{ inputs.build-dir }}
+        junit-file: junit-results-${{ inputs.suite }}-integration.xml
+        output-file: test-output-${{ inputs.suite }}-integration.txt
+        artifact-name: test-results-${{ inputs.suite }}-integration
+        retention-days: 7
+
+    - name: Upload test durations
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: test-duration-${{ inputs.suite }}
+        path: ${{ inputs.build-dir }}/test-duration-${{ inputs.suite }}-*.json
+        retention-days: 7

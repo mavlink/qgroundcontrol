@@ -1,9 +1,11 @@
 #include "VehicleGPS2FactGroup.h"
-#include "Vehicle.h"
-#include "QGCGeo.h"
-#include "development/mavlink_msg_gnss_integrity.h"
 
 #include <QtPositioning/QGeoCoordinate>
+
+#include "MAVLinkLib.h"
+#include "QGCGeo.h"
+#include "Vehicle.h"
+#include "development/mavlink_msg_gnss_integrity.h"
 
 void VehicleGPS2FactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
 {

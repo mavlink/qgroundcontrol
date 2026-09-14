@@ -2,7 +2,7 @@
 
 This page explains how the Application Settings pages are generated from JSON definitions and how to extend them.
 
-For the complete JSON schema reference see [tools/generators/settings_qml/README.md](../../../../tools/generators/settings_qml/README.md).
+For the complete JSON schema reference see [tools/generators/settings_qml/README.md](https://github.com/mavlink/qgroundcontrol/blob/master/tools/generators/settings_qml/README.md).
 
 ## Architecture Overview
 
@@ -19,7 +19,7 @@ At build time, CMake runs the generator and places generated QML in the build tr
 
 ## Where Generation Is Wired
 
-Generation is configured in [src/AppSettings/CMakeLists.txt](../../../../src/AppSettings/CMakeLists.txt):
+Generation is configured in [src/AppSettings/CMakeLists.txt](https://github.com/mavlink/qgroundcontrol/blob/master/src/AppSettings/CMakeLists.txt):
 
 - Custom command runs:
   - `python -m tools.generators.settings_qml.generate_pages --output-dir <build>/generated`
@@ -30,7 +30,7 @@ Generation is configured in [src/AppSettings/CMakeLists.txt](../../../../src/App
   - Generated page QML files (e.g. `GeneralSettings.qml`, `FlyViewSettings.qml`)
   - `SettingsPagesModel.qml`
 
-The generator entry point is [tools/generators/settings_qml/generate_pages.py](../../../../tools/generators/settings_qml/generate_pages.py), with most logic in [tools/generators/settings_qml/page_generator.py](../../../../tools/generators/settings_qml/page_generator.py).
+The generator entry point is [tools/generators/settings_qml/generate_pages.py](https://github.com/mavlink/qgroundcontrol/blob/master/tools/generators/settings_qml/generate_pages.py), with most logic in [tools/generators/settings_qml/page_generator.py](https://github.com/mavlink/qgroundcontrol/blob/master/tools/generators/settings_qml/page_generator.py).
 
 ## How Controls Are Chosen
 
@@ -49,7 +49,7 @@ The generated `SettingsPagesModel.qml` is built from `SettingsPages.json` and ea
 It includes:
 
 - `sections`: section names for expandable sidebar rows
-- `searchTerms`: page/section/fact keyword tokens used by the search field in [src/QmlControls/AppSettings.qml](../../../../src/QmlControls/AppSettings.qml)
+- `searchTerms`: page/section/fact keyword tokens used by the search field in [src/QmlControls/AppSettings.qml](https://github.com/mavlink/qgroundcontrol/blob/master/src/QmlControls/AppSettings.qml)
 
 Search terms are derived from:
 
@@ -68,7 +68,7 @@ Search terms are derived from:
    - File: `src/AppSettings/pages/<Page>.SettingsUI.json`
    - Add: `{ "setting": "<accessor>.<factName>" }`
 
-   See [tools/generators/settings_qml/README.md](../../../../tools/generators/settings_qml/README.md) for the full JSON schema.
+   See [tools/generators/settings_qml/README.md](https://github.com/mavlink/qgroundcontrol/blob/master/tools/generators/settings_qml/README.md) for the full JSON schema.
 4. Build. CMake regenerates the QML page automatically.
 
 ## Add a New Generated Settings Page
@@ -77,7 +77,7 @@ Search terms are derived from:
 2. Add a new entry to `src/AppSettings/pages/SettingsPages.json`:
    - `name`, `icon`, `qml` (output filename), `pageDefinition` (your new JSON file)
    - Optional `visible` expression
-3. Update the generated outputs list in [src/AppSettings/CMakeLists.txt](../../../../src/AppSettings/CMakeLists.txt):
+3. Update the generated outputs list in [src/AppSettings/CMakeLists.txt](https://github.com/mavlink/qgroundcontrol/blob/master/src/AppSettings/CMakeLists.txt):
    - Add your new QML filename to `_generated_qml_names`.
 4. Build QGC to generate and include the new page.
 

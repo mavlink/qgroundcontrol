@@ -61,8 +61,7 @@ def install_with_retries(apk_path: Path, retries: int, retry_delay: int) -> bool
         stdout = _decode(result.stdout).strip()
         stderr = _decode(result.stderr).strip()
         gh_warning(
-            f"adb install attempt {attempt}/{retries} failed."
-            f" stdout={stdout!r} stderr={stderr!r}"
+            f"adb install attempt {attempt}/{retries} failed. stdout={stdout!r} stderr={stderr!r}"
         )
         if attempt < retries:
             time.sleep(retry_delay)
@@ -476,8 +475,7 @@ def main() -> int:
 
         if attempt < args.launch_retries:
             gh_warning(
-                f"{final_error_message} on attempt "
-                f"{attempt}/{args.launch_retries}; retrying..."
+                f"{final_error_message} on attempt {attempt}/{args.launch_retries}; retrying..."
             )
             time.sleep(2)
 

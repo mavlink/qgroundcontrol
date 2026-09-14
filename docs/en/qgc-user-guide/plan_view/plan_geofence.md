@@ -23,12 +23,10 @@ You can create multiple regions by pressing the buttons multiple times, allowing
 
 - Circular region:
 
-
   - Move the region by dragging the central dot on the map
   - Resize the circle by dragging the dot on the edge of the circle (or you can change the radius value in the fence panel).
 
 - Polygon region:
-
 
   - Move the vertices by dragging the filled dots
   - Create new vertices by clicking the "unfilled" dots on the lines between the filled vertices.

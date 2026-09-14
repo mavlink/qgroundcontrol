@@ -12,6 +12,11 @@ on:
   pull_request:
   merge_group:
   workflow_dispatch:
+    inputs:
+      debug_runner:
+        description: 'Open an actor-only SSH session after a failure (up to 15 minutes, branches only)'
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -92,6 +97,12 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
+
       - name: Enable RunsOn magic cache
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: runs-on/action@v2
@@ -116,7 +127,7 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Initialize CodeQL
-        if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/master')) && runner.arch != 'ARM64'
+        if: runner.arch != 'ARM64'
         uses: github/codeql-action/init@v4
         with:
           languages: c-cpp
@@ -135,6 +146,7 @@ jobs:
           extra-args: -DQGC_APPIMAGE_UPDATE_INFORMATION=${{ env.QGC_APPIMAGE_UPDATE_INFORMATION }}
 
       - name: Build
+        id: build
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
@@ -144,8 +156,7 @@ jobs:
 
       - name: Perform CodeQL Analysis
         id: codeql
-        if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/master')) && runner.arch != 'ARM64'
-        continue-on-error: true
+        if: runner.arch != 'ARM64'
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:c-cpp"
@@ -201,38 +212,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
 
-  debug-matrix:
-    needs: changes
-    if: needs.changes.outputs.should_build == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 1
-    outputs:
-      include: ${{ steps.build.outputs.include }}
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@v7
-        with:
-          sparse-checkout: |
-            .github/scripts/linux_debug_matrix.py
-            .github/scripts/ci_bootstrap.py
-            tools/_bootstrap.py
-            tools/common/__init__.py
-            tools/common/file_traversal.py
-            tools/common/gh_actions.py
-          sparse-checkout-cone-mode: false
-          fetch-depth: 1
-          persist-credentials: false
-      - name: Build matrix
-        id: build
-        run: python3 .github/scripts/linux_debug_matrix.py
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner
 
   debug-validation:
-    name: ${{ matrix.job_name }}
-    needs: [changes, debug-matrix]
+    name: ${{ matrix.mode == 'coverage' && 'Test + Coverage linux_gcc_64 Debug' || 'Sanitizers linux_gcc_64 Debug (ASan+UBSan)' }}
+    needs: changes
     if: needs.changes.outputs.should_build == 'true'
     runs-on: >-
       ${{
@@ -241,18 +228,17 @@ jobs:
         format('runs-on={0}/runner=linux-x64-tester', github.run_id) ||
         'ubuntu-24.04'
       }}
-    timeout-minutes: ${{ matrix.timeout_minutes }}
+    timeout-minutes: 120
 
-    # checks: write scoped here: only this job reports test results (dorny/test-reporter).
     permissions:
+      actions: read
       contents: read
-      checks: write
       id-token: write
 
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.debug-matrix.outputs.include) }}
+        mode: [coverage, sanitizers]
 
     defaults:
       run:
@@ -263,6 +249,12 @@ jobs:
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
@@ -299,101 +291,28 @@ jobs:
           preset: ${{ matrix.mode == 'coverage' && 'Linux-coverage' || 'Linux-debug' }}
           testing: 'true'
           coverage: ${{ matrix.mode == 'coverage' && 'true' || 'false' }}
-          extra-args: ${{ matrix.configure_extra }}
+          extra-args: ${{ matrix.mode == 'sanitizers' && '-DQGC_ENABLE_ASAN=ON -DQGC_ENABLE_UBSAN=ON -DQGC_TEST_DETECT_LEAKS=ON' || '' }}
 
       - name: Build
+        id: build
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
 
-      # Split by label so Unit parallelizes; Integration serializes on shared MockLink/LinkManager state.
-      - name: Run Unit Tests (parallel)
-        id: unit_tests
-        uses: ./.github/actions/run-unit-tests
+      - name: Run and report tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        uses: ./.github/actions/test-phase
         env:
           ASAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
           LSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('suppressions={0}/build/asan_suppressions.txt', runner.temp) || '' }}
           UBSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('print_stacktrace=1:halt_on_error=1:suppressions={0}/build/ubsan_suppressions.txt', runner.temp) || '' }}
         with:
           build-dir: ${{ runner.temp }}/build
-          junit-output: junit-results-linux-${{ matrix.mode }}-unit.xml
-          ctest-output: test-output-linux-${{ matrix.mode }}-unit.txt
-          include-labels: 'Unit'
-          exclude-labels: ${{ matrix.exclude_labels }}
-          # Coverage requires serial execution (gcov writes race); sanitizers don't.
+          suite: linux-${{ matrix.mode }}
           parallel: ${{ matrix.mode == 'coverage' && '1' || 'auto' }}
-
-      - name: Run Integration Tests (serial)
-        id: integration_tests
-        if: always() && !cancelled() && steps.unit_tests.conclusion != 'cancelled'
-        uses: ./.github/actions/run-unit-tests
-        env:
-          ASAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
-          LSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('suppressions={0}/build/asan_suppressions.txt', runner.temp) || '' }}
-          UBSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('print_stacktrace=1:halt_on_error=1:suppressions={0}/build/ubsan_suppressions.txt', runner.temp) || '' }}
-        with:
-          build-dir: ${{ runner.temp }}/build
-          junit-output: junit-results-linux-${{ matrix.mode }}-integration.xml
-          ctest-output: test-output-linux-${{ matrix.mode }}-integration.txt
-          include-labels: 'Integration'
-          exclude-labels: ${{ matrix.exclude_labels }}
-          parallel: '1'
-
-      - name: Analyze Unit Test Durations (unit)
-        if: always() && !cancelled() && steps.unit_tests.conclusion != 'skipped'
-        uses: ./.github/actions/test-duration-report
-        with:
-          junit-path: ${{ runner.temp }}/build/junit-results-linux-${{ matrix.mode }}-unit.xml
-          report-json-path: ${{ runner.temp }}/build/test-duration-linux-${{ matrix.mode }}-unit.json
-          top-n: '20'
-          slow-threshold-seconds: '60'
-
-      - name: Analyze Unit Test Durations (integration)
-        if: always() && !cancelled() && steps.integration_tests.conclusion != 'skipped'
-        uses: ./.github/actions/test-duration-report
-        with:
-          junit-path: ${{ runner.temp }}/build/junit-results-linux-${{ matrix.mode }}-integration.xml
-          report-json-path: ${{ runner.temp }}/build/test-duration-linux-${{ matrix.mode }}-integration.json
-          top-n: '20'
-          slow-threshold-seconds: '60'
-
-      - name: Report Test Results (unit)
-        if: always() && !cancelled() && steps.unit_tests.conclusion != 'skipped'
-        uses: ./.github/actions/test-report
-        with:
-          name: Unit Tests (${{ matrix.mode }})
+          exclude-labels: ${{ matrix.mode == 'sanitizers' && 'Flaky|Network|NoSanitizer' || 'Flaky|Network' }}
           upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
-          codecov-flags: linux-${{ matrix.mode }}-unit
-          build-dir: ${{ runner.temp }}/build
-          junit-file: junit-results-linux-${{ matrix.mode }}-unit.xml
-          output-file: test-output-linux-${{ matrix.mode }}-unit.txt
-          artifact-name: test-results-linux-${{ matrix.mode }}-unit
-          retention-days: 7
-
-      - name: Report Test Results (integration)
-        if: always() && !cancelled() && steps.integration_tests.conclusion != 'skipped'
-        uses: ./.github/actions/test-report
-        with:
-          name: Integration Tests (${{ matrix.mode }})
-          upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
-          codecov-flags: linux-${{ matrix.mode }}-integration
-          build-dir: ${{ runner.temp }}/build
-          junit-file: junit-results-linux-${{ matrix.mode }}-integration.xml
-          output-file: test-output-linux-${{ matrix.mode }}-integration.txt
-          artifact-name: test-results-linux-${{ matrix.mode }}-integration
-          retention-days: 7
-
-      - name: Upload Test Artifacts
-        if: always() && !cancelled() && (steps.unit_tests.conclusion != 'skipped' || steps.integration_tests.conclusion != 'skipped')
-        uses: actions/upload-artifact@v7
-        with:
-          name: test-artifacts-linux-${{ matrix.mode }}
-          path: |
-            ${{ runner.temp }}/build/test-output-linux-${{ matrix.mode }}-*.txt
-            ${{ runner.temp }}/build/junit-results-linux-${{ matrix.mode }}-*.xml
-            ${{ runner.temp }}/build/test-duration-linux-${{ matrix.mode }}-*.json
-          retention-days: 7
 
       - name: Verify coverage data files exist
         if: matrix.mode == 'coverage'
@@ -426,3 +345,30 @@ jobs:
             --coverage-xml coverage.xml \
             --line-threshold "${line_thresh}" \
             --branch-threshold "${branch_thresh}"
+
+      - name: Run normally excluded tests
+        id: excluded
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.mode == 'coverage' && github.event_name == 'workflow_dispatch' }}
+        uses: ./.github/actions/run-unit-tests
+        with:
+          build-dir: ${{ runner.temp }}/build
+          include-labels: 'Network|Flaky'
+          exclude-labels: ''
+          parallel: '1'
+          junit-output: junit-excluded.xml
+          ctest-output: excluded-output.txt
+
+      - name: Report normally excluded tests
+        if: ${{ !cancelled() && steps.excluded.outcome != 'skipped' && steps.excluded.outcome != '' }}
+        uses: ./.github/actions/test-report
+        with:
+          name: Network and flaky tests
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-excluded.xml
+          output-file: excluded-output.txt
+          artifact-name: test-results-excluded
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner

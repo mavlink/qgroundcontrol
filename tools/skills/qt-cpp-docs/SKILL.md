@@ -17,6 +17,7 @@ metadata:
   author: qt-ai-skills
   version: "1.0"
   qt-version: "6.x"
+  category: process
 ---
 # Qt C++ Documentation Skill
 

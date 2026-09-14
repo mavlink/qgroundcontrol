@@ -68,9 +68,7 @@ To start a mission from landed:
 1. Press the **Action** button on the _Fly Tools_
 1. Select the _Start Mission_ action from the dialog.
 
-
 1. [Confirm](fly_tools.md#confirmation) the action to start the mission.
-
 
 #### Continue Mission {#continue_mission}
 
@@ -87,9 +85,7 @@ You can continue the current mission while (unless already in a mission!):
 1. Press the **Action** button on the _Fly Tools_
 1. Select the _Continue Mission_ action from the dialog.
 
-
 1. [Confirm](fly_tools.md#confirmation) the action to continue the mission.
-
 
 #### Resume Mission {#resume_mission}
 
@@ -102,10 +98,8 @@ After you insert the new battery _QGroundControl_ will detect the vehicle again 
 
 After landing you will be prompted with a _Flight Plan complete_ dialog, which gives you the option to remove the plan from the vehicle, leave it on the vehicle, or to resume the mission from the last waypoint that was traveled through.
 
-
 If you select to resume the mission, then _QGroundControl_ will rebuild the mission and upload it to the vehicle.
 Then [confirm](fly_tools.md#confirmation) the action to continue the mission.
-
 
 ::: info
 A mission cannot simply resume from the last mission item that the vehicle executed, because there may be multiple items at the last waypoint that affect the next stage of the mission (e.g. speed commands or camera control commands).
@@ -122,13 +116,11 @@ This is meant to prevent issues where stale missions are unknowingly left on a v
 When video streaming is enabled, _QGroundControl_ will display the video stream for the currently selected vehicle in the "video switcher window" at the bottom left of the map.
 You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 
-
 ::: info
 Video streaming is configured/enabled in [Application Settings > General tab > Video](../settings_view/general.md#video).
 :::
 
 You can further configure video display using controls on the switcher:
-
 
 - Resize the switcher by dragging the icon in the top right corner.
 - Hide the switcher by pressing the toggle icon in the lower left.
@@ -148,7 +140,6 @@ Video stored on the camera may be of much higher quality, but it is likely that 
 
 Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
 Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
-
 
 Video stream recording is configured in the [Application Settings > General tab](../settings_view/general.md):
 
@@ -170,4 +161,3 @@ To record video with QGroundControl application elements displayed, you should u
 
 Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
 First toggle to video mode, then select the red button to start recording.
-

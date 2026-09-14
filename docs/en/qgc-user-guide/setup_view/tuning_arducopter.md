@@ -1,6 +1,5 @@
 # ArduCopter Tuning
 
-
 ## Basic Tuning
 
 Adjust the flight characteristics by moving the desired slider to the left or right.

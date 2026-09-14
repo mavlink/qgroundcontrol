@@ -1,12 +1,14 @@
 #include "RTCMMavlink.h"
 
-#include <QtCore/QByteArray>
-#include <QtCore/QSet>
-#include <QtCore/QThread>
 #include <algorithm>
 #include <cstring>
 
+#include <QtCore/QByteArray>
+#include <QtCore/QSet>
+#include <QtCore/QThread>
+
 #include "LinkInterface.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"

@@ -16,12 +16,12 @@ ensure_tools_dir(__file__)
 from common.artifact_metadata import ArtifactMetadataError, read_run_artifact_metadata
 from common.format import format_bytes
 from common.gh_actions import list_run_artifacts, list_workflow_runs_for_sha, parse_csv_list
-from common.github_runs import (
+from common.io import write_json
+from qgc_tools.workflow_runs import (
     add_workflow_run_query_args,
     resolve_workflow_runs,
     select_latest_runs_by_name,
 )
-from common.io import write_json
 
 _DISTRIBUTABLE_PREFIXES = (
     "QGroundControl",

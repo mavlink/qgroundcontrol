@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import TYPE_CHECKING, Any
 
 from .io import read_json, write_json
@@ -31,7 +32,18 @@ def _normalize_artifact(artifact: Mapping[str, Any]) -> dict[str, Any]:
     if isinstance(size, bool) or not isinstance(size, int) or size < 0:
         raise ArtifactMetadataError("artifact size_in_bytes must be a non-negative integer")
 
-    return {"name": name, "size_in_bytes": size}
+    result = {"name": name, "size_in_bytes": size}
+    if "id" in artifact:
+        artifact_id = artifact["id"]
+        if isinstance(artifact_id, bool) or not isinstance(artifact_id, int) or artifact_id <= 0:
+            raise ArtifactMetadataError("artifact id must be a positive integer")
+        result["id"] = artifact_id
+    if artifact.get("digest") is not None:
+        digest = artifact["digest"]
+        if not isinstance(digest, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+            raise ArtifactMetadataError("artifact digest must be a SHA-256 digest")
+        result["digest"] = digest
+    return result
 
 
 def write_run_artifact_metadata(

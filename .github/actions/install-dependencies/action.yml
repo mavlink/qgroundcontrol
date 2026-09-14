@@ -100,7 +100,9 @@ runs:
       uses: actions/cache@v5
       with:
         path: ~/.cache/qgc-apt-archives
-        key: apt-debs-${{ steps.apt-cache-stamp.outputs.distro }}-${{ runner.arch }}-${{ steps.apt-cache-stamp.outputs.month }}-${{ hashFiles('tools/setup/install_dependencies/_packages.py', 'tools/setup/install_dependencies/_debian.py') }}
+        key: >-
+          apt-debs-${{ steps.apt-cache-stamp.outputs.distro }}-${{ runner.arch }}-${{ steps.apt-cache-stamp.outputs.month }}-${{ hashFiles(
+          'tools/setup/install_dependencies/_packages.py', 'tools/setup/install_dependencies/_debian.py') }}
         restore-keys: |
           apt-debs-${{ steps.apt-cache-stamp.outputs.distro }}-${{ runner.arch }}-${{ steps.apt-cache-stamp.outputs.month }}-
           apt-debs-${{ steps.apt-cache-stamp.outputs.distro }}-${{ runner.arch }}-
@@ -110,11 +112,11 @@ runs:
       shell: bash
       env:
         APT_PACKAGES: ${{ steps.linux-deps.outputs.packages }}
-      # Retry/cache/timeout rationale lives in .github/scripts/apt_install_retry.sh,
+      # Retry/cache/timeout rationale lives in .github/scripts/apt_install_retry.py,
       # which downloads .debs into the cached directory restored above.
       run: |
         read -ra packages <<< "${APT_PACKAGES}"
-        "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.sh" \
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.py" \
           --update --no-install-recommends --autoclean "${packages[@]}"
 
     - name: Fix apt alternatives (Linux)
@@ -127,15 +129,13 @@ runs:
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" install-optional
 
-    - name: Install pipx packages (Linux)
+    - name: Install locked Python build tools (Linux)
       if: runner.os == 'Linux'
       shell: bash
       run: |
-        if ! python3 tools/setup/install_dependencies --platform debian --skip-system-packages; then
-          echo "::warning::pipx package installation failed; using apt-provided build tools"
-        fi
-        cmake --version
-        ninja --version
+        python3 tools/setup/install_dependencies --platform debian --skip-system-packages
+        "${GITHUB_WORKSPACE}/tools/.venv/bin/cmake" --version
+        "${GITHUB_WORKSPACE}/tools/.venv/bin/ninja" --version
 
     - name: Install extra packages (Linux)
       if: runner.os == 'Linux' && inputs.extra-packages != ''
@@ -148,7 +148,7 @@ runs:
         read -ra extra <<< "${EXTRA_PACKAGES}"
         validated="$(python3 tools/setup/install_dependencies --validate-extra-packages "${extra[@]}")"
         read -ra packages <<< "${validated}"
-        "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.sh" \
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.py" \
           --install-timeout 300 --label "extra apt packages" "${packages[@]}"
 
     - name: Install dependencies (macOS)

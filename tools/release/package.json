@@ -1,0 +1,18 @@
+{
+  "name": "qgc-release-tools",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test release-rules.test.mjs",
+    "release": "semantic-release --extends ../../.releaserc.json"
+  },
+  "devDependencies": {
+    "semantic-release": "24.2.5",
+    "@semantic-release/exec": "7.1.0",
+    "conventional-changelog-conventionalcommits": "8.0.0"
+  }
+}

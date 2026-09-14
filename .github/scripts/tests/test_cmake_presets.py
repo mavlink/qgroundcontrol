@@ -318,7 +318,7 @@ def test_developer_build_entrypoints_use_presets() -> None:
     assert "ctest --preset default" in justfile
     assert "--parallel {{ jobs }} --no-tests=error" in justfile
     assert "host_os := os()" in justfile
-    assert 'python := if host_os == "windows"' in justfile
+    assert 'python := "uv run --frozen --project tools --group scripts python"' in justfile
     assert "msvc2022" not in justfile
     assert 'qt_root_arg := if qt_dir == ""' in justfile
     assert 'app_path := if host_os == "windows"' in justfile
@@ -326,20 +326,21 @@ def test_developer_build_entrypoints_use_presets() -> None:
     assert "preset = select_preset(config)" in configure_tool
     assert "qt-cmake not found; pass --no-qt-cmake" in configure_tool
     assert '"--preset"' in vscode_tasks
-    assert '"python.defaultInterpreterPath": "${workspaceFolder}/.venv"' in vscode_settings
-    for path in ("CMakePresets.json", "cmake/presets", "justfile", ".vscode"):
+    assert '"python.defaultInterpreterPath": "${workspaceFolder}/tools/.venv"' in vscode_settings
+    for path in ("CMakePresets.json", "cmake", "justfile", ".vscode"):
         assert path in ci_scripts
 
-    multipass = REPO_ROOT / "deploy" / "multipass" / "build-in-vm.sh"
+    multipass = REPO_ROOT / "deploy" / "multipass" / "build_in_vm.py"
     if multipass.exists():
-        assert '"${QT_ROOT}/bin/qt-cmake"' in multipass.read_text(encoding="utf-8")
+        assert 'qt_root / "bin/qt-cmake"' in multipass.read_text(encoding="utf-8")
 
     vagrant = REPO_ROOT / "deploy" / "vagrant" / "Vagrantfile"
     if vagrant.exists():
         vagrant_text = vagrant.read_text(encoding="utf-8")
-        assert "qt-cmake" in vagrant_text
-        assert "--preset Linux" in vagrant_text
-        assert "-DQGC_BUILD_TESTING=ON" not in vagrant_text
+        assert "deploy/vagrant/provision.py" in vagrant_text
+        provision = (vagrant.parent / "provision.py").read_text(encoding="utf-8")
+        assert "deploy/multipass/build_in_vm.py" in provision
+        assert '"Release": "Linux"' in multipass.read_text(encoding="utf-8")
 
 
 def test_host_tools_use_host_platform_predicates() -> None:
@@ -398,3 +399,20 @@ def test_ci_configure_steps_select_platform_presets() -> None:
 
     action = yaml.safe_load(CMAKE_CONFIGURE_ACTION.read_text(encoding="utf-8"))
     assert action["inputs"]["use-qt-cmake"]["default"] == "true"
+
+
+@pytest.mark.parametrize("platform", ["windows", "macos"])
+def test_portable_tests_share_the_platform_build(platform: str) -> None:
+    workflow = yaml.safe_load(
+        (REPO_ROOT / ".github/workflows" / f"{platform}.yml").read_text(encoding="utf-8")
+    )
+    steps = workflow["jobs"]["build"]["steps"]
+    configure = next(
+        step for step in steps if step.get("uses") == "./.github/actions/cmake-configure"
+    )
+    assert "QGC_BUILD_PORTABLE_TESTS=" in configure["with"]["extra-args"]
+    portable = next(step for step in steps if step.get("id") == "portable")
+    assert portable["with"]["include-labels"] == "Portable"
+    assert "steps.build.outcome == 'success'" in portable["if"]
+    if platform == "windows":
+        assert "matrix.variant == 'amd64'" in portable["if"]

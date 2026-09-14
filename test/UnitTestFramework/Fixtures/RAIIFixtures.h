@@ -1,19 +1,20 @@
 #pragma once
 
+#include <memory>
+#include <optional>
+
 #include <QtCore/QByteArray>
-#include <QtCore/QList>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonParseError>
+#include <QtCore/QList>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTemporaryFile>
 #include <QtCore/QUrl>
 #include <QtCore/QVariant>
 #include <QtNetwork/QNetworkReply>
 
-#include <memory>
-#include <optional>
-
+#include "MAVLinkEnums.h"
 #include "MAVLinkMessageType.h"
 
 class RunGuard;

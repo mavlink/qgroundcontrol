@@ -1,8 +1,10 @@
 #include "WaitForParamResponseState.h"
-#include "Vehicle.h"
-#include "QGCLoggingCategory.h"
 
 #include <utility>
+
+#include "MAVLinkLib.h"
+#include "QGCLoggingCategory.h"
+#include "Vehicle.h"
 
 WaitForParamResponseState::WaitForParamResponseState(QState *parent, int timeoutMsecs,
                                                      Predicate paramValuePredicate,

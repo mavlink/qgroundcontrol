@@ -1,4 +1,6 @@
 #include "ArduSubFirmwarePlugin.h"
+
+#include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 

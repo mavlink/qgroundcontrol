@@ -8,14 +8,14 @@ from _helpers import REPO_ROOT
 
 
 def test_appimagelint_reports_with_fuse_only_where_enabled() -> None:
-    entrypoint = (REPO_ROOT / "deploy/docker/entrypoint.sh").read_text()
+    entrypoint = (REPO_ROOT / "deploy/docker/entrypoint.py").read_text()
     create_appimage = (REPO_ROOT / "cmake/install/CreateAppImage.cmake").read_text()
     docker_workflow = (REPO_ROOT / ".github/workflows/docker.yml").read_text()
     linux_workflow = (REPO_ROOT / ".github/workflows/linux.yml").read_text()
     upload_action = (REPO_ROOT / ".github/actions/attest-and-upload/action.yml").read_text()
     variants = json.loads((REPO_ROOT / "deploy/docker/variants.json").read_text())["variants"]
 
-    assert "export APPIMAGE_EXTRACT_AND_RUN=1" in entrypoint
+    assert 'os.environ["APPIMAGE_EXTRACT_AND_RUN"] = "1"' in entrypoint
     assert 'COMMAND "${CMAKE_COMMAND}" -E env --unset=APPIMAGE_EXTRACT_AND_RUN' in create_appimage
     assert '--json-report "${APPIMAGELINT_REPORT_PATH}"' in create_appimage
     assert "AppImage passed validation" not in create_appimage

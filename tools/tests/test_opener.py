@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/common/opener.py."""
 
 from __future__ import annotations
@@ -33,7 +32,9 @@ def test_open_linux_uses_xdg_open(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     assert called == [["/usr/bin/xdg-open", str(target)]]
 
 
-def test_open_linux_no_opener_returns_false(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_open_linux_no_opener_returns_false(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr("sys.platform", "linux")
     monkeypatch.setattr("common.opener.shutil.which", lambda name: None)
     assert open_in_default_app(tmp_path / "x") is False

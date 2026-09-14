@@ -7,7 +7,7 @@ The Servo Outputs page provides real-time visualization and configuration for up
 Each servo channel (if its `SERVOn_FUNCTION` parameter exists) displays:
 
 | Column | Description | Parameter |
-|--------|-------------|----------|
+| -------- | ------------- | ---------- |
 | **#** | Servo number (1–16) | — |
 | **Position** | Live PWM value shown as a progress bar with numeric readout | (read-only telemetry) |
 | **Function** | Output function assignment (e.g., Motor1, Aileron, Throttle, etc.) | `SERVOn_FUNCTION` |

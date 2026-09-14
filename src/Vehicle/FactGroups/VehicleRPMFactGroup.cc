@@ -1,4 +1,6 @@
 #include "VehicleRPMFactGroup.h"
+
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 
 VehicleRPMFactGroup::VehicleRPMFactGroup(QObject *parent)

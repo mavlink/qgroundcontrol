@@ -35,9 +35,12 @@ include(CPMPatchCache)
 set(_mavlink_patch "${CMAKE_CURRENT_LIST_DIR}/mavlink-deterministic-mavgen.patch")
 qgc_cpm_patch_cache_key(
     _mavlink_cache_key
-    GIT_REPOSITORY "${QGC_MAVLINK_GIT_REPO}"
-    GIT_TAG "${QGC_MAVLINK_GIT_TAG}"
-    PATCHES "${_mavlink_patch}"
+    GIT_REPOSITORY
+    "${QGC_MAVLINK_GIT_REPO}"
+    GIT_TAG
+    "${QGC_MAVLINK_GIT_TAG}"
+    PATCHES
+    "${_mavlink_patch}"
 )
 
 CPMAddPackage(
@@ -46,19 +49,16 @@ CPMAddPackage(
     GIT_TAG ${QGC_MAVLINK_GIT_TAG}
     # CPM's default source-cache key does not hash PATCHES file contents.
     CUSTOM_CACHE_KEY "${_mavlink_cache_key}"
-    OPTIONS
-        "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}"
-        "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
-    # Retry upstream's build-time pip install and make mavgen hashes deterministic.
+    OPTIONS "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}" "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
+    # Use the locked generator environment and make mavgen hashes deterministic.
     PATCHES "${_mavlink_patch}"
 )
 
 qgc_require_cpm_added(mavlink)
 
 add_dependencies(${CMAKE_PROJECT_NAME} mavlink)
-target_include_directories(${CMAKE_PROJECT_NAME}
-                           PRIVATE ${mavlink_BINARY_DIR}/include/mavlink
-                                   ${mavlink_BINARY_DIR}/include/mavlink/${QGC_MAVLINK_DIALECT}
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${mavlink_BINARY_DIR}/include/mavlink
+                                                         ${mavlink_BINARY_DIR}/include/mavlink/${QGC_MAVLINK_DIALECT}
 )
 
 # Generate lightweight MAVLinkEnums.h (enum typedefs only, no message pack/unpack code)
@@ -75,7 +75,11 @@ add_custom_command(
     COMMENT "Generating MAVLinkEnums.h + MAVLinkEnumsQml.{h,cc}"
     VERBATIM
 )
-add_custom_target(mavlink_enums DEPENDS "${MAVLINK_ENUMS_H}" "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}")
+add_custom_target(
+    mavlink_enums
+    DEPENDS "${MAVLINK_ENUMS_H}" "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}"
+    COMMENT "Checking generated MAVLink enum bindings"
+)
 add_dependencies(${CMAKE_PROJECT_NAME} mavlink_enums)
 # Ensure AUTOMOC runs after the generator
 set_property(
@@ -95,14 +99,18 @@ set(MAVLINK_INSTANCE_FIELDS_GENERATOR "${CMAKE_SOURCE_DIR}/tools/generators/mavl
 set(MAVLINK_XML_DIR "${mavlink_SOURCE_DIR}/message_definitions/v1.0")
 add_custom_command(
     OUTPUT "${MAVLINK_INSTANCE_FIELDS_H}"
-    COMMAND Python3::Interpreter "${MAVLINK_INSTANCE_FIELDS_GENERATOR}"
-            "${MAVLINK_XML_DIR}" "${QGC_MAVLINK_DIALECT}" "${MAVLINK_INSTANCE_FIELDS_H}"
-    DEPENDS mavlink "${MAVLINK_INSTANCE_FIELDS_GENERATOR}"
-            "${CMAKE_SOURCE_DIR}/tools/common/io.py" "${CMAKE_SOURCE_DIR}/tools/common/xml.py"
+    COMMAND Python3::Interpreter "${MAVLINK_INSTANCE_FIELDS_GENERATOR}" "${MAVLINK_XML_DIR}" "${QGC_MAVLINK_DIALECT}"
+            "${MAVLINK_INSTANCE_FIELDS_H}"
+    DEPENDS mavlink "${MAVLINK_INSTANCE_FIELDS_GENERATOR}" "${CMAKE_SOURCE_DIR}/tools/common/io.py"
+            "${CMAKE_SOURCE_DIR}/tools/common/xml.py"
     COMMENT "Generating MAVLinkInstanceFields.h"
     VERBATIM
 )
-add_custom_target(mavlink_instance_fields DEPENDS "${MAVLINK_INSTANCE_FIELDS_H}")
+add_custom_target(
+    mavlink_instance_fields
+    DEPENDS "${MAVLINK_INSTANCE_FIELDS_H}"
+    COMMENT "Checking generated MAVLink instance fields"
+)
 add_dependencies(${CMAKE_PROJECT_NAME} mavlink_instance_fields)
 
 # Bundle the upstream component_metadata JSON schemas (referenced from the CPM dir, never
@@ -115,7 +123,8 @@ set(MAVLINK_SCHEMA_FILES
     "${MAVLINK_COMPONENT_METADATA_DIR}/peripherals.schema.json"
     "${MAVLINK_COMPONENT_METADATA_DIR}/translation.schema.json"
 )
-qt_add_resources(${CMAKE_PROJECT_NAME} mavlink_component_metadata_schemas
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} mavlink_component_metadata_schemas
     PREFIX "/json/component_metadata"
     BASE "${MAVLINK_COMPONENT_METADATA_DIR}"
     FILES ${MAVLINK_SCHEMA_FILES}

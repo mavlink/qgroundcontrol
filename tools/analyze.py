@@ -44,7 +44,7 @@ class FileCollector:
 
     def get_compare_ref(self) -> str | None:
         """Get the best available ref to compare against."""
-        return get_default_branch_ref(self.repo_root)
+        return os.environ.get("PR_BASE_SHA") or get_default_branch_ref(self.repo_root)
 
     def get_cpp_files(
         self,
@@ -87,6 +87,9 @@ class FileCollector:
         if not search_path.exists():
             return []
 
+        if search_path.is_file():
+            return [search_path] if search_path.suffix in extensions else []
+
         files: list[Path] = []
         for ext in extensions:
             files.extend(search_path.rglob(f"*{ext}"))
@@ -100,7 +103,7 @@ class FileCollector:
         )
 
         if result.returncode != 0:
-            return []
+            raise RuntimeError(f"Unable to determine changed files: {result.stderr}")
 
         files: list[Path] = []
         for line in result.stdout.strip().splitlines():
@@ -135,17 +138,24 @@ def get_analyzer(
     repo_root: Path,
     build_dir: Path,
     jobs: int = 1,
+    *,
+    shard: int = 1,
+    shard_count: int = 1,
 ) -> AnalyzerBase:
     """Get the appropriate analyzer for the given tool."""
     match tool:
         case "clang-tidy":
             from analyzers.clang_tidy import ClangTidyAnalyzer
 
-            return ClangTidyAnalyzer(repo_root, build_dir, jobs=jobs)
+            return ClangTidyAnalyzer(
+                repo_root, build_dir, jobs=jobs, shard=shard, shard_count=shard_count
+            )
         case "clazy":
             from analyzers.clazy import ClazyAnalyzer
 
-            return ClazyAnalyzer(repo_root, build_dir, jobs=jobs)
+            return ClazyAnalyzer(
+                repo_root, build_dir, jobs=jobs, shard=shard, shard_count=shard_count
+            )
         case "clang-format":
             from analyzers.clang_format import ClangFormatAnalyzer
 
@@ -197,8 +207,8 @@ Examples:
 
     parser.add_argument(
         "path",
-        nargs="?",
-        help="Path to analyze (relative to repo root)",
+        nargs="*",
+        help="Files or directories to analyze (relative to repo root)",
     )
     parser.add_argument(
         "-t",
@@ -242,9 +252,30 @@ Examples:
         help="Parallel jobs for clang-tidy/clazy (default: cpu count, 0=auto)",
     )
     parser.add_argument(
+        "--shard", type=int, default=1, help="Compiler-analysis shard number (1-based)"
+    )
+    parser.add_argument(
+        "--shard-count", type=int, default=1, help="Number of compiler-analysis shards"
+    )
+    parser.add_argument(
+        "--profile-checks",
+        action="store_true",
+        help="Record clang-tidy per-check profiles (adds significant runtime overhead)",
+    )
+    parser.add_argument(
         "--no-color",
         action="store_true",
         help="Disable colored output",
+    )
+
+    parser.add_argument(
+        "--qml-build", action="store_true", help="Use generated QML imports and enforce type errors"
+    )
+
+    parser.add_argument(
+        "--advisory",
+        action="store_true",
+        help="Report warnings without failing; errors still fail",
     )
 
     parser.add_argument(
@@ -253,7 +284,14 @@ Examples:
         help="Check that required external tools are available, then exit",
     )
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    if not 1 <= args.shard <= args.shard_count:
+        parser.error("--shard must be between 1 and --shard-count")
+    if args.shard_count > 1 and args.tool not in {"clang-tidy", "clazy"}:
+        parser.error("Sharding requires --tool clang-tidy or clazy")
+    if args.profile_checks and args.tool != "clang-tidy":
+        parser.error("--profile-checks requires --tool clang-tidy")
+    return args
 
 
 def main() -> int:
@@ -281,31 +319,59 @@ def main() -> int:
 
     build_dir = repo_root / args.build_dir
 
-    target_path: Path | None = None
-    if args.path:
-        try:
-            target_path = validate_path(args.path, repo_root)
-        except ValueError as e:
-            log_error(str(e))
-            return 1
-
     try:
-        jobs = args.jobs if args.jobs > 0 else os.cpu_count() or 1
-        analyzer = get_analyzer(args.tool, repo_root, build_dir, jobs=jobs)
+        targets = [validate_path(path, repo_root) for path in args.path]
     except ValueError as e:
         log_error(str(e))
         return 1
 
+    try:
+        jobs = args.jobs if args.jobs > 0 else os.cpu_count() or 1
+        analyzer = get_analyzer(
+            args.tool,
+            repo_root,
+            build_dir,
+            jobs=jobs,
+            shard=args.shard,
+            shard_count=args.shard_count,
+        )
+    except ValueError as e:
+        log_error(str(e))
+        return 1
+
+    if args.profile_checks:
+        from analyzers.clang_tidy import ClangTidyAnalyzer
+
+        if isinstance(analyzer, ClangTidyAnalyzer):
+            analyzer.profile_checks = True
+
+    if args.qml_build:
+        from analyzers.qmllint import QmlLintAnalyzer
+
+        if not isinstance(analyzer, QmlLintAnalyzer):
+            log_error("--qml-build requires --tool qmllint")
+            return 2
+        analyzer.build_aware = True
+
     collector = FileCollector(repo_root)
 
-    if args.tool == "qmllint":
-        files = collector.get_qml_files(target_path, args.all)
-    else:
-        files = collector.get_cpp_files(target_path, args.all)
+    collect = collector.get_qml_files if args.tool == "qmllint" else collector.get_cpp_files
+    try:
+        files = (
+            sorted({file for target in targets for file in collect(target)})
+            if targets
+            else collect(analyze_all=args.all)
+        )
+    except RuntimeError as e:
+        log_error(str(e))
+        return 2
 
     result = analyzer.run(files, fix=args.fix)
 
-    if result.passed:
+    print(f"{result.tool}: {result.status} ({result.files_checked} files)")
+    if result.execution_error or result.error_findings:
+        return 2
+    if result.passed or args.advisory:
         log_ok("Analysis complete")
         return 0
     else:

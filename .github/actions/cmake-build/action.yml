@@ -43,6 +43,7 @@ runs:
   using: composite
   steps:
     - name: Build
+      id: compile
       shell: bash
       working-directory: ${{ inputs.build-dir }}
       env:
@@ -63,6 +64,19 @@ runs:
         [[ "$CONTINUE" == "true" ]] && ARGS+=(--continue-on-error)
         [[ "$REVIEWDOG" == "true" ]] && ARGS+=(--reviewdog)
         python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" "${ARGS[@]}"
+
+    - name: Save successful build caches
+      if: steps.compile.outputs.build_success == 'true' && (inputs.target == 'all' || inputs.target == 'autogen')
+      uses: ./.github/actions/save-build-cache
+
+    - name: Upload build timings
+      if: always() && steps.compile.outputs.profile_path != ''
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.compile.outputs.profile_name }}
+        path: ${{ steps.compile.outputs.profile_path }}
+        retention-days: 7
+        if-no-files-found: warn
 
     - name: Setup reviewdog
       id: reviewdog

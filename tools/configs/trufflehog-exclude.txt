@@ -5,9 +5,9 @@
 .*/testdata/.*
 .*/fixtures/.*
 
-# Generated documentation (not handwritten - READMEs should still be scanned)
-docs/.*\.md$
-CHANGELOG\.md$
+# Generated documentation only; authored Markdown remains scanned.
+^docs/\.vitepress/(dist|cache)/
+^docs/api/
 
 # Dependencies
 .*/vendor/.*

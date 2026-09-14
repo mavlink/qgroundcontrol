@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
 """Tests for tools/setup/install_qt.py."""
 
 from __future__ import annotations
 
+import json
 import subprocess
 from typing import TYPE_CHECKING
 
@@ -21,6 +21,51 @@ from setup.install_qt import (
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+
+def test_configured_container_install_reuses_qt_policy(monkeypatch, tmp_path):
+    config = tmp_path / "build-config.json"
+    config.write_text(json.dumps({"qt": {"version": "6.8.3", "modules": "qtcharts qtlocation"}}))
+    monkeypatch.setenv("CONFIG_FILE", str(config))
+    monkeypatch.setattr(install_qt, "tool_command", lambda *args, **kwargs: ["locked-aqt"])
+    commands = []
+    monkeypatch.setattr(install_qt, "_run_aqt_with_retries", commands.append)
+    root = tmp_path / "Qt/6.8.3/android_arm64_v8a"
+    root.mkdir(parents=True)
+    assert (
+        install_qt.main(
+            [
+                "install",
+                "--from-config",
+                "--host",
+                "all_os",
+                "--target",
+                "android",
+                "--arch",
+                "android_arm64_v8a",
+                "--outdir",
+                str(tmp_path / "Qt"),
+                "--autodesktop",
+            ]
+        )
+        == 0
+    )
+    assert commands == [
+        [
+            "locked-aqt",
+            "install-qt",
+            "all_os",
+            "android",
+            "6.8.3",
+            "android_arm64_v8a",
+            "--outputdir",
+            str(tmp_path / "Qt"),
+            "--modules",
+            "qtcharts",
+            "qtlocation",
+            "--autodesktop",
+        ]
+    ]
 
 
 class TestResolveArchDir:
@@ -52,6 +97,17 @@ class TestResolveArchDir:
 
 
 class TestComputeCacheDigest:
+    def test_cache_metadata_uses_relative_workspace_path(self, monkeypatch, tmp_path):
+        output = tmp_path / "output.txt"
+        monkeypatch.setenv("GITHUB_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+        result = install_qt.main(
+            ["cache-key", "--arch", "win64_msvc2022_64", "--cache-dir", str(tmp_path / ".qt")]
+        )
+        assert result == 0
+        assert "cache_dir=.qt\n" in output.read_text()
+        assert "arch_dir=msvc2022_64\n" in output.read_text()
+
     def test_deterministic(self) -> None:
         a = compute_cache_digest("qtgraphs qtlocation", "")
         b = compute_cache_digest("qtgraphs qtlocation", "")
@@ -185,29 +241,32 @@ class TestRunAqtWithRetries:
     def _fake_run(returncodes: list[int], calls: list[list[str]]):
         seq = iter(returncodes)
 
-        def _run(args: list[str], check: bool = False) -> subprocess.CompletedProcess:
+        def _run(args: list[str], check: bool = False, **_kwargs) -> subprocess.CompletedProcess:
             calls.append(args)
-            return subprocess.CompletedProcess(args, next(seq))
+            code = next(seq)
+            if check and code:
+                raise subprocess.CalledProcessError(code, args)
+            return subprocess.CompletedProcess(args, code)
 
         return _run
 
     def test_succeeds_first_try(self, monkeypatch: pytest.MonkeyPatch) -> None:
         calls: list[list[str]] = []
-        monkeypatch.setattr(install_qt.subprocess, "run", self._fake_run([0], calls))
+        monkeypatch.setattr("common.proc.subprocess.run", self._fake_run([0], calls))
         _run_aqt_with_retries(["aqt", "install-qt"])
         assert len(calls) == 1
 
     def test_retries_then_succeeds(self, monkeypatch: pytest.MonkeyPatch) -> None:
         calls: list[list[str]] = []
-        monkeypatch.setattr(install_qt.subprocess, "run", self._fake_run([254, 0], calls))
-        monkeypatch.setattr(install_qt.time, "sleep", lambda _s: None)
+        monkeypatch.setattr("common.proc.subprocess.run", self._fake_run([254, 0], calls))
+        monkeypatch.setattr("common.proc.time.sleep", lambda _s: None)
         _run_aqt_with_retries(["aqt", "install-qt"])
         assert len(calls) == 2
 
     def test_raises_after_exhausting_attempts(self, monkeypatch: pytest.MonkeyPatch) -> None:
         calls: list[list[str]] = []
-        monkeypatch.setattr(install_qt.subprocess, "run", self._fake_run([254] * 3, calls))
-        monkeypatch.setattr(install_qt.time, "sleep", lambda _s: None)
+        monkeypatch.setattr("common.proc.subprocess.run", self._fake_run([254] * 3, calls))
+        monkeypatch.setattr("common.proc.time.sleep", lambda _s: None)
         with pytest.raises(subprocess.CalledProcessError):
             _run_aqt_with_retries(["aqt", "install-qt"])
         assert len(calls) == install_qt._AQT_MAX_ATTEMPTS

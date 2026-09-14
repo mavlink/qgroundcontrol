@@ -1,9 +1,13 @@
 name: "QGroundControl CodeQL Config"
+# C++ extraction runs with the native build in workflows/linux.yml.
+# The standalone CodeQL workflow handles Actions, Java/Kotlin, and Python.
 
 paths:
   - src
   - android/src
   - tools
+  - deploy
+  - test
   - .github
 
 paths-ignore:
@@ -22,6 +26,9 @@ queries:
   - uses: security-extended
 
 query-filters:
+  - exclude:
+      # Stable release tags are accepted by actions/README.md; zizmor enforces ref-pin.
+      id: actions/unpinned-tag
   - exclude:
       # Excluded due to frequent false positives with Qt/moc-heavy call patterns.
       # Re-evaluate before enabling if CodeQL signal quality improves.

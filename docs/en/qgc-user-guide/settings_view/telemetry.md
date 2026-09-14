@@ -9,7 +9,6 @@ The screen also allows you to manage [MAVLink 2 Log Streaming](#logging) (PX4 on
 
 This section sets the MAVLink properties and behaviour of _QGroundControl_.
 
-
 - **MAVLink System ID:** System ID of _QGroundControl_ on the MAVLink network (Default: 255).
   Vehicles are typically allocated IDs from 1.
   You may have to specify another ID if there are multiple ground stations or MAVLink applications on the network.
@@ -24,7 +23,6 @@ This section sets the MAVLink properties and behaviour of _QGroundControl_.
 
 This shows the status of MAVLink message transfer over the communications link.
 A high **Loss rate** may lead to protocol errors for things like parameter download or mission upload/download.
-
 
 ## MAVLink 2 Signing {#signing}
 
@@ -66,10 +64,8 @@ The log format is the same as for SD Card logs (downloaded using [Analyze View >
 
 The _MAVLink 2 Logging_ section allows you to manually start and stop logging, and to enable automatic capture of logs.
 
-
 The _MAVLink 2 Log Uploads_ section allows you configure uploading of MAVLink logs to [Flight Review](https://logs.px4.io).
 You can specify all the fields that you would otherwise have to directly enter in the site, and also choose whether logs are automatically or manually uploaded.
-
 
 The fields are:
 
@@ -83,7 +79,7 @@ The fields are:
 - **Wind Speed:** Used to aid debugging and filtering (from multiple flights). Allowed values: _Calm_ | _Breeze_ | _Gale_ | _Storm_.
 - **Flight Rating:** Used to aid debugging and filtering (from multiple flights). Allowed values: _Crashed (Pilot Error)_ | _Crashed (Software or Hardware Issue)_ | _Unsatisfactory_ | _Good_ | _Great_.
 - **Additional Feedback:** (Optional). Enter a more detailed description of the flight or behaviour.
-- **Make this log publically available:** If set, the log will be visible and searchable on _Flight Review_.
+- **Make this log publicly available:** If set, the log will be visible and searchable on _Flight Review_.
   If not set, it will only be available via the link emailed on upload.
 - **Enable automatic log uploads:** If set, the log will automatically be uploaded on completion.
 - **Delete log file after uploading:** If set, the log will automatically deleted after upload.
@@ -94,4 +90,3 @@ Use the checkboxes and buttons to select logs, and either delete or upload them.
 ::: tip
 You can change the parameters in _MAVLink 2 Log Uploads_ above to specify separate descriptions for uploaded logs.
 :::
-

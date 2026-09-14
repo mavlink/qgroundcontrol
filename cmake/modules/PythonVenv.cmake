@@ -1,40 +1,21 @@
 include_guard(GLOBAL)
 
-option(QGC_AUTO_PYTHON_VENV "Auto-create <repo>/.venv with generator deps if missing" ON)
+option(QGC_AUTO_PYTHON_VENV "Auto-create <repo>/tools/.venv with generator deps if missing" ON)
 
-if(CMAKE_HOST_WIN32)
-    set(_qgc_venv_python "${CMAKE_SOURCE_DIR}/.venv/Scripts/python.exe")
+if(DEFINED ENV{QGC_PYTHON_ENV} AND NOT "$ENV{QGC_PYTHON_ENV}" STREQUAL "")
+    get_filename_component(_qgc_venv_dir "$ENV{QGC_PYTHON_ENV}" ABSOLUTE)
 else()
-    set(_qgc_venv_python "${CMAKE_SOURCE_DIR}/.venv/bin/python")
+    set(_qgc_venv_dir "${CMAKE_SOURCE_DIR}/tools/.venv")
 endif()
 
+if(CMAKE_HOST_WIN32)
+    set(_qgc_venv_python "${_qgc_venv_dir}/Scripts/python.exe")
+else()
+    set(_qgc_venv_python "${_qgc_venv_dir}/bin/python")
+endif()
+
+# Restore generator dependencies if another tooling profile removed them.
 function(_qgc_sync_venv_if_stale _py)
-    # MAVLink requires `python -m pip`, which an unseeded uv environment may omit.
-    execute_process(
-        COMMAND "${_py}" -m pip --version
-        RESULT_VARIABLE _pip_result
-        OUTPUT_QUIET
-        ERROR_QUIET
-    )
-    if(NOT _pip_result EQUAL 0)
-        if(NOT QGC_AUTO_PYTHON_VENV)
-            message(FATAL_ERROR
-                "QGC: .venv is missing pip and QGC_AUTO_PYTHON_VENV=OFF. "
-                "Run: ${_py} -m ensurepip --upgrade")
-        endif()
-        message(STATUS "QGC: .venv is missing pip — bootstrapping it with ensurepip")
-        execute_process(
-            COMMAND "${_py}" -m ensurepip --upgrade
-            RESULT_VARIABLE _pip_result
-            OUTPUT_VARIABLE _pip_output
-            ERROR_VARIABLE _pip_output
-        )
-        if(NOT _pip_result EQUAL 0)
-            message(FATAL_ERROR
-                "QGC: failed to bootstrap pip in .venv (exit ${_pip_result}):\n${_pip_output}\n"
-                "Remove .venv and reconfigure, or run: ${_py} -m ensurepip --upgrade")
-        endif()
-    endif()
     if(NOT QGC_AUTO_PYTHON_VENV)
         return()
     endif()
@@ -42,8 +23,7 @@ function(_qgc_sync_venv_if_stale _py)
     execute_process(
         COMMAND "${_py}" "${CMAKE_SOURCE_DIR}/tools/setup/install_python.py" scripts --check
         RESULT_VARIABLE _deps_result
-        OUTPUT_QUIET
-        ERROR_QUIET
+        OUTPUT_QUIET ERROR_QUIET
     )
     if(_deps_result EQUAL 0)
         return()
@@ -54,19 +34,28 @@ function(_qgc_sync_venv_if_stale _py)
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         RESULT_VARIABLE _sync_result
         OUTPUT_VARIABLE _sync_output
-        ERROR_VARIABLE  _sync_output
+        ERROR_VARIABLE _sync_output
     )
     if(NOT _sync_result EQUAL 0)
         message(FATAL_ERROR "QGC: failed to re-sync .venv generator deps (exit ${_sync_result}):\n${_sync_output}\n"
-                            "Run manually: python tools/setup/install_python.py scripts")
+                            "Run manually: python tools/setup/install_python.py scripts"
+        )
     endif()
 endfunction()
 
 # Pin Python3_EXECUTABLE and Python_EXECUTABLE to the venv: upstream deps (mavlink) call
 # find_package(Python), which otherwise picks system Python (3.14 on Windows CI crashes pymavlink mavgen).
 macro(_qgc_pin_python _py)
-    set(Python3_EXECUTABLE "${_py}" CACHE FILEPATH "Python interpreter (workspace .venv)" FORCE)
-    set(Python_EXECUTABLE "${_py}" CACHE FILEPATH "Python interpreter (workspace .venv)" FORCE)
+    # FindPython and FindPython3 define these mixed-case cache variables.
+    # cmake-lint: disable=C0103
+    set(Python3_EXECUTABLE
+        "${_py}"
+        CACHE FILEPATH "Python interpreter (workspace .venv)" FORCE
+    )
+    set(Python_EXECUTABLE
+        "${_py}"
+        CACHE FILEPATH "Python interpreter (workspace .venv)" FORCE
+    )
 endmacro()
 
 if(DEFINED CACHE{Python3_EXECUTABLE})
@@ -83,26 +72,27 @@ if(DEFINED CACHE{Python3_EXECUTABLE})
     endif()
 endif()
 
-if(EXISTS "${CMAKE_SOURCE_DIR}/.venv" AND NOT EXISTS "${_qgc_venv_python}")
-    message(FATAL_ERROR "QGC: ${CMAKE_SOURCE_DIR}/.venv exists but has no interpreter at "
+if(EXISTS "${_qgc_venv_dir}" AND NOT EXISTS "${_qgc_venv_python}")
+    message(FATAL_ERROR "QGC: ${_qgc_venv_dir} exists but has no interpreter at "
                         "${_qgc_venv_python}. Remove it and reconfigure, or run: "
-                        "rm -rf .venv && python tools/setup/install_python.py scripts")
+                        "python tools/setup/install_python.py scripts --environment ${_qgc_venv_dir}"
+    )
 endif()
 
 if(NOT EXISTS "${_qgc_venv_python}" AND QGC_AUTO_PYTHON_VENV)
     find_program(_qgc_boot_python NAMES python3 python)
     if(NOT _qgc_boot_python)
         message(FATAL_ERROR "QGC: no python3 found to bootstrap .venv. "
-                            "Install Python 3.10+ or run tools/setup/install_python.py manually.")
+                            "Install Python 3.10+ or run tools/setup/install_python.py manually."
+        )
     endif()
-    execute_process(
-        COMMAND "${_qgc_boot_python}" -c
-                "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)"
-        RESULT_VARIABLE _qgc_boot_ok
+    execute_process(COMMAND "${_qgc_boot_python}" -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)"
+                    RESULT_VARIABLE _qgc_boot_ok
     )
     if(NOT _qgc_boot_ok EQUAL 0)
         message(FATAL_ERROR "QGC: bootstrap interpreter ${_qgc_boot_python} is older than Python 3.10 "
-                            "(required by tools/pyproject.toml). Install Python 3.10+ and reconfigure.")
+                            "(required by tools/pyproject.toml). Install Python 3.10+ and reconfigure."
+        )
     endif()
     message(STATUS "QGC: .venv missing — creating it via tools/setup/install_python.py scripts")
     execute_process(
@@ -110,11 +100,12 @@ if(NOT EXISTS "${_qgc_venv_python}" AND QGC_AUTO_PYTHON_VENV)
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         RESULT_VARIABLE _qgc_venv_result
         OUTPUT_VARIABLE _qgc_venv_output
-        ERROR_VARIABLE  _qgc_venv_output
+        ERROR_VARIABLE _qgc_venv_output
     )
     if(NOT _qgc_venv_result EQUAL 0)
         message(FATAL_ERROR "QGC: failed to create .venv (exit ${_qgc_venv_result}):\n${_qgc_venv_output}\n"
-                            "Run manually: python tools/setup/install_python.py scripts")
+                            "Run manually: python tools/setup/install_python.py scripts"
+        )
     endif()
 endif()
 
@@ -124,5 +115,6 @@ if(EXISTS "${_qgc_venv_python}")
     message(STATUS "QGC: using Python venv interpreter ${Python3_EXECUTABLE}")
 else()
     message(WARNING "QGC: no .venv found and QGC_AUTO_PYTHON_VENV=OFF; generators will use system "
-                    "python (may lack defusedxml/jinja2). Run: python tools/setup/install_python.py scripts")
+                    "python (may lack defusedxml/jinja2). Run: python tools/setup/install_python.py scripts"
+    )
 endif()

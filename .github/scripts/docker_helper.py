@@ -10,15 +10,18 @@ Subcommands:
 from __future__ import annotations
 
 import argparse
+import json
+import re
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import gh_error, write_github_output
+from common.gh_actions import gh_error, write_github_output, write_step_summary
 
 VALID_TARGETS = {"linux", "linux-cross", "android"}
 VALID_BUILD_TYPES = {"Release", "Debug"}
@@ -63,7 +66,7 @@ def cmd_resolve_push_target(args: argparse.Namespace) -> None:
 
 
 def cmd_run(args: argparse.Namespace) -> None:
-    cmd = ["./deploy/docker/_docker-exec.sh"]
+    cmd = [sys.executable, "deploy/docker/run_docker.py", "run"]
     if args.fuse:
         cmd.append("--fuse")
     cmd += [args.image, args.build_type]
@@ -79,6 +82,45 @@ def cmd_run(args: argparse.Namespace) -> None:
             f"Docker build failed on attempt {attempt}. Retrying in {args.retry_delay} seconds..."
         )
         time.sleep(args.retry_delay)
+
+
+def cmd_cache_key(args: argparse.Namespace) -> None:
+    result = subprocess.run(
+        [
+            "docker",
+            "run",
+            "--rm",
+            "--entrypoint",
+            "/bin/bash",
+            args.image,
+            "-lc",
+            "exec /opt/qgc-venv/bin/python /entrypoint.py --cache-key",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    fingerprint = result.stdout.strip()
+    if not re.fullmatch(r"[0-9a-f]{64}", fingerprint):
+        raise ValueError("Container returned an invalid compiler fingerprint")
+    write_github_output({"fingerprint": fingerprint})
+
+
+def cmd_summary(args: argparse.Namespace) -> None:
+    path = args.build_dir / "docker-build-report.json"
+    if not path.is_file():
+        print("No Docker build performance report was produced")
+        return
+    report = json.loads(path.read_text())
+    write_github_output({"build_success": str(report.get("build_success", False)).lower()})
+    lines = ["### Docker application build", "", "| Phase | Seconds |", "| --- | ---: |"]
+    lines.extend(f"| {name} | {seconds:.2f} |" for name, seconds in report["seconds"].items())
+    lines += ["", f"CPM sources: {report['cpm_bytes'] / 1024**2:.1f} MiB", ""]
+    for name in ("ccache", "moccache"):
+        lines += [f"#### {name}", "", "```text", report[name].strip(), "```", ""]
+    markdown = "\n".join(lines)
+    print(markdown)
+    write_step_summary(markdown)
 
 
 def main() -> None:
@@ -101,11 +143,18 @@ def main() -> None:
     p_target.add_argument("--repo", required=True)
     p_target.add_argument("--ref", required=True)
 
+    cache_key = sub.add_parser("cache-key", help="Identify the compilers inside a builder image")
+    cache_key.add_argument("--image", required=True)
+    summary = sub.add_parser("summary", help="Report container timings and cache statistics")
+    summary.add_argument("--build-dir", type=Path, required=True)
+
     args = parser.parse_args()
     {
         "validate": cmd_validate,
         "run": cmd_run,
         "resolve-push-target": cmd_resolve_push_target,
+        "cache-key": cmd_cache_key,
+        "summary": cmd_summary,
     }[args.command](args)
 
 

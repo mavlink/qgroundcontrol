@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/setup/read_config.py."""
 
 from __future__ import annotations
@@ -44,8 +43,8 @@ def _write_config(path: Path) -> None:
                 "default": "1.28.2",
                 "minimum": "1.24.0",
                 "android": "1.28.1",
-                "macos":   "1.28.2",
-                "ios":     "1.28.2",
+                "macos": "1.28.2",
+                "ios": "1.28.2",
                 "windows": "1.26.6",
             },
         },
@@ -76,7 +75,9 @@ def test_missing_key_returns_error(tmp_path: Path) -> None:
 
 def test_legacy_gstreamer_version_alias_returns_default_version(tmp_path: Path) -> None:
     config = tmp_path / "build-config.json"
-    config.write_text(json.dumps({"gstreamer": {"version": {"default": "1.28.2"}}}), encoding="utf-8")
+    config.write_text(
+        json.dumps({"gstreamer": {"version": {"default": "1.28.2"}}}), encoding="utf-8"
+    )
 
     result = _run_read_config("--get", "gstreamer_version", env={"CONFIG_FILE": str(config)})
 

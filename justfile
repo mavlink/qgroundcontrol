@@ -1,11 +1,12 @@
 # QGroundControl Development Commands
 # Install (requires just >=1.30 for home_directory()):
-#   python tools/setup/install_python.py dev   (recommended; pulls rust-just into .venv)
-#   brew install just / cargo install just / pipx install rust-just
+#   python tools/setup/install_python.py dev   (recommended; pulls rust-just into tools/.venv)
+#   brew install just / cargo install just
 # `apt install just` on Ubuntu ships 1.21 which is too old.
 
 host_os := os()
-python := if host_os == "windows" { "python" } else { "python3" }
+python := "uv run --frozen --project tools --group scripts python"
+build_tool := "uv run --frozen --project tools --group build"
 qt_version := shell(python + " ./tools/setup/read_config.py --get qt.version")
 cmake_min_version := shell(python + " ./tools/setup/read_config.py --get build.cmake_minimum_version")
 gstreamer_version := shell(python + " ./tools/setup/read_config.py --get gstreamer.version.default")
@@ -46,16 +47,16 @@ vscode:
 
 # Configure CMake build
 configure: submodules
-    {{ python }} ./tools/configure.py --preset {{ build_preset }} -B {{ build_dir }} -t {{ build_type }} {{ qt_root_arg }}
+    {{ build_tool }} python ./tools/configure.py --preset {{ build_preset }} -B {{ build_dir }} -t {{ build_type }} {{ qt_root_arg }}
 
 # Build the project
 build:
-    cmake --build --preset {{ build_preset }} --parallel {{ jobs }}
+    {{ build_tool }} cmake --build --preset {{ build_preset }} --parallel {{ jobs }}
 
 # Configure and build Release
 release:
-    {{ python }} ./tools/configure.py --preset default-release -B {{ build_dir }} --release {{ qt_root_arg }}
-    cmake --build --preset default-release --parallel {{ jobs }}
+    {{ build_tool }} python ./tools/configure.py --preset default-release -B {{ build_dir }} --release {{ qt_root_arg }}
+    {{ build_tool }} cmake --build --preset default-release --parallel {{ jobs }}
 
 # Clean build directory (forwards to tools/clean.py; pass --cache, --all, --dry-run)
 clean *ARGS:
@@ -73,11 +74,11 @@ setup: deps submodules configure build
 
 # Run application tests (matches CI label filters; override with `LABELS=... EXCLUDE=... JOBS=N just test`)
 test labels=env_var_or_default("LABELS", "Unit|Integration") exclude=env_var_or_default("EXCLUDE", "Flaky|Network"):
-    ctest --preset default --build-config {{ build_type }} --parallel {{ jobs }} --no-tests=error -L "{{ labels }}" -LE "{{ exclude }}"
+    {{ build_tool }} ctest --preset default --build-config {{ build_type }} --parallel {{ jobs }} --no-tests=error -L "{{ labels }}" -LE "{{ exclude }}"
 
 # Run pre-commit checks
 lint:
-    pre-commit run --all-files
+    uv run --frozen --project tools --group dev pre-commit run --all-files
 
 # Check code formatting (no changes)
 format:
@@ -95,8 +96,12 @@ analyze:
 coverage:
     {{ python }} ./tools/coverage.py
 
-# Run lint + test
-check: lint test
+# Run all Python tooling tests
+test-python:
+    uv run --frozen --project tools --group test pytest -q tools/tests .github/scripts/tests
+
+# Run lint + Python + application tests
+check: lint test-python test
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Run & Deploy
@@ -112,7 +117,7 @@ docs:
 
 # Build using Docker (Ubuntu)
 docker:
-    ./deploy/docker/run-docker.sh ubuntu
+    python3 deploy/docker/run_docker.py build ubuntu
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Utilities
@@ -144,3 +149,11 @@ translations:
 distclean:
     {{ python }} ./tools/clean.py --all
     {{ python }} -c "import shutil; shutil.rmtree('node_modules', ignore_errors=True)"
+
+# Validate schema and cross-field build settings
+validate-configs:
+    uv run --frozen --project tools --group lint python tools/validate_configs.py
+
+# Lint QML with generated module type information (requires a build)
+lint-qml-build:
+    {{ python }} tools/analyze.py --tool qmllint --qml-build --all --advisory

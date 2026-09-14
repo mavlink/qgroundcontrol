@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
 """Tests for tools/common/gh_actions.py."""
 
 from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 from unittest.mock import patch
 
 import common.gh_actions as mod
@@ -115,12 +115,12 @@ class TestResolveCachePolicy:
     def test_auto_same_repo_pr(self) -> None:
         env = {"EVENT_NAME": "pull_request", "PR_REPO": "owner/repo", "THIS_REPO": "owner/repo"}
         with patch.dict(os.environ, env, clear=False):
-            assert mod.resolve_cache_policy("auto") == "false"
+            assert mod.resolve_cache_policy("auto") == "true"
 
     def test_auto_fork_pr(self) -> None:
         env = {"EVENT_NAME": "pull_request", "PR_REPO": "fork/repo", "THIS_REPO": "owner/repo"}
         with patch.dict(os.environ, env, clear=False):
-            assert mod.resolve_cache_policy("auto") == "false"
+            assert mod.resolve_cache_policy("auto") == "true"
 
     def test_auto_pull_request_target(self) -> None:
         env = {
@@ -138,6 +138,24 @@ class TestResolveCachePolicy:
     def test_auto_workflow_dispatch(self) -> None:
         with patch.dict(os.environ, {"EVENT_NAME": "workflow_dispatch"}, clear=False):
             assert mod.resolve_cache_policy("auto") == "true"
+
+
+@pytest.mark.parametrize("cache_dir", [".ccache", ".cache/moccache", ".cache/CPM", ".qt"])
+def test_cache_path_survives_runner_workspace_changes(monkeypatch, tmp_path, cache_dir):
+    paths = []
+    for root in ("actions-runner/_work/qgc/qgc", "a/qgc/qgc"):
+        workspace = tmp_path / root
+        monkeypatch.setenv("GITHUB_WORKSPACE", str(workspace))
+        paths.append(mod.github_cache_path(workspace / cache_dir))
+        assert mod.github_cache_path(Path(cache_dir)) == cache_dir
+    assert paths == [cache_dir, cache_dir]
+
+
+def test_external_cache_path_is_not_relocated(monkeypatch, tmp_path):
+    monkeypatch.setenv("GITHUB_WORKSPACE", str(tmp_path / "workspace"))
+    external = tmp_path / "sdk"
+    assert mod.github_cache_path(external) == external.as_posix()
+    assert mod.github_cache_path(Path("../sdk")) == external.as_posix()
 
 
 class TestWriteGithubOutput:

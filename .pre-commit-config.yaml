@@ -4,6 +4,15 @@
 # Update: pre-commit autoupdate
 
 repos:
+  - repo: local
+    hooks:
+      - id: validate-configs
+        name: Validate configuration relationships
+        entry: uv run --frozen --project tools --group lint python tools/validate_configs.py
+        language: system
+        files: ^(\.github/build-config.*\.json|\.lychee\.toml|\.pre-commit-config\.yaml|tools/(validate_configs\.py|uv\.lock|pyproject\.toml))$
+        pass_filenames: false
+
   # Basic file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -40,13 +49,14 @@ repos:
       - id: trufflehog
         args: ['--only-verified', '--exclude-paths=tools/configs/trufflehog-exclude.txt']
 
-  # C++ formatting (check-only, use 'clang-format -i' to fix)
+  # Check changed C++ regions, matching CODING_STYLE.md; new files are checked in full.
   # Note: Install matching clang-format version locally to avoid formatting differences
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v23.1.0
     hooks:
       - id: clang-format
-        args: ['--dry-run', '--Werror']
+        entry: python tools/check_clang_format.py
+        args: []
         types_or: [c++, c]
         exclude: ^(build/|libs/)
 
@@ -128,8 +138,9 @@ repos:
     hooks:
       - id: check-jsonschema
         name: Validate .github/build-config.json
-        files: ^\.github/build-config\.json$
-        args: ['--schemafile', '.github/build-config.schema.json']
+        files: ^\.github/build-config(?:\.schema)?\.json$
+        args: ['--schemafile', '.github/build-config.schema.json', '.github/build-config.json']
+        pass_filenames: false
 
       - id: check-jsonschema
         alias: validate-dependabot-config
@@ -189,13 +200,13 @@ repos:
         additional_dependencies:
           - 'github.com/errata-ai/vale/v3/cmd/vale@v3.19.0'
         entry: vale sync
-        files: ^(docs/|\.vale\.ini$)
+        files: ^(docs/en/|\.vale\.ini$)
         pass_filenames: false
   - repo: https://github.com/errata-ai/vale
     rev: v3.19.0
     hooks:
       - id: vale
-        files: ^docs/
+        files: ^docs/en/
         args: ['--no-exit']  # Don't fail on warnings, just report
 
   # Spell checking (report-only, doesn't auto-fix)
@@ -203,7 +214,7 @@ repos:
     rev: v1.50.1
     hooks:
       - id: typos
-        args: []  # Empty args disables auto-fix mode
+        args: ['--force-exclude']  # Honor .typos.toml exclusions for explicit pre-commit paths
         files: \.(md|markdown|txt|rst)$|^docs/
 
   - repo: local
@@ -214,15 +225,16 @@ repos:
         language: system
         files: \.qml$
         exclude: ^build/
-        pass_filenames: false
+        pass_filenames: true
 
       - id: clang-tidy
         name: Clang-Tidy static analysis
         entry: python3 ./tools/analyze.py --tool clang-tidy
+        stages: [manual]
         language: system
         types_or: [c++, c]
         exclude: ^(build/|libs/|test/)
-        pass_filenames: false
+        pass_filenames: true
 
       - id: cmake-format
         name: cmake-format (check)
@@ -243,10 +255,11 @@ repos:
       - id: clazy
         name: Qt static analysis (clazy)
         entry: python3 ./tools/analyze.py --tool clazy
+        stages: [manual]
         language: system
         types: [c++]
         exclude: ^(build/|libs/|test/)
-        pass_filenames: false
+        pass_filenames: true
 
       - id: check-no-qassert
         name: Check for Q_ASSERT in production code

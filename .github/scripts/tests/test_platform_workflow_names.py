@@ -110,7 +110,8 @@ def test_build_results_pr_number_uses_plain_string_output() -> None:
     doc = yaml.safe_load(BUILD_RESULTS_YML.read_text(encoding="utf-8"))
     steps = doc["jobs"]["post-pr-comment"]["steps"]
     get_pr = next(step for step in steps if step.get("name") == "Get PR number")
-    assert get_pr["with"]["result-encoding"] == "string"
+    assert "needs.load-config.outputs.pr" in get_pr["env"]["PR_NUMBER"]
+    assert '"result=$PR_NUMBER"' in get_pr["run"]
 
 
 def test_release_wait_for_builds_lists_match_platforms() -> None:
@@ -120,29 +121,15 @@ def test_release_wait_for_builds_lists_match_platforms() -> None:
     jobs = doc.get("jobs") or {}
     wait = jobs.get("wait-for-builds") or {}
     steps = wait.get("steps") or []
-    names_block: str | None = None
-    wait_inputs: dict[str, object] = {}
-    for step in steps:
-        with_ = step.get("with") or {}
-        if "filter-workflow-names" in with_:
-            names_block = str(with_["filter-workflow-names"])
-            wait_inputs = with_
-            break
-    assert names_block is not None, "wait-for-builds step missing filter-workflow-names"
-    listed = {line.strip() for line in names_block.splitlines() if line.strip()}
-    expected = set(RELEASE_PLATFORM_FILES)
-    assert listed == expected, (
-        f"release.yml filter-workflow-names {sorted(listed)} != "
-        f"release platform workflows {sorted(expected)}"
-    )
-    assert wait_inputs["filter-workflow-events"] == "workflow_dispatch"
-    assert wait_inputs["sha"] == "${{ github.sha }}"
-    assert wait_inputs["initial-delay-seconds"] == 30
-    assert wait_inputs["period-seconds"] == 300
+    from release_builds import WORKFLOWS
 
+    assert WORKFLOWS == RELEASE_PLATFORM_FILES
     dispatch = next(
-        step for step in steps if step.get("name") == "Dispatch platform release builds"
+        step for step in steps if step.get("name") == "Dispatch and wait for release builds"
     )
-    assert dispatch["env"]["GH_REPO"] == "${{ github.repository }}"
-    for workflow_file in RELEASE_PLATFORM_FILES.values():
-        assert workflow_file in dispatch["run"]
+    assert "release_builds.py" in dispatch["run"]
+    assert '--sha "$GITHUB_SHA"' in dispatch["run"]
+    downloads = jobs["upload-artifacts"]["steps"]
+    download = next(step for step in downloads if step.get("name") == "Download artifacts")
+    assert download["with"]["runs-file"] == "release-build-runs.json"
+    assert download["with"]["strict-runs"] == "true"

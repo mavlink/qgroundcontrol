@@ -31,6 +31,7 @@ def run_checked_with_retry(
     max_attempts: int = 3,
     retry_backoff_seconds: float = 5.0,
     before_retry: Callable[[], None] | None = None,
+    timeout: float | None = None,
 ) -> subprocess.CompletedProcess[bytes]:
     """Run a checked command with bounded linear backoff."""
     command = list(cmd)
@@ -48,8 +49,9 @@ def run_checked_with_retry(
                 cwd=cwd,
                 env=dict(env) if env is not None else None,
                 check=True,
+                timeout=timeout,
             )
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
             if attempt >= max_attempts:
                 raise
             if before_retry is not None:
@@ -134,8 +136,10 @@ def run_tee(
     process_env = dict(env) if env is not None else None
     bash = shutil.which("bash")
     if bash:
+        if sys.platform == "win32":
+            command[0] = command[0].replace("\\", "/")
         quoted_cmd = " ".join(shlex.quote(part) for part in command)
-        script = f"set -o pipefail; {quoted_cmd} 2>&1 | tee {shlex.quote(str(log_path))}"
+        script = f"set -o pipefail; {quoted_cmd} 2>&1 | tee {shlex.quote(log_path.as_posix())}"
         return subprocess.run(
             [bash, "-c", script], cwd=cwd, env=process_env, check=False
         ).returncode

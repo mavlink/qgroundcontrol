@@ -25,7 +25,6 @@ To manually set up and test the motors, read and follow the instructions on the 
 Make sure the motors and propellers are clear from obstructions before sliding the switch to arm the vehicle and enable the test!
 :::
 
-
 ## Automatic Direction Detection {#automatic}
 
 Ardusub 4.0 and newer support automatic detection of the motor directions.
@@ -38,4 +37,3 @@ Additional output about the process will be shown next to the button as it runs.
 ::: warning
 This procedure still requires that the motors are connected to the _correct outputs_ as shown in the frame view!
 :::
-

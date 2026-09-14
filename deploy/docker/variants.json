@@ -1,5 +1,5 @@
 {
-  "_comment": "Single source of truth for QGC Docker build variants. Consumed by .github/scripts/plan_docker_builds.py (CI matrix), deploy/docker/run-docker.sh (local builds, via _variant_info.py), and deploy/docker/gen_compose.py (docker-compose.yml). Edit variants here only; docker-compose.yml is generated. Base-image digests: re-resolve with `docker buildx imagetools inspect <ref>` when bumping. build_args key order is preserved into the generated --build-arg list.",
+  "_comment": "Single source of truth for QGC Docker build variants. Consumed by .github/scripts/plan_docker_builds.py (CI matrix), deploy/docker/run_docker.py (local builds), and deploy/docker/gen_compose.py (docker-compose.yml). Edit variants here only; docker-compose.yml is generated. Base-image digests: re-resolve with `docker buildx imagetools inspect <ref>` when bumping. build_args key order is preserved into the generated --build-arg list.",
   "variants": [
     {
       "id": "ubuntu",
@@ -26,7 +26,6 @@
       "build_args": {
         "BASE_REF": "ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d",
         "APT_EXTRA": "gcc-12 g++-12",
-        "PIP_CMAKE": "cmake>=3.25,<4",
         "CC_PIN": "gcc-12",
         "CXX_PIN": "g++-12"
       }

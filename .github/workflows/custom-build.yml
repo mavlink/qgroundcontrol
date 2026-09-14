@@ -8,6 +8,11 @@ on:
   pull_request:
   merge_group:
   workflow_dispatch:
+    inputs:
+      debug_runner:
+        description: 'Open an actor-only SSH session after a failure (up to 15 minutes, branches only)'
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,99 +29,27 @@ jobs:
       platform: custom-build
 
   build:
-    name: Custom Plugin Build
+    name: ${{ matrix.build-type == 'Debug' && 'Custom Plugin Test Debug' || 'Custom Plugin Build' }}
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        build-type: ${{ fromJSON(github.event_name == 'pull_request' && '["Debug"]' || '["Debug", "Release"]') }}
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
         (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
         format('runs-on={0}/runner={1}', github.run_id,
+          matrix.build-type == 'Debug' && 'linux-x64-tester' ||
           vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder-60gb') ||
         'ubuntu-24.04'
       }}
     timeout-minutes: 120
 
-    defaults:
-      run:
-        shell: bash
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: runs-on/action@v2
-        with:
-          metrics: cpu,network,memory,disk,io
-          show_costs: summary
-
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 1
-          persist-credentials: false
-
-      - name: Setup Build Environment
-        uses: ./.github/actions/build-setup
-        with:
-          qt-host: linux
-          qt-arch: linux_gcc_64
-          build-type: Release
-          save-cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-
-      - name: Install Dependencies
-        uses: ./.github/actions/install-dependencies
-
-      - name: Configure
-        uses: ./.github/actions/cmake-configure
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Release
-          preset: Linux
-          extra-args: -DQGC_CUSTOM_DIR=custom-example
-
-      - name: Build
-        uses: ./.github/actions/cmake-build
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Release
-
-      - name: Create AppImage
-        uses: ./.github/actions/cmake-install
-        with:
-          build-dir: ${{ runner.temp }}/build
-          build-type: Release
-
-      - name: Verify Custom AppImage
-        uses: ./.github/actions/verify-executable
-        with:
-          binary-path: Custom-QGroundControl-x86_64.AppImage
-          type: appimage
-          working-dir: ${{ runner.temp }}/build
-
-  # Debug build with unit/integration tests: the custom plugin overlay changes real code paths
-  # (QGCCorePlugin overrides, disabled APM plugin), so the test suite must pass against it too.
-  test:
-    name: Custom Plugin Test Debug
-    needs: changes
-    if: needs.changes.outputs.should_build == 'true'
-    runs-on: >-
-      ${{
-        github.repository_owner == 'mavlink' &&
-        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
-        format('runs-on={0}/runner=linux-x64-tester', github.run_id) ||
-        'ubuntu-24.04'
-      }}
-    timeout-minutes: 120
-
-    # checks: write scoped here: only this job reports test results (dorny/test-reporter).
     permissions:
+      actions: read
       contents: read
-      checks: write
       id-token: write
 
     defaults:
@@ -129,6 +62,12 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
+
       - name: Enable RunsOn magic cache
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: runs-on/action@v2
@@ -147,9 +86,9 @@ jobs:
         with:
           qt-host: linux
           qt-arch: linux_gcc_64
-          build-type: Debug
+          build-type: ${{ matrix.build-type }}
           cache-variant: custom
-          save-cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          cache-key-suffix: ${{ matrix.build-type == 'Debug' && 'custom-debug' || 'custom-release' }}
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
@@ -158,65 +97,43 @@ jobs:
         uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
-          build-type: Debug
-          preset: Linux-debug
-          testing: 'true'
+          build-type: ${{ matrix.build-type }}
+          preset: ${{ matrix.build-type == 'Debug' && 'Linux-debug' || 'Linux' }}
+          testing: ${{ matrix.build-type == 'Debug' }}
           extra-args: -DQGC_CUSTOM_DIR=custom-example
 
       - name: Build
+        id: build
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
-          build-type: Debug
+          build-type: ${{ matrix.build-type }}
 
-      # Split by label so Unit parallelizes; Integration serializes on shared MockLink/LinkManager state.
-      - name: Run Unit Tests (parallel)
-        id: unit_tests
-        uses: ./.github/actions/run-unit-tests
+      - name: Create AppImage
+        if: matrix.build-type == 'Release'
+        uses: ./.github/actions/cmake-install
         with:
           build-dir: ${{ runner.temp }}/build
-          junit-output: junit-results-custom-unit.xml
-          ctest-output: test-output-custom-unit.txt
-          include-labels: 'Unit'
-          exclude-labels: 'Flaky|Network'
-          parallel: 'auto'
-          repeat: 'until-pass:2'
+          build-type: ${{ matrix.build-type }}
 
-      - name: Run Integration Tests (serial)
-        id: integration_tests
-        if: always() && !cancelled() && steps.unit_tests.conclusion != 'cancelled'
-        uses: ./.github/actions/run-unit-tests
+      - name: Verify Custom AppImage
+        if: matrix.build-type == 'Release'
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: Custom-QGroundControl-x86_64.AppImage
+          type: appimage
+          working-dir: ${{ runner.temp }}/build
+
+      - name: Run and report tests
+        if: ${{ !cancelled() && matrix.build-type == 'Debug' && steps.build.outcome == 'success' }}
+        uses: ./.github/actions/test-phase
         with:
           build-dir: ${{ runner.temp }}/build
-          junit-output: junit-results-custom-integration.xml
-          ctest-output: test-output-custom-integration.txt
-          include-labels: 'Integration'
-          # StockUI tests assert stock UI elements the custom overlay intentionally replaces
-          exclude-labels: 'Flaky|Network|StockUI'
-          parallel: '1'
-
-      - name: Report Test Results (unit)
-        if: always() && !cancelled() && steps.unit_tests.conclusion != 'skipped'
-        uses: ./.github/actions/test-report
-        with:
-          name: Custom Unit Tests
+          suite: custom
+          integration-exclude-labels: 'Flaky|Network|StockUI'
           upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
-          codecov-flags: custom-unit
-          build-dir: ${{ runner.temp }}/build
-          junit-file: junit-results-custom-unit.xml
-          output-file: test-output-custom-unit.txt
-          artifact-name: test-results-custom-unit
-          retention-days: 7
 
-      - name: Report Test Results (integration)
-        if: always() && !cancelled() && steps.integration_tests.conclusion != 'skipped'
-        uses: ./.github/actions/test-report
-        with:
-          name: Custom Integration Tests
-          upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
-          codecov-flags: custom-integration
-          build-dir: ${{ runner.temp }}/build
-          junit-file: junit-results-custom-integration.xml
-          output-file: test-output-custom-integration.txt
-          artifact-name: test-results-custom-integration
-          retention-days: 7
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner

@@ -39,7 +39,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 'lts/*'
+          node-version-file: .nvmrc
 
       - name: Run semantic-release
         id: release
@@ -48,14 +48,14 @@ jobs:
         run: |
           set -euo pipefail
           ./tools/release.py --install
-          # @semantic-release/exec verifyReleaseCmd writes .release-version
+          # @semantic-release/exec verifyReleaseCmd writes tools/release/.release-version
           # iff a release was actually published. Reading from a file is
           # immune to log-format drift across SR major versions.
-          rm -f .release-version
+          rm -f tools/release/.release-version
           ./tools/release.py --run
 
-          if [[ -f .release-version ]]; then
-            version=$(tr -d '[:space:]' < .release-version)
+          if [[ -f tools/release/.release-version ]]; then
+            version=$(tr -d '[:space:]' < tools/release/.release-version)
             if [[ -z "${version}" ]]; then
               echo "::error::semantic-release wrote an empty version file"
               exit 1
@@ -75,7 +75,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     permissions:
-      actions: write  # dispatch platform workflows, then poll their runs
+      contents: read
+      actions: write  # dispatch platform workflows, then poll their exact run IDs
 
     steps:
       - name: Harden Runner
@@ -83,32 +84,27 @@ jobs:
         with:
           egress-policy: audit
 
-      # Tags created with GITHUB_TOKEN do not trigger tag-push workflows, so
-      # release builds are explicitly dispatched at the new release tag.
-      - name: Dispatch platform release builds
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # GITHUB_TOKEN-created tags do not trigger builds; keep the selected IDs
+      # so later manual dispatches at the same SHA cannot replace these artifacts.
+      - name: Dispatch and wait for release builds
         env:
-          GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: v${{ needs.semantic-release.outputs.version }}
+          REPO: ${{ github.repository }}
         run: |
-          set -euo pipefail
-          for workflow in linux.yml windows.yml macos.yml android.yml ios.yml; do
-            gh workflow run "$workflow" --ref "$RELEASE_TAG"
-          done
+          python3 .github/scripts/release_builds.py --repo "$REPO" \
+            --sha "$GITHUB_SHA" --tag "$RELEASE_TAG" --output release-build-runs.json
 
-      - name: Wait for builds to complete
-        uses: int128/wait-for-workflows-action@v1
+      - uses: actions/upload-artifact@v7
         with:
-          filter-workflow-names: |
-            Linux
-            Windows
-            MacOS
-            Android
-            iOS
-          filter-workflow-events: workflow_dispatch
-          sha: ${{ github.sha }}
-          initial-delay-seconds: 30
-          period-seconds: 300
+          name: release-build-runs
+          path: release-build-runs.json
+          if-no-files-found: error
+
 
   upload-artifacts:
     name: Upload Release Artifacts
@@ -150,12 +146,19 @@ jobs:
           output-file: ${{ runner.temp }}/sbom-source.cdx.json
           artifact-name: sbom-source-cyclonedx
 
+      - name: Restore selected release run IDs
+        uses: actions/download-artifact@v8
+        with:
+          name: release-build-runs
+
       - name: Download artifacts
         uses: ./.github/actions/download-all-artifacts
         with:
           head-sha: ${{ github.sha }}
           workflows: Linux,Windows,MacOS,Android,iOS
           event: workflow_dispatch
+          runs-file: release-build-runs.json
+          strict-runs: 'true'
           output-dir: artifacts
           artifact-prefixes: QGroundControl,sbom-
 
@@ -163,6 +166,7 @@ jobs:
         run: |
           python3 .github/scripts/release_assets.py \
             --artifacts-dir artifacts \
+            --head-sha "$GITHUB_SHA" \
             --source-sbom "${RUNNER_TEMP}/sbom-source.spdx.json" \
             --source-sbom "${RUNNER_TEMP}/sbom-source.cdx.json" \
             --output release-assets.txt

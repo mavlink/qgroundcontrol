@@ -283,7 +283,7 @@ def check_python_deps(repo_root: Path) -> None:
         print(f"    - {manifest}")
 
     result = run_captured(
-        [sys.executable, "-m", "pip", "list", "--outdated", "--format=json"],
+        ["uv", "pip", "list", "--python", sys.executable, "--outdated", "--format=json"],
     )
     if result.returncode != 0:
         log_warn("Could not query installed Python package updates")
@@ -292,7 +292,7 @@ def check_python_deps(repo_root: Path) -> None:
     try:
         outdated = json.loads(result.stdout or "[]")
     except json.JSONDecodeError:
-        log_warn("Could not parse pip outdated output")
+        log_warn("Could not parse uv outdated output")
         return
 
     if not outdated:

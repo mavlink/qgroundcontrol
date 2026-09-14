@@ -8,10 +8,14 @@ on:
     paths:
       - 'docs/**'
       - 'package*.json'
+      - '.nvmrc'
+      - '.github/workflows/docs.yml'
   pull_request:
     paths:
       - 'docs/**'
       - 'package*.json'
+      - '.nvmrc'
+      - '.github/workflows/docs.yml'
   workflow_dispatch:
 
 concurrency:
@@ -42,13 +46,14 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: 'lts/*'
+          node-version-file: .nvmrc
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build with VitePress
         run: |
+          QGC_DOCS_CHECK_ENGLISH=1 npm run docs:build
           npm run docs:build
           touch docs/.vitepress/dist/.nojekyll
 
@@ -78,6 +83,7 @@ jobs:
             .github/actions
             .github/scripts
             tools/common
+            tools/qgc_tools
           persist-credentials: false
 
       - name: Deploy docs

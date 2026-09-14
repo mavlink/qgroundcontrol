@@ -13,7 +13,7 @@ from ._macos import install_macos
 from ._packages import (
     DEBIAN_PACKAGES,
     MACOS_PACKAGES,
-    PIPX_PACKAGES,
+    PYTHON_BUILD_TOOLS,
     get_arch_packages,
     get_debian_packages,
     get_fedora_packages,
@@ -51,8 +51,8 @@ def list_packages(platform: str | None = None) -> None:
             print(f"\n{category} ({len(packages)} packages):")
             for pkg in packages:
                 print(f"  - {pkg}")
-        print("\nPipx packages:")
-        for pkg in PIPX_PACKAGES:
+        print("\nLocked Python build tools:")
+        for pkg in PYTHON_BUILD_TOOLS:
             print(f"  - {pkg}")
 
     if platform in (None, "macos"):

@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include <QtPositioning/QGeoCoordinate>
+
 #include "UnitTest.h"
 
 class QmlObjectListModel;

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 from pathlib import Path
 
@@ -13,7 +14,9 @@ TEMPLATES = (
 )
 
 
-def install_vscode_templates(vscode_dir: Path, excluded: set[str] | None = None) -> list[Path]:
+def install_vscode_templates(
+    vscode_dir: Path, excluded: set[str] | None = None, python_interpreter: str | None = None
+) -> list[Path]:
     """Copy missing VS Code configuration files from the tracked templates."""
     created: list[Path] = []
     excluded = excluded or set()
@@ -28,6 +31,10 @@ def install_vscode_templates(vscode_dir: Path, excluded: set[str] | None = None)
         if not template.is_file():
             raise FileNotFoundError(f"VS Code template not found: {template}")
         shutil.copyfile(template, destination)
+        if destination_name == "settings.json" and python_interpreter:
+            settings = json.loads(destination.read_text())
+            settings["python.defaultInterpreterPath"] = python_interpreter
+            destination.write_text(json.dumps(settings, indent=2) + "\n")
         created.append(destination)
         print(f"Created {destination}")
     return created
@@ -48,10 +55,11 @@ def main(argv: list[str] | None = None) -> int:
         default=[],
         help="Configuration name to leave unmanaged (may be repeated)",
     )
+    parser.add_argument("--python-interpreter", help="Interpreter for newly created settings only")
     args = parser.parse_args(argv)
 
     try:
-        install_vscode_templates(args.vscode_dir, set(args.exclude))
+        install_vscode_templates(args.vscode_dir, set(args.exclude), args.python_interpreter)
     except (FileNotFoundError, OSError) as error:
         parser.error(str(error))
     return 0

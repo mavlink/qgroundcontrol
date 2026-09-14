@@ -40,7 +40,8 @@ indent_size = 2
 [*.md]
 indent_style = space
 indent_size = 2
-trim_trailing_whitespace = false  # Preserve trailing spaces for line breaks
+# Preserve trailing spaces for line breaks.
+trim_trailing_whitespace = false
 
 # XML files (including Qt resource files)
 [*.{xml,qrc,ui}]

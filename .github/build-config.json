@@ -92,5 +92,10 @@
     },
     "ca_bundle_url": "https://curl.se/ca/cacert-2026-08-13.pem",
     "ca_bundle_sha256": "f66dff1bdf8f96060b8177976f8b7d9254bc89bc4db933d769f7384d28480bc9"
+  },
+  "analysis": {
+    "llvm_version": "18",
+    "clazy_revision": "f3fb82cb8cd82664e5e5a546aa2a73d3a297d1bd",
+    "clazy_sha256": "8b440cccf2ab6d40c9ad3e97605e22fa48f29ef0430add48afae47f2db19ef46"
   }
 }

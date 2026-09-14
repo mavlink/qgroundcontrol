@@ -129,14 +129,7 @@ QStringList availableLabelNames();
 /// Wrapper around QTRY_COMPARE_WITH_TIMEOUT for consistency with QVERIFY_TRUE_WAIT.
 #define QCOMPARE_TRUE_WAIT(actual, expected, timeoutMs) QTRY_COMPARE_WITH_TIMEOUT(actual, expected, timeoutMs)
 
-/// Compare floating point values with configurable epsilon
-#define QCOMPARE_FUZZY(actual, expected, epsilon)                                             \
-    QVERIFY2(qAbs((actual) - (expected)) <= (epsilon),                                        \
-             qPrintable(QString("Values differ: actual=%1, expected=%2, diff=%3, epsilon=%4") \
-                            .arg(actual)                                                      \
-                            .arg(expected)                                                    \
-                            .arg(qAbs((actual) - (expected)))                                 \
-                            .arg(epsilon)))
+#include "UnitTestMath.h"
 
 /// Declare a parameterized test function pair
 /// Creates both the test slot and its _data() companion

@@ -17,10 +17,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import re
-import shutil
-import subprocess
 import sys
-import time
 from pathlib import Path
 
 _tools_dir = str(Path(__file__).resolve().parent.parent)
@@ -31,15 +28,17 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.deps import pip_install
-from common.gh_actions import gh_error, gh_warning, write_github_output
+from common.build_config import find_build_config, load_build_config
+from common.gh_actions import gh_error, github_cache_path, write_github_output
+from common.proc import run_checked_with_retry
+from qgc_tools.python_env import tool_command
 
 _ARCH_DIR_PREFIXES = [
     ("linux_", ""),
     ("win64_", ""),
 ]
 
-# Allowlist gates --aqt-source before pip sees it (extra-index-url flag injection, hostile git host).
+# Allowlist gates --aqt-source before uv sees it (extra-index-url flag injection, hostile git host).
 _AQT_SOURCE_ALLOWLIST = re.compile(
     r"^(?:aqtinstall(?:==[0-9][0-9A-Za-z.\-]*)?"
     r"|git\+https://github\.com/miurahr/aqtinstall(?:\.git)?@[0-9a-f]{7,40})$"
@@ -128,18 +127,12 @@ _AQT_RETRY_DELAY_SECONDS = 15
 
 def _run_aqt_with_retries(args: list[str]) -> None:
     """Run aqt, retrying transient CDN download/extraction failures (exit 254, "bad path")."""
-    for attempt in range(1, _AQT_MAX_ATTEMPTS + 1):
-        result = subprocess.run(args, check=False)
-        if result.returncode == 0:
-            return
-        if attempt == _AQT_MAX_ATTEMPTS:
-            raise subprocess.CalledProcessError(result.returncode, args)
-        gh_warning(
-            f"aqtinstall failed (exit {result.returncode}), "
-            f"attempt {attempt}/{_AQT_MAX_ATTEMPTS}; retrying in "
-            f"{_AQT_RETRY_DELAY_SECONDS}s"
-        )
-        time.sleep(_AQT_RETRY_DELAY_SECONDS)
+    run_checked_with_retry(
+        args,
+        max_attempts=_AQT_MAX_ATTEMPTS,
+        retry_backoff_seconds=_AQT_RETRY_DELAY_SECONDS,
+        timeout=1800,
+    )
 
 
 def install_qt(
@@ -151,31 +144,25 @@ def install_qt(
     modules: str = "",
     archives: str = "",
     aqt_source: str = "",
+    autodesktop: bool = False,
 ) -> Path:
     """Install Qt using aqtinstall and return the resolved root directory.
 
-    `aqt_source` overrides the PyPI `aqtinstall` package with a pip-compatible
-    spec (e.g. `git+https://github.com/miurahr/aqtinstall.git@<sha>`); we force
-    a reinstall so any aqt already on PATH from the runner image is replaced.
+    `aqt_source` overrides the PyPI `aqtinstall` package with an isolated uv package
+    spec (e.g. `git+https://github.com/miurahr/aqtinstall.git@<sha>`). The explicit
+    command bypasses other aqt executables on PATH.
     """
-    aqt = shutil.which("aqt")
-    if not aqt or aqt_source:
-        if aqt_source:
-            validate_aqt_source(aqt_source)
-            pip_install(["--force-reinstall", aqt_source])
-        else:
-            pip_install(["aqtinstall"])
-        aqt = shutil.which("aqt")
-        if not aqt:
-            gh_error("aqtinstall not found after pip install")
-            sys.exit(1)
-
-    args = [aqt, "install-qt", host, target, version, arch, "--outputdir", str(outdir)]
+    if aqt_source:
+        validate_aqt_source(aqt_source)
+    command = tool_command("aqt", "qt", source=aqt_source)
+    args = [*command, "install-qt", host, target, version, arch, "--outputdir", str(outdir)]
 
     if modules:
         args.extend(["--modules", *modules.split()])
     if archives:
         args.extend(["--archives", *archives.split()])
+    if autodesktop:
+        args.append("--autodesktop")
 
     print(f"Running: {' '.join(args)}")
     _run_aqt_with_retries(args)
@@ -225,18 +212,24 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     sub = parser.add_subparsers(dest="command", required=True)
 
     install_p = sub.add_parser("install", help="Install Qt")
-    install_p.add_argument("--version", required=True)
+    version = install_p.add_mutually_exclusive_group(required=True)
+    version.add_argument("--version")
+    version.add_argument(
+        "--from-config", action="store_true", help="Use the configured Qt version and modules"
+    )
+    install_p.add_argument("--autodesktop", action="store_true")
     install_p.add_argument("--host", default="linux")
     install_p.add_argument("--target", default="desktop")
     install_p.add_argument("--outdir", type=Path, default=Path(".qt"))
     install_p.add_argument(
         "--aqt-source",
         default="",
-        help="Override the pip spec used to install aqtinstall (e.g. git+https://...@<sha>).",
+        help="Override the isolated uv source for aqtinstall (e.g. git+https://...@<sha>).",
     )
     _add_arch_args(install_p)
 
     cache_p = sub.add_parser("cache-key", help="Output arch_dir and cache digest")
+    cache_p.add_argument("--cache-dir", type=Path, help="Installation directory for cache paths")
     _add_arch_args(cache_p)
 
     resolve_p = sub.add_parser("resolve-arch", help="Print resolved arch directory name")
@@ -338,11 +331,21 @@ def main(argv: list[str] | None = None) -> int:
         arch_dir = resolve_arch_dir(args.arch)
         digest = compute_cache_digest(args.modules, args.archives)
         write_github_output({"arch_dir": arch_dir, "digest": digest})
+        if args.cache_dir is not None:
+            write_github_output({"cache_dir": github_cache_path(args.cache_dir)})
         print(f"arch_dir={arch_dir}")
         print(f"digest={digest}")
         return 0
 
     # Default: install
+    if args.from_config:
+        config_path = find_build_config(
+            start=Path(__file__).parent,
+            extra_candidates=[Path(__file__).parent / "build-config.json"],
+        )
+        qt_config = load_build_config(config_path)["qt"]
+        args.version = qt_config["version"]
+        args.modules = args.modules or qt_config["modules"]
     arch_dir = resolve_arch_dir(args.arch)
     qt_root = install_qt(
         host=args.host,
@@ -353,6 +356,7 @@ def main(argv: list[str] | None = None) -> int:
         modules=args.modules,
         archives=args.archives,
         aqt_source=args.aqt_source,
+        autodesktop=args.autodesktop,
     )
 
     write_github_output(

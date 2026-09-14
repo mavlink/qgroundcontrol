@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for mavlink_instance_fields generator."""
 
 import textwrap
@@ -15,7 +14,8 @@ from generators.mavlink_instance_fields import (
 def xml_dir(tmp_path):
     """Create a minimal MAVLink XML structure for testing."""
     # minimal.xml - no instance fields
-    (tmp_path / "minimal.xml").write_text(textwrap.dedent("""\
+    (tmp_path / "minimal.xml").write_text(
+        textwrap.dedent("""\
         <?xml version="1.0"?>
         <mavlink>
           <messages>
@@ -24,10 +24,12 @@ def xml_dir(tmp_path):
             </message>
           </messages>
         </mavlink>
-    """))
+    """)
+    )
 
     # common.xml - includes minimal, has instance fields
-    (tmp_path / "common.xml").write_text(textwrap.dedent("""\
+    (tmp_path / "common.xml").write_text(
+        textwrap.dedent("""\
         <?xml version="1.0"?>
         <mavlink>
           <include>minimal.xml</include>
@@ -49,15 +51,18 @@ def xml_dir(tmp_path):
             </message>
           </messages>
         </mavlink>
-    """))
+    """)
+    )
 
     # all.xml - includes common
-    (tmp_path / "all.xml").write_text(textwrap.dedent("""\
+    (tmp_path / "all.xml").write_text(
+        textwrap.dedent("""\
         <?xml version="1.0"?>
         <mavlink>
           <include>common.xml</include>
         </mavlink>
-    """))
+    """)
+    )
 
     return tmp_path
 
@@ -89,14 +94,18 @@ class TestResolveIncludes:
 
     def test_no_circular(self, xml_dir):
         """Circular includes don't infinite loop."""
-        (xml_dir / "a.xml").write_text(textwrap.dedent("""\
+        (xml_dir / "a.xml").write_text(
+            textwrap.dedent("""\
             <?xml version="1.0"?>
             <mavlink><include>b.xml</include></mavlink>
-        """))
-        (xml_dir / "b.xml").write_text(textwrap.dedent("""\
+        """)
+        )
+        (xml_dir / "b.xml").write_text(
+            textwrap.dedent("""\
             <?xml version="1.0"?>
             <mavlink><include>a.xml</include></mavlink>
-        """))
+        """)
+        )
         paths = resolve_includes(xml_dir, "a")
         assert len(paths) == 2
 
@@ -126,7 +135,8 @@ class TestExtractInstanceFields:
 
     def test_deduplicates_by_msg_id(self, xml_dir):
         """If same message appears in multiple XMLs, keep first occurrence."""
-        (xml_dir / "extra.xml").write_text(textwrap.dedent("""\
+        (xml_dir / "extra.xml").write_text(
+            textwrap.dedent("""\
             <?xml version="1.0"?>
             <mavlink>
               <include>common.xml</include>
@@ -136,7 +146,8 @@ class TestExtractInstanceFields:
                 </message>
               </messages>
             </mavlink>
-        """))
+        """)
+        )
         paths = resolve_includes(xml_dir, "extra")
         fields = extract_instance_fields(paths)
         # First occurrence wins (from common.xml)

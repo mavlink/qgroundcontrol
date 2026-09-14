@@ -11,7 +11,6 @@ In order to set up flight modes you must already have
 
 To access this section, select the **Gear** icon (Vehicle Configuration) in the top toolbar and then **Flight Modes** in the sidebar.
 
-
 ## Flight Mode Settings
 
 On ArduPilot you can assign up to 6 different flight modes to a single channel of your transmitter (the channel is selectable on Plane, but fixed to channel 5 on Copter).
@@ -23,7 +22,6 @@ To set the flight modes:
 1. Turn on your RC transmitter.
 1. Select the **Gear** icon (Vehicle Configuration) in the top toolbar and then **Flight Modes** in the sidebar.
 
-
    ::: info
    The above image is a screenshot of the flight mode setup for ArduCopter.
    :::
@@ -31,7 +29,6 @@ To set the flight modes:
 1. Select up to 6 flight modes in the drop downs.
 1. **ArduCopter only:** Select additional _Channel Options_ for channels 7-12.
 1. **ArduPlane only:** Select the mode channel from the dropdown.
-
 
 1. Test that the modes are mapped to the right transmitter switches by selecting each mode switch on your transmitter in turn, and check that the desired flight mode is activated (the text turns yellow on _QGroundControl_ for the active mode).
 

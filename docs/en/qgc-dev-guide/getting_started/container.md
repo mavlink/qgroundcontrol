@@ -18,7 +18,7 @@ The main advantage of using the container is the usage of the `CMake` build syst
 To build the container using the script, run this command in the qgc root directory
 
 ```sh
-./deploy/docker/run-docker.sh ubuntu
+python3 deploy/docker/run_docker.py build ubuntu
 ```
 
 ### Manual

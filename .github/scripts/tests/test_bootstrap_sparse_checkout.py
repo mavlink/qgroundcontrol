@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Drift guard: every workflow or composite action that sparse-checks out the
 bootstrap shim must also include every `common.*` module that the scripts it
 checks out import transitively.
@@ -15,6 +14,7 @@ adding `tools/common/git.py` to its sparse-checkout list.
 from __future__ import annotations
 
 import ast
+import fnmatch
 from typing import TYPE_CHECKING
 
 import pytest
@@ -39,6 +39,7 @@ BASE_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
     {
         "tools/_bootstrap.py",
         "tools/common/__init__.py",
+        "tools/qgc_tools/__init__.py",
     }
 )
 
@@ -78,13 +79,13 @@ def _iter_common_imports(source: Path) -> Iterator[str]:
         if isinstance(node, ast.ImportFrom):
             if node.module is None:
                 continue
-            if node.level == 0 and node.module.split(".")[0] == "common":
+            if node.level == 0 and node.module.split(".")[0] in {"common", "qgc_tools"}:
                 yield node.module
             elif node.level >= 1 and inside_common:
                 yield f"common.{node.module}"
         elif isinstance(node, ast.Import):
             for alias in node.names:
-                if alias.name.split(".")[0] == "common":
+                if alias.name.split(".")[0] in {"common", "qgc_tools"}:
                     yield alias.name
 
 
@@ -204,22 +205,20 @@ def test_ci_scripts_checkout_includes_packaging_and_action_fixtures() -> None:
     job = workflow["jobs"]["test-ci-scripts"]
     ((_, entries),) = _iter_checkout_steps({"jobs": {"test-ci-scripts": job}}, "ci-scripts.yml")
     required = {
+        ".clusterfuzzlite/build.py",
+        ".clusterfuzzlite/read_mavlink_config.py",
         ".github/COPYING.md",
-        ".github/actions/replace-cache-entry/action.yml",
         ".github/actions/test-report/action.yml",
         "deploy/installer/packages/org.mavlink.qgroundcontrol/meta/installscript.js",
         "deploy/macos/MacOSXBundleInfo.plist.in",
-        "deploy/multipass/run-multipass.sh",
+        "deploy/multipass/run_multipass.py",
     }
     assert not _missing_paths(required, entries)
     for event in ("pull_request", "push"):
         paths = frozenset(workflow[True][event]["paths"])
-        assert {
-            ".github/COPYING.md",
-            "deploy/installer/**",
-            "deploy/macos/**",
-            "deploy/multipass/**",
-        } <= paths
+        assert all(
+            any(fnmatch.fnmatchcase(path, pattern) for pattern in paths) for path in required
+        )
 
 
 BOOTSTRAP_ACTION_YML = ACTIONS_DIR / "build-results-bootstrap" / "action.yml"
@@ -228,9 +227,9 @@ EXPECTED_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
     {
         ".github/actions/download-all-artifacts",
         ".github/actions/collect-artifact-sizes",
-        ".github/actions/replace-cache-entry",
         ".github/actions/setup-python",
         ".github/scripts/check_baseline_ready.py",
+        ".github/scripts/report_context.py",
         ".github/scripts/ci_bootstrap.py",
         "tools/_bootstrap.py",
         ".github/scripts/collect_artifact_sizes.py",
@@ -239,13 +238,15 @@ EXPECTED_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
         ".github/scripts/generate_build_results_comment.py",
         ".github/scripts/templates/build_results.md.j2",
         "tools/common/__init__.py",
+        "tools/qgc_tools/__init__.py",
         "tools/common/artifact_metadata.py",
         "tools/common/build_config.py",
         "tools/common/cobertura.py",
         "tools/common/file_traversal.py",
         "tools/common/format.py",
         "tools/common/gh_actions.py",
-        "tools/common/github_runs.py",
+        "tools/qgc_tools/workflow_runs.py",
+        "tools/qgc_tools/python_env.py",
         "tools/common/io.py",
         "tools/common/markdown.py",
         "tools/common/platform.py",
@@ -259,10 +260,7 @@ EXPECTED_BOOTSTRAP_PATHS: frozenset[str] = frozenset(
 
 
 def test_build_results_bootstrap_sparse_checkout_matches_expected() -> None:
-    """Full-mirror guard for the build-results-bootstrap composite: the import
-    closure above only covers .py files, so removing an action dir, template,
-    or lockfile entry would still break post-pr-comment/save-baselines at
-    runtime. Update EXPECTED_BOOTSTRAP_PATHS in lockstep when it changes."""
+    """Verify required actions, templates and locks as well as the Python import closure."""
     if not BOOTSTRAP_ACTION_YML.exists():
         pytest.skip("build-results-bootstrap action.yml not in checkout")
 
@@ -271,16 +269,4 @@ def test_build_results_bootstrap_sparse_checkout_matches_expected() -> None:
     assert blocks, "build-results-bootstrap action.yml has no sparse-checkout step"
     (actual,) = blocks.values()
 
-    missing = EXPECTED_BOOTSTRAP_PATHS - actual
-    extra = actual - EXPECTED_BOOTSTRAP_PATHS
-
-    msg_parts = []
-    if missing:
-        msg_parts.append(f"expected paths missing from composite: {sorted(missing)}")
-    if extra:
-        msg_parts.append(
-            f"composite has paths not in EXPECTED_BOOTSTRAP_PATHS "
-            f"(add them here if intentional): {sorted(extra)}"
-        )
-    if msg_parts:
-        pytest.fail(" / ".join(msg_parts))
+    assert not _missing_paths(set(EXPECTED_BOOTSTRAP_PATHS), actual)

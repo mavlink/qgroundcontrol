@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
+import sys
 
+import yaml
 from _helpers import REPO_ROOT
 
 CPACK_DIR = REPO_ROOT / "cmake/install/CPack"
@@ -120,9 +123,10 @@ def test_windows_installer_uses_only_the_cpack_nsis_path() -> None:
     assert "-DQGC_CPACK_GENERATOR=NSIS" in workflow
     assert "target: qgc-package" in workflow
     assert "uses: ./.github/actions/cmake-install" not in workflow
+    installer_test = (REPO_ROOT / "deploy/windows/verify-installer.ps1").read_text()
     assert "Install, upgrade, and verify installer" in workflow
     assert "Uninstall and verify cleanup" in workflow
-    assert "[Environment+SpecialFolder]::ApplicationData" in workflow
+    assert "[Environment+SpecialFolder]::ApplicationData" in installer_test
     assert "APPDATA: ${{ runner.temp }}\\qgc-appdata" not in workflow
     assert "Verify installer checksum" in workflow
     assert "Get-FileHash -LiteralPath $installerPath -Algorithm SHA256" in workflow
@@ -134,10 +138,10 @@ def test_windows_installer_uses_only_the_cpack_nsis_path() -> None:
     assert "Upload checksum to AWS" in upload_action
     assert "artifact-name: ${{ inputs.artifact-name }}.sha256" in upload_action
     assert "artifact-path: ${{ steps.checksum.outputs.path }}" in upload_action
-    assert "InstallLocation mismatch" in workflow
-    assert "Windows Error Reporting registry key not found" in workflow
-    assert "QGroundControl (GPU Safe Mode).lnk" in workflow
-    assert "Start Menu directory remains after uninstall" in workflow
+    assert "InstallLocation mismatch" in installer_test
+    assert "Windows Error Reporting registry key not found" in installer_test
+    assert "QGroundControl (GPU Safe Mode).lnk" in installer_test
+    assert "Start Menu directory remains after uninstall" in installer_test
 
 
 def test_windows_nsis_module_generates_cpack_config(tmp_path) -> None:
@@ -191,20 +195,58 @@ include(CreateCPackNSIS)
 
 def test_docker_workflow_requires_and_validates_native_packages() -> None:
     workflow = (REPO_ROOT / ".github/workflows/docker.yml").read_text()
-    validator = (REPO_ROOT / "deploy/docker/validate-native-package.sh").read_text()
+    validator = (REPO_ROOT / "deploy/docker/validate_native_package.py").read_text()
 
     assert "--top-level" in workflow
     assert workflow.count("--required") >= 2
-    assert "validate-native-package.sh" in workflow
+    assert "validate_native_package.py" in workflow
     assert "Validate native package lifecycle" in workflow
     assert "Verify native package checksum" in workflow
     assert 'sha256sum --check "${checksum_name}"' in workflow
     assert '"${package_name}" != *.pkg.tar.zst' in workflow
     assert "${{ steps.package-checksum.outputs.path }}" in workflow
-    assert "*.deb)" in validator
-    assert "*.rpm)" in validator
-    assert "*.pkg.tar.zst)" in validator
-    assert "test ! -e /opt/QGroundControl" in validator
+    assert '.endswith(".deb")' in validator
+    assert '.endswith(".rpm")' in validator
+    assert '.endswith(".pkg.tar.zst")' in validator
+    assert 'os.path.lexists("/opt/QGroundControl")' in validator
+
+
+def test_docker_package_validation_invokes_python(tmp_path) -> None:
+    workflow = yaml.safe_load((REPO_ROOT / ".github/workflows/docker.yml").read_text())
+    script = next(
+        step["run"]
+        for step in workflow["jobs"]["build"]["steps"]
+        if step.get("name") == "Validate native package lifecycle"
+    )
+    captured = subprocess.run(
+        ["bash", "-e", "-c", 'docker() { printf "%s\\0" "$@"; };\n' + script],
+        env={
+            **os.environ,
+            "GITHUB_WORKSPACE": str(tmp_path / "source tree"),
+            "PACKAGE_PATH": str(tmp_path / "packages/qgc test.deb"),
+            "IMAGE": "qgc-test:latest",
+        },
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    args = captured.stdout.split("\0")[:-1]
+    entrypoint = args[args.index("--entrypoint") + 1]
+    command = args[args.index("qgc-test:latest") + 1 :]
+    # Execute Docker's entrypoint + command locally with a harmless validator stand-in.
+    validator = tmp_path / "validator.py"
+    validator.write_text("import json, sys\nprint(json.dumps(sys.argv[1:]))\n")
+    paths = {
+        "/opt/qgc-venv/bin/python": sys.executable,
+        "/project/source/deploy/docker/validate_native_package.py": str(validator),
+    }
+    result = subprocess.run(
+        [paths.get(arg, arg) for arg in [entrypoint, *command]],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert json.loads(result.stdout) == ["/packages/qgc test.deb"]
 
 
 def test_linux_package_defaults_do_not_leak_into_mobile_cross_compiles() -> None:

@@ -12,6 +12,11 @@ on:
   pull_request:
   merge_group:
   workflow_dispatch:
+    inputs:
+      debug_runner:
+        description: 'Open an actor-only SSH session after a failure (up to 15 minutes, branches only)'
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -67,6 +72,12 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
+
       - name: Checkout repo
         uses: actions/checkout@v7
         with:
@@ -79,7 +90,8 @@ jobs:
         with:
           mode: ios
           build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          cache-key-suffix: ${{ matrix.target }}
+          cpm-modules: .cache/CPM
 
       - name: Import App Store signing certificate
         if: matrix.target == 'device' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
@@ -107,27 +119,7 @@ jobs:
           PROFILE_NAME: ${{ vars.APPSTORE_PROVISIONING_PROFILE_NAME }}
           PROFILES: ${{ steps.profiles.outputs.profiles }}
           TEAM_ID: ${{ vars.APPSTORE_TEAM_ID }}
-        run: |
-          if [[ -z "$TEAM_ID" ]]; then
-            echo "::error::APPSTORE_TEAM_ID repository variable is required"
-            exit 1
-          fi
-          if [[ -z "$PROFILE_NAME" ]]; then
-            echo "::error::APPSTORE_PROVISIONING_PROFILE_NAME repository variable is required"
-            exit 1
-          fi
-          matches=$(jq --arg name "$PROFILE_NAME" '[.[] | select(.name == $name)] | length' <<< "$PROFILES")
-          if [[ "$matches" != "1" ]]; then
-            echo "::error::Expected one active IOS_APP_STORE profile named '$PROFILE_NAME'; found $matches"
-            exit 1
-          fi
-          profile_uuid=$(jq -r --arg name "$PROFILE_NAME" '.[] | select(.name == $name) | .udid' <<< "$PROFILES")
-          {
-            printf 'cmake_args=-DQGC_IOS_APP_STORE_BUILD=ON '
-            printf '%s ' "-DQGC_IOS_DEVELOPMENT_TEAM=$TEAM_ID"
-            printf '%s ' "-DQGC_IOS_PROVISIONING_PROFILE=$profile_uuid"
-            printf '%s\n' "-DQGC_PACKAGE_NAME=$BUNDLE_ID"
-          } >> "$GITHUB_OUTPUT"
+        run: python3 .github/scripts/ios_package.py select-profile
 
       - name: Configure
         uses: ./.github/actions/cmake-configure
@@ -152,44 +144,25 @@ jobs:
         if: matrix.target == 'simulator'
         env:
           APP_PATH: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
-        run: |
-          test -d "$APP_PATH"
-          plutil -lint "$APP_PATH/Info.plist"
-          test -f "$APP_PATH/Assets.car"
-          test -d "$APP_PATH/QGCLaunchScreen.storyboardc"
-          test ! -f "$APP_PATH/QGCLaunchScreen.storyboard"
-          test -d "$APP_PATH/Frameworks/gstreamer_mobile.framework"
-          lipo "$APP_PATH/$PACKAGE" -verify_arch x86_64
+        run: python3 .github/scripts/ios_package.py verify --app "$APP_PATH" --arch x86_64
+
+      - name: Run simulator boot test
+        if: matrix.target == 'simulator'
+        env:
+          APP_PATH: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
+        run: python3 .github/scripts/ios_boot_test.py --app "$APP_PATH" --log "$RUNNER_TEMP/ios-boot-test.log"
+
+      - name: Upload simulator boot log
+        if: ${{ !cancelled() && matrix.target == 'simulator' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-boot-test
+          path: ${{ runner.temp }}/ios-boot-test.log
 
       - name: Package IPA
         if: matrix.target == 'device' && matrix.build_type == 'Release'
         working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}
-        run: |
-          APP_PATH="${PACKAGE}.app"
-          test -d "$APP_PATH"
-          plutil -lint "$APP_PATH/Info.plist"
-          test -f "$APP_PATH/Assets.car"
-          test -d "$APP_PATH/QGCLaunchScreen.storyboardc"
-          test ! -f "$APP_PATH/QGCLaunchScreen.storyboard"
-          test -d "$APP_PATH/Frameworks/gstreamer_mobile.framework"
-          lipo "$APP_PATH/$PACKAGE" -verify_arch arm64
-
-          if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" == v* ]]; then
-            bundle_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_PATH/Info.plist")
-            if [[ "$bundle_id" != "$APPSTORE_BUNDLE_ID" ]]; then
-              echo "::error::Signed bundle ID '$bundle_id' does not match '$APPSTORE_BUNDLE_ID'"
-              exit 1
-            fi
-            test -f "$APP_PATH/embedded.mobileprovision"
-            codesign --verify --deep --strict --verbose=2 "$APP_PATH"
-          fi
-
-          package_root=$(mktemp -d)
-          trap 'rm -rf "$package_root"' EXIT
-          mkdir "$package_root/Payload"
-          ditto "$APP_PATH" "$package_root/Payload/$APP_PATH"
-          ditto -c -k --sequesterRsrc --keepParent "$package_root/Payload" "${PACKAGE}.ipa"
-          unzip -tq "${PACKAGE}.ipa"
+        run: python3 "$GITHUB_WORKSPACE/.github/scripts/ios_package.py" package
 
       - name: Attest and Upload
         if: matrix.target == 'device' && matrix.build_type == 'Release'
@@ -209,3 +182,8 @@ jobs:
           issuer-id: ${{ vars.APPSTORE_ISSUER_ID }}
           api-key-id: ${{ vars.APPSTORE_API_KEY_ID }}
           api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner

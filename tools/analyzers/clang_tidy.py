@@ -1,65 +1,46 @@
-"""clang-tidy analyzer."""
+"""Clang-Tidy analysis using the configured compilation database."""
 
-from __future__ import annotations
+import hashlib
+import json
+from pathlib import Path
+from typing import ClassVar
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import TYPE_CHECKING, ClassVar
-
-from common.analyzer import AnalysisResult, AnalyzerBase
-from common.logging import log_info
-from common.proc import run_captured
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from .compiler import CompilerAnalyzer
 
 
-class ClangTidyAnalyzer(AnalyzerBase):
-    """Clang-tidy static analyzer."""
-
+class ClangTidyAnalyzer(CompilerAnalyzer):
     name: ClassVar[str] = "clang-tidy"
-    install_hint: ClassVar[str] = "Install with: sudo apt install clang-tidy"
+    executable: ClassVar[str] = "clang-tidy"
+    install_hint: ClassVar[str] = "Install clang-tidy matching the analysis compiler."
+    profile_checks: bool = False
 
-    def __init__(self, repo_root: Path, build_dir: Path, jobs: int = 1) -> None:
-        super().__init__(repo_root, build_dir)
-        self.jobs = jobs
+    def _tool_arguments(self) -> tuple[str, ...]:
+        # Cached dependencies can live outside the checkout and inherit another config.
+        return (*super()._tool_arguments(), f"--config-file={self.repo_root / '.clang-tidy'}")
 
-    def _analyze_file(self, file: Path) -> tuple[str, bool]:
-        rel_path = self.relative_path(file)
-        result = run_captured(["clang-tidy", "-p", str(self.build_dir), str(file)])
-        return rel_path, result.returncode != 0
+    def _file_arguments(self, file: Path) -> tuple[str, ...]:
+        if not self.profile_checks:
+            return ()
+        identity = hashlib.sha256(str(file.resolve()).encode()).hexdigest()[:16]
+        profile_dir = self.build_dir / "clang-tidy-profiles" / identity
+        profile_dir.mkdir(parents=True, exist_ok=True)
+        for previous in profile_dir.glob("*.json"):
+            previous.unlink()
+        return ("--enable-check-profile", f"--store-check-profile={profile_dir}/")
 
-    def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
-        if not self.require_compile_commands():
-            return AnalysisResult(
-                tool=self.name,
-                passed=False,
-                output="compile_commands.json not found",
-            )
-
-        if not self.require_tool("clang-tidy"):
-            return AnalysisResult(tool=self.name, passed=False, output="Tool not found")
-
-        if not files:
-            log_info("No files to analyze")
-            return AnalysisResult(tool=self.name, passed=True)
-
-        log_info(f"Running clang-tidy on {len(files)} files ({self.jobs} jobs)...")
-
-        files_with_issues: list[str] = []
-
-        with ThreadPoolExecutor(max_workers=self.jobs) as pool:
-            futures = {pool.submit(self._analyze_file, f): f for f in files}
-            for future in as_completed(futures):
-                rel_path, has_issues = future.result()
-                status = "ISSUES" if has_issues else "OK"
-                print(f"  {rel_path}... {status}")
-                if has_issues:
-                    files_with_issues.append(rel_path)
-
-        return AnalysisResult(
-            tool=self.name,
-            passed=not files_with_issues,
-            issues=len(files_with_issues),
-            files_checked=len(files),
-            files_with_issues=files_with_issues,
-        )
+    def _check_timings(self, files: list[Path]) -> dict[str, float]:
+        if not self.profile_checks:
+            return {}
+        totals: dict[str, float] = {}
+        for file in files:
+            identity = hashlib.sha256(str(file.resolve()).encode()).hexdigest()[:16]
+            for path in (self.build_dir / "clang-tidy-profiles" / identity).glob("*.json"):
+                try:
+                    profile = json.loads(path.read_text(encoding="utf-8"))["profile"]
+                    for name, seconds in profile.items():
+                        if name.startswith("time.clang-tidy.") and name.endswith(".wall"):
+                            check = name.removeprefix("time.clang-tidy.").removesuffix(".wall")
+                            totals[check] = totals.get(check, 0.0) + float(seconds)
+                except (OSError, ValueError, KeyError, TypeError, AttributeError):
+                    print(f"Could not read check timings: {path}", flush=True)
+        return {name: round(seconds, 6) for name, seconds in totals.items()}

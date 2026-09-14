@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "PortableTest.h"
 
-class JsonHelperTest : public UnitTest
+class JsonHelperTest : public PortableTest
 {
     Q_OBJECT
 

@@ -76,7 +76,9 @@ def _validate_sbom(sbom: Path, *, require_components: bool = False) -> None:
         raise ValueError(f"Unsupported SBOM filename: {sbom}")
 
 
-def collect_release_assets(artifacts_dir: Path, source_sboms: list[Path]) -> list[Path]:
+def collect_release_assets(
+    artifacts_dir: Path, source_sboms: list[Path], *, head_sha: str = ""
+) -> list[Path]:
     """Return the complete, validated release asset list."""
     if not artifacts_dir.is_dir():
         raise FileNotFoundError(f"Artifact directory does not exist: {artifacts_dir}")
@@ -85,8 +87,21 @@ def collect_release_assets(artifacts_dir: Path, source_sboms: list[Path]) -> lis
     for label, pattern in REQUIRED_PACKAGES:
         package = _require_unique(artifacts_dir, pattern, label)
         checksum = package.with_name(f"{package.name}.sha256")
-        verify_sha256_sidecar(package, checksum)
-        assets.extend((package, checksum))
+        digest = verify_sha256_sidecar(package, checksum)
+        manifest = package.with_name(f"{package.name}.build.json")
+        metadata = read_json(manifest)
+        if not isinstance(metadata, dict) or metadata.get("schema_version") != 1:
+            raise ValueError(f"Invalid build manifest: {manifest}")
+        artifact = metadata.get("artifact", {})
+        if (
+            not isinstance(artifact, dict)
+            or artifact.get("sha256") != digest
+            or artifact.get("name") != package.name
+        ):
+            raise ValueError(f"Build manifest does not match package: {manifest}")
+        if head_sha and metadata.get("commit") != head_sha:
+            raise ValueError(f"Build manifest commit does not match release: {manifest}")
+        assets.extend((package, checksum, manifest))
 
         if package.suffix == ".AppImage":
             zsync = package.with_name(f"{package.name}.zsync")
@@ -117,6 +132,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifacts-dir", required=True, type=Path)
     parser.add_argument("--source-sbom", action="append", required=True, type=Path)
+    parser.add_argument(
+        "--head-sha", default="", help="Require package manifests to match the release commit"
+    )
     parser.add_argument("--output", required=True, type=Path)
     return parser.parse_args()
 
@@ -124,7 +142,9 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     try:
-        assets = collect_release_assets(args.artifacts_dir, args.source_sbom)
+        assets = collect_release_assets(
+            args.artifacts_dir, args.source_sbom, head_sha=args.head_sha
+        )
         write_text_if_changed(args.output, "".join(f"{path}\n" for path in assets))
     except (OSError, ValueError) as exc:
         gh_error(str(exc))

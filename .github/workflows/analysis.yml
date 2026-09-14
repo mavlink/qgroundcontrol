@@ -1,6 +1,21 @@
 name: Code Analysis
 
 on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'cmake/**'
+      - 'CMakeLists.txt'
+      - 'CMakePresets.json'
+      - 'tools/analyzers/**'
+      - 'tools/analyze.py'
+      - 'tools/common/**'
+      - 'tools/pyproject.toml'
+      - 'tools/uv.lock'
+      - '.qmllint.ini'
+      - '.clang-tidy'
+      - '.github/build-config.json'
+      - '.github/workflows/analysis.yml'
   workflow_dispatch:
     inputs:
       tool:
@@ -10,33 +25,53 @@ on:
         type: choice
         options:
           - clazy
+          - clang-tidy
           - iwyu
+          - qmllint
           - asan
           - ubsan
           - tsan
       path:
-        description: 'Path to analyze (clazy/iwyu only, e.g., src/Vehicle/)'
+        description: 'Path to analyze (compiler analysis only, e.g., src/Vehicle/)'
         required: false
         default: ''
         type: string
       analyze_all:
-        description: 'Analyze all source files (clazy/iwyu only)'
+        description: 'Analyze all source files (compiler analysis only)'
         required: false
         default: true
         type: boolean
+      profile_checks:
+        description: 'Record clang-tidy per-check profiles (slower; select a narrow path)'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.tool }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ (inputs.tool || 'clazy') }}
   cancel-in-progress: true
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   analyze:
-    name: ${{ inputs.tool }} Analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: ${{ inputs.tool == 'clazy' && 60 || 120 }}
+    name: ${{ matrix.tool }} Analysis${{ matrix.tool == 'clang-tidy' && github.event_name != 'workflow_dispatch' && format(' ({0}/4)', matrix.shard) || '' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', inputs.tool)) || fromJSON('["clazy", "clang-tidy"]') }}
+        shard: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[1]' || '[1,2,3,4]') }}
+        exclude:
+          - tool: clazy
+            shard: 2
+          - tool: clazy
+            shard: 3
+          - tool: clazy
+            shard: 4
 
     steps:
       - name: Harden Runner
@@ -47,59 +82,97 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Build Setup (clazy/iwyu)
-        if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
+        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)
         uses: ./.github/actions/build-setup
         with:
           qt-host: linux
           qt-arch: linux_gcc_64
           build-type: Debug
-          cache-variant: ${{ inputs.tool }}
-          save-cache: true
+          cache-variant: ${{ matrix.tool }}
+          save-cache: ${{ matrix.shard == 1 }}
 
-      - name: Prepare apt repositories (clazy)
-        if: inputs.tool == 'clazy'
-        uses: nick-fields/retry@v4
-        with:
-          timeout_minutes: 5
-          max_attempts: 3
-          command: |
-            if ! grep -rEq --include='*.list' --include='*.sources' '^(deb|Components:).*universe' /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null; then
-              sudo apt-get -o DPkg::Lock::Timeout=300 -o Acquire::Retries=3 install -y -qq software-properties-common
-              sudo add-apt-repository -y universe
-            fi
-            sudo apt-get -o DPkg::Lock::Timeout=300 -o Acquire::Retries=3 update -y -qq
-
-      - name: Install clazy packages
-        if: inputs.tool == 'clazy'
+      - name: Read analysis toolchain
+        id: toolchain
+        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)
         run: |
-          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends clazy ninja-build
+          for key in llvm_version clazy_revision clazy_sha256; do
+            echo "$key=$(python3 tools/setup/read_config.py --get "analysis.$key")" >> "$GITHUB_OUTPUT"
+          done
 
-      - name: Install Dependencies (iwyu)
-        if: inputs.tool == 'iwyu'
+      - name: Install analysis dependencies
+        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)
         uses: ./.github/actions/install-dependencies
         with:
-          extra-packages: iwyu clang ninja-build
+          extra-packages: >-
+            clang-${{ steps.toolchain.outputs.llvm_version }}
+            clang-tidy-${{ steps.toolchain.outputs.llvm_version }}
+            clang-tools-${{ steps.toolchain.outputs.llvm_version }}
+            llvm-${{ steps.toolchain.outputs.llvm_version }}-dev
+            libclang-${{ steps.toolchain.outputs.llvm_version }}-dev
+            libclang-cpp${{ steps.toolchain.outputs.llvm_version }}-dev
+            iwyu ninja-build
+
+      # Ubuntu's Clazy links LLVM 15; build it against the configured compiler instead.
+      - name: Cache matching Clazy
+        id: clazy-cache
+        if: matrix.tool == 'clazy'
+        uses: actions/cache@v5
+        with:
+          path: .cache/clazy
+          key: clazy-ubuntu-24.04-${{ runner.arch }}-${{ steps.toolchain.outputs.llvm_version }}-${{ steps.toolchain.outputs.clazy_sha256 }}-v1
+
+      - name: Build matching Clazy
+        if: matrix.tool == 'clazy' && steps.clazy-cache.outputs.cache-hit != 'true'
+        env:
+          LLVM_VERSION: ${{ steps.toolchain.outputs.llvm_version }}
+          CLAZY_REVISION: ${{ steps.toolchain.outputs.clazy_revision }}
+          CLAZY_SHA256: ${{ steps.toolchain.outputs.clazy_sha256 }}
+        run: |
+          curl --fail --location --retry 3 "https://github.com/KDE/clazy/archive/${CLAZY_REVISION}.tar.gz" -o "$RUNNER_TEMP/clazy.tar.gz"
+          echo "$CLAZY_SHA256  $RUNNER_TEMP/clazy.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/clazy-src"
+          tar -xzf "$RUNNER_TEMP/clazy.tar.gz" -C "$RUNNER_TEMP/clazy-src" --strip-components=1
+          cmake -S "$RUNNER_TEMP/clazy-src" -B "$RUNNER_TEMP/clazy-build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER="/usr/bin/clang-$LLVM_VERSION" \
+            -DCMAKE_CXX_COMPILER="/usr/bin/clang++-$LLVM_VERSION" -DCMAKE_PREFIX_PATH="/usr/lib/llvm-$LLVM_VERSION" \
+            -DLLVM_CONFIG_EXECUTABLE="/usr/lib/llvm-$LLVM_VERSION/bin/llvm-config" \
+            -DCLAZY_LINK_CLANG_DYLIB=ON -DCLAZY_MAN_PAGE=OFF -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/.cache/clazy"
+          cmake --build "$RUNNER_TEMP/clazy-build" --target clazy-standalone --parallel "$(nproc)"
+          cmake --install "$RUNNER_TEMP/clazy-build"
+
+      - name: Select analysis executables
+        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)
+        env:
+          LLVM_VERSION: ${{ steps.toolchain.outputs.llvm_version }}
+          ANALYSIS_TOOL: ${{ matrix.tool }}
+        run: |
+          echo "/usr/lib/llvm-$LLVM_VERSION/bin" >> "$GITHUB_PATH"
+          "/usr/lib/llvm-$LLVM_VERSION/bin/clang-tidy" --verify-config
+          if [[ "$ANALYSIS_TOOL" == 'clazy' ]]; then
+            echo "$GITHUB_WORKSPACE/.cache/clazy/bin" >> "$GITHUB_PATH"
+            .cache/clazy/bin/clazy-standalone --version
+          fi
 
       - name: Build Setup (sanitizers)
-        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), matrix.tool)
         uses: ./.github/actions/build-setup
         with:
           qt-host: linux
           qt-arch: linux_gcc_64
           build-type: Debug
-          cache-variant: ${{ inputs.tool }}
+          cache-variant: ${{ matrix.tool }}
           save-cache: true
 
       - name: Install Dependencies (sanitizers)
-        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), matrix.tool)
         uses: ./.github/actions/install-dependencies
 
       - name: Configure (clazy/iwyu)
-        if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
+        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)
         uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
@@ -107,10 +180,16 @@ jobs:
           preset: Linux-debug
           extra-args: >-
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-            ${{ inputs.tool == 'iwyu' && '-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++' || '' }}
+            -DQGC_BUILD_TESTING=OFF
+            -DQGC_ENABLE_WERROR=OFF
+            -DCMAKE_C_COMPILER=clang-${{ steps.toolchain.outputs.llvm_version }}
+            -DCMAKE_CXX_COMPILER=clang++-${{ steps.toolchain.outputs.llvm_version }}
+            -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
+            ${{ matrix.tool != 'qmllint' && '-DCMAKE_AUTOGEN_ORIGIN_DEPENDS=OFF -DCMAKE_GLOBAL_AUTOGEN_TARGET=ON' || '' }}
+            -DQGC_UNITY_BUILD=OFF
 
       - name: Configure (sanitizers)
-        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), matrix.tool)
         uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
@@ -119,84 +198,115 @@ jobs:
           testing: 'true'
           extra-args: >-
             -DQGC_ENABLE_COVERAGE=OFF
-            ${{ inputs.tool == 'asan' && '-DQGC_ENABLE_ASAN=ON' || '' }}
-            ${{ inputs.tool == 'asan' && '-DQGC_TEST_DETECT_LEAKS=ON' || '' }}
-            ${{ inputs.tool == 'ubsan' && '-DQGC_ENABLE_UBSAN=ON' || '' }}
-            ${{ inputs.tool == 'tsan' && '-DQGC_ENABLE_TSAN=ON' || '' }}
+            ${{ matrix.tool == 'asan' && '-DQGC_ENABLE_ASAN=ON' || '' }}
+            ${{ matrix.tool == 'asan' && '-DQGC_TEST_DETECT_LEAKS=ON' || '' }}
+            ${{ matrix.tool == 'ubsan' && '-DQGC_ENABLE_UBSAN=ON' || '' }}
+            ${{ matrix.tool == 'tsan' && '-DQGC_ENABLE_TSAN=ON' || '' }}
 
-      - name: Build (sanitizers only)
-        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+      - name: Generate protocol headers
+        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu"]'), matrix.tool)
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+          target: qgc-analysis-headers
+
+      - name: Generate Qt analysis prerequisites
+        if: contains(fromJSON('["clazy", "clang-tidy", "iwyu"]'), matrix.tool)
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+          target: autogen
+
+      - name: Build runtime analysis prerequisites
+        if: contains(fromJSON('["qmllint", "asan", "ubsan", "tsan"]'), matrix.tool)
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
 
-      - name: Run Clazy
-        if: inputs.tool == 'clazy'
-        working-directory: ${{ github.workspace }}
+      - name: Run QML analysis with generated types
+        if: matrix.tool == 'qmllint'
         env:
           INPUT_PATH: ${{ inputs.path }}
           ANALYZE_ALL: ${{ inputs.analyze_all }}
         run: |
-          ARGS=(--tool clazy --build-dir "${RUNNER_TEMP}/build")
-
-          if [[ "$ANALYZE_ALL" == "true" ]]; then
-            ARGS+=(--all)
+          args=(--build-dir "${RUNNER_TEMP}/build" --qml-build --advisory)
+          if [[ "$ANALYZE_ALL" == 'true' ]]; then
+            args+=(--all)
           elif [[ -n "$INPUT_PATH" ]]; then
-            if [[ "$INPUT_PATH" =~ \.\. ]] || [[ "$INPUT_PATH" = /* ]]; then
-              echo "::error::Invalid path: must be relative, no '..'"
-              exit 1
-            fi
-            ARGS+=("$INPUT_PATH")
-          else
-            ARGS+=(--all)
+            args+=("$INPUT_PATH")
           fi
+          python3 tools/analyze.py --tool qmllint "${args[@]}" 2>&1 | tee "${RUNNER_TEMP}/build/analysis-output.txt"
 
-          echo "Running: python3 ./tools/analyze.py ${ARGS[*]}"
-          python3 ./tools/analyze.py "${ARGS[@]}"
-
-      - name: Run IWYU
-        if: inputs.tool == 'iwyu'
-        working-directory: ${{ runner.temp }}/build
+      - name: Run compiler analysis
+        if: contains(fromJSON('["clazy", "clang-tidy"]'), matrix.tool)
         env:
           INPUT_PATH: ${{ inputs.path }}
+          ANALYZE_ALL: ${{ inputs.analyze_all }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          ANALYSIS_TOOL: ${{ matrix.tool }}
+          ANALYSIS_SHARD: ${{ matrix.shard }}
+          ANALYSIS_SHARD_COUNT: ${{ matrix.tool == 'clang-tidy' && github.event_name != 'workflow_dispatch' && '4' || '1' }}
+          PROFILE_CHECKS: ${{ inputs.profile_checks }}
         run: |
-          set +e
-
-          if [[ -n "$INPUT_PATH" ]]; then
-            if [[ "$INPUT_PATH" =~ \.\. ]] || [[ "$INPUT_PATH" = /* ]]; then
-              echo "::error::Invalid path: must be relative, no '..'"
-              exit 1
-            fi
-
-            mapfile -t FILES < <(find "${GITHUB_WORKSPACE}/$INPUT_PATH" -type f \( -name "*.cc" -o -name "*.cpp" \) 2>/dev/null | head -100)
-            if [[ ${#FILES[@]} -eq 0 ]]; then
-              echo "::error::No source files found in $INPUT_PATH"
-              exit 1
-            fi
-
-            echo "Analyzing ${#FILES[@]} files in: $INPUT_PATH"
-            iwyu_tool.py -p . -j "$(nproc)" "${FILES[@]}" 2>&1 | tee iwyu-output.txt || true
-          else
-            echo "Analyzing all source files..."
-            cmake --build . --target all 2>&1 | tee iwyu-output.txt || true
+          args=(--build-dir "${RUNNER_TEMP}/build" --advisory)
+          args+=(--shard "$ANALYSIS_SHARD" --shard-count "$ANALYSIS_SHARD_COUNT")
+          if [[ "$ANALYSIS_TOOL" == 'clang-tidy' && "$PROFILE_CHECKS" == 'true' ]]; then
+            args+=(--profile-checks)
           fi
+          if [[ "$ANALYZE_ALL" == 'true' ]]; then
+            args+=(--all)
+          elif [[ -n "$INPUT_PATH" ]]; then
+            args+=("$INPUT_PATH")
+          elif [[ -n "$PR_BASE_SHA" ]]; then
+            tool_config=(tools/analyzers/clang_tidy.py .clang-tidy)
+            if [[ "$ANALYSIS_TOOL" == 'clazy' ]]; then
+              tool_config=(tools/analyzers/clazy.py)
+            fi
+            config_changes="$(git diff --name-only "${PR_BASE_SHA}...HEAD" -- \
+              "${tool_config[@]}" tools/analyzers/compiler.py tools/analyzers/dependencies.py \
+              tools/analyzers/__init__.py tools/analyze.py \
+              tools/common/analyzer.py tools/common/proc.py tools/common/file_traversal.py \
+              tools/common/git.py tools/common/tool_version.py tools/common/deps.py \
+              tools/_bootstrap.py tools/pyproject.toml tools/uv.lock \
+              .github/workflows/analysis.yml .github/build-config.json CMakeLists.txt CMakePresets.json cmake/ ':(glob)src/**/CMakeLists.txt')"
+            if [[ -n "$config_changes" ]]; then
+              args+=(--all)
+            fi
+          fi
+          python3 tools/analyze.py --tool "$ANALYSIS_TOOL" "${args[@]}" 2>&1 | tee "${RUNNER_TEMP}/build/analysis-output.txt"
 
-          echo ""
-          echo "=== IWYU Summary ==="
-          grep -E "^(${GITHUB_WORKSPACE}/src/.*should (add|remove)|The full include-list)" iwyu-output.txt | head -200 || echo "No suggestions found"
+      - name: Run IWYU
+        if: matrix.tool == 'iwyu'
+        env:
+          INPUT_PATH: ${{ inputs.path }}
+          ANALYZE_ALL: ${{ inputs.analyze_all }}
+        run: |
+          args=(-p "${RUNNER_TEMP}/build" -j "$(nproc)")
+          if [[ "$ANALYZE_ALL" != 'true' && -n "$INPUT_PATH" ]]; then
+            if [[ "$INPUT_PATH" = /* || "$INPUT_PATH" == *..* ]]; then
+              echo "::error::Analysis path must be relative without '..'"
+              exit 1
+            fi
+            args+=("$GITHUB_WORKSPACE/$INPUT_PATH")
+          else
+            args+=("$GITHUB_WORKSPACE/src")
+          fi
+          iwyu_tool.py "${args[@]}" 2>&1 | tee "${RUNNER_TEMP}/build/iwyu-output.txt"
 
       - name: Run Sanitizer Tests
-        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
+        if: contains(fromJSON('["asan", "ubsan", "tsan"]'), matrix.tool)
         uses: ./.github/actions/run-unit-tests
         env:
-          ASAN_OPTIONS: ${{ inputs.tool == 'asan' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
-          LSAN_OPTIONS: ${{ inputs.tool == 'asan' && format('suppressions={0}/build/asan_suppressions.txt', runner.temp) || '' }}
-          UBSAN_OPTIONS: ${{ inputs.tool == 'ubsan' && format('print_stacktrace=1:halt_on_error=1:suppressions={0}/build/ubsan_suppressions.txt', runner.temp) || '' }}
-          TSAN_OPTIONS: ${{ inputs.tool == 'tsan' && format('second_deadlock_stack=1:halt_on_error=1:suppressions={0}/build/tsan_suppressions.txt', runner.temp) || '' }}
+          ASAN_OPTIONS: ${{ matrix.tool == 'asan' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
+          LSAN_OPTIONS: ${{ matrix.tool == 'asan' && format('suppressions={0}/build/asan_suppressions.txt', runner.temp) || '' }}
+          UBSAN_OPTIONS: ${{ matrix.tool == 'ubsan' && format('print_stacktrace=1:halt_on_error=1:suppressions={0}/build/ubsan_suppressions.txt', runner.temp) || '' }}
+          TSAN_OPTIONS: ${{ matrix.tool == 'tsan' && format('second_deadlock_stack=1:halt_on_error=1:suppressions={0}/build/tsan_suppressions.txt', runner.temp) || '' }}
         with:
           build-dir: ${{ runner.temp }}/build
-          junit-output: junit-results-analysis-${{ inputs.tool }}.xml
+          junit-output: junit-results-analysis-${{ matrix.tool }}.xml
           ctest-output: sanitizer-output.txt
           include-labels: 'Unit|Integration'
           exclude-labels: 'Flaky|Network|NoSanitizer'
@@ -206,10 +316,15 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ inputs.tool }}-output
+          name: ${{ matrix.tool }}-output${{ matrix.tool == 'clang-tidy' && github.event_name != 'workflow_dispatch' && format('-{0}', matrix.shard) || '' }}
           path: |
+            ${{ runner.temp }}/build/analysis-output.txt
+            ${{ runner.temp }}/build/*-timings.json
+            ${{ runner.temp }}/build/*-progress.jsonl
+            ${{ runner.temp }}/build/*-raw.txt
+            ${{ runner.temp }}/build/clang-tidy-profiles/
             ${{ runner.temp }}/build/iwyu-output.txt
             ${{ runner.temp }}/build/sanitizer-output.txt
-            ${{ runner.temp }}/build/junit-results-analysis-${{ inputs.tool }}.xml
+            ${{ runner.temp }}/build/junit-results-analysis-${{ matrix.tool }}.xml
           if-no-files-found: ignore
           retention-days: 7

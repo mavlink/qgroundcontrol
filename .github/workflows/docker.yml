@@ -13,6 +13,11 @@ on:
     paths-ignore:
       - 'docs/**'
   workflow_dispatch:
+    inputs:
+      debug_runner:
+        description: 'Open an actor-only SSH session after a failure (up to 15 minutes, branches only)'
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -46,19 +51,16 @@ jobs:
       - name: Checkout planner
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
-          # Bootstrap shim (ci_bootstrap.py + tools/_bootstrap.py + common/__init__.py + common/gh_actions.py)
-          # also appears in linux.yml (debug-matrix), pr-checks.yml (size), _cache-cleanup.yml. Keep aligned —
-          # GHA composite actions can't run before checkout, so this list can't be deduplicated structurally.
+          fetch-depth: 0
           sparse-checkout: |
             .github/scripts/plan_docker_builds.py
+            .github/scripts/detect_changes.py
             .github/scripts/ci_bootstrap.py
             deploy/docker/variants.json
             deploy/docker/_variants.py
             tools/_bootstrap.py
-            tools/common/__init__.py
-            tools/common/file_traversal.py
-            tools/common/gh_actions.py
+            tools/common
+            tools/qgc_tools
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
@@ -66,6 +68,8 @@ jobs:
         id: plan
         env:
           EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           LINUX: ${{ needs.changes.outputs.docker_linux }}
           ANDROID: ${{ needs.changes.outputs.docker_android }}
         run: python3 "${GITHUB_WORKSPACE}/.github/scripts/plan_docker_builds.py"
@@ -84,6 +88,7 @@ jobs:
     if: always() && !cancelled() && needs.plan-builds.outputs.has_jobs == 'true'
     timeout-minutes: 120
     permissions:
+      actions: read
       contents: read
       security-events: write
       packages: write
@@ -101,6 +106,12 @@ jobs:
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
@@ -190,11 +201,11 @@ jobs:
         run: |
           package_dir=$(dirname "${PACKAGE_PATH}")
           package_name=$(basename "${PACKAGE_PATH}")
-          docker run --rm --entrypoint /bin/bash \
+          docker run --rm --entrypoint /opt/qgc-venv/bin/python \
             -v "${GITHUB_WORKSPACE}:/project/source:ro" \
             -v "${package_dir}:/packages:ro" \
             "${IMAGE}" \
-            /project/source/deploy/docker/validate-native-package.sh "/packages/${package_name}"
+            /project/source/deploy/docker/validate_native_package.py "/packages/${package_name}"
 
       - name: Verify native package checksum
         id: package-checksum
@@ -265,11 +276,18 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Install Grype
+        if: steps.artifact.outputs.found == 'true'
+        id: install-grype
+        timeout-minutes: 5
+        run: python3 .github/scripts/install_grype.py
+
       - name: Scan SBOM with Grype
         if: steps.artifact.outputs.found == 'true'
         id: grype
         uses: anchore/scan-action@v7
         with:
+          grype-version: ${{ steps.install-grype.outputs.version }}
           sbom: cpm-sbom.cdx.json
           fail-build: false
           severity-cutoff: high
@@ -283,8 +301,8 @@ jobs:
           sarif_file: ${{ steps.grype.outputs.sarif }}
           category: 'grype-${{ matrix.platform }}'
 
-      - name: Generate published image SBOM
-        if: steps.push-target.outputs.ref != ''
+      - name: Generate builder image SBOM
+        if: steps.artifact.outputs.found == 'true'
         uses: anchore/sbom-action@v0
         with:
           image: dronecode/qgroundcontrol:${{ matrix.variant }}
@@ -293,11 +311,12 @@ jobs:
           upload-artifact: false
           upload-release-assets: false
 
-      - name: Scan published image
-        if: steps.push-target.outputs.ref != ''
+      - name: Scan builder image
+        if: steps.artifact.outputs.found == 'true'
         id: grype-image
         uses: anchore/scan-action@v7
         with:
+          grype-version: ${{ steps.install-grype.outputs.version }}
           sbom: image-sbom.cdx.json
           fail-build: false
           severity-cutoff: high
@@ -305,7 +324,7 @@ jobs:
           output-format: sarif
 
       - name: Upload image scan to GitHub Security
-        if: steps.push-target.outputs.ref != ''
+        if: steps.artifact.outputs.found == 'true'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ steps.grype-image.outputs.sarif }}
@@ -330,6 +349,11 @@ jobs:
             image-sbom.cdx.json
           if-no-files-found: error
           retention-days: 7
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner
 
   attest-images:
     name: Attest ${{ matrix.platform }} Image
@@ -383,7 +407,9 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Attest image provenance
-        uses: actions/attest-build-provenance@v4
+        uses: actions/attest@v4
+        env:
+          NODE_OPTIONS: --max-http-header-size=32768
         with:
           subject-name: ${{ startsWith(github.ref, 'refs/tags/v') && 'dronecode/qgroundcontrol' || 'ghcr.io/mavlink/qgroundcontrol' }}
           subject-digest: ${{ steps.image.outputs.digest }}

@@ -2,6 +2,8 @@ name: Runner Images
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '23 3 * * 1'
 
 concurrency:
   group: runner-images
@@ -13,6 +15,9 @@ permissions:
 jobs:
   ubuntu24-x64:
     name: Ubuntu 24 x64
+    if: github.repository_owner == 'mavlink' && (github.event_name != 'schedule' || vars.RUNS_ON_AMI_SUBNET_ID != '')
+    outputs:
+      image: ${{ steps.candidate.outputs.image }}
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:
@@ -46,10 +51,12 @@ jobs:
             .github/actions/aws-credentials
             .github/build-config.json
             .github/runner-images
+            .github/scripts/runner_image.py
             .github/scripts/aws_upload.py
             .github/scripts/ci_bootstrap.py
             tools/_bootstrap.py
             tools/common
+            tools/qgc_tools
             tools/setup/read_config.py
           sparse-checkout-cone-mode: false
 
@@ -99,6 +106,14 @@ jobs:
           packer validate qgc-ubuntu24-x64.pkr.hcl
           packer build qgc-ubuntu24-x64.pkr.hcl
 
+      - name: Resolve candidate AMI
+        id: candidate
+        env:
+          REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+        run: |
+          image=$(python3 .github/scripts/runner_image.py manifest --region "$REGION" --manifest .github/runner-images/packer-manifest.json)
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
       - name: Upload Packer manifest
         uses: actions/upload-artifact@v7
         with:
@@ -115,7 +130,7 @@ jobs:
       ${{
         github.repository_owner == 'mavlink' &&
         (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
-        format('runs-on={0}/runner=linux-x64-builder-prebaked', github.run_id) ||
+        format('runs-on={0}/runner=linux-x64-builder-prebaked/ami={1}', github.run_id, needs.ubuntu24-x64.outputs.image) ||
         'ubuntu-24.04'
       }}
     timeout-minutes: 10
@@ -139,7 +154,38 @@ jobs:
           qt_root="${qt_roots[0]}"
           test -x "${qt_root}/bin/qt-cmake"
           test -f "${qt_root}/.qgc-modules"
+          test -s /opt/qgc-sdk/cpm/manifest.json
+          test -d /opt/qgc-sdk/cpm/sources
           "${qt_root}/bin/qt-cmake" --version
           cmake --version
           ninja --version
           dpkg-query -W libgstreamer1.0-dev libxcb-cursor-dev patchelf
+
+  promote:
+    name: Promote verified runner image
+    needs: [ubuntu24-x64, smoke-test]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Configure AWS Credentials
+        uses: ./.github/actions/aws-credentials
+        with:
+          aws-role-arn: ${{ secrets.RUNS_ON_AMI_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-west-2' }}
+      - name: Promote and retire expired QGC images
+        env:
+          REGION: ${{ vars.AWS_REGION || 'us-west-2' }}
+          CANDIDATE_IMAGE: ${{ needs.ubuntu24-x64.outputs.image }}
+        run: |
+          python3 .github/scripts/runner_image.py promote --region "$REGION" --image "$CANDIDATE_IMAGE" --commit "$GITHUB_SHA"
+          python3 .github/scripts/runner_image.py cleanup --region "$REGION"

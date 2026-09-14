@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "PortableTest.h"
 
-class SecureMemoryTest : public UnitTest
+class SecureMemoryTest : public PortableTest
 {
     Q_OBJECT
 

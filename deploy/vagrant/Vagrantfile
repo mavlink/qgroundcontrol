@@ -2,32 +2,13 @@
 # vi: set ft=ruby :
 
 require 'yaml'
-require 'json'
 
 current_dir    = File.dirname(File.expand_path(__FILE__))
 configfile     = YAML.load_file("#{current_dir}/.vagrantconfig.yml")
 yaml_config    = configfile['configs']['dev']
 
-# Load centralized build config
-build_config_path = File.join(current_dir, '../../.github/build-config.json')
-build_config = JSON.parse(File.read(build_config_path))
-
-env_global = [
-  'JOBS=4',
-  'SHADOW_BUILD_DIR=/tmp/shadow_build_dir',
-  'CODESIGN=nocodesign',
-]
-
-# QGC_CI=1 builds headless: drop the desktop/IDE packages a CI runner can't use.
+# CI uses a writable guest copy; desktop users share the repository directly.
 ci_mode = !ENV.fetch('QGC_CI', '').empty?
-
-packages = [
-  'libudev-dev',
-  'speech-dispatcher',
-  'wget',
-]
-packages += ['xubuntu-desktop', 'qtcreator'] unless ci_mode
-
 
 Vagrant.configure(2) do |config|
   # This trick is used to prefer a VM box over docker
@@ -35,13 +16,13 @@ Vagrant.configure(2) do |config|
   config.vm.provider "vmware_fusion"
 
   config.vm.box = "alvistack/ubuntu-25.10"
-  # Provisioning builds from /vagrant as the repo root, but Vagrant maps the
-  # Vagrantfile's own dir (deploy/vagrant) there. In CI remap it to the repo root.
   if ci_mode
     # rsync (not 9p): the guest needs a writable, vagrant-owned copy — QGC's cmake
-    # creates .venv inside the source tree, impossible on a foreign-uid 9p share.
+    # generates files inside the source tree, impossible on a foreign-uid 9p share.
     config.vm.synced_folder "../..", "/vagrant", type: "rsync",
       rsync__exclude: ["shadow_build/", ".venv/", "build/"]
+  else
+    config.vm.synced_folder "../..", "/vagrant"
   end
   config.vm.provider :docker do |docker, override|
     override.vm.box = "tknerr/baseimage-ubuntu-16.04"
@@ -71,146 +52,16 @@ Vagrant.configure(2) do |config|
     }
   end
 
-  # the "dev configuration puts the build products and a suitable
-  # environment into the /vagrant directory.  This allows you to run
-  # qgroundcontrol on the host machine with:
-  # "cd shadow-build/release; ./qgroundcontrol-start.sh"
-
-  # rm -rf /vagrant/shadow_build
-  # mkdir /vagrant/shadow_build
-  # cd /vagrant/shadow_build
-  # time qt-cmake --preset Linux -S /vagrant -B . -DQGC_STABLE_BUILD=OFF  # 34s
-  # time cmake --build . --target all --config Release  # 75m
-  # time cmake --install . --config Release
-
-  $config_shell = <<-'SHELL'
-     set -e
-     set -x
-
-     export %{build_env}
-     export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1))
-
-     sudo apt-get update -y
-     # we need this long command to keep packages (grub-pc esp.) from prompting for input
-     sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
-
-     sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install %{apt_pkgs}
-
-     sudo apt-get install -y python3-pip python3-venv python3-dev
-
-     # use common package installation:
-     python3 /vagrant/tools/setup/install_dependencies --platform debian
-
-     if [ -z "${QGC_CI:-}" ]; then sudo systemctl set-default graphical.target; fi
-
-     echo 'Initialising submodules'
-     # Belt-and-braces against git "dubious ownership" on the synced /vagrant tree.
-     su - vagrant -c "git config --global --add safe.directory '*'"
-     su - vagrant -c 'cd %{project_root_dir}; git submodule init && git submodule update'
-
-     # with reference to https://github.com/jurplel/install-qt-action@v3/blob/master/src/main.ts and .github/workflows/linux_release.yml:
-
-     # create a venv to install packages into:
-     su - vagrant -c 'python3 -m venv --system-site-packages ~vagrant/venv-qgroundcontrol'
-     su - vagrant -c 'echo "VIRTUAL_ENV_DISABLE_PROMPT=1 source /home/vagrant/venv-qgroundcontrol/bin/activate" >>~vagrant/.bashrc'
-     echo 'Installing QT'
-     sudo apt-get install -y qt6-base-dev-tools
-
-     QT6_FEATURES="charts location positioning speech 5compat multimedia serialport shadertools connectivity quick3d sensors"
-
-     su - vagrant -c "source /home/vagrant/venv-qgroundcontrol/bin/activate; python3 -m pip install --user aqtinstall"
-
-     apt-get install -y patchelf
-
-     dir="%{qt_deps_unpack_dir}"
-     version="%{qt_version}"
-     host="linux"
-     target="desktop"
-     modules="%{qt_modules}"
-     su - vagrant -c "rm -rf ${dir}"
-     su - vagrant -c "mkdir -p ${dir}"
-     su - vagrant -c "python3 -m aqt install-qt -O ${dir} ${host} ${target} ${version} -m ${modules}"
-
-     # appimage requires FUSE, so allow Vagrant to use FUSE:
-     perl -pe 's/#user_allow_other/user_allow_other/' -i /etc/fuse.conf
-     # plucky broke fusermount due to apparmor issues
-     # ... so (classily) disable apparmor:
-     systemctl disable apparmor
-     systemctl stop apparmor
-     aa-teardown
-
-     # write out a pair of scripts to make rebuilding on the VM easy:
-     su - vagrant -c "cat <<CONFIGURE >do-configure.sh
-#!/bin/bash
-
-set -e
-set -x
-
-# shadow_build in /home to avoid linking problems on vboxfs
-SHADOW_BUILD=\"\\\$HOME/shadow_build\"
-QT_ROOT=\"\\\$HOME/Qt/${version}/gcc_64\"
-export QT_ROOT_DIR=\"\\\$QT_ROOT\"
-rm -rf \"\\\$SHADOW_BUILD\"
-mkdir \"\\\$SHADOW_BUILD\"
-cd \"\\\$SHADOW_BUILD\"
-time \"\\\$QT_ROOT/bin/qt-cmake\" --preset Linux -S /vagrant -B \"\\\$SHADOW_BUILD\" -DQGC_STABLE_BUILD=OFF # 34s
-CONFIGURE
-"
-
-     su - vagrant -c "cat <<MAKE >do-make.sh
-#!/bin/bash
-
-set -e
-set -x
-
-SHADOW_BUILD=\"\\\$HOME/shadow_build\"
-
-cd \"\\\$SHADOW_BUILD\"
-
-time cmake --build . --target all --config Release  # 75m
-rm -rf AppDir
-time cmake --install . --config Release
-
-MAKE
-"
-
-    su - vagrant -c "chmod +x do-configure.sh do-make.sh"
-
-    # increase the allowed number of open files (the link step takes a
-    # lot of open filehandles!):
-echo '*               soft    nofile          2048' >/etc/security/limits.d/fileno.conf
-
-    # now run the scripts:
-    su - vagrant -c ./do-configure.sh
-    su - vagrant -c ./do-make.sh
-
-    # local dev only: expose build products on the host via the two-way
-    # /vagrant share (CI pulls the AppImage over scp instead; see vm-builds.yml)
-    if [ -z "${QGC_CI:-}" ]; then
-      su - vagrant -c 'rsync --delete -aPH "$HOME/shadow_build" /vagrant/shadow_build'
+  config.vm.provision "dev", type: "shell", env: {
+    "QGC_CI" => ENV.fetch('QGC_CI', ''),
+    "QGC_SOURCE_DIR" => yaml_config.fetch('project_root_dir'),
+    "QT_OUT" => yaml_config.fetch('qt_deps_unpack_dir'),
+  }, inline: <<-'SHELL'
+    set -eu
+    if ! command -v python3 >/dev/null 2>&1; then
+      apt-get update
+      DEBIAN_FRONTEND=noninteractive apt-get install -y python3
     fi
-
-   SHELL
-
-  config.vm.provision "dev", type: "shell", env: {"QGC_CI" => ENV.fetch('QGC_CI', '')}, inline: $config_shell  % {
-    :shadow_build_dir => yaml_config['shadow_build_dir'],
-    :spec => yaml_config['spec'],
-    :apt_pkgs => (packages).join(' '),
-    :build_env => env_global.select { |item| item.is_a?(String) }.join(' '),
-
-    :project_root_dir => yaml_config['project_root_dir'],
-    :qt_deps_unpack_parent_dir => yaml_config['qt_deps_unpack_parent_dir'],
-    :qt_deps_unpack_dir => yaml_config['qt_deps_unpack_dir'],
-
-    :qt_deps_dir => yaml_config['qt_deps_dir'],
-    :qt_deps_bin_dir => yaml_config['qt_deps_bin_dir'],
-    :qt_deps_lib_dir => yaml_config['qt_deps_lib_dir'],
-    :qt_deps_plugins_dir => yaml_config['qt_deps_plugins_dir'],
-    :qt_deps_qml_dir => yaml_config['qt_deps_qml_dir'],
-
-    :qt_version => build_config['qt']['version'],
-    :qt_modules => build_config['qt']['modules'],
-  }
-
-
+    exec python3 "$QGC_SOURCE_DIR/deploy/vagrant/provision.py"
+  SHELL
 end

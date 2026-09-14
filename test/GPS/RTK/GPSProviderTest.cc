@@ -1,8 +1,8 @@
 #include "GPSProviderTest.h"
 
-#include <QtTest/QSignalSpy>
-
 #include <cstring>
+
+#include <QtTest/QSignalSpy>
 
 #include "GPSProvider.h"
 #include "GPSTransport.h"
@@ -27,7 +27,11 @@ class TestTransport : public GPSTransport
 public:
     TestTransport(const std::atomic_bool& requestStop, TransportTrace& trace, std::function<void()> stop,
                   bool openResult, bool cancelInOpen)
-        : GPSTransport(requestStop), _trace(trace), _stop(stop), _openResult(openResult), _cancelInOpen(cancelInOpen)
+        : GPSTransport(requestStop)
+        , _trace(trace)
+        , _stop(stop)
+        , _openResult(openResult)
+        , _cancelInOpen(cancelInOpen)
     {
         _trace.constructedOn = QThread::currentThread();
     }
@@ -80,12 +84,13 @@ void GPSProviderTest::_transportLifetimeStaysOnWorker()
     TransportTrace trace;
     auto lifetime = std::make_shared<int>(0);
     trace.factoryLifetime = lifetime;
+    std::function<void()> stopProvider;
     GPSProvider provider(
         [&, lifetime = std::move(lifetime)](const std::atomic_bool& requestStop) {
-            return std::make_unique<TestTransport>(
-                requestStop, trace, [&provider]() { provider.stop(); }, openResult, cancelInOpen);
+            return std::make_unique<TestTransport>(requestStop, trace, stopProvider, openResult, cancelInOpen);
         },
         GPSReceiverType::ublox, GPSReceiverConfig{});
+    stopProvider = [&provider]() { provider.stop(); };
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::shortMs()));
@@ -209,12 +214,14 @@ void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
 void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
 {
     TransportTrace trace;
+    std::function<void()> stopProvider;
     GPSProvider provider(
         [&](const std::atomic_bool& requestStop) {
-            provider.stop();
+            stopProvider();
             return std::make_unique<TestTransport>(requestStop, trace, []() {}, true, false);
         },
         GPSReceiverType::ublox, GPSReceiverConfig{});
+    stopProvider = [&provider]() { provider.stop(); };
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::shortMs()));

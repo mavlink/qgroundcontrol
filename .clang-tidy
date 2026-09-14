@@ -50,6 +50,10 @@ CheckOptions:
     value: camelBack
   - key: readability-identifier-naming.VariableCase
     value: camelBack
+  - key: readability-identifier-naming.PrivateMethodCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMethodPrefix
+    value: '_'
   - key: readability-identifier-naming.PrivateMemberPrefix
     value: '_'
   - key: readability-identifier-naming.ProtectedMemberPrefix
@@ -74,6 +78,5 @@ CheckOptions:
     value: '0'  # Always require braces
 
 HeaderFilterRegex: '^.*/(src|test|tools)/.*\.(h|hpp)$'
-ExcludeHeaderFilterRegex: '.*(moc_|qrc_|ui_).*|.*_autogen/.*|.*/(build|libs|3rdparty)/.*'
 FormatStyle: file
 ...

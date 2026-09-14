@@ -12,8 +12,8 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.gh_actions import list_workflow_runs_for_sha, parse_csv_list, write_github_output
-from common.github_runs import select_latest_runs_by_name
 from common.io import read_json, write_json
+from qgc_tools.workflow_runs import evaluate_runs, select_latest_runs_by_name
 
 
 def evaluate_readiness(
@@ -22,24 +22,7 @@ def evaluate_readiness(
     event: str = "push",
 ) -> tuple[bool, list[str], list[str], list[str]]:
     """Return readiness and missing/incomplete/failed platform workflow lists."""
-    latest_by_name = select_latest_runs_by_name(runs, set(platforms), event=event)
-
-    missing = [name for name in platforms if name not in latest_by_name]
-    incomplete = [
-        name
-        for name in platforms
-        if name in latest_by_name and str(latest_by_name[name].get("status", "")) != "completed"
-    ]
-    failed = [
-        name
-        for name in platforms
-        if name in latest_by_name
-        and str(latest_by_name[name].get("status", "")) == "completed"
-        and str(latest_by_name[name].get("conclusion", "")) != "success"
-    ]
-
-    ready = not missing and not incomplete and not failed
-    return ready, missing, incomplete, failed
+    return evaluate_runs(runs, platforms, event)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -68,6 +51,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="",
         help="Path to write cached workflow runs JSON for downstream scripts",
     )
+    parser.add_argument(
+        "--require-complete", action="store_true", help="Accept any completed conclusion"
+    )
     return parser.parse_args(argv)
 
 
@@ -80,9 +66,18 @@ def main(argv: list[str] | None = None) -> int:
         runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
 
     if args.runs_cache:
-        write_json(Path(args.runs_cache), runs)
+        write_json(
+            Path(args.runs_cache),
+            list(
+                select_latest_runs_by_name(
+                    runs, set(platforms) | {"pre-commit"}, event=args.event
+                ).values()
+            ),
+        )
 
-    ready, missing, incomplete, failed = evaluate_readiness(runs, platforms, args.event)
+    ready, missing, incomplete, failed = evaluate_runs(
+        runs, platforms, args.event, require_success=not args.require_complete
+    )
 
     write_github_output(
         {

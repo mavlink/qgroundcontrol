@@ -1,26 +1,25 @@
-#!/usr/bin/env python3
 """Drift guards for the tools venv.
 
 uv.lock vs pyproject.toml: a dep added without regenerating the lockfile makes
 CI's `uv sync --frozen` fail with a confusing error — fail locally instead via
 `uv lock --locked`, which exits non-zero when the lockfile would change.
 
-JUST_VERSION vs rust-just: two independent install paths deliver `just` — the
+just binary vs rust-just: two independent install paths deliver `just` — the
 upstream-binary fallback in install_dependencies/_debian.py (Debian/Ubuntu
 < 24.04) and rust-just from PyPI (dev/CI venv via uv). _debian derives its
-JUST_VERSION from uv.lock's rust-just at runtime so the two can't drift; this
+version from uv.lock's rust-just at runtime so the two can't drift; this
 guards that the derivation still resolves against the real lockfile.
 """
 
 from __future__ import annotations
 
-import re
 import shutil
 import subprocess
 
 import pytest
+from common.io import read_toml
 
-from ._helpers import TOOLS_DIR, load_script_module
+from ._helpers import TOOLS_DIR
 
 UV_LOCK = TOOLS_DIR / "uv.lock"
 
@@ -47,24 +46,19 @@ def test_uv_lock_in_sync_with_pyproject() -> None:
 
 def _lock_version(package: str) -> str:
     """Independently parse *package*'s pin from uv.lock (not via the helper under test)."""
-    text = UV_LOCK.read_text(encoding="utf-8")
-    match = re.search(
-        r'\[\[package\]\]\s*\nname\s*=\s*"' + re.escape(package) + r'"\s*\nversion\s*=\s*"([\d.]+)"',
-        text,
+    return next(
+        entry["version"] for entry in read_toml(UV_LOCK)["package"] if entry["name"] == package
     )
-    assert match, f"{package} package not found in tools/uv.lock"
-    return match.group(1)
 
 
 def _derived_versions() -> dict[str, str]:
-    """The version each setup script resolves for its pip/binary fallback tool."""
-    from setup.install_dependencies._debian import JUST_VERSION
+    """The upstream binary fallback uses the same lock as the Python build profile."""
+    from setup.install_dependencies._debian import _just_version
 
-    bg = load_script_module("setup/build-gstreamer.py", "build_gstreamer")
-    return {"rust-just": JUST_VERSION, "meson": bg.MESON_VERSION, "ninja": bg.NINJA_VERSION}
+    return {"rust-just": _just_version()}
 
 
-@pytest.mark.parametrize("package", ["rust-just", "meson", "ninja"])
+@pytest.mark.parametrize("package", ["rust-just"])
 def test_fallback_version_derives_from_uv_lock(package: str) -> None:
     if not UV_LOCK.exists():
         pytest.skip("tools/uv.lock not in checkout")

@@ -1,4 +1,6 @@
 #include "VehicleEFIFactGroup.h"
+
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 
 VehicleEFIFactGroup::VehicleEFIFactGroup(QObject *parent)

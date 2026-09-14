@@ -1,4 +1,6 @@
 #include "VehicleEstimatorStatusFactGroup.h"
+
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 
 VehicleEstimatorStatusFactGroup::VehicleEstimatorStatusFactGroup(QObject *parent)

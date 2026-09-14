@@ -12,6 +12,7 @@ import hmac
 import json
 import os
 import re
+import sys
 import tempfile
 from typing import TYPE_CHECKING, Any
 
@@ -161,16 +162,16 @@ def read_toml(path: Path) -> dict[str, Any]:
     under runner system python which is 3.10 on some images) don't blow up
     transitively.
     """
-    try:
+    if sys.version_info >= (3, 11):
         import tomllib
-    except ModuleNotFoundError:  # stdlib tomllib is 3.11+; Ubuntu 22 ships 3.10
+    else:
         try:
             import tomli as tomllib  # type: ignore[import-not-found]
         except ModuleNotFoundError as exc:
             raise ModuleNotFoundError(
                 f"Reading {path} needs Python 3.11+ (stdlib tomllib) or the 'tomli' package "
-                "on 3.10. Install uv (recommended) so bootstrap uses 'uv sync', or run "
-                "'pip install tomli'."
+                "on 3.10. Run 'python tools/setup/install_python.py scripts' and use "
+                "the interpreter in tools/.venv."
             ) from exc
 
     with path.open("rb") as fh:

@@ -11,7 +11,7 @@ retry_script = load_script_module("setup/run_with_retry.py", "run_with_retry")
 
 
 def test_main_forwards_command_and_retry_limits() -> None:
-    command = ["python", "-m", "pip", "install", "fastcrc"]
+    command = ["uv", "sync", "--frozen", "--project", "tools"]
     with patch.object(
         retry_script,
         "run_checked_with_retry",

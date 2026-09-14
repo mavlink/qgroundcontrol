@@ -3,7 +3,7 @@
 #   docker build -f deploy/docker/Dockerfile --target linux       .   # x86_64 AppImage
 #   docker build -f deploy/docker/Dockerfile --target linux-cross .   # aarch64 cross
 #   docker build -f deploy/docker/Dockerfile --target android     .   # Android APK
-# run-docker.sh / plan_docker_builds.py drive --target + build-args; non-Ubuntu
+# run_docker.py / plan_docker_builds.py drive --target + build-args; non-Ubuntu
 # Linux variants reuse the `linux` target with base/bootstrap/backend overridden.
 
 # ---------- base: shared bootstrap for every variant ----------
@@ -15,8 +15,9 @@ FROM ${BASE_REF} AS base
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 ENV PATH="/opt/qgc-venv/bin:${PATH}"
+ENV QGC_PYTHON_ENV=/opt/qgc-venv QGC_TOOLS_PROJECT=/opt/qgc-tools
 
-# Shared shell helpers (retry, setup-base*, setup-venv, build-type validation).
+# Minimal shell bootstraps for system packages needed before Python is available.
 COPY deploy/docker/lib/ /usr/local/lib/qgc/
 
 # SETUP_BASE picks the bootstrap (apt/dnf/pacman); APT_EXTRA adds variant
@@ -39,20 +40,23 @@ RUN if [ -n "${CC_PIN}" ]; then \
             > /etc/profile.d/qgc-toolchain.sh; \
     fi
 
-# Build-time Python deps for CMake generators + aqt. PIP_CMAKE pulls a modern
-# cmake into the venv when the distro's apt cmake is too old (22.04: 3.22 < 3.25).
-ARG PIP_CMAKE=""
+# Locked Python environment for generators, Qt installation, and build tools.
 COPY --from=ghcr.io/astral-sh/uv:0.11.12 /uv /usr/local/bin/uv
-COPY tools/pyproject.toml tools/uv.lock /tmp/qgc-tools/
-RUN PIP_CMAKE="${PIP_CMAKE}" sh /usr/local/lib/qgc/setup-venv.sh && \
-    rm -rf /tmp/qgc-tools /usr/local/bin/uv
+COPY tools/pyproject.toml tools/uv.lock /opt/qgc-tools/
+RUN UV_PROJECT_ENVIRONMENT=/opt/qgc-venv uv sync \
+        --project /opt/qgc-tools --python python3 \
+        --group scripts --group qt --group build \
+        --no-default-groups --no-install-project --frozen && \
+    /opt/qgc-venv/bin/python -c "import jinja2, httpx, defusedxml, lxml, fastcrc" && \
+    /opt/qgc-venv/bin/aqt --help >/dev/null
 
 # Version config only (read_config + _bootstrap import need a dir named "tools").
 # Copied before the slow Qt layer so editing package lists doesn't bust Qt cache.
 COPY .github/build-config.json /tmp/tools/setup/
-COPY tools/setup/read_config.py /tmp/tools/setup/
+COPY tools/setup/read_config.py tools/setup/install_qt.py /tmp/tools/setup/
 COPY tools/_bootstrap.py /tmp/tools/
 COPY tools/common/ /tmp/tools/common/
+COPY tools/qgc_tools/ /tmp/tools/qgc_tools/
 
 # --system so it applies to the mapped runtime UID (containers run --user).
 RUN git config --system --add safe.directory /project/source && \
@@ -69,14 +73,14 @@ FROM base AS linux
 ARG DEP_PLATFORM=debian
 # Persist for entrypoint.sh: Fedora/Arch builds skip the appimagelint compat check.
 ENV QGC_DEP_PLATFORM=${DEP_PLATFORM}
-RUN sh /usr/local/lib/qgc/install-qt.sh linux desktop linux_gcc_64 && \
+RUN python3 /tmp/tools/setup/install_qt.py install --from-config --host linux --target desktop --arch linux_gcc_64 --outdir /opt/Qt && \
     QT_VERSION=$(python3 /tmp/tools/setup/read_config.py --get qt.version) && \
     { echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_64"; \
       echo 'export PATH=$QT_ROOT_DIR/bin:$PATH'; } > /etc/profile.d/qt.sh
 COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
 RUN python3 /tmp/tools/setup/install_dependencies --platform "${DEP_PLATFORM}" && \
     rm -rf /var/lib/apt/lists/* /var/cache/dnf /var/cache/pacman/pkg /tmp/tools
-COPY deploy/docker/entrypoint.sh /entrypoint.sh
+COPY deploy/docker/entrypoint.sh deploy/docker/entrypoint.py /
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]
 
@@ -105,29 +109,29 @@ CMD ["/bin/bash"]
 #   - Local developer cross-builds without a target board / QEMU.
 #   - Reproducible builds against a specific glibc/Qt without an arm64 runner.
 FROM base AS linux-cross
-LABEL org.opencontainers.image.documentation="deploy/docker/run-docker.sh (variant: aarch64)"
+LABEL org.opencontainers.image.documentation="deploy/docker/run_docker.py (variant: aarch64)"
 # Host build tools (core category covers cmake/ninja/build-essential/git/rsync/...).
 # Target libs come from the sysroot below, not install_dependencies.
 COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
 RUN python3 /tmp/tools/setup/install_dependencies --platform debian --category core && \
     rm -rf /var/lib/apt/lists/*
-# install-sysroot-aarch64.sh does dpkg --add-architecture arm64, arch-pins the
+# install_sysroot_aarch64.py does dpkg --add-architecture arm64, arch-pins the
 # amd64 sources, and adds ports.ubuntu.com for arm64.
-COPY deploy/docker/install-sysroot-aarch64.sh /tmp/install-sysroot-aarch64.sh
-RUN SYSROOT=/opt/sysroot bash /tmp/install-sysroot-aarch64.sh && \
-    rm -f /tmp/install-sysroot-aarch64.sh && \
+COPY deploy/docker/install_sysroot_aarch64.py /tmp/deploy/docker/install_sysroot_aarch64.py
+RUN SYSROOT=/opt/sysroot python3 /tmp/deploy/docker/install_sysroot_aarch64.py && \
+    rm -rf /tmp/deploy && \
     rm -rf /var/lib/apt/lists/*
 ENV SYSROOT=/opt/sysroot
 # Qt host (linux/linux_gcc_64) + target (linux_arm64/linux_gcc_arm64). aqt serves
 # arm64 desktop under host_os=linux_arm64, not linux; versions from build-config.json.
-RUN sh /usr/local/lib/qgc/install-qt.sh linux desktop linux_gcc_64 && \
-    sh /usr/local/lib/qgc/install-qt.sh linux_arm64 desktop linux_gcc_arm64 && \
+RUN python3 /tmp/tools/setup/install_qt.py install --from-config --host linux --target desktop --arch linux_gcc_64 --outdir /opt/Qt && \
+    python3 /tmp/tools/setup/install_qt.py install --from-config --host linux_arm64 --target desktop --arch linux_gcc_arm64 --outdir /opt/Qt && \
     QT_VERSION=$(python3 /tmp/tools/setup/read_config.py --get qt.version) && \
     { echo "export QT_HOST_PATH=/opt/Qt/${QT_VERSION}/gcc_64"; \
       echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_arm64"; \
       echo 'export PATH=$QT_HOST_PATH/bin:$PATH'; } > /etc/profile.d/qt-cross.sh && \
     rm -rf /tmp/tools
-COPY deploy/docker/entrypoint.sh /entrypoint.sh
+COPY deploy/docker/entrypoint.sh deploy/docker/entrypoint.py /
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]
 
@@ -172,8 +176,8 @@ ENV QT_HOST_DIR="gcc_64"
 ENV QT_TARGET="android"
 ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
 # aqtinstall: --arch=linux_gcc_64 but creates gcc_64/ dir.
-RUN sh /usr/local/lib/qgc/install-qt.sh "$QT_HOST" desktop "$QT_HOST_ARCH" && \
-    sh /usr/local/lib/qgc/install-qt.sh all_os "$QT_TARGET" "$QT_TARGET_ARCH_ARM64" --autodesktop && \
+RUN python3 /tmp/tools/setup/install_qt.py install --from-config --host "$QT_HOST" --target desktop --arch "$QT_HOST_ARCH" --outdir /opt/Qt && \
+    python3 /tmp/tools/setup/install_qt.py install --from-config --host all_os --target "$QT_TARGET" --arch "$QT_TARGET_ARCH_ARM64" --outdir /opt/Qt --autodesktop && \
     . /etc/profile.d/qgc.sh && \
     echo "export QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64" >> /etc/profile.d/qgc.sh && \
     echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_DIR" >> /etc/profile.d/qgc.sh
@@ -185,6 +189,6 @@ RUN . /etc/profile.d/qgc.sh && \
 RUN echo 'export PATH=$JAVA_HOME/bin:/usr/lib/ccache:$QT_HOST_PATH/bin:$QT_ROOT_DIR_ARM64/bin:$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_BUILD_TOOLS_DIR:$ANDROID_NDK_ROOT' >> /etc/profile.d/qgc.sh
 
 RUN rm -rf /tmp/tools
-COPY deploy/docker/entrypoint.sh /entrypoint.sh
+COPY deploy/docker/entrypoint.sh deploy/docker/entrypoint.py /
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]

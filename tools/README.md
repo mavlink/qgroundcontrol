@@ -28,13 +28,19 @@ Common commands are wrapped in a `justfile` (requires `just` >=1.30 for `home_di
 `apt install just` on Ubuntu ships 1.21, which is too old):
 
 ```bash
-# One-time: install `just` (pulls rust-just into .venv via uv)
+# Install uv first (Linux/macOS); Windows: https://docs.astral.sh/uv/getting-started/installation/
+python3 tools/setup/install_uv.py
+export PATH="$HOME/.local/bin:$PATH"
+
+# Install the locked developer profile and activate its commands
 python3 tools/setup/install_python.py dev
+. tools/.venv/bin/activate
 
 # Windows PowerShell/cmd
 python tools/setup/install_python.py dev
+# PowerShell: . tools/.venv/Scripts/Activate.ps1
 
-# or: brew install just / cargo install just / pipx install rust-just
+# or: brew install just / cargo install just
 ```
 
 Everyday loop:
@@ -43,7 +49,7 @@ Everyday loop:
 just             # List all recipes
 just setup       # First-time: deps + submodules + configure + build
 just build       # Incremental build
-just check       # lint + test — run before declaring done
+just check       # lint + Python tooling tests + application tests — run before declaring done
 ```
 
 Full recipe list, grouped by purpose: [Just Command Reference](#just-command-reference). `just`
@@ -77,7 +83,7 @@ tools/
 │   └── file_traversal.py    # File discovery
 ├── debuggers/                # Debugging tools
 │   ├── gdb-pretty-printers/ # GDB/LLDB Qt type formatters
-│   ├── profile.sh           # Profiling (valgrind, perf)
+│   ├── profile.py           # Profiling (valgrind, perf)
 │   ├── qt6.natvis           # Visual Studio debugger visualizers
 │   └── valgrind.supp        # Valgrind suppressions
 ├── generators/                # Build-time code generation (mavlink enums, config/settings QML)
@@ -85,7 +91,7 @@ tools/
 ├── setup/                     # Environment setup scripts
 ├── simulation/                # Vehicle simulators
 │   ├── mock_vehicle.py      # Lightweight MAVLink simulator
-│   └── run-arducopter-sitl.sh  # ArduCopter SITL (Docker)
+│   └── run_arducopter_sitl.py  # ArduCopter SITL (Docker)
 └── translations/              # Translation tools
 ```
 
@@ -139,7 +145,7 @@ just test "Slow" "Network"             # override via positional args (labels, e
 | ------------- | ------------------------------------------------------------------------------- |
 | `just run`    | Launch the built `QGroundControl` binary                                        |
 | `just docs`   | Build the VitePress documentation site (`npm run docs:build`)                   |
-| `just docker` | Build inside the Ubuntu Docker container (`deploy/docker/run-docker.sh ubuntu`) |
+| `just docker` | Build in Ubuntu with `run_docker.py build ubuntu`                               |
 
 ### Utilities
 
@@ -166,7 +172,7 @@ supplying an explicit target toolchain, as Android CI does.
 
 ```bash
 # Run tools/ Python tests
-cd tools && uv run --extra scripts --extra test pytest tests/ -q
+cd tools && uv run --group scripts --group test pytest tests/ -q
 ```
 
 ## Development Scripts
@@ -183,6 +189,8 @@ and `just analyze`.
 ./tools/analyze.py --tool clang-format --all    # Check formatting (all files)
 ./tools/analyze.py --tool cppcheck              # Use cppcheck instead of clang-tidy
 ./tools/analyze.py src/Vehicle/                 # Analyze specific directory
+./tools/analyze.py --tool clang-tidy --all --shard 1 --shard-count 4  # One of four disjoint partitions
+./tools/analyze.py --tool clang-tidy --profile-checks src/Vehicle/Vehicle.cc  # Slower per-check profiling
 ```
 
 Other `--tool` choices: `clazy`, `qmllint`, `vehicle-null-check`, `qt-translate-noop-check`.
@@ -206,10 +214,14 @@ Summarize build-time hotspots from Ninja logs and optional Clang time traces.
 python3 ./tools/build_profile.py -B build                 # Report slowest Ninja edges and rebuild churn
 python3 ./tools/build_profile.py -B build --limit 25      # Show more rows per section
 python3 ./tools/build_profile.py -B build --json          # Machine-readable output
+python3 ./tools/build_profile.py -B build --output-dir /tmp/qgc-profile  # Ninja-only snapshot
 ```
 
 For per-translation-unit trace details, configure with `-DQGC_TIME_TRACE=ON`, rebuild, then rerun
 the report — it scans the build dir for Clang `-ftime-trace` JSON and highlights the slowest events.
+
+Ordinary CI builds upload Ninja-only snapshots with separate link and generated-code rankings.
+Task totals overlap because commands run in parallel; they are not elapsed build time.
 
 ### android_mem_capture.py
 
@@ -250,7 +262,7 @@ python3 ./tools/coverage.py --open       # Generate and open in browser
 python3 ./tools/coverage.py --clean      # Clean coverage data
 ```
 
-Requires: `gcovr` (`pip install gcovr`, or `python3 tools/setup/install_python.py coverage`)
+Requires: `gcovr` (`python3 tools/setup/install_python.py coverage`)
 
 **Direct CMake usage:**
 
@@ -264,17 +276,18 @@ cmake --build build --target coverage-check    # Run tests + generate report + e
 cmake --build build --target coverage-clean   # Clean .gcda files
 ```
 
-### debuggers/profile.sh
+### debuggers/profile.py
 
 Profile QGC for performance and memory issues.
 
 ```bash
-./tools/debuggers/profile.sh                # CPU profiling with perf
-./tools/debuggers/profile.sh --memcheck     # Memory leak detection (valgrind)
-./tools/debuggers/profile.sh --callgrind    # CPU profiling (valgrind)
-./tools/debuggers/profile.sh --massif       # Heap profiling (valgrind)
-./tools/debuggers/profile.sh --heaptrack    # Heap profiling (heaptrack)
-./tools/debuggers/profile.sh --sanitize     # Build with AddressSanitizer
+./tools/debuggers/profile.py                # CPU profiling with perf
+./tools/debuggers/profile.py --memcheck     # Memory leak detection (valgrind)
+./tools/debuggers/profile.py --callgrind    # CPU profiling (valgrind)
+./tools/debuggers/profile.py --massif       # Heap profiling (valgrind)
+./tools/debuggers/profile.py --heaptrack    # Heap profiling (heaptrack)
+./tools/debuggers/profile.py --sanitize     # Build with AddressSanitizer
+./tools/debuggers/profile.py --config Debug -- --logging:full  # Forward application arguments
 ```
 
 ### check_deps.py
@@ -316,7 +329,7 @@ Scripts in `setup/` help configure development environments. They read configura
 | `install_dependencies --platform arch`    | Linux (Arch)          | Install build dependencies via pacman                                         |
 | `install_dependencies --platform macos`   | macOS                 | Install dependencies via Homebrew + GStreamer                                 |
 | `install_dependencies --platform windows` | Windows               | Install GStreamer (Vulkan SDK optional)                                       |
-| `install_python.py`                       | All                   | Install Python tools via uv or pip (see groups below)                         |
+| `install_python.py`                       | All                   | Install locked Python tools via uv (see groups below)                         |
 | `install_qt.py`                           | All                   | Install Qt SDK via aqtinstall with QGC arch-directory resolution (used by CI) |
 | `setup_vscode.py`                         | All                   | Install missing VS Code workspace files from tracked templates                |
 | `build-gstreamer.py`                      | All                   | Build GStreamer from source (optional)                                        |
@@ -325,7 +338,25 @@ Scripts in `setup/` help configure development environments. They read configura
 | `read_config.py`                          | All                   | Read `.github/build-config.json` (Python, cross-platform)                     |
 
 `install_python.py` installs dependency groups defined in `tools/pyproject.toml`:
-`scripts`, `precommit`, `test`, `ci` (default), `qt`, `coverage`, `dev`, `lint`, `all`.
+`scripts`, `precommit`, `test`, `ci`, `qt`, `coverage`, `build`, `dev` (default), `lint`, `all`.
+Groups compose smaller profiles: `dev` includes the build, Qt, lint, test, and pre-commit tools.
+
+All Python dependencies are resolved in `tools/uv.lock`. Setup requires uv and uses
+`uv sync --frozen --inexact` into `tools/.venv`. Repeating setup with a smaller group
+preserves installed tools. Use `--replace` only to deliberately replace the profile;
+`--check` validates installed versions and Python/platform markers without installing.
+CMake, VS Code, and CI use the same environment. Activate it for direct script commands,
+or use `uv run --frozen --project tools --group dev <command>`. `just test-python` runs
+the full tooling suite.
+
+For an image-owned environment, set `QGC_TOOLS_PROJECT` to the directory containing
+`pyproject.toml` and `uv.lock`, and `QGC_PYTHON_ENV` to the environment directory.
+Docker uses `/opt/qgc-tools` and `/opt/qgc-venv`. Qt source overrides run through an
+isolated `uv tool run`; normal Qt installs use the locked `qt` group.
+
+`common/` contains low-level utilities; `qgc_tools/` owns Python environment setup,
+workflow-run records, and Docker variant policy. CLI entrypoints stay in `setup/`,
+`.github/scripts/`, and `deploy/`. Import-linter enforces these dependency boundaries.
 
 ### Usage Examples
 
@@ -414,7 +445,7 @@ Vehicle simulators for testing QGC without hardware.
 ### Mock Vehicle (Lightweight)
 
 ```bash
-pip install pymavlink
+python tools/setup/install_python.py dev
 ./tools/simulation/mock_vehicle.py              # QGC connects to UDP 14550
 ./tools/simulation/mock_vehicle.py --tcp --port 5760  # TCP mode
 ```
@@ -422,8 +453,8 @@ pip install pymavlink
 ### ArduCopter SITL (Full Simulation)
 
 ```bash
-./tools/simulation/run-arducopter-sitl.sh       # Connect to tcp://localhost:5760
-./tools/simulation/run-arducopter-sitl.sh --with-latency  # Simulate network lag
+./tools/simulation/run_arducopter_sitl.py       # Connect to tcp://localhost:5760
+./tools/simulation/run_arducopter_sitl.py --with-latency  # Simulate network lag
 ```
 
 See [simulation/README.md](simulation/README.md) for details.
@@ -501,3 +532,32 @@ env vars / CI outputs derive from the path (`android.ndk_full_version` →
 `ANDROID_NDK_FULL_VERSION` / `android_ndk_full_version`).
 
 Scripts read from this file to ensure consistent versions across local development and CI.
+
+Compiler analysis uses `python tools/analyze.py --tool clazy|clang-tidy [paths...]`
+with a configured compilation database and generated build prerequisites. For compiler-only
+analysis, configure Ninja with `CMAKE_EXPORT_COMPILE_COMMANDS=ON`,
+`CMAKE_DISABLE_PRECOMPILE_HEADERS=ON`, `CMAKE_AUTOGEN_ORIGIN_DEPENDS=OFF`,
+`CMAKE_GLOBAL_AUTOGEN_TARGET=ON`, and `QGC_UNITY_BUILD=OFF`. Build `qgc-analysis-headers`
+first, then `autogen` with `cmake --build <dir> --target <target>`. This generates compiler inputs
+without building the application. QML runtime analysis and sanitizers still need full builds. Individual
+files and directories are accepted. `--advisory` keeps warnings informational while
+failing error-level diagnostics and tool/compiler invocation errors; empty selections are explicitly skipped.
+These compiler-aware pre-commit hooks use `--hook-stage manual`; fast hooks remain
+part of the required PR gate.
+
+Run `just validate-configs` after changing build versions, schemas, or link exceptions.
+It validates required fields, minimum versions, SDK ordering, checksum coverage, and exception expiry.
+The pre-commit gate triggers on schema-only edits too. Release dependencies live in
+`tools/release/package.json` with their own lockfile; `python tools/release.py --install`
+uses `npm ci` without changing the documentation package. `npm test --prefix tools/release`
+checks version decisions using the actual semantic-release commit analyzer.
+
+`just lint-qml-build` checks QML against generated `build/qml` type information after a build.
+Missing imports, properties, and types are errors; the fast source-only hook retains its
+limited checks. Use `tools/analyze.py --tool qmllint --qml-build --build-dir <dir> <files>`
+for another build directory or selected files.
+
+The documentation workflow checks English internal links without exceptions before building
+all locales. The full locale build allows a finite list of existing translation links in
+`docs/.vitepress/config.mjs`; translated sources remain maintained separately. External link
+exceptions in `.lychee.toml` are exact URLs with a review deadline enforced by config validation.

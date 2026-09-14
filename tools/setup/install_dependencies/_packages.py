@@ -29,10 +29,8 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "nasm",
         "ninja-build",
         "patchelf",
-        "pipx",
         "pkgconf",
         "python3",
-        "python3-pip",
         "rsync",
         "unzip",
         "valgrind",
@@ -116,7 +114,7 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libpipewire-0.3-dev",
     ],
     # Target-side libraries for the aarch64 cross sysroot. Single source for
-    # deploy/docker/install-sysroot-aarch64.sh, which apt-installs these with an
+    # deploy/docker/install_sysroot_aarch64.py, which apt-installs these with an
     # :arm64 tag. Excluded from the aggregate (native) set by get_debian_packages.
     "cross_arm64": [
         "libc6",
@@ -210,11 +208,9 @@ FEDORA_PACKAGES: dict[str, list[str]] = {
         "nasm",
         "ninja-build",
         "patchelf",
-        "pipx",
         "pkgconf-pkg-config",
         "rpm-build",
         "python3",
-        "python3-pip",
         "rsync",
         "unzip",
         "valgrind",
@@ -294,9 +290,7 @@ ARCH_PACKAGES: dict[str, list[str]] = {
         "nasm",
         "ninja",
         "patchelf",
-        "python-pipx",
         "python",
-        "python-pip",
         "rsync",
         "unzip",
         "valgrind",
@@ -364,7 +358,7 @@ MACOS_PACKAGES: list[str] = [
     "nasm",
 ]
 
-PIPX_PACKAGES: list[str] = [
+PYTHON_BUILD_TOOLS: list[str] = [
     "cmake",
     "ninja",
     "gcovr",
@@ -434,7 +428,7 @@ __all__ = [
     "FEDORA_PACKAGES",
     "MACOS_PACKAGES",
     "PACKAGE_NAME_RE",
-    "PIPX_PACKAGES",
+    "PYTHON_BUILD_TOOLS",
     "get_arch_packages",
     "get_debian_packages",
     "get_fedora_packages",

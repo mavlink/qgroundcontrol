@@ -6,11 +6,12 @@
 
 #include <cstdint>
 
-struct QGCMAVLinkTypes {
+struct QGCMAVLinkTypes
+{
     typedef int FirmwareClass_t;
     typedef int VehicleClass_t;
 
-    static constexpr VehicleClass_t VehicleClassGeneric = 0; // Must match MAV_TYPE_GENERIC
+    static constexpr VehicleClass_t VehicleClassGeneric = 0;  // Must match MAV_TYPE_GENERIC
 
     static constexpr uint8_t maxRcChannels = 18;
 };
@@ -24,6 +25,15 @@ typedef struct __mavlink_command_ack_t mavlink_command_ack_t;
 typedef struct __mavlink_command_long_t mavlink_command_long_t;
 typedef struct __mavlink_obstacle_distance_t mavlink_obstacle_distance_t;
 typedef struct __mavlink_camera_information_t mavlink_camera_information_t;
+typedef struct __mavlink_battery_status_t mavlink_battery_status_t;
+typedef struct __mavlink_camera_capture_status_t mavlink_camera_capture_status_t;
+typedef struct __mavlink_param_ext_ack_t mavlink_param_ext_ack_t;
+typedef struct __mavlink_param_ext_value_t mavlink_param_ext_value_t;
+typedef struct __mavlink_camera_settings_t mavlink_camera_settings_t;
+typedef struct __mavlink_storage_information_t mavlink_storage_information_t;
+typedef struct __mavlink_camera_tracking_image_status_t mavlink_camera_tracking_image_status_t;
+typedef struct __mavlink_video_stream_information_t mavlink_video_stream_information_t;
+typedef struct __mavlink_video_stream_status_t mavlink_video_stream_status_t;
 typedef struct __mavlink_high_latency2_t mavlink_high_latency2_t;
 typedef struct __mavlink_event_t mavlink_event_t;
 typedef struct __mavlink_request_event_t mavlink_request_event_t;

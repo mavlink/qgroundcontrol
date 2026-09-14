@@ -3,9 +3,9 @@ description: Setup Python with uv for fast dependency installation
 
 inputs:
   groups:
-    description: 'Dependency groups to install (comma-separated: scripts, precommit, test, ci, qt, coverage, dev, all)'
+    description: 'Dependency groups to install (comma-separated: scripts, precommit, test, ci, qt, coverage, build, lint, dev, all)'
     required: false
-    default: 'ci'
+    default: 'scripts'
   python-version:
     description: 'Python version'
     required: false
@@ -14,21 +14,38 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Resolve dependency cache backend
-      id: cache-policy
-      shell: bash
-      run: |
-        enabled=false
-        if [[ -n "${RUNS_ON_S3_BUCKET_CACHE:-}" ]]; then
-          enabled=true
-        fi
-        echo "enabled=${enabled}" >> "$GITHUB_OUTPUT"
+    # JavaScript actions receive runner-injected URLs that can override the
+    # shell environment. RunsOn < 3.1 does this on Windows despite the S3 flag.
+    - name: Detect Actions cache backend
+      uses: actions/github-script@v8
+      with:
+        script: |
+          const env = process.env;
+          let backend = 'github';
+          if (env.RUNS_ON_RUNNER_NAME && env.RUNS_ON_S3_BUCKET_CACHE) {
+            try {
+              const endpoint = new URL(env.ACTIONS_RESULTS_URL);
+              const original = new URL(env.ZCTIONS_RESULTS_URL);
+              if (['http:', 'https:'].includes(endpoint.protocol) &&
+                  original.protocol === 'https:' && endpoint.origin !== original.origin) {
+                backend = 's3';
+              }
+            } catch {
+              // Missing/invalid proxy metadata keeps GitHub's storage limits.
+            }
+            if (backend !== 's3') {
+              core.warning('RunsOn S3 cache routing is inactive; using GitHub cache limits. Windows requires RunsOn >= 3.1.');
+            }
+          }
+          core.exportVariable('QGC_ACTIONS_CACHE_BACKEND', backend);
+          core.info(`Actions cache backend: ${backend}`);
 
     - name: Setup uv and Python ${{ inputs.python-version }}
       uses: astral-sh/setup-uv@v8.1.0
       with:
-        enable-cache: ${{ steps.cache-policy.outputs.enabled }}
-        cache-python: ${{ steps.cache-policy.outputs.enabled }}
+        # These inputs are evaluated again during nested post-job cleanup.
+        enable-cache: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}
+        cache-python: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}
         cache-dependency-glob: tools/uv.lock
         python-version: ${{ inputs.python-version }}
 
@@ -43,9 +60,9 @@ runs:
       shell: bash
       run: | # zizmor: ignore[github-env] writes fixed runner workspace .venv path to PATH; not attacker-controllable
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          echo "$GITHUB_WORKSPACE/.venv/Scripts" >> "$GITHUB_PATH"
+          echo "$GITHUB_WORKSPACE/tools/.venv/Scripts" >> "$GITHUB_PATH"
         else
-          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+          echo "$GITHUB_WORKSPACE/tools/.venv/bin" >> "$GITHUB_PATH"
         fi
 
     # Mirrors step-debug toggle; tools/_bootstrap.py picks this up and enables faulthandler + ::error:: hooks.

@@ -110,6 +110,16 @@ runs:
         subject-path: ${{ steps.src.outputs.path }}
         sbom-path: ${{ steps.dependency-sbom.outputs.path }}
 
+    - name: Record build identity
+      id: metadata
+      shell: bash
+      env:
+        SOURCE_PATH: ${{ steps.src.outputs.path }}
+        BUILD_DIR: ${{ inputs.build-dir || format('{0}/build', runner.temp) }}
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/attest_helper.py" metadata \
+          --source-path "$SOURCE_PATH" --build-dir "$BUILD_DIR"
+
     - name: Save artifact
       uses: actions/upload-artifact@v7
       with:
@@ -117,6 +127,7 @@ runs:
         path: |
           ${{ steps.src.outputs.path }}
           ${{ steps.checksum.outputs.path }}
+          ${{ steps.metadata.outputs.path }}
           ${{ steps.dependency-sbom.outputs.path }}
           ${{ inputs.additional-artifact-paths }}
         retention-days: ${{ inputs.retention-days != '' && inputs.retention-days || (github.event_name == 'pull_request' && '7' || '30') }}

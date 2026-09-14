@@ -56,6 +56,7 @@ See [Planning Missions](../plan_view/plan_view.md) for details on surveys, geofe
 Switch to the **Flying** view. You should see a map centered on your vehicle's GPS position with the HUD overlay showing attitude.
 
 **To fly a mission:**
+
 1. Confirm all toolbar indicators are green/nominal
 2. Slide to arm (or tap the arm indicator)
 3. Tap **Start Mission** — the vehicle will take off and follow the planned route
@@ -63,6 +64,7 @@ Switch to the **Flying** view. You should see a map centered on your vehicle's G
 5. When the mission completes, the vehicle returns to launch and lands automatically (depending on firmware settings)
 
 **To fly manually:**
+
 1. Arm the vehicle via QGC or your transmitter
 2. Take off using your transmitter
 3. Use the **Fly Tools** (left edge of the map) for vehicle actions: Return to Launch, Land, Pause, Change Altitude, Go To Location, Orbit

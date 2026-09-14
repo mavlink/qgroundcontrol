@@ -28,7 +28,7 @@ def install_arch(
     else:
         print("\nSkipping pacman package installation (--skip-system-packages)")
 
-    if (not category or category == "core") and not _c.run_pipx_install(dry_run):
+    if (not category or category == "core") and not _c.install_build_tools(dry_run):
         return False
 
     if not skip_system_packages and not category:

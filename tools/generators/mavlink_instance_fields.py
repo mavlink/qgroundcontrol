@@ -101,12 +101,14 @@ def generate_header(instance_fields: dict[int, tuple[str, str]]) -> str:
         msg_name, field_name = instance_fields[msg_id]
         lines.append(f'        {{{msg_id}, QStringLiteral("{field_name}")}},  // {msg_name}')
 
-    lines.extend([
-        "    };",
-        "    return fields;",
-        "}",
-        "",
-    ])
+    lines.extend(
+        [
+            "    };",
+            "    return fields;",
+            "}",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 

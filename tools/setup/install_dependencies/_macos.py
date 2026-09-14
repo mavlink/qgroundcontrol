@@ -19,6 +19,7 @@ def get_gstreamer_macos_urls(version: str) -> tuple[str, str]:
     devel = f"{base_url}/gstreamer-1.0-devel-{version}-universal.pkg"
     return runtime, devel
 
+
 def install_macos(dry_run: bool = False) -> bool:
     """Install macOS dependencies."""
     _c.log_info("Installing macOS dependencies...")
@@ -99,5 +100,6 @@ def install_macos(dry_run: bool = False) -> bool:
 
     print("\nmacOS dependencies installed successfully!")
     return True
+
 
 __all__ = ["get_gstreamer_macos_urls", "install_macos"]

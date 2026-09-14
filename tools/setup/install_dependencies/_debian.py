@@ -16,14 +16,15 @@ from ._packages import DEBIAN_PACKAGES, get_debian_packages
 
 
 def _just_version() -> str:
-    # Local import: `common` resolves only after `_common` (above) bootstraps sys.path.
-    # Fallback covers the Docker builders that COPY this package out of the repo without uv.lock.
     from common.tool_version import uv_lock_version
+    from qgc_tools.python_env import project_path
 
-    return uv_lock_version("rust-just") or "1.55.1"
+    version = uv_lock_version("rust-just", lock_path=project_path() / "uv.lock")
+    if version is None:
+        raise ValueError("rust-just must be pinned in tools/uv.lock")
+    return version
 
 
-JUST_VERSION = _just_version()
 JUST_MIN_VERSION = (1, 30)
 JUST_TARGETS: dict[str, str] = {
     "x86_64": "x86_64-unknown-linux-musl",
@@ -95,6 +96,9 @@ def install_just_debian(dry_run: bool = False) -> bool:
     (needs home_directory() >= 1.30). Force the upstream binary when the
     installed version is too old, even if `just` is already on PATH.
     """
+    if dry_run:
+        print("Would install compatible just via apt or the locked upstream binary")
+        return True
     installed = _detect_just_version()
     if installed and installed >= JUST_MIN_VERSION:
         return True
@@ -122,12 +126,11 @@ def install_just_debian(dry_run: bool = False) -> bool:
         _c.log_warn(f"no prebuilt 'just' for arch '{machine}'; install manually")
         return True
 
-    url = f"https://github.com/casey/just/releases/download/{JUST_VERSION}/just-{JUST_VERSION}-{target}.tar.gz"
-    print(f"\nInstalling just {JUST_VERSION} (prebuilt: {target})...")
-    if dry_run:
-        print(f"  Would download: {url}")
-        print("  Would install: /usr/local/bin/just")
-        return True
+    version = _just_version()
+    url = (
+        f"https://github.com/casey/just/releases/download/{version}/just-{version}-{target}.tar.gz"
+    )
+    print(f"\nInstalling just {version} (prebuilt: {target})...")
 
     with tempfile.TemporaryDirectory() as tmp:
         archive = Path(tmp) / "just.tar.gz"
@@ -209,7 +212,7 @@ def install_debian(
         print("\nSkipping apt package installation (--skip-system-packages)")
 
     if not category or category == "core":
-        if not _c.run_pipx_install(dry_run):
+        if not _c.install_build_tools(dry_run):
             return False
 
         if not install_just_debian(dry_run):
@@ -228,7 +231,6 @@ __all__ = [
     "DEBIAN_PACKAGE_ALTERNATIVES",
     "JUST_MIN_VERSION",
     "JUST_TARGETS",
-    "JUST_VERSION",
     "_detect_just_version",
     "install_debian",
     "install_just_debian",

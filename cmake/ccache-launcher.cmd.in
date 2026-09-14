@@ -1,0 +1,7 @@
+@echo off
+setlocal
+if not defined CCACHE_CONFIGPATH if exist "@_ccache_conf@" set "CCACHE_CONFIGPATH=@_ccache_conf@"
+if not defined CCACHE_DIR set "CCACHE_DIR=@CMAKE_SOURCE_DIR@/.ccache"
+if not defined CCACHE_BASEDIR set "CCACHE_BASEDIR=@CMAKE_SOURCE_DIR@"
+"@QGC_CACHE_PROGRAM@" %*
+exit /b %errorlevel%

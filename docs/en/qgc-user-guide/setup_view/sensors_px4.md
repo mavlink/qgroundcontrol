@@ -13,7 +13,6 @@ Sensors with no light are simple settings with default values that you may choos
 
 Click on the button for each sensor to start its calibration sequence.
 
-
 ::: info
 The image shown is from a VTOL vehicle running PX4 firmware.
 Other autopilot firmware and vehicles will offer slightly different options.
@@ -52,7 +51,6 @@ The calibration steps are:
 1. Click **Ok** to start the calibration.
 
    The bar at the top shows the progress:
-
 
 1. When finished, _QGroundControl_ will display _Calibration complete_ and the progress bar will fill completely.
 
@@ -110,7 +108,6 @@ Cup your hands over the pitot to block any wind (if calibrating the sensor indoo
 To calibrate the airspeed sensor:
 
 1. Click the **Airspeed** sensor button
-
 
 1. Cover the sensor (i.e. with your hand)
 

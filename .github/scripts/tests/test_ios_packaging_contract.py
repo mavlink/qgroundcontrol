@@ -7,8 +7,10 @@ import os
 import plistlib
 import struct
 import subprocess
+import sys
 from typing import TYPE_CHECKING
 
+import pytest
 import yaml
 from _helpers import REPO_ROOT
 
@@ -16,7 +18,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 IOS_DIR = REPO_ROOT / "deploy/ios"
-PREPARE_BUNDLE = IOS_DIR / "prepare-bundle.sh"
+PREPARE_BUNDLE = IOS_DIR / "prepare_bundle.py"
 WORKFLOW = REPO_ROOT / ".github/workflows/ios.yml"
 CI_SCRIPTS_WORKFLOW = REPO_ROOT / ".github/workflows/ci-scripts.yml"
 QT_IOS_ACTION = REPO_ROOT / ".github/actions/qt-ios/action.yml"
@@ -37,10 +39,16 @@ def _png_metadata(path: Path) -> tuple[int, int, int]:
     return width, height, color_type
 
 
-def test_prepares_ninja_ios_bundle(tmp_path: Path) -> None:
+@pytest.mark.parametrize("binary", [False, True])
+def test_prepares_ninja_ios_bundle(tmp_path: Path, binary: bool) -> None:
     bundle = tmp_path / "QGroundControl.app"
     bundle.mkdir()
-    (bundle / "Info.plist").write_text("<?xml version='1.0'?><plist><dict/></plist>\n")
+    (bundle / "Info.plist").write_bytes(
+        plistlib.dumps(
+            {"CFBundleIdentifier": "org.test.qgc", "CFBundleIcons": {"Existing": True}},
+            fmt=plistlib.FMT_BINARY if binary else plistlib.FMT_XML,
+        )
+    )
     (bundle / "QGCLaunchScreen.storyboard").write_text("uncompiled\n")
 
     calls = tmp_path / "calls.log"
@@ -68,7 +76,7 @@ case "$tool" in
             esac
         done
         touch "$bundle_path/Assets.car"
-        printf "<?xml version='1.0'?><plist><dict/></plist>\\n" > "$partial_plist"
+        printf "<?xml version='1.0'?><plist><dict><key>CFBundleIcons</key><dict><key>Generated</key><true/></dict></dict></plist>\\n" > "$partial_plist"
         ;;
     ibtool)
         while (( $# )); do
@@ -83,22 +91,12 @@ esac
 """,
     )
 
-    plist_buddy = tmp_path / "PlistBuddy"
-    _write_executable(
-        plist_buddy,
-        """#!/usr/bin/env bash
-set -euo pipefail
-printf 'PlistBuddy %s\\n' "$*" >> "$CALLS_LOG"
-""",
-    )
-
     env = os.environ | {
         "CALLS_LOG": str(calls),
-        "PLIST_BUDDY": str(plist_buddy),
         "XCRUN": str(xcrun),
     }
     subprocess.run(
-        ["bash", str(PREPARE_BUNDLE), str(bundle), "17.0", "iphoneos"],
+        [sys.executable, str(PREPARE_BUNDLE), str(bundle), "17.0", "iphoneos"],
         check=True,
         env=env,
     )
@@ -110,19 +108,24 @@ printf 'PlistBuddy %s\\n' "$*" >> "$CALLS_LOG"
     assert "actool --app-icon AppIcon" in log
     assert "--platform iphoneos" in log
     assert "ibtool --errors --warnings --notices" in log
-    assert "PlistBuddy -c Merge " in log
+    metadata = plistlib.loads((bundle / "Info.plist").read_bytes())
+    assert metadata["CFBundleIdentifier"] == "org.test.qgc"
+    assert metadata["CFBundleIcons"] == {"Existing": True, "Generated": True}
+    assert (bundle / "Info.plist").read_bytes().startswith(b"bplist") == binary
+    assert not list(bundle.glob(".qgc-ios-assets-*"))
 
 
 def test_rejects_unsupported_ios_platform(tmp_path: Path) -> None:
     result = subprocess.run(
-        ["bash", str(PREPARE_BUNDLE), str(tmp_path), "17.0", "macosx"],
+        [sys.executable, str(PREPARE_BUNDLE), str(tmp_path), "17.0", "macosx"],
         check=False,
         capture_output=True,
         text=True,
     )
 
     assert result.returncode == 2
-    assert result.stderr == "Unsupported iOS platform: macosx\n"
+    assert "invalid choice" in result.stderr
+    assert "macosx" in result.stderr
 
 
 def test_ios_workflow_builds_device_and_simulator_targets() -> None:
@@ -153,15 +156,10 @@ def test_ios_workflow_builds_device_and_simulator_targets() -> None:
     assert "-DCMAKE_OSX_SYSROOT=iphonesimulator" in configure["extra-args"]
     assert "-DCMAKE_OSX_ARCHITECTURES=x86_64" in configure["extra-args"]
     simulator_verification = steps["Verify Simulator Bundle"]["run"]
-    assert 'test -f "$APP_PATH/Assets.car"' in simulator_verification
-    assert 'test -d "$APP_PATH/Frameworks/gstreamer_mobile.framework"' in simulator_verification
-    assert 'lipo "$APP_PATH/$PACKAGE" -verify_arch x86_64' in simulator_verification
-
+    assert 'ios_package.py verify --app "$APP_PATH" --arch x86_64' in simulator_verification
     package = steps["Package IPA"]["run"]
-    assert 'lipo "$APP_PATH/$PACKAGE" -verify_arch arm64' in package
-    assert 'test -d "$APP_PATH/Frameworks/gstreamer_mobile.framework"' in package
-    assert "bundle_id=$(/usr/libexec/PlistBuddy" in package
-    assert 'unzip -tq "${PACKAGE}.ipa"' in package
+    assert 'ios_package.py" package' in package
+    assert "ios_package.py select-profile" in steps["Select App Store provisioning profile"]["run"]
 
     for step_name in (
         "Import App Store signing certificate",
@@ -183,7 +181,6 @@ def test_ios_workflow_builds_device_and_simulator_targets() -> None:
         assert "github.ref_type == 'tag'" in condition
         assert "startsWith(github.ref_name, 'v')" in condition
 
-    assert '[[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" == v* ]]' in package
     attest = steps["Attest and Upload"]["with"]
     assert attest["package-name"] == "${{ env.PACKAGE }}-ios"
     assert attest["subject-name"] == "${{ env.PACKAGE }}-ios"
@@ -214,7 +211,7 @@ def test_ios_contract_dependencies_are_sparse_checked_out() -> None:
         "cmake/modules/AppleXCFramework.cmake",
         "cmake/platform/Apple.cmake",
         "deploy/ios",
-    } <= sparse_checkout
+    } <= sparse_checkout or {".github", "cmake", "deploy"} <= sparse_checkout
 
 
 def test_ios_packaging_uses_consolidated_bundle_sources() -> None:

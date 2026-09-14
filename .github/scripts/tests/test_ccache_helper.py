@@ -266,6 +266,16 @@ class TestCacheScope:
     def test_push_non_master_scope(self):
         assert determine_cache_scope("push", "feature/test") == "branch-feature-test"
 
+    @pytest.mark.parametrize("event", ["push", "schedule", "workflow_dispatch"])
+    def test_master_builds_populate_shared_baseline(self, event):
+        assert determine_cache_scope(event, "master") == "shared"
+
+    def test_manual_branch_cannot_populate_shared_baseline(self):
+        assert determine_cache_scope("workflow_dispatch", "feature/test") == "manual-feature-test"
+
+    def test_pull_request_target_cannot_populate_shared_baseline(self):
+        assert determine_cache_scope("pull_request_target", "master", "42") != "shared"
+
 
 class TestWindowsConfig:
     """Tests for Windows ccache binary resolution."""

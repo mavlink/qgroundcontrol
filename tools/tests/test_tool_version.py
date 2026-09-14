@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for tools/common/tool_version.py."""
 
 from __future__ import annotations
@@ -88,3 +87,26 @@ def test_version_prefix_matches_shared_components() -> None:
         ((4, 13, 6), "latest", False),
     ):
         assert version_prefix_matches(actual, expected) is matches
+
+
+def test_probe_timeout_is_unavailable() -> None:
+    import subprocess
+
+    with (
+        patch("common.tool_version.shutil.which", return_value="tool"),
+        patch("common.tool_version.run_captured", side_effect=subprocess.TimeoutExpired("tool", 1)),
+    ):
+        assert probe_version("tool") is None
+
+
+def test_lock_version_parses_toml_order_and_rejects_ambiguity(tmp_path) -> None:
+    import pytest
+    from common.tool_version import uv_lock_version
+
+    path = tmp_path / "uv.lock"
+    path.write_text('[[package]]\nversion = "1.2.0rc1"\nname = "demo"\n')
+    assert uv_lock_version("demo", lock_path=path) == "1.2.0rc1"
+    with path.open("a") as stream:
+        stream.write('[[package]]\nname = "demo"\nversion = "2.0"\n')
+    with pytest.raises(ValueError, match="Multiple locked versions"):
+        uv_lock_version("demo", lock_path=path)

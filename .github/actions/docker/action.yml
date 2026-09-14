@@ -116,7 +116,30 @@ runs:
         VARIANT: ${{ inputs.variant }}
       run: docker tag "${PUSH_IMAGE}:${VARIANT}" "dronecode/qgroundcontrol:${VARIANT}"
 
+    - name: Set up cache tooling
+      uses: ./.github/actions/setup-python
+      with:
+        groups: scripts
+
+    - name: Identify container compilers
+      id: compilers
+      shell: bash
+      env:
+        IMAGE: dronecode/qgroundcontrol:${{ inputs.variant }}
+      run: python3 .github/scripts/docker_helper.py cache-key --image "$IMAGE"
+
+    - name: Restore application build caches
+      uses: ./.github/actions/cache
+      with:
+        host: linux
+        target: docker-${{ inputs.variant }}
+        build-type: ${{ inputs.build-type }}
+        key-suffix: ${{ steps.compilers.outputs.fingerprint }}
+        cpm-modules: .cache/CPM
+        install-tools: 'false'
+
     - name: Run Docker build
+      id: application-build
       if: contains(fromJSON('["Release", "Debug"]'), inputs.build-type)
       shell: bash
       env:
@@ -124,7 +147,32 @@ runs:
         IMAGE: dronecode/qgroundcontrol:${{ inputs.variant }}
         BUILD_TYPE: ${{ inputs.build-type }}
       run: |
-        chmod +x ./deploy/docker/_docker-exec.sh
         ARGS=(run --image "$IMAGE" --build-type "$BUILD_TYPE")
         [[ "$ENABLE_FUSE" == "true" ]] && ARGS+=(--fuse)
         python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" "${ARGS[@]}"
+
+    - name: Report application build performance
+      id: performance
+      if: ${{ !cancelled() && steps.application-build.outcome != '' && steps.application-build.outcome != 'skipped' }}
+      shell: bash
+      run: python3 .github/scripts/docker_helper.py summary --build-dir build
+
+    - name: Save successful compilation caches
+      if: ${{ !cancelled() && steps.performance.outputs.build_success == 'true' }}
+      uses: ./.github/actions/save-build-cache
+
+    - name: Report Ninja build timings
+      if: ${{ !cancelled() && steps.application-build.outcome != '' && steps.application-build.outcome != 'skipped' }}
+      shell: bash
+      run: python3 tools/build_profile.py --build-dir build --output-dir build/build-profile >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload application build performance
+      if: ${{ !cancelled() && steps.application-build.outcome != '' && steps.application-build.outcome != 'skipped' }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: docker-performance-${{ inputs.variant }}-${{ inputs.build-type }}
+        path: |
+          build/docker-build-report.json
+          build/build-profile/
+        if-no-files-found: warn
+        retention-days: 14

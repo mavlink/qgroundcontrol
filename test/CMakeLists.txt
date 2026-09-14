@@ -9,11 +9,7 @@ endif()
 # ----------------------------------------------------------------------------
 # Test Framework Sources
 # ----------------------------------------------------------------------------
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        UnitTestList.cc
-        UnitTestList.h
-)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE UnitTestList.cc UnitTestList.h)
 
 # ----------------------------------------------------------------------------
 # Test Dependencies
@@ -21,16 +17,14 @@ target_sources(${CMAKE_PROJECT_NAME}
 find_package(Qt6 REQUIRED COMPONENTS Test)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Test)
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+                                                         ${CMAKE_CURRENT_SOURCE_DIR}/Portable
+)
 
 # QGC_UNITTEST_BUILD is defined directory-wide from the root CMakeLists.txt when
 # QGC_BUILD_TESTING is enabled, covering this target and all src/ targets.
 
-target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE
-    <QtTest/QTest>
-    <UnitTest.h>
-    <MultiSignalSpy.h>
-)
+target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE <QtTest/QTest> <UnitTest.h> <MultiSignalSpy.h>)
 
 # ----------------------------------------------------------------------------
 # CTest Integration (CTest included in root CMakeLists.txt)
@@ -41,10 +35,18 @@ include(Sanitizers)
 
 # Sanitizers add significant runtime overhead; expand CTest per-test limits to
 # avoid false timeout failures in CI sanitizer jobs.
-if(QGC_ENABLE_ASAN OR QGC_ENABLE_UBSAN OR QGC_ENABLE_TSAN OR QGC_ENABLE_MSAN)
+if(QGC_ENABLE_ASAN
+   OR QGC_ENABLE_UBSAN
+   OR QGC_ENABLE_TSAN
+   OR QGC_ENABLE_MSAN
+)
+    # Preserve longer user timeouts while allowing for sanitizer overhead.
     macro(_qgc_raise_test_timeout variable minimum description)
         if(${variable} LESS ${minimum})
-            set(${variable} ${minimum} CACHE STRING "${description}" FORCE)
+            set(${variable}
+                ${minimum}
+                CACHE STRING "${description}" FORCE
+            )
         endif()
     endmacro()
     _qgc_raise_test_timeout(QGC_TEST_TIMEOUT_UNIT 180 "Timeout for unit tests (seconds)")

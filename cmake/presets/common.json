@@ -6,28 +6,36 @@
       "displayName": "Default (Debug)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
-      "inherits": ["debug"]
+      "inherits": [
+        "debug"
+      ]
     },
     {
       "name": "default-release",
       "displayName": "Default (Release)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
-      "inherits": ["release"]
+      "inherits": [
+        "release"
+      ]
     },
     {
       "name": "default-relwithdebinfo",
       "displayName": "Default (RelWithDebInfo)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
-      "inherits": ["relwithdebinfo"]
+      "inherits": [
+        "relwithdebinfo"
+      ]
     },
     {
       "name": "default-minsizerel",
       "displayName": "Default (MinSizeRel)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
-      "inherits": ["minsizerel"]
+      "inherits": [
+        "minsizerel"
+      ]
     },
     {
       "name": "ccache",
@@ -106,59 +114,117 @@
       "hidden": true,
       "jobs": 0
     },
-    { "name": "default", "configurePreset": "default", "inherits": ["build-defaults"] },
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "inherits": [
+        "build-defaults"
+      ]
+    },
     {
       "name": "default-release",
       "configurePreset": "default-release",
-      "inherits": ["build-defaults"]
+      "inherits": [
+        "build-defaults"
+      ]
     },
     {
       "name": "default-relwithdebinfo",
       "configurePreset": "default-relwithdebinfo",
-      "inherits": ["build-defaults"]
+      "inherits": [
+        "build-defaults"
+      ]
     },
     {
       "name": "default-minsizerel",
       "configurePreset": "default-minsizerel",
-      "inherits": ["build-defaults"]
+      "inherits": [
+        "build-defaults"
+      ]
     }
   ],
   "testPresets": [
     {
       "name": "test-defaults",
       "hidden": true,
-      "output": { "outputOnFailure": true }
+      "output": {
+        "outputOnFailure": true
+      },
+      "filter": {
+        "include": {
+          "label": "Unit|Integration"
+        },
+        "exclude": {
+          "label": "Flaky|Network"
+        }
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
     },
-    { "name": "default", "configurePreset": "default", "inherits": ["test-defaults"] }
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "inherits": [
+        "test-defaults"
+      ]
+    }
   ],
   "workflowPresets": [
     {
       "name": "default",
       "steps": [
-        { "type": "configure", "name": "default" },
-        { "type": "build", "name": "default" },
-        { "type": "test", "name": "default" }
+        {
+          "type": "configure",
+          "name": "default"
+        },
+        {
+          "type": "build",
+          "name": "default"
+        },
+        {
+          "type": "test",
+          "name": "default"
+        }
       ]
     },
     {
       "name": "default-release",
       "steps": [
-        { "type": "configure", "name": "default-release" },
-        { "type": "build", "name": "default-release" }
+        {
+          "type": "configure",
+          "name": "default-release"
+        },
+        {
+          "type": "build",
+          "name": "default-release"
+        }
       ]
     },
     {
       "name": "default-relwithdebinfo",
       "steps": [
-        { "type": "configure", "name": "default-relwithdebinfo" },
-        { "type": "build", "name": "default-relwithdebinfo" }
+        {
+          "type": "configure",
+          "name": "default-relwithdebinfo"
+        },
+        {
+          "type": "build",
+          "name": "default-relwithdebinfo"
+        }
       ]
     },
     {
       "name": "default-minsizerel",
       "steps": [
-        { "type": "configure", "name": "default-minsizerel" },
-        { "type": "build", "name": "default-minsizerel" }
+        {
+          "type": "configure",
+          "name": "default-minsizerel"
+        },
+        {
+          "type": "build",
+          "name": "default-minsizerel"
+        }
       ]
     }
   ]

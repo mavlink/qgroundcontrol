@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
-SCRIPT = Path(__file__).resolve().parents[3] / "deploy/multipass/run-multipass.sh"
+SCRIPT = Path(__file__).resolve().parents[3] / "deploy/multipass/run_multipass.py"
 
 
 @pytest.mark.parametrize(
@@ -31,7 +32,7 @@ def test_cleanup_only_owns_successfully_created_vm(
     mock.chmod(0o755)
     log = tmp_path / "calls"
     result = subprocess.run(
-        ["bash", str(SCRIPT)],
+        [sys.executable, str(SCRIPT)],
         env={
             **os.environ,
             "PATH": f"{tmp_path}:{os.environ['PATH']}",

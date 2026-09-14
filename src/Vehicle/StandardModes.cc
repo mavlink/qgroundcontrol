@@ -1,7 +1,9 @@
 #include "StandardModes.h"
-#include "Vehicle.h"
+
+#include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
+#include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(StandardModesLog, "Vehicle.StandardModes")
 

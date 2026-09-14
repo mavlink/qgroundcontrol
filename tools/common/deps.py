@@ -18,12 +18,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .errors import ToolNotFoundError
-from .proc import run_checked_with_retry
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-__all__ = ["check_and_report", "check_dependencies", "pip_install", "require_tool"]
+__all__ = ["check_and_report", "check_dependencies", "require_tool"]
 
 
 def check_dependencies(tools: Iterable[str]) -> list[str]:
@@ -53,25 +52,3 @@ def check_and_report(tools: Sequence[str], *, exit_on_missing: bool = True) -> b
     if exit_on_missing:
         sys.exit(1)
     return False
-
-
-def pip_install(packages: Sequence[str], quiet: bool = True) -> None:
-    """Install packages into the project virtual environment when available.
-
-    ``uv`` is preferred so setup scripts use the same environment as the rest
-    of the tooling. The stdlib pip fallback uses the current interpreter.
-    """
-    if shutil.which("uv"):
-        from .file_traversal import find_repo_root
-
-        relative_python = "Scripts/python.exe" if sys.platform == "win32" else "bin/python"
-        venv_python = find_repo_root() / ".venv" / relative_python
-        if venv_python.exists():
-            command = ["uv", "pip", "install", "--python", str(venv_python), *packages]
-        else:
-            command = ["uv", "pip", "install", "--system", *packages]
-    else:
-        command = [sys.executable, "-m", "pip", "install", *packages]
-        if quiet:
-            command.append("--quiet")
-    run_checked_with_retry(command)

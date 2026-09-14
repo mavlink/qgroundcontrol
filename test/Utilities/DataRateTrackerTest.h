@@ -1,7 +1,7 @@
 #pragma once
-#include "UnitTest.h"
+#include "PortableTest.h"
 
-class DataRateTrackerTest : public UnitTest
+class DataRateTrackerTest : public PortableTest
 {
     Q_OBJECT
 private slots:

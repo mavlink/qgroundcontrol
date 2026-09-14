@@ -4,9 +4,7 @@ The details of the page differ if you are using PX4 firmware or ArduPilot firmwa
 
 ## ArduPilot Camera Setup
 
-
 ## PX4 Camera Setup
-
 
 For more information see [Camera](http://docs.px4.io/main/en/peripherals/camera.html) (PX4 User Guide).
 

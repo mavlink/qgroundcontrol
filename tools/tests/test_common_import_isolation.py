@@ -25,7 +25,6 @@ CI_CRITICAL_SUBMODULES = [
     "cobertura",
     "git",
     "proc",
-    "github_runs",
     "env",
     "format",
     "io",

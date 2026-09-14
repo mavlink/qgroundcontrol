@@ -40,9 +40,7 @@ Below we show how to map the Taranis 3-way "SD" switch to channel 5.
 
 Open the Taranis UI **MIXER** page and scroll down to **CH5**, as shown below:
 
-
 Press **ENT(ER)** to edit the **CH5** configuration then change the **Source** to be the _SD_ button.
-
 
 That's it!
 Channel 5 will now output 3 different PWM values for the three different **SD** switch positions.
@@ -55,6 +53,6 @@ Commonly this is done by encoding the positions of a 2- and a 3-position switch 
 On the FrSky Taranis this process involves assigning a "logical switch" to each combination of positions of the two real switches.
 Each logical switch is then assigned to a different PWM value on the same channel.
 
-This video shows how this is done with the _FrSky Taranis_ transmitter: https://youtu.be/TFEjEQZqdVA
+This video shows how this is done with the _FrSky Taranis_ transmitter: <https://youtu.be/TFEjEQZqdVA>
 
 <!-- @[youtube](https://youtu.be/BNzeVGD8IZI?t=427) - video showing how to set the QGC side - at about 7mins and 3 secs -->

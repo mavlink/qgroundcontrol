@@ -3,18 +3,14 @@
 
 CompileFlags:
   Add:
-    - "-std=c++20"
     - "-Wall"
     - "-Wextra"
-  Remove:
-    - "-m*"  # Remove machine-specific flags
 
 Diagnostics:
   # Strict catches real unused includes; Qt/moc false positives are rare enough to accept
   UnusedIncludes: Strict
   MissingIncludes: None
   Suppress:
-    - "unknown_typename"
     - "expansion_to_defined"
 
 Index:
@@ -32,6 +28,3 @@ Hover:
 
 Completion:
   AllScopes: No
-
-Style:
-  FullyQualifiedNamespaces: No

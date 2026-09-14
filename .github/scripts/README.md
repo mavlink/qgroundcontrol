@@ -8,13 +8,16 @@ with multiple consumers in [`tools/common/`](../../tools/common/README.md).
 
 | Script | Area | Purpose |
 | --- | --- | --- |
+| `runner_image.py` | Runner Images | Promote smoke-tested runner AMIs and retire expired owned images |
 | `android_boot_test.py` | Android | Run the emulator boot smoke test |
 | `android_build_retry.py` | Android | Retry known transient Android build failures |
 | `android_collect_diagnostics.py` | Android | Collect emulator, ADB, AVD, and GStreamer diagnostics |
 | `android_matrix.py` | Planning | Emit the Android build matrix |
 | `android_sdk_helper.py` | Android | Resolve and configure Android SDK and NDK paths |
+| `apt_install_retry.py` | Bootstrap | Install apt packages with bounded retries and restore download-cache ownership |
 | `attest_helper.py` | Release | Gate SBOM signing and resolve artifact paths |
 | `aws_upload.py` | Release | Validate and upload artifacts to AWS S3 |
+| `build_cache_artifact.py` | Cache | Retain compiler/MOC snapshots as isolated short-lived workflow artifacts |
 | `cache_policy.py` | Cache | Resolve cache-save policy for the current workflow event |
 | `ccache_helper.py` | Cache | Configure, install, and summarize ccache in CI |
 | `check_baseline_ready.py` | Reporting | Check whether baseline-producing workflows are complete |
@@ -23,10 +26,10 @@ with multiple consumers in [`tools/common/`](../../tools/common/README.md).
 | `collect_artifact_sizes.py` | Reporting | Collect artifact sizes from platform workflow runs |
 | `collect_build_status.py` | Reporting | Collect platform and pre-commit status for PR comments |
 | `coverage_comment.py` | Reporting | Build PR coverage comments from Cobertura XML |
-| `cpm_helper.py` | Cache | Fingerprint CPM dependencies and configure their source cache |
+| `cpm_helper.py` | Cache | Fingerprint CPM dependencies, prepare runner seeds, and configure their source cache |
 | `deploy_docs.py` | Release | Deploy generated documentation to an external Pages repository |
 | `detect_changes.py` | Planning | Decide which platform builds a change requires |
-| `docker_helper.py` | Build | Provide Docker workflow build operations |
+| `docker_helper.py` | Build | Run Docker builds and report compiler identities, timings, and cache statistics |
 | `download_artifacts.py` | Artifacts | Download artifacts from matching completed workflow runs |
 | `find_artifact.py` | Artifacts | Find optional or required build artifacts by glob pattern |
 | `generate_build_results_comment.py` | Reporting | Render the consolidated PR build-results comment |
@@ -35,12 +38,17 @@ with multiple consumers in [`tools/common/`](../../tools/common/README.md).
 | `gh_pr_size_label.py` | Reporting | Read and prune pull-request `size/*` labels |
 | `gstreamer_archive.py` | GStreamer | Package GStreamer builds and optionally upload them to S3 |
 | `install_dependencies_helper.py` | Bootstrap | Apply dependency-cache fixups before project dependencies exist |
-| `linux_debug_matrix.py` | Planning | Emit the Linux debug-validation matrix |
+| `install_grype.py` | Security | Install checksum-verified Grype release assets into the scan action tool cache |
+| `install_multipass.py` | Bootstrap | Install Multipass and wait for daemon readiness |
+| `ios_package.py` | Packaging | Select signing profiles and validate/package iOS bundles |
+| `ios_boot_test.py` | Testing | Run the QGC smoke test in a disposable iOS simulator |
 | `mirror_gstreamer.py` | GStreamer | Verify and mirror upstream GStreamer release artifacts to S3 |
 | `mold_helper.py` | Build | Install a pinned and checksum-verified mold linker |
 | `plan_docker_builds.py` | Planning | Generate Docker build matrices from changed files |
 | `precommit_results.py` | Reporting | Normalize pre-commit output into CI artifacts |
 | `release_assets.py` | Release | Validate checksums and enumerate release packages and SBOMs |
+| `release_builds.py` | Release | Dispatch and freeze exact release workflow run identities |
+| `report_context.py` | Reporting | Reject stale PR/default-branch reporting contexts |
 | `resolve_gstreamer_config.py` | GStreamer | Select the platform-specific GStreamer version |
 | `size_analysis.py` | Reporting | Analyze and report binary-size changes |
 | `test_duration_report.py` | Reporting | Report slow tests and duration regressions from JUnit XML |

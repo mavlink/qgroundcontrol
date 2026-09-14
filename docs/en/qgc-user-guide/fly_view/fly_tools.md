@@ -12,7 +12,6 @@ To view the checklist, first enable the tool by navigating to [Application Setti
 The tool will then be added to the _Flight Tools_.
 Press it to open the checklist:
 
-
 Once you have performed each test, select it on the UI to mark it as complete.
 
 ## Takeoff {#takeoff}
@@ -25,10 +24,11 @@ To takeoff (when landed):
 
 1. Press the **Takeoff** button in the _Fly Tools_ (this will toggle to a **Land** button after taking off).
 1. Optionally set the takeoff altitude in the right-side vertical slider.
-  - You can slide up/down to change the altitude
-  - You can also click on the specified altitude (10 ft in example) and then type in a specific altitude.
-1. [Confirm](#confirmation) the action.
 
+- You can slide up/down to change the altitude
+- You can also click on the specified altitude (10 ft in example) and then type in a specific altitude.
+
+1. [Confirm](#confirmation) the action.
 
 ## Land {#land}
 
@@ -56,5 +56,5 @@ You can change altitude while flying, except when in a mission:
 
 1. Press the **Actions** button on the _Fly Tools_
 1. Select the _Change Altitude_ button
-2. Select the new altitude from the vertical slider
-3. Confirm the action
+1. Select the new altitude from the vertical slider
+1. Confirm the action

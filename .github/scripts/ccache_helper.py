@@ -478,7 +478,9 @@ def run_summary() -> int:
         )
 
     if parts:
-        write_step_summary("\n".join(parts))
+        summary = "\n".join(parts)
+        print(summary)
+        write_step_summary(summary)
     return 0
 
 
@@ -503,6 +505,8 @@ def determine_cache_scope(event_name: str, ref_name: str, pr_number: str = "") -
     scope = "shared"
     if event_name == "pull_request":
         scope = f"pr-{pr_number or 'unknown'}"
+    elif ref_name == "master" and event_name in {"push", "schedule", "workflow_dispatch"}:
+        scope = "shared"
     elif event_name == "workflow_dispatch":
         scope = f"manual-{ref_name}"
     elif event_name == "push":
@@ -586,6 +590,17 @@ def add_windows_binary_to_path(version: str, arch: str, runner_temp: Path) -> Pa
     if result.stdout:
         print(result.stdout.strip())
     return install_dir
+
+
+def ci_cache_budget(host: str, build_type: str, variant: str, backend: str, s3_size: str) -> str:
+    """Keep large object sets resident without enlarging every GitHub archive."""
+    if backend == "s3":
+        return s3_size
+    if host.startswith("windows") or variant in {"coverage", "sanitizers", "asan", "ubsan", "tsan"}:
+        return "3G"
+    if build_type == "Debug" or host in {"mac", "macos"}:
+        return "2G"
+    return "1G"
 
 
 def configure_ccache_environment(workspace: Path, max_size: str = "2G") -> Path:
@@ -719,6 +734,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     env_cfg = sub.add_parser("configure-env", help="Configure ccache GitHub environment variables")
     env_cfg.add_argument("--workspace", type=Path, required=True)
     env_cfg.add_argument("--max-size", default="2G", help="Maximum ccache size (default: 2G)")
+    env_cfg.add_argument("--backend", choices=["github", "s3"], help="Select a CI cache budget")
+    env_cfg.add_argument("--host", default="")
+    env_cfg.add_argument("--build-type", default="Release")
+    env_cfg.add_argument("--variant", default="")
 
     return parser.parse_args(argv)
 
@@ -806,7 +825,12 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "configure-env":
+        if args.backend:
+            args.max_size = ci_cache_budget(
+                args.host, args.build_type, args.variant, args.backend, args.max_size
+            )
         ccache_dir = configure_ccache_environment(args.workspace, args.max_size)
+        print(f"Compiler cache budget: {args.max_size}")
         print(ccache_dir)
         return 0
 

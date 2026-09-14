@@ -7,6 +7,7 @@ on:
     paths:
       - '**.md'
       - '.lychee.toml'
+      - '.github/workflows/check-links.yml'
       - '!docs/ko/**'
       - '!docs/tr/**'
       - '!docs/zh/**'
@@ -14,9 +15,12 @@ on:
     paths:
       - '**.md'
       - '.lychee.toml'
+      - '.github/workflows/check-links.yml'
       - '!docs/ko/**'
       - '!docs/tr/**'
       - '!docs/zh/**'
+  schedule:
+    - cron: '41 5 * * 1'
   workflow_dispatch:
 
 concurrency:
@@ -43,13 +47,38 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Setup configuration validation
+        uses: ./.github/actions/setup-python
+        with:
+          groups: lint
+      - name: Validate link exception deadlines
+        run: python3 tools/validate_configs.py
+
+      - name: Restore link cache
+        id: link-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: .lycheecache
+          key: lychee-v1-${{ runner.os }}-${{ hashFiles('.lychee.toml', '.github/workflows/check-links.yml') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            lychee-v1-${{ runner.os }}-${{ hashFiles('.lychee.toml', '.github/workflows/check-links.yml') }}-
+
       - name: Check links
         uses: lycheeverse/lychee-action@v2
         with:
-          args: '--config .lychee.toml --cache --max-cache-age 3d --no-progress **/*.md docs/en/**'
+          args: '--config .lychee.toml --cache --max-cache-age 3d --no-progress **/*.md'
           lycheeVersion: v0.22.0
-          failIfEmpty: false
+          failIfEmpty: true
           fail: ${{ github.event_name == 'pull_request' }}
+
+      - name: Save link cache
+        if: >-
+          !cancelled() && hashFiles('.lycheecache') != '' &&
+          (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: actions/cache/save@v5
+        with:
+          path: .lycheecache
+          key: ${{ steps.link-cache.outputs.cache-primary-key }}
 
       - name: Upload report
         uses: actions/upload-artifact@v7

@@ -6,6 +6,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 
+#include "MAVLinkMessageType.h"
 #include "VehicleTypes.h"
 
 class MavCommandQueue;

@@ -277,9 +277,8 @@ jobs:
             .github/scripts/gh_pr_size_label.py
             .github/scripts/ci_bootstrap.py
             tools/_bootstrap.py
-            tools/common/__init__.py
-            tools/common/file_traversal.py
-            tools/common/gh_actions.py
+            tools/common
+            tools/qgc_tools
           sparse-checkout-cone-mode: false
           fetch-depth: 1
           persist-credentials: false

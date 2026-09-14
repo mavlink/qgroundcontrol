@@ -73,3 +73,20 @@ def test_write_rejects_invalid_run_ids_and_artifacts(tmp_path: Path) -> None:
         write_run_artifact_metadata(path, {0: []})
     with pytest.raises(ArtifactMetadataError, match="artifact name"):
         write_run_artifact_metadata(path, {42: [{"name": "", "size_in_bytes": 1}]})
+
+
+def test_artifact_identity_round_trip(tmp_path):
+    path = tmp_path / "artifacts.json"
+    artifacts = {
+        42: [{"id": 234, "digest": "sha256:" + "a" * 64, "name": "QGC", "size_in_bytes": 6}]
+    }
+    write_run_artifact_metadata(path, artifacts)
+    assert read_run_artifact_metadata(path) == artifacts
+
+
+@pytest.mark.parametrize("identity", [{"id": False}, {"id": -1}, {"digest": "sha256:bad"}])
+def test_invalid_identity_is_rejected(tmp_path, identity):
+    with pytest.raises(ArtifactMetadataError):
+        write_run_artifact_metadata(
+            tmp_path / "artifacts.json", {42: [{"name": "QGC", "size_in_bytes": 6, **identity}]}
+        )

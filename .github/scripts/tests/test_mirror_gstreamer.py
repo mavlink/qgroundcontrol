@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for mirror_gstreamer.py."""
 
 from __future__ import annotations
@@ -11,7 +10,10 @@ def test_android_single_artifact() -> None:
     arts = artifacts_for("android", "1.28.3")
     assert len(arts) == 1
     assert arts[0].filename == "gstreamer-1.0-android-universal-1.28.3.tar.xz"
-    assert arts[0].s3_key() == "dependencies/gstreamer/android/gstreamer-1.0-android-universal-1.28.3.tar.xz"
+    assert (
+        arts[0].s3_key()
+        == "dependencies/gstreamer/android/gstreamer-1.0-android-universal-1.28.3.tar.xz"
+    )
 
 
 def test_macos_has_runtime_and_devel() -> None:

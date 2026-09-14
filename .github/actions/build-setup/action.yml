@@ -27,7 +27,7 @@ inputs:
     required: false
     default: "Release"
   save-cache:
-    description: "Whether to save cache (auto = save for pushes/schedule/dispatch, skip for PRs)"
+    description: "Whether to save cache (auto = save including PR merge refs; skip pull_request_target)"
     required: false
     default: "auto"
   cache-variant:
@@ -54,7 +54,7 @@ inputs:
     default: ""
   aqt-source:
     description: >-
-      Optional pip spec used to install aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>)
+      Optional isolated uv source for aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>)
       for unreleased fixes. Forwarded to every qt-install step in this setup. Blank uses PyPI.
     required: false
     default: ""
@@ -148,7 +148,7 @@ runs:
         build-type: ${{ inputs.build-type }}
         variant: ${{ inputs.cache-variant }}
         key-suffix: ${{ inputs.cache-key-suffix }}
-        cpm-modules: ${{ runner.temp }}/build/cpm_modules
+        cpm-modules: .cache/CPM
         save-cache: ${{ inputs.save-cache }}
 
     # Desktop macOS toolchain. iOS gets its own Xcode pin inside qt-ios (uses apple_xcode_ios_version, which can differ from desktop's).
@@ -245,6 +245,7 @@ runs:
         version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
         modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
         ios-modules: ${{ inputs.ios-modules || steps.prereq.outputs.qt_modules_ios }}
+        cache-key-suffix: ${{ inputs.cache-key-suffix }}
         xcode-version: ${{ steps.prereq.outputs.apple_xcode_ios_version }}
         cpm-modules: ${{ inputs.cpm-modules }}
         build-type: ${{ inputs.build-type }}

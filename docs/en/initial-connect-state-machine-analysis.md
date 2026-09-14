@@ -288,7 +288,7 @@ It is skipped during unit tests in `FirmwarePlugin::checkIfIsLatestStable`.
 ## 9) Quick skip matrix
 
 | State | Skip trigger(s) | Outcome |
-|---|---|---|
+| --- | --- | --- |
 | AUTOPILOT_VERSION | no primary link OR high-latency OR log replay | immediate complete/advance |
 | StandardModes | none explicit | retry-on-timeout then advance |
 | ComponentInfo | none explicit | retry-on-timeout then advance |
@@ -313,7 +313,7 @@ Legend:
 - `Run*` = state executes but parameter download is short-circuited inside `ParameterManager` for high-latency/log-replay links
 
 | State | HL=0 LR=0 Fly=0 | HL=0 LR=0 Fly=1 | HL=1 LR=0 Fly=0 | HL=1 LR=0 Fly=1 | HL=0 LR=1 Fly=0 | HL=0 LR=1 Fly=1 | HL=1 LR=1 Fly=0 | HL=1 LR=1 Fly=1 |
-|---|---|---|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | AUTOPILOT_VERSION | Run | Run | Skip | Skip | Skip | Skip | Skip | Skip |
 | StandardModes | Run | Run | Run | Run | Run | Run | Run | Run |
 | ComponentInfo | Run | Run | Run | Run | Run | Run | Run | Run |

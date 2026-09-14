@@ -6,8 +6,8 @@ Tools for testing QGroundControl without physical hardware.
 
 | Tool | Use Case | Setup |
 | --- | --- | --- |
-| `mock_vehicle.py` | UI testing, quick checks | `pip install pymavlink` |
-| `run-arducopter-sitl.sh` | Full simulation, mission testing | Docker required |
+| `mock_vehicle.py` | UI testing, quick checks | `python tools/setup/install_python.py dev` |
+| `run_arducopter_sitl.py` | Full simulation, mission testing | Docker required |
 
 ## Mock Vehicle (Lightweight)
 
@@ -15,7 +15,7 @@ A minimal MAVLink simulator for UI testing. Does not simulate flight dynamics.
 
 ```bash
 # Install
-pip install pymavlink
+python tools/setup/install_python.py dev
 
 # Run (QGC connects to UDP 14550)
 ./mock_vehicle.py
@@ -54,10 +54,10 @@ Full ArduPilot simulation via Docker. Supports missions, geofences, all commands
 
 ```bash
 # Run (builds image on first run, ~10-15 min)
-./run-arducopter-sitl.sh
+./run_arducopter_sitl.py
 
 # With simulated network latency (Herelink-like)
-./run-arducopter-sitl.sh --with-latency
+./run_arducopter_sitl.py --with-latency
 
 # Connect QGC to: tcp://localhost:5760
 ```
@@ -95,3 +95,7 @@ For more advanced simulation:
 - [ArduPilot SITL](https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html) - Native install
 - [PX4 SITL](https://docs.px4.io/main/en/simulation/) - PX4 simulation
 - [Gazebo](https://gazebosim.org/) - 3D physics simulation
+
+The SITL launcher binds TCP port 5760 to localhost and waits for the guest listener without
+consuming its first client connection. It replaces only containers carrying its ownership label.
+Remove a container created by the previous shell launcher explicitly before using the same name.

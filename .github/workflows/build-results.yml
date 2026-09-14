@@ -21,8 +21,13 @@ jobs:
     name: Load Build Config
     runs-on: ubuntu-latest
     timeout-minutes: 2
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
     outputs:
       platform_workflows: ${{ steps.read.outputs.platform_workflows }}
+      pr: ${{ steps.context.outputs.pr }}
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -32,13 +37,12 @@ jobs:
         with:
           sparse-checkout: |
             .github/build-config.json
+            .github/scripts/report_context.py
+            .github/scripts/ci_bootstrap.py
             tools/_bootstrap.py
             tools/setup/read_config.py
-            tools/common/__init__.py
-            tools/common/build_config.py
-            tools/common/file_traversal.py
-            tools/common/gh_actions.py
-            tools/common/io.py
+            tools/common
+            tools/qgc_tools
           sparse-checkout-cone-mode: false
           fetch-depth: 1
           persist-credentials: false
@@ -52,21 +56,26 @@ jobs:
           fi
           echo "platform_workflows=${value}" >> "$GITHUB_OUTPUT"
 
+      - name: Resolve report context
+        id: context
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/report_context.py
+
   post-pr-comment:
     name: Post Build Results
     needs: load-config
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.event == 'pull_request'
+    if: github.event.workflow_run.event == 'pull_request' && needs.load-config.outputs.pr != ''
     concurrency:
-      group: build-results-pr-${{ github.event.workflow_run.head_sha }}
+      group: build-results-pr-${{ needs.load-config.outputs.pr }}
       cancel-in-progress: false
     timeout-minutes: 10
 
-    # checks/pull-requests/issues write used only by this results-posting job.
+    # pull-requests/issues write used only by this results-posting job.
     permissions:
       contents: read
       actions: read
-      checks: write
       pull-requests: write
       issues: write
 
@@ -82,34 +91,21 @@ jobs:
           sparse-checkout: |
             .github/actions/gate-platform-workflows
             .github/actions/build-results-bootstrap
+            .github/scripts/check_baseline_ready.py
+            .github/scripts/report_context.py
+            .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
+            tools/common
+            tools/qgc_tools
           sparse-checkout-cone-mode: false
           fetch-depth: 1
           persist-credentials: false
 
       - name: Get PR number
         id: pr
-        uses: actions/github-script@v9
-        with:
-          result-encoding: string
-          script: |
-            const run = context.payload.workflow_run;
-            if (run.pull_requests && run.pull_requests.length > 0) {
-              return run.pull_requests[0].number;
-            }
-            // For fork PRs, run.pull_requests is empty. Use head_repository owner.
-            const headOwner = run.head_repository?.owner?.login || context.repo.owner;
-            const prs = await github.paginate(
-              github.rest.pulls.list,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'open',
-                head: `${headOwner}:${run.head_branch}`,
-                per_page: 100
-              }
-            );
-            const exact = prs.find(pr => pr.head?.sha === run.head_sha);
-            return exact ? exact.number : '';
+        env:
+          PR_NUMBER: ${{ needs.load-config.outputs.pr }}
+        run: echo "result=$PR_NUMBER" >> "$GITHUB_OUTPUT"
 
       - name: Check if all platform workflows are complete
         id: gate
@@ -141,7 +137,7 @@ jobs:
             --platform-workflows "${PLATFORM_WORKFLOWS}" \
             --event pull_request \
             --runs-input "${RUNS_CACHE}" \
-            --runs-cache workflow-runs-cache.json
+            --runs-cache "$RUNS_CACHE"
 
       - name: Download artifacts from all platform workflows
         id: download
@@ -149,25 +145,13 @@ jobs:
         continue-on-error: true
         uses: ./.github/actions/download-all-artifacts
         with:
+          include-failed: 'true'
           head-sha: ${{ github.event.workflow_run.head_sha }}
           workflows: ${{ needs.load-config.outputs.platform_workflows }}
           event: pull_request
-          runs-file: workflow-runs-cache.json
+          runs-file: ${{ runner.temp }}/workflow-runs-cache.json
           artifact-prefixes: coverage-report,test-results-
           artifact-metadata-file: workflow-artifacts.json
-
-      - name: Post fallback comment on artifact download failure
-        if: steps.pr.outputs.result != '' && steps.download.outcome == 'failure'
-        uses: thollander/actions-comment-pull-request@v3
-        with:
-          pr-number: ${{ steps.pr.outputs.result }}
-          comment-tag: build-results
-          message: |
-            <!-- thollander/actions-comment-pull-request "build-results" -->
-            ⚠️ **Build results unavailable** — artifact download from one or more platform workflows failed
-            (likely artifact retention expiry or transient API error). The combined report cannot be generated for this run.
-
-            See the [Build Results workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
 
       - name: Stop if artifact download failed
         if: steps.pr.outputs.result != '' && steps.download.outcome == 'failure'
@@ -183,7 +167,7 @@ jobs:
           workflows: ${{ needs.load-config.outputs.platform_workflows }}
           event: pull_request
           output-file: pr-sizes.json
-          runs-file: workflow-runs-cache.json
+          runs-file: ${{ runner.temp }}/workflow-runs-cache.json
           artifacts-file: workflow-artifacts.json
 
       - name: Download pre-commit results artifact
@@ -199,21 +183,29 @@ jobs:
           name: pre-commit-results
           path: artifacts/pre-commit-results
 
-      - name: Restore baseline sizes
-        if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true'
-        uses: actions/cache/restore@v6
-        continue-on-error: true
-        with:
-          path: baseline-sizes.json
-          key: artifact-sizes-baseline-latest
+      - name: Resolve baseline revision
+        id: baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.result }}
+        run: |
+          sha=$(gh api "repos/$GH_REPO/pulls/$PR_NUMBER" --jq .base.sha)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
 
-      - name: Restore baseline coverage
-        if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true'
+      - name: Restore baseline snapshot
+        if: steps.builds.outputs.all_complete == 'true'
         uses: actions/cache/restore@v6
         continue-on-error: true
         with:
-          path: baseline-coverage.xml
-          key: coverage-baseline-latest
+          path: |
+            baseline-sizes.json
+            baseline-coverage.xml
+            baseline-context.json
+          key: build-baseline-v2-${{ steps.baseline.outputs.sha }}
+          restore-keys: |
+            build-baseline-v2-${{ steps.baseline.outputs.sha }}-
+            build-baseline-v2-
 
       - name: Generate combined report
         if: steps.pr.outputs.result != '' && steps.gate.outputs.ready == 'true'
@@ -236,8 +228,15 @@ jobs:
             --output comment.md
           cat comment.md
 
+      - name: Recheck PR head before publishing
+        id: current
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/report_context.py
+
       - name: Deduplicate prior build-results comments
-        if: steps.pr.outputs.result != '' && steps.gate.outputs.ready == 'true'
+        if: steps.current.outputs.current == 'true'
         uses: actions/github-script@v9
         env:
           PR_NUMBER: ${{ steps.pr.outputs.result }}
@@ -272,7 +271,7 @@ jobs:
             }
 
       - name: Post combined comment
-        if: steps.pr.outputs.result != '' && steps.gate.outputs.ready == 'true'
+        if: steps.current.outputs.current == 'true'
         uses: thollander/actions-comment-pull-request@v3
         with:
           pr-number: ${{ steps.pr.outputs.result }}
@@ -284,6 +283,7 @@ jobs:
     needs: load-config
     runs-on: ubuntu-latest
     if: >
+      github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.head_branch == 'master' &&
       github.event.workflow_run.conclusion == 'success'
     concurrency:
@@ -291,7 +291,7 @@ jobs:
       cancel-in-progress: false
     timeout-minutes: 10
     permissions:
-      actions: write
+      actions: read
       contents: read
 
     steps:
@@ -306,6 +306,12 @@ jobs:
           sparse-checkout: |
             .github/actions/gate-platform-workflows
             .github/actions/build-results-bootstrap
+            .github/scripts/check_baseline_ready.py
+            .github/scripts/report_context.py
+            .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
+            tools/common
+            tools/qgc_tools
           sparse-checkout-cone-mode: false
           fetch-depth: 1
           persist-credentials: false
@@ -324,61 +330,53 @@ jobs:
         if: steps.gate.outputs.ready == 'true'
         uses: ./.github/actions/build-results-bootstrap
 
-      - name: Verify all platform workflows succeeded for baseline SHA
-        if: steps.gate.outputs.ready == 'true'
-        id: ready
-        env:
-          PLATFORM_WORKFLOWS: ${{ needs.load-config.outputs.platform_workflows }}
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          RUNS_CACHE: ${{ runner.temp }}/workflow-runs-cache.json
-        run: |
-          python3 "${GITHUB_WORKSPACE}/.github/scripts/check_baseline_ready.py" \
-            --repo "$REPO" \
-            --head-sha "$HEAD_SHA" \
-            --platform-workflows "${PLATFORM_WORKFLOWS}" \
-            --event push \
-            --runs-input "${RUNS_CACHE}" \
-            --runs-cache workflow-runs-cache.json
-
       - name: Download artifacts from all platform workflows
-        if: steps.ready.outputs.ready == 'true'
+        if: steps.gate.outputs.ready == 'true'
         continue-on-error: true
         uses: ./.github/actions/download-all-artifacts
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
           workflows: ${{ needs.load-config.outputs.platform_workflows }}
           event: push
-          runs-file: workflow-runs-cache.json
+          runs-file: ${{ runner.temp }}/workflow-runs-cache.json
           artifact-prefixes: coverage-report,test-results-
           artifact-metadata-file: workflow-artifacts.json
 
       - name: Collect artifact sizes
-        if: steps.ready.outputs.ready == 'true'
+        if: steps.gate.outputs.ready == 'true'
         uses: ./.github/actions/collect-artifact-sizes
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
           workflows: ${{ needs.load-config.outputs.platform_workflows }}
           event: push
           output-file: baseline-sizes.json
-          runs-file: workflow-runs-cache.json
+          runs-file: ${{ runner.temp }}/workflow-runs-cache.json
           artifacts-file: workflow-artifacts.json
 
-      - name: Publish artifact sizes baseline
-        if: steps.ready.outputs.ready == 'true' && hashFiles('baseline-sizes.json') != ''
-        uses: ./.github/actions/replace-cache-entry
-        with:
-          path: baseline-sizes.json
-          key: artifact-sizes-baseline-latest
+      - name: Prepare immutable baseline
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          test -f baseline-sizes.json
+          test -f artifacts/coverage-report/coverage.xml
+          cp artifacts/coverage-report/coverage.xml baseline-coverage.xml
+          cp "$RUNNER_TEMP/workflow-runs-cache.json" baseline-context.json
 
-      - name: Copy coverage to baseline path
-        if: steps.ready.outputs.ready == 'true' && hashFiles('artifacts/coverage-report/coverage.xml') != ''
-        run: cp artifacts/coverage-report/coverage.xml baseline-coverage.xml
+      - name: Recheck default branch before publishing
+        id: current
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/report_context.py
 
-      - name: Publish coverage baseline
-        if: steps.ready.outputs.ready == 'true' && hashFiles('baseline-coverage.xml') != ''
-        uses: ./.github/actions/replace-cache-entry
+      - name: Publish immutable baseline
+        if: steps.current.outputs.current == 'true'
+        uses: actions/cache/save@v6
         with:
-          path: baseline-coverage.xml
-          key: coverage-baseline-latest
+          path: |
+            baseline-sizes.json
+            baseline-coverage.xml
+            baseline-context.json
+          key: build-baseline-v2-${{ github.event.workflow_run.head_sha }}-${{ github.run_id }}-${{ github.run_attempt }}

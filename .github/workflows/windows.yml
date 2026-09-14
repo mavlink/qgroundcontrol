@@ -13,6 +13,10 @@ on:
   merge_group:
   workflow_dispatch:
     inputs:
+      debug_runner:
+        description: 'Open an actor-only SSH session after a failure (up to 15 minutes, branches only)'
+        type: boolean
+        default: false
       build_type:
         description: 'Build type'
         required: false
@@ -103,6 +107,12 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
+
       - name: Enable RunsOn magic cache
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.variant != 'arm64'
         uses: runs-on/action@v2
@@ -142,6 +152,7 @@ jobs:
           build-type: ${{ matrix.build_type }}
           preset: ${{ matrix.build_type == 'Debug' && format('{0}-debug', matrix.preset) || matrix.preset }}
           extra-args: >-
+            -DQGC_BUILD_PORTABLE_TESTS=${{ matrix.variant == 'amd64' && 'ON' || 'OFF' }}
             -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.gstreamer && 'ON' || 'OFF' }}
             -DQGC_CPACK_GENERATOR=NSIS
             ${{ matrix.variant == 'arm64-cross' && format('-DQT_HOST_PATH={0}', steps.build-setup.outputs.host_qt_root_dir) || '' }}
@@ -165,10 +176,32 @@ jobs:
           STEPS_GST_ROOT_OUTPUTS_GST_ROOT: ${{ steps.gst-root.outputs.gst_root }}
 
       - name: Build
+        id: build
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
+
+      - name: Run portable tests
+        id: portable
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.variant == 'amd64' }}
+        uses: ./.github/actions/run-unit-tests
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
+          include-labels: Portable
+          junit-output: junit-portable.xml
+          ctest-output: portable-output.txt
+
+      - name: Report portable tests
+        if: ${{ !cancelled() && steps.portable.outcome != 'skipped' && steps.portable.outcome != '' }}
+        uses: ./.github/actions/test-report
+        with:
+          name: Portable tests (windows)
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-portable.xml
+          output-file: portable-output.txt
+          artifact-name: test-results-portable-windows
 
       - name: Verify Executable
         if: matrix.build_type == 'Release' && matrix.variant != 'arm64-cross'
@@ -236,122 +269,7 @@ jobs:
           OLD_INSTALL_DIR: ${{ runner.temp }}\qgc-install-old
           INSTALL_DIR: ${{ runner.temp }}\qgc-install-test
           EXPECT_GSTREAMER: ${{ matrix.gstreamer }}
-        run: |
-          $installerExe = Get-Item -LiteralPath $env:INSTALLER_PATH
-          $oldInstallDir = $env:OLD_INSTALL_DIR
-          $installDir = $env:INSTALL_DIR
-          Write-Host "Installing $($installerExe.Name) to $oldInstallDir"
-          Start-Process -FilePath $installerExe.FullName -ArgumentList "/S", "/D=$oldInstallDir" -Wait -NoNewWindow
-          $oldBinary = Join-Path $oldInstallDir "bin\QGroundControl.exe"
-          if (-not (Test-Path $oldBinary)) {
-            Write-Error "QGroundControl.exe not found at $oldBinary after initial install"
-            exit 1
-          }
-
-          $settingsRoot = [Environment]::GetFolderPath([Environment+SpecialFolder]::ApplicationData)
-          if ([String]::IsNullOrWhiteSpace($settingsRoot)) {
-            Write-Error "Unable to resolve the current user's roaming application data directory"
-            exit 1
-          }
-          $settingsDir = Join-Path $settingsRoot "QGroundControl"
-          $settingsMarker = Join-Path $settingsDir "installer-upgrade-test.txt"
-          New-Item -ItemType Directory -Force -Path $settingsDir | Out-Null
-          Set-Content -Path $settingsMarker -Value "preserve during upgrade"
-
-          Write-Host "Upgrading into a different directory: $installDir"
-          Start-Process -FilePath $installerExe.FullName -ArgumentList "/S", "/D=$installDir" -Wait -NoNewWindow
-          if (Test-Path $oldBinary) {
-            Write-Error "Previous installation was not removed from $oldInstallDir"
-            exit 1
-          }
-          if (-not (Test-Path $settingsMarker)) {
-            Write-Error "Application data was removed during upgrade"
-            exit 1
-          }
-
-          $binary = Join-Path $installDir "bin\QGroundControl.exe"
-          if (-not (Test-Path $binary)) {
-            Write-Error "QGroundControl.exe not found at $binary after upgrade"
-            Get-ChildItem -Path $installDir -Recurse | Select-Object FullName
-            exit 1
-          }
-          $expectGstreamer = $env:EXPECT_GSTREAMER -eq "true"
-          $pluginDir = Join-Path $installDir "lib\gstreamer-1.0"
-          if (-not $expectGstreamer) {
-            Write-Host "GStreamer disabled for this build; skipping plugin verification"
-          } elseif (Test-Path $pluginDir) {
-            $pluginCount = (Get-ChildItem -Path $pluginDir -Filter "*.dll" | Measure-Object).Count
-            Write-Host "GStreamer plugins found: $pluginCount"
-            if ($pluginCount -eq 0) {
-              Write-Error "No GStreamer plugin DLLs found in $pluginDir"
-              exit 1
-            }
-          } else {
-            Write-Error "GStreamer plugin directory not found: $pluginDir"
-            exit 1
-          }
-
-          $uninstallKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\QGroundControl"
-          $werKey = "HKLM:\Software\Microsoft\Windows\Windows Error Reporting\LocalDumps\QGroundControl.exe"
-          if (-not (Test-Path -LiteralPath $uninstallKey)) {
-            Write-Error "Uninstall registry key not found: $uninstallKey"
-            exit 1
-          }
-          $uninstallProperties = Get-ItemProperty -LiteralPath $uninstallKey
-          $actualInstallDir = [IO.Path]::GetFullPath($uninstallProperties.InstallLocation).TrimEnd([IO.Path]::DirectorySeparatorChar)
-          $expectedInstallDir = [IO.Path]::GetFullPath($installDir).TrimEnd([IO.Path]::DirectorySeparatorChar)
-          if (-not [StringComparer]::OrdinalIgnoreCase.Equals($actualInstallDir, $expectedInstallDir)) {
-            Write-Error "InstallLocation mismatch: expected $expectedInstallDir, got $actualInstallDir"
-            exit 1
-          }
-
-          if (-not (Test-Path -LiteralPath $werKey)) {
-            Write-Error "Windows Error Reporting registry key not found: $werKey"
-            exit 1
-          }
-          $werProperties = Get-ItemProperty -LiteralPath $werKey
-          if ($werProperties.DumpCount -ne 5 -or $werProperties.DumpType -ne 1) {
-            Write-Error "Unexpected WER dump policy: count=$($werProperties.DumpCount), type=$($werProperties.DumpType)"
-            exit 1
-          }
-          $werRegistryKey = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey(
-            "Software\Microsoft\Windows\Windows Error Reporting\LocalDumps\QGroundControl.exe"
-          )
-          if ($null -eq $werRegistryKey) {
-            Write-Error "Unable to open Windows Error Reporting registry key"
-            exit 1
-          }
-          try {
-            $dumpFolder = $werRegistryKey.GetValue(
-              "DumpFolder", $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames
-            )
-          } finally {
-            $werRegistryKey.Dispose()
-          }
-          if ($dumpFolder -ne "%LOCALAPPDATA%\QGCCrashDumps") {
-            Write-Error "Unexpected WER dump folder: $dumpFolder"
-            exit 1
-          }
-
-          $startMenuRoot = Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs"
-          $startMenuDir = Join-Path $startMenuRoot $uninstallProperties.StartMenu
-          $shortcuts = @(
-            (Join-Path $startMenuDir "QGroundControl.lnk"),
-            (Join-Path $startMenuDir "QGroundControl (GPU Safe Mode).lnk")
-          )
-          foreach ($shortcut in $shortcuts) {
-            if (-not (Test-Path -LiteralPath $shortcut -PathType Leaf)) {
-              Write-Error "Start Menu shortcut not found: $shortcut"
-              exit 1
-            }
-          }
-
-          "QGC_INSTALL_TEST_DIR=$installDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "QGC_INSTALL_TEST_BINARY=$binary" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "QGC_INSTALL_TEST_SETTINGS=$settingsDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "QGC_INSTALL_TEST_UNINSTALL_KEY=$uninstallKey" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "QGC_INSTALL_TEST_WER_KEY=$werKey" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          "QGC_INSTALL_TEST_START_MENU=$startMenuDir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+        run: ./deploy/windows/verify-installer.ps1 -Phase Install
 
       - name: Remove build SDK from PATH for installed verification
         if: matrix.build_type == 'Release' && matrix.gstreamer
@@ -375,34 +293,7 @@ jobs:
       - name: Uninstall and verify cleanup
         if: matrix.build_type == 'Release' && matrix.variant != 'arm64-cross'
         shell: pwsh
-        run: |
-          $uninstaller = Get-ChildItem -Path $env:QGC_INSTALL_TEST_DIR -Filter "*Uninstall*.exe" -Recurse | Select-Object -First 1
-          if (-not $uninstaller) {
-            Write-Error "Uninstaller not found in $env:QGC_INSTALL_TEST_DIR"
-            exit 1
-          }
-          # _?= keeps the self-copying NSIS uninstaller in place so -Wait is meaningful.
-          Start-Process -FilePath $uninstaller.FullName -ArgumentList "/S _?=$($uninstaller.DirectoryName)" -Wait -NoNewWindow
-          if (Test-Path $env:QGC_INSTALL_TEST_BINARY) {
-            Write-Error "Installed executable remains after uninstall"
-            exit 1
-          }
-          if (Test-Path $env:QGC_INSTALL_TEST_SETTINGS) {
-            Write-Error "Application data remains after a normal uninstall"
-            exit 1
-          }
-          if (Test-Path -LiteralPath $env:QGC_INSTALL_TEST_UNINSTALL_KEY) {
-            Write-Error "Uninstall registry key remains after uninstall"
-            exit 1
-          }
-          if (Test-Path -LiteralPath $env:QGC_INSTALL_TEST_WER_KEY) {
-            Write-Error "Windows Error Reporting registry key remains after uninstall"
-            exit 1
-          }
-          if (Test-Path -LiteralPath $env:QGC_INSTALL_TEST_START_MENU) {
-            Write-Error "Start Menu directory remains after uninstall"
-            exit 1
-          }
+        run: ./deploy/windows/verify-installer.ps1 -Phase Uninstall
 
       - name: Attest and Upload
         if: matrix.build_type == 'Release'
@@ -417,3 +308,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
           upload-aws: ${{ matrix.variant == 'arm64-cross' && 'false' || 'true' }}
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner

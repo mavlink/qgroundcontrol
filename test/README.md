@@ -166,8 +166,8 @@ to absorb instrumentation overhead. `TIMEOUT <seconds>` on `add_qgc_test()` alwa
 | `MissionManager` | Mission planning tests                                                                    |
 | `Comms`          | Communication/link tests                                                                  |
 | `Utilities`      | Utility class tests                                                                       |
-| `Network`        | Requires network access — excluded from CI (`check-ci`, `just test`)                      |
-| `Flaky`          | Reserved for intermittently-failing tests, excluded from CI; no test currently carries it |
+| `Network`        | Needs network; excluded from PR suites, covered by manual Linux coverage runs             |
+| `Flaky`          | Intermittent failures; excluded from PR suites, covered by manual Linux coverage runs     |
 | `Serial`         | Must run alone (no parallel) — set automatically by `SERIAL`                              |
 | `Joystick`       | Joystick/controller tests                                                                 |
 | `AnalyzeView`    | Log analysis and geo-tagging tests                                                        |
@@ -256,6 +256,13 @@ LABELS=Slow EXCLUDE=Flaky just test          # Both at once
 `just test` wraps `ctest --output-on-failure -L "<LABELS>" -LE "<EXCLUDE>"` and matches
 the label filters CI uses by default.
 
+CI runs integration tests with two processes. Settings and temporary directories are
+isolated per test; local network fixtures allocate ephemeral ports. Existing CTest
+`RESOURCE_LOCK` and `RUN_SERIAL` properties still serialize tests sharing hardware or
+fixed resources. The `test-phase` action accepts `integration-parallel` for constrained
+runners. To match CI locally, run `ctest --test-dir build -L Integration -LE 'Flaky|Network'
+--output-on-failure --parallel 2`. Preserve this isolation when adding integration tests.
+
 ### Via the QGroundControl Binary (unittest build)
 
 ```bash
@@ -316,6 +323,24 @@ ctest -R QmlTestFileValidator --output-on-failure
 # All tests via CTest with JUnit output
 ctest --output-junit results.xml
 ```
+
+## Portable utility tests
+
+Windows x64 and macOS CI enable `QGC_BUILD_PORTABLE_TESTS` alongside the normal application
+build. The six `Portable.*` CTest entries use small Qt Test executables, with the same test
+bodies and production utility libraries as the Linux application tests. They require no
+QGCApplication, vehicles, or QML engine. The portable command-line parser target enables
+its own test hooks; the packaged application keeps its normal build configuration.
+
+```bash
+cmake -S . -B build -DQGC_BUILD_PORTABLE_TESTS=ON
+cmake --build build --target portable-tests --parallel 8
+ctest --test-dir build --build-config Debug --output-on-failure -L Portable
+```
+
+Use `PortableTest` and `QGC_REGISTER_PORTABLE_TEST` for these suites. Full application
+builds use the existing UnitTest harness; standalone executables use Qt Test with warnings
+failing tests. Keep application-dependent fixtures in the full harness.
 
 ## MultiSignalSpy
 

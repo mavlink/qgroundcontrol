@@ -1,5 +1,6 @@
 {
-  "$schema": "https://json.schemastore.org/pyrightconfig.json",
+  "venvPath": "tools",
+  "venv": ".venv",
   "exclude": [
     "build",
     "**/__pycache__",
@@ -10,7 +11,10 @@
   "include": [
     "tools/**/*.py",
     "test/**/*.py",
-    ".github/scripts/**/*.py"
+    ".github/scripts/**/*.py",
+    ".github/runner-images/**/*.py",
+    "deploy/**/*.py",
+    ".clusterfuzzlite/**/*.py"
   ],
   "extraPaths": [
     "tools",

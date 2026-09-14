@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MAVLinkLib.h"
 #include "MavlinkCameraControlInterface.h"
 #include "QmlObjectListModel.h"
 

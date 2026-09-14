@@ -17,14 +17,24 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
+from pathlib import Path
 
 from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from build_profile import parse_ninja_log, write_snapshot
 from common.cmake import read_cache_var
-from common.gh_actions import append_github_env, gh_error, gh_notice, write_github_output
+from common.gh_actions import (
+    append_github_env,
+    gh_error,
+    gh_notice,
+    gh_warning,
+    write_github_output,
+    write_step_summary,
+)
 from common.proc import run_tee
 
 
@@ -68,7 +78,12 @@ def cmd_build(args: argparse.Namespace) -> None:
     if output_file and args.reviewdog:
         append_github_env({"REVIEWDOG_LOG": output_file})
 
-    print(f"Running: {' '.join(cmd)}")
+    print(f"Running: {' '.join(cmd)}", flush=True)
+    previous = None
+    try:
+        previous = parse_ninja_log(Path(".ninja_log")) if Path(".ninja_log").exists() else []
+    except (OSError, ValueError) as error:
+        gh_warning(f"Cannot read previous Ninja timings: {error}")
     start = time.monotonic()
 
     if output_file:
@@ -79,6 +94,20 @@ def cmd_build(args: argparse.Namespace) -> None:
 
     duration = int(time.monotonic() - start)
 
+    if Path(".ninja_log").is_file():
+        try:
+            directory = Path(
+                tempfile.mkdtemp(prefix="build-profile-", dir=os.environ.get("RUNNER_TEMP"))
+            )
+            report = write_snapshot(Path.cwd(), directory, previous=previous, wall_seconds=duration)
+            write_step_summary(
+                f"### Build timings: {args.target or 'all'} ({args.build_type})\n\n{report}"
+            )
+            write_github_output({"profile_path": str(directory), "profile_name": directory.name})
+        except (OSError, ValueError) as error:
+            gh_warning(f"Cannot write Ninja build timings: {error}")
+
+    write_github_output({"build_success": str(exit_code == 0).lower()})
     if exit_code == 0:
         gh_notice(f"Build completed in {duration}s")
     else:
@@ -114,9 +143,12 @@ def cmd_configure(args: argparse.Namespace) -> None:
         cmd.append("--no-qt-cmake")
     if args.unity_build:
         cmd += ["--unity", "--unity-batch", args.unity_batch_size]
-    if args.extra_args:
+    cache_program = os.environ.get("QGC_CACHE_PROGRAM")
+    if args.extra_args or cache_program:
         cmd.append("--")
         cmd.extend(args.extra_args.split())
+        if cache_program:
+            cmd.append(f"-DQGC_CACHE_PROGRAM:FILEPATH={cache_program}")
 
     start = time.monotonic()
     result = subprocess.run(cmd, check=False)
@@ -142,11 +174,16 @@ def cmd_ctest(args: argparse.Namespace) -> None:
     cmd = [
         "ctest",
         "--output-on-failure",
+        "--no-tests=error",
         "--output-junit",
         args.junit_output,
         "--parallel",
         str(args.jobs),
     ]
+    if getattr(args, "build_type", ""):
+        cmd += ["-C", args.build_type]
+    if getattr(args, "tests_regex", ""):
+        cmd += ["-R", args.tests_regex]
     if args.include_labels:
         cmd += ["-L", args.include_labels]
     if args.exclude_labels:
@@ -218,6 +255,8 @@ def main() -> None:
     p_ctest = sub.add_parser("ctest")
     p_ctest.add_argument("--junit-output", required=True)
     p_ctest.add_argument("--ctest-output", required=True)
+    p_ctest.add_argument("--build-type", default="")
+    p_ctest.add_argument("--tests-regex", default="")
     p_ctest.add_argument("--jobs", type=int, required=True)
     p_ctest.add_argument("--include-labels", default="")
     p_ctest.add_argument("--exclude-labels", default="")

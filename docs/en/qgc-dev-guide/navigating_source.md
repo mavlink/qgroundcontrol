@@ -15,8 +15,8 @@ The top level window Qml UI code is found in `MainWindow.qml`. You can start her
 
 In this qml file you'll find things like:
 
-* How the toolbar is created
-* How the top level views are created: Fly, Plan, ...
+- How the toolbar is created
+- How the top level views are created: Fly, Plan, ...
 
 ## Global Search
 

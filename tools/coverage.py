@@ -61,7 +61,7 @@ def check_dependencies() -> None:
     """Ensure required tooling is installed."""
     from common.deps import require_tool
 
-    require_tool("gcovr", hint="Install with: pip install gcovr")
+    require_tool("gcovr", hint="Install with: python tools/setup/install_python.py coverage")
 
 
 def clean_coverage(build_dir: Path) -> None:

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -67,7 +68,9 @@ def parse_ninja_log(path: Path) -> list[BuildEdge]:
 
         parts = line.split("\t")
         if len(parts) < 5:
-            raise ValueError(f"Malformed Ninja log line {line_number}: expected at least 5 tab-separated fields")
+            raise ValueError(
+                f"Malformed Ninja log line {line_number}: expected at least 5 tab-separated fields"
+            )
 
         start, end, mtime, output, command_hash = parts[:5]
         try:
@@ -81,7 +84,9 @@ def parse_ninja_log(path: Path) -> list[BuildEdge]:
                 )
             )
         except ValueError as exc:
-            raise ValueError(f"Malformed Ninja log line {line_number}: invalid numeric field") from exc
+            raise ValueError(
+                f"Malformed Ninja log line {line_number}: invalid numeric field"
+            ) from exc
 
     return edges
 
@@ -100,15 +105,29 @@ def classify_output(output: str) -> str:
         return "autogen/moc"
     if "/.qt/rcc/" in lower or "/.rcc/" in lower or name.startswith("qrc_"):
         return "rcc"
-    if name.endswith((".a", ".lib", ".so", ".dylib", ".dll", ".exe")) or "/release/" in lower or "/debug/" in lower:
-        return "link/archive"
     if name.endswith((".o", ".obj")):
         return "compile"
+    if (
+        name.endswith((".a", ".lib", ".so", ".dylib", ".dll", ".exe"))
+        or lower.startswith(("release/", "debug/", "relwithdebinfo/", "minsizerel/"))
+        or "/release/" in lower
+        or "/debug/" in lower
+    ):
+        return "link/archive"
     return "other"
 
 
 def summarize_ninja_log(edges: list[BuildEdge], *, limit: int) -> NinjaSummary:
     """Build a sorted summary from Ninja log edges."""
+    # Ninja logs every output of a command, including absolute/relative aliases.
+    # Count each execution once; otherwise large autogen rules dominate totals.
+    commands: dict[tuple[int, int, str], BuildEdge] = {}
+    for edge in edges:
+        identity = (edge.start_ms, edge.end_ms, edge.command_hash)
+        previous = commands.get(identity)
+        if previous is None or len(edge.output) < len(previous.output):
+            commands[identity] = edge
+    edges = list(commands.values())
     slowest = sorted(edges, key=lambda edge: edge.duration_ms, reverse=True)[:limit]
     generated = [
         edge
@@ -212,6 +231,25 @@ def build_report(summary: NinjaSummary, traces: list[TimeTrace], *, limit: int) 
 
     lines.extend(_edge_section("Slowest Ninja Edges", summary.slowest_edges))
     lines.extend(_edge_section("Generated Step Hotspots", summary.generated_edges))
+    links = sorted(
+        (edge for edge in summary.edges if classify_output(edge.output) == "link/archive"),
+        key=lambda edge: edge.duration_ms,
+        reverse=True,
+    )
+    lines.extend(_edge_section("Link and Archive Hotspots", links[:limit]))
+    lines.extend(
+        [
+            "## Task Time by Category",
+            "",
+            "Task durations overlap; these totals are not wall time.",
+            "",
+        ]
+    )
+    for category, values in category_totals(summary.edges).items():
+        lines.append(
+            f"- {category}: {values['count']} commands, {format_ms(values['duration_ms'])}"
+        )
+    lines.append("")
 
     lines.extend(["## Most Rebuilt Outputs"])
     if summary.rebuilt_outputs:
@@ -252,6 +290,12 @@ def build_json(summary: NinjaSummary, traces: list[TimeTrace], *, limit: int) ->
     """Build a machine-readable report payload."""
     return {
         "edge_count": len(summary.edges),
+        "categories": category_totals(summary.edges),
+        "link_edges": [
+            _edge_to_json(edge)
+            for edge in sorted(summary.edges, key=lambda edge: edge.duration_ms, reverse=True)
+            if classify_output(edge.output) == "link/archive"
+        ][:limit],
         "slowest_edges": [_edge_to_json(edge) for edge in summary.slowest_edges[:limit]],
         "generated_edges": [_edge_to_json(edge) for edge in summary.generated_edges[:limit]],
         "rebuilt_outputs": [
@@ -267,7 +311,10 @@ def build_json(summary: NinjaSummary, traces: list[TimeTrace], *, limit: int) ->
             {
                 "path": str(trace.path),
                 "total_ms": trace.total_ms,
-                "top_events": [{"label": label, "duration_ms": duration_ms} for label, duration_ms in trace.top_events],
+                "top_events": [
+                    {"label": label, "duration_ms": duration_ms}
+                    for label, duration_ms in trace.top_events
+                ],
             }
             for trace in traces[:limit]
         ],
@@ -278,9 +325,50 @@ def _edge_to_json(edge: BuildEdge) -> dict[str, Any]:
     return {
         "output": edge.output,
         "duration_ms": edge.duration_ms,
+        "start_ms": edge.start_ms,
+        "end_ms": edge.end_ms,
         "category": classify_output(edge.output),
         "command_hash": edge.command_hash,
     }
+
+
+def category_totals(edges: list[BuildEdge]) -> dict[str, dict[str, int]]:
+    totals: dict[str, dict[str, int]] = {}
+    for edge in edges:
+        entry = totals.setdefault(classify_output(edge.output), {"count": 0, "duration_ms": 0})
+        entry["count"] += 1
+        entry["duration_ms"] += edge.duration_ms
+    return totals
+
+
+def write_snapshot(
+    build_dir: Path,
+    output_dir: Path,
+    *,
+    previous: list[BuildEdge] | None = None,
+    wall_seconds: float | None = None,
+) -> str:
+    """Save cheap Ninja timings and raw evidence without scanning the SDK for traces."""
+    log = build_dir / ".ninja_log"
+    edges = parse_ninja_log(log)
+    if previous is not None:
+        if edges[: len(previous)] == previous:
+            edges = edges[len(previous) :]
+        else:
+            # Ninja may compact its accumulated log before starting a build.
+            old = set(previous)
+            edges = [edge for edge in edges if edge not in old]
+    summary = summarize_ninja_log(edges, limit=15)
+    report = build_report(summary, [], limit=15)
+    payload = build_json(summary, [], limit=15)
+    payload["wall_seconds"] = wall_seconds
+    output_dir.mkdir(parents=True, exist_ok=True)
+    # A non-hidden name is uploaded by actions/upload-artifact without opting
+    # into unrelated hidden build files.
+    shutil.copyfile(log, output_dir / "ninja.log")
+    (output_dir / "report.md").write_text(report, encoding="utf-8")
+    (output_dir / "report.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return report
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -312,8 +400,13 @@ Enable Clang traces with CMake option QGC_TIME_TRACE=ON, then rebuild.
         type=Path,
         help="Directory to scan for Clang -ftime-trace JSON files (default: build dir)",
     )
-    parser.add_argument("--limit", type=int, default=15, help="Rows to show per section (default: 15)")
+    parser.add_argument(
+        "--limit", type=int, default=15, help="Rows to show per section (default: 15)"
+    )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
+    parser.add_argument(
+        "--output-dir", type=Path, help="Write a Ninja-only CI snapshot (no trace scan)"
+    )
     return parser.parse_args(argv)
 
 
@@ -323,6 +416,13 @@ def main(argv: list[str] | None = None) -> int:
     ninja_log = (args.ninja_log or build_dir / ".ninja_log").resolve()
     trace_dir = (args.trace_dir or build_dir).resolve()
     limit = max(1, args.limit)
+
+    if args.output_dir:
+        if ninja_log.is_file():
+            print(write_snapshot(build_dir, args.output_dir))
+        else:
+            print(f"No Ninja log at {ninja_log}; this generator has no Ninja timing data.")
+        return 0
 
     edges = parse_ninja_log(ninja_log)
     summary = summarize_ninja_log(edges, limit=limit)

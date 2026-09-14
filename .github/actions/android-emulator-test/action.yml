@@ -1,8 +1,7 @@
 name: Android Emulator Boot Test
 description: >-
   Run the APK install + launch smoke test against an x86_64 Android emulator.
-  Wraps KVM enable + AVD cache restore/save + warm-up snapshot + boot test +
-  failure diagnostics so caller workflows don't repeat the ~100-line block.
+  Enables KVM, boots a fresh AVD, and collects failure diagnostics.
 
 inputs:
   apk-path:
@@ -13,12 +12,6 @@ inputs:
     required: true
   android-platform:
     description: Android API level (from build-config)
-    required: true
-  qt-version:
-    description: Qt version (for AVD cache key)
-    required: true
-  ndk-version:
-    description: Android NDK full version (for AVD cache key)
     required: true
   diagnostics-name:
     description: Suffix for the uploaded emulator-diagnostics artifact name
@@ -51,15 +44,19 @@ runs:
         ram-size: 4096M
         heap-size: 1024M
         avd-name: qgc-ci
-        force-avd-creation: false
+        force-avd-creation: true
         emulator-boot-timeout: 420
         disable-animations: true
         disable-spellchecker: true
         emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot-save
-        script: |
+        script: >-
           timeout 20s adb start-server >/dev/null 2>&1 || true
+
           timeout 180s adb wait-for-device || (echo "::error::adb wait-for-device timed out before boot test." && exit 1)
-          python3 .github/scripts/android_boot_test.py --apk "${{ inputs.apk-path }}" --package ${{ inputs.package }} --timeout 120 --stability-window 20 --adb-ready-timeout 180 --install-retries 4 --install-retry-delay 5 --launch-retries 2 --log-output /tmp/qgc_emulator_boot.log
+
+          python3 .github/scripts/android_boot_test.py --apk "${{ inputs.apk-path }}" --package ${{ inputs.package }}
+          --timeout 120 --stability-window 20 --adb-ready-timeout 180 --install-retries 4 --install-retry-delay 5
+          --launch-retries 2 --log-output /tmp/qgc_emulator_boot.log
 
     - name: Collect Emulator Diagnostics
       if: failure()

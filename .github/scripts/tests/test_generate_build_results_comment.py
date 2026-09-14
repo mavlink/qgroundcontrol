@@ -61,7 +61,7 @@ def test_generate_comment_precommit_artifact_overrides_status(tmp_path: Path) ->
         env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
     )
 
-    assert "| pre-commit | Failed (non-blocking) | [View](https://example.test/precommit) |" in out
+    assert "| pre-commit | Failed | [View](https://example.test/precommit) |" in out
     assert "Pre-commit hooks: 12 passed, 3 failed, 1 skipped." in out
 
 

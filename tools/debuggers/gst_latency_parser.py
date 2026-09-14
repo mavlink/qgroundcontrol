@@ -86,20 +86,24 @@ def summarize(buckets: dict[str, list[int]]) -> list[dict]:
     rows: list[dict] = []
     for label, vals in sorted(buckets.items()):
         s = sorted(vals)
-        rows.append({
-            "label": label,
-            "count": len(s),
-            "p50_ms": _percentile(s, 50) / 1e6,
-            "p95_ms": _percentile(s, 95) / 1e6,
-            "p99_ms": _percentile(s, 99) / 1e6,
-            "max_ms": s[-1] / 1e6 if s else 0,
-        })
+        rows.append(
+            {
+                "label": label,
+                "count": len(s),
+                "p50_ms": _percentile(s, 50) / 1e6,
+                "p95_ms": _percentile(s, 95) / 1e6,
+                "p99_ms": _percentile(s, 99) / 1e6,
+                "max_ms": s[-1] / 1e6 if s else 0,
+            }
+        )
     return rows
 
 
 def _format_table(rows: list[dict]) -> str:
     if not rows:
-        return "(no latency records found — was GST_TRACERS=latency set with GST_DEBUG=GST_TRACER:7?)"
+        return (
+            "(no latency records found — was GST_TRACERS=latency set with GST_DEBUG=GST_TRACER:7?)"
+        )
     widths = {"label": max(48, max(len(r["label"]) for r in rows))}
     header = f"{'bucket':<{widths['label']}}  {'count':>7}  {'p50ms':>8}  {'p95ms':>8}  {'p99ms':>8}  {'maxms':>8}"
     sep = "-" * len(header)
@@ -113,10 +117,16 @@ def _format_table(rows: list[dict]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     p.add_argument("log", type=Path, help="GStreamer debug log file (GST_DEBUG_FILE output)")
-    p.add_argument("--threshold-ms", type=float, default=None,
-                   help="Fail (exit 1) if any bucket's p95 exceeds this. CI gate.")
+    p.add_argument(
+        "--threshold-ms",
+        type=float,
+        default=None,
+        help="Fail (exit 1) if any bucket's p95 exceeds this. CI gate.",
+    )
     p.add_argument("--json", action="store_true", help="Emit JSON instead of a table")
     p.add_argument("--filter", default=None, help="Only show buckets containing this substring")
     args = p.parse_args(argv)
@@ -139,8 +149,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.threshold_ms is not None:
         bad = [r for r in rows if r["p95_ms"] > args.threshold_ms]
         if bad:
-            print(f"\nFAIL: {len(bad)} bucket(s) exceeded p95 threshold {args.threshold_ms:.1f} ms:",
-                  file=sys.stderr)
+            print(
+                f"\nFAIL: {len(bad)} bucket(s) exceeded p95 threshold {args.threshold_ms:.1f} ms:",
+                file=sys.stderr,
+            )
             for r in bad:
                 print(f"  {r['label']}: p95={r['p95_ms']:.2f} ms", file=sys.stderr)
             return 1

@@ -25,6 +25,12 @@ inputs:
     description: Path to cached workflow runs JSON (skips API call if provided)
     required: false
     default: ''
+  include-failed:
+    description: Include diagnostics from completed failed builds
+    default: 'false'
+  strict-runs:
+    description: Require exactly one successful run per requested workflow in the supplied snapshot
+    default: 'false'
   artifact-prefixes:
     description: Comma-separated artifact name prefixes to download (optional)
     required: false
@@ -47,6 +53,8 @@ runs:
         INPUT_HEAD_SHA: ${{ inputs.head-sha }}
         INPUT_OUTPUT_DIR: ${{ inputs.output-dir }}
         INPUT_WORKFLOWS: ${{ inputs.workflows }}
+        INCLUDE_FAILED: ${{ inputs.include-failed }}
+        STRICT_RUNS: ${{ inputs.strict-runs }}
         INPUT_EVENT: ${{ inputs.event }}
         INPUT_ARTIFACT_PREFIXES: ${{ inputs.artifact-prefixes }}
         INPUT_ARTIFACT_METADATA_FILE: ${{ inputs.artifact-metadata-file }}
@@ -57,6 +65,8 @@ runs:
              --head-sha "$INPUT_HEAD_SHA"
              --output-dir "$INPUT_OUTPUT_DIR"
              --workflows "$INPUT_WORKFLOWS")
+        [[ "$INCLUDE_FAILED" == "true" ]] && cmd+=(--include-failed)
+        [[ "$STRICT_RUNS" == "true" ]] && cmd+=(--strict-runs)
         [[ -n "$INPUT_EVENT" ]] && cmd+=(--event "$INPUT_EVENT")
         [[ -n "$RUNS_FILE" && -f "$RUNS_FILE" ]] && cmd+=(--runs-file "$RUNS_FILE")
         [[ -n "$INPUT_ARTIFACT_PREFIXES" ]] && cmd+=(--artifact-prefixes "$INPUT_ARTIFACT_PREFIXES")

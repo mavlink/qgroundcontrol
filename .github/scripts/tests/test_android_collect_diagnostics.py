@@ -35,7 +35,8 @@ class TestCollectBuildArtifacts:
         out.mkdir()
         (build / "qgc-build.log").write_text("build output", encoding="utf-8")
         (build / "android-QGroundControl-deployment-settings.json").write_text(
-            '{"k": "v"}', encoding="utf-8")
+            '{"k": "v"}', encoding="utf-8"
+        )
 
         collect_build_artifacts(out, build, boot_log=None)
 
@@ -51,7 +52,8 @@ class TestCollectBuildArtifacts:
         build.mkdir()
         out.mkdir()
         (build / "android-QGroundControl-deployment-settings.json").write_text(
-            "{not valid json}", encoding="utf-8")
+            "{not valid json}", encoding="utf-8"
+        )
 
         collect_build_artifacts(out, build, boot_log=None)
 
@@ -126,9 +128,12 @@ class TestCollectAdbDiagnostics:
 
     def test_offline_emulator_writes_skip_marker(self, tmp_path):
         offline = subprocess.CompletedProcess(
-            [], 0, stdout="List of devices attached\nemulator-5554\toffline\n", stderr="")
-        with patch("android_collect_diagnostics.shutil.which", return_value="/usr/bin/adb"), \
-             patch("android_collect_diagnostics._run", return_value=offline):
+            [], 0, stdout="List of devices attached\nemulator-5554\toffline\n", stderr=""
+        )
+        with (
+            patch("android_collect_diagnostics.shutil.which", return_value="/usr/bin/adb"),
+            patch("android_collect_diagnostics._run", return_value=offline),
+        ):
             collect_adb_diagnostics(tmp_path)
         assert "No online emulator" in (tmp_path / "adb-skipped.txt").read_text(encoding="utf-8")
 
@@ -136,10 +141,15 @@ class TestCollectAdbDiagnostics:
 class TestMain:
     def test_main_succeeds_with_missing_build_artifacts(self, tmp_path):
         with patch("android_collect_diagnostics.shutil.which", return_value=None):
-            rc = main([
-                "--out-dir", str(tmp_path / "out"),
-                "--build-dir", str(tmp_path / "build"),
-                "--avd-home", str(tmp_path / "avd"),
-            ])
+            rc = main(
+                [
+                    "--out-dir",
+                    str(tmp_path / "out"),
+                    "--build-dir",
+                    str(tmp_path / "build"),
+                    "--avd-home",
+                    str(tmp_path / "avd"),
+                ]
+            )
         assert rc == 0
         assert (tmp_path / "out").is_dir()
