@@ -1,6 +1,6 @@
 # Local RTK receiver, worker, Facts, and connection policy.
 add_subdirectory(Driver)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSDriver)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSDriver QGCGPSReceiverTransports)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSProvider.cc GPSProvider.h GPSRtk.cc GPSRtk.h GPSRTKFactGroup.cc
                                              GPSRTKFactGroup.h
@@ -9,9 +9,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSProvider.cc GPSProvider.h GPSRtk
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(NOT QGC_NO_SERIAL_LINK)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE RTKAutoConnect.cc RTKAutoConnect.h SerialGPSTransport.cc
-                                                 SerialGPSTransport.h
-    )
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE RTKAutoConnect.cc RTKAutoConnect.h)
 endif()
 
 qt_add_resources(

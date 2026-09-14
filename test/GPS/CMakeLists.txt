@@ -13,6 +13,7 @@ add_subdirectory(NTRIP)
 add_subdirectory(PositionManager)
 add_subdirectory(RTCM)
 add_subdirectory(RTK)
+add_subdirectory(Transport)
 
 add_subdirectory(Core)
 add_subdirectory(Standalone)

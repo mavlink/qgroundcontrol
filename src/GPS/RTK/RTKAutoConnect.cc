@@ -62,7 +62,7 @@ void RTKAutoConnect::update()
             return;
         }
         for (const auto& port : ports) {
-            if (port.systemLocation == _autoConnectedPort && port.autoConnectAllowed && !port.bootloader &&
+            if (port.systemLocation == _autoConnectedPort && !port.bootloader &&
                 port.boardType == QGCSerialPortInfo::BoardTypeRTKGPS &&
                 _serialPorts->canReservePort(port.systemLocation)) {
                 _retryDeadline = QDeadlineTimer::Forever;
@@ -73,9 +73,20 @@ void RTKAutoConnect::update()
         }
         return;
     }
+    QSet<QString> seenDevices;
     for (const auto& port : ports) {
-        if (!port.autoConnectAllowed || port.boardType != QGCSerialPortInfo::BoardTypeRTKGPS || port.bootloader ||
-            port.systemLocation == nmeaPort || !_serialPorts->canReservePort(port.systemLocation)) {
+        if (port.boardType != QGCSerialPortInfo::BoardTypeRTKGPS || port.bootloader ||
+            port.systemLocation == nmeaPort) {
+            _waitingPorts.remove(port.systemLocation);
+            continue;
+        }
+        // A labelled NMEA interface remains a receiver candidate on composite GPS devices.
+        const bool duplicate = !port.physicalDeviceId.isEmpty() && seenDevices.contains(port.physicalDeviceId);
+        if (!port.physicalDeviceId.isEmpty()) {
+            seenDevices.insert(port.physicalDeviceId);
+        }
+        if ((duplicate && !port.description.contains(QStringLiteral("NMEA"))) ||
+            !_serialPorts->canReservePort(port.systemLocation)) {
             _waitingPorts.remove(port.systemLocation);
             continue;
         }

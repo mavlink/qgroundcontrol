@@ -6,6 +6,9 @@
 
 #include "GPSProvider.h"
 #include "GPSTransport.h"
+#ifndef QGC_NO_SERIAL_LINK
+#include "SerialPortManager.h"
+#endif
 
 Q_DECLARE_METATYPE(GPSReceiverConfig)
 
@@ -22,8 +25,9 @@ struct TransportTrace
 class TestTransport : public GPSTransport
 {
 public:
-    TestTransport(TransportTrace& trace, std::function<void()> stop, bool openResult, bool cancelInOpen)
-        : _trace(trace), _stop(stop), _openResult(openResult), _cancelInOpen(cancelInOpen)
+    TestTransport(const std::atomic_bool& requestStop, TransportTrace& trace, std::function<void()> stop,
+                  bool openResult, bool cancelInOpen)
+        : GPSTransport(requestStop), _trace(trace), _stop(stop), _openResult(openResult), _cancelInOpen(cancelInOpen)
     {
         _trace.constructedOn = QThread::currentThread();
     }
@@ -34,21 +38,21 @@ public:
         _trace.factoryAliveDuringDestruction = !_trace.factoryLifetime.expired();
     }
 
-    bool open() override
+    OpenResult open() override
     {
         _trace.openedOn = QThread::currentThread();
         // Stop before receiver configuration; this test exercises transport ownership only.
         if (_cancelInOpen) {
             _stop();
         }
-        return _openResult;
+        return {_openResult ? OpenStatus::Opened : OpenStatus::Error};
     }
 
     bool fatalError() const override { return false; }
 
-    int read(uint8_t*, int, int) override { return -1; }
+    ReadResult read(uint8_t*, int, int) override { return {ReadStatus::Error}; }
 
-    int write(const uint8_t*, int) override { return -1; }
+    WriteResult write(const uint8_t*, int) override { return {WriteStatus::Error}; }
 
     bool setBaudrate(unsigned) override { return true; }
 
@@ -77,8 +81,9 @@ void GPSProviderTest::_transportLifetimeStaysOnWorker()
     auto lifetime = std::make_shared<int>(0);
     trace.factoryLifetime = lifetime;
     GPSProvider provider(
-        [&, lifetime = std::move(lifetime)](const std::atomic_bool&) {
-            return std::make_unique<TestTransport>(trace, [&provider]() { provider.stop(); }, openResult, cancelInOpen);
+        [&, lifetime = std::move(lifetime)](const std::atomic_bool& requestStop) {
+            return std::make_unique<TestTransport>(
+                requestStop, trace, [&provider]() { provider.stop(); }, openResult, cancelInOpen);
         },
         GPSReceiverType::ublox, GPSReceiverConfig{});
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
@@ -140,29 +145,31 @@ namespace {
 class FemtoAckTransport : public GPSTransport
 {
 public:
-    bool open() override { return true; }
+    using GPSTransport::GPSTransport;
+
+    OpenResult open() override { return {OpenStatus::Opened}; }
 
     bool fatalError() const override { return false; }
 
     bool setBaudrate(unsigned) override { return true; }
 
-    int write(const uint8_t* bytes, int size) override
+    WriteResult write(const uint8_t* bytes, int size) override
     {
         const QByteArray command(reinterpret_cast<const char*>(bytes), size);
         _reply = '<' + command.split(' ').first().trimmed() + " OK";
         _reply.append(char(0));
-        return size;
+        return {WriteStatus::Completed, size, size, 0};
     }
 
-    int read(uint8_t* bytes, int size, int) override
+    ReadResult read(uint8_t* bytes, int size, int) override
     {
         if (_reply.isEmpty()) {
-            return -1;
+            return {ReadStatus::Error};
         }
         const auto count = qMin(size, static_cast<int>(_reply.size()));
         std::memcpy(bytes, _reply.constData(), count);
         _reply.remove(0, count);
-        return count;
+        return {ReadStatus::Data, count};
     }
 
 private:
@@ -187,8 +194,9 @@ void GPSProviderTest::_configuredReceiverReportsReadyThenLoss_data()
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
 {
     QFETCH(GPSReceiverConfig, config);
-    GPSProvider provider([](const std::atomic_bool&) { return std::make_unique<FemtoAckTransport>(); },
-                         GPSReceiverType::femto, config);
+    GPSProvider provider(
+        [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); },
+        GPSReceiverType::femto, config);
     QSignalSpy ready(&provider, &GPSProvider::receiverReady);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
@@ -202,9 +210,9 @@ void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
 {
     TransportTrace trace;
     GPSProvider provider(
-        [&](const std::atomic_bool&) {
+        [&](const std::atomic_bool& requestStop) {
             provider.stop();
-            return std::make_unique<TestTransport>(trace, []() {}, true, false);
+            return std::make_unique<TestTransport>(requestStop, trace, []() {}, true, false);
         },
         GPSReceiverType::ublox, GPSReceiverConfig{});
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
@@ -215,3 +223,37 @@ void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
     QCOMPARE(trace.destroyedOn, &provider);
     QVERIFY(errors.isEmpty());
 }
+
+#ifndef QGC_NO_SERIAL_LINK
+void GPSProviderTest::_finishedReceiverReleasesReservation_data()
+{
+    QTest::addColumn<bool>("cancelled");
+    QTest::newRow("open-failed") << false;
+    QTest::newRow("cancelled-before-start") << true;
+}
+
+void GPSProviderTest::_finishedReceiverReleasesReservation()
+{
+    QFETCH(bool, cancelled);
+    QList<SerialPortManager::Port> inventory{
+        {QStringLiteral("/test/gps"), QStringLiteral("gps"), QGCSerialPortInfo::BoardTypeRTKGPS, QString()}};
+    SerialPortManager ports(nullptr, [&]() { return inventory; });
+    ports.setSinglePortOnly(true);
+    QCOMPARE(ports.availablePorts().size(), 1);
+    auto reservation = ports.reservePort(QStringLiteral("/test/gps"));
+    QVERIFY(reservation);
+    GPSProvider provider(
+        [reservation = std::move(reservation)](const std::atomic_bool&) { return std::unique_ptr<GPSTransport>{}; },
+        GPSReceiverType::ublox, GPSReceiverConfig{});
+    if (cancelled) {
+        provider.stop();
+    }
+    QVERIFY(!ports.canReservePort(QStringLiteral("/test/mavlink")));
+    inventory.clear();
+    provider.start();
+    QVERIFY(provider.wait(TestTimeout::shortMs()));
+    QVERIFY(!ports.anyPortReserved());
+    QVERIFY(ports.reservePort(QStringLiteral("/test/mavlink")));
+    QTRY_VERIFY_WITH_TIMEOUT(ports.availablePorts().isEmpty(), TestTimeout::mediumMs());
+}
+#endif

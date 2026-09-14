@@ -15,20 +15,19 @@
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.GPSDriver")
-QGC_LOGGING_CATEGORY(GPSDriversLog, "GPS.Drivers") // backs the px4 GPS_INFO/WARN/ERR macros in definitions.h
+QGC_LOGGING_CATEGORY(GPSDriversLog, "GPS.Drivers")  // backs the px4 GPS_INFO/WARN/ERR macros in definitions.h
 
 namespace {
-int callbackTrampoline(GPSCallbackType type, void *data1, int data2, void *user)
+int callbackTrampoline(GPSCallbackType type, void* data1, int data2, void* user)
 {
-    return static_cast<GPSDriver *>(user)->handleCallback(static_cast<int>(type), data1, data2);
+    return static_cast<GPSDriver*>(user)->handleCallback(static_cast<int>(type), data1, data2);
 }
-} // namespace
+}  // namespace
 
 GPSDriver::GPSDriver(GPSReceiverType type, GPSTransport& transport, const GPSReceiverConfig& config,
                      GPSDriverSinks sinks)
     : _type(type), _transport(transport), _config(config), _sinks(std::move(sinks))
-{
-}
+{}
 
 GPSDriver::~GPSDriver() = default;
 
@@ -64,7 +63,7 @@ bool GPSDriver::configure()
         return false;
     }
 
-    unsigned baudrate = 0;
+    unsigned baudrate = _transport.fixedBaudrate();
     switch (_type) {
         case GPSReceiverType::trimble:
             _driver.reset(new GPSDriverAshtech(&callbackTrampoline, this, &_sensorGps, &_satelliteInfo));
@@ -141,42 +140,52 @@ int GPSDriver::receive(unsigned timeoutMs)
     return ret;
 }
 
-int GPSDriver::handleCallback(int type, void *data1, int data2)
+int GPSDriver::handleCallback(int type, void* data1, int data2)
 {
     switch (static_cast<GPSCallbackType>(type)) {
-    case GPSCallbackType::readDeviceData: {
-        int timeoutMs = 0;
-        memcpy(&timeoutMs, data1, sizeof(timeoutMs)); // px4 packs the timeout into data1's first bytes (unaligned)
-        return _transport.read(static_cast<uint8_t *>(data1), data2, timeoutMs);
-    }
-    case GPSCallbackType::writeDeviceData:
-        return _transport.write(static_cast<const uint8_t *>(data1), data2);
-    case GPSCallbackType::setBaudrate:
-        return _transport.setBaudrate(static_cast<unsigned>(data2)) ? 0 : -1;
-    case GPSCallbackType::gotRTCMMessage:
-        if (_sinks.onRTCM) {
-            _sinks.onRTCM(QByteArray(static_cast<const char *>(data1), data2));
-        }
-        break;
-    case GPSCallbackType::surveyInStatus:
-        if (data1 && _sinks.onSurveyIn) {
-            const SurveyInStatus *const status = static_cast<const SurveyInStatus *>(data1);
-            GPSSurveyInStatus out;
-            out.coordinate = QGeoCoordinate(status->latitude, status->longitude);
-            out.altitudeEllipsoidMeters = status->altitude;
-            // Ashtech and Femto use zero for unknown accuracy; UBX can round a valid value to zero.
-            if (status->mean_accuracy != 0 || (_type != GPSReceiverType::trimble && _type != GPSReceiverType::femto)) {
-                out.meanAccuracyMeters = static_cast<double>(status->mean_accuracy) / 1000.0;
+        case GPSCallbackType::readDeviceData: {
+            int timeoutMs = 0;
+            memcpy(&timeoutMs, data1, sizeof(timeoutMs));  // px4 packs the timeout into data1's first bytes (unaligned)
+            const auto result = _transport.read(static_cast<uint8_t*>(data1), data2, timeoutMs);
+            if (result.status == GPSTransport::ReadStatus::Data && result.bytesRead >= 0 && result.bytesRead <= data2) {
+                return result.bytesRead;
             }
-            out.duration = std::chrono::seconds(status->duration);
-            out.valid = status->flags & 0x01;
-            out.active = (status->flags >> 1) & 0x01;
-            _sinks.onSurveyIn(out);
+            return result.status == GPSTransport::ReadStatus::TimedOut ? 0 : -1;
         }
-        break;
-    case GPSCallbackType::setClock:
-    default:
-        break;
+        case GPSCallbackType::writeDeviceData: {
+            const auto result = _transport.write(static_cast<const uint8_t*>(data1), data2);
+            return result.status == GPSTransport::WriteStatus::Completed && result.acceptedBytes == data2 &&
+                           result.writtenBytes == data2 && result.uncertainBytes == 0
+                       ? data2
+                       : -1;
+        }
+        case GPSCallbackType::setBaudrate:
+            return _transport.setBaudrate(static_cast<unsigned>(data2)) ? 0 : -1;
+        case GPSCallbackType::gotRTCMMessage:
+            if (_sinks.onRTCM) {
+                _sinks.onRTCM(QByteArray(static_cast<const char*>(data1), data2));
+            }
+            break;
+        case GPSCallbackType::surveyInStatus:
+            if (data1 && _sinks.onSurveyIn) {
+                const SurveyInStatus* const status = static_cast<const SurveyInStatus*>(data1);
+                GPSSurveyInStatus out;
+                out.coordinate = QGeoCoordinate(status->latitude, status->longitude);
+                out.altitudeEllipsoidMeters = status->altitude;
+                // Ashtech and Femto use zero for unknown accuracy; UBX can round a valid value to zero.
+                if (status->mean_accuracy != 0 ||
+                    (_type != GPSReceiverType::trimble && _type != GPSReceiverType::femto)) {
+                    out.meanAccuracyMeters = static_cast<double>(status->mean_accuracy) / 1000.0;
+                }
+                out.duration = std::chrono::seconds(status->duration);
+                out.valid = status->flags & 0x01;
+                out.active = (status->flags >> 1) & 0x01;
+                _sinks.onSurveyIn(out);
+            }
+            break;
+        case GPSCallbackType::setClock:
+        default:
+            break;
     }
 
     return 0;

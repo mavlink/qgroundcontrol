@@ -3,8 +3,11 @@
 
 from __future__ import annotations
 
+import io
+from email.message import Message
 from typing import TYPE_CHECKING
 from unittest.mock import call, patch
+from urllib.error import HTTPError
 
 import pytest
 from setup.install_dependencies import (
@@ -315,14 +318,49 @@ def test_download_file_dry_run(tmp_path: Path) -> None:
     assert not dest.exists()
 
 
-def test_download_file_network_error(tmp_path: Path) -> None:
+@pytest.mark.parametrize("warn_on_failure", [False, True])
+def test_download_file_network_error(tmp_path: Path, warn_on_failure: bool) -> None:
     from setup.install_dependencies import download_file
 
     dest = tmp_path / "test.bin"
-    # Mock httpx to raise, then fall through to urllib which also raises
-    with patch("urllib.request.urlopen", side_effect=OSError("unreachable")):
-        result = download_file("https://example.com/test.bin", dest, dry_run=False)
+    with (
+        patch("urllib.request.urlopen", side_effect=OSError("unreachable")) as request,
+        patch("common.net.time.sleep") as sleep,
+        patch.object(install_common, "log_warn") as warn,
+        patch.object(install_common, "log_error") as error,
+    ):
+        result = download_file(
+            "https://example.com/test.bin", dest, retries=2, warn_on_failure=warn_on_failure
+        )
     assert result is False
+    assert request.call_count == 3
+    assert sleep.call_count == 2
+    assert warn.call_count == int(warn_on_failure)
+    assert error.call_count == int(not warn_on_failure)
+    assert not dest.exists()
+
+
+@pytest.mark.parametrize("recover", [False, True])
+def test_download_file_http_error_without_httpx(tmp_path: Path, recover: bool) -> None:
+    from setup.install_dependencies import download_file
+
+    url = "https://example.com/just.tar.gz"
+    dest = tmp_path / "just.tar.gz"
+    failure = HTTPError(url, 500, "Internal Server Error", Message(), None)
+    response = io.BytesIO(b"archive") if recover else failure
+    with (
+        patch.dict("sys.modules", {"httpx": None}),
+        patch("urllib.request.urlopen", side_effect=[failure, response]) as request,
+        patch("common.net.time.sleep") as sleep,
+    ):
+        assert download_file(url, dest, retries=1, timeout=1.5) is recover
+    assert request.call_count == 2
+    assert all(call.kwargs["timeout"] == 1.5 for call in request.call_args_list)
+    sleep.assert_called_once_with(5.0)
+    if recover:
+        assert dest.read_bytes() == b"archive"
+    else:
+        assert not dest.exists()
 
 
 def test_run_apt_install_with_retry_success_first_try() -> None:

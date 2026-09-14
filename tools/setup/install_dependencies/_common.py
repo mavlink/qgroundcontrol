@@ -26,6 +26,7 @@ from common.env import is_ci  # noqa: E402  re-exported for submodules
 from common.gh_actions import append_github_env  # noqa: E402
 from common.io import require_tar_data_filter  # noqa: E402  re-exported for submodules
 from common.logging import log_error, log_info, log_warn  # noqa: E402  re-exported for submodules
+from common.net import download_with_retry  # noqa: E402
 from common.platform import is_linux, is_macos, is_windows  # noqa: E402
 
 APT_BASE_OPTIONS: list[str] = [
@@ -352,35 +353,13 @@ def download_file(
     *,
     warn_on_failure: bool = False,
 ) -> bool:
-    """Download a file from a URL."""
+    """Download with bounded retries using only bootstrap-safe standard-library dependencies."""
     if dry_run:
         print(f"  Would download: {url} -> {dest.name}")
         return True
 
     try:
-        import httpx
-
-        transport = httpx.HTTPTransport(retries=retries)
-        with httpx.Client(
-            transport=transport,
-            timeout=timeout,
-            headers={"User-Agent": "qgc-deps-installer/1.0"},
-            follow_redirects=True,
-        ) as client:
-            print(f"  Downloading {dest.name}...")
-            with client.stream("GET", url) as response:
-                response.raise_for_status()
-                with open(dest, "wb") as out:
-                    for chunk in response.iter_bytes(chunk_size=65536):
-                        out.write(chunk)
-        return True
-    except ImportError:
-        import urllib.request
-
-        req = urllib.request.Request(url, headers={"User-Agent": "qgc-deps-installer/1.0"})
-        print(f"  Downloading {dest.name}...")
-        with urllib.request.urlopen(req, timeout=timeout) as response, open(dest, "wb") as out:
-            shutil.copyfileobj(response, out)
+        download_with_retry(url, dest, attempts=retries + 1, timeout=timeout)
         return True
     except Exception as e:
         log = log_warn if warn_on_failure else log_error

@@ -406,8 +406,11 @@ static bool setControlLine(int descriptor, int line, bool set)
 bool QSerialPortPrivate::_posixSetDataTerminalReady(bool set)
 {
     if (!setControlLine(descriptor, TIOCM_DTR, set)) {
-        qCWarning(AndroidSerialPortLog) << "Failed to set DTR on" << systemLocation << ":" << strerror(errno);
-        setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QSerialPort::tr("Failed to set DTR")));
+        const int dtrError = errno;
+        const auto code = dtrError == ENOTTY || dtrError == EOPNOTSUPP ? QSerialPort::UnsupportedOperationError
+                                                                       : QSerialPort::UnknownError;
+        qCDebug(AndroidSerialPortLog) << "Failed to set DTR on" << systemLocation << ":" << strerror(dtrError);
+        setError(QSerialPortErrorInfo(code, QSerialPort::tr("Failed to set DTR")));
         return false;
     }
 

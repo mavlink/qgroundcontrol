@@ -45,7 +45,7 @@ def run_with_retries(
             backoff *= 2
 
 
-def download_file(url: str, dest: Path, *, timeout: int = 120) -> None:
+def download_file(url: str, dest: Path, *, timeout: float = 120) -> None:
     """Download *url* to *dest* in a single attempt (stdlib urllib)."""
     with (
         urllib.request.urlopen(urllib.request.Request(url), timeout=timeout) as resp,
@@ -55,7 +55,7 @@ def download_file(url: str, dest: Path, *, timeout: int = 120) -> None:
 
 
 def download_with_retry(
-    url: str, dest: Path, *, attempts: int = 3, delay: float = 5.0, timeout: int = 120
+    url: str, dest: Path, *, attempts: int = 3, delay: float = 5.0, timeout: float = 120
 ) -> None:
     """Download *url* to *dest*, retrying transient network failures."""
     last: Exception | None = None

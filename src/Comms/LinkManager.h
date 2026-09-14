@@ -7,19 +7,17 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include <limits>
+#include <memory>
 
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
-#ifndef QGC_NO_SERIAL_LINK
-    #include "QGCSerialPortInfo.h"
-#endif
 
 class AutoConnectSettings;
 class LogReplayLink;
 class MAVLinkProtocol;
 class QmlObjectListModel;
 class QTimer;
-class SerialLink;
+class SerialAutoConnect;
 class UDPConfiguration;
 
 /// @brief Manage communication links
@@ -154,13 +152,6 @@ private:
     static constexpr const char *_mavlinkForwardingSupportLinkName = "MAVLink Support Forwarding Link";
 
     static constexpr int _autoconnectUpdateTimerMSecs = 1000;
-#ifdef Q_OS_WIN
-    // Have to manually let the bootloader go by on Windows to get a working connect
-    static constexpr int _autoconnectConnectDelayMSecs = 6000;
-#else
-    static constexpr int _autoconnectConnectDelayMSecs = 1000;
-#endif
-
 #ifndef QGC_NO_SERIAL_LINK
 private:
     Q_PROPERTY(QStringList serialBaudRates   READ serialBaudRates   CONSTANT)
@@ -178,11 +169,7 @@ signals:
 
 private:
     void _updateSerialPorts();
-    bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType) const;
-    void _addSerialAutoConnectLink();
-
-    QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count
-    QList<SerialLink*> _activeLinkCheckList;       ///< List of links we are waiting for a vehicle to show up on
+    std::unique_ptr<SerialAutoConnect> _serialAutoConnect;
     QStringList _commPortList;
     QStringList _commPortDisplayList;
 #endif // QGC_NO_SERIAL_LINK

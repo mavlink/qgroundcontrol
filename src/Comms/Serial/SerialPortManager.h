@@ -29,7 +29,10 @@ public:
         QGCSerialPortInfo::BoardType_t boardType = QGCSerialPortInfo::BoardTypeUnknown;
         QString boardName;
         bool bootloader = false;
-        bool autoConnectAllowed = true;
+        /// Shared by interfaces with the same VID/PID/serial; empty when identity is unavailable.
+        QString physicalDeviceId = {};
+        QString description = {};
+        QString displayName = {};
     };
 
     struct Reservation
@@ -44,6 +47,7 @@ public:
     static SerialPortManager* instance();
 
     QList<Port> availablePorts();
+    QString displayName(const QString& systemLocation);
 
     QStringList serialPorts() const { return _serialPorts; }
 
@@ -56,11 +60,14 @@ public:
     /// Routing exclusions survive reconnects without marking the hardware occupied.
     ReservationPtr excludeFromAutoConnect(const QString& systemLocation);
     bool canAutoConnectPort(const QString& systemLocation) const;
+    bool isAutoConnectExcluded(const QString& systemLocation) const;
 
     void setSinglePortOnly(bool enabled) { _singlePortOnly = enabled; }
 
 signals:
     void serialPortsChanged();
+    /// Emitted only after a fresh scan, never for a retained Android snapshot. Includes native names and paths.
+    void portsEnumerated(const QStringList& availablePorts);
 
 private:
     static QList<Port> _enumeratePorts();

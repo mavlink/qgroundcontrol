@@ -40,7 +40,7 @@ void GPSProvider::run()
     if (_requestStop) {
         return;
     }
-    if (!transport || !transport->open()) {
+    if (!transport || transport->open().status != GPSTransport::OpenStatus::Opened) {
         if (!_requestStop) {
             emit connectionError(GPSConnectionError::OpenFailed);
         }
@@ -52,13 +52,13 @@ void GPSProvider::run()
 
     bool gotData = false;
     GPSDriverSinks sinks;
-    sinks.onPosition = [this](const sensor_gps_s &message) { emit sensorGpsUpdate(message); };
-    sinks.onSatelliteInfo = [this](const satellite_info_s &message) { emit satelliteInfoUpdate(message); };
-    sinks.onRTCM = [this, &gotData](const QByteArray &message) {
+    sinks.onPosition = [this](const sensor_gps_s& message) { emit sensorGpsUpdate(message); };
+    sinks.onSatelliteInfo = [this](const satellite_info_s& message) { emit satelliteInfoUpdate(message); };
+    sinks.onRTCM = [this, &gotData](const QByteArray& message) {
         gotData = true;
         emit RTCMDataUpdate(message);
     };
-    sinks.onSurveyIn = [this, &gotData](const GPSSurveyInStatus &status) {
+    sinks.onSurveyIn = [this, &gotData](const GPSSurveyInStatus& status) {
         gotData = true;
         qCDebug(GPSProviderLog) << QStringLiteral("Survey-in: %1s accuracy: %2m valid: %3 active: %4")
                                        .arg(status.duration.count())

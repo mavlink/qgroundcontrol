@@ -202,6 +202,7 @@ struct JniMethodCache
     jmethodID getDataSetReady = nullptr;
     jmethodID getDataTerminalReady = nullptr;
     jmethodID setDataTerminalReady = nullptr;
+    jmethodID dataTerminalReadySupport = nullptr;
     jmethodID getRingIndicator = nullptr;
     jmethodID getRequestToSend = nullptr;
     jmethodID setRequestToSend = nullptr;
@@ -245,6 +246,7 @@ static bool cacheMethodIds(JNIEnv* env, jclass javaClass)
         {&s_methods.getDataSetReady, "getDataSetReady", "(I)Z"},
         {&s_methods.getDataTerminalReady, "getDataTerminalReady", "(I)Z"},
         {&s_methods.setDataTerminalReady, "setDataTerminalReady", "(IZ)Z"},
+        {&s_methods.dataTerminalReadySupport, "getDataTerminalReadySupport", "(I)I"},
         {&s_methods.getRingIndicator, "getRingIndicator", "(I)Z"},
         {&s_methods.getRequestToSend, "getRequestToSend", "(I)Z"},
         {&s_methods.setRequestToSend, "setRequestToSend", "(IZ)Z"},
@@ -876,6 +878,19 @@ bool getRequestToSend(int deviceId)
 bool setDataTerminalReady(int deviceId, bool set)
 {
     return callBoolSetMethod(s_methods.setDataTerminalReady, deviceId, set, "setDataTerminalReady");
+}
+
+int dataTerminalReadySupport(int deviceId)
+{
+    JniContext ctx;
+    if (!getContext(ctx, "getDataTerminalReadySupport"))
+        return -1;
+    jint result = -1;
+    if (!AndroidInterface::callStaticIntMethod(ctx.env, ctx.cls, s_methods.dataTerminalReadySupport,
+                                               "getDataTerminalReadySupport", AndroidSerialLog(), result, deviceId)) {
+        return -1;
+    }
+    return static_cast<int>(result);
 }
 
 bool setRequestToSend(int deviceId, bool set)
