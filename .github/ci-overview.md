@@ -78,6 +78,7 @@ uploaded separately. The master-only continuous build still publishes fuzzer bin
 | `docs.yml`, `doxygen.yml` | Documentation deployment |
 | `cache-cleanup.yml`, `cache-cleanup-pr.yml`, `_cache-cleanup.yml` | Cache maintenance (reusable + scheduled + PR-triggered) |
 | `crowdin.yml`, `lupdate.yml` | Translation workflows |
+| `translation-validation.yml` | Changed TS message placeholder validation |
 | `dependency-review.yml` | Dependency security review |
 | `scorecard.yml` | OpenSSF Scorecard |
 | `stale.yml` | Nightly stale-issue labeling and closing (feature requests get their own close message) |
@@ -388,7 +389,11 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
   separate Extended Tests workflow. Manual Linux coverage jobs reuse their existing
   binary for `Network|Flaky` tests, after the
   ordinary coverage report. Those tests have separate reports and still fail the job. iOS simulator builds run `--simple-boot-test` and require
-  QGC's success marker. Windows installer verification lives in
+  QGC's success marker. Simulator cold boots have a 600-second deadline and at most two
+  fresh-device attempts; installation and application failures are never retried.
+  Each attempt retains command output, with simulator state collected before failed-boot cleanup.
+  `ios_boot_test.py` accepts `--boot-timeout` (1-900 seconds) and `--boot-attempts` (1-2).
+  Windows installer verification lives in
   `deploy/windows/verify-installer.ps1`.
 - Ordinary Docker PRs build Ubuntu 24.04 plus Android when affected. Toolchain,
   dependency and packaging changes, unknown diffs, pushes and dispatches
@@ -399,6 +404,10 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
   as terminal. Before posting or saving, it checks the current PR/master SHA.
   Baseline sizes, coverage and source run identities share an immutable commit/run
   cache key. Exact PR base snapshots are preferred before the most recent baseline.
+  Size snapshots record their source SHA: only the exact PR base is accepted for size
+  deltas, even when coverage restores an older cache. Android artifact names include
+  their target ABIs, so single-ABI PR APKs are not compared with multi-ABI release APKs.
+  Unmatched variants show `N/A` and do not contribute to total size changes.
 - Each uploaded package includes `.build.json` producer identity, checksum and selected
   CMake configuration. Artifact API metadata retains IDs and available digests.
   Releases dispatch builds at the tag, poll exact run IDs and freeze their identities;
@@ -428,8 +437,13 @@ rebuilds and bounded retention; see [runner-images/README.md](runner-images/READ
 
 Docs checks English internal links without exemptions before building all locales. Docs Lint
 runs Markdown, spelling, and prose hooks for changed English pages without installing Qt.
+VitePress is pinned to a 2.0 prerelease because the stable 1.x dependency chain prevents
+patched Vite updates. Native theme navigation replaces `vp-dynamic-nav`; its Node regression
+suite runs as part of `npm run docs:build`.
 External checks run weekly as well as on PRs; exact legacy URL exceptions expire on their
-recorded review date. Translation files are maintained independently.
+recorded review date. Translation Validation checks new or changed TS messages against the
+PR base or push baseline without installing Qt. Unchanged legacy placeholder defects do not
+block unrelated imports; malformed XML and newly introduced placeholder mismatches fail.
 
 Code Analysis also accepts `qmllint` on manual dispatch. It builds generated modules first,
 then enables missing-import/property/type errors against the SDK and build import directories.

@@ -22,7 +22,7 @@ REQUIRED_PACKAGES: tuple[tuple[str, str], ...] = (
         "Windows AMD64/ARM64 installer",
         "QGroundControl-installer-AMD64-ARM64/*.exe",
     ),
-    ("Android APK", "QGroundControl-linux/*.apk"),
+    ("Android APK", "QGroundControl-linux-arm64-v8a-armeabi-v7a/*.apk"),
     ("iOS IPA", "QGroundControl-ios/*.ipa"),
 )
 

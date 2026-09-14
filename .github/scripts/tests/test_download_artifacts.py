@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import download_artifacts as mod
+import pytest
 from _helpers import completed
 
 
@@ -19,6 +20,7 @@ def test_parse_args_defaults() -> None:
     assert args.event == ""
     assert args.artifact_prefixes == ""
     assert args.artifact_metadata_out == ""
+    assert args.allow_missing is False
 
 
 def test_get_workflow_runs_filters_by_name_status_and_conclusion() -> None:
@@ -245,6 +247,148 @@ def test_main_returns_one_on_invalid_runs_file(tmp_path: Path) -> None:
         ],
     )
     assert rc == 1
+
+
+@pytest.mark.parametrize("conclusion", ["success", "failure", "cancelled"])
+def test_optional_diagnostics_preserve_metadata_without_downloads(
+    tmp_path: Path, conclusion: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    runs = [{"id": 42, "name": "Linux", "status": "completed", "conclusion": conclusion}]
+    artifacts = [{"name": "QGroundControl.AppImage", "size_in_bytes": 100}]
+    metadata_path = tmp_path / "metadata.json"
+    with (
+        patch.object(mod, "list_workflow_runs_for_sha", return_value=runs),
+        patch.object(mod, "list_run_artifacts", return_value=artifacts),
+        patch.object(mod, "download_run_artifacts") as download,
+    ):
+        rc = mod.main(
+            [
+                "--repo",
+                "owner/repo",
+                "--head-sha",
+                "abc123",
+                "--workflows",
+                "Linux",
+                "--artifact-prefixes",
+                "coverage-report,test-results-",
+                "--artifact-metadata-out",
+                str(metadata_path),
+                "--include-failed",
+                "--allow-missing",
+            ]
+        )
+    assert rc == 0
+    download.assert_not_called()
+    assert json.loads(metadata_path.read_text()) == {"runs": {"42": artifacts}}
+    assert "continuing with build status only" in capsys.readouterr().out
+
+
+def test_optional_diagnostics_write_empty_metadata_without_runs(tmp_path: Path) -> None:
+    metadata_path = tmp_path / "metadata.json"
+    with patch.object(mod, "list_workflow_runs_for_sha", return_value=[]):
+        rc = mod.main(
+            [
+                "--repo",
+                "owner/repo",
+                "--head-sha",
+                "abc123",
+                "--artifact-prefixes",
+                "coverage-report,test-results-",
+                "--artifact-metadata-out",
+                str(metadata_path),
+                "--allow-missing",
+            ]
+        )
+    assert rc == 0
+    assert json.loads(metadata_path.read_text()) == {"runs": {}}
+
+
+@pytest.mark.parametrize(
+    "options", [[], ["--artifact-prefixes", "coverage-report", "--strict-runs"]]
+)
+def test_optional_diagnostics_reject_invalid_modes(options: list[str]) -> None:
+    with patch.object(mod, "list_workflow_runs_for_sha") as query:
+        rc = mod.main(["--repo", "owner/repo", "--head-sha", "abc123", "--allow-missing", *options])
+    assert rc == 1
+    query.assert_not_called()
+
+
+@pytest.mark.parametrize("allow_missing", [False, True])
+@pytest.mark.parametrize("partial_download", [False, True])
+def test_download_failure_is_not_optional(
+    tmp_path: Path, allow_missing: bool, partial_download: bool
+) -> None:
+    runs = [{"id": 42, "name": "Linux", "status": "completed", "conclusion": "success"}]
+    if partial_download:
+        (tmp_path / "coverage.xml").write_text("<coverage/>")
+    with (
+        patch.object(mod, "list_workflow_runs_for_sha", return_value=runs),
+        patch.object(mod, "list_run_artifacts", return_value=[{"name": "coverage-report"}]),
+        patch.object(mod, "download_run_artifacts", return_value=False),
+    ):
+        rc = mod.main(
+            [
+                "--repo",
+                "owner/repo",
+                "--head-sha",
+                "abc123",
+                "--workflows",
+                "Linux",
+                "--output-dir",
+                str(tmp_path),
+                "--artifact-prefixes",
+                "coverage-report",
+                *(["--allow-missing"] if allow_missing else []),
+            ]
+        )
+    assert rc == 1
+
+
+def test_optional_diagnostics_reject_advertised_empty_download(tmp_path: Path) -> None:
+    runs = [{"id": 42, "name": "Linux", "status": "completed", "conclusion": "success"}]
+    with (
+        patch.object(mod, "list_workflow_runs_for_sha", return_value=runs),
+        patch.object(mod, "list_run_artifacts", return_value=[{"name": "coverage-report"}]),
+        patch.object(mod, "download_run_artifacts", return_value=True),
+    ):
+        rc = mod.main(
+            [
+                "--repo",
+                "owner/repo",
+                "--head-sha",
+                "abc123",
+                "--workflows",
+                "Linux",
+                "--output-dir",
+                str(tmp_path),
+                "--artifact-prefixes",
+                "coverage-report",
+                "--allow-missing",
+            ]
+        )
+    assert rc == 2
+
+
+def test_optional_diagnostics_propagate_artifact_query_failure() -> None:
+    runs = [{"id": 42, "name": "Linux", "status": "completed", "conclusion": "success"}]
+    with (
+        patch.object(mod, "list_workflow_runs_for_sha", return_value=runs),
+        patch.object(mod, "list_run_artifacts", side_effect=RuntimeError("API failure")),
+        pytest.raises(RuntimeError, match="API failure"),
+    ):
+        mod.main(
+            [
+                "--repo",
+                "owner/repo",
+                "--head-sha",
+                "abc123",
+                "--workflows",
+                "Linux",
+                "--artifact-prefixes",
+                "coverage-report",
+                "--allow-missing",
+            ]
+        )
 
 
 def test_main_returns_one_on_non_list_runs_file(tmp_path: Path) -> None:

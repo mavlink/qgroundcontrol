@@ -1,0 +1,64 @@
+name: Translation Validation
+
+on:
+  pull_request:
+    paths: &translation-paths
+      - 'translations/**/*.ts'
+      - 'tools/translations/**'
+      - 'tools/tests/test_translation_placeholders.py'
+      - 'tools/common/**'
+      - 'tools/_bootstrap.py'
+      - 'tools/pyproject.toml'
+      - 'tools/uv.lock'
+      - '.pre-commit-config.yaml'
+      - '.github/actions/setup-python/**'
+      - '.github/workflows/translation-validation.yml'
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    paths: *translation-paths
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        with:
+          groups: scripts,test
+          python-version: '3.12'
+
+      - name: Test translation validator
+        run: pytest -q tools/tests/test_translation_placeholders.py
+
+      - name: Validate changed translations
+        working-directory: tools
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [[ "$BASE_REF" == "0000000000000000000000000000000000000000" ]]; then
+            BASE_REF=EMPTY
+          elif ! git cat-file -e "${BASE_REF}^{commit}"; then
+            git fetch --no-tags --depth=1 origin "$BASE_REF"
+          fi
+          python -m translations.check_placeholders --base-ref "$BASE_REF"

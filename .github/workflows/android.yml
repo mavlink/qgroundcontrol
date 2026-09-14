@@ -115,10 +115,7 @@ jobs:
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
       QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_ABIS: >-
-        ${{ matrix.emulator && 'x86_64'
-          || (matrix.primary && github.event_name != 'pull_request' && github.event_name != 'pull_request_target') && 'arm64-v8a;armeabi-v7a'
-          || 'arm64-v8a' }}
+      QT_ANDROID_ABIS: ${{ matrix.android_abis }}
       HAS_PLAYSTORE_SECRET: ${{ secrets.GOOGLE_SERVICE_ACCOUNT != '' }}
 
     steps:
@@ -292,7 +289,7 @@ jobs:
         uses: ./.github/actions/attest-and-upload
         with:
           artifact-name: ${{ env.PACKAGE }}.apk
-          package-name: ${{ format('{0}-{1}', env.PACKAGE, matrix.host) }}
+          package-name: ${{ format('{0}-{1}-{2}', env.PACKAGE, matrix.host, matrix.artifact_abi_suffix) }}
           subject-name: ${{ env.PACKAGE }}-${{ matrix.host }}
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}

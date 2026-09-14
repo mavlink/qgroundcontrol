@@ -112,6 +112,34 @@ def test_build_results_pr_number_uses_plain_string_output() -> None:
     get_pr = next(step for step in steps if step.get("name") == "Get PR number")
     assert "needs.load-config.outputs.pr" in get_pr["env"]["PR_NUMBER"]
     assert '"result=$PR_NUMBER"' in get_pr["run"]
+    report = next(step for step in steps if step.get("name") == "Generate combined report")
+    assert report["env"]["BASELINE_SHA"] == "${{ steps.baseline.outputs.sha }}"
+
+
+def test_only_pr_reporting_allows_missing_diagnostic_artifacts() -> None:
+    doc = yaml.safe_load(BUILD_RESULTS_YML.read_text(encoding="utf-8"))
+    for job, allows_missing in (("post-pr-comment", "true"), ("save-baselines", "false")):
+        download = next(
+            step
+            for step in doc["jobs"][job]["steps"]
+            if step.get("uses") == "./.github/actions/download-all-artifacts"
+        )
+        assert download["with"].get("allow-missing", "false") == allows_missing
+        sizes = next(
+            step
+            for step in doc["jobs"][job]["steps"]
+            if step.get("uses") == "./.github/actions/collect-artifact-sizes"
+        )
+        assert sizes["with"].get("require-artifacts", "false") == (
+            "true" if job == "save-baselines" else "false"
+        )
+    action = yaml.safe_load(
+        (REPO_ROOT / ".github/actions/download-all-artifacts/action.yml").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert action["inputs"]["allow-missing"]["default"] == "false"
+    assert "--allow-missing" in action["runs"]["steps"][0]["run"]
 
 
 def test_release_wait_for_builds_lists_match_platforms() -> None:
@@ -133,3 +161,4 @@ def test_release_wait_for_builds_lists_match_platforms() -> None:
     download = next(step for step in downloads if step.get("name") == "Download artifacts")
     assert download["with"]["runs-file"] == "release-build-runs.json"
     assert download["with"]["strict-runs"] == "true"
+    assert download["with"].get("allow-missing", "false") == "false"
