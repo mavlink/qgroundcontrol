@@ -59,17 +59,12 @@ runs:
         password: ${{ inputs.docker-token }}
 
     - name: Login to GHCR
-      if: github.event.pull_request.head.repo.fork != true
+      if: startsWith(inputs.push-image, 'ghcr.io/')
       uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ github.token }}
-
-    - name: Resolve GHCR cache ref
-      id: ghcr
-      shell: bash
-      run: echo "ref=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/qgroundcontrol-build-cache" >> "$GITHUB_OUTPUT"
 
     - name: Validate inputs
       shell: bash
@@ -109,8 +104,9 @@ runs:
         # Avoid the OCI attestation manifest that renders as unknown/unknown on Docker Hub.
         provenance: false
         sbom: false
-        cache-from: ${{ format('type=registry,ref={0}:{1}', steps.ghcr.outputs.ref, inputs.variant) }}
-        cache-to: ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}:{1},mode=max', steps.ghcr.outputs.ref, inputs.variant) || '' }}
+        # RunsOn redirects the GHA backend to S3; hosted fork jobs use GitHub's cache.
+        cache-from: type=gha,version=2,scope=qgc-docker-${{ inputs.variant }}-${{ inputs.target }}
+        cache-to: ${{ github.event_name != 'pull_request' && format('type=gha,version=2,scope=qgc-docker-{0}-{1},mode=max', inputs.variant, inputs.target) || '' }}
 
     - name: Re-tag pushed image for local run
       if: inputs.push-image != ''
