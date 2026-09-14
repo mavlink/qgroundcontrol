@@ -1,14 +1,17 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QString>
 
+#include "GPSCorrectionSourceRegistration.h"
 #include "GPSProvider.h"
 #include "satellite_info.h"
 #include "sensor_gps.h"
 
 class GPSRTKFactGroup;
 class FactGroup;
+class GPSCorrectionManager;
 
 class GPSRtk : public QObject
 {
@@ -23,7 +26,10 @@ public:
 #ifndef QGC_NO_SERIAL_LINK
     void connectGPS(const QString& device, QStringView gps_type);
 #endif
-    void connectReceiver(GPSReceiverType type, GPSProvider::TransportFactory transportFactory);
+    /// Inject before connecting; the caller retains ownership.
+    void setCorrectionManager(GPSCorrectionManager* manager);
+    void connectReceiver(GPSReceiverType type, GPSProvider::TransportFactory transportFactory,
+                         const QString& sourceInstance = {});
     void disconnectGPS();
     bool connected() const;
 
@@ -50,6 +56,8 @@ private slots:
 private:
     GPSProvider* _gpsProvider = nullptr;
     GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;
+    QPointer<GPSCorrectionManager> _correctionManager;
+    GPSCorrectionSourceRegistration _correctionRegistration;
 
     unsigned long _disconnectTimeoutMs = 2000;
 };

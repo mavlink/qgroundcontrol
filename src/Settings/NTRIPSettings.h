@@ -7,7 +7,7 @@ class NTRIPSettings : public SettingsGroup
     Q_OBJECT
 
 public:
-    NTRIPSettings(QObject* parent = nullptr);
+    explicit NTRIPSettings(QObject* parent = nullptr);
 
     DEFINE_SETTING_NAME_GROUP()
 
@@ -25,7 +25,4 @@ public:
     DEFINE_SETTINGFACT(ntripUdpForwardEnabled)
     DEFINE_SETTINGFACT(ntripUdpTargetAddress)
     DEFINE_SETTINGFACT(ntripUdpTargetPort)
-    DEFINE_SETTINGFACT(rtcmUdpInputEnabled)
-    DEFINE_SETTINGFACT(rtcmUdpInputPort)
-    DEFINE_SETTINGFACT(rtcmUdpValidate)
 };

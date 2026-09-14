@@ -6,18 +6,22 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(_gps_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS")
     set(_utilities_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities")
     set(QGC_GPS_COMPONENTS
-        "Core;NMEA;Positioning;Transport;ReceiverTransports"
-        CACHE STRING "GPS libraries to build: Core, NMEA, Positioning, Transport, ReceiverTransports"
+        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;Corrections"
+        CACHE STRING
+              "GPS libraries to build: Core, NMEA, Positioning, Transport, ReceiverTransports, RTCM, Corrections"
     )
     option(QGC_NO_SERIAL_LINK "Build without serial receiver support" OFF)
     set(QGC_GPS_COMPONENTS_ENABLED ${QGC_GPS_COMPONENTS})
     foreach(component IN LISTS QGC_GPS_COMPONENTS_ENABLED)
-        if(NOT component MATCHES "^(Core|NMEA|Positioning|Transport|ReceiverTransports)$")
+        if(NOT component MATCHES "^(Core|NMEA|Positioning|Transport|ReceiverTransports|RTCM|Corrections)$")
             message(FATAL_ERROR "Unknown GPS component: ${component}")
         endif()
     endforeach()
     if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "Positioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED Core)
+    endif()
+    if("Corrections" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        list(APPEND QGC_GPS_COMPONENTS_ENABLED RTCM)
     endif()
     if("ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED Transport)
@@ -46,6 +50,15 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     if("Transport" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/Transport" Transport)
     endif()
+    if("RTCM" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
+        add_subdirectory("${_gps_root}/RTCM" RTCM)
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../RTCM" RTCMTests)
+    endif()
+    if("Corrections" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/Corrections" Corrections)
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Corrections" CorrectionsTests)
+    endif()
 endif()
 
 if(TARGET QGCClock)
@@ -56,7 +69,16 @@ if(TARGET QGCClock)
         COMMENT "Verify Qt-free clock public headers in isolation"
     )
 endif()
-foreach(target QGCGPSCore QGCGPSPositioning QGCGPSNMEA QGCGPSTransport QGCGPSReceiverTransports)
+foreach(
+    target
+    QGCGPSCore
+    QGCGPSPositioning
+    QGCGPSNMEA
+    QGCGPSTransport
+    QGCGPSReceiverTransports
+    QGCGPSRTCM
+    QGCGPSCorrections
+)
     if(NOT TARGET ${target})
         continue()
     endif()

@@ -1,11 +1,11 @@
 #include "GPSRtk.h"
 
+#include "GPSCorrectionManager.h"
 #include "GPSProvider.h"
 #include "GPSRTKFactGroup.h"
 #include "GPSReceiverTypes.h"
-#include "NTRIPManager.h"
 #include "QGCLoggingCategory.h"
-#include "RTCMMavlink.h"
+#include "RTCMFrame.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 
@@ -61,6 +61,7 @@ void GPSRtk::_onGPSConnect()
 
 void GPSRtk::_onGPSDisconnect()
 {
+    _correctionRegistration.reset();
     _gpsRtkFactGroup->connected()->setRawValue(false);
     _gpsRtkFactGroup->valid()->setRawValue(false);
     _gpsRtkFactGroup->active()->setRawValue(false);
@@ -118,13 +119,30 @@ void GPSRtk::connectGPS(const QString& device, QStringView gps_type)
             break;
         }
     }
-    connectReceiver(type, [device, reservation](const std::atomic_bool& requestStop) {
-        return std::make_unique<SerialGPSTransport>(device, requestStop);
-    });
+    connectReceiver(
+        type,
+        [device, reservation](const std::atomic_bool& requestStop) {
+            return std::make_unique<SerialGPSTransport>(device, requestStop);
+        },
+        QStringLiteral("serial:%1").arg(device));
 }
 #endif
 
-void GPSRtk::connectReceiver(GPSReceiverType type, GPSProvider::TransportFactory transportFactory)
+void GPSRtk::setCorrectionManager(GPSCorrectionManager* manager)
+{
+    if (_correctionManager == manager) {
+        return;
+    }
+    if (_gpsProvider) {
+        qCWarning(GPSRtkLog) << "Inject the correction manager before connecting a receiver";
+        return;
+    }
+    _correctionRegistration.reset();
+    _correctionManager = manager;
+}
+
+void GPSRtk::connectReceiver(GPSReceiverType type, GPSProvider::TransportFactory transportFactory,
+                             const QString& sourceInstance)
 {
     RTKSettings* const rtkSettings = SettingsManager::instance()->rtkSettings();
     for (const GPSReceiverTypeEntry& entry : kGPSReceiverTypeTable) {
@@ -157,45 +175,62 @@ void GPSRtk::connectReceiver(GPSReceiverType type, GPSProvider::TransportFactory
     }
     _gpsProvider = new GPSProvider(std::move(transportFactory), type, rtkConfig, this);
     const QPointer<GPSProvider> provider = _gpsProvider;
-    // Always queue worker callbacks and reject retired sessions, including already queued events.
+    const QPointer<GPSCorrectionManager> correctionManager = _correctionManager;
+    if (correctionManager) {
+        auto registration = correctionManager->registerSource(GPSCorrectionSource::LocalReceiver, sourceInstance);
+        if (!provider || _gpsProvider != provider) {
+            return;
+        }
+        _correctionRegistration = std::move(registration);
+    }
+    const auto token = _correctionRegistration.token();
+    const auto current = [this, provider, token, registered = !correctionManager.isNull()]() {
+        return provider && _gpsProvider == provider && (!registered || token.valid());
+    };
+    // Queued callbacks retain the producing session's token.
     (void) connect(
         provider, &GPSProvider::RTCMDataUpdate, this,
-        [this, provider](const QByteArray& data) {
-            if (provider && _gpsProvider == provider) {
-                if (auto* rtcm = NTRIPManager::instance()->rtcmMavlink()) {
-                    rtcm->RTCMDataUpdate(data);
-                }
+        [correctionManager, token](const QByteArray& data, qint64 receivedAtMs) {
+            if (!correctionManager) {
+                qCWarning(GPSRtkLog) << "Correction manager not ready; dropping" << data.size() << "bytes";
+                return;
             }
+            const bool valid = RTCM::isValidFrame(data);
+            const int messageId =
+                data.size() >= 5 ? (static_cast<quint8>(data[3]) << 4) | (static_cast<quint8>(data[4]) >> 4) : 0;
+            correctionManager->acceptIngress(
+                token.event(data, receivedAtMs, messageId, valid, false,
+                            valid ? GPSCorrectionReason::None : GPSCorrectionReason::InvalidFrame));
         },
         Qt::QueuedConnection);
     (void) connect(
         provider, &GPSProvider::satelliteInfoUpdate, this,
-        [this, provider](const satellite_info_s& data) {
-            if (provider && _gpsProvider == provider) {
+        [this, current](const satellite_info_s& data) {
+            if (current()) {
                 _satelliteInfoUpdate(data);
             }
         },
         Qt::QueuedConnection);
     (void) connect(
         provider, &GPSProvider::sensorGpsUpdate, this,
-        [this, provider](const sensor_gps_s& data) {
-            if (provider && _gpsProvider == provider) {
+        [this, current](const sensor_gps_s& data) {
+            if (current()) {
                 _sensorGpsUpdate(data);
             }
         },
         Qt::QueuedConnection);
     (void) connect(
         provider, &GPSProvider::surveyInStatus, this,
-        [this, provider](const GPSSurveyInStatus& status) {
-            if (provider && _gpsProvider == provider) {
+        [this, current](const GPSSurveyInStatus& status) {
+            if (current()) {
                 _onGPSSurveyInStatus(status);
             }
         },
         Qt::QueuedConnection);
     (void) connect(
         provider, &GPSProvider::connectionError, this,
-        [this, provider](GPSConnectionError error) {
-            if (provider && _gpsProvider == provider) {
+        [this, current](GPSConnectionError error) {
+            if (current()) {
                 _onGPSDisconnect();
                 _onGPSConnectionError(error);
             }
@@ -203,8 +238,8 @@ void GPSRtk::connectReceiver(GPSReceiverType type, GPSProvider::TransportFactory
         Qt::QueuedConnection);
     (void) connect(
         provider, &GPSProvider::receiverReady, this,
-        [this, provider]() {
-            if (provider && _gpsProvider == provider) {
+        [this, current]() {
+            if (current()) {
                 _onGPSConnect();
             }
         },

@@ -1,9 +1,12 @@
 #include "GPSManager.h"
 
 #include "AppMessages.h"
+#include "GPSCorrectionManager.h"
+#include "GPSMavlinkOutput.h"
 #include "GPSRtk.h"
 #include "LinkManager.h"
 #include "NMEASourceManager.h"
+#include "NTRIPManager.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
@@ -20,9 +23,15 @@ Q_APPLICATION_STATIC(GPSManager, _gpsManager);
 
 GPSManager::GPSManager(QObject* parent)
     : QObject(parent)
+    , _corrections(new GPSCorrectionManager(this))
     , _gpsRtk(new GPSRtk(this))
+    , _ntripManager(NTRIPManager::instance())
 {
     qCDebug(GPSManagerLog) << this;
+    auto* output = new GPSMavlinkOutput(this);
+    _corrections->rtcmMavlink()->setOutputProvider([output]() { return output->outputs(); });
+    _gpsRtk->setCorrectionManager(_corrections);
+    _ntripManager->setCorrectionManager(_corrections);
 }
 
 GPSManager::~GPSManager()
@@ -38,9 +47,10 @@ GPSManager* GPSManager::instance()
 
 void GPSManager::init()
 {
-    if (_connectionTimer) {
+    if (_connectionTimer || _shutdown) {
         return;
     }
+    _corrections->init(SettingsManager::instance()->gpsCorrectionSettings());
     auto* settings = SettingsManager::instance()->autoConnectSettings();
     _nmeaSources = new NMEASourceManager(settings, QGCPositionManager::instance(), this);
 #ifndef QGC_NO_SERIAL_LINK
@@ -70,6 +80,10 @@ void GPSManager::_updateConnections()
 
 void GPSManager::shutdown()
 {
+    if (_shutdown) {
+        return;
+    }
+    _shutdown = true;
     if (_connectionTimer) {
         _connectionTimer->stop();
     }
@@ -82,4 +96,8 @@ void GPSManager::shutdown()
     }
 #endif
     _gpsRtk->disconnectGPS();
+    if (_ntripManager) {
+        _ntripManager->stopNTRIP();
+    }
+    _corrections->shutdown();
 }

@@ -6,9 +6,10 @@
 #include <QtNetwork/QTcpSocket>
 #include <chrono>
 
+#include "MonotonicClock.h"
 #include "NTRIPTransport.h"
 #include "NTRIPTransportConfig.h"
-#include "RTCMParser.h"
+#include "RTCMFrameDecoder.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPHttpTransportLog)
 
@@ -29,7 +30,7 @@ public:
     void stop() override;
     void sendNMEA(const QByteArray& nmea) override;
 
-    void setRtcmWhitelist(const QVector<int>& messageIds) override { _rtcmParser.setWhitelist(messageIds); }
+    void setRtcmWhitelist(const QVector<int>& messageIds) override { _rtcmDecoder.setWhitelist(messageIds); }
 
     const NTRIPTransportConfig& config() const { return _config; }
 
@@ -64,7 +65,8 @@ private:
     void _readBytes();
     void _handleHttpResponse();
     void _handleRtcmData();
-    void _parseRtcm(const QByteArray& buffer);
+    void _parseRtcm(const QByteArray& buffer,
+                    qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000));
 
     NTRIPTransportConfig _config;
 
@@ -72,7 +74,7 @@ private:
     QChronoTimer _connectTimeoutTimer;
     QChronoTimer _dataWatchdogTimer;
 
-    RTCMParser _rtcmParser;
+    RTCMFrameDecoder _rtcmDecoder;
     bool _httpHandshakeDone = false;
     bool _stopped = false;
 

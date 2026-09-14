@@ -1,0 +1,25 @@
+add_library(QGCGPSCorrections STATIC GPSCorrectionDiagnostics.cc GPSCorrectionEventModel.cc GPSCorrectionLedger.cc
+                                     GPSCorrectionRouter.cc GPSCorrectionSelector.cc GPSCorrectionSourceRegistration.cc
+)
+add_library(QGC::GPSCorrections ALIAS QGCGPSCorrections)
+set_target_properties(QGCGPSCorrections PROPERTIES AUTOMOC ON POSITION_INDEPENDENT_CODE ON)
+qt_extract_metatypes(QGCGPSCorrections)
+target_compile_features(QGCGPSCorrections PUBLIC cxx_std_20)
+target_link_libraries(
+    QGCGPSCorrections
+    PUBLIC QGCGPSRTCM Qt6::Core
+    PRIVATE QGCLoggingCategory
+)
+target_sources(
+    QGCGPSCorrections
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           GPSCorrectionDiagnostics.h
+           GPSCorrectionEventModel.h
+           GPSCorrectionFrame.h
+           GPSCorrectionLedger.h
+           GPSCorrectionRouter.h
+           GPSCorrectionSelector.h
+           GPSCorrectionSourceRegistration.h
+)

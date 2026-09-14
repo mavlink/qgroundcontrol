@@ -112,6 +112,8 @@ qt_add_qml_module(AppSettingsModule
         # Hand-coded pages and components
         AppLogging.qml
         BluetoothSettings.qml
+        CorrectionRoutingSettings.qml
+        CorrectionDiagnostics.qml
         DebugWindow.qml
         GcsPositionStatus.qml
         HelpSettings.qml

@@ -4,13 +4,22 @@
 #include <QtCore/QVector>
 
 #include "NTRIPError.h"
+#include "RTCMFrameDecoder.h"
 
 class NTRIPTransport : public QObject
 {
     Q_OBJECT
 
 public:
-    using QObject::QObject;
+    explicit NTRIPTransport(QObject* parent = nullptr)
+        : QObject(parent)
+    {
+        connect(this, &NTRIPTransport::correctionFrameReceived, this, [this](const RTCMFrameDecoder::Result& frame) {
+            if (frame.valid && !frame.filtered) {
+                emit RTCMDataUpdate(frame.data, frame.messageId);
+            }
+        });
+    }
 
     virtual void start() = 0;
     virtual void stop() = 0;
@@ -23,7 +32,10 @@ public:
 signals:
     void connected();
     void error(NTRIPError code, const QString& detail);
+    /// Compatibility projection of valid, unfiltered decoded frames.
     void RTCMDataUpdate(const QByteArray& message, int messageId);
+    /// Includes invalid and filtered candidates.
+    void correctionFrameReceived(const RTCMFrameDecoder::Result& frame);
     void finished();
 
     /// Emitted when the transport sent authentication credentials over a cleartext

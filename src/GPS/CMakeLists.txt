@@ -12,6 +12,8 @@ add_subdirectory(Transport)
 add_subdirectory(NMEA)
 
 add_subdirectory(RTCM)
+add_subdirectory(Corrections)
+add_subdirectory(Integration)
 add_subdirectory(NTRIP)
 add_subdirectory(PositionManager)
 
@@ -19,5 +21,5 @@ add_subdirectory(RTK)
 
 # QML registrations belong to the application; the Core library also builds without QML.
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE NMEA/NMEASourceManager.cc NMEA/NMEASourceManager.h GPSManager.cc
-                                             GPSManager.h GPSPositionQmlTypes.h
+                                             GPSManager.h GPSQmlTypes.h
 )

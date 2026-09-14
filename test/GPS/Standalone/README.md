@@ -2,7 +2,7 @@
 
 The Core library contains RTK configuration, connection types, position
 observations, and source health. It uses Qt Core, Qt Positioning, and the shared
-timing and logging libraries. The QML registration header, `src/GPS/GPSPositionQmlTypes.h`,
+timing and logging libraries. The QML registration header, `src/GPS/GPSQmlTypes.h`,
 is compiled only by the application. The positioning service handles source registration,
 selection, and recovery; QGC owns permissions and platform/custom/NMEA source
 creation. The NMEA library owns passive sentence framing, Qt position decoding,
@@ -52,9 +52,57 @@ cmake --build build/gps-transports
 ctest --test-dir build/gps-transports --output-on-failure
 ```
 
-The available components are `Core`, `NMEA`, `Positioning`, `Transport`, and
-`ReceiverTransports`. `Transport` alone needs Qt Core, Qt Network, and the logging library.
+The available components are `Core`, `NMEA`, `Positioning`, `Transport`,
+`ReceiverTransports`, `RTCM`, and `Corrections`. `Transport` alone needs Qt Core,
+Qt Network, and the logging library.
 All components are enabled by default.
+
+## Correction routing
+
+`RTCM` owns framing, CRC validation, timestamped decoding, and MAVLink payload
+fragmentation in `src/GPS/RTCM/`. `Corrections` owns source registrations,
+selection, routing, the delivery ledger, and the event model in
+`src/GPS/Corrections/`. Both expose isolated public-header checks and standalone
+consumers; neither depends on the application, native receiver drivers,
+recording, serial support, or Qt Positioning.
+
+```sh
+cmake -S test/GPS/Standalone -B build/gps-corrections -G Ninja \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/installation \
+  -DQGC_GPS_COMPONENTS=Corrections
+cmake --build build/gps-corrections
+ctest --test-dir build/gps-corrections --output-on-failure
+```
+
+The application adapters in `src/GPS/Integration/` connect the existing base
+receiver, NTRIP client, and UDP input to one shared MAVLink sequence domain.
+The correction manager applies routing and UDP settings before enabling ingress;
+`GPSManager` composes the producers and outputs without duplicating that wiring.
+Source registrations reject callbacks from retired sessions. UDP framing keeps
+each sender separate and limits work per event-loop turn. Only UDP can opt out
+of RTCM validation; other sources must submit validated frames.
+
+Automatic selection prefers a fresh local base, then NTRIP, then UDP. Manual
+selection pins a category and optionally an endpoint; All sources forwards
+every fresh stream. The existing NTRIP UDP output remains source-specific,
+independent of the source selected for vehicles. UDP input settings retain their
+existing `NTRIP` storage keys.
+
+Diagnostics distinguish received, validated, selected, queued, written, dropped,
+and unconfirmed bytes. MAVLink and UDP output admission is not receiver
+acknowledgement and does not prove an RTK fix. These application outputs report
+queue admission only and do not accrue written-byte credit. Unconfirmed counters
+track explicit uncertainty or reported-write destinations retired before
+completion. Local receiver injection and its completion reports remain deferred
+with the native receiver lifecycle.
+
+Written-frame counts require complete admission and completion; partial writes
+credit bytes only. Source queued-byte totals represent logical payload, while
+submitted and terminal byte totals include output fanout.
+Received and dropped bytes measure frame-candidate evidence, not raw transport
+traffic. Recovered frames can overlap rejected candidates.
+
+## Receiver transport compatibility
 
 Transport results distinguish bytes admitted, confirmed by the local transport,
 and uncertain; none of these counts is a receiver acknowledgement. Desktop serial and

@@ -3,8 +3,10 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QVector>
 
+#include "MonotonicClock.h"
 #include "NTRIPError.h"
 #include "NTRIPTransport.h"
+#include "RTCMFrame.h"
 
 class MockNTRIPTransport : public NTRIPTransport
 {
@@ -42,7 +44,17 @@ public:
 
     void simulateError(NTRIPError code, const QString& detail) { emit error(code, detail); }
 
-    void simulateRtcmData(const QByteArray& data, int messageId = 0) { emit RTCMDataUpdate(data, messageId); }
+    void simulateRtcmData(const QByteArray& data, int messageId = 0,
+                          qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000))
+    {
+        const bool valid = RTCM::isValidFrame(data);
+        emit correctionFrameReceived(
+            {.data = data,
+             .messageId = messageId,
+             .receivedAtMs = receivedAtMs,
+             .valid = valid,
+             .filtered = valid && !lastWhitelist.isEmpty() && !lastWhitelist.contains(messageId)});
+    }
 
     void simulateDisconnect() { emit finished(); }
 

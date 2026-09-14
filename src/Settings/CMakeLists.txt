@@ -25,6 +25,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FlyViewSettings.h
         GimbalControllerSettings.cc
         GimbalControllerSettings.h
+        GPSCorrectionSettings.cc
+        GPSCorrectionSettings.h
         JoystickManagerSettings.cc
         JoystickManagerSettings.h
         JoystickSettings.cc
