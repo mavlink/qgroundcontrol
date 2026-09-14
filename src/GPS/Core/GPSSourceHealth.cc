@@ -10,7 +10,10 @@
 QGC_LOGGING_CATEGORY(GPSSourceHealthLog, "GPS.Core.GPSSourceHealth")
 
 GPSSourceHealth::GPSSourceHealth(QObject* parent, RuntimeScheduler* scheduler)
-    : QObject(parent), _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this)), _positionTask(_scheduler, this)
+    : QObject(parent)
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
+    , _positionTask(_scheduler, this)
+    , _fixSatellitesTask(_scheduler, this)
 {
     qCDebug(GPSSourceHealthLog) << this;
     if (_scheduler->thread() != thread()) {
@@ -58,7 +61,8 @@ std::optional<GPSObservation> GPSSourceHealth::acceptedObservation() const
 
 void GPSSourceHealth::updateObservation(const GPSObservation& observation)
 {
-    ++_revision;
+    const QPointer<GPSSourceHealth> guard(this);
+    const quint64 revision = ++_revision;
     _positionTask.cancel();
     _positionInvalidated = false;
     _observation = observation;
@@ -72,10 +76,20 @@ void GPSSourceHealth::updateObservation(const GPSObservation& observation)
         _state = _observation.usable() ? State::Usable : State::Invalid;
     }
     _schedulePositionExpiry();
+    const int previousUsed = satellitesInUseCount();
+    const bool validFix = observation.position.isValid() && observation.receiverFixValid.value_or(true) &&
+                          observation.fixQuality != GPSObservation::FixQuality::NoFix;
+    _updateFixSatelliteCount(validFix ? observation.satellitesUsed.value_or(-1) : -1, ageMs);
     qCDebug(GPSSourceHealthLog) << this << "Position observation"
                                 << "state:" << _state << "coordinate:" << position.coordinate()
                                 << "horizontalAccuracy:" << position.attribute(QGeoPositionInfo::HorizontalAccuracy)
                                 << "ageMs:" << ageMs;
+    if (previousUsed != satellitesInUseCount()) {
+        emit satellitesChanged();
+    }
+    if (!guard || revision != _revision) {
+        return;
+    }
     emit positionChanged();
 }
 
@@ -117,12 +131,16 @@ void GPSSourceHealth::invalidatePosition()
 
 void GPSSourceHealth::reset()
 {
-    ++_revision;
+    const QPointer<GPSSourceHealth> guard(this);
+    const quint64 revision = ++_revision;
     _positionTask.cancel();
     _observation = {};
     _positionInvalidated = true;
     _state = State::NoData;
-    emit positionChanged();
+    clearSatellites();
+    if (guard && revision == _revision) {
+        emit positionChanged();
+    }
 }
 
 void GPSSourceHealth::setFreshnessTimeoutMs(int timeoutMs)
@@ -141,4 +159,38 @@ void GPSSourceHealth::setFreshnessTimeoutMs(int timeoutMs)
             _setState(State::Stale);
         }
     }
+}
+
+void GPSSourceHealth::_updateFixSatelliteCount(int count, qint64 ageMs)
+{
+    _fixSatellitesTask.cancel();
+    _fixSatellitesInUseCount = count >= 0 && ageMs >= 0 && ageMs < _freshnessTimeoutMs ? count : -1;
+    if (_fixSatellitesInUseCount >= 0 && _scheduler) {
+        _fixSatellitesTask.schedule(std::chrono::milliseconds(_freshnessTimeoutMs - ageMs), [this]() {
+            const int previous = satellitesInUseCount();
+            _fixSatellitesInUseCount = -1;
+            if (previous != satellitesInUseCount()) {
+                emit satellitesChanged();
+            }
+        });
+    }
+}
+
+void GPSSourceHealth::clearSatellites()
+{
+    _fixSatellitesTask.cancel();
+    if (_satellitesInViewCount != -1 || satellitesInUseCount() != -1) {
+        _satellitesInViewCount = -1;
+        _satellitesInUseCount = -1;
+        _fixSatellitesInUseCount = -1;
+        emit satellitesChanged();
+    }
+}
+
+void GPSSourceHealth::applySatelliteObservation(const GPSSatelliteObservation& observation)
+{
+    // The observation store owns report expiry; the fix's independent GGA count retains its own deadline.
+    _satellitesInViewCount = observation.satellitesInViewCount();
+    _satellitesInUseCount = observation.satellitesInUseCount();
+    emit satellitesChanged();
 }

@@ -19,6 +19,10 @@ default build runs CMake's `VERIFY_INTERFACE_HEADER_SETS` checks and builds a
 separate consumer that links only its owning target, preventing accidental
 dependencies between tests.
 
+`QGCIOConsumer` checks explicit and fallback receipt timestamps, including unknown
+receipts. `QGCNetworkIOConsumer` receives localhost datagrams and verifies that
+partial reads retain each datagram's receipt time and closing resets it.
+
 `CRC32Consumer` checks the Math checksum header directly without Qt, including
 incremental updates and empty input. `UtilityLibraryTest` covers scheduling,
 JSON validation and logging registration. The deterministic scheduler is provided by the shared

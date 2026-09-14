@@ -6,7 +6,7 @@ add_library(QGC::NetworkIO ALIAS QGCNetworkIO)
 set_target_properties(QGCNetworkIO PROPERTIES AUTOMOC ON)
 target_link_libraries(
     QGCNetworkIO
-    PUBLIC Qt6::Core Qt6::Network
+    PUBLIC Qt6::Core Qt6::Network QGCIO
     PRIVATE QGCLoggingCategory
 )
 

@@ -2,16 +2,14 @@
 
 #include <QtCore/QIODevice>
 #include <QtCore/QRegularExpression>
-#include <QtPositioning/QNmeaPositionInfoSource>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtTest/QSignalSpy>
 
-#include <cstring>
-
 #include "ManualScheduler.h"
 #include "NMEAUtils.h"
 #include "PositionManager.h"
+#include "SequentialTestDevice.h"
 #include "SimulatedPosition.h"
 
 namespace {
@@ -25,38 +23,7 @@ constexpr double kExpectedLat = 53.361337;
 constexpr double kExpectedLon = -6.50562;
 constexpr double kCoordEpsilon = 0.0001;
 
-/// Sequential QIODevice that hands queued NMEA bytes to QNmeaPositionInfoSource on demand.
-class NmeaTestDevice : public QIODevice
-{
-public:
-    NmeaTestDevice() { (void) open(QIODevice::ReadOnly); }
-
-    bool isSequential() const override { return true; }
-    qint64 bytesAvailable() const override { return _data.size() + QIODevice::bytesAvailable(); }
-    bool canReadLine() const override { return _data.contains('\n') || QIODevice::canReadLine(); }
-
-    void feed(const QByteArray &data)
-    {
-        _data.append(data);
-        emit readyRead();
-    }
-
-protected:
-    qint64 readData(char *data, qint64 maxSize) override
-    {
-        const qint64 count = qMin<qint64>(maxSize, _data.size());
-        (void) memcpy(data, _data.constData(), count);
-        _data.remove(0, count);
-        return count;
-    }
-
-    qint64 writeData(const char *, qint64) override { return -1; }
-
-private:
-    QByteArray _data;
-};
-
-} // namespace
+}  // namespace
 
 void PositionManagerTest::init()
 {
@@ -81,8 +48,8 @@ void PositionManagerTest::cleanup()
 
 void PositionManagerTest::_nmeaSourceProducesGcsPosition()
 {
-    QGCPositionManager *pm = QGCPositionManager::instance();
-    auto *device = new NmeaTestDevice();
+    QGCPositionManager* pm = QGCPositionManager::instance();
+    auto* device = new SequentialTestDevice();
     _nmeaDevice = device;
 
     pm->setNmeaSourceDevice(device);
@@ -96,8 +63,8 @@ void PositionManagerTest::_nmeaSourceProducesGcsPosition()
 
 void PositionManagerTest::_resetNmeaSourceTearsDownAndClearsState()
 {
-    QGCPositionManager *pm = QGCPositionManager::instance();
-    auto *device = new NmeaTestDevice();
+    QGCPositionManager* pm = QGCPositionManager::instance();
+    auto* device = new SequentialTestDevice();
     _nmeaDevice = device;
 
     pm->setNmeaSourceDevice(device);
@@ -126,8 +93,8 @@ void PositionManagerTest::_resetNmeaSourceTearsDownAndClearsState()
 
 void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
 {
-    NmeaTestDevice device;
     ManualScheduler scheduler;
+    SequentialTestDevice device(&scheduler);
     QGCPositionManager pm(nullptr, &scheduler);
     pm.setNmeaSourceDevice(&device);
     pm.sourceHealth()->setFreshnessTimeoutMs(300);
@@ -148,7 +115,8 @@ void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
         device.feed(sentences);
     };
     feed();
-    QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT((scheduler.advanceBy(std::chrono::microseconds::zero()), pm.gcsPosition().isValid()),
+                             TestTimeout::mediumMs());
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(299)));
     QVERIFY(pm.gcsPosition().isValid());
     QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
@@ -159,7 +127,8 @@ void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
     QVERIFY(!pm.gcsPositionTimestamp().isValid());
     QVERIFY(qIsInf(pm.gcsPositionHorizontalAccuracy()));
     feed();
-    QTRY_VERIFY_WITH_TIMEOUT(pm.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT((scheduler.advanceBy(std::chrono::microseconds::zero()), pm.gcsPosition().isValid()),
+                             TestTimeout::mediumMs());
     QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
     pm.resetNmeaSourceDevice();
     QVERIFY(!pm.gcsPosition().isValid());
@@ -186,7 +155,7 @@ void PositionManagerTest::_qmlPositionProperties()
     std::unique_ptr<QObject> object(
         component.createWithInitialProperties({{QStringLiteral("service"), QVariant::fromValue(&service)}}));
     QVERIFY2(object, qPrintable(component.errorString()));
-    NmeaTestDevice device;
+    SequentialTestDevice device;
     service.setNmeaSourceDevice(&device);
     device.feed(kNmeaSentences);
     QTRY_VERIFY_WITH_TIMEOUT(object->property("usable").toBool(), TestTimeout::mediumMs());
@@ -197,7 +166,7 @@ void PositionManagerTest::_qmlPositionProperties()
 
 void PositionManagerTest::_destructionDoesNotPublishPosition()
 {
-    NmeaTestDevice device;
+    SequentialTestDevice device;
     auto service = std::make_unique<QGCPositionManager>();
     service->setNmeaSourceDevice(&device);
     device.feed(kNmeaSentences);
@@ -210,7 +179,7 @@ void PositionManagerTest::_destructionDoesNotPublishPosition()
 
 void PositionManagerTest::_deviceDestructionRetiresNmea()
 {
-    auto device = std::make_unique<NmeaTestDevice>();
+    auto device = std::make_unique<SequentialTestDevice>();
     QGCPositionManager service;
     service.setNmeaSourceDevice(device.get());
     device->feed(kNmeaSentences);

@@ -6,6 +6,7 @@
 
 #include <algorithm>
 
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(UdpIODeviceLog, "Utilities.UdpIODevice")
@@ -88,10 +89,17 @@ qint64 UdpIODevice::readLineData(char* data, qint64 maxSize)
 
 qint64 UdpIODevice::readData(char* data, qint64 maxSize)
 {
-    const qint64 length = std::min<qint64>(_buffer.size(), maxSize);
+    qint64 length = std::min<qint64>(_buffer.size(), maxSize);
+    if (length > 0 && !_receipts.empty()) {
+        _lastReadTimestampUs = _receipts.front().timestampUs;
+        if (openMode().testFlag(Unbuffered)) {
+            length = std::min<qint64>(length, _receipts.front().size);
+        }
+    }
     (void) std::copy_n(_buffer.constData(), length, data);
 
     (void) _buffer.remove(0, length);
+    _consumeReceipts(length);
     return length;
 }
 
@@ -100,7 +108,10 @@ void UdpIODevice::close()
     ++_generation;
     _drainScheduled = false;
     _selectedPeer.clear();
+    _lastPeerDataUs = 0;
     _buffer.clear();
+    _receipts.clear();
+    _lastReadTimestampUs = 0;
     _discardUntilNewline = false;
     _socket.close();
     QIODevice::close();
@@ -108,9 +119,17 @@ void UdpIODevice::close()
 
 void UdpIODevice::_readAvailableData()
 {
-    if (!isOpen()) {
+    if (!isOpen() || _readingDatagrams) {
         return;
     }
+    _readingDatagrams = true;
+    const QPointer<UdpIODevice> readingGuard(this);
+    const auto finishReading = qScopeGuard([readingGuard]() {
+        if (readingGuard) {
+            readingGuard->_readingDatagrams = false;
+            readingGuard->_scheduleRead();
+        }
+    });
     UdpDrainBudget budget;
     bool receivedData = false;
     while (_socket.hasPendingDatagrams() && budget.available()) {
@@ -123,14 +142,39 @@ void UdpIODevice::_readAvailableData()
         if (data.isEmpty()) {
             continue;
         }
+        const auto receivedAtUs = ReadTimestamp::nowUs();
         if (_selectFirstPeer) {
             const QString peer = udpPeerKey(datagram.senderAddress(), datagram.senderPort());
             if (_selectedPeer.isEmpty()) {
                 _selectedPeer = peer;
                 qCDebug(UdpIODeviceLog) << "Selected UDP sender" << peer;
             } else if (_selectedPeer != peer) {
-                continue;
+                const auto idleMs = MonotonicClock::ageMilliseconds(_lastPeerDataUs, receivedAtUs);
+                if (_peerIdleTimeout <= std::chrono::milliseconds::zero() || idleMs < _peerIdleTimeout.count()) {
+                    continue;
+                }
+                const QString previousPeer = _selectedPeer;
+                _selectedPeer = peer;
+                _buffer.clear();
+                _receipts.clear();
+                _lastReadTimestampUs = 0;
+                _discardUntilNewline = false;
+                if (isTransactionStarted()) {
+                    commitTransaction();
+                }
+                // Reset Qt's read/peek buffers without closing the listening socket.
+                QIODevice::open(openMode());
+                _drainScheduled = false;
+                const auto generation = ++_generation;
+                _lastPeerDataUs = receivedAtUs;
+                qCDebug(UdpIODeviceLog) << "Replacing idle UDP sender" << previousPeer << "with" << peer;
+                const QPointer<UdpIODevice> guard(this);
+                emit peerReplaced(previousPeer, peer);
+                if (!guard || generation != _generation || !isOpen()) {
+                    return;
+                }
             }
+            _lastPeerDataUs = receivedAtUs;
         }
         qsizetype start = 0;
         if (_discardUntilNewline) {
@@ -154,27 +198,61 @@ void UdpIODevice::_readAvailableData()
             transactionBytes = QIODevice::bytesAvailable() - unreadBytes;
         }
         _buffer.append(data.constData() + start, data.size() - start);
+        if (data.size() > start) {
+            _receipts.push_back({data.size() - start, receivedAtUs});
+        }
         receivedData |= data.size() > start;
         if (bytesAvailable() > kMaxBufferedBytes) {
             // peek() and short reads retain a prefix in QIODevice. Include it in
             // the same overflow decision so dropped input cannot join two lines.
             const auto bufferedBytes = QIODevice::bytesAvailable();
             if (bufferedBytes > 0) {
-                _buffer.prepend(QIODevice::read(bufferedBytes));
+                const auto prefix = QIODevice::read(bufferedBytes);
+                _buffer.prepend(prefix);
+                if (!prefix.isEmpty()) {
+                    _receipts.push_front({prefix.size(), _lastReadTimestampUs});
+                }
             }
             const qsizetype newline = _buffer.indexOf('\n', _buffer.size() - kMaxBufferedBytes - 1);
             if (newline < 0) {
                 _buffer.clear();
+                _receipts.clear();
                 _discardUntilNewline = true;
             } else {
                 _buffer.remove(0, newline + 1);
+                _consumeReceipts(newline + 1);
             }
         } else if (transactionBytes >= 0) {
             startTransaction();
             (void) skip(transactionBytes);
         }
     }
-    if (_socket.hasPendingDatagrams() && !_drainScheduled) {
+    if (receivedData && bytesAvailable() > 0 && !_emittingReadyRead) {
+        _emittingReadyRead = true;
+        const QPointer<UdpIODevice> guard(this);
+        emit readyRead();
+        if (guard) {
+            _emittingReadyRead = false;
+        }
+    }
+}
+
+void UdpIODevice::_consumeReceipts(qsizetype size)
+{
+    while (size > 0 && !_receipts.empty()) {
+        auto& receipt = _receipts.front();
+        const auto consumed = std::min(size, receipt.size);
+        receipt.size -= consumed;
+        size -= consumed;
+        if (receipt.size == 0) {
+            _receipts.pop_front();
+        }
+    }
+}
+
+void UdpIODevice::_scheduleRead()
+{
+    if (isOpen() && _socket.hasPendingDatagrams() && !_drainScheduled) {
         _drainScheduled = true;
         const auto generation = _generation;
         QMetaObject::invokeMethod(
@@ -186,13 +264,5 @@ void UdpIODevice::_readAvailableData()
                 }
             },
             Qt::QueuedConnection);
-    }
-    if (receivedData && bytesAvailable() > 0 && !_emittingReadyRead) {
-        _emittingReadyRead = true;
-        const QPointer<UdpIODevice> guard(this);
-        emit readyRead();
-        if (guard) {
-            _emittingReadyRead = false;
-        }
     }
 }

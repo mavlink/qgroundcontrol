@@ -11,6 +11,8 @@ SettingsGroupLayout {
     visible: root._autoConnectSettings.nmeaSource.userVisible && root._autoConnectSettings.autoConnectNmeaBaud.userVisible
 
     readonly property var  _autoConnectSettings: QGroundControl.settingsManager.autoConnectSettings
+    readonly property var _positionManager: QGroundControl.qgcPositionManger
+    readonly property var _health: root._positionManager.nmeaHealth
     readonly property var _serialPortManager: QGroundControl.serialPortManager
     readonly property var _serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
     readonly property var _serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
@@ -97,5 +99,30 @@ SettingsGroupLayout {
         visible: root._autoConnectSettings.nmeaSource.rawValue === AutoConnectSettings.NmeaSourceUdp
         label: qsTr("NMEA stream UDP port")
         fact: root._autoConnectSettings.nmeaUdpPort
+    }
+
+    QGCLabel {
+        visible: root._health !== null
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+        text: root._positionManager.nmeaReceiving ? qsTr("Receiving NMEA data")
+              : root._positionManager.nmeaHasData ? qsTr("NMEA stream idle")
+              : root._serialSource ? qsTr("Waiting for NMEA data") : qsTr("Listening for NMEA UDP data")
+    }
+
+    QGCLabel {
+        visible: root._health !== null
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+        text: root._health && root._health.usable ? qsTr("Position usable") : qsTr("Waiting for a usable fix")
+    }
+
+    QGCLabel {
+        visible: root._health !== null
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+        text: qsTr("Satellites: %1 in use, %2 in view")
+            .arg(root._health && root._health.satellitesInUseCount >= 0 ? root._health.satellitesInUseCount : qsTr("Unknown"))
+            .arg(root._health && root._health.satellitesInViewCount >= 0 ? root._health.satellitesInViewCount : qsTr("Unknown"))
     }
 }

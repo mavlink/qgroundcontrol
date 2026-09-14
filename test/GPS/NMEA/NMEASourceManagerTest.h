@@ -2,12 +2,14 @@
 
 #include "UnitTest.h"
 
-class NmeaSourceManagerTest : public UnitTest
+class NMEASourceManagerTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
     void init();
+    void _udpActivityAndSatellites_data();
+    void _udpActivityAndSatellites();
     void _udpSwitchAndDisable();
     void _bindFailureAndTeardown();
     void _configuredSerialRoutingSurvivesReconnect();
