@@ -3,7 +3,9 @@
 # from this repository.
 runners:
   windows-x64-builder:
-    family: ["c8i.2xlarge"]
+    family: ["m8i.xlarge"]
+    cpu: [4]
+    ram: [16]
     spot: false
     image: windows22-full-x64
     extras: s3-cache
