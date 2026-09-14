@@ -22,7 +22,6 @@ class Vehicle;
 class VideoReceiver;
 class VideoSink;
 class FactValueGrid;
-typedef struct __mavlink_message mavlink_message_t;
 
 /// \brief Extension mechanism for generic, non-firmware-specific customization of QGC.
 ///
@@ -116,6 +115,9 @@ public:
     /// attached at creation (url interceptors, etc) before the engine goes away.
     virtual void destroyQmlApplicationEngine(QQmlApplicationEngine *qmlEngine);
 
+    /// Starts product-specific asynchronous cleanup before the main window closes.
+    Q_INVOKABLE virtual void prepareForClose();
+
     /// Allows the plugin to override the creation of the root (native) window.
     virtual void createRootWindow(QQmlApplicationEngine *qmlEngine);
 
@@ -125,10 +127,6 @@ public:
     virtual void *createVideoSink(QQuickItem *widget, QObject *parent);
     /// Allows the plugin to override the release of VideoSink.
     virtual void releaseVideoSink(void *sink);
-
-    /// Allows the plugin to see all mavlink traffic to a vehicle
-    /// @return true: Allow vehicle to continue processing, false: Vehicle should not process message
-    virtual bool mavlinkMessage(Vehicle *vehicle, LinkInterface *link, const mavlink_message_t &message) { Q_UNUSED(vehicle); Q_UNUSED(link); Q_UNUSED(message); return true; }
 
     /// Allows custom builds to add custom items to the FlightMap. Objects put into QmlObjectListModel should derive from QmlComponentInfo and set the url property.
     virtual const QmlObjectListModel *customMapItems();
@@ -238,6 +236,7 @@ public:
 signals:
     void showTouchAreasChanged(bool showTouchAreas);
     void showAdvancedUIChanged(bool showAdvancedUI);
+    void prepareForCloseCompleted();
 
 protected:
     bool _showTouchAreas = false;

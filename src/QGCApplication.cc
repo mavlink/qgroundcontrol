@@ -8,9 +8,6 @@
 #include <QtCore/private/qthread_p.h>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QIcon>
-#include <QtGui/QKeyEvent>
-#include <QtGui/QMouseEvent>
-#include <QtGui/QWheelEvent>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickImageProvider>
@@ -732,56 +729,6 @@ bool QGCApplication::compressEvent(QEvent* event, QObject* receiver, QPostEventL
 }
 
 QT_WARNING_POP
-
-bool QGCApplication::notify(QObject* receiver, QEvent* event)
-{
-    const bool delivered = QGuiApplication::notify(receiver, event);
-
-    // QQuickWindow performs delivery to the final QML target from its event handler. Inspecting
-    // acceptance here therefore observes the result of normal target delivery without filtering it.
-    if (receiver != _mainRootWindow) {
-        return delivered;
-    }
-
-    // Key releases can be accepted by the focused QML item even when the
-    // matching press was unaccepted. Visual shortcut tracking only acts on
-    // keys it previously tracked, so it must always receive the release.
-    if (event->type() == QEvent::KeyRelease) {
-        const auto* keyEvent = static_cast<const QKeyEvent*>(event);
-        if (!keyEvent->isAutoRepeat()) {
-            emit unacceptedKeyRelease(keyEvent->key());
-        }
-        return delivered;
-    }
-
-    if (event->isAccepted()) {
-        return delivered;
-    }
-
-    switch (event->type()) {
-        case QEvent::KeyPress: {
-            const auto* keyEvent = static_cast<const QKeyEvent*>(event);
-            if (!keyEvent->isAutoRepeat()) {
-                emit unacceptedKeyPress(keyEvent->key());
-            }
-            break;
-        }
-        case QEvent::MouseButtonRelease:
-            emit unacceptedMouseRelease(static_cast<const QMouseEvent*>(event)->button());
-            break;
-        case QEvent::Wheel: {
-            const int angleDeltaY = static_cast<const QWheelEvent*>(event)->angleDelta().y();
-            if (angleDeltaY != 0) {
-                emit unacceptedWheel(angleDeltaY);
-            }
-            break;
-        }
-        default:
-            break;
-    }
-
-    return delivered;
-}
 
 bool QGCApplication::event(QEvent* e)
 {

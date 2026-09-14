@@ -69,7 +69,6 @@ public:
 
     void removeCompressedSignal(const QMetaMethod &method);
 
-    bool notify(QObject* receiver, QEvent* event) final;
     bool event(QEvent *e) final;
 
     static QString cachedParameterMetaDataFile();
@@ -96,10 +95,6 @@ public:
 
 signals:
     void languageChanged(const QLocale &locale);
-    void unacceptedKeyPress(int key);
-    void unacceptedKeyRelease(int key);
-    void unacceptedMouseRelease(int button);
-    void unacceptedWheel(int angleDeltaY);
 
 public slots:
     void qmlAttemptWindowClose();

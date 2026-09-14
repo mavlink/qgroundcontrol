@@ -13,8 +13,6 @@ import QGroundControl.PlanView
 import QGroundControl.Toolbar
 import QGroundControl.FactControls
 
-import QGroundControl.SynclairVisionUI
-
 
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
@@ -243,10 +241,10 @@ ApplicationWindow {
     //  Returns true if it is OK to close
     readonly property int _skipUnsavedMissionCheckMask: 0x01
     readonly property int _skipPendingParameterWritesCheckMask: 0x02
-    readonly property int _skipActiveRecordingCheckMask: 0x04
-    readonly property int _skipActiveConnectionsCheckMask: 0x08
+    readonly property int _skipActiveConnectionsCheckMask: 0x04
     property int _closeChecksToSkip: 0
     property bool _reentrantCloseGuard: false
+    property bool _closePreparationStarted: false
     function performCloseChecks() {
         if (!(_closeChecksToSkip & _skipUnsavedMissionCheckMask) && !checkForUnsavedMission()) {
             return false
@@ -254,14 +252,14 @@ ApplicationWindow {
         if (!(_closeChecksToSkip & _skipPendingParameterWritesCheckMask) && !checkForPendingParameterWrites()) {
             return false
         }
-        if (!(_closeChecksToSkip & _skipActiveRecordingCheckMask) && !checkForActiveRecording()) {
-            return false
-        }
         if (!(_closeChecksToSkip & _skipActiveConnectionsCheckMask) && !checkForActiveConnections()) {
             return false
         }
-        finishCloseProcess()
-        return true
+        if (!_closePreparationStarted) {
+            _closePreparationStarted = true
+            QGroundControl.corePlugin.prepareForClose()
+        }
+        return false
     }
 
     function checkForUnsavedMission() {
@@ -302,25 +300,6 @@ ApplicationWindow {
         return true
     }
 
-    function checkForActiveRecording() {
-        if (SVState.record) {
-            let accepted = false
-            _reentrantCloseGuard = true
-            _showMessageDialogWorker(mainWindow, qsTr("Active Recording"),
-                qsTr("SynclairVisionQGC is currently recording. Are you sure that you want to exit?"),
-                Dialog.Yes | Dialog.No,
-                function() { accepted = true
-                            SVState.record = false
-                            _closeChecksToSkip |= _skipActiveRecordingCheckMask
-                             performCloseChecks() },
-                function() { if (!accepted) _reentrantCloseGuard = false },
-                true /* bypassNavigationCheck */)
-            return false
-        } else {
-            return true
-        }
-    }
-
     function checkForActiveConnections() {
         if (QGroundControl.multiVehicleManager.activeVehicle) {
             let accepted = false
@@ -345,6 +324,14 @@ ApplicationWindow {
             }
             _closeChecksToSkip = 0
             close.accepted = performCloseChecks()
+        }
+    }
+
+    Connections {
+        target: QGroundControl.corePlugin
+
+        function onPrepareForCloseCompleted() {
+            mainWindow.finishCloseProcess()
         }
     }
 
@@ -622,7 +609,7 @@ ApplicationWindow {
     Popup {
         id:             indicatorDrawer
         x:              calcXPosition()
-        y:              ((SVState.toolbar) ? ScreenTools.toolbarHeight : 0) + _margins
+        y:              ScreenTools.toolbarHeight + _margins
         leftInset:      0
         rightInset:     0
         topInset:       0
@@ -641,21 +628,8 @@ ApplicationWindow {
 
         function calcXPosition() {
             if (indicatorItem) {
-                var drawerItem = indicatorDrawerLoader.item
-                var centeredX = indicatorItem.mapToItem(mainWindow.contentItem, indicatorItem.width / 2, 0).x - (contentItem.implicitWidth / 2)
-                var maxX = mainWindow.contentItem.width - contentItem.implicitWidth - _margins - (indicatorDrawer.padding * 2) - (ScreenTools.defaultFontPixelHeight / 2)
-
-                if (drawerItem && drawerItem.indicatorDrawerUseRightEdgeAlignment) {
-                    var rightEdgeMargin = drawerItem.indicatorDrawerRightEdgeMargin
-                    if (rightEdgeMargin === undefined) {
-                        rightEdgeMargin = _margins
-                    }
-
-                    var popupWidth = Math.max(indicatorDrawer.width, indicatorDrawer.implicitWidth)
-                    return Math.max(0, mainWindow.contentItem.width - popupWidth - rightEdgeMargin)
-                }
-
-                return Math.max(_margins, Math.min(centeredX, maxX))
+                var xCenter = indicatorItem.mapToItem(mainWindow.contentItem, indicatorItem.width / 2, 0).x
+                return Math.max(_margins, Math.min(xCenter - (contentItem.implicitWidth / 2), mainWindow.contentItem.width - contentItem.implicitWidth - _margins - (indicatorDrawer.padding * 2) - (ScreenTools.defaultFontPixelHeight / 2)))
             } else {
                 return _margins
             }

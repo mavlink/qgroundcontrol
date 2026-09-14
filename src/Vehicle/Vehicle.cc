@@ -524,7 +524,6 @@ void Vehicle::resetCounters()
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
-    
     if (message.sysid != _systemID && message.sysid != 0) {
         // We allow RADIO_STATUS messages which come from a link the vehicle is using to pass through and be handled
         if (!(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _vehicleLinkManager->containsLink(link))) {
@@ -563,11 +562,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 
     // Give the plugin a change to adjust the message contents
     if (!_firmwarePlugin->adjustIncomingMavlinkMessage(this, &message)) {
-        return;
-    }
-
-    // Give the Core Plugin access to all mavlink traffic
-    if (!QGCCorePlugin::instance()->mavlinkMessage(this, link, message)) {
         return;
     }
 
@@ -3286,10 +3280,10 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
         _gcsControlStatusFlags_TakeoverAllowed = controlStatus.flags & GCS_CONTROL_STATUS_FLAGS_TAKEOVER_ALLOWED;
         updateControlStatusSignals = true;
     }
-    if (_gcsMain != controlStatus.sysid_in_control) {
-        _gcsMain = controlStatus.sysid_in_control;
+    /*if (_gcsMain != controlStatus.gcs_main) {
+        _gcsMain = controlStatus.gcs_main;
         updateControlStatusSignals = true;
-    }
+    }*/
 
     if (!_firstControlStatusReceived) {
         _firstControlStatusReceived = true;

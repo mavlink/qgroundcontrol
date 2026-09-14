@@ -310,6 +310,11 @@ void QGCCorePlugin::destroyQmlApplicationEngine(QQmlApplicationEngine *qmlEngine
     delete qmlEngine;
 }
 
+void QGCCorePlugin::prepareForClose()
+{
+    emit prepareForCloseCompleted();
+}
+
 void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine)
 {
     qmlEngine->load(QUrl(QStringLiteral("qrc:/qml/QGroundControl/MainWindow.qml")));
