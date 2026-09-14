@@ -328,6 +328,36 @@ Item {
 
     Component.onDestruction: clearVisualHeldState()
 
+    focus: root.shortcutInputEligible
+
+    Keys.onPressed: (event) => {
+        if (event.isAutoRepeat) {
+            event.accepted = false
+            return
+        }
+
+        const roles = root.trackVisualKeyPress(event.key)
+        event.accepted = roles.length > 0
+    }
+
+    Keys.onReleased: (event) => {
+        if (!event.isAutoRepeat) {
+            root.trackVisualKeyRelease(event.key)
+        }
+        event.accepted = false
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        enabled: root.shortcutInputEligible && SVState.synclairOverlay
+        acceptedButtons: Qt.AllButtons
+        onReleased: (mouse) => root.dispatch(SVSettings.mouseButtonShortcutBase - mouse.button)
+        onWheel: (wheel) => {
+            root.dispatch(wheel.angleDelta.y > 0 ? SVSettings.scrollUp : SVSettings.scrollDown)
+            wheel.accepted = true
+        }
+    }
+
     Shortcut {
         sequence: SVSettings.shortcutHUD
         enabled: root.shortcutInputEligible && root.shortcutRegistry[SVSettings.shortcutHUD] === root.actionHUD
