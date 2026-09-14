@@ -1,6 +1,7 @@
 #include "GPSCorrectionManager.h"
 
 #include <QtCore/QScopeGuard>
+#include <QtNetwork/QHostAddress>
 
 #include "GPSCorrectionSettings.h"
 #include "QGCLoggingCategory.h"
@@ -54,7 +55,7 @@ void GPSCorrectionManager::configureNtripUdpOutput(bool enabled, const QString& 
     if (_shutdown) {
         return;
     }
-    if (enabled && _ntripUdpOutput.isEnabled() && _ntripUdpOutput.address() == address &&
+    if (enabled && _ntripUdpOutput.isEnabled() && _ntripUdpOutput.address() == QHostAddress(address).toString() &&
         _ntripUdpOutput.port() == port) {
         return;
     }

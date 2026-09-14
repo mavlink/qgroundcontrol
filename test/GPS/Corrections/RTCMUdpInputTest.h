@@ -8,6 +8,8 @@ class RTCMUdpInputTest : public UnitTest
 
 private slots:
     void _testStartStop();
+    void _testSocketErrors_data();
+    void _testSocketErrors();
     void _testStartNotificationReentrancy_data();
     void _testStartNotificationReentrancy();
     void _testStartupPortReplacement_data();

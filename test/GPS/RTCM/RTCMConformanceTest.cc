@@ -77,11 +77,14 @@ void RTCMConformanceTest::_sharedCorpus_data()
     QTest::addColumn<QList<qint64>>("expectedReceiptTimes");
     QTest::addColumn<QList<QByteArray>>("expectedRejected");
     QTest::addColumn<QList<qint64>>("expectedRejectionTimes");
+    QTest::addColumn<qint64>("chunkIntervalMs");
 
     const auto addCase = [](const char* name, QList<QByteArray> chunks, QList<QByteArray> frames,
                             QList<qint64> receiptTimes, QList<QByteArray> rejected = {},
-                            QList<qint64> rejectionTimes = {}, QList<int> resetBefore = {}) {
-        QTest::newRow(name) << chunks << resetBefore << frames << receiptTimes << rejected << rejectionTimes;
+                            QList<qint64> rejectionTimes = {}, QList<int> resetBefore = {},
+                            qint64 chunkIntervalMs = 1000) {
+        QTest::newRow(name) << chunks << resetBefore << frames << receiptTimes << rejected << rejectionTimes
+                            << chunkIntervalMs;
     };
     addCase("short-frame", {SHORT_FRAME}, {SHORT_FRAME}, {1000});
     addCase(
@@ -140,6 +143,24 @@ void RTCMConformanceTest::_sharedCorpus_data()
     addCase("recover-multiple-buffered-frames",
             {LONG_FRAME.first(5), SHORT_FRAME.first(3), SHORT_FRAME.mid(3), SHORT_FRAME, QByteArray(4, '\0')},
             {SHORT_FRAME, SHORT_FRAME}, {2000, 4000}, {interrupted}, {1000});
+    const QByteArray interruptedWithFalseHeader =
+        QByteArray::fromHex("d300134350d300023ed0a4e000d303ffd300023ed0a4e00000");
+    individualBytes.clear();
+    for (const char byte : interruptedWithFalseHeader) {
+        individualBytes.append(QByteArray(1, byte));
+    }
+    addCase("recover-past-false-header-between-frames", individualBytes, {SHORT_FRAME, SHORT_FRAME}, {1005, 1016},
+            {interruptedWithFalseHeader}, {1000}, {}, 1);
+    addCase("recover-past-false-header-across-chunks",
+            {interruptedWithFalseHeader.first(5), interruptedWithFalseHeader.mid(5, 11),
+             interruptedWithFalseHeader.mid(16)},
+            {SHORT_FRAME, SHORT_FRAME}, {2000, 3000}, {interruptedWithFalseHeader}, {1000});
+    const QByteArray interruptedWithOuterPrefix = LONG_FRAME.first(5) + SHORT_FRAME + NESTED_PAYLOAD.first(12);
+    addCase("preserve-outer-beyond-rejected-evidence",
+            {LONG_FRAME.first(5), SHORT_FRAME, NESTED_PAYLOAD.first(12), NESTED_PAYLOAD.mid(12)},
+            {SHORT_FRAME, NESTED_PAYLOAD}, {2000, 3000}, {interruptedWithOuterPrefix}, {1000});
+    addCase("reset-retained-recovery", {interruptedWithOuterPrefix, SHORT_FRAME + NESTED_PAYLOAD},
+            {SHORT_FRAME, SHORT_FRAME, NESTED_PAYLOAD}, {1000, 2000, 2000}, {interruptedWithOuterPrefix}, {1000}, {1});
     const QByteArray rejectedSuffixes = LONG_FRAME.first(5) + badCrc + QByteArray(12, '\0');
     addCase("discard-known-bad-suffixes", {rejectedSuffixes, SHORT_FRAME}, {SHORT_FRAME}, {2000}, {rejectedSuffixes},
             {1000});
@@ -148,10 +169,12 @@ void RTCMConformanceTest::_sharedCorpus_data()
     corruptMaximum.replace(0, 3, QByteArray::fromHex("d303ff"));
     corruptMaximum.replace(16, 3, QByteArray::fromHex("d303ff"));
     corruptMaximum.replace(100, SHORT_FRAME.size(), SHORT_FRAME);
+    corruptMaximum.replace(200, 3, QByteArray::fromHex("d303ff"));
+    corruptMaximum.replace(1000, SHORT_FRAME.size(), SHORT_FRAME);
     addCase("maximum-recovery-skips-false-preamble",
             {QByteArray(RTCMFramer::MAX_FRAME_SIZE + 17, '\0'), corruptMaximum.first(100), corruptMaximum.mid(100, 1),
              corruptMaximum.mid(101)},
-            {SHORT_FRAME}, {3000}, {corruptMaximum}, {2000});
+            {SHORT_FRAME, SHORT_FRAME}, {3000, 4000}, {corruptMaximum}, {2000});
 }
 
 void RTCMConformanceTest::_sharedCorpus()
@@ -162,6 +185,7 @@ void RTCMConformanceTest::_sharedCorpus()
     QFETCH(QList<qint64>, expectedReceiptTimes);
     QFETCH(QList<QByteArray>, expectedRejected);
     QFETCH(QList<qint64>, expectedRejectionTimes);
+    QFETCH(qint64, chunkIntervalMs);
 
     RTCMFrameDecoder decoder;
     RTCMFramer framer;
@@ -186,7 +210,7 @@ void RTCMConformanceTest::_sharedCorpus()
         for (const char rawByte : chunks[chunkIndex]) {
             const auto byte = static_cast<uint8_t>(rawByte);
             int resultCount = 0;
-            for (auto decoded = decoder.addByte(byte, (chunkIndex + 1) * 1000); decoded;
+            for (auto decoded = decoder.addByte(byte, 1000 + chunkIndex * chunkIntervalMs); decoded;
                  decoded = decoder.nextFrame()) {
                 QVERIFY(++resultCount <= RTCMFramer::MAX_FRAME_SIZE);
                 QVERIFY(!decoded->filtered);

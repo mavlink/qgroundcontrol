@@ -15,8 +15,9 @@ SettingsGroupLayout {
                                    || root._source === GPSCorrectionSettings.Udp
     readonly property string _selectedInstance: root._settings.correctionSourceInstance.rawValue
     readonly property GPSCorrectionSettings _settings: QGroundControl.settingsManager.gpsCorrectionSettings
+    readonly property SettingsFact _sourceFact: root._settings.correctionSource as SettingsFact
+    readonly property SettingsFact _instanceFact: root._settings.correctionSourceInstance as SettingsFact
     readonly property int _source: root._settings.correctionSource.rawValue
-    readonly property int _streamIndex: root._streams.findIndex(stream => stream.instanceId === root._selectedInstance)
     readonly property var _streams: {
         const streams = [{ instanceId: "", label: qsTr("Automatic within source") }];
         for (const source of root.corrections.sourceInstances) {
@@ -36,25 +37,19 @@ SettingsGroupLayout {
         return streams;
     }
 
-    function _updateStreamIndex() {
-        Qt.callLater(function() {
-            streamCombo.currentIndex = Qt.binding(function() { return root._streamIndex; });
-        });
-    }
-
     heading: qsTr("Correction Routing")
     headingDescription: qsTr("Selects streams for vehicle links only. NTRIP UDP forwarding uses the NTRIP stream independently.")
     objectName: "correctionRoutingSettings"
-    visible: root._settings.userVisible && root._settings.correctionSource.userVisible
+    visible: root._settings.userVisible && root._sourceFact && root._sourceFact.userVisible
 
     LabelledFactComboBox {
-        fact: root._settings.correctionSource
+        fact: root._sourceFact
         indexModel: false
         label: fact.label
         objectName: "correctionSource"
 
         onActivated: {
-            if (root._settings.correctionSourceInstance.userVisible) {
+            if (root._instanceFact && root._instanceFact.userVisible) {
                 root._settings.correctionSourceInstance.rawValue = "";
             }
         }
@@ -78,24 +73,18 @@ SettingsGroupLayout {
         id: streamCombo
 
         comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
-        currentIndex: root._streamIndex
+        currentValue: root._selectedInstance
         label: qsTr("Stream")
-        model: root._streams.map(stream => stream.label)
+        model: root._streams
         objectName: "correctionStream"
-        visible: root._manual && root._settings.correctionSourceInstance.userVisible
+        textRole: "label"
+        valueRole: "instanceId"
+        visible: root._manual && root._instanceFact && root._instanceFact.userVisible
 
         onActivated: index => {
             if (index >= 0 && index < root._streams.length) {
-                root._settings.correctionSourceInstance.rawValue = root._streams[index].instanceId;
+                root._settings.correctionSourceInstance.rawValue = streamCombo.currentValue;
             }
-        }
-    }
-
-    Connections {
-        target: streamCombo.comboBox
-
-        function onModelChanged() {
-            root._updateStreamIndex();
         }
     }
 }

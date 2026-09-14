@@ -1,5 +1,7 @@
 #include "RTCMUdpInputTest.h"
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QEvent>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
@@ -8,6 +10,7 @@
 #include <QtTest/QTest>
 
 #include "GpsTestHelpers.h"
+#include "LogManager.h"
 #include "RTCMUdpInput.h"
 
 namespace {
@@ -29,6 +32,74 @@ void RTCMUdpInputTest::_testStartStop()
 
     input.stop();
     QVERIFY(!input.isRunning());
+}
+
+void RTCMUdpInputTest::_testSocketErrors_data()
+{
+    QTest::addColumn<bool>("restart");
+    QTest::newRow("retired-after-stop") << false;
+    QTest::newRow("retired-after-restart") << true;
+}
+
+void RTCMUdpInputTest::_testSocketErrors()
+{
+    QFETCH(bool, restart);
+    qRegisterMetaType<QAbstractSocket::SocketError>();
+    RTCMUdpInput input(0);
+    input.setValidation(true);
+    QVERIFY(input.start());
+    const QPointer<QUdpSocket> socket = input.findChild<QUdpSocket*>();
+    QVERIFY(socket);
+    QSignalSpy frames(&input, &RTCMUdpInput::frameReceived);
+    QSignalSpy rejected(&input, &RTCMUdpInput::frameRejected);
+    QSignalSpy runningChanges(&input, &RTCMUdpInput::runningChanged);
+    QSignalSpy reads(socket, &QUdpSocket::readyRead);
+    QUdpSocket sender;
+    const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    const auto prefix = frame.first(5);
+    QCOMPARE(sender.writeDatagram(prefix, QHostAddress::LocalHost, input.port()), prefix.size());
+    QTRY_VERIFY_WITH_TIMEOUT(!reads.isEmpty(), TestTimeout::mediumMs());
+    QVERIFY(frames.isEmpty());
+    expectLogMessage("GPS.Corrections.RTCMUdpInput", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("UDP socket error on port %1.*%2")
+                                            .arg(input.port())
+                                            .arg(QRegularExpression::escape(socket->errorString()))));
+    QVERIFY(QMetaObject::invokeMethod(socket, "errorOccurred", Qt::DirectConnection,
+                                      Q_ARG(QAbstractSocket::SocketError, QAbstractSocket::NetworkError)));
+    verifyExpectedLogMessage();
+    QVERIFY(input.isRunning());
+    QCOMPARE(socket->state(), QAbstractSocket::BoundState);
+    QVERIFY(runningChanges.isEmpty());
+    QVERIFY(frames.isEmpty());
+    QVERIFY(rejected.isEmpty());
+    const auto tail = frame.sliced(5);
+    QCOMPARE(sender.writeDatagram(tail, QHostAddress::LocalHost, input.port()), tail.size());
+    QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 1, TestTimeout::mediumMs());
+    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(frames.first().first()).data, frame);
+    frames.clear();
+
+    QSignalSpy errors(socket, &QUdpSocket::errorOccurred);
+    QVERIFY(QMetaObject::invokeMethod(
+        socket, [socket]() { emit socket->errorOccurred(QAbstractSocket::TemporaryError); }, Qt::QueuedConnection));
+    input.stop();
+    if (restart) {
+        QVERIFY(input.start());
+    }
+    const QString category = QStringLiteral("GPS.Corrections.RTCMUdpInput");
+    const auto messageCount = LogManager::capturedMessages(category).size();
+    const auto runningChangeCount = runningChanges.size();
+    QVERIFY(socket);
+    QCoreApplication::sendPostedEvents(socket, QEvent::MetaCall);
+    QCOMPARE(errors.size(), 1);
+    QCOMPARE(LogManager::capturedMessages(category).size(), messageCount);
+    QCOMPARE(runningChanges.size(), runningChangeCount);
+    QCOMPARE(input.isRunning(), restart);
+    QVERIFY(frames.isEmpty());
+    QVERIFY(rejected.isEmpty());
+    if (restart) {
+        QVERIFY(sendDatagram(input.port(), frame));
+        QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 1, TestTimeout::mediumMs());
+    }
 }
 
 void RTCMUdpInputTest::_testStartNotificationReentrancy_data()

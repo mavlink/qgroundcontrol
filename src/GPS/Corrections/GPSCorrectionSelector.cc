@@ -96,13 +96,7 @@ void GPSCorrectionSelector::clear()
 
 void GPSCorrectionSelector::retire(GPSCorrectionSource source, qint64 now)
 {
-    for (auto it = _sources.begin(); it != _sources.end();) {
-        if (it->category == source) {
-            it = _sources.erase(it);
-        } else {
-            ++it;
-        }
-    }
+    _sources.removeIf([source](auto it) { return it->category == source; });
     _select(now);
 }
 

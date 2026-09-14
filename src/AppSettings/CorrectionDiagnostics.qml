@@ -145,7 +145,7 @@ SettingsGroupLayout {
     QGCLabel {
         Layout.fillWidth: true
         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-        text: qsTr("Received/dropped source bytes measure frame-candidate evidence, not raw transport traffic. Recovered frames can overlap rejected candidates.")
+        text: qsTr("Received/dropped source bytes measure frame-candidate evidence, not raw transport traffic. Recovered frames can overlap rejected candidates. Drop events count separate selection, admission, and delivery losses; one frame may contribute more than once.")
         wrapMode: Text.WordWrap
     }
 
@@ -157,7 +157,7 @@ SettingsGroupLayout {
 
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-            text: qsTr("%1 — frames: received %2, validated %3, selected %4, queued %5, written %6, dropped %7").arg(root.sourceName(modelData.source)).arg(modelData.receivedFrames).arg(modelData.validatedFrames).arg(modelData.selectedFrames).arg(modelData.queuedFrames).arg(modelData.writtenFrames).arg(modelData.droppedFrames)
+            text: qsTr("%1 — frames: received %2, validated %3, selected %4, queued %5, written %6; drop events %7").arg(root.sourceName(modelData.source)).arg(modelData.receivedFrames).arg(modelData.validatedFrames).arg(modelData.selectedFrames).arg(modelData.queuedFrames).arg(modelData.writtenFrames).arg(modelData.droppedFrames)
             wrapMode: Text.WordWrap
         }
     }

@@ -32,7 +32,10 @@ public:
         quint64 writtenFrames = 0;
         quint64 writtenBytes = 0;
         quint64 transportAcceptedBytes = 0;
+        /// Loss/rejection events, not unique frames.
+        /// Global selection rejection can coexist with scoped admission.
         quint64 droppedFrames = 0;
+        /// Rejected/lost bytes across paths; may overlap admitted bytes.
         quint64 droppedBytes = 0;
         quint64 unconfirmedFrames = 0;
         quint64 unconfirmedBytes = 0;
@@ -48,7 +51,9 @@ public:
         quint64 writtenFrames = 0;
         quint64 writtenBytes = 0;
         quint64 transportAcceptedBytes = 0;
+        /// Admission and terminal loss/rejection events, not unique delivery identities.
         quint64 droppedFrames = 0;
+        /// Accumulates rejected admission bytes and subsequent terminal losses.
         quint64 droppedBytes = 0;
         quint64 pendingFrames = 0;
         quint64 pendingBytes = 0;

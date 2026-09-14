@@ -2,9 +2,9 @@
 
 #include <utility>
 
-#include "GPSCorrectionFrame.h"
 #include "GPSDriver.h"
 #include "GPSTransport.h"
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 #ifdef SIMULATE_RTCM_OUTPUT
 #include "RTCMFramer.h"
@@ -44,7 +44,7 @@ void GPSProvider::run()
             frame[size - 3] = static_cast<char>(crc >> 16);
             frame[size - 2] = static_cast<char>(crc >> 8);
             frame[size - 1] = static_cast<char>(crc);
-            emit RTCMDataUpdate(frame, GPSCorrectionFrame::monotonicNowMs());
+            emit RTCMDataUpdate(frame, static_cast<qint64>(MonotonicClock::nowUs() / 1000));
             QThread::msleep(4);
         }
         QThread::msleep(100);
@@ -71,7 +71,7 @@ void GPSProvider::run()
     sinks.onPosition = [this](const sensor_gps_s& message) { emit sensorGpsUpdate(message); };
     sinks.onSatelliteInfo = [this](const satellite_info_s& message) { emit satelliteInfoUpdate(message); };
     sinks.onRTCM = [this, &gotData](const QByteArray& message) {
-        const qint64 receivedAtMs = GPSCorrectionFrame::monotonicNowMs();
+        const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
         gotData = true;
         emit RTCMDataUpdate(message, receivedAtMs);
     };

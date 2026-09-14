@@ -1,5 +1,7 @@
 #include "RTCMFrameDecoder.h"
 
+#include <QtCore/QByteArrayView>
+
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(RTCMFrameDecoderLog, "GPS.RTCM.RTCMFrameDecoder")
@@ -37,8 +39,7 @@ RTCMFrameDecoder::Result RTCMFrameDecoder::_result() const
     const auto frame = _framer.frame();
     const size_t firstReceiptIndex =
         (_nextReceiptIndex + _receiptTimes.size() - _framer.bufferedSize()) % _receiptTimes.size();
-    Result result{QByteArray(reinterpret_cast<const char*>(frame.data()), static_cast<qsizetype>(frame.size())),
-                  _framer.messageId(), _receiptTimes[firstReceiptIndex]};
+    Result result{QByteArrayView(frame).toByteArray(), _framer.messageId(), _receiptTimes[firstReceiptIndex]};
     result.valid = _framer.valid();
     result.filtered = result.valid && !_whitelist.isEmpty() && !_whitelist.contains(result.messageId);
     return result;

@@ -22,6 +22,7 @@ public:
         _size = 0;
         _payloadSize = 0;
         _frameSize = 0;
+        _recoverySize = 0;
     }
 
     bool addByte(uint8_t byte)
@@ -98,17 +99,23 @@ private:
         if (count) {
             std::move(_bytes.begin() + count, _bytes.begin() + _size, _bytes.begin());
             _size -= count;
+            _recoverySize -= (std::min) (_recoverySize, count);
         }
     }
 
     void _discardCandidate()
     {
-        uint16_t discardSize = _frameSize;
+        uint16_t searchOffset = _frameSize;
         if (!valid()) {
-            discardSize = _size;
-            // Prefer verified suffixes over false, incomplete preambles.
-            const std::span<const uint8_t> bytes{_bytes.data(), _size};
-            for (uint16_t offset = 1; offset < _size; ++offset) {
+            _recoverySize = (std::max) (_recoverySize, _frameSize);
+            searchOffset = 1;
+        }
+        uint16_t discardSize = _frameSize;
+        if (searchOffset < _recoverySize) {
+            discardSize = _recoverySize;
+            // Fresh bytes may belong to an incomplete outer frame.
+            const std::span<const uint8_t> bytes{_bytes.data(), _recoverySize};
+            for (uint16_t offset = searchOffset; offset < _recoverySize; ++offset) {
                 const auto suffix = bytes.subspan(offset);
                 if (suffix[0] != PREAMBLE || (suffix.size() >= 2 && (suffix[1] & 0xfc))) {
                     continue;
@@ -166,4 +173,5 @@ private:
     uint16_t _size = 0;
     uint16_t _payloadSize = 0;
     uint16_t _frameSize = 0;
+    uint16_t _recoverySize = 0;
 };

@@ -12,6 +12,7 @@
 #include "GPSCorrectionManager.h"
 #include "GpsTestHelpers.h"
 #include "MockNTRIPTransport.h"
+#include "MonotonicClock.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
 #include "SettingsManager.h"
@@ -309,11 +310,23 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
     QCOMPARE(routed.size(), 1);
     QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), quint64(frame.size()));
-    second->simulateRtcmData(frame, 1005,
-                             GPSCorrectionFrame::monotonicNowMs() - GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS);
+    const qint64 expiredAgeMs = GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS + 6000;
+    const qint64 expiredAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000) - expiredAgeMs;
+    second->simulateRtcmData(frame, 1005, expiredAtMs);
+    QCOMPARE(mgr.connectionStats()->messagesReceived(), quint32(0));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(routed.size(), 1);
     QCOMPARE(corrections.rtcmMavlink()->totalBytesSubmitted(), quint64(frame.size()));
+    QCOMPARE(mgr.connectionStats()->messagesReceived(), quint32(1));
+    QCOMPARE(mgr.connectionStats()->bytesReceived(), quint64(frame.size()));
+    QVERIFY(mgr.connectionStats()->correctionAgeSec() >= expiredAgeMs / 1000.0);
+    QVERIFY(mgr.connectionStats()->dataStale());
+
+    second->simulateRtcmData(frame, 1005, expiredAtMs - 1000);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCOMPARE(mgr.connectionStats()->messagesReceived(), quint32(2));
+    QVERIFY(mgr.connectionStats()->dataStale());
+
     second->simulateRtcmData(frame, 1005);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(routed.size(), 2);
@@ -322,6 +335,17 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     QCOMPARE(replacement.sourceInstance, original.sourceInstance);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
     QCOMPARE(corrections.rtcmMavlink()->totalBytesSubmitted(), quint64(2 * frame.size()));
+    QCOMPARE(mgr.connectionStats()->messagesReceived(), quint32(3));
+    QVERIFY(mgr.connectionStats()->correctionAgeSec() < 1.0);
+    QVERIFY(!mgr.connectionStats()->dataStale());
+
+    second->simulateRtcmData(frame, 1005, expiredAtMs);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCOMPARE(routed.size(), 2);
+    QCOMPARE(mgr.connectionStats()->messagesReceived(), quint32(4));
+    QCOMPARE(mgr.connectionStats()->bytesReceived(), quint64(4 * frame.size()));
+    QVERIFY(mgr.connectionStats()->correctionAgeSec() < 1.0);
+    QVERIFY(!mgr.connectionStats()->dataStale());
 }
 
 void NTRIPManagerTest::testFactChangesReconfigureTransport_data()

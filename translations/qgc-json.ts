@@ -6510,18 +6510,6 @@
             <translation type="unfinished" />
         </message>
         <message>
-            <extracomment>.QGC.MetaData.Facts[correctionSource].shortDesc, .QGC.MetaData.Facts[correctionSource].label</extracomment>
-            <location filename="../src/Settings/GPSCorrection.SettingsGroup.json" />
-            <source>Correction source</source>
-            <translation type="unfinished" />
-        </message>
-        <message>
-            <extracomment>.QGC.MetaData.Facts[correctionSource].longDesc</extracomment>
-            <location filename="../src/Settings/GPSCorrection.SettingsGroup.json" />
-            <source>Automatic keeps one fresh correction stream and prefers the local base station, then NTRIP, then UDP. All forwards every stream.</source>
-            <translation type="unfinished" />
-        </message>
-        <message>
             <extracomment>.QGC.MetaData.Facts[correctionSource].enumStrings</extracomment>
             <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
             <location filename="../src/Settings/GPSCorrection.SettingsGroup.json" />
@@ -6532,12 +6520,6 @@
             <extracomment>.QGC.MetaData.Facts[correctionSourceInstance].shortDesc, .QGC.MetaData.Facts[correctionSourceInstance].label</extracomment>
             <location filename="../src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>Correction stream</source>
-            <translation type="unfinished" />
-        </message>
-        <message>
-            <extracomment>.QGC.MetaData.Facts[correctionSourceInstance].longDesc</extracomment>
-            <location filename="../src/Settings/GPSCorrection.SettingsGroup.json" />
-            <source>Selected correction endpoint. Leave empty to select an available stream from the chosen source.</source>
             <translation type="unfinished" />
         </message>
         <message>

@@ -12,5 +12,6 @@ class RTCMFramerTest : public UnitTest
 
 private slots:
     void _frameViewAndReset();
+    void _implicitAdvance_data();
     void _implicitAdvance();
 };

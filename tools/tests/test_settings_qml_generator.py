@@ -1348,6 +1348,8 @@ class TestRealPageDefinitions:
         assert "ntripSettings.ntripUdpForwardEnabled" in qml
         assert 'heading: qsTr("NTRIP UDP Forwarding")' in qml
         assert "gpsCorrectionSettings.userVisible" in qml
+        assert "correctionSource as SettingsFact).userVisible" in qml
+        assert "correctionSource.userVisible" not in qml
         assert "injectLocalReceiver" not in qml
 
 

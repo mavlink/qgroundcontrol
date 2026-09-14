@@ -95,7 +95,7 @@
         {
             "component": "CorrectionRoutingSettings",
             "sectionName": "Correction Routing",
-            "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible && QGroundControl.settingsManager.gpsCorrectionSettings.correctionSource.userVisible",
+            "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible && (QGroundControl.settingsManager.gpsCorrectionSettings.correctionSource as SettingsFact).userVisible",
             "keywords": ["corrections", "rtcm", "source", "stream", "routing", "automatic"]
         },
         {

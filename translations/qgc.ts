@@ -22152,12 +22152,12 @@ If a vehicle still has this key configured, you will no longer be able to commun
     </message>
     <message>
         <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="148"/>
-        <source>Received/dropped source bytes measure frame-candidate evidence, not raw transport traffic. Recovered frames can overlap rejected candidates.</source>
+        <source>Received/dropped source bytes measure frame-candidate evidence, not raw transport traffic. Recovered frames can overlap rejected candidates. Drop events count separate selection, admission, and delivery losses; one frame may contribute more than once.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="116"/>
-        <source>%1 — frames: received %2, validated %3, selected %4, queued %5, written %6, dropped %7</source>
+        <source>%1 — frames: received %2, validated %3, selected %4, queued %5, written %6; drop events %7</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -22235,18 +22235,8 @@ Source: %6 (session %7); destination: %8 (session %9)</source>
 <context>
     <name>CorrectionRoutingSettings</name>
     <message>
-        <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="11"/>
-        <source>Automatic</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="30"/>
         <source>Correction Routing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="37"/>
-        <source>Correction source</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -22292,11 +22282,6 @@ Source: %6 (session %7); destination: %8 (session %9)</source>
 </context>
 <context>
     <name>NTRIPConnectionStatus</name>
-    <message>
-        <location filename="../src/GPS/NTRIP/NTRIPConnectionStatus.qml" line="124"/>
-        <source>Queued to vehicle links</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <location filename="../src/GPS/NTRIP/NTRIPConnectionStatus.qml" line="124"/>
         <source>Queued to vehicle links (all sources)</source>

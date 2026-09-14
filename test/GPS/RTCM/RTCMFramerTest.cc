@@ -33,18 +33,42 @@ void RTCMFramerTest::_frameViewAndReset()
     QCOMPARE(framer.payloadLength(), 0);
 }
 
+void RTCMFramerTest::_implicitAdvance_data()
+{
+    QTest::addColumn<QByteArray>("stream");
+    QTest::addColumn<QList<QByteArray>>("expectedFrames");
+    QTest::addColumn<QList<QByteArray>>("expectedRejected");
+
+    const auto frame = QByteArray::fromHex("d300023ed0a4e000");
+    QTest::newRow("consecutive-frames") << frame + frame << QList<QByteArray>{frame, frame} << QList<QByteArray>{};
+    const auto nested = QByteArray::fromHex("d3000a4350d300023ed0a4e0000d07f0");
+    const auto interrupted = QByteArray::fromHex("d300134350") + frame + nested.first(12);
+    QTest::newRow("fresh-bytes-outside-recovery")
+        << interrupted + nested.mid(12) << QList<QByteArray>{frame, nested} << QList<QByteArray>{interrupted};
+}
+
 void RTCMFramerTest::_implicitAdvance()
 {
-    const auto frame = QByteArray::fromHex("d300023ed0a4e000");
+    QFETCH(QByteArray, stream);
+    QFETCH(QList<QByteArray>, expectedFrames);
+    QFETCH(QList<QByteArray>, expectedRejected);
     RTCMFramer framer;
-    int completed = 0;
-    for (const char byte : frame + frame) {
+    QList<QByteArray> frames;
+    QList<QByteArray> rejected;
+    for (const char byte : stream) {
         if (framer.addByte(static_cast<uint8_t>(byte))) {
-            QVERIFY(framer.valid());
-            ++completed;
+            const auto view = framer.frame();
+            const QByteArray candidate(reinterpret_cast<const char*>(view.data()), static_cast<qsizetype>(view.size()));
+            if (framer.valid()) {
+                frames.append(candidate);
+            } else {
+                rejected.append(candidate);
+            }
         }
+        QVERIFY(framer.bufferedSize() <= RTCMFramer::MAX_FRAME_SIZE);
     }
-    QCOMPARE(completed, 2);
+    QCOMPARE(frames, expectedFrames);
+    QCOMPARE(rejected, expectedRejected);
 }
 
 #ifdef QGC_GPS_STANDALONE_TEST

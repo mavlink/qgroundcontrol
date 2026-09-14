@@ -5,6 +5,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QEvent>
 #include <QtCore/QPointer>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtNetwork/QUdpSocket>
 #include <QtQml/QQmlComponent>
@@ -516,6 +517,68 @@ void GPSCorrectionManagerTest::_ntripUdpOutputIsSourceSpecific()
     QCOMPARE(outputStats().value(QStringLiteral("queuedBytes")).toULongLong(), quint64(data.size()));
     corrections.shutdown();
     QVERIFY(!corrections._ntripUdpOutput.isEnabled());
+}
+
+void GPSCorrectionManagerTest::_ntripUdpOutputEndpointChanges_data()
+{
+    QTest::addColumn<QString>("initialAddress");
+    QTest::addColumn<QString>("address");
+    QTest::addColumn<quint16>("port");
+    QTest::addColumn<bool>("unchanged");
+    QTest::addColumn<bool>("expectedEnabled");
+    const quint16 port = 13320;
+    QTest::newRow("same-ipv4") << QStringLiteral("127.0.0.1") << QStringLiteral("127.0.0.1") << port << true << true;
+    QTest::newRow("equivalent-ipv6") << QStringLiteral("::1") << QStringLiteral("0:0:0:0:0:0:0:1") << port << true
+                                     << true;
+    QTest::newRow("ipv6-case-and-zeroes")
+        << QStringLiteral("2001:db8::a") << QStringLiteral("2001:0DB8:0:0:0:0:0:000A") << port << true << true;
+    QTest::newRow("same-scope") << QStringLiteral("fe80::1%1") << QStringLiteral("fe80:0:0:0:0:0:0:1%1") << port << true
+                                << true;
+    QTest::newRow("changed-address") << QStringLiteral("127.0.0.1") << QStringLiteral("127.0.0.2") << port << false
+                                     << true;
+    QTest::newRow("changed-port") << QStringLiteral("127.0.0.1") << QStringLiteral("127.0.0.1") << quint16(port + 1)
+                                  << false << true;
+    QTest::newRow("changed-scope") << QStringLiteral("fe80::1%1") << QStringLiteral("fe80::1%2") << port << false
+                                   << true;
+    QTest::newRow("mapped-ipv4") << QStringLiteral("127.0.0.1") << QStringLiteral("::ffff:127.0.0.1") << port << false
+                                 << true;
+    QTest::newRow("loopback-protocol") << QStringLiteral("::1") << QStringLiteral("127.0.0.1") << port << false << true;
+    QTest::newRow("empty-address") << QStringLiteral("127.0.0.1") << QString() << port << false << false;
+    QTest::newRow("hostname") << QStringLiteral("127.0.0.1") << QStringLiteral("localhost") << port << false << false;
+    QTest::newRow("zero-port") << QStringLiteral("127.0.0.1") << QStringLiteral("127.0.0.1") << quint16(0) << false
+                               << false;
+}
+
+void GPSCorrectionManagerTest::_ntripUdpOutputEndpointChanges()
+{
+    QFETCH(QString, initialAddress);
+    QFETCH(QString, address);
+    QFETCH(quint16, port);
+    QFETCH(bool, unchanged);
+    QFETCH(bool, expectedEnabled);
+    GPSCorrectionManager corrections;
+    corrections.configureNtripUdpOutput(true, initialAddress, 13320);
+    QVERIFY(corrections._ntripUdpOutput.isEnabled());
+    auto* socket = corrections._ntripUdpOutput.findChild<QUdpSocket*>();
+    QVERIFY(socket);
+    // IPv4 binding exposes socket retirement without requiring IPv6.
+    QVERIFY(socket->bind(QHostAddress::LocalHost, 0));
+    const quint16 boundPort = socket->localPort();
+    if (!expectedEnabled) {
+        expectLogMessage("Utilities.UdpForwarder", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Invalid UDP forward config:")));
+    }
+    corrections.configureNtripUdpOutput(true, address, port);
+    if (!expectedEnabled) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(corrections._ntripUdpOutput.isEnabled(), expectedEnabled);
+    QCOMPARE(corrections._ntripUdpOutput.port(), expectedEnabled ? port : quint16(0));
+    QCOMPARE(corrections._ntripUdpOutput.address(), expectedEnabled ? QHostAddress(address).toString() : QString());
+    QCOMPARE(socket->state(), unchanged ? QAbstractSocket::BoundState : QAbstractSocket::UnconnectedState);
+    if (unchanged) {
+        QCOMPARE(socket->localPort(), boundPort);
+    }
 }
 
 void GPSCorrectionManagerTest::_sourceTopologyDoesNotNotifyOnCounters()

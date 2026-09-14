@@ -11,6 +11,8 @@ private slots:
     void _mavlinkDestinationAdmissions();
     void _outputsEnabledAfterLinkHistoryChurn();
     void _ntripUdpOutputIsSourceSpecific();
+    void _ntripUdpOutputEndpointChanges_data();
+    void _ntripUdpOutputEndpointChanges();
     void _sourceTopologyDoesNotNotifyOnCounters();
     void _sourceSelectionAndSessions();
     void _filteredAndExpiredFrames();

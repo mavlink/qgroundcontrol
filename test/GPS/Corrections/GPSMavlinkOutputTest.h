@@ -9,4 +9,5 @@ class GPSMavlinkOutputTest : public CommsTest
 private slots:
     void _admissionFollowsLinkLifetime();
     void _primarySwitchPreservesIdentity();
+    void _replayExcludedFromLiveAdmissions();
 };

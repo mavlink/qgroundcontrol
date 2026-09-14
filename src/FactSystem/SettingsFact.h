@@ -2,6 +2,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Fact.h"
 
@@ -10,6 +11,8 @@
 class SettingsFact : public Fact
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     /// Whether this setting should be shown in the UI. When false the setting is
     /// hidden from the user and its value is forced to the default. Controlled by
     /// QGCCorePlugin::adjustSettingMetaData and settings-override JSON files.

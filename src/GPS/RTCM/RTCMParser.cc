@@ -1,5 +1,7 @@
 #include "RTCMParser.h"
 
+#include <QtCore/QByteArrayView>
+
 RTCMParser::RTCMParser() = default;
 
 void RTCMParser::reset()
@@ -20,5 +22,5 @@ uint32_t RTCMParser::crc24q(const uint8_t* data, size_t len)
 QByteArray RTCMParser::currentFrame() const
 {
     const auto frame = _framer.frame();
-    return QByteArray(reinterpret_cast<const char*>(frame.data()), static_cast<qsizetype>(frame.size()));
+    return QByteArrayView(frame).toByteArray();
 }

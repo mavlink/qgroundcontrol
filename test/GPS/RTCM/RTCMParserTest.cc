@@ -33,6 +33,15 @@ void RTCMParserTest::_frameAccess()
         frame.chopped(RTCMParser::kCrcSize));
     QCOMPARE(QByteArray(reinterpret_cast<const char*>(parser.crcBytes()), RTCMParser::kCrcSize),
              frame.last(RTCMParser::kCrcSize));
+
+    const auto savedFrame = parser.currentFrame();
+    parser.reset();
+    const auto replacement = GpsTestHelpers::buildRtcmFrame(1006, extraPayload);
+    for (const char byte : replacement) {
+        parser.addByte(static_cast<uint8_t>(byte));
+    }
+    QCOMPARE(parser.currentFrame(), replacement);
+    QCOMPARE(savedFrame, frame);
 }
 
 void RTCMParserTest::_partialAndReset()

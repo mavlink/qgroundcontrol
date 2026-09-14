@@ -70,6 +70,8 @@ public:
 
     GPSCorrectionSourceRegistration registerSource(GPSCorrectionSource source, const QString& instance = {});
     bool isCurrentSource(GPSCorrectionSource source, quint64 session, const QString& instance) const;
+    /// Returns global selection, not output admission.
+    /// Scoped outputs may admit ingress even when false.
     bool acceptIngress(const GPSCorrectionIngress& ingress);
     quint64 sourceSession(GPSCorrectionSource source) const;
     QString sourceInstance(GPSCorrectionSource source) const;

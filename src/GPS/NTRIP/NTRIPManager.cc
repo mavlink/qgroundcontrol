@@ -499,7 +499,7 @@ void NTRIPManager::_setSecurityWarning(const QString& warning)
 
 void NTRIPManager::_rtcmDataReceived(const RTCMFrameDecoder::Result& frame)
 {
-    _stats.recordMessage(frame.data.size(), frame.messageId);
+    _stats.recordMessage(frame.data.size(), frame.messageId, frame.receivedAtMs);
     if (!_correctionManager) {
         qCWarning(NTRIPManagerLog) << "Correction manager not ready; dropping" << frame.data.size() << "bytes";
     }

@@ -46,6 +46,11 @@ bool RTCMUdpInput::start()
         return false;
     }
     connect(socket, &QUdpSocket::readyRead, this, &RTCMUdpInput::_readDatagrams);
+    connect(socket, &QAbstractSocket::errorOccurred, this, [this, guard, socket, revision]() {
+        if (guard && socket && socket == _socket && revision == _lifecycleRevision) {
+            qCWarning(RTCMUdpInputLog) << "UDP socket error on port" << _port << ":" << socket->errorString();
+        }
+    });
 
     if (_port == 0) {
         _port = socket->localPort();

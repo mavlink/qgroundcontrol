@@ -7,8 +7,8 @@ qt_extract_metatypes(QGCGPSCorrections)
 target_compile_features(QGCGPSCorrections PUBLIC cxx_std_20)
 target_link_libraries(
     QGCGPSCorrections
-    PUBLIC QGCGPSRTCM Qt6::Core
-    PRIVATE QGCLoggingCategory
+    PUBLIC Qt6::Core
+    PRIVATE QGCGPSRTCM QGCLoggingCategory
 )
 target_sources(
     QGCGPSCorrections

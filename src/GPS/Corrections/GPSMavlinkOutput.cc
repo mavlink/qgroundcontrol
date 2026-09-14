@@ -38,7 +38,7 @@ QList<RTCMMavlink::Output> GPSMavlinkOutput::outputs()
             continue;
         }
         const auto link = vehicle->vehicleLinkManager()->primaryLink().lock();
-        if (!link || !link->isConnected() || seen.contains(link.get())) {
+        if (!link || !link->isConnected() || link->isLogReplay() || seen.contains(link.get())) {
             continue;
         }
         seen.insert(link.get());
@@ -69,13 +69,9 @@ QList<RTCMMavlink::Output> GPSMavlinkOutput::outputs()
                             return true;
                         }});
     }
-    for (auto it = _connections.begin(); it != _connections.end();) {
+    _connections.removeIf([](auto it) {
         const auto link = it->link.lock();
-        if (!link || !link->isConnected()) {
-            it = _connections.erase(it);
-        } else {
-            ++it;
-        }
-    }
+        return !link || !link->isConnected();
+    });
     return outputs;
 }
