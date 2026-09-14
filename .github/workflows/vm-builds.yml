@@ -13,6 +13,7 @@ on:
       - 'deploy/multipass/**'
       - 'deploy/vagrant/**'
       - '.github/workflows/vm-builds.yml'
+      - '.github/runs-on.yml'
       - 'CMakePresets.json'
       - 'cmake/presets/**'
   pull_request:
@@ -21,6 +22,7 @@ on:
       - 'deploy/multipass/**'
       - 'deploy/vagrant/**'
       - '.github/workflows/vm-builds.yml'
+      - '.github/runs-on.yml'
       - 'CMakePresets.json'
       - 'cmake/presets/**'
   workflow_dispatch:
@@ -39,12 +41,11 @@ jobs:
     # Heavy nested-VM build that depends on fragile external resources (snap
     # store, image mirrors); informational only, never gate the PR on it.
     continue-on-error: true
-    # linux-x64-emulator is the only RunsOn pool with nested-virt (/dev/kvm); forks
-    # fall back to ubuntu-latest, which also exposes /dev/kvm.
+    # Keep 16 GiB for the 12 GiB guest plus host overhead, with nested-virt (/dev/kvm).
+    # Public-repo runner definitions come from master; PRs validate on the hosted KVM runner.
     runs-on: >-
-      ${{ github.repository_owner == 'mavlink' &&
-          (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
-          format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
+      ${{ github.repository_owner == 'mavlink' && github.event_name != 'pull_request' &&
+          format('runs-on={0}/runner=linux-x64-vm-builder', github.run_id) || 'ubuntu-latest' }}
     timeout-minutes: 120
     steps:
       - name: Harden Runner
@@ -53,7 +54,6 @@ jobs:
           egress-policy: audit
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io
@@ -112,9 +112,8 @@ jobs:
     # informational only, never gate the PR on it.
     continue-on-error: true
     runs-on: >-
-      ${{ github.repository_owner == 'mavlink' &&
-          (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
-          format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
+      ${{ github.repository_owner == 'mavlink' && github.event_name != 'pull_request' &&
+          format('runs-on={0}/runner=linux-x64-vm-builder', github.run_id) || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
       - name: Harden Runner
@@ -123,7 +122,6 @@ jobs:
           egress-policy: audit
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io

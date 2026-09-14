@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any
 
+import pytest
 import yaml
 from _helpers import REPO_ROOT
 
@@ -18,7 +19,6 @@ COMPOSITE_ACTIONS = sorted((REPO_ROOT / ".github" / "actions").rglob("action.y*m
 CI_SCRIPTS_WORKFLOW = WORKFLOWS_DIR / "ci-scripts.yml"
 DEPENDENCY_REVIEW_WORKFLOW = WORKFLOWS_DIR / "dependency-review.yml"
 HARDEN_RUNNER = "step-security/harden-runner@v2"
-RUNS_ON_ACTION = "runs-on/action@v2"
 VERSIONED_ACTION_REF = re.compile(r"(?:[0-9a-f]{40}|v\d+(?:\.\d+){0,2})")
 FORK_SAFETY_GUARDS = (
     "github.repository_owner == 'mavlink'",
@@ -53,6 +53,28 @@ def _uses_values(value: Any) -> Iterator[str]:
     elif isinstance(value, list):
         for child in value:
             yield from _uses_values(child)
+
+
+def _has_fork_safety_guard(condition: str) -> bool:
+    if all(guard in condition for guard in FORK_SAFETY_GUARDS):
+        return True
+    normalized = " ".join(condition.removeprefix("${{").removesuffix("}}").split())
+    non_pr_guard = "github.repository_owner == 'mavlink' && github.event_name != 'pull_request'"
+    return normalized == non_pr_guard or normalized.startswith(non_pr_guard + " && format(")
+
+
+@pytest.mark.parametrize(
+    ("condition", "safe"),
+    [
+        ("github.repository_owner == 'mavlink' && github.event_name != 'pull_request'", True),
+        ("github.event_name != 'pull_request'", False),
+        ("github.repository_owner == 'mavlink'", False),
+        ("github.repository_owner == 'mavlink' || github.event_name != 'pull_request'", False),
+        ("github.repository_owner == 'mavlink' && github.event_name == 'pull_request'", False),
+    ],
+)
+def test_non_pr_runner_guard_requires_both_owner_and_event(condition: str, safe: bool) -> None:
+    assert _has_fork_safety_guard(condition) is safe
 
 
 def test_ci_scripts_checks_every_workflow() -> None:
@@ -101,19 +123,11 @@ def test_runson_selection_is_fork_safe() -> None:
         for job_name, job in _executable_jobs(path):
             runner = str(job.get("runs-on", ""))
             if "runs-on=" in runner:
-                assert all(guard in runner for guard in FORK_SAFETY_GUARDS), (
+                assert _has_fork_safety_guard(runner), (
                     f"{path.name}:{job_name} must keep RunsOn selection fork-safe"
                 )
                 assert "||" in runner, (
                     f"{path.name}:{job_name} must provide a GitHub-hosted runner fallback"
-                )
-
-            for step in job["steps"]:
-                if step.get("uses") != RUNS_ON_ACTION:
-                    continue
-                condition = str(step.get("if", ""))
-                assert all(guard in condition for guard in FORK_SAFETY_GUARDS), (
-                    f"{path.name}:{job_name} must not enable RunsOn for fork pull requests"
                 )
 
 

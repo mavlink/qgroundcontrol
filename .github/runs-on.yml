@@ -1,5 +1,6 @@
 # RunsOn self-hosted runner pools, referenced by the workflows via
-# `runs-on=<run_id>/runner=<pool>`. Edit a pool here to change every job that uses it.
+# `runs-on=<run_id>/runner=<pool>`. Keep sizing here, not in workflow labels.
+# Public repositories load these definitions from the default branch only.
 images:
   qgc-ubuntu24-x64:
     platform: linux
@@ -8,44 +9,69 @@ images:
 
 runners:
   linux-x64-builder:
-    family: ["c8i.2xlarge"]
+    family: ["c8i.xlarge"]
+    cpu: [4]
+    ram: [8]
     spot: false
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 80gb
   linux-x64-builder-prebaked:
-    family: ["c8i.2xlarge"]
+    # Shared opt-in for desktop, Android, and Docker: retain desktop's 16 GiB floor.
+    family: ["m8i.xlarge"]
+    cpu: [4]
+    ram: [16]
     spot: false
     image: qgc-ubuntu24-x64
     extras: s3-cache
     volume: 80gb
   linux-x64-builder-60gb:
-    family: ["c8i.2xlarge"]
+    family: ["m8i.xlarge"]
+    cpu: [4]
+    ram: [16]
     spot: false
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 60gb
   linux-arm64-builder:
-    family: ["c8g.2xlarge"]
+    family: ["c8g.xlarge"]
+    cpu: [4]
+    ram: [8]
     spot: false
     image: ubuntu24-full-arm64
     extras: s3-cache
     volume: 60gb
   linux-x64-tester:
-    family: ["m8i.2xlarge"]
+    family: ["m8i.xlarge"]
+    cpu: [4]
+    ram: [16]
     spot: false
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 60gb
   linux-x64-emulator:
+    family: ["c8i.xlarge"]
+    cpu: [4]
+    ram: [8]
+    spot: false
+    image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 80gb
+    nested-virt: true
+  linux-x64-vm-builder:
+    # The 12 GiB guests need host headroom; do not share the 8 GiB emulator pool.
     family: ["c8i.2xlarge"]
+    cpu: [8]
+    ram: [16]
     spot: false
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 80gb
     nested-virt: true
   windows-x64-builder:
-    family: ["c8i.2xlarge"]
+    family: ["m8i.xlarge"]
+    cpu: [4]
+    ram: [16]
     spot: false
     image: windows22-full-x64
     extras: s3-cache
