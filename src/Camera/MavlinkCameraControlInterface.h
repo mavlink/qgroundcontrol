@@ -6,6 +6,7 @@
 #include <QtCore/QSizeF>
 
 #include "FactGroup.h"
+#include "QGCMAVLinkTypes.h"
 
 #include <QtQmlIntegration/QtQmlIntegration>
 

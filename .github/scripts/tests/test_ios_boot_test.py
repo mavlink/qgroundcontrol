@@ -39,6 +39,7 @@ def test_app_must_report_boot_success_and_device_is_deleted(tmp_path, output, er
                 boot_test(app, tmp_path / "log")
         else:
             boot_test(app, tmp_path / "log")
+    assert simctl.call_args_list[5].kwargs["timeout"] == 300
     assert simctl.call_args_list[-1].args == ("delete", "uuid")
     assert (tmp_path / "log").read_text() == output
 
@@ -48,7 +49,8 @@ def test_missing_runtime_fails():
         select_device({"devices": {}})
 
 
-def test_launch_timeout_still_cleans_up(tmp_path):
+@pytest.mark.parametrize("timeout", [300, 420])
+def test_launch_timeout_still_cleans_up(tmp_path, timeout):
     import json
 
     app = tmp_path / "QGC.app"
@@ -63,13 +65,20 @@ def test_launch_timeout_still_cleans_up(tmp_path):
                 "",
                 "",
                 "",
-                subprocess.TimeoutExpired("launch", 120, output=b"hung"),
+                subprocess.TimeoutExpired("launch", timeout, output=b"hung"),
                 "",
                 "",
             ],
         ) as simctl,
         pytest.raises(subprocess.TimeoutExpired),
     ):
-        boot_test(app, tmp_path / "log")
+        boot_test(app, tmp_path / "log", timeout=timeout)
+    assert simctl.call_args_list[5].kwargs["timeout"] == timeout
     assert simctl.call_args_list[-1].args == ("delete", "uuid")
     assert (tmp_path / "log").read_text() == "hung"
+
+
+def test_invalid_boot_deadline_does_not_create_simulator(tmp_path):
+    with patch("ios_boot_test.simctl") as simctl, pytest.raises(ValueError, match="positive"):
+        boot_test(tmp_path / "app", tmp_path / "log", timeout=0)
+    simctl.assert_not_called()

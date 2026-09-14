@@ -399,3 +399,16 @@ def test_ci_configure_steps_select_platform_presets() -> None:
 
     action = yaml.safe_load(CMAKE_CONFIGURE_ACTION.read_text(encoding="utf-8"))
     assert action["inputs"]["use-qt-cmake"]["default"] == "true"
+
+
+def test_portable_windows_tests_use_the_primary_workflow_aqt_override() -> None:
+    workflows = REPO_ROOT / ".github/workflows"
+    windows = yaml.safe_load((workflows / "windows.yml").read_text(encoding="utf-8"))
+    portable = yaml.safe_load((workflows / "extended-tests.yml").read_text(encoding="utf-8"))
+    setup = next(
+        step
+        for step in portable["jobs"]["portable"]["steps"]
+        if step.get("uses") == "./.github/actions/build-setup"
+    )
+    assert windows["env"]["AQT_SOURCE"] in setup["with"]["aqt-source"]
+    assert "matrix.host == 'windows'" in setup["with"]["aqt-source"]

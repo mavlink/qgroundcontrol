@@ -30,7 +30,9 @@ def select_device(devices: dict[str, Any]) -> tuple[str, str]:
     )
 
 
-def boot_test(app: Path, log: Path) -> None:
+def boot_test(app: Path, log: Path, *, timeout: int = 300) -> None:
+    if timeout <= 0:
+        raise ValueError("Boot timeout must be positive")
     with (app / "Info.plist").open("rb") as stream:
         bundle = plistlib.load(stream)["CFBundleIdentifier"]
     runtime, device_type = select_device(
@@ -48,7 +50,7 @@ def boot_test(app: Path, log: Path) -> None:
             device,
             bundle,
             "--simple-boot-test",
-            timeout=120,
+            timeout=timeout,
         )
         log.write_text(output, encoding="utf-8")
         print(output)
@@ -74,8 +76,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--app", type=Path, required=True)
     parser.add_argument("--log", type=Path, required=True)
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=300,
+        help="Cold simulator app startup deadline in seconds (default: 300)",
+    )
     args = parser.parse_args()
-    boot_test(args.app, args.log)
+    boot_test(args.app, args.log, timeout=args.timeout)
 
 
 if __name__ == "__main__":
