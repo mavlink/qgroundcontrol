@@ -1237,16 +1237,26 @@ public class QGCUsbSerialManager {
      * @return True if supported, false otherwise.
      */
     private static boolean isControlLineSupported(final UsbSerialPort port, final UsbSerialPort.ControlLine controlLine) {
-        EnumSet<UsbSerialPort.ControlLine> supportedControlLines;
+        return controlLineSupport(port, controlLine) == 1;
+    }
 
+    // 1: supported, 0: unsupported, -1: capability query failed. Shared with JNI.
+    static int controlLineSupport(final UsbSerialPort port, final UsbSerialPort.ControlLine controlLine) {
+        if (port == null) {
+            return -1;
+        }
         try {
-            supportedControlLines = port.getSupportedControlLines();
+            return port.getSupportedControlLines().contains(controlLine) ? 1 : 0;
+        } catch (final UnsupportedOperationException e) {
+            return 0;
         } catch (final IOException e) {
             QGCLogger.e(TAG, "Error getting supported control lines", e);
-            return false;
+            return -1;
         }
+    }
 
-        return supportedControlLines.contains(controlLine);
+    public static int getDataTerminalReadySupport(final int deviceId) {
+        return controlLineSupport(getOpenPortOrWarn(deviceId, "get DTR support"), UsbSerialPort.ControlLine.DTR);
     }
 
     /**

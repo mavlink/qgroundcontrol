@@ -11,10 +11,10 @@
 #include "AutoConnectSettings.h"
 #include "TCPLink.h"
 #include "UDPLink.h"
-
 #include "BluetoothLink.h"
 
 #ifndef QGC_NO_SERIAL_LINK
+#include "SerialAutoConnect.h"
 #include "SerialLink.h"
 #include "SerialPortManager.h"
 #ifdef Q_OS_ANDROID
@@ -29,6 +29,8 @@
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
+
+#include <utility>
 
 QGC_LOGGING_CATEGORY(LinkManagerLog, "Comms.LinkManager")
 QGC_LOGGING_CATEGORY(LinkManagerVerboseLog, "Comms.LinkManager:verbose")
@@ -46,6 +48,8 @@ LinkManager::LinkManager(QObject *parent)
     (void) qRegisterMetaType<LinkInterface*>("LinkInterface*");
 #ifndef QGC_NO_SERIAL_LINK
     (void) qRegisterMetaType<QGCSerialPortInfo>("QGCSerialPortInfo");
+    (void) connect(SerialPortManager::instance(), &SerialPortManager::portsEnumerated, this,
+                   &LinkManager::_updateSerialPorts);
 #endif
 }
 
@@ -63,11 +67,18 @@ void LinkManager::init()
 {
     _autoConnectSettings = SettingsManager::instance()->autoConnectSettings();
 
-#if defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
+#ifndef QGC_NO_SERIAL_LINK
+#ifdef Q_OS_ANDROID
     // The serial backend is fixed at startup. Changing the setting requires an app restart.
     AndroidSerial::setUsePosixSerial(
         SettingsManager::instance()->appSettings()->androidUsePosixSerial()->rawValue().toBool());
     SerialPortManager::instance()->setSinglePortOnly(!AndroidSerial::usePosixSerial());
+#endif
+    if (!_serialAutoConnect) {
+        _serialAutoConnect = std::make_unique<SerialAutoConnect>(
+            *SerialPortManager::instance(),
+            [this](SharedLinkConfigurationPtr& config) { createConnectedLink(config); });
+    }
 #endif
 
     if (!QGC::runningUnitTests()) {
@@ -143,9 +154,7 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
                 qCDebug(LinkManagerLog) << "Serial port is already reserved:" << serialConfig->portName();
                 return false;
             }
-            link = std::make_shared<SerialLink>(config);
-            // Keep the claim until SerialLink has shut down its worker and is destroyed.
-            connect(link.get(), &QObject::destroyed, this, [reservation]() {});
+            link = std::make_shared<SerialLink>(config, std::move(reservation));
             break;
         }
 #endif
@@ -518,6 +527,10 @@ void LinkManager::_reconnectAutoConnectLinks()
 
 void LinkManager::_updateAutoConnectLinks()
 {
+#ifndef QGC_NO_SERIAL_LINK
+    // Existing links still need fresh unplug checks while new connections are suspended.
+    const auto ports = SerialPortManager::instance()->availablePorts();
+#endif
     if (_connectionsSuspended) {
         return;
     }
@@ -527,7 +540,11 @@ void LinkManager::_updateAutoConnectLinks()
     _reconnectAutoConnectLinks();
 
 #ifndef QGC_NO_SERIAL_LINK
-    _addSerialAutoConnectLink();
+    if (_serialAutoConnect) {
+        _serialAutoConnect->update(ports, {_autoConnectSettings->autoConnectPixhawk()->rawValue().toBool(),
+                                           _autoConnectSettings->autoConnectSiKRadio()->rawValue().toBool(),
+                                           _autoConnectSettings->autoConnectLibrePilot()->rawValue().toBool()});
+    }
 #endif
 }
 
@@ -776,69 +793,25 @@ bool LinkManager::isLinkUSBDirect([[maybe_unused]] const LinkInterface *link)
 
 #ifndef QGC_NO_SERIAL_LINK // Serial Only Functions
 
-void LinkManager::_addSerialAutoConnectLink()
-{
-    SerialPortManager* const serialPorts = SerialPortManager::instance();
-    const auto ports = serialPorts->availablePorts();
-    for (const SerialPortManager::Port& port : ports) {
-        if (!port.autoConnectAllowed || !_allowAutoConnectToBoard(port.boardType) || port.bootloader ||
-            !serialPorts->canAutoConnectPort(port.systemLocation)) {
-            continue;
-        }
-        if (!_autoconnectPortWaitList.contains(port.systemLocation)) {
-            _autoconnectPortWaitList[port.systemLocation] = 1;
-            continue;
-        }
-        if ((++_autoconnectPortWaitList[port.systemLocation] * _autoconnectUpdateTimerMSecs) <=
-            _autoconnectConnectDelayMSecs) {
-            continue;
-        }
-        _autoconnectPortWaitList.remove(port.systemLocation);
-        auto* serialConfig = new SerialConfiguration(tr("%1 on %2 (AutoConnect)").arg(port.boardName, port.portName));
-        serialConfig->setUsbDirect(port.boardType == QGCSerialPortInfo::BoardTypePixhawk);
-        serialConfig->setBaud(port.boardType == QGCSerialPortInfo::BoardTypeSiKRadio ? 57600 : 115200);
-        serialConfig->setDynamic(true);
-        serialConfig->setPortName(port.systemLocation);
-        serialConfig->setAutoConnect(true);
-        SharedLinkConfigurationPtr config(serialConfig);
-        createConnectedLink(config);
-    }
-}
-
-bool LinkManager::_allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType) const
-{
-    switch (boardType) {
-    case QGCSerialPortInfo::BoardTypePixhawk:
-        if (_autoConnectSettings->autoConnectPixhawk()->rawValue().toBool()) {
-            return true;
-        }
-        break;
-    case QGCSerialPortInfo::BoardTypeSiKRadio:
-        if (_autoConnectSettings->autoConnectSiKRadio()->rawValue().toBool()) {
-            return true;
-        }
-        break;
-    case QGCSerialPortInfo::BoardTypeOpenPilot:
-        if (_autoConnectSettings->autoConnectLibrePilot()->rawValue().toBool()) {
-            return true;
-        }
-        break;
-    default:
-        return false;
-    }
-
-    return false;
-}
-
 void LinkManager::_updateSerialPorts()
 {
-    _commPortList.clear();
-    _commPortDisplayList.clear();
-    const auto portList = SerialPortManager::instance()->availablePorts();
-    for (const SerialPortManager::Port& info : portList) {
+    QStringList portList;
+    QStringList displayList;
+    const auto inventory = SerialPortManager::instance()->availablePorts();
+    for (const SerialPortManager::Port& info : inventory) {
         const QString port = info.systemLocation;
-        _commPortList += port;
-        _commPortDisplayList += SerialConfiguration::cleanPortDisplayName(port);
+        portList += port;
+        displayList += info.displayName.isEmpty() ? info.portName : info.displayName;
+    }
+    const bool portsChanged = _commPortList != portList;
+    const bool displayChanged = _commPortDisplayList != displayList;
+    _commPortList = std::move(portList);
+    _commPortDisplayList = std::move(displayList);
+    if (portsChanged) {
+        emit commPortsChanged();
+    }
+    if (displayChanged) {
+        emit commPortStringsChanged();
     }
 }
 

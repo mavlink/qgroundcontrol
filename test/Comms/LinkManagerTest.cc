@@ -4,6 +4,11 @@
 #include "MockLink.h"
 
 #include <QtTest/QTest>
+#include <QtCore/QScopeGuard>
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 
 SharedLinkConfigurationPtr LinkManagerTest::_addMockConfig(const QString &name, bool dynamic, bool autoConnect)
 {
@@ -123,8 +128,27 @@ void LinkManagerTest::_testLinkActiveStableAcrossReconnect()
 UT_REGISTER_TEST(LinkManagerTest, TestLabel::Integration, TestLabel::Comms)
 
 #ifndef QGC_NO_SERIAL_LINK
+#include "SerialAutoConnect.h"
 #include "SerialLink.h"
 #include "SerialPortManager.h"
+
+void LinkManagerTest::_testSerialReservationFollowsLink()
+{
+    SerialPortManager ports;
+    const QString name = QStringLiteral("/test/link-claim");
+    auto config = std::make_shared<SerialConfiguration>(QStringLiteral("Reservation"));
+    config->setPortName(name);
+    SharedLinkConfigurationPtr sharedConfig = config;
+    auto claim = ports.reservePort(name);
+    QVERIFY(claim);
+    {
+        SerialLink link(sharedConfig, std::move(claim));
+        QVERIFY(!claim);
+        QVERIFY(ports.isPortReserved(name));
+        QVERIFY(!ports.reservePort(name));
+    }
+    QVERIFY(ports.reservePort(name));
+}
 
 void LinkManagerTest::_testReservedSerialPortNotOpened()
 {
@@ -137,5 +161,50 @@ void LinkManagerTest::_testReservedSerialPortNotOpened()
     QVERIFY(!linkManager()->createConnectedLink(sharedConfig));
     QVERIFY(!config->link());
     QVERIFY(SerialPortManager::instance()->isPortReserved(port));
+}
+
+void LinkManagerTest::_testOccupiedSerialAutoConnectRecovers()
+{
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    linkManager()->init();
+    const int master = ::posix_openpt(O_RDWR | O_NOCTTY);
+    QVERIFY(master >= 0);
+    const auto closeMaster = qScopeGuard([master] { ::close(master); });
+    QCOMPARE(::grantpt(master), 0);
+    QCOMPARE(::unlockpt(master), 0);
+    const char* name = ::ptsname(master);
+    QVERIFY(name);
+    const QString location = QString::fromLocal8Bit(name);
+    QSerialPort occupied(location);
+    QVERIFY(occupied.open(QIODevice::ReadWrite));
+    const QList<SerialPortManager::Port> ports = {
+        {location, location, QGCSerialPortInfo::BoardTypePixhawk, QStringLiteral("Test")}};
+    const auto removePort = qScopeGuard([&] {
+        linkManager()->_serialAutoConnect->_configs.remove(location);
+        linkManager()->_serialAutoConnect->_waitingPorts.remove(location);
+    });
+    linkManager()->_serialAutoConnect->update(ports, {.pixhawk = true});
+    linkManager()->_serialAutoConnect->_waitingPorts[location].setRemainingTime(0);
+    linkManager()->_serialAutoConnect->update(ports, {.pixhawk = true});
+    const auto config = linkManager()->_serialAutoConnect->_configs.value(location);
+    QVERIFY(config);
+    QCOMPARE(config->type(), LinkConfiguration::TypeSerial);
+    QTRY_VERIFY_WITH_TIMEOUT(!config->link(), TestTimeout::shortMs());
+    QCOMPARE(linkManager()->_serialAutoConnect->_configs.value(location), config);
+    QVERIFY(!config->reconnectReady());
+    linkManager()->_serialAutoConnect->update(ports, {.pixhawk = true});
+    QVERIFY(!config->link());
+
+    occupied.close();
+    QTRY_VERIFY_WITH_TIMEOUT(config->reconnectReady(), TestTimeout::mediumMs());
+    linkManager()->_serialAutoConnect->update(ports, {.pixhawk = true});
+    QTRY_VERIFY_WITH_TIMEOUT(config->link() && config->link()->isConnected(), TestTimeout::shortMs());
+    QCOMPARE(linkManager()->_serialAutoConnect->_configs.value(location), config);
+    QVERIFY(!SerialPortManager::instance()->canAutoConnectPort(location));
+    linkManager()->disconnectLink(config->link());
+    QTRY_VERIFY_WITH_TIMEOUT(!config->link(), TestTimeout::shortMs());
+#else
+    QSKIP("Occupied serial reconnect coverage requires a Linux pseudo-terminal");
+#endif
 }
 #endif

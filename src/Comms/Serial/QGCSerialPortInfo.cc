@@ -7,6 +7,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QStringList>
 
 QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "Comms.QGCSerialPortInfo")
 
@@ -211,8 +212,6 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t &boardType, 
         }
     }
 
-    Q_ASSERT(boardType == BoardTypeUnknown);
-
     for (const BoardRegExpFallback_t &boardFallback : _boardDescriptionFallbackList) {
         if (description().contains(boardFallback.regExp)) {
 #ifndef Q_OS_ANDROID
@@ -295,7 +294,7 @@ bool QGCSerialPortInfo::isBlackCube() const
 bool QGCSerialPortInfo::isSystemPort(const QSerialPortInfo &port)
 {
 #ifdef Q_OS_MACOS
-    static const QList<QString> systemPortLocations = {
+    static const QStringList systemPortLocations = {
         QStringLiteral("tty.MALS"),
         QStringLiteral("tty.SOC"),
         QStringLiteral("tty.Bluetooth-Incoming-Port"),

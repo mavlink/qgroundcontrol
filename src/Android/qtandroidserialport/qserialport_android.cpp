@@ -327,7 +327,7 @@ bool QSerialPortPrivate::waitForReadyRead(int msecs)
     }
     locker.unlock();
 
-    qCWarning(AndroidSerialPortLog) << "Timeout while waiting for ready read on device ID" << _deviceId;
+    qCDebug(AndroidSerialPortLog) << "Timeout while waiting for ready read on device ID" << _deviceId;
     setError(QSerialPortErrorInfo(QSerialPort::TimeoutError, QSerialPort::tr("Timeout while waiting for ready read")));
 
     return false;
@@ -452,7 +452,10 @@ bool QSerialPortPrivate::setDataTerminalReady(bool set)
     const bool result = AndroidSerial::setDataTerminalReady(_deviceId, set);
     if (!result) {
         qCWarning(AndroidSerialPortLog) << "Failed to set DTR for device ID" << _deviceId;
-        setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QSerialPort::tr("Failed to set DTR")));
+        const auto dtrError = AndroidSerial::dataTerminalReadySupport(_deviceId) == 0
+                                  ? QSerialPort::UnsupportedOperationError
+                                  : QSerialPort::UnknownError;
+        setError(QSerialPortErrorInfo(dtrError, QSerialPort::tr("Failed to set DTR")));
     }
 
     return result;

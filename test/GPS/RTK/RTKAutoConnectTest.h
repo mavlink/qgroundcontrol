@@ -8,6 +8,8 @@ class RTKAutoConnectTest : public UnitTest
 
 private slots:
     void _discoveryUnplugAndDisable();
+    void _compositeReceiverSelection_data();
+    void _compositeReceiverSelection();
     void _excludedPorts_data();
     void _excludedPorts();
     void _failedAttemptsBackOffAndRespectReservations();

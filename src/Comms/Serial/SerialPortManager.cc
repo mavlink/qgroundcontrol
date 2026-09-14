@@ -9,7 +9,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(SerialPortManagerLog, "Comms.SerialPortManager")
+QGC_LOGGING_CATEGORY(SerialPortManagerLog, "Comms.Serial.SerialPortManager")
 Q_APPLICATION_STATIC(SerialPortManager, _serialPortManager)
 
 SerialPortManager::SerialPortManager(QObject* parent, Enumerator enumerator)
@@ -24,23 +24,25 @@ SerialPortManager* SerialPortManager::instance()
 QList<SerialPortManager::Port> SerialPortManager::_enumeratePorts()
 {
     QList<Port> ports;
-    QSet<QString> seenDevices;
     for (const QGCSerialPortInfo& info : QGCSerialPortInfo::availablePorts()) {
         Port port;
         if (info.hasVendorIdentifier() && info.hasProductIdentifier() && !info.serialNumber().isEmpty() &&
             info.serialNumber() != QStringLiteral("0")) {
-            const QString key = QStringLiteral("%1:%2:%3")
-                                    .arg(info.vendorIdentifier())
-                                    .arg(info.productIdentifier())
-                                    .arg(info.serialNumber());
-            // Composite boards expose one MAVLink port; retain explicitly identified NMEA interfaces.
-            if (seenDevices.contains(key) && !info.description().contains(QStringLiteral("NMEA"))) {
-                port.autoConnectAllowed = false;
-            }
-            seenDevices.insert(key);
+            port.physicalDeviceId = QStringLiteral("%1:%2:%3")
+                                        .arg(info.vendorIdentifier())
+                                        .arg(info.productIdentifier())
+                                        .arg(info.serialNumber());
         }
+        port.description = info.description();
         port.systemLocation = info.systemLocation().trimmed();
         port.portName = info.portName().trimmed();
+        port.displayName = port.portName;
+#ifdef Q_OS_ANDROID
+        const QString label = port.description.isEmpty() ? info.manufacturer() : port.description;
+        if (!label.isEmpty()) {
+            port.displayName = QStringLiteral("%1 (%2)").arg(label, port.portName);
+        }
+#endif
         (void) info.getBoardInfo(port.boardType, port.boardName);
         port.bootloader = info.isBootloader();
         ports.append(port);
@@ -57,16 +59,32 @@ QList<SerialPortManager::Port> SerialPortManager::availablePorts()
     }
     _ports = _enumerator();
     _scanTimer.restart();
+    QStringList identities;
     QStringList serialPorts;
     serialPorts.reserve(_ports.size());
     for (const Port& port : std::as_const(_ports)) {
         serialPorts.append(port.systemLocation);
+        identities.append(port.systemLocation);
+        identities.append(port.portName);
     }
     if (_serialPorts != serialPorts) {
         _serialPorts = std::move(serialPorts);
         emit serialPortsChanged();
     }
+    emit portsEnumerated(identities);
     return _ports;
+}
+
+QString SerialPortManager::displayName(const QString& systemLocation)
+{
+    const QString name = systemLocation.trimmed();
+    const auto ports = availablePorts();
+    for (const auto& port : ports) {
+        if (port.systemLocation == name || port.portName == name) {
+            return port.displayName.isEmpty() ? port.portName : port.displayName;
+        }
+    }
+    return {};
 }
 
 SerialPortManager::ReservationPtr SerialPortManager::reservePort(const QString& systemLocation)
@@ -123,7 +141,7 @@ SerialPortManager::ReservationPtr SerialPortManager::excludeFromAutoConnect(cons
 
 bool SerialPortManager::canAutoConnectPort(const QString& systemLocation) const
 {
-    return _autoConnectExclusions.value(systemLocation.trimmed()).expired() && canReservePort(systemLocation);
+    return !isAutoConnectExcluded(systemLocation) && canReservePort(systemLocation);
 }
 
 QStringList SerialPortManager::supportedBaudRates()
@@ -179,4 +197,9 @@ QStringList SerialPortManager::supportedBaudRates()
     }
 
     return supportBaudRateStrings;
+}
+
+bool SerialPortManager::isAutoConnectExcluded(const QString& systemLocation) const
+{
+    return !_autoConnectExclusions.value(systemLocation.trimmed()).expired();
 }

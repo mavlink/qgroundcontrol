@@ -53,7 +53,7 @@ void RTKAutoConnectTest::_discoveryUnplugAndDisable()
 void RTKAutoConnectTest::_excludedPorts_data()
 {
     QTest::addColumn<QString>("reason");
-    for (const auto* reason : {"bootloader", "composite", "busy", "nmea", "single-port", "other-board"}) {
+    for (const auto* reason : {"bootloader", "busy", "nmea", "single-port", "other-board"}) {
         QTest::newRow(reason) << QString::fromLatin1(reason);
     }
 }
@@ -71,7 +71,6 @@ void RTKAutoConnectTest::_excludedPorts()
     SerialPortManager::Port port{QStringLiteral("/test/rtk"), QStringLiteral("rtk"), QGCSerialPortInfo::BoardTypeRTKGPS,
                                  QStringLiteral("u-blox")};
     port.bootloader = reason == QStringLiteral("bootloader");
-    port.autoConnectAllowed = reason != QStringLiteral("composite");
     if (reason == QStringLiteral("other-board")) {
         port.boardType = QGCSerialPortInfo::BoardTypePixhawk;
     }
@@ -191,4 +190,65 @@ void RTKAutoConnectTest::_failedOpenRetriesWithoutUnplug()
     discovery.update();
     QCOMPARE(attempts.size(), 2);
     QVERIFY(discovery._autoConnectedPort.isEmpty());
+}
+
+void RTKAutoConnectTest::_compositeReceiverSelection_data()
+{
+    QTest::addColumn<QString>("scenario");
+    QTest::addColumn<bool>("connectSecond");
+    QTest::newRow("busy-primary-blocks-duplicate") << QStringLiteral("duplicate") << false;
+    QTest::newRow("nmea-interface-remains-eligible") << QStringLiteral("nmea-label") << true;
+    QTest::newRow("mavlink-sibling") << QStringLiteral("mavlink-sibling") << true;
+    QTest::newRow("bootloader-sibling") << QStringLiteral("bootloader") << true;
+    QTest::newRow("explicit-nmea-sibling") << QStringLiteral("nmea-source") << true;
+    QTest::newRow("unknown-identities") << QStringLiteral("unknown") << true;
+    QTest::newRow("distinct-devices") << QStringLiteral("distinct") << true;
+}
+
+void RTKAutoConnectTest::_compositeReceiverSelection()
+{
+    QFETCH(QString, scenario);
+    QFETCH(bool, connectSecond);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), true);
+    saved.setFactValue(settings->nmeaSource(), scenario == QStringLiteral("nmea-source")
+                                                   ? AutoConnectSettings::NmeaSourceSerial
+                                                   : AutoConnectSettings::NmeaSourceDisabled);
+    SerialPortManager::Port first{QStringLiteral("/test/receiver-first"), QStringLiteral("first"),
+                                  QGCSerialPortInfo::BoardTypeRTKGPS, QStringLiteral("u-blox")};
+    first.physicalDeviceId = QStringLiteral("1:2:serial");
+    auto second = first;
+    second.systemLocation = QStringLiteral("/test/receiver-second");
+    second.portName = QStringLiteral("second");
+    if (scenario == QStringLiteral("nmea-label")) {
+        second.description = QStringLiteral("NMEA interface");
+    } else if (scenario == QStringLiteral("mavlink-sibling")) {
+        first.boardType = QGCSerialPortInfo::BoardTypePixhawk;
+    } else if (scenario == QStringLiteral("bootloader")) {
+        first.bootloader = true;
+    } else if (scenario == QStringLiteral("unknown")) {
+        first.physicalDeviceId.clear();
+        second.physicalDeviceId.clear();
+    } else if (scenario == QStringLiteral("distinct")) {
+        second.physicalDeviceId = QStringLiteral("1:2:other");
+    }
+    saved.setFactValue(settings->autoConnectNmeaPort(), first.systemLocation);
+    SerialPortManager ports(nullptr, [&] { return QList<SerialPortManager::Port>{first, second}; });
+    auto claim = ports.reservePort(first.systemLocation);
+    QVERIFY(claim);
+    GPSRtk receiver;
+    RTKAutoConnect discovery(settings, &receiver, &ports);
+    discovery._connectDelayMs = 0;
+    QSignalSpy connects(&discovery, &RTKAutoConnect::connectRequested);
+    discovery.update();
+    discovery.update();
+    QCOMPARE(connects.size(), connectSecond ? 1 : 0);
+    if (connectSecond) {
+        QCOMPARE(connects.first().first().toString(), second.systemLocation);
+        discovery._retryDeadline.setRemainingTime(0);
+        discovery.update();
+        QCOMPARE(connects.size(), 2);
+        QCOMPARE(connects.last().first().toString(), second.systemLocation);
+    }
 }

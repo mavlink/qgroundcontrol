@@ -78,6 +78,8 @@ bool getClearToSend(int deviceId);
 bool getDataSetReady(int deviceId);
 bool getDataTerminalReady(int deviceId);
 bool setDataTerminalReady(int deviceId, bool set);
+// 1: supported, 0: unsupported, -1: capability query failed.
+int dataTerminalReadySupport(int deviceId);
 bool getRingIndicator(int deviceId);
 bool getRequestToSend(int deviceId);
 bool setRequestToSend(int deviceId, bool set);

@@ -6,6 +6,8 @@ import QGroundControl
 import QGroundControl.Controls
 
 ColumnLayout {
+    property var linkManager: QGroundControl.linkManager
+
     spacing: _rowSpacing
 
     function saveSettings() {
@@ -26,41 +28,52 @@ ColumnLayout {
         QGCComboBox {
             id:                     commPortCombo
             Layout.preferredWidth:  _secondColumnWidth
-            enabled:                QGroundControl.linkManager.serialPorts.length > 0
+            objectName:             "serialPortCombo"
+            enabled:                linkManager.serialPorts.length > 0
+            textRole:               "label"
+            valueRole:              "path"
+
+            function refreshPorts() {
+                const paths = linkManager.serialPorts
+                const labels = linkManager.serialPortStrings
+                const entries = []
+                let selectedPath = subEditConfig.portName
+                if (!selectedPath && paths.length > 0) {
+                    selectedPath = paths[0]
+                    subEditConfig.portName = selectedPath
+                }
+                for (let i = 0; i < paths.length; ++i) {
+                    entries.push({ label: labels[i] || paths[i], path: paths[i] })
+                }
+                let selectedIndex = paths.indexOf(selectedPath)
+                if (selectedIndex < 0 && selectedPath) {
+                    entries.push({ label: selectedPath, path: selectedPath })
+                    selectedIndex = entries.length - 1
+                }
+                if (entries.length === 0) {
+                    entries.push({ label: qsTr("None Available"), path: "" })
+                    selectedIndex = 0
+                }
+                model = entries
+                currentIndex = selectedIndex
+            }
 
             onActivated: (index) => {
-                if (index != -1) {
-                    if (index >= QGroundControl.linkManager.serialPortStrings.length) {
-                        // This item was adding at the end, must use added text as name
-                        subEditConfig.portName = commPortCombo.textAt(index)
-                    } else {
-                        subEditConfig.portName = QGroundControl.linkManager.serialPorts[index]
-                    }
+                if (index >= 0 && index < model.length && model[index].path) {
+                    subEditConfig.portName = model[index].path
                 }
             }
 
-            Component.onCompleted: {
-                var index = -1
-                var serialPorts = [ ]
-                if (QGroundControl.linkManager.serialPortStrings.length !== 0) {
-                    for (var i=0; i<QGroundControl.linkManager.serialPortStrings.length; i++) {
-                        serialPorts.push(QGroundControl.linkManager.serialPortStrings[i])
-                    }
-                    if (subEditConfig.portDisplayName === "" && QGroundControl.linkManager.serialPorts.length > 0) {
-                        subEditConfig.portName = QGroundControl.linkManager.serialPorts[0]
-                    }
-                    index = serialPorts.indexOf(subEditConfig.portDisplayName)
-                    if (index === -1) {
-                        serialPorts.push(subEditConfig.portName)
-                        index = serialPorts.indexOf(subEditConfig.portName)
-                    }
-                }
-                if (serialPorts.length === 0) {
-                    serialPorts = [ qsTr("None Available") ]
-                    index = 0
-                }
-                commPortCombo.model = serialPorts
-                commPortCombo.currentIndex = index
+            Component.onCompleted: refreshPorts()
+
+            Connections {
+                target: linkManager
+                function onCommPortsChanged() { commPortCombo.refreshPorts() }
+                function onCommPortStringsChanged() { commPortCombo.refreshPorts() }
+            }
+            Connections {
+                target: subEditConfig
+                function onPortNameChanged() { commPortCombo.refreshPorts() }
             }
         }
 
@@ -79,7 +92,7 @@ ColumnLayout {
             }
 
             Component.onCompleted: {
-                var rates = QGroundControl.linkManager.serialBaudRates.slice()
+                var rates = linkManager.serialBaudRates.slice()
                 rates.push(_customLabel)
                 model = rates
 

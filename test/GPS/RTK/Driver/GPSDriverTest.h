@@ -26,4 +26,5 @@ private slots:
     void _testInvalidFixedBaseRejected();
     void _testCallbacksWithoutSinksAreSafe();
     void _testUnknownCallbackIgnored();
+    void _transportResultsMapToLegacyCallbacks();
 };

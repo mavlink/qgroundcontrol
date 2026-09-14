@@ -2,6 +2,7 @@
 
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
+#include "SerialPortManager.h"
 
 #include <QtCore/QString>
 #ifdef Q_OS_ANDROID
@@ -13,7 +14,20 @@
 #include <atomic>
 
 class QThread;
-class QTimer;
+
+/// Captured on the application thread; changes take effect on the next connection.
+struct SerialConnectionSettings
+{
+    QString portName;
+    qint32 baud = QSerialPort::Baud57600;
+    QSerialPort::DataBits dataBits = QSerialPort::Data8;
+    QSerialPort::FlowControl flowControl = QSerialPort::NoFlowControl;
+    QSerialPort::StopBits stopBits = QSerialPort::OneStop;
+    QSerialPort::Parity parity = QSerialPort::NoParity;
+    bool dtrForceLow = false;
+    bool autoConnect = false;
+    bool bootloader = false;
+};
 
 /*===========================================================================*/
 
@@ -69,6 +83,8 @@ public:
     bool dtrForceLow() const { return _dtrForceLow; }
     void setdtrForceLow(bool dtrForceLow) { if (dtrForceLow != _dtrForceLow) { _dtrForceLow = dtrForceLow; emit dtrForceLowChanged(); } }
 
+    SerialConnectionSettings connectionSettings() const;
+
     static QStringList supportedBaudRates();
     static QString cleanPortDisplayName(const QString &name);
 
@@ -102,7 +118,8 @@ class SerialWorker : public QObject
     Q_OBJECT
 
 public:
-    explicit SerialWorker(const SerialConfiguration *config, QObject *parent = nullptr);
+    explicit SerialWorker(SerialConnectionSettings settings, SerialPortManager::ReservationPtr reservation = {},
+                          QObject* parent = nullptr);
     ~SerialWorker();
 
     bool isConnected() const;
@@ -120,6 +137,7 @@ public slots:
     void connectToPort();
     void disconnectFromPort();
     void writeData(const QByteArray &data);
+    void checkPortAvailability(const QStringList& availablePorts);
 
 private slots:
     void _onPortConnected();
@@ -127,12 +145,13 @@ private slots:
     void _onPortReadyRead();
     void _onPortBytesWritten(qint64 bytes) const;
     void _onPortErrorOccurred(QSerialPort::SerialPortError portError);
-    void _checkPortAvailability();
 
 private:
-    const SerialConfiguration *_serialConfig = nullptr;
+    bool _configurePort();
+
+    const SerialConnectionSettings _settings;
+    const SerialPortManager::ReservationPtr _reservation;
     QSerialPort *_port = nullptr;
-    QTimer *_timer = nullptr;
     std::atomic<bool> _isConnected{false};
     bool _errorEmitted = false;
 };
@@ -144,7 +163,8 @@ class SerialLink : public LinkInterface
     Q_OBJECT
 
 public:
-    explicit SerialLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
+    explicit SerialLink(SharedLinkConfigurationPtr& config, SerialPortManager::ReservationPtr reservation,
+                        QObject* parent = nullptr);
     virtual ~SerialLink();
 
     bool isConnected() const override;
@@ -167,6 +187,7 @@ private:
     void _writeBytes(const QByteArray &data) override;
 
     const SerialConfiguration *_serialConfig = nullptr;
+    const SerialPortManager::ReservationPtr _reservation;
     SerialWorker *_worker = nullptr;
     QThread *_workerThread = nullptr;
     std::atomic<bool> _disconnectedEmitted{false};

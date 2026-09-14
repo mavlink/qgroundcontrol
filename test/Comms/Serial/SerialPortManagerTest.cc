@@ -2,14 +2,26 @@
 
 #include <QtTest/QSignalSpy>
 
-#include "GPSProvider.h"
-#include "GPSTransport.h"
 #include "SerialLink.h"
 #include "SerialPortManager.h"
 
 void SerialPortManagerTest::_exclusiveReservations()
 {
-    SerialPortManager ports;
+    SerialPortManager::Port gps{QStringLiteral("/test/gps"), QStringLiteral("gps"), QGCSerialPortInfo::BoardTypeRTKGPS,
+                                QStringLiteral("Receiver")};
+    gps.physicalDeviceId = QStringLiteral("1:2:serial");
+    gps.description = QStringLiteral("NMEA interface");
+    auto mavlink = gps;
+    mavlink.systemLocation = QStringLiteral("/test/mavlink");
+    mavlink.portName = QStringLiteral("mavlink");
+    mavlink.description = QStringLiteral("MAVLink interface");
+    SerialPortManager ports(nullptr, [&] { return QList<SerialPortManager::Port>{gps, mavlink}; });
+    const auto inventory = ports.availablePorts();
+    QCOMPARE(inventory.size(), 2);
+    QCOMPARE(inventory[0].physicalDeviceId, inventory[1].physicalDeviceId);
+    QCOMPARE(inventory[0].description, gps.description);
+    QCOMPARE(inventory[1].description, mavlink.description);
+    QCOMPARE(ports.serialPorts(), QStringList({gps.systemLocation, mavlink.systemLocation}));
     QVERIFY(!ports.reservePort(QString()));
     auto first = ports.reservePort(QStringLiteral(" /test/gps "));
     QVERIFY(first);
@@ -36,7 +48,9 @@ void SerialPortManagerTest::_singlePortInventory()
         return inventory;
     });
     ports.setSinglePortOnly(true);
+    QSignalSpy enumerated(&ports, &SerialPortManager::portsEnumerated);
     QCOMPARE(ports.availablePorts().size(), 1);
+    QCOMPARE(enumerated.size(), 1);
     auto reservation = ports.reservePort(QStringLiteral("/test/gps"));
     QVERIFY(reservation);
     QVERIFY(!ports.canReservePort(QStringLiteral("/test/mavlink")));
@@ -44,9 +58,12 @@ void SerialPortManagerTest::_singlePortInventory()
     inventory.clear();
     QCOMPARE(ports.availablePorts().size(), 1);
     QCOMPARE(scans, 1);
+    QCOMPARE(enumerated.size(), 1);
     reservation.reset();
     QTRY_VERIFY_WITH_TIMEOUT(ports.availablePorts().isEmpty(), TestTimeout::mediumMs());
     QCOMPARE(scans, 2);
+    QCOMPARE(enumerated.size(), 2);
+    QVERIFY(enumerated.last().first().toStringList().isEmpty());
     QVERIFY(ports.canReservePort(QStringLiteral("/test/mavlink")));
 }
 
@@ -78,38 +95,6 @@ void SerialPortManagerTest::_inventoryNotificationsAndBaudRates()
     }
 }
 
-void SerialPortManagerTest::_finishedReceiverReleasesReservation_data()
-{
-    QTest::addColumn<bool>("cancelled");
-    QTest::newRow("open-failed") << false;
-    QTest::newRow("cancelled-before-start") << true;
-}
-
-void SerialPortManagerTest::_finishedReceiverReleasesReservation()
-{
-    QFETCH(bool, cancelled);
-    QList<SerialPortManager::Port> inventory{
-        {QStringLiteral("/test/gps"), QStringLiteral("gps"), QGCSerialPortInfo::BoardTypeRTKGPS, QString()}};
-    SerialPortManager ports(nullptr, [&]() { return inventory; });
-    ports.setSinglePortOnly(true);
-    QCOMPARE(ports.availablePorts().size(), 1);
-    auto reservation = ports.reservePort(QStringLiteral("/test/gps"));
-    QVERIFY(reservation);
-    GPSProvider provider(
-        [reservation = std::move(reservation)](const std::atomic_bool&) { return std::unique_ptr<GPSTransport>{}; },
-        GPSReceiverType::ublox, GPSReceiverConfig{});
-    if (cancelled) {
-        provider.stop();
-    }
-    QVERIFY(!ports.canReservePort(QStringLiteral("/test/mavlink")));
-    inventory.clear();
-    provider.start();
-    QVERIFY(provider.wait(TestTimeout::shortMs()));
-    QVERIFY(!ports.anyPortReserved());
-    QVERIFY(ports.reservePort(QStringLiteral("/test/mavlink")));
-    QTRY_VERIFY_WITH_TIMEOUT(ports.availablePorts().isEmpty(), TestTimeout::mediumMs());
-}
-
 void SerialPortManagerTest::_routingExclusionsDoNotOccupyPorts()
 {
     SerialPortManager ports;
@@ -117,6 +102,7 @@ void SerialPortManagerTest::_routingExclusionsDoNotOccupyPorts()
     const QString port = QStringLiteral("/test/nmea");
     auto exclusion = ports.excludeFromAutoConnect(port);
     QVERIFY(exclusion);
+    QVERIFY(ports.isAutoConnectExcluded(QStringLiteral(" /test/nmea ")));
     QVERIFY(!ports.canAutoConnectPort(port));
     QVERIFY(ports.canReservePort(port));
     QVERIFY(!ports.anyPortReserved());
@@ -126,8 +112,37 @@ void SerialPortManagerTest::_routingExclusionsDoNotOccupyPorts()
     QVERIFY(!ports.canAutoConnectPort(port));
     auto active = ports.reservePort(port);
     QVERIFY(active);
+    QVERIFY(ports.isAutoConnectExcluded(port));
+    QVERIFY(!ports.isAutoConnectExcluded(QStringLiteral("/test/mavlink")));
+    QVERIFY(!ports.canAutoConnectPort(QStringLiteral("/test/mavlink")));
     active.reset();
     QVERIFY(!ports.canAutoConnectPort(port));
     secondOwner.reset();
+    QVERIFY(!ports.isAutoConnectExcluded(port));
     QVERIFY(ports.canAutoConnectPort(port));
+}
+
+void SerialPortManagerTest::_displayMetadataUsesCachedInventory()
+{
+    int scans = 0;
+    SerialPortManager::Port port{QStringLiteral("/test/serial"), QStringLiteral("serial"),
+                                 QGCSerialPortInfo::BoardTypeUnknown, QString()};
+    port.displayName = QStringLiteral("USB receiver (serial)");
+    SerialPortManager ports(nullptr, [&] {
+        ++scans;
+        return QList<SerialPortManager::Port>{port};
+    });
+    QSignalSpy enumerated(&ports, &SerialPortManager::portsEnumerated);
+    QCOMPARE(ports.displayName(port.systemLocation), port.displayName);
+    QCOMPARE(ports.displayName(port.portName), port.displayName);
+    QVERIFY(ports.displayName(QStringLiteral("/test/missing")).isEmpty());
+    QCOMPARE(scans, 1);
+    QCOMPARE(enumerated.size(), 1);
+    const auto identities = enumerated.first().first().toStringList();
+    QVERIFY(identities.contains(port.systemLocation));
+    QVERIFY(identities.contains(port.portName));
+    port.displayName = QStringLiteral("Updated receiver (serial)");
+    QTRY_COMPARE_WITH_TIMEOUT(ports.displayName(port.systemLocation), port.displayName, TestTimeout::mediumMs());
+    QCOMPARE(scans, 2);
+    QCOMPARE(enumerated.size(), 2);
 }

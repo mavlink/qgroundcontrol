@@ -65,11 +65,13 @@ runs:
         python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" "${ARGS[@]}"
 
     - name: Setup reviewdog
+      id: reviewdog
+      continue-on-error: true
       if: inputs.reviewdog == 'true' && env.REVIEWDOG_LOG != ''
       uses: reviewdog/action-setup@v1
 
     - name: Annotate compiler warnings
-      if: inputs.reviewdog == 'true' && env.REVIEWDOG_LOG != ''
+      if: inputs.reviewdog == 'true' && env.REVIEWDOG_LOG != '' && steps.reviewdog.outcome == 'success'
       shell: bash
       env:
         REVIEWDOG_GITHUB_API_TOKEN: ${{ inputs.reviewdog-token }}
