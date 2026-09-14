@@ -18,6 +18,7 @@ public:
     static QGCCorePlugin* instance();
 
     SVBackend* backend() const { return _backend; }
+    const QVariantList& toolBarIndicators() final { return _toolBarIndicators; }
     QList<int> firstRunPromptCustomIds() final { return {}; }
     QString firstRunPromptResource(int id) const final;
     QQmlApplicationEngine* createQmlApplicationEngine(QObject* parent) final;
@@ -28,6 +29,7 @@ public:
 private:
     DigiviewManager* const _digiviewManager;
     SVBackend* const _backend;
+    QVariantList _toolBarIndicators;
     QQmlApplicationEngine* _qmlEngine = nullptr;
     class CustomOverrideInterceptor* _urlInterceptor = nullptr;
 };

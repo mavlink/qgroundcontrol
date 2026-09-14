@@ -26,6 +26,7 @@ qt_add_qml_module(SynclairVisionUIModule
         Flyview/SVFlyViewWidgetLayer.qml
         Flyview/SVRecordInfoBox.qml
         Flyview/SVFlyViewStats.qml
+        Flyview/SVFlyViewToolbarIndicator.qml
         Flyview/SVShortcutHandler.qml
         Flyview/SVWelcomePrompt.qml
         Flyview/SVNotificationManager.qml
@@ -36,6 +37,7 @@ qt_add_qml_module(SynclairVisionUIModule
         Camera/SVCameraLayer.qml
         Camera/SVCameraWidgetLayer.qml
         Camera/SVCameraLayerOverlays.qml
+        Camera/SVCameraCompass.qml
         Camera/SVCameraDetectionFlag.qml
 
         Controls/SVControlPanel.qml

@@ -1,11 +1,12 @@
 #include "CustomPlugin.h"
 
-#include "DigiviewManager.h"
-#include "SVBackend.h"
-
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QFile>
+#include <QtCore/QUrl>
 #include <QtQml/QQmlApplicationEngine>
+
+#include "DigiviewManager.h"
+#include "SVBackend.h"
 
 Q_APPLICATION_STATIC(CustomPlugin, _customPluginInstance);
 
@@ -13,7 +14,10 @@ CustomPlugin::CustomPlugin(QObject* parent)
     : QGCCorePlugin(parent)
     , _digiviewManager(new DigiviewManager(this))
     , _backend(new SVBackend(_digiviewManager, this))
+    , _toolBarIndicators(QGCCorePlugin::toolBarIndicators())
 {
+    _toolBarIndicators.prepend(QVariant::fromValue(
+        QUrl(QStringLiteral("qrc:/qml/QGroundControl/SynclairVisionUI/Flyview/SVFlyViewToolbarIndicator.qml"))));
 }
 
 QGCCorePlugin* CustomPlugin::instance()

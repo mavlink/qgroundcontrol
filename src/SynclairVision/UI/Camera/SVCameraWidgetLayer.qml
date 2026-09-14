@@ -19,9 +19,11 @@ Item {
     property var  parentToolInsets
     property real _heading:  NaN
     property real _pitch:    NaN
+    property real _roll:     NaN
     property bool _inverted: false
     property var vehicle: globals.activeVehicle
-    property real _rollAngle: (vehicle ? vehicle.roll.rawValue  : 0) + (_inverted ? 180 : 0)
+    property real _rollAngle: (Number.isFinite(_roll) ? _roll : vehicle ? vehicle.roll.rawValue : 0)
+        + (_inverted ? 180 : 0)
     property int  cameraSlot
     property int index
 
@@ -83,6 +85,7 @@ Item {
     function resetCameraOverrides() {
         _heading = NaN
         _pitch = NaN
+        _roll = NaN
         _inverted = false
     }
 
@@ -132,15 +135,13 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            QGCCompassWidget {
+            SVCameraCompass {
                 id:                     compass
                 anchors.left:           attitude.right
                 anchors.leftMargin:     SVUnits.bigMargin
                 size:                   SVUnits.objectWidth * 1.4
-                vehicle:                cameraVehicle
-                border.width:             SVSettings.simplifiedUserInterface ? 0 : 1
-                _lockNoseUpCompass:     true
-                _showAdditionalIndicators: false
+                heading:                cameraVehicle.heading.rawValue
+                showBorder:             !SVSettings.simplifiedUserInterface
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -172,15 +173,13 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
             }
 
-            QGCCompassWidget {
+            SVCameraCompass {
                 id:                       compass
                 anchors.top:              attitude.bottom
                 anchors.topMargin:        SVUnits.bigMargin
                 size:                     SVUnits.objectWidth * 1.4
-                vehicle:                  cameraVehicle
-                border.width:             SVSettings.simplifiedUserInterface ? 0 : 1
-                _lockNoseUpCompass:     true
-                _showAdditionalIndicators: false
+                heading:                  cameraVehicle.heading.rawValue
+                showBorder:               !SVSettings.simplifiedUserInterface
                 anchors.horizontalCenter: parent.horizontalCenter
             }
         }
@@ -207,23 +206,42 @@ Item {
                 visible: !SVSettings.simplifiedUserInterface
             }
 
-            IntegratedCompassAttitude {
+            Item {
                 id: combinedWidget
-                
-                // Explicitly define attitude dimensions so child elements position properly
-                attitudeSize:    SVUnits.objectWidth * 0.20
-                attitudeSpacing: SVUnits.margin
 
-                // Keep your max radius constraint
-                maxCompassRadius: SVUnits.objectWidth * 1.0
+                readonly property real compassRadius: SVUnits.objectWidth
+                readonly property real attitudeSize: SVUnits.objectWidth * 0.20
+                readonly property real attitudeSpacing: SVUnits.margin
+                readonly property real totalAttitudeSize: attitudeSize + attitudeSpacing
 
-                vehicle: cameraVehicle
-
-                // Center inside the container padding box, taking child negative offsets into account
+                width: compassRadius * 2
+                height: width
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
 
-                
+                IntegratedAttitudeIndicator {
+                    x: -combinedWidget.totalAttitudeSize
+                    attitudeAngleDegrees: cameraVehicle.roll.rawValue
+                    compassRadius: combinedWidget.compassRadius
+                    attitudeSize: combinedWidget.attitudeSize
+                    attitudeSpacing: combinedWidget.attitudeSpacing
+                }
+
+                IntegratedAttitudeIndicator {
+                    x: -combinedWidget.totalAttitudeSize
+                    attitudeAngleDegrees: -cameraVehicle.pitch.rawValue
+                    compassRadius: combinedWidget.compassRadius
+                    attitudeSize: combinedWidget.attitudeSize
+                    attitudeSpacing: combinedWidget.attitudeSpacing
+                    transformOrigin: Item.Center
+                    rotation: 90
+                }
+
+                SVCameraCompass {
+                    anchors.fill: parent
+                    heading: cameraVehicle.heading.rawValue
+                    showBorder: !SVSettings.simplifiedUserInterface
+                }
             }
         }
     }
@@ -267,17 +285,19 @@ Item {
             root.resetCameraOverrides()
         }
 
-        function onCamTargetingParametersReceived(streamName, camId, _targetingMode, eulerDelta, yaw, pitch) {
+        function onCamTargetingParametersReceived(streamName, camId, _targetingMode, eulerDelta, yaw, pitch, roll) {
             if (streamName !== SVState.digiview.streamName || camId !== root.cameraSlot) {
                 return
             }
 
-            if (eulerDelta !== 0 || !Number.isFinite(yaw) || !Number.isFinite(pitch)) {
+            if (eulerDelta !== 0 || !Number.isFinite(yaw) || !Number.isFinite(pitch)
+                    || !Number.isFinite(roll)) {
                 root.resetCameraOverrides()
                 return
             }
 
             root._heading = (yaw % 360 + 360) % 360
+            root._roll = roll
 
             var result = root.wrapPitchFull(pitch)
             root._pitch    = result.pitch

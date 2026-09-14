@@ -1,10 +1,7 @@
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Effects
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.FlyView
 import QGroundControl.SynclairVisionUI
 
 Item {
@@ -86,59 +83,29 @@ Item {
     }
 
     SVShortcutHandler {
+        parent: flyView ? flyView : root
         anchors.fill: parent
         flyView: synclairFlyView
         toolbarVisible: toolbar ? toolbar.visible : false
+        z: QGroundControl.zOrderTopMost
     }
 
-    Item {
-        anchors.top: parent.top
-        anchors.topMargin: toolbar && toolbar.visible ? toolbar.height + ScreenTools.defaultFontPixelHeight * 0.5 : 0
-        anchors.right: parent.right
-        anchors.rightMargin: ScreenTools.defaultFontPixelWidth
-        width: overlayToggle.width
-        height: overlayToggle.height
-        z: QGroundControl.zOrderTopMost
+    Connections {
+        target: SVState
 
-        MultiEffect {
-            id: overlayGlow
-
-            anchors.fill: overlayToggle
-            source: overlayToggle
-            visible: !SVState.synclairOverlay && !root.welcomePromptAcknowledged
-            shadowEnabled: true
-            shadowColor: QGroundControl.globalPalette.colorYellow
-            shadowBlur: 1
-
-            SequentialAnimation on shadowOpacity {
-                running: overlayGlow.visible
-                loops: Animation.Infinite
-                NumberAnimation { from: 0; to: 1; duration: 1000; easing.type: Easing.InOutSine }
-                NumberAnimation { from: 1; to: 0; duration: 1000; easing.type: Easing.InOutSine }
+        function onSynclairOverlayChanged() {
+            if (SVState.synclairOverlay && !root.welcomePromptAcknowledged) {
+                root.showVideoFullScreen()
+                welcomePromptLoader.active = true
             }
         }
+    }
 
-        QGCCheckBoxSlider {
-            id: overlayToggle
+    Loader {
+        id: welcomePromptLoader
 
-            text: qsTr("Synclair Vision: QGroundControl")
-            checked: SVState.synclairOverlay
-
-            onToggled: {
-                SVState.synclairOverlay = checked
-                if (checked && !root.welcomePromptAcknowledged) {
-                    root.showVideoFullScreen()
-                    welcomePromptLoader.active = true
-                }
-            }
-        }
-
-        Loader {
-            id: welcomePromptLoader
-
-            active: false
-            source: "qrc:/qml/QGroundControl/SynclairVisionUI/Flyview/SVWelcomePrompt.qml"
-            onLoaded: item.open()
-        }
+        active: false
+        source: "qrc:/qml/QGroundControl/SynclairVisionUI/Flyview/SVWelcomePrompt.qml"
+        onLoaded: item.open()
     }
 }
