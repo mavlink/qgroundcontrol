@@ -138,17 +138,24 @@ def get_analyzer(
     repo_root: Path,
     build_dir: Path,
     jobs: int = 1,
+    *,
+    shard: int = 1,
+    shard_count: int = 1,
 ) -> AnalyzerBase:
     """Get the appropriate analyzer for the given tool."""
     match tool:
         case "clang-tidy":
             from analyzers.clang_tidy import ClangTidyAnalyzer
 
-            return ClangTidyAnalyzer(repo_root, build_dir, jobs=jobs)
+            return ClangTidyAnalyzer(
+                repo_root, build_dir, jobs=jobs, shard=shard, shard_count=shard_count
+            )
         case "clazy":
             from analyzers.clazy import ClazyAnalyzer
 
-            return ClazyAnalyzer(repo_root, build_dir, jobs=jobs)
+            return ClazyAnalyzer(
+                repo_root, build_dir, jobs=jobs, shard=shard, shard_count=shard_count
+            )
         case "clang-format":
             from analyzers.clang_format import ClangFormatAnalyzer
 
@@ -245,6 +252,17 @@ Examples:
         help="Parallel jobs for clang-tidy/clazy (default: cpu count, 0=auto)",
     )
     parser.add_argument(
+        "--shard", type=int, default=1, help="Compiler-analysis shard number (1-based)"
+    )
+    parser.add_argument(
+        "--shard-count", type=int, default=1, help="Number of compiler-analysis shards"
+    )
+    parser.add_argument(
+        "--profile-checks",
+        action="store_true",
+        help="Record clang-tidy per-check profiles (adds significant runtime overhead)",
+    )
+    parser.add_argument(
         "--no-color",
         action="store_true",
         help="Disable colored output",
@@ -266,7 +284,14 @@ Examples:
         help="Check that required external tools are available, then exit",
     )
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    if not 1 <= args.shard <= args.shard_count:
+        parser.error("--shard must be between 1 and --shard-count")
+    if args.shard_count > 1 and args.tool not in {"clang-tidy", "clazy"}:
+        parser.error("Sharding requires --tool clang-tidy or clazy")
+    if args.profile_checks and args.tool != "clang-tidy":
+        parser.error("--profile-checks requires --tool clang-tidy")
+    return args
 
 
 def main() -> int:
@@ -302,10 +327,23 @@ def main() -> int:
 
     try:
         jobs = args.jobs if args.jobs > 0 else os.cpu_count() or 1
-        analyzer = get_analyzer(args.tool, repo_root, build_dir, jobs=jobs)
+        analyzer = get_analyzer(
+            args.tool,
+            repo_root,
+            build_dir,
+            jobs=jobs,
+            shard=args.shard,
+            shard_count=args.shard_count,
+        )
     except ValueError as e:
         log_error(str(e))
         return 1
+
+    if args.profile_checks:
+        from analyzers.clang_tidy import ClangTidyAnalyzer
+
+        if isinstance(analyzer, ClangTidyAnalyzer):
+            analyzer.profile_checks = True
 
     if args.qml_build:
         from analyzers.qmllint import QmlLintAnalyzer

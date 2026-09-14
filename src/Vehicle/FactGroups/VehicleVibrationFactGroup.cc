@@ -1,4 +1,6 @@
 #include "VehicleVibrationFactGroup.h"
+
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 
 VehicleVibrationFactGroup::VehicleVibrationFactGroup(QObject *parent)

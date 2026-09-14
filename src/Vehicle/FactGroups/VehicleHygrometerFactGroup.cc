@@ -1,4 +1,6 @@
 #include "VehicleHygrometerFactGroup.h"
+
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 
 VehicleHygrometerFactGroup::VehicleHygrometerFactGroup(QObject *parent)

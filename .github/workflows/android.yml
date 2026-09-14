@@ -13,6 +13,10 @@ on:
   merge_group:
   workflow_dispatch:
     inputs:
+      debug_runner:
+        description: 'Open an actor-only SSH session after a failure (up to 15 minutes, branches only)'
+        type: boolean
+        default: false
       build_type:
         description: 'Build type'
         required: false
@@ -123,6 +127,12 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
+
       - name: Enable RunsOn magic cache
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.host != 'mac'
         uses: runs-on/action@v2
@@ -160,7 +170,7 @@ jobs:
           # resolve to identical cache inputs and would race on the moccache
           # save key.
           cache-key-suffix: ${{ matrix.host }}
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
+          cpm-modules: .cache/CPM
 
       - name: Install host build dependencies
         if: runner.os == 'Linux'
@@ -219,6 +229,10 @@ jobs:
           python3 "${GITHUB_WORKSPACE}/.github/scripts/android_build_retry.py" \
             --build-dir "${{ runner.temp }}/build" \
             --build-type "${BUILD_TYPE}"
+
+      - name: Save recovered build caches
+        if: steps.build-retry.outcome == 'success'
+        uses: ./.github/actions/save-build-cache
 
       # `failure()` is required: build's continue-on-error makes outcome alone insufficient.
       - name: Annotate emulator build retry failure
@@ -310,3 +324,8 @@ jobs:
           status: ${{ steps.playstore_rollout.outputs.status }}
           user_fraction: ${{ steps.playstore_rollout.outputs.user_fraction }}
           whats_new_directory: ${{ github.workspace }}/deploy/android/whatsnew
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner

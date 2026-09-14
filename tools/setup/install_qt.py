@@ -28,7 +28,8 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import gh_error, write_github_output
+from common.build_config import find_build_config, load_build_config
+from common.gh_actions import gh_error, github_cache_path, write_github_output
 from common.proc import run_checked_with_retry
 from qgc_tools.python_env import tool_command
 
@@ -143,6 +144,7 @@ def install_qt(
     modules: str = "",
     archives: str = "",
     aqt_source: str = "",
+    autodesktop: bool = False,
 ) -> Path:
     """Install Qt using aqtinstall and return the resolved root directory.
 
@@ -159,6 +161,8 @@ def install_qt(
         args.extend(["--modules", *modules.split()])
     if archives:
         args.extend(["--archives", *archives.split()])
+    if autodesktop:
+        args.append("--autodesktop")
 
     print(f"Running: {' '.join(args)}")
     _run_aqt_with_retries(args)
@@ -208,7 +212,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     sub = parser.add_subparsers(dest="command", required=True)
 
     install_p = sub.add_parser("install", help="Install Qt")
-    install_p.add_argument("--version", required=True)
+    version = install_p.add_mutually_exclusive_group(required=True)
+    version.add_argument("--version")
+    version.add_argument(
+        "--from-config", action="store_true", help="Use the configured Qt version and modules"
+    )
+    install_p.add_argument("--autodesktop", action="store_true")
     install_p.add_argument("--host", default="linux")
     install_p.add_argument("--target", default="desktop")
     install_p.add_argument("--outdir", type=Path, default=Path(".qt"))
@@ -220,6 +229,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     _add_arch_args(install_p)
 
     cache_p = sub.add_parser("cache-key", help="Output arch_dir and cache digest")
+    cache_p.add_argument("--cache-dir", type=Path, help="Installation directory for cache paths")
     _add_arch_args(cache_p)
 
     resolve_p = sub.add_parser("resolve-arch", help="Print resolved arch directory name")
@@ -321,11 +331,21 @@ def main(argv: list[str] | None = None) -> int:
         arch_dir = resolve_arch_dir(args.arch)
         digest = compute_cache_digest(args.modules, args.archives)
         write_github_output({"arch_dir": arch_dir, "digest": digest})
+        if args.cache_dir is not None:
+            write_github_output({"cache_dir": github_cache_path(args.cache_dir)})
         print(f"arch_dir={arch_dir}")
         print(f"digest={digest}")
         return 0
 
     # Default: install
+    if args.from_config:
+        config_path = find_build_config(
+            start=Path(__file__).parent,
+            extra_candidates=[Path(__file__).parent / "build-config.json"],
+        )
+        qt_config = load_build_config(config_path)["qt"]
+        args.version = qt_config["version"]
+        args.modules = args.modules or qt_config["modules"]
     arch_dir = resolve_arch_dir(args.arch)
     qt_root = install_qt(
         host=args.host,
@@ -336,6 +356,7 @@ def main(argv: list[str] | None = None) -> int:
         modules=args.modules,
         archives=args.archives,
         aqt_source=args.aqt_source,
+        autodesktop=args.autodesktop,
     )
 
     write_github_output(

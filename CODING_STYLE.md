@@ -163,6 +163,9 @@ static constexpr int MaxRetries = 5;
 
 ### Defensive Coding
 
+Always use braces (`{}`) for `if`, `else if`, and `else` bodies, even when the body contains only one
+statement. Put the body on separate lines.
+
 ```cpp
 // Always null-check pointers
 Vehicle* vehicle = _manager->activeVehicle();
@@ -326,11 +329,15 @@ Connections {
 ```cpp
 // Always null-check vehicle
 Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
-if (!vehicle) return;
+if (!vehicle) {
+    return;
+}
 
 // Access parameters via Fact System
 Fact* param = vehicle->parameterManager()->getParameter(-1, "PARAM_NAME");
-if (param) param->setCookedValue(newValue);
+if (param) {
+    param->setCookedValue(newValue);
+}
 ```
 
 ```qml

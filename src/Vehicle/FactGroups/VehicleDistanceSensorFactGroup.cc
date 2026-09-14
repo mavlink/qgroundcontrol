@@ -1,4 +1,6 @@
 #include "VehicleDistanceSensorFactGroup.h"
+
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 
 VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject *parent)

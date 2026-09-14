@@ -1,3 +1,4 @@
+import argparse
 import math
 import random
 import socket
@@ -131,7 +132,7 @@ def handle_client(client_socket, aircrafts):
         client_socket.close()
 
 
-def start_server(host="0.0.0.0", port=30003):
+def start_server(host="127.0.0.1", port=30003):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
     server_socket.listen(5)
@@ -148,4 +149,8 @@ def start_server(host="0.0.0.0", port=30003):
 
 
 if __name__ == "__main__":
-    start_server()
+    parser = argparse.ArgumentParser(description="Simulate an ADS-B TCP feed")
+    parser.add_argument("--host", default="127.0.0.1", help="Interface address to listen on")
+    parser.add_argument("--port", type=int, default=30003)
+    args = parser.parse_args()
+    start_server(args.host, args.port)

@@ -62,6 +62,8 @@ def test_runner_image_workflow_smoke_tests_the_managed_image() -> None:
     assert "needs.ubuntu24-x64.outputs.image" in smoke_job["runs-on"]
     assert "qt-cmake" in smoke_steps
     assert ".qgc-modules" in smoke_steps
+    assert "/opt/qgc-sdk/cpm/manifest.json" in smoke_steps
+    assert "/opt/qgc-sdk/cpm/sources" in smoke_steps
     assert "libgstreamer1.0-dev" in smoke_steps
 
 
@@ -79,12 +81,14 @@ def test_ci_scripts_validates_the_packer_template() -> None:
 
 
 def test_linux_image_uses_repository_setup_helpers_and_module_manifest() -> None:
-    provision = _read(".github/runner-images/provision-linux.sh")
+    provision = _read(".github/runner-images/provision_linux.py")
     packer = _read(".github/runner-images/qgc-ubuntu24-x64.pkr.hcl")
 
-    assert 'tools/setup/install_dependencies" --platform debian' in provision
-    assert 'tools/setup/install_qt.py" install' in provision
+    assert '"tools/setup/install_dependencies"' in provision
+    assert '"tools/setup/install_qt.py"' in provision
     assert ".qgc-modules" in provision
+    assert '"create-seed"' in provision
+    assert "QGC_PREINSTALLED_CPM_DIR" in provision
     assert 'owners      = ["135269210855"]' in packer
     assert 'name                = "runs-on-v2.2-ubuntu24-full-x64-*"' in packer
 

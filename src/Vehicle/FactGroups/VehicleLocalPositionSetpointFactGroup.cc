@@ -1,4 +1,6 @@
 #include "VehicleLocalPositionSetpointFactGroup.h"
+
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 
 VehicleLocalPositionSetpointFactGroup::VehicleLocalPositionSetpointFactGroup(QObject *parent)

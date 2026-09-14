@@ -1,11 +1,12 @@
 #pragma once
 
-#include "TerrainQueryInterface.h"
-
 #include <QtCore/QMutex>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QQueue>
 #include <QtPositioning/QGeoCoordinate>
+
+#include "TerrainQueryInterface.h"
 
 class TerrainTile;
 class QNetworkAccessManager;

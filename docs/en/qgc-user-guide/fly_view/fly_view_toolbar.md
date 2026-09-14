@@ -1,6 +1,5 @@
 # Fly View Toolbar
 
-
 ## Views
 
 The "Q" icon on the left of the toolbar allows you to select between additional top level views:
@@ -13,7 +12,6 @@ The "Q" icon on the left of the toolbar allows you to select between additional 
 ## Toolbar Indicators
 
 Next are multiple toolbar indicators for vehicle status. The dropdowns for each toolbar indicator provide additional detail on status. You can also expand the indicators to show additional application and vehicle settings associated with the indicator. Press the ">" button to expand.
-
 
 ### Flight Status <img src="../../../assets/fly/toolbar/main_status_indicator.png" alt="Flight Status indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 
@@ -34,7 +32,6 @@ The Flight Status indicator dropdown also gives you access to:
 - **Emergency Stop** - Emergency stop is used to disarm the vehicle while it is flying. For emergency use only, your vehicle will crash!
 
 In the cases of warnings or not ready state you can click the indicator to display the dropdown which will show the reason(s) why. The toggle on the right expands each error with additional information and possible solutions.
-
 
 Once each issue is resolved it will disappear from the UI. When all issues blocking arming have been removed you should now be ready to fly.
 

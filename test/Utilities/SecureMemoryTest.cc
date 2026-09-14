@@ -5,7 +5,6 @@
 #include <cstring>
 
 #include "SecureMemory.h"
-#include "UnitTest.h"
 
 void SecureMemoryTest::_testSecureZeroRawMemory()
 {
@@ -54,4 +53,4 @@ void SecureMemoryTest::_testSecureZeroStdArray()
     }
 }
 
-UT_REGISTER_TEST(SecureMemoryTest, TestLabel::Unit, TestLabel::Utilities)
+QGC_REGISTER_PORTABLE_TEST(SecureMemoryTest, TestLabel::Unit, TestLabel::Utilities)

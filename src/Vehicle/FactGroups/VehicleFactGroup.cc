@@ -1,11 +1,13 @@
 #include "VehicleFactGroup.h"
-#include "Vehicle.h"
-#include "QGCMath.h"
 
 #include <cmath>
 
 #include <QtGui/QQuaternion>
 #include <QtGui/QVector3D>
+
+#include "MAVLinkLib.h"
+#include "QGCMath.h"
+#include "Vehicle.h"
 
 VehicleFactGroup::VehicleFactGroup(QObject *parent)
     : FactGroup(100, QStringLiteral(":/json/Vehicle/VehicleFact.json"), parent)

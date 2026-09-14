@@ -12,16 +12,13 @@ To select the airframe in Copter:
 
 1. First select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Airframe** in the sidebar.
 
-
 1. Select the broad _Frame Class_ for your vehicle:
-
 
    ::: info
    You will need to reboot the vehicle for class changes to take effect.
    :::
 
 1. Select the specific _Frame Type_ for your vehicle:
-
 
 ## ArduSub Frame Setup {#ardusub}
 
@@ -31,6 +28,4 @@ To select the frame type for Sub:
 1. Select the frame type that matches your vehicle (selecting a frame applies the selection).
 1. Make sure that all **green** thrusters have **clockwise** propellers and all **blue** thrusters have **counter-clockwise** propellers (or vice-versa).
 
-
    - You can also click **Load Vehicle Default Parameters** to load default parameter set for ArduSub.
-

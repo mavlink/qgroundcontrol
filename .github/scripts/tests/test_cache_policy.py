@@ -33,23 +33,38 @@ def test_auto_on_push_saves(monkeypatch, capsys) -> None:
 
 
 @pytest.mark.usefixtures("gh_output")
-def test_auto_on_pull_request_skips(monkeypatch, capsys) -> None:
+def test_auto_on_pull_request_saves(monkeypatch, capsys) -> None:
     monkeypatch.setenv("EVENT_NAME", "pull_request")
     monkeypatch.setenv("PR_REPO", "owner/repo")
     monkeypatch.setenv("THIS_REPO", "owner/repo")
     assert mod.main(["--requested", "auto"]) == 0
-    assert capsys.readouterr().out.strip() == "false"
+    assert capsys.readouterr().out.strip() == "true"
 
 
 @pytest.mark.usefixtures("gh_output")
-def test_auto_on_fork_pr_skips(monkeypatch, capsys) -> None:
+def test_auto_on_fork_pr_saves(monkeypatch, capsys) -> None:
     monkeypatch.setenv("EVENT_NAME", "pull_request")
     monkeypatch.setenv("PR_REPO", "fork/repo")
     monkeypatch.setenv("THIS_REPO", "owner/repo")
     assert mod.main(["--requested", "auto"]) == 0
-    assert capsys.readouterr().out.strip() == "false"
+    assert capsys.readouterr().out.strip() == "true"
 
 
 def test_requires_requested_arg() -> None:
     with pytest.raises(SystemExit):
         mod.main([])
+
+
+@pytest.mark.parametrize("pr_repo", ["owner/repo", "fork/repo"])
+def test_auto_on_pull_request_target_skips(monkeypatch, gh_output, pr_repo) -> None:
+    monkeypatch.setenv("EVENT_NAME", "pull_request_target")
+    monkeypatch.setenv("PR_REPO", pr_repo)
+    monkeypatch.setenv("THIS_REPO", "owner/repo")
+    assert mod.main(["--requested", "auto"]) == 0
+    assert "save=false\n" in gh_output.read_text()
+
+
+def test_explicit_read_only_overrides_pr_default(monkeypatch, gh_output) -> None:
+    monkeypatch.setenv("EVENT_NAME", "pull_request")
+    assert mod.main(["--requested", "false"]) == 0
+    assert "save=false\n" in gh_output.read_text()

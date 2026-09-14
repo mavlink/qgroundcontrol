@@ -1,6 +1,6 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "PortableTest.h"
 
 /// Unit tests for the pure-function layer of QGCCommandLineParser.
 ///
@@ -14,7 +14,7 @@
 /// Error-path handling is not covered because handleParseResult() calls
 /// QCommandLineParser::showMessageAndExit() on Status::Error which terminates
 /// the process.
-class QGCCommandLineParserTest : public UnitTest
+class QGCCommandLineParserTest : public PortableTest
 {
     Q_OBJECT
 

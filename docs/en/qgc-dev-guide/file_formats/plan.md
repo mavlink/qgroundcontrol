@@ -99,7 +99,7 @@ The format of the simple and complex items is given below.
 
 A simple item represents a single MAVLink [MISSION_ITEM](https://mavlink.io/en/messages/common.html#MISSION_ITEM) command.
 
-```
+```json
             {
                 "AMSLAltAboveTerrain": null,
                 "Altitude": 50,
@@ -127,8 +127,8 @@ The field mapping is shown below.
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `type`                | `SimpleItem` for a simple item                                                                                                                                                               |
 | `AMSLAltAboveTerrain` | Altitude value shown to the user.                                                                                                                                                            |
-| `Altitude`            |
-| `AltitudeMode`        |
+| `Altitude`            |                                                                                                                                                                                              |
+| `AltitudeMode`        |                                                                                                                                                                                              |
 | `autoContinue`        | [MISSION_ITEM](https://mavlink.io/en/messages/common.html#MISSION_ITEM).autoContinue                                                                                                         |
 | `command`             | The command ([MAV_CMD](https://mavlink.io/en/messages/common.html#MAV_CMD)) for this mission item - see [MISSION_ITEM](https://mavlink.io/en/messages/common.html#MISSION_ITEM).command.     |
 | `doJumpId`            | The target id for the current mission item in DO_JUMP commands. These are auto-numbered from 1.                                                                                              |
@@ -149,7 +149,7 @@ There are currently three types of complex mission items:
 
 The object definition for a `Survey` complex mission item is given below.
 
-```
+```json
 {
                 "TransectStyleComplexItem": {
                     ...
@@ -191,7 +191,7 @@ Complex items have these values associated with them:
 
 The object definition for a `CorridorScan` complex mission item is given below.
 
-```
+```json
             {
                 "CorridorWidth": 50,
                 "EntryPoint": 0,
@@ -273,7 +273,9 @@ The object definition for a `StructureScan` complex mission item is given below.
 | `altitudeRelative`          | `true`: `altitude` is relative to home, `false`: `altitude` is AMSL.   |
 | `polygon`                   | ?                                                                      |
 
-#### `TransectStyleComplexItem` {#TransectStyleComplexItem}
+<a id="TransectStyleComplexItem"></a>
+
+#### `TransectStyleComplexItem`
 
 `TransectStyleComplexItem` contains the common base definition for [`survey`](#survey) and [`CorridorScan`](#corridor_scan) complex items.
 
@@ -317,11 +319,13 @@ The object definition for a `StructureScan` complex mission item is given below.
 | `TurnAroundDistance`        | The distance to fly past the polygon edge prior to turning for the next transect. |
 | `VisualTransectPoints`      | ?                                                                                 |
 
-##### CameraCalc {#CameraCalc}
+<a id="CameraCalc"></a>
+
+##### CameraCalc
 
 The `CameraCalc` contains camera information used for a survey, corridor or structure scan.
 
-```
+```json
                     "CameraCalc": {
                         "AdjustedFootprintFrontal": 272.4,
                         "AdjustedFootprintSide": 409.2,

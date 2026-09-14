@@ -25,7 +25,7 @@ Patch releases increment the patch version number only.
 
 ### Patch - Development Stage
 
-Approved fixes to the stable release are commited to the current stable branch.
+Approved fixes to the stable release are committed to the current stable branch.
 These fixes continue to queue up in the stable branch until a patch release is made (see next step).
 
 Commits/changes to the stable branch must also be brought over to the master branch (either through cherry pick or separate pulls).
@@ -50,7 +50,7 @@ The released daily build will always match repo HEAD.
 
 ### Release Stage
 
-When the decision is made to release a new major/minor version the master branch tends to go through an intial lockdown mode.
+When the decision is made to release a new major/minor version the master branch tends to go through an initial lockdown mode.
 This is where only important fixes for the release are accepted as pull requests.
 
 ::: info
@@ -64,7 +64,7 @@ At that point the new stable branch is tagged with the new version tag and the f
 
 ## Custom Builds
 
-A proposed strategy for branching on custom builds can be found [here](custom_build/release_branching_process.md).
+A proposed strategy for branching on custom builds is described in [Custom Build Branching](custom_build/release_branching_process.md).
 
 ## Process to create a new Stable
 

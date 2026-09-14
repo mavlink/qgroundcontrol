@@ -13,6 +13,10 @@ on:
   merge_group:
   workflow_dispatch:
     inputs:
+      debug_runner:
+        description: 'Open an actor-only SSH session after a failure (up to 15 minutes, branches only)'
+        type: boolean
+        default: false
       build_type:
         description: 'Build type'
         required: false
@@ -64,6 +68,12 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
+
       - name: Checkout repo
         uses: actions/checkout@v7
         with:
@@ -88,14 +98,37 @@ jobs:
           build-type: ${{ matrix.build_type }}
           preset: ${{ matrix.build_type == 'Debug' && 'macOS-debug' || 'macOS' }}
           extra-args: >-
+            -DQGC_BUILD_PORTABLE_TESTS=ON
             -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
             -DQGC_MACOS_UNIVERSAL_BUILD=ON
 
       - name: Build
+        id: build
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
+
+      - name: Run portable tests
+        id: portable
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        uses: ./.github/actions/run-unit-tests
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
+          include-labels: Portable
+          junit-output: junit-portable.xml
+          ctest-output: portable-output.txt
+
+      - name: Report portable tests
+        if: ${{ !cancelled() && steps.portable.outcome != 'skipped' && steps.portable.outcome != '' }}
+        uses: ./.github/actions/test-report
+        with:
+          name: Portable tests (macos)
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-portable.xml
+          output-file: portable-output.txt
+          artifact-name: test-results-portable-macos
 
       - name: Verify dev build executable
         uses: ./.github/actions/verify-executable
@@ -149,3 +182,8 @@ jobs:
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner

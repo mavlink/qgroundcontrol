@@ -2,7 +2,7 @@
 """Plan Docker build matrix entries for the Docker workflow.
 
 The variant set (base images, build args, artifact patterns) is defined once in
-deploy/docker/variants.json and shared with run-docker.sh and gen_compose.py, so
+deploy/docker/variants.json and shared with run_docker.py and gen_compose.py, so
 this planner stays a thin selector over that source.
 """
 
@@ -66,12 +66,34 @@ def plan_builds(
 def needs_full_matrix(files: list[str] | None) -> bool:
     """Unknown diffs and toolchain/package changes require every variant."""
     patterns = (
-        ".github/**",
+        ".github/build-config*.json",
+        ".github/workflows/docker.yml",
+        ".github/workflows/_detect-changes.yml",
+        ".github/actions/docker/**",
+        ".github/actions/free-disk-space/**",
+        ".github/scripts/docker_helper.py",
+        ".github/scripts/plan_docker_builds.py",
+        ".github/scripts/detect_changes.py",
+        ".github/scripts/ci_bootstrap.py",
+        ".github/scripts/validate_native_package.py",
+        ".github/scripts/generate_cpm_sbom.py",
+        ".github/scripts/find_artifact.py",
+        ".dockerignore",
+        ".gitmodules",
         "CMakeLists.txt",
         "CMakePresets.json",
         "cmake/**",
-        "deploy/**",
-        "tools/**",
+        "src/**/CMakeLists.txt",
+        "deploy/docker/**",
+        "deploy/linux/**",
+        "tools/setup/**",
+        "tools/common/**",
+        "tools/qgc_tools/**",
+        "tools/_bootstrap.py",
+        "tools/pyproject.toml",
+        "tools/uv.lock",
+        "tools/configs/ccache.conf",
+        "tools/moccache.py",
         "libs/**",
         "android/**",
     )

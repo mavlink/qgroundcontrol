@@ -19,8 +19,7 @@ if(NOT QGC_ENABLE_COVERAGE)
 endif()
 
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(FATAL_ERROR
-        "QGC: Code coverage requires a Debug build, but CMAKE_BUILD_TYPE is '${CMAKE_BUILD_TYPE}'")
+    message(FATAL_ERROR "QGC: Code coverage requires a Debug build, but CMAKE_BUILD_TYPE is '${CMAKE_BUILD_TYPE}'")
 endif()
 
 foreach(_threshold IN ITEMS QGC_COVERAGE_LINE_THRESHOLD QGC_COVERAGE_BRANCH_THRESHOLD)
@@ -31,15 +30,10 @@ endforeach()
 
 message(STATUS "Code coverage instrumentation enabled")
 
-# Disable compiler caching for coverage builds. ccache does not cache .gcno
-# files (a side effect of --coverage), so cache hits produce .o files without
-# the corresponding .gcno, causing gcovr to report 0% coverage.
-# The CACHE FORCE affects future targets; set_property updates the existing target
-# whose launcher property was initialized at qt_add_executable() time.
-set(CMAKE_C_COMPILER_LAUNCHER "" CACHE STRING "C compiler launcher" FORCE)
-set(CMAKE_CXX_COMPILER_LAUNCHER "" CACHE STRING "CXX compiler launcher" FORCE)
+# ccache preserves .gcno alongside objects; keep the configured compiler launcher.
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    set(_qgc_coverage_compile_options --coverage -O0 -g)
+    # Qt worker threads share counters; non-atomic updates can corrupt branch counts.
+    set(_qgc_coverage_compile_options --coverage -fprofile-update=atomic -O0 -g)
     set(_qgc_coverage_link_options --coverage)
     string(REGEX MATCH "^[0-9]+" _qgc_gcc_major "${CMAKE_CXX_COMPILER_VERSION}")
     find_program(_qgc_gcov_executable NAMES "gcov-${_qgc_gcc_major}" gcov NO_CACHE)
@@ -76,13 +70,15 @@ function(qgc_apply_coverage_to_target target_name)
 
     get_target_property(_target_type ${target_name} TYPE)
     get_target_property(_imported ${target_name} IMPORTED)
-    if(_imported OR _target_type STREQUAL "INTERFACE_LIBRARY" OR _target_type STREQUAL "UTILITY")
-        message(FATAL_ERROR
-            "QGC: qgc_apply_coverage_to_target: '${target_name}' must be a non-imported compiled target")
+    if(_imported
+       OR _target_type STREQUAL "INTERFACE_LIBRARY"
+       OR _target_type STREQUAL "UTILITY"
+    )
+        message(
+            FATAL_ERROR "QGC: qgc_apply_coverage_to_target: '${target_name}' must be a non-imported compiled target"
+        )
     endif()
 
-    set_property(TARGET ${target_name} PROPERTY C_COMPILER_LAUNCHER "")
-    set_property(TARGET ${target_name} PROPERTY CXX_COMPILER_LAUNCHER "")
     foreach(_option IN LISTS _qgc_coverage_compile_options)
         target_compile_options(${target_name} PRIVATE "$<$<CONFIG:Debug>:${_option}>")
     endforeach()
@@ -97,21 +93,32 @@ find_program(GCOVR_EXECUTABLE gcovr)
 
 if(GCOVR_EXECUTABLE)
     message(STATUS "Found gcovr: ${GCOVR_EXECUTABLE}")
-    message(STATUS
-        "Coverage thresholds: lines=${QGC_COVERAGE_LINE_THRESHOLD}%, branches=${QGC_COVERAGE_BRANCH_THRESHOLD}%")
+    message(
+        STATUS "Coverage thresholds: lines=${QGC_COVERAGE_LINE_THRESHOLD}%, branches=${QGC_COVERAGE_BRANCH_THRESHOLD}%"
+    )
 
     # gcovr 8.x prepends CWD to relative filters, which breaks out-of-source builds
     set(GCOVR_COMMON_ARGS
-        --root ${CMAKE_SOURCE_DIR}
-        --object-directory ${CMAKE_BINARY_DIR}
-        --filter "${CMAKE_SOURCE_DIR}/src/"
-        --filter "${CMAKE_SOURCE_DIR}/test/"
-        --exclude ".*moc_.*"
-        --exclude ".*qrc_.*"
-        --exclude ".*ui_.*"
-        --exclude ".*_autogen.*"
-        --exclude ".*/cpm_modules/.*"
-        --exclude ".*/_deps/.*"
+        --root
+        ${CMAKE_SOURCE_DIR}
+        --object-directory
+        ${CMAKE_BINARY_DIR}
+        --filter
+        "${CMAKE_SOURCE_DIR}/src/"
+        --filter
+        "${CMAKE_SOURCE_DIR}/test/"
+        --exclude
+        ".*moc_.*"
+        --exclude
+        ".*qrc_.*"
+        --exclude
+        ".*ui_.*"
+        --exclude
+        ".*_autogen.*"
+        --exclude
+        ".*/cpm_modules/.*"
+        --exclude
+        ".*/_deps/.*"
         --print-summary
     )
 
@@ -123,36 +130,29 @@ if(GCOVR_EXECUTABLE)
         list(APPEND GCOVR_COMMON_ARGS --gcov-ignore-parse-errors=negative_hits.warn_once_per_file)
     endif()
 
-    add_custom_target(coverage-report
-        COMMAND "${GCOVR_EXECUTABLE}"
-            ${GCOVR_COMMON_ARGS}
-            --xml coverage.xml
-            --html coverage.html
-            --html-details
+    add_custom_target(
+        coverage-report
+        COMMAND "${GCOVR_EXECUTABLE}" ${GCOVR_COMMON_ARGS} --xml coverage.xml --html coverage.html --html-details
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
         COMMENT "Generating coverage report from existing coverage data (XML + HTML)"
         VERBATIM
     )
 
     if(QGC_BUILD_TESTING)
-        add_custom_target(coverage
+        add_custom_target(
+            coverage
             COMMAND "${CMAKE_CTEST_COMMAND}" --build-config "$<CONFIG>" --output-on-failure -L Unit
-            COMMAND "${GCOVR_EXECUTABLE}"
-                ${GCOVR_COMMON_ARGS}
-                --xml coverage.xml
-                --html coverage.html
-                --html-details
+            COMMAND "${GCOVR_EXECUTABLE}" ${GCOVR_COMMON_ARGS} --xml coverage.xml --html coverage.html --html-details
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
             COMMENT "Running tests and generating coverage report (XML + HTML)"
             VERBATIM
         )
         add_dependencies(coverage ${CMAKE_PROJECT_NAME})
 
-        add_custom_target(coverage-check
-            COMMAND "${GCOVR_EXECUTABLE}"
-                ${GCOVR_COMMON_ARGS}
-                --fail-under-line ${QGC_COVERAGE_LINE_THRESHOLD}
-                --fail-under-branch ${QGC_COVERAGE_BRANCH_THRESHOLD}
+        add_custom_target(
+            coverage-check
+            COMMAND "${GCOVR_EXECUTABLE}" ${GCOVR_COMMON_ARGS} --fail-under-line ${QGC_COVERAGE_LINE_THRESHOLD}
+                    --fail-under-branch ${QGC_COVERAGE_BRANCH_THRESHOLD}
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
             COMMENT "Verifying coverage thresholds — run 'coverage' target first"
             VERBATIM
@@ -164,7 +164,8 @@ else()
     message(STATUS "  Install with: python tools/setup/install_python.py coverage")
 endif()
 
-add_custom_target(coverage-clean
+add_custom_target(
+    coverage-clean
     COMMAND "${CMAKE_COMMAND}" -E rm -f coverage.xml coverage.html
     COMMAND "${CMAKE_COMMAND}" "-DQGC_COVERAGE_BUILD_DIR=${CMAKE_BINARY_DIR}" -P
             "${CMAKE_CURRENT_LIST_DIR}/CleanCoverage.cmake"

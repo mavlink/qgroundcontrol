@@ -18,7 +18,7 @@ present. In Qt 6, Window types were folded into the QtQuick module.
 ### IMP-2 (lint): Versioned imports
 Qt 6 dropped the requirement for version numbers on all imports.
 Versioned imports (`import QtQuick 2.15`) cap the API surface and
-cause "missing type" confusion. Also blocks `qmlsc` compilation.
+cause "missing type" confusion.
 
 ### IMP-3 (lint): Plain Controls import with customization
 When customizing `contentItem`, `background`, `indicator`, or
@@ -30,6 +30,9 @@ can produce unexpected rendering.
 Order imports: Qt modules first, then third-party, then local C++,
 then QML folder imports. Consistent ordering aids readability and
 matches `qmlformat --sort-imports`.
+If this causes shadowing issues, because types with the same name
+are defined in various modules, use a namespaced import:
+`import mymodule as MM`
 
 ### IMP-5 (lint): Qt.include() deprecated
 `Qt.include()` was deprecated in Qt 5.14 and removed from Qt 6
@@ -46,9 +49,9 @@ The same module imported more than once. Remove the duplicate.
 Within each QML object block, attributes must appear in this order:
 
 1. `id`
-2. Property declarations (`property type name`, `required property`)
-3. Signal declarations (`signal name()`)
-4. Property assignments (`width: 100`, `color: "red"`)
+2. Property assignments (`width: 100`, `color: "red"`)
+3. Property declarations (`property type name`, `required property`)
+4. Signal declarations (`signal name()`)
 5. Attached properties (`Layout.fillWidth`, `Drag.active`)
 6. `states`
 7. `transitions`
@@ -57,8 +60,8 @@ Within each QML object block, attributes must appear in this order:
 10. JavaScript functions
 
 This ordering ensures the most intrinsic properties are visible
-first. Signal handlers should be ordered shortest-first, with
-`Component.onCompleted` always last among handlers.
+first. Signal handlers should be grouped by semantic relation,
+and ordered shortest-first as a fallback.
 
 The linter reports only the first ordering violation per block.
 Blocks with special internal structure (Connections, Behavior,
@@ -103,8 +106,7 @@ loops cause performance degradation. Common source: `implicitWidth` /
 Aliases to aliases are fragile. Each link must resolve; if any
 intermediate component hasn't finished initialization, the value is
 `undefined`. Aliases are not activated until the component is fully
-initialized -- referencing them in `Component.onCompleted` of a child
-can fail.
+initialized -- referencing them during construction can fail.
 
 ### (agent): Qualified lookup
 Bare property names (`someProperty` instead of `root.someProperty`)
@@ -133,18 +135,13 @@ silently breaks the layout's size negotiation. Use
 
 ### LAY-3 (lint): Four anchor edges instead of fill
 Setting `anchors.left`, `anchors.right`, `anchors.top`, and
-`anchors.bottom` separately is verbose. Use `anchors.fill: parent`.
+`anchors.bottom` separately to the `parent`'s values is verbose.
+Use `anchors.fill: parent`.
 
-### LAY-4 (agent): Anchoring to invisible item
-Anchoring to an item with `visible: false` collapses unpredictably.
-The layout engine may still account for the invisible item's geometry
-depending on the parent type. Requires cross-block id resolution to
-detect.
 
-### LAY-5 (lint): Cross-branch anchoring via parent.parent
-Referencing `parent.parent` in anchor targets is fragile -- if the
-visual tree is refactored, the grandparent reference silently breaks.
-Use an explicit `id` on the target instead.
+### LAY-4 (lint): Cross-branch anchoring
+Anchors must only point to the `parent` or `silbling` items.
+
 
 ### LAY-6 (lint): Bare x/y inside Layout child
 Layouts manage positioning. Setting `x:` or `y:` on a layout child
@@ -161,21 +158,22 @@ a guard causes `TypeError`. Use optional chaining (`?.`) or gate on
 `Loader.status`.
 
 ### LDR-2 (lint): Qt.createComponent with string URL
-String-based `Qt.createComponent()` loses tooling support and type
-checking. Prefer inline `Component {}` definitions.
+String-based `Qt.createComponent()` is not type-safe and is not supported
+by QML tooling. Prefer `Component {}` definitions, or the module URI +
+type name overload of `Qt.createComponent`.
 
 ### LDR-3 (lint): Qt.createQmlObject
 Parses a QML string at runtime on every call. No component caching.
 Slow and error-prone. Use `Loader` or `Component.createObject()`.
 
 ### LDR-4 (agent): createObject without lifecycle management
-Objects created via `Component.createObject()` must be explicitly
-destroyed or parented. Untracked objects leak. Requires tracing the
-return variable to check for `destroy()` calls or parent assignment.
+Objects created via `Component.createObject()` must be referenced
+via JS variables or must have a parent set; otherwise they can be
+collected by the garbage collector at unexpected times.
 
 ### LDR-5 (lint): Loader with both source and sourceComponent
-These are mutually exclusive. Setting both is unsupported and
-behavior is undefined.
+These are mutually exclusive. Setting both is confusing, as the
+behavior is unspecified.
 
 ---
 
@@ -184,27 +182,25 @@ behavior is undefined.
 ### DEL-1 (lint): model.roleName without required property
 Modern Qt 6 best practice is to declare `required property` for each
 model role. Once any required property is declared, the implicit
-`model` context object is no longer injected. Required properties
-enable `qmlsc` compilation and eliminate `unqualified` warnings.
+`model` context object is no longer injected (but can also be explicitly
+requested as a `required property` ). Required properties
+enable compilation, eliminate `unqualified` warnings and have generally
+better tooling support (e.g. in qmlls, qmllint).
 
-### DEL-2 (lint): var in delegate with reuseItems
-With `reuseItems: true`, `Component.onCompleted` does NOT re-fire on
-reuse. JavaScript `var` declarations keep their old values, causing
-state bleed between items. Use QML properties (model-bound on reuse)
-or reset in `ListView.onReused`.
+### DEL-2 (lint): state in delegate with reuseItems
+With `reuseItems: true`, a delegate is pooled and rebound rather
+than recreated. Bindings to model roles re-evaluate automatically;
+all other state persists across reuse and bleeds between items.
+Reset non-model-derived state in `ListView.onReused`
+(`Component.onCompleted` runs only once, at first creation).
 
-### DEL-3 (lint): connect() in Component.onCompleted
-Direct `connect()` creates signal connections that outlive delegate
-destruction, causing `TypeError` when the signal fires on a destroyed
-delegate. Use `Connections {}` objects instead -- they are destroyed
-with the delegate automatically.
+### DEL-3 (lint): connect() in Component.onCompleted without receiver
+Direct `connect()` without a receiver creates signal connections that
+outlive delegate destruction, causing `TypeError` when the signal fires
+on a destroyed delegate. Use `Connections {}` objects instead, or pass
+an explicit receiver.
 
-### DEL-4 (lint): Component.onCompleted with reuseItems
-`Component.onCompleted` fires once at creation, NOT on reuse. State
-initialization that should run on every reuse must be in
-`ListView.onReused` instead.
-
-### DEL-5 (agent): Missing required property int index
+### DEL-4 (agent): Missing required property int index
 When using `required property` in delegates, built-in roles like
 `index` and `modelData` must also be declared explicitly -- they will
 not auto-inject when any required property exists. Requires
@@ -226,14 +222,15 @@ binding ignored). Workaround: re-apply in `onModelChanged`.
 ## 7. States & Transitions
 
 ### STA-1 (lint): PropertyChanges target: syntax (Qt 6)
-Qt 6 uses `PropertyChanges { myId.property: value }` syntax. The old
-`target: myId; property: value` form still works but is not
-recommended and is incompatible with Qt Design Studio.
+Qt 6 prefers `PropertyChanges { myId.property: value }` syntax. The old
+`target: myId; property: value` form still works but should only be used
+with ui.qml files used with Qt Design Studio.
 
 ### STA-2 (lint): Transition without from/to
 A `Transition {}` without explicit `from`/`to` fires on every state
 change, including unintended ones. Use explicit `from`/`to` pairs.
-Qt picks the first matching transition, so catch-all should be last.
+If there are multiple rules, a catch-all transition will only be picked
+if no other rule matches either on `from` or `to`.
 
 ### STA-3 (lint): Top-level states in reusable component
 `states` is a `QQmlListProperty` -- assigning from outside a
@@ -242,10 +239,12 @@ causing conflicts. Wrap internal states in a `StateGroup`. Only
 flagged when the file has `required property` declarations
 (indicating it is a reusable component).
 
-### STA-4 (lint): Imperative = inside PropertyChanges
-PropertyChanges should use declarative `:` binding syntax, not
-imperative `=` assignment. The declarative form integrates with the
-state machine's `restoreEntryValues` mechanism.
+### STA-4 (lint): PropertyChanges instead of imperative assignments
+Drive state-dependent property values through declarative PropertyChanges
+blocks rather than assigning properties imperatively (`obj.prop = ...`)
+from signal handlers or scripts. Only the declarative form participates in
+`restoreEntryValues`, so original values/bindings are restored when the
+state is left.
 
 ### (agent): restoreEntryValues surprises
 `PropertyChanges.restoreEntryValues` defaults to `true`. Properties
@@ -256,6 +255,7 @@ imperatively while in a state.
 Default changed from `RestoreNone` (Qt 5) to
 `RestoreBindingOrValue` (Qt 6). Qt 5 code relying on Binding to
 "stick" its value after deactivation silently reverts in Qt 6.
+If a `Binding` gets disabled, set the value explicitly.
 
 ---
 
@@ -264,7 +264,8 @@ Default changed from `RestoreNone` (Qt 5) to
 ### IMG-1 (lint): Image without sourceSize
 Without `sourceSize`, Qt decodes the full-resolution image into GPU
 memory. A 4000x3000 photo displayed at 100x75 still allocates ~48MB
-of texture memory. Always set `sourceSize` to display dimensions.
+of texture memory. Set `sourceSize` to display dimensions for large
+images.
 
 ### IMG-2 (lint): Network Image without asynchronous: true
 Image decoding blocks the UI thread by default. For network sources,
@@ -272,8 +273,7 @@ the entire download+decode is synchronous without `asynchronous: true`.
 
 ### IMG-3 (agent): Image without status check
 Dynamic/network sources can fail. Check `Image.status` for error
-handling rather than assuming successful load. Requires determining
-whether the source is dynamic (binding) vs static (string literal).
+handling rather than assuming successful load.
 
 ---
 
@@ -335,8 +335,7 @@ copy-on-write deep copies.
 
 ### STY-1 (lint): Top-level component missing id: root
 The QML convention is `id: root` on the top-level component. This
-enables qualified lookup (`root.someProperty`) and future-proofs
-against QML 3 unqualified lookup removal.
+enables qualified lookup (`root.someProperty`).
 
 ### STY-3 (lint): Multiple dot-notation for same group
 When setting 3+ sub-properties of the same group (e.g.,
@@ -352,11 +351,6 @@ break convention.
 Only assign `id` if the object is actually referenced elsewhere.
 Unnecessary IDs add cognitive overhead and risk duplicate-ID errors.
 Use `objectName` or comments for labeling.
-
-### (agent): Consolidate custom properties into QtObject
-Multiple custom property declarations on non-root items create
-implicit types requiring extra memory. Consolidate into a single
-`QtObject { id: privates; ... }`.
 
 ### (agent): Reusable component sizing
 Reusable components should never set explicit `width`/`height`
@@ -422,7 +416,6 @@ for cross-platform temporary file access.
 ### JS-1 (lint): var instead of let/const
 `var` has function scope and hoisting, causing subtle bugs. `let` and
 `const` have block scope. Qt coding instructions mandate `let`/`const`.
-`qmlsc` optimizes `const` better than `var`.
 
 ### JS-2 (lint): Loose equality
 Loose equality (`==`/`!=`) performs type coercion, which is almost
@@ -445,18 +438,18 @@ force interpreter fallback and prevent `qmlsc` compilation.
 ### (agent): No context properties
 `rootContext()->setContextProperty()` is expensive (re-evaluated on
 every access), globally scoped, invisible to tooling, and prevents
-compilation. Use QML_ELEMENT registration instead.
-
-### (agent): Singletons for API, not data
-Singletons are appropriate for common API access and enums. Do not
-use singletons for shared data access in reusable components.
-Instead, expose data through properties so components remain
-decoupled and testable.
+compilation. Use QML_ELEMENT or set properties, expose global state
+via singletons, and set state on components via
+the `createWithInitialProperties` API family.
 
 ### (agent): Object ownership across QML/C++ boundary
-When passing C++ objects to QML, set their parent to the C++ class
-that transmits them. QML may take ownership of parentless objects
-returned from invokable functions and destroy them unexpectedly.
+The QML engine takes ownership of QObjects (and instances of derived
+types) when they are returned from a `Q_INVOKABLE` method. It does not
+take ownership of objects retrieved from properties. You can retain
+ownership explicitly by either parenting the object or using
+`QJSEngine::setObjectOwnership` with `QJSEngine::CppOwnership`.
+You can also explicitly forfeit ownership using
+`QJSEngine::setObjectOwnership` with `QJSEngine::JavaScriptOwnership`.
 
 ---
 

@@ -36,7 +36,6 @@ from common.proc import run_captured
 | `proc.py` | Captured text, byte, and tee subprocess execution |
 | `tool_version.py` | External-tool and `uv.lock` version lookup |
 | `xml.py` | Safe XML parsing with entity-declaration rejection |
-| `shell-utils.sh` | Shared shell logging for developer scripts |
 
 API behavior and edge cases are covered by matching files under `tools/tests/`, such as
 `test_proc.py`, `test_io.py`, and `test_gh_actions.py`.

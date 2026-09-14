@@ -62,7 +62,7 @@ def _parse_precommit_results(path: Path) -> tuple[str | None, str | None, str | 
     skipped = str(data.get("skipped", "0")).strip()
     run_url = str(data.get("run_url", "")).strip()
 
-    status = "Passed" if exit_code == "0" else "Failed (non-blocking)"
+    status = "Passed" if exit_code == "0" else "Failed"
     details = _view_link(run_url)
     note = f"Pre-commit hooks: {passed} passed, {failed or '0'} failed, {skipped or '0'} skipped."
     return status, details, note

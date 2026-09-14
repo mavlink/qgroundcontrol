@@ -12,6 +12,7 @@ from typing import Any
 
 
 def simctl(*args: str, timeout: int = 120, check: bool = True) -> str:
+    print(f"Running simctl {' '.join(args)} (timeout: {timeout}s)", flush=True)
     result = subprocess.run(
         ["xcrun", "simctl", *args], capture_output=True, text=True, timeout=timeout, check=check
     )
@@ -42,7 +43,7 @@ def boot_test(app: Path, log: Path, *, timeout: int = 300) -> None:
     try:
         simctl("boot", device)
         simctl("bootstatus", device, "-b", timeout=300)
-        simctl("install", device, str(app))
+        simctl("install", device, str(app), timeout=timeout)
         output = simctl(
             "launch",
             "--console",
@@ -83,7 +84,7 @@ def main() -> None:
         "--timeout",
         type=int,
         default=300,
-        help="Cold simulator app startup deadline in seconds (default: 300)",
+        help="Deadline for each app installation and startup phase in seconds (default: 300)",
     )
     args = parser.parse_args()
     boot_test(args.app, args.log, timeout=args.timeout)

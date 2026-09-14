@@ -3,7 +3,7 @@
 The _Log Viewer_ screen (**Analyze > Log Viewer**) is a unified post-flight analysis tool that supports three log formats:
 
 | Format | Extension | Firmware |
-|--------|-----------|----------|
+| -------- | ----------- | ---------- |
 | ArduPilot DataFlash | `.bin` / `.log` | ArduPilot (ArduCopter, ArduPlane, ArduRover, ArduSub) |
 | PX4 ULog | `.ulg` | PX4 |
 | MAVLink Telemetry | `.tlog` | Any |
@@ -62,7 +62,7 @@ Lists all status messages from the log (ArduPilot `MSG` messages or PX4 equivale
 When a `.tlog` file is loaded the **Charting** tab shows a playback control bar in the left panel.
 
 | Control | Function |
-|---------|----------|
+| --------- | ---------- |
 | **Play / Pause** | Start or pause log replay |
 | Speed selector | Set replay speed (0.1× – 10×) |
 | Seek slider | Jump to any point in the log |

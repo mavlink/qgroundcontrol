@@ -39,6 +39,7 @@ def test_app_must_report_boot_success_and_device_is_deleted(tmp_path, output, er
                 boot_test(app, tmp_path / "log")
         else:
             boot_test(app, tmp_path / "log")
+    assert simctl.call_args_list[4].kwargs["timeout"] == 300
     assert simctl.call_args_list[5].kwargs["timeout"] == 300
     assert simctl.call_args_list[5].args[-4:] == (
         "--simple-boot-test",
@@ -56,30 +57,27 @@ def test_missing_runtime_fails():
 
 
 @pytest.mark.parametrize("timeout", [300, 420])
-def test_launch_timeout_still_cleans_up(tmp_path, timeout):
+@pytest.mark.parametrize("phase", ["install", "launch"])
+def test_install_or_launch_timeout_still_cleans_up(tmp_path, timeout, phase):
     import json
 
     app = tmp_path / "QGC.app"
     app.mkdir()
     (app / "Info.plist").write_bytes(plistlib.dumps({"CFBundleIdentifier": "org.qgc"}))
+    responses: list[str | subprocess.TimeoutExpired] = [json.dumps(DEVICES), "uuid", "", ""]
+    if phase == "launch":
+        responses.append("")
+    responses.extend([subprocess.TimeoutExpired(phase, timeout, output=b"hung"), "", ""])
     with (
         patch(
             "ios_boot_test.simctl",
-            side_effect=[
-                json.dumps(DEVICES),
-                "uuid",
-                "",
-                "",
-                "",
-                subprocess.TimeoutExpired("launch", timeout, output=b"hung"),
-                "",
-                "",
-            ],
+            side_effect=responses,
         ) as simctl,
         pytest.raises(subprocess.TimeoutExpired),
     ):
         boot_test(app, tmp_path / "log", timeout=timeout)
-    assert simctl.call_args_list[5].kwargs["timeout"] == timeout
+    phase_call = next(call for call in simctl.call_args_list if call.args[0] == phase)
+    assert phase_call.kwargs["timeout"] == timeout
     assert simctl.call_args_list[-1].args == ("delete", "uuid")
     assert (tmp_path / "log").read_text() == "hung"
 

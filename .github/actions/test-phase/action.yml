@@ -10,6 +10,9 @@ inputs:
   parallel:
     default: auto
     description: Unit test parallelism
+  integration-parallel:
+    default: '2'
+    description: Integration test parallelism; CTest resource locks remain enforced
   exclude-labels:
     default: 'Flaky|Network'
     description: Excluded CTest labels
@@ -33,7 +36,7 @@ runs:
         exclude-labels: ${{ inputs.exclude-labels }}
         parallel: ${{ inputs.parallel }}
 
-    - name: Run Integration Tests (serial)
+    - name: Run Integration Tests
       id: integration_tests
       if: ${{ !cancelled() }}
       uses: ./.github/actions/run-unit-tests
@@ -43,7 +46,7 @@ runs:
         ctest-output: test-output-${{ inputs.suite }}-integration.txt
         include-labels: 'Integration'
         exclude-labels: ${{ inputs.integration-exclude-labels || inputs.exclude-labels }}
-        parallel: '1'
+        parallel: ${{ inputs.integration-parallel }}
 
     - name: Analyze Unit Test Durations (unit)
       if: always() && !cancelled() && steps.unit_tests.conclusion != 'skipped'

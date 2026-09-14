@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "PortableTest.h"
 
-class QGCMathTest : public UnitTest
+class QGCMathTest : public PortableTest
 {
     Q_OBJECT
 

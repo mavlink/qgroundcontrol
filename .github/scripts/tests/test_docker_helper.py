@@ -67,3 +67,69 @@ class TestResolvePushTarget:
 
     def test_workflow_dispatch_never_pushes(self) -> None:
         assert resolve_push_target("workflow_dispatch", self.UPSTREAM, "refs/heads/master") == ""
+
+
+def test_cache_key_runs_inside_the_login_environment(monkeypatch):
+    import subprocess
+
+    import docker_helper
+
+    calls = []
+    outputs = {}
+
+    def run(command, **kwargs):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, "a" * 64 + "\n")
+
+    monkeypatch.setattr(docker_helper.subprocess, "run", run)
+    monkeypatch.setattr(docker_helper, "write_github_output", outputs.update)
+    docker_helper.cmd_cache_key(argparse.Namespace(image="builder:linux"))
+    assert calls[0][:7] == [
+        "docker",
+        "run",
+        "--rm",
+        "--entrypoint",
+        "/bin/bash",
+        "builder:linux",
+        "-lc",
+    ]
+    assert calls[0][-1].endswith("/entrypoint.py --cache-key")
+    assert outputs == {"fingerprint": "a" * 64}
+
+
+def test_cache_key_rejects_invalid_container_output(monkeypatch):
+    import subprocess
+
+    import docker_helper
+
+    monkeypatch.setattr(
+        docker_helper.subprocess,
+        "run",
+        lambda command, **kwargs: subprocess.CompletedProcess(command, 0, "invalid\noutput\n"),
+    )
+    with pytest.raises(ValueError, match="fingerprint"):
+        docker_helper.cmd_cache_key(argparse.Namespace(image="builder"))
+
+
+def test_performance_summary_reports_failed_phase(tmp_path, monkeypatch):
+    import json
+
+    import docker_helper
+
+    (tmp_path / "docker-build-report.json").write_text(
+        json.dumps(
+            {
+                "success": False,
+                "seconds": {"configure": 2, "build": 4},
+                "cpm_bytes": 1048576,
+                "ccache": "Hits: 12",
+                "moccache": "Hits: 8",
+            }
+        )
+    )
+    summaries = []
+    monkeypatch.setattr(docker_helper, "write_step_summary", summaries.append)
+    docker_helper.cmd_summary(argparse.Namespace(build_dir=tmp_path))
+    assert "| build | 4.00 |" in summaries[0]
+    assert "CPM sources: 1.0 MiB" in summaries[0]
+    assert "Hits: 12" in summaries[0]

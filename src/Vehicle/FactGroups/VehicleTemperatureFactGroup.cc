@@ -1,4 +1,6 @@
 #include "VehicleTemperatureFactGroup.h"
+
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 
 VehicleTemperatureFactGroup::VehicleTemperatureFactGroup(QObject *parent)

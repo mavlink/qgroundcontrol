@@ -62,7 +62,7 @@ Before installing _QGroundControl_ you should remove the modem manager and grant
 1. Enable serial-port access
 Add your user to the dialout group so you can talk to USB devices without root:
 
-```
+```bash
 sudo usermod -aG dialout "$(id -un)"
 ```
 
@@ -72,7 +72,8 @@ At login, your shell takes a snapshot of your user and group memberships. Becaus
 
 1. (Optional) Disable ModemManager
 On some Ubuntu-based systems, ModemManager can claim serial ports that QGC needs. If you don't use it elsewhere, mask or remove it.
-```
+
+```bash
 # preferred: stop and mask the service
 sudo systemctl mask --now ModemManager.service
 
@@ -81,6 +82,7 @@ sudo apt remove --purge modemmanager
 ```
 
 1. On the command prompt, enter:
+
 ```sh
 sudo apt install -y libfuse2 libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor0
 ```
@@ -92,14 +94,15 @@ sudo apt install -y libfuse2 libxcb-xinerama0 libxkbcommon-x11-0 libxcb-cursor0
    - [Linux aarch64](https://d176tv9ibo4jno.cloudfront.net/builds/master/QGroundControl-aarch64.AppImage)
 
 1. Make the AppImage executable
-```
+
+```bash
 chmod +x QGroundControl-<arch>.AppImage
 ```
 
 1. Run QGroundControl
 Either double-click the AppImage in your file manager or launch it from a terminal:
 
-```
+```bash
 ./QGroundControl-<arch>.AppImage
 ```
 

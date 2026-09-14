@@ -154,6 +154,8 @@ jobs:
           qt_root="${qt_roots[0]}"
           test -x "${qt_root}/bin/qt-cmake"
           test -f "${qt_root}/.qgc-modules"
+          test -s /opt/qgc-sdk/cpm/manifest.json
+          test -d /opt/qgc-sdk/cpm/sources
           "${qt_root}/bin/qt-cmake" --version
           cmake --version
           ninja --version

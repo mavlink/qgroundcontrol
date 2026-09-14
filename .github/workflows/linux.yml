@@ -12,6 +12,11 @@ on:
   pull_request:
   merge_group:
   workflow_dispatch:
+    inputs:
+      debug_runner:
+        description: 'Open an actor-only SSH session after a failure (up to 15 minutes, branches only)'
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -92,6 +97,12 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
+
       - name: Enable RunsOn magic cache
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: runs-on/action@v2
@@ -148,7 +159,7 @@ jobs:
         if: runner.arch != 'ARM64'
         uses: github/codeql-action/analyze@v4
         with:
-          category: "/language:c-cpp/build:linux"
+          category: "/language:c-cpp"
 
       - name: Annotate CodeQL failure
         if: steps.codeql.outcome == 'failure'
@@ -201,8 +212,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
 
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner
+
   debug-validation:
-    name: ${{ matrix.job_name }}
+    name: ${{ matrix.mode == 'coverage' && 'Test + Coverage linux_gcc_64 Debug' || 'Sanitizers linux_gcc_64 Debug (ASan+UBSan)' }}
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
     runs-on: >-
@@ -212,26 +228,17 @@ jobs:
         format('runs-on={0}/runner=linux-x64-tester', github.run_id) ||
         'ubuntu-24.04'
       }}
-    timeout-minutes: ${{ matrix.timeout_minutes }}
+    timeout-minutes: 120
 
     permissions:
+      actions: read
       contents: read
       id-token: write
 
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - job_name: Test + Coverage linux_gcc_64 Debug
-            mode: coverage
-            timeout_minutes: 120
-            configure_extra: ''
-            exclude_labels: 'Flaky|Network'
-          - job_name: Sanitizers linux_gcc_64 Debug (ASan+UBSan)
-            mode: sanitizers
-            timeout_minutes: 120
-            configure_extra: '-DQGC_ENABLE_ASAN=ON -DQGC_ENABLE_UBSAN=ON -DQGC_TEST_DETECT_LEAKS=ON'
-            exclude_labels: 'Flaky|Network|NoSanitizer'
+        mode: [coverage, sanitizers]
 
     defaults:
       run:
@@ -242,6 +249,12 @@ jobs:
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
@@ -278,7 +291,7 @@ jobs:
           preset: ${{ matrix.mode == 'coverage' && 'Linux-coverage' || 'Linux-debug' }}
           testing: 'true'
           coverage: ${{ matrix.mode == 'coverage' && 'true' || 'false' }}
-          extra-args: ${{ matrix.configure_extra }}
+          extra-args: ${{ matrix.mode == 'sanitizers' && '-DQGC_ENABLE_ASAN=ON -DQGC_ENABLE_UBSAN=ON -DQGC_TEST_DETECT_LEAKS=ON' || '' }}
 
       - name: Build
         id: build
@@ -298,7 +311,7 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           suite: linux-${{ matrix.mode }}
           parallel: ${{ matrix.mode == 'coverage' && '1' || 'auto' }}
-          exclude-labels: ${{ matrix.exclude_labels }}
+          exclude-labels: ${{ matrix.mode == 'sanitizers' && 'Flaky|Network|NoSanitizer' || 'Flaky|Network' }}
           upload-codecov: ${{ vars.CODECOV_TEST_ANALYTICS == 'true' }}
 
       - name: Verify coverage data files exist
@@ -332,3 +345,30 @@ jobs:
             --coverage-xml coverage.xml \
             --line-threshold "${line_thresh}" \
             --branch-threshold "${branch_thresh}"
+
+      - name: Run normally excluded tests
+        id: excluded
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.mode == 'coverage' && github.event_name == 'workflow_dispatch' }}
+        uses: ./.github/actions/run-unit-tests
+        with:
+          build-dir: ${{ runner.temp }}/build
+          include-labels: 'Network|Flaky'
+          exclude-labels: ''
+          parallel: '1'
+          junit-output: junit-excluded.xml
+          ctest-output: excluded-output.txt
+
+      - name: Report normally excluded tests
+        if: ${{ !cancelled() && steps.excluded.outcome != 'skipped' && steps.excluded.outcome != '' }}
+        uses: ./.github/actions/test-report
+        with:
+          name: Network and flaky tests
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-excluded.xml
+          output-file: excluded-output.txt
+          artifact-name: test-results-excluded
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner

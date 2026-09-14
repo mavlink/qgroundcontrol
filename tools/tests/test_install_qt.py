@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 from typing import TYPE_CHECKING
 
@@ -20,6 +21,51 @@ from setup.install_qt import (
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+
+def test_configured_container_install_reuses_qt_policy(monkeypatch, tmp_path):
+    config = tmp_path / "build-config.json"
+    config.write_text(json.dumps({"qt": {"version": "6.8.3", "modules": "qtcharts qtlocation"}}))
+    monkeypatch.setenv("CONFIG_FILE", str(config))
+    monkeypatch.setattr(install_qt, "tool_command", lambda *args, **kwargs: ["locked-aqt"])
+    commands = []
+    monkeypatch.setattr(install_qt, "_run_aqt_with_retries", commands.append)
+    root = tmp_path / "Qt/6.8.3/android_arm64_v8a"
+    root.mkdir(parents=True)
+    assert (
+        install_qt.main(
+            [
+                "install",
+                "--from-config",
+                "--host",
+                "all_os",
+                "--target",
+                "android",
+                "--arch",
+                "android_arm64_v8a",
+                "--outdir",
+                str(tmp_path / "Qt"),
+                "--autodesktop",
+            ]
+        )
+        == 0
+    )
+    assert commands == [
+        [
+            "locked-aqt",
+            "install-qt",
+            "all_os",
+            "android",
+            "6.8.3",
+            "android_arm64_v8a",
+            "--outputdir",
+            str(tmp_path / "Qt"),
+            "--modules",
+            "qtcharts",
+            "qtlocation",
+            "--autodesktop",
+        ]
+    ]
 
 
 class TestResolveArchDir:
@@ -51,6 +97,17 @@ class TestResolveArchDir:
 
 
 class TestComputeCacheDigest:
+    def test_cache_metadata_uses_relative_workspace_path(self, monkeypatch, tmp_path):
+        output = tmp_path / "output.txt"
+        monkeypatch.setenv("GITHUB_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+        result = install_qt.main(
+            ["cache-key", "--arch", "win64_msvc2022_64", "--cache-dir", str(tmp_path / ".qt")]
+        )
+        assert result == 0
+        assert "cache_dir=.qt\n" in output.read_text()
+        assert "arch_dir=msvc2022_64\n" in output.read_text()
+
     def test_deterministic(self) -> None:
         a = compute_cache_digest("qtgraphs qtlocation", "")
         b = compute_cache_digest("qtgraphs qtlocation", "")

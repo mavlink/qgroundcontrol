@@ -6,6 +6,7 @@
 
 #include "GeoJsonHelper.h"
 #include "JsonParsing.h"
+#include "UnitTestMath.h"
 
 void JsonHelperTest::_saveAndValidateExternalHeader_test()
 {
@@ -286,4 +287,4 @@ void JsonHelperTest::_loadSaveGeoCoordinateArrayQList_test()
     }
 }
 
-UT_REGISTER_TEST(JsonHelperTest, TestLabel::Unit, TestLabel::Utilities)
+QGC_REGISTER_PORTABLE_TEST(JsonHelperTest, TestLabel::Unit, TestLabel::Utilities)

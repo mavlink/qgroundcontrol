@@ -29,7 +29,7 @@ Common commands are wrapped in a `justfile` (requires `just` >=1.30 for `home_di
 
 ```bash
 # Install uv first (Linux/macOS); Windows: https://docs.astral.sh/uv/getting-started/installation/
-sh tools/setup/install_uv.sh
+python3 tools/setup/install_uv.py
 export PATH="$HOME/.local/bin:$PATH"
 
 # Install the locked developer profile and activate its commands
@@ -83,7 +83,7 @@ tools/
 │   └── file_traversal.py    # File discovery
 ├── debuggers/                # Debugging tools
 │   ├── gdb-pretty-printers/ # GDB/LLDB Qt type formatters
-│   ├── profile.sh           # Profiling (valgrind, perf)
+│   ├── profile.py           # Profiling (valgrind, perf)
 │   ├── qt6.natvis           # Visual Studio debugger visualizers
 │   └── valgrind.supp        # Valgrind suppressions
 ├── generators/                # Build-time code generation (mavlink enums, config/settings QML)
@@ -91,7 +91,7 @@ tools/
 ├── setup/                     # Environment setup scripts
 ├── simulation/                # Vehicle simulators
 │   ├── mock_vehicle.py      # Lightweight MAVLink simulator
-│   └── run-arducopter-sitl.sh  # ArduCopter SITL (Docker)
+│   └── run_arducopter_sitl.py  # ArduCopter SITL (Docker)
 └── translations/              # Translation tools
 ```
 
@@ -145,7 +145,7 @@ just test "Slow" "Network"             # override via positional args (labels, e
 | ------------- | ------------------------------------------------------------------------------- |
 | `just run`    | Launch the built `QGroundControl` binary                                        |
 | `just docs`   | Build the VitePress documentation site (`npm run docs:build`)                   |
-| `just docker` | Build inside the Ubuntu Docker container (`deploy/docker/run-docker.sh ubuntu`) |
+| `just docker` | Build in Ubuntu with `run_docker.py build ubuntu`                               |
 
 ### Utilities
 
@@ -189,6 +189,8 @@ and `just analyze`.
 ./tools/analyze.py --tool clang-format --all    # Check formatting (all files)
 ./tools/analyze.py --tool cppcheck              # Use cppcheck instead of clang-tidy
 ./tools/analyze.py src/Vehicle/                 # Analyze specific directory
+./tools/analyze.py --tool clang-tidy --all --shard 1 --shard-count 4  # One of four disjoint partitions
+./tools/analyze.py --tool clang-tidy --profile-checks src/Vehicle/Vehicle.cc  # Slower per-check profiling
 ```
 
 Other `--tool` choices: `clazy`, `qmllint`, `vehicle-null-check`, `qt-translate-noop-check`.
@@ -212,10 +214,14 @@ Summarize build-time hotspots from Ninja logs and optional Clang time traces.
 python3 ./tools/build_profile.py -B build                 # Report slowest Ninja edges and rebuild churn
 python3 ./tools/build_profile.py -B build --limit 25      # Show more rows per section
 python3 ./tools/build_profile.py -B build --json          # Machine-readable output
+python3 ./tools/build_profile.py -B build --output-dir /tmp/qgc-profile  # Ninja-only snapshot
 ```
 
 For per-translation-unit trace details, configure with `-DQGC_TIME_TRACE=ON`, rebuild, then rerun
 the report — it scans the build dir for Clang `-ftime-trace` JSON and highlights the slowest events.
+
+Ordinary CI builds upload Ninja-only snapshots with separate link and generated-code rankings.
+Task totals overlap because commands run in parallel; they are not elapsed build time.
 
 ### android_mem_capture.py
 
@@ -270,17 +276,18 @@ cmake --build build --target coverage-check    # Run tests + generate report + e
 cmake --build build --target coverage-clean   # Clean .gcda files
 ```
 
-### debuggers/profile.sh
+### debuggers/profile.py
 
 Profile QGC for performance and memory issues.
 
 ```bash
-./tools/debuggers/profile.sh                # CPU profiling with perf
-./tools/debuggers/profile.sh --memcheck     # Memory leak detection (valgrind)
-./tools/debuggers/profile.sh --callgrind    # CPU profiling (valgrind)
-./tools/debuggers/profile.sh --massif       # Heap profiling (valgrind)
-./tools/debuggers/profile.sh --heaptrack    # Heap profiling (heaptrack)
-./tools/debuggers/profile.sh --sanitize     # Build with AddressSanitizer
+./tools/debuggers/profile.py                # CPU profiling with perf
+./tools/debuggers/profile.py --memcheck     # Memory leak detection (valgrind)
+./tools/debuggers/profile.py --callgrind    # CPU profiling (valgrind)
+./tools/debuggers/profile.py --massif       # Heap profiling (valgrind)
+./tools/debuggers/profile.py --heaptrack    # Heap profiling (heaptrack)
+./tools/debuggers/profile.py --sanitize     # Build with AddressSanitizer
+./tools/debuggers/profile.py --config Debug -- --logging:full  # Forward application arguments
 ```
 
 ### check_deps.py
@@ -446,8 +453,8 @@ python tools/setup/install_python.py dev
 ### ArduCopter SITL (Full Simulation)
 
 ```bash
-./tools/simulation/run-arducopter-sitl.sh       # Connect to tcp://localhost:5760
-./tools/simulation/run-arducopter-sitl.sh --with-latency  # Simulate network lag
+./tools/simulation/run_arducopter_sitl.py       # Connect to tcp://localhost:5760
+./tools/simulation/run_arducopter_sitl.py --with-latency  # Simulate network lag
 ```
 
 See [simulation/README.md](simulation/README.md) for details.
@@ -527,7 +534,12 @@ env vars / CI outputs derive from the path (`android.ndk_full_version` →
 Scripts read from this file to ensure consistent versions across local development and CI.
 
 Compiler analysis uses `python tools/analyze.py --tool clazy|clang-tidy [paths...]`
-with a configured compilation database and generated build prerequisites. Individual
+with a configured compilation database and generated build prerequisites. For compiler-only
+analysis, configure Ninja with `CMAKE_EXPORT_COMPILE_COMMANDS=ON`,
+`CMAKE_DISABLE_PRECOMPILE_HEADERS=ON`, `CMAKE_AUTOGEN_ORIGIN_DEPENDS=OFF`,
+`CMAKE_GLOBAL_AUTOGEN_TARGET=ON`, and `QGC_UNITY_BUILD=OFF`. Build `qgc-analysis-headers`
+first, then `autogen` with `cmake --build <dir> --target <target>`. This generates compiler inputs
+without building the application. QML runtime analysis and sanitizers still need full builds. Individual
 files and directories are accepted. `--advisory` keeps warnings informational while
 failing error-level diagnostics and tool/compiler invocation errors; empty selections are explicitly skipped.
 These compiler-aware pre-commit hooks use `--hook-stage manual`; fast hooks remain

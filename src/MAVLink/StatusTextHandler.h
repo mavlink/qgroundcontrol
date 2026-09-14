@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QList>
+#include <QtCore/QMap>
 #include <QtCore/QObject>
 
 #include "MAVLinkEnums.h"

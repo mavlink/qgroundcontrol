@@ -1,10 +1,12 @@
 #include "VehicleGPSFactGroup.h"
-#include "Vehicle.h"
-#include "QGCGeo.h"
-#include "QGCLoggingCategory.h"
-#include "development/mavlink_msg_gnss_integrity.h"
 
 #include <QtPositioning/QGeoCoordinate>
+
+#include "MAVLinkLib.h"
+#include "QGCGeo.h"
+#include "QGCLoggingCategory.h"
+#include "Vehicle.h"
+#include "development/mavlink_msg_gnss_integrity.h"
 
 VehicleGPSFactGroup::VehicleGPSFactGroup(QObject *parent)
     : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)

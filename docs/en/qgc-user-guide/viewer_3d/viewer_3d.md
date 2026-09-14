@@ -11,27 +11,26 @@ The 3D View is not available on Android, as rendering is not yet reliable across
 The 3D View is used to visualize and monitor the vehicle, the environment, and the planned mission in 3D. Most of the capabilities available in the [Fly View](../fly_view/fly_view.md)  is also available in the 3D View.
 
 You can use it to:
+
 - To import and display the 3D map for any region of interest downloaded from the OpenStreetMap website (.osm file).
 - Display the vehicle along with its mission in 3D.
 - And most of the capabilities of the [Fly View](../fly_view/fly_view.md), including:
-    - Run an automated [pre-flight checklist](../fly_view/hud.md#preflight_checklist).
-    - Arm the vehicle (or check why it won't arm).
-    - Control missions: [start](../fly_view/hud.md#start_mission), [continue](../fly_view/hud.md#continue_mission), [pause](../fly_view/hud.md#pause), and [resume](../fly_view/hud.md#resume_mission).
-    - Guide the vehicle to [arm](../fly_view/hud.md#arm)/[disarm](../fly_view/hud.md#disarm)/[emergency stop](../fly_view/hud.md#emergency_stop), [takeoff](../fly_view/hud.md#takeoff)/[land](../fly_view/hud.md#land), [change altitude](../fly_view/hud.md#change_altitude), and [return/RTL](../fly_view/hud.md#rtl).
-    - Switch between a map view and a video view (if available)
-    - Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
+  - Run an automated [pre-flight checklist](../fly_view/hud.md#preflight_checklist).
+  - Arm the vehicle (or check why it won't arm).
+  - Control missions: [start](../fly_view/hud.md#start_mission), [continue](../fly_view/hud.md#continue_mission), [pause](../fly_view/hud.md#pause), and [resume](../fly_view/hud.md#resume_mission).
+  - Guide the vehicle to [arm](../fly_view/hud.md#arm)/[disarm](../fly_view/hud.md#disarm)/[emergency stop](../fly_view/hud.md#emergency_stop), [takeoff](../fly_view/hud.md#takeoff)/[land](../fly_view/hud.md#land), [change altitude](../fly_view/hud.md#change_altitude), and [return/RTL](../fly_view/hud.md#rtl).
+  - Switch between a map view and a video view (if available)
+  - Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
 
-
-# UI Overview
+## UI Overview
 
 The main elements of the 3D View are the same as the [Fly View](../fly_view/fly_view.md), with an added 3D environment.
 
 **Enabling the 3D View:** The 3D View is disabled by default. To enable it, go to **Settings > Fly View**, and under the **3D View** settings group, toggle the **Enabled** switch.
 
-
 To open the 3D View, when you are in the [Fly View](../fly_view/fly_view.md), select the 3D View icon from the toolbar on the left.
 
-## View Controls
+### View Controls
 
 The camera controls work like Gazebo: gestures are anchored to the ground point under the cursor, so the spot you grab stays under the cursor while you pan, orbit, or zoom.
 
@@ -53,7 +52,8 @@ To visualize the 3D map of a particular area in the 3D viewer, you have to downl
 
 If no OSM file is loaded, buildings are not shown, but the 3D View still displays the vehicle over a map-tile ground patch centered on the vehicle's home position, viewed from the side by default.
 
-# Settings
+## Settings
+
 You can change the settings of the 3D View from **Application Settings** ->**Fly View** tab under the **3D View** settings group.
 The following properties can be modified in the 3D View settings group:
 

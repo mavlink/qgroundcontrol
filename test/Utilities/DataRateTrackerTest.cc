@@ -72,4 +72,4 @@ void DataRateTrackerTest::testKBpsConversion()
     QCOMPARE(tracker.kBps(), tracker.bytesPerSec() / 1024.0);
 }
 
-UT_REGISTER_TEST(DataRateTrackerTest, TestLabel::Unit)
+QGC_REGISTER_PORTABLE_TEST(DataRateTrackerTest, TestLabel::Unit)

@@ -37,9 +37,13 @@ set(_deploy_tool_options_arg "")
 set(_deploy_include_plugins "")
 
 if(MACOS OR WIN32)
-    list(APPEND _deploy_tool_options_arg "-qmldir=${CMAKE_SOURCE_DIR}")
     if(MACOS)
-        list(APPEND _deploy_tool_options_arg "-appstore-compliant")
+        # Avoid walking build trees and dependency caches. macdeployqt accepts
+        # multiple QML roots; custom overlays can introduce their own imports.
+        list(APPEND _deploy_tool_options_arg "-qmldir=${CMAKE_SOURCE_DIR}/src" "-appstore-compliant" "-no-codesign")
+        if(QGC_CUSTOM_BUILD)
+            list(APPEND _deploy_tool_options_arg "-qmldir=${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}")
+        endif()
     endif()
     if(WIN32)
         # windeployqt and qt6_deploy_qml_imports both deploy QML plugins into qml/

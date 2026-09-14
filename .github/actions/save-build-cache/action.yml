@@ -1,0 +1,42 @@
+name: Save build caches
+description: Preserve successful compilation before packaging, tests, or scanners can fail
+runs:
+  using: composite
+  steps:
+    - name: Pack compiler cache snapshot
+      id: pack
+      if: env.QGC_BUILD_CACHE_ARTIFACT == 'true' && env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_BUILD_CACHE_SAVED != 'true'
+      shell: bash
+      run: python3 .github/scripts/build_cache_artifact.py pack
+
+    - name: Retain compiler cache snapshot
+      id: artifact
+      if: steps.pack.outputs.path != ''
+      continue-on-error: true
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ env.QGC_BUILD_CACHE_ARTIFACT_NAME }}
+        path: ${{ steps.pack.outputs.path }}
+        compression-level: 0
+        retention-days: 1
+        overwrite: true
+        if-no-files-found: error
+
+    - name: Save compiler cache
+      if: steps.artifact.outcome != 'success' && env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_CCACHE_KEY != '' && env.QGC_BUILD_CACHE_SAVED != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: .ccache
+        key: ${{ env.QGC_CCACHE_KEY }}
+
+    - name: Save moc cache
+      if: steps.artifact.outcome != 'success' && env.QGC_SAVE_BUILD_CACHE == 'true' && env.QGC_MOCCACHE_KEY != '' && env.QGC_BUILD_CACHE_SAVED != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: .cache/moccache
+        key: ${{ env.QGC_MOCCACHE_KEY }}
+
+    - name: Mark build caches saved
+      if: env.QGC_SAVE_BUILD_CACHE == 'true'
+      shell: bash
+      run: echo "QGC_BUILD_CACHE_SAVED=true" >> "$GITHUB_ENV"

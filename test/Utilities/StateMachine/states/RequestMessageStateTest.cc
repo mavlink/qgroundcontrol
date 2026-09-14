@@ -1,9 +1,9 @@
 #include "RequestMessageStateTest.h"
-#include "StateTestCommon.h"
 
+#include "MAVLinkLib.h"
 #include "RequestMessageState.h"
+#include "StateTestCommon.h"
 #include "Vehicle.h"
-
 
 void RequestMessageStateTest::_testStateCreation()
 {

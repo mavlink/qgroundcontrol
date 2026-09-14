@@ -1,8 +1,8 @@
 #include "GPSProviderTest.h"
 
-#include <QtTest/QSignalSpy>
-
 #include <cstring>
+
+#include <QtTest/QSignalSpy>
 
 #include "GPSProvider.h"
 #include "GPSTransport.h"
@@ -27,7 +27,11 @@ class TestTransport : public GPSTransport
 public:
     TestTransport(const std::atomic_bool& requestStop, TransportTrace& trace, std::function<void()> stop,
                   bool openResult, bool cancelInOpen)
-        : GPSTransport(requestStop), _trace(trace), _stop(stop), _openResult(openResult), _cancelInOpen(cancelInOpen)
+        : GPSTransport(requestStop)
+        , _trace(trace)
+        , _stop(stop)
+        , _openResult(openResult)
+        , _cancelInOpen(cancelInOpen)
     {
         _trace.constructedOn = QThread::currentThread();
     }
@@ -83,8 +87,7 @@ void GPSProviderTest::_transportLifetimeStaysOnWorker()
     std::function<void()> stopProvider;
     GPSProvider provider(
         [&, lifetime = std::move(lifetime)](const std::atomic_bool& requestStop) {
-            return std::make_unique<TestTransport>(
-                requestStop, trace, stopProvider, openResult, cancelInOpen);
+            return std::make_unique<TestTransport>(requestStop, trace, stopProvider, openResult, cancelInOpen);
         },
         GPSReceiverType::ublox, GPSReceiverConfig{});
     stopProvider = [&provider]() { provider.stop(); };

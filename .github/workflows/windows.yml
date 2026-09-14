@@ -13,6 +13,10 @@ on:
   merge_group:
   workflow_dispatch:
     inputs:
+      debug_runner:
+        description: 'Open an actor-only SSH session after a failure (up to 15 minutes, branches only)'
+        type: boolean
+        default: false
       build_type:
         description: 'Build type'
         required: false
@@ -103,6 +107,12 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Record build timeline
+        uses: Kesin11/actions-timeline@v3
+        continue-on-error: true
+        with:
+          show-waiting-runner: true
+
       - name: Enable RunsOn magic cache
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.variant != 'arm64'
         uses: runs-on/action@v2
@@ -142,6 +152,7 @@ jobs:
           build-type: ${{ matrix.build_type }}
           preset: ${{ matrix.build_type == 'Debug' && format('{0}-debug', matrix.preset) || matrix.preset }}
           extra-args: >-
+            -DQGC_BUILD_PORTABLE_TESTS=${{ matrix.variant == 'amd64' && 'ON' || 'OFF' }}
             -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.gstreamer && 'ON' || 'OFF' }}
             -DQGC_CPACK_GENERATOR=NSIS
             ${{ matrix.variant == 'arm64-cross' && format('-DQT_HOST_PATH={0}', steps.build-setup.outputs.host_qt_root_dir) || '' }}
@@ -165,10 +176,32 @@ jobs:
           STEPS_GST_ROOT_OUTPUTS_GST_ROOT: ${{ steps.gst-root.outputs.gst_root }}
 
       - name: Build
+        id: build
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
+
+      - name: Run portable tests
+        id: portable
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && matrix.variant == 'amd64' }}
+        uses: ./.github/actions/run-unit-tests
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
+          include-labels: Portable
+          junit-output: junit-portable.xml
+          ctest-output: portable-output.txt
+
+      - name: Report portable tests
+        if: ${{ !cancelled() && steps.portable.outcome != 'skipped' && steps.portable.outcome != '' }}
+        uses: ./.github/actions/test-report
+        with:
+          name: Portable tests (windows)
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-portable.xml
+          output-file: portable-output.txt
+          artifact-name: test-results-portable-windows
 
       - name: Verify Executable
         if: matrix.build_type == 'Release' && matrix.variant != 'arm64-cross'
@@ -275,3 +308,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
           upload-aws: ${{ matrix.variant == 'arm64-cross' && 'false' || 'true' }}
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && github.event_name == 'workflow_dispatch' && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner

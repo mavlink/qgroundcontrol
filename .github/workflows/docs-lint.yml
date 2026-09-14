@@ -7,7 +7,7 @@ on:
       - '.pre-commit-config.yaml'
       - '.vale.ini'
       - '.markdownlint*'
-      - '_typos.toml'
+      - '.typos.toml'
       - '.github/workflows/docs-lint.yml'
   workflow_dispatch:
 
@@ -39,7 +39,9 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if [[ -n "$BASE_SHA" ]]; then
+          if [[ -n "$BASE_SHA" ]] && git diff --quiet "$BASE_SHA" HEAD -- \
+            '.pre-commit-config.yaml' '.vale.ini' '.markdownlint*' '.typos.toml' \
+            '.github/workflows/docs-lint.yml'; then
             mapfile -d '' files < <(git diff --name-only -z --diff-filter=ACMR "$BASE_SHA" HEAD -- 'docs/en/*.md' 'docs/en/**/*.md')
           else
             mapfile -d '' files < <(git ls-files -z 'docs/en/*.md' 'docs/en/**/*.md')

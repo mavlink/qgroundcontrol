@@ -26,7 +26,6 @@ PRESET_CATEGORIES = {
 }
 CI_PLATFORM_WORKFLOWS = (
     "analysis.yml",
-    "extended-tests.yml",
     "android.yml",
     "build-profile.yml",
     "custom-build.yml",
@@ -331,16 +330,17 @@ def test_developer_build_entrypoints_use_presets() -> None:
     for path in ("CMakePresets.json", "cmake", "justfile", ".vscode"):
         assert path in ci_scripts
 
-    multipass = REPO_ROOT / "deploy" / "multipass" / "build-in-vm.sh"
+    multipass = REPO_ROOT / "deploy" / "multipass" / "build_in_vm.py"
     if multipass.exists():
-        assert '"${QT_ROOT}/bin/qt-cmake"' in multipass.read_text(encoding="utf-8")
+        assert 'qt_root / "bin/qt-cmake"' in multipass.read_text(encoding="utf-8")
 
     vagrant = REPO_ROOT / "deploy" / "vagrant" / "Vagrantfile"
     if vagrant.exists():
         vagrant_text = vagrant.read_text(encoding="utf-8")
-        assert "qt-cmake" in vagrant_text
-        assert "--preset Linux" in vagrant_text
-        assert "-DQGC_BUILD_TESTING=ON" not in vagrant_text
+        assert "deploy/vagrant/provision.py" in vagrant_text
+        provision = (vagrant.parent / "provision.py").read_text(encoding="utf-8")
+        assert "deploy/multipass/build_in_vm.py" in provision
+        assert '"Release": "Linux"' in multipass.read_text(encoding="utf-8")
 
 
 def test_host_tools_use_host_platform_predicates() -> None:
@@ -401,14 +401,18 @@ def test_ci_configure_steps_select_platform_presets() -> None:
     assert action["inputs"]["use-qt-cmake"]["default"] == "true"
 
 
-def test_portable_windows_tests_use_the_primary_workflow_aqt_override() -> None:
-    workflows = REPO_ROOT / ".github/workflows"
-    windows = yaml.safe_load((workflows / "windows.yml").read_text(encoding="utf-8"))
-    portable = yaml.safe_load((workflows / "extended-tests.yml").read_text(encoding="utf-8"))
-    setup = next(
-        step
-        for step in portable["jobs"]["portable"]["steps"]
-        if step.get("uses") == "./.github/actions/build-setup"
+@pytest.mark.parametrize("platform", ["windows", "macos"])
+def test_portable_tests_share_the_platform_build(platform: str) -> None:
+    workflow = yaml.safe_load(
+        (REPO_ROOT / ".github/workflows" / f"{platform}.yml").read_text(encoding="utf-8")
     )
-    assert windows["env"]["AQT_SOURCE"] in setup["with"]["aqt-source"]
-    assert "matrix.host == 'windows'" in setup["with"]["aqt-source"]
+    steps = workflow["jobs"]["build"]["steps"]
+    configure = next(
+        step for step in steps if step.get("uses") == "./.github/actions/cmake-configure"
+    )
+    assert "QGC_BUILD_PORTABLE_TESTS=" in configure["with"]["extra-args"]
+    portable = next(step for step in steps if step.get("id") == "portable")
+    assert portable["with"]["include-labels"] == "Portable"
+    assert "steps.build.outcome == 'success'" in portable["if"]
+    if platform == "windows":
+        assert "matrix.variant == 'amd64'" in portable["if"]

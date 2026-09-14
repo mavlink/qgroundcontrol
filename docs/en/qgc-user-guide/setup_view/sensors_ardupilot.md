@@ -13,7 +13,6 @@ Sensors with no light are simple settings with default values that you may choos
 
 Click on the button for each sensor to start its calibration sequence.
 
-
 ## Sensor Settings {#sensor_settings}
 
 The _Sensor Settings_ section allows you to specify the compass orientation and which compasses are enabled.
@@ -24,14 +23,11 @@ You can skip this section if the flight controller and compass are mounted uprig
 
 If the autopilot/compass are mounted in any other way you will need to specify their orientations as YAW, PITCH and/or ROLL offsets relative to the forward-facing-upright orientation (clock-wise rotation around the Z, Y and X axis, respectively).
 
-
 For example, the image below are at orientations: `ROTATION_NONE`, `ROTATION_YAW_90`,`ROTATION_YAW_180`,`ROTATION_YAW_270`.
-
 
 To set the orientation(s) and compasses used:
 
 1. Select the **Sensor Settings** button.
-
 
 1. Select the **AutoPilot Orientation**.
 1. Select the _orientation_ from **Compass 1 (primary/external) > Orientation** (or check **Compass2 (secondary, external) > Use Compass** to instead use the internal compass).
@@ -64,7 +60,6 @@ Older ArduPilot firmware can be calibrated using the [same process as PX4](../se
 
 You need to rotate the vehicle randomly around all axes until the progress bar fills all the way to the right and the calibration completes. When the calibration completes you will get the following results:
 
-
 This shows you the quality of the calibration for each compass. Using these values you can determine whether you may want to turn off usage of poorly performing compasses.
 
 ## Level Horizon {#level_horizon}
@@ -94,9 +89,7 @@ To perform **Pressure** calibration:
 
 1. Click the **Calibrate Pressure** button and then **Ok**.
 
-
    The calibration result is immediately displayed:
-
 
 ## CompassMot (Optional)
 
@@ -108,4 +101,3 @@ To perform **CompassMot** calibration:
 1. Click the **CompassMot** sensor button.
 
 1. Follow the onscreen prompts.
-

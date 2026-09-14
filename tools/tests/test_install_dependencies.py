@@ -94,8 +94,9 @@ def test_cross_arm64_excluded_from_aggregate() -> None:
 
 
 def test_sysroot_script_single_sources_cross_arm64() -> None:
-    script = (REPO_ROOT / "deploy" / "docker" / "install-sysroot-aarch64.sh").read_text()
-    assert "--category cross_arm64" in script
+    script = (REPO_ROOT / "deploy" / "docker" / "install_sysroot_aarch64.py").read_text()
+    assert '"--category",' in script
+    assert '"cross_arm64",' in script
     for pkg in ("libxcb1-dev", "libgstreamer1.0-dev", "libssl-dev"):
         assert f"{pkg}:arm64" not in script, (
             f"{pkg} should be sourced from cross_arm64, not hardcoded"

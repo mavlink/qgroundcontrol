@@ -1,11 +1,13 @@
 #include "PlanManager.h"
-#include "Vehicle.h"
-#include "VehicleLinkManager.h"
+
+#include "AppMessages.h"
 #include "FirmwarePlugin.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "MissionCommandTree.h"
-#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
+#include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManager.PlanManager")
 

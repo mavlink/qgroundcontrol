@@ -2,9 +2,9 @@
 
 #include <QtPositioning/QGeoCoordinate>
 
-#include "UnitTest.h"
+#include "PortableTest.h"
 
-class GeoTest : public UnitTest
+class GeoTest : public PortableTest
 {
     Q_OBJECT
 

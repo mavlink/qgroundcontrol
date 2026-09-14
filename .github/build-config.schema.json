@@ -281,6 +281,29 @@
           "pattern": "^https://curl\\.se/ca/cacert-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.pem$"
         }
       }
+    },
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "llvm_version",
+        "clazy_revision",
+        "clazy_sha256"
+      ],
+      "properties": {
+        "llvm_version": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "clazy_revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "clazy_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
     }
   },
   "additionalProperties": false

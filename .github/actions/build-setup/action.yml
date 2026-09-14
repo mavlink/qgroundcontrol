@@ -27,7 +27,7 @@ inputs:
     required: false
     default: "Release"
   save-cache:
-    description: "Whether to save cache (auto = save for pushes/schedule/dispatch, skip for PRs)"
+    description: "Whether to save cache (auto = save including PR merge refs; skip pull_request_target)"
     required: false
     default: "auto"
   cache-variant:
@@ -148,7 +148,7 @@ runs:
         build-type: ${{ inputs.build-type }}
         variant: ${{ inputs.cache-variant }}
         key-suffix: ${{ inputs.cache-key-suffix }}
-        cpm-modules: ${{ runner.temp }}/build/cpm_modules
+        cpm-modules: .cache/CPM
         save-cache: ${{ inputs.save-cache }}
 
     # Desktop macOS toolchain. iOS gets its own Xcode pin inside qt-ios (uses apple_xcode_ios_version, which can differ from desktop's).

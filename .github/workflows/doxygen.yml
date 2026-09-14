@@ -36,7 +36,7 @@ jobs:
 
       - name: Install Doxygen and Graphviz
         run: |
-          .github/scripts/apt_install_retry.sh \
+          python3 .github/scripts/apt_install_retry.py \
             --update \
             --no-install-recommends \
             --install-timeout 300 \

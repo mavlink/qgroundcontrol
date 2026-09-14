@@ -4,6 +4,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVariantList>
 #include <QtGui/QColor>
+#include <QtQml/qqml.h>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class Fact;

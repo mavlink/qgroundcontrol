@@ -4,6 +4,7 @@ on:
   pull_request:
     paths: &tooling-paths
       - '.github/**'
+      - '.clusterfuzzlite/**'
       - '.vscode/**'
       - '.devcontainer/**'
       - '.clang*'
@@ -130,6 +131,7 @@ jobs:
         with:
           fetch-depth: 1
           sparse-checkout: |
+            .clusterfuzzlite
             .github
             .vscode
             .gitattributes
@@ -192,6 +194,7 @@ jobs:
           pytest -q tools/tests/test_moccache.py tools/tests/test_install_python.py
           tools/tests/test_deps.py tools/tests/test_tool_version.py tools/tests/test_net.py
           tools/tests/test_proc.py tools/tests/test_install_qt.py tools/tests/test_ccache_launcher.py
+          tools/tests/test_gh_actions.py
 
   lint-python:
     name: Lint Python
@@ -223,8 +226,8 @@ jobs:
           npm test --prefix tools/release
       - name: Ruff
         run: |
-          ruff check tools .github/scripts deploy/docker test/ADSB/ADSB_Simulator.py
-          ruff format --check tools .github/scripts deploy/docker test/ADSB/ADSB_Simulator.py
+          ruff check tools .github/scripts .github/runner-images .clusterfuzzlite deploy test/ADSB/ADSB_Simulator.py
+          ruff format --check tools .github/scripts .github/runner-images .clusterfuzzlite deploy test/ADSB/ADSB_Simulator.py
       - name: Pyright
         run: pyright
       - name: Import boundaries

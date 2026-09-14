@@ -1,7 +1,9 @@
 #include "RadioStatusFactGroup.h"
-#include "Vehicle.h"
 
 #include <QtCore/QtMath>
+
+#include "MAVLinkLib.h"
+#include "Vehicle.h"
 
 RadioStatusFactGroup::RadioStatusFactGroup(QObject *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/RadioStatusFact.json"), parent)

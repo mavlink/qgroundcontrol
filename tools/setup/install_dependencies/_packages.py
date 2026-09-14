@@ -114,7 +114,7 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libpipewire-0.3-dev",
     ],
     # Target-side libraries for the aarch64 cross sysroot. Single source for
-    # deploy/docker/install-sysroot-aarch64.sh, which apt-installs these with an
+    # deploy/docker/install_sysroot_aarch64.py, which apt-installs these with an
     # :arm64 tag. Excluded from the aggregate (native) set by get_debian_packages.
     "cross_arm64": [
         "libc6",

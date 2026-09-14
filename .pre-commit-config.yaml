@@ -49,13 +49,14 @@ repos:
       - id: trufflehog
         args: ['--only-verified', '--exclude-paths=tools/configs/trufflehog-exclude.txt']
 
-  # C++ formatting (check-only, use 'clang-format -i' to fix)
+  # Check changed C++ regions, matching CODING_STYLE.md; new files are checked in full.
   # Note: Install matching clang-format version locally to avoid formatting differences
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v23.1.0
     hooks:
       - id: clang-format
-        args: ['--dry-run', '--Werror']
+        entry: python tools/check_clang_format.py
+        args: []
         types_or: [c++, c]
         exclude: ^(build/|libs/)
 
@@ -213,7 +214,7 @@ repos:
     rev: v1.50.1
     hooks:
       - id: typos
-        args: []  # Empty args disables auto-fix mode
+        args: ['--force-exclude']  # Honor .typos.toml exclusions for explicit pre-commit paths
         files: \.(md|markdown|txt|rst)$|^docs/
 
   - repo: local

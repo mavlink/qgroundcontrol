@@ -29,9 +29,12 @@ from common.gh_actions import (
 )
 from common.markdown import md_table
 
-DEFAULT_PROTECT = r"^(apt-debs|ccache|cpm-modules|moccache|qt|build-baseline-v2)-"
+DEFAULT_PROTECT = (
+    r"^(apt-debs|ccache|cpm-modules|cpm-sources-v2|gst-sdk-v1|moccache|qt|build-baseline-v2)-"
+)
 _BASELINE_RE = re.compile(r"^build-baseline-v2-[0-9a-f]{40,64}-(\d+)-(\d+)$")
 _ROLLING_SUFFIX_RE = re.compile(r"-\d+-\d+$")
+_PR_BUILD_CACHE_RE = re.compile(r"^(ccache|moccache|cpm-modules)-.*-(\d+)-(\d+)$")
 _DIGEST_RE = re.compile(r"(?<=-)[0-9a-f]{64}(?=-|$)")
 _APT_GENERATION_RE = re.compile(r"^(apt-debs-.+)-\d{4}-\d{2}-<digest>$")
 _MIB = 1024 * 1024
@@ -141,28 +144,44 @@ def select_prune_victims(
 ) -> tuple[list[CacheUsage], int, int]:
     """Pick evictable caches to delete; return (victims, total_bytes, projected_bytes).
 
-    No-op below high_water_mb. Above it, keeps the newest rolling generation for
-    each protected default-branch family and evicts other entries largest-first.
+    Drop superseded PR build generations even below high_water_mb. Above it,
+    keep the newest protected default-branch families and evict least recently used first.
     """
     protect_re = re.compile(protect)
     total = sum(cache.size_bytes for cache in caches)
-    if total <= high_water_mb * _MIB:
-        return [], total, total
+    victims = _superseded_pr_caches(caches)
+    projected = total - sum(cache.size_bytes for cache in victims)
+    if projected <= high_water_mb * _MIB:
+        return victims, total, projected
 
     keep = keep_mb * _MIB
     protected = _protected_cache_entries(caches, protect_re, default_branch)
     evictable = sorted(
-        (cache for cache in caches if cache not in protected),
-        key=lambda cache: (-cache.size_bytes, cache.last_accessed),
+        (cache for cache in caches if cache not in protected and cache not in victims),
+        key=lambda cache: (cache.last_accessed, -cache.size_bytes),
     )
-    victims: list[CacheUsage] = []
-    projected = total
     for cache in evictable:
         if projected <= keep:
             break
         victims.append(cache)
         projected -= cache.size_bytes
     return victims, total, projected
+
+
+def _superseded_pr_caches(caches: list[CacheUsage]) -> list[CacheUsage]:
+    families: dict[tuple[str, str], list[CacheUsage]] = {}
+    for cache in caches:
+        if re.fullmatch(r"refs/pull/\d+/merge", cache.ref) and _PR_BUILD_CACHE_RE.fullmatch(
+            cache.key
+        ):
+            families.setdefault((cache.ref, _cache_family(cache.key)), []).append(cache)
+
+    victims = []
+    for group in families.values():
+        # Run IDs/attempts identify generations; a restore can touch an older entry.
+        newest = max(group, key=lambda cache: tuple(map(int, cache.key.rsplit("-", 2)[1:])))
+        victims.extend(cache for cache in group if cache != newest)
+    return victims
 
 
 def _protected_cache_entries(

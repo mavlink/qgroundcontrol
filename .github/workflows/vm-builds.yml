@@ -9,6 +9,7 @@ on:
       - master
       - 'Stable*'
     paths:
+      - '.github/scripts/install_multipass.py'
       - 'deploy/multipass/**'
       - 'deploy/vagrant/**'
       - '.github/workflows/vm-builds.yml'
@@ -16,6 +17,7 @@ on:
       - 'cmake/presets/**'
   pull_request:
     paths:
+      - '.github/scripts/install_multipass.py'
       - 'deploy/multipass/**'
       - 'deploy/vagrant/**'
       - '.github/workflows/vm-builds.yml'
@@ -39,7 +41,10 @@ jobs:
     continue-on-error: true
     # linux-x64-emulator is the only RunsOn pool with nested-virt (/dev/kvm); forks
     # fall back to ubuntu-latest, which also exposes /dev/kvm.
-    runs-on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
+    runs-on: >-
+      ${{ github.repository_owner == 'mavlink' &&
+          (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+          format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
     timeout-minutes: 120
     steps:
       - name: Harden Runner
@@ -69,34 +74,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Install Multipass
-        run: |
-          # The RunsOn emulator AMI ships without snapd, so `snap` is absent; install and
-          # seed it first. No-op on the ubuntu-latest fork fallback (snapd already present).
-          if ! command -v snap >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y --allow-change-held-packages snapd
-            sudo systemctl enable --now snapd.socket
-          fi
-          sudo snap wait system seed.loaded
-          sudo snap install multipass
-          # `snap install` no-ops on the AMI's cached multipass; force latest stable — older
-          # manifests still list retired core16, whose blob 403s and aborts find/launch (multipass#2794).
-          sudo snap refresh multipass
-          # snapd's control socket is group-`sudo`, gained only on re-login; wait for the
-          # socket, then open group access for this job.
-          for _ in $(seq 1 30); do
-            [ -S /var/snap/multipass/common/multipass_socket ] && break
-            sleep 2
-          done
-          sudo chmod a+rw /var/snap/multipass/common/multipass_socket
-          multipass version
-          # The first `launch` races the daemon's initial manifest sync (`Remote "release" is
-          # unknown`), so wait for `find`. Don't hard-gate on its exit: it refreshes every
-          # remote and can trip over a retired image; the build launches from `release:` only.
-          for _ in $(seq 1 30); do
-            multipass find >/dev/null 2>&1 && break
-            sleep 5
-          done
+        run: python3 .github/scripts/install_multipass.py
 
       - name: Allow VM bridge networking
         run: |
@@ -118,7 +96,7 @@ jobs:
           OUTPUT_DIR: ${{ github.workspace }}/artifacts
         run: |
           mkdir -p "${OUTPUT_DIR}"
-          ./deploy/multipass/run-multipass.sh
+          python3 deploy/multipass/run_multipass.py
 
       - name: Upload AppImage
         if: success()
@@ -133,7 +111,10 @@ jobs:
     # Heavy nested-VM build (~75 min) on a fragile libvirt synced-folder path;
     # informational only, never gate the PR on it.
     continue-on-error: true
-    runs-on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
+    runs-on: >-
+      ${{ github.repository_owner == 'mavlink' &&
+          (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
+          format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:
       - name: Harden Runner

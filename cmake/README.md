@@ -34,6 +34,11 @@ entry point for normal builds.
 `cmake/modules/CPM.cmake` is vendored. Do not modify or reformat it as part of project CMake
 maintenance; the pre-commit CMake hooks intentionally exclude it.
 
+The standard application's autogen target depends explicitly on `qgc-analysis-headers` instead
+of waiting for all linked libraries. Add new build-time header generators to that prerequisite
+target when moc can consume them. Custom builds retain forwarded dependencies because their
+additional generators are not known to the standard build.
+
 Run the CMake lint hooks on the files you change:
 
 ```bash

@@ -7,11 +7,9 @@ Settable values include: display units, autoconnection devices, video display an
 Values are settable even if no vehicle is connected. Settings that require a vehicle restart are indicated in the UI.
 :::
 
-
 ## Units
 
 This section defines the display units used in the application.
-
 
 The settings are:
 
@@ -24,11 +22,9 @@ The settings are:
 
 This section defines a number of miscellaneous settings, related to (non exhaustively): font sizes, colour schemes, map providers, map types, telemetry logging, audio output, low battery announcement levels, default mission altitude, [virtual joysticks](../settings_view/virtual_joystick.md), mission autoloading, default application file load/save path etc.
 
-
 The settings are:
 
 - <a id="language"></a>**Language**: System (System Language) | Bulgarian, Chinese, ...
-
 
   Translations are generally built into the application and selected automatically based on the system language.
 
@@ -52,14 +48,12 @@ The settings are:
 
 ## Data Persistence {#data_persistence}
 
-
 The settings are:
 
 - **Disable all data persistence**: Check to prevent any data being saved or cached: logs, map tiles etc.
   This setting disables the [telemetry logs section](#telemetry_logs).
 
 ## Telemetry Logs from Vehicle {#telemetry_logs}
-
 
 The settings are:
 
@@ -69,7 +63,6 @@ The settings are:
 - [**CSV Logging**](csv.md): Log subset of telemetry data to a CSV file.
 
 ## Fly View {#fly_view}
-
 
 The settings are:
 
@@ -91,7 +84,6 @@ The settings are:
 
 ## Plan View {#plan_view}
 
-
 The settings are:
 
 - **Default Mission Altitude**: The default altitude used for the Mission Start Panel, and hence for the first waypoint.
@@ -99,7 +91,6 @@ The settings are:
 ## AutoConnect to the following devices {#auto_connect}
 
 This section defines the set of devices to which _QGroundControl_ will auto-connect.
-
 
 Settings include:
 
@@ -127,7 +118,6 @@ Use the _NMEA GPS Device_ drop-down selector to manually select the GPS device a
 
 - USB connection:
 
-
   - **NMEA GPS Device:** _Serial_
   - **NMEA GPS Baudrate**: The baudrate for the serial port
 
@@ -137,14 +127,12 @@ Use the _NMEA GPS Device_ drop-down selector to manually select the GPS device a
 
 - Network connection:
 
-
   - **NMEA GPS Device:** _UDP Port_.
   - **NMEA Stream UDP Port**: The UDP port on which QGC will listen for NMEA data (QGC binds the port as a server)
 
 ## RTK GPS {#rtk_gps}
 
 This section allows you to specify the RTK GPS "Survey-in" settings, to save and reuse the result of a Survey-In operation, or to directly enter any other known position for the base station.
-
 
 ::: info
 The _Survey-In_ process is a startup procedure required by RTK GPS systems to get an accurate estimate of the base station position.
@@ -172,7 +160,6 @@ The settings are:
 
 ## ADSB Server {#adsb_server}
 
-
 The settings are:
 
 - **Connect to ADSB SBS server**: Check to connect to ADSB server on startup.
@@ -198,7 +185,6 @@ The steps are:
 
 The _Video_ section is used to define the source and connection settings for video that will be displayed in _Fly View_.
 
-
 The settings are:
 
 - **Video Source**: Video Stream Disabled | RTSP Video Stream | UDP h.264 Video Stream | UDP h.265 Video Stream | TCP-MPEG2 Video Stream | MPEG-TS Video Stream | Integrated Camera
@@ -217,8 +203,6 @@ The settings are:
 The _Video Recording_ section is used to specify the file format and maximum allocated file storage for storing video.
 Videos are saved to a sub-directory ("Video") of the [Application Load/Save Path](#load_save_path).
 
-
-
 The settings are:
 
 - **Auto-Delete Files**: If checked, files are auto deleted when the specified amount of storage is used.
@@ -231,7 +215,6 @@ This setting specifies the _brand image_ used for indoor/outdoor colour schemes.
 
 The brand image is displayed in place of the icon for the connected autopilot in the top right corner of the toolbar.
 It is provided so that users can easily create screen/video captures that include a company logo/branding.
-
 
 The settings are:
 

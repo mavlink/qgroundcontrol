@@ -143,4 +143,4 @@ void QGCCommandLineParserTest::_testNormalizeArgs_ColonOptionValuePreserved()
     QCOMPARE(out, QStringList({QStringLiteral("--logging"), QStringLiteral("Vehicle.FTPManager")}));
 }
 
-UT_REGISTER_TEST(QGCCommandLineParserTest, TestLabel::Unit, TestLabel::Utilities)
+QGC_REGISTER_PORTABLE_TEST(QGCCommandLineParserTest, TestLabel::Unit, TestLabel::Utilities)

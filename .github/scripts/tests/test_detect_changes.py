@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for detect_changes.py."""
 
 from __future__ import annotations
@@ -40,7 +39,7 @@ def test_shared_build_inputs_trigger_all_platforms(platform: str, filename: str)
 
 
 @pytest.mark.parametrize(
-    "filename", ["variants.json", "_variants.py", "_variant_info.py", "docker_helper.py"]
+    "filename", ["variants.json", "_variants.py", "run_docker.py", "docker_helper.py"]
 )
 def test_variant_inputs_trigger_docker_builds(filename: str) -> None:
     for platform in ("docker-linux", "docker-android"):
@@ -123,16 +122,16 @@ class TestHasRelevantChanges:
 
     def test_docker_linux_patterns(self) -> None:
         assert has_relevant_changes(["deploy/docker/Dockerfile"], "docker-linux")
-        assert has_relevant_changes(["deploy/docker/install-sysroot-aarch64.sh"], "docker-linux")
+        assert has_relevant_changes(["deploy/docker/install_sysroot_aarch64.py"], "docker-linux")
         assert has_relevant_changes(["deploy/docker/entrypoint.sh"], "docker-linux")
-        assert has_relevant_changes(["deploy/docker/_docker-exec.sh"], "docker-linux")
-        assert has_relevant_changes(["deploy/docker/lib/retry.sh"], "docker-linux")
+        assert has_relevant_changes(["deploy/docker/run_docker.py"], "docker-linux")
+        assert has_relevant_changes(["deploy/docker/lib/setup-base.sh"], "docker-linux")
         assert has_relevant_changes(["deploy/linux/AppImage.sh"], "docker-linux")
         assert not has_relevant_changes(["deploy/docker/Dockerfile"], "linux")
 
     def test_docker_android_patterns(self) -> None:
         assert has_relevant_changes(["deploy/docker/Dockerfile"], "docker-android")
-        assert has_relevant_changes(["deploy/docker/lib/build-type.sh"], "docker-android")
+        assert has_relevant_changes(["deploy/docker/entrypoint.py"], "docker-android")
         assert has_relevant_changes(["android/build.gradle"], "docker-android")
 
     def test_setup_patterns_linux(self) -> None:

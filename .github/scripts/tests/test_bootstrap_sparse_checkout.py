@@ -205,11 +205,13 @@ def test_ci_scripts_checkout_includes_packaging_and_action_fixtures() -> None:
     job = workflow["jobs"]["test-ci-scripts"]
     ((_, entries),) = _iter_checkout_steps({"jobs": {"test-ci-scripts": job}}, "ci-scripts.yml")
     required = {
+        ".clusterfuzzlite/build.py",
+        ".clusterfuzzlite/read_mavlink_config.py",
         ".github/COPYING.md",
         ".github/actions/test-report/action.yml",
         "deploy/installer/packages/org.mavlink.qgroundcontrol/meta/installscript.js",
         "deploy/macos/MacOSXBundleInfo.plist.in",
-        "deploy/multipass/run-multipass.sh",
+        "deploy/multipass/run_multipass.py",
     }
     assert not _missing_paths(required, entries)
     for event in ("pull_request", "push"):

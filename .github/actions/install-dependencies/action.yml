@@ -112,11 +112,11 @@ runs:
       shell: bash
       env:
         APT_PACKAGES: ${{ steps.linux-deps.outputs.packages }}
-      # Retry/cache/timeout rationale lives in .github/scripts/apt_install_retry.sh,
+      # Retry/cache/timeout rationale lives in .github/scripts/apt_install_retry.py,
       # which downloads .debs into the cached directory restored above.
       run: |
         read -ra packages <<< "${APT_PACKAGES}"
-        "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.sh" \
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.py" \
           --update --no-install-recommends --autoclean "${packages[@]}"
 
     - name: Fix apt alternatives (Linux)
@@ -148,7 +148,7 @@ runs:
         read -ra extra <<< "${EXTRA_PACKAGES}"
         validated="$(python3 tools/setup/install_dependencies --validate-extra-packages "${extra[@]}")"
         read -ra packages <<< "${validated}"
-        "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.sh" \
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/apt_install_retry.py" \
           --install-timeout 300 --label "extra apt packages" "${packages[@]}"
 
     - name: Install dependencies (macOS)

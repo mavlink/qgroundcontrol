@@ -14,12 +14,38 @@ inputs:
 runs:
   using: composite
   steps:
+    # JavaScript actions receive runner-injected URLs that can override the
+    # shell environment. RunsOn < 3.1 does this on Windows despite the S3 flag.
+    - name: Detect Actions cache backend
+      uses: actions/github-script@v8
+      with:
+        script: |
+          const env = process.env;
+          let backend = 'github';
+          if (env.RUNS_ON_RUNNER_NAME && env.RUNS_ON_S3_BUCKET_CACHE) {
+            try {
+              const endpoint = new URL(env.ACTIONS_RESULTS_URL);
+              const original = new URL(env.ZCTIONS_RESULTS_URL);
+              if (['http:', 'https:'].includes(endpoint.protocol) &&
+                  original.protocol === 'https:' && endpoint.origin !== original.origin) {
+                backend = 's3';
+              }
+            } catch {
+              // Missing/invalid proxy metadata keeps GitHub's storage limits.
+            }
+            if (backend !== 's3') {
+              core.warning('RunsOn S3 cache routing is inactive; using GitHub cache limits. Windows requires RunsOn >= 3.1.');
+            }
+          }
+          core.exportVariable('QGC_ACTIONS_CACHE_BACKEND', backend);
+          core.info(`Actions cache backend: ${backend}`);
+
     - name: Setup uv and Python ${{ inputs.python-version }}
       uses: astral-sh/setup-uv@v8.1.0
       with:
         # These inputs are evaluated again during nested post-job cleanup.
-        enable-cache: ${{ env.RUNS_ON_S3_BUCKET_CACHE != '' }}
-        cache-python: ${{ env.RUNS_ON_S3_BUCKET_CACHE != '' }}
+        enable-cache: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}
+        cache-python: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}
         cache-dependency-glob: tools/uv.lock
         python-version: ${{ inputs.python-version }}
 

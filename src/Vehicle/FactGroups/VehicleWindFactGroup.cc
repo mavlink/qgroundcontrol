@@ -1,7 +1,9 @@
 #include "VehicleWindFactGroup.h"
-#include "Vehicle.h"
 
 #include <QtMath>
+
+#include "MAVLinkLib.h"
+#include "Vehicle.h"
 
 VehicleWindFactGroup::VehicleWindFactGroup(QObject *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/WindFact.json"), parent)

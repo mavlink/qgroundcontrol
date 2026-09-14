@@ -1,4 +1,6 @@
 #include "VehicleGeneratorFactGroup.h"
+
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 
 VehicleGeneratorFactGroup::VehicleGeneratorFactGroup(QObject *parent)

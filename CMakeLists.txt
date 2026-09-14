@@ -7,7 +7,9 @@ cmake_minimum_required(VERSION 3.25)
 # ----------------------------------------------------------------------------
 # CMake Module Paths
 # ----------------------------------------------------------------------------
-list(APPEND CMAKE_MODULE_PATH
+list(
+    APPEND
+    CMAKE_MODULE_PATH
     "${CMAKE_SOURCE_DIR}/cmake"
     "${CMAKE_SOURCE_DIR}/cmake/find-modules"
     "${CMAKE_SOURCE_DIR}/cmake/install"
@@ -22,7 +24,10 @@ include(Helpers)
 # Default Build Type
 # ----------------------------------------------------------------------------
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type (Debug or Release)" FORCE)
+    set(CMAKE_BUILD_TYPE
+        "Release"
+        CACHE STRING "Build type (Debug or Release)" FORCE
+    )
     message(STATUS "No build type specified. Defaulting to Release.")
 endif()
 
@@ -43,9 +48,9 @@ if(NOT QGC_CUSTOM_DIR
    OR IS_ABSOLUTE "${QGC_CUSTOM_DIR}"
    OR QGC_CUSTOM_DIR MATCHES "(^|[/\\\\])[.][.]([/\\\\]|$)"
 )
-    message(FATAL_ERROR
-        "QGC_CUSTOM_DIR must be a non-empty path relative to the source root without '..': "
-        "'${QGC_CUSTOM_DIR}'")
+    message(FATAL_ERROR "QGC_CUSTOM_DIR must be a non-empty path relative to the source root without '..': "
+                        "'${QGC_CUSTOM_DIR}'"
+    )
 endif()
 
 option(QGC_VERBOSE_CONFIGURE "Prefix configure messages with module context labels" OFF)
@@ -59,14 +64,11 @@ endif()
 
 if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}")
     message(STATUS "QGC: Custom build directory detected: ${QGC_CUSTOM_DIR}")
-    set(_qgc_custom_overrides
-        "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}/cmake/CustomOverrides.cmake")
-    if(NOT EXISTS "${_qgc_custom_overrides}"
-       OR NOT EXISTS "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}/CMakeLists.txt"
-    )
-        message(FATAL_ERROR
-            "QGC custom overlay '${QGC_CUSTOM_DIR}' must contain CMakeLists.txt and "
-            "cmake/CustomOverrides.cmake")
+    set(_qgc_custom_overrides "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}/cmake/CustomOverrides.cmake")
+    if(NOT EXISTS "${_qgc_custom_overrides}" OR NOT EXISTS "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}/CMakeLists.txt")
+        message(FATAL_ERROR "QGC custom overlay '${QGC_CUSTOM_DIR}' must contain CMakeLists.txt and "
+                            "cmake/CustomOverrides.cmake"
+        )
     endif()
     set(QGC_CUSTOM_BUILD ON)
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}/cmake")
@@ -74,8 +76,11 @@ if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}")
 endif()
 
 # Disable testing if not explicitly enabled
-if(NOT QGC_BUILD_TESTING)
-    set(BUILD_TESTING OFF CACHE INTERNAL "Disable testing by default" FORCE)
+if(NOT QGC_BUILD_TESTING AND NOT QGC_BUILD_PORTABLE_TESTS)
+    set(BUILD_TESTING
+        OFF
+        CACHE BOOL "Disable testing by default" FORCE
+    )
 endif()
 
 # ============================================================================
@@ -118,7 +123,8 @@ endif()
 # ----------------------------------------------------------------------------
 # Project Declaration
 # ----------------------------------------------------------------------------
-project(${QGC_APP_NAME}
+project(
+    ${QGC_APP_NAME}
     VERSION ${QGC_APP_VERSION}
     DESCRIPTION "${QGC_APP_DESCRIPTION}"
     HOMEPAGE_URL "https://${QGC_ORG_DOMAIN}"
@@ -133,8 +139,9 @@ project(${QGC_APP_NAME}
 include(GNUInstallDirs)
 include(FetchContent)
 include(CMakePrintHelpers)
-if(QGC_BUILD_TESTING)
+if(QGC_BUILD_TESTING OR QGC_BUILD_PORTABLE_TESTS)
     include(CTest)
+    enable_testing()
 endif()
 
 # ----------------------------------------------------------------------------
@@ -142,9 +149,15 @@ endif()
 # ----------------------------------------------------------------------------
 if(NOT CPM_SOURCE_CACHE)
     if(DEFINED ENV{CPM_SOURCE_CACHE} AND NOT "$ENV{CPM_SOURCE_CACHE}" STREQUAL "")
-        set(CPM_SOURCE_CACHE "$ENV{CPM_SOURCE_CACHE}" CACHE PATH "CPM source cache directory")
+        set(CPM_SOURCE_CACHE
+            "$ENV{CPM_SOURCE_CACHE}"
+            CACHE PATH "CPM source cache directory"
+        )
     else()
-        set(CPM_SOURCE_CACHE "${CMAKE_SOURCE_DIR}/.cache/CPM" CACHE PATH "CPM source cache directory")
+        set(CPM_SOURCE_CACHE
+            "${CMAKE_SOURCE_DIR}/.cache/CPM"
+            CACHE PATH "CPM source cache directory"
+        )
     endif()
 endif()
 include(CPM)
@@ -209,7 +222,12 @@ if(WIN32 AND NOT TARGET Vulkan::Headers)
             SYSTEM YES
         )
         if(VulkanHeaders_SOURCE_DIR)
-            set(Vulkan_INCLUDE_DIR "${VulkanHeaders_SOURCE_DIR}/include" CACHE PATH "" FORCE)
+            # FindVulkan owns this mixed-case cache variable.
+            # cmake-lint: disable=C0103
+            set(Vulkan_INCLUDE_DIR
+                "${VulkanHeaders_SOURCE_DIR}/include"
+                CACHE PATH "" FORCE
+            )
         endif()
     endif()
 endif()
@@ -222,50 +240,42 @@ set(QT_NO_PRIVATE_MODULE_WARNING ON)
 
 find_package(Qt6 ${QGC_QT_MINIMUM_VERSION} QUIET COMPONENTS Core)
 if(NOT Qt6_FOUND)
-    message(FATAL_ERROR
-        "Qt6 ${QGC_QT_MINIMUM_VERSION}+ not found.\n"
-        "Set CMAKE_PREFIX_PATH to your Qt installation, e.g.:\n"
-        "  cmake -DCMAKE_PREFIX_PATH=~/Qt/6.8.3/gcc_64 ..\n"
-        "  (or use qt-cmake which sets this automatically)\n"
-        "Searched: ${CMAKE_PREFIX_PATH}"
+    message(
+        FATAL_ERROR "Qt6 ${QGC_QT_MINIMUM_VERSION}+ not found.\n"
+                    "Set CMAKE_PREFIX_PATH to your Qt installation, e.g.:\n"
+                    "  cmake -DCMAKE_PREFIX_PATH=~/Qt/6.8.3/gcc_64 ..\n"
+                    "  (or use qt-cmake which sets this automatically)\n"
+                    "Searched: ${CMAKE_PREFIX_PATH}"
     )
 endif()
 
-find_package(Qt6
-    ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION}
-    REQUIRED
-    COMPONENTS
-        Graphs
-        Concurrent
-        Core
-        Gui
-        HttpServer
-        LinguistTools
-        Location
-        LocationPrivate
-        Multimedia
-        Network
-        Positioning
-        Qml
-        QmlIntegration
-        Quick
-        QuickControls2
-        QuickVectorImage
-        QuickWidgets
-        Sensors
-        Sql
-        Svg
-        TextToSpeech
-        Xml
-        Quick3D
-        StateMachine
-    OPTIONAL_COMPONENTS
-        Bluetooth
-        MultimediaQuickPrivate
-        OpenGL
-        QuickTest
-        SerialPort
-        Test
+find_package(
+    Qt6 ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION} REQUIRED
+    COMPONENTS Graphs
+               Concurrent
+               Core
+               Gui
+               HttpServer
+               LinguistTools
+               Location
+               LocationPrivate
+               Multimedia
+               Network
+               Positioning
+               Qml
+               QmlIntegration
+               Quick
+               QuickControls2
+               QuickVectorImage
+               QuickWidgets
+               Sensors
+               Sql
+               Svg
+               TextToSpeech
+               Xml
+               Quick3D
+               StateMachine
+    OPTIONAL_COMPONENTS Bluetooth MultimediaQuickPrivate OpenGL QuickTest SerialPort Test
 )
 
 if(LINUX AND NOT ANDROID)
@@ -276,21 +286,29 @@ if(QGC_USE_MOCCACHE)
     qgc_config_moccache()
 endif()
 
-qt_standard_project_setup(
-    REQUIRES ${QGC_QT_MINIMUM_VERSION}
-    SUPPORTS_UP_TO ${QGC_QT_MAXIMUM_VERSION}
-    I18N_SOURCE_LANGUAGE en
+qt_standard_project_setup(REQUIRES ${QGC_QT_MINIMUM_VERSION} SUPPORTS_UP_TO ${QGC_QT_MAXIMUM_VERSION}
+                          I18N_SOURCE_LANGUAGE en
 )
 
 # ----------------------------------------------------------------------------
 # Qt Policies (Enable modern Qt6 behaviors)
 # ----------------------------------------------------------------------------
 qt_policy(
-    SET QTP0001 NEW  # Modern resource handling
-    SET QTP0002 NEW  # New behavior for QML module URI
-    SET QTP0003 NEW  # Better QML type registration
-    SET QTP0004 NEW  # Improved translation handling
-    SET QTP0005 NEW  # Enhanced deployment handling
+    SET
+    QTP0001
+    NEW # Modern resource handling
+    SET
+    QTP0002
+    NEW # New behavior for QML module URI
+    SET
+    QTP0003
+    NEW # Better QML type registration
+    SET
+    QTP0004
+    NEW # Improved translation handling
+    SET
+    QTP0005
+    NEW # Enhanced deployment handling
 )
 
 if(QT_QML_NO_CACHEGEN)
@@ -320,8 +338,8 @@ set(QGC_APP_RESOURCES
     "${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.ico"
 )
 qgc_set_qt_resource_alias(${QGC_APP_RESOURCES})
-set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/SplashScreen.png"
-    PROPERTIES QT_RESOURCE_ALIAS "SplashScreen"
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/SplashScreen.png" PROPERTIES QT_RESOURCE_ALIAS
+                                                                                        "SplashScreen"
 )
 
 set(QGC_FONT_RESOURCES
@@ -330,17 +348,17 @@ set(QGC_FONT_RESOURCES
     "${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Regular.ttf"
     "${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Bold.ttf"
 )
-set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Regular.ttf"
-    PROPERTIES QT_RESOURCE_ALIAS "opensans"
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Regular.ttf" PROPERTIES QT_RESOURCE_ALIAS
+                                                                                                  "opensans"
 )
-set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Semibold.ttf"
-    PROPERTIES QT_RESOURCE_ALIAS "opensans-demibold"
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/OpenSans-Semibold.ttf" PROPERTIES QT_RESOURCE_ALIAS
+                                                                                                   "opensans-demibold"
 )
 set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Regular.ttf"
-    PROPERTIES QT_RESOURCE_ALIAS "NanumGothic-Regular"
+                            PROPERTIES QT_RESOURCE_ALIAS "NanumGothic-Regular"
 )
-set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Bold.ttf"
-    PROPERTIES QT_RESOURCE_ALIAS "NanumGothic-Bold"
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Bold.ttf" PROPERTIES QT_RESOURCE_ALIAS
+                                                                                                  "NanumGothic-Bold"
 )
 
 # ============================================================================
@@ -350,26 +368,25 @@ set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/fonts/NanumGothic-Bol
 include(Hardening)
 qgc_apply_global_hardening()
 
-qt_add_executable(${CMAKE_PROJECT_NAME}
-    WIN32          # Windows GUI application
-    MACOSX_BUNDLE  # macOS application bundle
+qt_add_executable(${CMAKE_PROJECT_NAME} WIN32 # Windows GUI application
+                  MACOSX_BUNDLE # macOS application bundle
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} qgc_fonts
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} qgc_fonts
     PREFIX "/fonts"
     BASE "${CMAKE_SOURCE_DIR}/resources/fonts"
     FILES ${QGC_FONT_RESOURCES}
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} qgc_app_resources
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} qgc_app_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES ${QGC_APP_RESOURCES}
 )
 
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
-    ADDITIONAL_CLEAN_FILES "${CMAKE_BINARY_DIR}/ccache-launcher"
-)
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES ADDITIONAL_CLEAN_FILES "${CMAKE_BINARY_DIR}/ccache-launcher")
 
 include(Sanitizers)
 
@@ -402,15 +419,12 @@ endif()
 # ----------------------------------------------------------------------------
 # QML Module Configuration
 # ----------------------------------------------------------------------------
-qt_add_qml_module(${CMAKE_PROJECT_NAME}
+qt_add_qml_module(
+    ${CMAKE_PROJECT_NAME}
     URI QGC
     VERSION 1.0
     RESOURCE_PREFIX /qml
-    IMPORTS
-        QtQuick
-        QtQuick.Controls
-        QtQuick.Dialogs
-        QtQuick.Layouts
+    IMPORTS QtQuick QtQuick.Controls QtQuick.Dialogs QtQuick.Layouts
 )
 
 # ----------------------------------------------------------------------------
@@ -430,9 +444,38 @@ add_subdirectory(src)
 if(QGC_BUILD_TESTING)
     add_subdirectory(test)
     # Exclude test directory from translation scanning
-    set_property(DIRECTORY test PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
+    set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/test" PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
     add_subdirectory(cmake/GStreamer/tests)
     add_subdirectory(cmake/tests)
+endif()
+
+add_custom_target(
+    qgc-analysis-headers
+    DEPENDS mavlink_enums mavlink_instance_fields generate_c_headers libevents_receive
+    COMMENT "Generate protocol headers for compiler analysis"
+)
+
+# moc needs generated protocol headers, not completed linked libraries. Custom
+# builds may introduce additional generators, so retain their dependency graph.
+if(NOT QGC_CUSTOM_BUILD)
+    set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY AUTOGEN_ORIGIN_DEPENDS OFF)
+    set_property(
+        TARGET ${CMAKE_PROJECT_NAME}
+        APPEND
+        PROPERTY AUTOGEN_TARGET_DEPENDS qgc-analysis-headers
+    )
+    if(QGC_BUILD_TESTING AND CMAKE_GENERATOR STREQUAL "Ninja")
+        add_test(
+            NAME CMake.ApplicationAutogenGraph
+            COMMAND "${CMAKE_COMMAND}" "-DNINJA=${CMAKE_MAKE_PROGRAM}" "-DBUILD_DIR=${PROJECT_BINARY_DIR}"
+                    "-DAPP_TARGET=${CMAKE_PROJECT_NAME}" -P "${CMAKE_SOURCE_DIR}/cmake/tests/check_autogen_graph.cmake"
+        )
+        set_tests_properties(CMake.ApplicationAutogenGraph PROPERTIES LABELS "CMake;Unit")
+    endif()
+endif()
+
+if(QGC_BUILD_PORTABLE_TESTS)
+    add_subdirectory(test/Portable)
 endif()
 
 # Apply compile policy after all project targets exist.
@@ -442,6 +485,8 @@ if(QGC_CUSTOM_BUILD)
 endif()
 if(QGC_BUILD_TESTING)
     qgc_configure_directory_targets("${CMAKE_SOURCE_DIR}/test")
+elseif(QGC_BUILD_PORTABLE_TESTS)
+    qgc_configure_directory_targets("${CMAKE_SOURCE_DIR}/test/Portable")
 endif()
 
 # ----------------------------------------------------------------------------
@@ -459,14 +504,13 @@ endif()
 
 set(QT_NO_MISSING_CATALOG_LANGUAGE_WARNING ON)
 
-qt_add_translations(${CMAKE_PROJECT_NAME}
+qt_add_translations(
+    ${CMAKE_PROJECT_NAME}
     TS_FILES ${TS_SOURCES}
     RESOURCE_PREFIX "/"
     LUPDATE_OPTIONS -no-obsolete
     TS_FILE_DIR "${CMAKE_SOURCE_DIR}/translations"
-    TS_FILE_BASE ${CMAKE_PROJECT_NAME}
-    QM_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/i18n"
-    MERGE_QT_TRANSLATIONS
+    TS_FILE_BASE ${CMAKE_PROJECT_NAME} QM_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/i18n" MERGE_QT_TRANSLATIONS
 )
 
 # ----------------------------------------------------------------------------
@@ -474,7 +518,8 @@ qt_add_translations(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 qgc_set_qt_resource_alias("${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf")
 
-qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_cmake"
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} "qgcresources_cmake"
     PREFIX "/"
     FILES "${CMAKE_SOURCE_DIR}/resources/qtquickcontrols2.conf"
 )
@@ -482,19 +527,23 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_cmake"
 # ----------------------------------------------------------------------------
 # Qt Plugin Configuration
 # ----------------------------------------------------------------------------
-qt_import_plugins(${CMAKE_PROJECT_NAME}
-    INCLUDE Qt6::QSvgPlugin Qt6::QOffscreenIntegrationPlugin
-    EXCLUDE_BY_TYPE geoservices  # Use built-in location plugins
-    INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
+qt_import_plugins(
+    ${CMAKE_PROJECT_NAME}
+    INCLUDE
+    Qt6::QSvgPlugin
+    Qt6::QOffscreenIntegrationPlugin
+    EXCLUDE_BY_TYPE
+    geoservices # Use built-in location plugins
+    INCLUDE_BY_TYPE
+    sqldrivers
+    Qt6::QSQLiteDriverPlugin
 )
 
 # Linux-specific Qt platform plugins
 if(LINUX)
-    qt_import_plugins(${CMAKE_PROJECT_NAME}
-        INCLUDE
-            Qt6::QWaylandIntegrationPlugin      # Wayland support (libqwayland.so)
-            Qt6::QXcbIntegrationPlugin          # X11 support
-            Qt6::QEglFSIntegrationPlugin        # Embedded GL support
+    qt_import_plugins(${CMAKE_PROJECT_NAME} INCLUDE Qt6::QWaylandIntegrationPlugin # Wayland support (libqwayland.so)
+                      Qt6::QXcbIntegrationPlugin # X11 support
+                      Qt6::QEglFSIntegrationPlugin # Embedded GL support
     )
 endif()
 

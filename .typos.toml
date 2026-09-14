@@ -9,6 +9,8 @@ extend-ignore-identifiers-re = [
     # long — shorter bounds exempt all-hex-letter words (facade, decade), hiding typos.
     "\\b0x[0-9a-fA-F]+\\b",
     "\\b[0-9a-fA-F]{16,}\\b",
+    "\\bQT_FATAL_CRITICALS\\b",
+    "\\bQ_INVOKABLE\\b",
 ]
 
 [default.extend-words]

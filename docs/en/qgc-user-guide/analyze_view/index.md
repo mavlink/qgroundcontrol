@@ -2,7 +2,6 @@
 
 The _Analyze View_ is accessed by selecting the _QGroundControl_ application menu ("Q" icon in the top left corner) and then selecting the **Analyze Tools** button (from the _Select Tool_ popup).
 
-
 The view provides tools to:
 
 - [Log Viewer](../analyze_view/log_viewer.md) — Open and analyze `.bin` DataFlash logs and `.tlog` telemetry logs.

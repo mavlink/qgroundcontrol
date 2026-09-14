@@ -158,7 +158,7 @@ elseif(IOS)
 
         file(GLOB_RECURSE _qgc_ios_bundle_inputs CONFIGURE_DEPENDS "${_qgc_ios_asset_catalog}/*")
         list(APPEND _qgc_ios_bundle_inputs "${_qgc_ios_launch_screen}"
-             "${CMAKE_SOURCE_DIR}/deploy/ios/prepare-bundle.sh"
+             "${CMAKE_SOURCE_DIR}/deploy/ios/prepare_bundle.py"
         )
         set_property(
             TARGET ${CMAKE_PROJECT_NAME}
@@ -169,7 +169,7 @@ elseif(IOS)
         add_custom_command(
             TARGET ${CMAKE_PROJECT_NAME}
             POST_BUILD
-            COMMAND /bin/bash "${CMAKE_SOURCE_DIR}/deploy/ios/prepare-bundle.sh"
+            COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/deploy/ios/prepare_bundle.py"
                     "$<TARGET_BUNDLE_DIR:${CMAKE_PROJECT_NAME}>" "${QGC_IOS_DEPLOYMENT_TARGET}" "${_qgc_ios_platform}"
             COMMENT "Compiling iOS launch screen and asset catalog"
             VERBATIM

@@ -1,10 +1,11 @@
 #include "QGCMathTest.h"
 
-#include <QtCore/QtNumeric>
-
 #include <cmath>
 
+#include <QtCore/QtNumeric>
+
 #include "QGCMath.h"
+#include "UnitTestMath.h"
 
 void QGCMathTest::_fuzzyCompareDoubleEqual_test()
 {
@@ -160,4 +161,4 @@ void QGCMathTest::_crc32Incremental_test()
     QCOMPARE(crc, 0xCBF43926u);
 }
 
-UT_REGISTER_TEST(QGCMathTest, TestLabel::Unit, TestLabel::Utilities)
+QGC_REGISTER_PORTABLE_TEST(QGCMathTest, TestLabel::Unit, TestLabel::Utilities)

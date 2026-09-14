@@ -54,6 +54,7 @@ known-first-party = ["qgc"]
 "tools/setup/install_python.py" = ["E402"]
 "tools/setup/install_qt.py" = ["E402"]
 ".github/scripts/*.py" = ["E402"]
+"deploy/docker/install_sysroot_aarch64.py" = ["E402"]
 ".github/scripts/tests/*.py" = ["E402"]
 # pseudo_loc.py deliberately uses look-alike characters for pseudo-localization.
 "tools/pseudo_loc.py" = ["RUF001"]

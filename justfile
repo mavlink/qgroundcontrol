@@ -117,7 +117,7 @@ docs:
 
 # Build using Docker (Ubuntu)
 docker:
-    ./deploy/docker/run-docker.sh ubuntu
+    python3 deploy/docker/run_docker.py build ubuntu
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Utilities

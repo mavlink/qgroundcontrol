@@ -1,7 +1,9 @@
 #include "VehicleSetpointFactGroup.h"
-#include "Vehicle.h"
 
 #include <QtMath>
+
+#include "MAVLinkLib.h"
+#include "Vehicle.h"
 
 VehicleSetpointFactGroup::VehicleSetpointFactGroup(QObject *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/SetpointFact.json"), parent)

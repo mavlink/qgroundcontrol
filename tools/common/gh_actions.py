@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Shared helpers for GitHub Actions API access via gh CLI."""
 
 from __future__ import annotations
@@ -6,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+from pathlib import Path
 from typing import Any
 
 
@@ -85,17 +85,27 @@ def is_fork_pr() -> bool:
 def resolve_cache_policy(requested: str) -> str:
     """Resolve cache save policy.
 
-    "auto" only saves on non-PR events (push, schedule, workflow_dispatch).
-    PRs read from the shared cache but never write, so the 10 GB repo cap
-    isn't churned by per-PR entries. Long-lived cache state is owned by
-    push-to-default-branch builds.
+    Pull-request saves are isolated by GitHub to the PR merge ref, including
+    forks. pull_request_target uses the base ref and must remain read-only.
     """
     if requested != "auto":
         return requested
     event = os.environ.get("EVENT_NAME", os.environ.get("GITHUB_EVENT_NAME", ""))
-    if event in {"pull_request", "pull_request_target"}:
-        return "false"
-    return "false" if is_fork_pr() else "true"
+    return "false" if event == "pull_request_target" else "true"
+
+
+def github_cache_path(path: Path) -> str:
+    """Use a stable archive path inside the workspace, preserving external paths.
+
+    actions/cache hashes the literal path input into its cache version. Absolute
+    workspace paths prevent sharing between hosted and self-hosted runners.
+    """
+    workspace = Path(os.environ.get("GITHUB_WORKSPACE", ".")).resolve()
+    absolute = (workspace / path).resolve()
+    try:
+        return absolute.relative_to(workspace).as_posix()
+    except ValueError:
+        return absolute.as_posix()
 
 
 def write_github_output(outputs: dict[str, str]) -> None:

@@ -27,6 +27,9 @@ queries:
 
 query-filters:
   - exclude:
+      # Stable release tags are accepted by actions/README.md; zizmor enforces ref-pin.
+      id: actions/unpinned-tag
+  - exclude:
       # Excluded due to frequent false positives with Qt/moc-heavy call patterns.
       # Re-evaluate before enabling if CodeQL signal quality improves.
       id: cpp/mistyped-function-arguments
