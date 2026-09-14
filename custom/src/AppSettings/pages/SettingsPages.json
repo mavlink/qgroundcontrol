@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "fileType": "SettingsPages",
+    "comment": "Custom-build overlay merged into src/AppSettings/pages/SettingsPages.json. Entries can append, insertAfter/insertBefore, replace (same name), or remove pages.",
+    "pages": [
+        {
+            "name": "Custom",
+            "qml": "CustomSettings.qml",
+            "icon": "qrc:/res/gear-white.svg",
+            "pageDefinition": "Custom.SettingsUI.json",
+            "insertAfter": "General"
+        }
+    ]
+}

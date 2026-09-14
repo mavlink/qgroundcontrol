@@ -1,0 +1,20 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "groups": [
+        {
+            "heading": "Custom Example",
+            "controls": [
+                {
+                    "setting": "customSettings.showAttitudeWidget"
+                },
+                {
+                    "setting": "customSettings.updateInterval"
+                },
+                {
+                    "setting": "customSettings.operatorName"
+                }
+            ]
+        }
+    ]
+}
