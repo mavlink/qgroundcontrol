@@ -9,7 +9,6 @@ qt_add_library(
     GPSDriver.cc
     GPSDriver.h
     GPSTransport.h
-    GPSType.h
     definitions.h
     satellite_info.h
     sensor_gnss_relative.h
@@ -45,8 +44,8 @@ qgc_disable_dependency_warnings(px4-gpsdrivers)
 
 target_link_libraries(
     QGCGPSDriver
-    PUBLIC Qt6::Core
-    PRIVATE QGCLogging px4-gpsdrivers
+    PUBLIC QGCGPSCore
+    PRIVATE QGCLoggingCategory px4-gpsdrivers
 )
 target_compile_definitions(QGCGPSDriver PRIVATE GPS_DEFINITIONS_HEADER=<${CMAKE_CURRENT_SOURCE_DIR}/definitions.h>)
 target_include_directories(QGCGPSDriver SYSTEM PRIVATE ${px4-gpsdrivers_SOURCE_DIR}/src)

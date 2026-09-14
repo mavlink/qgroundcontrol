@@ -97,7 +97,7 @@ void SerialPortManagerTest::_finishedReceiverReleasesReservation()
     QVERIFY(reservation);
     GPSProvider provider(
         [reservation = std::move(reservation)](const std::atomic_bool&) { return std::unique_ptr<GPSTransport>{}; },
-        GPSType::u_blox, GPSReceiverConfig{});
+        GPSReceiverType::ublox, GPSReceiverConfig{});
     if (cancelled) {
         provider.stop();
     }

@@ -3,6 +3,8 @@
 # EXIF, APMDataFlash (ArduPilot DataFlash binary log), PX4ULog (PX4 ULog), JSON
 # ============================================================================
 
+add_subdirectory(Json)
+
 qt_add_library(QGCParsing STATIC
     APMDataFlash/APMDataFlashUtility.cc
     APMDataFlash/APMDataFlashUtility.h
@@ -137,6 +139,7 @@ set_target_properties(valijson PROPERTIES SYSTEM TRUE)
 target_link_libraries(QGCParsing
     PUBLIC
         Qt6::Core
+        QGCJsonValidation
         exif
         ulog_cpp::ulog_cpp
     PRIVATE

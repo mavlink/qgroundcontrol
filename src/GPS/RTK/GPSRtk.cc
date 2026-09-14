@@ -2,7 +2,7 @@
 
 #include "GPSProvider.h"
 #include "GPSRTKFactGroup.h"
-#include "GPSType.h"
+#include "GPSReceiverTypes.h"
 #include "NTRIPManager.h"
 #include "QGCLoggingCategory.h"
 #include "RTCMMavlink.h"
@@ -21,18 +21,18 @@
 QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.GPSRtk")
 
 namespace {
-struct GPSTypeEntry
+struct GPSReceiverTypeEntry
 {
     QLatin1StringView key;
-    GPSType type;
+    GPSReceiverType type;
     int manufacturerId;  // RTKSettings::baseReceiverManufacturers enum value
 };
 
-constexpr GPSTypeEntry kGPSTypeTable[] = {
-    {QLatin1StringView("trimble"), GPSType::trimble, 1},
-    {QLatin1StringView("septentrio"), GPSType::septentrio, 2},
-    {QLatin1StringView("femtomes"), GPSType::femto, 3},
-    {QLatin1StringView("blox"), GPSType::u_blox, 4},
+constexpr GPSReceiverTypeEntry kGPSReceiverTypeTable[] = {
+    {QLatin1StringView("trimble"), GPSReceiverType::trimble, 1},
+    {QLatin1StringView("septentrio"), GPSReceiverType::septentrio, 2},
+    {QLatin1StringView("femtomes"), GPSReceiverType::femto, 3},
+    {QLatin1StringView("blox"), GPSReceiverType::ublox, 4},
 };
 }  // namespace
 
@@ -94,11 +94,11 @@ void GPSRtk::_onGPSConnectionError(GPSConnectionError error)
 
 void GPSRtk::_onGPSSurveyInStatus(const GPSSurveyInStatus& status)
 {
-    _gpsRtkFactGroup->currentDuration()->setRawValue(status.durationSecs);
-    _gpsRtkFactGroup->currentAccuracy()->setRawValue(static_cast<double>(status.meanAccuracyMM) / 1000.0);
-    _gpsRtkFactGroup->currentLatitude()->setRawValue(status.latitude);
-    _gpsRtkFactGroup->currentLongitude()->setRawValue(status.longitude);
-    _gpsRtkFactGroup->currentAltitude()->setRawValue(status.altitude);
+    _gpsRtkFactGroup->currentDuration()->setRawValue(static_cast<qint64>(status.duration.count()));
+    _gpsRtkFactGroup->currentAccuracy()->setRawValue(status.meanAccuracyMeters.value_or(qQNaN()));
+    _gpsRtkFactGroup->currentLatitude()->setRawValue(status.coordinate.latitude());
+    _gpsRtkFactGroup->currentLongitude()->setRawValue(status.coordinate.longitude());
+    _gpsRtkFactGroup->currentAltitude()->setRawValue(status.altitudeEllipsoidMeters);
     _gpsRtkFactGroup->valid()->setRawValue(status.valid);
     _gpsRtkFactGroup->active()->setRawValue(status.active);
 }
@@ -111,8 +111,8 @@ void GPSRtk::connectGPS(const QString& device, QStringView gps_type)
         qCDebug(GPSRtkLog) << "Serial port is already reserved:" << device;
         return;
     }
-    GPSType type = GPSType::u_blox;
-    for (const GPSTypeEntry& entry : kGPSTypeTable) {
+    GPSReceiverType type = GPSReceiverType::ublox;
+    for (const GPSReceiverTypeEntry& entry : kGPSReceiverTypeTable) {
         if (gps_type.contains(entry.key, Qt::CaseInsensitive)) {
             type = entry.type;
             break;
@@ -124,10 +124,10 @@ void GPSRtk::connectGPS(const QString& device, QStringView gps_type)
 }
 #endif
 
-void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory)
+void GPSRtk::connectReceiver(GPSReceiverType type, GPSProvider::TransportFactory transportFactory)
 {
     RTKSettings* const rtkSettings = SettingsManager::instance()->rtkSettings();
-    for (const GPSTypeEntry& entry : kGPSTypeTable) {
+    for (const GPSReceiverTypeEntry& entry : kGPSReceiverTypeTable) {
         if (entry.type == type) {
             rtkSettings->baseReceiverManufacturers()->setRawValue(entry.manufacturerId);
             break;
@@ -140,15 +140,21 @@ void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
     const bool useFixedBase =
         static_cast<BaseModeDefinition::Mode>(rtkSettings->useFixedBasePosition()->rawValue().toInt()) ==
         BaseModeDefinition::Mode::BaseFixed;
-    const GPSReceiverConfig rtkConfig = {
-        .useFixedBase = useFixedBase,
-        .surveyInAccMeters = rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),
-        .surveyInDurationSecs = rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(),
-        .fixedBaseLatitude = rtkSettings->fixedBasePositionLatitude()->rawValue().toDouble(),
-        .fixedBaseLongitude = rtkSettings->fixedBasePositionLongitude()->rawValue().toDouble(),
-        .fixedBaseAltitudeMeters = rtkSettings->fixedBasePositionAltitude()->rawValue().toFloat(),
-        .fixedBaseAccuracyMeters = rtkSettings->fixedBasePositionAccuracy()->rawValue().toFloat(),
-    };
+    GPSReceiverConfig rtkConfig;
+    if (useFixedBase) {
+        rtkConfig.base = GPSFixedBaseConfig{
+            .coordinate = QGeoCoordinate(rtkSettings->fixedBasePositionLatitude()->rawValue().toDouble(),
+                                         rtkSettings->fixedBasePositionLongitude()->rawValue().toDouble()),
+            .altitudeEllipsoidMeters = rtkSettings->fixedBasePositionAltitude()->rawValue().toFloat(),
+            .accuracyMeters = rtkSettings->fixedBasePositionAccuracy()->rawValue().toFloat(),
+        };
+    } else {
+        rtkConfig.base = GPSSurveyInConfig{
+            .accuracyMeters = rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),
+            .minimumDuration =
+                std::chrono::seconds(rtkSettings->surveyInMinObservationDuration()->rawValue().toLongLong()),
+        };
+    }
     _gpsProvider = new GPSProvider(std::move(transportFactory), type, rtkConfig, this);
     const QPointer<GPSProvider> provider = _gpsProvider;
     // Always queue worker callbacks and reject retired sessions, including already queued events.

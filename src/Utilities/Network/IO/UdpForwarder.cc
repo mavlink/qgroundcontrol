@@ -1,17 +1,12 @@
 #include "UdpForwarder.h"
 
-#include <QtNetwork/QUdpSocket>
+#include <algorithm>
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(UdpForwarderLog, "GPS.UdpForwarder")
+QGC_LOGGING_CATEGORY(UdpForwarderLog, "Utilities.UdpForwarder")
 
 UdpForwarder::UdpForwarder(QObject* parent) : QObject(parent) {}
-
-UdpForwarder::~UdpForwarder()
-{
-    stop();
-}
 
 bool UdpForwarder::configure(const QString& address, quint16 port)
 {
@@ -25,35 +20,29 @@ bool UdpForwarder::configure(const QString& address, quint16 port)
 
     _address = parsed;
     _port = port;
-    _socket = new QUdpSocket(this);
-    _enabled = true;
 
     qCDebug(UdpForwarderLog) << "UDP forwarding configured:" << address << ":" << port;
     return true;
 }
 
-void UdpForwarder::forward(const QByteArray& data)
+qint64 UdpForwarder::forward(const QByteArray& data)
 {
-    if (!_enabled || !_socket || _port == 0) {
-        return;
+    if (!isEnabled()) {
+        return 0;
     }
 
     // No rate limiting: RTCM runs 5-50 KB/s; writeDatagram()'s return value
     // surfaces saturation if it ever becomes a real problem.
-    const qint64 sent = _socket->writeDatagram(data, _address, _port);
+    const qint64 sent = _socket.writeDatagram(data, _address, _port);
     if (sent < 0) {
-        qCWarning(UdpForwarderLog) << "UDP forward failed:" << _socket->errorString();
+        qCWarning(UdpForwarderLog) << "UDP forward failed:" << _socket.errorString();
     }
+    return (std::max) (qint64{0}, sent);
 }
 
 void UdpForwarder::stop()
 {
-    if (_socket) {
-        _socket->close();
-        _socket->deleteLater();
-        _socket = nullptr;
-    }
-    _enabled = false;
+    _socket.close();
     _port = 0;
     _address.clear();
 }

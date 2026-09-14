@@ -96,7 +96,7 @@ void GPSRtkTest::_failedOpenNeverConnects()
     QSignalSpy connected(facts->connected(), &Fact::rawValueChanged);
     expectLogMessage("GPS.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
-    receiver.connectReceiver(GPSType::u_blox, {});
+    receiver.connectReceiver(GPSReceiverType::ublox, {});
     QVERIFY(!receiver.connected());
     QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver(), TestTimeout::mediumMs());
     QVERIFY(!receiver.connected());
@@ -119,7 +119,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
         secondGate->release.release();
         receiver._disconnectTimeoutMs = TestTimeout::mediumMs();
     });
-    receiver.connectReceiver(GPSType::u_blox, blockedFactory(firstGate));
+    receiver.connectReceiver(GPSReceiverType::ublox, blockedFactory(firstGate));
     QTRY_VERIFY_WITH_TIMEOUT(firstGate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> first = receiver._gpsProvider;
     auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
@@ -128,11 +128,10 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     GPSSurveyInStatus survey{};
     survey.valid = true;
     survey.active = true;
-    survey.latitude = 47.0;
-    survey.longitude = 8.0;
-    survey.altitude = 500.0;
-    survey.durationSecs = 20;
-    survey.meanAccuracyMM = 1500;
+    survey.coordinate = QGeoCoordinate(47.0, 8.0);
+    survey.altitudeEllipsoidMeters = 500.0;
+    survey.duration = std::chrono::seconds(20);
+    survey.meanAccuracyMeters = 1.5;
     emit first->surveyInStatus(survey);
     satellite_info_s satellites{};
     satellites.count = 2;
@@ -141,6 +140,11 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver.connected());
     QVERIFY(facts->valid()->rawValue().toBool());
+    QCOMPARE(facts->currentLatitude()->rawValue().toDouble(), 47.0);
+    QCOMPARE(facts->currentLongitude()->rawValue().toDouble(), 8.0);
+    QCOMPARE(facts->currentAltitude()->rawValue().toDouble(), 500.0);
+    QCOMPARE(facts->currentAccuracy()->rawValue().toDouble(), 1.5);
+    QCOMPARE(facts->currentDuration()->rawValue().toLongLong(), 20);
     QCOMPARE(facts->numSatellites()->rawValue().toInt(), 2);
 
     RTCMMavlink forwarder;
@@ -159,7 +163,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     expectLogMessage(
         "GPS.GPSRtk", QtWarningMsg,
         QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
-    receiver.connectReceiver(GPSType::u_blox, blockedFactory(secondGate));
+    receiver.connectReceiver(GPSReceiverType::ublox, blockedFactory(secondGate));
     verifyExpectedLogMessage();
     QVERIFY(!receiver.connected());
     QVERIFY(!facts->valid()->rawValue().toBool());
@@ -199,7 +203,7 @@ void GPSRtkTest::_workerCanOutliveManager()
     auto receiver = std::make_unique<GPSRtk>();
     receiver->_disconnectTimeoutMs = 0;
     const auto releaseWorker = qScopeGuard([&]() { gate->release.release(); });
-    receiver->connectReceiver(GPSType::u_blox, blockedFactory(gate));
+    receiver->connectReceiver(GPSReceiverType::ublox, blockedFactory(gate));
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> provider = receiver->_gpsProvider;
     expectLogMessage(

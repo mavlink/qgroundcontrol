@@ -9,11 +9,18 @@
 
 QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.GPSProvider")
 
-GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
+GPSProvider::GPSProvider(TransportFactory transportFactory, GPSReceiverType type, const GPSReceiverConfig& config,
                          QObject* parent)
     : QThread(parent), _transportFactory(std::move(transportFactory)), _type(type), _config(config)
 {
-    qCDebug(GPSProviderLog) << QStringLiteral("Survey in accuracy: %1 | duration: %2").arg(_config.surveyInAccMeters).arg(_config.surveyInDurationSecs);
+    qCDebug(GPSProviderLog) << this;
+    if (const auto* survey = std::get_if<GPSSurveyInConfig>(&_config.base)) {
+        qCDebug(GPSProviderLog) << "Survey-in accuracy (m):" << survey->accuracyMeters
+                                << "minimum duration (s):" << survey->minimumDuration.count();
+    } else if (const auto* fixed = std::get_if<GPSFixedBaseConfig>(&_config.base)) {
+        qCDebug(GPSProviderLog) << "Fixed base:" << fixed->coordinate
+                                << "ellipsoid altitude (m):" << fixed->altitudeEllipsoidMeters;
+    }
 }
 
 void GPSProvider::run()
@@ -53,8 +60,12 @@ void GPSProvider::run()
     };
     sinks.onSurveyIn = [this, &gotData](const GPSSurveyInStatus &status) {
         gotData = true;
-        qCDebug(GPSProviderLog) << QStringLiteral("Survey-in: %1s accuracy: %2mm valid: %3 active: %4")
-                                       .arg(status.durationSecs).arg(status.meanAccuracyMM).arg(status.valid).arg(status.active);
+        qCDebug(GPSProviderLog) << QStringLiteral("Survey-in: %1s accuracy: %2m valid: %3 active: %4")
+                                       .arg(status.duration.count())
+                                       .arg(status.meanAccuracyMeters ? QString::number(*status.meanAccuracyMeters)
+                                                                      : QStringLiteral("unknown"))
+                                       .arg(status.valid)
+                                       .arg(status.active);
         emit surveyInStatus(status);
     };
 

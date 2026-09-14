@@ -74,7 +74,7 @@ void NmeaSourceManager::update()
     }
     if (source == AutoConnectSettings::NmeaSourceUdp) {
         const quint16 port = _settings->nmeaUdpPort()->rawValue().toUInt();
-        if (_udp && _udp->state() == QAbstractSocket::BoundState && _udp->localPort() == port) {
+        if (_udp && _udp->isOpen() && _udp->localPort() == port) {
             return;
         }
         stop();

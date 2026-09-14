@@ -13,6 +13,8 @@ add_subdirectory(Network)
 add_subdirectory(Parsing)
 add_subdirectory(Platform)
 add_subdirectory(StateMachine)
+add_subdirectory(Timing)
+add_subdirectory(Standalone)
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE

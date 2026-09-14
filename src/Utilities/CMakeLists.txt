@@ -7,8 +7,6 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         AppMessages.cc
         AppMessages.h
-        DataRateTracker.cc
-        DataRateTracker.h
         QGCCommandLineParser.cc
         QGCCommandLineParser.h
 )
@@ -23,7 +21,11 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 # Utility Subdirectories
 # ============================================================================
 
+add_subdirectory(IO)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCIO)
+
 add_subdirectory(Logging)
+add_subdirectory(Timing)
 add_subdirectory(Audio)
 add_subdirectory(Compression)
 add_subdirectory(Concurrency)

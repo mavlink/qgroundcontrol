@@ -15,8 +15,15 @@ private slots:
     void _testRtcmMessageForwardedToSink();
     void _testSurveyInStatusTranslatedAndFlagsDecoded();
     void _testSurveyInStatusPreservesLargeValues();
+    void _testSurveyInAccuracy_data();
+    void _testSurveyInAccuracy();
     void _testSurveyInStatusNullDataIgnored();
+    void _testSurveyInCoordinates_data();
+    void _testSurveyInCoordinates();
+    void _testInvalidConfiguration_data();
+    void _testInvalidConfiguration();
+    void _testInvalidFixedBaseRejected_data();
+    void _testInvalidFixedBaseRejected();
     void _testCallbacksWithoutSinksAreSafe();
-    void _testDefaultConfigHeadingOffsetMatchesSeptentrioPreset();
     void _testUnknownCallbackIgnored();
 };
