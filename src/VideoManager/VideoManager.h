@@ -82,7 +82,7 @@ public:
     QString uvcVideoSourceID() const { return _uvcVideoSourceID; }
     void setfullScreen(bool on);
     void setSourceConfiguration(const QString &sourceName, const VideoSourceConfiguration &configuration);
-    void setVideoUriOverride(bool enabled, const QString &uri);
+    Q_INVOKABLE void setVideoUriOverride(bool enabled, const QString &uri);
 
 signals:
     void aspectRatioChanged();

@@ -17,11 +17,11 @@ void SVBackend::configureNetworkVideo(bool enabled, const QString& uri, bool for
     VideoSourceConfiguration primaryConfiguration;
     primaryConfiguration.uriOverrideEnabled = enabled;
     primaryConfiguration.uri = enabled ? uri : QString();
-    primaryConfiguration.forceRtspTcp = forceRtspTcp;
+    primaryConfiguration.forceRtspTcp = enabled && forceRtspTcp;
 
     VideoSourceConfiguration thermalConfiguration;
     thermalConfiguration.uriOverrideEnabled = enabled;
-    thermalConfiguration.forceRtspTcp = forceRtspTcp;
+    thermalConfiguration.forceRtspTcp = enabled && forceRtspTcp;
 
     VideoManager::instance()->setSourceConfiguration(QStringLiteral("thermalVideo"), thermalConfiguration);
     VideoManager::instance()->setSourceConfiguration(QStringLiteral("videoContent"), primaryConfiguration);
