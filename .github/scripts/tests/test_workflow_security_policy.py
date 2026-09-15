@@ -125,6 +125,7 @@ def test_runson_selection_keeps_independent_forks_on_hosted_runners() -> None:
         ("docker.yml", 1),
         ("custom-build.yml", 1),
         ("vm-builds.yml", 2),
+        ("analysis.yml", 1),
     ],
 )
 def test_upstream_runson_routes_do_not_restrict_pr_origin(workflow: str, route_count: int) -> None:

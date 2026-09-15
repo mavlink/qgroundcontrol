@@ -353,21 +353,22 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
   The C++ formatting hook checks modified regions against the PR merge base (or `HEAD` locally),
   following `CODING_STYLE.md`. New files and unchanged files supplied in a full sweep are checked in full.
   Compiler-aware Clazy and clang-tidy hooks are manual locally; `analysis.yml` generates
-  prerequisites and runs one Clazy job and four clang-tidy shards for relevant PRs.
-  Shards divide the selected compilation units after header dependency expansion; they retain
-  every enabled check and report errors independently. This reduces elapsed scan time at the
-  cost of three additional runner setups. Only the first shard saves the shared build caches.
+  prerequisites and runs one job per tool for relevant PRs. Upstream clang-tidy uses the
+  16-vCPU RunsOn runner; Clazy uses the smaller tester pool. Both initialize Magic Cache
+  and use all available CPUs for analysis and prerequisite builds.
   Manual dispatch runs one job for the selected tool; Code Analysis has no scheduled trigger.
   Compiler analysis uses Ninja,
   disables PCH and autogen's inherited link dependencies, and builds protocol headers
   (`qgc-analysis-headers`) before Qt's global `autogen` target. It does not compile or
   link QGC. Clazy is built and cached against the same LLVM version as Clang and clang-tidy;
   `.github/build-config.json` pins LLVM and the verified Clazy source revision. Runtime
-  sanitizers and build-aware QML analysis retain full builds. Source-only PRs scan changed
-  compilation units active in the build. Header changes use a fresh `clang-scan-deps`
+  sanitizers and build-aware QML analysis retain full builds. PRs scan changed
+  compilation units active in the build and report ordinary findings only on changed lines.
+  Compiler and tool errors remain visible regardless of their location.
+  Header changes use a fresh `clang-scan-deps`
   preprocessing scan to include transitive dependents, falling back to all active project
-  sources if the scanner is unavailable or incomplete. Analysis/build configuration changes
-  scan all active project compilation units. Each tool uploads per-file
+  sources if the scanner is unavailable or incomplete. Configuration-only PRs do not trigger
+  a full source scan; use manual dispatch with `analyze_all` for a full analysis. Each tool uploads per-file
   durations in `*-timings.json` and reports completed files immediately. Identical diagnostic
   blocks are shown once; `*-raw.txt` retains every translation unit's full output, including
   notes and compiler errors. Clang-tidy per-check instrumentation is disabled by default because

@@ -57,21 +57,21 @@ permissions:
 
 jobs:
   analyze:
-    name: ${{ matrix.tool }} Analysis${{ matrix.tool == 'clang-tidy' && github.event_name != 'workflow_dispatch' && format(' ({0}/4)', matrix.shard) || '' }}
-    runs-on: ubuntu-24.04
+    name: ${{ matrix.tool }} Analysis
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        format('runs-on={0}/{1}', github.run_id,
+          matrix.tool == 'clang-tidy' &&
+            'family=m8i.4xlarge/cpu=16/ram=64/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=60gb' ||
+          'runner=linux-x64-tester') ||
+        'ubuntu-24.04'
+      }}
     timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
         tool: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', inputs.tool)) || fromJSON('["clazy", "clang-tidy"]') }}
-        shard: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '[1]' || '[1,2,3,4]') }}
-        exclude:
-          - tool: clazy
-            shard: 2
-          - tool: clazy
-            shard: 3
-          - tool: clazy
-            shard: 4
 
     steps:
       - name: Harden Runner
@@ -79,11 +79,25 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Detect analysis parallelism
+        id: parallel
+        run: |
+          jobs="$(nproc)"
+          echo "jobs=$jobs" >> "$GITHUB_OUTPUT"
+          echo "Using $jobs analysis workers"
 
       - name: Build Setup (clazy/iwyu)
         if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)
@@ -93,7 +107,7 @@ jobs:
           qt-arch: linux_gcc_64
           build-type: Debug
           cache-variant: ${{ matrix.tool }}
-          save-cache: ${{ matrix.shard == 1 }}
+          save-cache: 'true'
 
       - name: Read analysis toolchain
         id: toolchain
@@ -131,6 +145,7 @@ jobs:
           LLVM_VERSION: ${{ steps.toolchain.outputs.llvm_version }}
           CLAZY_REVISION: ${{ steps.toolchain.outputs.clazy_revision }}
           CLAZY_SHA256: ${{ steps.toolchain.outputs.clazy_sha256 }}
+          ANALYSIS_JOBS: ${{ steps.parallel.outputs.jobs }}
         run: |
           curl --fail --location --retry 3 "https://github.com/KDE/clazy/archive/${CLAZY_REVISION}.tar.gz" -o "$RUNNER_TEMP/clazy.tar.gz"
           echo "$CLAZY_SHA256  $RUNNER_TEMP/clazy.tar.gz" | sha256sum --check
@@ -141,7 +156,7 @@ jobs:
             -DCMAKE_CXX_COMPILER="/usr/bin/clang++-$LLVM_VERSION" -DCMAKE_PREFIX_PATH="/usr/lib/llvm-$LLVM_VERSION" \
             -DLLVM_CONFIG_EXECUTABLE="/usr/lib/llvm-$LLVM_VERSION/bin/llvm-config" \
             -DCLAZY_LINK_CLANG_DYLIB=ON -DCLAZY_MAN_PAGE=OFF -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/.cache/clazy"
-          cmake --build "$RUNNER_TEMP/clazy-build" --target clazy-standalone --parallel "$(nproc)"
+          cmake --build "$RUNNER_TEMP/clazy-build" --target clazy-standalone --parallel "$ANALYSIS_JOBS"
           cmake --install "$RUNNER_TEMP/clazy-build"
 
       - name: Select analysis executables
@@ -210,6 +225,7 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
           target: qgc-analysis-headers
+          parallel-jobs: ${{ steps.parallel.outputs.jobs }}
 
       - name: Generate Qt analysis prerequisites
         if: contains(fromJSON('["clazy", "clang-tidy", "iwyu"]'), matrix.tool)
@@ -218,6 +234,7 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
           target: autogen
+          parallel-jobs: ${{ steps.parallel.outputs.jobs }}
 
       - name: Build runtime analysis prerequisites
         if: contains(fromJSON('["qmllint", "asan", "ubsan", "tsan"]'), matrix.tool)
@@ -225,6 +242,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
+          parallel-jobs: ${{ steps.parallel.outputs.jobs }}
 
       - name: Run QML analysis with generated types
         if: matrix.tool == 'qmllint'
@@ -247,12 +265,10 @@ jobs:
           ANALYZE_ALL: ${{ inputs.analyze_all }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           ANALYSIS_TOOL: ${{ matrix.tool }}
-          ANALYSIS_SHARD: ${{ matrix.shard }}
-          ANALYSIS_SHARD_COUNT: ${{ matrix.tool == 'clang-tidy' && github.event_name != 'workflow_dispatch' && '4' || '1' }}
+          ANALYSIS_JOBS: ${{ steps.parallel.outputs.jobs }}
           PROFILE_CHECKS: ${{ inputs.profile_checks }}
         run: |
-          args=(--build-dir "${RUNNER_TEMP}/build" --advisory)
-          args+=(--shard "$ANALYSIS_SHARD" --shard-count "$ANALYSIS_SHARD_COUNT")
+          args=(--build-dir "${RUNNER_TEMP}/build" --advisory --jobs "$ANALYSIS_JOBS")
           if [[ "$ANALYSIS_TOOL" == 'clang-tidy' && "$PROFILE_CHECKS" == 'true' ]]; then
             args+=(--profile-checks)
           fi
@@ -261,20 +277,7 @@ jobs:
           elif [[ -n "$INPUT_PATH" ]]; then
             args+=("$INPUT_PATH")
           elif [[ -n "$PR_BASE_SHA" ]]; then
-            tool_config=(tools/analyzers/clang_tidy.py .clang-tidy)
-            if [[ "$ANALYSIS_TOOL" == 'clazy' ]]; then
-              tool_config=(tools/analyzers/clazy.py)
-            fi
-            config_changes="$(git diff --name-only "${PR_BASE_SHA}...HEAD" -- \
-              "${tool_config[@]}" tools/analyzers/compiler.py tools/analyzers/dependencies.py \
-              tools/analyzers/__init__.py tools/analyze.py \
-              tools/common/analyzer.py tools/common/proc.py tools/common/file_traversal.py \
-              tools/common/git.py tools/common/tool_version.py tools/common/deps.py \
-              tools/_bootstrap.py tools/pyproject.toml tools/uv.lock \
-              .github/workflows/analysis.yml .github/build-config.json CMakeLists.txt CMakePresets.json cmake/ ':(glob)src/**/CMakeLists.txt')"
-            if [[ -n "$config_changes" ]]; then
-              args+=(--all)
-            fi
+            args+=(--diff-base "$PR_BASE_SHA")
           fi
           python3 tools/analyze.py --tool "$ANALYSIS_TOOL" "${args[@]}" 2>&1 | tee "${RUNNER_TEMP}/build/analysis-output.txt"
 
@@ -283,8 +286,9 @@ jobs:
         env:
           INPUT_PATH: ${{ inputs.path }}
           ANALYZE_ALL: ${{ inputs.analyze_all }}
+          ANALYSIS_JOBS: ${{ steps.parallel.outputs.jobs }}
         run: |
-          args=(-p "${RUNNER_TEMP}/build" -j "$(nproc)")
+          args=(-p "${RUNNER_TEMP}/build" -j "$ANALYSIS_JOBS")
           if [[ "$ANALYZE_ALL" != 'true' && -n "$INPUT_PATH" ]]; then
             if [[ "$INPUT_PATH" = /* || "$INPUT_PATH" == *..* ]]; then
               echo "::error::Analysis path must be relative without '..'"
@@ -316,7 +320,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.tool }}-output${{ matrix.tool == 'clang-tidy' && github.event_name != 'workflow_dispatch' && format('-{0}', matrix.shard) || '' }}
+          name: ${{ matrix.tool }}-output
           path: |
             ${{ runner.temp }}/build/analysis-output.txt
             ${{ runner.temp }}/build/*-timings.json

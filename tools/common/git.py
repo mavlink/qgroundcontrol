@@ -7,6 +7,7 @@ wrapper backed by :mod:`common.proc`.
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 from .proc import run_captured
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     import subprocess
     from pathlib import Path
 
-__all__ = ["get_default_branch_ref", "run_git"]
+__all__ = ["get_changed_line_ranges", "get_default_branch_ref", "run_git"]
 
 _FALLBACK_REFS: tuple[str, ...] = ("master", "main", "origin/master", "origin/main")
 
@@ -46,3 +47,49 @@ def get_default_branch_ref(repo_root: Path | None = None) -> str | None:
         if probe.returncode == 0:
             return ref
     return None
+
+
+def get_changed_line_ranges(
+    repo_root: Path, base: str, extensions: tuple[str, ...]
+) -> dict[Path, list[tuple[int, int]]]:
+    """Return existing changed files and inclusive new-side ranges in base...HEAD.
+
+    Keep deletion-only files with empty ranges: their compilation can still fail.
+    NUL-delimited names avoid Git's quoting of spaces and non-ASCII filenames.
+    """
+    revision = f"{base}...HEAD"
+
+    def diff(*args: str) -> str:
+        result = run_git(
+            "--literal-pathspecs",
+            "diff",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--no-color",
+            "--find-renames",
+            *args,
+            cwd=repo_root,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"Unable to determine changed lines: {result.stderr.strip()}")
+        return result.stdout
+
+    names = iter(diff("--name-status", "-z", revision, "--").split("\0"))
+    changed: dict[Path, list[tuple[int, int]]] = {}
+    for status in names:
+        if not status:
+            continue
+        old_path = next(names)
+        new_path = next(names) if status.startswith(("R", "C")) else old_path
+        file = repo_root / new_path
+        if status == "D" or file.suffix not in extensions or not file.is_file():
+            continue
+        patch = diff("--unified=0", revision, "--", *dict.fromkeys((old_path, new_path)))
+        ranges = []
+        for match in re.finditer(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", patch, re.MULTILINE):
+            start = int(match[1])
+            count = int(match[2]) if match[2] is not None else 1
+            if count:
+                ranges.append((start, start + count - 1))
+        changed[file.resolve()] = ranges
+    return changed

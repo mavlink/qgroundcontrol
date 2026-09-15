@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 from common.file_traversal import find_repo_root
-from common.git import get_default_branch_ref, run_git
+from common.git import get_changed_line_ranges, get_default_branch_ref, run_git
 from common.logging import log_error, log_ok, log_warn
 
 if TYPE_CHECKING:
@@ -232,6 +232,14 @@ Examples:
         help="Analyze all source files",
     )
     parser.add_argument(
+        "--diff-base",
+        metavar="REF",
+        help=(
+            "Analyze files in REF...HEAD; report changed-line warnings only, "
+            "retaining all errors (clang-tidy/clazy)"
+        ),
+    )
+    parser.add_argument(
         "-f",
         "--fix",
         action="store_true",
@@ -291,6 +299,13 @@ Examples:
         parser.error("Sharding requires --tool clang-tidy or clazy")
     if args.profile_checks and args.tool != "clang-tidy":
         parser.error("--profile-checks requires --tool clang-tidy")
+    if args.diff_base is not None:
+        if args.tool not in {"clang-tidy", "clazy"}:
+            parser.error("--diff-base requires --tool clang-tidy or clazy")
+        if args.all or args.path:
+            parser.error("--diff-base cannot be combined with --all or explicit paths")
+        if not args.diff_base or args.diff_base.startswith("-"):
+            parser.error("--diff-base requires a nonempty Git ref, not an option")
     return args
 
 
@@ -357,11 +372,21 @@ def main() -> int:
 
     collect = collector.get_qml_files if args.tool == "qmllint" else collector.get_cpp_files
     try:
-        files = (
-            sorted({file for target in targets for file in collect(target)})
-            if targets
-            else collect(analyze_all=args.all)
-        )
+        if args.diff_base is not None:
+            from analyzers.compiler import CompilerAnalyzer
+
+            if not isinstance(analyzer, CompilerAnalyzer):
+                raise RuntimeError("--diff-base requires a compiler analyzer")
+            analyzer.changed_lines = get_changed_line_ranges(
+                repo_root, args.diff_base, collector.CPP_EXTENSIONS
+            )
+            files = sorted(analyzer.changed_lines)
+        else:
+            files = (
+                sorted({file for target in targets for file in collect(target)})
+                if targets
+                else collect(analyze_all=args.all)
+            )
     except RuntimeError as e:
         log_error(str(e))
         return 2

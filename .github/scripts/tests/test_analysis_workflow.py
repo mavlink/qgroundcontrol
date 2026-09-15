@@ -85,8 +85,7 @@ def checkout(tmp_path):
         ANALYZE_ALL="false",
         INPUT_PATH="",
         PR_BASE_SHA=base,
-        ANALYSIS_SHARD="1",
-        ANALYSIS_SHARD_COUNT="1",
+        ANALYSIS_JOBS="16",
         PROFILE_CHECKS="false",
     )
     return tmp_path, env
@@ -114,7 +113,7 @@ def checkout(tmp_path):
     ],
 )
 @pytest.mark.parametrize("tool", ["clazy", "clang-tidy"])
-def test_pr_analysis_selects_full_scan_for_configuration_changes(
+def test_pr_analysis_stays_scoped_to_changed_code_for_configuration_changes(
     checkout, changed_path, monkeypatch, tool
 ):
     root, env = checkout
@@ -141,70 +140,80 @@ def test_pr_analysis_selects_full_scan_for_configuration_changes(
     invocations = [json.loads(line) for line in (root / "args.jsonl").read_text().splitlines()]
     assert len(invocations) == 1
     assert invocations[0][2] == env["ANALYSIS_TOOL"]
-    full_scan = changed_path not in {
-        "src/changed.cc",
-        "tools/analyzers/qmllint.py",
-        "tools/common/markdown.py",
-        *(
-            {".clang-tidy", "tools/analyzers/clang_tidy.py"}
-            if tool == "clazy"
-            else {"tools/analyzers/clazy.py"}
-        ),
-    }
-    assert all(("--all" in args) == full_scan for args in invocations)
+    args = invocations[0]
+    assert "--all" not in args
+    assert args[args.index("--diff-base") + 1] == env["PR_BASE_SHA"]
     monkeypatch.setenv("PR_BASE_SHA", env["PR_BASE_SHA"])
-    selected = FileCollector(root).get_cpp_files(analyze_all=full_scan)
-    expected = {"changed.cc", "unchanged.cc"} if full_scan else set()
-    if changed_path == "src/changed.cc":
-        expected = {"changed.cc"}
+    selected = FileCollector(root).get_cpp_files()
+    expected = {"changed.cc"} if changed_path == "src/changed.cc" else set()
     assert {path.name for path in selected} == expected
-
-
-def test_invalid_diff_stops_analysis_instead_of_skipping(checkout):
-    root, env = checkout
-    env["PR_BASE_SHA"] = "missing-ref"
-    result = subprocess.run(
-        ["bash", "-e", "-o", "pipefail", "-c", SCRIPT],
-        cwd=root,
-        env=env,
-        check=False,
-        capture_output=True,
-    )
-    assert result.returncode != 0
-    assert not (root / "args.jsonl").exists()
 
 
 @pytest.mark.parametrize("tool", ["clazy", "clang-tidy"])
 @pytest.mark.parametrize("profile_checks", ["true", "false"])
-def test_workflow_forwards_shards_and_only_explicit_tidy_profiling(checkout, tool, profile_checks):
+@pytest.mark.parametrize("jobs", ["4", "16"])
+def test_workflow_forwards_workers_and_only_explicit_tidy_profiling(
+    checkout, tool, profile_checks, jobs
+):
     root, env = checkout
     env.update(
         ANALYSIS_TOOL=tool,
         PROFILE_CHECKS=profile_checks,
-        ANALYSIS_SHARD="3",
-        ANALYSIS_SHARD_COUNT="4",
+        ANALYSIS_JOBS=jobs,
     )
     subprocess.run(["bash", "-e", "-o", "pipefail", "-c", SCRIPT], cwd=root, env=env, check=True)
     args = json.loads((root / "args.jsonl").read_text())
-    assert args[args.index("--shard") + 1] == "3"
-    assert args[args.index("--shard-count") + 1] == "4"
+    assert args[args.index("--jobs") + 1] == jobs
+    assert "--shard" not in args
+    assert "--shard-count" not in args
     assert ("--profile-checks" in args) == (tool == "clang-tidy" and profile_checks == "true")
 
 
-def test_automatic_matrix_partitions_only_tidy_and_saves_one_cache():
+def test_automatic_matrix_runs_one_job_per_tool():
     job = WORKFLOW["jobs"]["analyze"]
     matrix = job["strategy"]["matrix"]
-    assert "'[1,2,3,4]'" in matrix["shard"]
-    assert "github.event_name == 'workflow_dispatch' && '[1]'" in matrix["shard"]
-    legs = [
-        {"tool": tool, "shard": shard}
-        for tool in ("clazy", "clang-tidy")
-        for shard in range(1, 5)
-        if {"tool": tool, "shard": shard} not in matrix["exclude"]
-    ]
-    assert sum(leg["tool"] == "clazy" for leg in legs) == 1
-    assert sum(leg["tool"] == "clang-tidy" for leg in legs) == 4
+    assert set(matrix) == {"tool"}
+    assert "matrix.shard" not in job["name"]
+    assert "matrix.tool == 'clang-tidy'" in job["runs-on"]
+    for label in ("cpu=16", "ram=64", "spot=false", "extras=s3-cache", "runner=linux-x64-tester"):
+        assert label in job["runs-on"]
     setup = next(step for step in job["steps"] if step["name"] == "Build Setup (clazy/iwyu)")
-    assert setup["with"]["save-cache"] == "${{ matrix.shard == 1 }}"
+    assert setup["with"]["save-cache"] == "true"
     upload = next(step for step in job["steps"] if step["name"] == "Upload Output")
-    assert "matrix.shard" in upload["with"]["name"]
+    assert upload["with"]["name"] == "${{ matrix.tool }}-output"
+
+
+@pytest.mark.parametrize("jobs", ["4", "16"])
+def test_workflow_detects_and_forwards_available_cpus(checkout, jobs):
+    root, env = checkout
+    nproc = root / "bin/nproc"
+    nproc.write_text(f"#!/bin/sh\nprintf '%s\\n' '{jobs}'\n")
+    nproc.chmod(0o755)
+    output = root / "outputs"
+    env["GITHUB_OUTPUT"] = str(output)
+    steps = WORKFLOW["jobs"]["analyze"]["steps"]
+    parallel = next(step for step in steps if step.get("id") == "parallel")
+    subprocess.run(
+        ["bash", "-e", "-o", "pipefail", "-c", parallel["run"]],
+        cwd=root,
+        env=env,
+        check=True,
+    )
+    assert output.read_text().strip() == f"jobs={jobs}"
+    for step in steps:
+        if step.get("uses") == "./.github/actions/cmake-build":
+            assert step["with"]["parallel-jobs"] == "${{ steps.parallel.outputs.jobs }}"
+        if step["name"] in ("Run compiler analysis", "Run IWYU", "Build matching Clazy"):
+            assert step["env"]["ANALYSIS_JOBS"] == "${{ steps.parallel.outputs.jobs }}"
+
+
+@pytest.mark.parametrize("path", ["", "src/"])
+def test_manual_analysis_preserves_full_scan_and_path_modes(checkout, path):
+    root, env = checkout
+    env.update(PR_BASE_SHA="", INPUT_PATH=path, ANALYZE_ALL="false" if path else "true")
+    subprocess.run(["bash", "-e", "-o", "pipefail", "-c", SCRIPT], cwd=root, env=env, check=True)
+    args = json.loads((root / "args.jsonl").read_text())
+    assert "--diff-base" not in args
+    assert ("--all" in args) is (not path)
+    if path:
+        assert path in args
