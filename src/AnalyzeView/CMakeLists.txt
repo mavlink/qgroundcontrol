@@ -5,6 +5,7 @@
 
 add_subdirectory(GeoTag)
 add_subdirectory(LogViewer)
+add_subdirectory(MAVLinkBandwidth)
 add_subdirectory(MAVLinkConsole)
 add_subdirectory(MAVLinkInspector)
 add_subdirectory(OnboardLogs)
@@ -23,6 +24,7 @@ qt_add_qml_module(AnalyzeViewModule
     QML_FILES
         AnalyzePage.qml
         AnalyzeView.qml
+        MAVLinkBandwidth/MAVLinkBandwidthPage.qml
         MAVLinkConsole/MAVLinkConsolePage.qml
         MAVLinkInspector/MAVLinkChart.qml
         MAVLinkInspector/MAVLinkMessageButton.qml
