@@ -1,0 +1,59 @@
+name: Build qgc-dev
+description: Build the canonical Bake target natively and smoke-test the exact result
+inputs:
+  platform:
+    required: true
+    description: Native Bake platform
+  scope:
+    required: true
+    description: Platform cache scope
+  revision:
+    required: true
+    description: Exact source commit
+  publish:
+    default: 'false'
+    description: Export an untagged registry digest after read-only validation
+runs:
+  using: composite
+  steps:
+    - name: Require native builder
+      shell: bash
+      env:
+        NATIVE_PLATFORM: ${{ inputs.platform }}
+      run: |
+        case "$(docker info --format '{{.Architecture}}'):$NATIVE_PLATFORM" in
+          x86_64:linux/amd64|amd64:linux/amd64|aarch64:linux/arm64|arm64:linux/arm64) ;;
+          *) echo "::error::qgc-dev requires a native builder"; exit 1 ;;
+        esac
+    - name: Enable RunsOn Magic Cache
+      if: github.repository_owner == 'mavlink'
+      uses: runs-on/action@v2
+      with:
+        metrics: cpu,network,memory,disk,io
+        show_costs: summary
+    - uses: docker/setup-buildx-action@v4
+    - name: Build canonical target
+      id: bake
+      uses: docker/bake-action@v7
+      env:
+        SOURCE_REVISION: ${{ inputs.revision }}
+      with:
+        files: deploy/docker/docker-bake.hcl
+        targets: qgc-dev
+        load: ${{ inputs.publish != 'true' }}
+        provenance: false
+        sbom: false
+        set: |
+          qgc-dev.platform=${{ inputs.platform }}
+          qgc-dev.cache-from=type=gha,version=2,scope=qgc-dev-${{ inputs.scope }}
+          ${{ github.event_name != 'pull_request' && format('qgc-dev.cache-to=type=gha,version=2,scope=qgc-dev-{0},mode=max', inputs.scope) || '' }}
+          ${{ inputs.publish == 'true' && 'qgc-dev.tags=ghcr.io/mavlink/qgc-dev' || '' }}
+          ${{ inputs.publish == 'true' && 'qgc-dev.output=type=image,push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true' || '' }}
+    - name: Smoke exact native image
+      shell: bash
+      env:
+        BAKE_METADATA: ${{ steps.bake.outputs.metadata }}
+        PUBLISH_IMAGE: ${{ inputs.publish }}
+        NATIVE_PLATFORM: ${{ inputs.platform }}
+        SOURCE_REVISION: ${{ inputs.revision }}
+      run: python3 .github/scripts/qgc_dev.py smoke

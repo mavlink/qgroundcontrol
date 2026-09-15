@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Single source for the QGC builder images. Pick a variant with --target:
 #   docker build -f deploy/docker/Dockerfile --target linux       .   # x86_64 AppImage
-#   docker build -f deploy/docker/Dockerfile --target linux-analysis . # Ubuntu builder + analyzers
+#   docker buildx bake -f deploy/docker/docker-bake.hcl qgc-dev
 #   docker build -f deploy/docker/Dockerfile --target linux-cross .   # aarch64 cross
 #   docker build -f deploy/docker/Dockerfile --target android     .   # Android APK
 # run_docker.py / plan_docker_builds.py drive --target + build-args; non-Ubuntu
@@ -67,16 +67,24 @@ WORKDIR /project/build
 # Login shell so /etc/profile.d/*.sh (Qt paths, toolchain pins) are sourced.
 SHELL ["/bin/bash", "-lc"]
 
-# ---------- linux: native x86_64 AppImage build ----------
+# ---------- linux: native desktop build ----------
 # DEP_PLATFORM selects the install_dependencies backend (debian = apt/Ubuntu &
 # Debian; fedora = dnf; arch = pacman). Non-Ubuntu distros set it via build args.
 FROM base AS linux
+ARG TARGETARCH
 ARG DEP_PLATFORM=debian
 # Persist for entrypoint.sh: Fedora/Arch builds skip the appimagelint compat check.
 ENV QGC_DEP_PLATFORM=${DEP_PLATFORM}
-RUN python3 /tmp/tools/setup/install_qt.py install --from-config --host linux --target desktop --arch linux_gcc_64 --outdir /opt/Qt && \
+RUN case "${TARGETARCH}" in \
+        amd64) QT_HOST=linux; QT_ARCH=linux_gcc_64 ;; \
+        arm64) QT_HOST=linux_arm64; QT_ARCH=linux_gcc_arm64 ;; \
+        *) echo "Unsupported native architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac && \
+    python3 /tmp/tools/setup/install_qt.py install --from-config --host "${QT_HOST}" --target desktop --arch "${QT_ARCH}" --outdir /opt/Qt && \
     QT_VERSION=$(python3 /tmp/tools/setup/read_config.py --get qt.version) && \
-    { echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_64"; \
+    QT_ARCH_DIR=$(python3 /tmp/tools/setup/install_qt.py resolve-arch --arch "${QT_ARCH}") && \
+    ln -s "/opt/Qt/${QT_VERSION}/${QT_ARCH_DIR}" /opt/qt && \
+    { echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/${QT_ARCH_DIR}"; \
       echo 'export PATH=$QT_ROOT_DIR/bin:$PATH'; } > /etc/profile.d/qt.sh
 COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
 RUN python3 /tmp/tools/setup/install_dependencies --platform "${DEP_PLATFORM}" && \
@@ -85,28 +93,30 @@ COPY deploy/docker/entrypoint.sh deploy/docker/entrypoint.py /
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]
 
-# ---------- linux-analysis: Ubuntu 24.04 builder and configured analysis tools ----------
+# ---------- qgc-dev: complete, non-root native desktop development ----------
 # Other distros and cross/mobile images keep the smaller linux/base stages.
-FROM linux AS linux-analysis
+FROM linux AS qgc-dev
 COPY --from=base /tmp/tools/ /opt/qgc-bootstrap/tools/
 COPY deploy/docker/install_analysis.py /opt/qgc-bootstrap/deploy/docker/
 COPY .github/scripts/ccache_helper.py .github/scripts/ci_bootstrap.py /opt/qgc-bootstrap/.github/scripts/
 RUN python3 /opt/qgc-bootstrap/deploy/docker/install_analysis.py && \
     LLVM_VERSION=$(python3 /opt/qgc-bootstrap/tools/setup/read_config.py --get analysis.llvm_version) && \
     ln -s "/usr/lib/llvm-${LLVM_VERSION}" /opt/llvm && \
-    ln -s "${QT_ROOT_DIR}" /opt/qt && \
     TMPDIR=/opt/qgc-bootstrap python3 /opt/qgc-bootstrap/.github/scripts/ccache_helper.py install && \
     rm -rf /opt/qgc-bootstrap/clazy-build /var/lib/apt/lists/*
+RUN UV_PROJECT_ENVIRONMENT=/opt/qgc-venv uv sync \
+        --project /opt/qgc-tools --python /opt/qgc-venv/bin/python \
+        --group dev --no-default-groups --no-install-project --frozen --inexact
 ENV QT_ROOT_DIR=/opt/qt
 ENV PATH="/opt/qgc-venv/bin:/opt/clazy/bin:/opt/llvm/bin:/opt/qt/bin:${PATH}"
+ENV UV_PROJECT_ENVIRONMENT=/opt/qgc-venv UV_NO_SYNC=true UV_PYTHON_DOWNLOADS=never
+ENV UV_PYTHON=/opt/qgc-venv/bin/python
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN python3 /opt/qgc-bootstrap/deploy/docker/install_analysis.py --verify && \
     qt-cmake --version && \
     python3 -c "import jinja2, httpx, defusedxml, lxml, fastcrc" && \
     ccache --version
 
-# ---------- devcontainer: interactive, non-root desktop development ----------
-FROM linux-analysis AS devcontainer
 ARG DEV_USER=vscode
 ARG USER_UID=1000
 ARG USER_GID=1000

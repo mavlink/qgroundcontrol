@@ -29,6 +29,7 @@ def analysis_packages(llvm: str) -> list[str]:
         f"llvm-{llvm}-dev",
         f"libclang-{llvm}-dev",
         f"libclang-cpp{llvm}-dev",
+        "gh",
         "iwyu",
         "ninja-build",
     ]
@@ -83,10 +84,10 @@ def build_clazy(llvm: str, revision: str, checksum: str, prefix: Path, work_dir:
 
 
 def verify_toolchain(llvm: str, prefix: Path) -> None:
-    for tool in ("clang", "clang-tidy", str(prefix / "bin/clazy-standalone")):
+    for tool in ("clang", "clang-tidy", "clangd", str(prefix / "bin/clazy-standalone")):
         version = subprocess.check_output([tool, "--version"], text=True)
         print(version, end="")
-        if not re.search(rf"(?:clang|LLVM) version {re.escape(llvm)}\.", version):
+        if not re.search(rf"(?:clang|clangd|LLVM) version {re.escape(llvm)}\.", version):
             raise RuntimeError(f"{tool} does not use configured LLVM {llvm}")
     # Check the dynamic ABI as well as the version compiled into Clazy.
     libraries = subprocess.check_output(["ldd", str(prefix / "bin/clazy-standalone")], text=True)

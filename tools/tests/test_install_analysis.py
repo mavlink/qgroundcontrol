@@ -145,8 +145,14 @@ def test_devcontainer_adds_analysis_without_retargeting_application_builders():
     dockerfile = (root / "deploy/docker/Dockerfile").read_text()
     variants = json.loads((root / "deploy/docker/variants.json").read_text())["variants"]
     assert next(v for v in variants if v["id"] == "ubuntu")["target"] == "linux"
-    assert all(v["target"] not in {"linux-analysis", "devcontainer"} for v in variants)
-    assert "FROM linux-analysis AS devcontainer" in dockerfile
+    assert all(v["target"] != "qgc-dev" for v in variants)
+    assert "FROM linux AS qgc-dev" in dockerfile
+    assert " AS linux-analysis" not in dockerfile
+    assert " AS devcontainer" not in dockerfile
+    assert "arm64) QT_HOST=linux_arm64; QT_ARCH=linux_gcc_arm64" in dockerfile
+    assert "resolve-arch --arch" in dockerfile
+    assert "--group dev --no-default-groups" in dockerfile
+    assert "UV_NO_SYNC=true" in dockerfile
     assert (
         'ENV PATH="/opt/qgc-venv/bin:/opt/clazy/bin:/opt/llvm/bin:/opt/qt/bin:${PATH}"'
         in dockerfile
