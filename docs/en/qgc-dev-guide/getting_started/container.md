@@ -79,26 +79,37 @@ Depending on your system resources, or the resources assigned to your Docker Dae
 
 ## Development Container
 
-The VS Code devcontainer includes Clang,
+QGC has one default development container: the `devcontainer` target in
+`deploy/docker/Dockerfile`. Both `.devcontainer/devcontainer.json` and image publication
+build that same target and `linux/amd64` platform. It includes Clang,
 clang-tidy, clang-scan-deps, clangd, and Clazy built against the same LLVM.
 `.github/build-config.json` supplies the LLVM major version, checksum-verified Clazy
 revision, and Qt version used by CI. The image build uses `deploy/docker/install_analysis.py`;
 ccache uses the pinned, signature-verified release from `.github/scripts/ccache_helper.py`.
 Existing application builder images are unchanged.
 
-The dedicated Analysis Image workflow (`analysis-image.yml`) builds the local
-`devcontainer` stage, which inherits `linux-analysis`. It is independent of application
-builds and releases. After merging, push a new `analysis-image-vMAJOR.MINOR.PATCH` Git tag
-on a commit reachable from master to publish
-`ghcr.io/mavlink/qgroundcontrol-analysis:vMAJOR.MINOR.PATCH` and
-`ghcr.io/mavlink/qgroundcontrol-analysis:sha-<full-commit-SHA>`.
-For example, `analysis-image-v1.0.0` publishes `ghcr.io/mavlink/qgroundcontrol-analysis:v1.0.0`.
-Never reuse an image version tag. The publication summary also provides
-`ghcr.io/mavlink/qgroundcontrol-analysis@sha256:<digest>` for immutable pinning.
+The dedicated QGC Development Image workflow (`devcontainer.yml`) publishes this same
+default container in its own build pipeline:
 
-Relevant pull requests and manual dispatches validate the image without publishing.
-Application release tags, master/Stable pushes, and Docker Hub are not part of this
-image's release lifecycle. No application or analysis workflows consume it yet.
+- Every upstream master push publishes `ghcr.io/mavlink/qgroundcontrol-dev:latest`.
+  New pushes cancel older builds, and superseded master commits cannot initiate publication.
+- Published stable QGC releases publish `ghcr.io/mavlink/qgroundcontrol-dev:<QGC-release-tag>`
+  from the released tag's source and configuration, not current master.
+  For example, release `v5.1.4` maps to `ghcr.io/mavlink/qgroundcontrol-dev:v5.1.4`.
+  Drafts and prereleases are excluded. Stable publication never updates `latest`.
+
+The release workflow dispatches the same image pipeline for releases created with
+`GITHUB_TOKEN`, which do not generate downstream release events.
+The publication summary provides
+`ghcr.io/mavlink/qgroundcontrol-dev@sha256:<digest>` for immutable pinning.
+
+Relevant pull requests and ordinary manual dispatches validate without publishing.
+To publish or retry an existing stable release's image, manually dispatch with `release_tag`;
+the workflow verifies that it is a published, non-prerelease QGC release before building.
+There is no separate container version counter or Docker Hub mirror.
+No application or analysis workflows consume it yet;
+future analysis jobs can pin this same development image instead of maintaining
+a separate environment.
 The image builds only tooling, not QGC; Qt, Python dependencies, LLVM, and Clazy are
 already installed, with no package installation or downloads at container startup.
 

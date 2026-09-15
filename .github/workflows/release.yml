@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      actions: write        # Dispatch the separate development image publication workflow
       contents: write       # @semantic-release/github creates the tag and release
       issues: write         # @semantic-release/github comments on closed issues
       pull-requests: write  # @semantic-release/github comments on closed PRs
@@ -67,6 +68,15 @@ jobs:
             echo "new_release=false" >> "${GITHUB_OUTPUT}"
             echo "No new release"
           fi
+
+      # Releases created by GITHUB_TOKEN do not trigger downstream release events.
+      - name: Dispatch development image publication
+        if: steps.release.outputs.new_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: v${{ steps.release.outputs.version }}
+        run: gh workflow run devcontainer.yml --ref master -f "release_tag=$RELEASE_TAG"
 
   wait-for-builds:
     name: Wait for Platform Builds

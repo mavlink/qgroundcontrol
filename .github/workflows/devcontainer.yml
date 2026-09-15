@@ -1,0 +1,163 @@
+name: QGC Development Image
+
+on:
+  push:
+    branches:
+      - master
+  release:
+    types: [published]
+  pull_request:
+    paths:
+      - '.github/workflows/devcontainer.yml'
+      - '.github/build-config.json'
+      - '.github/scripts/ccache_helper.py'
+      - '.github/scripts/ci_bootstrap.py'
+      - '.devcontainer/**'
+      - '.dockerignore'
+      - 'deploy/docker/**'
+      - 'tools/setup/**'
+      - 'tools/common/**'
+      - 'tools/qgc_tools/**'
+      - 'tools/_bootstrap.py'
+      - 'tools/pyproject.toml'
+      - 'tools/uv.lock'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Published stable QGC release tag to publish; leave empty to validate only'
+        type: string
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'push' && 'latest' || github.event.release.tag_name || inputs.release_tag || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  image:
+    name: Build Development Image
+    if: github.event_name != 'release' || (!github.event.release.draft && !github.event.release.prerelease)
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        format('runs-on={0}/runner={1}', github.run_id,
+          vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder') ||
+        'ubuntu-latest'
+      }}
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+      packages: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
+      - name: Resolve publication
+        id: publication
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+        run: |
+          publish=false
+          tag=validation
+          source_ref="$GITHUB_SHA"
+          if [[ "$GITHUB_REPOSITORY" == 'mavlink/qgroundcontrol' ]]; then
+            if [[ "$EVENT_NAME" == 'push' && "$GITHUB_REF" == 'refs/heads/master' ]]; then
+              head=$(gh api "repos/$GITHUB_REPOSITORY/commits/master" --jq .sha)
+              if [[ "$head" == "$GITHUB_SHA" ]]; then
+                publish=true
+                tag=latest
+              else
+                echo "::notice::Superseded master commit; validating without publication"
+              fi
+            elif [[ -n "$RELEASE_TAG" && ( "$EVENT_NAME" == 'release' || "$EVENT_NAME" == 'workflow_dispatch' ) ]]; then
+              if [[ ! "$RELEASE_TAG" =~ ^v[0-9][A-Za-z0-9_.-]*$ || ${#RELEASE_TAG} -gt 128 ]]; then
+                echo "::error::Expected a QGC release tag usable as a Docker tag"
+                exit 1
+              fi
+              stable_tag=$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+                --json isDraft,isPrerelease,tagName \
+                --jq 'select(.isDraft == false and .isPrerelease == false) | .tagName')
+              if [[ "$stable_tag" != "$RELEASE_TAG" ]]; then
+                echo "::error::The requested QGC release is not a published stable release"
+                exit 1
+              fi
+              publish=true
+              tag="$stable_tag"
+              source_ref="refs/tags/$stable_tag"
+            fi
+          fi
+          {
+            echo "publish=$publish"
+            echo "tag=$tag"
+            echo "source_ref=$source_ref"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout image source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.publication.outputs.source_ref }}
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GHCR
+        if: steps.publication.outputs.publish == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          context: git
+          images: ghcr.io/mavlink/qgroundcontrol-dev
+          flavor: latest=false
+          tags: |
+            type=raw,value=${{ steps.publication.outputs.tag }}
+
+      - name: Build development image
+        id: image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./deploy/docker/Dockerfile
+          target: devcontainer
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          load: true
+          push: ${{ steps.publication.outputs.publish == 'true' }}
+          provenance: false
+          sbom: false
+          cache-from: type=gha,version=2,scope=qgc-docker-devcontainer-devcontainer
+          cache-to: ${{ github.event_name != 'pull_request' && 'type=gha,version=2,scope=qgc-docker-devcontainer-devcontainer,mode=max' || '' }}
+
+      - name: Record published image
+        if: steps.publication.outputs.publish == 'true'
+        shell: bash
+        env:
+          IMAGE_VERSION: ${{ steps.publication.outputs.tag }}
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          printf 'Image: ghcr.io/mavlink/qgroundcontrol-dev:%s\n\nDigest pin: ghcr.io/mavlink/qgroundcontrol-dev@%s\n' \
+            "$IMAGE_VERSION" "$IMAGE_DIGEST" >> "$GITHUB_STEP_SUMMARY"

@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Single source for the QGC builder images. Pick a variant with --target:
 #   docker build -f deploy/docker/Dockerfile --target linux       .   # x86_64 AppImage
-#   docker build -f deploy/docker/Dockerfile --target linux-analysis . # Ubuntu builder + analyzers
+#   docker build -f deploy/docker/Dockerfile --target devcontainer . # Default development environment
 #   docker build -f deploy/docker/Dockerfile --target linux-cross .   # aarch64 cross
 #   docker build -f deploy/docker/Dockerfile --target android     .   # Android APK
 # run_docker.py / plan_docker_builds.py drive --target + build-args; non-Ubuntu
@@ -85,9 +85,9 @@ COPY deploy/docker/entrypoint.sh deploy/docker/entrypoint.py /
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]
 
-# ---------- linux-analysis: Ubuntu 24.04 builder and configured analysis tools ----------
+# ---------- devcontainer: canonical QGC development environment ----------
 # Other distros and cross/mobile images keep the smaller linux/base stages.
-FROM linux AS linux-analysis
+FROM linux AS devcontainer
 COPY --from=base /tmp/tools/ /opt/qgc-bootstrap/tools/
 COPY deploy/docker/install_analysis.py /opt/qgc-bootstrap/deploy/docker/
 COPY .github/scripts/ccache_helper.py .github/scripts/ci_bootstrap.py /opt/qgc-bootstrap/.github/scripts/
@@ -105,8 +105,6 @@ RUN python3 /opt/qgc-bootstrap/deploy/docker/install_analysis.py --verify && \
     python3 -c "import jinja2, httpx, defusedxml, lxml, fastcrc" && \
     ccache --version
 
-# ---------- devcontainer: interactive, non-root desktop development ----------
-FROM linux-analysis AS devcontainer
 ARG DEV_USER=vscode
 ARG USER_UID=1000
 ARG USER_GID=1000

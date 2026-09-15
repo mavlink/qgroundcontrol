@@ -2,6 +2,9 @@
   "build": {
     "context": "..",
     "dockerfile": "../deploy/docker/Dockerfile",
+    "options": [
+      "--platform=linux/amd64"
+    ],
     "target": "devcontainer"
   },
   "customizations": {
