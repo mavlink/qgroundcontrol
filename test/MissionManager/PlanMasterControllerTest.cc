@@ -41,14 +41,33 @@ void PlanMasterControllerTest::_testMissionPlannerFileLoad()
     QCOMPARE(_masterController->missionController()->visualItems()->count(), 6);
 }
 
+void PlanMasterControllerTest::_testTakeoffTextFileLoad_data()
+{
+    QTest::addColumn<int>("firmwareClass");
+    QTest::addColumn<int>("vehicleClass");
+    QTest::addColumn<int>("takeoffCommand");
+
+    QTest::newRow("ArduPilot takeoff")
+        << int(QGCMAVLink::FirmwareClassArduPilot) << int(QGCMAVLink::VehicleClassMultiRotor) << int(MAV_CMD_NAV_TAKEOFF);
+    QTest::newRow("PX4 VTOL multicopter takeoff")
+        << int(QGCMAVLink::FirmwareClassPX4) << int(QGCMAVLink::VehicleClassVTOL) << int(MAV_CMD_NAV_TAKEOFF);
+    QTest::newRow("PX4 VTOL takeoff")
+        << int(QGCMAVLink::FirmwareClassPX4) << int(QGCMAVLink::VehicleClassVTOL) << int(MAV_CMD_NAV_VTOL_TAKEOFF);
+}
+
 void PlanMasterControllerTest::_testTakeoffTextFileLoad()
 {
+    QFETCH(int, firmwareClass);
+    QFETCH(int, vehicleClass);
+    QFETCH(int, takeoffCommand);
+
     // Plain-text mission file with home position, takeoff and one waypoint (#13167)
-    static const char* kTakeoffMission =
+    const QByteArray takeoffMission = QByteArray(
         "QGC WPL 110\r\n"
         "0\t1\t0\t16\t0\t0\t0\t0\t34.577822\t-112.469101\t584.380005\t1\r\n"
-        "1\t0\t3\t22\t20.000000\t0.000000\t0.000000\t0.000000\t0.000000\t0.000000\t30.000000\t1\r\n"
-        "2\t0\t3\t16\t0.000000\t0.000000\t0.000000\t0.000000\t34.469587\t-112.534801\t90.000000\t1\r\n";
+        "1\t0\t3\t") + QByteArray::number(takeoffCommand) + QByteArray(
+        "\t20.000000\t0.000000\t0.000000\t0.000000\t0.000000\t0.000000\t30.000000\t1\r\n"
+        "2\t0\t3\t16\t0.000000\t0.000000\t0.000000\t0.000000\t34.469587\t-112.534801\t90.000000\t1\r\n");
 
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
@@ -57,10 +76,11 @@ void PlanMasterControllerTest::_testTakeoffTextFileLoad()
     // No QIODevice::Text: write the CRLF line endings verbatim on all platforms to match
     // the original repro file from the issue.
     QVERIFY(file.open(QIODevice::WriteOnly));
-    QVERIFY(file.write(kTakeoffMission) != -1);
+    QVERIFY(file.write(takeoffMission) != -1);
     file.close();
 
-    SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass()->setRawValue(QGCMAVLink::FirmwareClassArduPilot);
+    SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass()->setRawValue(firmwareClass);
+    SettingsManager::instance()->appSettings()->offlineEditingVehicleClass()->setRawValue(vehicleClass);
 
     _masterController->loadFromFile(filename);
 
@@ -71,7 +91,7 @@ void PlanMasterControllerTest::_testTakeoffTextFileLoad()
     // resulting in a single takeoff item carrying the waypoint's values.
     TakeoffMissionItem* takeoffItem = visualItems->value<TakeoffMissionItem*>(1);
     QVERIFY(takeoffItem);
-    QCOMPARE(static_cast<MAV_CMD>(takeoffItem->command()), MAV_CMD_NAV_TAKEOFF);
+    QCOMPARE(static_cast<MAV_CMD>(takeoffItem->command()), static_cast<MAV_CMD>(takeoffCommand));
     QCOMPARE(takeoffItem->missionItem().param7(), 30.0);
 
     SimpleMissionItem* waypointItem = visualItems->value<SimpleMissionItem*>(2);

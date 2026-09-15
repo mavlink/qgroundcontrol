@@ -71,7 +71,7 @@ MissionController::~MissionController()
 
 void MissionController::_resetMissionFlightStatus(void)
 {
-    _flightStatusCalc.reset(_controllerVehicle, _managerVehicle, _missionContainsVTOLTakeoff);
+    _flightStatusCalc.reset(_controllerVehicle, _managerVehicle, _missionStartsInVTOLMulticopterMode);
     _missionFlightStatus = _flightStatusCalc.status();
 
     emit missionPlannedDistanceChanged(_missionFlightStatus.plannedDistance);
@@ -314,8 +314,27 @@ VisualMissionItem* MissionController::insertSimpleMissionItem(QGeoCoordinate coo
 
 VisualMissionItem* MissionController::insertTakeoffItem(QGeoCoordinate /*coordinate*/, int visualItemIndex, bool makeCurrentItem)
 {
+    return _insertTakeoffItemWorker(
+        _controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF,
+        visualItemIndex,
+        makeCurrentItem);
+}
+
+VisualMissionItem* MissionController::insertVTOLMulticopterTakeoffItem(
+    QGeoCoordinate /*coordinate*/, int visualItemIndex, bool makeCurrentItem)
+{
+    if (!TakeoffMissionItem::isVTOLMulticopterTakeoff(_controllerVehicle, MAV_CMD_NAV_TAKEOFF)) {
+        qCWarning(MissionControllerLog) << "Multicopter takeoff requested for an unsupported vehicle";
+        return nullptr;
+    }
+
+    return _insertTakeoffItemWorker(MAV_CMD_NAV_TAKEOFF, visualItemIndex, makeCurrentItem);
+}
+
+VisualMissionItem* MissionController::_insertTakeoffItemWorker(MAV_CMD command, int visualItemIndex, bool makeCurrentItem)
+{
     int sequenceNumber = _nextSequenceNumber();
-    _takeoffMissionItem = new TakeoffMissionItem(_controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF, _masterController, _flyView, _settingsItem, false /* forLoad */);
+    _takeoffMissionItem = new TakeoffMissionItem(command, _masterController, _flyView, _settingsItem, false /* forLoad */);
     _takeoffMissionItem->setSequenceNumber(sequenceNumber);
     _initVisualItem(_takeoffMissionItem);
 
@@ -996,7 +1015,7 @@ void MissionController::_recalcFlightPathSegments(void)
 
     FlightPathSegmentHashTable oldSegmentTable = _flightPathSegmentHashTable;
 
-    _missionContainsVTOLTakeoff = false;
+    _missionStartsInVTOLMulticopterMode = false;
     _flightPathSegmentHashTable.clear();
 
     _simpleFlightPathSegments.beginResetModel();
@@ -1036,14 +1055,16 @@ void MissionController::_recalcFlightPathSegments(void)
             MAV_CMD command = simpleItem->mavCommand();
             switch (command) {
             case MAV_CMD_NAV_TAKEOFF:
+                if (!linkEndToHome && firstCoordinateNotFound) {
+                    _missionStartsInVTOLMulticopterMode =
+                        TakeoffMissionItem::isVTOLMulticopterTakeoff(_controllerVehicle, command);
+                    linkStartToHome = true;
+                }
+                break;
             case MAV_CMD_NAV_VTOL_TAKEOFF:
-                _missionContainsVTOLTakeoff = command == MAV_CMD_NAV_VTOL_TAKEOFF;
-                if (!linkEndToHome) {
-                    // If we still haven't found the first coordinate item and we hit a takeoff command this means the mission starts from the ground.
-                    // Link the first item back to home to show that.
-                    if (firstCoordinateNotFound) {
-                        linkStartToHome = true;
-                    }
+                if (!linkEndToHome && firstCoordinateNotFound) {
+                    _missionStartsInVTOLMulticopterMode = true;
+                    linkStartToHome = true;
                 }
                 break;
             case MAV_CMD_NAV_RETURN_TO_LAUNCH:
@@ -1173,7 +1194,9 @@ void MissionController::_recalcMissionFlightStatus()
 
     qCDebug(MissionControllerLog) << "_recalcMissionFlightStatus";
 
-    _flightStatusCalc.recalc(_visualItems, _settingsItem, _controllerVehicle, _managerVehicle, _appSettings, _planViewSettings, _missionContainsVTOLTakeoff);
+    _flightStatusCalc.recalc(
+        _visualItems, _settingsItem, _controllerVehicle, _managerVehicle, _appSettings, _planViewSettings,
+        _missionStartsInVTOLMulticopterMode);
     _missionFlightStatus = _flightStatusCalc.status();
     _minAMSLAltitude = _flightStatusCalc.minAMSLAltitude();
     _maxAMSLAltitude = _flightStatusCalc.maxAMSLAltitude();

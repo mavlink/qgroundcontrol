@@ -4,6 +4,7 @@
 
 class PlanMasterController;
 class MissionSettingsItem;
+class Vehicle;
 
 /// \brief Takeoff mission item is a special case of a SimpleMissionItem which supports Launch Location display/editing
 /// which is tied to home position.
@@ -25,12 +26,15 @@ public:
     bool launchTakeoffAtSameLocation(void) const { return _launchTakeoffAtSameLocation; }
 
     static bool isTakeoffCommand(MAV_CMD command);
+    static bool isVTOLMulticopterTakeoff(Vehicle* vehicle, MAV_CMD command);
 
     ~TakeoffMissionItem();
 
     // Overrides from VisualMissionItem
     void setCoordinate(const QGeoCoordinate& coordinate) override;
     bool isTakeoffItem(void) const final { return true; }
+    QString commandDescription(void) const final;
+    QString commandName(void) const final;
     double specifiedFlightSpeed(void) final { return std::numeric_limits<double>::quiet_NaN(); }
     double specifiedGimbalYaw(void) final { return std::numeric_limits<double>::quiet_NaN(); }
     double specifiedGimbalPitch(void) final { return std::numeric_limits<double>::quiet_NaN(); }
