@@ -73,6 +73,7 @@ uploaded separately. The master-only continuous build still publishes fuzzer bin
 | `check-links.yml` | Markdown link validation |
 | `ci-scripts.yml` | Lints workflows, validates runner images, and runs the CI Python script tests (see [Tests](#tests)) |
 | `analysis.yml` | Static analysis |
+| `analysis-review.yml` | Trusted inline COMMENT reviews from Code Analysis PR artifacts |
 | `codeql.yml` | CodeQL security scanning |
 | `pr-checks.yml` | PR validation checks |
 | `release.yml` | Release automation |
@@ -348,6 +349,18 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
 ```
 
 ## Validation tiers and build identity
+
+Code Analysis exports up to 50 changed-line findings per compiler tool from the existing
+analysis pass, including fork PRs. `analysis-review.yml` downloads only that run/attempt's
+JSON artifact and validates its identity against live GitHub run, PR, head SHA, and diff data.
+It checks out only trusted default-branch reporting code, posts COMMENT reviews, and suppresses
+replayed reviews and findings already posted on the same head. Existing reviews are never dismissed
+or modified. Empty results post nothing. Truncation and partial analysis
+are disclosed with links to full raw logs. Missing GitHub patch data is not eligible for inline comments.
+The poster starts working only after its workflow and scripts reach the default branch.
+For a read-only rehearsal, run `python .github/scripts/analysis_review_poster.py --dry-run`
+with a saved `workflow_run` payload in `GITHUB_EVENT_PATH`, `GITHUB_EVENT_NAME=workflow_run`,
+the upstream `GITHUB_REPOSITORY`, and a read-only `GH_TOKEN`.
 
 - `pre-commit.yml` enforces fast hooks on changed files against the event's base SHA.
   The C++ formatting hook checks modified regions against the PR merge base (or `HEAD` locally),

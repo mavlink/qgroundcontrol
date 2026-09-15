@@ -80,6 +80,7 @@ def checkout(tmp_path):
         PATH=f"{binary}{os.pathsep}{os.environ['PATH']}",
         ARGS_LOG=str(tmp_path / "args.jsonl"),
         RUNNER_TEMP=str(tmp_path),
+        GITHUB_WORKSPACE=str(tmp_path),
         GITHUB_EVENT_NAME="pull_request",
         ANALYSIS_TOOL="clazy",
         ANALYZE_ALL="false",
@@ -143,6 +144,7 @@ def test_pr_analysis_stays_scoped_to_changed_code_for_configuration_changes(
     args = invocations[0]
     assert "--all" not in args
     assert args[args.index("--diff-base") + 1] == env["PR_BASE_SHA"]
+    assert args[args.index("--review-output") + 1] == str(root / "analysis-review/report.json")
     monkeypatch.setenv("PR_BASE_SHA", env["PR_BASE_SHA"])
     selected = FileCollector(root).get_cpp_files()
     expected = {"changed.cc"} if changed_path == "src/changed.cc" else set()
@@ -214,6 +216,7 @@ def test_manual_analysis_preserves_full_scan_and_path_modes(checkout, path):
     subprocess.run(["bash", "-e", "-o", "pipefail", "-c", SCRIPT], cwd=root, env=env, check=True)
     args = json.loads((root / "args.jsonl").read_text())
     assert "--diff-base" not in args
+    assert "--review-output" not in args
     assert ("--all" in args) is (not path)
     if path:
         assert path in args

@@ -94,6 +94,8 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          # Inline locations must refer to the PR head, not the synthetic merge commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Detect analysis parallelism
         id: parallel
@@ -280,9 +282,18 @@ jobs:
           elif [[ -n "$INPUT_PATH" ]]; then
             args+=("$INPUT_PATH")
           elif [[ -n "$PR_BASE_SHA" ]]; then
-            args+=(--diff-base "$PR_BASE_SHA")
+            args+=(--diff-base "$PR_BASE_SHA" --review-output "$GITHUB_WORKSPACE/analysis-review/report.json")
           fi
           python3 tools/analyze.py --tool "$ANALYSIS_TOOL" "${args[@]}" 2>&1 | tee "${RUNNER_TEMP}/build/analysis-output.txt"
+
+      - name: Upload inline review data
+        if: always() && github.event_name == 'pull_request' && contains(fromJSON('["clazy", "clang-tidy"]'), matrix.tool)
+        uses: actions/upload-artifact@v7
+        with:
+          name: analysis-review-${{ matrix.tool }}-${{ github.run_attempt }}
+          path: analysis-review/report.json
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Run IWYU
         if: matrix.tool == 'iwyu'

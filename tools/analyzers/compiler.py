@@ -9,12 +9,15 @@ import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import ClassVar, TypedDict
+from typing import TYPE_CHECKING, ClassVar, TypedDict
 
 from common.analyzer import AnalysisResult, AnalyzerBase
 from common.proc import run_captured
 
 from .dependencies import header_dependents
+
+if TYPE_CHECKING:
+    from .review import ReviewFindings
 
 
 class ChangedLineFilter:
@@ -120,6 +123,7 @@ class CompilerAnalyzer(AnalyzerBase):
         self.shard = shard
         self.shard_count = shard_count
         self.changed_lines: dict[Path, list[tuple[int, int]]] | None = None
+        self.review_findings: ReviewFindings | None = None
         self._compile_directories: dict[Path, Path] = {}
 
     def _translation_units(self, files: list[Path]) -> list[Path]:
@@ -267,6 +271,13 @@ class CompilerAnalyzer(AnalyzerBase):
                 if output:
                     raw_log.write(f"=== {name} ===\n{output}\n")
                     raw_log.flush()
+                if self.review_findings is not None:
+                    self.review_findings.collect(
+                        output,
+                        self._compile_directories.get(
+                            (self.repo_root / name).resolve(), self.repo_root
+                        ),
+                    )
                 if changed_filter is not None:
                     directory = self._compile_directories.get(
                         (self.repo_root / name).resolve(), self.repo_root

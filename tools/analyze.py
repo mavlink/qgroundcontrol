@@ -240,6 +240,11 @@ Examples:
         ),
     )
     parser.add_argument(
+        "--review-output",
+        type=Path,
+        help="Write PR review JSON from this analysis pass (requires --diff-base and PR context)",
+    )
+    parser.add_argument(
         "-f",
         "--fix",
         action="store_true",
@@ -293,6 +298,8 @@ Examples:
     )
 
     args = parser.parse_args()
+    if args.review_output and not args.diff_base:
+        parser.error("--review-output requires --diff-base")
     if not 1 <= args.shard <= args.shard_count:
         parser.error("--shard must be between 1 and --shard-count")
     if args.shard_count > 1 and args.tool not in {"clang-tidy", "clazy"}:
@@ -380,6 +387,10 @@ def main() -> int:
             analyzer.changed_lines = get_changed_line_ranges(
                 repo_root, args.diff_base, collector.CPP_EXTENSIONS
             )
+            if args.review_output:
+                from analyzers.review import ReviewFindings
+
+                analyzer.review_findings = ReviewFindings(repo_root, analyzer.changed_lines)
             files = sorted(analyzer.changed_lines)
         else:
             files = (
@@ -392,6 +403,15 @@ def main() -> int:
         return 2
 
     result = analyzer.run(files, fix=args.fix)
+    if args.review_output:
+        from analyzers.compiler import CompilerAnalyzer
+
+        if isinstance(analyzer, CompilerAnalyzer) and analyzer.review_findings is not None:
+            analyzer.review_findings.write(
+                args.review_output,
+                args.tool,
+                incomplete=result.execution_error or result.error_findings,
+            )
 
     print(f"{result.tool}: {result.status} ({result.files_checked} files)")
     if result.execution_error or result.error_findings:
