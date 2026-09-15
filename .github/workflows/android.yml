@@ -76,12 +76,11 @@ jobs:
     name: Android (${{ matrix.host }})
     needs: [changes, build-matrix]
     if: needs.changes.outputs.should_build == 'true'
-    # RunsOn runners only when the leg defines one, on mavlink, and not from a fork.
+    # Use RunsOn for upstream jobs when the platform defines a runner.
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
         matrix.runson_runner != '' &&
-        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
         format('runs-on={0}/{1}', github.run_id,
           matrix.host == 'windows' && vars.RUNS_ON_WINDOWS_POOL != '' &&
             format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
@@ -131,7 +130,7 @@ jobs:
           show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.host != 'mac'
+        if: github.repository_owner == 'mavlink' && matrix.host != 'mac'
         uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io

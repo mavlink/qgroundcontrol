@@ -20,11 +20,6 @@ CI_SCRIPTS_WORKFLOW = WORKFLOWS_DIR / "ci-scripts.yml"
 DEPENDENCY_REVIEW_WORKFLOW = WORKFLOWS_DIR / "dependency-review.yml"
 HARDEN_RUNNER = "step-security/harden-runner@v2"
 VERSIONED_ACTION_REF = re.compile(r"(?:[0-9a-f]{40}|v\d+(?:\.\d+){0,2})")
-FORK_SAFETY_GUARDS = (
-    "github.repository_owner == 'mavlink'",
-    "github.event_name != 'pull_request'",
-    "github.event.pull_request.head.repo.full_name == github.repository",
-)
 
 
 def _load_yaml_mapping(path: Path) -> dict[str, Any]:
@@ -55,26 +50,16 @@ def _uses_values(value: Any) -> Iterator[str]:
             yield from _uses_values(child)
 
 
-def _has_fork_safety_guard(condition: str) -> bool:
-    if all(guard in condition for guard in FORK_SAFETY_GUARDS):
-        return True
-    normalized = " ".join(condition.removeprefix("${{").removesuffix("}}").split())
-    non_pr_guard = "github.repository_owner == 'mavlink' && github.event_name != 'pull_request'"
-    return normalized == non_pr_guard or normalized.startswith(non_pr_guard + " && format(")
-
-
-@pytest.mark.parametrize(
-    ("condition", "safe"),
-    [
-        ("github.repository_owner == 'mavlink' && github.event_name != 'pull_request'", True),
-        ("github.event_name != 'pull_request'", False),
-        ("github.repository_owner == 'mavlink'", False),
-        ("github.repository_owner == 'mavlink' || github.event_name != 'pull_request'", False),
-        ("github.repository_owner == 'mavlink' && github.event_name == 'pull_request'", False),
-    ],
-)
-def test_non_pr_runner_guard_requires_both_owner_and_event(condition: str, safe: bool) -> None:
-    assert _has_fork_safety_guard(condition) is safe
+def _runson_routes(value: Any) -> Iterator[str]:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key in ("runs-on", "runs_on") and isinstance(child, str) and "runs-on=" in child:
+                yield child
+            else:
+                yield from _runson_routes(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _runson_routes(child)
 
 
 def test_ci_scripts_checks_every_workflow() -> None:
@@ -118,17 +103,36 @@ def test_workflow_checkouts_do_not_persist_credentials() -> None:
                 )
 
 
-def test_runson_selection_is_fork_safe() -> None:
+def test_runson_selection_keeps_independent_forks_on_hosted_runners() -> None:
     for path in WORKFLOWS:
         for job_name, job in _executable_jobs(path):
-            runner = str(job.get("runs-on", ""))
-            if "runs-on=" in runner:
-                assert _has_fork_safety_guard(runner), (
-                    f"{path.name}:{job_name} must keep RunsOn selection fork-safe"
+            for runner in _runson_routes(job):
+                normalized = " ".join(runner.removeprefix("${{").removesuffix("}}").split())
+                assert normalized.startswith("github.repository_owner == 'mavlink' && "), (
+                    f"{path.name}:{job_name} must limit RunsOn selection to upstream workflows"
                 )
                 assert "||" in runner, (
                     f"{path.name}:{job_name} must provide a GitHub-hosted runner fallback"
                 )
+
+
+@pytest.mark.parametrize(
+    ("workflow", "route_count"),
+    [
+        ("linux.yml", 3),
+        ("windows.yml", 2),
+        ("android.yml", 1),
+        ("docker.yml", 1),
+        ("custom-build.yml", 1),
+        ("vm-builds.yml", 2),
+    ],
+)
+def test_upstream_runson_routes_do_not_restrict_pr_origin(workflow: str, route_count: int) -> None:
+    routes = list(_runson_routes(_load_yaml_mapping(WORKFLOWS_DIR / workflow)["jobs"]))
+    assert len(routes) == route_count
+    for route in routes:
+        assert "github.event" not in route
+        assert "github.actor" not in route
 
 
 def test_external_actions_use_versioned_refs() -> None:

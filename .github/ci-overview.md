@@ -19,8 +19,9 @@ container-local dependency paths resolve to the correct repositories.
 
 Docker's BuildKit cache uses `type=gha,version=2`, scoped by variant and target. On RunsOn,
 `runs-on/action@v2` initializes [Magic Cache](https://runs-on.com/docs/performance/caching/docker/)
-before Buildx to store layers in S3. Only non-PR jobs export caches. Fork PRs use GitHub-hosted
-runners and the ordinary GHA cache backend, without access to the private S3 cache.
+before Buildx to store layers in S3. Only non-PR jobs export caches. Upstream builds, including
+PRs from forks, use RunsOn and Magic Cache. Workflows running in independent forks retain
+GitHub-hosted runners and the ordinary GHA cache backend.
 
 ClusterFuzzLite PR runs use the bundled seed corpus without querying historical GitHub artifacts
 (`NO_CLUSTERFUZZ_DEPLOYMENT=true`). This also disables previous-build crash comparison: reproducible
