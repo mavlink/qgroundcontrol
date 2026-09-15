@@ -21,6 +21,10 @@ class TestValidate:
         args = argparse.Namespace(target="linux-cross", build_type="Release")
         cmd_validate(args)
 
+    def test_valid_linux_analysis(self) -> None:
+        args = argparse.Namespace(target="linux-analysis", build_type="Release")
+        cmd_validate(args)
+
     def test_invalid_target(self) -> None:
         args = argparse.Namespace(target="bogus", build_type="Release")
         with pytest.raises(SystemExit):

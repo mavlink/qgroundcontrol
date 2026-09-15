@@ -6,7 +6,7 @@
       "ci_variant": "linux",
       "platform": "Linux-Ubuntu-24.04",
       "selector": "linux",
-      "target": "linux",
+      "target": "linux-analysis",
       "image": "qgc-ubuntu-docker",
       "fuse": true,
       "artifact_pattern": "QGroundControl-*.AppImage",

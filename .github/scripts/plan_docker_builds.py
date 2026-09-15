@@ -72,6 +72,7 @@ def needs_full_matrix(files: list[str] | None) -> bool:
         ".github/actions/docker/**",
         ".github/actions/free-disk-space/**",
         ".github/scripts/docker_helper.py",
+        ".github/scripts/ccache_helper.py",
         ".github/scripts/plan_docker_builds.py",
         ".github/scripts/detect_changes.py",
         ".github/scripts/ci_bootstrap.py",

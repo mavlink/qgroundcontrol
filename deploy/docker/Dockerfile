@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 # Single source for the QGC builder images. Pick a variant with --target:
 #   docker build -f deploy/docker/Dockerfile --target linux       .   # x86_64 AppImage
+#   docker build -f deploy/docker/Dockerfile --target linux-analysis . # Ubuntu builder + analyzers
 #   docker build -f deploy/docker/Dockerfile --target linux-cross .   # aarch64 cross
 #   docker build -f deploy/docker/Dockerfile --target android     .   # Android APK
 # run_docker.py / plan_docker_builds.py drive --target + build-args; non-Ubuntu
@@ -84,8 +85,31 @@ COPY deploy/docker/entrypoint.sh deploy/docker/entrypoint.py /
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]
 
+# ---------- linux-analysis: Ubuntu 24.04 builder and configured analysis tools ----------
+# Other distros and cross/mobile images keep the smaller linux/base stages.
+FROM linux AS linux-analysis
+COPY --from=base /tmp/tools/ /opt/qgc-bootstrap/tools/
+COPY tools/setup/install_analysis.py /opt/qgc-bootstrap/tools/setup/
+COPY .github/scripts/ccache_helper.py .github/scripts/ci_bootstrap.py /opt/qgc-bootstrap/.github/scripts/
+RUN python3 /opt/qgc-bootstrap/tools/setup/install_analysis.py \
+        --config /opt/qgc-bootstrap/tools/setup/build-config.json \
+        --install-packages --prefix /opt/clazy --work-dir /opt/qgc-bootstrap/clazy-build && \
+    LLVM_VERSION=$(python3 /opt/qgc-bootstrap/tools/setup/read_config.py --get analysis.llvm_version) && \
+    ln -s "/usr/lib/llvm-${LLVM_VERSION}" /opt/llvm && \
+    ln -s "${QT_ROOT_DIR}" /opt/qt && \
+    TMPDIR=/opt/qgc-bootstrap python3 /opt/qgc-bootstrap/.github/scripts/ccache_helper.py install && \
+    rm -rf /opt/qgc-bootstrap/clazy-build /var/lib/apt/lists/*
+ENV QT_ROOT_DIR=/opt/qt
+ENV PATH="/opt/qgc-venv/bin:/opt/clazy/bin:/opt/llvm/bin:/opt/qt/bin:${PATH}"
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN python3 /opt/qgc-bootstrap/tools/setup/install_analysis.py \
+        --config /opt/qgc-bootstrap/tools/setup/build-config.json --prefix /opt/clazy --verify && \
+    qt-cmake --version && \
+    python3 -c "import jinja2, httpx, defusedxml, lxml, fastcrc" && \
+    ccache --version
+
 # ---------- devcontainer: interactive, non-root desktop development ----------
-FROM linux AS devcontainer
+FROM linux-analysis AS devcontainer
 ARG DEV_USER=vscode
 ARG USER_UID=1000
 ARG USER_GID=1000
@@ -101,6 +125,12 @@ RUN if getent passwd "${USER_UID}" >/dev/null; then \
 ENV SHELL=/bin/bash
 WORKDIR /workspaces/qgroundcontrol
 USER ${DEV_USER}
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN python3 /opt/qgc-bootstrap/tools/setup/install_analysis.py \
+        --config /opt/qgc-bootstrap/tools/setup/build-config.json --prefix /opt/clazy --verify && \
+    qt-cmake --version && \
+    python3 -c "import jinja2, httpx, defusedxml, lxml, fastcrc" && \
+    ccache --version
 ENTRYPOINT []
 CMD ["/bin/bash"]
 

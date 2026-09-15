@@ -23,7 +23,7 @@ ensure_tools_dir(__file__)
 
 from common.gh_actions import gh_error, write_github_output, write_step_summary
 
-VALID_TARGETS = {"linux", "linux-cross", "android"}
+VALID_TARGETS = {"linux", "linux-analysis", "linux-cross", "android"}
 VALID_BUILD_TYPES = {"Release", "Debug"}
 
 
