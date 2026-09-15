@@ -299,14 +299,15 @@ class CcacheInstaller:
             return False
 
         dest_bin = self.prefix / "bin" / "ccache"
+        privilege_prefix = [] if getattr(os, "geteuid", lambda: -1)() == 0 else ["sudo"]
 
         try:
-            result = run_captured(["sudo", "cp", str(ccache_bin), str(dest_bin)])
+            result = run_captured([*privilege_prefix, "cp", str(ccache_bin), str(dest_bin)])
             if result.returncode != 0:
                 print(f"Error copying ccache: {result.stderr}", file=sys.stderr)
                 return False
 
-            result = run_captured(["sudo", "chmod", "+x", str(dest_bin)])
+            result = run_captured([*privilege_prefix, "chmod", "+x", str(dest_bin)])
             if result.returncode != 0:
                 print(f"Error setting permissions: {result.stderr}", file=sys.stderr)
                 return False

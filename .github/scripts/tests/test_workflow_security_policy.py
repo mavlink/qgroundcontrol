@@ -123,6 +123,7 @@ def test_runson_selection_keeps_independent_forks_on_hosted_runners() -> None:
         ("windows.yml", 2),
         ("android.yml", 1),
         ("docker.yml", 1),
+        ("qgc-dev.yml", 2),
         ("custom-build.yml", 1),
         ("vm-builds.yml", 2),
     ],
