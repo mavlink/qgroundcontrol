@@ -76,8 +76,8 @@ private slots:
 
 void GPSCorrectionRouterTest::fanoutRetirementSettlesPendingChildren()
 {
-    const qint64 now = 100000;
-    GPSCorrectionRouter router(nullptr, [now] { return now; });
+    constexpr qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [] { return now; });
     auto source = router.registerSource(GPSCorrectionSource::Ntrip);
     router.setOutput(QStringLiteral("receivers"),
                      {{}, GPSCorrectionRouter::Completion::Reported, [](const GPSCorrectionFrame& frame) {
@@ -108,8 +108,8 @@ void GPSCorrectionRouterTest::synchronousCompletion_data()
 void GPSCorrectionRouterTest::synchronousCompletion()
 {
     QFETCH(bool, changeRouting);
-    const qint64 now = 100000;
-    GPSCorrectionRouter router(nullptr, [now] { return now; });
+    constexpr qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [] { return now; });
     auto source = router.registerSource(GPSCorrectionSource::Ntrip);
     bool completionQueued = false;
     router.setOutput(QStringLiteral("receiver"),
@@ -315,8 +315,8 @@ void GPSCorrectionRouterTest::destinationRetirementDuringAdmission()
     QFETCH(bool, reportCompletion);
     QFETCH(bool, retireBeforeReport);
     QFETCH(bool, overflow);
-    const qint64 now = 100000;
-    GPSCorrectionRouter router(nullptr, [now] { return now; });
+    constexpr qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [] { return now; });
     auto source = router.registerSource(GPSCorrectionSource::Ntrip);
     quint64 session = 0;
     GPSCorrectionDelivery earlierCompletion;
