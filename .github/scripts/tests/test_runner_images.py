@@ -92,6 +92,22 @@ def test_vm_builds_do_not_use_the_smaller_android_emulator_pool() -> None:
         assert ".github/runs-on.yml" in workflow["on"][event]["paths"]
 
 
+def test_vagrant_cleanup_requires_attempted_startup_and_surfaces_errors() -> None:
+    workflow = _load_yaml(".github/workflows/vm-builds.yml")
+    steps = workflow["jobs"]["vagrant-build"]["steps"]
+    build = next(step for step in steps if step.get("id") == "build")
+    cleanup = next(step for step in steps if step["name"] == "Destroy VM")
+
+    assert build["run"] == "sg libvirt -c 'vagrant up --provider=libvirt'"
+    assert steps.index(build) < steps.index(cleanup)
+    assert cleanup["if"] == (
+        "${{ always() && steps.build.outcome != 'skipped' && steps.build.outcome != '' }}"
+    )
+    assert cleanup["working-directory"] == build["working-directory"] == "deploy/vagrant"
+    assert cleanup["run"] == "sg libvirt -c 'vagrant destroy -f'"
+    assert not cleanup.get("continue-on-error", False)
+
+
 @pytest.mark.parametrize(
     "workflow",
     [
