@@ -180,7 +180,7 @@ function getNetworkSections() {
                     optionsSource: 'networkProfiles',
                     enabledWhen: {
                         source: 'digiview',
-                        property: 'connected',
+                        property: 'sessionRequested',
                         equals: false
                     }
                 },
@@ -200,7 +200,7 @@ function getNetworkSections() {
                     buttonRole: 'editSelectedProfile',
                     enabledWhen: {
                         source: 'digiview',
-                        property: 'connected',
+                        property: 'sessionRequested',
                         equals: false
                     }
                 },
@@ -213,7 +213,7 @@ function getNetworkSections() {
                     buttonRole: 'newProfile',
                     enabledWhen: {
                         source: 'digiview',
-                        property: 'connected',
+                        property: 'sessionRequested',
                         equals: false
                     }
                 }
