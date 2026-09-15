@@ -4,8 +4,11 @@
 
 #include "GPSDriver.h"
 #include "GPSTransport.h"
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
-#include "RTCMMavlink.h"
+#ifdef SIMULATE_RTCM_OUTPUT
+#include "RTCMFramer.h"
+#endif
 
 QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.GPSProvider")
 
@@ -31,8 +34,21 @@ void GPSProvider::run()
         return;
     }
 #ifdef SIMULATE_RTCM_OUTPUT
-    RTCMMavlink rtcm;
-    rtcm.sendSimulatedData(_requestStop);
+    while (!_requestStop) {
+        for (const int size : {30, 170, 240}) {
+            QByteArray frame(size, '\0');
+            frame[0] = static_cast<char>(RTCMFramer::PREAMBLE);
+            frame[2] = static_cast<char>(size - RTCMFramer::HEADER_SIZE - RTCMFramer::CRC_SIZE);
+            const uint32_t crc = RTCMFramer::crc24q(
+                {reinterpret_cast<const uint8_t*>(frame.constData()), static_cast<size_t>(size - 3)});
+            frame[size - 3] = static_cast<char>(crc >> 16);
+            frame[size - 2] = static_cast<char>(crc >> 8);
+            frame[size - 1] = static_cast<char>(crc);
+            emit RTCMDataUpdate(frame, static_cast<qint64>(MonotonicClock::nowUs() / 1000));
+            QThread::msleep(4);
+        }
+        QThread::msleep(100);
+    }
     return;
 #endif
 
@@ -55,8 +71,9 @@ void GPSProvider::run()
     sinks.onPosition = [this](const sensor_gps_s& message) { emit sensorGpsUpdate(message); };
     sinks.onSatelliteInfo = [this](const satellite_info_s& message) { emit satelliteInfoUpdate(message); };
     sinks.onRTCM = [this, &gotData](const QByteArray& message) {
+        const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
         gotData = true;
-        emit RTCMDataUpdate(message);
+        emit RTCMDataUpdate(message, receivedAtMs);
     };
     sinks.onSurveyIn = [this, &gotData](const GPSSurveyInStatus& status) {
         gotData = true;

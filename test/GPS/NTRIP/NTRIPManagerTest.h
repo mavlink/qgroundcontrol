@@ -32,4 +32,9 @@ private slots:
     void testDuplicateTransportErrorsScheduleOneRetry();
     void testRetiredTransportErrorCannotAffectNewSession();
     void testMissingMountpointDoesNotStartTransport();
+    void testCorrectionIngressKeepsSessionAndIdentity();
+    void testFactChangesReconfigureTransport_data();
+    void testFactChangesReconfigureTransport();
+    void testNtripOnlyUdpForwardingBypassesSelectionOnce();
+    void testTransportDiagnosticsReachManager();
 };

@@ -1,0 +1,51 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "correctionSource",
+            "shortDesc": "Vehicle correction source",
+            "longDesc": "Automatic selects one fresh stream for vehicles, preferring the local base station, then NTRIP, then UDP. Manual selection never falls back to another source category. All forwards every fresh stream and may mix base stations. NTRIP UDP forwarding is independent.",
+            "type": "uint8",
+            "enumStrings": "Automatic,Local base station,NTRIP,UDP,All sources",
+            "enumValues": "0,1,2,3,4",
+            "default": 0,
+            "label": "Vehicle correction source"
+        },
+        {
+            "name": "correctionSourceInstance",
+            "shortDesc": "Correction stream",
+            "longDesc": "Leave empty to choose a fresh stream within the selected source category. A specific endpoint remains pinned when unavailable, without fallback to another stream.",
+            "type": "string",
+            "default": "",
+            "label": "Correction stream"
+        },
+        {
+            "name": "rtcmUdpInputEnabled",
+            "shortDesc": "Enable UDP RTCM input",
+            "longDesc": "Listen on a UDP port for incoming RTCM3 correction data and forward it to connected vehicles via MAVLink GPS_RTCM_DATA.",
+            "type": "bool",
+            "default": false,
+            "label": "Enable UDP RTCM input"
+        },
+        {
+            "name": "rtcmUdpInputPort",
+            "shortDesc": "UDP RTCM input port",
+            "longDesc": "UDP port to listen on for incoming RTCM3 correction data.",
+            "type": "uint32",
+            "default": 13320,
+            "min": 1024,
+            "max": 65535,
+            "decimalPlaces": 0,
+            "label": "UDP RTCM input port"
+        },
+        {
+            "name": "rtcmUdpValidate",
+            "shortDesc": "UDP RTCM enable validation",
+            "longDesc": "Enable validation of incoming data as RTCM and drop garbage (improves security).",
+            "type": "bool",
+            "default": true,
+            "label": "UDP RTCM enable validation"
+        }
+    ]
+}

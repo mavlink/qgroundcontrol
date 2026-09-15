@@ -2,7 +2,7 @@
 
 The Core library contains RTK configuration, connection types, position
 observations, and source health. It uses Qt Core, Qt Positioning, and the shared
-timing and logging libraries. The QML registration header, `src/GPS/GPSPositionQmlTypes.h`,
+timing and logging libraries. The QML registration header, `src/GPS/GPSQmlTypes.h`,
 is compiled only by the application. The positioning service handles source registration,
 selection, and recovery; QGC owns permissions and platform/custom/NMEA source
 creation. The NMEA library owns passive sentence framing, Qt position decoding,
@@ -20,7 +20,7 @@ The NMEA protocol is a separate Qt-free static library. Its consumer links only
 `QGCGPSNMEAProtocol` and exercises sentence decoding, constellation resolution, and
 satellite assembly without a Qt application.
 
-The standalone build requires a C++20 compiler and Qt 6.8 or newer with Core and
+The default standalone build requires a C++20 compiler and Qt 6.8 or newer with Core and
 Positioning:
 
 ```sh
@@ -52,9 +52,84 @@ cmake --build build/gps-transports
 ctest --test-dir build/gps-transports --output-on-failure
 ```
 
-The available components are `Core`, `NMEA`, `Positioning`, `Transport`, and
-`ReceiverTransports`. `Transport` alone needs Qt Core, Qt Network, and the logging library.
-All components are enabled by default.
+The available components are `Core`, `NMEA`, `Positioning`, `Transport`,
+`ReceiverTransports`, `RTCMFramer`, `RTCM`, and `Corrections`. `Transport` alone needs Qt Core,
+Qt Network, and the logging library.
+All components are enabled by default. `RTCM` and `Corrections` automatically include `RTCMFramer`.
+
+## Correction routing
+
+`RTCM` owns framing, CRC validation, timestamped decoding, and MAVLink payload
+fragmentation in `src/GPS/RTCM/`. `Corrections` owns source registrations,
+selection, routing, the delivery ledger, and the event model in
+`src/GPS/Corrections/`. Both expose isolated public-header checks and standalone
+consumers; neither depends on the application, native receiver drivers,
+recording, serial support, or Qt Positioning.
+
+```sh
+cmake -S test/GPS/Standalone -B build/gps-corrections -G Ninja \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/installation \
+  -DQGC_GPS_COMPONENTS=Corrections
+cmake --build build/gps-corrections
+ctest --test-dir build/gps-corrections --output-on-failure
+```
+
+`QGC::GPSRTCMFramer` exposes the C++20 framing header without Qt. Its standalone
+consumer and isolated header check compile without Qt include paths or libraries:
+
+```sh
+cmake -S test/GPS/Standalone -B build/gps-framer -G Ninja \
+  -DQGC_GPS_COMPONENTS=RTCMFramer -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
+cmake --build build/gps-framer
+ctest --test-dir build/gps-framer --output-on-failure
+```
+
+The aggregate `QGC::GPSRTCM` library remains Qt Core-backed. Corrections keeps
+Qt Core public and RTCM private; consumers using RTCM APIs link them explicitly.
+
+The application adapters live alongside their features in `src/GPS/Corrections/`
+and `src/GPS/RTCM/`. `src/GPS/CMakeLists.txt` compiles them only into the application,
+not the standalone libraries. They connect the existing base receiver, NTRIP client,
+and UDP input to one shared MAVLink sequence domain.
+The correction manager applies routing and UDP settings before enabling ingress;
+`GPSManager` composes the producers and outputs without duplicating that wiring.
+Source registrations reject callbacks from retired sessions. UDP framing keeps
+each sender separate and limits work per event-loop turn. Only UDP can opt out
+of RTCM validation; other sources must submit validated frames.
+NTRIP health retains actual receipt times across queued callbacks. Receive-only
+telemetry replay links are excluded from correction outputs.
+
+Automatic selection prefers a fresh local base, then NTRIP, then UDP. Manual
+selection pins a category and optionally an endpoint; All sources forwards
+every fresh stream. The existing NTRIP UDP output remains source-specific,
+independent of the source selected for vehicles. UDP input settings retain their
+existing `NTRIP` storage keys.
+
+`acceptIngress()` returns whether the input was selected for global outputs, not
+whether any output admitted it. A selected frame can be rejected by every output;
+an unselected frame can still reach an independent source-specific output.
+
+Diagnostics distinguish received, validated, selected, queued, written, dropped,
+and unconfirmed bytes. MAVLink and UDP output admission is not receiver
+acknowledgement and does not prove an RTK fix. These application outputs report
+queue admission only and do not accrue written-byte credit. Unconfirmed counters
+track explicit uncertainty or reported-write destinations retired before
+completion. Local receiver injection and its completion reports remain deferred
+with the native receiver lifecycle.
+
+Written-frame counts require complete admission and completion; partial writes
+credit bytes only. Source queued-byte totals represent logical payload, while
+submitted and terminal byte totals include output fanout.
+Received and dropped bytes measure frame-candidate evidence, not raw transport
+traffic. Recovered frames can overlap rejected candidates.
+The retained `droppedFrames` field counts loss/rejection events, not unique
+incomplete frames. Selection, admission, and terminal delivery can each record
+a separate event for the same input. For example, rejecting part of a frame at
+admission and losing more bytes at completion records two events; the lost-byte
+total accumulates the separate portions. A global selection rejection can also
+coexist with successful source-specific forwarding.
+
+## Receiver transport compatibility
 
 Transport results distinguish bytes admitted, confirmed by the local transport,
 and uncertain; none of these counts is a receiver acknowledgement. Desktop serial and

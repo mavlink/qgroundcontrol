@@ -1,5 +1,7 @@
 #include "NTRIPHttpTransportTest.h"
 
+#include <memory>
+
 #include <QtCore/QRegularExpression>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QSslCertificate>
@@ -11,6 +13,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "GpsTestHelpers.h"
+#include "MockNTRIPTransport.h"
 #include "NTRIPError.h"
 #include "NTRIPHttpTransport.h"
 #include "NTRIPTransportConfig.h"
@@ -247,46 +250,29 @@ void NTRIPHttpTransportTest::testTlsFatalErrorEmitsSingleError()
 // Whitelist Parsing
 // ---------------------------------------------------------------------------
 
-void NTRIPHttpTransportTest::_testWhitelistEmpty()
+void NTRIPHttpTransportTest::_testWhitelist_data()
 {
-    NTRIPHttpTransport t(NTRIPTransportConfig{});
-    QVERIFY(t._rtcmParser.isWhitelisted(9999));  // empty whitelist = accept all
-    QVERIFY(t._rtcmParser.isWhitelisted(1005));
-
-    NTRIPTransportConfig cfg;
-    cfg.whitelist = QStringLiteral("");
-    NTRIPHttpTransport t2(cfg);
-    QVERIFY(t2._rtcmParser.isWhitelisted(1005));
+    QTest::addColumn<QString>("whitelist");
+    QTest::addColumn<QList<int>>("expectedIds");
+    QTest::newRow("empty") << QString() << QList<int>{1005, 1077, 1087};
+    QTest::newRow("single") << QStringLiteral("1005") << QList<int>{1005};
+    QTest::newRow("multiple") << QStringLiteral("1005,1077,1087") << QList<int>{1005, 1077, 1087};
+    QTest::newRow("invalid-entries") << QStringLiteral("1005,abc,,1077") << QList<int>{1005, 1077};
 }
 
-void NTRIPHttpTransportTest::_testWhitelistSingle()
+void NTRIPHttpTransportTest::_testWhitelist()
 {
+    QFETCH(QString, whitelist);
+    QFETCH(QList<int>, expectedIds);
     NTRIPTransportConfig cfg;
-    cfg.whitelist = QStringLiteral("1005");
-    NTRIPHttpTransport t(cfg);
-    QVERIFY(t._rtcmParser.isWhitelisted(1005));
-    QVERIFY(!t._rtcmParser.isWhitelisted(1077));
-}
-
-void NTRIPHttpTransportTest::_testWhitelistMultiple()
-{
-    NTRIPTransportConfig cfg;
-    cfg.whitelist = QStringLiteral("1005,1077,1087");
-    NTRIPHttpTransport t(cfg);
-    QVERIFY(t._rtcmParser.isWhitelisted(1005));
-    QVERIFY(t._rtcmParser.isWhitelisted(1077));
-    QVERIFY(t._rtcmParser.isWhitelisted(1087));
-    QVERIFY(!t._rtcmParser.isWhitelisted(1234));
-}
-
-void NTRIPHttpTransportTest::_testWhitelistInvalidEntries()
-{
-    NTRIPTransportConfig cfg;
-    cfg.whitelist = QStringLiteral("1005,abc,,1077");
-    NTRIPHttpTransport t(cfg);
-    QVERIFY(t._rtcmParser.isWhitelisted(1005));
-    QVERIFY(t._rtcmParser.isWhitelisted(1077));
-    QVERIFY(!t._rtcmParser.isWhitelisted(9999));
+    cfg.whitelist = whitelist;
+    NTRIPHttpTransport transport(cfg);
+    QList<int> receivedIds;
+    connect(&transport, &NTRIPTransport::RTCMDataUpdate, this,
+            [&](const QByteArray&, int messageId) { receivedIds.append(messageId); });
+    transport._parseRtcm(GpsTestHelpers::buildRtcmFrame(1005) + GpsTestHelpers::buildRtcmFrame(1077) +
+                         GpsTestHelpers::buildRtcmFrame(1087));
+    QCOMPARE(receivedIds, expectedIds);
 }
 
 // ---------------------------------------------------------------------------
@@ -387,6 +373,7 @@ void NTRIPHttpTransportTest::_testFilterWithWhitelist()
     cfg.mountpoint = QStringLiteral("TEST");
     cfg.whitelist = QStringLiteral("1005,1087");
     NTRIPHttpTransport t(cfg);
+    QSignalSpy detailed(&t, &NTRIPTransport::correctionFrameReceived);
 
     QVector<uint16_t> receivedIds;
     connect(&t, &NTRIPHttpTransport::RTCMDataUpdate, this, [&](const QByteArray& msg) {
@@ -398,33 +385,137 @@ void NTRIPHttpTransportTest::_testFilterWithWhitelist()
 
     QByteArray stream = GpsTestHelpers::buildRtcmFrame(1005, 4) + GpsTestHelpers::buildRtcmFrame(1077, 8) +
                         GpsTestHelpers::buildRtcmFrame(1087, 2);
-    t._parseRtcm(stream);
+    t._parseRtcm(stream.first(1), 100);
+    t._parseRtcm(stream.sliced(1), 200);
 
     QCOMPARE(receivedIds.size(), 2);
     QVERIFY(receivedIds.contains(1005));
     QVERIFY(receivedIds.contains(1087));
     QVERIFY(!receivedIds.contains(1077));
+    QCOMPARE(detailed.size(), 3);
+    const auto first = qvariant_cast<RTCMFrameDecoder::Result>(detailed[0][0]);
+    const auto filtered = qvariant_cast<RTCMFrameDecoder::Result>(detailed[1][0]);
+    QCOMPARE(first.receivedAtMs, 100);
+    QVERIFY(first.valid);
+    QVERIFY(!first.filtered);
+    QCOMPARE(filtered.receivedAtMs, 200);
+    QVERIFY(filtered.valid);
+    QVERIFY(filtered.filtered);
+    QCOMPARE(filtered.messageId, 1077);
 }
 
-void NTRIPHttpTransportTest::_testFilterRejectsBadCrc()
+void NTRIPHttpTransportTest::_testFilterRejectsInvalidFrame_data()
 {
+    QTest::addColumn<QByteArray>("bad");
+    QTest::addColumn<bool>("embedded");
+    auto badCrc = GpsTestHelpers::buildRtcmFrame(1005, 4);
+    badCrc.back() ^= 0xff;
+    QTest::newRow("bad-crc") << badCrc << false;
+    const auto good = GpsTestHelpers::buildRtcmFrame(1077, 2);
+    auto enclosing = GpsTestHelpers::buildRtcmFrame(1005, good.size());
+    enclosing.replace(5, good.size(), good);
+    enclosing.back() ^= 0xff;
+    QTest::newRow("embedded-frame-at-end-of-stream") << enclosing << true;
+    QTest::newRow("reserved-header-bits") << QByteArray::fromHex("d380") << false;
+    QTest::newRow("impossible-payload-length") << QByteArray::fromHex("d30001") << false;
+}
+
+void NTRIPHttpTransportTest::_testFilterRejectsInvalidFrame()
+{
+    QFETCH(QByteArray, bad);
+    QFETCH(bool, embedded);
     NTRIPTransportConfig cfg;
     cfg.mountpoint = QStringLiteral("TEST");
     NTRIPHttpTransport t(cfg);
 
     int count = 0;
+    QSignalSpy detailed(&t, &NTRIPTransport::correctionFrameReceived);
     connect(&t, &NTRIPHttpTransport::RTCMDataUpdate, this, [&](const QByteArray&) { count++; });
 
-    QByteArray bad = GpsTestHelpers::buildRtcmFrame(1005, 4);
-    bad[bad.size() - 1] = static_cast<char>(bad[bad.size() - 1] ^ 0xFF);
-
-    QByteArray good = GpsTestHelpers::buildRtcmFrame(1077, 2);
-
-    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("RTCM CRC mismatch")));
-    t._parseRtcm(bad + good);
+    const QByteArray good = GpsTestHelpers::buildRtcmFrame(1077, 2);
+    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("Invalid RTCM frame")));
+    t._parseRtcm(embedded ? bad : bad + good, 123);
     verifyExpectedLogMessage();
 
     QCOMPARE(count, 1);
+    QCOMPARE(detailed.size(), 2);
+    const auto rejected = qvariant_cast<RTCMFrameDecoder::Result>(detailed[0][0]);
+    QCOMPARE(rejected.data, bad);
+    QVERIFY(!rejected.valid);
+    const auto recovered = qvariant_cast<RTCMFrameDecoder::Result>(detailed[1][0]);
+    QVERIFY(recovered.valid);
+    QCOMPARE(recovered.data, good);
+    QCOMPARE(recovered.receivedAtMs, 123);
+}
+
+void NTRIPHttpTransportTest::_testCompatibilityCallbackRetiresTransport_data()
+{
+    QTest::addColumn<bool>("destroy");
+    QTest::newRow("stop") << false;
+    QTest::newRow("delete") << true;
+}
+
+void NTRIPHttpTransportTest::_testCompatibilityCallbackRetiresTransport()
+{
+    QFETCH(bool, destroy);
+    auto transport = std::make_unique<NTRIPHttpTransport>(NTRIPTransportConfig{});
+    int acceptedFrames = 0;
+    connect(transport.get(), &NTRIPTransport::RTCMDataUpdate, this, [&]() {
+        ++acceptedFrames;
+        if (destroy) {
+            transport.reset();
+        } else {
+            transport->stop();
+        }
+    });
+    const auto frame = GpsTestHelpers::buildRtcmFrame(1005);
+
+    transport->_parseRtcm(frame + frame, 123);
+
+    QCOMPARE(acceptedFrames, 1);
+    QCOMPARE(!transport, destroy);
+    if (transport) {
+        QVERIFY(transport->_stopped);
+    }
+}
+
+void NTRIPHttpTransportTest::_testMockCompatibilityProjection_data()
+{
+    QTest::addColumn<bool>("valid");
+    QTest::addColumn<bool>("filtered");
+    QTest::newRow("accepted") << true << false;
+    QTest::newRow("filtered") << true << true;
+    QTest::newRow("invalid") << false << false;
+    QTest::newRow("invalid-filtered") << false << true;
+}
+
+void NTRIPHttpTransportTest::_testMockCompatibilityProjection()
+{
+    QFETCH(bool, valid);
+    QFETCH(bool, filtered);
+    MockNTRIPTransport transport;
+    transport.setRtcmWhitelist(filtered ? QVector<int>{1077} : QVector<int>{1005});
+    QSignalSpy decoded(&transport, &NTRIPTransport::correctionFrameReceived);
+    QSignalSpy accepted(&transport, &NTRIPTransport::RTCMDataUpdate);
+    auto frame = GpsTestHelpers::buildRtcmFrame(1005);
+    if (!valid) {
+        frame.back() ^= 1;
+    }
+
+    transport.simulateRtcmData(frame, 1005, 123);
+
+    QCOMPARE(decoded.size(), 1);
+    const auto result = qvariant_cast<RTCMFrameDecoder::Result>(decoded[0][0]);
+    QCOMPARE(result.data, frame);
+    QCOMPARE(result.messageId, 1005);
+    QCOMPARE(result.receivedAtMs, 123);
+    QCOMPARE(result.valid, valid);
+    QCOMPARE(result.filtered, valid && filtered);
+    QCOMPARE(accepted.size(), valid && !filtered ? 1 : 0);
+    if (!accepted.isEmpty()) {
+        QCOMPARE(accepted[0][0].toByteArray(), result.data);
+        QCOMPARE(accepted[0][1].toInt(), result.messageId);
+    }
 }
 
 // ---------------------------------------------------------------------------

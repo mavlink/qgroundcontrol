@@ -1,33 +1,22 @@
 #pragma once
 
+#include <memory>
+
+#include <QtCore/QHash>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtNetwork/QHostAddress>
 
-#include "RTCMParser.h"
+#include "GPSCorrectionDiagnostics.h"
+#include "GPSCorrectionFrame.h"
+#include "RTCMFrameDecoder.h"
 
 Q_DECLARE_LOGGING_CATEGORY(RTCMUdpInputLog)
 
 class QUdpSocket;
 
-/**
- * @brief Listens on a UDP port for raw RTCM3 correction data and emits it
- *        for forwarding to connected vehicles via RTCMMavlink::RTCMDataUpdate().
- *
- * Typical wiring:
- * @code
- *   auto *udpInput = new RTCMUdpInput(13320, this);
- *   connect(udpInput, &RTCMUdpInput::rtcmDataReceived,
- *           _rtcmMavlink, &RTCMMavlink::RTCMDataUpdate);
- *   udpInput->start();
- * @endcode
- *
- * The class accepts datagrams from any sender on the bound port. With validation
- * disabled each datagram is emitted as-is; with validation enabled (see
- * setValidation) datagrams are reframed through RTCMParser and only CRC-valid
- * RTCM3 frames are forwarded — one signal per frame so each gets its own
- * GPS_RTCM_DATA sequence. Downstream (RTCMMavlink) fragments as needed.
- */
+/// Receives RTCM datagrams with bounded work and independent framing for each sender.
+/// Validated input emits complete timestamped frames; raw mode preserves datagram boundaries.
 class RTCMUdpInput : public QObject
 {
     Q_OBJECT
@@ -38,12 +27,9 @@ public:
     explicit RTCMUdpInput(quint16 port, QObject* parent = nullptr);
     ~RTCMUdpInput() override;
 
-    /// Bind the socket and begin accepting datagrams.
-    /// Safe to call on an already-running instance — restarts with the current port.
-    /// Port 0 binds an ephemeral port; port() then reports the bound port.
+    /// Restarts listening; port zero requests an ephemeral port.
     bool start();
 
-    /// Unbind the socket and stop accepting datagrams.
     void stop();
 
     bool isRunning() const { return _running; }
@@ -53,15 +39,13 @@ public:
     /// Change the listen port. If already running, restarts automatically.
     void setPort(quint16 port);
 
-    /// Enable/disable validation of RTCM data.
-    /// With this enabled, only valid RTCM packets are converted to MAVLink.
-    void setValidation(const bool validate) { _validateRtcm = validate; }
+    void setValidation(bool validate);
+    /// Changes start a fresh stream, restarting the listener if running.
+    void configure(quint16 port, bool validate);
 
 signals:
-    /// Emitted with RTCM payload to forward. With validation off: once per
-    /// datagram. With validation on: once per CRC-valid RTCM3 frame.
-    /// Connect directly to RTCMMavlink::RTCMDataUpdate (same thread).
-    void rtcmDataReceived(const QByteArray& data);
+    void frameReceived(const GPSCorrectionFrame& frame);
+    void frameRejected(const GPSCorrectionFrame& frame, GPSCorrectionReason reason);
 
     void runningChanged();
     void portChanged();
@@ -70,11 +54,27 @@ private slots:
     void _readDatagrams();
 
 private:
+    quint64 _resetStream();
+    void _scheduleRead();
+
     QUdpSocket* _socket = nullptr;
     quint16 _port;
     bool _running = false;
     bool _validateRtcm = false;
-    RTCMParser _rtcmParser;
+
+    struct PeerParser
+    {
+        RTCMFrameDecoder decoder;
+        qint64 lastReceivedMs = 0;
+    };
+
+    std::shared_ptr<PeerParser> _parserForPeer(const QHostAddress& address, quint16 port);
+    QHash<QString, std::shared_ptr<PeerParser>> _peerParsers;
+    static constexpr qsizetype MAX_PEERS = 32;
+    static constexpr qint64 PEER_IDLE_TIMEOUT_MS = 30000;
     quint64 _validFrames = 0;
     quint64 _invalidFrames = 0;
+    bool _drainScheduled = false;
+    bool _readingDatagrams = false;
+    quint64 _lifecycleRevision = 0;
 };

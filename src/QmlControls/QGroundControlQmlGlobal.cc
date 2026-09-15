@@ -91,6 +91,11 @@ QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
 {
 }
 
+GPSManager* QGroundControlQmlGlobal::gpsManager() const
+{
+    return GPSManager::instance();
+}
+
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)
 {
     QSettings settings;

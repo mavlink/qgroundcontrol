@@ -1,19 +1,20 @@
 #include "NTRIPManager.h"
 
+#include <chrono>
+#include <utility>
+
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QCoreApplication>
+#include <QtCore/QUrl>
 #include <QtCore/QtMath>
-#include <chrono>
 
 #include "Fact.h"
+#include "GPSCorrectionManager.h"
 #include "MultiVehicleManager.h"
 #include "NTRIPError.h"
 #include "NTRIPHttpTransport.h"
 #include "NTRIPSettings.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
-#include "RTCMMavlink.h"
-#include "RTCMUdpInput.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
 
@@ -128,12 +129,20 @@ NTRIPManager::~NTRIPManager()
 
 RTCMMavlink* NTRIPManager::rtcmMavlink() const
 {
-    return _rtcmMavlink;
+    return _correctionManager ? _correctionManager->rtcmMavlink() : nullptr;
 }
 
-void NTRIPManager::setRtcmMavlink(RTCMMavlink* mavlink)
+void NTRIPManager::setCorrectionManager(GPSCorrectionManager* manager)
 {
-    _rtcmMavlink = mavlink;
+    if (_correctionManager == manager) {
+        return;
+    }
+    if (_initialized || _transport) {
+        qCWarning(NTRIPManagerLog) << "Inject the correction manager before initializing NTRIP";
+        return;
+    }
+    _correctionRegistration.reset();
+    _correctionManager = manager;
 }
 
 void NTRIPManager::init()
@@ -171,45 +180,9 @@ void NTRIPManager::init()
 
     _ggaProvider.init(_settings);
 
-    // RTCMMavlink may be injected for tests; otherwise own one so RTCM corrections
-    // reach connected vehicles. Mirrors the legacy self-wiring behavior.
-    if (!_rtcmMavlink) {
-        QObject* parentObj = qgcApp() ? static_cast<QObject*>(qgcApp()) : static_cast<QObject*>(this);
-        _rtcmMavlink = new RTCMMavlink(parentObj);
-        _rtcmMavlink->setObjectName(QStringLiteral("RTCMMavlink"));
-    }
-
-    _setupRtcmUdpInput();
-
     if (_settings) {
         _onSettingChanged();
     }
-}
-
-void NTRIPManager::_setupRtcmUdpInput()
-{
-    if (!_settings || !_settings->rtcmUdpInputPort()) {
-        return;
-    }
-
-    const quint16 port = static_cast<quint16>(_settings->rtcmUdpInputPort()->rawValue().toUInt());
-    _rtcmUdpInput = new RTCMUdpInput(port, this);
-    connect(_rtcmUdpInput, &RTCMUdpInput::rtcmDataReceived, _rtcmMavlink, &RTCMMavlink::RTCMDataUpdate);
-
-    auto applyUdpInputSettings = [this]() {
-        const quint16 inPort = static_cast<quint16>(_settings->rtcmUdpInputPort()->rawValue().toUInt());
-        _rtcmUdpInput->setPort(inPort);
-        _rtcmUdpInput->setValidation(_settings->rtcmUdpValidate()->rawValue().toBool());
-        if (_settings->rtcmUdpInputEnabled()->rawValue().toBool()) {
-            _rtcmUdpInput->start();
-        } else {
-            _rtcmUdpInput->stop();
-        }
-    };
-    connect(_settings->rtcmUdpInputEnabled(), &Fact::rawValueChanged, this, applyUdpInputSettings);
-    connect(_settings->rtcmUdpInputPort(), &Fact::rawValueChanged, this, applyUdpInputSettings);
-    connect(_settings->rtcmUdpValidate(), &Fact::rawValueChanged, this, applyUdpInputSettings);
-    applyUdpInputSettings();
 }
 
 // -----------------------------------------------------------------------------
@@ -310,7 +283,7 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to)
             _teardownTransport();
             _ggaProvider.stop();
             _stats.stop();
-            _udpForwarder.stop();
+            _applyUdpForwarderConfig({});
             _setSecurityWarning({});
             _runningConfig = {};
             break;
@@ -342,7 +315,7 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to)
             _teardownTransport();
             _ggaProvider.stop();
             _stats.stop();
-            _udpForwarder.stop();
+            _applyUdpForwarderConfig({});
             _setSecurityWarning({});
             _runningConfig = {};
             break;
@@ -355,13 +328,14 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to)
 
 void NTRIPManager::_teardownTransport()
 {
-    if (!_transport) {
+    const auto transport = std::exchange(_transport, {});
+    _correctionRegistration.reset();
+    if (!transport) {
         return;
     }
-    _transport->disconnect(this);
-    _transport->stop();
-    _transport->deleteLater();
-    _transport = nullptr;
+    transport->disconnect(this);
+    transport->stop();
+    transport->deleteLater();
 }
 
 int NTRIPManager::_reconnectBackoffMs() const
@@ -421,9 +395,26 @@ void NTRIPManager::_startTransport()
         _transport = new NTRIPHttpTransport(config, this);
     }
 
-    // QueuedConnection: _onTransportError may tear the transport down — Direct
-    // would destroy it while still inside its own signal emission (use-after-free).
     const QPointer<NTRIPTransport> transport = _transport;
+    const QPointer<GPSCorrectionManager> correctionManager = _correctionManager;
+    if (correctionManager) {
+        QUrl endpoint;
+        endpoint.setScheme(config.useTls ? QStringLiteral("ntrips") : QStringLiteral("ntrip"));
+        endpoint.setHost(config.host);
+        endpoint.setPort(config.port);
+        endpoint.setPath(QLatin1Char('/') + config.mountpoint);
+        auto registration =
+            correctionManager->registerSource(GPSCorrectionSource::Ntrip, endpoint.toString(QUrl::FullyEncoded));
+        if (!transport || _transport != transport) {
+            return;
+        }
+        _correctionRegistration = std::move(registration);
+    }
+    const auto token = _correctionRegistration.token();
+    const auto current = [this, transport, token, registered = !correctionManager.isNull()]() {
+        return transport && _transport == transport && (!registered || token.valid());
+    };
+    // Error handling may retire the emitting transport.
     connect(
         _transport, &NTRIPTransport::error, this,
         [this, transport](NTRIPError code, const QString& detail) {
@@ -433,21 +424,26 @@ void NTRIPManager::_startTransport()
         },
         Qt::QueuedConnection);
 
-    // Must stay non-queued: TransportConnected is dispatched synchronously so a
-    // queued `error` that tore the transport down cannot interleave a stale
-    // TransportConnected into the Disconnected state. Do not make this queued.
-    connect(_transport, &NTRIPTransport::connected, this, [this, transport]() {
-        if (transport && _transport == transport) {
+    // Handshake state must precede subsequently queued errors.
+    connect(_transport, &NTRIPTransport::connected, this, [this, current]() {
+        if (current()) {
             _dispatch(Event::TransportConnected);
         }
     });
 
-    connect(_transport, &NTRIPTransport::RTCMDataUpdate, this,
-            [this, transport](const QByteArray& data, int messageId) {
-                if (transport && _transport == transport) {
-                    _rtcmDataReceived(data, messageId);
-                }
-            });
+    connect(
+        _transport, &NTRIPTransport::correctionFrameReceived, this,
+        [this, current, correctionManager, token](const RTCMFrameDecoder::Result& frame) {
+            if (correctionManager) {
+                const auto rejection = frame.valid ? GPSCorrectionReason::None : GPSCorrectionReason::InvalidFrame;
+                correctionManager->acceptIngress(token.event(frame.data, frame.receivedAtMs, frame.messageId,
+                                                             frame.valid, frame.filtered, rejection));
+            }
+            if (current() && frame.valid && !frame.filtered) {
+                _rtcmDataReceived(frame);
+            }
+        },
+        Qt::QueuedConnection);
 
     connect(_transport, &NTRIPTransport::plaintextCredentialsWarning, this, [this, transport]() {
         if (transport && _transport == transport) {
@@ -502,27 +498,15 @@ void NTRIPManager::_setSecurityWarning(const QString& warning)
     emit securityWarningChanged();
 }
 
-void NTRIPManager::_rtcmDataReceived(const QByteArray& data, int messageId)
+void NTRIPManager::_rtcmDataReceived(const RTCMFrameDecoder::Result& frame)
 {
-    _stats.recordMessage(data.size(), messageId);
-
-    qCDebug(NTRIPManagerLog) << "NTRIP forwarding RTCM:" << data.size() << "bytes";
-
-    RTCMMavlink* mavlink = _rtcmMavlink;
-    if (mavlink) {
-        mavlink->RTCMDataUpdate(data);
-
-        if (_connectionStatus != ConnectionStatus::Connected) {
-            // RTCM arrived before we processed the connected() signal — normalize
-            // through the state machine so this stays the single source of truth.
-            // No-op (logged) from any state without a matching transition row.
-            _dispatch(Event::RTCMBeforeConnected);
-        }
-    } else {
-        qCWarning(NTRIPManagerLog) << "RTCMMavlink not ready; dropping" << data.size() << "bytes";
+    _stats.recordMessage(frame.data.size(), frame.messageId, frame.receivedAtMs);
+    if (!_correctionManager) {
+        qCWarning(NTRIPManagerLog) << "Correction manager not ready; dropping" << frame.data.size() << "bytes";
     }
-
-    _udpForwarder.forward(data);
+    if (_connectionStatus != ConnectionStatus::Connected) {
+        _dispatch(Event::RTCMBeforeConnected);
+    }
 }
 
 bool NTRIPManager::_isEnabled() const
@@ -584,11 +568,8 @@ void NTRIPManager::_onSettingChanged()
 
 void NTRIPManager::_applyUdpForwarderConfig(const NTRIPTransportConfig& config)
 {
-    if (!config.udpForwardEnabled) {
-        _udpForwarder.stop();
-        return;
-    }
-    if (!_udpForwarder.configure(config.udpTargetAddress, config.udpTargetPort)) {
-        qCWarning(NTRIPManagerLog) << "UDP forward config invalid:" << config.udpTargetAddress << config.udpTargetPort;
+    if (_correctionManager) {
+        _correctionManager->configureNtripUdpOutput(config.udpForwardEnabled, config.udpTargetAddress,
+                                                    config.udpTargetPort);
     }
 }

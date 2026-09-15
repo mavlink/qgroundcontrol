@@ -1,12 +1,11 @@
 #pragma once
 
+#include <functional>
+
 #include <QtCore/QByteArray>
 #include <QtPositioning/QGeoPositionInfoSource>
 
-#include <cstdint>
-#include <functional>
-
-#include "RTCMParser.h"
+#include "RTCM/RTCMTestFixtures.h"
 
 namespace GpsTestHelpers {
 
@@ -45,32 +44,5 @@ public:
     bool active = false;
     std::function<void()> onStop;
 };
-
-// Build a minimal RTCM3 frame with preamble, length, message ID, and CRC-24Q
-inline QByteArray buildRtcmFrame(uint16_t messageId, int extraPayloadBytes = 0)
-{
-    const int payloadLen = 2 + extraPayloadBytes;
-    QByteArray frame;
-
-    frame.append(static_cast<char>(RTCMParser::kPreamble));
-    frame.append(static_cast<char>((payloadLen >> 8) & 0x03));
-    frame.append(static_cast<char>(payloadLen & 0xFF));
-
-    frame.append(static_cast<char>((messageId >> 4) & 0xFF));
-    frame.append(static_cast<char>((messageId & 0x0F) << 4));
-
-    for (int i = 0; i < extraPayloadBytes; i++) {
-        frame.append(static_cast<char>(i & 0xFF));
-    }
-
-    const uint32_t crc =
-        RTCMParser::crc24q(reinterpret_cast<const uint8_t*>(frame.constData()), static_cast<size_t>(frame.size()));
-
-    frame.append(static_cast<char>((crc >> 16) & 0xFF));
-    frame.append(static_cast<char>((crc >> 8) & 0xFF));
-    frame.append(static_cast<char>(crc & 0xFF));
-
-    return frame;
-}
 
 }  // namespace GpsTestHelpers

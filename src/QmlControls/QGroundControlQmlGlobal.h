@@ -10,6 +10,7 @@
 
 class ADSBVehicleManager;
 class FactGroup;
+class GPSManager;
 class LinkManager;
 class MAVLinkSigningKeys;
 class MissionCommandTree;
@@ -26,6 +27,7 @@ class QmlObjectListModel;
 Q_MOC_INCLUDE("ADSBVehicleManager.h")
 Q_MOC_INCLUDE("NTRIPManager.h")
 Q_MOC_INCLUDE("FactGroup.h")
+Q_MOC_INCLUDE("GPSManager.h")
 Q_MOC_INCLUDE("LinkManager.h")
 Q_MOC_INCLUDE("MAVLinkSigningKeys.h")
 Q_MOC_INCLUDE("MissionCommandTree.h")
@@ -73,6 +75,7 @@ public:
     Q_PROPERTY(MissionCommandTree*  missionCommandTree      READ    missionCommandTree      CONSTANT)
     Q_PROPERTY(MAVLinkSigningKeys*   mavlinkSigningKeys      READ    mavlinkSigningKeys      CONSTANT)
     Q_PROPERTY(FactGroup*           gpsRtk                  READ    gpsRtkFactGroup         CONSTANT)
+    Q_PROPERTY(GPSManager* gpsManager READ gpsManager CONSTANT)
     Q_PROPERTY(QGCPalette*          globalPalette           MEMBER  _globalPalette          CONSTANT)   ///< This palette will always return enabled colors
     Q_PROPERTY(QmlUnitsConversion*  unitsConversion         READ    unitsConversion         CONSTANT)
     Q_PROPERTY(bool                 singleFirmwareSupport   READ    singleFirmwareSupport   CONSTANT)
@@ -162,6 +165,8 @@ public:
     QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
     SettingsManager*        settingsManager     ()  { return _settingsManager; }
     FactGroup*              gpsRtkFactGroup     ()  { return _gpsRtkFactGroup; }
+
+    GPSManager* gpsManager() const;
     ADSBVehicleManager*     adsbVehicleManager  ()  { return _adsbVehicleManager; }
     NTRIPManager*           ntripManager        ()  { return _ntripManager; }
     QmlUnitsConversion*     unitsConversion     ()  { return &_unitsConversion; }

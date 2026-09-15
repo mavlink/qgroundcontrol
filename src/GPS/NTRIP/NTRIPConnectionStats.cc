@@ -2,6 +2,10 @@
 
 #include <algorithm>
 
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(NTRIPConnectionStatsLog, "GPS.NTRIPConnectionStats")
+
 NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent) : QObject(parent), _rateTimer(this)
 {
     _rateTimer.setInterval(std::chrono::seconds{1});
@@ -18,16 +22,11 @@ NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent) : QObject(parent), _
             _prevMessagesReceived = _messagesReceived;
             emit messagesReceivedChanged();
         }
-        if (_lastMessageTime.isValid()) {
+        if (_lastReceivedAtMs > 0) {
             emit correctionAgeChanged();
         }
 
-        const bool stale = _lastMessageTime.isValid() && _lastMessageTime.elapsed() >= kStaleThreshold.count() &&
-                           _messagesReceived > 0;
-        if (stale != _dataStale) {
-            _dataStale = stale;
-            emit dataStaleChanged();
-        }
+        _updateDataStale(static_cast<qint64>(MonotonicClock::nowUs() / 1000));
         if (_messageCountsDirty) {
             _messageCountsDirty = false;
             emit messageCountsByIdChanged();
@@ -51,18 +50,37 @@ void NTRIPConnectionStats::stop()
     }
 }
 
-void NTRIPConnectionStats::recordMessage(int bytes, int messageId)
+double NTRIPConnectionStats::correctionAgeSec() const
+{
+    if (_lastReceivedAtMs <= 0) {
+        return -1.0;
+    }
+    return (static_cast<qint64>(MonotonicClock::nowUs() / 1000) - _lastReceivedAtMs) / 1000.0;
+}
+
+void NTRIPConnectionStats::_updateDataStale(qint64 nowMs)
+{
+    const bool stale = _lastReceivedAtMs > 0 && nowMs - _lastReceivedAtMs >= kStaleThreshold.count();
+    if (stale != _dataStale) {
+        _dataStale = stale;
+        emit dataStaleChanged();
+    }
+}
+
+void NTRIPConnectionStats::recordMessage(int bytes, int messageId, qint64 receivedAtMs)
 {
     if (bytes <= 0) {
         return;
     }
     _rateTracker.recordBytes(bytes);
     _messagesReceived++;
-    _lastMessageTime.restart();
-    if (_dataStale) {
-        _dataStale = false;
-        emit dataStaleChanged();
+    const qint64 nowMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
+    if (receivedAtMs <= 0 || receivedAtMs > nowMs) {
+        qCWarning(NTRIPConnectionStatsLog) << "Invalid RTCM receipt timestamp:" << receivedAtMs;
+    } else {
+        _lastReceivedAtMs = (std::max) (_lastReceivedAtMs, receivedAtMs);
     }
+    _updateDataStale(nowMs);
     if (_rateTracker.rateUpdated()) {
         _prevBytesReceived = _rateTracker.totalBytes();
         emit dataRateChanged();
@@ -77,7 +95,7 @@ void NTRIPConnectionStats::reset()
     _rateTracker.reset();
     _prevBytesReceived = 0;
     _messagesReceived = 0;
-    _lastMessageTime.invalidate();
+    _lastReceivedAtMs = 0;
     _messageCountsById.clear();
     _messageCountsDirty = false;
     if (_dataStale) {

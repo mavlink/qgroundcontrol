@@ -1,24 +1,26 @@
 #pragma once
 
+#include <chrono>
+
 #include <QtCore/QChronoTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtQmlIntegration/QtQmlIntegration>
-#include <chrono>
 
+#include "GPSCorrectionSourceRegistration.h"
 #include "NTRIPConnectionStats.h"
 #include "NTRIPGgaProvider.h"
 #include "NTRIPSourceTableController.h"
 #include "NTRIPTransport.h"
 #include "NTRIPTransportConfig.h"
-#include "UdpForwarder.h"
+#include "RTCMFrameDecoder.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPManagerLog)
 
 class NTRIPSettings;
 class RTCMMavlink;
-class RTCMUdpInput;
+class GPSCorrectionManager;
 
 /// Manages the NTRIP caster connection lifecycle as an explicit event-driven
 /// state machine. All connection state changes flow through `_dispatch()` and
@@ -41,8 +43,7 @@ class NTRIPManager : public QObject
     Q_PROPERTY(QString ggaSource READ ggaSource NOTIFY ggaSourceChanged)
     Q_PROPERTY(NTRIPSourceTableController* sourceTableController READ sourceTableController CONSTANT)
     Q_PROPERTY(NTRIPConnectionStats* connectionStats READ connectionStats CONSTANT)
-    // CONSTANT is safe: rtcmMavlink is established once in init() (or injected for
-    // tests) before any QML binds, and is never reassigned thereafter.
+    // Injection precedes init and QML bindings.
     Q_PROPERTY(RTCMMavlink* rtcmMavlink READ rtcmMavlink CONSTANT)
 
 public:
@@ -107,8 +108,7 @@ public:
 
     NTRIPConnectionStats* connectionStats() { return &_stats; }
 
-    /// Shared RTCM→MAVLink forwarder (created in init()). GPSRtk routes its serial-RTK
-    /// corrections through this same instance for one GPS_RTCM_DATA sequence-id domain.
+    /// Compatibility view of the injected manager's shared MAVLink output.
     RTCMMavlink* rtcmMavlink() const;
 
     Q_INVOKABLE void fetchMountpoints();
@@ -122,7 +122,8 @@ public:
     /// next Connecting entry. Production always constructs NTRIPHttpTransport.
     void setTransportForTest(NTRIPTransport* transport) { _injectedTransport = transport; }
 
-    void setRtcmMavlink(RTCMMavlink* mavlink);
+    /// Inject before init(); the caller retains ownership.
+    void setCorrectionManager(GPSCorrectionManager* manager);
 
     void startNTRIP();
     void stopNTRIP();
@@ -170,24 +171,18 @@ private:
 
     bool _reconnectExhausted() const { return _reconnectAttempts >= kMaxReconnectAttempts; }
 
-    /// Apply UDP-forwarder config in place (no transport touch). Used by both
-    /// transport startup and the "warm setting changed while running" path.
+    /// Reconfigure the manager-owned NTRIP sink without restarting transport.
     void _applyUdpForwarderConfig(const NTRIPTransportConfig& config);
 
     void _onTransportError(NTRIPError code, const QString& detail);
     void _onPlaintextCredentialsWarning();
     void _setSecurityWarning(const QString& warning);
-    void _rtcmDataReceived(const QByteArray& data, int messageId);
+    void _rtcmDataReceived(const RTCMFrameDecoder::Result& frame);
     void _onSettingChanged();
     bool _isEnabled() const;
 
-    /// Wire RTCMUdpInput (inbound RTCM over UDP → RTCMMavlink). Complementary to
-    /// UdpForwarder, which sends outbound. Driven by rtcmUdpInput* settings.
-    void _setupRtcmUdpInput();
-
     NTRIPGgaProvider _ggaProvider{this};
     NTRIPConnectionStats _stats{this};
-    UdpForwarder _udpForwarder{this};
 
     ConnectionStatus _connectionStatus = ConnectionStatus::Disconnected;
     QString _statusMessage;
@@ -197,8 +192,8 @@ private:
     QPointer<NTRIPTransport> _injectedTransport;
     QPointer<NTRIPTransport> _transport;
 
-    QPointer<RTCMMavlink> _rtcmMavlink;
-    RTCMUdpInput* _rtcmUdpInput = nullptr;
+    QPointer<GPSCorrectionManager> _correctionManager;
+    GPSCorrectionSourceRegistration _correctionRegistration;
 
     NTRIPTransportConfig _runningConfig;
     NTRIPSettings* _settings = nullptr;

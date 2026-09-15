@@ -32,7 +32,7 @@ public:
 signals:
     void satelliteInfoUpdate(const satellite_info_s &message);
     void sensorGpsUpdate(const sensor_gps_s &message);
-    void RTCMDataUpdate(const QByteArray &message);
+    void RTCMDataUpdate(const QByteArray& message, qint64 receivedAtMs);
     void surveyInStatus(const GPSSurveyInStatus &status);
     void connectionError(GPSConnectionError error);
     void receiverReady();

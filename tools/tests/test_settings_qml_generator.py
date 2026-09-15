@@ -1329,6 +1329,29 @@ class TestRealPageDefinitions:
         assert "ListModel {" in qml
         assert "General" in qml
 
+    def test_ntrip_correction_controls(self, repo_root: Path):
+        pages_dir = repo_root / "src" / "AppSettings" / "pages"
+        settings_dir = repo_root / "src" / "Settings"
+        page = load_page_def(pages_dir / "NTRIP.SettingsUI.json")
+        qml = generate_page_qml(page, settings_dir)
+        components = {group.component for group in page.groups if group.component}
+        assert components == {
+            "NtripConnectionSettings",
+            "NtripServerSettings",
+            "NtripMountpointBrowser",
+            "CorrectionRoutingSettings",
+            "CorrectionDiagnostics",
+        }
+        for name in ("rtcmUdpInputEnabled", "rtcmUdpInputPort", "rtcmUdpValidate"):
+            assert f"gpsCorrectionSettings.{name}" in qml
+            assert f"ntripSettings.{name}" not in qml
+        assert "ntripSettings.ntripUdpForwardEnabled" in qml
+        assert 'heading: qsTr("NTRIP UDP Forwarding")' in qml
+        assert "gpsCorrectionSettings.userVisible" in qml
+        assert "correctionSource as SettingsFact).userVisible" in qml
+        assert "correctionSource.userVisible" not in qml
+        assert "injectLocalReceiver" not in qml
+
 
 def test_cli_preserves_unchanged_output_timestamps(tmp_path: Path, monkeypatch) -> None:
     output_dir = tmp_path / "generated"

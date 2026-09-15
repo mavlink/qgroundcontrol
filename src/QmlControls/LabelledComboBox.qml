@@ -7,8 +7,11 @@ import QGroundControl.Controls
 RowLayout {
     property alias label:                   label.text
     property alias model:                   _comboBox.model
+    property alias textRole:                _comboBox.textRole
+    property alias valueRole:               _comboBox.valueRole
     property alias currentIndex:            _comboBox.currentIndex
     property alias currentText:             _comboBox.currentText
+    property alias currentValue:            _comboBox.currentValue
     property alias alternateText:           _comboBox.alternateText
     property var   comboBox:                _comboBox
     property real  comboBoxPreferredWidth:  -1

@@ -1,18 +1,34 @@
-# ============================================================================
-# RTCM Module
-# RTCM3 framing/parsing, UDP correction input, and MAVLink injection.
-# UDP socket helpers live in Utilities/Network.
-# ============================================================================
+add_library(QGCGPSRTCMFramer INTERFACE)
+add_library(QGC::GPSRTCMFramer ALIAS QGCGPSRTCMFramer)
+target_compile_features(QGCGPSRTCMFramer INTERFACE cxx_std_20)
+target_sources(QGCGPSRTCMFramer INTERFACE FILE_SET HEADERS FILES RTCMFramer.h)
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        RTCMMavlink.cc
-        RTCMMavlink.h
-        RTCMParser.cc
-        RTCMParser.h
-        RTCMUdpInput.cc
-        RTCMUdpInput.h
+if(DEFINED QGC_GPS_COMPONENTS_ENABLED AND NOT "RTCM" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    return()
+endif()
+
+add_library(QGCGPSRTCM STATIC RTCMFrameDecoder.cc RTCMMavlinkPacket.cc RTCMParser.cc)
+add_library(QGC::GPSRTCM ALIAS QGCGPSRTCM)
+set_target_properties(
+    QGCGPSRTCM
+    PROPERTIES AUTOMOC OFF
+               AUTOUIC OFF
+               AUTORCC OFF
+               POSITION_INDEPENDENT_CODE ON
 )
-
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core)
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(QGCGPSRTCM PUBLIC cxx_std_20)
+target_link_libraries(
+    QGCGPSRTCM
+    PUBLIC QGCGPSRTCMFramer Qt6::Core
+    PRIVATE QGCLoggingCategory
+)
+target_sources(
+    QGCGPSRTCM
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           RTCMFrame.h
+           RTCMFrameDecoder.h
+           RTCMMavlinkPacket.h
+           RTCMParser.h
+)

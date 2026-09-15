@@ -18,15 +18,18 @@ private slots:
     void _testParseHttpStatusNoReason();
 
     // Whitelist parsing
-    void _testWhitelistEmpty();
-    void _testWhitelistSingle();
-    void _testWhitelistMultiple();
-    void _testWhitelistInvalidEntries();
+    void _testWhitelist_data();
+    void _testWhitelist();
 
     // RTCM filtering
     void _testFilterNoWhitelist();
     void _testFilterWithWhitelist();
-    void _testFilterRejectsBadCrc();
+    void _testFilterRejectsInvalidFrame_data();
+    void _testFilterRejectsInvalidFrame();
+    void _testCompatibilityCallbackRetiresTransport_data();
+    void _testCompatibilityCallbackRetiresTransport();
+    void _testMockCompatibilityProjection_data();
+    void _testMockCompatibilityProjection();
 
     // Transport config validation
     void testConfigValidEmpty();

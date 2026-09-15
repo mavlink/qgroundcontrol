@@ -6470,40 +6470,74 @@
             <source>UDP target port</source>
             <translation type="unfinished" />
         </message>
+    </context>
+    <context>
+        <name>GPSCorrection.SettingsGroup.json</name>
         <message>
             <extracomment>.QGC.MetaData.Facts[rtcmUdpInputEnabled].shortDesc, .QGC.MetaData.Facts[rtcmUdpInputEnabled].label</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>Enable UDP RTCM input</source>
             <translation type="unfinished" />
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[rtcmUdpInputEnabled].longDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>Listen on a UDP port for incoming RTCM3 correction data and forward it to connected vehicles via MAVLink GPS_RTCM_DATA.</source>
             <translation type="unfinished" />
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[rtcmUdpInputPort].shortDesc, .QGC.MetaData.Facts[rtcmUdpInputPort].label</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>UDP RTCM input port</source>
             <translation type="unfinished" />
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[rtcmUdpInputPort].longDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>UDP port to listen on for incoming RTCM3 correction data.</source>
             <translation type="unfinished" />
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[rtcmUdpValidate].shortDesc, .QGC.MetaData.Facts[rtcmUdpValidate].label</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>UDP RTCM enable validation</source>
             <translation type="unfinished" />
         </message>
         <message>
             <extracomment>.QGC.MetaData.Facts[rtcmUdpValidate].longDesc</extracomment>
-            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/GPSCorrection.SettingsGroup.json" />
             <source>Enable validation of incoming data as RTCM and drop garbage (improves security).</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[correctionSource].enumStrings</extracomment>
+            <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+            <location filename="../src/Settings/GPSCorrection.SettingsGroup.json" />
+            <source>Automatic,Local base station,NTRIP,UDP,All sources</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[correctionSourceInstance].shortDesc, .QGC.MetaData.Facts[correctionSourceInstance].label</extracomment>
+            <location filename="../src/Settings/GPSCorrection.SettingsGroup.json" />
+            <source>Correction stream</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[correctionSource].shortDesc, .QGC.MetaData.Facts[correctionSource].label</extracomment>
+            <location filename="../src/Settings/GPSCorrection.SettingsGroup.json" />
+            <source>Vehicle correction source</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[correctionSource].longDesc</extracomment>
+            <location filename="../src/Settings/GPSCorrection.SettingsGroup.json" />
+            <source>Automatic selects one fresh stream for vehicles, preferring the local base station, then NTRIP, then UDP. Manual selection never falls back to another source category. All forwards every fresh stream and may mix base stations. NTRIP UDP forwarding is independent.</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[correctionSourceInstance].longDesc</extracomment>
+            <location filename="../src/Settings/GPSCorrection.SettingsGroup.json" />
+            <source>Leave empty to choose a fresh stream within the selected source category. A specific endpoint remains pinned when unavailable, without fallback to another stream.</source>
             <translation type="unfinished" />
         </message>
     </context>
@@ -10723,6 +10757,78 @@
             <extracomment>.groups[UDP RTCM Input].keywords[0]</extracomment>
             <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/AppSettings/pages/NTRIP.SettingsUI.json" />
             <source>udp rtcm</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.groups[Correction Routing].sectionName</extracomment>
+            <location filename="../src/AppSettings/pages/NTRIP.SettingsUI.json" />
+            <source>Correction Routing</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.groups[Correction Routing].keywords[2]</extracomment>
+            <location filename="../src/AppSettings/pages/NTRIP.SettingsUI.json" />
+            <source>source</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.groups[Correction Routing].keywords[4]</extracomment>
+            <location filename="../src/AppSettings/pages/NTRIP.SettingsUI.json" />
+            <source>routing</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.groups[Correction Routing].keywords[5]</extracomment>
+            <location filename="../src/AppSettings/pages/NTRIP.SettingsUI.json" />
+            <source>automatic</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.groups[Correction Diagnostics].sectionName</extracomment>
+            <location filename="../src/AppSettings/pages/NTRIP.SettingsUI.json" />
+            <source>Correction Diagnostics</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.groups[Correction Diagnostics].keywords[2]</extracomment>
+            <location filename="../src/AppSettings/pages/NTRIP.SettingsUI.json" />
+            <source>diagnostics</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.groups[Correction Diagnostics].keywords[3]</extracomment>
+            <location filename="../src/AppSettings/pages/NTRIP.SettingsUI.json" />
+            <source>events</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.groups[Correction Diagnostics].keywords[4]</extracomment>
+            <location filename="../src/AppSettings/pages/NTRIP.SettingsUI.json" />
+            <source>queued</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.groups[Correction Diagnostics].keywords[5]</extracomment>
+            <location filename="../src/AppSettings/pages/NTRIP.SettingsUI.json" />
+            <source>written</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.groups[Correction Diagnostics].keywords[6]</extracomment>
+            <location filename="../src/AppSettings/pages/NTRIP.SettingsUI.json" />
+            <source>unconfirmed</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.groups[Correction Diagnostics].keywords[7]</extracomment>
+            <location filename="../src/AppSettings/pages/NTRIP.SettingsUI.json" />
+            <source>dropped</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.groups[NTRIP UDP Forwarding].heading</extracomment>
+            <location filename="../src/AppSettings/pages/NTRIP.SettingsUI.json" />
+            <source>NTRIP UDP Forwarding</source>
             <translation type="unfinished" />
         </message>
     </context>

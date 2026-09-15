@@ -11,6 +11,8 @@ private slots:
     void _failedOpenNeverConnects();
     void _retiredWorkerCannotUpdateReplacement();
     void _workerCanOutliveManager();
+    void _receiverFramesAreValidated_data();
+    void _receiverFramesAreValidated();
     void _testCountSatellitesClampsToMax();
     void _testCountSatellitesCountsUsed();
     void _testCountSatellitesIgnoresUsedBeyondCount();

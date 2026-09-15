@@ -121,11 +121,10 @@ ColumnLayout {
     }
 
     LabelledLabel {
-        label:     qsTr("To Vehicle")
-        labelText: root.rtcmMavlink ? (root._formatDataSize(root.rtcmMavlink.totalBytesSent) + " ("
-                   + root.rtcmMavlink.bandwidthKBps.toFixed(1) + " KB/s)") : root._valueNA
+        label:     qsTr("Queued to vehicle links (all sources)")
+        labelText: root.rtcmMavlink ? root._formatDataSize(root.rtcmMavlink.totalBytesSubmitted) : root._valueNA
         visible:   root._connected
-                   && root.rtcmMavlink && root.rtcmMavlink.totalBytesSent > 0
+                   && root.rtcmMavlink && root.rtcmMavlink.totalBytesSubmitted > 0
     }
 
     LabelledLabel {

@@ -6,18 +6,25 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(_gps_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS")
     set(_utilities_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities")
     set(QGC_GPS_COMPONENTS
-        "Core;NMEA;Positioning;Transport;ReceiverTransports"
-        CACHE STRING "GPS libraries to build: Core, NMEA, Positioning, Transport, ReceiverTransports"
+        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;Corrections"
+        CACHE STRING
+              "GPS components: Core, NMEA, Positioning, Transport, ReceiverTransports, RTCMFramer, RTCM, Corrections"
     )
     option(QGC_NO_SERIAL_LINK "Build without serial receiver support" OFF)
     set(QGC_GPS_COMPONENTS_ENABLED ${QGC_GPS_COMPONENTS})
     foreach(component IN LISTS QGC_GPS_COMPONENTS_ENABLED)
-        if(NOT component MATCHES "^(Core|NMEA|Positioning|Transport|ReceiverTransports)$")
+        if(NOT component MATCHES "^(Core|NMEA|Positioning|Transport|ReceiverTransports|RTCMFramer|RTCM|Corrections)$")
             message(FATAL_ERROR "Unknown GPS component: ${component}")
         endif()
     endforeach()
     if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "Positioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED Core)
+    endif()
+    if("Corrections" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        list(APPEND QGC_GPS_COMPONENTS_ENABLED RTCM)
+    endif()
+    if("RTCM" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        list(APPEND QGC_GPS_COMPONENTS_ENABLED RTCMFramer)
     endif()
     if("ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED Transport)
@@ -28,8 +35,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     if("Transport" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Network)
     endif()
-    find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
-    add_subdirectory("${_utilities_root}/Logging/Category" LoggingCategory)
+    set(_qt_gps_components ${QGC_GPS_COMPONENTS_ENABLED})
+    list(REMOVE_ITEM _qt_gps_components RTCMFramer)
+    if(_qt_gps_components)
+        find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
+        add_subdirectory("${_utilities_root}/Logging/Category" LoggingCategory)
+    endif()
     if("Core" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Positioning)
         add_subdirectory("${_utilities_root}/Timing" Timing)
@@ -46,6 +57,17 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     if("Transport" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/Transport" Transport)
     endif()
+    if("RTCMFramer" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/RTCM" RTCM)
+    endif()
+    if("RTCM" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../RTCM" RTCMTests)
+    endif()
+    if("Corrections" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/Corrections" Corrections)
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Corrections" CorrectionsTests)
+    endif()
 endif()
 
 if(TARGET QGCClock)
@@ -56,7 +78,17 @@ if(TARGET QGCClock)
         COMMENT "Verify Qt-free clock public headers in isolation"
     )
 endif()
-foreach(target QGCGPSCore QGCGPSPositioning QGCGPSNMEA QGCGPSTransport QGCGPSReceiverTransports)
+foreach(
+    target
+    QGCGPSCore
+    QGCGPSPositioning
+    QGCGPSNMEA
+    QGCGPSTransport
+    QGCGPSReceiverTransports
+    QGCGPSRTCMFramer
+    QGCGPSRTCM
+    QGCGPSCorrections
+)
     if(NOT TARGET ${target})
         continue()
     endif()
@@ -67,6 +99,14 @@ foreach(target QGCGPSCore QGCGPSPositioning QGCGPSNMEA QGCGPSTransport QGCGPSRec
         COMMENT "Verify ${target} public headers in isolation"
     )
     add_executable(${target}Consumer ${target}Consumer.cc)
+    if("${target}" STREQUAL "QGCGPSRTCMFramer")
+        set_target_properties(
+            ${target}Consumer
+            PROPERTIES AUTOMOC OFF
+                       AUTOUIC OFF
+                       AUTORCC OFF
+        )
+    endif()
     target_link_libraries(${target}Consumer PRIVATE ${target})
     if("${target}" MATCHES "^QGCGPS(Core|Positioning|NMEA)$")
         target_link_libraries(${target}Consumer PRIVATE QGCTestTiming)

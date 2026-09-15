@@ -7,10 +7,11 @@
 #include <QtTest/QSignalSpy>
 
 #include "Fixtures/RAIIFixtures.h"
+#include "GPSCorrectionManager.h"
 #include "GPSRTKFactGroup.h"
 #include "GPSRtk.h"
 #include "GPSTransport.h"
-#include "NTRIPManager.h"
+#include "GpsTestHelpers.h"
 #include "QGroundControlQmlGlobal.h"
 #include "RTCMMavlink.h"
 #include "RTKSettings.h"
@@ -112,14 +113,17 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     saved.setFactValue(manufacturer, manufacturer->rawValue());
     auto firstGate = std::make_shared<BlockedOpen>();
     auto secondGate = std::make_shared<BlockedOpen>();
+    GPSCorrectionManager corrections;
     GPSRtk receiver;
+    receiver.setCorrectionManager(&corrections);
+    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
     receiver._disconnectTimeoutMs = 0;
     const auto releaseWorkers = qScopeGuard([&]() {
         firstGate->release.release();
         secondGate->release.release();
         receiver._disconnectTimeoutMs = TestTimeout::mediumMs();
     });
-    receiver.connectReceiver(GPSReceiverType::ublox, blockedFactory(firstGate));
+    receiver.connectReceiver(GPSReceiverType::ublox, blockedFactory(firstGate), QStringLiteral("serial:test-base"));
     QTRY_VERIFY_WITH_TIMEOUT(firstGate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> first = receiver._gpsProvider;
     auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
@@ -147,15 +151,19 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QCOMPARE(facts->currentDuration()->rawValue().toLongLong(), 20);
     QCOMPARE(facts->numSatellites()->rawValue().toInt(), 2);
 
-    RTCMMavlink forwarder;
-    auto* manager = NTRIPManager::instance();
-    auto* previousForwarder = manager->rtcmMavlink();
-    manager->setRtcmMavlink(&forwarder);
-    const auto restoreForwarder = qScopeGuard([&]() { manager->setRtcmMavlink(previousForwarder); });
-    auto* rtcm = &forwarder;
+    const auto frame = GpsTestHelpers::buildRtcmFrame(1005);
+    emit first->RTCMDataUpdate(frame, GPSCorrectionFrame::monotonicNowMs());
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCOMPARE(routed.size(), 1);
+    const auto original = qvariant_cast<GPSCorrectionFrame>(routed[0][0]);
+    QCOMPARE(original.source, GPSCorrectionSource::LocalReceiver);
+    QCOMPARE(original.sourceInstance, QStringLiteral("serial:test-base"));
+    QVERIFY(original.validated);
+    auto* rtcm = corrections.rtcmMavlink();
     const auto bytesBefore = rtcm->totalBytesSent();
-    // These callbacks are queued before retirement, then delivered during the replacement session.
-    emit first->RTCMDataUpdate(QByteArrayLiteral("stale corrections"));
+    QCOMPARE(bytesBefore, quint64(frame.size()));
+    // Retirement must reject callbacks already in the GUI queue.
+    emit first->RTCMDataUpdate(frame, GPSCorrectionFrame::monotonicNowMs());
     emit first->surveyInStatus(survey);
     emit first->satelliteInfoUpdate(satellites);
     emit first->receiverReady();
@@ -163,7 +171,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     expectLogMessage(
         "GPS.GPSRtk", QtWarningMsg,
         QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
-    receiver.connectReceiver(GPSReceiverType::ublox, blockedFactory(secondGate));
+    receiver.connectReceiver(GPSReceiverType::ublox, blockedFactory(secondGate), QStringLiteral("serial:test-base"));
     verifyExpectedLogMessage();
     QVERIFY(!receiver.connected());
     QVERIFY(!facts->valid()->rawValue().toBool());
@@ -178,20 +186,39 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QCOMPARE(facts->lastError()->rawValue().toInt(), static_cast<int>(GPSConnectionError::None));
     QCOMPARE(rtcm->totalBytesSent(), bytesBefore);
     emit receiver._gpsProvider->receiverReady();
-    emit receiver._gpsProvider->RTCMDataUpdate(QByteArrayLiteral("new"));
+    const auto receivedAtMs = GPSCorrectionFrame::monotonicNowMs() - 10;
+    emit receiver._gpsProvider->RTCMDataUpdate(frame, receivedAtMs);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver.connected());
-    QCOMPARE(rtcm->totalBytesSent(), bytesBefore + 3);
+    QCOMPARE(rtcm->totalBytesSent(), bytesBefore + frame.size());
+    QCOMPARE(routed.size(), 2);
+    const auto replacement = qvariant_cast<GPSCorrectionFrame>(routed[1][0]);
+    QVERIFY(replacement.session != original.session);
+    QCOMPARE(replacement.sourceInstance, original.sourceInstance);
+    QCOMPARE(replacement.receivedAtMs, receivedAtMs);
     firstGate->release.release();
     QTRY_VERIFY_WITH_TIMEOUT(first.isNull(), TestTimeout::mediumMs());
     QVERIFY(firstGate->sawCancellation);
     QVERIFY(receiver.connected());
+
+    expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("GPS device error, connection lost")));
+    emit receiver._gpsProvider->connectionError(GPSConnectionError::DeviceError);
+    emit receiver._gpsProvider->RTCMDataUpdate(frame, GPSCorrectionFrame::monotonicNowMs());
+    emit receiver._gpsProvider->receiverReady();
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    verifyExpectedLogMessage();
+    QVERIFY(!receiver.connected());
+    QVERIFY(corrections.sourceInstances().isEmpty());
+    QCOMPARE(routed.size(), 2);
+    QCOMPARE(rtcm->totalBytesSent(), bytesBefore + frame.size());
 
     receiver._gpsProvider->stop();
     secondGate->release.release();
     QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver(), TestTimeout::mediumMs());
     QVERIFY(secondGate->sawCancellation);
     QVERIFY(!receiver.connected());
+    QVERIFY(corrections.sourceInstances().isEmpty());
 }
 
 void GPSRtkTest::_workerCanOutliveManager()
@@ -216,4 +243,56 @@ void GPSRtkTest::_workerCanOutliveManager()
     gate->release.release();
     QTRY_VERIFY_WITH_TIMEOUT(provider.isNull(), TestTimeout::mediumMs());
     QVERIFY(gate->sawCancellation);
+}
+
+void GPSRtkTest::_receiverFramesAreValidated_data()
+{
+    QTest::addColumn<QByteArray>("frame");
+    QTest::addColumn<bool>("valid");
+    QTest::addColumn<bool>("expired");
+    const auto good = GpsTestHelpers::buildRtcmFrame(1005);
+    auto badCrc = good;
+    badCrc.back() ^= 1;
+    auto badHeader = good;
+    badHeader[1] |= 0x80;
+    QTest::newRow("valid") << good << true << false;
+    QTest::newRow("bad-crc") << badCrc << false << false;
+    QTest::newRow("reserved-header-bits") << badHeader << false << false;
+    QTest::newRow("truncated") << good.first(good.size() - 1) << false << false;
+    QTest::newRow("unframed") << QByteArrayLiteral("corrections") << false << false;
+    QTest::newRow("expired-before-dequeue") << good << true << true;
+}
+
+void GPSRtkTest::_receiverFramesAreValidated()
+{
+    QFETCH(QByteArray, frame);
+    QFETCH(bool, valid);
+    QFETCH(bool, expired);
+    TestFixtures::SettingsFixture saved;
+    auto* manufacturer = SettingsManager::instance()->rtkSettings()->baseReceiverManufacturers();
+    saved.setFactValue(manufacturer, manufacturer->rawValue());
+    auto gate = std::make_shared<BlockedOpen>();
+    GPSCorrectionManager corrections;
+    GPSRtk receiver;
+    receiver.setCorrectionManager(&corrections);
+    const auto releaseWorker = qScopeGuard([&]() { gate->release.release(); });
+    receiver.connectReceiver(GPSReceiverType::ublox, blockedFactory(gate));
+    QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
+    const auto receivedAtMs =
+        GPSCorrectionFrame::monotonicNowMs() - (expired ? GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS : 0);
+    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
+    emit receiver._gpsProvider->RTCMDataUpdate(frame, receivedAtMs);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    const auto stats = corrections.sources()[static_cast<int>(GPSCorrectionSource::LocalReceiver)].toMap();
+    QCOMPARE(stats.value(QStringLiteral("receivedFrames")).toULongLong(), 1);
+    QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), valid ? 1 : 0);
+    QCOMPARE(routed.size(), valid && !expired ? 1 : 0);
+    QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), valid && !expired ? quint64(frame.size()) : 0);
+    if (!routed.isEmpty()) {
+        const auto correction = qvariant_cast<GPSCorrectionFrame>(routed[0][0]);
+        QCOMPARE(correction.data, frame);
+        QCOMPARE(correction.messageId, 1005);
+        QVERIFY(correction.validated);
+        QCOMPARE(correction.receivedAtMs, receivedAtMs);
+    }
 }

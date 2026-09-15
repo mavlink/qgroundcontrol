@@ -10,4 +10,4 @@ target_link_libraries(
     PRIVATE QGCLoggingCategory
 )
 
-target_sources(QGCNetworkIO PUBLIC FILE_SET HEADERS FILES UdpIODevice.h UdpForwarder.h)
+target_sources(QGCNetworkIO PUBLIC FILE_SET HEADERS FILES UdpIODevice.h UdpForwarder.h UdpPeer.h)

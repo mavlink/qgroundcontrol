@@ -12,6 +12,7 @@ add_subdirectory(NMEA)
 add_subdirectory(NTRIP)
 add_subdirectory(PositionManager)
 add_subdirectory(RTCM)
+add_subdirectory(Corrections)
 add_subdirectory(RTK)
 add_subdirectory(Transport)
 

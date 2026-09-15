@@ -1,10 +1,21 @@
-# RTCM tests.
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE RTCMParserTest.cc RTCMParserTest.h RTCMMavlinkTest.cc RTCMMavlinkTest.h
-                                             RTCMUdpInputTest.cc RTCMUdpInputTest.h
-)
+if(COMMAND add_qgc_test)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE RTCMParserTest.cc RTCMParserTest.h RTCMFramerTest.cc RTCMFramerTest.h)
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    add_qgc_test(RTCMParserTest LABELS Unit)
+    add_qgc_test(RTCMFramerTest LABELS Unit)
+else()
+    foreach(test RTCMParserTest RTCMFramerTest)
+        qt_add_executable(QGC${test} ${test}.cc ${test}.h)
+        set_target_properties(QGC${test} PROPERTIES AUTOMOC ON)
+        target_compile_definitions(QGC${test} PRIVATE QGC_GPS_STANDALONE_TEST)
+        target_link_libraries(QGC${test} PRIVATE QGC::GPSRTCM Qt6::Test)
+        add_test(NAME ${test} COMMAND QGC${test})
+        set_tests_properties(${test} PROPERTIES LABELS "Unit;GPS" TIMEOUT 60)
+    endforeach()
+endif()
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-add_qgc_test(RTCMParserTest LABELS Unit)
-add_qgc_test(RTCMMavlinkTest LABELS Unit)
-add_qgc_test(RTCMUdpInputTest LABELS Unit)
+qt_add_executable(QGCRTCMConformanceTest RTCMConformanceTest.cc)
+set_target_properties(QGCRTCMConformanceTest PROPERTIES AUTOMOC ON)
+target_link_libraries(QGCRTCMConformanceTest PRIVATE QGC::GPSRTCM Qt6::Test)
+add_test(NAME RTCMConformanceTest COMMAND QGCRTCMConformanceTest)
+set_tests_properties(RTCMConformanceTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 60)

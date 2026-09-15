@@ -12,7 +12,10 @@ private slots:
     void testReset();
     void testDataRate();
     void testCorrectionAgeInitial();
+    void testCorrectionAgeAfterMessage_data();
     void testCorrectionAgeAfterMessage();
+    void testInvalidReceiptTimestamp_data();
+    void testInvalidReceiptTimestamp();
     void testMessageCountsByIdSortedAndReset();
     void testDataStaleAfterNoRecentMessages();
 };

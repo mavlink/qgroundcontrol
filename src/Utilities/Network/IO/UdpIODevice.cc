@@ -1,38 +1,16 @@
 #include "UdpIODevice.h"
 
+#include <algorithm>
+
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
 #include <QtNetwork/QNetworkDatagram>
 
-#include <algorithm>
-
 #include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
+#include "UdpPeer.h"
 
 QGC_LOGGING_CATEGORY(UdpIODeviceLog, "Utilities.UdpIODevice")
-
-namespace {
-QString udpPeerKey(const QHostAddress& address, quint16 port)
-{
-    return address.toString() + QLatin1Char(':') + QString::number(port);
-}
-
-struct UdpDrainBudget
-{
-    static constexpr qsizetype MAX_DATAGRAMS = 16;
-    static constexpr qsizetype MAX_BYTES = 64 * 1024;
-    qsizetype datagrams = 0;
-    qsizetype bytes = 0;
-
-    bool available() const { return datagrams < MAX_DATAGRAMS && bytes < MAX_BYTES; }
-
-    void consume(qsizetype size)
-    {
-        ++datagrams;
-        bytes += size;
-    }
-};
-}  // namespace
 
 UdpIODevice::UdpIODevice(QObject* parent) : QIODevice(parent), _socket(this)
 {

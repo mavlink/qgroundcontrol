@@ -1,10 +1,12 @@
 #include "NTRIPHttpTransport.h"
 
+#include <chrono>
+
 #include <QtCore/QDateTime>
+#include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtNetwork/QSslError>
 #include <QtNetwork/QSslSocket>
-#include <chrono>
 
 #include "NMEAUtils.h"
 #include "NTRIPError.h"
@@ -18,7 +20,7 @@ NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObje
     : NTRIPTransport(parent), _config(config), _connectTimeoutTimer(this), _dataWatchdogTimer(this)
 {
     const QVector<int> whitelist = NTRIPTransportConfig::parseWhitelist(_config.whitelist);
-    _rtcmParser.setWhitelist(whitelist);
+    _rtcmDecoder.setWhitelist(whitelist);
     qCDebug(NTRIPHttpTransportLog) << "RTCM message filter:" << whitelist;
     if (whitelist.empty()) {
         qCDebug(NTRIPHttpTransportLog) << "Message filter empty; all RTCM message IDs will be forwarded.";
@@ -142,7 +144,7 @@ void NTRIPHttpTransport::_connect()
 
     _httpHandshakeDone = false;
     _httpResponseBuf.clear();
-    _rtcmParser.reset();
+    _rtcmDecoder.reset();
 
     if (_config.useTls) {
         QSslSocket* sslSocket = new QSslSocket(this);
@@ -241,36 +243,32 @@ void NTRIPHttpTransport::_connect()
     _connectTimeoutTimer.start();
 }
 
-void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer)
+void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtMs)
 {
-    if (_stopped) {
-        return;
-    }
-
+    const QPointer<NTRIPHttpTransport> guard(this);
     for (char ch : buffer) {
+        if (_stopped) {
+            return;
+        }
         const uint8_t byte = static_cast<uint8_t>(static_cast<unsigned char>(ch));
-
-        if (!_rtcmParser.addByte(byte)) {
-            continue;
+        auto result = _rtcmDecoder.addByte(byte, receivedAtMs);
+        while (result) {
+            if (_stopped) {
+                return;
+            }
+            emit correctionFrameReceived(*result);
+            if (!guard || _stopped) {
+                return;
+            }
+            if (!result->valid) {
+                qCWarning(NTRIPHttpTransportLog) << "Invalid RTCM frame, dropping message id" << result->messageId;
+            } else if (!result->filtered) {
+                qCDebug(NTRIPHttpTransportLog) << "RTCM packet id" << result->messageId << "len" << result->data.size();
+            } else {
+                qCDebug(NTRIPHttpTransportLog) << "Ignoring RTCM" << result->messageId;
+            }
+            result = _rtcmDecoder.nextFrame();
         }
-
-        if (!_rtcmParser.validateCrc()) {
-            qCWarning(NTRIPHttpTransportLog) << "RTCM CRC mismatch, dropping message id" << _rtcmParser.messageId();
-            _rtcmParser.reset();
-            continue;
-        }
-
-        const QByteArray message = _rtcmParser.currentFrame();
-        const uint16_t id = _rtcmParser.messageId();
-
-        if (_rtcmParser.isWhitelisted(id)) {
-            qCDebug(NTRIPHttpTransportLog) << "RTCM packet id" << id << "len" << message.length();
-            emit RTCMDataUpdate(message, id);
-        } else {
-            qCDebug(NTRIPHttpTransportLog) << "Ignoring RTCM" << id;
-        }
-
-        _rtcmParser.reset();
     }
 }
 
@@ -295,6 +293,7 @@ void NTRIPHttpTransport::_readBytes()
 
 void NTRIPHttpTransport::_handleHttpResponse()
 {
+    const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
     // Bound reads so a single chunk can't overshoot kMaxHttpHeaderSize.
     const qint64 budget = static_cast<qint64>(kMaxHttpHeaderSize) - _httpResponseBuf.size();
     if (budget <= 0) {
@@ -330,7 +329,7 @@ void NTRIPHttpTransport::_handleHttpResponse()
                     const QByteArray remainingData = _httpResponseBuf.mid(firstLineEnd + 2);
                     _httpResponseBuf.clear();
                     if (!remainingData.isEmpty()) {
-                        _parseRtcm(remainingData);
+                        _parseRtcm(remainingData, receivedAtMs);
                     }
                     return;
                 }
@@ -370,7 +369,7 @@ void NTRIPHttpTransport::_handleHttpResponse()
 
             if (!remainingData.isEmpty()) {
                 qCDebug(NTRIPHttpTransportLog) << "Processing trailing data:" << remainingData.size() << "bytes";
-                _parseRtcm(remainingData);
+                _parseRtcm(remainingData, receivedAtMs);
             }
             return;
         }
@@ -408,11 +407,12 @@ void NTRIPHttpTransport::_handleHttpResponse()
 
 void NTRIPHttpTransport::_handleRtcmData()
 {
+    const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
     const QByteArray bytes = _socket->readAll();
     if (!bytes.isEmpty()) {
         _dataWatchdogTimer.start();
         qCDebug(NTRIPHttpTransportLog) << "rx bytes:" << bytes.size();
-        _parseRtcm(bytes);
+        _parseRtcm(bytes, receivedAtMs);
     }
 }
 
