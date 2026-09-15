@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QHash>
+#include <QtCore/QMetaObject>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
@@ -242,11 +243,15 @@ public:
     static constexpr const char *kDefaultGroup = QT_TRANSLATE_NOOP("FactMetaData", "Misc");
     static constexpr const char *qgcFileType = "FactMetaData";
 
+signals:
+    void appSettingsUnitsChanged();
+
 private:
     QVariant _minForType() const { return minForType(_type); };
     QVariant _maxForType() const { return maxForType(_type); };
     /// Set translators according to app settings
     void _setAppSettingsTranslators();
+    void _appSettingsUnitsChanged();
 
     /// Clamp a value to be within cookedMin and cookedMax
     template<class T>
@@ -361,6 +366,7 @@ private:
     QString _cookedUnits;
     Translator _rawTranslator = _defaultTranslator;
     Translator _cookedTranslator = _defaultTranslator;
+    QMetaObject::Connection _appSettingsUnitsConnection;
     bool _vehicleRebootRequired = false;
     bool _qgcRebootRequired = false;
     double _rawIncrement = std::numeric_limits<double>::quiet_NaN();
