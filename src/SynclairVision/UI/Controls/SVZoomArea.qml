@@ -148,8 +148,8 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
         height: SVUnits.lineWidth
-        color: (hoverIndex === -1 && !zoomInPressed && !zoomOutPressed && !zoomInVisualPressed && !zoomOutVisualPressed) 
-        ? qgcPalette.windowShadeLight 
+        color: (hoverIndex === -1 && !zoomInPressed && !zoomOutPressed && !zoomInVisualPressed && !zoomOutVisualPressed)
+        ? qgcPalette.windowShadeLight
         : "white"
     }
 
@@ -181,7 +181,7 @@ Item {
 
             if (pressed && index !== pressedButtonIndex) {
                 root.setPressed(pressedButtonIndex, false)
-                
+
                 if (index >= 0) {
                     root.setPressed(index, true)
                     pressedButtonIndex = index

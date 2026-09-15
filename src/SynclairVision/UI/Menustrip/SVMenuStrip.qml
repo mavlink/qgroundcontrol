@@ -12,7 +12,7 @@ Item {
     property bool headerless: false
     property bool exclusiveSelection: true
     property bool autoUpdateActiveId: true
-    
+
     property string direction: vertical
     property string menuDirection: direction
 
@@ -57,13 +57,13 @@ Item {
         return root.activeIds.indexOf(item.id) !== -1
     }
 
-    width: isVertical 
+    width: isVertical
             ? SVUnits.objectWidth
             : + (root.headerless ? 0 : root.buttonSize)
               + (root.separatorVisible ? root.separatorSpan : 0)
               + (root.contentVisible ? contentGrid.implicitWidth : 0) + 2
-    height: isHorizontal 
-            ? SVUnits.objectWidth 
+    height: isHorizontal
+            ? SVUnits.objectWidth
             : + (root.headerless ? 0 : root.buttonSize)
               + (root.separatorVisible ? root.separatorSpan : 0)
               + (root.contentVisible ? contentGrid.implicitHeight : 0) + 2
@@ -173,7 +173,7 @@ Item {
                         return SVUnits.lineWidth
                     }
                 }
-                
+
                 color: qgcPalette.windowShadeLight
 
                 gradient: SVSettings.simplifiedUserInterface

@@ -268,7 +268,7 @@ Item {
         }
         anchors.centerIn: parent
 
-        
+
         Repeater {
             model: root.digiviewCameraViews
 
@@ -299,7 +299,7 @@ Item {
             id: detectionOverlay
             x: root.digiview.videoOutputDetectionOverlayRect.x * root.digiviewScaleX
             y: root.digiview.videoOutputDetectionOverlayRect.y * root.digiviewScaleY
-            width: root.digiview.videoOutputDetectionOverlayRect.width * root.digiviewScaleX 
+            width: root.digiview.videoOutputDetectionOverlayRect.width * root.digiviewScaleX
             height: root.digiview.videoOutputDetectionOverlayRect.height * root.digiviewScaleY
             visible: root.digiviewOutputGeometryAvailable
                 && root.digiview.videoOutputDetectionOverlayRect.width > 0
@@ -307,9 +307,9 @@ Item {
             immediateSttHandler: () => root.submitImmediatePointTracking('singleTarget')
         }
 
-        
 
-        
+
+
     }
     SVBorder {
         id: cameraBorder
@@ -356,15 +356,15 @@ Item {
         anchors.right: adjustHud ? videoContentArea.right : parent.right
         anchors.top: adjustHud ? videoContentArea.top : parent.top
         anchors.bottom: adjustHud ? videoContentArea.bottom : parent.bottom
-        
+
         anchors.leftMargin: _widgetMargin + ((adjustHud && detectionPosition === "ColumnLeft") ? detectionOverlay.width : 0)
         anchors.rightMargin: _widgetMargin + ((adjustHud && (detectionPosition === "ColumnRight" || detectionPosition === "Single")) ? detectionOverlay.width : 0)
         anchors.bottomMargin: _widgetMargin + ((adjustHud && detectionPosition === "RowBottom") ? detectionOverlay.height : 0)
         //anchors.topMargin: _widgetMargin + (adjustHud ? (Math.max(Math.max(toolbarInset, heightOffset), adjustHud && detectionPosition === "RowTop" ? detectionOverlay.height : 0)
         anchors.topMargin: _widgetMargin + (adjustHud ? (Math.max(Math.max(0, toolbarInset - heightOffset), adjustHud && detectionPosition === "RowTop" ? detectionOverlay.height : 0)) : toolbarInset)
-        offsetX: adjustHud ? (anchors.rightMargin - _widgetMargin + Math.floor(widthOffset)) : 0 
+        offsetX: adjustHud ? (anchors.rightMargin - _widgetMargin + Math.floor(widthOffset)) : 0
         //offsetY: SVUnits.objectWidth + toolbarInset + (adjustHud ? Math.max(Math.max(toolbarInset, heightOffset), detectionPosition === "RowTop" ? detectionOverlay.height : 0)
-        offsetY: SVUnits.objectWidth + (adjustHud ? (Math.max(Math.max(toolbarInset, heightOffset) - toolbarInset, detectionPosition === "RowTop")) : 0)       
+        offsetY: SVUnits.objectWidth + (adjustHud ? (Math.max(Math.max(toolbarInset, heightOffset) - toolbarInset, detectionPosition === "RowTop")) : 0)
         leftToolStripBottom: root.leftToolStripBottom
         pipViewWidth: root.pipViewWidth
         visible: !root.previewMode && !SVState.cursorTrackingSessionActive

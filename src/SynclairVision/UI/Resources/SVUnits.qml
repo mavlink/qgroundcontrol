@@ -24,5 +24,5 @@ QtObject {
     property real largeText: ScreenTools.largeFontPointSize
 
     property real buttonHeight: ScreenTools.defaultFontPixelHeight * 1.6
-    //property real buttonWidth: 
+    //property real buttonWidth:
 }

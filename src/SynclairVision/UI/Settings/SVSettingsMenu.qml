@@ -403,7 +403,7 @@ Item {
             return
         }
 
-        
+
     }
 
     function dropdownCurrentIndex(settingData) {
@@ -1192,7 +1192,7 @@ Item {
         radius: ScreenTools.defaultBorderRadius * 2
         color: qgcPalette.window
     }
-    
+
     SVBackground {
         anchors.fill: parent
         /*normalColor: "transparent"
@@ -1233,12 +1233,12 @@ Item {
                 Layout.preferredWidth: root.navigationWidth
                 Layout.fillHeight: true
                 color: "transparent"
-                
+
 
                 ColumnLayout {
                     anchors.fill: parent
 
-                    
+
                     //anchors.leftMargin: 2
                     //anchors.rightMargin: 2
                     //anchors.margins: root.sectionPadding
@@ -1254,10 +1254,10 @@ Item {
                             anchors.topMargin: height / 8
                             text: root.categoryData.title
                             font.pointSize: ScreenTools.largeFontPointSize
-                            
+
                         }
                     }
-                    
+
                     Repeater {
                         model: root.sectionModel
 
@@ -1312,14 +1312,14 @@ Item {
                     }
                 }
 
-                
+
             }
 
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                
+
 
                 Flickable {
                     id: contentFlickable
@@ -1949,7 +1949,7 @@ Item {
                                                                 text: settingData.label
                                                                 wrapMode: Text.WordWrap
                                                             }
-                                                        
+
                                                             QGCTextField {
                                                                 Layout.fillWidth: true
                                                                 Layout.minimumWidth: SVUnits.width * 25
@@ -1959,7 +1959,7 @@ Item {
                                                             }
                                                         }
 
-                                                        
+
 
                                                         RowLayout {
                                                             Layout.fillWidth: true
@@ -2010,7 +2010,7 @@ Item {
                     anchors.bottom: parent.bottom
                     anchors.left: parent.left
                     anchors.right: parent.right
-                    
+
                     anchors.rightMargin: 20 - 4
                     height: root.edgeGradientHeight
                     opacity: root.bottomEdgeGradientOpacity

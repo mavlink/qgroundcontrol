@@ -32,7 +32,7 @@ Item {
     SVBackground {
         anchors.fill: parent
         //anchors.margins: root.enabled ? 0 : SVUnits.lineWidth * 2
-        
+
         transparentBackground: true
         enabled: true
         hoverEnabled: true

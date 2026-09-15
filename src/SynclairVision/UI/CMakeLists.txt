@@ -48,7 +48,7 @@ qt_add_qml_module(SynclairVisionUIModule
         Controls/SVZoom.qml
         Controls/SVZoomArea.qml
         Controls/SVZoomButton.qml
-        
+
         Menustrip/SVMenuStrip.qml
         Menustrip/SVMenuStripButton.qml
 
@@ -56,7 +56,7 @@ qt_add_qml_module(SynclairVisionUIModule
         Settings/SVSettingsDrawer.qml
         Settings/SVState.qml
         Resources/SVUnits.qml
-        
+
         Settings/SVSettingsMenu.qml
         Settings/SVCalibrationSettings.qml
         Settings/SVSettingsDefinitions.js
@@ -72,7 +72,7 @@ qt_add_qml_module(SynclairVisionUIModule
         Resources/Images/halftone_texture_2.png
         Resources/Images/no-video-camera-background.png
         Resources/Images/no_video_background.png
-        
+
     NO_PLUGIN
 )
 

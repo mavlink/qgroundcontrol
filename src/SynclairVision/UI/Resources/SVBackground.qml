@@ -90,12 +90,12 @@ Item {
     Rectangle {
         anchors.fill: parent
         //color: root.pressed ? root.pressedColor : (root.checkable && root.checked ? root.checkedColor : (root.hoverEnabled && root.hovered ? root.hoverColor : qgcPalette.windowTransparent))
-        
+
         color: Qt.tint(
-            root.checked ? root.pressedColor : (root.hovered ? hoverColor : root.normalColor), 
+            root.checked ? root.pressedColor : (root.hovered ? hoverColor : root.normalColor),
             (root.pressed ? Qt.rgba(1.0, 1.0, 1.5, 0.20) : Qt.rgba(0.0, 0.0, 0.0, 0.0))
         )
-        
+
         radius: root.radius
         border.width: root.borderWidth
         border.color: root.borderColor
@@ -136,10 +136,10 @@ Item {
             color: "transparent"
             border.width: 1//root.frameBorderWidth
             border.color: root.frameBorderColor
-            visible: !SVSettings.simplifiedUserInterface && root.enabled && (root.hovered || root.checked) 
+            visible: !SVSettings.simplifiedUserInterface && root.enabled && (root.hovered || root.checked)
             radius: root.radius
 
-            
+
         }
 
         Canvas {

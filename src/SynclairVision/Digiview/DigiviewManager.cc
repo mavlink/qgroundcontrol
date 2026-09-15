@@ -1391,7 +1391,7 @@ void DigiviewManager::changeZoom(int camId, float zoom)
     );
 }
 
-void DigiviewManager::startRecording() 
+void DigiviewManager::startRecording()
 {
     (void) sendCaptureParameters(
         _streamName,
@@ -1402,7 +1402,7 @@ void DigiviewManager::startRecording()
     );
 }
 
-void DigiviewManager::stopRecording() 
+void DigiviewManager::stopRecording()
 {
     (void) sendCaptureParameters(
         _streamName,

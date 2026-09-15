@@ -16,7 +16,7 @@ FirstRunPrompt {
     onClosed: {
         var appSettings = QGroundControl.settingsManager.appSettings
         var shownIds = appSettings.firstRunPromptIdsShown.rawValue
-        
+
         if (!shownIds.includes(promptId)) {
             shownIds.push(promptId)
             appSettings.firstRunPromptIdsShown.rawValue = shownIds
@@ -55,10 +55,10 @@ FirstRunPrompt {
                 Image {
                     id: noVideo
                     anchors.fill: parent
-                    source: Qt.resolvedUrl("../Resources/Images/no_video_background.png")                    
+                    source: Qt.resolvedUrl("../Resources/Images/no_video_background.png")
                     fillMode: Image.PreserveAspectCrop
                     visible: true
-                }   
+                }
 
                 Rectangle {
                     anchors.bottom: parent.bottom
@@ -83,7 +83,7 @@ FirstRunPrompt {
                         width: SVUnits.objectWidth * 1
                         height: SVUnits.objectWidth * 1
                         source: "/res/resources/svlogo.png"
-                        fillMode: Image.PreserveAspectCrop 
+                        fillMode: Image.PreserveAspectCrop
                         smooth: true
                         mipmap: true
                         antialiasing: true
@@ -192,7 +192,7 @@ FirstRunPrompt {
                                     if (!cardItem.hasSelection) return getStartedRow.defaultCardWidth;
                                     return cardItem.isSelected ? getStartedRow.expandedCardWidth : getStartedRow.collapsedCardWidth;
                                 }
-                                
+
                                 // Consistent card height prevents vertical size jumping
                                 implicitHeight: SVUnits.objectHeight * 0.5
 
@@ -236,7 +236,7 @@ FirstRunPrompt {
                                         horizontalAlignment: Text.AlignLeft
                                         visible: !cardItem.isCollapsed
 
-                                        
+
                                     }
                                 }
 
@@ -340,7 +340,7 @@ FirstRunPrompt {
                                 hoverPosition: Qt.point(mouseAreaDocumentation.mouseX, mouseAreaDocumentation.mouseY)
                                 radius: SVUnits.radius
                             }
-                                        
+
                             MouseArea {
                                 id: mouseAreaDocumentation
                                 anchors.fill: parent
@@ -388,7 +388,7 @@ FirstRunPrompt {
                                 hoverPosition: Qt.point(mouseAreaPatch.mouseX, mouseAreaPatch.mouseY)
                                 radius: SVUnits.radius
                             }
-                                        
+
                             MouseArea {
                                 id: mouseAreaPatch
                                 anchors.fill: parent

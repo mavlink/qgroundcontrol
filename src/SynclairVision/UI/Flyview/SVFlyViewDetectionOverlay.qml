@@ -53,9 +53,9 @@ Item {
     Rectangle {
         x: root.isHorizontal ? root.widthAmount * root.height - 1: 0
         y: !root.isHorizontal ? root.heightAmount * root.width - 1: 0
-        width: root.isHorizontal ? root.width % root.height : root.width 
+        width: root.isHorizontal ? root.width % root.height : root.width
         height: !root.isHorizontal ? root.height % root.width : root.height
-                
+
         color: "black"
         border.width: 1
         border.color: qgcPalette.windowShadeLight
@@ -70,6 +70,6 @@ Item {
         borderVisible: true
     }
 
-    
+
 
 }

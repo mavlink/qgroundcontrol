@@ -259,7 +259,7 @@ Item {
         // 1. Safely grab the state for this specific camera slot
         property var camState: (SVState.digiview &&
                                 SVState.digiview.cameraStates &&
-                                root.cameraSlot >= 0 && 
+                                root.cameraSlot >= 0 &&
                                 root.cameraSlot < SVState.digiview.cameraStates.length)
                                ? SVState.digiview.cameraStates[root.cameraSlot]
                                : null

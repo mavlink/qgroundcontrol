@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 
 import QGroundControl
-import QGroundControl.Controls 
+import QGroundControl.Controls
 
 Item {
     id: root
@@ -49,7 +49,7 @@ Item {
             var p3 = { x: pad, y: h - pad };
 
             ctx.beginPath();
-            
+
             // Start near top-left, draw rounded corner to bottom-right
             ctx.moveTo(p1.x + r, p1.y);
             ctx.arcTo(p2.x, p2.y, p3.x, p3.y, r / 2);   // Top-Right to Bottom-Right corner

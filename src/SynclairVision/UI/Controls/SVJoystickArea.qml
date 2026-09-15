@@ -163,7 +163,7 @@ Item {
         id: outerButtons
         anchors.fill: parent
         buttonColor: SVSettings.simplifiedUserInterface ? qgcPalette.windowShade : qgcPalette.windowTransparent
-        hoveredButtonColor: SVSettings.simplifiedUserInterface ? qgcPalette.windowShadeLight : Qt.alpha(qgcPalette.windowShadeLight, 0.8) 
+        hoveredButtonColor: SVSettings.simplifiedUserInterface ? qgcPalette.windowShadeLight : Qt.alpha(qgcPalette.windowShadeLight, 0.8)
         clickedButtonColor: qgcPalette.buttonHighlight
         borderColor: root.borderColor
         hoverIndex: (root.hoverIndex >= 0 && root.hoverIndex < 4) ? root.hoverIndex : -1
@@ -184,7 +184,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
         buttonColor: SVSettings.simplifiedUserInterface ? qgcPalette.window : qgcPalette.windowTransparent
-        hoveredButtonColor: SVSettings.simplifiedUserInterface ? qgcPalette.windowShadeLight : Qt.alpha(qgcPalette.windowShadeLight, 0.8) 
+        hoveredButtonColor: SVSettings.simplifiedUserInterface ? qgcPalette.windowShadeLight : Qt.alpha(qgcPalette.windowShadeLight, 0.8)
         clickedButtonColor: qgcPalette.buttonHighlight
         borderColor: root.borderColor
         hoverIndex: (root.hoverIndex >= 4) ? root.hoverIndex - 4 : -1
@@ -245,9 +245,9 @@ Item {
                         if (root.pressedIndex !== -1) {
                             root.clearClicked(root.pressedIndex)
                         }
-                        
+
                         root.pressedIndex = index
-                        
+
                         if (index >= 0) {
                             root.setClicked(index)
                             root.startInputModeLogic()

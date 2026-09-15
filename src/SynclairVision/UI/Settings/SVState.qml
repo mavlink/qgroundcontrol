@@ -600,7 +600,7 @@ QtObject {
                     )
                 }
             }
-            
+
             if(SVSettings.recordDestination === 'local') {
                 QGroundControl.videoManager.stopRecording();
                 SVNotificationManager.add(
@@ -608,10 +608,10 @@ QtObject {
                     "QGroundControl: Saving recording to local folder",
                     "info",
                     "recording_stopped"
-                ) 
+                )
             }
         }
-        
+
         record = false
         stopRecordTimer()
     }
@@ -682,7 +682,7 @@ QtObject {
         { grid: false, crosshair: false }
     ]
     readonly property bool hasActiveCamera: cameraSelected >= 0 && cameraSelected < cameraTrackingIds.length
-    
+
     readonly property var activeCameraState: (digiview && digiview.cameraStates && cameraSelected >= 0 && cameraSelected < digiview.cameraStates.length)
                                              ? digiview.cameraStates[cameraSelected]
                                              : null
@@ -690,8 +690,8 @@ QtObject {
     readonly property bool isCurrentCamTracking: activeCameraState
         ? activeCameraState.sttStatus === DigiviewProtocol.SttStatusRunning
         : false
-    
-    
+
+
     readonly property int activeCameraTrackId: activeCameraState ? activeCameraState.trackId : 0
 
     // Keep the local mode after a successful selection. Remote state only supplies
@@ -794,7 +794,7 @@ QtObject {
         }
     }
 
-    
+
 
     onUiInteractionEnabledChanged: {
         // State 2: Connected (Stream is actively decoding)

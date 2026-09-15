@@ -36,7 +36,7 @@ Item {
             }
         }
 
-    
+
 
         HoverHandler {
             id: contentHoverHandler

@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 
 import QGroundControl
-import QGroundControl.Controls 
+import QGroundControl.Controls
 
 Item {
     id: root
@@ -29,7 +29,7 @@ Item {
         SVLine { thickness: root.borderWidth; color: root.borderColor; startX: parent.stepX;     startY: 0;          endX: parent.stepX;        endY: parent.height }
         SVLine { thickness: root.borderWidth; color: root.borderColor; startX: parent.stepX * 2; startY: 0;          endX: parent.stepX * 2;    endY: parent.height }
 
-        
+
     }
 
     Item {
@@ -50,7 +50,7 @@ Item {
         visible: false
         enabled: false
 
-        
+
 
         SVLine { startX: 0; startY: parent.height / 2; endX: parent.width / 2 - root.crosshairCenter; endY: parent.height / 2}
         SVLine { startX: parent.width / 2 + root.crosshairCenter; startY: parent.height / 2; endX: parent.width; endY: parent.height / 2}

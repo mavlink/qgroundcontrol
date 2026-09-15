@@ -54,7 +54,7 @@ Item {
         borderColor: "white"
     }
 
-    
+
 
     SVBackground {
         anchors.fill: parent
@@ -107,7 +107,7 @@ Item {
         borderVisible: !root.previewMode && cursorTrackingSessionCamera
     }
 
-    
+
 
     SVBorder {
         id: selected
@@ -118,14 +118,14 @@ Item {
             && SVState.cameraSelectionEnabled
             && SVState.cameraSelected === cameraSlot
             && !SVState.cursorTrackingSessionActive
-            && SVState.hud 
+            && SVState.hud
         z: 100000000
 
     }
 
-    SVLine { 
-        thickness: SVUnits.lineWidth; 
-        color: qgcPalette.windowShadeLight; 
+    SVLine {
+        thickness: SVUnits.lineWidth;
+        color: qgcPalette.windowShadeLight;
         startX: 0
         startY: 0
         endX: root.width
@@ -133,9 +133,9 @@ Item {
         z: -10000
     }
 
-    SVLine { 
-        thickness: SVUnits.lineWidth; 
-        color: qgcPalette.windowShadeLight; 
+    SVLine {
+        thickness: SVUnits.lineWidth;
+        color: qgcPalette.windowShadeLight;
         startX: root.width
         startY: 0
         endX: root.width

@@ -179,7 +179,7 @@ Item {
         anchors.leftMargin: SVUnits.margin + ((SVState.hud && SVState.cursorTrackingSelect) ? SVUnits.objectWidth : 0)
         anchors.top: parent.top
         visible: SVState.record && SVSettings.recordInformationBox && !SVState.cursorTrackingSessionActive
-    } 
+    }
 
     SVNotificationBox {
         id: notificationBox

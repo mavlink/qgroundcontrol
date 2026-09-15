@@ -192,7 +192,7 @@ Item {
         anchors.left: parent.left
         isLeft: true
         isTop: true
-    
+
         visible: SVState.hud && SVState.cursorTrackingSelect
 
         exclusiveSelection: false
@@ -200,7 +200,7 @@ Item {
         activeIds: SVState.aiOverlay ? ["aiOverlay"] : []
 
         model: [
-            { 
+            {
                 id: "aiOverlay",
                 text: "Detect",
                 description: "Show/Hide AI Detection Overlay",
@@ -391,10 +391,10 @@ Item {
             }
         }
 
-         
-        
+
+
     }
-    
+
 
     SVMenuStrip {
         id: lockButton
@@ -412,7 +412,7 @@ Item {
         activeIds: SVState.lockControls ? ["lock"] : []
 
         model: [
-            { 
+            {
                 id: "lock",
                 text: "Lock",
                 description: "Lock/Unlock Controls",

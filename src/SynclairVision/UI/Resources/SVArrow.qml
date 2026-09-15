@@ -13,7 +13,7 @@ import QGroundControl.Controls
             strokeWidth: (arrowFilled) ? 0 : 1
             strokeColor: outerBorderColor
             fillColor: (arrowFilled) ? outerBorderColor : 'white'
-                    
+
             startX: width
             startY: height / 2
             PathLine { x: 0; y: height }      // bottom-left

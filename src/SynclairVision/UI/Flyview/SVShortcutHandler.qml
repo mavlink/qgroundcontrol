@@ -111,8 +111,8 @@ Item {
     }
 
     function startShortcutInputModeLogic() {
-        const hasHeldMovement = SVState.shortcutJoystickHeld.some(h => h) || 
-                                SVState.shortcutZoomInHeld || 
+        const hasHeldMovement = SVState.shortcutJoystickHeld.some(h => h) ||
+                                SVState.shortcutZoomInHeld ||
                                 SVState.shortcutZoomOutHeld
 
         if (!hasHeldMovement) {
@@ -310,8 +310,8 @@ Item {
         delete root.heldVisualKeys[keyId]
         root.setVisualRolesHeld(roles, false)
 
-        const hasHeldMovement = SVState.shortcutJoystickHeld.some(h => h) || 
-                                SVState.shortcutZoomInHeld || 
+        const hasHeldMovement = SVState.shortcutJoystickHeld.some(h => h) ||
+                                SVState.shortcutZoomInHeld ||
                                 SVState.shortcutZoomOutHeld
 
         if (!hasHeldMovement) {
@@ -538,7 +538,7 @@ Item {
         case root.actionCamera2:
             SVState.setCamera(1)
             break
-        case root.actionCamera3:            
+        case root.actionCamera3:
             SVState.setCamera(2)
             break
         case root.actionCamera4:

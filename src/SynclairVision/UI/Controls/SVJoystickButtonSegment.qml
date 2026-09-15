@@ -67,7 +67,7 @@ Item {
                             return buttonColor
                         }
                     }
-                    
+
                     startX: width / 2
                     startY: height / 2
 
@@ -160,7 +160,7 @@ Item {
                     }
                 }
             }
-            
+
             SVArrow {
                 id: arrow
                 width: root.arrowSpaceWidth * root.arrowSize

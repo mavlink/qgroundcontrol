@@ -168,7 +168,7 @@ function getGeneralSections(isRecording) {
 function getNetworkSections() {
     return [
         {
-            id: 'networkProfiles', 
+            id: 'networkProfiles',
             title: 'Profiles',
             items: [
                 {

@@ -121,8 +121,8 @@ Item {
         hoverGlowRadius: Math.max(width, height) * 0.65
     }
 
-    
-    
+
+
 
     Rectangle {
         id: background

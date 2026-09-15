@@ -41,7 +41,7 @@ Item {
         anchors.horizontalCenter: !isVertical ? parent.horizontalCenter : undefined
         anchors.verticalCenter: isVertical ? parent.verticalCenter : undefined
 
-        
+
 
         visible: tooltipVisible
 

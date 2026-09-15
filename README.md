@@ -97,48 +97,48 @@ Launch the configured Release build:
 
 ## Navigate the project and files
 
-The custom SynclairQGC code exist mostly in the Flyview mode in QGC (with a few exceptions), which includes a map-view and a video-view that you can switch between. It is in the video-view, that the Synclair code exists (and is only active and displayed when the Synclair Overlay is active), the map-view stays unchanged. 
+The custom SynclairQGC code exist mostly in the Flyview mode in QGC (with a few exceptions), which includes a map-view and a video-view that you can switch between. It is in the video-view, that the Synclair code exists (and is only active and displayed when the Synclair Overlay is active), the map-view stays unchanged.
 
-All of the custom QML elements and backend code lives in `/src/SynclairVision`. It is divided into two folders, **_Digiview_** and _**UI**_, self explanatory names. 
+All of the custom QML elements and backend code lives in `/src/SynclairVision`. It is divided into two folders, **_Digiview_** and _**UI**_, self explanatory names.
 
 ### Backend (_Digiview_)
 
-The backend code functions to communicate with Digiview through Mavlink. There are two layers, _**DigiviewConnection**_ and _**DigiviewManager**_. 
+The backend code functions to communicate with Digiview through Mavlink. There are two layers, _**DigiviewConnection**_ and _**DigiviewManager**_.
 
 _**DigiviewConnection**_ functions to handle the low level functions of the Mavlink communication, such as controlling host and ports, sending and receiving messages etc. Generally, this isn't code that is supposed to be changed unless a issue is found.
 
-_**DigiviewManager**_ is what handles the actual messages being sent, using the SynclairVision Mavlink dialect. Here, there are helper functions for changing things through the QML code, aswell as the base functions for sending, requesting and receiving different dialect messages from Digiview. Many values for the code are stored here, like view and detection values among other. Much information, such as settings and current program states are stored in the qml code, but still received from here. When adding new Digiview interactions, like a new message or a new feature, this is the place to change it. Generally speaking, sending and receiving Digiview messages in the QML frontend should be done with helper functions for ease of use. 
+_**DigiviewManager**_ is what handles the actual messages being sent, using the SynclairVision Mavlink dialect. Here, there are helper functions for changing things through the QML code, aswell as the base functions for sending, requesting and receiving different dialect messages from Digiview. Many values for the code are stored here, like view and detection values among other. Much information, such as settings and current program states are stored in the qml code, but still received from here. When adding new Digiview interactions, like a new message or a new feature, this is the place to change it. Generally speaking, sending and receiving Digiview messages in the QML frontend should be done with helper functions for ease of use.
 
 For example of helper function, check out _changeEuler()_ in _**DigiviewManager**_.
 
 ### Frontend (_UI_)
 
-Most of the custom Synclair QML code stems from `src/Flyview/Flyview.qml`. Here, the element **_SVFlyView.qml_** lives in the FlyViewVideo layer, in order to exist under the rest of the UI. This is the connection to the actual SynclairVision overlay. There are three types of layers in the Synclair code. 
+Most of the custom Synclair QML code stems from `src/Flyview/Flyview.qml`. Here, the element **_SVFlyView.qml_** lives in the FlyViewVideo layer, in order to exist under the rest of the UI. This is the connection to the actual SynclairVision overlay. There are three types of layers in the Synclair code.
 
-The first is as background elements in Flyview. This is the stem of the Synclair code, aswell as including background elements such as visual borders for recording, AI detection, borders and seperating lines for camera-view elements. 
+The first is as background elements in Flyview. This is the stem of the Synclair code, aswell as including background elements such as visual borders for recording, AI detection, borders and seperating lines for camera-view elements.
 
-The UI elements, such as buttons, menues, notifications and settingsDrawer and the contolpanel lives in `SVFlyViewWidgetLayer.qml`. Exceptions to this is camera-view ui, the toggle for turning off/on the SynclairVision overlay and popups (SettingsMenu, editing Network Profiles and other popups). This layer has margin against the sides and the top toolbar. The menustrips onscreen live in `SVFlyViewMenus.qml`. There is a blueprint file named `SVFlyViewMenusList.js`, which includes names for buttons and icons etc, that the menu file reads from when creating the menustrips. The menustrips are created as a `SVMenuStrip.qml` element, getting the model from the blueprint file. Functionality from the buttons are controlled through "onClicked" within the created menustrip elements. Here is also where the Controlpanel lives, which holds the joystick and zoom-buttons. 
+The UI elements, such as buttons, menues, notifications and settingsDrawer and the contolpanel lives in `SVFlyViewWidgetLayer.qml`. Exceptions to this is camera-view ui, the toggle for turning off/on the SynclairVision overlay and popups (SettingsMenu, editing Network Profiles and other popups). This layer has margin against the sides and the top toolbar. The menustrips onscreen live in `SVFlyViewMenus.qml`. There is a blueprint file named `SVFlyViewMenusList.js`, which includes names for buttons and icons etc, that the menu file reads from when creating the menustrips. The menustrips are created as a `SVMenuStrip.qml` element, getting the model from the blueprint file. Functionality from the buttons are controlled through "onClicked" within the created menustrip elements. Here is also where the Controlpanel lives, which holds the joystick and zoom-buttons.
 
-Because of the different layouts of camera-views, `SVFlyView.qml` camera layers are made here with `SVCameraLayer.qml`, sized and positioned relative to the different camera-views displayed in the Flyview Video. In the same place, the AI Detection ` SVFlyViewDetectionOverlay.qml` is already created. The camera-view layer has a similar structure to the SynclairVision Flyview layer, where it itself is split into a UI layer with margin and background elements. The UI layer has different versions of the compass for atitiude and pitch, with a custom function to make the pitch compass work in full rotation, aswell as a DetectionFlag currently used stop tracking for that camera-view. `SVCAmeraLayer` itself includes a overlays layer for guiding lines and crosshair, a visual overlay for not selectable when pinpointing tracking through STT or Cursor for one of the other camera-views. 
+Because of the different layouts of camera-views, `SVFlyView.qml` camera layers are made here with `SVCameraLayer.qml`, sized and positioned relative to the different camera-views displayed in the Flyview Video. In the same place, the AI Detection ` SVFlyViewDetectionOverlay.qml` is already created. The camera-view layer has a similar structure to the SynclairVision Flyview layer, where it itself is split into a UI layer with margin and background elements. The UI layer has different versions of the compass for atitiude and pitch, with a custom function to make the pitch compass work in full rotation, aswell as a DetectionFlag currently used stop tracking for that camera-view. `SVCAmeraLayer` itself includes a overlays layer for guiding lines and crosshair, a visual overlay for not selectable when pinpointing tracking through STT or Cursor for one of the other camera-views.
 
 ### Settings and States
-There are two types of values stored in SynclairQGC. The first is settings-values controlled through the settingsmenu and and the other is state-values, such as which layout-view you are in, if the HUD is showing or not and other active states. Both of these files are singletons, which means that they can be accessed anywhere in the project. 
+There are two types of values stored in SynclairQGC. The first is settings-values controlled through the settingsmenu and and the other is state-values, such as which layout-view you are in, if the HUD is showing or not and other active states. Both of these files are singletons, which means that they can be accessed anywhere in the project.
 
-Settings are stored in `SVSettings.qml`, which also include functions for resetting SynclairVisionQGC settings when requested, network settings among others. These settings are controlled through the settingsmenu. The settingsmenu stems from `SVSettingsDrawer`, which creates a visual popup, a secondary settings menustrip on the side and some margins. Inside of that, the `SVSettingsMenu.qml` lives, which actually renders settings-segments, loading in new values for the settingsmenu, aswell as handling interaction with these. There are a few different types of buttons and sliders that can be used, created in this file. The settingsmenu gets the blueprints from `SVSettingsDefinitions.js`, where different settings are placed into different segments and categories. The _property_ value in these blueprints are what links to `SVSettings.qml`, and makes it possible to change settings. 
+Settings are stored in `SVSettings.qml`, which also include functions for resetting SynclairVisionQGC settings when requested, network settings among others. These settings are controlled through the settingsmenu. The settingsmenu stems from `SVSettingsDrawer`, which creates a visual popup, a secondary settings menustrip on the side and some margins. Inside of that, the `SVSettingsMenu.qml` lives, which actually renders settings-segments, loading in new values for the settingsmenu, aswell as handling interaction with these. There are a few different types of buttons and sliders that can be used, created in this file. The settingsmenu gets the blueprints from `SVSettingsDefinitions.js`, where different settings are placed into different segments and categories. The _property_ value in these blueprints are what links to `SVSettings.qml`, and makes it possible to change settings.
 
-States are stored in ```bash SVState.qml```, which controls everything from the toolbar or HUD showing or not, if the user is actively recording, overlays and more. Useful features here are **_hud_** and **_synclairOverlay_**. 
+States are stored in ```bash SVState.qml```, which controls everything from the toolbar or HUD showing or not, if the user is actively recording, overlays and more. Useful features here are **_hud_** and **_synclairOverlay_**.
 
 ### Resources
 
-Many QGroundControl resources are used in this custom overlay, such as different types of buttons, labels, color-palette and mainly sizes and units. This makes the code consistant and visually similar to the rest of qgc, aswell as also easing development and new features. Outside of these original resources, SynclairQGC also includes its own Resources, such as `SVArrow.qml`, `SVBackground` (used for UI elements and background, includes visual elements and consistant with all SynclairQGC UI) and `SVTooltip.qml`, among others. 
+Many QGroundControl resources are used in this custom overlay, such as different types of buttons, labels, color-palette and mainly sizes and units. This makes the code consistant and visually similar to the rest of qgc, aswell as also easing development and new features. Outside of these original resources, SynclairQGC also includes its own Resources, such as `SVArrow.qml`, `SVBackground` (used for UI elements and background, includes visual elements and consistant with all SynclairQGC UI) and `SVTooltip.qml`, among others.
 
-An important file here is `SVUnits.qml`, which is a extension of the base units given in QGC. These are standardized, with nearly all UI using whole numbers of these values. This makes it so that all margins, corner-radius, text sizes among others stays consistant. 
+An important file here is `SVUnits.qml`, which is a extension of the base units given in QGC. These are standardized, with nearly all UI using whole numbers of these values. This makes it so that all margins, corner-radius, text sizes among others stays consistant.
 
-In the Resource folder, all images and icons used for the overlay is stored. 
+In the Resource folder, all images and icons used for the overlay is stored.
 
 ## Workflow
 
-There are few standards worth noting when developing for SynclairQGC. 
+There are few standards worth noting when developing for SynclairQGC.
 
 - All files names start with "SV" in the beginning, making it easier to find the correct SynclairVision files.
 - Keep files within the "SynclairVision" folder and in respective subfolders.
@@ -159,7 +159,7 @@ There are few standards worth noting when developing for SynclairQGC.
 
 ## To-do:
 - Tracking (STT, Cursor and Manual). Make it interact correctly with SynclairQGC UI.
-- When AI detection is active for different camera-views the DetectionFlag should get marked with with an identifier for what detection button it is following. 
+- When AI detection is active for different camera-views the DetectionFlag should get marked with with an identifier for what detection button it is following.
 
 ### DigiView protocol follow-up
 
@@ -171,7 +171,3 @@ There are few standards worth noting when developing for SynclairQGC.
 - Keep DEPTH and NAVIGATION disabled until DigiView supports those operations.
 - Expose the remaining calibration progress extensions and UI workflow.
 - Define legacy TCP protocol versioning and serialization.
-
-
-
-  
