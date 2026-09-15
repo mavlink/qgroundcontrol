@@ -1,11 +1,12 @@
 #include "NTRIPHttpTransport.h"
 
+#include <chrono>
+
 #include <QtCore/QDateTime>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtNetwork/QSslError>
 #include <QtNetwork/QSslSocket>
-#include <chrono>
 
 #include "NMEAUtils.h"
 #include "NTRIPError.h"

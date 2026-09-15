@@ -1,10 +1,11 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QSet>
 #include <QtCore/QVector>
-#include <cstddef>
-#include <cstdint>
 
 #include "RTCMFramer.h"
 

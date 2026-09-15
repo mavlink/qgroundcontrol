@@ -1,10 +1,10 @@
 #include "UdpIODevice.h"
 
+#include <algorithm>
+
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
 #include <QtNetwork/QNetworkDatagram>
-
-#include <algorithm>
 
 #include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"

@@ -1,10 +1,11 @@
 #pragma once
 
+#include <chrono>
+
 #include <QtCore/QChronoTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtNetwork/QSslSocket>
 #include <QtNetwork/QTcpSocket>
-#include <chrono>
 
 #include "MonotonicClock.h"
 #include "NTRIPTransport.h"

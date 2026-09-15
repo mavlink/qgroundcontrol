@@ -1,11 +1,12 @@
 #include "NTRIPManager.h"
 
+#include <chrono>
+#include <utility>
+
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QUrl>
 #include <QtCore/QtMath>
-#include <chrono>
-#include <utility>
 
 #include "Fact.h"
 #include "GPSCorrectionManager.h"

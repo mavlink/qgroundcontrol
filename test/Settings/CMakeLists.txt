@@ -3,20 +3,20 @@
 # Tests for application settings groups and their validation logic
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        AppSettingsTest.cc
-        AppSettingsTest.h
-        AutoConnectSettingsTest.cc
-        AutoConnectSettingsTest.h
-        FlyViewSettingsTest.cc
-        FlyViewSettingsTest.h
-        GPSCorrectionSettingsTest.cc
-        GPSCorrectionSettingsTest.h
-        RemoteIDSettingsTest.cc
-        RemoteIDSettingsTest.h
-        SettingsManagerTest.cc
-        SettingsManagerTest.h
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE AppSettingsTest.cc
+            AppSettingsTest.h
+            AutoConnectSettingsTest.cc
+            AutoConnectSettingsTest.h
+            FlyViewSettingsTest.cc
+            FlyViewSettingsTest.h
+            GPSCorrectionSettingsTest.cc
+            GPSCorrectionSettingsTest.h
+            RemoteIDSettingsTest.cc
+            RemoteIDSettingsTest.h
+            SettingsManagerTest.cc
+            SettingsManagerTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

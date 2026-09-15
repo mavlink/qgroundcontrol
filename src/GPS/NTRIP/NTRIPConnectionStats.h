@@ -1,12 +1,13 @@
 #pragma once
 
+#include <chrono>
+
 #include <QtCore/QChronoTimer>
 #include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QVariant>
 #include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
-#include <chrono>
 
 #include "DataRateTracker.h"
 #include "MonotonicClock.h"

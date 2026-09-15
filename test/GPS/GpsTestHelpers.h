@@ -1,9 +1,9 @@
 #pragma once
 
+#include <functional>
+
 #include <QtCore/QByteArray>
 #include <QtPositioning/QGeoPositionInfoSource>
-
-#include <functional>
 
 #include "RTCM/RTCMTestFixtures.h"
 

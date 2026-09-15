@@ -1,11 +1,12 @@
 #pragma once
 
+#include <chrono>
+
 #include <QtCore/QChronoTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtQmlIntegration/QtQmlIntegration>
-#include <chrono>
 
 #include "GPSCorrectionSourceRegistration.h"
 #include "NTRIPConnectionStats.h"

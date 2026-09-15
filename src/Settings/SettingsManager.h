@@ -83,7 +83,7 @@ class SettingsManager : public QQmlPropertyMap
     Q_PROPERTY(QObject *rtkSettings                     READ rtkSettings                    CONSTANT)
     Q_PROPERTY(QObject *unitsSettings                   READ unitsSettings                  CONSTANT)
     Q_PROPERTY(QObject *ntripSettings                   READ ntripSettings                  CONSTANT)
-    Q_PROPERTY(QObject *gpsCorrectionSettings           READ gpsCorrectionSettings          CONSTANT)
+    Q_PROPERTY(QObject* gpsCorrectionSettings READ gpsCorrectionSettings CONSTANT)
     Q_PROPERTY(QObject *videoSettings                   READ videoSettings                  CONSTANT)
     Q_PROPERTY(QObject *mavlinkSettings                 READ mavlinkSettings                CONSTANT)
     Q_PROPERTY(QObject *joystickManagerSettings         READ joystickManagerSettings        CONSTANT)
@@ -130,7 +130,7 @@ public:
     RTKSettings *rtkSettings() const;
     UnitsSettings *unitsSettings() const;
     NTRIPSettings *ntripSettings() const;
-    GPSCorrectionSettings *gpsCorrectionSettings() const;
+    GPSCorrectionSettings* gpsCorrectionSettings() const;
     VideoSettings *videoSettings() const;
     MavlinkSettings *mavlinkSettings() const;
     JoystickManagerSettings *joystickManagerSettings() const;
@@ -159,7 +159,7 @@ private:
     RTKSettings *_rtkSettings = nullptr;
     UnitsSettings *_unitsSettings = nullptr;
     NTRIPSettings *_ntripSettings = nullptr;
-    GPSCorrectionSettings *_gpsCorrectionSettings = nullptr;
+    GPSCorrectionSettings* _gpsCorrectionSettings = nullptr;
     VideoSettings *_videoSettings = nullptr;
     MavlinkSettings *_mavlinkSettings = nullptr;
     JoystickManagerSettings *_joystickManagerSettings = nullptr;
