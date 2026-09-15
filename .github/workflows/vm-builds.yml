@@ -164,6 +164,7 @@ jobs:
         run: vagrant validate --ignore-provider
 
       - name: Build QGC in Vagrant VM
+        id: build
         working-directory: deploy/vagrant
         env:
           QGC_CI: '1'
@@ -192,6 +193,6 @@ jobs:
           if-no-files-found: error
 
       - name: Destroy VM
-        if: always()
+        if: ${{ always() && steps.build.outcome != 'skipped' && steps.build.outcome != '' }}
         working-directory: deploy/vagrant
-        run: sg libvirt -c 'vagrant destroy -f' || true
+        run: sg libvirt -c 'vagrant destroy -f'
