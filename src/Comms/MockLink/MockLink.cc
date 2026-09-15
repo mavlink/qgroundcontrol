@@ -23,6 +23,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QLatin1StringView>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QSet>
 #include <QtCore/QRandomGenerator>
@@ -643,6 +644,24 @@ void MockLink::_loadParams()
 
         _mapParamName2Value[compId][paramName] = paramValue;
         _mapParamName2MavParamType[compId][paramName] = static_cast<MAV_PARAM_TYPE>(paramType);
+    }
+
+    if (_hasNonDefaultParamComponent()) {
+        auto &values = _mapParamName2Value[_nonDefaultParamComponentId];
+        auto &types = _mapParamName2MavParamType[_nonDefaultParamComponentId];
+        values[QStringLiteral("CAN_TERMINATE")] = QVariant(static_cast<qint32>(0));
+        types[QStringLiteral("CAN_TERMINATE")] = MAV_PARAM_TYPE_INT32;
+        values[QLatin1StringView(_nonDefaultFailParam)] = QVariant(static_cast<qint32>(8));
+        types[QLatin1StringView(_nonDefaultFailParam)] = MAV_PARAM_TYPE_INT32;
+        values[QStringLiteral("BATT_AMP_OFFSET")] = QVariant(0.0f);
+        types[QStringLiteral("BATT_AMP_OFFSET")] = MAV_PARAM_TYPE_REAL32;
+        values[QStringLiteral("OPTIONS")] = QVariant(static_cast<qint32>(0));
+        types[QStringLiteral("OPTIONS")] = MAV_PARAM_TYPE_INT32;
+        // Sort after the four above so their indices stay fixed for the shared-index failure mode
+        for (const char *name: {"TEMP1_ADDR", "TEMP1_TYPE", "TEMP2_ADDR", "TEMP2_TYPE", "TEMP3_ADDR", "TEMP3_TYPE", "UAVCAN_NODE_ID", "UAVCAN_RATE", "VOLT_MULT", "VOLT_PIN"}) {
+            values[QLatin1StringView(name)] = QVariant(static_cast<qint32>(0));
+            types[QLatin1StringView(name)] = MAV_PARAM_TYPE_INT32;
+        }
     }
 
     if ((_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) && _apmStartFreshParams) {
@@ -1604,6 +1623,62 @@ uint32_t MockLink::_computeParamHash(int componentId) const
     return crc;
 }
 
+bool MockLink::_hasNonDefaultParamComponent() const
+{
+    switch (_failureMode) {
+    case MockConfiguration::FailMissingParamOnAllRequestsNonDefaultComponent:
+    case MockConfiguration::FailMissingParamSharedIndexAcrossComponents:
+    case MockConfiguration::FailNonDefaultComponentDead:
+    case MockConfiguration::FailNonDefaultComponentLossy:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool MockLink::_shouldSkipParamSend(int componentId, const QString &paramName, int paramIndex) const
+{
+    switch (_failureMode) {
+    case MockConfiguration::FailMissingParamOnInitialRequest:
+    case MockConfiguration::FailMissingParamOnAllRequests:
+        return paramName == _failParam;
+    case MockConfiguration::FailMissingParamOnAllRequestsNonDefaultComponent:
+        return (componentId == _nonDefaultParamComponentId) && (paramName == _nonDefaultFailParam);
+    case MockConfiguration::FailMissingParamSharedIndexAcrossComponents:
+        return paramIndex == _sharedFailParamIndex;
+    case MockConfiguration::FailNonDefaultComponentDead:
+    case MockConfiguration::FailNonDefaultComponentLossy:
+        return (componentId == _nonDefaultParamComponentId) && (paramIndex >= _nonDefaultStreamedParamCount);
+    default:
+        return false;
+    }
+}
+
+bool MockLink::_shouldSkipParamRead(int componentId, const QString &paramName, int paramIndex)
+{
+    switch (_failureMode) {
+    case MockConfiguration::FailMissingParamOnAllRequests:
+        return paramName == _failParam;
+    case MockConfiguration::FailMissingParamOnAllRequestsNonDefaultComponent:
+        return (componentId == _nonDefaultParamComponentId) && (paramName == _nonDefaultFailParam);
+    case MockConfiguration::FailMissingParamSharedIndexAcrossComponents:
+        return (componentId == MAV_COMP_ID_AUTOPILOT1) && (paramIndex == _sharedFailParamIndex);
+    case MockConfiguration::FailNonDefaultComponentDead:
+        return componentId == _nonDefaultParamComponentId;
+    case MockConfiguration::FailNonDefaultComponentLossy:
+        if (componentId != _nonDefaultParamComponentId) {
+            return false;
+        }
+        if (_nonDefaultReadAttempted.contains(qMakePair(componentId, paramIndex))) {
+            return false;
+        }
+        _nonDefaultReadAttempted.insert(qMakePair(componentId, paramIndex));
+        return true;
+    default:
+        return false;
+    }
+}
+
 void MockLink::_handleParamRequestList(const mavlink_message_t &msg)
 {
     if (_failureMode == MockConfiguration::FailParamNoResponseToRequestList) {
@@ -1614,12 +1689,23 @@ void MockLink::_handleParamRequestList(const mavlink_message_t &msg)
     mavlink_msg_param_request_list_decode(&msg, &request);
 
     Q_ASSERT(request.target_system == _vehicleSystemId);
-    Q_ASSERT(request.target_component == MAV_COMP_ID_ALL);
 
     // Cache component IDs and first component's param names to avoid repeated keys() calls in worker
     // Thread safety: Lock mutex before modifying shared state accessed by worker thread
     QMutexLocker locker(&_paramRequestListMutex);
-    _paramRequestListComponentIds = _mapParamName2Value.keys();
+    if (request.target_component == MAV_COMP_ID_ALL) {
+        _paramRequestListComponentIds = _mapParamName2Value.keys();
+    } else {
+        _paramRequestListComponentIds.clear();
+        if (_mapParamName2Value.contains(request.target_component)) {
+            _paramRequestListComponentIds.append(request.target_component);
+        }
+    }
+    // Stream the autopilot last, like PX4 does with bridged DroneCAN nodes. Otherwise QGC finishes the
+    // initial load as soon as the autopilot completes and never sees the other components.
+    if (_paramRequestListComponentIds.removeOne(MAV_COMP_ID_AUTOPILOT1)) {
+        _paramRequestListComponentIds.append(MAV_COMP_ID_AUTOPILOT1);
+    }
     if (!_paramRequestListComponentIds.isEmpty()) {
         _paramRequestListParamNames = _mapParamName2Value[_paramRequestListComponentIds.first()].keys();
     }
@@ -1697,7 +1783,7 @@ void MockLink::_paramRequestListWorker()
 
     const QString &paramName = _paramRequestListParamNames.at(_currentParamRequestListParamIndex);
 
-    if (((_failureMode == MockConfiguration::FailMissingParamOnInitialRequest) || (_failureMode == MockConfiguration::FailMissingParamOnAllRequests)) && (paramName == _failParam)) {
+    if (_shouldSkipParamSend(componentId, paramName, _currentParamRequestListParamIndex)) {
         qCDebug(MockLinkLog) << "Skipping param send:" << paramName;
     } else {
         char paramId[MAVLINK_MSG_ID_PARAM_VALUE_LEN]{};
@@ -1876,6 +1962,7 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
         const QString key = _mapParamName2Value[componentId].keys().at(request.param_index);
         Q_ASSERT(key.length() <= MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN);
         strcpy(paramId, key.toLocal8Bit().constData());
+        _paramRequestReadIndexLog.append(qMakePair(componentId, static_cast<int>(request.param_index)));
     }
 
     if (!_mapParamName2Value[componentId].contains(paramId) || !_mapParamName2MavParamType[componentId].contains(paramId)) {
@@ -1886,9 +1973,9 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
         return;
     }
 
-    if ((_failureMode == MockConfiguration::FailMissingParamOnAllRequests) && (strcmp(paramId, _failParam) == 0)) {
-        qCDebug(MockLinkLog) << "Ignoring request read for " << _failParam;
-        // Fail to send this param no matter what
+    const int paramIndex = (request.param_index == -1) ? static_cast<int>(_mapParamName2Value[componentId].keys().indexOf(paramId)) : request.param_index;
+    if (_shouldSkipParamRead(componentId, paramId, paramIndex)) {
+        qCDebug(MockLinkLog) << "Ignoring request read for" << paramId;
         return;
     }
 

@@ -4,10 +4,12 @@
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
 #include "BulkRefreshJob.h"
+#include "LogManager.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
@@ -19,6 +21,44 @@ void ParameterManagerTest::_ignoreParamResponseTimeouts()
 {
     ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
                      QRegularExpression("Timeout \".*WaitForParamResponseState\""));
+}
+
+void ParameterManagerTest::_expectIndexLoadFailureWarning()
+{
+    expectLogMessage("FactSystem.ParameterManager", QtWarningMsg,
+                     QRegularExpression("could not be loaded after the maximum number of retries"));
+}
+
+// Starts a PX4 MockLink with the packed param file disabled so the PARAM_REQUEST_LIST stream path is exercised.
+Vehicle *ParameterManagerTest::_connectAndWaitForVehicle(MockConfiguration::FailureMode_t failureMode)
+{
+    if (_mockLink) {
+        qWarning() << "MockLink already connected";
+        return nullptr;
+    }
+    _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, failureMode);
+    _mockLink->mockLinkFTP()->setParamPckEnabled(false);
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
+    QSignalSpy spyVehicle(vehicleMgr, &MultiVehicleManager::activeVehicleAvailableChanged);
+    if (!UnitTest::waitForSignal(spyVehicle, TestTimeout::mediumMs(), QStringLiteral("activeVehicleAvailableChanged"))) {
+        return nullptr;
+    }
+    return vehicleMgr->activeVehicle();
+}
+
+int ParameterManagerTest::_readCountForComponent(const QList<QPair<int, int>> &readLog, int componentId)
+{
+    return static_cast<int>(std::count_if(readLog.cbegin(), readLog.cend(), [componentId](const QPair<int, int> &entry) { return entry.first == componentId; }));
+}
+
+bool ParameterManagerTest::_waitForAppMessage(const QRegularExpression &pattern)
+{
+    return UnitTest::waitForCondition([&pattern]() {
+        const auto messages = LogManager::capturedMessages();
+        return std::any_of(messages.cbegin(), messages.cend(), [&pattern](const LogEntry &entry) {
+            return (entry.category == QLatin1String("API.QGCApplication.AppMessage")) && pattern.match(entry.message).hasMatch();
+        });
+    }, TestTimeout::longMs(), QStringLiteral("app message"));
 }
 
 void ParameterManagerTest::cleanup()
@@ -109,9 +149,10 @@ void ParameterManagerTest::_requestListNoResponse()
 
 // MockLink will fail to send a param on initial request, it will also fail to send it on subsequent
 // param_read requests. The packed file is disabled so the stream path is exercised.
+// The initial-load re-read loop is the only retry authority: exactly one PARAM_REQUEST_READ per retry cycle,
+// and no PARAM_REQUEST_READ state machine timeouts.
 void ParameterManagerTest::_requestListMissingParamFail()
 {
-    _ignoreParamResponseTimeouts();
     QVERIFY2(!_mockLink, "MockLink already connected");
     _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, MockConfiguration::FailMissingParamOnAllRequests);
     _mockLink->mockLinkFTP()->setParamPckEnabled(false);
@@ -133,10 +174,190 @@ void ParameterManagerTest::_requestListMissingParamFail()
     arguments = spyProgress.takeFirst();
     QCOMPARE(arguments.count(), 1);
     QVERIFY(arguments.at(0).toFloat() > 0.0f);
-    expectAppMessage(QRegularExpression("was unable to retrieve the full set of parameters"));
+    expectAppMessage(QRegularExpression("was unable to retrieve the full set of parameters from vehicle"));
+    _expectIndexLoadFailureWarning();
     // We should get a parameters ready signal, but Vehicle should indicate missing params
     QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
     QCOMPARE(vehicle->parameterManager()->missingParameters(), true);
+    QCOMPARE(_mockLink->paramRequestReadIndexLog().count(), ParameterManager::kMaxInitialLoadRetrySingleParam);
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+}
+
+// The autopilot serves all its params but a second component (simulated DroneCAN node) never serves one of
+// its params. Only default component failures may block the UI, so missingParameters must stay false.
+void ParameterManagerTest::_requestListMissingParamNonDefaultComponentFail()
+{
+    QVERIFY2(!_mockLink, "MockLink already connected");
+    _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, MockConfiguration::FailMissingParamOnAllRequestsNonDefaultComponent);
+    _mockLink->mockLinkFTP()->setParamPckEnabled(false);
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
+    QVERIFY(vehicleMgr);
+    QSignalSpy spyVehicle(vehicleMgr, &MultiVehicleManager::activeVehicleAvailableChanged);
+    QVERIFY_SIGNAL_WAIT(spyVehicle, TestTimeout::mediumMs());
+    Vehicle* vehicle = vehicleMgr->activeVehicle();
+    QVERIFY(vehicle);
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    expectAppMessage(QRegularExpression("was unable to retrieve the full set of parameters from component"));
+    _expectIndexLoadFailureWarning();
+    QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
+    QCOMPARE(vehicle->parameterManager()->missingParameters(), false);
+    QVERIFY(_waitForAppMessage(QRegularExpression("from component")));
+    // A single dead index is below the unresponsive-component threshold: per-index retries only
+    QCOMPARE(_readCountForComponent(_mockLink->paramRequestReadIndexLog(), 125), ParameterManager::kMaxInitialLoadRetrySingleParam);
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+}
+
+// The second component streams 2 of its 14 params and never answers a read. Once enough re-reads are in flight
+// and it stays silent for consecutive cycles it must be given up on as a whole, not one index at a time.
+void ParameterManagerTest::_requestListNonDefaultComponentDead()
+{
+    Vehicle* vehicle = _connectAndWaitForVehicle(MockConfiguration::FailNonDefaultComponentDead);
+    QVERIFY(vehicle);
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    expectLogMessage("FactSystem.ParameterManager", QtWarningMsg, QRegularExpression("unresponsive"));
+    expectAppMessage(QRegularExpression("was unable to retrieve the full set of parameters from component"));
+    _expectIndexLoadFailureWarning();
+    QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
+    QCOMPARE(vehicle->parameterManager()->missingParameters(), false);
+    QVERIFY(_waitForAppMessage(QRegularExpression("from component")));
+    const int readCount = _readCountForComponent(_mockLink->paramRequestReadIndexLog(), 125);
+    QVERIFY2(readCount <= ParameterManager::kUnresponsiveSilentCycles * ParameterManager::kIndexBatchMaxOutstanding,
+             qPrintable(QStringLiteral("%1 reads sent to dead component").arg(readCount)));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+}
+
+// Same component, but it answers the second read of every param. A lossy component must not be declared
+// unresponsive: every param loads, no failure message.
+void ParameterManagerTest::_requestListNonDefaultComponentLossy()
+{
+    Vehicle* vehicle = _connectAndWaitForVehicle(MockConfiguration::FailNonDefaultComponentLossy);
+    QVERIFY(vehicle);
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
+    QCOMPARE(vehicle->parameterManager()->missingParameters(), false);
+    QTRY_COMPARE_WITH_TIMEOUT(vehicle->parameterManager()->parameterNames(125).count(), 14, TestTimeout::longMs());
+}
+
+// Ready is gated on the autopilot alone. The second component streamed first (MAV_COMP_ID_ALL) and is still
+// re-reading its lost params when the autopilot finishes; it must not hold the UI and must keep loading afterwards.
+void ParameterManagerTest::_requestListNonDefaultComponentDoesNotGateReady()
+{
+    Vehicle* vehicle = _connectAndWaitForVehicle(MockConfiguration::FailNonDefaultComponentLossy);
+    QVERIFY(vehicle);
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
+    QCOMPARE(_readCountForComponent(_mockLink->paramRequestReadIndexLog(), 125), 0);
+    QVERIFY(vehicle->parameterManager()->parameterNames(125).count() < 14);
+    // The bar is initial-load UI; the background load of the second component must not bring it back
+    QSignalSpy spyProgress(vehicle->parameterManager(), &ParameterManager::loadProgressChanged);
+    QTRY_COMPARE_WITH_TIMEOUT(vehicle->parameterManager()->parameterNames(125).count(), 14, TestTimeout::longMs());
+    QCOMPARE(vehicle->parameterManager()->missingParameters(), false);
+    QCOMPARE(spyProgress.count(), 0);
+}
+
+// A user refresh-all on a PX4 vehicle takes the FTP path, which never touches the stream-progress bookkeeping.
+// Once the packed file is parsed the bar must stay down even though another component is still loading via
+// the stream path.
+void ParameterManagerTest::_refreshAllViaFtpKeepsProgressDownForBackgroundComponent()
+{
+    QVERIFY2(!_mockLink, "MockLink already connected");
+    _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, MockConfiguration::FailNonDefaultComponentLossy);
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
+    QSignalSpy spyVehicle(vehicleMgr, &MultiVehicleManager::activeVehicleAvailableChanged);
+    QVERIFY_SIGNAL_WAIT(spyVehicle, TestTimeout::mediumMs());
+    Vehicle* vehicle = vehicleMgr->activeVehicle();
+    QVERIFY(vehicle);
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
+    ParameterManager* const paramManager = vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    // Initial load went via FTP, which only covers the autopilot. Kick 125 into a slow lossy stream load.
+    paramManager->refreshAllParameters(125);
+    QTRY_VERIFY_WITH_TIMEOUT(paramManager->parameterNames(125).count() >= 2, TestTimeout::mediumMs());
+
+    // Full refresh goes via FTP and finishes long before 125 does
+    QSignalSpy spyProgress(paramManager, &ParameterManager::loadProgressChanged);
+    paramManager->refreshAllParameters();
+    auto firstZeroIndex = [&spyProgress]() -> int {
+        for (int i = 0; i < spyProgress.count(); i++) {
+            if (spyProgress.at(i).at(0).toFloat() == 0.0f) {
+                return i;
+            }
+        }
+        return -1;
+    };
+    QTRY_VERIFY_WITH_TIMEOUT(firstZeroIndex() != -1, TestTimeout::longMs());
+    const int readsAtFtpDone = _readCountForComponent(_mockLink->paramRequestReadIndexLog(), 125);
+
+    // 125 must still be re-reading after the FTP parse, and none of that may bring the bar back
+    QTRY_COMPARE_WITH_TIMEOUT(paramManager->parameterNames(125).count(), 14, TestTimeout::longMs());
+    QVERIFY(_readCountForComponent(_mockLink->paramRequestReadIndexLog(), 125) > readsAtFtpDone);
+    QCOMPARE(spyProgress.count(), firstZeroIndex() + 1);
+}
+
+// A post-ready stream refresh whose last missing index is given up on gets no further PARAM_VALUE. The bar must
+// still return to 0 off the timeout path rather than staying stuck at the last streamed value.
+void ParameterManagerTest::_refreshAllViaStreamClearsProgressAfterGiveUp()
+{
+    Vehicle* vehicle = _connectAndWaitForVehicle(MockConfiguration::FailMissingParamOnAllRequests);
+    QVERIFY(vehicle);
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    expectAppMessage(QRegularExpression("was unable to retrieve the full set of parameters from vehicle"));
+    _expectIndexLoadFailureWarning();
+    QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    ParameterManager* const paramManager = vehicle->parameterManager();
+    QVERIFY(paramManager);
+    QCOMPARE(paramManager->loadProgress(), 0.0);
+
+    QSignalSpy spyProgress(paramManager, &ParameterManager::loadProgressChanged);
+    paramManager->refreshAllParameters();
+    QTRY_VERIFY_WITH_TIMEOUT(spyProgress.count() > 0 && spyProgress.first().at(0).toFloat() > 0.0f, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(paramManager->loadProgress(), 0.0, TestTimeout::longMs());
+    QCOMPARE(spyProgress.last().at(0).toFloat(), 0.0f);
+}
+
+// Both components are missing param index 1 after the initial stream. The autopilot's index 1 is dead, the second
+// component's index 1 answers re-reads. The re-read queue must track (component, index) pairs: the second component's
+// index 1 must be requested in the first re-read cycle, not starved until the autopilot's index 1 is given up.
+void ParameterManagerTest::_requestListSharedIndexAcrossComponents()
+{
+    QVERIFY2(!_mockLink, "MockLink already connected");
+    _mockLink = MockLink::startPX4MockLink(MockConfiguration::OptionNone, MockConfiguration::FailMissingParamSharedIndexAcrossComponents);
+    _mockLink->mockLinkFTP()->setParamPckEnabled(false);
+    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
+    QVERIFY(vehicleMgr);
+    QSignalSpy spyVehicle(vehicleMgr, &MultiVehicleManager::activeVehicleAvailableChanged);
+    QVERIFY_SIGNAL_WAIT(spyVehicle, TestTimeout::mediumMs());
+    Vehicle* vehicle = vehicleMgr->activeVehicle();
+    QVERIFY(vehicle);
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    expectAppMessage(QRegularExpression("was unable to retrieve the full set of parameters from vehicle"));
+    _expectIndexLoadFailureWarning();
+    QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
+    QCOMPARE(vehicle->parameterManager()->missingParameters(), true);
+    QVERIFY(vehicle->parameterManager()->parameterExists(125, QStringLiteral("BATT_MONITOR")));
+
+    constexpr int sharedIndex = 1;
+    const QList<QPair<int, int>> readLog = _mockLink->paramRequestReadIndexLog();
+    const qsizetype firstOtherComponentRead = readLog.indexOf(qMakePair(125, sharedIndex));
+    const qsizetype lastAutopilotRead = readLog.lastIndexOf(qMakePair(static_cast<int>(MAV_COMP_ID_AUTOPILOT1), sharedIndex));
+    QVERIFY(firstOtherComponentRead != -1);
+    QVERIFY(lastAutopilotRead != -1);
+    QVERIFY2(firstOtherComponentRead < lastAutopilotRead,
+             qPrintable(QStringLiteral("Component 125 index %1 first requested at position %2, after autopilot index %1 last requested at %3")
+                            .arg(sharedIndex).arg(firstOtherComponentRead).arg(lastAutopilotRead)));
+    verifyExpectedLogMessage();
     verifyExpectedLogMessage();
 }
 

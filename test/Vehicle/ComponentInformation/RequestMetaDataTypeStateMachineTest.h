@@ -14,4 +14,5 @@ private slots:
     void _requestCompletesForArduPilot();
     void _requestSkipsCompInfoOnHighLatencyLink();
     void _requestUsesCachedMetadataForParameter();
+    void _slowFtpDownloadAbortsEarly();
 };

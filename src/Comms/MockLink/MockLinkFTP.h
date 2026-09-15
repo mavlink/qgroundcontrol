@@ -49,6 +49,32 @@ public:
     /// When false, OpenFileRO of @PARAM/param.pck NAKs errno ENOENT, as PX4 without the virtual file does.
     void setParamPckEnabled(bool enabled) { _paramPckEnabled = enabled; }
 
+    /// When true, OpenFileRO NAKs kErrNoSessionsAvailable while a read session is already open, as PX4 (single session) does.
+    void setSingleSessionEnforced(bool enforced) { _singleSessionEnforced = enforced; }
+
+    /// Opens a read session server-side without any client request, simulating a session left behind by a crashed GCS.
+    void openStaleSessionForTest();
+
+    /// When true, ResetSessions requests get no reply.
+    void setIgnoreResetSessions(bool ignore) { _ignoreResetSessions = ignore; }
+
+    /// Closes the read session server-side once burstCount burst responses have been served, as PX4's idle
+    /// timer does mid-transfer. Subsequent reads NAK kErrInvalidSession until the client re-opens. One-shot; 0 disables.
+    void setExpireSessionAfterBursts(int burstCount) { _expireSessionAfterBursts = burstCount; _burstsServed = 0; }
+
+    /// Drops the burst data packet at the given file offset, once, to force a hole the client must fill.
+    void setDropBurstPacketOnce(uint32_t offset) { _dropBurstPacketOffset = offset; _dropBurstPacketPending = true; }
+
+    /// Sends the burst data packet at the given file offset after the rest of its burst, once, keeping its
+    /// original sequence number, as a late packet from an earlier burst arrives on a real link.
+    void setReorderBurstPacketOnce(uint32_t offset) { _reorderBurstPacketOffset = offset; _reorderBurstPacketPending = true; }
+
+    /// Number of OpenFileRO requests acked since construction.
+    int openFileROCount() const { return _openFileROCount; }
+
+    /// Number of ReadFile (non-burst) requests received since construction.
+    int readFileCount() const { return _readFileCount; }
+
     /// Called to handle an FTP message
     void mavlinkMessageReceived(const mavlink_message_t &message);
 
@@ -149,6 +175,16 @@ private:
     ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
     bool _listDirectoryWithTimeSupported = true; ///< Whether the server implements kCmdListDirectoryWithTime
     bool _paramPckEnabled = true;               ///< Serve @PARAM/param.pck; false NAKs errno ENOENT
+    bool _singleSessionEnforced = false;
+    bool _ignoreResetSessions = false;
+    int _expireSessionAfterBursts = 0;
+    int _burstsServed = 0;
+    uint32_t _dropBurstPacketOffset = 0;
+    bool _dropBurstPacketPending = false;
+    uint32_t _reorderBurstPacketOffset = 0;
+    bool _reorderBurstPacketPending = false;
+    int _openFileROCount = 0;
+    int _readFileCount = 0;
     mavlink_message_t _lastReply{};
     QFile _currentFile;
     QString _paramPckTempFile;

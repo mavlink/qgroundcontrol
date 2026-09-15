@@ -150,6 +150,10 @@ public:
         FailParamNoResponseToRequestList,                           ///< Do not respond to PARAM_REQUEST_LIST
         FailMissingParamOnInitialRequest,                           ///< Not all params are sent on initial request, should still succeed since QGC will re-query missing params
         FailMissingParamOnAllRequests,                              ///< Not all params are sent on initial request, QGC retries will fail as well
+        FailMissingParamOnAllRequestsNonDefaultComponent,           ///< Adds a second (non-autopilot) param component which never sends one of its params
+        FailMissingParamSharedIndexAcrossComponents,                ///< Autopilot never sends its param at index 1; second component skips its index 1 on initial request only
+        FailNonDefaultComponentDead,                                ///< Second component streams only its first two params and never answers a read
+        FailNonDefaultComponentLossy,                               ///< Second component streams only its first two params and drops the first read of every param
         FailInitialConnectRequestMessageAutopilotVersionFailure,    ///< REQUEST_MESSAGE:AUTOPILOT_VERSION returns failure
         FailInitialConnectRequestMessageAutopilotVersionLost,       ///< REQUEST_MESSAGE:AUTOPILOT_VERSION success, AUTOPILOT_VERSION never sent
     };
