@@ -106,7 +106,7 @@ QGCApplication::QGCApplication(int& argc, char* argv[], const QGCCommandLinePars
                                << "Is writable?:" << settings.isWritable();
 
     if (!settings.isWritable()) {
-        qCWarning(QGCApplicationLog) << "Setings location is not writable";
+        qCWarning(QGCApplicationLog) << "Settings location is not writable";
     }
 
     // The setting will delete all settings on this boot
@@ -176,7 +176,7 @@ void QGCApplication::setLanguage()
 {
     _locale = QLocale::system();
     qCDebug(QGCApplicationLog) << "System reported locale:" << _locale << "; Name" << _locale.name()
-                               << "; Preffered (used in maps): "
+                               << "; Preferred (used in maps): "
                                << (QLocale::system().uiLanguages().length() > 0 ? QLocale::system().uiLanguages()[0]
                                                                                 : "None");
 
