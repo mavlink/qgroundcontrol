@@ -11,7 +11,7 @@
     "release": "semantic-release --extends ../../.releaserc.json"
   },
   "devDependencies": {
-    "semantic-release": "24.2.5",
+    "semantic-release": "25.0.9",
     "@semantic-release/exec": "7.1.0",
     "conventional-changelog-conventionalcommits": "8.0.0"
   }
