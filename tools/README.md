@@ -331,7 +331,6 @@ Scripts in `setup/` help configure development environments. They read configura
 | `install_dependencies --platform windows` | Windows               | Install GStreamer (Vulkan SDK optional)                                       |
 | `install_python.py`                       | All                   | Install locked Python tools via uv (see groups below)                         |
 | `install_qt.py`                           | All                   | Install Qt SDK via aqtinstall with QGC arch-directory resolution (used by CI) |
-| `install_analysis.py`                     | Ubuntu 24.04          | Install configured LLVM and ABI-matched Clazy in the devcontainer             |
 | `setup_vscode.py`                         | All                   | Install missing VS Code workspace files from tracked templates                |
 | `build-gstreamer.py`                      | All                   | Build GStreamer from source (optional)                                        |
 | `build_android_openssl.py`                | Android               | Cross-compile OpenSSL as Qt-style Android libraries (optional)                |

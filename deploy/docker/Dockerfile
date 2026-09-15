@@ -89,11 +89,9 @@ CMD ["Release"]
 # Other distros and cross/mobile images keep the smaller linux/base stages.
 FROM linux AS linux-analysis
 COPY --from=base /tmp/tools/ /opt/qgc-bootstrap/tools/
-COPY tools/setup/install_analysis.py /opt/qgc-bootstrap/tools/setup/
+COPY deploy/docker/install_analysis.py /opt/qgc-bootstrap/deploy/docker/
 COPY .github/scripts/ccache_helper.py .github/scripts/ci_bootstrap.py /opt/qgc-bootstrap/.github/scripts/
-RUN python3 /opt/qgc-bootstrap/tools/setup/install_analysis.py \
-        --config /opt/qgc-bootstrap/tools/setup/build-config.json \
-        --install-packages --prefix /opt/clazy --work-dir /opt/qgc-bootstrap/clazy-build && \
+RUN python3 /opt/qgc-bootstrap/deploy/docker/install_analysis.py && \
     LLVM_VERSION=$(python3 /opt/qgc-bootstrap/tools/setup/read_config.py --get analysis.llvm_version) && \
     ln -s "/usr/lib/llvm-${LLVM_VERSION}" /opt/llvm && \
     ln -s "${QT_ROOT_DIR}" /opt/qt && \
@@ -102,8 +100,7 @@ RUN python3 /opt/qgc-bootstrap/tools/setup/install_analysis.py \
 ENV QT_ROOT_DIR=/opt/qt
 ENV PATH="/opt/qgc-venv/bin:/opt/clazy/bin:/opt/llvm/bin:/opt/qt/bin:${PATH}"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN python3 /opt/qgc-bootstrap/tools/setup/install_analysis.py \
-        --config /opt/qgc-bootstrap/tools/setup/build-config.json --prefix /opt/clazy --verify && \
+RUN python3 /opt/qgc-bootstrap/deploy/docker/install_analysis.py --verify && \
     qt-cmake --version && \
     python3 -c "import jinja2, httpx, defusedxml, lxml, fastcrc" && \
     ccache --version
@@ -126,8 +123,7 @@ ENV SHELL=/bin/bash
 WORKDIR /workspaces/qgroundcontrol
 USER ${DEV_USER}
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN python3 /opt/qgc-bootstrap/tools/setup/install_analysis.py \
-        --config /opt/qgc-bootstrap/tools/setup/build-config.json --prefix /opt/clazy --verify && \
+RUN python3 /opt/qgc-bootstrap/deploy/docker/install_analysis.py --verify && \
     qt-cmake --version && \
     python3 -c "import jinja2, httpx, defusedxml, lxml, fastcrc" && \
     ccache --version

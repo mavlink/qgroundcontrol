@@ -82,18 +82,25 @@ Depending on your system resources, or the resources assigned to your Docker Dae
 The VS Code devcontainer includes Clang,
 clang-tidy, clang-scan-deps, clangd, and Clazy built against the same LLVM.
 `.github/build-config.json` supplies the LLVM major version, checksum-verified Clazy
-revision, and Qt version used by CI. The container uses `tools/setup/install_analysis.py`;
+revision, and Qt version used by CI. The image build uses `deploy/docker/install_analysis.py`;
 ccache uses the pinned, signature-verified release from `.github/scripts/ccache_helper.py`.
 Existing application builder images are unchanged.
 
-The Docker workflow builds the local `devcontainer` stage, which inherits the
-`linux-analysis` tooling stage. It publishes the image to
-`ghcr.io/mavlink/qgroundcontrol:devcontainer` and
-`ghcr.io/mavlink/qgroundcontrol:devcontainer-<full-commit-SHA>` on upstream master pushes.
-Pull requests and manual dispatches build without publishing. Stable branches and release
-tags do not publish this image, and it is never published to Docker Hub.
-No application or analysis workflows consume this image yet.
-Its build/publication job builds only tooling, not QGC.
+The dedicated Analysis Image workflow (`analysis-image.yml`) builds the local
+`devcontainer` stage, which inherits `linux-analysis`. It is independent of application
+builds and releases. After merging, push a new `analysis-image-vMAJOR.MINOR.PATCH` Git tag
+on a commit reachable from master to publish
+`ghcr.io/mavlink/qgroundcontrol-analysis:MAJOR.MINOR.PATCH` and
+`ghcr.io/mavlink/qgroundcontrol-analysis:sha-<full-commit-SHA>`.
+For example, `analysis-image-v1.0.0` publishes `ghcr.io/mavlink/qgroundcontrol-analysis:1.0.0`.
+Never reuse an image version tag. The publication summary also provides
+`ghcr.io/mavlink/qgroundcontrol-analysis@sha256:<digest>` for immutable pinning.
+
+Relevant pull requests and manual dispatches validate the image without publishing.
+Application release tags, master/Stable pushes, and Docker Hub are not part of this
+image's release lifecycle. No application or analysis workflows consume it yet.
+The image builds only tooling, not QGC; Qt, Python dependencies, LLVM, and Clazy are
+already installed, with no package installation or downloads at container startup.
 
 Qt, Python, and analysis executables are on `PATH` for non-login shells and non-root users.
 Image builds check tool versions, Clazy's LLVM linkage, and compiler startup.

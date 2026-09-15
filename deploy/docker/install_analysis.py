@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install and verify QGC's configured Ubuntu LLVM/Clazy toolchain."""
+"""Bake the configured LLVM/Clazy toolchain into the development image."""
 
 from __future__ import annotations
 
@@ -10,15 +10,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 
-from _bootstrap import ensure_tools_dir
+from common.build_config import load_build_config
+from common.io import extract_tar_data, sha256_file
+from common.net import download_with_retry
 
-ensure_tools_dir(__file__)
-
-from common.build_config import load_build_config  # noqa: E402
-from common.io import extract_tar_data, sha256_file  # noqa: E402
-from common.net import download_with_retry  # noqa: E402
+IMAGE_ROOT = Path("/opt/qgc-bootstrap")
+PREFIX = Path("/opt/clazy")
 
 
 def analysis_packages(llvm: str) -> list[str]:
@@ -105,34 +104,25 @@ def verify_toolchain(llvm: str, prefix: Path) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", type=Path)
-    parser.add_argument("--print-packages", action="store_true")
-    parser.add_argument("--install-packages", action="store_true")
     parser.add_argument("--verify", action="store_true")
-    parser.add_argument("--prefix", type=Path, default=Path(".cache/clazy"))
-    parser.add_argument("--work-dir", type=Path, default=Path(".cache/clazy-build"))
     args = parser.parse_args(argv)
-    config = load_build_config(args.config, start=Path(__file__))
+    config = load_build_config(IMAGE_ROOT / "tools/setup/build-config.json")
     analysis = config["analysis"]
     llvm = analysis["llvm_version"]
-    if args.print_packages:
-        print(" ".join(analysis_packages(llvm)))
-        return 0
     if args.verify:
-        verify_toolchain(llvm, args.prefix.resolve())
+        verify_toolchain(llvm, PREFIX)
         return 0
-    if args.install_packages:
-        subprocess.run(["apt-get", "update"], check=True)
-        subprocess.run(
-            ["apt-get", "install", "-y", "--no-install-recommends", *analysis_packages(llvm)],
-            check=True,
-        )
+    subprocess.run(["apt-get", "update"], check=True)
+    subprocess.run(
+        ["apt-get", "install", "-y", "--no-install-recommends", *analysis_packages(llvm)],
+        check=True,
+    )
     build_clazy(
         llvm,
         analysis["clazy_revision"],
         analysis["clazy_sha256"],
-        args.prefix.resolve(),
-        args.work_dir.resolve(),
+        PREFIX,
+        IMAGE_ROOT / "clazy-build",
     )
     return 0
 

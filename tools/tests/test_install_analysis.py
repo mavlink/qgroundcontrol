@@ -2,25 +2,66 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
-from setup import install_analysis
+
+ROOT = Path(__file__).resolve().parents[2]
+SPEC = importlib.util.spec_from_file_location(
+    "install_analysis", ROOT / "deploy/docker/install_analysis.py"
+)
+assert SPEC is not None and SPEC.loader is not None
+install_analysis = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(install_analysis)
 
 
-def test_packages_follow_config(tmp_path, capsys):
-    config = tmp_path / "build-config.json"
-    config.write_text(json.dumps({"analysis": {"llvm_version": "19"}}))
-    assert install_analysis.main(["--config", str(config), "--print-packages"]) == 0
-    packages = capsys.readouterr().out.split()
+def test_image_build_installs_packages_and_clazy_from_config(tmp_path, monkeypatch):
+    config = tmp_path / "tools/setup/build-config.json"
+    config.parent.mkdir(parents=True)
+    config.write_text(
+        json.dumps(
+            {
+                "analysis": {
+                    "llvm_version": "19",
+                    "clazy_revision": "revision",
+                    "clazy_sha256": "checksum",
+                }
+            }
+        )
+    )
+    run, build = Mock(), Mock()
+    monkeypatch.setattr(install_analysis, "IMAGE_ROOT", tmp_path)
+    monkeypatch.setattr(install_analysis.subprocess, "run", run)
+    monkeypatch.setattr(install_analysis, "build_clazy", build)
+    assert install_analysis.main([]) == 0
+    assert run.call_args_list[0].args[0] == ["apt-get", "update"]
+    packages = run.call_args_list[1].args[0]
     assert "clang-19" in packages
     assert "clang-tidy-19" in packages
     assert "clang-tools-19" in packages
     assert "clangd-19" in packages
     assert "libclang-cpp19-dev" in packages
     assert "clazy" not in packages
+    build.assert_called_once_with(
+        "19", "revision", "checksum", Path("/opt/clazy"), tmp_path / "clazy-build"
+    )
+
+
+def test_verify_never_installs_or_downloads(monkeypatch):
+    monkeypatch.setattr(
+        install_analysis, "load_build_config", lambda path: {"analysis": {"llvm_version": "18"}}
+    )
+    verify, run, download = Mock(), Mock(), Mock()
+    monkeypatch.setattr(install_analysis, "verify_toolchain", verify)
+    monkeypatch.setattr(install_analysis.subprocess, "run", run)
+    monkeypatch.setattr(install_analysis, "download_with_retry", download)
+    assert install_analysis.main(["--verify"]) == 0
+    verify.assert_called_once_with("18", Path("/opt/clazy"))
+    run.assert_not_called()
+    download.assert_not_called()
 
 
 def test_checksum_failure_prevents_extraction_and_build(tmp_path, monkeypatch):
@@ -111,8 +152,5 @@ def test_devcontainer_adds_analysis_without_retargeting_application_builders():
         in dockerfile
     )
     nonroot = dockerfile.split("USER ${DEV_USER}", 1)[1].split("ENTRYPOINT", 1)[0]
-    assert (
-        "--config /opt/qgc-bootstrap/tools/setup/build-config.json --prefix /opt/clazy --verify"
-        in nonroot
-    )
+    assert "/opt/qgc-bootstrap/deploy/docker/install_analysis.py --verify" in nonroot
     assert 'SHELL ["/bin/bash", "-o", "pipefail", "-c"]' in nonroot
