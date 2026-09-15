@@ -14,6 +14,7 @@ import subprocess
 import zipfile
 from pathlib import Path, PurePosixPath
 from typing import Any
+from urllib.parse import urlencode
 
 import httpx
 from ci_bootstrap import ensure_tools_dir
@@ -64,19 +65,25 @@ def current_run(repo: str, source: dict[str, Any]) -> tuple[dict[str, Any], int]
     if not latest or max(candidate["id"] for candidate in latest) != run_id:
         return None
     context = resolve_context(repo, run)
-    if context["current"] != "true" or not context["pr"]:
+    if context["current"] == "true" and context["pr"]:
+        candidates = [api(f"repos/{repo}/pulls/{int(context['pr'])}")]
+    else:
+        # GitHub can omit fork PRs from both run metadata and commit associations.
+        owner = run["head_repository"]["full_name"].split("/", 1)[0]
+        query = urlencode({"state": "open", "head": f"{owner}:{run['head_branch']}"})
+        candidates = list_items(f"repos/{repo}/pulls?{query}")
+    matches = [
+        pr
+        for pr in candidates
+        if pr["state"] == "open"
+        and pr["head"]["sha"] == run["head_sha"]
+        and pr["base"]["repo"]["full_name"] == repo
+        and pr["head"]["repo"]["full_name"] == run["head_repository"]["full_name"]
+        and pr["head"]["ref"] == run["head_branch"]
+    ]
+    if len(matches) != 1:
         return None
-    number = int(context["pr"])
-    pr = api(f"repos/{repo}/pulls/{number}")
-    if (
-        pr["state"] != "open"
-        or pr["head"]["sha"] != run["head_sha"]
-        or pr["base"]["repo"]["full_name"] != repo
-        or pr["head"]["repo"]["full_name"] != run["head_repository"]["full_name"]
-        or pr["head"]["ref"] != run["head_branch"]
-    ):
-        return None
-    return run, number
+    return run, int(matches[0]["number"])
 
 
 def download_report(repo: str, artifact: dict[str, Any]) -> dict[str, Any]:
@@ -189,8 +196,9 @@ def validate_report(
 
 def list_items(path: str) -> list[dict[str, Any]]:
     items = []
+    separator = "&" if "?" in path else "?"
     for page in range(1, 31):
-        batch = api(f"{path}?per_page=100&page={page}")
+        batch = api(f"{path}{separator}per_page=100&page={page}")
         items.extend(batch)
         if len(batch) < 100:
             return items

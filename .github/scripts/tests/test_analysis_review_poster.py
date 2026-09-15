@@ -48,6 +48,7 @@ def live(monkeypatch, run):
         f"repos/{REPO}/actions/workflows/analysis.yml": {"id": 50},
         f"repos/{REPO}/commits/{SHA}/pulls": [{"number": 42}],
         f"repos/{REPO}/pulls/42": pr,
+        f"repos/{REPO}/pulls?state=open&head=contributor%3Afeature&per_page=100&page=1": [],
     }
     api = Mock(side_effect=lambda path: copy.deepcopy(responses[path]))
     monkeypatch.setattr(poster, "api", api)
@@ -89,6 +90,48 @@ def report(run, finding):
 def test_fork_empty_pr_array_uses_live_commit_association(run, live):
     assert poster.current_run(REPO, run) == (run, 42)
     assert f"repos/{REPO}/commits/{SHA}/pulls" in [call.args[0] for call in live[1].call_args_list]
+
+
+def test_fork_without_commit_association_uses_encoded_head(run, live):
+    run["head_branch"] = "feat/gps-corrections"
+    pr = live[0][f"repos/{REPO}/pulls/42"]
+    pr["head"]["ref"] = run["head_branch"]
+    live[0][f"repos/{REPO}/commits/{SHA}/pulls"] = []
+    query = (
+        f"repos/{REPO}/pulls?state=open&head=contributor%3Afeat%2Fgps-corrections"
+        "&per_page=100&page=1"
+    )
+    live[0][query] = [pr]
+    assert poster.current_run(REPO, run) == (run, 42)
+    assert query in [call.args[0] for call in live[1].call_args_list]
+
+
+@pytest.mark.parametrize(
+    "section,field,value",
+    [
+        ("head", "sha", "b" * 40),
+        ("head", "ref", "other"),
+        ("head", "repo", {"full_name": "other/qgroundcontrol"}),
+        ("base", "repo", {"full_name": "other/repo"}),
+    ],
+)
+def test_head_lookup_rejects_mismatched_pr_identity(run, live, section, field, value):
+    pr = live[0][f"repos/{REPO}/pulls/42"]
+    pr[section][field] = value
+    live[0][f"repos/{REPO}/commits/{SHA}/pulls"] = []
+    live[0][f"repos/{REPO}/pulls?state=open&head=contributor%3Afeature&per_page=100&page=1"] = [pr]
+    assert poster.current_run(REPO, run) is None
+
+
+@pytest.mark.parametrize("state,count", [("open", 0), ("closed", 1), ("open", 2)])
+def test_head_lookup_requires_one_open_match(run, live, state, count):
+    pr = live[0][f"repos/{REPO}/pulls/42"]
+    pr["state"] = state
+    live[0][f"repos/{REPO}/commits/{SHA}/pulls"] = []
+    live[0][f"repos/{REPO}/pulls?state=open&head=contributor%3Afeature&per_page=100&page=1"] = [
+        {**pr, "number": 42 + index} for index in range(count)
+    ]
+    assert poster.current_run(REPO, run) is None
 
 
 @pytest.mark.parametrize(
