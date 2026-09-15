@@ -84,7 +84,7 @@ def test_vm_builds_do_not_use_the_smaller_android_emulator_pool() -> None:
         assert "/runner=linux-x64-vm-builder" in route
         assert "linux-x64-emulator" not in route
         assert "github.repository_owner == 'mavlink'" in route
-        assert "github.event_name != 'pull_request'" in route
+        assert "github.event" not in route
         assert "|| 'ubuntu-latest'" in route
         cache_step = next(step for step in job["steps"] if step.get("uses") == "runs-on/action@v2")
         assert "if" not in cache_step

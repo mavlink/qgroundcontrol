@@ -42,9 +42,8 @@ jobs:
     # store, image mirrors); informational only, never gate the PR on it.
     continue-on-error: true
     # Keep 16 GiB for the 12 GiB guest plus host overhead, with nested-virt (/dev/kvm).
-    # Public-repo runner definitions come from master; PRs validate on the hosted KVM runner.
     runs-on: >-
-      ${{ github.repository_owner == 'mavlink' && github.event_name != 'pull_request' &&
+      ${{ github.repository_owner == 'mavlink' &&
           format('runs-on={0}/runner=linux-x64-vm-builder', github.run_id) || 'ubuntu-latest' }}
     timeout-minutes: 120
     steps:
@@ -112,7 +111,7 @@ jobs:
     # informational only, never gate the PR on it.
     continue-on-error: true
     runs-on: >-
-      ${{ github.repository_owner == 'mavlink' && github.event_name != 'pull_request' &&
+      ${{ github.repository_owner == 'mavlink' &&
           format('runs-on={0}/runner=linux-x64-vm-builder', github.run_id) || 'ubuntu-latest' }}
     timeout-minutes: 180
     steps:

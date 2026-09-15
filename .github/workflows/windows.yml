@@ -66,7 +66,6 @@ jobs:
           - variant: amd64
             runs_on: >-
               ${{ github.repository_owner == 'mavlink' &&
-                  (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
                   format('runs-on={0}/{1}', github.run_id,
                     vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
                     'runner=windows-x64-builder') || 'windows-2022' }}
@@ -87,7 +86,6 @@ jobs:
           - variant: arm64-cross
             runs_on: >-
               ${{ github.repository_owner == 'mavlink' &&
-                  (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
                   format('runs-on={0}/{1}', github.run_id,
                     vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
                     'runner=windows-x64-builder') || 'windows-2022' }}
@@ -114,7 +112,7 @@ jobs:
           show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.variant != 'arm64'
+        if: github.repository_owner == 'mavlink' && matrix.variant != 'arm64'
         uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io
@@ -128,7 +126,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Visual Studio Build Tools
-        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.variant != 'arm64'
+        if: github.repository_owner == 'mavlink' && matrix.variant != 'arm64'
         uses: ./.github/actions/install-dependencies
         with:
           gstreamer: 'false'

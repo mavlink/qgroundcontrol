@@ -155,16 +155,35 @@ def test_link_cache_has_restore_and_save_with_fork_read_only_policy() -> None:
     assert "github.event.pull_request.head.repo.full_name == github.repository" in workflow
 
 
-def test_runs_on_jobs_reject_fork_pull_requests() -> None:
-    guard = "github.event.pull_request.head.repo.full_name == github.repository"
+@pytest.mark.parametrize(
+    "workflow",
+    ["linux", "windows", "android", "docker", "custom-build", "vm-builds"],
+)
+def test_runs_on_cache_setup_includes_fork_pull_requests(workflow: str) -> None:
+    jobs = yaml.safe_load(_read(f".github/workflows/{workflow}.yml"))["jobs"]
+    cache_steps = [
+        step
+        for job in jobs.values()
+        for step in job.get("steps", [])
+        if step.get("uses") == "runs-on/action@v2"
+    ]
+    assert cache_steps
+    for step in cache_steps:
+        condition = step.get("if", "")
+        assert "github.event" not in condition
+        assert "github.actor" not in condition
 
-    assert _read(".github/workflows/linux.yml").count(guard) >= 5
-    custom = yaml.safe_load(_read(".github/workflows/custom-build.yml"))["jobs"]["build"]
-    assert guard in custom["runs-on"]
-    magic_cache = next(
-        step for step in custom["steps"] if step.get("uses", "").startswith("runs-on/action@")
+
+def test_windows_fork_prs_install_runson_build_tools() -> None:
+    workflow = yaml.safe_load(_read(".github/workflows/windows.yml"))
+    install = next(
+        step
+        for step in workflow["jobs"]["build"]["steps"]
+        if step.get("name") == "Install Visual Studio Build Tools"
     )
-    assert guard in magic_cache["if"]
+    assert install["if"] == "github.repository_owner == 'mavlink' && matrix.variant != 'arm64'"
+    assert install["with"]["msvc"] == "true"
+    assert install["with"]["msvc-arm64"] == "${{ matrix.variant == 'arm64-cross' }}"
 
 
 def test_manual_linux_reuses_coverage_build_for_excluded_tests() -> None:
@@ -220,11 +239,12 @@ def test_docker_cache_uses_magic_cache_compatible_backend() -> None:
     assert build["load"] is True
 
 
-def test_docker_build_enables_magic_cache_on_trusted_aws_runners() -> None:
+def test_docker_build_enables_magic_cache_on_upstream_aws_runners() -> None:
     workflow = yaml.safe_load(_read(".github/workflows/docker.yml"))
     job = workflow["jobs"]["build"]
     assert "runs-on={0}/runner={1}" in job["runs-on"]
-    assert "github.event.pull_request.head.repo.full_name == github.repository" in job["runs-on"]
+    assert "github.repository_owner == 'mavlink'" in job["runs-on"]
+    assert "github.event" not in job["runs-on"]
     assert "'ubuntu-latest'" in job["runs-on"]
     steps = job["steps"]
     magic = next(
@@ -234,9 +254,7 @@ def test_docker_build_enables_magic_cache_on_trusted_aws_runners() -> None:
         index for index, step in enumerate(steps) if step.get("uses") == "./.github/actions/docker"
     )
     assert magic < build
-    assert (
-        "github.event.pull_request.head.repo.full_name == github.repository" in steps[magic]["if"]
-    )
+    assert steps[magic]["if"] == "github.repository_owner == 'mavlink'"
     config = yaml.safe_load(_read(".github/runs-on.yml"))
     for pool in ("linux-x64-builder", "linux-x64-builder-prebaked"):
         assert config["runners"][pool]["extras"] == "s3-cache"

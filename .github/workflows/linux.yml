@@ -65,7 +65,6 @@ jobs:
             runs_on: >-
               ${{
                 github.repository_owner == 'mavlink' &&
-                (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
                 format('runs-on={0}/runner=linux-arm64-builder', github.run_id) ||
                 'ubuntu-24.04-arm'
               }}
@@ -76,7 +75,6 @@ jobs:
             runs_on: >-
               ${{
                 github.repository_owner == 'mavlink' &&
-                (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
                 format('runs-on={0}/runner={1}', github.run_id,
                   vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder-60gb') ||
                 'ubuntu-24.04'
@@ -104,7 +102,7 @@ jobs:
           show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: github.repository_owner == 'mavlink'
         uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io
@@ -224,7 +222,6 @@ jobs:
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
         format('runs-on={0}/runner=linux-x64-tester', github.run_id) ||
         'ubuntu-24.04'
       }}
@@ -257,7 +254,7 @@ jobs:
           show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: github.repository_owner == 'mavlink'
         uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io

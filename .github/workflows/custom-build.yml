@@ -39,7 +39,6 @@ jobs:
     runs-on: >-
       ${{
         github.repository_owner == 'mavlink' &&
-        (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) &&
         format('runs-on={0}/runner={1}', github.run_id,
           matrix.build-type == 'Debug' && 'linux-x64-tester' ||
           vars.RUNS_ON_LINUX_BUILDER || 'linux-x64-builder-60gb') ||
@@ -69,7 +68,7 @@ jobs:
           show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
-        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: github.repository_owner == 'mavlink'
         uses: runs-on/action@v2
         with:
           metrics: cpu,network,memory,disk,io
