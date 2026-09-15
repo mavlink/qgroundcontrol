@@ -2,6 +2,8 @@
 #include "ParameterManager.h"
 #include "BulkRefreshJob.h"
 
+#include <algorithm>
+
 #include <QtCore/QDir>
 #include <QtCore/QSet>
 #include <QtCore/QTextStream>
@@ -77,6 +79,11 @@ ParameterManager::~ParameterManager()
 
 void ParameterManager::_updateProgressBar()
 {
+    // The bar is initial-load and user-refresh UI; components still loading in the background must not revive it
+    if (_initialLoadComplete && !_refreshAllProgressActive) {
+        return;
+    }
+
     int waitingReadParamIndexCount = 0;
 
     for (const int compId: _waitingReadParamIndexMap.keys()) {
@@ -84,6 +91,7 @@ void ParameterManager::_updateProgressBar()
     }
 
     if (waitingReadParamIndexCount == 0) {
+        _refreshAllProgressActive = false;
         if (_readParamIndexProgressActive) {
             _readParamIndexProgressActive = false;
             _setLoadProgress(0.0);
@@ -176,6 +184,9 @@ void ParameterManager::_handleParamValue(int componentId, const QString &paramet
 
     _waitingParamTimeoutTimer.stop();
 
+    _paramValuesReceivedThisCycle[componentId]++;
+    _silentCycleCount.remove(componentId);
+
     // Update our total parameter counts
     if (!_paramCountMap.contains(componentId)) {
         _paramCountMap[componentId] = parameterCount;
@@ -200,7 +211,7 @@ void ParameterManager::_handleParamValue(int componentId, const QString &paramet
     // Remove this parameter from the waiting lists
     if (_waitingReadParamIndexMap[componentId].contains(parameterIndex)) {
         _waitingReadParamIndexMap[componentId].remove(parameterIndex);
-        (void) _indexBatchQueue.removeOne(parameterIndex);
+        (void) _indexBatchQueue.removeOne(qMakePair(componentId, parameterIndex));
         _fillIndexBatchQueue(false /* waitingParamTimeout */);
     }
 
@@ -601,6 +612,7 @@ void ParameterManager::refreshAllParameters(uint8_t componentId)
 {
     _resetHashCheck();
     setParameterDownloadSkipped(false);
+    _refreshAllProgressActive = true;
     _startParameterDownload(componentId);
 }
 
@@ -662,6 +674,7 @@ void ParameterManager::_startParameterDownload(uint8_t componentId)
         if (_ftpDownloadInProgress) {
             // A retry while the file is still transferring would disconnect the completion handler below
             qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Parameter file download already in progress";
+            _refreshAllProgressActive = false;
             return;
         }
         if (!_initialLoadComplete) {
@@ -669,7 +682,10 @@ void ParameterManager::_startParameterDownload(uint8_t componentId)
         }
         FTPManager *const ftpManager = _vehicle->ftpManager();
         (void) connect(ftpManager, &FTPManager::downloadComplete, this, &ParameterManager::_ftpDownloadComplete);
-        _waitingParamTimeoutTimer.stop();
+        // Other components may still be re-reading over the stream path; only their timer keeps them going
+        if (!_anyComponentWaiting()) {
+            _waitingParamTimeoutTimer.stop();
+        }
         if (ftpManager->download(MAV_COMP_ID_AUTOPILOT1,
                                  QStringLiteral("@PARAM/param.pck?withdefaults=1"),
                                  QStandardPaths::writableLocation(QStandardPaths::TempLocation),
@@ -680,6 +696,7 @@ void ParameterManager::_startParameterDownload(uint8_t componentId)
         } else {
             qCWarning(ParameterManagerLog) << "ParameterManager::_startParameterDownload FTPManager::download returned failure";
             (void) disconnect(ftpManager, &FTPManager::downloadComplete, this, &ParameterManager::_ftpDownloadComplete);
+            _refreshAllProgressActive = false;
         }
     } else {
         if (!_initialLoadComplete) {
@@ -838,8 +855,6 @@ bool ParameterManager::_fillIndexBatchQueue(bool waitingParamTimeout)
         return false;
     }
 
-    constexpr int maxBatchSize = 10;
-
     if (waitingParamTimeout) {
         // We timed out, clear the queue and try again
         qCDebug(ParameterManagerLog) << "Refilling index based batch queue due to timeout";
@@ -855,12 +870,12 @@ bool ParameterManager::_fillIndexBatchQueue(bool waitingParamTimeout)
         }
 
         for (const int paramIndex: _waitingReadParamIndexMap[componentId].keys()) {
-            if (_indexBatchQueue.contains(paramIndex)) {
+            if (_indexBatchQueue.contains(qMakePair(componentId, paramIndex))) {
                 // Don't add more than once
                 continue;
             }
 
-            if (_indexBatchQueue.count() > maxBatchSize) {
+            if (_indexBatchQueue.count() >= kIndexBatchMaxOutstanding) {
                 break;
             }
 
@@ -872,8 +887,8 @@ bool ParameterManager::_fillIndexBatchQueue(bool waitingParamTimeout)
                 (void) _waitingReadParamIndexMap[componentId].remove(paramIndex);
             } else {
                 // Retry again
-                _indexBatchQueue.append(paramIndex);
-                _mavlinkParamRequestRead(componentId, QString(), paramIndex, false /* notifyFailure */);
+                _indexBatchQueue.append(qMakePair(componentId, paramIndex));
+                _sendParamRequestReadIndex(componentId, paramIndex);
                 qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Read re-request for (paramIndex:" << paramIndex << "retryCount:" << _waitingReadParamIndexMap[componentId][paramIndex] << ")";
             }
         }
@@ -893,6 +908,8 @@ void ParameterManager::_waitingParamTimeout()
     // Now that we have timed out for possibly the first time we can activate the index batch queue
     _indexBatchQueueActive = true;
 
+    _giveUpOnUnresponsiveComponents();
+
     // First check for any missing parameters from the initial index based load
     bool paramsRequested = _fillIndexBatchQueue(true /* waitingParamTimeout */);
     if (!paramsRequested && !_waitingForDefaultComponent && !_mapCompId2FactMap.contains(_vehicle->defaultComponentId())) {
@@ -906,11 +923,43 @@ void ParameterManager::_waitingParamTimeout()
     _waitingForDefaultComponent = false;
 
     _checkInitialLoadComplete();
+    // Giving up on the last waiting index produces no PARAM_VALUE, so the bar must be recomputed here too
+    _updateProgressBar();
 
     if (paramsRequested) {
         qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Restarting _waitingParamTimeoutTimer - re-request";
         _waitingParamTimeoutTimer.start();
     }
+}
+
+void ParameterManager::_giveUpOnUnresponsiveComponents()
+{
+    const int defaultCompId = _vehicle->defaultComponentId();
+
+    for (const int componentId: _waitingReadParamIndexMap.keys()) {
+        if (componentId == defaultCompId) {
+            continue;
+        }
+
+        const int outstanding = static_cast<int>(std::count_if(_indexBatchQueue.cbegin(), _indexBatchQueue.cend(),
+                                                               [componentId](const QPair<int, int> &entry) { return entry.first == componentId; }));
+        if ((outstanding < kUnresponsiveMinOutstanding) || (_paramValuesReceivedThisCycle.value(componentId, 0) != 0)) {
+            continue;
+        }
+
+        if (++_silentCycleCount[componentId] < kUnresponsiveSilentCycles) {
+            continue;
+        }
+
+        const QList<int> remaining = _waitingReadParamIndexMap[componentId].keys();
+        qCWarning(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Component unresponsive for" << kUnresponsiveSilentCycles
+                                       << "cycles, giving up on remaining parameters:" << remaining.count();
+        _failedReadParamIndexMap[componentId] << remaining;
+        _waitingReadParamIndexMap[componentId].clear();
+        (void) _indexBatchQueue.removeIf([componentId](const QPair<int, int> &entry) { return entry.first == componentId; });
+    }
+
+    _paramValuesReceivedThisCycle.clear();
 }
 
 void ParameterManager::_requestHashCheck(uint8_t componentId)
@@ -936,6 +985,27 @@ void ParameterManager::_requestHashCheck(uint8_t componentId)
         paramId,
         -1);
 
+    (void) _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+}
+
+void ParameterManager::_sendParamRequestReadIndex(int componentId, int paramIndex)
+{
+    const SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        return;
+    }
+
+    // Packer copies the full fixed-width field, so a short literal would read out of bounds
+    char paramId[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN + 1] = {};
+    mavlink_message_t msg{};
+    (void) mavlink_msg_param_request_read_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                    MAVLinkProtocol::getComponentId(),
+                                                    sharedLink->mavlinkChannel(),
+                                                    &msg,
+                                                    static_cast<uint8_t>(_vehicle->id()),
+                                                    static_cast<uint8_t>(componentId),
+                                                    paramId,
+                                                    static_cast<int16_t>(paramIndex));
     (void) _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
 
@@ -1310,23 +1380,26 @@ FactMetaData::ValueType_t ParameterManager::mavTypeToFactType(MAV_PARAM_TYPE mav
 void ParameterManager::_checkInitialLoadComplete()
 {
     if (_initialLoadComplete) {
+        _checkOtherComponentsLoadComplete();
         return;
     }
 
-    for (const int componentId: _waitingReadParamIndexMap.keys()) {
-        if (!_waitingReadParamIndexMap[componentId].isEmpty()) {
-            // We are still waiting on some parameters, not done yet
-            return;
-        }
+    // Only the default component gates readiness. Other components (e.g. DroneCAN nodes bridged by PX4) keep
+    // loading in the background and are reported by _checkOtherComponentsLoadComplete when they finish.
+    const int defaultCompId = _vehicle->defaultComponentId();
+    if (_waitingReadParamIndexMap.contains(defaultCompId) && !_waitingReadParamIndexMap[defaultCompId].isEmpty()) {
+        return;
     }
 
-    if (!_mapCompId2FactMap.contains(_vehicle->defaultComponentId())) {
+    if (!_mapCompId2FactMap.contains(defaultCompId)) {
         // No default component params yet, not done yet
         return;
     }
 
     // We aren't waiting for any more initial parameter updates, initial parameter loading is complete
     _initialLoadComplete = true;
+    _refreshAllProgressActive = false;
+    _setLoadProgress(0.0);
 
     // Parameter cache crc failure debugging
     for (const int componentId: _debugCacheParamSeen.keys()) {
@@ -1342,32 +1415,19 @@ void ParameterManager::_checkInitialLoadComplete()
 
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(-1) << "Initial load complete";
 
-    // Check for index based load failures
-    QString indexList;
-    bool initialLoadFailures = false;
-    for (const int componentId: _failedReadParamIndexMap.keys()) {
-        for (const int paramIndex: _failedReadParamIndexMap[componentId]) {
-            if (initialLoadFailures) {
-                indexList += ", ";
-            }
-            indexList += QStringLiteral("%1:%2").arg(componentId).arg(paramIndex);
-            initialLoadFailures = true;
-            qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Gave up on initial load after max retries (paramIndex:" << paramIndex << ")";
+    _missingParameters = !_failedReadParamIndexMap.value(defaultCompId).isEmpty();
+    if (_missingParameters) {
+        QStringList failedIndices;
+        for (const int paramIndex: _failedReadParamIndexMap[defaultCompId]) {
+            failedIndices.append(QString::number(paramIndex));
         }
-    }
-
-    _missingParameters = false;
-    if (initialLoadFailures) {
-        _missingParameters = true;
+        qCWarning(ParameterManagerLog) << _logVehiclePrefix(defaultCompId) << "The following parameter indices could not be loaded after the maximum number of retries:" << failedIndices.join(QStringLiteral(", "));
         const QString errorMsg = tr("%1 was unable to retrieve the full set of parameters from vehicle %2. "
                                     "This will cause %1 to be unable to display its full user interface. "
                                     "If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. "
                                     "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.").arg(QCoreApplication::applicationName()).arg(_vehicle->id());
         qCDebug(ParameterManagerLog) << errorMsg;
         QGC::showAppMessage(errorMsg);
-        if (!QGC::runningUnitTests()) {
-            qCWarning(ParameterManagerLog) << _logVehiclePrefix(-1) << "The following parameter indices could not be loaded after the maximum number of retries:" << indexList;
-        }
     }
 
     // Signal load complete
@@ -1375,6 +1435,55 @@ void ParameterManager::_checkInitialLoadComplete()
     _vehicle->autopilotPlugin()->parametersReadyPreChecks();
     emit parametersReadyChanged(true);
     emit missingParametersChanged(_missingParameters);
+
+    _checkOtherComponentsLoadComplete();
+}
+
+bool ParameterManager::_anyComponentWaiting() const
+{
+    for (auto it = _waitingReadParamIndexMap.cbegin(); it != _waitingReadParamIndexMap.cend(); ++it) {
+        if (!it.value().isEmpty()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void ParameterManager::_checkOtherComponentsLoadComplete()
+{
+    if (_otherComponentsReported) {
+        return;
+    }
+
+    if (_anyComponentWaiting()) {
+        return;
+    }
+
+    const int defaultCompId = _vehicle->defaultComponentId();
+    QStringList failedIndices;
+    QStringList failedComponentIds;
+    for (const int componentId: _failedReadParamIndexMap.keys()) {
+        if ((componentId == defaultCompId) || _failedReadParamIndexMap[componentId].isEmpty()) {
+            continue;
+        }
+        failedComponentIds.append(QString::number(componentId));
+        for (const int paramIndex: _failedReadParamIndexMap[componentId]) {
+            failedIndices.append(QStringLiteral("%1:%2").arg(componentId).arg(paramIndex));
+        }
+    }
+    if (failedComponentIds.isEmpty()) {
+        return;
+    }
+    _otherComponentsReported = true;
+
+    qCWarning(ParameterManagerLog) << _logVehiclePrefix(-1) << "The following parameter indices could not be loaded after the maximum number of retries:" << failedIndices.join(QStringLiteral(", "));
+    QString vehicleIdPrefix;
+    if (MultiVehicleManager::instance()->vehicles()->count() > 1) {
+        vehicleIdPrefix = tr("Vehicle %1: ").arg(_vehicle->id());
+    }
+    const QString errorMsg = vehicleIdPrefix + tr("%1 was unable to retrieve the full set of parameters from component(s) %2.").arg(QCoreApplication::applicationName(), failedComponentIds.join(QStringLiteral(", ")));
+    qCDebug(ParameterManagerLog) << errorMsg;
+    QGC::showAppMessage(errorMsg);
 }
 
 void ParameterManager::_hashCheckTimeout()
@@ -1807,6 +1916,7 @@ Success:
         _writeLocalParamCache(_vehicle->id(), componentId);
     }
     _checkInitialLoadComplete();
+    _refreshAllProgressActive = false;
     _setLoadProgress(0.0);
     return true;
 

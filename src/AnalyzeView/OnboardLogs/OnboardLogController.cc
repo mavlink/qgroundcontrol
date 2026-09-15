@@ -566,12 +566,13 @@ void OnboardLogController::cancel()
             }
 
             if (_downloadingLogs) {
-                _vehicle->ftpManager()->cancelDownload();
+                // cancelDownload completes synchronously; detach the entry first so it is not stamped as an error
                 if (_ftpCurrentDownloadEntry) {
                     _ftpCurrentDownloadEntry->setStatus(tr("Canceled"));
                     _ftpCurrentDownloadEntry = nullptr;
                 }
                 _ftpDownloadQueue.clear();
+                _vehicle->ftpManager()->cancelDownload();
             }
         }
     } else {

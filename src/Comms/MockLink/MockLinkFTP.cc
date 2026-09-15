@@ -135,6 +135,12 @@ void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId
 
     const uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
+    if (_singleSessionEnforced && _currentFile.isOpen()) {
+        qCDebug(MockLinkFTPLog) << "MockLinkFTP: OpenFileRO while session open, NAK No Sessions Available";
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrNoSessionsAvailable, outgoingSeqNumber, MavlinkFTP::kCmdOpenFileRO);
+        return;
+    }
+
     const size_t cchPath = strnlen(reinterpret_cast<char*>(request->data), sizeof(request->data));
     Q_ASSERT(cchPath != sizeof(request->data));
     Q_UNUSED(cchPath); // Fix initialized-but-not-referenced warning on release builds
@@ -186,6 +192,7 @@ void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId
     // Ardupilot sends constant wrong file size for parameter file due to dynamic on the fly generation
     response.openFileLength = ((path == "@PARAM/param.pck" || path.startsWith("@PARAM/param.pck?")) ? qPow(1024, 2) : _currentFile.size());
 
+    _openFileROCount++;
     _sendResponse(senderSystemId, senderComponentId, &response, outgoingSeqNumber);
 }
 
@@ -243,8 +250,15 @@ void MockLinkFTP::_readCommand(uint8_t senderSystemId, uint8_t senderComponentId
 {
     MavlinkFTP::Request	response{};
     const uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
+    _readFileCount++;
 
     if (request->hdr.session != _sessionId) {
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrInvalidSession, outgoingSeqNumber, MavlinkFTP::kCmdReadFile);
+        return;
+    }
+
+    if (!_currentFile.isOpen()) {
+        qCDebug(MockLinkFTPLog) << "MockLinkFTP: ReadFile with no open session, NAK Invalid Session";
         _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrInvalidSession, outgoingSeqNumber, MavlinkFTP::kCmdReadFile);
         return;
     }
@@ -328,9 +342,22 @@ void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderCompon
         return;
     }
 
+    if (!_currentFile.isOpen()) {
+        qCDebug(MockLinkFTPLog) << "MockLinkFTP: BurstReadFile with no open session, NAK Invalid Session";
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrInvalidSession, outgoingSeqNumber, MavlinkFTP::kCmdBurstReadFile);
+        return;
+    }
+
+    if (_errMode == errModeNoSecondResponse) {
+        return;
+    }
+
     constexpr int burstMax = 10;
     int burstCount = 1;
     uint32_t burstOffset = request->hdr.offset;
+    MavlinkFTP::Request reorderedResponse{};
+    uint16_t reorderedSeqNumber = 0;
+    bool haveReorderedResponse = false;
 
     while ((burstOffset < _currentFile.size()) && (burstCount++ < burstMax)) {
         _currentFile.seek(burstOffset);
@@ -348,15 +375,36 @@ void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderCompon
         response.hdr.req_opcode = MavlinkFTP::kCmdBurstReadFile;
         response.hdr.burstComplete = (burstCount == burstMax) ? 1 : 0;
 
-        _sendResponse(senderSystemId, senderComponentId, &response, outgoingSeqNumber);
+        if (_dropBurstPacketPending && (burstOffset == _dropBurstPacketOffset)) {
+            qCDebug(MockLinkFTPLog) << "MockLinkFTP: dropping burst packet at offset" << burstOffset;
+            _dropBurstPacketPending = false;
+        } else if (_reorderBurstPacketPending && (burstOffset == _reorderBurstPacketOffset)) {
+            qCDebug(MockLinkFTPLog) << "MockLinkFTP: holding back burst packet at offset" << burstOffset;
+            _reorderBurstPacketPending = false;
+            reorderedResponse = response;
+            reorderedSeqNumber = outgoingSeqNumber;
+            haveReorderedResponse = true;
+        } else {
+            _sendResponse(senderSystemId, senderComponentId, &response, outgoingSeqNumber);
+        }
 
         outgoingSeqNumber = _nextSeqNumber(outgoingSeqNumber);
         burstOffset += cBytes;
     }
 
+    if (haveReorderedResponse) {
+        _sendResponse(senderSystemId, senderComponentId, &reorderedResponse, reorderedSeqNumber);
+    }
+
     if (burstOffset >= _currentFile.size()) {
         // Burst is fully complete
         _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrEOF, outgoingSeqNumber, MavlinkFTP::kCmdBurstReadFile);
+    }
+
+    if ((_expireSessionAfterBursts > 0) && (++_burstsServed >= _expireSessionAfterBursts)) {
+        qCDebug(MockLinkFTPLog) << "MockLinkFTP: expiring session after burst" << _burstsServed;
+        _currentFile.close();
+        _expireSessionAfterBursts = 0;
     }
 }
 
@@ -379,14 +427,25 @@ void MockLinkFTP::_terminateCommand(uint8_t senderSystemId, uint8_t senderCompon
 
 void MockLinkFTP::_resetCommand(uint8_t senderSystemId, uint8_t senderComponentId, uint16_t seqNumber)
 {
+    emit resetCommandReceived();
+
+    if (_ignoreResetSessions) {
+        return;
+    }
+
     const uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
 
     _currentFile.close();
     _sendAck(senderSystemId, senderComponentId, outgoingSeqNumber, MavlinkFTP::kCmdResetSessions);
 
     _finalizeActiveUpload();
+}
 
-    emit resetCommandReceived();
+void MockLinkFTP::openStaleSessionForTest()
+{
+    _currentFile.close();
+    _currentFile.setFileName(_createTestTempFile(1024));
+    (void) _currentFile.open(QIODevice::ReadOnly);
 }
 
 void MockLinkFTP::_writeCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)

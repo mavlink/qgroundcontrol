@@ -1,8 +1,11 @@
 #include "RequestMetaDataTypeStateMachineTest.h"
 
 #include <QtCore/QDir>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
+#include <QtCore/QRandomGenerator>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QUuid>
 #include <QtTest/QSignalSpy>
@@ -14,7 +17,10 @@
 #include "FactMetaData.h"
 #include "LinkManager.h"
 #include "MockConfiguration.h"
+#include "MockLink.h"
+#include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
+#include "QGCLoggingCategoryManager.h"
 #include "RequestMetaDataTypeStateMachine.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
@@ -242,6 +248,53 @@ void RequestMetaDataTypeStateMachineTest::_requestUsesCachedMetadataForParameter
     FactMetaData* metadata = param->factMetaDataForName(QStringLiteral("CACHE_HIT_PARAM"), FactMetaData::valueTypeFloat);
     QVERIFY(metadata);
     QCOMPARE(metadata->shortDescription(), QStringLiteral("Loaded from cache"));
+}
+
+// A metadata download that is clearly not going to finish in a sane time must be abandoned early: it sits in
+// front of parameter load, and on a slow telemetry link the projection is obvious within a few seconds.
+void RequestMetaDataTypeStateMachineTest::_slowFtpDownloadAbortsEarly()
+{
+    auto* manager = vehicle()->compInfoManager();
+    QVERIFY(manager);
+    QVERIFY_TRUE_WAIT(!manager->isRunning(), TestTimeout::mediumMs());
+
+    auto* param = manager->compInfoParam(MAV_COMP_ID_AUTOPILOT1);
+    QVERIFY(param);
+    // Random CRC so the file cache cannot satisfy the request
+    param->setUriMetaData(QStringLiteral("mftp://[;comp=1]parameter.json.xz"), QRandomGenerator::global()->generate());
+
+    // ~2 KB/s against a 92 KB file: projected total is far past the abort limit after the first few bursts
+    _mockLink->mockLinkFTP()->setBurstReadDelayMs(1000);
+
+    // Debug output for the category is off by default; enable it so the abort message is captured
+    const char* category = "ComponentInformation.RequestMetaDataTypeStateMachine";
+    QGCLoggingCategoryManager::instance()->setCategoryEnabled(category, true);
+    const auto restoreLogging = qScopeGuard([category]() {
+        QGCLoggingCategoryManager::instance()->setCategoryEnabled(category, false);
+    });
+    ignoreLogMessage(category, QtDebugMsg, QRegularExpression(".*"));
+    ignoreLogMessage(category, QtWarningMsg, QRegularExpression("failed to load metadata"));
+    // The mock's blocking burst delay also starves unrelated commands sent to it during the download
+    ignoreLogMessage("Vehicle.StandardModes", QtWarningMsg, QRegularExpression("Failed to retrieve available modes"));
+    expectLogMessage(category, QtDebugMsg, QRegularExpression("Slow download, aborting"));
+
+    RequestMetaDataTypeStateMachine requestMachine(manager, this);
+    QSignalSpy completeSpy(&requestMachine, &RequestMetaDataTypeStateMachine::requestComplete);
+    QVERIFY(completeSpy.isValid());
+
+    QElapsedTimer timer;
+    timer.start();
+    requestMachine.request(param);
+    QVERIFY(UnitTest::waitForSignal(completeSpy, TestTimeout::longMs(), QStringLiteral("requestComplete")));
+    const qint64 elapsedMs = timer.elapsed();
+    _mockLink->mockLinkFTP()->setBurstReadDelayMs(0);
+
+    verifyExpectedLogMessage();
+    // Abort fires on the first progress report 5s after the first data packet; well under the old fixed 10s,
+    // with slack for CI load
+    const qint64 maxAbortMs = TestTimeout::isCI() ? 15000 : 10000;
+    QVERIFY2(elapsedMs < maxAbortMs, qPrintable(QStringLiteral("Slow download ran %1 ms before aborting").arg(elapsedMs)));
+    QVERIFY(!requestMachine.active());
 }
 
 UT_REGISTER_TEST(RequestMetaDataTypeStateMachineTest, TestLabel::Integration, TestLabel::Vehicle)

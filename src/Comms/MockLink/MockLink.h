@@ -10,8 +10,10 @@
 #include "MockLinkMissionItemHandler.h"
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QList>
 #include <QtCore/QMap>
 #include <QtCore/QMutex>
+#include <QtCore/QPair>
 #include <QtCore/QSet>
 #include <QtPositioning/QGeoCoordinate>
 
@@ -178,6 +180,8 @@ public:
 
     /// Returns the number of standalone PARAM_REQUEST_READ requests for _HASH_CHECK received
     int hashCheckRequestCount() const { return _hashCheckRequestCount; }
+    /// Index-based PARAM_REQUEST_READs received, in arrival order: (componentId, paramIndex)
+    QList<QPair<int, int>> paramRequestReadIndexLog() const { return _paramRequestReadIndexLog; }
 
     /// Change a float parameter value directly on MockLink (for testing cache invalidation)
     void setMockParamValue(int componentId, const QString &paramName, float value);
@@ -283,6 +287,9 @@ private:
     void _handleParamRequestList(const mavlink_message_t &msg);
     void _handleParamSet(const mavlink_message_t &msg);
     void _handleParamRequestRead(const mavlink_message_t &msg);
+    bool _shouldSkipParamSend(int componentId, const QString &paramName, int paramIndex) const;
+    bool _shouldSkipParamRead(int componentId, const QString &paramName, int paramIndex);
+    bool _hasNonDefaultParamComponent() const;
     void _handleFTP(const mavlink_message_t &msg);
     void _handleCommandLong(const mavlink_message_t &msg);
     void _handleCommandInt(const mavlink_message_t &msg);
@@ -468,6 +475,7 @@ private:
     bool _paramRequestReadFailureFirstAttemptPending = false;
     bool _hashCheckNoResponse = false;
     int _hashCheckRequestCount = 0;
+    QList<QPair<int, int>> _paramRequestReadIndexLog;
     bool _paramRequestListHashCheckSent = false;
     bool _resetSysAutostartOnParamReset = false;
 
@@ -547,6 +555,13 @@ private:
     static constexpr const char *_failParam = "COM_FLTMODE6";
 
     static constexpr uint8_t _vehicleComponentId = MAV_COMP_ID_AUTOPILOT1;
+
+    // Simulated DroneCAN node exposed as its own param component (FailMissingParamOnAllRequestsNonDefaultComponent and friends)
+    static constexpr uint8_t _nonDefaultParamComponentId = 125;
+    static constexpr const char *_nonDefaultFailParam = "BATT_MONITOR";
+    static constexpr int _sharedFailParamIndex = 1;         ///< FailMissingParamSharedIndexAcrossComponents: index missing on both components
+    static constexpr int _nonDefaultStreamedParamCount = 2; ///< FailNonDefaultComponentDead/Lossy: params that make it through the stream
+    QSet<QPair<int, int>> _nonDefaultReadAttempted;         ///< FailNonDefaultComponentLossy: (component, index) reads already dropped once
 
     static constexpr uint16_t _logDownloadLogId = 0;        ///< Id of siumulated log file
     static constexpr uint32_t _logDownloadFileSize = 1000;  ///< Size of simulated log file

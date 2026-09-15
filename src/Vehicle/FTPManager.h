@@ -117,8 +117,11 @@ private:
         QFile                   file;
         int                     retryCount;
         bool                    checksize;
+        int                     sessionReopenCount;     ///< Times the server expired our session and we re-opened
+        int                     resumeStateIndex;       ///< State to return to after a session re-open, -1 if not resuming
+        bool                    active = false;         ///< true from download() until _downloadComplete, covers the pre-open phases
 
-        bool inProgress() const { return fileSize > 0; }
+        bool inProgress() const { return active; }
 
         void reset() {
             sessionId       = 0;
@@ -126,6 +129,9 @@ private:
             bytesWritten    = 0;
             retryCount      = 0;
             fileSize        = 0;
+            sessionReopenCount = 0;
+            resumeStateIndex = -1;
+            active          = false;
             fullPathOnVehicle.clear();
             fileName.clear();
             rgMissingData.clear();
@@ -213,6 +219,14 @@ private:
     void    _resetSessionsBegin         (void);
     void    _resetSessionsAckOrNak      (const MavlinkFTP::Request* ackOrNak);
     void    _resetSessionsTimeout       (void);
+    /// Leading ResetSessions step shared by all operations. Best effort: ack, nak and timeout all advance.
+    void    _clearStaleSessionsBegin    (void);
+    void    _clearStaleSessionsAckOrNak (const MavlinkFTP::Request* ackOrNak);
+    void    _clearStaleSessionsTimeout  (void);
+    /// Sends ResetSessions without waiting for a reply. Used when abandoning a session on failure.
+    void    _sendResetSessionsNoAck     (void);
+    /// Appends the leading ResetSessions step followed by rgStates to the state machine
+    void    _setStateMachine            (const StateFunctions_t* rgStates, size_t cStates);
     QString _errorMsgFromNak            (const MavlinkFTP::Request* nak);
     void    _sendRequestExpectAck       (MavlinkFTP::Request* request);
     void    _downloadCompleteNoError    (void) { _downloadComplete(QString()); }
@@ -220,6 +234,10 @@ private:
     void    _fillRequestDataWithString(MavlinkFTP::Request* request, const QString& str);
     void    _fillMissingBlocksWorker    (bool firstRequest);
     void    _burstReadFileWorker        (bool firstRequest);
+    /// Server expired our session mid-download: re-open the file and resume the interrupted state
+    void    _downloadSessionLost        (void);
+    /// Removes [offset, offset+cBytes) from the missing-data list if it lies entirely within one hole
+    bool    _claimMissingRange          (uint32_t offset, uint32_t cBytes);
     void    _listDirectoryWorker        (bool firstRequest);
     bool    _parseURI                   (uint8_t fromCompId, const QString& uri, QString& parsedURI, uint8_t& compId);
     void    _listDirectoryCompleteNoError(void) { _listDirectoryComplete(QString()); }
@@ -243,11 +261,6 @@ private:
     void    _terminateUploadSessionAckOrNak(const MavlinkFTP::Request* ackOrNak);
     void    _terminateUploadSessionTimeout(void);
 
-    void    _terminateSessionBegin      (void);
-    void    _terminateSessionAckOrNak   (const MavlinkFTP::Request* ackOrNak);
-    void    _terminateSessionTimeout    (void);
-    void    _terminateComplete          (void);
-
     Vehicle*                _vehicle;
     uint8_t                 _ftpCompId = MAV_COMP_ID_AUTOPILOT1;
     QList<StateFunctions_t> _rgStateMachine;
@@ -257,13 +270,17 @@ private:
     UploadState_t           _uploadState;
     QTimer                  _ackOrNakTimeoutTimer;
     int                     _currentStateMachineIndex   = -1;
+    int                     _clearStaleSessionsRetryCount = 0;
     uint16_t                _expectedIncomingSeqNumber  = 0;
     WithTimeSupport_t       _listDirWithTimeSupport     = WithTimeSupport_t::Unknown;
 
-    static const int _ackOrNakTimeoutMsecs  = 1000;
+    // Loaded SiK radios queue up to ~2.5s; a shorter timeout misreads that as a dead stream and restarts the burst
+    static const int _ackOrNakTimeoutMsecs  = 3000;
     static const int _maxRetry              = 3;
 
 public:
+    /// Max times a download re-opens after the server expires the session (PX4 idle timer fires mid-burst)
+    static constexpr int kMaxDownloadSessionReopens = 2;
     /// Ack timeout used in unit tests (much shorter for faster tests)
     static constexpr int kTestAckTimeoutMs = 10;
     /// Maximum wait time for FTP operations in unit tests (generous for multi-packet transfers)
