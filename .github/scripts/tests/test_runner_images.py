@@ -69,6 +69,12 @@ def test_memory_heavy_pools_retain_a_16_gib_floor(pool: str) -> None:
     assert min(_load_yaml(".github/runs-on.yml")["runners"][pool]["ram"]) >= 16
 
 
+def test_analysis_pool_provides_16_cpus_and_matching_memory() -> None:
+    runner = _load_yaml(".github/runs-on.yml")["runners"]["linux-x64-analyzer"]
+    assert runner["cpu"] == [16]
+    assert min(runner["ram"]) >= 64
+
+
 @pytest.mark.parametrize("pool", ["linux-x64-emulator", "linux-x64-vm-builder"])
 def test_virtualized_pools_require_nested_virtualization(pool: str) -> None:
     runner = _load_yaml(".github/runs-on.yml")["runners"][pool]

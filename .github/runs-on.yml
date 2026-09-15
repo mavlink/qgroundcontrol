@@ -49,6 +49,14 @@ runners:
     image: ubuntu24-full-x64
     extras: s3-cache
     volume: 60gb
+  linux-x64-analyzer:
+    family: ["m8i.4xlarge"]
+    cpu: [16]
+    ram: [64]
+    spot: false
+    image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 60gb
   linux-x64-emulator:
     family: ["c8i.xlarge"]
     cpu: [4]
