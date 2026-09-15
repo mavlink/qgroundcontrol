@@ -46,6 +46,15 @@ public:
     /// MockLink worker thread so it paces transfers without blocking the main thread.
     void setBurstReadDelayMs(int delayMs) { _burstReadDelayMs = delayMs; }
 
+    /// Stops each burst response after packetCount data packets without completing the burst,
+    /// as a link which cannot absorb the full burst stream does. 0 (the default) serves bursts
+    /// in full.
+    void setBurstPacketLimit(int packetCount) { _burstPacketLimit = packetCount; }
+
+    /// When false, the EOF Nak which terminates a burst that reached the end of the file is not
+    /// sent, simulating the loss of that final packet.
+    void setBurstEofEnabled(bool enabled) { _burstEofEnabled = enabled; }
+
     /// When false, OpenFileRO of @PARAM/param.pck NAKs errno ENOENT, as PX4 without the virtual file does.
     void setParamPckEnabled(bool enabled) { _paramPckEnabled = enabled; }
 
@@ -146,6 +155,8 @@ private:
     bool _lastReplyValid = false;
     bool _randomDropsEnabled = false;
     int _burstReadDelayMs = 0;                  ///< Per-burst delay to simulate a slow link
+    int _burstPacketLimit = 0;                  ///< Max data packets served per burst, 0 for no limit
+    bool _burstEofEnabled = true;               ///< Whether a completed burst is terminated with an EOF Nak
     ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
     bool _listDirectoryWithTimeSupported = true; ///< Whether the server implements kCmdListDirectoryWithTime
     bool _paramPckEnabled = true;               ///< Serve @PARAM/param.pck; false NAKs errno ENOENT

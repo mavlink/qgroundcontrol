@@ -12,6 +12,8 @@ private slots:
     void _performSizeBasedTestCases_data();
     void _performSizeBasedTestCases();
     void _testLostPackets();
+    void _testBurstFallback_data();
+    void _testBurstFallback();
     void _testListDirectory();
     void _testListDirectoryWithTime();
     void _testListDirectoryWithTimeFallback();

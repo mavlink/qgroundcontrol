@@ -330,9 +330,16 @@ void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderCompon
 
     constexpr int burstMax = 10;
     int burstCount = 1;
+    int packetsSent = 0;
     uint32_t burstOffset = request->hdr.offset;
 
     while ((burstOffset < _currentFile.size()) && (burstCount++ < burstMax)) {
+        if ((_burstPacketLimit > 0) && (packetsSent == _burstPacketLimit)) {
+            // Go silent mid-burst without marking it complete, leaving the client to time out
+            qCDebug(MockLinkFTPLog) << "MockLinkFTP: truncating burst after packets" << packetsSent;
+            return;
+        }
+
         _currentFile.seek(burstOffset);
 
         const uint8_t cBytes = static_cast<uint8_t>(qMin(static_cast<qint64>(sizeof(response.data)), _currentFile.size() - burstOffset));
@@ -349,6 +356,7 @@ void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderCompon
         response.hdr.burstComplete = (burstCount == burstMax) ? 1 : 0;
 
         _sendResponse(senderSystemId, senderComponentId, &response, outgoingSeqNumber);
+        packetsSent++;
 
         outgoingSeqNumber = _nextSeqNumber(outgoingSeqNumber);
         burstOffset += cBytes;
@@ -356,6 +364,10 @@ void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderCompon
 
     if (burstOffset >= _currentFile.size()) {
         // Burst is fully complete
+        if (!_burstEofEnabled) {
+            qCDebug(MockLinkFTPLog) << "MockLinkFTP: dropping burst EOF Nak";
+            return;
+        }
         _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrEOF, outgoingSeqNumber, MavlinkFTP::kCmdBurstReadFile);
     }
 }
