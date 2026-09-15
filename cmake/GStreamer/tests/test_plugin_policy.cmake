@@ -35,6 +35,10 @@ file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUI
 gstreamer_plugins_for(PLATFORM windows OUT_VAR _plugins_windows_real)
 qgc_test_assert_in_list("windows has d3d11" d3d11 _plugins_windows_real)
 qgc_test_assert_in_list("windows has d3d12" d3d12 _plugins_windows_real)
+qgc_test_assert_in_list("common has native JPEG decoder" jpeg _plugins_windows_real)
+qgc_test_assert_in_list("common has HTTP MJPEG jpeg parser" jpegformat _plugins_windows_real)
+qgc_test_assert_in_list("common has HTTP MJPEG multipart demuxer" multipart _plugins_windows_real)
+qgc_test_assert_in_list("common has HTTP client source" soup _plugins_windows_real)
 qgc_test_pass("plugins_for real windows d3d addenda")
 
 set(_req videoconvertscale videoconvert videoscale x264enc)
