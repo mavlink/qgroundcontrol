@@ -91,8 +91,11 @@ Existing application builder images are unchanged.
 The dedicated QGC Development Image workflow (`devcontainer.yml`) publishes this same
 default container in its own build pipeline:
 
-- Every upstream master push publishes `ghcr.io/mavlink/qgroundcontrol-dev:latest`.
-  New pushes cancel older builds, and superseded master commits cannot initiate publication.
+- Upstream master pushes that change image inputs publish `ghcr.io/mavlink/qgroundcontrol-dev:latest`.
+  Inputs include the Dockerfile, copied installers/helpers, shared configuration, Python locks,
+  default devcontainer configuration, and publication workflow. Source-only, test-only, and
+  documentation-only changes outside copied image inputs do not rebuild it.
+  New input-changing pushes cancel older builds; unrelated master commits do not suppress them.
 - Published stable QGC releases publish `ghcr.io/mavlink/qgroundcontrol-dev:<QGC-release-tag>`
   from the released tag's source and configuration, not current master.
   For example, release `v5.1.4` maps to `ghcr.io/mavlink/qgroundcontrol-dev:v5.1.4`.

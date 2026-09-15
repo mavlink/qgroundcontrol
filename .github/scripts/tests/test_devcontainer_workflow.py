@@ -2,8 +2,11 @@
 
 import json
 import os
+import re
+import shlex
 import shutil
 import subprocess
+from fnmatch import fnmatchcase
 from pathlib import Path
 
 import pytest
@@ -17,11 +20,12 @@ PUBLICATION_SCRIPT = next(step["run"] for step in JOB["steps"] if step.get("id")
 
 def test_image_tracks_master_pushes_and_published_stable_releases():
     triggers = WORKFLOW.get("on", WORKFLOW.get(True))
-    assert triggers["push"] == {"branches": ["master"]}
+    assert triggers["push"]["branches"] == ["master"]
+    assert triggers["push"]["paths"] == triggers["pull_request"]["paths"]
     assert triggers["release"] == {"types": ["published"]}
     assert "workflow_dispatch" in triggers
     assert ".github/build-config.json" in triggers["pull_request"]["paths"]
-    assert "deploy/docker/**" in triggers["pull_request"]["paths"]
+    assert "deploy/docker/install_analysis.py" in triggers["pull_request"]["paths"]
     assert JOB["if"] == (
         "github.event_name != 'release' || "
         "(!github.event.release.draft && !github.event.release.prerelease)"
@@ -34,7 +38,7 @@ def test_image_tracks_master_pushes_and_published_stable_releases():
     assert not any("DOCKERHUB" in str(step) for step in JOB["steps"])
 
 
-def test_latest_builds_cancel_older_builds_and_reject_superseded_commits():
+def test_latest_builds_ignore_unrelated_commits_and_reject_superseded_input_changes():
     assert WORKFLOW["concurrency"]["group"] == (
         "${{ github.workflow }}-${{ github.event_name == 'push' && 'latest' || "
         "github.event.release.tag_name || inputs.release_tag || github.ref }}"
@@ -42,7 +46,118 @@ def test_latest_builds_cancel_older_builds_and_reject_superseded_commits():
     assert WORKFLOW["concurrency"]["cancel-in-progress"] == (
         "${{ github.event_name == 'pull_request' || github.event_name == 'push' }}"
     )
-    assert 'gh api "repos/$GITHUB_REPOSITORY/commits/master" --jq .sha' in PUBLICATION_SCRIPT
+    assert (
+        "actions/workflows/devcontainer.yml/runs?branch=master&event=push&per_page=1"
+        in PUBLICATION_SCRIPT
+    )
+    assert "--jq '.workflow_runs[0].head_sha'" in PUBLICATION_SCRIPT
+    assert "/commits/master" not in PUBLICATION_SCRIPT
+
+
+def _copied_inputs(dockerfile, target):
+    stages, dependencies, aliases = {}, {}, {}
+    current = None
+    for line in re.sub(r"\\\n[ \t]*", " ", dockerfile).splitlines():
+        parts = line.strip().split(maxsplit=1)
+        if len(parts) != 2:
+            continue
+        instruction, arguments = parts
+        if instruction.upper() == "FROM":
+            tokens = shlex.split(arguments)
+            while tokens[0].startswith("--"):
+                tokens.pop(0)
+            current = (
+                tokens[-1] if len(tokens) >= 3 and tokens[-2].upper() == "AS" else str(len(stages))
+            )
+            aliases[str(len(stages))] = current
+            aliases[current] = current
+            stages[current] = set()
+            dependencies[current] = {tokens[0]}
+        elif instruction.upper() in {"COPY", "ADD"}:
+            assert current is not None
+            source_stage = None
+            while arguments.startswith("--"):
+                option, arguments = arguments.split(maxsplit=1)
+                if option.startswith("--from="):
+                    source_stage = shlex.split(option.split("=", 1)[1])[0]
+            if source_stage is not None:
+                assert "$" not in source_stage, "Resolve dynamic COPY stages in this coverage test"
+                dependencies[current].add(source_stage)
+                continue
+            tokens = json.loads(arguments) if arguments.startswith("[") else shlex.split(arguments)
+            assert len(tokens) >= 2
+            stages[current].update(tokens[:-1])
+
+    assert target in stages
+    pending, visited, inputs = [target], set(), set()
+    while pending:
+        stage = aliases.get(pending.pop())
+        if stage is None or stage in visited:
+            continue
+        visited.add(stage)
+        inputs.update(stages[stage])
+        pending.extend(dependencies[stage])
+    return inputs
+
+
+def test_path_filters_exactly_cover_the_target_copy_dependency_closure():
+    build = next(step for step in JOB["steps"] if step.get("id") == "image")["with"]
+    dockerfile = ROOT / build["file"]
+    inputs = _copied_inputs(dockerfile.read_text(), build["target"])
+    expected = {
+        ".github/workflows/devcontainer.yml",
+        ".devcontainer/devcontainer.json",
+        ".dockerignore",
+        dockerfile.relative_to(ROOT).as_posix(),
+    }
+    for source in inputs:
+        path = ROOT / source
+        assert path.exists(), f"Resolve COPY source {source!r} in the path coverage test"
+        expected.add(source.rstrip("/") + "/**" if path.is_dir() else source)
+    specific_ignore = dockerfile.with_name(dockerfile.name + ".dockerignore")
+    if specific_ignore.exists():
+        expected.add(specific_ignore.relative_to(ROOT).as_posix())
+    triggers = WORKFLOW.get("on", WORKFLOW.get(True))
+    assert set(triggers["push"]["paths"]) == expected
+    assert set(triggers["pull_request"]["paths"]) == expected
+    assert triggers["release"] == {"types": ["published"]}
+
+
+def test_copy_closure_follows_inheritance_and_copy_from_but_not_unrelated_stages():
+    assert _copied_inputs(
+        """
+        FROM ubuntu AS copied
+        COPY ["copied.py", "/tools/"]
+        FROM ubuntu AS unrelated
+        COPY android.py /tools/
+        FROM ubuntu AS base
+        COPY tools/ /tools/
+        FROM base AS devcontainer
+        COPY --from=copied /tools/ /tools/
+        COPY --from=registry/image:version /binary /usr/bin/
+        COPY install.py \\
+            config.json /setup/
+        """,
+        "devcontainer",
+    ) == {"copied.py", "tools/", "install.py", "config.json"}
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "docs/en/qgc-dev-guide/getting_started/container.md",
+        "tools/tests/test_install_analysis.py",
+        ".github/scripts/tests/test_devcontainer_workflow.py",
+        "src/Vehicle/Vehicle.cc",
+        "tools/analyze.py",
+        "tools/setup/setup_vscode.py",
+        "deploy/docker/install_sysroot_aarch64.py",
+        "deploy/docker/run_docker.py",
+    ],
+)
+def test_non_image_changes_do_not_trigger_latest(path):
+    triggers = WORKFLOW.get("on", WORKFLOW.get(True))
+    assert not any(fnmatchcase(path, pattern) for pattern in triggers["push"]["paths"])
 
 
 def test_published_identity_supports_version_and_digest_pins():
@@ -135,7 +250,7 @@ MOCK_GH = """
 gh() {
   if [[ "${MOCK_API_FAILURE:-false}" == true ]]; then return 1; fi
   case "$1" in
-    api) printf '%s\\n' "$MOCK_MASTER_SHA" ;;
+    api) printf '%s\\n' "$MOCK_LATEST_INPUT_SHA" ;;
     release) printf '%s\\n' "$MOCK_STABLE_TAG" ;;
     *) return 2 ;;
   esac
@@ -148,7 +263,8 @@ gh() {
     ("overrides", "expected"),
     [
         ({"EVENT_NAME": "push"}, LATEST),
-        ({"EVENT_NAME": "push", "MOCK_MASTER_SHA": "b" * 40}, VALIDATION),
+        ({"EVENT_NAME": "push", "MOCK_LATEST_INPUT_SHA": "b" * 40}, VALIDATION),
+        ({"EVENT_NAME": "push", "MOCK_LATEST_INPUT_SHA": ""}, None),
         ({"EVENT_NAME": "push", "GITHUB_REF": "refs/heads/feature"}, VALIDATION),
         ({"EVENT_NAME": "push", "GITHUB_REPOSITORY": "fork/qgroundcontrol"}, VALIDATION),
         ({"EVENT_NAME": "pull_request", "RELEASE_TAG": "v5.1.4"}, VALIDATION),
@@ -173,7 +289,7 @@ def test_publication_identity_never_substitutes_master_for_release(tmp_path, ove
             "GITHUB_REF": "refs/heads/master",
             "RELEASE_TAG": "",
             "GITHUB_OUTPUT": str(output),
-            "MOCK_MASTER_SHA": SHA,
+            "MOCK_LATEST_INPUT_SHA": SHA,
             "MOCK_STABLE_TAG": "v5.1.4",
             **overrides,
         },
