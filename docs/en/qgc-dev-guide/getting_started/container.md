@@ -79,37 +79,39 @@ Depending on your system resources, or the resources assigned to your Docker Dae
 
 ## Development Container
 
-QGC has one default development container: the `devcontainer` target in
+The existing "QGroundControl Dev" environment uses the `devcontainer` target in
 `deploy/docker/Dockerfile`. Both `.devcontainer/devcontainer.json` and image publication
 build that same target and `linux/amd64` platform. It includes Clang,
 clang-tidy, clang-scan-deps, clangd, and Clazy built against the same LLVM.
 `.github/build-config.json` supplies the LLVM major version, checksum-verified Clazy
 revision, and Qt version used by CI. The image build uses `deploy/docker/install_analysis.py`;
 ccache uses the pinned, signature-verified release from `.github/scripts/ccache_helper.py`.
-Existing application builder images are unchanged.
+Prebuilt publication uses the existing `ghcr.io/mavlink/qgroundcontrol` package.
+Its `:linux` and other distro builder tags and application consumers are unchanged;
+this publishes the existing local development container, not a new container definition.
 
 The dedicated QGC Development Image workflow (`devcontainer.yml`) publishes this same
 default container in its own build pipeline:
 
-- Upstream master pushes that change image inputs publish `ghcr.io/mavlink/qgroundcontrol-dev:latest`.
+- Upstream master pushes that change image inputs publish `ghcr.io/mavlink/qgroundcontrol:latest`.
   Inputs include the Dockerfile, copied installers/helpers, shared configuration, Python locks,
   default devcontainer configuration, and publication workflow. Source-only, test-only, and
   documentation-only changes outside copied image inputs do not rebuild it.
   New input-changing pushes cancel older builds; unrelated master commits do not suppress them.
-- Published stable QGC releases publish `ghcr.io/mavlink/qgroundcontrol-dev:<QGC-release-tag>`
+- Published stable QGC releases publish `ghcr.io/mavlink/qgroundcontrol:<QGC-release-tag>`
   from the released tag's source and configuration, not current master.
-  For example, release `v5.1.4` maps to `ghcr.io/mavlink/qgroundcontrol-dev:v5.1.4`.
+  For example, release `v5.1.4` maps to `ghcr.io/mavlink/qgroundcontrol:v5.1.4`.
   Drafts and prereleases are excluded. Stable publication never updates `latest`.
 
 The release workflow dispatches the same image pipeline for releases created with
 `GITHUB_TOKEN`, which do not generate downstream release events.
 The publication summary provides
-`ghcr.io/mavlink/qgroundcontrol-dev@sha256:<digest>` for immutable pinning.
+`ghcr.io/mavlink/qgroundcontrol@sha256:<digest>` for immutable pinning.
 
 Relevant pull requests and ordinary manual dispatches validate without publishing.
 To publish or retry an existing stable release's image, manually dispatch with `release_tag`;
 the workflow verifies that it is a published, non-prerelease QGC release before building.
-There is no separate container version counter or Docker Hub mirror.
+The devcontainer has no separate version counter or Docker Hub mirror.
 No application or analysis workflows consume it yet;
 future analysis jobs can pin this same development image instead of maintaining
 a separate environment.

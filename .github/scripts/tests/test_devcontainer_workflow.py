@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 import yaml
+from docker_helper import resolve_push_target
 
 ROOT = Path(__file__).resolve().parents[3]
 WORKFLOW = yaml.safe_load((ROOT / ".github/workflows/devcontainer.yml").read_text())
@@ -163,14 +164,17 @@ def test_non_image_changes_do_not_trigger_latest(path):
 def test_published_identity_supports_version_and_digest_pins():
     metadata = next(step for step in JOB["steps"] if step.get("id") == "meta")
     assert metadata["with"]["context"] == "git"
-    assert metadata["with"]["images"] == "ghcr.io/mavlink/qgroundcontrol-dev"
+    assert metadata["with"]["images"] == "ghcr.io/mavlink/qgroundcontrol"
+    assert metadata["with"]["images"] == resolve_push_target(
+        "push", "mavlink/qgroundcontrol", "refs/heads/master"
+    )
     assert metadata["with"]["flavor"] == "latest=false"
     assert metadata["with"]["tags"].splitlines() == [
         "type=raw,value=${{ steps.publication.outputs.tag }}",
     ]
     summary = JOB["steps"][-1]
     assert summary["env"]["IMAGE_DIGEST"] == "${{ steps.image.outputs.digest }}"
-    assert "ghcr.io/mavlink/qgroundcontrol-dev@%s" in summary["run"]
+    assert "ghcr.io/mavlink/qgroundcontrol@%s" in summary["run"]
 
 
 def test_release_source_is_selected_before_checkout():
@@ -236,10 +240,26 @@ def test_no_workflow_job_consumes_the_development_image():
         for job in workflow.get("jobs", {}).values():
             container = str(job.get("container", ""))
             assert "devcontainer" not in container
-            assert "qgroundcontrol-dev" not in container
+            assert not re.search(r"ghcr\.io/mavlink/qgroundcontrol:(?:latest|v\d)", container)
     application = (ROOT / ".github/workflows/docker.yml").read_text()
     assert "devcontainer" not in application
-    assert "qgroundcontrol-dev" not in application
+    assert not re.search(r"ghcr\.io/mavlink/qgroundcontrol:(?:latest|v\d)", application)
+
+
+def test_existing_builder_tags_remain_separate_from_development_tags():
+    variants = json.loads((ROOT / "deploy/docker/variants.json").read_text())["variants"]
+    assert all(variant["target"] != "devcontainer" for variant in variants)
+    assert all(
+        variant["ci_variant"] != "latest" and not re.match(r"v\d", variant["ci_variant"])
+        for variant in variants
+    )
+    builder = yaml.safe_load((ROOT / ".github/actions/docker/action.yml").read_text())
+    metadata = next(step for step in builder["runs"]["steps"] if step.get("id") == "meta")["with"]
+    assert metadata["flavor"] == "latest=false"
+    assert metadata["tags"].splitlines() == [
+        "type=raw,value=${{ inputs.variant }}",
+        "type=sha,prefix=${{ inputs.variant }}-,format=short,enable=${{ inputs.push-image != '' }}",
+    ]
 
 
 SHA = "a" * 40

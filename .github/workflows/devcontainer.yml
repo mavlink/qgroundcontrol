@@ -143,7 +143,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           context: git
-          images: ghcr.io/mavlink/qgroundcontrol-dev
+          images: ghcr.io/mavlink/qgroundcontrol
           flavor: latest=false
           tags: |
             type=raw,value=${{ steps.publication.outputs.tag }}
@@ -172,5 +172,5 @@ jobs:
           IMAGE_VERSION: ${{ steps.publication.outputs.tag }}
           IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
         run: |
-          printf 'Image: ghcr.io/mavlink/qgroundcontrol-dev:%s\n\nDigest pin: ghcr.io/mavlink/qgroundcontrol-dev@%s\n' \
+          printf 'Image: ghcr.io/mavlink/qgroundcontrol:%s\n\nDigest pin: ghcr.io/mavlink/qgroundcontrol@%s\n' \
             "$IMAGE_VERSION" "$IMAGE_DIGEST" >> "$GITHUB_STEP_SUMMARY"
