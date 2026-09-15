@@ -217,3 +217,22 @@ def test_manual_analysis_preserves_full_scan_and_path_modes(checkout, path):
     assert ("--all" in args) is (not path)
     if path:
         assert path in args
+
+
+@pytest.mark.parametrize("exit_code", [1, 2])
+def test_analyzer_failures_are_not_hidden_by_tee(checkout, exit_code):
+    root, env = checkout
+    assert WORKFLOW["jobs"]["analyze"]["defaults"]["run"]["shell"] == "bash"
+    (root / "bin/python3").write_text(
+        f"#!{sys.executable}\nimport sys\nprint('analysis failed')\nsys.exit({exit_code})\n"
+    )
+    result = subprocess.run(
+        ["bash", "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", SCRIPT],
+        cwd=root,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == exit_code
+    assert "analysis failed" in (root / "build/analysis-output.txt").read_text()
