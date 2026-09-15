@@ -11,7 +11,7 @@ services:
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile
-      target: linux-analysis
+      target: linux
     image: qgc-ubuntu-docker
     user: "${QGC_UID:-1000}:${QGC_GID:-1000}"
     environment:

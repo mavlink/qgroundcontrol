@@ -8,7 +8,7 @@ outputs:
 
 inputs:
   target:
-    description: Dockerfile build stage to target (linux, linux-analysis, linux-cross, android)
+    description: Dockerfile build stage to target (linux, linux-cross, android)
     required: false
     default: 'linux'
   variant:
@@ -88,7 +88,7 @@ runs:
 
     - name: Build Docker image
       id: build
-      if: contains(fromJSON('["linux", "linux-analysis", "linux-cross", "android"]'), inputs.target)
+      if: contains(fromJSON('["linux", "linux-cross", "android"]'), inputs.target)
       uses: docker/build-push-action@v7
       with:
         context: .

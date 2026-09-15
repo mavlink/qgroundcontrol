@@ -27,7 +27,7 @@ if you want to Build using the container manually, then you first have to build 
 You can accomplish this using docker, running the following script from the root of the QGC source code directory.
 
 ```sh
-docker build --target linux-analysis --file ./deploy/docker/Dockerfile -t qgc-ubuntu-docker .
+docker build --target linux --file ./deploy/docker/Dockerfile -t qgc-ubuntu-docker .
 ```
 
 ::: info
@@ -39,7 +39,7 @@ Keep in mind this is tagging the image for later reference since you can have mu
 If building on a Mac computer with an M1 chip you must also specify the build option `--platform linux/x86_64` as shown:
 
 ```sh
-docker build --platform linux/amd64 --target linux-analysis --file ./deploy/docker/Dockerfile -t qgc-ubuntu-docker .
+docker build --platform linux/x86_64 --target linux --file ./deploy/docker/Dockerfile -t qgc-ubuntu-docker .
 ```
 
 Otherwise you will get a build error like:
@@ -77,29 +77,32 @@ docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-ubuntu-
 
 Depending on your system resources, or the resources assigned to your Docker Daemon, the build step can take some time.
 
-## Compiler Analysis and Development
+## Development Container
 
-The Ubuntu 24.04 builder (`linux-analysis`) and VS Code devcontainer include Clang,
+The VS Code devcontainer includes Clang,
 clang-tidy, clang-scan-deps, clangd, and Clazy built against the same LLVM.
 `.github/build-config.json` supplies the LLVM major version, checksum-verified Clazy
-revision, and Qt version. CI and the container share `tools/setup/install_analysis.py`;
+revision, and Qt version used by CI. The container uses `tools/setup/install_analysis.py`;
 ccache uses the pinned, signature-verified release from `.github/scripts/ccache_helper.py`.
-Other distro, cross-compilation, and Android images do not install this analysis toolchain.
+Existing application builder images are unchanged.
 
-The existing Docker workflow publishes the Ubuntu builder as
-`ghcr.io/mavlink/qgroundcontrol:linux` on master and Stable pushes, with a
-`linux-<short-commit>` tag for each publication. Consumers should pin an image digest.
-The analysis workflow still installs its tools on the runner; it does not yet consume this image.
-Building the `linux-analysis` or `devcontainer` target only builds tooling, not QGC.
+The Docker workflow builds the local `devcontainer` stage, which inherits the
+`linux-analysis` tooling stage. It publishes the image to
+`ghcr.io/mavlink/qgroundcontrol:devcontainer` and
+`ghcr.io/mavlink/qgroundcontrol:devcontainer-<full-commit-SHA>` on upstream master pushes.
+Pull requests and manual dispatches build without publishing. Stable branches and release
+tags do not publish this image, and it is never published to Docker Hub.
+No application or analysis workflows consume this image yet.
+Its build/publication job builds only tooling, not QGC.
 
 Qt, Python, and analysis executables are on `PATH` for non-login shells and non-root users.
 Image builds check tool versions, Clazy's LLVM linkage, and compiler startup.
-To open a shell instead of the application's build entrypoint:
+To build and open a development shell locally:
 
 ```sh
-docker run --rm -it --entrypoint /bin/bash \
-  --user "$(id -u):$(id -g)" -v "$PWD:/project/source" \
-  -w /project/source qgc-ubuntu-docker
+docker build --platform linux/amd64 --target devcontainer \
+  -f deploy/docker/Dockerfile -t qgc-devcontainer .
+docker run --rm -it -v "$PWD:/workspaces/qgroundcontrol" qgc-devcontainer
 ```
 
 After configuring a compilation database and generating headers and autogen targets

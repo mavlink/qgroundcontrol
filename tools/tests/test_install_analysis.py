@@ -1,4 +1,4 @@
-"""Regression tests for the shared container/CI analysis installer."""
+"""Regression tests for the container analysis installer."""
 
 from __future__ import annotations
 
@@ -99,12 +99,12 @@ def test_verify_runs_compiler_smoke(monkeypatch):
     assert run.call_args.kwargs["check"]
 
 
-def test_devcontainer_inherits_published_ubuntu_analysis_stage():
+def test_devcontainer_adds_analysis_without_retargeting_application_builders():
     root = Path(__file__).resolve().parents[2]
     dockerfile = (root / "deploy/docker/Dockerfile").read_text()
     variants = json.loads((root / "deploy/docker/variants.json").read_text())["variants"]
-    assert next(v for v in variants if v["id"] == "ubuntu")["target"] == "linux-analysis"
-    assert all(v["target"] != "linux-analysis" for v in variants if v["id"] != "ubuntu")
+    assert next(v for v in variants if v["id"] == "ubuntu")["target"] == "linux"
+    assert all(v["target"] not in {"linux-analysis", "devcontainer"} for v in variants)
     assert "FROM linux-analysis AS devcontainer" in dockerfile
     assert (
         'ENV PATH="/opt/qgc-venv/bin:/opt/clazy/bin:/opt/llvm/bin:/opt/qt/bin:${PATH}"'

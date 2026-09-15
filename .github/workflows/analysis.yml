@@ -102,13 +102,19 @@ jobs:
           for key in llvm_version clazy_revision clazy_sha256; do
             echo "$key=$(python3 tools/setup/read_config.py --get "analysis.$key")" >> "$GITHUB_OUTPUT"
           done
-          echo "packages=$(python3 tools/setup/install_analysis.py --print-packages)" >> "$GITHUB_OUTPUT"
 
       - name: Install analysis dependencies
         if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)
         uses: ./.github/actions/install-dependencies
         with:
-          extra-packages: ${{ steps.toolchain.outputs.packages }}
+          extra-packages: >-
+            clang-${{ steps.toolchain.outputs.llvm_version }}
+            clang-tidy-${{ steps.toolchain.outputs.llvm_version }}
+            clang-tools-${{ steps.toolchain.outputs.llvm_version }}
+            llvm-${{ steps.toolchain.outputs.llvm_version }}-dev
+            libclang-${{ steps.toolchain.outputs.llvm_version }}-dev
+            libclang-cpp${{ steps.toolchain.outputs.llvm_version }}-dev
+            iwyu ninja-build
 
       # Ubuntu's Clazy links LLVM 15; build it against the configured compiler instead.
       - name: Cache matching Clazy
@@ -121,10 +127,22 @@ jobs:
 
       - name: Build matching Clazy
         if: matrix.tool == 'clazy' && steps.clazy-cache.outputs.cache-hit != 'true'
-        run: >-
-          python3 tools/setup/install_analysis.py
-          --prefix "$GITHUB_WORKSPACE/.cache/clazy"
-          --work-dir "$GITHUB_WORKSPACE/.cache/clazy-build"
+        env:
+          LLVM_VERSION: ${{ steps.toolchain.outputs.llvm_version }}
+          CLAZY_REVISION: ${{ steps.toolchain.outputs.clazy_revision }}
+          CLAZY_SHA256: ${{ steps.toolchain.outputs.clazy_sha256 }}
+        run: |
+          curl --fail --location --retry 3 "https://github.com/KDE/clazy/archive/${CLAZY_REVISION}.tar.gz" -o "$RUNNER_TEMP/clazy.tar.gz"
+          echo "$CLAZY_SHA256  $RUNNER_TEMP/clazy.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/clazy-src"
+          tar -xzf "$RUNNER_TEMP/clazy.tar.gz" -C "$RUNNER_TEMP/clazy-src" --strip-components=1
+          cmake -S "$RUNNER_TEMP/clazy-src" -B "$RUNNER_TEMP/clazy-build" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER="/usr/bin/clang-$LLVM_VERSION" \
+            -DCMAKE_CXX_COMPILER="/usr/bin/clang++-$LLVM_VERSION" -DCMAKE_PREFIX_PATH="/usr/lib/llvm-$LLVM_VERSION" \
+            -DLLVM_CONFIG_EXECUTABLE="/usr/lib/llvm-$LLVM_VERSION/bin/llvm-config" \
+            -DCLAZY_LINK_CLANG_DYLIB=ON -DCLAZY_MAN_PAGE=OFF -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/.cache/clazy"
+          cmake --build "$RUNNER_TEMP/clazy-build" --target clazy-standalone --parallel "$(nproc)"
+          cmake --install "$RUNNER_TEMP/clazy-build"
 
       - name: Select analysis executables
         if: contains(fromJSON('["clazy", "clang-tidy", "iwyu", "qmllint"]'), matrix.tool)

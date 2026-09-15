@@ -79,7 +79,7 @@ def test_plan_builds_pull_request_filters_by_changes():
     assert plan["matrix"]["include"] == [
         {
             "platform": "Linux-Ubuntu-24.04",
-            "target": "linux-analysis",
+            "target": "linux",
             "variant": "linux",
             "build_args": "",
             "fuse": True,
@@ -173,12 +173,11 @@ def test_artifact_patterns_exclude_packaging_tools_and_staging_copies():
     assert artifact["Android"] == "android-build/QGroundControl.apk"
 
 
-def test_only_2404_adds_analysis_with_distinct_cache_variant():
+def test_2204_reuses_linux_target_with_distinct_cache_variant():
     include = plan_builds("push", linux_changed=False, android_changed=False)["matrix"]["include"]
     by_platform = {e["platform"]: e for e in include}
     u2404, u2204 = by_platform["Linux-Ubuntu-24.04"], by_platform["Linux-Ubuntu-22.04"]
-    assert u2404["target"] == "linux-analysis"
-    assert u2204["target"] == "linux"
+    assert u2404["target"] == u2204["target"]
     assert u2404["variant"] != u2204["variant"]
     assert "ubuntu:22.04" in u2204["build_args"]
     assert u2404["build_args"] == ""
@@ -267,8 +266,6 @@ def test_application_pr_uses_representative_docker_variants():
         ["deploy/docker/Dockerfile"],
         ["cmake/CPack.cmake"],
         [".github/build-config.json"],
-        [".github/scripts/ccache_helper.py"],
-        ["tools/setup/install_analysis.py"],
         ["tools/setup/install_dependencies/_debian.py"],
         ["src/Vehicle/CMakeLists.txt"],
         [".github/actions/docker/action.yml"],
