@@ -78,7 +78,8 @@ def test_no_workflow_job_consumes_the_analysis_image():
 @pytest.mark.parametrize(
     ("publish", "tag", "merged", "expected"),
     [
-        ("true", "analysis-image-v1.2.3", True, "1.2.3"),
+        ("true", "analysis-image-v1.0.0", True, "v1.0.0"),
+        ("true", "analysis-image-v1.2.3", True, "v1.2.3"),
         ("true", "v1.2.3", True, None),
         ("true", "analysis-image-vlatest", True, None),
         ("true", "analysis-image-v1.2.3", False, None),

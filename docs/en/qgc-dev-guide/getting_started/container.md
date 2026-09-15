@@ -90,9 +90,9 @@ The dedicated Analysis Image workflow (`analysis-image.yml`) builds the local
 `devcontainer` stage, which inherits `linux-analysis`. It is independent of application
 builds and releases. After merging, push a new `analysis-image-vMAJOR.MINOR.PATCH` Git tag
 on a commit reachable from master to publish
-`ghcr.io/mavlink/qgroundcontrol-analysis:MAJOR.MINOR.PATCH` and
+`ghcr.io/mavlink/qgroundcontrol-analysis:vMAJOR.MINOR.PATCH` and
 `ghcr.io/mavlink/qgroundcontrol-analysis:sha-<full-commit-SHA>`.
-For example, `analysis-image-v1.0.0` publishes `ghcr.io/mavlink/qgroundcontrol-analysis:1.0.0`.
+For example, `analysis-image-v1.0.0` publishes `ghcr.io/mavlink/qgroundcontrol-analysis:v1.0.0`.
 Never reuse an image version tag. The publication summary also provides
 `ghcr.io/mavlink/qgroundcontrol-analysis@sha256:<digest>` for immutable pinning.
 

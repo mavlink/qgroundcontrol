@@ -76,7 +76,7 @@ jobs:
               echo "::error::Expected an analysis-image-vMAJOR.MINOR.PATCH tag"
               exit 1
             fi
-            version="${BASH_REMATCH[1]}"
+            version="v${BASH_REMATCH[1]}"
             if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/master; then
               echo "::error::Image release tags must point to a commit already on master"
               exit 1
