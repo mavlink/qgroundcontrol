@@ -109,8 +109,8 @@ docker buildx bake -f deploy/docker/docker-bake.hcl qgc-dev \
 docker run --rm -it -v "$PWD:/workspaces/qgroundcontrol" qgc-dev:local
 ```
 
-For a full native Linux QGC build, initialize the checkout's submodules, make its
-build directory writable by the container user, and run the existing recipes:
+For a full native Linux QGC build, initialize the checkout's submodules, make the
+checkout and build directory writable by the container user, and run the existing recipes:
 
 ```sh
 git submodule update --init --recursive

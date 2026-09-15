@@ -39,7 +39,7 @@ on:
         type: string
 
 concurrency:
-  group: qgc-dev-${{ inputs.release_tag || github.event.release.tag_name || github.ref }}
+  group: qgc-dev-${{ inputs.release_tag || github.event.release.tag_name || format('{0}-{1}', github.event_name, github.ref) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -98,10 +98,10 @@ jobs:
       - name: Native amd64 QGC acceptance build
         if: matrix.platform == 'linux/amd64'
         run: |
-          mkdir -p build
-          chmod a+rwx build
-          docker run --rm --volume "$PWD:/workspaces/qgroundcontrol" qgc-dev:local \
-            bash -c 'git config --global --add safe.directory /workspaces/qgroundcontrol &&
+          docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp/qgc-home \
+            --volume "$PWD:/workspaces/qgroundcontrol" qgc-dev:local \
+            bash -c 'mkdir -p "$HOME" &&
+              git config --global --add safe.directory /workspaces/qgroundcontrol &&
               just release && file build/Release/QGroundControl'
 
   build-digests:

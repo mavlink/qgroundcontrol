@@ -26,7 +26,6 @@ runs:
           *) echo "::error::qgc-dev requires a native builder"; exit 1 ;;
         esac
     - name: Enable RunsOn Magic Cache
-      if: github.repository_owner == 'mavlink'
       uses: runs-on/action@v2
       with:
         metrics: cpu,network,memory,disk,io
@@ -38,6 +37,7 @@ runs:
       env:
         SOURCE_REVISION: ${{ inputs.revision }}
       with:
+        source: .
         files: deploy/docker/docker-bake.hcl
         targets: qgc-dev
         load: ${{ inputs.publish != 'true' }}
@@ -46,7 +46,7 @@ runs:
         set: |
           qgc-dev.platform=${{ inputs.platform }}
           qgc-dev.cache-from=type=gha,version=2,scope=qgc-dev-${{ inputs.scope }}
-          ${{ github.event_name != 'pull_request' && format('qgc-dev.cache-to=type=gha,version=2,scope=qgc-dev-{0},mode=max', inputs.scope) || '' }}
+          qgc-dev.cache-to=type=gha,version=2,scope=qgc-dev-${{ inputs.scope }},mode=max
           ${{ inputs.publish == 'true' && 'qgc-dev.tags=ghcr.io/mavlink/qgc-dev' || '' }}
           ${{ inputs.publish == 'true' && 'qgc-dev.output=type=image,push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true' || '' }}
     - name: Smoke exact native image

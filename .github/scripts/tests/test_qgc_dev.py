@@ -29,6 +29,10 @@ def test_triggers_cover_only_image_input_closure():
         WORKFLOW["concurrency"]["cancel-in-progress"]
         == "${{ github.event_name == 'pull_request' }}"
     )
+    assert WORKFLOW["concurrency"]["group"] == (
+        "qgc-dev-${{ inputs.release_tag || github.event.release.tag_name || "
+        "format('{0}-{1}', github.event_name, github.ref) }}"
+    )
 
 
 @pytest.mark.parametrize(
@@ -66,11 +70,29 @@ def test_read_only_validation_and_digest_promotion_are_separate():
     steps = action["runs"]["steps"]
     uses = [step.get("uses", "") for step in steps]
     assert uses.index("runs-on/action@v2") < uses.index("docker/setup-buildx-action@v4")
+    magic_cache = next(step for step in steps if step.get("uses") == "runs-on/action@v2")
+    assert "if" not in magic_cache
     bake = next(step for step in steps if step.get("id") == "bake")
+    assert bake["with"]["source"] == "."
     assert bake["with"]["targets"] == "qgc-dev"
     assert "version=2,scope=qgc-dev-${{ inputs.scope }}" in bake["with"]["set"]
-    assert "github.event_name != 'pull_request'" in bake["with"]["set"]
+    assert (
+        "qgc-dev.cache-to=type=gha,version=2,scope=qgc-dev-${{ inputs.scope }},mode=max"
+        in bake["with"]["set"].splitlines()
+    )
     assert "push-by-digest=true" in bake["with"]["set"]
+
+
+def test_native_qgc_build_can_write_checkout_without_running_as_root():
+    acceptance = next(
+        step
+        for step in WORKFLOW["jobs"]["validate"]["steps"]
+        if step.get("name") == "Native amd64 QGC acceptance build"
+    )
+    assert '--user "$(id -u):$(id -g)"' in acceptance["run"]
+    assert "--env HOME=/tmp/qgc-home" in acceptance["run"]
+    assert 'mkdir -p "$HOME"' in acceptance["run"]
+    assert "just release && file build/Release/QGroundControl" in acceptance["run"]
 
 
 def test_release_hook_and_application_consumers_are_unchanged():
@@ -83,6 +105,16 @@ def test_release_hook_and_application_consumers_are_unchanged():
         assert "qgc-dev" not in (ROOT / ".github/workflows" / name).read_text()
     dev = json.loads((ROOT / ".devcontainer/devcontainer.json").read_text())
     assert dev["name"] == dev["build"]["target"] == "qgc-dev"
+
+
+def test_ci_script_checkout_includes_the_devcontainer_definition():
+    ci = yaml.safe_load((ROOT / ".github/workflows/ci-scripts.yml").read_text())
+    checkout = next(
+        step
+        for step in ci["jobs"]["test-ci-scripts"]["steps"]
+        if step.get("uses", "").startswith("actions/checkout@")
+    )
+    assert ".devcontainer" in checkout["with"]["sparse-checkout"].splitlines()
 
 
 @pytest.mark.skipif(not shutil.which("docker"), reason="Docker Buildx not installed")
