@@ -73,6 +73,7 @@ uploaded separately. The master-only continuous build still publishes fuzzer bin
 | `check-links.yml` | Markdown link validation |
 | `ci-scripts.yml` | Lints workflows, validates runner images, and runs the CI Python script tests (see [Tests](#tests)) |
 | `analysis.yml` | Static analysis |
+| `analysis-review.yml` | Trusted inline COMMENT reviews from Code Analysis PR artifacts |
 | `codeql.yml` | CodeQL security scanning |
 | `pr-checks.yml` | PR validation checks |
 | `release.yml` | Release automation |
@@ -349,25 +350,38 @@ uv run --project tools --group scripts --group test pytest -q tools/tests .githu
 
 ## Validation tiers and build identity
 
+Code Analysis exports up to 50 changed-line findings per compiler tool from the existing
+analysis pass, including fork PRs. `analysis-review.yml` downloads only that run/attempt's
+JSON artifact and validates its identity against live GitHub run, PR, head SHA, and diff data.
+It checks out only trusted default-branch reporting code, posts COMMENT reviews, and suppresses
+replayed reviews and findings already posted on the same head. Existing reviews are never dismissed
+or modified. Empty results post nothing. Truncation and partial analysis
+are disclosed with links to full raw logs. Missing GitHub patch data is not eligible for inline comments.
+The poster starts working only after its workflow and scripts reach the default branch.
+For a read-only rehearsal, run `python .github/scripts/analysis_review_poster.py --dry-run`
+with a saved `workflow_run` payload in `GITHUB_EVENT_PATH`, `GITHUB_EVENT_NAME=workflow_run`,
+the upstream `GITHUB_REPOSITORY`, and a read-only `GH_TOKEN`.
+
 - `pre-commit.yml` enforces fast hooks on changed files against the event's base SHA.
   The C++ formatting hook checks modified regions against the PR merge base (or `HEAD` locally),
   following `CODING_STYLE.md`. New files and unchanged files supplied in a full sweep are checked in full.
   Compiler-aware Clazy and clang-tidy hooks are manual locally; `analysis.yml` generates
-  prerequisites and runs one Clazy job and four clang-tidy shards for relevant PRs.
-  Shards divide the selected compilation units after header dependency expansion; they retain
-  every enabled check and report errors independently. This reduces elapsed scan time at the
-  cost of three additional runner setups. Only the first shard saves the shared build caches.
+  prerequisites and runs one job per tool for relevant PRs. Upstream clang-tidy uses the
+  16-vCPU RunsOn runner; Clazy uses the smaller tester pool. Both initialize Magic Cache
+  and use all available CPUs for analysis and prerequisite builds.
   Manual dispatch runs one job for the selected tool; Code Analysis has no scheduled trigger.
   Compiler analysis uses Ninja,
   disables PCH and autogen's inherited link dependencies, and builds protocol headers
   (`qgc-analysis-headers`) before Qt's global `autogen` target. It does not compile or
   link QGC. Clazy is built and cached against the same LLVM version as Clang and clang-tidy;
   `.github/build-config.json` pins LLVM and the verified Clazy source revision. Runtime
-  sanitizers and build-aware QML analysis retain full builds. Source-only PRs scan changed
-  compilation units active in the build. Header changes use a fresh `clang-scan-deps`
+  sanitizers and build-aware QML analysis retain full builds. PRs scan changed
+  compilation units active in the build and report ordinary findings only on changed lines.
+  Compiler and tool errors remain visible regardless of their location.
+  Header changes use a fresh `clang-scan-deps`
   preprocessing scan to include transitive dependents, falling back to all active project
-  sources if the scanner is unavailable or incomplete. Analysis/build configuration changes
-  scan all active project compilation units. Each tool uploads per-file
+  sources if the scanner is unavailable or incomplete. Configuration-only PRs do not trigger
+  a full source scan; use manual dispatch with `analyze_all` for a full analysis. Each tool uploads per-file
   durations in `*-timings.json` and reports completed files immediately. Identical diagnostic
   blocks are shown once; `*-raw.txt` retains every translation unit's full output, including
   notes and compiler errors. Clang-tidy per-check instrumentation is disabled by default because

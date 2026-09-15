@@ -189,11 +189,16 @@ and `just analyze`.
 ./tools/analyze.py --tool clang-format --all    # Check formatting (all files)
 ./tools/analyze.py --tool cppcheck              # Use cppcheck instead of clang-tidy
 ./tools/analyze.py src/Vehicle/                 # Analyze specific directory
+./tools/analyze.py --tool clang-tidy --diff-base origin/master  # Changed-code PR analysis
 ./tools/analyze.py --tool clang-tidy --all --shard 1 --shard-count 4  # One of four disjoint partitions
 ./tools/analyze.py --tool clang-tidy --profile-checks src/Vehicle/Vehicle.cc  # Slower per-check profiling
 ```
 
 Other `--tool` choices: `clazy`, `qmllint`, `vehicle-null-check`, `qt-translate-noop-check`.
+
+For clang-tidy and Clazy, `--diff-base REF` selects changed files and reports recognized warnings
+only on added or modified lines. Affected translation units are still parsed in full; errors and
+raw diagnostic logs are preserved. This mode cannot be combined with `--all` or explicit paths.
 
 ### clean.py
 
