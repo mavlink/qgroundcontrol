@@ -6,6 +6,7 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QSaveFile>
 #include <QtCore/QStandardPaths>
 #include <QtNetwork/QNetworkAccessManager>
 
@@ -131,9 +132,11 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
         return false;
     }
 
-    // Open output file for streaming write
-    _outputFile = new QFile(_localPath, this);
-    if (!_outputFile->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+    // Open output file for streaming write. QSaveFile writes to a temporary and only
+    // replaces _localPath on commit(), so a download that fails cannot destroy an
+    // existing file there.
+    _outputFile = new QSaveFile(_localPath, this);
+    if (!_outputFile->open(QIODevice::WriteOnly)) {
         _setErrorString(tr("Cannot open output file: %1").arg(_outputFile->errorString()));
         delete _outputFile;
         _outputFile = nullptr;
@@ -152,7 +155,6 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
     if (_currentReply == nullptr) {
         qCWarning(QGCFileDownloadLog) << "QNetworkAccessManager::get failed";
         _setErrorString(tr("Failed to start download"));
-        _outputFile->close();
         delete _outputFile;
         _outputFile = nullptr;
         return false;
@@ -248,25 +250,20 @@ void QGCFileDownload::_onDownloadFinished()
 
     _lastResultFromCache = reply->attribute(QNetworkRequest::SourceIsFromCacheAttribute).toBool();
 
-    // Close output file
+    // Write any remaining data, but leave the file uncommitted: nothing replaces
+    // _localPath until the reply below is known good.
     if (_outputFile != nullptr) {
-        // Write any remaining data
         const QByteArray remaining = reply->readAll();
         if (!_writeReplyData(remaining)) {
-            _outputFile->close();
-            delete _outputFile;
-            _outputFile = nullptr;
             _failForWriteError(QStringLiteral("finished"));
             return;
         }
-        _outputFile->close();
-        delete _outputFile;
-        _outputFile = nullptr;
     }
 
     // Check for errors
     if (reply->error() != QNetworkReply::NoError) {
         // Error already handled in _onDownloadError
+        _cleanup();
         if (_state == State::Downloading || _state == State::Verifying) {
             _setState(State::Failed);
             _emitFinished(false, QString(), QGCNetworkHelper::errorMessage(reply));
@@ -281,11 +278,21 @@ void QGCFileDownload::_onDownloadFinished()
             const QString error = tr("HTTP error %1: %2")
                 .arg(statusCode)
                 .arg(QGCNetworkHelper::httpStatusText(statusCode));
+            _cleanup();
             _setErrorString(error);
             _setState(State::Failed);
             _emitFinished(false, QString(), error);
             return;
         }
+    }
+
+    if (_outputFile != nullptr) {
+        if (!_outputFile->commit()) {
+            _failForWriteError(QStringLiteral("commit"));
+            return;
+        }
+        delete _outputFile;
+        _outputFile = nullptr;
     }
 
     qCDebug(QGCFileDownloadLog) << "Download finished:" << _localPath
@@ -429,9 +436,7 @@ void QGCFileDownload::_cleanup()
     }
 
     if (_outputFile != nullptr) {
-        if (_outputFile->isOpen()) {
-            _outputFile->close();
-        }
+        // Destroying an uncommitted QSaveFile discards its temporary.
         delete _outputFile;
         _outputFile = nullptr;
     }
@@ -484,8 +489,10 @@ QString QGCFileDownload::_generateOutputPath(const QString &remoteUrl) const
         return _outputPath;
     }
 
-    // Extract filename from URL
-    QString fileName = QUrl(remoteUrl).fileName();
+    // Extract filename from URL. QUrl::fileName() percent-decodes the segment before
+    // splitting it on '/', so a %5C arrives as a literal '\' and is a directory separator
+    // on Windows. The remote side names the file, never the directory.
+    QString fileName = QFileInfo(QUrl(remoteUrl).fileName()).fileName();
     if (fileName.isEmpty()) {
         fileName = QStringLiteral("DownloadedFile");
     }
