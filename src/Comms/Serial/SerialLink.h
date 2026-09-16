@@ -80,6 +80,10 @@ public:
     bool usbDirect() const { return _usbDirect; }
     void setUsbDirect(bool usbDirect) { if (usbDirect != _usbDirect) { _usbDirect = usbDirect; emit usbDirectChanged(); } }
 
+    /// Port was identified as a SiK radio by USB VID/PID at auto-connect. Runtime only, not persisted.
+    bool sikRadio() const { return _sikRadio; }
+    void setSikRadio(bool sikRadio) { _sikRadio = sikRadio; }
+
     bool dtrForceLow() const { return _dtrForceLow; }
     void setdtrForceLow(bool dtrForceLow) { if (dtrForceLow != _dtrForceLow) { _dtrForceLow = dtrForceLow; emit dtrForceLowChanged(); } }
 
@@ -108,6 +112,7 @@ private:
     QString _portName;
     QString _portDisplayName;
     bool _usbDirect = false;
+    bool _sikRadio = false;
     bool _dtrForceLow = false;
 };
 
@@ -169,6 +174,7 @@ public:
 
     bool isConnected() const override;
     bool isSecureConnection() const override { return _serialConfig->usbDirect(); }
+    bool isRadioLink() const override { return _serialConfig->sikRadio() || LinkInterface::isRadioLink(); }
 
     const QSerialPort *port() const { return _worker->port(); }
 

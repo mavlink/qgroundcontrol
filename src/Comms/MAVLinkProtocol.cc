@@ -125,6 +125,10 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, const QByteArray& data)
             continue;
         }
 
+        if (message.msgid == MAVLINK_MSG_ID_RADIO_STATUS) {
+            link->reportRadioStatusReceived();
+        }
+
         // v1/v2 share per-(sysid,compid) sequence counters; counting v1 makes every v2 appear lost. Skip v1 non-heartbeats.
         // RADIO_STATUS is exempt: SiK radios always frame it as v1, so it is processed and never triggers the v1 warning.
         const bool isV1 = (status.flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1);

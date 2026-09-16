@@ -181,6 +181,14 @@ void LinkInterface::_connectionRemoved()
     }
 }
 
+void LinkInterface::reportRadioStatusReceived()
+{
+    if (!_radioStatusSeen) {
+        _radioStatusSeen = true;
+        qCDebug(LinkInterfaceLog) << "RADIO_STATUS seen, treating link as radio link:" << _config->name();
+    }
+}
+
 void LinkInterface::reportMavlinkV1Traffic()
 {
     if (_mavlinkV1TrafficReported || _mavlinkV2TrafficSeen) {

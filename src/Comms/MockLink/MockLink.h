@@ -371,6 +371,7 @@ private:
     const MockConfiguration::FailureMode_t _failureMode = MockConfiguration::FailNone;
     const bool _stayMavlinkV1 = false;  ///< Test-only: never upgrade outgoing traffic to MAVLink v2
     const bool _ftpCapability = false;  ///< Test-only: advertise MAV_PROTOCOL_CAPABILITY_FTP
+    const bool _sendRadioStatusEnabled = true; ///< Stream RADIO_STATUS at 1Hz (marks the link as a radio link)
     const uint8_t _vehicleSystemId = 0;
     const double _vehicleLatitude = 0.0;
     const double _vehicleLongitude = 0.0;

@@ -67,6 +67,7 @@ void SerialConfiguration::copyFrom(const LinkConfiguration *source)
     setPortName(serialSource->portName());
     setPortDisplayName(serialSource->portDisplayName());
     setUsbDirect(serialSource->usbDirect());
+    setSikRadio(serialSource->sikRadio());
     setdtrForceLow(serialSource->dtrForceLow());
 }
 

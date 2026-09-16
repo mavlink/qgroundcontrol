@@ -75,6 +75,12 @@ public:
     /// Number of ReadFile (non-burst) requests received since construction.
     int readFileCount() const { return _readFileCount; }
 
+    /// hdr.size of the most recent BurstReadFile request, -1 if none received yet.
+    int lastBurstReadRequestSize() const { return _lastBurstReadRequestSize; }
+
+    /// hdr.size of the most recent ReadFile request, -1 if none received yet.
+    int lastReadFileRequestSize() const { return _lastReadFileRequestSize; }
+
     /// Called to handle an FTP message
     void mavlinkMessageReceived(const mavlink_message_t &message);
 
@@ -185,6 +191,8 @@ private:
     bool _reorderBurstPacketPending = false;
     int _openFileROCount = 0;
     int _readFileCount = 0;
+    int _lastBurstReadRequestSize = -1;
+    int _lastReadFileRequestSize = -1;
     mavlink_message_t _lastReply{};
     QFile _currentFile;
     QString _paramPckTempFile;

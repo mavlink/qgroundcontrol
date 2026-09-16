@@ -146,4 +146,8 @@ void SerialAutoConnectTest::_replacementDeviceResetsConfiguration()
     QVERIFY(config);
     QCOMPARE(config->baud(), 57600);
     QVERIFY(!config->usbDirect());
+    QVERIFY(config->sikRadio());
+    auto* pixhawkConfig = qobject_cast<SerialConfiguration*>(attempts.first().get());
+    QVERIFY(pixhawkConfig);
+    QVERIFY(!pixhawkConfig->sikRadio());
 }

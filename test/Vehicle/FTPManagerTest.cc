@@ -7,6 +7,8 @@
 #include <QtTest/QTest>
 
 #include "FTPManager.h"
+#include "MAVLinkLib.h"
+#include "MAVLinkProtocol.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "UnitTest.h"
@@ -229,11 +231,11 @@ void FTPManagerTest::_testDownloadResumesAfterSessionExpiredInBurst()
 // Same expiry, but hitting the hole-filling ReadFile phase instead of a burst request.
 void FTPManagerTest::_testDownloadResumesAfterSessionExpiredInFill()
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequence(MockConfiguration::OptionNoRadioStatus);
     MockLinkFTP* mockFtp = _mockLink->mockLinkFTP();
-    // File fits in one burst; dropping one packet forces a fill phase after the burst reaches EOF
-    const int fileSize = 2000;
-    mockFtp->setDropBurstPacketOnce(239 * 3);
+    // File fits in one burst (mock bursts are 9 chunks); dropping one packet forces a fill phase after EOF
+    const int fileSize = FTPManager::kFullReadChunkSize * 9;
+    mockFtp->setDropBurstPacketOnce(FTPManager::kFullReadChunkSize * 3);
     mockFtp->setExpireSessionAfterBursts(1);
 
     QString downloadedPath;
@@ -301,15 +303,88 @@ void FTPManagerTest::_testCancelDownloadBeforeOpen()
 // re-fetched one block at a time in the fill phase.
 void FTPManagerTest::_testLateBurstPacketIsKept()
 {
-    _connectMockLinkNoInitialConnectSequence();
+    _connectMockLinkNoInitialConnectSequence(MockConfiguration::OptionNoRadioStatus);
     MockLinkFTP* mockFtp = _mockLink->mockLinkFTP();
-    mockFtp->setReorderBurstPacketOnce(239 * 3);
+    mockFtp->setReorderBurstPacketOnce(FTPManager::kFullReadChunkSize * 3);
 
     const int fileSize = 4 * 1024;
     QString downloadedPath;
     QCOMPARE(_downloadSizeFile(fileSize, &downloadedPath), QString());
     QCOMPARE(mockFtp->readFileCount(), 0);
     _verifyFileContentsAndDelete(downloadedPath, fileSize);
+    _disconnectMockLink();
+}
+
+void FTPManagerTest::_testReadChunkSizeFollowsLinkType_data()
+{
+    QTest::addColumn<MockConfiguration::Options>("options");
+    QTest::addColumn<int>("expectedChunkSize");
+    QTest::newRow("non_radio_link") << MockConfiguration::Options(MockConfiguration::OptionNoRadioStatus)
+                                     << static_cast<int>(FTPManager::kFullReadChunkSize);
+    QTest::newRow("radio_link") << MockConfiguration::Options(MockConfiguration::OptionNone)
+                                 << static_cast<int>(FTPManager::kRadioReadChunkSize);
+}
+
+// SiK/RFD radios have a ~252 byte air frame; a full 239 byte FTP payload spans two frames and is lost if either
+// is. Once RADIO_STATUS (which only radios inject) has been seen on the link, reads must ask for smaller chunks.
+// Dropping one burst packet forces the ReadFile fill phase so both request paths are checked.
+void FTPManagerTest::_testReadChunkSizeFollowsLinkType()
+{
+    QFETCH(MockConfiguration::Options, options);
+    QFETCH(int, expectedChunkSize);
+
+    _connectMockLinkNoInitialConnectSequence(options);
+    MockLinkFTP* mockFtp = _mockLink->mockLinkFTP();
+    const bool radioExpected = !options.testFlag(MockConfiguration::OptionNoRadioStatus);
+    if (radioExpected) {
+        QTRY_VERIFY_WITH_TIMEOUT(_mockLink->isRadioLink(), TestTimeout::mediumMs());
+    } else {
+        QVERIFY(!_mockLink->isRadioLink());
+    }
+    mockFtp->setDropBurstPacketOnce(expectedChunkSize * 3);
+
+    const int fileSize = 3 * 1024;
+    QString downloadedPath;
+    QCOMPARE(_downloadSizeFile(fileSize, &downloadedPath), QString());
+    QCOMPARE(mockFtp->lastBurstReadRequestSize(), expectedChunkSize);
+    QCOMPARE(mockFtp->readFileCount(), 1);
+    QCOMPARE(mockFtp->lastReadFileRequestSize(), expectedChunkSize);
+    _verifyFileContentsAndDelete(downloadedPath, fileSize);
+    _disconnectMockLink();
+}
+
+// RADIO_STATUS may first arrive after a download has started (cold connect races the radio's 1Hz report). The
+// chunk size is re-evaluated per burst request, so the download must switch to small chunks without restarting.
+void FTPManagerTest::_testReadChunkSizeShrinksWhenRadioDetectedMidDownload()
+{
+    _connectMockLinkNoInitialConnectSequence(MockConfiguration::OptionNoRadioStatus);
+    MockLinkFTP* mockFtp = _mockLink->mockLinkFTP();
+    mockFtp->setBurstReadDelayMs(20);
+
+    FTPManager* ftpManager = _vehicle->ftpManager();
+    QSignalSpy spyProgress(ftpManager, &FTPManager::commandProgress);
+    QSignalSpy spyComplete(ftpManager, &FTPManager::downloadComplete);
+    const int fileSize = 64 * 1024;
+    const QString filename = QStringLiteral("%1%2").arg(MockLinkFTP::sizeFilenamePrefix).arg(fileSize);
+    QVERIFY(ftpManager->download(MAV_COMP_ID_AUTOPILOT1, filename,
+                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
+    QVERIFY(UnitTest::waitForSignal(spyProgress, TestTimeout::longMs(), QStringLiteral("commandProgress")));
+    QCOMPARE(mockFtp->lastBurstReadRequestSize(), static_cast<int>(FTPManager::kFullReadChunkSize));
+
+    mavlink_message_t msg{};
+    (void) mavlink_msg_radio_status_pack(_mockLink->vehicleId(), MAV_COMP_ID_TELEMETRY_RADIO, &msg, 100, 100, 50, 10, 10, 0, 0);
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    const int len = mavlink_msg_to_send_buffer(buffer, &msg);
+    MAVLinkProtocol::instance()->receiveBytes(_mockLink, QByteArray(reinterpret_cast<const char*>(buffer), len));
+    QVERIFY(_mockLink->isRadioLink());
+
+    QVERIFY(UnitTest::waitForSignal(spyComplete, TestTimeout::longMs(), QStringLiteral("downloadComplete")));
+    const QList<QVariant> arguments = spyComplete.takeFirst();
+    QCOMPARE(arguments[1].toString(), QString());
+    QCOMPARE(mockFtp->lastBurstReadRequestSize(), static_cast<int>(FTPManager::kRadioReadChunkSize));
+    _verifyFileContentsAndDelete(arguments[0].toString(), fileSize);
+
+    mockFtp->setBurstReadDelayMs(0);
     _disconnectMockLink();
 }
 

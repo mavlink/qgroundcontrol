@@ -234,6 +234,8 @@ private:
     void    _fillRequestDataWithString(MavlinkFTP::Request* request, const QString& str);
     void    _fillMissingBlocksWorker    (bool firstRequest);
     void    _burstReadFileWorker        (bool firstRequest);
+    /// Chunk size for the next read request, re-evaluated per request since radio detection can arrive mid-download
+    uint8_t _readChunkSize              (void) const;
     /// Server expired our session mid-download: re-open the file and resume the interrupted state
     void    _downloadSessionLost        (void);
     /// Removes [offset, offset+cBytes) from the missing-data list if it lies entirely within one hole
@@ -279,6 +281,12 @@ private:
     static const int _maxRetry              = 3;
 
 public:
+    /// Bytes requested per ReadFile/BurstReadFile chunk on non-radio links: the full FTP payload.
+    static constexpr uint8_t kFullReadChunkSize = sizeof(MavlinkFTP::Request::data);
+    /// Chunk size on SiK/RFD radio links. Keeps each FTP packet inside one ~252 byte air frame; a full payload
+    /// spans two frames and is lost if either is. On the wire: 12 MAVLink v2 + 15 FTP fixed + 110 = 137 bytes
+    /// (150 signed), leaving room for the radio to coalesce a telemetry packet into the same frame.
+    static constexpr uint8_t kRadioReadChunkSize = 110;
     /// Max times a download re-opens after the server expires the session (PX4 idle timer fires mid-burst)
     static constexpr int kMaxDownloadSessionReopens = 2;
     /// Ack timeout used in unit tests (much shorter for faster tests)
