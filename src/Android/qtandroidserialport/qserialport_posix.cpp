@@ -420,8 +420,11 @@ bool QSerialPortPrivate::_posixSetDataTerminalReady(bool set)
 bool QSerialPortPrivate::_posixSetRequestToSend(bool set)
 {
     if (!setControlLine(descriptor, TIOCM_RTS, set)) {
-        qCWarning(AndroidSerialPortLog) << "Failed to set RTS on" << systemLocation << ":" << strerror(errno);
-        setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QSerialPort::tr("Failed to set RTS")));
+        const int rtsError = errno;
+        const auto code = rtsError == ENOTTY || rtsError == EOPNOTSUPP ? QSerialPort::UnsupportedOperationError
+                                                                       : QSerialPort::UnknownError;
+        qCDebug(AndroidSerialPortLog) << "Failed to set RTS on" << systemLocation << ":" << strerror(rtsError);
+        setError(QSerialPortErrorInfo(code, QSerialPort::tr("Failed to set RTS")));
         return false;
     }
 

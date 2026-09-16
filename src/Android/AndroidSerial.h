@@ -83,6 +83,8 @@ int dataTerminalReadySupport(int deviceId);
 bool getRingIndicator(int deviceId);
 bool getRequestToSend(int deviceId);
 bool setRequestToSend(int deviceId, bool set);
+// 1: supported, 0: unsupported, -1: capability query failed.
+int requestToSendSupport(int deviceId);
 QSerialPort::PinoutSignals getControlLines(int deviceId);
 int getFlowControl(int deviceId);
 bool setFlowControl(int deviceId, int flowControl);

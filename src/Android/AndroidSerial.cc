@@ -206,6 +206,7 @@ struct JniMethodCache
     jmethodID getRingIndicator = nullptr;
     jmethodID getRequestToSend = nullptr;
     jmethodID setRequestToSend = nullptr;
+    jmethodID requestToSendSupport = nullptr;
     jmethodID getControlLines = nullptr;
     jmethodID getFlowControl = nullptr;
     jmethodID setFlowControl = nullptr;
@@ -250,6 +251,7 @@ static bool cacheMethodIds(JNIEnv* env, jclass javaClass)
         {&s_methods.getRingIndicator, "getRingIndicator", "(I)Z"},
         {&s_methods.getRequestToSend, "getRequestToSend", "(I)Z"},
         {&s_methods.setRequestToSend, "setRequestToSend", "(IZ)Z"},
+        {&s_methods.requestToSendSupport, "getRequestToSendSupport", "(I)I"},
         {&s_methods.getControlLines, "getControlLines", "(I)[I"},
         {&s_methods.getFlowControl, "getFlowControl", "(I)I"},
         {&s_methods.setFlowControl, "setFlowControl", "(II)Z"},
@@ -896,6 +898,20 @@ int dataTerminalReadySupport(int deviceId)
 bool setRequestToSend(int deviceId, bool set)
 {
     return callBoolSetMethod(s_methods.setRequestToSend, deviceId, set, "setRequestToSend");
+}
+
+int requestToSendSupport(int deviceId)
+{
+    JniContext ctx;
+    if (!getContext(ctx, "getRequestToSendSupport")) {
+        return -1;
+    }
+    jint result = -1;
+    if (!AndroidInterface::callStaticIntMethod(ctx.env, ctx.cls, s_methods.requestToSendSupport,
+                                               "getRequestToSendSupport", AndroidSerialLog(), result, deviceId)) {
+        return -1;
+    }
+    return static_cast<int>(result);
 }
 
 QSerialPort::PinoutSignals getControlLines(int deviceId)
