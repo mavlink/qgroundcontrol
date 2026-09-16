@@ -17,6 +17,8 @@ std::function<int(int)> writeStep;
 int writeCalls = 0;
 int dtrSupport = 1;
 bool dtrSuccess = true;
+int rtsSupport = 1;
+bool rtsSuccess = true;
 QStringList warnings;
 
 void captureWarnings(QtMsgType type, const QMessageLogContext&, const QString& message)
@@ -104,7 +106,12 @@ int dataTerminalReadySupport(int)
 
 bool setRequestToSend(int, bool)
 {
-    return true;
+    return rtsSuccess;
+}
+
+int requestToSendSupport(int)
+{
+    return rtsSupport;
 }
 
 bool setBreak(int, bool)
@@ -135,6 +142,8 @@ private slots:
         writeCalls = 0;
         dtrSupport = 1;
         dtrSuccess = true;
+        rtsSupport = 1;
+        rtsSuccess = true;
         writeStep = [](int length) { return length; };
         warnings.clear();
     }
@@ -237,6 +246,20 @@ private slots:
         QCOMPARE(port.error(), QSerialPort::UnknownError);
     }
 
+    void unsupportedRtsClassification()
+    {
+        QSerialPort port(QStringLiteral("test"));
+        QVERIFY(port.open(QIODevice::ReadWrite));
+        rtsSuccess = false;
+        rtsSupport = 0;
+        QVERIFY(!port.setRequestToSend(true));
+        QCOMPARE(port.error(), QSerialPort::UnsupportedOperationError);
+        port.clearError();
+        rtsSupport = -1;
+        QVERIFY(!port.setRequestToSend(true));
+        QCOMPARE(port.error(), QSerialPort::UnknownError);
+    }
+
     void posixDtrUnsupported()
     {
         posixBackend = true;
@@ -248,6 +271,21 @@ private slots:
         QSerialPort port(QString::fromLocal8Bit(::ptsname(master)));
         QVERIFY(port.open(QIODevice::ReadWrite));
         QVERIFY(!port.setDataTerminalReady(true));
+        QCOMPARE(port.error(), QSerialPort::UnsupportedOperationError);
+        QVERIFY(port.isOpen());
+    }
+
+    void posixRtsUnsupported()
+    {
+        posixBackend = true;
+        const int master = ::posix_openpt(O_RDWR | O_NOCTTY);
+        QVERIFY(master >= 0);
+        const auto closeMaster = qScopeGuard([master] { ::close(master); });
+        QCOMPARE(::grantpt(master), 0);
+        QCOMPARE(::unlockpt(master), 0);
+        QSerialPort port(QString::fromLocal8Bit(::ptsname(master)));
+        QVERIFY(port.open(QIODevice::ReadWrite));
+        QVERIFY(!port.setRequestToSend(true));
         QCOMPARE(port.error(), QSerialPort::UnsupportedOperationError);
         QVERIFY(port.isOpen());
     }

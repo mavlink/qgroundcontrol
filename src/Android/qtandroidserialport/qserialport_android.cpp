@@ -470,7 +470,10 @@ bool QSerialPortPrivate::setRequestToSend(bool set)
     const bool result = AndroidSerial::setRequestToSend(_deviceId, set);
     if (!result) {
         qCWarning(AndroidSerialPortLog) << "Failed to set RTS for device ID" << _deviceId;
-        setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QSerialPort::tr("Failed to set RTS")));
+        const auto rtsError = AndroidSerial::requestToSendSupport(_deviceId) == 0
+                                  ? QSerialPort::UnsupportedOperationError
+                                  : QSerialPort::UnknownError;
+        setError(QSerialPortErrorInfo(rtsError, QSerialPort::tr("Failed to set RTS")));
     }
 
     return result;

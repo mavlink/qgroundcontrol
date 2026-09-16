@@ -1254,6 +1254,10 @@ public class QGCUsbSerialManager {
         return controlLineSupport(getOpenPortOrWarn(deviceId, "get DTR support"), UsbSerialPort.ControlLine.DTR);
     }
 
+    public static int getRequestToSendSupport(final int deviceId) {
+        return controlLineSupport(getOpenPortOrWarn(deviceId, "get RTS support"), UsbSerialPort.ControlLine.RTS);
+    }
+
     /**
      * Retrieves the carrier detect (CD) flag from the device.
      *
