@@ -283,10 +283,12 @@ private:
 public:
     /// Bytes requested per ReadFile/BurstReadFile chunk on non-radio links: the full FTP payload.
     static constexpr uint8_t kFullReadChunkSize = sizeof(MavlinkFTP::Request::data);
-    /// Chunk size on SiK/RFD radio links. Keeps each FTP packet inside one ~252 byte air frame; a full payload
-    /// spans two frames and is lost if either is. On the wire: 12 MAVLink v2 + 15 FTP fixed + 110 = 137 bytes
-    /// (150 signed), leaving room for the radio to coalesce a telemetry packet into the same frame.
-    static constexpr uint8_t kRadioReadChunkSize = 110;
+    /// Chunk size on SiK/RFD radio links, so each FTP packet fits in one radio packet. A SiK radio's limit
+    /// (max_data_packet_length, reported by ATI6) is 250 bytes, but only 118 with error correction enabled,
+    /// which we cannot detect. On the wire: 12 MAVLink v2 + 15 FTP fixed + 91 = 118 bytes.
+    static constexpr uint8_t kRadioReadChunkSize = 91;
+    /// Chunk size on a signed radio link, where every packet carries a 13 byte signature.
+    static constexpr uint8_t kRadioReadChunkSizeSigned = kRadioReadChunkSize - 13;
     /// Max times a download re-opens after the server expires the session (PX4 idle timer fires mid-burst)
     static constexpr int kMaxDownloadSessionReopens = 2;
     /// Ack timeout used in unit tests (much shorter for faster tests)
