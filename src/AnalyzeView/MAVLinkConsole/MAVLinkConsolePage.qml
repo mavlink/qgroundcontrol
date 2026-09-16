@@ -23,6 +23,7 @@ AnalyzePage {
         id: pageComponent
 
         ColumnLayout {
+            objectName: "mavlinkConsole_page"
             height: availableHeight
             width: availableWidth
             property int _consoleOutputLen: 0
@@ -103,6 +104,7 @@ AnalyzePage {
 
                 TextArea.flickable: TextArea {
                     id: textConsole
+                    objectName: "mavlinkConsole_textArea"
                     width: availableWidth
                     wrapMode: Text.WordWrap
                     readOnly: _separateCommandInput
