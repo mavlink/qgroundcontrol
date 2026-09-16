@@ -88,11 +88,10 @@ QGCPopupDialog {
             TreeView {
                 id: treeView
                 Layout.preferredWidth: _maxRowWidth
-                Layout.maximumHeight: ScreenTools.defaultFontPixelHeight * 40
-                Layout.preferredHeight: contentHeight > 0 ? Math.min(contentHeight, ScreenTools.defaultFontPixelHeight * 40)
-                                                          : ScreenTools.defaultFontPixelHeight * 30
+                Layout.preferredHeight: contentHeight > 0 ? contentHeight : ScreenTools.defaultFontPixelHeight * 30
                 rowSpacing: ScreenTools.defaultFontPixelHeight * 0.25
                 model: QGCLoggingCategoryManager.treeModel
+                interactive: false
                 clip: true
 
                 property real _maxRowWidth: ScreenTools.defaultFontPixelWidth
@@ -168,7 +167,8 @@ QGCPopupDialog {
             QGCListView {
                 id: searchResultsView
                 Layout.preferredWidth: _maxRowWidth
-                Layout.preferredHeight: Math.min(contentHeight, ScreenTools.defaultFontPixelHeight * 40)
+                Layout.preferredHeight: contentHeight
+                interactive: false
                 clip: true
                 model: _filteredModel
                 spacing: ScreenTools.defaultFontPixelHeight * 0.25
