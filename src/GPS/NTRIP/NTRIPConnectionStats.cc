@@ -52,15 +52,16 @@ void NTRIPConnectionStats::stop()
 
 double NTRIPConnectionStats::correctionAgeSec() const
 {
-    if (_lastReceivedAtMs <= 0) {
-        return -1.0;
-    }
-    return (static_cast<qint64>(MonotonicClock::nowUs() / 1000) - _lastReceivedAtMs) / 1000.0;
+    const auto age = MonotonicClock::ageMilliseconds(_lastReceivedAtMs > 0 ? quint64(_lastReceivedAtMs) * 1000 : 0,
+                                                     MonotonicClock::nowUs());
+    return age < 0 ? -1.0 : age / 1000.0;
 }
 
 void NTRIPConnectionStats::_updateDataStale(qint64 nowMs)
 {
-    const bool stale = _lastReceivedAtMs > 0 && nowMs - _lastReceivedAtMs >= kStaleThreshold.count();
+    const auto age = MonotonicClock::ageMilliseconds(_lastReceivedAtMs > 0 ? quint64(_lastReceivedAtMs) * 1000 : 0,
+                                                     nowMs > 0 ? quint64(nowMs) * 1000 : 0);
+    const bool stale = age >= kStaleThreshold.count();
     if (stale != _dataStale) {
         _dataStale = stale;
         emit dataStaleChanged();

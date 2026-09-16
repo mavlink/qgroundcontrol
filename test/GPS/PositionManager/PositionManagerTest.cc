@@ -11,6 +11,7 @@
 #include "PositionManager.h"
 #include "SequentialTestDevice.h"
 #include "SimulatedPosition.h"
+#include "Vehicle.h"
 
 namespace {
 
@@ -237,4 +238,105 @@ void PositionManagerTest::_simulatedPosition()
     QCOMPARE(positions.size(), 3);
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(10)));
     QCOMPARE(positions.size(), 3);
+}
+
+void PositionManagerTest::_facadeUsesInjectedScheduler()
+{
+    ManualScheduler scheduler;
+    QGCPositionManager manager(nullptr, &scheduler);
+    manager.init();
+    QSignalSpy reports(&manager, &GPSPositionService::positionInfoUpdated);
+    QVERIFY(!manager.acceptedObservation());
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(999)));
+    QVERIFY(reports.isEmpty());
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    QCOMPARE(reports.size(), 1);
+    QCOMPARE(manager.selectedSource(), GPSPositionService::SelectedSource::Simulated);
+    QVERIFY(manager.acceptedObservation());
+    QCOMPARE(manager.acceptedObservation()->monotonicTimestampUs, scheduler.nowUs());
+    QVERIFY(manager.findChildren<RuntimeScheduler*>().isEmpty());
+
+    QGCPositionManager defaultManager;
+    defaultManager.init();
+    QCOMPARE(defaultManager.findChildren<RuntimeScheduler*>().size(), 1);
+    SequentialTestDevice device;
+    defaultManager.setNmeaSourceDevice(&device);
+    QVERIFY(defaultManager.nmeaHealth());
+    auto* session = defaultManager.nmeaHealth()->parent();
+    QVERIFY(session);
+    QVERIFY(session->findChildren<RuntimeScheduler*>().isEmpty());
+}
+
+void PositionManagerTest::_facadeSchedulerDestruction()
+{
+    auto scheduler = std::make_unique<ManualScheduler>();
+    QGCPositionManager manager(nullptr, scheduler.get());
+    manager.init();
+    SequentialTestDevice device;
+    manager.setNmeaSourceDevice(&device);
+    QVERIFY(manager.nmeaHealth());
+    scheduler.reset();
+    QVERIFY(!manager.nmeaHealth());
+    QVERIFY(!manager.acceptedObservation());
+    QCOMPARE(manager.selectedSource(), GPSPositionService::SelectedSource::None);
+    expectLogMessage("GPS.PositionManager.QGCPositionManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Positioning requires a live scheduler")));
+    manager.init();
+    verifyExpectedLogMessage();
+    expectLogMessage(
+        "GPS.PositionManager.QGCPositionManager", QtWarningMsg,
+        QRegularExpression(QStringLiteral("NMEA device requires matching thread affinity and a live scheduler")));
+    manager.setNmeaSourceDevice(&device);
+    verifyExpectedLogMessage();
+    QVERIFY(!manager.nmeaHealth());
+    QVERIFY(manager.findChildren<RuntimeScheduler*>().isEmpty());
+}
+
+void PositionManagerTest::_simulatedHomeSelection_data()
+{
+    QTest::addColumn<bool>("latestAlreadyValid");
+    QTest::addColumn<bool>("oldestFirst");
+    QTest::newRow("pending-oldest-first") << false << true;
+    QTest::newRow("pending-newest-first") << false << false;
+    QTest::newRow("valid-oldest-first") << true << true;
+    QTest::newRow("valid-newest-first") << true << false;
+}
+
+void PositionManagerTest::_simulatedHomeSelection()
+{
+    QFETCH(bool, latestAlreadyValid);
+    QFETCH(bool, oldestFirst);
+    ManualScheduler scheduler;
+    SimulatedPosition source(nullptr, &scheduler);
+    Vehicle first(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    Vehicle second(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    Vehicle latest(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    QGeoCoordinate latestHome(48, 9, 550);
+    if (latestAlreadyValid) {
+        latest._setHomePosition(latestHome);
+    }
+    const auto origin = source.lastKnownPosition(false).coordinate();
+    for (auto* vehicle : {&first, &second, &latest}) {
+        QVERIFY(QMetaObject::invokeMethod(&source, "_vehicleAdded", Qt::DirectConnection, Q_ARG(Vehicle*, vehicle)));
+    }
+    const auto updateOlderHomes = [&]() {
+        QGeoCoordinate firstHome(46, 7, 450);
+        QGeoCoordinate secondHome(47, 8, 500);
+        first._setHomePosition(firstHome);
+        second._setHomePosition(secondHome);
+    };
+    if (oldestFirst) {
+        updateOlderHomes();
+        QCOMPARE(source.lastKnownPosition(false).coordinate(), latestAlreadyValid ? latestHome : origin);
+    }
+    latest._setHomePosition(latestHome);
+    QCOMPARE(source.lastKnownPosition(false).coordinate(), latestHome);
+    if (!oldestFirst) {
+        updateOlderHomes();
+    }
+    QGeoCoordinate changedHome(49, 10, 600);
+    for (auto* vehicle : {&first, &second, &latest}) {
+        vehicle->_setHomePosition(changedHome);
+        QCOMPARE(source.lastKnownPosition(false).coordinate(), latestHome);
+    }
 }

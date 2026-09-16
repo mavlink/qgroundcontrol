@@ -9,9 +9,6 @@
 #include <chrono>
 #include <functional>
 
-class Fact;
-class FactGroup;
-class NTRIPSettings;
 class NTRIPTransport;
 
 struct PositionResult
@@ -45,12 +42,16 @@ public:
 
     using PositionProvider = std::function<PositionResult()>;
 
+    struct Configuration
+    {
+        PositionSource source = PositionSource::Auto;
+        std::chrono::milliseconds interval = kDefaultInterval;
+        bool operator==(const Configuration&) const = default;
+    };
+
     explicit NTRIPGgaProvider(QObject* parent = nullptr);
 
-    /// Post-construction wiring. Observes the NTRIP position-source / interval
-    /// settings and caches them for the GGA hot path. Must be called after
-    /// SettingsManager is ready — no singleton access happens at construction.
-    void init(NTRIPSettings* settings);
+    void configure(const Configuration& configuration);
 
     void start(NTRIPTransport* transport);
     void stop();
@@ -75,7 +76,6 @@ private:
 
     void _sendGGA();
     void _setRetryPhase(RetryPhase phase);
-    void _ensureDefaultProviders();
     void _clearSource();
 
     PositionResult _getBestPosition() const;
@@ -86,10 +86,7 @@ private:
     QHash<PositionSource, PositionProvider> _providers;
     RetryPhase _retryPhase = RetryPhase::Normal;
     int _fastRetryCount = 0;
-    // Cached ntripSettings()->ntripGgaPositionSource(); refreshed via rawValueChanged
-    // so we don't dereference SettingsManager on every GGA tick.
     PositionSource _cachedSource = PositionSource::Auto;
-    // Cached ntripSettings()->ntripGgaIntervalSec() converted to ms; refreshed on
-    // rawValueChanged so the hot path avoids SettingsManager dereference.
     std::chrono::milliseconds _normalInterval = kDefaultInterval;
+    quint64 _generation = 0;
 };

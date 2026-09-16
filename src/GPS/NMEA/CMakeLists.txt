@@ -8,7 +8,7 @@ set_target_properties(
                POSITION_INDEPENDENT_CODE ON
 )
 target_compile_features(QGCGPSNMEAProtocol PUBLIC cxx_std_20)
-target_include_directories(QGCGPSNMEAProtocol PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../Core")
+target_link_libraries(QGCGPSNMEAProtocol PUBLIC QGC::GPSNativeContracts)
 target_sources(QGCGPSNMEAProtocol PUBLIC FILE_SET HEADERS FILES NMEASentence.h NMEAConstellation.h NMEASatelliteEpoch.h)
 
 add_library(QGCGPSNMEA STATIC NMEADecoderSession.cc NMEAPositionSource.cc NMEASatelliteAdapter.cc NMEAStreamSplitter.cc

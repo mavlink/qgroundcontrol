@@ -28,8 +28,8 @@ QString GPSCorrectionSelector::key(GPSCorrectionSource source, const QString& in
 
 bool GPSCorrectionSelector::_eligible(const Source& source, qint64 now) const
 {
-    if (source.lastRoutableMs <= 0 || now < source.lastRoutableMs ||
-        now - source.lastRoutableMs >= FRESHNESS_TIMEOUT_MS) {
+    const qint64 age = GPSCorrectionFrame::ageMs(source.lastRoutableMs, now);
+    if (age < 0 || age >= FRESHNESS_TIMEOUT_MS) {
         return false;
     }
     return _configuration.policy != Policy::Manual ||
@@ -60,7 +60,7 @@ void GPSCorrectionSelector::_select(qint64 now)
     if (_candidate != best.key()) {
         _candidate = best.key();
         _candidateSinceMs = now;
-    } else if (now - _candidateSinceMs >= SWITCH_HOLD_DOWN_MS) {
+    } else if (GPSCorrectionFrame::ageMs(_candidateSinceMs, now) >= SWITCH_HOLD_DOWN_MS) {
         _active = _candidate;
         _candidate.clear();
     }

@@ -1,13 +1,14 @@
-#include <QtCore/QElapsedTimer>
-#include <QtTest/QTest>
-
 #include <atomic>
 #include <fcntl.h>
 #include <functional>
 #include <thread>
 #include <unistd.h>
 
+#include <QtCore/QElapsedTimer>
+#include <QtTest/QTest>
+
 #include "AndroidSerial.h"
+#include "GPSTransportResult.h"
 #include "SerialGPSTransport.h"
 #include "qserialport_p.h"
 
@@ -178,15 +179,26 @@ private slots:
         }
     }
 
+    void boundedWritesSendNothing_data()
+    {
+        QTest::addColumn<int>("timeout");
+        QTest::newRow("bounded") << 100;
+        QTest::newRow("expired") << 0;
+        QTest::newRow("forever") << -1;
+    }
+
     void boundedWritesSendNothing()
     {
+        QFETCH(int, timeout);
         std::atomic_bool stop = false;
         SerialGPSTransport transport(QStringLiteral("test"), stop);
         QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
         const uint8_t payload = 42;
-        const auto result = transport.writeBounded(&payload, 1, QDeadlineTimer(100));
+        const auto result = transport.writeBounded(&payload, 1, QDeadlineTimer(timeout));
         QCOMPARE(result.status, GPSWriteStatus::Unsupported);
         QCOMPARE(result.acceptedBytes, 0);
+        QCOMPARE(result.writtenBytes, 0);
+        QCOMPARE(result.uncertainBytes, 0);
         QCOMPARE(writeCalls, 0);
         QVERIFY(!transport.fatalError());
         stop = true;

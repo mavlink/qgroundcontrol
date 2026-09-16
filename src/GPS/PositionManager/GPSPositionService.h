@@ -105,7 +105,8 @@ public:
 
     QGeoPositionInfo geoPositionInfo() const { return _geoPositionInfo; }
 
-    std::optional<GPSObservation> acceptedObservation() const;
+    std::optional<GPSObservation> acceptedObservation(
+        GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation) const;
 
     QGeoPositionInfoSource::Error gcsPositioningError() const { return _gcsPositioningError; }
 
@@ -131,17 +132,16 @@ signals:
     void positionInfoUpdated(QGeoPositionInfo update);
     void gcsPositionHorizontalAccuracyChanged(qreal gcsPositionHorizontalAccuracy);
 
+protected:
+    RuntimeScheduler* scheduler() const { return _scheduler; }
+
 private slots:
     void _positionError(QGeoPositionInfoSource::Error gcsPositioningError);
 
 private:
     struct SourceBinding
     {
-        QPointer<QObject> source;
-        QPointer<GPSSourceHealth> health;
-        quint64 session = 0;
         quint64 token = 0;
-        QMetaObject::Connection destroyedConnection;
         std::unique_ptr<GPSPositionSourceAdapter> adapter;
     };
 
@@ -156,7 +156,8 @@ private:
     void _selectPositionSource();
     SelectedSource _choosePositionSource();
     QObject* _sourceFor(SelectedSource source) const;
-    void _refreshSourceAdapters();
+    void _refreshSourceBindings();
+    void _sourceObservationChanged(SelectedSource kind);
     void _updateSourceActivity();
     void _updateSelectionStatus();
     void _clearPosition();
@@ -166,6 +167,7 @@ private:
     QPointer<RuntimeScheduler> _scheduler;
     ScheduledTask _recoveryTask;
     std::array<SourceBinding, 5> _bindings;
+    std::array<bool, 5> _pendingObservations{};
     GPSPositionSourceSelector _selector;
     SelectedSource _selectedKind = SelectedSource::Internal;
     SourceMode _sourceMode = SourceMode::LegacyPriority;
@@ -177,13 +179,13 @@ private:
     static constexpr std::chrono::milliseconds RECOVERY_DELAY{5000};
     bool _selectingSource = false;
     bool _selectionPending = false;
+    bool _selectionPublicationPending = false;
     bool _forceSourceRefresh = false;
     bool _usingPluginSource = false;
     int _updateInterval = 0;
-    std::optional<GPSObservation> _acceptedSourceObservation(SelectedSource source) const;
+    std::optional<GPSObservation> _acceptedSourceObservation(
+        SelectedSource source, GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation) const;
     QPointer<GPSSourceHealth> _currentHealth;
-    QMetaObject::Connection _healthConnection;
-    QMetaObject::Connection _healthDestroyedConnection;
 
     QGeoPositionInfo _geoPositionInfo;
     QGeoPositionInfoSource::Error _gcsPositioningError = QGeoPositionInfoSource::NoError;
@@ -197,6 +199,7 @@ private:
     qreal _gcsPositionHorizontalAccuracy = std::numeric_limits<qreal>::infinity();
 
     quint64 _sourceGeneration = 0;
+    quint64 _selectedBindingRevision = 0;
     quint64 _positionRevision = 0;
     QPointer<QObject> _currentSource;
 };

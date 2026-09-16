@@ -1,25 +1,29 @@
 #include "NTRIPHttpTransport.h"
 
 #include <chrono>
+#include <utility>
 
 #include <QtCore/QDateTime>
 #include <QtCore/QPointer>
-#include <QtCore/QRegularExpression>
 #include <QtNetwork/QSslError>
 #include <QtNetwork/QSslSocket>
 
 #include "NMEAUtils.h"
+#include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
-#include "NTRIPTransportConfig.h"
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
 
 QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIPHttpTransport")
 
-NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObject* parent)
-    : NTRIPTransport(parent), _config(config), _connectTimeoutTimer(this), _dataWatchdogTimer(this)
+NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, const NTRIPRtcmFilterConfig& filter,
+                                       QObject* parent)
+    : NTRIPTransport(parent)
+    , _config(config)
+    , _connectTimeoutTimer(this)
+    , _dataWatchdogTimer(this)
 {
-    const QVector<int> whitelist = NTRIPTransportConfig::parseWhitelist(_config.whitelist);
+    const QVector<int> whitelist = filter.messageIds();
     _rtcmDecoder.setWhitelist(whitelist);
     qCDebug(NTRIPHttpTransportLog) << "RTCM message filter:" << whitelist;
     if (whitelist.empty()) {
@@ -49,6 +53,14 @@ NTRIPHttpTransport::~NTRIPHttpTransport()
 
 void NTRIPHttpTransport::start()
 {
+    const QPointer<NTRIPHttpTransport> guard(this);
+    const quint64 attempt = ++_attempt;
+    _connectTimeoutTimer.stop();
+    _dataWatchdogTimer.stop();
+    _retireSocket();
+    if (!guard || _attempt != attempt) {
+        return;
+    }
     _stopped = false;
     if (const QString error = _config.streamValidationError(); !error.isEmpty()) {
         _fail(NTRIPError::InvalidConfig, error);
@@ -59,22 +71,48 @@ void NTRIPHttpTransport::start()
 
 void NTRIPHttpTransport::stop()
 {
+    const QPointer<NTRIPHttpTransport> guard(this);
+    const quint64 attempt = ++_attempt;
     _stopped = true;
     _connectTimeoutTimer.stop();
     _dataWatchdogTimer.stop();
 
-    if (_socket) {
-        _socket->disconnect(this);
-        _socket->disconnectFromHost();
-        _socket->close();
-        _socket->deleteLater();
-        _socket = nullptr;
+    _retireSocket();
+    if (guard && _attempt == attempt) {
+        emit finished();
     }
-
-    emit finished();
 }
 
-NTRIPHttpTransport::HttpRequest NTRIPHttpTransport::buildHttpRequest(const NTRIPTransportConfig& config)
+void NTRIPHttpTransport::_retireSocket()
+{
+    const auto socket = std::exchange(_socket, {});
+    if (socket) {
+        socket->disconnect(this);
+        socket->deleteLater();
+        socket->abort();
+    }
+}
+
+bool NTRIPHttpTransport::_write(const QByteArray& bytes)
+{
+    const QPointer<NTRIPHttpTransport> guard(this);
+    const auto socket = _socket;
+    const quint64 attempt = _attempt;
+    if (!socket || _stopped) {
+        return false;
+    }
+    const qint64 accepted = socket->write(bytes);
+    if (!guard || _stopped || _attempt != attempt || !socket || _socket != socket) {
+        return false;
+    }
+    if (accepted != bytes.size()) {
+        _fail(NTRIPError::SocketError, tr("Socket did not accept the complete NTRIP write"));
+        return false;
+    }
+    return true;
+}
+
+NTRIPHttpTransport::HttpRequest NTRIPHttpTransport::buildHttpRequest(const NTRIPConnectionConfig& config)
 {
     HttpRequest result;
     QByteArray& req = result.bytes;
@@ -101,30 +139,38 @@ void NTRIPHttpTransport::_sendHttpRequest()
     }
 
     const HttpRequest request = buildHttpRequest(_config);
+    const QPointer<NTRIPHttpTransport> guard(this);
+    const auto socket = _socket;
+    const quint64 attempt = _attempt;
     if (request.credentialsInClear) {
         qCWarning(NTRIPHttpTransportLog) << "Sending credentials without TLS — data is not encrypted";
         emit plaintextCredentialsWarning();
     }
-    _socket->write(request.bytes);
-    qCDebug(NTRIPHttpTransportLog) << "HTTP request sent for mount:" << _config.mountpoint;
+    if (!guard || _stopped || _attempt != attempt || !socket || _socket != socket || !_write(request.bytes)) {
+        return;
+    }
+    qCDebug(NTRIPHttpTransportLog) << "HTTP request queued for mount:" << _config.mountpoint;
 
     qCDebug(NTRIPHttpTransportLog) << "Socket connected"
                                    << "local" << _socket->localAddress().toString() << ":" << _socket->localPort()
                                    << "-> peer" << _socket->peerAddress().toString() << ":" << _socket->peerPort();
 }
 
-void NTRIPHttpTransport::_fail(NTRIPError code, const QString& msg)
+void NTRIPHttpTransport::_fail(NTRIPError code, const QString& msg, std::chrono::milliseconds retryAfter)
 {
     if (_stopped) {
         return;
     }
-    // Abort can emit disconnected synchronously; mark this attempt finished first.
+    const QPointer<NTRIPHttpTransport> guard(this);
+    const auto socket = _socket;
+    const quint64 attempt = _attempt;
+    // Abort may synchronously emit disconnected.
     _stopped = true;
     _connectTimeoutTimer.stop();
     _dataWatchdogTimer.stop();
-    emit error(code, msg);
-    if (_socket) {
-        _socket->abort();
+    emit error(NTRIPFailure{code, msg, retryAfter});
+    if (guard && _attempt == attempt && socket && _socket == socket) {
+        socket->abort();
     }
 }
 
@@ -142,15 +188,16 @@ void NTRIPHttpTransport::_connect()
     qCDebug(NTRIPHttpTransportLog) << "connectToHost" << _config.host << ":" << _config.port
                                    << " mount=" << _config.mountpoint;
 
-    _httpHandshakeDone = false;
-    _httpResponseBuf.clear();
+    _httpDecoder.reset();
+    _reading = false;
     _rtcmDecoder.reset();
+    const quint64 attempt = _attempt;
 
     if (_config.useTls) {
         QSslSocket* sslSocket = new QSslSocket(this);
         _socket = sslSocket;
-        connect(sslSocket, &QSslSocket::sslErrors, this, [this, sslSocket](const QList<QSslError>& errors) {
-            if (_stopped) {
+        connect(sslSocket, &QSslSocket::sslErrors, this, [this, sslSocket, attempt](const QList<QSslError>& errors) {
+            if (_stopped || _attempt != attempt || _socket != sslSocket) {
                 return;
             }
             QStringList msgs;
@@ -184,68 +231,66 @@ void NTRIPHttpTransport::_connect()
     }
     _socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
     _socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
-    _socket->setReadBufferSize(0);
+    _socket->setReadBufferSize(65536);
 
-    connect(_socket, &QTcpSocket::errorOccurred, this, [this](QAbstractSocket::SocketError code) {
-        if (_stopped || !_socket) {
+    const auto socket = _socket;
+    const QPointer<NTRIPHttpTransport> guard(this);
+    const auto current = [this, guard, socket, attempt]() {
+        return guard && socket && _socket == socket && !_stopped && _attempt == attempt;
+    };
+    connect(_socket, &QTcpSocket::errorOccurred, this, [this, current](QAbstractSocket::SocketError code) {
+        if (!current()) {
+            return;
+        }
+        // disconnected drains remaining data before deciding whether framing completed.
+        if (code == QAbstractSocket::RemoteHostClosedError) {
             return;
         }
         _connectTimeoutTimer.stop();
 
-        QString msg = _socket->errorString();
-        if (code == QAbstractSocket::RemoteHostClosedError && !_httpHandshakeDone) {
-            if (!_config.mountpoint.isEmpty()) {
-                msg += QLatin1Char(' ');
-                msg += tr("(peer closed before HTTP response; check mountpoint and credentials)");
-            }
-        }
+        const QString msg = _socket->errorString();
 
         qCWarning(NTRIPHttpTransportLog) << "Socket error code:" << int(code) << " msg:" << msg;
         _fail(NTRIPError::SocketError, msg);
     });
 
     connect(_socket, &QTcpSocket::disconnected, this,
-            [this]() {
-                if (_stopped || !_socket) {
+            [this, current]() {
+                if (!current()) {
                     return;
                 }
-                _connectTimeoutTimer.stop();
-
-                const QByteArray trailing = _socket->readAll();
-                QString reason;
-                if (!trailing.isEmpty()) {
-                    reason = QString::fromUtf8(trailing).trimmed();
-                } else {
-                    reason = tr("Server disconnected");
-                }
-
-                qCWarning(NTRIPHttpTransportLog)
-                    << "Disconnected:"
-                    << "reason=" << reason << "ms_since_200="
-                    << (_postOkTimestampMs > 0 ? QDateTime::currentMSecsSinceEpoch() - _postOkTimestampMs : -1);
-                _fail(NTRIPError::ServerDisconnected, reason);
+                _finishResponse();
             });
 
-    connect(_socket, &QTcpSocket::readyRead, this, &NTRIPHttpTransport::_readBytes);
+    connect(_socket, &QTcpSocket::readyRead, this, [this, current]() {
+        if (current()) {
+            _readBytes();
+        }
+    });
 
+    _connectTimeoutTimer.start();
     if (_config.useTls) {
-        QSslSocket* sslSocket = qobject_cast<QSslSocket*>(_socket);
-        connect(sslSocket, &QSslSocket::encrypted, this, [this]() {
-            _sendHttpRequest();
+        QSslSocket* sslSocket = qobject_cast<QSslSocket*>(_socket.data());
+        connect(sslSocket, &QSslSocket::encrypted, this, [this, current]() {
+            if (current()) {
+                _sendHttpRequest();
+            }
         });
         sslSocket->connectToHostEncrypted(_config.host, static_cast<quint16>(_config.port));
     } else {
-        connect(_socket, &QTcpSocket::connected, this, [this]() {
-            _sendHttpRequest();
+        connect(_socket, &QTcpSocket::connected, this, [this, current]() {
+            if (current()) {
+                _sendHttpRequest();
+            }
         });
         _socket->connectToHost(_config.host, static_cast<quint16>(_config.port));
     }
-    _connectTimeoutTimer.start();
 }
 
 void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtMs)
 {
     const QPointer<NTRIPHttpTransport> guard(this);
+    const quint64 attempt = _attempt;
     for (char ch : buffer) {
         if (_stopped) {
             return;
@@ -257,7 +302,7 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtM
                 return;
             }
             emit correctionFrameReceived(*result);
-            if (!guard || _stopped) {
+            if (!guard || _stopped || _attempt != attempt) {
                 return;
             }
             if (!result->valid) {
@@ -274,145 +319,76 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtM
 
 void NTRIPHttpTransport::_readBytes()
 {
-    if (_stopped || !_socket) {
+    if (_stopped || !_socket || _reading) {
         return;
     }
-
-    if (!_httpHandshakeDone) {
-        _handleHttpResponse();
-        // The header read is bounded by kMaxHttpHeaderSize, so the handshake can
-        // complete with RTCM bytes still pending in the socket. Drain them now
-        // instead of stalling until the next readyRead.
-        if (!_stopped && _httpHandshakeDone && _socket && (_socket->bytesAvailable() > 0)) {
-            _handleRtcmData();
+    const QPointer<NTRIPHttpTransport> guard(this);
+    const auto socket = _socket;
+    const quint64 attempt = _attempt;
+    const auto current = [this, guard, socket, attempt]() {
+        return guard && !_stopped && _attempt == attempt && socket && _socket == socket;
+    };
+    _reading = true;
+    while (current() && socket->bytesAvailable() > 0) {
+        const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
+        const QByteArray bytes = socket->read(16384);
+        if (!current() || bytes.isEmpty()) {
+            break;
         }
-    } else {
-        _handleRtcmData();
+        _processHttpBytes(bytes, receivedAtMs);
+    }
+    if (guard && _attempt == attempt) {
+        _reading = false;
+        if (current() && socket->state() == QAbstractSocket::UnconnectedState) {
+            _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
+        }
     }
 }
 
-void NTRIPHttpTransport::_handleHttpResponse()
+void NTRIPHttpTransport::_processHttpBytes(QByteArrayView bytes, qint64 receivedAtMs, const QDateTime& utcNow)
 {
-    const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
-    // Bound reads so a single chunk can't overshoot kMaxHttpHeaderSize.
-    const qint64 budget = static_cast<qint64>(kMaxHttpHeaderSize) - _httpResponseBuf.size();
-    if (budget <= 0) {
-        qCWarning(NTRIPHttpTransportLog) << "HTTP response header too large, dropping";
-        _httpResponseBuf.clear();
-        _fail(NTRIPError::HeaderTooLarge, tr("HTTP response header too large"));
-        return;
+    if (!_stopped) {
+        _publishHttpResult(_httpDecoder.feed(bytes, utcNow), receivedAtMs);
     }
-    _httpResponseBuf.append(_socket->read(budget));
-    if (_httpResponseBuf.isEmpty()) {
-        return;
-    }
-
-    // NTRIP v1 casters may reply with a bare "ICY 200 OK\r\n" (no header block
-    // and no blank-line terminator) before immediately streaming RTCM. Detect
-    // that pattern and complete the handshake without waiting for \r\n\r\n,
-    // otherwise we deadlock waiting for a terminator that never arrives.
-    int hdrEnd = _httpResponseBuf.indexOf("\r\n\r\n");
-    if (hdrEnd < 0) {
-        const int firstLineEnd = _httpResponseBuf.indexOf("\r\n");
-        if (firstLineEnd > 0) {
-            const QString firstLine = QString::fromUtf8(_httpResponseBuf.left(firstLineEnd));
-            if (firstLine.startsWith(QStringLiteral("ICY "), Qt::CaseInsensitive)) {
-                const HttpStatus icyStatus = parseHttpStatusLine(firstLine);
-                if (icyStatus.valid && isHttpSuccess(icyStatus.code)) {
-                    qCDebug(NTRIPHttpTransportLog) << "NTRIP v1 ICY response:" << firstLine;
-                    _postOkTimestampMs = QDateTime::currentMSecsSinceEpoch();
-                    _httpHandshakeDone = true;
-                    _connectTimeoutTimer.stop();
-                    emit connected();
-                    _dataWatchdogTimer.start();
-
-                    const QByteArray remainingData = _httpResponseBuf.mid(firstLineEnd + 2);
-                    _httpResponseBuf.clear();
-                    if (!remainingData.isEmpty()) {
-                        _parseRtcm(remainingData, receivedAtMs);
-                    }
-                    return;
-                }
-            }
-        }
-        if (_httpResponseBuf.size() >= kMaxHttpHeaderSize) {
-            qCWarning(NTRIPHttpTransportLog) << "HTTP response header too large, dropping";
-            _httpResponseBuf.clear();
-            _fail(NTRIPError::HeaderTooLarge, tr("HTTP response header too large"));
-        }
-        return;
-    }
-
-    const QString header = QString::fromUtf8(_httpResponseBuf.left(hdrEnd));
-    qCDebug(NTRIPHttpTransportLog) << "HTTP response received:" << header.left(200);
-
-    const QStringList lines = header.split('\n');
-    for (const QString& line : lines) {
-        const HttpStatus status = parseHttpStatusLine(line);
-        if (!status.valid) {
-            continue;
-        }
-
-        if (isHttpSuccess(status.code)) {
-            qCDebug(NTRIPHttpTransportLog) << "HTTP" << status.code << status.reason;
-            _postOkTimestampMs = QDateTime::currentMSecsSinceEpoch();
-            _httpHandshakeDone = true;
-            _connectTimeoutTimer.stop();
-
-            qCDebug(NTRIPHttpTransportLog) << "HTTP handshake complete";
-            emit connected();
-
-            _dataWatchdogTimer.start();
-
-            const QByteArray remainingData = _httpResponseBuf.mid(hdrEnd + 4);
-            _httpResponseBuf.clear();
-
-            if (!remainingData.isEmpty()) {
-                qCDebug(NTRIPHttpTransportLog) << "Processing trailing data:" << remainingData.size() << "bytes";
-                _parseRtcm(remainingData, receivedAtMs);
-            }
-            return;
-        }
-
-        const QString body = QString::fromUtf8(_httpResponseBuf.mid(hdrEnd + 4)).trimmed();
-        _httpResponseBuf.clear();
-
-        if (status.code == 401) {
-            qCWarning(NTRIPHttpTransportLog) << "Authentication failed:" << status.reason;
-            _fail(NTRIPError::AuthFailed, tr("Authentication failed (401): check username and password"));
-            return;
-        }
-
-        qCWarning(NTRIPHttpTransportLog) << "HTTP error" << status.code << status.reason << "body:" << body.left(200);
-        QString msg = status.reason.isEmpty() ? tr("HTTP %1").arg(status.code)
-                                              : tr("HTTP %1: %2").arg(status.code).arg(status.reason);
-        if (!body.isEmpty()) {
-            QString cleanBody = body.left(500);
-            static const QRegularExpression htmlTags(QStringLiteral("<[^>]*>"));
-            cleanBody.remove(htmlTags);
-            cleanBody = cleanBody.simplified().left(200);
-            if (!cleanBody.isEmpty()) {
-                msg += QStringLiteral(" — ") + cleanBody;
-            }
-        }
-        _fail(NTRIPError::HttpError, msg);
-        return;
-    }
-
-    qCWarning(NTRIPHttpTransportLog) << "No HTTP status line found in response. First line:"
-                                     << (lines.isEmpty() ? QStringLiteral("(empty)") : lines.first().left(120));
-    _httpResponseBuf.clear();
-    _fail(NTRIPError::InvalidHttpResponse, tr("Invalid HTTP response from caster"));
 }
 
-void NTRIPHttpTransport::_handleRtcmData()
+void NTRIPHttpTransport::_publishHttpResult(const NTRIPHttpDecoder::Result& result, qint64 receivedAtMs)
 {
-    const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
-    const QByteArray bytes = _socket->readAll();
-    if (!bytes.isEmpty()) {
+    const QPointer<NTRIPHttpTransport> guard(this);
+    const quint64 attempt = _attempt;
+    const auto current = [this, guard, attempt]() { return guard && !_stopped && _attempt == attempt; };
+    if (result.connected) {
+        _connectTimeoutTimer.stop();
+        emit connected();
+        if (!current()) {
+            return;
+        }
         _dataWatchdogTimer.start();
-        qCDebug(NTRIPHttpTransportLog) << "rx bytes:" << bytes.size();
-        _parseRtcm(bytes, receivedAtMs);
+    }
+    if (!result.body.isEmpty()) {
+        _dataWatchdogTimer.start();
+        _parseRtcm(result.body, receivedAtMs);
+        if (!current()) {
+            return;
+        }
+    }
+    if (result.failure) {
+        _fail(result.failure->code, result.failure->detail, result.failure->retryAfter);
+    } else if (result.complete) {
+        _fail(NTRIPError::ServerDisconnected, tr("NTRIP correction stream ended"));
+    }
+}
+
+void NTRIPHttpTransport::_finishResponse()
+{
+    if (_reading) {
+        return;
+    }
+    const QPointer<NTRIPHttpTransport> guard(this);
+    const quint64 attempt = _attempt;
+    _readBytes();
+    if (guard && !_stopped && _attempt == attempt) {
+        _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
     }
 }
 
@@ -426,18 +402,7 @@ void NTRIPHttpTransport::sendNMEA(const QByteArray& nmea)
     }
 
     const QByteArray line = NMEAUtils::repairChecksum(nmea);
-    qCDebug(NTRIPHttpTransportLog) << "Sent NMEA:" << QString::fromUtf8(line.trimmed());
-    _socket->write(line);
-}
-
-NTRIPHttpTransport::HttpStatus NTRIPHttpTransport::parseHttpStatusLine(const QString& line)
-{
-    static const QRegularExpression re(QStringLiteral("^\\S+\\s+(\\d{3})(?:\\s+(.*))?$"));
-    const QRegularExpressionMatch match = re.match(line.trimmed());
-
-    if (!match.hasMatch()) {
-        return HttpStatus{0, {}, false};
+    if (_write(line)) {
+        qCDebug(NTRIPHttpTransportLog) << "Queued NMEA:" << QString::fromUtf8(line.trimmed());
     }
-
-    return HttpStatus{match.captured(1).toInt(), match.captured(2).trimmed(), true};
 }

@@ -45,6 +45,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         TrajectoryPointsTest.h
         VehicleDistanceSensorFactGroupTest.cc
         VehicleDistanceSensorFactGroupTest.h
+        VehicleGPSFactGroupTest.cc
+        VehicleGPSFactGroupTest.h
         VehicleLinkManagerTest.cc
         VehicleLinkManagerTest.h
 )
@@ -81,4 +83,5 @@ add_qgc_test(SetEstimatorOriginTest LABELS Integration Vehicle)
 add_qgc_test(StandardModesTest LABELS Integration Vehicle)
 add_qgc_test(TrajectoryPointsTest LABELS Unit Vehicle)
 add_qgc_test(VehicleDistanceSensorFactGroupTest LABELS Integration Vehicle)
+add_qgc_test(VehicleGPSFactGroupTest LABELS Unit)
 add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle SERIAL)

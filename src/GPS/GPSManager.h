@@ -4,12 +4,17 @@
 #include <QtCore/QPointer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "NTRIPGgaProvider.h"
+
 class GPSCorrectionManager;
 class GPSRtk;
 class NMEASourceManager;
 class NTRIPManager;
+class NTRIPSettings;
+struct NTRIPConfiguration;
 class RTKAutoConnect;
 class QTimer;
+class Vehicle;
 
 class GPSManager : public QObject
 {
@@ -27,6 +32,10 @@ public:
 
     void init();
     void shutdown();
+    static NTRIPConfiguration ntripConfigFromSettings(NTRIPSettings& settings);
+    void configureGgaProvider(NTRIPGgaProvider& provider, NTRIPSettings* settings);
+    /// nowUs shares the observation's local monotonic clock domain.
+    static PositionResult vehicleGgaPosition(Vehicle* vehicle, NTRIPGgaProvider::PositionSource source, quint64 nowUs);
 
     GPSRtk* gpsRtk() { return _gpsRtk; }
 

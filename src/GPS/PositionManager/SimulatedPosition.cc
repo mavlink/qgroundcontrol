@@ -1,9 +1,10 @@
 #include "SimulatedPosition.h"
 
-#include <QtCore/QDateTime>
-
 #include <algorithm>
 #include <chrono>
+#include <utility>
+
+#include <QtCore/QDateTime>
 
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
@@ -88,20 +89,25 @@ void SimulatedPosition::_vehicleAdded(Vehicle* vehicle)
         return;
     }
 
+    disconnect(std::exchange(_homePositionChangedConnection, {}));
+    const quint64 revision = ++_homeRevision;
     if (vehicle->homePosition().isValid()) {
         _lastPosition.setCoordinate(vehicle->homePosition());
     } else {
-        _homePositionChangedConnection = connect(vehicle, &Vehicle::homePositionChanged, this, &SimulatedPosition::_vehicleHomePositionChanged);
+        _homePositionChangedConnection =
+            connect(vehicle, &Vehicle::homePositionChanged, this, [this, revision](const QGeoCoordinate& homePosition) {
+                if (revision == _homeRevision) {
+                    _vehicleHomePositionChanged(homePosition);
+                }
+            });
     }
 }
 
 void SimulatedPosition::_vehicleHomePositionChanged(QGeoCoordinate homePosition)
 {
     if (homePosition.isValid()) {
+        ++_homeRevision;
         _lastPosition.setCoordinate(homePosition);
-        if (_homePositionChangedConnection) {
-            (void) disconnect(_homePositionChangedConnection);
-            _homePositionChangedConnection = QMetaObject::Connection();
-        }
+        disconnect(std::exchange(_homePositionChangedConnection, {}));
     }
 }

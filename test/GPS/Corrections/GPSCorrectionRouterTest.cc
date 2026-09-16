@@ -72,7 +72,103 @@ private slots:
     void scopedAdmissionAccounting();
     void eventHistoryUsesIncrementalRows();
     void eventHistoryAllowsReentrantUpdates();
+    void decodedIngressPreservesEvidence_data();
+    void decodedIngressPreservesEvidence();
+    void snapshotSamplesClockOnce();
+    void snapshotKeepsHealthDomainsIndependent();
 };
+
+void GPSCorrectionRouterTest::decodedIngressPreservesEvidence_data()
+{
+    QTest::addColumn<bool>("valid");
+    QTest::addColumn<bool>("filtered");
+    QTest::newRow("valid") << true << false;
+    QTest::newRow("filtered") << true << true;
+    QTest::newRow("invalid") << false << false;
+}
+
+void GPSCorrectionRouterTest::decodedIngressPreservesEvidence()
+{
+    QFETCH(bool, valid);
+    QFETCH(bool, filtered);
+    const qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [now]() { return now; });
+    auto registration = router.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
+    RTCMFrameDecoder::Result decoded{GpsTestHelpers::buildRtcmFrame(1005), 1005, now - 10, valid, filtered};
+    const auto input = registration.token().event(decoded);
+    QCOMPARE(input.frame().source, GPSCorrectionSource::Ntrip);
+    QCOMPARE(input.frame().sourceInstance, QStringLiteral("caster"));
+    QCOMPARE(input.frame().session, registration.token().session());
+    QCOMPARE(input.frame().receivedAtMs, decoded.receivedAtMs);
+    QCOMPARE(input.frame().data, decoded.data);
+    QCOMPARE(input.rejection(), valid ? GPSCorrectionReason::None : GPSCorrectionReason::InvalidFrame);
+    QCOMPARE(router.acceptIngress(input), valid && !filtered);
+    QCOMPARE(router.statistics()[2].receivedFrames, 1ULL);
+    QCOMPARE(router.statistics()[2].validatedFrames, valid ? 1ULL : 0ULL);
+    auto replacement = router.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
+    QVERIFY(!router.acceptIngress(input));
+    QCOMPARE(router.statistics()[2].receivedFrames, 0ULL);
+}
+
+void GPSCorrectionRouterTest::snapshotSamplesClockOnce()
+{
+    qint64 now = 100000;
+    int samples = 0;
+    GPSCorrectionRouter router(nullptr, [&]() {
+        ++samples;
+        return now;
+    });
+    auto registration = router.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
+    router.setSink(QStringLiteral("accepted"),
+                   [](const GPSCorrectionFrame& frame) { return quint64(frame.data.size()); });
+    QVERIFY(router.acceptIngress(ingress(registration, now)));
+    samples = 0;
+    const auto snapshot = router.snapshot();
+    QCOMPARE(samples, 1);
+    QCOMPARE(snapshot.activeInstance, QStringLiteral("caster"));
+    const auto source = snapshot.sources[2].toMap();
+    QCOMPARE(source.value(QStringLiteral("ageMs")).toLongLong(), 0);
+    QVERIFY(source.value(QStringLiteral("usable")).toBool());
+    const auto instance = snapshot.sourceInstances.first().toMap();
+    QVERIFY(instance.value(QStringLiteral("selected")).toBool());
+    const auto destination = snapshot.destinations.first().toMap();
+    QVERIFY(destination.value(QStringLiteral("queuedBytes")).toULongLong() > 0);
+    QCOMPARE(destination.value(QStringLiteral("writtenBytes")).toULongLong(), 0ULL);
+    QCOMPARE(destination.value(QStringLiteral("transportAcceptedBytes")).toULongLong(), 0ULL);
+    QCOMPARE(destination.value(QStringLiteral("pendingBytes")).toULongLong(), 0ULL);
+
+    now += GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS;
+    const auto expired = router.snapshot();
+    QVERIFY(!expired.sources[2].toMap().value(QStringLiteral("usable")).toBool());
+    QVERIFY(!expired.sourceInstances.first().toMap().value(QStringLiteral("selected")).toBool());
+    QVERIFY(expired.activeInstance.isEmpty());
+    QVERIFY(snapshot.sourceInstances.first().toMap().value(QStringLiteral("selected")).toBool());
+    now = 99999;
+    const auto future = router.snapshot();
+    QCOMPARE(future.sources[2].toMap().value(QStringLiteral("ageMs")).toLongLong(), -1);
+    QVERIFY(!future.sources[2].toMap().value(QStringLiteral("usable")).toBool());
+    QVERIFY(!future.sourceInstances.first().toMap().value(QStringLiteral("selected")).toBool());
+}
+
+void GPSCorrectionRouterTest::snapshotKeepsHealthDomainsIndependent()
+{
+    const qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [now]() { return now; });
+    auto ntrip = router.registerSource(GPSCorrectionSource::Ntrip);
+    const RTCMFrameDecoder::Result filtered{GpsTestHelpers::buildRtcmFrame(1005), 1005, now, true, true};
+    QVERIFY(!router.acceptIngress(ntrip.token().event(filtered)));
+    auto udp = router.registerSource(GPSCorrectionSource::Udp);
+    QVERIFY(router.acceptIngress(udp.token().event(QByteArrayLiteral("raw"), now, 0, false)));
+    const auto snapshot = router.snapshot();
+    QVERIFY(snapshot.sources[2].toMap().value(QStringLiteral("usable")).toBool());
+    QVERIFY(!snapshot.sources[3].toMap().value(QStringLiteral("usable")).toBool());
+    for (const auto& row : snapshot.sourceInstances) {
+        const auto instance = row.toMap();
+        const bool isUdp = instance.value(QStringLiteral("source")).toInt() == int(GPSCorrectionSource::Udp);
+        QCOMPARE(instance.value(QStringLiteral("usable")).toBool(), isUdp);
+        QCOMPARE(instance.value(QStringLiteral("selected")).toBool(), isUdp);
+    }
+}
 
 void GPSCorrectionRouterTest::fanoutRetirementSettlesPendingChildren()
 {

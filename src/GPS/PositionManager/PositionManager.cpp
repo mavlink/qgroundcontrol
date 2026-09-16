@@ -16,9 +16,11 @@ Q_APPLICATION_STATIC(QGCPositionManager, _positionManager);
 
 QGCPositionManager::QGCPositionManager(QObject* parent, RuntimeScheduler* scheduler)
     : GPSPositionService(parent, scheduler)
-    , _nmeaScheduler(scheduler)
 {
     qCDebug(QGCPositionManagerLog) << this;
+    if (this->scheduler()) {
+        connect(this->scheduler(), &QObject::destroyed, this, &QGCPositionManager::resetNmeaSourceDevice);
+    }
 }
 
 QGCPositionManager::~QGCPositionManager()
@@ -36,8 +38,12 @@ QGCPositionManager* QGCPositionManager::instance()
 
 void QGCPositionManager::init()
 {
+    if (!scheduler()) {
+        qCWarning(QGCPositionManagerLog) << "Positioning requires a live scheduler";
+        return;
+    }
     if (QGC::runningUnitTests()) {
-        setSimulatedPositionSource(new SimulatedPosition(this));
+        setSimulatedPositionSource(new SimulatedPosition(this, scheduler()));
     } else {
         _checkPermission();
     }
@@ -45,6 +51,10 @@ void QGCPositionManager::init()
 
 void QGCPositionManager::_setupPositionSources()
 {
+    if (!scheduler()) {
+        qCWarning(QGCPositionManagerLog) << "Positioning requires a live scheduler";
+        return;
+    }
     auto* platformSource = QGCCorePlugin::instance()->createPositionSource(this);
     const bool custom = platformSource != nullptr;
     if (!custom) {
@@ -86,8 +96,8 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
     if (_destroying) {
         return;
     }
-    if (QThread::currentThread() != thread() || (device && device->thread() != thread())) {
-        qCWarning(QGCPositionManagerLog) << "NMEA device requires matching thread affinity";
+    if (QThread::currentThread() != thread() || (device && (device->thread() != thread() || !scheduler()))) {
+        qCWarning(QGCPositionManagerLog) << "NMEA device requires matching thread affinity and a live scheduler";
         return;
     }
     const QPointer<QGCPositionManager> guard(this);
@@ -97,7 +107,7 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
     if (!guard || _nmeaRevision != revision || !deviceGuard) {
         return;
     }
-    _nmeaSource = std::make_unique<NMEADecoderSession>(nullptr, _nmeaScheduler);
+    _nmeaSource = std::make_unique<NMEADecoderSession>(nullptr, scheduler());
     if (!_nmeaSource->start(device)) {
         _nmeaSource.reset();
         return;

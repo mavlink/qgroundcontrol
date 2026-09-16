@@ -85,6 +85,8 @@
 
 #include <QtCore/QDateTime>
 
+#include "MonotonicClock.h"
+
 QGC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
 
 #define UPDATE_TIMER 50
@@ -310,6 +312,12 @@ void Vehicle::_commonInit(LinkInterface* link)
 
     _gpsFactGroup                   = new VehicleGPSFactGroup(this);
     _gps2FactGroup                  = new VehicleGPS2FactGroup(this);
+    connect(_vehicleLinkManager, &VehicleLinkManager::communicationLostChanged, this, [this](bool lost) {
+        if (lost) {
+            _invalidatePositionObservations();
+        }
+    });
+    connect(_vehicleLinkManager, &VehicleLinkManager::allLinksRemoved, this, &Vehicle::_invalidatePositionObservations);
     _gpsAggregateFactGroup          = new VehicleGPSAggregateFactGroup(this);
     _windFactGroup                  = new VehicleWindFactGroup(this);
     _vibrationFactGroup             = new VehicleVibrationFactGroup(this);
@@ -831,6 +839,35 @@ void Vehicle::_handleCameraImageCaptured(const mavlink_message_t& message)
     }
 }
 
+const GPSObservation& Vehicle::gpsObservation() const
+{
+    return _gpsFactGroup->observation();
+}
+
+void Vehicle::_invalidatePositionObservations()
+{
+    _gpsFactGroup->invalidateObservation();
+    _gps2FactGroup->invalidateObservation();
+    _fusedPositionObservation = {};
+}
+
+void Vehicle::_updateFusedPositionObservation(const QGeoCoordinate& coordinate, bool fixValid, const QString& sourceId)
+{
+    _fusedPositionObservation = {};
+    _fusedPositionObservation.monotonicTimestampUs = MonotonicClock::nowUs();
+    _fusedPositionObservation.receivedAt = QDateTime::currentDateTimeUtc();
+    _fusedPositionObservation.position = QGeoPositionInfo(coordinate, _fusedPositionObservation.receivedAt);
+    _fusedPositionObservation.sourceId = sourceId;
+    _fusedPositionObservation.receiverFixValid =
+        fixValid && coordinate.isValid() && (coordinate.latitude() != 0 || coordinate.longitude() != 0);
+    _fusedPositionObservation.fixQuality = *_fusedPositionObservation.receiverFixValid
+                                               ? GPSObservation::FixQuality::Extrapolated
+                                               : GPSObservation::FixQuality::NoFix;
+    if (qIsFinite(coordinate.altitude())) {
+        _fusedPositionObservation.altitudeDatum = GPSAltitudeDatum::MeanSeaLevel;
+    }
+}
+
 // TODO: VehicleFactGroup
 void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
 {
@@ -867,6 +904,15 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     mavlink_global_position_int_t globalPositionInt;
     mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
 
+    if (message.sysid == _systemID) {
+        _updateFusedPositionObservation(
+            QGeoCoordinate(globalPositionInt.lat * 1e-7, globalPositionInt.lon * 1e-7,
+                           globalPositionInt.alt == INT32_MAX || globalPositionInt.alt == INT32_MIN
+                               ? qQNaN()
+                               : globalPositionInt.alt / 1000.0),
+            true, QStringLiteral("GLOBAL_POSITION_INT"));
+    }
+
     if (!_altitudeMessageAvailable) {
         _altitudeRelativeFact.setRawValue(globalPositionInt.relative_alt / 1000.0);
         _altitudeAMSLFact.setRawValue(globalPositionInt.alt / 1000.0);
@@ -891,6 +937,16 @@ void Vehicle::_handleHighLatency(mavlink_message_t& message)
 {
     mavlink_high_latency_t highLatency;
     mavlink_msg_high_latency_decode(&message, &highLatency);
+
+    if (message.sysid == _systemID && message.compid == _defaultComponentId) {
+        _updateFusedPositionObservation(
+            QGeoCoordinate(highLatency.latitude * 1e-7, highLatency.longitude * 1e-7,
+                           highLatency.altitude_amsl == INT16_MAX || highLatency.altitude_amsl == INT16_MIN
+                               ? qQNaN()
+                               : highLatency.altitude_amsl),
+            highLatency.gps_fix_type >= GPS_FIX_TYPE_3D_FIX && highLatency.gps_fix_type <= GPS_FIX_TYPE_PPP,
+            QStringLiteral("HIGH_LATENCY"));
+    }
 
     QString previousFlightMode;
     if (_base_mode != 0 || _custom_mode != 0){
@@ -938,6 +994,16 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
 {
     mavlink_high_latency2_t highLatency2;
     mavlink_msg_high_latency2_decode(&message, &highLatency2);
+
+    if (message.sysid == _systemID && message.compid == _defaultComponentId) {
+        _updateFusedPositionObservation(
+            QGeoCoordinate(highLatency2.latitude * 1e-7, highLatency2.longitude * 1e-7,
+                           highLatency2.altitude == INT16_MAX || highLatency2.altitude == INT16_MIN
+                               ? qQNaN()
+                               : highLatency2.altitude),
+            !(highLatency2.failure_flags & (HL_FAILURE_FLAG_GPS | HL_FAILURE_FLAG_ESTIMATOR)),
+            QStringLiteral("HIGH_LATENCY2"));
+    }
 
     QString previousFlightMode;
     if (_base_mode != 0 || _custom_mode != 0){

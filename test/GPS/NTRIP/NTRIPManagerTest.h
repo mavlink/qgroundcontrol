@@ -2,13 +2,7 @@
 
 #include "UnitTest.h"
 
-/// State-transition smoke tests for the NTRIP manager singleton.
-///
-/// The detailed GGA formatting suite that used to live here has been moved to
-/// NTRIPGgaProviderTest — that is where the implementation of makeGGA lives and
-/// where future sentence-format cases should go. This file focuses on the
-/// NTRIPManager's observable state machine (connectionStatus, casterStatus)
-/// rather than downstream sentence encoding.
+/// Tests observable NTRIP state transitions and reconnect behavior.
 class NTRIPManagerTest : public UnitTest
 {
     Q_OBJECT
@@ -19,7 +13,8 @@ private slots:
     void testInitialStateIsDisconnected();
     void testStopFromIdleIsNoop();
     void testPlaintextCredentialWarningIsVisibleState();
-    void testErrorStateStopsUdpForwarder();
+    void testTerminalStateStopsUdpForwarder_data();
+    void testTerminalStateStopsUdpForwarder();
 
     // Reconnect backoff (migrated from NTRIPReconnectPolicyTest after the policy
     // was inlined into NTRIPManager). Driven through the friend test seam.
@@ -31,10 +26,18 @@ private slots:
     void testReconnectSignalFires();
     void testDuplicateTransportErrorsScheduleOneRetry();
     void testRetiredTransportErrorCannotAffectNewSession();
+    void testRetryAfterReconnect_data();
+    void testRetryAfterReconnect();
+    void testHttpRetryAfterReachesManager();
+    void testRetryPublicationSuperseded_data();
+    void testRetryPublicationSuperseded();
     void testMissingMountpointDoesNotStartTransport();
     void testCorrectionIngressKeepsSessionAndIdentity();
+    void testSettingsProduceExplicitConfiguration();
     void testFactChangesReconfigureTransport_data();
     void testFactChangesReconfigureTransport();
     void testNtripOnlyUdpForwardingBypassesSelectionOnce();
     void testTransportDiagnosticsReachManager();
+    void testStatusCallbackStopsTransition();
+    void testCasterCallbackStopsTransition();
 };

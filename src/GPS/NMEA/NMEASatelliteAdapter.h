@@ -3,7 +3,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 
-#include "GPSObservation.h"
+#include "GPSSatelliteObservation.h"
 #include "NMEASatelliteEpoch.h"
 #include "NMEASentenceEnvelope.h"
 #include "RuntimeScheduler.h"

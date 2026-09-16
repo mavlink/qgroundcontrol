@@ -9,10 +9,9 @@
 
 void VehicleGPS2FactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
 {
-    Q_UNUSED(vehicle);
-
     switch (message.msgid) {
     case MAVLINK_MSG_ID_GPS2_RAW:
+        _updateObservation(vehicle, message);
         _handleGps2Raw(message);
         break;
     case MAVLINK_MSG_ID_GNSS_INTEGRITY:

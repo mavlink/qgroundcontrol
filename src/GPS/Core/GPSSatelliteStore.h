@@ -1,10 +1,10 @@
 #pragma once
 
-#include <QtCore/QObject>
-
 #include <map>
 
-#include "GPSObservation.h"
+#include <QtCore/QObject>
+
+#include "GPSSatelliteObservation.h"
 #include "ScheduledTask.h"
 
 /// Authoritative accepted satellite state, with independent constellation and view/use deadlines.
@@ -44,7 +44,7 @@ private:
     void _expire(quint64 nowUs);
     bool _accept(quint64 receipt, quint64 current, quint64& retired, quint64 nowUs) const;
 
-    std::map<GPSSatellite::Constellation, ConstellationState> _constellations;
+    std::map<GPSConstellation, ConstellationState> _constellations;
     GPSSatelliteObservation _observation;
     QPointer<RuntimeScheduler> _scheduler;
     ScheduledTask _expiryTask;

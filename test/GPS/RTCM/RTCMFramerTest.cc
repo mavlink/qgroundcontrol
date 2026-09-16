@@ -1,18 +1,59 @@
 #include "RTCMFramerTest.h"
 
+#include <QtCore/QByteArrayView>
+
 #include "RTCMFramer.h"
+#include "RTCMTestFixtures.h"
+
+void RTCMFramerTest::_frameAccess_data()
+{
+    QTest::addColumn<int>("messageId");
+    QTest::addColumn<int>("extraPayload");
+    QTest::newRow("minimum-id") << 0 << 0;
+    QTest::newRow("base-position") << 1005 << 4;
+    QTest::newRow("observations") << 1077 << 8;
+    QTest::newRow("maximum-id") << 4095 << 0;
+    QTest::newRow("near-maximum-length") << 1230 << 1020;
+    QTest::newRow("maximum-length") << 1230 << 1021;
+}
+
+void RTCMFramerTest::_frameAccess()
+{
+    QFETCH(int, messageId);
+    QFETCH(int, extraPayload);
+    const auto frame = GpsTestHelpers::buildRtcmFrame(static_cast<uint16_t>(messageId), extraPayload);
+    RTCMFramer framer;
+    for (qsizetype index = 0; index < frame.size(); ++index) {
+        QCOMPARE(framer.addByte(static_cast<uint8_t>(frame[index])), index == frame.size() - 1);
+    }
+    QVERIFY(framer.valid());
+    QCOMPARE(framer.messageId(), messageId);
+    QCOMPARE(framer.payloadLength(), extraPayload + 2);
+    QCOMPARE(QByteArrayView(framer.frame()), QByteArrayView(frame));
+
+    const auto savedFrame = QByteArrayView(framer.frame()).toByteArray();
+    framer.reset();
+    const auto replacement = GpsTestHelpers::buildRtcmFrame(1006, extraPayload);
+    for (const char byte : replacement) {
+        framer.addByte(static_cast<uint8_t>(byte));
+    }
+    QCOMPARE(QByteArrayView(framer.frame()), QByteArrayView(replacement));
+    QCOMPARE(savedFrame, frame);
+}
 
 void RTCMFramerTest::_frameViewAndReset()
 {
     const auto frame = QByteArray::fromHex("d300023ed0a4e000");
     RTCMFramer framer;
     QVERIFY(framer.frame().empty());
+    QVERIFY(!framer.valid());
     QVERIFY(!framer.hasPartialFrame());
     QVERIFY(!framer.nextFrame());
     for (qsizetype index = 0; index < frame.size() - 1; ++index) {
         QVERIFY(!framer.addByte(static_cast<uint8_t>(frame[index])));
         QVERIFY(framer.hasPartialFrame());
         QVERIFY(framer.frame().empty());
+        QVERIFY(!framer.valid());
         QCOMPARE(framer.bufferedSize(), index + 1);
     }
     QVERIFY(framer.addByte(static_cast<uint8_t>(frame.back())));
@@ -31,6 +72,8 @@ void RTCMFramerTest::_frameViewAndReset()
     QVERIFY(framer.frame().empty());
     QCOMPARE(framer.bufferedSize(), 0);
     QCOMPARE(framer.payloadLength(), 0);
+    QCOMPARE(framer.messageId(), 0);
+    QVERIFY(!framer.valid());
 }
 
 void RTCMFramerTest::_implicitAdvance_data()

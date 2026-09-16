@@ -46,7 +46,6 @@ private:
     GPSPositionSourceRegistration _nmeaRegistration;
     QMetaObject::Connection _nmeaDeviceDestroyedConnection;
     QMetaObject::Connection _nmeaDeviceClosedConnection;
-    QPointer<RuntimeScheduler> _nmeaScheduler;
     quint64 _nmeaRevision = 0;
     bool _destroying = false;
 };

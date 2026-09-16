@@ -11,6 +11,7 @@ private slots:
     void _dateOrdering();
     void _fixLoss_data();
     void _fixLoss();
+    void _delayedFixLossReceipt();
     void _lateFixLossDoesNotRejectRecovery_data();
     void _lateFixLossDoesNotRejectRecovery();
     void _fixLossPreservesPendingRequest();

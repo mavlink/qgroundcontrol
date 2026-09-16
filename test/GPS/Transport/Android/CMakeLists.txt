@@ -11,14 +11,15 @@ add_executable(
     ${_android_serial}/qtandroidserialport/qserialportinfo_android.cpp
     ${_android_serial}/../GPS/Transport/SerialGPSTransport.cc
 )
+set_target_properties(AndroidGPSCompatibilityTest PROPERTIES AUTOMOC ON)
 target_compile_features(AndroidGPSCompatibilityTest PRIVATE cxx_std_20)
 target_compile_options(AndroidGPSCompatibilityTest PRIVATE -include ${CMAKE_CURRENT_SOURCE_DIR}/AndroidHostPlatform.h)
 target_include_directories(AndroidGPSCompatibilityTest
                            PRIVATE ${_android_serial} ${_android_serial}/qtandroidserialport
                                    ${_android_serial}/../GPS/Transport
 )
-target_link_libraries(AndroidGPSCompatibilityTest PRIVATE Qt6::Core Qt6::CorePrivate Qt6::Network Qt6::Test
-                                                          QGCGPSTransport QGCLoggingCategory
+target_link_libraries(AndroidGPSCompatibilityTest PRIVATE Qt6::Core Qt6::CorePrivate Qt6::Test QGCGPSTransport
+                                                          QGCLoggingCategory
 )
 add_test(NAME AndroidGPSCompatibilityTest COMMAND AndroidGPSCompatibilityTest)
 set_tests_properties(AndroidGPSCompatibilityTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 30)

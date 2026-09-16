@@ -37,7 +37,7 @@ private slots:
     void testConfigValidBadPort();
     void testConfigRejectsColonUsername();
     void testConfigRejectsControlChars();
-    void testConfigDiffClassifiersCoverIndependentFields();
+    void testConfigurationDomainsCompareIndependently();
     void testConfigCasterIdentityExcludesMountpointAndSinks();
 
     // Live TLS error path

@@ -8,4 +8,6 @@ class FollowMeTest : public VehicleTestManualConnect
 
 private slots:
     void _testFollowMe();
+    void _motionPolicyReports_data();
+    void _motionPolicyReports();
 };

@@ -7,7 +7,6 @@
 #include "RTCMFrameDecoder.h"
 #include "RTCMFramer.h"
 #include "RTCMMavlinkPacket.h"
-#include "RTCMParser.h"
 
 namespace {
 // Fixed CRCs keep expectations independent of the framing implementation.
@@ -189,23 +188,18 @@ void RTCMConformanceTest::_sharedCorpus()
 
     RTCMFrameDecoder decoder;
     RTCMFramer framer;
-    RTCMParser legacy;
     QList<QByteArray> decodedFrames;
     QList<QByteArray> framedFrames;
-    QList<QByteArray> legacyFrames;
     QList<int> decodedIds;
     QList<int> framedIds;
-    QList<int> legacyIds;
     QList<QByteArray> decodedRejected;
     QList<QByteArray> framedRejected;
-    QList<QByteArray> legacyRejected;
     QList<qint64> receiptTimes;
     QList<qint64> rejectionTimes;
     for (qsizetype chunkIndex = 0; chunkIndex < chunks.size(); ++chunkIndex) {
         if (resetBeforeChunk.contains(static_cast<int>(chunkIndex))) {
             decoder.reset();
             framer.reset();
-            legacy.reset();
         }
         for (const char rawByte : chunks[chunkIndex]) {
             const auto byte = static_cast<uint8_t>(rawByte);
@@ -235,25 +229,13 @@ void RTCMConformanceTest::_sharedCorpus()
                 }
             }
             QVERIFY(framer.bufferedSize() <= RTCMFramer::MAX_FRAME_SIZE);
-            for (bool complete = legacy.addByte(byte); complete; complete = legacy.nextFrame()) {
-                const auto candidate = legacy.currentFrame();
-                if (legacy.validateCrc()) {
-                    legacyFrames.append(candidate);
-                    legacyIds.append(legacy.messageId());
-                } else {
-                    legacyRejected.append(candidate);
-                }
-            }
         }
     }
     QCOMPARE(decodedFrames, expectedFrames);
     QCOMPARE(framedFrames, expectedFrames);
-    QCOMPARE(legacyFrames, expectedFrames);
     QCOMPARE(decodedIds, framedIds);
-    QCOMPARE(decodedIds, legacyIds);
     QCOMPARE(decodedRejected, expectedRejected);
     QCOMPARE(framedRejected, expectedRejected);
-    QCOMPARE(legacyRejected, expectedRejected);
     QCOMPARE(receiptTimes, expectedReceiptTimes);
     QCOMPARE(rejectionTimes, expectedRejectionTimes);
 }
@@ -280,7 +262,7 @@ void RTCMConformanceTest::_strictValidation()
 void RTCMConformanceTest::_fragmentReceiptAndFiltering()
 {
     RTCMFrameDecoder decoder;
-    decoder.setWhitelist({1077});
+    decoder.setWhitelist({1077, 1077});
     QVERIFY(!decoder.addByte(RTCMFramer::PREAMBLE, 500));
     const auto rejected = decoder.addByte(0x04, 500);
     QVERIFY(rejected && !rejected->valid && !rejected->filtered);

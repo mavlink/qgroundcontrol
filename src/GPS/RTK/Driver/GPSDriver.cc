@@ -6,7 +6,6 @@
 #include <definitions.h>
 #include <femtomes.h>
 #include <gps_helper.h>
-#include <limits>
 #include <sbf.h>
 #include <ubx.h>
 #include <utility>
@@ -24,9 +23,11 @@ int callbackTrampoline(GPSCallbackType type, void* data1, int data2, void* user)
 }
 }  // namespace
 
-GPSDriver::GPSDriver(GPSReceiverType type, GPSTransport& transport, const GPSReceiverConfig& config,
-                     GPSDriverSinks sinks)
-    : _type(type), _transport(transport), _config(config), _sinks(std::move(sinks))
+GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks)
+    : _type(type)
+    , _transport(transport)
+    , _config(config)
+    , _sinks(std::move(sinks))
 {}
 
 GPSDriver::~GPSDriver() = default;
@@ -34,45 +35,28 @@ GPSDriver::~GPSDriver() = default;
 bool GPSDriver::configure()
 {
     _driver.reset();
-    const auto* fixed = std::get_if<GPSFixedBaseConfig>(&_config.base);
-    const auto* survey = std::get_if<GPSSurveyInConfig>(&_config.base);
-    constexpr double MAX_UNSIGNED_VALUE = (std::numeric_limits<uint32_t>::max)();
-    if (fixed) {
-        if (!fixed->coordinate.isValid() || !qIsFinite(fixed->altitudeEllipsoidMeters)) {
-            qCWarning(GPSDriverLog) << "Fixed base position requires valid coordinates and finite ellipsoid altitude";
-            return false;
-        }
-        const double altitudeCm = static_cast<double>(fixed->altitudeEllipsoidMeters) * 100.0;
-        // PX4 passes accuracy as float millimeters, then UBX converts to unsigned 0.1 mm.
-        const double accuracyUnits = static_cast<double>((fixed->accuracyMeters * 1000.0f) * 10.0f);
-        if (altitudeCm < (std::numeric_limits<int32_t>::min)() || altitudeCm > (std::numeric_limits<int32_t>::max)() ||
-            !qIsFinite(accuracyUnits) || accuracyUnits < 0 || accuracyUnits > MAX_UNSIGNED_VALUE) {
-            qCWarning(GPSDriverLog) << "Fixed base altitude or accuracy exceeds driver limits";
-            return false;
-        }
-    } else if (survey) {
-        const double accuracyUnits = survey->accuracyMeters * 10000.0;
-        const auto duration = survey->minimumDuration.count();
-        if (!qIsFinite(accuracyUnits) || accuracyUnits < 1 || accuracyUnits > MAX_UNSIGNED_VALUE || duration < 1 ||
-            duration > (std::numeric_limits<uint32_t>::max)()) {
-            qCWarning(GPSDriverLog) << "Survey-in requires representable positive accuracy and duration";
-            return false;
-        }
-    } else {
-        qCWarning(GPSDriverLog) << "Missing base configuration";
+    if (_config.role != GPSReceiverConfig::Role::RTKBase ||
+        _config.outputProtocol != GPSReceiverConfig::OutputProtocol::Native || _config.constellationMask != 0 ||
+        _config.dynamicModel != 0 || _config.outputRateHz != 0 ||
+        _config.headingOffsetDeg != GPSReceiverConfig{}.headingOffsetDeg) {
+        qCWarning(GPSDriverLog) << "RTK driver does not support the requested receiver configuration";
+        return false;
+    }
+    if (const QString error = _config.validationError(); !error.isEmpty()) {
+        qCWarning(GPSDriverLog) << error;
         return false;
     }
 
     unsigned baudrate = _transport.fixedBaudrate();
     switch (_type) {
-        case GPSReceiverType::trimble:
+        case GPSType::trimble:
             _driver.reset(new GPSDriverAshtech(&callbackTrampoline, this, &_sensorGps, &_satelliteInfo));
             baudrate = 115200;
             break;
-        case GPSReceiverType::septentrio:
+        case GPSType::septentrio:
             _driver.reset(new GPSDriverSBF(&callbackTrampoline, this, &_sensorGps, &_satelliteInfo));
             break;
-        case GPSReceiverType::ublox: {
+        case GPSType::ublox: {
             const GPSDriverUBX::Settings settings{
                 .dynamic_model = 7,
                 .dgnss_timeout = 0,
@@ -89,7 +73,7 @@ bool GPSDriver::configure()
                                            &_satelliteInfo, settings));
             break;
         }
-        case GPSReceiverType::femto:
+        case GPSType::femto:
             _driver.reset(new GPSDriverFemto(&callbackTrampoline, this, &_sensorGps, &_satelliteInfo));
             break;
     }
@@ -99,12 +83,13 @@ bool GPSDriver::configure()
         return false;
     }
 
-    if (fixed) {
-        _driver->setBasePosition(fixed->coordinate.latitude(), fixed->coordinate.longitude(),
-                                 fixed->altitudeEllipsoidMeters, fixed->accuracyMeters * 1000.0f);
+    const auto& base = _config.base;
+    if (base.useFixedBase) {
+        _driver->setBasePosition(base.fixedBaseLatitude, base.fixedBaseLongitude, base.fixedBaseAltitudeMeters,
+                                 base.fixedBaseAccuracyMeters * 1000.0f);
     } else {
-        _driver->setSurveyInSpecs(static_cast<uint32_t>(survey->accuracyMeters * 10000.0),
-                                  static_cast<uint32_t>(survey->minimumDuration.count()));
+        _driver->setSurveyInSpecs(static_cast<uint32_t>(base.surveyInAccMeters * 10000.0),
+                                  static_cast<uint32_t>(base.surveyInDurationSecs));
     }
 
     GPSHelper::GPSConfig gpsConfig{};
@@ -147,14 +132,14 @@ int GPSDriver::handleCallback(int type, void* data1, int data2)
             int timeoutMs = 0;
             memcpy(&timeoutMs, data1, sizeof(timeoutMs));  // px4 packs the timeout into data1's first bytes (unaligned)
             const auto result = _transport.read(static_cast<uint8_t*>(data1), data2, timeoutMs);
-            if (result.status == GPSTransport::ReadStatus::Data && result.bytesRead >= 0 && result.bytesRead <= data2) {
+            if (result.status == GPSReadStatus::Data && result.bytesRead >= 0 && result.bytesRead <= data2) {
                 return result.bytesRead;
             }
-            return result.status == GPSTransport::ReadStatus::TimedOut ? 0 : -1;
+            return result.status == GPSReadStatus::TimedOut ? 0 : -1;
         }
         case GPSCallbackType::writeDeviceData: {
             const auto result = _transport.write(static_cast<const uint8_t*>(data1), data2);
-            return result.status == GPSTransport::WriteStatus::Completed && result.acceptedBytes == data2 &&
+            return result.status == GPSWriteStatus::Completed && result.acceptedBytes == data2 &&
                            result.writtenBytes == data2 && result.uncertainBytes == 0
                        ? data2
                        : -1;
@@ -173,8 +158,7 @@ int GPSDriver::handleCallback(int type, void* data1, int data2)
                 out.coordinate = QGeoCoordinate(status->latitude, status->longitude);
                 out.altitudeEllipsoidMeters = status->altitude;
                 // Ashtech and Femto use zero for unknown accuracy; UBX can round a valid value to zero.
-                if (status->mean_accuracy != 0 ||
-                    (_type != GPSReceiverType::trimble && _type != GPSReceiverType::femto)) {
+                if (status->mean_accuracy != 0 || (_type != GPSType::trimble && _type != GPSType::femto)) {
                     out.meanAccuracyMeters = static_cast<double>(status->mean_accuracy) / 1000.0;
                 }
                 out.duration = std::chrono::seconds(status->duration);

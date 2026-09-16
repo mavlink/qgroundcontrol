@@ -1,5 +1,7 @@
 #include "NMEADecoderSessionTest.h"
 
+#include <memory>
+
 #include <QtCore/QBuffer>
 #include <QtCore/QIODevice>
 #include <QtPositioning/QGeoPositionInfoSource>
@@ -125,4 +127,28 @@ void NMEADecoderSessionTest::_delayedInputRetainsReceiptAge()
     input.feed("new traffic\n");
     QCOMPARE(input.lastReadTimestampUs(), scheduler.nowUs());
     QVERIFY(session.receiving());
+}
+
+void NMEADecoderSessionTest::_schedulerDestructionRetiresSession()
+{
+    auto scheduler = std::make_unique<ManualScheduler>();
+    SequentialTestDevice input(scheduler.get());
+    NMEADecoderSession session(nullptr, scheduler.get());
+    QVERIFY(session.start(&input));
+    input.feed("receiver traffic\n");
+    QVERIFY(session.receiving());
+    const auto activeSession = session.sessionId();
+    QSignalSpy activity(&session, &NMEADecoderSession::activityChanged);
+    scheduler.reset();
+    QVERIFY(!session.receiving());
+    QVERIFY(!session.hasReceivedData());
+    QVERIFY(!session.positionSource());
+    QVERIFY(!session.health()->usable());
+    QVERIFY(session.sessionId() > activeSession);
+    QCOMPARE(activity.size(), 1);
+    QVERIFY(input.isOpen());
+    input.feed(FIX);
+    QVERIFY(!session.receiving());
+    QCOMPARE(activity.size(), 1);
+    QVERIFY(!session.start(&input));
 }

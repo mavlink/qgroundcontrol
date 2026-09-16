@@ -37,6 +37,7 @@ private:
     quint64 _lastUpdateUs = 0;
     QGeoPositionInfo _lastPosition;
     QMetaObject::Connection _homePositionChangedConnection;
+    quint64 _homeRevision = 0;
 
     static constexpr int kUpdateIntervalMsecs = 1000;
     static constexpr qreal kHorizontalVelocityMetersPerSec = 0.5;

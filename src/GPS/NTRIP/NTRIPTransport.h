@@ -31,16 +31,13 @@ public:
 
 signals:
     void connected();
-    void error(NTRIPError code, const QString& detail);
+    void error(const NTRIPFailure& failure);
     /// Compatibility projection of valid, unfiltered decoded frames.
     void RTCMDataUpdate(const QByteArray& message, int messageId);
     /// Includes invalid and filtered candidates.
     void correctionFrameReceived(const RTCMFrameDecoder::Result& frame);
     void finished();
 
-    /// Emitted when the transport sent authentication credentials over a cleartext
-    /// channel (e.g. Basic auth over HTTP, no TLS). Subclasses that never transmit
-    /// credentials simply never emit this. Exposed on the base so NTRIPManager does
-    /// not need to know the concrete transport type to wire the warning logger.
+    /// Warns before admitting a plaintext credential write; observers may cancel.
     void plaintextCredentialsWarning();
 };

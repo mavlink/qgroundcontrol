@@ -1,11 +1,12 @@
 #include "NMEADecoderSession.h"
 
-#include <QtCore/QIODevice>
-#include <QtCore/QPointer>
-
 #include <algorithm>
 #include <chrono>
 
+#include <QtCore/QIODevice>
+#include <QtCore/QPointer>
+
+#include "MonotonicClock.h"
 #include "NMEAPositionSource.h"
 #include "NMEASatelliteAdapter.h"
 #include "NMEAStreamSplitter.h"
@@ -22,6 +23,10 @@ NMEADecoderSession::NMEADecoderSession(QObject* parent, RuntimeScheduler* schedu
       _activityTask(_scheduler, this)
 {
     qCDebug(NMEADecoderSessionLog) << this;
+    connect(_scheduler, &QObject::destroyed, this, [this]() {
+        _scheduler = nullptr;
+        stop();
+    });
     connect(&_health, &GPSSourceHealth::satellitesChanged, this, &NMEADecoderSession::satellitesChanged);
     connect(&_satellites, &GPSSatelliteStore::observationChanged, &_health,
             &GPSSourceHealth::applySatelliteObservation);
@@ -39,6 +44,9 @@ NMEADecoderSession::~NMEADecoderSession()
     blockSignals(true);
     _health.blockSignals(true);
     _satellites.blockSignals(true);
+    if (_scheduler) {
+        _scheduler->disconnect(this);
+    }
     stop();
 }
 
@@ -168,15 +176,14 @@ void NMEADecoderSession::_receivedData(quint64 receivedAtUs)
     }
     const bool previouslyReceived = hasReceivedData();
     _lastDataTimestampUs = std::max(_lastDataTimestampUs, receivedAtUs);
-    const auto ageUs = _scheduler->nowUs() - _lastDataTimestampUs;
-    const auto lifetimeUs = static_cast<quint64>(
-        std::chrono::microseconds(std::chrono::milliseconds(_health.freshnessTimeoutMs())).count());
-    const bool receiving = ageUs < lifetimeUs;
+    const auto remaining = MonotonicClock::remaining(_lastDataTimestampUs, _scheduler->nowUs(),
+                                                     std::chrono::milliseconds(_health.freshnessTimeoutMs()));
+    const bool receiving = remaining > std::chrono::microseconds::zero();
     const bool changed = receiving != _receiving || !previouslyReceived;
     _receiving = receiving;
     _activityTask.cancel();
     if (receiving) {
-        _activityTask.schedule(std::chrono::microseconds(lifetimeUs - ageUs), [this]() {
+        _activityTask.schedule(remaining, [this]() {
             _receiving = false;
             emit activityChanged();
         });

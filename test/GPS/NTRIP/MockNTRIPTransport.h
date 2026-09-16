@@ -42,7 +42,10 @@ public:
 
     void simulateConnect() { emit connected(); }
 
-    void simulateError(NTRIPError code, const QString& detail) { emit error(code, detail); }
+    void simulateError(NTRIPError code, const QString& detail, std::chrono::milliseconds retryAfter = {})
+    {
+        emit error(NTRIPFailure{code, detail, retryAfter});
+    }
 
     void simulateRtcmData(const QByteArray& data, int messageId = 0,
                           qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000))

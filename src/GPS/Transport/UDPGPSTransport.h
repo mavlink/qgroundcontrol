@@ -21,14 +21,14 @@ public:
     UDPGPSTransport(QString host, quint16 port, const std::atomic_bool& requestStop, quint16 localPort = 0);
     ~UDPGPSTransport() override;
 
-    OpenResult open() override;
+    GPSOpenResult open() override;
     bool fatalError() const override;
 
     unsigned fixedBaudrate() const override { return 115200; }
 
-    ReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
+    GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
     std::chrono::milliseconds configurationWriteTimeout() const override;
-    WriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
+    GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
     bool setBaudrate(unsigned baudrate) override;
 
 private:

@@ -81,7 +81,7 @@ private:
 
     void _scheduleSourcesChanged();
     void _refreshDiagnostics();
-    void _refreshSourceInstances();
+    void _refreshSourceInstances(const QVariantList& instances);
 
     GPSCorrectionRouter _router;
     GPSCorrectionEventModel _eventModel;

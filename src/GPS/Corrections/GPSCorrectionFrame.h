@@ -1,10 +1,12 @@
 #pragma once
 
-#include <chrono>
+#include <limits>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QMetaType>
 #include <QtCore/QString>
+
+#include "MonotonicClock.h"
 
 // Unknown identifies legacy unclassified input; routing policy is selected separately.
 enum class GPSCorrectionSource
@@ -28,11 +30,15 @@ struct GPSCorrectionFrame
     QString sourceInstance = {};
     quint64 deliveryId = 0;
 
-    static qint64 monotonicNowMs()
+    static qint64 monotonicNowMs() { return static_cast<qint64>(MonotonicClock::nowUs() / 1000); }
+
+    static qint64 ageMs(qint64 receivedAtMs, qint64 nowMs)
     {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(
-                   std::chrono::steady_clock::now().time_since_epoch())
-            .count();
+        if (receivedAtMs <= 0 || nowMs < receivedAtMs ||
+            quint64(nowMs) > (std::numeric_limits<quint64>::max)() / 1000) {
+            return -1;
+        }
+        return MonotonicClock::ageMilliseconds(quint64(receivedAtMs) * 1000, quint64(nowMs) * 1000);
     }
 };
 Q_DECLARE_METATYPE(GPSCorrectionFrame)

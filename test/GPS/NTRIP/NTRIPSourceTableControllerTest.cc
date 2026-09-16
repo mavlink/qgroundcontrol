@@ -2,27 +2,27 @@
 
 #include <QtCore/QAbstractItemModel>
 #include <QtCore/QUrl>
+#include <QtHttpServer/QHttpServer>
+#include <QtHttpServer/QHttpServerResponse>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QSslCertificate>
 #include <QtNetwork/QSslConfiguration>
 #include <QtNetwork/QSslKey>
 #include <QtNetwork/QSslServer>
 #include <QtNetwork/QSslSocket>
-#include <QtHttpServer/QHttpServer>
-#include <QtHttpServer/QHttpServerResponse>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "LocalHttpTestServer.h"
+#include "NTRIPConfiguration.h"
 #include "NTRIPSettings.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
-#include "NTRIPTransportConfig.h"
 #include "SettingsManager.h"
 
-static NTRIPTransportConfig casterConfig(const QString& host, int port = 2101)
+static NTRIPConnectionConfig casterConfig(const QString& host, int port = 2101)
 {
-    NTRIPTransportConfig config;
+    NTRIPConnectionConfig config;
     config.host = host;
     config.port = port;
     return config;
@@ -114,7 +114,7 @@ void NTRIPSourceTableControllerTest::testFetchInvalidConfigTriggersError()
 {
     NTRIPSourceTableController ctrl;
 
-    NTRIPTransportConfig config = casterConfig(QStringLiteral("caster.example.com"));
+    NTRIPConnectionConfig config = casterConfig(QStringLiteral("caster.example.com"));
     config.username = QStringLiteral("bad:user");
 
     ctrl.fetch(config);
@@ -126,7 +126,7 @@ void NTRIPSourceTableControllerTest::testFetchInvalidConfigTriggersError()
 void NTRIPSourceTableControllerTest::testFetchErrorInvalidatesCache()
 {
     NTRIPSourceTableController ctrl;
-    const NTRIPTransportConfig config = casterConfig(QStringLiteral("caster.example.com"));
+    const NTRIPConnectionConfig config = casterConfig(QStringLiteral("caster.example.com"));
 
     ctrl.fetch(config);
     ctrl.injectSourceTableForTest(kValidTable);
@@ -159,7 +159,7 @@ void NTRIPSourceTableControllerTest::testFetchAbortsOversizedSourceTable()
     server.installHttpResponder(QByteArray(9 * 1024 * 1024, 'X'), 200, "text/plain");
 
     const QUrl base(server.url());
-    NTRIPTransportConfig config;
+    NTRIPConnectionConfig config;
     config.host = base.host();
     config.port = base.port();
     config.useTls = false;
@@ -196,7 +196,7 @@ void NTRIPSourceTableControllerTest::testFetchAllowsSelfSignedSourceTableWhenCon
     });
     QVERIFY(httpServer.bind(&server));
 
-    NTRIPTransportConfig config;
+    NTRIPConnectionConfig config;
     config.host = QStringLiteral("127.0.0.1");
     config.port = server.serverPort();
     config.useTls = true;
