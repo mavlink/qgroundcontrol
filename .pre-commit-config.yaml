@@ -50,7 +50,7 @@ repos:
 
   # Secret detection
   - repo: https://github.com/trufflesecurity/trufflehog
-    rev: v3.97.1
+    rev: v3.97.4
     hooks:
       - id: trufflehog
         args: ['--only-verified', '--exclude-paths=tools/configs/trufflehog-exclude.txt']
@@ -93,7 +93,7 @@ repos:
 
   # uv lockfile sync (keeps tools/uv.lock current with tools/pyproject.toml)
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.12.8
+    rev: 0.12.15
     hooks:
       - id: uv-lock
         files: ^tools/(pyproject\.toml|uv\.lock)$
@@ -180,7 +180,7 @@ repos:
 
   # Renovate config validation (schema-checks the active renovate.json)
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 44.56.1
+    rev: 44.93.5
     hooks:
       - id: renovate-config-validator
         files: ^\.github/renovate\.json$
@@ -204,12 +204,12 @@ repos:
         # install of the bare module fails and aborts the whole pre-commit run before any hook
         # fires.
         additional_dependencies:
-          - 'github.com/errata-ai/vale/v3/cmd/vale@v3.19.0'
+          - 'github.com/errata-ai/vale/v3/cmd/vale@v3.21.0'
         entry: vale sync
         files: ^(docs/en/|\.vale\.ini$)
         pass_filenames: false
   - repo: https://github.com/errata-ai/vale
-    rev: v3.19.0
+    rev: v3.21.0
     hooks:
       - id: vale
         files: ^docs/en/
@@ -217,7 +217,7 @@ repos:
 
   # Spell checking (report-only, doesn't auto-fix)
   - repo: https://github.com/crate-ci/typos
-    rev: v1.50.1
+    rev: v1.50.2
     hooks:
       - id: typos
         args: ['--force-exclude']  # Honor .typos.toml exclusions for explicit pre-commit paths
