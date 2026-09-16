@@ -251,6 +251,7 @@ void MockLinkFTP::_readCommand(uint8_t senderSystemId, uint8_t senderComponentId
     MavlinkFTP::Request	response{};
     const uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
     _readFileCount++;
+    _lastReadFileRequestSize = request->hdr.size;
 
     if (request->hdr.session != _sessionId) {
         _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrInvalidSession, outgoingSeqNumber, MavlinkFTP::kCmdReadFile);
@@ -283,7 +284,9 @@ void MockLinkFTP::_readCommand(uint8_t senderSystemId, uint8_t senderComponentId
         return;
     }
 
-    const uint8_t cBytesToRead = static_cast<uint8_t>(qMin(static_cast<qint64>(sizeof(response.data)), _currentFile.size() - readOffset));
+    // ArduPilot semantics: size 0 means the full payload, larger requests are clamped to it
+    const qint64 maxRead = qMin<qint64>(request->hdr.size ? request->hdr.size : sizeof(response.data), sizeof(response.data));
+    const uint8_t cBytesToRead = static_cast<uint8_t>(qMin(maxRead, _currentFile.size() - readOffset));
     (void) _currentFile.seek(readOffset);
     const QByteArray bytes = _currentFile.read(cBytesToRead);
     (void) memcpy(response.data, bytes.constData(), cBytesToRead);
@@ -330,6 +333,8 @@ void MockLinkFTP::_removeFileCommand(uint8_t senderSystemId, uint8_t senderCompo
 
 void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
 {
+    _lastBurstReadRequestSize = request->hdr.size;
+
     if (_burstReadDelayMs > 0) {
         QThread::msleep(_burstReadDelayMs);
     }
@@ -355,6 +360,8 @@ void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderCompon
     constexpr int burstMax = 10;
     int burstCount = 1;
     uint32_t burstOffset = request->hdr.offset;
+    // ArduPilot semantics: size 0 means the full payload, larger requests are clamped to it
+    const qint64 maxRead = qMin<qint64>(request->hdr.size ? request->hdr.size : sizeof(response.data), sizeof(response.data));
     MavlinkFTP::Request reorderedResponse{};
     uint16_t reorderedSeqNumber = 0;
     bool haveReorderedResponse = false;
@@ -362,7 +369,7 @@ void MockLinkFTP::_burstReadCommand(uint8_t senderSystemId, uint8_t senderCompon
     while ((burstOffset < _currentFile.size()) && (burstCount++ < burstMax)) {
         _currentFile.seek(burstOffset);
 
-        const uint8_t cBytes = static_cast<uint8_t>(qMin(static_cast<qint64>(sizeof(response.data)), _currentFile.size() - burstOffset));
+        const uint8_t cBytes = static_cast<uint8_t>(qMin(maxRead, _currentFile.size() - burstOffset));
         const QByteArray bytes = _currentFile.read(cBytes);
         Q_ASSERT(cBytes); // We should always have written something, otherwise there is something wrong with the code above
 

@@ -32,6 +32,9 @@ private slots:
     void _testCancelDownloadBeforeOpen();
     void _testLateBurstPacketIsKept();
     void _testInvalidUriDoesNotBlockNextOperation();
+    void _testReadChunkSizeFollowsLinkType_data();
+    void _testReadChunkSizeFollowsLinkType();
+    void _testReadChunkSizeShrinksWhenRadioDetectedMidDownload();
 
     // Overrides from UnitTest
     void cleanup() override;

@@ -50,6 +50,7 @@ public:
         OptionStayMavlinkV1       = 1 << 5,
         OptionAPMStartFreshParams = 1 << 6,
         OptionFtpCapability       = 1 << 7,
+        OptionNoRadioStatus       = 1 << 8,
     };
     Q_DECLARE_FLAGS(Options, Option)
     Q_FLAG(Options)
@@ -179,6 +180,10 @@ public:
     bool ftpCapability() const { return _ftpCapability; }
     void setFtpCapability(bool ftpCapability) { _ftpCapability = ftpCapability; }
 
+    // Test-only: when false, RADIO_STATUS is not streamed, so the link is not detected as a radio link. Not persisted.
+    bool sendRadioStatus() const { return _sendRadioStatus; }
+    void setSendRadioStatus(bool sendRadioStatus) { _sendRadioStatus = sendRadioStatus; }
+
 signals:
     void firmwareChanged();
     void vehicleChanged();
@@ -223,6 +228,7 @@ private:
     bool _preloadMission = false;
     bool _stayMavlinkV1 = false;
     bool _ftpCapability = false;
+    bool _sendRadioStatus = true;
 
     // Camera capability flags (defaults match current Camera 1 configuration)
     bool _cameraCaptureVideo = true;

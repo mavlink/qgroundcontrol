@@ -30,6 +30,10 @@ public:
     virtual bool isConnected() const = 0;
     virtual bool isLogReplay() const { return false; }
     virtual bool isSecureConnection() const { return false; } ///< Returns true if the connection is secure (e.g. USB, wired ethernet)
+    /// True for SiK/RFD telemetry radio links (~252 byte air frame). Detected from RADIO_STATUS traffic, which only
+    /// the radios inject, so it also works through UDP/TCP bridges. Subclasses may add transport-specific knowledge.
+    virtual bool isRadioLink() const { return _radioStatusSeen; }
+    void reportRadioStatusReceived();
 
     SharedLinkConfigurationPtr linkConfiguration() { return _config; }
     const SharedLinkConfigurationPtr linkConfiguration() const { return _config; }
@@ -104,6 +108,7 @@ private:
     int _vehicleReferenceCount = 0;
     bool _mavlinkV1TrafficReported = false;
     bool _mavlinkV2TrafficSeen = false;
+    bool _radioStatusSeen = false;
     QElapsedTimer _mavlinkV1FirstSeenTimer;
     static inline int _mavlinkV1TrafficGraceMsecs = kMavlinkV1TrafficGraceMsecsDefault;
     /// Must `reset()` in `_freeMavlinkChannel` before LinkManager frees the channel so the

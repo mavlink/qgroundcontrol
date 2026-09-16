@@ -769,15 +769,22 @@ void FTPManager::_openFileROAckOrNak(const MavlinkFTP::Request* ackOrNak)
     }
 }
 
+uint8_t FTPManager::_readChunkSize(void) const
+{
+    const SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    return (sharedLink && sharedLink->isRadioLink()) ? kRadioReadChunkSize : kFullReadChunkSize;
+}
+
 void FTPManager::_burstReadFileWorker(bool firstRequest)
 {
-    qCDebug(FTPManagerLog) << "_burstReadFileWorker: starting burst at offset:firstRequest:retryCount" << _downloadState.expectedOffset << firstRequest << _downloadState.retryCount;
+    const uint8_t chunkSize = _readChunkSize();
+    qCDebug(FTPManagerLog) << "_burstReadFileWorker: starting burst at offset:firstRequest:retryCount:chunkSize" << _downloadState.expectedOffset << firstRequest << _downloadState.retryCount << chunkSize;
 
     MavlinkFTP::Request request{};
     request.hdr.session = _downloadState.sessionId;
     request.hdr.opcode  = MavlinkFTP::kCmdBurstReadFile;
     request.hdr.offset  = _downloadState.expectedOffset;
-    request.hdr.size    = sizeof(request.data);
+    request.hdr.size    = chunkSize;
 
     if (firstRequest) {
         _downloadState.retryCount = 0;
@@ -1062,7 +1069,7 @@ void FTPManager::_fillMissingBlocksWorker(bool firstRequest)
         MavlinkFTP::Request request{};
         MissingData_t&      missingData = _downloadState.rgMissingData.first();
 
-        uint32_t cBytesToRead = qMin((uint32_t)sizeof(request.data), missingData.cBytesMissing);
+        uint32_t cBytesToRead = qMin(static_cast<uint32_t>(_readChunkSize()), missingData.cBytesMissing);
 
         qCDebug(FTPManagerLog) << "_fillMissingBlocksBegin: offset:cBytesToRead" << missingData.offset << cBytesToRead;
 

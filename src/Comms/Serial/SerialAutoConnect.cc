@@ -76,6 +76,7 @@ void SerialAutoConnect::update(const QList<SerialPortManager::Port>& ports, cons
         auto* serialConfig = new SerialConfiguration(
             QCoreApplication::translate("LinkManager", "%1 on %2 (AutoConnect)").arg(port.boardName, port.portName));
         serialConfig->setUsbDirect(port.boardType == QGCSerialPortInfo::BoardTypePixhawk);
+        serialConfig->setSikRadio(port.boardType == QGCSerialPortInfo::BoardTypeSiKRadio);
         serialConfig->setBaud(port.boardType == QGCSerialPortInfo::BoardTypeSiKRadio ? 57600 : 115200);
         serialConfig->setDynamic(true);
         serialConfig->setPortName(port.systemLocation);

@@ -170,6 +170,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _failureMode(_mockConfig->failureMode())
     , _stayMavlinkV1(_mockConfig->stayMavlinkV1())
     , _ftpCapability(_mockConfig->ftpCapability())
+    , _sendRadioStatusEnabled(_mockConfig->sendRadioStatus())
     , _vehicleSystemId(_mockConfig->incrementVehicleId() ? _nextVehicleSystemId++ : static_cast<int>(_nextVehicleSystemId))
     , _vehicleLatitude(_defaultVehicleLatitude + ((_vehicleSystemId - 128) * 0.0001))
     , _vehicleLongitude(_defaultVehicleLongitude + ((_vehicleSystemId - 128) * 0.0001))
@@ -430,7 +431,9 @@ void MockLink::run1HzTasks()
 
     _sendEscInfo();
     _sendEscStatus();
-    _sendRadioStatus();
+    if (_sendRadioStatusEnabled) {
+        _sendRadioStatus();
+    }
 
     if (_enableCamera) {
         _mockLinkCamera->sendCameraHeartbeats();
@@ -2726,6 +2729,7 @@ MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILO
     mockConfig->setStayMavlinkV1(options.testFlag(MockConfiguration::OptionStayMavlinkV1));
     mockConfig->setApmStartFreshParams(options.testFlag(MockConfiguration::OptionAPMStartFreshParams));
     mockConfig->setFtpCapability(options.testFlag(MockConfiguration::OptionFtpCapability));
+    mockConfig->setSendRadioStatus(!options.testFlag(MockConfiguration::OptionNoRadioStatus));
     mockConfig->setVideoStreamType(videoStreamType);
     mockConfig->setFailureMode(failureMode);
 
