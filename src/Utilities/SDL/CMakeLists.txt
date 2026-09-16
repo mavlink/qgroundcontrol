@@ -48,6 +48,7 @@ CPMAddPackage(
     VERSION 3.4.2
     GITHUB_REPOSITORY libsdl-org/SDL
     GIT_TAG release-3.4.2
+    FIND_PACKAGE_ARGUMENTS "CONFIG"
     OPTIONS
         "SDL_INSTALL OFF"
         "SDL_UNINSTALL OFF"
@@ -74,32 +75,44 @@ CPMAddPackage(
         "${SDL_EXTRA_OPTIONS}"
 )
 
-qgc_require_cpm_added(SDL3)
-
-if(ANDROID)
-    set(_qgc_sdl3_target SDL3-shared)
-else()
-    set(_qgc_sdl3_target SDL3-static)
+# SDL3_ADDED = CPM built it; SDL3_FOUND = system SDL3 (QGC_USE_SYSTEM_LIBS).
+if(NOT SDL3_ADDED AND NOT SDL3_FOUND)
+    message(FATAL_ERROR "QGC: SDL3 (required dependency) was not resolved")
 endif()
 
-qgc_disable_dependency_warnings(${_qgc_sdl3_target})
+if(SDL3_ADDED)
+    if(ANDROID)
+        set(_qgc_sdl3_target SDL3-shared)
+    else()
+        set(_qgc_sdl3_target SDL3-static)
+    endif()
 
-set_target_properties(${_qgc_sdl3_target} PROPERTIES
-    AUTOMOC OFF
-    AUTOUIC OFF
-    AUTORCC OFF
-)
+    qgc_disable_dependency_warnings(${_qgc_sdl3_target})
 
-# SDL3's subdir-scoped LibUSB::LibUSB target breaks qt_add_translations' top-level scan.
-set_property(DIRECTORY "${SDL3_SOURCE_DIR}" PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
+    set_target_properties(${_qgc_sdl3_target} PROPERTIES
+        AUTOMOC OFF
+        AUTOUIC OFF
+        AUTORCC OFF
+    )
 
-if(ANDROID)
-    target_compile_definitions(SDL3-shared PRIVATE SDL_MAIN_NOIMPL SDL_MAIN_HANDLED)
-    target_link_libraries(SDL3-shared PRIVATE log android)
-    set(QGC_SDL3_TARGET SDL3::SDL3-shared)
+    # SDL3's subdir-scoped LibUSB::LibUSB target breaks qt_add_translations' top-level scan.
+    set_property(DIRECTORY "${SDL3_SOURCE_DIR}" PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
+
+    if(ANDROID)
+        target_compile_definitions(SDL3-shared PRIVATE SDL_MAIN_NOIMPL SDL_MAIN_HANDLED)
+        target_link_libraries(SDL3-shared PRIVATE log android)
+        set(QGC_SDL3_TARGET SDL3::SDL3-shared)
+    else()
+        target_compile_definitions(SDL3-static PRIVATE SDL_MAIN_NOIMPL SDL_MAIN_HANDLED)
+        set(QGC_SDL3_TARGET SDL3::SDL3-static)
+    endif()
 else()
-    target_compile_definitions(SDL3-static PRIVATE SDL_MAIN_NOIMPL SDL_MAIN_HANDLED)
-    set(QGC_SDL3_TARGET SDL3::SDL3-static)
+    # System SDL3 is shared-only
+    if(TARGET SDL3::SDL3-shared)
+        set(QGC_SDL3_TARGET SDL3::SDL3-shared)
+    else()
+        set(QGC_SDL3_TARGET SDL3::SDL3)
+    endif()
 endif()
 
 # ============================================================================
@@ -128,12 +141,17 @@ target_include_directories(QGCSDL PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # Loaded at runtime from the Qt resource system.
 # ============================================================================
 
-CPMAddPackage(
-    NAME sdl_gamecontrollerdb
-    GITHUB_REPOSITORY mdqinc/SDL_GameControllerDB
-    GIT_TAG 513c72e34569e0f471dde7aa26eecb23946c3ef7
-    DOWNLOAD_ONLY YES
-)
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    # database file via the gamecontrollerdb package.
+    set(sdl_gamecontrollerdb_SOURCE_DIR "/usr/share/SDL_GameControllerDB" CACHE PATH "SDL_GameControllerDB directory")
+else()
+    CPMAddPackage(
+        NAME sdl_gamecontrollerdb
+        GITHUB_REPOSITORY mdqinc/SDL_GameControllerDB
+        GIT_TAG 513c72e34569e0f471dde7aa26eecb23946c3ef7
+        DOWNLOAD_ONLY YES
+    )
+endif()
 
 set(SDL_GAMECONTROLLERDB_PATH "${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt")
 qgc_set_qt_resource_alias("${SDL_GAMECONTROLLERDB_PATH}")

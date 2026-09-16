@@ -25,6 +25,18 @@ qt_add_library(
 # libexif (vendored - autotools, built directly from source)
 # ============================================================================
 
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    # System libexif ships libexif.so + headers.
+    find_path(LIBEXIF_INCLUDE_DIR NAMES libexif/exif-data.h)
+    find_library(LIBEXIF_LIBRARY NAMES exif)
+    if(NOT LIBEXIF_INCLUDE_DIR OR NOT LIBEXIF_LIBRARY)
+        message(FATAL_ERROR "QGC: libexif (required dependency) was not resolved from system")
+    endif()
+    add_library(exif SHARED IMPORTED)
+    set_target_properties(exif PROPERTIES
+        IMPORTED_LOCATION "${LIBEXIF_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${LIBEXIF_INCLUDE_DIR}")
+else()
 set(QGC_LIBEXIF_VERSION 0.6.26)
 CPMAddPackage(
     NAME libexif
@@ -106,37 +118,51 @@ target_compile_definitions(exif PRIVATE HAVE_CONFIG_H)
 set_target_properties(exif PROPERTIES C_STANDARD 99 POSITION_INDEPENDENT_CODE ON)
 
 qgc_disable_dependency_warnings(exif)
+endif()
 
 # ============================================================================
 # ulog_cpp (PX4 ULog parsing)
 # ============================================================================
 
-CPMAddPackage(
-    NAME ulog_cpp
-    GITHUB_REPOSITORY PX4/ulog_cpp
-    GIT_TAG v1.0.1
-)
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    find_package(ulog_cpp CONFIG REQUIRED)
+else()
+    CPMAddPackage(
+        NAME ulog_cpp
+        GITHUB_REPOSITORY PX4/ulog_cpp
+        GIT_TAG v1.0.1
+    )
 
-qgc_disable_dependency_warnings(ulog_cpp)
+    qgc_disable_dependency_warnings(ulog_cpp)
+endif()
 
 # ============================================================================
 # valijson (header-only JSON-Schema validator, native Qt-JSON adapter)
 # ============================================================================
 
-CPMAddPackage(
-    NAME valijson
-    GITHUB_REPOSITORY tristanpenman/valijson
-    # Pinned to 1.1.0: 1.1.1 calls std::from_chars(double) unguarded, which AppleClang's
-    # libc++ (macos-15/ios CI, pre-LLVM 20) lacks — valijson#239, fixed in 1.1.2.
-    GIT_TAG v1.1.0
-    OPTIONS "valijson_BUILD_TESTS OFF" "valijson_BUILD_EXAMPLES OFF" "valijson_INSTALL OFF"
-    # QtJsonAdapter isInteger()/getInteger() use 32-bit toInt(), so integral values
-    # > INT_MAX (e.g. PX4 uint32 fileCrc) fail "type": "integer" checks or truncate.
-    PATCHES valijson-qtjson-int64.patch
-)
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    find_package(valijson CONFIG REQUIRED)
+    # ALT's valijson config exports a bare `valijson` target; alias it onto the
+    # namespaced target QGC links.
+    if(TARGET valijson AND NOT TARGET ValiJSON::valijson)
+        add_library(ValiJSON::valijson ALIAS valijson)
+    endif()
+else()
+    CPMAddPackage(
+        NAME valijson
+        GITHUB_REPOSITORY tristanpenman/valijson
+        # Pinned to 1.1.0: 1.1.1 calls std::from_chars(double) unguarded, which AppleClang's
+        # libc++ (macos-15/ios CI, pre-LLVM 20) lacks — valijson#239, fixed in 1.1.2.
+        GIT_TAG v1.1.0
+        OPTIONS "valijson_BUILD_TESTS OFF" "valijson_BUILD_EXAMPLES OFF" "valijson_INSTALL OFF"
+        # QtJsonAdapter isInteger()/getInteger() use 32-bit toInt(), so integral values
+        # > INT_MAX (e.g. PX4 uint32 fileCrc) fail "type": "integer" checks or truncate.
+        PATCHES valijson-qtjson-int64.patch
+    )
 
-# Keep header-only Valijson diagnostics outside QGC's warning policy.
-set_target_properties(valijson PROPERTIES SYSTEM TRUE)
+    # Keep header-only Valijson diagnostics outside QGC's warning policy.
+    set_target_properties(valijson PROPERTIES SYSTEM TRUE)
+endif()
 
 target_link_libraries(
     QGCParsing
@@ -148,7 +174,9 @@ target_link_libraries(
 # its own tests); JsonSchemaValidator catches to stay warn-only, so force exceptions on here.
 target_compile_definitions(QGCParsing PRIVATE VALIJSON_USE_EXCEPTIONS=1)
 
-target_include_directories(QGCParsing SYSTEM PUBLIC ${ulog_cpp_SOURCE_DIR})
+if(NOT QGC_USE_SYSTEM_LIBS AND NOT QGC_SYSTEM_LIBS_ONLY)
+    target_include_directories(QGCParsing SYSTEM PUBLIC ${ulog_cpp_SOURCE_DIR})
+endif()
 
 # GCC 12 emits false-positive bounds warnings from Valijson's inlined string code.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

@@ -307,6 +307,10 @@ endfunction()
 function(cpm_find_package NAME VERSION)
   string(REPLACE " " ";" EXTRA_ARGS "${ARGN}")
   find_package(${NAME} ${VERSION} ${EXTRA_ARGS} QUIET)
+  # find_package() runs in this function scope, so propagate the standard
+  # <NAME>_FOUND result back to the caller (QGC checks ZLIB_FOUND etc. after
+  # CPMAddPackage). Without this the system-library path errors spuriously.
+  set(${NAME}_FOUND ${${NAME}_FOUND} PARENT_SCOPE)
   if(${CPM_ARGS_NAME}_FOUND)
     if(DEFINED ${CPM_ARGS_NAME}_VERSION)
       set(VERSION ${${CPM_ARGS_NAME}_VERSION})
@@ -1031,6 +1035,10 @@ macro(cpm_export_variables name)
   )
   set(${name}_ADDED
       "${${name}_ADDED}"
+      PARENT_SCOPE
+  )
+  set(${name}_FOUND
+      "${${name}_FOUND}"
       PARENT_SCOPE
   )
   set(CPM_LAST_PACKAGE_NAME

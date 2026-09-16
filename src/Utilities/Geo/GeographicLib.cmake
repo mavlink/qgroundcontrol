@@ -4,6 +4,13 @@ if(TARGET GeographicLib::GeographicLib)
     return()
 endif()
 
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    # The distro installs GeographicLib's config under the capitalized name;
+    # CPM's "NAMES" indirection is unreliable here, so call find_package directly.
+    find_package(GeographicLib CONFIG REQUIRED)
+    return()
+endif()
+
 if(NOT COMMAND CPMAddPackage)
     include("${CMAKE_CURRENT_LIST_DIR}/../../../cmake/modules/CPM.cmake")
 endif()

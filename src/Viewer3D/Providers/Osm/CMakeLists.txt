@@ -67,23 +67,29 @@ target_link_libraries(Osm3D PRIVATE expat)
 # protozero — required by libosmium headers
 # ----------------------------------------------------------------------------
 
-CPMAddPackage(
-    NAME protozero
-    GITHUB_REPOSITORY mapbox/protozero
-    GIT_TAG v1.8.1
-    DOWNLOAD_ONLY YES
-)
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    # System header-only packages
+    set(protozero_SOURCE_DIR "/usr" CACHE PATH "protozero include root")
+    set(libosmium_SOURCE_DIR "/usr" CACHE PATH "libosmium include root")
+else()
+    CPMAddPackage(
+        NAME protozero
+        GITHUB_REPOSITORY mapbox/protozero
+        GIT_TAG v1.8.1
+        DOWNLOAD_ONLY YES
+    )
 
-# ----------------------------------------------------------------------------
-# libosmium — OSM data parsing (header-only, only OsmParserThread.cc consumes it)
-# ----------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------
+    # libosmium — OSM data parsing (header-only, only OsmParserThread.cc consumes it)
+    # ----------------------------------------------------------------------------
 
-CPMAddPackage(
-    NAME libosmium
-    GITHUB_REPOSITORY osmcode/libosmium
-    GIT_TAG v2.23.0
-    DOWNLOAD_ONLY YES
-)
+    CPMAddPackage(
+        NAME libosmium
+        GITHUB_REPOSITORY osmcode/libosmium
+        GIT_TAG v2.23.0
+        DOWNLOAD_ONLY YES
+    )
+endif()
 
 target_include_directories(Osm3D
     SYSTEM
@@ -114,17 +120,28 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # unconditional "fixtures" object library from compiling.
 # ----------------------------------------------------------------------------
 
-CPMAddPackage(
-    NAME earcut_hpp
-    GITHUB_REPOSITORY mapbox/earcut.hpp
-    GIT_TAG f36ced7e50254738c4e5af1a239f5fb7b1094007
-    EXCLUDE_FROM_ALL YES
-    OPTIONS
-        "EARCUT_BUILD_TESTS OFF"
-        "EARCUT_BUILD_BENCH OFF"
-        "EARCUT_BUILD_VIZ OFF"
-    SYSTEM YES
-)
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    # earcut.hpp is header-only; QGC includes it as <mapbox/earcut.hpp>
+    find_path(earcut_hpp_INCLUDE_DIR NAMES mapbox/earcut.hpp)
+    if(NOT earcut_hpp_INCLUDE_DIR)
+        message(FATAL_ERROR "QGC: earcut_hpp (required dependency) was not resolved from system")
+    endif()
+    add_library(earcut_hpp::earcut_hpp INTERFACE IMPORTED GLOBAL)
+    set_target_properties(earcut_hpp::earcut_hpp PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${earcut_hpp_INCLUDE_DIR}")
+else()
+    CPMAddPackage(
+        NAME earcut_hpp
+        GITHUB_REPOSITORY mapbox/earcut.hpp
+        GIT_TAG f36ced7e50254738c4e5af1a239f5fb7b1094007
+        EXCLUDE_FROM_ALL YES
+        OPTIONS
+            "EARCUT_BUILD_TESTS OFF"
+            "EARCUT_BUILD_BENCH OFF"
+            "EARCUT_BUILD_VIZ OFF"
+        SYSTEM YES
+    )
+endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME}
     PRIVATE
