@@ -14,6 +14,7 @@ import QGroundControl.FlyView
 import QGroundControl.FlightMap
 import QGroundControl.Toolbar
 import QGroundControl.Viewer3D
+import QGroundControl.SynclairVisionUI
 
 Item {
     id: _root
@@ -56,6 +57,7 @@ Item {
 
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
+    readonly property bool _showVideoView: QGroundControl.videoManager.hasVideo || SVState.synclairOverlay
 
     function _calcCenterViewPort() {
         var newToolInset = Qt.rect(0, 0, width, height)
@@ -135,8 +137,8 @@ Item {
             anchors.margins:        _toolsMargin
             item1IsFullSettingsKey: "MainFlyWindowIsMap"
             item1:                  _mapControl
-            item2:                  QGroundControl.videoManager.hasVideo ? videoControl : null
-            show:                   QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen &&
+            item2:                  _showVideoView ? videoControl : null
+            show:                   _showVideoView && !QGroundControl.videoManager.fullScreen &&
                                         (videoControl.pipState.state === videoControl.pipState.pipState ||
                                          (_mapControl && _mapControl.pipState.state === _mapControl.pipState.pipState))
             z:                      QGroundControl.zOrderWidgets
