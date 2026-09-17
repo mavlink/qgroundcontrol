@@ -126,8 +126,11 @@ Item {
         }
 
         FlyViewVideo {
-            id:         videoControl
-            pipView:    _pipView
+            id:                 videoControl
+            pipView:            _pipView
+            forceVideoVisible:  SVState.synclairOverlay
+            forceNoCrop:        SVState.synclairOverlay
+            allowUvc:           !SVState.synclairOverlay
         }
 
         PipView {
