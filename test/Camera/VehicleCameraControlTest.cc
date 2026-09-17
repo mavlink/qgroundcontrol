@@ -1,6 +1,13 @@
 #include "VehicleCameraControlTest.h"
 #include <QtTest/QSignalSpy>
 
+#include <cstring>
+
+#include <QtCore/QDir>
+#include <QtCore/QTemporaryDir>
+
+#include "VehicleCameraControl.h"
+
 
 #include "LinkManager.h"
 #include "MavlinkCameraControlInterface.h"
@@ -9,6 +16,79 @@
 #include "MultiVehicleManager.h"
 #include "QGCCameraManager.h"
 #include "Vehicle.h"
+
+void VehicleCameraControlTest::_testNameFieldReadIsBounded()
+{
+    // CAMERA_INFORMATION.vendor_name and model_name are uint8_t[32] filled straight from
+    // the wire. MAVLink does not guarantee a NUL, so reading them as C strings runs past
+    // the array into whatever follows it in the struct.
+    struct { uint8_t vendor[32]; uint8_t model[32]; } wire{};
+    memset(wire.vendor, 'A', sizeof(wire.vendor));
+    memcpy(wire.model, "SHOULD_NOT_APPEAR", 18);
+
+    const QString bounded = VehicleCameraControl::boundedNameField(wire.vendor, sizeof(wire.vendor));
+
+    QCOMPARE(bounded.length(), 32);
+    QVERIFY(!bounded.contains(QLatin1String("SHOULD_NOT_APPEAR")));
+
+    // A short, properly terminated field must still read normally.
+    memset(&wire, 0, sizeof(wire));
+    memcpy(wire.vendor, "Sony", 5);
+    QCOMPARE(VehicleCameraControl::boundedNameField(wire.vendor, sizeof(wire.vendor)),
+             QStringLiteral("Sony"));
+
+    QVERIFY(VehicleCameraControl::boundedNameField(nullptr, 32).isEmpty());
+}
+
+void VehicleCameraControlTest::_testCameraNamesCannotSteerCachePath()
+{
+    // The vendor/model strings are formatted into the camera-definition cache file name.
+    // Whatever they contain, the result has to stay a single component inside the cache
+    // directory.
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString base = QDir::cleanPath(QDir(tempDir.path()).absolutePath());
+
+    const QList<QPair<QString, QString>> hostile = {
+        { QStringLiteral("../../../Desktop/QGC01_PWNED"), QStringLiteral("marker") },
+        { QStringLiteral("..\\..\\..\\Desktop\\PWNED"),   QStringLiteral("marker") },
+        { QStringLiteral("C:\\Windows\\Temp\\PWNED"),     QStringLiteral("marker") },
+        { QStringLiteral("/etc/cron.d/PWNED"),            QStringLiteral("marker") },
+        { QStringLiteral("T.txt:"),                       QStringLiteral("s") },
+        { QStringLiteral("vendor"),                       QStringLiteral("../../evil") },
+        { QStringLiteral(".."),                           QStringLiteral("..") },
+        { QString(),                                      QStringLiteral("marker") },
+    };
+
+    for (const auto &testCase : hostile) {
+        const QString token = QString::asprintf("%s_%s_%03d",
+            VehicleCameraControl::pathSafeNameToken(testCase.first).toStdString().c_str(),
+            VehicleCameraControl::pathSafeNameToken(testCase.second).toStdString().c_str(),
+            1);
+        const QString candidate = QDir(base).filePath(token + QStringLiteral(".xml"));
+
+        QVERIFY2(VehicleCameraControl::pathIsInside(base, candidate), qPrintable(candidate));
+
+        // It must be one component: no separator, and no drive or NTFS stream qualifier.
+        QVERIFY2(!token.contains(QLatin1Char('/')), qPrintable(token));
+        QVERIFY2(!token.contains(QLatin1Char('\\')), qPrintable(token));
+        QVERIFY2(!token.contains(QLatin1Char(':')), qPrintable(token));
+    }
+
+    // An unset cache directory must be refused rather than becoming a write at "/".
+    QVERIFY(!VehicleCameraControl::pathIsInside(QString(), QStringLiteral("/v_m_001.xml")));
+}
+
+void VehicleCameraControlTest::_testOrdinaryCameraNamesUnchanged()
+{
+    // Containment must not mangle a real camera's cache file name beyond replacing
+    // characters that cannot appear in one.
+    QCOMPARE(VehicleCameraControl::pathSafeNameToken(QStringLiteral("Sony")), QStringLiteral("Sony"));
+    QCOMPARE(VehicleCameraControl::pathSafeNameToken(QStringLiteral("ILCE-7RM4")), QStringLiteral("ILCE-7RM4"));
+    QCOMPARE(VehicleCameraControl::pathSafeNameToken(QStringLiteral("Skynode.v2")), QStringLiteral("Skynode.v2"));
+    QCOMPARE(VehicleCameraControl::pathSafeNameToken(QStringLiteral("FLIR Boson")), QStringLiteral("FLIR_Boson"));
+    QCOMPARE(VehicleCameraControl::pathSafeNameToken(QString()), QStringLiteral("unknown"));
+}
 
 void VehicleCameraControlTest::initTestCase()
 {
