@@ -9,6 +9,8 @@ class FTPManagerTest : public VehicleTestManualConnect
 private slots:
     void _performTestCases_data();
     void _performTestCases();
+    void _testDownloadUri_data();
+    void _testDownloadUri();
     void _performSizeBasedTestCases_data();
     void _performSizeBasedTestCases();
     void _testLostPackets();
