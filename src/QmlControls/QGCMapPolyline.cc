@@ -1,22 +1,20 @@
 #include "QGCMapPolyline.h"
-#include "QGCGeo.h"
+
+#include <QMetaMethod>
+
+#include "AppMessages.h"
 #include "GeoJsonHelper.h"
 #include "JsonParsing.h"
-#include "QGCQGeoCoordinate.h"
-#include "AppMessages.h"
 #include "QGCApplication.h"
+#include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
+#include "QGCPolygonClipper.h"
+#include "QGCQGeoCoordinate.h"
 #include "ShapeFileHelper.h"
-
-#include <QtCore/QLineF>
-#include <QMetaMethod>
 
 QGC_LOGGING_CATEGORY(QGCMapPolylineLog, "QMLControls.QGCMapPolyline")
 
-QGCMapPolyline::QGCMapPolyline(QObject* parent)
-    : QObject               (parent)
-    , _dirty                (false)
-    , _interactive          (false)
+QGCMapPolyline::QGCMapPolyline(QObject* parent) : QObject(parent), _dirty(false), _interactive(false)
 {
     _init();
 }
@@ -318,62 +316,23 @@ QList<QPointF> QGCMapPolyline::nedPolyline(void)
 
 QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
 {
-    QList<QGeoCoordinate> rgNewPolyline;
-
-    // I'm sure there is some beautiful famous algorithm to do this, but here is a brute force method
-
-    if (count() > 1) {
-        // Convert the polygon to NED
-        QList<QPointF> rgNedVertices = nedPolyline();
-
-        // Walk the edges, offsetting by the specified distance
-        QList<QLineF> rgOffsetEdges;
-        for (int i=0; i<rgNedVertices.count() - 1; i++) {
-            QLineF  offsetEdge;
-            QLineF  originalEdge(rgNedVertices[i], rgNedVertices[i + 1]);
-
-            QLineF workerLine = originalEdge;
-            workerLine.setLength(distance);
-            workerLine.setAngle(workerLine.angle() - 90.0);
-            offsetEdge.setP1(workerLine.p2());
-
-            workerLine.setPoints(originalEdge.p2(), originalEdge.p1());
-            workerLine.setLength(distance);
-            workerLine.setAngle(workerLine.angle() + 90.0);
-            offsetEdge.setP2(workerLine.p2());
-
-            rgOffsetEdges.append(offsetEdge);
-        }
-
-        QGeoCoordinate  tangentOrigin = vertexCoordinate(0);
-
-        // Add first vertex
-        QGeoCoordinate coord;
-        QGCGeo::convertNedToGeo(rgOffsetEdges[0].p1().y(), rgOffsetEdges[0].p1().x(), 0, tangentOrigin, coord);
-        rgNewPolyline.append(coord);
-
-        // Intersect the offset edges to generate new central vertices
-        QPointF  newVertex;
-        for (int i=1; i<rgOffsetEdges.count(); i++) {
-            auto intersect = rgOffsetEdges[i - 1].intersects(rgOffsetEdges[i], &newVertex);
-            if (intersect == QLineF::NoIntersection) {
-                // Two lines are colinear
-                newVertex = rgOffsetEdges[i].p2();
-            }
-            QGCGeo::convertNedToGeo(newVertex.y(), newVertex.x(), 0, tangentOrigin, coord);
-            rgNewPolyline.append(coord);
-        }
-
-        // Add last vertex
-        int lastIndex = rgOffsetEdges.count() - 1;
-        QGCGeo::convertNedToGeo(rgOffsetEdges[lastIndex].p2().y(), rgOffsetEdges[lastIndex].p2().x(), 0, tangentOrigin, coord);
-        rgNewPolyline.append(coord);
+    const QList<QPointF> offsetPoints = QGCPolygonClipper::offsetPolyline(nedPolyline(), distance);
+    if (offsetPoints.isEmpty()) {
+        return {};
     }
 
-    return rgNewPolyline;
+    const QGeoCoordinate tangentOrigin = vertexCoordinate(0);
+    QList<QGeoCoordinate> result;
+    result.reserve(offsetPoints.size());
+    for (const QPointF& point : offsetPoints) {
+        QGeoCoordinate coordinate;
+        QGCGeo::convertNedToGeo(point.y(), point.x(), 0.0, tangentOrigin, coordinate);
+        result.append(coordinate);
+    }
+    return result;
 }
 
-bool QGCMapPolyline::loadKMLOrSHPFile(const QString &file)
+bool QGCMapPolyline::loadKMLOrSHPFile(const QString& file)
 {
     QString errorString;
     QList<QList<QGeoCoordinate>> polylines;

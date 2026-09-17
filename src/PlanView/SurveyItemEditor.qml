@@ -86,6 +86,12 @@ TransectStyleComplexItemEditor {
                         fact:       missionItem.flyAlternateTransects,
                         enabled:    true,
                         visible:    _vehicle ? (_vehicle.fixedWing || _vehicle.vtol) : false
+                    },
+                    {
+                        text:       qsTr("Split concave polygons"),
+                        fact:       missionItem.splitConcavePolygons,
+                        enabled:    true,
+                        visible:    true
                     }
                 ]
             }
