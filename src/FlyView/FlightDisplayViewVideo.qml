@@ -11,6 +11,8 @@ Item {
     clip:   true
 
     property bool useSmallFont: true
+    property bool forceNoCrop: false
+    property bool allowUvc: true
 
     property double _ar:                (cameraLoader.visible && cameraLoader.status === Loader.Ready)
                                             ? cameraLoader.item.implicitWidth / cameraLoader.item.implicitHeight
@@ -22,9 +24,9 @@ Item {
     property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
     property bool   _hasZoom:           _camera && _camera.hasZoom
-    property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
+    property int    _fitMode:           forceNoCrop ? 3 : QGroundControl.settingsManager.videoSettings.videoFit.rawValue
     property bool   _showStreamLoader:  QGroundControl.videoManager.decoding
-    property bool   _showUvcLoader:     QGroundControl.videoManager.isUvc
+    property bool   _showUvcLoader:     allowUvc && QGroundControl.videoManager.isUvc
 
     property bool   _isMode_FIT_WIDTH:  _fitMode === 0
     property bool   _isMode_FIT_HEIGHT: _fitMode === 1
@@ -95,7 +97,7 @@ Item {
                     // For FIT_WIDTH and FILL
                     //    makes so the video height will be larger than (or equal to) the screen height
                     // For NO_CROP Mode
-                    //    makes so the video height will be smaller than (or equal to) the screen height
+                    //    makes so the video height will be smaller than (or equal to) the screen width
                     return root.width * (1 / _ar)
                 }
             }
