@@ -508,11 +508,18 @@ Item {
 
     function isShortcutEnabled(shortcut) {
         const action = root.shortcutRegistry[shortcut]
-        const policy = root.actionPolicies[action]
+        if (!root.shortcutInputEligible || action === undefined) {
+            return false
+        }
 
-        return root.shortcutInputEligible && action !== undefined
-            && (SVState.shortcutsEnabled || (policy && policy.allowWhenShortcutsDisabled
-                && (!policy.requiresVisibleToolbar || root.toolbarVisible)))
+        if (SVState.shortcutsEnabled) {
+            return true
+        }
+
+        const policy = root.actionPolicies[action]
+        return policy !== undefined
+            && policy.allowWhenShortcutsDisabled === true
+            && (!policy.requiresVisibleToolbar || root.toolbarVisible)
     }
 
     function dispatch(shortcut) {
