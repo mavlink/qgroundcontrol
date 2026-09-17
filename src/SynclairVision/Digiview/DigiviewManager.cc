@@ -14,8 +14,8 @@ QGC_LOGGING_CATEGORY(DigiviewManagerLog, "Digiview.Manager")
 
 namespace {
 
-constexpr uint8_t kCamTargetingLockFlagsUnchanged = 0xFF;
-constexpr uint8_t kCamTargetingLockFlagsAll = 0x07;
+constexpr uint8_t kCamTargetingStabilizationFlagsUnchanged = 0xFF;
+constexpr uint8_t kCamTargetingStabilizationFlagsAll = 0x07;
 constexpr float kOneShotIntervalUs = -1000.0F;
 constexpr float kVideoOutputParametersSubscriptionIntervalUs = 100000.0F;
 constexpr int kVideoOutputTransactionTimeoutMs = 2000;
@@ -562,7 +562,7 @@ bool DigiviewManager::setDetectionTracking(
         0.0f,
         0.0f,
         0.0f,
-        kCamTargetingLockFlagsAll,
+        kCamTargetingStabilizationFlagsAll,
         0.0f,
         0.0f,
         0.0f,
@@ -599,7 +599,7 @@ bool DigiviewManager::clearDetectionTracking(
         0.0f,
         0.0f,
         0.0f,
-        kCamTargetingLockFlagsAll,
+        kCamTargetingStabilizationFlagsAll,
         0.0f,
         0.0f,
         0.0f,
@@ -850,7 +850,7 @@ bool DigiviewManager::sendTrackedDetectionParameters(
 
 bool DigiviewManager::sendCamTargetingParameters(
     QString stream_name, uint8_t cam_id, uint8_t targeting_mode, uint8_t euler_delta,
-    float yaw, float pitch, float roll, uint8_t lock_flags,
+    float yaw, float pitch, float roll, uint8_t stabilization_flags,
     float x_offset, float y_offset,
     float target_latitude, float target_longitude, float target_altitude,
     uint16_t track_id, int16_t view_id, uint8_t lock_target)
@@ -869,7 +869,7 @@ bool DigiviewManager::sendCamTargetingParameters(
     payload.yaw = yaw;
     payload.pitch = pitch;
     payload.roll = roll;
-    payload.lock_flags = lock_flags;
+    payload.stabilization_flags = stabilization_flags;
     payload.x_offset = x_offset;
     payload.y_offset = y_offset;
     payload.target_latitude = target_latitude;
@@ -1148,7 +1148,7 @@ bool DigiviewManager::setSingleTargetTrackingTarget(int camId, float xOffset, fl
 
     return sendCamTargetingParameters(
         _streamName, static_cast<uint8_t>(camId), View::SINGLE_TARGET_TRACKING,
-        0, 0.0f, 0.0f, 0.0f, kCamTargetingLockFlagsUnchanged,
+        0, 0.0f, 0.0f, 0.0f, kCamTargetingStabilizationFlagsUnchanged,
         xOffset, yOffset, 0.0f, 0.0f, 0.0f, 0, -1, 0);
 }
 
@@ -1175,7 +1175,7 @@ bool DigiviewManager::setCameraCursorTarget(int camId, float xOffset, float yOff
         0.0f,
         0.0f,
         0.0f,
-        kCamTargetingLockFlagsUnchanged,
+        kCamTargetingStabilizationFlagsUnchanged,
         xOffset,
         yOffset,
         0.0f,
@@ -1204,7 +1204,7 @@ bool DigiviewManager::setCameraManualTarget(int camId, float latitude, float lon
         0.0f,
         0.0f,
         0.0f,
-        kCamTargetingLockFlagsUnchanged,
+        kCamTargetingStabilizationFlagsUnchanged,
         0.0f,
         0.0f,
         latitude,
@@ -1302,7 +1302,7 @@ bool DigiviewManager::clearCurrentTarget(int cameraSlot)
         payload.yaw = 0.0f;
         payload.pitch = 0.0f;
         payload.roll = 0.0f;
-        payload.lock_flags = kCamTargetingLockFlagsAll;
+        payload.stabilization_flags = kCamTargetingStabilizationFlagsAll;
         payload.x_offset = 0.0f;
         payload.y_offset = 0.0f;
         payload.target_latitude = 0.0f;
@@ -1372,7 +1372,7 @@ void DigiviewManager::changeEuler(int camId, float yaw, float pitch)
         yaw,
         pitch,
         0,
-        kCamTargetingLockFlagsUnchanged,
+        kCamTargetingStabilizationFlagsUnchanged,
         0, 0,
         0, 0, 0,
         0,
@@ -1956,7 +1956,7 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             payload.yaw,
             payload.pitch,
             payload.roll,
-            payload.lock_flags,
+            payload.stabilization_flags,
             payload.x_offset,
             payload.y_offset,
             payload.target_latitude,

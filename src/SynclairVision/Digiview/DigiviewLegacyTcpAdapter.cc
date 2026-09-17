@@ -296,7 +296,7 @@ QByteArray DigiviewLegacyTcpAdapter::encode(const mavlink_message_t& mavlinkMess
         pack_set_cam_targeting_parameters(nativeMessage, parameters.stream_name, parameters.cam_id,
                                           u8_to_enum<View::TargetingMode>(parameters.targeting_mode),
                                           parameters.euler_delta != 0U, parameters.yaw, parameters.pitch,
-                                          parameters.roll, parameters.lock_flags, parameters.x_offset,
+                                          parameters.roll, parameters.stabilization_flags, parameters.x_offset,
                                           parameters.y_offset, parameters.target_latitude,
                                           parameters.target_longitude, parameters.target_altitude,
                                           parameters.track_id, parameters.view_id, parameters.lock_target != 0U);
@@ -563,7 +563,7 @@ DigiviewLegacyTcpAdapter::DecodeResult DigiviewLegacyTcpAdapter::decode(
         parameters.yaw = nativeParameters.yaw;
         parameters.pitch = nativeParameters.pitch;
         parameters.roll = nativeParameters.roll;
-        parameters.lock_flags = nativeParameters.lock_flags;
+        parameters.stabilization_flags = nativeParameters.stabilize_flags;
         parameters.x_offset = nativeParameters.x_offset;
         parameters.y_offset = nativeParameters.y_offset;
         parameters.target_latitude = nativeParameters.target_latitude;
