@@ -1054,6 +1054,7 @@ void MissionController::_recalcFlightPathSegments(void)
 
             MAV_CMD command = simpleItem->mavCommand();
             switch (command) {
+            // A takeoff before any coordinate item means the mission starts from the ground: link it back to home
             case MAV_CMD_NAV_TAKEOFF:
                 if (!linkEndToHome && firstCoordinateNotFound) {
                     _missionStartsInVTOLMulticopterMode =
