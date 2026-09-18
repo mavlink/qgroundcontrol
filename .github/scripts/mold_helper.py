@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Mold linker helper for CI: download and install a pinned, SHA256-verified mold binary (Linux).
 
@@ -22,8 +21,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.io import extract_tar_data, sha256_file
-from common.net import download_with_retry
+from common.io import extract_tar_data
+from common.net import download_file
 from common.platform import host_arch, is_linux
 from common.proc import run_captured
 from common.tool_version import probe_version, version_prefix_matches
@@ -68,10 +67,7 @@ def install(version: str, arch: str, prefix: Path) -> Path:
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         archive = tmp_path / archive_name
-        download_with_retry(url, archive)
-        actual = sha256_file(archive)
-        if actual != sha256:
-            raise RuntimeError(f"SHA256 mismatch for {archive_name}: {actual} != {sha256}")
+        download_file(url, archive, expected_sha256=sha256)
         extract_tar_data(archive, tmp_path, mode="r:gz")
         src = tmp_path / stem / "bin" / "mold"
         if not src.exists():

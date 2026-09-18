@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Mirror official upstream GStreamer release artifacts to the QGC S3 bucket.
 
 Downloads the prebuilt SDK packages published at gstreamer.freedesktop.org for a
@@ -24,7 +23,6 @@ ensure_tools_dir(__file__)
 
 from common.aws import s3_object_exists, upload_public_file, validate_public_bucket
 from common.gh_actions import write_step_summary
-from common.io import sha256_file
 from common.net import download_file, read_url_text
 
 PKG_BASE = "https://gstreamer.freedesktop.org/data/pkg"
@@ -102,12 +100,8 @@ def resolve_platforms(value: str) -> list[str]:
     return requested
 
 
-def _download(url: str, dest: Path) -> None:
-    download_file(url, dest, timeout=120)
-
-
-def _sha256(path: Path) -> str:
-    return sha256_file(path)
+def _download(url: str, dest: Path, expected_sha256: str) -> None:
+    download_file(url, dest, expected_sha256=expected_sha256, timeout=120)
 
 
 def _fetch_expected_sha(url: str) -> str:
@@ -125,15 +119,9 @@ def mirror_artifact(
 
     local = work_dir / artifact.filename
     print(f"download: {artifact.url}")
-    _download(artifact.url, local)
-
     expected = _fetch_expected_sha(artifact.url)
-    actual = _sha256(local)
-    if actual != expected:
-        raise RuntimeError(
-            f"checksum mismatch for {artifact.filename}: expected {expected}, got {actual}"
-        )
-    print(f"verified sha256: {actual}")
+    _download(artifact.url, local, expected)
+    print(f"verified sha256: {expected}")
 
     if dry_run:
         print(f"dry-run: would upload -> s3://{bucket}/{key}")

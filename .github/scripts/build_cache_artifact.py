@@ -65,11 +65,13 @@ def trusted_baseline(
 def find_artifact(
     repo: str, run_id: str, name: str, shared_name: str = ""
 ) -> dict[str, Any] | None:
-    current = json.loads(gh("api", f"repos/{repo}/actions/runs/{run_id}").stdout)
+    current = json.loads(
+        gh("api", f"repos/{repo}/actions/runs/{run_id}", retry_transient=True).stdout
+    )
     for candidate_name in dict.fromkeys(filter(None, (name, shared_name))):
         repository = None
         if candidate_name != name:
-            repository = json.loads(gh("api", f"repos/{repo}").stdout)
+            repository = json.loads(gh("api", f"repos/{repo}", retry_transient=True).stdout)
         artifact = _find_named_artifact(repo, current, candidate_name, repository)
         if artifact is not None:
             return artifact
@@ -88,6 +90,7 @@ def _find_named_artifact(
         f"name={name}",
         "-f",
         "per_page=30",
+        retry_transient=True,
     )
     artifacts = json.loads(response.stdout)["artifacts"]
     for artifact in sorted(artifacts, key=lambda item: item["id"], reverse=True):
@@ -96,7 +99,13 @@ def _find_named_artifact(
         producer = artifact.get("workflow_run", {}).get("id")
         if not isinstance(producer, int) or producer <= 0 or producer == current["id"]:
             continue
-        candidate = json.loads(gh("api", f"repos/{repo}/actions/runs/{producer}").stdout)
+        candidate = json.loads(
+            gh(
+                "api",
+                f"repos/{repo}/actions/runs/{producer}",
+                retry_transient=True,
+            ).stdout
+        )
         # The snapshot is published immediately after successful compilation;
         # later tests or packaging may still be running or may have failed.
         if (

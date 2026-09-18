@@ -224,7 +224,13 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Error: invalid release snapshot for {workflow}", file=sys.stderr)
                 return 1
             saved = selected[0]
-            current = json.loads(gh("api", f"repos/{repo}/actions/runs/{saved['id']}").stdout)
+            current = json.loads(
+                gh(
+                    "api",
+                    f"repos/{repo}/actions/runs/{saved['id']}",
+                    retry_transient=True,
+                ).stdout
+            )
             if any(
                 current.get(key) != saved.get(key)
                 for key in ("head_sha", "run_attempt", "status", "conclusion")

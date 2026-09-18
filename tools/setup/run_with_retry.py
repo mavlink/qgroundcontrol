@@ -15,7 +15,7 @@ from _bootstrap import ensure_tools_dir  # noqa: E402
 
 ensure_tools_dir(__file__)
 
-from common.proc import run_checked_with_retry  # noqa: E402
+from common.proc import run_with_retry  # noqa: E402
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -36,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     """Run the requested command and return its final exit status."""
     args = parse_args(argv)
     try:
-        result = run_checked_with_retry(
+        result = run_with_retry(
             args.command,
             max_attempts=args.max_attempts,
             retry_backoff_seconds=args.retry_backoff_seconds,

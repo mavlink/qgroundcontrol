@@ -15,8 +15,8 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.gh_actions import write_github_output
-from common.io import extract_tar_data, sha256_file
-from common.net import download_with_retry
+from common.io import extract_tar_data
+from common.net import download_file
 from common.platform import host_arch, is_linux
 
 VERSION = "0.110.0"
@@ -42,9 +42,14 @@ def install(tool_cache: Path, arch: str) -> Path:
     with tempfile.TemporaryDirectory(prefix="qgc-grype-") as temporary:
         staging = Path(temporary)
         archive = staging / filename
-        download_with_retry(url, archive, attempts=3, delay=10, timeout=60)
-        if sha256_file(archive) != SHA256[arch]:
-            raise RuntimeError(f"SHA256 mismatch for {filename}")
+        download_file(
+            url,
+            archive,
+            expected_sha256=SHA256[arch],
+            attempts=3,
+            retry_backoff_seconds=10,
+            timeout=60,
+        )
         extract_tar_data(archive, staging, mode="r:gz")
         source = staging / "grype"
         if source.is_symlink() or not source.is_file():

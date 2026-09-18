@@ -57,7 +57,13 @@ def wait_for_builds(repo: str, sha: str, tag: str, output: Path, timeout: int = 
                     raise RuntimeError(f"Release run changed for {name}")
                 selected[name] = run
         current = [
-            json.loads(gh("api", f"repos/{repo}/actions/runs/{run['id']}").stdout)
+            json.loads(
+                gh(
+                    "api",
+                    f"repos/{repo}/actions/runs/{run['id']}",
+                    retry_transient=True,
+                ).stdout
+            )
             for run in selected.values()
         ]
         for run in current:

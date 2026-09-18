@@ -17,7 +17,7 @@ from common.io import read_json
 
 
 def api(path: str) -> Any:
-    return json.loads(gh("api", path).stdout)
+    return json.loads(gh("api", path, retry_transient=True).stdout)
 
 
 def resolve_context(repo: str, run: dict[str, Any]) -> dict[str, str]:

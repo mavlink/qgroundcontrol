@@ -118,7 +118,7 @@ def test_empty_cache_is_not_published(tmp_path):
 
 
 def test_find_artifact_skips_expired_self_and_wrong_workflow(monkeypatch):
-    def gh(*args):
+    def gh(*args, **kwargs):
         path = next(item for item in args if item.startswith("repos/"))
         if path.endswith("/runs/2"):
             payload = run()

@@ -15,15 +15,15 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
 
-__all__ = ["run_bytes", "run_captured", "run_checked_with_retry", "run_tee", "run_text"]
+__all__ = ["run_bytes", "run_captured", "run_tee", "run_text", "run_with_retry"]
 
 
-def run_checked_with_retry(
+def run_with_retry(
     cmd: Sequence[str],
     *,
     cwd: Path | str | None = None,
@@ -31,9 +31,16 @@ def run_checked_with_retry(
     max_attempts: int = 3,
     retry_backoff_seconds: float = 5.0,
     before_retry: Callable[[], None] | None = None,
+    retry_if: Callable[[Exception], bool] | None = None,
+    retry_result_if: Callable[[subprocess.CompletedProcess[Any]], bool] | None = None,
     timeout: float | None = None,
-) -> subprocess.CompletedProcess[bytes]:
-    """Run a checked command with bounded linear backoff."""
+    check: bool = True,
+    capture_output: bool = False,
+    text: bool = False,
+    encoding: str | None = None,
+    errors: str | None = None,
+) -> subprocess.CompletedProcess[Any]:
+    """Run a command with bounded retries and linear backoff."""
     command = list(cmd)
     if not command:
         raise ValueError("cmd must not be empty")
@@ -44,26 +51,34 @@ def run_checked_with_retry(
 
     for attempt in range(1, max_attempts + 1):
         try:
-            return subprocess.run(
+            result = subprocess.run(
                 command,
+                capture_output=capture_output,
+                text=text,
+                encoding=encoding,
+                errors=errors,
                 cwd=cwd,
                 env=dict(env) if env is not None else None,
-                check=True,
+                check=check,
                 timeout=timeout,
             )
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            if retry_result_if is None or not retry_result_if(result):
+                return result
             if attempt >= max_attempts:
+                return result
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+            if attempt >= max_attempts or (retry_if is not None and not retry_if(error)):
                 raise
-            if before_retry is not None:
-                before_retry()
-            delay = retry_backoff_seconds * attempt
-            print(
-                f"Command failed (attempt {attempt}/{max_attempts}); retrying in {delay:g}s: "
-                f"{Path(command[0]).name}",
-                file=sys.stderr,
-            )
-            if delay > 0:
-                time.sleep(delay)
+        if before_retry is not None:
+            before_retry()
+        delay = retry_backoff_seconds * attempt
+        print(
+            f"Command failed (attempt {attempt}/{max_attempts}); retrying in {delay:g}s: "
+            f"{Path(command[0]).name}",
+            file=sys.stderr,
+        )
+        if delay > 0:
+            time.sleep(delay)
 
     raise RuntimeError("unreachable")
 
@@ -110,6 +125,8 @@ def run_captured(
         list(cmd),
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         cwd=cwd,
         env=dict(env) if env is not None else None,
         timeout=timeout,

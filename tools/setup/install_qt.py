@@ -30,7 +30,7 @@ ensure_tools_dir(__file__)
 
 from common.build_config import find_build_config, load_build_config
 from common.gh_actions import gh_error, github_cache_path, write_github_output
-from common.proc import run_checked_with_retry
+from common.proc import run_with_retry
 from qgc_tools.python_env import tool_command
 
 _ARCH_DIR_PREFIXES = [
@@ -127,7 +127,7 @@ _AQT_RETRY_DELAY_SECONDS = 15
 
 def _run_aqt_with_retries(args: list[str]) -> None:
     """Run aqt, retrying transient CDN download/extraction failures (exit 254, "bad path")."""
-    run_checked_with_retry(
+    run_with_retry(
         args,
         max_attempts=_AQT_MAX_ATTEMPTS,
         retry_backoff_seconds=_AQT_RETRY_DELAY_SECONDS,

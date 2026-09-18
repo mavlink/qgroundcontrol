@@ -71,17 +71,21 @@ runs:
       uses: android-actions/setup-android@v4
       with:
         cmdline-tools-version: ${{ inputs.android-cmdline-tools }}
-        packages: 'platform-tools platforms;android-${{ inputs.android-platform }} build-tools;${{ inputs.android-build-tools }} ndk;${{ inputs.ndk-full-version }}'
+        packages: ''
         log-accepted-android-sdk-licenses: false
 
-    - name: Update Android SDK / NDK / Tools
+    - name: Install Android SDK / NDK / Tools
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/android_sdk_helper.py" \
           --ndk-version "${INPUTS_NDK_FULL_VERSION}" \
+          --platform "${INPUTS_ANDROID_PLATFORM}" \
+          --build-tools "${INPUTS_ANDROID_BUILD_TOOLS}" \
           --workspace "${GITHUB_WORKSPACE}"
       env:
         INPUTS_NDK_FULL_VERSION: ${{ inputs.ndk-full-version }}
+        INPUTS_ANDROID_PLATFORM: ${{ inputs.android-platform }}
+        INPUTS_ANDROID_BUILD_TOOLS: ${{ inputs.android-build-tools }}
 
     - name: Setup Caching
       uses: ./.github/actions/cache

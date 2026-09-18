@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Read and prune size/* labels on a pull request.
 
 Subcommands:
@@ -45,6 +44,7 @@ def list_size_labels(repo: str, pr: str) -> list[str]:
         "--jq",
         '.[] | select(.name | startswith("size/")) | .name',
         check=False,
+        retry_transient=True,
     )
     if result.returncode != 0:
         gh_error(f"gh api failed ({result.returncode}): {result.stderr.strip()}")
@@ -91,10 +91,12 @@ def cmd_prune(args: argparse.Namespace) -> int:
 
     old_label = args.old_label or os.environ.get("OLD_LABEL", "")
     to_remove = [old_label] if old_label and old_label in labels else list(labels[1:])
+    removal_failed = False
     for label in to_remove:
         print(f"Removing stale size label: {label}")
-        remove_label(repo, pr, label)
-    return 0
+        if not remove_label(repo, pr, label):
+            removal_failed = True
+    return int(removal_failed)
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -24,16 +24,16 @@ from common.proc import run_captured
 | `errors.py` | Shared tooling exceptions |
 | `file_traversal.py` | Repository-root discovery and filtered C++ file traversal |
 | `format.py` | Human-readable byte and size-delta formatting |
-| `gh_actions.py` | GitHub CLI calls, annotations, outputs, environment, and step summaries |
+| `gh_actions.py` | GitHub CLI calls, read-only API retries, annotations, outputs, and summaries |
 | `git.py` | Captured Git commands and default-branch discovery |
 | `io.py` | JSON/TOML I/O, checksums, atomic writes, and safe archive extraction |
 | `logging.py` | Color-aware terminal logging |
 | `markdown.py` | Escaped GitHub-Flavored Markdown tables |
-| `net.py` | Dependency-free downloads and retry policies |
+| `net.py` | Dependency-free atomic downloads with retries and optional SHA-256 verification |
 | `opener.py` | Cross-platform default-application launching |
 | `patterns.py` | QGC-specific source-analysis regular expressions |
 | `platform.py` | OS and CPU architecture normalization |
-| `proc.py` | Captured text, byte, and tee subprocess execution |
+| `proc.py` | Captured, tee, and bounded-retry subprocess execution |
 | `tool_version.py` | External-tool and `uv.lock` version lookup |
 | `xml.py` | Safe XML parsing with entity-declaration rejection |
 

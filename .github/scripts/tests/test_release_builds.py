@@ -42,7 +42,7 @@ def test_completed_dispatches_save_exact_ids(tmp_path):
 
     runs = [run(name, created_at="2099-01-01T00:00:00Z") for name in WORKFLOWS]
 
-    def gh(*args):
+    def gh(*args, **kwargs):
         if args[0] == "api":
             return CompletedProcess([], 0, json.dumps(runs[int(args[1].split("/")[-1]) - 1]))
         return CompletedProcess([], 0, "")

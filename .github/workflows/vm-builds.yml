@@ -142,9 +142,13 @@ jobs:
 
       - name: Install Vagrant + libvirt
         run: |
+          set -o pipefail
           # Ubuntu 24.04 (noble) dropped the `vagrant` package from its repos, so
           # pull it from HashiCorp's official apt repo (which publishes for noble).
-          wget -qO- https://apt.releases.hashicorp.com/gpg \
+          curl --fail --show-error --silent --location \
+            --retry 5 --retry-delay 2 --retry-max-time 120 \
+            --connect-timeout 10 --max-time 30 \
+            https://apt.releases.hashicorp.com/gpg \
             | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
           echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
             | sudo tee /etc/apt/sources.list.d/hashicorp.list

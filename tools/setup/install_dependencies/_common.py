@@ -20,12 +20,12 @@ _tools_dir = Path(__file__).resolve().parents[2]
 if str(_tools_dir) not in sys.path:
     sys.path.insert(0, str(_tools_dir))
 
-from common.build_config import get_build_config_value  # noqa: E402
+from common.build_config import get_build_config_value, load_build_config  # noqa: E402
 from common.env import is_ci  # noqa: E402  re-exported for submodules
 from common.gh_actions import append_github_env  # noqa: E402
 from common.io import require_tar_data_filter  # noqa: E402  re-exported for submodules
 from common.logging import log_error, log_info, log_warn  # noqa: E402  re-exported for submodules
-from common.net import download_with_retry  # noqa: E402
+from common.net import download_file as atomic_download_file  # noqa: E402
 from common.platform import is_linux, is_macos, is_windows  # noqa: E402
 
 APT_BASE_OPTIONS: list[str] = [
@@ -40,6 +40,16 @@ def get_config_value(key: str) -> str | None:
     """Get a top-level string value from build config by key name."""
     value = get_build_config_value(key)
     return value or None
+
+
+def get_gstreamer_checksum(version: str, artifact: str) -> str | None:
+    """Return a GStreamer artifact checksum for a version containing dots."""
+    try:
+        checksums = load_build_config().get("gstreamer", {}).get("checksums", {})
+    except (AttributeError, FileNotFoundError, OSError):
+        return None
+    value = checksums.get(version, {}).get(artifact)
+    return str(value) if value else None
 
 
 def _os_release_ids() -> set[str]:
@@ -332,6 +342,7 @@ def download_file(
     retries: int = 3,
     *,
     warn_on_failure: bool = False,
+    expected_sha256: str | None = None,
 ) -> bool:
     """Download with bounded retries using only bootstrap-safe standard-library dependencies."""
     if dry_run:
@@ -339,7 +350,13 @@ def download_file(
         return True
 
     try:
-        download_with_retry(url, dest, attempts=retries + 1, timeout=timeout)
+        atomic_download_file(
+            url,
+            dest,
+            expected_sha256=expected_sha256,
+            attempts=retries + 1,
+            timeout=timeout,
+        )
         return True
     except (OSError, RuntimeError) as error:
         log = log_warn if warn_on_failure else log_error
@@ -362,6 +379,7 @@ __all__ = [
     "get_brew_install_command",
     "get_config_value",
     "get_dnf_install_command",
+    "get_gstreamer_checksum",
     "has_command",
     "install_build_tools",
     "is_ci",

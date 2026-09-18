@@ -63,6 +63,11 @@ def install_macos(dry_run: bool = False) -> bool:
     else:
         print(f"\nInstalling GStreamer {gst_version}...")
         runtime_url, devel_url = get_gstreamer_macos_urls(gst_version)
+        runtime_sha256 = _c.get_gstreamer_checksum(gst_version, "macos")
+        devel_sha256 = _c.get_gstreamer_checksum(gst_version, "macos_devel")
+        if not runtime_sha256 or not devel_sha256:
+            _c.log_error(f"Missing GStreamer {gst_version} macOS checksums")
+            return False
 
         if dry_run:
             print(f"  Would download: {runtime_url}")
@@ -73,15 +78,20 @@ def install_macos(dry_run: bool = False) -> bool:
                 runtime_pkg = Path(tmpdir) / runtime_url.split("/")[-1]
                 devel_pkg = Path(tmpdir) / devel_url.split("/")[-1]
                 download_targets = [
-                    ("runtime", runtime_url, runtime_pkg),
-                    ("devel", devel_url, devel_pkg),
+                    ("runtime", runtime_url, runtime_pkg, runtime_sha256),
+                    ("devel", devel_url, devel_pkg, devel_sha256),
                 ]
 
                 print("  Downloading GStreamer packages in parallel...")
                 with ThreadPoolExecutor(max_workers=2) as executor:
                     futures = {
-                        executor.submit(_c.download_file, url, pkg_path): label
-                        for label, url, pkg_path in download_targets
+                        executor.submit(
+                            _c.download_file,
+                            url,
+                            pkg_path,
+                            expected_sha256=expected_sha256,
+                        ): label
+                        for label, url, pkg_path, expected_sha256 in download_targets
                     }
                     for future in as_completed(futures):
                         label = futures[future]
@@ -89,7 +99,7 @@ def install_macos(dry_run: bool = False) -> bool:
                             _c.log_error(f"Failed to download GStreamer {label} package")
                             return False
 
-                for label, _, pkg_path in download_targets:
+                for label, _, pkg_path, _ in download_targets:
                     print(f"  Installing GStreamer {label} package...")
                     result = subprocess.run(
                         ["sudo", "installer", "-pkg", str(pkg_path), "-target", "/"],

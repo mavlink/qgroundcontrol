@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import subprocess
-from typing import TYPE_CHECKING
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
+import size_analysis
 from size_analysis import BinaryAnalyzer
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 def test_binary_analyzer_requires_existing_file(tmp_path: Path) -> None:
@@ -63,6 +62,28 @@ def test_get_section_sizes_unavailable(tmp_path: Path) -> None:
 
     with patch("size_analysis.subprocess.run", side_effect=FileNotFoundError):
         assert analyzer.get_section_sizes() == "Section sizes unavailable"
+
+
+def test_source_build_cleans_temporary_directory(tmp_path: Path, monkeypatch) -> None:
+    build_directory = None
+    real_temporary_directory = tempfile.TemporaryDirectory
+
+    def temporary_directory(**kwargs):
+        nonlocal build_directory
+        directory = real_temporary_directory(dir=tmp_path, **kwargs)
+        build_directory = Path(directory.name)
+        return directory
+
+    monkeypatch.setattr(size_analysis.tempfile, "TemporaryDirectory", temporary_directory)
+    monkeypatch.setattr(
+        size_analysis,
+        "run_captured",
+        lambda command, **kwargs: subprocess.CompletedProcess(command, 0, "", ""),
+    )
+
+    assert size_analysis._install_bloaty_from_source(10)
+    assert build_directory is not None
+    assert not build_directory.exists()
 
 
 def test_generate_metrics_json_with_explicit_values(tmp_path: Path) -> None:
