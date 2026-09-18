@@ -1,5 +1,43 @@
 #include "GPSObservation.h"
 
+std::optional<GPSObservation> GPSObservation::projected(PositionUse use) const
+{
+    if (!position.isValid() || !receiverFixValid.value_or(true) || fixQuality == FixQuality::NoFix ||
+        (use != PositionUse::Gga && !usable())) {
+        return std::nullopt;
+    }
+    GPSObservation accepted = *this;
+    switch (use) {
+        case PositionUse::Gga:
+            break;
+        case PositionUse::GroundStation:
+        case PositionUse::Motion:
+            accepted.position.setCoordinate(coordinate());
+            if (accepted.position.coordinate().type() != QGeoCoordinate::Coordinate3D) {
+                accepted.position.removeAttribute(QGeoPositionInfo::VerticalAccuracy);
+            }
+            break;
+        case PositionUse::RemoteID:
+            if (altitudeEllipsoidMeters && qIsFinite(*altitudeEllipsoidMeters)) {
+                auto ellipsoidCoordinate = accepted.position.coordinate();
+                ellipsoidCoordinate.setAltitude(*altitudeEllipsoidMeters);
+                accepted.position.setCoordinate(ellipsoidCoordinate);
+                accepted.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
+            }
+            break;
+    }
+    if (use == PositionUse::Motion) {
+        const double course = heading();
+        if (qIsFinite(course)) {
+            accepted.position.setAttribute(QGeoPositionInfo::Direction, course);
+        } else {
+            accepted.position.removeAttribute(QGeoPositionInfo::Direction);
+            accepted.position.removeAttribute(QGeoPositionInfo::DirectionAccuracy);
+        }
+    }
+    return accepted;
+}
+
 bool GPSObservation::usable() const
 {
     const double accuracy = position.attribute(QGeoPositionInfo::HorizontalAccuracy);

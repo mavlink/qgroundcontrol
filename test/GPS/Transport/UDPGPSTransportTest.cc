@@ -47,7 +47,7 @@ void UDPGPSTransportTest::_transferAndPartialReads()
     QCOMPARE(sent.status, GPSWriteStatus::Completed);
     QCOMPARE(sent.acceptedBytes, payload.size());
     QCOMPARE(sent.writtenBytes, payload.size());
-    QCOMPARE(sent.uncertainBytes, 0);
+    QCOMPARE(sent.uncertainBytes(), 0);
     QTRY_VERIFY_WITH_TIMEOUT(receiver.hasPendingDatagrams(), TestTimeout::shortMs());
     const QNetworkDatagram request = receiver.receiveDatagram();
     QCOMPARE(request.data(), payload);

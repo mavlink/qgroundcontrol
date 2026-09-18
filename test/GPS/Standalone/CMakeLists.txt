@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
+include("${CMAKE_CURRENT_LIST_DIR}/../../../cmake/modules/TestSupport.cmake")
+
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(QGCGPSLibraryTests LANGUAGES CXX)
     enable_testing()
@@ -13,7 +15,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(QGC_GPS_COMPONENTS_ENABLED ${QGC_GPS_COMPONENTS})
     foreach(component IN LISTS QGC_GPS_COMPONENTS_ENABLED)
         if(NOT component MATCHES
-           "^((Native)?Contracts|Core|NMEA|Positioning|Transport|ReceiverTransports|RTCM(Framer)?|Corrections)$"
+           "^(Core|NMEA(Protocol)?|Positioning|Transport|ReceiverTransports|RTCM(Framer)?|Corrections)$"
         )
             message(FATAL_ERROR "Unknown GPS component: ${component}")
         endif()
@@ -21,17 +23,14 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "Positioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED Core)
     endif()
+    if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        list(APPEND QGC_GPS_COMPONENTS_ENABLED NMEAProtocol)
+    endif()
     if("ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED Transport)
         if(NOT QGC_NO_SERIAL_LINK)
             find_package(Qt6 6.8 REQUIRED COMPONENTS SerialPort)
         endif()
-    endif()
-    if("Transport" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        list(APPEND QGC_GPS_COMPONENTS_ENABLED Contracts)
-    endif()
-    if("Core" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "Contracts" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        list(APPEND QGC_GPS_COMPONENTS_ENABLED NativeContracts)
     endif()
     if("Corrections" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED RTCM)
@@ -43,19 +42,10 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Network)
     endif()
     set(_qt_gps_components ${QGC_GPS_COMPONENTS_ENABLED})
-    list(REMOVE_ITEM _qt_gps_components RTCMFramer NativeContracts)
+    list(REMOVE_ITEM _qt_gps_components RTCMFramer NMEAProtocol)
     if(_qt_gps_components)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
         add_subdirectory("${_utilities_root}/Logging/Category" LoggingCategory)
-    endif()
-    if("NativeContracts" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        add_subdirectory("${_gps_root}/Driver/Protocols/Contracts" NativeContracts)
-        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Driver/Protocols/Contracts" NativeContractsTests)
-    endif()
-    if("Contracts" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        add_subdirectory("${_gps_root}/Contracts" Contracts)
-        find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
-        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Contracts" ContractsTests)
     endif()
     if("Core" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Positioning Test)
@@ -66,6 +56,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     endif()
     if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_utilities_root}/IO" IO)
+    endif()
+    if("NMEAProtocol" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/NMEA" NMEA)
     endif()
     if("Positioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
@@ -75,6 +67,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         add_subdirectory("${_gps_root}/Transport" Transport)
     endif()
     if("ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
         add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Transport" TransportTests)
     endif()
     if("RTCMFramer" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
@@ -100,8 +93,6 @@ if(TARGET QGCClock)
 endif()
 foreach(
     target
-    QGCGPSNativeContracts
-    QGCGPSContracts
     QGCGPSCore
     QGCGPSPositioning
     QGCGPSNMEA
@@ -114,59 +105,22 @@ foreach(
     if(NOT TARGET ${target})
         continue()
     endif()
-    set_target_properties(${target} PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
-    add_custom_target(
-        ${target}HeaderChecks ALL
-        DEPENDS ${target}_verify_interface_header_sets
-        COMMENT "Verify ${target} public headers in isolation"
+    qgc_check_library_consumer(
+        ${target}
+        SOURCE ${target}Consumer.cc
+        LABELS Unit GPS
+        TIMEOUT 10
     )
-    add_executable(${target}Consumer ${target}Consumer.cc)
-    if("${target}" MATCHES "^QGCGPS(NativeContracts|RTCMFramer)$")
-        set_target_properties(
-            ${target}Consumer
-            PROPERTIES AUTOMOC OFF
-                       AUTOUIC OFF
-                       AUTORCC OFF
-        )
-    endif()
-    target_link_libraries(${target}Consumer PRIVATE ${target})
     if("${target}" MATCHES "^QGCGPS(Core|Positioning|NMEA)$")
         target_link_libraries(${target}Consumer PRIVATE QGCTestTiming)
     endif()
-    add_test(NAME ${target}Consumer COMMAND ${target}Consumer)
-    set_tests_properties(${target}Consumer PROPERTIES LABELS "Unit;GPS" TIMEOUT 10)
 endforeach()
 
-if(TARGET QGCGPSTransport)
-    foreach(order ContractsFirst TransportFirst)
-        set(_consumer QGCGPSTransport${order}Consumer)
-        add_executable(${_consumer} QGCGPSTransportContractsConsumer.cc)
-        target_link_libraries(${_consumer} PRIVATE QGC::GPSTransport)
-        if(order STREQUAL "ContractsFirst")
-            target_compile_definitions(${_consumer} PRIVATE QGC_GPS_CONTRACTS_FIRST)
-        endif()
-        add_test(NAME ${_consumer} COMMAND ${_consumer})
-        set_tests_properties(${_consumer} PROPERTIES LABELS "Unit;GPS;Contracts" TIMEOUT 10)
-    endforeach()
-endif()
-
 if(TARGET QGCGPSNMEAProtocol)
-    set_target_properties(QGCGPSNMEAProtocol PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
-    add_custom_target(
-        QGCGPSNMEAProtocolHeaderChecks ALL
-        DEPENDS QGCGPSNMEAProtocol_verify_interface_header_sets
-        COMMENT "Verify Qt-free NMEA protocol headers in isolation"
+    qgc_check_library_consumer(
+        QGCGPSNMEAProtocol
+        SOURCE QGCGPSNMEAProtocolConsumer.cc
+        LABELS Unit GPS
+        TIMEOUT 10
     )
-
-    add_executable(QGCGPSNMEAProtocolConsumer QGCGPSNMEAProtocolConsumer.cc)
-    set_target_properties(
-        QGCGPSNMEAProtocolConsumer
-        PROPERTIES AUTOMOC OFF
-                   AUTOUIC OFF
-                   AUTORCC OFF
-    )
-    target_link_libraries(QGCGPSNMEAProtocolConsumer PRIVATE QGCGPSNMEAProtocol)
-    add_test(NAME QGCGPSNMEAProtocolConsumer COMMAND QGCGPSNMEAProtocolConsumer)
-    set_tests_properties(QGCGPSNMEAProtocolConsumer PROPERTIES LABELS "Unit;GPS" TIMEOUT 10)
-
 endif()

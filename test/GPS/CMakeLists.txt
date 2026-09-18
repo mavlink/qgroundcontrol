@@ -16,7 +16,5 @@ add_subdirectory(Corrections)
 add_subdirectory(RTK)
 add_subdirectory(Transport)
 
-add_subdirectory(Contracts)
-add_subdirectory(Driver/Protocols/Contracts)
 add_subdirectory(Core)
 add_subdirectory(Standalone)

@@ -1,9 +1,9 @@
 #include "GPSRtk.h"
 
+#include "GPSBaseStationConfig.h"
 #include "GPSCorrectionManager.h"
 #include "GPSProvider.h"
 #include "GPSRTKFactGroup.h"
-#include "GPSReceiverConfig.h"
 #include "QGCLoggingCategory.h"
 #include "RTCMFrame.h"
 #include "RTKSettings.h"
@@ -154,9 +154,9 @@ void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
     const bool useFixedBase =
         static_cast<BaseModeDefinition::Mode>(rtkSettings->useFixedBasePosition()->rawValue().toInt()) ==
         BaseModeDefinition::Mode::BaseFixed;
-    GPSReceiverConfig rtkConfig;
+    GPSBaseStationConfig rtkConfig;
     if (useFixedBase) {
-        rtkConfig.base = GPSBaseStationConfig{
+        rtkConfig = GPSBaseStationConfig{
             .useFixedBase = true,
             .fixedBaseLatitude = rtkSettings->fixedBasePositionLatitude()->rawValue().toDouble(),
             .fixedBaseLongitude = rtkSettings->fixedBasePositionLongitude()->rawValue().toDouble(),
@@ -164,7 +164,7 @@ void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
             .fixedBaseAccuracyMeters = rtkSettings->fixedBasePositionAccuracy()->rawValue().toFloat(),
         };
     } else {
-        rtkConfig.base = GPSBaseStationConfig{
+        rtkConfig = GPSBaseStationConfig{
             .surveyInAccMeters = rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),
             .surveyInDurationSecs = rtkSettings->surveyInMinObservationDuration()->rawValue().toLongLong(),
         };

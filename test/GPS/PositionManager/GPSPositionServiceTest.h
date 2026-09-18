@@ -22,6 +22,7 @@ private slots:
     void _standbyReportsDoNotRepublish();
     void _consumerPolicies_data();
     void _consumerPolicies();
+    void _consumerMaximumAge();
     void _policySelectionGates();
     void _schedulerDestruction();
     void _sourceAndHealthLifetime();

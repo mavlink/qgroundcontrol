@@ -1,20 +1,19 @@
 #pragma once
 
 #include "FactGroup.h"
-#include "GPSObservation.h"
 
 class VehicleGPSFactGroup : public FactGroup
 {
     Q_OBJECT
-    Q_PROPERTY(Fact* lat READ lat CONSTANT)
-    Q_PROPERTY(Fact* lon READ lon CONSTANT)
-    Q_PROPERTY(Fact* mgrs READ mgrs CONSTANT)
-    Q_PROPERTY(Fact* hdop READ hdop CONSTANT)
-    Q_PROPERTY(Fact* vdop READ vdop CONSTANT)
-    Q_PROPERTY(Fact* courseOverGround READ courseOverGround CONSTANT)
-    Q_PROPERTY(Fact* yaw READ yaw CONSTANT)
-    Q_PROPERTY(Fact* count READ count CONSTANT)
-    Q_PROPERTY(Fact* lock READ lock CONSTANT)
+    Q_PROPERTY(Fact *lat                    READ lat                    CONSTANT)
+    Q_PROPERTY(Fact *lon                    READ lon                    CONSTANT)
+    Q_PROPERTY(Fact *mgrs                   READ mgrs                   CONSTANT)
+    Q_PROPERTY(Fact *hdop                   READ hdop                   CONSTANT)
+    Q_PROPERTY(Fact *vdop                   READ vdop                   CONSTANT)
+    Q_PROPERTY(Fact *courseOverGround       READ courseOverGround       CONSTANT)
+    Q_PROPERTY(Fact *yaw                    READ yaw                    CONSTANT)
+    Q_PROPERTY(Fact *count                  READ count                  CONSTANT)
+    Q_PROPERTY(Fact *lock                   READ lock                   CONSTANT)
     Q_PROPERTY(Fact* systemErrors           READ systemErrors           CONSTANT)
     Q_PROPERTY(Fact* spoofingState          READ spoofingState          CONSTANT)
     Q_PROPERTY(Fact* jammingState           READ jammingState           CONSTANT)
@@ -27,23 +26,15 @@ class VehicleGPSFactGroup : public FactGroup
 public:
     explicit VehicleGPSFactGroup(QObject *parent = nullptr);
 
-    Fact* lat() { return &_latFact; }
-
-    Fact* lon() { return &_lonFact; }
-
-    Fact* mgrs() { return &_mgrsFact; }
-
-    Fact* hdop() { return &_hdopFact; }
-
-    Fact* vdop() { return &_vdopFact; }
-
-    Fact* courseOverGround() { return &_courseOverGroundFact; }
-
-    Fact* yaw() { return &_yawFact; }
-
-    Fact* count() { return &_countFact; }
-
-    Fact* lock() { return &_lockFact; }
+    Fact *lat() { return &_latFact; }
+    Fact *lon() { return &_lonFact; }
+    Fact *mgrs() { return &_mgrsFact; }
+    Fact *hdop() { return &_hdopFact; }
+    Fact *vdop() { return &_vdopFact; }
+    Fact *courseOverGround() { return &_courseOverGroundFact; }
+    Fact *yaw() { return &_yawFact; }
+    Fact *count() { return &_countFact; }
+    Fact *lock() { return &_lockFact; }
     Fact *systemErrors() { return &_systemErrorsFact; }
     Fact *spoofingState() { return &_spoofingStateFact; }
     Fact *jammingState() { return &_jammingStateFact; }
@@ -53,18 +44,13 @@ public:
     Fact *gnssSignalQuality() { return &_gnssSignalQualityFact; }
     Fact *postProcessingQuality() { return &_postProcessingQualityFact; }
 
+    // Overrides from FactGroup
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
-
-    /// Raw receiver reports; high-latency positions belong to Vehicle.
-    const GPSObservation& observation() const { return _observation; }
-
-    void invalidateObservation() { _observation = {}; }
 
 signals:
     void gnssIntegrityReceived();
 
 protected:
-    void _updateObservation(Vehicle* vehicle, const mavlink_message_t& message);
     void _handleGpsRawInt(const mavlink_message_t &message);
     void _handleHighLatency(const mavlink_message_t &message);
     void _handleHighLatency2(const mavlink_message_t &message);
@@ -89,7 +75,4 @@ protected:
     Fact _postProcessingQualityFact = Fact(0, QStringLiteral("postProcessingQuality"), FactMetaData::valueTypeUint8);
 
     uint8_t _gnssIntegrityId {};
-
-private:
-    GPSObservation _observation;
 };

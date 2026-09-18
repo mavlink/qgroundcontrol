@@ -7,7 +7,7 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QMetaType>
 
-#include "GPSReceiverConfig.h"
+#include "GPSBaseStationConfig.h"
 #include "GPSSurveyInStatus.h"
 #include "GPSType.h"
 #include "satellite_info.h"
@@ -32,7 +32,7 @@ struct GPSDriverSinks
 class GPSDriver
 {
 public:
-    GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks);
+    GPSDriver(GPSType type, GPSTransport& transport, const GPSBaseStationConfig& config, GPSDriverSinks sinks);
     ~GPSDriver();
 
     GPSDriver(const GPSDriver &) = delete;
@@ -53,7 +53,7 @@ public:
 private:
     GPSType _type;
     GPSTransport &_transport;
-    GPSReceiverConfig _config;
+    GPSBaseStationConfig _config;
     GPSDriverSinks _sinks;
 
     std::unique_ptr<GPSBaseStationSupport> _driver;

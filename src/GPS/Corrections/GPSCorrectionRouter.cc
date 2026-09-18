@@ -74,18 +74,15 @@ QString GPSCorrectionRouter::sourceInstance(GPSCorrectionSource source) const
     return index < 0 ? QString() : _configuredInstances[index];
 }
 
-GPSCorrectionRouter::Snapshot GPSCorrectionRouter::snapshot() const
+QVariantList GPSCorrectionRouter::sourceDiagnostics() const
 {
     const qint64 nowMs = _clock();
-    Snapshot result;
-    result.events = _ledger.events();
-    result.activeInstance = _selector.activeInstance(nowMs);
-    const auto activeSource = _selector.activeSource(nowMs);
+    QVariantList result;
     const auto& statistics = _ledger.statistics();
     for (int index = 0; index < static_cast<int>(statistics.size()); ++index) {
         const auto& stats = statistics[index];
         const qint64 age = GPSCorrectionFrame::ageMs(stats.lastValidMs, nowMs);
-        result.sources.append(QVariantMap{
+        result.append(QVariantMap{
             {QStringLiteral("source"), index},
             {QStringLiteral("session"), QVariant::fromValue(stats.session)},
             {QStringLiteral("active"), stats.active},
@@ -110,20 +107,35 @@ GPSCorrectionRouter::Snapshot GPSCorrectionRouter::snapshot() const
             {QStringLiteral("ageMs"), age},
             {QStringLiteral("usable"), stats.active && age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS}});
     }
+    return result;
+}
+
+QVariantList GPSCorrectionRouter::sourceInstanceDiagnostics() const
+{
+    const qint64 nowMs = _clock();
+    QVariantList result;
+    const auto activeSource = _selector.activeSource(nowMs);
+    const auto activeInstance = _selector.activeInstance(nowMs);
     for (const auto& source : _selector.sources()) {
         const qint64 age = GPSCorrectionFrame::ageMs(source.lastRoutableMs, nowMs);
         const bool usable = age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS;
         const bool selected = usable && (_selector.configuration().policy == GPSCorrectionSelector::Policy::All ||
-                                         (source.category == activeSource && source.instance == result.activeInstance));
-        result.sourceInstances.append(QVariantMap{{QStringLiteral("source"), static_cast<int>(source.category)},
-                                                  {QStringLiteral("instanceId"), source.instance},
-                                                  {QStringLiteral("session"), QVariant::fromValue(source.session)},
-                                                  {QStringLiteral("active"), true},
-                                                  {QStringLiteral("usable"), usable},
-                                                  {QStringLiteral("selected"), selected}});
+                                         (source.category == activeSource && source.instance == activeInstance));
+        result.append(QVariantMap{{QStringLiteral("source"), static_cast<int>(source.category)},
+                                  {QStringLiteral("instanceId"), source.instance},
+                                  {QStringLiteral("session"), QVariant::fromValue(source.session)},
+                                  {QStringLiteral("active"), true},
+                                  {QStringLiteral("usable"), usable},
+                                  {QStringLiteral("selected"), selected}});
     }
+    return result;
+}
+
+QVariantList GPSCorrectionRouter::destinationDiagnostics() const
+{
+    QVariantList result;
     for (const auto& destination : _ledger.destinations()) {
-        result.destinations.append(QVariantMap{
+        result.append(QVariantMap{
             {QStringLiteral("destinationId"), destination.id},
             {QStringLiteral("destinationSession"), QVariant::fromValue(destination.session)},
             {QStringLiteral("reportsWrites"), destination.reportsWrites},

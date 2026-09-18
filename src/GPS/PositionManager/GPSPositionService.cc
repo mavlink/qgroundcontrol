@@ -428,20 +428,21 @@ void GPSPositionService::_updateSelectionStatus()
     }
 }
 
-std::optional<GPSObservation> GPSPositionService::acceptedObservation(GPSObservation::PositionUse use) const
+std::optional<GPSObservation> GPSPositionService::acceptedObservation(
+    GPSObservation::PositionUse use, std::optional<std::chrono::milliseconds> maximumAge) const
 {
-    // Pinned selections require a new fix before exposing any projection.
-    return _currentHealth && _gcsPosition.isValid() ? _acceptedSourceObservation(_selectedKind, use) : std::nullopt;
+    return _currentHealth && _selectedObservationAuthorized ? _acceptedSourceObservation(_selectedKind, use, maximumAge)
+                                                            : std::nullopt;
 }
 
-std::optional<GPSObservation> GPSPositionService::_acceptedSourceObservation(SelectedSource source,
-                                                                             GPSObservation::PositionUse use) const
+std::optional<GPSObservation> GPSPositionService::_acceptedSourceObservation(
+    SelectedSource source, GPSObservation::PositionUse use, std::optional<std::chrono::milliseconds> maximumAge) const
 {
     if (!_sourceFor(source)) {
         return std::nullopt;
     }
     auto* health = _binding(source).adapter->health();
-    auto observation = health ? health->acceptedObservation(use) : std::nullopt;
+    auto observation = health ? health->acceptedObservation(use, maximumAge) : std::nullopt;
     const quint64 session = _binding(source).adapter->sessionId();
     if (observation && session != 0 && observation->sessionId != session) {
         return std::nullopt;
@@ -454,7 +455,10 @@ void GPSPositionService::_externalPositionChanged()
     if (!_currentHealth) {
         return;
     }
-    const auto accepted = _acceptedSourceObservation(_selectedKind);
+    // Pinned selections need a new observation, not a timeout change.
+    _selectedObservationAuthorized =
+        _sourceMode == SourceMode::Automatic || _currentHealth->observationRevision() != _selectionObservationRevision;
+    const auto accepted = acceptedObservation();
     if (!accepted) {
         if (_currentHealth->state() != GPSSourceHealth::State::NoData &&
             (_gcsPositioningError == QGeoPositionInfoSource::NoError ||
@@ -476,7 +480,7 @@ void GPSPositionService::_publishPosition(const std::optional<GPSObservation>& o
     const quint64 generation = _sourceGeneration;
     const quint64 revision = ++_positionRevision;
     if (observation) {
-        // Preserve the raw fix for existing consumers alongside the ground-station projection.
+        // Legacy consumers still need the unfiltered fix.
         _geoPositionInfo = _currentHealth->observation().position;
         _gcsPosition = observation->position.coordinate();
         _gcsPositionTimestamp = observation->receivedAt;
@@ -551,6 +555,8 @@ void GPSPositionService::_setPositionSource(SelectedSource source)
     _currentHealth = nextHealth;
     _selectedKind = source;
     _selectedBindingRevision = _binding(source).adapter->bindingRevision();
+    _selectionObservationRevision = _currentHealth ? _currentHealth->observationRevision() : 0;
+    _selectedObservationAuthorized = false;
     if (_sourceMode != SourceMode::Automatic) {
         _pendingObservations[static_cast<size_t>(source)] = false;
     }

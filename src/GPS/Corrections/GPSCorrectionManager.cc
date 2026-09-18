@@ -267,10 +267,11 @@ void GPSCorrectionManager::invalidateDestination(const QString& id, quint64 dest
 void GPSCorrectionManager::_refreshDiagnostics()
 {
     const QPointer<GPSCorrectionManager> guard(this);
-    const auto snapshot = _router.snapshot();
-    _eventModel.setEvents(snapshot.events);
+    const auto events = _router.events();
+    const auto instances = _router.sourceInstanceDiagnostics();
+    _eventModel.setEvents(events);
     if (guard) {
-        _refreshSourceInstances(snapshot.sourceInstances);
+        _refreshSourceInstances(instances);
     }
     if (guard) {
         emit sourcesChanged();
@@ -292,7 +293,7 @@ void GPSCorrectionManager::_scheduleSourcesChanged()
 
 QVariantList GPSCorrectionManager::sources() const
 {
-    return _router.snapshot().sources;
+    return _router.sourceDiagnostics();
 }
 
 void GPSCorrectionManager::_refreshSourceInstances(const QVariantList& instances)
@@ -305,12 +306,12 @@ void GPSCorrectionManager::_refreshSourceInstances(const QVariantList& instances
 
 QVariantList GPSCorrectionManager::sourceInstances() const
 {
-    return _router.snapshot().sourceInstances;
+    return _router.sourceInstanceDiagnostics();
 }
 
 QVariantList GPSCorrectionManager::destinations() const
 {
-    return _router.snapshot().destinations;
+    return _router.destinationDiagnostics();
 }
 
 void GPSCorrectionManager::shutdown()

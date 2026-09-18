@@ -1,25 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-# Verify exported headers and link a consumer using only its owning target.
-function(qgc_check_utility_consumer target)
-    set_target_properties(${target} PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
-    add_custom_target(
-        ${target}HeaderChecks ALL
-        DEPENDS ${target}_verify_interface_header_sets
-        COMMENT "Verify ${target} public headers in isolation"
-    )
-
-    add_executable(${target}Consumer "${CMAKE_CURRENT_SOURCE_DIR}/Consumers/${target}.cc")
-    set_target_properties(
-        ${target}Consumer
-        PROPERTIES AUTOMOC OFF
-                   AUTOUIC OFF
-                   AUTORCC OFF
-    )
-    target_link_libraries(${target}Consumer PRIVATE ${target})
-    add_test(NAME ${target}Consumer COMMAND ${target}Consumer)
-    set_tests_properties(${target}Consumer PROPERTIES LABELS "Unit;Utilities" TIMEOUT 30)
-endfunction()
+include("${CMAKE_CURRENT_LIST_DIR}/../../../cmake/modules/TestSupport.cmake")
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(QGCUtilityLibraryTests LANGUAGES CXX)
@@ -65,5 +46,9 @@ add_test(NAME UtilityLibraryTest COMMAND QGCUtilityLibraryTest)
 set_tests_properties(UtilityLibraryTest PROPERTIES LABELS "Unit;Utilities" TIMEOUT 30)
 
 foreach(target QGCIO QGCTiming QGCNetworkIO QGCLoggingCategory QGCJsonValidation)
-    qgc_check_utility_consumer(${target})
+    qgc_check_library_consumer(
+        ${target}
+        SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Consumers/${target}.cc"
+        LABELS Unit Utilities
+    )
 endforeach()

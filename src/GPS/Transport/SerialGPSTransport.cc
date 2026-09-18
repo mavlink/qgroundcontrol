@@ -156,7 +156,7 @@ GPSWriteResult SerialGPSTransport::write(const uint8_t* buffer, int length)
         return {GPSWriteStatus::InvalidData};
     }
     if (fatalError()) {
-        return {GPSWriteStatus::Error, 0, 0, 0, _errorDetail()};
+        return {GPSWriteStatus::Error, 0, 0, _errorDetail()};
     }
     if (length == 0) {
         return {GPSWriteStatus::Completed};
@@ -171,8 +171,7 @@ GPSWriteResult SerialGPSTransport::write(const uint8_t* buffer, int length)
         status = GPSWriteStatus::Completed;
     }
     // A failed legacy write can have delivered bytes without reporting their count.
-    const GPSWriteResult result{status, length, written, length - written,
-                                status == GPSWriteStatus::Error ? _errorDetail() : QString()};
+    const GPSWriteResult result{status, length, written, status == GPSWriteStatus::Error ? _errorDetail() : QString()};
     if (status != GPSWriteStatus::Completed) {
         _serial->close();
     }
@@ -190,13 +189,13 @@ GPSWriteResult SerialGPSTransport::writeBounded(const uint8_t* buffer, int lengt
         return {GPSWriteStatus::InvalidData};
     }
     if (fatalError() || _serial->bytesToWrite() != 0) {
-        return {GPSWriteStatus::Error, 0, 0, 0, _errorDetail()};
+        return {GPSWriteStatus::Error, 0, 0, _errorDetail()};
     }
     if (length == 0) {
         return {GPSWriteStatus::Completed};
     }
     Q_UNUSED(deadline);
-    return {GPSWriteStatus::Unsupported, 0, 0, 0, QStringLiteral("Android serial does not support bounded writes")};
+    return {GPSWriteStatus::Unsupported, 0, 0, QStringLiteral("Android serial does not support bounded writes")};
 #else
     const qint64 previousAccepted = _acceptedTotal;
     return GPSStreamWrite::writeBounded(

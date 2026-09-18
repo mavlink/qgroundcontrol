@@ -26,14 +26,14 @@ private slots:
     void testReconnectSignalFires();
     void testDuplicateTransportErrorsScheduleOneRetry();
     void testRetiredTransportErrorCannotAffectNewSession();
-    void testRetryAfterReconnect_data();
-    void testRetryAfterReconnect();
-    void testHttpRetryAfterReachesManager();
+    void testRetryPolicy_data();
+    void testRetryPolicy();
     void testRetryPublicationSuperseded_data();
     void testRetryPublicationSuperseded();
     void testMissingMountpointDoesNotStartTransport();
     void testCorrectionIngressKeepsSessionAndIdentity();
     void testSettingsProduceExplicitConfiguration();
+    void testGgaSettingsUseInjectedProviders();
     void testFactChangesReconfigureTransport_data();
     void testFactChangesReconfigureTransport();
     void testNtripOnlyUdpForwardingBypassesSelectionOnce();

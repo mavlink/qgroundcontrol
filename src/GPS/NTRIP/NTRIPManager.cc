@@ -1,6 +1,5 @@
 #include "NTRIPManager.h"
 
-#include <algorithm>
 #include <chrono>
 #include <utility>
 
@@ -11,7 +10,6 @@
 
 #include "Fact.h"
 #include "GPSCorrectionManager.h"
-#include "GPSManager.h"
 #include "MultiVehicleManager.h"
 #include "NTRIPError.h"
 #include "NTRIPHttpTransport.h"
@@ -178,13 +176,51 @@ void NTRIPManager::init()
                 connect(fact, &Fact::rawValueChanged, this, [this]() { _settingsDebounceTimer.start(); });
             }
         }
+        const auto configureGga = [this]() {
+            _ggaProvider.configure(
+                {static_cast<NTRIPGgaProvider::PositionSource>(
+                     _settings->ntripGgaPositionSource()->rawValue().toUInt()),
+                 std::chrono::milliseconds(_settings->ntripGgaIntervalSec()->rawValue().toUInt() * qint64(1000))});
+        };
+        configureGga();
+        connect(_settings->ntripGgaPositionSource(), &Fact::rawValueChanged, this, configureGga);
+        connect(_settings->ntripGgaIntervalSec(), &Fact::rawValueChanged, this, configureGga);
     }
-
-    GPSManager::instance()->configureGgaProvider(_ggaProvider, _settings);
 
     if (_settings) {
         _onSettingChanged();
     }
+}
+
+void NTRIPManager::setGgaPositionProvider(NTRIPGgaProvider::PositionSource source,
+                                          NTRIPGgaProvider::PositionProvider provider)
+{
+    if (_initialized || _transport) {
+        qCWarning(NTRIPManagerLog) << "Inject GGA position providers before initializing NTRIP";
+        return;
+    }
+    _ggaProvider.setPositionProvider(source, std::move(provider));
+}
+
+NTRIPConfiguration NTRIPManager::_configFromSettings() const
+{
+    const auto read = [](Fact* fact, const QVariant& fallback) { return fact ? fact->rawValue() : fallback; };
+    NTRIPConfiguration config;
+    auto& connection = config.connection;
+    connection.host = read(_settings->ntripServerHostAddress(), connection.host).toString();
+    connection.port = read(_settings->ntripServerPort(), connection.port).toInt();
+    connection.username = read(_settings->ntripUsername(), connection.username).toString();
+    connection.password = read(_settings->ntripPassword(), connection.password).toString();
+    connection.mountpoint = read(_settings->ntripMountpoint(), connection.mountpoint).toString();
+    connection.useTls = read(_settings->ntripUseTls(), connection.useTls).toBool();
+    connection.allowSelfSignedCerts =
+        read(_settings->ntripAllowSelfSignedCerts(), connection.allowSelfSignedCerts).toBool();
+    config.filter.whitelist = read(_settings->ntripWhitelist(), config.filter.whitelist).toString();
+    auto& udpForward = config.udpForward;
+    udpForward.enabled = read(_settings->ntripUdpForwardEnabled(), udpForward.enabled).toBool();
+    udpForward.address = read(_settings->ntripUdpTargetAddress(), udpForward.address).toString();
+    udpForward.port = static_cast<quint16>(read(_settings->ntripUdpTargetPort(), udpForward.port).toUInt());
+    return config;
 }
 
 // -----------------------------------------------------------------------------
@@ -210,18 +246,18 @@ void NTRIPManager::fetchMountpoints()
     if (MultiVehicleManager* mvm = MultiVehicleManager::instance(); mvm && mvm->activeVehicle()) {
         sortCoord = mvm->activeVehicle()->coordinate();
     }
-    _sourceTableController.fetch(GPSManager::ntripConfigFromSettings(*_settings).connection, sortCoord);
+    _sourceTableController.fetch(_configFromSettings().connection, sortCoord);
 }
 
 // -----------------------------------------------------------------------------
 // State machine
 // -----------------------------------------------------------------------------
 
-bool NTRIPManager::_dispatch(Event ev, const QString& detail, std::chrono::milliseconds retryAfter)
+bool NTRIPManager::_dispatch(Event ev, const QString& detail)
 {
     for (const auto& row : kTransitions) {
         if (row.from == _connectionStatus && row.event == ev) {
-            _enterState(row.to, detail, retryAfter);
+            _enterState(row.to, detail);
             return true;
         }
     }
@@ -230,7 +266,7 @@ bool NTRIPManager::_dispatch(Event ev, const QString& detail, std::chrono::milli
     return false;
 }
 
-void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail, std::chrono::milliseconds retryAfter)
+void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail)
 {
     const QPointer<NTRIPManager> guard(this);
     const quint64 revision = ++_stateRevision;
@@ -263,7 +299,7 @@ void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail, std::
 
     // Entry action runs on every dispatched transition, including self-transitions
     // (e.g. Connecting→Connecting on HotReconfigure). Signals stay gated above.
-    _onEnterState(from, to, retryAfter);
+    _onEnterState(from, to);
 }
 
 QString NTRIPManager::_defaultMessageFor(ConnectionStatus state)
@@ -283,7 +319,7 @@ QString NTRIPManager::_defaultMessageFor(ConnectionStatus state)
     return {};
 }
 
-void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to, std::chrono::milliseconds retryAfter)
+void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to)
 {
     const QPointer<NTRIPManager> guard(this);
     const quint64 revision = _stateRevision;
@@ -351,7 +387,7 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to,
             }
             _stats.stop();
             if (current()) {
-                _scheduleReconnect(retryAfter);
+                _scheduleReconnect();
             }
             break;
 
@@ -376,18 +412,16 @@ void NTRIPManager::_teardownTransport()
     }
 }
 
-int NTRIPManager::_reconnectBackoffMs(std::chrono::milliseconds retryAfter) const
+int NTRIPManager::_reconnectBackoffMs() const
 {
-    const int exponentialMs = qMin(kMinReconnectMs * (1 << qMin(_reconnectAttempts, 5)), kMaxReconnectMs);
-    return static_cast<int>(
-        std::clamp(retryAfter, std::chrono::milliseconds{exponentialMs}, std::chrono::milliseconds{300000}).count());
+    return qMin(kMinReconnectMs * (1 << qMin(_reconnectAttempts, 5)), kMaxReconnectMs);
 }
 
-void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
+void NTRIPManager::_scheduleReconnect()
 {
     // Backoff uses the pre-increment attempt count: attempt #1 waits kMinReconnectMs,
     // #2 waits 2x, etc. Increment, then check the ceiling.
-    const auto backoff = std::chrono::milliseconds{_reconnectBackoffMs(retryAfter)};
+    const auto backoff = std::chrono::milliseconds{_reconnectBackoffMs()};
     ++_reconnectAttempts;
     if (_reconnectExhausted()) {
         _dispatch(Event::ReconnectGaveUp, tr("Gave up after %1 reconnect attempts").arg(kMaxReconnectAttempts));
@@ -407,7 +441,7 @@ void NTRIPManager::_startTransport()
         return;
     }
 
-    const NTRIPConfiguration config = GPSManager::ntripConfigFromSettings(*_settings);
+    const NTRIPConfiguration config = _configFromSettings();
     const auto& connection = config.connection;
 
     _applyUdpForwarderConfig(config.udpForward);
@@ -470,9 +504,9 @@ void NTRIPManager::_startTransport()
     // Error handling may retire the emitting transport.
     connect(
         _transport, &NTRIPTransport::error, this,
-        [this, transport](const NTRIPFailure& failure) {
+        [this, transport](NTRIPError code, const QString& detail) {
             if (transport && _transport == transport) {
-                _onTransportError(failure);
+                _onTransportError(code, detail);
             }
         },
         Qt::QueuedConnection);
@@ -510,10 +544,8 @@ void NTRIPManager::_startTransport()
 // Signal handlers
 // -----------------------------------------------------------------------------
 
-void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
+void NTRIPManager::_onTransportError(NTRIPError code, const QString& detail)
 {
-    const auto code = failure.code;
-    const auto& detail = failure.detail;
     const QPointer<NTRIPManager> guard(this);
     const quint64 revision = _stateRevision;
     if (_connectionStatus != ConnectionStatus::Connecting && _connectionStatus != ConnectionStatus::Connected) {
@@ -532,11 +564,10 @@ void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
     }
 
     if (_isEnabled() && isRetryable(code)) {
-        const int backoffMs = _reconnectBackoffMs(failure.retryAfter);
+        const int backoffMs = _reconnectBackoffMs();
         qCDebug(NTRIPManagerLog) << "NTRIP reconnecting in" << backoffMs << "ms (attempt" << (_reconnectAttempts + 1)
                                  << ")";
-        _dispatch(Event::TransportError, tr("Reconnecting in %1s: %2").arg(backoffMs / 1000).arg(detail),
-                  failure.retryAfter);
+        _dispatch(Event::TransportError, tr("Reconnecting in %1s: %2").arg(backoffMs / 1000).arg(detail));
     } else {
         _dispatch(Event::TransportFatalError, detail);
     }
@@ -607,7 +638,7 @@ void NTRIPManager::_onSettingChanged()
         return;
     }
 
-    const NTRIPConfiguration newConfig = GPSManager::ntripConfigFromSettings(*_settings);
+    const NTRIPConfiguration newConfig = _configFromSettings();
 
     if (newConfig.connection != _runningConfig.connection) {
         qCDebug(NTRIPManagerLog) << "NTRIP transport-affecting setting changed, reconnecting";

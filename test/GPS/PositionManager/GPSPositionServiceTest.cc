@@ -460,13 +460,16 @@ void GPSPositionServiceTest::_consumerPolicies()
         observation.position.removeAttribute(QGeoPositionInfo::HorizontalAccuracy);
     }
     observation.altitudeDatum = GPSAltitudeDatum::MeanSeaLevel;
+    observation.fixQuality = GPSObservation::FixQuality::Fix3D;
+    observation.satellitesUsed = 12;
+    observation.horizontalDop = 0.8;
     if (qIsFinite(ellipsoid)) {
         observation.altitudeEllipsoidMeters = ellipsoid;
     }
     health.updateObservation(observation);
-    for (const auto use : {Use::GroundStation, Use::Motion, Use::RemoteID}) {
+    for (const auto use : {Use::GroundStation, Use::Motion, Use::RemoteID, Use::Gga}) {
         const auto accepted = service.acceptedObservation(use);
-        QCOMPARE(accepted.has_value(), horizontalAccuracy);
+        QCOMPARE(accepted.has_value(), horizontalAccuracy || use == Use::Gga);
         if (!accepted) {
             continue;
         }
@@ -475,7 +478,8 @@ void GPSPositionServiceTest::_consumerPolicies()
         QCOMPARE(accepted->monotonicTimestampUs, observation.monotonicTimestampUs);
         QCOMPARE(accepted->receivedAt, observation.receivedAt);
         QCOMPARE(accepted->position.coordinate().latitude(), 47);
-        const double expectedAltitude = use == Use::RemoteID     ? (qIsFinite(ellipsoid) ? ellipsoid : altitude)
+        const double expectedAltitude = use == Use::Gga          ? altitude
+                                        : use == Use::RemoteID   ? (qIsFinite(ellipsoid) ? ellipsoid : altitude)
                                         : verticalAccuracy <= 10 ? altitude
                                                                  : qQNaN();
         if (qIsFinite(expectedAltitude)) {
@@ -487,15 +491,56 @@ void GPSPositionServiceTest::_consumerPolicies()
             QCOMPARE(accepted->position.hasAttribute(QGeoPositionInfo::Direction),
                      qIsFinite(course) && qIsFinite(speed) && speed >= 0.5);
         }
-        QCOMPARE(service.geoPositionInfo(), observation.position);
+        if (use == Use::Gga) {
+            QCOMPARE(accepted->position, observation.position);
+            QCOMPARE(accepted->altitudeDatum, GPSAltitudeDatum::MeanSeaLevel);
+            QCOMPARE(accepted->satellitesUsed, observation.satellitesUsed);
+            QCOMPARE(accepted->horizontalDop, observation.horizontalDop);
+        }
+        QCOMPARE(service.geoPositionInfo().isValid(), horizontalAccuracy);
+        QCOMPARE(service.gcsPosition().isValid(), horizontalAccuracy);
+        if (horizontalAccuracy) {
+            QCOMPARE(service.geoPositionInfo(), observation.position);
+        }
     }
     QCOMPARE(health.observation().position, observation.position);
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(4999)));
     QCOMPARE(service.acceptedObservation(Use::RemoteID).has_value(), horizontalAccuracy);
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
-    for (const auto use : {Use::GroundStation, Use::Motion, Use::RemoteID}) {
+    for (const auto use : {Use::GroundStation, Use::Motion, Use::RemoteID, Use::Gga}) {
         QVERIFY(!service.acceptedObservation(use));
     }
+}
+
+void GPSPositionServiceTest::_consumerMaximumAge()
+{
+    using namespace std::chrono_literals;
+    using Use = GPSObservation::PositionUse;
+    ManualScheduler serviceClock;
+    ManualScheduler sourceClock;
+    QVERIFY(sourceClock.advanceBy(1h));
+    QObject receiver;
+    GPSSourceHealth health(nullptr, &sourceClock);
+    health.setFreshnessTimeoutMs(10000);
+    GPSPositionService service(nullptr, &serviceClock);
+    auto registration = service.registerPositionSource(Kind::Receiver, &receiver, &health, 7);
+    const auto observation = fix(sourceClock, 47, 7);
+    health.updateObservation(observation);
+    QVERIFY(service.acceptedObservation(Use::RemoteID, 5000ms));
+    QVERIFY(serviceClock.advanceBy(24h));
+    QVERIFY(sourceClock.advanceBy(4999ms));
+    const auto accepted = service.acceptedObservation(Use::RemoteID, 5000ms);
+    QVERIFY(accepted);
+    QCOMPARE(accepted->monotonicTimestampUs, observation.monotonicTimestampUs);
+    QCOMPARE(accepted->receivedAt, observation.receivedAt);
+    QVERIFY(sourceClock.advanceBy(1ms));
+    QVERIFY(!service.acceptedObservation(Use::RemoteID, 5000ms));
+    QVERIFY(service.acceptedObservation(Use::RemoteID));
+    health.updateObservation(fix(sourceClock, 48, 7));
+    QVERIFY(service.acceptedObservation(Use::RemoteID, 5000ms));
+    health.setFreshnessTimeoutMs(1000);
+    QVERIFY(sourceClock.advanceBy(1s));
+    QVERIFY(!service.acceptedObservation(Use::RemoteID, 5000ms));
 }
 
 void GPSPositionServiceTest::_policySelectionGates()
@@ -513,13 +558,15 @@ void GPSPositionServiceTest::_policySelectionGates()
     auto registration = service.registerPositionSource(Kind::Receiver, &replacement, &replacementHealth, 2);
     oldRegistration.reset();
     firstHealth.updateObservation(fix(scheduler, 49, 1));
-    for (const auto use : {Use::GroundStation, Use::Motion, Use::RemoteID}) {
+    replacementHealth.setFreshnessTimeoutMs(10000);
+    for (const auto use : {Use::GroundStation, Use::Motion, Use::RemoteID, Use::Gga}) {
         QVERIFY(!service.acceptedObservation(use));
     }
     replacementHealth.updateObservation(fix(scheduler, 48, 1));
     QVERIFY(!service.acceptedObservation(Use::Motion));
+    QVERIFY(!service.acceptedObservation(Use::Gga));
     replacementHealth.updateObservation(fix(scheduler, 48, 2));
-    for (const auto use : {Use::GroundStation, Use::Motion, Use::RemoteID}) {
+    for (const auto use : {Use::GroundStation, Use::Motion, Use::RemoteID, Use::Gga}) {
         const auto accepted = service.acceptedObservation(use);
         QVERIFY(accepted);
         QCOMPARE(accepted->position.coordinate().latitude(), 48);
@@ -527,6 +574,7 @@ void GPSPositionServiceTest::_policySelectionGates()
     }
     registration.reset();
     QVERIFY(!service.acceptedObservation(Use::RemoteID));
+    QVERIFY(!service.acceptedObservation(Use::Gga));
 }
 
 void GPSPositionServiceTest::_schedulerDestruction()

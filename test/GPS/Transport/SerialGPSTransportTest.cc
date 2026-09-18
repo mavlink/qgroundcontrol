@@ -96,8 +96,8 @@ void SerialGPSTransportTest::_testCancelPendingOperation()
         QCOMPARE(result.status, GPSWriteStatus::Cancelled);
         QVERIFY(result.acceptedBytes < payload.size());
         QVERIFY(result.acceptedBytes > 0);
-        QVERIFY(result.uncertainBytes > 0);
-        QCOMPARE(result.writtenBytes + result.uncertainBytes, result.acceptedBytes);
+        QVERIFY(result.uncertainBytes() > 0);
+        QCOMPARE(result.writtenBytes + result.uncertainBytes(), result.acceptedBytes);
     } else {
         QVERIFY(transport.read(&byte, 1, TestTimeout::longMs()).status != GPSReadStatus::Data);
     }
@@ -126,8 +126,8 @@ void SerialGPSTransportTest::_testPendingWriteDeadline()
     QVERIFY(result.acceptedBytes < payload.size());
     QVERIFY(result.acceptedBytes > 0);
     QVERIFY(result.writtenBytes > 0);
-    QVERIFY(result.uncertainBytes > 0);
-    QCOMPARE(result.writtenBytes + result.uncertainBytes, result.acceptedBytes);
+    QVERIFY(result.uncertainBytes() > 0);
+    QCOMPARE(result.writtenBytes + result.uncertainBytes(), result.acceptedBytes);
     QVERIFY(elapsed.elapsed() < 1000);
     QVERIFY(!stop.load());
     QVERIFY(elapsed.elapsed() < TestTimeout::shortMs());
@@ -171,7 +171,7 @@ void SerialGPSTransportTest::_testLowBaudCorrectionAllowance()
                                                QDeadlineTimer(allowance));
     QCOMPARE(result.status, GPSWriteStatus::Completed);
     QCOMPARE(result.writtenBytes, payload.size());
-    QCOMPARE(result.uncertainBytes, 0);
+    QCOMPARE(result.uncertainBytes(), 0);
 #else
     QSKIP("Serial baud policy coverage requires a Linux pseudo-terminal");
 #endif
@@ -234,7 +234,7 @@ void SerialGPSTransportTest::_consecutiveWrites()
         QCOMPARE(result.status, GPSWriteStatus::Completed);
         QCOMPARE(result.acceptedBytes, size);
         QCOMPARE(result.writtenBytes, size);
-        QCOMPARE(result.uncertainBytes, 0);
+        QCOMPARE(result.uncertainBytes(), 0);
         expected.append(payload);
     }
     QVERIFY(fcntl(master.handle(), F_SETFL, fcntl(master.handle(), F_GETFL) | O_NONBLOCK) >= 0);

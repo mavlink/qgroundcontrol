@@ -12,7 +12,7 @@
 
 QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.GPSProvider")
 
-GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
+GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSBaseStationConfig& config,
                          QObject* parent)
     : QThread(parent)
     , _transportFactory(std::move(transportFactory))
@@ -24,14 +24,13 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
     (void) qRegisterMetaType<sensor_gps_s>("sensor_gps_s");
     (void) qRegisterMetaType<GPSConnectionError>("GPSConnectionError");
     (void) qRegisterMetaType<GPSSurveyInStatus>("GPSSurveyInStatus");
-    const auto& base = _config.base;
-    if (base.useFixedBase) {
-        qCDebug(GPSProviderLog) << "Fixed base latitude:" << base.fixedBaseLatitude
-                                << "longitude:" << base.fixedBaseLongitude
-                                << "ellipsoid altitude (m):" << base.fixedBaseAltitudeMeters;
+    if (_config.useFixedBase) {
+        qCDebug(GPSProviderLog) << "Fixed base latitude:" << _config.fixedBaseLatitude
+                                << "longitude:" << _config.fixedBaseLongitude
+                                << "ellipsoid altitude (m):" << _config.fixedBaseAltitudeMeters;
     } else {
-        qCDebug(GPSProviderLog) << "Survey-in accuracy (m):" << base.surveyInAccMeters
-                                << "minimum duration (s):" << base.surveyInDurationSecs;
+        qCDebug(GPSProviderLog) << "Survey-in accuracy (m):" << _config.surveyInAccMeters
+                                << "minimum duration (s):" << _config.surveyInDurationSecs;
     }
 }
 

@@ -325,8 +325,17 @@ void RemoteIDManagerTest::_gpsAltitudePolicy()
         TestTimeout::mediumMs());
 }
 
+void RemoteIDManagerTest::_liveGpsArrivalBudget_data()
+{
+    QTest::addColumn<int>("utcJumpSeconds");
+    QTest::newRow("steady-utc") << 0;
+    QTest::newRow("utc-jumped-forward") << 86400;
+    QTest::newRow("utc-jumped-backward") << -86400;
+}
+
 void RemoteIDManagerTest::_liveGpsArrivalBudget()
 {
+    QFETCH(int, utcJumpSeconds);
     auto* settings = SettingsManager::instance()->remoteIDSettings();
     auto* manager = vehicle()->remoteIDManager();
     auto* positioning = QGCPositionManager::instance();
@@ -345,18 +354,32 @@ void RemoteIDManagerTest::_liveGpsArrivalBudget()
     settings->region()->setRawValue(int(RemoteIDSettings::RegionOperation::FAA));
     settings->locationType()->setRawValue(RemoteIDManager::LiveGNSS);
     GPSObservation observation;
-    observation.receivedAt = QDateTime::currentDateTimeUtc().addSecs(-6);
+    observation.receivedAt = QDateTime::currentDateTimeUtc();
     observation.monotonicTimestampUs = scheduler.nowUs();
     observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, 500), observation.receivedAt);
     observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
     health.updateObservation(observation);
+    QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
+    QVERIFY(manager->gcsPositionUsable());
+
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds{4999}));
+    observation.receivedAt = observation.receivedAt.addSecs(utcJumpSeconds);
+    observation.position.setTimestamp(observation.receivedAt);
+    health.updateObservation(observation);
+    QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
+    QVERIFY(manager->gcsPositionUsable());
+
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds{1}));
     QVERIFY(positioning->acceptedObservation(GPSObservation::PositionUse::RemoteID));
+    QVERIFY(!positioning->acceptedObservation(GPSObservation::PositionUse::RemoteID, std::chrono::milliseconds{5000}));
     expectLogMessage("Vehicle.RemoteIDManager", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("GCS GPS data is older than 5 seconds")));
+                     QRegularExpression(QStringLiteral("GCS GPS data is not valid")));
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     verifyExpectedLogMessage();
     QVERIFY(!manager->gcsPositionUsable());
     observation.receivedAt = QDateTime::currentDateTimeUtc();
+    observation.position.setTimestamp(observation.receivedAt);
+    observation.monotonicTimestampUs = scheduler.nowUs();
     health.updateObservation(observation);
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     QVERIFY(manager->gcsPositionUsable());

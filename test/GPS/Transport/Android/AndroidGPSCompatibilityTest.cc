@@ -171,7 +171,7 @@ private slots:
         QCOMPARE(result.status, count == 4 ? GPSWriteStatus::Completed : GPSWriteStatus::Error);
         QCOMPARE(result.acceptedBytes, 4);
         QCOMPARE(result.writtenBytes, (std::max) (count, 0));
-        QCOMPARE(result.uncertainBytes, 4 - (std::max) (count, 0));
+        QCOMPARE(result.uncertainBytes(), 4 - (std::max) (count, 0));
         QCOMPARE(transport.fatalError(), count != 4);
         if (count != 4) {
             QCOMPARE(transport.write(payload, 4).acceptedBytes, 0);
@@ -198,7 +198,7 @@ private slots:
         QCOMPARE(result.status, GPSWriteStatus::Unsupported);
         QCOMPARE(result.acceptedBytes, 0);
         QCOMPARE(result.writtenBytes, 0);
-        QCOMPARE(result.uncertainBytes, 0);
+        QCOMPARE(result.uncertainBytes(), 0);
         QCOMPARE(writeCalls, 0);
         QVERIFY(!transport.fatalError());
         stop = true;
@@ -219,7 +219,7 @@ private slots:
         const auto result = transport.write(payload, 4);
         QCOMPARE(result.status, GPSWriteStatus::Cancelled);
         QCOMPARE(result.writtenBytes, 4);
-        QCOMPARE(result.uncertainBytes, 0);
+        QCOMPARE(result.uncertainBytes(), 0);
         QVERIFY(transport.fatalError());
     }
 

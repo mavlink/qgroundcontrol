@@ -19,7 +19,7 @@ GPSWriteResult writeBounded(const GPSTransport& transport, QIODevice* device, co
         return {GPSWriteStatus::InvalidData};
     }
     if (transport.fatalError() || !device || device->bytesToWrite() != 0) {
-        return {GPSWriteStatus::Error, 0, 0, 0, detail()};
+        return {GPSWriteStatus::Error, 0, 0, detail()};
     }
     if (length == 0) {
         return {GPSWriteStatus::Completed};
@@ -52,8 +52,7 @@ GPSWriteResult writeBounded(const GPSTransport& transport, QIODevice* device, co
         status = GPSWriteStatus::TimedOut;
     }
     const int written = static_cast<int>(std::clamp(confirmed(accepted), qint64(0), qint64(accepted)));
-    const GPSWriteResult result{status, accepted, written, accepted - written,
-                                status == GPSWriteStatus::Error ? detail() : QString()};
+    const GPSWriteResult result{status, accepted, written, status == GPSWriteStatus::Error ? detail() : QString()};
     if (status != GPSWriteStatus::Completed && accepted > 0) {
         retire();
     }

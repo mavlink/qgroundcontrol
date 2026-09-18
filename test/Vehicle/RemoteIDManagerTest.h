@@ -25,6 +25,7 @@ private slots:
     void _liveGpsFailureDiagnostics();
     void _gpsAltitudePolicy_data();
     void _gpsAltitudePolicy();
+    void _liveGpsArrivalBudget_data();
     void _liveGpsArrivalBudget();
 
 private:

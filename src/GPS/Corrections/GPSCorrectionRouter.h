@@ -62,16 +62,6 @@ public:
         FanoutSink admit;
     };
 
-    /// Read-only projection; selector and ledger remain the state owners.
-    struct Snapshot
-    {
-        QVariantList sources;
-        QVariantList sourceInstances;
-        QVariantList destinations;
-        QList<GPSCorrectionEvent> events;
-        QString activeInstance;
-    };
-
     static Output admissionOnlyOutput(const QString& id, GPSCorrectionSource scope, Sink sink);
 
     explicit GPSCorrectionRouter(QObject* parent = nullptr, Clock clock = {});
@@ -125,7 +115,9 @@ public:
 
     qint64 nowMs() const { return _clock(); }
 
-    Snapshot snapshot() const;
+    QVariantList sourceDiagnostics() const;
+    QVariantList sourceInstanceDiagnostics() const;
+    QVariantList destinationDiagnostics() const;
 
     static constexpr qint64 FRESHNESS_TIMEOUT_MS = GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS;
     static constexpr qint64 SWITCH_HOLD_DOWN_MS = GPSCorrectionSelector::SWITCH_HOLD_DOWN_MS;

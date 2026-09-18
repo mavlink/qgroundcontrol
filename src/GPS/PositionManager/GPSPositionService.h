@@ -106,7 +106,8 @@ public:
     QGeoPositionInfo geoPositionInfo() const { return _geoPositionInfo; }
 
     std::optional<GPSObservation> acceptedObservation(
-        GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation) const;
+        GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation,
+        std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
 
     QGeoPositionInfoSource::Error gcsPositioningError() const { return _gcsPositioningError; }
 
@@ -184,7 +185,8 @@ private:
     bool _usingPluginSource = false;
     int _updateInterval = 0;
     std::optional<GPSObservation> _acceptedSourceObservation(
-        SelectedSource source, GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation) const;
+        SelectedSource source, GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation,
+        std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
     QPointer<GPSSourceHealth> _currentHealth;
 
     QGeoPositionInfo _geoPositionInfo;
@@ -200,6 +202,8 @@ private:
 
     quint64 _sourceGeneration = 0;
     quint64 _selectedBindingRevision = 0;
+    quint64 _selectionObservationRevision = 0;
+    bool _selectedObservationAuthorized = false;
     quint64 _positionRevision = 0;
     QPointer<QObject> _currentSource;
 };

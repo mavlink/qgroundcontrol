@@ -8,8 +8,22 @@ set_target_properties(
                POSITION_INDEPENDENT_CODE ON
 )
 target_compile_features(QGCGPSNMEAProtocol PUBLIC cxx_std_20)
-target_link_libraries(QGCGPSNMEAProtocol PUBLIC QGC::GPSNativeContracts)
 target_sources(QGCGPSNMEAProtocol PUBLIC FILE_SET HEADERS FILES NMEASentence.h NMEAConstellation.h NMEASatelliteEpoch.h)
+target_sources(
+    QGCGPSNMEAProtocol
+    PUBLIC FILE_SET
+           satellite_types
+           TYPE
+           HEADERS
+           BASE_DIRS
+           ..
+           FILES
+           ../GPSConstellation.h
+)
+
+if(DEFINED QGC_GPS_COMPONENTS_ENABLED AND NOT "NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    return()
+endif()
 
 add_library(QGCGPSNMEA STATIC NMEADecoderSession.cc NMEAPositionSource.cc NMEASatelliteAdapter.cc NMEAStreamSplitter.cc
                               NMEAUtils.cc

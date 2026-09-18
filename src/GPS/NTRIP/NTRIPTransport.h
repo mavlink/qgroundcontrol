@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QString>
 #include <QtCore/QVector>
 
 #include "NTRIPError.h"
@@ -14,11 +15,6 @@ public:
     explicit NTRIPTransport(QObject* parent = nullptr)
         : QObject(parent)
     {
-        connect(this, &NTRIPTransport::correctionFrameReceived, this, [this](const RTCMFrameDecoder::Result& frame) {
-            if (frame.valid && !frame.filtered) {
-                emit RTCMDataUpdate(frame.data, frame.messageId);
-            }
-        });
     }
 
     virtual void start() = 0;
@@ -31,12 +27,9 @@ public:
 
 signals:
     void connected();
-    void error(const NTRIPFailure& failure);
-    /// Compatibility projection of valid, unfiltered decoded frames.
-    void RTCMDataUpdate(const QByteArray& message, int messageId);
+    void error(NTRIPError code, const QString& detail);
     /// Includes invalid and filtered candidates.
     void correctionFrameReceived(const RTCMFrameDecoder::Result& frame);
-    void finished();
 
     /// Warns before admitting a plaintext credential write; observers may cancel.
     void plaintextCredentialsWarning();

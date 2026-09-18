@@ -1,4 +1,5 @@
 #include <chrono>
+#include <limits>
 #include <memory>
 #include <thread>
 
@@ -8,6 +9,7 @@
 #include <QtNetwork/QTcpSocket>
 #include <QtTest/QTest>
 
+#include "PortableTest.h"
 #include "TCPGPSTransport.h"
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
@@ -18,11 +20,41 @@
 #include "SerialGPSTransport.h"
 #endif
 
-class GPSStreamTransportTest : public QObject
+class GPSStreamTransportTest : public PortableTest
 {
     Q_OBJECT
 
 private slots:
+
+    void _writeResultCounts_data()
+    {
+        QTest::addColumn<int>("accepted");
+        QTest::addColumn<int>("written");
+        QTest::addColumn<int>("uncertain");
+        QTest::newRow("empty") << 0 << 0 << 0;
+        QTest::newRow("complete") << 12 << 12 << 0;
+        QTest::newRow("partial") << 12 << 7 << 5;
+        QTest::newRow("unconfirmed") << 12 << 0 << 12;
+        QTest::newRow("maximum") << (std::numeric_limits<int>::max)() << 0 << (std::numeric_limits<int>::max)();
+        QTest::newRow("negative-accepted") << -1 << 0 << -1;
+        QTest::newRow("negative-written") << 0 << -1 << -1;
+        QTest::newRow("written-exceeds-accepted") << 12 << 13 << -1;
+        QTest::newRow("invalid-negative-complete") << -1 << -1 << -1;
+        QTest::newRow("invalid-subtraction-overflow")
+            << (std::numeric_limits<int>::max)() << (std::numeric_limits<int>::min)() << -1;
+    }
+
+    void _writeResultCounts()
+    {
+        QFETCH(int, accepted);
+        QFETCH(int, written);
+        QFETCH(int, uncertain);
+        for (const auto status : {GPSWriteStatus::Completed, GPSWriteStatus::TimedOut, GPSWriteStatus::Cancelled,
+                                  GPSWriteStatus::Error, GPSWriteStatus::Unsupported, GPSWriteStatus::InvalidData}) {
+            const GPSWriteResult result{status, accepted, written};
+            QCOMPARE(result.uncertainBytes(), uncertain);
+        }
+    }
 
     void writes_data()
     {
@@ -82,7 +114,7 @@ private slots:
             QCOMPARE(result.status, GPSWriteStatus::TimedOut);
             QCOMPARE(result.acceptedBytes, 0);
             QCOMPARE(result.writtenBytes, 0);
-            QCOMPARE(result.uncertainBytes, 0);
+            QCOMPARE(result.uncertainBytes(), 0);
             QVERIFY(!transport->fatalError());
             return;
         }
@@ -96,7 +128,7 @@ private slots:
                 QCOMPARE(result.status, GPSWriteStatus::Completed);
                 QCOMPARE(result.acceptedBytes, size);
                 QCOMPARE(result.writtenBytes, size);
-                QCOMPARE(result.uncertainBytes, 0);
+                QCOMPARE(result.uncertainBytes(), 0);
                 expected.append(payload);
             }
             QByteArray received;
@@ -139,14 +171,14 @@ private slots:
         QVERIFY(result.acceptedBytes > 0);
         QVERIFY(result.acceptedBytes < payload.size());
         QVERIFY(result.writtenBytes >= 0);
-        QVERIFY(result.uncertainBytes >= 0);
-        QVERIFY(result.uncertainBytes <= 4096);
-        QCOMPARE(result.acceptedBytes, result.writtenBytes + result.uncertainBytes);
+        QVERIFY(result.uncertainBytes() >= 0);
+        QVERIFY(result.uncertainBytes() <= 4096);
+        QCOMPARE(result.acceptedBytes, result.writtenBytes + result.uncertainBytes());
         QVERIFY(transport->fatalError());
         stop = false;
         QCOMPARE(transport->writeBounded(&byte, 1, QDeadlineTimer(100)).acceptedBytes, 0);
     }
 };
 
-QTEST_GUILESS_MAIN(GPSStreamTransportTest)
+QGC_REGISTER_PORTABLE_TEST(GPSStreamTransportTest, TestLabel::Unit)
 #include "GPSStreamTransportTest.moc"

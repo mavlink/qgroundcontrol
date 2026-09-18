@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <chrono>
 
-#include "GPSPositionPolicy.h"
 #include "GPSSatelliteObservation.h"
 #include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
@@ -47,13 +46,14 @@ double GPSSourceHealth::horizontalAccuracy() const
     return usable() ? _observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy) : qQNaN();
 }
 
-std::optional<GPSObservation> GPSSourceHealth::acceptedObservation(GPSObservation::PositionUse use) const
+std::optional<GPSObservation> GPSSourceHealth::acceptedObservation(
+    GPSObservation::PositionUse use, std::optional<std::chrono::milliseconds> maximumAge) const
 {
-    if ((_positionInvalidated && use != GPSObservation::PositionUse::Diagnostics) ||
-        _remaining(_observation.monotonicTimestampUs) == std::chrono::microseconds::zero()) {
+    if (_positionInvalidated ||
+        _remaining(_observation.monotonicTimestampUs, maximumAge) == std::chrono::microseconds::zero()) {
         return std::nullopt;
     }
-    auto accepted = GPSPositionPolicy::project(_observation, use);
+    auto accepted = _observation.projected(use);
     if (accepted) {
         const int used = satellitesInUseCount();
         accepted->satellitesUsed = used >= 0 ? std::optional<int>(used) : std::nullopt;
@@ -61,22 +61,27 @@ std::optional<GPSObservation> GPSSourceHealth::acceptedObservation(GPSObservatio
     return accepted;
 }
 
-std::chrono::microseconds GPSSourceHealth::_remaining(quint64 timestampUs) const
+std::chrono::microseconds GPSSourceHealth::_remaining(quint64 timestampUs,
+                                                      std::optional<std::chrono::milliseconds> maximumAge) const
 {
-    return _scheduler ? MonotonicClock::remaining(timestampUs, _scheduler->nowUs(),
-                                                  std::chrono::milliseconds(_freshnessTimeoutMs))
-                      : std::chrono::microseconds::zero();
+    const auto sourceLifetime = std::chrono::milliseconds(_freshnessTimeoutMs);
+    const auto lifetime = maximumAge ? std::min(sourceLifetime, *maximumAge) : sourceLifetime;
+    return _scheduler && lifetime > std::chrono::milliseconds::zero()
+               ? MonotonicClock::remaining(timestampUs, _scheduler->nowUs(), lifetime)
+               : std::chrono::microseconds::zero();
 }
 
 void GPSSourceHealth::updateObservation(const GPSObservation& observation)
 {
     const QPointer<GPSSourceHealth> guard(this);
     const quint64 revision = ++_revision;
+    ++_observationRevision;
     _positionTask.cancel();
-    _positionInvalidated = false;
     _observation = observation;
     const auto& position = observation.position;
     const qint64 ageMs = _age(observation.monotonicTimestampUs);
+    // Temporal rejection lasts until the next observation.
+    _positionInvalidated = ageMs < 0;
     if (ageMs < 0) {
         _state = State::Invalid;
     } else if (ageMs >= _freshnessTimeoutMs) {

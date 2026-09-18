@@ -1,5 +1,48 @@
 include_guard(GLOBAL)
 
+# Catch dependencies hidden by application-wide includes and links.
+function(qgc_check_library_consumer target)
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "" "SOURCE;TIMEOUT" "LABELS")
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "qgc_check_library_consumer: unknown arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+    if(ARG_KEYWORDS_MISSING_VALUES)
+        message(FATAL_ERROR "qgc_check_library_consumer: missing values for: ${ARG_KEYWORDS_MISSING_VALUES}")
+    endif()
+    if(NOT TARGET ${target})
+        message(FATAL_ERROR "qgc_check_library_consumer: target does not exist: ${target}")
+    endif()
+    if(NOT ARG_SOURCE)
+        message(FATAL_ERROR "qgc_check_library_consumer: SOURCE is required")
+    endif()
+    if(NOT DEFINED ARG_TIMEOUT)
+        set(ARG_TIMEOUT 30)
+    endif()
+    if(NOT ARG_TIMEOUT MATCHES "^[1-9][0-9]*$")
+        message(FATAL_ERROR "qgc_check_library_consumer: TIMEOUT must be a positive integer")
+    endif()
+    if(NOT ARG_LABELS)
+        set(ARG_LABELS Unit)
+    endif()
+
+    set_target_properties(${target} PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
+    add_custom_target(
+        ${target}HeaderChecks ALL
+        DEPENDS ${target}_verify_interface_header_sets
+        COMMENT "Verify ${target} public headers in isolation"
+    )
+    add_executable(${target}Consumer "${ARG_SOURCE}")
+    set_target_properties(
+        ${target}Consumer
+        PROPERTIES AUTOMOC OFF
+                   AUTOUIC OFF
+                   AUTORCC OFF
+    )
+    target_link_libraries(${target}Consumer PRIVATE ${target})
+    add_test(NAME ${target}Consumer COMMAND ${target}Consumer)
+    set_tests_properties(${target}Consumer PROPERTIES LABELS "${ARG_LABELS}" TIMEOUT "${ARG_TIMEOUT}")
+endfunction()
+
 # Attach the shared microbenchmark framework to a test target.
 function(qgc_add_benchmark_support target)
     # ----------------------------------------------------------------------------

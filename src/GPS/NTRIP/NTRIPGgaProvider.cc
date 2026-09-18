@@ -88,8 +88,7 @@ void NTRIPGgaProvider::_sendGGA()
         _setRetryPhase(RetryPhase::Normal);
     }
 
-    const double altitude = position.coordinate.altitude();
-    const QByteArray gga = NMEAUtils::makeGGA(position.coordinate, qIsFinite(altitude) ? altitude : 0.0);
+    const QByteArray gga = NMEAUtils::makeGGA(position.coordinate, position.coordinate.altitude());
     transport->sendNMEA(gga);
     if (!current()) {
         return;

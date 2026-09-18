@@ -1,11 +1,12 @@
 # GPS library boundary checks
 
-The Contracts library contains receiver configuration, validation, and transport
-results without application or driver dependencies. Its native layer provides
-Qt-free base settings, constellation identities, altitude datums, and I/O statuses.
+GPS value types live with their owners: base configuration and receiver identity
+in `RTK/`, I/O statuses and results in `Transport/`, and altitude datums in `Core/`.
+The shared `GPSConstellation.h` remains Qt-free and is exported by both Core and
+the NMEA protocol target without a separate contracts library.
 The Core library adds position and satellite observations, source health, and
-survey status. It uses native contracts, Qt Core, Qt Positioning, and the shared
-timing and logging libraries, not the receiver configuration library.
+survey status. It uses Qt Core, Qt Positioning, and the shared timing and logging
+libraries, not receiver configuration or native drivers.
 The QML registration header, `src/GPS/GPSQmlTypes.h`,
 is compiled only by the application. The positioning service handles source registration,
 selection, and recovery; QGC owns permissions and platform/custom/NMEA source
@@ -19,6 +20,11 @@ default build. Executable consumers verify accepted-position expiry, source
 registration, and session ownership without linking QGroundControl. They use
 `QGCTestTiming` for deterministic scheduling and also run in the application's
 Unit suite.
+
+Base-configuration, accepted-state, and stream-transport behavior suites reuse
+`PortableTest`: the application harness runs them against its production objects,
+while standalone builds create narrow executables. GPS and utility boundary
+consumers share `qgc_check_library_consumer()` from `TestSupport.cmake`.
 
 The NMEA protocol is a separate Qt-free static library. Its consumer links only
 `QGCGPSNMEAProtocol` and exercises sentence decoding, constellation resolution, and
@@ -34,10 +40,10 @@ cmake --build build/gps-libraries
 ctest --test-dir build/gps-libraries --output-on-failure
 ```
 
-`GPSTransport.h` exposes the public interface using the canonical
-`GPSIOStatus.h` enums and `GPSTransportResult.h` results directly. Two consumers compile
-these headers in both include orders, in standalone and application builds.
-Socket waiting is private to the TCP and UDP implementations.
+`GPSTransport.h` exposes the public interface using the statuses and results in
+`Transport/GPSTransportResult.h`. These synchronous values do not require Qt
+metatype registration. `GPSConnectionError` remains registered for queued worker
+signals. Socket waiting is private to the TCP and UDP implementations.
 
 The transport libraries provide typed open/read/write results and independent
 serial, TCP, and UDP receiver connections. They require Qt Core and Network, plus
@@ -58,75 +64,82 @@ cmake --build build/gps-transports
 ctest --test-dir build/gps-transports --output-on-failure
 ```
 
-The available components are `NativeContracts`, `Contracts`, `Core`, `NMEA`, `Positioning`, `Transport`,
+The available components are `Core`, `NMEAProtocol`, `NMEA`, `Positioning`, `Transport`,
 `ReceiverTransports`, `RTCMFramer`, `RTCM`, and `Corrections`. The `Transport` library
-needs Qt Core, Contracts, and the logging library, not Qt Network. The contract
-and base-configuration tests additionally use Qt Test, not Qt Positioning.
+needs Qt Core and the logging library, not Qt Network or RTK configuration.
+Receiver transport tests additionally use Qt Test, not Qt Positioning.
 Core survey-status coverage stays with the Core component.
-All components are enabled by default. `RTCM` and `Corrections` automatically include `RTCMFramer`.
+All components are enabled by default. `NMEA` includes `NMEAProtocol`;
+`RTCM` and `Corrections` automatically include `RTCMFramer`.
 
-## Receiver data contracts
+## Owner-local GPS types
 
-`QGC::GPSNativeContracts` publishes the shared base configuration, constellation,
-altitude-datum, and I/O-status types used by the active drivers and NMEA decoders.
-`QGC::GPSContracts` adds Qt receiver configuration, validation, connection errors,
-and transport results. The existing PX4 driver remains in use; these targets do
-not enable new receiver settings or replace its runtime.
+The existing PX4 driver remains in use; moving its configuration types does not
+enable new receiver settings or replace its runtime.
 
 The RTK provider and driver consume `GPSBaseStationConfig` directly. Shared
 receiver validation preserves the uint32 survey-duration range and existing
-fixed-base float wire limits.
+fixed-base float wire limits. Its implementation belongs to `QGCGPSDriver`,
+not the transport dependency graph.
 
-`GPSReceiverConfig::validationError()` checks configuration shape and wire limits.
-The active driver separately rejects unsupported roles, protocols, and settings.
+`gpsBaseStationConfigError()` checks the native base configuration and wire limits.
+There is no wrapper exposing receiver settings that the active driver cannot use.
 Receiver identity and manufacturer matching remain in the RTK connection path;
 there is no separate capability catalog or profile policy.
 `GPSAltitudeDatum` defines the shared native datum values (`Unknown=0`,
 `MeanSeaLevel=1`, `Ellipsoid=2`) used directly by observations and survey status.
-Native report batches, command transactions, and generalized receiver profiles
-are deferred until their runtime consumers are introduced.
+
+Base-configuration behavior runs in the application harness. The same cases can
+build independently from RTK, without fetching native drivers:
 
 ```sh
-cmake -S test/GPS/Standalone -B build/gps-native-contracts -G Ninja \
-  -DQGC_GPS_COMPONENTS=NativeContracts -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
-cmake --build build/gps-native-contracts
-ctest --test-dir build/gps-native-contracts --output-on-failure
+cmake -S test/GPS/RTK -B build/gps-rtk-config -G Ninja \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/installation
+cmake --build build/gps-rtk-config
+ctest --test-dir build/gps-rtk-config --output-on-failure
+```
+
+The NMEA protocol consumer covers shared constellation-ID normalization and
+rejects accidental Qt dependencies:
+
+```sh
+cmake -S test/GPS/Standalone -B build/gps-nmea-native -G Ninja \
+  -DQGC_GPS_COMPONENTS=NMEAProtocol -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
+cmake --build build/gps-nmea-native
+ctest --test-dir build/gps-nmea-native --output-on-failure
 ```
 
 Source health, satellite state, and NMEA activity reuse the shared monotonic
 receipt/deadline helper;
 changing a timeout does not re-ingest a fix or revive retired satellite counts.
-Satellite value headers can be consumed without position-policy headers.
+Future receipt timestamps remain rejected until a new observation arrives.
+Satellite value headers can be consumed without position headers.
 `GPSAcceptedStateTest` exercises these contracts and survey-status provenance
 in both application and standalone builds, using the shared test scheduler for expiry.
 
 Position policy is explicit: the default retains the current ground-station
 accuracy filtering, motion additionally rejects unreliable course, and Remote ID
-can use measured ellipsoid altitude. GGA can use a valid raw receiver fix;
-diagnostics can inspect invalid-fix coordinates without authorizing their use.
+can use measured ellipsoid altitude. GGA can use a valid raw receiver fix.
 Every accepted source-health view still expires with its original receipt.
-`GPSPositionPolicy` projects the whole observation, including altitude datum.
-Consumers use this policy or the freshness-gated source-health API directly.
+`GPSObservation::projected()` applies these four policies, including altitude datum.
+Consumers use the projection or the freshness-gated source-health API directly.
 The position service preserves its source/session gates while exposing the selected
 policy. Follow Me requests motion data; Remote ID requests its own altitude projection
-and retains its region-specific requirements and fixed-location mode.
+with a five-second maximum age measured by the source's monotonic clock. It retains
+its region-specific requirements and fixed-location mode.
 
-`VehicleGPSFactGroup` owns vehicle position and integrity Facts; GPS2 inherits that
-storage. The vehicle groups retain MAVLink decoding, partial high-latency updates,
-metadata, and the existing `GNSS_INTEGRITY` signal/UI path without applying
-ground-station accuracy filters. Local positioning continues through the positioning
-service rather than an unused parallel Fact projection. Separate relative/integrity
-stores and presenters remain deferred with their producers and consumers.
-Native-driver replacement and unified receiver lifecycle remain separate.
+Vehicle GPS FactGroups retain their existing MAVLink decoding, partial updates,
+metadata, and `GNSS_INTEGRITY` signal/UI behavior. They do not store GCS
+`GPSObservation` values or apply ground-station position policies.
 
-NTRIP vehicle inputs use receipt-stamped observations from the existing vehicle
-owners. GPS coordinates and MSL altitude come from the same GPS report; fused
-coordinates and altitude remain a separate source. Inputs without a valid fix
-and finite MSL altitude, or with receipts at least five seconds old, are
-unavailable to GGA. Communication loss clears those snapshots. Fresh repeated
-coordinates refresh their receipt, but reading a cached observation does not.
-Vehicle GGA eligibility does not require ground-station accuracy extensions;
-raw MAVLink Fact display retains its existing partial-update behavior.
+NTRIP's Vehicle GPS source uses the existing GPS latitude/longitude Facts and
+vehicle altitude; Vehicle EKF uses the vehicle coordinate. These inputs retain
+the existing vehicle data semantics, without per-report receipt-age or
+same-report altitude guarantees. Missing, offline-editing, or communication-lost
+vehicles are excluded, and the encoder requires a valid coordinate and finite
+altitude.
+The GCS fallback uses a fresh GGA projection with finite MSL altitude,
+not the accuracy-filtered map coordinate or a substituted zero altitude.
 
 ## Correction routing
 
@@ -168,12 +181,8 @@ The correction manager applies routing and UDP settings before enabling ingress;
 `GPSManager` composes the producers and outputs without duplicating that wiring.
 NTRIP configuration composes independent connection, RTCM-filter, and UDP-forward
 values. The HTTP transport receives only connection/filter values; settings
-conversion remains in `GPSManager`.
-The HTTP boundary uses `QHttpHeaders` with bounded framing validation before
-passing payload to RTCM decoding. Legacy ICY streams remain supported.
-Server retry hints accept delta seconds or an HTTP date, are bounded to five
-minutes, and feed the existing reconnect policy rather than a separate session
-controller. Stopping or replacing an attempt retires its retry hint.
+conversion and GGA setting subscriptions belong to `NTRIPManager`. `GPSManager`
+injects application position providers before initializing the facade.
 `NTRIPReentrancyTest` runs in the application harness, reusing its production
 objects. The same cases can run independently through `test/GPS/NTRIP/Standalone`;
 the application build does not create a second NTRIP executable.
@@ -194,9 +203,9 @@ whether any output admitted it. A selected frame can be rejected by every output
 an unselected frame can still reach an independent source-specific output.
 
 Diagnostics distinguish received, validated, selected, queued, written, dropped,
-and unconfirmed bytes. `GPSCorrectionRouter::snapshot()` projects these diagnostics
-into its `Snapshot` value using one clock sample, without duplicating ledger or
-selector state. MAVLink and UDP output admission is not receiver
+and unconfirmed bytes. Narrow projections avoid rebuilding every source and
+destination for an individual property or event refresh, without duplicating ledger
+or selector state. MAVLink and UDP output admission is not receiver
 acknowledgement and does not prove an RTK fix. These application outputs report
 queue admission only and do not accrue written-byte credit. Unconfirmed counters
 track explicit uncertainty or reported-write destinations retired before
@@ -218,8 +227,11 @@ coexist with successful source-specific forwarding.
 ## Receiver transport compatibility
 
 Transport results distinguish bytes admitted, confirmed by the local transport,
-and uncertain; none of these counts is a receiver acknowledgement. Desktop serial and
-TCP output queues are limited to 4 KiB. Cancellation is checked between waits
+and uncertain. `uncertainBytes()` derives the outstanding suffix from accepted and
+written evidence; none of these counts is a receiver acknowledgement. Correction
+ledger uncertainty remains explicit and separate from this transport calculation.
+Desktop serial and TCP output queues are limited to 4 KiB.
+Cancellation is checked between waits
 of at most 50 ms. A failed write that accepted data closes the connection and
 discards queued output; reopening starts a fresh session. UDP sends one datagram
 per write, rejects payloads above 65,507 bytes, filters input to the configured

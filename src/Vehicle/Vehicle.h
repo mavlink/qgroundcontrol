@@ -1,7 +1,5 @@
 #pragma once
 
-#include <array>
-#include <atomic>
 #include <functional>
 #include <memory>
 
@@ -16,7 +14,9 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "GPSObservation.h"
+#include <array>
+#include <atomic>
+
 #include "QGCMAVLink.h"
 #include "VehicleFactGroup.h"
 #include "VehicleSigningController.h"  // Q_PROPERTY needs the full QObject type for moc/QML metatype registration
@@ -414,10 +414,6 @@ public:
     // Property accessors
 
     QGeoCoordinate coordinate() { return _coordinate; }
-
-    const GPSObservation& gpsObservation() const;
-
-    const GPSObservation& fusedPositionObservation() const { return _fusedPositionObservation; }
     QGeoCoordinate armedPosition    () { return _armedPosition; }
 
     qreal getInitialGCSPressure() const { return _initialGCSPressure; }
@@ -879,8 +875,6 @@ private:
     void _handleCommandAck              (mavlink_message_t& message);
     void _handleGpsRawInt               (mavlink_message_t& message);
     void _handleGlobalPositionInt       (mavlink_message_t& message);
-    void _updateFusedPositionObservation(const QGeoCoordinate& coordinate, bool fixValid, const QString& sourceId);
-    void _invalidatePositionObservations();
     void _handleHighLatency             (mavlink_message_t& message);
     void _handleHighLatency2            (mavlink_message_t& message);
     void _handleOrbitExecutionStatus    (const mavlink_message_t& message);
@@ -940,7 +934,6 @@ private:
     bool _isActiveVehicle = false;
 
     QGeoCoordinate  _coordinate;
-    GPSObservation _fusedPositionObservation;
     QGeoCoordinate  _homePosition;
     QGeoCoordinate  _armedPosition;
 

@@ -10,6 +10,7 @@
 #include <ubx.h>
 #include <utility>
 
+#include "GPSBaseStationConfigValidation.h"
 #include "GPSTransport.h"
 #include "QGCLoggingCategory.h"
 
@@ -23,7 +24,7 @@ int callbackTrampoline(GPSCallbackType type, void* data1, int data2, void* user)
 }
 }  // namespace
 
-GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks)
+GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSBaseStationConfig& config, GPSDriverSinks sinks)
     : _type(type)
     , _transport(transport)
     , _config(config)
@@ -35,14 +36,7 @@ GPSDriver::~GPSDriver() = default;
 bool GPSDriver::configure()
 {
     _driver.reset();
-    if (_config.role != GPSReceiverConfig::Role::RTKBase ||
-        _config.outputProtocol != GPSReceiverConfig::OutputProtocol::Native || _config.constellationMask != 0 ||
-        _config.dynamicModel != 0 || _config.outputRateHz != 0 ||
-        _config.headingOffsetDeg != GPSReceiverConfig{}.headingOffsetDeg) {
-        qCWarning(GPSDriverLog) << "RTK driver does not support the requested receiver configuration";
-        return false;
-    }
-    if (const QString error = _config.validationError(); !error.isEmpty()) {
+    if (const QString error = gpsBaseStationConfigError(_config); !error.isEmpty()) {
         qCWarning(GPSDriverLog) << error;
         return false;
     }
@@ -83,13 +77,12 @@ bool GPSDriver::configure()
         return false;
     }
 
-    const auto& base = _config.base;
-    if (base.useFixedBase) {
-        _driver->setBasePosition(base.fixedBaseLatitude, base.fixedBaseLongitude, base.fixedBaseAltitudeMeters,
-                                 base.fixedBaseAccuracyMeters * 1000.0f);
+    if (_config.useFixedBase) {
+        _driver->setBasePosition(_config.fixedBaseLatitude, _config.fixedBaseLongitude, _config.fixedBaseAltitudeMeters,
+                                 _config.fixedBaseAccuracyMeters * 1000.0f);
     } else {
-        _driver->setSurveyInSpecs(static_cast<uint32_t>(base.surveyInAccMeters * 10000.0),
-                                  static_cast<uint32_t>(base.surveyInDurationSecs));
+        _driver->setSurveyInSpecs(static_cast<uint32_t>(_config.surveyInAccMeters * 10000.0),
+                                  static_cast<uint32_t>(_config.surveyInDurationSecs));
     }
 
     GPSHelper::GPSConfig gpsConfig{};
@@ -140,7 +133,7 @@ int GPSDriver::handleCallback(int type, void* data1, int data2)
         case GPSCallbackType::writeDeviceData: {
             const auto result = _transport.write(static_cast<const uint8_t*>(data1), data2);
             return result.status == GPSWriteStatus::Completed && result.acceptedBytes == data2 &&
-                           result.writtenBytes == data2 && result.uncertainBytes == 0
+                           result.writtenBytes == data2 && result.uncertainBytes() == 0
                        ? data2
                        : -1;
         }

@@ -1,13 +1,15 @@
 #pragma once
 
+#include <chrono>
+#include <functional>
+
 #include <QtCore/QChronoTimer>
 #include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
+#include <QtCore/qnumeric.h>
 #include <QtPositioning/QGeoCoordinate>
-#include <chrono>
-#include <functional>
 
 class NTRIPTransport;
 
@@ -16,7 +18,7 @@ struct PositionResult
     QGeoCoordinate coordinate;
     QString source;
 
-    bool isValid() const { return coordinate.isValid(); }
+    bool isValid() const { return coordinate.isValid() && qIsFinite(coordinate.altitude()); }
 };
 
 class NTRIPGgaProvider : public QObject
@@ -59,10 +61,6 @@ public:
     QString currentSource() const { return _source; }
 
     void setPositionProvider(PositionSource source, PositionProvider provider);
-
-    // Note: GGA sentence construction lives in NMEAUtils::makeGGA — call it
-    // directly. The pass-through that used to live here was removed to keep
-    // one source of truth for sentence encoding.
 
 signals:
     void sourceChanged(const QString& source);

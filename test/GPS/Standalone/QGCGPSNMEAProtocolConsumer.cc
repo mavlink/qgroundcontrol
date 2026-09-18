@@ -4,12 +4,29 @@
 #include "NMEASatelliteEpoch.h"
 #include "NMEASentence.h"
 
-#ifdef QT_CORE_LIB
+#if defined(QT_CORE_LIB) || defined(QT_VERSION)
 #error The NMEA protocol consumer must not inherit Qt dependencies.
 #endif
 
 int main()
 {
+    struct SatelliteCase
+    {
+        GPSConstellation constellation;
+        int wireId;
+        int expected;
+    };
+
+    constexpr SatelliteCase satelliteCases[] = {
+        {GPSConstellation::GLONASS, 65, 1},  {GPSConstellation::GLONASS, 96, 32}, {GPSConstellation::GLONASS, 97, 97},
+        {GPSConstellation::Galileo, 301, 1}, {GPSConstellation::BeiDou, 401, 1},  {GPSConstellation::BeiDou, 201, 1},
+        {GPSConstellation::QZSS, 193, 1},    {GPSConstellation::SBAS, 33, 120},   {GPSConstellation::Unknown, 999, 999},
+    };
+    for (const auto& entry : satelliteCases) {
+        if (gpsSatelliteId(entry.constellation, entry.wireId) != entry.expected) {
+            return 7;
+        }
+    }
     const auto sentence = NMEA::sentence("$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47");
     if (!sentence || !NMEA::gga(*sentence) || NMEA::utcMilliseconds(sentence->fields[1]) != 45319000) {
         return 1;

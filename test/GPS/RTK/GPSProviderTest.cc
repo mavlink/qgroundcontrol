@@ -12,7 +12,7 @@
 #include "SerialPortManager.h"
 #endif
 
-Q_DECLARE_METATYPE(GPSReceiverConfig)
+Q_DECLARE_METATYPE(GPSBaseStationConfig)
 
 void GPSProviderTest::_queuedPayloadsOwnSnapshots()
 {
@@ -148,7 +148,7 @@ void GPSProviderTest::_transportLifetimeStaysOnWorker()
         [&, lifetime = std::move(lifetime)](const std::atomic_bool& requestStop) {
             return std::make_unique<TestTransport>(requestStop, trace, stopProvider, openResult, cancelInOpen);
         },
-        GPSType::ublox, GPSReceiverConfig{});
+        GPSType::ublox, GPSBaseStationConfig{});
     stopProvider = [&provider]() { provider.stop(); };
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
@@ -178,7 +178,7 @@ void GPSProviderTest::_missingTransportReportsOpenFailure()
     if (hasFactory) {
         factory = [](const std::atomic_bool&) { return std::unique_ptr<GPSTransport>{}; };
     }
-    GPSProvider provider(std::move(factory), GPSType::ublox, GPSReceiverConfig{});
+    GPSProvider provider(std::move(factory), GPSType::ublox, GPSBaseStationConfig{});
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::shortMs()));
@@ -194,7 +194,7 @@ void GPSProviderTest::_cancelledProviderDoesNotCreateTransport()
             created = true;
             return std::unique_ptr<GPSTransport>{};
         },
-        GPSType::ublox, GPSReceiverConfig{});
+        GPSType::ublox, GPSBaseStationConfig{});
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.stop();
     provider.start();
@@ -222,7 +222,7 @@ public:
         const QByteArray command(reinterpret_cast<const char*>(bytes), size);
         _reply = '<' + command.split(' ').first().trimmed() + " OK";
         _reply.append(char(0));
-        return {GPSWriteStatus::Completed, size, size, 0};
+        return {GPSWriteStatus::Completed, size, size};
     }
 
     GPSReadResult read(uint8_t* bytes, int size, int) override
@@ -243,32 +243,31 @@ private:
 
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss_data()
 {
-    QTest::addColumn<GPSReceiverConfig>("config");
-    QTest::newRow("survey") << GPSReceiverConfig{.base = {.surveyInAccMeters = 2, .surveyInDurationSecs = 180}};
-    QTest::newRow("minimum-survey") << GPSReceiverConfig{
-        .base = {.surveyInAccMeters = 0.0001, .surveyInDurationSecs = 1}};
-    QTest::newRow("maximum-survey") << GPSReceiverConfig{
-        .base = {.surveyInAccMeters = 429496.7295, .surveyInDurationSecs = 4294967295LL}};
-    QTest::newRow("fixed") << GPSReceiverConfig{.base = {.useFixedBase = true,
-                                                         .fixedBaseLatitude = 47,
-                                                         .fixedBaseLongitude = 8,
-                                                         .fixedBaseAltitudeMeters = 500,
-                                                         .fixedBaseAccuracyMeters = 1}};
-    QTest::newRow("fixed-wire-limits") << GPSReceiverConfig{.base = {.useFixedBase = true,
-                                                                     .fixedBaseLatitude = 47,
-                                                                     .fixedBaseLongitude = 8,
-                                                                     .fixedBaseAltitudeMeters = 21474836.0f,
-                                                                     .fixedBaseAccuracyMeters = 429496.71875f}};
-    QTest::newRow("fixed-unknown-accuracy") << GPSReceiverConfig{.base = {.useFixedBase = true,
-                                                                          .fixedBaseLatitude = 47,
-                                                                          .fixedBaseLongitude = 8,
-                                                                          .fixedBaseAltitudeMeters = 500,
-                                                                          .fixedBaseAccuracyMeters = 0}};
+    QTest::addColumn<GPSBaseStationConfig>("config");
+    QTest::newRow("survey") << GPSBaseStationConfig{.surveyInAccMeters = 2, .surveyInDurationSecs = 180};
+    QTest::newRow("minimum-survey") << GPSBaseStationConfig{.surveyInAccMeters = 0.0001, .surveyInDurationSecs = 1};
+    QTest::newRow("maximum-survey") << GPSBaseStationConfig{.surveyInAccMeters = 429496.7295,
+                                                            .surveyInDurationSecs = 4294967295LL};
+    QTest::newRow("fixed") << GPSBaseStationConfig{.useFixedBase = true,
+                                                   .fixedBaseLatitude = 47,
+                                                   .fixedBaseLongitude = 8,
+                                                   .fixedBaseAltitudeMeters = 500,
+                                                   .fixedBaseAccuracyMeters = 1};
+    QTest::newRow("fixed-wire-limits") << GPSBaseStationConfig{.useFixedBase = true,
+                                                               .fixedBaseLatitude = 47,
+                                                               .fixedBaseLongitude = 8,
+                                                               .fixedBaseAltitudeMeters = 21474836.0f,
+                                                               .fixedBaseAccuracyMeters = 429496.71875f};
+    QTest::newRow("fixed-unknown-accuracy") << GPSBaseStationConfig{.useFixedBase = true,
+                                                                    .fixedBaseLatitude = 47,
+                                                                    .fixedBaseLongitude = 8,
+                                                                    .fixedBaseAltitudeMeters = 500,
+                                                                    .fixedBaseAccuracyMeters = 0};
 }
 
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
 {
-    QFETCH(GPSReceiverConfig, config);
+    QFETCH(GPSBaseStationConfig, config);
     GPSProvider provider(
         [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); },
         GPSType::femto, config);
@@ -290,7 +289,7 @@ void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
             stopProvider();
             return std::make_unique<TestTransport>(requestStop, trace, []() {}, true, false);
         },
-        GPSType::ublox, GPSReceiverConfig{});
+        GPSType::ublox, GPSBaseStationConfig{});
     stopProvider = [&provider]() { provider.stop(); };
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
@@ -321,7 +320,7 @@ void GPSProviderTest::_finishedReceiverReleasesReservation()
     QVERIFY(reservation);
     GPSProvider provider(
         [reservation = std::move(reservation)](const std::atomic_bool&) { return std::unique_ptr<GPSTransport>{}; },
-        GPSType::ublox, GPSReceiverConfig{});
+        GPSType::ublox, GPSBaseStationConfig{});
     if (cancelled) {
         provider.stop();
     }

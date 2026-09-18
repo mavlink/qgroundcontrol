@@ -1,5 +1,8 @@
 #pragma once
 
+#include <chrono>
+#include <optional>
+
 #include <QtCore/QDateTime>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -50,8 +53,11 @@ public:
 
     GPSObservation observation() const { return _observation; }
 
+    quint64 observationRevision() const { return _observationRevision; }
+
     std::optional<GPSObservation> acceptedObservation(
-        GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation) const;
+        GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation,
+        std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
 
     QGeoCoordinate coordinate() const { return usable() ? _observation.coordinate() : QGeoCoordinate(); }
 
@@ -80,7 +86,8 @@ private:
     void _setState(State state);
     void _schedulePositionExpiry();
     qint64 _age(quint64 timestampUs) const;
-    std::chrono::microseconds _remaining(quint64 timestampUs) const;
+    std::chrono::microseconds _remaining(quint64 timestampUs,
+                                         std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
 
     void _scheduleFixSatelliteExpiry();
 
@@ -95,5 +102,6 @@ private:
     int _satellitesInUseCount = -1;
     int _fixSatellitesInUseCount = -1;
     quint64 _fixSatellitesTimestampUs = 0;
+    quint64 _observationRevision = 0;
     quint64 _revision = 0;
 };

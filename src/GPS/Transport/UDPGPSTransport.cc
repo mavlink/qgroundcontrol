@@ -125,8 +125,7 @@ GPSWriteResult UDPGPSTransport::writeBounded(const uint8_t* buffer, int length, 
         return {GPSWriteStatus::InvalidData};
     }
     if (fatalError()) {
-        return {GPSWriteStatus::Error, 0, 0, 0,
-                _socket ? _socket->errorString() : QStringLiteral("GPS socket is closed")};
+        return {GPSWriteStatus::Error, 0, 0, _socket ? _socket->errorString() : QStringLiteral("GPS socket is closed")};
     }
     if (deadline.hasExpired()) {
         return {GPSWriteStatus::TimedOut};
@@ -139,7 +138,7 @@ GPSWriteResult UDPGPSTransport::writeBounded(const uint8_t* buffer, int length, 
         _failed = true;
     }
     const int count = static_cast<int>(std::clamp(written, qint64(0), qint64(length)));
-    return {written == length ? GPSWriteStatus::Completed : GPSWriteStatus::Error, count, count, 0};
+    return {written == length ? GPSWriteStatus::Completed : GPSWriteStatus::Error, count, count};
 }
 
 bool UDPGPSTransport::setBaudrate(unsigned baudrate)

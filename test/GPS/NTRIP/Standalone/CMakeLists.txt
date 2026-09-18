@@ -38,7 +38,6 @@ qt_add_executable(
     "${_root}/src/GPS/NTRIP/NTRIPTransport.h"
     "${_root}/src/GPS/NTRIP/NTRIPConfiguration.cc"
     "${_root}/src/GPS/NTRIP/NTRIPHttpTransport.cc"
-    "${_root}/src/GPS/NTRIP/NTRIPHttpDecoder.cc"
     "${_root}/src/GPS/NTRIP/NTRIPSourceTableController.cc"
     "${_root}/src/GPS/NTRIP/NTRIPSourceTable.cc"
     "${_root}/src/GPS/NTRIP/NTRIPGgaProvider.cc"
@@ -57,8 +56,8 @@ target_compile_features(QGCNTRIPReentrancyTest PRIVATE cxx_std_20)
 target_compile_definitions(QGCNTRIPReentrancyTest PRIVATE QGC_PORTABLE_TEST QGC_UNITTEST_BUILD)
 target_include_directories(
     QGCNTRIPReentrancyTest
-    PRIVATE "${_root}/src/GPS/NTRIP" "${_root}/src/GPS/NMEA" "${_root}/src/GPS/Driver/Protocols/Contracts"
-            "${_root}/src/Utilities/Network" "${_root}/src/Utilities/Compression" "${_root}/test/Portable"
+    PRIVATE "${_root}/src/GPS" "${_root}/src/GPS/NTRIP" "${_root}/src/GPS/NMEA" "${_root}/src/Utilities/Network"
+            "${_root}/src/Utilities/Compression" "${_root}/test/Portable"
 )
 target_link_libraries(
     QGCNTRIPReentrancyTest

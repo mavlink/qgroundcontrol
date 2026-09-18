@@ -153,15 +153,15 @@ void TCPGPSTransportTest::_boundedWriteEvidence()
     QCOMPARE(result.status, cancel ? GPSWriteStatus::Cancelled : GPSWriteStatus::TimedOut);
     QVERIFY(result.acceptedBytes > 0);
     QVERIFY(result.acceptedBytes < payload.size());
-    QVERIFY(result.uncertainBytes >= 0);
-    QVERIFY(result.uncertainBytes <= TCPGPSTransport::kWriteBufferBytes);
+    QVERIFY(result.uncertainBytes() >= 0);
+    QVERIFY(result.uncertainBytes() <= TCPGPSTransport::kWriteBufferBytes);
     QVERIFY(transport.fatalError());
     QCOMPARE(
         transport
             .writeBounded(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(), QDeadlineTimer(100))
             .acceptedBytes,
         0);
-    QCOMPARE(result.writtenBytes + result.uncertainBytes, result.acceptedBytes);
+    QCOMPARE(result.writtenBytes + result.uncertainBytes(), result.acceptedBytes);
     QVERIFY(elapsed.elapsed() < 1000);
     QCOMPARE(stop.load(), cancel);
 }
@@ -278,7 +278,7 @@ void TCPGPSTransportTest::_cancelFromAnotherThread()
     if (write) {
         QCOMPARE(written.status, GPSWriteStatus::Cancelled);
         QVERIFY(written.acceptedBytes > 0);
-        QCOMPARE(written.writtenBytes + written.uncertainBytes, written.acceptedBytes);
+        QCOMPARE(written.writtenBytes + written.uncertainBytes(), written.acceptedBytes);
     } else {
         QCOMPARE(readStatus, GPSReadStatus::Cancelled);
     }

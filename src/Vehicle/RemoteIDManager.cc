@@ -1,12 +1,15 @@
 #include "RemoteIDManager.h"
+
+#include <chrono>
+
 #include "MAVLinkLib.h"
-#include "SettingsManager.h"
-#include "RemoteIDSettings.h"
+#include "MAVLinkProtocol.h"
 #include "PositionManager.h"
+#include "QGCLoggingCategory.h"
+#include "RemoteIDSettings.h"
+#include "SettingsManager.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
-#include "MAVLinkProtocol.h"
-#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(RemoteIDManagerLog, "Vehicle.RemoteIDManager")
 
@@ -297,7 +300,8 @@ void RemoteIDManager::_sendSystem()
         }
     } else {
         QGCPositionManager* positionManager = QGCPositionManager::instance();
-        const auto observation = positionManager->acceptedObservation(GPSObservation::PositionUse::RemoteID);
+        const auto observation = positionManager->acceptedObservation(GPSObservation::PositionUse::RemoteID,
+                                                                      std::chrono::milliseconds{ALLOWED_GPS_DELAY});
         if (observation) {
             gcsPosition = observation->position.coordinate();
         }
@@ -319,10 +323,6 @@ void RemoteIDManager::_sendSystem()
                        static_cast<int>(RemoteIDSettings::RegionOperation::FAA) &&
                    gcsPosition.type() != QGeoCoordinate::Coordinate3D) {
             _updateGcsPositionStatus(false, "GCS GPS data error: Altitude data is mandatory for FAA regions.");
-        } else if (!observation->receivedAt.isValid() ||
-                   observation->receivedAt.msecsTo(QDateTime::currentDateTimeUtc()) > ALLOWED_GPS_DELAY) {
-            // Remote ID caps sources with longer freshness windows.
-            _updateGcsPositionStatus(false, "GCS GPS data is older than 5 seconds");
         } else {
             _updateGcsPositionStatus(true);
         }
