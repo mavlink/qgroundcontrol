@@ -21,6 +21,9 @@ DECLARE_SETTINGGROUP(Video, "Video")
     // Setup enum values for videoSource settings into meta data
     QVariantList videoSourceList;
     videoSourceList.append(videoSourceRTSP);
+    if (kGstEnabled) {
+        videoSourceList.append(videoSourceHTTPMJPEG);
+    }
     videoSourceList.append(videoSourceUDPH264);
     videoSourceList.append(videoSourceUDPH265);
     videoSourceList.append(videoSourceTCP);
@@ -221,6 +224,15 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrl)
     return _rtspUrlFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, httpMjpegUrl)
+{
+    if (!_httpMjpegUrlFact) {
+        _httpMjpegUrlFact = _createSettingsFact(httpMjpegUrlName);
+        connect(_httpMjpegUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _httpMjpegUrlFact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
 {
     if (!_tcpUrlFact) {
@@ -255,6 +267,11 @@ bool VideoSettings::streamConfigured(void)
         qCDebug(VideoSettingsLog) << "Testing configuration for RTSP Stream:"
                                   << QGCNetworkHelper::redactedUrlForLogging(url);
         return !url.isEmpty();
+    }
+    //-- If HTTP MJPEG, check for URL
+    if (vSource == videoSourceHTTPMJPEG) {
+        qCDebug(VideoSettingsLog) << "Testing configuration for HTTP MJPEG Stream";
+        return !httpMjpegUrl()->rawValue().toString().isEmpty();
     }
     //-- If TCP, check for URL
     if(vSource == videoSourceTCP) {
