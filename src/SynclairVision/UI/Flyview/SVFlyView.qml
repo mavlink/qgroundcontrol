@@ -123,26 +123,17 @@ Item {
 
         let point
         if (!rejectionMessage) {
-            const window = root.Window.window
-            if (!window) {
-                rejectionMessage = qsTr("Immediate tracking is unavailable because the fly view window is missing.")
-            } else if (!window.contentItem) {
-                rejectionMessage = qsTr("Immediate tracking is unavailable because the window content is missing.")
-            } else {
-                const contentPoint = window.contentItem.mapFromItem(
-                    null, ScreenTools.mouseX() - window.x, ScreenTools.mouseY() - window.y)
-                point = root.mapFromItem(window.contentItem, contentPoint.x, contentPoint.y)
-                if (!Number.isFinite(point.x) || !Number.isFinite(point.y)
-                        || point.x < videoContentArea.x || point.x >= videoContentArea.x + videoContentArea.width
-                        || point.y < videoContentArea.y || point.y >= videoContentArea.y + videoContentArea.height) {
-                    rejectionMessage = qsTr("The selected point is outside the video content.")
-                }
+            point = videoContentArea.mapFromGlobal(ScreenTools.mouseX(), ScreenTools.mouseY())
+            if (!Number.isFinite(point.x) || !Number.isFinite(point.y)
+                    || point.x < 0 || point.x >= videoContentArea.width
+                    || point.y < 0 || point.y >= videoContentArea.height) {
+                rejectionMessage = qsTr("The selected point is outside the video content.")
             }
         }
 
         if (!rejectionMessage) {
-            const outputX = (point.x - videoContentArea.x) / root.digiviewScaleX
-            const outputY = (point.y - videoContentArea.y) / root.digiviewScaleY
+            const outputX = point.x / root.digiviewScaleX
+            const outputY = point.y / root.digiviewScaleY
             for (let index = 0; index < root.digiviewCameraViews.length; ++index) {
                 const view = root.digiviewCameraViews[index]
                 if (outputX >= view.x && outputX < view.x + view.width
