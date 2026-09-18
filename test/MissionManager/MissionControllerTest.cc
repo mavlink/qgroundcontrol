@@ -151,6 +151,10 @@ void MissionControllerTest::_testVTOLTakeoffModes()
 
 void MissionControllerTest::_testArduPilotVTOLOrdinaryTakeoffCompatibility()
 {
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
+
     _initForVehicleType(MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_VTOL_TAILSITTER_QUADROTOR);
 
     Vehicle* controllerVehicle = _masterController->controllerVehicle();
@@ -177,7 +181,8 @@ void MissionControllerTest::_testArduPilotVTOLOrdinaryTakeoffCompatibility()
 
     TakeoffMissionItem ordinaryTakeoffItem(
         MAV_CMD_NAV_TAKEOFF, _masterController.get(), false /* flyView */, settingsItem, false /* forLoad */);
-    QCOMPARE(ordinaryTakeoffItem.launchTakeoffAtSameLocation(), !ordinaryTakeoffItem.specifiesCoordinate());
+    // ArduPilot NAV_TAKEOFF is altitude-only, so launch and takeoff stay co-located regardless of the PX4 capability
+    QCOMPARE(ordinaryTakeoffItem.launchTakeoffAtSameLocation(), true);
 }
 
 void MissionControllerTest::_testUnsupportedVTOLMulticopterTakeoff()
