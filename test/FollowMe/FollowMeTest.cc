@@ -68,6 +68,9 @@ void FollowMeTest::_motionPolicyReports()
     QFETCH(bool, hasHorizontalAccuracy);
     QFETCH(bool, hasPreviousReport);
     QFETCH(bool, ardupilot);
+    if (ardupilot && !apmFirmwareSupported()) {
+        QSKIP("ArduPilot support not registered in this build");
+    }
     TestFixtures::SettingsFixture saved;
     saved.setFactValue(SettingsManager::instance()->appSettings()->followTarget(), 0);
     if (ardupilot) {
