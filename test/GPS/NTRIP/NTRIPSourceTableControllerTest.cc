@@ -2,27 +2,27 @@
 
 #include <QtCore/QAbstractItemModel>
 #include <QtCore/QUrl>
+#include <QtHttpServer/QHttpServer>
+#include <QtHttpServer/QHttpServerResponse>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QSslCertificate>
 #include <QtNetwork/QSslConfiguration>
 #include <QtNetwork/QSslKey>
 #include <QtNetwork/QSslServer>
 #include <QtNetwork/QSslSocket>
-#include <QtHttpServer/QHttpServer>
-#include <QtHttpServer/QHttpServerResponse>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "LocalHttpTestServer.h"
+#include "NTRIPConfiguration.h"
 #include "NTRIPSettings.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
-#include "NTRIPTransportConfig.h"
 #include "SettingsManager.h"
 
-static NTRIPTransportConfig casterConfig(const QString& host, int port = 2101)
+static NTRIPConnectionConfig casterConfig(const QString& host, int port = 2101)
 {
-    NTRIPTransportConfig config;
+    NTRIPConnectionConfig config;
     config.host = host;
     config.port = port;
     return config;
@@ -114,7 +114,7 @@ void NTRIPSourceTableControllerTest::testFetchInvalidConfigTriggersError()
 {
     NTRIPSourceTableController ctrl;
 
-    NTRIPTransportConfig config = casterConfig(QStringLiteral("caster.example.com"));
+    NTRIPConnectionConfig config = casterConfig(QStringLiteral("caster.example.com"));
     config.username = QStringLiteral("bad:user");
 
     ctrl.fetch(config);
@@ -126,7 +126,7 @@ void NTRIPSourceTableControllerTest::testFetchInvalidConfigTriggersError()
 void NTRIPSourceTableControllerTest::testFetchErrorInvalidatesCache()
 {
     NTRIPSourceTableController ctrl;
-    const NTRIPTransportConfig config = casterConfig(QStringLiteral("caster.example.com"));
+    const NTRIPConnectionConfig config = casterConfig(QStringLiteral("caster.example.com"));
 
     ctrl.fetch(config);
     ctrl.injectSourceTableForTest(kValidTable);
@@ -159,7 +159,7 @@ void NTRIPSourceTableControllerTest::testFetchAbortsOversizedSourceTable()
     server.installHttpResponder(QByteArray(9 * 1024 * 1024, 'X'), 200, "text/plain");
 
     const QUrl base(server.url());
-    NTRIPTransportConfig config;
+    NTRIPConnectionConfig config;
     config.host = base.host();
     config.port = base.port();
     config.useTls = false;
@@ -171,8 +171,16 @@ void NTRIPSourceTableControllerTest::testFetchAbortsOversizedSourceTable()
     QVERIFY(ctrl.fetchError().contains(QStringLiteral("too large")));
 }
 
-void NTRIPSourceTableControllerTest::testFetchAllowsSelfSignedSourceTableWhenConfigured()
+void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges_data()
 {
+    QTest::addColumn<bool>("duringFetch");
+    QTest::newRow("in-flight") << true;
+    QTest::newRow("cached") << false;
+}
+
+void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges()
+{
+    QFETCH(bool, duringFetch);
     if (!QSslSocket::supportsSsl()) {
         QSKIP("No TLS backend available");
     }
@@ -196,7 +204,7 @@ void NTRIPSourceTableControllerTest::testFetchAllowsSelfSignedSourceTableWhenCon
     });
     QVERIFY(httpServer.bind(&server));
 
-    NTRIPTransportConfig config;
+    NTRIPConnectionConfig config;
     config.host = QStringLiteral("127.0.0.1");
     config.port = server.serverPort();
     config.useTls = true;
@@ -205,6 +213,19 @@ void NTRIPSourceTableControllerTest::testFetchAllowsSelfSignedSourceTableWhenCon
     NTRIPSourceTableController ctrl;
     ctrl.fetch(config);
 
+    if (!duringFetch) {
+        QTRY_COMPARE_WITH_TIMEOUT(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                                  TestTimeout::mediumMs());
+        QCOMPARE(ctrl.mountpointModel()->rowCount(), 1);
+    }
+    config.allowSelfSignedCerts = false;
+    ctrl.fetch(config);
+    QTRY_COMPARE_WITH_TIMEOUT(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error,
+                              TestTimeout::mediumMs());
+    QCOMPARE(ctrl.mountpointModel()->rowCount(), 0);
+
+    config.allowSelfSignedCerts = true;
+    ctrl.fetch(config);
     QTRY_VERIFY_WITH_TIMEOUT(ctrl.fetchStatus() != NTRIPSourceTableController::FetchStatus::InProgress,
                              TestTimeout::mediumMs());
     QVERIFY2(ctrl.fetchStatus() == NTRIPSourceTableController::FetchStatus::Success,

@@ -19,11 +19,26 @@ public:
                    quint64 sessionId = 0);
     void setActive(bool active);
 
-    QObject* source() const { return _producer; }
+    void setRawBindingAllowed(bool allowed) { _rawBindingAllowed = allowed; }
+
+    void observeHealth(bool observe);
+
+    QObject* producer() const { return _producer; }
+
+    GPSSourceHealth* providedHealth() const { return _providedHealth; }
+
+    quint64 sessionId() const { return _sessionId; }
+
+    quint64 bindingRevision() const { return _generation; }
+
+    QObject* source() const
+    {
+        return _scheduler && (_providedHealth || _rawBindingAllowed) ? _producer.data() : nullptr;
+    }
 
     GPSSourceHealth* health()
     {
-        return _producer ? (_providedHealth ? _providedHealth.data() : &_fallbackHealth) : nullptr;
+        return source() ? (_providedHealth ? _providedHealth.data() : &_fallbackHealth) : nullptr;
     }
 
     int updateInterval() const;
@@ -42,11 +57,13 @@ private:
     QPointer<RuntimeScheduler> _scheduler;
     GPSSourceHealth _fallbackHealth;
     QList<QMetaObject::Connection> _connections;
+    QMetaObject::Connection _observationConnection;
     QString _identity;
     quint64 _sessionId = 0;
     bool _platform = false;
     bool _active = false;
     bool _updatesStarted = false;
+    bool _rawBindingAllowed = true;
     quint64 _generation = 0;
     quint64 _backendRevision = 0;
 };

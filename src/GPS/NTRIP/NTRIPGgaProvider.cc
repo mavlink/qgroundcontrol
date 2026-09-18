@@ -1,118 +1,7 @@
 #include "NTRIPGgaProvider.h"
 
-#include <QtCore/QDateTime>
-
-#include "Fact.h"
-#include "FactGroup.h"
-#include "GPSManager.h"
-#include "GPSRtk.h"
-#include "MultiVehicleManager.h"
 #include "NMEAUtils.h"
-#include "NTRIPSettings.h"
 #include "NTRIPTransport.h"
-#include "PositionManager.h"
-#include "Vehicle.h"
-
-namespace {
-
-/// Rejects "zero island" (0,0) as well as out-of-range and non-finite values.
-/// QGeoCoordinate::isValid() alone accepts (0,0), which is how vehicles report
-/// "no fix yet" — we must treat that as invalid for GGA upstream.
-bool isSaneCoord(double lat, double lon)
-{
-    return qIsFinite(lat) && qIsFinite(lon) && !(lat == 0.0 && lon == 0.0) && qAbs(lat) <= 90.0 && qAbs(lon) <= 180.0;
-}
-
-PositionResult getVehicleGPSPosition()
-{
-    MultiVehicleManager* mvm = MultiVehicleManager::instance();
-    if (!mvm)
-        return {};
-    Vehicle* veh = mvm->activeVehicle();
-    if (!veh)
-        return {};
-
-    FactGroup* gps = veh->gpsFactGroup();
-    if (!gps)
-        return {};
-
-    Fact* latF = gps->getFact(QStringLiteral("lat"));
-    Fact* lonF = gps->getFact(QStringLiteral("lon"));
-    if (!latF || !lonF)
-        return {};
-
-    const double lat = latF->rawValue().toDouble();
-    const double lon = lonF->rawValue().toDouble();
-
-    if (isSaneCoord(lat, lon)) {
-        return {QGeoCoordinate(lat, lon, veh->coordinate().altitude()), QStringLiteral("Vehicle GPS")};
-    }
-    return {};
-}
-
-PositionResult getVehicleEKFPosition()
-{
-    MultiVehicleManager* mvm = MultiVehicleManager::instance();
-    if (!mvm)
-        return {};
-    Vehicle* veh = mvm->activeVehicle();
-    if (!veh)
-        return {};
-
-    const QGeoCoordinate coord = veh->coordinate();
-    if (coord.isValid() && isSaneCoord(coord.latitude(), coord.longitude())) {
-        return {coord, QStringLiteral("Vehicle EKF")};
-    }
-    return {};
-}
-
-PositionResult getRTKBasePosition()
-{
-    GPSManager* gpsManager = GPSManager::instance();
-    if (!gpsManager)
-        return {};
-    GPSRtk* rtk = gpsManager->gpsRtk();
-    if (!rtk)
-        return {};
-
-    FactGroup* rtkGroup = rtk->gpsRtkFactGroup();
-    if (!rtkGroup)
-        return {};
-
-    Fact* validF = rtkGroup->getFact(QStringLiteral("valid"));
-    if (!validF || !validF->rawValue().toBool())
-        return {};
-
-    Fact* latF = rtkGroup->getFact(QStringLiteral("currentLatitude"));
-    Fact* lonF = rtkGroup->getFact(QStringLiteral("currentLongitude"));
-    if (!latF || !lonF)
-        return {};
-
-    Fact* altF = rtkGroup->getFact(QStringLiteral("currentAltitude"));
-    const double lat = latF->rawValue().toDouble();
-    const double lon = lonF->rawValue().toDouble();
-    const double alt = altF ? altF->rawValue().toDouble() : 0.0;
-
-    if (isSaneCoord(lat, lon)) {
-        return {QGeoCoordinate(lat, lon, alt), QStringLiteral("RTK Base")};
-    }
-    return {};
-}
-
-PositionResult getGCSPosition()
-{
-    QGCPositionManager* posMgr = QGCPositionManager::instance();
-    if (!posMgr)
-        return {};
-
-    const QGeoCoordinate coord = posMgr->gcsPosition();
-    if (coord.isValid() && isSaneCoord(coord.latitude(), coord.longitude())) {
-        return {coord, QStringLiteral("GCS Position")};
-    }
-    return {};
-}
-
-}  // anonymous namespace
 
 NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent) : QObject(parent)
 {
@@ -120,34 +9,13 @@ NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent) : QObject(parent)
     connect(&_timer, &QChronoTimer::timeout, this, &NTRIPGgaProvider::_sendGGA);
 }
 
-void NTRIPGgaProvider::init(NTRIPSettings* settings)
+void NTRIPGgaProvider::configure(const Configuration& configuration)
 {
-    // Cache the user-selected source and interval so the hot path (_sendGGA)
-    // avoids a SettingsManager::instance()->ntripSettings()->...->rawValue()
-    // chain per tick.
-    if (!settings) {
-        return;
+    _cachedSource = configuration.source;
+    _normalInterval = configuration.interval.count() > 0 ? configuration.interval : kDefaultInterval;
+    if (_retryPhase == RetryPhase::Normal && _timer.interval() != _normalInterval) {
+        _timer.setInterval(_normalInterval);
     }
-
-    auto* sourceFact = settings->ntripGgaPositionSource();
-    auto refreshSource = [this, sourceFact]() {
-        _cachedSource = static_cast<PositionSource>(sourceFact->rawValue().toUInt());
-    };
-    refreshSource();
-    connect(sourceFact, &Fact::rawValueChanged, this, refreshSource);
-
-    auto* intervalFact = settings->ntripGgaIntervalSec();
-    auto refreshInterval = [this, intervalFact]() {
-        const uint seconds = intervalFact->rawValue().toUInt();
-        // Guard against 0 from a stale config — fall back to the default.
-        _normalInterval =
-            (seconds > 0) ? std::chrono::milliseconds{static_cast<qint64>(seconds) * 1000} : kDefaultInterval;
-        if (_retryPhase == RetryPhase::Normal) {
-            _timer.setInterval(_normalInterval);
-        }
-    };
-    refreshInterval();
-    connect(intervalFact, &Fact::rawValueChanged, this, refreshInterval);
 }
 
 void NTRIPGgaProvider::setPositionProvider(PositionSource source, PositionProvider provider)
@@ -157,16 +25,22 @@ void NTRIPGgaProvider::setPositionProvider(PositionSource source, PositionProvid
 
 void NTRIPGgaProvider::start(NTRIPTransport* transport)
 {
+    const QPointer<NTRIPGgaProvider> guard(this);
+    const quint64 generation = ++_generation;
     _transport = transport;
     _fastRetryCount = 0;
     _clearSource();
+    if (!guard || _generation != generation || !_transport) {
+        return;
+    }
     _setRetryPhase(RetryPhase::Fast);
-    _sendGGA();
     _timer.start();
+    _sendGGA();
 }
 
 void NTRIPGgaProvider::stop()
 {
+    ++_generation;
     _timer.stop();
     _transport = nullptr;
     _clearSource();
@@ -192,11 +66,16 @@ void NTRIPGgaProvider::_sendGGA()
     if (!_transport) {
         return;
     }
-
-    _ensureDefaultProviders();
-
+    const QPointer<NTRIPGgaProvider> guard(this);
+    const auto transport = _transport;
+    const quint64 generation = _generation;
+    const auto current = [this, guard, transport, generation]() {
+        return guard && transport && _transport == transport && _generation == generation;
+    };
     const auto position = _getBestPosition();
-
+    if (!current()) {
+        return;
+    }
     if (!position.isValid()) {
         if (++_fastRetryCount >= 5 && _retryPhase == RetryPhase::Fast) {
             _setRetryPhase(RetryPhase::Normal);
@@ -209,69 +88,44 @@ void NTRIPGgaProvider::_sendGGA()
         _setRetryPhase(RetryPhase::Normal);
     }
 
-    double alt_msl = position.coordinate.altitude();
-    if (!qIsFinite(alt_msl)) {
-        alt_msl = 0.0;
+    const QByteArray gga = NMEAUtils::makeGGA(position.coordinate, position.coordinate.altitude());
+    transport->sendNMEA(gga);
+    if (!current()) {
+        return;
     }
-
-    const QByteArray gga = NMEAUtils::makeGGA(position.coordinate, alt_msl);
-    _transport->sendNMEA(gga);
-
     if (!position.source.isEmpty() && position.source != _source) {
         _source = position.source;
         emit sourceChanged(_source);
     }
 }
 
-void NTRIPGgaProvider::_ensureDefaultProviders()
-{
-    // Lazily install the singleton-reaching default providers so construction
-    // touches no singletons and tests can override any source via
-    // setPositionProvider() before the first GGA tick. Only absent slots are
-    // filled, so partial overrides are preserved.
-    static const std::pair<PositionSource, PositionProvider> kDefaults[] = {
-        {PositionSource::VehicleGPS, &getVehicleGPSPosition},
-        {PositionSource::VehicleEKF, &getVehicleEKFPosition},
-        {PositionSource::RTKBase, &getRTKBasePosition},
-        {PositionSource::GCSPosition, &getGCSPosition},
-    };
-    for (const auto& [source, provider] : kDefaults) {
-        if (!_providers.contains(source)) {
-            _providers.insert(source, provider);
-        }
-    }
-}
-
 PositionResult NTRIPGgaProvider::_getBestPosition() const
 {
-    const PositionSource source = _cachedSource;
-
-    // If a specific source is requested, try only that one
-    if (source != PositionSource::Auto) {
-        auto it = _providers.find(source);
-        if (it != _providers.end()) {
-            return it.value()();
-        }
-        return {};
+    const auto providers = _providers;
+    if (_cachedSource != PositionSource::Auto) {
+        const auto provider = providers.value(_cachedSource);
+        return provider ? provider() : PositionResult{};
     }
 
-    // Auto: try each provider in priority order
     static constexpr PositionSource kPriority[] = {
         PositionSource::VehicleGPS,
         PositionSource::VehicleEKF,
         PositionSource::RTKBase,
         PositionSource::GCSPosition,
     };
-
-    for (PositionSource s : kPriority) {
-        auto it = _providers.find(s);
-        if (it != _providers.end()) {
-            auto result = it.value()();
+    const QPointer<const NTRIPGgaProvider> guard(this);
+    const quint64 generation = _generation;
+    for (PositionSource source : kPriority) {
+        const auto provider = providers.value(source);
+        if (provider) {
+            const auto result = provider();
+            if (!guard || _generation != generation) {
+                return {};
+            }
             if (result.isValid()) {
                 return result;
             }
         }
     }
-
     return {};
 }

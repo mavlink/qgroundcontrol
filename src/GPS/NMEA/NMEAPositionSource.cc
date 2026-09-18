@@ -43,6 +43,13 @@ public:
 
     ~NMEATimestampedPositionDecoder() override { qCDebug(NMEATimestampedPositionDecoderLog) << this; }
 
+    bool hasFix(const QGeoPositionInfo& position) const
+    {
+        const auto epoch = _epochs.constFind(position.timestamp().time());
+        return !_invalidThroughSequence ||
+               (_navigationValid && epoch != _epochs.cend() && epoch->navigationSequence > _invalidThroughSequence);
+    }
+
     GPSObservation observation(const QGeoPositionInfo& position) const
     {
         GPSObservation result;
@@ -53,17 +60,12 @@ public:
         // Qt propagates attributes between epochs. Retain only attributes decoded for this epoch.
         result.position.setCoordinate(position.coordinate());
         result.position.setTimestamp(position.timestamp());
-        if (_invalidThroughSequence &&
-            (!_navigationValid || epoch == _epochs.cend() || epoch->navigationSequence <= _invalidThroughSequence)) {
+        if (!hasFix(position)) {
             result.receiverFixValid = false;
             result.fixQuality = GPSObservation::FixQuality::NoFix;
         }
         result.sourceId = QStringLiteral("NMEA");
-        const auto nowUs = _scheduler ? _scheduler->nowUs() : ReadTimestamp::nowUs();
-        const auto ageMs = MonotonicClock::ageMilliseconds(result.monotonicTimestampUs, nowUs);
-        if (ageMs >= 0) {
-            result.receivedAt = QDateTime::currentDateTimeUtc().addMSecs(-ageMs);
-        }
+        result.receivedAt = _receiptTime(result.monotonicTimestampUs);
         return result;
     }
 
@@ -129,7 +131,7 @@ protected:
                 loss.fixQuality = GPSObservation::FixQuality::NoFix;
                 loss.monotonicTimestampUs = receivedAtUs;
                 loss.sourceId = QStringLiteral("NMEA");
-                loss.receivedAt = QDateTime::currentDateTimeUtc();
+                loss.receivedAt = _receiptTime(receivedAtUs);
                 _fixLost(std::move(loss));
             } else if (parsed && *hasFix && epoch.isValid()) {
                 _navigationValid = true;
@@ -189,9 +191,9 @@ protected:
                     fix && std::isfinite(fix->hdop) && fix->hdop > 0 ? std::optional<double>(fix->hdop) : std::nullopt;
                 metadata.dopTimestampUs = receivedAtUs;
                 metadata.altitudeEllipsoidMeters.reset();
-                metadata.altitudeDatum = GPSObservation::AltitudeDatum::Unknown;
+                metadata.altitudeDatum = GPSAltitudeDatum::Unknown;
                 if (fix && std::isfinite(fix->altitude)) {
-                    metadata.altitudeDatum = GPSObservation::AltitudeDatum::MeanSeaLevel;
+                    metadata.altitudeDatum = GPSAltitudeDatum::MeanSeaLevel;
                     if (std::isfinite(fix->geoidSeparation))
                         metadata.altitudeEllipsoidMeters = fix->altitude + fix->geoidSeparation;
                 }
@@ -225,6 +227,13 @@ protected:
     }
 
 private:
+    QDateTime _receiptTime(quint64 timestampUs) const
+    {
+        const auto nowUs = _scheduler ? _scheduler->nowUs() : ReadTimestamp::nowUs();
+        const auto ageMs = MonotonicClock::ageMilliseconds(timestampUs, nowUs);
+        return ageMs >= 0 ? QDateTime::currentDateTimeUtc().addMSecs(-ageMs) : QDateTime();
+    }
+
     struct EpochMetadata
     {
         GPSObservation observation;
@@ -370,15 +379,13 @@ void NMEAPositionSource::_resetDecoder()
                     return;
                 }
                 _pendingRequested |= _requestTask.active();
-                const auto observation =
-                    static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->observation(update);
-                if (!observation.receiverFixValid.value_or(true)) {
+                if (!static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->hasFix(update)) {
                     if (!_started && _requestTask.active()) {
                         _decoder->requestUpdate(DEFAULT_REQUEST_TIMEOUT_MS);
                     }
                     return;
                 }
-                _pendingObservation = observation;
+                _pendingObservation = update;
                 if (_pendingRequested) {
                     _publicationTask.cancel();
                 }
@@ -460,7 +467,7 @@ void NMEAPositionSource::_publishPending()
         return;
     }
     const auto observation =
-        static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->observation(_pendingObservation->position);
+        static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->observation(*_pendingObservation);
     const bool requested = _pendingRequested;
     _pendingObservation.reset();
     _pendingRequested = false;

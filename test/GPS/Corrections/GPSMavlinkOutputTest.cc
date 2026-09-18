@@ -96,7 +96,8 @@ void GPSMavlinkOutputTest::_replayExcludedFromLiveAdmissions()
         const quint64 timestamp = qToBigEndian<quint64>(1700000000000000ULL + index * 1000000ULL);
         tlog.append(reinterpret_cast<const char*>(&timestamp), sizeof(timestamp));
         mavlink_message_t heartbeat{};
-        mavlink_msg_heartbeat_pack(1, MAV_COMP_ID_AUTOPILOT1, &heartbeat, MAV_TYPE_QUADROTOR, MAV_AUTOPILOT_PX4, 0, 0,
+        // Heartbeat-only replay must not start the test connect sequence.
+        mavlink_msg_heartbeat_pack(1, MAV_COMP_ID_AUTOPILOT1, &heartbeat, MAV_TYPE_GENERIC, MAV_AUTOPILOT_PX4, 0, 0,
                                    MAV_STATE_ACTIVE);
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN]{};
         const int size = mavlink_msg_to_send_buffer(buffer, &heartbeat);

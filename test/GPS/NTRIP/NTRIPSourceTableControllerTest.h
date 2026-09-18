@@ -13,7 +13,8 @@ private slots:
     void testFetchErrorInvalidatesCache();
     void testFetchValidHostGoesInProgress();
     void testFetchAbortsOversizedSourceTable();
-    void testFetchAllowsSelfSignedSourceTableWhenConfigured();
+    void testFetchCertificatePolicyChanges_data();
+    void testFetchCertificatePolicyChanges();
     void testCacheTtlPreventsFetch();
     void testConfigChangeInvalidatesCache();
     void testSelectMountpointEmitsSignal();

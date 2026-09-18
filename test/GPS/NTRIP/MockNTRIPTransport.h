@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QVector>
 
@@ -31,7 +33,10 @@ public:
         _started = false;
         _stopped = true;
         stopCount++;
-        emit finished();
+        const auto callback = onStop;
+        if (callback) {
+            callback();
+        }
     }
 
     void sendNMEA(const QByteArray& nmea) override { sentNmea.append(nmea); }
@@ -56,8 +61,6 @@ public:
              .filtered = valid && !lastWhitelist.isEmpty() && !lastWhitelist.contains(messageId)});
     }
 
-    void simulateDisconnect() { emit finished(); }
-
     void simulatePlaintextWarning() { emit plaintextCredentialsWarning(); }
 
     // --- Test inspection ---
@@ -69,6 +72,7 @@ public:
     bool autoConnect = true;
     int startCount = 0;
     int stopCount = 0;
+    std::function<void()> onStop;
     QVector<QByteArray> sentNmea;
     QVector<int> lastWhitelist;
 

@@ -28,7 +28,7 @@ public:
 #endif
     /// Inject before connecting; the caller retains ownership.
     void setCorrectionManager(GPSCorrectionManager* manager);
-    void connectReceiver(GPSReceiverType type, GPSProvider::TransportFactory transportFactory,
+    void connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory,
                          const QString& sourceInstance = {});
     void disconnectGPS();
     bool connected() const;

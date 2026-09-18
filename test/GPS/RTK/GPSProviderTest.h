@@ -7,6 +7,7 @@ class GPSProviderTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _queuedPayloadsOwnSnapshots();
 #ifndef QGC_NO_SERIAL_LINK
     void _finishedReceiverReleasesReservation_data();
     void _finishedReceiverReleasesReservation();

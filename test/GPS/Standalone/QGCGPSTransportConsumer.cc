@@ -5,11 +5,11 @@ class UnsupportedTransport final : public GPSTransport
 public:
     using GPSTransport::GPSTransport;
 
-    OpenResult open() override { return {OpenStatus::Unsupported}; }
+    GPSOpenResult open() override { return {GPSOpenStatus::Unsupported}; }
 
     bool fatalError() const override { return true; }
 
-    ReadResult read(uint8_t*, int, int) override { return {ReadStatus::Closed}; }
+    GPSReadResult read(uint8_t*, int, int) override { return {GPSReadStatus::Closed}; }
 
     bool setBaudrate(unsigned) override { return false; }
 };
@@ -19,11 +19,11 @@ int main()
     std::atomic_bool stop = false;
     UnsupportedTransport transport(stop);
     const uint8_t byte = 1;
-    if (transport.write(&byte, 1).status != GPSTransport::WriteStatus::Unsupported) {
+    if (transport.write(&byte, 1).status != GPSWriteStatus::Unsupported) {
         return 1;
     }
     stop = true;
-    if (transport.write(&byte, 1).status != GPSTransport::WriteStatus::Cancelled) {
+    if (transport.write(&byte, 1).status != GPSWriteStatus::Cancelled) {
         return 2;
     }
     struct Allowance

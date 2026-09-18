@@ -54,17 +54,12 @@ public:
     /// Retained suffix length, including bytes beyond the current candidate.
     uint16_t bufferedSize() const { return _size; }
 
-    uint8_t* message() { return _bytes.data(); }
-
-    const uint8_t* message() const { return _bytes.data(); }
-
-    uint16_t messageLength() const { return _frameSize ? _frameSize : _size; }
-
     uint16_t payloadLength() const { return _payloadSize; }
 
     uint16_t messageId() const
     {
-        return messageLength() >= 5 && payloadLength() >= 2 ? (_bytes[3] << 4) | (_bytes[4] >> 4) : 0;
+        const uint16_t available = _frameSize ? _frameSize : _size;
+        return available >= 5 && payloadLength() >= 2 ? (_bytes[3] << 4) | (_bytes[4] >> 4) : 0;
     }
 
     bool valid() const { return isValidFrame(frame()); }

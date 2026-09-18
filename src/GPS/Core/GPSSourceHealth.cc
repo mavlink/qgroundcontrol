@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 
+#include "GPSSatelliteObservation.h"
 #include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 #include "QtRuntimeScheduler.h"
@@ -45,29 +46,42 @@ double GPSSourceHealth::horizontalAccuracy() const
     return usable() ? _observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy) : qQNaN();
 }
 
-std::optional<GPSObservation> GPSSourceHealth::acceptedObservation() const
+std::optional<GPSObservation> GPSSourceHealth::acceptedObservation(
+    GPSObservation::PositionUse use, std::optional<std::chrono::milliseconds> maximumAge) const
 {
-    const qint64 age = _age(_observation.monotonicTimestampUs);
-    if (!usable() || _positionInvalidated || age < 0 || age >= _freshnessTimeoutMs) {
+    if (_positionInvalidated ||
+        _remaining(_observation.monotonicTimestampUs, maximumAge) == std::chrono::microseconds::zero()) {
         return std::nullopt;
     }
-    GPSObservation accepted = _observation;
-    accepted.position = _observation.acceptedPosition();
-    if (!accepted.position.isValid()) {
-        return std::nullopt;
+    auto accepted = _observation.projected(use);
+    if (accepted) {
+        const int used = satellitesInUseCount();
+        accepted->satellitesUsed = used >= 0 ? std::optional<int>(used) : std::nullopt;
     }
     return accepted;
+}
+
+std::chrono::microseconds GPSSourceHealth::_remaining(quint64 timestampUs,
+                                                      std::optional<std::chrono::milliseconds> maximumAge) const
+{
+    const auto sourceLifetime = std::chrono::milliseconds(_freshnessTimeoutMs);
+    const auto lifetime = maximumAge ? std::min(sourceLifetime, *maximumAge) : sourceLifetime;
+    return _scheduler && lifetime > std::chrono::milliseconds::zero()
+               ? MonotonicClock::remaining(timestampUs, _scheduler->nowUs(), lifetime)
+               : std::chrono::microseconds::zero();
 }
 
 void GPSSourceHealth::updateObservation(const GPSObservation& observation)
 {
     const QPointer<GPSSourceHealth> guard(this);
     const quint64 revision = ++_revision;
+    ++_observationRevision;
     _positionTask.cancel();
-    _positionInvalidated = false;
     _observation = observation;
     const auto& position = observation.position;
     const qint64 ageMs = _age(observation.monotonicTimestampUs);
+    // Temporal rejection lasts until the next observation.
+    _positionInvalidated = ageMs < 0;
     if (ageMs < 0) {
         _state = State::Invalid;
     } else if (ageMs >= _freshnessTimeoutMs) {
@@ -79,7 +93,9 @@ void GPSSourceHealth::updateObservation(const GPSObservation& observation)
     const int previousUsed = satellitesInUseCount();
     const bool validFix = observation.position.isValid() && observation.receiverFixValid.value_or(true) &&
                           observation.fixQuality != GPSObservation::FixQuality::NoFix;
-    _updateFixSatelliteCount(validFix ? observation.satellitesUsed.value_or(-1) : -1, ageMs);
+    _fixSatellitesInUseCount = validFix ? observation.satellitesUsed.value_or(-1) : -1;
+    _fixSatellitesTimestampUs = observation.monotonicTimestampUs;
+    _scheduleFixSatelliteExpiry();
     qCDebug(GPSSourceHealthLog) << this << "Position observation"
                                 << "state:" << _state << "coordinate:" << position.coordinate()
                                 << "horizontalAccuracy:" << position.attribute(QGeoPositionInfo::HorizontalAccuracy)
@@ -96,12 +112,12 @@ void GPSSourceHealth::updateObservation(const GPSObservation& observation)
 void GPSSourceHealth::_schedulePositionExpiry()
 {
     _positionTask.cancel();
-    const qint64 age = _age(_observation.monotonicTimestampUs);
-    if (age < 0 || age >= _freshnessTimeoutMs || !_scheduler) {
+    const auto remaining = _remaining(_observation.monotonicTimestampUs);
+    if (remaining == std::chrono::microseconds::zero()) {
         return;
     }
     const quint64 revision = _revision;
-    _positionTask.schedule(std::chrono::milliseconds(_freshnessTimeoutMs - age), [this, revision]() {
+    _positionTask.schedule(remaining, [this, revision]() {
         if (_revision == revision) {
             _setState(State::Stale);
         }
@@ -149,24 +165,36 @@ void GPSSourceHealth::setFreshnessTimeoutMs(int timeoutMs)
     if (_state == State::NoData) {
         return;
     }
-    if (!_positionInvalidated) {
-        updateObservation(_observation);
-    } else {
-        ++_revision;
-        const qint64 ageMs = _age(_observation.monotonicTimestampUs);
-        _schedulePositionExpiry();
-        if (ageMs >= _freshnessTimeoutMs) {
-            _setState(State::Stale);
-        }
+    const QPointer<GPSSourceHealth> guard(this);
+    const quint64 revision = ++_revision;
+    const int previousUsed = satellitesInUseCount();
+    const qint64 ageMs = _age(_observation.monotonicTimestampUs);
+    if (ageMs < 0) {
+        _state = State::Invalid;
+    } else if (ageMs >= _freshnessTimeoutMs) {
+        _state = State::Stale;
+    } else if (!_positionInvalidated) {
+        _state = _observation.usable() ? State::Usable : State::Invalid;
+    }
+    _schedulePositionExpiry();
+    _scheduleFixSatelliteExpiry();
+    if (previousUsed != satellitesInUseCount()) {
+        emit satellitesChanged();
+    }
+    if (guard && revision == _revision) {
+        emit positionChanged();
     }
 }
 
-void GPSSourceHealth::_updateFixSatelliteCount(int count, qint64 ageMs)
+void GPSSourceHealth::_scheduleFixSatelliteExpiry()
 {
     _fixSatellitesTask.cancel();
-    _fixSatellitesInUseCount = count >= 0 && ageMs >= 0 && ageMs < _freshnessTimeoutMs ? count : -1;
-    if (_fixSatellitesInUseCount >= 0 && _scheduler) {
-        _fixSatellitesTask.schedule(std::chrono::milliseconds(_freshnessTimeoutMs - ageMs), [this]() {
+    const auto remaining = _remaining(_fixSatellitesTimestampUs);
+    if (remaining == std::chrono::microseconds::zero()) {
+        _fixSatellitesInUseCount = -1;
+    }
+    if (_fixSatellitesInUseCount >= 0) {
+        _fixSatellitesTask.schedule(remaining, [this]() {
             const int previous = satellitesInUseCount();
             _fixSatellitesInUseCount = -1;
             if (previous != satellitesInUseCount()) {
@@ -179,6 +207,7 @@ void GPSSourceHealth::_updateFixSatelliteCount(int count, qint64 ageMs)
 void GPSSourceHealth::clearSatellites()
 {
     _fixSatellitesTask.cancel();
+    _fixSatellitesTimestampUs = 0;
     if (_satellitesInViewCount != -1 || satellitesInUseCount() != -1) {
         _satellitesInViewCount = -1;
         _satellitesInUseCount = -1;

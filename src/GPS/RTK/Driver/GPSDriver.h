@@ -1,13 +1,15 @@
 #pragma once
 
-#include <QtCore/QByteArray>
-#include <QtCore/QMetaType>
-
 #include <cstdint>
 #include <functional>
 #include <memory>
 
-#include "GPSReceiverTypes.h"
+#include <QtCore/QByteArray>
+#include <QtCore/QMetaType>
+
+#include "GPSBaseStationConfig.h"
+#include "GPSSurveyInStatus.h"
+#include "GPSType.h"
 #include "satellite_info.h"
 #include "sensor_gps.h"
 
@@ -30,7 +32,7 @@ struct GPSDriverSinks
 class GPSDriver
 {
 public:
-    GPSDriver(GPSReceiverType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks);
+    GPSDriver(GPSType type, GPSTransport& transport, const GPSBaseStationConfig& config, GPSDriverSinks sinks);
     ~GPSDriver();
 
     GPSDriver(const GPSDriver &) = delete;
@@ -49,9 +51,9 @@ public:
     int handleCallback(int type, void *data1, int data2);
 
 private:
-    GPSReceiverType _type;
+    GPSType _type;
     GPSTransport &_transport;
-    GPSReceiverConfig _config;
+    GPSBaseStationConfig _config;
     GPSDriverSinks _sinks;
 
     std::unique_ptr<GPSBaseStationSupport> _driver;

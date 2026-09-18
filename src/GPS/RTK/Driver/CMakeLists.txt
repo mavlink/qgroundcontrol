@@ -8,13 +8,17 @@ qt_add_library(
     STATIC
     GPSDriver.cc
     GPSDriver.h
+    ../GPSBaseStationConfigValidation.cc
+    ../GPSBaseStationConfigValidation.h
+    ../GPSBaseStationConfig.h
+    ../GPSType.h
     definitions.h
     satellite_info.h
     sensor_gnss_relative.h
     sensor_gps.h
 )
 
-target_include_directories(QGCGPSDriver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGCGPSDriver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 # ----------------------------------------------------------------------------
 # PX4 GPS Drivers Integration
@@ -28,11 +32,8 @@ CPMAddPackage(
 
 # NOTE: Using file(GLOB) for external dependency sources
 # CONFIGURE_DEPENDS ensures CMake re-runs if files are added/removed
-file(GLOB GPS_DRIVERS_SOURCES
-    CONFIGURE_DEPENDS
-    "${px4-gpsdrivers_SOURCE_DIR}/src/*.c"
-    "${px4-gpsdrivers_SOURCE_DIR}/src/*.cpp"
-    "${px4-gpsdrivers_SOURCE_DIR}/src/*.h"
+file(GLOB GPS_DRIVERS_SOURCES CONFIGURE_DEPENDS "${px4-gpsdrivers_SOURCE_DIR}/src/*.c"
+     "${px4-gpsdrivers_SOURCE_DIR}/src/*.cpp" "${px4-gpsdrivers_SOURCE_DIR}/src/*.h"
 )
 
 add_library(px4-gpsdrivers OBJECT ${GPS_DRIVERS_SOURCES})

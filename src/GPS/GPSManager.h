@@ -33,6 +33,8 @@ public:
     GPSCorrectionManager* corrections() const { return _corrections; }
 
 private:
+    void _configureGgaProviders();
+
     void _updateConnections();
     QTimer* _connectionTimer = nullptr;
     NMEASourceManager* _nmeaSources = nullptr;

@@ -16,12 +16,12 @@ int main(int argc, char** argv)
         return 1;
     }
     UDPGPSTransport udp(QStringLiteral("127.0.0.1"), peer.localPort(), stop);
-    if (udp.open().status != GPSTransport::OpenStatus::Opened) {
+    if (udp.open().status != GPSOpenStatus::Opened) {
         return 2;
     }
     const uint8_t bytes[]{1, 2, 3};
     const auto sent = udp.write(bytes, sizeof(bytes));
-    if (sent.status != GPSTransport::WriteStatus::Completed || sent.writtenBytes != sizeof(bytes)) {
+    if (sent.status != GPSWriteStatus::Completed || sent.writtenBytes != sizeof(bytes)) {
         return 3;
     }
     TCPGPSTransport tcp(QStringLiteral("localhost"), 1, stop);
@@ -29,13 +29,13 @@ int main(int argc, char** argv)
     SerialGPSTransport serial(QStringLiteral("unused"), stop);
 #endif
     stop = true;
-    if (tcp.open().status != GPSTransport::OpenStatus::Cancelled) {
+    if (tcp.open().status != GPSOpenStatus::Cancelled) {
         return 4;
     }
 #ifndef QGC_NO_SERIAL_LINK
-    if (serial.open().status != GPSTransport::OpenStatus::Cancelled) {
+    if (serial.open().status != GPSOpenStatus::Cancelled) {
         return 5;
     }
 #endif
-    return udp.write(bytes, sizeof(bytes)).status == GPSTransport::WriteStatus::Cancelled ? 0 : 6;
+    return udp.write(bytes, sizeof(bytes)).status == GPSWriteStatus::Cancelled ? 0 : 6;
 }

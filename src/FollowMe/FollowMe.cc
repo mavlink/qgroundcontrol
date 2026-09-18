@@ -88,12 +88,12 @@ void FollowMe::_disableFollowSend()
 
 void FollowMe::_sendGCSMotionReport()
 {
-    const QGeoPositionInfo geoPositionInfo = QGCPositionManager::instance()->geoPositionInfo();
-    const QGeoCoordinate gcsCoordinate = geoPositionInfo.coordinate();
-
-    if (!geoPositionInfo.isValid()) {
+    const auto observation = QGCPositionManager::instance()->acceptedObservation(GPSObservation::PositionUse::Motion);
+    if (!observation) {
         return;
     }
+    const auto& geoPositionInfo = observation->position;
+    const QGeoCoordinate gcsCoordinate = geoPositionInfo.coordinate();
 
     // First check to see if any vehicles need follow me updates
     bool needFollowMe = false;
@@ -103,7 +103,7 @@ void FollowMe::_sendGCSMotionReport()
         QmlObjectListModel* const vehicles = MultiVehicleManager::instance()->vehicles();
         for (int i = 0; i < vehicles->count(); i++) {
             const Vehicle* const vehicle = vehicles->value<const Vehicle*>(i);
-            if (_isFollowFlightMode(vehicle, vehicle->flightMode())) {
+            if (vehicle && _isFollowFlightMode(vehicle, vehicle->flightMode())) {
                 needFollowMe = true;
             }
         }
@@ -115,8 +115,6 @@ void FollowMe::_sendGCSMotionReport()
     GCSMotionReport motionReport{};
     uint8_t estimationCapabilities = 0;
 
-    // Get the current location coordinates
-    // Important note: QGC only supports sending the constant GCS home position altitude for follow me.
     motionReport.lat_int = static_cast<int>(gcsCoordinate.latitude() * 1e7);
     motionReport.lon_int = static_cast<int>(gcsCoordinate.longitude() * 1e7);
     motionReport.altMetersAMSL = gcsCoordinate.altitude();
@@ -127,22 +125,18 @@ void FollowMe::_sendGCSMotionReport()
         motionReport.headingDegrees = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
     }
 
-    // get the current eph
     if (geoPositionInfo.hasAttribute(QGeoPositionInfo::HorizontalAccuracy)) {
         motionReport.pos_std_dev[0] = motionReport.pos_std_dev[1] = geoPositionInfo.attribute(QGeoPositionInfo::HorizontalAccuracy);
     }
 
-    // get the current epv
     if (geoPositionInfo.hasAttribute(QGeoPositionInfo::VerticalAccuracy)) {
         motionReport.pos_std_dev[2] = geoPositionInfo.attribute(QGeoPositionInfo::VerticalAccuracy);
     }
 
-    // calculate z velocity if it's available
     if (geoPositionInfo.hasAttribute(QGeoPositionInfo::VerticalSpeed)) {
         motionReport.vzMetersPerSec = geoPositionInfo.attribute(QGeoPositionInfo::VerticalSpeed);
     }
 
-    // calculate x,y velocity if it's available
     if (geoPositionInfo.hasAttribute(QGeoPositionInfo::Direction) && geoPositionInfo.hasAttribute(QGeoPositionInfo::GroundSpeed)) {
         estimationCapabilities |= (1 << VEL);
 
@@ -160,7 +154,7 @@ void FollowMe::_sendGCSMotionReport()
 
     for (int i = 0; i < vehicles->count(); i++) {
         Vehicle* const vehicle = vehicles->value<Vehicle*>(i);
-        if ((_currentMode == MODE_ALWAYS) || (_isFollowFlightMode(vehicle, vehicle->flightMode()))) {
+        if (vehicle && ((_currentMode == MODE_ALWAYS) || (_isFollowFlightMode(vehicle, vehicle->flightMode())))) {
             qCDebug(FollowMeLog) << "sendGCSMotionReport latInt:lonInt:altMetersAMSL" << motionReport.lat_int << motionReport.lon_int << motionReport.altMetersAMSL;
             vehicle->firmwarePlugin()->sendGCSMotionReport(vehicle, motionReport, estimationCapabilities);
         }

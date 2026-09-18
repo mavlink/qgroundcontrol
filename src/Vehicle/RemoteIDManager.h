@@ -3,7 +3,6 @@
 #include <QtCore/QObject>
 #include <QtCore/QDateTime>
 #include <QtCore/QTimer>
-#include <QtPositioning/QGeoPositionInfo>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkMessageType.h"

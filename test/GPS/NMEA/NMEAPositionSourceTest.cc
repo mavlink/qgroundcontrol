@@ -8,6 +8,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "GPSSourceHealth.h"
+#include "ManualScheduler.h"
 #include "MonotonicClock.h"
 #include "NMEAPositionSource.h"
 #include "NMEAUtils.h"
@@ -19,6 +20,27 @@ const QByteArray kFix =
     "$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A*43\r\n"
     "$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,*76\r\n";
 }  // namespace
+
+void NMEAPositionSourceTest::_delayedFixLossReceipt()
+{
+    ManualScheduler scheduler;
+    SequentialTestDevice device(&scheduler);
+    NMEAPositionSource source(&device, nullptr, &scheduler);
+    QSignalSpy observations(&source, &NMEAPositionSource::observationReceived);
+    source.startUpdates();
+    const auto receivedAtUs = scheduler.nowUs();
+    device.feed(NMEAUtils::repairChecksum("$GPGGA,092751.000,,,,,0,0,,,,,,,"), false);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
+    const auto beforeDecode = QDateTime::currentDateTimeUtc();
+    emit device.readyRead();
+    QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
+    QCOMPARE(observations.size(), 1);
+    const auto loss = observations.first().first().value<GPSObservation>();
+    QCOMPARE(loss.monotonicTimestampUs, receivedAtUs);
+    QCOMPARE(loss.receiverFixValid, std::optional<bool>(false));
+    QVERIFY(loss.receivedAt >= beforeDecode.addSecs(-2));
+    QVERIFY(loss.receivedAt <= QDateTime::currentDateTimeUtc().addSecs(-2));
+}
 
 void NMEAPositionSourceTest::_dateOrdering_data()
 {
@@ -270,7 +292,7 @@ void NMEAPositionSourceTest::_fixMetadata()
     QCOMPARE(observation.satellitesUsed, std::optional<int>(8));
     QCOMPARE(observation.horizontalDop, std::optional<double>(1.03));
     QCOMPARE(observation.verticalDop, std::optional<double>(0.6));
-    QCOMPARE(observation.altitudeDatum, GPSObservation::AltitudeDatum::MeanSeaLevel);
+    QCOMPARE(observation.altitudeDatum, GPSAltitudeDatum::MeanSeaLevel);
     QVERIFY(observation.altitudeEllipsoidMeters.has_value());
     QVERIFY(qAbs(*observation.altitudeEllipsoidMeters - 116.9) < 0.00001);
     QCOMPARE(observation.monotonicTimestampUs, device.receivedAtUs);
@@ -295,7 +317,7 @@ void NMEAPositionSourceTest::_metadataDoesNotCrossEpochs()
     QVERIFY(!observation.position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy));
     QVERIFY(!observation.verticalDop);
     QVERIFY(!observation.altitudeEllipsoidMeters);
-    QCOMPARE(observation.altitudeDatum, GPSObservation::AltitudeDatum::Unknown);
+    QCOMPARE(observation.altitudeDatum, GPSAltitudeDatum::Unknown);
 }
 
 void NMEAPositionSourceTest::_gstAccuracy_data()

@@ -12,17 +12,25 @@
 
 QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.GPSProvider")
 
-GPSProvider::GPSProvider(TransportFactory transportFactory, GPSReceiverType type, const GPSReceiverConfig& config,
+GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSBaseStationConfig& config,
                          QObject* parent)
-    : QThread(parent), _transportFactory(std::move(transportFactory)), _type(type), _config(config)
+    : QThread(parent)
+    , _transportFactory(std::move(transportFactory))
+    , _type(type)
+    , _config(config)
 {
     qCDebug(GPSProviderLog) << this;
-    if (const auto* survey = std::get_if<GPSSurveyInConfig>(&_config.base)) {
-        qCDebug(GPSProviderLog) << "Survey-in accuracy (m):" << survey->accuracyMeters
-                                << "minimum duration (s):" << survey->minimumDuration.count();
-    } else if (const auto* fixed = std::get_if<GPSFixedBaseConfig>(&_config.base)) {
-        qCDebug(GPSProviderLog) << "Fixed base:" << fixed->coordinate
-                                << "ellipsoid altitude (m):" << fixed->altitudeEllipsoidMeters;
+    (void) qRegisterMetaType<satellite_info_s>("satellite_info_s");
+    (void) qRegisterMetaType<sensor_gps_s>("sensor_gps_s");
+    (void) qRegisterMetaType<GPSConnectionError>("GPSConnectionError");
+    (void) qRegisterMetaType<GPSSurveyInStatus>("GPSSurveyInStatus");
+    if (_config.useFixedBase) {
+        qCDebug(GPSProviderLog) << "Fixed base latitude:" << _config.fixedBaseLatitude
+                                << "longitude:" << _config.fixedBaseLongitude
+                                << "ellipsoid altitude (m):" << _config.fixedBaseAltitudeMeters;
+    } else {
+        qCDebug(GPSProviderLog) << "Survey-in accuracy (m):" << _config.surveyInAccMeters
+                                << "minimum duration (s):" << _config.surveyInDurationSecs;
     }
 }
 
@@ -56,7 +64,7 @@ void GPSProvider::run()
     if (_requestStop) {
         return;
     }
-    if (!transport || transport->open().status != GPSTransport::OpenStatus::Opened) {
+    if (!transport || transport->open().status != GPSOpenStatus::Opened) {
         if (!_requestStop) {
             emit connectionError(GPSConnectionError::OpenFailed);
         }

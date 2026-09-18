@@ -19,6 +19,12 @@ private slots:
     void _automaticRejectionMatchesPublication_data();
     void _automaticRejectionMatchesPublication();
     void _automaticFailoverAndRecovery();
+    void _standbyReportsDoNotRepublish();
+    void _consumerPolicies_data();
+    void _consumerPolicies();
+    void _consumerMaximumAge();
+    void _policySelectionGates();
+    void _schedulerDestruction();
     void _sourceAndHealthLifetime();
     void _notificationsCanSwitchOrDelete_data();
     void _notificationsCanSwitchOrDelete();
@@ -30,6 +36,7 @@ private slots:
     void _adapterNestedBackendEvent();
     void _adapterReentrantDeactivation_data();
     void _adapterReentrantDeactivation();
+    void _nestedObservationNotifications_data();
     void _nestedObservationNotifications();
     void _accuracyNotifiesOnlyChanges();
     void _rawRegistrationCarriesSession();

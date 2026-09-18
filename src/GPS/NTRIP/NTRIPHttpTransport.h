@@ -4,12 +4,12 @@
 
 #include <QtCore/QChronoTimer>
 #include <QtCore/QLoggingCategory>
-#include <QtNetwork/QSslSocket>
+#include <QtCore/QPointer>
 #include <QtNetwork/QTcpSocket>
 
 #include "MonotonicClock.h"
+#include "NTRIPConfiguration.h"
 #include "NTRIPTransport.h"
-#include "NTRIPTransportConfig.h"
 #include "RTCMFrameDecoder.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPHttpTransportLog)
@@ -18,13 +18,15 @@ class NTRIPHttpTransport : public NTRIPTransport
 {
     Q_OBJECT
     friend class NTRIPHttpTransportTest;
+    friend class NTRIPReentrancyTest;
 
 public:
     static constexpr std::chrono::milliseconds kConnectTimeout{10000};
     static constexpr std::chrono::milliseconds kDataWatchdog{30000};
     static constexpr int kMaxHttpHeaderSize = 32768;
 
-    explicit NTRIPHttpTransport(const NTRIPTransportConfig& config, QObject* parent = nullptr);
+    NTRIPHttpTransport(const NTRIPConnectionConfig& config, const NTRIPRtcmFilterConfig& filter,
+                       QObject* parent = nullptr);
     ~NTRIPHttpTransport() override;
 
     void start() override;
@@ -33,23 +35,9 @@ public:
 
     void setRtcmWhitelist(const QVector<int>& messageIds) override { _rtcmDecoder.setWhitelist(messageIds); }
 
-    const NTRIPTransportConfig& config() const { return _config; }
-
-    // plaintextCredentialsWarning lives on the NTRIPTransport base signal set so
-    // NTRIPManager can connect without concrete-type knowledge.
+    const NTRIPConnectionConfig& config() const { return _config; }
 
 protected:
-    struct HttpStatus
-    {
-        int code = 0;
-        QString reason;
-        bool valid = false;
-    };
-
-    static HttpStatus parseHttpStatusLine(const QString& line);
-
-    static bool isHttpSuccess(int code) { return code >= 200 && code < 300; }
-
     struct HttpRequest
     {
         QByteArray bytes;
@@ -57,11 +45,24 @@ protected:
         bool credentialsInClear = false;
     };
 
-    static HttpRequest buildHttpRequest(const NTRIPTransportConfig& config);
+    static HttpRequest buildHttpRequest(const NTRIPConnectionConfig& config);
 
 private:
+    struct HttpStatus
+    {
+        int code = 0;
+        QString reason;
+        bool valid = false;
+    };
+
+    static HttpStatus _parseHttpStatusLine(const QString& line);
+
+    static bool _isHttpSuccess(int code) { return code >= 200 && code < 300; }
+
     void _connect();
     void _fail(NTRIPError code, const QString& msg);
+    void _retireSocket();
+    bool _write(const QByteArray& bytes);
     void _sendHttpRequest();
     void _readBytes();
     void _handleHttpResponse();
@@ -69,17 +70,16 @@ private:
     void _parseRtcm(const QByteArray& buffer,
                     qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000));
 
-    NTRIPTransportConfig _config;
+    NTRIPConnectionConfig _config;
 
-    QTcpSocket* _socket = nullptr;
+    QPointer<QTcpSocket> _socket;
     QChronoTimer _connectTimeoutTimer;
     QChronoTimer _dataWatchdogTimer;
 
     RTCMFrameDecoder _rtcmDecoder;
     bool _httpHandshakeDone = false;
     bool _stopped = false;
-
+    quint64 _attempt = 0;
     qint64 _postOkTimestampMs = 0;
-
     QByteArray _httpResponseBuf;
 };

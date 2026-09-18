@@ -6,6 +6,7 @@
 
 #include <QtCore/QMap>
 #include <QtCore/QObject>
+#include <QtCore/QVariantList>
 
 #include "GPSCorrectionDiagnostics.h"
 #include "GPSCorrectionFrame.h"
@@ -61,6 +62,8 @@ public:
         FanoutSink admit;
     };
 
+    static Output admissionOnlyOutput(const QString& id, GPSCorrectionSource scope, Sink sink);
+
     explicit GPSCorrectionRouter(QObject* parent = nullptr, Clock clock = {});
     ~GPSCorrectionRouter() override;
 
@@ -112,6 +115,10 @@ public:
 
     qint64 nowMs() const { return _clock(); }
 
+    QVariantList sourceDiagnostics() const;
+    QVariantList sourceInstanceDiagnostics() const;
+    QVariantList destinationDiagnostics() const;
+
     static constexpr qint64 FRESHNESS_TIMEOUT_MS = GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS;
     static constexpr qint64 SWITCH_HOLD_DOWN_MS = GPSCorrectionSelector::SWITCH_HOLD_DOWN_MS;
     static constexpr qsizetype MAX_SOURCE_INSTANCES = GPSCorrectionSelector::MAX_SOURCE_INSTANCES;
@@ -133,7 +140,6 @@ private:
     void recordRejectedFrame(GPSCorrectionFrame frame, GPSCorrectionReason reason);
 
     static int _sourceIndex(GPSCorrectionSource source);
-    static Output _admissionOnlyOutput(const QString& id, GPSCorrectionSource scope, Sink sink);
     bool _submit(const GPSCorrectionFrame& frame, bool selected);
     enum class RetirementKind
     {

@@ -3,24 +3,24 @@
 # NTRIP client, RTCM parsing, and correction streaming
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        NTRIPError.h
-        NTRIPTransport.h
-        NTRIPConnectionStats.cc
-        NTRIPConnectionStats.h
-        NTRIPGgaProvider.cc
-        NTRIPGgaProvider.h
-        NTRIPHttpTransport.cc
-        NTRIPHttpTransport.h
-        NTRIPTransportConfig.cc
-        NTRIPTransportConfig.h
-        NTRIPManager.cc
-        NTRIPManager.h
-        NTRIPSourceTableController.cc
-        NTRIPSourceTableController.h
-        NTRIPSourceTable.cc
-        NTRIPSourceTable.h
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE NTRIPError.h
+            NTRIPTransport.h
+            NTRIPConnectionStats.cc
+            NTRIPConnectionStats.h
+            NTRIPGgaProvider.cc
+            NTRIPGgaProvider.h
+            NTRIPHttpTransport.cc
+            NTRIPHttpTransport.h
+            NTRIPConfiguration.cc
+            NTRIPConfiguration.h
+            NTRIPManager.cc
+            NTRIPManager.h
+            NTRIPSourceTableController.cc
+            NTRIPSourceTableController.h
+            NTRIPSourceTable.cc
+            NTRIPSourceTable.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -30,14 +30,12 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # ----------------------------------------------------------------------------
 qt_add_library(GPSNTRIPModule STATIC)
 
-qt_add_qml_module(GPSNTRIPModule
+qt_add_qml_module(
+    GPSNTRIPModule
     URI QGroundControl.GPS.NTRIP
     VERSION 1.0
     RESOURCE_PREFIX /qml
-    QML_FILES
-        NTRIPConnectionStatus.qml
-        NTRIPConnectionStatusRow.qml
-        NTRIPMountpointList.qml
+    QML_FILES NTRIPConnectionStatus.qml NTRIPConnectionStatusRow.qml NTRIPMountpointList.qml
     NO_PLUGIN
 )
 

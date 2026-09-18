@@ -1,14 +1,13 @@
 #pragma once
 
+#include <optional>
+
 #include <QtCore/QDateTime>
-#include <QtCore/QList>
 #include <QtCore/QMetaType>
 #include <QtCore/QString>
 #include <QtPositioning/QGeoPositionInfo>
 
-#include <optional>
-
-#include "GPSConstellation.h"
+#include "GPSAltitudeDatum.h"
 
 /// Receiver-independent data. Unknown metadata remains absent, never a manufactured zero.
 struct GPSObservation
@@ -25,11 +24,12 @@ struct GPSObservation
         Extrapolated
     };
 
-    enum class AltitudeDatum
+    enum class PositionUse
     {
-        Unknown,
-        MeanSeaLevel,
-        Ellipsoid
+        GroundStation,
+        Motion,
+        RemoteID,
+        Gga
     };
 
     QGeoPositionInfo position;
@@ -38,10 +38,10 @@ struct GPSObservation
     quint64 sessionId = 0;
     QString sourceId;
     FixQuality fixQuality = FixQuality::Unknown;
-    // A receiver can retain coordinates while explicitly declaring its navigation solution invalid.
+    // Coordinates can outlive a valid navigation solution.
     std::optional<bool> receiverFixValid = std::nullopt;
 
-    AltitudeDatum altitudeDatum = AltitudeDatum::Unknown;
+    GPSAltitudeDatum altitudeDatum = GPSAltitudeDatum::Unknown;
     std::optional<int> satellitesUsed;
     quint64 dopTimestampUs = 0;
     quint64 accuracyTimestampUs = 0;
@@ -49,55 +49,10 @@ struct GPSObservation
     std::optional<double> verticalDop;
     std::optional<double> altitudeEllipsoidMeters;
 
+    /// The owner separately enforces freshness and session authorization.
+    [[nodiscard]] std::optional<GPSObservation> projected(PositionUse use) const;
     bool usable() const;
     QGeoCoordinate coordinate() const;
     double heading() const;
-    /// Apply the ground-station accuracy policy without changing the raw observation.
-    QGeoPositionInfo acceptedPosition() const;
 };
 Q_DECLARE_METATYPE(GPSObservation)
-
-struct GPSSatellite
-{
-    using Constellation = GPSConstellation;
-
-    int id = 0;
-    int prn = 0;
-    Constellation constellation = Constellation::Unknown;
-    std::optional<bool> used;
-    std::optional<double> elevationDegrees;
-    std::optional<int> signalStrength;
-    std::optional<double> normalizedAzimuthDegrees;
-
-    std::optional<double> azimuthDegrees() const;
-};
-
-/// Independent original receipts; zero means the field has no accepted report.
-struct GPSSatelliteProvenance
-{
-    GPSSatellite::Constellation constellation = GPSSatellite::Constellation::Unknown;
-    quint64 inViewTimestampUs = 0;
-    quint64 inUseTimestampUs = 0;
-    std::optional<int> satellitesUsed;
-    // Present even for an empty GSA list; independent of visibility reports.
-    std::optional<QList<int>> usedSatelliteIds = std::nullopt;
-};
-
-struct GPSSatelliteObservation
-{
-    enum class UpdateMode
-    {
-        FullSnapshot,       // Omitted constellation/field retires its prior report through this snapshot receipt.
-        ConstellationDelta  // Only explicitly supplied view/use receipts replace state; omission preserves it.
-    };
-    quint64 monotonicTimestampUs = 0;
-    quint64 sessionId = 0;
-    QList<GPSSatellite> satellites;
-    QList<GPSSatelliteProvenance> provenance = {};
-    quint64 revision = 0;  // Monotonic publication order assigned by the accepted-observation store.
-    QString sourceId = {};
-    UpdateMode updateMode = UpdateMode::FullSnapshot;
-    int satellitesInViewCount() const;
-    int satellitesInUseCount() const;
-};
-Q_DECLARE_METATYPE(GPSSatelliteObservation)

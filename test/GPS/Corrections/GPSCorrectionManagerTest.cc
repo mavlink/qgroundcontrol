@@ -590,13 +590,20 @@ void GPSCorrectionManagerTest::_sourceTopologyDoesNotNotifyOnCounters()
     const auto frame =
         ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), GPSCorrectionFrame::monotonicNowMs(), 1005, true);
     corrections.acceptIngress(frame);
+    QCOMPARE(corrections.sources()[2].toMap().value(QStringLiteral("receivedFrames")).toULongLong(), 1ULL);
+    QCOMPARE(corrections.sourceInstances().size(), 1);
+    QCOMPARE(topology.size(), 0);
+    QCOMPARE(counters.size(), 0);
     corrections._refreshDiagnostics();
     QCOMPARE(topology.size(), 1);
     corrections.acceptIngress(frame);
+    QCOMPARE(corrections.sources()[2].toMap().value(QStringLiteral("receivedFrames")).toULongLong(), 2ULL);
     corrections._refreshDiagnostics();
     QCOMPARE(topology.size(), 1);
     QCOMPARE(counters.size(), 2);
     ntrip.reset();
+    QVERIFY(corrections.sourceInstances().isEmpty());
+    QCOMPARE(topology.size(), 1);
     corrections._refreshDiagnostics();
     QCOMPARE(topology.size(), 2);
     QVERIFY(corrections.sourceInstances().isEmpty());

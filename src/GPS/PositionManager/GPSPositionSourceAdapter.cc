@@ -18,17 +18,30 @@ GPSPositionSourceAdapter::GPSPositionSourceAdapter(QObject* parent, RuntimeSched
     if (_scheduler && _scheduler->thread() != thread()) {
         _scheduler = nullptr;
     }
-    connect(&_fallbackHealth, &GPSSourceHealth::positionChanged, this, &GPSPositionSourceAdapter::observationChanged);
+    if (_scheduler) {
+        connect(_scheduler, &QObject::destroyed, this, [this]() {
+            _scheduler = nullptr;
+            const QPointer<GPSPositionSourceAdapter> guard(this);
+            _disconnectSource();
+            if (guard) {
+                emit bindingChanged();
+            }
+        });
+    }
 }
 
 GPSPositionSourceAdapter::~GPSPositionSourceAdapter()
 {
     qCDebug(GPSPositionSourceAdapterLog) << this;
+    if (_scheduler) {
+        _scheduler->disconnect(this);
+    }
     _disconnectSource();
 }
 
 void GPSPositionSourceAdapter::_disconnectSource()
 {
+    observeHealth(false);
     for (const auto& connection : _connections) {
         QObject::disconnect(connection);
     }
@@ -67,19 +80,30 @@ void GPSPositionSourceAdapter::configure(QObject* producer, GPSSourceHealth* hea
     _platform = platform;
     _sessionId = sessionId;
     _fallbackHealth.reset();
-    if (!guard || generation != _generation || !_producer) {
+    if (!guard || generation != _generation) {
         return;
     }
-    _connections.append(connect(_producer, &QObject::destroyed, this, [this]() { emit bindingChanged(); }));
+    if (!_producer) {
+        emit bindingChanged();
+        return;
+    }
+    _connections.append(connect(_producer, &QObject::destroyed, this, [this]() {
+        _producer = nullptr;
+        _source = nullptr;
+        _disconnectSource();
+        emit bindingChanged();
+    }));
     if (_providedHealth) {
-        _connections.append(connect(_providedHealth, &GPSSourceHealth::positionChanged, this,
-                                    &GPSPositionSourceAdapter::observationChanged));
         _connections.append(connect(_providedHealth, &QObject::destroyed, this, [this]() {
+            observeHealth(false);
+            _providedHealth = nullptr;
             _active = false;
             emit bindingChanged();
         }));
     }
+    observeHealth(true);
     if (!_source) {
+        emit bindingChanged();
         return;
     }
     _connections.append(connect(_source, &QGeoPositionInfoSource::positionUpdated, this,
@@ -102,10 +126,26 @@ void GPSPositionSourceAdapter::configure(QObject* producer, GPSSourceHealth* hea
                 _fallbackHealth.invalidatePosition();
             }
         }));
+    emit bindingChanged();
+}
+
+void GPSPositionSourceAdapter::observeHealth(bool observe)
+{
+    auto* sourceHealth = observe ? health() : nullptr;
+    if (!sourceHealth) {
+        QObject::disconnect(std::exchange(_observationConnection, {}));
+    } else if (!_observationConnection) {
+        _observationConnection = connect(sourceHealth, &GPSSourceHealth::positionChanged, this, [this]() {
+            if (_providedHealth || _active) {
+                emit observationChanged();
+            }
+        });
+    }
 }
 
 void GPSPositionSourceAdapter::setActive(bool active)
 {
+    active = active && source();
     if (_active == active || !_producer) {
         return;
     }

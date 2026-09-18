@@ -4,6 +4,7 @@
 
 #include "GpsTestHelpers.h"
 #include "MAVLinkLib.h"
+#include "ManualScheduler.h"
 #include "MockLink.h"
 #include "PositionManager.h"
 #include "RemoteIDManager.h"
@@ -223,6 +224,165 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     QVERIFY(manager->gcsPositionUsable());
     QCOMPARE(positioning->gcsPosition(), fix.coordinate());
+}
+
+void RemoteIDManagerTest::_gpsAltitudePolicy_data()
+{
+    QTest::addColumn<bool>("fixed");
+    QTest::addColumn<bool>("faa");
+    QTest::addColumn<double>("altitude");
+    QTest::addColumn<double>("verticalAccuracy");
+    QTest::addColumn<double>("ellipsoid");
+    QTest::addColumn<bool>("usable");
+    QTest::newRow("fixed") << true << true << 500.0 << qQNaN() << qQNaN() << true;
+    QTest::newRow("accurate") << false << true << 500.0 << 1.0 << qQNaN() << true;
+    QTest::newRow("poor-vertical-accuracy") << false << true << 500.0 << 100.0 << qQNaN() << true;
+    QTest::newRow("no-vertical-accuracy") << false << true << 500.0 << qQNaN() << qQNaN() << true;
+    QTest::newRow("ellipsoid") << false << true << 500.0 << 100.0 << 550.0 << true;
+    QTest::newRow("ellipsoid-only") << false << true << qQNaN() << qQNaN() << 550.0 << true;
+    QTest::newRow("faa-missing-altitude") << false << true << qQNaN() << qQNaN() << qQNaN() << false;
+    QTest::newRow("eu-missing-altitude") << false << false << qQNaN() << qQNaN() << qQNaN() << true;
+}
+
+void RemoteIDManagerTest::_gpsAltitudePolicy()
+{
+    QFETCH(bool, fixed);
+    QFETCH(bool, faa);
+    QFETCH(double, altitude);
+    QFETCH(double, verticalAccuracy);
+    QFETCH(double, ellipsoid);
+    QFETCH(bool, usable);
+    auto* settings = SettingsManager::instance()->remoteIDSettings();
+    auto* manager = vehicle()->remoteIDManager();
+    auto* positioning = QGCPositionManager::instance();
+    const auto savedMode = positioning->sourceMode();
+    const auto savedLatitude = settings->latitudeFixed()->rawValue();
+    const auto savedLongitude = settings->longitudeFixed()->rawValue();
+    const auto savedAltitude = settings->altitudeFixed()->rawValue();
+    const auto restore = qScopeGuard([&]() {
+        settings->locationType()->setRawValue(_savedLocationType);
+        settings->latitudeFixed()->setRawValue(savedLatitude);
+        settings->longitudeFixed()->setRawValue(savedLongitude);
+        settings->altitudeFixed()->setRawValue(savedAltitude);
+        positioning->setSourceMode(savedMode);
+    });
+    ManualScheduler scheduler;
+    QObject producer;
+    GPSSourceHealth health(nullptr, &scheduler);
+    auto registration =
+        positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &producer, &health, 7);
+    positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
+    settings->region()->setRawValue(
+        int(faa ? RemoteIDSettings::RegionOperation::FAA : RemoteIDSettings::RegionOperation::EU));
+    settings->locationType()->setRawValue(fixed ? RemoteIDManager::FIXED : RemoteIDManager::LiveGNSS);
+    if (fixed) {
+        settings->latitudeFixed()->setRawValue(47);
+        settings->longitudeFixed()->setRawValue(8);
+        settings->altitudeFixed()->setRawValue(altitude);
+        QVERIFY(!positioning->acceptedObservation());
+    } else {
+        GPSObservation observation;
+        observation.sessionId = 7;
+        observation.receivedAt = QDateTime::currentDateTimeUtc();
+        observation.monotonicTimestampUs = scheduler.nowUs();
+        observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, altitude), observation.receivedAt);
+        observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+        if (qIsFinite(verticalAccuracy)) {
+            observation.position.setAttribute(QGeoPositionInfo::VerticalAccuracy, verticalAccuracy);
+        }
+        if (qIsFinite(ellipsoid)) {
+            observation.altitudeEllipsoidMeters = ellipsoid;
+        }
+        health.updateObservation(observation);
+        QVERIFY(positioning->acceptedObservation(GPSObservation::PositionUse::RemoteID));
+        if (!(verticalAccuracy <= 10)) {
+            QVERIFY(qIsNaN(positioning->gcsPosition().altitude()));
+        }
+    }
+    if (!usable) {
+        expectLogMessage("Vehicle.RemoteIDManager", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Altitude data is mandatory for FAA regions")));
+    }
+    QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
+    QCOMPARE(manager->gcsPositionUsable(), usable);
+    if (!usable) {
+        verifyExpectedLogMessage();
+    }
+    const double acceptedAltitude = qIsFinite(ellipsoid) ? ellipsoid : altitude;
+    const float expectedAltitude = usable && qIsFinite(acceptedAltitude) ? float(acceptedAltitude) : -1000.0f;
+    QTRY_VERIFY_WITH_TIMEOUT(
+        ([&]() {
+            mavlink_message_t message{};
+            if (!mockLink()->lastReceivedMavlinkMessage(MAVLINK_MSG_ID_OPEN_DRONE_ID_SYSTEM, message)) {
+                return false;
+            }
+            mavlink_open_drone_id_system_t system{};
+            mavlink_msg_open_drone_id_system_decode(&message, &system);
+            return system.operator_latitude == (usable ? 470000000 : 0) &&
+                   system.operator_longitude == (usable ? 80000000 : 0) &&
+                   system.operator_altitude_geo == expectedAltitude;
+        })(),
+        TestTimeout::mediumMs());
+}
+
+void RemoteIDManagerTest::_liveGpsArrivalBudget_data()
+{
+    QTest::addColumn<int>("utcJumpSeconds");
+    QTest::newRow("steady-utc") << 0;
+    QTest::newRow("utc-jumped-forward") << 86400;
+    QTest::newRow("utc-jumped-backward") << -86400;
+}
+
+void RemoteIDManagerTest::_liveGpsArrivalBudget()
+{
+    QFETCH(int, utcJumpSeconds);
+    auto* settings = SettingsManager::instance()->remoteIDSettings();
+    auto* manager = vehicle()->remoteIDManager();
+    auto* positioning = QGCPositionManager::instance();
+    const auto savedMode = positioning->sourceMode();
+    const auto restore = qScopeGuard([&]() {
+        settings->locationType()->setRawValue(_savedLocationType);
+        positioning->setSourceMode(savedMode);
+    });
+    ManualScheduler scheduler;
+    QObject producer;
+    GPSSourceHealth health(nullptr, &scheduler);
+    health.setFreshnessTimeoutMs(60000);
+    auto registration =
+        positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &producer, &health);
+    positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
+    settings->region()->setRawValue(int(RemoteIDSettings::RegionOperation::FAA));
+    settings->locationType()->setRawValue(RemoteIDManager::LiveGNSS);
+    GPSObservation observation;
+    observation.receivedAt = QDateTime::currentDateTimeUtc();
+    observation.monotonicTimestampUs = scheduler.nowUs();
+    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, 500), observation.receivedAt);
+    observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+    health.updateObservation(observation);
+    QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
+    QVERIFY(manager->gcsPositionUsable());
+
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds{4999}));
+    observation.receivedAt = observation.receivedAt.addSecs(utcJumpSeconds);
+    observation.position.setTimestamp(observation.receivedAt);
+    health.updateObservation(observation);
+    QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
+    QVERIFY(manager->gcsPositionUsable());
+
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds{1}));
+    QVERIFY(positioning->acceptedObservation(GPSObservation::PositionUse::RemoteID));
+    QVERIFY(!positioning->acceptedObservation(GPSObservation::PositionUse::RemoteID, std::chrono::milliseconds{5000}));
+    expectLogMessage("Vehicle.RemoteIDManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("GCS GPS data is not valid")));
+    QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
+    verifyExpectedLogMessage();
+    QVERIFY(!manager->gcsPositionUsable());
+    observation.receivedAt = QDateTime::currentDateTimeUtc();
+    observation.position.setTimestamp(observation.receivedAt);
+    observation.monotonicTimestampUs = scheduler.nowUs();
+    health.updateObservation(observation);
+    QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
+    QVERIFY(manager->gcsPositionUsable());
 }
 
 UT_REGISTER_TEST(RemoteIDManagerTest, TestLabel::Integration, TestLabel::Vehicle)

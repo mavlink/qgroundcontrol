@@ -1,5 +1,8 @@
 #pragma once
 
+#include <chrono>
+#include <optional>
+
 #include <QtCore/QDateTime>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -7,6 +10,8 @@
 
 #include "GPSObservation.h"
 #include "ScheduledTask.h"
+
+struct GPSSatelliteObservation;
 
 /// Session health is independent of transport readiness and RTK survey-in validity.
 class GPSSourceHealth : public QObject
@@ -48,7 +53,11 @@ public:
 
     GPSObservation observation() const { return _observation; }
 
-    std::optional<GPSObservation> acceptedObservation() const;
+    quint64 observationRevision() const { return _observationRevision; }
+
+    std::optional<GPSObservation> acceptedObservation(
+        GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation,
+        std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
 
     QGeoCoordinate coordinate() const { return usable() ? _observation.coordinate() : QGeoCoordinate(); }
 
@@ -77,8 +86,10 @@ private:
     void _setState(State state);
     void _schedulePositionExpiry();
     qint64 _age(quint64 timestampUs) const;
+    std::chrono::microseconds _remaining(quint64 timestampUs,
+                                         std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
 
-    void _updateFixSatelliteCount(int count, qint64 ageMs);
+    void _scheduleFixSatelliteExpiry();
 
     int _freshnessTimeoutMs = FRESHNESS_TIMEOUT_MS;
     GPSObservation _observation;
@@ -90,5 +101,7 @@ private:
     int _satellitesInViewCount = -1;
     int _satellitesInUseCount = -1;
     int _fixSatellitesInUseCount = -1;
+    quint64 _fixSatellitesTimestampUs = 0;
+    quint64 _observationRevision = 0;
     quint64 _revision = 0;
 };

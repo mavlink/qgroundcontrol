@@ -23,18 +23,18 @@ public:
 
     /// Open the device, retrying briefly while it settles after startup. Aborts the
     /// retry promptly if requestStop is set, so a disconnect can't be stalled by it.
-    OpenResult open() override;
+    GPSOpenResult open() override;
 
     /// True once the port hits an error the receive loop should stop retrying past.
     bool fatalError() const override;
 
-    ReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
+    GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
 #ifdef Q_OS_ANDROID
     /// Legacy synchronous configuration writes use the backend timeout; bounded writes are unsupported.
-    WriteResult write(const uint8_t* buffer, int length) override;
+    GPSWriteResult write(const uint8_t* buffer, int length) override;
 #endif
     std::chrono::milliseconds configurationWriteTimeout() const override;
-    WriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
+    GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
     std::chrono::milliseconds correctionWriteTimeout(int length) const override;
     bool setBaudrate(unsigned baudrate) override;
 

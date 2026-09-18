@@ -176,13 +176,51 @@ void NTRIPManager::init()
                 connect(fact, &Fact::rawValueChanged, this, [this]() { _settingsDebounceTimer.start(); });
             }
         }
+        const auto configureGga = [this]() {
+            _ggaProvider.configure(
+                {static_cast<NTRIPGgaProvider::PositionSource>(
+                     _settings->ntripGgaPositionSource()->rawValue().toUInt()),
+                 std::chrono::milliseconds(_settings->ntripGgaIntervalSec()->rawValue().toUInt() * qint64(1000))});
+        };
+        configureGga();
+        connect(_settings->ntripGgaPositionSource(), &Fact::rawValueChanged, this, configureGga);
+        connect(_settings->ntripGgaIntervalSec(), &Fact::rawValueChanged, this, configureGga);
     }
-
-    _ggaProvider.init(_settings);
 
     if (_settings) {
         _onSettingChanged();
     }
+}
+
+void NTRIPManager::setGgaPositionProvider(NTRIPGgaProvider::PositionSource source,
+                                          NTRIPGgaProvider::PositionProvider provider)
+{
+    if (_initialized || _transport) {
+        qCWarning(NTRIPManagerLog) << "Inject GGA position providers before initializing NTRIP";
+        return;
+    }
+    _ggaProvider.setPositionProvider(source, std::move(provider));
+}
+
+NTRIPConfiguration NTRIPManager::_configFromSettings() const
+{
+    const auto read = [](Fact* fact, const QVariant& fallback) { return fact ? fact->rawValue() : fallback; };
+    NTRIPConfiguration config;
+    auto& connection = config.connection;
+    connection.host = read(_settings->ntripServerHostAddress(), connection.host).toString();
+    connection.port = read(_settings->ntripServerPort(), connection.port).toInt();
+    connection.username = read(_settings->ntripUsername(), connection.username).toString();
+    connection.password = read(_settings->ntripPassword(), connection.password).toString();
+    connection.mountpoint = read(_settings->ntripMountpoint(), connection.mountpoint).toString();
+    connection.useTls = read(_settings->ntripUseTls(), connection.useTls).toBool();
+    connection.allowSelfSignedCerts =
+        read(_settings->ntripAllowSelfSignedCerts(), connection.allowSelfSignedCerts).toBool();
+    config.filter.whitelist = read(_settings->ntripWhitelist(), config.filter.whitelist).toString();
+    auto& udpForward = config.udpForward;
+    udpForward.enabled = read(_settings->ntripUdpForwardEnabled(), udpForward.enabled).toBool();
+    udpForward.address = read(_settings->ntripUdpTargetAddress(), udpForward.address).toString();
+    udpForward.port = static_cast<quint16>(read(_settings->ntripUdpTargetPort(), udpForward.port).toUInt());
+    return config;
 }
 
 // -----------------------------------------------------------------------------
@@ -208,7 +246,7 @@ void NTRIPManager::fetchMountpoints()
     if (MultiVehicleManager* mvm = MultiVehicleManager::instance(); mvm && mvm->activeVehicle()) {
         sortCoord = mvm->activeVehicle()->coordinate();
     }
-    _sourceTableController.fetch(NTRIPTransportConfig::fromSettings(*_settings), sortCoord);
+    _sourceTableController.fetch(_configFromSettings().connection, sortCoord);
 }
 
 // -----------------------------------------------------------------------------
@@ -230,6 +268,8 @@ bool NTRIPManager::_dispatch(Event ev, const QString& detail)
 
 void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail)
 {
+    const QPointer<NTRIPManager> guard(this);
+    const quint64 revision = ++_stateRevision;
     const ConnectionStatus from = _connectionStatus;
     const bool stateChanged = (from != to);
     const QString msg = detail.isEmpty() ? _defaultMessageFor(to) : detail;
@@ -247,8 +287,14 @@ void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail)
         qCDebug(NTRIPManagerLog) << "NTRIP state" << static_cast<int>(from) << "→" << static_cast<int>(to) << msg;
         emit connectionStatusChanged();
     }
+    if (!guard || _stateRevision != revision) {
+        return;
+    }
     if (msgChanged) {
         emit statusMessageChanged();
+    }
+    if (!guard || _stateRevision != revision) {
+        return;
     }
 
     // Entry action runs on every dispatched transition, including self-transitions
@@ -275,50 +321,76 @@ QString NTRIPManager::_defaultMessageFor(ConnectionStatus state)
 
 void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to)
 {
-    // Per-state side effects. Teardown helpers are idempotent — safe to call
-    // from any state where the resource may or may not be active.
+    const QPointer<NTRIPManager> guard(this);
+    const quint64 revision = _stateRevision;
+    const auto current = [this, guard, revision]() { return guard && _stateRevision == revision; };
     switch (to) {
         case ConnectionStatus::Disconnected:
+        case ConnectionStatus::Error:
             _cancelReconnect();
             _teardownTransport();
+            if (!current()) {
+                return;
+            }
             _ggaProvider.stop();
+            if (!current()) {
+                return;
+            }
             _stats.stop();
+            if (!current()) {
+                return;
+            }
             _applyUdpForwarderConfig({});
+            if (!current()) {
+                return;
+            }
             _setSecurityWarning({});
+            if (!current()) {
+                return;
+            }
             _runningConfig = {};
             break;
 
         case ConnectionStatus::Connecting:
-            _cancelReconnect();    // may have arrived here via Reconnecting → StartRequested
+            _cancelReconnect();
             _setSecurityWarning({});
-            _teardownTransport();  // clear any lingering transport from a prior attempt
-            _startTransport();     // may recursively dispatch ConfigInvalid → Error
+            if (!current()) {
+                return;
+            }
+            _teardownTransport();
+            if (current()) {
+                _startTransport();
+            }
             break;
 
         case ConnectionStatus::Connected:
             _resetReconnectAttempts();
             _casterStatus = CasterStatus::CasterConnected;
             emit casterStatusChanged(_casterStatus);
+            if (!current()) {
+                return;
+            }
             _ggaProvider.start(_transport);
-            _stats.start();
+            if (current()) {
+                _stats.start();
+            }
             break;
 
         case ConnectionStatus::Reconnecting:
             _teardownTransport();
+            if (!current()) {
+                return;
+            }
             _ggaProvider.stop();
+            if (!current()) {
+                return;
+            }
             _stats.stop();
-            _scheduleReconnect();
+            if (current()) {
+                _scheduleReconnect();
+            }
             break;
 
-        case ConnectionStatus::Error:
-            _cancelReconnect();
-            _teardownTransport();
-            _ggaProvider.stop();
-            _stats.stop();
-            _applyUdpForwarderConfig({});
-            _setSecurityWarning({});
-            _runningConfig = {};
-            break;
     }
 }
 
@@ -335,7 +407,9 @@ void NTRIPManager::_teardownTransport()
     }
     transport->disconnect(this);
     transport->stop();
-    transport->deleteLater();
+    if (transport) {
+        transport->deleteLater();
+    }
 }
 
 int NTRIPManager::_reconnectBackoffMs() const
@@ -359,60 +433,73 @@ void NTRIPManager::_scheduleReconnect()
 
 void NTRIPManager::_startTransport()
 {
+    const QPointer<NTRIPManager> guard(this);
+    const quint64 revision = _stateRevision;
+    const auto sameState = [this, guard, revision]() { return guard && _stateRevision == revision; };
     if (!_settings) {
         _dispatch(Event::ConfigInvalid, tr("Settings unavailable"));
         return;
     }
 
-    NTRIPTransportConfig config = NTRIPTransportConfig::fromSettings(*_settings);
+    const NTRIPConfiguration config = _configFromSettings();
+    const auto& connection = config.connection;
 
-    _applyUdpForwarderConfig(config);
+    _applyUdpForwarderConfig(config.udpForward);
+    if (!sameState()) {
+        return;
+    }
 
-    if (const QString err = config.streamValidationError(); !err.isEmpty()) {
-        qCWarning(NTRIPManagerLog) << "NTRIP config invalid:" << err << "host=" << config.host
-                                   << " port=" << config.port;
+    if (const QString err = connection.streamValidationError(); !err.isEmpty()) {
+        qCWarning(NTRIPManagerLog) << "NTRIP config invalid:" << err << "host=" << connection.host
+                                   << " port=" << connection.port;
         _dispatch(Event::ConfigInvalid, err);
         return;
     }
 
-    qCDebug(NTRIPManagerLog) << "startTransport: host=" << config.host << " port=" << config.port
-                             << " mount=" << config.mountpoint;
+    qCDebug(NTRIPManagerLog) << "startTransport: host=" << connection.host << " port=" << connection.port
+                             << " mount=" << connection.mountpoint;
 
     // Replace the generic "Connecting..." with a host-specific message.
-    const QString msg = tr("Connecting to %1:%2...").arg(config.host).arg(config.port);
+    const QString msg = tr("Connecting to %1:%2...").arg(connection.host).arg(connection.port);
     if (_statusMessage != msg) {
         _statusMessage = msg;
         emit statusMessageChanged();
     }
+    if (!sameState()) {
+        return;
+    }
 
     _stats.reset();
+    if (!sameState()) {
+        return;
+    }
     _runningConfig = config;
 
     if (_injectedTransport) {
         _transport = _injectedTransport;
         _injectedTransport = nullptr;
     } else {
-        _transport = new NTRIPHttpTransport(config, this);
+        _transport = new NTRIPHttpTransport(config.connection, config.filter, this);
     }
 
     const QPointer<NTRIPTransport> transport = _transport;
     const QPointer<GPSCorrectionManager> correctionManager = _correctionManager;
     if (correctionManager) {
         QUrl endpoint;
-        endpoint.setScheme(config.useTls ? QStringLiteral("ntrips") : QStringLiteral("ntrip"));
-        endpoint.setHost(config.host);
-        endpoint.setPort(config.port);
-        endpoint.setPath(QLatin1Char('/') + config.mountpoint);
+        endpoint.setScheme(connection.useTls ? QStringLiteral("ntrips") : QStringLiteral("ntrip"));
+        endpoint.setHost(connection.host);
+        endpoint.setPort(connection.port);
+        endpoint.setPath(QLatin1Char('/') + connection.mountpoint);
         auto registration =
             correctionManager->registerSource(GPSCorrectionSource::Ntrip, endpoint.toString(QUrl::FullyEncoded));
-        if (!transport || _transport != transport) {
+        if (!sameState() || !transport || _transport != transport) {
             return;
         }
         _correctionRegistration = std::move(registration);
     }
     const auto token = _correctionRegistration.token();
-    const auto current = [this, transport, token, registered = !correctionManager.isNull()]() {
-        return transport && _transport == transport && (!registered || token.valid());
+    const auto current = [this, guard, transport, token, registered = !correctionManager.isNull()]() {
+        return guard && transport && _transport == transport && (!registered || token.valid());
     };
     // Error handling may retire the emitting transport.
     connect(
@@ -435,9 +522,7 @@ void NTRIPManager::_startTransport()
         _transport, &NTRIPTransport::correctionFrameReceived, this,
         [this, current, correctionManager, token](const RTCMFrameDecoder::Result& frame) {
             if (correctionManager) {
-                const auto rejection = frame.valid ? GPSCorrectionReason::None : GPSCorrectionReason::InvalidFrame;
-                correctionManager->acceptIngress(token.event(frame.data, frame.receivedAtMs, frame.messageId,
-                                                             frame.valid, frame.filtered, rejection));
+                correctionManager->acceptIngress(token.event(frame));
             }
             if (current() && frame.valid && !frame.filtered) {
                 _rtcmDataReceived(frame);
@@ -461,6 +546,8 @@ void NTRIPManager::_startTransport()
 
 void NTRIPManager::_onTransportError(NTRIPError code, const QString& detail)
 {
+    const QPointer<NTRIPManager> guard(this);
+    const quint64 revision = _stateRevision;
     if (_connectionStatus != ConnectionStatus::Connecting && _connectionStatus != ConnectionStatus::Connected) {
         return;
     }
@@ -471,6 +558,9 @@ void NTRIPManager::_onTransportError(NTRIPError code, const QString& detail)
     if (_casterStatus != caster) {
         _casterStatus = caster;
         emit casterStatusChanged(_casterStatus);
+    }
+    if (!guard || _stateRevision != revision) {
+        return;
     }
 
     if (_isEnabled() && isRetryable(code)) {
@@ -500,7 +590,12 @@ void NTRIPManager::_setSecurityWarning(const QString& warning)
 
 void NTRIPManager::_rtcmDataReceived(const RTCMFrameDecoder::Result& frame)
 {
+    const QPointer<NTRIPManager> guard(this);
+    const quint64 revision = _stateRevision;
     _stats.recordMessage(frame.data.size(), frame.messageId, frame.receivedAtMs);
+    if (!guard || _stateRevision != revision) {
+        return;
+    }
     if (!_correctionManager) {
         qCWarning(NTRIPManagerLog) << "Correction manager not ready; dropping" << frame.data.size() << "bytes";
     }
@@ -517,6 +612,8 @@ bool NTRIPManager::_isEnabled() const
 
 void NTRIPManager::_onSettingChanged()
 {
+    const QPointer<NTRIPManager> guard(this);
+    const quint64 revision = _stateRevision;
     if (!_settings) {
         return;
     }
@@ -541,35 +638,34 @@ void NTRIPManager::_onSettingChanged()
         return;
     }
 
-    // Active — classify the diff to avoid unnecessary reconnects.
-    // Hot (host, port, creds, mountpoint, TLS) requires a new TCP handshake.
-    // Warm (UDP sink) reconfigures the sidecar in place.
-    // Cold (whitelist) is pushed to the live parser; the caster doesn't care.
-    const NTRIPTransportConfig newConfig = NTRIPTransportConfig::fromSettings(*_settings);
+    const NTRIPConfiguration newConfig = _configFromSettings();
 
-    if (newConfig.transportDiffers(_runningConfig)) {
+    if (newConfig.connection != _runningConfig.connection) {
         qCDebug(NTRIPManagerLog) << "NTRIP transport-affecting setting changed, reconnecting";
         _dispatch(Event::HotReconfigure);
         return;
     }
 
-    if (newConfig.udpForwardDiffers(_runningConfig)) {
+    if (newConfig.udpForward != _runningConfig.udpForward) {
         qCDebug(NTRIPManagerLog) << "NTRIP UDP forward settings changed, reconfiguring in place";
-        _applyUdpForwarderConfig(newConfig);
+        _applyUdpForwarderConfig(newConfig.udpForward);
+    }
+    if (!guard || _stateRevision != revision) {
+        return;
     }
 
-    if (newConfig.whitelistDiffers(_runningConfig) && _transport) {
+    if (newConfig.filter != _runningConfig.filter && _transport) {
         qCDebug(NTRIPManagerLog) << "NTRIP RTCM whitelist changed, applying to live parser";
-        _transport->setRtcmWhitelist(NTRIPTransportConfig::parseWhitelist(newConfig.whitelist));
+        _transport->setRtcmWhitelist(newConfig.filter.messageIds());
     }
-
-    _runningConfig = newConfig;
+    if (guard && _stateRevision == revision) {
+        _runningConfig = newConfig;
+    }
 }
 
-void NTRIPManager::_applyUdpForwarderConfig(const NTRIPTransportConfig& config)
+void NTRIPManager::_applyUdpForwarderConfig(const NTRIPUdpForwardConfig& config)
 {
     if (_correctionManager) {
-        _correctionManager->configureNtripUdpOutput(config.udpForwardEnabled, config.udpTargetAddress,
-                                                    config.udpTargetPort);
+        _correctionManager->configureNtripUdpOutput(config.enabled, config.address, config.port);
     }
 }

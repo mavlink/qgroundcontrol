@@ -26,7 +26,7 @@ public:
         double vxMetersPerSec;  // X velocity in NED frame in meter / s
         double vyMetersPerSec;  // Y velocity in NED frame in meter / s
         double vzMetersPerSec;  // Z velocity in NED frame in meter / s
-        double pos_std_dev[3];  // -1 for unknown
+        double pos_std_dev[3];
     };
 
     /// Mavlink defined motion reporting capabilities
