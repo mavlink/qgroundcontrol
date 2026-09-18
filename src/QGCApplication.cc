@@ -762,14 +762,24 @@ bool QGCApplication::notify(QObject* receiver, QEvent* event)
 {
     const bool result = QGuiApplication::notify(receiver, event);
 
-    if (!event->isAccepted()) {
-        if (const auto* keyEvent = dynamic_cast<const QKeyEvent*>(event)) {
-            const bool pressed = keyEvent->type() == QEvent::KeyPress;
-            const bool released = keyEvent->type() == QEvent::KeyRelease;
-            if (pressed || released) {
-                emit unacceptedKeyEvent(keyEvent->key(), keyEvent->modifiers().toInt(), pressed,
-                                        keyEvent->isAutoRepeat());
-            }
+    // QQuickWindow delivers key events to the focused QML item internally. Only inspect
+    // the event once it has completed delivery through the main root window; otherwise
+    // the same physical key event can be observed at multiple QObject receivers and a
+    // one-shot shortcut (such as pixel tracking) can be dispatched multiple times.
+    if (receiver != _mainRootWindow) {
+        return result;
+    }
+
+    if (const auto* keyEvent = dynamic_cast<const QKeyEvent*>(event)) {
+        const bool pressed = keyEvent->type() == QEvent::KeyPress;
+        const bool released = keyEvent->type() == QEvent::KeyRelease;
+
+        // Releases must still be forwarded even if QML accepted them, so shortcut-held
+        // state is always cleared. Presses are forwarded only when normal QML handling
+        // left them unaccepted.
+        if (released || (pressed && !event->isAccepted())) {
+            emit unacceptedKeyEvent(keyEvent->key(), keyEvent->modifiers().toInt(), pressed,
+                                    keyEvent->isAutoRepeat());
         }
     }
 
