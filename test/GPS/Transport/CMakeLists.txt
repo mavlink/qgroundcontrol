@@ -23,6 +23,6 @@ else()
     )
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND (COMMAND add_qgc_test OR QGC_BUILD_ANDROID_SERIAL_TESTS))
     add_subdirectory(Android)
 endif()

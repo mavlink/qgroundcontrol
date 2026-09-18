@@ -13,7 +13,7 @@ void NTRIPGgaProvider::configure(const Configuration& configuration)
 {
     _cachedSource = configuration.source;
     _normalInterval = configuration.interval.count() > 0 ? configuration.interval : kDefaultInterval;
-    if (_retryPhase == RetryPhase::Normal) {
+    if (_retryPhase == RetryPhase::Normal && _timer.interval() != _normalInterval) {
         _timer.setInterval(_normalInterval);
     }
 }

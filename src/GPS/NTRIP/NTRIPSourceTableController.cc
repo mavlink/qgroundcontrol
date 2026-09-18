@@ -87,6 +87,13 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
         }
     }
 
+    if (cacheKey != _lastFetchKey) {
+        // Retire TLS connections authenticated under the previous certificate policy.
+        _networkManager->clearConnectionCache();
+        if (!current()) {
+            return;
+        }
+    }
     _cacheAge.invalidate();
     _sortCoord = sortCoord;
     _lastFetchKey = cacheKey;

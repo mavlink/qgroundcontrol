@@ -12,6 +12,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         CACHE STRING "GPS library components to build and test"
     )
     option(QGC_NO_SERIAL_LINK "Build without serial receiver support" OFF)
+    option(QGC_BUILD_ANDROID_SERIAL_TESTS "Build Linux-hosted Android serial compatibility tests" OFF)
     set(QGC_GPS_COMPONENTS_ENABLED ${QGC_GPS_COMPONENTS})
     foreach(component IN LISTS QGC_GPS_COMPONENTS_ENABLED)
         if(NOT component MATCHES

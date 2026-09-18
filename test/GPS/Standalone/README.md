@@ -68,6 +68,9 @@ The available components are `Core`, `NMEAProtocol`, `NMEA`, `Positioning`, `Tra
 `ReceiverTransports`, `RTCMFramer`, `RTCM`, and `Corrections`. The `Transport` library
 needs Qt Core and the logging library, not Qt Network or RTK configuration.
 Receiver transport tests additionally use Qt Test, not Qt Positioning.
+Linux standalone builds leave the Android serial compatibility harness disabled.
+Enable it with `-DQGC_BUILD_ANDROID_SERIAL_TESTS=ON` when Qt CorePrivate development
+files are available. Full Linux application test builds retain that harness.
 Core survey-status coverage stays with the Core component.
 All components are enabled by default. `NMEA` includes `NMEAProtocol`;
 `RTCM` and `Corrections` automatically include `RTCMFramer`.
@@ -83,6 +86,8 @@ fixed-base float wire limits. Its implementation belongs to `QGCGPSDriver`,
 not the transport dependency graph.
 
 `gpsBaseStationConfigError()` checks the native base configuration and wire limits.
+Fixed-base coordinates and altitude must be supplied explicitly; omitted fields
+are rejected, while explicit zero values remain valid.
 There is no wrapper exposing receiver settings that the active driver cannot use.
 Receiver identity and manufacturer matching remain in the RTK connection path;
 there is no separate capability catalog or profile policy.
@@ -118,8 +123,10 @@ Satellite value headers can be consumed without position headers.
 in both application and standalone builds, using the shared test scheduler for expiry.
 
 Position policy is explicit: the default retains the current ground-station
-accuracy filtering, motion additionally rejects unreliable course, and Remote ID
-can use measured ellipsoid altitude. GGA can use a valid raw receiver fix.
+accuracy filtering. Motion retains measured altitude and its reported uncertainty,
+while rejecting unreliable course. The FOLLOW_TARGET sender requires finite
+altitude; ArduPilot retains its separate home-altitude behavior. Remote ID can
+use measured ellipsoid altitude. GGA can use a valid raw receiver fix.
 Every accepted source-health view still expires with its original receipt.
 `GPSObservation::projected()` applies these four policies, including altitude datum.
 Consumers use the projection or the freshness-gated source-health API directly.
@@ -183,6 +190,8 @@ NTRIP configuration composes independent connection, RTCM-filter, and UDP-forwar
 values. The HTTP transport receives only connection/filter values; settings
 conversion and GGA setting subscriptions belong to `NTRIPManager`. `GPSManager`
 injects application position providers before initializing the facade.
+Source-table requests and cached results include the certificate policy in their
+identity. Changing it also retires pooled TLS connections.
 `NTRIPReentrancyTest` runs in the application harness, reusing its production
 objects. The same cases can run independently through `test/GPS/NTRIP/Standalone`;
 the application build does not create a second NTRIP executable.

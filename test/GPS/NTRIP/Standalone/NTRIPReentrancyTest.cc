@@ -2,7 +2,9 @@
 #include <functional>
 #include <memory>
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTimer>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QTcpServer>
 #include <QtTest/QSignalSpy>
@@ -103,6 +105,10 @@ private slots:
     void fetchNotificationReentry_data();
     void fetchNotificationReentry();
     void ggaSourceSelection();
+    void ggaSourceChangesPreserveCadence();
+    void ggaIntervalChangesRestartCadence_data();
+    void ggaIntervalChangesRestartCadence();
+    void ggaConfigurationPreservesFastRetry();
     void ggaCallbackStopsProvider();
 };
 
@@ -513,6 +519,106 @@ void NTRIPReentrancyTest::ggaSourceSelection()
     QCOMPARE(calls, (QList<Source>{Source::VehicleEKF}));
     QCOMPARE(transport.sentNmea.size(), 1);
     QVERIFY(provider.currentSource().isEmpty());
+}
+
+void NTRIPReentrancyTest::ggaSourceChangesPreserveCadence()
+{
+    using Source = NTRIPGgaProvider::PositionSource;
+    constexpr std::chrono::milliseconds INTERVAL{100};
+    NTRIPGgaProvider provider;
+    MockNTRIPTransport transport;
+    Source selected = Source::VehicleGPS;
+    bool usedSelectedSource = true;
+    for (const auto source : {Source::VehicleGPS, Source::RTKBase}) {
+        provider.setPositionProvider(source, [&, source]() {
+            usedSelectedSource &= source == selected;
+            return PositionResult{QGeoCoordinate(47, 8, 450), QString::number(static_cast<int>(source))};
+        });
+    }
+    provider.configure({selected, INTERVAL});
+    provider.start(&transport);
+    QCOMPARE(transport.sentNmea.size(), 1);
+
+    int sourceChanges = 0;
+    QTimer reconfigure;
+    connect(&reconfigure, &QTimer::timeout, this, [&]() {
+        if (transport.sentNmea.size() >= 4) {
+            reconfigure.stop();
+            provider.stop();
+            return;
+        }
+        selected = selected == Source::VehicleGPS ? Source::RTKBase : Source::VehicleGPS;
+        ++sourceChanges;
+        const auto sentBefore = transport.sentNmea.size();
+        provider.configure({selected, INTERVAL});
+        QCOMPARE(transport.sentNmea.size(), sentBefore);
+    });
+    // Keep changing sources until three scheduled sends survive reconfiguration.
+    reconfigure.start(0);
+    QTRY_COMPARE(transport.sentNmea.size(), 4);
+    reconfigure.stop();
+    provider.stop();
+    QVERIFY(sourceChanges > 3);
+    QVERIFY(usedSelectedSource);
+}
+
+void NTRIPReentrancyTest::ggaIntervalChangesRestartCadence_data()
+{
+    QTest::addColumn<int>("initialIntervalMs");
+    QTest::addColumn<int>("updatedIntervalMs");
+    QTest::newRow("shorter") << 3600000 << 100;
+    QTest::newRow("longer") << 100 << 1000;
+}
+
+void NTRIPReentrancyTest::ggaIntervalChangesRestartCadence()
+{
+    QFETCH(int, initialIntervalMs);
+    QFETCH(int, updatedIntervalMs);
+    using Source = NTRIPGgaProvider::PositionSource;
+    NTRIPGgaProvider provider;
+    MockNTRIPTransport transport;
+    provider.setPositionProvider(Source::VehicleGPS,
+                                 []() { return PositionResult{QGeoCoordinate(47, 8, 450), QStringLiteral("GPS")}; });
+    provider.setPositionProvider(Source::RTKBase,
+                                 []() { return PositionResult{QGeoCoordinate(48, 9, 460), QStringLiteral("RTK")}; });
+    provider.configure({Source::VehicleGPS, std::chrono::milliseconds{initialIntervalMs}});
+    provider.start(&transport);
+    QCOMPARE(transport.sentNmea.size(), 1);
+
+    QSignalSpy sourceChanged(&provider, &NTRIPGgaProvider::sourceChanged);
+    QElapsedTimer elapsed;
+    elapsed.start();
+    provider.configure({Source::RTKBase, std::chrono::milliseconds{updatedIntervalMs}});
+    QCOMPARE(transport.sentNmea.size(), 1);
+    QVERIFY(sourceChanged.wait());
+    provider.stop();
+    QCOMPARE(transport.sentNmea.size(), 2);
+    QCOMPARE(sourceChanged.first().first().toString(), QStringLiteral("RTK"));
+    // Allow coarse-timer early delivery, without constraining late CI scheduling.
+    QVERIFY(elapsed.elapsed() >= updatedIntervalMs * 4 / 5);
+}
+
+void NTRIPReentrancyTest::ggaConfigurationPreservesFastRetry()
+{
+    using Source = NTRIPGgaProvider::PositionSource;
+    NTRIPGgaProvider provider;
+    MockNTRIPTransport transport;
+    provider.configure({Source::VehicleGPS, std::chrono::hours{1}});
+    provider.setPositionProvider(Source::RTKBase,
+                                 []() { return PositionResult{QGeoCoordinate(47, 8, 450), QStringLiteral("RTK")}; });
+    QSignalSpy sourceChanged(&provider, &NTRIPGgaProvider::sourceChanged);
+    QElapsedTimer elapsed;
+    elapsed.start();
+    provider.start(&transport);
+    QVERIFY(transport.sentNmea.isEmpty());
+    provider.configure({Source::RTKBase, std::chrono::milliseconds{100}});
+    QVERIFY(transport.sentNmea.isEmpty());
+    QVERIFY(sourceChanged.wait());
+    QVERIFY(elapsed.elapsed() >= NTRIPGgaProvider::kFastRetryInterval.count() * 4 / 5);
+    QCOMPARE(transport.sentNmea.size(), 1);
+    QCOMPARE(provider.currentSource(), QStringLiteral("RTK"));
+    QTRY_COMPARE(transport.sentNmea.size(), 2);
+    provider.stop();
 }
 
 void NTRIPReentrancyTest::ggaCallbackStopsProvider()

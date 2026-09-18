@@ -17,7 +17,7 @@
 void FollowMeTest::_testFollowMe()
 {
     TestFixtures::SettingsFixture saved;
-    // The mock vehicle does not have a follow mode configured, so setFlightMode produces expected warnings.
+    // MockLink has no configured follow mode.
     ignoreLogMessage("FirmwarePlugin.PX4FirmwarePlugin", QtWarningMsg,
                      QRegularExpression("Unknown flight Mode"));
     ignoreLogMessage("Vehicle.Vehicle", QtWarningMsg,
@@ -38,28 +38,49 @@ void FollowMeTest::_motionPolicyReports_data()
 {
     QTest::addColumn<double>("speed");
     QTest::addColumn<bool>("hasCourse");
-    QTest::addColumn<bool>("hasVerticalAccuracy");
+    QTest::addColumn<double>("verticalAccuracy");
+    QTest::addColumn<double>("altitude");
     QTest::addColumn<bool>("hasHorizontalAccuracy");
     QTest::addColumn<bool>("hasPreviousReport");
-    QTest::newRow("moving") << 2.0 << true << true << true << false;
-    QTest::newRow("moving-after-previous-report") << 2.0 << true << true << true << true;
-    QTest::newRow("slow") << 0.1 << true << true << true << false;
-    QTest::newRow("no-course") << 2.0 << false << true << true << false;
-    QTest::newRow("no-motion-or-vertical-attributes") << qQNaN() << false << false << true << false;
-    QTest::newRow("no-horizontal-accuracy") << 2.0 << true << true << false << false;
+    QTest::addColumn<bool>("ardupilot");
+    QTest::newRow("moving") << 2.0 << true << 1.0 << 500.0 << true << false << false;
+    QTest::newRow("moving-after-previous-report") << 2.0 << true << 1.0 << 500.0 << true << true << false;
+    QTest::newRow("slow") << 0.1 << true << 1.0 << 500.0 << true << false << false;
+    QTest::newRow("no-course") << 2.0 << false << 1.0 << 500.0 << true << false << false;
+    QTest::newRow("no-motion-or-vertical-attributes") << qQNaN() << false << qQNaN() << 500.0 << true << false << false;
+    QTest::newRow("uncertain-altitude") << 2.0 << true << 11.0 << 500.0 << true << false << false;
+    QTest::newRow("uncertain-altitude-after-report") << 2.0 << true << 11.0 << 500.0 << true << true << false;
+    QTest::newRow("missing-vertical-accuracy-after-report") << 2.0 << true << qQNaN() << 500.0 << true << true << false;
+    QTest::newRow("missing-altitude") << 2.0 << true << 1.0 << qQNaN() << true << false << false;
+    QTest::newRow("missing-altitude-after-report") << 2.0 << true << 1.0 << qQNaN() << true << true << false;
+    QTest::newRow("infinite-altitude") << 2.0 << true << 1.0 << qInf() << true << false << false;
+    QTest::newRow("no-horizontal-accuracy") << 2.0 << true << 1.0 << 500.0 << false << false << false;
+    QTest::newRow("ardupilot-home-altitude") << 2.0 << true << 1.0 << 500.0 << true << false << true;
+    QTest::newRow("ardupilot-2d-after-report") << 2.0 << true << qQNaN() << qQNaN() << true << true << true;
 }
 
 void FollowMeTest::_motionPolicyReports()
 {
     QFETCH(double, speed);
     QFETCH(bool, hasCourse);
-    QFETCH(bool, hasVerticalAccuracy);
+    QFETCH(double, verticalAccuracy);
+    QFETCH(double, altitude);
     QFETCH(bool, hasHorizontalAccuracy);
     QFETCH(bool, hasPreviousReport);
+    QFETCH(bool, ardupilot);
     TestFixtures::SettingsFixture saved;
     saved.setFactValue(SettingsManager::instance()->appSettings()->followTarget(), 0);
-    _connectMockLinkNoInitialConnectSequence();
+    if (ardupilot) {
+        _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    } else {
+        _connectMockLinkNoInitialConnectSequence();
+    }
     QVERIFY(vehicle());
+    if (ardupilot) {
+        QTRY_VERIFY_WITH_TIMEOUT(vehicle()->homePosition().isValid() && qIsFinite(vehicle()->homePosition().altitude()),
+                                 TestTimeout::mediumMs());
+    }
+    const uint32_t messageId = ardupilot ? MAVLINK_MSG_ID_GLOBAL_POSITION_INT : MAVLINK_MSG_ID_FOLLOW_TARGET;
     auto* positioning = QGCPositionManager::instance();
     const auto savedMode = positioning->sourceMode();
     const auto restore = qScopeGuard([&]() { positioning->setSourceMode(savedMode); });
@@ -73,12 +94,12 @@ void FollowMeTest::_motionPolicyReports()
     observation.sessionId = 7;
     observation.monotonicTimestampUs = scheduler.nowUs();
     observation.receivedAt = QDateTime::currentDateTimeUtc();
-    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, 500), observation.receivedAt);
+    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, altitude), observation.receivedAt);
     if (hasHorizontalAccuracy) {
         observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
     }
-    if (hasVerticalAccuracy) {
-        observation.position.setAttribute(QGeoPositionInfo::VerticalAccuracy, 1);
+    if (qIsFinite(verticalAccuracy)) {
+        observation.position.setAttribute(QGeoPositionInfo::VerticalAccuracy, verticalAccuracy);
     }
     if (hasCourse) {
         observation.position.setAttribute(QGeoPositionInfo::Direction, 90);
@@ -93,38 +114,42 @@ void FollowMeTest::_motionPolicyReports()
         previousObservation.position.setCoordinate(QGeoCoordinate(46, 7, 400));
         health.updateObservation(previousObservation);
         QVERIFY(QMetaObject::invokeMethod(&follow, "_sendGCSMotionReport", Qt::DirectConnection));
-        QTRY_COMPARE_WITH_TIMEOUT(mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_FOLLOW_TARGET), 1,
-                                  TestTimeout::mediumMs());
+        QTRY_COMPARE_WITH_TIMEOUT(mockLink()->receivedMavlinkMessageCount(messageId), 1, TestTimeout::mediumMs());
         QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
         observation.monotonicTimestampUs = scheduler.nowUs();
     }
     health.updateObservation(observation);
-    const int previousReportCount = mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_FOLLOW_TARGET);
+    const int previousReportCount = mockLink()->receivedMavlinkMessageCount(messageId);
     QSignalSpy sent(vehicle(), &Vehicle::messagesSentChanged);
     QVERIFY(QMetaObject::invokeMethod(&follow, "_sendGCSMotionReport", Qt::DirectConnection));
-    QCOMPARE(sent.size(), hasHorizontalAccuracy ? 1 : 0);
-    if (!hasHorizontalAccuracy) {
+    const bool expectedReport = hasHorizontalAccuracy && (ardupilot || qIsFinite(altitude));
+    QCOMPARE(sent.size(), expectedReport ? 1 : 0);
+    if (!expectedReport) {
         return;
     }
-    QTRY_COMPARE_WITH_TIMEOUT(mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_FOLLOW_TARGET),
-                              previousReportCount + 1, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(mockLink()->receivedMavlinkMessageCount(messageId), previousReportCount + 1,
+                              TestTimeout::mediumMs());
     mavlink_message_t message{};
-    QVERIFY(mockLink()->lastReceivedMavlinkMessage(MAVLINK_MSG_ID_FOLLOW_TARGET, message));
-    mavlink_follow_target_t report{};
-    mavlink_msg_follow_target_decode(&message, &report);
-    QCOMPARE(report.lat, 470000000);
-    QCOMPARE(report.lon, 80000000);
-    QVERIFY(report.est_capabilities & (1 << FollowMe::POS));
-    const bool reliableCourse = hasCourse && speed >= 0.5;
-    QCOMPARE(bool(report.est_capabilities & (1 << FollowMe::HEADING)), reliableCourse);
-    QCOMPARE(bool(report.est_capabilities & (1 << FollowMe::VEL)), reliableCourse);
-    QVERIFY(qAbs(report.vel[0]) < 0.0001);
-    QCOMPARE(report.vel[1], reliableCourse ? float(speed) : 0.0f);
-    QCOMPARE(report.position_cov[2], hasVerticalAccuracy ? 1.0f : -1.0f);
-    if (hasVerticalAccuracy) {
-        QCOMPARE(report.alt, 500.0f);
+    QVERIFY(mockLink()->lastReceivedMavlinkMessage(messageId, message));
+    if (ardupilot) {
+        mavlink_global_position_int_t report{};
+        mavlink_msg_global_position_int_decode(&message, &report);
+        QCOMPARE(report.lat, 470000000);
+        QCOMPARE(report.lon, 80000000);
+        QCOMPARE(report.alt, static_cast<int32_t>(vehicle()->homePosition().altitude() * 1000));
     } else {
-        QVERIFY(qIsNaN(report.alt));
+        mavlink_follow_target_t report{};
+        mavlink_msg_follow_target_decode(&message, &report);
+        QCOMPARE(report.lat, 470000000);
+        QCOMPARE(report.lon, 80000000);
+        QVERIFY(report.est_capabilities & (1 << FollowMe::POS));
+        const bool reliableCourse = hasCourse && speed >= 0.5;
+        QCOMPARE(bool(report.est_capabilities & (1 << FollowMe::HEADING)), reliableCourse);
+        QCOMPARE(bool(report.est_capabilities & (1 << FollowMe::VEL)), reliableCourse);
+        QVERIFY(qAbs(report.vel[0]) < 0.0001);
+        QCOMPARE(report.vel[1], reliableCourse ? float(speed) : 0.0f);
+        QCOMPARE(report.position_cov[2], qIsFinite(verticalAccuracy) ? float(verticalAccuracy) : -1.0f);
+        QCOMPARE(report.alt, float(altitude));
     }
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(5)));
     sent.clear();

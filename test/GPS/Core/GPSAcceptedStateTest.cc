@@ -61,6 +61,8 @@ void GPSAcceptedStateTest::_consumerPolicies_data()
     QTest::newRow("gcs-uncertain-altitude") << Use::GroundStation << 11.0 << 0.0 << qQNaN() << true;
     QTest::newRow("motion-stationary") << Use::Motion << 1.0 << 0.0 << 500.0 << false;
     QTest::newRow("motion-moving") << Use::Motion << 1.0 << 1.0 << 500.0 << true;
+    QTest::newRow("motion-uncertain-altitude") << Use::Motion << 11.0 << 1.0 << 500.0 << true;
+    QTest::newRow("motion-missing-vertical-accuracy") << Use::Motion << qQNaN() << 1.0 << 500.0 << true;
     QTest::newRow("remote-id-ellipsoid") << Use::RemoteID << 11.0 << 0.0 << 550.0 << true;
     QTest::newRow("gga-raw-altitude") << Use::Gga << 11.0 << 0.0 << 500.0 << true;
 }
@@ -78,7 +80,9 @@ void GPSAcceptedStateTest::_consumerPolicies()
     observation.monotonicTimestampUs = scheduler.nowUs();
     observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, 500), QDateTime::currentDateTimeUtc());
     observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1.0);
-    observation.position.setAttribute(QGeoPositionInfo::VerticalAccuracy, verticalAccuracy);
+    if (qIsFinite(verticalAccuracy)) {
+        observation.position.setAttribute(QGeoPositionInfo::VerticalAccuracy, verticalAccuracy);
+    }
     observation.position.setAttribute(QGeoPositionInfo::GroundSpeed, speed);
     observation.position.setAttribute(QGeoPositionInfo::Direction, 90.0);
     observation.position.setAttribute(QGeoPositionInfo::DirectionAccuracy, 1.0);

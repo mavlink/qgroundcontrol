@@ -9,9 +9,9 @@ std::optional<GPSObservation> GPSObservation::projected(PositionUse use) const
     GPSObservation accepted = *this;
     switch (use) {
         case PositionUse::Gga:
+        case PositionUse::Motion:
             break;
         case PositionUse::GroundStation:
-        case PositionUse::Motion:
             accepted.position.setCoordinate(coordinate());
             if (accepted.position.coordinate().type() != QGeoCoordinate::Coordinate3D) {
                 accepted.position.removeAttribute(QGeoPositionInfo::VerticalAccuracy);

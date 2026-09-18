@@ -370,6 +370,7 @@ void GPSDriverTest::_testSurveyInAccuracy()
     callback(driver, GPSCallbackType::surveyInStatus, &status, 0);
     QCOMPARE(capture.surveyInCount, 1);
     QCOMPARE(capture.surveyIn.meanAccuracyMeters.has_value(), known);
+    QCOMPARE(capture.surveyIn.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
     if (known) {
         QCOMPARE(*capture.surveyIn.meanAccuracyMeters, static_cast<double>(accuracy) / 1000.0);
     }
@@ -394,6 +395,15 @@ void GPSDriverTest::_testInvalidConfiguration_data()
     survey("negative-survey-duration", 2, -1);
     survey("overflowing-survey-duration", 2, 4294967296LL);
     const QString fixedMessage = QStringLiteral("Enter a valid fixed base position and accuracy");
+    QTest::newRow("missing-fixed-position") << GPSBaseStationConfig{.useFixedBase = true} << fixedMessage;
+    QTest::newRow("missing-fixed-latitude")
+        << GPSBaseStationConfig{.useFixedBase = true, .fixedBaseLongitude = 8, .fixedBaseAltitudeMeters = 500}
+        << fixedMessage;
+    QTest::newRow("missing-fixed-longitude")
+        << GPSBaseStationConfig{.useFixedBase = true, .fixedBaseLatitude = 47, .fixedBaseAltitudeMeters = 500}
+        << fixedMessage;
+    QTest::newRow("missing-fixed-altitude")
+        << GPSBaseStationConfig{.useFixedBase = true, .fixedBaseLatitude = 47, .fixedBaseLongitude = 8} << fixedMessage;
     const auto fixed = [&](const char* name, float altitude, float accuracy) {
         QTest::newRow(name) << GPSBaseStationConfig{.useFixedBase = true,
                                                     .fixedBaseLatitude = 47,

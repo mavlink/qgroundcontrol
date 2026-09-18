@@ -171,8 +171,16 @@ void NTRIPSourceTableControllerTest::testFetchAbortsOversizedSourceTable()
     QVERIFY(ctrl.fetchError().contains(QStringLiteral("too large")));
 }
 
-void NTRIPSourceTableControllerTest::testFetchAllowsSelfSignedSourceTableWhenConfigured()
+void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges_data()
 {
+    QTest::addColumn<bool>("duringFetch");
+    QTest::newRow("in-flight") << true;
+    QTest::newRow("cached") << false;
+}
+
+void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges()
+{
+    QFETCH(bool, duringFetch);
     if (!QSslSocket::supportsSsl()) {
         QSKIP("No TLS backend available");
     }
@@ -205,6 +213,19 @@ void NTRIPSourceTableControllerTest::testFetchAllowsSelfSignedSourceTableWhenCon
     NTRIPSourceTableController ctrl;
     ctrl.fetch(config);
 
+    if (!duringFetch) {
+        QTRY_COMPARE_WITH_TIMEOUT(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                                  TestTimeout::mediumMs());
+        QCOMPARE(ctrl.mountpointModel()->rowCount(), 1);
+    }
+    config.allowSelfSignedCerts = false;
+    ctrl.fetch(config);
+    QTRY_COMPARE_WITH_TIMEOUT(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error,
+                              TestTimeout::mediumMs());
+    QCOMPARE(ctrl.mountpointModel()->rowCount(), 0);
+
+    config.allowSelfSignedCerts = true;
+    ctrl.fetch(config);
     QTRY_VERIFY_WITH_TIMEOUT(ctrl.fetchStatus() != NTRIPSourceTableController::FetchStatus::InProgress,
                              TestTimeout::mediumMs());
     QVERIFY2(ctrl.fetchStatus() == NTRIPSourceTableController::FetchStatus::Success,

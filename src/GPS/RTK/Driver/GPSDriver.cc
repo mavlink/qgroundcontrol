@@ -150,6 +150,7 @@ int GPSDriver::handleCallback(int type, void* data1, int data2)
                 GPSSurveyInStatus out;
                 out.coordinate = QGeoCoordinate(status->latitude, status->longitude);
                 out.altitudeEllipsoidMeters = status->altitude;
+                out.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
                 // Ashtech and Femto use zero for unknown accuracy; UBX can round a valid value to zero.
                 if (status->mean_accuracy != 0 || (_type != GPSType::trimble && _type != GPSType::femto)) {
                     out.meanAccuracyMeters = static_cast<double>(status->mean_accuracy) / 1000.0;

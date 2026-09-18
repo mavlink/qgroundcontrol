@@ -47,6 +47,19 @@ qgc_add_cmake_contract_test(QGCTestTimeoutZero qgc-test-timeout-zero)
 qgc_add_cmake_contract_test(LibraryConsumerDefaults library-consumer-defaults LibraryConsumer)
 qgc_add_cmake_contract_test(LibraryConsumerMetadata library-consumer-metadata LibraryConsumer)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_CROSSCOMPILING)
+    add_test(
+        NAME CMake.GPSReceiverTransportsMinimal
+        COMMAND
+            "${CMAKE_COMMAND}" --fresh -G "${CMAKE_GENERATOR}" -S "${PROJECT_SOURCE_DIR}/test/GPS/Standalone" -B
+            "${CMAKE_CURRENT_BINARY_DIR}/GPSReceiverTransportsMinimal" "-DQt6_DIR=${Qt6_DIR}"
+            -DQGC_GPS_COMPONENTS=ReceiverTransports -DQGC_NO_SERIAL_LINK=ON
+            -DCMAKE_DISABLE_FIND_PACKAGE_Qt6CorePrivate=ON -DCMAKE_DISABLE_FIND_PACKAGE_Qt6Positioning=ON
+            -DCMAKE_DISABLE_FIND_PACKAGE_Qt6SerialPort=ON
+    )
+    set_tests_properties(CMake.GPSReceiverTransportsMinimal PROPERTIES LABELS "CMake;Unit")
+endif()
+
 add_test(
     NAME CMake.CustomDirEscape
     COMMAND

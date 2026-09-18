@@ -440,6 +440,11 @@ int FirmwarePlugin::versionCompare(const Vehicle *vehicle, const QString &compar
 
 void FirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, const FollowMe::GCSMotionReport &motionReport, uint8_t estimationCapabilities) const
 {
+    const float altitude = static_cast<float>(motionReport.altMetersAMSL);
+    if (!vehicle || !qIsFinite(altitude)) {
+        qCDebug(FirmwarePluginLog) << "Follow target requires a vehicle and finite altitude";
+        return;
+    }
     SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
         return;
@@ -451,7 +456,7 @@ void FirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, const FollowMe::GCSMo
     follow_target.est_capabilities = estimationCapabilities;
     follow_target.position_cov[0] = static_cast<float>(motionReport.pos_std_dev[0]);
     follow_target.position_cov[2] = static_cast<float>(motionReport.pos_std_dev[2]);
-    follow_target.alt = static_cast<float>(motionReport.altMetersAMSL);
+    follow_target.alt = altitude;
     follow_target.lat = motionReport.lat_int;
     follow_target.lon = motionReport.lon_int;
     follow_target.vel[0] = static_cast<float>(motionReport.vxMetersPerSec);

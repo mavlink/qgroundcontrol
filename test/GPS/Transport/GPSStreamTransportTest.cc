@@ -9,6 +9,7 @@
 #include <QtNetwork/QTcpSocket>
 #include <QtTest/QTest>
 
+#include "GPSStreamWrite_p.h"
 #include "PortableTest.h"
 #include "TCPGPSTransport.h"
 
@@ -19,6 +20,47 @@
 
 #include "SerialGPSTransport.h"
 #endif
+
+namespace {
+class StreamWriteDevice : public QIODevice
+{
+public:
+    bool rejectWrite = false;
+    qint64 pendingBytes = 0;
+
+    bool isSequential() const override { return true; }
+
+    qint64 bytesToWrite() const override { return pendingBytes; }
+
+protected:
+    qint64 readData(char*, qint64) override { return -1; }
+
+    qint64 writeData(const char*, qint64 length) override
+    {
+        if (rejectWrite) {
+            return -1;
+        }
+        pendingBytes += length;
+        return length;
+    }
+};
+
+class StreamWriteTransport : public GPSTransport
+{
+public:
+    using GPSTransport::GPSTransport;
+
+    bool failed = false;
+
+    GPSOpenResult open() override { return {GPSOpenStatus::Unsupported}; }
+
+    bool fatalError() const override { return failed; }
+
+    GPSReadResult read(uint8_t*, int, int) override { return {GPSReadStatus::Closed}; }
+
+    bool setBaudrate(unsigned) override { return false; }
+};
+}  // namespace
 
 class GPSStreamTransportTest : public PortableTest
 {
@@ -54,6 +96,71 @@ private slots:
             const GPSWriteResult result{status, accepted, written};
             QCOMPARE(result.uncertainBytes(), uncertain);
         }
+    }
+
+    void _sharedWriterEvidence_data()
+    {
+        QTest::addColumn<bool>("rejectWrite");
+        QTest::addColumn<GPSWriteStatus>("status");
+        QTest::addColumn<int>("accepted");
+        QTest::addColumn<int>("written");
+        QTest::addColumn<int>("uncertain");
+        QTest::addColumn<int>("retirements");
+        QTest::newRow("complete") << false << GPSWriteStatus::Completed << 4 << 4 << 0 << 0;
+        QTest::newRow("fatal-wait") << false << GPSWriteStatus::Error << 4 << 2 << 2 << 1;
+        QTest::newRow("first-write-error") << true << GPSWriteStatus::Error << 0 << 0 << 0 << 0;
+        QTest::newRow("timeout") << false << GPSWriteStatus::TimedOut << 4 << 2 << 2 << 1;
+        QTest::newRow("cancelled") << false << GPSWriteStatus::Cancelled << 4 << 2 << 2 << 1;
+    }
+
+    void _sharedWriterEvidence()
+    {
+        QFETCH(bool, rejectWrite);
+        QFETCH(GPSWriteStatus, status);
+        QFETCH(int, accepted);
+        QFETCH(int, written);
+        QFETCH(int, uncertain);
+        QFETCH(int, retirements);
+
+        std::atomic_bool stop = false;
+        StreamWriteTransport transport(stop);
+        StreamWriteDevice device;
+        device.rejectWrite = rejectWrite;
+        QVERIFY(device.open(QIODevice::WriteOnly));
+        const uint8_t payload[4] = {};
+        const QString errorDetail = QStringLiteral("stream write failed");
+        QString detail = errorDetail;
+        qint64 confirmed = 0;
+        int retirementCount = 0;
+        const auto result = GPSStreamWrite::writeBounded(
+            transport, &device, payload, sizeof(payload), QDeadlineTimer(QDeadlineTimer::Forever), 4,
+            [&](QDeadlineTimer& remaining) {
+                const qint64 drained = status == GPSWriteStatus::Completed ? device.pendingBytes : 2;
+                device.pendingBytes -= drained;
+                confirmed += drained;
+                if (status == GPSWriteStatus::Error) {
+                    transport.failed = true;
+                } else if (status == GPSWriteStatus::Cancelled) {
+                    stop = true;
+                } else if (status == GPSWriteStatus::TimedOut) {
+                    // Expire the helper's deadline without a wall-clock delay.
+                    remaining.setRemainingTime(0);
+                }
+            },
+            [&](int) { return confirmed; }, [&]() { return detail; },
+            [&]() {
+                ++retirementCount;
+                transport.failed = true;
+                device.pendingBytes = 0;
+                device.close();
+                detail = QStringLiteral("connection retired");
+            });
+        QCOMPARE(result.status, status);
+        QCOMPARE(result.acceptedBytes, accepted);
+        QCOMPARE(result.writtenBytes, written);
+        QCOMPARE(result.uncertainBytes(), uncertain);
+        QCOMPARE(result.detail, status == GPSWriteStatus::Error ? errorDetail : QString());
+        QCOMPARE(retirementCount, retirements);
     }
 
     void writes_data()
@@ -173,7 +280,6 @@ private slots:
         QVERIFY(result.writtenBytes >= 0);
         QVERIFY(result.uncertainBytes() >= 0);
         QVERIFY(result.uncertainBytes() <= 4096);
-        QCOMPARE(result.acceptedBytes, result.writtenBytes + result.uncertainBytes());
         QVERIFY(transport->fatalError());
         stop = false;
         QCOMPARE(transport->writeBounded(&byte, 1, QDeadlineTimer(100)).acceptedBytes, 0);

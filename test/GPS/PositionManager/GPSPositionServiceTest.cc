@@ -478,7 +478,7 @@ void GPSPositionServiceTest::_consumerPolicies()
         QCOMPARE(accepted->monotonicTimestampUs, observation.monotonicTimestampUs);
         QCOMPARE(accepted->receivedAt, observation.receivedAt);
         QCOMPARE(accepted->position.coordinate().latitude(), 47);
-        const double expectedAltitude = use == Use::Gga          ? altitude
+        const double expectedAltitude = use == Use::Gga || use == Use::Motion ? altitude
                                         : use == Use::RemoteID   ? (qIsFinite(ellipsoid) ? ellipsoid : altitude)
                                         : verticalAccuracy <= 10 ? altitude
                                                                  : qQNaN();
@@ -749,37 +749,49 @@ UT_REGISTER_TEST(GPSPositionServiceTest, TestLabel::Unit)
 void GPSPositionServiceTest::_nestedObservationNotifications_data()
 {
     QTest::addColumn<Mode>("mode");
-    QTest::newRow("legacy") << Mode::LegacyPriority;
-    QTest::newRow("automatic") << Mode::Automatic;
+    QTest::addColumn<bool>("fromHealth");
+    QTest::newRow("legacy") << Mode::LegacyPriority << false;
+    QTest::newRow("automatic") << Mode::Automatic << false;
+    QTest::newRow("legacy-health-callback") << Mode::LegacyPriority << true;
+    QTest::newRow("automatic-health-callback") << Mode::Automatic << true;
 }
 
 void GPSPositionServiceTest::_nestedObservationNotifications()
 {
     QFETCH(Mode, mode);
+    QFETCH(bool, fromHealth);
     ManualScheduler scheduler;
     QObject receiver;
     QObject standby;
     GPSSourceHealth health(nullptr, &scheduler);
     GPSSourceHealth standbyHealth(nullptr, &scheduler);
     GPSPositionService service(nullptr, &scheduler);
-    auto registration = service.registerPositionSource(Kind::Receiver, &receiver, &health);
-    service.setSourceMode(mode);
     GPSPositionSourceRegistration standbyRegistration;
-    QSignalSpy positions(&service, &GPSPositionService::gcsPositionChanged);
-    QSignalSpy headings(&service, &GPSPositionService::gcsHeadingChanged);
     bool nested = false;
-    connect(&service, &GPSPositionService::gcsPositionHorizontalAccuracyChanged, &service, [&]() {
-        if (!nested && service.gcsPosition().isValid()) {
+    const auto registerStandby = [&]() {
+        if (!nested && (fromHealth || service.gcsPosition().isValid())) {
             nested = true;
             standbyRegistration = service.registerPositionSource(Kind::Nmea, &standby, &standbyHealth);
-            health.updateObservation(fix(scheduler, 48));
+            if (!fromHealth) {
+                health.updateObservation(fix(scheduler, 48));
+            }
         }
-    });
+    };
+    if (fromHealth) {
+        connect(&health, &GPSSourceHealth::positionChanged, &service, registerStandby);
+    } else {
+        connect(&service, &GPSPositionService::gcsPositionHorizontalAccuracyChanged, &service, registerStandby);
+    }
+    auto registration = service.registerPositionSource(Kind::Receiver, &receiver, &health);
+    service.setSourceMode(mode);
+    QSignalSpy positions(&service, &GPSPositionService::gcsPositionChanged);
+    QSignalSpy headings(&service, &GPSPositionService::gcsHeadingChanged);
     health.updateObservation(fix(scheduler));
+    QVERIFY(nested);
     QCOMPARE(positions.size(), 1);
     QCOMPARE(headings.size(), 1);
     QCOMPARE(positions.first().first().value<QGeoCoordinate>(), service.gcsPosition());
-    QCOMPARE(service.gcsPosition().latitude(), 48);
+    QCOMPARE(service.gcsPosition().latitude(), fromHealth ? 47 : 48);
 }
 
 void GPSPositionServiceTest::_rawRegistrationCarriesSession()

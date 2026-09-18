@@ -42,6 +42,16 @@ private slots:
                                                         .fixedBaseAccuracyMeters = accuracy}
                                 << valid;
         };
+        QTest::newRow("missing-fixed-position") << GPSBaseStationConfig{.useFixedBase = true} << false;
+        QTest::newRow("missing-fixed-latitude")
+            << GPSBaseStationConfig{.useFixedBase = true, .fixedBaseLongitude = 8, .fixedBaseAltitudeMeters = 500}
+            << false;
+        QTest::newRow("missing-fixed-longitude")
+            << GPSBaseStationConfig{.useFixedBase = true, .fixedBaseLatitude = 47, .fixedBaseAltitudeMeters = 500}
+            << false;
+        QTest::newRow("missing-fixed-altitude")
+            << GPSBaseStationConfig{.useFixedBase = true, .fixedBaseLatitude = 47, .fixedBaseLongitude = 8} << false;
+        fixed("fixed-explicit-zero-position", 0, 0, 0, 0, true);
         fixed("fixed-unknown-accuracy", 47, 8, 500, 0, true);
         fixed("fixed-wire-limit", 47, 8, 21474836.0f, 429496.71875f, true);
         fixed("fixed-negative-wire-limit", -90, -180, -21474836.0f, 0, true);

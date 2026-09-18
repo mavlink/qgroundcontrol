@@ -41,7 +41,7 @@ GPSPositionSourceAdapter::~GPSPositionSourceAdapter()
 
 void GPSPositionSourceAdapter::_disconnectSource()
 {
-    QObject::disconnect(_observationConnection);
+    observeHealth(false);
     for (const auto& connection : _connections) {
         QObject::disconnect(connection);
     }
@@ -95,6 +95,7 @@ void GPSPositionSourceAdapter::configure(QObject* producer, GPSSourceHealth* hea
     }));
     if (_providedHealth) {
         _connections.append(connect(_providedHealth, &QObject::destroyed, this, [this]() {
+            observeHealth(false);
             _providedHealth = nullptr;
             _active = false;
             emit bindingChanged();
@@ -130,9 +131,11 @@ void GPSPositionSourceAdapter::configure(QObject* producer, GPSSourceHealth* hea
 
 void GPSPositionSourceAdapter::observeHealth(bool observe)
 {
-    QObject::disconnect(_observationConnection);
-    if (observe && health()) {
-        _observationConnection = connect(health(), &GPSSourceHealth::positionChanged, this, [this]() {
+    auto* sourceHealth = observe ? health() : nullptr;
+    if (!sourceHealth) {
+        QObject::disconnect(std::exchange(_observationConnection, {}));
+    } else if (!_observationConnection) {
+        _observationConnection = connect(sourceHealth, &GPSSourceHealth::positionChanged, this, [this]() {
             if (_providedHealth || _active) {
                 emit observationChanged();
             }
