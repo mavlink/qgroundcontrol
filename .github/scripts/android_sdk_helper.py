@@ -33,13 +33,22 @@ def _find_sdkmanager(sdk_root: str) -> str:
     return str(found)
 
 
-def _install_packages(sdkmanager: str, packages: list[str], ndk_path: Path) -> None:
-    def remove_partial_ndk() -> None:
-        if ndk_path.exists():
-            shutil.rmtree(ndk_path, ignore_errors=True)
-
+def _install_packages(sdkmanager: str, packages: list[str]) -> None:
     run_with_retry(
         [sdkmanager, *packages],
+        max_attempts=3,
+        retry_backoff_seconds=15,
+        timeout=1800,
+    )
+
+
+def _install_ndk(sdkmanager: str, ndk_version: str, ndk_path: Path) -> None:
+    def remove_partial_ndk() -> None:
+        if ndk_path.exists():
+            shutil.rmtree(ndk_path)
+
+    run_with_retry(
+        [sdkmanager, f"ndk;{ndk_version}"],
         max_attempts=3,
         retry_backoff_seconds=15,
         before_retry=remove_partial_ndk,
@@ -76,10 +85,9 @@ def main() -> None:
             "platform-tools",
             f"platforms;android-{args.platform}",
             f"build-tools;{args.build_tools}",
-            f"ndk;{args.ndk_version}",
         ],
-        ndk_path,
     )
+    _install_ndk(sdkmanager, args.ndk_version, ndk_path)
 
     if not ndk_path.is_dir():
         gh_error(f"NDK path not found after installation: {ndk_path}")
@@ -94,7 +102,7 @@ def main() -> None:
         }
     )
 
-    run_with_retry([gradlew, "--version"])
+    run_with_retry([gradlew, "--version"], timeout=300)
 
 
 if __name__ == "__main__":

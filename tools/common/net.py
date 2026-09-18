@@ -8,6 +8,7 @@ import sys
 import tempfile
 import time
 import urllib.request
+from http.client import IncompleteRead
 from pathlib import Path
 from urllib.error import URLError
 
@@ -62,9 +63,19 @@ def download_file(
                 ) as output,
             ):
                 staging = Path(output.name)
+                headers = getattr(response, "headers", None)
+                content_length = headers.get("Content-Length") if headers is not None else None
+                expected_size = int(content_length) if content_length is not None else None
+                downloaded_size = 0
                 while chunk := response.read(1024 * 1024):
                     output.write(chunk)
                     digest.update(chunk)
+                    downloaded_size += len(chunk)
+                if expected_size is not None and downloaded_size != expected_size:
+                    raise OSError(
+                        f"incomplete download: expected {expected_size} bytes, "
+                        f"received {downloaded_size}"
+                    )
             actual_sha256 = digest.hexdigest()
             if expected_sha256 is not None and actual_sha256 != expected_sha256:
                 raise ChecksumMismatchError(
@@ -75,7 +86,7 @@ def download_file(
             return
         except ChecksumMismatchError:
             raise
-        except (URLError, OSError) as error:
+        except (IncompleteRead, URLError, OSError) as error:
             last = error
             print(f"Download failed: {error}", file=sys.stderr)
             if attempt < attempts:

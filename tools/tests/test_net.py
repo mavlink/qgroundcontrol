@@ -4,11 +4,20 @@ from __future__ import annotations
 
 import hashlib
 import io
+from http.client import IncompleteRead
 from unittest.mock import MagicMock, patch
 from urllib.error import URLError
 
 import pytest
 from common.net import download_file, read_url_text
+
+
+def _response(content: bytes, *, content_length: int | None = None) -> MagicMock:
+    response = MagicMock()
+    response.__enter__.return_value = response
+    response.read.side_effect = [content, b""]
+    response.headers = {"Content-Length": str(content_length)} if content_length is not None else {}
+    return response
 
 
 def test_read_url_text_decodes_response() -> None:
@@ -52,6 +61,40 @@ def test_download_retries_timeout_then_publishes_complete_file(tmp_path) -> None
     assert destination.read_bytes() == b"complete"
     assert list(tmp_path.iterdir()) == [destination]
     sleep.assert_called_once_with(2)
+
+
+def test_download_retries_truncated_fixed_length_response(tmp_path) -> None:
+    destination = tmp_path / "sdk.zip"
+    with (
+        patch(
+            "common.net.urllib.request.urlopen",
+            side_effect=[_response(b"short", content_length=10), io.BytesIO(b"complete")],
+        ) as urlopen,
+        patch("common.net.time.sleep"),
+    ):
+        download_file("https://example.test/sdk.zip", destination)
+
+    assert urlopen.call_count == 2
+    assert destination.read_bytes() == b"complete"
+
+
+def test_download_retries_incomplete_chunked_response(tmp_path) -> None:
+    destination = tmp_path / "sdk.zip"
+    incomplete = MagicMock()
+    incomplete.__enter__.return_value = incomplete
+    incomplete.headers = {}
+    incomplete.read.side_effect = IncompleteRead(b"partial", 10)
+    with (
+        patch(
+            "common.net.urllib.request.urlopen",
+            side_effect=[incomplete, io.BytesIO(b"complete")],
+        ) as urlopen,
+        patch("common.net.time.sleep"),
+    ):
+        download_file("https://example.test/sdk.zip", destination)
+
+    assert urlopen.call_count == 2
+    assert destination.read_bytes() == b"complete"
 
 
 def test_download_exhaustion_preserves_destination_and_cleans_staging(tmp_path) -> None:

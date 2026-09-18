@@ -67,6 +67,15 @@ def test_gh_rejects_retry_for_mutation() -> None:
     run.assert_not_called()
 
 
+def test_gh_rejects_retry_for_non_api_command() -> None:
+    with (
+        patch.object(mod, "run_with_retry") as run,
+        pytest.raises(ValueError, match="read-only"),
+    ):
+        mod.gh("workflow", "run", "build.yml", retry_transient=True)
+    run.assert_not_called()
+
+
 def test_list_workflow_runs_for_sha_uses_jq_get_method() -> None:
     payload = json.dumps({"id": 1, "name": "Linux"})
     with patch.object(mod, "gh", return_value=completed(stdout=payload)) as gh_mock:

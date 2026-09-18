@@ -73,10 +73,8 @@ def gh(
     if not retry_transient:
         return run_captured(command, check=check, timeout=timeout)
     method = _gh_api_method(args)
-    if method is not None and method != "GET":
-        raise ValueError(
-            f"retry_transient is only valid for read-only GitHub API calls, got {method}"
-        )
+    if method != "GET":
+        raise ValueError("retry_transient is only valid for read-only GitHub API GET calls")
     return run_with_retry(
         command,
         max_attempts=max_attempts,
