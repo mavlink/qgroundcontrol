@@ -458,8 +458,9 @@ void NTRIPHttpTransportTest::_testBuildRequestPlaintextCredentialsWarns()
 
     QVERIFY(request.credentialsInClear);
     QVERIFY(request.bytes.startsWith("GET /MOUNT01 HTTP/1.1\r\n"));
-    QVERIFY(request.bytes.contains("Host: caster.example.com\r\n"));
-    QVERIFY(request.bytes.contains("Authorization: Basic "));
+    QVERIFY(request.error.isEmpty());
+    QVERIFY(request.bytes.contains("host: caster.example.com\r\n"));
+    QVERIFY(request.bytes.contains("authorization: Basic "));
     QVERIFY(request.bytes.endsWith("\r\n\r\n"));
 }
 
@@ -475,7 +476,8 @@ void NTRIPHttpTransportTest::_testBuildRequestTlsCredentialsNoWarn()
     const auto request = NTRIPHttpTransport::buildHttpRequest(cfg);
 
     QVERIFY(!request.credentialsInClear);
-    QVERIFY(request.bytes.contains("Authorization: Basic "));
+    QVERIFY(request.error.isEmpty());
+    QVERIFY(request.bytes.contains("authorization: Basic "));
 }
 
 void NTRIPHttpTransportTest::_testBuildRequestNoCredentialsNoWarn()
@@ -488,7 +490,65 @@ void NTRIPHttpTransportTest::_testBuildRequestNoCredentialsNoWarn()
     const auto request = NTRIPHttpTransport::buildHttpRequest(cfg);
 
     QVERIFY(!request.credentialsInClear);
-    QVERIFY(!request.bytes.contains("Authorization"));
+    QVERIFY(request.error.isEmpty());
+    QVERIFY(!request.bytes.contains("authorization:"));
+}
+
+void NTRIPHttpTransportTest::_testBuildRequestPreservesValues()
+{
+    NTRIPConnectionConfig config;
+    config.host = QStringLiteral("Caster.Example.com");
+    config.mountpoint = QStringLiteral("MixedCase_1");
+    config.username = QString::fromUtf8("Us\xc3\xa9r");
+    config.password = QString::fromUtf8("Pa\xc3\x9fs");
+    const auto request = NTRIPHttpTransport::buildHttpRequest(config);
+    const QByteArray credentials = (config.username + QLatin1Char(':') + config.password).toUtf8().toBase64();
+    QVERIFY(request.error.isEmpty());
+    QCOMPARE(request.bytes,
+             "GET /MixedCase_1 HTTP/1.1\r\n"
+             "host: Caster.Example.com\r\n"
+             "ntrip-version: Ntrip/2.0\r\n"
+             "user-agent: NTRIP QGroundControl/1.0\r\n"
+             "authorization: Basic " +
+                 credentials + "\r\n\r\n");
+}
+
+void NTRIPHttpTransportTest::_testBuildRequestRejectsInvalidConfig_data()
+{
+    QTest::addColumn<QString>("host");
+    QTest::addColumn<QString>("mountpoint");
+    QTest::newRow("host-crlf") << QStringLiteral("caster\r\nInjected: value") << QStringLiteral("TEST");
+    QTest::newRow("host-space") << QStringLiteral("caster example") << QStringLiteral("TEST");
+    QTest::newRow("host-del") << QStringLiteral("caster\x7f") << QStringLiteral("TEST");
+    QTest::newRow("mountpoint-crlf") << QStringLiteral("localhost") << QStringLiteral("TEST\r\nInjected: value");
+    QTest::newRow("mountpoint-space") << QStringLiteral("localhost") << QStringLiteral("TEST OTHER");
+    QTest::newRow("mountpoint-del") << QStringLiteral("localhost") << QStringLiteral("TEST\x7f");
+    QTest::newRow("mountpoint-empty") << QStringLiteral("localhost") << QString();
+}
+
+void NTRIPHttpTransportTest::_testBuildRequestRejectsInvalidConfig()
+{
+    QFETCH(QString, host);
+    QFETCH(QString, mountpoint);
+    NTRIPConnectionConfig config;
+    config.host = host;
+    config.mountpoint = mountpoint;
+    config.username = QStringLiteral("user");
+    config.password = QStringLiteral("pass");
+    const auto request = NTRIPHttpTransport::buildHttpRequest(config);
+    QVERIFY(!request.error.isEmpty());
+    QVERIFY(request.bytes.isEmpty());
+    QVERIFY(!request.credentialsInClear);
+
+    NTRIPHttpTransport transport(config, {});
+    transport._socket = new QTcpSocket(&transport);
+    QSignalSpy errors(&transport, &NTRIPTransport::error);
+    QSignalSpy credentialsWarning(&transport, &NTRIPTransport::plaintextCredentialsWarning);
+    transport._sendHttpRequest();
+    QCOMPARE(errors.size(), 1);
+    QCOMPARE(qvariant_cast<NTRIPFailure>(errors.first().first()).code, NTRIPError::InvalidConfig);
+    QCOMPARE(transport._socket->bytesToWrite(), 0);
+    QVERIFY(credentialsWarning.isEmpty());
 }
 
 UT_REGISTER_TEST(NTRIPHttpTransportTest, TestLabel::Unit)

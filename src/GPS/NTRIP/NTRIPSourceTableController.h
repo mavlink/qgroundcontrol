@@ -6,7 +6,6 @@
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "NTRIPConfiguration.h"
 
@@ -20,9 +19,6 @@ class QNetworkReply;
 class NTRIPSourceTableController : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
-    Q_MOC_INCLUDE("QtCore/QAbstractListModel")
     Q_PROPERTY(FetchStatus fetchStatus READ fetchStatus NOTIFY fetchStatusChanged)
     Q_PROPERTY(QString fetchError READ fetchError NOTIFY fetchErrorChanged)
     Q_PROPERTY(QAbstractListModel* mountpointModel READ mountpointModel NOTIFY mountpointModelChanged)

@@ -7,7 +7,6 @@
 #include <QtCore/QObject>
 #include <QtCore/QVariant>
 #include <QtCore/QVariantList>
-#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "DataRateTracker.h"
 #include "MonotonicClock.h"
@@ -15,8 +14,6 @@
 class NTRIPConnectionStats : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
     Q_PROPERTY(quint64 bytesReceived READ bytesReceived NOTIFY bytesReceivedChanged)
     Q_PROPERTY(quint32 messagesReceived READ messagesReceived NOTIFY messagesReceivedChanged)
     Q_PROPERTY(double dataRateBytesPerSec READ dataRateBytesPerSec NOTIFY dataRateChanged)

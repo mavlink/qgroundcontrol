@@ -15,6 +15,8 @@
 #include <QtNetwork/QSslConfiguration>
 #include <QtNetwork/QSslKey>
 
+#include "QGCNetworkClient.h"
+
 class QIODevice;
 class QNetworkAccessManager;
 
@@ -389,7 +391,7 @@ void initializeProxySupport();
 
 /// Create a network access manager with recommended settings
 /// Caller takes ownership of the returned pointer
-QNetworkAccessManager* createNetworkManager(QObject* parent = nullptr);
+QNetworkAccessManager* createNetworkManager(QObject* parent);
 
 /// Set up default proxy configuration on a network manager
 void configureProxy(QNetworkAccessManager* manager);

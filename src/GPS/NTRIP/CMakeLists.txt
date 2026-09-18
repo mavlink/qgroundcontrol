@@ -3,29 +3,46 @@
 # NTRIP client, RTCM parsing, and correction streaming
 # ============================================================================
 
+add_library(QGCGPSNTRIPHttp STATIC NTRIPConfiguration.cc NTRIPHttpDecoder.cc)
+add_library(QGC::GPSNTRIPHttp ALIAS QGCGPSNTRIPHttp)
+set_target_properties(QGCGPSNTRIPHttp PROPERTIES AUTOMOC ON)
+target_compile_features(QGCGPSNTRIPHttp PUBLIC cxx_std_20)
+target_link_libraries(QGCGPSNTRIPHttp PUBLIC Qt6::Core Qt6::Network)
+target_sources(QGCGPSNTRIPHttp PUBLIC FILE_SET HEADERS FILES NTRIPConfiguration.h NTRIPError.h NTRIPHttpDecoder.h)
+
+if(DEFINED QGC_GPS_COMPONENTS_ENABLED AND NOT "NTRIP" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    return()
+endif()
+
+add_library(QGCGPSNTRIP STATIC NTRIPConnectionStats.cc NTRIPGgaProvider.cc NTRIPHttpTransport.cc
+                               NTRIPSourceTableController.cc NTRIPSourceTable.cc
+)
+add_library(QGC::GPSNTRIP ALIAS QGCGPSNTRIP)
+set_target_properties(QGCGPSNTRIP PROPERTIES AUTOMOC ON)
+target_link_libraries(
+    QGCGPSNTRIP
+    PUBLIC QGCGPSNTRIPHttp QGCGPSRTCM QGCClock QGCIO Qt6::Positioning
+    PRIVATE QGCGPSNMEAUtils QGCNetworkClient QGCLoggingCategory
+)
 target_sources(
-    ${CMAKE_PROJECT_NAME}
-    PRIVATE NTRIPError.h
-            NTRIPTransport.h
-            NTRIPConnectionStats.cc
-            NTRIPConnectionStats.h
-            NTRIPGgaProvider.cc
-            NTRIPGgaProvider.h
-            NTRIPHttpTransport.cc
-            NTRIPHttpTransport.h
-            NTRIPHttpDecoder.cc
-            NTRIPHttpDecoder.h
-            NTRIPConfiguration.cc
-            NTRIPConfiguration.h
-            NTRIPManager.cc
-            NTRIPManager.h
-            NTRIPSourceTableController.cc
-            NTRIPSourceTableController.h
-            NTRIPSourceTable.cc
-            NTRIPSourceTable.h
+    QGCGPSNTRIP
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           NTRIPTransport.h
+           NTRIPConnectionStats.h
+           NTRIPGgaProvider.h
+           NTRIPHttpTransport.h
+           NTRIPSourceTableController.h
+           NTRIPSourceTable.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+if(NOT TARGET ${CMAKE_PROJECT_NAME})
+    return()
+endif()
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE NTRIPManager.cc NTRIPManager.h)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSNTRIP)
 
 # ----------------------------------------------------------------------------
 # NTRIP QML Module

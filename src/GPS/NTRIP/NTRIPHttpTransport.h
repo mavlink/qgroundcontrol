@@ -5,6 +5,7 @@
 #include <QtCore/QChronoTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QPointer>
+#include <QtCore/QString>
 #include <QtNetwork/QTcpSocket>
 
 #include "MonotonicClock.h"
@@ -41,6 +42,7 @@ protected:
     struct HttpRequest
     {
         QByteArray bytes;
+        QString error;
         /// Credentials are present and the channel is not TLS — caller must warn.
         bool credentialsInClear = false;
     };

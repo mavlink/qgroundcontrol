@@ -5,6 +5,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QPointer>
+#include <QtNetwork/QHttpHeaders>
 #include <QtNetwork/QSslError>
 #include <QtNetwork/QSslSocket>
 
@@ -12,7 +13,7 @@
 #include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
 #include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
+#include "QGCNetworkClient.h"
 
 QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIPHttpTransport")
 
@@ -111,20 +112,37 @@ bool NTRIPHttpTransport::_write(const QByteArray& bytes)
 NTRIPHttpTransport::HttpRequest NTRIPHttpTransport::buildHttpRequest(const NTRIPConnectionConfig& config)
 {
     HttpRequest result;
-    QByteArray& req = result.bytes;
-    req += "GET /" + config.mountpoint.toUtf8() + " HTTP/1.1\r\n";
-    req += "Host: " + config.host.toUtf8() + "\r\n";
-    req += "Ntrip-Version: Ntrip/2.0\r\n";
-    req += "User-Agent: NTRIP QGroundControl/1.0\r\n";
-
-    if (!config.username.isEmpty() || !config.password.isEmpty()) {
-        result.credentialsInClear = !config.useTls;
-        const QByteArray authB64 =
-            QGCNetworkHelper::createBasicAuthCredentials(config.username, config.password).toUtf8();
-        req += "Authorization: Basic " + authB64 + "\r\n";
+    result.error = config.streamValidationError();
+    if (!result.error.isEmpty()) {
+        return result;
     }
 
-    req += "\r\n";
+    using Header = QHttpHeaders::WellKnownHeader;
+    QHttpHeaders headers;
+    const QByteArray host = config.host.toUtf8();
+    if (!headers.append(Header::Host, QLatin1StringView(host.constData(), host.size())) ||
+        !headers.append("Ntrip-Version", "Ntrip/2.0") ||
+        !headers.append(Header::UserAgent, "NTRIP QGroundControl/1.0")) {
+        result.error = tr("Invalid NTRIP request header");
+        return result;
+    }
+
+    const bool hasCredentials = !config.username.isEmpty() || !config.password.isEmpty();
+    if (hasCredentials) {
+        const QString authorization =
+            QStringLiteral("Basic ") + QGCNetworkHelper::createBasicAuthCredentials(config.username, config.password);
+        if (!headers.append(Header::Authorization, authorization)) {
+            result.error = tr("Invalid NTRIP authorization header");
+            return result;
+        }
+    }
+
+    result.bytes = "GET /" + config.mountpoint.toUtf8() + " HTTP/1.1\r\n";
+    for (const auto& [name, value] : headers.toListOfPairs()) {
+        result.bytes += name + ": " + value + "\r\n";
+    }
+    result.bytes += "\r\n";
+    result.credentialsInClear = hasCredentials && !config.useTls;
     return result;
 }
 
@@ -135,6 +153,10 @@ void NTRIPHttpTransport::_sendHttpRequest()
     }
 
     const HttpRequest request = buildHttpRequest(_config);
+    if (!request.error.isEmpty()) {
+        _fail(NTRIPError::InvalidConfig, request.error);
+        return;
+    }
     const QPointer<NTRIPHttpTransport> guard(this);
     const auto socket = _socket;
     const quint64 attempt = _attempt;

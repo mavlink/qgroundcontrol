@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include <QtNetwork/QHttpHeaders>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
@@ -9,7 +10,7 @@
 
 #include "NTRIPSourceTable.h"
 #include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
+#include "QGCNetworkClient.h"
 
 QGC_LOGGING_CATEGORY(NTRIPSourceTableControllerLog, "GPS.NTRIPSourceTableController")
 
@@ -106,14 +107,20 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
     url.setPort(config.port);
     url.setPath(QStringLiteral("/"));
 
-    QGCNetworkHelper::RequestConfig reqCfg;
-    reqCfg.timeoutMs = kFetchTimeoutMs;
-    reqCfg.userAgent = QStringLiteral("QGC-NTRIP");
-    reqCfg.http2Allowed = false;
-    reqCfg.cacheEnabled = false;
-
-    QNetworkRequest request = QGCNetworkHelper::createRequest(url, reqCfg);
-    request.setRawHeader("Ntrip-Version", "Ntrip/2.0");
+    QNetworkRequest request(url);
+    request.setTransferTimeout(kFetchTimeoutMs);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    request.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
+    request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
+    request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
+    QHttpHeaders headers;
+    using Header = QHttpHeaders::WellKnownHeader;
+    if (!headers.append(Header::UserAgent, "QGC-NTRIP") || !headers.append(Header::Accept, "*/*") ||
+        !headers.append(Header::Connection, "keep-alive") || !headers.append("Ntrip-Version", "Ntrip/2.0")) {
+        _onFetchError(tr("Invalid NTRIP source-table request header"));
+        return;
+    }
+    request.setHeaders(headers);
     if (!config.username.isEmpty() || !config.password.isEmpty()) {
         QGCNetworkHelper::setBasicAuth(request, config.username, config.password);
     }
@@ -163,7 +170,7 @@ void NTRIPSourceTableController::_onReplyFinished(QNetworkReply* reply, quint64 
     }
 
     const bool networkError = reply->error() != QNetworkReply::NoError;
-    const QString networkErrorMsg = networkError ? QGCNetworkHelper::errorMessage(reply) : QString();
+    const QString networkErrorMsg = networkError ? reply->errorString() : QString();
     const QString body = networkError ? QString() : QString::fromUtf8(reply->readAll());
     _abortReply();
     if (!current()) {

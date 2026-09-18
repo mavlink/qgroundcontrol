@@ -14,12 +14,18 @@ QString NTRIPConnectionConfig::validationError() const
         return tr("Invalid port");
     }
 
-    static const QRegularExpression controlChars(QStringLiteral("[\\r\\n\\x00-\\x1f]"));
+    static const QRegularExpression controlChars(QStringLiteral("[\\x00-\\x1f\\x7f]"));
     if (host.contains(controlChars)) {
         return tr("Invalid host (contains control characters)");
     }
+    if (host.contains(QLatin1Char(' '))) {
+        return tr("Invalid host (contains spaces)");
+    }
     if (!mountpoint.isEmpty() && mountpoint.contains(controlChars)) {
         return tr("Invalid mountpoint name (contains control characters)");
+    }
+    if (mountpoint.contains(QLatin1Char(' '))) {
+        return tr("Invalid mountpoint name (contains spaces)");
     }
     // RFC 7617 forbids colons in Basic-auth usernames.
     if (username.contains(QLatin1Char(':'))) {

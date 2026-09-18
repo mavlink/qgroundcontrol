@@ -6,24 +6,40 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(_gps_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS")
     set(_utilities_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities")
     set(QGC_GPS_COMPONENTS
-        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;Corrections"
+        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;Corrections;NTRIP"
         CACHE STRING "GPS library components to build and test"
     )
     option(QGC_NO_SERIAL_LINK "Build without serial receiver support" OFF)
     option(QGC_BUILD_ANDROID_SERIAL_TESTS "Build Linux-hosted Android serial compatibility tests" OFF)
+    set(_gps_available_components
+        Core
+        NMEAProtocol
+        NMEAUtils
+        NMEA
+        Positioning
+        Transport
+        ReceiverTransports
+        RTCMFramer
+        RTCM
+        Corrections
+        NTRIPHttp
+        NTRIP
+    )
     set(QGC_GPS_COMPONENTS_ENABLED ${QGC_GPS_COMPONENTS})
     foreach(component IN LISTS QGC_GPS_COMPONENTS_ENABLED)
-        if(NOT component MATCHES
-           "^(Core|NMEA(Protocol)?|Positioning|Transport|ReceiverTransports|RTCM(Framer)?|Corrections)$"
-        )
+        if(NOT component IN_LIST _gps_available_components)
             message(FATAL_ERROR "Unknown GPS component: ${component}")
         endif()
     endforeach()
     if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "Positioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED Core)
     endif()
-    if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    if("NTRIP" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        list(APPEND QGC_GPS_COMPONENTS_ENABLED NTRIPHttp NMEAUtils RTCM)
+    endif()
+    if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "NMEAUtils" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED NMEAProtocol)
+        find_package(Qt6 6.8 REQUIRED COMPONENTS Positioning)
     endif()
     if("ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED Transport)
@@ -37,7 +53,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     if("RTCM" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED RTCMFramer)
     endif()
-    if("ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    if("ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "NTRIPHttp" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Network)
     endif()
     set(_qt_gps_components ${QGC_GPS_COMPONENTS_ENABLED})
@@ -53,7 +69,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Timing/Support" TestTiming)
         add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Core" CoreTests)
     endif()
-    if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "NTRIP" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_utilities_root}/IO" IO)
     endif()
     if("NMEAProtocol" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
@@ -80,6 +96,16 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         add_subdirectory("${_gps_root}/Corrections" Corrections)
         add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Corrections" CorrectionsTests)
     endif()
+    if("NTRIP" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_utilities_root}/Timing/Clock" Clock)
+        add_subdirectory("${_utilities_root}/Network/Client" NetworkClient)
+    endif()
+    if("NTRIPHttp" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/NTRIP" NTRIP)
+    endif()
+    if("NTRIP" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../NTRIP/Standalone" NTRIPTests)
+    endif()
 endif()
 
 if(TARGET QGCClock)
@@ -96,6 +122,10 @@ foreach(
     QGCGPSPositioning
     QGCGPSNMEA
     QGCGPSNMEAProtocol
+    QGCGPSNMEAUtils
+    QGCNetworkClient
+    QGCGPSNTRIPHttp
+    QGCGPSNTRIP
     QGCGPSTransport
     QGCGPSReceiverTransports
     QGCGPSRTCMFramer
