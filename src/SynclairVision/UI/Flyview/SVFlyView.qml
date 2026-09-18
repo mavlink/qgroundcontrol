@@ -141,23 +141,15 @@ Item {
 
         let point
         if (!rejectionMessage) {
-            const window = root.Window.window
-            if (!window) {
-                rejectionMessage = qsTr("Immediate tracking is unavailable because the fly view window is missing.")
-            } else if (!window.contentItem) {
-                rejectionMessage = qsTr("Immediate tracking is unavailable because the window content is missing.")
-            } else {
-                // Match the proven backup-branch path: sample the live global cursor
-                // when the shortcut fires, then map it into the selected camera layer.
-                const contentPoint = window.contentItem.mapFromItem(
-                    null, ScreenTools.mouseX() - window.x, ScreenTools.mouseY() - window.y)
-                point = cameraLayer.mapFromItem(window.contentItem, contentPoint.x, contentPoint.y)
+            // ScreenTools.mouseX()/mouseY() come from QCursor::pos(), which is already
+            // in global screen coordinates. Let Qt map that global point directly into
+            // the camera layer so window/scene scaling is applied exactly once.
+            point = cameraLayer.mapFromGlobal(ScreenTools.mouseX(), ScreenTools.mouseY())
 
-                if (!Number.isFinite(point.x) || !Number.isFinite(point.y)
-                        || point.x < 0 || point.x >= cameraLayer.width
-                        || point.y < 0 || point.y >= cameraLayer.height) {
-                    rejectionMessage = qsTr("The selected point is outside the selected camera view.")
-                }
+            if (!Number.isFinite(point.x) || !Number.isFinite(point.y)
+                    || point.x < 0 || point.x >= cameraLayer.width
+                    || point.y < 0 || point.y >= cameraLayer.height) {
+                rejectionMessage = qsTr("The selected point is outside the selected camera view.")
             }
         }
 
