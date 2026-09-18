@@ -11,6 +11,9 @@ private slots:
     void _testWhitelist_data();
     void _testWhitelist();
 
+    void _testParseHttpStatus_data();
+    void _testParseHttpStatus();
+
     // RTCM filtering
     void _testFilterNoWhitelist();
     void _testFilterWithWhitelist();

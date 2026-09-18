@@ -1,5 +1,6 @@
 #include "NTRIPManagerTest.h"
 
+#include <limits>
 #include <utility>
 
 #include <QtCore/QChronoTimer>
@@ -262,7 +263,7 @@ void NTRIPManagerTest::testRetiredTransportErrorCannotAffectNewSession()
     first->autoConnect = false;
     mgr.setTransportForTest(first);
     mgr.startNTRIP();
-    first->simulateError(NTRIPError::HttpError, QStringLiteral("retired failure"));
+    first->simulateError(NTRIPError::HttpError, QStringLiteral("retired failure"), std::chrono::seconds{300});
     mgr.stopNTRIP();
     auto* second = new MockNTRIPTransport(&mgr);
     second->autoConnect = false;
@@ -277,19 +278,28 @@ void NTRIPManagerTest::testRetiredTransportErrorCannotAffectNewSession()
 
 void NTRIPManagerTest::testRetryPolicy_data()
 {
+    QTest::addColumn<qint64>("retryAfterMs");
     QTest::addColumn<int>("attempts");
     QTest::addColumn<bool>("enabled");
     QTest::addColumn<NTRIPError>("code");
     QTest::addColumn<int>("expectedDelayMs");
-    QTest::newRow("initial-backoff") << 0 << true << NTRIPError::HttpError << 1000;
-    QTest::newRow("exponential-backoff") << 4 << true << NTRIPError::HttpError << 16000;
-    QTest::newRow("disabled") << 0 << false << NTRIPError::HttpError << 0;
-    QTest::newRow("authentication") << 0 << true << NTRIPError::AuthFailed << 0;
-    QTest::newRow("invalid-config") << 0 << true << NTRIPError::InvalidConfig << 0;
+    QTest::newRow("initial-backoff") << qint64(0) << 0 << true << NTRIPError::HttpError << 1000;
+    QTest::newRow("exponential-backoff") << qint64(0) << 4 << true << NTRIPError::HttpError << 16000;
+    QTest::newRow("hint") << qint64(17000) << 0 << true << NTRIPError::HttpError << 17000;
+    QTest::newRow("backoff-dominates") << qint64(1000) << 4 << true << NTRIPError::HttpError << 16000;
+    QTest::newRow("negative-hint") << qint64(-1) << 0 << true << NTRIPError::HttpError << 1000;
+    QTest::newRow("cap") << std::numeric_limits<qint64>::max() << 0 << true << NTRIPError::HttpError << 300000;
+    QTest::newRow("disabled") << qint64(0) << 0 << false << NTRIPError::HttpError << 0;
+    QTest::newRow("disabled-with-hint") << qint64(17000) << 0 << false << NTRIPError::HttpError << 0;
+    QTest::newRow("authentication") << qint64(0) << 0 << true << NTRIPError::AuthFailed << 0;
+    QTest::newRow("authentication-with-hint") << qint64(17000) << 0 << true << NTRIPError::AuthFailed << 0;
+    QTest::newRow("invalid-config") << qint64(0) << 0 << true << NTRIPError::InvalidConfig << 0;
+    QTest::newRow("invalid-config-with-hint") << qint64(17000) << 0 << true << NTRIPError::InvalidConfig << 0;
 }
 
 void NTRIPManagerTest::testRetryPolicy()
 {
+    QFETCH(qint64, retryAfterMs);
     QFETCH(int, attempts);
     QFETCH(bool, enabled);
     QFETCH(NTRIPError, code);
@@ -307,7 +317,7 @@ void NTRIPManagerTest::testRetryPolicy()
     manager.startNTRIP();
     manager._reconnectAttempts = attempts;
     expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:.*retry test")));
-    transport->simulateError(code, QStringLiteral("retry test"));
+    transport->simulateError(code, QStringLiteral("retry test"), std::chrono::milliseconds{retryAfterMs});
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     verifyExpectedLogMessage();
     QCOMPARE(manager.connectionStatus(),
@@ -330,6 +340,37 @@ void NTRIPManagerTest::testRetryPolicy()
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     verifyExpectedLogMessage();
     QCOMPARE(manager._reconnectTimer.interval(), std::chrono::milliseconds(1000));
+    QCOMPARE(manager._reconnectAttempts, 1);
+}
+
+void NTRIPManagerTest::testHttpRetryAfterReachesManager()
+{
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("127.0.0.1"));
+    saved.setFactValue(settings->ntripServerPort(), server.serverPort());
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    saved.setFactValue(settings->ntripUsername(), QString());
+    saved.setFactValue(settings->ntripPassword(), QString());
+    saved.setFactValue(settings->ntripUseTls(), false);
+    saved.setFactValue(settings->ntripServerConnectEnabled(), true);
+    NTRIPManager manager;
+    manager._settings = settings;
+    manager.startNTRIP();
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::shortMs());
+    QTcpSocket* peer = server.nextPendingConnection();
+    QVERIFY(peer);
+    QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::shortMs());
+    peer->readAll();
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:.*503")));
+    const QByteArray response = "HTTP/1.1 503 Unavailable\r\nRetry-After: 17\r\nContent-Length: 0\r\n\r\n";
+    QCOMPARE(peer->write(response), response.size());
+    QTRY_COMPARE_WITH_TIMEOUT(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting,
+                              TestTimeout::shortMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(manager._reconnectTimer.interval(), std::chrono::seconds(17));
     QCOMPARE(manager._reconnectAttempts, 1);
 }
 
@@ -377,7 +418,7 @@ void NTRIPManagerTest::testRetryPublicationSuperseded()
         first->onStop = restart;
     }
     expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:.*superseded")));
-    first->simulateError(NTRIPError::HttpError, QStringLiteral("superseded"));
+    first->simulateError(NTRIPError::HttpError, QStringLiteral("superseded"), std::chrono::seconds(300));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     verifyExpectedLogMessage();
     QVERIFY(replaced);

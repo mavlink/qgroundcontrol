@@ -38,6 +38,7 @@ qt_add_executable(
     "${_root}/src/GPS/NTRIP/NTRIPTransport.h"
     "${_root}/src/GPS/NTRIP/NTRIPConfiguration.cc"
     "${_root}/src/GPS/NTRIP/NTRIPHttpTransport.cc"
+    "${_root}/src/GPS/NTRIP/NTRIPHttpDecoder.cc"
     "${_root}/src/GPS/NTRIP/NTRIPSourceTableController.cc"
     "${_root}/src/GPS/NTRIP/NTRIPSourceTable.cc"
     "${_root}/src/GPS/NTRIP/NTRIPGgaProvider.cc"

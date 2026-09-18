@@ -13,6 +13,8 @@ target_sources(
             NTRIPGgaProvider.h
             NTRIPHttpTransport.cc
             NTRIPHttpTransport.h
+            NTRIPHttpDecoder.cc
+            NTRIPHttpDecoder.h
             NTRIPConfiguration.cc
             NTRIPConfiguration.h
             NTRIPManager.cc

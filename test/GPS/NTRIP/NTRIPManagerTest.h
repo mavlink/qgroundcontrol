@@ -28,6 +28,7 @@ private slots:
     void testRetiredTransportErrorCannotAffectNewSession();
     void testRetryPolicy_data();
     void testRetryPolicy();
+    void testHttpRetryAfterReachesManager();
     void testRetryPublicationSuperseded_data();
     void testRetryPublicationSuperseded();
     void testMissingMountpointDoesNotStartTransport();

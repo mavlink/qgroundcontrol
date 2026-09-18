@@ -27,7 +27,7 @@ public:
 
 signals:
     void connected();
-    void error(NTRIPError code, const QString& detail);
+    void error(const NTRIPFailure& failure);
     /// Includes invalid and filtered candidates.
     void correctionFrameReceived(const RTCMFrameDecoder::Result& frame);
 

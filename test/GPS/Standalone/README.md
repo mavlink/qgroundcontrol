@@ -196,6 +196,24 @@ identity. Changing it also retires pooled TLS connections.
 `NTRIPReentrancyTest` runs in the application harness, reusing its production
 objects. The same cases can run independently through `test/GPS/NTRIP/Standalone`;
 the application build does not create a second NTRIP executable.
+
+The NTRIP HTTP decoder handles close-delimited, content-length, and chunked
+responses, including legacy ICY streams. Header bytes, line lengths, header
+counts, chunk sizes, and socket buffering are bounded. Only decoded correction
+payloads reach the RTCM decoder; valid payload prefixes retain their receipt
+timestamps if later framing fails.
+HTTP failures carry numeric or HTTP-date `Retry-After` hints through queued
+callbacks. Reconnects use the greater of the existing exponential backoff and
+the hint, capped at five minutes, without making authentication or configuration
+errors retryable.
+
+```sh
+cmake -S test/GPS/NTRIP/Standalone -B build/ntrip-http -G Ninja \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/installation
+cmake --build build/ntrip-http
+ctest --test-dir build/ntrip-http --output-on-failure -L Unit
+```
+
 Source registrations reject callbacks from retired sessions. UDP framing keeps
 each sender separate and limits work per event-loop turn. Only UDP can opt out
 of RTCM validation; other sources must submit validated frames.

@@ -140,15 +140,15 @@ signals:
 private:
     /// Dispatch an event. Returns true if a transition was found and taken.
     /// Events with no matching row for the current state are ignored (debug log).
-    bool _dispatch(Event ev, const QString& detail = {});
+    bool _dispatch(Event ev, const QString& detail = {}, std::chrono::milliseconds retryAfter = {});
 
     /// Commit a state change. Updates _connectionStatus/_statusMessage and
     /// emits change signals *before* invoking entry actions so recursive
     /// dispatches from entry actions observe the new state, not the old.
-    void _enterState(ConnectionStatus to, const QString& detail);
+    void _enterState(ConnectionStatus to, const QString& detail, std::chrono::milliseconds retryAfter = {});
 
     /// Per-state side effects (start transport, tear down, schedule reconnect, etc.).
-    void _onEnterState(ConnectionStatus from, ConnectionStatus to);
+    void _onEnterState(ConnectionStatus from, ConnectionStatus to, std::chrono::milliseconds retryAfter);
 
     /// Default user-visible message for a state. Callers may override via detail.
     static QString _defaultMessageFor(ConnectionStatus state);
@@ -163,20 +163,20 @@ private:
     static constexpr int kMaxReconnectMs = 30000;
     static constexpr int kMaxReconnectAttempts = 100;
 
-    void _scheduleReconnect();
+    void _scheduleReconnect(std::chrono::milliseconds retryAfter = {});
 
     void _cancelReconnect() { _reconnectTimer.stop(); }
 
     void _resetReconnectAttempts() { _reconnectAttempts = 0; }
 
-    int _reconnectBackoffMs() const;
+    int _reconnectBackoffMs(std::chrono::milliseconds retryAfter = {}) const;
 
     bool _reconnectExhausted() const { return _reconnectAttempts >= kMaxReconnectAttempts; }
 
     /// Reconfigure the manager-owned NTRIP sink without restarting transport.
     void _applyUdpForwarderConfig(const NTRIPUdpForwardConfig& config);
 
-    void _onTransportError(NTRIPError code, const QString& detail);
+    void _onTransportError(const NTRIPFailure& failure);
     void _onPlaintextCredentialsWarning();
     void _setSecurityWarning(const QString& warning);
     void _rtcmDataReceived(const RTCMFrameDecoder::Result& frame);
