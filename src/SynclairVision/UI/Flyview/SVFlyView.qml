@@ -98,12 +98,6 @@ Item {
 
     QGCPalette { id: qgcPalette}
 
-    HoverHandler {
-        id: pointerTracker
-        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-        blocking: false
-    }
-
     function beginPointTrackingSelection(trackingId) {
         if (!root.visible || root.previewMode || root.width <= 0 || root.height <= 0
                 || !SVState.beginPointTrackingSelection(
@@ -124,39 +118,59 @@ Item {
             rejectionMessage = qsTr("Immediate tracking is unavailable because video geometry is missing.")
         }
 
+        const cameraSlot = SVState.cameraSelected
+        let cameraLayer = null
+
         if (!rejectionMessage) {
-            if (!pointerTracker.hovered) {
-                rejectionMessage = qsTr("The selected point is outside the video content.")
+            if (cameraSlot < 0) {
+                rejectionMessage = qsTr("Immediate tracking is unavailable because no camera is selected.")
             } else {
                 for (let index = 0; index < cameraLayerRepeater.count; ++index) {
-                    const cameraLayer = cameraLayerRepeater.itemAt(index)
-                    if (!cameraLayer || cameraLayer.width <= 0 || cameraLayer.height <= 0) {
-                        continue
+                    const candidate = cameraLayerRepeater.itemAt(index)
+                    if (candidate && candidate.cameraSlot === cameraSlot) {
+                        cameraLayer = candidate
+                        break
                     }
-
-                    const point = cameraLayer.mapFromItem(
-                        root, pointerTracker.point.position.x, pointerTracker.point.position.y)
-                    if (point.x < 0 || point.x >= cameraLayer.width
-                            || point.y < 0 || point.y >= cameraLayer.height) {
-                        continue
-                    }
-
-                    const normalizedX = point.x / cameraLayer.width * 2.0 - 1.0
-                    const normalizedY = 1.0 - point.y / cameraLayer.height * 2.0
-                    const submitted = SVState.submitImmediatePointTracking(
-                        trackingId, cameraLayer.cameraSlot, normalizedX, normalizedY)
-                    if (submitted) {
-                        return true
-                    }
-
-                    rejectionMessage = qsTr("Immediate tracking was rejected because no camera is selected, controls are locked, or the camera state changed.")
-                    break
                 }
 
-                if (!rejectionMessage) {
-                    rejectionMessage = qsTr("The selected point does not match a DigiView camera view.")
+                if (!cameraLayer || cameraLayer.width <= 0 || cameraLayer.height <= 0) {
+                    rejectionMessage = qsTr("Immediate tracking is unavailable because the selected camera is not visible.")
                 }
             }
+        }
+
+        let point
+        if (!rejectionMessage) {
+            const window = root.Window.window
+            if (!window) {
+                rejectionMessage = qsTr("Immediate tracking is unavailable because the fly view window is missing.")
+            } else if (!window.contentItem) {
+                rejectionMessage = qsTr("Immediate tracking is unavailable because the window content is missing.")
+            } else {
+                // Match the proven backup-branch path: sample the live global cursor
+                // when the shortcut fires, then map it into the selected camera layer.
+                const contentPoint = window.contentItem.mapFromItem(
+                    null, ScreenTools.mouseX() - window.x, ScreenTools.mouseY() - window.y)
+                point = cameraLayer.mapFromItem(window.contentItem, contentPoint.x, contentPoint.y)
+
+                if (!Number.isFinite(point.x) || !Number.isFinite(point.y)
+                        || point.x < 0 || point.x >= cameraLayer.width
+                        || point.y < 0 || point.y >= cameraLayer.height) {
+                    rejectionMessage = qsTr("The selected point is outside the selected camera view.")
+                }
+            }
+        }
+
+        if (!rejectionMessage) {
+            // Keep this identical to the working SVCameraLayer click normalization.
+            const normalizedX = point.x / cameraLayer.width * 2.0 - 1.0
+            const normalizedY = 1.0 - point.y / cameraLayer.height * 2.0
+            if (SVState.submitImmediatePointTracking(
+                    trackingId, cameraSlot, normalizedX, normalizedY)) {
+                return true
+            }
+
+            rejectionMessage = qsTr("Immediate tracking was rejected because no camera is selected, controls are locked, or the camera state changed.")
         }
 
         SVNotificationManager.add(
