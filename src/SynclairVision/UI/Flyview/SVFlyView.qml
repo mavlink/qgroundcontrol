@@ -98,6 +98,12 @@ Item {
 
     QGCPalette { id: qgcPalette}
 
+    HoverHandler {
+        id: pointerTracker
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        blocking: false
+    }
+
     function beginPointTrackingSelection(trackingId) {
         if (!root.visible || root.previewMode || root.width <= 0 || root.height <= 0
                 || !SVState.beginPointTrackingSelection(
@@ -123,11 +129,15 @@ Item {
 
         let point
         if (!rejectionMessage) {
-            point = videoContentArea.mapFromGlobal(ScreenTools.mouseX(), ScreenTools.mouseY())
-            if (!Number.isFinite(point.x) || !Number.isFinite(point.y)
-                    || point.x < 0 || point.x >= videoContentArea.width
-                    || point.y < 0 || point.y >= videoContentArea.height) {
+            if (!pointerTracker.hovered) {
                 rejectionMessage = qsTr("The selected point is outside the video content.")
+            } else {
+                point = videoContentArea.mapFromItem(root, pointerTracker.point.position)
+                if (!Number.isFinite(point.x) || !Number.isFinite(point.y)
+                        || point.x < 0 || point.x >= videoContentArea.width
+                        || point.y < 0 || point.y >= videoContentArea.height) {
+                    rejectionMessage = qsTr("The selected point is outside the video content.")
+                }
             }
         }
 
