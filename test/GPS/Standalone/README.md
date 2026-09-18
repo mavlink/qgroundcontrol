@@ -23,8 +23,9 @@ Unit suite.
 
 Base-configuration, accepted-state, and stream-transport behavior suites reuse
 `PortableTest`: the application harness runs them against its production objects,
-while standalone builds create narrow executables. GPS and utility boundary
-consumers share `qgc_check_library_consumer()` from `TestSupport.cmake`.
+while standalone builds create narrow executables. GPS boundary consumers and
+their dependency checks are configured locally without changing utility test
+infrastructure.
 
 The NMEA protocol is a separate Qt-free static library. Its consumer links only
 `QGCGPSNMEAProtocol` and exercises sentence decoding, constellation resolution, and

@@ -148,7 +148,7 @@ void FollowMeTest::_motionPolicyReports()
         QCOMPARE(bool(report.est_capabilities & (1 << FollowMe::VEL)), reliableCourse);
         QVERIFY(qAbs(report.vel[0]) < 0.0001);
         QCOMPARE(report.vel[1], reliableCourse ? float(speed) : 0.0f);
-        QCOMPARE(report.position_cov[2], qIsFinite(verticalAccuracy) ? float(verticalAccuracy) : -1.0f);
+        QCOMPARE(report.position_cov[2], qIsFinite(verticalAccuracy) ? float(verticalAccuracy) : 0.0f);
         QCOMPARE(report.alt, float(altitude));
     }
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(5)));

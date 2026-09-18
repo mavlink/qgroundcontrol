@@ -38,14 +38,6 @@ format:
 # -----------------------------------------------------------------------------
 parse:
   additional_commands:
-    qgc_check_library_consumer:
-      pargs:
-        nargs: 1
-      kwargs:
-        SOURCE: 1
-        TIMEOUT: 1
-        LABELS: +
-
     # -------------------------------------------------------------------------
     # CPM Package Manager (https://github.com/cpm-cmake/CPM.cmake)
     # -------------------------------------------------------------------------

@@ -113,7 +113,6 @@ void FollowMe::_sendGCSMotionReport()
     }
 
     GCSMotionReport motionReport{};
-    motionReport.pos_std_dev[0] = motionReport.pos_std_dev[1] = motionReport.pos_std_dev[2] = -1;
     uint8_t estimationCapabilities = 0;
 
     motionReport.lat_int = static_cast<int>(gcsCoordinate.latitude() * 1e7);

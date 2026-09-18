@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
 
-include("${CMAKE_CURRENT_LIST_DIR}/../../../cmake/modules/TestSupport.cmake")
-
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(QGCGPSLibraryTests LANGUAGES CXX)
     enable_testing()
@@ -97,6 +95,7 @@ foreach(
     QGCGPSCore
     QGCGPSPositioning
     QGCGPSNMEA
+    QGCGPSNMEAProtocol
     QGCGPSTransport
     QGCGPSReceiverTransports
     QGCGPSRTCMFramer
@@ -106,22 +105,23 @@ foreach(
     if(NOT TARGET ${target})
         continue()
     endif()
-    qgc_check_library_consumer(
-        ${target}
-        SOURCE ${target}Consumer.cc
-        LABELS Unit GPS
-        TIMEOUT 10
+    set_target_properties(${target} PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
+    add_custom_target(
+        ${target}HeaderChecks ALL
+        DEPENDS ${target}_verify_interface_header_sets
+        COMMENT "Verify ${target} public headers in isolation"
     )
+    add_executable(${target}Consumer "${CMAKE_CURRENT_SOURCE_DIR}/${target}Consumer.cc")
+    set_target_properties(
+        ${target}Consumer
+        PROPERTIES AUTOMOC OFF
+                   AUTOUIC OFF
+                   AUTORCC OFF
+    )
+    target_link_libraries(${target}Consumer PRIVATE ${target})
+    add_test(NAME ${target}Consumer COMMAND ${target}Consumer)
+    set_tests_properties(${target}Consumer PROPERTIES LABELS "Unit;GPS" TIMEOUT 10)
     if("${target}" MATCHES "^QGCGPS(Core|Positioning|NMEA)$")
         target_link_libraries(${target}Consumer PRIVATE QGCTestTiming)
     endif()
 endforeach()
-
-if(TARGET QGCGPSNMEAProtocol)
-    qgc_check_library_consumer(
-        QGCGPSNMEAProtocol
-        SOURCE QGCGPSNMEAProtocolConsumer.cc
-        LABELS Unit GPS
-        TIMEOUT 10
-    )
-endif()

@@ -9,6 +9,18 @@ if(COMMAND add_qgc_test)
         target_sources(${CMAKE_PROJECT_NAME} PRIVATE SerialGPSTransportTest.cc SerialGPSTransportTest.h)
         add_qgc_test(SerialGPSTransportTest LABELS Unit)
     endif()
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_CROSSCOMPILING)
+        add_test(
+            NAME CMake.GPSReceiverTransportsMinimal
+            COMMAND
+                "${CMAKE_COMMAND}" --fresh -G "${CMAKE_GENERATOR}" -S "${CMAKE_CURRENT_SOURCE_DIR}/../Standalone" -B
+                "${CMAKE_CURRENT_BINARY_DIR}/GPSReceiverTransportsMinimal" "-DQt6_DIR=${Qt6_DIR}"
+                -DQGC_GPS_COMPONENTS=ReceiverTransports -DQGC_NO_SERIAL_LINK=ON
+                -DCMAKE_DISABLE_FIND_PACKAGE_Qt6CorePrivate=ON -DCMAKE_DISABLE_FIND_PACKAGE_Qt6Positioning=ON
+                -DCMAKE_DISABLE_FIND_PACKAGE_Qt6SerialPort=ON
+        )
+        set_tests_properties(CMake.GPSReceiverTransportsMinimal PROPERTIES LABELS "CMake;Unit;GPS")
+    endif()
 else()
     qt_add_executable(GPSStreamTransportTest GPSStreamTransportTest.cc
                       "${CMAKE_CURRENT_SOURCE_DIR}/../../Portable/PortableTest.h"

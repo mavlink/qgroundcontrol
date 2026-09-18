@@ -1,31 +1,25 @@
 set(_qgc_cmake_fixture_source "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/ModuleContracts")
 set(_qgc_cmake_fixture_root "${CMAKE_CURRENT_BINARY_DIR}/ModuleContracts")
 
-# Keep fixture configuration independent of cached application options.
 function(qgc_add_cmake_contract_test test_name test_case)
-    set(_fixture_source "${_qgc_cmake_fixture_source}")
-    if(ARGC GREATER 2)
-        set(_fixture_source "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/${ARGV2}")
-    endif()
-    add_test(NAME "CMake.${test_name}"
-             COMMAND "${CMAKE_COMMAND}" --fresh -S "${_fixture_source}" -B "${_qgc_cmake_fixture_root}/${test_name}"
-                     "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake" "-DTEST_CASE=${test_case}"
+    add_test(
+        NAME "CMake.${test_name}"
+        COMMAND
+            "${CMAKE_COMMAND}" --fresh -S "${_qgc_cmake_fixture_source}" -B "${_qgc_cmake_fixture_root}/${test_name}"
+            "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake" "-DTEST_CASE=${test_case}"
     )
     set_tests_properties("CMake.${test_name}" PROPERTIES LABELS "CMake;Unit")
 endfunction()
 
-# Require the intended failure, not an unrelated configure error.
 function(qgc_add_cmake_failure_contract_test test_name test_case expected_regex)
-    set(_fixture_source "${_qgc_cmake_fixture_source}")
-    if(ARGC GREATER 3)
-        set(_fixture_source "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/${ARGV3}")
-    endif()
     add_test(
         NAME "CMake.${test_name}"
         COMMAND
-            "${CMAKE_COMMAND}" "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}" "-DSOURCE_DIR=${_fixture_source}"
-            "-DBINARY_DIR=${_qgc_cmake_fixture_root}/${test_name}" "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake"
-            "-DTEST_CASE=${test_case}" "-DEXPECTED_REGEX=${expected_regex}" -P
+            "${CMAKE_COMMAND}" "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}"
+            "-DSOURCE_DIR=${_qgc_cmake_fixture_source}"
+            "-DBINARY_DIR=${_qgc_cmake_fixture_root}/${test_name}"
+            "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake" "-DTEST_CASE=${test_case}"
+            "-DEXPECTED_REGEX=${expected_regex}" -P
             "${CMAKE_CURRENT_SOURCE_DIR}/run_expected_failure_test.cmake"
     )
     set_tests_properties("CMake.${test_name}" PROPERTIES LABELS "CMake;Unit")
@@ -44,38 +38,20 @@ qgc_add_cmake_contract_test(PythonVenvStaleCache python-venv-stale-cache)
 qgc_add_cmake_contract_test(QmlCodegenValid qml-codegen-valid)
 qgc_add_cmake_contract_test(QmlCodegenConfigureValid qml-codegen-configure-valid)
 qgc_add_cmake_contract_test(QGCTestTimeoutZero qgc-test-timeout-zero)
-qgc_add_cmake_contract_test(LibraryConsumerDefaults library-consumer-defaults LibraryConsumer)
-qgc_add_cmake_contract_test(LibraryConsumerMetadata library-consumer-metadata LibraryConsumer)
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_CROSSCOMPILING)
-    add_test(
-        NAME CMake.GPSReceiverTransportsMinimal
-        COMMAND
-            "${CMAKE_COMMAND}" --fresh -G "${CMAKE_GENERATOR}" -S "${PROJECT_SOURCE_DIR}/test/GPS/Standalone" -B
-            "${CMAKE_CURRENT_BINARY_DIR}/GPSReceiverTransportsMinimal" "-DQt6_DIR=${Qt6_DIR}"
-            -DQGC_GPS_COMPONENTS=ReceiverTransports -DQGC_NO_SERIAL_LINK=ON
-            -DCMAKE_DISABLE_FIND_PACKAGE_Qt6CorePrivate=ON -DCMAKE_DISABLE_FIND_PACKAGE_Qt6Positioning=ON
-            -DCMAKE_DISABLE_FIND_PACKAGE_Qt6SerialPort=ON
-    )
-    set_tests_properties(CMake.GPSReceiverTransportsMinimal PROPERTIES LABELS "CMake;Unit")
-endif()
 
 add_test(
     NAME CMake.CustomDirEscape
     COMMAND
-        "${CMAKE_COMMAND}" "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}" "-DSOURCE_DIR=${PROJECT_SOURCE_DIR}"
-        "-DBINARY_DIR=${_qgc_cmake_fixture_root}/custom-dir-escape" "-DCONFIGURE_ARGUMENT=-DQGC_CUSTOM_DIR=../outside"
+        "${CMAKE_COMMAND}" "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}"
+        "-DSOURCE_DIR=${PROJECT_SOURCE_DIR}"
+        "-DBINARY_DIR=${_qgc_cmake_fixture_root}/custom-dir-escape"
+        "-DCONFIGURE_ARGUMENT=-DQGC_CUSTOM_DIR=../outside"
         "-DEXPECTED_REGEX=QGC_CUSTOM_DIR must be a non-empty path" -P
         "${CMAKE_CURRENT_SOURCE_DIR}/run_expected_failure_test.cmake"
 )
 set_tests_properties(CMake.CustomDirEscape PROPERTIES LABELS "CMake;Unit")
 
 set(_qgc_expected_failure_cases
-    "LibraryConsumerMissingSource|library-consumer-missing-source|SOURCE is required|LibraryConsumer"
-    "LibraryConsumerMissingValue|library-consumer-missing-value|missing values for|LibraryConsumer"
-    "LibraryConsumerUnknownArgument|library-consumer-unknown-argument|unknown arguments|LibraryConsumer"
-    "LibraryConsumerMissingTarget|library-consumer-missing-target|target does not exist|LibraryConsumer"
-    "LibraryConsumerInvalidTimeout|library-consumer-invalid-timeout|TIMEOUT must be a positive integer|LibraryConsumer"
     "QmlCodegenMissingNames|qml-codegen-missing-names|QML_NAMES is required"
     "QmlCodegenMissingPython|qml-codegen-missing-python|Python3::Interpreter target is required"
     "QmlCodegenUnknownArgument|qml-codegen-unknown-argument|unknown arguments"
@@ -99,7 +75,12 @@ set(_qgc_expected_failure_cases
 )
 foreach(qgc_failure_case IN LISTS _qgc_expected_failure_cases)
     string(REPLACE "|" ";" _qgc_failure_parts "${qgc_failure_case}")
-    qgc_add_cmake_failure_contract_test(${_qgc_failure_parts})
+    list(GET _qgc_failure_parts 0 _qgc_test_name)
+    list(GET _qgc_failure_parts 1 _qgc_test_case)
+    list(GET _qgc_failure_parts 2 _qgc_expected_regex)
+    qgc_add_cmake_failure_contract_test(
+        "${_qgc_test_name}" "${_qgc_test_case}" "${_qgc_expected_regex}"
+    )
 endforeach()
 
 add_test(
