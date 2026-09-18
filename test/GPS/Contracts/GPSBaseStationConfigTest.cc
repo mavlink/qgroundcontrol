@@ -125,7 +125,6 @@ private slots:
         config.base.fixedBaseAccuracyMeters = 0;
         QVERIFY(config.validationError().isEmpty());
     }
-
 };
 
 QTEST_APPLESS_MAIN(GPSBaseStationConfigTest)

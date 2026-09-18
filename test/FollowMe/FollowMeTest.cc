@@ -5,6 +5,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "FollowMe.h"
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
@@ -15,6 +16,7 @@
 
 void FollowMeTest::_testFollowMe()
 {
+    TestFixtures::SettingsFixture saved;
     // The mock vehicle does not have a follow mode configured, so setFlightMode produces expected warnings.
     ignoreLogMessage("FirmwarePlugin.PX4FirmwarePlugin", QtWarningMsg,
                      QRegularExpression("Unknown flight Mode"));
@@ -26,7 +28,7 @@ void FollowMeTest::_testFollowMe()
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     vehicle->setFlightMode(vehicle->followFlightMode());
-    SettingsManager::instance()->appSettings()->followTarget()->setRawValue(1);
+    saved.setFactValue(SettingsManager::instance()->appSettings()->followTarget(), 1);
     QSignalSpy spyGCSMotionReport(vehicle, &Vehicle::messagesSentChanged);
     QVERIFY_SIGNAL_WAIT(spyGCSMotionReport, TestTimeout::mediumMs());
     _disconnectMockLink();
@@ -38,11 +40,13 @@ void FollowMeTest::_motionPolicyReports_data()
     QTest::addColumn<bool>("hasCourse");
     QTest::addColumn<bool>("hasVerticalAccuracy");
     QTest::addColumn<bool>("hasHorizontalAccuracy");
-    QTest::newRow("moving") << 2.0 << true << true << true;
-    QTest::newRow("slow") << 0.1 << true << true << true;
-    QTest::newRow("no-course") << 2.0 << false << true << true;
-    QTest::newRow("no-motion-or-vertical-attributes") << qQNaN() << false << false << true;
-    QTest::newRow("no-horizontal-accuracy") << 2.0 << true << true << false;
+    QTest::addColumn<bool>("hasPreviousReport");
+    QTest::newRow("moving") << 2.0 << true << true << true << false;
+    QTest::newRow("moving-after-previous-report") << 2.0 << true << true << true << true;
+    QTest::newRow("slow") << 0.1 << true << true << true << false;
+    QTest::newRow("no-course") << 2.0 << false << true << true << false;
+    QTest::newRow("no-motion-or-vertical-attributes") << qQNaN() << false << false << true << false;
+    QTest::newRow("no-horizontal-accuracy") << 2.0 << true << true << false << false;
 }
 
 void FollowMeTest::_motionPolicyReports()
@@ -51,6 +55,9 @@ void FollowMeTest::_motionPolicyReports()
     QFETCH(bool, hasCourse);
     QFETCH(bool, hasVerticalAccuracy);
     QFETCH(bool, hasHorizontalAccuracy);
+    QFETCH(bool, hasPreviousReport);
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(SettingsManager::instance()->appSettings()->followTarget(), 0);
     _connectMockLinkNoInitialConnectSequence();
     QVERIFY(vehicle());
     auto* positioning = QGCPositionManager::instance();
@@ -79,17 +86,28 @@ void FollowMeTest::_motionPolicyReports()
     if (qIsFinite(speed)) {
         observation.position.setAttribute(QGeoPositionInfo::GroundSpeed, speed);
     }
-    health.updateObservation(observation);
     FollowMe follow;
     QVERIFY(QMetaObject::invokeMethod(&follow, "_settingsChanged", Qt::DirectConnection, Q_ARG(QVariant, QVariant(1))));
+    if (hasPreviousReport) {
+        auto previousObservation = observation;
+        previousObservation.position.setCoordinate(QGeoCoordinate(46, 7, 400));
+        health.updateObservation(previousObservation);
+        QVERIFY(QMetaObject::invokeMethod(&follow, "_sendGCSMotionReport", Qt::DirectConnection));
+        QTRY_COMPARE_WITH_TIMEOUT(mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_FOLLOW_TARGET), 1,
+                                  TestTimeout::mediumMs());
+        QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+        observation.monotonicTimestampUs = scheduler.nowUs();
+    }
+    health.updateObservation(observation);
+    const int previousReportCount = mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_FOLLOW_TARGET);
     QSignalSpy sent(vehicle(), &Vehicle::messagesSentChanged);
     QVERIFY(QMetaObject::invokeMethod(&follow, "_sendGCSMotionReport", Qt::DirectConnection));
     QCOMPARE(sent.size(), hasHorizontalAccuracy ? 1 : 0);
     if (!hasHorizontalAccuracy) {
         return;
     }
-    QTRY_VERIFY_WITH_TIMEOUT(mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_FOLLOW_TARGET) > 0,
-                             TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_FOLLOW_TARGET),
+                              previousReportCount + 1, TestTimeout::mediumMs());
     mavlink_message_t message{};
     QVERIFY(mockLink()->lastReceivedMavlinkMessage(MAVLINK_MSG_ID_FOLLOW_TARGET, message));
     mavlink_follow_target_t report{};

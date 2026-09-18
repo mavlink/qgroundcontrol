@@ -254,13 +254,12 @@ void NTRIPHttpTransport::_connect()
         _fail(NTRIPError::SocketError, msg);
     });
 
-    connect(_socket, &QTcpSocket::disconnected, this,
-            [this, current]() {
-                if (!current()) {
-                    return;
-                }
-                _finishResponse();
-            });
+    connect(_socket, &QTcpSocket::disconnected, this, [this, current]() {
+        if (!current()) {
+            return;
+        }
+        _finishResponse();
+    });
 
     connect(_socket, &QTcpSocket::readyRead, this, [this, current]() {
         if (current()) {

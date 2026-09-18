@@ -40,6 +40,7 @@ int main()
     if (!require(base.surveyInDurationSecs == 4294967295LL, "Survey duration lost legacy wire range")) {
         return EXIT_FAILURE;
     }
+
     struct SatelliteCase
     {
         GPSConstellation constellation;
