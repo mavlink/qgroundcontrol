@@ -32,6 +32,31 @@ Item {
 
     signal cursorTargetSelected(int cameraSlot, real normalizedX, real normalizedY)
 
+    function normalizedTargetAt(localX, localY) {
+        if (root.width <= 0 || root.height <= 0
+                || !Number.isFinite(localX) || !Number.isFinite(localY)
+                || localX < 0 || localX >= root.width
+                || localY < 0 || localY >= root.height) {
+            return null
+        }
+
+        return {
+            cameraSlot: root.cameraSlot,
+            normalizedX: localX / root.width * 2.0 - 1.0,
+            normalizedY: 1.0 - localY / root.height * 2.0
+        }
+    }
+
+    function currentPointerTarget() {
+        if (!immediatePointerTracker.hovered) {
+            return null
+        }
+
+        return root.normalizedTargetAt(
+            immediatePointerTracker.point.position.x,
+            immediatePointerTracker.point.position.y)
+    }
+
     readonly property bool crosshair: cameraSlot >= 0
         && cameraSlot < SVState.cameraOverlays.length
         && SVState.cameraOverlays[cameraSlot].crosshair
@@ -145,6 +170,12 @@ Item {
     }
 
 
+    HoverHandler {
+        id: immediatePointerTracker
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        blocking: false
+    }
+
     MouseArea {
         anchors.fill: parent
         enabled: !root.previewMode && !SVState.cursorTrackingSessionActive && SVState.cameraSelectionEnabled && SVState.hud
@@ -166,11 +197,12 @@ Item {
             mouse.accepted = true
 
             if (root.cursorTrackingSessionCamera) {
-                if (width > 0 && height > 0) {
+                const target = root.normalizedTargetAt(mouse.x, mouse.y)
+                if (target) {
                     root.cursorTargetSelected(
-                        root.cameraSlot,
-                        mouse.x / width * 2.0 - 1.0,
-                        1.0 - mouse.y / height * 2.0)
+                        target.cameraSlot,
+                        target.normalizedX,
+                        target.normalizedY)
                 } else {
                     SVState.cancelCursorTrackingSelection()
                 }
