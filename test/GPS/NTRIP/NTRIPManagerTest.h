@@ -29,6 +29,7 @@ private slots:
     void testRetryPolicy_data();
     void testRetryPolicy();
     void testHttpRetryAfterReachesManager();
+    void testHttpRetryAfterReachesManager_data();
     void testRetryPublicationSuperseded_data();
     void testRetryPublicationSuperseded();
     void testMissingMountpointDoesNotStartTransport();

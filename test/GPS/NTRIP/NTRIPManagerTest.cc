@@ -343,8 +343,19 @@ void NTRIPManagerTest::testRetryPolicy()
     QCOMPARE(manager._reconnectAttempts, 1);
 }
 
+void NTRIPManagerTest::testHttpRetryAfterReachesManager_data()
+{
+    QTest::addColumn<int>("status");
+    QTest::addColumn<bool>("compressed");
+    QTest::newRow("plain-retry") << 503 << false;
+    QTest::newRow("compressed-retry") << 503 << true;
+    QTest::newRow("compressed-authentication") << 401 << true;
+}
+
 void NTRIPManagerTest::testHttpRetryAfterReachesManager()
 {
+    QFETCH(int, status);
+    QFETCH(bool, compressed);
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
     TestFixtures::SettingsFixture saved;
@@ -364,14 +375,22 @@ void NTRIPManagerTest::testHttpRetryAfterReachesManager()
     QVERIFY(peer);
     QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::shortMs());
     peer->readAll();
-    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:.*503")));
-    const QByteArray response = "HTTP/1.1 503 Unavailable\r\nRetry-After: 17\r\nContent-Length: 0\r\n\r\n";
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("NTRIP error:.*%1").arg(status)));
+    const QByteArray body = compressed ? QByteArray::fromHex("1f8b080000000000000303000000000000000000") : QByteArray();
+    const QByteArray encoding = compressed ? QByteArray("Content-Encoding: gzip\r\n") : QByteArray();
+    const QByteArray response = "HTTP/1.1 " + QByteArray::number(status) + " Error\r\nRetry-After: 17\r\n" + encoding +
+                                "Content-Length: " + QByteArray::number(body.size()) + "\r\n\r\n" + body;
     QCOMPARE(peer->write(response), response.size());
-    QTRY_COMPARE_WITH_TIMEOUT(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting,
-                              TestTimeout::shortMs());
+    const auto expectedState =
+        status == 401 ? NTRIPManager::ConnectionStatus::Error : NTRIPManager::ConnectionStatus::Reconnecting;
+    QTRY_COMPARE_WITH_TIMEOUT(manager.connectionStatus(), expectedState, TestTimeout::shortMs());
     verifyExpectedLogMessage();
-    QCOMPARE(manager._reconnectTimer.interval(), std::chrono::seconds(17));
-    QCOMPARE(manager._reconnectAttempts, 1);
+    QCOMPARE(manager._reconnectTimer.isActive(), status != 401);
+    QCOMPARE(manager._reconnectAttempts, status == 401 ? 0 : 1);
+    if (status != 401) {
+        QCOMPARE(manager._reconnectTimer.interval(), std::chrono::seconds(17));
+    }
 }
 
 void NTRIPManagerTest::testRetryPublicationSuperseded_data()

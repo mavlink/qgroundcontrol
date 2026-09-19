@@ -23,6 +23,7 @@ NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, cons
     , _config(config)
     , _connectTimeoutTimer(this)
     , _dataWatchdogTimer(this)
+    , _errorBodyTimer(this)
 {
     const QVector<int> whitelist = filter.messageIds();
     _rtcmDecoder.setWhitelist(whitelist);
@@ -45,6 +46,14 @@ NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, cons
         qCWarning(NTRIPHttpTransportLog) << "No data received for" << secs << "seconds";
         _fail(NTRIPError::DataWatchdog, tr("No data received for %1 seconds").arg(secs));
     });
+
+    _errorBodyTimer.setSingleShot(true);
+    _errorBodyTimer.setInterval(kErrorBodyTimeout);
+    _errorBodyTimer.callOnTimeout(this, [this]() {
+        if (!_stopped) {
+            _finishResponse();
+        }
+    });
 }
 
 NTRIPHttpTransport::~NTRIPHttpTransport()
@@ -58,6 +67,7 @@ void NTRIPHttpTransport::start()
     const quint64 attempt = ++_attempt;
     _connectTimeoutTimer.stop();
     _dataWatchdogTimer.stop();
+    _errorBodyTimer.stop();
     _retireSocket();
     if (!guard || _attempt != attempt) {
         return;
@@ -76,6 +86,7 @@ void NTRIPHttpTransport::stop()
     _stopped = true;
     _connectTimeoutTimer.stop();
     _dataWatchdogTimer.stop();
+    _errorBodyTimer.stop();
 
     _retireSocket();
 }
@@ -138,8 +149,15 @@ NTRIPHttpTransport::HttpRequest NTRIPHttpTransport::buildHttpRequest(const NTRIP
     }
 
     result.bytes = "GET /" + config.mountpoint.toUtf8() + " HTTP/1.1\r\n";
-    for (const auto& [name, value] : headers.toListOfPairs()) {
-        result.bytes += name + ": " + value + "\r\n";
+    // Some legacy casters match these spellings case-sensitively.
+    for (const char* name : {"Host", "Ntrip-Version", "User-Agent", "Authorization"}) {
+        if (headers.contains(QLatin1StringView(name))) {
+            const auto value = headers.value(QLatin1StringView(name));
+            result.bytes += name;
+            result.bytes += ": ";
+            result.bytes.append(value.data(), value.size());
+            result.bytes += "\r\n";
+        }
     }
     result.bytes += "\r\n";
     result.credentialsInClear = hasCredentials && !config.useTls;
@@ -179,6 +197,10 @@ void NTRIPHttpTransport::_fail(NTRIPError code, const QString& msg, std::chrono:
     if (_stopped) {
         return;
     }
+    if (_httpDecoder.awaitingErrorBody()) {
+        _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
+        return;
+    }
     const QPointer<NTRIPHttpTransport> guard(this);
     const auto socket = _socket;
     const quint64 attempt = _attempt;
@@ -186,6 +208,7 @@ void NTRIPHttpTransport::_fail(NTRIPError code, const QString& msg, std::chrono:
     _stopped = true;
     _connectTimeoutTimer.stop();
     _dataWatchdogTimer.stop();
+    _errorBodyTimer.stop();
     emit error(NTRIPFailure{code, msg, retryAfter});
     if (guard && _attempt == attempt && socket && _socket == socket) {
         socket->abort();
@@ -393,6 +416,9 @@ void NTRIPHttpTransport::_publishHttpResult(const NTRIPHttpDecoder::Result& resu
         _fail(result.failure->code, result.failure->detail, result.failure->retryAfter);
     } else if (result.complete) {
         _fail(NTRIPError::ServerDisconnected, tr("NTRIP correction stream ended"));
+    } else if (result.awaitingErrorBody && !_errorBodyTimer.isActive()) {
+        _connectTimeoutTimer.stop();
+        _errorBodyTimer.start();
     }
 }
 

@@ -95,6 +95,17 @@ private slots:
     void handshakeRetiresAttempt();
     void failureCanRestart_data();
     void failureCanRestart();
+    void legacyCaster_data();
+    void legacyCaster();
+    void icyPartialFrame_data();
+    void icyPartialFrame();
+    void errorDiagnostics_data();
+    void errorDiagnostics();
+    void errorBodyBounds();
+    void errorBodyDeadline();
+    void errorBodySocketFailure();
+    void pendingErrorRetiresAttempt_data();
+    void pendingErrorRetiresAttempt();
     void httpFraming_data();
     void httpFraming();
     void retryAfter_data();
@@ -254,16 +265,28 @@ void NTRIPReentrancyTest::handshakeRetiresAttempt()
 
 void NTRIPReentrancyTest::failureCanRestart_data()
 {
-    warningRetiresAttempt_data();
+    QTest::addColumn<int>("action");
+    QTest::addColumn<bool>("deferred");
+    for (int action : {0, 1, 2}) {
+        QTest::newRow(qPrintable(QStringLiteral("immediate-%1").arg(action))) << action << false;
+        QTest::newRow(qPrintable(QStringLiteral("deferred-%1").arg(action))) << action << true;
+    }
 }
 
 void NTRIPReentrancyTest::failureCanRestart()
 {
     QFETCH(int, action);
-    auto transport = std::make_unique<NTRIPHttpTransport>(config(), NTRIPRtcmFilterConfig{});
+    QFETCH(bool, deferred);
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    auto configuration = config();
+    configuration.port = server.serverPort();
+    int failures = 0;
+    auto transport = std::make_unique<NTRIPHttpTransport>(configuration, NTRIPRtcmFilterConfig{});
     transport->_socket = new QTcpSocket(transport.get());
     const auto previous = transport->_socket;
     connect(transport.get(), &NTRIPTransport::error, this, [&]() {
+        ++failures;
         if (action == 0) {
             transport->stop();
         } else if (action == 1) {
@@ -272,7 +295,10 @@ void NTRIPReentrancyTest::failureCanRestart()
             transport->start();
         }
     });
-    transport->_processHttpBytes("HTTP/1.1 503 Unavailable\r\nRetry-After: 17\r\n\r\n", 123);
+    transport->_processHttpBytes("HTTP/1.1 503 Unavailable\r\nRetry-After: 17\r\nContent-Length: " +
+                                     QByteArray(deferred ? "100" : "0") + "\r\n\r\n",
+                                 123);
+    QTRY_COMPARE(failures, 1);
     if (action == 2) {
         QVERIFY(transport->_socket);
         QVERIFY(transport->_socket != previous);
@@ -284,6 +310,281 @@ void NTRIPReentrancyTest::failureCanRestart()
     } else {
         QVERIFY(!transport);
     }
+}
+
+void NTRIPReentrancyTest::legacyCaster_data()
+{
+    QTest::addColumn<bool>("authenticated");
+    QTest::newRow("anonymous") << false;
+    QTest::newRow("authenticated") << true;
+}
+
+void NTRIPReentrancyTest::legacyCaster()
+{
+    QFETCH(bool, authenticated);
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    auto configuration = config();
+    configuration.port = server.serverPort();
+    if (authenticated) {
+        configuration.username = QStringLiteral("test-user");
+        configuration.password = QStringLiteral("test-password");
+    }
+    const QRegularExpression warningPattern(QStringLiteral("Sending credentials without TLS"));
+#ifdef QGC_PORTABLE_TEST
+    std::optional<WarningCapture> warning;
+    if (authenticated) {
+        warning.emplace("GPS.NTRIPHttpTransport", warningPattern);
+    }
+#else
+    if (authenticated) {
+        expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, warningPattern);
+    }
+#endif
+    NTRIPHttpTransport transport(configuration, {});
+    QSignalSpy connected(&transport, &NTRIPTransport::connected);
+    QSignalSpy frames(&transport, &NTRIPTransport::correctionFrameReceived);
+    QSignalSpy errors(&transport, &NTRIPTransport::error);
+    transport.start();
+    QTRY_VERIFY(server.hasPendingConnections());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QByteArray request;
+    QTRY_VERIFY((request += peer->readAll()).endsWith("\r\n\r\n"));
+    const bool accepted =
+        request.startsWith("GET /TEST HTTP/1.1\r\n") && request.contains("\r\nUser-Agent: NTRIP ") &&
+        (!authenticated ||
+         request.contains("\r\nAuthorization: Basic " + QByteArray("test-user:test-password").toBase64() + "\r\n"));
+    const auto frame = GpsTestHelpers::buildRtcmFrame(1005);
+    if (accepted) {
+        const QByteArray response = "ICY 200 OK\r\n" + frame;
+        QCOMPARE(peer->write(response), response.size());
+    } else {
+        peer->disconnectFromHost();
+    }
+    QTRY_VERIFY(!frames.isEmpty() || !errors.isEmpty());
+    QVERIFY(errors.isEmpty());
+    QCOMPARE(connected.size(), 1);
+    QCOMPARE(frames.size(), 1);
+    QCOMPARE(qvariant_cast<RTCMFrameDecoder::Result>(frames.first().first()).data, frame);
+    transport.stop();
+#ifdef QGC_PORTABLE_TEST
+    if (warning) {
+        QCOMPARE(warning->count(), 1);
+    }
+#else
+    if (authenticated) {
+        verifyExpectedLogMessage();
+    }
+#endif
+}
+
+void NTRIPReentrancyTest::icyPartialFrame_data()
+{
+    QTest::addColumn<QByteArray>("suffix");
+    QTest::newRow("nul-crc-tail") << QByteArray(1, '\0');
+    QTest::newRow("printable-tail") << QByteArray("tail");
+    QTest::newRow("colon-tail") << QByteArray("field: tail");
+    QTest::newRow("carriage-return-tail") << QByteArray("\rX");
+    QTest::newRow("line-feed-tail") << QByteArray("\n");
+    QTest::newRow("terminated-tail") << QByteArray("tail\r\n");
+    QTest::newRow("header-like-tail") << QByteArray("Tail: data\r\n");
+    QTest::newRow("whitespace-tail") << QByteArray(" \t");
+}
+
+void NTRIPReentrancyTest::icyPartialFrame()
+{
+    QFETCH(QByteArray, suffix);
+    const auto frame = QByteArray::fromHex("d300023ed0a4e000");
+    for (const bool bytewise : {false, true}) {
+        NTRIPHttpTransport transport(config(), {});
+        QSignalSpy frames(&transport, &NTRIPTransport::correctionFrameReceived);
+        QSignalSpy errors(&transport, &NTRIPTransport::error);
+        QSignalSpy connected(&transport, &NTRIPTransport::connected);
+        const QByteArray prefix = "ICY 200 OK\r\n" + suffix;
+        if (bytewise) {
+            for (char ch : prefix) {
+                transport._processHttpBytes(QByteArray(1, ch), 50);
+            }
+            transport._processHttpBytes(frame.first(1), 100);
+            QCOMPARE(frames.size(), 0);
+            for (char ch : frame.sliced(1)) {
+                transport._processHttpBytes(QByteArray(1, ch), 200);
+            }
+        } else {
+            transport._processHttpBytes(prefix + frame, 100);
+        }
+        QCOMPARE(connected.size(), 1);
+        QCOMPARE(frames.size(), 1);
+        QCOMPARE(qvariant_cast<RTCMFrameDecoder::Result>(frames.first().first()).receivedAtMs, 100);
+        transport._processHttpBytes(frame.repeated(1024), 300);
+        QCOMPARE(frames.size(), 1025);
+        QCOMPARE(qvariant_cast<RTCMFrameDecoder::Result>(frames.last().first()).receivedAtMs, 300);
+        QVERIFY(errors.isEmpty());
+    }
+}
+
+void NTRIPReentrancyTest::errorDiagnostics_data()
+{
+    QTest::addColumn<QByteArray>("wire");
+    QTest::addColumn<int>("error");
+    QTest::addColumn<QString>("preview");
+    QTest::addColumn<int>("retryMs");
+    const int http = static_cast<int>(NTRIPError::HttpError);
+    const QByteArray denied = "HTTP/1.1 403 Forbidden\r\n";
+    const QByteArray unavailable = "HTTP/1.1 503 Unavailable\r\nRetry-After: 120\r\n";
+    const QByteArray html = "<b>Mountpoint denied</b>\nUse another mountpoint";
+    const QString preview = QStringLiteral("Mountpoint denied Use another mountpoint");
+    const QByteArray length = "Content-Length: " + QByteArray::number(html.size()) + "\r\n\r\n";
+    QTest::newRow("content-length") << denied + length + html << http << preview << 0;
+    QTest::newRow("close-delimited") << denied + "\r\n" + html << http << preview << 0;
+    QTest::newRow("truncated-length") << denied + "Content-Length: 1000\r\n\r\n" + html << http << preview << 0;
+    const QByteArray chunks =
+        unavailable + "Transfer-Encoding: chunked\r\n\r\n" + QByteArray::number(html.size(), 16) + "\r\n" + html;
+    QTest::newRow("chunked") << chunks + "\r\n0\r\n\r\n" << http << preview << 120000;
+    QTest::newRow("malformed-error-chunk") << chunks + "!\n" << http << preview << 120000;
+    QTest::newRow("binary-error-body") << denied + "\r\n" + GpsTestHelpers::buildRtcmFrame(1005) << http << QString()
+                                       << 0;
+    QTest::newRow("control-characters") << denied + "\r\nAccess\x01 denied\nRetry later" << http
+                                        << QStringLiteral("Access denied Retry later") << 0;
+    QTest::newRow("compressed-authentication")
+        << QByteArray("HTTP/1.1 401 Unauthorized\r\nContent-Encoding: gzip\r\nContent-Length: 20\r\n\r\n") +
+               QByteArray::fromHex("1f8b080000000000000303000000000000000000")
+        << static_cast<int>(NTRIPError::AuthFailed) << QString() << 0;
+    QTest::newRow("compressed-retry") << unavailable + "Content-Encoding: gzip\r\n\r\n" << http << QString() << 120000;
+    QTest::newRow("unsupported-error-transfer") << unavailable + "Transfer-Encoding: gzip, chunked\r\n\r\n"
+                                                << http << QString() << 120000;
+}
+
+void NTRIPReentrancyTest::errorDiagnostics()
+{
+    QFETCH(QByteArray, wire);
+    QFETCH(int, error);
+    QFETCH(QString, preview);
+    QFETCH(int, retryMs);
+    for (const qsizetype fragment : {qsizetype(1), qsizetype(7), wire.size()}) {
+        NTRIPHttpDecoder decoder;
+        std::optional<NTRIPFailure> failure;
+        int failures = 0;
+        const auto consume = [&](const NTRIPHttpDecoder::Result& result) {
+            QVERIFY(result.body.isEmpty());
+            QVERIFY(!result.connected);
+            QVERIFY(!result.complete);
+            if (result.failure) {
+                failure = result.failure;
+                ++failures;
+            }
+        };
+        for (qsizetype offset = 0; offset < wire.size(); offset += fragment) {
+            consume(decoder.feed(QByteArrayView(wire).sliced(offset, std::min(fragment, wire.size() - offset)),
+                                 QDateTime::currentDateTimeUtc()));
+        }
+        consume(decoder.finish());
+        QCOMPARE(failures, 1);
+        QVERIFY(failure);
+        QCOMPARE(static_cast<int>(failure->code), error);
+        QCOMPARE(failure->retryAfter, std::chrono::milliseconds(retryMs));
+        QVERIFY2(failure->detail.contains(preview), qPrintable(failure->detail));
+        QVERIFY(!failure->detail.contains(QLatin1Char('<')));
+        QVERIFY(!failure->detail.contains(QRegularExpression(QStringLiteral("[\\x00-\\x1f\\x7f]"))));
+        QVERIFY(!failure->detail.contains(QStringLiteral("encoding")));
+        const auto separator = failure->detail.indexOf(QStringLiteral(" \u2014 "));
+        if (separator >= 0) {
+            QVERIFY(failure->detail.size() - separator - 3 <= NTRIPHttpDecoder::MAX_ERROR_PREVIEW_CHARS);
+        }
+    }
+}
+
+void NTRIPReentrancyTest::errorBodyBounds()
+{
+    NTRIPHttpDecoder decoder;
+    auto result = decoder.feed("HTTP/1.1 403 Forbidden\r\nContent-Length: 1000000\r\n\r\n", {});
+    QVERIFY(result.awaitingErrorBody);
+    QVERIFY(!result.failure);
+    result = decoder.feed(QByteArray(NTRIPHttpDecoder::MAX_ERROR_BODY_BYTES - 1, 'x'), {});
+    QVERIFY(result.awaitingErrorBody);
+    QVERIFY(!result.failure);
+    result = decoder.feed("x", {});
+    QVERIFY(result.failure);
+    QVERIFY(!result.awaitingErrorBody);
+    QVERIFY(result.body.isEmpty());
+    QCOMPARE(result.failure->detail, QStringLiteral("HTTP 403: Forbidden \u2014 ") +
+                                         QString(NTRIPHttpDecoder::MAX_ERROR_PREVIEW_CHARS, QLatin1Char('x')));
+    QVERIFY(!decoder.feed("must not be appended", {}).failure);
+}
+
+void NTRIPReentrancyTest::errorBodyDeadline()
+{
+    NTRIPHttpTransport transport(config(), {});
+    QSignalSpy errors(&transport, &NTRIPTransport::error);
+    QSignalSpy frames(&transport, &NTRIPTransport::correctionFrameReceived);
+    transport._processHttpBytes(
+        "HTTP/1.1 503 Unavailable\r\nRetry-After: 120\r\nContent-Length: 1000000\r\n\r\nPartial detail", 123);
+    QVERIFY(errors.isEmpty());
+    QTimer drip;
+    drip.setInterval(NTRIPHttpTransport::kErrorBodyTimeout / 5);
+    connect(&drip, &QTimer::timeout, &transport, [&]() { transport._processHttpBytes("x", 123); });
+    drip.start();
+    QTRY_COMPARE(errors.size(), 1);
+    drip.stop();
+    const auto failure = qvariant_cast<NTRIPFailure>(errors.first().first());
+    QCOMPARE(failure.code, NTRIPError::HttpError);
+    QCOMPARE(failure.retryAfter, std::chrono::seconds(120));
+    QVERIFY(failure.detail.contains(QStringLiteral("Partial detail")));
+    QVERIFY(frames.isEmpty());
+    QVERIFY(!transport._errorBodyTimer.isActive());
+    QVERIFY(!transport._connectTimeoutTimer.isActive());
+    QVERIFY(!transport._dataWatchdogTimer.isActive());
+}
+
+void NTRIPReentrancyTest::pendingErrorRetiresAttempt_data()
+{
+    warningRetiresAttempt_data();
+}
+
+void NTRIPReentrancyTest::errorBodySocketFailure()
+{
+    NTRIPHttpTransport transport(config(), {});
+    QSignalSpy errors(&transport, &NTRIPTransport::error);
+    transport._processHttpBytes(
+        "HTTP/1.1 503 Unavailable\r\nRetry-After: 120\r\nContent-Length: 100\r\n\r\nPartial detail", 123);
+    QVERIFY(errors.isEmpty());
+    transport._fail(NTRIPError::SocketError, QStringLiteral("Connection reset"));
+    QCOMPARE(errors.size(), 1);
+    const auto failure = qvariant_cast<NTRIPFailure>(errors.first().first());
+    QCOMPARE(failure.code, NTRIPError::HttpError);
+    QCOMPARE(failure.retryAfter, std::chrono::seconds(120));
+    QVERIFY(failure.detail.contains(QStringLiteral("Partial detail")));
+    QVERIFY(!transport._errorBodyTimer.isActive());
+}
+
+void NTRIPReentrancyTest::pendingErrorRetiresAttempt()
+{
+    QFETCH(int, action);
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    auto configuration = config();
+    configuration.port = server.serverPort();
+    auto transport = std::make_unique<NTRIPHttpTransport>(configuration, NTRIPRtcmFilterConfig{});
+    QSignalSpy errors(transport.get(), &NTRIPTransport::error);
+    transport->_processHttpBytes("HTTP/1.1 503 Unavailable\r\nContent-Length: 100\r\n\r\n", 123);
+    QVERIFY(transport->_errorBodyTimer.isActive());
+    if (action == 1) {
+        transport.reset();
+    } else if (action == 0) {
+        transport->stop();
+    } else {
+        transport->start();
+        transport->_processHttpBytes("HTTP/1.1 200 OK\r\n\r\n", 456);
+    }
+    if (transport) {
+        QVERIFY(!transport->_errorBodyTimer.isActive());
+    }
+    bool deadlinePassed = false;
+    QObject context;
+    QTimer::singleShot(NTRIPHttpTransport::kErrorBodyTimeout + std::chrono::milliseconds{50}, &context,
+                       [&]() { deadlinePassed = true; });
+    QTRY_VERIFY(deadlinePassed);
+    QVERIFY(errors.isEmpty());
 }
 
 void NTRIPReentrancyTest::httpFraming_data()
@@ -309,10 +610,10 @@ void NTRIPReentrancyTest::httpFraming_data()
     QTest::newRow("icy-separator") << QByteArray("ICY 200 OK\r\n\r\n") + binary << binary << true << -1;
     QTest::newRow("icy-headers") << QByteArray("icy 200 OK\r\nServer: legacy\r\nContent-Length: 3\r\n\r\n") + binary
                                  << binary << true << -1;
-    QTest::newRow("icy-folded-header") << QByteArray("ICY 200 OK\r\n Content-Length: 3\r\n\r\n") << QByteArray() << true
-                                       << invalid;
+    QTest::newRow("icy-non-header-prefix") << QByteArray("ICY 200 OK\r\n Content-Length: 3\r\n\r\n")
+                                           << QByteArray(" Content-Length: 3\r\n\r\n") << true << -1;
     QTest::newRow("icy-missing-separator")
-        << QByteArray("ICY 200 OK\r\nContent-Length: 3\r\n") + binary << QByteArray() << true << invalid;
+        << QByteArray("ICY 200 OK\r\nContent-Length: 3\r\n") + binary << binary << true << -1;
     QTest::newRow("source-table") << QByteArray("SOURCETABLE 200 OK\r\nSTR;MP\r\n") << QByteArray() << false
                                   << mountpoint;
     QTest::newRow("source-content-type") << ok + "Content-Type: gnss/sourcetable; charset=utf-8\r\n\r\n"
@@ -466,7 +767,8 @@ void NTRIPReentrancyTest::retryAfter()
     connect(
         &transport, &NTRIPTransport::error, this, [&](const NTRIPFailure& failure) { queued.append(failure); },
         Qt::QueuedConnection);
-    transport._processHttpBytes("HTTP/1.1 503 Unavailable\r\nRetry-After: " + value + "\r\n\r\n", 123, now);
+    transport._processHttpBytes("HTTP/1.1 503 Unavailable\r\nRetry-After: " + value + "\r\nContent-Length: 0\r\n\r\n",
+                                123, now);
     QCOMPARE(errors.size(), 1);
     const auto failure = qvariant_cast<NTRIPFailure>(errors[0][0]);
     QCOMPARE(failure.code, NTRIPError::HttpError);
@@ -477,7 +779,8 @@ void NTRIPReentrancyTest::retryAfter()
     QCOMPARE(queued.first().retryAfter, failure.retryAfter);
     if (value.contains("GMT")) {
         NTRIPHttpDecoder decoder;
-        const auto result = decoder.feed("HTTP/1.1 503 Unavailable\r\nRetry-After: " + value + "\r\n\r\n", {});
+        const auto result =
+            decoder.feed("HTTP/1.1 503 Unavailable\r\nRetry-After: " + value + "\r\nContent-Length: 0\r\n\r\n", {});
         QVERIFY(result.failure);
         QCOMPARE(result.failure->retryAfter, std::chrono::milliseconds(0));
     }

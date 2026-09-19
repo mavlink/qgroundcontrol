@@ -14,8 +14,14 @@ if(DEFINED QGC_GPS_COMPONENTS_ENABLED AND NOT "NTRIP" IN_LIST QGC_GPS_COMPONENTS
     return()
 endif()
 
-add_library(QGCGPSNTRIP STATIC NTRIPConnectionStats.cc NTRIPGgaProvider.cc NTRIPHttpTransport.cc
-                               NTRIPSourceTableController.cc NTRIPSourceTable.cc
+qt_add_library(
+    QGCGPSNTRIP
+    STATIC
+    NTRIPConnectionStats.cc
+    NTRIPGgaProvider.cc
+    NTRIPHttpTransport.cc
+    NTRIPSourceTableController.cc
+    NTRIPSourceTable.cc
 )
 add_library(QGC::GPSNTRIP ALIAS QGCGPSNTRIP)
 set_target_properties(QGCGPSNTRIP PROPERTIES AUTOMOC ON)

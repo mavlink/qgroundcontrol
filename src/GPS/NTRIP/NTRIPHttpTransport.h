@@ -25,6 +25,7 @@ class NTRIPHttpTransport : public NTRIPTransport
 public:
     static constexpr std::chrono::milliseconds kConnectTimeout{10000};
     static constexpr std::chrono::milliseconds kDataWatchdog{30000};
+    static constexpr std::chrono::milliseconds kErrorBodyTimeout{250};
 
     NTRIPHttpTransport(const NTRIPConnectionConfig& config, const NTRIPRtcmFilterConfig& filter,
                        QObject* parent = nullptr);
@@ -68,6 +69,7 @@ private:
     QPointer<QTcpSocket> _socket;
     QChronoTimer _connectTimeoutTimer;
     QChronoTimer _dataWatchdogTimer;
+    QChronoTimer _errorBodyTimer;
 
     RTCMFrameDecoder _rtcmDecoder;
     NTRIPHttpDecoder _httpDecoder;

@@ -459,8 +459,8 @@ void NTRIPHttpTransportTest::_testBuildRequestPlaintextCredentialsWarns()
     QVERIFY(request.credentialsInClear);
     QVERIFY(request.bytes.startsWith("GET /MOUNT01 HTTP/1.1\r\n"));
     QVERIFY(request.error.isEmpty());
-    QVERIFY(request.bytes.contains("host: caster.example.com\r\n"));
-    QVERIFY(request.bytes.contains("authorization: Basic "));
+    QVERIFY(request.bytes.contains("Host: caster.example.com\r\n"));
+    QVERIFY(request.bytes.contains("Authorization: Basic "));
     QVERIFY(request.bytes.endsWith("\r\n\r\n"));
 }
 
@@ -477,7 +477,7 @@ void NTRIPHttpTransportTest::_testBuildRequestTlsCredentialsNoWarn()
 
     QVERIFY(!request.credentialsInClear);
     QVERIFY(request.error.isEmpty());
-    QVERIFY(request.bytes.contains("authorization: Basic "));
+    QVERIFY(request.bytes.contains("Authorization: Basic "));
 }
 
 void NTRIPHttpTransportTest::_testBuildRequestNoCredentialsNoWarn()
@@ -491,7 +491,7 @@ void NTRIPHttpTransportTest::_testBuildRequestNoCredentialsNoWarn()
 
     QVERIFY(!request.credentialsInClear);
     QVERIFY(request.error.isEmpty());
-    QVERIFY(!request.bytes.contains("authorization:"));
+    QVERIFY(!request.bytes.contains("Authorization:"));
 }
 
 void NTRIPHttpTransportTest::_testBuildRequestPreservesValues()
@@ -506,10 +506,10 @@ void NTRIPHttpTransportTest::_testBuildRequestPreservesValues()
     QVERIFY(request.error.isEmpty());
     QCOMPARE(request.bytes,
              "GET /MixedCase_1 HTTP/1.1\r\n"
-             "host: Caster.Example.com\r\n"
-             "ntrip-version: Ntrip/2.0\r\n"
-             "user-agent: NTRIP QGroundControl/1.0\r\n"
-             "authorization: Basic " +
+             "Host: Caster.Example.com\r\n"
+             "Ntrip-Version: Ntrip/2.0\r\n"
+             "User-Agent: NTRIP QGroundControl/1.0\r\n"
+             "Authorization: Basic " +
                  credentials + "\r\n\r\n");
 }
 

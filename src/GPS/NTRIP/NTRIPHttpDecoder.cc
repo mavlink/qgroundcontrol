@@ -1,6 +1,7 @@
 #include "NTRIPHttpDecoder.h"
 
 #include <algorithm>
+#include <utility>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QLocale>
@@ -169,10 +170,45 @@ NTRIPHttpDecoder::Status NTRIPHttpDecoder::parseStatusLine(QByteArrayView line)
 
 void NTRIPHttpDecoder::_fail(Result& result, const QString& detail, NTRIPError code)
 {
+    if (_pendingFailure) {
+        _finishError(result);
+        return;
+    }
     _state = State::Failed;
     _line.clear();
     result.complete = false;
     result.failure = NTRIPFailure{code, detail};
+}
+
+void NTRIPHttpDecoder::_finishError(Result& result)
+{
+    if (!_pendingFailure) {
+        _fail(result, tr("Invalid HTTP error state"));
+        return;
+    }
+    static const QRegularExpression htmlTags(QStringLiteral("<[^>]*(?:>|$)"));
+    static const QRegularExpression controls(QStringLiteral("[\\x00-\\x08\\x0e-\\x1f\\x7f]"));
+    QString preview = QString::fromUtf8(_errorBody);
+    preview.remove(htmlTags);
+    preview.remove(controls);
+    preview = preview.simplified().left(MAX_ERROR_PREVIEW_CHARS);
+    result.failure = std::exchange(_pendingFailure, std::nullopt);
+    if (!preview.isEmpty()) {
+        result.failure->detail += QStringLiteral(" \u2014 ") + preview;
+    }
+    _state = State::Failed;
+    _line.clear();
+    _errorBody.clear();
+    result.body.clear();
+    result.connected = false;
+    result.complete = false;
+    result.awaitingErrorBody = false;
+}
+
+void NTRIPHttpDecoder::_beginIcyBody(Result& result)
+{
+    _beginBody(result);
+    result.body += std::exchange(_line, {});
 }
 
 NTRIPHttpDecoder::Result NTRIPHttpDecoder::feed(QByteArrayView bytes, const QDateTime& utcNow)
@@ -183,22 +219,36 @@ NTRIPHttpDecoder::Result NTRIPHttpDecoder::feed(QByteArrayView bytes, const QDat
             _fail(result, tr("Unexpected data after HTTP response"));
             break;
         }
-        if (_state == State::IcyHeaders && _line.isEmpty()) {
+        if (_state == State::IcyHeaders) {
             const auto first = static_cast<unsigned char>(bytes.front());
-            // Legacy ICY may omit both headers and their separator.
-            if (_headers.isEmpty() && first >= 128) {
-                _beginBody(result);
+            const bool binary = first >= 127 || (first < 32 && first != '\t' && first != '\r' && first != '\n');
+            // A legacy stream may start mid-frame, not at the RTCM preamble.
+            // Probe optional ASCII headers only until binary or non-header input arrives.
+            if (_headers.isEmpty() &&
+                (binary || (first == '\n' && !_line.endsWith('\r')) || (_line.endsWith('\r') && first != '\n'))) {
+                _beginIcyBody(result);
+            } else if (!_headers.isEmpty() && _line.isEmpty() && binary) {
+                // ICY casters may omit the blank separator even after optional headers.
+                _lineReceived(result, utcNow);
+                continue;
             }
         }
         if (_state == State::Identity || _state == State::ChunkData) {
             const bool bounded = _state == State::ChunkData || _contentLength.has_value();
             const auto count =
                 bounded ? static_cast<qsizetype>(std::min<quint64>(bytes.size(), _remaining)) : bytes.size();
-            result.body.append(bytes.data(), count);
+            if (_pendingFailure) {
+                _errorBody.append(bytes.data(), std::min(count, MAX_ERROR_BODY_BYTES - _errorBody.size()));
+            } else {
+                result.body.append(bytes.data(), count);
+            }
             bytes = bytes.sliced(count);
             if (bounded && (_remaining -= count) == 0) {
                 _state = _state == State::ChunkData ? State::ChunkEnd : State::Complete;
                 result.complete = _state == State::Complete;
+            }
+            if (_pendingFailure && (_state == State::Complete || _errorBody.size() == MAX_ERROR_BODY_BYTES)) {
+                _finishError(result);
             }
             continue;
         }
@@ -231,6 +281,7 @@ NTRIPHttpDecoder::Result NTRIPHttpDecoder::feed(QByteArrayView bytes, const QDat
             _line.clear();
         }
     }
+    result.awaitingErrorBody = awaitingErrorBody();
     return result;
 }
 
@@ -276,9 +327,27 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
     }
     if (_line.isEmpty()) {
         if (_state == State::Trailers) {
-            _state = State::Complete;
-            result.complete = true;
+            if (_pendingFailure) {
+                _finishError(result);
+            } else {
+                _state = State::Complete;
+                result.complete = true;
+            }
             return;
+        }
+        if (_status.code >= 300) {
+            const auto code = _status.code == 401 ? NTRIPError::AuthFailed : NTRIPError::HttpError;
+            const QString detail = _status.code == 401 ? tr("Authentication failed (401): check username and password")
+                                                       : tr("HTTP %1: %2").arg(_status.code).arg(_status.reason);
+            _pendingFailure = NTRIPFailure{code, detail};
+            const auto retries = _headers.values(QHttpHeaders::WellKnownHeader::RetryAfter);
+            if (retries.size() == 1) {
+                _pendingFailure->retryAfter = retryAfter(retries.first(), utcNow);
+            }
+            if (code == NTRIPError::AuthFailed) {
+                _finishError(result);
+                return;
+            }
         }
         const auto lengths = _headers.values(QHttpHeaders::WellKnownHeader::ContentLength);
         for (const auto& field : lengths) {
@@ -298,12 +367,6 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
             _fail(result, tr("Unsupported or conflicting HTTP transfer encoding"));
             return;
         }
-        const auto encodings = _headers.values(QHttpHeaders::WellKnownHeader::ContentEncoding);
-        if (!encodings.isEmpty() &&
-            (encodings.size() != 1 || encodings.first().compare("identity", Qt::CaseInsensitive) != 0)) {
-            _fail(result, tr("Unsupported HTTP content encoding"));
-            return;
-        }
         if (_status.code >= 100 && _status.code < 200) {
             if (_status.code == 101 || _contentLength || _chunked || ++_informationalResponses > 4) {
                 _fail(result, tr("Unsupported HTTP informational response"));
@@ -313,15 +376,14 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
             }
             return;
         }
-        if (_status.code < 200 || _status.code >= 300) {
-            const auto code = _status.code == 401 ? NTRIPError::AuthFailed : NTRIPError::HttpError;
-            const QString detail = _status.code == 401 ? tr("Authentication failed (401): check username and password")
-                                                       : tr("HTTP %1: %2").arg(_status.code).arg(_status.reason);
-            _fail(result, detail, code);
-            const auto retries = _headers.values(QHttpHeaders::WellKnownHeader::RetryAfter);
-            if (retries.size() == 1) {
-                result.failure->retryAfter = retryAfter(retries.first(), utcNow);
-            }
+        const auto encodings = _headers.values(QHttpHeaders::WellKnownHeader::ContentEncoding);
+        if (!encodings.isEmpty() &&
+            (encodings.size() != 1 || encodings.first().compare("identity", Qt::CaseInsensitive) != 0)) {
+            _fail(result, tr("Unsupported HTTP content encoding"));
+            return;
+        }
+        if (_pendingFailure) {
+            _beginBody(result);
             return;
         }
         for (const auto& value : _headers.values(QHttpHeaders::WellKnownHeader::ContentType)) {
@@ -347,6 +409,11 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
     const QByteArrayView line(_line);
     if (colon <= 0 || !std::all_of(line.begin(), line.begin() + colon, isToken) ||
         !std::all_of(line.begin() + colon + 1, line.end(), isFieldValue)) {
+        if (_state == State::IcyHeaders && _headers.isEmpty()) {
+            _line += "\r\n";
+            _beginIcyBody(result);
+            return;
+        }
         _fail(result, tr("Invalid HTTP response header"));
         return;
     }
@@ -375,16 +442,22 @@ void NTRIPHttpDecoder::_beginBody(Result& result)
     _remaining = _contentLength.value_or(0);
     _state = _chunked ? State::ChunkSize : State::Identity;
     if (!_chunked && _contentLength && _remaining == 0) {
-        _state = State::Complete;
-        result.complete = true;
+        if (_pendingFailure) {
+            _finishError(result);
+        } else {
+            _state = State::Complete;
+            result.complete = true;
+        }
     }
 }
 
 NTRIPHttpDecoder::Result NTRIPHttpDecoder::finish()
 {
     Result result;
-    if ((_state == State::Identity && !_contentLength) ||
-        (_state == State::IcyHeaders && _line.isEmpty() && _headers.isEmpty()) || _state == State::Complete) {
+    if (_pendingFailure) {
+        _finishError(result);
+    } else if ((_state == State::Identity && !_contentLength) ||
+               (_state == State::IcyHeaders && _line.isEmpty() && _headers.isEmpty()) || _state == State::Complete) {
         _state = State::Complete;
         result.complete = true;
     } else if (_state != State::Failed) {

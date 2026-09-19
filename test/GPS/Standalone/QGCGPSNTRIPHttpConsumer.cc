@@ -19,7 +19,7 @@ int main()
         return 2;
     }
     decoder.reset();
-    const auto failure = decoder.feed("HTTP/1.1 503 Unavailable\r\nRetry-After: 17\r\n\r\n", {});
+    const auto failure = decoder.feed("HTTP/1.1 503 Unavailable\r\nRetry-After: 17\r\nContent-Length: 0\r\n\r\n", {});
     if (!failure.failure || failure.failure->code != NTRIPError::HttpError ||
         failure.failure->retryAfter != std::chrono::seconds(17)) {
         return 3;

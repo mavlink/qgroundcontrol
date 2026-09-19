@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     config.password = QStringLiteral("pass");
     const auto request = RequestConsumer::buildHttpRequest(config);
     if (!request.error.isEmpty() || !request.credentialsInClear ||
-        !request.bytes.contains("authorization: Basic dXNlcjpwYXNz\r\n")) {
+        !request.bytes.contains("Authorization: Basic dXNlcjpwYXNz\r\n")) {
         return 1;
     }
     NTRIPHttpTransport http(config, {});
