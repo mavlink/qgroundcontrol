@@ -65,16 +65,18 @@ cmake --build build/gps-transports
 ctest --test-dir build/gps-transports --output-on-failure
 ```
 
-The available components are `Core`, `NMEAProtocol`, `NMEA`, `Positioning`, `Transport`,
-`ReceiverTransports`, `RTCMFramer`, `RTCM`, and `Corrections`. The `Transport` library
+The available components are `Core`, `NMEAProtocol`, `NMEAUtils`, `NMEA`, `Positioning`,
+`Transport`, `ReceiverTransports`, `RTCMFramer`, `RTCM`, `Corrections`, `NTRIPHttp`,
+and `NTRIP`. The `Transport` library
 needs Qt Core and the logging library, not Qt Network or RTK configuration.
 Receiver transport tests additionally use Qt Test, not Qt Positioning.
 Linux standalone builds leave the Android serial compatibility harness disabled.
 Enable it with `-DQGC_BUILD_ANDROID_SERIAL_TESTS=ON` when Qt CorePrivate development
 files are available. Full Linux application test builds retain that harness.
 Core survey-status coverage stays with the Core component.
-All components are enabled by default. `NMEA` includes `NMEAProtocol`;
-`RTCM` and `Corrections` automatically include `RTCMFramer`.
+All components are enabled by default. `NMEA` includes `NMEAProtocol` and `NMEAUtils`;
+`RTCM` and `Corrections` automatically include `RTCMFramer`. `NTRIP` includes
+`NTRIPHttp`, `NMEAUtils`, and `RTCM`.
 
 ## Owner-local GPS types
 
@@ -193,9 +195,80 @@ conversion and GGA setting subscriptions belong to `NTRIPManager`. `GPSManager`
 injects application position providers before initializing the facade.
 Source-table requests and cached results include the certificate policy in their
 identity. Changing it also retires pooled TLS connections.
-`NTRIPReentrancyTest` runs in the application harness, reusing its production
-objects. The same cases can run independently through `test/GPS/NTRIP/Standalone`;
-the application build does not create a second NTRIP executable.
+`QGC::GPSNTRIPHttp` exports connection/filter configuration and bounded HTTP
+decoding with only Qt Core and Network. `QGC::GPSNTRIP` adds HTTP/TLS transport,
+GGA providers, source-table fetching/model, and connection statistics. It links
+RTCM, timing, rate tracking, Qt Positioning, and the existing NMEA formatting
+helpers, without QML, serial discovery, native drivers, Bluetooth, or HttpServer.
+`QGC::GPSNMEAUtils` owns the shared NMEA formatting implementation; it is not
+compiled again inside NTRIP.
+
+The application and standalone suites link these same production targets.
+`NTRIPManager`, settings conversion, and QML registration stay in the application;
+the existing QML type names and properties are preserved through foreign-type
+registrations. Public headers compile in isolation and executable consumers
+link only their owning targets. Shared HTTP authentication and proxy setup
+reside in `QGC::NetworkClient`, re-exported by `QGCNetworkHelper.h` for existing
+application callers.
+Application-only `NTRIPQmlMetadata` and `NTRIPQmlLint` checks cover the generated
+exports, properties and controller enum. They use the library's exported moc
+metadata without introducing QML dependencies into standalone NTRIP builds.
+
+`NTRIPReentrancyTest` and `NTRIPTlsTest` run against these targets in both the
+application harness and standalone executables. Loopback TLS cases cover
+encrypted identity/chunked correction delivery, self-signed rejection and
+explicit opt-in, hostname mismatch despite opt-in, stop/deletion during the
+handshake and before the HTTP response, and retirement across restart/reconnect.
+They use test-only certificates, ephemeral ports, and no external caster.
+
+The NTRIP HTTP decoder handles close-delimited, content-length, and chunked
+responses, including legacy ICY streams. Header bytes, line lengths, header
+counts, chunk sizes, and socket buffering are bounded. Only decoded correction
+payloads reach the RTCM decoder; valid payload prefixes retain their receipt
+timestamps if later framing fails.
+Legacy ICY input probes bounded optional ASCII headers and lets partial-frame
+suffixes reach RTCM resynchronization. A binary body can follow optional ICY
+headers without a blank separator.
+HTTP failures carry numeric or HTTP-date `Retry-After` hints through queued
+callbacks. Reconnects use the greater of the existing exponential backoff and
+the hint, capped at five minutes, without making authentication or configuration
+errors retryable.
+Error status and retry hints survive unsupported body encodings and interrupted
+diagnostic bodies. Non-authentication error responses may contribute up to
+500 body bytes to a sanitized preview of at most 200 characters. Collection
+ends on completion, the byte cap, or a non-resetting 250 ms deadline. Error
+bodies never reach the RTCM decoder; compressed diagnostic bodies are not
+decoded, and authentication failures are reported immediately.
+Outgoing streaming and source-table headers use `QHttpHeaders` validation.
+Streaming requests retain canonical field-name spelling for legacy casters
+that compare names case-sensitively. Mountpoint and credential value case is
+preserved. Invalid configuration is reported without admitting a request or
+warning that credentials were sent.
+
+```sh
+cmake -S test/GPS/NTRIP/Standalone -B build/ntrip-http -G Ninja \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/installation
+cmake --build build/ntrip-http
+ctest --test-dir build/ntrip-http --output-on-failure -L Unit
+```
+
+The same NTRIP suites are also included by `QGC_GPS_COMPONENTS=NTRIP`.
+The `NTRIPHttp` component builds only the decoder/configuration library and
+its consumer, without Qt Positioning or Qt Test:
+
+```sh
+cmake -S test/GPS/Standalone -B build/ntrip-framing-minimal -G Ninja \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/installation \
+  -DQGC_GPS_COMPONENTS=NTRIPHttp -DCMAKE_DISABLE_FIND_PACKAGE_Qt6Positioning=ON
+cmake --build build/ntrip-framing-minimal
+ctest --test-dir build/ntrip-framing-minimal --output-on-failure
+```
+
+The [HTTP decoder fuzz entry point](../../Fuzz/NTRIPHttpDecoder/README.md) adds
+deterministic seed smoke coverage and optional Clang libFuzzer/ASan/UBSan runs
+against the same production target. Its compatibility guide also covers local
+Qt 6.8 and Windows standalone builds.
+
 Source registrations reject callbacks from retired sessions. UDP framing keeps
 each sender separate and limits work per event-loop turn. Only UDP can opt out
 of RTCM validation; other sources must submit validated frames.

@@ -1,5 +1,6 @@
 #include "NTRIPManager.h"
 
+#include <algorithm>
 #include <chrono>
 #include <utility>
 
@@ -253,11 +254,11 @@ void NTRIPManager::fetchMountpoints()
 // State machine
 // -----------------------------------------------------------------------------
 
-bool NTRIPManager::_dispatch(Event ev, const QString& detail)
+bool NTRIPManager::_dispatch(Event ev, const QString& detail, std::chrono::milliseconds retryAfter)
 {
     for (const auto& row : kTransitions) {
         if (row.from == _connectionStatus && row.event == ev) {
-            _enterState(row.to, detail);
+            _enterState(row.to, detail, retryAfter);
             return true;
         }
     }
@@ -266,7 +267,7 @@ bool NTRIPManager::_dispatch(Event ev, const QString& detail)
     return false;
 }
 
-void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail)
+void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail, std::chrono::milliseconds retryAfter)
 {
     const QPointer<NTRIPManager> guard(this);
     const quint64 revision = ++_stateRevision;
@@ -299,7 +300,7 @@ void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail)
 
     // Entry action runs on every dispatched transition, including self-transitions
     // (e.g. Connecting→Connecting on HotReconfigure). Signals stay gated above.
-    _onEnterState(from, to);
+    _onEnterState(from, to, retryAfter);
 }
 
 QString NTRIPManager::_defaultMessageFor(ConnectionStatus state)
@@ -319,7 +320,7 @@ QString NTRIPManager::_defaultMessageFor(ConnectionStatus state)
     return {};
 }
 
-void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to)
+void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to, std::chrono::milliseconds retryAfter)
 {
     const QPointer<NTRIPManager> guard(this);
     const quint64 revision = _stateRevision;
@@ -387,7 +388,7 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to)
             }
             _stats.stop();
             if (current()) {
-                _scheduleReconnect();
+                _scheduleReconnect(retryAfter);
             }
             break;
 
@@ -412,16 +413,18 @@ void NTRIPManager::_teardownTransport()
     }
 }
 
-int NTRIPManager::_reconnectBackoffMs() const
+int NTRIPManager::_reconnectBackoffMs(std::chrono::milliseconds retryAfter) const
 {
-    return qMin(kMinReconnectMs * (1 << qMin(_reconnectAttempts, 5)), kMaxReconnectMs);
+    const int exponentialMs = qMin(kMinReconnectMs * (1 << qMin(_reconnectAttempts, 5)), kMaxReconnectMs);
+    return static_cast<int>(
+        std::clamp(retryAfter, std::chrono::milliseconds{exponentialMs}, std::chrono::milliseconds{300000}).count());
 }
 
-void NTRIPManager::_scheduleReconnect()
+void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
 {
     // Backoff uses the pre-increment attempt count: attempt #1 waits kMinReconnectMs,
     // #2 waits 2x, etc. Increment, then check the ceiling.
-    const auto backoff = std::chrono::milliseconds{_reconnectBackoffMs()};
+    const auto backoff = std::chrono::milliseconds{_reconnectBackoffMs(retryAfter)};
     ++_reconnectAttempts;
     if (_reconnectExhausted()) {
         _dispatch(Event::ReconnectGaveUp, tr("Gave up after %1 reconnect attempts").arg(kMaxReconnectAttempts));
@@ -504,9 +507,9 @@ void NTRIPManager::_startTransport()
     // Error handling may retire the emitting transport.
     connect(
         _transport, &NTRIPTransport::error, this,
-        [this, transport](NTRIPError code, const QString& detail) {
+        [this, transport](const NTRIPFailure& failure) {
             if (transport && _transport == transport) {
-                _onTransportError(code, detail);
+                _onTransportError(failure);
             }
         },
         Qt::QueuedConnection);
@@ -544,8 +547,10 @@ void NTRIPManager::_startTransport()
 // Signal handlers
 // -----------------------------------------------------------------------------
 
-void NTRIPManager::_onTransportError(NTRIPError code, const QString& detail)
+void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
 {
+    const auto code = failure.code;
+    const auto& detail = failure.detail;
     const QPointer<NTRIPManager> guard(this);
     const quint64 revision = _stateRevision;
     if (_connectionStatus != ConnectionStatus::Connecting && _connectionStatus != ConnectionStatus::Connected) {
@@ -564,10 +569,11 @@ void NTRIPManager::_onTransportError(NTRIPError code, const QString& detail)
     }
 
     if (_isEnabled() && isRetryable(code)) {
-        const int backoffMs = _reconnectBackoffMs();
+        const int backoffMs = _reconnectBackoffMs(failure.retryAfter);
         qCDebug(NTRIPManagerLog) << "NTRIP reconnecting in" << backoffMs << "ms (attempt" << (_reconnectAttempts + 1)
                                  << ")";
-        _dispatch(Event::TransportError, tr("Reconnecting in %1s: %2").arg(backoffMs / 1000).arg(detail));
+        _dispatch(Event::TransportError, tr("Reconnecting in %1s: %2").arg(backoffMs / 1000).arg(detail),
+                  failure.retryAfter);
     } else {
         _dispatch(Event::TransportFatalError, detail);
     }

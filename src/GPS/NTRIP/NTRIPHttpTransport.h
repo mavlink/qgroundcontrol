@@ -5,10 +5,12 @@
 #include <QtCore/QChronoTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QPointer>
+#include <QtCore/QString>
 #include <QtNetwork/QTcpSocket>
 
 #include "MonotonicClock.h"
 #include "NTRIPConfiguration.h"
+#include "NTRIPHttpDecoder.h"
 #include "NTRIPTransport.h"
 #include "RTCMFrameDecoder.h"
 
@@ -23,7 +25,7 @@ class NTRIPHttpTransport : public NTRIPTransport
 public:
     static constexpr std::chrono::milliseconds kConnectTimeout{10000};
     static constexpr std::chrono::milliseconds kDataWatchdog{30000};
-    static constexpr int kMaxHttpHeaderSize = 32768;
+    static constexpr std::chrono::milliseconds kErrorBodyTimeout{250};
 
     NTRIPHttpTransport(const NTRIPConnectionConfig& config, const NTRIPRtcmFilterConfig& filter,
                        QObject* parent = nullptr);
@@ -41,6 +43,7 @@ protected:
     struct HttpRequest
     {
         QByteArray bytes;
+        QString error;
         /// Credentials are present and the channel is not TLS — caller must warn.
         bool credentialsInClear = false;
     };
@@ -48,25 +51,16 @@ protected:
     static HttpRequest buildHttpRequest(const NTRIPConnectionConfig& config);
 
 private:
-    struct HttpStatus
-    {
-        int code = 0;
-        QString reason;
-        bool valid = false;
-    };
-
-    static HttpStatus _parseHttpStatusLine(const QString& line);
-
-    static bool _isHttpSuccess(int code) { return code >= 200 && code < 300; }
-
     void _connect();
-    void _fail(NTRIPError code, const QString& msg);
+    void _fail(NTRIPError code, const QString& msg, std::chrono::milliseconds retryAfter = {});
     void _retireSocket();
     bool _write(const QByteArray& bytes);
     void _sendHttpRequest();
     void _readBytes();
-    void _handleHttpResponse();
-    void _handleRtcmData();
+    void _processHttpBytes(QByteArrayView bytes, qint64 receivedAtMs,
+                           const QDateTime& utcNow = QDateTime::currentDateTimeUtc());
+    void _publishHttpResult(const NTRIPHttpDecoder::Result& result, qint64 receivedAtMs);
+    void _finishResponse();
     void _parseRtcm(const QByteArray& buffer,
                     qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000));
 
@@ -75,11 +69,11 @@ private:
     QPointer<QTcpSocket> _socket;
     QChronoTimer _connectTimeoutTimer;
     QChronoTimer _dataWatchdogTimer;
+    QChronoTimer _errorBodyTimer;
 
     RTCMFrameDecoder _rtcmDecoder;
-    bool _httpHandshakeDone = false;
+    NTRIPHttpDecoder _httpDecoder;
+    bool _reading = false;
     bool _stopped = false;
     quint64 _attempt = 0;
-    qint64 _postOkTimestampMs = 0;
-    QByteArray _httpResponseBuf;
 };

@@ -11,6 +11,9 @@ private slots:
     void _testWhitelist_data();
     void _testWhitelist();
 
+    void _testParseHttpStatus_data();
+    void _testParseHttpStatus();
+
     // RTCM filtering
     void _testFilterNoWhitelist();
     void _testFilterWithWhitelist();
@@ -39,4 +42,7 @@ private slots:
     void _testBuildRequestPlaintextCredentialsWarns();
     void _testBuildRequestTlsCredentialsNoWarn();
     void _testBuildRequestNoCredentialsNoWarn();
+    void _testBuildRequestPreservesValues();
+    void _testBuildRequestRejectsInvalidConfig_data();
+    void _testBuildRequestRejectsInvalidConfig();
 };

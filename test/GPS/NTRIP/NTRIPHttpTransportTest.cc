@@ -15,6 +15,7 @@
 #include "GpsTestHelpers.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
+#include "NTRIPHttpDecoder.h"
 #include "NTRIPHttpTransport.h"
 
 namespace {
@@ -270,6 +271,43 @@ void NTRIPHttpTransportTest::_testWhitelist()
 }
 
 // ---------------------------------------------------------------------------
+// HTTP Status Line Parsing
+// ---------------------------------------------------------------------------
+
+void NTRIPHttpTransportTest::_testParseHttpStatus_data()
+{
+    QTest::addColumn<QByteArray>("line");
+    QTest::addColumn<bool>("valid");
+    QTest::addColumn<int>("code");
+    QTest::addColumn<QString>("reason");
+    QTest::newRow("http-200") << QByteArray("HTTP/1.1 200 OK") << true << 200 << QStringLiteral("OK");
+    QTest::newRow("icy-200") << QByteArray("ICY 200 OK") << true << 200 << QStringLiteral("OK");
+    QTest::newRow("source-table") << QByteArray("SOURCETABLE 200 OK") << true << 200 << QStringLiteral("OK");
+    QTest::newRow("unauthorized") << QByteArray("HTTP/1.0 401 Unauthorized") << true << 401
+                                  << QStringLiteral("Unauthorized");
+    QTest::newRow("not-found") << QByteArray("HTTP/1.1 404 Not Found") << true << 404 << QStringLiteral("Not Found");
+    QTest::newRow("created") << QByteArray("HTTP/1.1 201 Created") << true << 201 << QStringLiteral("Created");
+    QTest::newRow("server-error") << QByteArray("HTTP/1.0 500 Internal Server Error") << true << 500
+                                  << QStringLiteral("Internal Server Error");
+    QTest::newRow("no-reason") << QByteArray("HTTP/1.1 400") << true << 400 << QString();
+    QTest::newRow("empty") << QByteArray() << false << 0 << QString();
+    QTest::newRow("garbage") << QByteArray("garbage data") << false << 0 << QString();
+    QTest::newRow("missing-protocol") << QByteArray("200 OK") << false << 0 << QString();
+}
+
+void NTRIPHttpTransportTest::_testParseHttpStatus()
+{
+    QFETCH(QByteArray, line);
+    QFETCH(bool, valid);
+    QFETCH(int, code);
+    QFETCH(QString, reason);
+    const auto status = NTRIPHttpDecoder::parseStatusLine(line);
+    QCOMPARE(status.valid, valid);
+    QCOMPARE(status.code, code);
+    QCOMPARE(status.reason, reason);
+}
+
+// ---------------------------------------------------------------------------
 // RTCM Filtering
 // ---------------------------------------------------------------------------
 
@@ -420,6 +458,7 @@ void NTRIPHttpTransportTest::_testBuildRequestPlaintextCredentialsWarns()
 
     QVERIFY(request.credentialsInClear);
     QVERIFY(request.bytes.startsWith("GET /MOUNT01 HTTP/1.1\r\n"));
+    QVERIFY(request.error.isEmpty());
     QVERIFY(request.bytes.contains("Host: caster.example.com\r\n"));
     QVERIFY(request.bytes.contains("Authorization: Basic "));
     QVERIFY(request.bytes.endsWith("\r\n\r\n"));
@@ -437,6 +476,7 @@ void NTRIPHttpTransportTest::_testBuildRequestTlsCredentialsNoWarn()
     const auto request = NTRIPHttpTransport::buildHttpRequest(cfg);
 
     QVERIFY(!request.credentialsInClear);
+    QVERIFY(request.error.isEmpty());
     QVERIFY(request.bytes.contains("Authorization: Basic "));
 }
 
@@ -450,7 +490,65 @@ void NTRIPHttpTransportTest::_testBuildRequestNoCredentialsNoWarn()
     const auto request = NTRIPHttpTransport::buildHttpRequest(cfg);
 
     QVERIFY(!request.credentialsInClear);
-    QVERIFY(!request.bytes.contains("Authorization"));
+    QVERIFY(request.error.isEmpty());
+    QVERIFY(!request.bytes.contains("Authorization:"));
+}
+
+void NTRIPHttpTransportTest::_testBuildRequestPreservesValues()
+{
+    NTRIPConnectionConfig config;
+    config.host = QStringLiteral("Caster.Example.com");
+    config.mountpoint = QStringLiteral("MixedCase_1");
+    config.username = QString::fromUtf8("Us\xc3\xa9r");
+    config.password = QString::fromUtf8("Pa\xc3\x9fs");
+    const auto request = NTRIPHttpTransport::buildHttpRequest(config);
+    const QByteArray credentials = (config.username + QLatin1Char(':') + config.password).toUtf8().toBase64();
+    QVERIFY(request.error.isEmpty());
+    QCOMPARE(request.bytes,
+             "GET /MixedCase_1 HTTP/1.1\r\n"
+             "Host: Caster.Example.com\r\n"
+             "Ntrip-Version: Ntrip/2.0\r\n"
+             "User-Agent: NTRIP QGroundControl/1.0\r\n"
+             "Authorization: Basic " +
+                 credentials + "\r\n\r\n");
+}
+
+void NTRIPHttpTransportTest::_testBuildRequestRejectsInvalidConfig_data()
+{
+    QTest::addColumn<QString>("host");
+    QTest::addColumn<QString>("mountpoint");
+    QTest::newRow("host-crlf") << QStringLiteral("caster\r\nInjected: value") << QStringLiteral("TEST");
+    QTest::newRow("host-space") << QStringLiteral("caster example") << QStringLiteral("TEST");
+    QTest::newRow("host-del") << QStringLiteral("caster\x7f") << QStringLiteral("TEST");
+    QTest::newRow("mountpoint-crlf") << QStringLiteral("localhost") << QStringLiteral("TEST\r\nInjected: value");
+    QTest::newRow("mountpoint-space") << QStringLiteral("localhost") << QStringLiteral("TEST OTHER");
+    QTest::newRow("mountpoint-del") << QStringLiteral("localhost") << QStringLiteral("TEST\x7f");
+    QTest::newRow("mountpoint-empty") << QStringLiteral("localhost") << QString();
+}
+
+void NTRIPHttpTransportTest::_testBuildRequestRejectsInvalidConfig()
+{
+    QFETCH(QString, host);
+    QFETCH(QString, mountpoint);
+    NTRIPConnectionConfig config;
+    config.host = host;
+    config.mountpoint = mountpoint;
+    config.username = QStringLiteral("user");
+    config.password = QStringLiteral("pass");
+    const auto request = NTRIPHttpTransport::buildHttpRequest(config);
+    QVERIFY(!request.error.isEmpty());
+    QVERIFY(request.bytes.isEmpty());
+    QVERIFY(!request.credentialsInClear);
+
+    NTRIPHttpTransport transport(config, {});
+    transport._socket = new QTcpSocket(&transport);
+    QSignalSpy errors(&transport, &NTRIPTransport::error);
+    QSignalSpy credentialsWarning(&transport, &NTRIPTransport::plaintextCredentialsWarning);
+    transport._sendHttpRequest();
+    QCOMPARE(errors.size(), 1);
+    QCOMPARE(qvariant_cast<NTRIPFailure>(errors.first().first()).code, NTRIPError::InvalidConfig);
+    QCOMPARE(transport._socket->bytesToWrite(), 0);
+    QVERIFY(credentialsWarning.isEmpty());
 }
 
 UT_REGISTER_TEST(NTRIPHttpTransportTest, TestLabel::Unit)
@@ -468,7 +566,7 @@ void NTRIPHttpTransportTest::testStreamingRequiresMountpoint()
         QSignalSpy connected(&transport, &NTRIPTransport::connected);
         transport.start();
         QCOMPARE(errors.size(), 1);
-        QCOMPARE(qvariant_cast<NTRIPError>(errors.first().first()), NTRIPError::InvalidConfig);
+        QCOMPARE(qvariant_cast<NTRIPFailure>(errors.first().first()).code, NTRIPError::InvalidConfig);
         QVERIFY(connected.isEmpty());
         QVERIFY(!transport._socket);
     }
@@ -532,7 +630,7 @@ void NTRIPHttpTransportTest::testHandshakeTimeoutClosesSocket()
     transport._connectTimeoutTimer.setInterval(std::chrono::milliseconds(50));
     transport._connectTimeoutTimer.start();
     QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
-    QCOMPARE(qvariant_cast<NTRIPError>(errors.first().first()), NTRIPError::ConnectionTimeout);
+    QCOMPARE(qvariant_cast<NTRIPFailure>(errors.first().first()).code, NTRIPError::ConnectionTimeout);
     QCOMPARE(transport._socket->state(), QAbstractSocket::UnconnectedState);
     QVERIFY(!transport._dataWatchdogTimer.isActive());
     QVERIFY(connected.isEmpty());
@@ -553,14 +651,11 @@ void NTRIPHttpTransportTest::testRemoteCloseEmitsSingleError()
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
     QVERIFY(peer);
-    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Socket error code:.*peer closed before HTTP response")));
     peer->disconnectFromHost();
     QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
     QCOMPARE(transport._socket->state(), QAbstractSocket::UnconnectedState);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(errors.size(), 1);
-    QCOMPARE(qvariant_cast<NTRIPError>(errors.first().first()), NTRIPError::SocketError);
+    QCOMPARE(qvariant_cast<NTRIPFailure>(errors.first().first()).code, NTRIPError::InvalidHttpResponse);
     QVERIFY(!transport._connectTimeoutTimer.isActive());
-    verifyExpectedLogMessage();
 }
