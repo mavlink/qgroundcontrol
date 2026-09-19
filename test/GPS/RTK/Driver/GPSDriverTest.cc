@@ -6,12 +6,14 @@
 #include <optional>
 
 #include <QtCore/QByteArray>
+#include <QtPositioning/QGeoCoordinate>
 
 #include "GPSBaseStationConfig.h"
 #include "GPSDriver.h"
 #include "GPSTransport.h"
 
 Q_DECLARE_METATYPE(GPSBaseStationConfig)
+Q_DECLARE_METATYPE(GPSReceiverConfig)
 
 namespace {
 
@@ -76,11 +78,11 @@ public:
     GPSDriverSinks sinks()
     {
         GPSDriverSinks s;
-        s.onRTCM = [this](const QByteArray& message) {
+        s.onRTCM = [this](std::span<const uint8_t> message) {
             ++rtcmCount;
-            rtcm = message;
+            rtcm = QByteArray(reinterpret_cast<const char*>(message.data()), static_cast<qsizetype>(message.size()));
         };
-        s.onSurveyIn = [this](const GPSSurveyInStatus& status) {
+        s.onSurveyIn = [this](const GPSSurveyReport& status) {
             ++surveyInCount;
             surveyIn = status;
         };
@@ -90,7 +92,7 @@ public:
     int rtcmCount = 0;
     QByteArray rtcm;
     int surveyInCount = 0;
-    GPSSurveyInStatus surveyIn;
+    GPSSurveyReport surveyIn;
 };
 
 int callback(GPSDriver& driver, GPSCallbackType type, void* data1, int data2)
@@ -103,7 +105,7 @@ int callback(GPSDriver& driver, GPSCallbackType type, void* data1, int data2)
 void GPSDriverTest::_testReceiveUnconfiguredReturnsError()
 {
     FakeGPSTransport transport;
-    GPSDriver driver(GPSType::ublox, transport, GPSBaseStationConfig{}, GPSDriverSinks{});
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
     QCOMPARE(driver.receive(10), -1);
 }
 
@@ -111,7 +113,7 @@ void GPSDriverTest::_testReadDeviceDataRoutesToTransport()
 {
     FakeGPSTransport transport;
     transport.scriptedRead = QByteArray::fromHex("b5620102");
-    GPSDriver driver(GPSType::ublox, transport, GPSBaseStationConfig{}, GPSDriverSinks{});
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
     uint8_t buffer[64] = {};
     const int timeoutMs = 250;  // px4 packs the timeout into the first sizeof(int) bytes
@@ -127,7 +129,7 @@ void GPSDriverTest::_testReadDeviceDataRoutesToTransport()
 void GPSDriverTest::_testWriteDeviceDataRoutesToTransport()
 {
     FakeGPSTransport transport;
-    GPSDriver driver(GPSType::ublox, transport, GPSBaseStationConfig{}, GPSDriverSinks{});
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
     const QByteArray payload = QByteArray::fromHex("deadbeef");
     const int ret = callback(driver, GPSCallbackType::writeDeviceData, const_cast<char*>(payload.constData()),
@@ -140,7 +142,7 @@ void GPSDriverTest::_testWriteDeviceDataRoutesToTransport()
 void GPSDriverTest::_testSetBaudrateRoutesToTransport()
 {
     FakeGPSTransport transport;
-    GPSDriver driver(GPSType::ublox, transport, GPSBaseStationConfig{}, GPSDriverSinks{});
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
     QCOMPARE(callback(driver, GPSCallbackType::setBaudrate, nullptr, 115200), 0);
     QCOMPARE(transport.lastBaudrate, 115200u);
@@ -153,7 +155,7 @@ void GPSDriverTest::_testRtcmMessageForwardedToSink()
 {
     FakeGPSTransport transport;
     SinkCapture capture;
-    GPSDriver driver(GPSType::septentrio, transport, GPSBaseStationConfig{}, capture.sinks());
+    GPSDriver driver(GPSType::septentrio, transport, GPSReceiverConfig{}, capture.sinks());
 
     const QByteArray rtcm = QByteArray::fromHex("d3aabbccddeeff00");
     callback(driver, GPSCallbackType::gotRTCMMessage, const_cast<char*>(rtcm.constData()),
@@ -167,7 +169,7 @@ void GPSDriverTest::_testSurveyInStatusTranslatedAndFlagsDecoded()
 {
     FakeGPSTransport transport;
     SinkCapture capture;
-    GPSDriver driver(GPSType::ublox, transport, GPSBaseStationConfig{}, capture.sinks());
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, capture.sinks());
 
     SurveyInStatus status{};
     status.latitude = 47.1;
@@ -198,8 +200,8 @@ void GPSDriverTest::_testSurveyInStatusTranslatedAndFlagsDecoded()
         QCOMPARE(capture.surveyIn.active, c.active);
     }
 
-    QCOMPARE(capture.surveyIn.coordinate.latitude(), 47.1);
-    QCOMPARE(capture.surveyIn.coordinate.longitude(), 8.2);
+    QCOMPARE(capture.surveyIn.latitudeDegrees, 47.1);
+    QCOMPARE(capture.surveyIn.longitudeDegrees, 8.2);
     QCOMPARE(capture.surveyIn.altitudeEllipsoidMeters, 500.0f);
     QCOMPARE(capture.surveyIn.meanAccuracyMeters.value(), 1.234);
     QCOMPARE(capture.surveyIn.duration.count(), 56u);
@@ -209,7 +211,7 @@ void GPSDriverTest::_testWriteDeviceDataErrorPropagates()
 {
     FakeGPSTransport transport;
     transport.writeOk = false;
-    GPSDriver driver(GPSType::ublox, transport, GPSBaseStationConfig{}, GPSDriverSinks{});
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
     const QByteArray payload = QByteArray::fromHex("deadbeef");
     const int ret = callback(driver, GPSCallbackType::writeDeviceData, const_cast<char*>(payload.constData()),
@@ -222,7 +224,7 @@ void GPSDriverTest::_testSurveyInStatusPreservesLargeValues()
 {
     FakeGPSTransport transport;
     SinkCapture capture;
-    GPSDriver driver(GPSType::ublox, transport, GPSBaseStationConfig{}, capture.sinks());
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, capture.sinks());
 
     SurveyInStatus status{};
     status.flags = 0x01;
@@ -239,7 +241,7 @@ void GPSDriverTest::_testSurveyInStatusNullDataIgnored()
 {
     FakeGPSTransport transport;
     SinkCapture capture;
-    GPSDriver driver(GPSType::ublox, transport, GPSBaseStationConfig{}, capture.sinks());
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, capture.sinks());
 
     QCOMPARE(callback(driver, GPSCallbackType::surveyInStatus, nullptr, 0), 0);
     QCOMPARE(capture.surveyInCount, 0);
@@ -264,17 +266,17 @@ void GPSDriverTest::_testSurveyInCoordinates()
     QFETCH(bool, valid);
     FakeGPSTransport transport;
     SinkCapture capture;
-    QVERIFY(!capture.surveyIn.coordinate.isValid());
+    QVERIFY(qIsNaN(capture.surveyIn.latitudeDegrees));
+    QVERIFY(qIsNaN(capture.surveyIn.longitudeDegrees));
     QVERIFY(qIsNaN(capture.surveyIn.altitudeEllipsoidMeters));
-    GPSDriver driver(GPSType::ublox, transport, GPSBaseStationConfig{}, capture.sinks());
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, capture.sinks());
     SurveyInStatus status{};
     status.latitude = latitude;
     status.longitude = longitude;
     status.altitude = -25.0f;
     status.flags = 0x02;
     callback(driver, GPSCallbackType::surveyInStatus, &status, 0);
-    QCOMPARE(capture.surveyIn.coordinate.isValid(), valid);
-    QVERIFY(qIsNaN(capture.surveyIn.coordinate.altitude()));
+    QCOMPARE(QGeoCoordinate(capture.surveyIn.latitudeDegrees, capture.surveyIn.longitudeDegrees).isValid(), valid);
     QCOMPARE(capture.surveyIn.altitudeEllipsoidMeters, -25.0f);
     QVERIFY(capture.surveyIn.active);
     QVERIFY(!capture.surveyIn.valid);
@@ -305,7 +307,7 @@ void GPSDriverTest::_testInvalidFixedBaseRejected()
                                       .fixedBaseLatitude = coordinate.latitude(),
                                       .fixedBaseLongitude = coordinate.longitude(),
                                       .fixedBaseAltitudeMeters = static_cast<float>(altitude)};
-    GPSDriver driver(GPSType::ublox, transport, config, GPSDriverSinks{});
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{.base = config}, GPSDriverSinks{});
     expectLogMessage("GPS.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Enter a valid fixed base position and accuracy")));
     QVERIFY(!driver.configure());
@@ -319,7 +321,7 @@ void GPSDriverTest::_testInvalidFixedBaseRejected()
 void GPSDriverTest::_testCallbacksWithoutSinksAreSafe()
 {
     FakeGPSTransport transport;
-    GPSDriver driver(GPSType::ublox, transport, GPSBaseStationConfig{}, GPSDriverSinks{});
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
 
     const QByteArray rtcm = QByteArray::fromHex("d3aabbcc");
     QCOMPARE(callback(driver, GPSCallbackType::gotRTCMMessage, const_cast<char*>(rtcm.constData()),
@@ -335,7 +337,7 @@ void GPSDriverTest::_testUnknownCallbackIgnored()
 {
     FakeGPSTransport transport;
     SinkCapture capture;
-    GPSDriver driver(GPSType::ublox, transport, GPSBaseStationConfig{}, capture.sinks());
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, capture.sinks());
 
     QCOMPARE(callback(driver, GPSCallbackType::setClock, nullptr, 0), 0);
     QCOMPARE(capture.rtcmCount, 0);
@@ -364,13 +366,12 @@ void GPSDriverTest::_testSurveyInAccuracy()
     QFETCH(bool, known);
     FakeGPSTransport transport;
     SinkCapture capture;
-    GPSDriver driver(GPSType(type), transport, GPSBaseStationConfig{}, capture.sinks());
+    GPSDriver driver(GPSType(type), transport, GPSReceiverConfig{}, capture.sinks());
     SurveyInStatus status{};
     status.mean_accuracy = accuracy;
     callback(driver, GPSCallbackType::surveyInStatus, &status, 0);
     QCOMPARE(capture.surveyInCount, 1);
     QCOMPARE(capture.surveyIn.meanAccuracyMeters.has_value(), known);
-    QCOMPARE(capture.surveyIn.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
     if (known) {
         QCOMPARE(*capture.surveyIn.meanAccuracyMeters, static_cast<double>(accuracy) / 1000.0);
     }
@@ -427,7 +428,7 @@ void GPSDriverTest::_testInvalidConfiguration()
     QFETCH(GPSBaseStationConfig, config);
     QFETCH(QString, message);
     FakeGPSTransport transport;
-    GPSDriver driver(GPSType::ublox, transport, config, GPSDriverSinks{});
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{.base = config}, GPSDriverSinks{});
     expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(message)));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
@@ -440,7 +441,7 @@ void GPSDriverTest::_testInvalidConfiguration()
 void GPSDriverTest::_transportResultsMapToLegacyCallbacks()
 {
     FakeGPSTransport transport;
-    GPSDriver driver(GPSType::ublox, transport, GPSBaseStationConfig{}, GPSDriverSinks{});
+    GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
     uint8_t buffer[16]{};
     for (const auto status : {GPSReadStatus::Cancelled, GPSReadStatus::Closed, GPSReadStatus::Error,
                               GPSReadStatus::Overflow, GPSReadStatus::InvalidData}) {
@@ -464,4 +465,69 @@ void GPSDriverTest::_transportResultsMapToLegacyCallbacks()
     }
     transport.writeOverride = GPSWriteResult{GPSWriteStatus::Completed, 16, 16};
     QCOMPARE(callback(driver, GPSCallbackType::writeDeviceData, buffer, sizeof(buffer)), 16);
+}
+
+void GPSDriverTest::_nativeConfigurationRejectedBeforeIo_data()
+{
+    QTest::addColumn<int>("type");
+    QTest::addColumn<GPSReceiverConfig>("config");
+    QTest::addColumn<QString>("message");
+    const GPSReceiverConfig position{.role = GPSReceiverConfig::Role::Position};
+    QTest::newRow("unknown-receiver") << 255 << position << QStringLiteral("Unsupported GPS receiver type");
+    QTest::newRow("invalid-role") << int(GPSType::ublox)
+                                  << GPSReceiverConfig{.role = static_cast<GPSReceiverConfig::Role>(255)}
+                                  << QStringLiteral("Unsupported GPS receiver role");
+    QTest::newRow("unsupported-constellations")
+        << int(GPSType::femto) << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position, .constellationMask = 1}
+        << QStringLiteral("This receiver cannot configure constellations");
+    QTest::newRow("invalid-model") << int(GPSType::ublox)
+                                   << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position, .dynamicModel = 1}
+                                   << QStringLiteral("Unsupported receiver dynamic model");
+    QTest::newRow("base-cannot-honor-model")
+        << int(GPSType::ublox)
+        << GPSReceiverConfig{.base = {.surveyInAccMeters = 2, .surveyInDurationSecs = 180}, .dynamicModel = 0}
+        << QStringLiteral("This receiver role cannot configure a dynamic model");
+    QTest::newRow("invalid-heading") << int(GPSType::septentrio)
+                                     << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position,
+                                                          .headingOffsetRadians = qQNaN()}
+                                     << QStringLiteral("Enter a finite heading offset between -pi and pi radians");
+}
+
+void GPSDriverTest::_nativeConfigurationRejectedBeforeIo()
+{
+    QFETCH(int, type);
+    QFETCH(GPSReceiverConfig, config);
+    QFETCH(QString, message);
+    FakeGPSTransport transport;
+    GPSDriver driver(static_cast<GPSType>(type), transport, config, {});
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(message)));
+    QVERIFY(!driver.configure());
+    verifyExpectedLogMessage();
+    QVERIFY(transport.lastWrite.isEmpty());
+    QCOMPARE(transport.lastBaudrate, 0u);
+    QCOMPARE(transport.lastReadLength, -1);
+}
+
+void GPSDriverTest::_invalidRtcmPayload_data()
+{
+    QTest::addColumn<int>("size");
+    QTest::addColumn<bool>("nullData");
+    QTest::newRow("missing-data") << 1 << true;
+    QTest::newRow("empty-data") << 0 << false;
+    QTest::newRow("negative-size") << -1 << false;
+}
+
+void GPSDriverTest::_invalidRtcmPayload()
+{
+    QFETCH(int, size);
+    QFETCH(bool, nullData);
+    FakeGPSTransport transport;
+    SinkCapture capture;
+    GPSDriver driver(GPSType::ublox, transport, {}, capture.sinks());
+    uint8_t byte = 0;
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Invalid RTCM callback payload")));
+    QCOMPARE(callback(driver, GPSCallbackType::gotRTCMMessage, nullData ? nullptr : &byte, size), -1);
+    verifyExpectedLogMessage();
+    QCOMPARE(capture.rtcmCount, 0);
 }

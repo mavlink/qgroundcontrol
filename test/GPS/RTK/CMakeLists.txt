@@ -5,6 +5,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     enable_testing()
     find_package(Qt6 6.8 REQUIRED COMPONENTS Core Test)
     set(_rtk_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/RTK")
+    add_subdirectory("${_rtk_root}/Config" ReceiverConfig)
     qt_add_executable(QGCGPSBaseStationConfigTest GPSBaseStationConfigTest.cc
                       "${_rtk_root}/GPSBaseStationConfigValidation.cc" ../../Portable/PortableTest.h
     )
@@ -14,7 +15,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     target_include_directories(QGCGPSBaseStationConfigTest PRIVATE "${_rtk_root}"
                                                                    "${CMAKE_CURRENT_SOURCE_DIR}/../../Portable"
     )
-    target_link_libraries(QGCGPSBaseStationConfigTest PRIVATE Qt6::Test)
+    target_link_libraries(QGCGPSBaseStationConfigTest PRIVATE Qt6::Test QGCGPSReceiverConfig)
     add_test(NAME GPSBaseStationConfigTest COMMAND QGCGPSBaseStationConfigTest)
     set_tests_properties(GPSBaseStationConfigTest PROPERTIES LABELS "Unit;GPS;RTK" TIMEOUT 60 ENVIRONMENT
                                                              "QT_FATAL_WARNINGS=1"

@@ -27,4 +27,8 @@ private slots:
     void _testCallbacksWithoutSinksAreSafe();
     void _testUnknownCallbackIgnored();
     void _transportResultsMapToLegacyCallbacks();
+    void _nativeConfigurationRejectedBeforeIo_data();
+    void _nativeConfigurationRejectedBeforeIo();
+    void _invalidRtcmPayload_data();
+    void _invalidRtcmPayload();
 };

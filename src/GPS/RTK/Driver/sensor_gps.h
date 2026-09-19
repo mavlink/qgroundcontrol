@@ -4,8 +4,6 @@
 
 #include <stdint.h>
 
-#include <QtCore/QMetaType>
-
 struct sensor_gps_s
 {
 	uint64_t timestamp;
@@ -78,4 +76,3 @@ struct sensor_gps_s
 	static constexpr uint8_t RTCM_MSG_USED_USED = 2;
 	uint8_t rtcm_msg_used;
 };
-Q_DECLARE_METATYPE(sensor_gps_s);

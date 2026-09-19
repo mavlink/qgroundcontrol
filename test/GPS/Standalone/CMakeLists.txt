@@ -6,7 +6,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(_gps_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS")
     set(_utilities_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities")
     set(QGC_GPS_COMPONENTS
-        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;Corrections;NTRIP"
+        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;Corrections;NTRIP;DriverData;ReceiverConfig"
         CACHE STRING "GPS library components to build and test"
     )
     option(QGC_NO_SERIAL_LINK "Build without serial receiver support" OFF)
@@ -24,6 +24,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         Corrections
         NTRIPHttp
         NTRIP
+        DriverData
+        ReceiverConfig
     )
     set(QGC_GPS_COMPONENTS_ENABLED ${QGC_GPS_COMPONENTS})
     foreach(component IN LISTS QGC_GPS_COMPONENTS_ENABLED)
@@ -57,10 +59,16 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Network)
     endif()
     set(_qt_gps_components ${QGC_GPS_COMPONENTS_ENABLED})
-    list(REMOVE_ITEM _qt_gps_components RTCMFramer NMEAProtocol)
+    list(REMOVE_ITEM _qt_gps_components RTCMFramer NMEAProtocol DriverData ReceiverConfig)
     if(_qt_gps_components)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
         add_subdirectory("${_utilities_root}/Logging/Category" LoggingCategory)
+    endif()
+    if("DriverData" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/RTK/Driver/Reports" DriverData)
+    endif()
+    if("ReceiverConfig" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/RTK/Config" ReceiverConfig)
     endif()
     if("Core" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Positioning Test)
@@ -108,6 +116,22 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     endif()
 endif()
 
+if(TARGET QGCGPSDriverData)
+    add_executable(QGCGPSDriverDataTest ../RTK/Driver/GPSDriverDataTest.cc)
+    set_target_properties(
+        QGCGPSDriverDataTest
+        PROPERTIES AUTOMOC OFF
+                   AUTOUIC OFF
+                   AUTORCC OFF
+    )
+    target_include_directories(QGCGPSDriverDataTest PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/RTK/Driver"
+                                                            "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/RTK"
+    )
+    target_link_libraries(QGCGPSDriverDataTest PRIVATE QGCGPSDriverData)
+    add_test(NAME GPSDriverDataTest COMMAND QGCGPSDriverDataTest)
+    set_tests_properties(GPSDriverDataTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 10)
+endif()
+
 if(TARGET QGCClock)
     set_target_properties(QGCClock PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
     add_custom_target(
@@ -131,6 +155,8 @@ foreach(
     QGCGPSRTCMFramer
     QGCGPSRTCM
     QGCGPSCorrections
+    QGCGPSDriverData
+    QGCGPSReceiverConfig
 )
     if(NOT TARGET ${target})
         continue()

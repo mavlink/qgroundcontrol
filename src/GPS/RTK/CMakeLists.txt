@@ -1,4 +1,5 @@
 # Local RTK receiver, worker, Facts, and connection policy.
+add_subdirectory(Config)
 add_subdirectory(Driver)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSDriver QGCGPSReceiverTransports)
 

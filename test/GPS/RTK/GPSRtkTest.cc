@@ -19,22 +19,22 @@
 
 void GPSRtkTest::_testCountSatellitesClampsToMax()
 {
-    satellite_info_s msg{};
+    GPSSatelliteReport msg;
     msg.count = 250;
 
     const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
 
-    QCOMPARE(static_cast<int>(counts.inView), static_cast<int>(satellite_info_s::SAT_INFO_MAX_SATELLITES));
+    QCOMPARE(counts.inView, GPSSatelliteReport::MAX_SATELLITES);
     QCOMPARE(counts.used, 0);
 }
 
 void GPSRtkTest::_testCountSatellitesCountsUsed()
 {
-    satellite_info_s msg{};
+    GPSSatelliteReport msg;
     msg.count = 6;
-    msg.used[1] = 1;
-    msg.used[3] = 1;
-    msg.used[5] = 1;
+    msg.satellites[1].used = true;
+    msg.satellites[3].used = true;
+    msg.satellites[5].used = true;
 
     const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
 
@@ -44,10 +44,10 @@ void GPSRtkTest::_testCountSatellitesCountsUsed()
 
 void GPSRtkTest::_testCountSatellitesIgnoresUsedBeyondCount()
 {
-    satellite_info_s msg{};
+    GPSSatelliteReport msg;
     msg.count = 2;
-    msg.used[0] = 1;
-    msg.used[5] = 1;
+    msg.satellites[0].used = true;
+    msg.satellites[5].used = true;
 
     const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
 
@@ -137,9 +137,9 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     survey.duration = std::chrono::seconds(4294967295LL);
     survey.meanAccuracyMeters = 1.5;
     emit first->surveyInStatus(survey);
-    satellite_info_s satellites{};
+    GPSSatelliteReport satellites;
     satellites.count = 2;
-    satellites.used[0] = 1;
+    satellites.satellites[0].used = true;
     emit first->satelliteInfoUpdate(satellites);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver.connected());
@@ -166,7 +166,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit first->RTCMDataUpdate(frame, GPSCorrectionFrame::monotonicNowMs());
     emit first->surveyInStatus(survey);
     emit first->satelliteInfoUpdate(satellites);
-    emit first->sensorGpsUpdate(sensor_gps_s{});
+    emit first->sensorGpsUpdate(GPSPositionReport{});
     emit first->receiverReady();
     emit first->connectionError(GPSConnectionError::DeviceError);
     expectLogMessage(

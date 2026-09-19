@@ -3,6 +3,8 @@
 # PX4 GPS driver integration + GNSS message structs
 # ============================================================================
 
+add_subdirectory(Reports)
+
 qt_add_library(
     QGCGPSDriver
     STATIC
@@ -44,7 +46,7 @@ qgc_disable_dependency_warnings(px4-gpsdrivers)
 
 target_link_libraries(
     QGCGPSDriver
-    PUBLIC QGCGPSCore QGCGPSTransport
+    PUBLIC QGCGPSDriverData QGCGPSReceiverConfig QGCGPSTransport
     PRIVATE QGCLoggingCategory px4-gpsdrivers
 )
 target_compile_definitions(QGCGPSDriver PRIVATE GPS_DEFINITIONS_HEADER=<${CMAKE_CURRENT_SOURCE_DIR}/definitions.h>)

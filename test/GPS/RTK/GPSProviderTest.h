@@ -20,4 +20,5 @@ private slots:
     void _cancelledFactoryDoesNotOpenTransport();
     void _configuredReceiverReportsReadyThenLoss_data();
     void _configuredReceiverReportsReadyThenLoss();
+    void _positionRoleDoesNotRequireBase();
 };

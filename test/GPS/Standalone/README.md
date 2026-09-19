@@ -67,7 +67,7 @@ ctest --test-dir build/gps-transports --output-on-failure
 
 The available components are `Core`, `NMEAProtocol`, `NMEAUtils`, `NMEA`, `Positioning`,
 `Transport`, `ReceiverTransports`, `RTCMFramer`, `RTCM`, `Corrections`, `NTRIPHttp`,
-and `NTRIP`. The `Transport` library
+`NTRIP`, `DriverData`, and `ReceiverConfig`. The `Transport` library
 needs Qt Core and the logging library, not Qt Network or RTK configuration.
 Receiver transport tests additionally use Qt Test, not Qt Positioning.
 Linux standalone builds leave the Android serial compatibility harness disabled.
@@ -80,20 +80,31 @@ All components are enabled by default. `NMEA` includes `NMEAProtocol` and `NMEAU
 
 ## Owner-local GPS types
 
-The existing PX4 driver remains in use; moving its configuration types does not
-enable new receiver settings or replace its runtime.
+The existing PX4 driver remains in use. `QGC::GPSReceiverConfig` owns the Qt-free
+configuration and software request capabilities in `RTK/`; `QGC::GPSDriverData`
+owns native report values in `RTK/Driver/Reports` and the private PX4 conversion
+boundary. Neither target depends on Qt, QGC settings, transports, or native
+protocol libraries. The wrapper's opaque state keeps PX4 layouts out of its
+public sinks and the worker's queued signals.
 
-The RTK provider and driver consume `GPSBaseStationConfig` directly. Shared
-receiver validation preserves the uint32 survey-duration range and existing
-fixed-base float wire limits. Its implementation belongs to `QGCGPSDriver`,
-not the transport dependency graph.
+The RTK provider and driver consume `GPSReceiverConfig`, with RTK base as the
+unchanged default role and `GPSBaseStationConfig` as its base-only member.
+Native position mode, u-blox constellation requests, u-blox position dynamic
+models, and position heading offsets use existing driver paths. Capabilities
+describe software request support, not receiver-model discovery or read-back.
+Unsupported role/setting combinations fail before configuration I/O. Output-rate
+selection, configured NMEA output, settings/UI controls and receiver read-back
+remain with the native-driver/lifecycle work.
+
+Shared Qt-free validation preserves the uint32 survey-duration range and existing
+fixed-base float wire limits. The existing Qt validation functions translate its
+error codes at the application-facing boundary.
 
 `gpsBaseStationConfigError()` checks the native base configuration and wire limits.
 Fixed-base coordinates and altitude must be supplied explicitly; omitted fields
 are rejected, while explicit zero values remain valid.
-There is no wrapper exposing receiver settings that the active driver cannot use.
 Receiver identity and manufacturer matching remain in the RTK connection path;
-there is no separate capability catalog or profile policy.
+there is no generic contracts library or separate profile/discovery policy.
 `GPSAltitudeDatum` defines the shared native datum values (`Unknown=0`,
 `MeanSeaLevel=1`, `Ellipsoid=2`) used directly by observations and survey status.
 
@@ -105,6 +116,33 @@ cmake -S test/GPS/RTK -B build/gps-rtk-config -G Ninja \
   -DCMAKE_PREFIX_PATH=/path/to/Qt/installation
 cmake --build build/gps-rtk-config
 ctest --test-dir build/gps-rtk-config --output-on-failure
+```
+
+Native reports default unavailable fields to NaN, `std::nullopt`, or an explicit
+unknown enum. The compatibility adapter retains known zero/false diagnostics,
+separates MSL and ellipsoid altitude, clamps legacy satellite arrays, and does not
+invent per-satellite detail for count-only SBF reports or recover truncated
+Ashtech azimuths. The PX4 state has no independent integrity receipt timestamps;
+native integrity snapshots keep `timestampUs == 0` rather than borrowing a newer
+position receipt. A clean RTCM report with unknown usage has no validity marker
+in that state, so its CRC result remains unavailable. Receiver diagnostic evidence
+is not correction-transport acknowledgement or proof of an RTK fix.
+
+The driver lends RTCM bytes only for the synchronous sink call. The Qt worker
+copies them before queueing and translates native survey values into the existing
+`GPSSurveyInStatus`. Position and satellite callbacks carry owning native values.
+Existing source-health, observation, satellite stores and vehicle Facts are
+unchanged; registering native positioning/diagnostic sources remains lifecycle work.
+
+Both native components, their isolated public headers and the private PX4 bridge
+regressions build without finding Qt or fetching the PX4 driver:
+
+```sh
+cmake -S test/GPS/Standalone -B build/gps-native-data -G Ninja \
+    '-DQGC_GPS_COMPONENTS=DriverData;ReceiverConfig' \
+    -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
+cmake --build build/gps-native-data
+ctest --test-dir build/gps-native-data --output-on-failure
 ```
 
 The NMEA protocol consumer covers shared constellation-ID normalization and

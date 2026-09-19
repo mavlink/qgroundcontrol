@@ -3,27 +3,23 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <span>
 
-#include <QtCore/QByteArray>
-#include <QtCore/QMetaType>
-
-#include "GPSBaseStationConfig.h"
-#include "GPSSurveyInStatus.h"
+#include "GPSDriverReports.h"
+#include "GPSReceiverConfig.h"
 #include "GPSType.h"
-#include "satellite_info.h"
-#include "sensor_gps.h"
 
 class GPSTransport;
-class GPSBaseStationSupport;
 
 /// Sinks the driver pushes decoded data into, invoked on the caller thread from
 /// within configure()/receive().
 struct GPSDriverSinks
 {
-    std::function<void(const sensor_gps_s &)> onPosition;
-    std::function<void(const satellite_info_s &)> onSatelliteInfo;
-    std::function<void(const QByteArray &)> onRTCM;
-    std::function<void(const GPSSurveyInStatus &)> onSurveyIn;
+    std::function<void(const GPSPositionReport&)> onPosition;
+    std::function<void(const GPSSatelliteReport&)> onSatelliteInfo;
+    /// Borrowed until the synchronous callback returns.
+    std::function<void(std::span<const uint8_t>)> onRTCM;
+    std::function<void(const GPSSurveyReport&)> onSurveyIn;
 };
 
 /// Facade over the px4-gpsdrivers library: selects and configures the receiver
@@ -32,7 +28,7 @@ struct GPSDriverSinks
 class GPSDriver
 {
 public:
-    GPSDriver(GPSType type, GPSTransport& transport, const GPSBaseStationConfig& config, GPSDriverSinks sinks);
+    GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks);
     ~GPSDriver();
 
     GPSDriver(const GPSDriver &) = delete;
@@ -53,10 +49,9 @@ public:
 private:
     GPSType _type;
     GPSTransport &_transport;
-    GPSBaseStationConfig _config;
+    GPSReceiverConfig _config;
     GPSDriverSinks _sinks;
 
-    std::unique_ptr<GPSBaseStationSupport> _driver;
-    sensor_gps_s _sensorGps{};
-    satellite_info_s _satelliteInfo{};
+    struct State;
+    std::unique_ptr<State> _state;
 };

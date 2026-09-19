@@ -4,8 +4,6 @@
 
 #include <stdint.h>
 
-#include <QtCore/QMetaType>
-
 struct satellite_info_s
 {
 	uint64_t timestamp;
@@ -19,4 +17,3 @@ struct satellite_info_s
 	uint8_t snr[SAT_INFO_MAX_SATELLITES];
 	uint8_t prn[SAT_INFO_MAX_SATELLITES];
 };
-Q_DECLARE_METATYPE(satellite_info_s);
