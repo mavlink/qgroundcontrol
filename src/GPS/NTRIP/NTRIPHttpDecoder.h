@@ -40,6 +40,7 @@ public:
     Result finish();
 
     bool awaitingErrorBody() const { return _pendingFailure.has_value(); }
+
     static Status parseStatusLine(QByteArrayView line);
 
 private:
