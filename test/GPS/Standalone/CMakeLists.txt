@@ -6,7 +6,7 @@ if(COMMAND add_qgc_test AND NOT CMAKE_CROSSCOMPILING)
     if(NOT TARGET Python3::Interpreter)
         message(FATAL_ERROR "The GPS minimal-build matrix requires Python3::Interpreter")
     endif()
-    foreach(component DriverReports ReceiverConfig Px4Adapter)
+    foreach(component DriverReports ReceiverConfig Px4Adapter Native Driver)
         add_test(
             NAME "CMake.GPSMinimal.${component}"
             COMMAND
@@ -14,7 +14,8 @@ if(COMMAND add_qgc_test AND NOT CMAKE_CROSSCOMPILING)
                 "--source-dir=${CMAKE_CURRENT_SOURCE_DIR}" "--build-root=${CMAKE_CURRENT_BINARY_DIR}/Minimal"
                 "--component=${component}" "--generator=${CMAKE_GENERATOR}" "--platform=${CMAKE_GENERATOR_PLATFORM}"
                 "--toolset=${CMAKE_GENERATOR_TOOLSET}" "--compiler=${CMAKE_CXX_COMPILER}" "--cmake=${CMAKE_COMMAND}"
-                "--ctest=${CMAKE_CTEST_COMMAND}" "--config=$<CONFIG>"
+                "--ctest=${CMAKE_CTEST_COMMAND}" "--config=$<CONFIG>" "--qt-dir=${Qt6_DIR}"
+                "--cpm-source-cache=${CPM_SOURCE_CACHE}"
         )
         set_tests_properties("CMake.GPSMinimal.${component}" PROPERTIES LABELS "CMake;Unit;GPS" TIMEOUT 180)
     endforeach()
@@ -26,7 +27,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(_gps_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS")
     set(_utilities_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities")
     set(QGC_GPS_COMPONENTS
-        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;Corrections;NTRIP;Px4Adapter;ReceiverConfig"
+        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;Corrections;NTRIP;Px4Adapter;ReceiverConfig;Driver"
         CACHE STRING "GPS library components to build and test"
     )
     option(QGC_NO_SERIAL_LINK "Build without serial receiver support" OFF)
@@ -47,6 +48,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         DriverReports
         Px4Adapter
         ReceiverConfig
+        Native
+        Driver
     )
     set(QGC_GPS_COMPONENTS_ENABLED ${QGC_GPS_COMPONENTS})
     foreach(component IN LISTS QGC_GPS_COMPONENTS_ENABLED)
@@ -54,6 +57,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
             message(FATAL_ERROR "Unknown GPS component: ${component}")
         endif()
     endforeach()
+    if("Driver" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        list(APPEND QGC_GPS_COMPONENTS_ENABLED Native Transport)
+    endif()
+    if("Native" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        list(APPEND QGC_GPS_COMPONENTS_ENABLED DriverReports ReceiverConfig NMEAProtocol RTCMFramer)
+    endif()
     if("Px4Adapter" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED DriverReports)
     endif()
@@ -91,6 +100,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         DriverReports
         Px4Adapter
         ReceiverConfig
+        Native
     )
     if(_qt_gps_components)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
@@ -100,7 +110,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         add_subdirectory("${_gps_root}/Receiver" Receiver EXCLUDE_FROM_ALL)
     endif()
     if("Px4Adapter" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        add_subdirectory("${_gps_root}/Driver/Px4" Px4Adapter)
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Driver/Legacy" Px4Adapter)
     endif()
     if("Core" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Positioning Test)
@@ -127,6 +137,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     endif()
     if("RTCMFramer" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/RTCM" RTCM)
+    endif()
+    if("Native" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/Driver/Protocols" Native)
+    endif()
+    if("Driver" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/Driver" Driver)
     endif()
     if("RTCM" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
@@ -156,9 +172,8 @@ if(TARGET QGCGPSPx4Adapter)
                    AUTOUIC OFF
                    AUTORCC OFF
     )
-    target_include_directories(QGCGPSPx4AdapterConsumer
-                               PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/Driver/Px4"
-                                       "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/Receiver"
+    target_include_directories(QGCGPSPx4AdapterConsumer PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../Driver/Legacy"
+                                                                "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/Receiver"
     )
     target_link_libraries(QGCGPSPx4AdapterConsumer PRIVATE QGCGPSPx4Adapter QGCGPSDriverReports)
     add_test(NAME QGCGPSPx4AdapterConsumer COMMAND QGCGPSPx4AdapterConsumer)
@@ -168,8 +183,21 @@ endif()
 if(TARGET QGCClock)
     qgc_check_library_headers(QGCClock)
 endif()
-if(TARGET QGCGPSDriver)
-    qgc_check_library_headers(QGCGPSDriver)
+if(TARGET QGCGPSNative)
+    get_target_property(_native_targets QGCGPSNative QGC_GPS_NATIVE_TARGETS)
+    foreach(target IN LISTS _native_targets)
+        qgc_check_library_headers(${target})
+    endforeach()
+    add_executable(QGCGPSNativeConsumer QGCGPSNativeConsumer.cc)
+    set_target_properties(
+        QGCGPSNativeConsumer
+        PROPERTIES AUTOMOC OFF
+                   AUTOUIC OFF
+                   AUTORCC OFF
+    )
+    target_link_libraries(QGCGPSNativeConsumer PRIVATE QGCGPSNative)
+    add_test(NAME QGCGPSNativeConsumer COMMAND QGCGPSNativeConsumer)
+    set_tests_properties(QGCGPSNativeConsumer PROPERTIES LABELS "Unit;GPS" TIMEOUT 10)
 endif()
 
 set(_receiver_consumer_targets)
@@ -194,6 +222,7 @@ foreach(
     QGCGPSRTCMFramer
     QGCGPSRTCM
     QGCGPSCorrections
+    QGCGPSDriver
     ${_receiver_consumer_targets}
 )
     if(NOT TARGET ${target})
@@ -211,5 +240,8 @@ foreach(
     )
     if("${target}" MATCHES "^QGCGPS(Core|Positioning|NMEA)$")
         target_link_libraries(${target}Consumer PRIVATE QGCTestTiming)
+    endif()
+    if("${target}" STREQUAL "QGCGPSDriver")
+        target_link_libraries(${target}Consumer PRIVATE QGCGPSTransport)
     endif()
 endforeach()

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "PortableTest.h"
+#include "GPSDriverTestBase.h"
 
-class GPSLegacySafetyTest : public PortableTest
+class GPSLegacySafetyTest : public GPSDriverTestBase
 {
     Q_OBJECT
 

@@ -1,4 +1,4 @@
-"""Build GPS library selections without Qt and verify their dependency boundaries."""
+"""Build isolated GPS selections and verify their dependency boundaries."""
 
 from __future__ import annotations
 
@@ -16,7 +16,21 @@ CASES = {
         {"QGCGPSPx4AdapterConsumer", "QGCGPSDriverReportsConsumer"},
         "QGCGPSDriverReportsHeaderChecks",
     ),
+    "Native": (
+        {
+            "QGCGPSNativeConsumer",
+            "QGCGPSDriverReportsConsumer",
+            "QGCGPSReceiverConfigConsumer",
+            "QGCGPSNMEAProtocolConsumer",
+            "QGCGPSRTCMFramerConsumer",
+        },
+        "QGCGPSNativeCommonHeaderChecks",
+    ),
 }
+CASES["Driver"] = (
+    CASES["Native"][0] | {"QGCGPSDriverConsumer", "QGCGPSTransportConsumer"},
+    "QGCGPSDriverHeaderChecks",
+)
 
 
 def run(command: list[str]) -> str:
@@ -46,11 +60,13 @@ def check_artifacts(build: Path, component: str, config: str) -> None:
         raise ValueError(f"No unique file-api configuration matches {config!r}")
     for target in configurations[0]["targets"]:
         name = target["name"]
-        if name in {"QGCGPSDriver", "px4-gpsdrivers"}:
-            raise ValueError(f"Unexpected PX4 runtime target: {name}")
+        if name in {"px4-gpsdrivers", "QGCGPSLegacyDriver"}:
+            raise ValueError(f"Unexpected legacy receiver runtime target: {name}")
+        if name == "QGCGPSDriver" and component != "Driver":
+            raise ValueError(f"Unexpected Qt receiver runtime target: {name}")
         if name == "QGCGPSPx4Adapter" and component != "Px4Adapter":
             raise ValueError("Unexpected compatibility adapter")
-        if name != "QGCGPSReceiverConfig" or component == "ReceiverConfig":
+        if name != "QGCGPSReceiverConfig" or component in {"ReceiverConfig", "Native", "Driver"}:
             continue
         target_model = json.loads((reply / target["jsonFile"]).read_text(encoding="utf-8"))
         for artifact in target_model["artifacts"]:
@@ -76,8 +92,21 @@ def check_build(args: argparse.Namespace, build: Path) -> None:
         f"-DCMAKE_CXX_COMPILER={args.compiler}",
         f"-DCMAKE_BUILD_TYPE={config}",
         f"-DQGC_GPS_COMPONENTS={args.component}",
-        "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON",
     ]
+    if args.component == "Driver":
+        configure.extend(
+            [
+                f"-DQt6_DIR={args.qt_dir}",
+                "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6Network=ON",
+                "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6Positioning=ON",
+                "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6SerialPort=ON",
+                "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6Qml=ON",
+            ]
+        )
+    else:
+        configure.append("-DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON")
+    if args.component in {"Native", "Driver"} and args.cpm_source_cache:
+        configure.append(f"-DCPM_SOURCE_CACHE={args.cpm_source_cache}")
     if args.platform:
         configure.extend(["-A", args.platform])
     if args.toolset:
@@ -108,6 +137,8 @@ def main() -> int:
     parser.add_argument("--config", default="Release")
     parser.add_argument("--platform", default="")
     parser.add_argument("--toolset", default="")
+    parser.add_argument("--qt-dir", default="")
+    parser.add_argument("--cpm-source-cache", default="")
     args = parser.parse_args()
     try:
         args.build_root.mkdir(parents=True, exist_ok=True)

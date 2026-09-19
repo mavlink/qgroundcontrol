@@ -4,7 +4,9 @@
 #include <functional>
 #include <memory>
 #include <span>
+#include <vector>
 
+#include "GPSConfigurationEvidence.h"
 #include "GPSDriverReports.h"
 #include "GPSReceiverConfig.h"
 #include "GPSType.h"
@@ -22,9 +24,7 @@ struct GPSDriverSinks
     std::function<void(const GPSSurveyReport&)> onSurveyIn;
 };
 
-/// Facade over the px4-gpsdrivers library: selects and configures the receiver
-/// driver, bridges its callbacks to a GPSTransport plus the supplied sinks, and
-/// pumps its receive loop. Keeps all px4 headers and types out of callers.
+/// Selects a native receiver protocol and adapts its decoded events to public reports.
 class GPSDriver
 {
 public:
@@ -38,13 +38,12 @@ public:
     bool configure();
 
     /// Pump one receive cycle, invoking the position/satellite sinks as data
-    /// arrives. Returns the px4 bitset (<0 error, bit0 position, bit1 satellite),
+    /// arrives. Returns a bitset (<0 error, bit0 position, bit1 satellite),
     /// or <0 if not configured.
     int receive(unsigned timeoutMs);
 
-    /// Trampoline target for the px4 callback; `type` is a GPSCallbackType value.
-    /// Public only so the file-local C callback can reach it — not for callers.
-    int handleCallback(int type, void* data1, int data2);
+    /// Latest configure() attempt; remains available after failure. Caller-thread access only.
+    [[nodiscard]] const std::vector<GPSConfigurationEvidence>& configurationEvidence() const;
 
 private:
     GPSType _type;

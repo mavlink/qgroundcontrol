@@ -6,7 +6,7 @@
 struct sensor_gps_s;
 struct satellite_info_s;
 
-/// Private compatibility boundary for the current PX4 driver.
+/// Private compatibility boundary for the legacy PX4 comparison driver.
 namespace GPSPx4Data {
 void initialize(sensor_gps_s& position);
 GPSPositionReport position(const sensor_gps_s& position);

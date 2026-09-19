@@ -70,6 +70,7 @@ public:
 
     GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
     GPSWriteResult write(const uint8_t* buffer, int length) override;
+    void queueFrame(uint8_t messageClass, uint8_t messageId, const QByteArray& payload);
 
     bool modern() const { return _modern; }
 
@@ -89,6 +90,10 @@ public:
     unsigned dynamicModel = 0;
     unsigned surveyDuration = 0;
     unsigned surveyAccuracy = 0;
+    uint32_t fixedAccuracy = 0;
+    unsigned retainedSurveyDuration = 0;
+    bool surveyStopStuck = false;
+    int surveyStopReads = 0;
     int disableCommands = 0;
     int disableAcksRead = 0;
     int timeModeReads = 0;

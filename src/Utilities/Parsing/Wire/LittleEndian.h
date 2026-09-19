@@ -36,4 +36,20 @@ template <Scalar T>
     return std::bit_cast<T>(static_cast<Bits<T>>(bits));
 }
 
+/// Encode an unaligned little-endian scalar. Insufficient space leaves the destination unchanged.
+template <Scalar T>
+[[nodiscard]] constexpr bool write(std::span<uint8_t> bytes, std::size_t offset, T value)
+{
+    static_assert(!std::floating_point<T> || std::numeric_limits<T>::is_iec559);
+    if (offset > bytes.size() || sizeof(T) > bytes.size() - offset) {
+        return false;
+    }
+
+    const auto bits = std::bit_cast<Bits<T>>(value);
+    for (std::size_t i = 0; i < sizeof(T); ++i) {
+        bytes[offset + i] = static_cast<uint8_t>(bits >> (8 * i));
+    }
+    return true;
+}
+
 }  // namespace LittleEndian

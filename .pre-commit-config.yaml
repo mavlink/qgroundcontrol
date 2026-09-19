@@ -41,12 +41,12 @@ repos:
       - id: check-executables-have-shebangs
       - id: trailing-whitespace
         args: ['--markdown-linebreak-ext=md']
-        exclude: ^translations/
+        exclude: ^(translations/|test/GPS/Driver/Protocols/(corpus|fixtures)/.*\.(bin|gps|nmea|sbf|ubx)$)
       - id: end-of-file-fixer
-        exclude: ^(translations/.*\.ts|.*\.(png|jpg|jpeg|gif|svg|ico|bin|dat))$
+        exclude: ^(translations/.*\.ts|.*\.(png|jpg|jpeg|gif|svg|ico|bin|dat)|test/GPS/Driver/Protocols/(corpus|fixtures)/.*\.(gps|nmea|sbf|ubx))$
       - id: mixed-line-ending
         args: ['--fix=lf']
-        exclude: \.(bat|ps1)$
+        exclude: (\.(bat|ps1)$|^test/GPS/Driver/Protocols/(corpus|fixtures)/.*\.(bin|gps|nmea|sbf|ubx)$)
 
   # Secret detection
   - repo: https://github.com/trufflesecurity/trufflehog
