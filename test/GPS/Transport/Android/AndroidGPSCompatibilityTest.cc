@@ -166,7 +166,7 @@ private slots:
         QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
         writeStep = [count](int) { return count; };
         const uint8_t payload[4]{};
-        const auto result = transport.write(payload, 4);
+        const auto result = transport.writeConfiguration(payload, 4, QDeadlineTimer(100));
         QCOMPARE(writeCalls, 1);
         QCOMPARE(result.status, count == 4 ? GPSWriteStatus::Completed : GPSWriteStatus::Error);
         QCOMPARE(result.acceptedBytes, 4);
@@ -177,6 +177,19 @@ private slots:
             QCOMPARE(transport.write(payload, 4).acceptedBytes, 0);
             QCOMPARE(writeCalls, 1);
         }
+    }
+
+    void expiredConfigurationSendsNothing()
+    {
+        std::atomic_bool stop = false;
+        SerialGPSTransport transport(QStringLiteral("test"), stop);
+        QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
+        const uint8_t payload = 42;
+        QCOMPARE(transport.writeConfiguration(&payload, 1, QDeadlineTimer(0)).status, GPSWriteStatus::TimedOut);
+        QCOMPARE(writeCalls, 0);
+        stop = true;
+        QCOMPARE(transport.writeConfiguration(&payload, 1, QDeadlineTimer(100)).status, GPSWriteStatus::Cancelled);
+        QCOMPARE(writeCalls, 0);
     }
 
     void boundedWritesSendNothing_data()

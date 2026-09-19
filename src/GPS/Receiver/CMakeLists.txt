@@ -25,5 +25,7 @@ if(NOT TARGET QGCGPSDriverReports)
     add_library(QGCGPSDriverReports INTERFACE)
     add_library(QGC::GPSDriverReports ALIAS QGCGPSDriverReports)
     target_compile_features(QGCGPSDriverReports INTERFACE cxx_std_20)
-    target_sources(QGCGPSDriverReports INTERFACE FILE_SET HEADERS FILES GPSDriverReports.h)
+    target_sources(QGCGPSDriverReports INTERFACE FILE_SET HEADERS FILES GPSDriverReports.h GPSConfigurationEvidence.h
+                                                 GPSSatelliteUsageReport.h
+    )
 endif()

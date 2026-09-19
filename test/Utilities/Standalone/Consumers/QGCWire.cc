@@ -29,10 +29,22 @@ bool checkScalar(const char* name, const std::array<uint8_t, sizeof(T)>& bytes, 
         std::cerr << name << ": incorrect unaligned scalar decoding\n";
         return false;
     }
+    alignas(T) std::array<uint8_t, sizeof(T) + 2> encoded;
+    encoded.fill(0xa5);
+    if (!LittleEndian::write(encoded, 1, *value) || encoded.front() != 0xa5 || encoded.back() != 0xa5 ||
+        !std::equal(bytes.begin(), bytes.end(), encoded.begin() + 1)) {
+        std::cerr << name << ": incorrect unaligned scalar encoding or overwritten guard bytes\n";
+        return false;
+    }
+    const auto unchanged = encoded;
     const auto payload = std::span<const uint8_t>(unaligned).subspan(1);
     for (std::size_t size = 0; size < sizeof(T); ++size) {
         if (LittleEndian::read<T>(payload.first(size))) {
             std::cerr << name << ": accepted a truncated scalar\n";
+            return false;
+        }
+        if (LittleEndian::write(std::span(encoded).subspan(1, size), 0, expected) || encoded != unchanged) {
+            std::cerr << name << ": truncated write changed the destination\n";
             return false;
         }
     }
@@ -40,6 +52,10 @@ bool checkScalar(const char* name, const std::array<uint8_t, sizeof(T)>& bytes, 
          {std::size_t{1}, payload.size(), payload.size() + 1, (std::numeric_limits<std::size_t>::max)()}) {
         if (LittleEndian::read<T>(payload, offset)) {
             std::cerr << name << ": accepted an invalid offset\n";
+            return false;
+        }
+        if (LittleEndian::write(std::span(encoded).subspan(1, sizeof(T)), offset, expected) || encoded != unchanged) {
+            std::cerr << name << ": invalid-offset write changed the destination\n";
             return false;
         }
     }
@@ -55,6 +71,11 @@ static_assert(!LittleEndian::Scalar<const volatile bool>);
 static_assert(!LittleEndian::Scalar<void*>);
 static_assert(LittleEndian::read<uint16_t>(std::array<uint8_t, 2>{0x34, 0x12}) == 0x1234);
 static_assert(!LittleEndian::read<uint64_t>({}));
+static_assert([] {
+    std::array<uint8_t, 2> bytes{};
+    return LittleEndian::write(bytes, 0, uint16_t{0x1234}) && bytes == std::array<uint8_t, 2>{0x34, 0x12};
+}());
+static_assert(!LittleEndian::write({}, 0, uint64_t{1}));
 
 int main()
 {

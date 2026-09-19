@@ -43,6 +43,7 @@ if(TARGET QGroundControlModule)
             "${CMAKE_COMMAND}" -E env --modify "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::qmllint>"
             "$<TARGET_FILE:Python3::Interpreter>" "${CMAKE_SOURCE_DIR}/tools/analyze.py" --tool qmllint --qml-build
             --build-dir "${CMAKE_BINARY_DIR}" test/GPS/NTRIP/NTRIPQmlMetadata.qml
+            src/AppSettings/NtripConnectionSettings.qml
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
     set_tests_properties(NTRIPQmlMetadata NTRIPQmlLint PROPERTIES LABELS "Unit;GPS;QML" TIMEOUT 60)

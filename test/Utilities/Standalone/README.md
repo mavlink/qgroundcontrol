@@ -15,12 +15,15 @@ I/O and JSON-validation targets without QML, application settings,
 or external GPS dependencies.
 
 `QGC::Wire` is a Qt-free, header-only target shared with the DataFlash and ULog
-parsers. `LittleEndian::read<T>` decodes integer and IEEE floating-point scalars
+parsers and native GPS codecs. `LittleEndian::read<T>` decodes integer and IEEE floating-point scalars
 from a byte span and offset, returning `std::nullopt` for insufficient input.
 It supports unaligned input and rejects out-of-range offsets without overflow.
 Boolean types, including cv-qualified forms, are excluded from scalar decoding.
+`LittleEndian::write<T>` provides the checked encoding counterpart: it returns
+`false` without modifying the destination when the scalar does not fit.
+Both operations support constant evaluation.
 `QGCWireConsumer` covers explicit wire fixtures, signed values, floating-point
-special values, truncated buffers and invalid offsets.
+special values, truncated buffers, invalid offsets, and unmodified guard bytes.
 The already-Qt DataFlash parser converts binary16 values through `qfloat16` after
 the bounded integer read; its application suite compares exact binary32 bits for
 signed zero, normal/subnormal boundaries and infinities.

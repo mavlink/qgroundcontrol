@@ -4,6 +4,7 @@
 
 #include "GPSCorrectionEventModel.h"
 #include "GPSPositionService.h"
+#include "GPSRTKFactGroup.h"
 #include "GPSSourceHealth.h"
 #include "NTRIPConnectionStats.h"
 #include "NTRIPSourceTableController.h"
@@ -20,6 +21,13 @@ struct GPSSourceHealthQmlType
 {
     Q_GADGET
     QML_FOREIGN(GPSSourceHealth)
+    QML_ANONYMOUS
+};
+
+struct GPSRTKFactGroupQmlType
+{
+    Q_GADGET
+    QML_FOREIGN(GPSRTKFactGroup)
     QML_ANONYMOUS
 };
 

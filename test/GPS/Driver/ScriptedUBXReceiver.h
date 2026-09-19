@@ -69,7 +69,8 @@ public:
     bool setBaudrate(unsigned) override { return true; }
 
     GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
-    GPSWriteResult write(const uint8_t* buffer, int length) override;
+    GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
+    void queueFrame(uint8_t messageClass, uint8_t messageId, const QByteArray& payload);
 
     bool modern() const { return _modern; }
 
@@ -79,6 +80,7 @@ public:
     bool staleDisableAck = false;
     bool staleSbasAck = false;
     bool coalesceReplies = false;
+    bool rejectRtcmActivation = false;
     DisableReply disableReply = DisableReply::Ack;
     DisableReply sbasReply = DisableReply::Ack;
     ReadbackReply readbackReply = ReadbackReply::Value;
@@ -89,6 +91,10 @@ public:
     unsigned dynamicModel = 0;
     unsigned surveyDuration = 0;
     unsigned surveyAccuracy = 0;
+    uint32_t fixedAccuracy = 0;
+    unsigned retainedSurveyDuration = 0;
+    bool surveyStopStuck = false;
+    int surveyStopReads = 0;
     int disableCommands = 0;
     int disableAcksRead = 0;
     int timeModeReads = 0;

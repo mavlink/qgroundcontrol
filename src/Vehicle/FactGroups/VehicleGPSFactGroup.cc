@@ -5,11 +5,13 @@
 #include "MAVLinkLib.h"
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 #include "Vehicle.h"
 #include "development/mavlink_msg_gnss_integrity.h"
 
-VehicleGPSFactGroup::VehicleGPSFactGroup(QObject *parent)
+VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent, RuntimeScheduler* scheduler)
     : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
 {
     _addFact(&_latFact);
     _addFact(&_lonFact);
@@ -122,6 +124,7 @@ void VehicleGPSFactGroup::_handleGnssIntegrity(const mavlink_message_t& message)
         return;
     }
 
+    const quint64 receiptUs = _scheduler ? _scheduler->nowUs() : 0;
     systemErrors()->setRawValue         (gnssIntegrity.system_errors);
     spoofingState()->setRawValue        (gnssIntegrity.spoofing_state);
     jammingState()->setRawValue         (gnssIntegrity.jamming_state);
@@ -131,5 +134,6 @@ void VehicleGPSFactGroup::_handleGnssIntegrity(const mavlink_message_t& message)
     gnssSignalQuality()->setRawValue    (gnssIntegrity.gnss_signal_quality);
     postProcessingQuality()->setRawValue(gnssIntegrity.post_processing_quality);
 
+    _gnssIntegrityTimestampUs = receiptUs;
     emit gnssIntegrityReceived();
 }

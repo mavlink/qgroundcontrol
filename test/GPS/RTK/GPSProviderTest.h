@@ -1,13 +1,15 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "../Driver/GPSDriverTestBase.h"
 
-class GPSProviderTest : public UnitTest
+class GPSProviderTest : public GPSDriverTestBase
 {
     Q_OBJECT
 
 private slots:
     void _queuedPayloadsOwnSnapshots();
+    void _ancillaryTraffic_data();
+    void _ancillaryTraffic();
     void _surveyReportProjection_data();
     void _surveyReportProjection();
 #ifndef QGC_NO_SERIAL_LINK

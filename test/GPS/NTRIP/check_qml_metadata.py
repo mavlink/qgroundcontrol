@@ -22,6 +22,8 @@ PROPERTIES = {
         "messageCountsById",
     },
     "NTRIPSourceTableController": {"fetchStatus", "fetchError", "mountpointModel"},
+    "GPSManager": {"corrections"},
+    "GPSCorrectionManager": {"rtcmMavlink"},
 }
 FETCH_STATUS = ["Idle", "InProgress", "Success", "Error"]
 
@@ -76,6 +78,16 @@ def check_metadata(text: str) -> list[str]:
     status = named_blocks(controller, "Enum").get("FetchStatus", "")
     if string_list(status, "values") != FETCH_STATUS:
         errors.append(f"NTRIPSourceTableController.FetchStatus: expected {FETCH_STATUS}")
+    ntrip = components.get("NTRIPManager", "")
+    if "rtcmMavlink" in named_blocks(ntrip, "Property"):
+        errors.append("NTRIPManager: obsolete rtcmMavlink compatibility property")
+    rtk = named_blocks(components.get("GPSRTKFactGroup", ""), "Property")
+    for name in ("canSaveCurrentBasePosition", "numSatellites", "numSatellitesUsed"):
+        if name not in rtk:
+            errors.append(f"GPSRTKFactGroup: missing property {name}")
+    global_properties = named_blocks(components.get("QGroundControlQmlGlobal", ""), "Property")
+    if not re.search(r'\btype:\s*"GPSRTKFactGroup"', global_properties.get("gpsRtk", "")):
+        errors.append("QGroundControl.gpsRtk: expected precise GPSRTKFactGroup type")
     return errors
 
 

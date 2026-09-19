@@ -7,6 +7,13 @@ QtObject {
 
     required property NTRIPConnectionStats stats
     required property NTRIPSourceTableController controller
+    required property GPSCorrectionManager corrections
+
+    readonly property QtObject forwarder: root.corrections.rtcmMavlink
+    readonly property real totalBytesSubmitted: root.corrections.rtcmMavlink.totalBytesSubmitted
+    readonly property bool canSaveBasePosition: QGroundControl.gpsRtk.canSaveCurrentBasePosition
+    readonly property int satellitesInView: QGroundControl.gpsRtk.numSatellites.rawValue
+    readonly property int satellitesUsed: QGroundControl.gpsRtk.numSatellitesUsed.rawValue
 
     readonly property real bytesReceived: root.stats.bytesReceived
     readonly property real messagesReceived: root.stats.messagesReceived

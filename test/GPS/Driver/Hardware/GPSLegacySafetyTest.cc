@@ -287,7 +287,7 @@ void GPSLegacySafetyTest::_femtoPositionOutput()
     GPSDriverFemto driver(ScriptedLegacyReceiver::callback, &receiver, &position, nullptr);
     unsigned baudrate = 115200;
     if (!warning.isEmpty()) {
-        expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QRegularExpression::escape(warning)));
+        expectLogMessage("GPS.LegacyDrivers", QtWarningMsg, QRegularExpression(QRegularExpression::escape(warning)));
     }
     const int result = driver.configure(baudrate, configFor(OutputMode::GPS));
     if (!warning.isEmpty()) {

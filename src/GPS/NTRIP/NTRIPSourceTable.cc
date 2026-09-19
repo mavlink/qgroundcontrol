@@ -1,7 +1,9 @@
 #include "NTRIPSourceTable.h"
 
-#include <QtCore/qnumeric.h>
 #include <algorithm>
+
+#include <QtCore/QPointer>
+#include <QtCore/qnumeric.h>
 
 #include "QGCLoggingCategory.h"
 
@@ -49,6 +51,7 @@ bool NTRIPMountpoint::fromSourceTableLine(const QString& line, NTRIPMountpoint& 
 void NTRIPMountpoint::updateDistance(const QGeoCoordinate& from)
 {
     if (!from.isValid() || (latitude == 0.0 && longitude == 0.0)) {
+        distanceKm = -1.0;
         return;
     }
     const QGeoCoordinate mountCoord(latitude, longitude);
@@ -140,63 +143,126 @@ QHash<int, QByteArray> NTRIPSourceTableModel::roleNames() const
 
 void NTRIPSourceTableModel::parseSourceTable(const QString& raw)
 {
-    beginResetModel();
-    _mountpoints.clear();
-
-    const QStringList lines = raw.split('\n');
-    for (const QString& line : lines) {
-        const QString trimmed = line.trimmed();
-        if (trimmed.isEmpty() || trimmed.startsWith(QStringLiteral("ENDSOURCETABLE"))) {
-            continue;
+    _mutate([this, raw]() {
+        QList<NTRIPMountpoint> mountpoints;
+        const QStringList lines = raw.split('\n');
+        for (const QString& line : lines) {
+            const QString trimmed = line.trimmed();
+            NTRIPMountpoint mp;
+            if (NTRIPMountpoint::fromSourceTableLine(trimmed, mp)) {
+                mountpoints.append(mp);
+            }
         }
-        NTRIPMountpoint mp;
-        if (NTRIPMountpoint::fromSourceTableLine(trimmed, mp)) {
-            _mountpoints.append(mp);
-        }
-    }
 
-    endResetModel();
-    emit countChanged();
+        const QPointer<NTRIPSourceTableModel> guard(this);
+        beginResetModel();
+        if (!guard) {
+            return;
+        }
+        _mountpoints = std::move(mountpoints);
+        endResetModel();
+        if (guard) {
+            emit countChanged();
+        }
+    });
 }
 
 void NTRIPSourceTableModel::updateDistances(const QGeoCoordinate& from)
 {
-    for (NTRIPMountpoint& mp : _mountpoints) {
-        mp.updateDistance(from);
-    }
-    sortByDistance();
+    _mutate([this, from]() {
+        if (_mountpoints.isEmpty()) {
+            return;
+        }
+        if (_mountpoints.size() == 1) {
+            const double previous = _mountpoints.first().distanceKm;
+            _mountpoints.first().updateDistance(from);
+            if (previous != _mountpoints.first().distanceKm) {
+                emit dataChanged(index(0), index(0), {DistanceKmRole});
+            }
+            return;
+        }
+        const QPointer<NTRIPSourceTableModel> guard(this);
+        beginResetModel();
+        if (!guard) {
+            return;
+        }
+        for (NTRIPMountpoint& mp : _mountpoints) {
+            mp.updateDistance(from);
+        }
+        _sortByDistance();
+        endResetModel();
+    });
 }
 
 void NTRIPSourceTableModel::sortByDistance()
 {
-    if (_mountpoints.size() < 2) {
-        return;
-    }
+    _mutate([this]() {
+        if (_mountpoints.size() < 2) {
+            return;
+        }
+        const QPointer<NTRIPSourceTableModel> guard(this);
+        beginResetModel();
+        if (!guard) {
+            return;
+        }
+        _sortByDistance();
+        endResetModel();
+    });
+}
 
+void NTRIPSourceTableModel::_sortByDistance()
+{
     // Distance ordering: known distances ascending, unknown (negative) last.
     const auto less = [](const NTRIPMountpoint& a, const NTRIPMountpoint& b) {
-        if (a.distanceKm < 0 && b.distanceKm < 0)
+        if (a.distanceKm < 0 && b.distanceKm < 0) {
             return false;
-        if (a.distanceKm < 0)
+        }
+        if (a.distanceKm < 0) {
             return false;  // a unknown → sorts after known b
-        if (b.distanceKm < 0)
-            return true;   // b unknown → known a sorts before
+        }
+        if (b.distanceKm < 0) {
+            return true;  // b unknown → known a sorts before
+        }
         return a.distanceKm < b.distanceKm;
     };
 
-    beginResetModel();
     std::stable_sort(_mountpoints.begin(), _mountpoints.end(), less);
-    endResetModel();
-    // No countChanged() here: a sort reorders rows but never changes the count.
 }
 
 void NTRIPSourceTableModel::clear()
 {
-    if (_mountpoints.isEmpty()) {
+    _mutate([this]() {
+        if (_mountpoints.isEmpty()) {
+            return;
+        }
+        const QPointer<NTRIPSourceTableModel> guard(this);
+        beginResetModel();
+        if (!guard) {
+            return;
+        }
+        _mountpoints.clear();
+        endResetModel();
+        if (guard) {
+            emit countChanged();
+        }
+    });
+}
+
+void NTRIPSourceTableModel::_mutate(std::function<void()> mutation)
+{
+    _pendingMutations.push_back(std::move(mutation));
+    if (_mutating) {
         return;
     }
-    beginResetModel();
-    _mountpoints.clear();
-    endResetModel();
-    emit countChanged();
+    _mutating = true;
+    const QPointer<NTRIPSourceTableModel> guard(this);
+    while (!_pendingMutations.empty()) {
+        auto pending = std::move(_pendingMutations.front());
+        _pendingMutations.pop_front();
+        pending();
+        if (!guard) {
+            return;
+        }
+    }
+    _mutating = false;
 }

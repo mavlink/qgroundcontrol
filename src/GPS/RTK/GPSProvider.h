@@ -18,6 +18,7 @@
 
 Q_DECLARE_METATYPE(GPSPositionReport)
 Q_DECLARE_METATYPE(GPSSatelliteReport)
+Q_DECLARE_METATYPE(GPSSatelliteUsageReport)
 
 class GPSTransport;
 
@@ -45,6 +46,7 @@ public:
 
 signals:
     void satelliteInfoUpdate(const GPSSatelliteReport& message);
+    void satelliteUsageUpdate(const GPSSatelliteUsageReport& message);
     void sensorGpsUpdate(const GPSPositionReport& message);
     void RTCMDataUpdate(const QByteArray& message, qint64 receivedAtMs);
     void surveyInStatus(const GPSSurveyInStatus &status);
@@ -63,5 +65,5 @@ private:
     GPSReceiverConfig _config{};
 
     static constexpr uint32_t kGPSReceiveTimeout = 1200;
-    static constexpr uint8_t kMaxIdleReceiveCycles = 3;
+    static constexpr int kUsefulDataTimeoutMs = 3 * kGPSReceiveTimeout;
 };

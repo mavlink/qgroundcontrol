@@ -94,7 +94,8 @@ void NTRIPGgaProviderTest::testSourceClearedOnStopAndFreshStart()
     MockNTRIPTransport transport;
 
     provider.setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, []() {
-        return PositionResult{QGeoCoordinate(47.3977, 8.5456, 450.0), QStringLiteral("Vehicle GPS")};
+        return PositionResult{QGeoCoordinate(47.3977, 8.5456, 450.0), QStringLiteral("Vehicle GPS"),
+                              GPSAltitudeDatum::MeanSeaLevel};
     });
 
     provider.start(&transport);
@@ -125,11 +126,9 @@ void NTRIPGgaProviderTest::testDefaultRTKBaseProvider()
     manager->setTransportForTest(transport);
     manager->startNTRIP();
     QCOMPARE(manager->connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
-    QCOMPARE(manager->ggaSource(), QStringLiteral("RTK Base"));
-    QCOMPARE(transport->sentNmea.size(), 1);
-    QVERIFY(transport->sentNmea.first().contains(",4723.8620,N,00832.7360,E,"));
-    QVERIFY(transport->sentNmea.first().contains(",450.0,M,"));
-    QVERIFY(NMEAUtils::verifyChecksum(transport->sentNmea.first()));
+    QVERIFY(manager->ggaSource().isEmpty());
+    QVERIFY(transport->sentNmea.isEmpty());
+    QCOMPARE(facts->currentAltitude()->rawValue().toDouble(), 450.0);
     manager->stopNTRIP();
 
     facts->valid()->setRawValue(false);
@@ -155,10 +154,12 @@ void NTRIPGgaProviderTest::_invalidProviderAltitude()
     NTRIPGgaProvider provider;
     MockNTRIPTransport transport;
     provider.setPositionProvider(Source::VehicleGPS, [altitude]() {
-        return PositionResult{QGeoCoordinate(47, 8, altitude), QStringLiteral("Vehicle GPS")};
+        return PositionResult{QGeoCoordinate(47, 8, altitude), QStringLiteral("Vehicle GPS"),
+                              GPSAltitudeDatum::MeanSeaLevel};
     });
-    provider.setPositionProvider(Source::GCSPosition,
-                                 []() { return PositionResult{QGeoCoordinate(48, 9, 0), QStringLiteral("GCS")}; });
+    provider.setPositionProvider(Source::GCSPosition, []() {
+        return PositionResult{QGeoCoordinate(48, 9, 0), QStringLiteral("GCS"), GPSAltitudeDatum::MeanSeaLevel};
+    });
 
     provider.configure({Source::VehicleGPS});
     provider.start(&transport);

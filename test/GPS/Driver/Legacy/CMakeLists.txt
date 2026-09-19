@@ -1,5 +1,7 @@
 include_guard(GLOBAL)
 
+get_filename_component(_qgc_root "${CMAKE_CURRENT_LIST_DIR}/../../../.." ABSOLUTE)
+
 if(NOT TARGET QGCGPSPx4Adapter)
     add_library(QGCGPSPx4Adapter STATIC GPSPx4Data.cc GPSPx4Data_p.h satellite_info.h sensor_gps.h)
     target_compile_features(QGCGPSPx4Adapter PRIVATE cxx_std_20)
@@ -10,11 +12,11 @@ if(NOT TARGET QGCGPSPx4Adapter)
                    AUTORCC OFF
                    POSITION_INDEPENDENT_CODE ON
     )
-    target_include_directories(QGCGPSPx4Adapter PRIVATE ../../Receiver)
+    target_include_directories(QGCGPSPx4Adapter PRIVATE "${_qgc_root}/src/GPS/Receiver")
     target_link_libraries(QGCGPSPx4Adapter PRIVATE QGCGPSDriverReports)
 endif()
 
-# Only the runtime facade opts into Qt and the external protocol implementation.
+# Only the test comparison facade opts into Qt and the external protocol implementation.
 function(qgc_add_px4_backend target)
     if(NOT ARGC EQUAL 1 OR NOT TARGET "${target}")
         message(FATAL_ERROR "qgc_add_px4_backend requires one existing driver target")

@@ -37,6 +37,10 @@ public:
     virtual GPSWriteResult write(const uint8_t* buffer, int length);
     virtual std::chrono::milliseconds configurationWriteTimeout() const;
 
+    /// Configuration-only entry point: honor the command deadline capped by the transport limit.
+    /// Android serial explicitly overrides this with its legacy synchronous backend; Unsupported never falls back.
+    virtual GPSWriteResult writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline);
+
     /// Counts describe transport progress, never receiver acknowledgement. Implementations must honor the deadline.
     /// A failed operation that accepted bytes retires the connection; open a new session before writing again.
     /// An unsupported implementation rejects without invoking an unbounded writer.

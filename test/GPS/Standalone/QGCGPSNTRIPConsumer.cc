@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
     GgaConsumer transport;
     NTRIPGgaProvider provider;
     provider.setPositionProvider(NTRIPGgaProvider::PositionSource::GCSPosition, []() {
-        return PositionResult{QGeoCoordinate(47, 8, 500), QStringLiteral("Consumer")};
+        return PositionResult{QGeoCoordinate(47, 8, 500), QStringLiteral("Consumer"), GPSAltitudeDatum::MeanSeaLevel};
     });
     provider.start(&transport);
     provider.stop();

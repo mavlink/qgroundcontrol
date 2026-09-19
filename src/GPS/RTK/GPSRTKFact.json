@@ -12,6 +12,7 @@
 {
     "name":             "currentAccuracy",
     "shortDesc": "Current Survey-In Accuracy",
+    "longDesc": "Receiver-reported base position accuracy. Unavailable accuracy is not inferred from a valid fix and cannot be saved as fixed-base accuracy.",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m",
@@ -34,6 +35,7 @@
 {
     "name":             "currentAltitude",
     "shortDesc": "Current Survey-In Altitude",
+    "longDesc": "Base position altitude above the WGS84 ellipsoid, not mean sea level.",
     "type":             "float",
     "decimalPlaces":    2,
     "default":          null
@@ -61,14 +63,16 @@
 {
     "name":             "numSatellites",
     "shortDesc": "Satellites in View",
+    "longDesc": "Satellites in the latest complete observation snapshot, or -1 when unavailable.",
     "type":             "int32",
-    "default":          0
+    "default":          -1
 },
 {
     "name":             "numSatellitesUsed",
     "shortDesc": "Satellites Used in Solution",
+    "longDesc": "Receiver-reported usage count or an exact count from known satellite usage flags; -1 when unavailable.",
     "type":             "int32",
-    "default":          0
+    "default":          -1
 },
 {
     "name":             "lastError",

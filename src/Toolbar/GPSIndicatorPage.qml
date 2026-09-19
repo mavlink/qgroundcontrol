@@ -128,8 +128,15 @@ ToolIndicatorPage {
                 }
 
                 LabelledLabel {
-                    label:      qsTr("Satellites")
-                    labelText:  QGroundControl.gpsRtk.numSatellites.value
+                    label:      qsTr("Satellites in View")
+                    labelText:  QGroundControl.gpsRtk.numSatellites.rawValue < 0
+                                ? na : QGroundControl.gpsRtk.numSatellites.valueString
+                }
+
+                LabelledLabel {
+                    label:      qsTr("Satellites Used")
+                    labelText:  QGroundControl.gpsRtk.numSatellitesUsed.rawValue < 0
+                                ? na : QGroundControl.gpsRtk.numSatellitesUsed.valueString
                 }
 
                 LabelledLabel {
@@ -157,7 +164,7 @@ ToolIndicatorPage {
                 Layout.fillWidth:   true
                 text:               qsTr("AutoConnect")
                 fact:               QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
-                visible:            fact.userVisible
+                visible:            QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS.userVisible
             }
 
             GridLayout {
@@ -253,15 +260,27 @@ ToolIndicatorPage {
 
             LabelledButton {
                 label:              qsTr("Current Base Position")
-                buttonText:         enabled ? qsTr("Save") : qsTr("Not Yet Valid")
+                buttonText:         !QGroundControl.gpsRtk.valid.rawValue ? qsTr("Not Yet Valid")
+                                    : !Number.isFinite(QGroundControl.gpsRtk.currentAccuracy.rawValue)
+                                      || QGroundControl.gpsRtk.currentAccuracy.rawValue < 0
+                                      ? qsTr("Accuracy Unavailable")
+                                    : QGroundControl.gpsRtk.canSaveCurrentBasePosition ? qsTr("Save")
+                                    : qsTr("Invalid Base Position")
                 visible:            useFixedPosition == BaseModeDefinition.BaseFixed
-                enabled:            QGroundControl.gpsRtk.valid.value
+                enabled:            QGroundControl.gpsRtk.canSaveCurrentBasePosition
 
                 onClicked: {
-                    rtkSettings.fixedBasePositionLatitude.rawValue  = QGroundControl.gpsRtk.currentLatitude.rawValue
-                    rtkSettings.fixedBasePositionLongitude.rawValue = QGroundControl.gpsRtk.currentLongitude.rawValue
-                    rtkSettings.fixedBasePositionAltitude.rawValue  = QGroundControl.gpsRtk.currentAltitude.rawValue
-                    rtkSettings.fixedBasePositionAccuracy.rawValue  = QGroundControl.gpsRtk.currentAccuracy.rawValue
+                    if (!QGroundControl.gpsRtk.canSaveCurrentBasePosition) {
+                        return
+                    }
+                    const latitude = QGroundControl.gpsRtk.currentLatitude.rawValue
+                    const longitude = QGroundControl.gpsRtk.currentLongitude.rawValue
+                    const altitude = QGroundControl.gpsRtk.currentAltitude.rawValue
+                    const accuracy = QGroundControl.gpsRtk.currentAccuracy.rawValue
+                    rtkSettings.fixedBasePositionLatitude.rawValue  = latitude
+                    rtkSettings.fixedBasePositionLongitude.rawValue = longitude
+                    rtkSettings.fixedBasePositionAltitude.rawValue  = altitude
+                    rtkSettings.fixedBasePositionAccuracy.rawValue  = accuracy
                 }
             }
         }
