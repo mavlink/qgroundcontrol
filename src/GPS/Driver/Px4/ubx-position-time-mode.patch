@@ -1,0 +1,331 @@
+diff --git a/src/ubx.cpp b/src/ubx.cpp
+--- a/src/ubx.cpp
++++ b/src/ubx.cpp
+@@ -51,6 +51,7 @@
+  */
+
+ #include <cmath>
++#include <cstdlib>
+ #include <string.h>
+
+ #include "rtcm.h"
+@@ -98,6 +99,7 @@
+ {
+ 	_configured = false;
+ 	_output_mode = config.output_mode;
++	_time_mode_unsupported = false;
+
+ 	ubx_payload_tx_cfg_prt_t cfg_prt[2];
+
+@@ -329,6 +331,9 @@
+ 		return -1;
+ 	}
+
++	// Baud-rate changes may lose their ACK. MON-VER completes that handshake.
++	_valset_ack_ambiguous = false;
++
+ 	/* Now that we know the board, update the baudrate on M8 boards (on F9+ we already used the
+ 	 * higher baudrate with CFG-VALSET) */
+ 	if (_interface == Interface::UART && auto_baudrate && _board == Board::u_blox8) {
+@@ -383,8 +388,81 @@
+ 		}
+ 	}
+
++	if (_output_mode == OutputMode::GPS && disableTimeMode() < 0) {
++		return -1;
++	}
++
+ 	_configured = true;
+ 	return 0;
++}
++
++
++int GPSDriverUBX::disableTimeMode()
++{
++	// Hardware generations alone cannot distinguish M8N/M8P or M9N/F9P.
++	// Skip only known non-base firmware/models; otherwise require an ACK.
++	if (_time_mode_unsupported) {
++		return 0;
++	}
++
++	if (_proto_ver_27_or_higher) {
++		// After a timeout, an ACK cannot be attributed to a later VALSET.
++		if (_valset_ack_ambiguous) {
++			return -1;
++		}
++
++		int msg_size = initCfgValset();
++		cfgValset<uint8_t>(UBX_CFG_KEY_TMODE_MODE, 0 /* Disabled */, msg_size);
++
++		if (!sendMessage(UBX_MSG_CFG_VALSET, _tx_cfg_valset_buf, msg_size)) {
++			return -1;
++		}
++
++		if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true) < 0) {
++			return -1;
++		}
++
++		return verifyConfigValue(UBX_CFG_KEY_TMODE_MODE, 0);
++	}
++
++	memset(&_buf.payload_tx_cfg_tmode3, 0, sizeof(_buf.payload_tx_cfg_tmode3));
++
++	if (!sendMessage(UBX_MSG_CFG_TMODE3, (uint8_t *)&_buf, sizeof(_buf.payload_tx_cfg_tmode3))) {
++		return -1;
++	}
++
++	if (waitForAck(UBX_MSG_CFG_TMODE3, UBX_CONFIG_TIMEOUT, true) < 0
++	    || !sendMessage(UBX_MSG_CFG_TMODE3, nullptr, 0)) {
++		return -1;
++	}
++
++	return waitForConfigResponse(UBX_MSG_CFG_TMODE3);
++}
++
++int GPSDriverUBX::verifyConfigValue(uint32_t key, uint8_t value)
++{
++	// Poll one byte-sized key from RAM; the response identifies the key and layer.
++	uint8_t request[8] {};
++	for (unsigned i = 0; i < 4; ++i) {
++		request[4 + i] = (key >> (8 * i)) & 0xff;
++	}
++
++	if (!sendMessage(UBX_MSG_CFG_VALGET, request, sizeof(request))) {
++		return -1;
++	}
++
++	_config_readback_key = key;
++	_config_readback_value = value;
++	return waitForConfigResponse(UBX_MSG_CFG_VALGET);
++}
++
++int GPSDriverUBX::waitForConfigResponse(uint16_t msg)
++{
++	_config_readback_active = true;
++	_config_readback_received = false;
++	const int ret = waitForAck(msg, UBX_CONFIG_TIMEOUT, true);
++	_config_readback_active = false;
++	return ret == 0 && _config_readback_received ? 0 : -1;
+ }
+
+
+@@ -881,6 +959,10 @@
+ 		}
+
+ 		// send SBAS config separately, because it seems to be buggy (with u-center, too)
++		if (_valset_ack_ambiguous) {
++			return -1;
++		}
++
+ 		cfg_valset_msg_size = initCfgValset();
+
+ 		if (config.gnss_systems & GNSSSystemsMask::ENABLE_SBAS) {
+@@ -896,7 +978,12 @@
+ 			return -1;
+ 		}
+
+-		waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true);
++		const uint8_t sbas_enabled = (config.gnss_systems & GNSSSystemsMask::ENABLE_SBAS) ? 1 : 0;
++		if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true) < 0
++		    || verifyConfigValue(UBX_CFG_KEY_SIGNAL_SBAS_ENA, sbas_enabled) < 0
++		    || (sbas_enabled && verifyConfigValue(UBX_CFG_KEY_SIGNAL_SBAS_L1CA_ENA, 1) < 0)) {
++			return -1;
++		}
+
+ 	} else if (_board == Board::u_blox10_L1L5 || _board == Board::u_blox_X20) {
+ 		// Enable L5 health override, use version 0 of the message
+@@ -1391,7 +1478,13 @@
+ 	gps_abstime time_started = gps_absolute_time();
+
+ 	while ((_ack_state == UBX_ACK_WAITING) && (gps_absolute_time() < time_started + timeout * 1000)) {
+-		receive(timeout);
++		if (receive(timeout) < 0) {
++			break;
++		}
++	}
++
++	if (msg == UBX_MSG_CFG_VALSET && _ack_state == UBX_ACK_WAITING) {
++		_valset_ack_ambiguous = true;
+ 	}
+
+ 	if (_ack_state == UBX_ACK_GOT_ACK) {
+@@ -1627,6 +1720,17 @@
+ 	_rx_state = UBX_RXMSG_HANDLE;	// handle by default
+
+ 	switch (_rx_msg) {
++	case UBX_MSG_CFG_VALGET:
++	case UBX_MSG_CFG_TMODE3:
++		if (_rx_payload_length != (_rx_msg == UBX_MSG_CFG_VALGET ? 9 : sizeof(ubx_payload_tx_cfg_tmode3_t))) {
++			_rx_state = UBX_RXMSG_ERROR_LENGTH;
++
++		} else if (!_config_readback_active || _ack_waiting_msg != _rx_msg) {
++			_rx_state = UBX_RXMSG_IGNORE;
++		}
++
++		break;
++
+ 	case UBX_MSG_NAV_PVT:
+ 		if ((_rx_payload_length != UBX_PAYLOAD_RX_NAV_PVT_SIZE_UBX7)		/* u-blox 7 msg format */
+ 		    && (_rx_payload_length != UBX_PAYLOAD_RX_NAV_PVT_SIZE_UBX8)) {	/* u-blox 8+ msg format */
+@@ -1773,6 +1877,7 @@
+ 		break;
+
+ 	case UBX_MSG_MON_VER:
++		_time_mode_unsupported_pending = false;
+ 		break;		// unconditionally handle this message
+
+ 	case UBX_MSG_MON_HW:
+@@ -2114,6 +2219,17 @@
+ 		// Fill Part 1 buffer
+ 		p_buf[_rx_payload_index] = b;
+
++		// Older receivers can omit all extensions, so classify hardware before Part 2.
++		if (_rx_payload_index + 1 == sizeof(ubx_payload_rx_mon_ver_part1_t)) {
++			const char *hw = (const char *)_buf.payload_rx_mon_ver_part1.hwVersion;
++			const unsigned hw_size = sizeof(_buf.payload_rx_mon_ver_part1.hwVersion);
++			_time_mode_unsupported_pending =
++				strncmp(hw, "00040005", hw_size) == 0
++				|| strncmp(hw, "00040007", hw_size) == 0
++				|| strncmp(hw, "00070000", hw_size) == 0
++				|| strncmp(hw, "000A0000", hw_size) == 0;
++		}
++
+ 	} else {
+ 		if (_rx_payload_index == sizeof(ubx_payload_rx_mon_ver_part1_t)) {
+ 			// Part 1 complete: decode Part 1 buffer and calculate hash for SW&HW version strings
+@@ -2174,6 +2290,12 @@
+ 			if (fwver_str != nullptr) {
+ 				GPS_INFO("u-blox firmware version: %s", fwver_str + strlen("FWVER="));
+
++				// Standard precision and sensor-fusion firmware have no base time mode.
++				if (strncmp(fwver_str, "FWVER=SPG ", 10) == 0
++				    || strncmp(fwver_str, "FWVER=HPS ", 10) == 0) {
++					_time_mode_unsupported_pending = true;
++				}
++
+ 				// Check if its a ZED-F9P-15B
+ 				if ((_board == Board::u_blox9) && strstr(fwver_str, "HPGL1L5")) {
+ 					_board = Board::u_blox9_F9P_L1L5;
+@@ -2186,12 +2308,24 @@
+
+ 			if (protver_str != nullptr) {
+ 				GPS_INFO("u-blox protocol version: %s", protver_str + strlen("PROTVER="));
++
++				// CFG-TMODE3 first appeared in protocol 20 (M8P).
++				char *version_end = nullptr;
++				const long version = std::strtol(protver_str + strlen("PROTVER="), &version_end, 10);
++				if (!_proto_ver_27_or_higher && version > 0 && version < 20 && *version_end == '.') {
++					_time_mode_unsupported_pending = true;
++				}
+ 			}
+
+ 			// "MOD=" Module identification. Set in production.
+ 			const char *mod_str = strstr((const char *)_buf.payload_rx_mon_ver_part2.extension, "MOD=");
+
+ 			if (mod_str != nullptr) {
++				// Only NEO-M8P-2 supports base operation; NEO-M8P-0 is rover-only.
++				if (strncmp(mod_str, "MOD=NEO-M8P-0", 13) == 0) {
++					_time_mode_unsupported_pending = true;
++				}
++
+ 				// in case of u-blox9 family, check if it's an F9P
+ 				if (_board == Board::u_blox9) {
+ 					if (strstr(mod_str, "F9P")) {
+@@ -2233,6 +2367,34 @@
+
+ 	// handle message
+ 	switch (_rx_msg) {
++	case UBX_MSG_CFG_VALGET:
++		if (_config_readback_active && _ack_state == UBX_ACK_WAITING && _ack_waiting_msg == _rx_msg) {
++			const uint8_t *payload = (const uint8_t *)&_buf;
++			const uint32_t key = uint32_t(payload[4]) | (uint32_t(payload[5]) << 8)
++					     | (uint32_t(payload[6]) << 16) | (uint32_t(payload[7]) << 24);
++
++			if (payload[0] == 1 && payload[1] == 0 && payload[2] == 0 && payload[3] == 0
++			    && key == _config_readback_key) {
++				_config_readback_received = true;
++				_ack_state = payload[8] == _config_readback_value ? UBX_ACK_GOT_ACK : UBX_ACK_GOT_NAK;
++				ret = 1;
++			}
++		}
++
++		break;
++
++	case UBX_MSG_CFG_TMODE3:
++		if (_config_readback_active && _ack_state == UBX_ACK_WAITING && _ack_waiting_msg == _rx_msg) {
++			const uint8_t *payload = (const uint8_t *)&_buf;
++
++			if (payload[0] == 0 && payload[1] == 0) {
++				_config_readback_received = true;
++				_ack_state = payload[2] == 0 ? UBX_ACK_GOT_ACK : UBX_ACK_GOT_NAK;
++				ret = 1;
++			}
++		}
++
++		break;
+
+ 	case UBX_MSG_NAV_PVT:
+ 		UBX_TRACE_RXMSG("Rx NAV-PVT");
+@@ -2606,6 +2768,8 @@
+
+ 		// This is polled only on startup, and the startup code waits for an ack
+ 		if (_ack_state == UBX_ACK_WAITING && _ack_waiting_msg == UBX_MSG_MON_VER) {
++			// Do not let a checksum-invalid or unsolicited MON-VER bypass the required change.
++			_time_mode_unsupported = _time_mode_unsupported_pending;
+ 			_ack_state = UBX_ACK_GOT_ACK;
+ 		}
+
+@@ -2668,7 +2832,8 @@
+ 	case UBX_MSG_ACK_ACK:
+ 		UBX_TRACE_RXMSG("Rx ACK-ACK");
+
+-		if ((_ack_state == UBX_ACK_WAITING) && (_buf.payload_rx_ack_ack.msg == _ack_waiting_msg)) {
++		if (!_config_readback_active && (_ack_state == UBX_ACK_WAITING)
++		    && (_buf.payload_rx_ack_ack.msg == _ack_waiting_msg)) {
+ 			_ack_state = UBX_ACK_GOT_ACK;
+ 		}
+
+@@ -2678,7 +2843,10 @@
+ 	case UBX_MSG_ACK_NAK:
+ 		UBX_TRACE_RXMSG("Rx ACK-NAK");
+
+-		if ((_ack_state == UBX_ACK_WAITING) && (_buf.payload_rx_ack_ack.msg == _ack_waiting_msg)) {
++		if ((_ack_state == UBX_ACK_WAITING || _ack_state == UBX_ACK_GOT_ACK)
++		    && (_buf.payload_rx_ack_ack.msg == _ack_waiting_msg
++			|| (_config_readback_active && _ack_waiting_msg == UBX_MSG_CFG_VALGET
++			    && _buf.payload_rx_ack_ack.msg == UBX_MSG_CFG_VALSET))) {
+ 			_ack_state = UBX_ACK_GOT_NAK;
+ 		}
+
+diff --git a/src/ubx.h b/src/ubx.h
+--- a/src/ubx.h
++++ b/src/ubx.h
+@@ -1048,6 +1048,9 @@
+
+ private:
+ 	int activateRTCMOutput(bool reduce_update_rate);
++	int disableTimeMode();
++	int verifyConfigValue(uint32_t key, uint8_t value);
++	int waitForConfigResponse(uint16_t msg);
+
+ 	/**
+ 	 * While parsing add every byte (except the sync bytes) to the checksum
+@@ -1188,6 +1191,13 @@
+ 	bool _got_velned{false};
+ 	bool _proto_ver_27_or_higher{false}; ///< true if protocol version 27 or higher detected
+ 	bool _use_nav_pvt{false};
++	bool _time_mode_unsupported{false};
++	bool _time_mode_unsupported_pending{false};
++	bool _valset_ack_ambiguous{false};
++	bool _config_readback_active{false};
++	bool _config_readback_received{false};
++	uint32_t _config_readback_key{0};
++	uint8_t _config_readback_value{0};
+
+ 	uint8_t _rx_ck_a{0};
+ 	uint8_t _rx_ck_b{0};
+@@ -1220,4 +1230,3 @@
+ 	const bool _jam_det_sensitivity_hi {};
+ };
+
+-

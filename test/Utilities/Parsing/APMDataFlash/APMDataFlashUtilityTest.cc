@@ -1,6 +1,6 @@
 #include "APMDataFlashUtilityTest.h"
 
-
+#include <bit>
 #include <cmath>
 #include <cstring>
 
@@ -71,140 +71,132 @@ void APMDataFlashUtilityTest::_testCalculatePayloadSize()
 // Value Parsing Tests
 // ============================================================================
 
-void APMDataFlashUtilityTest::_testParseValueIntegers()
+void APMDataFlashUtilityTest::_testParseValue_data()
 {
-    // int8
-    char i8 = -42;
-    QCOMPARE(APMDataFlashUtility::parseValue(&i8, 'b').toInt(), -42);
+    QTest::addColumn<char>("format");
+    QTest::addColumn<QByteArray>("bytes");
+    QTest::addColumn<QVariant>("expected");
 
-    // uint8
-    unsigned char u8 = 200;
-    QCOMPARE(APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&u8), 'B').toUInt(), 200u);
-
-    // int16
-    int16_t i16 = -1234;
-    QCOMPARE(APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&i16), 'h').toInt(), -1234);
-
-    // uint16
-    uint16_t u16 = 50000;
-    QCOMPARE(APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&u16), 'H').toUInt(), 50000u);
-
-    // int32
-    int32_t i32 = -123456;
-    QCOMPARE(APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&i32), 'i').toInt(), -123456);
-
-    // uint32
-    uint32_t u32 = 4000000000u;
-    QCOMPARE(APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&u32), 'I').toUInt(), 4000000000u);
-
-    // int64
-    int64_t i64 = -1234567890123LL;
-    QCOMPARE(APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&i64), 'q').toLongLong(), -1234567890123LL);
-
-    // uint64
-    uint64_t u64 = 12345678901234ULL;
-    QCOMPARE(APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&u64), 'Q').toULongLong(), 12345678901234ULL);
+    QTest::newRow("int8") << 'b' << QByteArray::fromHex("d6") << QVariant(-42);
+    QTest::newRow("uint8") << 'B' << QByteArray::fromHex("c8") << QVariant(200);
+    QTest::newRow("mode") << 'M' << QByteArray::fromHex("c8") << QVariant(200);
+    QTest::newRow("int16") << 'h' << QByteArray::fromHex("2efb") << QVariant(-1234);
+    QTest::newRow("uint16") << 'H' << QByteArray::fromHex("50c3") << QVariant(50000);
+    QTest::newRow("int32") << 'i' << QByteArray::fromHex("c01dfeff") << QVariant(-123456);
+    QTest::newRow("uint32") << 'I' << QByteArray::fromHex("00286bee") << QVariant(4000000000u);
+    QTest::newRow("int64") << 'q' << QByteArray::fromHex("35fb048ee0feffff") << QVariant(-1234567890123LL);
+    QTest::newRow("uint64") << 'Q' << QByteArray::fromHex("f22fce733a0b0000") << QVariant(12345678901234ULL);
+    QTest::newRow("centi-degrees") << 'c' << QByteArray::fromHex("9411") << QVariant(45.0);
+    QTest::newRow("unsigned-centi-degrees") << 'C' << QByteArray::fromHex("d204") << QVariant(12.34);
+    QTest::newRow("centi-units") << 'e' << QByteArray::fromHex("40e20100") << QVariant(1234.56);
+    QTest::newRow("unsigned-centi-units") << 'E' << QByteArray::fromHex("780ae305") << QVariant(987654.32);
+    QTest::newRow("latitude") << 'L' << QByteArray::fromHex("500a8016") << QVariant(37.749);
+    QTest::newRow("float") << 'f' << QByteArray::fromHex("d00f4940") << QVariant(static_cast<double>(3.14159f));
+    QTest::newRow("double") << 'd' << QByteArray::fromHex("6957148b0abf0540") << QVariant(2.718281828459045);
+    QTest::newRow("half") << 'g' << QByteArray::fromHex("003c") << QVariant(1.0);
+    QTest::newRow("raw-array") << 'a' << QByteArray(64, '\x95') << QVariant(QByteArray(64, '\x95'));
 }
 
-void APMDataFlashUtilityTest::_testParseValueScaled()
+void APMDataFlashUtilityTest::_testParseValue()
 {
-    // Centi-degrees (c) - signed, divide by 100
-    int16_t cdeg = 4500;  // 45.00 degrees
-    QVERIFY(qAbs(APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&cdeg), 'c').toDouble() - 45.0) < 0.001);
-
-    // Centi-units (C) - unsigned, divide by 100
-    uint16_t cunit = 1234;  // 12.34
-    QVERIFY(qAbs(APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&cunit), 'C').toDouble() - 12.34) < 0.001);
-
-    // Centi-units (e) - signed int32, divide by 100
-    int32_t e32 = 123456;  // 1234.56
-    QVERIFY(qAbs(APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&e32), 'e').toDouble() - 1234.56) < 0.001);
-
-    // Centi-units (E) - unsigned int32, divide by 100
-    uint32_t E32 = 98765432;  // 987654.32
-    QVERIFY(qAbs(APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&E32), 'E').toDouble() - 987654.32) < 0.01);
-
-    // Latitude/Longitude (L) - divide by 1e7
-    int32_t latlon = 377490000;  // 37.749 degrees
-    QVERIFY(qAbs(APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&latlon), 'L').toDouble() - 37.749) < 0.0001);
+    QFETCH(char, format);
+    QFETCH(QByteArray, bytes);
+    QFETCH(QVariant, expected);
+    const QByteArray unaligned = QByteArray(1, '\xff') + bytes;
+    const QVariant value = APMDataFlashUtility::parseValue(unaligned.constData() + 1, bytes.size(), format);
+    QCOMPARE(value, expected);
+    QCOMPARE(value.metaType(), expected.metaType());
 }
 
-void APMDataFlashUtilityTest::_testParseValueFloats()
+void APMDataFlashUtilityTest::_testParseValueInvalid_data()
 {
-    // Single-precision float
-    float f32 = 3.14159f;
-    double result = APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&f32), 'f').toDouble();
-    QVERIFY2(qAbs(result - 3.14159) < 0.0001, qPrintable(QString("Expected ~3.14159, got %1").arg(result)));
+    QTest::addColumn<char>("format");
+    QTest::addColumn<int>("size");
+    QTest::addColumn<bool>("nullData");
+    for (char format : QByteArray("bBMhHcCiIeELfdqQgnNZa")) {
+        const QByteArray name = QByteArray("truncated-") + format;
+        QTest::newRow(name.constData()) << format << (APMDataFlashUtility::formatCharSize(format) - 1) << false;
+    }
+    QTest::newRow("negative-size") << 'Q' << -1 << false;
+    QTest::newRow("null-data") << 'Q' << 8 << true;
+    QTest::newRow("unsupported-format") << '?' << 64 << false;
+}
 
-    // Double-precision float
-    double f64 = 2.718281828459045;
-    result = APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&f64), 'd').toDouble();
-    QVERIFY2(qAbs(result - 2.718281828459045) < 0.0000001,
-             qPrintable(QString("Expected ~2.718281828459045, got %1").arg(result)));
+void APMDataFlashUtilityTest::_testParseValueInvalid()
+{
+    QFETCH(char, format);
+    QFETCH(int, size);
+    QFETCH(bool, nullData);
+    const QByteArray bytes(64, '\0');
+    const QString warning = format == '?' ? QStringLiteral("^Unsupported DataFlash format character:")
+                                          : QStringLiteral("^Missing or truncated DataFlash value for format:");
+    expectLogMessage("Utilities.APMDataFlashUtility", QtWarningMsg, QRegularExpression(warning));
+    QVERIFY(!APMDataFlashUtility::parseValue(nullData ? nullptr : bytes.constData(), size, format).isValid());
+    verifyExpectedLogMessage();
 }
 
 void APMDataFlashUtilityTest::_testParseValueStrings()
 {
     // 4-char string (n)
     char n4[4] = {'T', 'E', 'S', 'T'};
-    QCOMPARE(APMDataFlashUtility::parseValue(n4, 'n').toString(), QStringLiteral("TEST"));
+    QCOMPARE(APMDataFlashUtility::parseValue(n4, sizeof(n4), 'n').toString(), QStringLiteral("TEST"));
 
     // 4-char string with null terminator
     char n4null[4] = {'A', 'B', '\0', 'D'};
-    QCOMPARE(APMDataFlashUtility::parseValue(n4null, 'n').toString(), QStringLiteral("AB"));
+    QCOMPARE(APMDataFlashUtility::parseValue(n4null, sizeof(n4null), 'n').toString(), QStringLiteral("AB"));
 
     // 16-char string (N)
     char n16[16] = "HelloWorld123";
-    QCOMPARE(APMDataFlashUtility::parseValue(n16, 'N').toString(), QStringLiteral("HelloWorld123"));
+    QCOMPARE(APMDataFlashUtility::parseValue(n16, sizeof(n16), 'N').toString(), QStringLiteral("HelloWorld123"));
 
     // 64-char string (Z)
     char z64[64] = {};
     memset(z64, 0, sizeof(z64));
     strcpy(z64, "This is a longer test string");
-    QCOMPARE(APMDataFlashUtility::parseValue(z64, 'Z').toString(), QStringLiteral("This is a longer test string"));
+    QCOMPARE(APMDataFlashUtility::parseValue(z64, sizeof(z64), 'Z').toString(),
+             QStringLiteral("This is a longer test string"));
 }
 
 // ============================================================================
 // Half-Precision Float Tests
 // ============================================================================
 
+void APMDataFlashUtilityTest::_testHalfToFloat_data()
+{
+    QTest::addColumn<quint16>("bits");
+    QTest::addColumn<quint32>("floatBits");
+    QTest::newRow("zero") << quint16{0x0000} << quint32{0x00000000};
+    QTest::newRow("negative-zero") << quint16{0x8000} << quint32{0x80000000};
+    QTest::newRow("smallest-subnormal") << quint16{0x0001} << quint32{0x33800000};
+    QTest::newRow("negative-smallest-subnormal") << quint16{0x8001} << quint32{0xb3800000};
+    QTest::newRow("largest-subnormal") << quint16{0x03ff} << quint32{0x387fc000};
+    QTest::newRow("negative-largest-subnormal") << quint16{0x83ff} << quint32{0xb87fc000};
+    QTest::newRow("smallest-normal") << quint16{0x0400} << quint32{0x38800000};
+    QTest::newRow("negative-smallest-normal") << quint16{0x8400} << quint32{0xb8800000};
+    QTest::newRow("one") << quint16{0x3c00} << quint32{0x3f800000};
+    QTest::newRow("negative-one") << quint16{0xbc00} << quint32{0xbf800000};
+    QTest::newRow("two") << quint16{0x4000} << quint32{0x40000000};
+    QTest::newRow("half") << quint16{0x3800} << quint32{0x3f000000};
+    QTest::newRow("largest-finite") << quint16{0x7bff} << quint32{0x477fe000};
+    QTest::newRow("negative-largest-finite") << quint16{0xfbff} << quint32{0xc77fe000};
+    QTest::newRow("infinity") << quint16{0x7c00} << quint32{0x7f800000};
+    QTest::newRow("negative-infinity") << quint16{0xfc00} << quint32{0xff800000};
+}
+
 void APMDataFlashUtilityTest::_testHalfToFloat()
 {
-    // Test common values
-    // 1.0 in half-precision: sign=0, exp=15 (biased), mantissa=0 -> 0x3C00
-    QVERIFY(qAbs(APMDataFlashUtility::halfToFloat(0x3C00) - 1.0f) < 0.001f);
-
-    // 2.0 in half-precision: 0x4000
-    QVERIFY(qAbs(APMDataFlashUtility::halfToFloat(0x4000) - 2.0f) < 0.001f);
-
-    // -1.0 in half-precision: 0xBC00
-    QVERIFY(qAbs(APMDataFlashUtility::halfToFloat(0xBC00) - (-1.0f)) < 0.001f);
-
-    // 0.5 in half-precision: 0x3800
-    QVERIFY(qAbs(APMDataFlashUtility::halfToFloat(0x3800) - 0.5f) < 0.001f);
-
-    // Test via parseValue
-    uint16_t half = 0x3C00;  // 1.0
-    double result = APMDataFlashUtility::parseValue(reinterpret_cast<char*>(&half), 'g').toDouble();
-    QVERIFY2(qAbs(result - 1.0) < 0.001, qPrintable(QString("Expected 1.0, got %1").arg(result)));
+    QFETCH(quint16, bits);
+    QFETCH(quint32, floatBits);
+    // Exact bits distinguish subnormals and signed zero without fuzzy floating-point comparisons.
+    QCOMPARE(std::bit_cast<quint32>(APMDataFlashUtility::halfToFloat(bits)), floatBits);
+    const char wire[] = {'\xff', static_cast<char>(bits & 0xff), static_cast<char>(bits >> 8)};
+    const QVariant value = APMDataFlashUtility::parseValue(wire + 1, 2, 'g');
+    QVERIFY(value.isValid());
+    QCOMPARE(std::bit_cast<quint32>(static_cast<float>(value.toDouble())), floatBits);
 }
 
 void APMDataFlashUtilityTest::_testHalfToFloatSpecial()
 {
-    // Zero
-    QCOMPARE(APMDataFlashUtility::halfToFloat(0x0000), 0.0f);
-
-    // Negative zero
-    QCOMPARE(APMDataFlashUtility::halfToFloat(0x8000), -0.0f);
-
-    // Infinity (exponent=31, mantissa=0)
-    float inf = APMDataFlashUtility::halfToFloat(0x7C00);
-    QVERIFY(std::isinf(inf) && inf > 0);
-
-    // Negative infinity
-    float ninf = APMDataFlashUtility::halfToFloat(0xFC00);
-    QVERIFY(std::isinf(ninf) && ninf < 0);
-
     // NaN (exponent=31, mantissa!=0)
     float nan = APMDataFlashUtility::halfToFloat(0x7C01);
     QVERIFY(std::isnan(nan));
@@ -325,18 +317,60 @@ void APMDataFlashUtilityTest::_testParseMessage()
     fmt.columns = QStringList() << QStringLiteral("TimeUS") << QStringLiteral("Value1") << QStringLiteral("Value2");
 
     // Create payload: Q(8 bytes) + B(1 byte) + b(1 byte) = 10 bytes
-    char payload[10];
-    uint64_t timestamp = 1234567890;
-    memcpy(payload, &timestamp, 8);
-    payload[8] = static_cast<char>(42);   // uint8
-    payload[9] = static_cast<char>(-10);  // int8
-
-    const QMap<QString, QVariant> fields = APMDataFlashUtility::parseMessage(payload, fmt);
+    const QByteArray payload = QByteArray::fromHex("d2029649000000002af6");
+    const QMap<QString, QVariant> fields = APMDataFlashUtility::parseMessage(payload.constData(), payload.size(), fmt);
 
     QCOMPARE(fields.size(), 3);
     QCOMPARE(fields[QStringLiteral("TimeUS")].toULongLong(), 1234567890ULL);
     QCOMPARE(fields[QStringLiteral("Value1")].toUInt(), 42u);
     QCOMPARE(fields[QStringLiteral("Value2")].toInt(), -10);
+}
+
+void APMDataFlashUtilityTest::_testParseMessageTruncated_data()
+{
+    QTest::addColumn<int>("size");
+    QTest::newRow("missing-timestamp") << 7;
+    QTest::newRow("missing-second-field") << 8;
+    QTest::newRow("missing-last-field") << 9;
+}
+
+void APMDataFlashUtilityTest::_testParseMessageTruncated()
+{
+    QFETCH(int, size);
+    APMDataFlashUtility::MessageFormat fmt;
+    fmt.format = QStringLiteral("QBb");
+    fmt.columns = {QStringLiteral("TimeUS"), QStringLiteral("Value1"), QStringLiteral("Value2")};
+    const QByteArray payload = QByteArray::fromHex("d2029649000000002af6");
+    expectLogMessage("Utilities.APMDataFlashUtility", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Missing or truncated DataFlash value for format:")));
+    QVERIFY(APMDataFlashUtility::parseMessage(payload.constData(), size, fmt).isEmpty());
+    verifyExpectedLogMessage();
+}
+
+void APMDataFlashUtilityTest::_testParseMessageUnsupportedFormat_data()
+{
+    QTest::addColumn<QString>("format");
+    QTest::addColumn<int>("columnCount");
+    QTest::newRow("first-field") << QStringLiteral("?I") << 2;
+    QTest::newRow("middle-field") << QStringLiteral("I?I") << 3;
+    QTest::newRow("last-field") << QStringLiteral("II?") << 3;
+    QTest::newRow("unnamed-tail") << QStringLiteral("I?") << 1;
+}
+
+void APMDataFlashUtilityTest::_testParseMessageUnsupportedFormat()
+{
+    QFETCH(QString, format);
+    QFETCH(int, columnCount);
+    APMDataFlashUtility::MessageFormat fmt;
+    fmt.format = format;
+    for (int i = 0; i < columnCount; ++i) {
+        fmt.columns.append(QString::number(i));
+    }
+    const QByteArray payload = QByteArray::fromHex("010000002a000000");
+    expectLogMessage("Utilities.APMDataFlashUtility", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Unsupported DataFlash format character:")));
+    QVERIFY(APMDataFlashUtility::parseMessage(payload.constData(), payload.size(), fmt).isEmpty());
+    verifyExpectedLogMessage();
 }
 
 // ============================================================================

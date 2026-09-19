@@ -14,6 +14,7 @@
 #include "SerialPortManager.h"
 #endif
 
+#include <algorithm>
 #include <functional>
 #include <utility>
 
@@ -169,7 +170,7 @@ void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
             .surveyInDurationSecs = rtkSettings->surveyInMinObservationDuration()->rawValue().toLongLong(),
         };
     }
-    _gpsProvider = new GPSProvider(std::move(transportFactory), type, rtkConfig, this);
+    _gpsProvider = new GPSProvider(std::move(transportFactory), type, GPSReceiverConfig{.base = rtkConfig}, this);
     const QPointer<GPSProvider> provider = _gpsProvider;
     const QPointer<GPSCorrectionManager> correctionManager = _correctionManager;
     if (correctionManager) {
@@ -256,19 +257,19 @@ FactGroup* GPSRtk::gpsRtkFactGroup()
     return _gpsRtkFactGroup;
 }
 
-GPSRtk::SatelliteCounts GPSRtk::countSatellites(const satellite_info_s& msg)
+GPSRtk::SatelliteCounts GPSRtk::countSatellites(const GPSSatelliteReport& msg)
 {
     SatelliteCounts counts;
-    counts.inView = qMin(msg.count, satellite_info_s::SAT_INFO_MAX_SATELLITES);
-    for (uint8_t i = 0; i < counts.inView; ++i) {
-        if (msg.used[i]) {
+    counts.inView = (std::min) (msg.count, GPSSatelliteReport::MAX_SATELLITES);
+    for (uint16_t i = 0; i < counts.inView; ++i) {
+        if (msg.satellites[i].used.value_or(false)) {
             ++counts.used;
         }
     }
     return counts;
 }
 
-void GPSRtk::_satelliteInfoUpdate(const satellite_info_s& msg)
+void GPSRtk::_satelliteInfoUpdate(const GPSSatelliteReport& msg)
 {
     const SatelliteCounts counts = countSatellites(msg);
     qCDebug(GPSRtkLog) << Q_FUNC_INFO << QStringLiteral("%1 in view, %2 used").arg(counts.inView).arg(counts.used);
@@ -276,11 +277,11 @@ void GPSRtk::_satelliteInfoUpdate(const satellite_info_s& msg)
     _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(counts.used);
 }
 
-void GPSRtk::_sensorGpsUpdate(const sensor_gps_s& msg)
+void GPSRtk::_sensorGpsUpdate(const GPSPositionReport& msg)
 {
     qCDebug(GPSRtkLog) << Q_FUNC_INFO
                        << QStringLiteral("alt=%1, long=%2, lat=%3")
-                              .arg(msg.altitude_msl_m)
-                              .arg(msg.longitude_deg)
-                              .arg(msg.latitude_deg);
+                              .arg(msg.altitudeMslMeters)
+                              .arg(msg.longitudeDegrees)
+                              .arg(msg.latitudeDegrees);
 }

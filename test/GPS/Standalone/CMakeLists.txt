@@ -1,12 +1,32 @@
 cmake_minimum_required(VERSION 3.25)
 
+include("${CMAKE_CURRENT_LIST_DIR}/../../LibraryBoundaryChecks.cmake")
+
+if(COMMAND add_qgc_test AND NOT CMAKE_CROSSCOMPILING)
+    if(NOT TARGET Python3::Interpreter)
+        message(FATAL_ERROR "The GPS minimal-build matrix requires Python3::Interpreter")
+    endif()
+    foreach(component DriverReports ReceiverConfig Px4Adapter)
+        add_test(
+            NAME "CMake.GPSMinimal.${component}"
+            COMMAND
+                "$<TARGET_FILE:Python3::Interpreter>" "${CMAKE_CURRENT_SOURCE_DIR}/check_minimal_build.py"
+                "--source-dir=${CMAKE_CURRENT_SOURCE_DIR}" "--build-root=${CMAKE_CURRENT_BINARY_DIR}/Minimal"
+                "--component=${component}" "--generator=${CMAKE_GENERATOR}" "--platform=${CMAKE_GENERATOR_PLATFORM}"
+                "--toolset=${CMAKE_GENERATOR_TOOLSET}" "--compiler=${CMAKE_CXX_COMPILER}" "--cmake=${CMAKE_COMMAND}"
+                "--ctest=${CMAKE_CTEST_COMMAND}" "--config=$<CONFIG>"
+        )
+        set_tests_properties("CMake.GPSMinimal.${component}" PROPERTIES LABELS "CMake;Unit;GPS" TIMEOUT 180)
+    endforeach()
+endif()
+
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(QGCGPSLibraryTests LANGUAGES CXX)
     enable_testing()
     set(_gps_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS")
     set(_utilities_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities")
     set(QGC_GPS_COMPONENTS
-        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;Corrections;NTRIP"
+        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;Corrections;NTRIP;Px4Adapter;ReceiverConfig"
         CACHE STRING "GPS library components to build and test"
     )
     option(QGC_NO_SERIAL_LINK "Build without serial receiver support" OFF)
@@ -24,6 +44,9 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         Corrections
         NTRIPHttp
         NTRIP
+        DriverReports
+        Px4Adapter
+        ReceiverConfig
     )
     set(QGC_GPS_COMPONENTS_ENABLED ${QGC_GPS_COMPONENTS})
     foreach(component IN LISTS QGC_GPS_COMPONENTS_ENABLED)
@@ -31,6 +54,9 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
             message(FATAL_ERROR "Unknown GPS component: ${component}")
         endif()
     endforeach()
+    if("Px4Adapter" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        list(APPEND QGC_GPS_COMPONENTS_ENABLED DriverReports)
+    endif()
     if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "Positioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED Core)
     endif()
@@ -57,10 +83,24 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Network)
     endif()
     set(_qt_gps_components ${QGC_GPS_COMPONENTS_ENABLED})
-    list(REMOVE_ITEM _qt_gps_components RTCMFramer NMEAProtocol)
+    list(
+        REMOVE_ITEM
+        _qt_gps_components
+        RTCMFramer
+        NMEAProtocol
+        DriverReports
+        Px4Adapter
+        ReceiverConfig
+    )
     if(_qt_gps_components)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
         add_subdirectory("${_utilities_root}/Logging/Category" LoggingCategory)
+    endif()
+    if("DriverReports" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "ReceiverConfig" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/Receiver" Receiver EXCLUDE_FROM_ALL)
+    endif()
+    if("Px4Adapter" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/Driver/Px4" Px4Adapter)
     endif()
     if("Core" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Positioning Test)
@@ -108,14 +148,37 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     endif()
 endif()
 
-if(TARGET QGCClock)
-    set_target_properties(QGCClock PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
-    add_custom_target(
-        QGCClockHeaderChecks ALL
-        DEPENDS QGCClock_verify_interface_header_sets
-        COMMENT "Verify Qt-free clock public headers in isolation"
+if(TARGET QGCGPSPx4Adapter)
+    add_executable(QGCGPSPx4AdapterConsumer QGCGPSPx4AdapterConsumer.cc)
+    set_target_properties(
+        QGCGPSPx4AdapterConsumer
+        PROPERTIES AUTOMOC OFF
+                   AUTOUIC OFF
+                   AUTORCC OFF
     )
+    target_include_directories(QGCGPSPx4AdapterConsumer
+                               PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/Driver/Px4"
+                                       "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/Receiver"
+    )
+    target_link_libraries(QGCGPSPx4AdapterConsumer PRIVATE QGCGPSPx4Adapter QGCGPSDriverReports)
+    add_test(NAME QGCGPSPx4AdapterConsumer COMMAND QGCGPSPx4AdapterConsumer)
+    set_tests_properties(QGCGPSPx4AdapterConsumer PROPERTIES LABELS "Unit;GPS" TIMEOUT 10)
 endif()
+
+if(TARGET QGCClock)
+    qgc_check_library_headers(QGCClock)
+endif()
+if(TARGET QGCGPSDriver)
+    qgc_check_library_headers(QGCGPSDriver)
+endif()
+
+set(_receiver_consumer_targets)
+foreach(component DriverReports ReceiverConfig)
+    if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR OR component IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        list(APPEND _receiver_consumer_targets "QGCGPS${component}")
+    endif()
+endforeach()
+
 foreach(
     target
     QGCGPSCore
@@ -131,26 +194,21 @@ foreach(
     QGCGPSRTCMFramer
     QGCGPSRTCM
     QGCGPSCorrections
+    ${_receiver_consumer_targets}
 )
     if(NOT TARGET ${target})
         continue()
     endif()
-    set_target_properties(${target} PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
-    add_custom_target(
-        ${target}HeaderChecks ALL
-        DEPENDS ${target}_verify_interface_header_sets
-        COMMENT "Verify ${target} public headers in isolation"
+    qgc_add_library_consumer(
+        ${target}
+        SOURCE
+        "${CMAKE_CURRENT_SOURCE_DIR}/${target}Consumer.cc"
+        LABELS
+        Unit
+        GPS
+        TIMEOUT
+        10
     )
-    add_executable(${target}Consumer "${CMAKE_CURRENT_SOURCE_DIR}/${target}Consumer.cc")
-    set_target_properties(
-        ${target}Consumer
-        PROPERTIES AUTOMOC OFF
-                   AUTOUIC OFF
-                   AUTORCC OFF
-    )
-    target_link_libraries(${target}Consumer PRIVATE ${target})
-    add_test(NAME ${target}Consumer COMMAND ${target}Consumer)
-    set_tests_properties(${target}Consumer PROPERTIES LABELS "Unit;GPS" TIMEOUT 10)
     if("${target}" MATCHES "^QGCGPS(Core|Positioning|NMEA)$")
         target_link_libraries(${target}Consumer PRIVATE QGCTestTiming)
     endif()

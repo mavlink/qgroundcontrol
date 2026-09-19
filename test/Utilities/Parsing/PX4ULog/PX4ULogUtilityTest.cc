@@ -94,36 +94,27 @@ void PX4ULogUtilityTest::_testGetVersionInvalid()
 // Timestamp Tests
 // ============================================================================
 
+void PX4ULogUtilityTest::_testGetHeaderTimestamp_data()
+{
+    QTest::addColumn<QByteArray>("header");
+    QTest::addColumn<quint64>("expected");
+    const QByteArray header = QByteArray::fromHex("554c6f6701120000c0ba8a3cd5620400");
+    QTest::newRow("little-endian") << header << quint64{1234567890123456ULL};
+    QTest::newRow("high-bit") << QByteArray::fromHex("554c6f67011200000807060504030281")
+                              << quint64{0x8102030405060708ULL};
+    QTest::newRow("invalid-magic") << QByteArray(16, '\0') << quint64{0};
+    for (int size = 0; size < PX4ULogUtility::kHeaderSize; ++size) {
+        const QByteArray name = QByteArray("truncated-") + QByteArray::number(size);
+        QTest::newRow(name.constData()) << header.first(size) << quint64{0};
+    }
+}
+
 void PX4ULogUtilityTest::_testGetHeaderTimestamp()
 {
-    // Create a valid ULog header with timestamp
-    char header[16];
-    memset(header, 0, sizeof(header));
-
-    // Magic bytes
-    header[0] = 'U';
-    header[1] = 'L';
-    header[2] = 'o';
-    header[3] = 'g';
-
-    // Version and flags
-    header[4] = 0x01;  // version
-    header[5] = 0x12;  // compat flags
-    header[6] = 0x00;  // incompat flags
-    header[7] = 0x00;
-
-    // Timestamp at offset 8 (8 bytes, little-endian)
-    uint64_t timestamp = 1234567890123456ULL;
-    memcpy(header + 8, &timestamp, sizeof(timestamp));
-
-    QCOMPARE(PX4ULogUtility::getHeaderTimestamp(header, sizeof(header)), timestamp);
-
-    // Invalid header should return 0
-    char invalid[16] = {0};
-    QCOMPARE(PX4ULogUtility::getHeaderTimestamp(invalid, sizeof(invalid)), 0ULL);
-
-    // Too small
-    QCOMPARE(PX4ULogUtility::getHeaderTimestamp(header, 8), 0ULL);
+    QFETCH(QByteArray, header);
+    QFETCH(quint64, expected);
+    const QByteArray unaligned = QByteArray(1, '\xff') + header;
+    QCOMPARE(PX4ULogUtility::getHeaderTimestamp(unaligned.constData() + 1, header.size()), expected);
 }
 
 // ============================================================================

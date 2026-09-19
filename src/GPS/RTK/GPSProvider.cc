@@ -12,7 +12,7 @@
 
 QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.GPSProvider")
 
-GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSBaseStationConfig& config,
+GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
                          QObject* parent)
     : QThread(parent)
     , _transportFactory(std::move(transportFactory))
@@ -20,17 +20,20 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
     , _config(config)
 {
     qCDebug(GPSProviderLog) << this;
-    (void) qRegisterMetaType<satellite_info_s>("satellite_info_s");
-    (void) qRegisterMetaType<sensor_gps_s>("sensor_gps_s");
+    (void) qRegisterMetaType<GPSSatelliteReport>("GPSSatelliteReport");
+    (void) qRegisterMetaType<GPSPositionReport>("GPSPositionReport");
     (void) qRegisterMetaType<GPSConnectionError>("GPSConnectionError");
     (void) qRegisterMetaType<GPSSurveyInStatus>("GPSSurveyInStatus");
-    if (_config.useFixedBase) {
-        qCDebug(GPSProviderLog) << "Fixed base latitude:" << _config.fixedBaseLatitude
-                                << "longitude:" << _config.fixedBaseLongitude
-                                << "ellipsoid altitude (m):" << _config.fixedBaseAltitudeMeters;
-    } else {
-        qCDebug(GPSProviderLog) << "Survey-in accuracy (m):" << _config.surveyInAccMeters
-                                << "minimum duration (s):" << _config.surveyInDurationSecs;
+    if (_config.role == GPSReceiverConfig::Role::RTKBase) {
+        const auto& base = _config.base;
+        if (base.useFixedBase) {
+            qCDebug(GPSProviderLog) << "Fixed base latitude:" << base.fixedBaseLatitude
+                                    << "longitude:" << base.fixedBaseLongitude
+                                    << "ellipsoid altitude (m):" << base.fixedBaseAltitudeMeters;
+        } else {
+            qCDebug(GPSProviderLog) << "Survey-in accuracy (m):" << base.surveyInAccMeters
+                                    << "minimum duration (s):" << base.surveyInDurationSecs;
+        }
     }
 }
 
@@ -76,22 +79,18 @@ void GPSProvider::run()
 
     bool gotData = false;
     GPSDriverSinks sinks;
-    sinks.onPosition = [this](const sensor_gps_s& message) { emit sensorGpsUpdate(message); };
-    sinks.onSatelliteInfo = [this](const satellite_info_s& message) { emit satelliteInfoUpdate(message); };
-    sinks.onRTCM = [this, &gotData](const QByteArray& message) {
+    sinks.onPosition = [this](const GPSPositionReport& message) { emit sensorGpsUpdate(message); };
+    sinks.onSatelliteInfo = [this](const GPSSatelliteReport& message) { emit satelliteInfoUpdate(message); };
+    sinks.onRTCM = [this, &gotData](std::span<const uint8_t> message) {
         const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
         gotData = true;
-        emit RTCMDataUpdate(message, receivedAtMs);
+        emit RTCMDataUpdate(
+            QByteArray(reinterpret_cast<const char*>(message.data()), static_cast<qsizetype>(message.size())),
+            receivedAtMs);
     };
-    sinks.onSurveyIn = [this, &gotData](const GPSSurveyInStatus& status) {
+    sinks.onSurveyIn = [this, &gotData](const GPSSurveyReport& report) {
         gotData = true;
-        qCDebug(GPSProviderLog) << QStringLiteral("Survey-in: %1s accuracy: %2m valid: %3 active: %4")
-                                       .arg(status.duration.count())
-                                       .arg(status.meanAccuracyMeters ? QString::number(*status.meanAccuracyMeters)
-                                                                      : QStringLiteral("unknown"))
-                                       .arg(status.valid)
-                                       .arg(status.active);
-        emit surveyInStatus(status);
+        _handleSurveyIn(report);
     };
 
     GPSDriver driver(_type, *transport, _config, std::move(sinks));
@@ -119,4 +118,23 @@ void GPSProvider::run()
     }
 
     qCDebug(GPSProviderLog) << "Exiting GPS thread";
+}
+
+void GPSProvider::_handleSurveyIn(const GPSSurveyReport& report)
+{
+    GPSSurveyInStatus status;
+    status.coordinate = QGeoCoordinate(report.latitudeDegrees, report.longitudeDegrees);
+    status.altitudeEllipsoidMeters = report.altitudeEllipsoidMeters;
+    status.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
+    status.meanAccuracyMeters = report.meanAccuracyMeters;
+    status.duration = report.duration;
+    status.valid = report.valid;
+    status.active = report.active;
+    qCDebug(GPSProviderLog) << QStringLiteral("Survey-in: %1s accuracy: %2m valid: %3 active: %4")
+                                   .arg(status.duration.count())
+                                   .arg(status.meanAccuracyMeters ? QString::number(*status.meanAccuracyMeters)
+                                                                  : QStringLiteral("unknown"))
+                                   .arg(status.valid)
+                                   .arg(status.active);
+    emit surveyInStatus(status);
 }

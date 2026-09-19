@@ -8,6 +8,8 @@ class GPSProviderTest : public UnitTest
 
 private slots:
     void _queuedPayloadsOwnSnapshots();
+    void _surveyReportProjection_data();
+    void _surveyReportProjection();
 #ifndef QGC_NO_SERIAL_LINK
     void _finishedReceiverReleasesReservation_data();
     void _finishedReceiverReleasesReservation();
@@ -20,4 +22,6 @@ private slots:
     void _cancelledFactoryDoesNotOpenTransport();
     void _configuredReceiverReportsReadyThenLoss_data();
     void _configuredReceiverReportsReadyThenLoss();
+    void _unsupportedPositionRoleReportsConfigFailure_data();
+    void _unsupportedPositionRoleReportsConfigFailure();
 };

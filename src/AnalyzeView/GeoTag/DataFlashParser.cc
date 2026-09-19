@@ -110,10 +110,14 @@ bool getTagsFromLog(const char *data, qint64 size, QList<GeoTagData> &cameraFeed
     }
 
     // Second pass: Extract CAM messages using iterator
-    APMDataFlashUtility::iterateMessages(data, size, formats,
-        [&](uint8_t msgType, const char *payload, int, const APMDataFlashUtility::MessageFormat &fmt) {
+    APMDataFlashUtility::iterateMessages(
+        data, size, formats,
+        [&](uint8_t msgType, const char* payload, int payloadSize, const APMDataFlashUtility::MessageFormat& fmt) {
             if (msgType == camMessageType) {
-                const QMap<QString, QVariant> fields = APMDataFlashUtility::parseMessage(payload, fmt);
+                const QMap<QString, QVariant> fields = APMDataFlashUtility::parseMessage(payload, payloadSize, fmt);
+                if (fields.isEmpty()) {
+                    return true;
+                }
                 GeoTagData feedback = extractGeoTagData(fields);
 
                 if (feedback.coordinate.isValid()) {

@@ -10,7 +10,8 @@
 #include <ubx.h>
 #include <utility>
 
-#include "GPSBaseStationConfigValidation.h"
+#include "GPSPx4Data_p.h"
+#include "GPSReceiverConfigValidation.h"
 #include "GPSTransport.h"
 #include "QGCLoggingCategory.h"
 
@@ -24,96 +25,117 @@ int callbackTrampoline(GPSCallbackType type, void* data1, int data2, void* user)
 }
 }  // namespace
 
-GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSBaseStationConfig& config, GPSDriverSinks sinks)
+struct GPSDriver::State
+{
+    State() { GPSPx4Data::initialize(position); }
+
+    sensor_gps_s position{};
+    satellite_info_s satellites{};
+    std::unique_ptr<GPSBaseStationSupport> driver;
+};
+
+GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks)
     : _type(type)
     , _transport(transport)
     , _config(config)
     , _sinks(std::move(sinks))
+    , _state(std::make_unique<State>())
 {}
 
 GPSDriver::~GPSDriver() = default;
 
 bool GPSDriver::configure()
 {
-    _driver.reset();
-    if (const QString error = gpsBaseStationConfigError(_config); !error.isEmpty()) {
+    _state->driver.reset();
+    GPSPx4Data::initialize(_state->position);
+    _state->satellites = {};
+    if (const QString error = gpsReceiverConfigError(_type, _config); !error.isEmpty()) {
         qCWarning(GPSDriverLog) << error;
         return false;
     }
 
     unsigned baudrate = _transport.fixedBaudrate();
+    const float headingOffset = _config.headingOffsetRadians.value_or(0.0f);
     switch (_type) {
         case GPSType::trimble:
-            _driver.reset(new GPSDriverAshtech(&callbackTrampoline, this, &_sensorGps, &_satelliteInfo));
+            _state->driver = std::make_unique<GPSDriverAshtech>(&callbackTrampoline, this, &_state->position,
+                                                                &_state->satellites, headingOffset);
             baudrate = 115200;
             break;
         case GPSType::septentrio:
-            _driver.reset(new GPSDriverSBF(&callbackTrampoline, this, &_sensorGps, &_satelliteInfo));
+            _state->driver = std::make_unique<GPSDriverSBF>(&callbackTrampoline, this, &_state->position,
+                                                            &_state->satellites, headingOffset);
             break;
         case GPSType::ublox: {
             const GPSDriverUBX::Settings settings{
-                .dynamic_model = 7,
+                .dynamic_model = static_cast<uint8_t>(_config.dynamicModel.value_or(7)),
                 .dgnss_timeout = 0,
                 .min_cno = 0,
                 .min_elev = 0,
                 .output_rate = 0,
-                .heading_offset = 0.0f,
+                .heading_offset = headingOffset,
                 .uart2_baudrate = 57600,
                 .ppk_output = false,
                 .jam_det_sensitivity_hi = false,
                 .mode = GPSDriverUBX::UBXMode::Normal,
             };
-            _driver.reset(new GPSDriverUBX(GPSDriverUBX::Interface::UART, &callbackTrampoline, this, &_sensorGps,
-                                           &_satelliteInfo, settings));
+            _state->driver = std::make_unique<GPSDriverUBX>(GPSDriverUBX::Interface::UART, &callbackTrampoline, this,
+                                                            &_state->position, &_state->satellites, settings);
             break;
         }
         case GPSType::femto:
-            _driver.reset(new GPSDriverFemto(&callbackTrampoline, this, &_sensorGps, &_satelliteInfo));
+            _state->driver = std::make_unique<GPSDriverFemto>(&callbackTrampoline, this, &_state->position,
+                                                              &_state->satellites, headingOffset);
             break;
     }
 
-    if (!_driver) {
+    if (!_state->driver) {
         qCWarning(GPSDriverLog) << "Unsupported GPS type:" << static_cast<int>(_type);
         return false;
     }
 
-    if (_config.useFixedBase) {
-        _driver->setBasePosition(_config.fixedBaseLatitude, _config.fixedBaseLongitude, _config.fixedBaseAltitudeMeters,
-                                 _config.fixedBaseAccuracyMeters * 1000.0f);
-    } else {
-        _driver->setSurveyInSpecs(static_cast<uint32_t>(_config.surveyInAccMeters * 10000.0),
-                                  static_cast<uint32_t>(_config.surveyInDurationSecs));
+    if (_config.role == GPSReceiverConfig::Role::RTKBase) {
+        const auto& base = _config.base;
+        if (base.useFixedBase) {
+            _state->driver->setBasePosition(base.fixedBaseLatitude, base.fixedBaseLongitude,
+                                            base.fixedBaseAltitudeMeters, base.fixedBaseAccuracyMeters * 1000.0f);
+        } else {
+            _state->driver->setSurveyInSpecs(static_cast<uint32_t>(base.surveyInAccMeters * 10000.0),
+                                             static_cast<uint32_t>(base.surveyInDurationSecs));
+        }
     }
 
     GPSHelper::GPSConfig gpsConfig{};
-    gpsConfig.output_mode = GPSHelper::OutputMode::RTCM;
+    gpsConfig.output_mode =
+        _config.role == GPSReceiverConfig::Role::RTKBase ? GPSHelper::OutputMode::RTCM : GPSHelper::OutputMode::GPS;
+    gpsConfig.gnss_systems = static_cast<GPSHelper::GNSSSystemsMask>(_config.constellationMask);
 
-    if (_driver->configure(baudrate, gpsConfig) != 0) {
+    if (_state->driver->configure(baudrate, gpsConfig) != 0) {
         qCWarning(GPSDriverLog) << "Driver configuration failed for type" << static_cast<int>(_type);
-        _driver.reset();
+        _state->driver.reset();
         return false;
     }
 
-    (void) memset(&_sensorGps, 0, sizeof(_sensorGps));
+    GPSPx4Data::initialize(_state->position);
     return true;
 }
 
 int GPSDriver::receive(unsigned timeoutMs)
 {
-    if (!_driver) {
+    if (!_state->driver) {
         return -1;
     }
 
-    const int ret = _driver->receive(timeoutMs);
+    const int ret = _state->driver->receive(timeoutMs);
     if (ret < 0) {
         return ret;
     }
 
     if ((ret & 0x01) && _sinks.onPosition) {
-        _sinks.onPosition(_sensorGps);
+        _sinks.onPosition(GPSPx4Data::position(_state->position));
     }
     if ((ret & 0x02) && _sinks.onSatelliteInfo) {
-        _sinks.onSatelliteInfo(_satelliteInfo);
+        _sinks.onSatelliteInfo(GPSPx4Data::satellites(_state->satellites, _type));
     }
     return ret;
 }
@@ -140,17 +162,21 @@ int GPSDriver::handleCallback(int type, void* data1, int data2)
         case GPSCallbackType::setBaudrate:
             return _transport.setBaudrate(static_cast<unsigned>(data2)) ? 0 : -1;
         case GPSCallbackType::gotRTCMMessage:
+            if (!data1 || data2 <= 0) {
+                qCWarning(GPSDriverLog) << "Invalid RTCM callback payload";
+                return -1;
+            }
             if (_sinks.onRTCM) {
-                _sinks.onRTCM(QByteArray(static_cast<const char*>(data1), data2));
+                _sinks.onRTCM({static_cast<const uint8_t*>(data1), static_cast<std::size_t>(data2)});
             }
             break;
         case GPSCallbackType::surveyInStatus:
             if (data1 && _sinks.onSurveyIn) {
                 const SurveyInStatus* const status = static_cast<const SurveyInStatus*>(data1);
-                GPSSurveyInStatus out;
-                out.coordinate = QGeoCoordinate(status->latitude, status->longitude);
+                GPSSurveyReport out;
+                out.latitudeDegrees = status->latitude;
+                out.longitudeDegrees = status->longitude;
                 out.altitudeEllipsoidMeters = status->altitude;
-                out.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
                 // Ashtech and Femto use zero for unknown accuracy; UBX can round a valid value to zero.
                 if (status->mean_accuracy != 0 || (_type != GPSType::trimble && _type != GPSType::femto)) {
                     out.meanAccuracyMeters = static_cast<double>(status->mean_accuracy) / 1000.0;

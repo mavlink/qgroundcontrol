@@ -16,12 +16,14 @@ private slots:
     void _testCalculatePayloadSize();
 
     // Value parsing tests
-    void _testParseValueIntegers();
-    void _testParseValueScaled();
-    void _testParseValueFloats();
+    void _testParseValue_data();
+    void _testParseValue();
+    void _testParseValueInvalid_data();
+    void _testParseValueInvalid();
     void _testParseValueStrings();
 
     // Half-precision float tests
+    void _testHalfToFloat_data();
     void _testHalfToFloat();
     void _testHalfToFloatSpecial();
 
@@ -36,6 +38,10 @@ private slots:
 
     // Message parsing tests
     void _testParseMessage();
+    void _testParseMessageTruncated_data();
+    void _testParseMessageTruncated();
+    void _testParseMessageUnsupportedFormat_data();
+    void _testParseMessageUnsupportedFormat();
 
     // Message iteration tests
     void _testIterateMessages();

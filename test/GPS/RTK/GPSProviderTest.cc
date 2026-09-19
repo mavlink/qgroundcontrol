@@ -1,35 +1,39 @@
 #include "GPSProviderTest.h"
 
+#include <cmath>
 #include <cstring>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QEvent>
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
 #include "GPSProvider.h"
+#include "GPSReceiverConfigValidation.h"
 #include "GPSTransport.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 #endif
 
 Q_DECLARE_METATYPE(GPSBaseStationConfig)
+Q_DECLARE_METATYPE(GPSSurveyReport)
 
 void GPSProviderTest::_queuedPayloadsOwnSnapshots()
 {
     GPSProvider provider({}, GPSType::ublox, {});
-    for (const auto name : {"satellite_info_s", "sensor_gps_s", "GPSConnectionError", "GPSSurveyInStatus"}) {
+    for (const auto name : {"GPSSatelliteReport", "GPSPositionReport", "GPSConnectionError", "GPSSurveyInStatus"}) {
         QVERIFY2(QMetaType::fromName(name).isValid(), name);
     }
-    satellite_info_s satellites{};
-    sensor_gps_s position{};
+    GPSSatelliteReport satellites;
+    GPSPositionReport position;
     GPSSurveyInStatus survey;
     GPSConnectionError error = GPSConnectionError::None;
     QObject receiver;
     connect(
         &provider, &GPSProvider::satelliteInfoUpdate, &receiver,
-        [&](const satellite_info_s& value) { satellites = value; }, Qt::QueuedConnection);
+        [&](const GPSSatelliteReport& value) { satellites = value; }, Qt::QueuedConnection);
     connect(
-        &provider, &GPSProvider::sensorGpsUpdate, &receiver, [&](const sensor_gps_s& value) { position = value; },
+        &provider, &GPSProvider::sensorGpsUpdate, &receiver, [&](const GPSPositionReport& value) { position = value; },
         Qt::QueuedConnection);
     connect(
         &provider, &GPSProvider::surveyInStatus, &receiver, [&](const GPSSurveyInStatus& value) { survey = value; },
@@ -38,19 +42,22 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
         &provider, &GPSProvider::connectionError, &receiver, [&](GPSConnectionError value) { error = value; },
         Qt::QueuedConnection);
     auto worker = std::unique_ptr<QThread>(QThread::create([&]() {
-        satellite_info_s snapshot{};
+        GPSSatelliteReport snapshot;
         snapshot.count = 1;
-        snapshot.used[0] = 1;
+        snapshot.satellites[0].used = true;
         emit provider.satelliteInfoUpdate(snapshot);
-        snapshot.used[0] = 0;
-        sensor_gps_s fix{};
-        fix.latitude_deg = 47;
+        snapshot.satellites[0].used = false;
+        GPSPositionReport fix;
+        fix.latitudeDegrees = 47;
+        fix.integrity.jamming = GPSIntegrityReport::JammingState::Warning;
+        fix.integrity.noisePerMillisecond = 0;
         emit provider.sensorGpsUpdate(fix);
-        fix.latitude_deg = 0;
-        GPSSurveyInStatus progress;
+        fix.latitudeDegrees = 0;
+        fix.integrity.noisePerMillisecond = 99;
+        GPSSurveyReport progress;
         progress.duration = std::chrono::seconds(4294967295LL);
         progress.meanAccuracyMeters = 1.234;
-        emit provider.surveyInStatus(progress);
+        provider._handleSurveyIn(progress);
         progress.meanAccuracyMeters = 0;
         emit provider.connectionError(GPSConnectionError::DeviceError);
     }));
@@ -64,11 +71,72 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
     QCOMPARE(survey.duration.count(), 0);
     QCoreApplication::sendPostedEvents(&receiver, QEvent::MetaCall);
     QCOMPARE(satellites.count, 1);
-    QCOMPARE(satellites.used[0], 1);
-    QCOMPARE(position.latitude_deg, 47);
+    QCOMPARE(satellites.satellites[0].used, std::optional<bool>{true});
+    QCOMPARE(position.latitudeDegrees, 47);
+    QCOMPARE(position.integrity.jamming, GPSIntegrityReport::JammingState::Warning);
+    QCOMPARE(position.integrity.noisePerMillisecond, std::optional<int32_t>{0});
+    QCOMPARE(position.integrity.timestampUs, uint64_t{0});
     QCOMPARE(survey.duration.count(), 4294967295LL);
     QCOMPARE(survey.meanAccuracyMeters.value(), 1.234);
     QCOMPARE(error, GPSConnectionError::DeviceError);
+}
+
+void GPSProviderTest::_surveyReportProjection_data()
+{
+    QTest::addColumn<GPSSurveyReport>("report");
+    QTest::addColumn<bool>("coordinateValid");
+
+    QTest::newRow("unknown") << GPSSurveyReport{} << false;
+    QTest::newRow("fixed") << GPSSurveyReport{.latitudeDegrees = -47.123,
+                                              .longitudeDegrees = 128.456,
+                                              .altitudeEllipsoidMeters = 512.25f,
+                                              .meanAccuracyMeters = 1.234,
+                                              .duration = std::chrono::seconds(4294967295LL),
+                                              .valid = true,
+                                              .active = false}
+                           << true;
+    QTest::newRow("survey-zero-accuracy") << GPSSurveyReport{.latitudeDegrees = 47,
+                                                             .longitudeDegrees = -8,
+                                                             .altitudeEllipsoidMeters = -30,
+                                                             .meanAccuracyMeters = 0,
+                                                             .duration = std::chrono::seconds(180),
+                                                             .valid = false,
+                                                             .active = true}
+                                          << true;
+    QTest::newRow("valid-active-unknown-accuracy")
+        << GPSSurveyReport{.latitudeDegrees = 0, .longitudeDegrees = 0, .valid = true, .active = true} << true;
+    QTest::newRow("invalid-latitude") << GPSSurveyReport{.latitudeDegrees = 91, .longitudeDegrees = 8} << false;
+    QTest::newRow("invalid-longitude") << GPSSurveyReport{.latitudeDegrees = 47, .longitudeDegrees = -181} << false;
+}
+
+void GPSProviderTest::_surveyReportProjection()
+{
+    QFETCH(GPSSurveyReport, report);
+    QFETCH(bool, coordinateValid);
+    GPSProvider provider({}, GPSType::ublox, {});
+    QSignalSpy reports(&provider, &GPSProvider::surveyInStatus);
+
+    provider._handleSurveyIn(report);
+
+    QCOMPARE(reports.size(), 1);
+    const auto status = qvariant_cast<GPSSurveyInStatus>(reports.first().first());
+    QCOMPARE(status.coordinate.isValid(), coordinateValid);
+    if (coordinateValid) {
+        QCOMPARE(status.coordinate.latitude(), report.latitudeDegrees);
+        QCOMPARE(status.coordinate.longitude(), report.longitudeDegrees);
+        QCOMPARE(status.coordinate.type(), QGeoCoordinate::Coordinate2D);
+    }
+    QVERIFY(std::isnan(status.coordinate.altitude()));
+    if (std::isnan(report.altitudeEllipsoidMeters)) {
+        QVERIFY(std::isnan(status.altitudeEllipsoidMeters));
+    } else {
+        QCOMPARE(status.altitudeEllipsoidMeters, report.altitudeEllipsoidMeters);
+    }
+    QCOMPARE(status.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
+    QCOMPARE(status.meanAccuracyMeters, report.meanAccuracyMeters);
+    QCOMPARE(status.duration, report.duration);
+    QCOMPARE(status.valid, report.valid);
+    QCOMPARE(status.active, report.active);
 }
 
 namespace {
@@ -148,7 +216,7 @@ void GPSProviderTest::_transportLifetimeStaysOnWorker()
         [&, lifetime = std::move(lifetime)](const std::atomic_bool& requestStop) {
             return std::make_unique<TestTransport>(requestStop, trace, stopProvider, openResult, cancelInOpen);
         },
-        GPSType::ublox, GPSBaseStationConfig{});
+        GPSType::ublox, GPSReceiverConfig{});
     stopProvider = [&provider]() { provider.stop(); };
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
@@ -178,7 +246,7 @@ void GPSProviderTest::_missingTransportReportsOpenFailure()
     if (hasFactory) {
         factory = [](const std::atomic_bool&) { return std::unique_ptr<GPSTransport>{}; };
     }
-    GPSProvider provider(std::move(factory), GPSType::ublox, GPSBaseStationConfig{});
+    GPSProvider provider(std::move(factory), GPSType::ublox, GPSReceiverConfig{});
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::shortMs()));
@@ -194,7 +262,7 @@ void GPSProviderTest::_cancelledProviderDoesNotCreateTransport()
             created = true;
             return std::unique_ptr<GPSTransport>{};
         },
-        GPSType::ublox, GPSBaseStationConfig{});
+        GPSType::ublox, GPSReceiverConfig{});
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.stop();
     provider.start();
@@ -270,14 +338,57 @@ void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
     QFETCH(GPSBaseStationConfig, config);
     GPSProvider provider(
         [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); },
-        GPSType::femto, config);
+        GPSType::femto, GPSReceiverConfig{.base = config});
     QSignalSpy ready(&provider, &GPSProvider::receiverReady);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
+    QSignalSpy surveys(&provider, &GPSProvider::surveyInStatus);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::mediumMs()));
     QCOMPARE(ready.size(), 1);
     QCOMPARE(errors.size(), 1);
     QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
+    if (config.useFixedBase) {
+        QCOMPARE(surveys.size(), 1);
+        const auto status = qvariant_cast<GPSSurveyInStatus>(surveys.first().first());
+        QCOMPARE(status.coordinate.type(), QGeoCoordinate::Coordinate2D);
+        QCOMPARE(status.coordinate.latitude(), config.fixedBaseLatitude);
+        QCOMPARE(status.coordinate.longitude(), config.fixedBaseLongitude);
+        QVERIFY(std::isnan(status.coordinate.altitude()));
+        QCOMPARE(status.altitudeEllipsoidMeters, config.fixedBaseAltitudeMeters);
+        QCOMPARE(status.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
+        QVERIFY(!status.meanAccuracyMeters.has_value());
+        QCOMPARE(status.duration.count(), 0);
+        QVERIFY(status.valid);
+        QVERIFY(!status.active);
+    }
+}
+
+void GPSProviderTest::_unsupportedPositionRoleReportsConfigFailure_data()
+{
+    QTest::addColumn<GPSType>("type");
+    QTest::newRow("trimble") << GPSType::trimble;
+    QTest::newRow("septentrio") << GPSType::septentrio;
+    QTest::newRow("femto") << GPSType::femto;
+}
+
+void GPSProviderTest::_unsupportedPositionRoleReportsConfigFailure()
+{
+    QFETCH(GPSType, type);
+    const GPSReceiverConfig config{.role = GPSReceiverConfig::Role::Position};
+    const QString error = gpsReceiverConfigError(type, config);
+    QVERIFY(!error.isEmpty());
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(error)));
+    GPSProvider provider(
+        [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); }, type,
+        config);
+    QSignalSpy ready(&provider, &GPSProvider::receiverReady);
+    QSignalSpy errors(&provider, &GPSProvider::connectionError);
+    provider.start();
+    QVERIFY(provider.wait(TestTimeout::mediumMs()));
+    verifyExpectedLogMessage();
+    QVERIFY(ready.isEmpty());
+    QCOMPARE(errors.size(), 1);
+    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::ConfigFailed);
 }
 
 void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
@@ -289,7 +400,7 @@ void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
             stopProvider();
             return std::make_unique<TestTransport>(requestStop, trace, []() {}, true, false);
         },
-        GPSType::ublox, GPSBaseStationConfig{});
+        GPSType::ublox, GPSReceiverConfig{});
     stopProvider = [&provider]() { provider.stop(); };
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
@@ -320,7 +431,7 @@ void GPSProviderTest::_finishedReceiverReleasesReservation()
     QVERIFY(reservation);
     GPSProvider provider(
         [reservation = std::move(reservation)](const std::atomic_bool&) { return std::unique_ptr<GPSTransport>{}; },
-        GPSType::ublox, GPSBaseStationConfig{});
+        GPSType::ublox, GPSReceiverConfig{});
     if (cancelled) {
         provider.stop();
     }

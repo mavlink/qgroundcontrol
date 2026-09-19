@@ -20,6 +20,7 @@ private slots:
     void _testGetVersionInvalid();
 
     // Timestamp tests
+    void _testGetHeaderTimestamp_data();
     void _testGetHeaderTimestamp();
 
     // Message iteration tests
