@@ -10,10 +10,10 @@ if(NOT TARGET QGCGPSTransportTypes)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Transport" "${CMAKE_CURRENT_BINARY_DIR}/TransportTypes")
 endif()
 if(NOT TARGET QGCGPSNMEAProtocol)
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../NMEA" "${CMAKE_CURRENT_BINARY_DIR}/NMEA")
+    add_subdirectory(NMEA)
 endif()
 if(NOT TARGET QGCGPSRTCMFramer)
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../RTCM" "${CMAKE_CURRENT_BINARY_DIR}/RTCM")
+    add_subdirectory(RTCM)
 endif()
 if(NOT TARGET QGCGPSReceiverConfig)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Receiver" "${CMAKE_CURRENT_BINARY_DIR}/Receiver")
@@ -38,8 +38,7 @@ target_sources(
            GPSProtocol.h
            GPSProtocolTime.h
            GPSBaseProtocol.h
-           GPSNMEAReport.h
-           NMEAFields.h
+           NMEA/GPSNMEAReport.h
 )
 set_target_properties(
     QGCGPSNativeCommon

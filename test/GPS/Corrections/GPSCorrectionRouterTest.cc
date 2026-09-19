@@ -10,6 +10,7 @@
 #include "../RTCM/RTCMTestFixtures.h"
 #include "GPSCorrectionEventModel.h"
 #include "GPSCorrectionRouter.h"
+#include "RTCMDecodedFrame.h"
 
 namespace {
 GPSCorrectionFrame frame(GPSCorrectionSource source, quint64 session, qint64 now, const QString& instance = {})
@@ -94,7 +95,7 @@ void GPSCorrectionRouterTest::decodedIngressPreservesEvidence()
     const qint64 now = 100000;
     GPSCorrectionRouter router(nullptr, [now]() { return now; });
     auto registration = router.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
-    RTCMFrameDecoder::Result decoded{GpsTestHelpers::buildRtcmFrame(1005), 1005, now - 10, valid, filtered};
+    RTCMDecodedFrame decoded{GpsTestHelpers::buildRtcmFrame(1005), 1005, now - 10, valid, filtered};
     const auto input = registration.token().event(decoded);
     QCOMPARE(input.frame().source, GPSCorrectionSource::Ntrip);
     QCOMPARE(input.frame().sourceInstance, QStringLiteral("caster"));
@@ -163,7 +164,7 @@ void GPSCorrectionRouterTest::diagnosticsKeepHealthDomainsIndependent()
     const qint64 now = 100000;
     GPSCorrectionRouter router(nullptr, [now]() { return now; });
     auto ntrip = router.registerSource(GPSCorrectionSource::Ntrip);
-    const RTCMFrameDecoder::Result filtered{GpsTestHelpers::buildRtcmFrame(1005), 1005, now, true, true};
+    const RTCMDecodedFrame filtered{GpsTestHelpers::buildRtcmFrame(1005), 1005, now, true, true};
     QVERIFY(!router.acceptIngress(ntrip.token().event(filtered)));
     auto udp = router.registerSource(GPSCorrectionSource::Udp);
     QVERIFY(router.acceptIngress(udp.token().event(QByteArrayLiteral("raw"), now, 0, false)));

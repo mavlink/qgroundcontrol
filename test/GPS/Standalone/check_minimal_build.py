@@ -13,6 +13,12 @@ CASES = {
     "DriverReports": ({"QGCGPSDriverReportsConsumer"}, "QGCGPSDriverReportsHeaderChecks"),
     "ReceiverConfig": ({"QGCGPSReceiverConfigConsumer"}, "QGCGPSReceiverConfigHeaderChecks"),
     "TransportTypes": ({"QGCGPSTransportTypesConsumer"}, "QGCGPSTransportTypesHeaderChecks"),
+    "NMEAProtocol": ({"QGCGPSNMEAProtocolConsumer"}, "QGCGPSNMEAProtocolHeaderChecks"),
+    "RTCMFramer": ({"QGCGPSRTCMFramerConsumer"}, "QGCGPSRTCMFramerHeaderChecks"),
+    "MavlinkPacket": (
+        {"QGCGPSMavlinkPacketConsumer", "RTCMMavlinkPacketTest"},
+        "QGCGPSMavlinkPacketHeaderChecks",
+    ),
     "Native": (
         {
             "QGCGPSNativeConsumer",
@@ -58,6 +64,12 @@ def check_artifacts(build: Path, component: str, config: str) -> None:
         raise ValueError(f"No unique file-api configuration matches {config!r}")
     for target in configurations[0]["targets"]:
         name = target["name"]
+        if (
+            component in {"NMEAProtocol", "RTCMFramer", "MavlinkPacket"}
+            and name.startswith("QGCGPS")
+            and not name.startswith(f"QGCGPS{component}")
+        ):
+            raise ValueError(f"Unexpected GPS sibling target for {component}: {name}")
         if name in {"px4-gpsdrivers", "QGCGPSLegacyDriver", "QGCGPSPx4Adapter"}:
             raise ValueError(f"Unexpected legacy receiver runtime target: {name}")
         if name == "QGCGPSDriver" and component != "Driver":
@@ -89,7 +101,7 @@ def check_build(args: argparse.Namespace, build: Path) -> None:
         f"-DCMAKE_BUILD_TYPE={config}",
         f"-DQGC_GPS_COMPONENTS={args.component}",
     ]
-    if args.component == "Driver":
+    if args.component in {"Driver", "MavlinkPacket"}:
         configure.extend(
             [
                 f"-DQt6_DIR={args.qt_dir}",

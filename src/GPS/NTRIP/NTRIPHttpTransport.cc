@@ -5,15 +5,14 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QPointer>
-#include <QtNetwork/QHttpHeaders>
 #include <QtNetwork/QSslError>
 #include <QtNetwork/QSslSocket>
 
 #include "NMEAUtils.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
+#include "NTRIPHttpRequest.h"
 #include "QGCLoggingCategory.h"
-#include "QGCNetworkClient.h"
 
 QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIPHttpTransport")
 
@@ -120,57 +119,13 @@ bool NTRIPHttpTransport::_write(const QByteArray& bytes)
     return true;
 }
 
-NTRIPHttpTransport::HttpRequest NTRIPHttpTransport::buildHttpRequest(const NTRIPConnectionConfig& config)
-{
-    HttpRequest result;
-    result.error = config.streamValidationError();
-    if (!result.error.isEmpty()) {
-        return result;
-    }
-
-    using Header = QHttpHeaders::WellKnownHeader;
-    QHttpHeaders headers;
-    const QByteArray host = config.host.toUtf8();
-    if (!headers.append(Header::Host, QLatin1StringView(host.constData(), host.size())) ||
-        !headers.append("Ntrip-Version", "Ntrip/2.0") ||
-        !headers.append(Header::UserAgent, "NTRIP QGroundControl/1.0")) {
-        result.error = tr("Invalid NTRIP request header");
-        return result;
-    }
-
-    const bool hasCredentials = !config.username.isEmpty() || !config.password.isEmpty();
-    if (hasCredentials) {
-        const QString authorization =
-            QStringLiteral("Basic ") + QGCNetworkHelper::createBasicAuthCredentials(config.username, config.password);
-        if (!headers.append(Header::Authorization, authorization)) {
-            result.error = tr("Invalid NTRIP authorization header");
-            return result;
-        }
-    }
-
-    result.bytes = "GET /" + config.mountpoint.toUtf8() + " HTTP/1.1\r\n";
-    // Some legacy casters match these spellings case-sensitively.
-    for (const char* name : {"Host", "Ntrip-Version", "User-Agent", "Authorization"}) {
-        if (headers.contains(QLatin1StringView(name))) {
-            const auto value = headers.value(QLatin1StringView(name));
-            result.bytes += name;
-            result.bytes += ": ";
-            result.bytes.append(value.data(), value.size());
-            result.bytes += "\r\n";
-        }
-    }
-    result.bytes += "\r\n";
-    result.credentialsInClear = hasCredentials && !config.useTls;
-    return result;
-}
-
 void NTRIPHttpTransport::_sendHttpRequest()
 {
     if (!_socket || _stopped) {
         return;
     }
 
-    const HttpRequest request = buildHttpRequest(_config);
+    const NTRIPHttpRequest request = NTRIPHttpRequest::build(_config);
     if (!request.error.isEmpty()) {
         _fail(NTRIPError::InvalidConfig, request.error);
         return;

@@ -518,7 +518,7 @@ void NTRIPManager::_startTransport()
 
     connect(
         _transport, &NTRIPTransport::correctionFrameReceived, this,
-        [this, current, correctionManager, token](const RTCMFrameDecoder::Result& frame) {
+        [this, current, correctionManager, token](const RTCMDecodedFrame& frame) {
             if (correctionManager) {
                 correctionManager->acceptIngress(token.event(frame));
             }
@@ -589,7 +589,7 @@ void NTRIPManager::_setSecurityWarning(const QString& warning)
     emit securityWarningChanged();
 }
 
-void NTRIPManager::_rtcmDataReceived(const RTCMFrameDecoder::Result& frame)
+void NTRIPManager::_rtcmDataReceived(const RTCMDecodedFrame& frame)
 {
     const QPointer<NTRIPManager> guard(this);
     const quint64 revision = _stateRevision;

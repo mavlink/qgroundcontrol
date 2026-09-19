@@ -5,6 +5,17 @@ SBF, and Femto. They require C++20 and CMake 3.25 or newer, but no Qt, PX4 runti
 receiver, or application build. The existing pinned GeographicLib dependency is
 resolved through the shared production dependency helper.
 
+`src/GPS/Driver/Protocols/NMEA/` and `RTCM/` contain the shared Qt-free wire
+protocols, not receiver configuration or application integration.
+Their independent `QGC::GPSNMEAProtocol` and `QGC::GPSRTCMFramer` targets remain
+usable without native receiver families. NMEA numbering and numeric-coordinate
+helpers belong to the NMEA protocol library. The co-located `GPSNMEAReport.h` mapper
+remains part of the native common target so generic NMEA consumers do not acquire
+native-report dependencies.
+Qt positioning adapters live in `src/GPS/Positioning/NMEA/`; shared formatting and
+frame adapters remain in `src/GPS/NMEA/` and `src/GPS/RTCM/`. MAVLink/UDP correction
+integration belongs to `src/GPS/Corrections/`, outside the protocol libraries.
+
 ## Build and run
 
 Run from the repository root:

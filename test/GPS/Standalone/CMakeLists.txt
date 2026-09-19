@@ -6,7 +6,17 @@ if(COMMAND add_qgc_test AND NOT CMAKE_CROSSCOMPILING)
     if(NOT TARGET Python3::Interpreter)
         message(FATAL_ERROR "The GPS minimal-build matrix requires Python3::Interpreter")
     endif()
-    foreach(component DriverReports ReceiverConfig TransportTypes Native Driver)
+    foreach(
+        component
+        DriverReports
+        ReceiverConfig
+        TransportTypes
+        NMEAProtocol
+        RTCMFramer
+        MavlinkPacket
+        Native
+        Driver
+    )
         add_test(
             NAME "CMake.GPSMinimal.${component}"
             COMMAND
@@ -27,7 +37,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(_gps_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS")
     set(_utilities_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities")
     set(QGC_GPS_COMPONENTS
-        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;Corrections;NTRIP;ReceiverConfig;Driver"
+        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;MavlinkPacket;Corrections;NTRIP;ReceiverConfig;Driver"
         CACHE STRING "GPS library components to build and test"
     )
     option(QGC_NO_SERIAL_LINK "Build without serial receiver support" OFF)
@@ -43,6 +53,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         ReceiverTransports
         RTCMFramer
         RTCM
+        MavlinkPacket
         Corrections
         NTRIPHttp
         NTRIP
@@ -125,10 +136,15 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         add_subdirectory("${_utilities_root}/IO" IO)
     endif()
     if("NMEAProtocol" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/Driver/Protocols/NMEA" NMEAProtocol)
+    endif()
+    if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "NMEAUtils" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/NMEA" NMEA)
     endif()
     if("Positioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        add_subdirectory("${_gps_root}/PositionManager" Positioning)
+        add_subdirectory("${_gps_root}/Positioning" Positioning)
+    elseif("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/Positioning/NMEA" NMEAPositioning)
     endif()
     if("Transport" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "TransportTypes" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/Transport" Transport)
@@ -138,7 +154,15 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Transport" TransportTests)
     endif()
     if("RTCMFramer" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/Driver/Protocols/RTCM" RTCMFramer)
+    endif()
+    if("RTCM" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/RTCM" RTCM)
+    endif()
+    if("MavlinkPacket" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/Corrections/MAVLink" MavlinkPacket)
+        find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Corrections/MAVLink" MavlinkPacketTests)
     endif()
     if("Native" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/Driver/Protocols" Native)
@@ -208,6 +232,7 @@ foreach(
     QGCGPSReceiverTransports
     QGCGPSRTCMFramer
     QGCGPSRTCM
+    QGCGPSMavlinkPacket
     QGCGPSCorrections
     QGCGPSDriver
     ${_receiver_consumer_targets}

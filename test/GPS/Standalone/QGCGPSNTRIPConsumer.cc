@@ -2,6 +2,7 @@
 
 #include "NTRIPConnectionStats.h"
 #include "NTRIPGgaProvider.h"
+#include "NTRIPHttpRequest.h"
 #include "NTRIPHttpTransport.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
@@ -10,12 +11,6 @@
     defined(QT_HTTPSERVER_LIB)
 #error NTRIP must not inherit application, serial, Bluetooth, or HTTP server dependencies.
 #endif
-
-class RequestConsumer : public NTRIPHttpTransport
-{
-public:
-    using NTRIPHttpTransport::buildHttpRequest;
-};
 
 class GgaConsumer : public NTRIPTransport
 {
@@ -37,7 +32,7 @@ int main(int argc, char* argv[])
     config.mountpoint = QStringLiteral("BASE");
     config.username = QStringLiteral("user");
     config.password = QStringLiteral("pass");
-    const auto request = RequestConsumer::buildHttpRequest(config);
+    const auto request = NTRIPHttpRequest::build(config);
     if (!request.error.isEmpty() || !request.credentialsInClear ||
         !request.bytes.contains("Authorization: Basic dXNlcjpwYXNz\r\n")) {
         return 1;

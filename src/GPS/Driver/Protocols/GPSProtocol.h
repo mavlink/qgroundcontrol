@@ -408,11 +408,6 @@ protected:
     static void ECEF2lla(double ecef_x, double ecef_y, double ecef_z, double& latitude, double& longitude,
                          float& altitude);
 
-    /**
-     * Convert an NMEA ddmm.mmmm (or dddmm.mmmm) coordinate to decimal degrees
-     */
-    static double nmeaToDegrees(double ddmm);
-
     bool _commandCompleted = true;
     GPSCommandResult _commandWrite;
     GPSDecodedBatch _decoded;

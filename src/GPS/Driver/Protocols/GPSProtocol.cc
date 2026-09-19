@@ -88,16 +88,6 @@ void GPSProtocol::ECEF2lla(double ecef_x, double ecef_y, double ecef_z, double& 
     altitude = static_cast<float>(height);
 }
 
-double GPSProtocol::nmeaToDegrees(double ddmm)
-{
-    if (!std::isfinite(ddmm) || std::abs(ddmm) > 18000.0) {
-        return NAN;
-    }
-    const double degrees = std::trunc(ddmm / 100.0);
-    const double minutes = ddmm - degrees * 100.0;
-    return std::abs(minutes) < 60.0 ? degrees + minutes / 60.0 : NAN;
-}
-
 uint64_t GPSProtocol::timeFromUtc(tm& utc, int32_t nsec)
 {
     const time_t epoch = gpsTimeToEpoch(utc);

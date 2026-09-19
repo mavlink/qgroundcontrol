@@ -16,7 +16,7 @@ RTCMFrameDecoder::~RTCMFrameDecoder()
     qCDebug(RTCMFrameDecoderLog) << this;
 }
 
-std::optional<RTCMFrameDecoder::Result> RTCMFrameDecoder::addByte(uint8_t byte, qint64 receivedAtMs)
+std::optional<RTCMDecodedFrame> RTCMFrameDecoder::addByte(uint8_t byte, qint64 receivedAtMs)
 {
     _receiptTimes[_nextReceiptIndex] = receivedAtMs;
     _nextReceiptIndex = (_nextReceiptIndex + 1) % _receiptTimes.size();
@@ -26,7 +26,7 @@ std::optional<RTCMFrameDecoder::Result> RTCMFrameDecoder::addByte(uint8_t byte, 
     return _result();
 }
 
-std::optional<RTCMFrameDecoder::Result> RTCMFrameDecoder::nextFrame()
+std::optional<RTCMDecodedFrame> RTCMFrameDecoder::nextFrame()
 {
     if (!_framer.nextFrame()) {
         return std::nullopt;
@@ -34,12 +34,12 @@ std::optional<RTCMFrameDecoder::Result> RTCMFrameDecoder::nextFrame()
     return _result();
 }
 
-RTCMFrameDecoder::Result RTCMFrameDecoder::_result() const
+RTCMDecodedFrame RTCMFrameDecoder::_result() const
 {
     const auto frame = _framer.frame();
     const size_t firstReceiptIndex =
         (_nextReceiptIndex + _receiptTimes.size() - _framer.bufferedSize()) % _receiptTimes.size();
-    Result result{QByteArrayView(frame).toByteArray(), _framer.messageId(), _receiptTimes[firstReceiptIndex]};
+    RTCMDecodedFrame result{QByteArrayView(frame).toByteArray(), _framer.messageId(), _receiptTimes[firstReceiptIndex]};
     result.valid = _framer.valid();
     result.filtered = result.valid && !_whitelist.isEmpty() && !_whitelist.contains(result.messageId);
     return result;

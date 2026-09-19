@@ -37,7 +37,7 @@ GPSCorrectionIngress GPSCorrectionSourceToken::event(QByteArray data, qint64 rec
     return ingress;
 }
 
-GPSCorrectionIngress GPSCorrectionSourceToken::event(const RTCMFrameDecoder::Result& result) const
+GPSCorrectionIngress GPSCorrectionSourceToken::event(const RTCMDecodedFrame& result) const
 {
     return event(result.data, result.receivedAtMs, result.messageId, result.valid, result.filtered,
                  result.valid ? GPSCorrectionReason::None : GPSCorrectionReason::InvalidFrame);

@@ -39,17 +39,6 @@ public:
 
     const NTRIPConnectionConfig& config() const { return _config; }
 
-protected:
-    struct HttpRequest
-    {
-        QByteArray bytes;
-        QString error;
-        /// Credentials are present and the channel is not TLS — caller must warn.
-        bool credentialsInClear = false;
-    };
-
-    static HttpRequest buildHttpRequest(const NTRIPConnectionConfig& config);
-
 private:
     void _connect();
     void _fail(NTRIPError code, const QString& msg, std::chrono::milliseconds retryAfter = {});

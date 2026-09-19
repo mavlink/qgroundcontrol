@@ -19,6 +19,7 @@
 #include "../NTRIPTlsTestFixtures.h"
 #include "NTRIPHttpTransport.h"
 #include "PortableTest.h"
+#include "RTCMDecodedFrame.h"
 
 namespace {
 #ifdef QGC_PORTABLE_TEST
@@ -257,7 +258,7 @@ void NTRIPTlsTest::certificatePolicy()
     QCOMPARE(peer->write(continuation), continuation.size());
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 2, timeoutMs());
     for (qsizetype index = 0; index < frames.size(); ++index) {
-        const auto frame = qvariant_cast<RTCMFrameDecoder::Result>(frames[index][0]);
+        const auto frame = qvariant_cast<RTCMDecodedFrame>(frames[index][0]);
         QCOMPARE(frame.data, index == 0 ? first : second);
         QCOMPARE(frame.messageId, index == 0 ? 1005 : 1077);
         QVERIFY(frame.valid && !frame.filtered);
@@ -410,7 +411,7 @@ void NTRIPTlsTest::restartRetiresAttempt()
     const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n" + current;
     QCOMPARE(peer->write(response), response.size());
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 1, timeoutMs());
-    const auto frame = qvariant_cast<RTCMFrameDecoder::Result>(frames.first().first());
+    const auto frame = qvariant_cast<RTCMDecodedFrame>(frames.first().first());
     QCOMPARE(frame.data, current);
     QVERIFY(frame.valid && !frame.filtered);
     QCOMPARE(connected.size(), 1);
@@ -460,7 +461,7 @@ void NTRIPTlsTest::reconnectFromTlsFailure()
     const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n" + expected;
     QCOMPARE(peer->write(response), response.size());
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 1, timeoutMs());
-    QCOMPARE(qvariant_cast<RTCMFrameDecoder::Result>(frames.first().first()).data, expected);
+    QCOMPARE(qvariant_cast<RTCMDecodedFrame>(frames.first().first()).data, expected);
     QCOMPARE(connected.size(), 1);
     transport.stop();
     QTRY_COMPARE_WITH_TIMEOUT(peer->state(), QAbstractSocket::UnconnectedState, timeoutMs());

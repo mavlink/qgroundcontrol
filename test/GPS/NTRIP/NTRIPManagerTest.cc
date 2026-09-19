@@ -18,6 +18,7 @@
 #include "MonotonicClock.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
+#include "RTCMDecodedFrame.h"
 #include "SettingsManager.h"
 
 void NTRIPManagerTest::cleanup()
@@ -499,7 +500,7 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     const qint64 receivedAtMs = GPSCorrectionFrame::monotonicNowMs() - 10;
     first->simulateRtcmData(frame, 1005, receivedAtMs);
     QCOMPARE(observed.size(), 1);
-    const auto result = qvariant_cast<RTCMFrameDecoder::Result>(observed[0][0]);
+    const auto result = qvariant_cast<RTCMDecodedFrame>(observed[0][0]);
     QCOMPARE(result.data, frame);
     QCOMPARE(result.messageId, 1005);
     QCOMPARE(result.receivedAtMs, receivedAtMs);

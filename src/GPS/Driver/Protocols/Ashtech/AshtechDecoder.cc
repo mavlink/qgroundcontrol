@@ -34,7 +34,7 @@
 #include <chrono>
 
 #include "AshtechPrivate.h"
-#include "GPSNMEAReport.h"
+#include "NMEA/GPSNMEAReport.h"
 
 namespace {
 bool validReceiptDate(std::string_view date)
@@ -346,8 +346,8 @@ int GPSNativeAshtech::handleMessage(int len)
             lon = -lon;
         }
 
-        _gps_position->latitude_deg = nmeaToDegrees(lat);
-        _gps_position->longitude_deg = nmeaToDegrees(lon);
+        _gps_position->latitude_deg = NMEA::degreesFromDegreesMinutes(lat);
+        _gps_position->longitude_deg = NMEA::degreesFromDegreesMinutes(lon);
         _gps_position->altitude_ellipsoid_m = alt;
         _gps_position->altitude_msl_m = NAN;
         _gps_position->hdop = static_cast<float>(hdop);

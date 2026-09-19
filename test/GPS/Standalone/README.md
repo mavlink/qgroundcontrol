@@ -55,24 +55,29 @@ ctest --test-dir build/gps-driver-tests --output-on-failure -L Unit
 
 Native application test builds also register `CMake.GPSMinimal.DriverReports`,
 `CMake.GPSMinimal.ReceiverConfig`, `CMake.GPSMinimal.TransportTypes`,
+`CMake.GPSMinimal.NMEAProtocol`, `CMake.GPSMinimal.RTCMFramer`, `CMake.GPSMinimal.MavlinkPacket`,
 `CMake.GPSMinimal.Native`, and `CMake.GPSMinimal.Driver` in the existing
 Unit/CMake test lane. Each case configures a fresh temporary standalone build,
 builds the default targets and isolated header checks, and
 runs exactly the selected consumers. CMake's file API is used to reject runtime
 targets outside the selected component and unrequested configuration artifacts.
 The value/protocol cases disable Qt discovery. The driver case permits Qt Core,
-but disables Network, Positioning, SerialPort, and QML; it rejects any legacy
-PX4 runtime target. Single- and multi-configuration
+and the packetizer case also uses Qt Test; both disable Network, Positioning,
+SerialPort, and QML. The matrix rejects legacy PX4 runtime targets. Single- and multi-configuration
 generators use the active test configuration. Cross-compiled application builds
 do not register these host-executed cases.
 The native case builds the production protocol libraries and checks their public
 headers without Qt or an external receiver runtime.
+The NMEA and RTCM cases reject sibling GPS targets, including native receiver
+drivers, even though their sources share the `Driver/Protocols/` directory.
+The packetizer case likewise rejects sibling GPS targets, including RTCM decoding.
 
 ```sh
 ctest --test-dir build --output-on-failure -R '^CMake.GPSMinimal\.'
 ```
 
-The NMEA protocol is a separate Qt-free static library. Its consumer links only
+The NMEA protocol is a separate Qt-free static library in
+`src/GPS/Driver/Protocols/NMEA/`. Its consumer links only
 `QGCGPSNMEAProtocol` and exercises sentence decoding, constellation resolution, and
 satellite assembly without a Qt application.
 
@@ -114,7 +119,7 @@ ctest --test-dir build/gps-transports --output-on-failure
 ```
 
 The available components are `Core`, `NMEAProtocol`, `NMEAUtils`, `NMEA`, `Positioning`,
-`TransportTypes`, `Transport`, `ReceiverTransports`, `RTCMFramer`, `RTCM`, `Corrections`, `NTRIPHttp`,
+`TransportTypes`, `Transport`, `ReceiverTransports`, `RTCMFramer`, `RTCM`, `MavlinkPacket`, `Corrections`, `NTRIPHttp`,
 `NTRIP`, `DriverReports`, `ReceiverConfig`, `Native`, and `Driver`.
 `Native` selects the Qt-free receiver protocols; `Driver` adds the Qt transport
 adapter and configuration diagnostics. The `Transport` library
@@ -127,6 +132,8 @@ Core survey-status coverage stays with the Core component.
 All components are enabled by default. `NMEA` includes `NMEAProtocol` and `NMEAUtils`;
 `RTCM` and `Corrections` automatically include `RTCMFramer`. `NTRIP` includes
 `NTRIPHttp`, `NMEAUtils`, and `RTCM`.
+`MavlinkPacket` selects only Qt Core-backed GPS_RTCM_DATA fragmentation and its
+tests; neither `RTCM`, `Corrections`, nor `NTRIP` implicitly selects it.
 `Driver` includes `Native` and `Transport`; `Native` includes receiver reports,
 configuration, transport status types, NMEA protocol support, and RTCM framing.
 
@@ -156,6 +163,14 @@ only requested consumers, so a report-only build does not compile configuration 
 | `Receiver/` | Qt-free configuration, configuration evidence, capabilities, identity, and receiver reports |
 | `Driver/` | Driver facade and Qt configuration diagnostics |
 | `Driver/Protocols/` | Qt-free native receiver protocols and configuration transactions |
+| `Driver/Protocols/NMEA/` | Shared Qt-free sentence/field parsing, constellation normalization, and satellite epochs |
+| `Driver/Protocols/RTCM/` | Shared Qt-free RTCM framing and CRC validation |
+| `NMEA/` | Shared Qt NMEA formatting and checksum adaptation |
+| `Positioning/` | Source selection, accepted-position policy, and application source creation |
+| `Positioning/NMEA/` | Qt position/satellite adapters, stream handling, and NMEA source management |
+| `RTCM/` | Qt frame decoding, validation adapters, and decoded-frame values |
+| `Corrections/` | Correction source registration, routing, delivery accounting, and UDP ingress |
+| `Corrections/MAVLink/` | Lightweight packetization plus application sequence/admission and vehicle-output adapters |
 | `RTK/` | Application composition, worker integration, Facts, settings, and auto-connect |
 
 Application and test targets use the native protocols only. The former PX4
@@ -199,6 +214,10 @@ The protocol libraries reuse checked little-endian reads and writes, shared NMEA
 decoding and RTCM framing, and the existing GeographicLib dependency. Their raw
 decoder state remains separate from the public receiver reports, with conversion
 inside the driver. The application continues to consume the same report types.
+NMEA satellite-number normalization and numeric coordinate conversion live in the
+NMEA protocol library, not the shared constellation enum or generic receiver base.
+The native GGA report mapper is co-located under `Driver/Protocols/NMEA/` but remains
+owned by `QGCGPSNativeCommon`; the generic NMEA library does not depend on native reports.
 Native configuration entry points also validate base values before I/O. SBF survey
 accuracy remains unavailable without actual survey evidence, and fixed-base survey
 state is distinct from automatic position determination.
@@ -341,9 +360,12 @@ not the accuracy-filtered map coordinate or a substituted zero altitude.
 
 ## Correction routing
 
-`RTCM` owns framing, CRC validation, timestamped decoding, and MAVLink payload
-fragmentation in `src/GPS/RTCM/`. Consumers use `RTCMFrameDecoder` for timestamped
-results or `RTCMFramer` for Qt-free frame views; there is no separate parser facade.
+The Qt-free RTCM framer owns framing and CRC validation in
+`src/GPS/Driver/Protocols/RTCM/`. The Qt-backed `RTCM` library keeps timestamped
+decoding in `src/GPS/RTCM/`. Consumers use `RTCMFrameDecoder` for timestamped
+`RTCMDecodedFrame` values or `RTCMFramer` for Qt-free frame views; there is no separate
+parser facade. Consumers of decoded values include `RTCMDecodedFrame.h` without
+importing the decoder implementation or an old nested-type alias.
 `Corrections` owns source registrations,
 selection, routing, the delivery ledger, and the event model in
 `src/GPS/Corrections/`. Both expose isolated public-header checks and standalone
@@ -368,11 +390,15 @@ cmake --build build/gps-framer
 ctest --test-dir build/gps-framer --output-on-failure
 ```
 
-The aggregate `QGC::GPSRTCM` library remains Qt Core-backed. Corrections keeps
-Qt Core public and RTCM private; consumers using RTCM APIs link them explicitly.
+`QGC::GPSRTCM` remains Qt Core-backed, and Corrections publicly exposes its decoded
+frame contract. `QGC::GPSMavlinkPacket` separately owns GPS_RTCM_DATA fragmentation
+in `Corrections/MAVLink/`, without RTCM decoding, vehicle/link objects or network
+dependencies. Its standalone consumer and `RTCMMavlinkPacketTest` cover packetization
+independently of the frame-decoder conformance suite.
 
-The application adapters live alongside their features in `src/GPS/Corrections/`
-and `src/GPS/RTCM/`. `src/GPS/CMakeLists.txt` compiles them only into the application,
+The UDP ingress adapter lives in `src/GPS/Corrections/`; MAVLink sequence/admission
+accounting and vehicle/link adapters live in `src/GPS/Corrections/MAVLink/`.
+`src/GPS/CMakeLists.txt` compiles these adapters only into the application,
 not the standalone libraries. They connect the existing base receiver, NTRIP client,
 and UDP input to one shared MAVLink sequence domain.
 The correction manager applies routing and UDP settings before enabling ingress;
@@ -383,8 +409,10 @@ conversion and GGA setting subscriptions belong to `NTRIPManager`. `GPSManager`
 injects application position providers before initializing the facade.
 Source-table requests and cached results include the certificate policy in their
 identity. Changing it also retires pooled TLS connections.
-`QGC::GPSNTRIPHttp` exports connection/filter configuration and bounded HTTP
-decoding with only Qt Core and Network. `QGC::GPSNTRIP` adds HTTP/TLS transport,
+`QGC::GPSNTRIPHttp` exports connection/filter configuration, request serialization
+and bounded HTTP decoding with only Qt Core and Network. `NTRIPHttpRequest` shares
+the existing authentication utility without depending on sockets, RTCM or positioning.
+`QGC::GPSNTRIP` adds HTTP/TLS transport,
 GGA providers, source-table fetching/model, and connection statistics. It links
 RTCM, timing, rate tracking, Qt Positioning, and the existing NMEA formatting
 helpers, without QML, serial discovery, native drivers, Bluetooth, or HttpServer.

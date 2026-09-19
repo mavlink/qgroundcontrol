@@ -14,7 +14,7 @@
 #include "NTRIPGgaProvider.h"
 #include "NTRIPSourceTableController.h"
 #include "NTRIPTransport.h"
-#include "RTCMFrameDecoder.h"
+#include "RTCMDecodedFrame.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPManagerLog)
 
@@ -172,7 +172,7 @@ private:
     void _onTransportError(const NTRIPFailure& failure);
     void _onPlaintextCredentialsWarning();
     void _setSecurityWarning(const QString& warning);
-    void _rtcmDataReceived(const RTCMFrameDecoder::Result& frame);
+    void _rtcmDataReceived(const RTCMDecodedFrame& frame);
     void _onSettingChanged();
     NTRIPConfiguration _configFromSettings() const;
     bool _isEnabled() const;

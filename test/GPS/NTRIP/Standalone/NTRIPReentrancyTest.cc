@@ -23,6 +23,7 @@
 #include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
 #include "PortableTest.h"
+#include "RTCMDecodedFrame.h"
 
 namespace {
 #ifdef QGC_PORTABLE_TEST
@@ -378,7 +379,7 @@ void NTRIPReentrancyTest::legacyCaster()
     QVERIFY(errors.isEmpty());
     QCOMPARE(connected.size(), 1);
     QCOMPARE(frames.size(), 1);
-    QCOMPARE(qvariant_cast<RTCMFrameDecoder::Result>(frames.first().first()).data, frame);
+    QCOMPARE(qvariant_cast<RTCMDecodedFrame>(frames.first().first()).data, frame);
     transport.stop();
 #ifdef QGC_PORTABLE_TEST
     if (warning) {
@@ -428,10 +429,10 @@ void NTRIPReentrancyTest::icyPartialFrame()
         }
         QCOMPARE(connected.size(), 1);
         QCOMPARE(frames.size(), 1);
-        QCOMPARE(qvariant_cast<RTCMFrameDecoder::Result>(frames.first().first()).receivedAtMs, 100);
+        QCOMPARE(qvariant_cast<RTCMDecodedFrame>(frames.first().first()).receivedAtMs, 100);
         transport._processHttpBytes(frame.repeated(1024), 300);
         QCOMPARE(frames.size(), 1025);
-        QCOMPARE(qvariant_cast<RTCMFrameDecoder::Result>(frames.last().first()).receivedAtMs, 300);
+        QCOMPARE(qvariant_cast<RTCMDecodedFrame>(frames.last().first()).receivedAtMs, 300);
         QVERIFY(errors.isEmpty());
     }
 }
@@ -819,19 +820,18 @@ void NTRIPReentrancyTest::bodyPublicationRetiresAttempt()
     int frames = 0;
     int errors = 0;
     connect(transport.get(), &NTRIPTransport::error, this, [&]() { ++errors; });
-    connect(transport.get(), &NTRIPTransport::correctionFrameReceived, this,
-            [&](const RTCMFrameDecoder::Result& result) {
-                QVERIFY(result.valid && !result.filtered);
-                QCOMPARE(result.receivedAtMs, 123);
-                ++frames;
-                if (action == 1) {
-                    transport.reset();
-                } else if (action == 0) {
-                    transport->stop();
-                } else {
-                    transport->start();
-                }
-            });
+    connect(transport.get(), &NTRIPTransport::correctionFrameReceived, this, [&](const RTCMDecodedFrame& result) {
+        QVERIFY(result.valid && !result.filtered);
+        QCOMPARE(result.receivedAtMs, 123);
+        ++frames;
+        if (action == 1) {
+            transport.reset();
+        } else if (action == 0) {
+            transport->stop();
+        } else {
+            transport->start();
+        }
+    });
     const QByteArray wire = chunked ? "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" +
                                           QByteArray::number(frame.size() * 2, 16) + "\r\n" + frame + frame + "!\r\n"
                                     : "HTTP/1.1 200 OK\r\n\r\n" + frame + frame;
@@ -856,10 +856,10 @@ void NTRIPReentrancyTest::receiptTimesAndEvidence()
     QFETCH(bool, chunked);
     NTRIPHttpTransport transport(config(), {.whitelist = QStringLiteral("1005")});
     QSignalSpy observed(&transport, &NTRIPTransport::correctionFrameReceived);
-    QList<RTCMFrameDecoder::Result> queued;
+    QList<RTCMDecodedFrame> queued;
     connect(
         &transport, &NTRIPTransport::correctionFrameReceived, this,
-        [&](const RTCMFrameDecoder::Result& frame) { queued.append(frame); }, Qt::QueuedConnection);
+        [&](const RTCMDecodedFrame& frame) { queued.append(frame); }, Qt::QueuedConnection);
     const auto first = GpsTestHelpers::buildRtcmFrame(1005);
     const auto second = GpsTestHelpers::buildRtcmFrame(1077);
     if (chunked) {
@@ -873,10 +873,10 @@ void NTRIPReentrancyTest::receiptTimesAndEvidence()
         transport._processHttpBytes(first.sliced(1) + second, 200);
     }
     QCOMPARE(observed.size(), 2);
-    const auto accepted = qvariant_cast<RTCMFrameDecoder::Result>(observed[0][0]);
+    const auto accepted = qvariant_cast<RTCMDecodedFrame>(observed[0][0]);
     QVERIFY(accepted.valid && !accepted.filtered);
     QCOMPARE(accepted.receivedAtMs, 100);
-    const auto filtered = qvariant_cast<RTCMFrameDecoder::Result>(observed[1][0]);
+    const auto filtered = qvariant_cast<RTCMDecodedFrame>(observed[1][0]);
     QVERIFY(filtered.valid && filtered.filtered);
     QCOMPARE(filtered.receivedAtMs, 200);
     QVERIFY(queued.isEmpty());
@@ -957,8 +957,8 @@ void NTRIPReentrancyTest::filterConfigurationUpdatesWithoutReconnect()
     const auto response = QByteArrayLiteral("HTTP/1.1 200 OK\r\n\r\n") + frames;
     QCOMPARE(peer->write(response), response.size());
     QTRY_COMPARE(observed.size(), 2);
-    auto first = qvariant_cast<RTCMFrameDecoder::Result>(observed[0][0]);
-    auto second = qvariant_cast<RTCMFrameDecoder::Result>(observed[1][0]);
+    auto first = qvariant_cast<RTCMDecodedFrame>(observed[0][0]);
+    auto second = qvariant_cast<RTCMDecodedFrame>(observed[1][0]);
     QVERIFY(first.valid && !first.filtered);
     QVERIFY(second.valid && second.filtered);
     QCOMPARE(first.messageId, 1005);
@@ -970,8 +970,8 @@ void NTRIPReentrancyTest::filterConfigurationUpdatesWithoutReconnect()
     transport.setRtcmWhitelist(replacement.messageIds());
     QCOMPARE(peer->write(frames), frames.size());
     QTRY_COMPARE(observed.size(), 4);
-    first = qvariant_cast<RTCMFrameDecoder::Result>(observed[2][0]);
-    second = qvariant_cast<RTCMFrameDecoder::Result>(observed[3][0]);
+    first = qvariant_cast<RTCMDecodedFrame>(observed[2][0]);
+    second = qvariant_cast<RTCMDecodedFrame>(observed[3][0]);
     QVERIFY(first.valid && first.filtered);
     QVERIFY(second.valid && !second.filtered);
     QCOMPARE(second.messageId, 1077);
@@ -979,8 +979,8 @@ void NTRIPReentrancyTest::filterConfigurationUpdatesWithoutReconnect()
     transport.setRtcmWhitelist(NTRIPRtcmFilterConfig{}.messageIds());
     QCOMPARE(peer->write(frames), frames.size());
     QTRY_COMPARE(observed.size(), 6);
-    first = qvariant_cast<RTCMFrameDecoder::Result>(observed[4][0]);
-    second = qvariant_cast<RTCMFrameDecoder::Result>(observed[5][0]);
+    first = qvariant_cast<RTCMDecodedFrame>(observed[4][0]);
+    second = qvariant_cast<RTCMDecodedFrame>(observed[5][0]);
     QVERIFY(first.valid && !first.filtered);
     QVERIFY(second.valid && !second.filtered);
     QCOMPARE(transport.config(), connection);
