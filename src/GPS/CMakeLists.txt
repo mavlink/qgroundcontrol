@@ -16,6 +16,8 @@ add_subdirectory(Corrections)
 add_subdirectory(NTRIP)
 add_subdirectory(PositionManager)
 
+add_subdirectory(Receiver)
+add_subdirectory(Driver)
 add_subdirectory(RTK)
 
 # QML registrations belong to the application; the Core library also builds without QML.

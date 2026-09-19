@@ -34,10 +34,10 @@ struct GPSIntegrityReport
     JammingState jamming = JammingState::Unknown;
     SpoofingState spoofing = SpoofingState::Unknown;
     CorrectionUse correctionUse = CorrectionUse::Unknown;
-    std::optional<int32_t> noisePerMillisecond;
-    std::optional<uint16_t> automaticGainControl;
-    std::optional<int32_t> jammingIndicator;
-    std::optional<bool> correctionCrcFailed;
+    std::optional<int32_t> noisePerMillisecond = std::nullopt;
+    std::optional<uint16_t> automaticGainControl = std::nullopt;
+    std::optional<int32_t> jammingIndicator = std::nullopt;
+    std::optional<bool> correctionCrcFailed = std::nullopt;
 };
 
 struct GPSPositionReport
@@ -65,11 +65,12 @@ struct GPSPositionReport
     float verticalAccuracyMeters = std::numeric_limits<float>::quiet_NaN();
     float horizontalDop = std::numeric_limits<float>::quiet_NaN();
     float verticalDop = std::numeric_limits<float>::quiet_NaN();
+    // Unavailable when the producer rejects its velocity solution, even with a valid position fix.
     float speedMetersPerSecond = std::numeric_limits<float>::quiet_NaN();
     float courseRadians = std::numeric_limits<float>::quiet_NaN();
     float headingRadians = std::numeric_limits<float>::quiet_NaN();
     float headingAccuracyRadians = std::numeric_limits<float>::quiet_NaN();
-    std::optional<uint8_t> satellitesUsed;
+    std::optional<uint8_t> satellitesUsed = std::nullopt;
     GPSIntegrityReport integrity;
 };
 
@@ -79,10 +80,10 @@ struct GPSSatelliteReport
     {
         uint16_t id = 0;
         uint16_t prn = 0;
-        std::optional<bool> used;
-        std::optional<float> elevationDegrees;
-        std::optional<float> azimuthDegrees;
-        std::optional<uint8_t> signalStrength;
+        std::optional<bool> used = std::nullopt;
+        std::optional<float> elevationDegrees = std::nullopt;
+        std::optional<float> azimuthDegrees = std::nullopt;
+        std::optional<uint8_t> signalStrength = std::nullopt;
     };
 
     static constexpr uint16_t MAX_SATELLITES = 128;
@@ -96,7 +97,7 @@ struct GPSSurveyReport
     double latitudeDegrees = std::numeric_limits<double>::quiet_NaN();
     double longitudeDegrees = std::numeric_limits<double>::quiet_NaN();
     float altitudeEllipsoidMeters = std::numeric_limits<float>::quiet_NaN();
-    std::optional<double> meanAccuracyMeters;
+    std::optional<double> meanAccuracyMeters = std::nullopt;
     std::chrono::seconds duration{0};
     bool valid = false;
     bool active = false;

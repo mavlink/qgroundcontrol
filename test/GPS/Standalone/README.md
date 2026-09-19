@@ -1,7 +1,7 @@
 # GPS library boundary checks
 
-GPS value types live with their owners: base configuration and receiver identity
-in `RTK/`, I/O statuses and results in `Transport/`, and altitude datums in `Core/`.
+GPS value types live with their owners: receiver configuration, identity and native
+reports in `Receiver/`, I/O statuses and results in `Transport/`, and altitude datums in `Core/`.
 The shared `GPSConstellation.h` remains Qt-free and is exported by both Core and
 the NMEA protocol target without a separate contracts library.
 The Core library adds position and satellite observations, source health, and
@@ -16,16 +16,16 @@ borrowed; it does not write receiver configuration or depend on QGC settings.
 
 CMake's `VERIFY_INTERFACE_HEADER_SETS` compiles each public header independently
 using only its owner's public link interface. These checks are part of the
-default build. Executable consumers verify accepted-position expiry, source
+default build. GPS and utility tests share the header/consumer wiring in
+`test/LibraryBoundaryChecks.cmake`, retaining their own labels, timeouts and
+component-specific dependencies. Executable consumers verify accepted-position expiry, source
 registration, and session ownership without linking QGroundControl. They use
 `QGCTestTiming` for deterministic scheduling and also run in the application's
 Unit suite.
 
 Base-configuration, accepted-state, and stream-transport behavior suites reuse
 `PortableTest`: the application harness runs them against its production objects,
-while standalone builds create narrow executables. GPS boundary consumers and
-their dependency checks are configured locally without changing utility test
-infrastructure.
+while standalone builds create narrow executables.
 
 The NMEA protocol is a separate Qt-free static library. Its consumer links only
 `QGCGPSNMEAProtocol` and exercises sentence decoding, constellation resolution, and
@@ -67,7 +67,7 @@ ctest --test-dir build/gps-transports --output-on-failure
 
 The available components are `Core`, `NMEAProtocol`, `NMEAUtils`, `NMEA`, `Positioning`,
 `Transport`, `ReceiverTransports`, `RTCMFramer`, `RTCM`, `Corrections`, `NTRIPHttp`,
-`NTRIP`, `DriverData`, and `ReceiverConfig`. The `Transport` library
+`NTRIP`, `DriverReports`, `Px4Adapter`, and `ReceiverConfig`. The `Transport` library
 needs Qt Core and the logging library, not Qt Network or RTK configuration.
 Receiver transport tests additionally use Qt Test, not Qt Positioning.
 Linux standalone builds leave the Android serial compatibility harness disabled.
@@ -76,29 +76,46 @@ files are available. Full Linux application test builds retain that harness.
 Core survey-status coverage stays with the Core component.
 All components are enabled by default. `NMEA` includes `NMEAProtocol` and `NMEAUtils`;
 `RTCM` and `Corrections` automatically include `RTCMFramer`. `NTRIP` includes
-`NTRIPHttp`, `NMEAUtils`, and `RTCM`.
+`NTRIPHttp`, `NMEAUtils`, and `RTCM`. `Px4Adapter` includes `DriverReports`.
 
 ## Owner-local GPS types
 
 The existing PX4 driver remains in use. `QGC::GPSReceiverConfig` owns the Qt-free
-configuration and software request capabilities in `RTK/`; `QGC::GPSDriverData`
-owns native report values in `RTK/Driver/Reports` and the private PX4 conversion
-boundary. Neither target depends on Qt, QGC settings, transports, or native
-protocol libraries. The wrapper's opaque state keeps PX4 layouts out of its
-public sinks and the worker's queued signals.
+configuration and software request capabilities. It shares `Receiver/CMakeLists.txt`
+with the independent, header-only `QGC::GPSDriverReports` target. Target declarations
+stay beside their sources instead of in build-only folders or per-target include
+fragments. Standalone builds add this module with `EXCLUDE_FROM_ALL` and register
+only requested consumers, so a report-only build does not compile configuration code.
+
+| Directory | Ownership |
+| --- | --- |
+| `Receiver/` | Qt-free configuration, capabilities, identity, and native reports |
+| `Driver/` | Driver facade and Qt configuration diagnostics |
+| `Driver/Px4/` | Private compatibility conversion, layouts, and PX4 backend build wiring |
+| `RTK/` | Application composition, worker integration, Facts, settings, and auto-connect |
+
+The private `QGCGPSPx4Adapter` target is Qt-free; its regression executable opts
+into the private `Driver/Px4` boundary. The driver facade explicitly calls
+`qgc_add_px4_backend()` to attach Qt and the external PX4 protocol implementation.
+Report, configuration and compatibility-only builds never invoke that runtime
+setup or fetch the dependency. The wrapper's opaque state keeps PX4 layouts out
+of its public sinks and the worker's queued signals. Its public header is checked
+in isolation in application test builds.
 
 The RTK provider and driver consume `GPSReceiverConfig`, with RTK base as the
 unchanged default role and `GPSBaseStationConfig` as its base-only member.
 Native position mode, u-blox constellation requests, u-blox position dynamic
-models, and position heading offsets use existing driver paths. Capabilities
+models, and supported position heading offsets use existing driver paths.
+The wrapper's u-blox Normal mode disables heading output, so u-blox heading-offset
+requests, including explicit zero, are rejected before I/O. Capabilities
 describe software request support, not receiver-model discovery or read-back.
 Unsupported role/setting combinations fail before configuration I/O. Output-rate
 selection, configured NMEA output, settings/UI controls and receiver read-back
 remain with the native-driver/lifecycle work.
 
 Shared Qt-free validation preserves the uint32 survey-duration range and existing
-fixed-base float wire limits. The existing Qt validation functions translate its
-error codes at the application-facing boundary.
+fixed-base float wire limits. `Driver/GPSReceiverConfigValidation` translates its
+error codes at the Qt-facing boundary without introducing Qt into `Receiver/`.
 
 `gpsBaseStationConfigError()` checks the native base configuration and wire limits.
 Fixed-base coordinates and altitude must be supplied explicitly; omitted fields
@@ -119,7 +136,8 @@ ctest --test-dir build/gps-rtk-config --output-on-failure
 ```
 
 Native reports default unavailable fields to NaN, `std::nullopt`, or an explicit
-unknown enum. The compatibility adapter retains known zero/false diagnostics,
+unknown enum. Invalid producer velocity leaves speed and course unavailable even
+when the position fix is valid. The compatibility adapter retains known zero/false diagnostics,
 separates MSL and ellipsoid altitude, clamps legacy satellite arrays, and does not
 invent per-satellite detail for count-only SBF reports or recover truncated
 Ashtech azimuths. The PX4 state has no independent integrity receipt timestamps;
@@ -134,12 +152,22 @@ copies them before queueing and translates native survey values into the existin
 Existing source-health, observation, satellite stores and vehicle Facts are
 unchanged; registering native positioning/diagnostic sources remains lifecycle work.
 
-Both native components, their isolated public headers and the private PX4 bridge
-regressions build without finding Qt or fetching the PX4 driver:
+The native report interface builds without finding Qt, compiling the private
+adapter or fetching the PX4 driver:
+
+```sh
+cmake -S test/GPS/Standalone -B build/gps-reports -G Ninja \
+    -DQGC_GPS_COMPONENTS=DriverReports -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
+cmake --build build/gps-reports
+ctest --test-dir build/gps-reports --output-on-failure
+```
+
+To include the private compatibility bridge regressions and receiver
+configuration without Qt or the PX4 protocol library:
 
 ```sh
 cmake -S test/GPS/Standalone -B build/gps-native-data -G Ninja \
-    '-DQGC_GPS_COMPONENTS=DriverData;ReceiverConfig' \
+    '-DQGC_GPS_COMPONENTS=Px4Adapter;ReceiverConfig' \
     -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
 cmake --build build/gps-native-data
 ctest --test-dir build/gps-native-data --output-on-failure

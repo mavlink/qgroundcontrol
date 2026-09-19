@@ -1,13 +1,12 @@
-#include "GPSDriverData.h"
-
 #include <algorithm>
 #include <bit>
 #include <limits>
 
+#include "GPSPx4Data_p.h"
 #include "satellite_info.h"
 #include "sensor_gps.h"
 
-namespace GPSDriverData {
+namespace GPSPx4Data {
 
 void initialize(sensor_gps_s& position)
 {
@@ -18,8 +17,8 @@ void initialize(sensor_gps_s& position)
         position.vel_m_s = position.vel_n_m_s = position.vel_e_m_s = position.vel_d_m_s = position.cog_rad =
             position.heading = position.heading_accuracy = std::numeric_limits<float>::quiet_NaN();
     position.noise_per_ms = position.jamming_indicator = -1;
-    position.automatic_gain_control = std::numeric_limits<uint16_t>::max();
-    position.satellites_used = std::numeric_limits<uint8_t>::max();
+    position.automatic_gain_control = (std::numeric_limits<uint16_t>::max)();
+    position.satellites_used = (std::numeric_limits<uint8_t>::max)();
 }
 
 GPSPositionReport position(const sensor_gps_s& source)
@@ -60,11 +59,13 @@ GPSPositionReport position(const sensor_gps_s& source)
     result.verticalAccuracyMeters = source.epv;
     result.horizontalDop = source.hdop;
     result.verticalDop = source.vdop;
-    result.speedMetersPerSecond = source.vel_m_s;
-    result.courseRadians = source.cog_rad;
+    if (source.vel_ned_valid) {
+        result.speedMetersPerSecond = source.vel_m_s;
+        result.courseRadians = source.cog_rad;
+    }
     result.headingRadians = source.heading;
     result.headingAccuracyRadians = source.heading_accuracy;
-    if (source.satellites_used != std::numeric_limits<uint8_t>::max()) {
+    if (source.satellites_used != (std::numeric_limits<uint8_t>::max)()) {
         result.satellitesUsed = source.satellites_used;
     }
 
@@ -98,7 +99,7 @@ GPSPositionReport position(const sensor_gps_s& source)
     if (source.noise_per_ms >= 0) {
         integrity.noisePerMillisecond = source.noise_per_ms;
     }
-    if (source.automatic_gain_control != std::numeric_limits<uint16_t>::max()) {
+    if (source.automatic_gain_control != (std::numeric_limits<uint16_t>::max)()) {
         integrity.automaticGainControl = source.automatic_gain_control;
     }
     if (source.jamming_indicator >= 0) {
@@ -120,7 +121,7 @@ GPSSatelliteReport satellites(const satellite_info_s& source, GPSType type)
 {
     GPSSatelliteReport result;
     result.timestampUs = source.timestamp;
-    result.count = std::min(source.count, satellite_info_s::SAT_INFO_MAX_SATELLITES);
+    result.count = (std::min) (source.count, satellite_info_s::SAT_INFO_MAX_SATELLITES);
     if (type == GPSType::septentrio) {
         // The PX4 SBF wrapper publishes a count, not per-satellite observations.
         return result;
@@ -146,4 +147,4 @@ GPSSatelliteReport satellites(const satellite_info_s& source, GPSType type)
     return result;
 }
 
-}  // namespace GPSDriverData
+}  // namespace GPSPx4Data

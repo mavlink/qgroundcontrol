@@ -12,7 +12,7 @@
 namespace LittleEndian {
 
 template <typename T>
-concept Scalar = ((std::integral<T> && !std::same_as<T, bool>) || std::floating_point<T>) &&
+concept Scalar = ((std::integral<T> && !std::same_as<std::remove_cv_t<T>, bool>) || std::floating_point<T>) &&
                  (sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8);
 
 template <Scalar T>

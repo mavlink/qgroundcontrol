@@ -31,8 +31,8 @@ public:
     GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks);
     ~GPSDriver();
 
-    GPSDriver(const GPSDriver &) = delete;
-    GPSDriver &operator=(const GPSDriver &) = delete;
+    GPSDriver(const GPSDriver&) = delete;
+    GPSDriver& operator=(const GPSDriver&) = delete;
 
     /// Create and configure the underlying driver. Returns false on failure.
     bool configure();
@@ -44,11 +44,11 @@ public:
 
     /// Trampoline target for the px4 callback; `type` is a GPSCallbackType value.
     /// Public only so the file-local C callback can reach it — not for callers.
-    int handleCallback(int type, void *data1, int data2);
+    int handleCallback(int type, void* data1, int data2);
 
 private:
     GPSType _type;
-    GPSTransport &_transport;
+    GPSTransport& _transport;
     GPSReceiverConfig _config;
     GPSDriverSinks _sinks;
 

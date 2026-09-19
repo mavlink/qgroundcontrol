@@ -4,6 +4,7 @@
 
 #include "GPSDriverReports.h"
 
+// This consumer must not require a PX4 adapter or transport implementation.
 static_assert(std::is_copy_constructible_v<GPSPositionReport>);
 static_assert(std::is_copy_constructible_v<GPSSatelliteReport>);
 static_assert(std::is_copy_constructible_v<GPSSurveyReport>);

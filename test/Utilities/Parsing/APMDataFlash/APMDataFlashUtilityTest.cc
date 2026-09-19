@@ -343,6 +343,32 @@ void APMDataFlashUtilityTest::_testParseMessageTruncated()
     verifyExpectedLogMessage();
 }
 
+void APMDataFlashUtilityTest::_testParseMessageUnsupportedFormat_data()
+{
+    QTest::addColumn<QString>("format");
+    QTest::addColumn<int>("columnCount");
+    QTest::newRow("first-field") << QStringLiteral("?I") << 2;
+    QTest::newRow("middle-field") << QStringLiteral("I?I") << 3;
+    QTest::newRow("last-field") << QStringLiteral("II?") << 3;
+    QTest::newRow("unnamed-tail") << QStringLiteral("I?") << 1;
+}
+
+void APMDataFlashUtilityTest::_testParseMessageUnsupportedFormat()
+{
+    QFETCH(QString, format);
+    QFETCH(int, columnCount);
+    APMDataFlashUtility::MessageFormat fmt;
+    fmt.format = format;
+    for (int i = 0; i < columnCount; ++i) {
+        fmt.columns.append(QString::number(i));
+    }
+    const QByteArray payload = QByteArray::fromHex("010000002a000000");
+    expectLogMessage("Utilities.APMDataFlashUtility", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Unsupported DataFlash format character:")));
+    QVERIFY(APMDataFlashUtility::parseMessage(payload.constData(), payload.size(), fmt).isEmpty());
+    verifyExpectedLogMessage();
+}
+
 // ============================================================================
 // Message Iteration Tests
 // ============================================================================

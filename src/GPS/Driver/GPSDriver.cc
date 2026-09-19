@@ -10,8 +10,8 @@
 #include <ubx.h>
 #include <utility>
 
-#include "GPSBaseStationConfigValidation.h"
-#include "GPSDriverData.h"
+#include "GPSPx4Data_p.h"
+#include "GPSReceiverConfigValidation.h"
 #include "GPSTransport.h"
 #include "QGCLoggingCategory.h"
 
@@ -27,7 +27,7 @@ int callbackTrampoline(GPSCallbackType type, void* data1, int data2, void* user)
 
 struct GPSDriver::State
 {
-    State() { GPSDriverData::initialize(position); }
+    State() { GPSPx4Data::initialize(position); }
 
     sensor_gps_s position{};
     satellite_info_s satellites{};
@@ -47,7 +47,7 @@ GPSDriver::~GPSDriver() = default;
 bool GPSDriver::configure()
 {
     _state->driver.reset();
-    GPSDriverData::initialize(_state->position);
+    GPSPx4Data::initialize(_state->position);
     _state->satellites = {};
     if (const QString error = gpsReceiverConfigError(_type, _config); !error.isEmpty()) {
         qCWarning(GPSDriverLog) << error;
@@ -116,7 +116,7 @@ bool GPSDriver::configure()
         return false;
     }
 
-    GPSDriverData::initialize(_state->position);
+    GPSPx4Data::initialize(_state->position);
     return true;
 }
 
@@ -132,10 +132,10 @@ int GPSDriver::receive(unsigned timeoutMs)
     }
 
     if ((ret & 0x01) && _sinks.onPosition) {
-        _sinks.onPosition(GPSDriverData::position(_state->position));
+        _sinks.onPosition(GPSPx4Data::position(_state->position));
     }
     if ((ret & 0x02) && _sinks.onSatelliteInfo) {
-        _sinks.onSatelliteInfo(GPSDriverData::satellites(_state->satellites, _type));
+        _sinks.onSatelliteInfo(GPSPx4Data::satellites(_state->satellites, _type));
     }
     return ret;
 }

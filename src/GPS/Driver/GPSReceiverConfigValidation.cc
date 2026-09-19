@@ -1,4 +1,4 @@
-#include "GPSBaseStationConfigValidation.h"
+#include "GPSReceiverConfigValidation.h"
 
 #include <QtCore/QCoreApplication>
 

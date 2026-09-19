@@ -237,7 +237,7 @@ int main()
             check(label + ": base path", capabilities.rtkBase);
             check(label + ": constellation mask", capabilities.constellationMask == (ublox ? 0x1fu : 0u));
             check(label + ": dynamic model", capabilities.dynamicModel == (ublox && position));
-            check(label + ": heading offset", capabilities.headingOffset == position);
+            check(label + ": heading offset", capabilities.headingOffset == (!ublox && position));
             GPSReceiverConfig config{.role = role, .base = validSurvey};
             expectError(label + ": defaults", gpsValidateReceiverConfig(type, config), Error::None);
             config.base = validFixed;
@@ -271,7 +271,7 @@ int main()
             for (const auto& entry : headingCases) {
                 config.headingOffsetRadians = entry.value;
                 expectError(label + ": heading " + std::string(entry.name), gpsValidateReceiverConfig(type, config),
-                            position ? entry.expected : Error::UnsupportedHeadingOffset);
+                            !ublox && position ? entry.expected : Error::UnsupportedHeadingOffset);
             }
             config.headingOffsetRadians.reset();
             expectError(label + ": cleared optional requests", gpsValidateReceiverConfig(type, config), Error::None);
@@ -306,7 +306,10 @@ int main()
           explicitZero.dynamicModel.has_value() && *explicitZero.dynamicModel == 0);
     check("explicit zero heading is retained",
           explicitZero.headingOffsetRadians.has_value() && *explicitZero.headingOffsetRadians == 0.0f);
-    expectError("all supported requests together", gpsValidateReceiverConfig(GPSType::ublox, explicitZero),
+    expectError("u-blox cannot honor explicit zero heading", gpsValidateReceiverConfig(GPSType::ublox, explicitZero),
+                Error::UnsupportedHeadingOffset);
+    explicitZero.headingOffsetRadians.reset();
+    expectError("u-blox supported requests together", gpsValidateReceiverConfig(GPSType::ublox, explicitZero),
                 Error::None);
 
     GPSReceiverConfig invalid{.constellationMask = 32, .dynamicModel = 1, .headingOffsetRadians = NAN_FLOAT};
@@ -320,6 +323,8 @@ int main()
                 Error::InvalidDynamicModel);
     invalid.dynamicModel.reset();
     expectError("heading checked after earlier requests pass", gpsValidateReceiverConfig(GPSType::ublox, invalid),
+                Error::UnsupportedHeadingOffset);
+    expectError("supported heading checked for invalid values", gpsValidateReceiverConfig(GPSType::septentrio, invalid),
                 Error::InvalidHeadingOffset);
 
     if (failures != 0) {

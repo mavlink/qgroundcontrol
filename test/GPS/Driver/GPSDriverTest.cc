@@ -27,7 +27,9 @@ const std::atomic_bool neverStop{false};
 class FakeGPSTransport : public GPSTransport
 {
 public:
-    FakeGPSTransport() : GPSTransport(neverStop) {}
+    FakeGPSTransport()
+        : GPSTransport(neverStop)
+    {}
 
     GPSOpenResult open() override { return {GPSOpenStatus::Opened}; }
 
@@ -487,6 +489,14 @@ void GPSDriverTest::_nativeConfigurationRejectedBeforeIo_data()
         << int(GPSType::ublox)
         << GPSReceiverConfig{.base = {.surveyInAccMeters = 2, .surveyInDurationSecs = 180}, .dynamicModel = 0}
         << QStringLiteral("This receiver role cannot configure a dynamic model");
+    QTest::newRow("ublox-position-cannot-honor-heading")
+        << int(GPSType::ublox)
+        << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position, .headingOffsetRadians = 0.5f}
+        << QStringLiteral("This receiver role cannot configure a heading offset");
+    QTest::newRow("ublox-position-cannot-honor-zero-heading")
+        << int(GPSType::ublox)
+        << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position, .headingOffsetRadians = 0.0f}
+        << QStringLiteral("This receiver role cannot configure a heading offset");
     QTest::newRow("invalid-heading") << int(GPSType::septentrio)
                                      << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position,
                                                           .headingOffsetRadians = qQNaN()}

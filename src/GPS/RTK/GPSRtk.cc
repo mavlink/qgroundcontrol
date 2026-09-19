@@ -14,6 +14,7 @@
 #include "SerialPortManager.h"
 #endif
 
+#include <algorithm>
 #include <functional>
 #include <utility>
 
@@ -259,7 +260,7 @@ FactGroup* GPSRtk::gpsRtkFactGroup()
 GPSRtk::SatelliteCounts GPSRtk::countSatellites(const GPSSatelliteReport& msg)
 {
     SatelliteCounts counts;
-    counts.inView = qMin(msg.count, GPSSatelliteReport::MAX_SATELLITES);
+    counts.inView = (std::min) (msg.count, GPSSatelliteReport::MAX_SATELLITES);
     for (uint16_t i = 0; i < counts.inView; ++i) {
         if (msg.satellites[i].used.value_or(false)) {
             ++counts.used;

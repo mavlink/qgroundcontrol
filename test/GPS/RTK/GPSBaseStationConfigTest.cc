@@ -2,7 +2,7 @@
 
 #include <QtTest/QTest>
 
-#include "GPSBaseStationConfigValidation.h"
+#include "GPSReceiverConfigValidation.h"
 #include "PortableTest.h"
 
 Q_DECLARE_METATYPE(GPSBaseStationConfig)

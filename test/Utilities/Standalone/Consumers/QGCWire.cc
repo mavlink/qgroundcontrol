@@ -37,7 +37,7 @@ bool checkScalar(const char* name, const std::array<uint8_t, sizeof(T)>& bytes, 
         }
     }
     for (const auto offset :
-         {std::size_t{1}, payload.size(), payload.size() + 1, std::numeric_limits<std::size_t>::max()}) {
+         {std::size_t{1}, payload.size(), payload.size() + 1, (std::numeric_limits<std::size_t>::max)()}) {
         if (LittleEndian::read<T>(payload, offset)) {
             std::cerr << name << ": accepted an invalid offset\n";
             return false;
@@ -49,6 +49,9 @@ bool checkScalar(const char* name, const std::array<uint8_t, sizeof(T)>& bytes, 
 }  // namespace
 
 static_assert(!LittleEndian::Scalar<bool>);
+static_assert(!LittleEndian::Scalar<const bool>);
+static_assert(!LittleEndian::Scalar<volatile bool>);
+static_assert(!LittleEndian::Scalar<const volatile bool>);
 static_assert(!LittleEndian::Scalar<void*>);
 static_assert(LittleEndian::read<uint16_t>(std::array<uint8_t, 2>{0x34, 0x12}) == 0x1234);
 static_assert(!LittleEndian::read<uint64_t>({}));

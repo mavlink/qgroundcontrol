@@ -39,6 +39,8 @@ private slots:
     void _testParseMessage();
     void _testParseMessageTruncated_data();
     void _testParseMessageTruncated();
+    void _testParseMessageUnsupportedFormat_data();
+    void _testParseMessageUnsupportedFormat();
 
     // Message iteration tests
     void _testIterateMessages();

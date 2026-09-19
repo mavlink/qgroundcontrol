@@ -4,15 +4,15 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(QGCBaseStationConfigTests LANGUAGES CXX)
     enable_testing()
     find_package(Qt6 6.8 REQUIRED COMPONENTS Core Test)
-    set(_rtk_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/RTK")
-    add_subdirectory("${_rtk_root}/Config" ReceiverConfig)
+    set(_gps_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS")
+    add_subdirectory("${_gps_root}/Receiver" Receiver EXCLUDE_FROM_ALL)
     qt_add_executable(QGCGPSBaseStationConfigTest GPSBaseStationConfigTest.cc
-                      "${_rtk_root}/GPSBaseStationConfigValidation.cc" ../../Portable/PortableTest.h
+                      "${_gps_root}/Driver/GPSReceiverConfigValidation.cc" ../../Portable/PortableTest.h
     )
     set_target_properties(QGCGPSBaseStationConfigTest PROPERTIES AUTOMOC ON)
     target_compile_features(QGCGPSBaseStationConfigTest PRIVATE cxx_std_20)
     target_compile_definitions(QGCGPSBaseStationConfigTest PRIVATE QGC_PORTABLE_TEST)
-    target_include_directories(QGCGPSBaseStationConfigTest PRIVATE "${_rtk_root}"
+    target_include_directories(QGCGPSBaseStationConfigTest PRIVATE "${_gps_root}/Driver"
                                                                    "${CMAKE_CURRENT_SOURCE_DIR}/../../Portable"
     )
     target_link_libraries(QGCGPSBaseStationConfigTest PRIVATE Qt6::Test QGCGPSReceiverConfig)
@@ -22,8 +22,6 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     )
     return()
 endif()
-
-add_subdirectory(Driver)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSBaseStationConfigTest.cc GPSProviderTest.cc GPSProviderTest.h
                                              GPSRtkTest.cc GPSRtkTest.h

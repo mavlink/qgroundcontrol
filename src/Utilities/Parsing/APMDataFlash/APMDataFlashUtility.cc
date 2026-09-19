@@ -173,20 +173,17 @@ QMap<QString, QVariant> parseMessage(const char* data, qint64 size, const Messag
     QMap<QString, QVariant> result;
     qint64 offset = 0;
 
-    for (int i = 0; i < fmt.format.length() && i < fmt.columns.size(); ++i) {
+    for (qsizetype i = 0; i < fmt.format.size(); ++i) {
         const char formatChar = fmt.format.at(i).toLatin1();
-        const QString &columnName = fmt.columns.at(i);
 
         const int fieldSize = formatCharSize(formatChar);
-        if (fieldSize == 0) {
-            continue;
-        }
-
         const QVariant value = parseValue(data + offset, size - offset, formatChar);
         if (!value.isValid()) {
             return {};
         }
-        result[columnName] = value;
+        if (i < fmt.columns.size()) {
+            result[fmt.columns.at(i)] = value;
+        }
         offset += fieldSize;
     }
 

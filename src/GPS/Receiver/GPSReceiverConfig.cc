@@ -29,7 +29,8 @@ GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type, GPSReceiverConfig:
     capabilities.recognized = true;
     capabilities.position = true;
     capabilities.rtkBase = true;
-    capabilities.headingOffset = role == GPSReceiverConfig::Role::Position;
+    // The wrapper's Normal UBX mode disables NAV-RELPOSNED, the only heading-offset consumer.
+    capabilities.headingOffset = role == GPSReceiverConfig::Role::Position && type != GPSType::ublox;
     return capabilities;
 }
 
