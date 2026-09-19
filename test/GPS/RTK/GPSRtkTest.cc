@@ -14,6 +14,8 @@
 #include "GPSRtk.h"
 #include "GPSTransport.h"
 #include "GpsTestHelpers.h"
+#include "LogManager.h"
+#include "QGCLoggingCategoryManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "RTCMMavlink.h"
 #include "RTKSettings.h"
@@ -169,6 +171,54 @@ void GPSRtkTest::_countOnlyUsagePreservesInView()
         receiver._satelliteUsageUpdate({.usedCount = count});
         QCOMPARE(facts->numSatellites()->rawValue().toInt(), 15);
         QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), count.value_or(-1));
+    }
+}
+
+void GPSRtkTest::_logsOnlyFixTransitions()
+{
+    GPSRtk receiver;
+    const QString category = QStringLiteral("GPS.GPSRtk");
+    auto* logging = QGCLoggingCategoryManager::instance();
+    const bool wasEnabled = logging->isCategoryEnabled(category);
+    if (!wasEnabled) {
+        logging->setCategoryEnabled(category, true);
+    }
+    const auto restore = qScopeGuard([logging, category, wasEnabled] {
+        if (!wasEnabled) {
+            logging->setCategoryEnabled(category, false);
+        }
+    });
+    const auto initialCount = LogManager::capturedMessages(category).size();
+    GPSPositionReport report;
+    report.fixType = GPSPositionReport::FixType::Fix3D;
+    report.latitudeDegrees = 47.123456;
+    report.longitudeDegrees = 8.654321;
+    report.altitudeMslMeters = 512.5;
+    expectLogMessage("GPS.GPSRtk", QtDebugMsg, QRegularExpression(QStringLiteral("Receiver fix changed:")));
+    receiver._sensorGpsUpdate(report);
+    verifyExpectedLogMessage();
+    QCOMPARE(LogManager::capturedMessages(category).size(), initialCount + 1);
+    for (int i = 0; i < 3; ++i) {
+        report.latitudeDegrees += 0.1;
+        receiver._sensorGpsUpdate(report);
+    }
+    QCOMPARE(LogManager::capturedMessages(category).size(), initialCount + 1);
+    report.fixType = GPSPositionReport::FixType::NoFix;
+    expectLogMessage("GPS.GPSRtk", QtDebugMsg, QRegularExpression(QStringLiteral("Receiver fix changed: 1")));
+    receiver._sensorGpsUpdate(report);
+    verifyExpectedLogMessage();
+    receiver._sensorGpsUpdate(report);
+    QCOMPARE(LogManager::capturedMessages(category).size(), initialCount + 2);
+    receiver.disconnectGPS();
+    expectLogMessage("GPS.GPSRtk", QtDebugMsg, QRegularExpression(QStringLiteral("Receiver fix changed: 1")));
+    receiver._sensorGpsUpdate(report);
+    verifyExpectedLogMessage();
+    QCOMPARE(LogManager::capturedMessages(category).size(), initialCount + 3);
+    for (const auto& entry : LogManager::capturedMessages(category)) {
+        QVERIFY(entry.message.contains(QStringLiteral("Receiver fix changed:")));
+        QVERIFY(!entry.message.contains(QStringLiteral("47.123")));
+        QVERIFY(!entry.message.contains(QStringLiteral("8.654")));
+        QVERIFY(!entry.message.contains(QStringLiteral("512.5")));
     }
 }
 

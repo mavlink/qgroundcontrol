@@ -90,9 +90,7 @@ int GPSNativeUBX::receiveInternal(unsigned timeout, bool& read_error)
                                remainingMilliseconds(time_started + uint64_t(timeout) * 1000)));
 
         if (ret < 0) {
-            /* something went wrong when polling or reading */
             read_error = true;
-            log(GPSProtocolLogLevel::Warning, "ubx poll_or_read err");
             return -1;
 
         } else if (ret > 0) {

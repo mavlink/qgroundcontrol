@@ -19,6 +19,13 @@ creation. The NMEA positioning library owns passive sentence framing, Qt positio
 satellite assembly, and independent receipt-based freshness. Its input device is
 borrowed; it does not write receiver configuration or depend on QGC settings.
 
+Runtime diagnostics identify NMEA session lifecycle reasons and GGA provider
+selection without logging raw position coordinates or complete GGA payloads.
+Receiver fix and source-health logs report transitions rather than every sample;
+position notifications and freshness tracking still process every observation.
+Expected read cancellation stays quiet, while real failures retain diagnostics
+and plaintext NTRIP authentication remains a visible warning.
+
 CMake's `VERIFY_INTERFACE_HEADER_SETS` compiles each public header independently
 using only its owner's public link interface. These checks are part of the
 default build. GPS and utility tests share the header/consumer wiring in
@@ -235,7 +242,7 @@ state is distinct from automatic position determination.
 No receiver sessions, recording format, GCS position-source integration, or
 settings migrations are introduced.
 
-The [hardware runner](../Driver/Hardware/README.md) exercises the native facade
+The [hardware runner](../Driver/Hardware/GPSHardwareRunner.cc) exercises the native facade
 with the application's requests and transport observation. It is opt-in,
 never opens hardware during CTest, requires explicit authorization for physical
 configuration, and separates scripted results from physical evidence.
@@ -358,6 +365,8 @@ vehicles are excluded, and the encoder requires a valid coordinate and finite
 altitude.
 The GCS fallback uses a fresh GGA projection with finite MSL altitude,
 not the accuracy-filtered map coordinate or a substituted zero altitude.
+NTRIP position providers do not supply geoid separation, so outgoing GGA leaves
+that field empty rather than asserting a known zero separation.
 
 ## Correction routing
 

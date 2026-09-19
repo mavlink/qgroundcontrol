@@ -402,6 +402,6 @@ void NTRIPHttpTransport::sendNMEA(const QByteArray& nmea)
 
     const QByteArray line = NMEAUtils::repairChecksum(nmea);
     if (_write(line)) {
-        qCDebug(NTRIPHttpTransportLog) << "Queued NMEA:" << QString::fromUtf8(line.trimmed());
+        qCDebug(NTRIPHttpTransportLog) << "Queued NMEA bytes:" << line.size();
     }
 }

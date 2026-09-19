@@ -59,6 +59,7 @@ private:
     GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;
     QPointer<GPSCorrectionManager> _correctionManager;
     GPSCorrectionSourceRegistration _correctionRegistration;
+    std::optional<GPSPositionReport::FixType> _lastLoggedFixType;
 
     unsigned long _disconnectTimeoutMs = 2000;
 };

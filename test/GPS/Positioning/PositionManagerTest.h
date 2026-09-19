@@ -18,6 +18,8 @@ private slots:
     void _qmlPositionProperties();
     void _destructionDoesNotPublishPosition();
     void _deviceDestructionRetiresNmea();
+    void _nmeaLifecycleDiagnostics_data();
+    void _nmeaLifecycleDiagnostics();
     void _simulatedPosition_data();
     void _simulatedPosition();
     void _facadeUsesInjectedScheduler();

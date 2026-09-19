@@ -192,6 +192,7 @@ int main()
                 for (const int error : {GPSProtocol::ReadCancelled, -EIO}) {
                     for (const auto mode : {GPSProtocol::OutputMode::GPS, GPSProtocol::OutputMode::RTCM}) {
                         gps_test_time = 0;
+                        gps_test_warnings.clear();
                         ScriptedIO io{fault, error};
                         GPSNativePositionReport position{};
                         GPSNativeSatelliteReport satellites{};
@@ -210,10 +211,21 @@ int main()
                         CHECK(receiver->ioError() == error);
                         CHECK(receiver->ioErrorDetail() ==
                               (fault == ScriptedIO::Operation::Baud ? QString() : io.detail));
+                        const auto warnings = gps_test_warnings;
+                        if (fault == ScriptedIO::Operation::Read && error != GPSProtocol::ReadCancelled) {
+                            CHECK(warnings ==
+                                  QStringList{QStringLiteral("Receiver read failed (status %1, code %2): %3")
+                                                  .arg(static_cast<int>(GPSReadStatus::Error))
+                                                  .arg(error)
+                                                  .arg(io.detail)});
+                        } else {
+                            CHECK(warnings.empty());
+                        }
                         CHECK(receiver->receive(10) < 0);
                         CHECK(receiver->ioError() == error);
                         CHECK(receiver->ioErrorDetail() ==
                               (fault == ScriptedIO::Operation::Baud ? QString() : io.detail));
+                        CHECK(gps_test_warnings == warnings);
                     }
                 }
             }

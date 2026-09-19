@@ -58,6 +58,7 @@ void GPSRtk::_onGPSConnect()
 
 void GPSRtk::_onGPSDisconnect()
 {
+    _lastLoggedFixType.reset();
     _correctionRegistration.reset();
     _gpsRtkFactGroup->connected()->setRawValue(false);
     _gpsRtkFactGroup->valid()->setRawValue(false);
@@ -292,11 +293,10 @@ void GPSRtk::_satelliteInfoUpdate(const GPSSatelliteReport& msg)
 
 void GPSRtk::_sensorGpsUpdate(const GPSPositionReport& msg)
 {
-    qCDebug(GPSRtkLog) << Q_FUNC_INFO
-                       << QStringLiteral("alt=%1, long=%2, lat=%3")
-                              .arg(msg.altitudeMslMeters)
-                              .arg(msg.longitudeDegrees)
-                              .arg(msg.latitudeDegrees);
+    if (_lastLoggedFixType != msg.fixType) {
+        _lastLoggedFixType = msg.fixType;
+        qCDebug(GPSRtkLog) << "Receiver fix changed:" << static_cast<int>(msg.fixType);
+    }
 }
 
 void GPSRtk::_satelliteUsageUpdate(const GPSSatelliteUsageReport& msg)

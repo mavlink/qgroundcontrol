@@ -27,6 +27,8 @@ public:
     void stop();
 
 private:
+    void _stop(const char* reason);
+
     AutoConnectSettings* _settings;
     QPointer<QGCPositionManager> _positionManager;
     std::unique_ptr<UdpIODevice> _udp;

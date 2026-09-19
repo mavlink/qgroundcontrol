@@ -82,10 +82,6 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
         int ret = read(reinterpret_cast<uint8_t*>(buf) + offset, sizeof(buf) - offset - 1, SBF_CONFIG_TIMEOUT);
 
         if (ret < 0) {
-            // something went wrong when reading
-            if (ret != ReadCancelled) {
-                log(GPSProtocolLogLevel::Warning, "sbf read err");
-            }
             return ret;
         }
 

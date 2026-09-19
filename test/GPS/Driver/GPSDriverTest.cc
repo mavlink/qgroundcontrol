@@ -1,5 +1,6 @@
 #include "GPSDriverTest.h"
 
+#include <cerrno>
 #include <cstring>
 #include <limits>
 #include <optional>
@@ -231,7 +232,13 @@ void GPSDriverTest::_receiveOutcomes()
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Activity);
     const QString detail = QStringLiteral("Receiver disconnected: Gerät");
     transport.readOverride = GPSReadResult{GPSReadStatus::Error, 0, detail};
+    expectLogMessage("GPS.Drivers", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Receiver read failed \\(status %1, code %2\\): %3")
+                                            .arg(static_cast<int>(GPSReadStatus::Error))
+                                            .arg(-EIO)
+                                            .arg(QRegularExpression::escape(detail))));
     const auto failed = driver.receiveOutcome(0);
+    verifyExpectedLogMessage();
     QCOMPARE(failed.status, GPSReceiveStatus::TransportError);
     QCOMPARE(failed.detail, detail);
     QVERIFY(!transport.fatalError());
@@ -590,10 +597,9 @@ void GPSDriverTest::_ubloxDisableFailure()
     GPSDriverSinks sinks;
     sinks.onPosition = [&](const auto&) { ++positions; };
     GPSDriver position(GPSType::ublox, receiver, {.role = GPSReceiverConfig::Role::Position}, sinks);
-    const bool readFailure =
-        reply == ScriptedUBXReceiver::DisableReply::ReadError || reply == ScriptedUBXReceiver::DisableReply::Cancelled;
+    const bool readFailure = reply == ScriptedUBXReceiver::DisableReply::ReadError;
     if (readFailure) {
-        expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("ubx poll_or_read err")));
+        expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("Receiver read failed")));
     }
     expectLogMessage("GPS.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Driver configuration failed for type")));
@@ -747,10 +753,9 @@ void GPSDriverTest::_ubloxReadbackFailure()
     receiver.timeMode = 2;
     receiver.readbackReply = reply;
     GPSDriver position(GPSType::ublox, receiver, {.role = GPSReceiverConfig::Role::Position}, {});
-    const bool readFailure = reply == ScriptedUBXReceiver::ReadbackReply::ReadError ||
-                             reply == ScriptedUBXReceiver::ReadbackReply::Cancelled;
+    const bool readFailure = reply == ScriptedUBXReceiver::ReadbackReply::ReadError;
     if (readFailure) {
-        expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("ubx poll_or_read err")));
+        expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("Receiver read failed")));
     }
     expectLogMessage("GPS.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Driver configuration failed for type")));
@@ -816,11 +821,10 @@ void GPSDriverTest::_ubloxSbasConfiguration()
     const GPSReceiverConfig config{.role = GPSReceiverConfig::Role::Position, .constellationMask = enable ? 3u : 1u};
     GPSDriver position(GPSType::ublox, receiver, config, {});
     const bool success = settingReply == Setting::Ack && readbackReply == Readback::Value;
-    const bool readFailure = settingReply == Setting::ReadError || settingReply == Setting::Cancelled ||
-                             readbackReply == Readback::ReadError || readbackReply == Readback::Cancelled;
+    const bool readFailure = settingReply == Setting::ReadError || readbackReply == Readback::ReadError;
     if (!success) {
         if (readFailure) {
-            expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("ubx poll_or_read err")));
+            expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("Receiver read failed")));
         }
         expectLogMessage("GPS.GPSDriver", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Driver configuration failed for type")));

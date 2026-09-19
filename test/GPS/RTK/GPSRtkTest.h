@@ -21,4 +21,5 @@ private slots:
     void _snapshotUsageEvidence();
     void _currentBaseSaveValidity_data();
     void _currentBaseSaveValidity();
+    void _logsOnlyFixTransitions();
 };

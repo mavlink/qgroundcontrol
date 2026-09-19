@@ -83,6 +83,7 @@ signals:
     void satellitesChanged();
 
 private:
+    void _logStateChange(State previous) const;
     void _setState(State state);
     void _schedulePositionExpiry();
     qint64 _age(quint64 timestampUs) const;

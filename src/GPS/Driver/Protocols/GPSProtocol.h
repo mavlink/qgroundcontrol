@@ -279,6 +279,12 @@ protected:
             return 0;
         }
         _io_error = result.status == GPSReadStatus::Cancelled ? ReadCancelled : -EIO;
+        if (_io_error != ReadCancelled && _io.log) {
+            _io.log(GPSProtocolLogLevel::Warning, QStringLiteral("Receiver read failed (status %1, code %2): %3")
+                                                      .arg(static_cast<int>(result.status))
+                                                      .arg(_io_error)
+                                                      .arg(_ioErrorDetail));
+        }
         return _io_error;
     }
 

@@ -2,13 +2,16 @@
 
 #include <QtCore/QIODevice>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtTest/QSignalSpy>
 
+#include "LogManager.h"
 #include "ManualScheduler.h"
 #include "NMEAUtils.h"
 #include "PositionManager.h"
+#include "QGCLoggingCategoryManager.h"
 #include "SequentialTestDevice.h"
 #include "SimulatedPosition.h"
 #include "Vehicle.h"
@@ -188,6 +191,108 @@ void PositionManagerTest::_deviceDestructionRetiresNmea()
     device.reset();
     QCOMPARE(service.selectedSource(), GPSPositionService::SelectedSource::None);
     QVERIFY(!service.gcsPosition().isValid());
+}
+
+void PositionManagerTest::_nmeaLifecycleDiagnostics_data()
+{
+    QTest::addColumn<int>("retirement");
+    QTest::addColumn<QString>("reason");
+    QTest::newRow("explicit-reset") << 0 << QStringLiteral("reset requested");
+    QTest::newRow("device-closed") << 1 << QStringLiteral("device closed");
+    QTest::newRow("device-destroyed") << 2 << QStringLiteral("device destroyed");
+    QTest::newRow("device-replaced") << 3 << QStringLiteral("device replacement");
+    QTest::newRow("device-cleared") << 4 << QStringLiteral("device cleared");
+    QTest::newRow("shutdown") << 5 << QStringLiteral("manager shutdown");
+    QTest::newRow("scheduler-destroyed") << 6 << QStringLiteral("scheduler destroyed");
+}
+
+void PositionManagerTest::_nmeaLifecycleDiagnostics()
+{
+    QFETCH(int, retirement);
+    QFETCH(QString, reason);
+    const QString category = QStringLiteral("GPS.PositionManager.QGCPositionManager");
+    auto* logging = QGCLoggingCategoryManager::instance();
+    const bool wasEnabled = logging->isCategoryEnabled(category);
+    if (!wasEnabled) {
+        logging->setCategoryEnabled(category, true);
+    }
+    const auto restoreLogging = qScopeGuard([logging, category, wasEnabled] {
+        if (!wasEnabled) {
+            logging->setCategoryEnabled(category, false);
+        }
+    });
+    auto scheduler = std::make_unique<ManualScheduler>();
+    auto device = std::make_unique<SequentialTestDevice>(scheduler.get());
+    SequentialTestDevice replacement(scheduler.get());
+    expectLogMessage("GPS.PositionManager.QGCPositionManager", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("^QGCPositionManager\\(")));
+    auto service = std::make_unique<QGCPositionManager>(nullptr, scheduler.get());
+    verifyExpectedLogMessage();
+    expectLogMessage("GPS.PositionManager.QGCPositionManager", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("NMEA session installed:.*revision: 1.*registered: true")));
+    service->setNmeaSourceDevice(device.get());
+    verifyExpectedLogMessage();
+    const QPointer<GPSSourceHealth> originalHealth(service->nmeaHealth());
+    QVERIFY(originalHealth);
+    expectLogMessage(
+        "GPS.PositionManager.QGCPositionManager", QtDebugMsg,
+        QRegularExpression(
+            QStringLiteral("NMEA session retired:.*reason: %1.*revision: 1").arg(QRegularExpression::escape(reason))));
+    if (retirement == 3) {
+        expectLogMessage("GPS.PositionManager.QGCPositionManager", QtDebugMsg,
+                         QRegularExpression(QStringLiteral("NMEA session installed:.*revision: 2.*registered: true")));
+    } else if (retirement == 5) {
+        expectLogMessage("GPS.PositionManager.QGCPositionManager", QtDebugMsg,
+                         QRegularExpression(QStringLiteral("Position manager shutdown:")));
+    }
+    switch (retirement) {
+        case 0:
+            service->resetNmeaSourceDevice();
+            break;
+        case 1:
+            device->close();
+            break;
+        case 2:
+            device.reset();
+            break;
+        case 3:
+            service->setNmeaSourceDevice(&replacement);
+            break;
+        case 4:
+            service->setNmeaSourceDevice(nullptr);
+            break;
+        case 5:
+            service.reset();
+            break;
+        case 6:
+            scheduler.reset();
+            break;
+    }
+    QTRY_VERIFY_WITH_TIMEOUT(originalHealth.isNull(), TestTimeout::shortMs());
+    verifyExpectedLogMessage();
+    if (retirement == 3 || retirement == 5) {
+        verifyExpectedLogMessage();
+    }
+    if (service) {
+        QCOMPARE(service->nmeaHealth() != nullptr, retirement == 3);
+        if (retirement != 3) {
+            const auto logCount = LogManager::capturedMessages(category).size();
+            service->resetNmeaSourceDevice();
+            QCOMPARE(LogManager::capturedMessages(category).size(), logCount);
+        }
+        expectLogMessage("GPS.PositionManager.QGCPositionManager", QtDebugMsg,
+                         QRegularExpression(QStringLiteral("Position manager shutdown:")));
+        if (retirement == 3) {
+            expectLogMessage("GPS.PositionManager.QGCPositionManager", QtDebugMsg,
+                             QRegularExpression(QStringLiteral("NMEA session retired:.*reason: manager shutdown"
+                                                               ".*revision: 2")));
+        }
+        service.reset();
+        verifyExpectedLogMessage();
+        if (retirement == 3) {
+            verifyExpectedLogMessage();
+        }
+    }
 }
 
 void PositionManagerTest::_simulatedPosition_data()

@@ -576,7 +576,6 @@ void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
 
 void NTRIPManager::_onPlaintextCredentialsWarning()
 {
-    qCWarning(NTRIPManagerLog) << "Credentials sent without TLS encryption — enable TLS in NTRIP settings";
     _setSecurityWarning(tr("Credentials are being sent without TLS encryption."));
 }
 

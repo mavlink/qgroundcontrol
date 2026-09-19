@@ -86,6 +86,7 @@ public:
     bool reject_start = false;
     bool fail_poll_write = false;
     int poll_read_error = 0;
+    QString poll_read_detail = QStringLiteral("Receiver link lost: Gerät");
     unsigned failed_reads = 0;
     size_t read_chunk = 7;  // Exercise packet fragmentation through the real parser.
     unsigned comms_polls = 0;
@@ -332,8 +333,8 @@ public:
             if (polls > 0 && poll_read_error < 0) {
                 ++failed_reads;
                 gps_test_time += 1000;
-                return {poll_read_error == GPSProtocol::ReadCancelled ? GPSReadStatus::Cancelled
-                                                                      : GPSReadStatus::Error};
+                return {poll_read_error == GPSProtocol::ReadCancelled ? GPSReadStatus::Cancelled : GPSReadStatus::Error,
+                        0, poll_read_detail};
             }
 
             if (incoming.empty()) {
@@ -470,9 +471,45 @@ struct Fixture
         CHECK(receiver.rtcm_enables == 0);
         CHECK(gps_test_time - receiver.disabled_at < 100000);
 
-        CHECK(gps_test_warnings == QStringList{"ubx poll_or_read err"});
+        const auto warnings = gps_test_warnings;
+        if (error == GPSProtocol::ReadCancelled) {
+            CHECK(warnings.empty());
+        } else {
+            CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1, code %2): %3")
+                                              .arg(static_cast<int>(GPSReadStatus::Error))
+                                              .arg(-EIO)
+                                              .arg(receiver.poll_read_detail)});
+        }
+        CHECK(driver.ioErrorDetail() == receiver.poll_read_detail);
+        CHECK(driver.receive(10) < 0);
+        CHECK(receiver.failed_reads == 1);
+        CHECK(gps_test_warnings == warnings);
     }
 };
+
+static void receiveFailureLogging()
+{
+    for (const int error : {GPSProtocol::ReadCancelled, -EIO}) {
+        Fixture f;
+        CHECK(f.configure() == 0);
+        f.receiver.poll_read_error = error;
+        gps_test_warnings.clear();
+        CHECK(f.driver.receive(10) == error);
+        CHECK(f.driver.ioErrorDetail() == f.receiver.poll_read_detail);
+        const auto warnings = gps_test_warnings;
+        if (error == GPSProtocol::ReadCancelled) {
+            CHECK(warnings.empty());
+        } else {
+            CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1, code %2): %3")
+                                              .arg(static_cast<int>(GPSReadStatus::Error))
+                                              .arg(-EIO)
+                                              .arg(f.receiver.poll_read_detail)});
+        }
+        CHECK(f.driver.receive(10) == error);
+        CHECK(f.receiver.failed_reads == 1);
+        CHECK(gps_test_warnings == warnings);
+    }
+}
 
 static void positionMode(bool legacy, bool base_capable)
 {
@@ -1231,6 +1268,7 @@ int main()
         {"explicit-no-fix", explicitNoFix},
         {"transactional-frames", transactionalFrames},
         {"reentrant-payload", reentrantPayload},
+        {"receive-read-diagnostics", receiveFailureLogging},
         {"comms-diagnostic-values", commsDiagnostics},
         {"comms-malformed-replies", invalidCommsDiagnostics},
         {"comms-expired-reply", expiredCommsDiagnostics},

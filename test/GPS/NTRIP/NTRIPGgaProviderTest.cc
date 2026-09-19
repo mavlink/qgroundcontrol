@@ -172,7 +172,12 @@ void NTRIPGgaProviderTest::_invalidProviderAltitude()
     provider.start(&transport);
     QCOMPARE(transport.sentNmea.size(), 1);
     QCOMPARE(provider.currentSource(), QStringLiteral("GCS"));
-    QVERIFY(transport.sentNmea.first().contains(",0.0,M,"));
+    const auto fields = transport.sentNmea.first().split(',');
+    QCOMPARE(fields.size(), 15);
+    QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE), QByteArray("0.0"));
+    QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE_UNITS), QByteArray("M"));
+    QVERIFY(fields.at(NMEA::Field::GGA_GEOID_SEPARATION).isEmpty());
+    QVERIFY(NMEAUtils::verifyChecksum(transport.sentNmea.first()));
 }
 
 void NTRIPGgaProviderTest::_activeVehicleAndCommunicationLoss()
@@ -213,13 +218,15 @@ void NTRIPGgaProviderTest::_activeVehicleAndCommunicationLoss()
                 .latitude = expected.latitude(),
                 .longitude = expected.longitude(),
                 .altitude = expected.altitude(),
-                .geoidSeparation = 0.0,
                 .hdop = 1.0,
                 .quality = NMEA::GgaQuality::GPS,
                 .satellitesUsed = 12,
             };
             const auto expectedFields = NMEAUtils::makeGGA(fix, QTime(12, 0)).split(',');
-            QCOMPARE(transport->sentNmea.first().split(',').mid(2, 8), expectedFields.mid(2, 8));
+            const auto fields = transport->sentNmea.first().split(',');
+            QCOMPARE(fields.size(), 15);
+            QCOMPARE(fields.mid(2, 11), expectedFields.mid(2, 11));
+            QVERIFY(fields.at(NMEA::Field::GGA_GEOID_SEPARATION).isEmpty());
             QCOMPARE(ntrip->ggaSource(),
                      source == Source::VehicleGPS ? QStringLiteral("Vehicle GPS") : QStringLiteral("Vehicle EKF"));
             QVERIFY(NMEAUtils::verifyChecksum(transport->sentNmea.first()));
@@ -310,7 +317,11 @@ void NTRIPGgaProviderTest::_gcsObservation()
     QCOMPARE(manager->ggaSource(), accepted ? QStringLiteral("GCS Position") : QString());
     if (accepted) {
         QVERIFY(transport->sentNmea.first().contains(",4723.8620,N,00832.7360,E,"));
-        QVERIFY(transport->sentNmea.first().contains(",450.0,M,"));
+        const auto fields = transport->sentNmea.first().split(',');
+        QCOMPARE(fields.size(), 15);
+        QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE), QByteArray("450.0"));
+        QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE_UNITS), QByteArray("M"));
+        QVERIFY(fields.at(NMEA::Field::GGA_GEOID_SEPARATION).isEmpty());
         QVERIFY(NMEAUtils::verifyChecksum(transport->sentNmea.first()));
     }
     manager->stopNTRIP();

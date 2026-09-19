@@ -16,4 +16,5 @@ private slots:
     void _normalizesObservation();
     void _ageAndRecovery();
     void _resetDuringPositionNotification();
+    void _logsOnlyHealthTransitions();
 };

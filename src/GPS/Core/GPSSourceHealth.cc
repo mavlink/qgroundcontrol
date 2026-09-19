@@ -74,11 +74,11 @@ std::chrono::microseconds GPSSourceHealth::_remaining(quint64 timestampUs,
 void GPSSourceHealth::updateObservation(const GPSObservation& observation)
 {
     const QPointer<GPSSourceHealth> guard(this);
+    const State previousState = _state;
     const quint64 revision = ++_revision;
     ++_observationRevision;
     _positionTask.cancel();
     _observation = observation;
-    const auto& position = observation.position;
     const qint64 ageMs = _age(observation.monotonicTimestampUs);
     // Temporal rejection lasts until the next observation.
     _positionInvalidated = ageMs < 0;
@@ -96,10 +96,7 @@ void GPSSourceHealth::updateObservation(const GPSObservation& observation)
     _fixSatellitesInUseCount = validFix ? observation.satellitesUsed.value_or(-1) : -1;
     _fixSatellitesTimestampUs = observation.monotonicTimestampUs;
     _scheduleFixSatelliteExpiry();
-    qCDebug(GPSSourceHealthLog) << this << "Position observation"
-                                << "state:" << _state << "coordinate:" << position.coordinate()
-                                << "horizontalAccuracy:" << position.attribute(QGeoPositionInfo::HorizontalAccuracy)
-                                << "ageMs:" << ageMs;
+    _logStateChange(previousState);
     if (previousUsed != satellitesInUseCount()) {
         emit satellitesChanged();
     }
@@ -124,11 +121,19 @@ void GPSSourceHealth::_schedulePositionExpiry()
     });
 }
 
+void GPSSourceHealth::_logStateChange(State previous) const
+{
+    if (previous != _state) {
+        qCDebug(GPSSourceHealthLog) << this << "Position health changed:" << previous << "->" << _state;
+    }
+}
+
 void GPSSourceHealth::_setState(State state)
 {
     if (_state != state) {
+        const State previous = _state;
         _state = state;
-        qCDebug(GPSSourceHealthLog) << this << "Position health:" << state;
+        _logStateChange(previous);
         emit positionChanged();
     }
 }
@@ -148,11 +153,13 @@ void GPSSourceHealth::invalidatePosition()
 void GPSSourceHealth::reset()
 {
     const QPointer<GPSSourceHealth> guard(this);
+    const State previousState = _state;
     const quint64 revision = ++_revision;
     _positionTask.cancel();
     _observation = {};
     _positionInvalidated = true;
     _state = State::NoData;
+    _logStateChange(previousState);
     clearSatellites();
     if (guard && revision == _revision) {
         emit positionChanged();
@@ -165,6 +172,7 @@ void GPSSourceHealth::setFreshnessTimeoutMs(int timeoutMs)
     if (_state == State::NoData) {
         return;
     }
+    const State previousState = _state;
     const QPointer<GPSSourceHealth> guard(this);
     const quint64 revision = ++_revision;
     const int previousUsed = satellitesInUseCount();
@@ -178,6 +186,7 @@ void GPSSourceHealth::setFreshnessTimeoutMs(int timeoutMs)
     }
     _schedulePositionExpiry();
     _scheduleFixSatelliteExpiry();
+    _logStateChange(previousState);
     if (previousUsed != satellitesInUseCount()) {
         emit satellitesChanged();
     }

@@ -389,7 +389,7 @@ int GPSNativeUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
             return -1;
         }
 
-        if (waitForAck(UBX_MSG_CFG_GNSS, UBX_CONFIG_TIMEOUT, true) < 0) {
+        if (waitForAck(UBX_MSG_CFG_GNSS, UBX_CONFIG_TIMEOUT, true) < 0 && !ioError()) {
             // The receiver rejects the configuration as a whole if it names a constellation it
             // cannot receive, e.g. BeiDou on a SAM-M8Q, or more of them than it can track at
             // once. Keep the receiver's own selection rather than losing the fix over it.
@@ -399,7 +399,7 @@ int GPSNativeUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
         // On u-blox 8 the Galileo change only takes effect once the configuration has been
         // saved and the receiver hardware reset, which we cannot do without dropping the
         // rest of this session's configuration
-        if (gnssSystems & GNSSSystemsMask::ENABLE_GALILEO) {
+        if ((gnssSystems & GNSSSystemsMask::ENABLE_GALILEO) && !ioError()) {
             log(GPSProtocolLogLevel::Warning, "Galileo needs a receiver power cycle to take effect");
         }
 
@@ -568,13 +568,15 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
 
     if (sendCfgValsetAcked(false) < 0) {
         if (_valsetAckAmbiguous) {
-            log(GPSProtocolLogLevel::Warning, "CFG-SEC-JAMDET_SENSITIVITY_HI not supported");
+            if (!ioError()) {
+                log(GPSProtocolLogLevel::Warning, "CFG-SEC-JAMDET_SENSITIVITY_HI not supported");
+            }
             return -1;
         }
         initCfgValset();
         cfgValset<uint8_t>(UBX_CFG_KEY_ITFM_ENABLE, 1);
 
-        if (sendCfgValsetAcked(false) < 0) {
+        if (sendCfgValsetAcked(false) < 0 && !ioError()) {
             log(GPSProtocolLogLevel::Warning, "Jamming monitor not supported by this receiver");
         }
     }
@@ -803,7 +805,7 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
         initCfgValset();
         cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_L5_HEALTH_OVERRIDE, use_gps ? 1 : 0);
 
-        if (sendCfgValsetAcked(false) < 0) {
+        if (sendCfgValsetAcked(false) < 0 && !ioError()) {
             log(GPSProtocolLogLevel::Warning, "GPS L5 health override not supported by this receiver");
         }
     }
@@ -875,7 +877,7 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
         cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_RXM_RAWX_I2C, 0);
     }
 
-    if (sendCfgValsetAcked(false) < 0) {
+    if (sendCfgValsetAcked(false) < 0 && !ioError()) {
         log(GPSProtocolLogLevel::Warning, "Could not disable unused messages");
     }
 

@@ -19,16 +19,17 @@ QGCPositionManager::QGCPositionManager(QObject* parent, RuntimeScheduler* schedu
 {
     qCDebug(QGCPositionManagerLog) << this;
     if (this->scheduler()) {
-        connect(this->scheduler(), &QObject::destroyed, this, &QGCPositionManager::resetNmeaSourceDevice);
+        connect(this->scheduler(), &QObject::destroyed, this,
+                [this]() { _resetNmeaSourceDevice("scheduler destroyed"); });
     }
 }
 
 QGCPositionManager::~QGCPositionManager()
 {
-    qCDebug(QGCPositionManagerLog) << this;
+    qCDebug(QGCPositionManagerLog) << "Position manager shutdown:" << this;
     _destroying = true;
     blockSignals(true);
-    resetNmeaSourceDevice();
+    _resetNmeaSourceDevice("manager shutdown");
 }
 
 QGCPositionManager* QGCPositionManager::instance()
@@ -103,12 +104,15 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
     const QPointer<QGCPositionManager> guard(this);
     const QPointer<QIODevice> deviceGuard(device);
     const quint64 revision = _nmeaRevision + 1;
-    resetNmeaSourceDevice();
+    _resetNmeaSourceDevice(device ? "device replacement" : "device cleared");
     if (!guard || _nmeaRevision != revision || !deviceGuard) {
         return;
     }
     _nmeaSource = std::make_unique<NMEADecoderSession>(nullptr, scheduler());
     if (!_nmeaSource->start(device)) {
+        qCDebug(QGCPositionManagerLog) << "NMEA session rejected:"
+                                       << "reason: decoder start failed"
+                                       << "revision:" << revision;
         _nmeaSource.reset();
         return;
     }
@@ -117,27 +121,39 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
         device, &QIODevice::aboutToClose, this,
         [this, revision]() {
             if (_nmeaRevision == revision) {
-                resetNmeaSourceDevice();
+                _resetNmeaSourceDevice("device closed");
             }
         },
         Qt::QueuedConnection);
     _nmeaDeviceDestroyedConnection = connect(device, &QObject::destroyed, this, [this, revision]() {
         if (_nmeaRevision == revision) {
-            resetNmeaSourceDevice();
+            _resetNmeaSourceDevice("device destroyed");
         }
     });
     auto registration =
         registerPositionSource(SelectedSource::Nmea, _nmeaSource->positionSource(), _nmeaSource->health());
     if (guard && _nmeaRevision == revision) {
         _nmeaRegistration = std::move(registration);
+        qCDebug(QGCPositionManagerLog) << "NMEA session installed:"
+                                       << "revision:" << revision << "device:" << static_cast<const void*>(device)
+                                       << "registered:" << bool(_nmeaRegistration);
         emit nmeaSourceChanged();
     }
 }
 
 void QGCPositionManager::resetNmeaSourceDevice()
 {
+    _resetNmeaSourceDevice("reset requested");
+}
+
+void QGCPositionManager::_resetNmeaSourceDevice(const char* reason)
+{
     if (QThread::currentThread() != thread()) {
         return;
+    }
+    if (_nmeaSource) {
+        qCDebug(QGCPositionManagerLog) << "NMEA session retired:"
+                                       << "reason:" << reason << "revision:" << _nmeaRevision;
     }
     ++_nmeaRevision;
     QObject::disconnect(_nmeaDeviceDestroyedConnection);

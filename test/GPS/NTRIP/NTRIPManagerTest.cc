@@ -87,14 +87,14 @@ void NTRIPManagerTest::testPlaintextCredentialWarningIsVisibleState()
     NTRIPManager mgr;
     QSignalSpy warningSpy(&mgr, &NTRIPManager::securityWarningChanged);
 
-    ignoreLogMessage("GPS.NTRIPManager", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Credentials sent without TLS encryption")));
-
     QVERIFY(mgr.securityWarning().isEmpty());
     mgr._onPlaintextCredentialsWarning();
 
     QCOMPARE(warningSpy.count(), 1);
     QVERIFY(mgr.securityWarning().contains(QStringLiteral("without TLS")));
+
+    mgr._onPlaintextCredentialsWarning();
+    QCOMPARE(warningSpy.count(), 1);
 }
 
 void NTRIPManagerTest::testTerminalStateStopsUdpForwarder_data()

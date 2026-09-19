@@ -41,6 +41,7 @@ private:
     void _setupPositionSources();
     void _handlePermissionStatus(Qt::PermissionStatus permissionStatus);
     void _checkPermission();
+    void _resetNmeaSourceDevice(const char* reason);
 
     std::unique_ptr<NMEADecoderSession> _nmeaSource;
     GPSPositionSourceRegistration _nmeaRegistration;

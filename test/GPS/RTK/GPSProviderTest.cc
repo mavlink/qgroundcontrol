@@ -1,5 +1,6 @@
 #include "GPSProviderTest.h"
 
+#include <cerrno>
 #include <cmath>
 #include <cstring>
 
@@ -316,7 +317,7 @@ public:
     GPSReadResult read(uint8_t* bytes, int size, int) override
     {
         if (_reply.isEmpty()) {
-            return {GPSReadStatus::Error};
+            return {GPSReadStatus::Error, 0, QStringLiteral("Scripted receiver connection lost")};
         }
         const auto count = qMin(size, static_cast<int>(_reply.size()));
         std::memcpy(bytes, _reply.constData(), count);
@@ -409,6 +410,11 @@ void GPSProviderTest::_configuredReceiverReportsReadyThenLoss_data()
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
 {
     QFETCH(GPSBaseStationConfig, config);
+    const QString diagnostic =
+        QStringLiteral("Receiver read failed (status %1, code %2): Scripted receiver connection lost")
+            .arg(static_cast<int>(GPSReadStatus::Error))
+            .arg(-EIO);
+    expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QRegularExpression::escape(diagnostic)));
     GPSProvider provider(
         [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); },
         GPSType::femto, GPSReceiverConfig{.base = config});
@@ -417,6 +423,7 @@ void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
     QSignalSpy surveys(&provider, &GPSProvider::surveyInStatus);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::mediumMs()));
+    verifyExpectedLogMessage();
     QCOMPARE(ready.size(), 1);
     QCOMPARE(errors.size(), 1);
     QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);

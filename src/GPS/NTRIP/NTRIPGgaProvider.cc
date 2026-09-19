@@ -5,6 +5,28 @@
 #include "NMEASentence.h"
 #include "NMEAUtils.h"
 #include "NTRIPTransport.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(NTRIPGgaProviderLog, "GPS.NTRIPGgaProvider")
+
+namespace {
+QString sourceName(NTRIPGgaProvider::PositionSource source)
+{
+    switch (source) {
+        case NTRIPGgaProvider::PositionSource::Auto:
+            return QStringLiteral("Auto");
+        case NTRIPGgaProvider::PositionSource::VehicleGPS:
+            return QStringLiteral("VehicleGPS");
+        case NTRIPGgaProvider::PositionSource::VehicleEKF:
+            return QStringLiteral("VehicleEKF");
+        case NTRIPGgaProvider::PositionSource::RTKBase:
+            return QStringLiteral("RTKBase");
+        case NTRIPGgaProvider::PositionSource::GCSPosition:
+            return QStringLiteral("GCSPosition");
+    }
+    return QStringLiteral("Unknown");
+}
+}  // namespace
 
 NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent) : QObject(parent)
 {
@@ -32,6 +54,7 @@ void NTRIPGgaProvider::start(NTRIPTransport* transport)
     const quint64 generation = ++_generation;
     _transport = transport;
     _fastRetryCount = 0;
+    _selectionDiagnostic.clear();
     _clearSource();
     if (!guard || _generation != generation || !_transport) {
         return;
@@ -75,10 +98,16 @@ void NTRIPGgaProvider::_sendGGA()
     const auto current = [this, guard, transport, generation]() {
         return guard && transport && _transport == transport && _generation == generation;
     };
-    const auto position = _getBestPosition();
+    const auto requested = _cachedSource;
+    const auto selection = _getBestPosition(requested);
     if (!current()) {
         return;
     }
+    _updateSelectionDiagnostic(requested, selection);
+    if (!current()) {
+        return;
+    }
+    const auto& position = selection.position;
     if (!position.isValid()) {
         if (++_fastRetryCount >= 5 && _retryPhase == RetryPhase::Fast) {
             _setRetryPhase(RetryPhase::Normal);
@@ -91,12 +120,11 @@ void NTRIPGgaProvider::_sendGGA()
         _setRetryPhase(RetryPhase::Normal);
     }
 
-    // Preserve the caster request's historical nominal fix metadata.
+    // Preserve nominal fix metadata; position providers do not supply geoid separation.
     const NMEA::GGA fix{
         .latitude = position.coordinate.latitude(),
         .longitude = position.coordinate.longitude(),
         .altitude = position.coordinate.altitude(),
-        .geoidSeparation = 0.0,
         .hdop = 1.0,
         .quality = NMEA::GgaQuality::GPS,
         .satellitesUsed = 12,
@@ -112,12 +140,12 @@ void NTRIPGgaProvider::_sendGGA()
     }
 }
 
-PositionResult NTRIPGgaProvider::_getBestPosition() const
+NTRIPGgaProvider::SelectedPosition NTRIPGgaProvider::_getBestPosition(PositionSource requested) const
 {
     const auto providers = _providers;
-    if (_cachedSource != PositionSource::Auto) {
-        const auto provider = providers.value(_cachedSource);
-        return provider ? provider() : PositionResult{};
+    if (requested != PositionSource::Auto) {
+        const auto provider = providers.value(requested);
+        return {provider ? provider() : PositionResult{}, requested};
     }
 
     static constexpr PositionSource kPriority[] = {
@@ -136,9 +164,25 @@ PositionResult NTRIPGgaProvider::_getBestPosition() const
                 return {};
             }
             if (result.isValid()) {
-                return result;
+                return {result, source};
             }
         }
     }
     return {};
+}
+
+void NTRIPGgaProvider::_updateSelectionDiagnostic(PositionSource requested, const SelectedPosition& selection)
+{
+    const bool fallback = requested == PositionSource::Auto && selection.source != PositionSource::VehicleGPS;
+    const QString diagnostic =
+        selection.position.isValid()
+            ? QStringLiteral("GGA source selection: requested=%1 provider=%2 fallback=%3")
+                  .arg(sourceName(requested), sourceName(selection.source),
+                       fallback ? QStringLiteral("yes") : QStringLiteral("no"))
+            : QStringLiteral("GGA source selection: requested=%1 no eligible source").arg(sourceName(requested));
+    if (_selectionDiagnostic == diagnostic) {
+        return;
+    }
+    _selectionDiagnostic = diagnostic;
+    qCDebug(NTRIPGgaProviderLog).noquote() << diagnostic;
 }

@@ -170,6 +170,7 @@ void GPSManager::shutdown()
         return;
     }
     _shutdown = true;
+    qCDebug(GPSManagerLog) << "Shutting down GPS sources and correction outputs";
     if (_connectionTimer) {
         _connectionTimer->stop();
     }

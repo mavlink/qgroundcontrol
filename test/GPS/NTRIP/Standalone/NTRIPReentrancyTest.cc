@@ -4,6 +4,9 @@
 #include <memory>
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QLoggingCategory>
+#include <QtCore/QMutex>
+#include <QtCore/QMutexLocker>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTimer>
 #include <QtGui/QPixmap>
@@ -15,6 +18,7 @@
 
 #include "../../RTCM/RTCMTestFixtures.h"
 #include "../MockNTRIPTransport.h"
+#include "NMEASentence.h"
 #include "NMEAUtils.h"
 #include "NTRIPConnectionStats.h"
 #include "NTRIPGgaProvider.h"
@@ -25,7 +29,91 @@
 #include "PortableTest.h"
 #include "RTCMDecodedFrame.h"
 
+#ifndef QGC_PORTABLE_TEST
+#include "QGCLoggingCategoryManager.h"
+#endif
+
 namespace {
+class DebugCapture
+{
+public:
+    explicit DebugCapture(const char* category)
+        : _category(category)
+    {
+        _active = this;
+        _previousHandler =
+            qInstallMessageHandler([](QtMsgType type, const QMessageLogContext& context, const QString& message) {
+                auto* capture = _active.load();
+                if (capture && type == QtDebugMsg && qstrcmp(context.category, capture->_category) == 0) {
+                    {
+                        QMutexLocker lock(&capture->_mutex);
+                        capture->_messages.append(message);
+                    }
+#ifndef QGC_PORTABLE_TEST
+                    if (const auto handler = _previousHandler.load()) {
+                        handler(type, context, message);
+                    }
+#endif
+                    if (capture->onMessage) {
+                        capture->onMessage();
+                    }
+                } else if (const auto handler = _previousHandler.load()) {
+                    handler(type, context, message);
+                }
+            });
+#ifdef QGC_PORTABLE_TEST
+        _previousFilter = QLoggingCategory::installFilter([](QLoggingCategory* category) {
+            if (const auto filter = _previousFilter.load()) {
+                filter(category);
+            }
+            if (const auto* capture = _active.load();
+                capture && qstrcmp(category->categoryName(), capture->_category) == 0) {
+                category->setEnabled(QtDebugMsg, true);
+            }
+        });
+#else
+        auto* logging = QGCLoggingCategoryManager::instance();
+        _wasEnabled = logging->isCategoryEnabled(QString::fromLatin1(_category));
+        if (!_wasEnabled) {
+            logging->setCategoryEnabled(QString::fromLatin1(_category), true);
+        }
+#endif
+    }
+
+    ~DebugCapture()
+    {
+#ifdef QGC_PORTABLE_TEST
+        QLoggingCategory::installFilter(_previousFilter.exchange(nullptr));
+#else
+        if (!_wasEnabled) {
+            QGCLoggingCategoryManager::instance()->setCategoryEnabled(QString::fromLatin1(_category), false);
+        }
+#endif
+        qInstallMessageHandler(_previousHandler.load());
+        _active = nullptr;
+    }
+
+    QStringList messages() const
+    {
+        QMutexLocker lock(&_mutex);
+        return _messages;
+    }
+
+    std::function<void()> onMessage;
+
+private:
+    const char* _category;
+    mutable QMutex _mutex;
+    QStringList _messages;
+    static inline std::atomic<DebugCapture*> _active{nullptr};
+    static inline std::atomic<QtMessageHandler> _previousHandler{nullptr};
+#ifdef QGC_PORTABLE_TEST
+    static inline std::atomic<QLoggingCategory::CategoryFilter> _previousFilter{nullptr};
+#else
+    bool _wasEnabled = false;
+#endif
+};
+
 #ifdef QGC_PORTABLE_TEST
 class WarningCapture
 {
@@ -95,6 +183,7 @@ class NTRIPReentrancyTest : public PortableTest
 private slots:
     void warningRetiresAttempt_data();
     void warningRetiresAttempt();
+    void nmeaLogsMetadataOnly();
     void writeAdmissionFailure_data();
     void writeAdmissionFailure();
     void handshakeRetiresAttempt_data();
@@ -139,12 +228,37 @@ private slots:
     void ggaAltitudeDatum();
     void statisticsExpireDuringSilence();
     void ggaSourceSelection();
+    void ggaSelectionDiagnostics();
+    void ggaDiagnosticRetiresProvider_data();
+    void ggaDiagnosticRetiresProvider();
     void ggaSourceChangesPreserveCadence();
     void ggaIntervalChangesRestartCadence_data();
     void ggaIntervalChangesRestartCadence();
     void ggaConfigurationPreservesFastRetry();
     void ggaCallbackStopsProvider();
+
+private:
+    void _expectDebugMessage(const char* category, const QString& message);
+    void _verifyDebugMessage();
 };
+
+void NTRIPReentrancyTest::_expectDebugMessage(const char* category, const QString& message)
+{
+#ifdef QGC_PORTABLE_TEST
+    Q_UNUSED(category)
+    Q_UNUSED(message)
+#else
+    expectLogMessage(category, QtDebugMsg,
+                     QRegularExpression(QRegularExpression::anchoredPattern(QRegularExpression::escape(message))));
+#endif
+}
+
+void NTRIPReentrancyTest::_verifyDebugMessage()
+{
+#ifndef QGC_PORTABLE_TEST
+    verifyExpectedLogMessage();
+#endif
+}
 
 void NTRIPReentrancyTest::warningRetiresAttempt_data()
 {
@@ -168,7 +282,9 @@ void NTRIPReentrancyTest::warningRetiresAttempt()
     };
     transport->_socket = socket;
     QPointer<QTcpSocket> retired = socket;
+    int notifications = 0;
     connect(transport.get(), &NTRIPTransport::plaintextCredentialsWarning, this, [&]() {
+        ++notifications;
         if (action == 1) {
             transport.reset();
         } else {
@@ -193,12 +309,40 @@ void NTRIPReentrancyTest::warningRetiresAttempt()
 #else
     verifyExpectedLogMessage();
 #endif
+    QCOMPARE(notifications, 1);
     QCOMPARE(writes, 0);
     if (action == 2) {
         QVERIFY(transport->_socket);
         QVERIFY(transport->_socket != retired);
         QVERIFY(transport->_connectTimeoutTimer.isActive());
     }
+}
+
+void NTRIPReentrancyTest::nmeaLogsMetadataOnly()
+{
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    auto configuration = config();
+    configuration.port = server.serverPort();
+    NTRIPHttpTransport transport(configuration, {});
+    transport.start();
+    QTRY_VERIFY(server.hasPendingConnections());
+    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    QVERIFY(peer);
+    QByteArray request;
+    QTRY_VERIFY((request += peer->readAll()).endsWith("\r\n\r\n"));
+
+    const DebugCapture logs("GPS.NTRIPHttpTransport");
+    const QByteArray gga = "$GPGGA,120000,4723.8620,N,00832.7360,E,1,12,1.0,100.0,M,0.0,M,,";
+    const QByteArray expected = gga + "*77\r\n";
+    const QString metadata = QStringLiteral("Queued NMEA bytes: %1").arg(expected.size());
+    _expectDebugMessage("GPS.NTRIPHttpTransport", metadata);
+    transport.sendNMEA(gga + "\r\n");
+    _verifyDebugMessage();
+    QTRY_COMPARE(peer->bytesAvailable(), expected.size());
+    QCOMPARE(peer->readAll(), expected);
+    QCOMPARE(logs.messages(), QStringList{metadata});
+    transport.stop();
 }
 
 void NTRIPReentrancyTest::writeAdmissionFailure_data()
@@ -357,6 +501,7 @@ void NTRIPReentrancyTest::legacyCaster()
 #endif
     NTRIPHttpTransport transport(configuration, {});
     QSignalSpy connected(&transport, &NTRIPTransport::connected);
+    QSignalSpy plaintext(&transport, &NTRIPTransport::plaintextCredentialsWarning);
     QSignalSpy frames(&transport, &NTRIPTransport::correctionFrameReceived);
     QSignalSpy errors(&transport, &NTRIPTransport::error);
     transport.start();
@@ -378,6 +523,7 @@ void NTRIPReentrancyTest::legacyCaster()
     QTRY_VERIFY(!frames.isEmpty() || !errors.isEmpty());
     QVERIFY(errors.isEmpty());
     QCOMPARE(connected.size(), 1);
+    QCOMPARE(plaintext.size(), authenticated ? 1 : 0);
     QCOMPARE(frames.size(), 1);
     QCOMPARE(qvariant_cast<RTCMDecodedFrame>(frames.first().first()).data, frame);
     transport.stop();
@@ -1292,7 +1438,12 @@ void NTRIPReentrancyTest::ggaAltitudeDatum()
     provider.start(&transport);
     QCOMPARE(transport.sentNmea.size(), 1);
     QCOMPARE(provider.currentSource(), accepted ? QStringLiteral("RTK") : QStringLiteral("GCS"));
-    QVERIFY(transport.sentNmea.first().contains(accepted ? ",450.0,M," : ",100.0,M,"));
+    const auto fields = transport.sentNmea.first().split(',');
+    QCOMPARE(fields.size(), 15);
+    QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE), accepted ? QByteArray("450.0") : QByteArray("100.0"));
+    QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE_UNITS), QByteArray("M"));
+    QVERIFY(fields.at(NMEA::Field::GGA_GEOID_SEPARATION).isEmpty());
+    QCOMPARE(fields.at(NMEA::Field::GGA_GEOID_UNITS), QByteArray("M"));
     QVERIFY(NMEAUtils::verifyChecksum(transport.sentNmea.first()));
 }
 
@@ -1337,6 +1488,143 @@ void NTRIPReentrancyTest::ggaSourceSelection()
     QCOMPARE(calls, (QList<Source>{Source::VehicleEKF}));
     QCOMPARE(transport.sentNmea.size(), 1);
     QVERIFY(provider.currentSource().isEmpty());
+}
+
+void NTRIPReentrancyTest::ggaSelectionDiagnostics()
+{
+    using Source = NTRIPGgaProvider::PositionSource;
+    const DebugCapture logs("GPS.NTRIPGgaProvider");
+    NTRIPGgaProvider provider;
+    MockNTRIPTransport transport;
+    bool vehicleAvailable = false;
+    bool gcsAvailable = false;
+    QGeoCoordinate gcsPosition(48.125, 9.25, 123.4);
+    provider.setPositionProvider(Source::VehicleGPS, [&]() {
+        return vehicleAvailable ? PositionResult{QGeoCoordinate(47.3977, 8.5456, 450), QStringLiteral("Vehicle GPS"),
+                                                 GPSAltitudeDatum::MeanSeaLevel}
+                                : PositionResult{};
+    });
+    provider.setPositionProvider(Source::RTKBase, []() {
+        return PositionResult{QGeoCoordinate(47, 8, 500), QStringLiteral("RTK Base"), GPSAltitudeDatum::Ellipsoid};
+    });
+    provider.setPositionProvider(Source::GCSPosition, [&]() {
+        return gcsAvailable
+                   ? PositionResult{gcsPosition, QStringLiteral("GCS Position"), GPSAltitudeDatum::MeanSeaLevel}
+                   : PositionResult{};
+    });
+
+    QStringList expected{QStringLiteral("GGA source selection: requested=Auto no eligible source")};
+    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    provider.start(&transport);
+    _verifyDebugMessage();
+    provider._sendGGA();
+    QCOMPARE(logs.messages(), expected);
+    QVERIFY(transport.sentNmea.isEmpty());
+
+    gcsAvailable = true;
+    expected.append(QStringLiteral("GGA source selection: requested=Auto provider=GCSPosition fallback=yes"));
+    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    provider._sendGGA();
+    _verifyDebugMessage();
+    QCOMPARE(logs.messages(), expected);
+    QCOMPARE(provider.currentSource(), QStringLiteral("GCS Position"));
+    QCOMPARE(transport.sentNmea.size(), 1);
+    QVERIFY(NMEAUtils::verifyChecksum(transport.sentNmea.last()));
+
+    gcsPosition.setLatitude(48.25);
+    provider._sendGGA();
+    QCOMPARE(logs.messages(), expected);
+    QCOMPARE(transport.sentNmea.size(), 2);
+    QVERIFY(transport.sentNmea.first() != transport.sentNmea.last());
+
+    vehicleAvailable = true;
+    expected.append(QStringLiteral("GGA source selection: requested=Auto provider=VehicleGPS fallback=no"));
+    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    provider._sendGGA();
+    _verifyDebugMessage();
+    QCOMPARE(logs.messages(), expected);
+    QCOMPARE(provider.currentSource(), QStringLiteral("Vehicle GPS"));
+
+    provider.configure({Source::GCSPosition});
+    QCOMPARE(logs.messages(), expected);
+    expected.append(QStringLiteral("GGA source selection: requested=GCSPosition provider=GCSPosition fallback=no"));
+    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    provider._sendGGA();
+    _verifyDebugMessage();
+    QCOMPARE(logs.messages(), expected);
+    QCOMPARE(provider.currentSource(), QStringLiteral("GCS Position"));
+    QCOMPARE(transport.sentNmea.size(), 4);
+
+    provider.configure({Source::RTKBase});
+    expected.append(QStringLiteral("GGA source selection: requested=RTKBase no eligible source"));
+    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    provider._sendGGA();
+    _verifyDebugMessage();
+    provider._sendGGA();
+    QCOMPARE(logs.messages(), expected);
+    QCOMPARE(transport.sentNmea.size(), 4);
+
+    vehicleAvailable = false;
+    gcsAvailable = false;
+    provider.configure({Source::Auto});
+    expected.append(QStringLiteral("GGA source selection: requested=Auto no eligible source"));
+    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    provider._sendGGA();
+    _verifyDebugMessage();
+    QCOMPARE(logs.messages(), expected);
+    provider.stop();
+    provider._sendGGA();
+    QCOMPARE(logs.messages(), expected);
+    expected.append(QStringLiteral("GGA source selection: requested=Auto no eligible source"));
+    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    provider.start(&transport);
+    _verifyDebugMessage();
+    QCOMPARE(logs.messages(), expected);
+    QCOMPARE(transport.sentNmea.size(), 4);
+}
+
+void NTRIPReentrancyTest::ggaDiagnosticRetiresProvider_data()
+{
+    QTest::addColumn<int>("action");
+    QTest::newRow("stop") << 0;
+    QTest::newRow("delete") << 1;
+    QTest::newRow("restart") << 2;
+}
+
+void NTRIPReentrancyTest::ggaDiagnosticRetiresProvider()
+{
+    QFETCH(int, action);
+    DebugCapture logs("GPS.NTRIPGgaProvider");
+    auto provider = std::make_unique<NTRIPGgaProvider>();
+    MockNTRIPTransport transport;
+    provider->setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, []() {
+        return PositionResult{QGeoCoordinate(47, 8, 450), QStringLiteral("Vehicle GPS"),
+                              GPSAltitudeDatum::MeanSeaLevel};
+    });
+    bool handled = false;
+    logs.onMessage = [&]() {
+        if (std::exchange(handled, true)) {
+            return;
+        }
+        if (action == 0) {
+            provider->stop();
+        } else if (action == 1) {
+            provider.reset();
+        } else {
+            provider->start(&transport);
+        }
+    };
+    _expectDebugMessage("GPS.NTRIPGgaProvider",
+                        QStringLiteral("GGA source selection: requested=Auto provider=VehicleGPS fallback=no"));
+    provider->start(&transport);
+    _verifyDebugMessage();
+    QVERIFY(handled);
+    QCOMPARE(transport.sentNmea.size(), action == 2 ? 1 : 0);
+    if (action == 1) {
+        QVERIFY(!provider);
+    } else {
+        QCOMPARE(provider->currentSource(), action == 2 ? QStringLiteral("Vehicle GPS") : QString());
+    }
 }
 
 void NTRIPReentrancyTest::ggaSourceChangesPreserveCadence()
@@ -1445,6 +1733,7 @@ void NTRIPReentrancyTest::ggaConfigurationPreservesFastRetry()
 
 void NTRIPReentrancyTest::ggaCallbackStopsProvider()
 {
+    const DebugCapture logs("GPS.NTRIPGgaProvider");
     NTRIPGgaProvider provider;
     MockNTRIPTransport transport;
     provider.setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, [&]() {
@@ -1455,6 +1744,7 @@ void NTRIPReentrancyTest::ggaCallbackStopsProvider()
     provider.start(&transport);
     QVERIFY(transport.sentNmea.isEmpty());
     QVERIFY(provider.currentSource().isEmpty());
+    QVERIFY(logs.messages().isEmpty());
 }
 
 QGC_REGISTER_PORTABLE_TEST(NTRIPReentrancyTest, TestLabel::Unit)

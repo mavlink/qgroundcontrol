@@ -172,18 +172,20 @@ int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
         if (writeAckedCommandFemto("LOG UAVGPSB 0.1\r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
             /** 20Hz need authorization in femtomes device */
             if (writeAckedCommandFemto("LOG UAVGPSB 0.05\r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
-            } else {
+            } else if (!ioError()) {
                 log(GPSProtocolLogLevel::Warning, "Femto: command LOG UAVGPSB 0.05 failed,maybe no authorization");
             }
 
         } else {
-            log(GPSProtocolLogLevel::Warning, "Femto: command LOG UAVGPSB 0.1 failed");
+            if (!ioError()) {
+                log(GPSProtocolLogLevel::Warning, "Femto: command LOG UAVGPSB 0.1 failed");
+            }
             return -1;
         }
 
         if (_satellite_info) {
             if (writeAckedCommandFemto("LOG UAVSTATUSB 1\r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
-            } else {
+            } else if (!ioError()) {
                 log(GPSProtocolLogLevel::Warning, "Femto: command LOG UAVSTATUSB 1 failed");
             }
         }

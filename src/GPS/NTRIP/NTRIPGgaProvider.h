@@ -33,6 +33,7 @@ struct PositionResult
 class NTRIPGgaProvider : public QObject
 {
     Q_OBJECT
+    friend class NTRIPReentrancyTest;
 
 public:
     enum class PositionSource
@@ -81,15 +82,23 @@ private:
         Normal
     };
 
+    struct SelectedPosition
+    {
+        PositionResult position;
+        PositionSource source = PositionSource::Auto;
+    };
+
     void _sendGGA();
     void _setRetryPhase(RetryPhase phase);
     void _clearSource();
 
-    PositionResult _getBestPosition() const;
+    SelectedPosition _getBestPosition(PositionSource requested) const;
+    void _updateSelectionDiagnostic(PositionSource requested, const SelectedPosition& selection);
 
     QPointer<NTRIPTransport> _transport;
     QChronoTimer _timer;
     QString _source;
+    QString _selectionDiagnostic;
     QHash<PositionSource, PositionProvider> _providers;
     RetryPhase _retryPhase = RetryPhase::Normal;
     int _fastRetryCount = 0;
