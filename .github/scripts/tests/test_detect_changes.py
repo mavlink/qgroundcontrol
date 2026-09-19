@@ -2,12 +2,30 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from detect_changes import (
+    _NON_PR_PASSTHROUGH_KEYS,
     build_patterns,
     has_relevant_changes,
+    main,
     workflow_name_for_platform,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+@pytest.mark.parametrize("value", ["true", "false"])
+def test_non_pr_passthrough_emits_every_output(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, value: str
+) -> None:
+    output = tmp_path / "output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+    assert main(["--non-pr-passthrough", "--passthrough-value", value]) == 0
+    lines = set(output.read_text().splitlines())
+    assert lines == {f"{key}={value}" for key in _NON_PR_PASSTHROUGH_KEYS}
 
 
 @pytest.mark.parametrize(

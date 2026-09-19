@@ -51,6 +51,7 @@ with multiple consumers in [`tools/common/`](../../tools/common/README.md).
 | `report_context.py` | Reporting | Reject stale PR/default-branch reporting contexts |
 | `resolve_gstreamer_config.py` | GStreamer | Select the platform-specific GStreamer version |
 | `size_analysis.py` | Reporting | Analyze and report binary-size changes |
+| `release_tag_check.py` | Release | Report whether the current tag is a `vX.Y.Z` release tag reachable from a `Stable*` branch |
 | `test_duration_report.py` | Reporting | Report slow tests and duration regressions from JUnit XML |
 | `validate_native_package.py` | Packaging | Validate native package identity, version, contents, and installed layout |
 | `verify_coverage_thresholds.py` | Reporting | Enforce line and branch coverage thresholds |
