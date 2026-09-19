@@ -91,8 +91,8 @@ void GPSCorrectionRouterTest::decodedIngressPreservesEvidence()
 {
     QFETCH(bool, valid);
     QFETCH(bool, filtered);
-    const qint64 now = 100000;
-    GPSCorrectionRouter router(nullptr, [now]() { return now; });
+    constexpr qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [] { return now; });
     auto registration = router.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
     RTCMFrameDecoder::Result decoded{GpsTestHelpers::buildRtcmFrame(1005), 1005, now - 10, valid, filtered};
     const auto input = registration.token().event(decoded);
@@ -160,8 +160,8 @@ void GPSCorrectionRouterTest::diagnosticsSampleClockOnce()
 
 void GPSCorrectionRouterTest::diagnosticsKeepHealthDomainsIndependent()
 {
-    const qint64 now = 100000;
-    GPSCorrectionRouter router(nullptr, [now]() { return now; });
+    constexpr qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [] { return now; });
     auto ntrip = router.registerSource(GPSCorrectionSource::Ntrip);
     const RTCMFrameDecoder::Result filtered{GpsTestHelpers::buildRtcmFrame(1005), 1005, now, true, true};
     QVERIFY(!router.acceptIngress(ntrip.token().event(filtered)));

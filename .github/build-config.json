@@ -15,8 +15,8 @@
     "java_version": "21"
   },
   "apple": {
-    "xcode_version": "16.x",
-    "xcode_ios_version": "latest-stable",
+    "xcode_version": "26.x",
+    "xcode_ios_version": "26.x",
     "macos_deployment_target": "13.0",
     "ios_deployment_target": "17.0"
   },
