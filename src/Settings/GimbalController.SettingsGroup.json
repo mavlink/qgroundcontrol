@@ -85,6 +85,13 @@
             "default": 60,
             "units": "deg/s",
             "label": "Minimum gimbal speed for max zoom (deg/sec)"
+        },
+        {
+            "name": "preserveYawLockOnPositionCommands",
+            "shortDesc": "Preserve yaw lock state when using position commands",
+            "longDesc": "When enabled, gimbal position commands will maintain the current yaw lock state instead of automatically switching to yaw follow mode.",
+            "type": "bool",
+            "default": true
         }
     ]
 }
