@@ -1,6 +1,8 @@
 #include "APMDataFlashUtility.h"
 
-#include <cstring>
+#include <bit>
+
+#include <QtCore/qfloat16.h>
 
 #include "LittleEndian.h"
 #include "QGCLoggingCategory.h"
@@ -51,22 +53,7 @@ int calculatePayloadSize(const QString &format)
 
 float halfToFloat(uint16_t bits)
 {
-    const uint32_t sign = (bits & 0x8000) << 16;
-    const uint32_t exponent = (bits >> 10) & 0x1F;
-    const uint32_t mantissa = bits & 0x3FF;
-    uint32_t result;
-
-    if (exponent == 0) {
-        result = sign;  // Zero or denormalized (treat as zero)
-    } else if (exponent == 31) {
-        result = sign | 0x7F800000 | (mantissa << 13);  // Inf or NaN
-    } else {
-        result = sign | ((exponent + 112) << 23) | (mantissa << 13);
-    }
-
-    float fval;
-    memcpy(&fval, &result, sizeof(fval));
-    return fval;
+    return static_cast<float>(std::bit_cast<qfloat16>(bits));
 }
 
 // ============================================================================

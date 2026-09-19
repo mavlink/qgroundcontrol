@@ -1,0 +1,167 @@
+diff --git a/src/ubx.cpp b/src/ubx.cpp
+--- a/src/ubx.cpp
++++ b/src/ubx.cpp
+@@ -51,6 +51,7 @@
+  */
+
+ #include <cmath>
++#include <cstdlib>
+ #include <string.h>
+
+ #include "rtcm.h"
+@@ -100,6 +101,7 @@ GPSDriverUBX::configure(unsigned &baudrate, const GPSConfig &config)
+ {
+ 	_configured = false;
+ 	_output_mode = config.output_mode;
++	_time_mode_unsupported = false;
+
+ 	ubx_payload_tx_cfg_prt_t cfg_prt[2];
+
+@@ -384,11 +386,44 @@ GPSDriverUBX::configure(unsigned &baudrate, const GPSConfig &config)
+ 		}
+ 	}
+
++	if (_output_mode == OutputMode::GPS && disableTimeMode() < 0) {
++		return -1;
++	}
++
+ 	_configured = true;
+ 	return 0;
+ }
+
+
++int GPSDriverUBX::disableTimeMode()
++{
++	// Hardware generations alone cannot distinguish M8N/M8P or M9N/F9P.
++	// Skip only known non-base firmware/models; otherwise require an ACK.
++	if (_time_mode_unsupported) {
++		return 0;
++	}
++
++	if (_proto_ver_27_or_higher) {
++		int msg_size = initCfgValset();
++		cfgValset<uint8_t>(UBX_CFG_KEY_TMODE_MODE, 0 /* Disabled */, msg_size);
++
++		if (!sendMessage(UBX_MSG_CFG_VALSET, _tx_cfg_valset_buf, msg_size)) {
++			return -1;
++		}
++
++		return waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true);
++	}
++
++	memset(&_buf.payload_tx_cfg_tmode3, 0, sizeof(_buf.payload_tx_cfg_tmode3));
++
++	if (!sendMessage(UBX_MSG_CFG_TMODE3, (uint8_t *)&_buf, sizeof(_buf.payload_tx_cfg_tmode3))) {
++		return -1;
++	}
++
++	return waitForAck(UBX_MSG_CFG_TMODE3, UBX_CONFIG_TIMEOUT, true);
++}
++
++
+ int GPSDriverUBX::configureDevicePreV27(const GNSSSystemsMask &gnssSystems)
+ {
+ 	/* Send a CFG-RATE message to define update rate */
+@@ -1397,7 +1432,9 @@ GPSDriverUBX::waitForAck(const uint16_t msg, const unsigned timeout, const bool report)
+ 	gps_abstime time_started = gps_absolute_time();
+
+ 	while ((_ack_state == UBX_ACK_WAITING) && (gps_absolute_time() < time_started + timeout * 1000)) {
+-		receive(timeout);
++		if (receive(timeout) < 0) {
++			break;
++		}
+ 	}
+
+ 	if (_ack_state == UBX_ACK_GOT_ACK) {
+@@ -1773,6 +1810,7 @@ GPSDriverUBX::payloadRxInit()
+ 		break;
+
+ 	case UBX_MSG_MON_VER:
++		_time_mode_unsupported_pending = false;
+ 		break;		// unconditionally handle this message
+
+ 	case UBX_MSG_MON_HW:
+@@ -2113,6 +2151,17 @@ GPSDriverUBX::payloadRxAddMonVer(const uint8_t b)
+ 	if (_rx_payload_index < sizeof(ubx_payload_rx_mon_ver_part1_t)) {
+ 		// Fill Part 1 buffer
+ 		p_buf[_rx_payload_index] = b;
++
++		// Older receivers can omit all extensions, so classify hardware before Part 2.
++		if (_rx_payload_index + 1 == sizeof(ubx_payload_rx_mon_ver_part1_t)) {
++			const char *hw = (const char *)_buf.payload_rx_mon_ver_part1.hwVersion;
++			const unsigned hw_size = sizeof(_buf.payload_rx_mon_ver_part1.hwVersion);
++			_time_mode_unsupported_pending =
++				strncmp(hw, "00040005", hw_size) == 0
++				|| strncmp(hw, "00040007", hw_size) == 0
++				|| strncmp(hw, "00070000", hw_size) == 0
++				|| strncmp(hw, "000A0000", hw_size) == 0;
++		}
+
+ 	} else {
+ 		if (_rx_payload_index == sizeof(ubx_payload_rx_mon_ver_part1_t)) {
+@@ -2168,6 +2217,12 @@ GPSDriverUBX::payloadRxAddMonVer(const uint8_t b)
+ 			if (fwver_str != nullptr) {
+ 				GPS_INFO("u-blox firmware version: %s", fwver_str + strlen("FWVER="));
+
++				// Standard precision and sensor-fusion firmware have no base time mode.
++				if (strncmp(fwver_str, "FWVER=SPG ", 10) == 0
++				    || strncmp(fwver_str, "FWVER=HPS ", 10) == 0) {
++					_time_mode_unsupported_pending = true;
++				}
++
+ 				// Check if its a ZED-F9P-15B
+ 				if ((_board == Board::u_blox9) && strstr(fwver_str, "HPGL1L5")) {
+ 					_board = Board::u_blox9_F9P_L1L5;
+@@ -2187,11 +2242,23 @@ GPSDriverUBX::payloadRxAddMonVer(const uint8_t b)
+ 			if (protver_str != nullptr) {
+ 				GPS_INFO("u-blox protocol version: %s", protver_str + strlen("PROTVER="));
++
++				// CFG-TMODE3 first appeared in protocol 20 (M8P).
++				char *version_end = nullptr;
++				const long version = std::strtol(protver_str + strlen("PROTVER="), &version_end, 10);
++				if (!_proto_ver_27_or_higher && version > 0 && version < 20 && *version_end == '.') {
++					_time_mode_unsupported_pending = true;
++				}
+ 			}
+
+ 			// "MOD=" Module identification. Set in production.
+ 			const char *mod_str = strstr((const char *)_buf.payload_rx_mon_ver_part2.extension, "MOD=");
+
+ 			if (mod_str != nullptr) {
++				// Only NEO-M8P-2 supports base operation; NEO-M8P-0 is rover-only.
++				if (strncmp(mod_str, "MOD=NEO-M8P-0", 13) == 0) {
++					_time_mode_unsupported_pending = true;
++				}
++
+ 				// in case of u-blox9 family, check if it's an F9P
+ 				if (_board == Board::u_blox9) {
+ 					if (strstr(mod_str, "F9P")) {
+@@ -2605,6 +2672,8 @@ GPSDriverUBX::payloadRxDone()
+ 		UBX_TRACE_RXMSG("Rx MON-VER");
+
+ 		// This is polled only on startup, and the startup code waits for an ack
+ 		if (_ack_state == UBX_ACK_WAITING && _ack_waiting_msg == UBX_MSG_MON_VER) {
++			// Do not let a checksum-invalid or unsolicited MON-VER bypass the required change.
++			_time_mode_unsupported = _time_mode_unsupported_pending;
+ 			_ack_state = UBX_ACK_GOT_ACK;
+ 		}
+diff --git a/src/ubx.h b/src/ubx.h
+--- a/src/ubx.h
++++ b/src/ubx.h
+@@ -1052,6 +1052,7 @@ public:
+
+ private:
+ 	int activateRTCMOutput(bool reduce_update_rate);
++	int disableTimeMode();
+
+ 	/**
+ 	 * While parsing add every byte (except the sync bytes) to the checksum
+@@ -1198,6 +1199,8 @@ private:
+ 	bool _got_velned{false};
+ 	bool _proto_ver_27_or_higher{false}; ///< true if protocol version 27 or higher detected
+ 	bool _use_nav_pvt{false};
++	bool _time_mode_unsupported{false};
++	bool _time_mode_unsupported_pending{false};
+
+ 	uint8_t _rx_ck_a{0};
+ 	uint8_t _rx_ck_b{0};

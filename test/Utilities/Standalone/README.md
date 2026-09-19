@@ -21,6 +21,9 @@ It supports unaligned input and rejects out-of-range offsets without overflow.
 Boolean types, including cv-qualified forms, are excluded from scalar decoding.
 `QGCWireConsumer` covers explicit wire fixtures, signed values, floating-point
 special values, truncated buffers and invalid offsets.
+The already-Qt DataFlash parser converts binary16 values through `qfloat16` after
+the bounded integer read; its application suite compares exact binary32 bits for
+signed zero, normal/subnormal boundaries and infinities.
 
 Each utility declares its public headers with a CMake `HEADERS` file set. The
 default build uses the shared `test/LibraryBoundaryChecks.cmake` helpers to run

@@ -1,6 +1,6 @@
 #include "APMDataFlashUtilityTest.h"
 
-
+#include <bit>
 #include <cmath>
 #include <cstring>
 
@@ -161,38 +161,42 @@ void APMDataFlashUtilityTest::_testParseValueStrings()
 // Half-Precision Float Tests
 // ============================================================================
 
+void APMDataFlashUtilityTest::_testHalfToFloat_data()
+{
+    QTest::addColumn<quint16>("bits");
+    QTest::addColumn<quint32>("floatBits");
+    QTest::newRow("zero") << quint16{0x0000} << quint32{0x00000000};
+    QTest::newRow("negative-zero") << quint16{0x8000} << quint32{0x80000000};
+    QTest::newRow("smallest-subnormal") << quint16{0x0001} << quint32{0x33800000};
+    QTest::newRow("negative-smallest-subnormal") << quint16{0x8001} << quint32{0xb3800000};
+    QTest::newRow("largest-subnormal") << quint16{0x03ff} << quint32{0x387fc000};
+    QTest::newRow("negative-largest-subnormal") << quint16{0x83ff} << quint32{0xb87fc000};
+    QTest::newRow("smallest-normal") << quint16{0x0400} << quint32{0x38800000};
+    QTest::newRow("negative-smallest-normal") << quint16{0x8400} << quint32{0xb8800000};
+    QTest::newRow("one") << quint16{0x3c00} << quint32{0x3f800000};
+    QTest::newRow("negative-one") << quint16{0xbc00} << quint32{0xbf800000};
+    QTest::newRow("two") << quint16{0x4000} << quint32{0x40000000};
+    QTest::newRow("half") << quint16{0x3800} << quint32{0x3f000000};
+    QTest::newRow("largest-finite") << quint16{0x7bff} << quint32{0x477fe000};
+    QTest::newRow("negative-largest-finite") << quint16{0xfbff} << quint32{0xc77fe000};
+    QTest::newRow("infinity") << quint16{0x7c00} << quint32{0x7f800000};
+    QTest::newRow("negative-infinity") << quint16{0xfc00} << quint32{0xff800000};
+}
+
 void APMDataFlashUtilityTest::_testHalfToFloat()
 {
-    // Test common values
-    // 1.0 in half-precision: sign=0, exp=15 (biased), mantissa=0 -> 0x3C00
-    QVERIFY(qAbs(APMDataFlashUtility::halfToFloat(0x3C00) - 1.0f) < 0.001f);
-
-    // 2.0 in half-precision: 0x4000
-    QVERIFY(qAbs(APMDataFlashUtility::halfToFloat(0x4000) - 2.0f) < 0.001f);
-
-    // -1.0 in half-precision: 0xBC00
-    QVERIFY(qAbs(APMDataFlashUtility::halfToFloat(0xBC00) - (-1.0f)) < 0.001f);
-
-    // 0.5 in half-precision: 0x3800
-    QVERIFY(qAbs(APMDataFlashUtility::halfToFloat(0x3800) - 0.5f) < 0.001f);
+    QFETCH(quint16, bits);
+    QFETCH(quint32, floatBits);
+    // Exact bits distinguish subnormals and signed zero without fuzzy floating-point comparisons.
+    QCOMPARE(std::bit_cast<quint32>(APMDataFlashUtility::halfToFloat(bits)), floatBits);
+    const char wire[] = {'\xff', static_cast<char>(bits & 0xff), static_cast<char>(bits >> 8)};
+    const QVariant value = APMDataFlashUtility::parseValue(wire + 1, 2, 'g');
+    QVERIFY(value.isValid());
+    QCOMPARE(std::bit_cast<quint32>(static_cast<float>(value.toDouble())), floatBits);
 }
 
 void APMDataFlashUtilityTest::_testHalfToFloatSpecial()
 {
-    // Zero
-    QCOMPARE(APMDataFlashUtility::halfToFloat(0x0000), 0.0f);
-
-    // Negative zero
-    QCOMPARE(APMDataFlashUtility::halfToFloat(0x8000), -0.0f);
-
-    // Infinity (exponent=31, mantissa=0)
-    float inf = APMDataFlashUtility::halfToFloat(0x7C00);
-    QVERIFY(std::isinf(inf) && inf > 0);
-
-    // Negative infinity
-    float ninf = APMDataFlashUtility::halfToFloat(0xFC00);
-    QVERIFY(std::isinf(ninf) && ninf < 0);
-
     // NaN (exponent=31, mantissa!=0)
     float nan = APMDataFlashUtility::halfToFloat(0x7C01);
     QVERIFY(std::isnan(nan));

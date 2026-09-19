@@ -5,32 +5,34 @@
 namespace {
 QString diagnostic(GPSReceiverConfigError error)
 {
-    const auto tr = [](const char* text) { return QCoreApplication::translate("GPSReceiverConfig", text); };
     switch (error) {
         case GPSReceiverConfigError::None:
             return {};
         case GPSReceiverConfigError::UnknownReceiver:
-            return tr("Unsupported GPS receiver type");
+            return QCoreApplication::translate("GPSReceiverConfig", "Unsupported GPS receiver type");
         case GPSReceiverConfigError::InvalidRole:
-            return tr("Unsupported GPS receiver role");
+            return QCoreApplication::translate("GPSReceiverConfig", "Unsupported GPS receiver role");
         case GPSReceiverConfigError::InvalidFixedBase:
-            return tr("Enter a valid fixed base position and accuracy");
+            return QCoreApplication::translate("GPSReceiverConfig", "Enter a valid fixed base position and accuracy");
         case GPSReceiverConfigError::InvalidSurveyIn:
-            return tr("Enter a valid survey-in accuracy and duration");
+            return QCoreApplication::translate("GPSReceiverConfig", "Enter a valid survey-in accuracy and duration");
         case GPSReceiverConfigError::UnsupportedConstellations:
-            return tr("This receiver cannot configure constellations");
+            return QCoreApplication::translate("GPSReceiverConfig", "This receiver cannot configure constellations");
         case GPSReceiverConfigError::InvalidConstellations:
-            return tr("Unsupported constellation selection");
+            return QCoreApplication::translate("GPSReceiverConfig", "Unsupported constellation selection");
         case GPSReceiverConfigError::UnsupportedDynamicModel:
-            return tr("This receiver role cannot configure a dynamic model");
+            return QCoreApplication::translate("GPSReceiverConfig",
+                                               "This receiver role cannot configure a dynamic model");
         case GPSReceiverConfigError::InvalidDynamicModel:
-            return tr("Unsupported receiver dynamic model");
+            return QCoreApplication::translate("GPSReceiverConfig", "Unsupported receiver dynamic model");
         case GPSReceiverConfigError::UnsupportedHeadingOffset:
-            return tr("This receiver role cannot configure a heading offset");
+            return QCoreApplication::translate("GPSReceiverConfig",
+                                               "This receiver role cannot configure a heading offset");
         case GPSReceiverConfigError::InvalidHeadingOffset:
-            return tr("Enter a finite heading offset between -pi and pi radians");
+            return QCoreApplication::translate("GPSReceiverConfig",
+                                               "Enter a finite heading offset between -pi and pi radians");
     }
-    return tr("Invalid GPS receiver configuration");
+    return QCoreApplication::translate("GPSReceiverConfig", "Invalid GPS receiver configuration");
 }
 }  // namespace
 

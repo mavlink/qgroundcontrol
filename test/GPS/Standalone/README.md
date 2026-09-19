@@ -23,9 +23,45 @@ registration, and session ownership without linking QGroundControl. They use
 `QGCTestTiming` for deterministic scheduling and also run in the application's
 Unit suite.
 
-Base-configuration, accepted-state, and stream-transport behavior suites reuse
+Receiver-configuration, PX4 conversion, accepted-state, and stream-transport behavior suites reuse
 `PortableTest`: the application harness runs them against its production objects,
-while standalone builds create narrow executables.
+while standalone builds create narrow Qt-backed executables. The no-Qt consumers
+remain small linkage/default/smoke checks rather than a second behavior-test framework.
+
+`GPSReceiverConfigTest` owns the native validation/capability tables, including
+wire limits and adjacent floating-point boundaries. `GPSBaseStationConfigTest`
+covers the Qt diagnostic adapter. `GPSPx4DataTest` uses named cases, field-level
+comparisons, and data rows for native enum mappings, motion validity and satellite
+families. Their production libraries remain Qt-free.
+
+To run those behavior suites without the application or native protocol dependency:
+
+```sh
+cmake -S test/GPS/Receiver -B build/gps-config-tests -G Ninja \
+    -DCMAKE_PREFIX_PATH=/path/to/Qt/installation
+cmake --build build/gps-config-tests
+ctest --test-dir build/gps-config-tests --output-on-failure
+
+cmake -S test/GPS/Driver -B build/gps-data-tests -G Ninja \
+    -DCMAKE_PREFIX_PATH=/path/to/Qt/installation
+cmake --build build/gps-data-tests
+ctest --test-dir build/gps-data-tests --output-on-failure
+```
+
+Native application test builds also register `CMake.GPSMinimal.DriverReports`,
+`CMake.GPSMinimal.ReceiverConfig`, and `CMake.GPSMinimal.Px4Adapter` in the existing
+Unit/CMake test lane. Each case configures a fresh temporary standalone build with
+Qt discovery disabled, builds the default targets and isolated header checks, and
+runs exactly the selected consumers. CMake's file API is used to reject runtime
+targets and unrequested configuration artifacts. Single- and multi-configuration
+generators use the active test configuration. Cross-compiled application builds
+do not register these host-executed cases.
+The compatibility case runs `QGCGPSPx4AdapterConsumer` plus the report consumer;
+it does not link the Qt-backed `GPSPx4DataTest`.
+
+```sh
+ctest --test-dir build --output-on-failure -R '^CMake.GPSMinimal\.'
+```
 
 The NMEA protocol is a separate Qt-free static library. Its consumer links only
 `QGCGPSNMEAProtocol` and exercises sentence decoding, constellation resolution, and
@@ -113,9 +149,25 @@ Unsupported role/setting combinations fail before configuration I/O. Output-rate
 selection, configured NMEA output, settings/UI controls and receiver read-back
 remain with the native-driver/lifecycle work.
 
+The pinned PX4 backend has a content-hashed compatibility patch for u-blox
+Position requests. It disables TMODE3 or the modern time-mode configuration key
+and requires receiver acknowledgement before reporting configuration success.
+Capability exceptions come only from a checksum-valid, solicited MON-VER response;
+known non-base and older identities avoid unsupported commands. Unidentified
+firmware must acknowledge the change or fail configuration rather than claim
+that an existing fixed/survey mode was cleared. No configuration wipe or dependency
+pin update is used.
+
+`GPSDriverTest` uses a stateful scripted receiver to retain base mode across new
+driver instances. Legacy/modern fixed and survey transitions, rejected/missing
+ACKs, cancellation, non-base identities and corrupted version reports are covered.
+These tests do not establish physical receiver acceptance; additional identity
+mapping may be needed for unidentified non-base firmware.
+
 Shared Qt-free validation preserves the uint32 survey-duration range and existing
 fixed-base float wire limits. `Driver/GPSReceiverConfigValidation` translates its
-error codes at the Qt-facing boundary without introducing Qt into `Receiver/`.
+error codes through literal, `lupdate`-extractable contexts at the Qt-facing
+boundary without introducing Qt into `Receiver/`.
 
 `gpsBaseStationConfigError()` checks the native base configuration and wire limits.
 Fixed-base coordinates and altitude must be supplied explicitly; omitted fields

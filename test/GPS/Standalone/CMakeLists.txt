@@ -2,6 +2,24 @@ cmake_minimum_required(VERSION 3.25)
 
 include("${CMAKE_CURRENT_LIST_DIR}/../../LibraryBoundaryChecks.cmake")
 
+if(COMMAND add_qgc_test AND NOT CMAKE_CROSSCOMPILING)
+    if(NOT TARGET Python3::Interpreter)
+        message(FATAL_ERROR "The GPS minimal-build matrix requires Python3::Interpreter")
+    endif()
+    foreach(component DriverReports ReceiverConfig Px4Adapter)
+        add_test(
+            NAME "CMake.GPSMinimal.${component}"
+            COMMAND
+                "$<TARGET_FILE:Python3::Interpreter>" "${CMAKE_CURRENT_SOURCE_DIR}/check_minimal_build.py"
+                "--source-dir=${CMAKE_CURRENT_SOURCE_DIR}" "--build-root=${CMAKE_CURRENT_BINARY_DIR}/Minimal"
+                "--component=${component}" "--generator=${CMAKE_GENERATOR}" "--platform=${CMAKE_GENERATOR_PLATFORM}"
+                "--toolset=${CMAKE_GENERATOR_TOOLSET}" "--compiler=${CMAKE_CXX_COMPILER}" "--cmake=${CMAKE_COMMAND}"
+                "--ctest=${CMAKE_CTEST_COMMAND}" "--config=$<CONFIG>"
+        )
+        set_tests_properties("CMake.GPSMinimal.${component}" PROPERTIES LABELS "CMake;Unit;GPS" TIMEOUT 180)
+    endforeach()
+endif()
+
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(QGCGPSLibraryTests LANGUAGES CXX)
     enable_testing()
@@ -131,19 +149,20 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 if(TARGET QGCGPSPx4Adapter)
-    add_executable(QGCGPSPx4DataTest ../Driver/GPSPx4DataTest.cc)
+    add_executable(QGCGPSPx4AdapterConsumer QGCGPSPx4AdapterConsumer.cc)
     set_target_properties(
-        QGCGPSPx4DataTest
+        QGCGPSPx4AdapterConsumer
         PROPERTIES AUTOMOC OFF
                    AUTOUIC OFF
                    AUTORCC OFF
     )
-    target_include_directories(QGCGPSPx4DataTest PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/Driver/Px4"
-                                                         "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/Receiver"
+    target_include_directories(QGCGPSPx4AdapterConsumer
+                               PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/Driver/Px4"
+                                       "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS/Receiver"
     )
-    target_link_libraries(QGCGPSPx4DataTest PRIVATE QGCGPSPx4Adapter QGCGPSDriverReports)
-    add_test(NAME GPSPx4DataTest COMMAND QGCGPSPx4DataTest)
-    set_tests_properties(GPSPx4DataTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 10)
+    target_link_libraries(QGCGPSPx4AdapterConsumer PRIVATE QGCGPSPx4Adapter QGCGPSDriverReports)
+    add_test(NAME QGCGPSPx4AdapterConsumer COMMAND QGCGPSPx4AdapterConsumer)
+    set_tests_properties(QGCGPSPx4AdapterConsumer PROPERTIES LABELS "Unit;GPS" TIMEOUT 10)
 endif()
 
 if(TARGET QGCClock)

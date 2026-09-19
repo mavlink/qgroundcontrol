@@ -23,11 +23,25 @@ function(qgc_add_px4_backend target)
         message(FATAL_ERROR "The PX4 GPS backend is already configured")
     endif()
 
+    include(CPMPatchCache)
+    set(px4_gpsdrivers_tag cd6f506afda9bd6e8e4645f094dcf5415f1f8be4)
+    set(px4_gpsdrivers_patch "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ubx-position-time-mode.patch")
+    qgc_cpm_patch_cache_key(
+        px4_gpsdrivers_cache_key
+        GIT_REPOSITORY
+        "https://github.com/PX4/PX4-GPSDrivers.git"
+        GIT_TAG
+        "${px4_gpsdrivers_tag}"
+        PATCHES
+        "${px4_gpsdrivers_patch}"
+    )
     CPMAddPackage(
         NAME px4-gpsdrivers
         GITHUB_REPOSITORY PX4/PX4-GPSDrivers
-        GIT_TAG cd6f506afda9bd6e8e4645f094dcf5415f1f8be4
+        GIT_TAG "${px4_gpsdrivers_tag}"
         SOURCE_SUBDIR src
+        CUSTOM_CACHE_KEY "${px4_gpsdrivers_cache_key}"
+        PATCHES "${px4_gpsdrivers_patch}"
     )
 
     file(GLOB gps_drivers_sources CONFIGURE_DEPENDS "${px4-gpsdrivers_SOURCE_DIR}/src/*.c"

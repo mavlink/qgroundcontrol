@@ -31,4 +31,12 @@ private slots:
     void _nativeConfigurationRejectedBeforeIo();
     void _invalidRtcmPayload_data();
     void _invalidRtcmPayload();
+    void _ubloxRoleTransition_data();
+    void _ubloxRoleTransition();
+    void _ubloxDisableFailure_data();
+    void _ubloxDisableFailure();
+    void _ubloxPositionNonBase_data();
+    void _ubloxPositionNonBase();
+    void _ubloxBaseRoleDefaults_data();
+    void _ubloxBaseRoleDefaults();
 };
