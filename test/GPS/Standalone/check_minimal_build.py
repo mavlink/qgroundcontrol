@@ -13,10 +13,6 @@ CASES = {
     "DriverReports": ({"QGCGPSDriverReportsConsumer"}, "QGCGPSDriverReportsHeaderChecks"),
     "ReceiverConfig": ({"QGCGPSReceiverConfigConsumer"}, "QGCGPSReceiverConfigHeaderChecks"),
     "TransportTypes": ({"QGCGPSTransportTypesConsumer"}, "QGCGPSTransportTypesHeaderChecks"),
-    "Px4Adapter": (
-        {"QGCGPSPx4AdapterConsumer", "QGCGPSDriverReportsConsumer"},
-        "QGCGPSDriverReportsHeaderChecks",
-    ),
     "Native": (
         {
             "QGCGPSNativeConsumer",
@@ -62,12 +58,10 @@ def check_artifacts(build: Path, component: str, config: str) -> None:
         raise ValueError(f"No unique file-api configuration matches {config!r}")
     for target in configurations[0]["targets"]:
         name = target["name"]
-        if name in {"px4-gpsdrivers", "QGCGPSLegacyDriver"}:
+        if name in {"px4-gpsdrivers", "QGCGPSLegacyDriver", "QGCGPSPx4Adapter"}:
             raise ValueError(f"Unexpected legacy receiver runtime target: {name}")
         if name == "QGCGPSDriver" and component != "Driver":
             raise ValueError(f"Unexpected Qt receiver runtime target: {name}")
-        if name == "QGCGPSPx4Adapter" and component != "Px4Adapter":
-            raise ValueError("Unexpected compatibility adapter")
         if name != "QGCGPSReceiverConfig" or component in {"ReceiverConfig", "Native", "Driver"}:
             continue
         target_model = json.loads((reply / target["jsonFile"]).read_text(encoding="utf-8"))

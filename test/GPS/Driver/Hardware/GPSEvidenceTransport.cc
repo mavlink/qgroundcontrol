@@ -68,13 +68,6 @@ GPSReadResult GPSEvidenceTransport::read(uint8_t* buffer, int length, int timeou
     return result;
 }
 
-GPSWriteResult GPSEvidenceTransport::write(const uint8_t* buffer, int length)
-{
-    const auto result = _transport.write(buffer, length);
-    _recordWrite(buffer, length, result);
-    return result;
-}
-
 GPSWriteResult GPSEvidenceTransport::writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline)
 {
     const auto result = _transport.writeBounded(buffer, length, deadline);

@@ -257,7 +257,9 @@ private slots:
             QVERIFY(!transport->fatalError());
             return;
         }
-        QCOMPARE(transport->write(&byte, 1).writtenBytes, 1);
+        QCOMPARE(transport->writeConfiguration(&byte, 1, QDeadlineTimer(transport->configurationWriteTimeout()))
+                     .writtenBytes,
+                 1);
         const QByteArray payload(16 * 1024 * 1024, 'x');
         std::jthread cancellation;
         const bool cancelled = outcome.startsWith("cancelled");

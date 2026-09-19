@@ -20,7 +20,7 @@ int main(int argc, char** argv)
         return 2;
     }
     const uint8_t bytes[]{1, 2, 3};
-    const auto sent = udp.write(bytes, sizeof(bytes));
+    const auto sent = udp.writeConfiguration(bytes, sizeof(bytes), QDeadlineTimer(udp.configurationWriteTimeout()));
     if (sent.status != GPSWriteStatus::Completed || sent.writtenBytes != sizeof(bytes)) {
         return 3;
     }
@@ -37,5 +37,8 @@ int main(int argc, char** argv)
         return 5;
     }
 #endif
-    return udp.write(bytes, sizeof(bytes)).status == GPSWriteStatus::Cancelled ? 0 : 6;
+    return udp.writeConfiguration(bytes, sizeof(bytes), QDeadlineTimer(udp.configurationWriteTimeout())).status ==
+                   GPSWriteStatus::Cancelled
+               ? 0
+               : 6;
 }

@@ -30,9 +30,15 @@ GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativ
     }
     auto& integrity = result.integrity;
     integrity.timestampUs = diagnostic.timestamp;
-    integrity.jamming = static_cast<GPSIntegrityReport::JammingState>(diagnostic.jamming_state);
-    integrity.spoofing = static_cast<GPSIntegrityReport::SpoofingState>(diagnostic.spoofing_state);
-    integrity.correctionUse = static_cast<GPSIntegrityReport::CorrectionUse>(diagnostic.corrections_msg_used);
+    if (diagnostic.jamming_state <= GPSNativeIntegrityReport::JAMMING_STATE_DETECTED) {
+        integrity.jamming = static_cast<GPSIntegrityReport::JammingState>(diagnostic.jamming_state);
+    }
+    if (diagnostic.spoofing_state <= GPSNativeIntegrityReport::SPOOFING_STATE_DETECTED) {
+        integrity.spoofing = static_cast<GPSIntegrityReport::SpoofingState>(diagnostic.spoofing_state);
+    }
+    if (diagnostic.corrections_msg_used <= GPSNativeIntegrityReport::CORRECTIONS_MSG_USED_USED) {
+        integrity.correctionUse = static_cast<GPSIntegrityReport::CorrectionUse>(diagnostic.corrections_msg_used);
+    }
     integrity.noisePerMillisecond = diagnostic.noise_per_ms;
     integrity.automaticGainControl = diagnostic.automatic_gain_control;
     integrity.jammingIndicator = diagnostic.jamming_indicator;

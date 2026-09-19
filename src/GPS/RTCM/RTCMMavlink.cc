@@ -27,15 +27,6 @@ void RTCMMavlink::setOutputProvider(OutputProvider provider)
     _outputProvider = std::move(provider);
 }
 
-quint64 RTCMMavlink::submit(QByteArrayView data)
-{
-    quint64 bytes = 0;
-    for (const auto& admission : submitToOutputs(data)) {
-        bytes += admission.queuedBytes;
-    }
-    return bytes;
-}
-
 QList<RTCMMavlink::Admission> RTCMMavlink::submitToOutputs(QByteArrayView data)
 {
     QList<Admission> admissions;
@@ -60,7 +51,7 @@ QList<RTCMMavlink::Admission> RTCMMavlink::submitToOutputs(QByteArrayView data)
             return admissions;
         }
     }
-    const auto packed = pack(data, _sequenceId);
+    const auto packed = RTCMMavlinkPacket::pack(data, _sequenceId);
     _sequenceId = packed.nextSequenceId;
     const auto outputs = provider ? provider() : QList<Output>();
     if (!current()) {

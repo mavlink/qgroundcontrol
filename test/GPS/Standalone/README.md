@@ -23,16 +23,16 @@ registration, and session ownership without linking QGroundControl. They use
 `QGCTestTiming` for deterministic scheduling and also run in the application's
 Unit suite.
 
-Receiver-configuration, PX4 conversion, accepted-state, and stream-transport behavior suites reuse
+Receiver-configuration, native conversion, accepted-state, and stream-transport behavior suites reuse
 `PortableTest`: the application harness runs them against its production objects,
 while standalone builds create narrow Qt-backed executables. The no-Qt consumers
 remain small linkage/default/smoke checks rather than a second behavior-test framework.
 
 `GPSReceiverConfigTest` owns the native validation/capability tables, including
 wire limits and adjacent floating-point boundaries. `GPSBaseStationConfigTest`
-covers the Qt diagnostic adapter. `GPSPx4DataTest` uses named cases, field-level
-comparisons, and data rows for native enum mappings, motion validity and satellite
-families. Their production libraries remain Qt-free.
+covers the Qt diagnostic adapter. `GPSNativeDataTest` exercises the production
+report adapter's enum mappings, motion validity, unavailable values and satellite
+snapshots. Receiver configuration and report value types remain Qt-free.
 
 Run receiver validation without the application or native protocol dependency:
 
@@ -43,7 +43,7 @@ cmake --build build/gps-config-tests
 ctest --test-dir build/gps-config-tests --output-on-failure
 ```
 
-Run native facade tests and the optional legacy comparison suites without the application:
+Run native facade/conversion tests and the optional hardware runner without the application:
 
 ```sh
 cmake -S test/GPS/Driver -B build/gps-driver-tests -G Ninja \
@@ -54,7 +54,7 @@ ctest --test-dir build/gps-driver-tests --output-on-failure -L Unit
 ```
 
 Native application test builds also register `CMake.GPSMinimal.DriverReports`,
-`CMake.GPSMinimal.ReceiverConfig`, `CMake.GPSMinimal.TransportTypes`, `CMake.GPSMinimal.Px4Adapter`,
+`CMake.GPSMinimal.ReceiverConfig`, `CMake.GPSMinimal.TransportTypes`,
 `CMake.GPSMinimal.Native`, and `CMake.GPSMinimal.Driver` in the existing
 Unit/CMake test lane. Each case configures a fresh temporary standalone build,
 builds the default targets and isolated header checks, and
@@ -66,9 +66,7 @@ PX4 runtime target. Single- and multi-configuration
 generators use the active test configuration. Cross-compiled application builds
 do not register these host-executed cases.
 The native case builds the production protocol libraries and checks their public
-headers without Qt or the external PX4 runtime. The compatibility case runs
-`QGCGPSPx4AdapterConsumer` plus the report consumer;
-it does not link the Qt-backed `GPSPx4DataTest`.
+headers without Qt or an external receiver runtime.
 
 ```sh
 ctest --test-dir build --output-on-failure -R '^CMake.GPSMinimal\.'
@@ -117,7 +115,7 @@ ctest --test-dir build/gps-transports --output-on-failure
 
 The available components are `Core`, `NMEAProtocol`, `NMEAUtils`, `NMEA`, `Positioning`,
 `TransportTypes`, `Transport`, `ReceiverTransports`, `RTCMFramer`, `RTCM`, `Corrections`, `NTRIPHttp`,
-`NTRIP`, `DriverReports`, `Px4Adapter`, `ReceiverConfig`, `Native`, and `Driver`.
+`NTRIP`, `DriverReports`, `ReceiverConfig`, `Native`, and `Driver`.
 `Native` selects the Qt-free receiver protocols; `Driver` adds the Qt transport
 adapter and configuration diagnostics. The `Transport` library
 needs Qt Core and the logging library, not Qt Network or RTK configuration.
@@ -128,7 +126,7 @@ files are available. Full Linux application test builds retain that harness.
 Core survey-status coverage stays with the Core component.
 All components are enabled by default. `NMEA` includes `NMEAProtocol` and `NMEAUtils`;
 `RTCM` and `Corrections` automatically include `RTCMFramer`. `NTRIP` includes
-`NTRIPHttp`, `NMEAUtils`, and `RTCM`. `Px4Adapter` includes `DriverReports`.
+`NTRIPHttp`, `NMEAUtils`, and `RTCM`.
 `Driver` includes `Native` and `Transport`; `Native` includes receiver reports,
 configuration, transport status types, NMEA protocol support, and RTCM framing.
 
@@ -158,15 +156,12 @@ only requested consumers, so a report-only build does not compile configuration 
 | `Receiver/` | Qt-free configuration, configuration evidence, capabilities, identity, and receiver reports |
 | `Driver/` | Driver facade and Qt configuration diagnostics |
 | `Driver/Protocols/` | Qt-free native receiver protocols and configuration transactions |
-| `test/GPS/Driver/Legacy/` | Test-only compatibility conversion, layouts, patches, and optional PX4 backend build wiring |
 | `RTK/` | Application composition, worker integration, Facts, settings, and auto-connect |
 
-The private `QGCGPSPx4Adapter` target remains Qt-free; its regression executable opts
-into the test-only `test/GPS/Driver/Legacy` boundary. The production driver does not attach the
-external PX4 implementation. `qgc_add_px4_backend()` is retained for the optional
-legacy hardware comparison target, without changing the dependency pin.
-Report, configuration, native, and compatibility-only builds never invoke that
-legacy runtime setup or fetch the PX4 dependency. The facade retains owning
+Application and test targets use the native protocols only. The former PX4
+backend, compatibility adapter, wire layouts and dependency patches have been
+removed. `GPSNativeDataTest` retains relevant conversion coverage against the
+production adapter. The facade retains owning
 receiver reports in its public sinks and the worker's queued signals. Its public
 header is checked in isolation in application and standalone driver builds.
 
@@ -182,8 +177,8 @@ describe software request support, not receiver-model discovery or read-back.
 Unsupported role/setting combinations fail before configuration I/O. Output-rate
 selection, configured NMEA output and settings/UI controls remain lifecycle work.
 
-The native facade preserves `configure()`, the integer `receive()` compatibility
-wrapper, and the existing report sinks. Production consumers use `receiveOutcome()`
+The native facade exposes `configure()`, typed `receiveOutcome()`, and owning
+report sinks. Consumers use `receiveOutcome()`
 to distinguish useful data, ancillary activity, idle time, cancellation and terminal
 errors. Inactivity is measured by elapsed time since useful reports, not by counting
 short ancillary receive calls.
@@ -191,7 +186,8 @@ short ancillary receive calls.
 settings or exposing a new UI: accepted/written byte counts are distinct from
 receiver acknowledgement and readback verification. The evidence values live with
 the other Qt-free receiver reports, not in the facade layer.
-`writeConfiguration()` preserves the native command deadline on desktop transports.
+`writeConfiguration()` requires an explicit deadline and preserves the native
+command budget on desktop transports; the generic `write()` wrapper is removed.
 Android explicitly retains its synchronous backend limitation; generic unsupported
 bounded writes are not retried through an unbounded writer.
 
@@ -209,13 +205,12 @@ state is distinct from automatic position determination.
 No receiver sessions, recording format, GCS position-source integration, or
 settings migrations are introduced.
 
-The [shared hardware runner](../Driver/Hardware/README.md) exercises the legacy
-and native facades with the same requests and transport observation. It is opt-in,
+The [hardware runner](../Driver/Hardware/README.md) exercises the native facade
+with the application's requests and transport observation. It is opt-in,
 never opens hardware during CTest, requires explicit authorization for physical
 configuration, and separates scripted results from physical evidence.
 
-The optional pinned PX4 comparison backend has content-hashed compatibility patches for receiver safety.
-The u-blox patch protects Position requests. It disables TMODE3 or the modern time-mode configuration key
+The native u-blox controller protects Position requests. It disables TMODE3 or the modern time-mode configuration key
 and requires both acknowledgement and checked TMODE3/VALGET read-back before
 reporting configuration success. Explicit SBAS enable/disable requests also require
 acknowledgement and matching RAM values, including L1CA when enabling SBAS.
@@ -225,24 +220,19 @@ checksum, key, layer and value; a generic ACK cannot substitute for it.
 Capability exceptions come only from a checksum-valid, solicited MON-VER response;
 known non-base and older identities avoid unsupported commands. Unidentified
 firmware must confirm the change or fail configuration rather than claim
-that an existing fixed/survey mode was cleared. No configuration wipe or dependency
-pin update is used.
+that an existing fixed/survey mode was cleared. No factory reset or configuration
+wipe is used.
 
 `GPSDriverTest` uses a stateful scripted receiver to retain base mode across new
-driver instances. Legacy/modern fixed and survey transitions, rejected/missing
+driver instances. Pre-v27/modern fixed and survey transitions, rejected/missing
 and delayed ACKs, rejected SBAS settings, read-back mismatches, cancellation,
 non-base identities and corrupted version reports are covered.
 These tests do not establish physical receiver acceptance; additional identity
 mapping may be needed for unidentified non-base firmware.
 
-The non-u-blox patch initializes legacy base settings, ignores Ashtech survey
-progress/completion outside base mode, and rejects failure to enable Femto's
-required position stream. Ashtech and Femto fixed-base reports have zero survey
-duration instead of reading the inactive survey-settings union.
-The opt-in `GPSHardwareRunner.LegacySafety` suite exercises those backend paths
-directly, including modes that the facade currently rejects. `GPSPx4DataTest`
-also remains available in that opt-in Driver build; neither legacy suite adds
-PX4 to the production runtime.
+Native family tests cover valid fixed/survey reports, bounded Ashtech receipts,
+required stream activation, and configuration failure paths. Older u-blox
+firmware remains supported by native protocol code, not by a retained PX4 engine.
 
 Shared Qt-free validation preserves the uint32 survey-duration range and existing
 fixed-base float wire limits. `Driver/GPSReceiverConfigValidation` translates its
@@ -269,13 +259,10 @@ ctest --test-dir build/gps-rtk-config --output-on-failure
 
 Native reports default unavailable fields to NaN, `std::nullopt`, or an explicit
 unknown enum. Invalid producer velocity leaves speed and course unavailable even
-when the position fix is valid. The compatibility adapter retains known zero/false diagnostics,
-separates MSL and ellipsoid altitude, clamps legacy satellite arrays, and does not
-invent per-satellite detail for count-only SBF reports or recover truncated
-Ashtech azimuths. The PX4 state has no independent integrity receipt timestamps;
-native integrity snapshots keep `timestampUs == 0` rather than borrowing a newer
-position receipt. A clean RTCM report with unknown usage has no validity marker
-in that state, so its CRC result remains unavailable. Receiver diagnostic evidence
+when the position fix is valid. Native conversion retains known zero/false diagnostics,
+separates MSL and ellipsoid altitude, bounds satellite snapshots, and retains
+independent integrity timestamps rather than borrowing a newer position receipt.
+Count-only reports do not invent per-satellite detail. Receiver diagnostic evidence
 is not correction-transport acknowledgement or proof of an RTK fix.
 
 The driver lends RTCM bytes only for the synchronous sink call. The Qt worker
@@ -288,8 +275,8 @@ the full survey-duration range, flags and queued snapshot ownership.
 Existing source-health, observation, satellite stores and vehicle Facts are
 unchanged; registering native positioning/diagnostic sources remains lifecycle work.
 
-The native report interface builds without finding Qt, compiling the private
-adapter or fetching the PX4 driver:
+The native report interface builds without finding Qt or compiling receiver
+protocols:
 
 ```sh
 cmake -S test/GPS/Standalone -B build/gps-reports -G Ninja \
@@ -298,12 +285,11 @@ cmake --build build/gps-reports
 ctest --test-dir build/gps-reports --output-on-failure
 ```
 
-To include the private compatibility bridge regressions and receiver
-configuration without Qt or the PX4 protocol library:
+To include receiver configuration and report contracts together without Qt:
 
 ```sh
 cmake -S test/GPS/Standalone -B build/gps-native-data -G Ninja \
-    '-DQGC_GPS_COMPONENTS=Px4Adapter;ReceiverConfig' \
+    '-DQGC_GPS_COMPONENTS=DriverReports;ReceiverConfig' \
     -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
 cmake --build build/gps-native-data
 ctest --test-dir build/gps-native-data --output-on-failure
@@ -511,8 +497,10 @@ coexist with successful source-specific forwarding.
 
 ## Receiver transport compatibility
 
-Transport results distinguish bytes admitted, confirmed by the local transport,
-and uncertain. `uncertainBytes()` derives the outstanding suffix from accepted and
+Configuration commands use `writeConfiguration()` with an explicit command deadline;
+runtime corrections use `writeBounded()`. Transport results distinguish bytes
+admitted, confirmed by the local transport, and uncertain. `uncertainBytes()` derives
+the outstanding suffix from accepted and
 written evidence; none of these counts is a receiver acknowledgement. Correction
 ledger uncertainty remains explicit and separate from this transport calculation.
 Desktop serial and TCP output queues are limited to 4 KiB.

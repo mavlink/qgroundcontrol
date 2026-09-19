@@ -174,7 +174,7 @@ private slots:
         QCOMPARE(result.uncertainBytes(), 4 - (std::max) (count, 0));
         QCOMPARE(transport.fatalError(), count != 4);
         if (count != 4) {
-            QCOMPARE(transport.write(payload, 4).acceptedBytes, 0);
+            QCOMPARE(transport.writeConfiguration(payload, 4, QDeadlineTimer(100)).acceptedBytes, 0);
             QCOMPARE(writeCalls, 1);
         }
     }
@@ -215,7 +215,7 @@ private slots:
         QCOMPARE(writeCalls, 0);
         QVERIFY(!transport.fatalError());
         stop = true;
-        QCOMPARE(transport.write(&payload, 1).status, GPSWriteStatus::Cancelled);
+        QCOMPARE(transport.writeConfiguration(&payload, 1, QDeadlineTimer(100)).status, GPSWriteStatus::Cancelled);
         QCOMPARE(writeCalls, 0);
     }
 
@@ -229,7 +229,7 @@ private slots:
             return length;
         };
         const uint8_t payload[4]{};
-        const auto result = transport.write(payload, 4);
+        const auto result = transport.writeConfiguration(payload, 4, QDeadlineTimer(100));
         QCOMPARE(result.status, GPSWriteStatus::Cancelled);
         QCOMPARE(result.writtenBytes, 4);
         QCOMPARE(result.uncertainBytes(), 0);

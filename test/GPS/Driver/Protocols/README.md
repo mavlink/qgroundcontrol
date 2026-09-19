@@ -12,7 +12,7 @@ Run from the repository root:
 ```sh
 cmake -S test/GPS/Driver/Protocols -B build/gps-protocol-tests -G Ninja \
   -DCMAKE_BUILD_TYPE=Debug -DFETCHCONTENT_UPDATES_DISCONNECTED=ON
-cmake --build build/gps-protocol-tests --parallel 4
+cmake --build build/gps-protocol-tests --parallel
 ctest --test-dir build/gps-protocol-tests --output-on-failure -L Unit
 ```
 
@@ -47,16 +47,15 @@ enabled. SBF and Femto low-level Position-mode tests exercise their internal
 protocol implementations, not a supported public facade role. The public
 `gpsValidateReceiverConfig` contract still restricts Position to u-blox.
 
-## Facade safety and legacy comparison
+## Facade safety and hardware validation
 
 The separate facade suite needs Qt Core, Test, and Positioning. It exercises
-`GPSDriver::configure()`, typed `receiveOutcome()`, the integer `receive()`
-compatibility wrapper, and public reports:
+`GPSDriver::configure()`, typed `receiveOutcome()`, and public reports:
 
 ```sh
 cmake -S test/GPS/Driver -B build/gps-driver-tests -G Ninja \
   -DCMAKE_BUILD_TYPE=Debug -DFETCHCONTENT_UPDATES_DISCONNECTED=ON
-cmake --build build/gps-driver-tests --parallel 4
+cmake --build build/gps-driver-tests --parallel
 ctest --test-dir build/gps-driver-tests --output-on-failure -R GPSDriverTest
 ```
 
@@ -66,11 +65,14 @@ evidence, survey callbacks, and restarting a retained survey. A write completion
 is not a receiver acknowledgement, and an acknowledgement is not verified
 readback.
 
+`GPSNativeDataTest` covers the production report adapter, including unavailable
+fields, enum normalization, velocity validity, satellite snapshots and survey
+projection. It runs without opting into hardware validation.
+
 Configure the facade test entry point with `-DQGC_BUILD_GPS_HARDWARE_TESTS=ON`
-to retain the test-only PX4 comparison runtime, `GPSPx4DataTest`, and
-`GPSHardwareRunner.LegacySafety`. That option also requires Qt Network and,
-unless `QGC_NO_SERIAL_LINK=ON`, SerialPort. Production `QGCGPSDriver` never
-links the legacy runtime. See the [hardware runner guide](../Hardware/README.md)
+to include the native hardware runner. That option also requires Qt Network and,
+unless `QGC_NO_SERIAL_LINK=ON`, SerialPort. Neither application nor test builds
+fetch the old PX4 driver dependency. See the [hardware runner guide](../Hardware/README.md)
 for scripted and explicitly requested physical runs.
 
 ## Sanitizer-backed fuzzing
@@ -81,7 +83,7 @@ Use a separate Clang build:
 cmake -S test/GPS/Driver/Protocols -B build/gps-protocol-fuzz -G Ninja \
   -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ \
   -DQGC_BUILD_GPS_PROTOCOL_FUZZER=ON -DFETCHCONTENT_UPDATES_DISCONNECTED=ON
-cmake --build build/gps-protocol-fuzz --parallel 4
+cmake --build build/gps-protocol-fuzz --parallel
 ctest --test-dir build/gps-protocol-fuzz --output-on-failure
 ```
 

@@ -346,7 +346,7 @@ private:
     bool _proto_ver_27_or_higher{false};  ///< true if protocol version 27 or higher detected
     bool _use_nav_pvt{false};
 
-    uint8_t _dyn_model{7};    ///< ublox Dynamic platform model default 7: airborne with <2g acceleration
+    uint8_t _dyn_model{7};  ///< ublox Dynamic platform model default 7: airborne with <2g acceleration
 
     bool _last_ack_rejected{false};
 

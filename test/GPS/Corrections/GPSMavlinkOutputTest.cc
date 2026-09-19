@@ -135,7 +135,7 @@ void GPSMavlinkOutputTest::_replayExcludedFromLiveAdmissions()
     sender.setOutputProvider([&output]() { return output.outputs(); });
     const QByteArray payload(360, 'R');
     QVERIFY(output.outputs().isEmpty());
-    QCOMPARE(sender.submit(payload), 0ULL);
+    QVERIFY(sender.submitToOutputs(payload).isEmpty());
     QCOMPARE(sender.totalBytesSubmitted(), 0ULL);
 
     expectAppMessage(QRegularExpression(QStringLiteral("Connected to Vehicle [0-9]+")));
@@ -169,7 +169,10 @@ void GPSMavlinkOutputTest::_replayExcludedFromLiveAdmissions()
     QCOMPARE(liveOnly.size(), 1);
     QCOMPARE(liveOnly.first().id, destinations.first().id);
     QCOMPARE(liveOnly.first().session, destinations.first().session);
-    QCOMPARE(sender.submit(payload), quint64(payload.size()));
+    const auto liveAdmissions = sender.submitToOutputs(payload);
+    QCOMPARE(liveAdmissions.size(), 1);
+    QVERIFY(liveAdmissions.first().complete);
+    QCOMPARE(liveAdmissions.first().queuedBytes, quint64(payload.size()));
     QCOMPARE(sender.totalBytesSubmitted(), quint64(2 * payload.size()));
 }
 

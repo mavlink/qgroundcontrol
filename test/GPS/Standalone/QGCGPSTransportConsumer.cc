@@ -19,11 +19,13 @@ int main()
     std::atomic_bool stop = false;
     UnsupportedTransport transport(stop);
     const uint8_t byte = 1;
-    if (transport.write(&byte, 1).status != GPSWriteStatus::Unsupported) {
+    if (transport.writeConfiguration(&byte, 1, QDeadlineTimer(transport.configurationWriteTimeout())).status !=
+        GPSWriteStatus::Unsupported) {
         return 1;
     }
     stop = true;
-    if (transport.write(&byte, 1).status != GPSWriteStatus::Cancelled) {
+    if (transport.writeConfiguration(&byte, 1, QDeadlineTimer(transport.configurationWriteTimeout())).status !=
+        GPSWriteStatus::Cancelled) {
         return 2;
     }
     struct Allowance

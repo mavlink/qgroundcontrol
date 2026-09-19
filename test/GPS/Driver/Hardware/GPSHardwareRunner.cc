@@ -1,10 +1,10 @@
-#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cmath>
 #include <csignal>
 #include <memory>
 #include <thread>
+#include <utility>
 
 #include <QtCore/QCommandLineParser>
 #include <QtCore/QCoreApplication>
@@ -20,7 +20,6 @@
 
 #include "GPSDriver.h"
 #include "GPSEvidenceTransport.h"
-#include "GPSLegacyDriver.h"
 #include "MonotonicClock.h"
 #include "ScriptedUBXReceiver.h"
 #include "TCPGPSTransport.h"
@@ -40,7 +39,6 @@ void interruptHandler(int)
 struct Options
 {
     QString action;
-    QString backend;
     QString transport;
     QString device;
     QString host;
@@ -114,7 +112,6 @@ QJsonObject requestedConfig(const GPSReceiverConfig& config)
 QString parseOptions(QCommandLineParser& parser, Options& options)
 {
     options.action = parser.value("action");
-    options.backend = parser.value("backend");
     options.transport = parser.value("transport");
     options.device = parser.value("device");
     options.host = parser.value("host");
@@ -129,7 +126,6 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     }
     const QString role = parser.value("role");
     if (!QStringList{"plan", "configure", "role-cycle", "suite", "cancel"}.contains(options.action) ||
-        !QStringList{"native", "legacy"}.contains(options.backend) ||
         !QStringList{"scripted", "serial", "tcp", "udp"}.contains(options.transport) ||
         !QStringList{"ublox", "trimble", "septentrio", "femto"}.contains(family) ||
         !QStringList{"base", "position"}.contains(role) || !QStringList{"f9p", "m8p"}.contains(options.model) ||
@@ -210,88 +206,48 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     return {};
 }
 
-class Backend
+QJsonObject configurationEvidence(const GPSDriver& driver)
 {
-public:
-    Backend(const Options& options, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks)
-        : _transport(transport)
-    {
-        if (options.backend == "native") {
-            _native = std::make_unique<GPSDriver>(options.family, transport, config, std::move(sinks));
-        } else {
-            _legacy = std::make_unique<GPSLegacyDriver>(options.family, transport, config, std::move(sinks));
+    QJsonArray commands;
+    for (const auto& evidence : driver.configurationEvidence()) {
+        QString outcome;
+        switch (evidence.outcome) {
+            case GPSConfigurationOutcome::Pending:
+                outcome = "pending";
+                break;
+            case GPSConfigurationOutcome::Written:
+                outcome = "transport_written";
+                break;
+            case GPSConfigurationOutcome::Acknowledged:
+                outcome = "acknowledged";
+                break;
+            case GPSConfigurationOutcome::ReadbackVerified:
+                outcome = "readback_verified";
+                break;
+            case GPSConfigurationOutcome::Rejected:
+                outcome = "rejected";
+                break;
+            case GPSConfigurationOutcome::TimedOut:
+                outcome = "timed_out";
+                break;
+            case GPSConfigurationOutcome::Cancelled:
+                outcome = "cancelled";
+                break;
+            case GPSConfigurationOutcome::TransportError:
+                outcome = "transport_error";
+                break;
         }
+        commands.append(QJsonObject{{"command", QString::fromStdString(evidence.command)},
+                                    {"outcome", outcome},
+                                    {"required", evidence.required},
+                                    {"started_at_us", static_cast<qint64>(evidence.startedAtUs)},
+                                    {"finished_at_us", static_cast<qint64>(evidence.finishedAtUs)},
+                                    {"accepted_bytes", evidence.acceptedBytes},
+                                    {"written_bytes", evidence.writtenBytes},
+                                    {"uncertain_bytes", evidence.uncertainBytes}});
     }
-
-    bool configure() { return _native ? _native->configure() : _legacy->configure(); }
-
-    GPSReceiveResult receive(unsigned timeoutMs)
-    {
-        if (_native) {
-            return _native->receiveOutcome(timeoutMs);
-        }
-        const int result = _legacy->receive(timeoutMs);
-        if (_transport.fatalError()) {
-            return {GPSReceiveStatus::TransportError, 0, result};
-        }
-        // Frozen legacy returns cannot distinguish protocol failure from idle or cancellation.
-        return {result > 0 ? GPSReceiveStatus::Data : GPSReceiveStatus::Activity, std::max(result, 0), 0};
-    }
-
-    QJsonObject configurationEvidence() const
-    {
-        if (_native) {
-            QJsonArray commands;
-            for (const auto& evidence : _native->configurationEvidence()) {
-                QString outcome;
-                switch (evidence.outcome) {
-                    case GPSConfigurationOutcome::Pending:
-                        outcome = "pending";
-                        break;
-                    case GPSConfigurationOutcome::Written:
-                        outcome = "transport_written";
-                        break;
-                    case GPSConfigurationOutcome::Acknowledged:
-                        outcome = "acknowledged";
-                        break;
-                    case GPSConfigurationOutcome::ReadbackVerified:
-                        outcome = "readback_verified";
-                        break;
-                    case GPSConfigurationOutcome::Rejected:
-                        outcome = "rejected";
-                        break;
-                    case GPSConfigurationOutcome::TimedOut:
-                        outcome = "timed_out";
-                        break;
-                    case GPSConfigurationOutcome::Cancelled:
-                        outcome = "cancelled";
-                        break;
-                    case GPSConfigurationOutcome::TransportError:
-                        outcome = "transport_error";
-                        break;
-                }
-                commands.append(QJsonObject{{"command", QString::fromStdString(evidence.command)},
-                                            {"outcome", outcome},
-                                            {"required", evidence.required},
-                                            {"started_at_us", static_cast<qint64>(evidence.startedAtUs)},
-                                            {"finished_at_us", static_cast<qint64>(evidence.finishedAtUs)},
-                                            {"accepted_bytes", evidence.acceptedBytes},
-                                            {"written_bytes", evidence.writtenBytes},
-                                            {"uncertain_bytes", evidence.uncertainBytes}});
-            }
-            return {{"source", "native_driver"}, {"commands", commands}};
-        }
-        return {{"status", "unverified"},
-                {"detail",
-                 "The legacy facade exposes bool configure(), not setting-specific verification. "
-                 "Inspect passive wire observations; no inferred ACK or readback success."}};
-    }
-
-private:
-    GPSTransport& _transport;
-    std::unique_ptr<GPSDriver> _native;
-    std::unique_ptr<GPSLegacyDriver> _legacy;
-};
+    return {{"source", "native_driver"}, {"commands", commands}};
+}
 
 std::unique_ptr<GPSTransport> physicalTransport(const Options& options, const std::atomic_bool& stop)
 {
@@ -338,15 +294,14 @@ void injectMeasurements(ScriptedUBXReceiver& receiver, const Options& options, c
 int run(const Options& options)
 {
     const bool scripted = options.transport == "scripted";
-    QJsonObject report{
-        {"backend", options.backend},          {"action", options.action},
-        {"transport", options.transport},      {"evidence_origin", scripted ? "scripted" : "physical_transport"},
-        {"physical_hardware_verified", false}, {"requested", requestedConfig(options.config)},
-        {"legacy_baseline", "f1e7700e0"},      {"px4_revision", "cd6f506afda9bd6e8e4645f094dcf5415f1f8be4"}};
+    QJsonObject report{{"backend", "native"},
+                       {"action", options.action},
+                       {"transport", options.transport},
+                       {"evidence_origin", scripted ? "scripted" : "physical_transport"},
+                       {"physical_hardware_verified", false},
+                       {"requested", requestedConfig(options.config)}};
     report.insert("receiver_family", options.familyName);
-    report.insert("receive_outcome_semantics", options.backend == "native"
-                                                   ? "typed_native"
-                                                   : "legacy_ambiguous_idle_protocol_error_and_cancellation");
+    report.insert("receive_outcome_semantics", "typed_native");
     report.insert("schema_version", 1);
     report.insert("deadlines", QJsonObject{{"open_and_configure_ms", options.timeoutMs},
                                            {"observation_ms", options.observeMs},
@@ -501,11 +456,11 @@ int run(const Options& options)
                                 {"fresh_survey_proven", false}});
             }
         };
-        Backend driver(options, evidence, config, std::move(sinks));
+        GPSDriver driver(options.family, evidence, config, std::move(sinks));
         const bool configured = driver.configure();
         checks.append(check("configure_return", configured ? "passed" : "failed",
                             "Facade return value only, not independent confirmation of every requested setting"));
-        stage.insert("configuration_evidence", driver.configurationEvidence());
+        stage.insert("configuration_evidence", configurationEvidence(driver));
         auto snapshot = [&] {
             stage.insert("position_messages", positions);
             stage.insert("last_position", lastPosition);
@@ -556,7 +511,7 @@ int run(const Options& options)
             observation.start();
             qint64 lastCheckpointMs = 0;
             while (!stop.load() && !evidence.fatalError() && observation.elapsed() < options.observeMs) {
-                const auto result = driver.receive(50);
+                const auto result = driver.receiveOutcome(50);
                 if (recordReceive(result)) {
                     break;
                 }
@@ -592,7 +547,7 @@ int run(const Options& options)
                 int receiveCalls = 0;
                 GPSReceiveResult result;
                 do {
-                    result = driver.receive(2000);
+                    result = driver.receiveOutcome(2000);
                     ++receiveCalls;
                     if (recordReceive(result)) {
                         break;
@@ -604,19 +559,14 @@ int run(const Options& options)
                 const bool timely =
                     !receiveFailed && stop.load() && !evidence.fatalError() && cancelMs < options.cancelAfterMs + 500;
                 const bool cancelled = timely && result.status == GPSReceiveStatus::Cancelled;
-                const bool legacyUnverified = timely && options.backend == "legacy";
-                checks.append(check("receive_cancellation",
-                                    cancelled          ? "passed"
-                                    : legacyUnverified ? "inconclusive"
-                                                       : "failed",
+                checks.append(check("receive_cancellation", cancelled ? "passed" : "failed",
                                     QString("Receive loop returned after %1 ms across %2 calls; stop requested=%3. "
-                                            "Only typed cancellation proves a native cancellation outcome; "
-                                            "legacy returns remain ambiguous.")
+                                            "Cancellation requires a typed cancellation outcome.")
                                         .arg(cancelMs)
                                         .arg(receiveCalls)
                                         .arg(stop.load())));
                 stage.insert("cancellation_ms", cancelMs);
-                failed = failed || (!cancelled && !legacyUnverified);
+                failed = failed || !cancelled;
                 // Cancellation is the final operation; never send a cleanup configuration.
                 stop.store(true);
             }
@@ -675,11 +625,11 @@ int main(int argc, char* argv[])
     QCoreApplication app(argc, argv);
     QCoreApplication::setApplicationName("QGCGPSHardwareRunner");
     QCommandLineParser parser;
-    parser.setApplicationDescription("Opt-in GPS backend comparison. Default action prints a plan and opens nothing.");
+    parser.setApplicationDescription(
+        "Opt-in native GPS receiver validation. Default action prints a plan and opens nothing.");
     parser.addHelpOption();
     parser.addOptions({
         {{"a", "action"}, "plan|configure|role-cycle|suite|cancel", "action", "plan"},
-        {"backend", "native|legacy", "backend", "native"},
         {"transport", "scripted|serial|tcp|udp", "transport", "scripted"},
         {"family", "ublox|trimble|septentrio|femto", "family", "ublox"},
         {"role", "base|position (Position: UBX only)", "role", "base"},

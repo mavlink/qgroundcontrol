@@ -308,7 +308,7 @@ void GPSCorrectionManagerTest::_shutdownDuringAdmission()
     QTRY_COMPARE_WITH_TIMEOUT(updates.size(), 1, TestTimeout::mediumMs());
     QCOMPARE(corrections->events()->rowCount(), corrections->_router.events().size());
     QCOMPARE(corrections->rtcmMavlink()->totalBytesSubmitted(), retireFromProvider ? 0ULL : 180ULL);
-    QCOMPARE(corrections->rtcmMavlink()->submit(bytes), 0ULL);
+    QVERIFY(corrections->rtcmMavlink()->submitToOutputs(bytes).isEmpty());
     corrections->shutdown();
     QCoreApplication::sendPostedEvents(corrections.data(), QEvent::MetaCall);
     QCOMPARE(updates.size(), 1);

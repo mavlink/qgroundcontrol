@@ -138,7 +138,7 @@ void RTCMMavlinkTest::_testFinalAdmissionRetirement()
     QPointer<RTCMMavlink> sender = new RTCMMavlink;
     const auto cleanup = qScopeGuard([&]() { delete sender.data(); });
     const auto bytes = makePayload(size);
-    const auto packetCount = RTCMMavlink::pack(bytes, 0).packets.size();
+    const auto packetCount = RTCMMavlinkPacket::pack(bytes, 0).packets.size();
     qsizetype calls = 0;
     int laterCalls = 0;
     sender->setOutputProvider([&]() {
@@ -185,16 +185,6 @@ void RTCMMavlinkTest::_testEmpty()
     QCOMPARE(sender.totalBytesSubmitted(), 0ULL);
 }
 
-void RTCMMavlinkTest::_testPackCompatibility()
-{
-    const auto bytes = makePayload(30);
-    const auto packed = RTCMMavlink::pack(bytes, 5);
-    QCOMPARE(packed.packets.size(), 1);
-    QCOMPARE(packed.packets.first().data, bytes);
-    QCOMPARE(sequenceId(packed.packets.first().flags), uint8_t(5));
-    QCOMPARE(packed.nextSequenceId, uint8_t(6));
-}
-
 void RTCMMavlinkTest::_testSequenceAdvances()
 {
     RTCMMavlink sender;
@@ -217,7 +207,13 @@ void RTCMMavlinkTest::_testSequenceAdvances()
     });
     const auto bytes = makePayload(360);
     for (int index = 0; index < 33; ++index) {
-        QCOMPARE(sender.submit(bytes), quint64(2 * bytes.size()));
+        const auto admissions = sender.submitToOutputs(bytes);
+        QCOMPARE(admissions.size(), 2);
+        for (const auto& admission : admissions) {
+            QVERIFY(admission.complete);
+            QCOMPARE(admission.queuedBytes, quint64(bytes.size()));
+        }
+        QCOMPARE(sender.totalBytesSubmitted(), quint64((index + 1) * 2 * bytes.size()));
         QCOMPARE(firstSequences.size(), index + 1);
         QCOMPARE(firstSequences.last(), uint8_t(index & 31));
     }

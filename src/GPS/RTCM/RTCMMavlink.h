@@ -36,10 +36,6 @@ public:
     };
 
     using OutputProvider = std::function<QList<Output>()>;
-    using PackResult = RTCMMavlinkPacket::PackResult;
-    static constexpr qsizetype kFragmentLen = RTCMMavlinkPacket::kFragmentLen;
-    static constexpr qsizetype kMaxFragments = RTCMMavlinkPacket::kMaxFragments;
-    static constexpr qsizetype kMaxAssembledLen = RTCMMavlinkPacket::kMaxAssembledLen;
 
     explicit RTCMMavlink(QObject* parent = nullptr);
     ~RTCMMavlink() override;
@@ -52,14 +48,6 @@ public:
 
     void setOutputProvider(OutputProvider provider);
     QList<Admission> submitToOutputs(QByteArrayView data);
-    /// Compatibility aggregate; diagnostics should consume individual output admissions.
-    quint64 submit(QByteArrayView data);
-
-    static PackResult pack(QByteArrayView data, uint8_t sequenceId)
-    {
-        return RTCMMavlinkPacket::pack(data, sequenceId);
-    }
-
 signals:
     void bandwidthChanged();
     void deliveryStatsChanged();

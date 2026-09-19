@@ -248,12 +248,3 @@ GPSReceiveResult GPSDriver::receiveOutcome(unsigned timeoutMs)
                                              : GPSReceiveStatus::Idle,
             _state->updates, 0};
 }
-
-int GPSDriver::receive(unsigned timeoutMs)
-{
-    const auto result = receiveOutcome(timeoutMs);
-    if (result.errorCode) {
-        return result.errorCode;
-    }
-    return result.status == GPSReceiveStatus::Idle ? -1 : result.updates;
-}

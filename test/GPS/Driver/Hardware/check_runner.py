@@ -28,6 +28,10 @@ def run(binary: str, arguments: list[str], expected: int) -> dict:
     report = json.loads(result.stdout)
     assert report["schema_version"] == 1
     assert report.get("physical_hardware_verified") is not True
+    assert "legacy_baseline" not in report and "px4_revision" not in report
+    if "backend" in report:
+        assert report["backend"] == "native"
+        assert report["receive_outcome_semantics"] == "typed_native"
     return report
 
 
@@ -115,177 +119,131 @@ def main() -> None:
     run(binary, ["--role", "position", "--dynamic-model", "1"], 2)
     run(binary, ["--survey-accuracy", "nan"], 2)
     run(binary, ["--observe-ms", "-1"], 2)
+    run(binary, ["--backend", "legacy", "--action", "suite"], 2)
+    run(binary, ["--backend", "native", "--action", "suite"], 2)
 
-    for backend in ("native", "legacy"):
-        for model in ("f9p", "m8p"):
-            report = run(
-                binary,
-                [
-                    "--action",
-                    "suite",
-                    "--backend",
-                    backend,
-                    "--model",
-                    model,
-                    "--observe-ms",
-                    "20",
-                    "--constellations",
-                    "1",
-                ],
-                3,
-            )
-            assert report["evidence_origin"] == "scripted"
-            assert report["outcome"] == "inconclusive"
-            assert report["scripted_wire_valid"]
-            stages = report["stages"]
-            assert [stage["name"] for stage in stages] == [
-                "base_initial",
-                "position",
-                "base_return",
-                "reconnected_base",
-            ]
-            for stage in stages:
-                checks = {item["name"]: item for item in stage["checks"]}
-                assert checks["configure_return"]["status"] == "passed", stage
-                assert stage["wire_evidence"]["transport_written_bytes"] > 0
-                assert stage["wire_evidence"]["ubx_ack_frames"] > 0
-                assert checks["requested_settings_readback"]["status"] == "inconclusive"
-                settings = {
-                    item["setting"]: item for item in stage["requested_setting_observations"]
-                }
-                assert settings["time_mode"]["matching_write_observed"], stage
-                assert not settings["time_mode"]["transaction_correlation_verified"]
-                if stage["name"] == "position":
-                    assert settings["time_mode"]["readback"] == "matching_value_observed", stage
-                if stage["name"] != "position":
-                    assert settings["survey_duration_s"]["matching_write_observed"], stage
-                    assert settings["survey_accuracy_0.1mm"]["matching_write_observed"], stage
-                    assert stage["survey_observations"], stage
-                    assert any(
-                        item["origin_assessment"] == "consistent_with_fresh"
-                        for item in stage["survey_observations"]
-                    ), stage
-                    assert not any(
-                        item["fresh_survey_proven"] for item in stage["survey_observations"]
-                    )
-            checks = {item["name"]: item for item in stages[-1]["checks"]}
-            assert checks["reconnect"]["status"] == "passed"
-            assert checks["receive_cancellation"]["status"] == (
-                "passed" if backend == "native" else "inconclusive"
-            )
-            if backend == "native":
-                commands = stages[1]["configuration_evidence"]["commands"]
-                assert any(item["outcome"] == "readback_verified" for item in commands)
-            position = run(
-                binary,
-                [
-                    "--action",
-                    "configure",
-                    "--role",
-                    "position",
-                    "--backend",
-                    backend,
-                    "--model",
-                    model,
-                    "--dynamic-model",
-                    "2",
-                    "--observe-ms",
-                    "20",
-                ],
-                3,
-            )
-            settings = {
-                item["setting"]: item
-                for item in position["stages"][0]["requested_setting_observations"]
-            }
-            assert settings["dynamic_model"]["matching_write_observed"], position
-
-        retained = run(
+    for model in ("f9p", "m8p"):
+        report = run(
             binary,
             [
                 "--action",
-                "configure",
-                "--backend",
-                backend,
-                "--survey-state",
-                "retained",
+                "suite",
+                "--model",
+                model,
                 "--observe-ms",
                 "20",
+                "--constellations",
+                "1",
             ],
             3,
         )
-        assert any(
-            item["origin_assessment"] == "retained_or_preexisting"
-            for item in retained["stages"][0]["survey_observations"]
-        ), retained
-        absent = run(
-            binary,
-            [
-                "--action",
-                "configure",
-                "--backend",
-                backend,
-                "--survey-state",
-                "none",
-                "--observe-ms",
-                "20",
-            ],
-            3,
-        )
-        checks = {item["name"]: item for item in absent["stages"][0]["checks"]}
-        assert checks["fresh_survey"]["status"] == "inconclusive"
-
-        for fault in ("nak", "wrong-readback", "cancel"):
-            failed = run(
-                binary,
-                [
-                    "--action",
-                    "configure",
-                    "--role",
-                    "position",
-                    "--backend",
-                    backend,
-                    "--fault",
-                    fault,
-                    "--observe-ms",
-                    "20",
-                ],
-                1,
-            )
-            assert failed["outcome"] == "failed"
-
-        for fault in ("rtcm-nak", "rtcm-nak-cancel"):
-            failed = run(
-                binary,
-                [
-                    "--action",
-                    "cancel",
-                    "--backend",
-                    backend,
-                    "--fault",
-                    fault,
-                    "--observe-ms",
-                    "20",
-                    "--cancel-after-ms",
-                    "1000",
-                ],
-                1 if backend == "native" else 3,
-            )
-            stage = failed["stages"][0]
+        assert report["evidence_origin"] == "scripted"
+        assert report["outcome"] == "inconclusive"
+        assert report["scripted_wire_valid"]
+        stages = report["stages"]
+        assert [stage["name"] for stage in stages] == [
+            "base_initial",
+            "position",
+            "base_return",
+            "reconnected_base",
+        ]
+        for stage in stages:
             checks = {item["name"]: item for item in stage["checks"]}
             assert checks["configure_return"]["status"] == "passed", stage
-            if backend == "native":
-                assert failed["outcome"] == "failed", failed
-                assert checks["receive_outcome"]["detail"] == "terminal_protocol_error", stage
-                assert stage["transport_healthy_at_receive_failure"], stage
-                assert checks["receive_cancellation"]["status"] == (
-                    "not_run" if fault == "rtcm-nak" else "failed"
-                ), stage
+            assert stage["wire_evidence"]["transport_written_bytes"] > 0
+            assert stage["wire_evidence"]["ubx_ack_frames"] > 0
+            assert checks["requested_settings_readback"]["status"] == "inconclusive"
+            settings = {item["setting"]: item for item in stage["requested_setting_observations"]}
+            assert settings["time_mode"]["matching_write_observed"], stage
+            assert not settings["time_mode"]["transaction_correlation_verified"]
+            if stage["name"] == "position":
+                assert settings["time_mode"]["readback"] == "matching_value_observed", stage
             else:
-                assert failed["outcome"] == "inconclusive", failed
-                assert checks["receive_cancellation"]["status"] == "inconclusive", stage
-                assert failed["receive_outcome_semantics"].startswith("legacy_ambiguous")
-    print("GPS runner safety, backend parity, survey provenance and failure contracts passed")
+                assert settings["survey_duration_s"]["matching_write_observed"], stage
+                assert settings["survey_accuracy_0.1mm"]["matching_write_observed"], stage
+                assert stage["survey_observations"], stage
+                assert any(
+                    item["origin_assessment"] == "consistent_with_fresh"
+                    for item in stage["survey_observations"]
+                ), stage
+                assert not any(item["fresh_survey_proven"] for item in stage["survey_observations"])
+        checks = {item["name"]: item for item in stages[-1]["checks"]}
+        assert checks["reconnect"]["status"] == "passed"
+        assert checks["receive_cancellation"]["status"] == "passed"
+        commands = stages[1]["configuration_evidence"]["commands"]
+        assert any(item["outcome"] == "readback_verified" for item in commands)
+        position = run(
+            binary,
+            [
+                "--action",
+                "configure",
+                "--role",
+                "position",
+                "--model",
+                model,
+                "--dynamic-model",
+                "2",
+                "--observe-ms",
+                "20",
+            ],
+            3,
+        )
+        settings = {
+            item["setting"]: item
+            for item in position["stages"][0]["requested_setting_observations"]
+        }
+        assert settings["dynamic_model"]["matching_write_observed"], position
+
+    retained = run(
+        binary,
+        ["--action", "configure", "--survey-state", "retained", "--observe-ms", "20"],
+        3,
+    )
+    assert any(
+        item["origin_assessment"] == "retained_or_preexisting"
+        for item in retained["stages"][0]["survey_observations"]
+    ), retained
+    absent = run(
+        binary,
+        ["--action", "configure", "--survey-state", "none", "--observe-ms", "20"],
+        3,
+    )
+    checks = {item["name"]: item for item in absent["stages"][0]["checks"]}
+    assert checks["fresh_survey"]["status"] == "inconclusive"
+
+    for fault in ("nak", "wrong-readback", "cancel"):
+        failed = run(
+            binary,
+            ["--action", "configure", "--role", "position", "--fault", fault, "--observe-ms", "20"],
+            1,
+        )
+        assert failed["outcome"] == "failed"
+
+    for fault in ("rtcm-nak", "rtcm-nak-cancel"):
+        failed = run(
+            binary,
+            [
+                "--action",
+                "cancel",
+                "--fault",
+                fault,
+                "--observe-ms",
+                "20",
+                "--cancel-after-ms",
+                "1000",
+            ],
+            1,
+        )
+        stage = failed["stages"][0]
+        checks = {item["name"]: item for item in stage["checks"]}
+        assert checks["configure_return"]["status"] == "passed", stage
+        assert failed["outcome"] == "failed", failed
+        assert checks["receive_outcome"]["detail"] == "terminal_protocol_error", stage
+        assert stage["transport_healthy_at_receive_failure"], stage
+        assert checks["receive_cancellation"]["status"] == (
+            "not_run" if fault == "rtcm-nak" else "failed"
+        ), stage
+    print("Native GPS runner safety, survey provenance and failure contracts passed")
 
 
 if __name__ == "__main__":

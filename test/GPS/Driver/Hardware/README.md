@@ -1,17 +1,10 @@
-# GPS backend hardware runner
+# Native GPS hardware runner
 
-`QGCGPSHardwareRunner` is one reusable command-line runner for the production native
-`GPSDriver` and a frozen PX4-backed `GPSLegacyDriver`. Both receive the same
-`GPSReceiverConfig`, `GPSTransport`, and `GPSDriverSinks`. No UI role is enabled.
-
-The legacy facade was copied from QGroundControl `f1e7700e0` using `git show HEAD`.
-Only its class/logging names, shared sink declaration, and test build integration
-are changed. A test-only compile definition isolates PX4's global SBF `crc16`
-function; native protocol classes already have distinct names. The PX4 pin remains
-`cd6f506afda9bd6e8e4645f094dcf5415f1f8be4`, including the existing safety patches.
-Production `QGCGPSDriver` does not link PX4.
-Its compatibility layouts, report adapter, patches, and dependency setup live
-under `test/GPS/Driver/Legacy`, not in the production source tree.
+`QGCGPSHardwareRunner` exercises the production `GPSDriver` through the same
+`GPSReceiverConfig`, `GPSTransport`, and `GPSDriverSinks` used by the application.
+It supports native receiver validation only; there is no backend selector or
+PX4-GPSDrivers dependency. Native support for older u-blox firmware remains.
+No additional UI role is enabled.
 
 ## Build and deterministic checks
 
@@ -20,34 +13,31 @@ From the repository root, with a Qt installation discoverable by `qt-cmake`:
 ```sh
 qt-cmake -S test/GPS/Driver/Hardware -B build/gps-hardware-item5 -G Ninja \
   -DCPM_SOURCE_CACHE="$PWD/.cache/CPM"
-cmake --build build/gps-hardware-item5 --parallel 4
+cmake --build build/gps-hardware-item5 --parallel
 ctest --test-dir build/gps-hardware-item5 --output-on-failure -L Unit
 ```
 
 The standalone entry point adds the production driver and transport CMake
 directories; it does not duplicate their source lists. A containing build can
 add this directory after defining `QGCGPSDriver`, `QGCGPSReceiverTransports`,
-CPM, and `qgc_disable_dependency_warnings`. The legacy backend is test-only.
+and `QGC::Clock`.
 `QGC_NO_SERIAL_LINK=ON` excludes serial support.
 The main driver-test CMake entry point gates this subdirectory behind
 `QGC_BUILD_GPS_HARDWARE_TESTS=ON` (off by default). Such containing builds must
-also enable receiver transports. An existing `QGCGPSLegacyDriver` target is
-reused rather than defined twice.
+also enable receiver transports.
 
 No test opens hardware. The existing `ScriptedUBXReceiver` supplies the receiver
 configuration simulation; this runner only injects navigation/survey fixtures.
-`GPSHardwareRunner.LegacySafety` additionally runs the complete original
-PX4-internal `GPSLegacySafetyTest` copied from the same baseline. Its assertions
-are unchanged; only the standalone test base and isolated logging category
-are adapted. These Ashtech/Femto cases remain test-only.
+Native protocol and report-conversion regressions run in the ordinary driver
+test suite; they do not require this opt-in executable.
 
 ```sh
 RUNNER=build/gps-hardware-item5/QGCGPSHardwareRunner
 "$RUNNER"                         # plan only; constructs no transport
 "$RUNNER" --help                  # lists options; no transport or writes
-"$RUNNER" --action suite --backend native --model f9p
-"$RUNNER" --action suite --backend legacy --model m8p
-"$RUNNER" --action suite --backend legacy --output build/gps-hardware-item5/scripted-legacy.json
+"$RUNNER" --action suite --model f9p
+"$RUNNER" --action suite --model m8p
+"$RUNNER" --action suite --output build/gps-hardware-item5/scripted-native.json
 "$RUNNER" --action configure --role position --dynamic-model 2
 "$RUNNER" --action configure --survey-state retained
 "$RUNNER" --action configure --survey-state none
@@ -71,9 +61,6 @@ and terminal protocol/transport failure. A terminal failure ends the stage even 
 the physical connection remains healthy; a later stop request cannot turn that failure
 into a cancellation pass. The two `rtcm-nak` scripted F9P cases reject activation after
 successful configuration, during observation or cancellation respectively.
-Legacy receive returns cannot distinguish these conditions, so its cancellation result
-is explicitly **inconclusive**, not proof that a blocked operation was cancelled.
-The frozen legacy source is unchanged.
 
 Satellite-list callbacks remain full snapshots, including aggregated Ashtech constellation
 updates and empty-scope clearing. Count-only Femto/SBF updates have a separate callback and
@@ -104,7 +91,7 @@ Example plans (safe; no I/O):
 Only after separate authorization, change `plan` to an explicit action:
 
 ```sh
-"$RUNNER" --action suite --backend native --transport serial \
+"$RUNNER" --action suite --transport serial \
   --device /dev/serial/by-id/REPLACE_WITH_AUTHORIZED_DEVICE --allow-reconfigure \
   --survey-duration 60 --survey-accuracy 2 --observe-ms 65000 \
   --output build/gps-hardware-item5/authorized-native.json
@@ -167,15 +154,14 @@ The current runner deliberately does not claim an overall hardware pass:
   to an individual setting. A successful write is never labelled an ACK.
 - Native `configuration_evidence.commands` preserves command-specific outcomes:
   pending, transport-written, acknowledged, readback-verified, rejected, timed
-  out, cancelled, or transport error. Legacy exposes only its configure return
-  and the same passive wire evidence. Missing evidence is unverified, not pass.
+  out, cancelled, or transport error. Missing evidence is unverified, not pass.
 - `requested` records the exact role, survey values, optional dynamic model,
   and constellation mask. Command-level readback evidence does **not** imply
   independent verification of every requested setting. A zero constellation
   mask means retain defaults, not a requested constellation selection.
 - UBX `requested_setting_observations` extracts matching writes, ACKs with the
   same message type, and readback values from those captured frames. It does
-  not send additional commands. Legacy constellation messages are retained as
+  not send additional commands. Pre-v27 constellation messages are retained as
   raw frames rather than decoded setting observations. An ACK is explicitly
   uncorrelated; a matching readback observation alone is not promoted to
   verified configuration. New writes discard earlier transitional readbacks.
@@ -189,8 +175,8 @@ The current runner deliberately does not claim an overall hardware pass:
   Full survey completion, setting readback, and physical reconnect checks that
   were not established remain explicitly inconclusive.
 
-The scripted regression test checks the runner itself: both backends, both UBX
-generations, role ordering, logical reconnect, receive cancellation, fresh-like
+The scripted regression test checks the runner itself: both UBX generations,
+role ordering, logical reconnect, receive cancellation, fresh-like
 versus retained survey observations, absence of observations, and rejected,
 incorrect-readback, and cancelled configuration. Its CTest success is not
 hardware acceptance.

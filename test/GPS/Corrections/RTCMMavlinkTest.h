@@ -14,6 +14,5 @@ private slots:
     void _testFinalAdmissionRetirement_data();
     void _testFinalAdmissionRetirement();
     void _testEmpty();
-    void _testPackCompatibility();
     void _testSequenceAdvances();
 };
