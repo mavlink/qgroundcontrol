@@ -203,6 +203,7 @@ void MissionManagerTest::_testWriteFailureHandlingWorker()
         {"FailWriteRequest0ErrorAck", MockLinkMissionItemHandler::FailWriteRequest0ErrorAck, true},
         {"FailWriteRequest1ErrorAck", MockLinkMissionItemHandler::FailWriteRequest1ErrorAck, true},
         {"FailWriteFinalAckNoResponse", MockLinkMissionItemHandler::FailWriteFinalAckNoResponse, true},
+        {"FailWriteFinalAckFirstResponse", MockLinkMissionItemHandler::FailWriteFinalAckFirstResponse, false},
         {"FailWriteFinalAckErrorAck", MockLinkMissionItemHandler::FailWriteFinalAckErrorAck, true},
         {"FailWriteFinalAckMissingRequests", MockLinkMissionItemHandler::FailWriteFinalAckMissingRequests, true},
     };
