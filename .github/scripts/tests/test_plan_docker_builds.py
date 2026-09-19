@@ -205,6 +205,12 @@ def test_plan_builds_pull_request_no_changes_yields_empty_matrix():
     assert plan["matrix"]["include"] == []
 
 
+def test_plan_builds_push_respects_should_build_false():
+    plan = plan_builds("push", linux_changed=True, android_changed=True, should_build=False)
+    assert plan["has_jobs"] is False
+    assert plan["matrix"]["include"] == []
+
+
 def test_plan_builds_push_includes_all():
     plan = plan_builds("push", linux_changed=False, android_changed=False)
     assert len(plan["matrix"]["include"]) == 8

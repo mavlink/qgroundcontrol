@@ -60,13 +60,15 @@ jobs:
 
       # Non-PR events (push, merge_group, workflow_dispatch) always rebuild
       # everything. Sparse-checkout just the script + bootstrap shim it needs.
+      # Tag pushes need full history + branch refs for the Stable* origin check.
       - name: Checkout passthrough script (non-PR)
         if: github.event_name != 'pull_request'
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
+          fetch-depth: ${{ github.ref_type != 'tag' && 1 || 0 }}
           sparse-checkout: |
             .github/scripts/detect_changes.py
+            .github/scripts/release_tag_check.py
             .github/scripts/ci_bootstrap.py
             tools/_bootstrap.py
             tools/common
@@ -74,11 +76,25 @@ jobs:
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      - name: Emit all-true outputs (non-PR)
+      # Release tags are only ever cut on Stable* branches. A tag on master (or
+      # anywhere else) must not trigger the release pipeline (stable build,
+      # S3 latest upload, CloudFront invalidation).
+      - name: Verify tag is on a Stable* branch
+        if: github.ref_type == 'tag'
+        id: tag
+        shell: bash
+        run: python3 "${GITHUB_WORKSPACE}/.github/scripts/release_tag_check.py" --context "skipping build"
+
+      - name: Emit passthrough outputs (non-PR)
         if: github.event_name != 'pull_request'
         id: nonpr
         shell: bash
-        run: python3 "${GITHUB_WORKSPACE}/.github/scripts/detect_changes.py" --non-pr-passthrough
+        env:
+          # Fail closed on tags: an empty release_tag is rejected by the script's choices.
+          PASSTHROUGH_VALUE: ${{ github.ref_type != 'tag' && 'true' || steps.tag.outputs.release_tag }}
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/detect_changes.py"
+          --non-pr-passthrough --passthrough-value "${PASSTHROUGH_VALUE}"
 
       - name: Checkout repo
         if: github.event_name == 'pull_request'

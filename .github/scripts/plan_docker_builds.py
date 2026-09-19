@@ -32,14 +32,25 @@ def build_args_str(build_args: dict[str, str]) -> str:
 
 
 def plan_builds(
-    event_name: str, linux_changed: bool, android_changed: bool, *, full_matrix: bool = False
+    event_name: str,
+    linux_changed: bool,
+    android_changed: bool,
+    *,
+    full_matrix: bool = False,
+    should_build: bool = True,
 ) -> dict[str, Any]:
     """Return workflow matrix and a has_jobs flag.
 
     Returns {"matrix": {"include": [...]}, "has_jobs": bool}. Typed as
     dict[str, Any] so callers can subscript matrix["include"] without
     pyright complaining about object indexing.
+
+    ``should_build`` is the detect-changes verdict; False (e.g. a release tag
+    not on a Stable* branch) yields an empty matrix regardless of event.
     """
+    if not should_build:
+        return {"matrix": {"include": []}, "has_jobs": False}
+
     selected = {
         "linux": event_name != "pull_request" or linux_changed,
         "android": event_name != "pull_request" or android_changed,
@@ -108,6 +119,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--event-name", default=os.environ.get("EVENT_NAME", ""))
     parser.add_argument("--linux", default=os.environ.get("LINUX", "false"))
     parser.add_argument("--android", default=os.environ.get("ANDROID", "false"))
+    parser.add_argument("--should-build", default=os.environ.get("SHOULD_BUILD", "true"))
     return parser.parse_args(argv)
 
 
@@ -123,6 +135,7 @@ def main(argv: list[str] | None = None) -> int:
         full_matrix=needs_full_matrix(get_changed_files())
         if args.event_name == "pull_request"
         else True,
+        should_build=parse_bool(args.should_build),
     )
     matrix_json = json.dumps(plan["matrix"], separators=(",", ":"))
     print(matrix_json)
