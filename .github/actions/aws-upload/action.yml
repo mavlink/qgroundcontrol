@@ -69,8 +69,16 @@ runs:
         INPUTS_ARTIFACT_NAME: ${{ inputs.artifact-name }}
         INPUTS_S3_BUCKET: ${{ inputs.s3-bucket }}
 
-    - name: Upload to S3 latest folder
+    # latest/ is the public stable download. Only tags cut on a Stable* branch
+    # may overwrite it; requires the caller to have checked out full history.
+    - name: Verify release tag is on a Stable* branch
       if: github.ref_type == 'tag'
+      id: stable-tag
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/release_tag_check.py" --context "not publishing to latest/"
+
+    - name: Upload to S3 latest folder
+      if: github.ref_type == 'tag' && steps.stable-tag.outputs.release_tag == 'true'
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/aws_upload.py" upload-latest \
@@ -83,7 +91,7 @@ runs:
         INPUTS_S3_BUCKET: ${{ inputs.s3-bucket }}
 
     - name: Invalidate CloudFront cache
-      if: github.ref_type == 'tag' && inputs.aws-distribution-id != ''
+      if: github.ref_type == 'tag' && steps.stable-tag.outputs.release_tag == 'true' && inputs.aws-distribution-id != ''
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/aws_upload.py" invalidate \

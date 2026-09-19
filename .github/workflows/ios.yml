@@ -6,7 +6,7 @@ on:
       - master
       - 'Stable*'
     tags:
-      - 'v*'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
       - 'docs/**'
   pull_request:
@@ -35,7 +35,7 @@ jobs:
   build:
     name: iOS (${{ matrix.target }})
     needs: changes
-    if: github.ref_type == 'tag' || needs.changes.outputs.should_build == 'true'
+    if: needs.changes.outputs.should_build == 'true'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
 

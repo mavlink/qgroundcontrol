@@ -6,7 +6,7 @@ on:
       - master
       - 'Stable*'
     tags:
-      - 'v*'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
       - 'docs/**'
   pull_request:
@@ -72,6 +72,7 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           LINUX: ${{ needs.changes.outputs.docker_linux }}
           ANDROID: ${{ needs.changes.outputs.docker_android }}
+          SHOULD_BUILD: ${{ needs.changes.outputs.should_build }}
         run: python3 "${GITHUB_WORKSPACE}/.github/scripts/plan_docker_builds.py"
 
   build:

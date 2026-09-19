@@ -207,8 +207,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--non-pr-passthrough",
         action="store_true",
-        help="Emit the reusable workflow's full output set as 'true' "
+        help="Emit the reusable workflow's full output set as a single value "
         "(used by _detect-changes.yml on push/merge_group/workflow_dispatch)",
+    )
+    parser.add_argument(
+        "--passthrough-value",
+        choices=("true", "false"),
+        default="true",
+        help="Value emitted for every output with --non-pr-passthrough (default: true)",
     )
     args = parser.parse_args(argv)
     if not args.non_pr_passthrough and not args.platform:
@@ -220,7 +226,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
     if args.non_pr_passthrough:
-        write_github_output(dict.fromkeys(_NON_PR_PASSTHROUGH_KEYS, "true"))
+        write_github_output(dict.fromkeys(_NON_PR_PASSTHROUGH_KEYS, args.passthrough_value))
         return 0
 
     platforms: list[str] = args.platform
