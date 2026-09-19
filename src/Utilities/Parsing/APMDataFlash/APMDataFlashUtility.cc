@@ -1,7 +1,9 @@
 #include "APMDataFlashUtility.h"
-#include "QGCLoggingCategory.h"
 
 #include <cstring>
+
+#include "LittleEndian.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(APMDataFlashUtilityLog, "Utilities.APMDataFlashUtility")
 
@@ -71,82 +73,80 @@ float halfToFloat(uint16_t bits)
 // Value Parsing
 // ============================================================================
 
-QVariant parseValue(const char *data, char formatChar)
+QVariant parseValue(const char* data, qint64 size, char formatChar)
 {
+    const int requiredSize = formatCharSize(formatChar);
+    if (requiredSize == 0) {
+        qCWarning(APMDataFlashUtilityLog) << "Unsupported DataFlash format character:" << formatChar;
+        return {};
+    }
+    if (!data || size < requiredSize) {
+        qCWarning(APMDataFlashUtilityLog) << "Missing or truncated DataFlash value for format:" << formatChar;
+        return {};
+    }
+
+    const std::span<const uint8_t> bytes{reinterpret_cast<const uint8_t*>(data),
+                                         static_cast<std::size_t>(requiredSize)};
     switch (formatChar) {
     case 'b':
-        return static_cast<int8_t>(*data);
+        return *LittleEndian::read<int8_t>(bytes);
     case 'B':
     case 'M':
-        return static_cast<uint8_t>(*data);
+        return *LittleEndian::read<uint8_t>(bytes);
     case 'h': {
-        int16_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<int16_t>(bytes);
         return val;
     }
     case 'H': {
-        uint16_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<uint16_t>(bytes);
         return val;
     }
     case 'c': {
-        int16_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<int16_t>(bytes);
         return val / 100.0;
     }
     case 'C': {
-        uint16_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<uint16_t>(bytes);
         return val / 100.0;
     }
     case 'i': {
-        int32_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<int32_t>(bytes);
         return val;
     }
     case 'I': {
-        uint32_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<uint32_t>(bytes);
         return val;
     }
     case 'e': {
-        int32_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<int32_t>(bytes);
         return val / 100.0;
     }
     case 'E': {
-        uint32_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<uint32_t>(bytes);
         return val / 100.0;
     }
     case 'L': {
-        int32_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<int32_t>(bytes);
         return val / 1.0e7;  // Latitude/longitude in degrees
     }
     case 'f': {
-        float val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<float>(bytes);
         return static_cast<double>(val);
     }
     case 'd': {
-        double val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<double>(bytes);
         return val;
     }
     case 'q': {
-        int64_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<int64_t>(bytes);
         return static_cast<qlonglong>(val);
     }
     case 'Q': {
-        uint64_t val;
-        memcpy(&val, data, sizeof(val));
+        const auto val = *LittleEndian::read<uint64_t>(bytes);
         return static_cast<qulonglong>(val);
     }
     case 'g': {
-        uint16_t bits;
-        memcpy(&bits, data, sizeof(bits));
+        const auto bits = *LittleEndian::read<uint16_t>(bytes);
         return static_cast<double>(halfToFloat(bits));
     }
     case 'n':
@@ -163,22 +163,31 @@ QVariant parseValue(const char *data, char formatChar)
     }
 }
 
-QMap<QString, QVariant> parseMessage(const char *data, const MessageFormat &fmt)
+QMap<QString, QVariant> parseMessage(const char* data, qint64 size, const MessageFormat& fmt)
 {
+    if (!data || size < 0) {
+        qCWarning(APMDataFlashUtilityLog) << "Invalid DataFlash message payload";
+        return {};
+    }
+
     QMap<QString, QVariant> result;
-    int offset = 0;
+    qint64 offset = 0;
 
     for (int i = 0; i < fmt.format.length() && i < fmt.columns.size(); ++i) {
         const char formatChar = fmt.format.at(i).toLatin1();
         const QString &columnName = fmt.columns.at(i);
 
-        const int size = formatCharSize(formatChar);
-        if (size == 0) {
+        const int fieldSize = formatCharSize(formatChar);
+        if (fieldSize == 0) {
             continue;
         }
 
-        result[columnName] = parseValue(data + offset, formatChar);
-        offset += size;
+        const QVariant value = parseValue(data + offset, size - offset, formatChar);
+        if (!value.isValid()) {
+            return {};
+        }
+        result[columnName] = value;
+        offset += fieldSize;
     }
 
     return result;

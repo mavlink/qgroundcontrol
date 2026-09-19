@@ -14,6 +14,13 @@ Network and Test. It links the production logging-category, I/O, timing, network
 I/O and JSON-validation targets without QML, application settings,
 or external GPS dependencies.
 
+`QGC::Wire` is a Qt-free, header-only target shared with the DataFlash and ULog
+parsers. `LittleEndian::read<T>` decodes integer and IEEE floating-point scalars
+from a byte span and offset, returning `std::nullopt` for insufficient input.
+It supports unaligned input and rejects out-of-range offsets without overflow.
+`QGCWireConsumer` covers explicit wire fixtures, signed values, floating-point
+special values, truncated buffers and invalid offsets.
+
 Each utility declares its public headers with a CMake `HEADERS` file set. The
 default build runs CMake's `VERIFY_INTERFACE_HEADER_SETS` checks and builds a
 separate consumer that links only its owning target, preventing accidental
@@ -36,4 +43,13 @@ cmake -S test/Utilities/Standalone -B build/utility-crc \
     -DQGC_UTILITY_CRC_ONLY=ON -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
 cmake --build build/utility-crc
 ctest --test-dir build/utility-crc --output-on-failure
+```
+
+To also build the wire consumer and its isolated public-header check without Qt:
+
+```sh
+cmake -S test/Utilities/Standalone -B build/utility-qt-free \
+    -DQGC_UTILITY_QT_FREE_ONLY=ON -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
+cmake --build build/utility-qt-free
+ctest --test-dir build/utility-qt-free --output-on-failure
 ```

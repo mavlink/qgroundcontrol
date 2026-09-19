@@ -26,6 +26,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     enable_testing()
     set(_qgc_utilities_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities")
     option(QGC_UTILITY_CRC_ONLY "Build only the Qt-free CRC consumer" OFF)
+    option(QGC_UTILITY_QT_FREE_ONLY "Build only Qt-free utility consumers" OFF)
 endif()
 
 add_executable(CRC32Consumer Consumers/CRC32.cc)
@@ -42,6 +43,15 @@ set_tests_properties(CRC32Consumer PROPERTIES LABELS "Unit;Utilities" TIMEOUT 30
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     if(QGC_UTILITY_CRC_ONLY)
+        return()
+    endif()
+    add_subdirectory("${_qgc_utilities_root}/Parsing/Wire" Wire)
+endif()
+
+qgc_check_utility_consumer(QGCWire)
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    if(QGC_UTILITY_QT_FREE_ONLY)
         return()
     endif()
     find_package(Qt6 6.8 REQUIRED COMPONENTS Core Network Test)

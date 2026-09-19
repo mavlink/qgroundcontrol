@@ -444,8 +444,14 @@ ParseResult _parseDataFlashFile(const QString &filePath)
     static const QString kERR  = QStringLiteral("ERR");
     static const QString kEV   = QStringLiteral("EV");
 
-    APMDataFlashUtility::iterateMessages(bytes.constData(), bytes.size(), formats, [&result, &signalSet, &plottableSet, &minTimestampSecs, &maxTimestampSecs, &hasOpenModeSegment, &modeSegmentStartSecs, &currentModeName, &signalNameByCol](uint8_t msgType, const char *payload, int, const APMDataFlashUtility::MessageFormat &fmt) {
-        const QMap<QString, QVariant> values = APMDataFlashUtility::parseMessage(payload, fmt);
+    const auto parseRecord = [&result, &signalSet, &plottableSet, &minTimestampSecs, &maxTimestampSecs,
+                              &hasOpenModeSegment, &modeSegmentStartSecs, &currentModeName,
+                              &signalNameByCol](uint8_t msgType, const char* payload, int payloadSize,
+                                                const APMDataFlashUtility::MessageFormat& fmt) {
+        const QMap<QString, QVariant> values = APMDataFlashUtility::parseMessage(payload, payloadSize, fmt);
+        if (values.isEmpty()) {
+            return true;
+        }
         const double timestampSecs = _extractTimestampSeconds(values);
         if (timestampSecs >= 0.0) {
             if (minTimestampSecs < 0.0 || timestampSecs < minTimestampSecs) {
@@ -456,7 +462,8 @@ ParseResult _parseDataFlashFile(const QString &filePath)
 
         if (fmt.name == kPARM) {
             const QString paramName = values.value(QStringLiteral("Name")).toString();
-            const QVariant paramValue = values.contains(QStringLiteral("Value")) ? values.value(QStringLiteral("Value")) : values.value(QStringLiteral("Val"));
+            const QVariant paramValue = values.contains(QStringLiteral("Value")) ? values.value(QStringLiteral("Value"))
+                                                                                 : values.value(QStringLiteral("Val"));
             if (!paramName.isEmpty()) {
                 QVariantMap row;
                 row[QStringLiteral("name")] = paramName;
@@ -484,7 +491,8 @@ ParseResult _parseDataFlashFile(const QString &filePath)
             } else if (modeName.isEmpty()) {
                 modeName = APMDataFlashLogParser::tr("Unknown");
             }
-            _appendEvent(result.events, timestampSecs, QStringLiteral("mode"), APMDataFlashLogParser::tr("Mode: %1").arg(modeName));
+            _appendEvent(result.events, timestampSecs, QStringLiteral("mode"),
+                         APMDataFlashLogParser::tr("Mode: %1").arg(modeName));
             if (timestampSecs >= 0.0) {
                 if (hasOpenModeSegment && (timestampSecs > modeSegmentStartSecs)) {
                     QVariantMap segment;
@@ -500,7 +508,8 @@ ParseResult _parseDataFlashFile(const QString &filePath)
         } else if (fmt.name == kERR) {
             const int subsystem = values.value(QStringLiteral("Subsys")).toInt();
             const int ecode = values.value(QStringLiteral("ECode")).toInt();
-            _appendEvent(result.events, timestampSecs, QStringLiteral("error"), _ardupilotErrDescription(subsystem, ecode));
+            _appendEvent(result.events, timestampSecs, QStringLiteral("error"),
+                         _ardupilotErrDescription(subsystem, ecode));
         } else if (fmt.name == kEV) {
             const int eventId = values.value(QStringLiteral("Id"), values.value(QStringLiteral("Event"))).toInt();
             _appendEvent(result.events, timestampSecs, QStringLiteral("event"), _ardupilotEventDescription(eventId));
@@ -510,14 +519,14 @@ ParseResult _parseDataFlashFile(const QString &filePath)
 
         // Single pass: lookup precomputed signal names, populate signal/plottable
         // sets, and append numeric samples in one walk over the values map.
-        const QHash<QString, QString> &perCol = signalNameByCol[msgType];
+        const QHash<QString, QString>& perCol = signalNameByCol[msgType];
         const bool haveTimestamp = (timestampSecs >= 0.0);
         for (auto it = values.cbegin(); it != values.cend(); ++it) {
             const auto nameIt = perCol.constFind(it.key());
             if (nameIt == perCol.constEnd()) {
                 continue;
             }
-            const QString &signalName = nameIt.value();
+            const QString& signalName = nameIt.value();
             signalSet.insert(signalName);
 
             if (!haveTimestamp) {
@@ -534,7 +543,8 @@ ParseResult _parseDataFlashFile(const QString &filePath)
         }
 
         return true;
-    });
+    };
+    APMDataFlashUtility::iterateMessages(bytes.constData(), bytes.size(), formats, parseRecord);
 
     if (hasOpenModeSegment && (maxTimestampSecs >= modeSegmentStartSecs)) {
         QVariantMap segment;

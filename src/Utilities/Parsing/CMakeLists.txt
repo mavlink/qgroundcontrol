@@ -4,6 +4,7 @@
 # ============================================================================
 
 add_subdirectory(Json)
+add_subdirectory(Wire)
 
 qt_add_library(QGCParsing STATIC
     APMDataFlash/APMDataFlashUtility.cc
@@ -145,6 +146,7 @@ target_link_libraries(QGCParsing
     PRIVATE
         QGCCompression
         QGCLogging
+        QGCWire
         ValiJSON::valijson
 )
 

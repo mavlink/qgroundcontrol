@@ -58,15 +58,17 @@ int calculatePayloadSize(const QString &format);
 /// - 'L': Lat/Lon (divide by 1e7)
 /// - 'g': Half-precision float (IEEE 754 binary16)
 /// @param data Pointer to binary data
+/// @param size Size of available data
 /// @param formatChar Format character
-/// @return QVariant containing the parsed value
-QVariant parseValue(const char *data, char formatChar);
+/// @return Parsed little-endian value, or an invalid QVariant with a diagnostic on invalid input
+QVariant parseValue(const char* data, qint64 size, char formatChar);
 
 /// Parse message data into a map of field name -> value
 /// @param data Pointer to the message payload (after header)
+/// @param size Size of available payload data
 /// @param fmt Message format definition
-/// @return Map of column name to parsed value
-QMap<QString, QVariant> parseMessage(const char *data, const MessageFormat &fmt);
+/// @return Map of column name to parsed value, or an empty map with a diagnostic on invalid input
+QMap<QString, QVariant> parseMessage(const char* data, qint64 size, const MessageFormat& fmt);
 
 // ============================================================================
 // Header and Message Detection

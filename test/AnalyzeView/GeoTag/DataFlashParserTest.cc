@@ -74,6 +74,25 @@ void DataFlashParserTest::_getTagsFromLogInvalidTest()
     QVERIFY(cameraFeedback.isEmpty());
 }
 
+void DataFlashParserTest::_getTagsFromLogTruncatedValueTest()
+{
+    QByteArray format(86, '\0');
+    format[0] = 100;
+    format[1] = 4;  // Header plus one payload byte cannot hold the declared double.
+    format.replace(2, 3, "CAM");
+    format.replace(6, 1, "d");
+    format.replace(22, 3, "Lat");
+    const QByteArray logBuffer = QByteArray::fromHex("a39580") + format + QByteArray::fromHex("a3956400");
+    QList<GeoTagData> cameraFeedback;
+    QString errorMessage;
+    expectLogMessage("Utilities.APMDataFlashUtility", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Missing or truncated DataFlash value for format:")));
+    QVERIFY(!DataFlashParser::getTagsFromLog(logBuffer, cameraFeedback, errorMessage));
+    verifyExpectedLogMessage();
+    QVERIFY(cameraFeedback.isEmpty());
+    QVERIFY(!errorMessage.isEmpty());
+}
+
 void DataFlashParserTest::_parseGeoTagDataFieldsTest()
 {
     const QByteArray logBuffer = generateTestDataFlash(20);
