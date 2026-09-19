@@ -22038,4 +22038,316 @@ If a vehicle still has this key configured, you will no longer be able to commun
       <translation type="unfinished">Invalid stress test count (must be &gt; 0): %1</translation>
     </message>
   </context>
+  <context>
+    <name>CorrectionDiagnostics</name>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="15"/>
+      <source>NTRIP UDP output</source>
+      <translation type="unfinished">NTRIP UDP output</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="17"/>
+      <source>Vehicles</source>
+      <translation type="unfinished">Vehicles</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="19"/>
+      <source>Vehicle link %1</source>
+      <translation type="unfinished">Vehicle link %1</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="20"/>
+      <source>Unselected</source>
+      <translation type="unfinished">Unselected</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="28"/>
+      <source>Inactive source</source>
+      <translation type="unfinished">Inactive source</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="30"/>
+      <source>Previous source session</source>
+      <translation type="unfinished">Previous source session</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="32"/>
+      <source>Invalid receipt time</source>
+      <translation type="unfinished">Invalid receipt time</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="34"/>
+      <source>Expired</source>
+      <translation type="unfinished">Expired</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="36"/>
+      <source>Filtered message</source>
+      <translation type="unfinished">Filtered message</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="38"/>
+      <source>Source not selected</source>
+      <translation type="unfinished">Source not selected</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="40"/>
+      <source>Destination unavailable</source>
+      <translation type="unfinished">Destination unavailable</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="42"/>
+      <source>Queue full</source>
+      <translation type="unfinished">Queue full</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="44"/>
+      <source>Invalid frame</source>
+      <translation type="unfinished">Invalid frame</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="46"/>
+      <source>Connection cancelled</source>
+      <translation type="unfinished">Connection cancelled</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="48"/>
+      <source>Source changed</source>
+      <translation type="unfinished">Source changed</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="50"/>
+      <source>Write failed</source>
+      <translation type="unfinished">Write failed</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="52"/>
+      <source>Incomplete write</source>
+      <translation type="unfinished">Incomplete write</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="54"/>
+      <source>Unmatched delivery report</source>
+      <translation type="unfinished">Unmatched delivery report</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="56"/>
+      <source>Connection ended before the write result was available</source>
+      <translation type="unfinished">Connection ended before the write result was available</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="58"/>
+      <source>Delivery tracking full</source>
+      <translation type="unfinished">Delivery tracking full</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="60"/>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="94"/>
+      <source>Unknown</source>
+      <translation type="unfinished">Unknown</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="67"/>
+      <source>Local base station</source>
+      <translation type="unfinished">Local base station</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="69"/>
+      <source>NTRIP</source>
+      <translation type="unfinished">NTRIP</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="71"/>
+      <source>UDP</source>
+      <translation type="unfinished">UDP</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="73"/>
+      <source>Unclassified</source>
+      <translation type="unfinished">Unclassified</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="80"/>
+      <source>Received</source>
+      <translation type="unfinished">Received</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="82"/>
+      <source>Validated</source>
+      <translation type="unfinished">Validated</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="84"/>
+      <source>Selected</source>
+      <translation type="unfinished">Selected</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="86"/>
+      <source>Queued</source>
+      <translation type="unfinished">Queued</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="88"/>
+      <source>Written</source>
+      <translation type="unfinished">Written</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="90"/>
+      <source>Unconfirmed</source>
+      <translation type="unfinished">Unconfirmed</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="92"/>
+      <source>Dropped</source>
+      <translation type="unfinished">Dropped</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="98"/>
+      <source>Correction Diagnostics</source>
+      <translation type="unfinished">Correction Diagnostics</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="104"/>
+      <source>Queued bytes have been submitted to an output. Written bytes reached an output transport; they do not confirm that a receiver applied the corrections or obtained a fix. Vehicle writes are unconfirmed.</source>
+      <translation type="unfinished">Queued bytes have been submitted to an output. Written bytes reached an output transport; they do not confirm that a receiver applied the corrections or obtained a fix. Vehicle writes are unconfirmed.</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="148"/>
+      <source>Received/dropped source bytes measure frame-candidate evidence, not raw transport traffic. Recovered frames can overlap rejected candidates. Drop events count separate selection, admission, and delivery losses; one frame may contribute more than once.</source>
+      <translation type="unfinished">Received/dropped source bytes measure frame-candidate evidence, not raw transport traffic. Recovered frames can overlap rejected candidates. Drop events count separate selection, admission, and delivery losses; one frame may contribute more than once.</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="116"/>
+      <source>%1 — frames: received %2, validated %3, selected %4, queued %5, written %6; drop events %7</source>
+      <translation type="unfinished">%1 — frames: received %2, validated %3, selected %4, queued %5, written %6; drop events %7</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="130"/>
+      <source>%1 — queued %2 B, written %3, dropped %4 B, pending %5 B, unconfirmed %6 B</source>
+      <translation type="unfinished">%1 — queued %2 B, written %3, dropped %4 B, pending %5 B, unconfirmed %6 B</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="130"/>
+      <source>%1 B</source>
+      <translation type="unfinished">%1 B</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="130"/>
+      <source>unconfirmed</source>
+      <translation type="unfinished">unconfirmed</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="139"/>
+      <source>Show recent correction events</source>
+      <translation type="unfinished">Show recent correction events</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="167"/>
+      <source>%1. %2 — %3, %4 B%5
+Source: %6 (session %7); destination: %8 (session %9)</source>
+      <translation type="unfinished">%1. %2 — %3, %4 B%5
+Source: %6 (session %7); destination: %8 (session %9)</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="167"/>
+      <source> — %1</source>
+      <translation type="unfinished"> — %1</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="107"/>
+      <source>Current correction streams:</source>
+      <translation type="unfinished">Current correction streams:</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="108"/>
+      <source>No fresh stream is selected for vehicles.</source>
+      <translation type="unfinished">No fresh stream is selected for vehicles.</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="124"/>
+      <source>Selected for vehicles; fresh</source>
+      <translation type="unfinished">Selected for vehicles; fresh</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="126"/>
+      <source>Fresh; not selected for vehicles</source>
+      <translation type="unfinished">Fresh; not selected for vehicles</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="128"/>
+      <source>Active; waiting for fresh corrections</source>
+      <translation type="unfinished">Active; waiting for fresh corrections</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="130"/>
+      <source>Unavailable</source>
+      <translation type="unfinished">Unavailable</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="131"/>
+      <source>%1 — %2: %3</source>
+      <translation type="unfinished">%1 — %2: %3</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionDiagnostics.qml" line="132"/>
+      <source>Default stream</source>
+      <translation type="unfinished">Default stream</translation>
+    </message>
+  </context>
+  <context>
+    <name>CorrectionRoutingSettings</name>
+    <message>
+      <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="30"/>
+      <source>Correction Routing</source>
+      <translation type="unfinished">Correction Routing</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="49"/>
+      <source>Uses one fresh stream, preferring the local base station, then NTRIP, then UDP.</source>
+      <translation type="unfinished">Uses one fresh stream, preferring the local base station, then NTRIP, then UDP.</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="56"/>
+      <source>Stream</source>
+      <translation type="unfinished">Stream</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="21"/>
+      <source>Automatic within source</source>
+      <translation type="unfinished">Automatic within source</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="26"/>
+      <source>No fresh corrections: %1</source>
+      <translation type="unfinished">No fresh corrections: %1</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="33"/>
+      <source>Unavailable: %1</source>
+      <translation type="unfinished">Unavailable: %1</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="46"/>
+      <source>Selects streams for vehicle links only. NTRIP UDP forwarding uses the NTRIP stream independently.</source>
+      <translation type="unfinished">Selects streams for vehicle links only. NTRIP UDP forwarding uses the NTRIP stream independently.</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="71"/>
+      <source>Forwards all fresh streams to vehicles. Corrections from different base stations may be mixed.</source>
+      <translation type="unfinished">Forwards all fresh streams to vehicles. Corrections from different base stations may be mixed.</translation>
+    </message>
+    <message>
+      <location filename="../src/AppSettings/CorrectionRoutingSettings.qml" line="72"/>
+      <source>Uses only the chosen source category, without fallback to other categories. Automatic within source chooses a fresh stream in that category; a pinned stream waits if unavailable.</source>
+      <translation type="unfinished">Uses only the chosen source category, without fallback to other categories. Automatic within source chooses a fresh stream in that category; a pinned stream waits if unavailable.</translation>
+    </message>
+  </context>
+  <context>
+    <name>NTRIPConnectionStatus</name>
+    <message>
+      <location filename="../src/GPS/NTRIP/NTRIPConnectionStatus.qml" line="124"/>
+      <source>Queued to vehicle links (all sources)</source>
+      <translation type="unfinished">Queued to vehicle links (all sources)</translation>
+    </message>
+  </context>
 </TS>
