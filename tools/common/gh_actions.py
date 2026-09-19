@@ -4,18 +4,89 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+from .proc import run_captured, run_with_retry
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
-def gh(*args: str, check: bool = True) -> subprocess.CompletedProcess:
-    """Run a gh CLI command and return the process result."""
-    return subprocess.run(
-        ["gh", *args],
+_TRANSIENT_GH_ERRORS = (
+    "api rate limit exceeded",
+    "secondary rate limit",
+    "connection reset",
+    "connection refused",
+    "could not resolve host",
+    "error connecting",
+    "network is unreachable",
+    "temporary failure",
+    "timed out",
+    "timeout",
+    "tls handshake timeout",
+)
+
+
+def _is_transient_gh_output(stdout: object, stderr: object) -> bool:
+    output = f"{stdout or ''}\n{stderr or ''}".lower()
+    return bool(re.search(r"\b(?:http|status(?: code)?)[ :=]*(?:429|5\d\d)\b", output)) or any(
+        marker in output for marker in _TRANSIENT_GH_ERRORS
+    )
+
+
+def _is_transient_gh_error(error: Exception) -> bool:
+    if isinstance(error, subprocess.TimeoutExpired):
+        return True
+    return isinstance(error, subprocess.CalledProcessError) and _is_transient_gh_output(
+        error.stdout, error.stderr
+    )
+
+
+def _is_transient_gh_result(result: subprocess.CompletedProcess[Any]) -> bool:
+    return result.returncode != 0 and _is_transient_gh_output(result.stdout, result.stderr)
+
+
+def _gh_api_method(args: Sequence[str]) -> str | None:
+    if not args or args[0] != "api":
+        return None
+    for index, arg in enumerate(args):
+        if arg in {"-X", "--method"} and index + 1 < len(args):
+            return args[index + 1].upper()
+        if arg.startswith("--method="):
+            return arg.partition("=")[2].upper()
+    return "POST" if any(arg in {"-f", "-F", "--raw-field", "--field"} for arg in args) else "GET"
+
+
+def gh(
+    *args: str,
+    check: bool = True,
+    retry_transient: bool = False,
+    max_attempts: int = 3,
+    retry_backoff_seconds: float = 2.0,
+    timeout: float | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run gh, optionally retrying transient failures for read-only operations."""
+    command = ["gh", *args]
+    if not retry_transient:
+        return run_captured(command, check=check, timeout=timeout)
+    method = _gh_api_method(args)
+    if method != "GET":
+        raise ValueError("retry_transient is only valid for read-only GitHub API GET calls")
+    return run_with_retry(
+        command,
+        max_attempts=max_attempts,
+        retry_backoff_seconds=retry_backoff_seconds,
+        retry_if=_is_transient_gh_error,
+        retry_result_if=_is_transient_gh_result,
+        timeout=timeout if timeout is not None else 60,
+        check=check,
         capture_output=True,
         text=True,
-        check=check,
+        encoding="utf-8",
+        errors="replace",
     )
 
 
@@ -29,7 +100,7 @@ def _paginate_items(path: str, item_key: str, params: dict[str, str]) -> list[di
     cmd = ["api", "--method", "GET", "--paginate", "--jq", f".{item_key}[]?", path]
     for key, value in params.items():
         cmd += ["-F", f"{key}={value}"]
-    result = gh(*cmd)
+    result = gh(*cmd, retry_transient=True)
     return [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
 
 

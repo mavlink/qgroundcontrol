@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 
-from common.proc import run_checked_with_retry
+from common.proc import run_with_retry
 
 
 def configure_sources(apt_dir: Path, suite: str, mirror: str) -> None:
@@ -78,7 +78,7 @@ def install() -> None:
     if "arm64" not in architectures:
         subprocess.run(["dpkg", "--add-architecture", "arm64"], check=True)
     configure_sources(Path("/etc/apt"), suite, mirror)
-    run_checked_with_retry(
+    run_with_retry(
         ["apt-get", "-o", "Acquire::Retries=3", "update", "-y", "--quiet"], retry_backoff_seconds=10
     )
     installer = os.environ.get(
@@ -101,7 +101,7 @@ def install() -> None:
     ).stdout.split()
     if not packages:
         raise ValueError("install_dependencies returned no cross_arm64 packages")
-    run_checked_with_retry(
+    run_with_retry(
         [
             "apt-get",
             "-o",
@@ -151,9 +151,7 @@ def install() -> None:
     # Download/extract instead of installing :arm64 -dev packages: those may
     # otherwise replace host Python with python3:arm64.
     with tempfile.TemporaryDirectory(prefix="qgc-sysroot-") as directory:
-        run_checked_with_retry(
-            ["apt-get", "download", *closure], cwd=directory, retry_backoff_seconds=10
-        )
+        run_with_retry(["apt-get", "download", *closure], cwd=directory, retry_backoff_seconds=10)
         archives = sorted(Path(directory).glob("*.deb"))
         if not archives:
             raise ValueError("apt-get download produced no .deb files")

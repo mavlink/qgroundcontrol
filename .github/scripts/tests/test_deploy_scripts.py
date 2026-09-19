@@ -134,7 +134,7 @@ def test_sysroot_retry_stops_after_three_attempts(module, monkeypatch):
     monkeypatch.setattr(script.subprocess, "run", fail)
     monkeypatch.setattr("common.proc.time.sleep", lambda _: None)
     with pytest.raises(subprocess.CalledProcessError):
-        script.run_checked_with_retry(["apt-get", "download", "libc6:arm64"])
+        script.run_with_retry(["apt-get", "download", "libc6:arm64"])
     assert len(calls) == 3
 
 

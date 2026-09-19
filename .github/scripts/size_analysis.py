@@ -66,46 +66,50 @@ def _install_bloaty_from_source(timeout: int) -> bool:
             timeout=60,
             check=True,
         )
-        bloaty_dir = tempfile.mkdtemp(prefix="bloaty-")
-        run_captured(["git", "init", bloaty_dir], timeout=10, check=True)
-        run_captured(
-            [
-                "git",
-                "-C",
-                bloaty_dir,
-                "fetch",
-                "--depth",
-                "1",
-                "https://github.com/google/bloaty.git",
-                "87082741b1cc0a97cd84bd17cd4ee41d70a42fc6",
-            ],
-            timeout=30,
-            check=True,
-        )
-        run_captured(["git", "-C", bloaty_dir, "checkout", "FETCH_HEAD"], timeout=10, check=True)
-        run_captured(
-            [
-                "cmake",
-                "-B",
-                f"{bloaty_dir}/build",
-                "-S",
-                bloaty_dir,
-                "-DCMAKE_BUILD_TYPE=Release",
-                "-DBLOATY_ENABLE_RE2=ON",
-            ],
-            timeout=60,
-            check=True,
-        )
-        run_captured(
-            ["cmake", "--build", f"{bloaty_dir}/build", "--parallel"],
-            timeout=timeout,
-            check=True,
-        )
-        run_captured(
-            ["sudo", "cmake", "--install", f"{bloaty_dir}/build"],
-            timeout=30,
-            check=True,
-        )
+        with tempfile.TemporaryDirectory(prefix="bloaty-") as bloaty_dir:
+            run_captured(["git", "init", bloaty_dir], timeout=10, check=True)
+            run_captured(
+                [
+                    "git",
+                    "-C",
+                    bloaty_dir,
+                    "fetch",
+                    "--depth",
+                    "1",
+                    "https://github.com/google/bloaty.git",
+                    "87082741b1cc0a97cd84bd17cd4ee41d70a42fc6",
+                ],
+                timeout=30,
+                check=True,
+            )
+            run_captured(
+                ["git", "-C", bloaty_dir, "checkout", "FETCH_HEAD"],
+                timeout=10,
+                check=True,
+            )
+            run_captured(
+                [
+                    "cmake",
+                    "-B",
+                    f"{bloaty_dir}/build",
+                    "-S",
+                    bloaty_dir,
+                    "-DCMAKE_BUILD_TYPE=Release",
+                    "-DBLOATY_ENABLE_RE2=ON",
+                ],
+                timeout=60,
+                check=True,
+            )
+            run_captured(
+                ["cmake", "--build", f"{bloaty_dir}/build", "--parallel"],
+                timeout=timeout,
+                check=True,
+            )
+            run_captured(
+                ["sudo", "cmake", "--install", f"{bloaty_dir}/build"],
+                timeout=30,
+                check=True,
+            )
         print("bloaty installed from source")
         return True
     except subprocess.TimeoutExpired:

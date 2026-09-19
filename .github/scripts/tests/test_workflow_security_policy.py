@@ -18,6 +18,8 @@ WORKFLOWS = sorted(WORKFLOWS_DIR.glob("*.y*ml"))
 COMPOSITE_ACTIONS = sorted((REPO_ROOT / ".github" / "actions").rglob("action.y*ml"))
 CI_SCRIPTS_WORKFLOW = WORKFLOWS_DIR / "ci-scripts.yml"
 DEPENDENCY_REVIEW_WORKFLOW = WORKFLOWS_DIR / "dependency-review.yml"
+VM_BUILDS_WORKFLOW = WORKFLOWS_DIR / "vm-builds.yml"
+BUILD_ACTION = REPO_ROOT / ".github" / "actions" / "build-action" / "action.yml"
 HARDEN_RUNNER = "step-security/harden-runner@v2"
 VERSIONED_ACTION_REF = re.compile(r"(?:[0-9a-f]{40}|v\d+(?:\.\d+){0,2})")
 
@@ -157,3 +159,32 @@ def test_dependency_review_covers_every_pull_request() -> None:
     uses = {step.get("uses") for step in steps}
     assert "actions/dependency-review-action@v5" in uses
     assert "gradle/actions/wrapper-validation@v4" in uses
+
+
+def test_build_action_uses_lockfile_aware_npm_install() -> None:
+    steps = _load_yaml_mapping(BUILD_ACTION)["runs"]["steps"]
+    build_script = next(step["run"] for step in steps if step.get("name", "").startswith("Build "))
+
+    assert "npm ci || npm install" not in build_script
+    assert "[[ -f package-lock.json || -f npm-shrinkwrap.json ]]" in build_script
+    assert "npm ci" in build_script
+    assert "npm install" in build_script
+
+
+def test_vm_build_hashicorp_key_download_is_bounded() -> None:
+    steps = _load_yaml_mapping(VM_BUILDS_WORKFLOW)["jobs"]["vagrant-build"]["steps"]
+    install_script = next(
+        step["run"] for step in steps if step.get("name") == "Install Vagrant + libvirt"
+    )
+
+    assert install_script.startswith("set -o pipefail\n")
+    assert "wget " not in install_script
+    for option in (
+        "--fail",
+        "--retry 5",
+        "--retry-delay 2",
+        "--retry-max-time 120",
+        "--connect-timeout 10",
+        "--max-time 30",
+    ):
+        assert option in install_script

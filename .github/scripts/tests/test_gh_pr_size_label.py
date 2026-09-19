@@ -100,6 +100,23 @@ def test_cmd_prune_removes_old_label_when_multiple(monkeypatch: pytest.MonkeyPat
     assert removed == ["size/S"]
 
 
+def test_cmd_prune_returns_nonzero_when_removal_fails(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GH_REPO", "owner/repo")
+    monkeypatch.setenv("PR_NUMBER", "42")
+    monkeypatch.setenv("OLD_LABEL", "size/S")
+    monkeypatch.setattr(mod, "list_size_labels", lambda *_: ["size/M", "size/S"])
+    monkeypatch.setattr(
+        mod,
+        "gh",
+        lambda *a, **kw: completed(returncode=1, stderr="HTTP 500: internal"),
+    )
+
+    assert mod.main(["prune"]) == 1
+    assert "failed to remove label 'size/S': HTTP 500: internal" in capsys.readouterr().out
+
+
 def test_cmd_prune_falls_back_to_alphabetic_when_old_label_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

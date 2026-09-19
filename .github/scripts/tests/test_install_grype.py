@@ -39,24 +39,22 @@ def test_direct_asset_retries_and_populates_scan_action_cache(
     calls = []
     sleeps = []
 
-    def download(url, destination, **kwargs):
-        calls.append(url)
-        if len(calls) < 3:
-            raise HTTPError(url, 504, "Gateway Timeout", Message(), None)
-        shutil.copyfile(release, destination)
+    url = (
+        f"https://github.com/anchore/grype/releases/download/v{install_grype.VERSION}/"
+        f"grype_{install_grype.VERSION}_linux_{asset}.tar.gz"
+    )
 
-    monkeypatch.setattr("common.net.download_file", download)
+    def urlopen(request, **kwargs):
+        calls.append(request.full_url)
+        if len(calls) < 3:
+            raise HTTPError(request.full_url, 504, "Gateway Timeout", Message(), None)
+        return release.open("rb")
+
+    monkeypatch.setattr("common.net.urllib.request.urlopen", urlopen)
     monkeypatch.setattr("common.net.time", SimpleNamespace(sleep=sleeps.append))
     binary = install_grype.install(tmp_path / "cache", arch)
-    assert (
-        calls
-        == [
-            f"https://github.com/anchore/grype/releases/download/v{install_grype.VERSION}/"
-            f"grype_{install_grype.VERSION}_linux_{asset}.tar.gz"
-        ]
-        * 3
-    )
-    assert sleeps == [10, 10]
+    assert calls == [url] * 3
+    assert sleeps == [10, 20]
     assert binary == tmp_path / "cache/grype" / install_grype.VERSION / node / "grype"
     assert binary.stat().st_mode & 0o111
     assert binary.parent.with_name(f"{node}.complete").is_file()
@@ -72,11 +70,13 @@ def test_failed_install_never_publishes_cache_marker(tmp_path, monkeypatch, rele
         monkeypatch.setattr(install_grype, "SHA256", {"x86_64": sha256_file(release)})
     if failure == "checksum":
         monkeypatch.setattr(install_grype, "SHA256", {"x86_64": "0" * 64})
-    monkeypatch.setattr(
-        install_grype,
-        "download_with_retry",
-        lambda url, destination, **kwargs: shutil.copyfile(release, destination),
-    )
+
+    def download(url, destination, *, expected_sha256, **kwargs):
+        if sha256_file(release) != expected_sha256:
+            raise RuntimeError("SHA-256 mismatch")
+        shutil.copyfile(release, destination)
+
+    monkeypatch.setattr(install_grype, "download_file", download)
     if failure == "execution":
 
         def fail(command, **kwargs):
@@ -95,7 +95,7 @@ def test_incomplete_cache_is_repaired_and_cli_exports_exact_version(tmp_path, mo
     binary.write_text("incomplete")
     monkeypatch.setattr(
         install_grype,
-        "download_with_retry",
+        "download_file",
         lambda url, destination, **kwargs: shutil.copyfile(release, destination),
     )
     monkeypatch.setattr(install_grype, "host_arch", lambda: "x86_64")

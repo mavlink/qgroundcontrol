@@ -152,7 +152,7 @@ def read_json(path: Path) -> Any:
 def write_json(path: Path, data: Any, *, indent: int = 2, sort_keys: bool = False) -> None:
     """Write *data* as JSON to *path* (UTF-8, trailing newline)."""
     text = json.dumps(data, indent=indent, sort_keys=sort_keys, ensure_ascii=False)
-    path.write_text(text + "\n", encoding="utf-8")
+    atomic_write(path, text + "\n")
 
 
 def read_toml(path: Path) -> dict[str, Any]:

@@ -176,7 +176,7 @@ Python helpers in `.github/scripts/` invoked by workflows and composite actions.
 | `android_boot_test.py` | Android emulator boot smoke test |
 | `android_build_retry.py` | Retry an Android build after a known intermittent Qt deployment-settings failure |
 | `android_collect_diagnostics.py` | Collect emulator failure diagnostics (build, adb dumps, GStreamer error grep, AVD logs) |
-| `android_sdk_helper.py` | Android SDK/NDK setup helpers |
+| `android_sdk_helper.py` | Retry Android SDK/NDK package installation and configure tool paths |
 | `attest_helper.py` | Gate SBOM signing and resolve artifact paths |
 | `aws_upload.py` | Validate and upload artifacts to AWS S3 |
 | `cache_policy.py` | Resolve the cache save policy for the current workflow event |

@@ -25,6 +25,10 @@ runs:
     - name: Build ${{ inputs.repo }}
       run: |
         cd build-action
-        npm ci || npm install
+        if [[ -f package-lock.json || -f npm-shrinkwrap.json ]]; then
+          npm ci
+        else
+          npm install
+        fi
         npm run build
       shell: bash

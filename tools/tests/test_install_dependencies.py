@@ -529,8 +529,12 @@ def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
             "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
         ),
     ]
-    assert dl.call_args_list[0].kwargs == {"warn_on_failure": True}
-    assert dl.call_args_list[1].kwargs == {}
+    expected_sha256 = _windows._c.get_gstreamer_checksum("1.28.4", "windows_msvc_x64")
+    assert dl.call_args_list[0].kwargs == {
+        "warn_on_failure": True,
+        "expected_sha256": expected_sha256,
+    }
+    assert dl.call_args_list[1].kwargs == {"expected_sha256": expected_sha256}
     assert rc.call_args.args[0] == [
         str(installer),
         "/VERYSILENT",

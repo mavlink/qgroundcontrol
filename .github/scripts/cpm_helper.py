@@ -27,6 +27,7 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.gh_actions import append_github_env, github_cache_path, write_github_output
+from common.io import write_json
 
 
 def compute_cpm_fingerprint(root: Path) -> str:
@@ -129,7 +130,7 @@ def create_seed(root: Path, qt_root: Path, seed: Path) -> None:
         "bytes": cache_size(sources),
         "prepare_seconds": round(time.monotonic() - started, 2),
     }
-    (seed / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    write_json(seed / "manifest.json", manifest, indent=2)
     print(json.dumps(manifest))
 
 

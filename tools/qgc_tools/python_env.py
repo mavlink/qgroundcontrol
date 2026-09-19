@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 from common.io import read_toml
-from common.proc import run_checked_with_retry
+from common.proc import run_with_retry
 
 
 def project_path() -> Path:
@@ -134,7 +134,7 @@ def sync_groups(
     env = os.environ.copy()
     env.pop("VIRTUAL_ENV", None)
     env["UV_PROJECT_ENVIRONMENT"] = str(target)
-    run_checked_with_retry(command, env=env)
+    run_with_retry(command, env=env)
     return target
 
 

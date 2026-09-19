@@ -120,6 +120,10 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
         return True
 
     installer_name = f"gstreamer-1.0-msvc-x86_64-{version}.exe"
+    expected_sha256 = _c.get_gstreamer_checksum(version, "windows_msvc_x64")
+    if not expected_sha256:
+        _c.log_error(f"Missing GStreamer {version} Windows checksum")
+        return False
 
     print(f"\nInstalling GStreamer {version}...")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -133,7 +137,13 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
             installer,
             dry_run,
             warn_on_failure=True,
-        ) and not _c.download_file(installer_urls[1], installer, dry_run):
+            expected_sha256=expected_sha256,
+        ) and not _c.download_file(
+            installer_urls[1],
+            installer,
+            dry_run,
+            expected_sha256=expected_sha256,
+        ):
             return False
         if not _c.run_command(
             [

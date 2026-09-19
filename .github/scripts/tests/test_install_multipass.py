@@ -45,5 +45,5 @@ def test_bad_secondary_remote_is_bounded_and_warns(calls, monkeypatch, capsys):
 
     monkeypatch.setattr(install_multipass.subprocess, "run", run)
     assert install_multipass.main() == 0
-    assert calls.count(["multipass", "find"]) == 30
+    assert calls.count(["multipass", "find"]) == install_multipass.CATALOG_ATTEMPTS
     assert "::warning::" in capsys.readouterr().out

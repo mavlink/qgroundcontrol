@@ -45,6 +45,21 @@ def test_write_json_sort_keys(tmp_path: Path) -> None:
     assert list(read_json(target).keys()) == ["a", "b"]
 
 
+def test_write_json_failed_replace_preserves_existing_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = tmp_path / "x.json"
+    target.write_text('{"old": true}\n', encoding="utf-8")
+
+    def fail_replace(*args: object, **kwargs: object) -> None:
+        raise OSError("replace failed")
+
+    monkeypatch.setattr("os.replace", fail_replace)
+    with pytest.raises(OSError, match="replace failed"):
+        write_json(target, {"new": True})
+    assert target.read_text(encoding="utf-8") == '{"old": true}\n'
+
+
 def test_read_json_missing_file_raises(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         read_json(tmp_path / "missing.json")
