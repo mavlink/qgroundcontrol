@@ -1,4 +1,5 @@
 #include "FactMetaData.h"
+#include "Fact.h"
 #include "JsonParsing.h"
 #include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
@@ -861,6 +862,7 @@ QVariant FactMetaData::_gramsToPunds(const QVariant &g)
 
 void FactMetaData::setRawUnits(const QString &rawUnits)
 {
+    disconnect(_appSettingsUnitsConnection);
     _rawUnits = rawUnits;
     _cookedUnits = rawUnits;
 
@@ -930,34 +932,35 @@ void FactMetaData::_setAppSettingsTranslators()
             }
 
             UnitsSettings *const settings = SettingsManager::instance()->unitsSettings();
-            uint settingsUnits = 0;
+            Fact *settingsFact = nullptr;
 
             switch (pAppSettingsTranslation->unitType) {
             case UnitHorizontalDistance:
-                settingsUnits = settings->horizontalDistanceUnits()->rawValue().toUInt();
+                settingsFact = settings->horizontalDistanceUnits();
                 break;
             case UnitVerticalDistance:
-                settingsUnits = settings->verticalDistanceUnits()->rawValue().toUInt();
+                settingsFact = settings->verticalDistanceUnits();
                 break;
             case UnitSpeed:
-                settingsUnits = settings->speedUnits()->rawValue().toUInt();
+                settingsFact = settings->speedUnits();
                 break;
             case UnitArea:
-                settingsUnits = settings->areaUnits()->rawValue().toUInt();
+                settingsFact = settings->areaUnits();
                 break;
             case UnitTemperature:
-                settingsUnits = settings->temperatureUnits()->rawValue().toUInt();
+                settingsFact = settings->temperatureUnits();
                 break;
             case UnitWeight:
-                settingsUnits = settings->weightUnits()->rawValue().toUInt();
+                settingsFact = settings->weightUnits();
                 break;
             default:
                 break;
             }
 
-            if (settingsUnits == pAppSettingsTranslation->unitOption) {
+            if (settingsFact && (settingsFact->rawValue().toUInt() == pAppSettingsTranslation->unitOption)) {
                 _cookedUnits = pAppSettingsTranslation->cookedUnits;
                 setTranslators(pAppSettingsTranslation->rawTranslator, pAppSettingsTranslation->cookedTranslator);
+                _appSettingsUnitsConnection = connect(settingsFact, &Fact::rawValueChanged, this, &FactMetaData::_appSettingsUnitsChanged);
                 return;
             }
         }
@@ -968,6 +971,13 @@ void FactMetaData::_setAppSettingsTranslators()
     if (_cookedUnits.compare(QStringLiteral("vertical m"), Qt::CaseInsensitive) == 0) {
         _cookedUnits = QStringLiteral("m");
     }
+}
+
+void FactMetaData::_appSettingsUnitsChanged()
+{
+    disconnect(_appSettingsUnitsConnection);
+    setBuiltInTranslator();
+    emit appSettingsUnitsChanged();
 }
 
 const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsUnitsTranslation(const QString &rawUnits, UnitTypes type)
