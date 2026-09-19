@@ -6,6 +6,8 @@
 #include <limits>
 #include <optional>
 
+#include "GPSSatelliteUsageReport.h"
+
 struct GPSIntegrityReport
 {
     enum class JammingState

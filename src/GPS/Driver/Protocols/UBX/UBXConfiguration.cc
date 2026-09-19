@@ -45,62 +45,6 @@ uint32_t fixedAccuracyWireUnits(float accuracyMeters)
 }
 }  // namespace
 
-int GPSNativeUBX::enableNmeaOutput(unsigned baudrate)
-{
-    if (!_configured || _output_mode != OutputMode::GPS || baudrate == 0) {
-        return -1;
-    }
-
-    _configured = false;
-    const int result = [&]() -> int {
-        if (_proto_ver_27_or_higher) {
-            // CFG-MSGOUT NMEA RMC, GGA, GSA and GSV keys for the I2C port; cfgValsetPort
-            // selects UART1 and USB without changing unrelated receiver ports.
-            static constexpr uint32_t nmea_messages[] = {
-                UBX_CFG_KEY_MSGOUT_NMEA_RMC_I2C, UBX_CFG_KEY_MSGOUT_NMEA_GGA_I2C, UBX_CFG_KEY_MSGOUT_NMEA_GSA_I2C,
-                UBX_CFG_KEY_MSGOUT_NMEA_GSV_I2C};
-            initCfgValset();
-            cfgValsetPort(nmea_messages, 1);
-            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1OUTPROT_NMEA, 1);
-            if (UBX::receiverProfile(_board).usb) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBOUTPROT_NMEA, 1);
-            }
-            return sendCfgValsetAcked();
-        }
-
-        // Legacy receivers use CFG-MSG and CFG-PRT rather than configuration keys.
-        static constexpr uint16_t legacy_messages[] = {0x04f0, 0x00f0, 0x02f0, 0x03f0};
-        for (const uint16_t message : legacy_messages) {
-            if (!configureMessageRateAndAck(message, 1, true)) {
-                return -1;
-            }
-        }
-        ubx_payload_tx_cfg_prt_t ports[2]{};
-        for (unsigned i = 0; i < 2; ++i) {
-            ports[i].portID = i == 0 ? UBX_TX_CFG_PRT_PORTID : UBX_TX_CFG_PRT_PORTID_USB;
-            ports[i].mode = UBX_TX_CFG_PRT_MODE;
-            ports[i].baudRate = baudrate;
-            ports[i].inProtoMask = UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM;
-            ports[i].outProtoMask = UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_NMEA;
-        }
-        if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(ports))) {
-            return -1;
-        }
-        return waitForAck(UBX_MSG_CFG_PRT, UBX_CONFIG_TIMEOUT, true);
-    }();
-    _configured = result == 0;
-    return result;
-}
-
-int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
-{
-    _baseConfig = config.base;
-    _dyn_model = config.dynamicModel;
-    _output_rate = config.outputRateHz;
-    _survey_duration = 0;
-    return configure(baudrate, config, OutputProtocol::Native);
-}
-
 GPSNativeUBX::BaseStationCapability GPSNativeUBX::baseStationCapability() const
 {
     if (_board == Board::u_blox8) {
@@ -113,94 +57,19 @@ GPSNativeUBX::BaseStationCapability GPSNativeUBX::baseStationCapability() const
                                          : BaseStationCapability::Unknown;
 }
 
-bool GPSNativeUBX::supportsConstellationSelection() const
-{
-    // M10 combinations have additional restrictions; the legacy path does not
-    // provide strict acknowledgement of every requested constellation change.
-    return _proto_ver_27_or_higher && UBX::receiverProfile(_board).constellationSelection;
-}
-
-bool GPSNativeUBX::supportsOutputRateSelection() const
-{
-    return _proto_ver_27_or_higher && _model_name[0] && _board != Board::unknown;
-}
-
-bool GPSNativeUBX::readConfiguration(ConfigurationReadback& report, unsigned timeout_ms)
-{
-    const Operation operation(*this, timeout_ms);
-    report = {};
-    if (!_configured || !supportsOutputRateSelection() || !timeout_ms || ioError()) {
-        return false;
-    }
-    std::array<uint32_t, 9> readbackKeys{};
-    readbackKeys[0] = UBX_CFG_KEY_NAVSPG_DYNMODEL;
-    readbackKeys[1] = UBX_CFG_KEY_RATE_MEAS;
-    readbackKeys[2] = UBX_CFG_KEY_RATE_NAV;
-    unsigned readbackCount = 3;
-    if (supportsConstellationSelection()) {
-        const uint32_t keys[] = {UBX_CFG_KEY_SIGNAL_GPS_ENA, UBX_CFG_KEY_SIGNAL_QZSS_ENA, UBX_CFG_KEY_SIGNAL_SBAS_ENA,
-                                 UBX_CFG_KEY_SIGNAL_GAL_ENA, UBX_CFG_KEY_SIGNAL_BDS_ENA,  UBX_CFG_KEY_SIGNAL_GLO_ENA};
-        for (uint32_t key : keys) {
-            readbackKeys[readbackCount++] = key;
-        }
-    }
-    uint8_t request[4 + sizeof(readbackKeys)]{};
-    for (unsigned i = 0; i < readbackCount; ++i) {
-        (void) LittleEndian::write(request, 4 + i * 4, readbackKeys[i]);
-    }
-    _controller.beginReadback(std::span(readbackKeys).first(readbackCount));
-    const uint64_t deadline = nowUs() + uint64_t(timeout_ms) * 1000;
-    if (sendMessage(UBX_MSG_CFG_VALGET, request, 4 + readbackCount * 4)) {
-        while (!_controller.readbackReady() && !ioError()) {
-            const uint64_t now = nowUs();
-            if (now >= deadline) {
-                break;
-            }
-            const unsigned remaining_ms = unsigned((deadline - now + 999) / 1000);
-            bool read_error = false;
-            receiveInternal(remaining_ms < 50 ? remaining_ms : 50, read_error);
-            if (read_error) {
-                break;
-            }
-        }
-    }
-    _controller.finishReadback();
-    if (!_controller.readbackReady()) {
-        return false;
-    }
-    report.dynamic_model = uint8_t(_controller.readback().values[0]);
-    report.measurement_interval_ms = uint16_t(_controller.readback().values[1]);
-    report.navigation_rate = uint16_t(_controller.readback().values[2]);
-    report.constellations_reported = readbackCount == 9;
-    if (report.constellations_reported) {
-        // QGC's GPS selection includes QZSS; differing receiver enables are not a match.
-        report.constellation_mask = (_controller.readback().values[3] && _controller.readback().values[4]) ? 1 : 0;
-        for (unsigned i = 5; i < 9; ++i) {
-            if (_controller.readback().values[i]) {
-                report.constellation_mask |= 1u << (i - 4);
-            }
-        }
-    }
-    return true;
-}
-
-int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputProtocol output_protocol)
+int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
 {
     _baseConfig = config.base;
     _dyn_model = config.dynamicModel;
-    _output_rate = config.outputRateHz;
     _survey_duration = 0;
     resetIOError();
     _timeModeUnsupported = false;
     _valsetAckAmbiguous = false;
-    _constellation_configuration_rejected = false;
-    _constellation_request_rejected = false;
     _configured = false;
     _decodeNavigation = false;
     _assembleEpochs = false;
     _navigationEpochs = {};
-    if (output_protocol != OutputProtocol::Native &&
-        (output_protocol != OutputProtocol::NMEA || config.output_mode != OutputMode::GPS)) {
+    if (!validateConfiguration(config)) {
         return -1;
     }
     _output_mode = config.output_mode;
@@ -351,10 +220,6 @@ int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
     if (_output_mode == OutputMode::RTCM && baseStationCapability() == BaseStationCapability::Unsupported) {
         return -1;
     }
-    if ((_output_rate && !supportsOutputRateSelection()) ||
-        (config.require_gnss_config && !supportsConstellationSelection())) {
-        return -1;
-    }
 
     /* Now that we know the board, update the baudrate on M8 boards (on F9+ we already used the
      * higher baudrate with CFG-VALSET) */
@@ -425,7 +290,7 @@ int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config, OutputP
     _configured = true;
     _decodeNavigation = true;
     _assembleEpochs = true;
-    return output_protocol == OutputProtocol::NMEA ? enableNmeaOutput(baudrate) : 0;
+    return 0;
 }
 
 int GPSNativeUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
@@ -649,32 +514,18 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
     // be restricted to 16. (Not mentioned in datasheet)
     int rate_meas = 100;  // 10Hz
 
-    if (_output_rate > 0) {
-        if (_output_rate > 25) {
-            log(GPSProtocolLogLevel::Warning, "Rate %u Hz exceeds max, limiting to 25Hz", _output_rate);
-            _output_rate = 25;
-        }
+    switch (_board) {
+        case Board::u_blox9:
+            rate_meas = 125;  // 8Hz
+            break;
 
-        // convert hz to ms
-        rate_meas = 1000 / _output_rate;
+        case Board::u_blox9_F9P_L1L2:
+        case Board::u_blox9_F9P_L1L5:
+            rate_meas = 200;  // 5Hz
+            break;
 
-    } else {
-        switch (_board) {
-            case Board::u_blox9:
-                rate_meas = 125;  // 8Hz
-                break;
-
-            case Board::u_blox9_F9P_L1L2:
-                rate_meas = 200;  // 5Hz
-                break;
-
-            case Board::u_blox9_F9P_L1L5:
-                rate_meas = 200;  // 5Hz
-                break;
-
-            default:
-                break;
-        }
+        default:
+            break;
     }
 
     cfgValset<uint16_t>(UBX_CFG_KEY_RATE_MEAS, rate_meas);
@@ -878,7 +729,6 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
 
         if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true) < 0) {
             if (_valsetAckAmbiguous || ioError()) {
-                _constellation_configuration_rejected = true;
                 return -1;
             }
             // The receiver NAKs the whole message and applies nothing if it does not know a
@@ -906,9 +756,7 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
             }
 
             if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true) < 0) {
-                if (config.require_gnss_config) {
-                    _constellation_configuration_rejected = true;
-                    _constellation_request_rejected = _last_ack_rejected;
+                if (_valsetAckAmbiguous || ioError()) {
                     return -1;
                 }
                 // Keep going with whatever the receiver already has, a refused constellation
@@ -938,8 +786,6 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
         if (waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, true) < 0 ||
             verifyConfigValue(UBX_CFG_KEY_SIGNAL_SBAS_ENA, enabled) < 0 ||
             (enabled && verifyConfigValue(UBX_CFG_KEY_SIGNAL_SBAS_L1CA_ENA, 1) < 0)) {
-            _constellation_configuration_rejected = true;
-            _constellation_request_rejected = _last_ack_rejected;
             return -1;
         }
 

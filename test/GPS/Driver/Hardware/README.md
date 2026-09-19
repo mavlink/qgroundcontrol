@@ -52,6 +52,8 @@ RUNNER=build/gps-hardware-item5/QGCGPSHardwareRunner
 "$RUNNER" --action configure --survey-state retained
 "$RUNNER" --action configure --survey-state none
 "$RUNNER" --action configure --role position --fault wrong-readback
+"$RUNNER" --action cancel --fault rtcm-nak
+"$RUNNER" --action cancel --fault rtcm-nak-cancel
 ```
 
 `suite` runs base → Position → base, closes/reopens the transport, reconfigures
@@ -63,6 +65,22 @@ request rather than mistaking an early data return for failed cancellation.
 This does not prove interruption of a physically blocked read. Reconfiguration is
 explicit even for the cancellation action. The runner currently tests
 survey-in base configuration, not fixed-position bases.
+
+Native receive outcomes distinguish useful data, ancillary activity, idle, cancellation,
+and terminal protocol/transport failure. A terminal failure ends the stage even when
+the physical connection remains healthy; a later stop request cannot turn that failure
+into a cancellation pass. The two `rtcm-nak` scripted F9P cases reject activation after
+successful configuration, during observation or cancellation respectively.
+Legacy receive returns cannot distinguish these conditions, so its cancellation result
+is explicitly **inconclusive**, not proof that a blocked operation was cancelled.
+The frozen legacy source is unchanged.
+
+Satellite-list callbacks remain full snapshots, including aggregated Ashtech constellation
+updates and empty-scope clearing. Count-only Femto/SBF updates have a separate callback and
+`satellite_usage_messages` counter; they do not manufacture satellites in view.
+Desktop configuration writes share each command's absolute deadline and the transport's cap.
+Android serial explicitly retains its synchronous configuration backend; only submission
+can be deadline-gated there, and unsupported bounded writes never trigger an implicit fallback.
 
 ## Physical receiver safety
 

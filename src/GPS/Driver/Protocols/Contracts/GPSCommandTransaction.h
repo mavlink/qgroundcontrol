@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <string>
 
-#include "../../GPSConfigurationEvidence.h"
+#include "GPSConfigurationEvidence.h"
 #include "GPSIOStatus.h"
 #include "GPSReceiverSettingId.h"
 

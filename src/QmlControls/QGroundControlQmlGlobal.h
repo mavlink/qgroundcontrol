@@ -9,7 +9,7 @@
 #include "QmlUnitsConversion.h"
 
 class ADSBVehicleManager;
-class FactGroup;
+class GPSRTKFactGroup;
 class GPSManager;
 class LinkManager;
 class MAVLinkSigningKeys;
@@ -26,7 +26,7 @@ class QmlObjectListModel;
 
 Q_MOC_INCLUDE("ADSBVehicleManager.h")
 Q_MOC_INCLUDE("NTRIPManager.h")
-Q_MOC_INCLUDE("FactGroup.h")
+Q_MOC_INCLUDE("GPSRTKFactGroup.h")
 Q_MOC_INCLUDE("GPSManager.h")
 Q_MOC_INCLUDE("LinkManager.h")
 Q_MOC_INCLUDE("MAVLinkSigningKeys.h")
@@ -74,7 +74,7 @@ public:
     Q_PROPERTY(QGCCorePlugin*       corePlugin              READ    corePlugin              CONSTANT)
     Q_PROPERTY(MissionCommandTree*  missionCommandTree      READ    missionCommandTree      CONSTANT)
     Q_PROPERTY(MAVLinkSigningKeys*   mavlinkSigningKeys      READ    mavlinkSigningKeys      CONSTANT)
-    Q_PROPERTY(FactGroup*           gpsRtk                  READ    gpsRtkFactGroup         CONSTANT)
+    Q_PROPERTY(GPSRTKFactGroup* gpsRtk READ gpsRtkFactGroup CONSTANT)
     Q_PROPERTY(GPSManager* gpsManager READ gpsManager CONSTANT)
     Q_PROPERTY(QGCPalette*          globalPalette           MEMBER  _globalPalette          CONSTANT)   ///< This palette will always return enabled colors
     Q_PROPERTY(QmlUnitsConversion*  unitsConversion         READ    unitsConversion         CONSTANT)
@@ -155,23 +155,38 @@ public:
 
     static QString appName();
     QObject* serialPortManager() const;
-    LinkManager*            linkManager         ()  { return _linkManager; }
-    MultiVehicleManager*    multiVehicleManager ()  { return _multiVehicleManager; }
-    QGCMapEngineManager*    mapEngineManager    ()  { return _mapEngineManager; }
-    QGCPositionManager*     qgcPositionManger   ()  { return _qgcPositionManager; }
-    MissionCommandTree*     missionCommandTree  ()  { return _missionCommandTree; }
-    MAVLinkSigningKeys*     mavlinkSigningKeys  ()  { return _mavlinkSigningKeys; }
-    VideoManager*           videoManager        ()  { return _videoManager; }
-    QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
-    SettingsManager*        settingsManager     ()  { return _settingsManager; }
-    FactGroup*              gpsRtkFactGroup     ()  { return _gpsRtkFactGroup; }
+
+    LinkManager* linkManager() { return _linkManager; }
+
+    MultiVehicleManager* multiVehicleManager() { return _multiVehicleManager; }
+
+    QGCMapEngineManager* mapEngineManager() { return _mapEngineManager; }
+
+    QGCPositionManager* qgcPositionManger() { return _qgcPositionManager; }
+
+    MissionCommandTree* missionCommandTree() { return _missionCommandTree; }
+
+    MAVLinkSigningKeys* mavlinkSigningKeys() { return _mavlinkSigningKeys; }
+
+    VideoManager* videoManager() { return _videoManager; }
+
+    QGCCorePlugin* corePlugin() { return _corePlugin; }
+
+    SettingsManager* settingsManager() { return _settingsManager; }
+
+    GPSRTKFactGroup* gpsRtkFactGroup() { return _gpsRtkFactGroup; }
 
     GPSManager* gpsManager() const;
-    ADSBVehicleManager*     adsbVehicleManager  ()  { return _adsbVehicleManager; }
-    NTRIPManager*           ntripManager        ()  { return _ntripManager; }
-    QmlUnitsConversion*     unitsConversion     ()  { return &_unitsConversion; }
-    static QGeoCoordinate   flightMapPosition   ()  { return _coord; }
-    static double           flightMapZoom       ()  { return _zoom; }
+
+    ADSBVehicleManager* adsbVehicleManager() { return _adsbVehicleManager; }
+
+    NTRIPManager* ntripManager() { return _ntripManager; }
+
+    QmlUnitsConversion* unitsConversion() { return &_unitsConversion; }
+
+    static QGeoCoordinate flightMapPosition() { return _coord; }
+
+    static double flightMapZoom() { return _zoom; }
 
     qreal zOrderTopMost             () { return 1000; }
     qreal zOrderWidgets             () { return 100; }
@@ -223,7 +238,7 @@ private:
     SettingsManager*        _settingsManager        = nullptr;
     QGCCorePlugin*          _corePlugin             = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
-    FactGroup*              _gpsRtkFactGroup        = nullptr;
+    GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;
 
     double                  _flightMapInitialZoom   = 17.0;
     QmlUnitsConversion      _unitsConversion;

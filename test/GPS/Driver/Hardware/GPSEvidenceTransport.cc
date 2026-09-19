@@ -82,6 +82,13 @@ GPSWriteResult GPSEvidenceTransport::writeBounded(const uint8_t* buffer, int len
     return result;
 }
 
+GPSWriteResult GPSEvidenceTransport::writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline)
+{
+    const auto result = _transport.writeConfiguration(buffer, length, deadline);
+    _recordWrite(buffer, length, result);
+    return result;
+}
+
 std::chrono::milliseconds GPSEvidenceTransport::configurationWriteTimeout() const
 {
     return _transport.configurationWriteTimeout();

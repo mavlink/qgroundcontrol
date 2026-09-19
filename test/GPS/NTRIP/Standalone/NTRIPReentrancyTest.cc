@@ -6,16 +6,21 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTimer>
+#include <QtGui/QPixmap>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QTcpServer>
+#include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "../../RTCM/RTCMTestFixtures.h"
 #include "../MockNTRIPTransport.h"
+#include "NMEAUtils.h"
+#include "NTRIPConnectionStats.h"
 #include "NTRIPGgaProvider.h"
 #include "NTRIPHttpDecoder.h"
 #include "NTRIPHttpTransport.h"
+#include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
 #include "PortableTest.h"
 
@@ -124,6 +129,14 @@ private slots:
     void deletedReplyPublishesError();
     void fetchNotificationReentry_data();
     void fetchNotificationReentry();
+    void modelResetReentry_data();
+    void modelResetReentry();
+    void modelMutationReentry_data();
+    void modelMutationReentry();
+    void singleMountpointDistanceNotification();
+    void ggaAltitudeDatum_data();
+    void ggaAltitudeDatum();
+    void statisticsExpireDuringSilence();
     void ggaSourceSelection();
     void ggaSourceChangesPreserveCadence();
     void ggaIntervalChangesRestartCadence_data();
@@ -997,6 +1010,7 @@ void NTRIPReentrancyTest::sourceTableSuccessAndCache()
 {
     const QByteArray table =
         "STR;MP1;Id1;RTCM 3.2;details;2;GPS;NET;USA;40.0;-74.0;0;1;gen;none;B;N;4800;misc\r\n"
+        "STR;MP2;Id2;RTCM 3.2;details;2;GPS;NET;DEU;52.0;13.0;0;1;gen;none;B;N;4800;misc\r\n"
         "ENDSOURCETABLE\r\n";
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
@@ -1012,11 +1026,30 @@ void NTRIPReentrancyTest::sourceTableSuccessAndCache()
         "HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(table.size()) + "\r\n\r\n" + table;
     QCOMPARE(peer->write(response), response.size());
     QTRY_COMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
-    QCOMPARE(controller.mountpointModel()->rowCount(), 1);
-    controller.fetch(configuration);
+    auto* model = controller.mountpointModel();
+    QCOMPARE(model->rowCount(), 2);
+    const auto distanceAt = [model](int row) {
+        return model->data(model->index(row, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble();
+    };
+    QCOMPARE(distanceAt(0), -1.0);
+    controller.fetch(configuration, QGeoCoordinate(40, -74));
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
     QVERIFY(!controller._reply);
     QVERIFY(controller._cacheAge.isValid());
+    QCOMPARE(distanceAt(0), 0.0);
+    QVERIFY(distanceAt(1) > 1000);
+    QCOMPARE(model->data(model->index(0, 0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP1"));
+
+    controller.fetch(configuration, QGeoCoordinate(52, 13));
+    QVERIFY(!controller._reply);
+    QCOMPARE(distanceAt(0), 0.0);
+    QVERIFY(distanceAt(1) > 1000);
+    QCOMPARE(model->data(model->index(0, 0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP2"));
+
+    controller.fetch(configuration);
+    QVERIFY(!controller._reply);
+    QCOMPARE(distanceAt(0), -1.0);
+    QCOMPARE(distanceAt(1), -1.0);
 
     auto invalid = configuration;
     invalid.mountpoint = QStringLiteral("invalid\r\nmount");
@@ -1089,6 +1122,197 @@ void NTRIPReentrancyTest::fetchNotificationReentry()
     }
 }
 
+void NTRIPReentrancyTest::modelResetReentry_data()
+{
+    QTest::addColumn<bool>("aboutToReset");
+    QTest::addColumn<int>("action");
+    for (bool aboutToReset : {false, true}) {
+        QTest::newRow(aboutToReset ? "about-to-reset-error" : "reset-error") << aboutToReset << 0;
+        QTest::newRow(aboutToReset ? "about-to-reset-delete" : "reset-delete") << aboutToReset << 1;
+        QTest::newRow(aboutToReset ? "about-to-reset-replace" : "reset-replace") << aboutToReset << 2;
+    }
+}
+
+void NTRIPReentrancyTest::modelResetReentry()
+{
+    QFETCH(bool, aboutToReset);
+    QFETCH(int, action);
+    auto controller = std::make_unique<NTRIPSourceTableController>();
+    auto* model = controller->mountpointModel();
+    qRegisterMetaType<QPixmap>();
+    new QAbstractItemModelTester(model, QAbstractItemModelTester::FailureReportingMode::QtTest, model);
+    const QString table = QStringLiteral(
+        "STR;MP1;Id;RTCM 3.2;details;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\r\n"
+        "ENDSOURCETABLE\r\n");
+    controller->injectSourceTableForTest(table);
+    bool handled = false;
+    int countChangesAfterDeletion = 0;
+    connect(qobject_cast<NTRIPSourceTableModel*>(model), &NTRIPSourceTableModel::countChanged, this, [&]() {
+        if (!controller) {
+            ++countChangesAfterDeletion;
+        }
+    });
+    const auto retire = [&]() {
+        if (std::exchange(handled, true)) {
+            return;
+        }
+        if (action == 1) {
+            controller.reset();
+        } else if (action == 0) {
+            controller->injectFetchErrorForTest(QStringLiteral("replacement"));
+        } else {
+            controller->injectSourceTableForTest(
+                QString(table).replace(QStringLiteral("MP1"), QStringLiteral("replacement")));
+        }
+    };
+    int publications = 0;
+    connect(controller.get(), &NTRIPSourceTableController::fetchStatusChanged, this, [&]() {
+        ++publications;
+        if (action == 0) {
+            QCOMPARE(controller->mountpointModel()->rowCount(), 0);
+        } else if (action == 2) {
+            QCOMPARE(model->data(model->index(0, 0), NTRIPSourceTableModel::MountpointRole).toString(),
+                     QStringLiteral("replacement"));
+        }
+    });
+    if (aboutToReset) {
+        connect(model, &QAbstractItemModel::modelAboutToBeReset, this, retire);
+    } else {
+        connect(model, &QAbstractItemModel::modelReset, this, retire);
+    }
+    controller->injectSourceTableForTest(table);
+    QVERIFY(handled);
+    QCOMPARE(countChangesAfterDeletion, 0);
+    if (action != 1) {
+        QTRY_COMPARE(publications, 1);
+        QCOMPARE(controller->fetchStatus(), action == 0 ? NTRIPSourceTableController::FetchStatus::Error
+                                                        : NTRIPSourceTableController::FetchStatus::Success);
+    }
+}
+
+void NTRIPReentrancyTest::modelMutationReentry_data()
+{
+    QTest::addColumn<bool>("aboutToReset");
+    QTest::addColumn<int>("action");
+    for (bool aboutToReset : {false, true}) {
+        for (int action : {0, 1, 2, 3}) {
+            QTest::newRow(qPrintable(QStringLiteral("%1-%2").arg(aboutToReset).arg(action))) << aboutToReset << action;
+        }
+    }
+}
+
+void NTRIPReentrancyTest::modelMutationReentry()
+{
+    QFETCH(bool, aboutToReset);
+    QFETCH(int, action);
+    NTRIPSourceTableModel model;
+    qRegisterMetaType<QPixmap>();
+    QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+    const QString first = QStringLiteral("STR;MP1;Id;RTCM 3.2;details;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\n");
+    const QString second = QStringLiteral("STR;MP2;Id;RTCM 3.2;details;2;GPS;NET;DEU;52;13;0;1;gen;none;B;N;4800\n");
+    model.parseSourceTable(first);
+    bool handled = false;
+    const auto mutate = [&]() {
+        if (std::exchange(handled, true)) {
+            return;
+        }
+        if (action == 0) {
+            model.clear();
+        } else if (action == 1) {
+            model.parseSourceTable(second);
+        } else if (action == 2) {
+            model.updateDistances(QGeoCoordinate(52, 13));
+        } else {
+            model.sortByDistance();
+        }
+    };
+    if (aboutToReset) {
+        connect(&model, &QAbstractItemModel::modelAboutToBeReset, this, mutate);
+    } else {
+        connect(&model, &QAbstractItemModel::modelReset, this, mutate);
+    }
+    model.parseSourceTable(first + second);
+    QVERIFY(handled);
+    QCOMPARE(model.rowCount(), action == 0 ? 0 : action == 1 ? 1 : 2);
+    if (action == 1 || action == 2) {
+        QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP2"));
+    }
+    if (action == 2) {
+        QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::DistanceKmRole).toDouble(), 0.0);
+    }
+}
+
+void NTRIPReentrancyTest::singleMountpointDistanceNotification()
+{
+    NTRIPSourceTableModel model;
+    model.parseSourceTable(QStringLiteral("STR;MP1;Id;RTCM 3.2;details;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\n"));
+    QSignalSpy changes(&model, &QAbstractItemModel::dataChanged);
+    QSignalSpy resets(&model, &QAbstractItemModel::modelReset);
+    for (const auto& coordinate : {QGeoCoordinate(40, -74), QGeoCoordinate(52, 13), QGeoCoordinate()}) {
+        model.updateDistances(coordinate);
+        QCOMPARE(changes.size(), 1);
+        const auto change = changes.takeFirst();
+        QCOMPARE(qvariant_cast<QModelIndex>(change[0]), model.index(0));
+        QCOMPARE(qvariant_cast<QModelIndex>(change[1]), model.index(0));
+        QCOMPARE(qvariant_cast<QList<int>>(change[2]), QList<int>{NTRIPSourceTableModel::DistanceKmRole});
+        const double distance = model.data(model.index(0), NTRIPSourceTableModel::DistanceKmRole).toDouble();
+        QCOMPARE(distance, coordinate.isValid() ? coordinate.distanceTo(QGeoCoordinate(40, -74)) / 1000 : -1.0);
+    }
+    QVERIFY(resets.isEmpty());
+}
+
+void NTRIPReentrancyTest::ggaAltitudeDatum_data()
+{
+    QTest::addColumn<GPSAltitudeDatum>("datum");
+    QTest::addColumn<bool>("accepted");
+    QTest::newRow("unknown") << GPSAltitudeDatum::Unknown << false;
+    QTest::newRow("ellipsoid") << GPSAltitudeDatum::Ellipsoid << false;
+    QTest::newRow("explicit-msl") << GPSAltitudeDatum::MeanSeaLevel << true;
+}
+
+void NTRIPReentrancyTest::ggaAltitudeDatum()
+{
+    QFETCH(GPSAltitudeDatum, datum);
+    QFETCH(bool, accepted);
+    using Source = NTRIPGgaProvider::PositionSource;
+    NTRIPGgaProvider provider;
+    MockNTRIPTransport transport;
+    provider.setPositionProvider(Source::RTKBase, [datum]() {
+        return PositionResult{QGeoCoordinate(47, 8, 450), QStringLiteral("RTK"), datum};
+    });
+    provider.setPositionProvider(Source::GCSPosition, []() {
+        return PositionResult{QGeoCoordinate(48, 9, 100), QStringLiteral("GCS"), GPSAltitudeDatum::MeanSeaLevel};
+    });
+    provider.configure({Source::RTKBase});
+    provider.start(&transport);
+    QCOMPARE(transport.sentNmea.size(), accepted ? 1 : 0);
+    provider.stop();
+    transport.sentNmea.clear();
+    provider.configure({Source::Auto});
+    provider.start(&transport);
+    QCOMPARE(transport.sentNmea.size(), 1);
+    QCOMPARE(provider.currentSource(), accepted ? QStringLiteral("RTK") : QStringLiteral("GCS"));
+    QVERIFY(transport.sentNmea.first().contains(accepted ? ",450.0,M," : ",100.0,M,"));
+    QVERIFY(NMEAUtils::verifyChecksum(transport.sentNmea.first()));
+}
+
+void NTRIPReentrancyTest::statisticsExpireDuringSilence()
+{
+    NTRIPConnectionStats stats;
+    QSignalSpy rateChanges(&stats, &NTRIPConnectionStats::dataRateChanged);
+    stats.start();
+    stats.recordMessage(2048);
+    QTRY_VERIFY(stats.dataRateBytesPerSec() > 0.0);
+    rateChanges.clear();
+    QTRY_COMPARE(stats.dataRateBytesPerSec(), 0.0);
+    QVERIFY(!rateChanges.isEmpty());
+    QCOMPARE(stats.bytesReceived(), quint64(2048));
+    QCOMPARE(stats.messagesReceived(), quint32(1));
+    QCOMPARE(stats.messageCountsById().first().toList().at(1).toUInt(), quint32(1));
+    stats.stop();
+    QCOMPARE(stats.bytesReceived(), quint64(2048));
+}
+
 void NTRIPReentrancyTest::ggaSourceSelection()
 {
     using Source = NTRIPGgaProvider::PositionSource;
@@ -1098,7 +1322,8 @@ void NTRIPReentrancyTest::ggaSourceSelection()
     for (auto source : {Source::VehicleGPS, Source::VehicleEKF, Source::RTKBase, Source::GCSPosition}) {
         provider.setPositionProvider(source, [&, source]() {
             calls.append(source);
-            return source == Source::RTKBase ? PositionResult{QGeoCoordinate(47, 8, 450), QStringLiteral("RTK")}
+            return source == Source::RTKBase ? PositionResult{QGeoCoordinate(47, 8, 450), QStringLiteral("RTK"),
+                                                              GPSAltitudeDatum::MeanSeaLevel}
                                              : PositionResult{};
         });
     }
@@ -1125,7 +1350,8 @@ void NTRIPReentrancyTest::ggaSourceChangesPreserveCadence()
     for (const auto source : {Source::VehicleGPS, Source::RTKBase}) {
         provider.setPositionProvider(source, [&, source]() {
             usedSelectedSource &= source == selected;
-            return PositionResult{QGeoCoordinate(47, 8, 450), QString::number(static_cast<int>(source))};
+            return PositionResult{QGeoCoordinate(47, 8, 450), QString::number(static_cast<int>(source)),
+                                  GPSAltitudeDatum::MeanSeaLevel};
         });
     }
     provider.configure({selected, INTERVAL});
@@ -1170,10 +1396,12 @@ void NTRIPReentrancyTest::ggaIntervalChangesRestartCadence()
     using Source = NTRIPGgaProvider::PositionSource;
     NTRIPGgaProvider provider;
     MockNTRIPTransport transport;
-    provider.setPositionProvider(Source::VehicleGPS,
-                                 []() { return PositionResult{QGeoCoordinate(47, 8, 450), QStringLiteral("GPS")}; });
-    provider.setPositionProvider(Source::RTKBase,
-                                 []() { return PositionResult{QGeoCoordinate(48, 9, 460), QStringLiteral("RTK")}; });
+    provider.setPositionProvider(Source::VehicleGPS, []() {
+        return PositionResult{QGeoCoordinate(47, 8, 450), QStringLiteral("GPS"), GPSAltitudeDatum::MeanSeaLevel};
+    });
+    provider.setPositionProvider(Source::RTKBase, []() {
+        return PositionResult{QGeoCoordinate(48, 9, 460), QStringLiteral("RTK"), GPSAltitudeDatum::MeanSeaLevel};
+    });
     provider.configure({Source::VehicleGPS, std::chrono::milliseconds{initialIntervalMs}});
     provider.start(&transport);
     QCOMPARE(transport.sentNmea.size(), 1);
@@ -1197,8 +1425,9 @@ void NTRIPReentrancyTest::ggaConfigurationPreservesFastRetry()
     NTRIPGgaProvider provider;
     MockNTRIPTransport transport;
     provider.configure({Source::VehicleGPS, std::chrono::hours{1}});
-    provider.setPositionProvider(Source::RTKBase,
-                                 []() { return PositionResult{QGeoCoordinate(47, 8, 450), QStringLiteral("RTK")}; });
+    provider.setPositionProvider(Source::RTKBase, []() {
+        return PositionResult{QGeoCoordinate(47, 8, 450), QStringLiteral("RTK"), GPSAltitudeDatum::MeanSeaLevel};
+    });
     QSignalSpy sourceChanged(&provider, &NTRIPGgaProvider::sourceChanged);
     QElapsedTimer elapsed;
     elapsed.start();
@@ -1220,7 +1449,8 @@ void NTRIPReentrancyTest::ggaCallbackStopsProvider()
     MockNTRIPTransport transport;
     provider.setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, [&]() {
         provider.stop();
-        return PositionResult{QGeoCoordinate(47, 8, 450), QStringLiteral("Vehicle GPS")};
+        return PositionResult{QGeoCoordinate(47, 8, 450), QStringLiteral("Vehicle GPS"),
+                              GPSAltitudeDatum::MeanSeaLevel};
     });
     provider.start(&transport);
     QVERIFY(transport.sentNmea.isEmpty());

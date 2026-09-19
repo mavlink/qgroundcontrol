@@ -1,6 +1,6 @@
 #pragma once
 
-enum class GPSNativeOpenStatus
+enum class GPSOpenStatus
 {
     Opened,
     TimedOut,
@@ -9,7 +9,7 @@ enum class GPSNativeOpenStatus
     Unsupported
 };
 
-enum class GPSNativeReadStatus
+enum class GPSReadStatus
 {
     Data,
     TimedOut,
@@ -20,7 +20,7 @@ enum class GPSNativeReadStatus
     InvalidData
 };
 
-enum class GPSNativeWriteStatus
+enum class GPSWriteStatus
 {
     Completed,
     TimedOut,

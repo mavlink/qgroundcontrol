@@ -35,6 +35,10 @@ endfunction()
 qgc_add_protocol_test_target(QGCNativeGPSUtcTest gps-time-test.cpp)
 if(QGC_GPS_ENABLE_UBX)
     qgc_add_protocol_test_target(QGCNativeGPSUbxTest gps-ubx-test.cpp)
+    qgc_add_protocol_test_target(QGCNativeGPSAllocationTest gps-allocation-test.cpp)
+    target_compile_definitions(QGCNativeGPSAllocationTest
+                               PRIVATE GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+    )
 endif()
 if(QGC_GPS_ENABLE_SBF OR QGC_GPS_ENABLE_FEMTO)
     qgc_add_protocol_test_target(QGCNativeGPSReceiverModesTest gps-receiver-mode-test.cpp)
@@ -44,7 +48,7 @@ qgc_add_protocol_test_target(QGCNativeGPSDecodeTest gps-decode-test.cpp)
 qgc_add_protocol_test_target(QGCNativeGPSFixtureTest gps-fixture-test.cpp)
 target_compile_definitions(QGCNativeGPSFixtureTest PRIVATE GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
 
-foreach(test IN ITEMS Decode Ubx ReceiverModes IOContract Fixture)
+foreach(test IN ITEMS Decode Ubx Allocation ReceiverModes IOContract Fixture)
     if(NOT TARGET QGCNativeGPS${test}Test)
         continue()
     endif()
@@ -63,21 +67,42 @@ endforeach()
 
 option(QGC_BUILD_GPS_PROTOCOL_FUZZER "Build the native protocol libFuzzer harness" OFF)
 if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
-    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        message(FATAL_ERROR "QGC_BUILD_GPS_PROTOCOL_FUZZER requires Clang")
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR MSVC)
+        message(
+            FATAL_ERROR "QGC_BUILD_GPS_PROTOCOL_FUZZER requires a Clang driver with libFuzzer and sanitizer runtimes"
+        )
     endif()
     get_target_property(native_targets QGCGPSNative QGC_GPS_NATIVE_TARGETS)
-    list(APPEND native_targets QGCGPSNMEAProtocol)
+    list(APPEND native_targets QGCGPSNMEAProtocol QGCGPSReceiverConfig)
     foreach(native_target IN LISTS native_targets)
         get_target_property(native_type ${native_target} TYPE)
         if(native_type STREQUAL "INTERFACE_LIBRARY")
+            set(_sanitizer_scope INTERFACE)
+        else()
+            set(_sanitizer_scope PUBLIC)
+        endif()
+        target_compile_options(${native_target} ${_sanitizer_scope} -fsanitize=fuzzer-no-link,address,undefined
+                               -fno-omit-frame-pointer
+        )
+        target_link_options(${native_target} INTERFACE -fsanitize=address,undefined)
+    endforeach()
+    add_executable(QGCGPSFuzzNMEAConsumer "../../Standalone/QGCGPSNMEAProtocolConsumer.cc")
+    target_link_libraries(QGCGPSFuzzNMEAConsumer PRIVATE QGCGPSNMEAProtocol)
+    add_test(NAME GPSProtocolFuzzNMEAConsumer COMMAND QGCGPSFuzzNMEAConsumer)
+    set_tests_properties(GPSProtocolFuzzNMEAConsumer PROPERTIES LABELS "Unit;GPS;Fuzz" TIMEOUT 10)
+    foreach(family UBX Ashtech SBF Femto)
+        if(NOT TARGET QGCGPS${family})
             continue()
         endif()
-        target_compile_options(${native_target} PRIVATE -fsanitize=fuzzer-no-link,address,undefined
-                                                        -fno-omit-frame-pointer
+        add_executable(QGCGPSFuzz${family}Consumer NativeFamilyConsumer.cc)
+        target_compile_definitions(QGCGPSFuzz${family}Consumer
+                                   PRIVATE QGC_GPS_DRIVER_HEADER="${family}/GPSDriver${family}.h"
+                                           QGC_GPS_DRIVER_CLASS=GPSNative${family}
         )
+        target_link_libraries(QGCGPSFuzz${family}Consumer PRIVATE QGCGPS${family})
+        add_test(NAME GPSProtocolFuzz${family}Consumer COMMAND QGCGPSFuzz${family}Consumer)
+        set_tests_properties(GPSProtocolFuzz${family}Consumer PROPERTIES LABELS "Unit;GPS;Fuzz" TIMEOUT 10)
     endforeach()
-    target_link_options(QGCGPSNative INTERFACE -fsanitize=address,undefined)
     qgc_add_protocol_test_target(QGCGPSProtocolFuzz ProtocolFuzz.cc)
     target_compile_options(QGCGPSProtocolFuzz PRIVATE -fsanitize=fuzzer-no-link,address,undefined
                                                       -fno-omit-frame-pointer

@@ -16,4 +16,9 @@ private slots:
     void _testCountSatellitesClampsToMax();
     void _testCountSatellitesCountsUsed();
     void _testCountSatellitesIgnoresUsedBeyondCount();
+    void _countOnlyUsagePreservesInView();
+    void _snapshotUsageEvidence_data();
+    void _snapshotUsageEvidence();
+    void _currentBaseSaveValidity_data();
+    void _currentBaseSaveValidity();
 };

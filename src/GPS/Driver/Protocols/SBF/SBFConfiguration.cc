@@ -35,13 +35,18 @@
 
 int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
 {
-    _baseConfig = config.base;
-    _survey_duration = 0;
+    _configured = false;
     resetIOError();
+    _survey_duration = 0;
+    _survey_active = false;
+    _survey_activation_date = 0;
+    if (!validateConfiguration(config)) {
+        return -1;
+    }
+    _baseConfig = config.base;
     char buf[GPS_READ_BUFFER_SIZE];
     char msg[MSG_SIZE];
 
-    _configured = false;
     _epochs = {};
     _lastPublishedEpoch.reset();
     _rtcm_parsing.reset();
@@ -233,8 +238,7 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
         if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATUS, SBF_CONFIG_TIMEOUT)) {
             return -1;
         }
-        _survey_active = true;
-        _survey_activation_date = nowUs();
+        _survey_activation_date = _baseConfig.useFixedBase ? 0 : nowUs();
     }
 
     _configured = true;

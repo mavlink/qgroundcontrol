@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Exercise the real runner entry point without opening physical transports."""
 
 from __future__ import annotations
@@ -171,7 +170,9 @@ def main() -> None:
                     )
             checks = {item["name"]: item for item in stages[-1]["checks"]}
             assert checks["reconnect"]["status"] == "passed"
-            assert checks["receive_cancellation"]["status"] == "passed"
+            assert checks["receive_cancellation"]["status"] == (
+                "passed" if backend == "native" else "inconclusive"
+            )
             if backend == "native":
                 commands = stages[1]["configuration_evidence"]["commands"]
                 assert any(item["outcome"] == "readback_verified" for item in commands)
@@ -252,6 +253,38 @@ def main() -> None:
                 1,
             )
             assert failed["outcome"] == "failed"
+
+        for fault in ("rtcm-nak", "rtcm-nak-cancel"):
+            failed = run(
+                binary,
+                [
+                    "--action",
+                    "cancel",
+                    "--backend",
+                    backend,
+                    "--fault",
+                    fault,
+                    "--observe-ms",
+                    "20",
+                    "--cancel-after-ms",
+                    "1000",
+                ],
+                1 if backend == "native" else 3,
+            )
+            stage = failed["stages"][0]
+            checks = {item["name"]: item for item in stage["checks"]}
+            assert checks["configure_return"]["status"] == "passed", stage
+            if backend == "native":
+                assert failed["outcome"] == "failed", failed
+                assert checks["receive_outcome"]["detail"] == "terminal_protocol_error", stage
+                assert stage["transport_healthy_at_receive_failure"], stage
+                assert checks["receive_cancellation"]["status"] == (
+                    "not_run" if fault == "rtcm-nak" else "failed"
+                ), stage
+            else:
+                assert failed["outcome"] == "inconclusive", failed
+                assert checks["receive_cancellation"]["status"] == "inconclusive", stage
+                assert failed["receive_outcome_semantics"].startswith("legacy_ambiguous")
     print("GPS runner safety, backend parity, survey provenance and failure contracts passed")
 
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
@@ -8,7 +10,6 @@
 #include "GPSProvider.h"
 
 class GPSRTKFactGroup;
-class FactGroup;
 class GPSCorrectionManager;
 
 class GPSRtk : public QObject
@@ -32,19 +33,21 @@ public:
     bool connected() const;
 
     bool hasReceiver() const { return _gpsProvider != nullptr; }
-    FactGroup* gpsRtkFactGroup();
+
+    GPSRTKFactGroup* gpsRtkFactGroup();
 
     struct SatelliteCounts
     {
         uint16_t inView = 0;
-        int used = 0;
+        std::optional<int> used;
     };
 
-    /// Clamp count to the array bound and tally used-in-solution satellites.
+    /// Usage is exact only for a complete snapshot with every used flag known (including an empty snapshot).
     static SatelliteCounts countSatellites(const GPSSatelliteReport& msg);
 
 private slots:
     void _satelliteInfoUpdate(const GPSSatelliteReport& msg);
+    void _satelliteUsageUpdate(const GPSSatelliteUsageReport& msg);
     void _sensorGpsUpdate(const GPSPositionReport& msg);
     void _onGPSConnect();
     void _onGPSDisconnect();

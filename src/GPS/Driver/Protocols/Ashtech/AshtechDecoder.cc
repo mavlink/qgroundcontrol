@@ -31,8 +31,25 @@
  *
  ****************************************************************************/
 
+#include <chrono>
+
 #include "AshtechPrivate.h"
 #include "GPSNMEAReport.h"
+
+namespace {
+bool validReceiptDate(std::string_view date)
+{
+    if (date.size() != 10 || date[2] != '.' || date[5] != '.') {
+        return false;
+    }
+    const auto day = NMEA::number<unsigned>(date.substr(0, 2));
+    const auto month = NMEA::number<unsigned>(date.substr(3, 2));
+    const auto year = NMEA::number<int>(date.substr(6, 4));
+    return day && month && year && *year >= 1980 && *year <= 9999 &&
+           std::chrono::year_month_day{std::chrono::year{*year}, std::chrono::month{*month}, std::chrono::day{*day}}
+               .ok();
+}
+}  // namespace
 
 int GPSNativeAshtech::handleMessage(int len)
 {
@@ -48,7 +65,8 @@ int GPSNativeAshtech::handleMessage(int len)
         }
     }
 
-    NMEAFields::Cursor bufptr({reinterpret_cast<const char*>(_rx_buffer + 7), static_cast<size_t>(len - 7)});
+    const std::string_view message{reinterpret_cast<const char*>(_rx_buffer), static_cast<size_t>(len)};
+    NMEAFields::Cursor bufptr(message.substr(7));
     int ret = 0;
 
     if ((memcmp(_rx_buffer + 3, "ZDA,", 3) == 0) && (uiCalcComma == 6)) {
@@ -168,7 +186,7 @@ int GPSNativeAshtech::handleMessage(int len)
             _gps_position->heading_timestamp = nowUs();
         }
 
-    } else if ((memcmp(_rx_buffer, "$PASHR,POS,", 11) == 0) && (uiCalcComma == 18)) {
+    } else if (message.starts_with("$PASHR,POS,") && (uiCalcComma == 18)) {
         /*
         Example
         $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0,0.007,-0.001,2.0,1.0,1.7,1.0,*34
@@ -199,7 +217,7 @@ int GPSNativeAshtech::handleMessage(int len)
               s17 Reserved no data
               *cc Checksum
             */
-        bufptr = NMEAFields::Cursor({reinterpret_cast<const char*>(_rx_buffer + 11), static_cast<size_t>(len - 11)});
+        bufptr = NMEAFields::Cursor(message.substr(11));
 
         /*
          * Ashtech would return empty space as coordinate (lat, lon or alt) if it doesn't have a fix yet
@@ -337,7 +355,7 @@ int GPSNativeAshtech::handleMessage(int len)
         _gps_position->vdop = static_cast<float>(vdop);
 
         if (coordinatesFound < 3) {
-            _gps_position->fix_type = 0;
+            _gps_position->fix_type = GPSNativePositionReport::FIX_TYPE_NONE;
 
         } else {
             if (fix_quality == 9 || fix_quality == 10) {          // SBAS differential or BeiDou differential
@@ -417,27 +435,27 @@ int GPSNativeAshtech::handleMessage(int len)
             publishSatellites(*_satellite_info);
         }
 
-    } else if (memcmp(_rx_buffer, "$PASHR,NAK", 10) == 0) {
+    } else if (message.starts_with("$PASHR,NAK*")) {
         if (_command_state == NMEACommandState::waiting) {
             _command_state = NMEACommandState::nack;
         }
 
-    } else if (memcmp(_rx_buffer, "$PASHR,ACK", 10) == 0) {
+    } else if (message.starts_with("$PASHR,ACK*")) {
         if (_command_state == NMEACommandState::waiting && _waiting_for_command == NMEACommand::Acked) {
             _command_state = NMEACommandState::received;
         }
 
-    } else if (memcmp(_rx_buffer, "$PASHR,PRT,", 11) == 0 && uiCalcComma == 3) {
+    } else if (message.starts_with("$PASHR,PRT,") && uiCalcComma == 3) {
         if (_command_state == NMEACommandState::waiting && _waiting_for_command == NMEACommand::PRT) {
             _command_state = NMEACommandState::received;
             _port = _rx_buffer[11];
         }
 
-    } else if (memcmp(_rx_buffer, "$PASHR,RID,", 11) == 0) {
+    } else if (message.starts_with("$PASHR,RID,")) {
         if (_command_state == NMEACommandState::waiting && _waiting_for_command == NMEACommand::RID) {
             _command_state = NMEACommandState::received;
 
-            if (memcmp(_rx_buffer + 11, "MB2", 3) == 0) {
+            if (message.substr(11).starts_with("MB2")) {
                 _board = AshtechBoard::trimble_mb_two;
 
             } else {
@@ -445,87 +463,61 @@ int GPSNativeAshtech::handleMessage(int len)
             }
         }
 
-    } else if (memcmp(_rx_buffer, "$PASHR,RECEIPT,", 15) == 0) {
-        // this is the response to $PASHS,POS,AVG,100
-        // example: $PASHR,RECEIPT,POS,AVG,STARTED,INTERVAL,100,114502.56,28.12.2011
-        if (_command_state == NMEACommandState::waiting && _waiting_for_command == NMEACommand::RECEIPT) {
-            _command_state = NMEACommandState::received;
+    } else if (message.starts_with("$PASHR,RECEIPT,")) {
+        const auto receipt = NMEA::sentence(message);
+        if (!receipt || receipt->count < 9) {
+            return 0;
+        }
+        const auto& fields = receipt->fields;
+        if (fields[2] != "POS" || fields[3] != "AVG") {
+            return 0;
+        }
+        const bool started = fields[4] == "STARTED";
+        const bool failed = !started && fields[8] == "ERR";
+        double latitude = NAN;
+        double longitude = NAN;
+        float altitude = NAN;
+
+        if (started) {
+            const auto interval = NMEA::number<uint32_t>(fields[6]);
+            if (receipt->count != 9 || fields[5] != "INTERVAL" || !interval || *interval == 0 ||
+                !NMEA::utcMilliseconds(fields[7]) || !validReceiptDate(fields[8])) {
+                return 0;
+            }
+        } else {
+            const auto interval = NMEA::number<uint32_t>(fields[4]);
+            if (!interval || *interval == 0 || fields[5] != "FINISHED" || !NMEA::utcMilliseconds(fields[6]) ||
+                !validReceiptDate(fields[7]) || receipt->count != (failed ? 9 : 16)) {
+                return 0;
+            }
+            if (!failed) {
+                const auto lat = NMEA::coordinate(fields[8], fields[9], true);
+                const auto lon = NMEA::coordinate(fields[10], fields[11], false);
+                const auto alt = NMEA::number<float>(fields[12]);
+                const auto duration = NMEA::number<double>(fields[15]);
+                if (!lat || !lon || !alt || fields[13] != "OK" || fields[14].empty() || !duration || *duration < 0) {
+                    return 0;
+                }
+                latitude = *lat;
+                longitude = *lon;
+                altitude = *alt;
+            }
         }
 
-        // when finished we get one of the follwing messages:
-        // - successful:
-        // $PASHR,RECEIPT,POS,AVG,100,FINISHED,114642.81,28.12.2011,5542.5178481,N,03739.2954994,E,176.334,OK,CONTINUOUS,100.20*09
-        // - unsuccessful: $PASHR,RECEIPT,POS,AVG,100,FINISHED,124628.01,28.12.2011,ERR
-        char* finished_find = strstr((char*) _rx_buffer, "FINISHED,");
-
-        if (finished_find) {
-            const bool error = strstr((const char*) _rx_buffer, "ERR");
-            _survey_in_start = 0;
-
-            if (error) {
-                sendSurveyInStatusUpdate(false, false);
-
-            } else {
-                // extract the position
-                double lat = 0., lon = 0.;
-                float alt = 0.f;
-                char ns = '?', ew = '?';
-                const char* position_fields = strchr(finished_find + 9, ',');
-                if (!position_fields) {
-                    return 0;
-                }
-                position_fields = strchr(position_fields + 1, ',');
-                if (!position_fields) {
-                    return 0;
-                }
-                bufptr = NMEAFields::Cursor(std::string_view(
-                    position_fields + 1, reinterpret_cast<const char*>(_rx_buffer) + len - position_fields - 1));
-
-                bufptr.read(lat);
-
-                if (!bufptr.valid()) {
-                    return 0;
-                }
-
-                bufptr.read(ns);
-
-                if (!bufptr.valid()) {
-                    return 0;
-                }
-
-                bufptr.read(lon);
-
-                if (!bufptr.valid()) {
-                    return 0;
-                }
-
-                bufptr.read(ew);
-
-                if (!bufptr.valid()) {
-                    return 0;
-                }
-
-                bufptr.read(alt);
-
-                if (!bufptr.valid()) {
-                    return 0;
-                }
-
-                if (ns == 'S') {
-                    lat = -lat;
-                }
-
-                if (ew == 'W') {
-                    lon = -lon;
-                }
-
-                lat = nmeaToDegrees(lat);
-                lon = nmeaToDegrees(lon);
-
-                sendSurveyInStatusUpdate(false, true, lat, lon, alt);
-
-                _rtcmActivationPending = true;
+        if (_output_mode != OutputMode::RTCM || !_configure_done || _baseConfig.useFixedBase ||
+            _board != AshtechBoard::trimble_mb_two) {
+            return 0;
+        }
+        if (_command_state == NMEACommandState::waiting && _waiting_for_command == NMEACommand::RECEIPT) {
+            _command_state = failed ? NMEACommandState::nack : NMEACommandState::received;
+        }
+        if (!started) {
+            if (_survey_in_start != 0) {
+                _survey_duration = (nowUs() - _survey_in_start) / 1000000;
             }
+            _survey_in_start = 0;
+            sendSurveyInStatusUpdate(false, !failed, latitude, longitude, altitude);
+            _rtcmActivationPending = !failed;
         }
     }
 

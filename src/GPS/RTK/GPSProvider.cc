@@ -1,5 +1,6 @@
 #include "GPSProvider.h"
 
+#include <algorithm>
 #include <utility>
 
 #include "GPSDriver.h"
@@ -21,6 +22,7 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
 {
     qCDebug(GPSProviderLog) << this;
     (void) qRegisterMetaType<GPSSatelliteReport>("GPSSatelliteReport");
+    (void) qRegisterMetaType<GPSSatelliteUsageReport>("GPSSatelliteUsageReport");
     (void) qRegisterMetaType<GPSPositionReport>("GPSPositionReport");
     (void) qRegisterMetaType<GPSConnectionError>("GPSConnectionError");
     (void) qRegisterMetaType<GPSSurveyInStatus>("GPSSurveyInStatus");
@@ -77,19 +79,32 @@ void GPSProvider::run()
         return;
     }
 
-    bool gotData = false;
+    QDeadlineTimer inactivity(kUsefulDataTimeoutMs, Qt::PreciseTimer);
+    const auto usefulDataReceived = [&inactivity] {
+        inactivity.setRemainingTime(kUsefulDataTimeoutMs, Qt::PreciseTimer);
+    };
     GPSDriverSinks sinks;
-    sinks.onPosition = [this](const GPSPositionReport& message) { emit sensorGpsUpdate(message); };
-    sinks.onSatelliteInfo = [this](const GPSSatelliteReport& message) { emit satelliteInfoUpdate(message); };
-    sinks.onRTCM = [this, &gotData](std::span<const uint8_t> message) {
+    sinks.onPosition = [this, usefulDataReceived](const GPSPositionReport& message) {
+        usefulDataReceived();
+        emit sensorGpsUpdate(message);
+    };
+    sinks.onSatelliteInfo = [this, usefulDataReceived](const GPSSatelliteReport& message) {
+        usefulDataReceived();
+        emit satelliteInfoUpdate(message);
+    };
+    sinks.onSatelliteUsage = [this, usefulDataReceived](const GPSSatelliteUsageReport& message) {
+        usefulDataReceived();
+        emit satelliteUsageUpdate(message);
+    };
+    sinks.onRTCM = [this, usefulDataReceived](std::span<const uint8_t> message) {
+        usefulDataReceived();
         const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
-        gotData = true;
         emit RTCMDataUpdate(
             QByteArray(reinterpret_cast<const char*>(message.data()), static_cast<qsizetype>(message.size())),
             receivedAtMs);
     };
-    sinks.onSurveyIn = [this, &gotData](const GPSSurveyReport& report) {
-        gotData = true;
+    sinks.onSurveyIn = [this, usefulDataReceived](const GPSSurveyReport& report) {
+        usefulDataReceived();
         _handleSurveyIn(report);
     };
 
@@ -106,14 +121,20 @@ void GPSProvider::run()
     }
     emit receiverReady();
 
-    uint8_t idleCycles = 0;
-    while (!_requestStop && !transport->fatalError() && idleCycles < kMaxIdleReceiveCycles) {
-        gotData = false;
-        const int ret = driver.receive(kGPSReceiveTimeout);
-        const bool progress = (ret > 0) || gotData;
-        idleCycles = progress ? 0 : (idleCycles + 1);
+    usefulDataReceived();
+    bool cancelled = false;
+    while (!_requestStop && !transport->fatalError() && !inactivity.hasExpired()) {
+        const auto timeout = static_cast<unsigned>(std::min(qint64(kGPSReceiveTimeout), inactivity.remainingTime()));
+        const auto result = driver.receiveOutcome(timeout);
+        if (result.terminal()) {
+            break;
+        }
+        if (result.status == GPSReceiveStatus::Cancelled) {
+            cancelled = true;
+            break;
+        }
     }
-    if (!_requestStop) {
+    if (!_requestStop && !cancelled) {
         emit connectionError(GPSConnectionError::DeviceError);
     }
 

@@ -16,7 +16,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     add_subdirectory("${_root}/test/GPS/Standalone" Consumers)
 endif()
 
-find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Test Gui)
 set(_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../..")
 
 foreach(test NTRIPReentrancyTest NTRIPTlsTest)
@@ -35,3 +35,19 @@ foreach(test NTRIPReentrancyTest NTRIPTlsTest)
     set_tests_properties(${test} PROPERTIES LABELS "Unit;GPS" TIMEOUT 60 ENVIRONMENT "QT_FATAL_CRITICALS=1")
 endforeach()
 target_sources(QGCNTRIPReentrancyTest PRIVATE ../MockNTRIPTransport.h)
+target_link_libraries(QGCNTRIPReentrancyTest PRIVATE QGCGPSNMEAUtils Qt6::Gui)
+
+qt_add_executable(QGCNTRIPDataRateTrackerTest "${_root}/test/Utilities/DataRateTrackerTest.cc"
+                  "${_root}/test/Portable/PortableTest.h"
+)
+set_target_properties(
+    QGCNTRIPDataRateTrackerTest
+    PROPERTIES AUTOMOC ON
+               MACOSX_BUNDLE OFF
+               WIN32_EXECUTABLE OFF
+)
+target_compile_definitions(QGCNTRIPDataRateTrackerTest PRIVATE QGC_PORTABLE_TEST)
+target_include_directories(QGCNTRIPDataRateTrackerTest PRIVATE "${_root}/test/Portable")
+target_link_libraries(QGCNTRIPDataRateTrackerTest PRIVATE QGCIO Qt6::Test)
+add_test(NAME NTRIPDataRateTrackerTest COMMAND QGCNTRIPDataRateTrackerTest)
+set_tests_properties(NTRIPDataRateTrackerTest PROPERTIES LABELS "Unit;GPS;Utilities" TIMEOUT 60)

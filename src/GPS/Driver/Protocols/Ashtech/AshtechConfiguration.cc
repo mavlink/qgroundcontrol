@@ -98,12 +98,22 @@ int GPSNativeAshtech::waitForReply(NMEACommand command, const unsigned timeout)
 
 int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
 {
-    _baseConfig = config.base;
-    _survey_duration = 0;
-    resetIOError();
-    _output_mode = config.output_mode;
-    _correction_output_activated = false;
     _configure_done = false;
+    resetIOError();
+    _survey_duration = 0;
+    _survey_in_start = 0;
+    _correction_output_activated = false;
+    _correctionSetupPending = false;
+    _rtcmActivationPending = false;
+    _got_pashr_pos_message = false;
+    _command_state = NMEACommandState::idle;
+    _rtcm_parsing.reset();
+    decodeInit();
+    if (!validateConfiguration(config)) {
+        return -1;
+    }
+    _baseConfig = config.base;
+    _output_mode = config.output_mode;
 
     /* Try different baudrates (115200 is the default for Trimble) and request the baudrate that we want.
      *
@@ -301,9 +311,9 @@ void GPSNativeAshtech::activateCorrectionOutput()
 
     if (!_baseConfig.useFixedBase) {
         // setup the base reference: average the position over N seconds
-        const char avg_pos[] = "$PASHS,POS,AVG,%i\r\n";
+        const char avg_pos[] = "$PASHS,POS,AVG,%u\r\n";
         // alternatively use the current position as reference: "$PASHS,POS,CUR\r\n"
-        int len = snprintf(buffer, sizeof(buffer), avg_pos, (int) _baseConfig.surveyInDurationSecs);
+        int len = snprintf(buffer, sizeof(buffer), avg_pos, static_cast<unsigned>(_baseConfig.surveyInDurationSecs));
 
         beginCommandWrite();
         write(buffer, len);
@@ -325,9 +335,11 @@ void GPSNativeAshtech::activateCorrectionOutput()
             }
         }
 
-        _survey_duration = 0;  // use it as counter how long survey-in has been active
-        _survey_in_start = nowUs();
-        sendSurveyInStatusUpdate(true, false);
+        if (!_rtcmActivationPending) {
+            _survey_duration = 0;  // use it as counter how long survey-in has been active
+            _survey_in_start = nowUs();
+            sendSurveyInStatusUpdate(true, false);
+        }
 
     } else {
         const GPSBaseStationConfig& settings = _baseConfig;

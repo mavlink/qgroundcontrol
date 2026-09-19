@@ -3,12 +3,15 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <limits>
+#include <memory>
 #include <stdexcept>
 #include <vector>
 
 #include "Ashtech/GPSDriverAshtech.h"
 #include "CRC32.h"
 #include "Femto/GPSDriverFemto.h"
+#include "GPSNMEAReport.h"
 #include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "NMEAFields.h"
@@ -16,11 +19,11 @@
 #include "ProtocolTestPackets.h"
 #include "SBF/GPSDriverSBF.h"
 
-#define CHECK(condition)                          \
-    do {                                          \
-        if (!(condition)) {                       \
-            throw std::runtime_error(#condition); \
-        }                                         \
+#define CHECK(condition)                                                                                 \
+    do {                                                                                                 \
+        if (!(condition)) {                                                                              \
+            throw std::runtime_error(std::string("line ") + std::to_string(__LINE__) + ": " #condition); \
+        }                                                                                                \
     } while (0)
 
 GPSProtocolIO noDevice()
@@ -34,6 +37,34 @@ GPSProtocolIO noDevice()
     };
     io.setBaudrate = [](unsigned) -> GPSBaudStatus { throw std::runtime_error("decoder changed baudrate"); };
     return io;
+}
+
+void nmeaFixQualities()
+{
+    struct Case
+    {
+        unsigned quality;
+        uint8_t expected;
+    };
+
+    constexpr std::array cases{
+        Case{NMEA::GgaQuality::INVALID, GPSNativePositionReport::FIX_TYPE_NONE},
+        Case{NMEA::GgaQuality::GPS, GPSNativePositionReport::FIX_TYPE_3D},
+        Case{NMEA::GgaQuality::DIFFERENTIAL, GPSNativePositionReport::FIX_TYPE_RTCM_CODE_DIFFERENTIAL},
+        Case{NMEA::GgaQuality::RTK_FIXED, GPSNativePositionReport::FIX_TYPE_RTK_FIXED},
+        Case{NMEA::GgaQuality::RTK_FLOAT, GPSNativePositionReport::FIX_TYPE_RTK_FLOAT},
+        Case{NMEA::GgaQuality::ESTIMATED, GPSNativePositionReport::FIX_TYPE_EXTRAPOLATED},
+        Case{99, GPSNativePositionReport::FIX_TYPE_UNKNOWN},
+    };
+    GPSNativePositionReport report;
+    CHECK(report.fix_type == GPSNativePositionReport::FIX_TYPE_UNKNOWN);
+    for (const auto& test : cases) {
+        NMEA::GGA fix;
+        fix.quality = test.quality;
+        applyNMEAGGA(report, fix, 123);
+        CHECK(report.fix_type == test.expected);
+        CHECK(report.timestamp == 123);
+    }
 }
 
 #if QGC_GPS_ENABLE_SBF
@@ -151,7 +182,7 @@ void tinyReads()
         CHECK(deadline.remainingMilliseconds(gps_test_time) == 1000);
         CHECK(!bytes.empty() && bytes.size() <= 3);
         std::fill(bytes.begin(), bytes.end(), 0x12);
-        return {GPSNativeReadStatus::Data, int(bytes.size())};
+        return {GPSReadStatus::Data, int(bytes.size())};
     };
     ReadProbe probe(io);
     for (int capacity = 0; capacity <= 3; ++capacity) {
@@ -190,11 +221,11 @@ void absoluteDeadline()
             CHECK(deadline.remainingMilliseconds(now) == 10);
             now += 9000;
             buffer[0] = 0;
-            return GPSProtocolReadResult{GPSNativeReadStatus::Data, 1};
+            return GPSProtocolReadResult{GPSReadStatus::Data, 1};
         }
         CHECK(deadline.remainingMilliseconds(now) == 1);
         now = deadline.untilUs;
-        return GPSProtocolReadResult{GPSNativeReadStatus::TimedOut};
+        return GPSProtocolReadResult{GPSReadStatus::TimedOut};
     };
     DeadlineProbe probe(io);
     CHECK(probe.transaction() == 0);
@@ -218,13 +249,227 @@ std::vector<uint8_t> nmeaPacket(std::string_view body)
 }
 
 #if QGC_GPS_ENABLE_ASHTECH
+constexpr std::string_view ASHTECH_SURVEY_STARTED = "PASHR,RECEIPT,POS,AVG,STARTED,INTERVAL,100,114502.56,28.12.2011";
+constexpr std::string_view ASHTECH_SURVEY_FINISHED =
+    "PASHR,RECEIPT,POS,AVG,100,FINISHED,114642.81,28.12.2011,5542.5178481,N,03739.2954994,E,176.334,OK,CONTINUOUS,100."
+    "20";
+constexpr std::string_view ASHTECH_SURVEY_FAILED = "PASHR,RECEIPT,POS,AVG,100,FINISHED,124628.01,28.12.2011,ERR";
+
+class AshtechReceiver
+{
+public:
+    std::vector<std::string> commands;
+    std::vector<GPSCommandResult> results;
+    std::vector<GPSNativeSurveyReport> surveys;
+    std::string surveyReply{ASHTECH_SURVEY_STARTED};
+    std::vector<uint8_t> reply;
+    GPSNativePositionReport position;
+    size_t transportCalls = 0;
+    GPSNativeAshtech driver;
+
+    AshtechReceiver()
+        : driver(io(), &position, nullptr)
+    {}
+
+    GPSProtocolIO io()
+    {
+        auto io = makeGPSProtocolTestIO();
+        io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) {
+            ++transportCalls;
+            if (reply.empty()) {
+                gps_test_time += uint64_t(deadline.remainingMilliseconds(gps_test_time)) * 1000 + 1;
+                return GPSProtocolReadResult{GPSReadStatus::TimedOut};
+            }
+            const size_t count = std::min(bytes.size(), reply.size());
+            std::copy_n(reply.begin(), count, bytes.begin());
+            reply.erase(reply.begin(), reply.begin() + count);
+            ++gps_test_time;
+            return GPSProtocolReadResult{GPSReadStatus::Data, int(count)};
+        };
+        io.write = [this](std::span<const uint8_t> bytes, GPSDeadline) {
+            ++transportCalls;
+            const std::string command(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+            commands.push_back(command);
+            if (command.starts_with("$PASHQ,PRT")) {
+                reply = nmeaPacket("PASHR,PRT,A,115200");
+            } else if (command.starts_with("$PASHQ,RID")) {
+                reply = nmeaPacket("PASHR,RID,MB2");
+            } else if (command.starts_with("$PASHS,POS,AVG")) {
+                reply = nmeaPacket(surveyReply);
+            } else {
+                reply = nmeaPacket("PASHR,ACK");
+            }
+            return GPSProtocolWriteResult{GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size()), 0};
+        };
+        io.setBaudrate = [this](unsigned) {
+            ++transportCalls;
+            return GPSBaudStatus::Configured;
+        };
+        io.commandFinished = [this](const GPSCommandResult& result) { results.push_back(result); };
+        io.decoded = [this](const GPSDecodedBatch& batch) {
+            for (const auto& event : batch.events) {
+                if (const auto* survey = std::get_if<GPSNativeSurveyReport>(&event)) {
+                    surveys.push_back(*survey);
+                }
+            }
+        };
+        return io;
+    }
+
+    void configure(GPSProtocol::OutputMode mode = GPSProtocol::OutputMode::RTCM, bool fixed = false)
+    {
+        GPSProtocol::GPSConfig config{};
+        config.output_mode = mode;
+        config.base = {.useFixedBase = fixed,
+                       .surveyInAccMeters = 1,
+                       .surveyInDurationSecs = 100,
+                       .fixedBaseLatitude = 47,
+                       .fixedBaseLongitude = 8,
+                       .fixedBaseAltitudeMeters = 500};
+        unsigned baudrate = 115200;
+        CHECK(driver.configure(baudrate, config) == 0);
+        CHECK(driver.receiverReady());
+        driver.consume({});
+        surveys.clear();
+    }
+
+    int startSurvey()
+    {
+        driver.consume(nmeaPacket("PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,"));
+        return driver.receive(1);
+    }
+};
+
+void ashtechSurveyReceipts()
+{
+    gps_test_time = 1000000;
+    AshtechReceiver receiver;
+    receiver.configure();
+    receiver.startSurvey();
+    CHECK(!receiver.surveys.empty() && receiver.surveys.back().flags == 2);
+    receiver.surveys.clear();
+
+    std::vector<std::string> malformed{"PASHR,RECEIPT,", "PASHR,RECEIPT,POS,AVG,100,FINISHED",
+                                       "PASHR,RECEIPT,POS,AVG,100,FINISHED,114642.81,28.12.2011,"};
+    const std::string finished{ASHTECH_SURVEY_FINISHED};
+    for (size_t end = finished.find(','); end != std::string::npos; end = finished.find(',', end + 1)) {
+        malformed.push_back(finished.substr(0, end));
+    }
+    for (const auto& [field, replacement] :
+         std::vector<std::pair<std::string, std::string>>{{"5542.5178481", ""},
+                                                          {"5542.5178481", "5560.0"},
+                                                          {"5542.5178481", "9100.0"},
+                                                          {"03739.2954994", "18100.0"},
+                                                          {"03739.2954994", "nan"},
+                                                          {",N,", ",Q,"},
+                                                          {",E,", ",N,"},
+                                                          {"176.334", ""},
+                                                          {"176.334", "inf"},
+                                                          {"114642.81", ""},
+                                                          {"114642.81", "246000.00"},
+                                                          {"28.12.2011", "31.02.2011"},
+                                                          {",OK,", ",ERR,"},
+                                                          {"100.20", ""}}) {
+        std::string body = finished;
+        body.replace(body.find(field), field.size(), replacement);
+        malformed.push_back(std::move(body));
+    }
+    for (const auto& body : malformed) {
+        receiver.driver.consume(nmeaPacket(finished));
+        CHECK(receiver.surveys.size() == 1);
+        CHECK(receiver.surveys.back().flags == 1);
+        CHECK(!receiver.surveys.back().accuracyKnown);
+        CHECK(std::abs(receiver.surveys.back().latitude - (55 + 42.5178481 / 60)) < 1e-8);
+        receiver.driver.receive(1);
+        receiver.surveys.clear();
+        const auto commands = receiver.commands.size();
+        receiver.driver.consume(nmeaPacket(body));
+        CHECK(receiver.surveys.empty());
+        receiver.driver.receive(1);
+        CHECK(receiver.commands.size() == commands);
+        CHECK(receiver.surveys.empty());
+    }
+
+    // A checksum-valid unrelated long frame poisons the reused buffer beyond the next short receipt.
+    receiver.driver.consume(nmeaPacket("XXXXX," + finished));
+    receiver.driver.consume(nmeaPacket("PASHR,RECEIPT,"));
+    CHECK(receiver.surveys.empty());
+    const auto commands = receiver.commands.size();
+    receiver.driver.receive(1);
+    CHECK(receiver.commands.size() == commands);
+
+    const auto completeFrame = nmeaPacket(finished);
+    for (size_t length : {size_t{1}, size_t{15}, size_t{64}, completeFrame.size() - 4, completeFrame.size() - 3}) {
+        receiver.driver.consume(std::span(completeFrame).first(length));
+        CHECK(receiver.surveys.empty());
+        receiver.driver.consume(nmeaPacket("PASHR,RECEIPT,"));
+        CHECK(receiver.surveys.empty());
+        receiver.driver.consume(completeFrame);
+        CHECK(receiver.surveys.size() == 1 && receiver.surveys.back().flags == 1);
+        receiver.driver.receive(1);
+        receiver.surveys.clear();
+    }
+
+    receiver.configure();
+    receiver.startSurvey();
+    receiver.surveys.clear();
+    receiver.driver.consume(nmeaPacket("PASHR,RECEIPT,POS,AVG,100,FINISHED,114642.81,28.12.2011,"));
+    gps_test_time += 2000000;
+    receiver.driver.consume(nmeaPacket("GPHDT,121.2,T"));
+    CHECK(receiver.surveys.size() == 1 && receiver.surveys.back().flags == 2);
+    CHECK(receiver.surveys.back().duration >= 2);
+    receiver.surveys.clear();
+    receiver.driver.consume(nmeaPacket(ASHTECH_SURVEY_FAILED));
+    CHECK(receiver.surveys.size() == 1 && receiver.surveys.back().flags == 0);
+    const auto afterFailure = receiver.commands.size();
+    receiver.driver.receive(1);
+    CHECK(receiver.commands.size() == afterFailure);
+    receiver.surveys.clear();
+    receiver.driver.consume(nmeaPacket(finished));
+    receiver.driver.consume(nmeaPacket(ASHTECH_SURVEY_FAILED));
+    receiver.driver.receive(1);
+    CHECK(receiver.commands.size() == afterFailure);
+    CHECK(receiver.surveys.size() == 2 && receiver.surveys.back().flags == 0);
+
+    for (const auto body :
+         {std::string_view{"PASHR,RECEIPT,"},
+          std::string_view{"PASHR,RECEIPT,POS,AVG,STARTED,INTERVAL,,114502.56,28.12.2011"},
+          std::string_view{"PASHR,RECEIPT,POS,AVG,STARTED,INTERVAL,100,,28.12.2011"}, ASHTECH_SURVEY_FAILED}) {
+        receiver.configure();
+        receiver.surveyReply = body;
+        CHECK(receiver.startSurvey() < 0);
+        CHECK(receiver.results.back().outcome ==
+              (body == ASHTECH_SURVEY_FAILED ? GPSCommandOutcome::Rejected : GPSCommandOutcome::TimedOut));
+    }
+    receiver.configure();
+    receiver.surveyReply = ASHTECH_SURVEY_FINISHED;
+    receiver.startSurvey();
+    CHECK(receiver.surveys.size() == 1 && receiver.surveys.back().flags == 1);
+    for (auto mode : {GPSProtocol::OutputMode::GPS, GPSProtocol::OutputMode::RTCM}) {
+        receiver.configure(mode, true);
+        receiver.driver.consume(nmeaPacket(finished));
+        CHECK(receiver.surveys.empty());
+        const auto count = receiver.commands.size();
+        receiver.driver.receive(1);
+        CHECK(receiver.commands.size() == count);
+    }
+
+    GPSProtocol::GPSConfig invalid{};
+    invalid.output_mode = GPSProtocol::OutputMode::RTCM;
+    unsigned baudrate = 115200;
+    const auto calls = receiver.transportCalls;
+    CHECK(receiver.driver.configure(baudrate, invalid) < 0);
+    CHECK(!receiver.driver.receiverReady());
+    CHECK(receiver.transportCalls == calls);
+}
+
 void ashtechMetadata()
 {
     GPSNativePositionReport position{};
     GPSNativeSatelliteReport satellites{};
     auto io = noDevice();
     GPSNativeSatelliteReport gpsSatellites;
-    io.decoded = [&](GPSDecodedBatch batch) {
+    io.decoded = [&](const GPSDecodedBatch& batch) {
         for (const auto& event : batch.events) {
             if (const auto* report = std::get_if<GPSNativeSatelliteReport>(&event);
                 report && report->constellation == GPSConstellation::GPS) {
@@ -244,6 +489,14 @@ void ashtechMetadata()
     CHECK(driver.consume(nmeaPacket("PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,")) & 1);
     CHECK(position.altitude_ellipsoid_m == 18.9);
     CHECK(std::isnan(position.altitude_msl_m));
+    for (const std::string_view missingCoordinate : {
+             "PASHR,POS,2,12,172814.0,,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,",
+             "PASHR,POS,2,12,172814.0,3723.4,N,,W,18.9,0,90,10,0,1,1,1,1,",
+             "PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,,0,90,10,0,1,1,1,1,",
+         }) {
+        CHECK(driver.consume(nmeaPacket(missingCoordinate)) & 1);
+        CHECK(position.fix_type == GPSNativePositionReport::FIX_TYPE_NONE);
+    }
     CHECK(driver.consume(nmeaPacket("GPGSV,1,1,01,01,,,")) & 2);
     CHECK(gpsSatellites.count == 1);
     CHECK(!gpsSatellites.entries[0].signal);
@@ -259,6 +512,72 @@ void ashtechMetadata()
 }
 #endif
 
+void invalidFamilyConfiguration()
+{
+    using Config = GPSProtocol::GPSConfig;
+    Config valid{};
+    valid.output_mode = GPSProtocol::OutputMode::RTCM;
+    valid.base = {.useFixedBase = true,
+                  .surveyInAccMeters = 1,
+                  .surveyInDurationSecs = 60,
+                  .fixedBaseLatitude = 47,
+                  .fixedBaseLongitude = 8,
+                  .fixedBaseAltitudeMeters = 500,
+                  .fixedBaseAccuracyMeters = 1};
+    std::vector<Config> invalid;
+    auto add = [&](auto member, auto value) {
+        Config config = valid;
+        config.base.*member = value;
+        invalid.push_back(config);
+    };
+    for (auto member : {&GPSBaseStationConfig::fixedBaseLatitude, &GPSBaseStationConfig::fixedBaseLongitude}) {
+        for (double value : std::array<double, 5>{NAN, INFINITY, -INFINITY, 181.0, -181.0}) {
+            add(member, value);
+        }
+    }
+    add(&GPSBaseStationConfig::fixedBaseLatitude, 90.01);
+    for (auto member :
+         {&GPSBaseStationConfig::fixedBaseAltitudeMeters, &GPSBaseStationConfig::fixedBaseAccuracyMeters}) {
+        for (float value : {NAN, INFINITY, -INFINITY, std::numeric_limits<float>::max()}) {
+            add(member, value);
+        }
+    }
+    add(&GPSBaseStationConfig::fixedBaseAccuracyMeters, -1.0f);
+    valid.base = {.useFixedBase = true};
+    invalid.push_back(valid);
+    valid.base = {.surveyInAccMeters = 1, .surveyInDurationSecs = 60};
+    for (double value : std::array<double, 5>{NAN, INFINITY, -1.0, 0.0, std::numeric_limits<double>::max()}) {
+        add(&GPSBaseStationConfig::surveyInAccMeters, value);
+    }
+    for (int64_t value : std::array<int64_t, 3>{-1, 0, int64_t(UINT32_MAX) + 1}) {
+        add(&GPSBaseStationConfig::surveyInDurationSecs, value);
+    }
+    valid.base = {};
+    invalid.push_back(valid);
+    valid.output_mode = static_cast<GPSProtocol::OutputMode>(255);
+    invalid.push_back(valid);
+
+    for (const auto& config : invalid) {
+        GPSNativePositionReport position{};
+        std::vector<std::unique_ptr<GPSProtocol>> drivers;
+#if QGC_GPS_ENABLE_ASHTECH
+        drivers.push_back(std::make_unique<GPSNativeAshtech>(noDevice(), &position, nullptr));
+#endif
+#if QGC_GPS_ENABLE_SBF
+        drivers.push_back(std::make_unique<GPSNativeSBF>(noDevice(), &position));
+#endif
+#if QGC_GPS_ENABLE_FEMTO
+        drivers.push_back(std::make_unique<GPSNativeFemto>(noDevice(), &position));
+#endif
+        for (const auto& driver : drivers) {
+            unsigned baudrate = 9600;
+            CHECK(driver->configure(baudrate, config) < 0);
+            CHECK(!driver->receiverReady());
+            CHECK(baudrate == 9600);
+        }
+    }
+}
+
 #if QGC_GPS_ENABLE_SBF
 void sbfEpochMetadata()
 {
@@ -267,7 +586,7 @@ void sbfEpochMetadata()
     std::vector<GPSNativePositionReport> fixes;
     std::vector<GPSSatelliteUsageReport> usage;
     auto io = makeGPSProtocolTestIO();
-    io.decoded = [&](GPSDecodedBatch batch) {
+    io.decoded = [&](const GPSDecodedBatch& batch) {
         for (const auto& event : batch.events) {
             if (const auto* fix = std::get_if<GPSNativePositionReport>(&event)) {
                 fixes.push_back(*fix);
@@ -330,6 +649,61 @@ void sbfEpochMetadata()
     driver.consume({});
     CHECK(fixes.size() == 2);
 }
+
+void sbfInvalidCoordinates()
+{
+    GPSNativePositionReport position;
+    GPSNativeSatelliteReport satellites;
+    std::vector<GPSNativePositionReport> reports;
+    auto io = noDevice();
+    io.decoded = [&](const GPSDecodedBatch& batch) {
+        for (const auto& event : batch.events) {
+            if (const auto* report = std::get_if<GPSNativePositionReport>(&event)) {
+                reports.push_back(*report);
+            }
+        }
+    };
+    GPSNativeSBF driver(io, &position, &satellites);
+    sbf_payload_pvt_geodetic_t fix{};
+    fix.mode_type = 1;
+    fix.latitude = 0.5;
+    fix.longitude = 1;
+    fix.height = 10;
+    uint32_t tow = 1000;
+    auto check = [&](const auto& payload) {
+        const auto previous = reports.size();
+        driver.consume(sbfPacket(SBF_ID_PVTGeodetic, payload, tow));
+        tow += 1000;
+        gps_test_time += 200000;
+        driver.consume({});
+        CHECK(reports.size() == previous + 1);
+        CHECK(reports.back().fix_type == GPSNativePositionReport::FIX_TYPE_NONE);
+    };
+
+    struct InvalidCoordinate
+    {
+        size_t offset;
+        double value;
+    };
+
+    for (const auto& invalid : std::array{
+             InvalidCoordinate{2, NAN},
+             InvalidCoordinate{2, 4},
+             InvalidCoordinate{10, NAN},
+             InvalidCoordinate{10, 4},
+             InvalidCoordinate{18, NAN},
+             InvalidCoordinate{18, 1e11},
+         }) {
+        auto payload = bytes(fix);
+        CHECK(LittleEndian::write(payload, invalid.offset, invalid.value));
+        check(payload);
+    }
+    for (const float invalid : {NAN, 1e11f}) {
+        auto payload = bytes(fix);
+        CHECK(LittleEndian::write(payload, 26, invalid));
+        check(payload);
+    }
+}
 #endif
 
 int main()
@@ -337,14 +711,18 @@ int main()
     try {
         tinyReads();
         absoluteDeadline();
+        invalidFamilyConfiguration();
+        nmeaFixQualities();
 #if QGC_GPS_ENABLE_SBF || QGC_GPS_ENABLE_FEMTO
         malformedMessages();
 #endif
 #if QGC_GPS_ENABLE_SBF
         sbfEpochMetadata();
+        sbfInvalidCoordinates();
 #endif
 #if QGC_GPS_ENABLE_ASHTECH
         ashtechMetadata();
+        ashtechSurveyReceipts();
 #endif
     } catch (const std::exception& error) {
         std::fprintf(stderr, "%s\n", error.what());

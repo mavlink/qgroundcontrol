@@ -63,15 +63,7 @@ public:
 
     virtual ~GPSNativeUBX();
 
-    enum class OutputProtocol : uint8_t
-    {
-        Native = 0,
-        NMEA
-    };
-
     int configure(unsigned& baudrate, const GPSConfig& config) override;
-    /** Configure navigation and its output protocol together. NMEA requires normal GPS on UART/USB. */
-    int configure(unsigned& baudrate, const GPSConfig& config, OutputProtocol output_protocol);
 
     int receive(unsigned timeout) override;
     int decodeByte(uint8_t byte) override;
@@ -96,8 +88,6 @@ public:
         Supported,
     };
     BaseStationCapability baseStationCapability() const;
-    bool supportsConstellationSelection() const;
-    bool supportsOutputRateSelection() const;
 
     struct DecodeContext
     {
@@ -109,25 +99,6 @@ public:
 
     void setDecodeContext(DecodeContext context);
 
-    bool constellationConfigurationRejected() const { return _constellation_configuration_rejected; }
-
-    bool constellationRequestRejected() const { return _constellation_request_rejected; }
-
-    struct ConfigurationReadback
-    {
-        uint8_t dynamic_model = 0;
-        uint16_t measurement_interval_ms = 0;
-        uint16_t navigation_rate = 0;
-        uint32_t constellation_mask = 0;
-        bool constellations_reported = false;
-    };
-
-    bool readConfiguration(ConfigurationReadback& report, unsigned timeout_ms);
-
-    /**
-     * What UART1 carries in a given mode, for status output
-     */
-
 private:
     void servicePendingCommands() override;
     bool _rtcmActivationPending = false;
@@ -136,13 +107,12 @@ private:
     GPSReceiverSettingSet _valsetSettings;
     GPSReceiverSettingSet _pendingCommandSettings;
     UBX::ReceiverController _controller;
-    int enableNmeaOutput(unsigned baudrate);
 
     /** Like receive(), but reports a negative device read separately from a timeout. */
     int receiveInternal(unsigned timeout, bool& read_error);
 
     void requestCommsDiagnostics();
-    void logCommsDiagnostics();
+    void logCommsDiagnostics(std::span<const uint8_t> payload);
 
     int activateRTCMOutput();
 
@@ -314,7 +284,7 @@ private:
     /**
      * Start payload rx
      */
-    int payloadRxInit(void);
+    bool payloadRxInit(uint16_t message, std::span<const uint8_t> payload);
 
     /**
      * Add payload rx byte
@@ -326,7 +296,7 @@ private:
     /**
      * Finish payload rx
      */
-    int payloadRxDone(GPSNativePositionReport& position);
+    int payloadRxDone(uint16_t message, std::span<const uint8_t> payload, GPSNativePositionReport& position);
 
     /**
      * Send a message
@@ -354,9 +324,8 @@ private:
     uint64_t _comms_poll_deadline{0};
     GPSNativePositionReport* _gps_position{nullptr};
     GPSNativeSatelliteReport* _satellite_info{nullptr};
-    std::array<uint8_t, 4096> _framePayload{};
     UBX::FrameDecoder _frameDecoder;
-    int decodeValidatedPayload();
+    int decodeValidatedPayload(uint16_t message, std::span<const uint8_t> payload);
     void flushDecoded() override;
     void publishEpoch(const GPSNativePositionReport& report);
     UBXNavigationEpoch _navigationEpochs;
@@ -364,7 +333,6 @@ private:
     bool _epochHasHighPrecision = false;
     uint8_t _tx_cfg_valset_buf[UBX_CFG_VALSET_BUF_SIZE]{};
     int _tx_cfg_valset_size{0};
-    ubx_rxmsg_state_t _rx_state{UBX_RXMSG_IGNORE};
 
     bool _configured{false};
     bool _decodeNavigation = false;
@@ -380,13 +348,7 @@ private:
 
     uint8_t _dyn_model{7};    ///< ublox Dynamic platform model default 7: airborne with <2g acceleration
 
-    uint8_t _output_rate{0};  ///< ublox output rate in Hz, 0 = auto-select based on module
-    bool _constellation_configuration_rejected{false};
-    bool _constellation_request_rejected{false};
     bool _last_ack_rejected{false};
-
-    uint16_t _rx_msg{};
-    uint16_t _rx_payload_length{0};
 
     uint64_t _last_timestamp_time{0};
 

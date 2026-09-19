@@ -21,6 +21,26 @@ handshakes, I/O failures, receiver modes, and UTC conversion under three time
 zones. Checks remain active in Release builds. Narrow a run with
 `ctest --test-dir build/gps-protocol-tests --output-on-failure -R GPSProtocolUbx`.
 
+All native configuration entry points reject invalid base/wire values before any
+transport operation. Ashtech receipt tests include long-then-short replay and
+poisoned tails. SBF tests distinguish fixed, determining, completed, and invalid
+base states without treating navigation PVT accuracy as survey accuracy.
+RELPOSNED retains unknown UTC when only GPS time-of-week is available.
+Fix-state regressions distinguish unavailable metadata from an explicit loss of
+fix, including missing Ashtech coordinates, rejected SBF coordinates, UBX
+`GNSSFIXOK`, and NMEA invalid/estimated quality. UBX framing also exercises
+overlapping sync prefixes without dropping the following valid frame.
+
+The receiver runtime keeps only its consumed configuration surface: native output,
+default receiver-rate setup, supported dynamic-model/constellation requests and
+required safety readback. Unused configured-NMEA, general-readback and explicit-rate
+APIs are not carried as speculative lifecycle features.
+
+`GPSProtocolAllocation` counts C++ allocations while replaying 1,000 NAV-PVT frames.
+After warmup, synchronous `consume()` callbacks reuse event storage; `decode()` still
+returns an owning batch. Nested callback and retained-result checks protect that
+ownership distinction. This measures allocator traffic, not end-to-end latency.
+
 `QGC_GPS_ENABLE_UBX`, `QGC_GPS_ENABLE_ASHTECH`, `QGC_GPS_ENABLE_SBF`, and
 `QGC_GPS_ENABLE_FEMTO` select the compiled families; at least one must remain
 enabled. SBF and Femto low-level Position-mode tests exercise their internal
@@ -30,7 +50,8 @@ protocol implementations, not a supported public facade role. The public
 ## Facade safety and legacy comparison
 
 The separate facade suite needs Qt Core, Test, and Positioning. It exercises
-the unchanged `GPSDriver::configure()` / `receive()` API and public reports:
+`GPSDriver::configure()`, typed `receiveOutcome()`, the integer `receive()`
+compatibility wrapper, and public reports:
 
 ```sh
 cmake -S test/GPS/Driver -B build/gps-driver-tests -G Ninja \
@@ -70,6 +91,9 @@ not compile parallel copies of their sources. `GPSProtocolFuzzSmoke` runs
 10,000 deterministic iterations against a build-directory copy of `corpus`.
 The harness checks bounded decoded batches and aborts if decoding attempts
 device I/O.
+Sanitizer compile/link requirements follow each instrumented production target.
+Direct NMEA and enabled-family consumers verify that they do not need the Native
+aggregate to acquire the runtime link flags.
 
 For a longer local run, keep generated corpus additions outside the source tree:
 

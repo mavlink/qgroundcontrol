@@ -3,50 +3,52 @@
 # Tests for vehicle connection, FTP, MAVLink commands, and link management
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        APMAirframeComponentControllerTest.cc
-        APMAirframeComponentControllerTest.h
-        APMStartMissionTest.cc
-        APMStartMissionTest.h
-        FTPManagerTest.cc
-        FTPManagerTest.h
-        FTPControllerTest.cc
-        FTPControllerTest.h
-        GuidedModeROITest.cc
-        GuidedModeROITest.h
-        InitialConnectTest.cc
-        InitialConnectTest.h
-        InitialConnectPeripheralStartupTest.cc
-        InitialConnectPeripheralStartupTest.h
-        MAVLinkLogManagerTest.cc
-        MAVLinkLogManagerTest.h
-        MavCommandQueueReentrancyTest.cc
-        MavCommandQueueReentrancyTest.h
-        MultiVehicleManagerTest.cc
-        MultiVehicleManagerTest.h
-        PX4ExternalFlightModesTest.cc
-        PX4ExternalFlightModesTest.h
-        PX4HasGripperTest.cc
-        PX4HasGripperTest.h
-        RemoteIDManagerTest.cc
-        RemoteIDManagerTest.h
-        RequestMessageTest.cc
-        RequestMessageTest.h
-        SendMavCommandWithHandlerTest.cc
-        SendMavCommandWithHandlerTest.h
-        SendMavCommandWithSignallingTest.cc
-        SendMavCommandWithSignallingTest.h
-        SetEstimatorOriginTest.cc
-        SetEstimatorOriginTest.h
-        StandardModesTest.cc
-        StandardModesTest.h
-        TrajectoryPointsTest.cc
-        TrajectoryPointsTest.h
-        VehicleDistanceSensorFactGroupTest.cc
-        VehicleDistanceSensorFactGroupTest.h
-        VehicleLinkManagerTest.cc
-        VehicleLinkManagerTest.h
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE APMAirframeComponentControllerTest.cc
+            APMAirframeComponentControllerTest.h
+            APMStartMissionTest.cc
+            APMStartMissionTest.h
+            FTPManagerTest.cc
+            FTPManagerTest.h
+            FTPControllerTest.cc
+            FTPControllerTest.h
+            GuidedModeROITest.cc
+            GuidedModeROITest.h
+            InitialConnectTest.cc
+            InitialConnectTest.h
+            InitialConnectPeripheralStartupTest.cc
+            InitialConnectPeripheralStartupTest.h
+            MAVLinkLogManagerTest.cc
+            MAVLinkLogManagerTest.h
+            MavCommandQueueReentrancyTest.cc
+            MavCommandQueueReentrancyTest.h
+            MultiVehicleManagerTest.cc
+            MultiVehicleManagerTest.h
+            PX4ExternalFlightModesTest.cc
+            PX4ExternalFlightModesTest.h
+            PX4HasGripperTest.cc
+            PX4HasGripperTest.h
+            RemoteIDManagerTest.cc
+            RemoteIDManagerTest.h
+            RequestMessageTest.cc
+            RequestMessageTest.h
+            SendMavCommandWithHandlerTest.cc
+            SendMavCommandWithHandlerTest.h
+            SendMavCommandWithSignallingTest.cc
+            SendMavCommandWithSignallingTest.h
+            SetEstimatorOriginTest.cc
+            SetEstimatorOriginTest.h
+            StandardModesTest.cc
+            StandardModesTest.h
+            TrajectoryPointsTest.cc
+            TrajectoryPointsTest.h
+            VehicleDistanceSensorFactGroupTest.cc
+            VehicleDistanceSensorFactGroupTest.h
+            VehicleGPSAggregateFactGroupTest.cc
+            VehicleGPSAggregateFactGroupTest.h
+            VehicleLinkManagerTest.cc
+            VehicleLinkManagerTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -81,4 +83,5 @@ add_qgc_test(SetEstimatorOriginTest LABELS Integration Vehicle)
 add_qgc_test(StandardModesTest LABELS Integration Vehicle)
 add_qgc_test(TrajectoryPointsTest LABELS Unit Vehicle)
 add_qgc_test(VehicleDistanceSensorFactGroupTest LABELS Integration Vehicle)
+add_qgc_test(VehicleGPSAggregateFactGroupTest LABELS Unit)
 add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle SERIAL)

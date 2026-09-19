@@ -1,5 +1,7 @@
 #include "GPSRtkTest.h"
 
+#include <limits>
+
 #include <QtCore/QFile>
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
@@ -17,6 +19,53 @@
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 
+void GPSRtkTest::_currentBaseSaveValidity_data()
+{
+    QTest::addColumn<QString>("field");
+    QTest::addColumn<double>("value");
+    QTest::addColumn<bool>("expected");
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const double infinity = std::numeric_limits<double>::infinity();
+    QTest::newRow("known-zero-accuracy") << "currentAccuracy" << 0.0 << true;
+    QTest::newRow("known-accuracy") << "currentAccuracy" << 1.25 << true;
+    QTest::newRow("unavailable-accuracy") << "currentAccuracy" << nan << false;
+    QTest::newRow("infinite-accuracy") << "currentAccuracy" << infinity << false;
+    QTest::newRow("negative-accuracy") << "currentAccuracy" << -1.0 << false;
+    QTest::newRow("wire-accuracy-overflow") << "currentAccuracy" << 429496.75 << false;
+    QTest::newRow("float-accuracy-overflow") << "currentAccuracy" << 1e100 << false;
+    QTest::newRow("unavailable-latitude") << "currentLatitude" << nan << false;
+    QTest::newRow("invalid-latitude") << "currentLatitude" << 91.0 << false;
+    QTest::newRow("unavailable-longitude") << "currentLongitude" << nan << false;
+    QTest::newRow("invalid-longitude") << "currentLongitude" << -181.0 << false;
+    QTest::newRow("unavailable-ellipsoid-altitude") << "currentAltitude" << nan << false;
+    QTest::newRow("infinite-ellipsoid-altitude") << "currentAltitude" << infinity << false;
+    QTest::newRow("wire-altitude-overflow") << "currentAltitude" << 21474838.0 << false;
+}
+
+void GPSRtkTest::_currentBaseSaveValidity()
+{
+    QFETCH(QString, field);
+    QFETCH(double, value);
+    QFETCH(bool, expected);
+    GPSRTKFactGroup facts;
+    facts.currentLatitude()->setRawValue(47.0);
+    facts.currentLongitude()->setRawValue(8.0);
+    facts.currentAltitude()->setRawValue(500.0f);
+    facts.currentAccuracy()->setRawValue(1.0);
+    QVERIFY(!facts.canSaveCurrentBasePosition());
+    facts.valid()->setRawValue(true);
+    QVERIFY(facts.canSaveCurrentBasePosition());
+    QSignalSpy changes(&facts, &GPSRTKFactGroup::currentBasePositionChanged);
+    Fact* const changed = facts.property(field.toUtf8().constData()).value<Fact*>();
+    QVERIFY(changed);
+    changed->setRawValue(value);
+    QVERIFY(!changes.isEmpty());
+    QCOMPARE(facts.canSaveCurrentBasePosition(), expected);
+    QCOMPARE(facts.property("canSaveCurrentBasePosition").toBool(), expected);
+    facts.valid()->setRawValue(false);
+    QVERIFY(!facts.canSaveCurrentBasePosition());
+}
+
 void GPSRtkTest::_testCountSatellitesClampsToMax()
 {
     GPSSatelliteReport msg;
@@ -25,13 +74,16 @@ void GPSRtkTest::_testCountSatellitesClampsToMax()
     const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
 
     QCOMPARE(counts.inView, GPSSatelliteReport::MAX_SATELLITES);
-    QCOMPARE(counts.used, 0);
+    QVERIFY(!counts.used);
 }
 
 void GPSRtkTest::_testCountSatellitesCountsUsed()
 {
     GPSSatelliteReport msg;
     msg.count = 6;
+    for (uint16_t i = 0; i < msg.count; ++i) {
+        msg.satellites[i].used = false;
+    }
     msg.satellites[1].used = true;
     msg.satellites[3].used = true;
     msg.satellites[5].used = true;
@@ -39,7 +91,7 @@ void GPSRtkTest::_testCountSatellitesCountsUsed()
     const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
 
     QCOMPARE(static_cast<int>(counts.inView), 6);
-    QCOMPARE(counts.used, 3);
+    QCOMPARE(counts.used, std::optional<int>{3});
 }
 
 void GPSRtkTest::_testCountSatellitesIgnoresUsedBeyondCount()
@@ -47,12 +99,77 @@ void GPSRtkTest::_testCountSatellitesIgnoresUsedBeyondCount()
     GPSSatelliteReport msg;
     msg.count = 2;
     msg.satellites[0].used = true;
+    msg.satellites[1].used = false;
     msg.satellites[5].used = true;
 
     const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
 
     QCOMPARE(static_cast<int>(counts.inView), 2);
-    QCOMPARE(counts.used, 1);
+    QCOMPARE(counts.used, std::optional<int>{1});
+}
+
+void GPSRtkTest::_snapshotUsageEvidence_data()
+{
+    QTest::addColumn<int>("count");
+    QTest::addColumn<QList<int>>("flags");
+    QTest::addColumn<int>("expectedUsage");
+    QTest::newRow("all-unknown") << 3 << QList<int>{-1, -1, -1} << -1;
+    QTest::newRow("partially-known") << 3 << QList<int>{0, 1, -1} << -1;
+    QTest::newRow("known-zero") << 3 << QList<int>{0, 0, 0} << 0;
+    QTest::newRow("known-used") << 3 << QList<int>{1, 0, 1} << 2;
+    QTest::newRow("empty-clears") << 0 << QList<int>{} << 0;
+}
+
+void GPSRtkTest::_snapshotUsageEvidence()
+{
+    QFETCH(int, count);
+    QFETCH(QList<int>, flags);
+    QFETCH(int, expectedUsage);
+    GPSSatelliteReport snapshot;
+    snapshot.count = static_cast<uint16_t>(count);
+    for (qsizetype i = 0; i < flags.size(); ++i) {
+        if (flags[i] >= 0) {
+            snapshot.satellites[i].used = flags[i] != 0;
+        }
+    }
+    const auto counts = GPSRtk::countSatellites(snapshot);
+    QCOMPARE(counts.inView, count);
+    QCOMPARE(counts.used.value_or(-1), expectedUsage);
+
+    GPSRtk receiver;
+    auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
+    receiver._satelliteInfoUpdate(snapshot);
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), count);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), expectedUsage);
+
+    receiver._satelliteUsageUpdate({.usedCount = 12});
+    receiver._satelliteInfoUpdate(snapshot);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), expectedUsage < 0 ? 12 : expectedUsage);
+    receiver._satelliteUsageUpdate({.usedCount = 0});
+    receiver._satelliteInfoUpdate(snapshot);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), expectedUsage < 0 ? 0 : expectedUsage);
+    receiver._satelliteUsageUpdate({});
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
+    receiver._onGPSDisconnect();
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
+}
+
+void GPSRtkTest::_countOnlyUsagePreservesInView()
+{
+    GPSRtk receiver;
+    auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
+    GPSSatelliteReport snapshot;
+    snapshot.count = 15;
+    receiver._satelliteInfoUpdate(snapshot);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
+    for (const auto count : {std::optional<int>{12}, std::optional<int>{0}, std::optional<int>{}}) {
+        receiver._satelliteUsageUpdate({.usedCount = count});
+        QCOMPARE(facts->numSatellites()->rawValue().toInt(), 15);
+        QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), count.value_or(-1));
+    }
 }
 
 UT_REGISTER_TEST(GPSRtkTest, TestLabel::Unit)
@@ -141,6 +258,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     satellites.count = 2;
     satellites.satellites[0].used = true;
     emit first->satelliteInfoUpdate(satellites);
+    emit first->satelliteUsageUpdate({.usedCount = 7});
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver.connected());
     QVERIFY(facts->valid()->rawValue().toBool());
@@ -150,6 +268,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QCOMPARE(facts->currentAccuracy()->rawValue().toDouble(), 1.5);
     QCOMPARE(facts->currentDuration()->rawValue().toLongLong(), 4294967295LL);
     QCOMPARE(facts->numSatellites()->rawValue().toInt(), 2);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), 7);
 
     const auto frame = GpsTestHelpers::buildRtcmFrame(1005);
     emit first->RTCMDataUpdate(frame, GPSCorrectionFrame::monotonicNowMs());
@@ -166,6 +285,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit first->RTCMDataUpdate(frame, GPSCorrectionFrame::monotonicNowMs());
     emit first->surveyInStatus(survey);
     emit first->satelliteInfoUpdate(satellites);
+    emit first->satelliteUsageUpdate({.usedCount = 12});
     emit first->sensorGpsUpdate(GPSPositionReport{});
     emit first->receiverReady();
     emit first->connectionError(GPSConnectionError::DeviceError);
@@ -180,10 +300,12 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QVERIFY(qIsNaN(facts->currentLatitude()->rawValue().toDouble()));
     QVERIFY(qIsNaN(facts->currentAccuracy()->rawValue().toDouble()));
     QCOMPARE(facts->currentDuration()->rawValue().toInt(), 0);
-    QCOMPARE(facts->numSatellites()->rawValue().toInt(), 0);
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
     QTRY_VERIFY_WITH_TIMEOUT(secondGate->entered.available() > 0, TestTimeout::mediumMs());
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(!receiver.connected());
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
     QCOMPARE(facts->lastError()->rawValue().toInt(), static_cast<int>(GPSConnectionError::None));
     QCOMPARE(rtcm->totalBytesSent(), bytesBefore);
     emit receiver._gpsProvider->receiverReady();
@@ -209,11 +331,13 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit receiver._gpsProvider->receiverReady();
     emit receiver._gpsProvider->surveyInStatus(survey);
     emit receiver._gpsProvider->satelliteInfoUpdate(satellites);
+    emit receiver._gpsProvider->satelliteUsageUpdate({.usedCount = 12});
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     verifyExpectedLogMessage();
     QVERIFY(!receiver.connected());
     QCOMPARE(facts->currentDuration()->rawValue().toLongLong(), 0);
-    QCOMPARE(facts->numSatellites()->rawValue().toInt(), 0);
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
     QVERIFY(corrections.sourceInstances().isEmpty());
     QCOMPARE(routed.size(), 2);
     QCOMPARE(rtcm->totalBytesSent(), bytesBefore + frame.size());

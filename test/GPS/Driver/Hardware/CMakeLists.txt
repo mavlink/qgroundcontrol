@@ -48,7 +48,7 @@ add_executable(QGCGPSHardwareRunner GPSHardwareRunner.cc GPSEvidenceTransport.cc
 )
 target_compile_features(QGCGPSHardwareRunner PRIVATE cxx_std_20)
 target_include_directories(QGCGPSHardwareRunner PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
-target_link_libraries(QGCGPSHardwareRunner PRIVATE QGCGPSLegacyDriver QGCGPSReceiverTransports)
+target_link_libraries(QGCGPSHardwareRunner PRIVATE QGCGPSLegacyDriver QGCGPSReceiverTransports QGC::Clock)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_test(NAME GPSHardwareRunner.Scripted COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_runner.py"

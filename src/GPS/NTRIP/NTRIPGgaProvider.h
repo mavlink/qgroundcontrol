@@ -11,14 +11,23 @@
 #include <QtCore/qnumeric.h>
 #include <QtPositioning/QGeoCoordinate>
 
+#include "../Core/GPSAltitudeDatum.h"
+
 class NTRIPTransport;
 
 struct PositionResult
 {
     QGeoCoordinate coordinate;
     QString source;
+    GPSAltitudeDatum altitudeDatum = GPSAltitudeDatum::Unknown;
 
-    bool isValid() const { return coordinate.isValid() && qIsFinite(coordinate.altitude()); }
+    /// GGA needs MSL altitude. Providers must convert ellipsoid height using
+    /// known geoid separation before explicitly declaring it MeanSeaLevel.
+    bool isValid() const
+    {
+        return coordinate.isValid() && qIsFinite(coordinate.altitude()) &&
+               altitudeDatum == GPSAltitudeDatum::MeanSeaLevel;
+    }
 };
 
 class NTRIPGgaProvider : public QObject

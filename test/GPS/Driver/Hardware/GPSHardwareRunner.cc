@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -20,6 +21,7 @@
 #include "GPSDriver.h"
 #include "GPSEvidenceTransport.h"
 #include "GPSLegacyDriver.h"
+#include "MonotonicClock.h"
 #include "ScriptedUBXReceiver.h"
 #include "TCPGPSTransport.h"
 #include "UDPGPSTransport.h"
@@ -132,7 +134,8 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
         !QStringList{"ublox", "trimble", "septentrio", "femto"}.contains(family) ||
         !QStringList{"base", "position"}.contains(role) || !QStringList{"f9p", "m8p"}.contains(options.model) ||
         !QStringList{"fresh", "retained", "none"}.contains(options.surveyState) ||
-        !QStringList{"none", "nak", "wrong-readback", "cancel"}.contains(options.fault)) {
+        !QStringList{"none", "nak", "wrong-readback", "cancel", "rtcm-nak", "rtcm-nak-cancel"}.contains(
+            options.fault)) {
         return "Unsupported option value";
     }
     if (!parser.positionalArguments().isEmpty()) {
@@ -155,6 +158,12 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     }
     if (options.transport == "scripted" && options.family != GPSType::ublox) {
         return "The scripted peer supports UBX only";
+    }
+    if (options.fault.startsWith("rtcm-nak") && role != "base") {
+        return "RTCM activation faults require --role base";
+    }
+    if (options.fault == "rtcm-nak-cancel" && options.action != "cancel") {
+        return "rtcm-nak-cancel requires --action cancel";
     }
     if (options.transport != "scripted" &&
         (parser.isSet("fault") || parser.isSet("survey-state") || parser.isSet("model"))) {
@@ -205,6 +214,7 @@ class Backend
 {
 public:
     Backend(const Options& options, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks)
+        : _transport(transport)
     {
         if (options.backend == "native") {
             _native = std::make_unique<GPSDriver>(options.family, transport, config, std::move(sinks));
@@ -215,7 +225,18 @@ public:
 
     bool configure() { return _native ? _native->configure() : _legacy->configure(); }
 
-    int receive(unsigned timeoutMs) { return _native ? _native->receive(timeoutMs) : _legacy->receive(timeoutMs); }
+    GPSReceiveResult receive(unsigned timeoutMs)
+    {
+        if (_native) {
+            return _native->receiveOutcome(timeoutMs);
+        }
+        const int result = _legacy->receive(timeoutMs);
+        if (_transport.fatalError()) {
+            return {GPSReceiveStatus::TransportError, 0, result};
+        }
+        // Frozen legacy returns cannot distinguish protocol failure from idle or cancellation.
+        return {result > 0 ? GPSReceiveStatus::Data : GPSReceiveStatus::Activity, std::max(result, 0), 0};
+    }
 
     QJsonObject configurationEvidence() const
     {
@@ -267,6 +288,7 @@ public:
     }
 
 private:
+    GPSTransport& _transport;
     std::unique_ptr<GPSDriver> _native;
     std::unique_ptr<GPSLegacyDriver> _legacy;
 };
@@ -287,11 +309,14 @@ std::unique_ptr<GPSTransport> physicalTransport(const Options& options, const st
     return {};
 }
 
-void injectMeasurements(ScriptedUBXReceiver& receiver, const Options& options, const GPSReceiverConfig& config)
+void injectMeasurements(ScriptedUBXReceiver& receiver, const Options& options, const GPSReceiverConfig& config,
+                        bool cancellation = false)
 {
-    if (config.role == GPSReceiverConfig::Role::RTKBase && options.surveyState != "none") {
+    const bool rejectActivation = options.fault == "rtcm-nak" || (cancellation && options.fault == "rtcm-nak-cancel");
+    receiver.rejectRtcmActivation = rejectActivation;
+    if (config.role == GPSReceiverConfig::Role::RTKBase && (options.surveyState != "none" || rejectActivation)) {
         QByteArray survey(40, '\0');
-        const bool retained = options.surveyState == "retained";
+        const bool retained = options.surveyState == "retained" || rejectActivation;
         qToLittleEndian<quint32>(retained ? 600 : 0, survey.data() + 8);
         qToLittleEndian<quint32>(10000, survey.data() + 28);
         qToLittleEndian<quint32>(retained ? 600 : 1, survey.data() + 32);
@@ -300,6 +325,7 @@ void injectMeasurements(ScriptedUBXReceiver& receiver, const Options& options, c
         receiver.queueFrame(0x01, 0x3b, survey);
     }
     QByteArray position(92, '\0');
+    qToLittleEndian<quint32>(cancellation ? 1000 : 0, position.data());
     position[20] = 3;
     position[21] = 1;
     position[23] = 12;
@@ -318,6 +344,9 @@ int run(const Options& options)
         {"physical_hardware_verified", false}, {"requested", requestedConfig(options.config)},
         {"legacy_baseline", "f1e7700e0"},      {"px4_revision", "cd6f506afda9bd6e8e4645f094dcf5415f1f8be4"}};
     report.insert("receiver_family", options.familyName);
+    report.insert("receive_outcome_semantics", options.backend == "native"
+                                                   ? "typed_native"
+                                                   : "legacy_ambiguous_idle_protocol_error_and_cancellation");
     report.insert("schema_version", 1);
     report.insert("deadlines", QJsonObject{{"open_and_configure_ms", options.timeoutMs},
                                            {"observation_ms", options.observeMs},
@@ -356,11 +385,7 @@ int run(const Options& options)
     std::atomic_bool stop = false;
     std::atomic_bool deadlineExpired = false;
     std::atomic<qint64> operationDeadline = 0;
-    const auto now = [] {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(
-                   std::chrono::steady_clock::now().time_since_epoch())
-            .count();
-    };
+    const auto now = [] { return static_cast<qint64>(MonotonicClock::nowUs() / 1000); };
     std::jthread watchdog([&](std::stop_token token) {
         while (!token.stop_requested()) {
             const auto deadline = operationDeadline.load();
@@ -438,6 +463,7 @@ int run(const Options& options)
         QJsonObject lastPosition;
         int positions = 0;
         int satellites = 0;
+        int satelliteUsage = 0;
         int correctionFrames = 0;
         QElapsedTimer elapsed;
         elapsed.start();
@@ -451,6 +477,7 @@ int run(const Options& options)
                             {"horizontal_accuracy_m", position.horizontalAccuracyMeters}};
         };
         sinks.onSatelliteInfo = [&](const GPSSatelliteReport&) { ++satellites; };
+        sinks.onSatelliteUsage = [&](const GPSSatelliteUsageReport&) { ++satelliteUsage; };
         sinks.onRTCM = [&](std::span<const uint8_t>) { ++correctionFrames; };
         sinks.onSurveyIn = [&](const GPSSurveyReport& survey) {
             const bool prior = survey.duration.count() > elapsed.elapsed() / 1000 + 2;
@@ -483,6 +510,7 @@ int run(const Options& options)
             stage.insert("position_messages", positions);
             stage.insert("last_position", lastPosition);
             stage.insert("satellite_messages", satellites);
+            stage.insert("satellite_usage_messages", satelliteUsage);
             stage.insert("correction_frames", correctionFrames);
             stage.insert("survey_observations", surveys);
             stage.insert("wire_evidence", evidence.evidence());
@@ -505,6 +533,21 @@ int run(const Options& options)
         if (!configured) {
             failed = true;
         } else {
+            bool receiveFailed = false;
+            const auto recordReceive = [&](const GPSReceiveResult& result) {
+                if (!result.terminal()) {
+                    return false;
+                }
+                receiveFailed = true;
+                failed = true;
+                const QString detail = result.status == GPSReceiveStatus::ProtocolError    ? "terminal_protocol_error"
+                                       : result.status == GPSReceiveStatus::TransportError ? "terminal_transport_error"
+                                                                                           : "not_configured";
+                checks.append(check("receive_outcome", "failed", detail));
+                stage.insert("receive_error_code", result.errorCode);
+                stage.insert("transport_healthy_at_receive_failure", !evidence.fatalError());
+                return true;
+            };
             operationDeadline.store(now() + options.observeMs + options.timeoutMs);
             if (scripted) {
                 injectMeasurements(*receiver, options, config);
@@ -513,7 +556,15 @@ int run(const Options& options)
             observation.start();
             qint64 lastCheckpointMs = 0;
             while (!stop.load() && !evidence.fatalError() && observation.elapsed() < options.observeMs) {
-                driver.receive(50);
+                const auto result = driver.receive(50);
+                if (recordReceive(result)) {
+                    break;
+                }
+                if (result.status == GPSReceiveStatus::Cancelled) {
+                    failed = true;
+                    checks.append(check("observation_window", "failed", "Receive cancelled during observation"));
+                    break;
+                }
                 if (!options.outputPath.isEmpty() && observation.elapsed() - lastCheckpointMs >= 1000) {
                     if (const QString error = checkpoint(); !error.isEmpty()) {
                         stop.store(true);
@@ -526,30 +577,46 @@ int run(const Options& options)
                 failed = true;
                 checks.append(check("observation_window", "failed", "Observation interrupted or deadline expired"));
             }
-            if (!stop.load() && (options.action == "cancel" || (options.action == "suite" && name == stages.last()))) {
+            const bool cancellationRequested =
+                options.action == "cancel" || (options.action == "suite" && name == stages.last());
+            if (receiveFailed && cancellationRequested) {
+                checks.append(check("receive_cancellation", "not_run", "Prior terminal receive failure"));
+            }
+            if (!failed && !stop.load() && cancellationRequested) {
                 if (scripted) {
-                    injectMeasurements(*receiver, options, config);
+                    injectMeasurements(*receiver, options, config, true);
                 }
                 operationDeadline.store(now() + options.cancelAfterMs);
                 QElapsedTimer cancellation;
                 cancellation.start();
                 int receiveCalls = 0;
+                GPSReceiveResult result;
                 do {
-                    driver.receive(2000);
+                    result = driver.receive(2000);
                     ++receiveCalls;
-                } while (!stop.load() && !evidence.fatalError() &&
+                    if (recordReceive(result)) {
+                        break;
+                    }
+                } while (result.status != GPSReceiveStatus::Cancelled && !stop.load() && !evidence.fatalError() &&
                          cancellation.elapsed() < options.cancelAfterMs + 500);
                 const qint64 cancelMs = cancellation.elapsed();
                 operationDeadline.store(0);
-                const bool cancelled = stop.load() && !evidence.fatalError() && cancelMs < options.cancelAfterMs + 500;
-                checks.append(check("receive_cancellation", cancelled ? "passed" : "failed",
+                const bool timely =
+                    !receiveFailed && stop.load() && !evidence.fatalError() && cancelMs < options.cancelAfterMs + 500;
+                const bool cancelled = timely && result.status == GPSReceiveStatus::Cancelled;
+                const bool legacyUnverified = timely && options.backend == "legacy";
+                checks.append(check("receive_cancellation",
+                                    cancelled          ? "passed"
+                                    : legacyUnverified ? "inconclusive"
+                                                       : "failed",
                                     QString("Receive loop returned after %1 ms across %2 calls; stop requested=%3. "
-                                            "Streaming input may prevent a blocked-read test.")
+                                            "Only typed cancellation proves a native cancellation outcome; "
+                                            "legacy returns remain ambiguous.")
                                         .arg(cancelMs)
                                         .arg(receiveCalls)
                                         .arg(stop.load())));
                 stage.insert("cancellation_ms", cancelMs);
-                failed = failed || !cancelled;
+                failed = failed || (!cancelled && !legacyUnverified);
                 // Cancellation is the final operation; never send a cleanup configuration.
                 stop.store(true);
             }
@@ -631,7 +698,7 @@ int main(int argc, char* argv[])
         {"cancel-after-ms", "Delay before requesting blocked-receive cancellation", "milliseconds", "50"},
         {"model", "Scripted receiver: f9p|m8p", "model", "f9p"},
         {"survey-state", "Scripted observations: fresh|retained|none", "state", "fresh"},
-        {"fault", "Scripted fault: none|nak|wrong-readback|cancel", "fault", "none"},
+        {"fault", "Scripted fault: none|nak|wrong-readback|cancel|rtcm-nak|rtcm-nak-cancel", "fault", "none"},
     });
     if (!parser.parse(app.arguments())) {
         return output({{"outcome", "rejected"}, {"detail", parser.errorText()}}, 2);

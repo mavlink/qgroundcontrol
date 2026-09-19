@@ -99,8 +99,7 @@ typedef struct
                                       8: moving-base RTK with float ambiguities
                                       10:Precise Point Positioning (PPP) */
     uint8_t mode_reserved : 2;   /**< Reserved */
-    uint8_t mode_base_fixed : 1; /**< Set if the user has entered the command setPVTMode,base,auto and the receiver
-                                      is still in the process of determining its fixed position. */
+    uint8_t mode_base_fixed : 1; /**< Automatic static base position determination is still in progress (Mode bit 6). */
     uint8_t mode_2d : 1;         /**< 2D/3D flag: set in 2D mode(height assumed constant and not computed). */
     uint8_t error;               /**< PVT error code. The following values are defined:
                                        0: No Error
@@ -187,8 +186,7 @@ typedef struct
                                       8: moving-base RTK with float ambiguities
                                       10:Precise Point Positioning (PPP) */
     uint8_t mode_reserved : 2;   /**< Reserved */
-    uint8_t mode_base_fixed : 1; /**< Set if the user has entered the command setPVTMode,base,auto and the receiver
-                                       is still in the process of determining its fixed position. */
+    uint8_t mode_base_fixed : 1; /**< Automatic static base position determination is still in progress (Mode bit 6). */
     uint8_t mode_2d : 1;         /**< 2D/3D flag: set in 2D mode(height assumed constant and not computed). */
     uint8_t error;               /**< PVT error code. The following values are defined:
                                        0: No Error

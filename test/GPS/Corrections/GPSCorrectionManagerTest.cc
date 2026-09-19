@@ -17,6 +17,7 @@
 #include "GPSCorrectionManager.h"
 #include "GPSCorrectionSettings.h"
 #include "GPSManager.h"
+#include "GPSRTKFactGroup.h"
 #include "GPSRtk.h"
 #include "GpsTestHelpers.h"
 #include "MockNTRIPTransport.h"
@@ -65,7 +66,6 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     auto local = corrections.registerSource(GPSCorrectionSource::LocalReceiver);
     const auto localToken = local.token();
     auto* forwarder = corrections.rtcmMavlink();
-    QCOMPARE(ntrip.rtcmMavlink(), forwarder);
     QCOMPARE(forwarder->parent(), &corrections);
     QVERIFY(corrections._udpInput.isRunning());
     QList<uint8_t> sequences;
@@ -352,7 +352,6 @@ void GPSCorrectionManagerTest::_qmlForwarderAvailableBeforeInit()
         import QGroundControl
         QtObject {
             readonly property var forwarder: QGroundControl.gpsManager.corrections.rtcmMavlink
-            readonly property var ntripForwarder: QGroundControl.ntripManager.rtcmMavlink
             readonly property var legacyBaseFacts: QGroundControl.gpsRtk
         }
     )",
@@ -362,8 +361,6 @@ void GPSCorrectionManagerTest::_qmlForwarderAvailableBeforeInit()
     std::unique_ptr<QObject> root(component.create());
     QVERIFY2(root, qPrintable(component.errorString()));
     QCOMPARE(root->property("forwarder").value<RTCMMavlink*>(), GPSManager::instance()->corrections()->rtcmMavlink());
-    QCOMPARE(root->property("ntripForwarder").value<RTCMMavlink*>(),
-             GPSManager::instance()->corrections()->rtcmMavlink());
     QCOMPARE(root->property("legacyBaseFacts").value<FactGroup*>(),
              GPSManager::instance()->gpsRtk()->gpsRtkFactGroup());
 }

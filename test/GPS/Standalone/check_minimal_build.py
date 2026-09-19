@@ -12,6 +12,7 @@ from pathlib import Path
 CASES = {
     "DriverReports": ({"QGCGPSDriverReportsConsumer"}, "QGCGPSDriverReportsHeaderChecks"),
     "ReceiverConfig": ({"QGCGPSReceiverConfigConsumer"}, "QGCGPSReceiverConfigHeaderChecks"),
+    "TransportTypes": ({"QGCGPSTransportTypesConsumer"}, "QGCGPSTransportTypesHeaderChecks"),
     "Px4Adapter": (
         {"QGCGPSPx4AdapterConsumer", "QGCGPSDriverReportsConsumer"},
         "QGCGPSDriverReportsHeaderChecks",
@@ -23,6 +24,7 @@ CASES = {
             "QGCGPSReceiverConfigConsumer",
             "QGCGPSNMEAProtocolConsumer",
             "QGCGPSRTCMFramerConsumer",
+            "QGCGPSTransportTypesConsumer",
         },
         "QGCGPSNativeCommonHeaderChecks",
     ),

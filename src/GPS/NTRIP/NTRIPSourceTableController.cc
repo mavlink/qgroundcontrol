@@ -60,10 +60,14 @@ QAbstractListModel* NTRIPSourceTableController::mountpointModel() const
 
 void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, const QGeoCoordinate& sortCoord)
 {
+    if (_deferModelMutation([this, config, sortCoord]() { fetch(config, sortCoord); })) {
+        return;
+    }
     const QString cacheKey = config.casterIdentity();
     const QString invalid = config.validationError();
 
     if (invalid.isEmpty() && _reply && _fetchStatus == FetchStatus::InProgress && cacheKey == _lastFetchKey) {
+        _sortCoord = sortCoord;
         return;
     }
 
@@ -82,6 +86,11 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
     if (_model->count() > 0 && _cacheAge.isValid() && cacheKey == _lastFetchKey) {
         if (const qint64 age = _cacheAge.elapsed(); age < kCacheTtlMs) {
             qCDebug(NTRIPSourceTableControllerLog) << "Source table cache hit, age:" << age << "ms";
+            _sortCoord = sortCoord;
+            _model->updateDistances(_sortCoord);
+            if (!current()) {
+                return;
+            }
             _fetchStatus = FetchStatus::Success;
             emit fetchStatusChanged();
             return;
@@ -192,6 +201,9 @@ void NTRIPSourceTableController::_onReplyFinished(QNetworkReply* reply, quint64 
 
 void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
 {
+    if (_deferModelMutation([this, table]() { _onSourceTableReceived(table); })) {
+        return;
+    }
     const QPointer<NTRIPSourceTableController> guard(this);
     const quint64 revision = _fetchRevision;
     const auto current = [this, guard, revision]() { return guard && _fetchRevision == revision; };
@@ -217,6 +229,9 @@ void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
 
 void NTRIPSourceTableController::_onFetchError(const QString& error)
 {
+    if (_deferModelMutation([this, error]() { _onFetchError(error); })) {
+        return;
+    }
     const QPointer<NTRIPSourceTableController> guard(this);
     const quint64 revision = _fetchRevision;
     const auto current = [this, guard, revision]() { return guard && _fetchRevision == revision; };
@@ -231,6 +246,25 @@ void NTRIPSourceTableController::_onFetchError(const QString& error)
     if (current()) {
         emit fetchStatusChanged();
     }
+}
+
+bool NTRIPSourceTableController::_deferModelMutation(std::function<void()> action)
+{
+    if (!_model->_mutating) {
+        return false;
+    }
+    // A reset observer can replace this fetch. Retire its publication now, but
+    // defer the replacement (including status signals) until the model is stable.
+    const quint64 revision = ++_fetchRevision;
+    QMetaObject::invokeMethod(
+        this,
+        [this, revision, action = std::move(action)]() {
+            if (_fetchRevision == revision) {
+                action();
+            }
+        },
+        Qt::QueuedConnection);
+    return true;
 }
 
 void NTRIPSourceTableController::_abortReply()

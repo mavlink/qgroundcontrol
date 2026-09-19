@@ -12,7 +12,7 @@ struct Frame
     std::array<uint8_t, 4096> payload{};
 };
 
-/// A native frame owns its bytes until both checksum bytes are consumed.
+/// Completed frames own their bytes independently of subsequent consumes and resets.
 class FrameDecoder
 {
 public:
@@ -36,7 +36,7 @@ public:
             case State::Sync2:
                 if (byte == 0x62) {
                     _state = State::Class;
-                } else {
+                } else if (byte != 0xb5) {
                     reset();
                 }
                 break;

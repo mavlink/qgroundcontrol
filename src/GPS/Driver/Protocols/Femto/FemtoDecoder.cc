@@ -167,8 +167,8 @@ int GPSNativeFemto::handleMessage(int len)
             sendSurveyInStatusUpdate(false, true, fix->latitude, fix->longitude, fix->altitude + fix->geoidSeparation);
             _rtcmActivationPending = true;
         }
-        if (_satellite_info && fix->satellitesUsed) {
-            publishSatelliteUsage(*fix->satellitesUsed);
+        if (_satellite_info) {
+            publishSatelliteUsage(fix->satellitesUsed);
         }
     }
 

@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "GPSNativeSatelliteData.h"
+#include "GPSSatelliteUsageReport.h"
 
 struct GPSNativeSatelliteReport
 {
@@ -13,10 +14,4 @@ struct GPSNativeSatelliteReport
     uint16_t count = 0;
     std::optional<GPSConstellation> constellation;
     std::array<GPSNativeSatelliteData, SAT_INFO_MAX_SATELLITES> entries{};
-};
-
-struct GPSSatelliteUsageReport
-{
-    uint64_t timestamp = 0;
-    std::optional<int> usedCount;
 };

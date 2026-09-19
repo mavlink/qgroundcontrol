@@ -1,5 +1,8 @@
 #pragma once
 
+#include <deque>
+#include <functional>
+
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
@@ -35,8 +38,7 @@ struct NTRIPMountpoint
     /// valid STR row; returns false (out untouched) otherwise.
     static bool fromSourceTableLine(const QString& line, NTRIPMountpoint& out);
 
-    /// Recompute distanceKm from a reference coordinate. No-op for invalid
-    /// references or unknown (0,0) mountpoint coordinates.
+    /// Recompute distanceKm, or mark it unknown for invalid reference/mountpoint coordinates.
     void updateDistance(const QGeoCoordinate& from);
 };
 
@@ -88,5 +90,13 @@ signals:
     void countChanged();
 
 private:
+    friend class NTRIPSourceTableController;
+
+    /// Reset observers may request another mutation; finish the current notification first.
+    void _mutate(std::function<void()> mutation);
+    void _sortByDistance();
+
     QList<NTRIPMountpoint> _mountpoints;
+    std::deque<std::function<void()>> _pendingMutations;
+    bool _mutating = false;
 };

@@ -1,8 +1,11 @@
 #include "DataRateTracker.h"
 
-DataRateTracker::DataRateTracker()
+#include <utility>
+
+DataRateTracker::DataRateTracker(Clock clock)
+    : _clock(clock ? std::move(clock) : Clock{MonotonicClock::nowUs})
 {
-    _timer.start();
+    _windowStartedUs = _clock();
 }
 
 void DataRateTracker::recordBytes(qsizetype bytes)
@@ -10,12 +13,18 @@ void DataRateTracker::recordBytes(qsizetype bytes)
     _windowBytes += bytes;
     _totalBytes += static_cast<quint64>(bytes);
 
-    const qint64 elapsed = _timer.elapsed();
-    if (elapsed >= kWindowMs) {
-        _currentRate = static_cast<double>(_windowBytes) / static_cast<double>(elapsed) * 1000.0;
+    refresh();
+}
+
+void DataRateTracker::refresh()
+{
+    const quint64 now = _clock();
+    const quint64 elapsed = now >= _windowStartedUs ? now - _windowStartedUs : 0;
+    if (elapsed >= kWindowUs) {
+        _currentRate = static_cast<double>(_windowBytes) / static_cast<double>(elapsed) * 1000000.0;
         _windowBytes = 0;
         _rateUpdated = true;
-        (void) _timer.restart();
+        _windowStartedUs = now;
     } else {
         _rateUpdated = false;
     }
@@ -27,5 +36,5 @@ void DataRateTracker::reset()
     _windowBytes = 0;
     _currentRate = 0.0;
     _rateUpdated = false;
-    _timer.restart();
+    _windowStartedUs = _clock();
 }

@@ -141,10 +141,13 @@ GPSReadResult ScriptedUBXReceiver::read(uint8_t* buffer, int length, int timeout
     return {GPSReadStatus::Data, count};
 }
 
-GPSWriteResult ScriptedUBXReceiver::write(const uint8_t* buffer, int length)
+GPSWriteResult ScriptedUBXReceiver::writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline)
 {
     if (isCancelled()) {
         return {GPSWriteStatus::Cancelled};
+    }
+    if (deadline.hasExpired()) {
+        return {GPSWriteStatus::TimedOut};
     }
     _outgoing.append(reinterpret_cast<const char*>(buffer), length);
     while (_outgoing.size() >= 6) {
@@ -309,6 +312,10 @@ bool ScriptedUBXReceiver::_handleFrame(const QByteArray& frame)
     std::optional<unsigned> mode;
     if (messageId == CFG_VALSET) {
         const auto values = _valsetValues(payload);
+        if (rejectRtcmActivation && values.value(0x30210001) == 1000) {
+            _queueAck(messageId, false);
+            return true;
+        }
         if (values.contains(TMODE_MODE)) {
             mode = static_cast<unsigned>(values.value(TMODE_MODE));
         }
@@ -336,6 +343,11 @@ bool ScriptedUBXReceiver::_handleFrame(const QByteArray& frame)
         surveyAccuracy = qFromLittleEndian<quint32>(payload.constData() + 28);
     } else if (messageId == 0x24 && payload.size() == 36) {
         dynamicModel = static_cast<uint8_t>(payload[2]);
+    }
+    if (rejectRtcmActivation && messageId == 0x08 && payload.size() == 6 &&
+        qFromLittleEndian<quint16>(payload.constData()) == 1000) {
+        _queueAck(messageId, false);
+        return true;
     }
     if (!mode) {
         _queueAck(messageId, true);

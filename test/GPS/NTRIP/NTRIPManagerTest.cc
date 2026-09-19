@@ -484,7 +484,7 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     });
     NTRIPManager mgr;
     mgr.setCorrectionManager(&corrections);
-    QCOMPARE(mgr.rtcmMavlink(), corrections.rtcmMavlink());
+    QCOMPARE(mgr.metaObject()->indexOfProperty("rtcmMavlink"), -1);
     QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
     auto* first = new MockNTRIPTransport(&mgr);
     first->autoConnect = false;
@@ -617,10 +617,12 @@ void NTRIPManagerTest::testGgaSettingsUseInjectedProviders()
     saved.setFactValue(settings->ntripGgaIntervalSec(), 60);
     NTRIPManager manager;
     manager.setGgaPositionProvider(Source::VehicleGPS, []() {
-        return PositionResult{QGeoCoordinate(47, 8, 500), QStringLiteral("Injected vehicle")};
+        return PositionResult{QGeoCoordinate(47, 8, 500), QStringLiteral("Injected vehicle"),
+                              GPSAltitudeDatum::MeanSeaLevel};
     });
     manager.setGgaPositionProvider(Source::GCSPosition, []() {
-        return PositionResult{QGeoCoordinate(48, 9, 600), QStringLiteral("Injected GCS")};
+        return PositionResult{QGeoCoordinate(48, 9, 600), QStringLiteral("Injected GCS"),
+                              GPSAltitudeDatum::MeanSeaLevel};
     });
     auto* transport = new MockNTRIPTransport(&manager);
     manager.setTransportForTest(transport);

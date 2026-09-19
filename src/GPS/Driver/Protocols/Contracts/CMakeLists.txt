@@ -4,7 +4,9 @@ endif()
 add_library(QGCGPSNativeContracts INTERFACE)
 add_library(QGC::GPSNativeContracts ALIAS QGCGPSNativeContracts)
 target_compile_features(QGCGPSNativeContracts INTERFACE cxx_std_20)
-target_link_libraries(QGCGPSNativeContracts INTERFACE QGCGPSReceiverConfig QGCGPSNMEAProtocol)
+target_link_libraries(QGCGPSNativeContracts INTERFACE QGCGPSReceiverConfig QGCGPSDriverReports QGCGPSTransportTypes
+                                                      QGCGPSNMEAProtocol
+)
 target_include_directories(QGCGPSNativeContracts INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 target_sources(
     QGCGPSNativeContracts
@@ -14,7 +16,6 @@ target_sources(
               GPSCommandTransaction.h
               GPSDeadline.h
               GPSDecodedBatch.h
-              GPSIOStatus.h
               GPSNativeIntegrityReport.h
               GPSNativePositionReport.h
               GPSNativeRelativeReport.h

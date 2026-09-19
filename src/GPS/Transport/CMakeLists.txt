@@ -1,9 +1,24 @@
+if(NOT TARGET QGCGPSTransportTypes)
+    add_library(QGCGPSTransportTypes INTERFACE)
+    add_library(QGC::GPSTransportTypes ALIAS QGCGPSTransportTypes)
+    target_compile_features(QGCGPSTransportTypes INTERFACE cxx_std_20)
+    target_sources(QGCGPSTransportTypes INTERFACE FILE_SET HEADERS FILES GPSIOStatus.h)
+endif()
+
+if(DEFINED QGC_GPS_COMPONENTS_ENABLED
+   AND NOT "Transport" IN_LIST QGC_GPS_COMPONENTS_ENABLED
+   AND NOT "ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED
+   AND NOT "Driver" IN_LIST QGC_GPS_COMPONENTS_ENABLED
+)
+    return()
+endif()
+
 add_library(QGCGPSTransport STATIC GPSTransport.cc)
 add_library(QGC::GPSTransport ALIAS QGCGPSTransport)
 target_compile_features(QGCGPSTransport PUBLIC cxx_std_20)
 target_link_libraries(
     QGCGPSTransport
-    PUBLIC Qt6::Core
+    PUBLIC Qt6::Core QGCGPSTransportTypes
     PRIVATE QGCLoggingCategory
 )
 target_sources(QGCGPSTransport PUBLIC FILE_SET HEADERS FILES GPSTransport.h GPSTransportResult.h)

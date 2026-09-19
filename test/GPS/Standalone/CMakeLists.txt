@@ -6,7 +6,7 @@ if(COMMAND add_qgc_test AND NOT CMAKE_CROSSCOMPILING)
     if(NOT TARGET Python3::Interpreter)
         message(FATAL_ERROR "The GPS minimal-build matrix requires Python3::Interpreter")
     endif()
-    foreach(component DriverReports ReceiverConfig Px4Adapter Native Driver)
+    foreach(component DriverReports ReceiverConfig TransportTypes Px4Adapter Native Driver)
         add_test(
             NAME "CMake.GPSMinimal.${component}"
             COMMAND
@@ -39,6 +39,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         NMEA
         Positioning
         Transport
+        TransportTypes
         ReceiverTransports
         RTCMFramer
         RTCM
@@ -61,7 +62,15 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED Native Transport)
     endif()
     if("Native" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        list(APPEND QGC_GPS_COMPONENTS_ENABLED DriverReports ReceiverConfig NMEAProtocol RTCMFramer)
+        list(
+            APPEND
+            QGC_GPS_COMPONENTS_ENABLED
+            DriverReports
+            ReceiverConfig
+            TransportTypes
+            NMEAProtocol
+            RTCMFramer
+        )
     endif()
     if("Px4Adapter" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED DriverReports)
@@ -101,6 +110,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         Px4Adapter
         ReceiverConfig
         Native
+        TransportTypes
     )
     if(_qt_gps_components)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
@@ -128,7 +138,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     if("Positioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/PositionManager" Positioning)
     endif()
-    if("Transport" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    if("Transport" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "TransportTypes" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/Transport" Transport)
     endif()
     if("ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
@@ -218,6 +228,7 @@ foreach(
     QGCGPSNTRIPHttp
     QGCGPSNTRIP
     QGCGPSTransport
+    QGCGPSTransportTypes
     QGCGPSReceiverTransports
     QGCGPSRTCMFramer
     QGCGPSRTCM

@@ -67,8 +67,8 @@ void GPSRtk::_onGPSDisconnect()
     _gpsRtkFactGroup->currentLatitude()->setRawValue(qQNaN());
     _gpsRtkFactGroup->currentLongitude()->setRawValue(qQNaN());
     _gpsRtkFactGroup->currentAltitude()->setRawValue(qQNaN());
-    _gpsRtkFactGroup->numSatellites()->setRawValue(0);
-    _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(0);
+    _gpsRtkFactGroup->numSatellites()->setRawValue(-1);
+    _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(-1);
 }
 
 void GPSRtk::_onGPSConnectionError(GPSConnectionError error)
@@ -212,6 +212,7 @@ void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
         },
         Qt::QueuedConnection);
     (void) connectCurrent(&GPSProvider::satelliteInfoUpdate, std::bind_front(&GPSRtk::_satelliteInfoUpdate, this));
+    (void) connectCurrent(&GPSProvider::satelliteUsageUpdate, std::bind_front(&GPSRtk::_satelliteUsageUpdate, this));
     (void) connectCurrent(&GPSProvider::sensorGpsUpdate, std::bind_front(&GPSRtk::_sensorGpsUpdate, this));
     (void) connectCurrent(&GPSProvider::surveyInStatus, std::bind_front(&GPSRtk::_onGPSSurveyInStatus, this));
     (void) connectCurrent(&GPSProvider::connectionError, [this](GPSConnectionError error) {
@@ -252,7 +253,7 @@ bool GPSRtk::connected() const
     return _gpsRtkFactGroup->connected()->rawValue().toBool();
 }
 
-FactGroup* GPSRtk::gpsRtkFactGroup()
+GPSRTKFactGroup* GPSRtk::gpsRtkFactGroup()
 {
     return _gpsRtkFactGroup;
 }
@@ -261,9 +262,17 @@ GPSRtk::SatelliteCounts GPSRtk::countSatellites(const GPSSatelliteReport& msg)
 {
     SatelliteCounts counts;
     counts.inView = (std::min) (msg.count, GPSSatelliteReport::MAX_SATELLITES);
+    if (msg.count > GPSSatelliteReport::MAX_SATELLITES) {
+        return counts;
+    }
+    counts.used = 0;
     for (uint16_t i = 0; i < counts.inView; ++i) {
-        if (msg.satellites[i].used.value_or(false)) {
-            ++counts.used;
+        if (!msg.satellites[i].used) {
+            counts.used.reset();
+            break;
+        }
+        if (*msg.satellites[i].used) {
+            ++*counts.used;
         }
     }
     return counts;
@@ -272,9 +281,13 @@ GPSRtk::SatelliteCounts GPSRtk::countSatellites(const GPSSatelliteReport& msg)
 void GPSRtk::_satelliteInfoUpdate(const GPSSatelliteReport& msg)
 {
     const SatelliteCounts counts = countSatellites(msg);
-    qCDebug(GPSRtkLog) << Q_FUNC_INFO << QStringLiteral("%1 in view, %2 used").arg(counts.inView).arg(counts.used);
+    qCDebug(GPSRtkLog) << QStringLiteral("%1 in view, %2 used")
+                              .arg(counts.inView)
+                              .arg(counts.used ? QString::number(*counts.used) : QStringLiteral("unknown"));
     _gpsRtkFactGroup->numSatellites()->setRawValue(counts.inView);
-    _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(counts.used);
+    if (counts.used) {
+        _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(*counts.used);
+    }
 }
 
 void GPSRtk::_sensorGpsUpdate(const GPSPositionReport& msg)
@@ -284,4 +297,10 @@ void GPSRtk::_sensorGpsUpdate(const GPSPositionReport& msg)
                               .arg(msg.altitudeMslMeters)
                               .arg(msg.longitudeDegrees)
                               .arg(msg.latitudeDegrees);
+}
+
+void GPSRtk::_satelliteUsageUpdate(const GPSSatelliteUsageReport& msg)
+{
+    // A count-only observation cannot change the independently reported satellites in view.
+    _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(msg.usedCount.value_or(-1));
 }

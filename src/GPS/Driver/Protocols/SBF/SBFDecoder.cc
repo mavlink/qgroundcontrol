@@ -31,6 +31,8 @@
  *
  ****************************************************************************/
 
+#include <numbers>
+
 #include "LittleEndian.h"
 #include "SBFPrivate.h"
 
@@ -332,11 +334,13 @@ int GPSNativeSBF::payloadRxDone()
             // Check boundaries and invalidate position
             // We're not just checking for the do-not-use value (-2*10^10) but for any value beyond the specified max
             // values
-            if (fabs(_buf.payload_pvt_geodetic.latitude) > (double) (GPS_PI / 2.0f) ||
-                fabs(_buf.payload_pvt_geodetic.longitude) > (double) GPS_PI ||
-                fabs(_buf.payload_pvt_geodetic.height) > DNU ||
-                fabsf(_buf.payload_pvt_geodetic.undulation) > (float) DNU) {
-                _gps_position->fix_type = 0;
+            const auto& pvt = _buf.payload_pvt_geodetic;
+            const bool coordinatesValid = std::isfinite(pvt.latitude) &&
+                                          std::abs(pvt.latitude) <= std::numbers::pi / 2 &&
+                                          std::isfinite(pvt.longitude) && std::abs(pvt.longitude) <= std::numbers::pi &&
+                                          std::isfinite(pvt.height) && std::abs(pvt.height) <= DNU;
+            if (!coordinatesValid || !std::isfinite(pvt.undulation) || std::abs(pvt.undulation) > DNU) {
+                _gps_position->fix_type = GPSNativePositionReport::FIX_TYPE_NONE;
             }
 
             if (_buf.payload_pvt_geodetic.nr_sv < 255) {  // 255 = do not use value
@@ -386,17 +390,24 @@ int GPSNativeSBF::payloadRxDone()
             _gps_position->timestamp = nowUs();
 
             // In RTCM mode, PVTGeodetic is used to get base station survey-in
-            if (_output_mode == OutputMode::RTCM) {
+            if (_configured && _output_mode == OutputMode::RTCM) {
+                // Mode bit 6 means automatic base determination is still in progress, not completed.
+                // Septentrio PolaRx5TR 5.5.0 Reference Guide, SBF Mode definition (p. 382).
+                const bool active = !_baseConfig.useFixedBase && pvt.mode_base_fixed;
+                const bool valid =
+                    !pvt.mode_base_fixed && pvt.mode_type == 3 && !pvt.mode_2d && !pvt.error && coordinatesValid;
+                if (!_baseConfig.useFixedBase && (active || _survey_active)) {
+                    _survey_duration = (nowUs() - _survey_activation_date) / 1000000;
+                }
+                _survey_active = active;
                 GPSNativeSurveyReport status{};
-                status.accuracyKnown = true;
+                // PVT accuracy describes the navigation solution, not the averaged base survey.
                 status.altitudeDatum = GPSNativeSurveyReport::AltitudeDatum::Ellipsoid;
-                status.latitude = _gps_position->latitude_deg;
-                status.longitude = _gps_position->longitude_deg;
-                status.altitude = _gps_position->altitude_ellipsoid_m;
-                status.duration = _survey_active ? (float) (nowUs() - _survey_activation_date) / 1000000.0f : 0;
-                status.mean_accuracy =
-                    (_buf.payload_pvt_geodetic.h_accuracy + _buf.payload_pvt_geodetic.v_accuracy) / 20;  // Value in mm
-                status.flags = (_buf.payload_pvt_geodetic.mode_type > 0 ? 1 : 0) | (_survey_active & 1) << 1;
+                status.latitude = coordinatesValid && !pvt.error ? _gps_position->latitude_deg : NAN;
+                status.longitude = coordinatesValid && !pvt.error ? _gps_position->longitude_deg : NAN;
+                status.altitude = coordinatesValid && !pvt.error ? _gps_position->altitude_ellipsoid_m : NAN;
+                status.duration = _baseConfig.useFixedBase ? 0 : _survey_duration;
+                status.flags = static_cast<uint8_t>(valid) | (static_cast<uint8_t>(active) << 1);
                 surveyInStatus(status);
                 ret |= 4;  // RTCM infos have been updated
             }

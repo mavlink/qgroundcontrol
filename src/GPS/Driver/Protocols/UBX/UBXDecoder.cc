@@ -31,6 +31,8 @@
  *
  ****************************************************************************/
 
+#include <string_view>
+
 #include "UBXMessageCodec.h"
 #include "UBXPrivate.h"
 
@@ -48,38 +50,32 @@ int GPSNativeUBX::parseChar(uint8_t byte)
             return 0;
         }
     }
+    // Keep the completed frame local: synchronous logging can reenter or reset the parser.
     const auto frame = _frameDecoder.consume(byte);
     if (!frame) {
         return 0;
     }
-    _rx_msg = frame->message;
-    _rx_payload_length = frame->length;
-    _framePayload = frame->payload;
-    const int updates = decodeValidatedPayload();
     if (_rtcm_parsing) {
         _rtcm_parsing->reset();
     }
-    return updates;
+    return decodeValidatedPayload(frame->message, std::span(frame->payload).first(frame->length));
 }
 
-int  // -1 = abort, 0 = continue
-GPSNativeUBX::payloadRxInit()
+bool GPSNativeUBX::payloadRxInit(uint16_t message, std::span<const uint8_t> payload)
 {
-    int ret = 0;
+    auto state = UBX_RXMSG_HANDLE;
 
-    _rx_state = UBX_RXMSG_HANDLE;  // handle by default
-
-    switch (_rx_msg) {
+    switch (message) {
         case UBX_MSG_CFG_TMODE3:
             if (!_timeModeReadbackPending) {
-                _rx_state = UBX_RXMSG_IGNORE;
+                state = UBX_RXMSG_IGNORE;
             }
             break;
         case UBX_MSG_CFG_VALGET:
             if (!_controller.readbackPending()) {
-                _rx_state = UBX_RXMSG_IGNORE;
-            } else if (_rx_payload_length < 4 || _rx_payload_length > UBX::MAX_CONTROL_PAYLOAD_SIZE) {
-                _rx_state = UBX_RXMSG_ERROR_LENGTH;
+                state = UBX_RXMSG_IGNORE;
+            } else if (payload.size() < 4 || payload.size() > UBX::MAX_CONTROL_PAYLOAD_SIZE) {
+                state = UBX_RXMSG_ERROR_LENGTH;
             }
             break;
         case UBX_MSG_MON_COMMS:
@@ -87,10 +83,10 @@ GPSNativeUBX::payloadRxInit()
 
         case UBX_MSG_NAV_PVT:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
 
             } else if (!_use_nav_pvt) {
-                _rx_state = UBX_RXMSG_DISABLE;  // disable if not using NAV-PVT
+                state = UBX_RXMSG_DISABLE;  // disable if not using NAV-PVT
             }
 
             break;
@@ -99,73 +95,73 @@ GPSNativeUBX::payloadRxInit()
         case UBX_MSG_INF_ERROR:
         case UBX_MSG_INF_NOTICE:
         case UBX_MSG_INF_WARNING:
-            if (_rx_payload_length >= UBX::MAX_CONTROL_PAYLOAD_SIZE) {
-                _rx_state = UBX_RXMSG_ERROR_LENGTH;
+            if (payload.size() >= UBX::MAX_CONTROL_PAYLOAD_SIZE) {
+                state = UBX_RXMSG_ERROR_LENGTH;
             }
 
             break;
 
         case UBX_MSG_NAV_POSLLH:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
 
             } else if (_use_nav_pvt) {
-                _rx_state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
+                state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
             }
 
             break;
 
         case UBX_MSG_NAV_SOL:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
 
             } else if (_use_nav_pvt) {
-                _rx_state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
+                state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
             }
 
             break;
 
         case UBX_MSG_NAV_STATUS:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
 
         case UBX_MSG_NAV_DOP:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
 
         case UBX_MSG_NAV_RELPOSNED:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
 
         case UBX_MSG_NAV_DAHEADING:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
 
         case UBX_MSG_NAV_HPPOSLLH:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
 
         case UBX_MSG_NAV_TIMEUTC:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
 
             } else if (_use_nav_pvt) {
-                _rx_state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
+                state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
             }
 
             break;
@@ -173,10 +169,10 @@ GPSNativeUBX::payloadRxInit()
         case UBX_MSG_NAV_SAT:
         case UBX_MSG_NAV_SVINFO:
             if (_satellite_info == nullptr) {
-                _rx_state = UBX_RXMSG_DISABLE;  // disable if sat info not requested
+                state = UBX_RXMSG_DISABLE;  // disable if sat info not requested
 
             } else if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
 
             } else {
                 *_satellite_info = {};  // initialize sat info
@@ -189,10 +185,10 @@ GPSNativeUBX::payloadRxInit()
 
         case UBX_MSG_NAV_VELNED:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
 
             } else if (_use_nav_pvt) {
-                _rx_state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
+                state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
             }
 
             break;
@@ -202,86 +198,62 @@ GPSNativeUBX::payloadRxInit()
 
         case UBX_MSG_MON_HW:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
 
         case UBX_MSG_MON_RF:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
 
         case UBX_MSG_SEC_SIG:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;
+                state = UBX_RXMSG_IGNORE;
             }
 
             break;
 
         case UBX_MSG_RXM_RTCM:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
             }
 
             break;
 
         case UBX_MSG_RXM_COR:
             if (!_decodeNavigation) {
-                _rx_state = UBX_RXMSG_IGNORE;
+                state = UBX_RXMSG_IGNORE;
             }
 
             break;
 
         case UBX_MSG_ACK_ACK:
             if (!_controller.awaitingAcknowledgement()) {
-                _rx_state = UBX_RXMSG_IGNORE;  // No command is awaiting acknowledgement.
+                state = UBX_RXMSG_IGNORE;  // No command is awaiting acknowledgement.
             }
 
             break;
 
         case UBX_MSG_ACK_NAK:
             if (!_controller.awaitingAcknowledgement() && !_controller.readbackPending() && !_timeModeReadbackPending) {
-                _rx_state = UBX_RXMSG_IGNORE;  // No command is awaiting acknowledgement.
+                state = UBX_RXMSG_IGNORE;  // No command is awaiting acknowledgement.
             }
 
             break;
 
         default:
-            _rx_state = UBX_RXMSG_DISABLE;  // disable all other messages
+            state = UBX_RXMSG_DISABLE;  // disable all other messages
             break;
     }
 
-    switch (_rx_state) {
-        case UBX_RXMSG_HANDLE:  // handle message
-        case UBX_RXMSG_IGNORE:  // ignore message but don't report error
-            ret = 0;
-            break;
-
-        case UBX_RXMSG_DISABLE:  // disable unexpected messages
-
-                                 // TODO: UBX-MON-HW2
-            // [uavcan:52:gps] ubx msg 0x0a0b len 28 unexpected
-
-            _pendingDisableMessage = _rx_msg;
-
-            ret = -1;  // return error, abort handling this message
-            break;
-
-        case UBX_RXMSG_ERROR_LENGTH:  // error: invalid length
-
-            ret = -1;                 // return error, abort handling this message
-            break;
-
-        default:       // invalid message state
-            log(GPSProtocolLogLevel::Warning, "ubx internal err1");
-            ret = -1;  // return error, abort handling this message
-            break;
+    if (state == UBX_RXMSG_DISABLE) {
+        _pendingDisableMessage = message;
     }
-
-    return ret;
+    return state == UBX_RXMSG_HANDLE;
 }
 
 void GPSNativeUBX::decodeNavSat(std::span<const uint8_t> payload)
@@ -452,20 +424,14 @@ void GPSNativeUBX::decodeMonVer(std::span<const uint8_t> payload)
 }
 
 int  // 0 = no message handled, 1 = message handled, 2 = sat info message handled
-GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
+GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, GPSNativePositionReport& position)
 {
     int ret = 0;
 
-    // return if no message handled
-    if (_rx_state != UBX_RXMSG_HANDLE) {
-        return ret;
-    }
-
     // handle message
-    switch (_rx_msg) {
+    switch (message) {
         case UBX_MSG_NAV_PVT: {
-            const auto decoded_payload_rx_nav_pvt =
-                UBX::MessageCodec<ubx_payload_rx_nav_pvt_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_nav_pvt = UBX::MessageCodec<ubx_payload_rx_nav_pvt_t>::decode(payload);
             if (!decoded_payload_rx_nav_pvt) {
                 break;
             }
@@ -491,7 +457,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
                 position.vel_ned_valid = true;
 
             } else {
-                position.fix_type = 0;
+                position.fix_type = GPSNativePositionReport::FIX_TYPE_NONE;
                 position.vel_ned_valid = false;
             }
 
@@ -551,41 +517,36 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
         }
         case UBX_MSG_INF_DEBUG:
-        case UBX_MSG_INF_NOTICE: {
-            uint8_t* p_buf = _framePayload.data();
-            p_buf[_rx_payload_length] = 0;
-
-        } break;
+        case UBX_MSG_INF_NOTICE:
+            break;
 
         case UBX_MSG_INF_ERROR:
         case UBX_MSG_INF_WARNING: {
-            uint8_t* p_buf = _framePayload.data();
-            p_buf[_rx_payload_length] = 0;
-            log(GPSProtocolLogLevel::Warning, "ubx msg: %s", p_buf);
+            const std::string_view text(reinterpret_cast<const char*>(payload.data()), payload.size());
+            log(GPSProtocolLogLevel::Warning, "ubx msg: %.*s", int(text.size()), text.data());
 
-            if (strncmp(reinterpret_cast<const char*>(p_buf), "txbuf", 5) == 0) {
+            if (text.starts_with("txbuf")) {
                 _comms_request_pending = true;
             }
         } break;
 
         case UBX_MSG_MON_COMMS:
-            logCommsDiagnostics();
+            logCommsDiagnostics(payload);
             break;
         case UBX_MSG_CFG_TMODE3:
-            if (_timeModeReadbackPending && _framePayload[0] == 0 && _framePayload[1] == 0) {
-                _timeModeReadback = _framePayload[2];
+            if (_timeModeReadbackPending && payload[0] == 0 && payload[1] == 0) {
+                _timeModeReadback = payload[2];
                 _timeModeReadbackReady = true;
             }
             break;
         case UBX_MSG_CFG_VALGET:
-            if (const auto values = UBX::decodeConfigurationValues({_framePayload.data(), _rx_payload_length})) {
+            if (const auto values = UBX::decodeConfigurationValues(payload)) {
                 _controller.accept(*values);
             }
             break;
 
         case UBX_MSG_NAV_POSLLH: {
-            const auto decoded_payload_rx_nav_posllh =
-                UBX::MessageCodec<ubx_payload_rx_nav_posllh_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_nav_posllh = UBX::MessageCodec<ubx_payload_rx_nav_posllh_t>::decode(payload);
             if (!decoded_payload_rx_nav_posllh) {
                 break;
             }
@@ -608,7 +569,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
         }
         case UBX_MSG_NAV_HPPOSLLH: {
             const auto decoded_payload_rx_nav_hpposllh =
-                UBX::MessageCodec<ubx_payload_rx_nav_hpposllh_t>::decode({_framePayload.data(), _rx_payload_length});
+                UBX::MessageCodec<ubx_payload_rx_nav_hpposllh_t>::decode(payload);
             if (!decoded_payload_rx_nav_hpposllh) {
                 break;
             }
@@ -641,8 +602,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
         }
         case UBX_MSG_NAV_SOL: {
-            const auto decoded_payload_rx_nav_sol =
-                UBX::MessageCodec<ubx_payload_rx_nav_sol_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_nav_sol = UBX::MessageCodec<ubx_payload_rx_nav_sol_t>::decode(payload);
             if (!decoded_payload_rx_nav_sol) {
                 break;
             }
@@ -657,8 +617,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
         }
         case UBX_MSG_NAV_STATUS: {
-            const auto decoded_payload_rx_nav_status =
-                UBX::MessageCodec<ubx_payload_rx_nav_status_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_nav_status = UBX::MessageCodec<ubx_payload_rx_nav_status_t>::decode(payload);
             if (!decoded_payload_rx_nav_status) {
                 break;
             }
@@ -672,8 +631,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
         }
         case UBX_MSG_NAV_DOP: {
-            const auto decoded_payload_rx_nav_dop =
-                UBX::MessageCodec<ubx_payload_rx_nav_dop_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_nav_dop = UBX::MessageCodec<ubx_payload_rx_nav_dop_t>::decode(payload);
             if (!decoded_payload_rx_nav_dop) {
                 break;
             }
@@ -688,7 +646,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
         }
         case UBX_MSG_NAV_TIMEUTC: {
             const auto decoded_payload_rx_nav_timeutc =
-                UBX::MessageCodec<ubx_payload_rx_nav_timeutc_t>::decode({_framePayload.data(), _rx_payload_length});
+                UBX::MessageCodec<ubx_payload_rx_nav_timeutc_t>::decode(payload);
             if (!decoded_payload_rx_nav_timeutc) {
                 break;
             }
@@ -726,8 +684,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
 
         case UBX_MSG_NAV_SVIN: {
-            const auto decoded_payload_rx_nav_svin =
-                UBX::MessageCodec<ubx_payload_rx_nav_svin_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_nav_svin = UBX::MessageCodec<ubx_payload_rx_nav_svin_t>::decode(payload);
             if (!decoded_payload_rx_nav_svin) {
                 break;
             }
@@ -763,8 +720,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
         }
         case UBX_MSG_NAV_VELNED: {
-            const auto decoded_payload_rx_nav_velned =
-                UBX::MessageCodec<ubx_payload_rx_nav_velned_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_nav_velned = UBX::MessageCodec<ubx_payload_rx_nav_velned_t>::decode(payload);
             if (!decoded_payload_rx_nav_velned) {
                 break;
             }
@@ -785,7 +741,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
         }
         case UBX_MSG_NAV_RELPOSNED: {
             const auto decoded_payload_rx_nav_relposned =
-                UBX::MessageCodec<ubx_payload_rx_nav_relposned_t>::decode({_framePayload.data(), _rx_payload_length});
+                UBX::MessageCodec<ubx_payload_rx_nav_relposned_t>::decode(payload);
             if (!decoded_payload_rx_nav_relposned) {
                 break;
             }
@@ -819,8 +775,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
 
                 gps_rel.timestamp_sample = nowUs();  // TODO: adjust with delay estimate
 
-                gps_rel.time_utc_usec =
-                    uint64_t(payload_rx_nav_relposned.iTOW) * 1000;  // TODO: convert iTOW ms GPS time of week
+                // iTOW alone has no week/UTC correlation; leave time_utc_usec unavailable.
                 gps_rel.reference_station_id = payload_rx_nav_relposned.refStationId;
 
                 gps_rel.position[0] =
@@ -861,7 +816,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
         }
         case UBX_MSG_NAV_DAHEADING: {
             const auto decoded_payload_rx_nav_daheading =
-                UBX::MessageCodec<ubx_payload_rx_nav_daheading_t>::decode({_framePayload.data(), _rx_payload_length});
+                UBX::MessageCodec<ubx_payload_rx_nav_daheading_t>::decode(payload);
             if (!decoded_payload_rx_nav_daheading) {
                 break;
             }
@@ -935,10 +890,9 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
 
         case UBX_MSG_MON_HW: {
-            switch (_rx_payload_length) {
+            switch (payload.size()) {
                 case UBX::WIRE_SIZE<ubx_payload_rx_mon_hw_ubx6_t>: /* u-blox 6 msg format */ {
-                    const auto decoded = UBX::MessageCodec<ubx_payload_rx_mon_hw_ubx6_t>::decode(
-                        {_framePayload.data(), _rx_payload_length});
+                    const auto decoded = UBX::MessageCodec<ubx_payload_rx_mon_hw_ubx6_t>::decode(payload);
                     if (!decoded) {
                         break;
                     }
@@ -953,8 +907,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
                 }
 
                 case UBX::WIRE_SIZE<ubx_payload_rx_mon_hw_ubx7_t>: /* u-blox 7+ msg format */ {
-                    const auto decoded = UBX::MessageCodec<ubx_payload_rx_mon_hw_ubx7_t>::decode(
-                        {_framePayload.data(), _rx_payload_length});
+                    const auto decoded = UBX::MessageCodec<ubx_payload_rx_mon_hw_ubx7_t>::decode(payload);
                     if (!decoded) {
                         break;
                     }
@@ -980,8 +933,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
         }
         case UBX_MSG_MON_RF: {
-            const auto decoded_payload_rx_mon_rf =
-                UBX::MessageCodec<ubx_payload_rx_mon_rf_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_mon_rf = UBX::MessageCodec<ubx_payload_rx_mon_rf_t>::decode(payload);
             if (!decoded_payload_rx_mon_rf) {
                 break;
             }
@@ -1005,8 +957,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
         }
         case UBX_MSG_SEC_SIG: {
-            const auto decoded_payload_rx_sec_sig =
-                UBX::MessageCodec<ubx_payload_rx_sec_sig_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_sec_sig = UBX::MessageCodec<ubx_payload_rx_sec_sig_t>::decode(payload);
             if (!decoded_payload_rx_sec_sig) {
                 break;
             }
@@ -1017,7 +968,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
                 uint8_t flag_byte;
 
                 if (version == 1) {
-                    if (_rx_payload_length < 5) {
+                    if (payload.size() < 5) {
                         ret = 0;
                         break;
                     }
@@ -1063,8 +1014,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
         }
         case UBX_MSG_RXM_RTCM: {
-            const auto decoded_payload_rx_rxm_rtcm =
-                UBX::MessageCodec<ubx_payload_rx_rxm_rtcm_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_rxm_rtcm = UBX::MessageCodec<ubx_payload_rx_rxm_rtcm_t>::decode(payload);
             if (!decoded_payload_rx_rxm_rtcm) {
                 break;
             }
@@ -1080,8 +1030,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
         }
         case UBX_MSG_RXM_COR: {
-            const auto decoded_payload_rx_rxm_cor =
-                UBX::MessageCodec<ubx_payload_rx_rxm_cor_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_rxm_cor = UBX::MessageCodec<ubx_payload_rx_rxm_cor_t>::decode(payload);
             if (!decoded_payload_rx_rxm_cor) {
                 break;
             }
@@ -1125,8 +1074,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
         }
         case UBX_MSG_ACK_ACK: {
-            const auto decoded_payload_rx_ack_ack =
-                UBX::MessageCodec<ubx_payload_rx_ack_ack_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_ack_ack = UBX::MessageCodec<ubx_payload_rx_ack_ack_t>::decode(payload);
             if (!decoded_payload_rx_ack_ack) {
                 break;
             }
@@ -1138,8 +1086,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
             break;
         }
         case UBX_MSG_ACK_NAK: {
-            const auto decoded_payload_rx_ack_ack =
-                UBX::MessageCodec<ubx_payload_rx_ack_ack_t>::decode({_framePayload.data(), _rx_payload_length});
+            const auto decoded_payload_rx_ack_ack = UBX::MessageCodec<ubx_payload_rx_ack_ack_t>::decode(payload);
             if (!decoded_payload_rx_ack_ack) {
                 break;
             }
@@ -1155,7 +1102,7 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
     }
 
     if (ret > 0) {
-        switch (_rx_msg) {
+        switch (message) {
             case UBX_MSG_NAV_STATUS:
             case UBX_MSG_MON_HW:
             case UBX_MSG_MON_RF:
@@ -1176,21 +1123,20 @@ GPSNativeUBX::payloadRxDone(GPSNativePositionReport& position)
     return ret;
 }
 
-void GPSNativeUBX::logCommsDiagnostics()
+void GPSNativeUBX::logCommsDiagnostics(std::span<const uint8_t> payload)
 {
     if (_comms_poll_deadline == 0 || nowUs() > _comms_poll_deadline) {
         return;
     }
 
-    const auto decoded_status =
-        UBX::MessageCodec<ubx_payload_rx_mon_comms_t>::decode({_framePayload.data(), _rx_payload_length});
+    const auto decoded_status = UBX::MessageCodec<ubx_payload_rx_mon_comms_t>::decode(payload);
     if (!decoded_status) {
         return;
     }
     const auto& status = *decoded_status;
 
     if (status.version != 0 || status.nPorts > UBX_MON_COMMS_MAX_PORTS ||
-        _rx_payload_length != 8 + status.nPorts * UBX::WIRE_SIZE<ubx_payload_rx_mon_comms_port_t>) {
+        payload.size() != 8 + status.nPorts * UBX::WIRE_SIZE<ubx_payload_rx_mon_comms_port_t>) {
         return;
     }
 
@@ -1259,42 +1205,38 @@ void GPSNativeUBX::calcChecksum(const uint8_t* buffer, const uint16_t length, ub
     }
 }
 
-int GPSNativeUBX::decodeValidatedPayload()
+int GPSNativeUBX::decodeValidatedPayload(uint16_t message, std::span<const uint8_t> payload)
 {
-    if (_rx_payload_length > _framePayload.size()) {
+    if (!UBX::validPayload(message, payload)) {
         return 0;
     }
-    if (!UBX::validPayload(_rx_msg, {_framePayload.data(), _rx_payload_length})) {
-        return 0;
-    }
-    if (_rx_msg == UBX::NAV_EOE && _rx_payload_length == 4 && _assembleEpochs) {
+    if (message == UBX::NAV_EOE && payload.size() == 4 && _assembleEpochs) {
         uint32_t tow = 0;
         for (unsigned index = 0; index < 4; ++index) {
-            tow |= uint32_t(_framePayload[index]) << (index * 8);
+            tow |= uint32_t(payload[index]) << (index * 8);
         }
         if (tow < UBXNavigationEpoch::WEEK_MS) {
             _navigationEpochs.end(tow, [this](const auto& report) { publishEpoch(report); });
         }
         return GPSDecodedBatch::PROTOCOL_ACTIVITY;
     }
-    if (payloadRxInit() != 0 || _rx_state != UBX_RXMSG_HANDLE) {
+    if (!payloadRxInit(message, payload)) {
         return 0;
     }
     UBXNavigationEpoch::Epoch* epoch = nullptr;
     const auto publish = [this](const auto& report) { publishEpoch(report); };
-    const auto* schema = UBX::messageSchema(_rx_msg);
+    const auto* schema = UBX::messageSchema(message);
     const bool timed = schema && schema->towOffset >= 0;
     if (_assembleEpochs && timed) {
         const size_t offset = schema->towOffset;
-        const auto tow = LittleEndian::read<uint32_t>(_framePayload, offset).value_or(0);
+        const auto tow = LittleEndian::read<uint32_t>(payload, offset).value_or(0);
         epoch = _navigationEpochs.find(tow, nowUs(), publish);
         if (!epoch) {
             return GPSDecodedBatch::PROTOCOL_ACTIVITY;
         }
         _epochHasHighPrecision = epoch->highPrecision;
     }
-    const std::span<const uint8_t> payload{_framePayload.data(), _rx_payload_length};
-    switch (_rx_msg) {
+    switch (message) {
         case UBX_MSG_NAV_SAT:
             *_satellite_info = {};
             decodeNavSat(payload);
@@ -1309,22 +1251,22 @@ int GPSNativeUBX::decodeValidatedPayload()
         default:
             break;
     }
-    const int updates = payloadRxDone(epoch ? epoch->position : *_gps_position);
+    const int updates = payloadRxDone(message, payload, epoch ? epoch->position : *_gps_position);
     if (epoch) {
-        if (_rx_msg == UBX_MSG_NAV_PVT) {
+        if (message == UBX_MSG_NAV_PVT) {
             epoch->positionValid = epoch->velocityValid = true;
-        } else if (_rx_msg == UBX_MSG_NAV_POSLLH) {
+        } else if (message == UBX_MSG_NAV_POSLLH) {
             epoch->positionValid = true;
-        } else if (_rx_msg == UBX_MSG_NAV_VELNED) {
+        } else if (message == UBX_MSG_NAV_VELNED) {
             epoch->velocityValid = true;
-        } else if (_rx_msg == UBX_MSG_NAV_HPPOSLLH && (updates & 1)) {
+        } else if (message == UBX_MSG_NAV_HPPOSLLH && (updates & 1)) {
             epoch->highPrecision = true;
         }
         return GPSDecodedBatch::PROTOCOL_ACTIVITY;
     }
     // ACKs and ancillary metadata are useful protocol activity, not new position epochs.
-    if ((updates & 1) && _rx_msg != UBX_MSG_NAV_PVT && _rx_msg != UBX_MSG_NAV_POSLLH &&
-        _rx_msg != UBX_MSG_NAV_HPPOSLLH && _rx_msg != UBX_MSG_NAV_VELNED) {
+    if ((updates & 1) && message != UBX_MSG_NAV_PVT && message != UBX_MSG_NAV_POSLLH &&
+        message != UBX_MSG_NAV_HPPOSLLH && message != UBX_MSG_NAV_VELNED) {
         return (updates & ~1) | GPSDecodedBatch::PROTOCOL_ACTIVITY;
     }
     return updates;

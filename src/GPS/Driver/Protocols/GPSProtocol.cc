@@ -39,6 +39,8 @@
 #include <time.h>
 
 #include "GPSProtocolTime.h"
+#include "GPSReceiverConfig.h"
+#include "MonotonicClock.h"
 #include <GeographicLib/Geocentric.hpp>
 
 /**
@@ -52,11 +54,7 @@ GPSProtocol::GPSProtocol(GPSProtocolIO io)
     : _io(std::move(io))
 {
     if (!_io.nowUs) {
-        _io.nowUs = [] {
-            return std::chrono::duration_cast<std::chrono::microseconds>(
-                       std::chrono::steady_clock::now().time_since_epoch())
-                .count();
-        };
+        _io.nowUs = MonotonicClock::nowUs;
     }
     if (!_io.wait) {
         _io.wait = [](std::chrono::microseconds duration) {
@@ -64,6 +62,22 @@ GPSProtocol::GPSProtocol(GPSProtocolIO io)
             return true;
         };
     }
+}
+
+bool GPSProtocol::validateConfiguration(const GPSConfig& config) const
+{
+    if (config.output_mode != OutputMode::GPS && config.output_mode != OutputMode::RTCM) {
+        log(GPSProtocolLogLevel::Warning, "Invalid receiver output mode");
+        return false;
+    }
+    if (config.output_mode == OutputMode::RTCM) {
+        const auto error = gpsValidateBaseStationConfig(config.base);
+        if (error != GPSReceiverConfigError::None) {
+            log(GPSProtocolLogLevel::Warning, "Invalid base station configuration (%d)", static_cast<int>(error));
+            return false;
+        }
+    }
+    return true;
 }
 
 void GPSProtocol::ECEF2lla(double ecef_x, double ecef_y, double ecef_z, double& latitude, double& longitude,
@@ -161,7 +175,12 @@ int GPSProtocol::consume(std::span<const uint8_t> bytes)
         bytes = bytes.subspan(result.bytesConsumed);
         updates |= result.batch.updates;
         if (_io.decoded) {
-            _io.decoded(std::move(result.batch));
+            _io.decoded(result.batch);
+        }
+        result.batch.events.clear();
+        // A nested callback may already have populated or replenished the decoder's storage.
+        if (_decoded.events.empty() && _decoded.events.capacity() < result.batch.events.capacity()) {
+            _decoded.events.swap(result.batch.events);
         }
     } while (!bytes.empty());
     return updates;

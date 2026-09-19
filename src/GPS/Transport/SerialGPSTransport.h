@@ -32,6 +32,7 @@ public:
 #ifdef Q_OS_ANDROID
     /// Legacy synchronous configuration writes use the backend timeout; bounded writes are unsupported.
     GPSWriteResult write(const uint8_t* buffer, int length) override;
+    GPSWriteResult writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
 #endif
     std::chrono::milliseconds configurationWriteTimeout() const override;
     GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;

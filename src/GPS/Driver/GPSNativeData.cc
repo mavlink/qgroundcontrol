@@ -80,4 +80,32 @@ GPSSurveyReport survey(const GPSNativeSurveyReport& source)
     result.active = (source.flags & 2) != 0;
     return result;
 }
+
+GPSSatelliteReport SatelliteSnapshot::update(const GPSNativeSatelliteReport& source)
+{
+    const auto projected = satellites(source);
+    if (source.constellation) {
+        _constellations[*source.constellation].clear();
+    } else {
+        _constellations.clear();
+    }
+    for (uint16_t i = 0; i < projected.count; ++i) {
+        _constellations[source.constellation.value_or(source.entries[i].constellation)].push_back(
+            projected.satellites[i]);
+    }
+    if (!source.constellation) {
+        return projected;
+    }
+    GPSSatelliteReport snapshot;
+    snapshot.timestampUs = projected.timestampUs;
+    for (const auto& [constellation, entries] : _constellations) {
+        for (const auto& entry : entries) {
+            if (snapshot.count == GPSSatelliteReport::MAX_SATELLITES) {
+                return snapshot;
+            }
+            snapshot.satellites[snapshot.count++] = entry;
+        }
+    }
+    return snapshot;
+}
 }  // namespace GPSNativeData

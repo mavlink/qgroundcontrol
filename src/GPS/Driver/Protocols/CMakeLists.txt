@@ -1,8 +1,14 @@
 if(NOT TARGET QGCWire)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Parsing/Wire" "${CMAKE_CURRENT_BINARY_DIR}/Wire")
 endif()
+if(NOT TARGET QGCClock)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Timing/Clock" "${CMAKE_CURRENT_BINARY_DIR}/Clock")
+endif()
 block(SCOPE_FOR VARIABLES)
-set(QGC_GPS_COMPONENTS_ENABLED NMEAProtocol RTCMFramer ReceiverConfig)
+set(QGC_GPS_COMPONENTS_ENABLED NMEAProtocol RTCMFramer ReceiverConfig TransportTypes)
+if(NOT TARGET QGCGPSTransportTypes)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Transport" "${CMAKE_CURRENT_BINARY_DIR}/TransportTypes")
+endif()
 if(NOT TARGET QGCGPSNMEAProtocol)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../NMEA" "${CMAKE_CURRENT_BINARY_DIR}/NMEA")
 endif()
@@ -46,7 +52,7 @@ target_include_directories(QGCGPSNativeCommon PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 )
 target_link_libraries(
     QGCGPSNativeCommon
-    PUBLIC QGCWire QGCGPSNativeContracts QGCGPSNMEAProtocol QGCGPSRTCMFramer
+    PUBLIC QGCWire QGCClock QGCGPSNativeContracts QGCGPSNMEAProtocol QGCGPSRTCMFramer
     PRIVATE GeographicLib::GeographicLib
 )
 add_library(QGCGPSNative INTERFACE)

@@ -1,8 +1,8 @@
 #include "GPSDriver.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
-#include <limits>
 #include <thread>
 #include <type_traits>
 #include <utility>
@@ -12,6 +12,7 @@
 #include "GPSProtocolFeatures.h"
 #include "GPSReceiverConfigValidation.h"
 #include "GPSTransport.h"
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 
 #if QGC_GPS_ENABLE_UBX
@@ -30,23 +31,18 @@
 QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.GPSDriver")
 QGC_LOGGING_CATEGORY(GPSNativeDriversLog, "GPS.Drivers")
 
-namespace {
-uint64_t nowUs()
-{
-    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch())
-        .count();
-}
-}  // namespace
-
 struct GPSDriver::State
 {
     GPSNativePositionReport position;
     GPSNativeSatelliteReport satellites;
     GPSNativeIntegrityReport integrity;
+    GPSNativeData::SatelliteSnapshot satelliteSnapshot;
     std::unique_ptr<GPSProtocol> driver;
     std::vector<GPSConfigurationEvidence> evidence;
     bool configuring = false;
     int updates = 0;
+    bool usefulData = false;
+    bool activity = false;
 };
 
 GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks)
@@ -73,20 +69,30 @@ bool GPSDriver::configure()
     }
 
     GPSProtocolIO io;
-    io.nowUs = nowUs;
+    io.nowUs = MonotonicClock::nowUs;
     io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) {
-        const auto now = nowUs();
-        const int timeout = now >= deadline.untilUs
-                                ? 0
-                                : static_cast<int>(std::min<uint64_t>((deadline.untilUs - now + 999) / 1000, INT_MAX));
+        const int timeout = deadline.remainingMilliseconds(MonotonicClock::nowUs());
         const auto result = _transport.read(bytes.data(), static_cast<int>(bytes.size()), timeout);
-        return GPSProtocolReadResult{static_cast<GPSNativeReadStatus>(result.status), result.bytesRead};
+        _state->activity |= result.status == GPSReadStatus::Data && result.bytesRead > 0;
+        return GPSProtocolReadResult{result.status, result.bytesRead};
     };
-    io.write = [this](std::span<const uint8_t> bytes, GPSDeadline) {
-        // Android serial implements the synchronous configuration writer, not writeBounded().
-        const auto result = _transport.write(bytes.data(), static_cast<int>(bytes.size()));
-        return GPSProtocolWriteResult{static_cast<GPSNativeWriteStatus>(result.status), result.acceptedBytes,
-                                      result.writtenBytes, result.uncertainBytes()};
+    io.write = [this](std::span<const uint8_t> bytes, GPSDeadline deadline) {
+        const int remaining = deadline.remainingMilliseconds(MonotonicClock::nowUs());
+        // Do not submit another part of a multipart command after its absolute deadline.
+        if (_transport.isCancelled() || remaining == 0) {
+            return GPSProtocolWriteResult{_transport.isCancelled() ? GPSWriteStatus::Cancelled
+                                                                   : GPSWriteStatus::TimedOut};
+        }
+        QDeadlineTimer commandDeadline(QDeadlineTimer::Forever, Qt::PreciseTimer);
+        if (deadline.untilUs != UINT64_MAX) {
+            using DeadlineTime = std::chrono::time_point<std::chrono::steady_clock, std::chrono::microseconds>;
+            commandDeadline =
+                QDeadlineTimer(DeadlineTime(std::chrono::microseconds(deadline.untilUs)), Qt::PreciseTimer);
+        }
+        const auto result =
+            _transport.writeConfiguration(bytes.data(), static_cast<int>(bytes.size()), commandDeadline);
+        return GPSProtocolWriteResult{result.status, result.acceptedBytes, result.writtenBytes,
+                                      result.uncertainBytes()};
     };
     io.setBaudrate = [this](unsigned baud) {
         if (_transport.isCancelled()) {
@@ -117,7 +123,8 @@ bool GPSDriver::configure()
                                         result.required});
         }
     };
-    io.decoded = [this](GPSDecodedBatch batch) {
+    io.decoded = [this](const GPSDecodedBatch& batch) {
+        _state->activity |= !batch.events.empty();
         for (const auto& event : batch.events) {
             std::visit(
                 [this](const auto& report) {
@@ -126,6 +133,7 @@ bool GPSDriver::configure()
                         _state->integrity = report;
                     } else if constexpr (std::is_same_v<Report, GPSNativePositionReport>) {
                         if (!_state->configuring) {
+                            _state->usefulData = true;
                             _state->updates |= 1;
                             if (_sinks.onPosition) {
                                 _sinks.onPosition(GPSNativeData::position(report, _state->integrity));
@@ -133,27 +141,28 @@ bool GPSDriver::configure()
                         }
                     } else if constexpr (std::is_same_v<Report, GPSNativeSatelliteReport>) {
                         if (!_state->configuring) {
+                            _state->usefulData = true;
                             _state->updates |= 2;
+                            const auto snapshot = _state->satelliteSnapshot.update(report);
                             if (_sinks.onSatelliteInfo) {
-                                _sinks.onSatelliteInfo(GPSNativeData::satellites(report));
+                                _sinks.onSatelliteInfo(snapshot);
                             }
                         }
                     } else if constexpr (std::is_same_v<Report, GPSSatelliteUsageReport>) {
-                        if (!_state->configuring && _type == GPSType::septentrio && report.usedCount) {
+                        if (!_state->configuring) {
+                            _state->usefulData = true;
                             _state->updates |= 2;
-                            if (_sinks.onSatelliteInfo) {
-                                GPSSatelliteReport satellites;
-                                satellites.timestampUs = report.timestamp;
-                                satellites.count = static_cast<uint16_t>(
-                                    std::clamp(*report.usedCount, 0, int(GPSSatelliteReport::MAX_SATELLITES)));
-                                _sinks.onSatelliteInfo(satellites);
+                            if (_sinks.onSatelliteUsage) {
+                                _sinks.onSatelliteUsage(report);
                             }
                         }
                     } else if constexpr (std::is_same_v<Report, GPSNativeSurveyReport>) {
+                        _state->usefulData = true;
                         if (_sinks.onSurveyIn) {
                             _sinks.onSurveyIn(GPSNativeData::survey(report));
                         }
                     } else if constexpr (std::is_same_v<Report, GPSRTCMReport>) {
+                        _state->usefulData = true;
                         if (!_state->configuring && _sinks.onRTCM) {
                             _sinks.onRTCM(std::span(report.bytes).first(report.size));
                         }
@@ -212,12 +221,39 @@ bool GPSDriver::configure()
     return true;
 }
 
-int GPSDriver::receive(unsigned timeoutMs)
+GPSReceiveResult GPSDriver::receiveOutcome(unsigned timeoutMs)
 {
     if (!_state->driver) {
-        return -1;
+        return {GPSReceiveStatus::NotConfigured, 0, -1};
     }
     _state->updates = 0;
+    _state->usefulData = false;
+    _state->activity = false;
     const int result = _state->driver->receive(timeoutMs);
-    return result < 0 ? result : _state->updates;
+    const int error = _state->driver->ioError() ? _state->driver->ioError() : (result < -1 ? result : 0);
+    if (error) {
+        return {error == -ECANCELED ? GPSReceiveStatus::Cancelled
+                : error == -EPROTO  ? GPSReceiveStatus::ProtocolError
+                                    : GPSReceiveStatus::TransportError,
+                _state->updates, error};
+    }
+    if (_transport.isCancelled()) {
+        return {GPSReceiveStatus::Cancelled, _state->updates, -ECANCELED};
+    }
+    if (_transport.fatalError()) {
+        return {GPSReceiveStatus::TransportError, _state->updates, -EIO};
+    }
+    return {_state->usefulData               ? GPSReceiveStatus::Data
+            : _state->activity || result > 0 ? GPSReceiveStatus::Activity
+                                             : GPSReceiveStatus::Idle,
+            _state->updates, 0};
+}
+
+int GPSDriver::receive(unsigned timeoutMs)
+{
+    const auto result = receiveOutcome(timeoutMs);
+    if (result.errorCode) {
+        return result.errorCode;
+    }
+    return result.status == GPSReceiveStatus::Idle ? -1 : result.updates;
 }

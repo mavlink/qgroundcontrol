@@ -45,18 +45,16 @@ struct ScriptedIO
         auto result = makeGPSProtocolTestIO();
         result.read = [this](std::span<uint8_t>, GPSDeadline deadline) -> GPSProtocolReadResult {
             if (fail(Operation::Read)) {
-                return {error == GPSProtocol::ReadCancelled ? GPSNativeReadStatus::Cancelled
-                                                            : GPSNativeReadStatus::Error};
+                return {error == GPSProtocol::ReadCancelled ? GPSReadStatus::Cancelled : GPSReadStatus::Error};
             }
             gps_test_time = deadline.untilUs + 1000;
-            return {GPSNativeReadStatus::TimedOut};
+            return {GPSReadStatus::TimedOut};
         };
         result.write = [this](std::span<const uint8_t> bytes, GPSDeadline) -> GPSProtocolWriteResult {
             if (fail(Operation::Write)) {
-                return {error == GPSProtocol::ReadCancelled ? GPSNativeWriteStatus::Cancelled
-                                                            : GPSNativeWriteStatus::Error};
+                return {error == GPSProtocol::ReadCancelled ? GPSWriteStatus::Cancelled : GPSWriteStatus::Error};
             }
-            return {GPSNativeWriteStatus::Completed, int(bytes.size()), int(bytes.size()), 0};
+            return {GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size()), 0};
         };
         result.setBaudrate = [this](unsigned) {
             return !fail(Operation::Baud)                ? GPSBaudStatus::Configured
@@ -96,6 +94,14 @@ static std::unique_ptr<GPSBaseProtocol> createReceiver(unsigned family, Scripted
 int main()
 {
     try {
+        CHECK(GPSDeadline{}.remainingMilliseconds(0) == INT32_MAX);
+        CHECK(GPSDeadline{0}.remainingMilliseconds(0) == 0);
+        CHECK(GPSDeadline{1}.remainingMilliseconds(0) == 1);
+        CHECK(GPSDeadline{1000}.remainingMilliseconds(0) == 1);
+        CHECK(GPSDeadline{1001}.remainingMilliseconds(0) == 2);
+        CHECK(GPSDeadline{1000}.remainingMilliseconds(1001) == 0);
+        CHECK(GPSDeadline{UINT64_MAX}.remainingMilliseconds(UINT64_MAX - 1001) == 2);
+        CHECK(GPSDeadline{UINT64_MAX}.remainingMilliseconds(UINT64_MAX) == 0);
         for (unsigned family = 0; family != 4; ++family) {
             for (const auto fault :
                  {ScriptedIO::Operation::Read, ScriptedIO::Operation::Write, ScriptedIO::Operation::Baud}) {

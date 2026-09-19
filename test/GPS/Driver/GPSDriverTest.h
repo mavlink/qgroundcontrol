@@ -9,6 +9,13 @@ class GPSDriverTest : public GPSDriverTestBase
 private slots:
     void _femtoConfigurationSurvey();
     void _ashtechFixedSurvey();
+    void _ashtechSatelliteSnapshots();
+    void _femtoSatelliteUsage();
+    void _sbfSatelliteUsage();
+    void _receiveOutcomes();
+    void _rtcmActivationRejected();
+    void _configurationDeadline_data();
+    void _configurationDeadline();
     void _configurationWriteEvidence_data();
     void _configurationWriteEvidence();
     void _freshSurveyAndEvidence_data();

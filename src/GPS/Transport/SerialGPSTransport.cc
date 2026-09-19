@@ -147,6 +147,21 @@ QString SerialGPSTransport::_errorDetail() const
 }
 
 #ifdef Q_OS_ANDROID
+GPSWriteResult SerialGPSTransport::writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline)
+{
+    if (isCancelled()) {
+        return {GPSWriteStatus::Cancelled};
+    }
+    if (!buffer || length < 0) {
+        return {GPSWriteStatus::InvalidData};
+    }
+    if (deadline.hasExpired()) {
+        return {GPSWriteStatus::TimedOut};
+    }
+    // Explicit platform limitation: only the initial submission can honor the caller's deadline.
+    return write(buffer, length);
+}
+
 GPSWriteResult SerialGPSTransport::write(const uint8_t* buffer, int length)
 {
     if (isCancelled()) {

@@ -10,7 +10,7 @@ qt_add_library(
     GPSReceiverConfigValidation.cc
     GPSReceiverConfigValidation.h
 )
-target_sources(QGCGPSDriver PUBLIC FILE_SET HEADERS FILES GPSDriver.h GPSConfigurationEvidence.h)
+target_sources(QGCGPSDriver PUBLIC FILE_SET HEADERS FILES GPSDriver.h)
 target_link_libraries(
     QGCGPSDriver
     PUBLIC QGCGPSDriverReports QGCGPSReceiverConfig

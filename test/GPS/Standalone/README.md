@@ -54,7 +54,7 @@ ctest --test-dir build/gps-driver-tests --output-on-failure -L Unit
 ```
 
 Native application test builds also register `CMake.GPSMinimal.DriverReports`,
-`CMake.GPSMinimal.ReceiverConfig`, `CMake.GPSMinimal.Px4Adapter`,
+`CMake.GPSMinimal.ReceiverConfig`, `CMake.GPSMinimal.TransportTypes`, `CMake.GPSMinimal.Px4Adapter`,
 `CMake.GPSMinimal.Native`, and `CMake.GPSMinimal.Driver` in the existing
 Unit/CMake test lane. Each case configures a fresh temporary standalone build,
 builds the default targets and isolated header checks, and
@@ -88,8 +88,11 @@ cmake --build build/gps-libraries
 ctest --test-dir build/gps-libraries --output-on-failure
 ```
 
-`GPSTransport.h` exposes the public interface using the statuses and results in
-`Transport/GPSTransportResult.h`. These synchronous values do not require Qt
+`GPSTransport.h` exposes the public interface using Qt-free statuses from
+`Transport/GPSIOStatus.h` and Qt-backed details in `GPSTransportResult.h`.
+`QGC::GPSTransportTypes` exports the shared statuses without Qt; native protocols
+use the same enums directly instead of ordinal casts between duplicated types.
+These synchronous values do not require Qt
 metatype registration. `GPSConnectionError` remains registered for queued worker
 signals. Socket waiting is private to the TCP and UDP implementations.
 
@@ -113,7 +116,7 @@ ctest --test-dir build/gps-transports --output-on-failure
 ```
 
 The available components are `Core`, `NMEAProtocol`, `NMEAUtils`, `NMEA`, `Positioning`,
-`Transport`, `ReceiverTransports`, `RTCMFramer`, `RTCM`, `Corrections`, `NTRIPHttp`,
+`TransportTypes`, `Transport`, `ReceiverTransports`, `RTCMFramer`, `RTCM`, `Corrections`, `NTRIPHttp`,
 `NTRIP`, `DriverReports`, `Px4Adapter`, `ReceiverConfig`, `Native`, and `Driver`.
 `Native` selects the Qt-free receiver protocols; `Driver` adds the Qt transport
 adapter and configuration diagnostics. The `Transport` library
@@ -127,7 +130,7 @@ All components are enabled by default. `NMEA` includes `NMEAProtocol` and `NMEAU
 `RTCM` and `Corrections` automatically include `RTCMFramer`. `NTRIP` includes
 `NTRIPHttp`, `NMEAUtils`, and `RTCM`. `Px4Adapter` includes `DriverReports`.
 `Driver` includes `Native` and `Transport`; `Native` includes receiver reports,
-configuration, NMEA protocol support, and RTCM framing.
+configuration, transport status types, NMEA protocol support, and RTCM framing.
 
 ```sh
 cmake -S test/GPS/Standalone -B build/gps-native -G Ninja \
@@ -152,7 +155,7 @@ only requested consumers, so a report-only build does not compile configuration 
 
 | Directory | Ownership |
 | --- | --- |
-| `Receiver/` | Qt-free configuration, capabilities, identity, and native reports |
+| `Receiver/` | Qt-free configuration, configuration evidence, capabilities, identity, and receiver reports |
 | `Driver/` | Driver facade and Qt configuration diagnostics |
 | `Driver/Protocols/` | Qt-free native receiver protocols and configuration transactions |
 | `test/GPS/Driver/Legacy/` | Test-only compatibility conversion, layouts, patches, and optional PX4 backend build wiring |
@@ -179,17 +182,30 @@ describe software request support, not receiver-model discovery or read-back.
 Unsupported role/setting combinations fail before configuration I/O. Output-rate
 selection, configured NMEA output and settings/UI controls remain lifecycle work.
 
-The native facade preserves `configure()`, `receive()`, and the existing report
-sinks. `configurationEvidence()` adds command outcomes without changing receiver
+The native facade preserves `configure()`, the integer `receive()` compatibility
+wrapper, and the existing report sinks. Production consumers use `receiveOutcome()`
+to distinguish useful data, ancillary activity, idle time, cancellation and terminal
+errors. Inactivity is measured by elapsed time since useful reports, not by counting
+short ancillary receive calls.
+`configurationEvidence()` adds command outcomes without changing receiver
 settings or exposing a new UI: accepted/written byte counts are distinct from
-receiver acknowledgement and readback verification. Configuration uses the
-existing synchronous transport writer, retaining Android's current behavior;
-it does not reinterpret unsupported bounded writes as successful delivery.
+receiver acknowledgement and readback verification. The evidence values live with
+the other Qt-free receiver reports, not in the facade layer.
+`writeConfiguration()` preserves the native command deadline on desktop transports.
+Android explicitly retains its synchronous backend limitation; generic unsupported
+bounded writes are not retried through an unbounded writer.
+
+Scoped satellite updates are aggregated before publishing full snapshots. Used-only
+counts have their own `GPSSatelliteUsageReport` and sink; they do not manufacture
+anonymous satellites in view. Empty scoped reports still clear their own system.
 
 The protocol libraries reuse checked little-endian reads and writes, shared NMEA
 decoding and RTCM framing, and the existing GeographicLib dependency. Their raw
 decoder state remains separate from the public receiver reports, with conversion
 inside the driver. The application continues to consume the same report types.
+Native configuration entry points also validate base values before I/O. SBF survey
+accuracy remains unavailable without actual survey evidence, and fixed-base survey
+state is distinct from automatic position determination.
 No receiver sessions, recording format, GCS position-source integration, or
 settings migrations are introduced.
 

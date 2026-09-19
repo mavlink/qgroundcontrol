@@ -75,17 +75,19 @@ int GPSNativeFemto::writeAckedCommandFemto(const char* command, const char* repl
 
 int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
 {
-    _baseConfig = config.base;
-    _survey_duration = 0;
+    _configure_done = false;
     resetIOError();
-
-    if (config.output_mode != OutputMode::GPS && config.output_mode != OutputMode::RTCM) {
+    _survey_duration = 0;
+    _survey_in_start = 0;
+    _correction_output_activated = false;
+    _rtcmActivationPending = false;
+    _rtcm_parsing.reset();
+    decodeInit();
+    if (!validateConfiguration(config)) {
         return -1;
     }
-
+    _baseConfig = config.base;
     _output_mode = config.output_mode;
-    _configure_done = false;
-    _correction_output_activated = false;
     /** Try different baudrates (115200 is the default for Femtomes) and request the baudrate that we want.	 */
     const unsigned baudrates_to_try[] = {115200};
     bool success = false;

@@ -92,12 +92,10 @@ public:
 
     struct GPSConfig
     {
-        GPSBaseStationConfig base;
+        GPSBaseStationConfig base{};
         uint8_t dynamicModel = 0;
-        uint8_t outputRateHz = 0;
-        OutputMode output_mode;
-        GNSSSystemsMask gnss_systems;
-        bool require_gnss_config = false;
+        OutputMode output_mode = OutputMode::GPS;
+        GNSSSystemsMask gnss_systems = GNSSSystemsMask::RECEIVER_DEFAULTS;
     };
 
     explicit GPSProtocol(GPSProtocolIO io);
@@ -131,6 +129,8 @@ public:
     virtual bool receiverReady() const { return true; }
 
 protected:
+    [[nodiscard]] bool validateConfiguration(const GPSConfig& config) const;
+
     virtual int decodeByte(uint8_t) { return 0; }
 
     virtual void flushDecoded() {}
@@ -247,11 +247,7 @@ protected:
         _commandCompleted = true;
     }
 
-    int remainingMilliseconds(uint64_t deadline) const
-    {
-        const auto now = nowUs();
-        return now >= deadline ? 0 : static_cast<int>(std::min<uint64_t>((deadline - now + 999) / 1000, INT32_MAX));
-    }
+    int remainingMilliseconds(uint64_t deadline) const { return GPSDeadline{deadline}.remainingMilliseconds(nowUs()); }
 
     /**
      * read from device
@@ -272,14 +268,14 @@ protected:
         }
         GPSDeadline deadline{std::min(_operationDeadline.untilUs, nowUs() + uint64_t(std::max(timeout, 0)) * 1000)};
         const auto result = _io.read ? _io.read({buf, static_cast<size_t>(buf_length)}, deadline)
-                                     : GPSProtocolReadResult{GPSNativeReadStatus::Error};
-        if (result.status == GPSNativeReadStatus::Data && result.bytesRead >= 0 && result.bytesRead <= buf_length) {
+                                     : GPSProtocolReadResult{GPSReadStatus::Error};
+        if (result.status == GPSReadStatus::Data && result.bytesRead >= 0 && result.bytesRead <= buf_length) {
             return result.bytesRead;
         }
-        if (result.status == GPSNativeReadStatus::TimedOut) {
+        if (result.status == GPSReadStatus::TimedOut) {
             return 0;
         }
-        _io_error = result.status == GPSNativeReadStatus::Cancelled ? ReadCancelled : -EIO;
+        _io_error = result.status == GPSReadStatus::Cancelled ? ReadCancelled : -EIO;
         return _io_error;
     }
 
@@ -303,17 +299,17 @@ protected:
         _commandWrite.acceptedBytes += result.acceptedBytes;
         _commandWrite.writtenBytes += result.writtenBytes;
         _commandWrite.uncertainBytes += result.uncertainBytes;
-        if (result.status == GPSNativeWriteStatus::Completed && result.acceptedBytes == buf_length &&
+        if (result.status == GPSWriteStatus::Completed && result.acceptedBytes == buf_length &&
             result.writtenBytes == buf_length && result.uncertainBytes == 0) {
             return result.writtenBytes;
         }
-        if (result.status == GPSNativeWriteStatus::Unsupported) {
+        if (result.status == GPSWriteStatus::Unsupported) {
             failCommandWrite(GPSCommandOutcome::TransportError);
             return -1;
         }
-        _io_error = result.status == GPSNativeWriteStatus::Cancelled ? ReadCancelled : -EIO;
-        failCommandWrite(result.status == GPSNativeWriteStatus::Cancelled ? GPSCommandOutcome::Cancelled
-                                                                          : GPSCommandOutcome::TransportError);
+        _io_error = result.status == GPSWriteStatus::Cancelled ? ReadCancelled : -EIO;
+        failCommandWrite(result.status == GPSWriteStatus::Cancelled ? GPSCommandOutcome::Cancelled
+                                                                    : GPSCommandOutcome::TransportError);
         return _io_error;
     }
 

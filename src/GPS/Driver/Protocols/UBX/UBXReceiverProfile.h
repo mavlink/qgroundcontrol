@@ -24,22 +24,21 @@ struct ReceiverProfile
     Board board;
     bool usb;
     bool rtcmOutput;
-    bool constellationSelection;
     bool baseCapabilityKnown;
 };
 
 inline constexpr std::array RECEIVER_PROFILES = {
-    ReceiverProfile{Board::unknown, true, false, false, false},
-    ReceiverProfile{Board::u_blox5, true, false, false, false},
-    ReceiverProfile{Board::u_blox6, true, false, false, false},
-    ReceiverProfile{Board::u_blox7, true, false, false, false},
-    ReceiverProfile{Board::u_blox8, true, false, false, false},
-    ReceiverProfile{Board::u_blox9, true, false, true, true},
-    ReceiverProfile{Board::u_blox9_F9P_L1L2, true, true, true, true},
-    ReceiverProfile{Board::u_blox10, false, false, false, true},
-    ReceiverProfile{Board::u_blox9_F9P_L1L5, true, true, false, true},
-    ReceiverProfile{Board::u_blox10_L1L5, false, false, false, true},
-    ReceiverProfile{Board::u_blox_X20, true, true, false, true},
+    ReceiverProfile{Board::unknown, true, false, false},
+    ReceiverProfile{Board::u_blox5, true, false, false},
+    ReceiverProfile{Board::u_blox6, true, false, false},
+    ReceiverProfile{Board::u_blox7, true, false, false},
+    ReceiverProfile{Board::u_blox8, true, false, false},
+    ReceiverProfile{Board::u_blox9, true, false, true},
+    ReceiverProfile{Board::u_blox9_F9P_L1L2, true, true, true},
+    ReceiverProfile{Board::u_blox10, false, false, true},
+    ReceiverProfile{Board::u_blox9_F9P_L1L5, true, true, true},
+    ReceiverProfile{Board::u_blox10_L1L5, false, false, true},
+    ReceiverProfile{Board::u_blox_X20, true, true, true},
 };
 
 constexpr ReceiverProfile receiverProfile(Board board)

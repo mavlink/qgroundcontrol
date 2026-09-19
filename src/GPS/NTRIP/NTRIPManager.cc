@@ -128,11 +128,6 @@ NTRIPManager::~NTRIPManager()
     stopNTRIP();
 }
 
-RTCMMavlink* NTRIPManager::rtcmMavlink() const
-{
-    return _correctionManager ? _correctionManager->rtcmMavlink() : nullptr;
-}
-
 void NTRIPManager::setCorrectionManager(GPSCorrectionManager* manager)
 {
     if (_correctionManager == manager) {

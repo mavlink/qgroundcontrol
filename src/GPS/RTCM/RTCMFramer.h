@@ -23,18 +23,17 @@ public:
         _payloadSize = 0;
         _frameSize = 0;
         _recoverySize = 0;
+        _valid = false;
     }
 
     bool addByte(uint8_t byte)
     {
-        if (_frameSize) {
-            _discardCandidate();
-        }
+        const uint16_t validatedFrameSize = _frameSize ? _discardCandidate() : 0;
         if (!_size && byte != PREAMBLE) {
             return false;
         }
         _bytes[_size++] = byte;
-        return _inspect();
+        return _inspect(validatedFrameSize);
     }
 
     bool nextFrame()
@@ -42,8 +41,7 @@ public:
         if (!_frameSize) {
             return false;
         }
-        _discardCandidate();
-        return _inspect();
+        return _inspect(_discardCandidate());
     }
 
     bool hasPartialFrame() const { return _size != 0 && !_frameSize; }
@@ -62,7 +60,7 @@ public:
         return available >= 5 && payloadLength() >= 2 ? (_bytes[3] << 4) | (_bytes[4] >> 4) : 0;
     }
 
-    bool valid() const { return isValidFrame(frame()); }
+    bool valid() const { return _valid; }
 
     static bool isValidFrame(std::span<const uint8_t> bytes)
     {
@@ -98,8 +96,9 @@ private:
         }
     }
 
-    void _discardCandidate()
+    uint16_t _discardCandidate()
     {
+        uint16_t validatedFrameSize = 0;
         uint16_t searchOffset = _frameSize;
         if (!valid()) {
             _recoverySize = (std::max) (_recoverySize, _frameSize);
@@ -130,16 +129,20 @@ private:
                 }
                 if (isValidFrame(suffix.first(length))) {
                     discardSize = offset;
+                    validatedFrameSize = static_cast<uint16_t>(length);
                     break;
                 }
             }
         }
         _discardPrefix(discardSize);
         _frameSize = 0;
+        _valid = false;
+        return validatedFrameSize;
     }
 
-    bool _inspect()
+    bool _inspect(uint16_t validatedFrameSize)
     {
+        _valid = false;
         _frameSize = 0;
         _payloadSize = 0;
         const auto preamble = std::find(_bytes.begin(), _bytes.begin() + _size, PREAMBLE);
@@ -161,6 +164,7 @@ private:
             return false;
         }
         _frameSize = expectedSize;
+        _valid = validatedFrameSize == _frameSize || isValidFrame(frame());
         return true;
     }
 
@@ -169,4 +173,5 @@ private:
     uint16_t _payloadSize = 0;
     uint16_t _frameSize = 0;
     uint16_t _recoverySize = 0;
+    bool _valid = false;
 };

@@ -7,8 +7,10 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QThread>
+#include <QtCore/QtEndian>
 #include <QtPositioning/QGeoCoordinate>
 
+#include "../RTK/ScriptedSBFReceiver.h"
 #include "GPSBaseStationConfig.h"
 #include "GPSDriver.h"
 #include "GPSTransport.h"
@@ -69,8 +71,11 @@ public:
         return {GPSReadStatus::Data, n};
     }
 
-    GPSWriteResult write(const uint8_t* buffer, int length) override
+    GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override
     {
+        if (deadline.hasExpired()) {
+            return {GPSWriteStatus::TimedOut};
+        }
         lastWrite = QByteArray(reinterpret_cast<const char*>(buffer), length);
         if (acknowledgeFemto) {
             scriptedRead = '<' + lastWrite.split(' ').first().trimmed() + " OK" + char(0);
@@ -105,7 +110,222 @@ public:
     bool acknowledgeAshtech = false;
 };
 
+class ConfigurationProbeTransport : public GPSTransport
+{
+public:
+    ConfigurationProbeTransport()
+        : GPSTransport(neverStop)
+    {}
+
+    GPSOpenResult open() override { return {GPSOpenStatus::Opened}; }
+
+    bool fatalError() const override { return false; }
+
+    bool setBaudrate(unsigned) override { return true; }
+
+    GPSReadResult read(uint8_t*, int, int) override { return {GPSReadStatus::TimedOut}; }
+
+    std::chrono::milliseconds configurationWriteTimeout() const override { return cap; }
+
+    GPSWriteResult write(const uint8_t*, int) override
+    {
+        ++unboundedCalls;
+        return {GPSWriteStatus::Error};
+    }
+
+    GPSWriteResult writeBounded(const uint8_t*, int length, QDeadlineTimer deadline) override
+    {
+        ++boundedCalls;
+        budgetMs = deadline.remainingTime();
+        if (delayReturn) {
+            // Completion occurred, but its return was descheduled beyond the command's budget.
+            QThread::msleep(static_cast<unsigned long>(budgetMs + 10));
+            return {GPSWriteStatus::Completed, length, length};
+        }
+        return {GPSWriteStatus::Unsupported};
+    }
+
+    std::chrono::milliseconds cap{500};
+    bool delayReturn = false;
+    int boundedCalls = 0;
+    int unboundedCalls = 0;
+    qint64 budgetMs = 0;
+};
+
 }  // namespace
+
+void GPSDriverTest::_ashtechSatelliteSnapshots()
+{
+    FakeGPSTransport transport;
+    transport.acknowledgeAshtech = true;
+    std::vector<GPSSatelliteReport> snapshots;
+    GPSDriverSinks sinks;
+    sinks.onSatelliteInfo = [&](const auto& snapshot) { snapshots.push_back(snapshot); };
+    GPSDriver driver(GPSType::trimble, transport,
+                     {.base = {.useFixedBase = true,
+                               .fixedBaseLatitude = 47,
+                               .fixedBaseLongitude = 8,
+                               .fixedBaseAltitudeMeters = 500}},
+                     sinks);
+    QVERIFY(driver.configure());
+    const auto feed = [&](const QByteArray& body) {
+        snapshots.clear();
+        transport.scriptedRead = nmeaFrame(body);
+        return driver.receiveOutcome(20);
+    };
+    QCOMPARE(feed("GPGSV,1,1,01,01,10,20,30").status, GPSReceiveStatus::Data);
+    QCOMPARE(snapshots.size(), size_t(2));
+    QCOMPARE(snapshots[0].count, 1);
+    QCOMPARE(snapshots[1].count, 1);  // Empty SBAS scope must not clear GPS.
+    QCOMPARE(feed("GLGSV,1,1,01,65,20,30,40").updates, 2);
+    QCOMPARE(snapshots.back().count, 2);
+    QCOMPARE(feed("GPGSV,1,1,02,01,10,20,30,33,15,25,35").status, GPSReceiveStatus::Data);
+    QCOMPARE(snapshots.back().count, 3);
+    QCOMPARE(feed("GLGSV,1,1,00").status, GPSReceiveStatus::Data);
+    QCOMPARE(snapshots.back().count, 2);
+    QCOMPARE(feed("GPGSV,1,1,00").status, GPSReceiveStatus::Data);
+    QCOMPARE(snapshots.size(), size_t(2));
+    QCOMPARE(snapshots[0].count, 1);
+    QCOMPARE(snapshots[1].count, 0);
+}
+
+void GPSDriverTest::_femtoSatelliteUsage()
+{
+    FakeGPSTransport transport;
+    transport.acknowledgeFemto = true;
+    std::vector<GPSSatelliteUsageReport> usage;
+    int snapshots = 0;
+    GPSDriverSinks sinks;
+    sinks.onSatelliteInfo = [&](const auto&) { ++snapshots; };
+    sinks.onSatelliteUsage = [&](const auto& report) { usage.push_back(report); };
+    GPSDriver driver(GPSType::femto, transport,
+                     {.base = {.useFixedBase = true,
+                               .fixedBaseLatitude = 47,
+                               .fixedBaseLongitude = 8,
+                               .fixedBaseAltitudeMeters = 500}},
+                     sinks);
+    QVERIFY(driver.configure());
+    for (const auto& count : {QByteArray("12"), QByteArray("00"), QByteArray()}) {
+        transport.scriptedRead = nmeaFrame("GPGGA,123519,4807.038,N,01131.000,E,1," + count + ",0.9,545.4,M,46.9,M,,");
+        const auto result = driver.receiveOutcome(20);
+        QCOMPARE(result.status, GPSReceiveStatus::Data);
+        QCOMPARE(result.updates & 2, 2);
+    }
+    QCOMPARE(usage.size(), size_t(3));
+    QCOMPARE(usage[0].usedCount, std::optional<int>{12});
+    QCOMPARE(usage[1].usedCount, std::optional<int>{0});
+    QVERIFY(!usage[2].usedCount);
+    QVERIFY(usage[0].timestampUs > 0);
+    QCOMPARE(snapshots, 0);
+}
+
+void GPSDriverTest::_receiveOutcomes()
+{
+    FakeGPSTransport transport;
+    transport.acknowledgeFemto = true;
+    GPSDriver driver(GPSType::femto, transport,
+                     {.base = {.useFixedBase = true,
+                               .fixedBaseLatitude = 47,
+                               .fixedBaseLongitude = 8,
+                               .fixedBaseAltitudeMeters = 500}},
+                     {});
+    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::NotConfigured);
+    QVERIFY(driver.configure());
+    transport.scriptedRead.clear();
+    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Idle);
+    transport.scriptedRead = nmeaFrame("GPTXT,01,01,02,diagnostic");
+    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Activity);
+    transport.readOverride = GPSReadResult{GPSReadStatus::Error};
+    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::TransportError);
+    QVERIFY(!transport.fatalError());
+    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::TransportError);
+    transport.readOverride.reset();
+    QVERIFY(driver.configure());
+    transport.readOverride = GPSReadResult{GPSReadStatus::Cancelled};
+    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Cancelled);
+}
+
+void GPSDriverTest::_sbfSatelliteUsage()
+{
+    ScriptedSBFReceiver receiver(neverStop);
+    std::vector<GPSSatelliteUsageReport> usage;
+    int snapshots = 0;
+    GPSDriverSinks sinks;
+    sinks.onSatelliteUsage = [&](const auto& report) { usage.push_back(report); };
+    sinks.onSatelliteInfo = [&](const auto&) { ++snapshots; };
+    GPSDriver driver(GPSType::septentrio, receiver,
+                     {.base = {.useFixedBase = true,
+                               .fixedBaseLatitude = 47,
+                               .fixedBaseLongitude = 8,
+                               .fixedBaseAltitudeMeters = 500}},
+                     sinks);
+    QVERIFY(driver.configure());
+    uint32_t tow = 0;
+    for (const uint8_t used : {12, 0, 255}) {
+        receiver.reply = ScriptedSBFReceiver::pvt(used, ++tow);
+        const auto result = driver.receiveOutcome(20);
+        QCOMPARE(result.status, GPSReceiveStatus::Data);
+        QCOMPARE(result.updates & 2, 2);
+    }
+    QCOMPARE(usage.size(), size_t(3));
+    QCOMPARE(usage[0].usedCount, std::optional<int>{12});
+    QCOMPARE(usage[1].usedCount, std::optional<int>{0});
+    QVERIFY(!usage[2].usedCount);
+    QCOMPARE(snapshots, 0);
+}
+
+void GPSDriverTest::_rtcmActivationRejected()
+{
+    std::atomic_bool stop = false;
+    ScriptedUBXReceiver receiver(ScriptedUBXReceiver::Model::F9P, stop);
+    GPSDriver driver(GPSType::ublox, receiver, {.base = {.surveyInAccMeters = 2, .surveyInDurationSecs = 1}}, {});
+    QVERIFY(driver.configure());
+    receiver.rejectRtcmActivation = true;
+    QByteArray survey(40, '\0');
+    qToLittleEndian<quint32>(5, survey.data() + 8);
+    survey[36] = 1;
+    receiver.queueFrame(0x01, 0x3b, survey);
+    const auto result = driver.receiveOutcome(20);
+    QCOMPARE(result.status, GPSReceiveStatus::ProtocolError);
+    QVERIFY(result.terminal());
+    QVERIFY(!receiver.fatalError());
+    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::ProtocolError);
+    stop = true;
+    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::ProtocolError);
+}
+
+void GPSDriverTest::_configurationDeadline_data()
+{
+    QTest::addColumn<int>("capMs");
+    QTest::addColumn<bool>("delayReturn");
+    QTest::newRow("desktop-default") << 500 << false;
+    QTest::newRow("short-transport-cap") << 20 << false;
+    QTest::newRow("tcp-cap-command-deadline") << 5000 << false;
+    QTest::newRow("expired-multipart") << 500 << true;
+}
+
+void GPSDriverTest::_configurationDeadline()
+{
+    QFETCH(int, capMs);
+    QFETCH(bool, delayReturn);
+    ConfigurationProbeTransport transport;
+    transport.cap = std::chrono::milliseconds(capMs);
+    transport.delayReturn = delayReturn;
+    GPSDriver driver(GPSType::ublox, transport, {.role = GPSReceiverConfig::Role::Position}, {});
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
+    QVERIFY(!driver.configure());
+    verifyExpectedLogMessage();
+    QVERIFY(transport.budgetMs > 0);
+    QVERIFY(transport.budgetMs <= std::min(capMs, 250));
+    QCOMPARE(transport.unboundedCalls, 0);
+    if (delayReturn) {
+        QCOMPARE(transport.boundedCalls, 1);
+        QVERIFY(!driver.configurationEvidence().empty());
+        QCOMPARE(driver.configurationEvidence().back().acceptedBytes, 6);
+        QCOMPARE(driver.configurationEvidence().back().writtenBytes, 6);
+        QCOMPARE(driver.configurationEvidence().back().uncertainBytes, 0);
+    }
+}
 
 void GPSDriverTest::_femtoConfigurationSurvey()
 {

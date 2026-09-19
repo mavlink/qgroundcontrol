@@ -31,6 +31,7 @@ public:
     size_t read_chunk = 7;
     size_t noise_bytes = 0;
     unsigned failed_reads = 0;
+    size_t transport_calls = 0;
     std::vector<std::string> commands;
 
     bool sent(const std::string& prefix) const
@@ -48,6 +49,7 @@ public:
     {
         auto result = makeGPSProtocolTestIO();
         result.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSProtocolReadResult {
+            ++transport_calls;
             const int timeout = deadline.remainingMilliseconds(gps_test_time);
             auto* data = bytes.data();
             const int size = static_cast<int>(bytes.size());
@@ -55,20 +57,21 @@ public:
             gps_test_time += 1000;
             if (rejected && cancel_read) {
                 ++failed_reads;
-                return {GPSNativeReadStatus::Cancelled};
+                return {GPSReadStatus::Cancelled};
             }
             if (reply.empty()) {
                 gps_test_time += uint64_t(timeout) * 1000 + 1;
-                return {GPSNativeReadStatus::TimedOut};
+                return {GPSReadStatus::TimedOut};
             }
             // Neither protocol guarantees that an ACK fits in one read or includes a NUL terminator.
             const size_t count = std::min({reply.size(), size_t(size), read_chunk});
             memcpy(data, reply.data(), count);
             reply.erase(0, count);
             gps_test_time += 1000;
-            return {GPSNativeReadStatus::Data, static_cast<int>(count)};
+            return {GPSReadStatus::Data, static_cast<int>(count)};
         };
         result.write = [this](std::span<const uint8_t> input, GPSDeadline) -> GPSProtocolWriteResult {
+            ++transport_calls;
             const auto* data = input.data();
             const int size = static_cast<int>(input.size());
 
@@ -83,7 +86,11 @@ public:
                 reply = '<' + command.substr(0, command.find_first_of(" \r\n")) + " OK";
                 reply.insert(0, noise_bytes, '\0');
             }
-            return {GPSNativeWriteStatus::Completed, size, size, 0};
+            return {GPSWriteStatus::Completed, size, size, 0};
+        };
+        result.setBaudrate = [this](unsigned) {
+            ++transport_calls;
+            return GPSBaudStatus::Configured;
         };
         return result;
     }
@@ -150,6 +157,12 @@ static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fix
         CHECK(receiver.sent("FIX POSITION 47.00000000 8.00000000") == (base && fixed));
         CHECK(receiver.sent("POSAVE ON") == (base && !fixed));
     }
+    config.output_mode = GPSProtocol::OutputMode::RTCM;
+    config.base = {};
+    const auto calls = receiver.transport_calls;
+    CHECK(driver->configure(baudrate, config) < 0);
+    CHECK(!driver->receiverReady());
+    CHECK(receiver.transport_calls == calls);
 }
 
 #if QGC_GPS_ENABLE_SBF
@@ -179,7 +192,12 @@ void sbfRequiredBaseCommands()
                 GPSNativeSBF driver(io, &position, &satellites);
                 GPSProtocol::GPSConfig config{};
                 config.output_mode = GPSProtocol::OutputMode::RTCM;
-                config.base.useFixedBase = fixed;
+                config.base = {.useFixedBase = fixed,
+                               .surveyInAccMeters = 1,
+                               .surveyInDurationSecs = 60,
+                               .fixedBaseLatitude = 47,
+                               .fixedBaseLongitude = 8,
+                               .fixedBaseAltitudeMeters = 500};
                 unsigned baudrate = 115200;
                 CHECK(driver.configure(baudrate, config) < 0);
                 CHECK(!driver.receiverReady());
@@ -207,7 +225,7 @@ void sbfFrameOwnership()
     size_t correctionCount = 0;
     size_t fixCount = 0;
     auto io = receiver.io();
-    io.decoded = [&](GPSDecodedBatch batch) {
+    io.decoded = [&](const GPSDecodedBatch& batch) {
         for (const auto& event : batch.events) {
             correctionCount += std::holds_alternative<GPSRTCMReport>(event);
             fixCount += std::holds_alternative<GPSNativePositionReport>(event);
@@ -250,6 +268,116 @@ void sbfFrameOwnership()
     CHECK(correctionCount == 1);
     CHECK(fixCount == 1);
 }
+
+void sbfSurveyEvidence()
+{
+    gps_test_time = 1000000;
+    Receiver receiver;
+    receiver.septentrio = true;
+    GPSNativePositionReport position;
+    std::vector<GPSNativeSurveyReport> surveys;
+    auto io = receiver.io();
+    io.decoded = [&](const GPSDecodedBatch& batch) {
+        for (const auto& event : batch.events) {
+            if (const auto* survey = std::get_if<GPSNativeSurveyReport>(&event)) {
+                surveys.push_back(*survey);
+            }
+        }
+    };
+    GPSNativeSBF driver(io, &position);
+    GPSProtocol::GPSConfig config{};
+    config.output_mode = GPSProtocol::OutputMode::RTCM;
+    config.base = {.surveyInAccMeters = 1,
+                   .surveyInDurationSecs = 60,
+                   .fixedBaseLatitude = 47,
+                   .fixedBaseLongitude = 8,
+                   .fixedBaseAltitudeMeters = 500};
+    unsigned baudrate = 115200;
+    uint32_t tow = 0;
+    std::vector<uint8_t> frame(94);
+    (void) LittleEndian::write<uint16_t>(frame, 0, 0x4024);
+    (void) LittleEndian::write<uint16_t>(frame, 4, SBF_ID_PVTGeodetic);
+    (void) LittleEndian::write<uint16_t>(frame, 6, uint16_t(frame.size()));
+    (void) LittleEndian::write<uint16_t>(frame, 12, 2435);
+    (void) LittleEndian::write<double>(frame, 16, 0.5);
+    (void) LittleEndian::write<double>(frame, 24, 1);
+    (void) LittleEndian::write<double>(frame, 32, 500);
+    auto publish = [&](uint8_t mode, uint8_t flags, uint16_t horizontal = 200, uint16_t vertical = 200) {
+        gps_test_time += 1000000;
+        tow += 1000;
+        frame[14] = mode;
+        (void) LittleEndian::write<uint32_t>(frame, 8, tow);
+        (void) LittleEndian::write<uint16_t>(frame, 90, horizontal);
+        (void) LittleEndian::write<uint16_t>(frame, 92, vertical);
+        (void) LittleEndian::write<uint16_t>(frame, 2, crc16(frame.data() + 4, frame.size() - 4));
+        surveys.clear();
+        driver.consume(frame);
+        CHECK(surveys.size() == 1);
+        CHECK(surveys.back().flags == flags);
+        CHECK(!surveys.back().accuracyKnown);
+        CHECK(surveys.back().altitudeDatum == GPSNativeSurveyReport::AltitudeDatum::Ellipsoid);
+        gps_test_time += 200000;
+        driver.consume({});
+        if (horizontal == UINT16_MAX) {
+            CHECK(std::isnan(position.eph));
+        } else {
+            CHECK(position.eph == horizontal / 200.0f);
+        }
+        if (vertical == UINT16_MAX) {
+            CHECK(std::isnan(position.epv));
+        } else {
+            CHECK(position.epv == vertical / 200.0f);
+        }
+        return surveys.back().duration;
+    };
+
+    for (bool fixed : {false, true, false}) {
+        config.base.useFixedBase = fixed;
+        CHECK(driver.configure(baudrate, config) == 0);
+        CHECK(driver.receiverReady());
+        // A standalone solution without the determination flag is not a completed fixed base.
+        CHECK(publish(1, 0) == 0);
+        const auto progress = publish(0x41, fixed ? 0 : 2);
+        CHECK(fixed ? progress == 0 : progress > 0);
+        const auto completed = publish(3, 1);
+        CHECK(fixed ? completed == 0 : completed >= progress);
+        CHECK(std::abs(surveys.back().latitude - 0.5 * GPS_RAD_TO_DEG) < 1e-6);
+        CHECK(surveys.back().altitude == 500);
+        CHECK(publish(3, 1, 0, 0) == completed);
+        CHECK(publish(3, 1, UINT16_MAX, UINT16_MAX) == completed);
+        CHECK(publish(3, 1, UINT16_MAX, 200) == completed);
+        CHECK(publish(3, 1, 200, UINT16_MAX) == completed);
+
+        for (uint8_t mode : {0, 1, 2, 4, 9, 15, 0x83}) {
+            CHECK(publish(mode, 0) == completed);
+        }
+        frame[15] = 9;
+        CHECK(publish(3, 0) == completed);
+        CHECK(std::isnan(surveys.back().latitude));
+        const auto failedProgress = publish(0x41, fixed ? 0 : 2);
+        CHECK(fixed ? failedProgress == 0 : failedProgress > completed);
+        frame[15] = 0;
+        publish(3, 1);
+
+        for (size_t offset : {16, 24, 32}) {
+            const double original = LittleEndian::read<double>(frame, offset).value();
+            for (double invalid : {double(NAN), double(INFINITY), -2e10}) {
+                (void) LittleEndian::write<double>(frame, offset, invalid);
+                publish(3, 0);
+                CHECK(std::isnan(surveys.back().latitude));
+                CHECK(std::isnan(surveys.back().longitude));
+                CHECK(std::isnan(surveys.back().altitude));
+            }
+            (void) LittleEndian::write<double>(frame, offset, original);
+        }
+        publish(3, 1);
+    }
+    config.output_mode = GPSProtocol::OutputMode::GPS;
+    CHECK(driver.configure(baudrate, config) == 0);
+    surveys.clear();
+    driver.consume(frame);
+    CHECK(surveys.empty());
+}
 #endif
 
 int main()
@@ -275,6 +403,7 @@ int main()
 #if QGC_GPS_ENABLE_SBF
         sbfRequiredBaseCommands();
         sbfFrameOwnership();
+        sbfSurveyEvidence();
 #endif
 #if QGC_GPS_ENABLE_FEMTO
         receiverMode(false, GPSProtocol::OutputMode::GPS, true, {}, false, 1);

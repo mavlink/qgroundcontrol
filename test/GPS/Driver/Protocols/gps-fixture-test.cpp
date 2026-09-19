@@ -67,6 +67,25 @@ std::vector<uint8_t> endEpoch(uint32_t tow)
 }
 
 #if QGC_GPS_ENABLE_UBX
+void relativeUtcUnavailable()
+{
+    GPSNativePositionReport position{};
+    GPSNativeUBX ubx(noDevice(), &position, nullptr);
+    ubx.setDecodeContext({.navigation = true});
+    ubx.consume(fixture("nav-pvt.ubx"));
+    CHECK(position.time_utc_usec != 0);
+    const auto original = fixture("relative.ubx");
+    for (const uint32_t tow : {UBXNavigationEpoch::WEEK_MS - 1, 0u, 1000u}) {
+        const auto frame = timed(original, tow, 4);
+        CHECK(ubx.decode(std::span(frame).first(frame.size() - 1)).batch.events.empty());
+        const auto decoded = ubx.decode(std::span(frame).last(1));
+        CHECK(decoded.batch.events.size() == 1);
+        const auto& relative = std::get<GPSNativeRelativeReport>(decoded.batch.events.front());
+        CHECK(relative.time_utc_usec == 0);
+        CHECK(relative.relative_position_valid == GPSFixture::relativeValid);
+    }
+}
+
 void navigationEpochs()
 {
     for (bool before : {false, true}) {
@@ -74,7 +93,7 @@ void navigationEpochs()
         GPSNativeSatelliteReport satellites{};
         std::vector<GPSNativePositionReport> observations;
         auto io = noDevice();
-        io.decoded = [&](GPSDecodedBatch batch) {
+        io.decoded = [&](const GPSDecodedBatch& batch) {
             for (const auto& event : batch.events) {
                 if (const auto* fix = std::get_if<GPSNativePositionReport>(&event)) {
                     observations.push_back(*fix);
@@ -245,6 +264,7 @@ int main()
         GPSNativeSatelliteReport satellites{};
 #endif
 #if QGC_GPS_ENABLE_UBX
+        relativeUtcUnavailable();
         navigationEpochs();
         CHECK(!UBX::receiverProfile(UBX::Board::u_blox9).rtcmOutput);
         CHECK(UBX::receiverProfile(UBX::Board::u_blox9_F9P_L1L2).rtcmOutput);
@@ -269,8 +289,7 @@ int main()
         relative = timed(relative, UBXNavigationEpoch::WEEK_MS - 1000, 4);
         const auto relativeBatch = ubx.decode(relative).batch;
         CHECK(relativeBatch.events.size() == 1);
-        CHECK(std::get<GPSNativeRelativeReport>(relativeBatch.events.front()).time_utc_usec ==
-              uint64_t(UBXNavigationEpoch::WEEK_MS - 1000) * 1000);
+        CHECK(std::get<GPSNativeRelativeReport>(relativeBatch.events.front()).time_utc_usec == 0);
         const auto pvt = fixture("nav-pvt.ubx");
         for (auto byte : pvt) {
             ubx.consume({&byte, 1});
