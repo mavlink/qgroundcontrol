@@ -35,20 +35,9 @@ The `-t` flag is essential.
 Keep in mind this is tagging the image for later reference since you can have multiple builds of the same container
 :::
 
-::: info
-If building on a Mac computer with an M1 chip you must also specify the build option `--platform linux/x86_64` as shown:
-
-```sh
-docker build --platform linux/x86_64 --target linux --file ./deploy/docker/Dockerfile -t qgc-ubuntu-docker .
-```
-
-Otherwise you will get a build error like:
-
-```sh
-qemu-x86_64: Could not open '/lib64/ld-linux-x86-64.so.2': No such file or directory
-```
-
-:::
+The native Linux target selects the matching Qt kit on amd64 and ARM64 hosts,
+including Apple Silicon Docker Desktop. The separate `linux-cross` target remains
+an amd64-to-ARM64 cross-compilation environment.
 
 ## Building QGC using the Container
 
@@ -76,6 +65,71 @@ docker run --rm -v %cd%:/project/source -v %cd%/build:/project/build qgc-ubuntu-
 :::
 
 Depending on your system resources, or the resources assigned to your Docker Daemon, the build step can take some time.
+
+## Development Container
+
+The existing VS Code development container is named __qgc-dev__. It includes Clang,
+clang-tidy, clang-scan-deps, clangd, and Clazy built against the same LLVM.
+`.github/build-config.json` supplies the LLVM major version, checksum-verified Clazy
+revision, and Qt version used by CI. The image build uses `deploy/docker/install_analysis.py`;
+ccache uses the pinned, signature-verified release from `.github/scripts/ccache_helper.py`.
+The locked Python `dev` profile includes `just`, build, lint and test tools.
+Git and the GitHub CLI are prebuilt too, without separate devcontainer feature installs.
+Linux GStreamer libraries come from the existing system dependency installer,
+satisfying the configured minimum; mobile and Apple SDK versions do not apply here.
+Existing application builder tags and Docker Hub flows are unchanged.
+
+`ghcr.io/mavlink/qgc-dev:latest` is one multi-platform OCI index for native
+`linux/amd64` and `linux/arm64`. Docker selects the correct architecture automatically.
+The `qgc-dev.yml` workflow updates `latest` only for meaningful image-input changes
+on `master`. A published stable QGC release gets its exact existing tag, for example
+`ghcr.io/mavlink/qgc-dev:v5.0.0`, built from that released commit, without changing
+`latest`. Retries preserve an existing matching stable tag and reject a changed source.
+The workflow summary records `ghcr.io/mavlink/qgc-dev@sha256:<digest>` for pinning.
+
+Relevant PRs and manual __Run workflow__ dispatches build both architectures without
+publishing. Dispatch does not require changed files. Drafts and prereleases do not
+publish stable images. Release automation explicitly calls the same publisher because
+`GITHUB_TOKEN`-created release events do not start another workflow.
+Older releases lacking this definition cannot be backfilled using current master.
+No application or analyzer workflow adopts this image in this change.
+
+Qt, Python, and analysis executables are on `PATH` for non-login shells and non-root users.
+Image checks verify native executable architectures, configured tool versions, Clazy's
+LLVM linkage, Python imports, and real Qt compilation plus clang-tidy/Clazy execution
+as a non-root user. The prebuilt environment is used by `just` without runtime
+SDK provisioning or Python synchronization.
+
+To build and load the host platform using the same Bake target as CI, run from the
+repository root (use `linux/amd64` on an x86-64 Docker host):
+
+```sh
+docker buildx bake -f deploy/docker/docker-bake.hcl qgc-dev \
+  --set qgc-dev.platform=linux/arm64 --load
+docker run --rm -it -v "$PWD:/workspaces/qgroundcontrol" qgc-dev:local
+```
+
+For a full native Linux QGC build, initialize the checkout's submodules, make the
+checkout and build directory writable by the container user, and run the existing recipes:
+
+```sh
+git submodule update --init --recursive
+mkdir -p build
+docker run --rm -it -v "$PWD:/workspaces/qgroundcontrol" qgc-dev:local \
+  bash -c 'git config --global --add safe.directory /workspaces/qgroundcontrol && just release'
+```
+
+On Linux, map ownership to the development user's UID/GID (1000 by default), or
+set `USER_UID`/`USER_GID` when building the image. `just` uses detected CPU parallelism;
+set `JOBS` to limit it. The result is `build/Release/QGroundControl`, a Linux artifact
+even when Docker runs on macOS or Windows. Image publication runs a native amd64
+QGC acceptance build in addition to bounded smoke checks on both architectures.
+
+After configuring a compilation database and generating headers and autogen targets
+as described in the [tools guide](https://github.com/mavlink/qgroundcontrol/blob/master/tools/README.md#centralized-configuration),
+run `python tools/analyze.py --tool clang-tidy --build-dir build` or
+`python tools/analyze.py --tool clazy --build-dir build`. ccache accelerates compilation,
+not the analyzers' AST scans.
 
 ## Troubleshooting
 

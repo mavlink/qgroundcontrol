@@ -9,9 +9,13 @@
 .gitmodules
 .mailmap
 
-# GitHub (except build-config.json needed by Dockerfile)
+# GitHub (except shared configuration and compiler-cache installer)
 .github/
 !.github/build-config.json
+!.github/scripts/
+.github/scripts/*
+!.github/scripts/ccache_helper.py
+!.github/scripts/ci_bootstrap.py
 
 # Documentation (not needed for build)
 docs/
