@@ -1,6 +1,6 @@
 qt_add_executable(QGCGPSCorrectionRouterTest GPSCorrectionRouterTest.cc)
 set_target_properties(QGCGPSCorrectionRouterTest PROPERTIES AUTOMOC ON)
-target_link_libraries(QGCGPSCorrectionRouterTest PRIVATE QGC::GPSCorrections QGC::GPSRTCMFramer Qt6::Test)
+target_link_libraries(QGCGPSCorrectionRouterTest PRIVATE QGC::GPSCorrections QGC::GPSRTCM Qt6::Test)
 add_test(NAME GPSCorrectionRouterTest COMMAND QGCGPSCorrectionRouterTest)
 set_tests_properties(GPSCorrectionRouterTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 60)
 

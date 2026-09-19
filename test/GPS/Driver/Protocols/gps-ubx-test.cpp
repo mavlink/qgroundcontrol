@@ -322,7 +322,7 @@ public:
     GPSProtocolIO io()
     {
         auto result = makeGPSProtocolTestIO();
-        result.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSProtocolReadResult {
+        result.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSReadResult {
             ++transport_operations;
             const int timeout = deadline.remainingMilliseconds(gps_test_time);
             auto* data = bytes.data();
@@ -352,7 +352,7 @@ public:
 
             return {GPSReadStatus::Data, static_cast<int>(count)};
         };
-        result.write = [this](std::span<const uint8_t> input, GPSDeadline) -> GPSProtocolWriteResult {
+        result.write = [this](std::span<const uint8_t> input, GPSDeadline) -> GPSWriteResult {
             ++transport_operations;
             const auto* data = input.data();
             const int size = static_cast<int>(input.size());
@@ -376,7 +376,7 @@ public:
                 process(complete);
             }
 
-            return {GPSWriteStatus::Completed, size, size, 0};
+            return {GPSWriteStatus::Completed, size, size};
         };
         result.setBaudrate = [this](unsigned) {
             ++transport_operations;
@@ -470,7 +470,7 @@ struct Fixture
         CHECK(receiver.rtcm_enables == 0);
         CHECK(gps_test_time - receiver.disabled_at < 100000);
 
-        CHECK(gps_test_warnings == std::vector<std::string>{"ubx poll_or_read err"});
+        CHECK(gps_test_warnings == QStringList{"ubx poll_or_read err"});
     }
 };
 
@@ -535,7 +535,7 @@ static void positionMode(bool legacy, bool base_capable)
     store(40, 800);
     f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
     CHECK(f.driver.receive(500) & 1);
-    CHECK(f.position.fix_type == 3);
+    CHECK(f.position.fix_type == GPSPositionReport::FixType::Fix3D);
     CHECK(f.position.latitude_deg == 20.0);
     CHECK(f.position.longitude_deg == 10.0);
     CHECK(f.position.satellites_used == 12);
@@ -597,7 +597,7 @@ static void integrityReceipts()
     f.driver.receive(100);
     CHECK(f.receiver.integrityCount == 1);
     CHECK(f.position.timestamp == 0);
-    CHECK(f.receiver.integrity.jamming_state == 3);
+    CHECK(f.receiver.integrity.jamming_state == GPSIntegrityReport::JammingState::Critical);
     const auto rf_stamp = f.receiver.integrity.jamming_state_timestamp;
     CHECK(rf_stamp != 0);
 
@@ -627,7 +627,7 @@ static void integrityReceipts()
     CHECK(f.receiver.integrity.jamming_state_timestamp == rf_stamp);
     f.receiver.queue(packet(UBX_MSG_MON_RF, mon_rf));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.jamming_state == 3);
+    CHECK(f.receiver.integrity.jamming_state == GPSIntegrityReport::JammingState::Critical);
     CHECK(f.receiver.integrity.jamming_state_timestamp > rf_stamp);
 
     Bytes sec_sig(4, 0);
@@ -635,7 +635,7 @@ static void integrityReceipts()
     sec_sig[1] = 1 | (3 << 1);
     f.receiver.queue(packet(UBX_MSG_SEC_SIG, sec_sig));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.jamming_state == 3);
+    CHECK(f.receiver.integrity.jamming_state == GPSIntegrityReport::JammingState::Critical);
     const auto sec_stamp = f.receiver.integrity.jamming_state_timestamp;
     gps_test_time += 6000000;
     f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
@@ -643,14 +643,14 @@ static void integrityReceipts()
     CHECK(f.receiver.integrity.jamming_state_timestamp == sec_stamp);
     f.receiver.queue(packet(UBX_MSG_SEC_SIG, sec_sig));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.jamming_state == 3);
+    CHECK(f.receiver.integrity.jamming_state == GPSIntegrityReport::JammingState::Critical);
     CHECK(f.receiver.integrity.jamming_state_timestamp > sec_stamp);
 
     Bytes rtcm(UBX::WIRE_SIZE<ubx_payload_rx_rxm_rtcm_t>, 0);
     rtcm[1] = 2 << UBX_RX_RXM_RTCM_MSGUSED_SHIFT;
     f.receiver.queue(packet(UBX_MSG_RXM_RTCM, rtcm));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.corrections_msg_used == 2);
+    CHECK(f.receiver.integrity.corrections_msg_used == GPSIntegrityReport::CorrectionUse::Used);
     const auto correction_stamp = f.receiver.integrity.corrections_timestamp;
     CHECK(correction_stamp != 0);
     gps_test_time += 6000000;
@@ -664,7 +664,7 @@ static void integrityReceipts()
     f.receiver.queue(packet(UBX_MSG_RXM_COR, cor));
     f.driver.receive(100);
     CHECK(f.receiver.integrity.corrections_protocol == GPSNativeIntegrityReport::CORRECTIONS_PROTOCOL_PMP);
-    CHECK(f.receiver.integrity.corrections_msg_used == 2);
+    CHECK(f.receiver.integrity.corrections_msg_used == GPSIntegrityReport::CorrectionUse::Used);
     CHECK(f.receiver.integrity.corrections_timestamp > correction_stamp);
 }
 
@@ -679,15 +679,15 @@ static void commsDiagnostics()
     f.receiver.bufferWarning();
     f.driver.receive(100);
     CHECK(f.receiver.comms_polls == 1);
-    CHECK(gps_test_warnings == std::vector<std::string>{"ubx msg: txbuf alloc"});
+    CHECK(gps_test_warnings == QStringList{"ubx msg: txbuf alloc"});
     gps_test_warnings.clear();
     f.receiver.queue(reply);
     CHECK(f.driver.receive(100) < 0);  // Diagnostic traffic alone is not a position update.
-    const std::vector<std::string> expected{"MON-COMMS after txbuf: txErrors=0x02 ports=2 (snapshot after warning)",
-                                            "MON-COMMS USB port=0x0300 txPending=11800 txUsage=100% txPeakUsage=101% "
-                                            "rxPending=12 rxUsage=3% overrunErrs=4 skipped=123456",
-                                            "MON-COMMS UART2 port=0x0201 txPending=0 txUsage=0% txPeakUsage=108% "
-                                            "rxPending=0 rxUsage=0% overrunErrs=0 skipped=0"};
+    const QStringList expected{"MON-COMMS after txbuf: txErrors=0x02 ports=2 (snapshot after warning)",
+                               "MON-COMMS USB port=0x0300 txPending=11800 txUsage=100% txPeakUsage=101% "
+                               "rxPending=12 rxUsage=3% overrunErrs=4 skipped=123456",
+                               "MON-COMMS UART2 port=0x0201 txPending=0 txUsage=0% txPeakUsage=108% "
+                               "rxPending=0 rxUsage=0% overrunErrs=0 skipped=0"};
     CHECK(gps_test_warnings == expected);
     gps_test_warnings.clear();
     f.receiver.queue(reply);
@@ -722,7 +722,7 @@ static void invalidCommsDiagnostics()
         f.receiver.queue(packet(UBX_MSG_MON_COMMS, Bytes(8, 0)));
         f.driver.receive(100);
         CHECK(gps_test_warnings ==
-              std::vector<std::string>{"MON-COMMS after txbuf: txErrors=0x00 ports=0 (snapshot after warning)"});
+              QStringList{"MON-COMMS after txbuf: txErrors=0x00 ports=0 (snapshot after warning)"});
     }
 }
 
@@ -890,19 +890,19 @@ static void explicitNoFix()
     Receiver receiver;
     GPSNativePositionReport position;
     GPSNativeUBX driver(receiver.io(), &position, nullptr);
-    CHECK(position.fix_type == GPSNativePositionReport::FIX_TYPE_UNKNOWN);
+    CHECK(position.fix_type == GPSPositionReport::FixType::Unknown);
     driver.setDecodeContext({.navigation = true});
     Bytes payload(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
     payload[20] = 3;
     for (const uint8_t flags : std::array<uint8_t, 4>{0, 2, 0x40, 0x80}) {
         payload[21] = UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK;
         CHECK(driver.decode(packet(UBX_MSG_NAV_PVT, payload)).batch.events.size() == 1);
-        CHECK(position.fix_type == GPSNativePositionReport::FIX_TYPE_3D);
+        CHECK(position.fix_type == GPSPositionReport::FixType::Fix3D);
         payload[21] = flags;
         const auto decoded = driver.decode(packet(UBX_MSG_NAV_PVT, payload));
         CHECK(decoded.batch.events.size() == 1);
         CHECK(std::get<GPSNativePositionReport>(decoded.batch.events.front()).fix_type ==
-              GPSNativePositionReport::FIX_TYPE_NONE);
+              GPSPositionReport::FixType::NoFix);
         CHECK(!position.vel_ned_valid);
     }
 }
@@ -1042,13 +1042,13 @@ static void reentrantPayload()
     auto io = receiver.io();
     GPSNativeUBX* active = nullptr;
     bool reentered = false;
-    std::vector<std::string> warnings;
+    QStringList warnings;
     Bytes correction{0xd3, 0, 2, 0x3e, 0xd0};
     const auto crc = RTCMFramer::crc24q(correction);
     correction.insert(correction.end(), {uint8_t(crc >> 16), uint8_t(crc >> 8), uint8_t(crc)});
-    io.log = [&](GPSProtocolLogLevel, std::string_view message) {
-        warnings.emplace_back(message);
-        if (!reentered && message == "ubx msg: txbuf alloc") {
+    io.log = [&](GPSProtocolLogLevel, QStringView message) {
+        warnings.push_back(message.toString());
+        if (!reentered && message == u"ubx msg: txbuf alloc") {
             reentered = true;
             active->setDecodeContext({.navigation = true, .corrections = true});
             for (auto byte : packet(UBX_MSG_INF_WARNING, Bytes{'o', 'k'})) {
@@ -1065,7 +1065,7 @@ static void reentrantPayload()
     const std::string warning = "txbuf alloc";
     CHECK(driver.decode(packet(UBX_MSG_INF_WARNING, Bytes(warning.begin(), warning.end()))).batch.events.empty());
     CHECK(reentered);
-    CHECK(warnings == (std::vector<std::string>{"ubx msg: txbuf alloc", "ubx msg: ok"}));
+    CHECK(warnings == (QStringList{"ubx msg: txbuf alloc", "ubx msg: ok"}));
     const auto decoded = driver.decode(std::span(correction).subspan(4));
     CHECK(decoded.batch.events.size() == 1);
     CHECK(std::holds_alternative<GPSRTCMReport>(decoded.batch.events.front()));

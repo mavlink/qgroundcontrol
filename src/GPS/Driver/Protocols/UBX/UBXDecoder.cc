@@ -436,34 +436,35 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                 break;
             }
             const auto& payload_rx_nav_pvt = *decoded_payload_rx_nav_pvt;
+            uint8_t fixType = payload_rx_nav_pvt.fixType;
 
             // Check if position fix flag is good
             if ((payload_rx_nav_pvt.flags & UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK) == 1) {
-                position.fix_type = payload_rx_nav_pvt.fixType;
-
                 if (payload_rx_nav_pvt.flags & UBX_RX_NAV_PVT_FLAGS_DIFFSOLN) {
-                    position.fix_type = 4;  // DGPS
+                    fixType = static_cast<uint8_t>(GPSPositionReport::FixType::Differential);
                 }
 
                 uint8_t carr_soln = payload_rx_nav_pvt.flags >> 6;
 
                 if (carr_soln == 1) {
-                    position.fix_type = 5;  // Float RTK
+                    fixType = static_cast<uint8_t>(GPSPositionReport::FixType::RTKFloat);
 
                 } else if (carr_soln == 2) {
-                    position.fix_type = 6;  // Fixed RTK
+                    fixType = static_cast<uint8_t>(GPSPositionReport::FixType::RTKFixed);
                 }
 
                 position.vel_ned_valid = true;
 
             } else {
-                position.fix_type = GPSNativePositionReport::FIX_TYPE_NONE;
+                fixType = static_cast<uint8_t>(GPSPositionReport::FixType::NoFix);
                 position.vel_ned_valid = false;
             }
+            position.fix_type = GPSPositionReport::fixTypeFromValue(fixType);
 
             position.satellites_used = payload_rx_nav_pvt.numSV;
 
-            if (_assembleEpochs ? !_epochHasHighPrecision : position.fix_type < 6) {
+            if (_assembleEpochs ? !_epochHasHighPrecision
+                                : fixType < static_cast<uint8_t>(GPSPositionReport::FixType::RTKFixed)) {
                 // When RTK is active and solid (fix=6), these values will be filled by HPPOSLLH:
                 position.latitude_deg = payload_rx_nav_pvt.lat * UBX::DEGREES_PER_COORDINATE;
                 position.longitude_deg = payload_rx_nav_pvt.lon * UBX::DEGREES_PER_COORDINATE;
@@ -575,7 +576,8 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             }
             const auto& payload_rx_nav_hpposllh = *decoded_payload_rx_nav_hpposllh;
 
-            if (payload_rx_nav_hpposllh.flags == 0 && (_assembleEpochs || position.fix_type == 6)) {
+            if (payload_rx_nav_hpposllh.flags == 0 &&
+                (_assembleEpochs || position.fix_type == GPSPositionReport::FixType::RTKFixed)) {
                 position.latitude_deg =
                     payload_rx_nav_hpposllh.lat * UBX::DEGREES_PER_COORDINATE +
                     payload_rx_nav_hpposllh.latHp * 1e-9;  // regular precision lat/lon (1e7), plus high precision (1e9)
@@ -608,7 +610,7 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             }
             const auto& payload_rx_nav_sol = *decoded_payload_rx_nav_sol;
 
-            position.fix_type = payload_rx_nav_sol.gpsFix;
+            position.fix_type = GPSPositionReport::fixTypeFromValue(payload_rx_nav_sol.gpsFix);
             position.speedAccuracyMetersPerSecond =
                 static_cast<float>(payload_rx_nav_sol.sAcc) * 1e-2f;  // from cm to m
             position.satellites_used = payload_rx_nav_sol.numSV;
@@ -623,8 +625,9 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             }
             const auto& payload_rx_nav_status = *decoded_payload_rx_nav_status;
 
-            _integrity.spoofing_state = (payload_rx_nav_status.flags2 & UBX_RX_NAV_STATUS_SPOOFDETSTATE_MASK) >>
-                                        UBX_RX_NAV_STATUS_SPOOFDETSTATE_SHIFT;
+            _integrity.spoofing_state = GPSIntegrityReport::spoofingStateFromValue(
+                (payload_rx_nav_status.flags2 & UBX_RX_NAV_STATUS_SPOOFDETSTATE_MASK) >>
+                UBX_RX_NAV_STATUS_SPOOFDETSTATE_SHIFT);
             _integrity.spoofing_state_timestamp = nowUs();
 
             ret = 1;
@@ -949,7 +952,8 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             _integrity.rf_timestamp = nowUs();
 
             if (!_got_sec_sig) {
-                _integrity.jamming_state = payload_rx_mon_rf.block[0].flags & 0x03;
+                _integrity.jamming_state =
+                    GPSIntegrityReport::jammingStateFromValue(payload_rx_mon_rf.block[0].flags & 0x03);
                 _integrity.jamming_state_timestamp = nowUs();
             }
 
@@ -979,7 +983,7 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                     flag_byte = payload_rx_sec_sig.flags;
                 }
 
-                uint8_t jamming_state = 0;
+                auto jammingState = GPSIntegrityReport::JammingState::Unknown;
 
                 // TODO: bits 6..4 of the same byte are spfState (v1: spfFlags at offset 8, bits 3..1).
                 // spoofing_state still comes from NAV-STATUS spoofDetState, whose F9 value 3 means
@@ -993,14 +997,14 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                     // Pre-v2 MON-RF also had 3 = critical. sensor_gps 2 is "mitigated";
                     // commander only alerts on 3 (detected).
                     if (jam_state >= 2) {
-                        jamming_state = 3;
+                        jammingState = GPSIntegrityReport::JammingState::Critical;
 
                     } else {
-                        jamming_state = jam_state;
+                        jammingState = GPSIntegrityReport::jammingStateFromValue(jam_state);
                     }
                 }
 
-                _integrity.jamming_state = jamming_state;
+                _integrity.jamming_state = jammingState;
                 _integrity.jamming_state_timestamp = nowUs();
                 _got_sec_sig = true;
 
@@ -1023,8 +1027,8 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             _integrity.corrections_timestamp = nowUs();
             _integrity.corrections_protocol = GPSNativeIntegrityReport::CORRECTIONS_PROTOCOL_RTCM3;
             _integrity.corrections_crc_failed = (payload_rx_rxm_rtcm.flags & UBX_RX_RXM_RTCM_CRCFAILED_MASK) != 0;
-            _integrity.corrections_msg_used =
-                (payload_rx_rxm_rtcm.flags & UBX_RX_RXM_RTCM_MSGUSED_MASK) >> UBX_RX_RXM_RTCM_MSGUSED_SHIFT;
+            _integrity.corrections_msg_used = GPSIntegrityReport::correctionUseFromValue(
+                (payload_rx_rxm_rtcm.flags & UBX_RX_RXM_RTCM_MSGUSED_MASK) >> UBX_RX_RXM_RTCM_MSGUSED_SHIFT);
 
             ret = 1;
             break;
@@ -1066,8 +1070,8 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                 _integrity.corrections_protocol = protocol;
                 _integrity.corrections_crc_failed =
                     ((status & UBX_RX_RXM_COR_ERRSTATUS_MASK) >> UBX_RX_RXM_COR_ERRSTATUS_SHIFT) == 2;
-                _integrity.corrections_msg_used =
-                    (status & UBX_RX_RXM_COR_MSGUSED_MASK) >> UBX_RX_RXM_COR_MSGUSED_SHIFT;
+                _integrity.corrections_msg_used = GPSIntegrityReport::correctionUseFromValue(
+                    (status & UBX_RX_RXM_COR_MSGUSED_MASK) >> UBX_RX_RXM_COR_MSGUSED_SHIFT);
             }
 
             ret = 1;

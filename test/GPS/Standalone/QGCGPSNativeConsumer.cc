@@ -5,6 +5,10 @@
 #include "GPSProtocolFeatures.h"
 #include "GPSProtocolIO.h"
 
+#if defined(QT_NETWORK_LIB) || defined(QT_POSITIONING_LIB) || defined(QT_QML_LIB) || defined(QT_SERIALPORT_LIB)
+#error Native receiver protocols must not inherit concrete transport or application dependencies.
+#endif
+
 #if QGC_GPS_ENABLE_UBX
 #include "UBX/GPSDriverUBX.h"
 #endif
@@ -27,11 +31,11 @@ bool decodeWithoutDevice(const char* family)
     io.nowUs = [] { return uint64_t{1000000}; };
     io.read = [&](std::span<uint8_t>, GPSDeadline) {
         ++operations;
-        return GPSProtocolReadResult{};
+        return GPSReadResult{};
     };
     io.write = [&](std::span<const uint8_t>, GPSDeadline) {
         ++operations;
-        return GPSProtocolWriteResult{};
+        return GPSWriteResult{};
     };
     io.setBaudrate = [&](unsigned) {
         ++operations;

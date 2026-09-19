@@ -15,7 +15,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     target_include_directories(QGCGPSBaseStationConfigTest PRIVATE "${_gps_root}/Driver"
                                                                    "${CMAKE_CURRENT_SOURCE_DIR}/../../Portable"
     )
-    target_link_libraries(QGCGPSBaseStationConfigTest PRIVATE Qt6::Test QGCGPSReceiverConfig)
+    target_link_libraries(QGCGPSBaseStationConfigTest PRIVATE Qt6::Test QGCGPSReceiver)
     add_test(NAME GPSBaseStationConfigTest COMMAND QGCGPSBaseStationConfigTest)
     set_tests_properties(GPSBaseStationConfigTest PROPERTIES LABELS "Unit;GPS;RTK" TIMEOUT 60 ENVIRONMENT
                                                              "QT_FATAL_WARNINGS=1"

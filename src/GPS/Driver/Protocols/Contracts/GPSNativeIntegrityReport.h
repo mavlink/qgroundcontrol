@@ -3,26 +3,20 @@
 #include <cstdint>
 #include <optional>
 
+#include "GPSDriverReports.h"
+
 struct GPSNativeIntegrityReport
 {
     uint64_t timestamp = 0;
     std::optional<int32_t> noise_per_ms = std::nullopt;
     std::optional<uint16_t> automatic_gain_control = std::nullopt;
 
-    static constexpr uint8_t JAMMING_STATE_UNKNOWN = 0;
-    static constexpr uint8_t JAMMING_STATE_OK = 1;
-    static constexpr uint8_t JAMMING_STATE_MITIGATED = 2;
-    static constexpr uint8_t JAMMING_STATE_DETECTED = 3;
-    uint8_t jamming_state{};
+    GPSIntegrityReport::JammingState jamming_state = GPSIntegrityReport::JammingState::Unknown;
     uint64_t jamming_state_timestamp{};
     std::optional<int32_t> jamming_indicator = std::nullopt;
     uint64_t rf_timestamp = 0;
 
-    static constexpr uint8_t SPOOFING_STATE_UNKNOWN = 0;
-    static constexpr uint8_t SPOOFING_STATE_OK = 1;
-    static constexpr uint8_t SPOOFING_STATE_MITIGATED = 2;
-    static constexpr uint8_t SPOOFING_STATE_DETECTED = 3;
-    uint8_t spoofing_state{};
+    GPSIntegrityReport::SpoofingState spoofing_state = GPSIntegrityReport::SpoofingState::Unknown;
     uint64_t spoofing_state_timestamp{};
 
     static constexpr uint8_t CORRECTIONS_PROTOCOL_UNKNOWN = 0;
@@ -35,9 +29,6 @@ struct GPSNativeIntegrityReport
 
     std::optional<bool> corrections_crc_failed = std::nullopt;
 
-    static constexpr uint8_t CORRECTIONS_MSG_USED_UNKNOWN = 0;
-    static constexpr uint8_t CORRECTIONS_MSG_USED_NOT_USED = 1;
-    static constexpr uint8_t CORRECTIONS_MSG_USED_USED = 2;
-    uint8_t corrections_msg_used{};
+    GPSIntegrityReport::CorrectionUse corrections_msg_used = GPSIntegrityReport::CorrectionUse::Unknown;
     uint64_t corrections_timestamp{};
 };

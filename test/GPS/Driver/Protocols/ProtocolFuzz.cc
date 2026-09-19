@@ -13,8 +13,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     GPSNativePositionReport position{};
     GPSNativeSatelliteReport satellites{};
     GPSProtocolIO io;
-    io.read = [](auto, auto) -> GPSProtocolReadResult { std::abort(); };
-    io.write = [](auto, auto) -> GPSProtocolWriteResult { std::abort(); };
+    io.read = [](auto, auto) -> GPSReadResult { std::abort(); };
+    io.write = [](auto, auto) -> GPSWriteResult { std::abort(); };
     io.setBaudrate = [](auto) -> GPSBaudStatus { std::abort(); };
     uint64_t clock = 1000000;
     io.nowUs = [&clock] { return clock; };

@@ -9,7 +9,7 @@ if(NOT TARGET QGCNetworkClient)
     )
 endif()
 
-add_library(QGCGPSNTRIPHttp STATIC NTRIPConfiguration.cc NTRIPHttpDecoder.cc NTRIPHttpRequest.cc)
+qt_add_library(QGCGPSNTRIPHttp STATIC NTRIPConfiguration.cc NTRIPHttpDecoder.cc NTRIPHttpRequest.cc)
 add_library(QGC::GPSNTRIPHttp ALIAS QGCGPSNTRIPHttp)
 set_target_properties(QGCGPSNTRIPHttp PROPERTIES AUTOMOC ON)
 target_compile_features(QGCGPSNTRIPHttp PUBLIC cxx_std_20)
@@ -47,7 +47,7 @@ set_target_properties(QGCGPSNTRIP PROPERTIES AUTOMOC ON)
 target_link_libraries(
     QGCGPSNTRIP
     PUBLIC QGCGPSNTRIPHttp QGCGPSRTCM QGCClock QGCIO Qt6::Positioning
-    PRIVATE QGCGPSNMEAUtils QGCNetworkClient QGCLoggingCategory
+    PRIVATE QGCGPSNMEAProtocol QGCNetworkClient QGCLoggingCategory
 )
 target_sources(
     QGCGPSNTRIP

@@ -5,9 +5,10 @@
 #include "NMEAConstellation.h"
 #include "NMEASatelliteEpoch.h"
 #include "NMEASentence.h"
+#include "NMEAUtils.h"
 
-#if defined(QT_CORE_LIB) || defined(QT_VERSION)
-#error The NMEA protocol consumer must not inherit Qt dependencies.
+#if defined(QT_POSITIONING_LIB) || defined(QT_NETWORK_LIB) || defined(QT_QML_LIB) || defined(QT_SERIALPORT_LIB)
+#error The NMEA protocol consumer must not inherit positioning, transport, or application dependencies.
 #endif
 
 int main()
@@ -77,6 +78,27 @@ int main()
         } else if (!std::isfinite(actual) || std::abs(actual - entry.expected) > 1e-10) {
             return 8;
         }
+    }
+
+    const NMEA::GGA fix{
+        .latitude = 47.3977,
+        .longitude = 8.5456,
+        .altitude = 100.0,
+        .geoidSeparation = 0.0,
+        .hdop = 1.0,
+        .quality = NMEA::GgaQuality::GPS,
+        .satellitesUsed = 12,
+    };
+    const auto generated = NMEAUtils::makeGGA(fix, QTime(12, 0, 0, 999));
+    if (generated != "$GPGGA,120000,4723.8620,N,00832.7360,E,1,12,1.0,100.0,M,0.0,M,,*77\r\n" ||
+        !NMEAUtils::verifyChecksum(generated) || NMEAUtils::repairChecksum(generated) != generated) {
+        return 9;
+    }
+    const NMEA::GGA unknownFix{.latitude = 47.3977, .longitude = 8.5456};
+    const auto unknown = NMEAUtils::makeGGA(unknownFix, QTime(0, 0));
+    if (!unknown.contains(",E,0,,,,M,,M,,*") || !NMEAUtils::verifyChecksum(unknown) ||
+        !NMEAUtils::makeGGA(fix, QTime()).isEmpty() || !NMEAUtils::makeGGA({}, QTime(0, 0)).isEmpty()) {
+        return 10;
     }
 
     const auto sentence = NMEA::sentence("$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47");

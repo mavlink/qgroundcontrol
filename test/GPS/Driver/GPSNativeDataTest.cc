@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <type_traits>
 
 #include <QtCore/QList>
 #include <QtTest/QTest>
@@ -10,6 +11,12 @@
 
 Q_DECLARE_METATYPE(GPSNativeIntegrityReport)
 Q_DECLARE_METATYPE(GPSNativeSatelliteData)
+
+static_assert(std::is_same_v<decltype(GPSNativePositionReport::fix_type), GPSPositionReport::FixType>);
+static_assert(std::is_same_v<decltype(GPSNativeIntegrityReport::jamming_state), GPSIntegrityReport::JammingState>);
+static_assert(std::is_same_v<decltype(GPSNativeIntegrityReport::spoofing_state), GPSIntegrityReport::SpoofingState>);
+static_assert(
+    std::is_same_v<decltype(GPSNativeIntegrityReport::corrections_msg_used), GPSIntegrityReport::CorrectionUse>);
 
 namespace {
 
@@ -149,20 +156,20 @@ void GPSNativeDataTest::_positionValues()
 
 void GPSNativeDataTest::_velocityValidity_data()
 {
-    QTest::addColumn<uint8_t>("fix");
+    QTest::addColumn<GPSPositionReport::FixType>("fix");
     QTest::addColumn<bool>("valid");
     QTest::addColumn<float>("speed");
     QTest::addColumn<float>("course");
-    QTest::newRow("no-fix-invalid") << GPSNativePositionReport::FIX_TYPE_NONE << false << 12.5f << 1.25f;
-    QTest::newRow("no-fix-valid") << GPSNativePositionReport::FIX_TYPE_NONE << true << 12.5f << 1.25f;
-    QTest::newRow("rtk-fixed-invalid") << GPSNativePositionReport::FIX_TYPE_RTK_FIXED << false << 12.5f << 1.25f;
-    QTest::newRow("rtk-fixed-valid") << GPSNativePositionReport::FIX_TYPE_RTK_FIXED << true << 12.5f << 1.25f;
-    QTest::newRow("stationary-north") << GPSNativePositionReport::FIX_TYPE_3D << true << 0.0f << 0.0f;
+    QTest::newRow("no-fix-invalid") << GPSPositionReport::FixType::NoFix << false << 12.5f << 1.25f;
+    QTest::newRow("no-fix-valid") << GPSPositionReport::FixType::NoFix << true << 12.5f << 1.25f;
+    QTest::newRow("rtk-fixed-invalid") << GPSPositionReport::FixType::RTKFixed << false << 12.5f << 1.25f;
+    QTest::newRow("rtk-fixed-valid") << GPSPositionReport::FixType::RTKFixed << true << 12.5f << 1.25f;
+    QTest::newRow("stationary-north") << GPSPositionReport::FixType::Fix3D << true << 0.0f << 0.0f;
 }
 
 void GPSNativeDataTest::_velocityValidity()
 {
-    QFETCH(uint8_t, fix);
+    QFETCH(GPSPositionReport::FixType, fix);
     QFETCH(bool, valid);
     QFETCH(float, speed);
     QFETCH(float, course);
@@ -183,58 +190,66 @@ void GPSNativeDataTest::_velocityValidity()
 
 void GPSNativeDataTest::_fixTypes_data()
 {
-    QTest::addColumn<uint8_t>("native");
+    QTest::addColumn<int>("native");
     QTest::addColumn<GPSPositionReport::FixType>("expected");
     using Fix = GPSPositionReport::FixType;
-    QTest::newRow("unknown") << GPSNativePositionReport::FIX_TYPE_UNKNOWN << Fix::Unknown;
-    QTest::newRow("none") << GPSNativePositionReport::FIX_TYPE_NONE << Fix::NoFix;
-    QTest::newRow("2d") << GPSNativePositionReport::FIX_TYPE_2D << Fix::Fix2D;
-    QTest::newRow("3d") << GPSNativePositionReport::FIX_TYPE_3D << Fix::Fix3D;
-    QTest::newRow("differential") << GPSNativePositionReport::FIX_TYPE_RTCM_CODE_DIFFERENTIAL << Fix::Differential;
-    QTest::newRow("rtk-float") << GPSNativePositionReport::FIX_TYPE_RTK_FLOAT << Fix::RTKFloat;
-    QTest::newRow("rtk-fixed") << GPSNativePositionReport::FIX_TYPE_RTK_FIXED << Fix::RTKFixed;
-    QTest::newRow("reserved-7") << uint8_t{7} << Fix::Unknown;
-    QTest::newRow("extrapolated") << GPSNativePositionReport::FIX_TYPE_EXTRAPOLATED << Fix::Extrapolated;
-    QTest::newRow("reserved-9") << uint8_t{9} << Fix::Unknown;
-    QTest::newRow("reserved-255") << uint8_t{255} << Fix::Unknown;
+    QTest::newRow("unknown") << 0 << Fix::Unknown;
+    QTest::newRow("none") << 1 << Fix::NoFix;
+    QTest::newRow("2d") << 2 << Fix::Fix2D;
+    QTest::newRow("3d") << 3 << Fix::Fix3D;
+    QTest::newRow("differential") << 4 << Fix::Differential;
+    QTest::newRow("rtk-float") << 5 << Fix::RTKFloat;
+    QTest::newRow("rtk-fixed") << 6 << Fix::RTKFixed;
+    QTest::newRow("reserved-7") << 7 << Fix::Unknown;
+    QTest::newRow("extrapolated") << 8 << Fix::Extrapolated;
+    QTest::newRow("reserved-9") << 9 << Fix::Unknown;
+    QTest::newRow("reserved-255") << 255 << Fix::Unknown;
+    QTest::newRow("negative") << -1 << Fix::Unknown;
+    QTest::newRow("out-of-byte-range") << 256 << Fix::Unknown;
 }
 
 void GPSNativeDataTest::_fixTypes()
 {
-    QFETCH(uint8_t, native);
+    QFETCH(int, native);
     QFETCH(GPSPositionReport::FixType, expected);
     GPSNativePositionReport source;
-    source.fix_type = native;
+    QCOMPARE(GPSPositionReport::fixTypeFromValue(native), expected);
+    source.fix_type = static_cast<GPSPositionReport::FixType>(native);
     QCOMPARE(GPSNativeData::position(source, {}).fixType, expected);
 }
 
 void GPSNativeDataTest::_integrityStates_data()
 {
-    QTest::addColumn<uint8_t>("native");
+    QTest::addColumn<int>("native");
     QTest::addColumn<GPSIntegrityReport::JammingState>("jamming");
     QTest::addColumn<GPSIntegrityReport::SpoofingState>("spoofing");
     QTest::addColumn<GPSIntegrityReport::CorrectionUse>("correctionUse");
     using Jamming = GPSIntegrityReport::JammingState;
     using Spoofing = GPSIntegrityReport::SpoofingState;
     using Use = GPSIntegrityReport::CorrectionUse;
-    QTest::newRow("unknown") << uint8_t{0} << Jamming::Unknown << Spoofing::Unknown << Use::Unknown;
-    QTest::newRow("ok-not-used") << uint8_t{1} << Jamming::Ok << Spoofing::None << Use::NotUsed;
-    QTest::newRow("warning-used") << uint8_t{2} << Jamming::Warning << Spoofing::Indicated << Use::Used;
-    QTest::newRow("critical-reserved-use") << uint8_t{3} << Jamming::Critical << Spoofing::Multiple << Use::Unknown;
-    QTest::newRow("reserved-4") << uint8_t{4} << Jamming::Unknown << Spoofing::Unknown << Use::Unknown;
-    QTest::newRow("reserved-255") << uint8_t{255} << Jamming::Unknown << Spoofing::Unknown << Use::Unknown;
+    QTest::newRow("unknown") << 0 << Jamming::Unknown << Spoofing::Unknown << Use::Unknown;
+    QTest::newRow("ok-not-used") << 1 << Jamming::Ok << Spoofing::None << Use::NotUsed;
+    QTest::newRow("warning-used") << 2 << Jamming::Warning << Spoofing::Indicated << Use::Used;
+    QTest::newRow("critical-reserved-use") << 3 << Jamming::Critical << Spoofing::Multiple << Use::Unknown;
+    QTest::newRow("reserved-4") << 4 << Jamming::Unknown << Spoofing::Unknown << Use::Unknown;
+    QTest::newRow("reserved-255") << 255 << Jamming::Unknown << Spoofing::Unknown << Use::Unknown;
+    QTest::newRow("negative") << -1 << Jamming::Unknown << Spoofing::Unknown << Use::Unknown;
+    QTest::newRow("out-of-byte-range") << 256 << Jamming::Unknown << Spoofing::Unknown << Use::Unknown;
 }
 
 void GPSNativeDataTest::_integrityStates()
 {
-    QFETCH(uint8_t, native);
+    QFETCH(int, native);
     QFETCH(GPSIntegrityReport::JammingState, jamming);
     QFETCH(GPSIntegrityReport::SpoofingState, spoofing);
     QFETCH(GPSIntegrityReport::CorrectionUse, correctionUse);
     GPSNativeIntegrityReport diagnostic;
-    diagnostic.jamming_state = native;
-    diagnostic.spoofing_state = native;
-    diagnostic.corrections_msg_used = native;
+    QCOMPARE(GPSIntegrityReport::jammingStateFromValue(native), jamming);
+    QCOMPARE(GPSIntegrityReport::spoofingStateFromValue(native), spoofing);
+    QCOMPARE(GPSIntegrityReport::correctionUseFromValue(native), correctionUse);
+    diagnostic.jamming_state = static_cast<GPSIntegrityReport::JammingState>(native);
+    diagnostic.spoofing_state = static_cast<GPSIntegrityReport::SpoofingState>(native);
+    diagnostic.corrections_msg_used = static_cast<GPSIntegrityReport::CorrectionUse>(native);
     const auto integrity = GPSNativeData::position({}, diagnostic).integrity;
     QCOMPARE(integrity.jamming, jamming);
     QCOMPARE(integrity.spoofing, spoofing);
@@ -257,15 +272,14 @@ void GPSNativeDataTest::_optionalValues_data()
                                      .automatic_gain_control = 12345,
                                      .jamming_indicator = 77,
                                      .corrections_crc_failed = true,
-                                     .corrections_msg_used = GPSNativeIntegrityReport::CORRECTIONS_MSG_USED_USED};
+                                     .corrections_msg_used = GPSIntegrityReport::CorrectionUse::Used};
     QTest::newRow("largest-reported") << uint8_t{254}
                                       << GPSNativeIntegrityReport{
                                              .noise_per_ms = (std::numeric_limits<int32_t>::max)(),
                                              .automatic_gain_control = (std::numeric_limits<uint16_t>::max)(),
                                              .jamming_indicator = (std::numeric_limits<int32_t>::max)()};
     QTest::newRow("correction-use-without-crc")
-        << uint8_t{255}
-        << GPSNativeIntegrityReport{.corrections_msg_used = GPSNativeIntegrityReport::CORRECTIONS_MSG_USED_USED};
+        << uint8_t{255} << GPSNativeIntegrityReport{.corrections_msg_used = GPSIntegrityReport::CorrectionUse::Used};
 }
 
 void GPSNativeDataTest::_optionalValues()

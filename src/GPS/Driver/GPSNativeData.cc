@@ -8,9 +8,7 @@ GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativ
     GPSPositionReport result;
     result.timestampUs = source.timestamp;
     result.utcTimeUs = source.time_utc_usec;
-    if (source.fix_type <= 6 || source.fix_type == 8) {
-        result.fixType = static_cast<GPSPositionReport::FixType>(source.fix_type);
-    }
+    result.fixType = GPSPositionReport::fixTypeFromValue(static_cast<int>(source.fix_type));
     result.latitudeDegrees = source.latitude_deg;
     result.longitudeDegrees = source.longitude_deg;
     result.altitudeMslMeters = source.altitude_msl_m;
@@ -30,15 +28,10 @@ GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativ
     }
     auto& integrity = result.integrity;
     integrity.timestampUs = diagnostic.timestamp;
-    if (diagnostic.jamming_state <= GPSNativeIntegrityReport::JAMMING_STATE_DETECTED) {
-        integrity.jamming = static_cast<GPSIntegrityReport::JammingState>(diagnostic.jamming_state);
-    }
-    if (diagnostic.spoofing_state <= GPSNativeIntegrityReport::SPOOFING_STATE_DETECTED) {
-        integrity.spoofing = static_cast<GPSIntegrityReport::SpoofingState>(diagnostic.spoofing_state);
-    }
-    if (diagnostic.corrections_msg_used <= GPSNativeIntegrityReport::CORRECTIONS_MSG_USED_USED) {
-        integrity.correctionUse = static_cast<GPSIntegrityReport::CorrectionUse>(diagnostic.corrections_msg_used);
-    }
+    integrity.jamming = GPSIntegrityReport::jammingStateFromValue(static_cast<int>(diagnostic.jamming_state));
+    integrity.spoofing = GPSIntegrityReport::spoofingStateFromValue(static_cast<int>(diagnostic.spoofing_state));
+    integrity.correctionUse =
+        GPSIntegrityReport::correctionUseFromValue(static_cast<int>(diagnostic.corrections_msg_used));
     integrity.noisePerMillisecond = diagnostic.noise_per_ms;
     integrity.automaticGainControl = diagnostic.automatic_gain_control;
     integrity.jammingIndicator = diagnostic.jamming_indicator;

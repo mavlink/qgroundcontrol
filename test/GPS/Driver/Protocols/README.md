@@ -1,19 +1,19 @@
 # Native GPS protocol tests
 
 These host tests link the production `QGCGPSNative` libraries for UBX, Ashtech,
-SBF, and Femto. They require C++20 and CMake 3.25 or newer, but no Qt, PX4 runtime,
-receiver, or application build. The existing pinned GeographicLib dependency is
+SBF, and Femto. They require C++20, CMake 3.25 or newer, and Qt Core 6.8 or newer,
+but no PX4 runtime, receiver, or application build. The existing pinned GeographicLib dependency is
 resolved through the shared production dependency helper.
 
-`src/GPS/Driver/Protocols/NMEA/` and `RTCM/` contain the shared Qt-free wire
+`src/GPS/Driver/Protocols/NMEA/` and `RTCM/` contain the shared Qt-Core-backed wire
 protocols, not receiver configuration or application integration.
-Their independent `QGC::GPSNMEAProtocol` and `QGC::GPSRTCMFramer` targets remain
+Their independent `QGC::GPSNMEAProtocol` and `QGC::GPSRTCM` targets remain
 usable without native receiver families. NMEA numbering and numeric-coordinate
 helpers belong to the NMEA protocol library. The co-located `GPSNMEAReport.h` mapper
 remains part of the native common target so generic NMEA consumers do not acquire
 native-report dependencies.
 Qt positioning adapters live in `src/GPS/Positioning/NMEA/`; shared formatting and
-frame adapters remain in `src/GPS/NMEA/` and `src/GPS/RTCM/`. MAVLink/UDP correction
+timestamped frame decoding live alongside their wire protocols. MAVLink/UDP correction
 integration belongs to `src/GPS/Corrections/`, outside the protocol libraries.
 
 ## Build and run
@@ -22,6 +22,7 @@ Run from the repository root:
 
 ```sh
 cmake -S test/GPS/Driver/Protocols -B build/gps-protocol-tests -G Ninja \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/installation \
   -DCMAKE_BUILD_TYPE=Debug -DFETCHCONTENT_UPDATES_DISCONNECTED=ON
 cmake --build build/gps-protocol-tests --parallel
 ctest --test-dir build/gps-protocol-tests --output-on-failure -L Unit
@@ -46,6 +47,10 @@ The receiver runtime keeps only its consumed configuration surface: native outpu
 default receiver-rate setup, supported dynamic-model/constellation requests and
 required safety readback. Unused configured-NMEA, general-readback and explicit-rate
 APIs are not carried as speculative lifecycle features.
+Protocol I/O shares the transport result types and their Qt error details. Clocks,
+waits and transport operations remain injectable; decoding still performs no I/O.
+Public report headers own their Qt metatype declarations, while native state shares
+canonical fix/integrity enums without losing partial-epoch state or normalization.
 
 `GPSProtocolAllocation` counts C++ allocations while replaying 1,000 NAV-PVT frames.
 After warmup, synchronous `consume()` callbacks reuse event storage; `decode()` still
@@ -65,6 +70,7 @@ The separate facade suite needs Qt Core, Test, and Positioning. It exercises
 
 ```sh
 cmake -S test/GPS/Driver -B build/gps-driver-tests -G Ninja \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/installation \
   -DCMAKE_BUILD_TYPE=Debug -DFETCHCONTENT_UPDATES_DISCONNECTED=ON
 cmake --build build/gps-driver-tests --parallel
 ctest --test-dir build/gps-driver-tests --output-on-failure -R GPSDriverTest
@@ -92,13 +98,14 @@ Use a separate Clang build:
 
 ```sh
 cmake -S test/GPS/Driver/Protocols -B build/gps-protocol-fuzz -G Ninja \
+  -DCMAKE_PREFIX_PATH=/path/to/Qt/installation \
   -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ \
   -DQGC_BUILD_GPS_PROTOCOL_FUZZER=ON -DFETCHCONTENT_UPDATES_DISCONNECTED=ON
 cmake --build build/gps-protocol-fuzz --parallel
 ctest --test-dir build/gps-protocol-fuzz --output-on-failure
 ```
 
-The option instruments the same production protocol and NMEA libraries with
+The option instruments the same production protocol, receiver, transport and RTCM libraries with
 AddressSanitizer, UndefinedBehaviorSanitizer, and libFuzzer coverage; it does
 not compile parallel copies of their sources. `GPSProtocolFuzzSmoke` runs
 10,000 deterministic iterations against a build-directory copy of `corpus`.

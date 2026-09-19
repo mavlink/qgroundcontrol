@@ -1,5 +1,6 @@
-add_library(
-    QGCGPSUBX STATIC
+qt_add_library(
+    QGCGPSUBX
+    STATIC
     GPSDriverUBX.cc
     GPSDriverUBX.h
     UBXConfiguration.cc

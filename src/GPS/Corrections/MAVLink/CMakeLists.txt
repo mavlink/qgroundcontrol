@@ -1,4 +1,4 @@
-add_library(QGCGPSMavlinkPacket STATIC RTCMMavlinkPacket.cc)
+qt_add_library(QGCGPSMavlinkPacket STATIC RTCMMavlinkPacket.cc)
 add_library(QGC::GPSMavlinkPacket ALIAS QGCGPSMavlinkPacket)
 set_target_properties(
     QGCGPSMavlinkPacket

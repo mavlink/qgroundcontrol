@@ -39,6 +39,7 @@ struct GPSDriver::State
     GPSNativeData::SatelliteSnapshot satelliteSnapshot;
     std::unique_ptr<GPSProtocol> driver;
     std::vector<GPSConfigurationEvidence> evidence;
+    QString configurationError;
     bool configuring = false;
     int updates = 0;
     bool usefulData = false;
@@ -60,10 +61,16 @@ const std::vector<GPSConfigurationEvidence>& GPSDriver::configurationEvidence() 
     return _state->evidence;
 }
 
+const QString& GPSDriver::configurationError() const
+{
+    return _state->configurationError;
+}
+
 bool GPSDriver::configure()
 {
     _state = std::make_unique<State>();
     if (const QString error = gpsReceiverConfigError(_type, _config); !error.isEmpty()) {
+        _state->configurationError = error;
         qCWarning(GPSDriverLog) << error;
         return false;
     }
@@ -74,25 +81,15 @@ bool GPSDriver::configure()
         const int timeout = deadline.remainingMilliseconds(MonotonicClock::nowUs());
         const auto result = _transport.read(bytes.data(), static_cast<int>(bytes.size()), timeout);
         _state->activity |= result.status == GPSReadStatus::Data && result.bytesRead > 0;
-        return GPSProtocolReadResult{result.status, result.bytesRead};
+        return result;
     };
     io.write = [this](std::span<const uint8_t> bytes, GPSDeadline deadline) {
         const int remaining = deadline.remainingMilliseconds(MonotonicClock::nowUs());
         // Do not submit another part of a multipart command after its absolute deadline.
         if (_transport.isCancelled() || remaining == 0) {
-            return GPSProtocolWriteResult{_transport.isCancelled() ? GPSWriteStatus::Cancelled
-                                                                   : GPSWriteStatus::TimedOut};
+            return GPSWriteResult{_transport.isCancelled() ? GPSWriteStatus::Cancelled : GPSWriteStatus::TimedOut};
         }
-        QDeadlineTimer commandDeadline(QDeadlineTimer::Forever, Qt::PreciseTimer);
-        if (deadline.untilUs != UINT64_MAX) {
-            using DeadlineTime = std::chrono::time_point<std::chrono::steady_clock, std::chrono::microseconds>;
-            commandDeadline =
-                QDeadlineTimer(DeadlineTime(std::chrono::microseconds(deadline.untilUs)), Qt::PreciseTimer);
-        }
-        const auto result =
-            _transport.writeConfiguration(bytes.data(), static_cast<int>(bytes.size()), commandDeadline);
-        return GPSProtocolWriteResult{result.status, result.acceptedBytes, result.writtenBytes,
-                                      result.uncertainBytes()};
+        return _transport.writeConfiguration(bytes.data(), static_cast<int>(bytes.size()), deadline.toQDeadlineTimer());
     };
     io.setBaudrate = [this](unsigned baud) {
         if (_transport.isCancelled()) {
@@ -108,12 +105,11 @@ bool GPSDriver::configure()
         }
         return !_transport.isCancelled();
     };
-    io.log = [](GPSProtocolLogLevel level, std::string_view message) {
-        const auto text = QString::fromUtf8(message.data(), static_cast<qsizetype>(message.size()));
+    io.log = [](GPSProtocolLogLevel level, QStringView message) {
         if (level == GPSProtocolLogLevel::Debug) {
-            qCDebug(GPSNativeDriversLog) << text;
+            qCDebug(GPSNativeDriversLog) << message;
         } else {
-            qCWarning(GPSNativeDriversLog) << text;
+            qCWarning(GPSNativeDriversLog) << message;
         }
     };
     io.commandFinished = [this](const GPSCommandResult& result) {
@@ -196,6 +192,7 @@ bool GPSDriver::configure()
             break;
 #endif
         default:
+            _state->configurationError = QStringLiteral("Unsupported GPS type: %1").arg(static_cast<int>(_type));
             qCWarning(GPSDriverLog) << "Unsupported GPS type:" << static_cast<int>(_type);
             return false;
     }
@@ -214,7 +211,12 @@ bool GPSDriver::configure()
     }
     _state->configuring = false;
     if (result < 0) {
-        qCWarning(GPSDriverLog) << "Driver configuration failed for type" << static_cast<int>(_type);
+        _state->configurationError = _state->driver->ioErrorDetail();
+        if (_state->configurationError.isEmpty()) {
+            _state->configurationError = QStringLiteral("Receiver configuration failed");
+        }
+        qCWarning(GPSDriverLog) << "Driver configuration failed for type" << static_cast<int>(_type)
+                                << _state->configurationError;
         _state->driver.reset();
         return false;
     }
@@ -235,7 +237,7 @@ GPSReceiveResult GPSDriver::receiveOutcome(unsigned timeoutMs)
         return {error == -ECANCELED ? GPSReceiveStatus::Cancelled
                 : error == -EPROTO  ? GPSReceiveStatus::ProtocolError
                                     : GPSReceiveStatus::TransportError,
-                _state->updates, error};
+                _state->updates, error, _state->driver->ioErrorDetail()};
     }
     if (_transport.isCancelled()) {
         return {GPSReceiveStatus::Cancelled, _state->updates, -ECANCELED};

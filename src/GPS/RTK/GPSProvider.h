@@ -16,10 +16,6 @@
 #include "GPSSurveyInStatus.h"
 #include "GPSType.h"
 
-Q_DECLARE_METATYPE(GPSPositionReport)
-Q_DECLARE_METATYPE(GPSSatelliteReport)
-Q_DECLARE_METATYPE(GPSSatelliteUsageReport)
-
 class GPSTransport;
 
 enum class GPSConnectionError

@@ -1,5 +1,8 @@
 #include "NTRIPGgaProvider.h"
 
+#include <QtCore/QDateTime>
+
+#include "NMEASentence.h"
 #include "NMEAUtils.h"
 #include "NTRIPTransport.h"
 
@@ -88,7 +91,17 @@ void NTRIPGgaProvider::_sendGGA()
         _setRetryPhase(RetryPhase::Normal);
     }
 
-    const QByteArray gga = NMEAUtils::makeGGA(position.coordinate, position.coordinate.altitude());
+    // Preserve the caster request's historical nominal fix metadata.
+    const NMEA::GGA fix{
+        .latitude = position.coordinate.latitude(),
+        .longitude = position.coordinate.longitude(),
+        .altitude = position.coordinate.altitude(),
+        .geoidSeparation = 0.0,
+        .hdop = 1.0,
+        .quality = NMEA::GgaQuality::GPS,
+        .satellitesUsed = 12,
+    };
+    const QByteArray gga = NMEAUtils::makeGGA(fix, QDateTime::currentDateTimeUtc().time());
     transport->sendNMEA(gga);
     if (!current()) {
         return;

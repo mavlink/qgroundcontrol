@@ -1,3 +1,11 @@
+if(NOT TARGET Qt6::Core)
+    find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
+endif()
+if(NOT TARGET QGCLoggingCategory)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Logging/Category"
+                     "${CMAKE_CURRENT_BINARY_DIR}/LoggingCategory"
+    )
+endif()
 if(NOT TARGET QGCWire)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Parsing/Wire" "${CMAKE_CURRENT_BINARY_DIR}/Wire")
 endif()
@@ -5,17 +13,17 @@ if(NOT TARGET QGCClock)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Timing/Clock" "${CMAKE_CURRENT_BINARY_DIR}/Clock")
 endif()
 block(SCOPE_FOR VARIABLES)
-set(QGC_GPS_COMPONENTS_ENABLED NMEAProtocol RTCMFramer ReceiverConfig TransportTypes)
-if(NOT TARGET QGCGPSTransportTypes)
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Transport" "${CMAKE_CURRENT_BINARY_DIR}/TransportTypes")
+set(QGC_GPS_COMPONENTS_ENABLED NMEAProtocol RTCM Receiver Transport)
+if(NOT TARGET QGCGPSTransport)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Transport" "${CMAKE_CURRENT_BINARY_DIR}/Transport")
 endif()
 if(NOT TARGET QGCGPSNMEAProtocol)
     add_subdirectory(NMEA)
 endif()
-if(NOT TARGET QGCGPSRTCMFramer)
+if(NOT TARGET QGCGPSRTCM)
     add_subdirectory(RTCM)
 endif()
-if(NOT TARGET QGCGPSReceiverConfig)
+if(NOT TARGET QGCGPSReceiver)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Receiver" "${CMAKE_CURRENT_BINARY_DIR}/Receiver")
 endif()
 endblock()
@@ -29,7 +37,7 @@ if(NOT QGC_GPS_ENABLE_UBX
 endif()
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Geo/GeographicLib.cmake")
 
-add_library(QGCGPSNativeCommon STATIC GPSProtocol.cc GPSProtocol.h GPSProtocolTime.h GPSBaseProtocol.h)
+qt_add_library(QGCGPSNativeCommon STATIC GPSProtocol.cc GPSProtocol.h GPSProtocolTime.h GPSBaseProtocol.h)
 target_sources(
     QGCGPSNativeCommon
     PUBLIC FILE_SET
@@ -51,7 +59,7 @@ target_include_directories(QGCGPSNativeCommon PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 )
 target_link_libraries(
     QGCGPSNativeCommon
-    PUBLIC QGCWire QGCClock QGCGPSNativeContracts QGCGPSNMEAProtocol QGCGPSRTCMFramer
+    PUBLIC QGCWire QGCClock QGCGPSNativeContracts QGCGPSNMEAProtocol QGCGPSRTCM
     PRIVATE GeographicLib::GeographicLib
 )
 add_library(QGCGPSNative INTERFACE)

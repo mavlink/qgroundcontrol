@@ -6,6 +6,8 @@
 #include <span>
 #include <vector>
 
+#include <QtCore/QString>
+
 #include "GPSConfigurationEvidence.h"
 #include "GPSDriverReports.h"
 #include "GPSReceiverConfig.h"
@@ -42,6 +44,7 @@ struct GPSReceiveResult
     GPSReceiveStatus status = GPSReceiveStatus::NotConfigured;
     int updates = 0;
     int errorCode = 0;
+    QString detail = {};
 
     [[nodiscard]] bool terminal() const
     {
@@ -69,6 +72,9 @@ public:
 
     /// Latest configure() attempt; remains available after failure. Caller-thread access only.
     [[nodiscard]] const std::vector<GPSConfigurationEvidence>& configurationEvidence() const;
+
+    /// Diagnostic from the latest configure() failure; cleared when a new attempt starts.
+    [[nodiscard]] const QString& configurationError() const;
 
 private:
     GPSType _type;

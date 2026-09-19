@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <span>
 
+#include <QtCore/QByteArrayView>
+
 /// Bounded RTCM framing shared by receiver codecs and correction inputs.
 /// Drain nextFrame() after completion to recover buffered suffixes.
 class RTCMFramer
@@ -69,6 +71,12 @@ public:
         }
         const size_t payloadSize = ((bytes[1] & 3) << 8) | bytes[2];
         return bytes.size() == HEADER_SIZE + payloadSize + CRC_SIZE && crc24q(bytes) == 0;
+    }
+
+    static bool isValidFrame(QByteArrayView bytes)
+    {
+        return isValidFrame(std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(bytes.data()),
+                                                     static_cast<size_t>(bytes.size())));
     }
 
     static uint32_t crc24q(std::span<const uint8_t> bytes)

@@ -4,6 +4,8 @@
 #include <limits>
 #include <optional>
 
+#include "GPSDriverReports.h"
+
 struct GPSNativePositionReport
 {
     uint64_t timestamp{};
@@ -16,15 +18,7 @@ struct GPSNativePositionReport
     float speedAccuracyMetersPerSecond = std::numeric_limits<float>::quiet_NaN();
     float courseAccuracyRadians = std::numeric_limits<float>::quiet_NaN();
 
-    static constexpr uint8_t FIX_TYPE_UNKNOWN = 0;
-    static constexpr uint8_t FIX_TYPE_NONE = 1;
-    static constexpr uint8_t FIX_TYPE_2D = 2;
-    static constexpr uint8_t FIX_TYPE_3D = 3;
-    static constexpr uint8_t FIX_TYPE_RTCM_CODE_DIFFERENTIAL = 4;
-    static constexpr uint8_t FIX_TYPE_RTK_FLOAT = 5;
-    static constexpr uint8_t FIX_TYPE_RTK_FIXED = 6;
-    static constexpr uint8_t FIX_TYPE_EXTRAPOLATED = 8;
-    uint8_t fix_type = FIX_TYPE_UNKNOWN;
+    GPSPositionReport::FixType fix_type = GPSPositionReport::FixType::Unknown;
 
     float eph = std::numeric_limits<float>::quiet_NaN();
     float epv = std::numeric_limits<float>::quiet_NaN();

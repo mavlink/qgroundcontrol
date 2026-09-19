@@ -13,6 +13,6 @@ qt_add_library(
 target_sources(QGCGPSDriver PUBLIC FILE_SET HEADERS FILES GPSDriver.h)
 target_link_libraries(
     QGCGPSDriver
-    PUBLIC QGCGPSDriverReports QGCGPSReceiverConfig
+    PUBLIC QGCGPSReceiver
     PRIVATE QGCGPSTransport QGCLoggingCategory QGCGPSNative
 )

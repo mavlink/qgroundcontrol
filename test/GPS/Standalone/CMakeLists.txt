@@ -8,11 +8,10 @@ if(COMMAND add_qgc_test AND NOT CMAKE_CROSSCOMPILING)
     endif()
     foreach(
         component
-        DriverReports
-        ReceiverConfig
-        TransportTypes
+        Receiver
+        Transport
         NMEAProtocol
-        RTCMFramer
+        RTCM
         MavlinkPacket
         Native
         Driver
@@ -37,7 +36,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(_gps_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS")
     set(_utilities_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/Utilities")
     set(QGC_GPS_COMPONENTS
-        "Core;NMEA;Positioning;Transport;ReceiverTransports;RTCM;MavlinkPacket;Corrections;NTRIP;ReceiverConfig;Driver"
+        "Core;NMEAPositioning;Positioning;Transport;ReceiverTransports;RTCM;MavlinkPacket"
+        "Corrections;NTRIP;Receiver;Driver"
         CACHE STRING "GPS library components to build and test"
     )
     option(QGC_NO_SERIAL_LINK "Build without serial receiver support" OFF)
@@ -45,20 +45,16 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(_gps_available_components
         Core
         NMEAProtocol
-        NMEAUtils
-        NMEA
+        NMEAPositioning
         Positioning
         Transport
-        TransportTypes
         ReceiverTransports
-        RTCMFramer
         RTCM
         MavlinkPacket
         Corrections
         NTRIPHttp
         NTRIP
-        DriverReports
-        ReceiverConfig
+        Receiver
         Native
         Driver
     )
@@ -72,23 +68,16 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED Native Transport)
     endif()
     if("Native" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        list(
-            APPEND
-            QGC_GPS_COMPONENTS_ENABLED
-            DriverReports
-            ReceiverConfig
-            TransportTypes
-            NMEAProtocol
-            RTCMFramer
-        )
+        list(APPEND QGC_GPS_COMPONENTS_ENABLED Receiver Transport NMEAProtocol RTCM)
     endif()
-    if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "Positioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    if("NMEAPositioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "Positioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED Core)
     endif()
     if("NTRIP" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        list(APPEND QGC_GPS_COMPONENTS_ENABLED NTRIPHttp NMEAUtils RTCM)
+        list(APPEND QGC_GPS_COMPONENTS_ENABLED NTRIPHttp NMEAProtocol RTCM)
+        find_package(Qt6 6.8 REQUIRED COMPONENTS Positioning)
     endif()
-    if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "NMEAUtils" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    if("NMEAPositioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED NMEAProtocol)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Positioning)
     endif()
@@ -101,29 +90,13 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     if("Corrections" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         list(APPEND QGC_GPS_COMPONENTS_ENABLED RTCM)
     endif()
-    if("RTCM" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        list(APPEND QGC_GPS_COMPONENTS_ENABLED RTCMFramer)
-    endif()
     if("ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "NTRIPHttp" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Network)
     endif()
-    set(_qt_gps_components ${QGC_GPS_COMPONENTS_ENABLED})
-    list(
-        REMOVE_ITEM
-        _qt_gps_components
-        RTCMFramer
-        NMEAProtocol
-        DriverReports
-        ReceiverConfig
-        Native
-        TransportTypes
-    )
-    if(_qt_gps_components)
-        find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
-        add_subdirectory("${_utilities_root}/Logging/Category" LoggingCategory)
-    endif()
-    if("DriverReports" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "ReceiverConfig" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        add_subdirectory("${_gps_root}/Receiver" Receiver EXCLUDE_FROM_ALL)
+    find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
+    add_subdirectory("${_utilities_root}/Logging/Category" LoggingCategory)
+    if("Receiver" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+        add_subdirectory("${_gps_root}/Receiver" Receiver)
     endif()
     if("Core" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Positioning Test)
@@ -132,32 +105,26 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Timing/Support" TestTiming)
         add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Core" CoreTests)
     endif()
-    if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "NTRIP" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    if("NMEAPositioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "NTRIP" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_utilities_root}/IO" IO)
     endif()
     if("NMEAProtocol" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/Driver/Protocols/NMEA" NMEAProtocol)
     endif()
-    if("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "NMEAUtils" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        add_subdirectory("${_gps_root}/NMEA" NMEA)
-    endif()
     if("Positioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/Positioning" Positioning)
-    elseif("NMEA" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    elseif("NMEAPositioning" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/Positioning/NMEA" NMEAPositioning)
     endif()
-    if("Transport" IN_LIST QGC_GPS_COMPONENTS_ENABLED OR "TransportTypes" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    if("Transport" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/Transport" Transport)
     endif()
     if("ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
         add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Transport" TransportTests)
     endif()
-    if("RTCMFramer" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        add_subdirectory("${_gps_root}/Driver/Protocols/RTCM" RTCMFramer)
-    endif()
     if("RTCM" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        add_subdirectory("${_gps_root}/RTCM" RTCM)
+        add_subdirectory("${_gps_root}/Driver/Protocols/RTCM" RTCM)
     endif()
     if("MavlinkPacket" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
         add_subdirectory("${_gps_root}/Corrections/MAVLink" MavlinkPacket)
@@ -210,32 +177,22 @@ if(TARGET QGCGPSNative)
     set_tests_properties(QGCGPSNativeConsumer PROPERTIES LABELS "Unit;GPS" TIMEOUT 10)
 endif()
 
-set(_receiver_consumer_targets)
-foreach(component DriverReports ReceiverConfig)
-    if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR OR component IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-        list(APPEND _receiver_consumer_targets "QGCGPS${component}")
-    endif()
-endforeach()
-
 foreach(
     target
     QGCGPSCore
     QGCGPSPositioning
-    QGCGPSNMEA
+    QGCGPSNMEAPositioning
     QGCGPSNMEAProtocol
-    QGCGPSNMEAUtils
     QGCNetworkClient
     QGCGPSNTRIPHttp
     QGCGPSNTRIP
     QGCGPSTransport
-    QGCGPSTransportTypes
     QGCGPSReceiverTransports
-    QGCGPSRTCMFramer
     QGCGPSRTCM
     QGCGPSMavlinkPacket
     QGCGPSCorrections
     QGCGPSDriver
-    ${_receiver_consumer_targets}
+    QGCGPSReceiver
 )
     if(NOT TARGET ${target})
         continue()
@@ -250,7 +207,7 @@ foreach(
         TIMEOUT
         10
     )
-    if("${target}" MATCHES "^QGCGPS(Core|Positioning|NMEA)$")
+    if("${target}" MATCHES "^QGCGPS(Core|Positioning|NMEAPositioning)$")
         target_link_libraries(${target}Consumer PRIVATE QGCTestTiming)
     endif()
     if("${target}" STREQUAL "QGCGPSDriver")

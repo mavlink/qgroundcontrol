@@ -1,10 +1,11 @@
+#include <span>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QEvent>
 #include <QtCore/QList>
 #include <QtTest/QTest>
 
 #include "RTCMDecodedFrame.h"
-#include "RTCMFrame.h"
 #include "RTCMFrameDecoder.h"
 #include "RTCMFramer.h"
 
@@ -254,7 +255,9 @@ void RTCMConformanceTest::_strictValidation()
     candidate.append(static_cast<char>(crc >> 16));
     candidate.append(static_cast<char>(crc >> 8));
     candidate.append(static_cast<char>(crc));
-    QVERIFY(!RTCM::isValidFrame(candidate));
+    QVERIFY(!RTCMFramer::isValidFrame(candidate));
+    QVERIFY(!RTCMFramer::isValidFrame(std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(candidate.constData()),
+                                                               static_cast<size_t>(candidate.size()))));
 }
 
 void RTCMConformanceTest::_fragmentReceiptAndFiltering()

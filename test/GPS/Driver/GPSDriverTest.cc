@@ -224,18 +224,35 @@ void GPSDriverTest::_receiveOutcomes()
                      {});
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::NotConfigured);
     QVERIFY(driver.configure());
+    QVERIFY(driver.configurationError().isEmpty());
     transport.scriptedRead.clear();
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Idle);
     transport.scriptedRead = nmeaFrame("GPTXT,01,01,02,diagnostic");
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Activity);
-    transport.readOverride = GPSReadResult{GPSReadStatus::Error};
-    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::TransportError);
+    const QString detail = QStringLiteral("Receiver disconnected: Gerät");
+    transport.readOverride = GPSReadResult{GPSReadStatus::Error, 0, detail};
+    const auto failed = driver.receiveOutcome(0);
+    QCOMPARE(failed.status, GPSReceiveStatus::TransportError);
+    QCOMPARE(failed.detail, detail);
     QVERIFY(!transport.fatalError());
-    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::TransportError);
+    const auto latched = driver.receiveOutcome(0);
+    QCOMPARE(latched.status, GPSReceiveStatus::TransportError);
+    QCOMPARE(latched.detail, detail);
     transport.readOverride.reset();
     QVERIFY(driver.configure());
-    transport.readOverride = GPSReadResult{GPSReadStatus::Cancelled};
-    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Cancelled);
+    QVERIFY(driver.configurationError().isEmpty());
+    transport.readOverride = GPSReadResult{GPSReadStatus::Cancelled, 0, QStringLiteral("Receiver stopped")};
+    const auto cancelled = driver.receiveOutcome(0);
+    QCOMPARE(cancelled.status, GPSReceiveStatus::Cancelled);
+    QCOMPARE(cancelled.detail, transport.readOverride->detail);
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
+    QVERIFY(!driver.configure());
+    verifyExpectedLogMessage();
+    QCOMPARE(driver.configurationError(), transport.readOverride->detail);
+    transport.readOverride.reset();
+    QVERIFY(driver.configure());
+    QVERIFY(driver.configurationError().isEmpty());
+    QVERIFY(driver.receiveOutcome(0).detail.isEmpty());
 }
 
 void GPSDriverTest::_sbfSatelliteUsage()
@@ -373,12 +390,14 @@ void GPSDriverTest::_configurationWriteEvidence()
 {
     QFETCH(GPSWriteResult, result);
     QFETCH(int, uncertain);
+    result.detail = QStringLiteral("Configuration write failed: Gerät");
     FakeGPSTransport transport;
     transport.writeOverride = result;
     GPSDriver driver(GPSType::ublox, transport, {.role = GPSReceiverConfig::Role::Position}, {});
     expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
+    QCOMPARE(driver.configurationError(), result.detail);
     QVERIFY(!driver.configurationEvidence().empty());
     for (const auto& command : driver.configurationEvidence()) {
         QCOMPARE(command.outcome, result.status == GPSWriteStatus::Cancelled ? GPSConfigurationOutcome::Cancelled

@@ -10,7 +10,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     target_compile_features(QGCGPSReceiverConfigTest PRIVATE cxx_std_20)
     target_compile_definitions(QGCGPSReceiverConfigTest PRIVATE QGC_PORTABLE_TEST)
     target_include_directories(QGCGPSReceiverConfigTest PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../Portable")
-    target_link_libraries(QGCGPSReceiverConfigTest PRIVATE Qt6::Test QGCGPSReceiverConfig)
+    target_link_libraries(QGCGPSReceiverConfigTest PRIVATE Qt6::Test QGCGPSReceiver)
     add_test(NAME GPSReceiverConfigTest COMMAND QGCGPSReceiverConfigTest)
     set_tests_properties(GPSReceiverConfigTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 60 ENVIRONMENT
                                                           "QT_FATAL_WARNINGS=1"
@@ -19,6 +19,6 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSReceiverConfigTest.cc)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSReceiverConfig)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSReceiver)
 
 add_qgc_test(GPSReceiverConfigTest LABELS Unit GPS)

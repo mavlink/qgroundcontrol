@@ -1,5 +1,11 @@
-add_library(QGCGPSAshtech STATIC AshtechConfiguration.cc AshtechDecoder.cc AshtechPrivate.h GPSDriverAshtech.cc
-                                 GPSDriverAshtech.h
+qt_add_library(
+    QGCGPSAshtech
+    STATIC
+    AshtechConfiguration.cc
+    AshtechDecoder.cc
+    AshtechPrivate.h
+    GPSDriverAshtech.cc
+    GPSDriverAshtech.h
 )
 set_target_properties(
     QGCGPSAshtech

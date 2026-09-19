@@ -10,11 +10,13 @@ import tempfile
 from pathlib import Path
 
 CASES = {
-    "DriverReports": ({"QGCGPSDriverReportsConsumer"}, "QGCGPSDriverReportsHeaderChecks"),
-    "ReceiverConfig": ({"QGCGPSReceiverConfigConsumer"}, "QGCGPSReceiverConfigHeaderChecks"),
-    "TransportTypes": ({"QGCGPSTransportTypesConsumer"}, "QGCGPSTransportTypesHeaderChecks"),
+    "Receiver": ({"QGCGPSReceiverConsumer"}, "QGCGPSReceiverHeaderChecks"),
+    "Transport": ({"QGCGPSTransportConsumer"}, "QGCGPSTransportHeaderChecks"),
     "NMEAProtocol": ({"QGCGPSNMEAProtocolConsumer"}, "QGCGPSNMEAProtocolHeaderChecks"),
-    "RTCMFramer": ({"QGCGPSRTCMFramerConsumer"}, "QGCGPSRTCMFramerHeaderChecks"),
+    "RTCM": (
+        {"QGCGPSRTCMConsumer", "RTCMFramerTest", "RTCMConformanceTest"},
+        "QGCGPSRTCMHeaderChecks",
+    ),
     "MavlinkPacket": (
         {"QGCGPSMavlinkPacketConsumer", "RTCMMavlinkPacketTest"},
         "QGCGPSMavlinkPacketHeaderChecks",
@@ -22,17 +24,18 @@ CASES = {
     "Native": (
         {
             "QGCGPSNativeConsumer",
-            "QGCGPSDriverReportsConsumer",
-            "QGCGPSReceiverConfigConsumer",
+            "QGCGPSReceiverConsumer",
             "QGCGPSNMEAProtocolConsumer",
-            "QGCGPSRTCMFramerConsumer",
-            "QGCGPSTransportTypesConsumer",
+            "QGCGPSRTCMConsumer",
+            "QGCGPSTransportConsumer",
+            "RTCMFramerTest",
+            "RTCMConformanceTest",
         },
         "QGCGPSNativeCommonHeaderChecks",
     ),
 }
 CASES["Driver"] = (
-    CASES["Native"][0] | {"QGCGPSDriverConsumer", "QGCGPSTransportConsumer"},
+    CASES["Native"][0] | {"QGCGPSDriverConsumer"},
     "QGCGPSDriverHeaderChecks",
 )
 
@@ -65,7 +68,7 @@ def check_artifacts(build: Path, component: str, config: str) -> None:
     for target in configurations[0]["targets"]:
         name = target["name"]
         if (
-            component in {"NMEAProtocol", "RTCMFramer", "MavlinkPacket"}
+            component in {"Receiver", "NMEAProtocol", "RTCM", "MavlinkPacket"}
             and name.startswith("QGCGPS")
             and not name.startswith(f"QGCGPS{component}")
         ):
@@ -74,13 +77,13 @@ def check_artifacts(build: Path, component: str, config: str) -> None:
             raise ValueError(f"Unexpected legacy receiver runtime target: {name}")
         if name == "QGCGPSDriver" and component != "Driver":
             raise ValueError(f"Unexpected Qt receiver runtime target: {name}")
-        if name != "QGCGPSReceiverConfig" or component in {"ReceiverConfig", "Native", "Driver"}:
+        if name != "QGCGPSReceiver" or component in {"Receiver", "Native", "Driver"}:
             continue
         target_model = json.loads((reply / target["jsonFile"]).read_text(encoding="utf-8"))
         for artifact in target_model["artifacts"]:
             path = build / artifact["path"]
             if path.exists():
-                raise ValueError(f"Unrequested configuration artifact was built: {path}")
+                raise ValueError(f"Unrequested receiver artifact was built: {path}")
 
 
 def check_build(args: argparse.Namespace, build: Path) -> None:
@@ -101,18 +104,15 @@ def check_build(args: argparse.Namespace, build: Path) -> None:
         f"-DCMAKE_BUILD_TYPE={config}",
         f"-DQGC_GPS_COMPONENTS={args.component}",
     ]
-    if args.component in {"Driver", "MavlinkPacket"}:
-        configure.extend(
-            [
-                f"-DQt6_DIR={args.qt_dir}",
-                "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6Network=ON",
-                "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6Positioning=ON",
-                "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6SerialPort=ON",
-                "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6Qml=ON",
-            ]
-        )
-    else:
-        configure.append("-DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON")
+    configure.extend(
+        [
+            f"-DQt6_DIR={args.qt_dir}",
+            "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6Network=ON",
+            "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6Positioning=ON",
+            "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6SerialPort=ON",
+            "-DCMAKE_DISABLE_FIND_PACKAGE_Qt6Qml=ON",
+        ]
+    )
     if args.component in {"Native", "Driver"} and args.cpm_source_cache:
         configure.append(f"-DCPM_SOURCE_CACHE={args.cpm_source_cache}")
     if args.platform:

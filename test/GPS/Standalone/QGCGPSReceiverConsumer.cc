@@ -2,9 +2,16 @@
 #include <iostream>
 #include <type_traits>
 
-#include "GPSDriverReports.h"
+#include <QtCore/QVariant>
 
-// This consumer must not require a PX4 adapter or transport implementation.
+#include "GPSDriverReports.h"
+#include "GPSReceiverCapabilities.h"
+#include "GPSReceiverConfig.h"
+
+#if defined(QT_NETWORK_LIB) || defined(QT_POSITIONING_LIB) || defined(QT_QML_LIB) || defined(QT_SERIALPORT_LIB)
+#error Receiver contracts must not inherit transport, positioning, or application dependencies.
+#endif
+
 static_assert(std::is_copy_constructible_v<GPSPositionReport>);
 static_assert(std::is_copy_constructible_v<GPSSatelliteReport>);
 static_assert(std::is_copy_constructible_v<GPSSurveyReport>);
@@ -45,5 +52,25 @@ int main()
         std::cerr << "Empty native survey reports must not manufacture a base or accuracy\n";
         return 5;
     }
-    return 0;
+    const auto transported = QVariant::fromValue(snapshot).value<GPSPositionReport>();
+    if (transported.integrity.noisePerMillisecond != 0 || transported.integrity.correctionCrcFailed != false) {
+        std::cerr << "Receiver reports must own their Qt metatype declarations and copy semantics\n";
+        return 6;
+    }
+
+    using Error = GPSReceiverConfigError;
+    using Role = GPSReceiverConfig::Role;
+    if (gpsValidateBaseStationConfig({}) != Error::InvalidSurveyIn ||
+        gpsValidateReceiverConfig(GPSType::ublox, {}) != Error::InvalidSurveyIn) {
+        std::cerr << "Default receiver configuration must not manufacture a valid survey request\n";
+        return 7;
+    }
+    GPSReceiverConfig config{.role = Role::Position, .dynamicModel = 0};
+    if (!gpsReceiverCapabilities(GPSType::ublox, config.role).dynamicModel ||
+        gpsValidateReceiverConfig(GPSType::ublox, config) != Error::None) {
+        std::cerr << "Supported u-blox positioning settings must remain valid\n";
+        return 8;
+    }
+    config.headingOffsetRadians = 0.0f;
+    return gpsValidateReceiverConfig(GPSType::ublox, config) == Error::UnsupportedHeadingOffset ? 0 : 9;
 }

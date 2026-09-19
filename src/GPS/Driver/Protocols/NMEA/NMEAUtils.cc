@@ -1,6 +1,6 @@
 #include "NMEAUtils.h"
 
-#include <QtCore/QDateTime>
+#include <cmath>
 
 #include "NMEASentence.h"
 
@@ -11,6 +11,7 @@ constexpr double MINUTE_FRACTION_SCALE = 10000.0;
 constexpr int LATITUDE_DEGREE_DIGITS = 2;
 constexpr int LONGITUDE_DEGREE_DIGITS = 3;
 constexpr int ALTITUDE_DECIMAL_PLACES = 1;
+constexpr int DOP_DECIMAL_PLACES = 1;
 
 QByteArray checksumText(QByteArrayView body)
 {
@@ -43,9 +44,14 @@ QByteArray repairChecksum(const QByteArray& sentence)
     return line + "\r\n";
 }
 
-QByteArray makeGGA(const QGeoCoordinate& coord, double altitudeMsl, int fixQuality, int numSatellites)
+QByteArray makeGGA(const NMEA::GGA& fix, const QTime& utc)
 {
-    const QTime utc = QDateTime::currentDateTimeUtc().time();
+    if (!utc.isValid() || !std::isfinite(fix.latitude) || fix.latitude < -90.0 || fix.latitude > 90.0 ||
+        !std::isfinite(fix.longitude) || fix.longitude < -180.0 || fix.longitude > 180.0 || std::isinf(fix.altitude) ||
+        std::isinf(fix.geoidSeparation) || std::isinf(fix.hdop) || fix.hdop < 0.0 ||
+        fix.quality > NMEA::GgaQuality::MAX_VALUE) {
+        return {};
+    }
     const QByteArray hhmmss = utc.toString(u"hhmmss").toLatin1();
 
     auto dmm = [](double deg, bool lat) -> QByteArray {
@@ -69,11 +75,14 @@ QByteArray makeGGA(const QGeoCoordinate& coord, double altitudeMsl, int fixQuali
         return QByteArray::number(d).rightJustified(dWidth, '0') + mm;
     };
 
-    const bool latNorth = coord.latitude() >= 0.0;
-    const bool lonEast = coord.longitude() >= 0.0;
+    const bool latNorth = fix.latitude >= 0.0;
+    const bool lonEast = fix.longitude >= 0.0;
 
-    const QByteArray latField = dmm(coord.latitude(), true);
-    const QByteArray lonField = dmm(coord.longitude(), false);
+    const QByteArray latField = dmm(fix.latitude, true);
+    const QByteArray lonField = dmm(fix.longitude, false);
+    const auto measurement = [](double value, int decimalPlaces) {
+        return std::isnan(value) ? QByteArray() : QByteArray::number(value, 'f', decimalPlaces);
+    };
 
     QByteArray core;
     core += "GPGGA,";
@@ -83,9 +92,13 @@ QByteArray makeGGA(const QGeoCoordinate& coord, double altitudeMsl, int fixQuali
     core += ',';
     core += lonField + ',';
     core += (lonEast ? "E" : "W");
-    core += ',' + QByteArray::number(fixQuality) + ',' + QByteArray::number(numSatellites) + ",1.0,";
-    core += QByteArray::number(altitudeMsl, 'f', ALTITUDE_DECIMAL_PLACES);
-    core += ",M,0.0,M,,";
+    core += ',' + QByteArray::number(fix.quality) + ',';
+    if (fix.satellitesUsed) {
+        core += QByteArray::number(*fix.satellitesUsed);
+    }
+    core += ',' + measurement(fix.hdop, DOP_DECIMAL_PLACES) + ',';
+    core += measurement(fix.altitude, ALTITUDE_DECIMAL_PLACES);
+    core += ",M," + measurement(fix.geoidSeparation, ALTITUDE_DECIMAL_PLACES) + ",M,,";
 
     QByteArray sentence;
     sentence += '$';

@@ -28,6 +28,8 @@ void RTCMFramerTest::_frameAccess()
     }
     QVERIFY(framer.valid());
     QVERIFY(framer.valid());
+    QVERIFY(RTCMFramer::isValidFrame(frame));
+    QVERIFY(RTCMFramer::isValidFrame(framer.frame()));
     QCOMPARE(framer.messageId(), messageId);
     QCOMPARE(framer.payloadLength(), extraPayload + 2);
     QCOMPARE(QByteArrayView(framer.frame()), QByteArrayView(frame));

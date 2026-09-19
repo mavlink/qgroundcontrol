@@ -6,6 +6,8 @@
 #include <limits>
 #include <optional>
 
+#include <QtCore/QMetaType>
+
 #include "GPSSatelliteUsageReport.h"
 
 struct GPSIntegrityReport
@@ -30,6 +32,27 @@ struct GPSIntegrityReport
         NotUsed,
         Used
     };
+
+    static constexpr JammingState jammingStateFromValue(int value)
+    {
+        return value >= static_cast<int>(JammingState::Unknown) && value <= static_cast<int>(JammingState::Critical)
+                   ? static_cast<JammingState>(value)
+                   : JammingState::Unknown;
+    }
+
+    static constexpr SpoofingState spoofingStateFromValue(int value)
+    {
+        return value >= static_cast<int>(SpoofingState::Unknown) && value <= static_cast<int>(SpoofingState::Multiple)
+                   ? static_cast<SpoofingState>(value)
+                   : SpoofingState::Unknown;
+    }
+
+    static constexpr CorrectionUse correctionUseFromValue(int value)
+    {
+        return value >= static_cast<int>(CorrectionUse::Unknown) && value <= static_cast<int>(CorrectionUse::Used)
+                   ? static_cast<CorrectionUse>(value)
+                   : CorrectionUse::Unknown;
+    }
 
     // Zero means the producer cannot establish the original diagnostic receipt.
     uint64_t timestampUs = 0;
@@ -56,6 +79,14 @@ struct GPSPositionReport
         Extrapolated = 8
     };
 
+    static constexpr FixType fixTypeFromValue(int value)
+    {
+        return (value >= static_cast<int>(FixType::Unknown) && value <= static_cast<int>(FixType::RTKFixed)) ||
+                       value == static_cast<int>(FixType::Extrapolated)
+                   ? static_cast<FixType>(value)
+                   : FixType::Unknown;
+    }
+
     uint64_t timestampUs = 0;
     uint64_t utcTimeUs = 0;
     FixType fixType = FixType::Unknown;
@@ -75,6 +106,7 @@ struct GPSPositionReport
     std::optional<uint8_t> satellitesUsed = std::nullopt;
     GPSIntegrityReport integrity;
 };
+Q_DECLARE_METATYPE(GPSPositionReport)
 
 struct GPSSatelliteReport
 {
@@ -93,6 +125,7 @@ struct GPSSatelliteReport
     uint16_t count = 0;
     std::array<Satellite, MAX_SATELLITES> satellites{};
 };
+Q_DECLARE_METATYPE(GPSSatelliteReport)
 
 struct GPSSurveyReport
 {

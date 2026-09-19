@@ -1,10 +1,12 @@
 #pragma once
 #include <thread>
 
+#include <QtCore/QStringList>
+
 #include "GPSProtocol.h"
 #ifdef QGC_GPS_TEST_CLOCK
 inline uint64_t gps_test_time = 0;
-inline std::vector<std::string> gps_test_warnings;
+inline QStringList gps_test_warnings;
 #else
 #include <QtCore/QLoggingCategory>
 Q_DECLARE_LOGGING_CATEGORY(GPSNativeDriversLog)
@@ -20,9 +22,10 @@ inline GPSProtocolIO makeGPSProtocolTestIO()
         gps_test_time += delay.count();
         return true;
     };
-    io.log = [](GPSProtocolLogLevel level, std::string_view message) {
-        if (level == GPSProtocolLogLevel::Warning)
-            gps_test_warnings.emplace_back(message);
+    io.log = [](GPSProtocolLogLevel level, QStringView message) {
+        if (level == GPSProtocolLogLevel::Warning) {
+            gps_test_warnings.push_back(message.toString());
+        }
     };
 #else
     io.nowUs = [] {
@@ -34,9 +37,10 @@ inline GPSProtocolIO makeGPSProtocolTestIO()
         std::this_thread::sleep_for(delay);
         return true;
     };
-    io.log = [](GPSProtocolLogLevel level, std::string_view message) {
-        if (level == GPSProtocolLogLevel::Warning)
-            qCWarning(GPSNativeDriversLog, "%.*s", int(message.size()), message.data());
+    io.log = [](GPSProtocolLogLevel level, QStringView message) {
+        if (level == GPSProtocolLogLevel::Warning) {
+            qCWarning(GPSNativeDriversLog) << message;
+        }
     };
 #endif
     io.setBaudrate = [](unsigned) { return GPSBaudStatus::Configured; };

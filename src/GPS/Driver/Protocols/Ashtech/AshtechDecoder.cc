@@ -355,20 +355,20 @@ int GPSNativeAshtech::handleMessage(int len)
         _gps_position->vdop = static_cast<float>(vdop);
 
         if (coordinatesFound < 3) {
-            _gps_position->fix_type = GPSNativePositionReport::FIX_TYPE_NONE;
+            _gps_position->fix_type = GPSPositionReport::FixType::NoFix;
 
         } else {
-            if (fix_quality == 9 || fix_quality == 10) {          // SBAS differential or BeiDou differential
-                _gps_position->fix_type = 4;                      // use RTCM differential
+            if (fix_quality == 9 || fix_quality == 10) {  // SBAS differential or BeiDou differential
+                _gps_position->fix_type = GPSPositionReport::FixType::Differential;
 
             } else if (fix_quality == 12 || fix_quality == 22) {  // RTK float or RTK float dithered
-                _gps_position->fix_type = 5;
+                _gps_position->fix_type = GPSPositionReport::FixType::RTKFloat;
 
             } else if (fix_quality == 13 || fix_quality == 23) {  // RTK fixed or RTK fixed dithered
-                _gps_position->fix_type = 6;
+                _gps_position->fix_type = GPSPositionReport::FixType::RTKFixed;
 
             } else {
-                _gps_position->fix_type = 3 + fix_quality;
+                _gps_position->fix_type = GPSPositionReport::fixTypeFromValue(3 + fix_quality);
             }
 
             _got_pashr_pos_message = true;

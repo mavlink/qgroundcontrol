@@ -43,11 +43,12 @@
 #include <cerrno>
 #include <cmath>
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
 #include <ctime>
 #include <numbers>
 #include <span>
+
+#include <QtCore/QString>
 
 #include "GPSBaseStationConfig.h"
 #include "GPSProtocolIO.h"
@@ -66,6 +67,8 @@ public:
     static constexpr int ReadCancelled = -ECANCELED;
 
     int ioError() const { return _io_error; }
+
+    const QString& ioErrorDetail() const { return _ioErrorDetail; }
 
     void finishConfigurationEvidence() { failCommandWrite(GPSCommandOutcome::Written); }
 
@@ -163,13 +166,11 @@ protected:
         if (!_io.log) {
             return;
         }
-        char message[1024]{};
         if constexpr (sizeof...(Args) == 0) {
-            std::snprintf(message, sizeof(message), "%s", format);
+            _io.log(level, QString::fromUtf8(format));
         } else {
-            std::snprintf(message, sizeof(message), format, args...);
+            _io.log(level, QString::asprintf(format, args...));
         }
-        _io.log(level, message);
     }
 
     uint64_t nowUs() const { return _io.nowUs(); }
@@ -184,6 +185,7 @@ protected:
         duration = std::min(duration, std::chrono::microseconds(std::min<uint64_t>(remaining, INT64_MAX)));
         if (_io.wait && !_io.wait(duration)) {
             _io_error = ReadCancelled;
+            _ioErrorDetail.clear();
         }
     }
 
@@ -267,12 +269,13 @@ protected:
             return 0;
         }
         GPSDeadline deadline{std::min(_operationDeadline.untilUs, nowUs() + uint64_t(std::max(timeout, 0)) * 1000)};
-        const auto result = _io.read ? _io.read({buf, static_cast<size_t>(buf_length)}, deadline)
-                                     : GPSProtocolReadResult{GPSReadStatus::Error};
+        const auto result =
+            _io.read ? _io.read({buf, static_cast<size_t>(buf_length)}, deadline) : GPSReadResult{GPSReadStatus::Error};
+        _ioErrorDetail = result.detail;
         if (result.status == GPSReadStatus::Data && result.bytesRead >= 0 && result.bytesRead <= buf_length) {
             return result.bytesRead;
         }
-        if (result.status == GPSReadStatus::TimedOut) {
+        if (result.status == GPSReadStatus::TimedOut && result.bytesRead == 0) {
             return 0;
         }
         _io_error = result.status == GPSReadStatus::Cancelled ? ReadCancelled : -EIO;
@@ -291,19 +294,21 @@ protected:
             return _io_error;
         }
         if (!buf || buf_length < 0) {
+            _ioErrorDetail.clear();
             return _io_error = -EINVAL;
         }
         const auto result = _io.write ? _io.write({static_cast<const uint8_t*>(buf), static_cast<size_t>(buf_length)},
                                                   _operationDeadline)
-                                      : GPSProtocolWriteResult{};
+                                      : GPSWriteResult{};
+        _ioErrorDetail = result.detail;
         _commandWrite.acceptedBytes += result.acceptedBytes;
         _commandWrite.writtenBytes += result.writtenBytes;
-        _commandWrite.uncertainBytes += result.uncertainBytes;
+        _commandWrite.uncertainBytes += result.uncertainBytes();
         if (result.status == GPSWriteStatus::Completed && result.acceptedBytes == buf_length &&
-            result.writtenBytes == buf_length && result.uncertainBytes == 0) {
+            result.writtenBytes == buf_length && result.uncertainBytes() == 0) {
             return result.writtenBytes;
         }
-        if (result.status == GPSWriteStatus::Unsupported) {
+        if (result.status == GPSWriteStatus::Unsupported && result.acceptedBytes == 0 && result.writtenBytes == 0) {
             failCommandWrite(GPSCommandOutcome::TransportError);
             return -1;
         }
@@ -323,6 +328,7 @@ protected:
         if (_io_error) {
             return _io_error;
         }
+        _ioErrorDetail.clear();
         const auto result = _io.setBaudrate ? _io.setBaudrate(baudrate) : GPSBaudStatus::Unsupported;
         if (result == GPSBaudStatus::Configured) {
             return 0;
@@ -336,12 +342,17 @@ protected:
 
     // A new configuration attempt starts a new I/O transaction. After a terminal
     // error, no command may be written until the caller explicitly retries.
-    void resetIOError() { _io_error = 0; }
+    void resetIOError()
+    {
+        _io_error = 0;
+        _ioErrorDetail.clear();
+    }
 
     void controlFailed()
     {
         if (!_io_error) {
             _io_error = -EPROTO;
+            _ioErrorDetail.clear();
         }
     }
 
@@ -414,6 +425,7 @@ protected:
     GPSNativeIntegrityReport _integrity;
     GPSProtocolIO _io;
     int _io_error = 0;
+    QString _ioErrorDetail;
     GPSDeadline _operationDeadline;
     bool _servicingControls = false;
 };

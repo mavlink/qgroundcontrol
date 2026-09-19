@@ -106,7 +106,7 @@ int GPSNativeFemto::handleMessage(int len)
         _gps_position->vel_d_m_s = position.vel_d_m_s;
         _gps_position->cog_rad = position.cog_rad;
         _gps_position->timestamp_time_relative = position.timestamp_time_relative;
-        _gps_position->fix_type = position.fix_type;
+        _gps_position->fix_type = GPSPositionReport::fixTypeFromValue(position.fix_type);
         _gps_position->vel_ned_valid = position.vel_ned_valid;
         _gps_position->satellites_used = position.satellites_used;
 

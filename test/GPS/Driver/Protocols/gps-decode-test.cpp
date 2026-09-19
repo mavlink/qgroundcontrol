@@ -29,10 +29,8 @@
 GPSProtocolIO noDevice()
 {
     auto io = makeGPSProtocolTestIO();
-    io.read = [](std::span<uint8_t>, GPSDeadline) -> GPSProtocolReadResult {
-        throw std::runtime_error("decoder read device");
-    };
-    io.write = [](std::span<const uint8_t>, GPSDeadline) -> GPSProtocolWriteResult {
+    io.read = [](std::span<uint8_t>, GPSDeadline) -> GPSReadResult { throw std::runtime_error("decoder read device"); };
+    io.write = [](std::span<const uint8_t>, GPSDeadline) -> GPSWriteResult {
         throw std::runtime_error("decoder wrote device");
     };
     io.setBaudrate = [](unsigned) -> GPSBaudStatus { throw std::runtime_error("decoder changed baudrate"); };
@@ -44,20 +42,20 @@ void nmeaFixQualities()
     struct Case
     {
         unsigned quality;
-        uint8_t expected;
+        GPSPositionReport::FixType expected;
     };
 
     constexpr std::array cases{
-        Case{NMEA::GgaQuality::INVALID, GPSNativePositionReport::FIX_TYPE_NONE},
-        Case{NMEA::GgaQuality::GPS, GPSNativePositionReport::FIX_TYPE_3D},
-        Case{NMEA::GgaQuality::DIFFERENTIAL, GPSNativePositionReport::FIX_TYPE_RTCM_CODE_DIFFERENTIAL},
-        Case{NMEA::GgaQuality::RTK_FIXED, GPSNativePositionReport::FIX_TYPE_RTK_FIXED},
-        Case{NMEA::GgaQuality::RTK_FLOAT, GPSNativePositionReport::FIX_TYPE_RTK_FLOAT},
-        Case{NMEA::GgaQuality::ESTIMATED, GPSNativePositionReport::FIX_TYPE_EXTRAPOLATED},
-        Case{99, GPSNativePositionReport::FIX_TYPE_UNKNOWN},
+        Case{NMEA::GgaQuality::INVALID, GPSPositionReport::FixType::NoFix},
+        Case{NMEA::GgaQuality::GPS, GPSPositionReport::FixType::Fix3D},
+        Case{NMEA::GgaQuality::DIFFERENTIAL, GPSPositionReport::FixType::Differential},
+        Case{NMEA::GgaQuality::RTK_FIXED, GPSPositionReport::FixType::RTKFixed},
+        Case{NMEA::GgaQuality::RTK_FLOAT, GPSPositionReport::FixType::RTKFloat},
+        Case{NMEA::GgaQuality::ESTIMATED, GPSPositionReport::FixType::Extrapolated},
+        Case{99, GPSPositionReport::FixType::Unknown},
     };
     GPSNativePositionReport report;
-    CHECK(report.fix_type == GPSNativePositionReport::FIX_TYPE_UNKNOWN);
+    CHECK(report.fix_type == GPSPositionReport::FixType::Unknown);
     for (const auto& test : cases) {
         NMEA::GGA fix;
         fix.quality = test.quality;
@@ -178,7 +176,7 @@ public:
 void tinyReads()
 {
     auto io = makeGPSProtocolTestIO();
-    io.read = [](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSProtocolReadResult {
+    io.read = [](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSReadResult {
         CHECK(deadline.remainingMilliseconds(gps_test_time) == 1000);
         CHECK(!bytes.empty() && bytes.size() <= 3);
         std::fill(bytes.begin(), bytes.end(), 0x12);
@@ -221,11 +219,11 @@ void absoluteDeadline()
             CHECK(deadline.remainingMilliseconds(now) == 10);
             now += 9000;
             buffer[0] = 0;
-            return GPSProtocolReadResult{GPSReadStatus::Data, 1};
+            return GPSReadResult{GPSReadStatus::Data, 1};
         }
         CHECK(deadline.remainingMilliseconds(now) == 1);
         now = deadline.untilUs;
-        return GPSProtocolReadResult{GPSReadStatus::TimedOut};
+        return GPSReadResult{GPSReadStatus::TimedOut};
     };
     DeadlineProbe probe(io);
     CHECK(probe.transaction() == 0);
@@ -278,13 +276,13 @@ public:
             ++transportCalls;
             if (reply.empty()) {
                 gps_test_time += uint64_t(deadline.remainingMilliseconds(gps_test_time)) * 1000 + 1;
-                return GPSProtocolReadResult{GPSReadStatus::TimedOut};
+                return GPSReadResult{GPSReadStatus::TimedOut};
             }
             const size_t count = std::min(bytes.size(), reply.size());
             std::copy_n(reply.begin(), count, bytes.begin());
             reply.erase(reply.begin(), reply.begin() + count);
             ++gps_test_time;
-            return GPSProtocolReadResult{GPSReadStatus::Data, int(count)};
+            return GPSReadResult{GPSReadStatus::Data, int(count)};
         };
         io.write = [this](std::span<const uint8_t> bytes, GPSDeadline) {
             ++transportCalls;
@@ -299,7 +297,7 @@ public:
             } else {
                 reply = nmeaPacket("PASHR,ACK");
             }
-            return GPSProtocolWriteResult{GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size()), 0};
+            return GPSWriteResult{GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())};
         };
         io.setBaudrate = [this](unsigned) {
             ++transportCalls;
@@ -495,7 +493,7 @@ void ashtechMetadata()
              "PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,,0,90,10,0,1,1,1,1,",
          }) {
         CHECK(driver.consume(nmeaPacket(missingCoordinate)) & 1);
-        CHECK(position.fix_type == GPSNativePositionReport::FIX_TYPE_NONE);
+        CHECK(position.fix_type == GPSPositionReport::FixType::NoFix);
     }
     CHECK(driver.consume(nmeaPacket("GPGSV,1,1,01,01,,,")) & 2);
     CHECK(gpsSatellites.count == 1);
@@ -623,7 +621,7 @@ void sbfEpochMetadata()
     gps_test_time += 200000;
     driver.consume({});
     CHECK(fixes.size() == 1);
-    CHECK(fixes[0].fix_type == GPSNativePositionReport::FIX_TYPE_2D);
+    CHECK(fixes[0].fix_type == GPSPositionReport::FixType::Fix2D);
     CHECK(fixes[0].satellites_used == UINT8_MAX);
     CHECK(usage.size() == 1 && !usage[0].usedCount);
     CHECK(std::isnan(fixes[0].hdop));
@@ -639,7 +637,7 @@ void sbfEpochMetadata()
     driver.consume({});
     CHECK(fixes.size() == 2);
     CHECK(fixes.back().satellites_used == 0);
-    CHECK(fixes.back().fix_type == GPSNativePositionReport::FIX_TYPE_3D);
+    CHECK(fixes.back().fix_type == GPSPositionReport::FixType::Fix3D);
     CHECK(std::isnan(fixes.back().heading));
     CHECK(std::isnan(fixes.back().heading_accuracy));
     CHECK(std::isnan(fixes.back().speedAccuracyMetersPerSecond));
@@ -677,7 +675,7 @@ void sbfInvalidCoordinates()
         gps_test_time += 200000;
         driver.consume({});
         CHECK(reports.size() == previous + 1);
-        CHECK(reports.back().fix_type == GPSNativePositionReport::FIX_TYPE_NONE);
+        CHECK(reports.back().fix_type == GPSPositionReport::FixType::NoFix);
     };
 
     struct InvalidCoordinate

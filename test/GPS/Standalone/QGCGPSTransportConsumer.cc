@@ -1,4 +1,17 @@
+#include <type_traits>
+
 #include "GPSTransport.h"
+
+#if defined(QT_NETWORK_LIB) || defined(QT_POSITIONING_LIB) || defined(QT_QML_LIB) || defined(QT_SERIALPORT_LIB)
+#error Transport contracts must not inherit concrete transport or application dependencies.
+#endif
+
+static_assert(std::is_enum_v<GPSOpenStatus>);
+static_assert(std::is_enum_v<GPSReadStatus>);
+static_assert(std::is_enum_v<GPSWriteStatus>);
+static_assert(std::is_enum_v<GPSBaudStatus>);
+static_assert(GPSReadStatus::Data != GPSReadStatus::TimedOut);
+static_assert(GPSWriteStatus::Completed != GPSWriteStatus::Unsupported);
 
 class UnsupportedTransport final : public GPSTransport
 {

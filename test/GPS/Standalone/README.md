@@ -2,6 +2,11 @@
 
 GPS value types live with their owners: receiver configuration, identity and native
 reports in `Receiver/`, I/O statuses and results in `Transport/`, and altitude datums in `Core/`.
+Qt Core is the baseline dependency; boundaries exclude unrelated networking,
+positioning and application code rather than prohibiting Qt.
+Compiled GPS libraries use `qt_add_library(... STATIC ...)` for Qt target
+finalization. Alias and interface-only targets use CMake's `add_library`; autogen
+settings remain explicit so value/parser-only libraries do not run moc unnecessarily.
 The shared `GPSConstellation.h` remains Qt-free and is exported by both Core and
 the NMEA protocol target without a separate contracts library.
 The Core library adds position and satellite observations, source health, and
@@ -10,7 +15,7 @@ libraries, not receiver configuration or native drivers.
 The QML registration header, `src/GPS/GPSQmlTypes.h`,
 is compiled only by the application. The positioning service handles source registration,
 selection, and recovery; QGC owns permissions and platform/custom/NMEA source
-creation. The NMEA library owns passive sentence framing, Qt position decoding,
+creation. The NMEA positioning library owns passive sentence framing, Qt position decoding,
 satellite assembly, and independent receipt-based freshness. Its input device is
 borrowed; it does not write receiver configuration or depend on QGC settings.
 
@@ -25,14 +30,15 @@ Unit suite.
 
 Receiver-configuration, native conversion, accepted-state, and stream-transport behavior suites reuse
 `PortableTest`: the application harness runs them against its production objects,
-while standalone builds create narrow Qt-backed executables. The no-Qt consumers
+while standalone builds create narrow Qt-backed executables. The library consumers
 remain small linkage/default/smoke checks rather than a second behavior-test framework.
 
 `GPSReceiverConfigTest` owns the native validation/capability tables, including
 wire limits and adjacent floating-point boundaries. `GPSBaseStationConfigTest`
 covers the Qt diagnostic adapter. `GPSNativeDataTest` exercises the production
 report adapter's enum mappings, motion validity, unavailable values and satellite
-snapshots. Receiver configuration and report value types remain Qt-free.
+snapshots. Receiver configuration and report value types share a Qt-Core-backed
+library; report metatype declarations belong to their defining headers, not the RTK worker.
 
 Run receiver validation without the application or native protocol dependency:
 
@@ -53,21 +59,20 @@ cmake --build build/gps-driver-tests
 ctest --test-dir build/gps-driver-tests --output-on-failure -L Unit
 ```
 
-Native application test builds also register `CMake.GPSMinimal.DriverReports`,
-`CMake.GPSMinimal.ReceiverConfig`, `CMake.GPSMinimal.TransportTypes`,
-`CMake.GPSMinimal.NMEAProtocol`, `CMake.GPSMinimal.RTCMFramer`, `CMake.GPSMinimal.MavlinkPacket`,
+Native application test builds also register `CMake.GPSMinimal.Receiver`,
+`CMake.GPSMinimal.Transport`, `CMake.GPSMinimal.NMEAProtocol`,
+`CMake.GPSMinimal.RTCM`, `CMake.GPSMinimal.MavlinkPacket`,
 `CMake.GPSMinimal.Native`, and `CMake.GPSMinimal.Driver` in the existing
 Unit/CMake test lane. Each case configures a fresh temporary standalone build,
 builds the default targets and isolated header checks, and
 runs exactly the selected consumers. CMake's file API is used to reject runtime
-targets outside the selected component and unrequested configuration artifacts.
-The value/protocol cases disable Qt discovery. The driver case permits Qt Core,
-and the packetizer case also uses Qt Test; both disable Network, Positioning,
-SerialPort, and QML. The matrix rejects legacy PX4 runtime targets. Single- and multi-configuration
+targets outside the selected component and unrequested receiver artifacts.
+Every case permits Qt Core, with Qt Test for behavior suites, while disabling
+Network, Positioning, SerialPort, and QML. The matrix rejects legacy PX4 runtime targets. Single- and multi-configuration
 generators use the active test configuration. Cross-compiled application builds
 do not register these host-executed cases.
 The native case builds the production protocol libraries and checks their public
-headers without Qt or an external receiver runtime.
+headers without concrete transports, positioning, QML or an external receiver runtime.
 The NMEA and RTCM cases reject sibling GPS targets, including native receiver
 drivers, even though their sources share the `Driver/Protocols/` directory.
 The packetizer case likewise rejects sibling GPS targets, including RTCM decoding.
@@ -76,10 +81,10 @@ The packetizer case likewise rejects sibling GPS targets, including RTCM decodin
 ctest --test-dir build --output-on-failure -R '^CMake.GPSMinimal\.'
 ```
 
-The NMEA protocol is a separate Qt-free static library in
+The NMEA protocol is a Qt-Core-backed static library in
 `src/GPS/Driver/Protocols/NMEA/`. Its consumer links only
-`QGCGPSNMEAProtocol` and exercises sentence decoding, constellation resolution, and
-satellite assembly without a Qt application.
+`QGCGPSNMEAProtocol` and exercises sentence decoding, constellation resolution,
+satellite assembly and explicit-time GGA formatting without a Qt application.
 
 The default standalone build requires a C++20 compiler and Qt 6.8 or newer with Core and
 Positioning:
@@ -91,10 +96,10 @@ cmake --build build/gps-libraries
 ctest --test-dir build/gps-libraries --output-on-failure
 ```
 
-`GPSTransport.h` exposes the public interface using Qt-free statuses from
-`Transport/GPSIOStatus.h` and Qt-backed details in `GPSTransportResult.h`.
-`QGC::GPSTransportTypes` exports the shared statuses without Qt; native protocols
-use the same enums directly instead of ordinal casts between duplicated types.
+`QGC::GPSTransport` owns the public interface, statuses from `Transport/GPSIOStatus.h`,
+and Qt-backed details in `GPSTransportResult.h`. Native protocols use the same
+`GPSReadResult` and `GPSWriteResult` rather than duplicate result types, preserving
+transport error details and deriving uncertain bytes from shared progress evidence.
 These synchronous values do not require Qt
 metatype registration. `GPSConnectionError` remains registered for queued worker
 signals. Socket waiting is private to the TCP and UDP implementations.
@@ -118,10 +123,10 @@ cmake --build build/gps-transports
 ctest --test-dir build/gps-transports --output-on-failure
 ```
 
-The available components are `Core`, `NMEAProtocol`, `NMEAUtils`, `NMEA`, `Positioning`,
-`TransportTypes`, `Transport`, `ReceiverTransports`, `RTCMFramer`, `RTCM`, `MavlinkPacket`, `Corrections`, `NTRIPHttp`,
-`NTRIP`, `DriverReports`, `ReceiverConfig`, `Native`, and `Driver`.
-`Native` selects the Qt-free receiver protocols; `Driver` adds the Qt transport
+The available components are `Core`, `NMEAProtocol`, `NMEAPositioning`, `Positioning`,
+`Transport`, `ReceiverTransports`, `RTCM`, `MavlinkPacket`, `Corrections`, `NTRIPHttp`,
+`NTRIP`, `Receiver`, `Native`, and `Driver`.
+`Native` selects the Qt-Core-backed receiver protocols; `Driver` adds the transport
 adapter and configuration diagnostics. The `Transport` library
 needs Qt Core and the logging library, not Qt Network or RTK configuration.
 Receiver transport tests additionally use Qt Test, not Qt Positioning.
@@ -129,17 +134,18 @@ Linux standalone builds leave the Android serial compatibility harness disabled.
 Enable it with `-DQGC_BUILD_ANDROID_SERIAL_TESTS=ON` when Qt CorePrivate development
 files are available. Full Linux application test builds retain that harness.
 Core survey-status coverage stays with the Core component.
-All components are enabled by default. `NMEA` includes `NMEAProtocol` and `NMEAUtils`;
-`RTCM` and `Corrections` automatically include `RTCMFramer`. `NTRIP` includes
-`NTRIPHttp`, `NMEAUtils`, and `RTCM`.
+All components are enabled by default. `NMEAPositioning` includes `Core` and `NMEAProtocol`;
+`Corrections` includes `RTCM`. `NTRIP` includes `NTRIPHttp`, `NMEAProtocol`, and `RTCM`.
+Formatting belongs to `NMEAProtocol`; framing and timestamped decoding belong to `RTCM`.
 `MavlinkPacket` selects only Qt Core-backed GPS_RTCM_DATA fragmentation and its
 tests; neither `RTCM`, `Corrections`, nor `NTRIP` implicitly selects it.
-`Driver` includes `Native` and `Transport`; `Native` includes receiver reports,
-configuration, transport status types, NMEA protocol support, and RTCM framing.
+`Driver` includes `Native` and `Transport`; `Native` includes `Receiver`, `Transport`,
+`NMEAProtocol`, and `RTCM`. Obsolete header-only and adapter component selections
+are removed rather than maintained as aliases.
 
 ```sh
 cmake -S test/GPS/Standalone -B build/gps-native -G Ninja \
-  -DQGC_GPS_COMPONENTS=Native -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
+  -DQGC_GPS_COMPONENTS=Native -DCMAKE_PREFIX_PATH=/path/to/Qt/installation
 cmake --build build/gps-native
 ctest --test-dir build/gps-native --output-on-failure
 
@@ -151,24 +157,22 @@ ctest --test-dir build/gps-driver --output-on-failure
 
 ## Owner-local GPS types
 
-The production driver uses the native receiver protocols. `QGC::GPSReceiverConfig` owns the Qt-free
-configuration and software request capabilities. It shares `Receiver/CMakeLists.txt`
-with the independent, header-only `QGC::GPSDriverReports` target. Target declarations
+The production driver uses the native receiver protocols. `QGC::GPSReceiver` owns
+configuration, software request capabilities, evidence, and public receiver reports,
+including their Qt metatype declarations. Target declarations
 stay beside their sources instead of in build-only folders or per-target include
-fragments. Standalone builds add this module with `EXCLUDE_FROM_ALL` and register
-only requested consumers, so a report-only build does not compile configuration code.
+fragments. Native contract/interface targets remain internal implementation boundaries;
+they are not separately selectable library components.
 
 | Directory | Ownership |
 | --- | --- |
-| `Receiver/` | Qt-free configuration, configuration evidence, capabilities, identity, and receiver reports |
+| `Receiver/` | Configuration, evidence, capabilities, identity, canonical enums, and Qt-integrated receiver reports |
 | `Driver/` | Driver facade and Qt configuration diagnostics |
-| `Driver/Protocols/` | Qt-free native receiver protocols and configuration transactions |
-| `Driver/Protocols/NMEA/` | Shared Qt-free sentence/field parsing, constellation normalization, and satellite epochs |
-| `Driver/Protocols/RTCM/` | Shared Qt-free RTCM framing and CRC validation |
-| `NMEA/` | Shared Qt NMEA formatting and checksum adaptation |
+| `Driver/Protocols/` | Qt-Core-backed native receiver protocols and injectable configuration transactions |
+| `Driver/Protocols/NMEA/` | Sentence parsing/formatting, constellation normalization, satellite epochs, and checksum handling |
+| `Driver/Protocols/RTCM/` | Bounded framing/CRC, timestamped decoding, and decoded-frame values |
 | `Positioning/` | Source selection, accepted-position policy, and application source creation |
 | `Positioning/NMEA/` | Qt position/satellite adapters, stream handling, and NMEA source management |
-| `RTCM/` | Qt frame decoding, validation adapters, and decoded-frame values |
 | `Corrections/` | Correction source registration, routing, delivery accounting, and UDP ingress |
 | `Corrections/MAVLink/` | Lightweight packetization plus application sequence/admission and vehicle-output adapters |
 | `RTK/` | Application composition, worker integration, Facts, settings, and auto-connect |
@@ -197,14 +201,19 @@ report sinks. Consumers use `receiveOutcome()`
 to distinguish useful data, ancillary activity, idle time, cancellation and terminal
 errors. Inactivity is measured by elapsed time since useful reports, not by counting
 short ancillary receive calls.
+`configurationError()` and `GPSReceiveResult::detail` retain transport diagnostics
+without requiring callers to parse log output.
 `configurationEvidence()` adds command outcomes without changing receiver
 settings or exposing a new UI: accepted/written byte counts are distinct from
 receiver acknowledgement and readback verification. The evidence values live with
-the other Qt-free receiver reports, not in the facade layer.
+the other receiver reports, not in the facade layer.
 `writeConfiguration()` requires an explicit deadline and preserves the native
 command budget on desktop transports; the generic `write()` wrapper is removed.
 Android explicitly retains its synchronous backend limitation; generic unsupported
 bounded writes are not retried through an unbounded writer.
+Protocols retain injected clocks and absolute command deadlines for deterministic
+tests. Conversion to a live Qt deadline happens only at the real transport boundary;
+enabling Qt does not replace fake-time tests with wall-clock waits.
 
 Scoped satellite updates are aggregated before publishing full snapshots. Used-only
 counts have their own `GPSSatelliteUsageReport` and sink; they do not manufacture
@@ -214,6 +223,8 @@ The protocol libraries reuse checked little-endian reads and writes, shared NMEA
 decoding and RTCM framing, and the existing GeographicLib dependency. Their raw
 decoder state remains separate from the public receiver reports, with conversion
 inside the driver. The application continues to consume the same report types.
+Native state shares the public fix and integrity enums; protocol-specific partial
+state, validity checks, altitude projection and snapshot aggregation remain distinct.
 NMEA satellite-number normalization and numeric coordinate conversion live in the
 NMEA protocol library, not the shared constellation enum or generic receiver base.
 The native GGA report mapper is co-located under `Driver/Protocols/NMEA/` but remains
@@ -253,10 +264,10 @@ Native family tests cover valid fixed/survey reports, bounded Ashtech receipts,
 required stream activation, and configuration failure paths. Older u-blox
 firmware remains supported by native protocol code, not by a retained PX4 engine.
 
-Shared Qt-free validation preserves the uint32 survey-duration range and existing
+Shared receiver validation preserves the uint32 survey-duration range and existing
 fixed-base float wire limits. `Driver/GPSReceiverConfigValidation` translates its
-error codes through literal, `lupdate`-extractable contexts at the Qt-facing
-boundary without introducing Qt into `Receiver/`.
+error codes through literal, `lupdate`-extractable contexts at the driver diagnostic
+boundary, separate from the validation rules.
 
 `gpsBaseStationConfigError()` checks the native base configuration and wire limits.
 Fixed-base coordinates and altitude must be supplied explicitly; omitted fields
@@ -294,32 +305,22 @@ the full survey-duration range, flags and queued snapshot ownership.
 Existing source-health, observation, satellite stores and vehicle Facts are
 unchanged; registering native positioning/diagnostic sources remains lifecycle work.
 
-The native report interface builds without finding Qt or compiling receiver
-protocols:
+The receiver contract library builds with Qt Core, without compiling receiver
+protocols or depending on positioning, concrete transports, or the application:
 
 ```sh
 cmake -S test/GPS/Standalone -B build/gps-reports -G Ninja \
-    -DQGC_GPS_COMPONENTS=DriverReports -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
+    -DQGC_GPS_COMPONENTS=Receiver -DCMAKE_PREFIX_PATH=/path/to/Qt/installation
 cmake --build build/gps-reports
 ctest --test-dir build/gps-reports --output-on-failure
 ```
 
-To include receiver configuration and report contracts together without Qt:
-
-```sh
-cmake -S test/GPS/Standalone -B build/gps-native-data -G Ninja \
-    '-DQGC_GPS_COMPONENTS=DriverReports;ReceiverConfig' \
-    -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
-cmake --build build/gps-native-data
-ctest --test-dir build/gps-native-data --output-on-failure
-```
-
 The NMEA protocol consumer covers shared constellation-ID normalization and
-rejects accidental Qt dependencies:
+formatting while rejecting accidental positioning, network and QML dependencies:
 
 ```sh
 cmake -S test/GPS/Standalone -B build/gps-nmea-native -G Ninja \
-  -DQGC_GPS_COMPONENTS=NMEAProtocol -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
+  -DQGC_GPS_COMPONENTS=NMEAProtocol -DCMAKE_PREFIX_PATH=/path/to/Qt/installation
 cmake --build build/gps-nmea-native
 ctest --test-dir build/gps-nmea-native --output-on-failure
 ```
@@ -360,10 +361,9 @@ not the accuracy-filtered map coordinate or a substituted zero altitude.
 
 ## Correction routing
 
-The Qt-free RTCM framer owns framing and CRC validation in
-`src/GPS/Driver/Protocols/RTCM/`. The Qt-backed `RTCM` library keeps timestamped
-decoding in `src/GPS/RTCM/`. Consumers use `RTCMFrameDecoder` for timestamped
-`RTCMDecodedFrame` values or `RTCMFramer` for Qt-free frame views; there is no separate
+The Qt-Core-backed RTCM library owns framing, CRC validation and timestamped decoding
+in `src/GPS/Driver/Protocols/RTCM/`. Consumers use `RTCMFrameDecoder` for timestamped
+`RTCMDecodedFrame` values or `RTCMFramer` for borrowed frame views; there is no separate
 parser facade. Consumers of decoded values include `RTCMDecodedFrame.h` without
 importing the decoder implementation or an old nested-type alias.
 `Corrections` owns source registrations,
@@ -380,12 +380,12 @@ cmake --build build/gps-corrections
 ctest --test-dir build/gps-corrections --output-on-failure
 ```
 
-`QGC::GPSRTCMFramer` exposes the C++20 framing header without Qt. Its standalone
-consumer and isolated header check compile without Qt include paths or libraries:
+`QGC::GPSRTCM` exposes both framing and decoded values. Its standalone consumer
+and isolated header checks require Qt Core, not concrete transports or positioning:
 
 ```sh
 cmake -S test/GPS/Standalone -B build/gps-framer -G Ninja \
-  -DQGC_GPS_COMPONENTS=RTCMFramer -DCMAKE_DISABLE_FIND_PACKAGE_Qt6=ON
+  -DQGC_GPS_COMPONENTS=RTCM -DCMAKE_PREFIX_PATH=/path/to/Qt/installation
 cmake --build build/gps-framer
 ctest --test-dir build/gps-framer --output-on-failure
 ```
@@ -416,8 +416,10 @@ the existing authentication utility without depending on sockets, RTCM or positi
 GGA providers, source-table fetching/model, and connection statistics. It links
 RTCM, timing, rate tracking, Qt Positioning, and the existing NMEA formatting
 helpers, without QML, serial discovery, native drivers, Bluetooth, or HttpServer.
-`QGC::GPSNMEAUtils` owns the shared NMEA formatting implementation; it is not
-compiled again inside NTRIP.
+`QGC::GPSNMEAProtocol` owns the shared NMEA formatting implementation; it is not
+compiled again inside NTRIP. GGA formatting accepts explicit fix fields and UTC time;
+coordinate-source selection, altitude policy, and obtaining the current time stay
+with the caller, outside the protocol library.
 
 The application and standalone suites link these same production targets.
 `NTRIPManager`, settings conversion, and QML registration stay in the application;

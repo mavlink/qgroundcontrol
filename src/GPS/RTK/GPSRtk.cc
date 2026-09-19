@@ -5,7 +5,7 @@
 #include "GPSProvider.h"
 #include "GPSRTKFactGroup.h"
 #include "QGCLoggingCategory.h"
-#include "RTCMFrame.h"
+#include "RTCMFramer.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 
@@ -203,7 +203,7 @@ void GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
                 qCWarning(GPSRtkLog) << "Correction manager not ready; dropping" << data.size() << "bytes";
                 return;
             }
-            const bool valid = RTCM::isValidFrame(data);
+            const bool valid = RTCMFramer::isValidFrame(data);
             const int messageId =
                 data.size() >= 5 ? (static_cast<quint8>(data[3]) << 4) | (static_cast<quint8>(data[4]) >> 4) : 0;
             correctionManager->acceptIngress(

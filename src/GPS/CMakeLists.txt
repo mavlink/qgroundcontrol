@@ -10,10 +10,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 add_subdirectory(Core)
 add_subdirectory(Transport)
 add_subdirectory(Driver/Protocols/NMEA)
-add_subdirectory(NMEA)
 
 add_subdirectory(Driver/Protocols/RTCM)
-add_subdirectory(RTCM)
 add_subdirectory(Corrections)
 add_subdirectory(Corrections/MAVLink)
 add_subdirectory(NTRIP)

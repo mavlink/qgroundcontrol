@@ -9,7 +9,7 @@
 #include "MonotonicClock.h"
 #include "NTRIPError.h"
 #include "NTRIPTransport.h"
-#include "RTCMFrame.h"
+#include "RTCMFramer.h"
 
 class MockNTRIPTransport : public NTRIPTransport
 {
@@ -56,7 +56,7 @@ public:
     void simulateRtcmData(const QByteArray& data, int messageId = 0,
                           qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000))
     {
-        const bool valid = RTCM::isValidFrame(data);
+        const bool valid = RTCMFramer::isValidFrame(data);
         emit correctionFrameReceived(
             {.data = data,
              .messageId = messageId,

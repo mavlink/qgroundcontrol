@@ -1,31 +1,22 @@
-if(NOT TARGET QGCGPSTransportTypes)
-    add_library(QGCGPSTransportTypes INTERFACE)
-    add_library(QGC::GPSTransportTypes ALIAS QGCGPSTransportTypes)
-    target_compile_features(QGCGPSTransportTypes INTERFACE cxx_std_20)
-    target_sources(QGCGPSTransportTypes INTERFACE FILE_SET HEADERS FILES GPSIOStatus.h)
-endif()
-
-if(DEFINED QGC_GPS_COMPONENTS_ENABLED
-   AND NOT "Transport" IN_LIST QGC_GPS_COMPONENTS_ENABLED
-   AND NOT "ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED
-   AND NOT "Driver" IN_LIST QGC_GPS_COMPONENTS_ENABLED
-)
-    return()
-endif()
-
-add_library(QGCGPSTransport STATIC GPSTransport.cc)
+qt_add_library(QGCGPSTransport STATIC GPSTransport.cc)
 add_library(QGC::GPSTransport ALIAS QGCGPSTransport)
 target_compile_features(QGCGPSTransport PUBLIC cxx_std_20)
 target_link_libraries(
     QGCGPSTransport
-    PUBLIC Qt6::Core QGCGPSTransportTypes
+    PUBLIC Qt6::Core
     PRIVATE QGCLoggingCategory
 )
-target_sources(QGCGPSTransport PUBLIC FILE_SET HEADERS FILES GPSTransport.h GPSTransportResult.h)
+target_sources(QGCGPSTransport PUBLIC FILE_SET HEADERS FILES GPSTransport.h GPSTransportResult.h GPSIOStatus.h)
 
 if(NOT DEFINED QGC_GPS_COMPONENTS_ENABLED OR "ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
-    add_library(QGCGPSReceiverTransports STATIC TCPGPSTransport.cc UDPGPSTransport.cc GPSSocketWait.cc
-                                                GPSSocketWait_p.h GPSStreamWrite_p.h
+    qt_add_library(
+        QGCGPSReceiverTransports
+        STATIC
+        TCPGPSTransport.cc
+        UDPGPSTransport.cc
+        GPSSocketWait.cc
+        GPSSocketWait_p.h
+        GPSStreamWrite_p.h
     )
     add_library(QGC::GPSReceiverTransports ALIAS QGCGPSReceiverTransports)
     target_compile_features(QGCGPSReceiverTransports PUBLIC cxx_std_20)

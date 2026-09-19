@@ -288,40 +288,41 @@ int GPSNativeSBF::payloadRxDone()
             epoch->hasPosition = true;
 
             if (_buf.payload_pvt_geodetic.mode_type < 1) {
-                _gps_position->fix_type = 1;
+                _gps_position->fix_type = GPSPositionReport::FixType::NoFix;
 
             } else {
                 switch (_buf.payload_pvt_geodetic.mode_type) {
                     case 2:
                     case 6:
-                        _gps_position->fix_type = 4;
+                        _gps_position->fix_type = GPSPositionReport::FixType::Differential;
                         break;
 
                     case 5:
                     case 8:
-                        _gps_position->fix_type = 5;
+                        _gps_position->fix_type = GPSPositionReport::FixType::RTKFloat;
                         break;
 
                     case 4:
                     case 7:
-                        _gps_position->fix_type = 6;
+                        _gps_position->fix_type = GPSPositionReport::FixType::RTKFixed;
                         break;
 
                     default:
-                        _gps_position->fix_type = 3;
+                        _gps_position->fix_type = GPSPositionReport::FixType::Fix3D;
                         break;
                 }
             }
 
             if (_buf.payload_pvt_geodetic.error != 0) {
-                _gps_position->fix_type = GPSNativePositionReport::FIX_TYPE_NONE;
+                _gps_position->fix_type = GPSPositionReport::FixType::NoFix;
             } else if (_buf.payload_pvt_geodetic.mode_2d &&
-                       _gps_position->fix_type >= GPSNativePositionReport::FIX_TYPE_3D) {
-                _gps_position->fix_type = GPSNativePositionReport::FIX_TYPE_2D;
+                       _gps_position->fix_type >= GPSPositionReport::FixType::Fix3D) {
+                _gps_position->fix_type = GPSPositionReport::FixType::Fix2D;
             }
 
             // Check fix and error code
-            _gps_position->vel_ned_valid = _gps_position->fix_type > 1 && _buf.payload_pvt_geodetic.error == 0;
+            _gps_position->vel_ned_valid =
+                _gps_position->fix_type > GPSPositionReport::FixType::NoFix && _buf.payload_pvt_geodetic.error == 0;
 
             // Check boundaries and invalidate GPS velocities
             // We're not just checking for the do-not-use value (-2*10^10) but for any value beyond the specified max
@@ -340,7 +341,7 @@ int GPSNativeSBF::payloadRxDone()
                                           std::isfinite(pvt.longitude) && std::abs(pvt.longitude) <= std::numbers::pi &&
                                           std::isfinite(pvt.height) && std::abs(pvt.height) <= DNU;
             if (!coordinatesValid || !std::isfinite(pvt.undulation) || std::abs(pvt.undulation) > DNU) {
-                _gps_position->fix_type = GPSNativePositionReport::FIX_TYPE_NONE;
+                _gps_position->fix_type = GPSPositionReport::FixType::NoFix;
             }
 
             if (_buf.payload_pvt_geodetic.nr_sv < 255) {  // 255 = do not use value

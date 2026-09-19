@@ -7,7 +7,7 @@
 #include <QtCore/QScopeGuard>
 
 #include "QGCLoggingCategory.h"
-#include "RTCMFrame.h"
+#include "RTCMFramer.h"
 
 QGC_LOGGING_CATEGORY(GPSCorrectionRouterLog, "GPS.Corrections.GPSCorrectionRouter")
 
@@ -208,7 +208,7 @@ bool GPSCorrectionRouter::acceptIngress(const GPSCorrectionIngress& ingress)
         return false;
     }
     if ((!frame.validated && frame.source != GPSCorrectionSource::Udp) ||
-        (frame.validated && !RTCM::isValidFrame(frame.data))) {
+        (frame.validated && !RTCMFramer::isValidFrame(frame.data))) {
         frame.validated = false;
         recordRejectedFrame(frame, GPSCorrectionReason::InvalidFrame);
         return false;

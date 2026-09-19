@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <span>
 #include <stdexcept>
 #include <vector>
 
@@ -31,10 +32,8 @@ std::vector<uint8_t> fixture(const char* name)
 GPSProtocolIO noDevice()
 {
     auto io = makeGPSProtocolTestIO();
-    io.read = [](std::span<uint8_t>, GPSDeadline) -> GPSProtocolReadResult {
-        throw std::runtime_error("decoder read device");
-    };
-    io.write = [](std::span<const uint8_t>, GPSDeadline) -> GPSProtocolWriteResult {
+    io.read = [](std::span<uint8_t>, GPSDeadline) -> GPSReadResult { throw std::runtime_error("decoder read device"); };
+    io.write = [](std::span<const uint8_t>, GPSDeadline) -> GPSWriteResult {
         throw std::runtime_error("decoder wrote device");
     };
     io.setBaudrate = [](unsigned) -> GPSBaudStatus { throw std::runtime_error("decoder changed baudrate"); };
@@ -147,7 +146,7 @@ void navigationEpochs()
         gps_test_time += UBXNavigationEpoch::MAX_AGE_US;
         ubx.consume({});
         CHECK(observations.size() == 5);
-        CHECK(observations.back().fix_type == 6);
+        CHECK(observations.back().fix_type == GPSPositionReport::FixType::RTKFixed);
         CHECK(std::abs(observations.back().latitude_deg - 53.4507228) < 1e-8);
     }
 }
@@ -201,7 +200,7 @@ void independentSequences()
         CHECK(frame.frame().size() == expected.size);
         std::vector<uint8_t> corrupt(frame.frame().begin(), frame.frame().end());
         corrupt.back() ^= 1;
-        CHECK(!RTCMFramer::isValidFrame(corrupt));
+        CHECK(!RTCMFramer::isValidFrame(std::span<const uint8_t>(corrupt)));
     }
     ubx.consume(mixed);
     CHECK(std::abs(position.latitude_deg - 32.0658325) < 1e-8);
@@ -308,7 +307,7 @@ int main()
         corrupt[30] ^= 1;
         CHECK(ubx.consume(corrupt) == 0);
         CHECK(position.timestamp == timestamp);
-        position.fix_type = 6;
+        position.fix_type = GPSPositionReport::FixType::RTKFixed;
         ubx.consume(fixture("nav-hpposllh.ubx"));
         CHECK(std::abs(position.latitude_deg - 53.337816927) < 1e-9);
         CHECK(std::abs(position.longitude_deg + 2.056673696) < 1e-9);

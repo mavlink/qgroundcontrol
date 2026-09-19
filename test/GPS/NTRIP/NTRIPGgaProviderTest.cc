@@ -16,6 +16,7 @@
 #include "ManualScheduler.h"
 #include "MockNTRIPTransport.h"
 #include "MultiVehicleManager.h"
+#include "NMEASentence.h"
 #include "NMEAUtils.h"
 #include "NTRIPGgaProvider.h"
 #include "NTRIPManager.h"
@@ -208,7 +209,16 @@ void NTRIPGgaProviderTest::_activeVehicleAndCommunicationLoss()
                 expected.setLatitude(gps->getFact(QStringLiteral("lat"))->rawValue().toDouble());
                 expected.setLongitude(gps->getFact(QStringLiteral("lon"))->rawValue().toDouble());
             }
-            const auto expectedFields = NMEAUtils::makeGGA(expected, expected.altitude()).split(',');
+            const NMEA::GGA fix{
+                .latitude = expected.latitude(),
+                .longitude = expected.longitude(),
+                .altitude = expected.altitude(),
+                .geoidSeparation = 0.0,
+                .hdop = 1.0,
+                .quality = NMEA::GgaQuality::GPS,
+                .satellitesUsed = 12,
+            };
+            const auto expectedFields = NMEAUtils::makeGGA(fix, QTime(12, 0)).split(',');
             QCOMPARE(transport->sentNmea.first().split(',').mid(2, 8), expectedFields.mid(2, 8));
             QCOMPARE(ntrip->ggaSource(),
                      source == Source::VehicleGPS ? QStringLiteral("Vehicle GPS") : QStringLiteral("Vehicle EKF"));

@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -11,6 +12,7 @@
 #include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "LittleEndian.h"
+#include "RTCMFramer.h"
 #include "SBF/GPSDriverSBF.h"
 
 // Keep checks active in Release, too.
@@ -48,7 +50,7 @@ public:
     GPSProtocolIO io()
     {
         auto result = makeGPSProtocolTestIO();
-        result.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSProtocolReadResult {
+        result.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSReadResult {
             ++transport_calls;
             const int timeout = deadline.remainingMilliseconds(gps_test_time);
             auto* data = bytes.data();
@@ -70,7 +72,7 @@ public:
             gps_test_time += 1000;
             return {GPSReadStatus::Data, static_cast<int>(count)};
         };
-        result.write = [this](std::span<const uint8_t> input, GPSDeadline) -> GPSProtocolWriteResult {
+        result.write = [this](std::span<const uint8_t> input, GPSDeadline) -> GPSWriteResult {
             ++transport_calls;
             const auto* data = input.data();
             const int size = static_cast<int>(input.size());
@@ -86,7 +88,7 @@ public:
                 reply = '<' + command.substr(0, command.find_first_of(" \r\n")) + " OK";
                 reply.insert(0, noise_bytes, '\0');
             }
-            return {GPSWriteStatus::Completed, size, size, 0};
+            return {GPSWriteStatus::Completed, size, size};
         };
         result.setBaudrate = [this](unsigned) {
             ++transport_calls;
@@ -246,7 +248,7 @@ void sbfFrameOwnership()
     correction.push_back(checksum >> 16);
     correction.push_back(checksum >> 8);
     correction.push_back(checksum);
-    CHECK(RTCMFramer::isValidFrame(correction));
+    CHECK(RTCMFramer::isValidFrame(std::span<const uint8_t>(correction)));
     std::vector<uint8_t> native(94);
     (void) LittleEndian::write<uint16_t>(native, 0, 0x4024);
     (void) LittleEndian::write<uint16_t>(native, 4, SBF_ID_PVTGeodetic);
