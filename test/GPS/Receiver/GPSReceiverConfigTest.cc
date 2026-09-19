@@ -202,11 +202,11 @@ void GPSReceiverConfigTest::_capabilities_data()
             QTest::newRow(qPrintable(QStringLiteral("%1-%2").arg(typeName, roleName)))
                 << type << role
                 << GPSReceiverCapabilities{.recognized = true,
-                                           .position = true,
+                                           .position = type == GPSType::ublox,
                                            .rtkBase = true,
                                            .constellationMask = type == GPSType::ublox ? 0x1fu : 0u,
                                            .dynamicModel = type == GPSType::ublox && role == Role::Position,
-                                           .headingOffset = type != GPSType::ublox && role == Role::Position};
+                                           .headingOffset = false};
         }
     }
     for (int value : {-1, 4, 255}) {
@@ -247,6 +247,9 @@ void GPSReceiverConfigTest::_receiverValidation_data()
     for (const auto& [typeName, type] : RECEIVERS) {
         for (const auto& [roleName, role] : ROLES) {
             const auto add = [=](const char* name, const GPSBaseStationConfig& base, Error expected) {
+                if (role == Role::Position && type != GPSType::ublox) {
+                    expected = Error::UnsupportedRole;
+                }
                 QTest::newRow(qPrintable(QStringLiteral("%1-%2-%3").arg(typeName, roleName, name)))
                     << type << GPSReceiverConfig{.role = role, .base = base} << expected;
             };
@@ -290,6 +293,9 @@ void GPSReceiverConfigTest::_constellations_data()
     for (const auto& [typeName, type] : RECEIVERS) {
         for (const auto& [roleName, role] : ROLES) {
             const auto add = [=](uint32_t mask, Error expected) {
+                if (role == Role::Position && type != GPSType::ublox) {
+                    expected = Error::UnsupportedRole;
+                }
                 QTest::newRow(qPrintable(QStringLiteral("%1-%2-mask-%3").arg(typeName, roleName).arg(mask)))
                     << type << role << mask << expected;
             };
@@ -321,7 +327,9 @@ void GPSReceiverConfigTest::_dynamicModel_data()
     for (const auto& [typeName, type] : RECEIVERS) {
         for (const auto& [roleName, role] : ROLES) {
             const auto add = [=](const char* name, std::optional<int> model, Error expected) {
-                if (model.has_value() && !(type == GPSType::ublox && role == Role::Position)) {
+                if (role == Role::Position && type != GPSType::ublox) {
+                    expected = Error::UnsupportedRole;
+                } else if (model.has_value() && !(type == GPSType::ublox && role == Role::Position)) {
                     expected = Error::UnsupportedDynamicModel;
                 }
                 QTest::newRow(qPrintable(QStringLiteral("%1-%2-%3").arg(typeName, roleName, name)))
@@ -363,7 +371,9 @@ void GPSReceiverConfigTest::_headingOffset_data()
     for (const auto& [typeName, type] : RECEIVERS) {
         for (const auto& [roleName, role] : ROLES) {
             const auto add = [=](const char* name, std::optional<float> offset, Error expected) {
-                if (offset.has_value() && !(type != GPSType::ublox && role == Role::Position)) {
+                if (role == Role::Position && type != GPSType::ublox) {
+                    expected = Error::UnsupportedRole;
+                } else if (offset.has_value()) {
                     expected = Error::UnsupportedHeadingOffset;
                 }
                 QTest::newRow(qPrintable(QStringLiteral("%1-%2-%3").arg(typeName, roleName, name)))
@@ -417,12 +427,24 @@ void GPSReceiverConfigTest::_validationPrecedence_data()
     GPSReceiverConfig config{.constellationMask = 32, .dynamicModel = 1, .headingOffsetRadians = NAN_FLOAT};
     QTest::newRow("base-precedes-optional-requests") << GPSType::ublox << config << Error::InvalidSurveyIn;
     config.role = Role::Position;
+    for (const auto& [typeName, type] : RECEIVERS) {
+        if (type != GPSType::ublox) {
+            QTest::newRow(qPrintable(QStringLiteral("%1-role-precedes-optional-requests").arg(typeName)))
+                << type << config << Error::UnsupportedRole;
+        }
+    }
+    QTest::newRow("unknown-receiver-precedes-optional-requests")
+        << static_cast<GPSType>(-1) << config << Error::UnknownReceiver;
+    GPSReceiverConfig invalidRole = config;
+    invalidRole.role = static_cast<Role>(-1);
+    QTest::newRow("invalid-role-precedes-unknown-receiver")
+        << static_cast<GPSType>(-1) << invalidRole << Error::InvalidRole;
     QTest::newRow("constellations-precede-dynamic-model") << GPSType::ublox << config << Error::InvalidConstellations;
     config.constellationMask = 0;
     QTest::newRow("dynamic-model-precedes-heading") << GPSType::ublox << config << Error::InvalidDynamicModel;
     config.dynamicModel.reset();
     QTest::newRow("unsupported-heading-precedes-value") << GPSType::ublox << config << Error::UnsupportedHeadingOffset;
-    QTest::newRow("supported-heading-checks-value") << GPSType::septentrio << config << Error::InvalidHeadingOffset;
+    QTest::newRow("unsupported-role-precedes-heading-value") << GPSType::septentrio << config << Error::UnsupportedRole;
 }
 
 void GPSReceiverConfigTest::_validationPrecedence()

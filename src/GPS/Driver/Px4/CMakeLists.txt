@@ -25,7 +25,9 @@ function(qgc_add_px4_backend target)
 
     include(CPMPatchCache)
     set(px4_gpsdrivers_tag cd6f506afda9bd6e8e4645f094dcf5415f1f8be4)
-    set(px4_gpsdrivers_patch "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ubx-position-time-mode.patch")
+    set(px4_gpsdrivers_patches "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ubx-position-time-mode.patch"
+                               "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/non-ubx-safety.patch"
+    )
     qgc_cpm_patch_cache_key(
         px4_gpsdrivers_cache_key
         GIT_REPOSITORY
@@ -33,7 +35,7 @@ function(qgc_add_px4_backend target)
         GIT_TAG
         "${px4_gpsdrivers_tag}"
         PATCHES
-        "${px4_gpsdrivers_patch}"
+        ${px4_gpsdrivers_patches}
     )
     CPMAddPackage(
         NAME px4-gpsdrivers
@@ -41,7 +43,7 @@ function(qgc_add_px4_backend target)
         GIT_TAG "${px4_gpsdrivers_tag}"
         SOURCE_SUBDIR src
         CUSTOM_CACHE_KEY "${px4_gpsdrivers_cache_key}"
-        PATCHES "${px4_gpsdrivers_patch}"
+        PATCHES ${px4_gpsdrivers_patches}
     )
 
     file(GLOB gps_drivers_sources CONFIGURE_DEPENDS "${px4-gpsdrivers_SOURCE_DIR}/src/*.c"

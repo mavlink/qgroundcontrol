@@ -12,6 +12,9 @@ QString diagnostic(GPSReceiverConfigError error)
             return QCoreApplication::translate("GPSReceiverConfig", "Unsupported GPS receiver type");
         case GPSReceiverConfigError::InvalidRole:
             return QCoreApplication::translate("GPSReceiverConfig", "Unsupported GPS receiver role");
+        case GPSReceiverConfigError::UnsupportedRole:
+            return QCoreApplication::translate("GPSReceiverConfig",
+                                               "This receiver does not support the requested role");
         case GPSReceiverConfigError::InvalidFixedBase:
             return QCoreApplication::translate("GPSReceiverConfig", "Enter a valid fixed base position and accuracy");
         case GPSReceiverConfigError::InvalidSurveyIn:

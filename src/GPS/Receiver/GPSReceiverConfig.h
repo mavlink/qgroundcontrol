@@ -12,6 +12,7 @@ struct GPSReceiverConfig
     enum class Role
     {
         RTKBase,
+        /// Currently supported only by u-blox; other backends cannot safely leave base mode.
         Position,
     };
 
@@ -21,7 +22,7 @@ struct GPSReceiverConfig
     uint32_t constellationMask = 0;
     /// UBX models 0 and 2..8; an explicit zero is distinct from an absent request.
     std::optional<int> dynamicModel{};
-    /// Finite radians in [-pi, pi]; an explicit zero requests no heading offset.
+    /// No currently supported role accepts heading offsets.
     std::optional<float> headingOffsetRadians{};
 };
 
@@ -30,6 +31,7 @@ enum class GPSReceiverConfigError
     None,
     UnknownReceiver,
     InvalidRole,
+    UnsupportedRole,
     InvalidSurveyIn,
     InvalidFixedBase,
     UnsupportedConstellations,
@@ -43,6 +45,6 @@ enum class GPSReceiverConfigError
 /// Check the selected base mode against the existing receiver wire-unit limits.
 [[nodiscard]] GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& config);
 
-/// Precedence: role, receiver, RTK base, constellations, dynamic model, heading offset.
-/// For each optional request, unsupported takes precedence over an invalid value.
+/// Precedence: valid role, recognized receiver, supported role, RTK base, constellations, dynamic model, heading
+/// offset. For each optional request, unsupported takes precedence over an invalid value.
 [[nodiscard]] GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiverConfig& config);

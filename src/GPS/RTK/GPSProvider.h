@@ -52,7 +52,10 @@ signals:
     void receiverReady();
 
 private:
+    friend class GPSProviderTest;
+
     void run() final;
+    void _handleSurveyIn(const GPSSurveyReport& report);
 
     TransportFactory _transportFactory;
     GPSType _type;

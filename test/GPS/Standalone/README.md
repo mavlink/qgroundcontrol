@@ -140,29 +140,44 @@ in isolation in application test builds.
 
 The RTK provider and driver consume `GPSReceiverConfig`, with RTK base as the
 unchanged default role and `GPSBaseStationConfig` as its base-only member.
-Native position mode, u-blox constellation requests, u-blox position dynamic
-models, and supported position heading offsets use existing driver paths.
-The wrapper's u-blox Normal mode disables heading output, so u-blox heading-offset
-requests, including explicit zero, are rejected before I/O. Capabilities
+Position mode is supported only for u-blox. Trimble/Ashtech, Septentrio and Femto
+Position requests are rejected until their base-to-position transitions can be
+implemented and verified; their RTK-base paths remain available. u-blox constellation
+and position dynamic-model requests use the existing driver paths.
+The wrapper's u-blox Normal mode disables heading output, so heading-offset
+requests, including explicit zero, are not supported. Capabilities
 describe software request support, not receiver-model discovery or read-back.
 Unsupported role/setting combinations fail before configuration I/O. Output-rate
-selection, configured NMEA output, settings/UI controls and receiver read-back
-remain with the native-driver/lifecycle work.
+selection, configured NMEA output, settings/UI controls and general configuration
+read-back remain with the native-driver/lifecycle work.
 
-The pinned PX4 backend has a content-hashed compatibility patch for u-blox
-Position requests. It disables TMODE3 or the modern time-mode configuration key
-and requires receiver acknowledgement before reporting configuration success.
+The pinned PX4 backend has content-hashed compatibility patches for receiver safety.
+The u-blox patch protects Position requests. It disables TMODE3 or the modern time-mode configuration key
+and requires both acknowledgement and checked TMODE3/VALGET read-back before
+reporting configuration success. Explicit SBAS enable/disable requests also require
+acknowledgement and matching RAM values, including L1CA when enabling SBAS.
+An unresolved configuration ACK timeout fails closed rather than allowing a
+delayed ACK to confirm a later required VALSET. Read-back validates message length,
+checksum, key, layer and value; a generic ACK cannot substitute for it.
 Capability exceptions come only from a checksum-valid, solicited MON-VER response;
 known non-base and older identities avoid unsupported commands. Unidentified
-firmware must acknowledge the change or fail configuration rather than claim
+firmware must confirm the change or fail configuration rather than claim
 that an existing fixed/survey mode was cleared. No configuration wipe or dependency
 pin update is used.
 
 `GPSDriverTest` uses a stateful scripted receiver to retain base mode across new
 driver instances. Legacy/modern fixed and survey transitions, rejected/missing
-ACKs, cancellation, non-base identities and corrupted version reports are covered.
+and delayed ACKs, rejected SBAS settings, read-back mismatches, cancellation,
+non-base identities and corrupted version reports are covered.
 These tests do not establish physical receiver acceptance; additional identity
 mapping may be needed for unidentified non-base firmware.
+
+The non-u-blox patch initializes legacy base settings, ignores Ashtech survey
+progress/completion outside base mode, and rejects failure to enable Femto's
+required position stream. Ashtech and Femto fixed-base reports have zero survey
+duration instead of reading the inactive survey-settings union.
+`GPSLegacySafetyTest` exercises those backend paths
+directly, including modes that the facade currently rejects.
 
 Shared Qt-free validation preserves the uint32 survey-duration range and existing
 fixed-base float wire limits. `Driver/GPSReceiverConfigValidation` translates its
@@ -201,6 +216,10 @@ is not correction-transport acknowledgement or proof of an RTK fix.
 The driver lends RTCM bytes only for the synchronous sink call. The Qt worker
 copies them before queueing and translates native survey values into the existing
 `GPSSurveyInStatus`. Position and satellite callbacks carry owning native values.
+`GPSProviderTest` exercises the production survey handler and a transport-backed
+configuration callback. It covers coordinate validity and ordering, separate
+ellipsoid altitude without assigning MSL coordinate altitude, optional accuracy,
+the full survey-duration range, flags and queued snapshot ownership.
 Existing source-health, observation, satellite stores and vehicle Facts are
 unchanged; registering native positioning/diagnostic sources remains lifecycle work.
 

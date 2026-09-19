@@ -16,5 +16,5 @@ struct GPSReceiverCapabilities
     bool headingOffset = false;
 };
 
-/// Unknown receiver families or roles return no capabilities.
+/// Unknown receiver families or roles return no capabilities; known families may not support the requested role.
 [[nodiscard]] GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type, GPSReceiverConfig::Role role);

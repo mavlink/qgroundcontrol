@@ -27,10 +27,9 @@ GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type, GPSReceiverConfig:
             return {};
     }
     capabilities.recognized = true;
-    capabilities.position = true;
+    capabilities.position = type == GPSType::ublox;
     capabilities.rtkBase = true;
-    // The wrapper's Normal UBX mode disables NAV-RELPOSNED, the only heading-offset consumer.
-    capabilities.headingOffset = role == GPSReceiverConfig::Role::Position && type != GPSType::ublox;
+    // Normal UBX mode disables NAV-RELPOSNED; other Position backends are unsupported.
     return capabilities;
 }
 
@@ -66,6 +65,10 @@ GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiver
     const GPSReceiverCapabilities capabilities = gpsReceiverCapabilities(type, config.role);
     if (!capabilities.recognized) {
         return GPSReceiverConfigError::UnknownReceiver;
+    }
+    if ((config.role == GPSReceiverConfig::Role::Position && !capabilities.position) ||
+        (config.role == GPSReceiverConfig::Role::RTKBase && !capabilities.rtkBase)) {
+        return GPSReceiverConfigError::UnsupportedRole;
     }
     if (config.role == GPSReceiverConfig::Role::RTKBase) {
         const GPSReceiverConfigError error = gpsValidateBaseStationConfig(config.base);

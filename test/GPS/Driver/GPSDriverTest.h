@@ -39,4 +39,10 @@ private slots:
     void _ubloxPositionNonBase();
     void _ubloxBaseRoleDefaults_data();
     void _ubloxBaseRoleDefaults();
+    void _ubloxAmbiguousAcknowledgements_data();
+    void _ubloxAmbiguousAcknowledgements();
+    void _ubloxReadbackFailure_data();
+    void _ubloxReadbackFailure();
+    void _ubloxSbasConfiguration_data();
+    void _ubloxSbasConfiguration();
 };

@@ -18,6 +18,7 @@ Q_DECLARE_METATYPE(GPSBaseStationConfig)
 Q_DECLARE_METATYPE(GPSReceiverConfig)
 Q_DECLARE_METATYPE(ScriptedUBXReceiver::Model)
 Q_DECLARE_METATYPE(ScriptedUBXReceiver::DisableReply)
+Q_DECLARE_METATYPE(ScriptedUBXReceiver::ReadbackReply)
 
 namespace {
 
@@ -144,12 +145,14 @@ void GPSDriverTest::_ubloxRoleTransition()
     QCOMPARE(receiver.timeMode, fixed ? 2u : 1u);
     const int previousDisables = receiver.disableCommands;
     const int previousAcks = receiver.disableAcksRead;
+    const int previousReads = receiver.timeModeReads;
 
     GPSDriver position(GPSType::ublox, receiver, {.role = GPSReceiverConfig::Role::Position}, {});
     QVERIFY(position.configure());
     QCOMPARE(receiver.timeMode, 0u);
     QCOMPARE(receiver.disableCommands, previousDisables + 1);
     QCOMPARE(receiver.disableAcksRead, previousAcks + 1);
+    QCOMPARE(receiver.timeModeReads, previousReads + 1);
     // VALSET changes just TMODE_MODE in RAM; TMODE3 sets its disabled mode and reserved fields to zero.
     QCOMPARE(receiver.lastDisablePayload,
              receiver.modern() ? QByteArray::fromHex("000100000100032000") : QByteArray(40, '\0'));
@@ -171,6 +174,7 @@ void GPSDriverTest::_ubloxDisableFailure_data()
         {"write", Reply::WriteError},
         {"read", Reply::ReadError},
         {"cancel", Reply::Cancelled},
+        {"ack-without-change", Reply::AckWithoutChange},
     };
     for (const auto model : {ScriptedUBXReceiver::Model::M8PBase, ScriptedUBXReceiver::Model::F9P,
                              ScriptedUBXReceiver::Model::Unidentified}) {
@@ -209,7 +213,7 @@ void GPSDriverTest::_ubloxDisableFailure()
     QCOMPARE(position.receive(10), -1);
     QCOMPARE(positions, 0);
     QCOMPARE(receiver.disableCommands, 1);
-    QCOMPARE(receiver.disableAcksRead, 0);
+    QCOMPARE(receiver.disableAcksRead, reply == ScriptedUBXReceiver::DisableReply::AckWithoutChange ? 1 : 0);
     QCOMPARE(receiver.resetCommands, 0);
     QVERIFY(receiver.wireValid);
 }
@@ -234,8 +238,215 @@ void GPSDriverTest::_ubloxPositionNonBase()
     GPSDriver position(GPSType::ublox, receiver, {.role = GPSReceiverConfig::Role::Position}, {});
     QVERIFY(position.configure());
     QCOMPARE(receiver.disableCommands, 0);
+    QCOMPARE(receiver.timeModeReads, 0);
     QCOMPARE(receiver.dynamicModel, 7u);
     QCOMPARE(receiver.resetCommands, 0);
+    QVERIFY(receiver.wireValid);
+}
+
+void GPSDriverTest::_ubloxAmbiguousAcknowledgements_data()
+{
+    QTest::addColumn<ScriptedUBXReceiver::Model>("model");
+    QTest::addColumn<bool>("sbas");
+    QTest::addColumn<bool>("delayOptional");
+    QTest::addColumn<bool>("alreadyMatching");
+    QTest::addColumn<bool>("coalesce");
+    using Model = ScriptedUBXReceiver::Model;
+    QTest::newRow("time-mode-delayed-optional-ACK") << Model::F9P << false << true << false << false;
+    QTest::newRow("time-mode-stale-ACK-then-NAK") << Model::F9P << false << false << false << false;
+    QTest::newRow("legacy-stale-ACK-then-NAK") << Model::M8PBase << false << false << false << false;
+    QTest::newRow("SBAS-delayed-optional-ACK") << Model::F9P << true << true << false << false;
+    QTest::newRow("SBAS-stale-ACK-then-NAK") << Model::F9P << true << false << false << false;
+    QTest::newRow("SBAS-matching-state-does-not-excuse-NAK") << Model::F9P << true << false << true << false;
+    QTest::newRow("SBAS-coalesced-stale-ACK-NAK") << Model::F9P << true << false << true << true;
+    QTest::newRow("time-mode-coalesced-stale-ACK-NAK") << Model::F9P << false << false << false << true;
+}
+
+void GPSDriverTest::_ubloxAmbiguousAcknowledgements()
+{
+    QFETCH(ScriptedUBXReceiver::Model, model);
+    QFETCH(bool, sbas);
+    QFETCH(bool, delayOptional);
+    QFETCH(bool, alreadyMatching);
+    QFETCH(bool, coalesce);
+    std::atomic_bool stopRequested{false};
+    ScriptedUBXReceiver receiver(model, stopRequested);
+    {
+        const GPSReceiverConfig config{.base = {.useFixedBase = true,
+                                                .fixedBaseLatitude = 47,
+                                                .fixedBaseLongitude = 8,
+                                                .fixedBaseAltitudeMeters = 500}};
+        GPSDriver base(GPSType::ublox, receiver, config, {});
+        QVERIFY(base.configure());
+        QCOMPARE(receiver.timeMode, 2u);
+    }
+    const int previousDisables = receiver.disableCommands;
+    receiver.delayOptionalAck = delayOptional;
+    receiver.coalesceReplies = coalesce;
+    if (sbas) {
+        receiver.sbasReply = ScriptedUBXReceiver::DisableReply::Nak;
+        receiver.staleSbasAck = !delayOptional;
+        receiver.sbasEnabled = receiver.sbasL1caEnabled = alreadyMatching ? 1 : 0;
+    } else {
+        receiver.disableReply = ScriptedUBXReceiver::DisableReply::Nak;
+        receiver.staleDisableAck = !delayOptional;
+    }
+    const GPSReceiverConfig config{.role = GPSReceiverConfig::Role::Position, .constellationMask = sbas ? 3u : 0u};
+    GPSDriver position(GPSType::ublox, receiver, config, {});
+    if (delayOptional) {
+        expectLogMessage("GPS.Drivers", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("CFG-SEC-JAMDET_SENSITIVITY_HI not supported")));
+    }
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Driver configuration failed for type")));
+    QVERIFY(!position.configure());
+    if (delayOptional) {
+        verifyExpectedLogMessage();
+        QCOMPARE(receiver.optionalAckDelays, 1);
+        QCOMPARE(receiver.disableCommands, previousDisables);
+        QCOMPARE(receiver.sbasCommands, 0);
+    } else {
+        QCOMPARE(sbas ? receiver.sbasReads : receiver.timeModeReads, coalesce ? 0 : 1);
+    }
+    verifyExpectedLogMessage();
+    QCOMPARE(receiver.timeMode, 2u);
+    QCOMPARE(position.receive(10), -1);
+    QVERIFY(receiver.wireValid);
+}
+
+void GPSDriverTest::_ubloxReadbackFailure_data()
+{
+    QTest::addColumn<ScriptedUBXReceiver::Model>("model");
+    QTest::addColumn<ScriptedUBXReceiver::ReadbackReply>("reply");
+    using Reply = ScriptedUBXReceiver::ReadbackReply;
+    const std::pair<const char*, Reply> failures[] = {
+        {"NAK", Reply::Nak},
+        {"timeout", Reply::Timeout},
+        {"ACK-not-value", Reply::AckOnly},
+        {"wrong-message", Reply::WrongMessage},
+        {"wrong-value", Reply::WrongValue},
+        {"wrong-version", Reply::WrongVersion},
+        {"corrupt", Reply::Corrupt},
+        {"truncated", Reply::Truncated},
+        {"oversized", Reply::Oversized},
+        {"write", Reply::WriteError},
+        {"read", Reply::ReadError},
+        {"cancel", Reply::Cancelled},
+    };
+    for (const auto model : {ScriptedUBXReceiver::Model::M8PBase, ScriptedUBXReceiver::Model::F9P}) {
+        for (const auto& [name, reply] : failures) {
+            const QByteArray row = QByteArray::number(static_cast<int>(model)) + '-' + name;
+            QTest::newRow(row.constData()) << model << reply;
+        }
+    }
+    QTest::newRow("VALGET-wrong-key") << ScriptedUBXReceiver::Model::F9P << Reply::WrongKey;
+    QTest::newRow("VALGET-wrong-layer") << ScriptedUBXReceiver::Model::F9P << Reply::WrongLayer;
+    QTest::newRow("VALGET-wrong-position") << ScriptedUBXReceiver::Model::F9P << Reply::WrongPosition;
+}
+
+void GPSDriverTest::_ubloxReadbackFailure()
+{
+    QFETCH(ScriptedUBXReceiver::Model, model);
+    QFETCH(ScriptedUBXReceiver::ReadbackReply, reply);
+    std::atomic_bool stopRequested{false};
+    ScriptedUBXReceiver receiver(model, stopRequested);
+    receiver.timeMode = 2;
+    receiver.readbackReply = reply;
+    GPSDriver position(GPSType::ublox, receiver, {.role = GPSReceiverConfig::Role::Position}, {});
+    const bool readFailure = reply == ScriptedUBXReceiver::ReadbackReply::ReadError ||
+                             reply == ScriptedUBXReceiver::ReadbackReply::Cancelled;
+    if (readFailure) {
+        expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("ubx poll_or_read err")));
+    }
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Driver configuration failed for type")));
+    QVERIFY(!position.configure());
+    if (readFailure) {
+        verifyExpectedLogMessage();
+        QCOMPARE(receiver.failedReads, 1);
+    }
+    verifyExpectedLogMessage();
+    QCOMPARE(position.receive(10), -1);
+    QCOMPARE(receiver.disableAcksRead, 1);
+    QCOMPARE(receiver.timeModeReads, 1);
+    QVERIFY(receiver.wireValid);
+}
+
+void GPSDriverTest::_ubloxSbasConfiguration_data()
+{
+    QTest::addColumn<bool>("enable");
+    QTest::addColumn<ScriptedUBXReceiver::DisableReply>("settingReply");
+    QTest::addColumn<ScriptedUBXReceiver::ReadbackReply>("readbackReply");
+    QTest::addColumn<quint32>("faultKey");
+    using Setting = ScriptedUBXReceiver::DisableReply;
+    using Readback = ScriptedUBXReceiver::ReadbackReply;
+    const std::pair<const char*, Setting> settings[] = {
+        {"accepted", Setting::Ack},
+        {"NAK", Setting::Nak},
+        {"timeout", Setting::Timeout},
+        {"wrong-ACK", Setting::WrongAck},
+        {"corrupt-ACK", Setting::CorruptAck},
+        {"write", Setting::WriteError},
+        {"read", Setting::ReadError},
+        {"cancel", Setting::Cancelled},
+        {"unchanged", Setting::AckWithoutChange},
+    };
+    for (const bool enable : {false, true}) {
+        for (const auto& [name, reply] : settings) {
+            const QByteArray row = QByteArray(enable ? "enable-" : "disable-") + name;
+            QTest::newRow(row.constData()) << enable << reply << Readback::Value << quint32(0);
+        }
+    }
+    QTest::newRow("readback-timeout") << true << Setting::Ack << Readback::Timeout << quint32(0x10310020);
+    QTest::newRow("readback-NAK") << true << Setting::Ack << Readback::Nak << quint32(0x10310020);
+    QTest::newRow("L1CA-mismatch") << true << Setting::Ack << Readback::WrongValue << quint32(0x10310005);
+    QTest::newRow("L1CA-timeout") << true << Setting::Ack << Readback::Timeout << quint32(0x10310005);
+    QTest::newRow("L1CA-read-error") << true << Setting::Ack << Readback::ReadError << quint32(0x10310005);
+    QTest::newRow("L1CA-cancel") << true << Setting::Ack << Readback::Cancelled << quint32(0x10310005);
+}
+
+void GPSDriverTest::_ubloxSbasConfiguration()
+{
+    QFETCH(bool, enable);
+    QFETCH(ScriptedUBXReceiver::DisableReply, settingReply);
+    QFETCH(ScriptedUBXReceiver::ReadbackReply, readbackReply);
+    QFETCH(quint32, faultKey);
+    using Setting = ScriptedUBXReceiver::DisableReply;
+    using Readback = ScriptedUBXReceiver::ReadbackReply;
+    std::atomic_bool stopRequested{false};
+    ScriptedUBXReceiver receiver(ScriptedUBXReceiver::Model::F9P, stopRequested);
+    receiver.sbasEnabled = enable ? 0 : 1;
+    receiver.sbasReply = settingReply;
+    receiver.readbackReply = readbackReply;
+    receiver.faultReadbackKey = faultKey;
+    const GPSReceiverConfig config{.role = GPSReceiverConfig::Role::Position, .constellationMask = enable ? 3u : 1u};
+    GPSDriver position(GPSType::ublox, receiver, config, {});
+    const bool success = settingReply == Setting::Ack && readbackReply == Readback::Value;
+    const bool readFailure = settingReply == Setting::ReadError || settingReply == Setting::Cancelled ||
+                             readbackReply == Readback::ReadError || readbackReply == Readback::Cancelled;
+    if (!success) {
+        if (readFailure) {
+            expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("ubx poll_or_read err")));
+        }
+        expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Driver configuration failed for type")));
+    }
+    QCOMPARE(position.configure(), success);
+    if (success) {
+        QCOMPARE(receiver.sbasEnabled, enable ? 1u : 0u);
+        QCOMPARE(receiver.sbasReads, enable ? 2 : 1);
+        if (enable) {
+            QCOMPARE(receiver.sbasL1caEnabled, 1u);
+        }
+    } else {
+        if (readFailure) {
+            verifyExpectedLogMessage();
+        }
+        verifyExpectedLogMessage();
+        QCOMPARE(position.receive(10), -1);
+        QCOMPARE(receiver.timeModeReads, 0);
+    }
+    QCOMPARE(receiver.sbasCommands, 1);
     QVERIFY(receiver.wireValid);
 }
 
@@ -411,19 +622,17 @@ void GPSDriverTest::_testSurveyInCoordinates_data()
 {
     QTest::addColumn<double>("latitude");
     QTest::addColumn<double>("longitude");
-    QTest::addColumn<bool>("valid");
-    QTest::newRow("unknown") << qQNaN() << qQNaN() << false;
-    QTest::newRow("missing-longitude") << 47.0 << qQNaN() << false;
-    QTest::newRow("out-of-range") << 91.0 << 8.0 << false;
-    QTest::newRow("origin") << 0.0 << 0.0 << true;
-    QTest::newRow("surveying") << 47.0 << 8.0 << true;
+    QTest::newRow("unknown") << qQNaN() << qQNaN();
+    QTest::newRow("missing-longitude") << 47.0 << qQNaN();
+    QTest::newRow("out-of-range") << 91.0 << 8.0;
+    QTest::newRow("origin") << 0.0 << 0.0;
+    QTest::newRow("surveying") << 47.0 << 8.0;
 }
 
 void GPSDriverTest::_testSurveyInCoordinates()
 {
     QFETCH(double, latitude);
     QFETCH(double, longitude);
-    QFETCH(bool, valid);
     FakeGPSTransport transport;
     SinkCapture capture;
     QVERIFY(qIsNaN(capture.surveyIn.latitudeDegrees));
@@ -436,7 +645,16 @@ void GPSDriverTest::_testSurveyInCoordinates()
     status.altitude = -25.0f;
     status.flags = 0x02;
     callback(driver, GPSCallbackType::surveyInStatus, &status, 0);
-    QCOMPARE(QGeoCoordinate(capture.surveyIn.latitudeDegrees, capture.surveyIn.longitudeDegrees).isValid(), valid);
+    if (qIsNaN(latitude)) {
+        QVERIFY(qIsNaN(capture.surveyIn.latitudeDegrees));
+    } else {
+        QCOMPARE(capture.surveyIn.latitudeDegrees, latitude);
+    }
+    if (qIsNaN(longitude)) {
+        QVERIFY(qIsNaN(capture.surveyIn.longitudeDegrees));
+    } else {
+        QCOMPARE(capture.surveyIn.longitudeDegrees, longitude);
+    }
     QCOMPARE(capture.surveyIn.altitudeEllipsoidMeters, -25.0f);
     QVERIFY(capture.surveyIn.active);
     QVERIFY(!capture.surveyIn.valid);
@@ -633,13 +851,18 @@ void GPSDriverTest::_nativeConfigurationRejectedBeforeIo_data()
     QTest::addColumn<GPSReceiverConfig>("config");
     QTest::addColumn<QString>("message");
     const GPSReceiverConfig position{.role = GPSReceiverConfig::Role::Position};
+    const QString unsupportedRole = QStringLiteral("This receiver does not support the requested role");
+    for (const auto type : {GPSType::trimble, GPSType::septentrio, GPSType::femto}) {
+        const QByteArray name = "unsupported-position-" + QByteArray::number(int(type));
+        QTest::newRow(name.constData()) << int(type) << position << unsupportedRole;
+    }
     QTest::newRow("unknown-receiver") << 255 << position << QStringLiteral("Unsupported GPS receiver type");
     QTest::newRow("invalid-role") << int(GPSType::ublox)
                                   << GPSReceiverConfig{.role = static_cast<GPSReceiverConfig::Role>(255)}
                                   << QStringLiteral("Unsupported GPS receiver role");
-    QTest::newRow("unsupported-constellations")
+    QTest::newRow("femto-position-before-constellations")
         << int(GPSType::femto) << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position, .constellationMask = 1}
-        << QStringLiteral("This receiver cannot configure constellations");
+        << unsupportedRole;
     QTest::newRow("invalid-model") << int(GPSType::ublox)
                                    << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position, .dynamicModel = 1}
                                    << QStringLiteral("Unsupported receiver dynamic model");
@@ -655,10 +878,10 @@ void GPSDriverTest::_nativeConfigurationRejectedBeforeIo_data()
         << int(GPSType::ublox)
         << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position, .headingOffsetRadians = 0.0f}
         << QStringLiteral("This receiver role cannot configure a heading offset");
-    QTest::newRow("invalid-heading") << int(GPSType::septentrio)
-                                     << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position,
-                                                          .headingOffsetRadians = qQNaN()}
-                                     << QStringLiteral("Enter a finite heading offset between -pi and pi radians");
+    QTest::newRow("septentrio-position-before-heading")
+        << int(GPSType::septentrio)
+        << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position, .headingOffsetRadians = qQNaN()}
+        << unsupportedRole;
 }
 
 void GPSDriverTest::_nativeConfigurationRejectedBeforeIo()

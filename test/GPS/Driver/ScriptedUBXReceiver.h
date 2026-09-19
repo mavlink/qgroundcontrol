@@ -4,6 +4,7 @@
 #include <optional>
 
 #include <QtCore/QByteArray>
+#include <QtCore/QHash>
 #include <QtCore/QList>
 
 #include "GPSTransport.h"
@@ -34,6 +35,26 @@ public:
         CorruptAck,
         WriteError,
         ReadError,
+        Cancelled,
+        AckWithoutChange
+    };
+    enum class ReadbackReply
+    {
+        Value,
+        Nak,
+        Timeout,
+        AckOnly,
+        WrongMessage,
+        WrongKey,
+        WrongValue,
+        WrongLayer,
+        WrongPosition,
+        WrongVersion,
+        Corrupt,
+        Truncated,
+        Oversized,
+        WriteError,
+        ReadError,
         Cancelled
     };
 
@@ -54,13 +75,26 @@ public:
 
     bool wireValid = true;
     bool corruptVersionReplies = false;
+    bool delayOptionalAck = false;
+    bool staleDisableAck = false;
+    bool staleSbasAck = false;
+    bool coalesceReplies = false;
     DisableReply disableReply = DisableReply::Ack;
+    DisableReply sbasReply = DisableReply::Ack;
+    ReadbackReply readbackReply = ReadbackReply::Value;
+    quint32 faultReadbackKey = 0;
     unsigned timeMode = 0;
+    unsigned sbasEnabled = 0;
+    unsigned sbasL1caEnabled = 0;
     unsigned dynamicModel = 0;
     unsigned surveyDuration = 0;
     unsigned surveyAccuracy = 0;
     int disableCommands = 0;
     int disableAcksRead = 0;
+    int timeModeReads = 0;
+    int sbasCommands = 0;
+    int sbasReads = 0;
+    int optionalAckDelays = 0;
     int resetCommands = 0;
     int failedReads = 0;
     QByteArray lastDisablePayload;
@@ -73,7 +107,9 @@ private:
     };
 
     bool _handleFrame(const QByteArray& frame);
-    std::optional<unsigned> _valsetTimeMode(const QByteArray& payload);
+    QHash<quint32, quint64> _valsetValues(const QByteArray& payload);
+    bool _replyToSetting(uint8_t messageId, DisableReply reply, bool disable = false);
+    bool _replyToReadback(uint8_t messageId, QByteArray payload, quint32 key);
     void _queueAck(uint8_t messageId, bool accepted, bool disableAck = false);
     static QByteArray _frame(uint8_t messageClass, uint8_t messageId, const QByteArray& payload);
 
@@ -84,4 +120,6 @@ private:
     QByteArray _version;
     QByteArray _outgoing;
     QList<Response> _incoming;
+    bool _delayNextValsetAck = false;
+    std::optional<Response> _heldValsetAck;
 };

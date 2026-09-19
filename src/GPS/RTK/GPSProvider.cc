@@ -90,21 +90,7 @@ void GPSProvider::run()
     };
     sinks.onSurveyIn = [this, &gotData](const GPSSurveyReport& report) {
         gotData = true;
-        GPSSurveyInStatus status;
-        status.coordinate = QGeoCoordinate(report.latitudeDegrees, report.longitudeDegrees);
-        status.altitudeEllipsoidMeters = report.altitudeEllipsoidMeters;
-        status.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
-        status.meanAccuracyMeters = report.meanAccuracyMeters;
-        status.duration = report.duration;
-        status.valid = report.valid;
-        status.active = report.active;
-        qCDebug(GPSProviderLog) << QStringLiteral("Survey-in: %1s accuracy: %2m valid: %3 active: %4")
-                                       .arg(status.duration.count())
-                                       .arg(status.meanAccuracyMeters ? QString::number(*status.meanAccuracyMeters)
-                                                                      : QStringLiteral("unknown"))
-                                       .arg(status.valid)
-                                       .arg(status.active);
-        emit surveyInStatus(status);
+        _handleSurveyIn(report);
     };
 
     GPSDriver driver(_type, *transport, _config, std::move(sinks));
@@ -132,4 +118,23 @@ void GPSProvider::run()
     }
 
     qCDebug(GPSProviderLog) << "Exiting GPS thread";
+}
+
+void GPSProvider::_handleSurveyIn(const GPSSurveyReport& report)
+{
+    GPSSurveyInStatus status;
+    status.coordinate = QGeoCoordinate(report.latitudeDegrees, report.longitudeDegrees);
+    status.altitudeEllipsoidMeters = report.altitudeEllipsoidMeters;
+    status.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
+    status.meanAccuracyMeters = report.meanAccuracyMeters;
+    status.duration = report.duration;
+    status.valid = report.valid;
+    status.active = report.active;
+    qCDebug(GPSProviderLog) << QStringLiteral("Survey-in: %1s accuracy: %2m valid: %3 active: %4")
+                                   .arg(status.duration.count())
+                                   .arg(status.meanAccuracyMeters ? QString::number(*status.meanAccuracyMeters)
+                                                                  : QStringLiteral("unknown"))
+                                   .arg(status.valid)
+                                   .arg(status.active);
+    emit surveyInStatus(status);
 }

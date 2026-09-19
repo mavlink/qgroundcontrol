@@ -1,18 +1,22 @@
 #include "GPSProviderTest.h"
 
+#include <cmath>
 #include <cstring>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QEvent>
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
 #include "GPSProvider.h"
+#include "GPSReceiverConfigValidation.h"
 #include "GPSTransport.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 #endif
 
 Q_DECLARE_METATYPE(GPSBaseStationConfig)
+Q_DECLARE_METATYPE(GPSSurveyReport)
 
 void GPSProviderTest::_queuedPayloadsOwnSnapshots()
 {
@@ -50,10 +54,10 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
         emit provider.sensorGpsUpdate(fix);
         fix.latitudeDegrees = 0;
         fix.integrity.noisePerMillisecond = 99;
-        GPSSurveyInStatus progress;
+        GPSSurveyReport progress;
         progress.duration = std::chrono::seconds(4294967295LL);
         progress.meanAccuracyMeters = 1.234;
-        emit provider.surveyInStatus(progress);
+        provider._handleSurveyIn(progress);
         progress.meanAccuracyMeters = 0;
         emit provider.connectionError(GPSConnectionError::DeviceError);
     }));
@@ -75,6 +79,64 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
     QCOMPARE(survey.duration.count(), 4294967295LL);
     QCOMPARE(survey.meanAccuracyMeters.value(), 1.234);
     QCOMPARE(error, GPSConnectionError::DeviceError);
+}
+
+void GPSProviderTest::_surveyReportProjection_data()
+{
+    QTest::addColumn<GPSSurveyReport>("report");
+    QTest::addColumn<bool>("coordinateValid");
+
+    QTest::newRow("unknown") << GPSSurveyReport{} << false;
+    QTest::newRow("fixed") << GPSSurveyReport{.latitudeDegrees = -47.123,
+                                              .longitudeDegrees = 128.456,
+                                              .altitudeEllipsoidMeters = 512.25f,
+                                              .meanAccuracyMeters = 1.234,
+                                              .duration = std::chrono::seconds(4294967295LL),
+                                              .valid = true,
+                                              .active = false}
+                           << true;
+    QTest::newRow("survey-zero-accuracy") << GPSSurveyReport{.latitudeDegrees = 47,
+                                                             .longitudeDegrees = -8,
+                                                             .altitudeEllipsoidMeters = -30,
+                                                             .meanAccuracyMeters = 0,
+                                                             .duration = std::chrono::seconds(180),
+                                                             .valid = false,
+                                                             .active = true}
+                                          << true;
+    QTest::newRow("valid-active-unknown-accuracy")
+        << GPSSurveyReport{.latitudeDegrees = 0, .longitudeDegrees = 0, .valid = true, .active = true} << true;
+    QTest::newRow("invalid-latitude") << GPSSurveyReport{.latitudeDegrees = 91, .longitudeDegrees = 8} << false;
+    QTest::newRow("invalid-longitude") << GPSSurveyReport{.latitudeDegrees = 47, .longitudeDegrees = -181} << false;
+}
+
+void GPSProviderTest::_surveyReportProjection()
+{
+    QFETCH(GPSSurveyReport, report);
+    QFETCH(bool, coordinateValid);
+    GPSProvider provider({}, GPSType::ublox, {});
+    QSignalSpy reports(&provider, &GPSProvider::surveyInStatus);
+
+    provider._handleSurveyIn(report);
+
+    QCOMPARE(reports.size(), 1);
+    const auto status = qvariant_cast<GPSSurveyInStatus>(reports.first().first());
+    QCOMPARE(status.coordinate.isValid(), coordinateValid);
+    if (coordinateValid) {
+        QCOMPARE(status.coordinate.latitude(), report.latitudeDegrees);
+        QCOMPARE(status.coordinate.longitude(), report.longitudeDegrees);
+        QCOMPARE(status.coordinate.type(), QGeoCoordinate::Coordinate2D);
+    }
+    QVERIFY(std::isnan(status.coordinate.altitude()));
+    if (std::isnan(report.altitudeEllipsoidMeters)) {
+        QVERIFY(std::isnan(status.altitudeEllipsoidMeters));
+    } else {
+        QCOMPARE(status.altitudeEllipsoidMeters, report.altitudeEllipsoidMeters);
+    }
+    QCOMPARE(status.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
+    QCOMPARE(status.meanAccuracyMeters, report.meanAccuracyMeters);
+    QCOMPARE(status.duration, report.duration);
+    QCOMPARE(status.valid, report.valid);
+    QCOMPARE(status.active, report.active);
 }
 
 namespace {
@@ -279,25 +341,54 @@ void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
         GPSType::femto, GPSReceiverConfig{.base = config});
     QSignalSpy ready(&provider, &GPSProvider::receiverReady);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
+    QSignalSpy surveys(&provider, &GPSProvider::surveyInStatus);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::mediumMs()));
     QCOMPARE(ready.size(), 1);
     QCOMPARE(errors.size(), 1);
     QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
+    if (config.useFixedBase) {
+        QCOMPARE(surveys.size(), 1);
+        const auto status = qvariant_cast<GPSSurveyInStatus>(surveys.first().first());
+        QCOMPARE(status.coordinate.type(), QGeoCoordinate::Coordinate2D);
+        QCOMPARE(status.coordinate.latitude(), config.fixedBaseLatitude);
+        QCOMPARE(status.coordinate.longitude(), config.fixedBaseLongitude);
+        QVERIFY(std::isnan(status.coordinate.altitude()));
+        QCOMPARE(status.altitudeEllipsoidMeters, config.fixedBaseAltitudeMeters);
+        QCOMPARE(status.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
+        QVERIFY(!status.meanAccuracyMeters.has_value());
+        QCOMPARE(status.duration.count(), 0);
+        QVERIFY(status.valid);
+        QVERIFY(!status.active);
+    }
 }
 
-void GPSProviderTest::_positionRoleDoesNotRequireBase()
+void GPSProviderTest::_unsupportedPositionRoleReportsConfigFailure_data()
 {
+    QTest::addColumn<GPSType>("type");
+    QTest::newRow("trimble") << GPSType::trimble;
+    QTest::newRow("septentrio") << GPSType::septentrio;
+    QTest::newRow("femto") << GPSType::femto;
+}
+
+void GPSProviderTest::_unsupportedPositionRoleReportsConfigFailure()
+{
+    QFETCH(GPSType, type);
+    const GPSReceiverConfig config{.role = GPSReceiverConfig::Role::Position};
+    const QString error = gpsReceiverConfigError(type, config);
+    QVERIFY(!error.isEmpty());
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(error)));
     GPSProvider provider(
-        [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); },
-        GPSType::femto, GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position, .headingOffsetRadians = 0.0f});
+        [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); }, type,
+        config);
     QSignalSpy ready(&provider, &GPSProvider::receiverReady);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::mediumMs()));
-    QCOMPARE(ready.size(), 1);
+    verifyExpectedLogMessage();
+    QVERIFY(ready.isEmpty());
     QCOMPARE(errors.size(), 1);
-    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
+    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::ConfigFailed);
 }
 
 void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
