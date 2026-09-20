@@ -24,7 +24,16 @@ target_sources(
               GPSReceiverSettingId.h
 )
 
-foreach(family UBX ASHTECH SBF FEMTO)
+foreach(
+    family
+    UBX
+    ASHTECH
+    SBF
+    FEMTO
+    UNICORE
+    QUECTEL
+    PASSIVE
+)
     option(QGC_GPS_ENABLE_${family} "Build the ${family} GPS receiver protocol" ON)
 endforeach()
 configure_file(GPSProtocolFeatures.h.in GPSProtocolFeatures.h)

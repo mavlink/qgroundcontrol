@@ -32,6 +32,9 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
             qCDebug(GPSProviderLog) << "Fixed base latitude:" << base.fixedBaseLatitude
                                     << "longitude:" << base.fixedBaseLongitude
                                     << "ellipsoid altitude (m):" << base.fixedBaseAltitudeMeters;
+        } else if (base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
+            qCDebug(GPSProviderLog) << "Receiver-managed averaging maximum duration (s):"
+                                    << base.receiverAveragingDurationSecs;
         } else {
             qCDebug(GPSProviderLog) << "Survey-in accuracy (m):" << base.surveyInAccMeters
                                     << "minimum duration (s):" << base.surveyInDurationSecs;
@@ -112,6 +115,7 @@ void GPSProvider::run()
 
     if (!driver.configure()) {
         if (!_requestStop) {
+            emit configurationError(driver.configurationError());
             emit connectionError(GPSConnectionError::ConfigFailed);
         }
         return;

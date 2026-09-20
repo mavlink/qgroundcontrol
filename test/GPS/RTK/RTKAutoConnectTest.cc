@@ -252,3 +252,72 @@ void RTKAutoConnectTest::_compositeReceiverSelection()
         QCOMPARE(connects.last().first().toString(), second.systemLocation);
     }
 }
+
+void RTKAutoConnectTest::_genericUsbNeedsExplicitSelection_data()
+{
+    QTest::addColumn<int>("manufacturer");
+    QTest::newRow("unicore") << 5;
+    QTest::newRow("quectel") << 6;
+    QTest::newRow("passive") << 7;
+}
+
+void RTKAutoConnectTest::_genericUsbNeedsExplicitSelection()
+{
+    QFETCH(int, manufacturer);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    auto* rtkSettings = SettingsManager::instance()->rtkSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), true);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceDisabled);
+    saved.setFactValue(rtkSettings->baseReceiverManufacturers(), manufacturer);
+    saved.setFactValue(rtkSettings->serialDevice(), QStringLiteral("/test/ch340"));
+    const QList<SerialPortManager::Port> inventory{
+        {QStringLiteral("/test/ch340"), QStringLiteral("ch340"), QGCSerialPortInfo::BoardTypeUnknown,
+         QStringLiteral("CH340")},
+        {QStringLiteral("/test/ftdi"), QStringLiteral("ftdi"), QGCSerialPortInfo::BoardTypeUnknown,
+         QStringLiteral("FTDI")},
+        {QStringLiteral("/test/known"), QStringLiteral("known"), QGCSerialPortInfo::BoardTypeRTKGPS,
+         QStringLiteral("u-blox")},
+    };
+    SerialPortManager ports(nullptr, [&] { return inventory; });
+    GPSRtk receiver;
+    RTKAutoConnect discovery(settings, &receiver, &ports);
+    discovery._connectDelayMs = 0;
+    QSignalSpy connects(&discovery, &RTKAutoConnect::connectRequested);
+    discovery.update();
+    discovery.update();
+    QCOMPARE(connects.size(), 1);
+    QCOMPARE(connects.first().first().toString(), QStringLiteral("/test/known"));
+    QVERIFY(ports.canReservePort(QStringLiteral("/test/ch340")));
+    QVERIFY(ports.canReservePort(QStringLiteral("/test/ftdi")));
+}
+
+void RTKAutoConnectTest::_manualConnectionRetiresAutoOwnership()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), true);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceDisabled);
+    SerialPortManager ports(nullptr, [] {
+        return QList<SerialPortManager::Port>{{QStringLiteral("/test/known"), QStringLiteral("known"),
+                                               QGCSerialPortInfo::BoardTypeRTKGPS, QStringLiteral("u-blox")}};
+    });
+    GPSRtk receiver;
+    RTKAutoConnect discovery(settings, &receiver, &ports);
+    discovery._connectDelayMs = 0;
+    QSignalSpy connects(&discovery, &RTKAutoConnect::connectRequested);
+    QSignalSpy disconnects(&discovery, &RTKAutoConnect::disconnectRequested);
+    discovery.update();
+    discovery.update();
+    QCOMPARE(connects.size(), 1);
+    receiver.disconnectConfiguredGPS();
+    discovery.update();
+    discovery.stop();
+    QCOMPARE(disconnects.size(), 0);
+    QCOMPARE(connects.size(), 1);
+    QVERIFY(!settings->autoConnectRTKGPS()->rawValue().toBool());
+    settings->autoConnectRTKGPS()->setRawValue(true);
+    discovery.update();
+    discovery.update();
+    QCOMPARE(connects.size(), 2);
+}

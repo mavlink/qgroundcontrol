@@ -17,7 +17,9 @@ class GPSManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("GPSCorrectionManager.h")
+    Q_MOC_INCLUDE("GPSRtk.h")
     Q_PROPERTY(GPSCorrectionManager* corrections READ corrections CONSTANT)
+    Q_PROPERTY(GPSRtk* gpsRtk READ gpsRtk CONSTANT)
 
 public:
     GPSManager(QObject* parent = nullptr);

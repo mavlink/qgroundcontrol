@@ -21,6 +21,15 @@
 #if QGC_GPS_ENABLE_FEMTO
 #include "Femto/GPSDriverFemto.h"
 #endif
+#if QGC_GPS_ENABLE_UNICORE
+#include "Unicore/GPSDriverUnicore.h"
+#endif
+#if QGC_GPS_ENABLE_QUECTEL
+#include "Quectel/GPSDriverQuectel.h"
+#endif
+#if QGC_GPS_ENABLE_PASSIVE
+#include "Passive/GPSDriverPassive.h"
+#endif
 
 namespace {
 template <typename Driver>
@@ -74,6 +83,15 @@ int main()
 #endif
 #if QGC_GPS_ENABLE_FEMTO
     valid &= decodeWithoutDevice<GPSNativeFemto>("Femto");
+#endif
+#if QGC_GPS_ENABLE_UNICORE
+    valid &= decodeWithoutDevice<GPSNativeUnicore>("Unicore");
+#endif
+#if QGC_GPS_ENABLE_QUECTEL
+    valid &= decodeWithoutDevice<GPSNativeQuectel>("Quectel");
+#endif
+#if QGC_GPS_ENABLE_PASSIVE
+    valid &= decodeWithoutDevice<GPSNativePassive>("Passive");
 #endif
     return valid ? 0 : 1;
 }

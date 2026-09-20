@@ -64,13 +64,22 @@ GPSProtocol::GPSProtocol(GPSProtocolIO io)
     }
 }
 
-bool GPSProtocol::validateConfiguration(const GPSConfig& config) const
+bool GPSProtocol::validateConfiguration(const GPSConfig& config, bool allowReceiverAveraging,
+                                        bool supportsPersistentChanges) const
 {
+    if (config.allowPersistentChanges && !supportsPersistentChanges) {
+        log(GPSProtocolLogLevel::Warning, "Persistent configuration is not supported by this driver");
+        return false;
+    }
     if (config.output_mode != OutputMode::GPS && config.output_mode != OutputMode::RTCM) {
         log(GPSProtocolLogLevel::Warning, "Invalid receiver output mode");
         return false;
     }
     if (config.output_mode == OutputMode::RTCM) {
+        if (!allowReceiverAveraging && config.base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
+            log(GPSProtocolLogLevel::Warning, "Receiver-managed averaging is not supported by this driver");
+            return false;
+        }
         const auto error = gpsValidateBaseStationConfig(config.base);
         if (error != GPSReceiverConfigError::None) {
             log(GPSProtocolLogLevel::Warning, "Invalid base station configuration (%d)", static_cast<int>(error));

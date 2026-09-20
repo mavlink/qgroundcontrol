@@ -32,12 +32,24 @@ if(NOT QGC_GPS_ENABLE_UBX
    AND NOT QGC_GPS_ENABLE_ASHTECH
    AND NOT QGC_GPS_ENABLE_SBF
    AND NOT QGC_GPS_ENABLE_FEMTO
+   AND NOT QGC_GPS_ENABLE_UNICORE
+   AND NOT QGC_GPS_ENABLE_QUECTEL
+   AND NOT QGC_GPS_ENABLE_PASSIVE
 )
     message(FATAL_ERROR "At least one GPS receiver family must be enabled")
 endif()
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Geo/GeographicLib.cmake")
 
-qt_add_library(QGCGPSNativeCommon STATIC GPSProtocol.cc GPSProtocol.h GPSProtocolTime.h GPSBaseProtocol.h)
+qt_add_library(
+    QGCGPSNativeCommon
+    STATIC
+    GPSProtocol.cc
+    GPSProtocol.h
+    GPSProtocolTime.h
+    GPSBaseProtocol.h
+    GPSAsciiProtocol.cc
+    GPSAsciiProtocol.h
+)
 target_sources(
     QGCGPSNativeCommon
     PUBLIC FILE_SET
@@ -46,6 +58,7 @@ target_sources(
            GPSProtocol.h
            GPSProtocolTime.h
            GPSBaseProtocol.h
+           GPSAsciiProtocol.h
            NMEA/GPSNMEAReport.h
 )
 set_target_properties(
@@ -67,7 +80,16 @@ add_library(QGC::GPSNative ALIAS QGCGPSNative)
 target_link_libraries(QGCGPSNative INTERFACE QGCGPSNativeCommon)
 target_sources(QGCGPSNative INTERFACE FILE_SET HEADERS FILES GPSProtocol.h GPSProtocolTime.h GPSBaseProtocol.h)
 set(_native_targets QGCGPSNativeContracts QGCGPSNativeCommon)
-foreach(family UBX Ashtech SBF Femto)
+foreach(
+    family
+    UBX
+    Ashtech
+    SBF
+    Femto
+    Unicore
+    Quectel
+    Passive
+)
     string(TOUPPER "${family}" option_name)
     if(QGC_GPS_ENABLE_${option_name})
         add_subdirectory(${family})

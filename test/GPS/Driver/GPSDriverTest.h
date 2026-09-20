@@ -41,4 +41,5 @@ private slots:
     void _testInvalidConfiguration();
     void _nativeConfigurationRejectedBeforeIo_data();
     void _nativeConfigurationRejectedBeforeIo();
+    void _passiveInput();
 };

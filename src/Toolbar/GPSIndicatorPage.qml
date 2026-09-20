@@ -8,6 +8,7 @@ import QGroundControl.FactControls
 // This indicator page is used both when showing RTK status only with no vehicle connect and when showing GPS/RTK status with a vehicle connected
 
 ToolIndicatorPage {
+    id: root
     showExpand: true
 
     property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
@@ -17,49 +18,35 @@ ToolIndicatorPage {
     property var    useFixedPosition:           rtkSettings.useFixedBasePosition.rawValue
     property var    manufacturer:       rtkSettings.baseReceiverManufacturers.rawValue
 
-    readonly property var    _trimble:            0b0001
-    readonly property var    _septentrio:         0b0010
-    readonly property var    _femtomes:           0b0100
-    readonly property var    _ublox:              0b1000
-    readonly property var    _all:                0b1111
-    property var             settingsDisplayId:     _all
+    readonly property var _receiver: QGroundControl.gpsManager.gpsRtk
+    readonly property var _capabilities: _receiver.capabilitiesForManufacturer(manufacturer)
+    readonly property var _activeCapabilities: _receiver.capabilitiesForManufacturer(_receiver.activeManufacturer)
+    readonly property var _serialPortManager: QGroundControl.serialPortManager
+    readonly property var _serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
+    readonly property var _serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
+    readonly property bool _passiveConnected: _activeCapabilities.passive
+    readonly property bool _averagingConnected: _receiver.activeBaseMode === BaseModeDefinition.BaseReceiverAveraging
+    readonly property bool _modeCompatible: _capabilities.passive
+        || (useFixedPosition === BaseModeDefinition.BaseFixed && _capabilities.rtkBase)
+        || (useFixedPosition === BaseModeDefinition.BaseSurveyIn && _capabilities.surveyIn)
+        || (useFixedPosition === BaseModeDefinition.BaseReceiverAveraging && _capabilities.receiverAveraging)
+    property bool _allowPersistentChanges: false
 
-    function updateSettingsDisplayId() {
-        switch(manufacturer) {
-            case 0: // All
-                settingsDisplayId = _trimble | _septentrio | _femtomes | _ublox
-                break
-            case 1: // Trimble
-                settingsDisplayId = _trimble
-                break
-            case 2: // Septentrio
-                settingsDisplayId = _septentrio
-                break
-            case 3: // Femtomes
-                settingsDisplayId = _femtomes
-                break
-            case 4: // UBlox
-                settingsDisplayId = _ublox
-                break
-            default:
-                settingsDisplayId = _all
-        }
-    }
+    onManufacturerChanged: _allowPersistentChanges = false
+    onUseFixedPositionChanged: _allowPersistentChanges = false
 
-    onManufacturerChanged: {
-        updateSettingsDisplayId()
-    }
-
-    Component.onCompleted: {
-        updateSettingsDisplayId()
+    function connectSelectedReceiver() {
+        const allowPersistentChanges = manufacturer === 6 && _allowPersistentChanges
+        _allowPersistentChanges = false
+        return _receiver.connectConfiguredGPS(allowPersistentChanges)
     }
 
     function errorText() {
-        if (!_activeVehicle) {
+        if (!activeVehicle) {
             return qsTr("Disconnected");
         }
 
-        switch (_activeVehicle.gps.systemErrors.value) {
+        switch (activeVehicle.gps.systemErrors.value) {
             case 1:
                 return qsTr("Incoming correction");
             case 2:
@@ -76,6 +63,22 @@ ToolIndicatorPage {
                 return qsTr("Output congestion");
             default:
                 return qsTr("Multiple errors");
+        }
+    }
+
+    Connections {
+        target: root._receiver
+        function onReceiverChanged() {
+            if (root._receiver.hasReceiver) {
+                root._allowPersistentChanges = false
+            }
+        }
+    }
+
+    Connections {
+        target: root.rtkSettings.serialDevice
+        function onRawValueChanged() {
+            root._allowPersistentChanges = false
         }
     }
 
@@ -124,7 +127,11 @@ ToolIndicatorPage {
                 visible:    QGroundControl.gpsRtk.connected.value
 
                 QGCLabel {
-                    text: (QGroundControl.gpsRtk.active.value) ? qsTr("Survey-in Active") : qsTr("RTK Streaming")
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: root._passiveConnected ? qsTr("Passive RTCM/NMEA input connected")
+                          : root._averagingConnected ? qsTr("Receiver-managed averaging — no accuracy guarantee")
+                          : QGroundControl.gpsRtk.active.value ? qsTr("Survey-in Active") : qsTr("Receiver connected")
                 }
 
                 LabelledLabel {
@@ -140,7 +147,8 @@ ToolIndicatorPage {
                 }
 
                 LabelledLabel {
-                    label:      qsTr("Duration")
+                    label:      root._receiver.activeManufacturer === 6 ? qsTr("Accepted observation time") : qsTr("Duration")
+                    visible:    !root._passiveConnected && !root._averagingConnected
                     //: %1 is Survey-In duration in seconds
                     labelText:  qsTr("%1 s").arg(QGroundControl.gpsRtk.currentDuration.value)
                 }
@@ -148,8 +156,16 @@ ToolIndicatorPage {
                 LabelledLabel {
                     label:      QGroundControl.gpsRtk.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
                     labelText:  QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
-                    visible:    QGroundControl.gpsRtk.currentAccuracy.value > 0
+                    visible:    !root._passiveConnected && !root._averagingConnected && QGroundControl.gpsRtk.currentAccuracy.value > 0
                 }
+            }
+
+            QGCLabel {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                visible: root._receiver.errorMessage.length > 0
+                text: root._receiver.errorMessage
+                textFormat: Text.PlainText
             }
         }
     }
@@ -162,7 +178,7 @@ ToolIndicatorPage {
 
             FactCheckBoxSlider {
                 Layout.fillWidth:   true
-                text:               qsTr("AutoConnect")
+                text:               qsTr("Auto-connect known receivers")
                 fact:               QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
                 visible:            QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS.userVisible
             }
@@ -171,90 +187,200 @@ ToolIndicatorPage {
                 columns: 2
 
                 QGCLabel {
-                    text: qsTr("Settings displayed")
+                    text: qsTr("Receiver / settings")
                 }
                 FactComboBox {
                     Layout.fillWidth:   true
                     fact:               QGroundControl.settingsManager.rtkSettings.baseReceiverManufacturers
+                    enabled:            !root._receiver.hasReceiver
                     visible:            QGroundControl.settingsManager.rtkSettings.baseReceiverManufacturers.userVisible
                 }
             }
 
-            RowLayout {
+            LabelledComboBox {
+                objectName: "rtkSerialDevice"
+                label: qsTr("Serial device")
+                visible: root._receiver.serialSupported
+                enabled: !root._receiver.hasReceiver && root._serialPorts.length > 0
+                model: root._serialPorts.length > 0 ? root._serialPorts : [qsTr("<none available>")]
+                currentIndex: root._serialPorts.length > 0 ? root._serialPorts.indexOf(root.rtkSettings.serialDevice.valueString) : 0
+                onActivated: (index) => {
+                    if (index >= 0 && index < root._serialPorts.length) {
+                        root.rtkSettings.serialDevice.rawValue = root._serialPorts[index]
+                    }
+                }
+            }
+
+            LabelledComboBox {
+                id: baudCombo
+                objectName: "rtkSerialBaudRate"
+                label: qsTr("Baud rate")
+                visible: root._receiver.serialSupported
+                enabled: !root._receiver.hasReceiver
+                readonly property string customLabel: qsTr("Custom")
+                readonly property var rates: root._serialBaudRates.filter(rate => Number(rate) >= 1200 && Number(rate) <= 4000000)
+                property bool customSelected: rates.indexOf(root.rtkSettings.serialBaudRate.valueString) < 0
+                model: rates.concat([customLabel])
+                currentIndex: customSelected ? rates.length : rates.indexOf(root.rtkSettings.serialBaudRate.valueString)
+                onActivated: (index) => {
+                    customSelected = index === rates.length
+                    if (index >= 0 && index < rates.length) {
+                        root.rtkSettings.serialBaudRate.rawValue = Number(rates[index])
+                    }
+                }
+            }
+
+            LabelledFactTextField {
+                label: qsTr("Custom baud rate")
+                fact: root.rtkSettings.serialBaudRate
+                visible: root._receiver.serialSupported && baudCombo.customSelected
+                enabled: !root._receiver.hasReceiver
+            }
+
+            QGCLabel {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                visible: !root._receiver.hasReceiver
+                text: root.manufacturer === 0
+                      ? qsTr("Select a specific receiver type, device, and baud rate to connect manually.")
+                      : qsTr("Connect only the selected receiver. USB adapter identity does not identify its GNSS manufacturer. Manual connections disable auto-connect.")
+            }
+
+            QGCLabel {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                visible: root._capabilities.passive
+                text: qsTr("Passive input never configures the receiver. Configure RTCM/NMEA output externally and select its existing baud rate. No survey-in status is inferred.")
+            }
+
+            QGCLabel {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                visible: root.manufacturer === 6
+                text: qsTr("Without permission to save, Quectel role and base settings must already match settings saved externally. The receiver restarts on connection. Survey-in counts accepted 1 Hz observations; its accuracy limit filters each observation and does not guarantee final position accuracy.")
+            }
+
+            QGCLabel {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                visible: root.manufacturer === 6 && root.useFixedPosition === BaseModeDefinition.BaseSurveyIn
+                text: qsTr("The Quectel receiver may automatically store the completed survey position in its own memory.")
+            }
+
+            ColumnLayout {
+                visible: root._capabilities.rtkBase
+                enabled: !root._receiver.hasReceiver
                 QGCRadioButton {
                     text:       qsTr("Survey-In")
                     checked:    useFixedPosition == BaseModeDefinition.BaseSurveyIn
                     onClicked:  rtkSettings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseSurveyIn
-                    visible:    settingsDisplayId & _all
+                    visible:    root._capabilities.surveyIn
                 }
 
                 QGCRadioButton {
                     text: qsTr("Specify position")
                     checked:    useFixedPosition == BaseModeDefinition.BaseFixed
                     onClicked:  rtkSettings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseFixed
-                    visible:    settingsDisplayId & _all
+                    visible:    root._capabilities.rtkBase
                 }
+
+                QGCRadioButton {
+                    text: qsTr("Receiver-managed averaging")
+                    checked: root.useFixedPosition === BaseModeDefinition.BaseReceiverAveraging
+                    onClicked: root.rtkSettings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseReceiverAveraging
+                    visible: root._capabilities.receiverAveraging
+                }
+            }
+
+            QGCLabel {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                visible: !root._modeCompatible
+                text: qsTr("The selected base mode is not supported by this receiver. Choose a supported mode explicitly.")
+            }
+
+            QGCLabel {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                visible: root._capabilities.receiverAveraging && root.useFixedPosition === BaseModeDefinition.BaseReceiverAveraging
+                text: qsTr("The receiver averages its position for up to the maximum time. This is not accuracy-controlled survey-in and does not guarantee a position accuracy.")
+            }
+
+            LabelledFactTextField {
+                label: qsTr("Maximum averaging time")
+                fact: root.rtkSettings.receiverAveragingDuration
+                visible: root._capabilities.receiverAveraging && root.useFixedPosition === BaseModeDefinition.BaseReceiverAveraging
+                enabled: !root._receiver.hasReceiver
             }
 
             FactSlider {
                 Layout.fillWidth:       true
                 Layout.preferredWidth:  sliderWidth
-                label:                  qsTr("Accuracy")
+                label:                  root.manufacturer === 6 ? qsTr("Observation accuracy limit") : qsTr("Accuracy")
                 fact:                   QGroundControl.settingsManager.rtkSettings.surveyInAccuracyLimit
                 majorTickStepSize:      0.1
+                enabled:                !root._receiver.hasReceiver
                 visible:                (
                     useFixedPosition == BaseModeDefinition.BaseSurveyIn
                     && rtkSettings.surveyInAccuracyLimit.userVisible
-                    && (settingsDisplayId & _ublox)
+                    && root._capabilities.surveyIn
+                    && (root.manufacturer === 0 || root.manufacturer === 4 || root.manufacturer === 6)
                 )
             }
 
             FactSlider {
                 Layout.fillWidth:       true
                 Layout.preferredWidth:  sliderWidth
-                label:                  qsTr("Min Duration")
+                label:                  root.manufacturer === 6 ? qsTr("Accepted observation time") : qsTr("Min Duration")
                 fact:                   rtkSettings.surveyInMinObservationDuration
                 majorTickStepSize:      10
+                enabled:                !root._receiver.hasReceiver
                 visible:                (
                     useFixedPosition == BaseModeDefinition.BaseSurveyIn
                     && rtkSettings.surveyInMinObservationDuration.userVisible
-                    && (settingsDisplayId & (_ublox | _femtomes | _trimble))
+                    && root._capabilities.surveyIn
+                    && root.manufacturer !== 2
                 )
             }
 
             LabelledFactTextField {
                 label:                  rtkSettings.fixedBasePositionLatitude.shortDescription
                 fact:                   rtkSettings.fixedBasePositionLatitude
+                enabled:                !root._receiver.hasReceiver
                 visible:                (
                     useFixedPosition == BaseModeDefinition.BaseFixed
-                    && (settingsDisplayId & _all)
+                    && root._capabilities.rtkBase
                 )
             }
 
             LabelledFactTextField {
                 label:              rtkSettings.fixedBasePositionLongitude.shortDescription
                 fact:               rtkSettings.fixedBasePositionLongitude
+                enabled:            !root._receiver.hasReceiver
                 visible:            (
                     useFixedPosition == BaseModeDefinition.BaseFixed
-                    && (settingsDisplayId & _all)
+                    && root._capabilities.rtkBase
                 )
             }
 
             LabelledFactTextField {
                 label:              rtkSettings.fixedBasePositionAltitude.shortDescription
                 fact:               rtkSettings.fixedBasePositionAltitude
+                enabled:            !root._receiver.hasReceiver
                 visible:            (
                     useFixedPosition == BaseModeDefinition.BaseFixed
-                    && (settingsDisplayId & _all)
+                    && root._capabilities.rtkBase
                 )
             }
 
             LabelledFactTextField {
                 label:              rtkSettings.fixedBasePositionAccuracy.shortDescription
                 fact:               rtkSettings.fixedBasePositionAccuracy
+                enabled:            !root._receiver.hasReceiver
                 visible:            (
                     useFixedPosition == BaseModeDefinition.BaseFixed
-                    && (settingsDisplayId & _ublox)
+                    && root._capabilities.rtkBase
+                    && (root.manufacturer === 0 || root.manufacturer === 4)
                 )
             }
 
@@ -266,7 +392,7 @@ ToolIndicatorPage {
                                       ? qsTr("Accuracy Unavailable")
                                     : QGroundControl.gpsRtk.canSaveCurrentBasePosition ? qsTr("Save")
                                     : qsTr("Invalid Base Position")
-                visible:            useFixedPosition == BaseModeDefinition.BaseFixed
+                visible:            root._capabilities.rtkBase && useFixedPosition == BaseModeDefinition.BaseFixed
                 enabled:            QGroundControl.gpsRtk.canSaveCurrentBasePosition
 
                 onClicked: {
@@ -282,6 +408,42 @@ ToolIndicatorPage {
                     rtkSettings.fixedBasePositionAltitude.rawValue  = altitude
                     rtkSettings.fixedBasePositionAccuracy.rawValue  = accuracy
                 }
+            }
+
+            QGCCheckBox {
+                objectName: "rtkPersistentChangesCheckBox"
+                text: qsTr("Allow flash save and restart")
+                focusPolicy: Qt.StrongFocus
+                visible: root._receiver.serialSupported && root.manufacturer === 6
+                enabled: !root._receiver.hasReceiver
+                checked: root._allowPersistentChanges
+                onClicked: root._allowPersistentChanges = checked
+            }
+
+            QGCLabel {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                visible: root._receiver.serialSupported && root.manufacturer === 6
+                text: qsTr("For this connection only, allow QGroundControl to write requested role or base-setting changes to receiver flash and restart it. Changes may remain saved even if reconnecting fails. No factory reset is performed. Permission is cleared after each attempt and is never used by auto-connect.")
+            }
+
+            LabelledButton {
+                objectName: "rtkConnectButton"
+                label: root._receiver.hasReceiver
+                       ? (QGroundControl.gpsRtk.connected.value ? qsTr("Receiver connected") : qsTr("Connecting receiver"))
+                       : qsTr("Manual serial connection")
+                buttonText: root._receiver.hasReceiver ? qsTr("Disconnect") : qsTr("Connect")
+                visible: root._receiver.serialSupported
+                enabled: root._receiver.hasReceiver || (root.manufacturer !== 0 && root._modeCompatible)
+                onClicked: {
+                    if (root._receiver.hasReceiver) {
+                        root._allowPersistentChanges = false
+                        root._receiver.disconnectConfiguredGPS()
+                    } else {
+                        root.connectSelectedReceiver()
+                    }
+                }
+
             }
         }
     }

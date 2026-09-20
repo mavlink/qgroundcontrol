@@ -6,6 +6,15 @@
 #include "GPSProtocolTestIO.h"
 #include "SBF/GPSDriverSBF.h"
 #include "UBX/GPSDriverUBX.h"
+#if QGC_GPS_ENABLE_UNICORE
+#include "Unicore/GPSDriverUnicore.h"
+#endif
+#if QGC_GPS_ENABLE_QUECTEL
+#include "Quectel/GPSDriverQuectel.h"
+#endif
+#if QGC_GPS_ENABLE_PASSIVE
+#include "Passive/GPSDriverPassive.h"
+#endif
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
@@ -34,6 +43,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 #if QGC_GPS_ENABLE_FEMTO
     GPSNativeFemto femto(io, &position, &satellites);
 #endif
+#if QGC_GPS_ENABLE_UNICORE
+    GPSNativeUnicore unicore(io, &position, &satellites);
+#endif
+#if QGC_GPS_ENABLE_QUECTEL
+    GPSNativeQuectel quectel(io, &position, &satellites);
+#endif
+#if QGC_GPS_ENABLE_PASSIVE
+    GPSNativePassive passive(io, &position, &satellites);
+#endif
     GPSProtocol* protocols[] = {
 #if QGC_GPS_ENABLE_UBX
         &ubx,     &operationalUbx, &epochUbx,
@@ -46,6 +64,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 #endif
 #if QGC_GPS_ENABLE_FEMTO
         &femto,
+#endif
+#if QGC_GPS_ENABLE_UNICORE
+        &unicore,
+#endif
+#if QGC_GPS_ENABLE_QUECTEL
+        &quectel,
+#endif
+#if QGC_GPS_ENABLE_PASSIVE
+        &passive,
 #endif
     };
     for (GPSProtocol* protocol : protocols) {

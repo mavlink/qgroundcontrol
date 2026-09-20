@@ -30,6 +30,9 @@ static_assert(static_cast<int>(GPSType::ublox) == 0);
 static_assert(static_cast<int>(GPSType::trimble) == 1);
 static_assert(static_cast<int>(GPSType::septentrio) == 2);
 static_assert(static_cast<int>(GPSType::femto) == 3);
+static_assert(static_cast<int>(GPSType::unicore) == 4);
+static_assert(static_cast<int>(GPSType::quectel) == 5);
+static_assert(static_cast<int>(GPSType::passive) == 6);
 
 const std::atomic_bool neverStop{false};
 
@@ -1008,6 +1011,12 @@ void GPSDriverTest::_nativeConfigurationRejectedBeforeIo_data()
         << int(GPSType::septentrio)
         << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Position, .headingOffsetRadians = qQNaN()}
         << unsupportedRole;
+    QTest::newRow("unicore-survey-semantics")
+        << int(GPSType::unicore) << GPSReceiverConfig{.base = {.surveyInAccMeters = 2, .surveyInDurationSecs = 180}}
+        << QStringLiteral("This receiver does not support the selected base mode");
+    QTest::newRow("passive-missing-baud")
+        << int(GPSType::passive) << GPSReceiverConfig{.role = GPSReceiverConfig::Role::Passive}
+        << QStringLiteral("Select a valid serial baud rate; passive input requires an explicit rate");
 }
 
 void GPSDriverTest::_nativeConfigurationRejectedBeforeIo()
@@ -1023,6 +1032,31 @@ void GPSDriverTest::_nativeConfigurationRejectedBeforeIo()
     QVERIFY(transport.lastWrite.isEmpty());
     QCOMPARE(transport.lastBaudrate, 0u);
     QCOMPARE(transport.lastReadLength, -1);
+}
+
+void GPSDriverTest::_passiveInput()
+{
+    FakeGPSTransport transport;
+    int surveys = 0;
+    std::vector<GPSPositionReport> positions;
+    GPSDriverSinks sinks;
+    sinks.onPosition = [&](const auto& position) { positions.push_back(position); };
+    sinks.onSurveyIn = [&](const auto&) { ++surveys; };
+    GPSDriver driver(GPSType::passive, transport, {.role = GPSReceiverConfig::Role::Passive, .baudRate = 115200},
+                     sinks);
+    QVERIFY(driver.configure());
+    QVERIFY(driver.configurationEvidence().empty());
+    QCOMPARE(transport.lastBaudrate, 115200u);
+    QVERIFY(transport.lastWrite.isEmpty());
+    transport.scriptedRead = nmeaFrame("GNGGA,123519,4807.038,N,01131.000,E,4,08,0.9,0.0,M,,M,,");
+    QCOMPARE(driver.receiveOutcome(10).status, GPSReceiveStatus::Data);
+    QCOMPARE(positions.size(), size_t{1});
+    QCOMPARE(positions.front().fixType, GPSPositionReport::FixType::RTKFixed);
+    QCOMPARE(surveys, 0);
+    QVERIFY(transport.lastWrite.isEmpty());
+    transport.readOverride = GPSReadResult{GPSReadStatus::Cancelled};
+    QCOMPARE(driver.receiveOutcome(10).status, GPSReceiveStatus::Cancelled);
+    QVERIFY(transport.lastWrite.isEmpty());
 }
 
 QGC_REGISTER_PORTABLE_TEST(GPSDriverTest, TestLabel::Unit)

@@ -47,6 +47,7 @@ signals:
     void RTCMDataUpdate(const QByteArray& message, qint64 receivedAtMs);
     void surveyInStatus(const GPSSurveyInStatus &status);
     void connectionError(GPSConnectionError error);
+    void configurationError(const QString& detail);
     void receiverReady();
 
 private:

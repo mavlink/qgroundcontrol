@@ -60,6 +60,9 @@ private slots:
     void _optionalRequests();
     void _validationPrecedence_data();
     void _validationPrecedence();
+    void _newReceivers_data();
+    void _newReceivers();
+    void _newCapabilities();
 };
 
 void GPSReceiverConfigTest::_defaults()
@@ -67,6 +70,7 @@ void GPSReceiverConfigTest::_defaults()
     const GPSReceiverConfig config;
     QCOMPARE(config.role, Role::RTKBase);
     QCOMPARE(config.constellationMask, 0u);
+    QVERIFY(!config.allowPersistentChanges);
     QVERIFY(!config.dynamicModel.has_value());
     QVERIFY(!config.headingOffsetRadians.has_value());
     QVERIFY(!config.base.useFixedBase);
@@ -209,13 +213,13 @@ void GPSReceiverConfigTest::_capabilities_data()
                                            .headingOffset = false};
         }
     }
-    for (int value : {-1, 4, 255}) {
+    for (int value : {-1, 7, 255}) {
         for (const auto& [roleName, role] : ROLES) {
             QTest::newRow(qPrintable(QStringLiteral("unknown-type-%1-%2").arg(value).arg(roleName)))
                 << static_cast<GPSType>(value) << role << GPSReceiverCapabilities{};
         }
     }
-    for (int value : {-1, 2, 255}) {
+    for (int value : {-1, 3, 255}) {
         for (const auto& [typeName, type] : RECEIVERS) {
             QTest::newRow(qPrintable(QStringLiteral("%1-unknown-role-%2").arg(typeName).arg(value)))
                 << type << static_cast<Role>(value) << GPSReceiverCapabilities{};
@@ -260,13 +264,13 @@ void GPSReceiverConfigTest::_receiverValidation_data()
                 role == Role::Position ? Error::None : Error::InvalidFixedBase);
         }
     }
-    for (int value : {-1, 4, 255}) {
+    for (int value : {-1, 7, 255}) {
         for (const auto& [roleName, role] : ROLES) {
             QTest::newRow(qPrintable(QStringLiteral("unknown-type-%1-%2").arg(value).arg(roleName)))
                 << static_cast<GPSType>(value) << GPSReceiverConfig{.role = role} << Error::UnknownReceiver;
         }
     }
-    for (int value : {-1, 2, 255}) {
+    for (int value : {-1, 3, 255}) {
         for (const auto& [typeName, type] : RECEIVERS) {
             QTest::newRow(qPrintable(QStringLiteral("%1-unknown-role-%2").arg(typeName).arg(value)))
                 << type << GPSReceiverConfig{.role = static_cast<Role>(value)} << Error::InvalidRole;
@@ -453,6 +457,84 @@ void GPSReceiverConfigTest::_validationPrecedence()
     QFETCH(GPSReceiverConfig, config);
     QFETCH(Error, expected);
     QCOMPARE(gpsValidateReceiverConfig(type, config), expected);
+}
+
+void GPSReceiverConfigTest::_newReceivers_data()
+{
+    QTest::addColumn<GPSType>("type");
+    QTest::addColumn<GPSReceiverConfig>("config");
+    QTest::addColumn<Error>("expected");
+    for (const auto type : {GPSType::unicore, GPSType::quectel}) {
+        const auto add = [type](const char* name, GPSReceiverConfig config, Error expected) {
+            QTest::newRow(qPrintable(QStringLiteral("%1-%2").arg(static_cast<int>(type)).arg(name)))
+                << type << config << expected;
+        };
+        add("position", {.role = Role::Position}, Error::None);
+        add("fixed", {.base = VALID_FIXED}, Error::None);
+        add("survey", {.base = VALID_SURVEY}, type == GPSType::unicore ? Error::UnsupportedBaseMode : Error::None);
+        GPSReceiverConfig averaging;
+        averaging.base.surveyMode = GPSBaseStationConfig::SurveyMode::ReceiverManaged;
+        add("receiver-averaging", averaging, type == GPSType::unicore ? Error::None : Error::UnsupportedBaseMode);
+        averaging.base.receiverAveragingDurationSecs = 0;
+        add("zero-averaging", averaging,
+            type == GPSType::unicore ? Error::InvalidReceiverAveraging : Error::UnsupportedBaseMode);
+        averaging.base.receiverAveragingDurationSecs = 3601;
+        add("excessive-averaging", averaging,
+            type == GPSType::unicore ? Error::InvalidReceiverAveraging : Error::UnsupportedBaseMode);
+        add("passive-role", {.role = Role::Passive, .baudRate = 115200}, Error::UnsupportedRole);
+        add("invalid-baud", {.role = Role::Position, .baudRate = 1}, Error::InvalidBaudRate);
+        add("heading", {.role = Role::Position, .headingOffsetRadians = 0.0f}, Error::UnsupportedHeadingOffset);
+    }
+    QTest::newRow("passive-explicit-baud")
+        << GPSType::passive << GPSReceiverConfig{.role = Role::Passive, .baudRate = 115200} << Error::None;
+    QTest::newRow("passive-no-baud") << GPSType::passive << GPSReceiverConfig{.role = Role::Passive}
+                                     << Error::InvalidBaudRate;
+    QTest::newRow("passive-not-base") << GPSType::passive << GPSReceiverConfig{.base = VALID_FIXED, .baudRate = 115200}
+                                      << Error::UnsupportedRole;
+    QTest::newRow("passive-no-survey") << GPSType::passive
+                                       << GPSReceiverConfig{.role = Role::Passive,
+                                                            .base = VALID_SURVEY,
+                                                            .baudRate = 115200}
+                                       << Error::UnsupportedBaseMode;
+    QTest::newRow("passive-no-constellation-config")
+        << GPSType::passive << GPSReceiverConfig{.role = Role::Passive, .constellationMask = 1, .baudRate = 115200}
+        << Error::UnsupportedConstellations;
+    GPSReceiverConfig averaging;
+    averaging.base.surveyMode = GPSBaseStationConfig::SurveyMode::ReceiverManaged;
+    QTest::newRow("ublox-no-receiver-averaging") << GPSType::ublox << averaging << Error::UnsupportedBaseMode;
+    averaging.base.useFixedBase = true;
+    QTest::newRow("fixed-and-averaging-conflict") << GPSType::unicore << averaging << Error::InvalidReceiverAveraging;
+    QTest::newRow("quectel-persistent-opt-in")
+        << GPSType::quectel << GPSReceiverConfig{.role = Role::Position, .allowPersistentChanges = true} << Error::None;
+    QTest::newRow("unicore-persistent-opt-in-unsupported")
+        << GPSType::unicore << GPSReceiverConfig{.role = Role::Position, .allowPersistentChanges = true}
+        << Error::UnsupportedPersistentConfiguration;
+    QTest::newRow("passive-cannot-save") << GPSType::passive
+                                         << GPSReceiverConfig{.role = Role::Passive,
+                                                              .baudRate = 115200,
+                                                              .allowPersistentChanges = true}
+                                         << Error::UnsupportedPersistentConfiguration;
+}
+
+void GPSReceiverConfigTest::_newReceivers()
+{
+    QFETCH(GPSType, type);
+    QFETCH(GPSReceiverConfig, config);
+    QFETCH(Error, expected);
+    QCOMPARE(gpsValidateReceiverConfig(type, config), expected);
+}
+
+void GPSReceiverConfigTest::_newCapabilities()
+{
+    const auto unicore = gpsReceiverCapabilities(GPSType::unicore, Role::RTKBase);
+    QVERIFY(unicore.recognized && unicore.position && unicore.rtkBase && unicore.receiverAveraging);
+    QVERIFY(!unicore.surveyIn && !unicore.passive);
+    const auto quectel = gpsReceiverCapabilities(GPSType::quectel, Role::RTKBase);
+    QVERIFY(quectel.recognized && quectel.position && quectel.rtkBase && quectel.surveyIn);
+    QVERIFY(!quectel.receiverAveraging && !quectel.passive);
+    const auto passive = gpsReceiverCapabilities(GPSType::passive, Role::Passive);
+    QVERIFY(passive.recognized && passive.passive);
+    QVERIFY(!passive.position && !passive.rtkBase && !passive.surveyIn && !passive.receiverAveraging);
 }
 
 QGC_REGISTER_PORTABLE_TEST(GPSReceiverConfigTest, TestLabel::Unit)

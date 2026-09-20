@@ -99,6 +99,7 @@ public:
         uint8_t dynamicModel = 0;
         OutputMode output_mode = OutputMode::GPS;
         GNSSSystemsMask gnss_systems = GNSSSystemsMask::RECEIVER_DEFAULTS;
+        bool allowPersistentChanges = false;
     };
 
     explicit GPSProtocol(GPSProtocolIO io);
@@ -132,7 +133,8 @@ public:
     virtual bool receiverReady() const { return true; }
 
 protected:
-    [[nodiscard]] bool validateConfiguration(const GPSConfig& config) const;
+    [[nodiscard]] bool validateConfiguration(const GPSConfig& config, bool allowReceiverAveraging = false,
+                                             bool supportsPersistentChanges = false) const;
 
     virtual int decodeByte(uint8_t) { return 0; }
 

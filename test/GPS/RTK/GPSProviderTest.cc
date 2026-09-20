@@ -34,6 +34,7 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
     GPSPositionReport position;
     GPSSurveyInStatus survey;
     GPSConnectionError error = GPSConnectionError::None;
+    QString configurationDetail;
     QObject receiver;
     connect(
         &provider, &GPSProvider::satelliteInfoUpdate, &receiver,
@@ -50,6 +51,9 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
     connect(
         &provider, &GPSProvider::connectionError, &receiver, [&](GPSConnectionError value) { error = value; },
         Qt::QueuedConnection);
+    connect(
+        &provider, &GPSProvider::configurationError, &receiver,
+        [&](const QString& value) { configurationDetail = value; }, Qt::QueuedConnection);
     auto worker = std::unique_ptr<QThread>(QThread::create([&]() {
         GPSSatelliteReport snapshot;
         snapshot.count = 1;
@@ -71,6 +75,9 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
         progress.meanAccuracyMeters = 1.234;
         provider._handleSurveyIn(progress);
         progress.meanAccuracyMeters = 0;
+        QString detail = QStringLiteral("Settings may be saved; reconnect failed");
+        emit provider.configurationError(detail);
+        detail.clear();
         emit provider.connectionError(GPSConnectionError::DeviceError);
     }));
     worker->start();
@@ -93,6 +100,7 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
     QCOMPARE(survey.duration.count(), 4294967295LL);
     QCOMPARE(survey.meanAccuracyMeters.value(), 1.234);
     QCOMPARE(error, GPSConnectionError::DeviceError);
+    QCOMPARE(configurationDetail, QStringLiteral("Settings may be saved; reconnect failed"));
 }
 
 void GPSProviderTest::_surveyReportProjection_data()
@@ -463,12 +471,22 @@ void GPSProviderTest::_unsupportedPositionRoleReportsConfigFailure()
         config);
     QSignalSpy ready(&provider, &GPSProvider::receiverReady);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
+    QObject observer;
+    QStringList errorOrder;
+    connect(
+        &provider, &GPSProvider::configurationError, &observer,
+        [&errorOrder](const QString& detail) { errorOrder.append(detail); }, Qt::QueuedConnection);
+    connect(
+        &provider, &GPSProvider::connectionError, &observer,
+        [&errorOrder](GPSConnectionError) { errorOrder.append(QStringLiteral("ConfigFailed")); }, Qt::QueuedConnection);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::mediumMs()));
     verifyExpectedLogMessage();
     QVERIFY(ready.isEmpty());
     QCOMPARE(errors.size(), 1);
     QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::ConfigFailed);
+    QCoreApplication::sendPostedEvents(&observer, QEvent::MetaCall);
+    QCOMPARE(errorOrder, (QStringList{error, QStringLiteral("ConfigFailed")}));
 }
 
 void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()

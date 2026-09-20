@@ -27,6 +27,8 @@ signals:
     void disconnectRequested();
 
 private:
+    void _resetDiscovery();
+
     AutoConnectSettings* _settings;
     GPSRtk* _receiver;
     SerialPortManager* _serialPorts;

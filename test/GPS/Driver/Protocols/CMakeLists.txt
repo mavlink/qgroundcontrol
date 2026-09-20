@@ -5,6 +5,10 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     enable_testing()
 endif()
 
+if(NOT TARGET Qt6::Core)
+    find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
+endif()
+
 get_filename_component(QGC_GPS_PROTOCOL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/GPS/Driver/Protocols"
                        ABSOLUTE
 )
@@ -47,8 +51,26 @@ qgc_add_protocol_test_target(QGCNativeGPSIOContractTest gps-io-contract-test.cpp
 qgc_add_protocol_test_target(QGCNativeGPSDecodeTest gps-decode-test.cpp)
 qgc_add_protocol_test_target(QGCNativeGPSFixtureTest gps-fixture-test.cpp)
 target_compile_definitions(QGCNativeGPSFixtureTest PRIVATE GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
+foreach(family Unicore Quectel Passive)
+    string(TOUPPER "${family}" option_name)
+    string(TOLOWER "${family}" source_name)
+    if(QGC_GPS_ENABLE_${option_name})
+        qgc_add_protocol_test_target(QGCNativeGPS${family}Test "gps-${source_name}-test.cpp")
+    endif()
+endforeach()
 
-foreach(test IN ITEMS Decode Ubx Allocation ReceiverModes IOContract Fixture)
+foreach(
+    test IN
+    ITEMS Decode
+          Ubx
+          Allocation
+          ReceiverModes
+          IOContract
+          Fixture
+          Unicore
+          Quectel
+          Passive
+)
     if(NOT TARGET QGCNativeGPS${test}Test)
         continue()
     endif()
@@ -90,7 +112,16 @@ if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
     target_link_libraries(QGCGPSFuzzNMEAConsumer PRIVATE QGCGPSNMEAProtocol)
     add_test(NAME GPSProtocolFuzzNMEAConsumer COMMAND QGCGPSFuzzNMEAConsumer)
     set_tests_properties(GPSProtocolFuzzNMEAConsumer PROPERTIES LABELS "Unit;GPS;Fuzz" TIMEOUT 10)
-    foreach(family UBX Ashtech SBF Femto)
+    foreach(
+        family
+        UBX
+        Ashtech
+        SBF
+        Femto
+        Unicore
+        Quectel
+        Passive
+    )
         if(NOT TARGET QGCGPS${family})
             continue()
         endif()
@@ -113,4 +144,13 @@ if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
                                                "${CMAKE_CURRENT_BINARY_DIR}/corpus"
     )
     set_tests_properties(GPSProtocolFuzzSmoke PROPERTIES LABELS "GPS;Fuzz" TIMEOUT 60)
+endif()
+
+option(QGC_BUILD_GPS_MINMEA_TESTS "Build the pinned minmea differential tests" OFF)
+option(QGC_BUILD_GPS_FIXPOSITION_PROTOTYPE "Build the experimental Fixposition parser comparison" OFF)
+if(QGC_BUILD_GPS_MINMEA_TESTS)
+    add_subdirectory(Comparisons/Minmea)
+endif()
+if(QGC_BUILD_GPS_FIXPOSITION_PROTOTYPE)
+    add_subdirectory(Comparisons/Fixposition)
 endif()

@@ -8,7 +8,8 @@
 
 GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type, GPSReceiverConfig::Role role)
 {
-    if (role != GPSReceiverConfig::Role::RTKBase && role != GPSReceiverConfig::Role::Position) {
+    if (role != GPSReceiverConfig::Role::RTKBase && role != GPSReceiverConfig::Role::Position &&
+        role != GPSReceiverConfig::Role::Passive) {
         return {};
     }
 
@@ -22,20 +23,36 @@ GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type, GPSReceiverConfig:
         case GPSType::trimble:
         case GPSType::septentrio:
         case GPSType::femto:
+        case GPSType::unicore:
+        case GPSType::quectel:
+        case GPSType::passive:
             break;
         default:
             return {};
     }
     capabilities.recognized = true;
-    capabilities.position = type == GPSType::ublox;
-    capabilities.rtkBase = true;
-    // Normal UBX mode disables NAV-RELPOSNED; other Position backends are unsupported.
+    capabilities.position = type == GPSType::ublox || type == GPSType::unicore || type == GPSType::quectel;
+    capabilities.rtkBase = type != GPSType::passive;
+    capabilities.surveyIn = capabilities.rtkBase && type != GPSType::unicore;
+    capabilities.receiverAveraging = type == GPSType::unicore;
+    capabilities.passive = type == GPSType::passive;
     return capabilities;
 }
 
 GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& config)
 {
     constexpr double MAX_UNSIGNED_VALUE = (std::numeric_limits<uint32_t>::max)();
+    if (config.surveyMode != GPSBaseStationConfig::SurveyMode::AccuracyControlled &&
+        config.surveyMode != GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
+        return GPSReceiverConfigError::UnsupportedBaseMode;
+    }
+    if (config.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
+        if (config.useFixedBase || config.receiverAveragingDurationSecs < 1 ||
+            config.receiverAveragingDurationSecs > 3600) {
+            return GPSReceiverConfigError::InvalidReceiverAveraging;
+        }
+        return GPSReceiverConfigError::None;
+    }
     if (config.useFixedBase) {
         const double altitudeCm = static_cast<double>(config.fixedBaseAltitudeMeters) * 100.0;
         // Match legacy float conversions before checking wire limits.
@@ -59,7 +76,8 @@ GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& 
 
 GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiverConfig& config)
 {
-    if (config.role != GPSReceiverConfig::Role::RTKBase && config.role != GPSReceiverConfig::Role::Position) {
+    if (config.role != GPSReceiverConfig::Role::RTKBase && config.role != GPSReceiverConfig::Role::Position &&
+        config.role != GPSReceiverConfig::Role::Passive) {
         return GPSReceiverConfigError::InvalidRole;
     }
     const GPSReceiverCapabilities capabilities = gpsReceiverCapabilities(type, config.role);
@@ -67,14 +85,34 @@ GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiver
         return GPSReceiverConfigError::UnknownReceiver;
     }
     if ((config.role == GPSReceiverConfig::Role::Position && !capabilities.position) ||
-        (config.role == GPSReceiverConfig::Role::RTKBase && !capabilities.rtkBase)) {
+        (config.role == GPSReceiverConfig::Role::RTKBase && !capabilities.rtkBase) ||
+        (config.role == GPSReceiverConfig::Role::Passive && !capabilities.passive)) {
         return GPSReceiverConfigError::UnsupportedRole;
     }
+    if (config.allowPersistentChanges && type != GPSType::quectel) {
+        return GPSReceiverConfigError::UnsupportedPersistentConfiguration;
+    }
     if (config.role == GPSReceiverConfig::Role::RTKBase) {
+        if (!config.base.useFixedBase &&
+            ((config.base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged &&
+              !capabilities.receiverAveraging) ||
+             (config.base.surveyMode == GPSBaseStationConfig::SurveyMode::AccuracyControlled &&
+              !capabilities.surveyIn))) {
+            return GPSReceiverConfigError::UnsupportedBaseMode;
+        }
         const GPSReceiverConfigError error = gpsValidateBaseStationConfig(config.base);
         if (error != GPSReceiverConfigError::None) {
             return error;
         }
+    }
+    if (config.role == GPSReceiverConfig::Role::Passive &&
+        (config.base.useFixedBase || config.base.surveyInAccMeters != 0 || config.base.surveyInDurationSecs != 0 ||
+         config.base.surveyMode != GPSBaseStationConfig::SurveyMode::AccuracyControlled)) {
+        return GPSReceiverConfigError::UnsupportedBaseMode;
+    }
+    if ((config.baudRate != 0 && (config.baudRate < 1200 || config.baudRate > 4000000)) ||
+        (config.role == GPSReceiverConfig::Role::Passive && config.baudRate == 0)) {
+        return GPSReceiverConfigError::InvalidBaudRate;
     }
     if (config.constellationMask != 0) {
         if (capabilities.constellationMask == 0) {

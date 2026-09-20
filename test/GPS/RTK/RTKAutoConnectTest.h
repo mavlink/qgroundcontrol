@@ -14,4 +14,7 @@ private slots:
     void _excludedPorts();
     void _failedAttemptsBackOffAndRespectReservations();
     void _failedOpenRetriesWithoutUnplug();
+    void _genericUsbNeedsExplicitSelection_data();
+    void _genericUsbNeedsExplicitSelection();
+    void _manualConnectionRetiresAutoOwnership();
 };

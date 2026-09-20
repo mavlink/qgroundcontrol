@@ -20,6 +20,7 @@
 
 #include "GPSDriver.h"
 #include "GPSEvidenceTransport.h"
+#include "GPSReceiverCapabilities.h"
 #include "MonotonicClock.h"
 #include "ScriptedUBXReceiver.h"
 #include "TCPGPSTransport.h"
@@ -100,11 +101,28 @@ QJsonObject check(const QString& name, const QString& status, const QString& det
 
 QJsonObject requestedConfig(const GPSReceiverConfig& config)
 {
-    QJsonObject result{{"role", config.role == GPSReceiverConfig::Role::RTKBase ? "base" : "position"},
-                       {"base_mode", "survey"},
-                       {"survey_duration_s", static_cast<qint64>(config.base.surveyInDurationSecs)},
-                       {"survey_accuracy_m", config.base.surveyInAccMeters},
+    QJsonObject result{{"role", config.role == GPSReceiverConfig::Role::RTKBase   ? "base"
+                                : config.role == GPSReceiverConfig::Role::Passive ? "passive"
+                                                                                  : "position"},
+                       {"baud_rate", static_cast<qint64>(config.baudRate)},
+                       {"allow_persistent_changes", config.allowPersistentChanges},
                        {"constellation_mask", static_cast<qint64>(config.constellationMask)}};
+    if (config.role == GPSReceiverConfig::Role::RTKBase) {
+        if (config.base.useFixedBase) {
+            result.insert("base_mode", "fixed");
+            result.insert("latitude_deg", config.base.fixedBaseLatitude);
+            result.insert("longitude_deg", config.base.fixedBaseLongitude);
+            result.insert("ellipsoid_altitude_m", config.base.fixedBaseAltitudeMeters);
+        } else if (config.base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
+            result.insert("base_mode", "receiver-averaging");
+            result.insert("averaging_maximum_s", static_cast<qint64>(config.base.receiverAveragingDurationSecs));
+            result.insert("survey_accuracy_m", QJsonValue::Null);
+        } else {
+            result.insert("base_mode", "survey");
+            result.insert("survey_duration_s", static_cast<qint64>(config.base.surveyInDurationSecs));
+            result.insert("survey_accuracy_m", config.base.surveyInAccMeters);
+        }
+    }
     result.insert("dynamic_model", config.dynamicModel ? QJsonValue(*config.dynamicModel) : QJsonValue::Null);
     return result;
 }
@@ -127,8 +145,9 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     const QString role = parser.value("role");
     if (!QStringList{"plan", "configure", "role-cycle", "suite", "cancel"}.contains(options.action) ||
         !QStringList{"scripted", "serial", "tcp", "udp"}.contains(options.transport) ||
-        !QStringList{"ublox", "trimble", "septentrio", "femto"}.contains(family) ||
-        !QStringList{"base", "position"}.contains(role) || !QStringList{"f9p", "m8p"}.contains(options.model) ||
+        !QStringList{"ublox", "trimble", "septentrio", "femto", "unicore", "quectel", "passive"}.contains(family) ||
+        !QStringList{"base", "position", "passive"}.contains(role) ||
+        !QStringList{"f9p", "m8p"}.contains(options.model) ||
         !QStringList{"fresh", "retained", "none"}.contains(options.surveyState) ||
         !QStringList{"none", "nak", "wrong-readback", "cancel", "rtcm-nak", "rtcm-nak-cancel"}.contains(
             options.fault)) {
@@ -143,11 +162,19 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
         options.family = GPSType::septentrio;
     } else if (family == "femto") {
         options.family = GPSType::femto;
+    } else if (family == "unicore") {
+        options.family = GPSType::unicore;
+    } else if (family == "quectel") {
+        options.family = GPSType::quectel;
+    } else if (family == "passive") {
+        options.family = GPSType::passive;
     }
-    options.config.role = role == "base" ? GPSReceiverConfig::Role::RTKBase : GPSReceiverConfig::Role::Position;
+    options.config.role = role == "base"      ? GPSReceiverConfig::Role::RTKBase
+                          : role == "passive" ? GPSReceiverConfig::Role::Passive
+                                              : GPSReceiverConfig::Role::Position;
     const bool roleCycle = options.action == "role-cycle" || options.action == "suite";
-    if (options.family != GPSType::ublox && (roleCycle || role == "position")) {
-        return "Position and base -> Position -> base cycles are supported only for UBX";
+    if (!gpsReceiverCapabilities(options.family, options.config.role).position && (roleCycle || role == "position")) {
+        return "This receiver does not support Position or base -> Position -> base cycles";
     }
     if (roleCycle && role != "base") {
         return "Role cycles must begin with --role base";
@@ -175,14 +202,53 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     options.observeMs = integer("observe-ms", 1, 3600000);
     options.cancelAfterMs = integer("cancel-after-ms", 1, 1000);
     options.timeoutMs = integer("timeout-ms", 100, 120000);
+    if (options.family == GPSType::quectel && !parser.isSet("timeout-ms")) {
+        // Role and base changes can require multiple receiver restarts within the driver's 45-second budget.
+        options.timeoutMs = 60000;
+    }
     options.port = static_cast<quint16>(integer("port", 0, 65535));
     options.localPort = static_cast<quint16>(integer("local-port", 0, 65535));
-    options.config.base.surveyInDurationSecs = integer("survey-duration", 1, 86400);
+    options.config.baudRate = static_cast<uint32_t>(integer("baud", 0, 4000000));
+    options.config.allowPersistentChanges = parser.isSet("allow-save");
     options.config.constellationMask = static_cast<uint32_t>(integer("constellations", 0, 31));
-    bool accuracyValid = false;
-    options.config.base.surveyInAccMeters = parser.value("survey-accuracy").toDouble(&accuracyValid);
-    valid = valid && accuracyValid && std::isfinite(options.config.base.surveyInAccMeters) &&
-            options.config.base.surveyInAccMeters > 0;
+    const QString baseMode = parser.value("base-mode");
+    if (!QStringList{"survey", "fixed", "receiver-averaging"}.contains(baseMode)) {
+        return "Unsupported base mode";
+    }
+    if (options.config.role == GPSReceiverConfig::Role::RTKBase) {
+        if ((baseMode != "survey" && (parser.isSet("survey-duration") || parser.isSet("survey-accuracy"))) ||
+            (baseMode != "receiver-averaging" && parser.isSet("averaging-duration")) ||
+            (baseMode != "fixed" &&
+             (parser.isSet("latitude") || parser.isSet("longitude") || parser.isSet("altitude")))) {
+            return "Base options do not match the selected base mode";
+        }
+        if (baseMode == "fixed") {
+            const auto coordinate = [&](const QString& name) {
+                bool ok = false;
+                const double value = parser.value(name).toDouble(&ok);
+                valid = valid && parser.isSet(name) && ok && std::isfinite(value);
+                return value;
+            };
+            options.config.base.useFixedBase = true;
+            options.config.base.fixedBaseLatitude = coordinate("latitude");
+            options.config.base.fixedBaseLongitude = coordinate("longitude");
+            options.config.base.fixedBaseAltitudeMeters = static_cast<float>(coordinate("altitude"));
+        } else if (baseMode == "receiver-averaging") {
+            options.config.base.surveyMode = GPSBaseStationConfig::SurveyMode::ReceiverManaged;
+            options.config.base.receiverAveragingDurationSecs =
+                static_cast<uint32_t>(integer("averaging-duration", 1, 3600));
+        } else {
+            options.config.base.surveyInDurationSecs = integer("survey-duration", 1, 86400);
+            bool accuracyValid = false;
+            options.config.base.surveyInAccMeters = parser.value("survey-accuracy").toDouble(&accuracyValid);
+            valid = valid && accuracyValid && std::isfinite(options.config.base.surveyInAccMeters) &&
+                    options.config.base.surveyInAccMeters > 0;
+        }
+    } else if (parser.isSet("base-mode") || parser.isSet("survey-duration") || parser.isSet("survey-accuracy") ||
+               parser.isSet("averaging-duration") || parser.isSet("latitude") || parser.isSet("longitude") ||
+               parser.isSet("altitude")) {
+        return "Base options require --role base";
+    }
     if (parser.isSet("dynamic-model")) {
         options.config.dynamicModel = integer("dynamic-model", 0, 8);
     }
@@ -576,7 +642,7 @@ int run(const Options& options)
             }
             checks.append(check("position_observation", positions > 0 ? "passed" : "inconclusive",
                                 "Decoded position messages observed; does not certify fix quality"));
-            if (config.role == GPSReceiverConfig::Role::RTKBase) {
+            if (config.role == GPSReceiverConfig::Role::RTKBase && !config.base.useFixedBase) {
                 checks.append(check("survey_observation", surveys.isEmpty() ? "inconclusive" : "passed",
                                     "Freshness is reported separately; retained completion is not a fresh survey"));
                 checks.append(check("fresh_survey", "inconclusive",
@@ -631,16 +697,24 @@ int main(int argc, char* argv[])
     parser.addOptions({
         {{"a", "action"}, "plan|configure|role-cycle|suite|cancel", "action", "plan"},
         {"transport", "scripted|serial|tcp|udp", "transport", "scripted"},
-        {"family", "ublox|trimble|septentrio|femto", "family", "ublox"},
-        {"role", "base|position (Position: UBX only)", "role", "base"},
+        {"family", "ublox|trimble|septentrio|femto|unicore|quectel|passive", "family", "ublox"},
+        {"role", "base|position|passive", "role", "base"},
         {"allow-reconfigure", "Authorize physical receiver writes and role changes"},
+        {"allow-save", "Explicitly permit LG290P settings to be saved to flash and the receiver restarted"},
         {"output", "New JSON evidence path (atomic progress snapshots; never overwrites a previous run)", "path"},
         {"device", "Explicit serial device path", "path"},
+        {"baud", "Serial baud rate (0 for managed detection; passive requires an explicit rate)", "baud", "0"},
         {"host", "Explicit TCP/UDP peer host", "host"},
         {"port", "TCP/UDP peer port", "port", "0"},
         {"local-port", "UDP local port (0 allocates one)", "port", "0"},
         {"survey-duration", "Requested survey minimum seconds", "seconds", "60"},
         {"survey-accuracy", "Requested survey accuracy limit, metres", "metres", "2"},
+        {"base-mode", "survey|fixed|receiver-averaging", "mode", "survey"},
+        {"averaging-duration", "Receiver-managed maximum averaging seconds (not a minimum or accuracy guarantee)",
+         "seconds", "60"},
+        {"latitude", "Fixed base latitude, degrees", "degrees"},
+        {"longitude", "Fixed base longitude, degrees", "degrees"},
+        {"altitude", "Fixed base ellipsoid altitude, metres", "metres"},
         {"constellations", "Requested mask (0 retains defaults)", "mask", "0"},
         {"dynamic-model", "Requested UBX dynamic model (single Position configuration only)", "model"},
         {"observe-ms", "Per-stage observation window", "milliseconds", "1000"},

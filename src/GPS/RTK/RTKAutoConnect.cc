@@ -11,15 +11,25 @@
 RTKAutoConnect::RTKAutoConnect(AutoConnectSettings* settings, GPSRtk* receiver, SerialPortManager* serialPorts,
                                QObject* parent)
     : QObject(parent), _settings(settings), _receiver(receiver), _serialPorts(serialPorts)
-{}
-
-void RTKAutoConnect::stop()
 {
+    if (_receiver) {
+        connect(_receiver, &GPSRtk::manualConnectionRequested, this, &RTKAutoConnect::_resetDiscovery);
+    }
+}
+
+void RTKAutoConnect::_resetDiscovery()
+{
+    _autoConnectedPort.clear();
     _waitingPorts.clear();
     _retryDeadline = QDeadlineTimer::Forever;
     _retryDelayMs = 1000;
-    if (!_autoConnectedPort.isEmpty()) {
-        _autoConnectedPort.clear();
+}
+
+void RTKAutoConnect::stop()
+{
+    const bool hadAutoConnection = !_autoConnectedPort.isEmpty();
+    _resetDiscovery();
+    if (hadAutoConnection) {
         emit disconnectRequested();
     }
 }

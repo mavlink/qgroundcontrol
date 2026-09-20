@@ -27,6 +27,15 @@
 #if QGC_GPS_ENABLE_FEMTO
 #include "Femto/GPSDriverFemto.h"
 #endif
+#if QGC_GPS_ENABLE_UNICORE
+#include "Unicore/GPSDriverUnicore.h"
+#endif
+#if QGC_GPS_ENABLE_QUECTEL
+#include "Quectel/GPSDriverQuectel.h"
+#endif
+#if QGC_GPS_ENABLE_PASSIVE
+#include "Passive/GPSDriverPassive.h"
+#endif
 
 QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.GPSDriver")
 QGC_LOGGING_CATEGORY(GPSNativeDriversLog, "GPS.Drivers")
@@ -168,7 +177,12 @@ bool GPSDriver::configure()
         }
     };
 
-    unsigned baudrate = _transport.fixedBaudrate();
+    unsigned baudrate = _config.baudRate ? _config.baudRate : _transport.fixedBaudrate();
+    if (_config.baudRate && _transport.fixedBaudrate() && _config.baudRate != _transport.fixedBaudrate()) {
+        _state->configurationError = QStringLiteral("Selected baud rate differs from the transport's fixed baud rate");
+        qCWarning(GPSDriverLog) << _state->configurationError;
+        return false;
+    }
     switch (_type) {
 #if QGC_GPS_ENABLE_UBX
         case GPSType::ublox:
@@ -178,7 +192,9 @@ bool GPSDriver::configure()
 #if QGC_GPS_ENABLE_ASHTECH
         case GPSType::trimble:
             _state->driver = std::make_unique<GPSNativeAshtech>(io, &_state->position, &_state->satellites);
-            baudrate = 115200;
+            if (!_config.baudRate) {
+                baudrate = 115200;
+            }
             break;
 #endif
 #if QGC_GPS_ENABLE_SBF
@@ -191,6 +207,21 @@ bool GPSDriver::configure()
             _state->driver = std::make_unique<GPSNativeFemto>(io, &_state->position, &_state->satellites);
             break;
 #endif
+#if QGC_GPS_ENABLE_UNICORE
+        case GPSType::unicore:
+            _state->driver = std::make_unique<GPSNativeUnicore>(io, &_state->position, &_state->satellites);
+            break;
+#endif
+#if QGC_GPS_ENABLE_QUECTEL
+        case GPSType::quectel:
+            _state->driver = std::make_unique<GPSNativeQuectel>(io, &_state->position, &_state->satellites);
+            break;
+#endif
+#if QGC_GPS_ENABLE_PASSIVE
+        case GPSType::passive:
+            _state->driver = std::make_unique<GPSNativePassive>(io, &_state->position, &_state->satellites);
+            break;
+#endif
         default:
             _state->configurationError = QStringLiteral("Unsupported GPS type: %1").arg(static_cast<int>(_type));
             qCWarning(GPSDriverLog) << "Unsupported GPS type:" << static_cast<int>(_type);
@@ -198,10 +229,12 @@ bool GPSDriver::configure()
     }
     GPSProtocol::GPSConfig config{};
     config.base = _config.base;
-    config.dynamicModel = static_cast<uint8_t>(_config.dynamicModel.value_or(7));
+    const bool asciiReceiver = _type == GPSType::unicore || _type == GPSType::quectel || _type == GPSType::passive;
+    config.dynamicModel = static_cast<uint8_t>(_config.dynamicModel.value_or(asciiReceiver ? 0 : 7));
     config.output_mode =
         _config.role == GPSReceiverConfig::Role::RTKBase ? GPSProtocol::OutputMode::RTCM : GPSProtocol::OutputMode::GPS;
     config.gnss_systems = static_cast<GPSProtocol::GNSSSystemsMask>(_config.constellationMask);
+    config.allowPersistentChanges = _config.allowPersistentChanges;
     _state->configuring = true;
     const int result = _state->driver->configure(baudrate, config);
     _state->driver->finishConfigurationEvidence();

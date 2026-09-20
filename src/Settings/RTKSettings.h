@@ -11,9 +11,11 @@ class BaseModeDefinition : public QObject {
     QML_UNCREATABLE("")
 
 public:
-    enum class Mode {
+    enum class Mode
+    {
         BaseSurveyIn = 0,
-        BaseFixed    = 1,
+        BaseFixed = 1,
+        BaseReceiverAveraging = 2,
     };
     Q_ENUM(Mode)
 
@@ -32,6 +34,9 @@ public:
     DEFINE_SETTINGFACT(baseReceiverManufacturers)
     DEFINE_SETTINGFACT(surveyInAccuracyLimit)
     DEFINE_SETTINGFACT(surveyInMinObservationDuration)
+    DEFINE_SETTINGFACT(receiverAveragingDuration)
+    DEFINE_SETTINGFACT(serialDevice)
+    DEFINE_SETTINGFACT(serialBaudRate)
     DEFINE_SETTINGFACT(useFixedBasePosition)
     DEFINE_SETTINGFACT(fixedBasePositionLatitude)
     DEFINE_SETTINGFACT(fixedBasePositionLongitude)
