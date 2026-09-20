@@ -15,7 +15,7 @@ You can further configure video display using controls on the switcher:
   (once detached, you can move and resize the window just like any other in your OS).
   If you close the detached window the switcher will re-lock to the QGC Fly view.
 
-### Record Video
+## Record Video
 
 If supported by the camera and vehicle, _QGroundControl_ can start and stop video recording on the camera itself. _QGroundControl_ can also record the video stream and save it locally.
 
@@ -23,7 +23,7 @@ If supported by the camera and vehicle, _QGroundControl_ can start and stop vide
 Video stored on the camera may be of much higher quality, but it is likely that your ground station will have a much larger recording capacity.
 :::
 
-#### Record Video Stream (on GCS)
+### Record Video Stream (on GCS)
 
 Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
 Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
@@ -44,8 +44,7 @@ The stored video includes just the video stream itself.
 To record video with QGroundControl application elements displayed, you should use separate screen recording software.
 :::
 
-#### Record Video on Camera
+### Record Video on Camera
 
 Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
 First toggle to video mode, then select the red button to start recording.
-

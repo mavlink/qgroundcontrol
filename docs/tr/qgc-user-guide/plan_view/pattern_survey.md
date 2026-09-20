@@ -25,8 +25,8 @@ Bir gözlem görevi oluşturmak için:
 
 3. On the map drag the vertices to change the shape of the polygon.
 
-4. Yeni bir köşe noktası oluşturmak için var olan köşelerin ortalarındaki `(+)` semboüne tıklayın.
-   Yeni köşe, yeni pozisyonlara çekilebilir.
+4. Click the `(+)` symbol between existing vertices to create a new vertex.
+   The new vertex can then be dragged into a new position.
 
 Gözlem modu ayarları bir sonraki bölümde ele alınmıştır.
 
@@ -108,4 +108,3 @@ Ayarlanabilir seçenekler şunlardır:
 ### İstatistikler
 
 _Statistics_ bölümü, hesaplanan tarama alanını, fotoğraf aralığını, fotoğraflar arası boşluğu ve planlanan fotoğraf sayısını gösterir.
-

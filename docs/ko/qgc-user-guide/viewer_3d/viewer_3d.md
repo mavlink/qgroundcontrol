@@ -22,7 +22,7 @@ You can use it to:
   - Switch between a map view and a video view (if available)
   - Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
 
-# UI Overview
+## UI Overview
 
 The main elements of the 3D View are the same as the [Fly View](../fly_view/fly_view.md), with an added 3D environment.
 
@@ -30,7 +30,7 @@ The main elements of the 3D View are the same as the [Fly View](../fly_view/fly_
 
 To open the 3D View, when you are in the [Fly View](../fly_view/fly_view.md), select the 3D View icon from the toolbar on the left.
 
-## View Controls
+### View Controls
 
 The camera controls work like Gazebo: gestures are anchored to the ground point under the cursor, so the spot you grab stays under the cursor while you pan, orbit, or zoom.
 
@@ -52,7 +52,7 @@ To visualize the 3D map of a particular area in the 3D viewer, you have to downl
 
 If no OSM file is loaded, buildings are not shown, but the 3D View still displays the vehicle over a map-tile ground patch centered on the vehicle's home position, viewed from the side by default.
 
-# Settings
+## Settings
 
 You can change the settings of the 3D View from **Application Settings** ->**Fly View** tab under the **3D View** settings group.
 The following properties can be modified in the 3D View settings group:

@@ -7,7 +7,7 @@ The _Safety Setup_ page allows you to configure (vehicle specific) failsafe sett
 :::
 
 :::tip
-_QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 지원하지 않습니다.
+_QGroundContro&#x6C;_&#xC740; ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 지원하지 않습니다.
 :::
 
 ## 콥터
@@ -32,10 +32,10 @@ _QGroundControl_은 ArduPilot에서 폴리곤 펜스 또는 랠리 포인트를 
 
 - **Low action**([BATT_FS_LOW_ACT](http://ardupilot.org/copter/docs/parameters.html#batt-fs-low-act-low-battery-failsafe-action)) - 없음, Land, RTL, SmartRTL, SmartRTL 또는 Land, Terminate 중 하나를 선택합니다.
 - **Critical action**([BATT_FS_CRT_ACT](http://ardupilot.org/copter/docs/parameters.html#batt-fs-crt-act-critical-battery-failsafe-action)) - 없음, Land, RTL, SmartRTL, SmartRTL 또는 Land, Terminate 중 하나를 선택합니다.
-- **Low voltage threshold**([BATT_LOW_VOLT](http://ardupilot.org/copter/docs/parameters.html#batt-low-volt-low-battery-voltage)) - _낮은 동작_을 트리거하는 배터리 전압입니다.
-- **Critical voltage threshold<**([BATT_CRT_VOLT](http://ardupilot.org/copter/docs/parameters.html#batt-crt-volt-critical-battery-voltage))- _중요 작업_을 트리거하는 배터리 전압입니다.
-- **Low mAh threshold**([BATT_LOW_MAH](http://ardupilot.org/copter/docs/parameters.html#batt-low-mah-low-battery-capacity)) - _낮은 작업_을 트리거하는 배터리 용량입니다.
-- **Critical mAh threshold**([BATT_CRT_MAH](http://ardupilot.org/copter/docs/parameters.html#batt-crt-mah-battery-critical-capacity)) - _중요한 작업_을 트리거하는 배터리 용량입니다.
+- **Low voltage threshold**([BATT_LOW_VOLT](http://ardupilot.org/copter/docs/parameters.html#batt-low-volt-low-battery-voltage)) - _낮은 동&#xC791;_&#xC744; 트리거하는 배터리 전압입니다.
+- **Critical voltage threshold<**([BATT_CRT_VOLT](http://ardupilot.org/copter/docs/parameters.html#batt-crt-volt-critical-battery-voltage))- _중요 작&#xC5C5;_&#xC744; 트리거하는 배터리 전압입니다.
+- **Low mAh threshold**([BATT_LOW_MAH](http://ardupilot.org/copter/docs/parameters.html#batt-low-mah-low-battery-capacity)) - _낮은 작&#xC5C5;_&#xC744; 트리거하는 배터리 용량입니다.
+- **Critical mAh threshold**([BATT_CRT_MAH](http://ardupilot.org/copter/docs/parameters.html#batt-crt-mah-battery-critical-capacity)) - _중요한 작&#xC5C5;_&#xC744; 트리거하는 배터리 용량입니다.
 
 ### 일반적인 안전장치 트리거 {#failsafe_triggers_copter}
 

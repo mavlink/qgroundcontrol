@@ -15,8 +15,7 @@ Most of the settings that are displayed depend on the camera (they are defined i
 > A few common settings at the end are hard-coded: Photo Mode (Single/Time Lapse), Photo Interval (if Time Lapse), Reset Camera Defaults (sends a reset command to the camera), Format (storage)
 > :::
 
-### Video Stream {#video_instrument_page}
+## Video Stream {#video_instrument_page}
 
 The video page is used to enable/disable video streaming.
 When enabled, you can start/stop the video stream, enable a grid overlay, change how the image fits the screen, and record the video locally with QGC.
-

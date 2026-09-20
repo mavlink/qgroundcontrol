@@ -79,7 +79,7 @@ The fields are:
 - **Wind Speed:** Used to aid debugging and filtering (from multiple flights). Allowed values: _Calm_ | _Breeze_ | _Gale_ | _Storm_.
 - **Flight Rating:** Used to aid debugging and filtering (from multiple flights). Allowed values: _Crashed (Pilot Error)_ | _Crashed (Software or Hardware Issue)_ | _Unsatisfactory_ | _Good_ | _Great_.
 - **Additional Feedback:** (Optional). Enter a more detailed description of the flight or behaviour.
-- **Make this log publically available:** If set, the log will be visible and searchable on _Flight Review_.
+- **Make this log publicly available:** If set, the log will be visible and searchable on _Flight Review_.
   If not set, it will only be available via the link emailed on upload.
 - **Enable automatic log uploads:** If set, the log will automatically be uploaded on completion.
 - **Delete log file after uploading:** If set, the log will automatically deleted after upload.
@@ -90,4 +90,3 @@ Use the checkboxes and buttons to select logs, and either delete or upload them.
 :::tip
 You can change the parameters in _MAVLink 2 Log Uploads_ above to specify separate descriptions for uploaded logs.
 :::
-

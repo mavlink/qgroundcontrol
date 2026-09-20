@@ -30,4 +30,3 @@ Sub için gövde modelini seçmek için:
 3. Tüm \*\* yeşil \*\* iticilerin \*\* saat yönünde \*\* pervanelere ve tüm \*\* mavi \*\* iticilerin dede \*\* saat yönünün tersine \*\* pervanelere sahip olduğundan emin olun (veya tersi).
 
    - ArduSub için varsayılan parametre setini yüklemek için \*\* Load Vehicle Default Parameters\*\* 'ye de tıklayabilirsiniz.
-

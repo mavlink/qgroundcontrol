@@ -4,8 +4,7 @@
 下面你可以看到计划文件的顶级格式
 
 :::tip
-这是 "近乎最低限度"的计划——必须至少包含一个任务项目。
-当没有任务运行时，计划围栏和集结点（rally points）也用于模式。
+这是 "近乎最低限度"的计划——必须至少包含一个任务项目。当没有任务运行时，计划围栏和集结点（rally points）也用于模式。
 :::
 
 ```json
@@ -30,7 +29,7 @@
 
 | 键                              | 描述                                  |
 | ------------------------------ | ----------------------------------- |
-| `version`                      | 此文件的版本。 当前版本是 1。                    |
+| `version`                      | 此文件的版本。当前版本是 1。                     |
 | `fileType`                     | 必须是“计划”。                            |
 | `groundStation`                | 创建此文件的地面站的名称（此处为 _QGroundControl_ ） |
 | [`mission`](#mission)          | 与此飞行计划相关的任务。                        |
@@ -40,8 +39,7 @@
 ## 使命对象 {#mission}
 
 任务对象的结构如下所示。
-`items`字段包含一个逗号分隔的任务项目列表(如下文所示，它必须至少包含一个任务项目)。
-列表可能既有 [SimpleItem](#mission_simple_item) 对象也有 [ComplexItem](#mission_complex_item) 对象。
+`items`字段包含一个逗号分隔的任务项目列表(如下文所示，它必须至少包含一个任务项目)。列表可能既有 [SimpleItem](#mission_simple_item) 对象也有 [ComplexItem](#mission_complex_item) 对象。
 
 ```json
     "mission": {
@@ -84,13 +82,13 @@
 
 | 键                        | 描述                                                                                                                                                                                                                                                               |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `version`                | 任务对象的版本。 当前版本是 2。                                                                                                                                                                                                                                                |
-| `firmwareType`           | 创建此任务的固件类型。 这是 [MAV_AUTOPILOT](https://mavlink.io/en/messages/common.html#MAV_AUTOPILOT)枚举值之一。                                                                                                                                              |
-| `globalPlanAltitudeMode` | 全局高度模式设置。 此选项用于不指定\`"高度模型"的计划。                                                                                                                                                                                                                                   |
-| `vehicleType`            | 创建此任务的载具类型。 这是 [MAV_TYPE](https://mavlink.io/en/messages/common.html#MAV_TYPE)枚举值之一。                                                                                                                                                        |
+| `version`                | 任务对象的版本。当前版本是 2。                                                                                                                                                                                                                                                 |
+| `firmwareType`           | 创建此任务的固件类型。这是 [MAV_AUTOPILOT](https://mavlink.io/en/messages/common.html#MAV_AUTOPILOT)枚举值之一。                                                                                                                                               |
+| `globalPlanAltitudeMode` | 全局高度模式设置。此选项用于不指定\`"高度模型"的计划。                                                                                                                                                                                                                                    |
+| `vehicleType`            | 创建此任务的载具类型。这是 [MAV_TYPE](https://mavlink.io/en/messages/common.html#MAV_TYPE)枚举值之一。                                                                                                                                                         |
 | `cruiseSpeed`            | 固定翼或VTOL载具的默认前进速度（例如在航点之间移动时）。                                                                                                                                                                                                                                   |
 | `hoverSpeed`             | 多旋翼飞行器的默认前进速度。                                                                                                                                                                                                                                                   |
-| `items`                  | 与任务关联的任务项目对象列表 列表可能包含 [SimpleItem](#mission_simple_item) 对象和 [ComplexItem](#mission_complex_item) 对象。                                                                                                                                                            |
+| `items`                  | 与任务关联的任务项目对象列表列表可能包含 [SimpleItem](#mission_simple_item) 对象和 [ComplexItem](#mission_complex_item) 对象。                                                                                                                                                             |
 | `plannedHomePosition`    | The planned home position is shown on the map and used for mission planning when no vehicle is connected. The array values shown above are (from top): latitude, longitude and AMSL altitude. |
 
 简单和复杂项目的格式如下。
@@ -99,7 +97,7 @@
 
 一个简单的项表示单个MAVLink MISSION_ITEM命令。
 
-```
+```json
              {
                 "AMSLAltAboveTerrain": null,
                 "Altitude": 50,
@@ -149,7 +147,7 @@
 
 调查复杂任务项目的对象定义如下。
 
-```
+```json
 {
                 "TransectStyleComplexItem": {
                     ...
@@ -176,22 +174,22 @@
 
 复杂项目具有与之关联的这些值：
 
-| 键                                                        | 描述                                                                                                                                                                                                                       |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `version`                                                | The version number for this `survey` definition. Current version is 3.                                                                                                                   |
-| `type`                                                   | ComplexItem（这是一个复杂的项目）。                                                                                                                                                                                                  |
-| `complexItemType`                                        | `survey`                                                                                                                                                                                                                 |
-| [`TransectStyleComplexItem	`](#TransectStyleComplexItem) | Survey和CorridorScan复杂项目的通用基础定义。                                                                                                                                                                                          |
-| `angle`                                                  | 横断面的角度（度数）。                                                                                                                                                                                                              |
-| `entryLocation`                                          | ?                                                                                                                                                                                                                        |
-| `flyAlternateTransects`                                  | 团结积分信息是可选的。 该计划可以包含任意数量的拉力点，每个拉力点具有纬度，经度和高度（高于原始位置）。 如果是，则载具会跳过每个其他横断面，然后在最后返回并飞行这些替代。 This can be used for fixed wing aircraft when the turnaround would be too acute for the vehicle to make the turn. |
-| `polygon`                                                | The polygon array which represents the polygonal survey area. Each point is a latitude, longitude pair for a polygon vertex.                                                             |
+| 键                                                        | 描述                                                                                                                                                                                                                      |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `version`                                                | The version number for this `survey` definition. Current version is 3.                                                                                                                  |
+| `type`                                                   | ComplexItem（这是一个复杂的项目）。                                                                                                                                                                                                 |
+| `complexItemType`                                        | `survey`                                                                                                                                                                                                                |
+| [`TransectStyleComplexItem	`](#TransectStyleComplexItem) | Survey和CorridorScan复杂项目的通用基础定义。                                                                                                                                                                                         |
+| `angle`                                                  | 横断面的角度（度数）。                                                                                                                                                                                                             |
+| `entryLocation`                                          | ?                                                                                                                                                                                                                       |
+| `flyAlternateTransects`                                  | 团结积分信息是可选的。 该计划可以包含任意数量的拉力点，每个拉力点具有纬度，经度和高度（高于原始位置）。如果是，则载具会跳过每个其他横断面，然后在最后返回并飞行这些替代。 This can be used for fixed wing aircraft when the turnaround would be too acute for the vehicle to make the turn. |
+| `polygon`                                                | The polygon array which represents the polygonal survey area. Each point is a latitude, longitude pair for a polygon vertex.                                                            |
 
 #### 走廊扫描 {#corridor_scan}
 
 CorridorScan复杂任务项的对象定义如下。
 
-```
+```json
              {
                 "CorridorWidth": 50,
                 "EntryPoint": 0,
@@ -273,7 +271,9 @@ StructureScan复杂任务项的对象定义如下。
 | `altitudeRelative`          | true: altitude相对于主页，false: altitude是AMSL。 |
 | `polygon`                   | ?                                                                         |
 
-#### `TransectStyleComplexItem	` {#TransectStyleComplexItem}
+<a id="TransectStyleComplexItem"></a>
+
+#### `TransectStyleComplexItem`
 
 `TransectStyleComplexItem` contains the common base definition for [`survey`](#survey) and [`CorridorScan`](#corridor_scan) complex items.
 
@@ -305,23 +305,25 @@ StructureScan复杂任务项的对象定义如下。
                 },
 ```
 
-| 键                            | 描述                                                      |
-| ---------------------------- | ------------------------------------------------------- |
-| `version`                    | 此TransectStyleComplexItem定义的版本。 当前版本为1。 此文件的版本。 当前版本为1。 |
-| [`CameraCalc`](#CameraCalc)  | ?                                                       |
-| `CameraTriggerInTurnAround	` | ? （布尔值）                                                 |
-| `FollowTerrain`              | ? （布尔值）                                                 |
-| `HoverAndCapture`            | ? （布尔值）                                                 |
-| `Items`                      | ?                                                       |
-| `Refly90Degrees`             | ? （布尔值）                                                 |
-| `TurnAroundDistance`         | 在转向下一个横断面之前飞过多边形边缘的距离。                                  |
-| `VisualTransectPoints`       | ?                                                       |
+| 键                            | 描述                                                     |
+| ---------------------------- | ------------------------------------------------------ |
+| `version`                    | 此TransectStyleComplexItem定义的版本。 当前版本为1。此文件的版本。 当前版本为1。 |
+| [`CameraCalc`](#CameraCalc)  | ?                                                      |
+| `CameraTriggerInTurnAround	` | ? （布尔值）                                                |
+| `FollowTerrain`              | ? （布尔值）                                                |
+| `HoverAndCapture`            | ? （布尔值）                                                |
+| `Items`                      | ?                                                      |
+| `Refly90Degrees`             | ? （布尔值）                                                |
+| `TurnAroundDistance`         | 在转向下一个横断面之前飞过多边形边缘的距离。                                 |
+| `VisualTransectPoints`       | ?                                                      |
 
-##### CameraCalc {#CameraCalc}
+<a id="CameraCalc"></a>
+
+##### CameraCalc
 
 CameraCalc包含用于调查，走廊或结构扫描的摄像机信息。
 
-```
+```json
                     "CameraCalc": {
                         "AdjustedFootprintFrontal": 272.4,
                         "AdjustedFootprintSide": 409.2,
@@ -346,7 +348,7 @@ CameraCalc包含用于调查，走廊或结构扫描的摄像机信息。
 
 | 键                           | 描述                                                                                                                                                                                                                                                                                                       |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `version`                   | 此CameraCalc定义的版本。 当前版本为1。 此调查定义的版本号。 目前的版本是3。                                                                                                                                                                                                                                                            |
+| `version`                   | 此CameraCalc定义的版本。 当前版本为1。此调查定义的版本号。 目前的版本是3。                                                                                                                                                                                                                                                             |
 | `AdjustedFootprintFrontal`  | ?                                                                                                                                                                                                                                                                                                        |
 | `AdjustedFootprintSide`     | ?                                                                                                                                                                                                                                                                                                        |
 | `DistanceToSurface`         | ? 单位?                                                                                                                                                                                                                                                                                                    |

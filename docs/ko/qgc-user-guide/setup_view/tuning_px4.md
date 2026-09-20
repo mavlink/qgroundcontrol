@@ -112,7 +112,7 @@ It is designed to be read/used in conjustion with the [PX4 Manual PID Tuning Gui
 3. _Rate Controller_ 탭을 선택하십시오.
    **자동 튜닝 사용** 버튼이 꺼져 있는 지 확인합니다.
 
-4. 조정할 _조정 축_을 선택합니다: **롤**, **피치** 또는 **요**(각 축은 개별적으로 조정됨).
+4. 조정할 _조정 &#xCD95;_&#xC744; 선택합니다: **롤**, **피치** 또는 **요**(각 축은 개별적으로 조정됨).
 
 5. 차트의 추적을 관찰하면서 비행합니다.
    - 슬라이더를 사용하여 그래프에 표시되는 추적을 개선하려면 _조정 값_(매개변수)을 조정합니다.
@@ -123,4 +123,3 @@ It is designed to be read/used in conjustion with the [PX4 Manual PID Tuning Gui
 
 7. 다른 컨트롤러로 전환하고 프로세스를 반복합니다.
    튜닝 페이지의 캡쳐 화면은 아래와 같습니다.
-

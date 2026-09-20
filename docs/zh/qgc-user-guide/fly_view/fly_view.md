@@ -14,7 +14,7 @@ For connection issues, see [Connection Problems](../troubleshooting/vehicle_conn
 - **[Status Indicators](fly_view_toolbar.md):** Shows flight status and mode as well as the status of the main components of the vehicle.
 - **[Actions](fly_tools.md):** Allows you to command the vehicle to take a specific action.
 - **[Camera Tools](camera_tools.md):** Switch between still and video modes, start/stop capture, and control camera settings.
-- **[视频](video.md):** 显示载具中的视频。 允许您在视频或地图之间切换为主显示。
+- **[视频](video.md):** 显示载具中的视频。允许您在视频或地图之间切换为主显示。
 - **[Telemetry Values](instrument_panel.md):** Displays configurable telemetry values.
 - **[Attitude/Compass](hud.md):** Provides virtual horizon and heading information.
 - **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle. Can be switched between multiple variations.
@@ -34,7 +34,7 @@ For connection issues, see [Connection Problems](../troubleshooting/vehicle_conn
 
 ### Actions associated with a map position {#map_actions}
 
-可以采取一些与地图上的具体立场相关的行动。 要使用这些动作：
+可以采取一些与地图上的具体立场相关的行动。要使用这些动作：
 
 1. 在指定位置点击地图
 2. 弹出窗口将显示您的可用动作列表
@@ -45,7 +45,7 @@ For connection issues, see [Connection Problems](../troubleshooting/vehicle_conn
 
 ### 暂停
 
-您可以暂停大多数操作，包括起飞、着陆、返航、任务执行、轨道等。 暂停使用时的车辆行为取决于载具类型；通常是多层飞行器悬停，固定翼飞行器将环绕。
+您可以暂停大多数操作，包括起飞、着陆、返航、任务执行、轨道等。暂停使用时的车辆行为取决于载具类型；通常是多层飞行器悬停，固定翼飞行器将环绕。
 
 :::info
 您不能暂停 _前往位置_ 操作。
@@ -76,9 +76,7 @@ You can start a mission when the vehicle is landed (the start mission confirmati
 You can _continue_ mission from the _next_ waypoint when you're flying (the _Continue Mission_ confirmation button is often displayed by default after you takeoff).
 
 :::info
-继续和 [回复任务](#resume_mission) 是不一样的！
-_继续_ 用于重新启动已暂停的任务，或者你已经起飞，因此已经错过起飞任务指令的情况。
-恢复任务 用于在执行任务中途使用了返航或着陆（例如更换电池），然后希望继续执行下一个任务项目的情况（也就是说，它会将你带到任务中之前执行到的位置，而不是从任务中的当前位置继续）。
+继续和 [回复任务](#resume_mission) 是不一样的！_继续_ 用于重新启动已暂停的任务，或者你已经起飞，因此已经错过起飞任务指令的情况。恢复任务 用于在执行任务中途使用了返航或着陆（例如更换电池），然后希望继续执行下一个任务项目的情况（也就是说，它会将你带到任务中之前执行到的位置，而不是从任务中的当前位置继续）。
 :::
 
 你可以继续当前任务（除非已经在执行任务）：
@@ -94,8 +92,7 @@ _继续_ 用于重新启动已暂停的任务，或者你已经起飞，因此�
 _Resume Mission_ is used to resume a mission after performing an [RTL/Return](hud.md#rtl) or [Land](hud.md#land) from within a mission (in order, for example, to perform a battery change).
 
 :::info
-如果你正在更换电池，断开电池后**请勿**断开 QGC 与飞行器的连接。
-插入新电池后，“QGroundControl” 将再次检测到飞行器并自动恢复连接。
+如果你正在更换电池，断开电池后**请勿**断开 QGC 与飞行器的连接。插入新电池后，“QGroundControl” 将再次检测到飞行器并自动恢复连接。
 :::
 
 着陆后，系统将弹出 _飞行计划完成” 对话框，你可以选择从飞行器中删除该计划、_将其保留在飞行器上，或者从最后经过的航点恢复任务。
@@ -104,14 +101,12 @@ _Resume Mission_ is used to resume a mission after performing an [RTL/Return](hu
 Then [confirm](fly_tools.md#confirmation) the action to continue the mission.
 
 :::info
-任务不能简单地从飞行器执行的最后一个任务项目继续，因为在最后一个航点可能有多个影响任务下一阶段的项目（例如速度指令或相机控制指令）。
-相反，_QGroundControl_ 会从最后飞行的任务项目开始重构任务，并自动将任何相关指令添加到任务开头。
+任务不能简单地从飞行器执行的最后一个任务项目继续，因为在最后一个航点可能有多个影响任务下一阶段的项目（例如速度指令或相机控制指令）。相反，_QGroundControl_ 会从最后飞行的任务项目开始重构任务，并自动将任何相关指令添加到任务开头。
 :::
 
 #### 着陆后移除任务提示 {#resume_mission_prompt}
 
-任务完成、飞行器着陆并锁定后，系统会提示你从飞行器中移除该任务。
-这旨在防止陈旧的任务在不知不觉中留在飞行器上，从而可能导致意外行为的问题。
+任务完成、飞行器着陆并锁定后，系统会提示你从飞行器中移除该任务。这旨在防止陈旧的任务在不知不觉中留在飞行器上，从而可能导致意外行为的问题。
 
 ### 显示视频 {#video_switcher}
 
@@ -126,8 +121,7 @@ You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 
 - 通过拖动右上角的图标来调整切换器的大小。
 - 点击左下方的切换图标来隐藏切换器。
-- 按下视频切换器窗口左上角的图标可将其分离（分离后，你可以像操作系统中的其他窗口一样移动和调整该窗口的大小）。
-  如果您关闭分离的窗口，切换器将重新锁定到 QGC 飞行视图。
+- 按下视频切换器窗口左上角的图标可将其分离（分离后，你可以像操作系统中的其他窗口一样移动和调整该窗口的大小）。如果您关闭分离的窗口，切换器将重新锁定到 QGC 飞行视图。
 
 ### 录制视频
 
@@ -147,19 +141,16 @@ Video stream recording is controlled on the [video stream instrument page](hud.m
 - [视频录制](../settings_view/general.md#video-recording) - 指定录制文件格式和存储限制。
 
   ::: info
-  视频默认保存为 Matroska 格式 (.mkv) 。
-  这种格式在出现错误的情况下，相对不容易损坏。
+  视频默认保存为 Matroska 格式 (.mkv) 。这种格式在出现错误的情况下，相对不容易损坏。
   :::
 
 - [杂项](../settings_view/general.md#miscellaneous) - 流视频保存在**应用程序加载/保存路径**下。
 
 :::tip
-存储的视频仅包括视频流本身。
-要使用显示的 QGroundControl 应用程序元素录制视频，您应该使用单独的屏幕录制软件。
+存储的视频仅包括视频流本身。要使用显示的 QGroundControl 应用程序元素录制视频，您应该使用单独的屏幕录制软件。
 :::
 
 #### 在相机上录制视频
 
 Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
 首先切换到视频模式，然后选择红色按钮开始录制。
-
