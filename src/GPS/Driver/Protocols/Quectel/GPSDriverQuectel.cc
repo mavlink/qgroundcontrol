@@ -72,7 +72,14 @@ std::string frame(std::string_view body)
         checksum ^= byte;
     }
     constexpr char HEX[] = "0123456789ABCDEF";
-    return "$" + std::string(body) + '*' + HEX[checksum >> 4] + HEX[checksum & 15] + "\r\n";
+    // Avoid the literal + temporary-string path diagnosed as overlapping by older GCC.
+    std::string result{"$"};
+    result.append(body);
+    result.push_back('*');
+    result.push_back(HEX[checksum >> 4]);
+    result.push_back(HEX[checksum & 15]);
+    result.append("\r\n");
+    return result;
 }
 
 std::string_view checkedBody(std::string_view line)
@@ -224,7 +231,8 @@ bool GPSNativeQuectel::_verifyBase(bool requireMatch)
                        // Re-execute precisely the read configuration, including otherwise ignored ECEF fields.
                        _surveyRestartCommand = "PQTMCFGSVIN,W";
                        for (size_t index = 2; index < reply.size(); ++index) {
-                           _surveyRestartCommand += "," + std::string(reply[index]);
+                           _surveyRestartCommand.push_back(',');
+                           _surveyRestartCommand.append(reply[index]);
                        }
                    }
                }
@@ -265,11 +273,23 @@ bool GPSNativeQuectel::_saveConfiguration()
 
 bool GPSNativeQuectel::_setMessageRate(std::string_view name, unsigned rate, std::string_view version)
 {
-    const std::string suffix = version.empty() ? "" : "," + std::string(version);
-    if (!_acknowledge("PQTMCFGMSGRATE,W," + std::string(name) + "," + std::to_string(rate) + suffix)) {
+    std::string suffix;
+    if (!version.empty()) {
+        suffix.push_back(',');
+        suffix.append(version);
+    }
+    std::string setRateCommand{"PQTMCFGMSGRATE,W,"};
+    setRateCommand.append(name);
+    setRateCommand.push_back(',');
+    setRateCommand.append(std::to_string(rate));
+    setRateCommand.append(suffix);
+    if (!_acknowledge(setRateCommand)) {
         return false;
     }
-    return _transact("PQTMCFGMSGRATE,R," + std::string(name) + suffix, [name, rate, version](std::string_view body) {
+    std::string rateQuery{"PQTMCFGMSGRATE,R,"};
+    rateQuery.append(name);
+    rateQuery.append(suffix);
+    return _transact(rateQuery, [name, rate, version](std::string_view body) {
                auto reply = fields(body);
                // V1.0 documents an empty optional version after standard NMEA rates.
                if (version.empty() && reply.size() == 5 && reply.back().empty()) {
@@ -416,7 +436,9 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
                 "LG290P role mismatch: save the requested rover/base role externally, reboot and reconnect. "
                 "Alternatively, explicitly allow persistent changes for this connection");
         }
-        if (!_acknowledge("PQTMCFGRCVRMODE,W," + std::to_string(expectedRole)) || !_verifyRole()) {
+        std::string roleCommand{"PQTMCFGRCVRMODE,W,"};
+        roleCommand.append(std::to_string(expectedRole));
+        if (!_acknowledge(roleCommand) || !_verifyRole()) {
             return _fail("LG290P role change was rejected or its readback did not match");
         }
         if (!_saveConfiguration()) {
