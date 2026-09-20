@@ -13,6 +13,7 @@
 #include "AutoConnectSettings.h"
 #include "ColoredSvgImageProvider.h"
 #include "Fixtures/RAIIFixtures.h"
+#include "GPSManager.h"
 #include "GPSRTKFactGroup.h"
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverDescriptor.h"
@@ -382,6 +383,75 @@ void GPSReceiverSettingsTest::_pageWidth()
     QTRY_VERIFY_WITH_TIMEOUT(item->width() <= width + 1, TestTimeout::mediumMs());
     const auto bounds = panel->mapRectToItem(item, panel->boundingRect());
     QVERIFY(bounds.right() <= width + 1);
+}
+
+void GPSReceiverSettingsTest::_disconnectedPage_data()
+{
+    _pageWidth_data();
+}
+
+void GPSReceiverSettingsTest::_disconnectedPage()
+{
+    QFETCH(int, width);
+    SettingsFixture settings(4);
+    auto* receiver = GPSManager::instance()->gpsRtk();
+    QVERIFY(!receiver->hasReceiver());
+    auto* facts = receiver->gpsRtkFactGroup();
+    settings.saved.setFactValue(facts->connected(), false);
+    settings.saved.setFactValue(facts->active(), false);
+    settings.saved.setFactValue(facts->numSatellites(), 12);
+    settings.saved.setFactValue(facts->numSatellitesUsed(), 7);
+
+    QQuickWindow window;
+    window.resize(width, 800);
+    QQmlEngine engine;
+    configureEngine(engine);
+    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSIndicatorPage.qml")));
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    std::unique_ptr<QObject> page(component.createWithInitialProperties(
+        {{QStringLiteral("availableWidth"), width},
+         {QStringLiteral("activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))}}));
+    QVERIFY2(page, qPrintable(component.errorString()));
+    auto* item = qobject_cast<QQuickItem*>(page.get());
+    QVERIFY(item);
+    item->setParentItem(window.contentItem());
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window, TestTimeout::mediumMs()));
+    QVERIFY(!page->property("expanded").toBool());
+    QTRY_VERIFY_WITH_TIMEOUT(item->height() > 0 && item->implicitHeight() > 0, TestTimeout::shortMs());
+    QVERIFY(item->width() <= width + 1);
+    QVERIFY(page->property("_showExpand").toBool());
+
+    auto* status = page->findChild<QQuickItem*>(QStringLiteral("rtkReceiverStatus"));
+    auto* satellites = page->findChild<QQuickItem*>(QStringLiteral("rtkSatellitesInView"));
+    auto* usage = page->findChild<QQuickItem*>(QStringLiteral("rtkSatellitesUsed"));
+    QVERIFY(status && satellites && usage);
+    QVERIFY(status->isVisible());
+    const QString disconnectedText = status->property("text").toString();
+    QVERIFY(!disconnectedText.isEmpty());
+    QVERIFY(!satellites->isVisible());
+    QVERIFY(!usage->isVisible());
+    QVERIFY(status->mapRectToItem(item, status->boundingRect()).right() <= width + 1);
+
+    facts->connected()->setRawValue(true);
+    QTRY_VERIFY_WITH_TIMEOUT(satellites->isVisible() && usage->isVisible(), TestTimeout::shortMs());
+    QVERIFY(status->property("text").toString() != disconnectedText);
+    facts->connected()->setRawValue(false);
+    QTRY_VERIFY_WITH_TIMEOUT(status->isVisible() && !satellites->isVisible() && !usage->isVisible(),
+                             TestTimeout::shortMs());
+    QCOMPARE(status->property("text").toString(), disconnectedText);
+    QVERIFY(item->height() > 0);
+
+    QVERIFY(page->setProperty("expanded", true));
+    QTRY_VERIFY_WITH_TIMEOUT(page->findChild<QQuickItem*>(QStringLiteral("gpsReceiverSettings")),
+                             TestTimeout::shortMs());
+    auto* connect = page->findChild<QQuickItem*>(QStringLiteral("rtkConnectButton"));
+    QVERIFY(connect);
+    QCOMPARE(connect->isVisible(), receiver->serialSupported());
+    if (receiver->serialSupported()) {
+        QVERIFY(connect->isEnabled());
+    }
+    QVERIFY(item->width() <= width + 1);
 }
 
 UT_REGISTER_TEST(GPSReceiverSettingsTest, TestLabel::Unit)

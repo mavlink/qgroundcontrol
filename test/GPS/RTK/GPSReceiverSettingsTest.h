@@ -16,4 +16,6 @@ private slots:
     void _warningWidth();
     void _pageWidth_data();
     void _pageWidth();
+    void _disconnectedPage_data();
+    void _disconnectedPage();
 };

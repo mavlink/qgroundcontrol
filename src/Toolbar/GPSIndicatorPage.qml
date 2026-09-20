@@ -15,6 +15,7 @@ ToolIndicatorPage {
     property string valueNA: qsTr("–.––", "No data to display")
     property var rtkSettings: QGroundControl.settingsManager.rtkSettings
     readonly property var _receiver: QGroundControl.gpsManager.gpsRtk
+    readonly property bool _rtkConnected: QGroundControl.gpsRtk.connected.value
     readonly property var _activePresentation: _receiver.capabilitiesForManufacturer(_receiver.activeManufacturer)
     readonly property var _serialPortManager: QGroundControl.serialPortManager
     readonly property bool _averagingConnected: _receiver.activeBaseMode === BaseModeDefinition.BaseReceiverAveraging
@@ -100,37 +101,47 @@ ToolIndicatorPage {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 heading: qsTr("RTK GPS Status")
-                visible: QGroundControl.gpsRtk.connected.value
+                visible: root._rtkConnected || root._receiver.hasReceiver || !root.activeVehicle
 
                 QGCLabel {
+                    objectName: "rtkReceiverStatus"
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     Layout.preferredWidth: 0
                     wrapMode: Text.Wrap
-                    text: root._activePresentation.passive ? qsTr("Passive RTCM/NMEA input connected")
+                    text: !root._rtkConnected
+                          ? (root._receiver.hasReceiver ? qsTr("Connecting to receiver...")
+                                                       : qsTr("No RTK receiver connected. Expand for settings."))
+                          : root._activePresentation.passive ? qsTr("Passive RTCM/NMEA input connected")
                           : root._averagingConnected ? qsTr("Receiver-managed averaging — no accuracy guarantee")
                           : QGroundControl.gpsRtk.active.value ? qsTr("Survey-in Active") : qsTr("Receiver connected")
                 }
                 LabelledLabel {
+                    objectName: "rtkSatellitesInView"
+                    visible: root._rtkConnected
                     label: qsTr("Satellites in View")
                     labelText: QGroundControl.gpsRtk.numSatellites.rawValue < 0
                                ? root.na : QGroundControl.gpsRtk.numSatellites.valueString
                 }
                 LabelledLabel {
+                    objectName: "rtkSatellitesUsed"
+                    visible: root._rtkConnected
                     label: qsTr("Satellites Used")
                     labelText: QGroundControl.gpsRtk.numSatellitesUsed.rawValue < 0
                                ? root.na : QGroundControl.gpsRtk.numSatellitesUsed.valueString
                 }
                 LabelledLabel {
                     label: root._activePresentation.acceptedObservationTime ? qsTr("Accepted observation time") : qsTr("Duration")
-                    visible: root._activePresentation.reportsSurveyDuration && !root._averagingConnected
+                    visible: root._rtkConnected && root._activePresentation.reportsSurveyDuration
+                             && !root._averagingConnected
                     //: %1 is Survey-In duration in seconds
                     labelText: qsTr("%1 s").arg(QGroundControl.gpsRtk.currentDuration.value)
                 }
                 LabelledLabel {
                     label: QGroundControl.gpsRtk.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
                     labelText: QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.gpsRtk.currentAccuracy.units
-                    visible: !root._activePresentation.passive && !root._averagingConnected && QGroundControl.gpsRtk.currentAccuracy.value > 0
+                    visible: root._rtkConnected && !root._activePresentation.passive && !root._averagingConnected
+                             && QGroundControl.gpsRtk.currentAccuracy.value > 0
                 }
             }
 
