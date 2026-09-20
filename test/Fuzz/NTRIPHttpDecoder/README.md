@@ -1,8 +1,7 @@
 # NTRIP HTTP decoder fuzzing
 
-This standalone entry point links the production `QGC::GPSNTRIPHttp` target, not a copy of
-the decoder. It needs Qt 6.8 or newer **Core and Network only**. Its default build also
-compiles the HTTP public-header checks and consumer from `test/GPS/Standalone`.
+This specialized fuzzing entry point links the production `QGC::GPSNTRIPHttp` target,
+not a copy of the decoder. It needs Qt 6.8 or newer **Core and Network only**.
 It does not change the MAVLink ClusterFuzzLite image, dependencies, or fuzzing budget.
 
 ## Deterministic smoke test
@@ -55,7 +54,12 @@ cmake --build build/ntrip-fuzz-qt68 --parallel 2
 ctest --test-dir build/ntrip-fuzz-qt68 --output-on-failure -L Unit
 ```
 
-For the full NTRIP suites and public consumers, configure `test/GPS/NTRIP/Standalone`
-in another build directory with Qt Positioning installed, then build and run CTest.
-Those TLS/reentrancy fixtures use loopback sockets and ephemeral ports, not external
-casters.
+The ordinary NTRIP suites run in the QGroundControl test executable:
+
+```bash
+ctest --test-dir build --output-on-failure -R '^NTRIP'
+```
+
+The TLS/reentrancy fixtures use loopback sockets and ephemeral ports, not external
+casters. Their HTTP request, decoder, and lifecycle checks do not require a separate
+consumer project.

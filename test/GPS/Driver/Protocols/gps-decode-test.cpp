@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -18,6 +19,7 @@
 #include "NMEASentence.h"
 #include "ProtocolTestPackets.h"
 #include "SBF/GPSDriverSBF.h"
+#include "UnitTest.h"
 
 #define CHECK(condition)                                                                                 \
     do {                                                                                                 \
@@ -26,6 +28,7 @@
         }                                                                                                \
     } while (0)
 
+namespace {
 GPSProtocolIO noDevice()
 {
     auto io = makeGPSProtocolTestIO();
@@ -260,6 +263,8 @@ public:
     std::vector<GPSCommandResult> results;
     std::vector<GPSNativeSurveyReport> surveys;
     std::string surveyReply{ASHTECH_SURVEY_STARTED};
+    std::string failedCommand;
+    bool silentFailure = false;
     std::vector<uint8_t> reply;
     GPSNativePositionReport position;
     size_t transportCalls = 0;
@@ -288,7 +293,9 @@ public:
             ++transportCalls;
             const std::string command(reinterpret_cast<const char*>(bytes.data()), bytes.size());
             commands.push_back(command);
-            if (command.starts_with("$PASHQ,PRT")) {
+            if (command == failedCommand) {
+                reply = silentFailure ? std::vector<uint8_t>{} : nmeaPacket("PASHR,NAK");
+            } else if (command.starts_with("$PASHQ,PRT")) {
                 reply = nmeaPacket("PASHR,PRT,A,115200");
             } else if (command.starts_with("$PASHQ,RID")) {
                 reply = nmeaPacket("PASHR,RID,MB2");
@@ -321,9 +328,7 @@ public:
         config.base = {.useFixedBase = fixed,
                        .surveyInAccMeters = 1,
                        .surveyInDurationSecs = 100,
-                       .fixedBaseLatitude = 47,
-                       .fixedBaseLongitude = 8,
-                       .fixedBaseAltitudeMeters = 500};
+                       .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}};
         unsigned baudrate = 115200;
         CHECK(driver.configure(baudrate, config) == 0);
         CHECK(driver.receiverReady());
@@ -337,6 +342,33 @@ public:
         return driver.receive(1);
     }
 };
+
+void ashtechCommandEvidence()
+{
+    for (const std::string command : {"$PASHS,POP,20\r\n", "$PASHS,NME,ALL,A,OFF\r\n"}) {
+        for (const auto outcome :
+             {GPSCommandOutcome::Acknowledged, GPSCommandOutcome::Rejected, GPSCommandOutcome::TimedOut}) {
+            gps_test_time = 1000000;
+            AshtechReceiver receiver;
+            if (outcome != GPSCommandOutcome::Acknowledged) {
+                receiver.failedCommand = command;
+                receiver.silentFailure = outcome == GPSCommandOutcome::TimedOut;
+            }
+            receiver.configure(GPSProtocol::OutputMode::GPS);
+            CHECK(receiver.results.size() == receiver.commands.size());
+            for (size_t index = 0; index < receiver.results.size(); ++index) {
+                CHECK(receiver.results[index].evidence.command == receiver.commands[index]);
+            }
+            const auto result = std::find_if(receiver.results.begin(), receiver.results.end(),
+                                             [&](const auto& item) { return item.evidence.command == command; });
+            CHECK(result != receiver.results.end());
+            CHECK(result->evidence.outcome == outcome);
+            CHECK(result->evidence.acceptedBytes == int(command.size()));
+            CHECK(result->evidence.writtenBytes == int(command.size()));
+            CHECK(result->evidence.uncertainBytes == 0);
+        }
+    }
+}
 
 void ashtechSurveyReceipts()
 {
@@ -436,7 +468,8 @@ void ashtechSurveyReceipts()
         receiver.configure();
         receiver.surveyReply = body;
         CHECK(receiver.startSurvey() < 0);
-        CHECK(receiver.results.back().outcome ==
+        CHECK(receiver.results.back().evidence.command == "$PASHS,POS,AVG,100\r\n");
+        CHECK(receiver.results.back().evidence.outcome ==
               (body == ASHTECH_SURVEY_FAILED ? GPSCommandOutcome::Rejected : GPSCommandOutcome::TimedOut));
     }
     receiver.configure();
@@ -522,9 +555,7 @@ void invalidFamilyConfiguration()
     valid.base = {.useFixedBase = true,
                   .surveyInAccMeters = 1,
                   .surveyInDurationSecs = 60,
-                  .fixedBaseLatitude = 47,
-                  .fixedBaseLongitude = 8,
-                  .fixedBaseAltitudeMeters = 500,
+                  .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
                   .fixedBaseAccuracyMeters = 1};
     std::vector<Config> invalid;
     auto add = [&](auto member, auto value) {
@@ -532,17 +563,20 @@ void invalidFamilyConfiguration()
         config.base.*member = value;
         invalid.push_back(config);
     };
-    for (auto member : {&GPSBaseStationConfig::fixedBaseLatitude, &GPSBaseStationConfig::fixedBaseLongitude}) {
+    const auto addPosition = [&](auto member, auto value) {
+        Config config = valid;
+        config.base.fixedPosition.*member = value;
+        invalid.push_back(config);
+    };
+    for (auto member : {&GPSEllipsoidPosition::latitudeDegrees, &GPSEllipsoidPosition::longitudeDegrees}) {
         for (double value : std::array<double, 5>{NAN, INFINITY, -INFINITY, 181.0, -181.0}) {
-            add(member, value);
+            addPosition(member, value);
         }
     }
-    add(&GPSBaseStationConfig::fixedBaseLatitude, 90.01);
-    for (auto member :
-         {&GPSBaseStationConfig::fixedBaseAltitudeMeters, &GPSBaseStationConfig::fixedBaseAccuracyMeters}) {
-        for (float value : {NAN, INFINITY, -INFINITY, std::numeric_limits<float>::max()}) {
-            add(member, value);
-        }
+    addPosition(&GPSEllipsoidPosition::latitudeDegrees, 90.01);
+    for (float value : {NAN, INFINITY, -INFINITY, std::numeric_limits<float>::max()}) {
+        addPosition(&GPSEllipsoidPosition::altitudeMeters, value);
+        add(&GPSBaseStationConfig::fixedBaseAccuracyMeters, value);
     }
     add(&GPSBaseStationConfig::fixedBaseAccuracyMeters, -1.0f);
     valid.base = {.useFixedBase = true};
@@ -708,8 +742,22 @@ void sbfInvalidCoordinates()
 }
 #endif
 
-int main()
+}  // namespace
+
+class GPSProtocolDecodeTest : public UnitTest
 {
+    Q_OBJECT
+
+private slots:
+
+    void _protocol();
+    void _commandEvidence();
+};
+
+void GPSProtocolDecodeTest::_protocol()
+{
+    gps_test_time = 0;
+    gps_test_warnings.clear();
     try {
         tinyReads();
         absoluteDeadline();
@@ -727,8 +775,24 @@ int main()
         ashtechSurveyReceipts();
 #endif
     } catch (const std::exception& error) {
-        std::fprintf(stderr, "%s\n", error.what());
-        return 1;
+        QFAIL(error.what());
     }
-    return 0;
 }
+
+void GPSProtocolDecodeTest::_commandEvidence()
+{
+#if QGC_GPS_ENABLE_ASHTECH
+    gps_test_warnings.clear();
+    try {
+        ashtechCommandEvidence();
+    } catch (const std::exception& error) {
+        QFAIL(error.what());
+    }
+#else
+    QSKIP("Ashtech protocol is disabled");
+#endif
+}
+
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolDecodeTest, TestLabel::Unit)
+
+#include "gps-decode-test.moc"

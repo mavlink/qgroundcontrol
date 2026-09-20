@@ -736,7 +736,8 @@ void NTRIPManagerTest::testNtripOnlyUdpForwardingBypassesSelectionOnce()
     saved.setFactValue(settings->ntripUdpTargetAddress(), QStringLiteral("127.0.0.1"));
     saved.setFactValue(settings->ntripUdpTargetPort(), listener.localPort());
     GPSCorrectionManager corrections;
-    corrections.setSelectedSource(GPSCorrectionSource::LocalReceiver);
+    corrections.applyRoutingConfiguration(
+        {GPSCorrectionManager::RoutingPolicy::Manual, GPSCorrectionSource::LocalReceiver, {}});
     auto local = corrections.registerSource(GPSCorrectionSource::LocalReceiver, QStringLiteral("serial:test"));
     auto udp = corrections.registerSource(GPSCorrectionSource::Udp);
     NTRIPManager mgr;

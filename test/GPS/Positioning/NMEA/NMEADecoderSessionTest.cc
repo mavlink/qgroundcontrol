@@ -24,17 +24,19 @@ void NMEADecoderSessionTest::_decoderSessionRestart()
     SequentialTestDevice input;
     NMEADecoderSession session;
     QVERIFY(session.start(&input));
+    QVERIFY(session.positionSource());
+    QVERIFY(!session.health()->usable());
     session.positionSource()->startUpdates();
     // Mixed binary traffic and split sentences must still produce a usable fix.
     input.feed(QByteArray::fromHex("b5620000") + FIX.first(19));
     QVERIFY(!session.health()->usable());
     input.feed(FIX.mid(19));
-    // This executable has no application test harness; allow Qt's realtime NMEA timer to fire.
     QTRY_VERIFY_WITH_TIMEOUT(session.health()->usable(), 5000);
     QVERIFY(session.health()->coordinate().isValid());
 
     session.stop();
     QVERIFY(input.isOpen());
+    QCOMPARE(session.satelliteObservation().satellitesInViewCount(), -1);
     QCOMPARE(session.health()->state(), GPSSourceHealth::State::NoData);
     QVERIFY(session.start(&input));
     session.positionSource()->startUpdates();

@@ -1,13 +1,14 @@
 #pragma once
 
-#include "../Driver/GPSDriverTestBase.h"
+#include "UnitTest.h"
 
-class GPSProviderTest : public GPSDriverTestBase
+class GPSProviderTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
     void _queuedPayloadsOwnSnapshots();
+    void _positionFixTransitions();
     void _ancillaryTraffic_data();
     void _ancillaryTraffic();
     void _satelliteExpiryDoesNotRenewLiveness();

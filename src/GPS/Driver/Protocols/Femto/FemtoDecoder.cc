@@ -313,66 +313,12 @@ int GPSNativeFemto::parseChar(uint8_t temp)
 
     } else { /**< RTCM mode */
 
-        switch (_decode_state) {
-            case FemtoDecodeState::pream_ble1:
-                if (temp == '$') {
-                    _decode_state = FemtoDecodeState::pream_nmea_got_sync1;
-                    _femto_msg.read = 0;
-                    _femto_msg.data[_femto_msg.read++] = temp;
-                }
-
-                break;
-
-            case FemtoDecodeState::pream_nmea_got_sync1:
-                if (temp == '$') {
-                    _decode_state = FemtoDecodeState::pream_nmea_got_sync1;
-                    _femto_msg.read = 0;
-
-                } else if (temp == '*') {
-                    _decode_state = FemtoDecodeState::pream_nmea_got_asteriks;
-                }
-
-                if (_femto_msg.read >= (sizeof(_femto_msg.data) - 5)) {
-                    _decode_state = FemtoDecodeState::pream_ble1;
-                    _femto_msg.read = 0;
-
-                } else {
-                    _femto_msg.data[_femto_msg.read++] = temp;
-                }
-
-                break;
-
-            case FemtoDecodeState::pream_nmea_got_asteriks:
-                _femto_msg.data[_femto_msg.read++] = temp;
-                _decode_state = FemtoDecodeState::pream_nmea_got_first_cs_byte;
-                break;
-
-            case FemtoDecodeState::pream_nmea_got_first_cs_byte: {
-                _femto_msg.data[_femto_msg.read++] = temp;
-                uint8_t checksum = 0;
-                uint8_t* buffer = _femto_msg.data + 1;
-                uint8_t* bufend = _femto_msg.data + _femto_msg.read - 3;
-
-                for (; buffer < bufend; buffer++) {
-                    checksum ^= *buffer;
-                }
-
-                if ((NMEAFields::hexDigit(checksum >> 4) == *(_femto_msg.data + _femto_msg.read - 2)) &&
-                    (NMEAFields::hexDigit(checksum & 0x0F) == *(_femto_msg.data + _femto_msg.read - 1))) {
-                    iRet = _femto_msg.read;
-                    _femto_msg.messageId = FEMTO_MSG_ID_GPGGA;
-
-                    if (_rtcm_parsing) {
-                        _rtcm_parsing->reset();
-                    }
-                }
-
-                decodeInit();
-                break;
+        iRet = static_cast<int>(_nmeaFramer.addByte(temp));
+        if (iRet > 0) {
+            _femto_msg.messageId = FEMTO_MSG_ID_GPGGA;
+            if (_rtcm_parsing) {
+                _rtcm_parsing->reset();
             }
-
-            default:
-                break;
         }
     }
 
@@ -382,6 +328,7 @@ int GPSNativeFemto::parseChar(uint8_t temp)
 void GPSNativeFemto::decodeInit()
 {
     _decode_state = FemtoDecodeState::pream_ble1;
+    _nmeaFramer.reset();
 }
 
 void GPSNativeFemto::sendSurveyInStatusUpdate(bool active, bool valid, double latitude, double longitude,

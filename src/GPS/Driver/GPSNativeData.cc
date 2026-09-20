@@ -2,6 +2,27 @@
 
 #include "GPSNativeData_p.h"
 
+namespace {
+GPSSatellite satelliteObservation(const GPSNativeSatelliteData& source, GPSConstellation constellation)
+{
+    GPSSatellite result;
+    result.id = source.id;
+    result.prn = source.prn;
+    result.used = source.used;
+    result.constellation = constellation;
+    if (source.elevation && *source.elevation >= -90 && *source.elevation <= 90) {
+        result.elevationDegrees = static_cast<float>(*source.elevation);
+    }
+    if (source.azimuth && *source.azimuth >= 0 && *source.azimuth <= 360) {
+        result.normalizedAzimuthDegrees = static_cast<float>(*source.azimuth);
+    }
+    if (source.signal && *source.signal >= 0 && *source.signal <= 255) {
+        result.signalStrength = static_cast<uint8_t>(*source.signal);
+    }
+    return result;
+}
+}  // namespace
+
 namespace GPSNativeData {
 GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativeIntegrityReport& diagnostic,
                            uint64_t nowUs)
@@ -46,40 +67,13 @@ GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativ
     return result;
 }
 
-GPSSatelliteReport satellites(const GPSNativeSatelliteReport& source)
-{
-    GPSSatelliteReport result;
-    result.timestampUs = source.timestamp;
-    result.count = std::min(source.count, GPSSatelliteReport::MAX_SATELLITES);
-    for (uint16_t i = 0; i < result.count; ++i) {
-        const auto& from = source.entries[i];
-        auto& to = result.satellites[i];
-        to.id = from.id;
-        to.prn = from.prn;
-        to.used = from.used;
-        to.constellation = source.constellation.value_or(from.constellation);
-        to.inViewTimestampUs = source.timestamp;
-        to.inUseTimestampUs = source.usage ? source.usage->timestamp : (from.used ? source.timestamp : 0);
-        if (from.elevation && *from.elevation >= -90 && *from.elevation <= 90) {
-            to.elevationDegrees = static_cast<float>(*from.elevation);
-        }
-        if (from.azimuth && *from.azimuth >= 0 && *from.azimuth <= 360) {
-            to.azimuthDegrees = static_cast<float>(*from.azimuth);
-        }
-        if (from.signal && *from.signal >= 0 && *from.signal <= 255) {
-            to.signalStrength = static_cast<uint8_t>(*from.signal);
-        }
-    }
-    return result;
-}
-
 GPSSurveyReport survey(const GPSNativeSurveyReport& source)
 {
     GPSSurveyReport result;
-    result.latitudeDegrees = source.latitude;
-    result.longitudeDegrees = source.longitude;
+    result.position.latitudeDegrees = source.latitude;
+    result.position.longitudeDegrees = source.longitude;
     if (source.altitudeDatum == GPSNativeSurveyReport::AltitudeDatum::Ellipsoid) {
-        result.altitudeEllipsoidMeters = source.altitude;
+        result.position.altitudeMeters = source.altitude;
     }
     if (source.accuracyKnown) {
         result.meanAccuracyMeters = static_cast<double>(source.mean_accuracy) / 1000.0;
@@ -92,15 +86,16 @@ GPSSurveyReport survey(const GPSNativeSurveyReport& source)
 
 GPSSatelliteReport SatelliteSnapshot::update(const GPSNativeSatelliteReport& source, uint64_t nowUs)
 {
-    const auto projected = satellites(source);
     GPSSatelliteObservation observation;
     observation.monotonicTimestampUs = source.timestamp;
     observation.updateMode = source.constellation ? GPSSatelliteObservation::UpdateMode::ConstellationDelta
                                                   : GPSSatelliteObservation::UpdateMode::FullSnapshot;
-    for (uint16_t i = 0; i < projected.count; ++i) {
-        const auto& satellite = projected.satellites[i];
-        observation.satellites.append({satellite.id, satellite.prn, satellite.constellation, satellite.used,
-                                       satellite.elevationDegrees, satellite.signalStrength, satellite.azimuthDegrees});
+    const auto viewCount =
+        std::min({source.count, GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES, GPSSatelliteReport::MAX_SATELLITES});
+    for (uint16_t i = 0; i < viewCount; ++i) {
+        const auto& satellite = source.entries[i];
+        observation.satellites.append(
+            satelliteObservation(satellite, source.constellation.value_or(satellite.constellation)));
     }
     if (source.constellation) {
         GPSSatelliteProvenance provenance;

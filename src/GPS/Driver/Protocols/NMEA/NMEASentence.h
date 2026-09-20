@@ -5,6 +5,7 @@
 #include <cmath>
 #include <locale>
 #include <optional>
+#include <span>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -116,6 +117,9 @@ struct Sentence
 };
 
 unsigned char checksum(std::string_view body);
+
+/// Preserve empty fields, including the final field. Return zero on storage overflow.
+size_t splitFields(std::string_view text, std::span<std::string_view> fields);
 
 /// Views into a single wire frame; the caller owns the backing bytes.
 struct Frame

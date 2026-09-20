@@ -17,4 +17,7 @@ private slots:
     void _makeGga();
     void _repairChecksum_data();
     void _repairChecksum();
+    void _incrementalFraming_data();
+    void _incrementalFraming();
+    void _incrementalReset();
 };

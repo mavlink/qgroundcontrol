@@ -17,4 +17,7 @@ private slots:
     void _genericUsbNeedsExplicitSelection_data();
     void _genericUsbNeedsExplicitSelection();
     void _manualConnectionRetiresAutoOwnership();
+    void _notificationSupersedesDiscovery_data();
+    void _notificationSupersedesDiscovery();
+    void _shutdownDuringConnectionTick();
 };

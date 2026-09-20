@@ -177,19 +177,19 @@ bool GPSRtk::connectGPS(const QString& device, QStringView gps_type, uint32_t ba
         return false;
     }
     ++_session.generation;
-    std::optional<GPSType> type;
     for (const auto& entry : gpsReceiverDescriptors()) {
         if (gps_type.contains(QLatin1StringView(entry.detectionKey.data(), entry.detectionKey.size()),
                               Qt::CaseInsensitive)) {
-            type = entry.type;
-            break;
+            return _connectSerialGPS(device, entry.type, baudRate, allowPersistentChanges);
         }
     }
-    if (!type) {
-        _setError(GPSConnectionError::ConfigFailed, tr("Select a specific receiver type before connecting."));
-        return false;
-    }
-    if (!GPSDriver::supportsType(*type)) {
+    _setError(GPSConnectionError::ConfigFailed, tr("Select a specific receiver type before connecting."));
+    return false;
+}
+
+bool GPSRtk::_connectSerialGPS(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges)
+{
+    if (!GPSDriver::supportsType(type)) {
         _setError(GPSConnectionError::ConfigFailed, tr("The selected receiver type is unavailable in this build."));
         return false;
     }
@@ -204,7 +204,7 @@ bool GPSRtk::connectGPS(const QString& device, QStringView gps_type, uint32_t ba
         return false;
     }
     return _connectReceiver(
-        *type,
+        type,
         [endpoint, reservation, factory = _serialTransportFactory](const std::atomic_bool& requestStop) {
             return factory(endpoint, requestStop);
         },
@@ -283,15 +283,12 @@ bool GPSRtk::connectConfiguredGPS(bool allowPersistentChanges)
     if (!guard || _session.generation != generation) {
         return false;
     }
-    if (const auto* descriptor = gpsReceiverDescriptor(*type)) {
-        return connectGPS(device, QString::fromLatin1(descriptor->detectionKey.data(), descriptor->detectionKey.size()),
-                          static_cast<uint32_t>(baud), allowPersistentChanges);
-    }
+    return _connectSerialGPS(device, *type, static_cast<uint32_t>(baud), allowPersistentChanges);
 #else
     Q_UNUSED(allowPersistentChanges);
-#endif
     _setError(GPSConnectionError::OpenFailed, tr("Serial receiver connections are unavailable in this build."));
     return false;
+#endif
 }
 
 void GPSRtk::disconnectConfiguredGPS()
@@ -340,9 +337,9 @@ QString GPSRtk::_receiverConfig(GPSType type, RTKSettings* settings, uint32_t ba
         case BaseModeDefinition::Mode::BaseFixed:
             config.base = GPSBaseStationConfig{
                 .useFixedBase = true,
-                .fixedBaseLatitude = settings->fixedBasePositionLatitude()->rawValue().toDouble(),
-                .fixedBaseLongitude = settings->fixedBasePositionLongitude()->rawValue().toDouble(),
-                .fixedBaseAltitudeMeters = settings->fixedBasePositionAltitude()->rawValue().toFloat(),
+                .fixedPosition = {.latitudeDegrees = settings->fixedBasePositionLatitude()->rawValue().toDouble(),
+                                  .longitudeDegrees = settings->fixedBasePositionLongitude()->rawValue().toDouble(),
+                                  .altitudeMeters = settings->fixedBasePositionAltitude()->rawValue().toFloat()},
                 .fixedBaseAccuracyMeters = settings->fixedBasePositionAccuracy()->rawValue().toFloat(),
             };
             break;
@@ -466,7 +463,7 @@ bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transp
         Qt::QueuedConnection);
     (void) connectCurrent(&GPSProvider::satelliteInfoUpdate, std::bind_front(&GPSRtk::_satelliteInfoUpdate, this));
     (void) connectCurrent(&GPSProvider::satelliteUsageUpdate, std::bind_front(&GPSRtk::_satelliteUsageUpdate, this));
-    (void) connectCurrent(&GPSProvider::sensorGpsUpdate, std::bind_front(&GPSRtk::_sensorGpsUpdate, this));
+    (void) connectCurrent(&GPSProvider::fixTypeChanged, std::bind_front(&GPSRtk::_fixTypeChanged, this));
     (void) connectCurrent(&GPSProvider::surveyInStatus, std::bind_front(&GPSRtk::_onGPSSurveyInStatus, this));
     (void) connectCurrent(&GPSProvider::configurationError, [this](const QString& detail) {
         if (!detail.isEmpty()) {
@@ -569,12 +566,9 @@ void GPSRtk::_satelliteInfoUpdate(const GPSSatelliteReport& msg)
                   generation);
 }
 
-void GPSRtk::_sensorGpsUpdate(const GPSPositionReport& msg)
+void GPSRtk::_fixTypeChanged(GPSPositionReport::FixType fixType)
 {
-    if (_session.lastLoggedFixType != msg.fixType) {
-        _session.lastLoggedFixType = msg.fixType;
-        qCDebug(GPSRtkLog) << "Receiver fix changed:" << static_cast<int>(msg.fixType);
-    }
+    qCDebug(GPSRtkLog) << "Receiver fix changed:" << static_cast<int>(fixType);
 }
 
 void GPSRtk::_satelliteUsageUpdate(const GPSSatelliteUsageReport& msg)

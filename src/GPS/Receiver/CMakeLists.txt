@@ -22,6 +22,7 @@ target_sources(
            GPSReceiverCapabilities.h
            GPSReceiverDescriptor.h
            GPSBaseStationConfig.h
+           GPSEllipsoidPosition.h
            GPSType.h
            GPSDriverReports.h
            GPSConfigurationEvidence.h

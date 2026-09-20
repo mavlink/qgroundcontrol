@@ -4,11 +4,11 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
-
-#include "SerialPortManager.h"
+#include <QtCore/QPointer>
 
 class AutoConnectSettings;
 class GPSRtk;
+class SerialPortManager;
 
 /// Serial RTK discovery policy; GPSRtk owns the worker and its serial claim.
 class RTKAutoConnect : public QObject
@@ -29,9 +29,10 @@ signals:
 private:
     void _resetDiscovery();
 
-    AutoConnectSettings* _settings;
-    GPSRtk* _receiver;
-    SerialPortManager* _serialPorts;
+    QPointer<AutoConnectSettings> _settings;
+    QPointer<GPSRtk> _receiver;
+    QPointer<SerialPortManager> _serialPorts;
+    quint64 _revision = 0;
     QString _autoConnectedPort;
     QMap<QString, QElapsedTimer> _waitingPorts;
     QDeadlineTimer _retryDeadline = QDeadlineTimer::Forever;

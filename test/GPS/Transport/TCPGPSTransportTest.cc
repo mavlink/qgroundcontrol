@@ -79,7 +79,7 @@ void TCPGPSTransportTest::_cancelWait()
     TCPGPSTransport transport(QStringLiteral("localhost"), server.serverPort(), stop);
     QElapsedTimer elapsed;
     if (phase == QStringLiteral("before-open")) {
-        QVERIFY(transport.open().status != GPSOpenStatus::Opened);
+        QCOMPARE(transport.open().status, GPSOpenStatus::Cancelled);
     } else if (phase == QStringLiteral("connecting")) {
         QTimer::singleShot(0, &server, [&]() { stop = true; });
         elapsed.start();

@@ -17,6 +17,7 @@
 #include "NMEAUtils.h"
 #include "SBF/GPSDriverSBF.h"
 #include "UBX/GPSDriverUBX.h"
+#include "UnitTest.h"
 
 #define CHECK(condition)                          \
     do {                                          \
@@ -25,6 +26,7 @@
         }                                         \
     } while (0)
 
+namespace {
 struct ScriptedIO
 {
     enum class Operation
@@ -205,13 +207,14 @@ static void commandAttempts()
     CommandProbe probe(io.io());
     io.onCompletion = [&] { probe.finishConfigurationEvidence(); };
     const auto result = probe.attempt(false);
-    CHECK(result.outcome == GPSCommandOutcome::Acknowledged);
-    CHECK(result.startedAtUs == 1000000);
-    CHECK(result.finishedAtUs == 1042000);
-    CHECK(result.acceptedBytes == 3 && result.writtenBytes == 3 && result.uncertainBytes == 0);
+    CHECK(result.evidence.outcome == GPSCommandOutcome::Acknowledged);
+    CHECK(result.evidence.startedAtUs == 1000000);
+    CHECK(result.evidence.finishedAtUs == 1042000);
+    CHECK(result.evidence.acceptedBytes == 3 && result.evidence.writtenBytes == 3 &&
+          result.evidence.uncertainBytes == 0);
     CHECK(result.affectedSettings.contains(GPSReceiverSetting::OutputRateHz));
-    CHECK(!result.required);
-    CHECK(io.completions.size() == 1 && !io.completions.front().required);
+    CHECK(!result.evidence.required);
+    CHECK(io.completions.size() == 1 && !io.completions.front().evidence.required);
     CHECK(io.transcript == (std::vector<std::string>{"write/1100000", "read/1100000", "read/1100000"}));
     CHECK(io.decodedReports == 2);
     CHECK(!probe.awaiting());
@@ -222,13 +225,13 @@ static void commandAttempts()
     CHECK(io.transcript.size() == operations);  // Decoding never performs device I/O.
     probe.finishConfigurationEvidence();
     CHECK(io.completions.size() == 1);
-    CHECK(probe.awaitAgain().command == "SET");
+    CHECK(probe.awaitAgain().evidence.command == "SET");
     CHECK(io.transcript.size() == operations);
 
     io.chunks = {"NAK\n"};
-    CHECK(probe.attempt().outcome == GPSCommandOutcome::Rejected);
+    CHECK(probe.attempt().evidence.outcome == GPSCommandOutcome::Rejected);
     CHECK(io.completions.size() == 2);
-    CHECK(io.completions.back().required);
+    CHECK(io.completions.back().evidence.required);
     CHECK(!probe.awaiting());
 
     for (const auto readStatus : {GPSReadStatus::Data, GPSReadStatus::Cancelled, GPSReadStatus::Error}) {
@@ -237,9 +240,10 @@ static void commandAttempts()
         failed.readStatus = readStatus;
         CommandProbe receiver(failed.io());
         const auto failure = receiver.attempt();
-        CHECK(failure.outcome == (readStatus == GPSReadStatus::Data        ? GPSCommandOutcome::TimedOut
-                                  : readStatus == GPSReadStatus::Cancelled ? GPSCommandOutcome::Cancelled
-                                                                           : GPSCommandOutcome::TransportError));
+        CHECK(failure.evidence.outcome == (readStatus == GPSReadStatus::Data ? GPSCommandOutcome::TimedOut
+                                           : readStatus == GPSReadStatus::Cancelled
+                                               ? GPSCommandOutcome::Cancelled
+                                               : GPSCommandOutcome::TransportError));
         CHECK(failed.transcript == (std::vector<std::string>{"write/1100000", "read/1100000"}));
         CHECK(failed.completions.size() == 1);
         CHECK(!receiver.awaiting());
@@ -261,17 +265,17 @@ static void commandAttempts()
         failed.writeResult = failure;
         CommandProbe receiver(failed.io());
         const auto attemptResult = receiver.attempt(false);
-        CHECK(attemptResult.outcome == (failure.status == GPSWriteStatus::Cancelled
-                                            ? GPSCommandOutcome::Cancelled
-                                            : GPSCommandOutcome::TransportError));
-        CHECK(attemptResult.acceptedBytes == failure.acceptedBytes);
-        CHECK(attemptResult.writtenBytes == failure.writtenBytes);
-        CHECK(attemptResult.uncertainBytes == failure.uncertainBytes());
-        CHECK(!attemptResult.required);
+        CHECK(attemptResult.evidence.outcome == (failure.status == GPSWriteStatus::Cancelled
+                                                     ? GPSCommandOutcome::Cancelled
+                                                     : GPSCommandOutcome::TransportError));
+        CHECK(attemptResult.evidence.acceptedBytes == failure.acceptedBytes);
+        CHECK(attemptResult.evidence.writtenBytes == failure.writtenBytes);
+        CHECK(attemptResult.evidence.uncertainBytes == failure.uncertainBytes());
+        CHECK(!attemptResult.evidence.required);
         CHECK(failed.completions.size() == 1);
-        CHECK(!failed.completions.front().required);
+        CHECK(!failed.completions.front().evidence.required);
         CHECK(!receiver.awaiting());
-        CHECK(receiver.awaitAgain().outcome == attemptResult.outcome);
+        CHECK(receiver.awaitAgain().evidence.outcome == attemptResult.evidence.outcome);
         receiver.finishConfigurationEvidence();
         if (failure.status != GPSWriteStatus::Unsupported) {
             CHECK(receiver.receive(100) < 0);
@@ -286,7 +290,7 @@ static void commandAttempts()
     CommandIO exhausted;
     exhausted.writeDurationUs = 100000;
     CommandProbe receiver(exhausted.io());
-    CHECK(receiver.attempt().outcome == GPSCommandOutcome::TimedOut);
+    CHECK(receiver.attempt().evidence.outcome == GPSCommandOutcome::TimedOut);
     CHECK(exhausted.transcript == std::vector<std::string>{"write/1100000"});
     CHECK(exhausted.completions.size() == 1);
     CHECK(!receiver.awaiting());
@@ -294,7 +298,7 @@ static void commandAttempts()
     gps_test_time = 1000000;
     CommandIO outerDeadline;
     CommandProbe bounded(outerDeadline.io());
-    CHECK(bounded.attemptWithin(50).outcome == GPSCommandOutcome::TimedOut);
+    CHECK(bounded.attemptWithin(50).evidence.outcome == GPSCommandOutcome::TimedOut);
     CHECK(outerDeadline.transcript == (std::vector<std::string>{"write/1050000", "read/1050000"}));
     CHECK(gps_test_time == 1050000);
 
@@ -307,12 +311,12 @@ static void commandAttempts()
             nestedReceiver.beginCommandWrite("next");
         }
     };
-    CHECK(nestedReceiver.attempt().outcome == GPSCommandOutcome::Acknowledged);
+    CHECK(nestedReceiver.attempt().evidence.outcome == GPSCommandOutcome::Acknowledged);
     CHECK(nested.completions.size() == 1);
     nestedReceiver.finishConfigurationEvidence();
     CHECK(nested.completions.size() == 2);
-    CHECK(nested.completions.back().command == "next");
-    CHECK(nested.completions.back().outcome == GPSCommandOutcome::Written);
+    CHECK(nested.completions.back().evidence.command == "next");
+    CHECK(nested.completions.back().evidence.outcome == GPSCommandOutcome::Written);
 
     gps_test_time = 1000000;
     CommandIO throwing;
@@ -362,9 +366,9 @@ static void ashtechAcknowledgementReturnsImmediately()
     CHECK(writes == (std::vector<std::string>{"$PASHQ,PRT\r\n", "$PASHQ,RID\r\n"}));
     CHECK(reads > 1);
     CHECK(completions.size() == 2);
-    CHECK(completions[0].outcome == GPSCommandOutcome::Acknowledged);
-    CHECK(completions[0].finishedAtUs == 1001000 + uint64_t(reads) * 1000);
-    CHECK(completions[1].outcome == GPSCommandOutcome::Cancelled);
+    CHECK(completions[0].evidence.outcome == GPSCommandOutcome::Acknowledged);
+    CHECK(completions[0].evidence.finishedAtUs == 1001000 + uint64_t(reads) * 1000);
+    CHECK(completions[1].evidence.outcome == GPSCommandOutcome::Cancelled);
     CHECK(receiver.ioError() == GPSProtocol::ReadCancelled);
 #endif
 }
@@ -384,21 +388,21 @@ static void sharedResults()
     }};
     for (const auto& result : invalidWrites) {
         int writes = 0;
-        GPSCommandResult evidence;
+        GPSCommandResult completion;
         auto io = makeGPSProtocolTestIO();
         io.write = [&](std::span<const uint8_t>, GPSDeadline) {
             ++writes;
             return result;
         };
-        io.commandFinished = [&](const auto& command) { evidence = command; };
+        io.commandFinished = [&](const auto& command) { completion = command; };
         IOProbe probe(std::move(io));
         probe.beginCommandWrite("probe");
         CHECK(probe.write(payload, sizeof(payload)) < 0);
         CHECK(probe.ioError() == -EIO);
         CHECK(probe.ioErrorDetail() == detail);
-        CHECK(evidence.acceptedBytes == result.acceptedBytes);
-        CHECK(evidence.writtenBytes == result.writtenBytes);
-        CHECK(evidence.uncertainBytes == result.uncertainBytes());
+        CHECK(completion.evidence.acceptedBytes == result.acceptedBytes);
+        CHECK(completion.evidence.writtenBytes == result.writtenBytes);
+        CHECK(completion.evidence.uncertainBytes == result.uncertainBytes());
         CHECK(probe.write(payload, sizeof(payload)) < 0);
         CHECK(writes == 1);
         probe.resetIOError();
@@ -452,8 +456,21 @@ static std::unique_ptr<GPSBaseProtocol> createReceiver(unsigned family, Scripted
     }
 }
 
-int main()
+}  // namespace
+
+class GPSProtocolIOContractTest : public UnitTest
 {
+    Q_OBJECT
+
+private slots:
+
+    void _protocol();
+};
+
+void GPSProtocolIOContractTest::_protocol()
+{
+    gps_test_time = 0;
+    gps_test_warnings.clear();
     try {
         commandAttempts();
         ashtechAcknowledgementReturnsImmediately();
@@ -519,8 +536,10 @@ int main()
             }
         }
     } catch (const std::exception& error) {
-        fprintf(stderr, "%s\n", error.what());
-        return 1;
+        QFAIL(error.what());
     }
-    return 0;
 }
+
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolIOContractTest, TestLabel::Unit)
+
+#include "gps-io-contract-test.moc"

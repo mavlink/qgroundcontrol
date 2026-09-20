@@ -6,7 +6,6 @@
 
 #include "NMEA/GPSNMEAReport.h"
 #include "NMEA/GPSNMEASatelliteReport.h"
-#include <GeographicLib/Geocentric.hpp>
 
 GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, GPSNativePositionReport* position,
                                    GPSNativeSatelliteReport* satellites)
@@ -26,17 +25,13 @@ void GPSAsciiProtocol::resetStream()
     _pendingRTCM = false;
     _accuracyTime.reset();
     _positionTime.reset();
+    _vdopReceivedAtUs.reset();
     _accuracyReceivedAtUs = 0;
     _accuracy = {};
     *_position = {};
     if (_satellites) {
         *_satellites = {};
     }
-}
-
-void GPSAsciiProtocol::lla2ECEF(double latitude, double longitude, double altitude, double& x, double& y, double& z)
-{
-    GeographicLib::Geocentric::WGS84().Forward(latitude, longitude, altitude, x, y, z);
 }
 
 int GPSAsciiProtocol::receive(unsigned timeout)
@@ -103,10 +98,15 @@ int GPSAsciiProtocol::_handleNmea(std::string_view line)
     auto satelliteUpdate = _satelliteAssembler.ingest(*sentence, now);
     _publishSatellites(satelliteUpdate.completed);
     if (const auto fix = NMEA::gga(*sentence)) {
+        const auto positionTime = NMEA::utcMilliseconds(sentence->fields[NMEA::Field::UTC_TIME]);
+        if (!positionTime || positionTime != _positionTime) {
+            _vdopReceivedAtUs.reset();
+        }
+        _expireVdop(now);
         applyNMEAGGA(*_position, *fix, now);
-        _positionTime = NMEA::utcMilliseconds(sentence->fields[NMEA::Field::UTC_TIME]);
+        _positionTime = positionTime;
         const bool matchingAccuracy = _positionTime && _positionTime == _accuracyTime && now >= _accuracyReceivedAtUs &&
-                                      now - _accuracyReceivedAtUs <= 2000000;
+                                      now - _accuracyReceivedAtUs <= METADATA_MAX_AGE_US;
         _position->eph = matchingAccuracy ? _accuracy.horizontalAccuracy : NAN;
         _position->epv = matchingAccuracy ? _accuracy.verticalAccuracy : NAN;
         _position->accuracy_timestamp = matchingAccuracy ? _accuracyReceivedAtUs : 0;
@@ -117,20 +117,33 @@ int GPSAsciiProtocol::_handleNmea(std::string_view line)
         _accuracyReceivedAtUs = now;
         _accuracy = *accuracy;
         if (_positionTime && _positionTime == _accuracyTime && now >= _position->timestamp &&
-            now - _position->timestamp <= 2000000) {
+            now - _position->timestamp <= METADATA_MAX_AGE_US) {
+            _expireVdop(now);
             _position->eph = _accuracy.horizontalAccuracy;
             _position->epv = _accuracy.verticalAccuracy;
             _position->accuracy_timestamp = now;
             updates |= 1;
         }
-    } else if (sentence->type() == "GSA" && satelliteUpdate.accepted) {
+    } else if (sentence->type() == "GSA" && satelliteUpdate.accepted && _positionTime && now >= _position->timestamp &&
+               now - _position->timestamp <= METADATA_MAX_AGE_US) {
+        // GSA has no UTC field, so it can only supplement the preceding fresh GGA.
         const auto hdop = NMEA::number<float>(sentence->fields[NMEA::Field::GSA_HDOP]);
         const auto vdop = NMEA::number<float>(sentence->fields[NMEA::Field::GSA_VDOP]);
         _position->hdop = hdop && *hdop >= 0 ? *hdop : NAN;
         _position->vdop = vdop && *vdop >= 0 ? *vdop : NAN;
+        _vdopReceivedAtUs = now;
         _position->dop_timestamp = now;
     }
     return updates;
+}
+
+void GPSAsciiProtocol::_expireVdop(uint64_t now)
+{
+    // GGA refreshes HDOP only; it must not renew an older GSA's VDOP.
+    if (!_vdopReceivedAtUs || now < *_vdopReceivedAtUs || now - *_vdopReceivedAtUs > METADATA_MAX_AGE_US) {
+        _vdopReceivedAtUs.reset();
+        _position->vdop = NAN;
+    }
 }
 
 void GPSAsciiProtocol::_publishSatellites(const NMEA::SatelliteEpoch& epoch)
@@ -159,6 +172,7 @@ void GPSAsciiProtocol::_drainSatellites()
 
 void GPSAsciiProtocol::flushDecoded()
 {
+    _expireVdop(nowUs());
     _publishSatellites(_satelliteAssembler.flushDue(nowUs()));
     _drainRTCM();
     _drainSatellites();

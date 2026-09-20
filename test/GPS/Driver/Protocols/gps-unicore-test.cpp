@@ -13,6 +13,7 @@
 #include "RTCMFramer.h"
 #include "Support/UnicoreReceiverModel.h"
 #include "Unicore/GPSDriverUnicore.h"
+#include "UnitTest.h"
 
 #define CHECK(condition)                                                                                 \
     do {                                                                                                 \
@@ -107,9 +108,7 @@ GPSProtocol::GPSConfig baseConfig(bool fixed)
     config.base.surveyMode = fixed ? GPSBaseStationConfig::SurveyMode::AccuracyControlled
                                    : GPSBaseStationConfig::SurveyMode::ReceiverManaged;
     config.base.receiverAveragingDurationSecs = 60;
-    config.base.fixedBaseLatitude = 47;
-    config.base.fixedBaseLongitude = 8;
-    config.base.fixedBaseAltitudeMeters = 500;
+    config.base.fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500};
     return config;
 }
 
@@ -150,9 +149,10 @@ void identityAndRole()
             CHECK(receiver.role == "MODE ROVER SURVEY");
             CHECK(receiver.sent("GPGGA 1") && receiver.sent("GPGST 1") && receiver.sent("GPGSV 1"));
             CHECK(!receiver.sent("SAVECONFIG") && !receiver.sent("FRESET") && !receiver.sent("RTCM"));
-            CHECK(receiver.results.back().outcome == GPSCommandOutcome::Acknowledged);
+            CHECK(receiver.results.back().evidence.outcome == GPSCommandOutcome::Acknowledged);
             CHECK(std::any_of(receiver.results.begin(), receiver.results.end(), [](const auto& result) {
-                return result.command == "MODE" && result.outcome == GPSCommandOutcome::ReadbackVerified;
+                return result.evidence.command == "MODE" &&
+                       result.evidence.outcome == GPSCommandOutcome::ReadbackVerified;
             }));
             driver.consume(correction());
             CHECK(receiver.rtcmCount == 0);
@@ -223,7 +223,8 @@ void fixedBaseAndTransition()
     CHECK(std::abs(receiver.surveys.back().longitude - 8) < 1e-7);
     CHECK(std::abs(receiver.surveys.back().altitude - 500) < 0.01);
     CHECK(std::any_of(receiver.results.begin(), receiver.results.end(), [](const auto& result) {
-        return result.command == "BESTNAVXYZA" && result.outcome == GPSCommandOutcome::ReadbackVerified;
+        return result.evidence.command == "BESTNAVXYZA" &&
+               result.evidence.outcome == GPSCommandOutcome::ReadbackVerified;
     }));
     const auto calls = receiver.calls;
     const auto frame = correction();
@@ -316,8 +317,8 @@ void commandFailures()
                                   : fault == Receiver::Fault::WriteError || fault == Receiver::Fault::ShortWrite
                                       ? GPSCommandOutcome::TransportError
                                       : GPSCommandOutcome::TimedOut;
-            CHECK(receiver.results.back().outcome == expected);
-            CHECK(receiver.results.back().required);
+            CHECK(receiver.results.back().evidence.outcome == expected);
+            CHECK(receiver.results.back().evidence.required);
             if (fault == Receiver::Fault::Cancel) {
                 CHECK(driver.ioError() == GPSProtocol::ReadCancelled);
                 CHECK(gps_test_warnings.empty());
@@ -326,8 +327,8 @@ void commandFailures()
                 CHECK(driver.ioErrorDetail() == QStringLiteral("Unicore test write failure"));
             }
             if (fault == Receiver::Fault::ShortWrite) {
-                CHECK(receiver.results.back().writtenBytes > 0);
-                CHECK(receiver.results.back().acceptedBytes == receiver.results.back().writtenBytes);
+                CHECK(receiver.results.back().evidence.writtenBytes > 0);
+                CHECK(receiver.results.back().evidence.acceptedBytes == receiver.results.back().evidence.writtenBytes);
             }
             CHECK(gps_test_time < 45000000);
             driver.consume(correction());
@@ -356,7 +357,7 @@ void readbackFailures()
         unsigned rate = 115200;
         CHECK(driver.configure(rate, baseConfig(true)) < 0);
         CHECK(!driver.receiverReady());
-        CHECK(receiver.results.back().outcome ==
+        CHECK(receiver.results.back().evidence.outcome ==
               (variant < 2 ? GPSCommandOutcome::Rejected : GPSCommandOutcome::TimedOut));
         CHECK(!receiver.sent("RTCM"));
         if (variant == 4) {
@@ -515,8 +516,19 @@ void scheduledAveragingAndBoot()
 
 }  // namespace
 
-int main()
+class GPSProtocolUnicoreTest : public UnitTest
 {
+    Q_OBJECT
+
+private slots:
+
+    void _protocol();
+};
+
+void GPSProtocolUnicoreTest::_protocol()
+{
+    gps_test_time = 0;
+    gps_test_warnings.clear();
     try {
         identityAndRole();
         rejectBeforeMutation();
@@ -529,8 +541,10 @@ int main()
         measurementFreshnessAndRollover();
         scheduledAveragingAndBoot();
     } catch (const std::exception& error) {
-        std::fprintf(stderr, "%s\n", error.what());
-        return 1;
+        QFAIL(error.what());
     }
-    return 0;
 }
+
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolUnicoreTest, TestLabel::Unit)
+
+#include "gps-unicore-test.moc"

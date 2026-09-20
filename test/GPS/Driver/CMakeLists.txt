@@ -1,65 +1,14 @@
-cmake_minimum_required(VERSION 3.25)
-
-set(_gps_root "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/GPS")
 option(QGC_BUILD_GPS_HARDWARE_TESTS "Build opt-in GPS hardware validation runners" OFF)
-
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    project(QGCGPSDriverTests LANGUAGES CXX)
-    enable_testing()
-    find_package(Qt6 6.8 REQUIRED COMPONENTS Core Test Positioning)
-    set(QGC_GPS_COMPONENTS_ENABLED Driver)
-    if(QGC_BUILD_GPS_HARDWARE_TESTS)
-        list(APPEND QGC_GPS_COMPONENTS_ENABLED ReceiverTransports)
-        find_package(Qt6 6.8 REQUIRED COMPONENTS Network)
-        if(NOT QGC_NO_SERIAL_LINK)
-            find_package(Qt6 6.8 REQUIRED COMPONENTS SerialPort)
-        endif()
-    endif()
-    add_subdirectory("${_gps_root}/../Utilities/Logging/Category" LoggingCategory)
-    add_subdirectory("${_gps_root}/Transport" Transport)
-    add_subdirectory("${_gps_root}/Receiver" Receiver)
-    add_subdirectory("${_gps_root}/Driver" Driver)
-endif()
 
 add_subdirectory(Protocols)
 
-if(COMMAND add_qgc_test)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverTest.cc GPSDriverTest.h GPSDriverReentrancyTest.cc
-                                                 GPSNativeDataTest.cc ScriptedUBXReceiver.cc
-    )
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../Portable")
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSNative)
-    add_qgc_test(GPSDriverTest LABELS Unit GPS TIMEOUT 240)
-    add_qgc_test(GPSDriverReentrancyTest LABELS Unit GPS)
-    add_qgc_test(GPSNativeDataTest LABELS Unit GPS)
-else()
-    find_package(Qt6 6.8 REQUIRED COMPONENTS Test Positioning)
-    qt_add_executable(QGCGPSDriverTest GPSDriverTest.cc GPSDriverTest.h GPSDriverTestBase.h ScriptedUBXReceiver.cc
-                      ../../Portable/PortableTest.h
-    )
-    set_target_properties(QGCGPSDriverTest PROPERTIES AUTOMOC ON)
-    target_compile_definitions(QGCGPSDriverTest PRIVATE QGC_PORTABLE_TEST)
-    target_include_directories(QGCGPSDriverTest PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../Portable")
-    target_link_libraries(QGCGPSDriverTest PRIVATE Qt6::Test Qt6::Positioning QGCGPSDriver QGCGPSTransport)
-    add_test(NAME GPSDriverTest COMMAND QGCGPSDriverTest)
-    set_tests_properties(GPSDriverTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 240)
-    qt_add_executable(QGCGPSDriverReentrancyTest GPSDriverReentrancyTest.cc GPSDriverTestBase.h
-                      ../../Portable/PortableTest.h
-    )
-    set_target_properties(QGCGPSDriverReentrancyTest PROPERTIES AUTOMOC ON)
-    target_compile_definitions(QGCGPSDriverReentrancyTest PRIVATE QGC_PORTABLE_TEST)
-    target_include_directories(QGCGPSDriverReentrancyTest PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../Portable")
-    target_link_libraries(QGCGPSDriverReentrancyTest PRIVATE Qt6::Test QGCGPSDriver QGCGPSTransport QGCGPSNative)
-    add_test(NAME GPSDriverReentrancyTest COMMAND QGCGPSDriverReentrancyTest)
-    set_tests_properties(GPSDriverReentrancyTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 60)
-    qt_add_executable(QGCGPSNativeDataTest GPSNativeDataTest.cc ../../Portable/PortableTest.h)
-    set_target_properties(QGCGPSNativeDataTest PROPERTIES AUTOMOC ON)
-    target_compile_definitions(QGCGPSNativeDataTest PRIVATE QGC_PORTABLE_TEST)
-    target_include_directories(QGCGPSNativeDataTest PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../Portable")
-    target_link_libraries(QGCGPSNativeDataTest PRIVATE Qt6::Test QGCGPSDriver QGCGPSNative)
-    add_test(NAME GPSNativeDataTest COMMAND QGCGPSNativeDataTest)
-    set_tests_properties(GPSNativeDataTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 60)
-endif()
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverTest.cc GPSDriverTest.h GPSDriverReentrancyTest.cc
+                                             GPSNativeDataTest.cc ScriptedUBXReceiver.cc
+)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSNative)
+add_qgc_test(GPSDriverTest LABELS Unit GPS TIMEOUT 240)
+add_qgc_test(GPSDriverReentrancyTest LABELS Unit GPS)
+add_qgc_test(GPSNativeDataTest LABELS Unit GPS)
 
 # Hardware validation is opt-in and never opens a physical device during CTest.
 if(QGC_BUILD_GPS_HARDWARE_TESTS)

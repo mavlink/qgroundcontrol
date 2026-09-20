@@ -45,9 +45,9 @@ bool GPSRTKFactGroup::canSaveCurrentBasePosition() const
     }
     const GPSBaseStationConfig config{
         .useFixedBase = true,
-        .fixedBaseLatitude = _currentLatitudeFact.rawValue().toDouble(),
-        .fixedBaseLongitude = _currentLongitudeFact.rawValue().toDouble(),
-        .fixedBaseAltitudeMeters = _currentAltitudeFact.rawValue().toFloat(),
+        .fixedPosition = {.latitudeDegrees = _currentLatitudeFact.rawValue().toDouble(),
+                          .longitudeDegrees = _currentLongitudeFact.rawValue().toDouble(),
+                          .altitudeMeters = _currentAltitudeFact.rawValue().toFloat()},
         .fixedBaseAccuracyMeters = static_cast<float>(accuracy),
     };
     return gpsValidateBaseStationConfig(config) == GPSReceiverConfigError::None;

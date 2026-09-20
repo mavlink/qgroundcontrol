@@ -58,7 +58,7 @@ private:
     GPSCommandOutcome _reply = GPSCommandOutcome::Pending;
     std::string _firmware;
     std::string _surveyRestartCommand;
-    std::array<double, 3> _fixedECEF{};
+    EcefMeters _fixedECEF;
     OutputMode _outputMode = OutputMode::GPS;
     unsigned _receiverRole = 0;
     uint64_t _lastSurveyUs = 0;

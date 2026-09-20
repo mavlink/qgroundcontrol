@@ -14,6 +14,7 @@
 #include "Quectel/GPSDriverQuectel.h"
 #include "RTCMFramer.h"
 #include "Support/QuectelReceiverModel.h"
+#include "UnitTest.h"
 
 #define CHECK(condition)                                                                                 \
     do {                                                                                                 \
@@ -61,9 +62,7 @@ GPSProtocol::GPSConfig fixedConfig()
 {
     auto config = surveyConfig();
     config.base.useFixedBase = true;
-    config.base.fixedBaseLatitude = 0;
-    config.base.fixedBaseLongitude = 90;
-    config.base.fixedBaseAltitudeMeters = 100;
+    config.base.fixedPosition = {.latitudeDegrees = 0, .longitudeDegrees = 90, .altitudeMeters = 100};
     return config;
 }
 
@@ -130,10 +129,10 @@ void positionAndEvidence()
         CHECK(receiver.sent("PQTMCFGMSGRATE,R," + std::string(name)));
     }
     CHECK(receiver.sent("PQTMSRR"));
-    CHECK(receiver.outcomes[0].outcome == GPSCommandOutcome::ReadbackVerified);
-    CHECK(receiver.outcomes[2].outcome == GPSCommandOutcome::Written);
-    CHECK(receiver.outcomes[5].outcome == GPSCommandOutcome::Acknowledged);
-    CHECK(receiver.outcomes[6].outcome == GPSCommandOutcome::ReadbackVerified);
+    CHECK(receiver.outcomes[0].evidence.outcome == GPSCommandOutcome::ReadbackVerified);
+    CHECK(receiver.outcomes[2].evidence.outcome == GPSCommandOutcome::Written);
+    CHECK(receiver.outcomes[5].evidence.outcome == GPSCommandOutcome::Acknowledged);
+    CHECK(receiver.outcomes[6].evidence.outcome == GPSCommandOutcome::ReadbackVerified);
     feed(driver, "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47\r\n", 1);
     CHECK(std::abs(position.latitude_deg - 48.1173) < 1e-7);
     CHECK(std::abs(position.altitude_ellipsoid_m - 592.3) < 0.01);
@@ -200,7 +199,7 @@ void fixedECEF()
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 2);
     CHECK(std::any_of(receiver.outcomes.begin(), receiver.outcomes.end(), [](const auto& result) {
-        return result.command == "PQTMSRR" && result.outcome == GPSCommandOutcome::Written;
+        return result.evidence.command == "PQTMSRR" && result.evidence.outcome == GPSCommandOutcome::Written;
     }));
     noPersistence(receiver);
 }
@@ -373,8 +372,8 @@ void scheduledShortSurvey()
             const auto captureCommand = io.commandFinished;
             io.commandFinished = [&](const GPSCommandResult& result) {
                 captureCommand(result);
-                if (receiver.sent("PQTMSRR") && result.command == "PQTMCFGSVIN,R" &&
-                    result.outcome == GPSCommandOutcome::ReadbackVerified) {
+                if (receiver.sent("PQTMSRR") && result.evidence.command == "PQTMCFGSVIN,R" &&
+                    result.evidence.outcome == GPSCommandOutcome::ReadbackVerified) {
                     savedBaseVerified = true;
                     savedBaseVerifiedAt = gps_test_time;
                 }
@@ -499,7 +498,7 @@ void transactionFailures()
         CHECK(!driver.receiverReady());
         CHECK(receiver.sent(receiver.failure));
         CHECK(!receiver.sent("PQTMCFGMSGRATE,W,GST"));
-        CHECK(receiver.outcomes.back().outcome ==
+        CHECK(receiver.outcomes.back().evidence.outcome ==
               (fault == Receiver::Fault::Cancel    ? GPSCommandOutcome::Cancelled
                : fault == Receiver::Fault::Partial ? GPSCommandOutcome::TransportError
                : fault == Receiver::Fault::Silent || fault == Receiver::Fault::Checksum ? GPSCommandOutcome::TimedOut
@@ -508,8 +507,8 @@ void transactionFailures()
             CHECK(gps_test_warnings.empty());
         }
         if (fault == Receiver::Fault::Partial) {
-            CHECK(receiver.outcomes.back().writtenBytes == 4);
-            CHECK(receiver.outcomes.back().uncertainBytes > 0);
+            CHECK(receiver.outcomes.back().evidence.writtenBytes == 4);
+            CHECK(receiver.outcomes.back().evidence.uncertainBytes > 0);
         }
         CHECK(gps_test_time < 5000000);
         noPersistence(receiver);
@@ -599,10 +598,10 @@ void requiredBaseCommands()
             CHECK(driver.configure(baud, surveyConfig()) < 0);
             CHECK(receiver.commands.back().starts_with(command));
             CHECK(!driver.receiverReady());
-            CHECK(receiver.outcomes.back().outcome == (fault == Receiver::Fault::Reject ? GPSCommandOutcome::Rejected
-                                                       : fault == Receiver::Fault::Silent
-                                                           ? GPSCommandOutcome::TimedOut
-                                                           : GPSCommandOutcome::Cancelled));
+            CHECK(receiver.outcomes.back().evidence.outcome ==
+                  (fault == Receiver::Fault::Reject   ? GPSCommandOutcome::Rejected
+                   : fault == Receiver::Fault::Silent ? GPSCommandOutcome::TimedOut
+                                                      : GPSCommandOutcome::Cancelled));
             if (fault == Receiver::Fault::Cancel) {
                 CHECK(gps_test_warnings.empty());
             }
@@ -664,7 +663,8 @@ void managedChanges()
         CHECK(receiver.saves == 2);  // Role must be active before configuring base parameters.
         CHECK(std::count(receiver.commands.begin(), receiver.commands.end(), "PQTMSRR") == 3);
         CHECK(std::count_if(receiver.outcomes.begin(), receiver.outcomes.end(), [](const auto& outcome) {
-                  return outcome.command == "PQTMSAVEPAR" && outcome.outcome == GPSCommandOutcome::Acknowledged;
+                  return outcome.evidence.command == "PQTMSAVEPAR" &&
+                         outcome.evidence.outcome == GPSCommandOutcome::Acknowledged;
               }) == 2);
         CHECK(!receiver.sent("PQTMRESTOREPAR"));
         CHECK(!receiver.sent("PQTMCOLD"));
@@ -767,7 +767,8 @@ void managedFailures()
                     CHECK(driver.ioErrorDetail().contains("rejected PQTMSRR"));
                 }
                 CHECK(std::any_of(receiver.outcomes.begin(), receiver.outcomes.end(), [](const auto& result) {
-                    return result.command == "PQTMSAVEPAR" && result.outcome == GPSCommandOutcome::Acknowledged;
+                    return result.evidence.command == "PQTMSAVEPAR" &&
+                           result.evidence.outcome == GPSCommandOutcome::Acknowledged;
                 }));
             } else if (std::string_view(command) == "PQTMSAVEPAR" && fault != Receiver::Fault::Reject) {
                 CHECK(driver.ioErrorDetail().contains("flash save may"));
@@ -804,7 +805,7 @@ void managedReadbackFailures()
             unsigned baud = 460800;
             CHECK(driver.configure(baud, config) < 0);
             CHECK(!driver.receiverReady());
-            CHECK(receiver.outcomes.back().outcome == GPSCommandOutcome::Rejected);
+            CHECK(receiver.outcomes.back().evidence.outcome == GPSCommandOutcome::Rejected);
             CHECK(receiver.saves == (afterSave ? 1 : 0));
             CHECK(!receiver.sent("PQTMCFGMSGRATE,W"));
             if (afterSave) {
@@ -869,9 +870,7 @@ void managedPersistenceScope()
         GPSNativeQuectel driver(receiver.io(), nullptr);
         auto config = fixedConfig();
         config.allowPersistentChanges = true;
-        config.base.fixedBaseLatitude = latitude;
-        config.base.fixedBaseLongitude = 45;
-        config.base.fixedBaseAltitudeMeters = 0;
+        config.base.fixedPosition = {.latitudeDegrees = latitude, .longitudeDegrees = 45, .altitudeMeters = 0};
         unsigned baud = 460800;
         CHECK(driver.configure(baud, config) == 0);
         CHECK(receiver.savedBase == expected);
@@ -879,8 +878,19 @@ void managedPersistenceScope()
 }
 }  // namespace
 
-int main()
+class GPSProtocolQuectelTest : public UnitTest
 {
+    Q_OBJECT
+
+private slots:
+
+    void _protocol();
+};
+
+void GPSProtocolQuectelTest::_protocol()
+{
+    gps_test_time = 0;
+    gps_test_warnings.clear();
     try {
         positionAndEvidence();
         identityAndRoleSafety();
@@ -900,10 +910,11 @@ int main()
         managedFailures();
         managedReadbackFailures();
         managedPersistenceScope();
-        std::cout << "Quectel protocol tests passed\n";
-        return 0;
     } catch (const std::exception& exception) {
-        std::cerr << exception.what() << '\n';
-        return 1;
+        QFAIL(exception.what());
     }
 }
+
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolQuectelTest, TestLabel::Unit)
+
+#include "gps-quectel-test.moc"

@@ -39,6 +39,7 @@
 
 #include "FemtoMessages.h"
 #include "GPSBaseProtocol.h"
+#include "NMEAFramer.h"
 #include "RTCMFramer.h"
 
 class GPSNativeFemto : public GPSBaseProtocol
@@ -88,11 +89,6 @@ private:
     int writeAckedCommandFemto(const char* command, const char* reply, const unsigned timeout);
 
     /**
-     * receive data for at least the specified amount of time
-     */
-    void receiveWait(unsigned timeout_min);
-
-    /**
      * enable output of correction output
      */
     void activateCorrectionOutput();
@@ -111,6 +107,7 @@ private:
     struct GPSNativePositionReport* _gps_position{nullptr};
     FemtoDecodeState _decode_state{FemtoDecodeState::pream_ble1};
     femto_msg_t _femto_msg;
+    NMEA::Framer _nmeaFramer{_femto_msg.data};
     GPSNativeSatelliteReport* _satellite_info{nullptr};
     float _heading_offset;
 

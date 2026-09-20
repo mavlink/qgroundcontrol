@@ -236,7 +236,7 @@ void GPSRtkTest::_unavailableSatelliteCoverage()
     QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
 }
 
-void GPSRtkTest::_logsOnlyFixTransitions()
+void GPSRtkTest::_logsFixTransitionsWithoutCoordinates()
 {
     GPSRtk receiver;
     const QString category = QStringLiteral("GPS.GPSRtk");
@@ -251,36 +251,21 @@ void GPSRtkTest::_logsOnlyFixTransitions()
         }
     });
     const auto initialCount = LogManager::capturedMessages(category).size();
-    GPSPositionReport report;
-    report.fixType = GPSPositionReport::FixType::Fix3D;
-    report.latitudeDegrees = 47.123456;
-    report.longitudeDegrees = 8.654321;
-    report.altitudeMslMeters = 512.5;
     expectLogMessage("GPS.GPSRtk", QtDebugMsg, QRegularExpression(QStringLiteral("Receiver fix changed:")));
-    receiver._sensorGpsUpdate(report);
+    receiver._fixTypeChanged(GPSPositionReport::FixType::Fix3D);
     verifyExpectedLogMessage();
     QCOMPARE(LogManager::capturedMessages(category).size(), initialCount + 1);
-    for (int i = 0; i < 3; ++i) {
-        report.latitudeDegrees += 0.1;
-        receiver._sensorGpsUpdate(report);
-    }
-    QCOMPARE(LogManager::capturedMessages(category).size(), initialCount + 1);
-    report.fixType = GPSPositionReport::FixType::NoFix;
     expectLogMessage("GPS.GPSRtk", QtDebugMsg, QRegularExpression(QStringLiteral("Receiver fix changed: 1")));
-    receiver._sensorGpsUpdate(report);
+    receiver._fixTypeChanged(GPSPositionReport::FixType::NoFix);
     verifyExpectedLogMessage();
-    receiver._sensorGpsUpdate(report);
     QCOMPARE(LogManager::capturedMessages(category).size(), initialCount + 2);
     receiver.disconnectGPS();
     expectLogMessage("GPS.GPSRtk", QtDebugMsg, QRegularExpression(QStringLiteral("Receiver fix changed: 1")));
-    receiver._sensorGpsUpdate(report);
+    receiver._fixTypeChanged(GPSPositionReport::FixType::NoFix);
     verifyExpectedLogMessage();
     QCOMPARE(LogManager::capturedMessages(category).size(), initialCount + 3);
     for (const auto& entry : LogManager::capturedMessages(category)) {
-        QVERIFY(entry.message.contains(QStringLiteral("Receiver fix changed:")));
-        QVERIFY(!entry.message.contains(QStringLiteral("47.123")));
-        QVERIFY(!entry.message.contains(QStringLiteral("8.654")));
-        QVERIFY(!entry.message.contains(QStringLiteral("512.5")));
+        QVERIFY(QRegularExpression(QStringLiteral("^Receiver fix changed: [0-9]+$")).match(entry.message).hasMatch());
     }
 }
 
@@ -676,7 +661,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit first->surveyInStatus(survey);
     emit first->satelliteInfoUpdate(satellites);
     emit first->satelliteUsageUpdate({.usedCount = 12});
-    emit first->sensorGpsUpdate(GPSPositionReport{});
+    emit first->fixTypeChanged(GPSPositionReport::FixType::Unknown);
     emit first->receiverReady();
     emit first->configurationError(QStringLiteral("Retired receiver configuration failure"));
     emit first->connectionError(GPSConnectionError::DeviceError);
@@ -927,9 +912,9 @@ void GPSRtkTest::_receiverSettingsMapping()
         QVERIFY(!config.base.useFixedBase);
         QCOMPARE(config.base.surveyInAccMeters, 0.0);
         QCOMPARE(config.base.surveyInDurationSecs, int64_t(0));
-        QVERIFY(qIsNaN(config.base.fixedBaseLatitude));
-        QVERIFY(qIsNaN(config.base.fixedBaseLongitude));
-        QVERIFY(qIsNaN(config.base.fixedBaseAltitudeMeters));
+        QVERIFY(qIsNaN(config.base.fixedPosition.latitudeDegrees));
+        QVERIFY(qIsNaN(config.base.fixedPosition.longitudeDegrees));
+        QVERIFY(qIsNaN(config.base.fixedPosition.altitudeMeters));
         QCOMPARE(config.base.fixedBaseAccuracyMeters, 0.0f);
         QCOMPARE(config.base.surveyMode, GPSBaseStationConfig::SurveyMode::AccuracyControlled);
         QCOMPARE(config.base.receiverAveragingDurationSecs, uint32_t(60));
@@ -937,9 +922,9 @@ void GPSRtkTest::_receiverSettingsMapping()
         QCOMPARE(config.role, GPSReceiverConfig::Role::RTKBase);
         QCOMPARE(config.base.useFixedBase, baseMode == 1);
         if (baseMode == 1) {
-            QCOMPARE(config.base.fixedBaseLatitude, 47.5);
-            QCOMPARE(config.base.fixedBaseLongitude, 8.25);
-            QCOMPARE(config.base.fixedBaseAltitudeMeters, 512.0f);
+            QCOMPARE(config.base.fixedPosition.latitudeDegrees, 47.5);
+            QCOMPARE(config.base.fixedPosition.longitudeDegrees, 8.25);
+            QCOMPARE(config.base.fixedPosition.altitudeMeters, 512.0f);
             QCOMPARE(config.base.fixedBaseAccuracyMeters, 1.5f);
         } else if (baseMode == 2) {
             QCOMPARE(config.base.surveyMode, GPSBaseStationConfig::SurveyMode::ReceiverManaged);

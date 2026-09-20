@@ -5,6 +5,8 @@
 #include <string>
 #include <string_view>
 
+#include <QtCore/QString>
+
 #include "GPSAsciiProtocol.h"
 
 /// Native N4 ASCII controller for UM980/UM982, R4.10 firmware with the documented rover modes.
@@ -48,7 +50,7 @@ private:
 
     bool _execute(std::string command, Reply reply = Reply::Acknowledgment);
     bool _identify(unsigned& baud);
-    int _configurationFailed();
+    int _configurationFailed(const QString& reason = {});
     void _handleVersion(std::string_view body);
     void _handleMode(std::string_view body);
     void _handlePosition(std::string_view body);
@@ -62,11 +64,12 @@ private:
     std::string _model;
     std::string _firmware;
     std::string _command;
+    QString _configurationDetail;
     Reply _expectedReply = Reply::Acknowledgment;
     Mode _expectedMode = Mode::Rover;
     GPSCommandOutcome _replyOutcome = GPSCommandOutcome::Pending;
-    std::array<double, 3> _fixedECEF{};
-    std::array<double, 3> _baseECEF{};
+    EcefMeters _fixedECEF;
+    EcefMeters _baseECEF;
     uint64_t _lastBaseStatus = 0;
     std::optional<uint64_t> _lastBaseEpoch;
     bool _commandActive = false;

@@ -27,6 +27,22 @@ unsigned char checksum(std::string_view body)
     return result;
 }
 
+size_t splitFields(std::string_view text, std::span<std::string_view> fields)
+{
+    size_t count = 0;
+    for (;;) {
+        if (count == fields.size()) {
+            return 0;
+        }
+        const auto comma = text.find(',');
+        fields[count++] = text.substr(0, comma);
+        if (comma == std::string_view::npos) {
+            return count;
+        }
+        text.remove_prefix(comma + 1);
+    }
+}
+
 bool Frame::hasValidChecksum() const
 {
     if (checksum.size() != CHECKSUM_DIGITS)
@@ -65,16 +81,8 @@ std::optional<Sentence> sentence(std::string_view text)
         return {};
     Sentence result;
     text = text.substr(0, Sentence::PREFIX_LENGTH + wire->body.size());
-    do {
-        if (result.count == result.fields.size())
-            return {};
-        const auto comma = text.find(',');
-        result.fields[result.count++] = text.substr(0, comma);
-        if (comma == std::string_view::npos)
-            break;
-        text.remove_prefix(comma + 1);
-    } while (true);
-    if (result.fields[0].size() != Sentence::HEADER_LENGTH)
+    result.count = splitFields(text, result.fields);
+    if (result.count == 0 || result.fields[0].size() != Sentence::HEADER_LENGTH)
         return {};
     return result;
 }

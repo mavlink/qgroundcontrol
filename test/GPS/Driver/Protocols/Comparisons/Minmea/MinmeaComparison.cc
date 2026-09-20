@@ -16,6 +16,7 @@
 
 #include "NMEASatelliteEpoch.h"
 #include "NMEASentence.h"
+#include "UnitTest.h"
 
 namespace {
 constexpr size_t MAX_SENTENCE_BYTES = 256;
@@ -170,7 +171,16 @@ void rejectChecksumFailures(const std::string& wire)
 }
 }  // namespace
 
-int main()
+class GPSMinmeaComparisonTest : public UnitTest
+{
+    Q_OBJECT
+
+private slots:
+
+    void _comparison();
+};
+
+void GPSMinmeaComparisonTest::_comparison()
 {
     try {
         const std::array ggaBodies{
@@ -255,9 +265,11 @@ int main()
             {"scope", "Complete sentences only; no constellation/signal IDs, epoch assembly or receiver control"},
         };
         std::cout << QJsonDocument(report).toJson(QJsonDocument::Compact).constData() << '\n';
-        return 0;
     } catch (const std::exception& error) {
-        std::cerr << "minmea comparison failed: " << error.what() << '\n';
-        return 1;
+        QFAIL(error.what());
     }
 }
+
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSMinmeaComparisonTest, TestLabel::Unit)
+
+#include "MinmeaComparison.moc"

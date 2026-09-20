@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdio>
 #include <deque>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <stdexcept>
@@ -12,6 +13,7 @@
 #include "GPSProtocolTestIO.h"
 #include "UBX/GPSDriverUBX.h"
 #include "UBX/UBXMessageCodec.h"
+#include "UnitTest.h"
 
 // Keep checks active in Release, too.
 #define CHECK(condition)                                                                                 \
@@ -21,6 +23,7 @@
         }                                                                                                \
     } while (0)
 
+namespace {
 using Bytes = std::vector<uint8_t>;
 
 static uint32_t littleEndian(const Bytes& bytes, size_t offset, size_t width)
@@ -614,9 +617,7 @@ static void positionMode(bool legacy, bool base_capable)
     }
     // A configured fixed base must not be re-applied when selecting GPS output.
     f.base = {.useFixedBase = true,
-              .fixedBaseLatitude = 47.0,
-              .fixedBaseLongitude = 8.0,
-              .fixedBaseAltitudeMeters = 500.0f,
+              .fixedPosition = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
               .fixedBaseAccuracyMeters = 1.0f};
     CHECK(f.configure(GPSProtocol::OutputMode::GPS) == 0);
     CHECK(f.driver.receiverReady());
@@ -889,7 +890,7 @@ static void receiverSettings()
             for (auto setting : {GPSReceiverSetting::DynamicModel, GPSReceiverSetting::OutputRateHz,
                                  GPSReceiverSetting::ConstellationMask}) {
                 if (command.affectedSettings.contains(setting)) {
-                    outcomes[setting].push_back(command.outcome);
+                    outcomes[setting].push_back(command.evidence.outcome);
                 }
             }
         };
@@ -938,9 +939,7 @@ static void invalidConfiguration()
 {
     using Config = GPSProtocol::GPSConfig;
     const Config fixed{.base = {.useFixedBase = true,
-                                .fixedBaseLatitude = 47,
-                                .fixedBaseLongitude = 8,
-                                .fixedBaseAltitudeMeters = 500,
+                                .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
                                 .fixedBaseAccuracyMeters = 1},
                        .output_mode = GPSProtocol::OutputMode::RTCM};
     const auto nan = std::numeric_limits<double>::quiet_NaN();
@@ -953,13 +952,13 @@ static void invalidConfiguration()
     };
     addFixed([](auto& base) { base = {.useFixedBase = true}; });
     for (double value : {nan, double(infinity), 91.0, -91.0}) {
-        addFixed([&](auto& base) { base.fixedBaseLatitude = value; });
+        addFixed([&](auto& base) { base.fixedPosition.latitudeDegrees = value; });
     }
     for (double value : {nan, double(infinity), 181.0, -181.0}) {
-        addFixed([&](auto& base) { base.fixedBaseLongitude = value; });
+        addFixed([&](auto& base) { base.fixedPosition.longitudeDegrees = value; });
     }
     for (float value : {float(nan), infinity, 21474838.0f, -21474838.0f}) {
-        addFixed([&](auto& base) { base.fixedBaseAltitudeMeters = value; });
+        addFixed([&](auto& base) { base.fixedPosition.altitudeMeters = value; });
     }
     for (float value : {float(nan), infinity, -1.0f, std::nextafter(429496.71875f, infinity)}) {
         addFixed([&](auto& base) { base.fixedBaseAccuracyMeters = value; });
@@ -1499,9 +1498,9 @@ static void checkedWireCodecs()
     CHECK(ack && ack->msg == UBX_MSG_CFG_NAV5);
 }
 
-int main()
+const auto& testCases()
 {
-    const struct
+    static const struct
     {
         const char* name;
         void (*run)();
@@ -1685,9 +1684,7 @@ int main()
          [] {
              Fixture f;
              f.base = {.useFixedBase = true,
-                       .fixedBaseLatitude = 47.0,
-                       .fixedBaseLongitude = 8.0,
-                       .fixedBaseAltitudeMeters = 500.0f,
+                       .fixedPosition = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
                        .fixedBaseAccuracyMeters = 1.0f};
              CHECK(f.configure() == 0);
              CHECK(f.driver.receiverReady());
@@ -1697,18 +1694,41 @@ int main()
          }},
     };
 
-    bool success = true;
-
-    for (const auto& test : cases) {
-        try {
-            test.run();
-            std::printf("PASS %s\n", test.name);
-
-        } catch (const std::exception& error) {
-            std::fprintf(stderr, "FAIL %s: %s\n", test.name, error.what());
-            success = false;
-        }
-    }
-
-    return success ? 0 : 1;
+    return cases;
 }
+}  // namespace
+
+class GPSProtocolUbxTest : public UnitTest
+{
+    Q_OBJECT
+
+private slots:
+
+    void _cases_data();
+    void _cases();
+};
+
+void GPSProtocolUbxTest::_cases_data()
+{
+    QTest::addColumn<int>("index");
+    const auto& cases = testCases();
+    for (size_t index = 0; index < std::size(cases); ++index) {
+        QTest::newRow(cases[index].name) << static_cast<int>(index);
+    }
+}
+
+void GPSProtocolUbxTest::_cases()
+{
+    QFETCH(int, index);
+    gps_test_time = 0;
+    gps_test_warnings.clear();
+    try {
+        testCases()[index].run();
+    } catch (const std::exception& error) {
+        QFAIL(error.what());
+    }
+}
+
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolUbxTest, TestLabel::Unit)
+
+#include "gps-ubx-test.moc"

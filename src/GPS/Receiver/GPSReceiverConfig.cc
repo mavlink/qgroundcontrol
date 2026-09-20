@@ -38,11 +38,12 @@ GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& 
         return GPSReceiverConfigError::None;
     }
     if (config.useFixedBase) {
-        const double altitudeCm = static_cast<double>(config.fixedBaseAltitudeMeters) * 100.0;
+        const auto& position = config.fixedPosition;
+        const double altitudeCm = static_cast<double>(position.altitudeMeters) * 100.0;
         // Match legacy float conversions before checking wire limits.
         const double accuracyUnits = static_cast<double>((config.fixedBaseAccuracyMeters * 1000.0f) * 10.0f);
-        if (!std::isfinite(config.fixedBaseLatitude) || std::abs(config.fixedBaseLatitude) > 90.0 ||
-            !std::isfinite(config.fixedBaseLongitude) || std::abs(config.fixedBaseLongitude) > 180.0 ||
+        if (!std::isfinite(position.latitudeDegrees) || std::abs(position.latitudeDegrees) > 90.0 ||
+            !std::isfinite(position.longitudeDegrees) || std::abs(position.longitudeDegrees) > 180.0 ||
             !std::isfinite(altitudeCm) || altitudeCm < (std::numeric_limits<int32_t>::min)() ||
             altitudeCm > (std::numeric_limits<int32_t>::max)() || !std::isfinite(accuracyUnits) || accuracyUnits < 0 ||
             accuracyUnits > MAX_UNSIGNED_VALUE) {

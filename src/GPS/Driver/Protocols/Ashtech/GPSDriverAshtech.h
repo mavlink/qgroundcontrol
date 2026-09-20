@@ -41,6 +41,7 @@
 #include <optional>
 
 #include "GPSBaseProtocol.h"
+#include "NMEAFramer.h"
 #include "NMEASatelliteEpoch.h"
 #include "RTCMFramer.h"
 
@@ -98,14 +99,6 @@ private:
         received
     };
 
-    enum class NMEADecodeState
-    {
-        uninit,
-        got_sync1,
-        got_asteriks,
-        got_first_cs_byte
-    };
-
     /**
      * enable output of correction output
      */
@@ -142,7 +135,7 @@ private:
     char _port{'A'};                    /**< port we are connected to (e.g. 'A') */
 
     uint8_t _rx_buffer[ASHTECH_RECV_BUFFER_SIZE];
-    uint16_t _rx_buffer_bytes{};
+    NMEA::Framer _nmeaFramer{_rx_buffer};
     uint64_t _last_timestamp_time{0};
 
     float _heading_offset;
@@ -160,8 +153,6 @@ private:
     NMEACommand _waiting_for_command;
 
     NMEACommandState _command_state{NMEACommandState::idle};
-
-    NMEADecodeState _decode_state{NMEADecodeState::uninit};
 
     OutputMode _output_mode{OutputMode::GPS};
 

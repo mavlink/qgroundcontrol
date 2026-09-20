@@ -83,5 +83,5 @@ private:
     QElapsedTimer _cacheAge;
     quint64 _fetchRevision = 0;
 
-    QString _lastFetchKey;
+    NTRIPConnectionConfig _lastFetchConfig;  ///< Mountpoint is excluded from source-table identity.
 };

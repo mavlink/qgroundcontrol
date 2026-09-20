@@ -535,62 +535,9 @@ int GPSNativeAshtech::parseChar(uint8_t b)
         }
     }
 
-    switch (_decode_state) {
-        /* First, look for sync1 */
-        case NMEADecodeState::uninit:
-            if (b == '$') {
-                _decode_state = NMEADecodeState::got_sync1;
-                _rx_buffer_bytes = 0;
-                _rx_buffer[_rx_buffer_bytes++] = b;
-            }
-
-            break;
-
-        case NMEADecodeState::got_sync1:
-            if (b == '$') {
-                _decode_state = NMEADecodeState::got_sync1;
-                _rx_buffer_bytes = 0;
-
-            } else if (b == '*') {
-                _decode_state = NMEADecodeState::got_asteriks;
-            }
-
-            if (_rx_buffer_bytes >= (sizeof(_rx_buffer) - 5)) {
-                _decode_state = NMEADecodeState::uninit;
-                _rx_buffer_bytes = 0;
-
-            } else {
-                _rx_buffer[_rx_buffer_bytes++] = b;
-            }
-
-            break;
-
-        case NMEADecodeState::got_asteriks:
-            _rx_buffer[_rx_buffer_bytes++] = b;
-            _decode_state = NMEADecodeState::got_first_cs_byte;
-            break;
-
-        case NMEADecodeState::got_first_cs_byte: {
-            _rx_buffer[_rx_buffer_bytes++] = b;
-            uint8_t checksum = 0;
-            uint8_t* buffer = _rx_buffer + 1;
-            uint8_t* bufend = _rx_buffer + _rx_buffer_bytes - 3;
-
-            for (; buffer < bufend; buffer++) {
-                checksum ^= *buffer;
-            }
-
-            if ((NMEAFields::hexDigit(checksum >> 4) == *(_rx_buffer + _rx_buffer_bytes - 2)) &&
-                (NMEAFields::hexDigit(checksum & 0x0F) == *(_rx_buffer + _rx_buffer_bytes - 1))) {
-                iRet = _rx_buffer_bytes;
-
-                if (_rtcm_parsing) {
-                    _rtcm_parsing->reset();
-                }
-            }
-
-            decodeInit();
-        } break;
+    iRet = static_cast<int>(_nmeaFramer.addByte(b));
+    if (iRet > 0 && _rtcm_parsing) {
+        _rtcm_parsing->reset();
     }
 
     return iRet;
@@ -598,8 +545,7 @@ int GPSNativeAshtech::parseChar(uint8_t b)
 
 void GPSNativeAshtech::decodeInit()
 {
-    _rx_buffer_bytes = 0;
-    _decode_state = NMEADecodeState::uninit;
+    _nmeaFramer.reset();
 }
 
 void GPSNativeAshtech::sendSurveyInStatusUpdate(bool active, bool valid, double latitude, double longitude,

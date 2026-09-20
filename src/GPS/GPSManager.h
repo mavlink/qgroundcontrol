@@ -14,6 +14,7 @@ class QTimer;
 class GPSManager : public QObject
 {
     Q_OBJECT
+    friend class RTKAutoConnectTest;
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("GPSCorrectionManager.h")

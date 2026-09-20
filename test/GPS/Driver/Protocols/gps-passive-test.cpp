@@ -8,6 +8,7 @@
 
 #include "GPSProtocolTestIO.h"
 #include "Passive/GPSDriverPassive.h"
+#include "UnitTest.h"
 
 #define CHECK(condition)                          \
     do {                                          \
@@ -312,8 +313,19 @@ void satelliteBatchDeadline()
 }
 }  // namespace
 
-int main()
+class GPSProtocolPassiveTest : public UnitTest
 {
+    Q_OBJECT
+
+private slots:
+
+    void _protocol();
+};
+
+void GPSProtocolPassiveTest::_protocol()
+{
+    gps_test_time = 0;
+    gps_test_warnings.clear();
     try {
         configuration();
         navigation();
@@ -322,8 +334,10 @@ int main()
         satelliteEpochBoundaries();
         satelliteBatchDeadline();
     } catch (const std::exception& error) {
-        std::fprintf(stderr, "%s\n", error.what());
-        return 1;
+        QFAIL(error.what());
     }
-    return 0;
 }
+
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolPassiveTest, TestLabel::Unit)
+
+#include "gps-passive-test.moc"

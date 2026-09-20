@@ -382,12 +382,13 @@ void GPSCorrectionManagerTest::_sourceSelectionAndSessions()
     QCOMPARE(routed.size(), 1);
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(routed.first().first()).messageId, 1005);
     QCOMPARE(corrections.rtcmMavlink()->totalBytesSubmitted(), quint64(0));
-    corrections.setSelectedSource(GPSCorrectionSource::LocalReceiver);
+    corrections.applyRoutingConfiguration(
+        {GPSCorrectionManager::RoutingPolicy::Manual, GPSCorrectionSource::LocalReceiver, {}});
     corrections.acceptIngress(frame);
     QCOMPARE(routed.size(), 1);
     corrections.acceptIngress(local.token().event(data, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     QCOMPARE(routed.size(), 2);
-    corrections.setSelectedSource(GPSCorrectionSource::Unknown);
+    corrections.applyRoutingConfiguration({GPSCorrectionManager::RoutingPolicy::All, GPSCorrectionSource::Unknown, {}});
     ntrip.reset();
     corrections.acceptIngress(frame);
     QCOMPARE(routed.size(), 2);

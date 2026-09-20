@@ -1,4 +1,12 @@
-qt_add_library(QGCGPSQuectel STATIC GPSDriverQuectel.cc GPSDriverQuectel.h)
+qt_add_library(
+    QGCGPSQuectel
+    STATIC
+    GPSDriverQuectel.cc
+    GPSDriverQuectel.h
+    QuectelDecoder.cc
+    QuectelCodec.cc
+    QuectelCodec_p.h
+)
 set_target_properties(
     QGCGPSQuectel
     PROPERTIES AUTOMOC OFF

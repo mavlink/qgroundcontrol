@@ -121,15 +121,8 @@ private:
     bool sendMessageAndWaitForAck(const char* msg, int timeout, GPSReceiverSettingSet settings = {},
                                   bool required = true);
 
-    /**
-     * @brief Configures the SBF Output blocks
-     * @return true on success, false on write error (errno set) or ack wait timeout
-     */
-    bool configSBFOutput(const char* com_port);
-
     GPSNativePositionReport* _gps_position{nullptr};
     GPSNativeSatelliteReport* _satellite_info{nullptr};
-    uint8_t _dynamic_model{7};
     bool _configured{false};
     sbf_decode_state_t _decode_state{SBF_DECODE_SYNC1};
     uint16_t _rx_payload_index{0};

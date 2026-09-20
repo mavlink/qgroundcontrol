@@ -153,18 +153,7 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
             return -1;
         }
 
-        if (_dynamic_model < 6) {
-            snprintf(msg, sizeof(msg), SBF_CONFIG_RECEIVER_DYNAMICS, "low");
-
-        } else if (_dynamic_model < 7) {
-            snprintf(msg, sizeof(msg), SBF_CONFIG_RECEIVER_DYNAMICS, "moderate");
-
-        } else if (_dynamic_model < 8) {
-            snprintf(msg, sizeof(msg), SBF_CONFIG_RECEIVER_DYNAMICS, "high");
-
-        } else {
-            snprintf(msg, sizeof(msg), SBF_CONFIG_RECEIVER_DYNAMICS, "max");
-        }
+        snprintf(msg, sizeof(msg), SBF_CONFIG_RECEIVER_DYNAMICS, "high");
 
         if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
             return -1;
@@ -208,8 +197,9 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
 
     if (_output_mode == OutputMode::RTCM) {
         if (_baseConfig.useFixedBase) {
-            snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATIC_COORDINATES, _baseConfig.fixedBaseLatitude,
-                     _baseConfig.fixedBaseLongitude, static_cast<double>(_baseConfig.fixedBaseAltitudeMeters));
+            snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATIC_COORDINATES, _baseConfig.fixedPosition.latitudeDegrees,
+                     _baseConfig.fixedPosition.longitudeDegrees,
+                     static_cast<double>(_baseConfig.fixedPosition.altitudeMeters));
             if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
                 return -1;
             }
@@ -278,5 +268,5 @@ bool GPSNativeSBF::sendMessageAndWaitForAck(const char* msg, int timeout, GPSRec
             }
         },
         [&] { return response; });
-    return result.outcome == GPSCommandOutcome::Acknowledged;
+    return result.evidence.outcome == GPSCommandOutcome::Acknowledged;
 }

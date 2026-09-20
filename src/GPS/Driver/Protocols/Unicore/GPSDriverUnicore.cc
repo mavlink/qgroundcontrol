@@ -8,29 +8,14 @@
 
 #include <QtCore/QScopeGuard>
 
+#include "CRC32.h"
+
 // Independent implementation of Unicore N4 Commands and Logs Reference Book, EN R1.6:
 // https://en.unicore.com/uploads/file/Unicore%20Reference%20Commands%20Manual%20For%20N4%20High%20Precision%20Products_V2_EN_R1.6.pdf
 // Sections 3, 7.3.1, 7.3.27, 7.3.44; Appendices 1/2 and position/solution status tables.
 // Captured command-reply framing (XOR includes '$'):
 // https://s-taka.org/control-command-for-gnss-receiver-um982/
 namespace {
-
-template <size_t N>
-size_t split(std::string_view input, std::array<std::string_view, N>& fields)
-{
-    size_t count = 0;
-    for (;;) {
-        if (count == fields.size()) {
-            return 0;
-        }
-        const auto separator = input.find(',');
-        fields[count++] = input.substr(0, separator);
-        if (separator == std::string_view::npos) {
-            return count;
-        }
-        input.remove_prefix(separator + 1);
-    }
-}
 
 bool equalCommand(std::string_view left, std::string_view right)
 {
@@ -68,17 +53,10 @@ bool validChecksum(std::string_view line, bool crc32)
     uint32_t checksum = 0;
     if (crc32) {
         // Reflected CRC-32, initial value zero and no final XOR; '#' is excluded.
-        for (const unsigned char ch : line.substr(1, star - 1)) {
-            checksum ^= ch;
-            for (unsigned bit = 0; bit < 8; ++bit) {
-                checksum = (checksum >> 1) ^ ((checksum & 1) ? 0xedb88320U : 0U);
-            }
-        }
+        checksum = QGC::crc32Update({reinterpret_cast<const uint8_t*>(line.data() + 1), star - 1});
     } else {
         // MODE and command acknowledgments include their leading '#' / '$', unlike NMEA.
-        for (const unsigned char ch : line.substr(0, star)) {
-            checksum ^= ch;
-        }
+        checksum = NMEA::checksum(line.substr(0, star));
     }
     return checksum == *expected;
 }
@@ -93,13 +71,6 @@ bool supportedFirmware(std::string_view model, std::string_view firmware)
     // N4 R1.6 section 3.6 explicitly gives these minimum builds for the rover modes.
     return build && ((model == "UM980" && *build >= 7923) || (model == "UM982" && *build >= 7650));
 }
-
-bool samePosition(const std::array<double, 3>& left, const std::array<double, 3>& right)
-{
-    // ECEF command/readback values have four decimal places; this is not survey accuracy.
-    return std::hypot(left[0] - right[0], left[1] - right[1], left[2] - right[2]) < 0.02;
-}
-
 }  // namespace
 
 GPSNativeUnicore::GPSNativeUnicore(GPSProtocolIO io, GPSNativePositionReport* position,
@@ -114,19 +85,32 @@ bool GPSNativeUnicore::_execute(std::string command, Reply reply)
     _command = std::move(command);
     _expectedReply = reply;
     _replyOutcome = GPSCommandOutcome::Pending;
+    _configurationDetail.clear();
     _commandActive = true;
     const auto clearReply = qScopeGuard([this] { _commandActive = false; });
     const GPSConfigurationStep step{_command, std::chrono::milliseconds(COMMAND_TIMEOUT_MS)};
     const auto wire = _command + "\r\n";
     if (!writeCommand(step, {reinterpret_cast<const uint8_t*>(wire.data()), wire.size()})) {
+        _configurationDetail =
+            QStringLiteral("Unicore command '%1' could not be written").arg(QString::fromStdString(_command));
         return false;
     }
     const auto result = awaitCommand(step, [this] { return _replyOutcome; });
     _commandActive = false;
-    if (result.outcome != GPSCommandOutcome::Acknowledged && result.outcome != GPSCommandOutcome::ReadbackVerified) {
-        if (result.outcome != GPSCommandOutcome::Cancelled) {
-            log(GPSProtocolLogLevel::Warning, "Unicore command failed (%d): %s", static_cast<int>(result.outcome),
-                _command.c_str());
+    if (result.evidence.outcome != GPSCommandOutcome::Acknowledged &&
+        result.evidence.outcome != GPSCommandOutcome::ReadbackVerified) {
+        if (result.evidence.outcome != GPSCommandOutcome::Cancelled) {
+            if (_configurationDetail.isEmpty()) {
+                const auto failure = result.evidence.outcome == GPSCommandOutcome::TimedOut
+                                         ? QStringLiteral("timed out")
+                                     : result.evidence.outcome == GPSCommandOutcome::Rejected
+                                         ? QStringLiteral("was rejected or its readback did not match")
+                                         : QStringLiteral("failed");
+                _configurationDetail =
+                    QStringLiteral("Unicore command '%1' %2").arg(QString::fromStdString(_command), failure);
+            }
+            log(GPSProtocolLogLevel::Warning, "Unicore command failed (%d): %s",
+                static_cast<int>(result.evidence.outcome), _command.c_str());
         }
         return false;
     }
@@ -139,6 +123,7 @@ bool GPSNativeUnicore::_identify(unsigned& baud)
     for (const auto candidate : BAUD_RATES) {
         const unsigned rate = baud ? baud : candidate;
         resetStream();
+        _configurationDetail = QStringLiteral("Cannot configure Unicore host serial speed %1").arg(rate);
         if (setBaudrate(static_cast<int>(rate)) == 0 && _execute("VERSIONA", Reply::Version)) {
             baud = rate;
             log(GPSProtocolLogLevel::Debug, "Unicore %s firmware %s", _model.c_str(), _firmware.c_str());
@@ -166,24 +151,33 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
     resetStream();
     _model.clear();
     _firmware.clear();
+    _configurationDetail.clear();
     if (wasBase || _base) {
         _publishBase(false, false);
         consume({});
     }
 
-    if (!validateConfiguration(config, true) ||
-        (_averaging &&
-         (config.base.surveyMode != GPSBaseStationConfig::SurveyMode::ReceiverManaged ||
-          config.base.receiverAveragingDurationSecs == 0 || config.base.receiverAveragingDurationSecs > 3600)) ||
-        config.gnss_systems != GNSSSystemsMask::RECEIVER_DEFAULTS || config.dynamicModel != 0) {
+    if (!validateConfiguration(config, true)) {
+        return _configurationFailed(
+            QStringLiteral("Invalid Unicore receiver configuration: check the role, base position and survey settings; "
+                           "persistent changes are not supported"));
+    }
+    if (_averaging &&
+        (config.base.surveyMode != GPSBaseStationConfig::SurveyMode::ReceiverManaged ||
+         config.base.receiverAveragingDurationSecs == 0 || config.base.receiverAveragingDurationSecs > 3600)) {
         log(GPSProtocolLogLevel::Warning,
             "Unicore supports receiver-managed averaging, not accuracy-controlled survey");
-        return -1;
+        return _configurationFailed(
+            QStringLiteral("Unicore requires receiver-managed averaging with a duration between 1 and 3600 seconds"));
+    }
+    if (config.gnss_systems != GNSSSystemsMask::RECEIVER_DEFAULTS || config.dynamicModel != 0) {
+        log(GPSProtocolLogLevel::Warning, "Unicore requires receiver-default constellations and dynamic model");
+        return _configurationFailed(
+            QStringLiteral("Unicore requires receiver-default constellations and dynamic model"));
     }
     _baseConfig = config.base;
     if (_base && !_averaging) {
-        lla2ECEF(config.base.fixedBaseLatitude, config.base.fixedBaseLongitude, config.base.fixedBaseAltitudeMeters,
-                 _fixedECEF[0], _fixedECEF[1], _fixedECEF[2]);
+        _fixedECEF = toEcef(config.base.fixedPosition);
     }
     const Operation operation(*this, 45000);
     if (!_identify(baud) || !_execute("UNLOG")) {
@@ -210,8 +204,8 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
         mode << "MODE BASE TIME " << config.base.receiverAveragingDurationSecs << " 0";
         _expectedMode = Mode::AveragingBase;
     } else {
-        mode << std::fixed << std::setprecision(4) << "MODE BASE " << _fixedECEF[0] << ' ' << _fixedECEF[1] << ' '
-             << _fixedECEF[2];
+        mode << std::fixed << std::setprecision(4) << "MODE BASE " << _fixedECEF.x << ' ' << _fixedECEF.y << ' '
+             << _fixedECEF.z;
         _expectedMode = Mode::FixedBase;
     }
     if (!_execute(mode.str()) || !_execute("MODE", Reply::Mode)) {
@@ -236,8 +230,11 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
     return 0;
 }
 
-int GPSNativeUnicore::_configurationFailed()
+int GPSNativeUnicore::_configurationFailed(const QString& reason)
 {
+    if (!reason.isEmpty()) {
+        _configurationDetail = reason;
+    }
     if (_monitorBase) {
         _publishBase(false, false);
     }
@@ -246,13 +243,16 @@ int GPSNativeUnicore::_configurationFailed()
     _baseValid = false;
     setRTCMEnabled(false);
     consume({});
+    if (ioError() != ReadCancelled && ioErrorDetail().isEmpty()) {
+        _ioErrorDetail = _configurationDetail;
+    }
     return ioError() ? ioError() : -1;
 }
 
 void GPSNativeUnicore::_handleVersion(std::string_view body)
 {
     std::array<std::string_view, 6> fields{};
-    if (split(body, fields) != fields.size()) {
+    if (NMEA::splitFields(body, fields) != fields.size()) {
         return;
     }
     const auto model = unquote(fields[0]);
@@ -265,6 +265,13 @@ void GPSNativeUnicore::_handleVersion(std::string_view body)
         _firmware = firmware;
         _replyOutcome =
             supportedFirmware(model, firmware) ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected;
+        if (_replyOutcome == GPSCommandOutcome::Rejected) {
+            _configurationDetail =
+                QStringLiteral(
+                    "Unsupported Unicore receiver '%1' firmware '%2'; requires UM980 R4.10Build7923+ "
+                    "or UM982 R4.10Build7650+")
+                    .arg(QString::fromStdString(_model), QString::fromStdString(_firmware));
+        }
     } else if (_ready) {
         // An unsolicited identity report can indicate a reboot; never retain old base validity.
         _invalidateBase();
@@ -293,7 +300,7 @@ void GPSNativeUnicore::_handlePosition(std::string_view body)
         return;
     }
     std::array<std::string_view, 28> fields{};
-    if (split(body, fields) != fields.size()) {
+    if (NMEA::splitFields(body, fields) != fields.size()) {
         return;
     }
     const auto x = NMEA::number<double>(fields[2]);
@@ -302,7 +309,11 @@ void GPSNativeUnicore::_handlePosition(std::string_view body)
     if (!x || !y || !z) {
         return;
     }
-    const std::array<double, 3> coordinates{*x, *y, *z};
+    const EcefMeters coordinates{*x, *y, *z};
+    const auto samePosition = [](const EcefMeters& left, const EcefMeters& right) {
+        // ECEF command/readback values have four decimal places; this is not survey accuracy.
+        return std::hypot(left.x - right.x, left.y - right.y, left.z - right.z) < 0.02;
+    };
     const auto radius = std::hypot(*x, *y, *z);
     const bool fixed = fields[0] == "SOL_COMPUTED" && fields[1] == "FIXEDPOS" && radius > 6000000 && radius < 7000000;
     const bool matches = _averaging || samePosition(coordinates, _fixedECEF);
@@ -331,7 +342,10 @@ void GPSNativeUnicore::_publishBase(bool valid, bool active)
     report.altitude = NAN;
     report.flags = static_cast<uint8_t>(valid) | (static_cast<uint8_t>(active) << 1);
     if (valid) {
-        ECEF2lla(_baseECEF[0], _baseECEF[1], _baseECEF[2], report.latitude, report.longitude, report.altitude);
+        const auto position = fromEcef(_baseECEF);
+        report.latitude = position.latitudeDegrees;
+        report.longitude = position.longitudeDegrees;
+        report.altitude = position.altitudeMeters;
         report.altitudeDatum = GPSNativeSurveyReport::AltitudeDatum::Ellipsoid;
     }
     // BESTNAV's instantaneous sigmas and BASEPOS monitoring are not averaging accuracy or elapsed time.
@@ -410,7 +424,7 @@ int GPSNativeUnicore::handleReceiverLine(std::string_view line)
         return 0;
     }
     std::array<std::string_view, 10> header{};
-    if (split(line.substr(1, semicolon - 1), header) != header.size()) {
+    if (NMEA::splitFields(line.substr(1, semicolon - 1), header) != header.size()) {
         return 0;
     }
     const auto body = line.substr(semicolon + 1, line.find('*') - semicolon - 1);

@@ -18,6 +18,7 @@ target_sources(
            NMEAConstellation.h
            NMEASatelliteEpoch.h
            NMEAFields.h
+           NMEAFramer.h
            NMEAUtils.h
 )
 target_sources(

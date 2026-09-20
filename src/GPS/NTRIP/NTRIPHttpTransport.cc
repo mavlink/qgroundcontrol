@@ -12,6 +12,7 @@
 #include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
 #include "NTRIPHttpRequest.h"
+#include "NTRIPTlsPolicy_p.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIPHttpTransport")
@@ -197,24 +198,16 @@ void NTRIPHttpTransport::_connect()
                 return;
             }
             QStringList msgs;
-            QList<QSslError> ignorable;
-            bool fatal = false;
             for (const QSslError& e : errors) {
                 qCWarning(NTRIPHttpTransportLog) << "TLS error:" << e.errorString();
                 msgs.append(e.errorString());
-                if (e.error() == QSslError::SelfSignedCertificate ||
-                    e.error() == QSslError::SelfSignedCertificateInChain) {
-                    ignorable.append(e);
-                } else {
-                    fatal = true;
-                }
             }
-            if (fatal) {
+            if (!NTRIPTlsPolicy::isSelfSignedOnly(errors)) {
                 _fail(NTRIPError::SslError, msgs.join(QStringLiteral("; ")));
             } else if (_config.allowSelfSignedCerts) {
                 qCWarning(NTRIPHttpTransportLog) << "Accepting self-signed certificate (user opted in)";
                 // Only ignore the specific self-signed errors; all other SSL errors remain fatal.
-                sslSocket->ignoreSslErrors(ignorable);
+                sslSocket->ignoreSslErrors(errors);
             } else {
                 qCWarning(NTRIPHttpTransportLog)
                     << "Rejecting self-signed certificate (enable 'Accept self-signed certificates' to allow)";

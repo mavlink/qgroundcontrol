@@ -1,5 +1,6 @@
 #include "NTRIPHttpTransportTest.h"
 
+#include <chrono>
 #include <memory>
 
 #include <QtCore/QRegularExpression>
@@ -172,32 +173,6 @@ void NTRIPHttpTransportTest::testConfigurationDomainsCompareIndependently()
     QCOMPARE(changed.connection, baseline.connection);
     QCOMPARE(changed.udpForward, baseline.udpForward);
     QVERIFY(changed.filter != baseline.filter);
-}
-
-void NTRIPHttpTransportTest::testConfigCasterIdentityExcludesMountpointAndSinks()
-{
-    NTRIPConfiguration baseline;
-    baseline.connection.host = QStringLiteral("caster.example.com");
-    baseline.connection.username = QStringLiteral("user");
-    baseline.connection.password = QStringLiteral("pass");
-    baseline.connection.mountpoint = QStringLiteral("MOUNT1");
-    baseline.connection.useTls = true;
-    baseline.filter.whitelist = QStringLiteral("1005");
-    baseline.udpForward = {.enabled = true, .address = QStringLiteral("127.0.0.1"), .port = 3000};
-
-    auto sameCaster = baseline;
-    sameCaster.connection.mountpoint = QStringLiteral("MOUNT2");
-    sameCaster.filter.whitelist = QStringLiteral("1005,1077");
-    sameCaster.udpForward = {.enabled = false, .address = QStringLiteral("192.0.2.1"), .port = 3001};
-    QCOMPARE(sameCaster.connection.casterIdentity(), baseline.connection.casterIdentity());
-
-    auto differentCaster = baseline;
-    differentCaster.connection.useTls = false;
-    QVERIFY(differentCaster.connection.casterIdentity() != baseline.connection.casterIdentity());
-
-    differentCaster = baseline;
-    differentCaster.connection.password = QStringLiteral("other-pass");
-    QVERIFY(differentCaster.connection.casterIdentity() != baseline.connection.casterIdentity());
 }
 
 void NTRIPHttpTransportTest::testTlsFatalErrorEmitsSingleError()
@@ -495,23 +470,65 @@ void NTRIPHttpTransportTest::_testBuildRequestNoCredentialsNoWarn()
     QVERIFY(!request.bytes.contains("Authorization:"));
 }
 
+void NTRIPHttpTransportTest::_testBuildRequestPreservesValues_data()
+{
+    QTest::addColumn<QString>("username");
+    QTest::addColumn<QString>("password");
+    QTest::addColumn<QByteArray>("encoded");
+    QTest::addColumn<bool>("useTls");
+    for (const bool useTls : {false, true}) {
+        const QByteArray suffix = useTls ? "-tls" : "-plaintext";
+        QTest::newRow(("anonymous" + suffix).constData()) << QString{} << QString{} << QByteArray{} << useTls;
+        QTest::newRow(("username-and-password" + suffix).constData())
+            << QStringLiteral("user") << QStringLiteral("pass") << QByteArray("dXNlcjpwYXNz") << useTls;
+        QTest::newRow(("username-only" + suffix).constData())
+            << QStringLiteral("user") << QString{} << QByteArray("dXNlcjo=") << useTls;
+        QTest::newRow(("password-only" + suffix).constData())
+            << QString{} << QStringLiteral("pass") << QByteArray("OnBhc3M=") << useTls;
+        QTest::newRow(("utf8-credentials" + suffix).constData())
+            << QString::fromUtf8("Us\xc3\xa9r") << QString::fromUtf8("Pa\xc3\x9fs") << QByteArray("VXPDqXI6UGHDn3M=")
+            << useTls;
+    }
+}
+
 void NTRIPHttpTransportTest::_testBuildRequestPreservesValues()
 {
+    QFETCH(QString, username);
+    QFETCH(QString, password);
+    QFETCH(QByteArray, encoded);
+    QFETCH(bool, useTls);
     NTRIPConnectionConfig config;
     config.host = QStringLiteral("Caster.Example.com");
     config.mountpoint = QStringLiteral("MixedCase_1");
-    config.username = QString::fromUtf8("Us\xc3\xa9r");
-    config.password = QString::fromUtf8("Pa\xc3\x9fs");
+    config.username = username;
+    config.password = password;
+    config.useTls = useTls;
+    QVERIFY(config.streamValidationError().isEmpty());
     const auto request = NTRIPHttpRequest::build(config);
-    const QByteArray credentials = (config.username + QLatin1Char(':') + config.password).toUtf8().toBase64();
+    const QByteArray authorization = encoded.isEmpty() ? QByteArray{} : "Authorization: Basic " + encoded + "\r\n";
     QVERIFY(request.error.isEmpty());
+    QCOMPARE(request.credentialsInClear, !encoded.isEmpty() && !useTls);
     QCOMPARE(request.bytes,
              "GET /MixedCase_1 HTTP/1.1\r\n"
              "Host: Caster.Example.com\r\n"
              "Ntrip-Version: Ntrip/2.0\r\n"
-             "User-Agent: NTRIP QGroundControl/1.0\r\n"
-             "Authorization: Basic " +
-                 credentials + "\r\n\r\n");
+             "User-Agent: NTRIP QGroundControl/1.0\r\n" +
+                 authorization + "\r\n");
+}
+
+void NTRIPHttpTransportTest::_testHttpDecoderReset()
+{
+    NTRIPHttpDecoder decoder;
+    const auto result = decoder.feed("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nabc\r\n0\r\n\r\n", {});
+    QVERIFY(result.connected);
+    QVERIFY(result.complete);
+    QVERIFY(!result.failure);
+    QCOMPARE(result.body, QByteArray("abc"));
+    decoder.reset();
+    const auto failure = decoder.feed("HTTP/1.1 503 Unavailable\r\nRetry-After: 17\r\nContent-Length: 0\r\n\r\n", {});
+    QVERIFY(failure.failure);
+    QCOMPARE(failure.failure->code, NTRIPError::HttpError);
+    QCOMPARE(failure.failure->retryAfter, std::chrono::seconds(17));
 }
 
 void NTRIPHttpTransportTest::_testBuildRequestRejectsInvalidConfig_data()

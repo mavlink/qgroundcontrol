@@ -2,8 +2,9 @@
 #include <QtTest/QTest>
 
 #include "RTCMMavlinkPacket.h"
+#include "UnitTest.h"
 
-class RTCMMavlinkPacketTest : public QObject
+class RTCMMavlinkPacketTest : public UnitTest
 {
     Q_OBJECT
 
@@ -61,6 +62,6 @@ void RTCMMavlinkPacketTest::_packetization()
     QCOMPARE(assembled, bytes);
 }
 
-QTEST_GUILESS_MAIN(RTCMMavlinkPacketTest)
+UT_REGISTER_TEST(RTCMMavlinkPacketTest, TestLabel::Unit)
 
 #include "RTCMMavlinkPacketTest.moc"

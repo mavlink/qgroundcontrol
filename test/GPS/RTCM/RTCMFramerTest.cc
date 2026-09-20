@@ -134,8 +134,4 @@ void RTCMFramerTest::_implicitAdvance()
     QCOMPARE(rejected, expectedRejected);
 }
 
-#ifdef QGC_GPS_STANDALONE_TEST
-QTEST_GUILESS_MAIN(RTCMFramerTest)
-#else
 UT_REGISTER_TEST(RTCMFramerTest, TestLabel::Unit)
-#endif

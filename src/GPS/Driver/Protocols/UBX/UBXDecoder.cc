@@ -732,10 +732,14 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                 GPSNativeSurveyReport status{};
                 status.accuracyKnown = true;
                 status.altitudeDatum = GPSNativeSurveyReport::AltitudeDatum::Ellipsoid;
-                double ecef_x = (static_cast<double>(svin.meanX) + static_cast<double>(svin.meanXHP) * 0.01) * 0.01;
-                double ecef_y = (static_cast<double>(svin.meanY) + static_cast<double>(svin.meanYHP) * 0.01) * 0.01;
-                double ecef_z = (static_cast<double>(svin.meanZ) + static_cast<double>(svin.meanZHP) * 0.01) * 0.01;
-                ECEF2lla(ecef_x, ecef_y, ecef_z, status.latitude, status.longitude, status.altitude);
+                const auto surveyPosition = fromEcef({
+                    .x = (static_cast<double>(svin.meanX) + static_cast<double>(svin.meanXHP) * 0.01) * 0.01,
+                    .y = (static_cast<double>(svin.meanY) + static_cast<double>(svin.meanYHP) * 0.01) * 0.01,
+                    .z = (static_cast<double>(svin.meanZ) + static_cast<double>(svin.meanZHP) * 0.01) * 0.01,
+                });
+                status.latitude = surveyPosition.latitudeDegrees;
+                status.longitude = surveyPosition.longitudeDegrees;
+                status.altitude = surveyPosition.altitudeMeters;
                 status.duration = svin.dur;
                 status.mean_accuracy = svin.meanAcc / 10;
                 status.flags = (svin.valid & 1) | ((svin.active & 1) << 1);

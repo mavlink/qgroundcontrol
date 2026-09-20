@@ -1,6 +1,7 @@
-#include <cstdio>
-
 #include "GPSProtocolTime.h"
+#include "UnitTest.h"
+
+Q_DECLARE_METATYPE(tm)
 
 static tm calendar(int year, int month, int day, int hour, int minute, int second, int isdst = 0)
 {
@@ -15,8 +16,20 @@ static tm calendar(int year, int month, int day, int hour, int minute, int secon
     return utc;
 }
 
-int main()
+class GPSProtocolUtcTest : public UnitTest
 {
+    Q_OBJECT
+
+private slots:
+
+    void _utc_data();
+    void _utc();
+};
+
+void GPSProtocolUtcTest::_utc_data()
+{
+    QTest::addColumn<tm>("utc");
+    QTest::addColumn<qint64>("epoch");
     const struct
     {
         const char* name;
@@ -42,49 +55,45 @@ int main()
         {"signed-32-bit-next-day", calendar(2038, 1, 20, 0, 0, 0), 2147558400LL},
     };
 
-    bool success = true;
-
     for (const auto& test : cases) {
-        tm utc = test.utc;
-        const time_t actual = gpsTimeToEpoch(utc);
-        const bool representable =
-            static_cast<uint64_t>(test.expected) <= static_cast<uint64_t>(std::numeric_limits<time_t>::max());
-        const time_t expected = representable ? static_cast<time_t>(test.expected) : static_cast<time_t>(-1);
-
-        if (actual != expected) {
-            std::fprintf(stderr, "%s: expected %lld, got %lld\n", test.name, static_cast<long long>(expected),
-                         static_cast<long long>(actual));
-            success = false;
-        }
-
-        if (!representable) {
-            continue;
-        }
-
-        const tm* normalized = gmtime(&expected);
-
-        if (normalized == nullptr || utc.tm_year != normalized->tm_year || utc.tm_mon != normalized->tm_mon ||
-            utc.tm_mday != normalized->tm_mday || utc.tm_hour != normalized->tm_hour ||
-            utc.tm_min != normalized->tm_min || utc.tm_sec != normalized->tm_sec ||
-            utc.tm_yday != normalized->tm_yday || utc.tm_wday != normalized->tm_wday || utc.tm_isdst != 0) {
-            std::fprintf(stderr, "%s: UTC calendar fields were not normalized\n", test.name);
-            success = false;
-        }
+        QTest::newRow(test.name) << test.utc << qint64(test.expected);
     }
-
-    tm gps_week = cases[7].utc;
-    gpsTimeToEpoch(gps_week);
-
-    if (gps_week.tm_year != 126 || gps_week.tm_mon != 8 || gps_week.tm_mday != 8 || gps_week.tm_hour != 15 ||
-        gps_week.tm_min != 58 || gps_week.tm_sec != 9) {
-        std::fprintf(stderr, "SBF GPS week calendar fields were not normalized\n");
-        success = false;
-    }
-
-    if (success) {
-        std::printf("Passed %u UTC cases with %u-bit time_t\n", static_cast<unsigned>(sizeof(cases) / sizeof(cases[0])),
-                    static_cast<unsigned>(sizeof(time_t) * 8));
-    }
-
-    return success ? 0 : 1;
 }
+
+void GPSProtocolUtcTest::_utc()
+{
+    QFETCH(tm, utc);
+    QFETCH(qint64, epoch);
+    const time_t actual = gpsTimeToEpoch(utc);
+    const bool representable =
+        static_cast<uint64_t>(epoch) <= static_cast<uint64_t>((std::numeric_limits<time_t>::max)());
+    const time_t expected = representable ? static_cast<time_t>(epoch) : static_cast<time_t>(-1);
+    QCOMPARE(actual, expected);
+    if (!representable) {
+        return;
+    }
+
+    const tm* normalized = gmtime(&expected);
+    QVERIFY(normalized);
+    QCOMPARE(utc.tm_year, normalized->tm_year);
+    QCOMPARE(utc.tm_mon, normalized->tm_mon);
+    QCOMPARE(utc.tm_mday, normalized->tm_mday);
+    QCOMPARE(utc.tm_hour, normalized->tm_hour);
+    QCOMPARE(utc.tm_min, normalized->tm_min);
+    QCOMPARE(utc.tm_sec, normalized->tm_sec);
+    QCOMPARE(utc.tm_yday, normalized->tm_yday);
+    QCOMPARE(utc.tm_wday, normalized->tm_wday);
+    QCOMPARE(utc.tm_isdst, 0);
+    if (qstrcmp(QTest::currentDataTag(), "sbf-gps-week") == 0) {
+        QCOMPARE(utc.tm_year, 126);
+        QCOMPARE(utc.tm_mon, 8);
+        QCOMPARE(utc.tm_mday, 8);
+        QCOMPARE(utc.tm_hour, 15);
+        QCOMPARE(utc.tm_min, 58);
+        QCOMPARE(utc.tm_sec, 9);
+    }
+}
+
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolUtcTest, TestLabel::Unit)
+
+#include "gps-time-test.moc"

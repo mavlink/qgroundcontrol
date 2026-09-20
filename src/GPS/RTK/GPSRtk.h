@@ -92,7 +92,7 @@ signals:
 private slots:
     void _satelliteInfoUpdate(const GPSSatelliteReport& msg);
     void _satelliteUsageUpdate(const GPSSatelliteUsageReport& msg);
-    void _sensorGpsUpdate(const GPSPositionReport& msg);
+    void _fixTypeChanged(GPSPositionReport::FixType fixType);
     void _onGPSConnect();
     void _onGPSDisconnect();
     void _onGPSConnectionError(GPSConnectionError error);
@@ -105,7 +105,6 @@ private:
         GPSCorrectionSourceRegistration corrections;
         GPSReceiverConfig configuration;
         QString serialDevice;
-        std::optional<GPSPositionReport::FixType> lastLoggedFixType;
         std::optional<int> countOnlySatelliteUsage;
         int manufacturer = 0;
         int baseMode = -1;
@@ -115,6 +114,9 @@ private:
 
     static QString _receiverConfig(GPSType type, RTKSettings* settings, uint32_t baudRate, GPSReceiverConfig& config,
                                    bool allowPersistentChanges = false);
+#ifndef QGC_NO_SERIAL_LINK
+    bool _connectSerialGPS(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges);
+#endif
     bool _connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory, const QString& sourceInstance,
                           uint32_t baudRate, bool allowPersistentChanges, const QString& serialDevice = {});
     void _retireSession(quint64 generation);

@@ -110,9 +110,9 @@ QJsonObject requestedConfig(const GPSReceiverConfig& config)
     if (config.role == GPSReceiverConfig::Role::RTKBase) {
         if (config.base.useFixedBase) {
             result.insert("base_mode", "fixed");
-            result.insert("latitude_deg", config.base.fixedBaseLatitude);
-            result.insert("longitude_deg", config.base.fixedBaseLongitude);
-            result.insert("ellipsoid_altitude_m", config.base.fixedBaseAltitudeMeters);
+            result.insert("latitude_deg", config.base.fixedPosition.latitudeDegrees);
+            result.insert("longitude_deg", config.base.fixedPosition.longitudeDegrees);
+            result.insert("ellipsoid_altitude_m", config.base.fixedPosition.altitudeMeters);
         } else if (config.base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
             result.insert("base_mode", "receiver-averaging");
             result.insert("averaging_maximum_s", static_cast<qint64>(config.base.receiverAveragingDurationSecs));
@@ -230,9 +230,9 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
                 return value;
             };
             options.config.base.useFixedBase = true;
-            options.config.base.fixedBaseLatitude = coordinate("latitude");
-            options.config.base.fixedBaseLongitude = coordinate("longitude");
-            options.config.base.fixedBaseAltitudeMeters = static_cast<float>(coordinate("altitude"));
+            options.config.base.fixedPosition = {.latitudeDegrees = coordinate("latitude"),
+                                                 .longitudeDegrees = coordinate("longitude"),
+                                                 .altitudeMeters = static_cast<float>(coordinate("altitude"))};
         } else if (baseMode == "receiver-averaging") {
             options.config.base.surveyMode = GPSBaseStationConfig::SurveyMode::ReceiverManaged;
             options.config.base.receiverAveragingDurationSecs =

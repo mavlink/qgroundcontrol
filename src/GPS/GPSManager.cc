@@ -155,12 +155,18 @@ void GPSManager::init()
 
 void GPSManager::_updateConnections()
 {
-    if (LinkManager::instance()->connectionsSuspended()) {
+    if (_shutdown || !_nmeaSources || LinkManager::instance()->connectionsSuspended()) {
         return;
     }
+    const QPointer<GPSManager> guard(this);
     _nmeaSources->update();
+    if (!guard || _shutdown) {
+        return;
+    }
 #ifndef QGC_NO_SERIAL_LINK
-    _rtkAutoConnect->update();
+    if (_rtkAutoConnect) {
+        _rtkAutoConnect->update();
+    }
 #endif
 }
 

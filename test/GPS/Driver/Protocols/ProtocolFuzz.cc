@@ -68,9 +68,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     GPSProtocol::GPSConfig fixed;
     fixed.output_mode = GPSProtocol::OutputMode::RTCM;
     fixed.base.useFixedBase = true;
-    fixed.base.fixedBaseLatitude = 0;
-    fixed.base.fixedBaseLongitude = 90;
-    fixed.base.fixedBaseAltitudeMeters = 100;
+    fixed.base.fixedPosition = {.latitudeDegrees = 0, .longitudeDegrees = 90, .altitudeMeters = 100};
     const bool fixedMode = size != 0 && (data[0] & 1);
 #if QGC_GPS_ENABLE_UBX
     GPSNativeUBX ubx(io, &position, &satellites);

@@ -42,6 +42,7 @@ void SerialGPSTransportTest::_testReadAbortsWhenStopRequested()
     SerialGPSTransport transport(QStringLiteral("/dev/null"), stop);
     QVERIFY(!transport.isCancelled());
     stop = true;
+    QCOMPARE(transport.open().status, GPSOpenStatus::Cancelled);
 
     uint8_t buffer[16] = {};
     QVERIFY(transport.read(buffer, static_cast<int>(sizeof(buffer)), 100).status != GPSReadStatus::Data);

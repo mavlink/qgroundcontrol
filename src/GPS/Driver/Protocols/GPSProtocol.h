@@ -51,6 +51,7 @@
 #include <QtCore/QString>
 
 #include "GPSBaseStationConfig.h"
+#include "GPSEllipsoidPosition.h"
 #include "GPSProtocolIO.h"
 
 inline constexpr int GPS_READ_BUFFER_SIZE = 150;
@@ -276,9 +277,9 @@ protected:
                                                   _operationDeadline)
                                       : GPSWriteResult{};
         _ioErrorDetail = result.detail;
-        _commandWrite.acceptedBytes += result.acceptedBytes;
-        _commandWrite.writtenBytes += result.writtenBytes;
-        _commandWrite.uncertainBytes += result.uncertainBytes();
+        _commandWrite.evidence.acceptedBytes += result.acceptedBytes;
+        _commandWrite.evidence.writtenBytes += result.writtenBytes;
+        _commandWrite.evidence.uncertainBytes += result.uncertainBytes();
         if (result.status == GPSWriteStatus::Completed && result.acceptedBytes == buf_length &&
             result.writtenBytes == buf_length && result.uncertainBytes() == 0) {
             return result.writtenBytes;
@@ -382,17 +383,15 @@ protected:
      */
     uint64_t timeFromUtc(tm& utc, int32_t nsec);
 
-    /**
-     * Convert an ECEF (Earth Centered Earth Fixed) coordinate to LLA WGS84 (Lat, Lon, Alt).
-     * @param ecef_x ECEF X-coordinate [m]
-     * @param ecef_y ECEF Y-coordinate [m]
-     * @param ecef_z ECEF Z-coordinate [m]
-     * @param latitude [deg]
-     * @param longitude [deg]
-     * @param altitude [m]
-     */
-    static void ECEF2lla(double ecef_x, double ecef_y, double ecef_z, double& latitude, double& longitude,
-                         float& altitude);
+    struct EcefMeters
+    {
+        double x = 0;
+        double y = 0;
+        double z = 0;
+    };
+
+    static EcefMeters toEcef(const GPSEllipsoidPosition& position);
+    static GPSEllipsoidPosition fromEcef(const EcefMeters& position);
 
     bool _commandCompleted = true;
     GPSCommandResult _commandWrite;

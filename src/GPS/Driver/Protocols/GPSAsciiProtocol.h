@@ -21,11 +21,6 @@ protected:
     void resetStream();
 
     void setRTCMEnabled(bool enabled) { _rtcmEnabled = enabled; }
-
-    GPSNativePositionReport& nativePosition() { return *_position; }
-
-    static void lla2ECEF(double latitude, double longitude, double altitude, double& x, double& y, double& z);
-
     /// Complete printable line, without CR/LF. Vendor checksums remain the controller's responsibility.
     virtual int handleReceiverLine(std::string_view) { return 0; }
 
@@ -36,11 +31,13 @@ protected:
 
 private:
     int _handleNmea(std::string_view line);
+    void _expireVdop(uint64_t now);
     void _publishSatellites(const NMEA::SatelliteEpoch& epoch);
     void _drainSatellites();
     void _drainRTCM();
 
     static constexpr size_t MAX_LINE_SIZE = 4096;
+    static constexpr uint64_t METADATA_MAX_AGE_US = 2000000;
     GPSNativePositionReport _fallbackPosition;
     GPSNativePositionReport* _position;
     GPSNativeSatelliteReport* _satellites;
@@ -55,6 +52,7 @@ private:
     bool _rtcmEnabled = true;
     std::optional<int> _accuracyTime;
     std::optional<int> _positionTime;
+    std::optional<uint64_t> _vdopReceivedAtUs;
     uint64_t _accuracyReceivedAtUs = 0;
     NMEA::GST _accuracy;
 };

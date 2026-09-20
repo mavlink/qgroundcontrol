@@ -16,14 +16,17 @@
 #include "SBF/GPSDriverSBF.h"
 #include "UBX/GPSDriverUBX.h"
 #include "UBX/UBXMessageSchema.h"
+#include "UnitTest.h"
 #include "fixtures/GPSFixtureExpectations.h"
 
 #define CHECK(value)                          \
     do {                                      \
-        if (!(value))                         \
+        if (!(value)) {                       \
             throw std::runtime_error(#value); \
+        }                                     \
     } while (0)
 
+namespace {
 std::vector<uint8_t> fixture(const char* name)
 {
     std::ifstream file(std::string(GPS_FIXTURE_DIR) + "/" + name, std::ios::binary);
@@ -447,8 +450,21 @@ void scalarWireValues()
     CHECK(std::bit_cast<uint64_t>(*LittleEndian::read<double>(output, 1)) == 0x7ff8000000000001);
 }
 
-int main()
+}  // namespace
+
+class GPSProtocolFixtureTest : public UnitTest
 {
+    Q_OBJECT
+
+private slots:
+
+    void _protocol();
+};
+
+void GPSProtocolFixtureTest::_protocol()
+{
+    gps_test_time = 0;
+    gps_test_warnings.clear();
     try {
         scalarWireValues();
         independentNmeaFields();
@@ -528,7 +544,10 @@ int main()
         CHECK(std::isnan(position.cog_rad));
 #endif
     } catch (const std::exception& error) {
-        std::cerr << error.what() << '\n';
-        return 1;
+        QFAIL(error.what());
     }
 }
+
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolFixtureTest, TestLabel::Unit)
+
+#include "gps-fixture-test.moc"

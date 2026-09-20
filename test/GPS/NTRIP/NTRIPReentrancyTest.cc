@@ -4,20 +4,20 @@
 #include <memory>
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTimer>
 #include <QtGui/QPixmap>
 #include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QTcpServer>
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
-#include "../../RTCM/RTCMTestFixtures.h"
-#include "../MockNTRIPTransport.h"
+#include "../RTCM/RTCMTestFixtures.h"
+#include "MockNTRIPTransport.h"
 #include "NMEASentence.h"
 #include "NMEAUtils.h"
 #include "NTRIPConnectionStats.h"
@@ -26,12 +26,11 @@
 #include "NTRIPHttpTransport.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
-#include "PortableTest.h"
-#include "RTCMDecodedFrame.h"
-
-#ifndef QGC_PORTABLE_TEST
 #include "QGCLoggingCategoryManager.h"
-#endif
+#include "RTCMDecodedFrame.h"
+#include "UnitTest.h"
+
+Q_DECLARE_METATYPE(NTRIPConnectionConfig)
 
 namespace {
 class DebugCapture
@@ -49,11 +48,9 @@ public:
                         QMutexLocker lock(&capture->_mutex);
                         capture->_messages.append(message);
                     }
-#ifndef QGC_PORTABLE_TEST
                     if (const auto handler = _previousHandler.load()) {
                         handler(type, context, message);
                     }
-#endif
                     if (capture->onMessage) {
                         capture->onMessage();
                     }
@@ -61,34 +58,18 @@ public:
                     handler(type, context, message);
                 }
             });
-#ifdef QGC_PORTABLE_TEST
-        _previousFilter = QLoggingCategory::installFilter([](QLoggingCategory* category) {
-            if (const auto filter = _previousFilter.load()) {
-                filter(category);
-            }
-            if (const auto* capture = _active.load();
-                capture && qstrcmp(category->categoryName(), capture->_category) == 0) {
-                category->setEnabled(QtDebugMsg, true);
-            }
-        });
-#else
         auto* logging = QGCLoggingCategoryManager::instance();
         _wasEnabled = logging->isCategoryEnabled(QString::fromLatin1(_category));
         if (!_wasEnabled) {
             logging->setCategoryEnabled(QString::fromLatin1(_category), true);
         }
-#endif
     }
 
     ~DebugCapture()
     {
-#ifdef QGC_PORTABLE_TEST
-        QLoggingCategory::installFilter(_previousFilter.exchange(nullptr));
-#else
         if (!_wasEnabled) {
             QGCLoggingCategoryManager::instance()->setCategoryEnabled(QString::fromLatin1(_category), false);
         }
-#endif
         qInstallMessageHandler(_previousHandler.load());
         _active = nullptr;
     }
@@ -107,50 +88,8 @@ private:
     QStringList _messages;
     static inline std::atomic<DebugCapture*> _active{nullptr};
     static inline std::atomic<QtMessageHandler> _previousHandler{nullptr};
-#ifdef QGC_PORTABLE_TEST
-    static inline std::atomic<QLoggingCategory::CategoryFilter> _previousFilter{nullptr};
-#else
     bool _wasEnabled = false;
-#endif
 };
-
-#ifdef QGC_PORTABLE_TEST
-class WarningCapture
-{
-public:
-    WarningCapture(const char* category, const QRegularExpression& pattern)
-        : _category(category)
-        , _pattern(pattern)
-    {
-        _active = this;
-        _previous =
-            qInstallMessageHandler([](QtMsgType type, const QMessageLogContext& context, const QString& message) {
-                auto* capture = _active.load();
-                if (capture && type == QtWarningMsg && qstrcmp(context.category, capture->_category) == 0 &&
-                    capture->_pattern.match(message).hasMatch()) {
-                    ++capture->_count;
-                } else if (const auto handler = _previous.load()) {
-                    handler(type, context, message);
-                }
-            });
-    }
-
-    ~WarningCapture()
-    {
-        qInstallMessageHandler(_previous.load());
-        _active = nullptr;
-    }
-
-    int count() const { return _count.load(); }
-
-private:
-    const char* _category;
-    QRegularExpression _pattern;
-    std::atomic_int _count{0};
-    static inline std::atomic<WarningCapture*> _active{nullptr};
-    static inline std::atomic<QtMessageHandler> _previous{nullptr};
-};
-#endif
 
 class WriteSocket : public QTcpSocket
 {
@@ -176,7 +115,7 @@ NTRIPConnectionConfig config()
 }
 }  // namespace
 
-class NTRIPReentrancyTest : public PortableTest
+class NTRIPReentrancyTest : public UnitTest
 {
     Q_OBJECT
 
@@ -214,6 +153,8 @@ private slots:
     void filterConfigurationUpdatesWithoutReconnect();
     void invalidFetchRetiresPendingReply();
     void sourceTableSuccessAndCache();
+    void sourceTableIdentity_data();
+    void sourceTableIdentity();
     void abortCallbackSupersedesReplacement();
     void abortCallbackDeletesReply();
     void deletedReplyPublishesError();
@@ -244,20 +185,13 @@ private:
 
 void NTRIPReentrancyTest::_expectDebugMessage(const char* category, const QString& message)
 {
-#ifdef QGC_PORTABLE_TEST
-    Q_UNUSED(category)
-    Q_UNUSED(message)
-#else
     expectLogMessage(category, QtDebugMsg,
                      QRegularExpression(QRegularExpression::anchoredPattern(QRegularExpression::escape(message))));
-#endif
 }
 
 void NTRIPReentrancyTest::_verifyDebugMessage()
 {
-#ifndef QGC_PORTABLE_TEST
     verifyExpectedLogMessage();
-#endif
 }
 
 void NTRIPReentrancyTest::warningRetiresAttempt_data()
@@ -298,17 +232,9 @@ void NTRIPReentrancyTest::warningRetiresAttempt()
         QStringLiteral("Sending credentials without TLS \u2014 data is not encrypted");
     const QRegularExpression warningPattern(
         QRegularExpression::anchoredPattern(QRegularExpression::escape(warningMessage)));
-#ifdef QGC_PORTABLE_TEST
-    const WarningCapture warning("GPS.NTRIPHttpTransport", warningPattern);
-#else
     expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, warningPattern);
-#endif
     transport->_sendHttpRequest();
-#ifdef QGC_PORTABLE_TEST
-    QCOMPARE(warning.count(), 1);
-#else
     verifyExpectedLogMessage();
-#endif
     QCOMPARE(notifications, 1);
     QCOMPARE(writes, 0);
     if (action == 2) {
@@ -489,16 +415,9 @@ void NTRIPReentrancyTest::legacyCaster()
         configuration.password = QStringLiteral("test-password");
     }
     const QRegularExpression warningPattern(QStringLiteral("Sending credentials without TLS"));
-#ifdef QGC_PORTABLE_TEST
-    std::optional<WarningCapture> warning;
-    if (authenticated) {
-        warning.emplace("GPS.NTRIPHttpTransport", warningPattern);
-    }
-#else
     if (authenticated) {
         expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, warningPattern);
     }
-#endif
     NTRIPHttpTransport transport(configuration, {});
     QSignalSpy connected(&transport, &NTRIPTransport::connected);
     QSignalSpy plaintext(&transport, &NTRIPTransport::plaintextCredentialsWarning);
@@ -527,15 +446,9 @@ void NTRIPReentrancyTest::legacyCaster()
     QCOMPARE(frames.size(), 1);
     QCOMPARE(qvariant_cast<RTCMDecodedFrame>(frames.first().first()).data, frame);
     transport.stop();
-#ifdef QGC_PORTABLE_TEST
-    if (warning) {
-        QCOMPARE(warning->count(), 1);
-    }
-#else
     if (authenticated) {
         verifyExpectedLogMessage();
     }
-#endif
 }
 
 void NTRIPReentrancyTest::icyPartialFrame_data()
@@ -1205,6 +1118,120 @@ void NTRIPReentrancyTest::sourceTableSuccessAndCache()
     QCOMPARE(controller.mountpointModel()->rowCount(), 0);
 }
 
+void NTRIPReentrancyTest::sourceTableIdentity_data()
+{
+    QTest::addColumn<NTRIPConnectionConfig>("initial");
+    QTest::addColumn<NTRIPConnectionConfig>("replacement");
+    QTest::addColumn<bool>("sameCaster");
+    QTest::addColumn<bool>("cached");
+    const auto add = [](const char* name, const NTRIPConnectionConfig& initial,
+                        const NTRIPConnectionConfig& replacement, bool sameCaster = false) {
+        for (const bool cached : {false, true}) {
+            QTest::newRow((QByteArray(name) + (cached ? "-cached" : "-in-flight")).constData())
+                << initial << replacement << sameCaster << cached;
+        }
+    };
+    auto initial = config();
+    initial.username = QStringLiteral("user");
+    initial.password = QStringLiteral("pass");
+    add("unchanged", initial, initial, true);
+    auto replacement = initial;
+    replacement.mountpoint = QStringLiteral("OTHER");
+    add("mountpoint", initial, replacement, true);
+    replacement = initial;
+    replacement.host = QStringLiteral("localhost");
+    add("host", initial, replacement);
+    auto hostname = replacement;
+    replacement.host = QStringLiteral("LOCALHOST");
+    add("host-case", hostname, replacement);
+    replacement = initial;
+    ++replacement.port;
+    add("port", initial, replacement);
+    replacement = initial;
+    replacement.username = QStringLiteral("another-user");
+    add("username", initial, replacement);
+    replacement = initial;
+    replacement.password = QStringLiteral("another-password");
+    add("password", initial, replacement);
+    replacement = initial;
+    replacement.useTls = true;
+    add("tls", initial, replacement);
+    replacement = initial;
+    replacement.allowSelfSignedCerts = true;
+    add("self-signed-policy", initial, replacement);
+
+    initial.username = QStringLiteral("%4");
+    replacement = initial;
+    replacement.username = initial.password;
+    add("username-password-placeholder", initial, replacement);
+    initial.username = QStringLiteral("%5");
+    replacement = initial;
+    replacement.username = QStringLiteral("0");
+    add("username-tls-placeholder", initial, replacement);
+    initial.username = QStringLiteral("user");
+    initial.password = QStringLiteral("%5");
+    replacement = initial;
+    replacement.password = QStringLiteral("0");
+    add("password-tls-placeholder", initial, replacement);
+    initial.username = QStringLiteral("%1%2%4");
+    initial.password = QStringLiteral("%1%5%6");
+    add("literal-placeholders", initial, initial, true);
+
+    initial.username = QStringLiteral(
+        "a\x1f"
+        "b");
+    initial.password = QStringLiteral("c");
+    replacement = initial;
+    replacement.username = QStringLiteral("a");
+    replacement.password = QStringLiteral(
+        "b\x1f"
+        "c");
+    add("credential-delimiters", initial, replacement);
+}
+
+void NTRIPReentrancyTest::sourceTableIdentity()
+{
+    QFETCH(NTRIPConnectionConfig, initial);
+    QFETCH(NTRIPConnectionConfig, replacement);
+    QFETCH(bool, sameCaster);
+    QFETCH(bool, cached);
+    NTRIPSourceTableController controller;
+    controller.fetch(initial);
+    const auto previous = controller._reply;
+    QVERIFY(previous);
+    if (cached) {
+        controller.injectSourceTableForTest(
+            QStringLiteral("STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\r\n"
+                           "ENDSOURCETABLE\r\n"));
+        QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+        QVERIFY(!controller._reply);
+    }
+    const auto revision = controller._fetchRevision;
+    controller.fetch(replacement);
+    if (sameCaster && cached) {
+        QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+        QVERIFY(!controller._reply);
+        QCOMPARE(controller.mountpointModel()->rowCount(), 1);
+        return;
+    }
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
+    QVERIFY(controller._reply);
+    if (sameCaster) {
+        QCOMPARE(controller._reply, previous);
+        QCOMPARE(controller._fetchRevision, revision);
+    } else {
+        QVERIFY(controller._reply != previous);
+        QVERIFY(controller._fetchRevision > revision);
+        QVERIFY(!previous->isRunning());
+        QVERIFY(!controller._cacheAge.isValid());
+    }
+    const auto request = controller._reply->request();
+    QCOMPARE(request.rawHeader("Authorization"),
+             "Basic " + (replacement.username + QLatin1Char(':') + replacement.password).toUtf8().toBase64());
+    QCOMPARE(request.url().port(), replacement.port);
+    QCOMPARE(request.url().scheme(), replacement.useTls ? QStringLiteral("https") : QStringLiteral("http"));
+}
+
 void NTRIPReentrancyTest::abortCallbackSupersedesReplacement()
 {
     NTRIPSourceTableController controller;
@@ -1747,5 +1774,5 @@ void NTRIPReentrancyTest::ggaCallbackStopsProvider()
     QVERIFY(logs.messages().isEmpty());
 }
 
-QGC_REGISTER_PORTABLE_TEST(NTRIPReentrancyTest, TestLabel::Unit)
+UT_REGISTER_TEST(NTRIPReentrancyTest, TestLabel::Unit)
 #include "NTRIPReentrancyTest.moc"

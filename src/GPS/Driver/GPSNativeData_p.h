@@ -10,7 +10,6 @@
 namespace GPSNativeData {
 GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativeIntegrityReport& diagnostic,
                            uint64_t nowUs = 0);
-GPSSatelliteReport satellites(const GPSNativeSatelliteReport& source);
 GPSSurveyReport survey(const GPSNativeSurveyReport& source);
 
 /// Projection state only; native epoch assembly remains owned by the protocol.

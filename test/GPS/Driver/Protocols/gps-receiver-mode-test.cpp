@@ -14,6 +14,7 @@
 #include "LittleEndian.h"
 #include "RTCMFramer.h"
 #include "SBF/GPSDriverSBF.h"
+#include "UnitTest.h"
 
 // Keep checks active in Release, too.
 #define CHECK(condition)                                                                                 \
@@ -23,6 +24,7 @@
         }                                                                                                \
     } while (0)
 
+namespace {
 class Receiver
 {
 public:
@@ -127,9 +129,7 @@ static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fix
     config.base = {.useFixedBase = fixed,
                    .surveyInAccMeters = 1.25,
                    .surveyInDurationSecs = 60,
-                   .fixedBaseLatitude = 47.0,
-                   .fixedBaseLongitude = 8.0,
-                   .fixedBaseAltitudeMeters = 500.0f,
+                   .fixedPosition = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
                    .fixedBaseAccuracyMeters = 1.0f};
     config.output_mode = mode;
     unsigned baudrate = 115200;
@@ -197,20 +197,19 @@ void sbfRequiredBaseCommands()
                 config.base = {.useFixedBase = fixed,
                                .surveyInAccMeters = 1,
                                .surveyInDurationSecs = 60,
-                               .fixedBaseLatitude = 47,
-                               .fixedBaseLongitude = 8,
-                               .fixedBaseAltitudeMeters = 500};
+                               .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}};
                 unsigned baudrate = 115200;
                 CHECK(driver.configure(baudrate, config) < 0);
                 CHECK(!driver.receiverReady());
                 CHECK(receiver.sent(command));
                 CHECK(receiver.commands.back().starts_with(command));
                 CHECK(!results.empty());
-                CHECK(results.back().command.starts_with(command));
-                CHECK(results.back().required);
-                CHECK(results.back().outcome == (silent ? GPSCommandOutcome::TimedOut : GPSCommandOutcome::Rejected));
-                CHECK(results.back().acceptedBytes == int(receiver.commands.back().size()));
-                CHECK(results.back().writtenBytes == int(receiver.commands.back().size()));
+                CHECK(results.back().evidence.command.starts_with(command));
+                CHECK(results.back().evidence.required);
+                CHECK(results.back().evidence.outcome ==
+                      (silent ? GPSCommandOutcome::TimedOut : GPSCommandOutcome::Rejected));
+                CHECK(results.back().evidence.acceptedBytes == int(receiver.commands.back().size()));
+                CHECK(results.back().evidence.writtenBytes == int(receiver.commands.back().size()));
             }
         }
     }
@@ -236,9 +235,7 @@ void sbfFrameOwnership()
     GPSNativeSBF driver(io, &position, &satellites);
     GPSProtocol::GPSConfig config{};
     config.base = {.useFixedBase = true,
-                   .fixedBaseLatitude = 47,
-                   .fixedBaseLongitude = 8,
-                   .fixedBaseAltitudeMeters = 500,
+                   .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
                    .fixedBaseAccuracyMeters = 1};
     config.output_mode = GPSProtocol::OutputMode::RTCM;
     unsigned baudrate = 115200;
@@ -291,9 +288,7 @@ void sbfSurveyEvidence()
     config.output_mode = GPSProtocol::OutputMode::RTCM;
     config.base = {.surveyInAccMeters = 1,
                    .surveyInDurationSecs = 60,
-                   .fixedBaseLatitude = 47,
-                   .fixedBaseLongitude = 8,
-                   .fixedBaseAltitudeMeters = 500};
+                   .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}};
     unsigned baudrate = 115200;
     uint32_t tow = 0;
     std::vector<uint8_t> frame(94);
@@ -382,8 +377,21 @@ void sbfSurveyEvidence()
 }
 #endif
 
-int main()
+}  // namespace
+
+class GPSProtocolReceiverModesTest : public UnitTest
 {
+    Q_OBJECT
+
+private slots:
+
+    void _protocol();
+};
+
+void GPSProtocolReceiverModesTest::_protocol()
+{
+    gps_test_time = 0;
+    gps_test_warnings.clear();
     try {
         for (bool septentrio : {false, true}) {
             if ((septentrio && !QGC_GPS_ENABLE_SBF) || (!septentrio && !QGC_GPS_ENABLE_FEMTO)) {
@@ -412,10 +420,11 @@ int main()
         receiverMode(false, GPSProtocol::OutputMode::GPS, true, {}, false, GPS_READ_BUFFER_SIZE,
                      2 * GPS_READ_BUFFER_SIZE - 3);
 #endif
-        std::puts("PASS receiver position/base modes and failed mode switches");
     } catch (const std::exception& error) {
-        std::fprintf(stderr, "FAIL %s\n", error.what());
-        return 1;
+        QFAIL(error.what());
     }
-    return 0;
 }
+
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolReceiverModesTest, TestLabel::Unit)
+
+#include "gps-receiver-mode-test.moc"

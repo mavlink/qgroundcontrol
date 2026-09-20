@@ -19,4 +19,3 @@ add_subdirectory(RTK)
 add_subdirectory(Transport)
 
 add_subdirectory(Core)
-add_subdirectory(Standalone)

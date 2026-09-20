@@ -1,6 +1,7 @@
 #include "GPSProvider.h"
 
 #include <algorithm>
+#include <optional>
 #include <utility>
 
 #include "GPSDriver.h"
@@ -23,15 +24,15 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
     qCDebug(GPSProviderLog) << this;
     (void) qRegisterMetaType<GPSSatelliteReport>("GPSSatelliteReport");
     (void) qRegisterMetaType<GPSSatelliteUsageReport>("GPSSatelliteUsageReport");
-    (void) qRegisterMetaType<GPSPositionReport>("GPSPositionReport");
+    (void) qRegisterMetaType<GPSPositionReport::FixType>("GPSPositionReport::FixType");
     (void) qRegisterMetaType<GPSConnectionError>("GPSConnectionError");
     (void) qRegisterMetaType<GPSSurveyInStatus>("GPSSurveyInStatus");
     if (_config.role == GPSReceiverConfig::Role::RTKBase) {
         const auto& base = _config.base;
         if (base.useFixedBase) {
-            qCDebug(GPSProviderLog) << "Fixed base latitude:" << base.fixedBaseLatitude
-                                    << "longitude:" << base.fixedBaseLongitude
-                                    << "ellipsoid altitude (m):" << base.fixedBaseAltitudeMeters;
+            qCDebug(GPSProviderLog) << "Fixed base latitude:" << base.fixedPosition.latitudeDegrees
+                                    << "longitude:" << base.fixedPosition.longitudeDegrees
+                                    << "ellipsoid altitude (m):" << base.fixedPosition.altitudeMeters;
         } else if (base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
             qCDebug(GPSProviderLog) << "Receiver-managed averaging maximum duration (s):"
                                     << base.receiverAveragingDurationSecs;
@@ -87,7 +88,13 @@ void GPSProvider::run()
         inactivity.setRemainingTime(kUsefulDataTimeoutMs, Qt::PreciseTimer);
     };
     GPSDriverSinks sinks;
-    sinks.onPosition = [this](const GPSPositionReport& message) { emit sensorGpsUpdate(message); };
+    sinks.onPosition =
+        [this, lastFixType = std::optional<GPSPositionReport::FixType>{}](const GPSPositionReport& message) mutable {
+            if (lastFixType != message.fixType) {
+                lastFixType = message.fixType;
+                emit fixTypeChanged(message.fixType);
+            }
+        };
     sinks.onSatelliteInfo = [this](const GPSSatelliteReport& message) { emit satelliteInfoUpdate(message); };
     sinks.onSatelliteUsage = [this](const GPSSatelliteUsageReport& message) { emit satelliteUsageUpdate(message); };
     sinks.onRTCM = [this](std::span<const uint8_t> message) {
@@ -138,8 +145,8 @@ void GPSProvider::run()
 void GPSProvider::_handleSurveyIn(const GPSSurveyReport& report)
 {
     GPSSurveyInStatus status;
-    status.coordinate = QGeoCoordinate(report.latitudeDegrees, report.longitudeDegrees);
-    status.altitudeEllipsoidMeters = report.altitudeEllipsoidMeters;
+    status.coordinate = QGeoCoordinate(report.position.latitudeDegrees, report.position.longitudeDegrees);
+    status.altitudeEllipsoidMeters = report.position.altitudeMeters;
     status.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
     status.meanAccuracyMeters = report.meanAccuracyMeters;
     status.duration = report.duration;

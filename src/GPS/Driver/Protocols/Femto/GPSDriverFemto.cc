@@ -45,18 +45,6 @@ GPSNativeFemto::GPSNativeFemto(GPSProtocolIO io, struct GPSNativePositionReport*
 
 GPSNativeFemto::~GPSNativeFemto() {}
 
-void GPSNativeFemto::receiveWait(unsigned timeout_min)
-{
-    uint64_t time_started = nowUs();
-
-    while (nowUs() < time_started + timeout_min * 1000) {
-        receive(timeout_min);
-        if (ioError()) {
-            return;
-        }
-    }
-}
-
 int GPSNativeFemto::receive(unsigned timeout)
 {
     const int result = receiveDecoded(timeout);

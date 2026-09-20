@@ -69,7 +69,7 @@ int GPSNativeFemto::writeAckedCommandFemto(const char* command, const char* repl
             }
         },
         [&] { return acknowledged ? GPSCommandOutcome::Acknowledged : GPSCommandOutcome::Pending; });
-    return result.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
+    return result.evidence.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
 }
 
 int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
@@ -87,23 +87,12 @@ int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
     }
     _baseConfig = config.base;
     _output_mode = config.output_mode;
-    /** Try different baudrates (115200 is the default for Femtomes) and request the baudrate that we want.	 */
-    const unsigned baudrates_to_try[] = {115200};
+    constexpr unsigned supportedBaudrate = 115200;
     bool success = false;
 
-    unsigned test_baudrate = 0;
-
-    for (unsigned int baud_i = 0; !success && baud_i < sizeof(baudrates_to_try) / sizeof(baudrates_to_try[0]);
-         baud_i++) {
-        test_baudrate = baudrates_to_try[baud_i];
-
-        if (baudrate > 0 && baudrate != test_baudrate) {
-            continue; /**< skip to next baudrate*/
-        }
-
-        setBaudrate(test_baudrate);
-
-        for (int run = 0; run < 2; ++run) { /** try several times*/
+    if (baudrate == 0 || baudrate == supportedBaudrate) {
+        setBaudrate(supportedBaudrate);
+        for (int run = 0; run < 2; ++run) {
             if (writeAckedCommandFemto("UNLOGALL THISPORT\r\n", "<UNLOGALL OK", FEMTO_RESPONSE_TIMEOUT) == 0 &&
                 writeAckedCommandFemto("VERSION\r\n", "<VERSION OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
                 success = true;
@@ -116,41 +105,8 @@ int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
         return -1;
     }
 
-    /**
-     * We successfully got a response and know to which port we are connected. Now set the desired baudrate
-     * if it's different from the current one.
-     */
-    const unsigned desired_baudrate = 115200; /**< changing this requires also changing the SPD command*/
-
-    baudrate = test_baudrate;
-
-    if (baudrate != desired_baudrate) {
-        baudrate = desired_baudrate;
-        const char baud_config[] = "com 115200\r\n";  // configure baudrate to 115200
-        write(baud_config, sizeof(baud_config));
-        decodeInit();
-        receiveWait(200);
-        decodeInit();
-        setBaudrate(baudrate);
-
-        success = false;
-
-        for (int run = 0; run < 10; ++run) {
-            /** We ask for the port config again. If we get a reply, we know that the changed settings work.*/
-            if (writeAckedCommandFemto("UNLOGALL THISPORT\r\n", "<UNLOGALL OK", FEMTO_RESPONSE_TIMEOUT) == 0 &&
-                writeAckedCommandFemto("VERSION\r\n", "<VERSION OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
-                success = true;
-                break;
-            }
-        }
-
-        if (!success) {
-            return -1;
-        }
-
-    } else {
-        decodeInit();
-    }
+    baudrate = supportedBaudrate;
+    decodeInit();
 
     /** init rtcm parsing */
     if (_output_mode == OutputMode::RTCM) {
@@ -216,8 +172,9 @@ void GPSNativeFemto::activateCorrectionOutput()
     }
     const auto& settings = _baseConfig;
     char buffer[100];
-    const int length = snprintf(buffer, sizeof(buffer), "FIX POSITION %.8lf %.8lf %.5f\r\n", settings.fixedBaseLatitude,
-                                settings.fixedBaseLongitude, double(settings.fixedBaseAltitudeMeters));
+    const int length =
+        snprintf(buffer, sizeof(buffer), "FIX POSITION %.8lf %.8lf %.5f\r\n", settings.fixedPosition.latitudeDegrees,
+                 settings.fixedPosition.longitudeDegrees, double(settings.fixedPosition.altitudeMeters));
     if (length < 0 || length >= int(sizeof(buffer)) ||
         writeAckedCommandFemto(buffer, "FIX OK", FEMTO_RESPONSE_TIMEOUT) != 0 ||
         writeAckedCommandFemto("LOG GPGGA 1 \r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) != 0) {
@@ -226,8 +183,8 @@ void GPSNativeFemto::activateCorrectionOutput()
     }
     activateRTCMOutput();
     if (_correction_output_activated) {
-        sendSurveyInStatusUpdate(false, true, settings.fixedBaseLatitude, settings.fixedBaseLongitude,
-                                 settings.fixedBaseAltitudeMeters);
+        sendSurveyInStatusUpdate(false, true, settings.fixedPosition.latitudeDegrees,
+                                 settings.fixedPosition.longitudeDegrees, settings.fixedPosition.altitudeMeters);
     }
 }
 

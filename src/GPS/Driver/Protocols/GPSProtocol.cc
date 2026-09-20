@@ -89,12 +89,22 @@ bool GPSProtocol::validateConfiguration(const GPSConfig& config, bool allowRecei
     return true;
 }
 
-void GPSProtocol::ECEF2lla(double ecef_x, double ecef_y, double ecef_z, double& latitude, double& longitude,
-                           float& altitude)
+GPSProtocol::EcefMeters GPSProtocol::toEcef(const GPSEllipsoidPosition& position)
 {
+    EcefMeters result;
+    GeographicLib::Geocentric::WGS84().Forward(position.latitudeDegrees, position.longitudeDegrees,
+                                               position.altitudeMeters, result.x, result.y, result.z);
+    return result;
+}
+
+GPSEllipsoidPosition GPSProtocol::fromEcef(const EcefMeters& position)
+{
+    GPSEllipsoidPosition result;
     double height;
-    GeographicLib::Geocentric::WGS84().Reverse(ecef_x, ecef_y, ecef_z, latitude, longitude, height);
-    altitude = static_cast<float>(height);
+    GeographicLib::Geocentric::WGS84().Reverse(position.x, position.y, position.z, result.latitudeDegrees,
+                                               result.longitudeDegrees, height);
+    result.altitudeMeters = static_cast<float>(height);
+    return result;
 }
 
 uint64_t GPSProtocol::timeFromUtc(tm& utc, int32_t nsec)
@@ -141,9 +151,9 @@ GPSCommandResult GPSProtocol::awaitCommand(GPSConfigurationStep step, const std:
     const auto timeout = static_cast<unsigned>(step.timeout.count());
     const Operation operation(*this, timeout);
     _operationDeadline.untilUs =
-        std::min(_operationDeadline.untilUs, _commandWrite.startedAtUs + uint64_t(timeout) * 1000);
-    _commandWrite.command = std::move(step.command);
-    _commandWrite.required = step.required;
+        std::min(_operationDeadline.untilUs, _commandWrite.evidence.startedAtUs + uint64_t(timeout) * 1000);
+    _commandWrite.evidence.command = std::move(step.command);
+    _commandWrite.evidence.required = step.required;
     _commandWrite.affectedSettings = step.affectedSettings;
     const auto outcome = GPSCommandTransaction::await(
         _operationDeadline.untilUs, [this] { return nowUs(); }, reply, pump,
@@ -162,10 +172,10 @@ void GPSProtocol::beginCommandWrite(std::string command, GPSReceiverSettingSet s
     }
     failCommandWrite(GPSCommandOutcome::Written);
     _commandWrite = {};
-    _commandWrite.startedAtUs = nowUs();
-    _commandWrite.command = std::move(command);
+    _commandWrite.evidence.startedAtUs = nowUs();
+    _commandWrite.evidence.command = std::move(command);
     _commandWrite.affectedSettings = settings;
-    _commandWrite.required = required;
+    _commandWrite.evidence.required = required;
     _commandCompleted = false;
 }
 
@@ -174,8 +184,8 @@ GPSCommandResult GPSProtocol::completeCommand(GPSCommandOutcome outcome)
     if (_commandCompleted) {
         return _commandWrite;
     }
-    _commandWrite.outcome = outcome;
-    _commandWrite.finishedAtUs = nowUs();
+    _commandWrite.evidence.outcome = outcome;
+    _commandWrite.evidence.finishedAtUs = nowUs();
     _commandCompleted = true;
     // Completion observers may finish evidence again or begin another attempt.
     const auto result = _commandWrite;

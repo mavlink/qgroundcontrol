@@ -9,6 +9,7 @@
 #include <QtCore/QMetaType>
 
 #include "../GPSConstellation.h"
+#include "GPSEllipsoidPosition.h"
 #include "GPSSatelliteUsageReport.h"
 
 struct GPSIntegrityReport
@@ -138,6 +139,7 @@ struct GPSPositionReport
     GPSIntegrityReport integrity;
 };
 Q_DECLARE_METATYPE(GPSPositionReport)
+Q_DECLARE_METATYPE(GPSPositionReport::FixType)
 
 struct GPSSatelliteReport
 {
@@ -164,9 +166,7 @@ Q_DECLARE_METATYPE(GPSSatelliteReport)
 
 struct GPSSurveyReport
 {
-    double latitudeDegrees = std::numeric_limits<double>::quiet_NaN();
-    double longitudeDegrees = std::numeric_limits<double>::quiet_NaN();
-    float altitudeEllipsoidMeters = std::numeric_limits<float>::quiet_NaN();
+    GPSEllipsoidPosition position{};
     std::optional<double> meanAccuracyMeters = std::nullopt;
     std::chrono::seconds duration{0};
     bool valid = false;

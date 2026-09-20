@@ -14,12 +14,15 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QSet>
+#include <QtCore/QVariant>
 #include <QtTest/QTest>
 
+#include "GPSDriverReports.h"
+#include "GPSEllipsoidPosition.h"
 #include "GPSReceiverCapabilities.h"
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverDescriptor.h"
-#include "PortableTest.h"
+#include "UnitTest.h"
 
 namespace {
 using Error = GPSReceiverConfigError;
@@ -41,17 +44,25 @@ constexpr std::pair<const char*, GPSType> RECEIVERS[] = {
 constexpr std::pair<const char*, Role> ROLES[] = {{"base", Role::RTKBase}, {"position", Role::Position}};
 constexpr GPSBaseStationConfig VALID_SURVEY{.surveyInAccMeters = 0.0001, .surveyInDurationSecs = 1};
 constexpr GPSBaseStationConfig VALID_FIXED{
-    .useFixedBase = true, .fixedBaseLatitude = 0.0, .fixedBaseLongitude = 0.0, .fixedBaseAltitudeMeters = 0.0f};
+    .useFixedBase = true, .fixedPosition = {.latitudeDegrees = 0.0, .longitudeDegrees = 0.0, .altitudeMeters = 0.0f}};
 }  // namespace
 
 static_assert(std::is_aggregate_v<GPSReceiverConfig>);
+static_assert(std::is_copy_constructible_v<GPSPositionReport>);
+static_assert(std::is_copy_constructible_v<GPSSatelliteReport>);
+static_assert(std::is_copy_constructible_v<GPSSurveyReport>);
+static_assert(std::is_same_v<decltype(GPSEllipsoidPosition::latitudeDegrees), double>);
+static_assert(std::is_same_v<decltype(GPSEllipsoidPosition::longitudeDegrees), double>);
+static_assert(std::is_same_v<decltype(GPSEllipsoidPosition::altitudeMeters), float>);
 
-class GPSReceiverConfigTest : public PortableTest
+class GPSReceiverConfigTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
     void _defaults();
+    void _reportDefaults();
+    void _reportSnapshots();
     void _baseValidation_data();
     void _baseValidation();
     void _surveyWireRange();
@@ -88,9 +99,9 @@ void GPSReceiverConfigTest::_defaults()
     QVERIFY(!config.base.useFixedBase);
     QCOMPARE(config.base.surveyInAccMeters, 0.0);
     QCOMPARE(config.base.surveyInDurationSecs, int64_t{0});
-    QVERIFY(std::isnan(config.base.fixedBaseLatitude));
-    QVERIFY(std::isnan(config.base.fixedBaseLongitude));
-    QVERIFY(std::isnan(config.base.fixedBaseAltitudeMeters));
+    QVERIFY(std::isnan(config.base.fixedPosition.latitudeDegrees));
+    QVERIFY(std::isnan(config.base.fixedPosition.longitudeDegrees));
+    QVERIFY(std::isnan(config.base.fixedPosition.altitudeMeters));
     QCOMPARE(config.base.fixedBaseAccuracyMeters, 0.0f);
 
     const GPSReceiverCapabilities capabilities;
@@ -100,6 +111,54 @@ void GPSReceiverConfigTest::_defaults()
     QCOMPARE(capabilities.constellationMask, 0u);
     QVERIFY(!capabilities.dynamicModel);
     QVERIFY(!capabilities.headingOffset);
+}
+
+void GPSReceiverConfigTest::_reportDefaults()
+{
+    const GPSPositionReport position;
+    QCOMPARE(position.fixType, GPSPositionReport::FixType::Unknown);
+    QVERIFY(!position.satellitesUsed);
+    QVERIFY(std::isnan(position.latitudeDegrees));
+    QVERIFY(std::isnan(position.longitudeDegrees));
+    QVERIFY(std::isnan(position.altitudeMslMeters));
+    QVERIFY(std::isnan(position.altitudeEllipsoidMeters));
+    const auto& integrity = position.integrity;
+    QCOMPARE(integrity.timestampUs, uint64_t{0});
+    QCOMPARE(integrity.jamming, GPSIntegrityReport::JammingState::Unknown);
+    QCOMPARE(integrity.spoofing, GPSIntegrityReport::SpoofingState::Unknown);
+    QCOMPARE(integrity.correctionUse, GPSIntegrityReport::CorrectionUse::Unknown);
+    QVERIFY(!integrity.noisePerMillisecond);
+    QVERIFY(!integrity.automaticGainControl);
+    QVERIFY(!integrity.jammingIndicator);
+    QVERIFY(!integrity.correctionCrcFailed);
+
+    const GPSSatelliteReport satellites;
+    QCOMPARE(satellites.count, uint16_t{0});
+    QVERIFY(!satellites.satellites.front().used);
+    QVERIFY(!satellites.satellites.front().signalStrength);
+
+    const GPSSurveyReport survey;
+    QVERIFY(std::isnan(survey.position.latitudeDegrees));
+    QVERIFY(std::isnan(survey.position.longitudeDegrees));
+    QVERIFY(std::isnan(survey.position.altitudeMeters));
+    QVERIFY(!survey.meanAccuracyMeters);
+    QVERIFY(!survey.valid);
+    QVERIFY(!survey.active);
+}
+
+void GPSReceiverConfigTest::_reportSnapshots()
+{
+    GPSPositionReport position;
+    position.integrity.correctionCrcFailed = false;
+    position.integrity.noisePerMillisecond = 0;
+    const auto snapshot = position;
+    position.integrity.noisePerMillisecond = 42;
+    QCOMPARE(snapshot.integrity.noisePerMillisecond, std::optional<int32_t>{0});
+    QCOMPARE(snapshot.integrity.correctionCrcFailed, std::optional<bool>{false});
+
+    const auto transported = QVariant::fromValue(snapshot).value<GPSPositionReport>();
+    QCOMPARE(transported.integrity.noisePerMillisecond, std::optional<int32_t>{0});
+    QCOMPARE(transported.integrity.correctionCrcFailed, std::optional<bool>{false});
 }
 
 void GPSReceiverConfigTest::_baseValidation_data()
@@ -131,21 +190,21 @@ void GPSReceiverConfigTest::_baseValidation_data()
     const auto fixed = [](const char* name, double latitude, double longitude, float altitude, float accuracy,
                           Error expected) {
         QTest::newRow(name) << GPSBaseStationConfig{.useFixedBase = true,
-                                                    .fixedBaseLatitude = latitude,
-                                                    .fixedBaseLongitude = longitude,
-                                                    .fixedBaseAltitudeMeters = altitude,
+                                                    .fixedPosition = {.latitudeDegrees = latitude,
+                                                                      .longitudeDegrees = longitude,
+                                                                      .altitudeMeters = altitude},
                                                     .fixedBaseAccuracyMeters = accuracy}
                             << expected;
     };
     QTest::newRow("missing-fixed-position") << GPSBaseStationConfig{.useFixedBase = true} << Error::InvalidFixedBase;
     QTest::newRow("missing-fixed-latitude")
-        << GPSBaseStationConfig{.useFixedBase = true, .fixedBaseLongitude = 8, .fixedBaseAltitudeMeters = 500}
+        << GPSBaseStationConfig{.useFixedBase = true, .fixedPosition = {.longitudeDegrees = 8, .altitudeMeters = 500}}
         << Error::InvalidFixedBase;
     QTest::newRow("missing-fixed-longitude")
-        << GPSBaseStationConfig{.useFixedBase = true, .fixedBaseLatitude = 47, .fixedBaseAltitudeMeters = 500}
+        << GPSBaseStationConfig{.useFixedBase = true, .fixedPosition = {.latitudeDegrees = 47, .altitudeMeters = 500}}
         << Error::InvalidFixedBase;
     QTest::newRow("missing-fixed-altitude")
-        << GPSBaseStationConfig{.useFixedBase = true, .fixedBaseLatitude = 47, .fixedBaseLongitude = 8}
+        << GPSBaseStationConfig{.useFixedBase = true, .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8}}
         << Error::InvalidFixedBase;
     fixed("fixed-explicit-zero-ignores-unused-survey", 0, 0, 0, 0, Error::None);
     fixed("fixed-unknown-accuracy", 47, 8, 500, 0, Error::None);
@@ -197,13 +256,12 @@ void GPSReceiverConfigTest::_surveyWireRange()
 
 void GPSReceiverConfigTest::_fixedWireRepresentability()
 {
-    const GPSBaseStationConfig config{.useFixedBase = true,
-                                      .fixedBaseLatitude = 47,
-                                      .fixedBaseLongitude = 8,
-                                      .fixedBaseAltitudeMeters = 21474836.0f,
-                                      .fixedBaseAccuracyMeters = 429496.71875f};
+    const GPSBaseStationConfig config{
+        .useFixedBase = true,
+        .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 21474836.0f},
+        .fixedBaseAccuracyMeters = 429496.71875f};
     QCOMPARE(gpsValidateBaseStationConfig(config), Error::None);
-    QCOMPARE(static_cast<int32_t>(static_cast<double>(config.fixedBaseAltitudeMeters) * 100.0), 2147483600);
+    QCOMPARE(static_cast<int32_t>(static_cast<double>(config.fixedPosition.altitudeMeters) * 100.0), 2147483600);
     const float accuracyMillimeters = config.fixedBaseAccuracyMeters * 1000.0f;
     QCOMPARE(static_cast<uint32_t>(accuracyMillimeters * 10.0f), 4294967040u);
 }
@@ -675,5 +733,5 @@ void GPSReceiverConfigTest::_presentation()
     }
 }
 
-QGC_REGISTER_PORTABLE_TEST(GPSReceiverConfigTest, TestLabel::Unit)
+UT_REGISTER_TEST(GPSReceiverConfigTest, TestLabel::Unit)
 #include "GPSReceiverConfigTest.moc"

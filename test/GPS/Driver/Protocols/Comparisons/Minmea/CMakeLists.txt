@@ -41,18 +41,15 @@ if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
     target_link_options(QGCGPSMinmeaReference INTERFACE -fsanitize=address,undefined)
 endif()
 
-qt_add_executable(QGCGPSMinmeaComparison MinmeaComparison.cc)
-set_target_properties(
-    QGCGPSMinmeaComparison
-    PROPERTIES AUTOMOC OFF
-               AUTOUIC OFF
-               AUTORCC OFF
-               MACOSX_BUNDLE OFF
-               WIN32_EXECUTABLE OFF
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE MinmeaComparison.cc)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSMinmeaReference)
+set_property(
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/MinmeaComparison.cc" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../fixtures"
+             MINMEA_REFERENCE_REVISION="${_minmea_revision}"
 )
-target_link_libraries(QGCGPSMinmeaComparison PRIVATE QGCGPSNMEAProtocol QGCGPSMinmeaReference)
-target_compile_definitions(QGCGPSMinmeaComparison PRIVATE GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../fixtures"
-                                                          MINMEA_REFERENCE_REVISION="${_minmea_revision}"
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/MinmeaComparison.cc" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+                            PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
 )
-add_test(NAME GPSMinmeaComparison COMMAND QGCGPSMinmeaComparison)
-set_tests_properties(GPSMinmeaComparison PROPERTIES LABELS "Unit;GPS;Comparison" TIMEOUT 30)
+add_qgc_test(GPSMinmeaComparisonTest LABELS Unit GPS Comparison)

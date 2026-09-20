@@ -102,6 +102,7 @@ void NTRIPGgaProviderTest::testSourceClearedOnStopAndFreshStart()
     provider.start(&transport);
     QCOMPARE(provider.currentSource(), QStringLiteral("Vehicle GPS"));
     QCOMPARE(transport.sentNmea.size(), 1);
+    QVERIFY(transport.sentNmea.first().startsWith("$GPGGA,"));
 
     provider.stop();
     QVERIFY(provider.currentSource().isEmpty());

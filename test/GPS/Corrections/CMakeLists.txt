@@ -1,16 +1,10 @@
-qt_add_executable(QGCGPSCorrectionRouterTest GPSCorrectionRouterTest.cc)
-set_target_properties(QGCGPSCorrectionRouterTest PROPERTIES AUTOMOC ON)
-target_link_libraries(QGCGPSCorrectionRouterTest PRIVATE QGC::GPSCorrections QGC::GPSRTCM Qt6::Test)
-add_test(NAME GPSCorrectionRouterTest COMMAND QGCGPSCorrectionRouterTest)
-set_tests_properties(GPSCorrectionRouterTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 60)
+add_subdirectory(MAVLink)
 
-if(COMMAND add_qgc_test)
-    add_subdirectory(MAVLink)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSCorrectionRouterTest.cc GPSCorrectionManagerTest.cc
+                                             GPSCorrectionManagerTest.h RTCMUdpInputTest.cc RTCMUdpInputTest.h
+)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSCorrectionManagerTest.cc GPSCorrectionManagerTest.h
-                                                 RTCMUdpInputTest.cc RTCMUdpInputTest.h
-    )
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-    add_qgc_test(GPSCorrectionManagerTest LABELS Unit RESOURCE_LOCK Settings)
-    add_qgc_test(RTCMUdpInputTest LABELS Unit)
-endif()
+add_qgc_test(GPSCorrectionRouterTest LABELS Unit GPS)
+add_qgc_test(GPSCorrectionManagerTest LABELS Unit RESOURCE_LOCK Settings)
+add_qgc_test(RTCMUdpInputTest LABELS Unit)

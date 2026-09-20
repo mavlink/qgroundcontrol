@@ -1,6 +1,6 @@
 #include <array>
-#include <atomic>
 #include <memory>
+#include <utility>
 
 #include <QtCore/QDateTime>
 #include <QtCore/QPointer>
@@ -15,62 +15,18 @@
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
-#include "../../RTCM/RTCMTestFixtures.h"
-#include "../NTRIPTlsTestFixtures.h"
+#include "../RTCM/RTCMTestFixtures.h"
 #include "NTRIPHttpTransport.h"
-#include "PortableTest.h"
+#include "NTRIPSourceTableController.h"
+#include "NTRIPTlsPolicy_p.h"
+#include "NTRIPTlsTestFixtures.h"
 #include "RTCMDecodedFrame.h"
+#include "UnitTest.h"
 
 namespace {
-#ifdef QGC_PORTABLE_TEST
-class WarningCapture
-{
-public:
-    explicit WarningCapture(const std::array<QRegularExpression, 2>& patterns)
-        : _patterns(patterns)
-    {
-        _active = this;
-        _previous =
-            qInstallMessageHandler([](QtMsgType type, const QMessageLogContext& context, const QString& message) {
-                auto* capture = _active.load();
-                if (capture && type == QtWarningMsg && qstrcmp(context.category, "GPS.NTRIPHttpTransport") == 0) {
-                    for (size_t index = 0; index < capture->_patterns.size(); ++index) {
-                        if (capture->_patterns[index].match(message).hasMatch()) {
-                            ++capture->_counts[index];
-                            return;
-                        }
-                    }
-                }
-                if (const auto previous = _previous.load()) {
-                    previous(type, context, message);
-                }
-            });
-    }
-
-    ~WarningCapture()
-    {
-        qInstallMessageHandler(_previous.load());
-        _active = nullptr;
-    }
-
-    int count(size_t index) const { return _counts[index].load(); }
-
-private:
-    std::array<QRegularExpression, 2> _patterns;
-    std::array<std::atomic_int, 2> _counts{};
-    static inline std::atomic<WarningCapture*> _active{nullptr};
-    static inline std::atomic<QtMessageHandler> _previous{nullptr};
-};
-#endif
-
 int timeoutMs()
 {
-#ifdef QGC_PORTABLE_TEST
-    // PortableTest does not pull in the application-only TestTimeout helpers.
-    return qEnvironmentVariableIsSet("CI") || qEnvironmentVariableIsSet("GITHUB_ACTIONS") ? 10000 : 5000;
-#else
     return TestTimeout::mediumMs();
-#endif
 }
 
 QSslConfiguration serverConfiguration(bool mismatched = false)
@@ -97,17 +53,27 @@ QByteArray chunk(const QByteArray& bytes)
 {
     return QByteArray::number(bytes.size(), 16) + "\r\n" + bytes + "\r\n";
 }
+
+QByteArray sourceTableResponse(bool chunked = false)
+{
+    const QByteArray body = "STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\r\nENDSOURCETABLE\r\n";
+    return chunked ? "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" + chunk(body) + "0\r\n\r\n"
+                   : "HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\n\r\n" + body;
+}
 }  // namespace
 
-class NTRIPTlsTest : public PortableTest
+class NTRIPTlsTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
-    void initTestCase();
-    void cleanup();
+    void initTestCase() override;
+    void selfSignedClassification_data();
+    void selfSignedClassification();
     void certificatePolicy_data();
     void certificatePolicy();
+    void sourceTablePolicyChanges_data();
+    void sourceTablePolicyChanges();
     void retireAttempt_data();
     void retireAttempt();
     void restartRetiresAttempt_data();
@@ -117,37 +83,23 @@ private slots:
 private:
     void _expectTlsWarnings(bool allowSelfSigned, bool mismatched = false);
     void _verifyTlsWarnings();
-#ifdef QGC_PORTABLE_TEST
-    std::unique_ptr<WarningCapture> _warnings;
-#endif
 };
 
 void NTRIPTlsTest::initTestCase()
 {
-#ifndef QGC_PORTABLE_TEST
-    PortableTest::initTestCase();
-#endif
+    UnitTest::initTestCase();
     if (!QSslSocket::supportsSsl()) {
         QSKIP("No TLS backend available");
     }
     using namespace NTRIPTlsTestFixtures;
     QVERIFY(!QSslKey(PRIVATE_KEY_PEM, QSsl::Rsa, QSsl::Pem).isNull());
     const auto now = QDateTime::currentDateTimeUtc();
-    for (const auto& pem : {SERVER_CERT_PEM, MISMATCHED_CERT_PEM}) {
+    for (const auto& pem : {SERVER_CERT_PEM, MISMATCHED_CERT_PEM, ISSUED_CERT_PEM}) {
         const QSslCertificate certificate(pem, QSsl::Pem);
         QVERIFY(!certificate.isNull());
         QVERIFY2(certificate.effectiveDate() <= now, "Test certificate is not yet valid");
         QVERIFY2(certificate.expiryDate() > now, "Replace the expired test-only TLS certificate");
     }
-}
-
-void NTRIPTlsTest::cleanup()
-{
-#ifdef QGC_PORTABLE_TEST
-    _warnings.reset();
-#else
-    PortableTest::cleanup();
-#endif
 }
 
 void NTRIPTlsTest::_expectTlsWarnings(bool allowSelfSigned, bool mismatched)
@@ -165,26 +117,70 @@ void NTRIPTlsTest::_expectTlsWarnings(bool allowSelfSigned, bool mismatched)
                   allowSelfSigned ? QStringLiteral("Accepting self-signed certificate (user opted in)")
                                   : QStringLiteral("Rejecting self-signed certificate (enable 'Accept self-signed "
                                                    "certificates' to allow)"))));
-#ifdef QGC_PORTABLE_TEST
-    QVERIFY(!_warnings);
-    _warnings = std::make_unique<WarningCapture>(std::array{selfSigned, policy});
-#else
     expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, selfSigned);
     expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, policy);
-#endif
 }
 
 void NTRIPTlsTest::_verifyTlsWarnings()
 {
-#ifdef QGC_PORTABLE_TEST
-    QVERIFY(_warnings);
-    QCOMPARE(_warnings->count(0), 1);
-    QCOMPARE(_warnings->count(1), 1);
-    _warnings.reset();
-#else
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
-#endif
+}
+
+void NTRIPTlsTest::selfSignedClassification_data()
+{
+    using namespace NTRIPTlsTestFixtures;
+    const QSslCertificate selfSigned(SERVER_CERT_PEM, QSsl::Pem);
+    const QSslCertificate issued(ISSUED_CERT_PEM, QSsl::Pem);
+    QVERIFY(selfSigned.isSelfSigned());
+    QVERIFY(!issued.isNull() && !issued.isSelfSigned());
+    QTest::addColumn<QList<QSslError>>("errors");
+    QTest::addColumn<bool>("allowed");
+    QTest::newRow("empty") << QList<QSslError>{} << false;
+    QTest::newRow("self-signed") << QList{QSslError(QSslError::SelfSignedCertificate, selfSigned)} << true;
+    QTest::newRow("self-signed-chain") << QList{QSslError(QSslError::SelfSignedCertificateInChain, selfSigned)} << true;
+    QList allowedErrors{QSslError(QSslError::SelfSignedCertificate, selfSigned),
+                        QSslError(QSslError::SelfSignedCertificateInChain, selfSigned)};
+    const std::array trustErrors{
+        std::pair{"local-issuer", QSslError::UnableToGetLocalIssuerCertificate},
+        std::pair{"first-certificate", QSslError::UnableToVerifyFirstCertificate},
+        std::pair{"untrusted", QSslError::CertificateUntrusted},
+    };
+    for (const auto& [name, code] : trustErrors) {
+        QTest::newRow((QByteArray(name) + "-self-signed").constData()) << QList{QSslError(code, selfSigned)} << true;
+        QTest::newRow((QByteArray(name) + "-missing-certificate").constData()) << QList{QSslError(code)} << false;
+        QTest::newRow((QByteArray(name) + "-issued").constData()) << QList{QSslError(code, issued)} << false;
+        allowedErrors.append(QSslError(code, selfSigned));
+    }
+    QTest::newRow("all-self-signed-trust-errors") << allowedErrors << true;
+    const std::array fatalErrors{
+        std::pair{"hostname-mismatch", QSslError::HostNameMismatch},
+        std::pair{"expired", QSslError::CertificateExpired},
+        std::pair{"revoked", QSslError::CertificateRevoked},
+        std::pair{"invalid-signature", QSslError::CertificateSignatureFailed},
+        std::pair{"no-error", QSslError::NoError},
+        std::pair{"unknown", QSslError::UnspecifiedError},
+    };
+    for (const auto& [name, code] : fatalErrors) {
+        const QSslError fatal(code, selfSigned);
+        QTest::newRow(name) << QList{fatal} << false;
+        auto mixed = allowedErrors;
+        mixed.append(fatal);
+        QTest::newRow((QByteArray(name) + "-after-allowed").constData()) << mixed << false;
+        mixed.removeLast();
+        mixed.prepend(fatal);
+        QTest::newRow((QByteArray(name) + "-before-allowed").constData()) << mixed << false;
+    }
+    auto mixed = allowedErrors;
+    mixed.append(QSslError(QSslError::CertificateUntrusted, issued));
+    QTest::newRow("self-signed-and-unrelated-certificate") << mixed << false;
+}
+
+void NTRIPTlsTest::selfSignedClassification()
+{
+    QFETCH(QList<QSslError>, errors);
+    QFETCH(bool, allowed);
+    QCOMPARE(NTRIPTlsPolicy::isSelfSignedOnly(errors), allowed);
 }
 
 void NTRIPTlsTest::certificatePolicy_data()
@@ -192,10 +188,15 @@ void NTRIPTlsTest::certificatePolicy_data()
     QTest::addColumn<bool>("allowSelfSigned");
     QTest::addColumn<bool>("mismatched");
     QTest::addColumn<bool>("chunked");
-    QTest::newRow("reject-self-signed-by-default") << false << false << false;
-    QTest::newRow("opt-in-identity-stream") << true << false << false;
-    QTest::newRow("opt-in-chunked-stream") << true << false << true;
-    QTest::newRow("opt-in-still-rejects-hostname-mismatch") << true << true << false;
+    QTest::addColumn<bool>("sourceTable");
+    for (const bool sourceTable : {false, true}) {
+        const QByteArray prefix = sourceTable ? "source-table-" : "stream-";
+        QTest::newRow((prefix + "reject-self-signed-by-default").constData()) << false << false << false << sourceTable;
+        QTest::newRow((prefix + "opt-in-identity").constData()) << true << false << false << sourceTable;
+        QTest::newRow((prefix + "opt-in-chunked").constData()) << true << false << true << sourceTable;
+        QTest::newRow((prefix + "opt-in-still-rejects-hostname-mismatch").constData())
+            << true << true << false << sourceTable;
+    }
 }
 
 void NTRIPTlsTest::certificatePolicy()
@@ -203,12 +204,36 @@ void NTRIPTlsTest::certificatePolicy()
     QFETCH(bool, allowSelfSigned);
     QFETCH(bool, mismatched);
     QFETCH(bool, chunked);
+    QFETCH(bool, sourceTable);
     QSslServer server;
     server.setSslConfiguration(serverConfiguration(mismatched));
     QVERIFY(server.listen(QHostAddress::LocalHost));
     auto configuration = connectionConfig(server);
     QVERIFY(!configuration.allowSelfSignedCerts);
     configuration.allowSelfSignedCerts = allowSelfSigned;
+    if (sourceTable) {
+        NTRIPSourceTableController controller;
+        controller.fetch(configuration);
+        if (!allowSelfSigned || mismatched) {
+            QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error,
+                                      timeoutMs());
+            QVERIFY(!controller.fetchError().isEmpty());
+            QCOMPARE(controller.mountpointModel()->rowCount(), 0);
+            return;
+        }
+        QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), timeoutMs());
+        std::unique_ptr<QSslSocket> peer(qobject_cast<QSslSocket*>(server.nextPendingConnection()));
+        QVERIFY(peer && peer->isEncrypted());
+        QByteArray request;
+        QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).endsWith("\r\n\r\n"), timeoutMs());
+        QVERIFY(request.startsWith("GET / HTTP/1.1\r\n"));
+        const QByteArray response = sourceTableResponse(chunked);
+        QCOMPARE(peer->write(response), response.size());
+        QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                                  timeoutMs());
+        QCOMPARE(controller.mountpointModel()->rowCount(), 1);
+        return;
+    }
     NTRIPHttpTransport transport(configuration, {});
     QSignalSpy connected(&transport, &NTRIPTransport::connected);
     QSignalSpy frames(&transport, &NTRIPTransport::correctionFrameReceived);
@@ -270,6 +295,54 @@ void NTRIPTlsTest::certificatePolicy()
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(errors.isEmpty());
     QVERIFY(plaintext.isEmpty());
+}
+
+void NTRIPTlsTest::sourceTablePolicyChanges_data()
+{
+    QTest::addColumn<bool>("duringFetch");
+    QTest::newRow("in-flight") << true;
+    QTest::newRow("cached") << false;
+}
+
+void NTRIPTlsTest::sourceTablePolicyChanges()
+{
+    QFETCH(bool, duringFetch);
+    QSslServer server;
+    server.setSslConfiguration(serverConfiguration());
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    connect(&server, &QSslServer::pendingConnectionAvailable, &server, [&server]() {
+        while (server.hasPendingConnections()) {
+            auto* peer = server.nextPendingConnection();
+            auto respond = [peer, request = QByteArray{}]() mutable {
+                request += peer->readAll();
+                if (request.endsWith("\r\n\r\n")) {
+                    peer->write(sourceTableResponse());
+                    request.clear();
+                }
+            };
+            respond();
+            connect(peer, &QTcpSocket::readyRead, peer, std::move(respond));
+        }
+    });
+    auto configuration = connectionConfig(server);
+    configuration.allowSelfSignedCerts = true;
+    NTRIPSourceTableController controller;
+    controller.fetch(configuration);
+    if (!duringFetch) {
+        QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                                  timeoutMs());
+        QCOMPARE(controller.mountpointModel()->rowCount(), 1);
+    }
+
+    configuration.allowSelfSignedCerts = false;
+    controller.fetch(configuration);
+    QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error, timeoutMs());
+    QCOMPARE(controller.mountpointModel()->rowCount(), 0);
+
+    configuration.allowSelfSignedCerts = true;
+    controller.fetch(configuration);
+    QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success, timeoutMs());
+    QCOMPARE(controller.mountpointModel()->rowCount(), 1);
 }
 
 void NTRIPTlsTest::retireAttempt_data()
@@ -469,5 +542,5 @@ void NTRIPTlsTest::reconnectFromTlsFailure()
     QCOMPARE(errors.size(), 1);
 }
 
-QGC_REGISTER_PORTABLE_TEST(NTRIPTlsTest, TestLabel::Unit)
+UT_REGISTER_TEST(NTRIPTlsTest, TestLabel::Unit)
 #include "NTRIPTlsTest.moc"

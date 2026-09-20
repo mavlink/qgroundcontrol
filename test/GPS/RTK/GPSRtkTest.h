@@ -29,7 +29,7 @@ private slots:
     void _unavailableSatelliteCoverage();
     void _currentBaseSaveValidity_data();
     void _currentBaseSaveValidity();
-    void _logsOnlyFixTransitions();
+    void _logsFixTransitionsWithoutCoordinates();
     void _manufacturerIds_data();
     void _manufacturerIds();
     void _runtimeSettingsDoNotRequireAppRestart_data();

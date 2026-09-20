@@ -199,34 +199,9 @@ void GPSCorrectionManager::acceptIngress(const GPSCorrectionIngress& ingress)
     _router.acceptIngress(ingress);
 }
 
-void GPSCorrectionManager::setSelectedSource(GPSCorrectionSource source)
-{
-    applyRoutingConfiguration({source == GPSCorrectionSource::Unknown ? RoutingPolicy::All : RoutingPolicy::Manual,
-                               source, _router.selectedInstance()});
-}
-
-void GPSCorrectionManager::setSelectedInstance(const QString& instance)
-{
-    applyRoutingConfiguration({routingPolicy(), _router.selectedSource(), instance});
-}
-
-void GPSCorrectionManager::setRoutingPolicy(RoutingPolicy policy)
-{
-    applyRoutingConfiguration({policy, _router.selectedSource(), _router.selectedInstance()});
-}
-
 GPSCorrectionManager::RoutingPolicy GPSCorrectionManager::routingPolicy() const
 {
     return _router.policy();
-}
-
-void GPSCorrectionManager::addSink(const QString& id, GPSCorrectionRouter::Sink sink)
-{
-    if (!sink) {
-        removeSink(id);
-        return;
-    }
-    setOutput(id, GPSCorrectionRouter::admissionOnlyOutput(id, GPSCorrectionSource::Unknown, std::move(sink)));
 }
 
 void GPSCorrectionManager::removeSink(const QString& id)
@@ -248,20 +223,6 @@ void GPSCorrectionManager::setOutput(const QString& id, GPSCorrectionRouter::Out
     if (guard) {
         _scheduleSourcesChanged();
     }
-}
-
-void GPSCorrectionManager::recordDeliveries(const QList<GPSCorrectionDelivery>& deliveries)
-{
-    for (const auto& delivery : deliveries) {
-        _router.recordDelivery(delivery);
-    }
-    _scheduleSourcesChanged();
-}
-
-void GPSCorrectionManager::invalidateDestination(const QString& id, quint64 destinationSession)
-{
-    _router.invalidateDestination(id, destinationSession);
-    _scheduleSourcesChanged();
 }
 
 void GPSCorrectionManager::_refreshDiagnostics()

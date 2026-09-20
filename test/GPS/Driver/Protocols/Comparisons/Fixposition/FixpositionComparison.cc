@@ -16,10 +16,11 @@
 #include <string_view>
 #include <vector>
 
-#include "AllocationCounter.h"
+#include "AllocationTracker.h"
 #include "NMEASentence.h"
 #include "RTCMFramer.h"
 #include "UBX/UBXFrameDecoder.h"
+#include "UnitTest.h"
 
 namespace {
 namespace fp = fpsdk::common::parser;
@@ -507,14 +508,17 @@ struct Digest
 
 void validateCounter()
 {
-    AllocationCounter::start();
-    void* scalar = ::operator new(7);
-    void* array = ::operator new[](9);
-    void* aligned = ::operator new(64, std::align_val_t(64));
-    ::operator delete(scalar);
-    ::operator delete[](array);
-    ::operator delete(aligned, std::align_val_t(64));
-    const auto result = AllocationCounter::stop();
+    QGCTest::AllocationTracker::Counts result;
+    {
+        QGCTest::AllocationTracker tracker;
+        void* scalar = ::operator new(7);
+        void* array = ::operator new[](9);
+        void* aligned = ::operator new(64, std::align_val_t(64));
+        ::operator delete(scalar);
+        ::operator delete[](array);
+        ::operator delete(aligned, std::align_val_t(64));
+        result = tracker.counts();
+    }
     require(result.calls == 3 && result.bytes == 80 && result.largest == 64, "Allocation counter self-test failed");
 }
 
@@ -544,16 +548,22 @@ void measure(const char* name, View input, Protocol protocol)
     require(qgcDigest == candidateDigest, "Warmup frame contents differ");
     qgcDigest = {};
     candidateDigest = {};
-    AllocationCounter::start();
-    for (std::size_t iteration = 0; iteration < ITERATIONS; ++iteration) {
-        qgcRun();
+    QGCTest::AllocationTracker::Counts qgcCounts;
+    {
+        QGCTest::AllocationTracker tracker;
+        for (std::size_t iteration = 0; iteration < ITERATIONS; ++iteration) {
+            qgcRun();
+        }
+        qgcCounts = tracker.counts();
     }
-    const auto qgcCounts = AllocationCounter::stop();
-    AllocationCounter::start();
-    for (std::size_t iteration = 0; iteration < ITERATIONS; ++iteration) {
-        candidateRun();
+    QGCTest::AllocationTracker::Counts candidateCounts;
+    {
+        QGCTest::AllocationTracker tracker;
+        for (std::size_t iteration = 0; iteration < ITERATIONS; ++iteration) {
+            candidateRun();
+        }
+        candidateCounts = tracker.counts();
     }
-    const auto candidateCounts = AllocationCounter::stop();
     require(qgcDigest == candidateDigest && qgcDigest.frames == ITERATIONS, "Measured frame work differs");
     std::cout << "{\"kind\":\"allocations\",\"case\":" << std::quoted(name) << ",\"iterations\":" << ITERATIONS
               << ",\"frames\":" << qgcDigest.frames << ",\"payload_bytes_hashed\":" << qgcDigest.bytes
@@ -593,12 +603,19 @@ void addBounds()
 }
 }  // namespace
 
-int main(int argc, char** argv)
+class GPSFixpositionComparisonTest : public UnitTest
+{
+    Q_OBJECT
+
+private slots:
+
+    void _comparison();
+};
+
+void GPSFixpositionComparisonTest::_comparison()
 {
     try {
-        const bool reportOnly = argc == 2 && std::string_view(argv[1]) == "--report-only";
-        require(argc == 1 || reportOnly || (argc == 2 && std::string_view(argv[1]) == "--require-compatible"),
-                "Usage: QGCGPSFixpositionComparison [--report-only|--require-compatible]");
+        const bool requireCompatible = qEnvironmentVariableIntValue("QGC_GPS_FIXPOSITION_REQUIRE_COMPATIBLE") != 0;
         std::cout
             << "{\"kind\":\"dependencies\",\"sdk_license\":\"MIT; full common LICENSE notices retained\","
                "\"eigen_version\":\"3.4.0\",\"eigen_commit\":\"3147391d946bb4b6c68edd901f2add6ac1f31f8c\","
@@ -693,10 +710,15 @@ int main(int argc, char** argv)
                   << ",\"unsupported_cases\":" << unsupported << ",\"max_observed_message_capacity\":" << maxCapacity
                   << ",\"compatibility_gate_exit_code\":" << compatibilityExitCode << ",\"adoption\":\""
                   << (mismatches ? "no-adoption" : "not-established") << "\",\"production_changed\":false}\n";
-        return reportOnly ? 0 : compatibilityExitCode;
+        if (requireCompatible) {
+            QCOMPARE(compatibilityExitCode, 0);
+        }
     } catch (const std::exception& exception) {
-        AllocationCounter::stop();
         std::cerr << "{\"kind\":\"harness-error\",\"message\":" << std::quoted(exception.what()) << "}\n";
-        return 2;
+        QFAIL(exception.what());
     }
 }
+
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSFixpositionComparisonTest, TestLabel::Unit)
+
+#include "FixpositionComparison.moc"

@@ -1004,7 +1004,7 @@ int GPSNativeUBX::disableTimeMode()
                    : _timeModeReadback == 0 ? GPSCommandOutcome::ReadbackVerified
                                             : GPSCommandOutcome::Rejected;
         });
-    return result.outcome == GPSCommandOutcome::ReadbackVerified ? 0 : -1;
+    return result.evidence.outcome == GPSCommandOutcome::ReadbackVerified ? 0 : -1;
 }
 
 int GPSNativeUBX::verifyConfigValue(uint32_t key, uint8_t value)
@@ -1026,7 +1026,7 @@ int GPSNativeUBX::verifyConfigValue(uint32_t key, uint8_t value)
                    : _controller.readback().values[0] == value ? GPSCommandOutcome::ReadbackVerified
                                                                : GPSCommandOutcome::Rejected;
         });
-    return result.outcome == GPSCommandOutcome::ReadbackVerified ? 0 : -1;
+    return result.evidence.outcome == GPSCommandOutcome::ReadbackVerified ? 0 : -1;
 }
 
 int GPSNativeUBX::waitForSurveyStop()
@@ -1057,7 +1057,7 @@ int GPSNativeUBX::waitForSurveyStop()
         return -1;
     }
 
-    _commandWrite.command = "UBX-NAV-SVIN stopped";
+    _commandWrite.evidence.command = "UBX-NAV-SVIN stopped";
     failCommandWrite(GPSCommandOutcome::ReadbackVerified);
     return 0;
 }
@@ -1102,13 +1102,13 @@ int GPSNativeUBX::restartSurveyInPreV27()
 
         payload_tx_cfg_tmode3 = {};
         payload_tx_cfg_tmode3.flags = 2 /* fixed mode */ | (1 << 8) /* lat/lon mode */;
-        int64_t lat64 = (int64_t) (settings.fixedBaseLatitude * 1e9);
+        int64_t lat64 = (int64_t) (settings.fixedPosition.latitudeDegrees * 1e9);
         payload_tx_cfg_tmode3.ecefXOrLat = (int32_t) (lat64 / 100);
         payload_tx_cfg_tmode3.ecefXOrLatHP = lat64 % 100;  // range [-99, 99]
-        int64_t lon64 = (int64_t) (settings.fixedBaseLongitude * 1e9);
+        int64_t lon64 = (int64_t) (settings.fixedPosition.longitudeDegrees * 1e9);
         payload_tx_cfg_tmode3.ecefYOrLon = (int32_t) (lon64 / 100);
         payload_tx_cfg_tmode3.ecefYOrLonHP = lon64 % 100;
-        int64_t alt64 = (int64_t) ((double) settings.fixedBaseAltitudeMeters * 1e4);
+        int64_t alt64 = (int64_t) ((double) settings.fixedPosition.altitudeMeters * 1e4);
         payload_tx_cfg_tmode3.ecefZOrAlt = (int32_t) (alt64 / 100);  // cm
         payload_tx_cfg_tmode3.ecefZOrAltHP = alt64 % 100;            // 0.1mm
 
@@ -1166,13 +1166,13 @@ int GPSNativeUBX::restartSurveyIn()
         initCfgValset();
         cfgValset<uint8_t>(UBX_CFG_KEY_TMODE_MODE, 2 /* Fixed Mode */);
         cfgValset<uint8_t>(UBX_CFG_KEY_TMODE_POS_TYPE, 1 /* Lat/Lon/Height */);
-        int64_t lat64 = (int64_t) (settings.fixedBaseLatitude * 1e9);
+        int64_t lat64 = (int64_t) (settings.fixedPosition.latitudeDegrees * 1e9);
         cfgValset<int32_t>(UBX_CFG_KEY_TMODE_LAT, (int32_t) (lat64 / 100));
         cfgValset<int8_t>(UBX_CFG_KEY_TMODE_LAT_HP, lat64 % 100 /* range [-99, 99] */);
-        int64_t lon64 = (int64_t) (settings.fixedBaseLongitude * 1e9);
+        int64_t lon64 = (int64_t) (settings.fixedPosition.longitudeDegrees * 1e9);
         cfgValset<int32_t>(UBX_CFG_KEY_TMODE_LON, (int32_t) (lon64 / 100));
         cfgValset<int8_t>(UBX_CFG_KEY_TMODE_LON_HP, lon64 % 100 /* range [-99, 99] */);
-        int64_t alt64 = (int64_t) ((double) settings.fixedBaseAltitudeMeters * 1e4);
+        int64_t alt64 = (int64_t) ((double) settings.fixedPosition.altitudeMeters * 1e4);
         cfgValset<int32_t>(UBX_CFG_KEY_TMODE_HEIGHT, (int32_t) (alt64 / 100) /* cm */);
         cfgValset<int8_t>(UBX_CFG_KEY_TMODE_HEIGHT_HP, alt64 % 100 /* 0.1mm */);
         cfgValset<uint32_t>(UBX_CFG_KEY_TMODE_FIXED_POS_ACC, fixedAccuracyWireUnits(settings.fixedBaseAccuracyMeters));
@@ -1235,8 +1235,8 @@ GPSNativeUBX::waitForAck(const uint16_t msg, const unsigned timeout, const bool 
                     return _controller.readback().values == expected.values ? GPSCommandOutcome::ReadbackVerified
                                                                             : GPSCommandOutcome::Rejected;
                 });
-            _last_ack_rejected = result.outcome == GPSCommandOutcome::Rejected;
-            if (result.outcome != GPSCommandOutcome::ReadbackVerified) {
+            _last_ack_rejected = result.evidence.outcome == GPSCommandOutcome::Rejected;
+            if (result.evidence.outcome != GPSCommandOutcome::ReadbackVerified) {
                 return -1;
             }
         }
@@ -1248,11 +1248,11 @@ GPSNativeUBX::waitForAck(const uint16_t msg, const unsigned timeout, const bool 
         awaitCommand({std::to_string(msg), std::chrono::milliseconds(timeout), _pendingCommandSettings, report},
                      [this] { return _controller.acknowledgement(); });
     _pendingCommandSettings = {};
-    _last_ack_rejected = result.outcome == GPSCommandOutcome::Rejected;
-    if (msg == UBX_MSG_CFG_VALSET && result.outcome == GPSCommandOutcome::TimedOut) {
+    _last_ack_rejected = result.evidence.outcome == GPSCommandOutcome::Rejected;
+    if (msg == UBX_MSG_CFG_VALSET && result.evidence.outcome == GPSCommandOutcome::TimedOut) {
         _valsetAckAmbiguous = true;
     }
-    return result.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
+    return result.evidence.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
 }
 
 void GPSNativeUBX::waitForGnssReset()

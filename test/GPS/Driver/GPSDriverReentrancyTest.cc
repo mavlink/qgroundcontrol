@@ -10,9 +10,9 @@
 #include <QtTest/QTest>
 
 #include "GPSDriver.h"
-#include "GPSDriverTestBase.h"
 #include "GPSProtocolFeatures.h"
 #include "GPSTransport.h"
+#include "UnitTest.h"
 
 namespace {
 const std::atomic_bool NEVER_STOP{false};
@@ -68,7 +68,7 @@ public:
 };
 }  // namespace
 
-class GPSDriverReentrancyTest : public GPSDriverTestBase
+class GPSDriverReentrancyTest : public UnitTest
 {
     Q_OBJECT
 
@@ -204,10 +204,10 @@ void GPSDriverReentrancyTest::_configurationCallbacks()
         nestedConfiguration = driverPointer->configure();
         nestedReceive = driverPointer->receiveOutcome(0);
     };
-    GPSDriver driver(
-        GPSType::femto, transport,
-        {.base = {.useFixedBase = true, .fixedBaseLatitude = 0, .fixedBaseLongitude = 0, .fixedBaseAltitudeMeters = 0}},
-        std::move(sinks));
+    GPSDriver driver(GPSType::femto, transport,
+                     {.base = {.useFixedBase = true,
+                               .fixedPosition = {.latitudeDegrees = 0, .longitudeDegrees = 0, .altitudeMeters = 0}}},
+                     std::move(sinks));
     driverPointer = &driver;
     expectLogMessage(
         "GPS.GPSDriver", QtWarningMsg,
@@ -283,5 +283,5 @@ void GPSDriverReentrancyTest::_satelliteExpiry()
     QCOMPARE(transport.writes, 0);
 }
 
-QGC_REGISTER_PORTABLE_TEST(GPSDriverReentrancyTest, TestLabel::Unit)
+UT_REGISTER_TEST(GPSDriverReentrancyTest, TestLabel::Unit)
 #include "GPSDriverReentrancyTest.moc"

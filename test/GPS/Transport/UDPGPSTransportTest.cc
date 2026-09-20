@@ -92,7 +92,7 @@ void UDPGPSTransportTest::_cancelRead()
     QVERIFY(receiver.bind(QHostAddress::LocalHost, 0));
     std::atomic_bool stop = true;
     UDPGPSTransport transport(QStringLiteral("127.0.0.1"), receiver.localPort(), stop);
-    QVERIFY(transport.open().status != GPSOpenStatus::Opened);
+    QCOMPARE(transport.open().status, GPSOpenStatus::Cancelled);
     stop = false;
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     QTimer::singleShot(0, &receiver, [&]() { stop = true; });

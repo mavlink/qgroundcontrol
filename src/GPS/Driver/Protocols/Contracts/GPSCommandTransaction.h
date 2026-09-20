@@ -20,15 +20,8 @@ struct GPSConfigurationStep
 
 struct GPSCommandResult
 {
-    std::string command;
-    GPSCommandOutcome outcome = GPSCommandOutcome::Pending;
-    uint64_t startedAtUs = 0;
-    uint64_t finishedAtUs = 0;
+    GPSConfigurationEvidence evidence{};
     GPSReceiverSettingSet affectedSettings = {};
-    int acceptedBytes = 0;
-    int writtenBytes = 0;
-    int uncertainBytes = 0;
-    bool required = true;
 };
 
 /// One attempt under a single absolute deadline. Retry decisions belong to the configuration policy.

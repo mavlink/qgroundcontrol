@@ -7,10 +7,12 @@
 #include <QtTest/QTest>
 
 #include "GPSNativeData_p.h"
-#include "PortableTest.h"
+#include "GPSProtocol.h"
+#include "UnitTest.h"
 
 Q_DECLARE_METATYPE(GPSNativeIntegrityReport)
 Q_DECLARE_METATYPE(GPSNativeSatelliteData)
+Q_DECLARE_METATYPE(GPSEllipsoidPosition)
 
 static_assert(std::is_same_v<decltype(GPSNativePositionReport::fix_type), GPSPositionReport::FixType>);
 static_assert(std::is_same_v<decltype(GPSNativeIntegrityReport::jamming_state), GPSIntegrityReport::JammingState>);
@@ -19,6 +21,13 @@ static_assert(
     std::is_same_v<decltype(GPSNativeIntegrityReport::corrections_msg_used), GPSIntegrityReport::CorrectionUse>);
 
 namespace {
+
+struct CoordinateConversions : GPSProtocol
+{
+    using GPSProtocol::EcefMeters;
+    using GPSProtocol::fromEcef;
+    using GPSProtocol::toEcef;
+};
 
 QList<uint16_t> satelliteIds(const GPSSatelliteReport& report)
 {
@@ -32,11 +41,13 @@ QList<uint16_t> satelliteIds(const GPSSatelliteReport& report)
 
 }  // namespace
 
-class GPSNativeDataTest : public PortableTest
+class GPSNativeDataTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
+    void _ellipsoidEcefConversion_data();
+    void _ellipsoidEcefConversion();
     void _unreportedPosition();
     void _positionValues_data();
     void _positionValues();
@@ -53,12 +64,56 @@ private slots:
     void _satelliteCounts();
     void _satelliteMetadata_data();
     void _satelliteMetadata();
+    void _satelliteConstellationOverride();
     void _satelliteSnapshotScopes();
     void _satelliteSnapshotBounds();
     void _satelliteSnapshotExpiry();
     void _surveyProjection_data();
     void _surveyProjection();
 };
+
+void GPSNativeDataTest::_ellipsoidEcefConversion_data()
+{
+    QTest::addColumn<GPSEllipsoidPosition>("position");
+    QTest::addColumn<double>("x");
+    QTest::addColumn<double>("y");
+    QTest::addColumn<double>("z");
+    QTest::newRow("equator") << GPSEllipsoidPosition{0, 0, 0} << 6378137.0 << 0.0 << 0.0;
+    QTest::newRow("equator-east-height") << GPSEllipsoidPosition{0, 90, 100} << 0.0 << 6378237.0 << 0.0;
+    QTest::newRow("north-pole") << GPSEllipsoidPosition{90, 45, 0} << 0.0 << 0.0 << 6356752.314245;
+    QTest::newRow("south-pole-below-ellipsoid")
+        << GPSEllipsoidPosition{-90, -120, -30} << 0.0 << 0.0 << -6356722.314245;
+    QTest::newRow("oblique") << GPSEllipsoidPosition{45, 45, 0} << 3194419.145061 << 3194419.145061 << 4487348.408866;
+    QTest::newRow("antimeridian") << GPSEllipsoidPosition{0, 180, -30} << -6378107.0 << 0.0 << 0.0;
+    QTest::newRow("unknown") << GPSEllipsoidPosition{} << qQNaN() << qQNaN() << qQNaN();
+}
+
+void GPSNativeDataTest::_ellipsoidEcefConversion()
+{
+    QFETCH(GPSEllipsoidPosition, position);
+    QFETCH(double, x);
+    QFETCH(double, y);
+    QFETCH(double, z);
+    const auto ecef = CoordinateConversions::toEcef(position);
+    const auto restored = CoordinateConversions::fromEcef(ecef);
+    if (std::isnan(x)) {
+        QVERIFY(std::isnan(ecef.x));
+        QVERIFY(std::isnan(ecef.y));
+        QVERIFY(std::isnan(ecef.z));
+        QVERIFY(std::isnan(restored.latitudeDegrees));
+        QVERIFY(std::isnan(restored.longitudeDegrees));
+        QVERIFY(std::isnan(restored.altitudeMeters));
+        return;
+    }
+    QVERIFY(std::abs(ecef.x - x) < 0.000001);
+    QVERIFY(std::abs(ecef.y - y) < 0.000001);
+    QVERIFY(std::abs(ecef.z - z) < 0.000001);
+    QVERIFY(std::abs(restored.latitudeDegrees - position.latitudeDegrees) < 1e-10);
+    if (std::abs(position.latitudeDegrees) != 90) {
+        QVERIFY(std::abs(restored.longitudeDegrees - position.longitudeDegrees) < 1e-10);
+    }
+    QVERIFY(std::abs(restored.altitudeMeters - position.altitudeMeters) < 0.00001f);
+}
 
 void GPSNativeDataTest::_unreportedPosition()
 {
@@ -371,7 +426,8 @@ void GPSNativeDataTest::_satelliteCounts()
         source.entries[i].prn = 500 + i;
         source.entries[i].used = (i % 2) != 0;
     }
-    const auto report = GPSNativeData::satellites(source);
+    GPSNativeData::SatelliteSnapshot snapshot;
+    const auto report = snapshot.update(source);
     QCOMPARE(report.timestampUs, source.timestamp);
     QCOMPARE(report.count, expectedCount);
     for (uint16_t i = 0; i < expectedCount; ++i) {
@@ -430,14 +486,18 @@ void GPSNativeDataTest::_satelliteMetadata()
     QFETCH(bool, azimuthKnown);
     QFETCH(bool, signalKnown);
     GPSNativeSatelliteReport source;
+    source.timestamp = 100;
     source.count = 1;
     source.entries[0] = entry;
-    const auto report = GPSNativeData::satellites(source);
+    GPSNativeData::SatelliteSnapshot snapshot;
+    const auto report = snapshot.update(source);
     QCOMPARE(report.count, uint16_t{1});
     const auto& satellite = report.satellites[0];
     QCOMPARE(satellite.id, entry.id);
     QCOMPARE(satellite.prn, entry.prn);
     QCOMPARE(satellite.used, entry.used);
+    QCOMPARE(satellite.inViewTimestampUs, source.timestamp);
+    QCOMPARE(satellite.inUseTimestampUs, entry.used ? source.timestamp : uint64_t{0});
     QCOMPARE(satellite.elevationDegrees.has_value(), elevationKnown);
     QCOMPARE(satellite.azimuthDegrees.has_value(), azimuthKnown);
     QCOMPARE(satellite.signalStrength.has_value(), signalKnown);
@@ -450,6 +510,33 @@ void GPSNativeDataTest::_satelliteMetadata()
     if (signalKnown) {
         QCOMPARE(*satellite.signalStrength, static_cast<uint8_t>(*entry.signal));
     }
+}
+
+void GPSNativeDataTest::_satelliteConstellationOverride()
+{
+    GPSNativeSatelliteReport source;
+    source.timestamp = 100;
+    source.count = 1;
+    source.constellation = GPSConstellation::GPS;
+    source.entries[0] = {.id = 1,
+                         .prn = 2,
+                         .constellation = GPSConstellation::GLONASS,
+                         .used = false,
+                         .elevation = 10.123456789,
+                         .azimuth = 123.123456789,
+                         .signal = 0};
+    GPSNativeData::SatelliteSnapshot snapshot;
+    const auto report = snapshot.update(source);
+    QCOMPARE(report.count, uint16_t{1});
+    const auto& satellite = report.satellites[0];
+    QCOMPARE(satellite.constellation, GPSConstellation::GPS);
+    QCOMPARE(satellite.prn, uint16_t{2});
+    QCOMPARE(satellite.used, std::optional<bool>{false});
+    QCOMPARE(satellite.signalStrength, std::optional<uint8_t>{0});
+    QCOMPARE(satellite.elevationDegrees.value(), static_cast<float>(*source.entries[0].elevation));
+    QCOMPARE(satellite.azimuthDegrees.value(), static_cast<float>(*source.entries[0].azimuth));
+    QCOMPARE(satellite.inViewTimestampUs, source.timestamp);
+    QCOMPARE(satellite.inUseTimestampUs, source.timestamp);
 }
 
 void GPSNativeDataTest::_satelliteSnapshotScopes()
@@ -639,12 +726,12 @@ void GPSNativeDataTest::_surveyProjection()
                                        .duration = duration,
                                        .flags = flags};
     const auto report = GPSNativeData::survey(source);
-    QCOMPARE(report.latitudeDegrees, -47.123456789);
-    QCOMPARE(report.longitudeDegrees, 179.987654321);
+    QCOMPARE(report.position.latitudeDegrees, -47.123456789);
+    QCOMPARE(report.position.longitudeDegrees, 179.987654321);
     if (datum == GPSNativeSurveyReport::AltitudeDatum::Ellipsoid) {
-        QCOMPARE(report.altitudeEllipsoidMeters, -25.5f);
+        QCOMPARE(report.position.altitudeMeters, -25.5f);
     } else {
-        QVERIFY(std::isnan(report.altitudeEllipsoidMeters));
+        QVERIFY(std::isnan(report.position.altitudeMeters));
     }
     if (std::isnan(accuracyMeters)) {
         QVERIFY(!report.meanAccuracyMeters.has_value());
@@ -657,6 +744,6 @@ void GPSNativeDataTest::_surveyProjection()
     QCOMPARE(report.active, active);
 }
 
-QGC_REGISTER_PORTABLE_TEST(GPSNativeDataTest, TestLabel::Unit)
+UT_REGISTER_TEST(GPSNativeDataTest, TestLabel::Unit)
 
 #include "GPSNativeDataTest.moc"

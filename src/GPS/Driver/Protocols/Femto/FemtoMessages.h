@@ -145,18 +145,14 @@ struct femto_msg_t
 
 enum class FemtoDecodeState
 {
-    pream_ble1,                   /**< Frame header preamble first byte 0xaa */
-    pream_ble2,                   /**< Frame header preamble second byte 0x44 */
-    pream_ble3,                   /**< Frame header preamble third byte 0x12 */
-    head_length,                  /**< Frame header length */
-    head_data,                    /**< Frame header data */
-    data,                         /**< Frame data */
-    crc1,                         /**< Frame crc1 */
-    crc2,                         /**< Frame crc2 */
-    crc3,                         /**< Frame crc3 */
-    crc4,                         /**< Frame crc4 */
-
-    pream_nmea_got_sync1,         /**< NMEA Frame '$' */
-    pream_nmea_got_asteriks,      /**< NMEA Frame '*' */
-    pream_nmea_got_first_cs_byte, /**< NMEA Frame cs first byte */
+    pream_ble1,  /**< Frame header preamble first byte 0xaa */
+    pream_ble2,  /**< Frame header preamble second byte 0x44 */
+    pream_ble3,  /**< Frame header preamble third byte 0x12 */
+    head_length, /**< Frame header length */
+    head_data,   /**< Frame header data */
+    data,        /**< Frame data */
+    crc1,        /**< Frame crc1 */
+    crc2,        /**< Frame crc2 */
+    crc3,        /**< Frame crc3 */
+    crc4,        /**< Frame crc4 */
 };

@@ -86,12 +86,12 @@ int GPSNativeAshtech::waitForReply(NMEACommand command, const unsigned timeout)
     const auto clearReply = qScopeGuard([this] { _command_state = NMEACommandState::idle; });
 
     const auto result =
-        awaitCommand({std::to_string(static_cast<int>(command)), std::chrono::milliseconds(timeout)}, [this] {
+        awaitCommand({_commandWrite.evidence.command, std::chrono::milliseconds(timeout)}, [this] {
             return _command_state == NMEACommandState::received ? GPSCommandOutcome::Acknowledged
                    : _command_state == NMEACommandState::nack   ? GPSCommandOutcome::Rejected
                                                                 : GPSCommandOutcome::Pending;
         });
-    return result.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
+    return result.evidence.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
 }
 
 int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
@@ -342,7 +342,7 @@ void GPSNativeAshtech::activateCorrectionOutput()
     } else {
         const GPSBaseStationConfig& settings = _baseConfig;
         char ns, ew;
-        double latitude = settings.fixedBaseLatitude;
+        double latitude = settings.fixedPosition.latitudeDegrees;
 
         if (latitude < 0.) {
             latitude = -latitude;
@@ -355,7 +355,7 @@ void GPSNativeAshtech::activateCorrectionOutput()
         // convert to ddmm.mmmmmm format
         latitude = ((int) latitude) * 100. + (latitude - ((int) latitude)) * 60.;
 
-        double longitude = settings.fixedBaseLongitude;
+        double longitude = settings.fixedPosition.longitudeDegrees;
 
         if (longitude < 0.) {
             longitude = -longitude;
@@ -369,7 +369,7 @@ void GPSNativeAshtech::activateCorrectionOutput()
         longitude = ((int) longitude) * 100. + (longitude - ((int) longitude)) * 60.;
 
         int len = snprintf(buffer, sizeof(buffer), "$PASHS,POS,%.8f,%c,%.8f,%c,%.5f,PC1", latitude, ns, longitude, ew,
-                           (double) settings.fixedBaseAltitudeMeters);
+                           (double) settings.fixedPosition.altitudeMeters);
 
         if (len >= 0 && len < (int) sizeof(buffer)) {
             if (writeAckedCommand(buffer, len, ASH_RESPONSE_TIMEOUT) != 0) {
@@ -386,8 +386,8 @@ void GPSNativeAshtech::activateCorrectionOutput()
         if (ioError()) {
             return;
         }
-        sendSurveyInStatusUpdate(false, true, settings.fixedBaseLatitude, settings.fixedBaseLongitude,
-                                 settings.fixedBaseAltitudeMeters);
+        sendSurveyInStatusUpdate(false, true, settings.fixedPosition.latitudeDegrees,
+                                 settings.fixedPosition.longitudeDegrees, settings.fixedPosition.altitudeMeters);
     }
     _correction_output_activated = true;
 }

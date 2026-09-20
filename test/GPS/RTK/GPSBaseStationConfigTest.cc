@@ -7,9 +7,9 @@
 #include <QtTest/QTest>
 
 #include "GPSReceiverConfigValidation.h"
-#include "PortableTest.h"
+#include "UnitTest.h"
 
-class GPSBaseStationConfigTest : public PortableTest
+class GPSBaseStationConfigTest : public UnitTest
 {
     Q_OBJECT
 
@@ -60,15 +60,15 @@ private slots:
         QTest::newRow("invalid-fixed") << GPSBaseStationConfig{.useFixedBase = true}
                                        << QStringLiteral("Enter a valid fixed base position and accuracy");
         QTest::newRow("valid-fixed") << GPSBaseStationConfig{.useFixedBase = true,
-                                                             .fixedBaseLatitude = 0,
-                                                             .fixedBaseLongitude = 0,
-                                                             .fixedBaseAltitudeMeters = 0}
+                                                             .fixedPosition = {.latitudeDegrees = 0,
+                                                                               .longitudeDegrees = 0,
+                                                                               .altitudeMeters = 0}}
                                      << QString();
         QTest::newRow("fixed-unavailable-accuracy")
             << GPSBaseStationConfig{.useFixedBase = true,
-                                    .fixedBaseLatitude = 47,
-                                    .fixedBaseLongitude = 8,
-                                    .fixedBaseAltitudeMeters = 500,
+                                    .fixedPosition = {.latitudeDegrees = 47,
+                                                      .longitudeDegrees = 8,
+                                                      .altitudeMeters = 500},
                                     .fixedBaseAccuracyMeters = std::numeric_limits<float>::quiet_NaN()}
             << QStringLiteral("Enter a valid fixed base position and accuracy");
     }
@@ -131,5 +131,5 @@ private slots:
     }
 };
 
-QGC_REGISTER_PORTABLE_TEST(GPSBaseStationConfigTest, TestLabel::Unit)
+UT_REGISTER_TEST(GPSBaseStationConfigTest, TestLabel::Unit)
 #include "GPSBaseStationConfigTest.moc"

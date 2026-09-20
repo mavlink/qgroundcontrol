@@ -1,8 +1,8 @@
 #pragma once
 
-#include "GPSDriverTestBase.h"
+#include "UnitTest.h"
 
-class GPSDriverTest : public GPSDriverTestBase
+class GPSDriverTest : public UnitTest
 {
     Q_OBJECT
 

@@ -182,9 +182,7 @@ bool GPSDriver::configure()
     };
     io.commandFinished = [this](const GPSCommandResult& result) {
         if (_state->configuring) {
-            _state->evidence.push_back({result.command, result.outcome, result.startedAtUs, result.finishedAtUs,
-                                        result.acceptedBytes, result.writtenBytes, result.uncertainBytes,
-                                        result.required});
+            _state->evidence.push_back(result.evidence);
         }
     };
     io.decoded = [this](const GPSDecodedBatch& batch) {

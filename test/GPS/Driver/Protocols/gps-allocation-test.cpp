@@ -1,45 +1,25 @@
 #include <array>
-#include <cstdlib>
 #include <fstream>
-#include <iostream>
-#include <new>
 
+#include "AllocationTracker.h"
 #include "UBX/GPSDriverUBX.h"
+#include "UnitTest.h"
 
-namespace {
-bool countAllocations = false;
-std::size_t allocations = 0;
-}  // namespace
-
-void* operator new(std::size_t size)
+class GPSProtocolAllocationTest : public UnitTest
 {
-    if (countAllocations) {
-        ++allocations;
-    }
-    if (void* memory = std::malloc(size ? size : 1)) {
-        return memory;
-    }
-    throw std::bad_alloc();
-}
+    Q_OBJECT
 
-void operator delete(void* memory) noexcept
-{
-    std::free(memory);
-}
+private slots:
 
-void operator delete(void* memory, std::size_t) noexcept
-{
-    std::free(memory);
-}
+    void _runtimeDelivery();
+};
 
-int main()
+void GPSProtocolAllocationTest::_runtimeDelivery()
 {
     std::array<uint8_t, 100> frame{};
     std::ifstream input(GPS_FIXTURE_DIR "/nav-pvt.ubx", std::ios::binary);
-    if (!input.read(reinterpret_cast<char*>(frame.data()), frame.size())) {
-        std::cerr << "Cannot read the independent NAV-PVT fixture\n";
-        return 1;
-    }
+    QVERIFY2(input.read(reinterpret_cast<char*>(frame.data()), frame.size()),
+             "Cannot read the independent NAV-PVT fixture");
     uint64_t now = 1000000;
     std::size_t positions = 0;
     GPSNativeUBX* receiver = nullptr;
@@ -67,33 +47,31 @@ int main()
     driver.consume(frame);
     positions = 0;
     constexpr std::size_t ITERATIONS = 1000;
-    countAllocations = true;
-    for (std::size_t i = 0; i < ITERATIONS; ++i) {
-        now += 200000;
-        driver.consume(frame);
+    QGCTest::AllocationTracker::Counts allocations;
+    {
+        QGCTest::AllocationTracker tracker;
+        for (std::size_t i = 0; i < ITERATIONS; ++i) {
+            now += 200000;
+            driver.consume(frame);
+        }
+        allocations = tracker.counts();
     }
-    countAllocations = false;
-    std::cout << "Runtime NAV-PVT reports: " << positions << ", C++ allocations after warmup: " << allocations << '\n';
-    if (positions != ITERATIONS || allocations != 0) {
-        std::cerr << "Synchronous runtime delivery must reuse decoded-event storage\n";
-        return 1;
-    }
+    QCOMPARE(positions, ITERATIONS);
+    QCOMPARE(allocations.calls, size_t{0});
     const auto owned = driver.decode(frame);
     const auto timestamp = now;
     now += 200000;
     driver.consume(frame);
-    if (owned.batch.events.size() != 1 ||
-        !std::holds_alternative<GPSNativePositionReport>(owned.batch.events.front()) ||
-        std::get<GPSNativePositionReport>(owned.batch.events.front()).timestamp != timestamp) {
-        std::cerr << "Standalone decode results must retain ownership across subsequent input\n";
-        return 1;
-    }
+    QCOMPARE(owned.batch.events.size(), size_t{1});
+    QVERIFY(std::holds_alternative<GPSNativePositionReport>(owned.batch.events.front()));
+    QCOMPARE(std::get<GPSNativePositionReport>(owned.batch.events.front()).timestamp, timestamp);
     const auto beforeNested = positions;
     injectNested = true;
     driver.consume(frame);
-    if (!nestedSnapshotValid || positions != beforeNested + 2) {
-        std::cerr << "Nested synchronous delivery must not invalidate its caller's report\n";
-        return 1;
-    }
-    return 0;
+    QVERIFY(nestedSnapshotValid);
+    QCOMPARE(positions, beforeNested + 2);
 }
+
+UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolAllocationTest, TestLabel::Unit)
+
+#include "gps-allocation-test.moc"

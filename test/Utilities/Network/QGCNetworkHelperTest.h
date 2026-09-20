@@ -48,6 +48,7 @@ private slots:
     void _testCreateBasicAuthCredentials();
     void _testSetBasicAuthHeader();
     void _testSetBearerTokenHeader();
+    void _testCreateNetworkManager();
     void _testLooksLikeJson();
     void _testErrorMessageNullReply();
     void _testRedirectUrlResolvesRelativeTarget();

@@ -18,8 +18,6 @@ struct NTRIPConnectionConfig
     QString streamValidationError() const;
 
     bool isValid() const { return validationError().isEmpty(); }
-
-    QString casterIdentity() const;
 };
 
 struct NTRIPRtcmFilterConfig

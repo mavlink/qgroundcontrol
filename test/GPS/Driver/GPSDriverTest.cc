@@ -52,7 +52,11 @@ public:
         : GPSTransport(neverStop)
     {}
 
-    GPSOpenResult open() override { return {GPSOpenStatus::Opened}; }
+    GPSOpenResult open() override
+    {
+        ++openCalls;
+        return {GPSOpenStatus::Opened};
+    }
 
     bool fatalError() const override { return false; }
 
@@ -104,6 +108,7 @@ public:
     std::optional<GPSReadResult> readOverride;
     std::optional<GPSWriteResult> writeOverride;
     QByteArray scriptedRead;
+    int openCalls = 0;
     int lastReadLength = -1;
     int lastReadTimeoutMs = -1;
     QByteArray lastWrite;
@@ -160,9 +165,7 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
     sinks.onSatelliteInfo = [&](const auto& snapshot) { snapshots.push_back(snapshot); };
     GPSDriver driver(GPSType::trimble, transport,
                      {.base = {.useFixedBase = true,
-                               .fixedBaseLatitude = 47,
-                               .fixedBaseLongitude = 8,
-                               .fixedBaseAltitudeMeters = 500}},
+                               .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}},
                      sinks);
     QVERIFY(driver.configure());
     unsigned epoch = 120000;
@@ -249,9 +252,7 @@ void GPSDriverTest::_femtoSatelliteUsage()
     sinks.onSatelliteUsage = [&](const auto& report) { usage.push_back(report); };
     GPSDriver driver(GPSType::femto, transport,
                      {.base = {.useFixedBase = true,
-                               .fixedBaseLatitude = 47,
-                               .fixedBaseLongitude = 8,
-                               .fixedBaseAltitudeMeters = 500}},
+                               .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}},
                      sinks);
     QVERIFY(driver.configure());
     for (const auto& count : {QByteArray("12"), QByteArray("00"), QByteArray()}) {
@@ -274,9 +275,7 @@ void GPSDriverTest::_receiveOutcomes()
     transport.acknowledgeFemto = true;
     GPSDriver driver(GPSType::femto, transport,
                      {.base = {.useFixedBase = true,
-                               .fixedBaseLatitude = 47,
-                               .fixedBaseLongitude = 8,
-                               .fixedBaseAltitudeMeters = 500}},
+                               .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}},
                      {});
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::NotConfigured);
     QVERIFY(driver.configure());
@@ -327,9 +326,7 @@ void GPSDriverTest::_sbfSatelliteUsage()
     sinks.onSatelliteInfo = [&](const auto&) { ++snapshots; };
     GPSDriver driver(GPSType::septentrio, receiver,
                      {.base = {.useFixedBase = true,
-                               .fixedBaseLatitude = 47,
-                               .fixedBaseLongitude = 8,
-                               .fixedBaseAltitudeMeters = 500}},
+                               .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}},
                      sinks);
     QVERIFY(driver.configure());
     uint32_t tow = 0;
@@ -409,17 +406,16 @@ void GPSDriverTest::_femtoConfigurationSurvey()
         ++reports;
         survey = report;
     };
-    GPSDriver driver(GPSType::femto, transport,
-                     {.base = {.useFixedBase = true,
-                               .fixedBaseLatitude = -47.1,
-                               .fixedBaseLongitude = -8.2,
-                               .fixedBaseAltitudeMeters = -25}},
-                     sinks);
+    GPSDriver driver(
+        GPSType::femto, transport,
+        {.base = {.useFixedBase = true,
+                  .fixedPosition = {.latitudeDegrees = -47.1, .longitudeDegrees = -8.2, .altitudeMeters = -25}}},
+        sinks);
     QVERIFY(driver.configure());
     QCOMPARE(reports, 1);
-    QCOMPARE(survey.latitudeDegrees, -47.1);
-    QCOMPARE(survey.longitudeDegrees, -8.2);
-    QCOMPARE(survey.altitudeEllipsoidMeters, -25);
+    QCOMPARE(survey.position.latitudeDegrees, -47.1);
+    QCOMPARE(survey.position.longitudeDegrees, -8.2);
+    QCOMPARE(survey.position.altitudeMeters, -25);
     QVERIFY(survey.valid);
     QVERIFY(!survey.active);
     QVERIFY(!survey.meanAccuracyMeters);
@@ -480,9 +476,7 @@ void GPSDriverTest::_ashtechFixedSurvey()
     sinks.onSurveyIn = [&](const auto& report) { surveys.push_back(report); };
     GPSDriver driver(GPSType::trimble, transport,
                      {.base = {.useFixedBase = true,
-                               .fixedBaseLatitude = 47,
-                               .fixedBaseLongitude = 8,
-                               .fixedBaseAltitudeMeters = 500}},
+                               .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}},
                      sinks);
     QVERIFY(driver.configure());
     surveys.clear();
@@ -491,9 +485,9 @@ void GPSDriverTest::_ashtechFixedSurvey()
     QCOMPARE(driver.receiveOutcome(50).status, GPSReceiveStatus::Data);
     QCOMPARE(surveys.size(), size_t(1));
     const auto& survey = surveys.front();
-    QCOMPARE(survey.latitudeDegrees, 47);
-    QCOMPARE(survey.longitudeDegrees, 8);
-    QCOMPARE(survey.altitudeEllipsoidMeters, 500);
+    QCOMPARE(survey.position.latitudeDegrees, 47);
+    QCOMPARE(survey.position.longitudeDegrees, 8);
+    QCOMPARE(survey.position.altitudeMeters, 500);
     QVERIFY(survey.valid);
     QVERIFY(!survey.active);
     QVERIFY(!survey.meanAccuracyMeters);
@@ -586,9 +580,7 @@ void GPSDriverTest::_ubloxRoleTransition()
         config.base = {.useFixedBase = fixed,
                        .surveyInAccMeters = 2.0,
                        .surveyInDurationSecs = 180,
-                       .fixedBaseLatitude = 47.0,
-                       .fixedBaseLongitude = 8.0,
-                       .fixedBaseAltitudeMeters = 500.0f,
+                       .fixedPosition = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
                        .fixedBaseAccuracyMeters = fixedAccuracyMeters};
         GPSDriver base(GPSType::ublox, receiver, config, {});
         QVERIFY(base.configure());
@@ -726,10 +718,9 @@ void GPSDriverTest::_ubloxAmbiguousAcknowledgements()
     std::atomic_bool stopRequested{false};
     ScriptedUBXReceiver receiver(model, stopRequested);
     {
-        const GPSReceiverConfig config{.base = {.useFixedBase = true,
-                                                .fixedBaseLatitude = 47,
-                                                .fixedBaseLongitude = 8,
-                                                .fixedBaseAltitudeMeters = 500}};
+        const GPSReceiverConfig config{
+            .base = {.useFixedBase = true,
+                     .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}};
         GPSDriver base(GPSType::ublox, receiver, config, {});
         QVERIFY(base.configure());
         QCOMPARE(receiver.timeMode, 2u);
@@ -951,9 +942,9 @@ void GPSDriverTest::_testInvalidFixedBaseRejected()
     QFETCH(double, altitude);
     FakeGPSTransport transport;
     const GPSBaseStationConfig config{.useFixedBase = true,
-                                      .fixedBaseLatitude = coordinate.latitude(),
-                                      .fixedBaseLongitude = coordinate.longitude(),
-                                      .fixedBaseAltitudeMeters = static_cast<float>(altitude)};
+                                      .fixedPosition = {.latitudeDegrees = coordinate.latitude(),
+                                                        .longitudeDegrees = coordinate.longitude(),
+                                                        .altitudeMeters = static_cast<float>(altitude)}};
     GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{.base = config}, GPSDriverSinks{});
     expectLogMessage("GPS.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Enter a valid fixed base position and accuracy")));
@@ -986,18 +977,19 @@ void GPSDriverTest::_testInvalidConfiguration_data()
     const QString fixedMessage = QStringLiteral("Enter a valid fixed base position and accuracy");
     QTest::newRow("missing-fixed-position") << GPSBaseStationConfig{.useFixedBase = true} << fixedMessage;
     QTest::newRow("missing-fixed-latitude")
-        << GPSBaseStationConfig{.useFixedBase = true, .fixedBaseLongitude = 8, .fixedBaseAltitudeMeters = 500}
+        << GPSBaseStationConfig{.useFixedBase = true, .fixedPosition = {.longitudeDegrees = 8, .altitudeMeters = 500}}
         << fixedMessage;
     QTest::newRow("missing-fixed-longitude")
-        << GPSBaseStationConfig{.useFixedBase = true, .fixedBaseLatitude = 47, .fixedBaseAltitudeMeters = 500}
+        << GPSBaseStationConfig{.useFixedBase = true, .fixedPosition = {.latitudeDegrees = 47, .altitudeMeters = 500}}
         << fixedMessage;
     QTest::newRow("missing-fixed-altitude")
-        << GPSBaseStationConfig{.useFixedBase = true, .fixedBaseLatitude = 47, .fixedBaseLongitude = 8} << fixedMessage;
+        << GPSBaseStationConfig{.useFixedBase = true, .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8}}
+        << fixedMessage;
     const auto fixed = [&](const char* name, float altitude, float accuracy) {
         QTest::newRow(name) << GPSBaseStationConfig{.useFixedBase = true,
-                                                    .fixedBaseLatitude = 47,
-                                                    .fixedBaseLongitude = 8,
-                                                    .fixedBaseAltitudeMeters = altitude,
+                                                    .fixedPosition = {.latitudeDegrees = 47,
+                                                                      .longitudeDegrees = 8,
+                                                                      .altitudeMeters = altitude},
                                                     .fixedBaseAccuracyMeters = accuracy}
                             << fixedMessage;
     };
@@ -1078,9 +1070,12 @@ void GPSDriverTest::_nativeConfigurationRejectedBeforeIo()
     QFETCH(QString, message);
     FakeGPSTransport transport;
     GPSDriver driver(static_cast<GPSType>(type), transport, config, {});
+    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::NotConfigured);
     expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(message)));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
+    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::NotConfigured);
+    QCOMPARE(transport.openCalls, 0);
     QVERIFY(transport.lastWrite.isEmpty());
     QCOMPARE(transport.lastBaudrate, 0u);
     QCOMPARE(transport.lastReadLength, -1);
@@ -1111,4 +1106,4 @@ void GPSDriverTest::_passiveInput()
     QVERIFY(transport.lastWrite.isEmpty());
 }
 
-QGC_REGISTER_PORTABLE_TEST(GPSDriverTest, TestLabel::Unit)
+UT_REGISTER_TEST(GPSDriverTest, TestLabel::Unit)

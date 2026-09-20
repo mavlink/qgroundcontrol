@@ -1,13 +1,65 @@
 #include "NMEASentenceTest.h"
 
+#include <array>
+
 #include <QtCore/QTime>
 
+#include "NMEAFramer.h"
 #include "NMEASentence.h"
 #include "NMEAStreamSplitter.h"
 #include "NMEAUtils.h"
 #include "SequentialTestDevice.h"
 
 Q_DECLARE_METATYPE(NMEA::GGA)
+
+void NMEASentenceTest::_incrementalFraming_data()
+{
+    QTest::addColumn<QByteArray>("input");
+    QTest::addColumn<QList<QByteArray>>("expected");
+    QTest::newRow("no-line-ending") << QByteArray("$A*41") << QList<QByteArray>{"$A*41"};
+    QTest::newRow("line-ending") << QByteArray("$A*41\r\n") << QList<QByteArray>{"$A*41"};
+    QTest::newRow("adjacent-frames") << QByteArray("$A*41$Z*5A") << QList<QByteArray>{"$A*41", "$Z*5A"};
+    QTest::newRow("embedded-sync") << QByteArray("$partial$A*41") << QList<QByteArray>{"$A*41"};
+    QTest::newRow("bad-checksum") << QByteArray("noise$A*00$Z*5A") << QList<QByteArray>{"$Z*5A"};
+    QTest::newRow("lowercase-checksum") << QByteArray("$Z*5a") << QList<QByteArray>{};
+    QTest::newRow("incomplete") << QByteArray("$A*4") << QList<QByteArray>{};
+    const QByteArray maximum = "$" + QByteArray(9, 'A') + "*41";
+    QTest::newRow("maximum-length") << maximum << QList<QByteArray>{maximum};
+    QTest::newRow("overlong-resync") << "$" + QByteArray(10, 'A') + "*00$Z*5A" << QList<QByteArray>{"$Z*5A"};
+}
+
+void NMEASentenceTest::_incrementalFraming()
+{
+    QFETCH(QByteArray, input);
+    QFETCH(QList<QByteArray>, expected);
+    std::array<uint8_t, 18> storage;
+    storage.fill(0xA5);
+    auto buffer = std::span(storage).subspan(1, 16);
+    NMEA::Framer framer(buffer);
+    QList<QByteArray> frames;
+    for (const auto byte : input) {
+        if (const auto length = framer.addByte(static_cast<uint8_t>(byte)); length > 0) {
+            frames.append(QByteArray(reinterpret_cast<const char*>(buffer.data()), static_cast<qsizetype>(length)));
+        }
+    }
+    QCOMPARE(frames, expected);
+    QCOMPARE(storage.front(), uint8_t(0xA5));
+    QCOMPARE(storage.back(), uint8_t(0xA5));
+}
+
+void NMEASentenceTest::_incrementalReset()
+{
+    std::array<uint8_t, 16> buffer{};
+    NMEA::Framer framer(buffer);
+    for (const auto byte : QByteArray("$A*")) {
+        QCOMPARE(framer.addByte(static_cast<uint8_t>(byte)), size_t(0));
+    }
+    framer.reset();
+    for (const auto byte : QByteArray("41$A*4")) {
+        QCOMPARE(framer.addByte(static_cast<uint8_t>(byte)), size_t(0));
+    }
+    QCOMPARE(framer.addByte('1'), size_t(5));
+}
 
 void NMEASentenceTest::_utcMilliseconds_data()
 {

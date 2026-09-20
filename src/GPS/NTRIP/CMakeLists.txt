@@ -41,6 +41,7 @@ qt_add_library(
     NTRIPHttpTransport.cc
     NTRIPSourceTableController.cc
     NTRIPSourceTable.cc
+    NTRIPTlsPolicy_p.h
 )
 add_library(QGC::GPSNTRIP ALIAS QGCGPSNTRIP)
 set_target_properties(QGCGPSNTRIP PROPERTIES AUTOMOC ON)

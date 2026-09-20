@@ -8,6 +8,7 @@
 #include "RTCMDecodedFrame.h"
 #include "RTCMFrameDecoder.h"
 #include "RTCMFramer.h"
+#include "UnitTest.h"
 
 namespace {
 // Fixed CRCs keep expectations independent of the framing implementation.
@@ -26,7 +27,7 @@ QByteArray maximumFrame()
 }
 }  // namespace
 
-class RTCMConformanceTest : public QObject
+class RTCMConformanceTest : public UnitTest
 {
     Q_OBJECT
 
@@ -341,6 +342,6 @@ void RTCMConformanceTest::_queuedResultDelivery()
     QVERIFY(received->filtered);
 }
 
-QTEST_GUILESS_MAIN(RTCMConformanceTest)
+UT_REGISTER_TEST(RTCMConformanceTest, TestLabel::Unit)
 
 #include "RTCMConformanceTest.moc"

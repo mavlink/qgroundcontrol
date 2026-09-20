@@ -1,10 +1,12 @@
 #include "QGCNetworkHelperTest.h"
 
+#include <chrono>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QMap>
+#include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
-#include <chrono>
 
 #include "Fixtures/RAIIFixtures.h"
 #include "QGCNetworkHelper.h"
@@ -424,14 +426,26 @@ void QGCNetworkHelperTest::_testSetBasicAuthHeader()
     QGCNetworkHelper::setBasicAuth(request, QStringLiteral("user"), QStringLiteral("pass"));
 
     QCOMPARE(request.rawHeader("Authorization"), QByteArray("Basic dXNlcjpwYXNz"));
+    QGCNetworkHelper::setBasicAuth(request, QStringLiteral("User"), QStringLiteral("PaSs"));
+    QCOMPARE(request.rawHeader("Authorization"), QByteArray("Basic VXNlcjpQYVNz"));
 }
 
 void QGCNetworkHelperTest::_testSetBearerTokenHeader()
 {
     QNetworkRequest request(QUrl(QStringLiteral("https://example.com")));
+    QGCNetworkHelper::setBearerToken(request, QStringLiteral("CaseSensitive"));
+    QCOMPARE(request.rawHeader("Authorization"), QByteArray("Bearer ") + QByteArray("CaseSensitive"));
     QGCNetworkHelper::setBearerToken(request, QStringLiteral("abc123"));
 
     QCOMPARE(request.rawHeader("Authorization"), QByteArray("Bearer abc123"));
+}
+
+void QGCNetworkHelperTest::_testCreateNetworkManager()
+{
+    QObject owner;
+    auto* manager = QGCNetworkHelper::createNetworkManager(&owner);
+    QVERIFY(manager);
+    QCOMPARE(manager->parent(), &owner);
 }
 
 void QGCNetworkHelperTest::_testLooksLikeJson()

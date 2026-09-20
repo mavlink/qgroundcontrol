@@ -46,17 +46,6 @@ QString NTRIPConnectionConfig::streamValidationError() const
     return {};
 }
 
-QString NTRIPConnectionConfig::casterIdentity() const
-{
-    return QStringLiteral("%1\x1f%2\x1f%3\x1f%4\x1f%5\x1f%6")
-        .arg(host)
-        .arg(port)
-        .arg(username)
-        .arg(password)
-        .arg(useTls ? 1 : 0)
-        .arg(allowSelfSignedCerts ? 1 : 0);
-}
-
 QVector<int> NTRIPRtcmFilterConfig::messageIds() const
 {
     QVector<int> ids;

@@ -1,20 +1,6 @@
-cmake_minimum_required(VERSION 3.25)
-
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    project(QGCNativeGPSDriverTests LANGUAGES CXX)
-    enable_testing()
-endif()
-
-if(NOT TARGET Qt6::Core)
-    find_package(Qt6 6.8 REQUIRED COMPONENTS Core)
-endif()
-
 get_filename_component(QGC_GPS_PROTOCOL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../../src/GPS/Driver/Protocols"
                        ABSOLUTE
 )
-if(NOT TARGET QGCGPSNative)
-    add_subdirectory("${QGC_GPS_PROTOCOL_SOURCE_DIR}" Native)
-endif()
 add_library(QGCGPSProtocolTestRuntime INTERFACE)
 target_link_libraries(QGCGPSProtocolTestRuntime INTERFACE QGCGPSNative)
 target_include_directories(
@@ -22,69 +8,80 @@ target_include_directories(
     INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/.." "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../Corrections"
               "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../../Utilities/Math"
 )
-target_compile_definitions(QGCGPSProtocolTestRuntime INTERFACE QGC_GPS_TEST_CLOCK)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSProtocolTestRuntime)
 
-# Build a host test against the shared native protocol runtime.
-function(qgc_add_protocol_test_target target source)
-    add_executable(${target} ${source})
-    target_link_libraries(${target} PRIVATE QGCGPSProtocolTestRuntime)
-    set_target_properties(
-        ${target}
-        PROPERTIES AUTOMOC OFF
-                   AUTOUIC OFF
-                   AUTORCC OFF
+# Register an application test without leaking its injected-clock definition into other suites.
+function(qgc_add_protocol_test name source)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
+    set_property(
+        SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/${source}" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+        APPEND
+        PROPERTY COMPILE_DEFINITIONS QGC_GPS_TEST_CLOCK
     )
+    set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/${source}" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+                                PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
+    )
+    add_qgc_test(${name} LABELS Unit GPS NativeDriver)
 endfunction()
 
-qgc_add_protocol_test_target(QGCNativeGPSUtcTest gps-time-test.cpp)
+qgc_add_protocol_test(GPSProtocolUtcTest gps-time-test.cpp)
+get_test_property(GPSProtocolUtcTest ENVIRONMENT _utc_test_environment)
+set_property(
+    TEST GPSProtocolUtcTest
+    APPEND
+    PROPERTY ENVIRONMENT "TZ=UTC0"
+)
+foreach(timezone IN ITEMS EST5EDT JST-9)
+    set(_utc_command $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest:GPSProtocolUtcTest --allow-multiple)
+    if(QGC_TEST_ONSCREEN)
+        list(APPEND _utc_command --onscreen)
+    endif()
+    add_test(
+        NAME GPSProtocolUtcTest-${timezone}
+        COMMAND ${_utc_command}
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+    )
+    set_tests_properties(
+        GPSProtocolUtcTest-${timezone}
+        PROPERTIES LABELS
+                   "Unit;GPS;NativeDriver"
+                   TIMEOUT
+                   ${QGC_TEST_TIMEOUT_UNIT}
+                   ENVIRONMENT
+                   "${_utc_test_environment};TZ=${timezone}"
+                   FAIL_REGULAR_EXPRESSION
+                   "FAIL!;Segmentation fault"
+    )
+endforeach()
+qgc_add_protocol_test(GPSProtocolContractsTest GPSProtocolContractsTest.cc)
 if(QGC_GPS_ENABLE_UBX)
-    qgc_add_protocol_test_target(QGCNativeGPSUbxTest gps-ubx-test.cpp)
-    qgc_add_protocol_test_target(QGCNativeGPSAllocationTest gps-allocation-test.cpp)
-    target_compile_definitions(QGCNativeGPSAllocationTest
-                               PRIVATE GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+    qgc_add_protocol_test(GPSProtocolUbxTest gps-ubx-test.cpp)
+    qgc_add_protocol_test(GPSProtocolAllocationTest gps-allocation-test.cpp)
+    set_property(
+        SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/gps-allocation-test.cpp" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+        APPEND
+        PROPERTY COMPILE_DEFINITIONS GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
     )
 endif()
 if(QGC_GPS_ENABLE_SBF OR QGC_GPS_ENABLE_FEMTO)
-    qgc_add_protocol_test_target(QGCNativeGPSReceiverModesTest gps-receiver-mode-test.cpp)
+    qgc_add_protocol_test(GPSProtocolReceiverModesTest gps-receiver-mode-test.cpp)
 endif()
-qgc_add_protocol_test_target(QGCNativeGPSIOContractTest gps-io-contract-test.cpp)
-qgc_add_protocol_test_target(QGCNativeGPSDecodeTest gps-decode-test.cpp)
-qgc_add_protocol_test_target(QGCNativeGPSFixtureTest gps-fixture-test.cpp)
-target_compile_definitions(QGCNativeGPSFixtureTest PRIVATE GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
+qgc_add_protocol_test(GPSProtocolIOContractTest gps-io-contract-test.cpp)
+qgc_add_protocol_test(GPSProtocolDecodeTest gps-decode-test.cpp)
+qgc_add_protocol_test(GPSProtocolFixtureTest gps-fixture-test.cpp)
+qgc_add_protocol_test(GPSAsciiProtocolTest GPSAsciiProtocolTest.cc)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSAsciiProtocolTest.h)
+set_property(
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/gps-fixture-test.cpp" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+)
 foreach(family Unicore Quectel Passive)
     string(TOUPPER "${family}" option_name)
     string(TOLOWER "${family}" source_name)
     if(QGC_GPS_ENABLE_${option_name})
-        qgc_add_protocol_test_target(QGCNativeGPS${family}Test "gps-${source_name}-test.cpp")
+        qgc_add_protocol_test(GPSProtocol${family}Test "gps-${source_name}-test.cpp")
     endif()
-endforeach()
-
-foreach(
-    test IN
-    ITEMS Decode
-          Ubx
-          Allocation
-          ReceiverModes
-          IOContract
-          Fixture
-          Unicore
-          Quectel
-          Passive
-)
-    if(NOT TARGET QGCNativeGPS${test}Test)
-        continue()
-    endif()
-    add_test(NAME GPSProtocol${test} COMMAND QGCNativeGPS${test}Test)
-    set_tests_properties(GPSProtocol${test} PROPERTIES LABELS "Unit;GPS;NativeDriver" TIMEOUT 60)
-endforeach()
-
-foreach(timezone IN ITEMS UTC0 EST5EDT JST-9)
-    foreach(variant IN ITEMS Utc)
-        add_test(NAME GPSProtocol${variant}-${timezone} COMMAND QGCNativeGPS${variant}Test)
-        set_tests_properties(GPSProtocol${variant}-${timezone} PROPERTIES LABELS "Unit;GPS;NativeDriver" TIMEOUT 60
-                                                                          ENVIRONMENT "TZ=${timezone}"
-        )
-    endforeach()
 endforeach()
 
 option(QGC_BUILD_GPS_PROTOCOL_FUZZER "Build the native protocol libFuzzer harness" OFF)
@@ -108,33 +105,15 @@ if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
         )
         target_link_options(${native_target} INTERFACE -fsanitize=address,undefined)
     endforeach()
-    add_executable(QGCGPSFuzzNMEAConsumer "../../Standalone/QGCGPSNMEAProtocolConsumer.cc")
-    target_link_libraries(QGCGPSFuzzNMEAConsumer PRIVATE QGCGPSNMEAProtocol)
-    add_test(NAME GPSProtocolFuzzNMEAConsumer COMMAND QGCGPSFuzzNMEAConsumer)
-    set_tests_properties(GPSProtocolFuzzNMEAConsumer PROPERTIES LABELS "Unit;GPS;Fuzz" TIMEOUT 10)
-    foreach(
-        family
-        UBX
-        Ashtech
-        SBF
-        Femto
-        Unicore
-        Quectel
-        Passive
+    add_executable(QGCGPSProtocolFuzz ProtocolFuzz.cc)
+    target_link_libraries(QGCGPSProtocolFuzz PRIVATE QGCGPSProtocolTestRuntime)
+    target_compile_definitions(QGCGPSProtocolFuzz PRIVATE QGC_GPS_TEST_CLOCK)
+    set_target_properties(
+        QGCGPSProtocolFuzz
+        PROPERTIES AUTOMOC OFF
+                   AUTOUIC OFF
+                   AUTORCC OFF
     )
-        if(NOT TARGET QGCGPS${family})
-            continue()
-        endif()
-        add_executable(QGCGPSFuzz${family}Consumer NativeFamilyConsumer.cc)
-        target_compile_definitions(QGCGPSFuzz${family}Consumer
-                                   PRIVATE QGC_GPS_DRIVER_HEADER="${family}/GPSDriver${family}.h"
-                                           QGC_GPS_DRIVER_CLASS=GPSNative${family}
-        )
-        target_link_libraries(QGCGPSFuzz${family}Consumer PRIVATE QGCGPS${family})
-        add_test(NAME GPSProtocolFuzz${family}Consumer COMMAND QGCGPSFuzz${family}Consumer)
-        set_tests_properties(GPSProtocolFuzz${family}Consumer PROPERTIES LABELS "Unit;GPS;Fuzz" TIMEOUT 10)
-    endforeach()
-    qgc_add_protocol_test_target(QGCGPSProtocolFuzz ProtocolFuzz.cc)
     target_compile_options(QGCGPSProtocolFuzz PRIVATE -fsanitize=fuzzer-no-link,address,undefined
                                                       -fno-omit-frame-pointer
     )
