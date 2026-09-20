@@ -244,6 +244,12 @@ ctest -R MyTest                    # Run a single test by name
 ctest --rerun-failed               # Re-run only failed tests
 ```
 
+The `CMake.GPSMinimal.*` checks build isolated library selections and verify their
+headers, artifacts, and consumer tests. They reserve `QGC_TEST_PARALLEL_LEVEL`
+CTest processor slots and pass that same job count to the nested build, avoiding
+competing cold builds. Native receiver and driver selections retain a bounded
+300-second build-command budget and 600-second overall test budget.
+
 ### Via `just`
 
 ```bash

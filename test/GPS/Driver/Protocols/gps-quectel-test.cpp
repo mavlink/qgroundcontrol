@@ -283,6 +283,30 @@ void surveyLifecycle()
     noPersistence(receiver);
 }
 
+void numericStatusFields()
+{
+    for (const std::string_view invalid :
+         {"", "nan", "inf", "1e9999", "6378137junk", " 6378137", "6378137 ", "+6378137"}) {
+        gps_test_time = 0;
+        Receiver receiver;
+        receiver.role = 2;
+        receiver.periodicStatus = false;
+        GPSNativeQuectel driver(receiver.io(), nullptr);
+        unsigned baud = 460800;
+        CHECK(driver.configure(baud, surveyConfig()) == 0);
+        feed(driver, sentence("PQTMSVINSTATUS,1,291324000,2,,11,60,60,6.378137e6,-0.0,0.0000,1.25e-1"));
+        CHECK(!receiver.surveys.empty());
+        CHECK(receiver.surveys.back().flags == 1);
+        CHECK(receiver.surveys.back().mean_accuracy == 125);
+        CHECK(std::abs(receiver.surveys.back().latitude) < 1e-7);
+        CHECK(std::abs(receiver.surveys.back().longitude) < 1e-7);
+        feed(driver, sentence("PQTMSVINSTATUS,1,291325000,2,,11,60,60," + std::string(invalid) + ",0,0,1"));
+        revoked(receiver.surveys.back());
+        driver.consume(CORRECTION);
+        CHECK(receiver.corrections == 0);
+    }
+}
+
 void malformedAndMixedFraming()
 {
     Receiver receiver;
@@ -862,6 +886,7 @@ int main()
         identityAndRoleSafety();
         fixedECEF();
         surveyLifecycle();
+        numericStatusFields();
         malformedAndMixedFraming();
         scheduledShortSurvey();
         measurementOrderAndRollover();

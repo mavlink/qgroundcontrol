@@ -40,14 +40,14 @@ CASES["Driver"] = (
 )
 
 
-def run(command: list[str]) -> str:
+def run(command: list[str], *, timeout: int = 120) -> str:
     result = subprocess.run(
         command,
         check=False,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
-        timeout=120,
+        timeout=timeout,
     )
     if result.returncode:
         raise ValueError(f"Command failed ({result.returncode}): {command}\n{result.stdout}")
@@ -120,10 +120,12 @@ def check_build(args: argparse.Namespace, build: Path) -> None:
     if args.toolset:
         configure.extend(["-T", args.toolset])
     run(configure)
-    build_command = [args.cmake, "--build", str(build), "--config", config, "--parallel", "2"]
+    build_command = [args.cmake, "--build", str(build), "--config", config, "--parallel"]
+    if args.parallel is not None:
+        build_command.append(str(args.parallel))
     # Build ALL, not just the consumer, to detect accidentally enabled sibling libraries.
-    run(build_command)
-    run([*build_command, "--target", header_check])
+    run(build_command, timeout=args.build_timeout)
+    run([*build_command, "--target", header_check], timeout=args.build_timeout)
     test_command = [args.ctest, "--test-dir", str(build), "--build-config", config]
     discovery = json.loads(run([*test_command, "--show-only=json-v1"]))
     actual_tests = [item["name"] for item in discovery["tests"]]
@@ -131,6 +133,13 @@ def check_build(args: argparse.Namespace, build: Path) -> None:
         raise ValueError(f"Expected tests {sorted(expected_tests)}, got {sorted(actual_tests)}")
     check_artifacts(build, args.component, config)
     run([*test_command, "--output-on-failure", "--no-tests=error"])
+
+
+def positive_integer(value: str) -> int:
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return number
 
 
 def main() -> int:
@@ -147,6 +156,8 @@ def main() -> int:
     parser.add_argument("--toolset", default="")
     parser.add_argument("--qt-dir", default="")
     parser.add_argument("--cpm-source-cache", default="")
+    parser.add_argument("--parallel", type=positive_integer, default=None)
+    parser.add_argument("--build-timeout", type=positive_integer, default=300)
     args = parser.parse_args()
     try:
         args.build_root.mkdir(parents=True, exist_ok=True)

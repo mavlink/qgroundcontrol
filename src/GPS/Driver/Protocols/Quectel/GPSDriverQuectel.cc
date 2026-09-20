@@ -1,7 +1,6 @@
 #include "GPSDriverQuectel.h"
 
 #include <algorithm>
-#include <charconv>
 #include <cmath>
 #include <iomanip>
 #include <limits>
@@ -11,6 +10,8 @@
 #include <vector>
 
 #include <QtCore/QScopeGuard>
+
+#include "NMEA/NMEASentence.h"
 
 namespace {
 // Quectel LG290P(03)&LGx80P(03) GNSS Protocol Specification V1.1:
@@ -39,12 +40,15 @@ Fields fields(std::string_view body)
 template <typename T>
 bool number(std::string_view text, T& result)
 {
-    if (text.empty()) {
+    if (text.empty() || text.front() == '+') {
         return false;
     }
-    const auto parsed = std::from_chars(text.data(), text.data() + text.size(), result);
-    return parsed.ec == std::errc{} && parsed.ptr == text.data() + text.size() &&
-           std::isfinite(static_cast<double>(result));
+    const auto parsed = NMEA::number<T>(text);
+    if (!parsed) {
+        return false;
+    }
+    result = *parsed;
+    return true;
 }
 
 int hexDigit(char digit)

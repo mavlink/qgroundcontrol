@@ -334,6 +334,7 @@ void GPSAcceptedStateTest::_satelliteNormalization()
         QCOMPARE(actual.provenance[index].inViewTimestampUs, expected.provenance[index].inViewTimestampUs);
         QCOMPARE(actual.provenance[index].inUseTimestampUs, expected.provenance[index].inUseTimestampUs);
         QCOMPARE(actual.provenance[index].satellitesUsed, expected.provenance[index].satellitesUsed);
+        QCOMPARE(actual.provenance[index].usedSatelliteIds, expected.provenance[index].usedSatelliteIds);
     }
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
     QCOMPARE(native.observation().satellitesInViewCount(), -1);

@@ -6,6 +6,10 @@ if(COMMAND add_qgc_test AND NOT CMAKE_CROSSCOMPILING)
     if(NOT TARGET Python3::Interpreter)
         message(FATAL_ERROR "The GPS minimal-build matrix requires Python3::Interpreter")
     endif()
+    add_test(NAME CMake.GPSMinimal.Harness COMMAND "$<TARGET_FILE:Python3::Interpreter>"
+                                                   "${CMAKE_CURRENT_SOURCE_DIR}/test_check_minimal_build.py"
+    )
+    set_tests_properties(CMake.GPSMinimal.Harness PROPERTIES LABELS "CMake;Unit;GPS" TIMEOUT 30)
     foreach(
         component
         Receiver
@@ -16,6 +20,13 @@ if(COMMAND add_qgc_test AND NOT CMAKE_CROSSCOMPILING)
         Native
         Driver
     )
+        set(_gps_build_timeout 120)
+        set(_gps_test_timeout 180)
+        if(component STREQUAL "Native" OR component STREQUAL "Driver")
+            # These cases compile every receiver and dependency from a fresh build tree.
+            set(_gps_build_timeout 300)
+            set(_gps_test_timeout 600)
+        endif()
         add_test(
             NAME "CMake.GPSMinimal.${component}"
             COMMAND
@@ -24,9 +35,13 @@ if(COMMAND add_qgc_test AND NOT CMAKE_CROSSCOMPILING)
                 "--component=${component}" "--generator=${CMAKE_GENERATOR}" "--platform=${CMAKE_GENERATOR_PLATFORM}"
                 "--toolset=${CMAKE_GENERATOR_TOOLSET}" "--compiler=${CMAKE_CXX_COMPILER}" "--cmake=${CMAKE_COMMAND}"
                 "--ctest=${CMAKE_CTEST_COMMAND}" "--config=$<CONFIG>" "--qt-dir=${Qt6_DIR}"
-                "--cpm-source-cache=${CPM_SOURCE_CACHE}"
+                "--cpm-source-cache=${CPM_SOURCE_CACHE}" "--parallel=${QGC_TEST_PARALLEL_LEVEL}"
+                "--build-timeout=${_gps_build_timeout}"
         )
-        set_tests_properties("CMake.GPSMinimal.${component}" PROPERTIES LABELS "CMake;Unit;GPS" TIMEOUT 180)
+        set_tests_properties("CMake.GPSMinimal.${component}"
+                             PROPERTIES LABELS "CMake;Unit;GPS" TIMEOUT ${_gps_test_timeout} PROCESSORS
+                                        ${QGC_TEST_PARALLEL_LEVEL}
+        )
     endforeach()
 endif()
 

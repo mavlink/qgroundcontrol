@@ -56,9 +56,14 @@ public:
                     count += satellite.used.value_or(false) ? 1 : 0;
                     known &= satellite.used.has_value();
                 }
-                reports.append({constellation, observation.monotonicTimestampUs,
-                                known ? observation.monotonicTimestampUs : 0,
-                                known ? std::optional<int>(count) : std::nullopt});
+                // Populate in place; GCC 13 -O3 misdiagnoses the aggregate append's disengaged optional<QList>.
+                auto& report = reports.emplaceBack();
+                report.constellation = constellation;
+                report.inViewTimestampUs = observation.monotonicTimestampUs;
+                if (known) {
+                    report.inUseTimestampUs = observation.monotonicTimestampUs;
+                    report.satellitesUsed = count;
+                }
             }
         }
         const bool fullSnapshot = observation.updateMode == GPSSatelliteObservation::UpdateMode::FullSnapshot;
