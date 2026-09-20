@@ -87,29 +87,16 @@ void GPSProvider::run()
         inactivity.setRemainingTime(kUsefulDataTimeoutMs, Qt::PreciseTimer);
     };
     GPSDriverSinks sinks;
-    sinks.onPosition = [this, usefulDataReceived](const GPSPositionReport& message) {
-        usefulDataReceived();
-        emit sensorGpsUpdate(message);
-    };
-    sinks.onSatelliteInfo = [this, usefulDataReceived](const GPSSatelliteReport& message) {
-        usefulDataReceived();
-        emit satelliteInfoUpdate(message);
-    };
-    sinks.onSatelliteUsage = [this, usefulDataReceived](const GPSSatelliteUsageReport& message) {
-        usefulDataReceived();
-        emit satelliteUsageUpdate(message);
-    };
-    sinks.onRTCM = [this, usefulDataReceived](std::span<const uint8_t> message) {
-        usefulDataReceived();
+    sinks.onPosition = [this](const GPSPositionReport& message) { emit sensorGpsUpdate(message); };
+    sinks.onSatelliteInfo = [this](const GPSSatelliteReport& message) { emit satelliteInfoUpdate(message); };
+    sinks.onSatelliteUsage = [this](const GPSSatelliteUsageReport& message) { emit satelliteUsageUpdate(message); };
+    sinks.onRTCM = [this](std::span<const uint8_t> message) {
         const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
         emit RTCMDataUpdate(
             QByteArray(reinterpret_cast<const char*>(message.data()), static_cast<qsizetype>(message.size())),
             receivedAtMs);
     };
-    sinks.onSurveyIn = [this, usefulDataReceived](const GPSSurveyReport& report) {
-        usefulDataReceived();
-        _handleSurveyIn(report);
-    };
+    sinks.onSurveyIn = [this](const GPSSurveyReport& report) { _handleSurveyIn(report); };
 
     GPSDriver driver(_type, *transport, _config, std::move(sinks));
 
@@ -130,6 +117,9 @@ void GPSProvider::run()
     while (!_requestStop && !transport->fatalError() && !inactivity.hasExpired()) {
         const auto timeout = static_cast<unsigned>(std::min(qint64(kGPSReceiveTimeout), inactivity.remainingTime()));
         const auto result = driver.receiveOutcome(timeout);
+        if (result.status == GPSReceiveStatus::Data) {
+            usefulDataReceived();
+        }
         if (result.terminal()) {
             break;
         }

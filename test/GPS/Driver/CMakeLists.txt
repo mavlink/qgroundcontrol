@@ -24,12 +24,13 @@ endif()
 add_subdirectory(Protocols)
 
 if(COMMAND add_qgc_test)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverTest.cc GPSDriverTest.h GPSNativeDataTest.cc
-                                                 ScriptedUBXReceiver.cc
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverTest.cc GPSDriverTest.h GPSDriverReentrancyTest.cc
+                                                 GPSNativeDataTest.cc ScriptedUBXReceiver.cc
     )
     target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../Portable")
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSNative)
     add_qgc_test(GPSDriverTest LABELS Unit GPS TIMEOUT 240)
+    add_qgc_test(GPSDriverReentrancyTest LABELS Unit GPS)
     add_qgc_test(GPSNativeDataTest LABELS Unit GPS)
 else()
     find_package(Qt6 6.8 REQUIRED COMPONENTS Test Positioning)
@@ -42,6 +43,15 @@ else()
     target_link_libraries(QGCGPSDriverTest PRIVATE Qt6::Test Qt6::Positioning QGCGPSDriver QGCGPSTransport)
     add_test(NAME GPSDriverTest COMMAND QGCGPSDriverTest)
     set_tests_properties(GPSDriverTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 240)
+    qt_add_executable(QGCGPSDriverReentrancyTest GPSDriverReentrancyTest.cc GPSDriverTestBase.h
+                      ../../Portable/PortableTest.h
+    )
+    set_target_properties(QGCGPSDriverReentrancyTest PROPERTIES AUTOMOC ON)
+    target_compile_definitions(QGCGPSDriverReentrancyTest PRIVATE QGC_PORTABLE_TEST)
+    target_include_directories(QGCGPSDriverReentrancyTest PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../Portable")
+    target_link_libraries(QGCGPSDriverReentrancyTest PRIVATE Qt6::Test QGCGPSDriver QGCGPSTransport QGCGPSNative)
+    add_test(NAME GPSDriverReentrancyTest COMMAND QGCGPSDriverReentrancyTest)
+    set_tests_properties(GPSDriverReentrancyTest PROPERTIES LABELS "Unit;GPS" TIMEOUT 60)
     qt_add_executable(QGCGPSNativeDataTest GPSNativeDataTest.cc ../../Portable/PortableTest.h)
     set_target_properties(QGCGPSNativeDataTest PROPERTIES AUTOMOC ON)
     target_compile_definitions(QGCGPSNativeDataTest PRIVATE QGC_PORTABLE_TEST)

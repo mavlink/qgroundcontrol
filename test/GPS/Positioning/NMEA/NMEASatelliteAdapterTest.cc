@@ -5,6 +5,7 @@
 #include <QtPositioning/QNmeaSatelliteInfoSource>
 #include <QtTest/QSignalSpy>
 
+#include "ManualScheduler.h"
 #include "MonotonicClock.h"
 #include "NMEAConstellation.h"
 #include "NMEADecoderSession.h"
@@ -201,6 +202,37 @@ void NMEASatelliteAdapterTest::_modernConstellationsAndSignals()
                  "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
     QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInViewCount(), 0, TestTimeout::shortMs());
     QCOMPARE(store.observation().satellitesInUseCount(), 0);
+}
+
+void NMEASatelliteAdapterTest::_interleavedDeadlineReports()
+{
+    ManualScheduler scheduler;
+    NMEASatelliteAdapter adapter(nullptr, &scheduler);
+    GPSSatelliteStore store(nullptr, 5000, &scheduler);
+    connectStore(adapter, store);
+    QSignalSpy reports(&adapter, &NMEASatelliteAdapter::observationReceived);
+    const auto ingest = [&](const QByteArray& body) {
+        const auto sentence = NMEASentenceEnvelope::parse(NMEAUtils::repairChecksum(body), scheduler.nowUs());
+        QVERIFY(sentence);
+        adapter.ingest(*sentence);
+    };
+    const auto firstReceipt = scheduler.nowUs();
+    ingest("$GPGSV,2,1,05,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60,1");
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(25)));
+    ingest("$GLGSV,1,1,01,65,10,20,30,1");
+    ingest("$GPGSV,2,2,05,05,50,60,70,1");
+    ingest("$GPGSV,1,1,01,07,10,20,45,7");
+    ingest("$GNRMC,120001.00,V,,,,,,,999999,,,N");
+    QVERIFY(reports.isEmpty());
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(149)));
+    QVERIFY(reports.isEmpty());
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    QCOMPARE(reports.size(), 1);
+    QCOMPARE(store.observation().satellitesInViewCount(), 7);
+    QCOMPARE(store.observation().provenance.first().inViewTimestampUs, firstReceipt);
+    QVERIFY(scheduler.advanceToUs(firstReceipt + 5'000'000));
+    QCOMPARE(store.observation().satellitesInViewCount(), 1);
+    QCOMPARE(store.observation().satellites.first().constellation, GPSConstellation::GLONASS);
 }
 
 void NMEASatelliteAdapterTest::_incompleteReportIsDiscarded_data()

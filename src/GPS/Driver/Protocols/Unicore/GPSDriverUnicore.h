@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -67,7 +68,7 @@ private:
     std::array<double, 3> _fixedECEF{};
     std::array<double, 3> _baseECEF{};
     uint64_t _lastBaseStatus = 0;
-    uint64_t _lastBaseEpoch = 0;
+    std::optional<uint64_t> _lastBaseEpoch;
     bool _commandActive = false;
     bool _ready = false;
     bool _base = false;

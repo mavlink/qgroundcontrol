@@ -1,8 +1,6 @@
 #pragma once
 
-#include <map>
-#include <vector>
-
+#include "../Core/GPSSatelliteState.h"
 #include "GPSDriverReports.h"
 #include "GPSNativeIntegrityReport.h"
 #include "GPSNativePositionReport.h"
@@ -10,7 +8,8 @@
 #include "GPSNativeSurveyReport.h"
 
 namespace GPSNativeData {
-GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativeIntegrityReport& diagnostic);
+GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativeIntegrityReport& diagnostic,
+                           uint64_t nowUs = 0);
 GPSSatelliteReport satellites(const GPSNativeSatelliteReport& source);
 GPSSurveyReport survey(const GPSNativeSurveyReport& source);
 
@@ -18,9 +17,13 @@ GPSSurveyReport survey(const GPSNativeSurveyReport& source);
 class SatelliteSnapshot
 {
 public:
-    GPSSatelliteReport update(const GPSNativeSatelliteReport& source);
+    GPSSatelliteReport update(const GPSNativeSatelliteReport& source, uint64_t nowUs = 0);
+    /// Poll on receive turns, including turns with position/correction traffic but no satellite report.
+    std::optional<GPSSatelliteReport> expire(uint64_t nowUs);
 
 private:
-    std::map<GPSConstellation, std::vector<GPSSatelliteReport::Satellite>> _constellations;
+    GPSSatelliteReport _snapshot(uint64_t nowUs);
+    GPSSatelliteState _state;
+    uint64_t _latestReceiptUs = 0;
 };
 }  // namespace GPSNativeData

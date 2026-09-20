@@ -8,6 +8,7 @@
 
 #include <QtCore/QMetaType>
 
+#include "../GPSConstellation.h"
 #include "GPSSatelliteUsageReport.h"
 
 struct GPSIntegrityReport
@@ -54,8 +55,12 @@ struct GPSIntegrityReport
                    : CorrectionUse::Unknown;
     }
 
-    // Zero means the producer cannot establish the original diagnostic receipt.
+    // Receipt of this diagnostic update, not a freshness timestamp for every retained field.
     uint64_t timestampUs = 0;
+    uint64_t jammingTimestampUs = 0;
+    uint64_t spoofingTimestampUs = 0;
+    uint64_t rfTimestampUs = 0;
+    uint64_t correctionTimestampUs = 0;
     JammingState jamming = JammingState::Unknown;
     SpoofingState spoofing = SpoofingState::Unknown;
     CorrectionUse correctionUse = CorrectionUse::Unknown;
@@ -63,6 +68,32 @@ struct GPSIntegrityReport
     std::optional<uint16_t> automaticGainControl = std::nullopt;
     std::optional<int32_t> jammingIndicator = std::nullopt;
     std::optional<bool> correctionCrcFailed = std::nullopt;
+
+    /// Project independent diagnostic groups at the consumer's monotonic time.
+    GPSIntegrityReport freshAt(uint64_t nowUs, std::chrono::microseconds maximumAge = std::chrono::seconds(5)) const
+    {
+        auto result = *this;
+        const auto fresh = [nowUs, maximumAge](uint64_t receipt) {
+            return receipt && receipt <= nowUs && maximumAge.count() > 0 &&
+                   nowUs - receipt < static_cast<uint64_t>(maximumAge.count());
+        };
+        if (!fresh(jammingTimestampUs)) {
+            result.jamming = JammingState::Unknown;
+        }
+        if (!fresh(spoofingTimestampUs)) {
+            result.spoofing = SpoofingState::Unknown;
+        }
+        if (!fresh(rfTimestampUs)) {
+            result.noisePerMillisecond.reset();
+            result.automaticGainControl.reset();
+            result.jammingIndicator.reset();
+        }
+        if (!fresh(correctionTimestampUs)) {
+            result.correctionUse = CorrectionUse::Unknown;
+            result.correctionCrcFailed.reset();
+        }
+        return result;
+    }
 };
 
 struct GPSPositionReport
@@ -118,9 +149,13 @@ struct GPSSatelliteReport
         std::optional<float> elevationDegrees = std::nullopt;
         std::optional<float> azimuthDegrees = std::nullopt;
         std::optional<uint8_t> signalStrength = std::nullopt;
+        GPSConstellation constellation = GPSConstellation::Unknown;
+        uint64_t inViewTimestampUs = 0;
+        uint64_t inUseTimestampUs = 0;
     };
 
     static constexpr uint16_t MAX_SATELLITES = 128;
+    // Latest accepted view receipt. Zero means no view coverage, not an explicitly empty view.
     uint64_t timestampUs = 0;
     uint16_t count = 0;
     std::array<Satellite, MAX_SATELLITES> satellites{};

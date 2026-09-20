@@ -59,6 +59,9 @@ void GPSNativeAshtech::receiveWait(unsigned timeout_min)
 
 int GPSNativeAshtech::receive(unsigned timeout)
 {
+    if (const auto deadline = _satelliteAssembler.deadlineUs()) {
+        timeout = std::min(timeout, static_cast<unsigned>(remainingMilliseconds(*deadline)));
+    }
     const int result = receiveDecoded(timeout);
     serviceControls();
     return ioError() ? ioError() : result;

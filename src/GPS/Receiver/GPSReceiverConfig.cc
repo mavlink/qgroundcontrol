@@ -5,6 +5,7 @@
 #include <numbers>
 
 #include "GPSReceiverCapabilities.h"
+#include "GPSReceiverDescriptor.h"
 
 GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type, GPSReceiverConfig::Role role)
 {
@@ -13,29 +14,12 @@ GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type, GPSReceiverConfig:
         return {};
     }
 
-    GPSReceiverCapabilities capabilities;
-    switch (type) {
-        case GPSType::ublox:
-            // Pre-v27 configuration has no NavIC path; GPS also controls QZSS.
-            capabilities.constellationMask = 0x1f;
-            capabilities.dynamicModel = role == GPSReceiverConfig::Role::Position;
-            break;
-        case GPSType::trimble:
-        case GPSType::septentrio:
-        case GPSType::femto:
-        case GPSType::unicore:
-        case GPSType::quectel:
-        case GPSType::passive:
-            break;
-        default:
-            return {};
+    const auto* descriptor = gpsReceiverDescriptor(type);
+    if (!descriptor) {
+        return {};
     }
-    capabilities.recognized = true;
-    capabilities.position = type == GPSType::ublox || type == GPSType::unicore || type == GPSType::quectel;
-    capabilities.rtkBase = type != GPSType::passive;
-    capabilities.surveyIn = capabilities.rtkBase && type != GPSType::unicore;
-    capabilities.receiverAveraging = type == GPSType::unicore;
-    capabilities.passive = type == GPSType::passive;
+    auto capabilities = descriptor->capabilities;
+    capabilities.dynamicModel &= role == GPSReceiverConfig::Role::Position;
     return capabilities;
 }
 
@@ -89,7 +73,7 @@ GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiver
         (config.role == GPSReceiverConfig::Role::Passive && !capabilities.passive)) {
         return GPSReceiverConfigError::UnsupportedRole;
     }
-    if (config.allowPersistentChanges && type != GPSType::quectel) {
+    if (config.allowPersistentChanges && !capabilities.persistentConfiguration) {
         return GPSReceiverConfigError::UnsupportedPersistentConfiguration;
     }
     if (config.role == GPSReceiverConfig::Role::RTKBase) {

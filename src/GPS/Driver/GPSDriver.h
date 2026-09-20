@@ -16,7 +16,8 @@
 class GPSTransport;
 
 /// Sinks the driver pushes decoded data into, invoked on the caller thread from
-/// within configure()/receiveOutcome().
+/// within configure()/receiveOutcome(). Recursive operations are rejected;
+/// the caller must keep the driver alive until the enclosing operation returns.
 struct GPSDriverSinks
 {
     std::function<void(const GPSPositionReport&)> onPosition;
@@ -36,7 +37,8 @@ enum class GPSReceiveStatus
     Cancelled,
     ProtocolError,
     TransportError,
-    NotConfigured
+    NotConfigured,
+    Busy,
 };
 
 struct GPSReceiveResult
@@ -63,24 +65,31 @@ public:
     GPSDriver(const GPSDriver&) = delete;
     GPSDriver& operator=(const GPSDriver&) = delete;
 
-    /// Create and configure the underlying driver. Returns false on failure.
+    /// Whether this build contains the requested native protocol implementation.
+    static bool supportsType(GPSType type);
+
+    /// Create and configure the underlying driver. Reentrant calls fail without replacing the active driver.
     bool configure();
 
     /// Useful reports are Data even without a registered sink. Diagnostics/partial input are Activity,
     /// never proof of navigation liveness. Terminal failures take precedence over reports in the same cycle.
+    /// Reentrant calls return Busy without touching the transport or active decoder.
     [[nodiscard]] GPSReceiveResult receiveOutcome(unsigned timeoutMs);
 
-    /// Latest configure() attempt; remains available after failure. Caller-thread access only.
+    /// Latest non-reentrant configure() attempt; remains available after failure. Caller-thread access only.
     [[nodiscard]] const std::vector<GPSConfigurationEvidence>& configurationEvidence() const;
 
     /// Diagnostic from the latest configure() failure; cleared when a new attempt starts.
     [[nodiscard]] const QString& configurationError() const;
 
 private:
+    void _publishExpiredSatellites();
+
     GPSType _type;
     GPSTransport& _transport;
     GPSReceiverConfig _config;
     GPSDriverSinks _sinks;
+    bool _operationInProgress = false;
 
     struct State;
     std::unique_ptr<State> _state;

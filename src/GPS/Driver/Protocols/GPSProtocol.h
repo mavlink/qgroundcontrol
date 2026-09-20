@@ -103,6 +103,10 @@ public:
     };
 
     explicit GPSProtocol(GPSProtocolIO io);
+    GPSProtocol(const GPSProtocol&) = delete;
+    GPSProtocol& operator=(const GPSProtocol&) = delete;
+    GPSProtocol(GPSProtocol&&) = delete;
+    GPSProtocol& operator=(GPSProtocol&&) = delete;
     virtual ~GPSProtocol() = default;
 
     /**
@@ -197,59 +201,22 @@ protected:
 
     int receiveDecoded(unsigned timeout);
 
+    /// Read one bounded chunk, then return to the command matcher even when it contains only an ACK.
+    int readAndDecode(unsigned timeout);
+
+    /// Start one command attempt; its write time counts toward the subsequent awaitCommand deadline.
+    bool writeCommand(GPSConfigurationStep step, std::span<const uint8_t> bytes);
+
+    GPSCommandResult awaitCommand(GPSConfigurationStep step, const std::function<GPSCommandOutcome()>& reply);
     GPSCommandResult awaitCommand(GPSConfigurationStep step, const std::function<void()>& pump,
-                                  const std::function<GPSCommandOutcome()>& reply)
-    {
-        const auto timeout = static_cast<unsigned>(step.timeout.count());
-        const Operation operation(*this, timeout);
-        _operationDeadline.untilUs =
-            std::min(_operationDeadline.untilUs, _commandWrite.startedAtUs + uint64_t(timeout) * 1000);
-        auto result = _commandWrite;
-        result.command = std::move(step.command);
-        result.required = step.required;
-        result.affectedSettings = step.affectedSettings;
-        result.outcome = GPSCommandTransaction::await(
-            _operationDeadline.untilUs, [this] { return nowUs(); }, reply, pump,
-            [this] {
-                return ioError() == ReadCancelled ? GPSCommandOutcome::Cancelled
-                       : ioError()                ? GPSCommandOutcome::TransportError
-                                                  : GPSCommandOutcome::Pending;
-            });
-        result.finishedAtUs = nowUs();
-        if (!_commandCompleted && _io.commandFinished) {
-            _io.commandFinished(result);
-        }
-        _commandCompleted = true;
-        return result;
-    }
+                                  const std::function<GPSCommandOutcome()>& reply);
 
-    void beginCommandWrite(std::string command = {}, GPSReceiverSettingSet settings = {})
-    {
-        if (ioError()) {
-            return;
-        }
-        if (!_commandCompleted) {
-            failCommandWrite(GPSCommandOutcome::Written);
-        }
-        _commandWrite = {};
-        _commandWrite.startedAtUs = nowUs();
-        _commandWrite.command = std::move(command);
-        _commandWrite.affectedSettings = settings;
-        _commandCompleted = false;
-    }
+    void beginCommandWrite(std::string command = {}, GPSReceiverSettingSet settings = {}, bool required = true);
 
-    void failCommandWrite(GPSCommandOutcome outcome)
-    {
-        if (_commandCompleted) {
-            return;
-        }
-        _commandWrite.outcome = outcome;
-        _commandWrite.finishedAtUs = nowUs();
-        if (_io.commandFinished) {
-            _io.commandFinished(_commandWrite);
-        }
-        _commandCompleted = true;
-    }
+    void failCommandWrite(GPSCommandOutcome outcome) { (void) completeCommand(outcome); }
+
+    /// Retire before notifying observers; repeated completion returns the retained evidence without republishing.
+    GPSCommandResult completeCommand(GPSCommandOutcome outcome);
 
     int remainingMilliseconds(uint64_t deadline) const { return GPSDeadline{deadline}.remainingMilliseconds(nowUs()); }
 

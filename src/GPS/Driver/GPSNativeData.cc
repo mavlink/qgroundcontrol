@@ -3,7 +3,8 @@
 #include "GPSNativeData_p.h"
 
 namespace GPSNativeData {
-GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativeIntegrityReport& diagnostic)
+GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativeIntegrityReport& diagnostic,
+                           uint64_t nowUs)
 {
     GPSPositionReport result;
     result.timestampUs = source.timestamp;
@@ -28,6 +29,10 @@ GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativ
     }
     auto& integrity = result.integrity;
     integrity.timestampUs = diagnostic.timestamp;
+    integrity.jammingTimestampUs = diagnostic.jamming_state_timestamp;
+    integrity.spoofingTimestampUs = diagnostic.spoofing_state_timestamp;
+    integrity.rfTimestampUs = diagnostic.rf_timestamp;
+    integrity.correctionTimestampUs = diagnostic.corrections_timestamp;
     integrity.jamming = GPSIntegrityReport::jammingStateFromValue(static_cast<int>(diagnostic.jamming_state));
     integrity.spoofing = GPSIntegrityReport::spoofingStateFromValue(static_cast<int>(diagnostic.spoofing_state));
     integrity.correctionUse =
@@ -36,6 +41,8 @@ GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativ
     integrity.automaticGainControl = diagnostic.automatic_gain_control;
     integrity.jammingIndicator = diagnostic.jamming_indicator;
     integrity.correctionCrcFailed = diagnostic.corrections_crc_failed;
+    // Navigation epochs retain their first receipt; diagnostics may arrive before that epoch is published.
+    integrity = integrity.freshAt(nowUs ? nowUs : std::max(source.timestamp, diagnostic.timestamp));
     return result;
 }
 
@@ -50,6 +57,9 @@ GPSSatelliteReport satellites(const GPSNativeSatelliteReport& source)
         to.id = from.id;
         to.prn = from.prn;
         to.used = from.used;
+        to.constellation = source.constellation.value_or(from.constellation);
+        to.inViewTimestampUs = source.timestamp;
+        to.inUseTimestampUs = source.usage ? source.usage->timestamp : (from.used ? source.timestamp : 0);
         if (from.elevation && *from.elevation >= -90 && *from.elevation <= 90) {
             to.elevationDegrees = static_cast<float>(*from.elevation);
         }
@@ -80,29 +90,82 @@ GPSSurveyReport survey(const GPSNativeSurveyReport& source)
     return result;
 }
 
-GPSSatelliteReport SatelliteSnapshot::update(const GPSNativeSatelliteReport& source)
+GPSSatelliteReport SatelliteSnapshot::update(const GPSNativeSatelliteReport& source, uint64_t nowUs)
 {
     const auto projected = satellites(source);
-    if (source.constellation) {
-        _constellations[*source.constellation].clear();
-    } else {
-        _constellations.clear();
-    }
+    GPSSatelliteObservation observation;
+    observation.monotonicTimestampUs = source.timestamp;
+    observation.updateMode = source.constellation ? GPSSatelliteObservation::UpdateMode::ConstellationDelta
+                                                  : GPSSatelliteObservation::UpdateMode::FullSnapshot;
     for (uint16_t i = 0; i < projected.count; ++i) {
-        _constellations[source.constellation.value_or(source.entries[i].constellation)].push_back(
-            projected.satellites[i]);
+        const auto& satellite = projected.satellites[i];
+        observation.satellites.append({satellite.id, satellite.prn, satellite.constellation, satellite.used,
+                                       satellite.elevationDegrees, satellite.signalStrength, satellite.azimuthDegrees});
     }
-    if (!source.constellation) {
-        return projected;
-    }
-    GPSSatelliteReport snapshot;
-    snapshot.timestampUs = projected.timestampUs;
-    for (const auto& [constellation, entries] : _constellations) {
-        for (const auto& entry : entries) {
-            if (snapshot.count == GPSSatelliteReport::MAX_SATELLITES) {
-                return snapshot;
+    if (source.constellation) {
+        GPSSatelliteProvenance provenance;
+        provenance.constellation = *source.constellation;
+        provenance.inViewTimestampUs = source.timestamp;
+        if (source.usage) {
+            provenance.inUseTimestampUs = source.usage->timestamp;
+            const auto count = std::min(source.usage->count, GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES);
+            provenance.satellitesUsed = count;
+            provenance.usedSatelliteIds.emplace(source.usage->ids.begin(), source.usage->ids.begin() + count);
+        } else {
+            int used = 0;
+            bool known = !observation.satellites.isEmpty();
+            for (const auto& satellite : observation.satellites) {
+                known &= satellite.used.has_value();
+                used += satellite.used.value_or(false);
             }
-            snapshot.satellites[snapshot.count++] = entry;
+            if (known) {
+                provenance.inUseTimestampUs = source.timestamp;
+                provenance.satellitesUsed = used;
+            }
+        }
+        observation.provenance.append(provenance);
+    }
+    _latestReceiptUs =
+        nowUs ? nowUs : std::max({_latestReceiptUs, source.timestamp, source.usage ? source.usage->timestamp : 0});
+    _state.updateObservation(observation, _latestReceiptUs);
+    return _snapshot(_latestReceiptUs);
+}
+
+std::optional<GPSSatelliteReport> SatelliteSnapshot::expire(uint64_t nowUs)
+{
+    const auto deadline = _state.nextExpiryUs();
+    if (!deadline || nowUs < *deadline) {
+        return std::nullopt;
+    }
+    _latestReceiptUs = nowUs;
+    return _snapshot(nowUs);
+}
+
+GPSSatelliteReport SatelliteSnapshot::_snapshot(uint64_t nowUs)
+{
+    const auto accepted = _state.snapshot(nowUs);
+    GPSSatelliteReport snapshot;
+    for (const auto& provenance : accepted.provenance) {
+        snapshot.timestampUs = std::max<uint64_t>(snapshot.timestampUs, provenance.inViewTimestampUs);
+    }
+    for (const auto& satellite : accepted.satellites) {
+        if (snapshot.count == GPSSatelliteReport::MAX_SATELLITES) {
+            break;
+        }
+        auto& entry = snapshot.satellites[snapshot.count++];
+        entry.id = satellite.id;
+        entry.prn = satellite.prn;
+        entry.constellation = satellite.constellation;
+        entry.used = satellite.used;
+        entry.elevationDegrees = satellite.elevationDegrees;
+        entry.azimuthDegrees = satellite.normalizedAzimuthDegrees;
+        entry.signalStrength = satellite.signalStrength;
+        for (const auto& provenance : accepted.provenance) {
+            if (provenance.constellation == satellite.constellation) {
+                entry.inViewTimestampUs = provenance.inViewTimestampUs;
+                entry.inUseTimestampUs = provenance.inUseTimestampUs;
+                break;
+            }
         }
     }
     return snapshot;

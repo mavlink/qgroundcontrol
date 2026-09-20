@@ -221,6 +221,9 @@ void satellites()
     feed(driver, sentence("GPGSV,2,1,05,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60"));
     CHECK(receiver.reports<GPSNativeSatelliteReport>().empty());
     feed(driver, sentence("GPGSV,2,2,05,05,50,60,70"));
+    CHECK(receiver.reports<GPSNativeSatelliteReport>().empty());
+    receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+    driver.consume({});
     const auto reports = receiver.reports<GPSNativeSatelliteReport>();
     CHECK(reports.size() == 2);
     CHECK(reports[0].constellation == GPSConstellation::GPS);
@@ -229,6 +232,83 @@ void satellites()
     CHECK(!reports[0].entries[0].used);
     CHECK(receiver.reports<GPSNativePositionReport>().empty());
     CHECK(receiver.writes == 0);
+}
+
+void satelliteEpochBoundaries()
+{
+    Receiver receiver;
+    GPSNativePassive driver(receiver.io(), &receiver.position, &receiver.satellites);
+    const auto send = [&](const char* body) { feed(driver, sentence(body)); };
+    send("GPGSV,2,1,05,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60,1");
+    send("GLGSV,1,1,01,65,10,20,30,1");
+    send("GPGSV,2,2,05,05,50,60,70,1");
+    send("GPGSV,1,1,01,07,10,20,45,7");
+    CHECK(receiver.reports<GPSNativeSatelliteReport>().empty());
+    send("GNRMC,120001.00,V,,,,,,,090926,,,N");
+    auto reports = receiver.reports<GPSNativeSatelliteReport>();
+    CHECK(reports.size() == 3);
+    CHECK(reports[0].constellation == GPSConstellation::GPS && reports[0].count == 6);
+    CHECK(reports[0].entries[5].id == 7);
+    CHECK(reports[1].constellation == GPSConstellation::GLONASS && reports[1].count == 1);
+    CHECK(reports[0].timestamp == 1000000);
+    receiver.events.clear();
+    feed(driver, sentence("GPGSA,A,3,01,,,,,,,,,,,,1.0,0.8,0.6"));
+    receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+    driver.consume({});
+    reports = receiver.reports<GPSNativeSatelliteReport>();
+    CHECK(reports.size() == 2);
+    CHECK(reports[0].timestamp == 0 && reports[0].usage);
+    CHECK(reports[0].usage->count == 1 && reports[0].usage->ids[0] == 1);
+    CHECK(reports[1].usage && reports[1].usage->count == 0);
+
+    receiver.events.clear();
+    send("GPGSV,2,1,05,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60");
+    send("GLGSV,1,1,01,66,10,20,30");
+    receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+    driver.consume({});
+    reports = receiver.reports<GPSNativeSatelliteReport>();
+    CHECK(reports.size() == 1 && reports[0].constellation == GPSConstellation::GLONASS);
+    receiver.events.clear();
+    send("GPGSV,2,2,05,05,50,60,70");
+    receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+    driver.consume({});
+    CHECK(receiver.events.empty());
+    send("GPGSV,1,1,00");
+    receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+    driver.consume({});
+    reports = receiver.reports<GPSNativeSatelliteReport>();
+    CHECK(reports.size() == 2 && reports[0].count == 0);
+
+    receiver.events.clear();
+    // More systems than one batch can drain: no complete epoch may overrun MAX_EVENTS.
+    for (int epoch = 0; epoch < 3; ++epoch) {
+        for (const char* body : {"GPGSV,1,1,01,01,10,20,30", "GLGSV,1,1,01,65,10,20,30", "GAGSV,1,1,01,01,10,20,30",
+                                 "GBGSV,1,1,01,01,10,20,30", "GQGSV,1,1,01,01,10,20,30", "GIGSV,1,1,01,01,10,20,30"}) {
+            send(body);
+        }
+        receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+        driver.consume({});
+        driver.consume({});
+    }
+    CHECK(receiver.reports<GPSNativeSatelliteReport>().size() == 21);
+}
+
+void satelliteBatchDeadline()
+{
+    Receiver receiver;
+    GPSNativePassive driver(receiver.io(), &receiver.position, &receiver.satellites);
+    feed(driver, sentence("GLGSV,1,1,01,65,10,20,30"));
+    for (int page = 1; page <= 10; ++page) {
+        feed(driver,
+             sentence("GPGSV,64," + std::to_string(page) + ",256,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60"));
+        receiver.clock += 100000;
+    }
+    CHECK(receiver.reports<GPSNativeSatelliteReport>().empty());
+    driver.consume({});
+    const auto reports = receiver.reports<GPSNativeSatelliteReport>();
+    CHECK(reports.size() == 1);
+    CHECK(reports[0].constellation == GPSConstellation::GLONASS);
+    CHECK(reports[0].timestamp == 1000000);
 }
 }  // namespace
 
@@ -239,6 +319,8 @@ int main()
         navigation();
         corrections();
         satellites();
+        satelliteEpochBoundaries();
+        satelliteBatchDeadline();
     } catch (const std::exception& error) {
         std::fprintf(stderr, "%s\n", error.what());
         return 1;

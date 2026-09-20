@@ -10,6 +10,8 @@
 #include <utility>
 #include <vector>
 
+#include <QtCore/QScopeGuard>
+
 namespace {
 // Quectel LG290P(03)&LGx80P(03) GNSS Protocol Specification V1.1:
 // §§2.3.9, 2.3.15, 2.3.22–25, 2.3.28. Base Station Mode Application Note
@@ -17,6 +19,7 @@ namespace {
 constexpr unsigned CONFIGURATION_TIMEOUT_MS = 45000;
 constexpr unsigned RESTART_TIMEOUT_MS = 8000;
 constexpr uint64_t STATUS_MAX_AGE_US = 5000000;
+constexpr unsigned GPS_WEEK_MS = 604800000;
 
 using Fields = std::vector<std::string_view>;
 
@@ -116,27 +119,15 @@ GPSNativeQuectel::GPSNativeQuectel(GPSProtocolIO io, GPSNativePositionReport* po
 
 GPSCommandOutcome GPSNativeQuectel::_transact(const std::string& command, ReplyHandler handler, unsigned timeoutMs)
 {
-    const Operation operation(*this, timeoutMs);
     _reply = GPSCommandOutcome::Pending;
     _replyHandler = std::move(handler);
+    const auto clearReply = qScopeGuard([this] { _replyHandler = {}; });
+    const GPSConfigurationStep step{command, std::chrono::milliseconds(timeoutMs)};
     const std::string bytes = frame(command);
-    beginCommandWrite(command);
-    if (write(bytes.data(), static_cast<int>(bytes.size())) != static_cast<int>(bytes.size())) {
-        _replyHandler = {};
+    if (!writeCommand(step, {reinterpret_cast<const uint8_t*>(bytes.data()), bytes.size()})) {
         return ioError() == ReadCancelled ? GPSCommandOutcome::Cancelled : GPSCommandOutcome::TransportError;
     }
-    const auto result = awaitCommand(
-        {command, std::chrono::milliseconds(timeoutMs)},
-        [this, timeoutMs] {
-            uint8_t buffer[GPS_READ_BUFFER_SIZE];
-            const int count = read(buffer, sizeof(buffer), static_cast<int>(timeoutMs));
-            if (count > 0) {
-                consume({buffer, static_cast<size_t>(count)});
-            }
-        },
-        [this] { return _reply; });
-    _replyHandler = {};
-    return result.outcome;
+    return awaitCommand(step, [this] { return _reply; }).outcome;
 }
 
 bool GPSNativeQuectel::_acknowledge(const std::string& command, unsigned timeoutMs)
@@ -288,8 +279,10 @@ bool GPSNativeQuectel::_setMessageRate(std::string_view name, unsigned rate, std
            }) == GPSCommandOutcome::ReadbackVerified;
 }
 
-bool GPSNativeQuectel::_restart(bool requireRoleMatch)
+bool GPSNativeQuectel::_restart(bool requireRoleMatch, bool startSurveySession)
 {
+    _revokeSurvey();
+    _surveyPhase = startSurveySession ? SurveyPhase::AwaitingBoot : SurveyPhase::Off;
     log(GPSProtocolLogLevel::Debug, "Restarting LG290P and verifying its saved configuration");
     const Operation operation(*this, RESTART_TIMEOUT_MS);
     const uint64_t deadline = nowUs() + uint64_t(RESTART_TIMEOUT_MS) * 1000;
@@ -326,8 +319,9 @@ bool GPSNativeQuectel::_restart(bool requireRoleMatch)
 int GPSNativeQuectel::_fail(const char* reason)
 {
     _configured = false;
-    _monitorSurvey = false;
-    setRTCMEnabled(false);
+    _surveyPhase = SurveyPhase::Off;
+    _revokeSurvey();
+    consume({});
     QString detail = QString::fromUtf8(reason);
     if (!ioErrorDetail().isEmpty()) {
         detail += QStringLiteral(" ") + ioErrorDetail();
@@ -352,9 +346,10 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
 {
     resetIOError();
     _configured = false;
-    _monitorSurvey = false;
-    _sawSurveyProgress = false;
-    _haveSurveyStatus = false;
+    _surveyPhase = SurveyPhase::Off;
+    _revokeSurvey();
+    consume({});
+    _lastSurveyTow.reset();
     _persistentSaveAcknowledged = false;
     _persistentSaveUncertain = false;
     _firmware.clear();
@@ -405,7 +400,7 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
     if (config.allowPersistentChanges) {
         // Work from saved settings, not another client's uncommitted changes. A role
         // readback alone cannot distinguish a pending role from the active one.
-        if (!_restart(false)) {
+        if (!_restart(false, _outputMode == OutputMode::RTCM)) {
             return _fail("LG290P saved role query after restart failed; no persistent change was attempted");
         }
         restarted = true;
@@ -423,7 +418,7 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
         if (!_saveConfiguration()) {
             return _fail("LG290P role save failed; receiver activation is not verified");
         }
-        if (!_restart()) {
+        if (!_restart(true, _outputMode == OutputMode::RTCM)) {
             return _fail("LG290P saved role could not be verified after restart");
         }
         restarted = true;
@@ -445,7 +440,7 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
             if (!_saveConfiguration()) {
                 return _fail("LG290P base save failed; receiver activation is not verified");
             }
-            if (!_restart() || !_verifyBase()) {
+            if (!_restart(true, true) || !_verifyBase()) {
                 return _fail("LG290P saved base settings could not be verified after restart");
             }
             baseChanged = true;
@@ -462,15 +457,17 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
     }
     // A role readback can reflect an unsaved, not-yet-active change. Reboot and read back
     // the saved role before claiming that the receiver actually operates in that role.
-    if ((!restarted && !_restart()) || (_outputMode == OutputMode::RTCM && !baseChanged && !_verifyBase())) {
+    if ((!restarted && !_restart(true, _outputMode == OutputMode::RTCM)) ||
+        (_outputMode == OutputMode::RTCM && !baseChanged && !_verifyBase())) {
         return _fail("LG290P restart/readback failed; saved role or base settings do not match the request");
     }
     if (_outputMode == OutputMode::RTCM) {
+        _surveyPhase = SurveyPhase::Monitoring;
+        _publishSurvey();
         if (!_setMessageRate("PQTMSVINSTATUS", 1, "1") || !_setMessageRate("RTCM3-1005", 1) ||
             !_setMessageRate("RTCM3-107X", 1, "0")) {
             return _fail("LG290P base message output configuration/readback failed");
         }
-        _monitorSurvey = true;
     }
     for (const std::string_view name : {"GGA", "GST", "GSA", "GSV"}) {
         if (!_setMessageRate(name, 1)) {
@@ -478,6 +475,8 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
         }
     }
     _configured = true;
+    _expireSurvey();
+    setRTCMEnabled(_surveyReport && (_surveyReport->flags & 1));
     return 0;
 }
 
@@ -499,11 +498,15 @@ int GPSNativeQuectel::handleReceiverLine(std::string_view line)
         const auto reply = fields(body);
         if (reply.size() == 6 && reply[1] == "1" && reply[2] == "MODULE" && reply[3] == _firmware) {
             // §2.3.1: this is the first output upon each successful startup.
-            _sawBoot = _expectingBoot;
-            if (_configured) {
+            if (_expectingBoot && !_sawBoot) {
+                _sawBoot = true;
+                if (_surveyPhase == SurveyPhase::AwaitingBoot) {
+                    _surveyPhase = SurveyPhase::Verifying;
+                }
+            } else if (!_expectingBoot && (_configured || _surveyPhase != SurveyPhase::Off)) {
                 _configured = false;
-                _monitorSurvey = false;
-                setRTCMEnabled(false);
+                _surveyPhase = SurveyPhase::Off;
+                _revokeSurvey();
                 controlFailed();
             }
             return GPSDecodedBatch::PROTOCOL_ACTIVITY;
@@ -514,18 +517,48 @@ int GPSNativeQuectel::handleReceiverLine(std::string_view line)
 
 int GPSNativeQuectel::decodeByte(uint8_t byte)
 {
-    if (_monitorSurvey && _haveSurveyStatus && nowUs() - _lastSurveyUs > STATUS_MAX_AGE_US) {
-        setRTCMEnabled(false);
-    }
+    _expireSurvey();
     return GPSAsciiProtocol::decodeByte(byte);
+}
+
+void GPSNativeQuectel::flushDecoded()
+{
+    _expireSurvey();
+    GPSAsciiProtocol::flushDecoded();
+}
+
+void GPSNativeQuectel::_revokeSurvey()
+{
+    setRTCMEnabled(false);
+    if (_surveyReport) {
+        _surveyReport.reset();
+        GPSNativeSurveyReport report{};
+        report.latitude = NAN;
+        report.longitude = NAN;
+        report.altitude = NAN;
+        surveyInStatus(report);
+    }
+}
+
+void GPSNativeQuectel::_expireSurvey()
+{
+    if (_surveyReport && (ioError() || nowUs() - _lastSurveyUs > STATUS_MAX_AGE_US)) {
+        _revokeSurvey();
+    }
+}
+
+void GPSNativeQuectel::_publishSurvey()
+{
+    _expireSurvey();
+    if (_surveyPhase == SurveyPhase::Monitoring && _surveyReport) {
+        // A status buffered during boot verification keeps its original receipt time.
+        _decoded.events.emplace_back(*_surveyReport);
+        setRTCMEnabled(_configured && (_surveyReport->flags & 1));
+    }
 }
 
 bool GPSNativeQuectel::_handleSurvey(std::string_view body)
 {
-    if (!_monitorSurvey || _outputMode != OutputMode::RTCM) {
-        return false;
-    }
-    setRTCMEnabled(false);
     const auto reply = fields(body);
     unsigned version = 0;
     unsigned tow = 0;
@@ -535,11 +568,27 @@ bool GPSNativeQuectel::_handleSurvey(std::string_view body)
     double accuracy = 0;
     std::array<double, 3> ecef{};
     if (reply.size() != 12 || !number(reply[1], version) || version != 1 || !number(reply[2], tow) ||
-        tow >= 604800000 || !number(reply[3], validity) || validity > 2 || !reply[4].empty() ||
-        !number(reply[6], observations) || observations > 86400 || !number(reply[7], configuredCount) ||
-        configuredCount > 86400 || !number(reply[8], ecef[0]) || !number(reply[9], ecef[1]) ||
-        !number(reply[10], ecef[2]) || !number(reply[11], accuracy) || accuracy < 0 ||
-        accuracy > std::numeric_limits<uint32_t>::max() / 1000.0) {
+        tow >= GPS_WEEK_MS) {
+        return false;
+    }
+    if (_lastSurveyTow) {
+        // TOW is a modular measurement clock, not a receipt timestamp. A late packet
+        // from before Sunday's rollover must not look newer than the current week.
+        const unsigned advance = (tow + GPS_WEEK_MS - *_lastSurveyTow) % GPS_WEEK_MS;
+        if (advance == 0 || advance >= GPS_WEEK_MS / 2) {
+            return false;
+        }
+    }
+    _lastSurveyTow = tow;
+    if ((_surveyPhase != SurveyPhase::Verifying && _surveyPhase != SurveyPhase::Monitoring) ||
+        _outputMode != OutputMode::RTCM) {
+        return false;
+    }
+    if (!number(reply[3], validity) || validity > 2 || !reply[4].empty() || !number(reply[6], observations) ||
+        observations > 86400 || !number(reply[7], configuredCount) || configuredCount > 86400 ||
+        !number(reply[8], ecef[0]) || !number(reply[9], ecef[1]) || !number(reply[10], ecef[2]) ||
+        !number(reply[11], accuracy) || accuracy < 0 || accuracy > std::numeric_limits<uint32_t>::max() / 1000.0) {
+        _revokeSurvey();
         return false;
     }
     const bool matches = _baseConfig.useFixedBase ? configuredCount == 0 && observations == 0
@@ -547,20 +596,18 @@ bool GPSNativeQuectel::_handleSurvey(std::string_view body)
     const double radius = std::hypot(ecef[0], ecef[1], ecef[2]);
     const bool coordinatesKnown = radius >= 6000000 && radius <= 7000000;
     if (!matches || (!coordinatesKnown && (validity == 2 || (validity == 1 && observations != 0)))) {
+        _revokeSurvey();
         return false;
     }
     if (_baseConfig.useFixedBase && validity == 2 &&
         (std::abs(ecef[0] - _fixedECEF[0]) > 0.001 || std::abs(ecef[1] - _fixedECEF[1]) > 0.001 ||
          std::abs(ecef[2] - _fixedECEF[2]) > 0.001)) {
+        _revokeSurvey();
         return false;
     }
-    if (validity == 0) {
-        _sawSurveyProgress = false;
-    } else if (validity == 1) {
-        _sawSurveyProgress = true;
-    }
-    const bool valid = validity == 2 && (_baseConfig.useFixedBase || _sawSurveyProgress) &&
-                       (_baseConfig.useFixedBase || observations >= configuredCount);
+    // BOOT + identity + saved-role/base readback establish this survey's session.
+    // A one-observation survey can finish before any progress notification is sent.
+    const bool valid = validity == 2 && (_baseConfig.useFixedBase || observations >= configuredCount);
     GPSNativeSurveyReport report{};
     report.latitude = std::numeric_limits<double>::quiet_NaN();
     report.longitude = std::numeric_limits<double>::quiet_NaN();
@@ -576,17 +623,22 @@ bool GPSNativeQuectel::_handleSurvey(std::string_view body)
         ECEF2lla(ecef[0], ecef[1], ecef[2], report.latitude, report.longitude, report.altitude);
     }
     _lastSurveyUs = nowUs();
-    _haveSurveyStatus = true;
-    surveyInStatus(report);
-    setRTCMEnabled(_configured && valid);
+    report.timestamp = _lastSurveyUs;
+    _surveyReport = report;
+    _publishSurvey();
     return true;
 }
 
 int GPSNativeQuectel::receive(unsigned timeout)
 {
-    if (_monitorSurvey && _haveSurveyStatus && nowUs() - _lastSurveyUs > STATUS_MAX_AGE_US) {
-        setRTCMEnabled(false);
-    }
+    _expireSurvey();
     // Re-evaluate stale status before each transport read, even when one caller gives a large timeout.
-    return GPSAsciiProtocol::receive(std::min(timeout, 1000U));
+    const int result = GPSAsciiProtocol::receive(std::min(timeout, 1000U));
+    if (ioError()) {
+        _configured = false;
+        _surveyPhase = SurveyPhase::Off;
+        _revokeSurvey();
+        consume({});
+    }
+    return result;
 }

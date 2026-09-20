@@ -23,8 +23,15 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     return()
 endif()
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSBaseStationConfigTest.cc GPSProviderTest.cc GPSProviderTest.h
-                                             GPSRtkTest.cc GPSRtkTest.h
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE GPSBaseStationConfigTest.cc
+            GPSProviderTest.cc
+            GPSProviderTest.h
+            GPSRtkTest.cc
+            GPSRtkTest.h
+            GPSReceiverSettingsTest.cc
+            GPSReceiverSettingsTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -32,6 +39,15 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 add_qgc_test(GPSProviderTest LABELS Unit)
 add_qgc_test(GPSBaseStationConfigTest LABELS Unit GPS RTK)
 add_qgc_test(GPSRtkTest LABELS Unit RESOURCE_LOCK Settings)
+add_qgc_test(
+    GPSReceiverSettingsTest
+    LABELS
+    Unit
+    GPS
+    RTK
+    RESOURCE_LOCK
+    Settings
+)
 
 if(NOT QGC_NO_SERIAL_LINK)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE RTKAutoConnectTest.cc RTKAutoConnectTest.h)

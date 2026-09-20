@@ -1,5 +1,6 @@
 #include <array>
 #include <iostream>
+#include <type_traits>
 #include <utility>
 
 #include "GPSProtocolFeatures.h"
@@ -35,6 +36,10 @@ namespace {
 template <typename Driver>
 bool decodeWithoutDevice(const char* family)
 {
+    static_assert(!std::is_copy_constructible_v<Driver>);
+    static_assert(!std::is_copy_assignable_v<Driver>);
+    static_assert(!std::is_move_constructible_v<Driver>);
+    static_assert(!std::is_move_assignable_v<Driver>);
     int operations = 0;
     GPSProtocolIO io;
     io.nowUs = [] { return uint64_t{1000000}; };

@@ -80,6 +80,7 @@ void GPSRtkTest::_currentBaseSaveValidity()
 void GPSRtkTest::_testCountSatellitesClampsToMax()
 {
     GPSSatelliteReport msg;
+    msg.timestampUs = 1;
     msg.count = 250;
 
     const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
@@ -91,6 +92,7 @@ void GPSRtkTest::_testCountSatellitesClampsToMax()
 void GPSRtkTest::_testCountSatellitesCountsUsed()
 {
     GPSSatelliteReport msg;
+    msg.timestampUs = 1;
     msg.count = 6;
     for (uint16_t i = 0; i < msg.count; ++i) {
         msg.satellites[i].used = false;
@@ -108,6 +110,7 @@ void GPSRtkTest::_testCountSatellitesCountsUsed()
 void GPSRtkTest::_testCountSatellitesIgnoresUsedBeyondCount()
 {
     GPSSatelliteReport msg;
+    msg.timestampUs = 1;
     msg.count = 2;
     msg.satellites[0].used = true;
     msg.satellites[1].used = false;
@@ -137,6 +140,7 @@ void GPSRtkTest::_snapshotUsageEvidence()
     QFETCH(QList<int>, flags);
     QFETCH(int, expectedUsage);
     GPSSatelliteReport snapshot;
+    snapshot.timestampUs = 1;
     snapshot.count = static_cast<uint16_t>(count);
     for (qsizetype i = 0; i < flags.size(); ++i) {
         if (flags[i] >= 0) {
@@ -173,6 +177,7 @@ void GPSRtkTest::_countOnlyUsagePreservesInView()
     GPSRtk receiver;
     auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
     GPSSatelliteReport snapshot;
+    snapshot.timestampUs = 1;
     snapshot.count = 15;
     receiver._satelliteInfoUpdate(snapshot);
     QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
@@ -181,6 +186,54 @@ void GPSRtkTest::_countOnlyUsagePreservesInView()
         QCOMPARE(facts->numSatellites()->rawValue().toInt(), 15);
         QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), count.value_or(-1));
     }
+}
+
+void GPSRtkTest::_unavailableSatelliteCoverage_data()
+{
+    QTest::addColumn<QString>("coverage");
+    QTest::addColumn<int>("countOnly");
+    for (const QString& coverage :
+         {QStringLiteral("unavailable"), QStringLiteral("empty"), QStringLiteral("usage-expired")}) {
+        for (int countOnly : {-1, 0, 7}) {
+            QTest::newRow(qPrintable(coverage + QString::number(countOnly))) << coverage << countOnly;
+        }
+    }
+}
+
+void GPSRtkTest::_unavailableSatelliteCoverage()
+{
+    QFETCH(QString, coverage);
+    QFETCH(int, countOnly);
+    GPSRtk receiver;
+    auto* facts = receiver.gpsRtkFactGroup();
+    GPSSatelliteReport report;
+    report.timestampUs = 1;
+    report.count = 2;
+    report.satellites[0].used = true;
+    report.satellites[1].used = false;
+    receiver._satelliteInfoUpdate(report);
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), 2);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), 1);
+    if (countOnly >= 0) {
+        receiver._satelliteUsageUpdate({.timestampUs = 2, .usedCount = countOnly});
+    }
+
+    report = {};
+    const bool unavailable = coverage == QStringLiteral("unavailable");
+    const bool usageExpired = coverage == QStringLiteral("usage-expired");
+    report.timestampUs = unavailable ? 0 : 3;
+    report.count = usageExpired ? 2 : 0;
+    const auto counts = GPSRtk::countSatellites(report);
+    QCOMPARE(counts.inView, unavailable ? -1 : usageExpired ? 2 : 0);
+    QCOMPARE(counts.used.value_or(-1), unavailable || usageExpired ? -1 : 0);
+    receiver._satelliteInfoUpdate(report);
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), counts.inView);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), unavailable || usageExpired ? countOnly : 0);
+
+    receiver.disconnectGPS();
+    receiver._satelliteInfoUpdate({});
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
 }
 
 void GPSRtkTest::_logsOnlyFixTransitions()
@@ -263,6 +316,283 @@ GPSProvider::TransportFactory blockedFactory(const std::shared_ptr<BlockedOpen>&
 }
 }  // namespace
 
+void GPSRtkTest::_connectionNotificationSupersedesAttempt_data()
+{
+    QTest::addColumn<QString>("phase");
+    QTest::addColumn<QString>("action");
+    for (const QString& phase :
+         {QStringLiteral("retired"), QStringLiteral("manufacturer"), QStringLiteral("error-fact"),
+          QStringLiteral("error-message"), QStringLiteral("installed")}) {
+        for (const QString& action :
+             {QStringLiteral("replace"), QStringLiteral("disconnect"), QStringLiteral("delete")}) {
+            QTest::newRow(qPrintable(phase + '-' + action)) << phase << action;
+        }
+    }
+}
+
+void GPSRtkTest::_connectionNotificationSupersedesAttempt()
+{
+    QFETCH(QString, phase);
+    QFETCH(QString, action);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->rtkSettings();
+    saved.setFactValue(settings->baseReceiverManufacturers(), 6);
+    saved.setFactValue(settings->useFixedBasePosition(), 0);
+    auto firstGate = std::make_shared<BlockedOpen>();
+    auto replacementGate = std::make_shared<BlockedOpen>();
+    auto receiver = std::make_unique<GPSRtk>();
+    receiver->_setError(GPSConnectionError::OpenFailed, QStringLiteral("previous failure"));
+    receiver->_disconnectTimeoutMs = 0;
+    QPointer<GPSProvider> first;
+    QPointer<GPSProvider> replacement;
+    bool handled = false;
+    QObject observer;
+    const auto cleanup = qScopeGuard([&] {
+        for (const auto& provider : {first, replacement}) {
+            if (provider) {
+                provider->stop();
+            }
+        }
+        if (receiver && receiver->_session.provider) {
+            receiver->_session.provider->stop();
+        }
+        firstGate->release.release();
+        replacementGate->release.release();
+        if (receiver) {
+            receiver->_disconnectTimeoutMs = TestTimeout::mediumMs();
+            receiver->disconnectGPS();
+        }
+        for (const auto& provider : {first, replacement}) {
+            if (provider) {
+                QVERIFY(provider->wait(TestTimeout::mediumMs()));
+            }
+        }
+    });
+    const auto supersede = [&] {
+        if (std::exchange(handled, true)) {
+            return;
+        }
+        if (receiver->hasReceiver()) {
+            first = receiver->_session.provider;
+            QVERIFY(firstGate->entered.tryAcquire(1, TestTimeout::mediumMs()));
+            expectLogMessage(
+                "GPS.GPSRtk", QtWarningMsg,
+                QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
+        }
+        if (action == QStringLiteral("delete")) {
+            receiver.reset();
+        } else if (action == QStringLiteral("disconnect")) {
+            receiver->disconnectGPS();
+        } else {
+            QVERIFY(receiver->connectReceiver(GPSType::passive, blockedFactory(replacementGate),
+                                              QStringLiteral("replacement"), 115200));
+            replacement = receiver->_session.provider;
+        }
+        if (first) {
+            verifyExpectedLogMessage();
+            QVERIFY(!first->parent());
+        }
+    };
+    if (phase == QStringLiteral("manufacturer")) {
+        connect(settings->baseReceiverManufacturers(), &Fact::rawValueChanged, &observer, supersede);
+    } else if (phase == QStringLiteral("error-fact")) {
+        connect(receiver->gpsRtkFactGroup()->lastError(), &Fact::rawValueChanged, &observer, supersede);
+    } else if (phase == QStringLiteral("error-message")) {
+        connect(receiver.get(), &GPSRtk::errorMessageChanged, &observer, supersede);
+    } else {
+        connect(receiver.get(), &GPSRtk::receiverChanged, &observer, [&] {
+            if (receiver && receiver->hasReceiver() == (phase == QStringLiteral("installed"))) {
+                supersede();
+            }
+        });
+    }
+    QVERIFY(!receiver->connectReceiver(GPSType::ublox, blockedFactory(firstGate)));
+    QVERIFY(handled);
+    if (action == QStringLiteral("delete")) {
+        QVERIFY(!receiver);
+    } else if (action == QStringLiteral("replace")) {
+        QVERIFY(receiver->hasReceiver());
+        QCOMPARE(receiver->_session.provider, replacement);
+        QCOMPARE(receiver->activeManufacturer(), 7);
+        QVERIFY(!receiver->_session.configuration.allowPersistentChanges);
+        QCOMPARE(receiver->findChildren<GPSProvider*>().size(), 1);
+    } else {
+        QVERIFY(!receiver->hasReceiver());
+        QCOMPARE(receiver->findChildren<GPSProvider*>().size(), 0);
+    }
+}
+
+void GPSRtkTest::_factNotificationRetiresSession_data()
+{
+    QTest::addColumn<QString>("report");
+    QTest::addColumn<QString>("action");
+    for (const QString& report : {QStringLiteral("survey"), QStringLiteral("satellites"), QStringLiteral("ready"),
+                                  QStringLiteral("disconnect"), QStringLiteral("error")}) {
+        for (const QString& action :
+             {QStringLiteral("replace"), QStringLiteral("disconnect"), QStringLiteral("delete")}) {
+            QTest::newRow(qPrintable(report + '-' + action)) << report << action;
+        }
+    }
+}
+
+void GPSRtkTest::_factNotificationRetiresSession()
+{
+    QFETCH(QString, report);
+    QFETCH(QString, action);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->rtkSettings();
+    saved.setFactValue(settings->baseReceiverManufacturers(), 4);
+    saved.setFactValue(settings->useFixedBasePosition(), 0);
+    auto gate = std::make_shared<BlockedOpen>();
+    auto replacementGate = std::make_shared<BlockedOpen>();
+    auto receiver = std::make_unique<GPSRtk>();
+    QPointer<GPSProvider> replacement;
+    bool handled = false;
+    QObject observer;
+    QVERIFY(receiver->connectReceiver(GPSType::ublox, blockedFactory(gate)));
+    const QPointer<GPSProvider> first = receiver->_session.provider;
+    const auto cleanup = qScopeGuard([&] {
+        for (const auto& provider : {first, replacement}) {
+            if (provider) {
+                provider->stop();
+            }
+        }
+        gate->release.release();
+        replacementGate->release.release();
+        if (receiver) {
+            receiver->_disconnectTimeoutMs = TestTimeout::mediumMs();
+            receiver->disconnectGPS();
+        }
+        for (const auto& provider : {first, replacement}) {
+            if (provider) {
+                QVERIFY(provider->wait(TestTimeout::mediumMs()));
+            }
+        }
+    });
+    QVERIFY(gate->entered.tryAcquire(1, TestTimeout::mediumMs()));
+    receiver->_disconnectTimeoutMs = 0;
+    auto* facts = receiver->gpsRtkFactGroup();
+    if (report == QStringLiteral("disconnect")) {
+        receiver->_onGPSConnect();
+    }
+    Fact* trigger = report == QStringLiteral("survey")       ? facts->currentDuration()
+                    : report == QStringLiteral("satellites") ? facts->numSatellites()
+                    : report == QStringLiteral("error")      ? facts->lastError()
+                                                             : facts->connected();
+    connect(trigger, &Fact::rawValueChanged, &observer, [&] {
+        if (std::exchange(handled, true)) {
+            return;
+        }
+        if (action == QStringLiteral("delete")) {
+            receiver.reset();
+        } else if (action == QStringLiteral("disconnect")) {
+            receiver->disconnectGPS();
+        } else {
+            QVERIFY(receiver->connectReceiver(GPSType::passive, blockedFactory(replacementGate), {}, 115200));
+            replacement = receiver->_session.provider;
+        }
+    });
+    expectLogMessage(
+        "GPS.GPSRtk", QtWarningMsg,
+        QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
+    if (report == QStringLiteral("survey")) {
+        GPSSurveyInStatus survey;
+        survey.duration = std::chrono::seconds(123);
+        survey.valid = true;
+        survey.active = true;
+        survey.coordinate = QGeoCoordinate(47, 8);
+        survey.meanAccuracyMeters = 1.5;
+        receiver->_onGPSSurveyInStatus(survey);
+    } else if (report == QStringLiteral("satellites")) {
+        GPSSatelliteReport satellites;
+        satellites.timestampUs = 1;
+        satellites.count = 1;
+        satellites.satellites[0].used = true;
+        receiver->_satelliteInfoUpdate(satellites);
+    } else if (report == QStringLiteral("ready")) {
+        receiver->_onGPSConnect();
+    } else if (report == QStringLiteral("disconnect")) {
+        receiver->disconnectGPS();
+    } else {
+        receiver->_setError(GPSConnectionError::ConfigFailed, QStringLiteral("old session failure"));
+    }
+    verifyExpectedLogMessage();
+    QVERIFY(handled);
+    QVERIFY(first && !first->parent());
+    if (receiver) {
+        QCOMPARE(receiver->hasReceiver(), action == QStringLiteral("replace"));
+        QVERIFY(!receiver->connected());
+        QVERIFY(!receiver->gpsRtkFactGroup()->valid()->rawValue().toBool());
+        QCOMPARE(receiver->gpsRtkFactGroup()->numSatellitesUsed()->rawValue().toInt(), -1);
+        if (replacement) {
+            QVERIFY(receiver->errorMessage().isEmpty());
+            QCOMPARE(receiver->activeManufacturer(), 7);
+        }
+    }
+}
+
+void GPSRtkTest::_manualNotificationSupersedesAttempt_data()
+{
+    QTest::addColumn<bool>("fromSetting");
+    QTest::addColumn<bool>("destroy");
+    QTest::newRow("manual-stop") << false << false;
+    QTest::newRow("manual-delete") << false << true;
+    QTest::newRow("setting-stop") << true << false;
+    QTest::newRow("setting-delete") << true << true;
+}
+
+void GPSRtkTest::_manualNotificationSupersedesAttempt()
+{
+#ifdef QGC_NO_SERIAL_LINK
+    QSKIP("Manual serial connection requires serial support");
+#else
+    QFETCH(bool, fromSetting);
+    QFETCH(bool, destroy);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->rtkSettings();
+    auto* enabled = SettingsManager::instance()->autoConnectSettings()->autoConnectRTKGPS();
+    saved.setFactValue(settings->baseReceiverManufacturers(), 7);
+    saved.setFactValue(settings->serialDevice(), QStringLiteral("/test/reentrant"));
+    saved.setFactValue(settings->serialBaudRate(), 115200);
+    saved.setFactValue(enabled, true);
+    SerialPortManager ports(nullptr, [] {
+        return QList<SerialPortManager::Port>{
+            {QStringLiteral("/test/reentrant"), QStringLiteral("reentrant"), QGCSerialPortInfo::BoardTypeUnknown, {}}};
+    });
+    auto receiver = std::make_unique<GPSRtk>();
+    receiver->setSerialPortManager(&ports);
+    std::atomic_bool opened = false;
+    receiver->_serialTransportFactory = [&opened](const QString&, const std::atomic_bool&) {
+        opened = true;
+        return std::unique_ptr<GPSTransport>{};
+    };
+    bool handled = false;
+    const auto supersede = [&] {
+        if (std::exchange(handled, true)) {
+            return;
+        }
+        if (destroy) {
+            receiver.reset();
+        } else {
+            receiver->disconnectGPS();
+        }
+    };
+    QObject observer;
+    if (fromSetting) {
+        connect(enabled, &Fact::rawValueChanged, &observer, supersede);
+    } else {
+        connect(receiver.get(), &GPSRtk::manualConnectionRequested, &observer, supersede);
+    }
+    QVERIFY(!receiver->connectConfiguredGPS());
+    QVERIFY(handled);
+    QVERIFY(!opened);
+    QVERIFY(!ports.isPortReserved(QStringLiteral("/test/reentrant")));
+    if (receiver) {
+        QVERIFY(!receiver->hasReceiver());
+    }
+#endif
+}
+
 void GPSRtkTest::_failedOpenNeverConnects()
 {
     TestFixtures::SettingsFixture saved;
@@ -301,7 +631,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     });
     receiver.connectReceiver(GPSType::ublox, blockedFactory(firstGate), QStringLiteral("serial:test-base"));
     QTRY_VERIFY_WITH_TIMEOUT(firstGate->entered.available() > 0, TestTimeout::mediumMs());
-    QPointer<GPSProvider> first = receiver._gpsProvider;
+    QPointer<GPSProvider> first = receiver._session.provider;
     auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
     QVERIFY(!receiver.connected());
     emit first->receiverReady();
@@ -314,6 +644,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     survey.meanAccuracyMeters = 1.5;
     emit first->surveyInStatus(survey);
     GPSSatelliteReport satellites;
+    satellites.timestampUs = 1;
     satellites.count = 2;
     satellites.satellites[0].used = true;
     emit first->satelliteInfoUpdate(satellites);
@@ -369,9 +700,9 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QCOMPARE(facts->lastError()->rawValue().toInt(), static_cast<int>(GPSConnectionError::None));
     QVERIFY(receiver.errorMessage().isEmpty());
     QCOMPARE(rtcm->totalBytesSent(), bytesBefore);
-    emit receiver._gpsProvider->receiverReady();
+    emit receiver._session.provider->receiverReady();
     const auto receivedAtMs = GPSCorrectionFrame::monotonicNowMs() - 10;
-    emit receiver._gpsProvider->RTCMDataUpdate(frame, receivedAtMs);
+    emit receiver._session.provider->RTCMDataUpdate(frame, receivedAtMs);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver.connected());
     QCOMPARE(rtcm->totalBytesSent(), bytesBefore + frame.size());
@@ -387,13 +718,18 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
 
     expectLogMessage("GPS.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("GPS device error, connection lost")));
-    emit receiver._gpsProvider->connectionError(GPSConnectionError::DeviceError);
-    emit receiver._gpsProvider->RTCMDataUpdate(frame, GPSCorrectionFrame::monotonicNowMs());
-    emit receiver._gpsProvider->receiverReady();
-    emit receiver._gpsProvider->surveyInStatus(survey);
-    emit receiver._gpsProvider->satelliteInfoUpdate(satellites);
-    emit receiver._gpsProvider->satelliteUsageUpdate({.usedCount = 12});
+    expectLogMessage(
+        "GPS.GPSRtk", QtWarningMsg,
+        QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
+    const auto second = receiver._session.provider;
+    emit second->connectionError(GPSConnectionError::DeviceError);
+    emit second->RTCMDataUpdate(frame, GPSCorrectionFrame::monotonicNowMs());
+    emit second->receiverReady();
+    emit second->surveyInStatus(survey);
+    emit second->satelliteInfoUpdate(satellites);
+    emit second->satelliteUsageUpdate({.usedCount = 12});
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    verifyExpectedLogMessage();
     verifyExpectedLogMessage();
     QVERIFY(!receiver.connected());
     QCOMPARE(facts->currentDuration()->rawValue().toLongLong(), 0);
@@ -403,9 +739,8 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QCOMPARE(routed.size(), 2);
     QCOMPARE(rtcm->totalBytesSent(), bytesBefore + frame.size());
 
-    receiver._gpsProvider->stop();
     secondGate->release.release();
-    QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver(), TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(second.isNull(), TestTimeout::mediumMs());
     QVERIFY(secondGate->sawCancellation);
     QVERIFY(!receiver.connected());
     QVERIFY(corrections.sourceInstances().isEmpty());
@@ -422,7 +757,7 @@ void GPSRtkTest::_workerCanOutliveManager()
     const auto releaseWorker = qScopeGuard([&]() { gate->release.release(); });
     receiver->connectReceiver(GPSType::ublox, blockedFactory(gate));
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
-    QPointer<GPSProvider> provider = receiver->_gpsProvider;
+    QPointer<GPSProvider> provider = receiver->_session.provider;
     emit provider->receiverReady();
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver->connected());
@@ -474,7 +809,7 @@ void GPSRtkTest::_receiverFramesAreValidated()
     const auto receivedAtMs =
         GPSCorrectionFrame::monotonicNowMs() - (expired ? GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS : 0);
     QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
-    emit receiver._gpsProvider->RTCMDataUpdate(frame, receivedAtMs);
+    emit receiver._session.provider->RTCMDataUpdate(frame, receivedAtMs);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     const auto stats = corrections.sources()[static_cast<int>(GPSCorrectionSource::LocalReceiver)].toMap();
     QCOMPARE(stats.value(QStringLiteral("receivedFrames")).toULongLong(), 1);
@@ -724,7 +1059,7 @@ void GPSRtkTest::_explicitSerialSelectionAndDisconnect()
     QVERIFY(ports.isPortReserved(openedDevice));
     QVERIFY(!ports.isPortReserved(QStringLiteral("/test/unselected")));
     QVERIFY(!ports.reservePort(openedDevice));
-    QPointer<GPSProvider> provider = receiver._gpsProvider;
+    QPointer<GPSProvider> provider = receiver._session.provider;
     emit provider->receiverReady();
     GPSSurveyInStatus survey;
     survey.active = true;
@@ -824,7 +1159,7 @@ void GPSRtkTest::_serialReservationSurvivesDelayedStop()
     const auto releaseWorker = qScopeGuard([&] { gate->release.release(); });
     QVERIFY(receiver.connectGPS(QStringLiteral("/test/selected"), QStringLiteral("passive"), 115200));
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
-    QPointer<GPSProvider> provider = receiver._gpsProvider;
+    QPointer<GPSProvider> provider = receiver._session.provider;
     expectLogMessage(
         "GPS.GPSRtk", QtWarningMsg,
         QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
@@ -981,12 +1316,17 @@ void GPSRtkTest::_configurationDiagnosticRetained()
     const auto releaseWorker = qScopeGuard([&] { gate->release.release(); });
     QVERIFY(receiver.connectReceiver(GPSType::quectel, blockedFactory(gate), {}, 115200, true));
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
-    QPointer<GPSProvider> provider = receiver._gpsProvider;
+    QPointer<GPSProvider> provider = receiver._session.provider;
+    receiver._disconnectTimeoutMs = 0;
     emit provider->configurationError(detail);
     emit provider->connectionError(GPSConnectionError::ConfigFailed);
     expectLogMessage("GPS.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("GPS receiver did not accept configuration")));
+    expectLogMessage(
+        "GPS.GPSRtk", QtWarningMsg,
+        QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    verifyExpectedLogMessage();
     verifyExpectedLogMessage();
     QVERIFY(!receiver.connected());
     QCOMPARE(receiver.gpsRtkFactGroup()->lastError()->rawValue().toInt(),
@@ -996,9 +1336,8 @@ void GPSRtkTest::_configurationDiagnosticRetained()
         QVERIFY(receiver.errorMessage().contains(detail));
     }
     const QString message = receiver.errorMessage();
-    provider->stop();
     gate->release.release();
-    QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver(), TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(provider.isNull(), TestTimeout::mediumMs());
     QCOMPARE(receiver.errorMessage(), message);
 }
 

@@ -35,6 +35,7 @@
 
 #include "AshtechPrivate.h"
 #include "NMEA/GPSNMEAReport.h"
+#include "NMEA/GPSNMEASatelliteReport.h"
 
 namespace {
 bool validReceiptDate(std::string_view date)
@@ -68,6 +69,15 @@ int GPSNativeAshtech::handleMessage(int len)
     const std::string_view message{reinterpret_cast<const char*>(_rx_buffer), static_cast<size_t>(len)};
     NMEAFields::Cursor bufptr(message.substr(7));
     int ret = 0;
+    if (_satellite_info) {
+        if (const auto sentence = NMEA::sentence(message)) {
+            auto update = _satelliteAssembler.ingest(*sentence, nowUs());
+            _queueSatellites(std::move(update.completed));
+            if (update.accepted) {
+                ret |= GPSDecodedBatch::PROTOCOL_ACTIVITY;
+            }
+        }
+    }
 
     if ((memcmp(_rx_buffer + 3, "ZDA,", 3) == 0) && (uiCalcComma == 6)) {
         /*
@@ -408,33 +418,6 @@ int GPSNativeAshtech::handleMessage(int len)
         _gps_position->epv = error->verticalAccuracy;
         _gps_position->speedAccuracyMetersPerSecond = NAN;
 
-    } else if ((memcmp(_rx_buffer + 3, "GSV,", 4) == 0) && (uiCalcComma >= 3)) {
-        const auto parsed = NMEA::sentence({reinterpret_cast<const char*>(_rx_buffer), static_cast<size_t>(len)});
-        if (!parsed || !_satellite_info) {
-            return 0;
-        }
-        const auto page = NMEA::gsv(*parsed);
-        if (!page) {
-            return 0;
-        }
-        auto update = _satelliteAssembler.ingest(*parsed, nowUs());
-        if (page->message == page->messages) {
-            auto completed = _satelliteAssembler.flush();
-            update.completed.insert(update.completed.end(), completed.begin(), completed.end());
-        }
-        for (const auto& system : update.completed) {
-            *_satellite_info = {};
-            _satellite_info->timestamp = system.inViewTimestampUs;
-            _satellite_info->constellation = system.constellation;
-            _satellite_info->count = std::min(system.satellites.size(), _satellite_info->entries.size());
-            for (size_t i = 0; i < _satellite_info->count; ++i) {
-                const auto& source = system.satellites[i];
-                _satellite_info->entries[i] = {source.id,        source.prn,     source.constellation, std::nullopt,
-                                               source.elevation, source.azimuth, source.signal};
-            }
-            publishSatellites(*_satellite_info);
-        }
-
     } else if (message.starts_with("$PASHR,NAK*")) {
         if (_command_state == NMEACommandState::waiting) {
             _command_state = NMEACommandState::nack;
@@ -638,5 +621,29 @@ void GPSNativeAshtech::sendSurveyInStatusUpdate(bool active, bool valid, double 
 int GPSNativeAshtech::decodeByte(uint8_t byte)
 {
     const int length = parseChar(byte);
-    return length > 0 ? handleMessage(length) : 0;
+    const int result = length > 0 ? handleMessage(length) : 0;
+    _drainSatellites();
+    return result;
+}
+
+void GPSNativeAshtech::_queueSatellites(NMEA::SatelliteEpoch epoch)
+{
+    _pendingSatellites.insert(_pendingSatellites.end(), std::make_move_iterator(epoch.begin()),
+                              std::make_move_iterator(epoch.end()));
+}
+
+void GPSNativeAshtech::_drainSatellites()
+{
+    size_t count = 0;
+    while (count < _pendingSatellites.size() && _decoded.events.size() + 2 < GPSDecodedBatch::MAX_EVENTS) {
+        *_satellite_info = gpsNMEASatelliteReport(_pendingSatellites[count++]);
+        publishSatellites(*_satellite_info);
+    }
+    _pendingSatellites.erase(_pendingSatellites.begin(), _pendingSatellites.begin() + count);
+}
+
+void GPSNativeAshtech::flushDecoded()
+{
+    _queueSatellites(_satelliteAssembler.flushDue(nowUs()));
+    _drainSatellites();
 }

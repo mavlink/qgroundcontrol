@@ -10,6 +10,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
+#include "GPSDriver.h"
 #include "GPSProvider.h"
 #include "GPSReceiverConfigValidation.h"
 #include "GPSTransport.h"
@@ -336,7 +337,100 @@ public:
 private:
     QByteArray _reply;
 };
+
+class ExpiringSatelliteTransport : public GPSTransport
+{
+public:
+    static constexpr int POSITION_AT_MS = 2000;
+    using GPSTransport::GPSTransport;
+
+    GPSOpenResult open() override
+    {
+        _elapsed.start();
+        _pending = "$GPGSV,1,1,01,01,10,20,30*79\r\n" + position();
+        return {GPSOpenStatus::Opened};
+    }
+
+    bool fatalError() const override { return false; }
+
+    bool setBaudrate(unsigned) override { return true; }
+
+    GPSReadResult read(uint8_t* bytes, int size, int timeoutMs) override
+    {
+        if (_pending.isEmpty() && timeoutMs > 0) {
+            const qint64 untilPosition =
+                _sentPosition ? timeoutMs : qMax(qint64{0}, POSITION_AT_MS - _elapsed.elapsed());
+            QThread::msleep(static_cast<unsigned long>(qMin(qint64{timeoutMs}, untilPosition)));
+        }
+        if (isCancelled()) {
+            return {GPSReadStatus::Cancelled};
+        }
+        if (!_sentPosition && _elapsed.elapsed() >= POSITION_AT_MS) {
+            _sentPosition = true;
+            _pending.append(position());
+        }
+        if (_pending.isEmpty()) {
+            return {GPSReadStatus::TimedOut};
+        }
+        const int count = qMin(size, static_cast<int>(_pending.size()));
+        std::memcpy(bytes, _pending.constData(), static_cast<size_t>(count));
+        _pending.remove(0, count);
+        return {GPSReadStatus::Data, count};
+    }
+
+private:
+    static QByteArray position() { return "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47\r\n"; }
+
+    QElapsedTimer _elapsed;
+    QByteArray _pending;
+    bool _sentPosition = false;
+};
 }  // namespace
+
+void GPSProviderTest::_satelliteExpiryDoesNotRenewLiveness()
+{
+    if (!GPSDriver::supportsType(GPSType::passive)) {
+        QSKIP("Passive receiver support is disabled");
+    }
+    GPSProvider provider(
+        [](const std::atomic_bool& stop) { return std::make_unique<ExpiringSatelliteTransport>(stop); },
+        GPSType::passive, {.role = GPSReceiverConfig::Role::Passive, .baudRate = 115200});
+    std::atomic_bool freshView = false;
+    std::atomic_bool expiredView = false;
+    std::atomic<qint64> lastPositionAtMs = -1;
+    QElapsedTimer elapsed;
+    connect(
+        &provider, &GPSProvider::satelliteInfoUpdate, &provider,
+        [&](const GPSSatelliteReport& report) {
+            if (report.timestampUs && report.count) {
+                freshView = true;
+            } else if (!report.timestampUs && freshView.load()) {
+                expiredView = true;
+            }
+        },
+        Qt::DirectConnection);
+    connect(
+        &provider, &GPSProvider::sensorGpsUpdate, &provider,
+        [&](const GPSPositionReport&) { lastPositionAtMs = elapsed.elapsed(); }, Qt::DirectConnection);
+    QSignalSpy errors(&provider, &GPSProvider::connectionError);
+    elapsed.start();
+    provider.start();
+    const bool finished = provider.wait(TestTimeout::longMs());
+    if (!finished) {
+        provider.stop();
+        QVERIFY(provider.wait(TestTimeout::longMs()));
+    }
+    QVERIFY(finished);
+    QVERIFY(freshView.load());
+    QVERIFY(expiredView.load());
+    QCOMPARE(errors.size(), 1);
+    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
+    // An expiry credited as new traffic would add another complete inactivity window.
+    QVERIFY(lastPositionAtMs.load() >= ExpiringSatelliteTransport::POSITION_AT_MS);
+    const qint64 expectedDeadline = lastPositionAtMs.load() + GPSProvider::kUsefulDataTimeoutMs;
+    QVERIFY(elapsed.elapsed() >= expectedDeadline);
+    QVERIFY(elapsed.elapsed() < expectedDeadline + GPSProvider::kGPSReceiveTimeout);
+}
 
 void GPSProviderTest::_ancillaryTraffic_data()
 {

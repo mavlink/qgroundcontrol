@@ -10,6 +10,7 @@ private slots:
     void _femtoConfigurationSurvey();
     void _ashtechFixedSurvey();
     void _ashtechSatelliteSnapshots();
+    void _nativeIntegrityProvenance();
     void _femtoSatelliteUsage();
     void _sbfSatelliteUsage();
     void _receiveOutcomes();

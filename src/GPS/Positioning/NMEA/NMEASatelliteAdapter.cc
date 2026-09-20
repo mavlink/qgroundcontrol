@@ -6,8 +6,6 @@
 #include "QtRuntimeScheduler.h"
 
 namespace {
-constexpr auto SATELLITE_IDLE_TIMEOUT = std::chrono::milliseconds(150);
-constexpr auto SATELLITE_BATCH_TIMEOUT = std::chrono::seconds(1);
 constexpr qsizetype MAX_PENDING_EPOCHS = 64;
 }  // namespace
 
@@ -16,8 +14,7 @@ QGC_LOGGING_CATEGORY(NMEASatelliteAdapterLog, "GPS.NMEA.NMEASatelliteAdapter")
 NMEASatelliteAdapter::NMEASatelliteAdapter(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
-    , _idleTask(_scheduler, this)
-    , _batchTask(_scheduler, this)
+    , _flushTask(_scheduler, this)
     , _deliveryTask(_scheduler, this)
 {
     qCDebug(NMEASatelliteAdapterLog) << this;
@@ -32,7 +29,7 @@ NMEASatelliteAdapter::~NMEASatelliteAdapter()
 void NMEASatelliteAdapter::close()
 {
     _open = false;
-    for (auto* task : {&_idleTask, &_batchTask, &_deliveryTask}) {
+    for (auto* task : {&_flushTask, &_deliveryTask}) {
         task->cancel();
     }
     _assembler.clear();
@@ -44,23 +41,28 @@ void NMEASatelliteAdapter::ingest(const NMEASentenceEnvelope& envelope)
     if (!_open || !_scheduler) {
         return;
     }
-    auto update = _assembler.ingest(envelope.sentence(), envelope.receivedAtUs());
+    auto update = _assembler.ingest(envelope.sentence(), envelope.receivedAtUs(), _scheduler->nowUs());
     if (!update.completed.empty())
         _queue(std::move(update.completed));
-    if (!update.accepted)
-        return;
-    _idleTask.cancel();
-    _idleTask.schedule(SATELLITE_IDLE_TIMEOUT, [this]() { _flush(); });
-    if (!_batchTask.active()) {
-        _batchTask.schedule(SATELLITE_BATCH_TIMEOUT, [this]() { _flush(); });
-    }
+    _scheduleFlush();
 }
 
 void NMEASatelliteAdapter::_flush()
 {
-    _idleTask.cancel();
-    _batchTask.cancel();
-    _queue(_assembler.flush());
+    if (!_open || !_scheduler) {
+        return;
+    }
+    _queue(_assembler.flushDue(_scheduler->nowUs()));
+    _scheduleFlush();
+}
+
+void NMEASatelliteAdapter::_scheduleFlush()
+{
+    _flushTask.cancel();
+    if (const auto deadline = _assembler.deadlineUs(); deadline && _scheduler) {
+        const auto now = _scheduler->nowUs();
+        _flushTask.schedule(std::chrono::microseconds(*deadline > now ? *deadline - now : 0), [this]() { _flush(); });
+    }
 }
 
 void NMEASatelliteAdapter::_queue(NMEA::SatelliteEpoch epoch)

@@ -46,6 +46,7 @@ private slots:
     void _fixTypes();
     void _integrityStates_data();
     void _integrityStates();
+    void _integrityReceipts();
     void _optionalValues_data();
     void _optionalValues();
     void _satelliteCounts_data();
@@ -54,6 +55,7 @@ private slots:
     void _satelliteMetadata();
     void _satelliteSnapshotScopes();
     void _satelliteSnapshotBounds();
+    void _satelliteSnapshotExpiry();
     void _surveyProjection_data();
     void _surveyProjection();
 };
@@ -250,10 +252,53 @@ void GPSNativeDataTest::_integrityStates()
     diagnostic.jamming_state = static_cast<GPSIntegrityReport::JammingState>(native);
     diagnostic.spoofing_state = static_cast<GPSIntegrityReport::SpoofingState>(native);
     diagnostic.corrections_msg_used = static_cast<GPSIntegrityReport::CorrectionUse>(native);
-    const auto integrity = GPSNativeData::position({}, diagnostic).integrity;
+    diagnostic.jamming_state_timestamp = 100;
+    diagnostic.spoofing_state_timestamp = 100;
+    diagnostic.corrections_timestamp = 100;
+    const auto integrity = GPSNativeData::position({.timestamp = 100}, diagnostic).integrity;
     QCOMPARE(integrity.jamming, jamming);
     QCOMPARE(integrity.spoofing, spoofing);
     QCOMPARE(integrity.correctionUse, correctionUse);
+}
+
+void GPSNativeDataTest::_integrityReceipts()
+{
+    GPSNativeIntegrityReport diagnostic;
+    diagnostic.timestamp = 7'000'000;
+    diagnostic.jamming_state = GPSIntegrityReport::JammingState::Critical;
+    diagnostic.jamming_state_timestamp = 1'000'000;
+    diagnostic.spoofing_state = GPSIntegrityReport::SpoofingState::Indicated;
+    diagnostic.spoofing_state_timestamp = 7'000'000;
+    diagnostic.rf_timestamp = 3'000'000;
+    diagnostic.noise_per_ms = 0;
+    diagnostic.corrections_timestamp = 6'000'000;
+    diagnostic.corrections_crc_failed = false;
+    diagnostic.corrections_msg_used = GPSIntegrityReport::CorrectionUse::Used;
+    const auto report = GPSNativeData::position({.timestamp = 7'000'000}, diagnostic);
+    QCOMPARE(report.integrity.jamming, GPSIntegrityReport::JammingState::Unknown);
+    QCOMPARE(report.integrity.jammingTimestampUs, uint64_t{1'000'000});
+    QCOMPARE(report.integrity.spoofing, GPSIntegrityReport::SpoofingState::Indicated);
+    QCOMPARE(report.integrity.spoofingTimestampUs, uint64_t{7'000'000});
+    QCOMPARE(report.integrity.noisePerMillisecond, std::optional<int32_t>{0});
+    QCOMPARE(report.integrity.rfTimestampUs, uint64_t{3'000'000});
+    QCOMPARE(report.integrity.correctionCrcFailed, std::optional<bool>{false});
+    QCOMPARE(report.integrity.correctionTimestampUs, uint64_t{6'000'000});
+    const auto earlierEpoch = GPSNativeData::position({.timestamp = 6'500'000}, diagnostic);
+    QCOMPARE(earlierEpoch.integrity.spoofing, GPSIntegrityReport::SpoofingState::Indicated);
+    QCOMPARE(earlierEpoch.integrity.jamming, GPSIntegrityReport::JammingState::Unknown);
+    const auto delayedPublication = GPSNativeData::position({.timestamp = 6'500'000}, diagnostic, 8'000'000);
+    QVERIFY(!delayedPublication.integrity.noisePerMillisecond);
+    QCOMPARE(delayedPublication.integrity.spoofing, GPSIntegrityReport::SpoofingState::Indicated);
+    QCOMPARE(delayedPublication.integrity.rfTimestampUs, uint64_t{3'000'000});
+
+    const auto later = report.integrity.freshAt(8'000'000);
+    QVERIFY(!later.noisePerMillisecond);
+    QCOMPARE(later.spoofing, GPSIntegrityReport::SpoofingState::Indicated);
+    QCOMPARE(later.correctionUse, GPSIntegrityReport::CorrectionUse::Used);
+    QCOMPARE(report.integrity.noisePerMillisecond, std::optional<int32_t>{0});
+    const auto future = report.integrity.freshAt(6'500'000);
+    QCOMPARE(future.spoofing, GPSIntegrityReport::SpoofingState::Unknown);
+    QCOMPARE(future.correctionUse, GPSIntegrityReport::CorrectionUse::Used);
 }
 
 void GPSNativeDataTest::_optionalValues_data()
@@ -287,6 +332,9 @@ void GPSNativeDataTest::_optionalValues()
     QFETCH(uint8_t, satellites);
     QFETCH(GPSNativeIntegrityReport, diagnostic);
     GPSNativePositionReport source;
+    source.timestamp = 100;
+    diagnostic.rf_timestamp = 100;
+    diagnostic.corrections_timestamp = 100;
     source.satellites_used = satellites;
     const auto report = GPSNativeData::position(source, diagnostic);
     QCOMPARE(report.satellitesUsed.has_value(), satellites != 255);
@@ -439,11 +487,14 @@ void GPSNativeDataTest::_satelliteSnapshotScopes()
     QCOMPARE(satelliteIds(snapshot.update(scoped)), (QList<uint16_t>{1, 33}));
 
     whole.count = 1;
+    whole.timestamp = 400;
     whole.entries[0] = {.id = 301, .constellation = GPSConstellation::Galileo};
     QCOMPARE(satelliteIds(snapshot.update(whole)), (QList<uint16_t>{301}));
     scoped.constellation = GPSConstellation::SBAS;
+    scoped.timestamp = 500;
     QCOMPARE(satelliteIds(snapshot.update(scoped)), (QList<uint16_t>{301}));
     whole.count = 0;
+    whole.timestamp = 600;
     QCOMPARE(snapshot.update(whole).count, uint16_t{0});
     QCOMPARE(snapshot.update(scoped).count, uint16_t{0});
 }
@@ -452,6 +503,7 @@ void GPSNativeDataTest::_satelliteSnapshotBounds()
 {
     GPSNativeData::SatelliteSnapshot snapshot;
     GPSNativeSatelliteReport full;
+    full.timestamp = 4'294'967'296;
     full.constellation = GPSConstellation::GPS;
     full.count = GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES;
     for (uint16_t i = 0; i < full.count; ++i) {
@@ -467,7 +519,78 @@ void GPSNativeDataTest::_satelliteSnapshotBounds()
     QCOMPARE(report.count, GPSSatelliteReport::MAX_SATELLITES);
     QCOMPARE(report.timestampUs, extra.timestamp);
     full.count = 0;
+    full.timestamp = extra.timestamp + 1;
     QCOMPARE(satelliteIds(snapshot.update(full)), (QList<uint16_t>{301}));
+}
+
+void GPSNativeDataTest::_satelliteSnapshotExpiry()
+{
+    GPSNativeData::SatelliteSnapshot state;
+    GPSNativeSatelliteReport gps;
+    gps.constellation = GPSConstellation::GPS;
+    gps.timestamp = 1'000'000;
+    gps.count = 1;
+    gps.entries[0] = {.id = 1, .used = false, .signal = 0};
+    state.update(gps);
+    GPSNativeSatelliteReport glonass;
+    glonass.constellation = GPSConstellation::GLONASS;
+    glonass.timestamp = 4'000'000;
+    glonass.count = 1;
+    glonass.entries[0].id = 65;
+    auto snapshot = state.update(glonass);
+    QCOMPARE(snapshot.count, uint16_t{2});
+    QCOMPARE(snapshot.satellites[0].inViewTimestampUs, gps.timestamp);
+    QCOMPARE(snapshot.satellites[0].inUseTimestampUs, gps.timestamp);
+
+    glonass.timestamp = 6'000'000;
+    snapshot = state.update(glonass);
+    QCOMPARE(satelliteIds(snapshot), (QList<uint16_t>{65}));
+    QCOMPARE(satelliteIds(state.update(gps)), (QList<uint16_t>{65}));  // Retired receipts cannot resurrect a view.
+    gps.timestamp = 6'000'001;
+    snapshot = state.update(gps);
+    QCOMPARE(snapshot.count, uint16_t{2});
+    QCOMPARE(snapshot.satellites[0].signalStrength, std::optional<uint8_t>{0});
+    QCOMPARE(snapshot.satellites[0].used, std::optional<bool>{false});
+
+    GPSNativeSatelliteReport usage;
+    usage.constellation = GPSConstellation::GPS;
+    usage.usage = GPSNativeSatelliteReport::Usage{};
+    usage.usage->timestamp = 7'000'000;
+    usage.usage->count = 1;
+    usage.usage->ids[0] = 1;
+    GPSNativeData::SatelliteSnapshot usageOnly;
+    const auto unavailableView = usageOnly.update(usage);
+    QCOMPARE(unavailableView.timestampUs, uint64_t{0});
+    QCOMPARE(unavailableView.count, uint16_t{0});
+    snapshot = state.update(usage);
+    QCOMPARE(snapshot.satellites[0].used, std::optional<bool>{true});
+    QCOMPARE(snapshot.satellites[0].inViewTimestampUs, gps.timestamp);
+    QCOMPARE(snapshot.satellites[0].inUseTimestampUs, usage.usage->timestamp);
+    gps.timestamp = 7'500'000;
+    gps.entries[0].used.reset();
+    snapshot = state.update(gps);
+    QCOMPARE(snapshot.satellites[0].used, std::optional<bool>{true});
+    gps.timestamp = 12'000'000;
+    snapshot = state.update(gps);
+    QCOMPARE(snapshot.count, uint16_t{1});
+    QVERIFY(!snapshot.satellites[0].used);
+    QCOMPARE(snapshot.satellites[0].inUseTimestampUs, uint64_t{0});
+    gps.count = 0;
+    gps.timestamp++;
+    QCOMPARE(state.update(gps).count, uint16_t{0});
+    QVERIFY(!state.expire(gps.timestamp + 4'999'999));
+    const auto expired = state.expire(gps.timestamp + 5'000'000);
+    QVERIFY(expired);
+    QCOMPARE(expired->count, uint16_t{0});
+    QVERIFY(!state.expire(gps.timestamp + 6'000'000));
+
+    gps.timestamp += 7'000'000;
+    gps.count = 1;
+    state.update(gps);
+    const auto gone = state.expire(gps.timestamp + 5'000'000);
+    QVERIFY(gone);
+    QCOMPARE(gone->count, uint16_t{0});
+    QVERIFY(!state.expire(gps.timestamp + 5'000'001));
 }
 
 void GPSNativeDataTest::_surveyProjection_data()

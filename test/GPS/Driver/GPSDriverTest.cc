@@ -165,9 +165,11 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
                                .fixedBaseAltitudeMeters = 500}},
                      sinks);
     QVERIFY(driver.configure());
+    unsigned epoch = 120000;
     const auto feed = [&](const QByteArray& body) {
         snapshots.clear();
-        transport.scriptedRead = nmeaFrame(body);
+        transport.scriptedRead =
+            nmeaFrame(body) + nmeaFrame("GNRMC," + QByteArray::number(++epoch) + ".00,V,,,,,,,090926,,,N");
         return driver.receiveOutcome(20);
     };
     QCOMPARE(feed("GPGSV,1,1,01,01,10,20,30").status, GPSReceiveStatus::Data);
@@ -184,6 +186,56 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
     QCOMPARE(snapshots.size(), size_t(2));
     QCOMPARE(snapshots[0].count, 1);
     QCOMPARE(snapshots[1].count, 0);
+}
+
+void GPSDriverTest::_nativeIntegrityProvenance()
+{
+    std::atomic_bool stop = false;
+    ScriptedUBXReceiver receiver(ScriptedUBXReceiver::Model::F9P, stop);
+    std::vector<GPSPositionReport> positions;
+    GPSDriverSinks sinks;
+    sinks.onPosition = [&](const auto& report) { positions.push_back(report); };
+    GPSDriver driver(GPSType::ublox, receiver, {.role = GPSReceiverConfig::Role::Position}, sinks);
+    QVERIFY(driver.configure());
+    receiver.coalesceReplies = true;
+    const auto navigation = [&](uint32_t tow) {
+        QByteArray pvt(92, '\0');
+        qToLittleEndian(tow, pvt.data());
+        pvt[20] = 3;
+        pvt[21] = 1;
+        receiver.queueFrame(0x01, 0x07, pvt);
+        QByteArray end(4, '\0');
+        qToLittleEndian(tow, end.data());
+        receiver.queueFrame(0x01, 0x61, end);
+        for (int attempt = 0; attempt < 4; ++attempt) {
+            QVERIFY(!driver.receiveOutcome(0).terminal());
+        }
+    };
+    QByteArray rf(28, '\0');
+    rf[1] = 1;
+    rf[5] = 3;
+    receiver.queueFrame(0x0a, 0x38, rf);
+    navigation(1000);
+    QVERIFY(!positions.empty());
+    const auto first = positions.back();
+    QCOMPARE(first.integrity.jamming, GPSIntegrityReport::JammingState::Critical);
+    QVERIFY(first.integrity.jammingTimestampUs > 0);
+
+    QByteArray status(16, '\0');
+    status[7] = 2 << 3;
+    receiver.queueFrame(0x01, 0x03, status);
+    navigation(2000);
+    QCOMPARE(positions.size(), size_t{2});
+    const auto second = positions.back();
+    QCOMPARE(second.integrity.jammingTimestampUs, first.integrity.jammingTimestampUs);
+    QCOMPARE(second.integrity.rfTimestampUs, first.integrity.rfTimestampUs);
+    QVERIFY(second.integrity.spoofingTimestampUs > first.integrity.jammingTimestampUs);
+    QCOMPARE(second.integrity.spoofing, GPSIntegrityReport::SpoofingState::Indicated);
+    const auto fresh = second.integrity.freshAt(first.integrity.jammingTimestampUs + 5'000'000);
+    QCOMPARE(fresh.jamming, GPSIntegrityReport::JammingState::Unknown);
+    QVERIFY(!fresh.noisePerMillisecond);
+    QCOMPARE(fresh.spoofing, GPSIntegrityReport::SpoofingState::Indicated);
+    QCOMPARE(first.integrity.jamming, GPSIntegrityReport::JammingState::Critical);
 }
 
 void GPSDriverTest::_femtoSatelliteUsage()

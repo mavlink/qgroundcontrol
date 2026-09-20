@@ -51,6 +51,13 @@ For **Unicore UM980/UM982**, **Quectel LG290P**, or **Passive RTCM/NMEA**:
 Settings are read on each connection. Reconnect the receiver to apply changes;
 restarting QGroundControl is not required.
 
+After a survey completes, **Save Current Base Position** copies its coordinates and
+receiver-reported accuracy into the fixed-position settings. This is available while
+the survey receiver remains connected and does not reconfigure it. Then disconnect,
+select **Specify position**, and reconnect to use the saved position. Saving requires
+valid coordinates and a known, finite accuracy; receiver-managed averaging without
+accuracy telemetry cannot supply a fixed-position accuracy.
+
 The serial port is reserved while the receiver is running, including shutdown.
 Ports already used by a vehicle link or another GPS source cannot be taken over.
 Connection and configuration failures appear in the GPS indicator.

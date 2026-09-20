@@ -2,6 +2,7 @@
 
 #include <array>
 #include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -24,9 +25,18 @@ public:
 
 protected:
     int decodeByte(uint8_t byte) override;
+    void flushDecoded() override;
     int handleReceiverLine(std::string_view line) override;
 
 private:
+    enum class SurveyPhase
+    {
+        Off,
+        AwaitingBoot,
+        Verifying,
+        Monitoring,
+    };
+
     using ReplyHandler = std::function<GPSCommandOutcome(std::string_view)>;
 
     GPSCommandOutcome _transact(const std::string& command, ReplyHandler handler, unsigned timeoutMs = 1000);
@@ -37,8 +47,11 @@ private:
     std::string _baseCommand() const;
     bool _saveConfiguration();
     bool _setMessageRate(std::string_view name, unsigned rate, std::string_view version = {});
-    bool _restart(bool requireRoleMatch = true);
+    bool _restart(bool requireRoleMatch = true, bool startSurveySession = false);
     bool _handleSurvey(std::string_view body);
+    void _revokeSurvey();
+    void _expireSurvey();
+    void _publishSurvey();
     int _fail(const char* reason);
 
     ReplyHandler _replyHandler;
@@ -49,14 +62,14 @@ private:
     OutputMode _outputMode = OutputMode::GPS;
     unsigned _receiverRole = 0;
     uint64_t _lastSurveyUs = 0;
+    std::optional<unsigned> _lastSurveyTow;
+    std::optional<GPSNativeSurveyReport> _surveyReport;
+    SurveyPhase _surveyPhase = SurveyPhase::Off;
     bool _baseMatches = false;
     bool _baseHasDistance = false;
     bool _persistentSaveAcknowledged = false;
     bool _persistentSaveUncertain = false;
     bool _configured = false;
-    bool _monitorSurvey = false;
-    bool _sawSurveyProgress = false;
-    bool _haveSurveyStatus = false;
     bool _expectingBoot = false;
     bool _sawBoot = false;
     bool _restartRejected = false;

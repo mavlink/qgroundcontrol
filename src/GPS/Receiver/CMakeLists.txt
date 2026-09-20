@@ -2,7 +2,7 @@ if(TARGET QGCGPSReceiver)
     return()
 endif()
 
-qt_add_library(QGCGPSReceiver STATIC GPSReceiverConfig.cc)
+qt_add_library(QGCGPSReceiver STATIC GPSReceiverConfig.cc GPSReceiverDescriptor.cc)
 add_library(QGC::GPSReceiver ALIAS QGCGPSReceiver)
 set_target_properties(
     QGCGPSReceiver
@@ -20,9 +20,21 @@ target_sources(
            FILES
            GPSReceiverConfig.h
            GPSReceiverCapabilities.h
+           GPSReceiverDescriptor.h
            GPSBaseStationConfig.h
            GPSType.h
            GPSDriverReports.h
            GPSConfigurationEvidence.h
            GPSSatelliteUsageReport.h
+)
+target_sources(
+    QGCGPSReceiver
+    PUBLIC FILE_SET
+           constellation_types
+           TYPE
+           HEADERS
+           BASE_DIRS
+           ..
+           FILES
+           ../GPSConstellation.h
 )

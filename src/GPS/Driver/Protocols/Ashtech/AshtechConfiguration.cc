@@ -31,6 +31,8 @@
  *
  ****************************************************************************/
 
+#include <QtCore/QScopeGuard>
+
 #include "AshtechPrivate.h"
 
 void GPSNativeAshtech::activateRTCMOutput()
@@ -69,9 +71,8 @@ void GPSNativeAshtech::activateRTCMOutput()
 
 int GPSNativeAshtech::writeAckedCommand(const void* buf, int buf_length, unsigned timeout)
 {
-    const Operation operation(*this, timeout);
-    beginCommandWrite(std::string(static_cast<const char*>(buf), buf_length));
-    if (write(buf, buf_length) != buf_length) {
+    if (!writeCommand({std::string(static_cast<const char*>(buf), buf_length), std::chrono::milliseconds(timeout)},
+                      {static_cast<const uint8_t*>(buf), static_cast<size_t>(buf_length)})) {
         return -1;
     }
 
@@ -80,15 +81,12 @@ int GPSNativeAshtech::writeAckedCommand(const void* buf, int buf_length, unsigne
 
 int GPSNativeAshtech::waitForReply(NMEACommand command, const unsigned timeout)
 {
-    const Operation operation(*this, timeout);
-
     _command_state = NMEACommandState::waiting;
     _waiting_for_command = command;
+    const auto clearReply = qScopeGuard([this] { _command_state = NMEACommandState::idle; });
 
-    const auto result = awaitCommand(
-        {std::to_string(static_cast<int>(command)), std::chrono::milliseconds(timeout)},
-        [this, timeout] { receiveDecoded(timeout); },
-        [this] {
+    const auto result =
+        awaitCommand({std::to_string(static_cast<int>(command)), std::chrono::milliseconds(timeout)}, [this] {
             return _command_state == NMEACommandState::received ? GPSCommandOutcome::Acknowledged
                    : _command_state == NMEACommandState::nack   ? GPSCommandOutcome::Rejected
                                                                 : GPSCommandOutcome::Pending;
@@ -140,8 +138,8 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         const char port_config[] = "$PASHQ,PRT\r\n";  // ask for the current port configuration
 
         for (int run = 0; run < 2; ++run) {           // try several times
-            beginCommandWrite();
-            write(port_config, sizeof(port_config) - 1);
+            writeCommand({port_config, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
+                         {reinterpret_cast<const uint8_t*>(port_config), sizeof(port_config) - 1});
 
             if (waitForReply(NMEACommand::PRT, ASH_RESPONSE_TIMEOUT) == 0) {
                 success = true;
@@ -165,8 +163,8 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         const char baud_config[] = "$PASHS,SPD,%c,9\r\n";  // configure baudrate to 115200
         char baud_config_str[sizeof(baud_config)];
         int len = snprintf(baud_config_str, sizeof(baud_config_str), baud_config, _port);
-        beginCommandWrite();
-        write(baud_config_str, len);
+        writeCommand({baud_config_str, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
+                     {reinterpret_cast<const uint8_t*>(baud_config_str), static_cast<size_t>(len)});
         decodeInit();
         receiveWait(200);
         decodeInit();
@@ -177,8 +175,8 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         for (int run = 0; run < 10; ++run) {
             // We ask for the port config again. If we get a reply, we know that the changed settings work.
             const char port_config[] = "$PASHQ,PRT\r\n";
-            beginCommandWrite();
-            write(port_config, sizeof(port_config) - 1);
+            writeCommand({port_config, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
+                         {reinterpret_cast<const uint8_t*>(port_config), sizeof(port_config) - 1});
 
             if (waitForReply(NMEACommand::PRT, ASH_RESPONSE_TIMEOUT) == 0) {
                 success = true;
@@ -215,8 +213,8 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
     // get the board identification
     const char board_identification[] = "$PASHQ,RID\r\n";
 
-    beginCommandWrite();
-    if (write(board_identification, sizeof(board_identification) - 1) == sizeof(board_identification) - 1) {
+    if (writeCommand({board_identification, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
+                     {reinterpret_cast<const uint8_t*>(board_identification), sizeof(board_identification) - 1})) {
         if (waitForReply(NMEACommand::RID, ASH_RESPONSE_TIMEOUT) != 0) {
             return -1;
         }
@@ -315,8 +313,8 @@ void GPSNativeAshtech::activateCorrectionOutput()
         // alternatively use the current position as reference: "$PASHS,POS,CUR\r\n"
         int len = snprintf(buffer, sizeof(buffer), avg_pos, static_cast<unsigned>(_baseConfig.surveyInDurationSecs));
 
-        beginCommandWrite();
-        write(buffer, len);
+        writeCommand({buffer, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
+                     {reinterpret_cast<const uint8_t*>(buffer), static_cast<size_t>(len)});
 
         if (waitForReply(NMEACommand::RECEIPT, ASH_RESPONSE_TIMEOUT) != 0) {
             controlFailed();

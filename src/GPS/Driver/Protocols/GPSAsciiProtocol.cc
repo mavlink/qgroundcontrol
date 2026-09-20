@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "NMEA/GPSNMEAReport.h"
+#include "NMEA/GPSNMEASatelliteReport.h"
 #include <GeographicLib/Geocentric.hpp>
 
 GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, GPSNativePositionReport* position,
@@ -40,6 +41,9 @@ void GPSAsciiProtocol::lla2ECEF(double latitude, double longitude, double altitu
 
 int GPSAsciiProtocol::receive(unsigned timeout)
 {
+    if (const auto deadline = _satelliteAssembler.deadlineUs()) {
+        timeout = std::min(timeout, static_cast<unsigned>(remainingMilliseconds(*deadline)));
+    }
     const int result = receiveDecoded(timeout);
     serviceControls();
     return ioError() ? ioError() : result;
@@ -98,9 +102,6 @@ int GPSAsciiProtocol::_handleNmea(std::string_view line)
     int updates = GPSDecodedBatch::PROTOCOL_ACTIVITY;
     auto satelliteUpdate = _satelliteAssembler.ingest(*sentence, now);
     _publishSatellites(satelliteUpdate.completed);
-    if (const auto page = NMEA::gsv(*sentence); page && page->message == page->messages) {
-        _publishSatellites(_satelliteAssembler.flush());
-    }
     if (const auto fix = NMEA::gga(*sentence)) {
         applyNMEAGGA(*_position, *fix, now);
         _positionTime = NMEA::utcMilliseconds(sentence->fields[NMEA::Field::UTC_TIME]);
@@ -138,7 +139,7 @@ void GPSAsciiProtocol::_publishSatellites(const NMEA::SatelliteEpoch& epoch)
         return;
     }
     for (const auto& system : epoch) {
-        if (system.inViewTimestampUs != 0) {
+        if (system.inViewTimestampUs != 0 || system.inUseTimestampUs != 0) {
             _pendingSatellites.push_back(system);
         }
     }
@@ -150,21 +151,7 @@ void GPSAsciiProtocol::_drainSatellites()
     // Leave space for the position and vendor event belonging to the current line.
     while (count < _pendingSatellites.size() && _decoded.events.size() + 2 < GPSDecodedBatch::MAX_EVENTS) {
         const auto& system = _pendingSatellites[count++];
-        *_satellites = {};
-        _satellites->timestamp = system.inViewTimestampUs;
-        _satellites->constellation = system.constellation;
-        _satellites->count = static_cast<uint16_t>(std::min(system.satellites.size(), _satellites->entries.size()));
-        for (size_t index = 0; index < _satellites->count; ++index) {
-            const auto& source = system.satellites[index];
-            _satellites->entries[index] = {
-                source.id,
-                source.prn,
-                source.constellation,
-                system.usedIds ? std::optional<bool>(system.usedIds->contains(source.id)) : std::nullopt,
-                source.elevation,
-                source.azimuth,
-                source.signal};
-        }
+        *_satellites = gpsNMEASatelliteReport(system);
         publishSatellites(*_satellites);
     }
     _pendingSatellites.erase(_pendingSatellites.begin(), _pendingSatellites.begin() + count);
@@ -172,6 +159,7 @@ void GPSAsciiProtocol::_drainSatellites()
 
 void GPSAsciiProtocol::flushDecoded()
 {
+    _publishSatellites(_satelliteAssembler.flushDue(nowUs()));
     _drainRTCM();
     _drainSatellites();
 }

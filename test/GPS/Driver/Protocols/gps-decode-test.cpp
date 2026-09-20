@@ -495,13 +495,17 @@ void ashtechMetadata()
         CHECK(driver.consume(nmeaPacket(missingCoordinate)) & 1);
         CHECK(position.fix_type == GPSPositionReport::FixType::NoFix);
     }
-    CHECK(driver.consume(nmeaPacket("GPGSV,1,1,01,01,,,")) & 2);
+    CHECK(!(driver.consume(nmeaPacket("GPGSV,1,1,01,01,,,")) & 2));
+    gps_test_time += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+    CHECK(driver.consume({}) & 2);
     CHECK(gpsSatellites.count == 1);
     CHECK(!gpsSatellites.entries[0].signal);
     CHECK(!gpsSatellites.entries[0].azimuth);
     CHECK(!gpsSatellites.entries[0].elevation);
     CHECK(!gpsSatellites.entries[0].used);
-    CHECK(driver.consume(nmeaPacket("GPGSV,1,1,01,01,0,0,0")) & 2);
+    CHECK(!(driver.consume(nmeaPacket("GPGSV,1,1,01,01,0,0,0")) & 2));
+    gps_test_time += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+    CHECK(driver.consume({}) & 2);
     CHECK(gpsSatellites.entries[0].signal == 0);
     CHECK(gpsSatellites.entries[0].azimuth == 0);
     CHECK(gpsSatellites.entries[0].elevation == 0);

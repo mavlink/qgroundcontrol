@@ -105,6 +105,36 @@ truncation are in-memory mutations, not changes to the checked-in fixtures.
 The MON-RF comparison covers QGC's current first-block report only, not per-band
 reporting. These cases do not claim complete protocol or receiver support.
 
+## Stateful ASCII base-controller fuzz seeds
+
+`../corpus/synthetic-unicore-base.ascii` and `../corpus/synthetic-quectel-base.nmea`
+are original synthetic wire data, not device recordings. Their layouts follow
+Unicore N4 EN R1.6 §7.3.27 (BESTNAVXYZ) and Quectel LG290P Protocol V1.1 §2.3.23
+(PQTMSVINSTATUS), respectively. The invented ECEF position is `(0, 6378237, 0)`
+metres; timestamps, uncertainties and observation counts are test inputs, not
+hardware observations. Lines use LF, which the shared ASCII framing accepts.
+
+The Unicore seed supplies fixed-position evidence, a duplicate epoch, a newer
+epoch, then loss of the fixed solution. CRC-32 values were calculated with Python
+`zlib.crc32(body.encode(), 0xffffffff) ^ 0xffffffff`, excluding `#` and `*`.
+The Quectel seed supplies survey progress/completion, a duplicate, invalidity,
+matching fixed-base evidence and a contradictory fixed coordinate. Its checksums
+are bytewise XOR of the ASCII body, excluding `$` and `*`. Neither construction
+uses a production QGC encoder.
+
+The fuzzer configures fixed or averaging/survey controllers through the
+event-scheduled test peers before decoding these seeds (odd first byte selects
+fixed mode). `synthetic-unicore-averaging.ascii` repeats the first Unicore frame
+with a leading space; `synthetic-quectel-fixed.nmea` repeats the two Quectel
+fixed-position frames with a leading `!`. These noise prefixes select the other
+operational mode and are discarded by ASCII resynchronization. All four seeds
+have the same synthetic provenance and checksum method described above.
+During fuzzed decode,
+every read/write/baud/wait callback aborts: only the injected measurement clock
+and in-memory decoder are available. Each controller also receives an empty
+decode after its five-second freshness limit, exercising revocation without
+additional transport data.
+
 ## Regeneration
 
 Optional regeneration (requires network only during installation):

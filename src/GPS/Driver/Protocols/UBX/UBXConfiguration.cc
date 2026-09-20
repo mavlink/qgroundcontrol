@@ -31,6 +31,8 @@
  *
  ****************************************************************************/
 
+#include <QtCore/QScopeGuard>
+
 #include "LittleEndian.h"
 #include "UBXMessageSchema.h"
 #include "UBXPrivate.h"
@@ -69,172 +71,121 @@ int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
     _decodeNavigation = false;
     _assembleEpochs = false;
     _navigationEpochs = {};
+    _controller = {};
+    _pendingDisableMessage = 0;
+    _comms_request_pending = false;
+    _rtcmActivationPending = false;
+    _rtcm_parsing.reset();
     if (!validateConfiguration(config)) {
         return -1;
     }
     _output_mode = config.output_mode;
 
-    ubx_payload_tx_cfg_prt_t cfg_prt[2];
-
-    uint16_t out_proto_mask = _output_mode == OutputMode::GPS ? UBX_TX_CFG_PRT_PROTO_UBX
-                                                              : (UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM);
-
-    uint16_t in_proto_mask = (_output_mode == OutputMode::GPS) ? (UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM)
-                                                               : UBX_TX_CFG_PRT_PROTO_UBX;
-
     const bool auto_baudrate = baudrate == 0;
-
-    {
-        /* try different baudrates */
-        const unsigned baudrates[] = {38400, 57600, 9600, 115200, 230400, 460800, 921600};
-
-        unsigned baud_i;
-        unsigned desired_baudrate = auto_baudrate ? UBX_BAUDRATE_M8_AND_NEWER : baudrate;
-
-        for (baud_i = 0; baud_i < sizeof(baudrates) / sizeof(baudrates[0]); baud_i++) {
-            unsigned test_baudrate = baudrates[baud_i];
-
-            if (!auto_baudrate && baudrate != test_baudrate) {
-                continue;  // skip to next baudrate
-            }
-
-            setBaudrate(test_baudrate);
-
-            /* flush input and wait for at least 20 ms silence */
-            decodeInit();
-            receive(20);
-            decodeInit();
-
-            // try CFG-VALSET: if we get an ACK we know we can use protocol version 27+
-            static constexpr CfgValsetItem uart1_ubx[] = {
-                {UBX_CFG_KEY_CFG_UART1_STOPBITS, 1},    {UBX_CFG_KEY_CFG_UART1_DATABITS, 0},
-                {UBX_CFG_KEY_CFG_UART1_PARITY, 0},      {UBX_CFG_KEY_CFG_UART1INPROT_UBX, 1},
-                {UBX_CFG_KEY_CFG_UART1INPROT_NMEA, 0},  {UBX_CFG_KEY_CFG_UART1OUTPROT_UBX, 1},
-                {UBX_CFG_KEY_CFG_UART1OUTPROT_NMEA, 0},
-            };
-            initCfgValset();
-            cfgValset(uart1_ubx);
-            // TODO: are we ever connected to UART2?
-
-            // Note: USB protocol settings are handled later in the configureDevice function.
-
-            bool cfg_valset_success = false;
-
-            if (sendCfgValset()) {
-                // Note: The M10 comes up sending NMEA sentences at 9600. It can't
-                // respond with an ACK until the current sentence has completed transmission.
-                // This can take over a second so need a large timeout on this particular wait.
-                // Once it has acked this it will turn off the NMEA sentences and all is good
-                // for future transactions.
-                if (waitForAck(UBX_MSG_CFG_VALSET, 2000, true) == 0) {
-                    cfg_valset_success = true;
-                }
-            }
-
-            if (cfg_valset_success) {
-                _proto_ver_27_or_higher = true;
-                // Now we only have to change the baudrate
-                initCfgValset();
-                cfgValset<uint32_t>(UBX_CFG_KEY_CFG_UART1_BAUDRATE, desired_baudrate);
-
-                if (!sendCfgValset()) {
-                    continue;
-                }
-
-                /* no ACK is expected here, but read the buffer anyway in case we actually get an ACK */
-                waitForAck(UBX_MSG_CFG_VALSET, UBX_CONFIG_TIMEOUT, false);
-
-            } else {
-                _proto_ver_27_or_higher = false;
-
-                /* Send a CFG-PRT message to set the UBX protocol for in and out
-                 * and leave the baudrate as it is, we just want an ACK-ACK for this */
-                memset(cfg_prt, 0, 2 * UBX::WIRE_SIZE<ubx_payload_tx_cfg_prt_t>);
-                cfg_prt[0].portID = UBX_TX_CFG_PRT_PORTID;
-                cfg_prt[0].mode = UBX_TX_CFG_PRT_MODE;
-                cfg_prt[0].baudRate = test_baudrate;
-                cfg_prt[0].inProtoMask = in_proto_mask;
-                cfg_prt[0].outProtoMask = out_proto_mask;
-                cfg_prt[1].portID = UBX_TX_CFG_PRT_PORTID_USB;
-                cfg_prt[1].mode = UBX_TX_CFG_PRT_MODE;
-                cfg_prt[1].baudRate = test_baudrate;
-                cfg_prt[1].inProtoMask = in_proto_mask;
-                cfg_prt[1].outProtoMask = out_proto_mask;
-
-                if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(cfg_prt))) {
-                    continue;
-                }
-
-                if (waitForAck(UBX_MSG_CFG_PRT, UBX_CONFIG_TIMEOUT, false) < 0) {
-                    /* try next baudrate */
-                    continue;
-                }
-
-                if (auto_baudrate) {
-                    desired_baudrate = UBX_TX_CFG_PRT_BAUDRATE;
-                }
-
-                /* Send a CFG-PRT message again, this time change the baudrate */
-                cfg_prt[0].baudRate = desired_baudrate;
-                cfg_prt[1].baudRate = desired_baudrate;
-
-                if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(cfg_prt))) {
-                    continue;
-                }
-
-                /* no ACK is expected here, but read the buffer anyway in case we actually get an ACK */
-                waitForAck(UBX_MSG_CFG_PRT, UBX_CONFIG_TIMEOUT, false);
-            }
-
-            if (desired_baudrate != test_baudrate) {
-                setBaudrate(desired_baudrate);
-
-                decodeInit();
-                receive(20);
-                decodeInit();
-            }
-
-            /* at this point we have correct baudrate on both ends */
-            baudrate = desired_baudrate;
+    const auto identify = [this] {
+        // Slow factory NMEA output can delay a MON-VER response by over a second.
+        const Operation operation(*this, 2000);
+        _board = Board::unknown;
+        return sendMessage(UBX_MSG_MON_VER, nullptr, 0) && waitForAck(UBX_MSG_MON_VER, 2000, true) == 0;
+    };
+    constexpr unsigned BAUD_RATES[] = {38400, 57600, 9600, 115200, 230400, 460800, 921600};
+    unsigned detectedBaud = 0;
+    for (const unsigned candidate : BAUD_RATES) {
+        const unsigned selected = auto_baudrate ? candidate : baudrate;
+        if (setBaudrate(selected) < 0) {
+            return -1;
+        }
+        decodeInit();
+        bool readError = false;
+        receiveInternal(20, readError);
+        decodeInit();
+        if (readError) {
+            return -1;
+        }
+        if (identify()) {
+            detectedBaud = selected;
             break;
         }
-
-        if (baud_i >= sizeof(baudrates) / sizeof(baudrates[0])) {
-            return -1;  // connection and/or baudrate detection failed
+        if (ioError() || !auto_baudrate) {
+            return -1;
         }
     }
-
-    /* Request module version information by sending an empty MON-VER message */
-    if (!sendMessage(UBX_MSG_MON_VER, nullptr, 0)) {
+    // Discovery only polls identity: silence or an unsupported identity must not change receiver settings.
+    if (!detectedBaud || _board == Board::unknown) {
         return -1;
     }
-
-    /* Wait for the reply so that we know to which device we're connected (_board will be set).
-     * Note: we won't actually get an ACK-ACK, but UBX_MSG_MON_VER will also set the ack state.
-     */
-    if (waitForAck(UBX_MSG_MON_VER, UBX_CONFIG_TIMEOUT, true) < 0) {
-        return -1;
-    }
-    // The identity response completes the initial baud/protocol handshake.
-    _valsetAckAmbiguous = false;
     if (_output_mode == OutputMode::RTCM && baseStationCapability() == BaseStationCapability::Unsupported) {
         return -1;
     }
 
-    /* Now that we know the board, update the baudrate on M8 boards (on F9+ we already used the
-     * higher baudrate with CFG-VALSET) */
-    if (auto_baudrate && _board == Board::u_blox8) {
-        cfg_prt[0].baudRate = UBX_BAUDRATE_M8_AND_NEWER;
-        cfg_prt[1].baudRate = UBX_BAUDRATE_M8_AND_NEWER;
-
-        if (sendMessage(UBX_MSG_CFG_PRT, UBX::encode(cfg_prt))) {
-            /* no ACK is expected here, but read the buffer anyway in case we actually get an ACK */
-            waitForAck(UBX_MSG_CFG_PRT, UBX_CONFIG_TIMEOUT, false);
-
-            setBaudrate(UBX_BAUDRATE_M8_AND_NEWER);
-            baudrate = UBX_BAUDRATE_M8_AND_NEWER;
+    const unsigned desiredBaud = !auto_baudrate                                        ? baudrate
+                                 : _proto_ver_27_or_higher || _board == Board::u_blox8 ? UBX_BAUDRATE_M8_AND_NEWER
+                                                                                       : UBX_TX_CFG_PRT_BAUDRATE;
+    ubx_payload_tx_cfg_prt_t ports[2]{};
+    if (_proto_ver_27_or_higher) {
+        static constexpr CfgValsetItem UART1_UBX[] = {
+            {UBX_CFG_KEY_CFG_UART1_STOPBITS, 1},    {UBX_CFG_KEY_CFG_UART1_DATABITS, 0},
+            {UBX_CFG_KEY_CFG_UART1_PARITY, 0},      {UBX_CFG_KEY_CFG_UART1INPROT_UBX, 1},
+            {UBX_CFG_KEY_CFG_UART1INPROT_NMEA, 0},  {UBX_CFG_KEY_CFG_UART1OUTPROT_UBX, 1},
+            {UBX_CFG_KEY_CFG_UART1OUTPROT_NMEA, 0},
+        };
+        initCfgValset();
+        cfgValset(UART1_UBX);
+        if (!sendCfgValset() || waitForAck(UBX_MSG_CFG_VALSET, 2000, true) < 0) {
+            return -1;
+        }
+    } else {
+        for (auto& port : ports) {
+            port.mode = UBX_TX_CFG_PRT_MODE;
+            port.baudRate = detectedBaud;
+            port.inProtoMask = _output_mode == OutputMode::GPS ? UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM
+                                                               : UBX_TX_CFG_PRT_PROTO_UBX;
+            port.outProtoMask = _output_mode == OutputMode::GPS ? UBX_TX_CFG_PRT_PROTO_UBX
+                                                                : UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM;
+        }
+        ports[0].portID = UBX_TX_CFG_PRT_PORTID;
+        ports[1].portID = UBX_TX_CFG_PRT_PORTID_USB;
+        if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(ports)) ||
+            waitForAck(UBX_MSG_CFG_PRT, UBX_CONFIG_TIMEOUT, true) < 0) {
+            return -1;
         }
     }
+    if (desiredBaud != detectedBaud) {
+        const bool modern = _proto_ver_27_or_higher;
+        const Board identifiedBoard = _board;
+        if (modern) {
+            initCfgValset();
+            cfgValset<uint32_t>(UBX_CFG_KEY_CFG_UART1_BAUDRATE, desiredBaud);
+            if (!sendCfgValset()) {
+                return -1;
+            }
+        } else {
+            for (auto& port : ports) {
+                port.baudRate = desiredBaud;
+            }
+            if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(ports))) {
+                return -1;
+            }
+        }
+        const uint16_t command = modern ? UBX_MSG_CFG_VALSET : UBX_MSG_CFG_PRT;
+        const bool acknowledged = waitForAck(command, UBX_CONFIG_TIMEOUT, false) == 0;
+        if (ioError() || _last_ack_rejected || setBaudrate(desiredBaud) < 0) {
+            return -1;
+        }
+        if (modern && !acknowledged) {
+            // Do not clear ACK ambiguity after UART handoff: every later VALSET needs matching readback.
+            _controller.requireConfigurationReadback(command);
+        }
+        decodeInit();
+        if (!identify() || _board != identifiedBoard || _proto_ver_27_or_higher != modern ||
+            _controller.lateRejection()) {
+            return -1;
+        }
+        if (modern && !acknowledged && waitForAck(command, UBX_CONFIG_TIMEOUT, true) < 0) {
+            return -1;
+        }
+    }
+    baudrate = desiredBaud;
 
     if (_output_mode == OutputMode::RTCM) {
         if (!_rtcm_parsing) {
@@ -916,7 +867,7 @@ void GPSNativeUBX::initCfgValset()
 
 bool GPSNativeUBX::sendCfgValset()
 {
-    if (_valsetAckAmbiguous) {
+    if (_valsetAckAmbiguous && !_controller.configurationReadbackRequired()) {
         return false;
     }
     return sendMessage(UBX_MSG_CFG_VALSET, _tx_cfg_valset_buf, _tx_cfg_valset_size);
@@ -1040,17 +991,12 @@ int GPSNativeUBX::disableTimeMode()
     }
     _timeModeReadbackPending = true;
     _timeModeReadbackReady = false;
+    const auto clearReadback = qScopeGuard([this] { _timeModeReadbackPending = false; });
     if (!sendMessage(UBX_MSG_CFG_TMODE3, nullptr, 0)) {
-        _timeModeReadbackPending = false;
         return -1;
     }
-    const auto result = awaitCommand(
-        {"UBX-CFG-TMODE3 disabled readback", std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)},
-        [this] {
-            bool error = false;
-            receiveInternal(UBX_CONFIG_TIMEOUT, error);
-        },
-        [this] {
+    const auto result =
+        awaitCommand({"UBX-CFG-TMODE3 disabled readback", std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)}, [this] {
             if (_controller.lateRejection()) {
                 return GPSCommandOutcome::Rejected;
             }
@@ -1058,7 +1004,6 @@ int GPSNativeUBX::disableTimeMode()
                    : _timeModeReadback == 0 ? GPSCommandOutcome::ReadbackVerified
                                             : GPSCommandOutcome::Rejected;
         });
-    _timeModeReadbackPending = false;
     return result.outcome == GPSCommandOutcome::ReadbackVerified ? 0 : -1;
 }
 
@@ -1066,19 +1011,14 @@ int GPSNativeUBX::verifyConfigValue(uint32_t key, uint8_t value)
 {
     const std::array keys{key};
     _controller.beginReadback(keys);
+    const auto clearReadback = qScopeGuard([this] { _controller.finishReadback(); });
     std::array<uint8_t, 8> request{};
     (void) LittleEndian::write(request, 4, key);
     if (!sendMessage(UBX_MSG_CFG_VALGET, request)) {
-        _controller.finishReadback();
         return -1;
     }
     const auto result = awaitCommand(
-        {"UBX-CFG-VALGET " + std::to_string(key), std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)},
-        [this] {
-            bool error = false;
-            receiveInternal(UBX_CONFIG_TIMEOUT, error);
-        },
-        [this, value] {
+        {"UBX-CFG-VALGET " + std::to_string(key), std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)}, [this, value] {
             if (_controller.lateRejection()) {
                 return GPSCommandOutcome::Rejected;
             }
@@ -1086,7 +1026,6 @@ int GPSNativeUBX::verifyConfigValue(uint32_t key, uint8_t value)
                    : _controller.readback().values[0] == value ? GPSCommandOutcome::ReadbackVerified
                                                                : GPSCommandOutcome::Rejected;
         });
-    _controller.finishReadback();
     return result.outcome == GPSCommandOutcome::ReadbackVerified ? 0 : -1;
 }
 
@@ -1255,19 +1194,64 @@ GPSNativeUBX::waitForAck(const uint16_t msg, const unsigned timeout, const bool 
     const Operation operation(*this, timeout);
     _last_ack_rejected = false;
     _controller.beginAcknowledgement(msg);
-    const auto result = awaitCommand(
-        {std::to_string(msg), std::chrono::milliseconds(timeout), _pendingCommandSettings, report},
-        [this, timeout] {
-            bool error;
-            receiveInternal(timeout, error);
-        },
-        [this] { return _controller.acknowledgement(); });
+    if (msg == UBX_MSG_CFG_VALSET && _controller.configurationReadbackRequired()) {
+        _controller.finishAcknowledgement();
+        const auto settings = _pendingCommandSettings;
+        const std::span<const uint8_t> bytes(_tx_cfg_valset_buf, static_cast<size_t>(_tx_cfg_valset_size));
+        for (size_t offset = 4; offset < bytes.size();) {
+            UBX::ConfigurationValues expected;
+            std::array<uint8_t, 40> request{};
+            while (offset < bytes.size() && expected.count < expected.keys.size()) {
+                const auto key = LittleEndian::read<uint32_t>(bytes, offset);
+                if (!key) {
+                    return -1;
+                }
+                offset += 4;
+                const unsigned width = UBX::configurationValueBytes(*key);
+                if (!width || width > bytes.size() - offset) {
+                    return -1;
+                }
+                uint32_t value = 0;
+                for (unsigned index = 0; index < width; ++index) {
+                    value |= uint32_t(bytes[offset++]) << (8 * index);
+                }
+                (void) LittleEndian::write(request, 4 + expected.count * 4, *key);
+                expected.keys[expected.count] = *key;
+                expected.values[expected.count++] = value;
+            }
+            _controller.beginReadback(std::span(expected.keys).first(expected.count));
+            const auto clearReadback = qScopeGuard([this] { _controller.finishReadback(); });
+            if (!sendMessage(UBX_MSG_CFG_VALGET, std::span(request).first(4 + expected.count * 4))) {
+                return -1;
+            }
+            const auto result = awaitCommand(
+                {"UBX-CFG-VALSET readback", std::chrono::milliseconds(timeout), settings, report}, [this, &expected] {
+                    if (_controller.lateRejection()) {
+                        return GPSCommandOutcome::Rejected;
+                    }
+                    if (!_controller.readbackReady()) {
+                        return GPSCommandOutcome::Pending;
+                    }
+                    return _controller.readback().values == expected.values ? GPSCommandOutcome::ReadbackVerified
+                                                                            : GPSCommandOutcome::Rejected;
+                });
+            _last_ack_rejected = result.outcome == GPSCommandOutcome::Rejected;
+            if (result.outcome != GPSCommandOutcome::ReadbackVerified) {
+                return -1;
+            }
+        }
+        _pendingCommandSettings = {};
+        return 0;
+    }
+    const auto clearAcknowledgement = qScopeGuard([this] { _controller.finishAcknowledgement(); });
+    const auto result =
+        awaitCommand({std::to_string(msg), std::chrono::milliseconds(timeout), _pendingCommandSettings, report},
+                     [this] { return _controller.acknowledgement(); });
     _pendingCommandSettings = {};
     _last_ack_rejected = result.outcome == GPSCommandOutcome::Rejected;
     if (msg == UBX_MSG_CFG_VALSET && result.outcome == GPSCommandOutcome::TimedOut) {
         _valsetAckAmbiguous = true;
     }
-    _controller.finishAcknowledgement();
     return result.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
 }
 

@@ -6,6 +6,8 @@
 #include <locale>
 #include <sstream>
 
+#include <QtCore/QScopeGuard>
+
 // Independent implementation of Unicore N4 Commands and Logs Reference Book, EN R1.6:
 // https://en.unicore.com/uploads/file/Unicore%20Reference%20Commands%20Manual%20For%20N4%20High%20Precision%20Products_V2_EN_R1.6.pdf
 // Sections 3, 7.3.1, 7.3.27, 7.3.44; Appendices 1/2 and position/solution status tables.
@@ -109,27 +111,17 @@ GPSNativeUnicore::GPSNativeUnicore(GPSProtocolIO io, GPSNativePositionReport* po
 
 bool GPSNativeUnicore::_execute(std::string command, Reply reply)
 {
-    const Operation operation(*this, COMMAND_TIMEOUT_MS);
     _command = std::move(command);
     _expectedReply = reply;
     _replyOutcome = GPSCommandOutcome::Pending;
     _commandActive = true;
-    beginCommandWrite(_command);
+    const auto clearReply = qScopeGuard([this] { _commandActive = false; });
+    const GPSConfigurationStep step{_command, std::chrono::milliseconds(COMMAND_TIMEOUT_MS)};
     const auto wire = _command + "\r\n";
-    if (write(wire.data(), static_cast<int>(wire.size())) != static_cast<int>(wire.size())) {
-        _commandActive = false;
+    if (!writeCommand(step, {reinterpret_cast<const uint8_t*>(wire.data()), wire.size()})) {
         return false;
     }
-    const auto result = awaitCommand(
-        {_command, std::chrono::milliseconds(COMMAND_TIMEOUT_MS)},
-        [this] {
-            std::array<uint8_t, GPS_READ_BUFFER_SIZE> buffer{};
-            const int count = read(buffer.data(), static_cast<int>(buffer.size()), COMMAND_TIMEOUT_MS);
-            if (count > 0) {
-                consume(std::span(buffer).first(static_cast<size_t>(count)));
-            }
-        },
-        [this] { return _replyOutcome; });
+    const auto result = awaitCommand(step, [this] { return _replyOutcome; });
     _commandActive = false;
     if (result.outcome != GPSCommandOutcome::Acknowledged && result.outcome != GPSCommandOutcome::ReadbackVerified) {
         if (result.outcome != GPSCommandOutcome::Cancelled) {
@@ -165,7 +157,7 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
     _ready = false;
     _monitorBase = false;
     _baseValid = false;
-    _lastBaseEpoch = 0;
+    _lastBaseEpoch.reset();
     _commandActive = false;
     _base = config.output_mode == OutputMode::RTCM;
     _averaging = _base && !config.base.useFixedBase;
@@ -436,8 +428,11 @@ int GPSNativeUnicore::handleReceiverLine(std::string_view line)
             return 0;
         }
         const uint64_t epoch = uint64_t(*week) * 604800000 + *milliseconds;
-        if (_lastBaseEpoch && epoch < _lastBaseEpoch) {
+        if (_lastBaseEpoch && epoch < *_lastBaseEpoch) {
             _invalidateBase();
+            return GPSDecodedBatch::PROTOCOL_ACTIVITY;
+        }
+        if (_lastBaseEpoch && epoch == *_lastBaseEpoch) {
             return GPSDecodedBatch::PROTOCOL_ACTIVITY;
         }
         _lastBaseEpoch = epoch;

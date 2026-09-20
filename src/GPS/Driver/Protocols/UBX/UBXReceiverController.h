@@ -56,6 +56,11 @@ inline std::optional<ConfigurationValues> decodeConfigurationValues(std::span<co
 class ReceiverController
 {
 public:
+    /// A baud change can lose its ACK on UART; subsequent VALSETs must prove their values by readback.
+    void requireConfigurationReadback(uint16_t message) { _unacknowledgedConfiguration = message; }
+
+    bool configurationReadbackRequired() const { return _unacknowledgedConfiguration.has_value(); }
+
     void beginAcknowledgement(uint16_t message)
     {
         _lastMessage.reset();
@@ -78,7 +83,8 @@ public:
 
     void accept(Acknowledgement response)
     {
-        if (!response.accepted && _lastMessage == response.message) {
+        if (!response.accepted &&
+            (_lastMessage == response.message || _unacknowledgedConfiguration == response.message)) {
             _lateRejection = true;
         }
         if (_awaitingMessage == response.message && _acknowledgement != GPSCommandOutcome::Rejected) {
@@ -128,6 +134,7 @@ public:
     }
 
 private:
+    std::optional<uint16_t> _unacknowledgedConfiguration;
     std::optional<uint16_t> _awaitingMessage;
     std::optional<uint16_t> _lastMessage;
     bool _lateRejection = false;

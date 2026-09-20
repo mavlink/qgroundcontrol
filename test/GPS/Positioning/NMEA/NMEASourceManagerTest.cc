@@ -1,6 +1,7 @@
 #include "NMEASourceManagerTest.h"
 
 #include <memory>
+#include <utility>
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
@@ -16,6 +17,7 @@
 #include "NMEAUtils.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategoryManager.h"
+#include "SequentialTestDevice.h"
 #include "SettingsManager.h"
 #include "UdpIODevice.h"
 
@@ -174,6 +176,149 @@ void NMEASourceManagerTest::_bindFailureAndTeardown()
     verifyExpectedLogMessage();
     QVERIFY(!position.gcsPosition().isValid());
     QVERIFY(occupied.bind(QHostAddress::AnyIPv4, port, QUdpSocket::DontShareAddress));
+}
+
+void NMEASourceManagerTest::_notificationSupersedesLifecycle_data()
+{
+    QTest::addColumn<QString>("phase");
+    QTest::addColumn<QString>("action");
+    for (const QString& phase : {QStringLiteral("install-reset"), QStringLiteral("installed"),
+                                 QStringLiteral("retired"), QStringLiteral("position")}) {
+        for (const QString& action : {QStringLiteral("stop"), QStringLiteral("replace"), QStringLiteral("delete")}) {
+            QTest::newRow(qPrintable(phase + '-' + action)) << phase << action;
+        }
+    }
+}
+
+void NMEASourceManagerTest::_notificationSupersedesLifecycle()
+{
+    QFETCH(QString, phase);
+    QFETCH(QString, action);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
+    QUdpSocket firstProbe;
+    QUdpSocket replacementProbe;
+    QVERIFY(firstProbe.bind(QHostAddress::LocalHost, 0));
+    QVERIFY(replacementProbe.bind(QHostAddress::LocalHost, 0));
+    const quint16 firstPort = firstProbe.localPort();
+    const quint16 replacementPort = replacementProbe.localPort();
+    firstProbe.close();
+    replacementProbe.close();
+    saved.setFactValue(settings->nmeaUdpPort(), firstPort);
+    QGCPositionManager position;
+    auto source = std::make_unique<NMEASourceManager>(settings, &position);
+    const bool retiring = phase == QStringLiteral("retired") || phase == QStringLiteral("position");
+    if (retiring) {
+        source->update();
+        QVERIFY(position.nmeaHealth());
+        if (phase == QStringLiteral("position")) {
+            QUdpSocket sender;
+            QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, firstPort), kFix.size());
+            QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+        }
+    }
+    QPointer<UdpIODevice> retired;
+    QPointer<UdpIODevice> replacement;
+    bool handled = false;
+    QObject observer;
+    const auto supersede = [&] {
+        if (std::exchange(handled, true)) {
+            return;
+        }
+        if (source->_udp) {
+            retired = source->_udp.get();
+        }
+        if (action == QStringLiteral("delete")) {
+            source.reset();
+        } else if (action == QStringLiteral("stop")) {
+            source->stop();
+        } else {
+            settings->nmeaUdpPort()->setRawValue(replacementPort);
+            source->update();
+            QVERIFY(source->_udp);
+            replacement = source->_udp.get();
+        }
+    };
+    if (phase == QStringLiteral("position")) {
+        connect(&position, &QGCPositionManager::gcsPositionChanged, &observer, supersede);
+    } else {
+        connect(&position, &QGCPositionManager::nmeaSourceChanged, &observer, [&] {
+            if ((position.nmeaHealth() != nullptr) == (phase == QStringLiteral("installed"))) {
+                supersede();
+            }
+        });
+    }
+    if (retiring) {
+        retired = source->_udp.get();
+        source->stop();
+    } else {
+        source->update();
+    }
+    QVERIFY(handled);
+    QVERIFY(retired.isNull());
+    if (action == QStringLiteral("replace")) {
+        QVERIFY(source->_sourceInstalled);
+        QCOMPARE(source->_udp.get(), replacement.data());
+        QCOMPARE(source->_udp->localPort(), replacementPort);
+        QVERIFY(position.nmeaHealth());
+        QUdpSocket sender;
+        QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, replacementPort), kFix.size());
+        QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+    } else {
+        QVERIFY(!position.nmeaHealth());
+        QVERIFY(!position.gcsPosition().isValid());
+        if (source) {
+            QVERIFY(!source->_sourceInstalled);
+            QVERIFY(!source->_udp);
+        }
+    }
+    QVERIFY(firstProbe.bind(QHostAddress::AnyIPv4, firstPort, QUdpSocket::DontShareAddress));
+}
+
+void NMEASourceManagerTest::_externalReplacementKeepsOwnership_data()
+{
+    QTest::addColumn<bool>("duringInstall");
+    QTest::newRow("during-install") << true;
+    QTest::newRow("after-install") << false;
+}
+
+void NMEASourceManagerTest::_externalReplacementKeepsOwnership()
+{
+    QFETCH(bool, duringInstall);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
+    QUdpSocket probe;
+    QVERIFY(probe.bind(QHostAddress::LocalHost, 0));
+    const quint16 port = probe.localPort();
+    probe.close();
+    saved.setFactValue(settings->nmeaUdpPort(), port);
+    QGCPositionManager position;
+    SequentialTestDevice replacement;
+    auto source = std::make_unique<NMEASourceManager>(settings, &position);
+    QObject observer;
+    bool replaced = false;
+    if (duringInstall) {
+        connect(&position, &QGCPositionManager::nmeaSourceChanged, &observer, [&] {
+            if (!std::exchange(replaced, true)) {
+                position.setNmeaSourceDevice(&replacement);
+            }
+        });
+    }
+    source->update();
+    if (!duringInstall) {
+        position.setNmeaSourceDevice(&replacement);
+    }
+    QCOMPARE(position.nmeaSourceDevice(), &replacement);
+    const QPointer<GPSSourceHealth> health(position.nmeaHealth());
+    QVERIFY(health);
+    source->stop();
+    source.reset();
+    QCOMPARE(position.nmeaHealth(), health.data());
+    replacement.feed(kFix);
+    QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
+    QVERIFY(probe.bind(QHostAddress::AnyIPv4, port, QUdpSocket::DontShareAddress));
 }
 
 UT_REGISTER_TEST(NMEASourceManagerTest, TestLabel::Unit)

@@ -11,6 +11,12 @@ private slots:
     void _failedOpenNeverConnects();
     void _retiredWorkerCannotUpdateReplacement();
     void _workerCanOutliveManager();
+    void _connectionNotificationSupersedesAttempt_data();
+    void _connectionNotificationSupersedesAttempt();
+    void _factNotificationRetiresSession_data();
+    void _factNotificationRetiresSession();
+    void _manualNotificationSupersedesAttempt_data();
+    void _manualNotificationSupersedesAttempt();
     void _receiverFramesAreValidated_data();
     void _receiverFramesAreValidated();
     void _testCountSatellitesClampsToMax();
@@ -19,6 +25,8 @@ private slots:
     void _countOnlyUsagePreservesInView();
     void _snapshotUsageEvidence_data();
     void _snapshotUsageEvidence();
+    void _unavailableSatelliteCoverage_data();
+    void _unavailableSatelliteCoverage();
     void _currentBaseSaveValidity_data();
     void _currentBaseSaveValidity();
     void _logsOnlyFixTransitions();

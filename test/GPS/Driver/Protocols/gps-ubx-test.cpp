@@ -83,6 +83,22 @@ public:
     unsigned legacy_constellation_requests = 0;
     bool legacy = false;
     std::string module = "ZED-F9P";
+    std::string hardware;
+    std::string protocol;
+    unsigned receiverBaud = 0;
+    unsigned hostBaud = 0;
+    bool usb = false;
+    bool loseBaudAck = false;
+    bool ignoreBaudChange = false;
+    bool corruptIdentity = false;
+    bool silencePortConfiguration = false;
+    bool rejectAfterBaudChange = false;
+    bool nakAfterBaudChange = false;
+    bool lateBaudAckDelivered = false;
+    unsigned configurationWrites = 0;
+    unsigned unidentifiedWrites = 0;
+    std::vector<unsigned> identityBauds;
+    std::vector<unsigned> hostBauds;
     bool reject_start = false;
     bool fail_poll_write = false;
     int poll_read_error = 0;
@@ -143,12 +159,25 @@ public:
 private:
     Bytes outgoing;
     std::deque<uint8_t> incoming;
+    Bytes heldBaudAck;
+    bool identityDelivered = false;
 
     void process(const Bytes& bytes)
     {
         const auto message = uint16_t(littleEndian(bytes, 2, 2));
         const Bytes payload(bytes.begin() + 6, bytes.end() - 2);
         CHECK(bytes == packet(message, payload));  // Validate outgoing framing/checksum.
+        if (message == UBX_MSG_MON_VER) {
+            identityBauds.push_back(hostBaud);
+        }
+        if ((message & 0xff) == UBX_CLASS_CFG && message != UBX_MSG_CFG_VALGET &&
+            !(message == UBX_MSG_CFG_TMODE3 && payload.empty())) {
+            ++configurationWrites;
+            unidentifiedWrites += !identityDelivered;
+        }
+        if (receiverBaud && !usb && hostBaud != receiverBaud) {
+            return;
+        }
 
         if (message == UBX_MSG_MON_COMMS) {
             CHECK(payload.empty());
@@ -211,11 +240,28 @@ private:
             CHECK(payload.empty());
             Bytes version(70, 0);
             memcpy(version.data(), "HPG 1.32", 8);
-            memcpy(version.data() + 30, legacy ? "00080000" : module == "ZED-X20P" ? "000B0000" : "00190000", 8);
+            const std::string hardwareVersion = hardware.empty() ? (legacy                 ? "00080000"
+                                                                    : module == "ZED-X20P" ? "000B0000"
+                                                                                           : "00190000")
+                                                                 : hardware;
+            CHECK(hardwareVersion.size() == 8);
+            memcpy(version.data() + 30, hardwareVersion.data(), 8);
             const std::string identity = "MOD=" + module;
             CHECK(identity.size() < 30);
             memcpy(version.data() + 40, identity.c_str(), identity.size());
-            queue(packet(message, version));
+            if (!protocol.empty()) {
+                const std::string extension = "PROTVER=" + protocol;
+                CHECK(extension.size() < 30);
+                version.resize(100);
+                std::copy(extension.begin(), extension.end(), version.begin() + 70);
+            }
+            auto response = packet(message, version);
+            if (corruptIdentity) {
+                response.back() ^= 1;
+            } else {
+                identityDelivered = true;
+            }
+            queue(response);
             return;
         }
 
@@ -236,6 +282,18 @@ private:
             }
             if (message == UBX_MSG_CFG_GNSS) {
                 ++legacy_constellation_requests;
+            }
+            if (message == UBX_MSG_CFG_PRT) {
+                CHECK(payload.size() == 40);
+                CHECK(payload[0] == UBX_TX_CFG_PRT_PORTID && payload[20] == UBX_TX_CFG_PRT_PORTID_USB);
+                const auto rate = littleEndian(payload, 8, 4);
+                CHECK(rate == littleEndian(payload, 28, 4));
+                if (receiverBaud && rate != receiverBaud) {
+                    receiverBaud = rate;
+                    if (loseBaudAck) {
+                        return;
+                    }
+                }
             }
             if (message == UBX_MSG_CFG_MSG) {
                 message_rates[uint16_t(littleEndian(payload, 0, 2))] = payload.at(2);
@@ -261,6 +319,9 @@ private:
 
         CHECK(message == UBX_MSG_CFG_VALSET);
         CHECK(payload.size() >= 4);
+        if (silencePortConfiguration) {
+            return;
+        }
         std::map<uint32_t, uint32_t> settings;
 
         for (size_t i = 4; i < payload.size();) {
@@ -274,6 +335,17 @@ private:
             const size_t width = size_code <= 2 ? 1 : size_code == 3 ? 2 : 4;
             settings[key] = littleEndian(payload, i, width);
             i += width;
+        }
+        if (!heldBaudAck.empty()) {
+            queue(heldBaudAck);
+            heldBaudAck.clear();
+            lateBaudAckDelivered = true;
+            if (rejectAfterBaudChange) {
+                return;
+            }
+            if (nakAfterBaudChange) {
+                queue(packet(UBX_MSG_ACK_NAK, {uint8_t(message), uint8_t(message >> 8)}));
+            }
         }
 
         if (settings.count(UBX_CFG_KEY_SIGNAL_GPS_ENA)) {
@@ -313,6 +385,18 @@ private:
         if (!reject) {
             for (const auto& setting : settings) {
                 current_settings[setting.first] = setting.second;
+            }
+        }
+        if (const auto rate = settings.find(UBX_CFG_KEY_CFG_UART1_BAUDRATE);
+            rate != settings.end() && receiverBaud && rate->second != receiverBaud) {
+            if (!ignoreBaudChange) {
+                receiverBaud = rate->second;
+            } else {
+                current_settings[rate->first] = receiverBaud;
+            }
+            if (loseBaudAck) {
+                heldBaudAck = packet(UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)});
+                return;
             }
         }
 
@@ -379,8 +463,10 @@ public:
 
             return {GPSWriteStatus::Completed, size, size};
         };
-        result.setBaudrate = [this](unsigned) {
+        result.setBaudrate = [this](unsigned rate) {
             ++transport_operations;
+            hostBaud = rate;
+            hostBauds.push_back(rate);
             return GPSBaudStatus::Configured;
         };
         result.wait = [this](std::chrono::microseconds delay) {
@@ -944,6 +1030,172 @@ static void explicitNoFix()
     }
 }
 
+static void baudDiscovery()
+{
+    for (const unsigned initialBaud : {9600U, 115200U}) {
+        for (const bool fixed : {false, true}) {
+            for (const bool usb : {false, true}) {
+                for (const bool loseAck : {false, true}) {
+                    gps_test_time = 1000000;
+                    Receiver receiver;
+                    receiver.receiverBaud = initialBaud;
+                    receiver.usb = usb;
+                    receiver.loseBaudAck = loseAck;
+                    receiver.protocol = "27.31";
+                    GPSNativePositionReport position;
+                    GPSNativeUBX driver(receiver.io(), &position, nullptr);
+                    GPSProtocol::GPSConfig config{};
+                    unsigned baud = fixed ? initialBaud : 0;
+                    CHECK(driver.configure(baud, config) == 0);
+                    CHECK(driver.receiverReady());
+                    CHECK(receiver.unidentifiedWrites == 0);
+                    CHECK(baud == (fixed ? initialBaud : 115200));
+                    CHECK(receiver.receiverBaud == baud);
+                    CHECK(receiver.hostBaud == baud);
+                    CHECK(receiver.current_settings.at(UBX_CFG_KEY_NAVSPG_DYNMODEL) == 0);
+                    CHECK(receiver.current_settings.at(UBX_CFG_KEY_RATE_MEAS) == 200);
+                    if (fixed) {
+                        CHECK(receiver.hostBauds == std::vector<unsigned>{initialBaud});
+                    } else if (!usb) {
+                        const std::vector<unsigned> probes = initialBaud == 9600
+                                                                 ? std::vector<unsigned>{38400, 57600, 9600}
+                                                                 : std::vector<unsigned>{38400, 57600, 9600, 115200};
+                        CHECK(receiver.identityBauds.size() >= probes.size());
+                        CHECK(std::equal(probes.begin(), probes.end(), receiver.identityBauds.begin()));
+                    }
+                    CHECK(gps_test_time < 15000000);
+                }
+            }
+        }
+    }
+    for (const bool oldReceiver : {false, true}) {
+        for (const bool loseAck : {false, true}) {
+            gps_test_time = 1000000;
+            Receiver receiver;
+            receiver.legacy = true;
+            receiver.module = oldReceiver ? "u-blox6" : "NEO-M8N";
+            receiver.hardware = oldReceiver ? "00040007" : "00080000";
+            receiver.protocol = oldReceiver ? "" : "15.00";
+            receiver.receiverBaud = 9600;
+            receiver.loseBaudAck = loseAck;
+            GPSNativePositionReport position;
+            GPSNativeUBX driver(receiver.io(), &position, nullptr);
+            unsigned baud = 0;
+            CHECK(driver.configure(baud, {}) == 0);
+            CHECK(receiver.unidentifiedWrites == 0);
+            CHECK(baud == (oldReceiver ? 38400U : 115200U));
+            CHECK(receiver.receiverBaud == baud);
+            CHECK(receiver.legacy_measurement_interval == 200);
+            CHECK(receiver.current_settings.empty());
+        }
+    }
+}
+
+static void discoveryFailures()
+{
+    for (unsigned scenario = 0; scenario < 10; ++scenario) {
+        gps_test_time = 1000000;
+        Receiver receiver;
+        receiver.receiverBaud = 9600;
+        receiver.hardware = scenario == 0 ? "UNKN0WN!" : "00190000";
+        receiver.protocol = scenario == 1 ? "invalid" : "27.31";
+        receiver.corruptIdentity = scenario == 2;
+        receiver.silencePortConfiguration = scenario == 3;
+        receiver.loseBaudAck = scenario >= 4;
+        receiver.ignoreBaudChange = scenario == 4 || scenario == 5;
+        receiver.usb = scenario == 5;
+        receiver.rejectAfterBaudChange = scenario == 6;
+        receiver.nakAfterBaudChange = scenario == 8;
+        receiver.readback_mode = scenario == 9 ? 1 : 0;
+        receiver.module = scenario == 7 ? "NEO-M9N" : "ZED-F9P";
+        GPSNativePositionReport position;
+        GPSNativeUBX driver(receiver.io(), &position, nullptr);
+        GPSProtocol::GPSConfig config{};
+        if (scenario == 7) {
+            config.output_mode = GPSProtocol::OutputMode::RTCM;
+            config.base = {.surveyInAccMeters = 1, .surveyInDurationSecs = 60};
+        }
+        unsigned baud = 0;
+        CHECK(driver.configure(baud, config) < 0);
+        CHECK(!driver.receiverReady());
+        CHECK(receiver.unidentifiedWrites == 0);
+        if (scenario < 3 || scenario == 7) {
+            CHECK(receiver.configurationWrites == 0);
+        } else if (scenario == 3) {
+            CHECK(receiver.configurationWrites == 1);
+        } else if (scenario == 6) {
+            CHECK(receiver.lateBaudAckDelivered);
+            CHECK(receiver.current_settings.count(UBX_CFG_KEY_CFG_USBOUTPROT_UBX) == 0);
+        } else if (scenario == 8) {
+            CHECK(receiver.lateBaudAckDelivered);
+            CHECK(receiver.current_settings.at(UBX_CFG_KEY_CFG_USBOUTPROT_UBX) == 1);
+        }
+        CHECK(gps_test_time < 20000000);
+    }
+}
+
+static void navigationFixFlags()
+{
+    using Fix = GPSPositionReport::FixType;
+    constexpr std::array<Fix, 8> FIX_3D{Fix::Fix3D,    Fix::Differential, Fix::RTKFloat, Fix::RTKFloat,
+                                        Fix::RTKFixed, Fix::RTKFixed,     Fix::Fix3D,    Fix::Differential};
+    constexpr std::array<Fix, 6> UNCORRECTED{Fix::NoFix, Fix::Extrapolated, Fix::Fix2D,
+                                             Fix::Fix3D, Fix::Fix3D,        Fix::NoFix};
+    for (const bool legacy : {false, true}) {
+        for (const unsigned rawFix : {0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 255U}) {
+            for (unsigned flags = 0; flags <= UINT8_MAX; ++flags) {
+                Fix expected = rawFix < UNCORRECTED.size() ? UNCORRECTED[rawFix] : Fix::Unknown;
+                if (!(flags & 1)) {
+                    expected = Fix::NoFix;
+                } else if (rawFix == 3 || rawFix == 4) {
+                    expected = legacy ? FIX_3D[(flags >> 1) & 1] : FIX_3D[((flags >> 6) * 2) + ((flags >> 1) & 1)];
+                }
+                std::array<unsigned, 3> order{0, 1, 2};
+                do {
+                    gps_test_time = 1000000;
+                    GPSNativePositionReport position;
+                    GPSNativeUBX driver(makeGPSProtocolTestIO(), &position, nullptr);
+                    driver.setDecodeContext({.navigation = true, .useNavPvt = !legacy, .assembleEpochs = true});
+                    Bytes pvt(92);
+                    (void) LittleEndian::write<uint32_t>(pvt, 0, 1000);
+                    pvt[20] = static_cast<uint8_t>(rawFix);
+                    pvt[21] = static_cast<uint8_t>(flags);
+                    (void) LittleEndian::write<int32_t>(pvt, 24, 80000000);
+                    (void) LittleEndian::write<int32_t>(pvt, 28, 470000000);
+                    (void) LittleEndian::write<int32_t>(pvt, 60, 12000);
+                    if (!legacy) {
+                        CHECK(driver.decode(packet(UBX_MSG_NAV_PVT, pvt)).batch.events.empty());
+                    } else {
+                        std::array<Bytes, 3> payloads{Bytes(28), Bytes(52), Bytes(36)};
+                        constexpr std::array<uint16_t, 3> MESSAGES{UBX_MSG_NAV_POSLLH, UBX_MSG_NAV_SOL,
+                                                                   UBX_MSG_NAV_VELNED};
+                        for (auto& payload : payloads) {
+                            (void) LittleEndian::write<uint32_t>(payload, 0, 1000);
+                        }
+                        (void) LittleEndian::write<int32_t>(payloads[0], 4, 80000000);
+                        (void) LittleEndian::write<int32_t>(payloads[0], 8, 470000000);
+                        payloads[1][10] = static_cast<uint8_t>(rawFix);
+                        payloads[1][11] = static_cast<uint8_t>(flags);
+                        (void) LittleEndian::write<uint32_t>(payloads[2], 20, 1200);
+                        for (const unsigned index : order) {
+                            CHECK(driver.decode(packet(MESSAGES[index], payloads[index])).batch.events.empty());
+                        }
+                    }
+                    Bytes end(4);
+                    (void) LittleEndian::write<uint32_t>(end, 0, 1000);
+                    const auto decoded = driver.decode(packet(UBX::NAV_EOE, end));
+                    CHECK(decoded.batch.events.size() == 1);
+                    const auto& fix = std::get<GPSNativePositionReport>(decoded.batch.events.front());
+                    CHECK(fix.fix_type == expected);
+                    CHECK(fix.vel_ned_valid == (expected != Fix::NoFix && expected != Fix::Unknown));
+                    CHECK(fix.latitude_deg == 47 && fix.longitude_deg == 8);
+                    CHECK(std::abs(fix.vel_m_s - 12) < 1e-5f);
+                } while (legacy && std::next_permutation(order.begin(), order.end()));
+            }
+        }
+    }
+}
+
 static void transactionalFrames()
 {
     Receiver receiver;
@@ -1266,6 +1518,9 @@ int main()
         {"position-stop-failures", [] { positionModeFailure(); }},
         {"control-deadline", controlDeadline},
         {"explicit-no-fix", explicitNoFix},
+        {"read-only-baud-discovery", baudDiscovery},
+        {"discovery-failures-and-late-acks", discoveryFailures},
+        {"navigation-fix-flags-and-ordering", navigationFixFlags},
         {"transactional-frames", transactionalFrames},
         {"reentrant-payload", reentrantPayload},
         {"receive-read-diagnostics", receiveFailureLogging},

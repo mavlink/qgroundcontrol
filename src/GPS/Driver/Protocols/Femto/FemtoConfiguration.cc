@@ -35,15 +35,14 @@
 
 int GPSNativeFemto::writeAckedCommandFemto(const char* command, const char* reply, const unsigned int timeout)
 {
-    const Operation operation(*this, timeout);
-    beginCommandWrite(command);
+    const GPSConfigurationStep step{command, std::chrono::milliseconds(timeout)};
     const size_t command_length = strlen(command);
     const size_t reply_length = strlen(reply);
     uint8_t buf[GPS_READ_BUFFER_SIZE];
 
     // Keep one full ACK in the bounded receive window.
     if (reply_length == 0 || reply_length > sizeof(buf) ||
-        write(command, command_length) != static_cast<int>(command_length)) {
+        !writeCommand(step, {reinterpret_cast<const uint8_t*>(command), command_length})) {
         return -1;
     }
 
@@ -51,7 +50,7 @@ int GPSNativeFemto::writeAckedCommandFemto(const char* command, const char* repl
 
     bool acknowledged = false;
     const auto result = awaitCommand(
-        {command, std::chrono::milliseconds(timeout)},
+        step,
         [&] {
             const int count = read(buf + buffered, sizeof(buf) - buffered, timeout);
             if (count <= 0) {

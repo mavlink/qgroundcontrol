@@ -252,18 +252,15 @@ bool GPSNativeSBF::sendMessage(const char* msg)
 
 bool GPSNativeSBF::sendMessageAndWaitForAck(const char* msg, int timeout, GPSReceiverSettingSet settings, bool required)
 {
-    const Operation operation(*this, timeout);
-
-    beginCommandWrite(msg, settings);
-    const int length = static_cast<int>(strlen(msg));
-    if (write(msg, length) != length) {
+    const GPSConfigurationStep step{msg, std::chrono::milliseconds(timeout), settings, required};
+    if (!writeCommand(step, {reinterpret_cast<const uint8_t*>(msg), strlen(msg)})) {
         return false;
     }
     const std::string expected = "$R: " + std::string(msg);
     std::string received;
     GPSCommandOutcome response = GPSCommandOutcome::Pending;
     const auto result = awaitCommand(
-        {msg, std::chrono::milliseconds(timeout), settings, required},
+        step,
         [&] {
             uint8_t bytes[GPS_READ_BUFFER_SIZE];
             const int count = read(bytes, sizeof(bytes), timeout);

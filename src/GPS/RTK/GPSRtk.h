@@ -1,6 +1,9 @@
 #pragma once
 
+#include <initializer_list>
+#include <memory>
 #include <optional>
+#include <utility>
 
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -13,6 +16,7 @@
 
 class GPSRTKFactGroup;
 class GPSCorrectionManager;
+class Fact;
 class SerialPortManager;
 class RTKSettings;
 
@@ -42,6 +46,7 @@ public:
 #endif
     /// Inject before connecting; the caller retains ownership.
     void setCorrectionManager(GPSCorrectionManager* manager);
+    /// Synchronous lifecycle observers may stop, replace, or delete this receiver. Superseded attempts return false.
     bool connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory,
                          const QString& sourceInstance = {}, uint32_t baudRate = 0,
                          bool allowPersistentChanges = false);
@@ -50,17 +55,17 @@ public:
     void disconnectGPS();
     bool connected() const;
 
-    bool hasReceiver() const { return _gpsProvider != nullptr; }
+    bool hasReceiver() const { return !_session.provider.isNull(); }
 
     bool serialSupported() const;
 
     QString errorMessage() const { return _errorMessage; }
 
-    int activeManufacturer() const { return _activeManufacturer; }
+    int activeManufacturer() const { return _session.manufacturer; }
 
-    int activeBaseMode() const { return _activeBaseMode; }
+    int activeBaseMode() const { return _session.baseMode; }
 
-    QString activeSerialDevice() const { return _activeSerialDevice; }
+    QString activeSerialDevice() const { return _session.serialDevice; }
 
     Q_INVOKABLE QVariantMap capabilitiesForManufacturer(int manufacturer) const;
 
@@ -71,11 +76,12 @@ public:
 
     struct SatelliteCounts
     {
-        uint16_t inView = 0;
+        int inView = -1;
         std::optional<int> used;
     };
 
-    /// Usage is exact only for a complete snapshot with every used flag known (including an empty snapshot).
+    /// Zero receipt means unavailable. Timestamped empty snapshots explicitly report zero view and usage counts.
+    /// Nonempty snapshots provide exact usage only when every used flag is known.
     static SatelliteCounts countSatellites(const GPSSatelliteReport& msg);
 
 signals:
@@ -93,19 +99,35 @@ private slots:
     void _onGPSSurveyInStatus(const GPSSurveyInStatus& status);
 
 private:
+    struct ReceiverSession
+    {
+        QPointer<GPSProvider> provider;
+        GPSCorrectionSourceRegistration corrections;
+        GPSReceiverConfig configuration;
+        QString serialDevice;
+        std::optional<GPSPositionReport::FixType> lastLoggedFixType;
+        std::optional<int> countOnlySatelliteUsage;
+        int manufacturer = 0;
+        int baseMode = -1;
+        quint64 generation = 0;
+        bool started = false;
+    };
+
     static QString _receiverConfig(GPSType type, RTKSettings* settings, uint32_t baudRate, GPSReceiverConfig& config,
                                    bool allowPersistentChanges = false);
+    bool _connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory, const QString& sourceInstance,
+                          uint32_t baudRate, bool allowPersistentChanges, const QString& serialDevice = {});
+    void _retireSession(quint64 generation);
+    bool _publishDisconnected(quint64 generation);
+    bool _publishFacts(std::initializer_list<std::pair<Fact*, QVariant>> updates, quint64 generation);
     void _setError(GPSConnectionError error, const QString& message = {});
 
-    GPSProvider* _gpsProvider = nullptr;
-    GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;
+    ReceiverSession _session;
+    // Fact setters can still be unwinding after a notification deletes their receiver owner.
+    std::shared_ptr<GPSRTKFactGroup> _gpsRtkFactGroup;
     QPointer<GPSCorrectionManager> _correctionManager;
-    GPSCorrectionSourceRegistration _correctionRegistration;
-    std::optional<GPSPositionReport::FixType> _lastLoggedFixType;
     QString _errorMessage;
-    QString _activeSerialDevice;
-    int _activeManufacturer = 0;
-    int _activeBaseMode = -1;
+    bool _destroying = false;
 #ifndef QGC_NO_SERIAL_LINK
     QPointer<SerialPortManager> _serialPorts;
     QMetaObject::Connection _portEnumerationConnection;

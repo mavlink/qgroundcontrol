@@ -18,6 +18,7 @@ target_sources(
            GPSSatelliteObservation.h
            GPSSourceHealth.h
            GPSSatelliteStore.h
+           GPSSatelliteState.h
            GPSSurveyInStatus.h
 )
 target_sources(

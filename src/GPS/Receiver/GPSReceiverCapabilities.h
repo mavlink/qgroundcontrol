@@ -17,6 +17,7 @@ struct GPSReceiverCapabilities
     bool surveyIn = false;
     bool receiverAveraging = false;
     bool passive = false;
+    bool persistentConfiguration = false;
 };
 
 /// Unknown receiver families or roles return no capabilities; known families may not support the requested role.

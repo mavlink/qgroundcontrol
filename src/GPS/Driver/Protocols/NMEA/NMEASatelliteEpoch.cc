@@ -1,6 +1,8 @@
 #include "NMEASatelliteEpoch.h"
 
 #include <algorithm>
+#include <chrono>
+#include <iterator>
 #include <utility>
 
 #include "NMEAConstellation.h"
@@ -23,6 +25,35 @@ constexpr size_t GSV_SIGNAL_OFFSET = 3;
 constexpr double MAX_ELEVATION_DEGREES = 90.0;
 constexpr double MAX_AZIMUTH_DEGREES = 360.0;
 constexpr int MAX_SIGNAL_STRENGTH = 99;
+
+bool validNavigation(const NMEA::Sentence& input)
+{
+    if (input.type() == "GGA") {
+        return NMEA::gga(input).has_value() ||
+               (input.count >= NMEA::Field::GGA_MIN_FIELDS &&
+                NMEA::number<unsigned>(input.fields[NMEA::Field::GGA_QUALITY]) == NMEA::GgaQuality::INVALID);
+    }
+    if (input.type() != "RMC" || input.count < 10) {
+        return false;
+    }
+    const auto date = input.fields[9];
+    if (date.size() != 6 ||
+        !std::all_of(date.begin(), date.end(), [](char digit) { return digit >= '0' && digit <= '9'; })) {
+        return false;
+    }
+    const auto day = NMEA::number<unsigned>(date.substr(0, 2));
+    const auto month = NMEA::number<unsigned>(date.substr(2, 2));
+    const auto year = NMEA::number<unsigned>(date.substr(4, 2));
+    if (!day || !month || !year ||
+        !std::chrono::year_month_day{std::chrono::year{2000 + static_cast<int>(*year)}, std::chrono::month{*month},
+                                     std::chrono::day{*day}}
+             .ok()) {
+        return false;
+    }
+    return input.fields[NMEA::Field::RMC_STATUS] == "V" ||
+           (input.fields[NMEA::Field::RMC_STATUS] == "A" && NMEA::coordinate(input.fields[3], input.fields[4], true) &&
+            NMEA::coordinate(input.fields[5], input.fields[6], false));
+}
 }  // namespace
 
 namespace NMEA {
@@ -88,15 +119,22 @@ void SatelliteAssembler::clear()
     _views.clear();
     _used.clear();
     _time.reset();
+    _batchStartedUs.reset();
+    _lastAcceptedUs = 0;
 }
 
-SatelliteAssembler::Update SatelliteAssembler::ingest(const Sentence& input, uint64_t receivedAtUs)
+SatelliteAssembler::Update SatelliteAssembler::ingest(const Sentence& input, uint64_t receivedAtUs, uint64_t nowUs)
 {
-    Update update;
-    if ((input.type() == "RMC" || input.type() == "GGA") && input.count > Field::UTC_TIME) {
+    Update update{false, flushDue(nowUs)};
+    const auto complete = [&]() {
+        auto epoch = flush();
+        update.completed.insert(update.completed.end(), std::make_move_iterator(epoch.begin()),
+                                std::make_move_iterator(epoch.end()));
+    };
+    if (validNavigation(input)) {
         const auto time = utcMilliseconds(input.fields[Field::UTC_TIME]);
         if (time && time != _time) {
-            update.completed = flush();
+            complete();
             _time = time;
         }
         return update;
@@ -108,7 +146,7 @@ SatelliteAssembler::Update SatelliteAssembler::ingest(const Sentence& input, uin
         const auto& page = *parsed;
         auto& signalReports = _views[page.constellation];
         if (page.message == 1 && signalReports[page.signal].complete())
-            update.completed = flush();
+            complete();
         auto& report = _views[page.constellation][page.signal];
         if (page.message == 1)
             report = {page.messages, page.satelliteCount, 1, receivedAtUs, {}};
@@ -156,16 +194,37 @@ SatelliteAssembler::Update SatelliteAssembler::ingest(const Sentence& input, uin
             return update;
         if (!_views.empty() && std::any_of(reports.begin(), reports.end(),
                                            [this](const auto& report) { return _used.contains(report.first); }))
-            update.completed = flush();
+            complete();
         for (auto& [constellation, report] : reports)
             _used[constellation] = std::move(report);
         update.accepted = true;
     }
+    if (update.accepted) {
+        if (!_batchStartedUs) {
+            _batchStartedUs = nowUs;
+        }
+        _lastAcceptedUs = nowUs;
+    }
     return update;
+}
+
+std::optional<uint64_t> SatelliteAssembler::deadlineUs() const
+{
+    if (!_batchStartedUs) {
+        return std::nullopt;
+    }
+    return std::min(*_batchStartedUs + BATCH_TIMEOUT_US, _lastAcceptedUs + IDLE_TIMEOUT_US);
+}
+
+SatelliteEpoch SatelliteAssembler::flushDue(uint64_t nowUs)
+{
+    const auto deadline = deadlineUs();
+    return deadline && nowUs >= *deadline ? flush() : SatelliteEpoch{};
 }
 
 SatelliteEpoch SatelliteAssembler::flush()
 {
+    _batchStartedUs.reset();
     std::map<GPSConstellation, SatelliteSystem> systems;
     std::map<GPSConstellation, std::map<int, SatelliteData>> satellites;
     const auto includeView = [&systems](GPSConstellation constellation, uint64_t timestamp) {

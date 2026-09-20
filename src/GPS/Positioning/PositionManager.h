@@ -28,6 +28,9 @@ public:
 
     void setNmeaSourceDevice(QIODevice* device);
     void resetNmeaSourceDevice();
+    /// A retiring input owner must not clear a source installed by a replacement callback.
+    void resetNmeaSourceDevice(QIODevice* expectedDevice);
+    QIODevice* nmeaSourceDevice() const;
 
     GPSSourceHealth* nmeaHealth() const;
     bool nmeaReceiving() const;
@@ -44,6 +47,7 @@ private:
     void _resetNmeaSourceDevice(const char* reason);
 
     std::unique_ptr<NMEADecoderSession> _nmeaSource;
+    QPointer<QIODevice> _nmeaDevice;
     GPSPositionSourceRegistration _nmeaRegistration;
     QMetaObject::Connection _nmeaDeviceDestroyedConnection;
     QMetaObject::Connection _nmeaDeviceClosedConnection;

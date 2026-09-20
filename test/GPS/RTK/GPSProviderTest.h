@@ -10,6 +10,7 @@ private slots:
     void _queuedPayloadsOwnSnapshots();
     void _ancillaryTraffic_data();
     void _ancillaryTraffic();
+    void _satelliteExpiryDoesNotRenewLiveness();
     void _surveyReportProjection_data();
     void _surveyReportProjection();
 #ifndef QGC_NO_SERIAL_LINK

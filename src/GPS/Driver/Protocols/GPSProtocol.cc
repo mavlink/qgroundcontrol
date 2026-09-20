@@ -108,20 +108,89 @@ uint64_t GPSProtocol::timeFromUtc(tm& utc, int32_t nsec)
     return 0;
 }
 
+int GPSProtocol::readAndDecode(unsigned timeout)
+{
+    uint8_t buffer[GPS_READ_BUFFER_SIZE];
+    const int count = read(buffer, sizeof(buffer), static_cast<int>(timeout));
+    if (count < 0) {
+        return count;
+    }
+    const int updates = consume({buffer, static_cast<size_t>(count)});
+    return ioError() ? ioError() : updates;
+}
+
+bool GPSProtocol::writeCommand(GPSConfigurationStep step, std::span<const uint8_t> bytes)
+{
+    const Operation operation(*this, static_cast<unsigned>(step.timeout.count()));
+    beginCommandWrite(std::move(step.command), step.affectedSettings, step.required);
+    return write(bytes.data(), static_cast<int>(bytes.size())) == static_cast<int>(bytes.size());
+}
+
+GPSCommandResult GPSProtocol::awaitCommand(GPSConfigurationStep step, const std::function<GPSCommandOutcome()>& reply)
+{
+    const auto timeout = static_cast<unsigned>(step.timeout.count());
+    return awaitCommand(std::move(step), [this, timeout] { readAndDecode(timeout); }, reply);
+}
+
+GPSCommandResult GPSProtocol::awaitCommand(GPSConfigurationStep step, const std::function<void()>& pump,
+                                           const std::function<GPSCommandOutcome()>& reply)
+{
+    if (_commandCompleted) {
+        return _commandWrite;
+    }
+    const auto timeout = static_cast<unsigned>(step.timeout.count());
+    const Operation operation(*this, timeout);
+    _operationDeadline.untilUs =
+        std::min(_operationDeadline.untilUs, _commandWrite.startedAtUs + uint64_t(timeout) * 1000);
+    _commandWrite.command = std::move(step.command);
+    _commandWrite.required = step.required;
+    _commandWrite.affectedSettings = step.affectedSettings;
+    const auto outcome = GPSCommandTransaction::await(
+        _operationDeadline.untilUs, [this] { return nowUs(); }, reply, pump,
+        [this] {
+            return ioError() == ReadCancelled ? GPSCommandOutcome::Cancelled
+                   : ioError()                ? GPSCommandOutcome::TransportError
+                                              : GPSCommandOutcome::Pending;
+        });
+    return completeCommand(outcome);
+}
+
+void GPSProtocol::beginCommandWrite(std::string command, GPSReceiverSettingSet settings, bool required)
+{
+    if (ioError()) {
+        return;
+    }
+    failCommandWrite(GPSCommandOutcome::Written);
+    _commandWrite = {};
+    _commandWrite.startedAtUs = nowUs();
+    _commandWrite.command = std::move(command);
+    _commandWrite.affectedSettings = settings;
+    _commandWrite.required = required;
+    _commandCompleted = false;
+}
+
+GPSCommandResult GPSProtocol::completeCommand(GPSCommandOutcome outcome)
+{
+    if (_commandCompleted) {
+        return _commandWrite;
+    }
+    _commandWrite.outcome = outcome;
+    _commandWrite.finishedAtUs = nowUs();
+    _commandCompleted = true;
+    // Completion observers may finish evidence again or begin another attempt.
+    const auto result = _commandWrite;
+    if (_io.commandFinished) {
+        _io.commandFinished(result);
+    }
+    return result;
+}
+
 int GPSProtocol::receiveDecoded(unsigned timeout)
 {
     const Operation operation(*this, timeout);
     const uint64_t deadline = _operationDeadline.untilUs;
-    uint8_t buffer[GPS_READ_BUFFER_SIZE];
     do {
-        const int count = read(buffer, sizeof(buffer), remainingMilliseconds(deadline));
-        if (count < 0) {
-            return count;
-        }
-        const int handled = consume({buffer, static_cast<size_t>(count)});
-        if (ioError()) {
-            return ioError();
-        }
+        const int handled = readAndDecode(static_cast<unsigned>(remainingMilliseconds(deadline)));
         if (handled) {
             return handled;
         }

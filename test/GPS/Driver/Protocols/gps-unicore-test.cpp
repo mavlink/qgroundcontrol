@@ -11,6 +11,7 @@
 
 #include "GPSProtocolTestIO.h"
 #include "RTCMFramer.h"
+#include "Support/UnicoreReceiverModel.h"
 #include "Unicore/GPSDriverUnicore.h"
 
 #define CHECK(condition)                                                                                 \
@@ -96,154 +97,7 @@ void consume(GPSNativeUnicore& driver, std::string_view line, size_t chunk = 5)
     }
 }
 
-struct Receiver
-{
-    enum class Fault
-    {
-        None,
-        Silence,
-        Reject,
-        WrongAck,
-        Corrupt,
-        Cancel,
-        WriteError,
-        ShortWrite,
-    };
-
-    Fault fault = Fault::None;
-    std::string faultCommand;
-    std::string version{VERSION};
-    std::string role = "MODE ROVER SURVEY";
-    std::string positionType = "SINGLE";
-    std::array<double, 3> coordinates{-2160489.0276, 4383620.1006, 4084738.1110};
-    std::vector<std::string> commands;
-    std::vector<GPSCommandResult> results;
-    std::vector<GPSNativeSurveyReport> surveys;
-    size_t rtcmCount = 0;
-    size_t calls = 0;
-    size_t chunk = 7;
-    bool modeMismatch = false;
-    bool positionMismatch = false;
-    bool omitModeReadback = false;
-    bool omitPositionReadback = false;
-    bool readError = false;
-    bool cancel = false;
-    std::string queued;
-    unsigned availableBaud = 115200;
-    unsigned hostBaud = 0;
-
-    bool sent(std::string_view prefix) const
-    {
-        return std::any_of(commands.begin(), commands.end(),
-                           [&](const auto& text) { return text.starts_with(prefix); });
-    }
-
-    GPSProtocolIO io()
-    {
-        auto io = makeGPSProtocolTestIO();
-        io.decoded = [this](const GPSDecodedBatch& batch) {
-            for (const auto& event : batch.events) {
-                if (const auto* survey = std::get_if<GPSNativeSurveyReport>(&event)) {
-                    surveys.push_back(*survey);
-                }
-                rtcmCount += std::holds_alternative<GPSRTCMReport>(event);
-            }
-        };
-        io.commandFinished = [this](const GPSCommandResult& result) { results.push_back(result); };
-        io.setBaudrate = [this](unsigned baud) {
-            ++calls;
-            hostBaud = baud;
-            return GPSBaudStatus::Configured;
-        };
-        io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSReadResult {
-            ++calls;
-            if (cancel) {
-                return {GPSReadStatus::Cancelled};
-            }
-            if (readError) {
-                return {GPSReadStatus::Error, 0, QStringLiteral("Unicore test disconnect")};
-            }
-            if (queued.empty()) {
-                gps_test_time = deadline.untilUs;
-                return {GPSReadStatus::TimedOut};
-            }
-            const auto count = std::min({queued.size(), bytes.size(), chunk});
-            std::memcpy(bytes.data(), queued.data(), count);
-            queued.erase(0, count);
-            gps_test_time += 100;
-            return {GPSReadStatus::Data, static_cast<int>(count)};
-        };
-        io.write = [this](std::span<const uint8_t> bytes, GPSDeadline deadline) -> GPSWriteResult {
-            ++calls;
-            CHECK(deadline.untilUs > gps_test_time);
-            const std::string wire(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-            CHECK(wire.ends_with("\r\n"));
-            const auto command = wire.substr(0, wire.size() - 2);
-            commands.push_back(command);
-            const int length = static_cast<int>(bytes.size());
-            const bool fail = !faultCommand.empty() && command.starts_with(faultCommand);
-            if (fail && fault == Fault::WriteError) {
-                return {GPSWriteStatus::Error, 0, 0, QStringLiteral("Unicore test write failure")};
-            }
-            if (fail && fault == Fault::ShortWrite) {
-                return {GPSWriteStatus::Completed, length - 1, length - 1};
-            }
-            if (fail && fault == Fault::Cancel) {
-                cancel = true;
-            }
-            if ((fail && (fault == Fault::Silence || fault == Fault::Cancel)) || hostBaud != availableBaud) {
-                return {GPSWriteStatus::Completed, length, length};
-            }
-            std::string ack = checked("$command," + command + ",response: OK", false);
-            if (fail && fault == Fault::Reject) {
-                queued += checked("$command," + command + ",response: PARSING FAILD NO MATCHING FUNC", false);
-            } else if (fail && fault == Fault::WrongAck) {
-                queued += checked("$command," + command + " OTHER,response: OK", false);
-            } else if (fail && fault == Fault::Corrupt) {
-                ack[ack.find('*') + 1] = 'Z';
-                queued += ack;
-            } else if (command == "VERSIONA") {
-                queued += ack + version;
-            } else if (command == "UNLOG") {
-                queued += ACK_UNLOG;
-            } else if (command == "MODE") {
-                queued += ack;
-                if (!omitModeReadback) {
-                    queued += modeMismatch                  ? native("MODE", "MODE HEADING2,")
-                              : role == "MODE ROVER SURVEY" ? std::string(MODE_ROVER)
-                                                            : native("MODE", role + ',');
-                }
-            } else if (command.starts_with("MODE ")) {
-                if (command == "MODE ROVER") {
-                    role = "MODE ROVER SURVEY";
-                    positionType = "SINGLE";
-                } else if (command.starts_with("MODE BASE TIME ")) {
-                    role = "MODE BASE TIME";
-                    positionType = "SINGLE";
-                } else {
-                    role = "MODE BASE";
-                    positionType = "FIXEDPOS";
-                    std::istringstream fields(command.substr(10));
-                    fields.imbue(std::locale::classic());
-                    fields >> coordinates[0] >> coordinates[1] >> coordinates[2];
-                    CHECK(!fields.fail());
-                }
-                queued += ack;
-            } else if (command.starts_with("BESTNAVXYZA")) {
-                auto result = coordinates;
-                result[0] += positionMismatch ? 10 : 0;
-                queued += ack;
-                if (command != "BESTNAVXYZA" || !omitPositionReadback) {
-                    queued += position(positionType, result);
-                }
-            } else {
-                queued += ack;
-            }
-            return {GPSWriteStatus::Completed, length, length};
-        };
-        return io;
-    }
-};
+using Receiver = GPSTest::UnicoreReceiver;
 
 GPSProtocol::GPSConfig baseConfig(bool fixed)
 {
@@ -422,7 +276,7 @@ void averagingEvidenceAndRestart()
     CHECK(receiver.rtcmCount == 1);
 
     // Loss of the receiver's fixed solution cannot silently resume with a previous average.
-    consume(driver, position("SINGLE", receiver.coordinates));
+    consume(driver, position("SINGLE", receiver.coordinates, 378239000));
     CHECK(!driver.receiverReady());
     CHECK(receiver.surveys.back().flags == 0);
     CHECK(std::isnan(receiver.surveys.back().latitude));
@@ -541,7 +395,7 @@ void corruptStatusAndExpiry()
         CHECK(receiver.calls == calls);
         CHECK(receiver.rtcmCount == 0);
         CHECK(receiver.surveys.back().flags == 2);
-        consume(driver, position("FIXEDPOS", receiver.coordinates));
+        consume(driver, position("FIXEDPOS", receiver.coordinates, 378239000));
         driver.consume(correction());
         CHECK(receiver.rtcmCount == 1);
         gps_test_time += 5000001;
@@ -578,6 +432,87 @@ void restartAndReadErrors()
     }
 }
 
+void measurementFreshnessAndRollover()
+{
+    for (const bool rollover : {false, true}) {
+        resetClock();
+        Receiver receiver;
+        GPSNativeUnicore driver(receiver.io(), nullptr);
+        unsigned baud = 115200;
+        CHECK(driver.configure(baud, baseConfig(false)) == 0);
+        const auto complete = GPSTest::unicorePosition("FIXEDPOS", receiver.coordinates, 604799000, 2326);
+        consume(driver, complete, 1);
+        CHECK(receiver.surveys.back().flags == 1);
+        CHECK(!receiver.surveys.back().accuracyKnown);
+        CHECK(receiver.surveys.back().duration == 0);
+        const auto reports = receiver.surveys.size();
+        const auto receipt = receiver.surveys.back().timestamp;
+        gps_test_time += 4000000;
+        consume(driver, complete);
+        CHECK(receiver.surveys.size() == reports);
+        CHECK(receiver.surveys.back().timestamp == receipt);
+        if (rollover) {
+            consume(driver, GPSTest::unicorePosition("FIXEDPOS", receiver.coordinates, 0, 2327));
+            CHECK(driver.receiverReady());
+            CHECK(receiver.surveys.back().flags == 1);
+            CHECK(receiver.surveys.back().timestamp > receipt);
+            driver.consume(correction());
+            CHECK(receiver.rtcmCount == 1);
+            consume(driver, complete);  // Previous week cannot revive/replace the new week's evidence.
+        } else {
+            gps_test_time += 1000001;
+            driver.consume({});
+        }
+        CHECK(!driver.receiverReady());
+        CHECK(receiver.surveys.back().flags == 0);
+        CHECK(!receiver.surveys.back().accuracyKnown);
+        CHECK(receiver.surveys.back().duration == 0);
+        CHECK(std::isnan(receiver.surveys.back().latitude));
+        CHECK(std::isnan(receiver.surveys.back().longitude));
+        CHECK(std::isnan(receiver.surveys.back().altitude));
+        consume(driver, complete);
+        const auto count = receiver.rtcmCount;
+        driver.consume(correction());
+        CHECK(receiver.rtcmCount == count);
+    }
+}
+
+void scheduledAveragingAndBoot()
+{
+    for (const size_t chunk : {size_t(1), size_t(150)}) {
+        resetClock();
+        Receiver receiver;
+        receiver.chunk = chunk;
+        receiver.initialTow = 604798000;
+        GPSNativeUnicore driver(receiver.io(), nullptr);
+        auto config = baseConfig(false);
+        config.base.receiverAveragingDurationSecs = 1;
+        unsigned baud = 115200;
+        CHECK(driver.configure(baud, config) == 0);
+        const auto commands = receiver.commands.size();
+        for (unsigned slices = 0; gps_test_time < 2500000; ++slices) {
+            CHECK(slices < 100);
+            driver.receive(1000);
+            CHECK(driver.receiverReady());
+        }
+        CHECK(receiver.surveys.back().flags == 1);
+        CHECK(receiver.surveys.back().duration == 0);
+        CHECK(!receiver.surveys.back().accuracyKnown);
+        CHECK(receiver.commands.size() == commands);
+        driver.consume(correction());
+        CHECK(receiver.rtcmCount == 1);
+        receiver.events.schedule(500000, [&receiver] { receiver.boot(); });
+        for (unsigned slices = 0; driver.receiverReady(); ++slices) {
+            CHECK(slices < 100);
+            driver.receive(1000);
+        }
+        CHECK(receiver.surveys.back().flags == 0);
+        CHECK(std::isnan(receiver.surveys.back().altitude));
+        driver.consume(correction());
+        CHECK(receiver.rtcmCount == 1);
+    }
+}
+
 }  // namespace
 
 int main()
@@ -591,6 +526,8 @@ int main()
         readbackFailures();
         corruptStatusAndExpiry();
         restartAndReadErrors();
+        measurementFreshnessAndRollover();
+        scheduledAveragingAndBoot();
     } catch (const std::exception& error) {
         std::fprintf(stderr, "%s\n", error.what());
         return 1;

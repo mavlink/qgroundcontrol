@@ -70,6 +70,9 @@ public:
     const GPSNativeSatelliteReport* satelliteReport() const override { return _satellite_info; }
 
 private:
+    void flushDecoded() override;
+    void _queueSatellites(NMEA::SatelliteEpoch epoch);
+    void _drainSatellites();
     void servicePendingCommands() override;
     bool _correctionSetupPending = false;
     bool _rtcmActivationPending = false;
@@ -150,6 +153,7 @@ private:
 
     GPSNativeSatelliteReport* _satellite_info{nullptr};
     NMEA::SatelliteAssembler _satelliteAssembler;
+    NMEA::SatelliteEpoch _pendingSatellites;
 
     AshtechBoard _board{AshtechBoard::other}; /**< board we are connected to */
 

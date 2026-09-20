@@ -27,12 +27,12 @@ signals:
 
 private:
     void _flush();
+    void _scheduleFlush();
     void _deliver();
     void _queue(NMEA::SatelliteEpoch epoch);
 
     QPointer<RuntimeScheduler> _scheduler;
-    ScheduledTask _idleTask;
-    ScheduledTask _batchTask;
+    ScheduledTask _flushTask;
     ScheduledTask _deliveryTask;
     NMEA::SatelliteAssembler _assembler;
     QList<GPSSatelliteObservation> _pending;

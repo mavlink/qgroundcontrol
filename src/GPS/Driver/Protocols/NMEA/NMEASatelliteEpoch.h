@@ -49,6 +49,9 @@ std::optional<GSV> gsv(const Sentence& input);
 class SatelliteAssembler
 {
 public:
+    static constexpr uint64_t IDLE_TIMEOUT_US = 150000;
+    static constexpr uint64_t BATCH_TIMEOUT_US = 1000000;
+
     struct Update
     {
         bool accepted = false;
@@ -57,9 +60,13 @@ public:
 
     void clear();
 
-    Update ingest(const Sentence& input, uint64_t receivedAtUs);
+    Update ingest(const Sentence& input, uint64_t receivedAtUs) { return ingest(input, receivedAtUs, receivedAtUs); }
+
+    Update ingest(const Sentence& input, uint64_t receivedAtUs, uint64_t nowUs);
 
     SatelliteEpoch flush();
+    SatelliteEpoch flushDue(uint64_t nowUs);
+    std::optional<uint64_t> deadlineUs() const;
 
 private:
     struct View
@@ -82,5 +89,7 @@ private:
     std::map<GPSConstellation, std::map<int, View>> _views;
     std::map<GPSConstellation, Used> _used;
     std::optional<int> _time;
+    std::optional<uint64_t> _batchStartedUs;
+    uint64_t _lastAcceptedUs = 0;
 };
 }  // namespace NMEA

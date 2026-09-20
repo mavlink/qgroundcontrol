@@ -30,6 +30,7 @@ private slots:
     void _preservesReceiptAgeAcrossReports();
     void _decoderRejectsDelayedSatelliteBatch();
     void _modernConstellationsAndSignals();
+    void _interleavedDeadlineReports();
     void _incompleteReportIsDiscarded();
     void _incompleteReportIsDiscarded_data();
     void _epochTimeNormalization_data();

@@ -36,6 +36,46 @@
 #include "UBXMessageCodec.h"
 #include "UBXPrivate.h"
 
+namespace {
+GPSPositionReport::FixType navigationFix(uint8_t wireFix, uint8_t flags, bool hasCarrierFlags)
+{
+    using Fix = GPSPositionReport::FixType;
+    if (!(flags & UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK)) {
+        return Fix::NoFix;
+    }
+    switch (wireFix) {
+        case 0:
+        case 5:
+            return Fix::NoFix;
+        case 1:
+            return Fix::Extrapolated;
+        case 2:
+            // Correction flags cannot establish a three-dimensional navigation solution.
+            return Fix::Fix2D;
+        case 3:
+        case 4:
+            break;
+        default:
+            return Fix::Unknown;
+    }
+    if (hasCarrierFlags) {
+        const uint8_t carrier = flags >> 6;
+        if (carrier == 1) {
+            return Fix::RTKFloat;
+        }
+        if (carrier == 2) {
+            return Fix::RTKFixed;
+        }
+    }
+    return flags & UBX_RX_NAV_PVT_FLAGS_DIFFSOLN ? Fix::Differential : Fix::Fix3D;
+}
+
+bool velocityValid(GPSPositionReport::FixType fix)
+{
+    return fix != GPSPositionReport::FixType::Unknown && fix != GPSPositionReport::FixType::NoFix;
+}
+}  // namespace
+
 int GPSNativeUBX::parseChar(uint8_t byte)
 {
     if (_rtcm_parsing && (_frameDecoder.idle() || _rtcm_parsing->hasPartialFrame())) {
@@ -312,6 +352,9 @@ void GPSNativeUBX::decodeNavSvinfo(std::span<const uint8_t> payload)
 
 void GPSNativeUBX::decodeMonVer(std::span<const uint8_t> payload)
 {
+    _board = Board::unknown;
+    _is_m8p = false;
+    _proto_ver_27_or_higher = false;
     _model_name[0] = '\0';
     _firmware_version[0] = '\0';
     auto decoded_payload_rx_mon_ver_part1 = UBX::MessageCodec<ubx_payload_rx_mon_ver_part1_t>::block(payload);
@@ -351,6 +394,7 @@ void GPSNativeUBX::decodeMonVer(std::span<const uint8_t> payload)
     if (!known) {
         log(GPSProtocolLogLevel::Warning, "unknown board hw: %s", payload_rx_mon_ver_part1.hwVersion);
     }
+    _proto_ver_27_or_higher = _board == Board::u_blox9 || _board == Board::u_blox10 || _board == Board::u_blox_X20;
     _timeModeUnsupported =
         _board == Board::u_blox5 || _board == Board::u_blox6 || _board == Board::u_blox7 || _board == Board::u_blox10;
     for (size_t offset = UBX::WIRE_SIZE<ubx_payload_rx_mon_ver_part1_t>; offset < payload.size();
@@ -390,7 +434,12 @@ void GPSNativeUBX::decodeMonVer(std::span<const uint8_t> payload)
             log(GPSProtocolLogLevel::Debug, "u-blox protocol version: %s", protver_str + strlen("PROTVER="));
             const std::string_view version(protver_str + strlen("PROTVER="));
             const auto major = NMEA::number<unsigned>(version.substr(0, version.find('.')));
-            if (!_proto_ver_27_or_higher && major && *major > 0 && *major < 20) {
+            if (!major || *major == 0) {
+                _board = Board::unknown;
+                return;
+            }
+            _proto_ver_27_or_higher = *major >= 27;
+            if (*major < 20) {
                 _timeModeUnsupported = true;
             }
         }
@@ -436,35 +485,12 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                 break;
             }
             const auto& payload_rx_nav_pvt = *decoded_payload_rx_nav_pvt;
-            uint8_t fixType = payload_rx_nav_pvt.fixType;
-
-            // Check if position fix flag is good
-            if ((payload_rx_nav_pvt.flags & UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK) == 1) {
-                if (payload_rx_nav_pvt.flags & UBX_RX_NAV_PVT_FLAGS_DIFFSOLN) {
-                    fixType = static_cast<uint8_t>(GPSPositionReport::FixType::Differential);
-                }
-
-                uint8_t carr_soln = payload_rx_nav_pvt.flags >> 6;
-
-                if (carr_soln == 1) {
-                    fixType = static_cast<uint8_t>(GPSPositionReport::FixType::RTKFloat);
-
-                } else if (carr_soln == 2) {
-                    fixType = static_cast<uint8_t>(GPSPositionReport::FixType::RTKFixed);
-                }
-
-                position.vel_ned_valid = true;
-
-            } else {
-                fixType = static_cast<uint8_t>(GPSPositionReport::FixType::NoFix);
-                position.vel_ned_valid = false;
-            }
-            position.fix_type = GPSPositionReport::fixTypeFromValue(fixType);
+            position.fix_type = navigationFix(payload_rx_nav_pvt.fixType, payload_rx_nav_pvt.flags, true);
+            position.vel_ned_valid = velocityValid(position.fix_type);
 
             position.satellites_used = payload_rx_nav_pvt.numSV;
 
-            if (_assembleEpochs ? !_epochHasHighPrecision
-                                : fixType < static_cast<uint8_t>(GPSPositionReport::FixType::RTKFixed)) {
+            if (_assembleEpochs ? !_epochHasHighPrecision : position.fix_type != GPSPositionReport::FixType::RTKFixed) {
                 // When RTK is active and solid (fix=6), these values will be filled by HPPOSLLH:
                 position.latitude_deg = payload_rx_nav_pvt.lat * UBX::DEGREES_PER_COORDINATE;
                 position.longitude_deg = payload_rx_nav_pvt.lon * UBX::DEGREES_PER_COORDINATE;
@@ -610,7 +636,8 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             }
             const auto& payload_rx_nav_sol = *decoded_payload_rx_nav_sol;
 
-            position.fix_type = GPSPositionReport::fixTypeFromValue(payload_rx_nav_sol.gpsFix);
+            position.fix_type = navigationFix(payload_rx_nav_sol.gpsFix, payload_rx_nav_sol.flags, false);
+            position.vel_ned_valid = velocityValid(position.fix_type);
             position.speedAccuracyMetersPerSecond =
                 static_cast<float>(payload_rx_nav_sol.sAcc) * 1e-2f;  // from cm to m
             position.satellites_used = payload_rx_nav_sol.numSV;
@@ -735,7 +762,7 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             position.vel_d_m_s = static_cast<float>(payload_rx_nav_velned.velD) * 1e-2f;  // NED DOWN velocity
             position.cog_rad = static_cast<float>(payload_rx_nav_velned.heading) * GPS_DEG_TO_RAD * 1e-5f;
             position.courseAccuracyRadians = static_cast<float>(payload_rx_nav_velned.cAcc) * GPS_DEG_TO_RAD * 1e-5f;
-            position.vel_ned_valid = true;
+            position.vel_ned_valid = velocityValid(position.fix_type);
 
             _got_velned = true;
 

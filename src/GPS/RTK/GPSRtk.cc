@@ -3,10 +3,11 @@
 #include "AutoConnectSettings.h"
 #include "GPSBaseStationConfig.h"
 #include "GPSCorrectionManager.h"
+#include "GPSDriver.h"
 #include "GPSProvider.h"
 #include "GPSRTKFactGroup.h"
-#include "GPSReceiverCapabilities.h"
 #include "GPSReceiverConfigValidation.h"
+#include "GPSReceiverDescriptor.h"
 #include "QGCLoggingCategory.h"
 #include "RTCMFramer.h"
 #include "RTKSettings.h"
@@ -25,23 +26,9 @@
 
 QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.GPSRtk")
 
-namespace {
-struct GPSReceiverTypeEntry
-{
-    QLatin1StringView key;
-    GPSType type;
-    int manufacturerId;  // RTKSettings::baseReceiverManufacturers enum value
-};
-
-constexpr GPSReceiverTypeEntry kGPSReceiverTypeTable[] = {
-    {QLatin1StringView("trimble"), GPSType::trimble, 1}, {QLatin1StringView("septentrio"), GPSType::septentrio, 2},
-    {QLatin1StringView("femtomes"), GPSType::femto, 3},  {QLatin1StringView("blox"), GPSType::ublox, 4},
-    {QLatin1StringView("unicore"), GPSType::unicore, 5}, {QLatin1StringView("quectel"), GPSType::quectel, 6},
-    {QLatin1StringView("passive"), GPSType::passive, 7},
-};
-}  // namespace
-
-GPSRtk::GPSRtk(QObject* parent) : QObject(parent), _gpsRtkFactGroup(new GPSRTKFactGroup(this))
+GPSRtk::GPSRtk(QObject* parent)
+    : QObject(parent)
+    , _gpsRtkFactGroup(std::make_shared<GPSRTKFactGroup>())
 {
     qCDebug(GPSRtkLog) << this;
 #ifndef QGC_NO_SERIAL_LINK
@@ -54,35 +41,58 @@ GPSRtk::GPSRtk(QObject* parent) : QObject(parent), _gpsRtkFactGroup(new GPSRTKFa
 
 GPSRtk::~GPSRtk()
 {
-    disconnectGPS();
+    _destroying = true;
+    _retireSession(++_session.generation);
 
     qCDebug(GPSRtkLog) << this;
 }
 
 void GPSRtk::_onGPSConnect()
 {
+    const QPointer<GPSRtk> guard(this);
+    const quint64 generation = ++_session.generation;
     _setError(GPSConnectionError::None);
-    _gpsRtkFactGroup->connected()->setRawValue(true);
+    if (guard && _session.generation == generation) {
+        _publishFacts({{_gpsRtkFactGroup->connected(), true}}, generation);
+    }
 }
 
 void GPSRtk::_onGPSDisconnect()
 {
-    _lastLoggedFixType.reset();
-    _correctionRegistration.reset();
-    _gpsRtkFactGroup->connected()->setRawValue(false);
-    _gpsRtkFactGroup->valid()->setRawValue(false);
-    _gpsRtkFactGroup->active()->setRawValue(false);
-    _gpsRtkFactGroup->currentDuration()->setRawValue(0);
-    _gpsRtkFactGroup->currentAccuracy()->setRawValue(qQNaN());
-    _gpsRtkFactGroup->currentLatitude()->setRawValue(qQNaN());
-    _gpsRtkFactGroup->currentLongitude()->setRawValue(qQNaN());
-    _gpsRtkFactGroup->currentAltitude()->setRawValue(qQNaN());
-    _gpsRtkFactGroup->numSatellites()->setRawValue(-1);
-    _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(-1);
-    _activeManufacturer = 0;
-    _activeBaseMode = -1;
-    _activeSerialDevice.clear();
+    disconnectGPS();
+}
+
+bool GPSRtk::_publishFacts(std::initializer_list<std::pair<Fact*, QVariant>> updates, quint64 generation)
+{
+    const QPointer<GPSRtk> guard(this);
+    const auto facts = _gpsRtkFactGroup;
+    for (const auto& [fact, value] : updates) {
+        fact->setRawValue(value);
+        if (!guard || _session.generation != generation) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool GPSRtk::_publishDisconnected(quint64 generation)
+{
+    const QPointer<GPSRtk> guard(this);
+    if (!_publishFacts({{_gpsRtkFactGroup->connected(), false},
+                        {_gpsRtkFactGroup->valid(), false},
+                        {_gpsRtkFactGroup->active(), false},
+                        {_gpsRtkFactGroup->currentDuration(), 0},
+                        {_gpsRtkFactGroup->currentAccuracy(), qQNaN()},
+                        {_gpsRtkFactGroup->currentLatitude(), qQNaN()},
+                        {_gpsRtkFactGroup->currentLongitude(), qQNaN()},
+                        {_gpsRtkFactGroup->currentAltitude(), qQNaN()},
+                        {_gpsRtkFactGroup->numSatellites(), -1},
+                        {_gpsRtkFactGroup->numSatellitesUsed(), -1}},
+                       generation)) {
+        return false;
+    }
     emit receiverChanged();
+    return guard && _session.generation == generation;
 }
 
 void GPSRtk::_onGPSConnectionError(GPSConnectionError error)
@@ -112,42 +122,50 @@ void GPSRtk::_onGPSConnectionError(GPSConnectionError error)
 
 void GPSRtk::_setError(GPSConnectionError error, const QString& message)
 {
-    _gpsRtkFactGroup->lastError()->setRawValue(static_cast<int>(error));
-    if (_errorMessage != message) {
-        _errorMessage = message;
+    const quint64 generation = _session.generation;
+    const bool changed = _errorMessage != message;
+    _errorMessage = message;
+    if (_publishFacts({{_gpsRtkFactGroup->lastError(), static_cast<int>(error)}}, generation) && changed) {
         emit errorMessageChanged();
     }
 }
 
 void GPSRtk::_onGPSSurveyInStatus(const GPSSurveyInStatus& status)
 {
-    if (_activeManufacturer == manufacturerForType(GPSType::passive)) {
+    if (_session.manufacturer == manufacturerForType(GPSType::passive)) {
         return;
     }
-    _gpsRtkFactGroup->currentDuration()->setRawValue(static_cast<qint64>(status.duration.count()));
-    _gpsRtkFactGroup->currentAccuracy()->setRawValue(status.meanAccuracyMeters.value_or(qQNaN()));
-    _gpsRtkFactGroup->currentLatitude()->setRawValue(status.coordinate.latitude());
-    _gpsRtkFactGroup->currentLongitude()->setRawValue(status.coordinate.longitude());
-    _gpsRtkFactGroup->currentAltitude()->setRawValue(status.altitudeEllipsoidMeters);
-    _gpsRtkFactGroup->valid()->setRawValue(status.valid);
-    _gpsRtkFactGroup->active()->setRawValue(status.active);
+    const quint64 generation = ++_session.generation;
+    _publishFacts({{_gpsRtkFactGroup->currentDuration(), static_cast<qint64>(status.duration.count())},
+                   {_gpsRtkFactGroup->currentAccuracy(), status.meanAccuracyMeters.value_or(qQNaN())},
+                   {_gpsRtkFactGroup->currentLatitude(), status.coordinate.latitude()},
+                   {_gpsRtkFactGroup->currentLongitude(), status.coordinate.longitude()},
+                   {_gpsRtkFactGroup->currentAltitude(), status.altitudeEllipsoidMeters},
+                   {_gpsRtkFactGroup->valid(), status.valid},
+                   {_gpsRtkFactGroup->active(), status.active}},
+                  generation);
 }
 
 #ifndef QGC_NO_SERIAL_LINK
 void GPSRtk::setSerialPortManager(SerialPortManager* serialPorts)
 {
-    if (hasReceiver()) {
+    if (_destroying || hasReceiver()) {
         return;
     }
+    ++_session.generation;
     QObject::disconnect(_portEnumerationConnection);
     _serialPorts = serialPorts;
     if (_serialPorts) {
         _portEnumerationConnection =
             connect(_serialPorts, &SerialPortManager::portsEnumerated, this, [this](const QStringList& availablePorts) {
-                if (!_activeSerialDevice.isEmpty() && !availablePorts.contains(_activeSerialDevice)) {
+                if (!_session.serialDevice.isEmpty() && !availablePorts.contains(_session.serialDevice)) {
+                    const QPointer<GPSRtk> guard(this);
+                    const quint64 generation = _session.generation + 1;
                     disconnectGPS();
-                    _setError(GPSConnectionError::DeviceError,
-                              tr("Receiver unplugged. Select a device and reconnect."));
+                    if (guard && _session.generation == generation) {
+                        _setError(GPSConnectionError::DeviceError,
+                                  tr("Receiver unplugged. Select a device and reconnect."));
+                    }
                 }
             });
     }
@@ -155,15 +173,24 @@ void GPSRtk::setSerialPortManager(SerialPortManager* serialPorts)
 
 bool GPSRtk::connectGPS(const QString& device, QStringView gps_type, uint32_t baudRate, bool allowPersistentChanges)
 {
+    if (_destroying) {
+        return false;
+    }
+    ++_session.generation;
     std::optional<GPSType> type;
-    for (const GPSReceiverTypeEntry& entry : kGPSReceiverTypeTable) {
-        if (gps_type.contains(entry.key, Qt::CaseInsensitive)) {
+    for (const auto& entry : gpsReceiverDescriptors()) {
+        if (gps_type.contains(QLatin1StringView(entry.detectionKey.data(), entry.detectionKey.size()),
+                              Qt::CaseInsensitive)) {
             type = entry.type;
             break;
         }
     }
     if (!type) {
         _setError(GPSConnectionError::ConfigFailed, tr("Select a specific receiver type before connecting."));
+        return false;
+    }
+    if (!GPSDriver::supportsType(*type)) {
+        _setError(GPSConnectionError::ConfigFailed, tr("The selected receiver type is unavailable in this build."));
         return false;
     }
     const QString endpoint = device.trimmed();
@@ -176,17 +203,12 @@ bool GPSRtk::connectGPS(const QString& device, QStringView gps_type, uint32_t ba
         _setError(GPSConnectionError::OpenFailed, tr("The selected serial device is already in use."));
         return false;
     }
-    const bool started = connectReceiver(
+    return _connectReceiver(
         *type,
         [endpoint, reservation, factory = _serialTransportFactory](const std::atomic_bool& requestStop) {
             return factory(endpoint, requestStop);
         },
-        QStringLiteral("serial:%1").arg(endpoint), baudRate, allowPersistentChanges);
-    if (started) {
-        _activeSerialDevice = endpoint;
-        emit receiverChanged();
-    }
-    return started;
+        QStringLiteral("serial:%1").arg(endpoint), baudRate, allowPersistentChanges, endpoint);
 }
 #endif
 
@@ -201,48 +223,32 @@ bool GPSRtk::serialSupported() const
 
 std::optional<GPSType> GPSRtk::typeForManufacturer(int manufacturer)
 {
-    for (const auto& entry : kGPSReceiverTypeTable) {
-        if (entry.manufacturerId == manufacturer) {
-            return entry.type;
-        }
+    if (const auto* descriptor = gpsReceiverDescriptorForManufacturer(manufacturer)) {
+        return descriptor->type;
     }
     return std::nullopt;
 }
 
 int GPSRtk::manufacturerForType(GPSType type)
 {
-    for (const auto& entry : kGPSReceiverTypeTable) {
-        if (entry.type == type) {
-            return entry.manufacturerId;
-        }
-    }
-    return 0;
+    const auto* descriptor = gpsReceiverDescriptor(type);
+    return descriptor ? descriptor->manufacturerId : 0;
 }
 
 QVariantMap GPSRtk::capabilitiesForManufacturer(int manufacturer) const
 {
-    GPSReceiverCapabilities capabilities;
-    for (const auto& entry : kGPSReceiverTypeTable) {
-        if (manufacturer != 0 && manufacturer != entry.manufacturerId) {
-            continue;
-        }
-        const auto receiverCapabilities = gpsReceiverCapabilities(entry.type, GPSReceiverConfig::Role::RTKBase);
-        capabilities.recognized |= receiverCapabilities.recognized;
-        capabilities.rtkBase |= receiverCapabilities.rtkBase;
-        capabilities.surveyIn |= receiverCapabilities.surveyIn;
-        capabilities.receiverAveraging |= receiverCapabilities.receiverAveraging;
-        capabilities.passive |= manufacturer != 0 && receiverCapabilities.passive;
-    }
-    return {{QStringLiteral("recognized"), capabilities.recognized},
-            {QStringLiteral("rtkBase"), capabilities.rtkBase},
-            {QStringLiteral("surveyIn"), capabilities.surveyIn},
-            {QStringLiteral("receiverAveraging"), capabilities.receiverAveraging},
-            {QStringLiteral("passive"), capabilities.passive}};
+    return gpsReceiverPresentation(manufacturer);
 }
 
 bool GPSRtk::connectConfiguredGPS(bool allowPersistentChanges)
 {
+    if (_destroying) {
+        return false;
+    }
+    ++_session.generation;
 #ifndef QGC_NO_SERIAL_LINK
+    const QPointer<GPSRtk> guard(this);
+    const quint64 generation = _session.generation;
     auto* settings = SettingsManager::instance()->rtkSettings();
     const auto type = typeForManufacturer(settings->baseReceiverManufacturers()->rawValue().toInt());
     if (!type) {
@@ -255,6 +261,9 @@ bool GPSRtk::connectConfiguredGPS(bool allowPersistentChanges)
     }
     const QString device = settings->serialDevice()->rawValue().toString().trimmed();
     const auto ports = _serialPorts ? _serialPorts->availablePorts() : QList<SerialPortManager::Port>{};
+    if (!guard || _session.generation != generation) {
+        return false;
+    }
     const auto port = std::find_if(ports.cbegin(), ports.cend(),
                                    [&device](const auto& candidate) { return candidate.systemLocation == device; });
     if (device.isEmpty() || port == ports.cend() || port->bootloader) {
@@ -267,11 +276,16 @@ bool GPSRtk::connectConfiguredGPS(bool allowPersistentChanges)
         return false;
     }
     emit manualConnectionRequested();
+    if (!guard || _session.generation != generation) {
+        return false;
+    }
     SettingsManager::instance()->autoConnectSettings()->autoConnectRTKGPS()->setRawValue(false);
-    for (const auto& entry : kGPSReceiverTypeTable) {
-        if (entry.type == *type) {
-            return connectGPS(device, entry.key.toString(), static_cast<uint32_t>(baud), allowPersistentChanges);
-        }
+    if (!guard || _session.generation != generation) {
+        return false;
+    }
+    if (const auto* descriptor = gpsReceiverDescriptor(*type)) {
+        return connectGPS(device, QString::fromLatin1(descriptor->detectionKey.data(), descriptor->detectionKey.size()),
+                          static_cast<uint32_t>(baud), allowPersistentChanges);
     }
 #else
     Q_UNUSED(allowPersistentChanges);
@@ -282,22 +296,35 @@ bool GPSRtk::connectConfiguredGPS(bool allowPersistentChanges)
 
 void GPSRtk::disconnectConfiguredGPS()
 {
+    if (_destroying) {
+        return;
+    }
+    const QPointer<GPSRtk> guard(this);
+    const quint64 generation = ++_session.generation;
     emit manualConnectionRequested();
+    if (!guard || _session.generation != generation) {
+        return;
+    }
     SettingsManager::instance()->autoConnectSettings()->autoConnectRTKGPS()->setRawValue(false);
-    disconnectGPS();
-    _setError(GPSConnectionError::None);
+    if (!guard || _session.generation != generation) {
+        return;
+    }
+    _retireSession(generation);
+    if (guard && _session.generation == generation && _publishDisconnected(generation)) {
+        _setError(GPSConnectionError::None);
+    }
 }
 
 void GPSRtk::setCorrectionManager(GPSCorrectionManager* manager)
 {
-    if (_correctionManager == manager) {
+    if (_destroying || _correctionManager == manager) {
         return;
     }
-    if (_gpsProvider) {
+    if (hasReceiver()) {
         qCWarning(GPSRtkLog) << "Inject the correction manager before connecting a receiver";
         return;
     }
-    _correctionRegistration.reset();
+    ++_session.generation;
     _correctionManager = manager;
 }
 
@@ -338,6 +365,26 @@ QString GPSRtk::_receiverConfig(GPSType type, RTKSettings* settings, uint32_t ba
 bool GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory,
                              const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges)
 {
+    if (_destroying) {
+        return false;
+    }
+    ++_session.generation;
+    return _connectReceiver(type, std::move(transportFactory), sourceInstance, baudRate, allowPersistentChanges);
+}
+
+bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory,
+                              const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
+                              const QString& serialDevice)
+{
+    const QPointer<GPSRtk> guard(this);
+    const quint64 generation = _session.generation;
+    const auto currentOperation = [guard, generation]() {
+        return guard && !guard->_destroying && guard->_session.generation == generation;
+    };
+    if (!GPSDriver::supportsType(type)) {
+        _setError(GPSConnectionError::ConfigFailed, tr("The selected receiver type is unavailable in this build."));
+        return false;
+    }
     RTKSettings* const settings = SettingsManager::instance()->rtkSettings();
     GPSReceiverConfig config;
     const QString configError = _receiverConfig(type, settings, baudRate, config, allowPersistentChanges);
@@ -345,25 +392,50 @@ bool GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
         _setError(GPSConnectionError::ConfigFailed, configError);
         return false;
     }
-    disconnectGPS();
+    _retireSession(generation);
+    if (!currentOperation() || !_publishDisconnected(generation)) {
+        return false;
+    }
     settings->baseReceiverManufacturers()->setRawValue(manufacturerForType(type));
+    if (!currentOperation()) {
+        return false;
+    }
     _setError(GPSConnectionError::None);
-    _activeManufacturer = manufacturerForType(type);
-    _activeBaseMode =
-        config.role == GPSReceiverConfig::Role::Passive ? -1 : settings->useFixedBasePosition()->rawValue().toInt();
-    _gpsProvider = new GPSProvider(std::move(transportFactory), type, config, this);
-    const QPointer<GPSProvider> provider = _gpsProvider;
+    if (!currentOperation()) {
+        return false;
+    }
     const QPointer<GPSCorrectionManager> correctionManager = _correctionManager;
+    GPSCorrectionSourceRegistration registration;
     if (correctionManager) {
-        auto registration = correctionManager->registerSource(GPSCorrectionSource::LocalReceiver, sourceInstance);
-        if (!provider || _gpsProvider != provider) {
+        registration = correctionManager->registerSource(GPSCorrectionSource::LocalReceiver, sourceInstance);
+        if (!currentOperation()) {
             return false;
         }
-        _correctionRegistration = std::move(registration);
     }
-    const auto token = _correctionRegistration.token();
-    const auto current = [this, provider, token, registered = !correctionManager.isNull()]() {
-        return provider && _gpsProvider == provider && _activeManufacturer != 0 && (!registered || token.valid());
+    _session.corrections = std::move(registration);
+    _session.configuration = config;
+    _session.manufacturer = manufacturerForType(type);
+    _session.baseMode = config.role == GPSReceiverConfig::Role::Passive ? -1
+                        : config.base.useFixedBase ? static_cast<int>(BaseModeDefinition::Mode::BaseFixed)
+                        : config.base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged
+                            ? static_cast<int>(BaseModeDefinition::Mode::BaseReceiverAveraging)
+                            : static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn);
+    _session.serialDevice = serialDevice;
+    _session.provider = new GPSProvider(std::move(transportFactory), type, config, this);
+    const QPointer<GPSProvider> provider = _session.provider;
+    (void) connect(
+        provider, &QThread::finished, this,
+        [this, provider]() {
+            if (provider && _session.provider == provider) {
+                disconnectGPS();
+            }
+        },
+        Qt::QueuedConnection);
+    (void) connect(provider, &QThread::finished, provider, &QObject::deleteLater);
+    const auto token = _session.corrections.token();
+    const auto current = [guard, provider, token, registered = !correctionManager.isNull()]() {
+        return guard && provider && guard->_session.provider == provider && guard->_session.manufacturer != 0 &&
+               (!registered || token.valid());
     };
     const auto connectCurrent = [this, provider, current]<typename... Args>(void (GPSProvider::*signal)(Args...),
                                                                             auto handler) {
@@ -401,38 +473,54 @@ bool GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
             _setError(GPSConnectionError::ConfigFailed, tr("Receiver configuration failed: %1").arg(detail));
         }
     });
-    (void) connectCurrent(&GPSProvider::connectionError, [this](GPSConnectionError error) {
-        _onGPSDisconnect();
-        _onGPSConnectionError(error);
+    (void) connectCurrent(&GPSProvider::connectionError, [this, guard](GPSConnectionError error) {
+        const quint64 retiredGeneration = ++_session.generation;
+        _retireSession(retiredGeneration);
+        if (guard && _session.generation == retiredGeneration && _publishDisconnected(retiredGeneration)) {
+            _onGPSConnectionError(error);
+        }
     });
     (void) connectCurrent(&GPSProvider::receiverReady, std::bind_front(&GPSRtk::_onGPSConnect, this));
-    (void) connect(
-        provider, &QThread::finished, this,
-        [this, provider]() {
-            if (provider && _gpsProvider == provider) {
-                _gpsProvider = nullptr;
-                _onGPSDisconnect();
-            }
-        },
-        Qt::QueuedConnection);
-    (void) connect(provider, &QThread::finished, provider, &QObject::deleteLater);
+    _session.started = true;
     provider->start();
     emit receiverChanged();
-    return provider && _gpsProvider == provider;
+    return currentOperation() && provider && _session.provider == provider;
+}
+
+void GPSRtk::_retireSession(quint64 generation)
+{
+    auto retired = std::move(_session);
+    _session = {};
+    _session.generation = generation;
+    const auto provider = retired.provider;
+    const auto timeoutMs = _disconnectTimeoutMs;
+    if (provider) {
+        // Retirement callbacks may delete this owner; the worker must already be independent.
+        provider->setParent(nullptr);
+        provider->stop();
+    }
+    retired.corrections.reset();
+    if (provider) {
+        if (!retired.started) {
+            delete provider.data();
+        } else if (!provider->wait(timeoutMs)) {
+            qCWarning(GPSRtkLog) << "GPS thread did not exit in time; deferring cleanup to finished()";
+        } else {
+            delete provider.data();
+        }
+    }
 }
 
 void GPSRtk::disconnectGPS()
 {
-    // Invalidate the session before waiting: queued output may still be in the GUI event queue.
-    auto* provider = std::exchange(_gpsProvider, nullptr);
-    _onGPSDisconnect();
-    if (provider) {
-        provider->stop();
-        if (!provider->wait(_disconnectTimeoutMs)) {
-            qCWarning(GPSRtkLog) << "GPS thread did not exit in time; deferring cleanup to finished()";
-            // The worker owns its stop flag and must survive destruction of this manager.
-            provider->setParent(nullptr);
-        }
+    if (_destroying) {
+        return;
+    }
+    const QPointer<GPSRtk> guard(this);
+    const quint64 generation = ++_session.generation;
+    _retireSession(generation);
+    if (guard && _session.generation == generation) {
+        _publishDisconnected(generation);
     }
 }
 
@@ -443,18 +531,21 @@ bool GPSRtk::connected() const
 
 GPSRTKFactGroup* GPSRtk::gpsRtkFactGroup()
 {
-    return _gpsRtkFactGroup;
+    return _gpsRtkFactGroup.get();
 }
 
 GPSRtk::SatelliteCounts GPSRtk::countSatellites(const GPSSatelliteReport& msg)
 {
     SatelliteCounts counts;
+    if (msg.timestampUs == 0) {
+        return counts;
+    }
     counts.inView = (std::min) (msg.count, GPSSatelliteReport::MAX_SATELLITES);
     if (msg.count > GPSSatelliteReport::MAX_SATELLITES) {
         return counts;
     }
     counts.used = 0;
-    for (uint16_t i = 0; i < counts.inView; ++i) {
+    for (int i = 0; i < counts.inView; ++i) {
         if (!msg.satellites[i].used) {
             counts.used.reset();
             break;
@@ -468,20 +559,20 @@ GPSRtk::SatelliteCounts GPSRtk::countSatellites(const GPSSatelliteReport& msg)
 
 void GPSRtk::_satelliteInfoUpdate(const GPSSatelliteReport& msg)
 {
+    const quint64 generation = ++_session.generation;
     const SatelliteCounts counts = countSatellites(msg);
     qCDebug(GPSRtkLog) << QStringLiteral("%1 in view, %2 used")
                               .arg(counts.inView)
                               .arg(counts.used ? QString::number(*counts.used) : QStringLiteral("unknown"));
-    _gpsRtkFactGroup->numSatellites()->setRawValue(counts.inView);
-    if (counts.used) {
-        _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(*counts.used);
-    }
+    const int used = counts.used.value_or(_session.countOnlySatelliteUsage.value_or(-1));
+    _publishFacts({{_gpsRtkFactGroup->numSatellites(), counts.inView}, {_gpsRtkFactGroup->numSatellitesUsed(), used}},
+                  generation);
 }
 
 void GPSRtk::_sensorGpsUpdate(const GPSPositionReport& msg)
 {
-    if (_lastLoggedFixType != msg.fixType) {
-        _lastLoggedFixType = msg.fixType;
+    if (_session.lastLoggedFixType != msg.fixType) {
+        _session.lastLoggedFixType = msg.fixType;
         qCDebug(GPSRtkLog) << "Receiver fix changed:" << static_cast<int>(msg.fixType);
     }
 }
@@ -489,5 +580,6 @@ void GPSRtk::_sensorGpsUpdate(const GPSPositionReport& msg)
 void GPSRtk::_satelliteUsageUpdate(const GPSSatelliteUsageReport& msg)
 {
     // A count-only observation cannot change the independently reported satellites in view.
-    _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(msg.usedCount.value_or(-1));
+    _session.countOnlySatelliteUsage = msg.usedCount;
+    _publishFacts({{_gpsRtkFactGroup->numSatellitesUsed(), msg.usedCount.value_or(-1)}}, ++_session.generation);
 }
