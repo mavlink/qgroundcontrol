@@ -85,12 +85,11 @@ int GPSNativeAshtech::waitForReply(NMEACommand command, const unsigned timeout)
     _waiting_for_command = command;
     const auto clearReply = qScopeGuard([this] { _command_state = NMEACommandState::idle; });
 
-    const auto result =
-        awaitCommand({_commandWrite.evidence.command, std::chrono::milliseconds(timeout)}, [this] {
-            return _command_state == NMEACommandState::received ? GPSCommandOutcome::Acknowledged
-                   : _command_state == NMEACommandState::nack   ? GPSCommandOutcome::Rejected
-                                                                : GPSCommandOutcome::Pending;
-        });
+    const auto result = awaitCommand({_commandWrite.evidence.command, std::chrono::milliseconds(timeout)}, [this] {
+        return _command_state == NMEACommandState::received ? GPSCommandOutcome::Acknowledged
+               : _command_state == NMEACommandState::nack   ? GPSCommandOutcome::Rejected
+                                                            : GPSCommandOutcome::Pending;
+    });
     return result.evidence.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
 }
 

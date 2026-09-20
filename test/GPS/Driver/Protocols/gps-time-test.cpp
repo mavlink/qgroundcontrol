@@ -30,6 +30,7 @@ void GPSProtocolUtcTest::_utc_data()
 {
     QTest::addColumn<tm>("utc");
     QTest::addColumn<qint64>("epoch");
+
     const struct
     {
         const char* name;

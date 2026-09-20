@@ -21,6 +21,7 @@ protected:
     void resetStream();
 
     void setRTCMEnabled(bool enabled) { _rtcmEnabled = enabled; }
+
     /// Complete printable line, without CR/LF. Vendor checksums remain the controller's responsibility.
     virtual int handleReceiverLine(std::string_view) { return 0; }
 

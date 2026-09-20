@@ -244,29 +244,6 @@ ctest -R MyTest                    # Run a single test by name
 ctest --rerun-failed               # Re-run only failed tests
 ```
 
-Ordinary GPS unit tests run in the QGroundControl executable through `add_qgc_test`, using
-the production GPS libraries. There are no separate GPS consumer projects or
-nested minimal-build tests. Python QML metadata and static checks remain separate
-CTest entries.
-
-The Linux-hosted `AndroidGPSCompatibilityTest` also runs in that executable. Its
-test-only object target compiles the bundled Android serial backend with private
-symbol aliases and without application PCH/unity compilation, so JNI simulation
-does not replace the application's desktop serial implementation.
-
-Allocation regressions use the shared test-build-only
-`UnitTestFramework/AllocationTracker` instead of separate executables overriding
-global allocation operators. Its RAII scopes count C++ allocation requests on the
-current thread; direct `malloc`/`realloc` calls are not counted. Keep assertions and
-reporting outside measured scopes. `AllocationTrackerTest` covers operator forms,
-failure handling, nested scopes and thread isolation; `GPSProtocolAllocationTest`
-retains the warmed-up 1,000-frame zero-allocation assertion.
-
-The optional `GPSFixpositionComparisonTest` uses the same tracker inside
-QGroundControl. Enable it with `QGC_BUILD_GPS_FIXPOSITION_PROTOTYPE`; comparisons
-are report-only unless `QGC_GPS_FIXPOSITION_REQUIRE_COMPATIBLE=1` enables the strict
-compatibility gate.
-
 ### Via `just`
 
 ```bash
