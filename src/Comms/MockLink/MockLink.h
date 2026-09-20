@@ -31,6 +31,7 @@ class MockLink : public LinkInterface
 {
     Q_OBJECT
     friend class MockLinkFTP;
+    friend class StandardModesTest;
 
 public:
     explicit MockLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);
@@ -447,9 +448,9 @@ private:
     QMutex _paramRequestListMutex;
 
     // Mavlink standard modes worker information
-    int _availableModesWorkerNextModeIndex = 0;         ///< 0: not active, +index: next mode the send in sequence, -index: send a single mode (indices are 1-based)
+    int _availableModesWorkerNextModeIndex = 0;  ///< 0: inactive; otherwise the next one-based streaming index
     /// Protects _availableModesWorkerNextModeIndex from check-then-set and read-modify-write races:
-    ///   - Main thread: _handleRequestMessageAvailableModes() checking/starting/stopping worker
+    ///   - Main thread: _handleRequestMessageAvailableModes() checking/starting a stream
     ///   - Worker thread: _availableModesWorker() incrementing index every 2ms (500Hz)
     QMutex _availableModesWorkerMutex;
     /// Sequence number sent in AVAILABLE_MODES_MONITOR. Written from the test (main) thread via

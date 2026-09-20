@@ -622,21 +622,22 @@ void ParameterManagerTest::_FTPnoFailure()
     // Test APM FTP-based parameter download (param.pck).
     // FailParamNoResponseToRequestList forces the FTP path by blocking PARAM_REQUEST_LIST.
     QVERIFY2(!_mockLink, "MockLink already connected");
-    _mockLink = MockLink::startAPMArduPlaneMockLink(MockConfiguration::OptionNone, MockConfiguration::FailParamNoResponseToRequestList);
 
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
     QSignalSpy spyVehicle(vehicleMgr, &MultiVehicleManager::activeVehicleAvailableChanged);
-    QVERIFY_SIGNAL_WAIT(spyVehicle, TestTimeout::mediumMs());
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    _mockLink = MockLink::startAPMArduPlaneMockLink(MockConfiguration::OptionNone,
+                                                    MockConfiguration::FailParamNoResponseToRequestList);
+    QTRY_VERIFY_WITH_TIMEOUT(!spyVehicle.isEmpty(), TestTimeout::mediumMs());
     QCOMPARE(spyVehicle.count(), 1);
     QCOMPARE(spyVehicle.first().at(0).toBool(), true);
 
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     QVERIFY(vehicle);
 
-    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
-    QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
+    QTRY_VERIFY_WITH_TIMEOUT(!spyParamsReady.isEmpty(), TestTimeout::longMs());
     QCOMPARE(spyParamsReady.takeFirst().at(0).toBool(), true);
 
     // Verify FTP was used and PARAM_REQUEST_LIST was not
@@ -664,20 +665,21 @@ void ParameterManagerTest::_FTPChangeParam()
 {
     // Test that parameter set works after APM FTP param download
     QVERIFY2(!_mockLink, "MockLink already connected");
-    _mockLink = MockLink::startAPMArduPlaneMockLink(MockConfiguration::OptionNone, MockConfiguration::FailParamNoResponseToRequestList);
 
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
     QSignalSpy spyVehicle(vehicleMgr, &MultiVehicleManager::activeVehicleAvailableChanged);
-    QVERIFY_SIGNAL_WAIT(spyVehicle, TestTimeout::mediumMs());
+    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    _mockLink = MockLink::startAPMArduPlaneMockLink(MockConfiguration::OptionNone,
+                                                    MockConfiguration::FailParamNoResponseToRequestList);
+    QTRY_VERIFY_WITH_TIMEOUT(!spyVehicle.isEmpty(), TestTimeout::mediumMs());
     QCOMPARE(spyVehicle.takeFirst().at(0).toBool(), true);
 
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     QVERIFY(vehicle);
 
-    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
-    QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
+    QTRY_VERIFY_WITH_TIMEOUT(!spyParamsReady.isEmpty(), TestTimeout::longMs());
     QCOMPARE(spyParamsReady.takeFirst().at(0).toBool(), true);
 
     ParameterManager* paramManager = vehicle->parameterManager();

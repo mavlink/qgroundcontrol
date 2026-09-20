@@ -42,26 +42,22 @@ void HashCheckTest::_connectAndWaitForParams()
     MultiVehicleManager *const vehicleMgr = MultiVehicleManager::instance();
     QVERIFY(vehicleMgr);
 
-    QSignalSpy spyVehicle(vehicleMgr, &MultiVehicleManager::activeVehicleAvailableChanged);
-    QVERIFY_SIGNAL_WAIT(spyVehicle, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(vehicleMgr->activeVehicle() != nullptr, TestTimeout::mediumMs());
 
     Vehicle *const vehicle = vehicleMgr->activeVehicle();
     QVERIFY(vehicle);
 
-    QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
-    QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
-
-    const QList<QVariant> arguments = spyParamsReady.takeFirst();
-    QCOMPARE(arguments.count(), 1);
-    QCOMPARE(arguments.at(0).toBool(), true);
+    auto* parameterManager = vehicle->parameterManager();
+    QVERIFY(parameterManager);
+    QTRY_VERIFY_WITH_TIMEOUT(parameterManager->parametersReady(), TestTimeout::longMs());
 }
 
 void HashCheckTest::_disconnectAndSettle()
 {
+    QSignalSpy spyDisconnect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
     _mockLink->disconnect();
     _mockLink = nullptr;
-    QSignalSpy spyDisconnect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
-    QVERIFY(UnitTest::waitForSignal(spyDisconnect, TestTimeout::longMs(), QStringLiteral("activeVehicleChanged")));
+    QTRY_VERIFY_WITH_TIMEOUT(!spyDisconnect.isEmpty(), TestTimeout::longMs());
     UnitTest::settleEventLoopForCleanup();
 }
 
@@ -213,18 +209,7 @@ void HashCheckTest::_hashCheckMatrix()
 
     } else if (highLatency) {
         _mockLink = _startPX4MockLinkHighLatency();
-
-        MultiVehicleManager *const vehicleMgr = MultiVehicleManager::instance();
-        QVERIFY(vehicleMgr);
-
-        QSignalSpy spyVehicle(vehicleMgr, &MultiVehicleManager::activeVehicleAvailableChanged);
-        QVERIFY_SIGNAL_WAIT(spyVehicle, TestTimeout::mediumMs());
-
-        Vehicle *const vehicle = vehicleMgr->activeVehicle();
-        QVERIFY(vehicle);
-
-        QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
-        QVERIFY_SIGNAL_WAIT(spyParamsReady, TestTimeout::longMs());
+        _connectAndWaitForParams();
 
     } else if (!px4) {
         _connectMockLink(firmwareType);

@@ -165,10 +165,7 @@ void VehicleTest::_connectMockLink(MAV_AUTOPILOT autopilot, MockConfiguration::F
     QVERIFY2(_vehicle != nullptr, "Vehicle should not be null after connection");
 
     if (autopilot != MAV_AUTOPILOT_INVALID) {
-        QSignalSpy spyConnect(_vehicle, &Vehicle::initialConnectComplete);
-        QVERIFY2(spyConnect.isValid(), "Failed to create spy for initialConnectComplete");
-        QVERIFY2(UnitTest::waitForSignal(spyConnect, TestTimeout::longMs(), QStringLiteral("initialConnectComplete")),
-                 "Timeout waiting for initial connect");
+        QVERIFY2(waitForInitialConnect(), "Timeout waiting for initial connect");
     }
 }
 
