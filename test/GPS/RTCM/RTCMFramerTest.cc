@@ -27,6 +27,9 @@ void RTCMFramerTest::_frameAccess()
         QCOMPARE(framer.addByte(static_cast<uint8_t>(frame[index])), index == frame.size() - 1);
     }
     QVERIFY(framer.valid());
+    QVERIFY(framer.valid());
+    QVERIFY(RTCMFramer::isValidFrame(frame));
+    QVERIFY(RTCMFramer::isValidFrame(framer.frame()));
     QCOMPARE(framer.messageId(), messageId);
     QCOMPARE(framer.payloadLength(), extraPayload + 2);
     QCOMPARE(QByteArrayView(framer.frame()), QByteArrayView(frame));
@@ -39,6 +42,22 @@ void RTCMFramerTest::_frameAccess()
     }
     QCOMPARE(QByteArrayView(framer.frame()), QByteArrayView(replacement));
     QCOMPARE(savedFrame, frame);
+    QVERIFY(framer.valid());
+    QVERIFY(!framer.addByte(0));
+    QVERIFY(!framer.valid());
+    QVERIFY(!framer.hasPartialFrame());
+
+    auto corrupted = replacement;
+    corrupted.back() ^= 1;
+    for (const char byte : corrupted) {
+        framer.addByte(static_cast<uint8_t>(byte));
+    }
+    QVERIFY(!framer.valid());
+    QVERIFY(!framer.valid());
+    for (const char byte : replacement) {
+        framer.addByte(static_cast<uint8_t>(byte));
+    }
+    QVERIFY(framer.valid());
 }
 
 void RTCMFramerTest::_frameViewAndReset()
@@ -49,6 +68,7 @@ void RTCMFramerTest::_frameViewAndReset()
     QVERIFY(!framer.valid());
     QVERIFY(!framer.hasPartialFrame());
     QVERIFY(!framer.nextFrame());
+    QVERIFY(!framer.valid());
     for (qsizetype index = 0; index < frame.size() - 1; ++index) {
         QVERIFY(!framer.addByte(static_cast<uint8_t>(frame[index])));
         QVERIFY(framer.hasPartialFrame());
@@ -114,8 +134,4 @@ void RTCMFramerTest::_implicitAdvance()
     QCOMPARE(rejected, expectedRejected);
 }
 
-#ifdef QGC_GPS_STANDALONE_TEST
-QTEST_GUILESS_MAIN(RTCMFramerTest)
-#else
 UT_REGISTER_TEST(RTCMFramerTest, TestLabel::Unit)
-#endif

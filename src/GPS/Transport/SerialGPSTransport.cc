@@ -147,7 +147,7 @@ QString SerialGPSTransport::_errorDetail() const
 }
 
 #ifdef Q_OS_ANDROID
-GPSWriteResult SerialGPSTransport::write(const uint8_t* buffer, int length)
+GPSWriteResult SerialGPSTransport::writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline)
 {
     if (isCancelled()) {
         return {GPSWriteStatus::Cancelled};
@@ -155,13 +155,16 @@ GPSWriteResult SerialGPSTransport::write(const uint8_t* buffer, int length)
     if (!buffer || length < 0) {
         return {GPSWriteStatus::InvalidData};
     }
+    if (deadline.hasExpired()) {
+        return {GPSWriteStatus::TimedOut};
+    }
     if (fatalError()) {
         return {GPSWriteStatus::Error, 0, 0, _errorDetail()};
     }
     if (length == 0) {
         return {GPSWriteStatus::Completed};
     }
-    // The legacy Android backend writes synchronously with its own timeout and cannot be interrupted.
+    // The synchronous Android backend can honor the caller's deadline only before submission.
     const qint64 count = _serial->write(reinterpret_cast<const char*>(buffer), length);
     const int written = static_cast<int>(std::clamp(count, qint64(0), qint64(length)));
     GPSWriteStatus status = GPSWriteStatus::Error;
@@ -170,7 +173,7 @@ GPSWriteResult SerialGPSTransport::write(const uint8_t* buffer, int length)
     } else if (count == length && !fatalError()) {
         status = GPSWriteStatus::Completed;
     }
-    // A failed legacy write can have delivered bytes without reporting their count.
+    // A failed backend write can have delivered bytes without reporting their count.
     const GPSWriteResult result{status, length, written, status == GPSWriteStatus::Error ? _errorDetail() : QString()};
     if (status != GPSWriteStatus::Completed) {
         _serial->close();

@@ -1,0 +1,8 @@
+#pragma once
+#cmakedefine01 QGC_GPS_ENABLE_UBX
+#cmakedefine01 QGC_GPS_ENABLE_ASHTECH
+#cmakedefine01 QGC_GPS_ENABLE_SBF
+#cmakedefine01 QGC_GPS_ENABLE_FEMTO
+#cmakedefine01 QGC_GPS_ENABLE_UNICORE
+#cmakedefine01 QGC_GPS_ENABLE_QUECTEL
+#cmakedefine01 QGC_GPS_ENABLE_PASSIVE

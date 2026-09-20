@@ -2,6 +2,7 @@
 #include <limits>
 #include <memory>
 #include <thread>
+#include <type_traits>
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
@@ -10,8 +11,15 @@
 #include <QtTest/QTest>
 
 #include "GPSStreamWrite_p.h"
-#include "PortableTest.h"
 #include "TCPGPSTransport.h"
+#include "UnitTest.h"
+
+static_assert(std::is_enum_v<GPSOpenStatus>);
+static_assert(std::is_enum_v<GPSReadStatus>);
+static_assert(std::is_enum_v<GPSWriteStatus>);
+static_assert(std::is_enum_v<GPSBaudStatus>);
+static_assert(GPSReadStatus::Data != GPSReadStatus::TimedOut);
+static_assert(GPSWriteStatus::Completed != GPSWriteStatus::Unsupported);
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
 #include <cstdlib>
@@ -62,11 +70,46 @@ public:
 };
 }  // namespace
 
-class GPSStreamTransportTest : public PortableTest
+class GPSStreamTransportTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
+
+    void _defaultWriteContract()
+    {
+        std::atomic_bool stop = false;
+        StreamWriteTransport transport(stop);
+        const uint8_t byte = 1;
+        QCOMPARE(transport.writeConfiguration(&byte, 1, QDeadlineTimer(transport.configurationWriteTimeout())).status,
+                 GPSWriteStatus::Unsupported);
+        stop = true;
+        QCOMPARE(transport.writeConfiguration(&byte, 1, QDeadlineTimer(transport.configurationWriteTimeout())).status,
+                 GPSWriteStatus::Cancelled);
+    }
+
+    void _serialCorrectionAllowance_data()
+    {
+        QTest::addColumn<int>("length");
+        QTest::addColumn<qint64>("baud");
+        QTest::addColumn<qint64>("expectedMs");
+        QTest::newRow("low-baud-frame") << 1029 << qint64(9600) << qint64(1172);
+        QTest::newRow("high-baud-frame") << 1029 << qint64(38400) << qint64(368);
+        QTest::newRow("empty") << 0 << qint64(9600) << qint64(200);
+        QTest::newRow("negative-length") << -1 << qint64(9600) << qint64(200);
+        QTest::newRow("zero-baud") << 1029 << qint64(0) << qint64(200);
+        QTest::newRow("negative-baud") << 1029 << qint64(-1) << qint64(200);
+        QTest::newRow("round-up") << 1 << qint64(115200) << qint64(101);
+        QTest::newRow("bounded-allowance") << 1000000 << qint64(9600) << qint64(3000);
+    }
+
+    void _serialCorrectionAllowance()
+    {
+        QFETCH(int, length);
+        QFETCH(qint64, baud);
+        QFETCH(qint64, expectedMs);
+        QCOMPARE(GPSTransport::serialCorrectionWriteTimeout(length, baud), std::chrono::milliseconds(expectedMs));
+    }
 
     void _writeResultCounts_data()
     {
@@ -257,7 +300,9 @@ private slots:
             QVERIFY(!transport->fatalError());
             return;
         }
-        QCOMPARE(transport->write(&byte, 1).writtenBytes, 1);
+        QCOMPARE(transport->writeConfiguration(&byte, 1, QDeadlineTimer(transport->configurationWriteTimeout()))
+                     .writtenBytes,
+                 1);
         const QByteArray payload(16 * 1024 * 1024, 'x');
         std::jthread cancellation;
         const bool cancelled = outcome.startsWith("cancelled");
@@ -286,5 +331,5 @@ private slots:
     }
 };
 
-QGC_REGISTER_PORTABLE_TEST(GPSStreamTransportTest, TestLabel::Unit)
+UT_REGISTER_TEST(GPSStreamTransportTest, TestLabel::Unit)
 #include "GPSStreamTransportTest.moc"

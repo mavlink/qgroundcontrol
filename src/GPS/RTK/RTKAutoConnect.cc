@@ -1,25 +1,37 @@
 #include "RTKAutoConnect.h"
 
-#include <QtCore/QSet>
-
 #include <algorithm>
 #include <iterator>
 
+#include <QtCore/QSet>
+
 #include "AutoConnectSettings.h"
 #include "GPSRtk.h"
+#include "SerialPortManager.h"
 
 RTKAutoConnect::RTKAutoConnect(AutoConnectSettings* settings, GPSRtk* receiver, SerialPortManager* serialPorts,
                                QObject* parent)
     : QObject(parent), _settings(settings), _receiver(receiver), _serialPorts(serialPorts)
-{}
-
-void RTKAutoConnect::stop()
 {
+    if (_receiver) {
+        connect(_receiver.data(), &GPSRtk::manualConnectionRequested, this, &RTKAutoConnect::_resetDiscovery);
+    }
+}
+
+void RTKAutoConnect::_resetDiscovery()
+{
+    ++_revision;
+    _autoConnectedPort.clear();
     _waitingPorts.clear();
     _retryDeadline = QDeadlineTimer::Forever;
     _retryDelayMs = 1000;
-    if (!_autoConnectedPort.isEmpty()) {
-        _autoConnectedPort.clear();
+}
+
+void RTKAutoConnect::stop()
+{
+    const bool hadAutoConnection = !_autoConnectedPort.isEmpty();
+    _resetDiscovery();
+    if (hadAutoConnection) {
         emit disconnectRequested();
     }
 }
@@ -33,7 +45,16 @@ void RTKAutoConnect::update()
         stop();
         return;
     }
+    const QPointer<RTKAutoConnect> guard(this);
+    const quint64 revision = ++_revision;
     const auto ports = _serialPorts->availablePorts();
+    if (!guard || revision != _revision || !_settings || !_receiver || !_serialPorts) {
+        return;
+    }
+    if (!_settings->autoConnectRTKGPS()->rawValue().toBool()) {
+        stop();
+        return;
+    }
     QSet<QString> present;
     for (const auto& port : ports) {
         present.insert(port.systemLocation);
@@ -43,6 +64,7 @@ void RTKAutoConnect::update()
                                  : QString();
     if (!_autoConnectedPort.isEmpty() && (!present.contains(_autoConnectedPort) || _autoConnectedPort == nmeaPort)) {
         stop();
+        return;
     }
     for (auto it = _waitingPorts.begin(); it != _waitingPorts.end();) {
         it = !present.contains(it.key()) ? _waitingPorts.erase(it) : std::next(it);

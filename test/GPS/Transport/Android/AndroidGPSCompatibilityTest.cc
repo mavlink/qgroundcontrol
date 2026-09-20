@@ -5,11 +5,14 @@
 #include <unistd.h>
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QThread>
 #include <QtTest/QTest>
 
 #include "AndroidSerial.h"
 #include "GPSTransportResult.h"
 #include "SerialGPSTransport.h"
+#include "UnitTest.h"
 #include "qserialport_p.h"
 
 namespace {
@@ -21,6 +24,7 @@ bool dtrSuccess = true;
 int rtsSupport = 1;
 bool rtsSuccess = true;
 QStringList warnings;
+QSerialPortPrivate* activePort = nullptr;
 
 void captureWarnings(QtMsgType type, const QMessageLogContext&, const QString& message)
 {
@@ -61,9 +65,17 @@ int getDeviceHandle(int)
     return 1;
 }
 
-void registerPointer(QSerialPortPrivate*) {}
+void registerPointer(QSerialPortPrivate* port)
+{
+    activePort = port;
+}
 
-void unregisterPointer(QSerialPortPrivate*) {}
+void unregisterPointer(QSerialPortPrivate* port)
+{
+    if (activePort == port) {
+        activePort = nullptr;
+    }
+}
 
 bool setParameters(int, int, int, int, int)
 {
@@ -132,13 +144,14 @@ int write(int, const char*, int length, int, bool)
 }
 }  // namespace AndroidSerial
 
-class AndroidGPSCompatibilityTest : public QObject
+class AndroidGPSCompatibilityTest : public UnitTest
 {
     Q_OBJECT
 private slots:
 
-    void init()
+    void init() override
     {
+        UnitTest::init();
         posixBackend = false;
         writeCalls = 0;
         dtrSupport = 1;
@@ -147,6 +160,7 @@ private slots:
         rtsSuccess = true;
         writeStep = [](int length) { return length; };
         warnings.clear();
+        activePort = nullptr;
     }
 
     void legacyWriteResults_data()
@@ -166,7 +180,14 @@ private slots:
         QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
         writeStep = [count](int) { return count; };
         const uint8_t payload[4]{};
-        const auto result = transport.write(payload, 4);
+        if (count < 0) {
+            expectLogMessage("Android.AndroidSerialPort", QtWarningMsg,
+                             QRegularExpression(QStringLiteral("^Failed to write to port")));
+        }
+        const auto result = transport.writeConfiguration(payload, 4, QDeadlineTimer(100));
+        if (count < 0) {
+            verifyExpectedLogMessage();
+        }
         QCOMPARE(writeCalls, 1);
         QCOMPARE(result.status, count == 4 ? GPSWriteStatus::Completed : GPSWriteStatus::Error);
         QCOMPARE(result.acceptedBytes, 4);
@@ -174,9 +195,22 @@ private slots:
         QCOMPARE(result.uncertainBytes(), 4 - (std::max) (count, 0));
         QCOMPARE(transport.fatalError(), count != 4);
         if (count != 4) {
-            QCOMPARE(transport.write(payload, 4).acceptedBytes, 0);
+            QCOMPARE(transport.writeConfiguration(payload, 4, QDeadlineTimer(100)).acceptedBytes, 0);
             QCOMPARE(writeCalls, 1);
         }
+    }
+
+    void expiredConfigurationSendsNothing()
+    {
+        std::atomic_bool stop = false;
+        SerialGPSTransport transport(QStringLiteral("test"), stop);
+        QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
+        const uint8_t payload = 42;
+        QCOMPARE(transport.writeConfiguration(&payload, 1, QDeadlineTimer(0)).status, GPSWriteStatus::TimedOut);
+        QCOMPARE(writeCalls, 0);
+        stop = true;
+        QCOMPARE(transport.writeConfiguration(&payload, 1, QDeadlineTimer(100)).status, GPSWriteStatus::Cancelled);
+        QCOMPARE(writeCalls, 0);
     }
 
     void boundedWritesSendNothing_data()
@@ -202,7 +236,7 @@ private slots:
         QCOMPARE(writeCalls, 0);
         QVERIFY(!transport.fatalError());
         stop = true;
-        QCOMPARE(transport.write(&payload, 1).status, GPSWriteStatus::Cancelled);
+        QCOMPARE(transport.writeConfiguration(&payload, 1, QDeadlineTimer(100)).status, GPSWriteStatus::Cancelled);
         QCOMPARE(writeCalls, 0);
     }
 
@@ -216,7 +250,7 @@ private slots:
             return length;
         };
         const uint8_t payload[4]{};
-        const auto result = transport.write(payload, 4);
+        const auto result = transport.writeConfiguration(payload, 4, QDeadlineTimer(100));
         QCOMPARE(result.status, GPSWriteStatus::Cancelled);
         QCOMPARE(result.writtenBytes, 4);
         QCOMPARE(result.uncertainBytes(), 0);
@@ -244,17 +278,44 @@ private slots:
         QVERIFY2(warnings.isEmpty(), qPrintable(warnings.join(QStringLiteral("; "))));
     }
 
+    void incomingDataIsDeliveredOnOwnerThread()
+    {
+        QSerialPort port(QStringLiteral("test"));
+        QVERIFY(port.open(QIODevice::ReadWrite));
+        QVERIFY(activePort);
+        QCOMPARE(QString::fromLatin1(port.metaObject()->className()), QStringLiteral("QGCAndroidTestSerialPort"));
+        std::atomic<QThread*> notifiedThread = nullptr;
+        connect(
+            &port, &QIODevice::readyRead, &port, [&] { notifiedThread = QThread::currentThread(); },
+            Qt::DirectConnection);
+        const QByteArray payload("worker-delivered data");
+        {
+            std::jthread producer(
+                [backend = activePort, payload] { backend->newDataArrived(payload.constData(), payload.size()); });
+        }
+        QTRY_COMPARE_WITH_TIMEOUT(notifiedThread.load(), port.thread(), TestTimeout::shortMs());
+        QCOMPARE(port.readAll(), payload);
+        port.close();
+        QVERIFY(!activePort);
+    }
+
     void unsupportedDtrClassification()
     {
         QSerialPort port(QStringLiteral("test"));
         QVERIFY(port.open(QIODevice::ReadWrite));
         dtrSuccess = false;
         dtrSupport = 0;
+        expectLogMessage("Android.AndroidSerialPort", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Failed to set DTR for device ID")));
         QVERIFY(!port.setDataTerminalReady(true));
+        verifyExpectedLogMessage();
         QCOMPARE(port.error(), QSerialPort::UnsupportedOperationError);
         port.clearError();
         dtrSupport = -1;
+        expectLogMessage("Android.AndroidSerialPort", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Failed to set DTR for device ID")));
         QVERIFY(!port.setDataTerminalReady(true));
+        verifyExpectedLogMessage();
         QCOMPARE(port.error(), QSerialPort::UnknownError);
     }
 
@@ -264,11 +325,17 @@ private slots:
         QVERIFY(port.open(QIODevice::ReadWrite));
         rtsSuccess = false;
         rtsSupport = 0;
+        expectLogMessage("Android.AndroidSerialPort", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Failed to set RTS for device ID")));
         QVERIFY(!port.setRequestToSend(true));
+        verifyExpectedLogMessage();
         QCOMPARE(port.error(), QSerialPort::UnsupportedOperationError);
         port.clearError();
         rtsSupport = -1;
+        expectLogMessage("Android.AndroidSerialPort", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Failed to set RTS for device ID")));
         QVERIFY(!port.setRequestToSend(true));
+        verifyExpectedLogMessage();
         QCOMPARE(port.error(), QSerialPort::UnknownError);
     }
 
@@ -282,7 +349,10 @@ private slots:
         QCOMPARE(::unlockpt(master), 0);
         QSerialPort port(QString::fromLocal8Bit(::ptsname(master)));
         QVERIFY(port.open(QIODevice::ReadWrite));
+        expectLogMessage("Android.AndroidSerialPort", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^TIOCMGET failed on ")));
         QVERIFY(!port.setDataTerminalReady(true));
+        verifyExpectedLogMessage();
         QCOMPARE(port.error(), QSerialPort::UnsupportedOperationError);
         QVERIFY(port.isOpen());
     }
@@ -297,17 +367,15 @@ private slots:
         QCOMPARE(::unlockpt(master), 0);
         QSerialPort port(QString::fromLocal8Bit(::ptsname(master)));
         QVERIFY(port.open(QIODevice::ReadWrite));
+        expectLogMessage("Android.AndroidSerialPort", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^TIOCMGET failed on ")));
         QVERIFY(!port.setRequestToSend(true));
+        verifyExpectedLogMessage();
         QCOMPARE(port.error(), QSerialPort::UnsupportedOperationError);
         QVERIFY(port.isOpen());
     }
 };
 
-int main(int argc, char** argv)
-{
-    QCoreApplication app(argc, argv);
-    AndroidGPSCompatibilityTest test;
-    return QTest::qExec(&test, argc, argv);
-}
+UT_REGISTER_TEST(AndroidGPSCompatibilityTest, TestLabel::Unit)
 
 #include "AndroidGPSCompatibilityTest.moc"

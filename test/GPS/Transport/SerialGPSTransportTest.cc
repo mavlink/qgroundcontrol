@@ -42,6 +42,7 @@ void SerialGPSTransportTest::_testReadAbortsWhenStopRequested()
     SerialGPSTransport transport(QStringLiteral("/dev/null"), stop);
     QVERIFY(!transport.isCancelled());
     stop = true;
+    QCOMPARE(transport.open().status, GPSOpenStatus::Cancelled);
 
     uint8_t buffer[16] = {};
     QVERIFY(transport.read(buffer, static_cast<int>(sizeof(buffer)), 100).status != GPSReadStatus::Data);
@@ -56,7 +57,8 @@ void SerialGPSTransportTest::_testWriteAbortsWhenStopRequested()
     stop = true;
 
     const uint8_t payload[4] = {1, 2, 3, 4};
-    QVERIFY(transport.write(payload, static_cast<int>(sizeof(payload))).status != GPSWriteStatus::Completed);
+    QCOMPARE(transport.writeConfiguration(payload, sizeof(payload), QDeadlineTimer(TestTimeout::shortMs())).status,
+             GPSWriteStatus::Cancelled);
 }
 
 void SerialGPSTransportTest::_testCancelPendingOperation_data()
@@ -137,7 +139,8 @@ void SerialGPSTransportTest::_testPendingWriteDeadline()
              0);
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     const uint8_t next = 42;
-    QCOMPARE(transport.write(&next, 1).status, GPSWriteStatus::Completed);
+    QCOMPARE(transport.writeConfiguration(&next, 1, QDeadlineTimer(TestTimeout::shortMs())).status,
+             GPSWriteStatus::Completed);
 #else
     QSKIP("A stalled serial write requires a Linux pseudo-terminal");
 #endif
@@ -212,7 +215,8 @@ void SerialGPSTransportTest::_inputBudgetEndsStream()
     QCOMPARE(result.bytesRead, 0);
     QVERIFY(!result.detail.isEmpty());
     QCOMPARE(transport.read(bytes, sizeof(bytes), 0).status, GPSReadStatus::Overflow);
-    QCOMPARE(transport.write(bytes, sizeof(bytes)).acceptedBytes, 0);
+    QCOMPARE(transport.writeConfiguration(bytes, sizeof(bytes), QDeadlineTimer(TestTimeout::shortMs())).acceptedBytes,
+             0);
 #else
     QSKIP("Serial ingress budget coverage requires a Linux pseudo-terminal");
 #endif
@@ -230,7 +234,8 @@ void SerialGPSTransportTest::_consecutiveWrites()
     QByteArray expected;
     for (int size : {1, 127, 3, 512, 17, 1029, 2}) {
         const QByteArray payload(size, char(size));
-        const auto result = transport.write(reinterpret_cast<const uint8_t*>(payload.constData()), size);
+        const auto result = transport.writeConfiguration(reinterpret_cast<const uint8_t*>(payload.constData()), size,
+                                                         QDeadlineTimer(TestTimeout::shortMs()));
         QCOMPARE(result.status, GPSWriteStatus::Completed);
         QCOMPARE(result.acceptedBytes, size);
         QCOMPARE(result.writtenBytes, size);

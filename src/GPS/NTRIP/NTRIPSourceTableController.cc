@@ -9,36 +9,11 @@
 #include <QtNetwork/QSslError>
 
 #include "NTRIPSourceTable.h"
+#include "NTRIPTlsPolicy_p.h"
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkClient.h"
 
 QGC_LOGGING_CATEGORY(NTRIPSourceTableControllerLog, "GPS.NTRIPSourceTableController")
-
-namespace {
-bool isSelfSignedOnly(const QList<QSslError>& errors)
-{
-    if (errors.isEmpty()) {
-        return false;
-    }
-    for (const QSslError& error : errors) {
-        switch (error.error()) {
-            case QSslError::SelfSignedCertificate:
-            case QSslError::SelfSignedCertificateInChain:
-                break;
-            case QSslError::UnableToGetLocalIssuerCertificate:
-            case QSslError::UnableToVerifyFirstCertificate:
-            case QSslError::CertificateUntrusted:
-                if (error.certificate().isNull() || !error.certificate().isSelfSigned()) {
-                    return false;
-                }
-                break;
-            default:
-                return false;
-        }
-    }
-    return true;
-}
-}  // namespace
 
 NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent)
     : QObject(parent),
@@ -60,10 +35,16 @@ QAbstractListModel* NTRIPSourceTableController::mountpointModel() const
 
 void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, const QGeoCoordinate& sortCoord)
 {
-    const QString cacheKey = config.casterIdentity();
+    if (_deferModelMutation([this, config, sortCoord]() { fetch(config, sortCoord); })) {
+        return;
+    }
+    auto casterConfig = config;
+    casterConfig.mountpoint.clear();
+    const bool sameCaster = casterConfig == _lastFetchConfig;
     const QString invalid = config.validationError();
 
-    if (invalid.isEmpty() && _reply && _fetchStatus == FetchStatus::InProgress && cacheKey == _lastFetchKey) {
+    if (invalid.isEmpty() && _reply && _fetchStatus == FetchStatus::InProgress && sameCaster) {
+        _sortCoord = sortCoord;
         return;
     }
 
@@ -79,16 +60,21 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
         return;
     }
 
-    if (_model->count() > 0 && _cacheAge.isValid() && cacheKey == _lastFetchKey) {
+    if (_model->count() > 0 && _cacheAge.isValid() && sameCaster) {
         if (const qint64 age = _cacheAge.elapsed(); age < kCacheTtlMs) {
             qCDebug(NTRIPSourceTableControllerLog) << "Source table cache hit, age:" << age << "ms";
+            _sortCoord = sortCoord;
+            _model->updateDistances(_sortCoord);
+            if (!current()) {
+                return;
+            }
             _fetchStatus = FetchStatus::Success;
             emit fetchStatusChanged();
             return;
         }
     }
 
-    if (cacheKey != _lastFetchKey) {
+    if (!sameCaster) {
         // Retire TLS connections authenticated under the previous certificate policy.
         _networkManager->clearConnectionCache();
         if (!current()) {
@@ -97,7 +83,7 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
     }
     _cacheAge.invalidate();
     _sortCoord = sortCoord;
-    _lastFetchKey = cacheKey;
+    _lastFetchConfig = casterConfig;
     _fetchStatus = FetchStatus::InProgress;
     _fetchError.clear();
 
@@ -131,7 +117,7 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
     const auto currentReply = [this, current, reply]() { return current() && reply && _reply == reply; };
     connect(reply, &QNetworkReply::sslErrors, this,
             [reply, currentReply, allowSelfSigned = config.allowSelfSignedCerts](const QList<QSslError>& errors) {
-                if (currentReply() && allowSelfSigned && isSelfSignedOnly(errors)) {
+                if (currentReply() && allowSelfSigned && NTRIPTlsPolicy::isSelfSignedOnly(errors)) {
                     reply->ignoreSslErrors(errors);
                 }
             });
@@ -192,6 +178,9 @@ void NTRIPSourceTableController::_onReplyFinished(QNetworkReply* reply, quint64 
 
 void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
 {
+    if (_deferModelMutation([this, table]() { _onSourceTableReceived(table); })) {
+        return;
+    }
     const QPointer<NTRIPSourceTableController> guard(this);
     const quint64 revision = _fetchRevision;
     const auto current = [this, guard, revision]() { return guard && _fetchRevision == revision; };
@@ -217,6 +206,9 @@ void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
 
 void NTRIPSourceTableController::_onFetchError(const QString& error)
 {
+    if (_deferModelMutation([this, error]() { _onFetchError(error); })) {
+        return;
+    }
     const QPointer<NTRIPSourceTableController> guard(this);
     const quint64 revision = _fetchRevision;
     const auto current = [this, guard, revision]() { return guard && _fetchRevision == revision; };
@@ -231,6 +223,25 @@ void NTRIPSourceTableController::_onFetchError(const QString& error)
     if (current()) {
         emit fetchStatusChanged();
     }
+}
+
+bool NTRIPSourceTableController::_deferModelMutation(std::function<void()> action)
+{
+    if (!_model->_mutating) {
+        return false;
+    }
+    // A reset observer can replace this fetch. Retire its publication now, but
+    // defer the replacement (including status signals) until the model is stable.
+    const quint64 revision = ++_fetchRevision;
+    QMetaObject::invokeMethod(
+        this,
+        [this, revision, action = std::move(action)]() {
+            if (_fetchRevision == revision) {
+                action();
+            }
+        },
+        Qt::QueuedConnection);
+    return true;
 }
 
 void NTRIPSourceTableController::_abortReply()

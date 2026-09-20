@@ -1,15 +1,53 @@
 #include <limits>
 
+#include <QtCore/QFile>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
 #include <QtTest/QTest>
 
 #include "GPSReceiverConfigValidation.h"
-#include "PortableTest.h"
+#include "UnitTest.h"
 
-class GPSBaseStationConfigTest : public PortableTest
+class GPSBaseStationConfigTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
+
+    void _currentBaseMetadata()
+    {
+        QFile file(QFINDTESTDATA("../../../src/GPS/RTK/GPSRTKFact.json"));
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const auto document = QJsonDocument::fromJson(file.readAll());
+        QVERIFY(document.isObject());
+        QJsonObject accuracy;
+        QJsonObject altitude;
+        QJsonObject inView;
+        QJsonObject used;
+        for (const auto& item : document.object().value("QGC.MetaData.Facts").toArray()) {
+            const auto fact = item.toObject();
+            if (fact.value("name") == "currentAccuracy") {
+                accuracy = fact;
+            } else if (fact.value("name") == "currentAltitude") {
+                altitude = fact;
+            } else if (fact.value("name") == "numSatellites") {
+                inView = fact;
+            } else if (fact.value("name") == "numSatellitesUsed") {
+                used = fact;
+            }
+        }
+        QVERIFY(!accuracy.isEmpty());
+        QVERIFY(accuracy.value("default").isNull());
+        QVERIFY(accuracy.value("longDesc").toString().contains("Unavailable"));
+        QVERIFY(!altitude.isEmpty());
+        QVERIFY(altitude.value("default").isNull());
+        QVERIFY(altitude.value("longDesc").toString().contains("WGS84 ellipsoid"));
+        QVERIFY(!inView.isEmpty());
+        QCOMPARE(inView.value("default").toInt(), -1);
+        QVERIFY(!used.isEmpty());
+        QCOMPARE(used.value("default").toInt(), -1);
+    }
 
     void _baseDiagnostic_data()
     {
@@ -22,10 +60,17 @@ private slots:
         QTest::newRow("invalid-fixed") << GPSBaseStationConfig{.useFixedBase = true}
                                        << QStringLiteral("Enter a valid fixed base position and accuracy");
         QTest::newRow("valid-fixed") << GPSBaseStationConfig{.useFixedBase = true,
-                                                             .fixedBaseLatitude = 0,
-                                                             .fixedBaseLongitude = 0,
-                                                             .fixedBaseAltitudeMeters = 0}
+                                                             .fixedPosition = {.latitudeDegrees = 0,
+                                                                               .longitudeDegrees = 0,
+                                                                               .altitudeMeters = 0}}
                                      << QString();
+        QTest::newRow("fixed-unavailable-accuracy")
+            << GPSBaseStationConfig{.useFixedBase = true,
+                                    .fixedPosition = {.latitudeDegrees = 47,
+                                                      .longitudeDegrees = 8,
+                                                      .altitudeMeters = 500},
+                                    .fixedBaseAccuracyMeters = std::numeric_limits<float>::quiet_NaN()}
+            << QStringLiteral("Enter a valid fixed base position and accuracy");
     }
 
     void _baseDiagnostic()
@@ -86,5 +131,5 @@ private slots:
     }
 };
 
-QGC_REGISTER_PORTABLE_TEST(GPSBaseStationConfigTest, TestLabel::Unit)
+UT_REGISTER_TEST(GPSBaseStationConfigTest, TestLabel::Unit)
 #include "GPSBaseStationConfigTest.moc"

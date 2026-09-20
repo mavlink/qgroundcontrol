@@ -18,6 +18,7 @@
 #include "MonotonicClock.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
+#include "RTCMDecodedFrame.h"
 #include "SettingsManager.h"
 
 void NTRIPManagerTest::cleanup()
@@ -86,14 +87,14 @@ void NTRIPManagerTest::testPlaintextCredentialWarningIsVisibleState()
     NTRIPManager mgr;
     QSignalSpy warningSpy(&mgr, &NTRIPManager::securityWarningChanged);
 
-    ignoreLogMessage("GPS.NTRIPManager", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Credentials sent without TLS encryption")));
-
     QVERIFY(mgr.securityWarning().isEmpty());
     mgr._onPlaintextCredentialsWarning();
 
     QCOMPARE(warningSpy.count(), 1);
     QVERIFY(mgr.securityWarning().contains(QStringLiteral("without TLS")));
+
+    mgr._onPlaintextCredentialsWarning();
+    QCOMPARE(warningSpy.count(), 1);
 }
 
 void NTRIPManagerTest::testTerminalStateStopsUdpForwarder_data()
@@ -484,7 +485,7 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     });
     NTRIPManager mgr;
     mgr.setCorrectionManager(&corrections);
-    QCOMPARE(mgr.rtcmMavlink(), corrections.rtcmMavlink());
+    QCOMPARE(mgr.metaObject()->indexOfProperty("rtcmMavlink"), -1);
     QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
     auto* first = new MockNTRIPTransport(&mgr);
     first->autoConnect = false;
@@ -499,7 +500,7 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     const qint64 receivedAtMs = GPSCorrectionFrame::monotonicNowMs() - 10;
     first->simulateRtcmData(frame, 1005, receivedAtMs);
     QCOMPARE(observed.size(), 1);
-    const auto result = qvariant_cast<RTCMFrameDecoder::Result>(observed[0][0]);
+    const auto result = qvariant_cast<RTCMDecodedFrame>(observed[0][0]);
     QCOMPARE(result.data, frame);
     QCOMPARE(result.messageId, 1005);
     QCOMPARE(result.receivedAtMs, receivedAtMs);
@@ -617,10 +618,12 @@ void NTRIPManagerTest::testGgaSettingsUseInjectedProviders()
     saved.setFactValue(settings->ntripGgaIntervalSec(), 60);
     NTRIPManager manager;
     manager.setGgaPositionProvider(Source::VehicleGPS, []() {
-        return PositionResult{QGeoCoordinate(47, 8, 500), QStringLiteral("Injected vehicle")};
+        return PositionResult{QGeoCoordinate(47, 8, 500), QStringLiteral("Injected vehicle"),
+                              GPSAltitudeDatum::MeanSeaLevel};
     });
     manager.setGgaPositionProvider(Source::GCSPosition, []() {
-        return PositionResult{QGeoCoordinate(48, 9, 600), QStringLiteral("Injected GCS")};
+        return PositionResult{QGeoCoordinate(48, 9, 600), QStringLiteral("Injected GCS"),
+                              GPSAltitudeDatum::MeanSeaLevel};
     });
     auto* transport = new MockNTRIPTransport(&manager);
     manager.setTransportForTest(transport);
@@ -733,7 +736,8 @@ void NTRIPManagerTest::testNtripOnlyUdpForwardingBypassesSelectionOnce()
     saved.setFactValue(settings->ntripUdpTargetAddress(), QStringLiteral("127.0.0.1"));
     saved.setFactValue(settings->ntripUdpTargetPort(), listener.localPort());
     GPSCorrectionManager corrections;
-    corrections.setSelectedSource(GPSCorrectionSource::LocalReceiver);
+    corrections.applyRoutingConfiguration(
+        {GPSCorrectionManager::RoutingPolicy::Manual, GPSCorrectionSource::LocalReceiver, {}});
     auto local = corrections.registerSource(GPSCorrectionSource::LocalReceiver, QStringLiteral("serial:test"));
     auto udp = corrections.registerSource(GPSCorrectionSource::Udp);
     NTRIPManager mgr;

@@ -33,9 +33,12 @@ public:
     /// A nonpositive timeout polls immediately available input. Failures never carry usable stream bytes.
     virtual GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) = 0;
 
-    /// Configuration writes preserve the same progress evidence as correction writes.
-    virtual GPSWriteResult write(const uint8_t* buffer, int length);
     virtual std::chrono::milliseconds configurationWriteTimeout() const;
+
+    /// Configuration-only entry point: honor the command deadline capped by the transport limit.
+    /// Configuration writes preserve the same progress evidence as correction writes.
+    /// Android serial explicitly overrides this with its synchronous backend; Unsupported never falls back.
+    virtual GPSWriteResult writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline);
 
     /// Counts describe transport progress, never receiver acknowledgement. Implementations must honor the deadline.
     /// A failed operation that accepted bytes retires the connection; open a new session before writing again.

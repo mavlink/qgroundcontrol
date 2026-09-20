@@ -44,8 +44,6 @@ public:
 
     using FanoutSink = std::function<QList<Admission>(const GPSCorrectionFrame&)>;
 
-    using DetailedSink = std::function<Submission(const GPSCorrectionFrame&)>;
-
     using Statistics = GPSCorrectionLedger::Statistics;
     using Destination = GPSCorrectionLedger::Destination;
     using Source = GPSCorrectionSelector::Source;
@@ -76,13 +74,9 @@ public:
     /// Returns global selection, not output admission.
     /// Scoped outputs may admit ingress even when false.
     bool acceptIngress(const GPSCorrectionIngress& ingress);
-    quint64 sourceSession(GPSCorrectionSource source) const;
     QString sourceInstance(GPSCorrectionSource source) const;
-    void setPolicy(Policy policy);
 
     Policy policy() const { return configuration().policy; }
-
-    void setSelectedSource(GPSCorrectionSource source, const QString& instance = {});
 
     GPSCorrectionSource selectedSource() const { return configuration().source; }
 
@@ -92,13 +86,9 @@ public:
 
     GPSCorrectionSource activeSource() const { return _selector.activeSource(_clock()); }
 
-    /// Configures scope and completion atomically for advanced outputs.
+    /// Configures scope and completion atomically.
+    /// Scoped outputs bypass global selection, but retain filtering and freshness checks.
     void setOutput(const QString& id, Output output);
-    void setSink(const QString& id, Sink sink);
-    /// Source-specific outputs deliberately bypass global selection, but retain filtering and freshness checks.
-    void setSourceSink(const QString& id, GPSCorrectionSource source, Sink sink);
-    void setFanoutSink(const QString& id, FanoutSink sink);
-    void setDetailedSink(const QString& id, DetailedSink sink, bool reportsWrites = true);
     void removeSink(const QString& id);
     /// Synchronous completion evidence is validated after admission returns.
     bool recordDelivery(const GPSCorrectionDelivery& delivery);
@@ -112,8 +102,6 @@ public:
     QList<Destination> destinations() const { return _ledger.destinations(); }
 
     const QList<GPSCorrectionEvent>& events() const { return _ledger.events(); }
-
-    qint64 nowMs() const { return _clock(); }
 
     QVariantList sourceDiagnostics() const;
     QVariantList sourceInstanceDiagnostics() const;
@@ -163,6 +151,13 @@ private:
         bool retireDelivery = false;
     };
 
+    struct StreamIdentity
+    {
+        GPSCorrectionSelector::SourceIdentity source;
+        quint64 session = 0;
+        bool operator==(const StreamIdentity&) const = default;
+    };
+
     void _deferRetirement(Retirement retirement);
     void _finishAdmission();
 
@@ -171,7 +166,7 @@ private:
     GPSCorrectionLedger _ledger;
     std::array<QString, 4> _configuredInstances;
     QMap<QString, Output> _sinks;
-    QString _lastSubmittedSource;
+    std::optional<StreamIdentity> _lastSubmittedStream = std::nullopt;
     quint64 _nextDelivery = 0;
     std::optional<AdmissionContext> _admission;
     quint64 _revision = 0;

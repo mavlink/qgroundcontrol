@@ -14,8 +14,8 @@ target_sources(
             NTRIPGgaProviderTest.h
             NTRIPSourceTableControllerTest.cc
             NTRIPSourceTableControllerTest.h
-            Standalone/NTRIPReentrancyTest.cc
-            Standalone/NTRIPTlsTest.cc
+            NTRIPReentrancyTest.cc
+            NTRIPTlsTest.cc
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -30,7 +30,6 @@ add_qgc_test(NTRIPReentrancyTest LABELS Unit GPS)
 add_qgc_test(NTRIPTlsTest LABELS Unit GPS)
 
 # QML_FOREIGN runtime registration can succeed even when tooling sees only opaque stubs.
-# Keep these generated-metadata checks out of the Core/Network-only standalone builds.
 if(TARGET QGroundControlModule)
     get_target_property(_qgc_qml_output_dir ${CMAKE_PROJECT_NAME} QT_QML_MODULE_OUTPUT_DIRECTORY)
     get_target_property(_qgc_qml_typeinfo ${CMAKE_PROJECT_NAME} QT_QML_MODULE_TYPEINFO)
@@ -43,6 +42,7 @@ if(TARGET QGroundControlModule)
             "${CMAKE_COMMAND}" -E env --modify "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::qmllint>"
             "$<TARGET_FILE:Python3::Interpreter>" "${CMAKE_SOURCE_DIR}/tools/analyze.py" --tool qmllint --qml-build
             --build-dir "${CMAKE_BINARY_DIR}" test/GPS/NTRIP/NTRIPQmlMetadata.qml
+            src/AppSettings/NtripConnectionSettings.qml
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
     set_tests_properties(NTRIPQmlMetadata NTRIPQmlLint PROPERTIES LABELS "Unit;GPS;QML" TIMEOUT 60)

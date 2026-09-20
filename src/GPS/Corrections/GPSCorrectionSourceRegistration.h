@@ -3,7 +3,7 @@
 #include <QtCore/QPointer>
 
 #include "GPSCorrectionDiagnostics.h"
-#include "RTCMFrameDecoder.h"
+#include "RTCMDecodedFrame.h"
 
 class GPSCorrectionRouter;
 class GPSCorrectionIngress;
@@ -25,7 +25,7 @@ public:
     GPSCorrectionIngress event(QByteArray data, qint64 receivedAtMs, int messageId, bool validated,
                                bool filtered = false, GPSCorrectionReason rejection = GPSCorrectionReason::None,
                                const QString& peerInstance = {}) const;
-    GPSCorrectionIngress event(const RTCMFrameDecoder::Result& result) const;
+    GPSCorrectionIngress event(const RTCMDecodedFrame& result) const;
     GPSCorrectionIngress event(const GPSCorrectionFrame& frame,
                                GPSCorrectionReason rejection = GPSCorrectionReason::None) const;
 

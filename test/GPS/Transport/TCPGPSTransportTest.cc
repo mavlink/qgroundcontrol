@@ -34,7 +34,10 @@ void TCPGPSTransportTest::_transferTimeoutAndPeerClose()
     const int received = transport.read(buffer, sizeof(buffer), TestTimeout::shortMs()).bytesRead;
     QCOMPARE(received, payload.size());
     QCOMPARE(QByteArray(reinterpret_cast<char*>(buffer), received), payload);
-    QCOMPARE(transport.write(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size()).writtenBytes,
+    QCOMPARE(transport
+                 .writeConfiguration(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
+                                     QDeadlineTimer(TestTimeout::shortMs()))
+                 .writtenBytes,
              payload.size());
     QTRY_COMPARE_WITH_TIMEOUT(peer->bytesAvailable(), payload.size(), TestTimeout::shortMs());
     QCOMPARE(peer->readAll(), payload);
@@ -52,8 +55,10 @@ void TCPGPSTransportTest::_transferTimeoutAndPeerClose()
     QCOMPARE(finalRead.bytesRead, payload.size());
     QCOMPARE(QByteArray(reinterpret_cast<char*>(buffer), finalRead.bytesRead), payload);
     QCOMPARE(transport.read(buffer, sizeof(buffer), 0).status, GPSReadStatus::Closed);
-    QVERIFY(transport.write(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size()).status !=
-            GPSWriteStatus::Completed);
+    QVERIFY(transport
+                .writeConfiguration(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
+                                    QDeadlineTimer(TestTimeout::shortMs()))
+                .status != GPSWriteStatus::Completed);
 }
 
 void TCPGPSTransportTest::_cancelWait_data()
@@ -74,7 +79,7 @@ void TCPGPSTransportTest::_cancelWait()
     TCPGPSTransport transport(QStringLiteral("localhost"), server.serverPort(), stop);
     QElapsedTimer elapsed;
     if (phase == QStringLiteral("before-open")) {
-        QVERIFY(transport.open().status != GPSOpenStatus::Opened);
+        QCOMPARE(transport.open().status, GPSOpenStatus::Cancelled);
     } else if (phase == QStringLiteral("connecting")) {
         QTimer::singleShot(0, &server, [&]() { stop = true; });
         elapsed.start();
@@ -94,8 +99,10 @@ void TCPGPSTransportTest::_cancelWait()
         } else {
             // Exceed the kernel send buffer to keep bytes pending until cancellation.
             const QByteArray payload(8 * 1024 * 1024, 'x');
-            QVERIFY(transport.write(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size()).status !=
-                    GPSWriteStatus::Completed);
+            QVERIFY(transport
+                        .writeConfiguration(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
+                                            QDeadlineTimer(TestTimeout::shortMs()))
+                        .status != GPSWriteStatus::Completed);
         }
         QVERIFY(elapsed.elapsed() < TestTimeout::shortMs());
     }
@@ -103,7 +110,8 @@ void TCPGPSTransportTest::_cancelWait()
     QVERIFY(transport.isCancelled());
     uint8_t byte{};
     QVERIFY(transport.read(&byte, 1, TestTimeout::shortMs()).status != GPSReadStatus::Data);
-    QVERIFY(transport.write(&byte, 1).status != GPSWriteStatus::Completed);
+    QCOMPARE(transport.writeConfiguration(&byte, 1, QDeadlineTimer(TestTimeout::shortMs())).status,
+             GPSWriteStatus::Cancelled);
 }
 
 void TCPGPSTransportTest::_refusedConnection()

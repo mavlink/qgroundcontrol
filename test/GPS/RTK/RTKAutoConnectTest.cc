@@ -1,12 +1,21 @@
 #include "RTKAutoConnectTest.h"
 
+#include <memory>
+
+#include <QtCore/QScopeGuard>
+#include <QtNetwork/QUdpSocket>
 #include <QtTest/QSignalSpy>
 
 #include "AutoConnectSettings.h"
 #include "Fixtures/RAIIFixtures.h"
+#include "GPSManager.h"
 #include "GPSRtk.h"
+#include "NMEASourceManager.h"
+#include "NTRIPManager.h"
+#include "PositionManager.h"
 #include "RTKAutoConnect.h"
 #include "RTKSettings.h"
+#include "SerialPortManager.h"
 #include "SettingsManager.h"
 
 void RTKAutoConnectTest::_discoveryUnplugAndDisable()
@@ -251,4 +260,168 @@ void RTKAutoConnectTest::_compositeReceiverSelection()
         QCOMPARE(connects.size(), 2);
         QCOMPARE(connects.last().first().toString(), second.systemLocation);
     }
+}
+
+void RTKAutoConnectTest::_genericUsbNeedsExplicitSelection_data()
+{
+    QTest::addColumn<int>("manufacturer");
+    QTest::newRow("unicore") << 5;
+    QTest::newRow("quectel") << 6;
+    QTest::newRow("passive") << 7;
+}
+
+void RTKAutoConnectTest::_genericUsbNeedsExplicitSelection()
+{
+    QFETCH(int, manufacturer);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    auto* rtkSettings = SettingsManager::instance()->rtkSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), true);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceDisabled);
+    saved.setFactValue(rtkSettings->baseReceiverManufacturers(), manufacturer);
+    saved.setFactValue(rtkSettings->serialDevice(), QStringLiteral("/test/ch340"));
+    const QList<SerialPortManager::Port> inventory{
+        {QStringLiteral("/test/ch340"), QStringLiteral("ch340"), QGCSerialPortInfo::BoardTypeUnknown,
+         QStringLiteral("CH340")},
+        {QStringLiteral("/test/ftdi"), QStringLiteral("ftdi"), QGCSerialPortInfo::BoardTypeUnknown,
+         QStringLiteral("FTDI")},
+        {QStringLiteral("/test/known"), QStringLiteral("known"), QGCSerialPortInfo::BoardTypeRTKGPS,
+         QStringLiteral("u-blox")},
+    };
+    SerialPortManager ports(nullptr, [&] { return inventory; });
+    GPSRtk receiver;
+    RTKAutoConnect discovery(settings, &receiver, &ports);
+    discovery._connectDelayMs = 0;
+    QSignalSpy connects(&discovery, &RTKAutoConnect::connectRequested);
+    discovery.update();
+    discovery.update();
+    QCOMPARE(connects.size(), 1);
+    QCOMPARE(connects.first().first().toString(), QStringLiteral("/test/known"));
+    QVERIFY(ports.canReservePort(QStringLiteral("/test/ch340")));
+    QVERIFY(ports.canReservePort(QStringLiteral("/test/ftdi")));
+}
+
+void RTKAutoConnectTest::_manualConnectionRetiresAutoOwnership()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), true);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceDisabled);
+    SerialPortManager ports(nullptr, [] {
+        return QList<SerialPortManager::Port>{{QStringLiteral("/test/known"), QStringLiteral("known"),
+                                               QGCSerialPortInfo::BoardTypeRTKGPS, QStringLiteral("u-blox")}};
+    });
+    GPSRtk receiver;
+    RTKAutoConnect discovery(settings, &receiver, &ports);
+    discovery._connectDelayMs = 0;
+    QSignalSpy connects(&discovery, &RTKAutoConnect::connectRequested);
+    QSignalSpy disconnects(&discovery, &RTKAutoConnect::disconnectRequested);
+    discovery.update();
+    discovery.update();
+    QCOMPARE(connects.size(), 1);
+    receiver.disconnectConfiguredGPS();
+    discovery.update();
+    discovery.stop();
+    QCOMPARE(disconnects.size(), 0);
+    QCOMPARE(connects.size(), 1);
+    QVERIFY(!settings->autoConnectRTKGPS()->rawValue().toBool());
+    settings->autoConnectRTKGPS()->setRawValue(true);
+    discovery.update();
+    discovery.update();
+    QCOMPARE(connects.size(), 2);
+}
+
+void RTKAutoConnectTest::_notificationSupersedesDiscovery_data()
+{
+    QTest::addColumn<bool>("disconnecting");
+    QTest::addColumn<QString>("action");
+    for (const bool disconnecting : {false, true}) {
+        for (const auto* action : {"delete", "stop", "update"}) {
+            const QByteArray name = QByteArray(disconnecting ? "disconnect-" : "enumeration-") + action;
+            QTest::newRow(name.constData()) << disconnecting << QString::fromLatin1(action);
+        }
+    }
+}
+
+void RTKAutoConnectTest::_notificationSupersedesDiscovery()
+{
+    QFETCH(bool, disconnecting);
+    QFETCH(QString, action);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), true);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceDisabled);
+    saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/rtk"));
+    SerialPortManager ports(nullptr, [] {
+        return QList<SerialPortManager::Port>{{QStringLiteral("/test/rtk"), QStringLiteral("rtk"),
+                                               QGCSerialPortInfo::BoardTypeRTKGPS, QStringLiteral("u-blox")}};
+    });
+    GPSRtk receiver;
+    auto discovery = std::make_unique<RTKAutoConnect>(settings, &receiver, &ports);
+    discovery->_connectDelayMs = 0;
+    QSignalSpy connects(discovery.get(), &RTKAutoConnect::connectRequested);
+    if (disconnecting) {
+        discovery->update();
+        discovery->update();
+        QCOMPARE(connects.size(), 1);
+        settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceSerial);
+    }
+    bool notified = false;
+    const auto supersede = [&] {
+        notified = true;
+        if (action == QStringLiteral("delete")) {
+            discovery.reset();
+        } else if (action == QStringLiteral("stop")) {
+            discovery->stop();
+        } else {
+            settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceDisabled);
+            discovery->update();
+        }
+    };
+    const auto notification = disconnecting
+                                  ? connect(discovery.get(), &RTKAutoConnect::disconnectRequested, this, supersede)
+                                  : connect(&ports, &SerialPortManager::portsEnumerated, this, supersede);
+    discovery->update();
+    disconnect(notification);
+    QVERIFY(notified);
+    QCOMPARE(connects.size(), disconnecting ? 1 : 0);
+    if (action == QStringLiteral("delete")) {
+        QVERIFY(!discovery);
+    } else if (action == QStringLiteral("stop")) {
+        QVERIFY(discovery->_waitingPorts.isEmpty());
+    } else {
+        discovery->update();
+        QCOMPARE(connects.size(), disconnecting ? 2 : 1);
+    }
+}
+
+void RTKAutoConnectTest::_shutdownDuringConnectionTick()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    saved.setFactValue(settings->autoConnectRTKGPS(), true);
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
+    QUdpSocket spare;
+    QVERIFY(spare.bind(QHostAddress::LocalHost, 0));
+    saved.setFactValue(settings->nmeaUdpPort(), spare.localPort());
+    spare.close();
+    auto* applicationCorrections = GPSManager::instance()->corrections();
+    const auto restoreCorrections = qScopeGuard(
+        [applicationCorrections] { NTRIPManager::instance()->setCorrectionManager(applicationCorrections); });
+    int enumerations = 0;
+    SerialPortManager ports(nullptr, [&] {
+        ++enumerations;
+        return QList<SerialPortManager::Port>{};
+    });
+    QGCPositionManager position;
+    GPSManager manager;
+    manager._nmeaSources = new NMEASourceManager(settings, &position, &manager);
+    manager._rtkAutoConnect = new RTKAutoConnect(settings, manager.gpsRtk(), &ports, &manager);
+    connect(&position, &QGCPositionManager::nmeaSourceChanged, &manager, &GPSManager::shutdown);
+    manager._updateConnections();
+    QVERIFY(manager._shutdown);
+    QVERIFY(!position.nmeaSourceDevice());
+    QCOMPARE(enumerations, 0);
+    manager._updateConnections();
+    QCOMPARE(enumerations, 0);
 }

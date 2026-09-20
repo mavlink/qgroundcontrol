@@ -5,7 +5,7 @@
 #include <QtCore/QVector>
 
 #include "NTRIPError.h"
-#include "RTCMFrameDecoder.h"
+#include "RTCMDecodedFrame.h"
 
 class NTRIPTransport : public QObject
 {
@@ -29,7 +29,7 @@ signals:
     void connected();
     void error(const NTRIPFailure& failure);
     /// Includes invalid and filtered candidates.
-    void correctionFrameReceived(const RTCMFrameDecoder::Result& frame);
+    void correctionFrameReceived(const RTCMDecodedFrame& frame);
 
     /// Warns before admitting a plaintext credential write; observers may cancel.
     void plaintextCredentialsWarning();

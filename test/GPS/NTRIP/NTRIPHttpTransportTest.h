@@ -13,6 +13,7 @@ private slots:
 
     void _testParseHttpStatus_data();
     void _testParseHttpStatus();
+    void _testHttpDecoderReset();
 
     // RTCM filtering
     void _testFilterNoWhitelist();
@@ -29,7 +30,6 @@ private slots:
     void testConfigRejectsColonUsername();
     void testConfigRejectsControlChars();
     void testConfigurationDomainsCompareIndependently();
-    void testConfigCasterIdentityExcludesMountpointAndSinks();
 
     // Live TLS error path
     void testTlsFatalErrorEmitsSingleError();
@@ -42,6 +42,7 @@ private slots:
     void _testBuildRequestPlaintextCredentialsWarns();
     void _testBuildRequestTlsCredentialsNoWarn();
     void _testBuildRequestNoCredentialsNoWarn();
+    void _testBuildRequestPreservesValues_data();
     void _testBuildRequestPreservesValues();
     void _testBuildRequestRejectsInvalidConfig_data();
     void _testBuildRequestRejectsInvalidConfig();

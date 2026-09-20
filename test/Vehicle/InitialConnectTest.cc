@@ -79,7 +79,7 @@ void InitialConnectTest::_boardVendorProductId()
     mockConfig->setBoardVendorProduct(mockVendor, mockProduct);
     SharedLinkConfigurationPtr linkConfig = mockConfig;
     LinkManager::instance()->createConnectedLink(linkConfig);
-    QVERIFY_SIGNAL_WAIT(activeVehicleSpy, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(!activeVehicleSpy.isEmpty(), TestTimeout::mediumMs());
     auto* vehicle = mvm->activeVehicle();
     QVERIFY(vehicle);
     QSignalSpy initialConnectCompleteSpy{vehicle, &Vehicle::initialConnectComplete};
@@ -89,9 +89,9 @@ void InitialConnectTest::_boardVendorProductId()
                       TestTimeout::mediumMs());
     QCOMPARE(vehicle->firmwareBoardVendorId(), mockVendor);
     QCOMPARE(vehicle->firmwareBoardProductId(), mockProduct);
-    LinkManager::instance()->disconnectAll();
     QSignalSpy vehicleRemovedSpy{mvm, &MultiVehicleManager::activeVehicleChanged};
-    QVERIFY_SIGNAL_WAIT(vehicleRemovedSpy, TestTimeout::mediumMs());
+    LinkManager::instance()->disconnectAll();
+    QTRY_VERIFY_WITH_TIMEOUT(!vehicleRemovedSpy.isEmpty(), TestTimeout::mediumMs());
 }
 
 void InitialConnectTest::_progressTracking()
@@ -160,12 +160,11 @@ void InitialConnectTest::_highLatencySkipsPlanRequests()
     QVERIFY(_mockLink);
     _mockLink->clearReceivedMavlinkMessageCounts();
 
-    QVERIFY(activeVehicleSpy.wait(TestTimeout::longMs()));
+    QTRY_VERIFY_WITH_TIMEOUT(!activeVehicleSpy.isEmpty(), TestTimeout::longMs());
     _vehicle = mvm->activeVehicle();
     QVERIFY(_vehicle);
 
-    QSignalSpy initialConnectCompleteSpy{_vehicle, &Vehicle::initialConnectComplete};
-    QVERIFY(initialConnectCompleteSpy.wait(TestTimeout::longMs()) || _vehicle->isInitialConnectComplete());
+    QVERIFY(waitForInitialConnect());
     QVERIFY(_vehicle->initialPlanRequestComplete());
     QCOMPARE(_mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_MISSION_REQUEST_LIST), 0);
 
@@ -232,7 +231,7 @@ void InitialConnectTest::_rallyFailurePathDoesNotLeakCompletionHandler()
     _mockLink = qobject_cast<MockLink*>(linkConfig->link());
     QVERIFY(_mockLink);
 
-    QVERIFY(activeVehicleSpy.wait(TestTimeout::longMs()));
+    QTRY_VERIFY_WITH_TIMEOUT(!activeVehicleSpy.isEmpty(), TestTimeout::longMs());
     _vehicle = mvm->activeVehicle();
     QVERIFY(_vehicle);
 
@@ -248,8 +247,7 @@ void InitialConnectTest::_rallyFailurePathDoesNotLeakCompletionHandler()
 
     // Rally read fails internally (PlanManager exhausts retries) but still signals
     // loadComplete, so initial connect completes with the plan request marked complete.
-    QSignalSpy initialConnectCompleteSpy{_vehicle, &Vehicle::initialConnectComplete};
-    QVERIFY(initialConnectCompleteSpy.wait(TestTimeout::longMs()) || _vehicle->isInitialConnectComplete());
+    QVERIFY(waitForInitialConnect());
     QVERIFY(_vehicle->initialPlanRequestComplete());
 
     _mockLink->setMissionItemFailureMode(MockLinkMissionItemHandler::FailNone, MAV_MISSION_ACCEPTED);
@@ -259,7 +257,7 @@ void InitialConnectTest::_rallyFailurePathDoesNotLeakCompletionHandler()
     QSignalSpy rallyLoadCompleteSpy{rallyPointManager, &RallyPointManager::loadComplete};
 
     rallyPointManager->loadFromVehicle();
-    QVERIFY(rallyLoadCompleteSpy.wait(TestTimeout::longMs()));
+    QTRY_VERIFY_WITH_TIMEOUT(!rallyLoadCompleteSpy.isEmpty(), TestTimeout::longMs());
     QCOMPARE(planCompleteSpy.count(), 0);
 
     _disconnectMockLink();
@@ -383,7 +381,7 @@ void InitialConnectTest::_subsystemFailureFallsThrough()
             MockLinkMissionItemHandler::FailReadRequestListNoResponse, MAV_MISSION_ACCEPTED);
     }
 
-    QVERIFY(activeVehicleSpy.wait(TestTimeout::longMs()));
+    QTRY_VERIFY_WITH_TIMEOUT(!activeVehicleSpy.isEmpty(), TestTimeout::longMs());
     _vehicle = mvm->activeVehicle();
     QVERIFY(_vehicle);
 
@@ -396,10 +394,7 @@ void InitialConnectTest::_subsystemFailureFallsThrough()
         });
     }
 
-    QSignalSpy initialConnectCompleteSpy{_vehicle, &Vehicle::initialConnectComplete};
-    if (!_vehicle->isInitialConnectComplete()) {
-        QVERIFY(initialConnectCompleteSpy.wait(TestTimeout::longMs()));
-    }
+    QVERIFY(waitForInitialConnect());
     QCOMPARE(_vehicle->parameterManager()->parametersReady(), expectParametersReady);
     QVERIFY(_vehicle->initialPlanRequestComplete());
 
@@ -496,13 +491,11 @@ void InitialConnectTest::_stateRunMatrix()
     _mockLink = qobject_cast<MockLink*>(linkConfig->link());
     QVERIFY(_mockLink);
 
-    QVERIFY(activeVehicleSpy.wait(TestTimeout::longMs()));
+    QTRY_VERIFY_WITH_TIMEOUT(!activeVehicleSpy.isEmpty(), TestTimeout::longMs());
     _vehicle = mvm->activeVehicle();
     QVERIFY(_vehicle);
 
-    // Initial connection likely completed already.
-    QSignalSpy initialConnectCompleteSpy{_vehicle, &Vehicle::initialConnectComplete};
-    QVERIFY(initialConnectCompleteSpy.wait(TestTimeout::longMs()) || _vehicle->isInitialConnectComplete());
+    QVERIFY(waitForInitialConnect());
 
     const int autopilotVersionReqCount =
         _mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AUTOPILOT_VERSION);

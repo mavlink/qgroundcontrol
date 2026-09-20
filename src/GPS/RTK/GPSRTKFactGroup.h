@@ -16,6 +16,7 @@ class GPSRTKFactGroup : public FactGroup
     Q_PROPERTY(Fact *numSatellites      READ numSatellites      CONSTANT)
     Q_PROPERTY(Fact *numSatellitesUsed  READ numSatellitesUsed  CONSTANT)
     Q_PROPERTY(Fact *lastError          READ lastError          CONSTANT)
+    Q_PROPERTY(bool canSaveCurrentBasePosition READ canSaveCurrentBasePosition NOTIFY currentBasePositionChanged)
 
 public:
     explicit GPSRTKFactGroup(QObject *parent = nullptr);
@@ -32,6 +33,12 @@ public:
     Fact *numSatellites() { return &_numSatellitesFact; }
     Fact *numSatellitesUsed() { return &_numSatellitesUsedFact; }
     Fact *lastError() { return &_lastErrorFact; }
+
+    /// A valid receiver status alone does not establish usable coordinates or accuracy.
+    bool canSaveCurrentBasePosition() const;
+
+signals:
+    void currentBasePositionChanged();
 
 private:
     Fact _connectedFact = Fact(0, QStringLiteral("connected"), FactMetaData::valueTypeBool);

@@ -10,11 +10,11 @@
 #include "GPSSurveyInStatus.h"
 #include "ManualScheduler.h"
 #include "MonotonicClock.h"
-#include "PortableTest.h"
+#include "UnitTest.h"
 
 static_assert(std::is_same_v<decltype(GPSObservation::altitudeDatum), decltype(GPSSurveyInStatus::altitudeDatum)>);
 
-class GPSAcceptedStateTest : public PortableTest
+class GPSAcceptedStateTest : public UnitTest
 {
     Q_OBJECT
 
@@ -334,6 +334,7 @@ void GPSAcceptedStateTest::_satelliteNormalization()
         QCOMPARE(actual.provenance[index].inViewTimestampUs, expected.provenance[index].inViewTimestampUs);
         QCOMPARE(actual.provenance[index].inUseTimestampUs, expected.provenance[index].inUseTimestampUs);
         QCOMPARE(actual.provenance[index].satellitesUsed, expected.provenance[index].satellitesUsed);
+        QCOMPARE(actual.provenance[index].usedSatelliteIds, expected.provenance[index].usedSatelliteIds);
     }
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
     QCOMPARE(native.observation().satellitesInViewCount(), -1);
@@ -392,6 +393,6 @@ void GPSAcceptedStateTest::_schedulerDestructionClearsAcceptedState()
     QVERIFY(satellites.observation().satellites.isEmpty());
 }
 
-QGC_REGISTER_PORTABLE_TEST(GPSAcceptedStateTest, TestLabel::Unit)
+UT_REGISTER_TEST(GPSAcceptedStateTest, TestLabel::Unit)
 
 #include "GPSAcceptedStateTest.moc"

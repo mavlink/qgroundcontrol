@@ -1,7 +1,10 @@
 #pragma once
 
+#include <optional>
+
 #include <QtCore/QMap>
 #include <QtCore/QObject>
+#include <QtCore/QString>
 
 #include "GPSCorrectionFrame.h"
 
@@ -24,14 +27,25 @@ public:
     {
         Policy policy = Policy::Automatic;
         GPSCorrectionSource source = GPSCorrectionSource::Unknown;
-        QString instance;
+        QString instance{};
         bool operator==(const Configuration&) const = default;
+    };
+
+    struct SourceIdentity
+    {
+        GPSCorrectionSource category = GPSCorrectionSource::Unknown;
+        QString instance{};
+        bool operator==(const SourceIdentity&) const = default;
+
+        bool operator<(const SourceIdentity& other) const
+        {
+            return category != other.category ? category < other.category : instance < other.instance;
+        }
     };
 
     struct Source
     {
-        GPSCorrectionSource category = GPSCorrectionSource::Unknown;
-        QString instance;
+        SourceIdentity identity{};
         quint64 session = 0;
         qint64 lastReceivedMs = 0;
         qint64 lastRoutableMs = 0;
@@ -50,7 +64,6 @@ public:
 
     QList<Source> sources() const { return _sources.values(); }
 
-    static QString key(GPSCorrectionSource source, const QString& instance);
     static constexpr qint64 FRESHNESS_TIMEOUT_MS = 5000;
     static constexpr qint64 SWITCH_HOLD_DOWN_MS = 2000;
     static constexpr qsizetype MAX_SOURCE_INSTANCES = 64;
@@ -60,8 +73,8 @@ private:
     bool _eligible(const Source& source, qint64 now) const;
     void _select(qint64 now);
     Configuration _configuration;
-    QMap<QString, Source> _sources;
-    QString _active;
-    QString _candidate;
+    QMap<SourceIdentity, Source> _sources;
+    std::optional<SourceIdentity> _active = std::nullopt;
+    std::optional<SourceIdentity> _candidate = std::nullopt;
     qint64 _candidateSinceMs = 0;
 };

@@ -10,12 +10,14 @@ NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent) : QObject(parent), _
 {
     _rateTimer.setInterval(std::chrono::seconds{1});
     _rateTimer.callOnTimeout(this, [this]() {
+        const double previousRate = _rateTracker.bytesPerSec();
+        _rateTracker.refresh();
         const quint64 totalBytes = _rateTracker.totalBytes();
         if (totalBytes != _prevBytesReceived) {
             _prevBytesReceived = totalBytes;
             emit bytesReceivedChanged();
             emit dataRateChanged();
-        } else if (_rateTracker.bytesPerSec() > 0) {
+        } else if (_rateTracker.bytesPerSec() != previousRate) {
             emit dataRateChanged();
         }
         if (_prevMessagesReceived != _messagesReceived) {

@@ -1,5 +1,7 @@
 #include "StandardModesTest.h"
 
+#include "MAVLinkLib.h"
+#include "MockLinkWorker.h"
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
 
@@ -18,6 +20,33 @@ void StandardModesTest::_monitorSequenceBumpTriggersRequery()
     QTRY_VERIFY_WITH_TIMEOUT(
         _mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_AVAILABLE_MODES) > baselineRequests,
         TestTimeout::longMs());
+}
+
+void StandardModesTest::_singleModeDoesNotDependOnPeriodicTelemetry()
+{
+    QVERIFY(_mockLink);
+    QVERIFY(_mockLink->_worker);
+    QVERIFY(QMetaObject::invokeMethod(_mockLink->_worker, &MockLinkWorker::stopWork, Qt::BlockingQueuedConnection));
+    auto* connectedVehicle = vehicle();
+    QVERIFY(connectedVehicle);
+    _singleModeReceived = false;
+    _singleModeValid = false;
+    connectedVehicle->requestMessage(
+        [](void* context, MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failure,
+           const mavlink_message_t& message) {
+            auto* test = static_cast<StandardModesTest*>(context);
+            mavlink_available_modes_t mode{};
+            if (message.msgid == MAVLINK_MSG_ID_AVAILABLE_MODES) {
+                mavlink_msg_available_modes_decode(&message, &mode);
+            }
+            test->_singleModeValid = result == MAV_RESULT_ACCEPTED &&
+                                     failure == VehicleTypes::RequestMessageNoFailure &&
+                                     message.msgid == MAVLINK_MSG_ID_AVAILABLE_MODES && mode.mode_index == 1;
+            test->_singleModeReceived = true;
+        },
+        this, MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AVAILABLE_MODES, 1);
+    QTRY_VERIFY_WITH_TIMEOUT(_singleModeReceived, TestTimeout::shortMs());
+    QVERIFY(_singleModeValid);
 }
 
 UT_REGISTER_TEST(StandardModesTest, TestLabel::Integration, TestLabel::Vehicle)

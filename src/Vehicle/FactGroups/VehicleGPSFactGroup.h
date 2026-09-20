@@ -1,6 +1,10 @@
 #pragma once
 
+#include <QtCore/QPointer>
+
 #include "FactGroup.h"
+
+class RuntimeScheduler;
 
 class VehicleGPSFactGroup : public FactGroup
 {
@@ -24,7 +28,7 @@ class VehicleGPSFactGroup : public FactGroup
     Q_PROPERTY(Fact* postProcessingQuality  READ postProcessingQuality  CONSTANT)
 
 public:
-    explicit VehicleGPSFactGroup(QObject *parent = nullptr);
+    explicit VehicleGPSFactGroup(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
 
     Fact *lat() { return &_latFact; }
     Fact *lon() { return &_lonFact; }
@@ -43,6 +47,9 @@ public:
     Fact *systemQuality() { return &_systemQualityFact; }
     Fact *gnssSignalQuality() { return &_gnssSignalQualityFact; }
     Fact *postProcessingQuality() { return &_postProcessingQualityFact; }
+
+    /// Receipt time in the scheduler's monotonic clock domain; zero until an integrity report arrives.
+    quint64 gnssIntegrityTimestampUs() const { return _gnssIntegrityTimestampUs; }
 
     // Overrides from FactGroup
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
@@ -75,4 +82,8 @@ protected:
     Fact _postProcessingQualityFact = Fact(0, QStringLiteral("postProcessingQuality"), FactMetaData::valueTypeUint8);
 
     uint8_t _gnssIntegrityId {};
+
+private:
+    QPointer<RuntimeScheduler> _scheduler;
+    quint64 _gnssIntegrityTimestampUs = 0;
 };

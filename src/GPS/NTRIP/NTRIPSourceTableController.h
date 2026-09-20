@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
@@ -69,6 +71,7 @@ private:
     void _onSourceTableReceived(const QString& table);
     void _onFetchError(const QString& error);
     void _abortReply();
+    bool _deferModelMutation(std::function<void()> action);
 
     NTRIPSourceTableModel* _model = nullptr;
     QNetworkAccessManager* _networkManager = nullptr;
@@ -80,5 +83,5 @@ private:
     QElapsedTimer _cacheAge;
     quint64 _fetchRevision = 0;
 
-    QString _lastFetchKey;
+    NTRIPConnectionConfig _lastFetchConfig;  ///< Mountpoint is excluded from source-table identity.
 };

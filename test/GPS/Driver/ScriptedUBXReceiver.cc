@@ -1,6 +1,7 @@
 #include "ScriptedUBXReceiver.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 
 #include <QtCore/QThread>
@@ -12,6 +13,7 @@ constexpr uint8_t CFG_TMODE3 = 0x71;
 constexpr uint8_t CFG_VALSET = 0x8a;
 constexpr uint8_t CFG_VALGET = 0x8b;
 constexpr uint32_t TMODE_MODE = 0x20030001;
+constexpr uint32_t TMODE_FIXED_POS_ACC = 0x4003000f;
 constexpr uint32_t TMODE_SVIN_MIN_DUR = 0x40030010;
 constexpr uint32_t TMODE_SVIN_ACC_LIMIT = 0x40030011;
 constexpr uint32_t NAVSPG_DYNMODEL = 0x20110021;
@@ -94,6 +96,11 @@ ScriptedUBXReceiver::ScriptedUBXReceiver(Model model, std::atomic_bool& stopRequ
     }
 }
 
+void ScriptedUBXReceiver::queueFrame(uint8_t messageClass, uint8_t messageId, const QByteArray& payload)
+{
+    _incoming.append({_frame(messageClass, messageId, payload)});
+}
+
 GPSReadResult ScriptedUBXReceiver::read(uint8_t* buffer, int length, int timeoutMs)
 {
     if (isCancelled() || _readError) {
@@ -102,8 +109,15 @@ GPSReadResult ScriptedUBXReceiver::read(uint8_t* buffer, int length, int timeout
     }
     if (_incoming.isEmpty()) {
         // Simulate a blocking transport timeout, not an unsolicited receiver response.
-        if (timeoutMs > 0) {
-            QThread::msleep(static_cast<unsigned long>(timeoutMs));
+        const auto until = std::chrono::steady_clock::now() + std::chrono::milliseconds(std::max(timeoutMs, 0));
+        while (!isCancelled() && std::chrono::steady_clock::now() < until) {
+            const auto remaining =
+                std::chrono::duration_cast<std::chrono::milliseconds>(until - std::chrono::steady_clock::now()).count();
+            QThread::msleep(static_cast<unsigned long>(std::clamp<int64_t>(remaining, 1, 10)));
+        }
+        if (isCancelled()) {
+            ++failedReads;
+            return {GPSReadStatus::Cancelled};
         }
         return {GPSReadStatus::TimedOut};
     }
@@ -127,10 +141,13 @@ GPSReadResult ScriptedUBXReceiver::read(uint8_t* buffer, int length, int timeout
     return {GPSReadStatus::Data, count};
 }
 
-GPSWriteResult ScriptedUBXReceiver::write(const uint8_t* buffer, int length)
+GPSWriteResult ScriptedUBXReceiver::writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline)
 {
     if (isCancelled()) {
         return {GPSWriteStatus::Cancelled};
+    }
+    if (deadline.hasExpired()) {
+        return {GPSWriteStatus::TimedOut};
     }
     _outgoing.append(reinterpret_cast<const char*>(buffer), length);
     while (_outgoing.size() >= 6) {
@@ -211,6 +228,8 @@ QHash<quint32, quint64> ScriptedUBXReceiver::_valsetValues(const QByteArray& pay
             surveyDuration = static_cast<unsigned>(value);
         } else if (key == TMODE_SVIN_ACC_LIMIT) {
             surveyAccuracy = static_cast<unsigned>(value);
+        } else if (key == TMODE_FIXED_POS_ACC) {
+            fixedAccuracy = static_cast<uint32_t>(value);
         } else if (key == NAVSPG_DYNMODEL) {
             dynamicModel = static_cast<unsigned>(value);
         }
@@ -242,6 +261,14 @@ bool ScriptedUBXReceiver::_handleFrame(const QByteArray& frame)
         if (corruptVersionReplies) {
             _incoming.append({corruptVersion});
         }
+        return true;
+    }
+    if (messageClass == 0x01 && messageId == 0x3b && payload.isEmpty()) {
+        QByteArray status(40, '\0');
+        status[37] = static_cast<char>(timeMode == 1 || surveyStopStuck);
+        qToLittleEndian<quint32>(retainedSurveyDuration, status.data() + 8);
+        ++surveyStopReads;
+        _incoming.append({_frame(messageClass, messageId, status)});
         return true;
     }
     if (messageClass != CFG_CLASS) {
@@ -285,6 +312,10 @@ bool ScriptedUBXReceiver::_handleFrame(const QByteArray& frame)
     std::optional<unsigned> mode;
     if (messageId == CFG_VALSET) {
         const auto values = _valsetValues(payload);
+        if (rejectRtcmActivation && values.value(0x30210001) == 1000) {
+            _queueAck(messageId, false);
+            return true;
+        }
         if (values.contains(TMODE_MODE)) {
             mode = static_cast<unsigned>(values.value(TMODE_MODE));
         }
@@ -307,10 +338,16 @@ bool ScriptedUBXReceiver::_handleFrame(const QByteArray& frame)
         }
     } else if (messageId == CFG_TMODE3 && payload.size() == 40) {
         mode = qFromLittleEndian<quint16>(payload.constData() + 2) & 0xff;
+        fixedAccuracy = qFromLittleEndian<quint32>(payload.constData() + 20);
         surveyDuration = qFromLittleEndian<quint32>(payload.constData() + 24);
         surveyAccuracy = qFromLittleEndian<quint32>(payload.constData() + 28);
     } else if (messageId == 0x24 && payload.size() == 36) {
         dynamicModel = static_cast<uint8_t>(payload[2]);
+    }
+    if (rejectRtcmActivation && messageId == 0x08 && payload.size() == 6 &&
+        qFromLittleEndian<quint16>(payload.constData()) == 1000) {
+        _queueAck(messageId, false);
+        return true;
     }
     if (!mode) {
         _queueAck(messageId, true);
@@ -335,6 +372,9 @@ bool ScriptedUBXReceiver::_handleFrame(const QByteArray& frame)
     if (disableReply == DisableReply::Ack || disableReply == DisableReply::Timeout ||
         disableReply == DisableReply::WrongAck || disableReply == DisableReply::CorruptAck) {
         timeMode = 0;
+        if (!surveyStopStuck) {
+            retainedSurveyDuration = 0;
+        }
     }
     return _replyToSetting(messageId, disableReply, true);
 }

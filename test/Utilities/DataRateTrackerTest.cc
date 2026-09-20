@@ -72,4 +72,43 @@ void DataRateTrackerTest::testKBpsConversion()
     QCOMPARE(tracker.kBps(), tracker.bytesPerSec() / 1024.0);
 }
 
+void DataRateTrackerTest::testRefreshDuringSilence()
+{
+    quint64 nowUs = 1000000;
+    DataRateTracker tracker([&nowUs]() { return nowUs; });
+    tracker.recordBytes(2048);
+    nowUs += 999999;
+    tracker.refresh();
+    QVERIFY(!tracker.rateUpdated());
+    QCOMPARE(tracker.bytesPerSec(), 0.0);
+
+    ++nowUs;
+    tracker.refresh();
+    QVERIFY(tracker.rateUpdated());
+    QCOMPARE(tracker.bytesPerSec(), 2048.0);
+    QCOMPARE(tracker.kBps(), 2.0);
+    nowUs += 1000000;
+    tracker.refresh();
+    QVERIFY(tracker.rateUpdated());
+    QCOMPARE(tracker.bytesPerSec(), 0.0);
+    QCOMPARE(tracker.totalBytes(), quint64(2048));
+
+    nowUs += 500000;
+    tracker.recordBytes(1024);
+    QVERIFY(!tracker.rateUpdated());
+    nowUs += 500000;
+    tracker.recordBytes(1024);
+    QVERIFY(tracker.rateUpdated());
+    QCOMPARE(tracker.bytesPerSec(), 2048.0);
+    QCOMPARE(tracker.totalBytes(), quint64(4096));
+
+    nowUs += 3000000;
+    tracker.refresh();
+    QCOMPARE(tracker.bytesPerSec(), 0.0);
+    QCOMPARE(tracker.totalBytes(), quint64(4096));
+    tracker.reset();
+    QCOMPARE(tracker.totalBytes(), quint64(0));
+    QVERIFY(!tracker.rateUpdated());
+}
+
 QGC_REGISTER_PORTABLE_TEST(DataRateTrackerTest, TestLabel::Unit)

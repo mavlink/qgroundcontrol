@@ -82,7 +82,8 @@ void UDPGPSTransportTest::_transferAndPartialReads()
     stop = true;
     QCOMPARE(transport.read(buffer, 0, 0).status, GPSReadStatus::Cancelled);
     QVERIFY(transport.read(buffer, sizeof(buffer), TestTimeout::shortMs()).status != GPSReadStatus::Data);
-    QVERIFY(transport.write(buffer, 1).status != GPSWriteStatus::Completed);
+    QCOMPARE(transport.writeConfiguration(buffer, 1, QDeadlineTimer(TestTimeout::shortMs())).status,
+             GPSWriteStatus::Cancelled);
 }
 
 void UDPGPSTransportTest::_cancelRead()
@@ -91,7 +92,7 @@ void UDPGPSTransportTest::_cancelRead()
     QVERIFY(receiver.bind(QHostAddress::LocalHost, 0));
     std::atomic_bool stop = true;
     UDPGPSTransport transport(QStringLiteral("127.0.0.1"), receiver.localPort(), stop);
-    QVERIFY(transport.open().status != GPSOpenStatus::Opened);
+    QCOMPARE(transport.open().status, GPSOpenStatus::Cancelled);
     stop = false;
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     QTimer::singleShot(0, &receiver, [&]() { stop = true; });
@@ -117,7 +118,8 @@ void UDPGPSTransportTest::_bindFailure()
     QVERIFY(transport.fatalError());
     uint8_t byte{};
     QVERIFY(transport.read(&byte, 1, 0).status != GPSReadStatus::Data);
-    QVERIFY(transport.write(&byte, 1).status != GPSWriteStatus::Completed);
+    QVERIFY(transport.writeConfiguration(&byte, 1, QDeadlineTimer(TestTimeout::shortMs())).status !=
+            GPSWriteStatus::Completed);
 }
 
 UT_REGISTER_TEST(UDPGPSTransportTest, TestLabel::Unit)
@@ -130,13 +132,15 @@ void UDPGPSTransportTest::_oversizedWriteIsRejectedWithoutRetiringPeer()
     UDPGPSTransport transport(QStringLiteral("127.0.0.1"), peer.localPort(), stop);
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     const QByteArray oversized(UDPGPSTransport::kMaxDatagramBytes + 1, 'x');
-    const auto result = transport.write(reinterpret_cast<const uint8_t*>(oversized.constData()), oversized.size());
+    const auto result = transport.writeConfiguration(reinterpret_cast<const uint8_t*>(oversized.constData()),
+                                                     oversized.size(), QDeadlineTimer(TestTimeout::shortMs()));
     QCOMPARE(result.status, GPSWriteStatus::InvalidData);
     QCOMPARE(result.acceptedBytes, 0);
     QVERIFY(!peer.hasPendingDatagrams());
     QVERIFY(!transport.fatalError());
     const uint8_t byte = 42;
-    QCOMPARE(transport.write(&byte, 1).status, GPSWriteStatus::Completed);
+    QCOMPARE(transport.writeConfiguration(&byte, 1, QDeadlineTimer(TestTimeout::shortMs())).status,
+             GPSWriteStatus::Completed);
     QTRY_VERIFY_WITH_TIMEOUT(peer.hasPendingDatagrams(), TestTimeout::shortMs());
     QCOMPARE(peer.receiveDatagram().data(), QByteArray(1, char(byte)));
 }

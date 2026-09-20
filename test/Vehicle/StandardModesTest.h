@@ -11,4 +11,9 @@ public:
 
 private slots:
     void _monitorSequenceBumpTriggersRequery();
+    void _singleModeDoesNotDependOnPeriodicTelemetry();
+
+private:
+    bool _singleModeReceived = false;
+    bool _singleModeValid = false;
 };

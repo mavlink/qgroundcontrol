@@ -1,13 +1,15 @@
 #include "GPSSourceHealthTest.h"
 
+#include <memory>
+
 #include <QtCore/QScopeGuard>
 #include <QtCore/QThread>
 #include <QtTest/QSignalSpy>
 
-#include <memory>
-
 #include "GPSSourceHealth.h"
+#include "LogManager.h"
 #include "ManualScheduler.h"
+#include "QGCLoggingCategoryManager.h"
 
 namespace {
 QGeoPositionInfo position()
@@ -131,6 +133,70 @@ void GPSSourceHealthTest::_resetDuringPositionNotification()
     QCOMPARE(positions.size(), 2);
     QCOMPARE(scheduler.pendingCount(), 0);
     QVERIFY(!health.acceptedObservation());
+}
+
+void GPSSourceHealthTest::_logsOnlyHealthTransitions()
+{
+    ManualScheduler scheduler;
+    GPSSourceHealth health(nullptr, &scheduler);
+    QSignalSpy changed(&health, &GPSSourceHealth::positionChanged);
+    const QString category = QStringLiteral("GPS.Core.GPSSourceHealth");
+    auto* logging = QGCLoggingCategoryManager::instance();
+    const bool wasEnabled = logging->isCategoryEnabled(category);
+    if (!wasEnabled) {
+        logging->setCategoryEnabled(category, true);
+    }
+    const auto restore = qScopeGuard([logging, category, wasEnabled] {
+        if (!wasEnabled) {
+            logging->setCategoryEnabled(category, false);
+        }
+    });
+    const auto logCount = [&] { return LogManager::capturedMessages(category).size(); };
+    const auto initialCount = logCount();
+
+    expectLogMessage("GPS.Core.GPSSourceHealth", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Position health changed:.*NoData.*Usable")));
+    health.updateObservation(observation(position(), scheduler, 60));
+    verifyExpectedLogMessage();
+    QCOMPARE(logCount(), initialCount + 1);
+    for (int i = 0; i < 3; ++i) {
+        auto next = position();
+        next.setCoordinate(QGeoCoordinate(47.123456 + i, 8.654321, 500));
+        health.updateObservation(observation(next, scheduler, 60));
+    }
+    QCOMPARE(logCount(), initialCount + 1);
+    QCOMPARE(changed.size(), 4);
+    QCOMPARE(health.coordinate().latitude(), 49.123456);
+
+    expectLogMessage("GPS.Core.GPSSourceHealth", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Position health changed:.*Usable.*Stale")));
+    health.setFreshnessTimeoutMs(50);
+    verifyExpectedLogMessage();
+    QCOMPARE(health.state(), GPSSourceHealth::State::Stale);
+    QCOMPARE(logCount(), initialCount + 2);
+    expectLogMessage("GPS.Core.GPSSourceHealth", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Position health changed:.*Stale.*Usable")));
+    health.updateObservation(observation(position(), scheduler));
+    verifyExpectedLogMessage();
+    QCOMPARE(logCount(), initialCount + 3);
+    expectLogMessage("GPS.Core.GPSSourceHealth", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Position health changed:.*Usable.*Invalid")));
+    health.invalidatePosition();
+    verifyExpectedLogMessage();
+    QCOMPARE(logCount(), initialCount + 4);
+    expectLogMessage("GPS.Core.GPSSourceHealth", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Position health changed:.*Invalid.*NoData")));
+    health.reset();
+    verifyExpectedLogMessage();
+    QCOMPARE(logCount(), initialCount + 5);
+    health.reset();
+    QCOMPARE(logCount(), initialCount + 5);
+    QCOMPARE(changed.size(), 9);
+    for (const auto& entry : LogManager::capturedMessages(category)) {
+        QVERIFY(!entry.message.contains(QStringLiteral("coordinate"), Qt::CaseInsensitive));
+        QVERIFY(!entry.message.contains(QStringLiteral("47.123")));
+        QVERIFY(!entry.message.contains(QStringLiteral("8.654")));
+    }
 }
 
 UT_REGISTER_TEST(GPSSourceHealthTest, TestLabel::Unit)

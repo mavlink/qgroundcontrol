@@ -14,10 +14,13 @@ class QTimer;
 class GPSManager : public QObject
 {
     Q_OBJECT
+    friend class RTKAutoConnectTest;
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("GPSCorrectionManager.h")
+    Q_MOC_INCLUDE("GPSRtk.h")
     Q_PROPERTY(GPSCorrectionManager* corrections READ corrections CONSTANT)
+    Q_PROPERTY(GPSRtk* gpsRtk READ gpsRtk CONSTANT)
 
 public:
     GPSManager(QObject* parent = nullptr);

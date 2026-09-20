@@ -12,8 +12,10 @@ struct GPSReceiverConfig
     enum class Role
     {
         RTKBase,
-        /// Currently supported only by u-blox; other backends cannot safely leave base mode.
+        /// Only receivers with a verified base-to-rover transition support this role.
         Position,
+        /// Receive NMEA/RTCM without issuing receiver configuration commands.
+        Passive,
     };
 
     Role role = Role::RTKBase;
@@ -24,6 +26,10 @@ struct GPSReceiverConfig
     std::optional<int> dynamicModel{};
     /// No currently supported role accepts heading offsets.
     std::optional<float> headingOffsetRadians{};
+    /// Zero selects managed-driver baud detection; passive serial input requires an explicit rate.
+    uint32_t baudRate = 0;
+    /// Per-connection consent to persistent receiver settings and the required restart.
+    bool allowPersistentChanges = false;
 };
 
 enum class GPSReceiverConfigError
@@ -40,6 +46,10 @@ enum class GPSReceiverConfigError
     InvalidDynamicModel,
     UnsupportedHeadingOffset,
     InvalidHeadingOffset,
+    UnsupportedBaseMode,
+    InvalidReceiverAveraging,
+    InvalidBaudRate,
+    UnsupportedPersistentConfiguration,
 };
 
 /// Check the selected base mode against the existing receiver wire-unit limits.

@@ -14,12 +14,11 @@
 #include "NTRIPGgaProvider.h"
 #include "NTRIPSourceTableController.h"
 #include "NTRIPTransport.h"
-#include "RTCMFrameDecoder.h"
+#include "RTCMDecodedFrame.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPManagerLog)
 
 class NTRIPSettings;
-class RTCMMavlink;
 class GPSCorrectionManager;
 
 /// Manages the NTRIP caster connection lifecycle as an explicit event-driven
@@ -35,7 +34,6 @@ class NTRIPManager : public QObject
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("NTRIPConnectionStats.h")
     Q_MOC_INCLUDE("NTRIPSourceTableController.h")
-    Q_MOC_INCLUDE("RTCMMavlink.h")
     Q_PROPERTY(ConnectionStatus connectionStatus READ connectionStatus NOTIFY connectionStatusChanged)
     Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged)
     Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged)
@@ -43,8 +41,6 @@ class NTRIPManager : public QObject
     Q_PROPERTY(QString ggaSource READ ggaSource NOTIFY ggaSourceChanged)
     Q_PROPERTY(NTRIPSourceTableController* sourceTableController READ sourceTableController CONSTANT)
     Q_PROPERTY(NTRIPConnectionStats* connectionStats READ connectionStats CONSTANT)
-    // Injection precedes init and QML bindings.
-    Q_PROPERTY(RTCMMavlink* rtcmMavlink READ rtcmMavlink CONSTANT)
 
 public:
     /// Public connection status. Numeric values are stable — QML binds against them.
@@ -107,9 +103,6 @@ public:
     NTRIPSourceTableController* sourceTableController() { return &_sourceTableController; }
 
     NTRIPConnectionStats* connectionStats() { return &_stats; }
-
-    /// Compatibility view of the injected manager's shared MAVLink output.
-    RTCMMavlink* rtcmMavlink() const;
 
     Q_INVOKABLE void fetchMountpoints();
 
@@ -179,7 +172,7 @@ private:
     void _onTransportError(const NTRIPFailure& failure);
     void _onPlaintextCredentialsWarning();
     void _setSecurityWarning(const QString& warning);
-    void _rtcmDataReceived(const RTCMFrameDecoder::Result& frame);
+    void _rtcmDataReceived(const RTCMDecodedFrame& frame);
     void _onSettingChanged();
     NTRIPConfiguration _configFromSettings() const;
     bool _isEnabled() const;

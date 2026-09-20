@@ -46,21 +46,15 @@ public:
     void applyRoutingConfiguration(const RoutingConfiguration& configuration);
     GPSCorrectionSourceRegistration registerSource(GPSCorrectionSource source, const QString& instance = {});
     void acceptIngress(const GPSCorrectionIngress& ingress);
-    void setSelectedSource(GPSCorrectionSource source);
 
     GPSCorrectionSource selectedSource() const { return _router.selectedSource(); }
 
-    void setRoutingPolicy(RoutingPolicy policy);
     RoutingPolicy routingPolicy() const;
-    void setSelectedInstance(const QString& instance);
 
     QString activeInstance() const { return _router.activeInstance(); }
 
-    void addSink(const QString& id, GPSCorrectionRouter::Sink sink);
     void removeSink(const QString& id);
     void setOutput(const QString& id, GPSCorrectionRouter::Output output);
-    void recordDeliveries(const QList<GPSCorrectionDelivery>& deliveries);
-    void invalidateDestination(const QString& id, quint64 destinationSession);
 
     GPSCorrectionEventModel* events() { return &_eventModel; }
 

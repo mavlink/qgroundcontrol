@@ -11,19 +11,29 @@
 #include <QtCore/qnumeric.h>
 #include <QtPositioning/QGeoCoordinate>
 
+#include "../Core/GPSAltitudeDatum.h"
+
 class NTRIPTransport;
 
 struct PositionResult
 {
     QGeoCoordinate coordinate;
     QString source;
+    GPSAltitudeDatum altitudeDatum = GPSAltitudeDatum::Unknown;
 
-    bool isValid() const { return coordinate.isValid() && qIsFinite(coordinate.altitude()); }
+    /// GGA needs MSL altitude. Providers must convert ellipsoid height using
+    /// known geoid separation before explicitly declaring it MeanSeaLevel.
+    bool isValid() const
+    {
+        return coordinate.isValid() && qIsFinite(coordinate.altitude()) &&
+               altitudeDatum == GPSAltitudeDatum::MeanSeaLevel;
+    }
 };
 
 class NTRIPGgaProvider : public QObject
 {
     Q_OBJECT
+    friend class NTRIPReentrancyTest;
 
 public:
     enum class PositionSource
@@ -72,15 +82,23 @@ private:
         Normal
     };
 
+    struct SelectedPosition
+    {
+        PositionResult position;
+        PositionSource source = PositionSource::Auto;
+    };
+
     void _sendGGA();
     void _setRetryPhase(RetryPhase phase);
     void _clearSource();
 
-    PositionResult _getBestPosition() const;
+    SelectedPosition _getBestPosition(PositionSource requested) const;
+    void _updateSelectionDiagnostic(PositionSource requested, const SelectedPosition& selection);
 
     QPointer<NTRIPTransport> _transport;
     QChronoTimer _timer;
     QString _source;
+    QString _selectionDiagnostic;
     QHash<PositionSource, PositionProvider> _providers;
     RetryPhase _retryPhase = RetryPhase::Normal;
     int _fastRetryCount = 0;

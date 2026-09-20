@@ -1,29 +1,41 @@
-if(NOT TARGET QGCGPSReceiverConfig)
-    add_library(QGCGPSReceiverConfig STATIC GPSReceiverConfig.cc)
-    add_library(QGC::GPSReceiverConfig ALIAS QGCGPSReceiverConfig)
-    set_target_properties(
-        QGCGPSReceiverConfig
-        PROPERTIES AUTOMOC OFF
-                   AUTOUIC OFF
-                   AUTORCC OFF
-                   POSITION_INDEPENDENT_CODE ON
-    )
-    target_compile_features(QGCGPSReceiverConfig PUBLIC cxx_std_20)
-    target_sources(
-        QGCGPSReceiverConfig
-        PUBLIC FILE_SET
-               HEADERS
-               FILES
-               GPSReceiverConfig.h
-               GPSReceiverCapabilities.h
-               GPSBaseStationConfig.h
-               GPSType.h
-    )
+if(TARGET QGCGPSReceiver)
+    return()
 endif()
 
-if(NOT TARGET QGCGPSDriverReports)
-    add_library(QGCGPSDriverReports INTERFACE)
-    add_library(QGC::GPSDriverReports ALIAS QGCGPSDriverReports)
-    target_compile_features(QGCGPSDriverReports INTERFACE cxx_std_20)
-    target_sources(QGCGPSDriverReports INTERFACE FILE_SET HEADERS FILES GPSDriverReports.h)
-endif()
+qt_add_library(QGCGPSReceiver STATIC GPSReceiverConfig.cc GPSReceiverDescriptor.cc)
+add_library(QGC::GPSReceiver ALIAS QGCGPSReceiver)
+set_target_properties(
+    QGCGPSReceiver
+    PROPERTIES AUTOMOC OFF
+               AUTOUIC OFF
+               AUTORCC OFF
+               POSITION_INDEPENDENT_CODE ON
+)
+target_compile_features(QGCGPSReceiver PUBLIC cxx_std_20)
+target_link_libraries(QGCGPSReceiver PUBLIC Qt6::Core)
+target_sources(
+    QGCGPSReceiver
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           GPSReceiverConfig.h
+           GPSReceiverCapabilities.h
+           GPSReceiverDescriptor.h
+           GPSBaseStationConfig.h
+           GPSEllipsoidPosition.h
+           GPSType.h
+           GPSDriverReports.h
+           GPSConfigurationEvidence.h
+           GPSSatelliteUsageReport.h
+)
+target_sources(
+    QGCGPSReceiver
+    PUBLIC FILE_SET
+           constellation_types
+           TYPE
+           HEADERS
+           BASE_DIRS
+           ..
+           FILES
+           ../GPSConstellation.h
+)

@@ -37,9 +37,19 @@ std::chrono::milliseconds GPSTransport::serialCorrectionWriteTimeout(int length,
     return std::chrono::milliseconds((std::min) (wireTimeMs + 100, qint64(3000)));
 }
 
-GPSWriteResult GPSTransport::write(const uint8_t* buffer, int length)
+GPSWriteResult GPSTransport::writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline)
 {
-    return writeBounded(buffer, length, QDeadlineTimer(configurationWriteTimeout()));
+    if (isCancelled()) {
+        return {GPSWriteStatus::Cancelled};
+    }
+    if (!buffer || length < 0) {
+        return {GPSWriteStatus::InvalidData};
+    }
+    if (deadline.hasExpired()) {
+        return {GPSWriteStatus::TimedOut};
+    }
+    const QDeadlineTimer cap(configurationWriteTimeout(), Qt::PreciseTimer);
+    return writeBounded(buffer, length, std::min(deadline, cap));
 }
 
 std::chrono::milliseconds GPSTransport::configurationWriteTimeout() const

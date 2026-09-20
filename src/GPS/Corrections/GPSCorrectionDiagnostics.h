@@ -21,13 +21,6 @@ enum class GPSCorrectionOutcome
 };
 Q_DECLARE_METATYPE(GPSCorrectionOutcome)
 
-struct GPSCorrectionSubmitResult
-{
-    bool accepted = false;
-    /// Describes rejection only; acceptance does not imply a terminal delivery outcome.
-    GPSCorrectionOutcome outcome = GPSCorrectionOutcome::NotReady;
-};
-
 /// A terminal destination result. Written bytes reached the transport write API, not receiver acknowledgement.
 struct GPSCorrectionDelivery
 {

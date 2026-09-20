@@ -1,37 +1,106 @@
 #include "GPSDriver.h"
 
-#include <ashtech.h>
-#include <base_station.h>
-#include <cstring>
-#include <definitions.h>
-#include <femtomes.h>
-#include <gps_helper.h>
-#include <sbf.h>
-#include <ubx.h>
+#include <algorithm>
+#include <array>
+#include <cerrno>
+#include <chrono>
+#include <thread>
+#include <type_traits>
 #include <utility>
 
-#include "GPSPx4Data_p.h"
+#include <QtCore/QScopedValueRollback>
+
+#include "GPSNativeData_p.h"
+#include "GPSProtocol.h"
+#include "GPSProtocolFeatures.h"
 #include "GPSReceiverConfigValidation.h"
 #include "GPSTransport.h"
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 
+#if QGC_GPS_ENABLE_UBX
+#include "UBX/GPSDriverUBX.h"
+#endif
+#if QGC_GPS_ENABLE_ASHTECH
+#include "Ashtech/GPSDriverAshtech.h"
+#endif
+#if QGC_GPS_ENABLE_SBF
+#include "SBF/GPSDriverSBF.h"
+#endif
+#if QGC_GPS_ENABLE_FEMTO
+#include "Femto/GPSDriverFemto.h"
+#endif
+#if QGC_GPS_ENABLE_UNICORE
+#include "Unicore/GPSDriverUnicore.h"
+#endif
+#if QGC_GPS_ENABLE_QUECTEL
+#include "Quectel/GPSDriverQuectel.h"
+#endif
+#if QGC_GPS_ENABLE_PASSIVE
+#include "Passive/GPSDriverPassive.h"
+#endif
+
 QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.GPSDriver")
-QGC_LOGGING_CATEGORY(GPSDriversLog, "GPS.Drivers")  // backs the px4 GPS_INFO/WARN/ERR macros in definitions.h
+QGC_LOGGING_CATEGORY(GPSNativeDriversLog, "GPS.Drivers")
 
 namespace {
-int callbackTrampoline(GPSCallbackType type, void* data1, int data2, void* user)
+template <typename Protocol>
+std::unique_ptr<GPSProtocol> makeProtocol(GPSProtocolIO io, GPSNativePositionReport* position,
+                                          GPSNativeSatelliteReport* satellites)
 {
-    return static_cast<GPSDriver*>(user)->handleCallback(static_cast<int>(type), data1, data2);
+    return std::make_unique<Protocol>(std::move(io), position, satellites);
+}
+
+struct ProtocolFactory
+{
+    GPSType type;
+    std::unique_ptr<GPSProtocol> (*create)(GPSProtocolIO, GPSNativePositionReport*, GPSNativeSatelliteReport*);
+};
+
+constexpr std::array PROTOCOL_FACTORIES{
+#if QGC_GPS_ENABLE_UBX
+    ProtocolFactory{GPSType::ublox, &makeProtocol<GPSNativeUBX>},
+#endif
+#if QGC_GPS_ENABLE_ASHTECH
+    ProtocolFactory{GPSType::trimble, &makeProtocol<GPSNativeAshtech>},
+#endif
+#if QGC_GPS_ENABLE_SBF
+    ProtocolFactory{GPSType::septentrio, &makeProtocol<GPSNativeSBF>},
+#endif
+#if QGC_GPS_ENABLE_FEMTO
+    ProtocolFactory{GPSType::femto, &makeProtocol<GPSNativeFemto>},
+#endif
+#if QGC_GPS_ENABLE_UNICORE
+    ProtocolFactory{GPSType::unicore, &makeProtocol<GPSNativeUnicore>},
+#endif
+#if QGC_GPS_ENABLE_QUECTEL
+    ProtocolFactory{GPSType::quectel, &makeProtocol<GPSNativeQuectel>},
+#endif
+#if QGC_GPS_ENABLE_PASSIVE
+    ProtocolFactory{GPSType::passive, &makeProtocol<GPSNativePassive>},
+#endif
+};
+
+auto findProtocolFactory(GPSType type)
+{
+    return std::find_if(PROTOCOL_FACTORIES.begin(), PROTOCOL_FACTORIES.end(),
+                        [type](const ProtocolFactory& factory) { return factory.type == type; });
 }
 }  // namespace
 
 struct GPSDriver::State
 {
-    State() { GPSPx4Data::initialize(position); }
-
-    sensor_gps_s position{};
-    satellite_info_s satellites{};
-    std::unique_ptr<GPSBaseStationSupport> driver;
+    GPSNativePositionReport position;
+    GPSNativeSatelliteReport satellites;
+    GPSNativeIntegrityReport integrity;
+    GPSNativeData::SatelliteSnapshot satelliteSnapshot;
+    std::unique_ptr<GPSProtocol> driver;
+    std::vector<GPSConfigurationEvidence> evidence;
+    QString configurationError;
+    bool configuring = false;
+    int updates = 0;
+    bool usefulData = false;
+    bool activity = false;
 };
 
 GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks)
@@ -44,153 +113,215 @@ GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverCon
 
 GPSDriver::~GPSDriver() = default;
 
+bool GPSDriver::supportsType(GPSType type)
+{
+    return findProtocolFactory(type) != PROTOCOL_FACTORIES.end();
+}
+
+const std::vector<GPSConfigurationEvidence>& GPSDriver::configurationEvidence() const
+{
+    return _state->evidence;
+}
+
+const QString& GPSDriver::configurationError() const
+{
+    return _state->configurationError;
+}
+
 bool GPSDriver::configure()
 {
-    _state->driver.reset();
-    GPSPx4Data::initialize(_state->position);
-    _state->satellites = {};
+    if (_operationInProgress) {
+        _state->configurationError = QStringLiteral("Receiver operation already in progress; configuration rejected");
+        qCWarning(GPSDriverLog) << _state->configurationError;
+        return false;
+    }
+    const QScopedValueRollback operation(_operationInProgress, true);
+    _state = std::make_unique<State>();
     if (const QString error = gpsReceiverConfigError(_type, _config); !error.isEmpty()) {
+        _state->configurationError = error;
         qCWarning(GPSDriverLog) << error;
         return false;
     }
 
-    unsigned baudrate = _transport.fixedBaudrate();
-    const float headingOffset = _config.headingOffsetRadians.value_or(0.0f);
-    switch (_type) {
-        case GPSType::trimble:
-            _state->driver = std::make_unique<GPSDriverAshtech>(&callbackTrampoline, this, &_state->position,
-                                                                &_state->satellites, headingOffset);
-            baudrate = 115200;
-            break;
-        case GPSType::septentrio:
-            _state->driver = std::make_unique<GPSDriverSBF>(&callbackTrampoline, this, &_state->position,
-                                                            &_state->satellites, headingOffset);
-            break;
-        case GPSType::ublox: {
-            const GPSDriverUBX::Settings settings{
-                .dynamic_model = static_cast<uint8_t>(_config.dynamicModel.value_or(7)),
-                .dgnss_timeout = 0,
-                .min_cno = 0,
-                .min_elev = 0,
-                .output_rate = 0,
-                .heading_offset = headingOffset,
-                .uart2_baudrate = 57600,
-                .ppk_output = false,
-                .jam_det_sensitivity_hi = false,
-                .mode = GPSDriverUBX::UBXMode::Normal,
-            };
-            _state->driver = std::make_unique<GPSDriverUBX>(GPSDriverUBX::Interface::UART, &callbackTrampoline, this,
-                                                            &_state->position, &_state->satellites, settings);
-            break;
+    GPSProtocolIO io;
+    io.nowUs = MonotonicClock::nowUs;
+    io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) {
+        const int timeout = deadline.remainingMilliseconds(MonotonicClock::nowUs());
+        const auto result = _transport.read(bytes.data(), static_cast<int>(bytes.size()), timeout);
+        _state->activity |= result.status == GPSReadStatus::Data && result.bytesRead > 0;
+        return result;
+    };
+    io.write = [this](std::span<const uint8_t> bytes, GPSDeadline deadline) {
+        const int remaining = deadline.remainingMilliseconds(MonotonicClock::nowUs());
+        // Do not submit another part of a multipart command after its absolute deadline.
+        if (_transport.isCancelled() || remaining == 0) {
+            return GPSWriteResult{_transport.isCancelled() ? GPSWriteStatus::Cancelled : GPSWriteStatus::TimedOut};
         }
-        case GPSType::femto:
-            _state->driver = std::make_unique<GPSDriverFemto>(&callbackTrampoline, this, &_state->position,
-                                                              &_state->satellites, headingOffset);
-            break;
-    }
+        return _transport.writeConfiguration(bytes.data(), static_cast<int>(bytes.size()), deadline.toQDeadlineTimer());
+    };
+    io.setBaudrate = [this](unsigned baud) {
+        if (_transport.isCancelled()) {
+            return GPSBaudStatus::Cancelled;
+        }
+        return _transport.setBaudrate(baud) ? GPSBaudStatus::Configured : GPSBaudStatus::Error;
+    };
+    io.wait = [this](std::chrono::microseconds duration) {
+        const auto until = std::chrono::steady_clock::now() + duration;
+        while (!_transport.isCancelled() && std::chrono::steady_clock::now() < until) {
+            std::this_thread::sleep_for(std::min(until - std::chrono::steady_clock::now(),
+                                                 std::chrono::steady_clock::duration(std::chrono::milliseconds(20))));
+        }
+        return !_transport.isCancelled();
+    };
+    io.log = [](GPSProtocolLogLevel level, QStringView message) {
+        if (level == GPSProtocolLogLevel::Debug) {
+            qCDebug(GPSNativeDriversLog) << message;
+        } else {
+            qCWarning(GPSNativeDriversLog) << message;
+        }
+    };
+    io.commandFinished = [this](const GPSCommandResult& result) {
+        if (_state->configuring) {
+            _state->evidence.push_back(result.evidence);
+        }
+    };
+    io.decoded = [this](const GPSDecodedBatch& batch) {
+        _state->activity |= !batch.events.empty();
+        for (const auto& event : batch.events) {
+            std::visit(
+                [this](const auto& report) {
+                    using Report = std::decay_t<decltype(report)>;
+                    if constexpr (std::is_same_v<Report, GPSNativeIntegrityReport>) {
+                        _state->integrity = report;
+                    } else if constexpr (std::is_same_v<Report, GPSNativePositionReport>) {
+                        if (!_state->configuring) {
+                            _state->usefulData = true;
+                            _state->updates |= 1;
+                            if (_sinks.onPosition) {
+                                _sinks.onPosition(
+                                    GPSNativeData::position(report, _state->integrity, MonotonicClock::nowUs()));
+                            }
+                        }
+                    } else if constexpr (std::is_same_v<Report, GPSNativeSatelliteReport>) {
+                        if (!_state->configuring) {
+                            _state->usefulData = true;
+                            _state->updates |= 2;
+                            const auto snapshot = _state->satelliteSnapshot.update(report, MonotonicClock::nowUs());
+                            if (_sinks.onSatelliteInfo) {
+                                _sinks.onSatelliteInfo(snapshot);
+                            }
+                        }
+                    } else if constexpr (std::is_same_v<Report, GPSSatelliteUsageReport>) {
+                        if (!_state->configuring) {
+                            _state->usefulData = true;
+                            _state->updates |= 2;
+                            if (_sinks.onSatelliteUsage) {
+                                _sinks.onSatelliteUsage(report);
+                            }
+                        }
+                    } else if constexpr (std::is_same_v<Report, GPSNativeSurveyReport>) {
+                        _state->usefulData = true;
+                        if (_sinks.onSurveyIn) {
+                            _sinks.onSurveyIn(GPSNativeData::survey(report));
+                        }
+                    } else if constexpr (std::is_same_v<Report, GPSRTCMReport>) {
+                        _state->usefulData = true;
+                        if (!_state->configuring && _sinks.onRTCM) {
+                            _sinks.onRTCM(std::span(report.bytes).first(report.size));
+                        }
+                    }
+                },
+                event);
+        }
+    };
 
-    if (!_state->driver) {
+    unsigned baudrate = _config.baudRate ? _config.baudRate : _transport.fixedBaudrate();
+    if (_config.baudRate && _transport.fixedBaudrate() && _config.baudRate != _transport.fixedBaudrate()) {
+        _state->configurationError = QStringLiteral("Selected baud rate differs from the transport's fixed baud rate");
+        qCWarning(GPSDriverLog) << _state->configurationError;
+        return false;
+    }
+    const auto factory = findProtocolFactory(_type);
+    if (factory == PROTOCOL_FACTORIES.end()) {
+        _state->configurationError = QStringLiteral("Unsupported GPS type: %1").arg(static_cast<int>(_type));
         qCWarning(GPSDriverLog) << "Unsupported GPS type:" << static_cast<int>(_type);
         return false;
     }
-
-    if (_config.role == GPSReceiverConfig::Role::RTKBase) {
-        const auto& base = _config.base;
-        if (base.useFixedBase) {
-            _state->driver->setBasePosition(base.fixedBaseLatitude, base.fixedBaseLongitude,
-                                            base.fixedBaseAltitudeMeters, base.fixedBaseAccuracyMeters * 1000.0f);
-        } else {
-            _state->driver->setSurveyInSpecs(static_cast<uint32_t>(base.surveyInAccMeters * 10000.0),
-                                             static_cast<uint32_t>(base.surveyInDurationSecs));
-        }
+    _state->driver = factory->create(std::move(io), &_state->position, &_state->satellites);
+    if (_type == GPSType::trimble && !_config.baudRate) {
+        baudrate = 115200;
     }
-
-    GPSHelper::GPSConfig gpsConfig{};
-    gpsConfig.output_mode =
-        _config.role == GPSReceiverConfig::Role::RTKBase ? GPSHelper::OutputMode::RTCM : GPSHelper::OutputMode::GPS;
-    gpsConfig.gnss_systems = static_cast<GPSHelper::GNSSSystemsMask>(_config.constellationMask);
-
-    if (_state->driver->configure(baudrate, gpsConfig) != 0) {
-        qCWarning(GPSDriverLog) << "Driver configuration failed for type" << static_cast<int>(_type);
+    GPSProtocol::GPSConfig config{};
+    config.base = _config.base;
+    const bool asciiReceiver = _type == GPSType::unicore || _type == GPSType::quectel || _type == GPSType::passive;
+    config.dynamicModel = static_cast<uint8_t>(_config.dynamicModel.value_or(asciiReceiver ? 0 : 7));
+    config.output_mode =
+        _config.role == GPSReceiverConfig::Role::RTKBase ? GPSProtocol::OutputMode::RTCM : GPSProtocol::OutputMode::GPS;
+    config.gnss_systems = static_cast<GPSProtocol::GNSSSystemsMask>(_config.constellationMask);
+    config.allowPersistentChanges = _config.allowPersistentChanges;
+    _state->configuring = true;
+    const int result = _state->driver->configure(baudrate, config);
+    _state->driver->finishConfigurationEvidence();
+    if (result >= 0) {
+        // Configuration can finish by publishing a fixed-base or survey-start event without another read.
+        _state->driver->consume({});
+    }
+    _state->configuring = false;
+    if (result < 0) {
+        _state->configurationError = _state->driver->ioErrorDetail();
+        if (_state->configurationError.isEmpty()) {
+            _state->configurationError = QStringLiteral("Receiver configuration failed");
+        }
+        qCWarning(GPSDriverLog) << "Driver configuration failed for type" << static_cast<int>(_type)
+                                << _state->configurationError;
         _state->driver.reset();
         return false;
     }
-
-    GPSPx4Data::initialize(_state->position);
+    _state->configurationError.clear();
     return true;
 }
 
-int GPSDriver::receive(unsigned timeoutMs)
+GPSReceiveResult GPSDriver::receiveOutcome(unsigned timeoutMs)
 {
+    if (_operationInProgress) {
+        const QString detail = QStringLiteral("Receiver operation already in progress; receive rejected");
+        qCWarning(GPSDriverLog) << detail;
+        return {GPSReceiveStatus::Busy, 0, -EBUSY, detail};
+    }
+    const QScopedValueRollback operation(_operationInProgress, true);
     if (!_state->driver) {
-        return -1;
+        return {GPSReceiveStatus::NotConfigured, 0, -1};
     }
-
-    const int ret = _state->driver->receive(timeoutMs);
-    if (ret < 0) {
-        return ret;
+    _state->updates = 0;
+    _state->usefulData = false;
+    _state->activity = false;
+    _publishExpiredSatellites();
+    const int result = _state->driver->receive(timeoutMs);
+    _publishExpiredSatellites();
+    const int error = _state->driver->ioError() ? _state->driver->ioError() : (result < -1 ? result : 0);
+    if (error) {
+        return {error == -ECANCELED ? GPSReceiveStatus::Cancelled
+                : error == -EPROTO  ? GPSReceiveStatus::ProtocolError
+                                    : GPSReceiveStatus::TransportError,
+                _state->updates, error, _state->driver->ioErrorDetail()};
     }
-
-    if ((ret & 0x01) && _sinks.onPosition) {
-        _sinks.onPosition(GPSPx4Data::position(_state->position));
+    if (_transport.isCancelled()) {
+        return {GPSReceiveStatus::Cancelled, _state->updates, -ECANCELED};
     }
-    if ((ret & 0x02) && _sinks.onSatelliteInfo) {
-        _sinks.onSatelliteInfo(GPSPx4Data::satellites(_state->satellites, _type));
+    if (_transport.fatalError()) {
+        return {GPSReceiveStatus::TransportError, _state->updates, -EIO};
     }
-    return ret;
+    return {_state->usefulData               ? GPSReceiveStatus::Data
+            : _state->activity || result > 0 ? GPSReceiveStatus::Activity
+                                             : GPSReceiveStatus::Idle,
+            _state->updates, 0};
 }
 
-int GPSDriver::handleCallback(int type, void* data1, int data2)
+void GPSDriver::_publishExpiredSatellites()
 {
-    switch (static_cast<GPSCallbackType>(type)) {
-        case GPSCallbackType::readDeviceData: {
-            int timeoutMs = 0;
-            memcpy(&timeoutMs, data1, sizeof(timeoutMs));  // px4 packs the timeout into data1's first bytes (unaligned)
-            const auto result = _transport.read(static_cast<uint8_t*>(data1), data2, timeoutMs);
-            if (result.status == GPSReadStatus::Data && result.bytesRead >= 0 && result.bytesRead <= data2) {
-                return result.bytesRead;
-            }
-            return result.status == GPSReadStatus::TimedOut ? 0 : -1;
-        }
-        case GPSCallbackType::writeDeviceData: {
-            const auto result = _transport.write(static_cast<const uint8_t*>(data1), data2);
-            return result.status == GPSWriteStatus::Completed && result.acceptedBytes == data2 &&
-                           result.writtenBytes == data2 && result.uncertainBytes() == 0
-                       ? data2
-                       : -1;
-        }
-        case GPSCallbackType::setBaudrate:
-            return _transport.setBaudrate(static_cast<unsigned>(data2)) ? 0 : -1;
-        case GPSCallbackType::gotRTCMMessage:
-            if (!data1 || data2 <= 0) {
-                qCWarning(GPSDriverLog) << "Invalid RTCM callback payload";
-                return -1;
-            }
-            if (_sinks.onRTCM) {
-                _sinks.onRTCM({static_cast<const uint8_t*>(data1), static_cast<std::size_t>(data2)});
-            }
-            break;
-        case GPSCallbackType::surveyInStatus:
-            if (data1 && _sinks.onSurveyIn) {
-                const SurveyInStatus* const status = static_cast<const SurveyInStatus*>(data1);
-                GPSSurveyReport out;
-                out.latitudeDegrees = status->latitude;
-                out.longitudeDegrees = status->longitude;
-                out.altitudeEllipsoidMeters = status->altitude;
-                // Ashtech and Femto use zero for unknown accuracy; UBX can round a valid value to zero.
-                if (status->mean_accuracy != 0 || (_type != GPSType::trimble && _type != GPSType::femto)) {
-                    out.meanAccuracyMeters = static_cast<double>(status->mean_accuracy) / 1000.0;
-                }
-                out.duration = std::chrono::seconds(status->duration);
-                out.valid = status->flags & 0x01;
-                out.active = (status->flags >> 1) & 0x01;
-                _sinks.onSurveyIn(out);
-            }
-            break;
-        case GPSCallbackType::setClock:
-        default:
-            break;
+    const auto expired = _state->satelliteSnapshot.expire(MonotonicClock::nowUs());
+    if (expired && _sinks.onSatelliteInfo) {
+        // Cache retirement is a notification, not new receiver traffic or navigation liveness.
+        _sinks.onSatelliteInfo(*expired);
     }
-
-    return 0;
 }

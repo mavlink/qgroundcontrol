@@ -128,11 +128,6 @@ NTRIPManager::~NTRIPManager()
     stopNTRIP();
 }
 
-RTCMMavlink* NTRIPManager::rtcmMavlink() const
-{
-    return _correctionManager ? _correctionManager->rtcmMavlink() : nullptr;
-}
-
 void NTRIPManager::setCorrectionManager(GPSCorrectionManager* manager)
 {
     if (_correctionManager == manager) {
@@ -523,7 +518,7 @@ void NTRIPManager::_startTransport()
 
     connect(
         _transport, &NTRIPTransport::correctionFrameReceived, this,
-        [this, current, correctionManager, token](const RTCMFrameDecoder::Result& frame) {
+        [this, current, correctionManager, token](const RTCMDecodedFrame& frame) {
             if (correctionManager) {
                 correctionManager->acceptIngress(token.event(frame));
             }
@@ -581,7 +576,6 @@ void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
 
 void NTRIPManager::_onPlaintextCredentialsWarning()
 {
-    qCWarning(NTRIPManagerLog) << "Credentials sent without TLS encryption — enable TLS in NTRIP settings";
     _setSecurityWarning(tr("Credentials are being sent without TLS encryption."));
 }
 
@@ -594,7 +588,7 @@ void NTRIPManager::_setSecurityWarning(const QString& warning)
     emit securityWarningChanged();
 }
 
-void NTRIPManager::_rtcmDataReceived(const RTCMFrameDecoder::Result& frame)
+void NTRIPManager::_rtcmDataReceived(const RTCMDecodedFrame& frame)
 {
     const QPointer<NTRIPManager> guard(this);
     const quint64 revision = _stateRevision;

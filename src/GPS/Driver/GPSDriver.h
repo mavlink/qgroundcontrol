@@ -4,7 +4,11 @@
 #include <functional>
 #include <memory>
 #include <span>
+#include <vector>
 
+#include <QtCore/QString>
+
+#include "GPSConfigurationEvidence.h"
 #include "GPSDriverReports.h"
 #include "GPSReceiverConfig.h"
 #include "GPSType.h"
@@ -12,7 +16,8 @@
 class GPSTransport;
 
 /// Sinks the driver pushes decoded data into, invoked on the caller thread from
-/// within configure()/receive().
+/// within configure()/receiveOutcome(). Recursive operations are rejected;
+/// the caller must keep the driver alive until the enclosing operation returns.
 struct GPSDriverSinks
 {
     std::function<void(const GPSPositionReport&)> onPosition;
@@ -20,11 +25,37 @@ struct GPSDriverSinks
     /// Borrowed until the synchronous callback returns.
     std::function<void(std::span<const uint8_t>)> onRTCM;
     std::function<void(const GPSSurveyReport&)> onSurveyIn;
+    /// Count-only observations do not imply a list of satellites in view.
+    std::function<void(const GPSSatelliteUsageReport&)> onSatelliteUsage;
 };
 
-/// Facade over the px4-gpsdrivers library: selects and configures the receiver
-/// driver, bridges its callbacks to a GPSTransport plus the supplied sinks, and
-/// pumps its receive loop. Keeps all px4 headers and types out of callers.
+enum class GPSReceiveStatus
+{
+    Data,
+    Activity,
+    Idle,
+    Cancelled,
+    ProtocolError,
+    TransportError,
+    NotConfigured,
+    Busy,
+};
+
+struct GPSReceiveResult
+{
+    GPSReceiveStatus status = GPSReceiveStatus::NotConfigured;
+    int updates = 0;
+    int errorCode = 0;
+    QString detail = {};
+
+    [[nodiscard]] bool terminal() const
+    {
+        return status == GPSReceiveStatus::ProtocolError || status == GPSReceiveStatus::TransportError ||
+               status == GPSReceiveStatus::NotConfigured;
+    }
+};
+
+/// Selects a native receiver protocol and adapts its decoded events to public reports.
 class GPSDriver
 {
 public:
@@ -34,23 +65,31 @@ public:
     GPSDriver(const GPSDriver&) = delete;
     GPSDriver& operator=(const GPSDriver&) = delete;
 
-    /// Create and configure the underlying driver. Returns false on failure.
+    /// Whether this build contains the requested native protocol implementation.
+    static bool supportsType(GPSType type);
+
+    /// Create and configure the underlying driver. Reentrant calls fail without replacing the active driver.
     bool configure();
 
-    /// Pump one receive cycle, invoking the position/satellite sinks as data
-    /// arrives. Returns the px4 bitset (<0 error, bit0 position, bit1 satellite),
-    /// or <0 if not configured.
-    int receive(unsigned timeoutMs);
+    /// Useful reports are Data even without a registered sink. Diagnostics/partial input are Activity,
+    /// never proof of navigation liveness. Terminal failures take precedence over reports in the same cycle.
+    /// Reentrant calls return Busy without touching the transport or active decoder.
+    [[nodiscard]] GPSReceiveResult receiveOutcome(unsigned timeoutMs);
 
-    /// Trampoline target for the px4 callback; `type` is a GPSCallbackType value.
-    /// Public only so the file-local C callback can reach it — not for callers.
-    int handleCallback(int type, void* data1, int data2);
+    /// Latest non-reentrant configure() attempt; remains available after failure. Caller-thread access only.
+    [[nodiscard]] const std::vector<GPSConfigurationEvidence>& configurationEvidence() const;
+
+    /// Diagnostic from the latest configure() failure; cleared when a new attempt starts.
+    [[nodiscard]] const QString& configurationError() const;
 
 private:
+    void _publishExpiredSatellites();
+
     GPSType _type;
     GPSTransport& _transport;
     GPSReceiverConfig _config;
     GPSDriverSinks _sinks;
+    bool _operationInProgress = false;
 
     struct State;
     std::unique_ptr<State> _state;

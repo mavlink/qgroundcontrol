@@ -1,5 +1,6 @@
 #include "NTRIPHttpTransportTest.h"
 
+#include <chrono>
 #include <memory>
 
 #include <QtCore/QRegularExpression>
@@ -16,7 +17,9 @@
 #include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
 #include "NTRIPHttpDecoder.h"
+#include "NTRIPHttpRequest.h"
 #include "NTRIPHttpTransport.h"
+#include "RTCMDecodedFrame.h"
 
 namespace {
 const QByteArray kTestServerCertPem =
@@ -172,32 +175,6 @@ void NTRIPHttpTransportTest::testConfigurationDomainsCompareIndependently()
     QVERIFY(changed.filter != baseline.filter);
 }
 
-void NTRIPHttpTransportTest::testConfigCasterIdentityExcludesMountpointAndSinks()
-{
-    NTRIPConfiguration baseline;
-    baseline.connection.host = QStringLiteral("caster.example.com");
-    baseline.connection.username = QStringLiteral("user");
-    baseline.connection.password = QStringLiteral("pass");
-    baseline.connection.mountpoint = QStringLiteral("MOUNT1");
-    baseline.connection.useTls = true;
-    baseline.filter.whitelist = QStringLiteral("1005");
-    baseline.udpForward = {.enabled = true, .address = QStringLiteral("127.0.0.1"), .port = 3000};
-
-    auto sameCaster = baseline;
-    sameCaster.connection.mountpoint = QStringLiteral("MOUNT2");
-    sameCaster.filter.whitelist = QStringLiteral("1005,1077");
-    sameCaster.udpForward = {.enabled = false, .address = QStringLiteral("192.0.2.1"), .port = 3001};
-    QCOMPARE(sameCaster.connection.casterIdentity(), baseline.connection.casterIdentity());
-
-    auto differentCaster = baseline;
-    differentCaster.connection.useTls = false;
-    QVERIFY(differentCaster.connection.casterIdentity() != baseline.connection.casterIdentity());
-
-    differentCaster = baseline;
-    differentCaster.connection.password = QStringLiteral("other-pass");
-    QVERIFY(differentCaster.connection.casterIdentity() != baseline.connection.casterIdentity());
-}
-
 void NTRIPHttpTransportTest::testTlsFatalErrorEmitsSingleError()
 {
     if (!QSslSocket::supportsSsl()) {
@@ -260,7 +237,7 @@ void NTRIPHttpTransportTest::_testWhitelist()
     QFETCH(QList<int>, expectedIds);
     NTRIPHttpTransport transport({}, {.whitelist = whitelist});
     QList<int> receivedIds;
-    connect(&transport, &NTRIPTransport::correctionFrameReceived, this, [&](const RTCMFrameDecoder::Result& frame) {
+    connect(&transport, &NTRIPTransport::correctionFrameReceived, this, [&](const RTCMDecodedFrame& frame) {
         if (frame.valid && !frame.filtered) {
             receivedIds.append(frame.messageId);
         }
@@ -318,7 +295,7 @@ void NTRIPHttpTransportTest::_testFilterNoWhitelist()
     NTRIPHttpTransport t(cfg, {});
 
     QVector<QByteArray> received;
-    connect(&t, &NTRIPTransport::correctionFrameReceived, this, [&](const RTCMFrameDecoder::Result& frame) {
+    connect(&t, &NTRIPTransport::correctionFrameReceived, this, [&](const RTCMDecodedFrame& frame) {
         QVERIFY(frame.valid);
         QVERIFY(!frame.filtered);
         received.append(frame.data);
@@ -344,8 +321,8 @@ void NTRIPHttpTransportTest::_testFilterWithWhitelist()
     t._parseRtcm(stream.sliced(1), 200);
 
     QCOMPARE(detailed.size(), 3);
-    const auto first = qvariant_cast<RTCMFrameDecoder::Result>(detailed[0][0]);
-    const auto filtered = qvariant_cast<RTCMFrameDecoder::Result>(detailed[1][0]);
+    const auto first = qvariant_cast<RTCMDecodedFrame>(detailed[0][0]);
+    const auto filtered = qvariant_cast<RTCMDecodedFrame>(detailed[1][0]);
     QCOMPARE(first.receivedAtMs, 100);
     QVERIFY(first.valid);
     QVERIFY(!first.filtered);
@@ -354,7 +331,7 @@ void NTRIPHttpTransportTest::_testFilterWithWhitelist()
     QVERIFY(filtered.valid);
     QVERIFY(filtered.filtered);
     QCOMPARE(filtered.messageId, 1077);
-    const auto last = qvariant_cast<RTCMFrameDecoder::Result>(detailed[2][0]);
+    const auto last = qvariant_cast<RTCMDecodedFrame>(detailed[2][0]);
     QVERIFY(last.valid && !last.filtered);
     QCOMPARE(last.messageId, 1087);
 }
@@ -391,10 +368,10 @@ void NTRIPHttpTransportTest::_testFilterRejectsInvalidFrame()
     verifyExpectedLogMessage();
 
     QCOMPARE(detailed.size(), 2);
-    const auto rejected = qvariant_cast<RTCMFrameDecoder::Result>(detailed[0][0]);
+    const auto rejected = qvariant_cast<RTCMDecodedFrame>(detailed[0][0]);
     QCOMPARE(rejected.data, bad);
     QVERIFY(!rejected.valid);
-    const auto recovered = qvariant_cast<RTCMFrameDecoder::Result>(detailed[1][0]);
+    const auto recovered = qvariant_cast<RTCMDecodedFrame>(detailed[1][0]);
     QVERIFY(recovered.valid);
     QCOMPARE(recovered.data, good);
     QCOMPARE(recovered.receivedAtMs, 123);
@@ -416,19 +393,18 @@ void NTRIPHttpTransportTest::_testFrameCallbackRetiresTransport()
     config.mountpoint = QStringLiteral("TEST");
     auto transport = std::make_unique<NTRIPHttpTransport>(config, NTRIPRtcmFilterConfig{});
     int acceptedFrames = 0;
-    connect(transport.get(), &NTRIPTransport::correctionFrameReceived, this,
-            [&](const RTCMFrameDecoder::Result& result) {
-                QVERIFY(result.valid && !result.filtered);
-                QCOMPARE(result.receivedAtMs, 123);
-                ++acceptedFrames;
-                if (action == 1) {
-                    transport.reset();
-                } else if (action == 2) {
-                    transport->start();
-                } else {
-                    transport->stop();
-                }
-            });
+    connect(transport.get(), &NTRIPTransport::correctionFrameReceived, this, [&](const RTCMDecodedFrame& result) {
+        QVERIFY(result.valid && !result.filtered);
+        QCOMPARE(result.receivedAtMs, 123);
+        ++acceptedFrames;
+        if (action == 1) {
+            transport.reset();
+        } else if (action == 2) {
+            transport->start();
+        } else {
+            transport->stop();
+        }
+    });
     const auto frame = GpsTestHelpers::buildRtcmFrame(1005);
 
     transport->_parseRtcm(frame + frame, 123);
@@ -454,7 +430,7 @@ void NTRIPHttpTransportTest::_testBuildRequestPlaintextCredentialsWarns()
     cfg.password = QStringLiteral("pass");
     cfg.useTls = false;
 
-    const auto request = NTRIPHttpTransport::buildHttpRequest(cfg);
+    const auto request = NTRIPHttpRequest::build(cfg);
 
     QVERIFY(request.credentialsInClear);
     QVERIFY(request.bytes.startsWith("GET /MOUNT01 HTTP/1.1\r\n"));
@@ -473,7 +449,7 @@ void NTRIPHttpTransportTest::_testBuildRequestTlsCredentialsNoWarn()
     cfg.password = QStringLiteral("pass");
     cfg.useTls = true;
 
-    const auto request = NTRIPHttpTransport::buildHttpRequest(cfg);
+    const auto request = NTRIPHttpRequest::build(cfg);
 
     QVERIFY(!request.credentialsInClear);
     QVERIFY(request.error.isEmpty());
@@ -487,30 +463,72 @@ void NTRIPHttpTransportTest::_testBuildRequestNoCredentialsNoWarn()
     cfg.mountpoint = QStringLiteral("MOUNT01");
     cfg.useTls = false;
 
-    const auto request = NTRIPHttpTransport::buildHttpRequest(cfg);
+    const auto request = NTRIPHttpRequest::build(cfg);
 
     QVERIFY(!request.credentialsInClear);
     QVERIFY(request.error.isEmpty());
     QVERIFY(!request.bytes.contains("Authorization:"));
 }
 
+void NTRIPHttpTransportTest::_testBuildRequestPreservesValues_data()
+{
+    QTest::addColumn<QString>("username");
+    QTest::addColumn<QString>("password");
+    QTest::addColumn<QByteArray>("encoded");
+    QTest::addColumn<bool>("useTls");
+    for (const bool useTls : {false, true}) {
+        const QByteArray suffix = useTls ? "-tls" : "-plaintext";
+        QTest::newRow(("anonymous" + suffix).constData()) << QString{} << QString{} << QByteArray{} << useTls;
+        QTest::newRow(("username-and-password" + suffix).constData())
+            << QStringLiteral("user") << QStringLiteral("pass") << QByteArray("dXNlcjpwYXNz") << useTls;
+        QTest::newRow(("username-only" + suffix).constData())
+            << QStringLiteral("user") << QString{} << QByteArray("dXNlcjo=") << useTls;
+        QTest::newRow(("password-only" + suffix).constData())
+            << QString{} << QStringLiteral("pass") << QByteArray("OnBhc3M=") << useTls;
+        QTest::newRow(("utf8-credentials" + suffix).constData())
+            << QString::fromUtf8("Us\xc3\xa9r") << QString::fromUtf8("Pa\xc3\x9fs") << QByteArray("VXPDqXI6UGHDn3M=")
+            << useTls;
+    }
+}
+
 void NTRIPHttpTransportTest::_testBuildRequestPreservesValues()
 {
+    QFETCH(QString, username);
+    QFETCH(QString, password);
+    QFETCH(QByteArray, encoded);
+    QFETCH(bool, useTls);
     NTRIPConnectionConfig config;
     config.host = QStringLiteral("Caster.Example.com");
     config.mountpoint = QStringLiteral("MixedCase_1");
-    config.username = QString::fromUtf8("Us\xc3\xa9r");
-    config.password = QString::fromUtf8("Pa\xc3\x9fs");
-    const auto request = NTRIPHttpTransport::buildHttpRequest(config);
-    const QByteArray credentials = (config.username + QLatin1Char(':') + config.password).toUtf8().toBase64();
+    config.username = username;
+    config.password = password;
+    config.useTls = useTls;
+    QVERIFY(config.streamValidationError().isEmpty());
+    const auto request = NTRIPHttpRequest::build(config);
+    const QByteArray authorization = encoded.isEmpty() ? QByteArray{} : "Authorization: Basic " + encoded + "\r\n";
     QVERIFY(request.error.isEmpty());
+    QCOMPARE(request.credentialsInClear, !encoded.isEmpty() && !useTls);
     QCOMPARE(request.bytes,
              "GET /MixedCase_1 HTTP/1.1\r\n"
              "Host: Caster.Example.com\r\n"
              "Ntrip-Version: Ntrip/2.0\r\n"
-             "User-Agent: NTRIP QGroundControl/1.0\r\n"
-             "Authorization: Basic " +
-                 credentials + "\r\n\r\n");
+             "User-Agent: NTRIP QGroundControl/1.0\r\n" +
+                 authorization + "\r\n");
+}
+
+void NTRIPHttpTransportTest::_testHttpDecoderReset()
+{
+    NTRIPHttpDecoder decoder;
+    const auto result = decoder.feed("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nabc\r\n0\r\n\r\n", {});
+    QVERIFY(result.connected);
+    QVERIFY(result.complete);
+    QVERIFY(!result.failure);
+    QCOMPARE(result.body, QByteArray("abc"));
+    decoder.reset();
+    const auto failure = decoder.feed("HTTP/1.1 503 Unavailable\r\nRetry-After: 17\r\nContent-Length: 0\r\n\r\n", {});
+    QVERIFY(failure.failure);
+    QCOMPARE(failure.failure->code, NTRIPError::HttpError);
+    QCOMPARE(failure.failure->retryAfter, std::chrono::seconds(17));
 }
 
 void NTRIPHttpTransportTest::_testBuildRequestRejectsInvalidConfig_data()
@@ -535,7 +553,7 @@ void NTRIPHttpTransportTest::_testBuildRequestRejectsInvalidConfig()
     config.mountpoint = mountpoint;
     config.username = QStringLiteral("user");
     config.password = QStringLiteral("pass");
-    const auto request = NTRIPHttpTransport::buildHttpRequest(config);
+    const auto request = NTRIPHttpRequest::build(config);
     QVERIFY(!request.error.isEmpty());
     QVERIFY(request.bytes.isEmpty());
     QVERIFY(!request.credentialsInClear);
@@ -596,7 +614,7 @@ void NTRIPHttpTransportTest::testConnectionWaitsForHttpResponse()
     QCOMPARE(peer->write(response), response.size());
     QTRY_COMPARE_WITH_TIMEOUT(connected.size(), 1, TestTimeout::mediumMs());
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 1, TestTimeout::mediumMs());
-    const auto result = qvariant_cast<RTCMFrameDecoder::Result>(frames.first().first());
+    const auto result = qvariant_cast<RTCMDecodedFrame>(frames.first().first());
     QVERIFY(result.valid && !result.filtered);
     QCOMPARE(result.data, frame);
     QVERIFY(!transport._connectTimeoutTimer.isActive());

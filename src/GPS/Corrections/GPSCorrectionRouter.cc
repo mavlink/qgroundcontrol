@@ -7,7 +7,7 @@
 #include <QtCore/QScopeGuard>
 
 #include "QGCLoggingCategory.h"
-#include "RTCMFrame.h"
+#include "RTCMFramer.h"
 
 QGC_LOGGING_CATEGORY(GPSCorrectionRouterLog, "GPS.Corrections.GPSCorrectionRouter")
 
@@ -56,16 +56,10 @@ void GPSCorrectionRouter::endSourceSession(GPSCorrectionSource source)
     ++_revision;
     _ledger.endSource(source);
     _selector.retire(source, _clock());
-    if (_lastSubmittedSource.startsWith(QString::number(index) + QLatin1Char('/'))) {
-        _lastSubmittedSource.clear();
+    if (_lastSubmittedStream && _lastSubmittedStream->source.category == source) {
+        _lastSubmittedStream.reset();
         emit sourceInvalidated();
     }
-}
-
-quint64 GPSCorrectionRouter::sourceSession(GPSCorrectionSource source) const
-{
-    const int index = _sourceIndex(source);
-    return index < 0 ? 0 : _ledger.statistics()[index].session;
 }
 
 QString GPSCorrectionRouter::sourceInstance(GPSCorrectionSource source) const
@@ -119,10 +113,11 @@ QVariantList GPSCorrectionRouter::sourceInstanceDiagnostics() const
     for (const auto& source : _selector.sources()) {
         const qint64 age = GPSCorrectionFrame::ageMs(source.lastRoutableMs, nowMs);
         const bool usable = age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS;
-        const bool selected = usable && (_selector.configuration().policy == GPSCorrectionSelector::Policy::All ||
-                                         (source.category == activeSource && source.instance == activeInstance));
-        result.append(QVariantMap{{QStringLiteral("source"), static_cast<int>(source.category)},
-                                  {QStringLiteral("instanceId"), source.instance},
+        const bool selected =
+            usable && (_selector.configuration().policy == GPSCorrectionSelector::Policy::All ||
+                       (source.identity.category == activeSource && source.identity.instance == activeInstance));
+        result.append(QVariantMap{{QStringLiteral("source"), static_cast<int>(source.identity.category)},
+                                  {QStringLiteral("instanceId"), source.identity.instance},
                                   {QStringLiteral("session"), QVariant::fromValue(source.session)},
                                   {QStringLiteral("active"), true},
                                   {QStringLiteral("usable"), usable},
@@ -164,20 +159,10 @@ void GPSCorrectionRouter::applyConfiguration(const Configuration& configuration)
     }
     ++_revision;
     _selector.configure(configuration, _clock());
-    if (!_lastSubmittedSource.isEmpty()) {
-        _lastSubmittedSource.clear();
+    if (_lastSubmittedStream) {
+        _lastSubmittedStream.reset();
         emit sourceInvalidated();
     }
-}
-
-void GPSCorrectionRouter::setPolicy(Policy policy)
-{
-    applyConfiguration({policy, selectedSource(), selectedInstance()});
-}
-
-void GPSCorrectionRouter::setSelectedSource(GPSCorrectionSource source, const QString& instance)
-{
-    applyConfiguration({policy(), source, instance});
 }
 
 GPSCorrectionSourceRegistration GPSCorrectionRouter::registerSource(GPSCorrectionSource source, const QString& instance)
@@ -208,25 +193,12 @@ bool GPSCorrectionRouter::acceptIngress(const GPSCorrectionIngress& ingress)
         return false;
     }
     if ((!frame.validated && frame.source != GPSCorrectionSource::Udp) ||
-        (frame.validated && !RTCM::isValidFrame(frame.data))) {
+        (frame.validated && !RTCMFramer::isValidFrame(frame.data))) {
         frame.validated = false;
         recordRejectedFrame(frame, GPSCorrectionReason::InvalidFrame);
         return false;
     }
     return acceptFrame(frame);
-}
-
-void GPSCorrectionRouter::setSink(const QString& id, Sink sink)
-{
-    setOutput(id, admissionOnlyOutput(id, GPSCorrectionSource::Unknown, std::move(sink)));
-}
-
-void GPSCorrectionRouter::setSourceSink(const QString& id, GPSCorrectionSource source, Sink sink)
-{
-    if (_sourceIndex(source) <= 0) {
-        return;
-    }
-    setOutput(id, admissionOnlyOutput(id, source, std::move(sink)));
 }
 
 GPSCorrectionRouter::Output GPSCorrectionRouter::admissionOnlyOutput(const QString& id, GPSCorrectionSource scope,
@@ -242,24 +214,6 @@ GPSCorrectionRouter::Output GPSCorrectionRouter::admissionOnlyOutput(const QStri
                      {queued, 0, queued ? GPSCorrectionReason::None : GPSCorrectionReason::DestinationUnavailable},
                      true}};
             }};
-}
-
-void GPSCorrectionRouter::setDetailedSink(const QString& id, DetailedSink sink, bool reportsWrites)
-{
-    if (!sink) {
-        removeSink(id);
-        return;
-    }
-    setOutput(id, {{},
-                   reportsWrites ? Completion::Reported : Completion::AdmissionOnly,
-                   [id, sink = std::move(sink)](const GPSCorrectionFrame& frame) {
-                       return QList<Admission>{{id, sink(frame), true}};
-                   }});
-}
-
-void GPSCorrectionRouter::setFanoutSink(const QString& id, FanoutSink sink)
-{
-    setOutput(id, {{}, Completion::AdmissionOnly, std::move(sink)});
 }
 
 void GPSCorrectionRouter::setOutput(const QString& id, Output output)
@@ -385,14 +339,14 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
     if (frame.validated) {
         _ledger.validated(frame);
     }
-    _selector.observe(frame, false, now);
-    if (frame.filtered || age >= FRESHNESS_TIMEOUT_MS) {
+    const bool routable = !frame.filtered && age < FRESHNESS_TIMEOUT_MS;
+    _selector.observe(frame, routable, now);
+    if (!routable) {
         _ledger.filtered(frame);
         _ledger.recordDrop(frame, frame.filtered ? GPSCorrectionReason::MessageFiltered : GPSCorrectionReason::Expired,
                            frame.data.size());
         return false;
     }
-    _selector.observe(frame, true, now);
     if (frame.validated && frame.messageId == 0 && frame.data.size() >= 8 &&
         static_cast<quint8>(frame.data[0]) == 0xD3) {
         frame.messageId = (static_cast<quint8>(frame.data[3]) << 4) | (static_cast<quint8>(frame.data[4]) >> 4);
@@ -409,7 +363,6 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
 
 bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected)
 {
-    const QString key = GPSCorrectionSelector::key(frame.source, frame.sourceInstance);
     const QPointer<GPSCorrectionRouter> guard(this);
     const quint64 revision = _revision;
     const auto sinks = _sinks;
@@ -419,9 +372,9 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
             guard->_submitting = false;
         }
     });
-    const QString submissionSource = key + QLatin1Char('#') + QString::number(frame.session);
-    if (selected && _lastSubmittedSource != submissionSource) {
-        _lastSubmittedSource = submissionSource;
+    const StreamIdentity stream{{frame.source, frame.sourceInstance}, frame.session};
+    if (selected && _lastSubmittedStream != stream) {
+        _lastSubmittedStream = stream;
         emit sourceSelected(frame.source, frame.sourceInstance);
         if (!guard) {
             return false;

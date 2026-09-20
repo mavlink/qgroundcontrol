@@ -16,9 +16,6 @@
 #include "GPSSurveyInStatus.h"
 #include "GPSType.h"
 
-Q_DECLARE_METATYPE(GPSPositionReport)
-Q_DECLARE_METATYPE(GPSSatelliteReport)
-
 class GPSTransport;
 
 enum class GPSConnectionError
@@ -45,10 +42,12 @@ public:
 
 signals:
     void satelliteInfoUpdate(const GPSSatelliteReport& message);
-    void sensorGpsUpdate(const GPSPositionReport& message);
+    void satelliteUsageUpdate(const GPSSatelliteUsageReport& message);
+    void fixTypeChanged(GPSPositionReport::FixType fixType);
     void RTCMDataUpdate(const QByteArray& message, qint64 receivedAtMs);
     void surveyInStatus(const GPSSurveyInStatus &status);
     void connectionError(GPSConnectionError error);
+    void configurationError(const QString& detail);
     void receiverReady();
 
 private:
@@ -63,5 +62,5 @@ private:
     GPSReceiverConfig _config{};
 
     static constexpr uint32_t kGPSReceiveTimeout = 1200;
-    static constexpr uint8_t kMaxIdleReceiveCycles = 3;
+    static constexpr int kUsefulDataTimeoutMs = 3 * kGPSReceiveTimeout;
 };

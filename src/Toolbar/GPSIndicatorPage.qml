@@ -1,268 +1,190 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.FactControls
 
-// This indicator page is used both when showing RTK status only with no vehicle connect and when showing GPS/RTK status with a vehicle connected
-
+// Used with a connected vehicle and as the standalone receiver indicator.
 ToolIndicatorPage {
+    id: root
     showExpand: true
 
-    property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
-    property string na:                 qsTr("N/A", "No data to display")
-    property string valueNA:            qsTr("–.––", "No data to display")
-    property var    rtkSettings:        QGroundControl.settingsManager.rtkSettings
-    property var    useFixedPosition:           rtkSettings.useFixedBasePosition.rawValue
-    property var    manufacturer:       rtkSettings.baseReceiverManufacturers.rawValue
+    property string na: qsTr("N/A", "No data to display")
+    property string valueNA: qsTr("–.––", "No data to display")
+    property var rtkSettings: QGroundControl.settingsManager.rtkSettings
+    readonly property var _receiver: QGroundControl.gpsManager.gpsRtk
+    readonly property bool _rtkConnected: QGroundControl.gpsRtk.connected.value
+    readonly property var _activePresentation: _receiver.capabilitiesForManufacturer(_receiver.activeManufacturer)
+    readonly property var _serialPortManager: QGroundControl.serialPortManager
+    readonly property bool _averagingConnected: _receiver.activeBaseMode === BaseModeDefinition.BaseReceiverAveraging
+    readonly property real _preferredStatusWidth: ScreenTools.defaultFontPixelWidth * 36
+    readonly property real _preferredSettingsWidth: ScreenTools.defaultFontPixelWidth * 56
+    property real availableWidth: drawer && drawer.parent
+                                  ? drawer.parent.width - ScreenTools.defaultFontPixelHeight * 4
+                                  : root.Window.window
+                                    ? root.Window.window.width - ScreenTools.defaultFontPixelHeight * 4
+                                    : _preferredStatusWidth + _preferredSettingsWidth + spacing * 2 + 1
+    readonly property bool _compact: availableWidth < _preferredStatusWidth + _preferredSettingsWidth + spacing * 2 + 1
+    readonly property real _settingsWidth: Math.max(0, Math.min(_preferredSettingsWidth,
+        availableWidth - (_compact ? 0 : _preferredStatusWidth) - spacing * 2 - 1))
+    property alias _allowPersistentChanges: connectionConsent.allowed
+    property var _settingsPanel: null
 
-    readonly property var    _trimble:            0b0001
-    readonly property var    _septentrio:         0b0010
-    readonly property var    _femtomes:           0b0100
-    readonly property var    _ublox:              0b1000
-    readonly property var    _all:                0b1111
-    property var             settingsDisplayId:     _all
-
-    function updateSettingsDisplayId() {
-        switch(manufacturer) {
-            case 0: // All
-                settingsDisplayId = _trimble | _septentrio | _femtomes | _ublox
-                break
-            case 1: // Trimble
-                settingsDisplayId = _trimble
-                break
-            case 2: // Septentrio
-                settingsDisplayId = _septentrio
-                break
-            case 3: // Femtomes
-                settingsDisplayId = _femtomes
-                break
-            case 4: // UBlox
-                settingsDisplayId = _ublox
-                break
-            default:
-                settingsDisplayId = _all
-        }
-    }
-
-    onManufacturerChanged: {
-        updateSettingsDisplayId()
-    }
-
-    Component.onCompleted: {
-        updateSettingsDisplayId()
+    function connectSelectedReceiver() {
+        return _settingsPanel ? _settingsPanel.connectSelectedReceiver() : false
     }
 
     function errorText() {
-        if (!_activeVehicle) {
-            return qsTr("Disconnected");
+        if (!activeVehicle) {
+            return qsTr("Disconnected")
         }
+        switch (activeVehicle.gps.systemErrors.value) {
+        case 1: return qsTr("Incoming correction")
+        case 2: return qsTr("Configuration")
+        case 4: return qsTr("Software")
+        case 8: return qsTr("Antenna")
+        case 16: return qsTr("Event congestion")
+        case 32: return qsTr("CPU overload")
+        case 64: return qsTr("Output congestion")
+        default: return qsTr("Multiple errors")
+        }
+    }
 
-        switch (_activeVehicle.gps.systemErrors.value) {
-            case 1:
-                return qsTr("Incoming correction");
-            case 2:
-                return qsTr("Configuration");
-            case 4:
-                return qsTr("Software");
-            case 8:
-                return qsTr("Antenna");
-            case 16:
-                return qsTr("Event congestion");
-            case 32:
-                return qsTr("CPU overload");
-            case 64:
-                return qsTr("Output congestion");
-            default:
-                return qsTr("Multiple errors");
-        }
+    QtObject {
+        id: connectionConsent
+        property bool allowed: false
     }
 
     contentComponent: Component {
         ColumnLayout {
+            // On narrow screens the expanded view replaces status instead of requiring horizontal scrolling.
+            width: root.expanded && root._compact ? 0 : Math.min(root._preferredStatusWidth, root.availableWidth)
+            visible: !root.expanded || !root._compact
             spacing: ScreenTools.defaultFontPixelHeight / 2
 
             SettingsGroupLayout {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 heading: qsTr("Vehicle GPS Status")
-                visible: activeVehicle
+                visible: root.activeVehicle
 
                 LabelledLabel {
-                    label:      qsTr("Satellites")
-                    labelText:  activeVehicle ? activeVehicle.gps.count.valueString : na
+                    label: qsTr("Satellites")
+                    labelText: root.activeVehicle ? root.activeVehicle.gps.count.valueString : root.na
                 }
-
                 LabelledLabel {
-                    label:      qsTr("GPS Lock")
-                    labelText:  activeVehicle ? activeVehicle.gps.lock.enumStringValue : na
+                    label: qsTr("GPS Lock")
+                    labelText: root.activeVehicle ? root.activeVehicle.gps.lock.enumStringValue : root.na
                 }
-
                 LabelledLabel {
-                    label:      qsTr("HDOP")
-                    labelText:  activeVehicle ? activeVehicle.gps.hdop.valueString : valueNA
+                    label: qsTr("HDOP")
+                    labelText: root.activeVehicle ? root.activeVehicle.gps.hdop.valueString : root.valueNA
                 }
-
                 LabelledLabel {
-                    label:      qsTr("VDOP")
-                    labelText:  activeVehicle ? activeVehicle.gps.vdop.valueString : valueNA
+                    label: qsTr("VDOP")
+                    labelText: root.activeVehicle ? root.activeVehicle.gps.vdop.valueString : root.valueNA
                 }
-
                 LabelledLabel {
-                    label:      qsTr("Course Over Ground")
-                    labelText:  activeVehicle ? activeVehicle.gps.courseOverGround.valueString : valueNA
+                    label: qsTr("Course Over Ground")
+                    labelText: root.activeVehicle ? root.activeVehicle.gps.courseOverGround.valueString : root.valueNA
                 }
-
                 LabelledLabel {
                     label: qsTr("GPS Error")
-                    labelText: errorText()
-                    visible: activeVehicle && activeVehicle.gps.systemErrors.value > 0
+                    labelText: root.errorText()
+                    visible: root.activeVehicle && root.activeVehicle.gps.systemErrors.value > 0
                 }
             }
 
             SettingsGroupLayout {
-                heading:    qsTr("RTK GPS Status")
-                visible:    QGroundControl.gpsRtk.connected.value
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                heading: qsTr("RTK GPS Status")
+                visible: root._rtkConnected || root._receiver.hasReceiver || !root.activeVehicle
 
                 QGCLabel {
-                    text: (QGroundControl.gpsRtk.active.value) ? qsTr("Survey-in Active") : qsTr("RTK Streaming")
+                    objectName: "rtkReceiverStatus"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    Layout.preferredWidth: 0
+                    wrapMode: Text.Wrap
+                    text: !root._rtkConnected
+                          ? (root._receiver.hasReceiver ? qsTr("Connecting to receiver...")
+                                                       : qsTr("No RTK receiver connected. Expand for settings."))
+                          : root._activePresentation.passive ? qsTr("Passive RTCM/NMEA input connected")
+                          : root._averagingConnected ? qsTr("Receiver-managed averaging — no accuracy guarantee")
+                          : QGroundControl.gpsRtk.active.value ? qsTr("Survey-in Active") : qsTr("Receiver connected")
                 }
-
                 LabelledLabel {
-                    label:      qsTr("Satellites")
-                    labelText:  QGroundControl.gpsRtk.numSatellites.value
+                    objectName: "rtkSatellitesInView"
+                    visible: root._rtkConnected
+                    label: qsTr("Satellites in View")
+                    labelText: QGroundControl.gpsRtk.numSatellites.rawValue < 0
+                               ? root.na : QGroundControl.gpsRtk.numSatellites.valueString
                 }
-
                 LabelledLabel {
-                    label:      qsTr("Duration")
+                    objectName: "rtkSatellitesUsed"
+                    visible: root._rtkConnected
+                    label: qsTr("Satellites Used")
+                    labelText: QGroundControl.gpsRtk.numSatellitesUsed.rawValue < 0
+                               ? root.na : QGroundControl.gpsRtk.numSatellitesUsed.valueString
+                }
+                LabelledLabel {
+                    label: root._activePresentation.acceptedObservationTime ? qsTr("Accepted observation time") : qsTr("Duration")
+                    visible: root._rtkConnected && root._activePresentation.reportsSurveyDuration
+                             && !root._averagingConnected
                     //: %1 is Survey-In duration in seconds
-                    labelText:  qsTr("%1 s").arg(QGroundControl.gpsRtk.currentDuration.value)
+                    labelText: qsTr("%1 s").arg(QGroundControl.gpsRtk.currentDuration.value)
                 }
-
                 LabelledLabel {
-                    label:      QGroundControl.gpsRtk.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
-                    labelText:  QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
-                    visible:    QGroundControl.gpsRtk.currentAccuracy.value > 0
+                    label: QGroundControl.gpsRtk.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
+                    labelText: QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.gpsRtk.currentAccuracy.units
+                    visible: root._rtkConnected && !root._activePresentation.passive && !root._averagingConnected
+                             && QGroundControl.gpsRtk.currentAccuracy.value > 0
                 }
+            }
+
+            QGCLabel {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.preferredWidth: 0
+                wrapMode: Text.Wrap
+                visible: root._receiver.errorMessage.length > 0
+                text: root._receiver.errorMessage
+                textFormat: Text.PlainText
             }
         }
     }
 
     expandedComponent: Component {
-        SettingsGroupLayout {
-            heading:        qsTr("RTK GPS Settings")
+        ColumnLayout {
+            width: root._settingsWidth
+            spacing: ScreenTools.defaultFontPixelHeight / 2
 
-            property real sliderWidth: ScreenTools.defaultFontPixelWidth * 40
-
-            FactCheckBoxSlider {
-                Layout.fillWidth:   true
-                text:               qsTr("AutoConnect")
-                fact:               QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
-                visible:            fact.userVisible
+            GPSReceiverSettings {
+                id: settingsPanel
+                objectName: "gpsReceiverSettings"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                receiver: root._receiver
+                settings: root.rtkSettings
+                baseFacts: QGroundControl.gpsRtk
+                autoConnectFact: QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
+                serialPorts: root._serialPortManager ? root._serialPortManager.serialPorts : []
+                serialBaudRates: root._serialPortManager ? root._serialPortManager.serialBaudRates : []
+                consent: connectionConsent
+                Component.onCompleted: root._settingsPanel = settingsPanel
+                Component.onDestruction: root._settingsPanel = null
             }
-
-            GridLayout {
-                columns: 2
-
-                QGCLabel {
-                    text: qsTr("Settings displayed")
-                }
-                FactComboBox {
-                    Layout.fillWidth:   true
-                    fact:               QGroundControl.settingsManager.rtkSettings.baseReceiverManufacturers
-                    visible:            QGroundControl.settingsManager.rtkSettings.baseReceiverManufacturers.userVisible
-                }
-            }
-
-            RowLayout {
-                QGCRadioButton {
-                    text:       qsTr("Survey-In")
-                    checked:    useFixedPosition == BaseModeDefinition.BaseSurveyIn
-                    onClicked:  rtkSettings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseSurveyIn
-                    visible:    settingsDisplayId & _all
-                }
-
-                QGCRadioButton {
-                    text: qsTr("Specify position")
-                    checked:    useFixedPosition == BaseModeDefinition.BaseFixed
-                    onClicked:  rtkSettings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseFixed
-                    visible:    settingsDisplayId & _all
-                }
-            }
-
-            FactSlider {
-                Layout.fillWidth:       true
-                Layout.preferredWidth:  sliderWidth
-                label:                  qsTr("Accuracy")
-                fact:                   QGroundControl.settingsManager.rtkSettings.surveyInAccuracyLimit
-                majorTickStepSize:      0.1
-                visible:                (
-                    useFixedPosition == BaseModeDefinition.BaseSurveyIn
-                    && rtkSettings.surveyInAccuracyLimit.userVisible
-                    && (settingsDisplayId & _ublox)
-                )
-            }
-
-            FactSlider {
-                Layout.fillWidth:       true
-                Layout.preferredWidth:  sliderWidth
-                label:                  qsTr("Min Duration")
-                fact:                   rtkSettings.surveyInMinObservationDuration
-                majorTickStepSize:      10
-                visible:                (
-                    useFixedPosition == BaseModeDefinition.BaseSurveyIn
-                    && rtkSettings.surveyInMinObservationDuration.userVisible
-                    && (settingsDisplayId & (_ublox | _femtomes | _trimble))
-                )
-            }
-
-            LabelledFactTextField {
-                label:                  rtkSettings.fixedBasePositionLatitude.shortDescription
-                fact:                   rtkSettings.fixedBasePositionLatitude
-                visible:                (
-                    useFixedPosition == BaseModeDefinition.BaseFixed
-                    && (settingsDisplayId & _all)
-                )
-            }
-
-            LabelledFactTextField {
-                label:              rtkSettings.fixedBasePositionLongitude.shortDescription
-                fact:               rtkSettings.fixedBasePositionLongitude
-                visible:            (
-                    useFixedPosition == BaseModeDefinition.BaseFixed
-                    && (settingsDisplayId & _all)
-                )
-            }
-
-            LabelledFactTextField {
-                label:              rtkSettings.fixedBasePositionAltitude.shortDescription
-                fact:               rtkSettings.fixedBasePositionAltitude
-                visible:            (
-                    useFixedPosition == BaseModeDefinition.BaseFixed
-                    && (settingsDisplayId & _all)
-                )
-            }
-
-            LabelledFactTextField {
-                label:              rtkSettings.fixedBasePositionAccuracy.shortDescription
-                fact:               rtkSettings.fixedBasePositionAccuracy
-                visible:            (
-                    useFixedPosition == BaseModeDefinition.BaseFixed
-                    && (settingsDisplayId & _ublox)
-                )
-            }
-
-            LabelledButton {
-                label:              qsTr("Current Base Position")
-                buttonText:         enabled ? qsTr("Save") : qsTr("Not Yet Valid")
-                visible:            useFixedPosition == BaseModeDefinition.BaseFixed
-                enabled:            QGroundControl.gpsRtk.valid.value
-
-                onClicked: {
-                    rtkSettings.fixedBasePositionLatitude.rawValue  = QGroundControl.gpsRtk.currentLatitude.rawValue
-                    rtkSettings.fixedBasePositionLongitude.rawValue = QGroundControl.gpsRtk.currentLongitude.rawValue
-                    rtkSettings.fixedBasePositionAltitude.rawValue  = QGroundControl.gpsRtk.currentAltitude.rawValue
-                    rtkSettings.fixedBasePositionAccuracy.rawValue  = QGroundControl.gpsRtk.currentAccuracy.rawValue
-                }
+            QGCLabel {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.preferredWidth: 0
+                wrapMode: Text.Wrap
+                visible: root._compact && root._receiver.errorMessage.length > 0
+                text: root._receiver.errorMessage
+                textFormat: Text.PlainText
             }
         }
     }

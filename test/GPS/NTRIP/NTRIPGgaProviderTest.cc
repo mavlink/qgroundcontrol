@@ -16,6 +16,7 @@
 #include "ManualScheduler.h"
 #include "MockNTRIPTransport.h"
 #include "MultiVehicleManager.h"
+#include "NMEASentence.h"
 #include "NMEAUtils.h"
 #include "NTRIPGgaProvider.h"
 #include "NTRIPManager.h"
@@ -94,12 +95,14 @@ void NTRIPGgaProviderTest::testSourceClearedOnStopAndFreshStart()
     MockNTRIPTransport transport;
 
     provider.setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, []() {
-        return PositionResult{QGeoCoordinate(47.3977, 8.5456, 450.0), QStringLiteral("Vehicle GPS")};
+        return PositionResult{QGeoCoordinate(47.3977, 8.5456, 450.0), QStringLiteral("Vehicle GPS"),
+                              GPSAltitudeDatum::MeanSeaLevel};
     });
 
     provider.start(&transport);
     QCOMPARE(provider.currentSource(), QStringLiteral("Vehicle GPS"));
     QCOMPARE(transport.sentNmea.size(), 1);
+    QVERIFY(transport.sentNmea.first().startsWith("$GPGGA,"));
 
     provider.stop();
     QVERIFY(provider.currentSource().isEmpty());
@@ -125,11 +128,9 @@ void NTRIPGgaProviderTest::testDefaultRTKBaseProvider()
     manager->setTransportForTest(transport);
     manager->startNTRIP();
     QCOMPARE(manager->connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
-    QCOMPARE(manager->ggaSource(), QStringLiteral("RTK Base"));
-    QCOMPARE(transport->sentNmea.size(), 1);
-    QVERIFY(transport->sentNmea.first().contains(",4723.8620,N,00832.7360,E,"));
-    QVERIFY(transport->sentNmea.first().contains(",450.0,M,"));
-    QVERIFY(NMEAUtils::verifyChecksum(transport->sentNmea.first()));
+    QVERIFY(manager->ggaSource().isEmpty());
+    QVERIFY(transport->sentNmea.isEmpty());
+    QCOMPARE(facts->currentAltitude()->rawValue().toDouble(), 450.0);
     manager->stopNTRIP();
 
     facts->valid()->setRawValue(false);
@@ -155,10 +156,12 @@ void NTRIPGgaProviderTest::_invalidProviderAltitude()
     NTRIPGgaProvider provider;
     MockNTRIPTransport transport;
     provider.setPositionProvider(Source::VehicleGPS, [altitude]() {
-        return PositionResult{QGeoCoordinate(47, 8, altitude), QStringLiteral("Vehicle GPS")};
+        return PositionResult{QGeoCoordinate(47, 8, altitude), QStringLiteral("Vehicle GPS"),
+                              GPSAltitudeDatum::MeanSeaLevel};
     });
-    provider.setPositionProvider(Source::GCSPosition,
-                                 []() { return PositionResult{QGeoCoordinate(48, 9, 0), QStringLiteral("GCS")}; });
+    provider.setPositionProvider(Source::GCSPosition, []() {
+        return PositionResult{QGeoCoordinate(48, 9, 0), QStringLiteral("GCS"), GPSAltitudeDatum::MeanSeaLevel};
+    });
 
     provider.configure({Source::VehicleGPS});
     provider.start(&transport);
@@ -170,7 +173,12 @@ void NTRIPGgaProviderTest::_invalidProviderAltitude()
     provider.start(&transport);
     QCOMPARE(transport.sentNmea.size(), 1);
     QCOMPARE(provider.currentSource(), QStringLiteral("GCS"));
-    QVERIFY(transport.sentNmea.first().contains(",0.0,M,"));
+    const auto fields = transport.sentNmea.first().split(',');
+    QCOMPARE(fields.size(), 15);
+    QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE), QByteArray("0.0"));
+    QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE_UNITS), QByteArray("M"));
+    QVERIFY(fields.at(NMEA::Field::GGA_GEOID_SEPARATION).isEmpty());
+    QVERIFY(NMEAUtils::verifyChecksum(transport.sentNmea.first()));
 }
 
 void NTRIPGgaProviderTest::_activeVehicleAndCommunicationLoss()
@@ -207,8 +215,19 @@ void NTRIPGgaProviderTest::_activeVehicleAndCommunicationLoss()
                 expected.setLatitude(gps->getFact(QStringLiteral("lat"))->rawValue().toDouble());
                 expected.setLongitude(gps->getFact(QStringLiteral("lon"))->rawValue().toDouble());
             }
-            const auto expectedFields = NMEAUtils::makeGGA(expected, expected.altitude()).split(',');
-            QCOMPARE(transport->sentNmea.first().split(',').mid(2, 8), expectedFields.mid(2, 8));
+            const NMEA::GGA fix{
+                .latitude = expected.latitude(),
+                .longitude = expected.longitude(),
+                .altitude = expected.altitude(),
+                .hdop = 1.0,
+                .quality = NMEA::GgaQuality::GPS,
+                .satellitesUsed = 12,
+            };
+            const auto expectedFields = NMEAUtils::makeGGA(fix, QTime(12, 0)).split(',');
+            const auto fields = transport->sentNmea.first().split(',');
+            QCOMPARE(fields.size(), 15);
+            QCOMPARE(fields.mid(2, 11), expectedFields.mid(2, 11));
+            QVERIFY(fields.at(NMEA::Field::GGA_GEOID_SEPARATION).isEmpty());
             QCOMPARE(ntrip->ggaSource(),
                      source == Source::VehicleGPS ? QStringLiteral("Vehicle GPS") : QStringLiteral("Vehicle EKF"));
             QVERIFY(NMEAUtils::verifyChecksum(transport->sentNmea.first()));
@@ -299,7 +318,11 @@ void NTRIPGgaProviderTest::_gcsObservation()
     QCOMPARE(manager->ggaSource(), accepted ? QStringLiteral("GCS Position") : QString());
     if (accepted) {
         QVERIFY(transport->sentNmea.first().contains(",4723.8620,N,00832.7360,E,"));
-        QVERIFY(transport->sentNmea.first().contains(",450.0,M,"));
+        const auto fields = transport->sentNmea.first().split(',');
+        QCOMPARE(fields.size(), 15);
+        QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE), QByteArray("450.0"));
+        QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE_UNITS), QByteArray("M"));
+        QVERIFY(fields.at(NMEA::Field::GGA_GEOID_SEPARATION).isEmpty());
         QVERIFY(NMEAUtils::verifyChecksum(transport->sentNmea.first()));
     }
     manager->stopNTRIP();
