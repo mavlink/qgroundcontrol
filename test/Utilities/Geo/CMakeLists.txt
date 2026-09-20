@@ -11,6 +11,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         GeoTest.h
         KMLDomDocumentTest.cc
         KMLDomDocumentTest.h
+        PolygonClipperTest.cc
+        PolygonClipperTest.h
         ShapeTest.cc
         ShapeTest.h
 )
@@ -38,4 +40,5 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "Test_Utilities_Geo_res"
 add_qgc_test(GeoTest LABELS Unit Utilities)
 add_qgc_test(GeoJsonHelperTest LABELS Unit Utilities)
 add_qgc_test(KMLDomDocumentTest LABELS Unit Utilities)
+add_qgc_test(PolygonClipperTest LABELS Unit Utilities)
 add_qgc_test(ShapeTest LABELS Unit Utilities)
