@@ -202,7 +202,7 @@ public:
         uint16_t track_id, quint64 publish_timestamp_us, uint8_t view_id);
     Q_INVOKABLE bool sendCamTargetingParameters(
         QString stream_name, uint8_t cam_id, uint8_t targeting_mode, uint8_t euler_delta,
-        float yaw, float pitch, float roll, uint8_t lock_flags,
+        float yaw, float pitch, float roll, uint8_t stabilization_flags,
         float x_offset, float y_offset,
         float target_latitude, float target_longitude, float target_altitude,
         uint16_t track_id, int16_t view_id, uint8_t lock_target);
@@ -322,7 +322,7 @@ signals:
         uint16_t track_id, quint64 publish_timestamp_us, uint8_t view_id);
     void camTargetingParametersReceived(
         const QString& stream_name, uint8_t cam_id, uint8_t targeting_mode, uint8_t euler_delta,
-        float yaw, float pitch, float roll, uint8_t lock_flags,
+        float yaw, float pitch, float roll, uint8_t stabilization_flags,
         float x_offset, float y_offset,
         float target_latitude, float target_longitude, float target_altitude,
         uint16_t track_id, int16_t view_id, uint8_t lock_target);

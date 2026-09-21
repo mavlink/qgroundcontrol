@@ -116,51 +116,39 @@ Item {
             rejectionMessage = qsTr("Immediate tracking is unavailable because video content is not visible or decoding.")
         } else if (!root.digiviewOutputGeometryAvailable) {
             rejectionMessage = qsTr("Immediate tracking is unavailable because video geometry is missing.")
-        } else if (!Number.isFinite(root.digiviewScaleX) || !Number.isFinite(root.digiviewScaleY)
-                   || root.digiviewScaleX <= 0 || root.digiviewScaleY <= 0) {
-            rejectionMessage = qsTr("Immediate tracking is unavailable because the video scale is invalid.")
+        } else if (SVState.cameraSelected < 0) {
+            rejectionMessage = qsTr("Immediate tracking is unavailable because no camera is selected.")
         }
 
-        let point
         if (!rejectionMessage) {
-            const window = root.Window.window
-            if (!window) {
-                rejectionMessage = qsTr("Immediate tracking is unavailable because the fly view window is missing.")
-            } else if (!window.contentItem) {
-                rejectionMessage = qsTr("Immediate tracking is unavailable because the window content is missing.")
-            } else {
-                const contentPoint = window.contentItem.mapFromItem(
-                    null, ScreenTools.mouseX() - window.x, ScreenTools.mouseY() - window.y)
-                point = root.mapFromItem(window.contentItem, contentPoint.x, contentPoint.y)
-                if (!Number.isFinite(point.x) || !Number.isFinite(point.y)
-                        || point.x < videoContentArea.x || point.x >= videoContentArea.x + videoContentArea.width
-                        || point.y < videoContentArea.y || point.y >= videoContentArea.y + videoContentArea.height) {
-                    rejectionMessage = qsTr("The selected point is outside the video content.")
+            for (let index = 0; index < cameraLayerRepeater.count; ++index) {
+                const cameraLayer = cameraLayerRepeater.itemAt(index)
+                if (!cameraLayer || cameraLayer.cameraSlot !== SVState.cameraSelected) {
+                    continue
                 }
-            }
-        }
 
-        if (!rejectionMessage) {
-            const outputX = (point.x - videoContentArea.x) / root.digiviewScaleX
-            const outputY = (point.y - videoContentArea.y) / root.digiviewScaleY
-            for (let index = 0; index < root.digiviewCameraViews.length; ++index) {
-                const view = root.digiviewCameraViews[index]
-                if (outputX >= view.x && outputX < view.x + view.width
-                        && outputY >= view.y && outputY < view.y + view.height) {
-                    const normalizedX = (outputX - view.x) / view.width * 2.0 - 1.0
-                    const normalizedY = 1.0 - (outputY - view.y) / view.height * 2.0
-                    const submitted = SVState.submitImmediatePointTracking(
-                        trackingId, view.slot, normalizedX, normalizedY)
-                    if (submitted) {
-                        return true
-                    }
-
-                    rejectionMessage = qsTr("Immediate tracking was rejected because no camera is selected, controls are locked, or the camera state changed.")
+                // Use the pointer position already expressed in the exact same
+                // SVCameraLayer-local coordinate system as the working UI click.
+                const target = cameraLayer.currentPointerTarget()
+                if (!target) {
+                    rejectionMessage = qsTr("The selected point is outside the selected camera view.")
                     break
                 }
+
+                if (SVState.submitImmediatePointTracking(
+                        trackingId,
+                        target.cameraSlot,
+                        target.normalizedX,
+                        target.normalizedY)) {
+                    return true
+                }
+
+                rejectionMessage = qsTr("Immediate tracking was rejected because no camera is selected, controls are locked, or the camera state changed.")
+                break
             }
+
             if (!rejectionMessage) {
-                rejectionMessage = qsTr("The selected point does not match a DigiView camera view.")
+                rejectionMessage = qsTr("The selected camera view is unavailable.")
             }
         }
 
@@ -270,6 +258,7 @@ Item {
 
 
         Repeater {
+            id: cameraLayerRepeater
             model: root.digiviewCameraViews
 
             delegate: SVCameraLayer {

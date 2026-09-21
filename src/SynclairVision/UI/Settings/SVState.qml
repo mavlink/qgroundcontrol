@@ -45,11 +45,12 @@ QtObject {
 
     function _applyNetworkVideoConfiguration() {
         SVBackend.configureNetworkVideo(
-            synclairOverlayVideoActive,
-            synclairOverlayVideoUri,
+            synclairOverlay,
+            synclairOverlayVideoActive ? synclairOverlayVideoUri : "",
             forceRtspVideoOverTcp)
     }
 
+    onSynclairOverlayChanged: _applyNetworkVideoConfiguration()
     onSynclairOverlayVideoActiveChanged: _applyNetworkVideoConfiguration()
     onSynclairOverlayVideoUriChanged: _applyNetworkVideoConfiguration()
     onForceRtspVideoOverTcpChanged: _applyNetworkVideoConfiguration()

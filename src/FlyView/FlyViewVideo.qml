@@ -8,6 +8,9 @@ Item {
 
     property Item pipView
     property Item pipState: videoPipState
+    property bool forceVideoVisible: false
+    property bool forceNoCrop: false
+    property bool allowUvc: true
 
     PipState {
         id:         videoPipState
@@ -44,7 +47,9 @@ Item {
         id:             videoStreaming
         anchors.fill:   parent
         useSmallFont:   _root.pipState.state !== _root.pipState.fullState
-        visible:        QGroundControl.videoManager.isStreamSource || QGroundControl.videoManager.isUvc
+        forceNoCrop:    _root.forceNoCrop
+        allowUvc:       _root.allowUvc
+        visible:        _root.forceVideoVisible || QGroundControl.videoManager.isStreamSource || QGroundControl.videoManager.isUvc
     }
 
     QGCLabel {

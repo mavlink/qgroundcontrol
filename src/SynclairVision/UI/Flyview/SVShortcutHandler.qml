@@ -54,8 +54,8 @@ Item {
         && root.Window.window && root.Window.window.active
         && !SVSettings.shortcutCaptureActive && !root.textInputHasFocus()
         && !(Overlay.overlay && Overlay.overlay.visible)
-        && !SVState.cursorTrackingSessionActive
     readonly property bool visualShortcutsEligible: root.shortcutInputEligible && root.enabled
+        && !SVState.cursorTrackingSessionActive
         && !SVState.lockControls && SVState.cameraSelected !== -1
 
     readonly property var actionPolicies: ({
@@ -342,6 +342,7 @@ Item {
             if (pressed) {
                 if (!autoRepeat) {
                     root.trackVisualKeyPress(key)
+                    root.dispatch(key)
                 }
             } else if (!autoRepeat) {
                 root.trackVisualKeyRelease(key)
@@ -351,7 +352,7 @@ Item {
 
     MouseArea {
         anchors.fill: parent
-        enabled: root.shortcutInputEligible
+        enabled: root.shortcutInputEligible && !SVState.cursorTrackingSessionActive
         acceptedButtons: Qt.AllButtons
         onPressed: (mouse) => {
             mouse.accepted = root.isShortcutEnabled(root.mouseButtonShortcut(mouse.button))
@@ -364,155 +365,28 @@ Item {
         }
     }
 
-    Shortcut {
-        sequence: SVSettings.shortcutHUD
-        enabled: root.isShortcutEnabled(SVSettings.shortcutHUD)
-        onActivated: root.dispatch(SVSettings.shortcutHUD, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutToolbar
-        enabled: root.isShortcutEnabled(SVSettings.shortcutToolbar)
-        onActivated: root.dispatch(SVSettings.shortcutToolbar, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutSynclair
-        enabled: root.isShortcutEnabled(SVSettings.shortcutSynclair)
-        onActivated: root.dispatch(SVSettings.shortcutSynclair, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutCamera1
-        enabled: root.isShortcutEnabled(SVSettings.shortcutCamera1)
-        onActivated: root.dispatch(SVSettings.shortcutCamera1, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutCamera2
-        enabled: root.isShortcutEnabled(SVSettings.shortcutCamera2)
-        onActivated: root.dispatch(SVSettings.shortcutCamera2, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutCamera3
-        enabled: root.isShortcutEnabled(SVSettings.shortcutCamera3)
-        onActivated: root.dispatch(SVSettings.shortcutCamera3, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutCamera4
-        enabled: root.isShortcutEnabled(SVSettings.shortcutCamera4)
-        onActivated: root.dispatch(SVSettings.shortcutCamera4, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutCamera5
-        enabled: root.isShortcutEnabled(SVSettings.shortcutCamera5)
-        onActivated: root.dispatch(SVSettings.shortcutCamera5, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutNextCamera
-        enabled: root.isShortcutEnabled(SVSettings.shortcutNextCamera)
-        onActivated: root.dispatch(SVSettings.shortcutNextCamera, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutDeselectCamera
-        enabled: root.isShortcutEnabled(SVSettings.shortcutDeselectCamera)
-        onActivated: root.dispatch(SVSettings.shortcutDeselectCamera, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutRecord
-        enabled: root.isShortcutEnabled(SVSettings.shortcutRecord)
-        onActivated: root.dispatch(SVSettings.shortcutRecord, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutPhoto
-        enabled: root.isShortcutEnabled(SVSettings.shortcutPhoto)
-        onActivated: root.dispatch(SVSettings.shortcutPhoto, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutLockControls
-        enabled: root.isShortcutEnabled(SVSettings.shortcutLockControls)
-        onActivated: root.dispatch(SVSettings.shortcutLockControls, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutPreviousCamera
-        enabled: root.isShortcutEnabled(SVSettings.shortcutPreviousCamera)
-        onActivated: root.dispatch(SVSettings.shortcutPreviousCamera, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutAiDetection
-        enabled: root.isShortcutEnabled(SVSettings.shortcutAiDetection)
-        onActivated: root.dispatch(SVSettings.shortcutAiDetection, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutNextLayout
-        enabled: root.isShortcutEnabled(SVSettings.shortcutNextLayout)
-        onActivated: root.dispatch(SVSettings.shortcutNextLayout, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutGrid
-        enabled: root.isShortcutEnabled(SVSettings.shortcutGrid)
-        onActivated: root.dispatch(SVSettings.shortcutGrid, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutCrosshair
-        enabled: root.isShortcutEnabled(SVSettings.shortcutCrosshair)
-        onActivated: root.dispatch(SVSettings.shortcutCrosshair, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutSTT
-        enabled: root.isShortcutEnabled(SVSettings.shortcutSTT)
-        onActivated: root.dispatch(SVSettings.shortcutSTT, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutCursorTracking
-        enabled: root.isShortcutEnabled(SVSettings.shortcutCursorTracking)
-        onActivated: root.dispatch(SVSettings.shortcutCursorTracking, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutManualTracking
-        enabled: root.isShortcutEnabled(SVSettings.shortcutManualTracking)
-        onActivated: root.dispatch(SVSettings.shortcutManualTracking, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutDeselectTracking
-        enabled: root.isShortcutEnabled(SVSettings.shortcutDeselectTracking)
-        onActivated: root.dispatch(SVSettings.shortcutDeselectTracking, [])
-    }
-
-    Shortcut {
-        sequence: SVSettings.shortcutLockTarget
-        enabled: root.isShortcutEnabled(SVSettings.shortcutLockTarget)
-        onActivated: root.dispatch(SVSettings.shortcutLockTarget, [])
-    }
-
     function mouseButtonShortcut(button) {
         return SVSettings.mouseButtonShortcutBase - button
     }
 
     function isShortcutEnabled(shortcut) {
         const action = root.shortcutRegistry[shortcut]
-        const policy = root.actionPolicies[action]
+        if (!root.shortcutInputEligible || action === undefined) {
+            return false
+        }
 
-        return root.shortcutInputEligible && action !== undefined
-            && (SVState.shortcutsEnabled || (policy && policy.allowWhenShortcutsDisabled
-                && (!policy.requiresVisibleToolbar || root.toolbarVisible)))
+        if (SVState.cursorTrackingSessionActive && action !== root.actionDeselectTracking) {
+            return false
+        }
+
+        if (SVState.shortcutsEnabled) {
+            return true
+        }
+
+        const policy = root.actionPolicies[action]
+        return policy !== undefined
+            && policy.allowWhenShortcutsDisabled === true
+            && (!policy.requiresVisibleToolbar || root.toolbarVisible)
     }
 
     function dispatch(shortcut) {

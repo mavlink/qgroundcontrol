@@ -316,11 +316,6 @@ void GstVideoReceiver::stop()
         return;
     }
 
-    if (_uri.isEmpty()) {
-        qCDebug(GstVideoReceiverLog) << "Stop called on empty URI (no-op)";
-        return;
-    }
-
     qCDebug(GstVideoReceiverLog) << "Stopping" << _redactedUri();
 
     // Bump the epoch synchronously (atomic — no GUI thread needed) so any in-flight reconnect lambda
