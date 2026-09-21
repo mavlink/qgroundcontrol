@@ -7,7 +7,9 @@
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QSslError>
+#include <QtNetwork/QSslSocket>
 
+#include "NTRIPHttpRequest.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPTlsPolicy_p.h"
 #include "QGCLoggingCategory.h"
@@ -16,10 +18,16 @@
 QGC_LOGGING_CATEGORY(NTRIPSourceTableControllerLog, "GPS.NTRIPSourceTableController")
 
 NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent)
-    : QObject(parent),
-      _model(new NTRIPSourceTableModel(this)),
-      _networkManager(QGCNetworkHelper::createNetworkManager(this))
-{}
+    : QObject(parent)
+    , _model(new NTRIPSourceTableModel(this))
+    , _networkManager(QGCNetworkHelper::createNetworkManager(this))
+    , _legacyTimeout(this)
+{
+    _legacyTimeout.setSingleShot(true);
+    _legacyTimeout.setInterval(kFetchTimeoutMs);
+    connect(&_legacyTimeout, &QTimer::timeout, this,
+            [this]() { _finishLegacyFetch(tr("Source table request timed out")); });
+}
 
 NTRIPSourceTableController::~NTRIPSourceTableController()
 {
@@ -43,7 +51,7 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
     const bool sameCaster = casterConfig == _lastFetchConfig;
     const QString invalid = config.validationError();
 
-    if (invalid.isEmpty() && _reply && _fetchStatus == FetchStatus::InProgress && sameCaster) {
+    if (invalid.isEmpty() && (_reply || _legacySocket) && _fetchStatus == FetchStatus::InProgress && sameCaster) {
         _sortCoord = sortCoord;
         return;
     }
@@ -87,29 +95,18 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
     _fetchStatus = FetchStatus::InProgress;
     _fetchError.clear();
 
-    QUrl url;
-    url.setScheme(config.useTls ? QStringLiteral("https") : QStringLiteral("http"));
-    url.setHost(config.host);
-    url.setPort(config.port);
-    url.setPath(QStringLiteral("/"));
-
-    QNetworkRequest request(url);
+    const auto built = NTRIPHttpRequest::build(config, NTRIPHttpRequest::Purpose::SourceTable);
+    if (!built.error.isEmpty()) {
+        _onFetchError(built.error);
+        return;
+    }
+    QNetworkRequest request(built.url);
     request.setTransferTimeout(kFetchTimeoutMs);
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
     request.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
     request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
     request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
-    QHttpHeaders headers;
-    using Header = QHttpHeaders::WellKnownHeader;
-    if (!headers.append(Header::UserAgent, "QGC-NTRIP") || !headers.append(Header::Accept, "*/*") ||
-        !headers.append(Header::Connection, "keep-alive") || !headers.append("Ntrip-Version", "Ntrip/2.0")) {
-        _onFetchError(tr("Invalid NTRIP source-table request header"));
-        return;
-    }
-    request.setHeaders(headers);
-    if (!config.username.isEmpty() || !config.password.isEmpty()) {
-        QGCNetworkHelper::setBasicAuth(request, config.username, config.password);
-    }
+    request.setHeaders(built.headers);
 
     _replyTooLarge = false;
     _reply = _networkManager->get(request);
@@ -156,6 +153,11 @@ void NTRIPSourceTableController::_onReplyFinished(QNetworkReply* reply, quint64 
     }
 
     const bool networkError = reply->error() != QNetworkReply::NoError;
+    const bool legacyEnvelope =
+        !reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).isValid() &&
+        (reply->error() == QNetworkReply::ProtocolFailure ||
+         reply->error() == QNetworkReply::ProtocolInvalidOperationError ||
+         reply->error() == QNetworkReply::RemoteHostClosedError || reply->error() == QNetworkReply::TimeoutError);
     const QString networkErrorMsg = networkError ? reply->errorString() : QString();
     const QString body = networkError ? QString() : QString::fromUtf8(reply->readAll());
     _abortReply();
@@ -164,7 +166,12 @@ void NTRIPSourceTableController::_onReplyFinished(QNetworkReply* reply, quint64 
     }
 
     if (networkError) {
-        _onFetchError(networkErrorMsg);
+        if (legacyEnvelope) {
+            // QNAM cannot expose a v1 SOURCETABLE status line. Retry once with the same TLS/auth policy.
+            _startLegacyFetch(revision);
+        } else {
+            _onFetchError(networkErrorMsg);
+        }
         return;
     }
 
@@ -174,6 +181,115 @@ void NTRIPSourceTableController::_onReplyFinished(QNetworkReply* reply, quint64 
     }
 
     _onSourceTableReceived(body);
+}
+
+void NTRIPSourceTableController::_startLegacyFetch(quint64 revision)
+{
+    const auto request = NTRIPHttpRequest::build(_lastFetchConfig, NTRIPHttpRequest::Purpose::SourceTable);
+    if (!request.error.isEmpty()) {
+        _onFetchError(request.error);
+        return;
+    }
+    QTcpSocket* socket = _lastFetchConfig.useTls ? new QSslSocket(this) : new QTcpSocket(this);
+    _legacySocket = socket;
+    socket->setReadBufferSize(64 * 1024);
+    const QPointer<NTRIPSourceTableController> guard(this);
+    const QPointer<QTcpSocket> socketGuard(socket);
+    const auto current = [this, guard, socketGuard, revision]() {
+        return guard && socketGuard && _legacySocket == socketGuard && _fetchRevision == revision;
+    };
+    const auto sendRequest = [this, current, bytes = request.bytes]() {
+        if (current() && _legacySocket->write(bytes) != bytes.size()) {
+            _finishLegacyFetch(tr("Failed to send source table request"));
+        }
+    };
+    connect(socket, &QTcpSocket::readyRead, this, [this, current, revision]() {
+        if (current()) {
+            _readLegacyReply(revision);
+        }
+    });
+    connect(socket, &QTcpSocket::errorOccurred, this, [this, current](QAbstractSocket::SocketError error) {
+        if (current() && error != QAbstractSocket::RemoteHostClosedError) {
+            _finishLegacyFetch(_legacySocket->errorString());
+        }
+    });
+    connect(socket, &QTcpSocket::disconnected, this, [this, current, revision]() {
+        if (current()) {
+            _readLegacyReply(revision);
+            if (current()) {
+                _finishLegacyFetch(tr("Response does not contain a valid source table"));
+            }
+        }
+    });
+    connect(socket, &QObject::destroyed, this, [this, revision]() {
+        if (_fetchRevision == revision && _fetchStatus == FetchStatus::InProgress && !_reply) {
+            _legacyTimeout.stop();
+            _onFetchError(tr("Source table connection was destroyed before completion"));
+        }
+    });
+    _legacyTimeout.start();
+    if (auto* sslSocket = qobject_cast<QSslSocket*>(socket)) {
+        connect(sslSocket, &QSslSocket::sslErrors, this,
+                [this, current, sslSocket,
+                 allowSelfSigned = _lastFetchConfig.allowSelfSignedCerts](const QList<QSslError>& errors) {
+                    if (!current()) {
+                        return;
+                    }
+                    if (allowSelfSigned && NTRIPTlsPolicy::isSelfSignedOnly(errors)) {
+                        sslSocket->ignoreSslErrors(errors);
+                    } else {
+                        _finishLegacyFetch(tr("Source table TLS certificate validation failed"));
+                    }
+                });
+        connect(sslSocket, &QSslSocket::encrypted, this, sendRequest);
+        sslSocket->connectToHostEncrypted(_lastFetchConfig.host, static_cast<quint16>(_lastFetchConfig.port));
+    } else {
+        connect(socket, &QTcpSocket::connected, this, sendRequest);
+        socket->connectToHost(_lastFetchConfig.host, static_cast<quint16>(_lastFetchConfig.port));
+    }
+}
+
+void NTRIPSourceTableController::_readLegacyReply(quint64 revision)
+{
+    while (_legacySocket && _fetchRevision == revision && _legacySocket->bytesAvailable() > 0) {
+        const auto result = _legacyDecoder.feed(_legacySocket->read(16384), QDateTime::currentDateTimeUtc());
+        if (result.failure) {
+            _finishLegacyFetch(result.failure->detail);
+            return;
+        }
+        if (_legacyBody.size() + result.body.size() >= kMaxSourceTableBytes) {
+            _finishLegacyFetch(tr("Source table too large (exceeds %1 MB)").arg(kMaxSourceTableBytes / (1024 * 1024)));
+            return;
+        }
+        _legacyBody += result.body;
+        if (_legacyBody.startsWith("ENDSOURCETABLE\r\n") || _legacyBody.contains("\nENDSOURCETABLE\r\n")) {
+            _finishLegacyFetch();
+            return;
+        }
+        if (result.complete) {
+            _finishLegacyFetch(tr("Response does not contain a valid source table"));
+            return;
+        }
+    }
+}
+
+void NTRIPSourceTableController::_finishLegacyFetch(const QString& error)
+{
+    if (!_legacySocket) {
+        return;
+    }
+    const QPointer<NTRIPSourceTableController> guard(this);
+    const quint64 revision = _fetchRevision;
+    const QString body = QString::fromUtf8(_legacyBody);
+    _abortReply();
+    if (!guard || revision != _fetchRevision) {
+        return;
+    }
+    if (error.isEmpty()) {
+        _onSourceTableReceived(body);
+    } else {
+        _onFetchError(error);
+    }
 }
 
 void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
@@ -246,13 +362,35 @@ bool NTRIPSourceTableController::_deferModelMutation(std::function<void()> actio
 
 void NTRIPSourceTableController::_abortReply()
 {
+    _legacyTimeout.stop();
+    _legacyBody.clear();
+    _legacyDecoder.reset();
+    const auto socket = std::exchange(_legacySocket, {});
     const auto reply = std::exchange(_reply, {});
+    if (socket) {
+        socket->disconnect(this);
+        socket->deleteLater();
+    }
     if (reply) {
         disconnect(reply, nullptr, this, nullptr);
         reply->deleteLater();
-        if (reply->isRunning()) {
-            reply->abort();
-        }
+    }
+    if (socket) {
+        socket->abort();
+    }
+    if (reply && reply->isRunning()) {
+        reply->abort();
+    }
+}
+
+void NTRIPSourceTableController::cancel()
+{
+    const QPointer<NTRIPSourceTableController> guard(this);
+    const quint64 revision = ++_fetchRevision;
+    _abortReply();
+    if (guard && _fetchRevision == revision && _fetchStatus == FetchStatus::InProgress) {
+        _fetchStatus = FetchStatus::Idle;
+        emit fetchStatusChanged();
     }
 }
 

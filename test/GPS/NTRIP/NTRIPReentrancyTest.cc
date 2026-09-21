@@ -153,6 +153,10 @@ private slots:
     void filterConfigurationUpdatesWithoutReconnect();
     void invalidFetchRetiresPendingReply();
     void sourceTableSuccessAndCache();
+    void legacySourceTable_data();
+    void legacySourceTable();
+    void validFrameWatchdog_data();
+    void validFrameWatchdog();
     void sourceTableIdentity_data();
     void sourceTableIdentity();
     void abortCallbackSupersedesReplacement();
@@ -1116,6 +1120,102 @@ void NTRIPReentrancyTest::sourceTableSuccessAndCache()
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
     QVERIFY(!controller._cacheAge.isValid());
     QCOMPARE(controller.mountpointModel()->rowCount(), 0);
+}
+
+void NTRIPReentrancyTest::legacySourceTable_data()
+{
+    QTest::addColumn<QByteArray>("separator");
+    QTest::addColumn<bool>("cancel");
+    QTest::newRow("without-headers") << QByteArray() << false;
+    QTest::newRow("blank-separator") << QByteArray("\r\n") << false;
+    QTest::newRow("optional-headers") << QByteArray("Server: loopback\r\n\r\n") << false;
+    QTest::newRow("cancel-fallback") << QByteArray() << true;
+}
+
+void NTRIPReentrancyTest::legacySourceTable()
+{
+    QFETCH(QByteArray, separator);
+    QFETCH(bool, cancel);
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    auto configuration = config();
+    configuration.port = server.serverPort();
+    NTRIPSourceTableController controller;
+    const QByteArray table =
+        "STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\r\n"
+        "ENDSOURCETABLE\r\n";
+    int requests = 0;
+    bool fallbackSeen = false;
+    connect(&server, &QTcpServer::newConnection, &server, [&]() {
+        auto* peer = server.nextPendingConnection();
+        QVERIFY(peer);
+        connect(peer, &QTcpSocket::readyRead, peer, [&, peer, request = QByteArray()]() mutable {
+            request += peer->readAll();
+            if (!request.endsWith("\r\n\r\n")) {
+                return;
+            }
+            ++requests;
+            QVERIFY(request.startsWith("GET / HTTP/1.1\r\n"));
+            if (controller._legacySocket) {
+                fallbackSeen = true;
+            }
+            if (fallbackSeen && cancel) {
+                controller.cancel();
+            }
+            peer->write("SOURCETABLE 200 OK\r\n" + separator + table);
+            peer->disconnectFromHost();
+        });
+    });
+    controller.fetch(configuration);
+    if (cancel) {
+        QTRY_VERIFY_WITH_TIMEOUT(fallbackSeen, TestTimeout::mediumMs());
+        QVERIFY(!controller._reply);
+        QVERIFY(!controller._legacySocket);
+        QCOMPARE(controller.mountpointModel()->rowCount(), 0);
+    } else {
+        QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                                  TestTimeout::mediumMs());
+        QVERIFY(fallbackSeen);
+        QVERIFY(requests >= 2);
+        QCOMPARE(controller.mountpointModel()->rowCount(), 1);
+        const int completedRequests = requests;
+        controller.fetch(configuration);
+        QCOMPARE(requests, completedRequests);
+        QVERIFY(!controller._legacySocket);
+    }
+}
+
+void NTRIPReentrancyTest::validFrameWatchdog_data()
+{
+    QTest::addColumn<bool>("filtered");
+    QTest::newRow("garbage-does-not-refresh") << false;
+    QTest::newRow("valid-filtered-frames-refresh") << true;
+}
+
+void NTRIPReentrancyTest::validFrameWatchdog()
+{
+    QFETCH(bool, filtered);
+    NTRIPHttpTransport transport(config(), {QStringLiteral("1077")});
+    transport._validFrameWatchdogTimer.setInterval(std::chrono::milliseconds(50));
+    QSignalSpy errors(&transport, &NTRIPTransport::error);
+    transport._processHttpBytes("HTTP/1.1 200 OK\r\n\r\n", 123);
+    QTimer producer;
+    const auto data = filtered ? GpsTestHelpers::buildRtcmFrame(1005) : QByteArray("garbage");
+    connect(&producer, &QTimer::timeout, &transport, [&]() { transport._processHttpBytes(data, 123); });
+    producer.start(10);
+    if (filtered) {
+        bool producedBeyondDeadline = false;
+        QTimer::singleShot(150, &transport, [&]() { producedBeyondDeadline = true; });
+        QTRY_VERIFY_WITH_TIMEOUT(producedBeyondDeadline, TestTimeout::mediumMs());
+        QVERIFY(errors.isEmpty());
+        producer.stop();
+    }
+    QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
+    const auto failure = qvariant_cast<NTRIPFailure>(errors.first().first());
+    QCOMPARE(failure.code, NTRIPError::DataWatchdog);
+    QVERIFY(failure.detail.contains(QStringLiteral("valid RTCM")));
+    QVERIFY(!transport._validFrameWatchdogTimer.isActive());
+    QVERIFY(!transport._dataWatchdogTimer.isActive());
 }
 
 void NTRIPReentrancyTest::sourceTableIdentity_data()

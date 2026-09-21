@@ -226,10 +226,12 @@ private slots:
         QFETCH(int, timeout);
         std::atomic_bool stop = false;
         SerialGPSTransport transport(QStringLiteral("test"), stop);
+        QVERIFY(!transport.supportsCorrectionWrites());
         QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
         const uint8_t payload = 42;
         const auto result = transport.writeBounded(&payload, 1, QDeadlineTimer(timeout));
         QCOMPARE(result.status, GPSWriteStatus::Unsupported);
+        QVERIFY(result.detail.contains(QStringLiteral("Android serial does not support bounded writes")));
         QCOMPARE(result.acceptedBytes, 0);
         QCOMPARE(result.writtenBytes, 0);
         QCOMPARE(result.uncertainBytes(), 0);

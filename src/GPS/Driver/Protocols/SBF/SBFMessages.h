@@ -55,10 +55,10 @@
 #define SBF_CONFIG_DISABLE_OUTPUT "setDataInOut,%s%d,,-RTCMv3-RTCMv2-CMRv2\n"
 
 /* RTK Protocol */
-#define SBF_CONFIG_OUTPUT_RTCM3 "setDataInOut, USB1, Auto, RTCMv3+SBF\n"
+#define SBF_CONFIG_OUTPUT_RTCM3 "setDataInOut, %s, Auto, RTCMv3+SBF\n"
 
 /* RTK Fixed */
-#define SBF_CONFIG_RTCM_STATIC_COORDINATES "setStaticPosGeodetic, Geodetic1, %f, %f, %f\n"
+#define SBF_CONFIG_RTCM_STATIC_COORDINATES "setStaticPosGeodetic, Geodetic1, %.9f, %.9f, %.4f, WGS84\n"
 
 #define SBF_CONFIG_RTCM_STATIC_OFFSET "setAntennaOffset, Main, %f, %f, %f\n"
 
@@ -70,7 +70,7 @@
 #define SBF_CONFIG_RTCM_SURVEY_IN "setPVTMode, Static, All, auto\n"
 
 /* Status */
-#define SBF_CONFIG_RTCM_STATUS "setSBFOutput, Stream1, USB1, +PVTGeodetic, msec500\n"
+#define SBF_CONFIG_RTCM_STATUS "setSBFOutput, Stream1, %s, +PVTGeodetic, msec500\n"
 
 #define SBF_SYNC1 0x24
 #define SBF_SYNC2 0x40

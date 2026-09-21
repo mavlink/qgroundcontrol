@@ -78,17 +78,10 @@ bool velocityValid(GPSPositionReport::FixType fix)
 
 int GPSNativeUBX::parseChar(uint8_t byte)
 {
-    if (_rtcm_parsing && (_frameDecoder.idle() || _rtcm_parsing->hasPartialFrame())) {
-        if (_rtcm_parsing->addByte(byte)) {
-            if (_rtcm_parsing->valid()) {
-                gotRTCMMessage(_rtcm_parsing->frame().data(), _rtcm_parsing->frame().size());
-            }
-            _rtcm_parsing->reset();
-            return 0;
-        }
-        if (_rtcm_parsing->hasPartialFrame()) {
-            return 0;
-        }
+    if (_rtcm_parsing && _frameDecoder.idle() && _rtcm_parsing->ownsByte(byte)) {
+        _rtcm_parsing->addByte(byte);
+        drainRTCM(*_rtcm_parsing);
+        return 0;
     }
     // Keep the completed frame local: synchronous logging can reenter or reset the parser.
     const auto frame = _frameDecoder.consume(byte);

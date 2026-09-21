@@ -28,39 +28,16 @@ SettingsGroupLayout {
         Layout.fillWidth:   true
     }
 
-    LabelledComboBox {
-        id:                 nmeaPortCombo
-        objectName:         "nmeaPortCombo"
-        label:              qsTr("Device")
-        Layout.fillWidth:   true
-        visible:            root._serialSource
-
-        model: root._serialPorts.length > 0 ? root._serialPorts : [qsTr("<none available>")]
-        currentIndex: root._serialPorts.length > 0
-                      ? root._serialPorts.indexOf(root._autoConnectSettings.autoConnectNmeaPort.valueString) : 0
-        enabled: root._serialPorts.length > 0
-
-        onActivated: (index) => {
-            if (index >= 0 && index < root._serialPorts.length) {
-                root._autoConnectSettings.autoConnectNmeaPort.value = root._serialPorts[index]
-            }
-        }
-    }
-
-    LabelledComboBox {
-        id:                 nmeaBaudCombo
-        objectName:         "nmeaBaudCombo"
-        label:              qsTr("Baudrate")
-        Layout.fillWidth:   true
-        visible:            root._serialSource
-        model:              root._serialBaudRates
-        currentIndex:       root._serialBaudRates.indexOf(root._autoConnectSettings.autoConnectNmeaBaud.valueString)
-
-        onActivated: (index) => {
-            if (index >= 0 && index < root._serialBaudRates.length) {
-                root._autoConnectSettings.autoConnectNmeaBaud.value = parseInt(root._serialBaudRates[index])
-            }
-        }
+    FactSerialPortSettings {
+        Layout.fillWidth: true
+        visible: root._serialSource
+        deviceFact: root._autoConnectSettings.autoConnectNmeaPort
+        baudFact: root._autoConnectSettings.autoConnectNmeaBaud
+        serialPorts: root._serialPorts
+        serialBaudRates: root._serialBaudRates
+        deviceObjectName: "nmeaPortCombo"
+        baudObjectName: "nmeaBaudCombo"
+        customBaudObjectName: "customNmeaBaudField"
     }
 
     LabelledFactTextField {

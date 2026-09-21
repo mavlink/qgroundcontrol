@@ -33,6 +33,20 @@
     "decimalPlaces":    1
 },
 {
+    "name":             "horizontalAccuracy",
+    "shortDesc": "Horizontal Accuracy",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
+    "name":             "verticalAccuracy",
+    "shortDesc": "Vertical Accuracy",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
     "name":             "courseOverGround",
     "shortDesc": "Course Over Ground",
     "type":             "double",

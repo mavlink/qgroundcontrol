@@ -18,4 +18,9 @@ private slots:
     void _pageWidth();
     void _disconnectedPage_data();
     void _disconnectedPage();
+    void _serialSelectionTracksFacts();
+    void _resilienceUnknownStates_data();
+    void _resilienceUnknownStates();
+    void _horizontalAccuracyLabel();
+    void _vehicleAccuracyFacts();
 };

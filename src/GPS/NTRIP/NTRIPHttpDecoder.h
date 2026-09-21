@@ -13,6 +13,16 @@
 class NTRIPHttpDecoder
 {
 public:
+    enum class Purpose
+    {
+        Corrections,
+        SourceTable,
+    };
+
+    explicit NTRIPHttpDecoder(Purpose purpose = Purpose::Corrections)
+        : _purpose(purpose)
+    {}
+
     static constexpr qsizetype MAX_HEADER_BYTES = 32768;
     static constexpr qsizetype MAX_LINE_BYTES = 8192;
     static constexpr quint64 MAX_CHUNK_BYTES = 16 * 1024 * 1024;
@@ -65,6 +75,7 @@ private:
     void _fail(Result& result, const QString& detail, NTRIPError code = NTRIPError::InvalidHttpResponse);
 
     QHttpHeaders _headers;
+    Purpose _purpose;
     State _state = State::Status;
     QByteArray _line;
     Status _status;

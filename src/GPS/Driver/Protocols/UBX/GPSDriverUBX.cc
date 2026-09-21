@@ -190,6 +190,9 @@ void GPSNativeUBX::publishEpoch(const GPSNativePositionReport& report)
 
 void GPSNativeUBX::flushDecoded()
 {
+    if (_rtcm_parsing) {
+        drainRTCM(*_rtcm_parsing);
+    }
     if (_assembleEpochs) {
         _navigationEpochs.expire(nowUs(), [this](const auto& report) { publishEpoch(report); });
     }

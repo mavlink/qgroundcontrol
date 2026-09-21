@@ -29,7 +29,8 @@ constexpr std::array DESCRIPTORS{
         .detectionKey = "femtomes",
         .capabilities = {.recognized = true, .rtkBase = true, .surveyIn = true},
         .surveyDuration = Duration::ElapsedTime,
-        .configurableSurveyDuration = true,
+        // POSAVE ON uses the receiver's averaging policy; the driver does not program a duration.
+        .configurableSurveyDuration = false,
     },
     GPSReceiverDescriptor{
         .type = GPSType::ublox,

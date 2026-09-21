@@ -23,6 +23,13 @@ std::optional<GPSObservation> GPSObservation::projected(PositionUse use) const
                 ellipsoidCoordinate.setAltitude(*altitudeEllipsoidMeters);
                 accepted.position.setCoordinate(ellipsoidCoordinate);
                 accepted.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
+            } else if (altitudeDatum != GPSAltitudeDatum::Ellipsoid ||
+                       !qIsFinite(accepted.position.coordinate().altitude())) {
+                auto horizontalCoordinate = accepted.position.coordinate();
+                horizontalCoordinate.setAltitude(qQNaN());
+                accepted.position.setCoordinate(horizontalCoordinate);
+                accepted.position.removeAttribute(QGeoPositionInfo::VerticalAccuracy);
+                accepted.altitudeDatum = GPSAltitudeDatum::Unknown;
             }
             break;
     }

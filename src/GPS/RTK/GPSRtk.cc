@@ -490,22 +490,16 @@ void GPSRtk::_retireSession(quint64 generation)
     _session = {};
     _session.generation = generation;
     const auto provider = retired.provider;
-    const auto timeoutMs = _disconnectTimeoutMs;
     if (provider) {
         // Retirement callbacks may delete this owner; the worker must already be independent.
         provider->setParent(nullptr);
         provider->stop();
     }
     retired.corrections.reset();
-    if (provider) {
-        if (!retired.started) {
-            delete provider.data();
-        } else if (!provider->wait(timeoutMs)) {
-            qCWarning(GPSRtkLog) << "GPS thread did not exit in time; deferring cleanup to finished()";
-        } else {
-            delete provider.data();
-        }
+    if (provider && !retired.started) {
+        delete provider.data();
     }
+    // Started workers own their transport reservation until run() exits; finished() schedules deletion.
 }
 
 void GPSRtk::disconnectGPS()

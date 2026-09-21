@@ -52,6 +52,99 @@ void NTRIPManagerTest::testStopFromIdleIsNoop()
     QCOMPARE(mgr->connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
 }
 
+void NTRIPManagerTest::testStopCancelsDeferredSettings_data()
+{
+    QTest::addColumn<bool>("shutdown");
+    QTest::newRow("restartable-stop") << false;
+    QTest::newRow("permanent-shutdown") << true;
+}
+
+void NTRIPManagerTest::testStopCancelsDeferredSettings()
+{
+    QFETCH(bool, shutdown);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->ntripServerConnectEnabled(), true);
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("127.0.0.1"));
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    NTRIPManager manager;
+    manager.setTransportForTest(new MockNTRIPTransport(&manager));
+    manager.init();
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
+    settings->ntripMountpoint()->setRawValue(QStringLiteral("CHANGED"));
+    QVERIFY(manager._settingsDebounceTimer.isActive());
+    auto* replacement = new MockNTRIPTransport(&manager);
+    manager.setTransportForTest(replacement);
+    if (shutdown) {
+        manager.shutdown();
+    } else {
+        manager.stopNTRIP();
+    }
+    QVERIFY(!manager._settingsDebounceTimer.isActive());
+    QVERIFY(!manager._reconnectTimer.isActive());
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QCOMPARE(replacement->startCount, 0);
+    if (shutdown) {
+        settings->ntripMountpoint()->setRawValue(QStringLiteral("AFTER_SHUTDOWN"));
+        manager._onSettingChanged();
+        QVERIFY(!manager._settingsDebounceTimer.isActive());
+    }
+    manager.startNTRIP();
+    QCOMPARE(replacement->startCount, shutdown ? 0 : 1);
+}
+
+void NTRIPManagerTest::testNewSessionRetryBudget_data()
+{
+    QTest::addColumn<int>("action");
+    QTest::newRow("explicit-retry") << 0;
+    QTest::newRow("disable-enable") << 1;
+    QTest::newRow("automatic-reconnect") << 2;
+    QTest::newRow("qml-retry-enables-connection") << 3;
+}
+
+void NTRIPManagerTest::testNewSessionRetryBudget()
+{
+    QFETCH(int, action);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->ntripServerConnectEnabled(), action != 3);
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("127.0.0.1"));
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    NTRIPManager manager;
+    manager._settings = settings;
+    manager._reconnectAttempts = action == 2 ? 3 : NTRIPManager::kMaxReconnectAttempts;
+    manager._connectionStatus =
+        action == 2 ? NTRIPManager::ConnectionStatus::Reconnecting : NTRIPManager::ConnectionStatus::Error;
+    auto* transport = new MockNTRIPTransport(&manager);
+    transport->autoConnect = false;
+    manager.setTransportForTest(transport);
+    if (action == 1) {
+        settings->ntripServerConnectEnabled()->setRawValue(false);
+        manager._onSettingChanged();
+        settings->ntripServerConnectEnabled()->setRawValue(true);
+        manager._onSettingChanged();
+    } else if (action == 2) {
+        manager._dispatch(NTRIPManager::Event::ReconnectDue);
+    } else if (action == 3) {
+        QVERIFY(manager.metaObject()->indexOfMethod("retryNTRIP()") >= 0);
+        manager.retryNTRIP();
+    } else {
+        manager.startNTRIP();
+    }
+    QCOMPARE(transport->startCount, 1);
+    QVERIFY(settings->ntripServerConnectEnabled()->rawValue().toBool());
+    QCOMPARE(manager._reconnectAttempts, action == 2 ? 3 : 0);
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("NTRIP error:.*retry budget")));
+    transport->simulateError(NTRIPError::SocketError, QStringLiteral("retry budget"));
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+    QCOMPARE(manager._reconnectAttempts, action == 2 ? 4 : 1);
+    QVERIFY(manager._reconnectTimer.isActive());
+}
+
 void NTRIPManagerTest::testStatusCallbackStopsTransition()
 {
     NTRIPManager manager;

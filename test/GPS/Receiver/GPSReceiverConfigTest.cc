@@ -679,7 +679,7 @@ void GPSReceiverConfigTest::_presentation_data()
     QTest::newRow("all") << 0 << true << true << true << true << true << false;
     QTest::newRow("trimble") << 1 << true << false << false << true << false << false;
     QTest::newRow("septentrio") << 2 << true << false << false << false << false << false;
-    QTest::newRow("femto") << 3 << true << false << false << true << false << false;
+    QTest::newRow("femto") << 3 << true << false << false << false << false << false;
     QTest::newRow("ublox") << 4 << true << false << true << true << true << false;
     QTest::newRow("unicore") << 5 << false << true << false << false << false << false;
     QTest::newRow("quectel") << 6 << true << false << true << true << false << true;

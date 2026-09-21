@@ -11,6 +11,7 @@
 #include <QtQml/QQmlExpression>
 
 #include "AutoConnectSettings.h"
+#include "ColoredSvgImageProvider.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "LogManager.h"
 #include "NMEASourceManager.h"
@@ -157,12 +158,32 @@ void NMEASourceManagerTest::_bindFailureAndTeardown()
         verifyExpectedLogMessage();
         QVERIFY(!source._sourceInstalled);
         QVERIFY(!source._udp);
+        QCOMPARE(position.nmeaInput(), &source);
+        QCOMPARE(source.connectionState(), NMEASourceManager::ConnectionState::Error);
+        QVERIFY(source.errorMessage().contains(QString::number(port)));
+        QVERIFY(!position.nmeaHealth());
+        QQmlEngine engine;
+        engine.addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
+        engine.addImportPath(QStringLiteral("qrc:/qml"));
+        QQmlComponent component(&engine,
+                                QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NmeaGpsSettings.qml")));
+        QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+        std::unique_ptr<QObject> panel(component.createWithInitialProperties(
+            {{QStringLiteral("positionManager"), QVariant::fromValue(&position)}}));
+        QVERIFY2(panel, qPrintable(component.errorString()));
+        auto* status = panel->findChild<QObject*>(QStringLiteral("nmeaConnectionStatus"));
+        QVERIFY(status);
+        QVERIFY(status->property("visible").toBool());
+        QCOMPARE(status->property("text").toString(), source.errorMessage());
         occupied.close();
         expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
                          QRegularExpression(QStringLiteral("NMEA input started:.*source: UDP.*port: %1").arg(port)));
         source.update();
         verifyExpectedLogMessage();
         QVERIFY(source._sourceInstalled);
+        QCOMPARE(source.connectionState(), NMEASourceManager::ConnectionState::Connected);
+        QVERIFY(source.errorMessage().isEmpty());
+        QVERIFY(!status->property("visible").toBool());
         QUdpSocket sender;
         QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, port), kFix.size());
         QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
@@ -174,6 +195,7 @@ void NMEASourceManagerTest::_bindFailureAndTeardown()
     }
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
+    QVERIFY(!position.nmeaInput());
     QVERIFY(!position.gcsPosition().isValid());
     QVERIFY(occupied.bind(QHostAddress::AnyIPv4, port, QUdpSocket::DontShareAddress));
 }
@@ -340,6 +362,8 @@ void NMEASourceManagerTest::_configuredSerialRoutingSurvivesReconnect()
         QVERIFY(!ports->isPortReserved(first));
         source.update();
         QVERIFY(!source._sourceInstalled);
+        QCOMPARE(source.connectionState(), NMEASourceManager::ConnectionState::WaitingForDevice);
+        QVERIFY(!source.connectionStatusText().isEmpty());
         source.stop();
         QVERIFY(!ports->canAutoConnectPort(first));
         settings->autoConnectNmeaPort()->setRawValue(second);
@@ -359,21 +383,20 @@ void NMEASourceManagerTest::_configuredSerialRoutingSurvivesReconnect()
 void NMEASourceManagerTest::_settingsUseSharedSerialInventory_data()
 {
     QTest::addColumn<QString>("qmlFile");
-    QTest::addColumn<bool>("customBaudSupported");
-    QTest::newRow("nmea-settings") << QStringLiteral("NmeaGpsSettings.qml") << true;
-    QTest::newRow("remote-id-settings") << QStringLiteral("RemoteIDGpsLocation.qml") << false;
+    QTest::newRow("nmea-settings") << QStringLiteral("NmeaGpsSettings.qml");
+    QTest::newRow("remote-id-settings") << QStringLiteral("RemoteIDGpsLocation.qml");
 }
 
 void NMEASourceManagerTest::_settingsUseSharedSerialInventory()
 {
     QFETCH(QString, qmlFile);
-    QFETCH(bool, customBaudSupported);
     TestFixtures::SettingsFixture saved;
     auto* settings = SettingsManager::instance()->autoConnectSettings();
     saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceUdp);
     saved.setFactValue(settings->autoConnectNmeaBaud(), 123457);
     saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/saved-nmea"));
     QQmlEngine engine;
+    engine.addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
     engine.addImportPath(QStringLiteral("qrc:/qml"));
     QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/") + qmlFile));
     QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
@@ -384,14 +407,11 @@ void NMEASourceManagerTest::_settingsUseSharedSerialInventory()
     QVERIFY(portCombo);
     auto* baudCombo = root->findChild<QObject*>(QStringLiteral("nmeaBaudCombo"));
     QVERIFY(baudCombo);
-    if (customBaudSupported) {
-        auto* customBaud = root->findChild<QObject*>(QStringLiteral("customNmeaBaudField"));
-        QVERIFY(customBaud);
-        QVERIFY(baudCombo->property("isCustomBaud").toBool());
-        QCOMPARE(customBaud->property("text").toString(), QStringLiteral("123457"));
-    } else {
-        QCOMPARE(baudCombo->property("currentIndex").toInt(), -1);
-    }
+    auto* customBaud = root->findChild<QObject*>(QStringLiteral("customNmeaBaudField"));
+    QVERIFY(customBaud);
+    QVERIFY(baudCombo->property("isCustomBaud").toBool());
+    QCOMPARE(customBaud->property("text").toString(), QStringLiteral("123457"));
+    QVERIFY(portCombo->property("currentText").toString().contains(QStringLiteral("/test/saved-nmea")));
     QCOMPARE(settings->autoConnectNmeaBaud()->rawValue().toInt(), 123457);
     QCOMPARE(settings->autoConnectNmeaPort()->rawValue().toString(), QStringLiteral("/test/saved-nmea"));
 
@@ -406,14 +426,17 @@ void NMEASourceManagerTest::_settingsUseSharedSerialInventory()
 #else
     QVERIFY(!manager);
 #endif
-    if (!customBaudSupported) {
-        settings->autoConnectNmeaBaud()->setRawValue(115200);
-        QQmlExpression baudIndex(qmlContext(root.get()), root.get(),
-                                 QStringLiteral("_serialBaudRates.indexOf('115200')"));
-        const int expectedIndex = baudIndex.evaluate().toInt();
-        QVERIFY(!baudIndex.hasError());
-        QCOMPARE(baudCombo->property("currentIndex").toInt(), expectedIndex);
-    }
+    settings->autoConnectNmeaBaud()->setRawValue(115200);
+    QQmlExpression standardBaud(qmlContext(root.get()), root.get(),
+                                QStringLiteral("_serialBaudRates.includes('115200')"));
+    const bool hasStandardBaud = standardBaud.evaluate().toBool();
+    QVERIFY(!standardBaud.hasError());
+    QCOMPARE(baudCombo->property("isCustomBaud").toBool(), !hasStandardBaud);
+    QCOMPARE(hasStandardBaud ? baudCombo->property("currentText").toString() : customBaud->property("text").toString(),
+             QStringLiteral("115200"));
+    settings->autoConnectNmeaBaud()->setRawValue(76543);
+    QVERIFY(baudCombo->property("isCustomBaud").toBool());
+    QCOMPARE(customBaud->property("text").toString(), QStringLiteral("76543"));
 }
 
 void NMEASourceManagerTest::_udpActivityAndSatellites_data()

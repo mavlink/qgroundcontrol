@@ -24,6 +24,7 @@
 #include "PositionManager.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleGPSFactGroup.h"
 #include "VehicleLinkManager.h"
 
 namespace {
@@ -31,14 +32,16 @@ namespace {
 using Source = NTRIPGgaProvider::PositionSource;
 
 mavlink_message_t gpsMessage(int vehicleId, int32_t altitude = 123000, int32_t latitude = 473977000,
-                             int32_t longitude = 85456000)
+                             int32_t longitude = 85456000, uint8_t fixType = GPS_FIX_TYPE_3D_FIX)
 {
     mavlink_gps_raw_int_t raw{};
     raw.time_usec = 1234567;
     raw.lat = latitude;
     raw.lon = longitude;
     raw.alt = altitude;
-    raw.fix_type = GPS_FIX_TYPE_3D_FIX;
+    raw.fix_type = fixType;
+    raw.eph = 110;
+    raw.epv = 220;
     mavlink_message_t message{};
     mavlink_msg_gps_raw_int_encode(vehicleId, MAV_COMP_ID_AUTOPILOT1, &message, &raw);
     return message;
@@ -103,6 +106,10 @@ void NTRIPGgaProviderTest::testSourceClearedOnStopAndFreshStart()
     QCOMPARE(provider.currentSource(), QStringLiteral("Vehicle GPS"));
     QCOMPARE(transport.sentNmea.size(), 1);
     QVERIFY(transport.sentNmea.first().startsWith("$GPGGA,"));
+    const auto fields = transport.sentNmea.first().split(',');
+    QCOMPARE(fields.at(NMEA::Field::GGA_QUALITY).toUInt(), NMEA::GgaQuality::ESTIMATED);
+    QVERIFY(fields.at(NMEA::Field::GGA_HDOP).isEmpty());
+    QVERIFY(fields.at(NMEA::Field::GGA_SATELLITES_USED).isEmpty());
 
     provider.stop();
     QVERIFY(provider.currentSource().isEmpty());
@@ -209,19 +216,18 @@ void NTRIPGgaProviderTest::_activeVehicleAndCommunicationLoss()
             ntrip->setTransportForTest(transport);
             ntrip->startNTRIP();
             QCOMPARE(transport->sentNmea.size(), 1);
-            QGeoCoordinate expected = vehicle->coordinate();
-            if (source == Source::VehicleGPS) {
-                auto* gps = vehicle->gpsFactGroup();
-                expected.setLatitude(gps->getFact(QStringLiteral("lat"))->rawValue().toDouble());
-                expected.setLongitude(gps->getFact(QStringLiteral("lon"))->rawValue().toDouble());
-            }
+            const auto* gps = qobject_cast<VehicleGPSFactGroup*>(vehicle->gpsFactGroup());
+            QVERIFY(gps);
+            const auto observation =
+                source == Source::VehicleGPS ? gps->acceptedObservation() : vehicle->acceptedPositionObservation();
+            QVERIFY(observation);
+            const auto expected = observation->position.coordinate();
             const NMEA::GGA fix{
                 .latitude = expected.latitude(),
                 .longitude = expected.longitude(),
                 .altitude = expected.altitude(),
-                .hdop = 1.0,
-                .quality = NMEA::GgaQuality::GPS,
-                .satellitesUsed = 12,
+                .hdop = observation->horizontalDop.value_or(qQNaN()),
+                .quality = source == Source::VehicleGPS ? NMEA::GgaQuality::GPS : NMEA::GgaQuality::ESTIMATED,
             };
             const auto expectedFields = NMEAUtils::makeGGA(fix, QTime(12, 0)).split(',');
             const auto fields = transport->sentNmea.first().split(',');
@@ -273,7 +279,7 @@ void NTRIPGgaProviderTest::_gcsObservation_data()
     QTest::newRow("ellipsoid-only") << position << GPSAltitudeDatum::Ellipsoid << 1.0 << true << false;
     QTest::newRow("unknown-altitude") << QGeoCoordinate(47.3977, 8.5456) << GPSAltitudeDatum::MeanSeaLevel << 1.0
                                       << true << false;
-    QTest::newRow("zero-island") << QGeoCoordinate(0, 0, 450) << GPSAltitudeDatum::MeanSeaLevel << 1.0 << true << false;
+    QTest::newRow("zero-island") << QGeoCoordinate(0, 0, 450) << GPSAltitudeDatum::MeanSeaLevel << 1.0 << true << true;
     QTest::newRow("invalid-coordinate") << QGeoCoordinate() << GPSAltitudeDatum::MeanSeaLevel << 1.0 << true << false;
     QTest::newRow("no-fix") << position << GPSAltitudeDatum::MeanSeaLevel << 1.0 << false << false;
 }
@@ -317,7 +323,13 @@ void NTRIPGgaProviderTest::_gcsObservation()
     QCOMPARE(transport->sentNmea.size(), accepted ? 1 : 0);
     QCOMPARE(manager->ggaSource(), accepted ? QStringLiteral("GCS Position") : QString());
     if (accepted) {
-        QVERIFY(transport->sentNmea.first().contains(",4723.8620,N,00832.7360,E,"));
+        const auto& wire = transport->sentNmea.first();
+        const auto decoded = NMEA::sentence(std::string_view(wire.constData(), wire.size()));
+        QVERIFY(decoded);
+        const auto fix = NMEA::gga(*decoded);
+        QVERIFY(fix);
+        QVERIFY(qAbs(fix->latitude - coordinate.latitude()) < 1e-6);
+        QVERIFY(qAbs(fix->longitude - coordinate.longitude()) < 1e-6);
         const auto fields = transport->sentNmea.first().split(',');
         QCOMPARE(fields.size(), 15);
         QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE), QByteArray("450.0"));
@@ -393,6 +405,77 @@ void NTRIPGgaProviderTest::_gcsSelectionAndFreshness()
     observation.receiverFixValid = false;
     health.updateObservation(observation);
     checkGga(false);
+}
+
+void NTRIPGgaProviderTest::_vehicleFixLossAndExpiry()
+{
+    TestFixtures::SettingsFixture saved;
+    configureNtrip(saved, Source::Auto);
+    auto* vehicles = MultiVehicleManager::instance();
+    Vehicle* previous = vehicles->activeVehicle();
+    Vehicle vehicle(nullptr, 17, MAV_COMP_ID_AUTOPILOT1, MAV_AUTOPILOT_GENERIC, MAV_TYPE_GENERIC);
+    const auto restore = qScopeGuard([&]() {
+        vehicles->setActiveVehicle(previous);
+        QVERIFY(QTest::qWaitFor([&]() { return vehicles->activeVehicle() == previous; }, TestTimeout::shortMs()));
+    });
+    saved.setFactValue(GPSManager::instance()->gpsRtk()->gpsRtkFactGroup()->getFact(QStringLiteral("valid")), false);
+    auto* positioning = QGCPositionManager::instance();
+    const auto savedMode = positioning->sourceMode();
+    const auto restoreMode = qScopeGuard([&]() { positioning->setSourceMode(savedMode); });
+    positioning->setSourceMode(GPSPositionService::SourceMode::NmeaOnly);
+    vehicles->setActiveVehicle(&vehicle);
+    QTRY_COMPARE_WITH_TIMEOUT(vehicles->activeVehicle(), &vehicle, TestTimeout::shortMs());
+    QVERIFY(receiveMessage(vehicle, gpsMessage(vehicle.id())));
+    QVERIFY(receiveMessage(vehicle, fusedMessage(vehicle.id())));
+
+    auto* manager = NTRIPManager::instance();
+    const auto checkSource = [&](const QString& expected) {
+        auto* transport = new MockNTRIPTransport(manager);
+        manager->setTransportForTest(transport);
+        manager->startNTRIP();
+        QCOMPARE(manager->ggaSource(), expected);
+        QCOMPARE(transport->sentNmea.size(), expected.isEmpty() ? 0 : 1);
+        manager->stopNTRIP();
+    };
+    checkSource(QStringLiteral("Vehicle GPS"));
+    QVERIFY(receiveMessage(vehicle, gpsMessage(vehicle.id(), 123000, 473977000, 85456000, GPS_FIX_TYPE_NO_FIX)));
+    checkSource(QStringLiteral("Vehicle EKF"));
+    vehicle._positionHealth->setFreshnessTimeoutMs(1);
+    QTRY_VERIFY_WITH_TIMEOUT(!vehicle.acceptedPositionObservation(), TestTimeout::shortMs());
+    checkSource(QString());
+    QVERIFY(receiveMessage(vehicle, gpsMessage(vehicle.id())));
+    checkSource(QStringLiteral("Vehicle GPS"));
+}
+
+void NTRIPGgaProviderTest::_providerMetadata_data()
+{
+    QTest::addColumn<GPSObservation::FixQuality>("quality");
+    QTest::addColumn<unsigned>("expectedQuality");
+    using Quality = GPSObservation::FixQuality;
+    QTest::newRow("gps") << Quality::Fix3D << NMEA::GgaQuality::GPS;
+    QTest::newRow("differential") << Quality::Differential << NMEA::GgaQuality::DIFFERENTIAL;
+    QTest::newRow("rtk-float") << Quality::RTKFloat << NMEA::GgaQuality::RTK_FLOAT;
+    QTest::newRow("rtk-fixed") << Quality::RTKFixed << NMEA::GgaQuality::RTK_FIXED;
+    QTest::newRow("estimated") << Quality::Extrapolated << NMEA::GgaQuality::ESTIMATED;
+    QTest::newRow("unknown") << Quality::Unknown << NMEA::GgaQuality::ESTIMATED;
+}
+
+void NTRIPGgaProviderTest::_providerMetadata()
+{
+    QFETCH(GPSObservation::FixQuality, quality);
+    QFETCH(unsigned, expectedQuality);
+    NTRIPGgaProvider provider;
+    MockNTRIPTransport transport;
+    provider.setPositionProvider(Source::VehicleGPS, [quality]() {
+        return PositionResult{
+            QGeoCoordinate(47, 8, 450), QStringLiteral("GPS"), GPSAltitudeDatum::MeanSeaLevel, quality, 18, 0.7};
+    });
+    provider.start(&transport);
+    QCOMPARE(transport.sentNmea.size(), 1);
+    const auto fields = transport.sentNmea.first().split(',');
+    QCOMPARE(fields.at(NMEA::Field::GGA_QUALITY).toUInt(), expectedQuality);
+    QCOMPARE(fields.at(NMEA::Field::GGA_SATELLITES_USED).toUInt(), 18u);
+    QCOMPARE(fields.at(NMEA::Field::GGA_HDOP).toDouble(), 0.7);
 }
 
 UT_REGISTER_TEST(NTRIPGgaProviderTest, TestLabel::Unit)

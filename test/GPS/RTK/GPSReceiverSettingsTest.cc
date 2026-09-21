@@ -7,11 +7,13 @@
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQml/QQmlExpression>
+#include <QtQml/QQmlPropertyMap>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 
 #include "AutoConnectSettings.h"
 #include "ColoredSvgImageProvider.h"
+#include "Fact.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSManager.h"
 #include "GPSRTKFactGroup.h"
@@ -20,6 +22,8 @@
 #include "GPSRtk.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
+#include "Vehicle.h"
+#include "VehicleGPSFactGroup.h"
 
 /// Records the QML command boundary without opening a device or configuring hardware.
 class ReceiverSettingsController : public QObject
@@ -434,11 +438,12 @@ void GPSReceiverSettingsTest::_disconnectedPage()
     QVERIFY(status->mapRectToItem(item, status->boundingRect()).right() <= width + 1);
 
     facts->connected()->setRawValue(true);
-    QTRY_VERIFY_WITH_TIMEOUT(satellites->isVisible() && usage->isVisible(), TestTimeout::shortMs());
+    // FactGroup publishes at 1 Hz; allow that interval plus event-loop scheduling.
+    QTRY_VERIFY_WITH_TIMEOUT(satellites->isVisible() && usage->isVisible(), TestTimeout::mediumMs());
     QVERIFY(status->property("text").toString() != disconnectedText);
     facts->connected()->setRawValue(false);
     QTRY_VERIFY_WITH_TIMEOUT(status->isVisible() && !satellites->isVisible() && !usage->isVisible(),
-                             TestTimeout::shortMs());
+                             TestTimeout::mediumMs());
     QCOMPARE(status->property("text").toString(), disconnectedText);
     QVERIFY(item->height() > 0);
 
@@ -452,6 +457,165 @@ void GPSReceiverSettingsTest::_disconnectedPage()
         QVERIFY(connect->isEnabled());
     }
     QVERIFY(item->width() <= width + 1);
+}
+
+void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
+{
+    SettingsFixture settings(4);
+    ReceiverSettingsController receiver(settings.settings);
+    GPSRTKFactGroup facts;
+    QQmlEngine engine;
+    QString error;
+    auto panel = createPanel(engine, receiver, settings, facts, error);
+    QVERIFY2(panel, qPrintable(error));
+    auto* device = panel->findChild<QObject*>(QStringLiteral("rtkSerialDevice"));
+    auto* baud = panel->findChild<QObject*>(QStringLiteral("rtkSerialBaudRate"));
+    auto* custom = panel->findChild<QObject*>(QStringLiteral("rtkCustomBaudRate"));
+    QVERIFY(device && baud && custom);
+    QCOMPARE(device->property("currentText").toString(), QStringLiteral("/test/receiver"));
+    QCOMPARE(baud->property("currentText").toString(), QStringLiteral("115200"));
+    settings.settings->serialDevice()->setRawValue(QStringLiteral("/test/missing"));
+    QVERIFY(device->property("currentText").toString().contains(QStringLiteral("/test/missing")));
+    QVERIFY(device->property("currentText").toString().contains(QStringLiteral("unavailable")));
+    QVERIFY(panel->setProperty("serialPorts", QStringList{QStringLiteral("/test/missing")}));
+    QCOMPARE(device->property("currentText").toString(), QStringLiteral("/test/missing"));
+    settings.settings->serialBaudRate()->setRawValue(123457);
+    QVERIFY(baud->property("isCustomBaud").toBool());
+    QCOMPARE(custom->property("text").toString(), QStringLiteral("123457"));
+    settings.settings->serialBaudRate()->setRawValue(230400);
+    QVERIFY(!baud->property("isCustomBaud").toBool());
+    QCOMPARE(baud->property("currentText").toString(), QStringLiteral("230400"));
+    QVERIFY(QMetaObject::invokeMethod(baud, "activated", Q_ARG(int, 2)));
+    QVERIFY(baud->property("isCustomBaud").toBool());
+    QVERIFY(custom->setProperty("text", QStringLiteral("250000")));
+    QVERIFY(QMetaObject::invokeMethod(custom, "_onEditingFinished"));
+    QCOMPARE(settings.settings->serialBaudRate()->rawValue().toInt(), 250000);
+    receiver.setConnected(true);
+    QVERIFY(!device->property("enabled").toBool());
+    QVERIFY(!baud->property("enabled").toBool());
+    QVERIFY(!custom->property("enabled").toBool());
+}
+
+void GPSReceiverSettingsTest::_resilienceUnknownStates_data()
+{
+    QTest::addColumn<int>("spoofing");
+    QTest::addColumn<int>("jamming");
+    for (const int spoofing : {0, 1, 2, 3, 255}) {
+        for (const int jamming : {0, 1, 2, 3, 255}) {
+            QTest::newRow(qPrintable(QStringLiteral("%1-%2").arg(spoofing).arg(jamming))) << spoofing << jamming;
+        }
+    }
+}
+
+void GPSReceiverSettingsTest::_resilienceUnknownStates()
+{
+    QFETCH(int, spoofing);
+    QFETCH(int, jamming);
+    Fact spoofingFact(0, QStringLiteral("spoofing"), FactMetaData::valueTypeUint8);
+    Fact jammingFact(0, QStringLiteral("jamming"), FactMetaData::valueTypeUint8);
+    Fact authenticationFact(0, QStringLiteral("authentication"), FactMetaData::valueTypeUint8);
+    spoofingFact.setRawValue(spoofing);
+    jammingFact.setRawValue(jamming);
+    authenticationFact.setRawValue(255);
+    std::unique_ptr<QQmlPropertyMap> aggregate(QQmlPropertyMap::create());
+    aggregate->insert(QStringLiteral("spoofingState"), QVariant::fromValue(&spoofingFact));
+    aggregate->insert(QStringLiteral("jammingState"), QVariant::fromValue(&jammingFact));
+    aggregate->insert(QStringLiteral("authenticationState"), QVariant::fromValue(&authenticationFact));
+    QQuickWindow window;
+    QQmlEngine engine;
+    configureEngine(engine);
+    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSResilienceIndicator.qml")));
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    std::unique_ptr<QObject> indicator(component.createWithInitialProperties(
+        {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+         {QStringLiteral("_activeVehicle"), QVariant::fromValue(aggregate.get())},
+         {QStringLiteral("_gpsAggregate"), QVariant::fromValue(aggregate.get())}}));
+    QVERIFY2(indicator, qPrintable(component.errorString()));
+    const int expected = qMax(spoofing == 255 ? 0 : spoofing, jamming == 255 ? 0 : jamming);
+    QCOMPARE(indicator->property("_interferenceState").toInt(), expected);
+    auto* icon = indicator->findChild<QObject*>(QStringLiteral("gpsInterferenceIcon"));
+    QVERIFY(icon);
+    QCOMPARE(icon->property("visible").toBool(), expected > 0);
+    QVERIFY(indicator->setProperty("_gpsAggregate", QVariant::fromValue(static_cast<QObject*>(nullptr))));
+    QCOMPARE(indicator->property("_interferenceState").toInt(), 0);
+    QVERIFY(!icon->property("visible").toBool());
+}
+
+void GPSReceiverSettingsTest::_horizontalAccuracyLabel()
+{
+    QQmlEngine engine;
+    configureEngine(engine);
+    const QUrl url =
+        QUrl::fromLocalFile(QFileInfo(QString::fromUtf8(__FILE__))
+                                .dir()
+                                .filePath(QStringLiteral("../../../src/AppSettings/GcsPositionStatus.qml")));
+    QQmlComponent component(&engine, url);
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    std::unique_ptr<QObject> panel(
+        component.createWithInitialProperties({{QStringLiteral("_horizontalAccuracy"), 5.1}}));
+    QVERIFY2(panel, qPrintable(component.errorString()));
+    auto* accuracy = panel->findChild<QObject*>(QStringLiteral("gcsHorizontalAccuracy"));
+    QVERIFY(accuracy);
+    QCOMPARE(accuracy->property("label").toString(), QStringLiteral("Horizontal accuracy"));
+    QCOMPARE(accuracy->property("labelText").toString(), QStringLiteral("5.1 m"));
+    QVERIFY(panel->setProperty("_horizontalAccuracy", 0));
+    QCOMPARE(accuracy->property("labelText").toString(), QStringLiteral("0.0 m"));
+    QVERIFY(panel->setProperty("_horizontalAccuracy", qInf()));
+    QCOMPARE(accuracy->property("labelText").toString(), QStringLiteral("N/A"));
+}
+
+void GPSReceiverSettingsTest::_vehicleAccuracyFacts()
+{
+    Vehicle vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    auto* gps = qobject_cast<VehicleGPSFactGroup*>(vehicle.gpsFactGroup());
+    QVERIFY(gps);
+    gps->setLiveUpdates(true);
+    gps->hdop()->setRawValue(0.8);
+    gps->vdop()->setRawValue(1.2);
+    gps->horizontalAccuracy()->setRawValue(2.5);
+    gps->verticalAccuracy()->setRawValue(4.5);
+    QQuickWindow window;
+    window.resize(640, 800);
+    QQmlEngine engine;
+    configureEngine(engine);
+    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSIndicatorPage.qml")));
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    std::unique_ptr<QObject> page(
+        component.createWithInitialProperties({{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                                               {QStringLiteral("activeVehicle"), QVariant::fromValue(&vehicle)},
+                                               {QStringLiteral("availableWidth"), 640}}));
+    QVERIFY2(page, qPrintable(component.errorString()));
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window, TestTimeout::mediumMs()));
+    auto* hdop = page->findChild<QObject*>(QStringLiteral("vehicleGpsHdop"));
+    auto* vdop = page->findChild<QObject*>(QStringLiteral("vehicleGpsVdop"));
+    auto* horizontal = page->findChild<QObject*>(QStringLiteral("vehicleGpsHorizontalAccuracy"));
+    auto* vertical = page->findChild<QObject*>(QStringLiteral("vehicleGpsVerticalAccuracy"));
+    QVERIFY(hdop && vdop && horizontal && vertical);
+    QCOMPARE(hdop->property("labelText").toString(), gps->hdop()->cookedValueString());
+    QCOMPARE(vdop->property("labelText").toString(), gps->vdop()->cookedValueString());
+    const auto accuracyText = [](Fact* fact) {
+        return fact->cookedValueString() + QLatin1Char(' ') + fact->cookedUnits();
+    };
+    QCOMPARE(horizontal->property("labelText").toString(), accuracyText(gps->horizontalAccuracy()));
+    QCOMPARE(vertical->property("labelText").toString(), accuracyText(gps->verticalAccuracy()));
+    QVERIFY(horizontal->property("visible").toBool());
+    QVERIFY(vertical->property("visible").toBool());
+    gps->horizontalAccuracy()->setRawValue(qQNaN());
+    QTRY_VERIFY_WITH_TIMEOUT(!horizontal->property("visible").toBool(), TestTimeout::shortMs());
+    QCOMPARE(hdop->property("labelText").toString(), gps->hdop()->cookedValueString());
+    gps->hdop()->setRawValue(qQNaN());
+    gps->vdop()->setRawValue(qQNaN());
+    gps->horizontalAccuracy()->setRawValue(5.0);
+    gps->verticalAccuracy()->setRawValue(10.0);
+    QTRY_VERIFY_WITH_TIMEOUT(horizontal->property("visible").toBool(), TestTimeout::shortMs());
+    QCOMPARE(horizontal->property("labelText").toString(), accuracyText(gps->horizontalAccuracy()));
+    QCOMPARE(vertical->property("labelText").toString(), accuracyText(gps->verticalAccuracy()));
+    QCOMPARE(hdop->property("labelText").toString(), gps->hdop()->cookedValueString());
+    QCOMPARE(vdop->property("labelText").toString(), gps->vdop()->cookedValueString());
+    QVERIFY(page->setProperty("activeVehicle", QVariant::fromValue(static_cast<Vehicle*>(nullptr))));
+    QVERIFY(!horizontal->property("visible").toBool());
+    QVERIFY(!vertical->property("visible").toBool());
 }
 
 UT_REGISTER_TEST(GPSReceiverSettingsTest, TestLabel::Unit)

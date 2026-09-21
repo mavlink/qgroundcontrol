@@ -35,8 +35,9 @@ ConnectionStatusRow {
         if (!root.ntripManager) return ""
         switch (root.ntripManager.connectionStatus) {
         case NTRIPManager.Connecting:   return qsTr("Connecting…")
-        case NTRIPManager.Reconnecting: return qsTr("Reconnecting…")
+        case NTRIPManager.Reconnecting: return qsTr("Cancel reconnect")
         case NTRIPManager.Connected:    return qsTr("Disconnect")
+        case NTRIPManager.Error:        return qsTr("Retry")
         default:                        return qsTr("Connect")
         }
     }

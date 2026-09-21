@@ -130,6 +130,17 @@ Use the _NMEA GPS Device_ drop-down selector to manually select the GPS device a
   - **NMEA GPS Device:** _UDP Port_.
   - **NMEA Stream UDP Port**: The UDP port on which QGC will listen for NMEA data (QGC binds the port as a server)
 
+Connection status is separate from position quality. An occupied UDP port, inaccessible serial
+device, or port reserved by another connection is reported even before a GPS fix is available.
+The serial selectors preserve custom baud rates and update when the saved settings change.
+
+Horizontal accuracy is an estimated distance in meters; it is not HDOP, which is dimensionless.
+For live Remote ID, operator altitude must be WGS84 ellipsoid altitude. NMEA sources can provide
+it using MSL altitude and geoid separation. If the datum or conversion is unavailable, QGC does
+not send MSL altitude as ellipsoid altitude. FAA configurations requiring operator altitude report
+the live position as unavailable; configurations permitting horizontal-only reporting send an
+unknown altitude.
+
 ## RTK GPS {#rtk_gps}
 
 This section allows you to specify the RTK GPS "Survey-in" settings, to save and reuse the result of a Survey-In operation, or to directly enter any other known position for the base station.
@@ -137,7 +148,10 @@ This section allows you to specify the RTK GPS "Survey-in" settings, to save and
 ::: info
 The _Survey-In_ process is a startup procedure required by RTK GPS systems to get an accurate estimate of the base station position.
 The process takes measurements over time, leading to increasing position accuracy.
-Both of the setting conditions must met for the Survey-in process to complete.
+Survey controls depend on the receiver. U-blox supports an accuracy target and a minimum elapsed
+observation duration. Quectel duration counts accepted observations and its accuracy setting filters
+observations. Unicore uses receiver-managed averaging with a maximum duration, not a minimum
+duration or an accuracy guarantee. Receivers without implemented duration control do not expose it.
 For more information see [RTK GPS](https://docs.px4.io/en/advanced_features/rtk-gps.html) (PX4 docs) and [GPS- How it works](http://ardupilot.org/copter/docs/common-gps-how-it-works.html#rtk-corrections) (ArduPilot docs).
 :::
 
@@ -150,13 +164,19 @@ The settings are:
 
 - Perform Survey-In
   - **Survey-in accuracy (U-blox only):** The minimum position accuracy for the RTK Survey-In process to complete.
-  - **Minimum observation duration:** The minimum time that will be taken for the RTK Survey-in process.
+  - **Observation duration:** Receiver-specific elapsed time, accepted-observation time, or maximum averaging time.
 - Use Specified Base Position
   - **Base Position Latitude:** Latitude of fixed RTK base station.
   - **Base Position Longitude:** Longitude of fixed RTK base station.
   - **Base Position Alt (WGS84):** Altitude of fixed RTK base station.
   - **Base Position Accuracy:** Accuracy of base station position information.
   - **Save Current Base Position** (button): Press to copy settings from the last Survey-In operation to the _Use Specified Base Position_ fields above.
+
+Fixed-base altitude is ellipsoid height, not height above mean sea level. Use WGS84 coordinates
+and retain sufficient decimal precision for the required RTK accuracy.
+Receiver settings that require persistent writes or a restart need explicit consent; connecting
+does not imply permission to change persistent configuration.
+Corrected positions whose datum cannot be established are rejected rather than assumed to be WGS84.
 
 ## ADSB Server {#adsb_server}
 

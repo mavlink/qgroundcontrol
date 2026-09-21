@@ -6,17 +6,26 @@
 #include "NTRIPConfiguration.h"
 #include "QGCNetworkClient.h"
 
-NTRIPHttpRequest NTRIPHttpRequest::build(const NTRIPConnectionConfig& config)
+NTRIPHttpRequest NTRIPHttpRequest::build(const NTRIPConnectionConfig& config, Purpose purpose)
 {
     NTRIPHttpRequest result;
-    result.error = config.streamValidationError();
+    result.error = purpose == Purpose::Corrections ? config.streamValidationError() : config.validationError();
     if (!result.error.isEmpty()) {
         return result;
     }
 
+    result.url.setScheme(config.useTls ? QStringLiteral("https") : QStringLiteral("http"));
+    result.url.setHost(config.host);
+    result.url.setPort(config.port);
+    result.url.setPath(purpose == Purpose::SourceTable ? QStringLiteral("/") : QLatin1Char('/') + config.mountpoint);
+    if (!result.url.isValid() || result.url.host().isEmpty()) {
+        result.error = QCoreApplication::translate("NTRIPHttpTransport", "Invalid NTRIP endpoint");
+        return result;
+    }
+
     using Header = QHttpHeaders::WellKnownHeader;
-    QHttpHeaders headers;
-    const QByteArray host = config.host.toUtf8();
+    auto& headers = result.headers;
+    const QByteArray host = result.url.authority(QUrl::FullyEncoded).toLatin1();
     if (!headers.append(Header::Host, QLatin1StringView(host.constData(), host.size())) ||
         !headers.append("Ntrip-Version", "Ntrip/2.0") ||
         !headers.append(Header::UserAgent, "NTRIP QGroundControl/1.0")) {
@@ -34,7 +43,7 @@ NTRIPHttpRequest NTRIPHttpRequest::build(const NTRIPConnectionConfig& config)
         }
     }
 
-    result.bytes = "GET /" + config.mountpoint.toUtf8() + " HTTP/1.1\r\n";
+    result.bytes = "GET " + result.url.path(QUrl::FullyEncoded).toLatin1() + " HTTP/1.1\r\n";
     // Some legacy casters match these spellings case-sensitively.
     for (const char* name : {"Host", "Ntrip-Version", "User-Agent", "Authorization"}) {
         if (headers.contains(QLatin1StringView(name))) {

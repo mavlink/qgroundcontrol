@@ -28,6 +28,8 @@ public:
 
     unsigned fixedBaudrate() const override { return 115200; }
 
+    bool supportsCorrectionWrites() const override { return true; }
+
     GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
     std::chrono::milliseconds configurationWriteTimeout() const override;
     GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;

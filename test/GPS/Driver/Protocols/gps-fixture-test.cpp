@@ -84,7 +84,8 @@ void independentNmeaFields()
         const auto sentence = NMEA::sentence(text);
         CHECK(sentence && sentence->talker() == expected.talker);
         const auto actual = NMEA::gga(*sentence);
-        if (std::isnan(expected.latitude) || std::isnan(expected.longitude)) {
+        if ((std::isnan(expected.latitude) || std::isnan(expected.longitude)) &&
+            expected.quality != NMEA::GgaQuality::INVALID) {
             CHECK(!actual);
         } else {
             CHECK(actual);

@@ -67,6 +67,7 @@ private slots:
     void claimedValidatedIngressRequiresCrc();
     void registrationMoveAssignment();
     void fanoutAdmissionAccounting();
+    void liveFanoutDestinationsSurviveHistoryChurn();
     void retiredDuringAdmissionPreservesEvidence_data();
     void retiredDuringAdmissionPreservesEvidence();
     void automaticSelectionAndFailover();
@@ -308,7 +309,7 @@ void GPSCorrectionRouterTest::destinationHistoryDoesNotLimitOutputs()
                       [](const GPSCorrectionFrame&) { return GPSCorrectionRouter::Submission{}; });
     for (int index = 0; index < outputCount; ++index) {
         QVERIFY(router.acceptIngress(source.token().event(data, ++now, 1005, true)));
-        QVERIFY(router.destinations().size() <= GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 2);
+        QVERIFY(router.destinations().size() <= GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 3);
     }
     GPSCorrectionDelivery delivery;
     delivery.deliveryId = queued.deliveryId;
@@ -877,6 +878,38 @@ void GPSCorrectionRouterTest::fanoutAdmissionAccounting()
     QCOMPARE(second->queuedFrames, 0ULL);
     QCOMPARE(second->queuedBytes, 180ULL);
     QCOMPARE(second->droppedBytes, quint64(bytes.size() - 180));
+}
+
+void GPSCorrectionRouterTest::liveFanoutDestinationsSurviveHistoryChurn()
+{
+    qint64 now = 100000;
+    GPSCorrectionRouter router(nullptr, [&]() { return now; });
+    auto source = router.registerSource(GPSCorrectionSource::Ntrip);
+    int destinations = GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 4;
+    router.setOutput(
+        QStringLiteral("mavlink"), {.admit = [&](const GPSCorrectionFrame& frame) {
+            QList<GPSCorrectionRouter::Admission> admissions;
+            for (int index = 0; index < destinations; ++index) {
+                admissions.append({QStringLiteral("mavlink/%1").arg(index),
+                                   {quint64(frame.data.size()), quint64(index + 1), GPSCorrectionReason::None},
+                                   true});
+            }
+            return admissions;
+        }});
+    const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    for (int iteration = 1; iteration <= 3; ++iteration) {
+        QVERIFY(router.acceptIngress(source.token().event(frame, ++now, 1005, true)));
+        QCOMPARE(router.destinations().size(), destinations + 1);
+        for (const auto& destination : router.destinations()) {
+            if (destination.id != QStringLiteral("mavlink")) {
+                QCOMPARE(destination.queuedFrames, quint64(iteration));
+                QCOMPARE(destination.queuedBytes, quint64(iteration * frame.size()));
+            }
+        }
+    }
+    destinations = 0;
+    QVERIFY(router.acceptIngress(source.token().event(frame, ++now, 1005, true)));
+    QCOMPARE(router.destinations().size(), GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 1);
 }
 
 void GPSCorrectionRouterTest::retiredDuringAdmissionPreservesEvidence_data()

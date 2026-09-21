@@ -53,6 +53,7 @@
 #include "GPSBaseStationConfig.h"
 #include "GPSEllipsoidPosition.h"
 #include "GPSProtocolIO.h"
+#include "RTCMStreamDecoder.h"
 
 inline constexpr int GPS_READ_BUFFER_SIZE = 150;
 inline constexpr float GPS_PI = std::numbers::pi_v<float>;
@@ -367,6 +368,20 @@ protected:
         report.size = static_cast<size_t>(buf_length);
         std::copy_n(buf, report.size, report.bytes.begin());
         _decoded.events.emplace_back(std::move(report));
+    }
+
+    void drainRTCM(RTCMStreamDecoder& decoder, bool enabled = true)
+    {
+        decoder.drain([this, enabled](std::span<const uint8_t> frame) {
+            if (_decoded.events.size() + 2 >= GPSDecodedBatch::MAX_EVENTS) {
+                return false;
+            }
+            if (enabled) {
+                gotRTCMMessage(frame.data(), static_cast<int>(frame.size()));
+                _decoded.updates |= GPSDecodedBatch::PROTOCOL_ACTIVITY;
+            }
+            return true;
+        });
     }
 
     /** got a relative position message from the device */

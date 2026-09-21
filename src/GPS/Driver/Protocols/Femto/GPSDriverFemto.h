@@ -64,6 +64,7 @@ public:
     int configure(unsigned& baudrate, const GPSConfig& config) override;
 
 private:
+    void flushDecoded() override;
     void servicePendingCommands() override;
     bool _rtcmActivationPending = false;
 
@@ -111,7 +112,7 @@ private:
     GPSNativeSatelliteReport* _satellite_info{nullptr};
     float _heading_offset;
 
-    std::optional<RTCMFramer> _rtcm_parsing;
+    std::optional<RTCMStreamDecoder> _rtcm_parsing;
     OutputMode _output_mode{OutputMode::GPS};
     bool _configure_done{false};
     bool _correction_output_activated{false};

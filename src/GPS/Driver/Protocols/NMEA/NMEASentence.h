@@ -152,9 +152,20 @@ struct GGA
     std::optional<unsigned> satellitesUsed = std::nullopt;
 };
 
+/// Quality zero is a valid fix-loss observation with empty coordinates and optional hemisphere fields.
 std::optional<GGA> gga(const Sentence& input);
 
 std::optional<int> utcMilliseconds(std::string_view field);
+
+struct NavigationStatus
+{
+    bool valid = false;
+    std::optional<int> utcMilliseconds;
+};
+
+/// Receiver-declared validity, independent of coordinate availability. A valid flag alone is not a usable fix.
+/// GSA is untimed; malformed/unsupported status fields return no observation.
+std::optional<NavigationStatus> navigationStatus(const Sentence& input);
 
 struct GST
 {

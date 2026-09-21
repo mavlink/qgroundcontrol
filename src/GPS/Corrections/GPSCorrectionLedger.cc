@@ -87,23 +87,35 @@ void GPSCorrectionLedger::queued(const GPSCorrectionFrame& frame, quint64 bytes,
 void GPSCorrectionLedger::registerOutput(const QString& id, bool reportsWrites)
 {
     _outputs.insert(id);
+    _outputDestinations.remove(id);
     auto& destination = _destinations[id];
     destination.id = id;
     destination.reportsWrites = reportsWrites;
 }
 
+void GPSCorrectionLedger::updateOutputDestinations(const QString& id, const QSet<QString>& destinations)
+{
+    if (_outputs.contains(id)) {
+        _outputDestinations.insert(id, destinations);
+    }
+}
+
 void GPSCorrectionLedger::pruneDestinationHistory()
 {
+    QSet<QString> live = _outputs;
+    for (const auto& destinations : std::as_const(_outputDestinations)) {
+        live.unite(destinations);
+    }
     qsizetype historyCount = 0;
     for (auto it = _destinations.cbegin(); it != _destinations.cend(); ++it) {
-        if (!_outputs.contains(it.key()) && it->pendingFrames == 0) {
+        if (!live.contains(it.key()) && it->pendingFrames == 0) {
             ++historyCount;
         }
     }
     while (historyCount > MAX_DESTINATION_HISTORY) {
         auto oldest = _destinations.end();
         for (auto it = _destinations.begin(); it != _destinations.end(); ++it) {
-            if (!_outputs.contains(it.key()) && it->pendingFrames == 0 &&
+            if (!live.contains(it.key()) && it->pendingFrames == 0 &&
                 (oldest == _destinations.end() || it->lastActivityMs < oldest->lastActivityMs)) {
                 oldest = it;
             }
@@ -250,6 +262,7 @@ void GPSCorrectionLedger::invalidateDelivery(quint64 deliveryId, const QString& 
 void GPSCorrectionLedger::removeOutput(const QString& id, quint64 excludedDeliveryId)
 {
     _outputs.remove(id);
+    _outputDestinations.remove(id);
     _invalidatePending([&](const PendingDelivery& delivery) {
         return (delivery.destination == id || delivery.outputId == id) &&
                (!excludedDeliveryId || delivery.frame.deliveryId != excludedDeliveryId);
@@ -304,6 +317,7 @@ void GPSCorrectionLedger::shutdown(quint64 excludedDeliveryId)
         stats.active = false;
     }
     _outputs.clear();
+    _outputDestinations.clear();
     _invalidatePending([&](const PendingDelivery& delivery) {
         return !excludedDeliveryId || delivery.frame.deliveryId != excludedDeliveryId;
     });

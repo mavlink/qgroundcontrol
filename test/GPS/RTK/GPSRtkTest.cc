@@ -3,10 +3,12 @@
 #include <limits>
 #include <utility>
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QSemaphore>
+#include <QtCore/QTimer>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQml/QQmlExpression>
@@ -327,7 +329,6 @@ void GPSRtkTest::_connectionNotificationSupersedesAttempt()
     auto replacementGate = std::make_shared<BlockedOpen>();
     auto receiver = std::make_unique<GPSRtk>();
     receiver->_setError(GPSConnectionError::OpenFailed, QStringLiteral("previous failure"));
-    receiver->_disconnectTimeoutMs = 0;
     QPointer<GPSProvider> first;
     QPointer<GPSProvider> replacement;
     bool handled = false;
@@ -344,7 +345,6 @@ void GPSRtkTest::_connectionNotificationSupersedesAttempt()
         firstGate->release.release();
         replacementGate->release.release();
         if (receiver) {
-            receiver->_disconnectTimeoutMs = TestTimeout::mediumMs();
             receiver->disconnectGPS();
         }
         for (const auto& provider : {first, replacement}) {
@@ -360,9 +360,6 @@ void GPSRtkTest::_connectionNotificationSupersedesAttempt()
         if (receiver->hasReceiver()) {
             first = receiver->_session.provider;
             QVERIFY(firstGate->entered.tryAcquire(1, TestTimeout::mediumMs()));
-            expectLogMessage(
-                "GPS.GPSRtk", QtWarningMsg,
-                QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
         }
         if (action == QStringLiteral("delete")) {
             receiver.reset();
@@ -374,7 +371,6 @@ void GPSRtkTest::_connectionNotificationSupersedesAttempt()
             replacement = receiver->_session.provider;
         }
         if (first) {
-            verifyExpectedLogMessage();
             QVERIFY(!first->parent());
         }
     };
@@ -445,7 +441,6 @@ void GPSRtkTest::_factNotificationRetiresSession()
         gate->release.release();
         replacementGate->release.release();
         if (receiver) {
-            receiver->_disconnectTimeoutMs = TestTimeout::mediumMs();
             receiver->disconnectGPS();
         }
         for (const auto& provider : {first, replacement}) {
@@ -455,7 +450,6 @@ void GPSRtkTest::_factNotificationRetiresSession()
         }
     });
     QVERIFY(gate->entered.tryAcquire(1, TestTimeout::mediumMs()));
-    receiver->_disconnectTimeoutMs = 0;
     auto* facts = receiver->gpsRtkFactGroup();
     if (report == QStringLiteral("disconnect")) {
         receiver->_onGPSConnect();
@@ -477,9 +471,6 @@ void GPSRtkTest::_factNotificationRetiresSession()
             replacement = receiver->_session.provider;
         }
     });
-    expectLogMessage(
-        "GPS.GPSRtk", QtWarningMsg,
-        QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
     if (report == QStringLiteral("survey")) {
         GPSSurveyInStatus survey;
         survey.duration = std::chrono::seconds(123);
@@ -501,7 +492,6 @@ void GPSRtkTest::_factNotificationRetiresSession()
     } else {
         receiver->_setError(GPSConnectionError::ConfigFailed, QStringLiteral("old session failure"));
     }
-    verifyExpectedLogMessage();
     QVERIFY(handled);
     QVERIFY(first && !first->parent());
     if (receiver) {
@@ -608,11 +598,9 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     GPSRtk receiver;
     receiver.setCorrectionManager(&corrections);
     QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
-    receiver._disconnectTimeoutMs = 0;
     const auto releaseWorkers = qScopeGuard([&]() {
         firstGate->release.release();
         secondGate->release.release();
-        receiver._disconnectTimeoutMs = TestTimeout::mediumMs();
     });
     receiver.connectReceiver(GPSType::ublox, blockedFactory(firstGate), QStringLiteral("serial:test-base"));
     QTRY_VERIFY_WITH_TIMEOUT(firstGate->entered.available() > 0, TestTimeout::mediumMs());
@@ -665,11 +653,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit first->receiverReady();
     emit first->configurationError(QStringLiteral("Retired receiver configuration failure"));
     emit first->connectionError(GPSConnectionError::DeviceError);
-    expectLogMessage(
-        "GPS.GPSRtk", QtWarningMsg,
-        QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
     receiver.connectReceiver(GPSType::ublox, blockedFactory(secondGate), QStringLiteral("serial:test-base"));
-    verifyExpectedLogMessage();
     QVERIFY(!receiver.connected());
     QVERIFY(!facts->valid()->rawValue().toBool());
     QVERIFY(!facts->active()->rawValue().toBool());
@@ -703,9 +687,6 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
 
     expectLogMessage("GPS.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("GPS device error, connection lost")));
-    expectLogMessage(
-        "GPS.GPSRtk", QtWarningMsg,
-        QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
     const auto second = receiver._session.provider;
     emit second->connectionError(GPSConnectionError::DeviceError);
     emit second->RTCMDataUpdate(frame, GPSCorrectionFrame::monotonicNowMs());
@@ -714,7 +695,6 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit second->satelliteInfoUpdate(satellites);
     emit second->satelliteUsageUpdate({.usedCount = 12});
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
-    verifyExpectedLogMessage();
     verifyExpectedLogMessage();
     QVERIFY(!receiver.connected());
     QCOMPARE(facts->currentDuration()->rawValue().toLongLong(), 0);
@@ -738,7 +718,6 @@ void GPSRtkTest::_workerCanOutliveManager()
     saved.setFactValue(manufacturer, manufacturer->rawValue());
     auto gate = std::make_shared<BlockedOpen>();
     auto receiver = std::make_unique<GPSRtk>();
-    receiver->_disconnectTimeoutMs = 0;
     const auto releaseWorker = qScopeGuard([&]() { gate->release.release(); });
     receiver->connectReceiver(GPSType::ublox, blockedFactory(gate));
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
@@ -746,11 +725,7 @@ void GPSRtkTest::_workerCanOutliveManager()
     emit provider->receiverReady();
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver->connected());
-    expectLogMessage(
-        "GPS.GPSRtk", QtWarningMsg,
-        QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
     receiver.reset();
-    verifyExpectedLogMessage();
     QVERIFY(provider);
     QVERIFY(!provider->parent());
     gate->release.release();
@@ -1137,7 +1112,6 @@ void GPSRtkTest::_serialReservationSurvivesDelayedStop()
     auto gate = std::make_shared<BlockedOpen>();
     GPSRtk receiver;
     receiver.setSerialPortManager(&ports);
-    receiver._disconnectTimeoutMs = 0;
     receiver._serialTransportFactory = [gate](const QString&, const std::atomic_bool& stop) {
         return blockedFactory(gate)(stop);
     };
@@ -1145,12 +1119,19 @@ void GPSRtkTest::_serialReservationSurvivesDelayedStop()
     QVERIFY(receiver.connectGPS(QStringLiteral("/test/selected"), QStringLiteral("passive"), 115200));
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> provider = receiver._session.provider;
-    expectLogMessage(
-        "GPS.GPSRtk", QtWarningMsg,
-        QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
+    emit provider->receiverReady();
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+    QVERIFY(receiver.connected());
+    bool heartbeat = false;
+    QTimer::singleShot(0, &receiver, [&heartbeat] { heartbeat = true; });
+    QElapsedTimer retirementTime;
+    retirementTime.start();
     receiver.disconnectGPS();
-    verifyExpectedLogMessage();
+    QVERIFY2(retirementTime.elapsed() < 500, "Retiring a worker must not wait for its transport on the GUI thread");
     QVERIFY(!receiver.hasReceiver());
+    QVERIFY(!receiver.connected());
+    QTRY_VERIFY_WITH_TIMEOUT(heartbeat, TestTimeout::shortMs());
+    QVERIFY(provider && provider->isRunning());
     QVERIFY(ports.isPortReserved(QStringLiteral("/test/selected")));
     gate->release.release();
     QTRY_VERIFY_WITH_TIMEOUT(provider.isNull(), TestTimeout::mediumMs());
@@ -1302,16 +1283,11 @@ void GPSRtkTest::_configurationDiagnosticRetained()
     QVERIFY(receiver.connectReceiver(GPSType::quectel, blockedFactory(gate), {}, 115200, true));
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> provider = receiver._session.provider;
-    receiver._disconnectTimeoutMs = 0;
     emit provider->configurationError(detail);
     emit provider->connectionError(GPSConnectionError::ConfigFailed);
     expectLogMessage("GPS.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("GPS receiver did not accept configuration")));
-    expectLogMessage(
-        "GPS.GPSRtk", QtWarningMsg,
-        QRegularExpression(QStringLiteral("GPS thread did not exit in time; deferring cleanup to finished")));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
-    verifyExpectedLogMessage();
     verifyExpectedLogMessage();
     QVERIFY(!receiver.connected());
     QCOMPARE(receiver.gpsRtkFactGroup()->lastError()->rawValue().toInt(),

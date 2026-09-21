@@ -115,3 +115,31 @@ void NTRIPSourceTableTest::_testEmptyTable()
 }
 
 UT_REGISTER_TEST(NTRIPSourceTableTest, TestLabel::Unit)
+
+void NTRIPSourceTableTest::_testCoordinateValidity_data()
+{
+    QTest::addColumn<QString>("latitude");
+    QTest::addColumn<QString>("longitude");
+    QTest::addColumn<bool>("known");
+    QTest::newRow("empty-latitude") << QString() << QStringLiteral("-74") << false;
+    QTest::newRow("invalid-latitude") << QStringLiteral("bad") << QStringLiteral("-74") << false;
+    QTest::newRow("out-of-range-latitude") << QStringLiteral("91") << QStringLiteral("-74") << false;
+    QTest::newRow("nonfinite-longitude") << QStringLiteral("40") << QStringLiteral("nan") << false;
+    QTest::newRow("out-of-range-longitude") << QStringLiteral("40") << QStringLiteral("181") << false;
+    QTest::newRow("equator") << QStringLiteral("0") << QStringLiteral("-74") << true;
+    QTest::newRow("prime-meridian") << QStringLiteral("40") << QStringLiteral("0") << true;
+    QTest::newRow("unspecified-origin") << QStringLiteral("0") << QStringLiteral("0") << false;
+}
+
+void NTRIPSourceTableTest::_testCoordinateValidity()
+{
+    QFETCH(QString, latitude);
+    QFETCH(QString, longitude);
+    QFETCH(bool, known);
+    NTRIPMountpoint mountpoint;
+    QVERIFY(NTRIPMountpoint::fromSourceTableLine(
+        QStringLiteral("STR;TEST;Id;RTCM 3.2;;2;GPS;NET;USA;%1;%2;0;1;gen;none;B;N;4800").arg(latitude, longitude),
+        mountpoint));
+    mountpoint.updateDistance(QGeoCoordinate(40, -74));
+    QCOMPARE(mountpoint.distanceKm >= 0, known);
+}

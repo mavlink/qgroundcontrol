@@ -14,4 +14,6 @@ private slots:
     void _testDistanceCalculation();
     void _testUpdateDistancesAll();
     void _testEmptyTable();
+    void _testCoordinateValidity_data();
+    void _testCoordinateValidity();
 };

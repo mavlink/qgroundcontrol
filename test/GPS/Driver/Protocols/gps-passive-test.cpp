@@ -165,12 +165,27 @@ void navigation()
     corrupt[10] ^= 1;
     feed(driver, corrupt);
     feed(driver, gga.substr(0, 8) + "\r" + gga.substr(8));
-    feed(driver, sentence("GNGGA,123521,,,,,0,00,0.9,,M,,M,,"));
     CHECK(receiver.reports<GPSNativePositionReport>().empty());
+    feed(driver, sentence("GNGGA,123521,,,,,0,00,0.9,,M,,M,,"));
+    CHECK(receiver.reports<GPSNativePositionReport>().size() == 1);
+    CHECK(receiver.position.fix_type == GPSPositionReport::FixType::NoFix);
+    CHECK(std::isnan(receiver.position.latitude_deg) && std::isnan(receiver.position.longitude_deg));
+    CHECK(receiver.reports<GPSSatelliteUsageReport>().back().usedCount == 0);
+    receiver.events.clear();
     feed(driver, std::string(10000, 'A') + "\n" + gga);
     CHECK(receiver.reports<GPSNativePositionReport>().size() == 1);
     CHECK(receiver.reports<GPSNativeSurveyReport>().empty());
     CHECK(receiver.writes == 0 && receiver.reads == 0 && receiver.baud == 0);
+
+    for (const auto* body :
+         {"GNRMC,123522,V,,,,,,,090926,,,N", "GNGLL,,,,,123522,V", "GPGSA,A,1,,,,,,,,,,,,,1.0,0.8,0.6"}) {
+        feed(driver, gga);
+        receiver.events.clear();
+        feed(driver, sentence(body));
+        const auto invalid = receiver.reports<GPSNativePositionReport>();
+        CHECK(invalid.size() == 1 && invalid.front().fix_type == GPSPositionReport::FixType::NoFix);
+        CHECK(std::isnan(invalid.front().latitude_deg) && std::isnan(invalid.front().eph));
+    }
 }
 
 void corrections()

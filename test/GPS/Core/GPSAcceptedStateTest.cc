@@ -21,6 +21,8 @@ class GPSAcceptedStateTest : public UnitTest
 private slots:
     void _consumerPolicies_data();
     void _consumerPolicies();
+    void _remoteIdDatum_data();
+    void _remoteIdDatum();
     void _ggaDoesNotRequireAccuracy();
     void _independentSatelliteExpiry();
     void _freshnessReconfiguration_data();
@@ -136,6 +138,49 @@ void GPSAcceptedStateTest::_ggaDoesNotRequireAccuracy()
     QCOMPARE(health.observation().position, observation.position);
     health.reset();
     QVERIFY(!health.acceptedObservation(GPSObservation::PositionUse::Gga));
+}
+
+void GPSAcceptedStateTest::_remoteIdDatum_data()
+{
+    QTest::addColumn<GPSAltitudeDatum>("datum");
+    QTest::addColumn<double>("altitude");
+    QTest::addColumn<double>("ellipsoid");
+    QTest::addColumn<double>("expected");
+    QTest::newRow("unknown") << GPSAltitudeDatum::Unknown << 500.0 << qQNaN() << qQNaN();
+    QTest::newRow("msl-without-geoid") << GPSAltitudeDatum::MeanSeaLevel << 500.0 << qQNaN() << qQNaN();
+    QTest::newRow("msl-with-ellipsoid") << GPSAltitudeDatum::MeanSeaLevel << 500.0 << 550.0 << 550.0;
+    QTest::newRow("ellipsoid-coordinate") << GPSAltitudeDatum::Ellipsoid << 550.0 << qQNaN() << 550.0;
+    QTest::newRow("ellipsoid-only") << GPSAltitudeDatum::MeanSeaLevel << qQNaN() << 550.0 << 550.0;
+    QTest::newRow("nonfinite-ellipsoid") << GPSAltitudeDatum::Ellipsoid << qInf() << qQNaN() << qQNaN();
+}
+
+void GPSAcceptedStateTest::_remoteIdDatum()
+{
+    QFETCH(GPSAltitudeDatum, datum);
+    QFETCH(double, altitude);
+    QFETCH(double, ellipsoid);
+    QFETCH(double, expected);
+    GPSObservation observation;
+    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, altitude), QDateTime::currentDateTimeUtc());
+    observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+    observation.position.setAttribute(QGeoPositionInfo::VerticalAccuracy, 1);
+    observation.altitudeDatum = datum;
+    if (qIsFinite(ellipsoid)) {
+        observation.altitudeEllipsoidMeters = ellipsoid;
+    }
+    const auto projected = observation.projected(GPSObservation::PositionUse::RemoteID);
+    QVERIFY(projected);
+    QCOMPARE(projected->position.coordinate().latitude(), 47);
+    QCOMPARE(projected->position.coordinate().longitude(), 8);
+    if (qIsFinite(expected)) {
+        QCOMPARE(projected->position.coordinate().altitude(), expected);
+        QCOMPARE(projected->altitudeDatum, GPSAltitudeDatum::Ellipsoid);
+    } else {
+        QCOMPARE(projected->position.coordinate().type(), QGeoCoordinate::Coordinate2D);
+        QVERIFY(!projected->position.hasAttribute(QGeoPositionInfo::VerticalAccuracy));
+        QCOMPARE(projected->altitudeDatum, GPSAltitudeDatum::Unknown);
+    }
+    QCOMPARE(observation.altitudeDatum, datum);
 }
 
 void GPSAcceptedStateTest::_independentSatelliteExpiry()

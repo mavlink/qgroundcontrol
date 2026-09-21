@@ -129,7 +129,7 @@ private:
     sbf_buf_t _buf;
     std::array<uint8_t, 110> _wire{};
     OutputMode _output_mode{OutputMode::GPS};
-    std::optional<RTCMFramer> _rtcm_parsing;
+    std::optional<RTCMStreamDecoder> _rtcm_parsing;
 
     const float _heading_offset;
     const float _pitch_offset;

@@ -447,7 +447,7 @@ void GPSCorrectionManagerTest::_outputsEnabledAfterLinkHistoryChurn()
         ++linkSession;
         corrections.acceptIngress(source.token().event(data, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     }
-    QCOMPARE(corrections.destinations().size(), GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 1);
+    QCOMPARE(corrections.destinations().size(), GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 2);
 
     GPSCorrectionFrame receiverFrame;
     corrections.setOutput(
@@ -473,7 +473,7 @@ void GPSCorrectionManagerTest::_outputsEnabledAfterLinkHistoryChurn()
             QCOMPARE(destination.value(QStringLiteral("queuedBytes")).toULongLong(), quint64(data.size()));
         }
     }
-    QCOMPARE(corrections.destinations().size(), GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 3);
+    QCOMPARE(corrections.destinations().size(), GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 4);
 }
 
 void GPSCorrectionManagerTest::_ntripUdpOutputIsSourceSpecific()

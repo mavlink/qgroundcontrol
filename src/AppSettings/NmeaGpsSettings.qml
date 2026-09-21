@@ -11,8 +11,9 @@ SettingsGroupLayout {
     visible: root._autoConnectSettings.nmeaSource.userVisible && root._autoConnectSettings.autoConnectNmeaBaud.userVisible
 
     readonly property var  _autoConnectSettings: QGroundControl.settingsManager.autoConnectSettings
-    readonly property var _positionManager: QGroundControl.qgcPositionManger
-    readonly property var _health: root._positionManager.nmeaHealth
+    property var positionManager: QGroundControl.qgcPositionManger
+    readonly property var _health: root.positionManager.nmeaHealth
+    readonly property var nmeaInput: root.positionManager.nmeaInput
     readonly property var _serialPortManager: QGroundControl.serialPortManager
     readonly property var _serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
     readonly property var _serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
@@ -23,76 +24,16 @@ SettingsGroupLayout {
         fact: root._autoConnectSettings.nmeaSource
     }
 
-    LabelledComboBox {
-        id: nmeaPortCombo
-        objectName: "nmeaPortCombo"
+    FactSerialPortSettings {
+        Layout.fillWidth: true
         visible: root._serialSource
-        label: qsTr("Device")
-
-        model: root._serialPorts.length > 0 ? root._serialPorts : [qsTr("<none available>")]
-        currentIndex: root._serialPorts.length > 0
-                      ? root._serialPorts.indexOf(root._autoConnectSettings.autoConnectNmeaPort.valueString) : 0
-        enabled: root._serialPorts.length > 0
-
-        onActivated: (index) => {
-            if (index >= 0 && index < root._serialPorts.length) {
-                root._autoConnectSettings.autoConnectNmeaPort.value = root._serialPorts[index]
-            }
-        }
-    }
-
-    LabelledComboBox {
-        id: nmeaBaudCombo
-        objectName: "nmeaBaudCombo"
-        visible: root._serialSource
-        label: qsTr("Baudrate")
-
-        readonly property string _customLabel:  qsTr("Custom")
-        readonly property bool   isCustomBaud:  currentText === _customLabel
-
-        onActivated: (index) => {
-            if (index !== -1 && !isCustomBaud) {
-                QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = parseInt(comboBox.textAt(index));
-            }
-        }
-
-        Component.onCompleted: {
-            var rates = root._serialBaudRates.slice()
-            rates.push(_customLabel)
-            nmeaBaudCombo.model = rates
-
-            var baud = root._autoConnectSettings.autoConnectNmeaBaud.valueString
-            const index = nmeaBaudCombo.comboBox.find(baud);
-            if (index === -1) {
-                nmeaBaudCombo.currentIndex = nmeaBaudCombo.comboBox.count - 1
-                customNmeaBaudField.text = baud
-            } else {
-                nmeaBaudCombo.currentIndex = index;
-            }
-        }
-    }
-
-    RowLayout {
-        visible: nmeaBaudCombo.visible && nmeaBaudCombo.isCustomBaud
-        spacing: ScreenTools.defaultFontPixelWidth
-
-        QGCLabel {
-            text:               qsTr("Custom Baud Rate")
-            Layout.fillWidth:   true
-        }
-        QGCTextField {
-            id:                 customNmeaBaudField
-            objectName:         "customNmeaBaudField"
-            numericValuesOnly:  true
-            validator:          IntValidator { bottom: 1 }
-            onEditingFinished: {
-                if (!nmeaBaudCombo.isCustomBaud) return
-                var baud = parseInt(text)
-                if (baud > 0) {
-                    root._autoConnectSettings.autoConnectNmeaBaud.value = baud
-                }
-            }
-        }
+        deviceFact: root._autoConnectSettings.autoConnectNmeaPort
+        baudFact: root._autoConnectSettings.autoConnectNmeaBaud
+        serialPorts: root._serialPorts
+        serialBaudRates: root._serialBaudRates
+        deviceObjectName: "nmeaPortCombo"
+        baudObjectName: "nmeaBaudCombo"
+        customBaudObjectName: "customNmeaBaudField"
     }
 
     LabelledFactTextField {
@@ -102,11 +43,22 @@ SettingsGroupLayout {
     }
 
     QGCLabel {
+        objectName: "nmeaConnectionStatus"
+        visible: root.nmeaInput && (root.nmeaInput.errorMessage.length > 0 || !root._health)
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+        textFormat: Text.PlainText
+        text: root.nmeaInput ? root.nmeaInput.connectionStatusText : ""
+        color: root.nmeaInput && root.nmeaInput.errorMessage.length > 0
+               ? QGroundControl.globalPalette.warningText : QGroundControl.globalPalette.text
+    }
+
+    QGCLabel {
         visible: root._health !== null
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
-        text: root._positionManager.nmeaReceiving ? qsTr("Receiving NMEA data")
-              : root._positionManager.nmeaHasData ? qsTr("NMEA stream idle")
+        text: root.positionManager.nmeaReceiving ? qsTr("Receiving NMEA data")
+              : root.positionManager.nmeaHasData ? qsTr("NMEA stream idle")
               : root._serialSource ? qsTr("Waiting for NMEA data") : qsTr("Listening for NMEA UDP data")
     }
 

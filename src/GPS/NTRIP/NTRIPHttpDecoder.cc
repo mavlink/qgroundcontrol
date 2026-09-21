@@ -157,7 +157,7 @@ QString tr(const char* text)
 
 void NTRIPHttpDecoder::reset()
 {
-    *this = NTRIPHttpDecoder{};
+    *this = NTRIPHttpDecoder{_purpose};
 }
 
 NTRIPHttpDecoder::Status NTRIPHttpDecoder::parseStatusLine(QByteArrayView line)
@@ -292,8 +292,13 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
         if (!_status.valid) {
             _fail(result, tr("Invalid HTTP status line"));
         } else if (_line.left(11).compare("SOURCETABLE", Qt::CaseInsensitive) == 0) {
-            _fail(result, tr("Caster returned a source table; select a valid mountpoint"),
-                  NTRIPError::InvalidMountpoint);
+            if (_purpose == Purpose::SourceTable && _status.code == 200) {
+                _state = State::IcyHeaders;
+                result.connected = true;
+            } else {
+                _fail(result, tr("Caster returned a source table; select a valid mountpoint"),
+                      NTRIPError::InvalidMountpoint);
+            }
         } else if (_line.first(3).compare("ICY", Qt::CaseInsensitive) == 0 && _status.code == 200) {
             _state = State::IcyHeaders;
             result.connected = true;
@@ -387,7 +392,8 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
             return;
         }
         for (const auto& value : _headers.values(QHttpHeaders::WellKnownHeader::ContentType)) {
-            if (value.split(';').first().trimmed().compare("gnss/sourcetable", Qt::CaseInsensitive) == 0) {
+            if (_purpose == Purpose::Corrections &&
+                value.split(';').first().trimmed().compare("gnss/sourcetable", Qt::CaseInsensitive) == 0) {
                 _fail(result, tr("Caster returned a source table; select a valid mountpoint"),
                       NTRIPError::InvalidMountpoint);
                 return;

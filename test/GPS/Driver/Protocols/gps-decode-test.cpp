@@ -262,6 +262,7 @@ public:
     std::vector<std::string> commands;
     std::vector<GPSCommandResult> results;
     std::vector<GPSNativeSurveyReport> surveys;
+    std::vector<std::vector<uint8_t>> corrections;
     std::string surveyReply{ASHTECH_SURVEY_STARTED};
     std::string failedCommand;
     bool silentFailure = false;
@@ -293,6 +294,10 @@ public:
             ++transportCalls;
             const std::string command(reinterpret_cast<const char*>(bytes.data()), bytes.size());
             commands.push_back(command);
+            if (!command.ends_with("\r\n")) {
+                reply.clear();
+                return GPSWriteResult{GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())};
+            }
             if (command == failedCommand) {
                 reply = silentFailure ? std::vector<uint8_t>{} : nmeaPacket("PASHR,NAK");
             } else if (command.starts_with("$PASHQ,PRT")) {
@@ -315,6 +320,8 @@ public:
             for (const auto& event : batch.events) {
                 if (const auto* survey = std::get_if<GPSNativeSurveyReport>(&event)) {
                     surveys.push_back(*survey);
+                } else if (const auto* frame = std::get_if<GPSRTCMReport>(&event)) {
+                    corrections.emplace_back(frame->bytes.begin(), frame->bytes.begin() + frame->size);
                 }
             }
         };
@@ -397,7 +404,10 @@ void ashtechSurveyReceipts()
                                                           {"176.334", "inf"},
                                                           {"114642.81", ""},
                                                           {"114642.81", "246000.00"},
+                                                          {"114642.81", "114402.00"},
                                                           {"28.12.2011", "31.02.2011"},
+                                                          {"28.12.2011", "27.12.2011"},
+                                                          {"100,FINISHED", "99,FINISHED"},
                                                           {",OK,", ",ERR,"},
                                                           {"100.20", ""}}) {
         std::string body = finished;
@@ -405,13 +415,6 @@ void ashtechSurveyReceipts()
         malformed.push_back(std::move(body));
     }
     for (const auto& body : malformed) {
-        receiver.driver.consume(nmeaPacket(finished));
-        CHECK(receiver.surveys.size() == 1);
-        CHECK(receiver.surveys.back().flags == 1);
-        CHECK(!receiver.surveys.back().accuracyKnown);
-        CHECK(std::abs(receiver.surveys.back().latitude - (55 + 42.5178481 / 60)) < 1e-8);
-        receiver.driver.receive(1);
-        receiver.surveys.clear();
         const auto commands = receiver.commands.size();
         receiver.driver.consume(nmeaPacket(body));
         CHECK(receiver.surveys.empty());
@@ -434,11 +437,17 @@ void ashtechSurveyReceipts()
         CHECK(receiver.surveys.empty());
         receiver.driver.consume(nmeaPacket("PASHR,RECEIPT,"));
         CHECK(receiver.surveys.empty());
-        receiver.driver.consume(completeFrame);
-        CHECK(receiver.surveys.size() == 1 && receiver.surveys.back().flags == 1);
-        receiver.driver.receive(1);
-        receiver.surveys.clear();
     }
+    receiver.driver.consume(completeFrame);
+    CHECK(receiver.surveys.size() == 1 && receiver.surveys.back().flags == 1);
+    CHECK(!receiver.surveys.back().accuracyKnown);
+    CHECK(std::abs(receiver.surveys.back().latitude - (55 + 42.5178481 / 60)) < 1e-8);
+    receiver.driver.receive(1);
+    receiver.surveys.clear();
+    const auto completedCommands = receiver.commands.size();
+    receiver.driver.consume(completeFrame);
+    receiver.driver.receive(1);
+    CHECK(receiver.surveys.empty() && receiver.commands.size() == completedCommands);
 
     receiver.configure();
     receiver.startSurvey();
@@ -459,7 +468,7 @@ void ashtechSurveyReceipts()
     receiver.driver.consume(nmeaPacket(ASHTECH_SURVEY_FAILED));
     receiver.driver.receive(1);
     CHECK(receiver.commands.size() == afterFailure);
-    CHECK(receiver.surveys.size() == 2 && receiver.surveys.back().flags == 0);
+    CHECK(receiver.surveys.empty());
 
     for (const auto body :
          {std::string_view{"PASHR,RECEIPT,"},
@@ -469,13 +478,12 @@ void ashtechSurveyReceipts()
         receiver.surveyReply = body;
         CHECK(receiver.startSurvey() < 0);
         CHECK(receiver.results.back().evidence.command == "$PASHS,POS,AVG,100\r\n");
-        CHECK(receiver.results.back().evidence.outcome ==
-              (body == ASHTECH_SURVEY_FAILED ? GPSCommandOutcome::Rejected : GPSCommandOutcome::TimedOut));
+        CHECK(receiver.results.back().evidence.outcome == GPSCommandOutcome::TimedOut);
     }
     receiver.configure();
     receiver.surveyReply = ASHTECH_SURVEY_FINISHED;
-    receiver.startSurvey();
-    CHECK(receiver.surveys.size() == 1 && receiver.surveys.back().flags == 1);
+    CHECK(receiver.startSurvey() < 0);
+    CHECK(receiver.surveys.empty());
     for (auto mode : {GPSProtocol::OutputMode::GPS, GPSProtocol::OutputMode::RTCM}) {
         receiver.configure(mode, true);
         receiver.driver.consume(nmeaPacket(finished));
@@ -544,6 +552,43 @@ void ashtechMetadata()
     CHECK(gpsSatellites.entries[0].elevation == 0);
     driver.consume(nmeaPacket("GPZDA,172809.456,12,07,2026,00,00"));
     CHECK(position.time_utc_usec % 1000000 >= 455999 && position.time_utc_usec % 1000000 <= 456001);
+
+    driver.consume(nmeaPacket("GPGST,172810.0,0,0,0,0,0.3,0.4,0.6"));
+    driver.consume(nmeaPacket("GPHDT,121.2,T"));
+    const auto positionPacket = nmeaPacket("PASHR,POS,2,12,172810.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,");
+    driver.consume(positionPacket);
+    CHECK(position.eph == 0.5f && std::isfinite(position.heading));
+    CHECK(position.time_utc_usec % 60000000 == 10000000);
+    gps_test_time += 6000000;
+    driver.consume(positionPacket);
+    CHECK(std::isnan(position.eph) && std::isnan(position.epv) && std::isnan(position.heading));
+    CHECK(position.time_utc_usec == 0);
+    driver.consume(nmeaPacket("GPGST,172809.0,0,0,0,0,0.3,0.4,0.6"));
+    driver.consume(positionPacket);
+    CHECK(std::isnan(position.eph));
+    const auto positionReceipt = position.timestamp;
+    ++gps_test_time;
+    CHECK(driver.consume(nmeaPacket("GPGST,172810.0,0,0,0,0,0.3,0.4,0.6")) & 1);
+    CHECK(position.eph == 0.5f && position.timestamp == positionReceipt);
+}
+
+void ashtechMixedFramingAndFixedCommand()
+{
+    gps_test_time = 1000000;
+    AshtechReceiver receiver;
+    receiver.configure(GPSProtocol::OutputMode::RTCM, true);
+    const auto embedded = nmeaPacket("PASHR,POS,2,12,172810.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,");
+    const auto binary = rtcmPacket(embedded);
+    receiver.driver.consume(binary);
+    CHECK(receiver.position.timestamp == 0);
+    CHECK(receiver.corrections == std::vector<std::vector<uint8_t>>{binary});
+    verifyRTCMRecovery(receiver.driver, receiver.corrections);
+    receiver.startSurvey();
+    CHECK(receiver.driver.ioError() == 0);
+    CHECK(receiver.surveys.size() == 1 && receiver.surveys.back().flags == 1);
+    const auto fixed = std::find_if(receiver.commands.begin(), receiver.commands.end(),
+                                    [](const auto& command) { return command.starts_with("$PASHS,POS,4700."); });
+    CHECK(fixed != receiver.commands.end() && fixed->ends_with(",PC1\r\n"));
 }
 #endif
 
@@ -772,6 +817,7 @@ void GPSProtocolDecodeTest::_protocol()
 #endif
 #if QGC_GPS_ENABLE_ASHTECH
         ashtechMetadata();
+        ashtechMixedFramingAndFixedCommand();
         ashtechSurveyReceipts();
 #endif
     } catch (const std::exception& error) {

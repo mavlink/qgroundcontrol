@@ -119,6 +119,10 @@ private slots:
     void _coordinateNumbers_data();
     void _coordinateNumbers();
     void _nmeaWireContract();
+    void _ggaValidity_data();
+    void _ggaValidity();
+    void _navigationStatus_data();
+    void _navigationStatus();
 };
 
 void GPSProtocolContractsTest::_satelliteIds_data()
@@ -256,6 +260,73 @@ void GPSProtocolContractsTest::_nmeaWireContract()
     QVERIFY(assembler.flush().empty());
 }
 
+void GPSProtocolContractsTest::_ggaValidity_data()
+{
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<bool>("accepted");
+    QTest::addColumn<bool>("coordinates");
+    QTest::newRow("no-fix-empty") << QByteArray("GPGGA,120000,,,,,0,0,,,,,,,") << true << false;
+    QTest::newRow("no-fix-hemispheres") << QByteArray("GPGGA,120000,,N,,E,0,0,,,,,,,") << true << false;
+    QTest::newRow("no-fix-zero-coordinates")
+        << QByteArray("GPGGA,120000,0000.0,N,00000.0,E,0,0,,,,,,,") << true << true;
+    QTest::newRow("fix-without-coordinates") << QByteArray("GPGGA,120000,,,,,1,0,,,,,,,") << false << false;
+    QTest::newRow("invalid-coordinate") << QByteArray("GPGGA,120000,9100.0,N,00000.0,E,0,0,,,,,,,") << false << false;
+    QTest::newRow("invalid-hemisphere") << QByteArray("GPGGA,120000,,Q,,E,0,0,,,,,,,") << false << false;
+}
+
+void GPSProtocolContractsTest::_ggaValidity()
+{
+    QFETCH(QByteArray, body);
+    QFETCH(bool, accepted);
+    QFETCH(bool, coordinates);
+    const auto wire = NMEAUtils::repairChecksum('$' + body);
+    const auto sentence = NMEA::sentence({wire.constData(), static_cast<size_t>(wire.size())});
+    QVERIFY(sentence);
+    const auto fix = NMEA::gga(*sentence);
+    QCOMPARE(fix.has_value(), accepted);
+    if (fix) {
+        QCOMPARE(fix->quality, NMEA::GgaQuality::INVALID);
+        QCOMPARE(fix->satellitesUsed, std::optional<unsigned>(0));
+        QCOMPARE(std::isfinite(fix->latitude) && std::isfinite(fix->longitude), coordinates);
+    }
+}
+
 UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolContractsTest, TestLabel::Unit)
+
+void GPSProtocolContractsTest::_navigationStatus_data()
+{
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<int>("valid");
+    QTest::addColumn<int>("epoch");
+    QTest::newRow("gga-no-fix") << QByteArray("GPGGA,120001,,,,,0,0,,,,,,,") << 0 << 43201000;
+    QTest::newRow("gga-declared-fix") << QByteArray("GPGGA,120001,,,,,1,0,,,,,,,") << 1 << 43201000;
+    QTest::newRow("gga-unknown-quality") << QByteArray("GPGGA,120001,,,,,9,0,,,,,,,") << -1 << -1;
+    QTest::newRow("rmc-valid") << QByteArray("GPRMC,120001,A") << 1 << 43201000;
+    QTest::newRow("rmc-invalid") << QByteArray("GPRMC,120001,V") << 0 << 43201000;
+    QTest::newRow("rmc-invalid-time") << QByteArray("GPRMC,,V") << 0 << -1;
+    QTest::newRow("gll-invalid") << QByteArray("GPGLL,,,,,120001,V") << 0 << 43201000;
+    QTest::newRow("gll-valid") << QByteArray("GPGLL,,,,,120001,A") << 1 << 43201000;
+    QTest::newRow("gsa-invalid") << QByteArray("GPGSA,A,1") << 0 << -1;
+    QTest::newRow("gsa-two-dimensional") << QByteArray("GPGSA,A,2") << 1 << -1;
+    QTest::newRow("gsa-three-dimensional") << QByteArray("GPGSA,A,3") << 1 << -1;
+    QTest::newRow("gsa-unknown") << QByteArray("GPGSA,A,4") << -1 << -1;
+    QTest::newRow("rmc-unknown") << QByteArray("GPRMC,120001,X") << -1 << -1;
+}
+
+void GPSProtocolContractsTest::_navigationStatus()
+{
+    QFETCH(QByteArray, body);
+    QFETCH(int, valid);
+    QFETCH(int, epoch);
+    const auto wire = NMEAUtils::repairChecksum('$' + body);
+    const auto sentence = NMEA::sentence({wire.constData(), static_cast<size_t>(wire.size())});
+    QVERIFY(sentence);
+    const auto status = NMEA::navigationStatus(*sentence);
+    QCOMPARE(status.has_value(), valid >= 0);
+    if (status) {
+        QCOMPARE(status->valid, valid != 0);
+        QCOMPARE(status->utcMilliseconds.value_or(-1), epoch);
+    }
+}
 
 #include "GPSProtocolContractsTest.moc"

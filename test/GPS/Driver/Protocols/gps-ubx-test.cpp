@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "GPSProtocolTestIO.h"
+#include "ProtocolTestPackets.h"
 #include "UBX/GPSDriverUBX.h"
 #include "UBX/UBXMessageCodec.h"
 #include "UnitTest.h"
@@ -1281,6 +1282,18 @@ static void transactionalFrames()
     const auto standalone = driver.decode(correction);
     CHECK(standalone.batch.events.size() == 1);
     CHECK(std::holds_alternative<GPSRTCMReport>(standalone.batch.events.front()));
+    std::vector<std::vector<uint8_t>> recovered;
+    auto io = makeGPSProtocolTestIO();
+    io.decoded = [&](const GPSDecodedBatch& batch) {
+        CHECK(batch.events.size() <= GPSDecodedBatch::MAX_EVENTS);
+        for (const auto& event : batch.events) {
+            const auto& report = std::get<GPSRTCMReport>(event);
+            recovered.emplace_back(report.bytes.begin(), report.bytes.begin() + report.size);
+        }
+    };
+    GPSNativeUBX recoveryDriver(io, &position, nullptr);
+    recoveryDriver.setDecodeContext({.corrections = true});
+    verifyRTCMRecovery(recoveryDriver, recovered);
 }
 
 static void controlDeadline()

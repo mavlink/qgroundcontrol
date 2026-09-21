@@ -66,6 +66,7 @@ private:
     bool _dataStale = false;
     bool _messageCountsDirty = false;
     qint64 _lastReceivedAtMs = 0;
+    qint64 _startedAtMs = 0;
     QChronoTimer _rateTimer;
     // Per-ID counts. Using int for compatibility with QVariant in QML.
     QHash<int, quint32> _messageCountsById;

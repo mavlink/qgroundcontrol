@@ -60,7 +60,9 @@ SettingsGroupLayout {
     }
 
     NTRIPMountpointList {
+        objectName:             "ntripMountpointList"
         Layout.fillWidth:       true
+        enabled:                !root._isActive
         visible:                root._ntripMgr.sourceTableController.mountpointModel && root._ntripMgr.sourceTableController.mountpointModel.count > 0
         model:                  root._ntripMgr.sourceTableController.mountpointModel
         selectedMountpoint:     root._ntrip.ntripMountpoint.rawValue

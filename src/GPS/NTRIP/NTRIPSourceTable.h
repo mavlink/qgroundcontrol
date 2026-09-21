@@ -7,6 +7,7 @@
 #include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
+#include <QtCore/qnumeric.h>
 #include <QtPositioning/QGeoCoordinate>
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableLog)
@@ -23,8 +24,8 @@ struct NTRIPMountpoint
     QString navSystem;
     QString network;
     QString country;
-    double latitude = 0.0;
-    double longitude = 0.0;
+    double latitude = qQNaN();
+    double longitude = qQNaN();
     bool nmea = false;
     bool solution = false;
     QString generator;

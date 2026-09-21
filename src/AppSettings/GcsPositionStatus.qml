@@ -9,7 +9,7 @@ SettingsGroupLayout {
     visible: _gcsPosition.isValid
 
     property var  _gcsPosition: QGroundControl.qgcPositionManger.gcsPosition
-    property real _gcsHDOP:     QGroundControl.qgcPositionManger.gcsPositionHorizontalAccuracy
+    property real _horizontalAccuracy: QGroundControl.qgcPositionManger.gcsPositionHorizontalAccuracy
 
     LabelledLabel {
         Layout.fillWidth: true
@@ -25,7 +25,9 @@ SettingsGroupLayout {
 
     LabelledLabel {
         Layout.fillWidth: true
-        label:     qsTr("HDOP")
-        labelText: _gcsHDOP > 0 ? _gcsHDOP.toFixed(1) + " m" : qsTr("N/A")
+        objectName: "gcsHorizontalAccuracy"
+        label:     qsTr("Horizontal accuracy")
+        labelText: Number.isFinite(_horizontalAccuracy) && _horizontalAccuracy >= 0
+                   ? qsTr("%1 m").arg(_horizontalAccuracy.toFixed(1)) : qsTr("N/A")
     }
 }

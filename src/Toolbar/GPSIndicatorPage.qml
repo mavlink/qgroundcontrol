@@ -79,12 +79,36 @@ ToolIndicatorPage {
                     labelText: root.activeVehicle ? root.activeVehicle.gps.lock.enumStringValue : root.na
                 }
                 LabelledLabel {
+                    objectName: "vehicleGpsHdop"
                     label: qsTr("HDOP")
                     labelText: root.activeVehicle ? root.activeVehicle.gps.hdop.valueString : root.valueNA
                 }
                 LabelledLabel {
+                    objectName: "vehicleGpsVdop"
                     label: qsTr("VDOP")
                     labelText: root.activeVehicle ? root.activeVehicle.gps.vdop.valueString : root.valueNA
+                }
+                LabelledLabel {
+                    objectName: "vehicleGpsHorizontalAccuracy"
+                    label: qsTr("Horizontal accuracy")
+                    visible: root.activeVehicle
+                             && Number.isFinite(root.activeVehicle.gps.horizontalAccuracy.value)
+                             && root.activeVehicle.gps.horizontalAccuracy.value >= 0
+                    labelText: root.activeVehicle
+                               ? qsTr("%1 %2").arg(root.activeVehicle.gps.horizontalAccuracy.valueString)
+                                             .arg(root.activeVehicle.gps.horizontalAccuracy.units)
+                               : root.valueNA
+                }
+                LabelledLabel {
+                    objectName: "vehicleGpsVerticalAccuracy"
+                    label: qsTr("Vertical accuracy")
+                    visible: root.activeVehicle
+                             && Number.isFinite(root.activeVehicle.gps.verticalAccuracy.value)
+                             && root.activeVehicle.gps.verticalAccuracy.value >= 0
+                    labelText: root.activeVehicle
+                               ? qsTr("%1 %2").arg(root.activeVehicle.gps.verticalAccuracy.valueString)
+                                             .arg(root.activeVehicle.gps.verticalAccuracy.units)
+                               : root.valueNA
                 }
                 LabelledLabel {
                     label: qsTr("Course Over Ground")

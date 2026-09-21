@@ -131,58 +131,19 @@ SettingsGroupLayout {
         }
     }
 
-    ColumnLayout {
+    FactSerialPortSettings {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         visible: root.receiver.serialSupported
-        Explanation { text: qsTr("Serial device") }
-        QGCComboBox {
-            objectName: "rtkSerialDevice"
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            enabled: root._editable && root.serialPorts.length > 0
-            model: root.serialPorts.length > 0 ? root.serialPorts : [qsTr("<none available>")]
-            currentIndex: root.serialPorts.length > 0
-                          ? root.serialPorts.indexOf(root.settings.serialDevice.valueString) : 0
-            onActivated: (index) => {
-                if (index >= 0 && index < root.serialPorts.length) {
-                    root.settings.serialDevice.rawValue = root.serialPorts[index]
-                }
-            }
-        }
-    }
-
-    ColumnLayout {
-        Layout.fillWidth: true
-        Layout.minimumWidth: 0
-        visible: root.receiver.serialSupported
-        Explanation { text: qsTr("Baud rate") }
-        QGCComboBox {
-            id: baudCombo
-            objectName: "rtkSerialBaudRate"
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            enabled: root._editable
-
-            readonly property var rates: root.serialBaudRates.filter(rate => Number(rate) >= 1200 && Number(rate) <= 4000000)
-            property bool customSelected: rates.indexOf(root.settings.serialBaudRate.valueString) < 0
-
-            model: rates.concat([qsTr("Custom")])
-            currentIndex: customSelected ? rates.length : rates.indexOf(root.settings.serialBaudRate.valueString)
-            onActivated: (index) => {
-                customSelected = index === rates.length
-                if (index >= 0 && index < rates.length) {
-                    root.settings.serialBaudRate.rawValue = Number(rates[index])
-                }
-            }
-        }
-    }
-
-    SettingField {
-        label: qsTr("Custom baud rate")
-        fact: root.settings.serialBaudRate
-        visible: root.receiver.serialSupported && baudCombo.customSelected
-        enabled: root._editable
+        deviceFact: root.settings.serialDevice
+        baudFact: root.settings.serialBaudRate
+        serialPorts: root.serialPorts
+        serialBaudRates: root.serialBaudRates
+        minimumBaud: 1200
+        editable: root._editable
+        deviceObjectName: "rtkSerialDevice"
+        baudObjectName: "rtkSerialBaudRate"
+        customBaudObjectName: "rtkCustomBaudRate"
     }
 
     Explanation {

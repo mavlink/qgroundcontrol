@@ -19,6 +19,7 @@ target_sources(
            NMEASatelliteEpoch.h
            NMEAFields.h
            NMEAFramer.h
+           NMEAMetadata.h
            NMEAUtils.h
 )
 target_sources(

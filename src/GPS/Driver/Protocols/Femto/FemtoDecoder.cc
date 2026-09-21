@@ -190,13 +190,11 @@ int GPSNativeFemto::parseChar(uint8_t temp)
 {
     int iRet = 0;
 
-    if (_rtcm_parsing) {
-        if (_rtcm_parsing->addByte(temp) && _rtcm_parsing->valid()) {
-            gotRTCMMessage(_rtcm_parsing->frame().data(), _rtcm_parsing->frame().size());
-            decodeInit();
-            _rtcm_parsing->reset();
-            return iRet;
-        }
+    if (_rtcm_parsing && _rtcm_parsing->ownsByte(temp)) {
+        _nmeaFramer.reset();
+        _rtcm_parsing->addByte(temp);
+        drainRTCM(*_rtcm_parsing);
+        return 0;
     }
 
     if (_output_mode == OutputMode::GPS) {
@@ -349,4 +347,11 @@ int GPSNativeFemto::decodeByte(uint8_t byte)
 {
     const int length = parseChar(byte);
     return length > 0 ? handleMessage(length) : 0;
+}
+
+void GPSNativeFemto::flushDecoded()
+{
+    if (_rtcm_parsing) {
+        drainRTCM(*_rtcm_parsing);
+    }
 }

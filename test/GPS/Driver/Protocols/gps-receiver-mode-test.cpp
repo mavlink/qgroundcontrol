@@ -12,6 +12,7 @@
 #include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "LittleEndian.h"
+#include "ProtocolTestPackets.h"
 #include "RTCMFramer.h"
 #include "SBF/GPSDriverSBF.h"
 #include "UnitTest.h"
@@ -29,6 +30,7 @@ class Receiver
 {
 public:
     bool septentrio = false;
+    std::string port = "USB1";
     std::string rejected_command;
     bool cancel_read = false;
     bool silence_rejected = false;
@@ -85,7 +87,7 @@ public:
             if (rejected) {
                 reply = silence_rejected ? std::string{} : septentrio ? "$R? rejected\n" : "<ERROR\r\n";
             } else if (septentrio) {
-                reply = command == "\n\r" ? "USB1>" : "$R: " + command;
+                reply = command == "\n\r" ? port + ">" : "$R: " + command;
             } else {
                 reply = '<' + command.substr(0, command.find_first_of(" \r\n")) + " OK";
                 reply.insert(0, noise_bytes, '\0');
@@ -171,14 +173,19 @@ static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fix
 void sbfRequiredBaseCommands()
 {
     const std::vector<std::string> fixedCommands = {
-        "setDataInOut, USB1, Auto, RTCMv3+SBF", "setStaticPosGeodetic", "setAntennaOffset",
-        "setReceiverDynamics, Low, Static",     "setPVTMode, Static",   "setSBFOutput, Stream1, USB1, +PVTGeodetic",
+        "setGeodeticDatum, WGS84",
+        "setDataInOut, USB1, Auto, RTCMv3+SBF",
+        "setStaticPosGeodetic",
+        "setAntennaOffset",
+        "setReceiverDynamics, Low, Static",
+        "setPVTMode, Static",
+        "setSBFOutput, Stream1, USB1, +PVTGeodetic",
     };
     for (bool fixed : {false, true}) {
         const auto commands =
             fixed ? fixedCommands
-                  : std::vector<std::string>{"setDataInOut, USB1, Auto, RTCMv3+SBF", "setPVTMode, Static",
-                                             "setSBFOutput, Stream1, USB1, +PVTGeodetic"};
+                  : std::vector<std::string>{"setGeodeticDatum, WGS84", "setDataInOut, USB1, Auto, RTCMv3+SBF",
+                                             "setPVTMode, Static", "setSBFOutput, Stream1, USB1, +PVTGeodetic"};
         for (const auto& command : commands) {
             for (bool silent : {false, true}) {
                 gps_test_time = 0;
@@ -212,6 +219,67 @@ void sbfRequiredBaseCommands()
                 CHECK(results.back().evidence.writtenBytes == int(receiver.commands.back().size()));
             }
         }
+    }
+}
+
+void sbfSelectedPortAndPrecision()
+{
+    for (const auto* port : {"COM1", "USB2"}) {
+        Receiver peer;
+        peer.septentrio = true;
+        peer.port = port;
+        GPSNativePositionReport position;
+        GPSNativeSBF driver(peer.io(), &position);
+        GPSProtocol::GPSConfig config;
+        config.output_mode = GPSProtocol::OutputMode::RTCM;
+        config.base.useFixedBase = true;
+        config.base.fixedPosition = {47.397742491, -8.545593291, 500.125f};
+        unsigned baud = 115200;
+        CHECK(driver.configure(baud, config) == 0);
+        CHECK(peer.sent(std::string("setDataInOut, ") + port + ", Auto, RTCMv3+SBF"));
+        CHECK(peer.sent(std::string("setSBFOutput, Stream1, ") + port + ", +PVTGeodetic"));
+        CHECK(peer.sent("setStaticPosGeodetic, Geodetic1, 47.397742491, -8.545593291, 500.1250, WGS84"));
+    }
+}
+
+void sbfDatumRejection()
+{
+    for (uint8_t datum : {19, 31, 250}) {
+        Receiver peer;
+        peer.septentrio = true;
+        GPSNativePositionReport position;
+        std::vector<GPSNativeSurveyReport> surveys;
+        auto io = peer.io();
+        io.decoded = [&](const GPSDecodedBatch& batch) {
+            for (const auto& event : batch.events) {
+                if (const auto* report = std::get_if<GPSNativeSurveyReport>(&event)) {
+                    surveys.push_back(*report);
+                }
+            }
+        };
+        GPSNativeSBF driver(io, &position);
+        GPSProtocol::GPSConfig config;
+        config.output_mode = GPSProtocol::OutputMode::RTCM;
+        config.base = {.surveyInAccMeters = 1, .surveyInDurationSecs = 60};
+        unsigned baud = 115200;
+        CHECK(driver.configure(baud, config) == 0);
+        std::vector<uint8_t> frame(96);
+        (void) LittleEndian::write<uint16_t>(frame, 0, 0x4024);
+        (void) LittleEndian::write<uint16_t>(frame, 4, SBF_ID_PVTGeodetic);
+        (void) LittleEndian::write<uint16_t>(frame, 6, uint16_t(frame.size()));
+        (void) LittleEndian::write<uint16_t>(frame, 12, 2435);
+        frame[14] = 3;
+        frame[73] = datum;
+        (void) LittleEndian::write<double>(frame, 16, 0.5);
+        (void) LittleEndian::write<double>(frame, 24, 1);
+        (void) LittleEndian::write<double>(frame, 32, 500);
+        (void) LittleEndian::write<uint16_t>(frame, 2, crc16(frame.data() + 4, frame.size() - 4));
+        driver.consume(frame);
+        CHECK(driver.ioError() == -EPROTO);
+        CHECK(driver.ioErrorDetail().contains("datum"));
+        CHECK(!driver.receiverReady());
+        CHECK(surveys.size() == 1 && surveys.back().flags == 0);
+        CHECK(std::isnan(surveys.back().latitude));
     }
 }
 #endif
@@ -377,6 +445,53 @@ void sbfSurveyEvidence()
 }
 #endif
 
+void baseMixedFraming(bool septentrio)
+{
+    Receiver peer;
+    peer.septentrio = septentrio;
+    auto io = peer.io();
+    GPSNativePositionReport position;
+    std::vector<std::vector<uint8_t>> frames;
+    size_t otherReports = 0;
+    io.decoded = [&](const GPSDecodedBatch& batch) {
+        CHECK(batch.events.size() <= GPSDecodedBatch::MAX_EVENTS);
+        for (const auto& event : batch.events) {
+            if (const auto* frame = std::get_if<GPSRTCMReport>(&event)) {
+                frames.emplace_back(frame->bytes.begin(), frame->bytes.begin() + frame->size);
+            } else {
+                ++otherReports;
+            }
+        }
+    };
+    std::unique_ptr<GPSProtocol> driver;
+    if (septentrio) {
+#if QGC_GPS_ENABLE_SBF
+        driver = std::make_unique<GPSNativeSBF>(io, &position);
+#endif
+    } else {
+#if QGC_GPS_ENABLE_FEMTO
+        driver = std::make_unique<GPSNativeFemto>(io, &position);
+#endif
+    }
+    GPSProtocol::GPSConfig config;
+    config.output_mode = GPSProtocol::OutputMode::RTCM;
+    config.base = {.surveyInAccMeters = 1, .surveyInDurationSecs = 60};
+    unsigned baud = 115200;
+    CHECK(driver->configure(baud, config) == 0);
+    driver->consume({});
+    otherReports = 0;
+    const std::string body = "GPGGA,123519,4807.038,N,01131.000,E,7,08,0.9,545.4,M,46.9,M,,";
+    char suffix[8];
+    std::snprintf(suffix, sizeof(suffix), "*%02X\r\n", NMEA::checksum(body));
+    const auto text = "$" + body + suffix;
+    const auto binary = rtcmPacket({reinterpret_cast<const uint8_t*>(text.data()), text.size()});
+    driver->consume(binary);
+    CHECK(frames == std::vector<std::vector<uint8_t>>{binary});
+    CHECK(otherReports == 0);
+    verifyRTCMRecovery(*driver, frames);
+    CHECK(otherReports == 0);
+}
+
 }  // namespace
 
 class GPSProtocolReceiverModesTest : public UnitTest
@@ -401,6 +516,7 @@ void GPSProtocolReceiverModesTest::_protocol()
                 receiverMode(septentrio, GPSProtocol::OutputMode::GPS, fixed);
                 receiverMode(septentrio, GPSProtocol::OutputMode::RTCM, fixed);
             }
+            baseMixedFraming(septentrio);
             const std::vector<std::string> stop_commands = septentrio
                                                                ? std::vector<std::string>{"setPVTMode, Rover"}
                                                                : std::vector<std::string>{"POSAVE OFF", "FIX NONE"};
@@ -412,6 +528,8 @@ void GPSProtocolReceiverModesTest::_protocol()
         }
 #if QGC_GPS_ENABLE_SBF
         sbfRequiredBaseCommands();
+        sbfSelectedPortAndPrecision();
+        sbfDatumRejection();
         sbfFrameOwnership();
         sbfSurveyEvidence();
 #endif

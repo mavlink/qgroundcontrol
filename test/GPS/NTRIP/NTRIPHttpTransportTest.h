@@ -44,6 +44,8 @@ private slots:
     void _testBuildRequestNoCredentialsNoWarn();
     void _testBuildRequestPreservesValues_data();
     void _testBuildRequestPreservesValues();
+    void _testBuildRequestAuthority_data();
+    void _testBuildRequestAuthority();
     void _testBuildRequestRejectsInvalidConfig_data();
     void _testBuildRequestRejectsInvalidConfig();
 };

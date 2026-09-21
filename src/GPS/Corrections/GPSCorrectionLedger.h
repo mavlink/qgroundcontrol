@@ -79,6 +79,7 @@ public:
     void selected(const GPSCorrectionFrame& frame);
     void queued(const GPSCorrectionFrame& frame, quint64 bytes, bool complete);
     void registerOutput(const QString& id, bool reportsWrites);
+    void updateOutputDestinations(const QString& id, const QSet<QString>& destinations);
     void removeOutput(const QString& id, quint64 excludedDeliveryId = 0);
 
     bool admissionAvailable() const { return _pendingDeliveries.size() < MAX_PENDING_DELIVERIES; }
@@ -117,6 +118,7 @@ private:
     Clock _clock;
     std::array<Statistics, 4> _statistics;
     QSet<QString> _outputs;
+    QMap<QString, QSet<QString>> _outputDestinations;
     QMap<QString, Destination> _destinations;
     QMap<QString, PendingDelivery> _pendingDeliveries;
     QList<GPSCorrectionEvent> _events;

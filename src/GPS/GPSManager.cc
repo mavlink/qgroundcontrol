@@ -17,6 +17,7 @@
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleGPSFactGroup.h"
 #include "VehicleLinkManager.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "RTKAutoConnect.h"
@@ -44,8 +45,7 @@ Vehicle* activeVehicleForGga()
 
 PositionResult ggaPosition(const QGeoCoordinate& coordinate, const QString& label, GPSAltitudeDatum datum)
 {
-    if (!coordinate.isValid() || !qIsFinite(coordinate.altitude()) ||
-        (coordinate.latitude() == 0 && coordinate.longitude() == 0)) {
+    if (!coordinate.isValid() || !qIsFinite(coordinate.altitude())) {
         return {};
     }
     return {coordinate, label, datum};
@@ -56,7 +56,11 @@ PositionResult ggaPosition(const std::optional<GPSObservation>& observation, con
     if (!observation || observation->altitudeDatum != GPSAltitudeDatum::MeanSeaLevel) {
         return {};
     }
-    return ggaPosition(observation->position.coordinate(), label, observation->altitudeDatum);
+    auto result = ggaPosition(observation->position.coordinate(), label, observation->altitudeDatum);
+    result.fixQuality = observation->fixQuality;
+    result.satellitesUsed = observation->satellitesUsed;
+    result.horizontalDop = observation->horizontalDop;
+    return result;
 }
 
 }  // namespace
@@ -93,21 +97,13 @@ void GPSManager::_configureGgaProviders()
         if (!vehicle) {
             return {};
         }
-        FactGroup* facts = vehicle->gpsFactGroup();
-        Fact* latitude = facts ? facts->getFact(QStringLiteral("lat")) : nullptr;
-        Fact* longitude = facts ? facts->getFact(QStringLiteral("lon")) : nullptr;
-        if (!latitude || !longitude) {
-            return {};
-        }
-        return ggaPosition(QGeoCoordinate(latitude->rawValue().toDouble(), longitude->rawValue().toDouble(),
-                                          vehicle->coordinate().altitude()),
-                           QStringLiteral("Vehicle GPS"), GPSAltitudeDatum::MeanSeaLevel);
+        const auto* gps = qobject_cast<VehicleGPSFactGroup*>(vehicle->gpsFactGroup());
+        return gps ? ggaPosition(gps->acceptedObservation(), QStringLiteral("Vehicle GPS")) : PositionResult{};
     });
     _ntripManager->setGgaPositionProvider(Source::VehicleEKF, []() -> PositionResult {
         Vehicle* vehicle = activeVehicleForGga();
-        return vehicle
-                   ? ggaPosition(vehicle->coordinate(), QStringLiteral("Vehicle EKF"), GPSAltitudeDatum::MeanSeaLevel)
-                   : PositionResult{};
+        return vehicle ? ggaPosition(vehicle->acceptedPositionObservation(), QStringLiteral("Vehicle EKF"))
+                       : PositionResult{};
     });
     _ntripManager->setGgaPositionProvider(Source::RTKBase, [rtk = QPointer<GPSRtk>(_gpsRtk)]() -> PositionResult {
         FactGroup* facts = rtk ? rtk->gpsRtkFactGroup() : nullptr;
@@ -190,7 +186,7 @@ void GPSManager::shutdown()
 #endif
     _gpsRtk->disconnectGPS();
     if (_ntripManager) {
-        _ntripManager->stopNTRIP();
+        _ntripManager->shutdown();
     }
     _corrections->shutdown();
 }

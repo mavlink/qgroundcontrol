@@ -356,5 +356,5 @@ private:
 
     OutputMode _output_mode{OutputMode::GPS};
 
-    std::optional<RTCMFramer> _rtcm_parsing;
+    std::optional<RTCMStreamDecoder> _rtcm_parsing;
 };

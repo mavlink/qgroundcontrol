@@ -24,7 +24,30 @@ QString sourceName(NTRIPGgaProvider::PositionSource source)
         case NTRIPGgaProvider::PositionSource::GCSPosition:
             return QStringLiteral("GCSPosition");
     }
+
     return QStringLiteral("Unknown");
+}
+
+unsigned ggaQuality(GPSObservation::FixQuality quality)
+{
+    using Quality = GPSObservation::FixQuality;
+    switch (quality) {
+        case Quality::NoFix:
+            return NMEA::GgaQuality::INVALID;
+        case Quality::Differential:
+            return NMEA::GgaQuality::DIFFERENTIAL;
+        case Quality::RTKFloat:
+            return NMEA::GgaQuality::RTK_FLOAT;
+        case Quality::RTKFixed:
+            return NMEA::GgaQuality::RTK_FIXED;
+        case Quality::Extrapolated:
+        case Quality::Unknown:
+            return NMEA::GgaQuality::ESTIMATED;
+        case Quality::Fix2D:
+        case Quality::Fix3D:
+            return NMEA::GgaQuality::GPS;
+    }
+    return NMEA::GgaQuality::INVALID;
 }
 }  // namespace
 
@@ -109,6 +132,10 @@ void NTRIPGgaProvider::_sendGGA()
     }
     const auto& position = selection.position;
     if (!position.isValid()) {
+        _clearSource();
+        if (!current()) {
+            return;
+        }
         if (++_fastRetryCount >= 5 && _retryPhase == RetryPhase::Fast) {
             _setRetryPhase(RetryPhase::Normal);
         }
@@ -120,14 +147,17 @@ void NTRIPGgaProvider::_sendGGA()
         _setRetryPhase(RetryPhase::Normal);
     }
 
-    // Preserve nominal fix metadata; position providers do not supply geoid separation.
     const NMEA::GGA fix{
         .latitude = position.coordinate.latitude(),
         .longitude = position.coordinate.longitude(),
         .altitude = position.coordinate.altitude(),
-        .hdop = 1.0,
-        .quality = NMEA::GgaQuality::GPS,
-        .satellitesUsed = 12,
+        .hdop = position.horizontalDop && qIsFinite(*position.horizontalDop) && *position.horizontalDop >= 0
+                    ? *position.horizontalDop
+                    : qQNaN(),
+        .quality = ggaQuality(position.fixQuality),
+        .satellitesUsed = position.satellitesUsed && *position.satellitesUsed >= 0
+                              ? std::optional<unsigned>(static_cast<unsigned>(*position.satellitesUsed))
+                              : std::nullopt,
     };
     const QByteArray gga = NMEAUtils::makeGGA(fix, QDateTime::currentDateTimeUtc().time());
     transport->sendNMEA(gga);

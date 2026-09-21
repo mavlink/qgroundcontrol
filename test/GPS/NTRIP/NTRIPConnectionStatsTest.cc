@@ -32,6 +32,18 @@ void NTRIPConnectionStatsTest::testRecordMessage()
     QCOMPARE(stats.messagesReceived(), quint32(2));
 }
 
+void NTRIPConnectionStatsTest::testNoFirstCorrectionBecomesStale()
+{
+    NTRIPConnectionStats stats;
+    stats.start();
+    QCOMPARE(stats.correctionAgeSec(), -1.0);
+    QTRY_VERIFY_WITH_TIMEOUT(stats.dataStale(), TestTimeout::longMs());
+    QCOMPARE(stats.messagesReceived(), quint32(0));
+    QCOMPARE(stats.correctionAgeSec(), -1.0);
+    stats.recordMessage(100);
+    QVERIFY(!stats.dataStale());
+}
+
 void NTRIPConnectionStatsTest::testReset()
 {
     NTRIPConnectionStats stats;
@@ -72,10 +84,14 @@ void NTRIPConnectionStatsTest::testDataRate()
     QVERIFY(stats.dataRateBytesPerSec() > 0.0);
 
     const auto messageCount = stats.messagesReceived();
+    const auto byteCount = stats.bytesReceived();
     const double ageBeforeStop = stats.correctionAgeSec();
     stats.stop();
     QCOMPARE(stats.dataRateBytesPerSec(), 0.0);
     QCOMPARE(stats.messagesReceived(), messageCount);
+    QCOMPARE(stats.bytesReceived(), byteCount);
+    stats.stop();
+    QCOMPARE(stats.bytesReceived(), byteCount);
     QVERIFY(stats.correctionAgeSec() >= ageBeforeStop);
 }
 

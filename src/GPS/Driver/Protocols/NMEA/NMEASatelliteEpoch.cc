@@ -28,10 +28,12 @@ constexpr int MAX_SIGNAL_STRENGTH = 99;
 
 bool validNavigation(const NMEA::Sentence& input)
 {
+    const auto status = NMEA::navigationStatus(input);
+    if (!status) {
+        return false;
+    }
     if (input.type() == "GGA") {
-        return NMEA::gga(input).has_value() ||
-               (input.count >= NMEA::Field::GGA_MIN_FIELDS &&
-                NMEA::number<unsigned>(input.fields[NMEA::Field::GGA_QUALITY]) == NMEA::GgaQuality::INVALID);
+        return NMEA::gga(input).has_value() || (input.count >= NMEA::Field::GGA_MIN_FIELDS && !status->valid);
     }
     if (input.type() != "RMC" || input.count < 10) {
         return false;
@@ -50,9 +52,8 @@ bool validNavigation(const NMEA::Sentence& input)
              .ok()) {
         return false;
     }
-    return input.fields[NMEA::Field::RMC_STATUS] == "V" ||
-           (input.fields[NMEA::Field::RMC_STATUS] == "A" && NMEA::coordinate(input.fields[3], input.fields[4], true) &&
-            NMEA::coordinate(input.fields[5], input.fields[6], false));
+    return !status->valid || (NMEA::coordinate(input.fields[3], input.fields[4], true) &&
+                              NMEA::coordinate(input.fields[5], input.fields[6], false));
 }
 }  // namespace
 

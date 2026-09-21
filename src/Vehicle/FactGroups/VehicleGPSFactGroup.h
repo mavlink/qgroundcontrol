@@ -3,7 +3,9 @@
 #include <QtCore/QPointer>
 
 #include "FactGroup.h"
+#include "GPSObservation.h"
 
+class GPSSourceHealth;
 class RuntimeScheduler;
 
 class VehicleGPSFactGroup : public FactGroup
@@ -14,6 +16,8 @@ class VehicleGPSFactGroup : public FactGroup
     Q_PROPERTY(Fact *mgrs                   READ mgrs                   CONSTANT)
     Q_PROPERTY(Fact *hdop                   READ hdop                   CONSTANT)
     Q_PROPERTY(Fact *vdop                   READ vdop                   CONSTANT)
+    Q_PROPERTY(Fact* horizontalAccuracy READ horizontalAccuracy CONSTANT)
+    Q_PROPERTY(Fact* verticalAccuracy READ verticalAccuracy CONSTANT)
     Q_PROPERTY(Fact *courseOverGround       READ courseOverGround       CONSTANT)
     Q_PROPERTY(Fact *yaw                    READ yaw                    CONSTANT)
     Q_PROPERTY(Fact *count                  READ count                  CONSTANT)
@@ -34,7 +38,11 @@ public:
     Fact *lon() { return &_lonFact; }
     Fact *mgrs() { return &_mgrsFact; }
     Fact *hdop() { return &_hdopFact; }
-    Fact *vdop() { return &_vdopFact; }
+    Fact* vdop() { return &_vdopFact; }
+
+    Fact* horizontalAccuracy() { return &_horizontalAccuracyFact; }
+
+    Fact* verticalAccuracy() { return &_verticalAccuracyFact; }
     Fact *courseOverGround() { return &_courseOverGroundFact; }
     Fact *yaw() { return &_yawFact; }
     Fact *count() { return &_countFact; }
@@ -51,6 +59,8 @@ public:
     /// Receipt time in the scheduler's monotonic clock domain; zero until an integrity report arrives.
     quint64 gnssIntegrityTimestampUs() const { return _gnssIntegrityTimestampUs; }
 
+    std::optional<GPSObservation> acceptedObservation() const;
+
     // Overrides from FactGroup
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
 
@@ -58,7 +68,7 @@ signals:
     void gnssIntegrityReceived();
 
 protected:
-    void _handleGpsRawInt(const mavlink_message_t &message);
+    void _handleGpsRaw(const mavlink_message_t& message);
     void _handleHighLatency(const mavlink_message_t &message);
     void _handleHighLatency2(const mavlink_message_t &message);
     void _handleGnssIntegrity(const mavlink_message_t& message);
@@ -68,6 +78,8 @@ protected:
     Fact _mgrsFact = Fact(0, QStringLiteral("mgrs"), FactMetaData::valueTypeString);
     Fact _hdopFact = Fact(0, QStringLiteral("hdop"), FactMetaData::valueTypeDouble);
     Fact _vdopFact = Fact(0, QStringLiteral("vdop"), FactMetaData::valueTypeDouble);
+    Fact _horizontalAccuracyFact = Fact(0, QStringLiteral("horizontalAccuracy"), FactMetaData::valueTypeDouble);
+    Fact _verticalAccuracyFact = Fact(0, QStringLiteral("verticalAccuracy"), FactMetaData::valueTypeDouble);
     Fact _courseOverGroundFact = Fact(0, QStringLiteral("courseOverGround"), FactMetaData::valueTypeDouble);
     Fact _yawFact = Fact(0, QStringLiteral("yaw"), FactMetaData::valueTypeDouble);
     Fact _countFact = Fact(0, QStringLiteral("count"), FactMetaData::valueTypeInt32);
@@ -84,6 +96,9 @@ protected:
     uint8_t _gnssIntegrityId {};
 
 private:
+    void _updateGpsObservation(GPSObservation observation, int fixType, int satellitesVisible, double yaw = qQNaN());
+
     QPointer<RuntimeScheduler> _scheduler;
+    GPSSourceHealth* _positionHealth = nullptr;
     quint64 _gnssIntegrityTimestampUs = 0;
 };

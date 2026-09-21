@@ -38,17 +38,26 @@
 #include "NMEA/GPSNMEASatelliteReport.h"
 
 namespace {
-bool validReceiptDate(std::string_view date)
+std::optional<uint64_t> receiptUtc(std::string_view date, std::string_view time)
 {
     if (date.size() != 10 || date[2] != '.' || date[5] != '.') {
-        return false;
+        return std::nullopt;
     }
     const auto day = NMEA::number<unsigned>(date.substr(0, 2));
     const auto month = NMEA::number<unsigned>(date.substr(3, 2));
     const auto year = NMEA::number<int>(date.substr(6, 4));
-    return day && month && year && *year >= 1980 && *year <= 9999 &&
-           std::chrono::year_month_day{std::chrono::year{*year}, std::chrono::month{*month}, std::chrono::day{*day}}
-               .ok();
+    const auto milliseconds = NMEA::utcMilliseconds(time);
+    if (!day || !month || !year || *year < 1980 || *year > 9999 || !milliseconds) {
+        return std::nullopt;
+    }
+    const std::chrono::year_month_day calendar{std::chrono::year{*year}, std::chrono::month{*month},
+                                               std::chrono::day{*day}};
+    if (!calendar.ok()) {
+        return std::nullopt;
+    }
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::sys_days(calendar).time_since_epoch() +
+                                                                 std::chrono::milliseconds(*milliseconds))
+        .count();
 }
 }  // namespace
 
@@ -159,7 +168,8 @@ int GPSNativeAshtech::handleMessage(int len)
         timeinfo.tm_hour = ashtech_hour;
         timeinfo.tm_min = ashtech_minute;
         timeinfo.tm_sec = int(ashtech_sec);
-        _gps_position->time_utc_usec = timeFromUtc(timeinfo, usecs * 1000);
+        _utcReference = timeFromUtc(timeinfo, usecs * 1000);
+        _gps_position->time_utc_usec = _utcReference;
 
         _last_timestamp_time = nowUs();
     }
@@ -171,6 +181,7 @@ int GPSNativeAshtech::handleMessage(int len)
             return 0;
         }
         applyNMEAGGA(*_gps_position, *fix, nowUs());
+        _applyMetadata(NMEA::utcMilliseconds(parsed->fields[NMEA::Field::UTC_TIME]));
         ret = 1;
 
     } else if (memcmp(_rx_buffer, "$GPHDT,", 7) == 0 && uiCalcComma == 2) {
@@ -390,6 +401,9 @@ int GPSNativeAshtech::handleMessage(int len)
         }
 
         _gps_position->timestamp = nowUs();
+        const auto fields = NMEA::sentence(message);
+        _applyMetadata(fields ? NMEA::utcMilliseconds(fields->fields[4]) : std::nullopt);
+        _gps_position->satellites_used = static_cast<uint8_t>(num_of_sv);
 
         float track_rad = static_cast<float>(track_true) * GPS_PI / 180.0f;
 
@@ -413,10 +427,16 @@ int GPSNativeAshtech::handleMessage(int len)
         if (!error) {
             return 0;
         }
-        _gps_position->eph = error->horizontalAccuracy;
-        _gps_position->accuracy_timestamp = nowUs();
-        _gps_position->epv = error->verticalAccuracy;
+        _accuracy = *error;
+        _accuracyReceipt = {NMEA::utcMilliseconds(parsed->fields[NMEA::Field::UTC_TIME]), nowUs()};
         _gps_position->speedAccuracyMetersPerSecond = NAN;
+        if (_positionEpoch.matches(_accuracyReceipt, METADATA_MAX_AGE_US)) {
+            _expireMetadata();
+            _gps_position->eph = _accuracy.horizontalAccuracy;
+            _gps_position->epv = _accuracy.verticalAccuracy;
+            _gps_position->accuracy_timestamp = _accuracyReceipt.receivedAtUs;
+            ret |= 1;
+        }
 
     } else if (message.starts_with("$PASHR,NAK*")) {
         if (_command_state == NMEACommandState::waiting) {
@@ -460,17 +480,20 @@ int GPSNativeAshtech::handleMessage(int len)
         double latitude = NAN;
         double longitude = NAN;
         float altitude = NAN;
+        std::optional<uint64_t> receiptTime;
+        std::optional<uint32_t> interval;
 
         if (started) {
-            const auto interval = NMEA::number<uint32_t>(fields[6]);
-            if (receipt->count != 9 || fields[5] != "INTERVAL" || !interval || *interval == 0 ||
-                !NMEA::utcMilliseconds(fields[7]) || !validReceiptDate(fields[8])) {
+            interval = NMEA::number<uint32_t>(fields[6]);
+            receiptTime = receiptUtc(fields[8], fields[7]);
+            if (receipt->count != 9 || fields[5] != "INTERVAL" || !interval || *interval == 0 || !receiptTime) {
                 return 0;
             }
         } else {
-            const auto interval = NMEA::number<uint32_t>(fields[4]);
-            if (!interval || *interval == 0 || fields[5] != "FINISHED" || !NMEA::utcMilliseconds(fields[6]) ||
-                !validReceiptDate(fields[7]) || receipt->count != (failed ? 9 : 16)) {
+            interval = NMEA::number<uint32_t>(fields[4]);
+            receiptTime = receiptUtc(fields[7], fields[6]);
+            if (!interval || *interval == 0 || fields[5] != "FINISHED" || !receiptTime ||
+                receipt->count != (failed ? 9 : 16)) {
                 return 0;
             }
             if (!failed) {
@@ -488,8 +511,29 @@ int GPSNativeAshtech::handleMessage(int len)
         }
 
         if (_output_mode != OutputMode::RTCM || !_configure_done || _baseConfig.useFixedBase ||
-            _board != AshtechBoard::trimble_mb_two) {
+            _board != AshtechBoard::trimble_mb_two || !_surveyReceiptRequested) {
             return 0;
+        }
+        if (*interval != _baseConfig.surveyInDurationSecs) {
+            return 0;
+        }
+        if (started) {
+            if (_command_state != NMEACommandState::waiting || _waiting_for_command != NMEACommand::RECEIPT ||
+                _surveyReceiptStartUtc) {
+                return 0;
+            }
+            if (_utcReference && NMEA::freshAt(_last_timestamp_time, nowUs(), METADATA_MAX_AGE_US) &&
+                (*receiptTime < _utcReference || *receiptTime - _utcReference > METADATA_MAX_AGE_US)) {
+                return 0;
+            }
+            _surveyReceiptStartUtc = receiptTime;
+        } else {
+            if (!_surveyReceiptStartUtc || *receiptTime < *_surveyReceiptStartUtc ||
+                (!failed && *receiptTime - *_surveyReceiptStartUtc < uint64_t(*interval) * 1000000)) {
+                return 0;
+            }
+            _surveyReceiptRequested = false;
+            _surveyReceiptStartUtc.reset();
         }
         if (_command_state == NMEACommandState::waiting && _waiting_for_command == NMEACommand::RECEIPT) {
             _command_state = failed ? NMEACommandState::nack : NMEACommandState::received;
@@ -526,13 +570,11 @@ int GPSNativeAshtech::parseChar(uint8_t b)
 {
     int iRet = 0;
 
-    if (_rtcm_parsing) {
-        if (_rtcm_parsing->addByte(b) && _rtcm_parsing->valid()) {
-            gotRTCMMessage(_rtcm_parsing->frame().data(), _rtcm_parsing->frame().size());
-            decodeInit();
-            _rtcm_parsing->reset();
-            return iRet;
-        }
+    if (_rtcm_parsing && _rtcm_parsing->ownsByte(b)) {
+        _nmeaFramer.reset();
+        _rtcm_parsing->addByte(b);
+        drainRTCM(*_rtcm_parsing);
+        return 0;
     }
 
     iRet = static_cast<int>(_nmeaFramer.addByte(b));
@@ -590,6 +632,40 @@ void GPSNativeAshtech::_drainSatellites()
 
 void GPSNativeAshtech::flushDecoded()
 {
+    _expireMetadata();
+    if (_rtcm_parsing) {
+        drainRTCM(*_rtcm_parsing);
+    }
     _queueSatellites(_satelliteAssembler.flushDue(nowUs()));
     _drainSatellites();
+}
+
+void GPSNativeAshtech::_expireMetadata()
+{
+    const auto now = nowUs();
+    if (!_gps_position->heading_timestamp ||
+        !NMEA::freshAt(_gps_position->heading_timestamp, now, METADATA_MAX_AGE_US)) {
+        _gps_position->heading = NAN;
+        _gps_position->heading_accuracy = NAN;
+    }
+    if (!_accuracyReceipt.time || !NMEA::freshAt(_accuracyReceipt.receivedAtUs, now, METADATA_MAX_AGE_US)) {
+        _gps_position->eph = NAN;
+        _gps_position->epv = NAN;
+    }
+    if (!_utcReference || !NMEA::freshAt(_last_timestamp_time, now, METADATA_MAX_AGE_US)) {
+        _gps_position->time_utc_usec = 0;
+    }
+}
+
+void GPSNativeAshtech::_applyMetadata(std::optional<int> time)
+{
+    _expireMetadata();
+    const auto now = nowUs();
+    _positionEpoch = {time, now};
+    const bool matches = _accuracyReceipt.matches(_positionEpoch, METADATA_MAX_AGE_US);
+    _gps_position->eph = matches ? _accuracy.horizontalAccuracy : NAN;
+    _gps_position->epv = matches ? _accuracy.verticalAccuracy : NAN;
+    _gps_position->accuracy_timestamp = matches ? _accuracyReceipt.receivedAtUs : 0;
+    _gps_position->time_utc_usec =
+        NMEA::utcAtTimeOfDay(_utcReference, _last_timestamp_time, time, now, METADATA_MAX_AGE_US);
 }

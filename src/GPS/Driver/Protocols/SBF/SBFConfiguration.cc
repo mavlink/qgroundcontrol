@@ -138,6 +138,11 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
         return -1;
     }
 
+    // Septentrio's WGS84/Default selects the global datum except when external corrections supply a datum.
+    if (!sendMessageAndWaitForAck("setGeodeticDatum, WGS84\n", SBF_CONFIG_TIMEOUT)) {
+        return -1;
+    }
+
     // Set the type of dynamics the GNSS antenna is subjected to.
     if (_output_mode != OutputMode::RTCM) {
         // Release a previously configured static base position before starting navigation.
@@ -190,7 +195,8 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
     }
 
     if (_output_mode != OutputMode::GPS) {
-        if (!sendMessageAndWaitForAck(SBF_CONFIG_OUTPUT_RTCM3, SBF_CONFIG_TIMEOUT)) {
+        snprintf(msg, sizeof(msg), SBF_CONFIG_OUTPUT_RTCM3, com_port);
+        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
             return -1;
         }
     }
@@ -221,7 +227,8 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
             }
         }
 
-        if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATUS, SBF_CONFIG_TIMEOUT)) {
+        snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATUS, com_port);
+        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
             return -1;
         }
         _survey_activation_date = _baseConfig.useFixedBase ? 0 : nowUs();

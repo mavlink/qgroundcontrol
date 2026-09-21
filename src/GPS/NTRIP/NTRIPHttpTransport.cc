@@ -23,6 +23,7 @@ NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, cons
     , _config(config)
     , _connectTimeoutTimer(this)
     , _dataWatchdogTimer(this)
+    , _validFrameWatchdogTimer(this)
     , _errorBodyTimer(this)
 {
     const QVector<int> whitelist = filter.messageIds();
@@ -47,6 +48,11 @@ NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, cons
         _fail(NTRIPError::DataWatchdog, tr("No data received for %1 seconds").arg(secs));
     });
 
+    _validFrameWatchdogTimer.setSingleShot(true);
+    _validFrameWatchdogTimer.setInterval(kDataWatchdog);
+    _validFrameWatchdogTimer.callOnTimeout(
+        this, [this]() { _fail(NTRIPError::DataWatchdog, tr("No valid RTCM corrections received")); });
+
     _errorBodyTimer.setSingleShot(true);
     _errorBodyTimer.setInterval(kErrorBodyTimeout);
     _errorBodyTimer.callOnTimeout(this, [this]() {
@@ -67,6 +73,7 @@ void NTRIPHttpTransport::start()
     const quint64 attempt = ++_attempt;
     _connectTimeoutTimer.stop();
     _dataWatchdogTimer.stop();
+    _validFrameWatchdogTimer.stop();
     _errorBodyTimer.stop();
     _retireSocket();
     if (!guard || _attempt != attempt) {
@@ -86,6 +93,7 @@ void NTRIPHttpTransport::stop()
     _stopped = true;
     _connectTimeoutTimer.stop();
     _dataWatchdogTimer.stop();
+    _validFrameWatchdogTimer.stop();
     _errorBodyTimer.stop();
 
     _retireSocket();
@@ -164,6 +172,7 @@ void NTRIPHttpTransport::_fail(NTRIPError code, const QString& msg, std::chrono:
     _stopped = true;
     _connectTimeoutTimer.stop();
     _dataWatchdogTimer.stop();
+    _validFrameWatchdogTimer.stop();
     _errorBodyTimer.stop();
     emit error(NTRIPFailure{code, msg, retryAfter});
     if (guard && _attempt == attempt && socket && _socket == socket) {
@@ -289,6 +298,10 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtM
             if (_stopped) {
                 return;
             }
+            if (result->valid) {
+                // Whitelisting is a routing policy, not evidence of a broken caster stream.
+                _validFrameWatchdogTimer.start();
+            }
             emit correctionFrameReceived(*result);
             if (!guard || _stopped || _attempt != attempt) {
                 return;
@@ -352,6 +365,7 @@ void NTRIPHttpTransport::_publishHttpResult(const NTRIPHttpDecoder::Result& resu
             return;
         }
         _dataWatchdogTimer.start();
+        _validFrameWatchdogTimer.start();
     }
     if (!result.body.isEmpty()) {
         _dataWatchdogTimer.start();

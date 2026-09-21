@@ -24,7 +24,19 @@ SettingsGroupLayout {
         Layout.fillWidth: true
         ntripManager:     root._ntripMgr
         canConnect:       root._isActive || root._hasHost
-        onClicked:        root._enabled.rawValue = !root._isActive
+        onClicked: {
+            if (root._ntripMgr.connectionStatus === NTRIPManager.Error)
+                root._ntripMgr.retryNTRIP()
+            else
+                root._enabled.rawValue = !root._isActive
+        }
+    }
+
+    QGCButton {
+        objectName: "ntripDisconnectButton"
+        text: qsTr("Disconnect")
+        visible: root._isActive && root._ntripMgr.connectionStatus === NTRIPManager.Error
+        onClicked: root._enabled.rawValue = false
     }
 
     NTRIPConnectionStatus {

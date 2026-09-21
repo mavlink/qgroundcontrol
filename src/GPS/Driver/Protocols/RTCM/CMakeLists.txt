@@ -13,4 +13,13 @@ target_link_libraries(
     PUBLIC Qt6::Core
     PRIVATE QGCLoggingCategory
 )
-target_sources(QGCGPSRTCM PUBLIC FILE_SET HEADERS FILES RTCMDecodedFrame.h RTCMFrameDecoder.h RTCMFramer.h)
+target_sources(
+    QGCGPSRTCM
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           RTCMDecodedFrame.h
+           RTCMFrameDecoder.h
+           RTCMFramer.h
+           RTCMStreamDecoder.h
+)

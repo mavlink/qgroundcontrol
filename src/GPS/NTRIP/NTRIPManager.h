@@ -120,8 +120,13 @@ public:
 
     void setGgaPositionProvider(NTRIPGgaProvider::PositionSource source, NTRIPGgaProvider::PositionProvider provider);
 
-    void startNTRIP();
+    /// Explicit start/retry begins a fresh retry budget; it is a no-op while already active.
+    Q_INVOKABLE void startNTRIP();
+    /// Retry a user-visible error, preserving the enabled setting for subsequent automatic retries.
+    Q_INVOKABLE void retryNTRIP();
     void stopNTRIP();
+    /// Permanently retire this manager, including deferred settings work.
+    void shutdown();
 
 signals:
     void connectionStatusChanged();
@@ -201,5 +206,6 @@ private:
     QChronoTimer _reconnectTimer{this};
     int _reconnectAttempts = 0;
     bool _initialized = false;
+    bool _shutdown = false;
     quint64 _stateRevision = 0;
 };

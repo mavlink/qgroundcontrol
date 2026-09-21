@@ -42,6 +42,7 @@
 
 #include "GPSBaseProtocol.h"
 #include "NMEAFramer.h"
+#include "NMEAMetadata.h"
 #include "NMEASatelliteEpoch.h"
 #include "RTCMFramer.h"
 
@@ -72,6 +73,8 @@ public:
 
 private:
     void flushDecoded() override;
+    void _expireMetadata();
+    void _applyMetadata(std::optional<int> time);
     void _queueSatellites(NMEA::SatelliteEpoch epoch);
     void _drainSatellites();
     void servicePendingCommands() override;
@@ -137,10 +140,18 @@ private:
     uint8_t _rx_buffer[ASHTECH_RECV_BUFFER_SIZE];
     NMEA::Framer _nmeaFramer{_rx_buffer};
     uint64_t _last_timestamp_time{0};
+    uint64_t _utcReference = 0;
+    NMEA::EpochReceipt _positionEpoch;
+    NMEA::EpochReceipt _accuracyReceipt;
+    NMEA::GST _accuracy;
+    // ZDA/GST output is requested every three seconds.
+    static constexpr uint64_t METADATA_MAX_AGE_US = 5000000;
 
     float _heading_offset;
 
     uint64_t _survey_in_start{0};
+    bool _surveyReceiptRequested = false;
+    std::optional<uint64_t> _surveyReceiptStartUtc;
 
     GPSNativePositionReport* _gps_position{nullptr};
 
@@ -156,5 +167,5 @@ private:
 
     OutputMode _output_mode{OutputMode::GPS};
 
-    std::optional<RTCMFramer> _rtcm_parsing;
+    std::optional<RTCMStreamDecoder> _rtcm_parsing;
 };

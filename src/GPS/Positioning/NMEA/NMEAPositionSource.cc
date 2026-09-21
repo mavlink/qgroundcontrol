@@ -10,6 +10,7 @@
 #include <QtPositioning/QNmeaPositionInfoSource>
 
 #include "MonotonicClock.h"
+#include "NMEAMetadata.h"
 #include "NMEASentenceEnvelope.h"
 #include "QGCLoggingCategory.h"
 #include "QtRuntimeScheduler.h"
@@ -97,35 +98,14 @@ protected:
         const quint64 receivedAtUs = envelope->receivedAtUs();
         const auto accuracy = NMEA::gst(decoded);
         const quint64 sequence = ++_sentenceSequence;
-        std::optional<bool> navigationValid;
-        if (type == "GGA" && decoded.count > NMEA::Field::GGA_QUALITY) {
-            const auto quality = NMEA::number<unsigned>(fields[NMEA::Field::GGA_QUALITY]);
-            if (quality && *quality <= NMEA::GgaQuality::MAX_VALUE) {
-                navigationValid = *quality != NMEA::GgaQuality::INVALID;
-            }
-        } else if (type == "RMC" && decoded.count > NMEA::Field::RMC_STATUS &&
-                   (fields[NMEA::Field::RMC_STATUS] == "A" || fields[NMEA::Field::RMC_STATUS] == "V")) {
-            navigationValid = fields[NMEA::Field::RMC_STATUS] == "A";
-        } else if (type == "GLL" && decoded.count > NMEA::Field::GLL_STATUS &&
-                   (fields[NMEA::Field::GLL_STATUS] == "A" || fields[NMEA::Field::GLL_STATUS] == "V")) {
-            navigationValid = fields[NMEA::Field::GLL_STATUS] == "A";
-        } else if (type == "GSA" && decoded.count > NMEA::Field::GSA_DIMENSION) {
-            const auto dimension = NMEA::number<unsigned>(fields[NMEA::Field::GSA_DIMENSION]);
-            if (dimension && *dimension >= NMEA::FixDimension::NO_FIX && *dimension <= NMEA::FixDimension::THREE_D) {
-                navigationValid = *dimension != NMEA::FixDimension::NO_FIX;
-            }
-        }
-        if (navigationValid) {
-            const auto time =
-                type == "GSA"
-                    ? std::nullopt
-                    : NMEA::utcMilliseconds(fields[type == "GLL" ? NMEA::Field::GLL_TIME : NMEA::Field::UTC_TIME]);
+        if (const auto navigation = NMEA::navigationStatus(decoded)) {
+            const auto time = navigation->utcMilliseconds;
             const QTime epoch = time ? QTime::fromMSecsSinceStartOfDay(*time) : QTime();
             const QDate date = position->timestamp().date();
             if (!_acceptNavigationStatus(epoch, date, receivedAtUs)) {
                 return false;
             }
-            if (!*navigationValid) {
+            if (!navigation->valid) {
                 _navigationValid = false;
                 _invalidThroughSequence = sequence;
                 GPSObservation loss;
@@ -164,7 +144,7 @@ protected:
             auto& metadata = epochData.observation;
             const QDate date = position->timestamp().date();
             const bool expired = metadata.monotonicTimestampUs && receivedAtUs > metadata.monotonicTimestampUs &&
-                                 receivedAtUs - metadata.monotonicTimestampUs > METADATA_MAX_AGE_US;
+                                 !NMEA::freshAt(metadata.monotonicTimestampUs, receivedAtUs, METADATA_MAX_AGE_US);
             if (expired || (date.isValid() && metadata.position.timestamp().date().isValid() &&
                             metadata.position.timestamp().date() != date)) {
                 // Measurement expiry must preserve navigation ordering, including a fix just decoded above.
@@ -212,8 +192,8 @@ protected:
             auto epoch = _epochs.find(_currentEpoch);
             // GSA has no UTC field. Associate only with the preceding, fresh epoch in this stream;
             // never carry its DOP forward into the next timed fix.
-            if (epoch != _epochs.end() && receivedAtUs >= epoch->observation.monotonicTimestampUs &&
-                receivedAtUs - epoch->observation.monotonicTimestampUs < UNTIMED_METADATA_MAX_AGE_US) {
+            if (epoch != _epochs.end() &&
+                NMEA::freshAt(epoch->observation.monotonicTimestampUs, receivedAtUs, UNTIMED_METADATA_MAX_AGE_US - 1)) {
                 _mergeAttributes(epoch->observation.position, *position, epoch->observation.accuracyTimestampUs != 0);
                 if (type != "GSA" || decoded.count < NMEA::Field::GSA_MIN_FIELDS) {
                     return parsed;

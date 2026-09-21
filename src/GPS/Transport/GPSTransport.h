@@ -30,6 +30,9 @@ public:
     /// Nonzero when the link cannot follow baud-rate changes (for example, a serial bridge).
     virtual unsigned fixedBaudrate() const { return 0; }
 
+    /// Runtime RTCM injection requires a cancellable bounded writer, not just configuration writes.
+    virtual bool supportsCorrectionWrites() const { return false; }
+
     /// A nonpositive timeout polls immediately available input. Failures never carry usable stream bytes.
     virtual GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) = 0;
 

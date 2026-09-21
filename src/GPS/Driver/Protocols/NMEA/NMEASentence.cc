@@ -123,10 +123,20 @@ std::optional<GGA> gga(const Sentence& input)
     const auto longitude = coordinate(f[Field::GGA_LONGITUDE], f[Field::GGA_LONGITUDE_HEMISPHERE], false);
     const auto quality = number<unsigned>(f[Field::GGA_QUALITY]);
     const auto satellites = number<unsigned>(f[Field::GGA_SATELLITES_USED]);
-    if (!latitude || !longitude || !quality || *quality > GgaQuality::MAX_VALUE ||
-        (satellites && *satellites > MAX_GGA_SATELLITES))
+    if (!quality || *quality > GgaQuality::MAX_VALUE || (satellites && *satellites > MAX_GGA_SATELLITES))
         return {};
-    GGA result{*latitude, *longitude};
+    const auto latitudeHemisphere = f[Field::GGA_LATITUDE_HEMISPHERE];
+    const auto longitudeHemisphere = f[Field::GGA_LONGITUDE_HEMISPHERE];
+    const bool missingLatitude = f[Field::GGA_LATITUDE].empty() &&
+                                 (latitudeHemisphere.empty() || latitudeHemisphere == "N" || latitudeHemisphere == "S");
+    const bool missingLongitude =
+        f[Field::GGA_LONGITUDE].empty() &&
+        (longitudeHemisphere.empty() || longitudeHemisphere == "E" || longitudeHemisphere == "W");
+    if ((!latitude && !(*quality == GgaQuality::INVALID && missingLatitude)) ||
+        (!longitude && !(*quality == GgaQuality::INVALID && missingLongitude))) {
+        return {};
+    }
+    GGA result{latitude.value_or(NAN), longitude.value_or(NAN)};
     result.quality = *quality;
     result.satellitesUsed = satellites;
     result.hdop = number<double>(f[Field::GGA_HDOP]).value_or(NAN);
@@ -161,6 +171,30 @@ std::optional<int> utcMilliseconds(std::string_view field)
     const auto wholeSeconds =
         std::chrono::hours(*hours) + std::chrono::minutes(*minutes) + std::chrono::seconds(*seconds);
     return static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(wholeSeconds).count()) + milliseconds;
+}
+
+std::optional<NavigationStatus> navigationStatus(const Sentence& input)
+{
+    const auto type = input.type();
+    const auto& fields = input.fields;
+    if (type == "GGA" && input.count > Field::GGA_QUALITY) {
+        const auto quality = number<unsigned>(fields[Field::GGA_QUALITY]);
+        if (quality && *quality <= GgaQuality::MAX_VALUE) {
+            return NavigationStatus{*quality != GgaQuality::INVALID, utcMilliseconds(fields[Field::UTC_TIME])};
+        }
+    } else if (type == "GSA" && input.count > Field::GSA_DIMENSION) {
+        const auto dimension = number<unsigned>(fields[Field::GSA_DIMENSION]);
+        if (dimension && *dimension >= FixDimension::NO_FIX && *dimension <= FixDimension::THREE_D) {
+            return NavigationStatus{*dimension != FixDimension::NO_FIX, std::nullopt};
+        }
+    } else if (type == "RMC" || type == "GLL") {
+        const auto status = type == "RMC" ? Field::RMC_STATUS : Field::GLL_STATUS;
+        const auto time = type == "RMC" ? Field::UTC_TIME : Field::GLL_TIME;
+        if (input.count > status && (fields[status] == "A" || fields[status] == "V")) {
+            return NavigationStatus{fields[status] == "A", utcMilliseconds(fields[time])};
+        }
+    }
+    return std::nullopt;
 }
 
 std::optional<GST> gst(const Sentence& input)

@@ -14,6 +14,9 @@ private slots:
     void _invalidProviderAltitude();
     void testDefaultRTKBaseProvider();
     void _activeVehicleAndCommunicationLoss();
+    void _vehicleFixLossAndExpiry();
+    void _providerMetadata_data();
+    void _providerMetadata();
     void _gcsObservation_data();
     void _gcsObservation();
     void _gcsSelectionAndFreshness();

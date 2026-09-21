@@ -408,6 +408,15 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
         if (!guard) {
             return false;
         }
+        if (!_shutdown && revision == _revision) {
+            QSet<QString> destinations;
+            for (const auto& admission : admissions) {
+                if (!admission.destination.isEmpty()) {
+                    destinations.insert(admission.destination);
+                }
+            }
+            _ledger.updateOutputDestinations(it.key(), destinations);
+        }
         // Callback retirement must not discard returned admission evidence.
         for (const auto& admission : admissions) {
             if (admission.destination.isEmpty()) {

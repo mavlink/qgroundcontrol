@@ -52,6 +52,7 @@ public:
                          bool allowPersistentChanges = false);
     Q_INVOKABLE bool connectConfiguredGPS(bool allowPersistentChanges = false);
     Q_INVOKABLE void disconnectConfiguredGPS();
+    /// Retires immediately; the worker retains its transport reservation until cancellation completes.
     void disconnectGPS();
     bool connected() const;
 
@@ -135,6 +136,4 @@ private:
     QMetaObject::Connection _portEnumerationConnection;
     std::function<std::unique_ptr<GPSTransport>(const QString&, const std::atomic_bool&)> _serialTransportFactory;
 #endif
-
-    unsigned long _disconnectTimeoutMs = 2000;
 };

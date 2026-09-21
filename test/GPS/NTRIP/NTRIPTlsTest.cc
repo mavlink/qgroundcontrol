@@ -54,9 +54,12 @@ QByteArray chunk(const QByteArray& bytes)
     return QByteArray::number(bytes.size(), 16) + "\r\n" + bytes + "\r\n";
 }
 
-QByteArray sourceTableResponse(bool chunked = false)
+QByteArray sourceTableResponse(bool chunked = false, bool legacy = false)
 {
     const QByteArray body = "STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\r\nENDSOURCETABLE\r\n";
+    if (legacy) {
+        return "SOURCETABLE 200 OK\r\n\r\n" + body;
+    }
     return chunked ? "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" + chunk(body) + "0\r\n\r\n"
                    : "HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\n\r\n" + body;
 }
@@ -300,24 +303,31 @@ void NTRIPTlsTest::certificatePolicy()
 void NTRIPTlsTest::sourceTablePolicyChanges_data()
 {
     QTest::addColumn<bool>("duringFetch");
-    QTest::newRow("in-flight") << true;
-    QTest::newRow("cached") << false;
+    QTest::addColumn<bool>("legacy");
+    QTest::newRow("http-in-flight") << true << false;
+    QTest::newRow("http-cached") << false << false;
+    QTest::newRow("legacy-in-flight") << true << true;
+    QTest::newRow("legacy-cached") << false << true;
 }
 
 void NTRIPTlsTest::sourceTablePolicyChanges()
 {
     QFETCH(bool, duringFetch);
+    QFETCH(bool, legacy);
     QSslServer server;
     server.setSslConfiguration(serverConfiguration());
     QVERIFY(server.listen(QHostAddress::LocalHost));
-    connect(&server, &QSslServer::pendingConnectionAvailable, &server, [&server]() {
+    connect(&server, &QSslServer::pendingConnectionAvailable, &server, [&server, legacy]() {
         while (server.hasPendingConnections()) {
             auto* peer = server.nextPendingConnection();
-            auto respond = [peer, request = QByteArray{}]() mutable {
+            auto respond = [peer, legacy, request = QByteArray{}]() mutable {
                 request += peer->readAll();
                 if (request.endsWith("\r\n\r\n")) {
-                    peer->write(sourceTableResponse());
+                    peer->write(sourceTableResponse(false, legacy));
                     request.clear();
+                    if (legacy) {
+                        peer->disconnectFromHost();
+                    }
                 }
             };
             respond();

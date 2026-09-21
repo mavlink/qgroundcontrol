@@ -258,6 +258,13 @@ void GPSPositionServiceTest::_sourcesShareAcceptance()
     QCOMPARE(service.gcsPosition(), observation.coordinate());
     QCOMPARE(service.gcsHeading(), observation.heading());
     QVERIFY(service.gcsPositionTimestamp().isValid());
+    QCOMPARE(service.sourceHealth()->observation().altitudeDatum, GPSAltitudeDatum::Unknown);
+    const auto remoteId = service.acceptedObservation(GPSObservation::PositionUse::RemoteID);
+    QVERIFY(remoteId);
+    QVERIFY(remoteId->position.coordinate().isValid());
+    QVERIFY(qIsNaN(remoteId->position.coordinate().altitude()));
+    QVERIFY(!remoteId->position.hasAttribute(QGeoPositionInfo::VerticalAccuracy));
+    QCOMPARE(remoteId->altitudeDatum, GPSAltitudeDatum::Unknown);
     if (Kind(kind) == Kind::Internal) {
         QCOMPARE(service.sourceHealth()->observation().sourceId,
                  custom ? QStringLiteral("Plugin") : QStringLiteral("Platform"));
@@ -479,9 +486,9 @@ void GPSPositionServiceTest::_consumerPolicies()
         QCOMPARE(accepted->receivedAt, observation.receivedAt);
         QCOMPARE(accepted->position.coordinate().latitude(), 47);
         const double expectedAltitude = use == Use::Gga || use == Use::Motion ? altitude
-                                        : use == Use::RemoteID   ? (qIsFinite(ellipsoid) ? ellipsoid : altitude)
-                                        : verticalAccuracy <= 10 ? altitude
-                                                                 : qQNaN();
+                                        : use == Use::RemoteID                ? ellipsoid
+                                        : verticalAccuracy <= 10              ? altitude
+                                                                              : qQNaN();
         if (qIsFinite(expectedAltitude)) {
             QCOMPARE(accepted->position.coordinate().altitude(), expectedAltitude);
         } else {
@@ -490,6 +497,10 @@ void GPSPositionServiceTest::_consumerPolicies()
         if (use == Use::Motion) {
             QCOMPARE(accepted->position.hasAttribute(QGeoPositionInfo::Direction),
                      qIsFinite(course) && qIsFinite(speed) && speed >= 0.5);
+        }
+        if (use == Use::RemoteID && !qIsFinite(ellipsoid)) {
+            QVERIFY(!accepted->position.hasAttribute(QGeoPositionInfo::VerticalAccuracy));
+            QCOMPARE(accepted->altitudeDatum, GPSAltitudeDatum::Unknown);
         }
         if (use == Use::Gga) {
             QCOMPARE(accepted->position, observation.position);

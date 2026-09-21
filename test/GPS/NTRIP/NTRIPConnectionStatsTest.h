@@ -8,6 +8,7 @@ class NTRIPConnectionStatsTest : public UnitTest
 
 private slots:
     void testInitialState();
+    void testNoFirstCorrectionBecomesStale();
     void testRecordMessage();
     void testReset();
     void testDataRate();

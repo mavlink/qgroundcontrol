@@ -164,7 +164,7 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
     });
     positioning->setSourceMode(GPSPositionService::SourceMode::InternalOnly);
     positioning->setInternalPositionSource(&source, GPSPositionService::SourceStatus::WaitingForFix);
-    settings->region()->setRawValue(static_cast<int>(RemoteIDSettings::RegionOperation::FAA));
+    settings->region()->setRawValue(static_cast<int>(RemoteIDSettings::RegionOperation::EU));
     settings->locationType()->setRawValue(RemoteIDManager::LocationTypes::LiveGNSS);
 
     QCOMPARE(positioning->sourceStatus(), GPSPositionService::SourceStatus::WaitingForFix);
@@ -234,14 +234,25 @@ void RemoteIDManagerTest::_gpsAltitudePolicy_data()
     QTest::addColumn<double>("verticalAccuracy");
     QTest::addColumn<double>("ellipsoid");
     QTest::addColumn<bool>("usable");
-    QTest::newRow("fixed") << true << true << 500.0 << qQNaN() << qQNaN() << true;
-    QTest::newRow("accurate") << false << true << 500.0 << 1.0 << qQNaN() << true;
-    QTest::newRow("poor-vertical-accuracy") << false << true << 500.0 << 100.0 << qQNaN() << true;
-    QTest::newRow("no-vertical-accuracy") << false << true << 500.0 << qQNaN() << qQNaN() << true;
-    QTest::newRow("ellipsoid") << false << true << 500.0 << 100.0 << 550.0 << true;
-    QTest::newRow("ellipsoid-only") << false << true << qQNaN() << qQNaN() << 550.0 << true;
-    QTest::newRow("faa-missing-altitude") << false << true << qQNaN() << qQNaN() << qQNaN() << false;
-    QTest::newRow("eu-missing-altitude") << false << false << qQNaN() << qQNaN() << qQNaN() << true;
+    QTest::addColumn<GPSAltitudeDatum>("datum");
+    QTest::newRow("fixed") << true << true << 500.0 << qQNaN() << qQNaN() << true << GPSAltitudeDatum::Ellipsoid;
+    QTest::newRow("msl-without-geoid") << false << true << 500.0 << 1.0 << qQNaN() << false
+                                       << GPSAltitudeDatum::MeanSeaLevel;
+    QTest::newRow("unknown-datum") << false << true << 500.0 << 1.0 << qQNaN() << false << GPSAltitudeDatum::Unknown;
+    QTest::newRow("declared-ellipsoid") << false << true << 500.0 << 1.0 << qQNaN() << true
+                                        << GPSAltitudeDatum::Ellipsoid;
+    QTest::newRow("poor-vertical-accuracy")
+        << false << true << 500.0 << 100.0 << 550.0 << true << GPSAltitudeDatum::MeanSeaLevel;
+    QTest::newRow("no-vertical-accuracy")
+        << false << true << 500.0 << qQNaN() << 550.0 << true << GPSAltitudeDatum::MeanSeaLevel;
+    QTest::newRow("ellipsoid-only") << false << true << qQNaN() << qQNaN() << 550.0 << true
+                                    << GPSAltitudeDatum::MeanSeaLevel;
+    QTest::newRow("faa-missing-altitude")
+        << false << true << qQNaN() << qQNaN() << qQNaN() << false << GPSAltitudeDatum::Ellipsoid;
+    QTest::newRow("eu-missing-altitude") << false << false << qQNaN() << qQNaN() << qQNaN() << true
+                                         << GPSAltitudeDatum::Unknown;
+    QTest::newRow("eu-msl-without-geoid")
+        << false << false << 500.0 << 1.0 << qQNaN() << true << GPSAltitudeDatum::MeanSeaLevel;
 }
 
 void RemoteIDManagerTest::_gpsAltitudePolicy()
@@ -252,6 +263,7 @@ void RemoteIDManagerTest::_gpsAltitudePolicy()
     QFETCH(double, verticalAccuracy);
     QFETCH(double, ellipsoid);
     QFETCH(bool, usable);
+    QFETCH(GPSAltitudeDatum, datum);
     auto* settings = SettingsManager::instance()->remoteIDSettings();
     auto* manager = vehicle()->remoteIDManager();
     auto* positioning = QGCPositionManager::instance();
@@ -287,6 +299,7 @@ void RemoteIDManagerTest::_gpsAltitudePolicy()
         observation.monotonicTimestampUs = scheduler.nowUs();
         observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, altitude), observation.receivedAt);
         observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+        observation.altitudeDatum = datum;
         if (qIsFinite(verticalAccuracy)) {
             observation.position.setAttribute(QGeoPositionInfo::VerticalAccuracy, verticalAccuracy);
         }
@@ -308,7 +321,9 @@ void RemoteIDManagerTest::_gpsAltitudePolicy()
     if (!usable) {
         verifyExpectedLogMessage();
     }
-    const double acceptedAltitude = qIsFinite(ellipsoid) ? ellipsoid : altitude;
+    const double acceptedAltitude = qIsFinite(ellipsoid)                   ? ellipsoid
+                                    : datum == GPSAltitudeDatum::Ellipsoid ? altitude
+                                                                           : qQNaN();
     const float expectedAltitude = usable && qIsFinite(acceptedAltitude) ? float(acceptedAltitude) : -1000.0f;
     QTRY_VERIFY_WITH_TIMEOUT(
         ([&]() {
@@ -358,6 +373,7 @@ void RemoteIDManagerTest::_liveGpsArrivalBudget()
     observation.monotonicTimestampUs = scheduler.nowUs();
     observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, 500), observation.receivedAt);
     observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+    observation.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
     health.updateObservation(observation);
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     QVERIFY(manager->gcsPositionUsable());

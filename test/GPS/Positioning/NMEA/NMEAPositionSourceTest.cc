@@ -11,6 +11,7 @@
 #include "ManualScheduler.h"
 #include "MonotonicClock.h"
 #include "NMEAPositionSource.h"
+#include "NMEASentence.h"
 #include "NMEAUtils.h"
 #include "QtRuntimeScheduler.h"
 #include "SequentialTestDevice.h"
@@ -379,6 +380,7 @@ void NMEAPositionSourceTest::_fixLoss_data()
         {"gga", "$GPGGA,092751.000,5321.6802,N,00630.3372,W,0,0,99.9,61.7,M,55.2,M,,"},
         {"gga-empty", "$GPGGA,092751.000,,,,,0,0,,,,,,,"},
         {"rmc", "$GPRMC,092751.000,V,,,,,,,280511,,,N"},
+        {"gll", "$GPGLL,,,,,092751.000,V"},
         {"gsa", "$GPGSA,A,1,,,,,,,,,,,,,99.9,99.9,99.9"},
     };
     for (const auto& [name, loss] : cases) {
@@ -391,6 +393,12 @@ void NMEAPositionSourceTest::_fixLoss()
 {
     QFETCH(QByteArray, loss);
     QFETCH(bool, pending);
+    const auto lossSentence = NMEAUtils::repairChecksum(loss);
+    const auto parsed = NMEA::sentence({lossSentence.constData(), static_cast<size_t>(lossSentence.size())});
+    QVERIFY(parsed);
+    const auto navigation = NMEA::navigationStatus(*parsed);
+    QVERIFY(navigation);
+    QVERIFY(!navigation->valid);
     SequentialTestDevice device;
     NMEAPositionSource source(&device);
     GPSSourceHealth health;
@@ -409,7 +417,7 @@ void NMEAPositionSourceTest::_fixLoss()
         QTRY_VERIFY_WITH_TIMEOUT(health.usable(), TestTimeout::shortMs());
     }
     const auto previousUpdates = updates.size();
-    device.feed(NMEAUtils::repairChecksum(loss));
+    device.feed(lossSentence);
     QTRY_COMPARE_WITH_TIMEOUT(health.state(), GPSSourceHealth::State::Invalid, TestTimeout::shortMs());
     QCOMPARE(source.lastObservation().receiverFixValid, std::optional<bool>(false));
     QVERIFY(!source._publicationTask.active());

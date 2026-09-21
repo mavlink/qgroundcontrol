@@ -39,6 +39,9 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
         _updateSerialRouting();
     }
 #endif
+    if (_positionManager) {
+        _positionManager->setNmeaInput(this);
+    }
 }
 
 #ifndef QGC_NO_SERIAL_LINK
@@ -66,9 +69,10 @@ void NMEASourceManager::stop()
     _stop("stop requested");
 }
 
-void NMEASourceManager::_stop(const char* reason)
+void NMEASourceManager::_stop(const char* reason, bool resetStatus)
 {
-    ++_revision;
+    const quint64 revision = ++_revision;
+    const QPointer<NMEASourceManager> guard(this);
     const auto positionManager = _positionManager;
     const bool installed = std::exchange(_sourceInstalled, false);
     _source = -1;
@@ -99,6 +103,36 @@ void NMEASourceManager::_stop(const char* reason)
     if (installed && positionManager) {
         positionManager->resetNmeaSourceDevice(device);
     }
+    if (guard && _revision == revision && resetStatus) {
+        _setConnectionState(ConnectionState::Disabled);
+    }
+}
+
+QString NMEASourceManager::connectionStatusText() const
+{
+    switch (_connectionState) {
+        case ConnectionState::Disabled:
+            return tr("NMEA input is disabled");
+        case ConnectionState::WaitingForDevice:
+            return tr("Waiting for the selected NMEA serial device");
+        case ConnectionState::Connected:
+            return tr("NMEA input is open");
+        case ConnectionState::Error:
+            return _errorMessage;
+    }
+    return {};
+}
+
+void NMEASourceManager::_setConnectionState(ConnectionState state, const QString& error)
+{
+    if (_connectionState == state && _errorMessage == error) {
+        return;
+    }
+    _connectionState = state;
+    _errorMessage = error;
+    if (!_destroying) {
+        emit connectionStateChanged();
+    }
 }
 
 void NMEASourceManager::update()
@@ -114,7 +148,7 @@ void NMEASourceManager::update()
     };
     const auto retire = [this, &revision, &current](const char* reason) {
         ++revision;
-        _stop(reason);
+        _stop(reason, false);
         return current();
     };
     if (!_settings || !_positionManager) {
@@ -128,6 +162,10 @@ void NMEASourceManager::update()
         }
         _source = source;
     }
+    if (source == AutoConnectSettings::NmeaSourceDisabled) {
+        _setConnectionState(ConnectionState::Disabled);
+        return;
+    }
     if (source == AutoConnectSettings::NmeaSourceUdp) {
         const quint16 port = _settings->nmeaUdpPort()->rawValue().toUInt();
         if (_udp && _udp->isOpen() && _udp->localPort() == port) {
@@ -140,6 +178,8 @@ void NMEASourceManager::update()
         auto socket = std::make_unique<UdpIODevice>();
         if (!socket->bind(QHostAddress::AnyIPv4, port)) {
             qCDebug(NMEASourceManagerLog) << "Cannot bind NMEA UDP port" << port << socket->errorString();
+            _setConnectionState(ConnectionState::Error,
+                                tr("Cannot listen on NMEA UDP port %1: %2").arg(port).arg(socket->errorString()));
             return;
         }
         socket->setSelectFirstPeer(true);
@@ -167,6 +207,8 @@ void NMEASourceManager::update()
         _positionManager->setNmeaSourceDevice(_udp.get());
         if (current()) {
             _sourceInstalled = _positionManager->nmeaSourceDevice() == _udp.get();
+            _setConnectionState(_sourceInstalled ? ConnectionState::Connected : ConnectionState::Error,
+                                _sourceInstalled ? QString() : tr("The NMEA decoder could not be started."));
         }
         return;
     }
@@ -198,11 +240,16 @@ void NMEASourceManager::update()
             }
             _source = source;
         }
-        if (!present || _serial) {
+        if (!present) {
+            _setConnectionState(ConnectionState::WaitingForDevice);
+            return;
+        }
+        if (_serial) {
             return;
         }
         auto reservation = ports->reservePort(device);
         if (!reservation) {
+            _setConnectionState(ConnectionState::Error, tr("The NMEA serial device %1 is already in use.").arg(device));
             return;
         }
         auto serial = std::make_unique<QSerialPort>();
@@ -210,6 +257,10 @@ void NMEASourceManager::update()
         if (!serial->setBaudRate(baud) || !serial->open(QIODevice::ReadOnly)) {
             qCDebug(NMEASourceManagerLog)
                 << "Cannot open NMEA serial port" << device << "baud:" << baud << serial->errorString();
+            _setConnectionState(ConnectionState::Error, tr("Cannot open NMEA serial device %1 at %2 baud: %3")
+                                                            .arg(device)
+                                                            .arg(baud)
+                                                            .arg(serial->errorString()));
             return;
         }
         _serialDevice = device;
@@ -224,7 +275,14 @@ void NMEASourceManager::update()
                     qCDebug(NMEASourceManagerLog) << "NMEA serial error:"
                                                   << "port:" << _serialDevice << "baud:" << _serialBaud
                                                   << "error:" << error << current->errorString();
-                    _stop("serial error");
+                    const QString message =
+                        tr("NMEA serial device %1 failed: %2").arg(_serialDevice, current->errorString());
+                    const QPointer<NMEASourceManager> errorGuard(this);
+                    const quint64 errorRevision = _revision + 1;
+                    _stop("serial error", false);
+                    if (errorGuard && _revision == errorRevision) {
+                        _setConnectionState(ConnectionState::Error, message);
+                    }
                 }
             },
             Qt::QueuedConnection);
@@ -235,7 +293,13 @@ void NMEASourceManager::update()
         _positionManager->setNmeaSourceDevice(_serial.get());
         if (current()) {
             _sourceInstalled = _positionManager->nmeaSourceDevice() == _serial.get();
+            _setConnectionState(_sourceInstalled ? ConnectionState::Connected : ConnectionState::Error,
+                                _sourceInstalled ? QString() : tr("The NMEA decoder could not be started."));
         }
+    }
+#else
+    if (source == AutoConnectSettings::NmeaSourceSerial) {
+        _setConnectionState(ConnectionState::Error, tr("Serial NMEA input is unavailable in this build."));
     }
 #endif
 }

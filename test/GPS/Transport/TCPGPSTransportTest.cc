@@ -17,6 +17,7 @@ void TCPGPSTransportTest::_transferTimeoutAndPeerClose()
     QVERIFY(server.listen(QHostAddress::LocalHost));
     std::atomic_bool stop = false;
     TCPGPSTransport transport(QStringLiteral("localhost"), server.serverPort(), stop);
+    QVERIFY(transport.supportsCorrectionWrites());
     uint8_t buffer[64]{};
     QCOMPARE(transport.read(buffer, 0, 0).status, GPSReadStatus::Closed);
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);

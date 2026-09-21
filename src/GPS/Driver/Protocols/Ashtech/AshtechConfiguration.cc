@@ -71,8 +71,13 @@ void GPSNativeAshtech::activateRTCMOutput()
 
 int GPSNativeAshtech::writeAckedCommand(const void* buf, int buf_length, unsigned timeout)
 {
-    if (!writeCommand({std::string(static_cast<const char*>(buf), buf_length), std::chrono::milliseconds(timeout)},
-                      {static_cast<const uint8_t*>(buf), static_cast<size_t>(buf_length)})) {
+    std::string command(static_cast<const char*>(buf), buf_length);
+    while (!command.empty() && (command.back() == '\r' || command.back() == '\n')) {
+        command.pop_back();
+    }
+    command += "\r\n";
+    if (!writeCommand({command, std::chrono::milliseconds(timeout)},
+                      {reinterpret_cast<const uint8_t*>(command.data()), command.size()})) {
         return -1;
     }
 
@@ -99,10 +104,20 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
     resetIOError();
     _survey_duration = 0;
     _survey_in_start = 0;
+    _surveyReceiptRequested = false;
+    _surveyReceiptStartUtc.reset();
     _correction_output_activated = false;
     _correctionSetupPending = false;
     _rtcmActivationPending = false;
     _got_pashr_pos_message = false;
+    _last_timestamp_time = 0;
+    _utcReference = 0;
+    _positionEpoch = {};
+    _accuracyReceipt = {};
+    _accuracy = {};
+    *_gps_position = {};
+    _satelliteAssembler.clear();
+    _pendingSatellites.clear();
     _command_state = NMEACommandState::idle;
     _rtcm_parsing.reset();
     decodeInit();
@@ -312,11 +327,18 @@ void GPSNativeAshtech::activateCorrectionOutput()
         // alternatively use the current position as reference: "$PASHS,POS,CUR\r\n"
         int len = snprintf(buffer, sizeof(buffer), avg_pos, static_cast<unsigned>(_baseConfig.surveyInDurationSecs));
 
+        _surveyReceiptRequested = true;
+        _surveyReceiptStartUtc.reset();
         writeCommand({buffer, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
                      {reinterpret_cast<const uint8_t*>(buffer), static_cast<size_t>(len)});
 
         if (waitForReply(NMEACommand::RECEIPT, ASH_RESPONSE_TIMEOUT) != 0) {
+            _surveyReceiptRequested = false;
+            _surveyReceiptStartUtc.reset();
             controlFailed();
+            if (ioError() != ReadCancelled && _ioErrorDetail.isEmpty()) {
+                _ioErrorDetail = QStringLiteral("No matching Ashtech survey-start receipt");
+            }
             return;
         }
 

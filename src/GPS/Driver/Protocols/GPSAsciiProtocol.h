@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include "GPSBaseProtocol.h"
+#include "NMEA/NMEAMetadata.h"
 #include "NMEA/NMEASatelliteEpoch.h"
 #include "NMEA/NMEASentence.h"
 #include "RTCM/RTCMFramer.h"
@@ -42,18 +43,16 @@ private:
     GPSNativePositionReport _fallbackPosition;
     GPSNativePositionReport* _position;
     GPSNativeSatelliteReport* _satellites;
-    RTCMFramer _rtcm;
+    RTCMStreamDecoder _rtcm;
     NMEA::SatelliteAssembler _satelliteAssembler;
     NMEA::SatelliteEpoch _pendingSatellites;
     std::array<char, MAX_LINE_SIZE> _line{};
     size_t _lineSize = 0;
     bool _discardLine = false;
     bool _lineEnded = false;
-    bool _pendingRTCM = false;
     bool _rtcmEnabled = true;
-    std::optional<int> _accuracyTime;
+    NMEA::EpochReceipt _accuracyReceipt;
     std::optional<int> _positionTime;
     std::optional<uint64_t> _vdopReceivedAtUs;
-    uint64_t _accuracyReceivedAtUs = 0;
     NMEA::GST _accuracy;
 };

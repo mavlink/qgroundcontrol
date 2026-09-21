@@ -24,6 +24,13 @@ Item {
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property var    _gpsAggregate:  _activeVehicle ? _activeVehicle.gpsAggregate : null
+    readonly property int _interferenceState: {
+        if (!_gpsAggregate) return 0
+        const spoofing = _gpsAggregate.spoofingState.value
+        const jamming = _gpsAggregate.jammingState.value
+        return Math.max(spoofing > 0 && spoofing < 255 ? spoofing : 0,
+                        jamming > 0 && jamming < 255 ? jamming : 0)
+    }
 
     property var    qgcPal:         QGroundControl.globalPalette
 
@@ -49,6 +56,7 @@ Item {
     // Interference Icon (Inner/Top Layer)
     QGCColoredImage {
         id:                 interfIcon
+        objectName:         "gpsInterferenceIcon"
         width:              parent.height * 0.55
         height:             parent.height * 0.55
         anchors.centerIn:   parent
@@ -56,7 +64,7 @@ Item {
         fillMode:           Image.PreserveAspectFit
         sourceSize.height:  height
         color:              _interfColor()
-        visible:            _gpsAggregate && (Math.max(_gpsAggregate.spoofingState.value, _gpsAggregate.jammingState.value) > 0) && (Math.max(_gpsAggregate.spoofingState.value, _gpsAggregate.jammingState.value) < 255)
+        visible:            control._interferenceState > 0
     }
 
     function _authColor() {
@@ -71,8 +79,7 @@ Item {
 
     function _interfColor() {
         if (!_gpsAggregate) return qgcPal.colorGrey;
-        let maxState = Math.max(_gpsAggregate.spoofingState.value, _gpsAggregate.jammingState.value);
-        switch (maxState) {
+        switch (control._interferenceState) {
             case 1: return qgcPal.colorGreen;  // Not spoofed/jammed
             case 2: return qgcPal.colorOrange; // Mitigated
             case 3: return qgcPal.colorRed;    // Detected
@@ -135,17 +142,17 @@ Item {
                 LabelledLabel {
                     label: qsTr("Jamming")
                     labelText: (_activeVehicle && _activeVehicle.gps) ? (_activeVehicle.gps.jammingState.enumStringValue || qsTr("n/a")) : qsTr("n/a")
-                    visible: _activeVehicle.gps.jammingState.value > 0 && _activeVehicle.gps.jammingState.value < 255
+                    visible: _activeVehicle && _activeVehicle.gps.jammingState.value > 0 && _activeVehicle.gps.jammingState.value < 255
                 }
                 LabelledLabel {
                     label: qsTr("Spoofing")
                     labelText: (_activeVehicle && _activeVehicle.gps) ? (_activeVehicle.gps.spoofingState.enumStringValue || qsTr("n/a")) : qsTr("n/a")
-                    visible: _activeVehicle.gps.spoofingState.value > 0 && _activeVehicle.gps.spoofingState.value < 255
+                    visible: _activeVehicle && _activeVehicle.gps.spoofingState.value > 0 && _activeVehicle.gps.spoofingState.value < 255
                 }
                 LabelledLabel {
                     label: qsTr("Authentication")
                     labelText: (_activeVehicle && _activeVehicle.gps) ? (_activeVehicle.gps.authenticationState.enumStringValue || qsTr("n/a")) : qsTr("n/a")
-                    visible: _activeVehicle.gps.authenticationState.value > 0 && _activeVehicle.gps.authenticationState.value < 255
+                    visible: _activeVehicle && _activeVehicle.gps.authenticationState.value > 0 && _activeVehicle.gps.authenticationState.value < 255
                 }
             }
 
@@ -162,17 +169,17 @@ Item {
                 LabelledLabel {
                     label: qsTr("Jamming")
                     labelText: (_activeVehicle && _activeVehicle.gps2) ? (_activeVehicle.gps2.jammingState.enumStringValue || qsTr("n/a")) : qsTr("n/a")
-                    visible: _activeVehicle.gps2.jammingState.value > 0 && _activeVehicle.gps2.jammingState.value < 255
+                    visible: _activeVehicle && _activeVehicle.gps2.jammingState.value > 0 && _activeVehicle.gps2.jammingState.value < 255
                 }
                 LabelledLabel {
                     label: qsTr("Spoofing")
                     labelText: (_activeVehicle && _activeVehicle.gps2) ? (_activeVehicle.gps2.spoofingState.enumStringValue || qsTr("n/a")) : qsTr("n/a")
-                    visible: _activeVehicle.gps2.spoofingState.value > 0 && _activeVehicle.gps2.spoofingState.value < 255
+                    visible: _activeVehicle && _activeVehicle.gps2.spoofingState.value > 0 && _activeVehicle.gps2.spoofingState.value < 255
                 }
                 LabelledLabel {
                     label: qsTr("Authentication")
                     labelText: (_activeVehicle && _activeVehicle.gps2) ? (_activeVehicle.gps2.authenticationState.enumStringValue || qsTr("n/a")) : qsTr("n/a")
-                    visible: _activeVehicle.gps2.authenticationState.value > 0 && _activeVehicle.gps2.authenticationState.value < 255
+                    visible: _activeVehicle && _activeVehicle.gps2.authenticationState.value > 0 && _activeVehicle.gps2.authenticationState.value < 255
                 }
             }
         }

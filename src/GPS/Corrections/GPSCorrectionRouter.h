@@ -42,6 +42,7 @@ public:
         bool complete = true;
     };
 
+    /// Each result is a snapshot of the output's current destinations, including unavailable ones.
     using FanoutSink = std::function<QList<Admission>(const GPSCorrectionFrame&)>;
 
     using Statistics = GPSCorrectionLedger::Statistics;

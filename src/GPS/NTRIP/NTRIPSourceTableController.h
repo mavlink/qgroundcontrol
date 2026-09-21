@@ -7,9 +7,11 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
+#include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
 
 #include "NTRIPConfiguration.h"
+#include "NTRIPHttpDecoder.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableControllerLog)
 
@@ -17,6 +19,7 @@ class NTRIPSourceTableModel;
 class NTRIPSourceTableControllerTest;
 class QNetworkAccessManager;
 class QNetworkReply;
+class QTcpSocket;
 
 class NTRIPSourceTableController : public QObject
 {
@@ -49,6 +52,7 @@ public:
     QAbstractListModel* mountpointModel() const;
 
     void fetch(const NTRIPConnectionConfig& config, const QGeoCoordinate& sortCoord = {});
+    void cancel();
     Q_INVOKABLE void selectMountpoint(const QString& mountpoint);
 
 signals:
@@ -71,11 +75,18 @@ private:
     void _onSourceTableReceived(const QString& table);
     void _onFetchError(const QString& error);
     void _abortReply();
+    void _startLegacyFetch(quint64 revision);
+    void _readLegacyReply(quint64 revision);
+    void _finishLegacyFetch(const QString& error = {});
     bool _deferModelMutation(std::function<void()> action);
 
     NTRIPSourceTableModel* _model = nullptr;
     QNetworkAccessManager* _networkManager = nullptr;
     QPointer<QNetworkReply> _reply;
+    QPointer<QTcpSocket> _legacySocket;
+    QTimer _legacyTimeout;
+    NTRIPHttpDecoder _legacyDecoder{NTRIPHttpDecoder::Purpose::SourceTable};
+    QByteArray _legacyBody;
     bool _replyTooLarge = false;
     QGeoCoordinate _sortCoord;
     FetchStatus _fetchStatus = FetchStatus::Idle;

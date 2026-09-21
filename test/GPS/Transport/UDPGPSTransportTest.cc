@@ -31,6 +31,7 @@ void UDPGPSTransportTest::_transferAndPartialReads()
 
     std::atomic_bool stop = false;
     UDPGPSTransport transport(host, receiver.localPort(), stop, localPort);
+    QVERIFY(transport.supportsCorrectionWrites());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     QVERIFY(!transport.fatalError());
     QCOMPARE(transport.fixedBaudrate(), 115200u);

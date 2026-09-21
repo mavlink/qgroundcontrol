@@ -27,12 +27,10 @@ bool NTRIPMountpoint::fromSourceTableLine(const QString& line, NTRIPMountpoint& 
     mp.navSystem = fields.at(6).trimmed();
     mp.network = fields.at(7).trimmed();
     mp.country = fields.at(8).trimmed();
-    // Caster-supplied coordinates are untrusted; out-of-range/non-finite values
-    // collapse to 0.0, which updateDistance() treats as "unknown" and skips.
     const auto parseCoord = [](const QString& s, double limit) -> double {
         bool ok = false;
         const double v = s.trimmed().toDouble(&ok);
-        return (ok && qIsFinite(v) && qAbs(v) <= limit) ? v : 0.0;
+        return (ok && qIsFinite(v) && qAbs(v) <= limit) ? v : qQNaN();
     };
     mp.latitude = parseCoord(fields.at(9), 90.0);
     mp.longitude = parseCoord(fields.at(10), 180.0);
@@ -50,11 +48,11 @@ bool NTRIPMountpoint::fromSourceTableLine(const QString& line, NTRIPMountpoint& 
 
 void NTRIPMountpoint::updateDistance(const QGeoCoordinate& from)
 {
-    if (!from.isValid() || (latitude == 0.0 && longitude == 0.0)) {
+    const QGeoCoordinate mountCoord(latitude, longitude);
+    if (!from.isValid() || !mountCoord.isValid() || (latitude == 0.0 && longitude == 0.0)) {
         distanceKm = -1.0;
         return;
     }
-    const QGeoCoordinate mountCoord(latitude, longitude);
     distanceKm = from.distanceTo(mountCoord) / 1000.0;
 }
 

@@ -25,6 +25,8 @@ private slots:
     void _testConnectGatedByHost();
     void _testBrowseGatedByHost();
     void _testSelfSignedGatedByTls();
+    void _testErrorActionRetries();
+    void _testMountpointLockedWhileActive();
 
 private:
     bool _navigateToNtripPage();

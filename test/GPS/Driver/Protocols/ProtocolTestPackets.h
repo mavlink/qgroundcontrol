@@ -1,11 +1,50 @@
 #pragma once
+#include <array>
+#include <stdexcept>
 #include <vector>
 
 #include "Femto/FemtoMessages.h"
 #include "LittleEndian.h"
+#include "RTCMFramer.h"
 #include "SBF/SBFMessages.h"
 
 // Fixtures encode documented offsets independently of decoded object alignment.
+inline std::vector<uint8_t> rtcmPacket(std::span<const uint8_t> payload)
+{
+    std::vector<uint8_t> result{0xd3, static_cast<uint8_t>(payload.size() >> 8), static_cast<uint8_t>(payload.size())};
+    result.insert(result.end(), payload.begin(), payload.end());
+    const auto crc = RTCMFramer::crc24q(result);
+    result.insert(result.end(), {uint8_t(crc >> 16), uint8_t(crc >> 8), uint8_t(crc)});
+    return result;
+}
+
+template <typename Driver>
+void verifyRTCMRecovery(Driver& driver, std::vector<std::vector<uint8_t>>& frames)
+{
+    const auto frame = rtcmPacket(std::array<uint8_t, 2>{0x3e, 0xd0});
+    auto noisy = frame;
+    noisy.insert(noisy.begin(), 0xd3);
+    frames.clear();
+    driver.consume(noisy);
+    if (frames != std::vector<std::vector<uint8_t>>{frame}) {
+        throw std::runtime_error("RTCM stray-preamble recovery failed");
+    }
+    std::vector<uint8_t> payload;
+    for (int i = 0; i < 20; ++i) {
+        payload.insert(payload.end(), frame.begin(), frame.end());
+    }
+    auto corrupt = rtcmPacket(payload);
+    corrupt.back() ^= 1;
+    frames.clear();
+    driver.consume(corrupt);
+    for (int i = 0; i < 20; ++i) {
+        driver.consume({});
+    }
+    if (frames != std::vector(20, frame)) {
+        throw std::runtime_error("RTCM bounded recovery drain failed");
+    }
+}
+
 inline std::vector<uint8_t> bytes(const sbf_payload_pvt_geodetic_t& v)
 {
     std::vector<uint8_t> b(80);

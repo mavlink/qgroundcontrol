@@ -22,11 +22,9 @@ void GPSAsciiProtocol::resetStream()
     _lineSize = 0;
     _discardLine = false;
     _lineEnded = false;
-    _pendingRTCM = false;
-    _accuracyTime.reset();
+    _accuracyReceipt = {};
     _positionTime.reset();
     _vdopReceivedAtUs.reset();
-    _accuracyReceivedAtUs = 0;
     _accuracy = {};
     *_position = {};
     if (_satellites) {
@@ -46,11 +44,11 @@ int GPSAsciiProtocol::receive(unsigned timeout)
 
 int GPSAsciiProtocol::decodeByte(uint8_t byte)
 {
-    if (_rtcm.hasPartialFrame() || byte == RTCMFramer::PREAMBLE) {
+    if (_rtcm.ownsByte(byte)) {
         _lineSize = 0;
         _discardLine = false;
         _lineEnded = false;
-        _pendingRTCM = _rtcm.addByte(byte);
+        _rtcm.addByte(byte);
         _drainRTCM();
         return 0;
     }
@@ -97,27 +95,42 @@ int GPSAsciiProtocol::_handleNmea(std::string_view line)
     int updates = GPSDecodedBatch::PROTOCOL_ACTIVITY;
     auto satelliteUpdate = _satelliteAssembler.ingest(*sentence, now);
     _publishSatellites(satelliteUpdate.completed);
-    if (const auto fix = NMEA::gga(*sentence)) {
-        const auto positionTime = NMEA::utcMilliseconds(sentence->fields[NMEA::Field::UTC_TIME]);
+    const auto navigation = NMEA::navigationStatus(*sentence);
+    if (navigation && !navigation->valid) {
+        *_position = {};
+        _position->timestamp = now;
+        _position->fix_type = GPSPositionReport::FixType::NoFix;
+        _positionTime = navigation->utcMilliseconds;
+        _accuracyReceipt = {};
+        _vdopReceivedAtUs.reset();
+        std::optional<int> used;
+        if (sentence->type() == "GGA" && sentence->count > NMEA::Field::GGA_SATELLITES_USED) {
+            const auto count = NMEA::number<unsigned>(sentence->fields[NMEA::Field::GGA_SATELLITES_USED]);
+            if (count && *count < UINT8_MAX) {
+                used = static_cast<int>(*count);
+                _position->satellites_used = static_cast<uint8_t>(*count);
+            }
+        }
+        publishSatelliteUsage(used);
+        updates |= 1;
+    } else if (const auto fix = NMEA::gga(*sentence)) {
+        const auto positionTime = navigation ? navigation->utcMilliseconds : std::nullopt;
         if (!positionTime || positionTime != _positionTime) {
             _vdopReceivedAtUs.reset();
         }
         _expireVdop(now);
         applyNMEAGGA(*_position, *fix, now);
         _positionTime = positionTime;
-        const bool matchingAccuracy = _positionTime && _positionTime == _accuracyTime && now >= _accuracyReceivedAtUs &&
-                                      now - _accuracyReceivedAtUs <= METADATA_MAX_AGE_US;
+        const bool matchingAccuracy = _accuracyReceipt.matches({_positionTime, now}, METADATA_MAX_AGE_US);
         _position->eph = matchingAccuracy ? _accuracy.horizontalAccuracy : NAN;
         _position->epv = matchingAccuracy ? _accuracy.verticalAccuracy : NAN;
-        _position->accuracy_timestamp = matchingAccuracy ? _accuracyReceivedAtUs : 0;
+        _position->accuracy_timestamp = matchingAccuracy ? _accuracyReceipt.receivedAtUs : 0;
         publishSatelliteUsage(fix->satellitesUsed ? std::optional<int>(*fix->satellitesUsed) : std::nullopt);
         updates |= 1;
     } else if (const auto accuracy = NMEA::gst(*sentence)) {
-        _accuracyTime = NMEA::utcMilliseconds(sentence->fields[NMEA::Field::UTC_TIME]);
-        _accuracyReceivedAtUs = now;
+        _accuracyReceipt = {NMEA::utcMilliseconds(sentence->fields[NMEA::Field::UTC_TIME]), now};
         _accuracy = *accuracy;
-        if (_positionTime && _positionTime == _accuracyTime && now >= _position->timestamp &&
-            now - _position->timestamp <= METADATA_MAX_AGE_US) {
+        if (NMEA::EpochReceipt{_positionTime, _position->timestamp}.matches(_accuracyReceipt, METADATA_MAX_AGE_US)) {
             _expireVdop(now);
             _position->eph = _accuracy.horizontalAccuracy;
             _position->epv = _accuracy.verticalAccuracy;
@@ -180,12 +193,5 @@ void GPSAsciiProtocol::flushDecoded()
 
 void GPSAsciiProtocol::_drainRTCM()
 {
-    while (_pendingRTCM && _decoded.events.size() + 2 < GPSDecodedBatch::MAX_EVENTS) {
-        if (_rtcm.valid() && _rtcmEnabled) {
-            const auto frame = _rtcm.frame();
-            gotRTCMMessage(frame.data(), static_cast<int>(frame.size()));
-            _decoded.updates |= GPSDecodedBatch::PROTOCOL_ACTIVITY;
-        }
-        _pendingRTCM = _rtcm.nextFrame();
-    }
+    drainRTCM(_rtcm, _rtcmEnabled);
 }

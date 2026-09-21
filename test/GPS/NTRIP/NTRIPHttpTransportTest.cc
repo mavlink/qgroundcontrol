@@ -435,7 +435,7 @@ void NTRIPHttpTransportTest::_testBuildRequestPlaintextCredentialsWarns()
     QVERIFY(request.credentialsInClear);
     QVERIFY(request.bytes.startsWith("GET /MOUNT01 HTTP/1.1\r\n"));
     QVERIFY(request.error.isEmpty());
-    QVERIFY(request.bytes.contains("Host: caster.example.com\r\n"));
+    QVERIFY(request.bytes.contains("Host: caster.example.com:2101\r\n"));
     QVERIFY(request.bytes.contains("Authorization: Basic "));
     QVERIFY(request.bytes.endsWith("\r\n\r\n"));
 }
@@ -510,10 +510,43 @@ void NTRIPHttpTransportTest::_testBuildRequestPreservesValues()
     QCOMPARE(request.credentialsInClear, !encoded.isEmpty() && !useTls);
     QCOMPARE(request.bytes,
              "GET /MixedCase_1 HTTP/1.1\r\n"
-             "Host: Caster.Example.com\r\n"
+             "Host: caster.example.com:2101\r\n"
              "Ntrip-Version: Ntrip/2.0\r\n"
              "User-Agent: NTRIP QGroundControl/1.0\r\n" +
                  authorization + "\r\n");
+}
+
+void NTRIPHttpTransportTest::_testBuildRequestAuthority_data()
+{
+    QTest::addColumn<QString>("host");
+    QTest::addColumn<int>("port");
+    QTest::addColumn<QByteArray>("authority");
+    QTest::newRow("hostname") << QStringLiteral("Caster.Example.com") << 2101 << QByteArray("caster.example.com:2101");
+    QTest::newRow("ipv4") << QStringLiteral("127.0.0.1") << 8080 << QByteArray("127.0.0.1:8080");
+    QTest::newRow("ipv6") << QStringLiteral("::1") << 2101 << QByteArray("[::1]:2101");
+}
+
+void NTRIPHttpTransportTest::_testBuildRequestAuthority()
+{
+    QFETCH(QString, host);
+    QFETCH(int, port);
+    QFETCH(QByteArray, authority);
+    NTRIPConnectionConfig configuration;
+    configuration.host = host;
+    configuration.port = port;
+    configuration.mountpoint = QStringLiteral("TEST");
+    configuration.username = QStringLiteral("user");
+    configuration.password = QStringLiteral("pass");
+    const auto stream = NTRIPHttpRequest::build(configuration);
+    const auto table = NTRIPHttpRequest::build(configuration, NTRIPHttpRequest::Purpose::SourceTable);
+    QVERIFY(stream.error.isEmpty());
+    QVERIFY(table.error.isEmpty());
+    QVERIFY(stream.bytes.contains("Host: " + authority + "\r\n"));
+    QVERIFY(table.bytes.contains("Host: " + authority + "\r\n"));
+    QCOMPARE(table.url.port(), port);
+    QCOMPARE(table.bytes.sliced(table.bytes.indexOf("\r\n")), stream.bytes.sliced(stream.bytes.indexOf("\r\n")));
+    QVERIFY(table.bytes.startsWith("GET / HTTP/1.1\r\n"));
+    QVERIFY(table.credentialsInClear);
 }
 
 void NTRIPHttpTransportTest::_testHttpDecoderReset()

@@ -12,6 +12,10 @@ private slots:
 
     void testInitialStateIsDisconnected();
     void testStopFromIdleIsNoop();
+    void testStopCancelsDeferredSettings_data();
+    void testStopCancelsDeferredSettings();
+    void testNewSessionRetryBudget_data();
+    void testNewSessionRetryBudget();
     void testPlaintextCredentialWarningIsVisibleState();
     void testTerminalStateStopsUdpForwarder_data();
     void testTerminalStateStopsUdpForwarder();

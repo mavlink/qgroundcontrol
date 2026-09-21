@@ -149,18 +149,10 @@ int GPSNativeSBF::parseChar(const uint8_t b)
     int ret = 0;
 
     // A native frame owns its payload, including any embedded RTCM preambles.
-    if (_rtcm_parsing && (_decode_state == SBF_DECODE_SYNC1 || _rtcm_parsing->hasPartialFrame())) {
-        const bool complete = _rtcm_parsing->addByte(b);
-        if (complete) {
-            if (_rtcm_parsing->valid()) {
-                gotRTCMMessage(_rtcm_parsing->frame().data(), _rtcm_parsing->frame().size());
-            }
-            _rtcm_parsing->reset();
-            return GPSDecodedBatch::PROTOCOL_ACTIVITY;
-        }
-        if (_rtcm_parsing->hasPartialFrame()) {
-            return 0;
-        }
+    if (_rtcm_parsing && _decode_state == SBF_DECODE_SYNC1 && _rtcm_parsing->ownsByte(b)) {
+        _rtcm_parsing->addByte(b);
+        drainRTCM(*_rtcm_parsing);
+        return 0;
     }
 
     switch (_decode_state) {
@@ -286,6 +278,26 @@ int GPSNativeSBF::payloadRxDone()
     switch (_buf.msg_id) {
         case SBF_ID_PVTGeodetic: {
             epoch->hasPosition = true;
+
+            // PVTGeodetic Datum 0 is WGS84/ITRS. Datum 19 is the correction provider's unspecified datum.
+            if (_buf.payload_pvt_geodetic.datum != 0) {
+                epoch->position = {};
+                epoch->position.fix_type = GPSPositionReport::FixType::NoFix;
+                if (_configured) {
+                    log(GPSProtocolLogLevel::Warning, "Unsupported Septentrio position datum: %u",
+                        unsigned(_buf.payload_pvt_geodetic.datum));
+                    controlFailed();
+                    _ioErrorDetail = QStringLiteral("Septentrio position datum is not WGS84/ITRS");
+                    _configured = false;
+                    _rtcm_parsing.reset();
+                    if (_output_mode == OutputMode::RTCM) {
+                        GPSNativeSurveyReport status{};
+                        status.latitude = status.longitude = status.altitude = NAN;
+                        surveyInStatus(status);
+                    }
+                }
+                break;
+            }
 
             if (_buf.payload_pvt_geodetic.mode_type < 1) {
                 _gps_position->fix_type = GPSPositionReport::FixType::NoFix;
@@ -503,6 +515,9 @@ void GPSNativeSBF::finishEpoch(std::optional<NavigationEpoch>& epoch)
 
 void GPSNativeSBF::flushDecoded()
 {
+    if (_rtcm_parsing) {
+        drainRTCM(*_rtcm_parsing);
+    }
     if (_epochs[0] && _epochs[1] && _epochs[0]->receiverTimeMs > _epochs[1]->receiverTimeMs) {
         std::swap(_epochs[0], _epochs[1]);
     }

@@ -58,6 +58,7 @@ private:
     QPointer<QTcpSocket> _socket;
     QChronoTimer _connectTimeoutTimer;
     QChronoTimer _dataWatchdogTimer;
+    QChronoTimer _validFrameWatchdogTimer;
     QChronoTimer _errorBodyTimer;
 
     RTCMFrameDecoder _rtcmDecoder;

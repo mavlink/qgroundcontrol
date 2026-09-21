@@ -125,7 +125,7 @@ NTRIPManager::NTRIPManager(QObject* parent) : QObject(parent)
 NTRIPManager::~NTRIPManager()
 {
     qCDebug(NTRIPManagerLog) << "NTRIPManager destroyed";
-    stopNTRIP();
+    shutdown();
 }
 
 void NTRIPManager::setCorrectionManager(GPSCorrectionManager* manager)
@@ -143,7 +143,7 @@ void NTRIPManager::setCorrectionManager(GPSCorrectionManager* manager)
 
 void NTRIPManager::init()
 {
-    if (_initialized) {
+    if (_initialized || _shutdown) {
         qCWarning(NTRIPManagerLog) << "NTRIPManager::init() called more than once";
         return;
     }
@@ -169,7 +169,11 @@ void NTRIPManager::init()
         };
         for (const auto* fact : facts) {
             if (fact) {
-                connect(fact, &Fact::rawValueChanged, this, [this]() { _settingsDebounceTimer.start(); });
+                connect(fact, &Fact::rawValueChanged, this, [this]() {
+                    if (!_shutdown) {
+                        _settingsDebounceTimer.start();
+                    }
+                });
             }
         }
         const auto configureGga = [this]() {
@@ -225,22 +229,59 @@ NTRIPConfiguration NTRIPManager::_configFromSettings() const
 
 void NTRIPManager::startNTRIP()
 {
+    if (_shutdown || _connectionStatus == ConnectionStatus::Connecting ||
+        _connectionStatus == ConnectionStatus::Connected) {
+        return;
+    }
+    _settingsDebounceTimer.stop();
+    _cancelReconnect();
+    _resetReconnectAttempts();
     _dispatch(Event::StartRequested);
 }
 
 void NTRIPManager::stopNTRIP()
 {
+    _settingsDebounceTimer.stop();
+    _cancelReconnect();
     _dispatch(Event::StopRequested);
+}
+
+void NTRIPManager::retryNTRIP()
+{
+    if (_shutdown || !_settings || _connectionStatus != ConnectionStatus::Error) {
+        return;
+    }
+    const QPointer<NTRIPManager> guard(this);
+    const quint64 revision = _stateRevision;
+    _settings->ntripServerConnectEnabled()->setRawValue(true);
+    if (guard && _stateRevision == revision) {
+        startNTRIP();
+    }
+}
+
+void NTRIPManager::shutdown()
+{
+    if (_shutdown) {
+        return;
+    }
+    _shutdown = true;
+    const QPointer<NTRIPManager> guard(this);
+    _sourceTableController.cancel();
+    if (guard) {
+        stopNTRIP();
+    }
 }
 
 void NTRIPManager::fetchMountpoints()
 {
-    if (!_settings) {
+    if (!_settings || _shutdown) {
         return;
     }
     QGeoCoordinate sortCoord;
-    if (MultiVehicleManager* mvm = MultiVehicleManager::instance(); mvm && mvm->activeVehicle()) {
-        sortCoord = mvm->activeVehicle()->coordinate();
+    if (MultiVehicleManager* mvm = MultiVehicleManager::instance()) {
+        if (Vehicle* vehicle = mvm->activeVehicle()) {
+            sortCoord = vehicle->coordinate();
+        }
     }
     _sourceTableController.fetch(_configFromSettings().connection, sortCoord);
 }
@@ -434,7 +475,7 @@ void NTRIPManager::_startTransport()
     const QPointer<NTRIPManager> guard(this);
     const quint64 revision = _stateRevision;
     const auto sameState = [this, guard, revision]() { return guard && _stateRevision == revision; };
-    if (!_settings) {
+    if (!_settings || _shutdown) {
         _dispatch(Event::ConfigInvalid, tr("Settings unavailable"));
         return;
     }
@@ -614,17 +655,13 @@ void NTRIPManager::_onSettingChanged()
 {
     const QPointer<NTRIPManager> guard(this);
     const quint64 revision = _stateRevision;
-    if (!_settings) {
+    if (!_settings || _shutdown) {
         return;
     }
 
     if (!_isEnabled()) {
-        // Match legacy: when disabled while Reconnecting, reset the attempt
-        // counter so a future re-enable starts with a clean backoff schedule.
-        if (_connectionStatus == ConnectionStatus::Reconnecting) {
-            _resetReconnectAttempts();
-        }
-        _dispatch(Event::StopRequested);
+        _resetReconnectAttempts();
+        stopNTRIP();
         return;
     }
 
@@ -634,7 +671,7 @@ void NTRIPManager::_onSettingChanged()
     if (!isActive) {
         // Disconnected / Error / Reconnecting: start fresh. The connecting
         // path re-reads settings, so the new values take effect there.
-        _dispatch(Event::StartRequested);
+        startNTRIP();
         return;
     }
 
