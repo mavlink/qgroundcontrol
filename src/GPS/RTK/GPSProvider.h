@@ -13,7 +13,6 @@
 
 #include "GPSDriverReports.h"
 #include "GPSReceiverConfig.h"
-#include "GPSSurveyInStatus.h"
 #include "GPSType.h"
 
 class GPSTransport;
@@ -45,16 +44,16 @@ signals:
     void satelliteUsageUpdate(const GPSSatelliteUsageReport& message);
     void fixTypeChanged(GPSPositionReport::FixType fixType);
     void RTCMDataUpdate(const QByteArray& message, qint64 receivedAtMs);
-    void surveyInStatus(const GPSSurveyInStatus &status);
+    void surveyInStatus(const GPSSurveyReport& report);
     void connectionError(GPSConnectionError error);
     void configurationError(const QString& detail);
     void receiverReady();
 
 private:
     friend class GPSProviderTest;
+    friend class GPSRtkTest;
 
     void run() final;
-    void _handleSurveyIn(const GPSSurveyReport& report);
 
     TransportFactory _transportFactory;
     GPSType _type;

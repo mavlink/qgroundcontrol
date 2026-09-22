@@ -1379,6 +1379,27 @@ void GPSCorrectionRouterTest::terminalDeliveryAccounting()
     QCOMPARE(destination.pendingFrames, quint64(0));
     QCOMPARE(destination.pendingBytes, quint64(0));
     QCOMPARE(destination.unconfirmedFrames, quint64(0));
+
+    const auto verifyCounters = [](const QVariantMap& values, const GPSCorrectionLedger::DeliveryCounters& counters) {
+        const QVariantMap expected{
+            {QStringLiteral("queuedFrames"), QVariant::fromValue(counters.queuedFrames)},
+            {QStringLiteral("queuedBytes"), QVariant::fromValue(counters.queuedBytes)},
+            {QStringLiteral("writtenFrames"), QVariant::fromValue(counters.writtenFrames)},
+            {QStringLiteral("writtenBytes"), QVariant::fromValue(counters.writtenBytes)},
+            {QStringLiteral("transportAcceptedBytes"), QVariant::fromValue(counters.transportAcceptedBytes)},
+            {QStringLiteral("droppedFrames"), QVariant::fromValue(counters.droppedFrames)},
+            {QStringLiteral("droppedBytes"), QVariant::fromValue(counters.droppedBytes)},
+            {QStringLiteral("unconfirmedFrames"), QVariant::fromValue(counters.unconfirmedFrames)},
+            {QStringLiteral("unconfirmedBytes"), QVariant::fromValue(counters.unconfirmedBytes)},
+        };
+        for (auto it = expected.cbegin(); it != expected.cend(); ++it) {
+            QVERIFY(values.contains(it.key()));
+            QCOMPARE(values.value(it.key()).metaType(), QMetaType::fromType<quint64>());
+            QCOMPARE(values.value(it.key()), it.value());
+        }
+    };
+    verifyCounters(router.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap(), source);
+    verifyCounters(router.destinationDiagnostics().first().toMap(), destination);
 }
 
 void GPSCorrectionRouterTest::lateDeliveryDoesNotCreditReplacementSource()

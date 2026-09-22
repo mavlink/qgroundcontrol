@@ -1,6 +1,4 @@
-qt_add_library(QGCGPSNMEAPositioning STATIC NMEADecoderSession.cc NMEAPositionSource.cc NMEASatelliteAdapter.cc
-               NMEAStreamSplitter.cc
-)
+qt_add_library(QGCGPSNMEAPositioning STATIC NMEADecoderSession.cc NMEAPositionSource.cc NMEAStreamSplitter.cc)
 add_library(QGC::GPSNMEAPositioning ALIAS QGCGPSNMEAPositioning)
 set_target_properties(QGCGPSNMEAPositioning PROPERTIES AUTOMOC ON)
 target_link_libraries(
@@ -15,7 +13,6 @@ target_sources(
            FILES
            NMEADecoderSession.h
            NMEAPositionSource.h
-           NMEASatelliteAdapter.h
            NMEAStreamSplitter.h
            NMEASentenceEnvelope.h
 )

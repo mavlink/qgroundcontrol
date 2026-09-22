@@ -55,8 +55,12 @@ private:
     ScheduledTask _lossTask;
     ScheduledTask _errorTask;
     std::optional<GPSObservation> _pendingLoss;
-    std::optional<QGeoPositionInfo> _pendingObservation;
-    bool _pendingRequested = false;
+
+    struct PendingFix
+    {
+        std::optional<QGeoPositionInfo> position;
+        bool requested = false;
+    } _pendingFix;
     Error _error = NoError;
     quint64 _generation = 0;
     bool _started = false;

@@ -2,8 +2,11 @@
 
 #include <utility>
 
+#include <QtCore/QThread>
+
 #include "AutoConnectSettings.h"
 #include "GPSSourceHealth.h"
+#include "NMEADecoderSession.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "UdpIODevice.h"
@@ -40,6 +43,11 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
     }
 #endif
     if (_positionManager) {
+        connect(_positionManager, &QObject::destroyed, this, [this]() { _stop("position manager shutdown"); });
+        if (_positionManager->scheduler()) {
+            connect(_positionManager->scheduler(), &QObject::destroyed, this,
+                    [this]() { _stop("scheduler destroyed"); });
+        }
         _positionManager->setNmeaInput(this);
     }
 }
@@ -72,40 +80,128 @@ void NMEASourceManager::stop()
 void NMEASourceManager::_stop(const char* reason, bool resetStatus)
 {
     const quint64 revision = ++_revision;
+    const quint64 generation = ++_decoderGeneration;
     const QPointer<NMEASourceManager> guard(this);
-    const auto positionManager = _positionManager;
-    const bool installed = std::exchange(_sourceInstalled, false);
-    _source = -1;
-    auto udp = std::move(_udp);
-    QIODevice* device = udp.get();
-#ifndef QGC_NO_SERIAL_LINK
-    auto reservation = std::move(_reservation);
-    auto serial = std::move(_serial);
-    if (serial) {
-        device = serial.get();
+    auto retired = std::exchange(_input, {});
+    QObject::disconnect(retired.binding.closedConnection);
+    QObject::disconnect(retired.binding.destroyedConnection);
+    if (retired.binding.decoder) {
+        retired.binding.decoder->disconnect(this);
+        qCDebug(NMEASourceManagerLog) << "NMEA decoder retired:" << reason << "generation:" << generation;
     }
-    const auto serialDevice = std::exchange(_serialDevice, {});
-    const auto serialBaud = std::exchange(_serialBaud, 0);
-#endif
-    if (udp) {
+    if (retired.udp) {
         qCDebug(NMEASourceManagerLog) << "NMEA input retired:"
                                       << "reason:" << reason << "source: UDP"
-                                      << "port:" << udp->localPort() << "peer:" << udp->selectedPeer();
+                                      << "port:" << retired.udp->localPort() << "peer:" << retired.udp->selectedPeer();
     }
 #ifndef QGC_NO_SERIAL_LINK
-    if (serial) {
+    if (retired.serial) {
         qCDebug(NMEASourceManagerLog) << "NMEA input retired:"
                                       << "reason:" << reason << "source: serial"
-                                      << "port:" << serialDevice << "baud:" << serialBaud;
+                                      << "port:" << retired.serialDevice << "baud:" << retired.serialBaud;
     }
 #endif
-    // Keep only the retiring devices alive while the decoder notifies observers.
-    if (installed && positionManager) {
-        positionManager->resetNmeaSourceDevice(device);
+    // Registration callbacks may replace or destroy this owner; retired resources remain local.
+    retired.binding.registration.reset();
+    if (!guard || _revision != revision || _decoderGeneration != generation) {
+        return;
     }
-    if (guard && _revision == revision && resetStatus) {
+    if (retired.binding.decoder && !_destroying) {
+        emit sourceChanged();
+        if (!guard || _revision != revision || _decoderGeneration != generation) {
+            return;
+        }
+        emit activityChanged();
+    }
+    if (guard && _revision == revision && _decoderGeneration == generation && resetStatus) {
         _setConnectionState(ConnectionState::Disabled);
     }
+}
+
+void NMEASourceManager::_retireDecoder(const char* reason)
+{
+    const quint64 generation = ++_decoderGeneration;
+    auto retired = std::exchange(_input.binding, {});
+    QObject::disconnect(retired.closedConnection);
+    QObject::disconnect(retired.destroyedConnection);
+    if (!retired.decoder) {
+        return;
+    }
+    retired.decoder->disconnect(this);
+    qCDebug(NMEASourceManagerLog) << "NMEA decoder retired:" << reason << "generation:" << generation;
+    const QPointer<NMEASourceManager> guard(this);
+    retired.registration.reset();
+    if (guard && generation == _decoderGeneration && !_destroying) {
+        emit sourceChanged();
+        if (guard && generation == _decoderGeneration) {
+            emit activityChanged();
+        }
+    }
+}
+
+void NMEASourceManager::_startDecoder(QIODevice* device)
+{
+    if (_destroying) {
+        return;
+    }
+    if (!_positionManager || !_positionManager->scheduler() || QThread::currentThread() != thread() ||
+        (device && device->thread() != thread())) {
+        qCWarning(NMEASourceManagerLog) << "NMEA device requires matching thread affinity and a live scheduler";
+        return;
+    }
+    const QPointer<NMEASourceManager> guard(this);
+    const QPointer<QIODevice> deviceGuard(device);
+    const quint64 revision = _revision;
+    const quint64 generation = _decoderGeneration + 1;
+    _retireDecoder(device ? "device replacement" : "device cleared");
+    if (!guard || generation != _decoderGeneration || revision != _revision || !deviceGuard) {
+        return;
+    }
+    auto decoder = std::make_unique<NMEADecoderSession>(nullptr, _positionManager->scheduler());
+    if (!decoder->start(deviceGuard)) {
+        qCWarning(NMEASourceManagerLog) << "NMEA decoder could not be started";
+        return;
+    }
+    _input.binding.device = deviceGuard;
+    _input.binding.decoder = std::move(decoder);
+    connect(_input.binding.decoder.get(), &NMEADecoderSession::activityChanged, this,
+            &NMEASourceManager::activityChanged);
+    _input.binding.closedConnection = connect(
+        deviceGuard, &QIODevice::aboutToClose, this,
+        [this, generation]() {
+            if (generation == _decoderGeneration) {
+                _stop("device closed");
+            }
+        },
+        Qt::QueuedConnection);
+    _input.binding.destroyedConnection = connect(deviceGuard, &QObject::destroyed, this, [this, generation]() {
+        if (generation == _decoderGeneration) {
+            _stop("device destroyed");
+        }
+    });
+    auto registration = _positionManager->registerPositionSource(GPSPositionService::SelectedSource::Nmea,
+                                                                 _input.binding.decoder->positionSource(), health());
+    if (guard && generation == _decoderGeneration) {
+        _input.binding.registration = std::move(registration);
+        qCDebug(NMEASourceManagerLog) << "NMEA decoder installed:" << "generation:" << generation
+                                      << "registered:" << bool(_input.binding.registration);
+        emit sourceChanged();
+    }
+}
+
+GPSSourceHealth* NMEASourceManager::health() const
+{
+    return _input.binding.decoder ? _input.binding.decoder->health() : nullptr;
+}
+
+bool NMEASourceManager::receiving() const
+{
+    return _input.binding.decoder && _input.binding.decoder->receiving();
+}
+
+bool NMEASourceManager::hasData() const
+{
+    return _input.binding.decoder && _input.binding.decoder->hasReceivedData();
 }
 
 QString NMEASourceManager::connectionStatusText() const
@@ -156,11 +252,11 @@ void NMEASourceManager::update()
         return;
     }
     const int source = _settings->nmeaSource()->rawValue().toInt();
-    if (_source != source) {
+    if (_input.source != source) {
         if (!retire(source == AutoConnectSettings::NmeaSourceDisabled ? "source disabled" : "source setting changed")) {
             return;
         }
-        _source = source;
+        _input.source = source;
     }
     if (source == AutoConnectSettings::NmeaSourceDisabled) {
         _setConnectionState(ConnectionState::Disabled);
@@ -168,13 +264,13 @@ void NMEASourceManager::update()
     }
     if (source == AutoConnectSettings::NmeaSourceUdp) {
         const quint16 port = _settings->nmeaUdpPort()->rawValue().toUInt();
-        if (_udp && _udp->isOpen() && _udp->localPort() == port) {
+        if (_input.udp && _input.udp->isOpen() && _input.udp->localPort() == port) {
             return;
         }
-        if (!retire(_udp && !_udp->isOpen() ? "UDP device closed" : "UDP port setting changed")) {
+        if (!retire(_input.udp && !_input.udp->isOpen() ? "UDP device closed" : "UDP port setting changed")) {
             return;
         }
-        _source = source;
+        _input.source = source;
         auto socket = std::make_unique<UdpIODevice>();
         if (!socket->bind(QHostAddress::AnyIPv4, port)) {
             qCDebug(NMEASourceManagerLog) << "Cannot bind NMEA UDP port" << port << socket->errorString();
@@ -187,28 +283,26 @@ void NMEASourceManager::update()
         connect(
             socket.get(), &UdpIODevice::peerReplaced, this,
             [this, current = QPointer<UdpIODevice>(socket.get())](const QString& previousPeer, const QString& peer) {
-                if (current && _udp.get() == current && _positionManager &&
-                    _positionManager->nmeaSourceDevice() == current) {
+                if (current && _input.udp.get() == current && _positionManager && _input.binding.device == current) {
                     qCDebug(NMEASourceManagerLog)
                         << "NMEA session restart:"
                         << "reason: UDP peer replaced"
                         << "port:" << current->localPort() << "previousPeer:" << previousPeer << "peer:" << peer;
                     // Retire partial sentences, Qt epoch state, and satellite assembly together.
                     ++_revision;
-                    _positionManager->setNmeaSourceDevice(current);
+                    _startDecoder(current);
                 }
             });
         socket->open(QIODevice::ReadOnly | QIODevice::Unbuffered);
-        _udp = std::move(socket);
+        _input.udp = std::move(socket);
         qCDebug(NMEASourceManagerLog) << "NMEA input started:"
                                       << "source: UDP"
-                                      << "port:" << _udp->localPort();
-        _sourceInstalled = true;
-        _positionManager->setNmeaSourceDevice(_udp.get());
+                                      << "port:" << _input.udp->localPort();
+        _startDecoder(_input.udp.get());
         if (current()) {
-            _sourceInstalled = _positionManager->nmeaSourceDevice() == _udp.get();
-            _setConnectionState(_sourceInstalled ? ConnectionState::Connected : ConnectionState::Error,
-                                _sourceInstalled ? QString() : tr("The NMEA decoder could not be started."));
+            const bool installed = bool(_input.binding.registration);
+            _setConnectionState(installed ? ConnectionState::Connected : ConnectionState::Error,
+                                installed ? QString() : tr("The NMEA decoder could not be started."));
         }
         return;
     }
@@ -228,23 +322,23 @@ void NMEASourceManager::update()
                 break;
             }
         }
-        if (!present || device != _serialDevice || baud != _serialBaud) {
+        if (!present || device != _input.serialDevice || baud != _input.serialBaud) {
             const char* reason = "serial port missing";
-            if (device != _serialDevice) {
+            if (device != _input.serialDevice) {
                 reason = "serial port setting changed";
-            } else if (baud != _serialBaud) {
+            } else if (baud != _input.serialBaud) {
                 reason = "serial baud setting changed";
             }
             if (!retire(reason)) {
                 return;
             }
-            _source = source;
+            _input.source = source;
         }
         if (!present) {
             _setConnectionState(ConnectionState::WaitingForDevice);
             return;
         }
-        if (_serial) {
+        if (_input.serial) {
             return;
         }
         auto reservation = ports->reservePort(device);
@@ -263,20 +357,20 @@ void NMEASourceManager::update()
                                                             .arg(serial->errorString()));
             return;
         }
-        _serialDevice = device;
-        _serialBaud = baud;
-        _reservation = std::move(reservation);
-        _serial = std::move(serial);
+        _input.serialDevice = device;
+        _input.serialBaud = baud;
+        _input.reservation = std::move(reservation);
+        _input.serial = std::move(serial);
         connect(
-            _serial.get(), &QSerialPort::errorOccurred, this,
-            [this, current = QPointer<QSerialPort>(_serial.get())](QSerialPort::SerialPortError error) {
-                if (current && _serial.get() == current && error != QSerialPort::NoError &&
+            _input.serial.get(), &QSerialPort::errorOccurred, this,
+            [this, current = QPointer<QSerialPort>(_input.serial.get())](QSerialPort::SerialPortError error) {
+                if (current && _input.serial.get() == current && error != QSerialPort::NoError &&
                     error != QSerialPort::TimeoutError) {
                     qCDebug(NMEASourceManagerLog) << "NMEA serial error:"
-                                                  << "port:" << _serialDevice << "baud:" << _serialBaud
+                                                  << "port:" << _input.serialDevice << "baud:" << _input.serialBaud
                                                   << "error:" << error << current->errorString();
                     const QString message =
-                        tr("NMEA serial device %1 failed: %2").arg(_serialDevice, current->errorString());
+                        tr("NMEA serial device %1 failed: %2").arg(_input.serialDevice, current->errorString());
                     const QPointer<NMEASourceManager> errorGuard(this);
                     const quint64 errorRevision = _revision + 1;
                     _stop("serial error", false);
@@ -288,13 +382,12 @@ void NMEASourceManager::update()
             Qt::QueuedConnection);
         qCDebug(NMEASourceManagerLog) << "NMEA input started:"
                                       << "source: serial"
-                                      << "port:" << _serialDevice << "baud:" << _serialBaud;
-        _sourceInstalled = true;
-        _positionManager->setNmeaSourceDevice(_serial.get());
+                                      << "port:" << _input.serialDevice << "baud:" << _input.serialBaud;
+        _startDecoder(_input.serial.get());
         if (current()) {
-            _sourceInstalled = _positionManager->nmeaSourceDevice() == _serial.get();
-            _setConnectionState(_sourceInstalled ? ConnectionState::Connected : ConnectionState::Error,
-                                _sourceInstalled ? QString() : tr("The NMEA decoder could not be started."));
+            const bool installed = bool(_input.binding.registration);
+            _setConnectionState(installed ? ConnectionState::Connected : ConnectionState::Error,
+                                installed ? QString() : tr("The NMEA decoder could not be started."));
         }
     }
 #else

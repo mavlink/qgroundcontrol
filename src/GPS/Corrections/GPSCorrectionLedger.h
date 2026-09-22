@@ -14,7 +14,21 @@ class GPSCorrectionLedger
 public:
     using Clock = std::function<qint64()>;
 
-    struct Statistics
+    struct DeliveryCounters
+    {
+        quint64 queuedFrames = 0;
+        quint64 queuedBytes = 0;
+        quint64 writtenFrames = 0;
+        quint64 writtenBytes = 0;
+        quint64 transportAcceptedBytes = 0;
+        /// Loss/rejection events, not unique frames; may overlap admitted bytes.
+        quint64 droppedFrames = 0;
+        quint64 droppedBytes = 0;
+        quint64 unconfirmedFrames = 0;
+        quint64 unconfirmedBytes = 0;
+    };
+
+    struct Statistics : DeliveryCounters
     {
         quint64 session = 1;
         bool active = false;
@@ -27,38 +41,15 @@ public:
         quint64 validatedBytes = 0;
         quint64 selectedFrames = 0;
         quint64 selectedBytes = 0;
-        quint64 queuedFrames = 0;
-        quint64 queuedBytes = 0;
-        quint64 writtenFrames = 0;
-        quint64 writtenBytes = 0;
-        quint64 transportAcceptedBytes = 0;
-        /// Loss/rejection events, not unique frames.
-        /// Global selection rejection can coexist with scoped admission.
-        quint64 droppedFrames = 0;
-        /// Rejected/lost bytes across paths; may overlap admitted bytes.
-        quint64 droppedBytes = 0;
-        quint64 unconfirmedFrames = 0;
-        quint64 unconfirmedBytes = 0;
     };
 
-    struct Destination
+    struct Destination : DeliveryCounters
     {
         QString id;
         bool reportsWrites = false;
         quint64 session = 0;
-        quint64 queuedFrames = 0;
-        quint64 queuedBytes = 0;
-        quint64 writtenFrames = 0;
-        quint64 writtenBytes = 0;
-        quint64 transportAcceptedBytes = 0;
-        /// Admission and terminal loss/rejection events, not unique delivery identities.
-        quint64 droppedFrames = 0;
-        /// Accumulates rejected admission bytes and subsequent terminal losses.
-        quint64 droppedBytes = 0;
         quint64 pendingFrames = 0;
         quint64 pendingBytes = 0;
-        quint64 unconfirmedFrames = 0;
-        quint64 unconfirmedBytes = 0;
         qint64 lastActivityMs = 0;
     };
 
@@ -102,6 +93,8 @@ public:
 
 private:
     Statistics* _currentStatistics(const GPSCorrectionFrame& frame);
+    void _recordUnconfirmed(const GPSCorrectionFrame& frame, quint64 bytes, const QString& destination,
+                            quint64 destinationSession);
     template <typename Predicate>
     void _invalidatePending(Predicate matches);
 
@@ -117,7 +110,6 @@ private:
 
     Clock _clock;
     std::array<Statistics, 4> _statistics;
-    QSet<QString> _outputs;
     QMap<QString, QSet<QString>> _outputDestinations;
     QMap<QString, Destination> _destinations;
     QMap<QString, PendingDelivery> _pendingDeliveries;

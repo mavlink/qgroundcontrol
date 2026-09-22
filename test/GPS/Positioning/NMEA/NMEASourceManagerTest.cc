@@ -9,11 +9,13 @@
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQml/QQmlExpression>
+#include <QtTest/QSignalSpy>
 
 #include "AutoConnectSettings.h"
 #include "ColoredSvgImageProvider.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "LogManager.h"
+#include "NMEADecoderSession.h"
 #include "NMEASourceManager.h"
 #include "NMEAUtils.h"
 #include "PositionManager.h"
@@ -26,6 +28,19 @@ namespace {
 const QByteArray kFix =
     "$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A*43\r\n"
     "$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,*76\r\n";
+
+QRegularExpression decoderInstalled(quint64 generation)
+{
+    return QRegularExpression(
+        QStringLiteral("^NMEA decoder installed: generation: %1 registered: true$").arg(generation));
+}
+
+QRegularExpression decoderRetired(const QString& reason, quint64 generation)
+{
+    return QRegularExpression(QStringLiteral("^NMEA decoder retired: %1 generation: %2$")
+                                  .arg(QRegularExpression::escape(reason))
+                                  .arg(generation));
+}
 
 auto enableSourceLogs()
 {
@@ -69,17 +84,19 @@ void NMEASourceManagerTest::_udpSwitchAndDisable()
     verifyExpectedLogMessage();
     expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
                      QRegularExpression(QStringLiteral("NMEA input started:.*source: UDP.*port: %1").arg(firstPort)));
+    expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg, decoderInstalled(3));
     source.update();
     verifyExpectedLogMessage();
-    QVERIFY(source._sourceInstalled);
+    verifyExpectedLogMessage();
+    QVERIFY(source._input.binding.registration);
     const QString category = QStringLiteral("GPS.NMEA.NMEASourceManager");
     const auto initialLogCount = LogManager::capturedMessages(category).size();
-    const auto initialHealth = position.nmeaHealth();
+    const auto initialHealth = (position.nmeaInput() ? position.nmeaInput()->health() : nullptr);
     for (int i = 0; i < 3; ++i) {
         source.update();
     }
     QCOMPARE(LogManager::capturedMessages(category).size(), initialLogCount);
-    QCOMPARE(position.nmeaHealth(), initialHealth);
+    QCOMPARE((position.nmeaInput() ? position.nmeaInput()->health() : nullptr), initialHealth);
     QUdpSocket sender;
     QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, firstPort), kFix.size());
     QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
@@ -88,48 +105,61 @@ void NMEASourceManagerTest::_udpSwitchAndDisable()
     const quint16 secondPort = spare.localPort();
     spare.close();
     settings->nmeaUdpPort()->setRawValue(secondPort);
+    expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
+                     decoderRetired(QStringLiteral("UDP port setting changed"), source._decoderGeneration + 1));
     expectLogMessage(
         "GPS.NMEA.NMEASourceManager", QtDebugMsg,
         QRegularExpression(
             QStringLiteral("NMEA input retired:.*reason: UDP port setting changed.*port: %1").arg(firstPort)));
     expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
                      QRegularExpression(QStringLiteral("NMEA input started:.*source: UDP.*port: %1").arg(secondPort)));
+    expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg, decoderInstalled(source._decoderGeneration + 2));
     source.update();
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
     QVERIFY(!position.gcsPosition().isValid());
-    QVERIFY(source._sourceInstalled);
+    QVERIFY(source._input.binding.registration);
     QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, firstPort), kFix.size());
     QVERIFY(spare.bind(QHostAddress::LocalHost, firstPort, QUdpSocket::DontShareAddress));
     QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, secondPort), kFix.size());
     QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
     saved.setFactValue(settings->autoConnectNmeaPort(), QStringLiteral("/test/missing-nmea"));
     settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceSerial);
+    expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
+                     decoderRetired(QStringLiteral("source setting changed"), source._decoderGeneration + 1));
     expectLogMessage(
         "GPS.NMEA.NMEASourceManager", QtDebugMsg,
         QRegularExpression(
             QStringLiteral("NMEA input retired:.*reason: source setting changed.*port: %1").arg(secondPort)));
     source.update();
     verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
     QVERIFY(!position.gcsPosition().isValid());
-    QVERIFY(!source._sourceInstalled);
-    QVERIFY(!source._udp);
+    QVERIFY(!source._input.binding.registration);
+    QVERIFY(!source._input.udp);
     settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceUdp);
     expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
                      QRegularExpression(QStringLiteral("NMEA input started:.*source: UDP.*port: %1").arg(secondPort)));
+    expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg, decoderInstalled(source._decoderGeneration + 3));
     source.update();
+    verifyExpectedLogMessage();
     verifyExpectedLogMessage();
     QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, secondPort), kFix.size());
     QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
     settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceDisabled);
+    expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
+                     decoderRetired(QStringLiteral("source disabled"), source._decoderGeneration + 1));
     expectLogMessage(
         "GPS.NMEA.NMEASourceManager", QtDebugMsg,
         QRegularExpression(QStringLiteral("NMEA input retired:.*reason: source disabled.*port: %1").arg(secondPort)));
     source.update();
     verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
     QVERIFY(!position.gcsPosition().isValid());
-    QVERIFY(!source._sourceInstalled);
-    QVERIFY(!source._udp);
+    QVERIFY(!source._input.binding.registration);
+    QVERIFY(!source._input.udp);
     expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
                      QRegularExpression(QStringLiteral("NMEA source manager shutdown:")));
     sourceOwner.reset();
@@ -156,12 +186,12 @@ void NMEASourceManagerTest::_bindFailureAndTeardown()
                          QRegularExpression(QStringLiteral("Cannot bind NMEA UDP port %1").arg(port)));
         source.update();
         verifyExpectedLogMessage();
-        QVERIFY(!source._sourceInstalled);
-        QVERIFY(!source._udp);
+        QVERIFY(!source._input.binding.registration);
+        QVERIFY(!source._input.udp);
         QCOMPARE(position.nmeaInput(), &source);
         QCOMPARE(source.connectionState(), NMEASourceManager::ConnectionState::Error);
         QVERIFY(source.errorMessage().contains(QString::number(port)));
-        QVERIFY(!position.nmeaHealth());
+        QVERIFY(!(position.nmeaInput() ? position.nmeaInput()->health() : nullptr));
         QQmlEngine engine;
         engine.addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
         engine.addImportPath(QStringLiteral("qrc:/qml"));
@@ -178,9 +208,11 @@ void NMEASourceManagerTest::_bindFailureAndTeardown()
         occupied.close();
         expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
                          QRegularExpression(QStringLiteral("NMEA input started:.*source: UDP.*port: %1").arg(port)));
+        expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg, decoderInstalled(source._decoderGeneration + 2));
         source.update();
         verifyExpectedLogMessage();
-        QVERIFY(source._sourceInstalled);
+        verifyExpectedLogMessage();
+        QVERIFY(source._input.binding.registration);
         QCOMPARE(source.connectionState(), NMEASourceManager::ConnectionState::Connected);
         QVERIFY(source.errorMessage().isEmpty());
         QVERIFY(!status->property("visible").toBool());
@@ -189,10 +221,13 @@ void NMEASourceManagerTest::_bindFailureAndTeardown()
         QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
         expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
                          QRegularExpression(QStringLiteral("NMEA source manager shutdown:")));
+        expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
+                         decoderRetired(QStringLiteral("shutdown"), source._decoderGeneration + 1));
         expectLogMessage(
             "GPS.NMEA.NMEASourceManager", QtDebugMsg,
             QRegularExpression(QStringLiteral("NMEA input retired:.*reason: shutdown.*port: %1").arg(port)));
     }
+    verifyExpectedLogMessage();
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
     QVERIFY(!position.nmeaInput());
@@ -233,7 +268,7 @@ void NMEASourceManagerTest::_notificationSupersedesLifecycle()
     const bool retiring = phase == QStringLiteral("retired") || phase == QStringLiteral("position");
     if (retiring) {
         source->update();
-        QVERIFY(position.nmeaHealth());
+        QVERIFY((position.nmeaInput() ? position.nmeaInput()->health() : nullptr));
         if (phase == QStringLiteral("position")) {
             QUdpSocket sender;
             QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, firstPort), kFix.size());
@@ -248,8 +283,8 @@ void NMEASourceManagerTest::_notificationSupersedesLifecycle()
         if (std::exchange(handled, true)) {
             return;
         }
-        if (source->_udp) {
-            retired = source->_udp.get();
+        if (source->_input.udp) {
+            retired = source->_input.udp.get();
         }
         if (action == QStringLiteral("delete")) {
             source.reset();
@@ -258,21 +293,24 @@ void NMEASourceManagerTest::_notificationSupersedesLifecycle()
         } else {
             settings->nmeaUdpPort()->setRawValue(replacementPort);
             source->update();
-            QVERIFY(source->_udp);
-            replacement = source->_udp.get();
+            QVERIFY(source->_input.udp);
+            replacement = source->_input.udp.get();
         }
     };
     if (phase == QStringLiteral("position")) {
         connect(&position, &QGCPositionManager::gcsPositionChanged, &observer, supersede);
+    } else if (phase == QStringLiteral("install-reset")) {
+        connect(&position, &QGCPositionManager::positionInfoUpdated, &observer, supersede);
     } else {
-        connect(&position, &QGCPositionManager::nmeaSourceChanged, &observer, [&] {
-            if ((position.nmeaHealth() != nullptr) == (phase == QStringLiteral("installed"))) {
+        connect(source.get(), &NMEASourceManager::sourceChanged, &observer, [&] {
+            if (((position.nmeaInput() ? position.nmeaInput()->health() : nullptr) != nullptr) ==
+                (phase == QStringLiteral("installed"))) {
                 supersede();
             }
         });
     }
     if (retiring) {
-        retired = source->_udp.get();
+        retired = source->_input.udp.get();
         source->stop();
     } else {
         source->update();
@@ -280,19 +318,19 @@ void NMEASourceManagerTest::_notificationSupersedesLifecycle()
     QVERIFY(handled);
     QVERIFY(retired.isNull());
     if (action == QStringLiteral("replace")) {
-        QVERIFY(source->_sourceInstalled);
-        QCOMPARE(source->_udp.get(), replacement.data());
-        QCOMPARE(source->_udp->localPort(), replacementPort);
-        QVERIFY(position.nmeaHealth());
+        QVERIFY(source->_input.binding.registration);
+        QCOMPARE(source->_input.udp.get(), replacement.data());
+        QCOMPARE(source->_input.udp->localPort(), replacementPort);
+        QVERIFY((position.nmeaInput() ? position.nmeaInput()->health() : nullptr));
         QUdpSocket sender;
         QCOMPARE(sender.writeDatagram(kFix, QHostAddress::LocalHost, replacementPort), kFix.size());
         QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
     } else {
-        QVERIFY(!position.nmeaHealth());
+        QVERIFY(!(position.nmeaInput() ? position.nmeaInput()->health() : nullptr));
         QVERIFY(!position.gcsPosition().isValid());
         if (source) {
-            QVERIFY(!source->_sourceInstalled);
-            QVERIFY(!source->_udp);
+            QVERIFY(!source->_input.binding.registration);
+            QVERIFY(!source->_input.udp);
         }
     }
     QVERIFY(firstProbe.bind(QHostAddress::AnyIPv4, firstPort, QUdpSocket::DontShareAddress));
@@ -318,26 +356,32 @@ void NMEASourceManagerTest::_externalReplacementKeepsOwnership()
     saved.setFactValue(settings->nmeaUdpPort(), port);
     QGCPositionManager position;
     SequentialTestDevice replacement;
+    NMEADecoderSession replacementDecoder;
+    QVERIFY(replacementDecoder.start(&replacement));
+    GPSPositionSourceRegistration replacementRegistration;
     auto source = std::make_unique<NMEASourceManager>(settings, &position);
     QObject observer;
     bool replaced = false;
     if (duringInstall) {
-        connect(&position, &QGCPositionManager::nmeaSourceChanged, &observer, [&] {
+        connect(source.get(), &NMEASourceManager::sourceChanged, &observer, [&] {
             if (!std::exchange(replaced, true)) {
-                position.setNmeaSourceDevice(&replacement);
+                replacementRegistration =
+                    position.registerPositionSource(GPSPositionService::SelectedSource::Nmea,
+                                                    replacementDecoder.positionSource(), replacementDecoder.health());
             }
         });
     }
     source->update();
     if (!duringInstall) {
-        position.setNmeaSourceDevice(&replacement);
+        replacementRegistration = position.registerPositionSource(
+            GPSPositionService::SelectedSource::Nmea, replacementDecoder.positionSource(), replacementDecoder.health());
     }
-    QCOMPARE(position.nmeaSourceDevice(), &replacement);
-    const QPointer<GPSSourceHealth> health(position.nmeaHealth());
+    QCOMPARE(position.sourceHealth(), replacementDecoder.health());
+    const QPointer<GPSSourceHealth> health(position.sourceHealth());
     QVERIFY(health);
     source->stop();
     source.reset();
-    QCOMPARE(position.nmeaHealth(), health.data());
+    QCOMPARE(position.sourceHealth(), health.data());
     replacement.feed(kFix);
     QTRY_VERIFY_WITH_TIMEOUT(position.gcsPosition().isValid(), TestTimeout::mediumMs());
     QVERIFY(probe.bind(QHostAddress::AnyIPv4, port, QUdpSocket::DontShareAddress));
@@ -361,7 +405,7 @@ void NMEASourceManagerTest::_configuredSerialRoutingSurvivesReconnect()
         QVERIFY(!ports->canAutoConnectPort(first));
         QVERIFY(!ports->isPortReserved(first));
         source.update();
-        QVERIFY(!source._sourceInstalled);
+        QVERIFY(!source._input.binding.registration);
         QCOMPARE(source.connectionState(), NMEASourceManager::ConnectionState::WaitingForDevice);
         QVERIFY(!source.connectionStatusText().isEmpty());
         source.stop();
@@ -466,35 +510,44 @@ void NMEASourceManagerTest::_udpActivityAndSatellites()
     verifyExpectedLogMessage();
     expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
                      QRegularExpression(QStringLiteral("NMEA input started:.*source: UDP.*port: %1").arg(port)));
+    expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg, decoderInstalled(3));
     source.update();
     verifyExpectedLogMessage();
-    QVERIFY(position.nmeaHealth());
-    QVERIFY(!position.nmeaReceiving());
-    QVERIFY(!position.nmeaHasData());
-    QCOMPARE(position.nmeaHealth()->satellitesInUseCount(), -1);
+    verifyExpectedLogMessage();
+    QVERIFY((position.nmeaInput() ? position.nmeaInput()->health() : nullptr));
+    QVERIFY(!(position.nmeaInput() && position.nmeaInput()->receiving()));
+    QVERIFY(!(position.nmeaInput() && position.nmeaInput()->hasData()));
+    QCOMPARE((position.nmeaInput() ? position.nmeaInput()->health() : nullptr)->satellitesInUseCount(), -1);
     QUdpSocket sender;
     const auto data = kFix + NMEAUtils::repairChecksum("$GPGSV,1,1,01,01,40,083,41");
     QCOMPARE(sender.writeDatagram(data, QHostAddress::LocalHost, port), data.size());
-    QTRY_VERIFY_WITH_TIMEOUT(position.nmeaReceiving(), TestTimeout::shortMs());
-    QTRY_VERIFY_WITH_TIMEOUT(position.nmeaHealth()->usable(), TestTimeout::mediumMs());
-    QTRY_COMPARE_WITH_TIMEOUT(position.nmeaHealth()->satellitesInViewCount(), 1, TestTimeout::shortMs());
-    QCOMPARE(position.nmeaHealth()->satellitesInUseCount(), 8);
-    const QPointer<GPSSourceHealth> originalHealth(position.nmeaHealth());
-    const QPointer<UdpIODevice> originalSocket(source._udp.get());
-    QSignalSpy peerChanges(source._udp.get(), &UdpIODevice::peerReplaced);
+    QTRY_VERIFY_WITH_TIMEOUT((position.nmeaInput() && position.nmeaInput()->receiving()), TestTimeout::shortMs());
+    QTRY_VERIFY_WITH_TIMEOUT((position.nmeaInput() ? position.nmeaInput()->health() : nullptr)->usable(),
+                             TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(
+        (position.nmeaInput() ? position.nmeaInput()->health() : nullptr)->satellitesInViewCount(), 1,
+        TestTimeout::shortMs());
+    QCOMPARE((position.nmeaInput() ? position.nmeaInput()->health() : nullptr)->satellitesInUseCount(), 8);
+    const QPointer<GPSSourceHealth> originalHealth((position.nmeaInput() ? position.nmeaInput()->health() : nullptr));
+    const QPointer<UdpIODevice> originalSocket(source._input.udp.get());
+    QSignalSpy peerChanges(source._input.udp.get(), &UdpIODevice::peerReplaced);
     QUdpSocket replacement;
     {
-        QSignalSpy ready(source._udp.get(), &QIODevice::readyRead);
+        QSignalSpy ready(source._input.udp.get(), &QIODevice::readyRead);
         const QByteArray otherData("other sender\n");
         QCOMPARE(replacement.writeDatagram(otherData, QHostAddress::LocalHost, port), otherData.size());
         QVERIFY(!ready.wait(100));
         QVERIFY(peerChanges.isEmpty());
     }
-    QTRY_VERIFY_WITH_TIMEOUT(!position.nmeaReceiving(), TestTimeout::mediumMs());
-    QVERIFY(position.nmeaHasData());
-    QTRY_VERIFY_WITH_TIMEOUT(!position.nmeaHealth()->usable(), TestTimeout::shortMs());
-    QTRY_COMPARE_WITH_TIMEOUT(position.nmeaHealth()->satellitesInViewCount(), -1, TestTimeout::shortMs());
-    QTRY_COMPARE_WITH_TIMEOUT(position.nmeaHealth()->satellitesInUseCount(), -1, TestTimeout::shortMs());
+    QTRY_VERIFY_WITH_TIMEOUT(!(position.nmeaInput() && position.nmeaInput()->receiving()), TestTimeout::mediumMs());
+    QVERIFY((position.nmeaInput() && position.nmeaInput()->hasData()));
+    QTRY_VERIFY_WITH_TIMEOUT(!(position.nmeaInput() ? position.nmeaInput()->health() : nullptr)->usable(),
+                             TestTimeout::shortMs());
+    QTRY_COMPARE_WITH_TIMEOUT(
+        (position.nmeaInput() ? position.nmeaInput()->health() : nullptr)->satellitesInViewCount(), -1,
+        TestTimeout::shortMs());
+    QTRY_COMPARE_WITH_TIMEOUT((position.nmeaInput() ? position.nmeaInput()->health() : nullptr)->satellitesInUseCount(),
+                              -1, TestTimeout::shortMs());
     QByteArray resumed;
     for (auto line : kFix.split('\n')) {
         if (!line.trimmed().isEmpty()) {
@@ -515,28 +568,37 @@ void NMEASourceManagerTest::_udpActivityAndSatellites()
                                                 .arg(port)
                                                 .arg(sender.localPort())
                                                 .arg(replacement.localPort())));
+        expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
+                         decoderRetired(QStringLiteral("device replacement"), source._decoderGeneration + 1));
+        expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg, decoderInstalled(source._decoderGeneration + 1));
     }
     QCOMPARE(resumedSender.writeDatagram(resumed, QHostAddress::LocalHost, port), resumed.size());
-    QTRY_VERIFY_WITH_TIMEOUT(position.nmeaReceiving(), TestTimeout::shortMs());
-    QTRY_VERIFY_WITH_TIMEOUT(position.nmeaHealth()->usable(), TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT((position.nmeaInput() && position.nmeaInput()->receiving()), TestTimeout::shortMs());
+    QTRY_VERIFY_WITH_TIMEOUT((position.nmeaInput() ? position.nmeaInput()->health() : nullptr)->usable(),
+                             TestTimeout::mediumMs());
     QCOMPARE(peerChanges.size(), replaceSender ? 1 : 0);
     QCOMPARE(originalHealth.isNull(), replaceSender);
     if (replaceSender) {
         verifyExpectedLogMessage();
+        verifyExpectedLogMessage();
+        verifyExpectedLogMessage();
     }
-    QCOMPARE(LogManager::capturedMessages(category).size(), previousLogCount + (replaceSender ? 1 : 0));
-    QCOMPARE(source._udp.get(), originalSocket.data());
+    QCOMPARE(LogManager::capturedMessages(category).size(), previousLogCount + (replaceSender ? 3 : 0));
+    QCOMPARE(source._input.udp.get(), originalSocket.data());
     QCOMPARE(settings->nmeaUdpPort()->rawValue().toUInt(), uint(port));
-    QCOMPARE(position.nmeaHealth()->satellitesInViewCount(), -1);
-    QCOMPARE(position.nmeaHealth()->satellitesInUseCount(), 8);
+    QCOMPARE((position.nmeaInput() ? position.nmeaInput()->health() : nullptr)->satellitesInViewCount(), -1);
+    QCOMPARE((position.nmeaInput() ? position.nmeaInput()->health() : nullptr)->satellitesInUseCount(), 8);
+    expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
+                     decoderRetired(QStringLiteral("stop requested"), source._decoderGeneration + 1));
     expectLogMessage(
         "GPS.NMEA.NMEASourceManager", QtDebugMsg,
         QRegularExpression(QStringLiteral("NMEA input retired:.*reason: stop requested.*port: %1").arg(port)));
     source.stop();
     verifyExpectedLogMessage();
-    QVERIFY(!position.nmeaHealth());
-    QVERIFY(!position.nmeaReceiving());
-    QVERIFY(!position.nmeaHasData());
+    verifyExpectedLogMessage();
+    QVERIFY(!(position.nmeaInput() ? position.nmeaInput()->health() : nullptr));
+    QVERIFY(!(position.nmeaInput() && position.nmeaInput()->receiving()));
+    QVERIFY(!(position.nmeaInput() && position.nmeaInput()->hasData()));
     expectLogMessage("GPS.NMEA.NMEASourceManager", QtDebugMsg,
                      QRegularExpression(QStringLiteral("NMEA source manager shutdown:")));
     sourceOwner.reset();

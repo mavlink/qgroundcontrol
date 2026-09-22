@@ -47,11 +47,11 @@ public:
 
     void setFreshnessTimeoutMs(int timeoutMs);
 
-    State state() const { return _state; }
+    State state() const { return _position.state; }
 
-    bool usable() const { return _state == State::Usable; }
+    bool usable() const { return state() == State::Usable; }
 
-    GPSObservation observation() const { return _observation; }
+    GPSObservation observation() const { return _position.observation; }
 
     quint64 observationRevision() const { return _observationRevision; }
 
@@ -59,17 +59,17 @@ public:
         GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation,
         std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
 
-    QGeoCoordinate coordinate() const { return usable() ? _observation.coordinate() : QGeoCoordinate(); }
+    QGeoCoordinate coordinate() const { return usable() ? _position.observation.coordinate() : QGeoCoordinate(); }
 
     double horizontalAccuracy() const;
 
-    QDateTime receivedAt() const { return _observation.receivedAt; }
+    QDateTime receivedAt() const { return _position.observation.receivedAt; }
 
-    int satellitesInViewCount() const { return _satellitesInViewCount; }
+    int satellitesInViewCount() const { return _satelliteCounts.inView; }
 
     int satellitesInUseCount() const
     {
-        return _fixSatellitesInUseCount >= 0 ? _fixSatellitesInUseCount : _satellitesInUseCount;
+        return _fixSatellites.count >= 0 ? _fixSatellites.count : _satelliteCounts.inUse;
     }
 
     void updateObservation(const GPSObservation& observation);
@@ -85,6 +85,7 @@ signals:
 private:
     void _logStateChange(State previous) const;
     void _setState(State state);
+    State _updatedPositionState() const;
     void _schedulePositionExpiry();
     qint64 _age(quint64 timestampUs) const;
     std::chrono::microseconds _remaining(quint64 timestampUs,
@@ -92,17 +93,32 @@ private:
 
     void _scheduleFixSatelliteExpiry();
 
+    struct PositionState
+    {
+        GPSObservation observation;
+        State state = State::NoData;
+        bool invalidated = true;
+    };
+
+    struct SatelliteCounts
+    {
+        int inView = -1;
+        int inUse = -1;
+    };
+
+    struct FixSatelliteCount
+    {
+        int count = -1;
+        quint64 receivedAtUs = 0;
+    };
+
     int _freshnessTimeoutMs = FRESHNESS_TIMEOUT_MS;
-    GPSObservation _observation;
-    State _state = State::NoData;
-    bool _positionInvalidated = true;
+    PositionState _position;
     QPointer<RuntimeScheduler> _scheduler;
     ScheduledTask _positionTask;
     ScheduledTask _fixSatellitesTask;
-    int _satellitesInViewCount = -1;
-    int _satellitesInUseCount = -1;
-    int _fixSatellitesInUseCount = -1;
-    quint64 _fixSatellitesTimestampUs = 0;
+    SatelliteCounts _satelliteCounts;
+    FixSatelliteCount _fixSatellites;
     quint64 _observationRevision = 0;
     quint64 _revision = 0;
 };

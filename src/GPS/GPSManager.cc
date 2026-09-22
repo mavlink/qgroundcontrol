@@ -1,12 +1,9 @@
 #include "GPSManager.h"
 
 #include "AppMessages.h"
-#include "Fact.h"
-#include "FactGroup.h"
 #include "GPSCorrectionManager.h"
 #include "GPSMavlinkOutput.h"
 #include "GPSObservation.h"
-#include "GPSRTKFactGroup.h"
 #include "GPSRtk.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
@@ -72,8 +69,7 @@ GPSManager::GPSManager(QObject* parent)
     , _ntripManager(NTRIPManager::instance())
 {
     qCDebug(GPSManagerLog) << this;
-    auto* output = new GPSMavlinkOutput(this);
-    _corrections->rtcmMavlink()->setOutputProvider([output]() { return output->outputs(); });
+    _corrections->rtcmMavlink()->setOutputProvider(createGpsMavlinkOutputProvider());
     _gpsRtk->setCorrectionManager(_corrections);
     _ntripManager->setCorrectionManager(_corrections);
 }
@@ -104,19 +100,6 @@ void GPSManager::_configureGgaProviders()
         Vehicle* vehicle = activeVehicleForGga();
         return vehicle ? ggaPosition(vehicle->acceptedPositionObservation(), QStringLiteral("Vehicle EKF"))
                        : PositionResult{};
-    });
-    _ntripManager->setGgaPositionProvider(Source::RTKBase, [rtk = QPointer<GPSRtk>(_gpsRtk)]() -> PositionResult {
-        FactGroup* facts = rtk ? rtk->gpsRtkFactGroup() : nullptr;
-        Fact* valid = facts ? facts->getFact(QStringLiteral("valid")) : nullptr;
-        Fact* latitude = facts ? facts->getFact(QStringLiteral("currentLatitude")) : nullptr;
-        Fact* longitude = facts ? facts->getFact(QStringLiteral("currentLongitude")) : nullptr;
-        Fact* altitude = facts ? facts->getFact(QStringLiteral("currentAltitude")) : nullptr;
-        if (!valid || !valid->rawValue().toBool() || !latitude || !longitude || !altitude) {
-            return {};
-        }
-        return ggaPosition(QGeoCoordinate(latitude->rawValue().toDouble(), longitude->rawValue().toDouble(),
-                                          altitude->rawValue().toDouble()),
-                           QStringLiteral("RTK Base"), GPSAltitudeDatum::Ellipsoid);
     });
     _ntripManager->setGgaPositionProvider(Source::GCSPosition, []() -> PositionResult {
         auto* manager = QGCPositionManager::instance();

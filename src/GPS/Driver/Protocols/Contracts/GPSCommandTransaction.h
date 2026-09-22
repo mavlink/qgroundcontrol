@@ -5,7 +5,6 @@
 #include <string>
 
 #include "GPSConfigurationEvidence.h"
-#include "GPSIOStatus.h"
 #include "GPSReceiverSettingId.h"
 
 using GPSCommandOutcome = GPSConfigurationOutcome;

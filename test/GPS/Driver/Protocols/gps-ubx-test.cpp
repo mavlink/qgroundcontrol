@@ -69,7 +69,7 @@ enum class SurveyReply
 class Receiver
 {
 public:
-    GPSNativeIntegrityReport integrity;
+    GPSIntegrityReport integrity;
     unsigned integrityCount = 0;
 
     int readback_mode = 0;
@@ -480,7 +480,7 @@ public:
         };
         result.decoded = [this](const GPSDecodedBatch& batch) {
             for (const auto& event : batch.events) {
-                if (const auto* report = std::get_if<GPSNativeIntegrityReport>(&event)) {
+                if (const auto* report = std::get_if<GPSIntegrityReport>(&event)) {
                     integrity = *report;
                     ++integrityCount;
                 }
@@ -507,8 +507,8 @@ struct Fixture
     {
         gps_test_time = 0;
         gps_test_warnings.clear();
-        base.surveyInAccMeters = 1.25;
-        base.surveyInDurationSecs = 60;
+        std::get<GPSBaseStationConfig::SurveyIn>(base.mode).accuracyMeters = 1.25;
+        std::get<GPSBaseStationConfig::SurveyIn>(base.mode).durationSecs = 60;
     }
 
     int configure(GPSProtocol::OutputMode output = GPSProtocol::OutputMode::RTCM)
@@ -617,9 +617,9 @@ static void positionMode(bool legacy, bool base_capable)
         f.receiver.message_rates[UBX_MSG_NAV_SVIN] = 5;
     }
     // A configured fixed base must not be re-applied when selecting GPS output.
-    f.base = {.useFixedBase = true,
-              .fixedPosition = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-              .fixedBaseAccuracyMeters = 1.0f};
+    f.base = {.mode = GPSBaseStationConfig::Fixed{
+                  .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
+                  .accuracyMeters = 1.0f}};
     CHECK(f.configure(GPSProtocol::OutputMode::GPS) == 0);
     CHECK(f.driver.receiverReady());
     CHECK(f.receiver.modes == (base_capable ? std::vector<uint32_t>{0} : std::vector<uint32_t>{}));
@@ -660,10 +660,10 @@ static void positionMode(bool legacy, bool base_capable)
     store(40, 800);
     f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
     CHECK(f.driver.receive(500) & 1);
-    CHECK(f.position.fix_type == GPSPositionReport::FixType::Fix3D);
-    CHECK(f.position.latitude_deg == 20.0);
-    CHECK(f.position.longitude_deg == 10.0);
-    CHECK(f.position.satellites_used == 12);
+    CHECK(f.position.navigation.fixType == GPSPositionReport::FixType::Fix3D);
+    CHECK(f.position.navigation.latitudeDegrees == 20.0);
+    CHECK(f.position.navigation.longitudeDegrees == 10.0);
+    CHECK(f.position.navigation.satellitesUsed == 12);
 }
 
 static void positionModeFailure()
@@ -721,18 +721,18 @@ static void integrityReceipts()
     f.receiver.queue(packet(UBX_MSG_MON_RF, mon_rf));
     f.driver.receive(100);
     CHECK(f.receiver.integrityCount == 1);
-    CHECK(f.position.timestamp == 0);
-    CHECK(f.receiver.integrity.jamming_state == GPSIntegrityReport::JammingState::Critical);
-    const auto rf_stamp = f.receiver.integrity.jamming_state_timestamp;
+    CHECK(f.position.navigation.timestampUs == 0);
+    CHECK(f.receiver.integrity.jamming.state == GPSIntegrityReport::JammingState::Critical);
+    const auto rf_stamp = f.receiver.integrity.jamming.timestampUs;
     CHECK(rf_stamp != 0);
 
     Bytes nav_status(UBX::WIRE_SIZE<ubx_payload_rx_nav_status_t>, 0);
     nav_status[7] = 1 << UBX_RX_NAV_STATUS_SPOOFDETSTATE_SHIFT;
     f.receiver.queue(packet(UBX_MSG_NAV_STATUS, nav_status));
     f.driver.receive(100);
-    const auto spoof_stamp = f.receiver.integrity.spoofing_state_timestamp;
+    const auto spoof_stamp = f.receiver.integrity.spoofing.timestampUs;
     CHECK(spoof_stamp != 0);
-    CHECK(f.receiver.integrity.jamming_state_timestamp == rf_stamp);
+    CHECK(f.receiver.integrity.jamming.timestampUs == rf_stamp);
 
     Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
     pvt[20] = 3;
@@ -741,56 +741,56 @@ static void integrityReceipts()
         gps_test_time += 1000000;
         f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
         CHECK(f.driver.receive(100) & 1);
-        CHECK(f.position.timestamp > rf_stamp);
-        CHECK(f.receiver.integrity.jamming_state_timestamp == rf_stamp);
-        CHECK(f.receiver.integrity.spoofing_state_timestamp == spoof_stamp);
+        CHECK(f.position.navigation.timestampUs > rf_stamp);
+        CHECK(f.receiver.integrity.jamming.timestampUs == rf_stamp);
+        CHECK(f.receiver.integrity.spoofing.timestampUs == spoof_stamp);
     }
     Bytes corrupt = packet(UBX_MSG_MON_RF, mon_rf);
     corrupt.back() ^= 0xff;
     f.receiver.queue(corrupt);
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.jamming_state_timestamp == rf_stamp);
+    CHECK(f.receiver.integrity.jamming.timestampUs == rf_stamp);
     f.receiver.queue(packet(UBX_MSG_MON_RF, mon_rf));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.jamming_state == GPSIntegrityReport::JammingState::Critical);
-    CHECK(f.receiver.integrity.jamming_state_timestamp > rf_stamp);
+    CHECK(f.receiver.integrity.jamming.state == GPSIntegrityReport::JammingState::Critical);
+    CHECK(f.receiver.integrity.jamming.timestampUs > rf_stamp);
 
     Bytes sec_sig(4, 0);
     sec_sig[0] = 2;
     sec_sig[1] = 1 | (3 << 1);
     f.receiver.queue(packet(UBX_MSG_SEC_SIG, sec_sig));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.jamming_state == GPSIntegrityReport::JammingState::Critical);
-    const auto sec_stamp = f.receiver.integrity.jamming_state_timestamp;
+    CHECK(f.receiver.integrity.jamming.state == GPSIntegrityReport::JammingState::Critical);
+    const auto sec_stamp = f.receiver.integrity.jamming.timestampUs;
     gps_test_time += 6000000;
     f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
     CHECK(f.driver.receive(100) & 1);
-    CHECK(f.receiver.integrity.jamming_state_timestamp == sec_stamp);
+    CHECK(f.receiver.integrity.jamming.timestampUs == sec_stamp);
     f.receiver.queue(packet(UBX_MSG_SEC_SIG, sec_sig));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.jamming_state == GPSIntegrityReport::JammingState::Critical);
-    CHECK(f.receiver.integrity.jamming_state_timestamp > sec_stamp);
+    CHECK(f.receiver.integrity.jamming.state == GPSIntegrityReport::JammingState::Critical);
+    CHECK(f.receiver.integrity.jamming.timestampUs > sec_stamp);
 
     Bytes rtcm(UBX::WIRE_SIZE<ubx_payload_rx_rxm_rtcm_t>, 0);
     rtcm[1] = 2 << UBX_RX_RXM_RTCM_MSGUSED_SHIFT;
     f.receiver.queue(packet(UBX_MSG_RXM_RTCM, rtcm));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.corrections_msg_used == GPSIntegrityReport::CorrectionUse::Used);
-    const auto correction_stamp = f.receiver.integrity.corrections_timestamp;
+    CHECK(f.receiver.integrity.corrections.use == GPSIntegrityReport::CorrectionUse::Used);
+    const auto correction_stamp = f.receiver.integrity.corrections.timestampUs;
     CHECK(correction_stamp != 0);
     gps_test_time += 6000000;
     f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
     CHECK(f.driver.receive(100) & 1);
-    CHECK(f.receiver.integrity.corrections_timestamp == correction_stamp);
+    CHECK(f.receiver.integrity.corrections.timestampUs == correction_stamp);
     Bytes cor(UBX::WIRE_SIZE<ubx_payload_rx_rxm_cor_t>, 0);
     cor[0] = 1;
     cor[4] = 29;
     cor[5] = 1;  // msgUsed=2 in statusInfo bits 8..7.
     f.receiver.queue(packet(UBX_MSG_RXM_COR, cor));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.corrections_protocol == GPSNativeIntegrityReport::CORRECTIONS_PROTOCOL_PMP);
-    CHECK(f.receiver.integrity.corrections_msg_used == GPSIntegrityReport::CorrectionUse::Used);
-    CHECK(f.receiver.integrity.corrections_timestamp > correction_stamp);
+    CHECK(f.receiver.integrity.corrections.protocol == GPSIntegrityReport::CorrectionProtocol::PMP);
+    CHECK(f.receiver.integrity.corrections.use == GPSIntegrityReport::CorrectionUse::Used);
+    CHECK(f.receiver.integrity.corrections.timestampUs > correction_stamp);
 }
 
 static void commsDiagnostics()
@@ -939,9 +939,10 @@ static void receiverSettings()
 static void invalidConfiguration()
 {
     using Config = GPSProtocol::GPSConfig;
-    const Config fixed{.base = {.useFixedBase = true,
-                                .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
-                                .fixedBaseAccuracyMeters = 1},
+    const Config fixed{.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 47,
+                                                                                 .longitudeDegrees = 8,
+                                                                                 .altitudeMeters = 500},
+                                                                    .accuracyMeters = 1}},
                        .output_mode = GPSProtocol::OutputMode::RTCM};
     const auto nan = std::numeric_limits<double>::quiet_NaN();
     const auto infinity = std::numeric_limits<float>::infinity();
@@ -951,26 +952,30 @@ static void invalidConfiguration()
         mutate(config.base);
         invalid.push_back(config);
     };
-    addFixed([](auto& base) { base = {.useFixedBase = true}; });
+    addFixed([](auto& base) { base = {.mode = GPSBaseStationConfig::Fixed{}}; });
     for (double value : {nan, double(infinity), 91.0, -91.0}) {
-        addFixed([&](auto& base) { base.fixedPosition.latitudeDegrees = value; });
+        addFixed(
+            [&](auto& base) { std::get<GPSBaseStationConfig::Fixed>(base.mode).position.latitudeDegrees = value; });
     }
     for (double value : {nan, double(infinity), 181.0, -181.0}) {
-        addFixed([&](auto& base) { base.fixedPosition.longitudeDegrees = value; });
+        addFixed(
+            [&](auto& base) { std::get<GPSBaseStationConfig::Fixed>(base.mode).position.longitudeDegrees = value; });
     }
     for (float value : {float(nan), infinity, 21474838.0f, -21474838.0f}) {
-        addFixed([&](auto& base) { base.fixedPosition.altitudeMeters = value; });
+        addFixed([&](auto& base) { std::get<GPSBaseStationConfig::Fixed>(base.mode).position.altitudeMeters = value; });
     }
     for (float value : {float(nan), infinity, -1.0f, std::nextafter(429496.71875f, infinity)}) {
-        addFixed([&](auto& base) { base.fixedBaseAccuracyMeters = value; });
+        addFixed([&](auto& base) { std::get<GPSBaseStationConfig::Fixed>(base.mode).accuracyMeters = value; });
     }
     for (double accuracy : {nan, double(infinity), 0.0, -1.0, 429496.7296}) {
-        invalid.push_back({.base = {.surveyInAccMeters = accuracy, .surveyInDurationSecs = 60},
-                           .output_mode = GPSProtocol::OutputMode::RTCM});
+        invalid.push_back(
+            {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = accuracy, .durationSecs = 60}},
+             .output_mode = GPSProtocol::OutputMode::RTCM});
     }
     for (int64_t duration : {int64_t(0), int64_t(-1), int64_t(UINT32_MAX) + 1}) {
-        invalid.push_back({.base = {.surveyInAccMeters = 1, .surveyInDurationSecs = duration},
-                           .output_mode = GPSProtocol::OutputMode::RTCM});
+        invalid.push_back(
+            {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = duration}},
+             .output_mode = GPSProtocol::OutputMode::RTCM});
     }
     invalid.push_back({.output_mode = static_cast<GPSProtocol::OutputMode>(99)});
     for (const auto& config : invalid) {
@@ -997,14 +1002,14 @@ static void invalidConfiguration()
         f.receiver.legacy = legacy;
         f.receiver.module = legacy ? "NEO-M8P" : "ZED-F9P";
         f.base = fixed.base;
-        f.base.fixedBaseAccuracyMeters = 429496.71875f;
+        std::get<GPSBaseStationConfig::Fixed>(f.base.mode).accuracyMeters = 429496.71875f;
         CHECK(f.configure() == 0);
         CHECK(f.driver.receiverReady());
         CHECK((legacy ? f.receiver.legacy_fixed_accuracy
                       : f.receiver.current_settings.at(UBX_CFG_KEY_TMODE_FIXED_POS_ACC)) == 4294967040u);
     }
     Fixture position;
-    position.base = {.useFixedBase = true};
+    position.base = {.mode = GPSBaseStationConfig::Fixed{}};
     CHECK(position.configure(GPSProtocol::OutputMode::GPS) == 0);
 }
 
@@ -1013,18 +1018,18 @@ static void explicitNoFix()
     Receiver receiver;
     GPSNativePositionReport position;
     GPSNativeUBX driver(receiver.io(), &position, nullptr);
-    CHECK(position.fix_type == GPSPositionReport::FixType::Unknown);
+    CHECK(position.navigation.fixType == GPSPositionReport::FixType::Unknown);
     driver.setDecodeContext({.navigation = true});
     Bytes payload(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
     payload[20] = 3;
     for (const uint8_t flags : std::array<uint8_t, 4>{0, 2, 0x40, 0x80}) {
         payload[21] = UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK;
         CHECK(driver.decode(packet(UBX_MSG_NAV_PVT, payload)).batch.events.size() == 1);
-        CHECK(position.fix_type == GPSPositionReport::FixType::Fix3D);
+        CHECK(position.navigation.fixType == GPSPositionReport::FixType::Fix3D);
         payload[21] = flags;
         const auto decoded = driver.decode(packet(UBX_MSG_NAV_PVT, payload));
         CHECK(decoded.batch.events.size() == 1);
-        CHECK(std::get<GPSNativePositionReport>(decoded.batch.events.front()).fix_type ==
+        CHECK(std::get<GPSNativePositionReport>(decoded.batch.events.front()).navigation.fixType ==
               GPSPositionReport::FixType::NoFix);
         CHECK(!position.vel_ned_valid);
     }
@@ -1113,7 +1118,7 @@ static void discoveryFailures()
         GPSProtocol::GPSConfig config{};
         if (scenario == 7) {
             config.output_mode = GPSProtocol::OutputMode::RTCM;
-            config.base = {.surveyInAccMeters = 1, .surveyInDurationSecs = 60};
+            config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
         }
         unsigned baud = 0;
         CHECK(driver.configure(baud, config) < 0);
@@ -1186,10 +1191,10 @@ static void navigationFixFlags()
                     const auto decoded = driver.decode(packet(UBX::NAV_EOE, end));
                     CHECK(decoded.batch.events.size() == 1);
                     const auto& fix = std::get<GPSNativePositionReport>(decoded.batch.events.front());
-                    CHECK(fix.fix_type == expected);
+                    CHECK(fix.navigation.fixType == expected);
                     CHECK(fix.vel_ned_valid == (expected != Fix::NoFix && expected != Fix::Unknown));
-                    CHECK(fix.latitude_deg == 47 && fix.longitude_deg == 8);
-                    CHECK(std::abs(fix.vel_m_s - 12) < 1e-5f);
+                    CHECK(fix.navigation.latitudeDegrees == 47 && fix.navigation.longitudeDegrees == 8);
+                    CHECK(std::abs(fix.navigation.speedMetersPerSecond - 12) < 1e-5f);
                 } while (legacy && std::next_permutation(order.begin(), order.end()));
             }
         }
@@ -1267,7 +1272,7 @@ static void transactionalFrames()
         CHECK(batch.batch.events.size() <= GPSDecodedBatch::MAX_EVENTS);
         offset += batch.bytesConsumed;
         for (const auto& event : batch.batch.events) {
-            CHECK(std::get<GPSNativePositionReport>(event).satellites_used == ++count);
+            CHECK(std::get<GPSNativePositionReport>(event).navigation.satellitesUsed == ++count);
         }
     }
     CHECK(count == 20);
@@ -1488,6 +1493,16 @@ static void checkedWireCodecs()
     fixed.operator()<ubx_payload_rx_rxm_rtcm_t>();
     fixed.operator()<ubx_payload_rx_mon_hw_ubx6_t>();
     fixed.operator()<ubx_payload_rx_mon_hw_ubx7_t>();
+    const auto hardware = []<typename T>(size_t jammingOffset) {
+        Bytes payload(UBX::WIRE_SIZE<T>, 0xa5);
+        CHECK(LittleEndian::write<uint16_t>(payload, 16, 0x1234));
+        CHECK(LittleEndian::write<uint16_t>(payload, 18, 0x5678));
+        payload[jammingOffset] = 77;
+        const auto decoded = UBX::MessageCodec<T>::decode(payload);
+        CHECK(decoded && decoded->noisePerMS == 0x1234 && decoded->agcCnt == 0x5678 && decoded->jamInd == 77);
+    };
+    hardware.operator()<ubx_payload_rx_mon_hw_ubx6_t>(53);
+    hardware.operator()<ubx_payload_rx_mon_hw_ubx7_t>(45);
     CHECK(UBX::MessageCodec<ubx_payload_rx_nav_pvt_t>::decode(Bytes(84)));
 
     Bytes rf(28, 0);
@@ -1696,9 +1711,9 @@ const auto& testCases()
         {"fixed-base-does-not-poll",
          [] {
              Fixture f;
-             f.base = {.useFixedBase = true,
-                       .fixedPosition = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-                       .fixedBaseAccuracyMeters = 1.0f};
+             f.base = {.mode = GPSBaseStationConfig::Fixed{
+                           .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
+                           .accuracyMeters = 1.0f}};
              CHECK(f.configure() == 0);
              CHECK(f.driver.receiverReady());
              CHECK(f.receiver.modes == std::vector<uint32_t>({2}));

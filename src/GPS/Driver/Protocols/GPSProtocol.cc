@@ -76,7 +76,8 @@ bool GPSProtocol::validateConfiguration(const GPSConfig& config, bool allowRecei
         return false;
     }
     if (config.output_mode == OutputMode::RTCM) {
-        if (!allowReceiverAveraging && config.base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
+        if (!allowReceiverAveraging &&
+            std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode)) {
             log(GPSProtocolLogLevel::Warning, "Receiver-managed averaging is not supported by this driver");
             return false;
         }

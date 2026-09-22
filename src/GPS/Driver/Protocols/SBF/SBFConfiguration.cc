@@ -31,7 +31,17 @@
  *
  ****************************************************************************/
 
-#include "SBFPrivate.h"
+#include <cmath>
+#include <cstddef>
+#include <string.h>
+
+#include "RTCMFramer.h"
+#include "SBF/GPSDriverSBF.h"
+
+namespace {
+constexpr int SBF_CONFIG_TIMEOUT = 1000;
+constexpr size_t MSG_SIZE = 100;
+}  // namespace
 
 int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
 {
@@ -151,8 +161,7 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
         }
 
         // Specify the offsets that the receiver applies to the computed attitude angles.
-        snprintf(msg, sizeof(msg), SBF_CONFIG_ATTITUDE_OFFSET, (double) (_heading_offset * 180 / GPS_PI),
-                 (double) _pitch_offset);
+        snprintf(msg, sizeof(msg), SBF_CONFIG_ATTITUDE_OFFSET, 0.0, 0.0);
 
         if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT, {GPSReceiverSetting::HeadingOffsetDeg})) {
             return -1;
@@ -202,10 +211,12 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
     }
 
     if (_output_mode == OutputMode::RTCM) {
-        if (_baseConfig.useFixedBase) {
-            snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATIC_COORDINATES, _baseConfig.fixedPosition.latitudeDegrees,
-                     _baseConfig.fixedPosition.longitudeDegrees,
-                     static_cast<double>(_baseConfig.fixedPosition.altitudeMeters));
+        if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
+            snprintf(
+                msg, sizeof(msg), SBF_CONFIG_RTCM_STATIC_COORDINATES,
+                std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position.latitudeDegrees,
+                std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position.longitudeDegrees,
+                static_cast<double>(std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position.altitudeMeters));
             if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
                 return -1;
             }
@@ -231,7 +242,7 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
         if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
             return -1;
         }
-        _survey_activation_date = _baseConfig.useFixedBase ? 0 : nowUs();
+        _survey_activation_date = std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? 0 : nowUs();
     }
 
     _configured = true;

@@ -40,12 +40,6 @@ QString diagnostic(GPSReceiverConfigError error)
                                                "This receiver role cannot configure a dynamic model");
         case GPSReceiverConfigError::InvalidDynamicModel:
             return QCoreApplication::translate("GPSReceiverConfig", "Unsupported receiver dynamic model");
-        case GPSReceiverConfigError::UnsupportedHeadingOffset:
-            return QCoreApplication::translate("GPSReceiverConfig",
-                                               "This receiver role cannot configure a heading offset");
-        case GPSReceiverConfigError::InvalidHeadingOffset:
-            return QCoreApplication::translate("GPSReceiverConfig",
-                                               "Enter a finite heading offset between -pi and pi radians");
     }
     return QCoreApplication::translate("GPSReceiverConfig", "Invalid GPS receiver configuration");
 }

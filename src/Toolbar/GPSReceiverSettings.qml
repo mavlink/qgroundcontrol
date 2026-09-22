@@ -56,10 +56,6 @@ SettingsGroupLayout {
         const longitude = baseFacts.currentLongitude.rawValue
         const altitude = baseFacts.currentAltitude.rawValue
         const accuracy = baseFacts.currentAccuracy.rawValue
-        if (![latitude, longitude, altitude, accuracy].every(Number.isFinite)
-            || accuracy < 0 || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
-            return false
-        }
         settings.fixedBasePositionLatitude.rawValue = latitude
         settings.fixedBasePositionLongitude.rawValue = longitude
         settings.fixedBasePositionAltitude.rawValue = altitude

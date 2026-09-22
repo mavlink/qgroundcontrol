@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <memory>
+#include <type_traits>
 
 #include <QtCore/QRegularExpression>
 #include <QtNetwork/QHostAddress>
@@ -16,10 +17,11 @@
 #include "GpsTestHelpers.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
-#include "NTRIPHttpDecoder.h"
-#include "NTRIPHttpRequest.h"
+#include "NTRIPHttpCodec.h"
 #include "NTRIPHttpTransport.h"
 #include "RTCMDecodedFrame.h"
+
+static_assert(std::is_same_v<NTRIPHttpRequest::Purpose, NTRIPHttpDecoder::Purpose>);
 
 namespace {
 const QByteArray kTestServerCertPem =

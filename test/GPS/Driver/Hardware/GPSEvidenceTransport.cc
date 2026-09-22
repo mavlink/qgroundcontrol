@@ -174,11 +174,12 @@ QJsonArray GPSEvidenceTransport::requestedSettings(const GPSReceiverConfig& conf
         }
         result.append(evidence);
     };
-    setting("time_mode", config.role == GPSReceiverConfig::Role::RTKBase ? 1 : 0, 0x20030001, 0x71, 2, 1);
-    if (config.role == GPSReceiverConfig::Role::RTKBase) {
-        setting("survey_duration_s", config.base.surveyInDurationSecs, 0x40030010, 0x71, 24, 4);
-        setting("survey_accuracy_0.1mm", static_cast<quint64>(config.base.surveyInAccMeters * 10000), 0x40030011, 0x71,
-                28, 4);
+    const bool fixed = std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode);
+    setting("time_mode", config.role == GPSReceiverConfig::Role::RTKBase ? (fixed ? 2 : 1) : 0, 0x20030001, 0x71, 2, 1);
+    if (const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&config.base.mode);
+        config.role == GPSReceiverConfig::Role::RTKBase && survey) {
+        setting("survey_duration_s", survey->durationSecs, 0x40030010, 0x71, 24, 4);
+        setting("survey_accuracy_0.1mm", static_cast<quint64>(survey->accuracyMeters * 10000), 0x40030011, 0x71, 28, 4);
     }
     if (config.dynamicModel) {
         setting("dynamic_model", *config.dynamicModel, 0x20110021, 0x24, 2, 1);

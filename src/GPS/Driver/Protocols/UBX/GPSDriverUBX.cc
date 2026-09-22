@@ -31,11 +31,17 @@
  *
  ****************************************************************************/
 
-#include "UBXPrivate.h"
+#include "UBX/GPSDriverUBX.h"
+
+#include <cmath>
+#include <string.h>
+
+#include "NMEASentence.h"
+#include "RTCMFramer.h"
 
 GPSNativeUBX::GPSNativeUBX(GPSProtocolIO io, GPSNativePositionReport* gps_position,
                            GPSNativeSatelliteReport* satellite_info)
-    : GPSBaseProtocol(std::move(io))
+    : GPSProtocol(std::move(io))
     , _gps_position(gps_position)
     , _satellite_info(satellite_info)
 
@@ -71,7 +77,7 @@ int GPSNativeUBX::receiveInternal(unsigned timeout, bool& read_error)
 
     while (true) {
         bool ready_to_return =
-            (_timeModeReadbackPending && _timeModeReadbackReady) ||
+            (_timeModeReadback.pending && _timeModeReadback.response.has_value()) ||
             (_controller.readbackPending() && _controller.readbackReady()) ||
             (_configured ? (_assembleEpochs ? (handled & 1) : (_got_posllh && _got_velned)) : handled);
 
@@ -111,8 +117,8 @@ int GPSNativeUBX::receiveInternal(unsigned timeout, bool& read_error)
 
 void GPSNativeUBX::servicePendingCommands()
 {
-    if (_comms_request_pending) {
-        _comms_request_pending = false;
+    if (_comms.pending) {
+        _comms.pending = false;
         requestCommsDiagnostics();
     }
     if (_rtcmActivationPending) {
@@ -124,7 +130,7 @@ void GPSNativeUBX::servicePendingCommands()
     if (_pendingDisableMessage) {
         const auto message = _pendingDisableMessage;
         _pendingDisableMessage = 0;
-        if (_proto_ver_27_or_higher) {
+        if (_identity.protocol27) {
             uint32_t key_id = 0;
 
             switch (message) {  // we cannot infer the config Key ID from message for protocol version 27+

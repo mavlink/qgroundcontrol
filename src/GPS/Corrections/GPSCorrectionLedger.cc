@@ -7,6 +7,31 @@
 
 QGC_LOGGING_CATEGORY(GPSCorrectionLedgerLog, "GPS.Corrections.GPSCorrectionLedger")
 
+namespace {
+GPSCorrectionReason gpsCorrectionReason(GPSCorrectionOutcome outcome)
+{
+    switch (outcome) {
+        case GPSCorrectionOutcome::Written:
+            return GPSCorrectionReason::None;
+        case GPSCorrectionOutcome::WriteFailed:
+            return GPSCorrectionReason::WriteFailed;
+        case GPSCorrectionOutcome::Expired:
+            return GPSCorrectionReason::Expired;
+        case GPSCorrectionOutcome::Cancelled:
+            return GPSCorrectionReason::Cancelled;
+        case GPSCorrectionOutcome::Cleared:
+            return GPSCorrectionReason::SourceChanged;
+        case GPSCorrectionOutcome::NotReady:
+            return GPSCorrectionReason::DestinationUnavailable;
+        case GPSCorrectionOutcome::InvalidData:
+            return GPSCorrectionReason::InvalidFrame;
+        case GPSCorrectionOutcome::Overflow:
+            return GPSCorrectionReason::QueueFull;
+    }
+    return GPSCorrectionReason::InvalidDelivery;
+}
+}  // namespace
+
 GPSCorrectionLedger::GPSCorrectionLedger(Clock clock)
     : _clock(std::move(clock))
 {
@@ -86,8 +111,7 @@ void GPSCorrectionLedger::queued(const GPSCorrectionFrame& frame, quint64 bytes,
 
 void GPSCorrectionLedger::registerOutput(const QString& id, bool reportsWrites)
 {
-    _outputs.insert(id);
-    _outputDestinations.remove(id);
+    _outputDestinations.insert(id, {});
     auto& destination = _destinations[id];
     destination.id = id;
     destination.reportsWrites = reportsWrites;
@@ -95,16 +119,17 @@ void GPSCorrectionLedger::registerOutput(const QString& id, bool reportsWrites)
 
 void GPSCorrectionLedger::updateOutputDestinations(const QString& id, const QSet<QString>& destinations)
 {
-    if (_outputs.contains(id)) {
+    if (_outputDestinations.contains(id)) {
         _outputDestinations.insert(id, destinations);
     }
 }
 
 void GPSCorrectionLedger::pruneDestinationHistory()
 {
-    QSet<QString> live = _outputs;
-    for (const auto& destinations : std::as_const(_outputDestinations)) {
-        live.unite(destinations);
+    QSet<QString> live;
+    for (auto it = _outputDestinations.cbegin(); it != _outputDestinations.cend(); ++it) {
+        live.insert(it.key());
+        live.unite(it.value());
     }
     qsizetype historyCount = 0;
     for (auto it = _destinations.cbegin(); it != _destinations.cend(); ++it) {
@@ -199,14 +224,7 @@ bool GPSCorrectionLedger::recordDelivery(const GPSCorrectionDelivery& delivery)
                     pending.destination, pending.destinationSession);
     }
     if (delivery.uncertainBytes > 0) {
-        ++destination.unconfirmedFrames;
-        destination.unconfirmedBytes += delivery.uncertainBytes;
-        if (auto* stats = _currentStatistics(pending.frame)) {
-            ++stats->unconfirmedFrames;
-            stats->unconfirmedBytes += delivery.uncertainBytes;
-        }
-        recordEvent(pending.frame, GPSCorrectionStage::Unconfirmed, GPSCorrectionReason::DeliveryUnconfirmed,
-                    delivery.uncertainBytes, pending.destination, pending.destinationSession);
+        _recordUnconfirmed(pending.frame, delivery.uncertainBytes, pending.destination, pending.destinationSession);
     }
     const quint64 undelivered = pending.queuedBytes - delivery.writtenBytes - delivery.uncertainBytes;
     if (undelivered > 0) {
@@ -216,6 +234,20 @@ bool GPSCorrectionLedger::recordDelivery(const GPSCorrectionDelivery& delivery)
     }
     pruneDestinationHistory();
     return true;
+}
+
+void GPSCorrectionLedger::_recordUnconfirmed(const GPSCorrectionFrame& frame, quint64 bytes,
+                                             const QString& destinationId, quint64 destinationSession)
+{
+    auto& destination = _destinations[destinationId];
+    ++destination.unconfirmedFrames;
+    destination.unconfirmedBytes += bytes;
+    if (auto* stats = _currentStatistics(frame)) {
+        ++stats->unconfirmedFrames;
+        stats->unconfirmedBytes += bytes;
+    }
+    recordEvent(frame, GPSCorrectionStage::Unconfirmed, GPSCorrectionReason::DeliveryUnconfirmed, bytes, destinationId,
+                destinationSession);
 }
 
 template <typename Predicate>
@@ -230,14 +262,7 @@ void GPSCorrectionLedger::_invalidatePending(Predicate matches)
         auto& destination = _destinations[delivery.destination];
         --destination.pendingFrames;
         destination.pendingBytes -= delivery.queuedBytes;
-        ++destination.unconfirmedFrames;
-        destination.unconfirmedBytes += delivery.queuedBytes;
-        if (auto* stats = _currentStatistics(delivery.frame)) {
-            ++stats->unconfirmedFrames;
-            stats->unconfirmedBytes += delivery.queuedBytes;
-        }
-        recordEvent(delivery.frame, GPSCorrectionStage::Unconfirmed, GPSCorrectionReason::DeliveryUnconfirmed,
-                    delivery.queuedBytes, delivery.destination, delivery.destinationSession);
+        _recordUnconfirmed(delivery.frame, delivery.queuedBytes, delivery.destination, delivery.destinationSession);
         it = _pendingDeliveries.erase(it);
     }
     pruneDestinationHistory();
@@ -261,7 +286,6 @@ void GPSCorrectionLedger::invalidateDelivery(quint64 deliveryId, const QString& 
 
 void GPSCorrectionLedger::removeOutput(const QString& id, quint64 excludedDeliveryId)
 {
-    _outputs.remove(id);
     _outputDestinations.remove(id);
     _invalidatePending([&](const PendingDelivery& delivery) {
         return (delivery.destination == id || delivery.outputId == id) &&
@@ -295,14 +319,7 @@ bool GPSCorrectionLedger::admitted(const GPSCorrectionFrame& frame, const QStrin
         return true;
     }
     if (!admissionAvailable()) {
-        ++destination.unconfirmedFrames;
-        destination.unconfirmedBytes += bytes;
-        if (auto* stats = _currentStatistics(frame)) {
-            ++stats->unconfirmedFrames;
-            stats->unconfirmedBytes += bytes;
-        }
-        recordEvent(frame, GPSCorrectionStage::Unconfirmed, GPSCorrectionReason::DeliveryUnconfirmed, bytes, id,
-                    session);
+        _recordUnconfirmed(frame, bytes, id, session);
     } else {
         ++destination.pendingFrames;
         destination.pendingBytes += bytes;
@@ -316,7 +333,6 @@ void GPSCorrectionLedger::shutdown(quint64 excludedDeliveryId)
     for (auto& stats : _statistics) {
         stats.active = false;
     }
-    _outputs.clear();
     _outputDestinations.clear();
     _invalidatePending([&](const PendingDelivery& delivery) {
         return !excludedDeliveryId || delivery.frame.deliveryId != excludedDeliveryId;

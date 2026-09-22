@@ -417,10 +417,10 @@ void RTKAutoConnectTest::_shutdownDuringConnectionTick()
     GPSManager manager;
     manager._nmeaSources = new NMEASourceManager(settings, &position, &manager);
     manager._rtkAutoConnect = new RTKAutoConnect(settings, manager.gpsRtk(), &ports, &manager);
-    connect(&position, &QGCPositionManager::nmeaSourceChanged, &manager, &GPSManager::shutdown);
+    connect(manager._nmeaSources, &NMEASourceManager::sourceChanged, &manager, &GPSManager::shutdown);
     manager._updateConnections();
     QVERIFY(manager._shutdown);
-    QVERIFY(!position.nmeaSourceDevice());
+    QVERIFY(!manager._nmeaSources->health());
     QCOMPARE(enumerations, 0);
     manager._updateConnections();
     QCOMPARE(enumerations, 0);

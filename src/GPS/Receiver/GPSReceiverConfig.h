@@ -24,8 +24,6 @@ struct GPSReceiverConfig
     uint32_t constellationMask = 0;
     /// UBX models 0 and 2..8; an explicit zero is distinct from an absent request.
     std::optional<int> dynamicModel{};
-    /// No currently supported role accepts heading offsets.
-    std::optional<float> headingOffsetRadians{};
     /// Zero selects managed-driver baud detection; passive serial input requires an explicit rate.
     uint32_t baudRate = 0;
     /// Per-connection consent to persistent receiver settings and the required restart.
@@ -44,8 +42,6 @@ enum class GPSReceiverConfigError
     InvalidConstellations,
     UnsupportedDynamicModel,
     InvalidDynamicModel,
-    UnsupportedHeadingOffset,
-    InvalidHeadingOffset,
     UnsupportedBaseMode,
     InvalidReceiverAveraging,
     InvalidBaudRate,
@@ -55,6 +51,6 @@ enum class GPSReceiverConfigError
 /// Check the selected base mode against the existing receiver wire-unit limits.
 [[nodiscard]] GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& config);
 
-/// Precedence: valid role, recognized receiver, supported role, RTK base, constellations, dynamic model, heading
-/// offset. For each optional request, unsupported takes precedence over an invalid value.
+/// Precedence: valid role, recognized receiver, supported role, RTK base, constellations, dynamic model.
+/// For each optional request, unsupported takes precedence over an invalid value.
 [[nodiscard]] GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiverConfig& config);

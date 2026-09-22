@@ -228,15 +228,6 @@ typedef struct
 
 typedef struct
 {
-    uint8_t antenna;
-    uint8_t reserved;
-    uint16_t tracking_status;
-    uint16_t pvt_status;
-    uint16_t pvt_info;
-} sbf_payload_channel_state_info_t;
-
-typedef struct
-{
     uint8_t nr_sv; /**< The average over all antennas of the number of satellites currently included in the attitude
                       calculations. */
     uint8_t error_aux1 : 2;          /**< Bits 0-1: Error code for Main-Aux1 baseline:

@@ -421,7 +421,7 @@ void NMEAPositionSourceTest::_fixLoss()
     QTRY_COMPARE_WITH_TIMEOUT(health.state(), GPSSourceHealth::State::Invalid, TestTimeout::shortMs());
     QCOMPARE(source.lastObservation().receiverFixValid, std::optional<bool>(false));
     QVERIFY(!source._publicationTask.active());
-    QVERIFY(!source._pendingObservation);
+    QVERIFY(!source._pendingFix.position);
     source.setUpdateInterval(0);
     QCOMPARE(updates.size(), previousUpdates);
     const auto recovery =

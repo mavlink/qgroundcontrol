@@ -32,10 +32,10 @@ void GPSProtocolAllocationTest::_runtimeDelivery()
             positions += std::holds_alternative<GPSNativePositionReport>(event);
             if (const auto* report = std::get_if<GPSNativePositionReport>(&event); report && injectNested) {
                 injectNested = false;
-                const auto timestamp = report->timestamp;
+                const auto timestamp = report->navigation.timestampUs;
                 now += 200000;
                 receiver->consume(frame);
-                nestedSnapshotValid = report->timestamp == timestamp;
+                nestedSnapshotValid = report->navigation.timestampUs == timestamp;
             }
         }
     };
@@ -64,7 +64,7 @@ void GPSProtocolAllocationTest::_runtimeDelivery()
     driver.consume(frame);
     QCOMPARE(owned.batch.events.size(), size_t{1});
     QVERIFY(std::holds_alternative<GPSNativePositionReport>(owned.batch.events.front()));
-    QCOMPARE(std::get<GPSNativePositionReport>(owned.batch.events.front()).timestamp, timestamp);
+    QCOMPARE(std::get<GPSNativePositionReport>(owned.batch.events.front()).navigation.timestampUs, timestamp);
     const auto beforeNested = positions;
     injectNested = true;
     driver.consume(frame);

@@ -6,10 +6,8 @@ int GPSNativePassive::configure(unsigned& baud, const GPSConfig& config)
     resetIOError();
     resetStream();
     if (config.output_mode != OutputMode::GPS || config.gnss_systems != GNSSSystemsMask::RECEIVER_DEFAULTS ||
-        config.dynamicModel != 0 || config.allowPersistentChanges || config.base.useFixedBase ||
-        config.base.surveyInAccMeters != 0 || config.base.surveyInDurationSecs != 0 ||
-        config.base.surveyMode != GPSBaseStationConfig::SurveyMode::AccuracyControlled || baud < 1200 ||
-        baud > 4000000) {
+        config.dynamicModel != 0 || config.allowPersistentChanges || config.base != GPSBaseStationConfig{} ||
+        baud < 1200 || baud > 4000000) {
         log(GPSProtocolLogLevel::Warning, "Passive input requires an explicit baud rate and no receiver configuration");
         return -1;
     }

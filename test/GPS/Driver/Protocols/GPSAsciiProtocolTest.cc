@@ -93,24 +93,24 @@ void GPSAsciiProtocolTest::_vdopEpoch()
     QVERIFY(!published);
     feed(receiver, gga(firstUtc));
     QVERIFY(published);
-    QCOMPARE(published->eph, 0.5f);
-    const auto positionReceipt = published->timestamp;
+    QCOMPARE(published->navigation.horizontalAccuracyMeters, 0.5f);
+    const auto positionReceipt = published->navigation.timestampUs;
     feed(receiver, GSA);
-    QCOMPARE(position.vdop, 0.6f);
+    QCOMPARE(position.navigation.verticalDop, 0.6f);
     ++now;
     feed(receiver, gst);
-    QCOMPARE(published->timestamp, positionReceipt);
-    QCOMPARE(published->vdop, 0.6f);
+    QCOMPARE(published->navigation.timestampUs, positionReceipt);
+    QCOMPARE(published->navigation.verticalDop, 0.6f);
     now = positionReceipt + elapsedUs;
     feed(receiver, gga(nextUtc));
-    QCOMPARE(published->timestamp, now);
+    QCOMPARE(published->navigation.timestampUs, now);
     QCOMPARE(published->dop_timestamp, now);
-    QCOMPARE(published->hdop, 0.9f);
+    QCOMPARE(published->navigation.horizontalDop, 0.9f);
     if (retained) {
-        QCOMPARE(published->vdop, 0.6f);
+        QCOMPARE(published->navigation.verticalDop, 0.6f);
     } else {
-        QVERIFY(std::isnan(published->vdop));
-        QVERIFY(std::isnan(published->eph));
+        QVERIFY(std::isnan(published->navigation.verticalDop));
+        QVERIFY(std::isnan(published->navigation.horizontalAccuracyMeters));
     }
 }
 
@@ -126,11 +126,11 @@ void GPSAsciiProtocolTest::_vdopReceiptIsNotRenewed()
     for (unsigned second = 1; second <= 7; ++second) {
         now += 1000000;
         feed(receiver, gga("123519"));
-        QCOMPARE(position.timestamp, now);
+        QCOMPARE(position.navigation.timestampUs, now);
         if (second <= 2) {
-            QCOMPARE(position.vdop, 0.6f);
+            QCOMPARE(position.navigation.verticalDop, 0.6f);
         } else {
-            QVERIFY(std::isnan(position.vdop));
+            QVERIFY(std::isnan(position.navigation.verticalDop));
         }
     }
 }
@@ -156,10 +156,10 @@ void GPSAsciiProtocolTest::_unassociatedGsa()
         now = static_cast<uint64_t>(static_cast<qint64>(now) + ageUs);
     }
     feed(receiver, GSA);
-    QVERIFY(std::isnan(position.vdop));
+    QVERIFY(std::isnan(position.navigation.verticalDop));
     now = 4000000;
     feed(receiver, gga("123520"));
-    QVERIFY(std::isnan(position.vdop));
+    QVERIFY(std::isnan(position.navigation.verticalDop));
 }
 
 void GPSAsciiProtocolTest::_boundedFields_data()

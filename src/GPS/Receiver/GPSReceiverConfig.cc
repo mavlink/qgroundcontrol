@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <limits>
-#include <numbers>
 
 #include "GPSReceiverCapabilities.h"
 #include "GPSReceiverDescriptor.h"
@@ -26,22 +25,17 @@ GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type, GPSReceiverConfig:
 GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& config)
 {
     constexpr double MAX_UNSIGNED_VALUE = (std::numeric_limits<uint32_t>::max)();
-    if (config.surveyMode != GPSBaseStationConfig::SurveyMode::AccuracyControlled &&
-        config.surveyMode != GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
-        return GPSReceiverConfigError::UnsupportedBaseMode;
-    }
-    if (config.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
-        if (config.useFixedBase || config.receiverAveragingDurationSecs < 1 ||
-            config.receiverAveragingDurationSecs > 3600) {
+    if (const auto* averaging = std::get_if<GPSBaseStationConfig::ReceiverAveraging>(&config.mode)) {
+        if (averaging->maximumDurationSecs < 1 || averaging->maximumDurationSecs > 3600) {
             return GPSReceiverConfigError::InvalidReceiverAveraging;
         }
         return GPSReceiverConfigError::None;
     }
-    if (config.useFixedBase) {
-        const auto& position = config.fixedPosition;
+    if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.mode)) {
+        const auto& position = fixed->position;
         const double altitudeCm = static_cast<double>(position.altitudeMeters) * 100.0;
         // Match legacy float conversions before checking wire limits.
-        const double accuracyUnits = static_cast<double>((config.fixedBaseAccuracyMeters * 1000.0f) * 10.0f);
+        const double accuracyUnits = static_cast<double>((fixed->accuracyMeters * 1000.0f) * 10.0f);
         if (!std::isfinite(position.latitudeDegrees) || std::abs(position.latitudeDegrees) > 90.0 ||
             !std::isfinite(position.longitudeDegrees) || std::abs(position.longitudeDegrees) > 180.0 ||
             !std::isfinite(altitudeCm) || altitudeCm < (std::numeric_limits<int32_t>::min)() ||
@@ -50,9 +44,10 @@ GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& 
             return GPSReceiverConfigError::InvalidFixedBase;
         }
     } else {
-        const double accuracyUnits = config.surveyInAccMeters * 10000.0;
+        const auto& survey = std::get<GPSBaseStationConfig::SurveyIn>(config.mode);
+        const double accuracyUnits = survey.accuracyMeters * 10000.0;
         if (!std::isfinite(accuracyUnits) || accuracyUnits < 1 || accuracyUnits > MAX_UNSIGNED_VALUE ||
-            config.surveyInDurationSecs < 1 || config.surveyInDurationSecs > (std::numeric_limits<uint32_t>::max)()) {
+            survey.durationSecs < 1 || survey.durationSecs > (std::numeric_limits<uint32_t>::max)()) {
             return GPSReceiverConfigError::InvalidSurveyIn;
         }
     }
@@ -78,11 +73,9 @@ GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiver
         return GPSReceiverConfigError::UnsupportedPersistentConfiguration;
     }
     if (config.role == GPSReceiverConfig::Role::RTKBase) {
-        if (!config.base.useFixedBase &&
-            ((config.base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged &&
-              !capabilities.receiverAveraging) ||
-             (config.base.surveyMode == GPSBaseStationConfig::SurveyMode::AccuracyControlled &&
-              !capabilities.surveyIn))) {
+        if ((std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode) &&
+             !capabilities.receiverAveraging) ||
+            (std::holds_alternative<GPSBaseStationConfig::SurveyIn>(config.base.mode) && !capabilities.surveyIn)) {
             return GPSReceiverConfigError::UnsupportedBaseMode;
         }
         const GPSReceiverConfigError error = gpsValidateBaseStationConfig(config.base);
@@ -90,9 +83,7 @@ GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiver
             return error;
         }
     }
-    if (config.role == GPSReceiverConfig::Role::Passive &&
-        (config.base.useFixedBase || config.base.surveyInAccMeters != 0 || config.base.surveyInDurationSecs != 0 ||
-         config.base.surveyMode != GPSBaseStationConfig::SurveyMode::AccuracyControlled)) {
+    if (config.role == GPSReceiverConfig::Role::Passive && config.base != GPSBaseStationConfig{}) {
         return GPSReceiverConfigError::UnsupportedBaseMode;
     }
     if ((config.baudRate != 0 && (config.baudRate < 1200 || config.baudRate > 4000000)) ||
@@ -114,15 +105,6 @@ GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiver
         const int model = *config.dynamicModel;
         if (model != 0 && (model < 2 || model > 8)) {
             return GPSReceiverConfigError::InvalidDynamicModel;
-        }
-    }
-    if (config.headingOffsetRadians.has_value()) {
-        if (!capabilities.headingOffset) {
-            return GPSReceiverConfigError::UnsupportedHeadingOffset;
-        }
-        const float offset = *config.headingOffsetRadians;
-        if (!std::isfinite(offset) || std::abs(offset) > std::numbers::pi_v<float>) {
-            return GPSReceiverConfigError::InvalidHeadingOffset;
         }
     }
     return GPSReceiverConfigError::None;

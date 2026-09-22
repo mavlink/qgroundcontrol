@@ -63,16 +63,22 @@ private:
 
     std::string _model;
     std::string _firmware;
-    std::string _command;
+
+    struct Command
+    {
+        std::string text;
+        Reply expected = Reply::Acknowledgment;
+        GPSCommandOutcome outcome = GPSCommandOutcome::Pending;
+        bool active = false;
+    };
+
+    Command _command;
     QString _configurationDetail;
-    Reply _expectedReply = Reply::Acknowledgment;
     Mode _expectedMode = Mode::Rover;
-    GPSCommandOutcome _replyOutcome = GPSCommandOutcome::Pending;
     EcefMeters _fixedECEF;
     EcefMeters _baseECEF;
     uint64_t _lastBaseStatus = 0;
     std::optional<uint64_t> _lastBaseEpoch;
-    bool _commandActive = false;
     bool _ready = false;
     bool _base = false;
     bool _monitorBase = false;

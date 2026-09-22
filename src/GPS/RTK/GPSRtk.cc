@@ -57,11 +57,6 @@ void GPSRtk::_onGPSConnect()
     }
 }
 
-void GPSRtk::_onGPSDisconnect()
-{
-    disconnectGPS();
-}
-
 bool GPSRtk::_publishFacts(std::initializer_list<std::pair<Fact*, QVariant>> updates, quint64 generation)
 {
     const QPointer<GPSRtk> guard(this);
@@ -78,18 +73,14 @@ bool GPSRtk::_publishFacts(std::initializer_list<std::pair<Fact*, QVariant>> upd
 bool GPSRtk::_publishDisconnected(quint64 generation)
 {
     const QPointer<GPSRtk> guard(this);
-    if (!_publishFacts({{_gpsRtkFactGroup->connected(), false},
-                        {_gpsRtkFactGroup->valid(), false},
-                        {_gpsRtkFactGroup->active(), false},
-                        {_gpsRtkFactGroup->currentDuration(), 0},
-                        {_gpsRtkFactGroup->currentAccuracy(), qQNaN()},
-                        {_gpsRtkFactGroup->currentLatitude(), qQNaN()},
-                        {_gpsRtkFactGroup->currentLongitude(), qQNaN()},
-                        {_gpsRtkFactGroup->currentAltitude(), qQNaN()},
-                        {_gpsRtkFactGroup->numSatellites(), -1},
-                        {_gpsRtkFactGroup->numSatellitesUsed(), -1}},
-                       generation)) {
-        return false;
+    for (Fact* fact :
+         {_gpsRtkFactGroup->connected(), _gpsRtkFactGroup->valid(), _gpsRtkFactGroup->active(),
+          _gpsRtkFactGroup->currentDuration(), _gpsRtkFactGroup->currentAccuracy(), _gpsRtkFactGroup->currentLatitude(),
+          _gpsRtkFactGroup->currentLongitude(), _gpsRtkFactGroup->currentAltitude(), _gpsRtkFactGroup->numSatellites(),
+          _gpsRtkFactGroup->numSatellitesUsed()}) {
+        if (!_publishFacts({{fact, fact->rawDefaultValue()}}, generation)) {
+            return false;
+        }
     }
     emit receiverChanged();
     return guard && _session.generation == generation;
@@ -130,7 +121,7 @@ void GPSRtk::_setError(GPSConnectionError error, const QString& message)
     }
 }
 
-void GPSRtk::_onGPSSurveyInStatus(const GPSSurveyInStatus& status)
+void GPSRtk::_onGPSSurveyReport(const GPSSurveyReport& status)
 {
     if (_session.manufacturer == manufacturerForType(GPSType::passive)) {
         return;
@@ -138,9 +129,9 @@ void GPSRtk::_onGPSSurveyInStatus(const GPSSurveyInStatus& status)
     const quint64 generation = ++_session.generation;
     _publishFacts({{_gpsRtkFactGroup->currentDuration(), static_cast<qint64>(status.duration.count())},
                    {_gpsRtkFactGroup->currentAccuracy(), status.meanAccuracyMeters.value_or(qQNaN())},
-                   {_gpsRtkFactGroup->currentLatitude(), status.coordinate.latitude()},
-                   {_gpsRtkFactGroup->currentLongitude(), status.coordinate.longitude()},
-                   {_gpsRtkFactGroup->currentAltitude(), status.altitudeEllipsoidMeters},
+                   {_gpsRtkFactGroup->currentLatitude(), status.position.latitudeDegrees},
+                   {_gpsRtkFactGroup->currentLongitude(), status.position.longitudeDegrees},
+                   {_gpsRtkFactGroup->currentAltitude(), status.position.altitudeMeters},
                    {_gpsRtkFactGroup->valid(), status.valid},
                    {_gpsRtkFactGroup->active(), status.active}},
                   generation);
@@ -335,23 +326,22 @@ QString GPSRtk::_receiverConfig(GPSType type, RTKSettings* settings, uint32_t ba
     }
     switch (static_cast<BaseModeDefinition::Mode>(settings->useFixedBasePosition()->rawValue().toInt())) {
         case BaseModeDefinition::Mode::BaseFixed:
-            config.base = GPSBaseStationConfig{
-                .useFixedBase = true,
-                .fixedPosition = {.latitudeDegrees = settings->fixedBasePositionLatitude()->rawValue().toDouble(),
-                                  .longitudeDegrees = settings->fixedBasePositionLongitude()->rawValue().toDouble(),
-                                  .altitudeMeters = settings->fixedBasePositionAltitude()->rawValue().toFloat()},
-                .fixedBaseAccuracyMeters = settings->fixedBasePositionAccuracy()->rawValue().toFloat(),
+            config.base.mode = GPSBaseStationConfig::Fixed{
+                .position = {.latitudeDegrees = settings->fixedBasePositionLatitude()->rawValue().toDouble(),
+                             .longitudeDegrees = settings->fixedBasePositionLongitude()->rawValue().toDouble(),
+                             .altitudeMeters = settings->fixedBasePositionAltitude()->rawValue().toFloat()},
+                .accuracyMeters = settings->fixedBasePositionAccuracy()->rawValue().toFloat(),
             };
             break;
         case BaseModeDefinition::Mode::BaseSurveyIn:
-            config.base = GPSBaseStationConfig{
-                .surveyInAccMeters = settings->surveyInAccuracyLimit()->rawValue().toDouble(),
-                .surveyInDurationSecs = settings->surveyInMinObservationDuration()->rawValue().toLongLong(),
+            config.base.mode = GPSBaseStationConfig::SurveyIn{
+                .accuracyMeters = settings->surveyInAccuracyLimit()->rawValue().toDouble(),
+                .durationSecs = settings->surveyInMinObservationDuration()->rawValue().toLongLong(),
             };
             break;
         case BaseModeDefinition::Mode::BaseReceiverAveraging:
-            config.base.surveyMode = GPSBaseStationConfig::SurveyMode::ReceiverManaged;
-            config.base.receiverAveragingDurationSecs = settings->receiverAveragingDuration()->rawValue().toUInt();
+            config.base.mode = GPSBaseStationConfig::ReceiverAveraging{
+                .maximumDurationSecs = settings->receiverAveragingDuration()->rawValue().toUInt()};
             break;
         default:
             return tr("Select a supported base mode.");
@@ -410,11 +400,11 @@ bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transp
         }
     }
     _session.corrections = std::move(registration);
-    _session.configuration = config;
     _session.manufacturer = manufacturerForType(type);
     _session.baseMode = config.role == GPSReceiverConfig::Role::Passive ? -1
-                        : config.base.useFixedBase ? static_cast<int>(BaseModeDefinition::Mode::BaseFixed)
-                        : config.base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged
+                        : std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode)
+                            ? static_cast<int>(BaseModeDefinition::Mode::BaseFixed)
+                        : std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode)
                             ? static_cast<int>(BaseModeDefinition::Mode::BaseReceiverAveraging)
                             : static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn);
     _session.serialDevice = serialDevice;
@@ -464,7 +454,7 @@ bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transp
     (void) connectCurrent(&GPSProvider::satelliteInfoUpdate, std::bind_front(&GPSRtk::_satelliteInfoUpdate, this));
     (void) connectCurrent(&GPSProvider::satelliteUsageUpdate, std::bind_front(&GPSRtk::_satelliteUsageUpdate, this));
     (void) connectCurrent(&GPSProvider::fixTypeChanged, std::bind_front(&GPSRtk::_fixTypeChanged, this));
-    (void) connectCurrent(&GPSProvider::surveyInStatus, std::bind_front(&GPSRtk::_onGPSSurveyInStatus, this));
+    (void) connectCurrent(&GPSProvider::surveyInStatus, std::bind_front(&GPSRtk::_onGPSSurveyReport, this));
     (void) connectCurrent(&GPSProvider::configurationError, [this](const QString& detail) {
         if (!detail.isEmpty()) {
             _setError(GPSConnectionError::ConfigFailed, tr("Receiver configuration failed: %1").arg(detail));

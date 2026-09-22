@@ -40,7 +40,7 @@
 #include <math.h>
 #include <optional>
 
-#include "GPSBaseProtocol.h"
+#include "GPSProtocol.h"
 #include "NMEAFramer.h"
 #include "NMEAMetadata.h"
 #include "NMEASatelliteEpoch.h"
@@ -49,16 +49,12 @@
 #define ASHTECH_RECV_BUFFER_SIZE 512
 #define ASH_RESPONSE_TIMEOUT 200  // ms, timeout for waiting for a response
 
-class GPSNativeAshtech : public GPSBaseProtocol
+class GPSNativeAshtech : public GPSProtocol
 {
 public:
-    /**
-     * @param heading_offset heading offset in radians [-pi, pi]. It is substracted from the measurement.
-     */
-    GPSNativeAshtech(GPSProtocolIO io, GPSNativePositionReport* gps_position, GPSNativeSatelliteReport* satellite_info,
-                     float heading_offset = 0.f);
+    GPSNativeAshtech(GPSProtocolIO io, GPSNativePositionReport* gps_position, GPSNativeSatelliteReport* satellite_info);
 
-    virtual ~GPSNativeAshtech();
+    ~GPSNativeAshtech() override = default;
 
     int configure(unsigned& baudrate, const GPSConfig& config) override;
 
@@ -147,8 +143,7 @@ private:
     // ZDA/GST output is requested every three seconds.
     static constexpr uint64_t METADATA_MAX_AGE_US = 5000000;
 
-    float _heading_offset;
-
+    uint32_t _survey_duration = 0;
     uint64_t _survey_in_start{0};
     bool _surveyReceiptRequested = false;
     std::optional<uint64_t> _surveyReceiptStartUtc;

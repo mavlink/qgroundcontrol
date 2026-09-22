@@ -42,4 +42,5 @@ private slots:
     void _rawRegistrationCarriesSession();
     void _registrationRetiresFromWorker();
     void _foreignSchedulerRejected();
+    void _destructionDisconnectsBindings();
 };

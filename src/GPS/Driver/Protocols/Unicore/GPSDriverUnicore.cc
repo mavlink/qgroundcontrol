@@ -82,21 +82,18 @@ GPSNativeUnicore::GPSNativeUnicore(GPSProtocolIO io, GPSNativePositionReport* po
 
 bool GPSNativeUnicore::_execute(std::string command, Reply reply)
 {
-    _command = std::move(command);
-    _expectedReply = reply;
-    _replyOutcome = GPSCommandOutcome::Pending;
+    _command = {.text = std::move(command), .expected = reply, .active = true};
     _configurationDetail.clear();
-    _commandActive = true;
-    const auto clearReply = qScopeGuard([this] { _commandActive = false; });
-    const GPSConfigurationStep step{_command, std::chrono::milliseconds(COMMAND_TIMEOUT_MS)};
-    const auto wire = _command + "\r\n";
+    const auto clearReply = qScopeGuard([this] { _command.active = false; });
+    const GPSConfigurationStep step{_command.text, std::chrono::milliseconds(COMMAND_TIMEOUT_MS)};
+    const auto wire = _command.text + "\r\n";
     if (!writeCommand(step, {reinterpret_cast<const uint8_t*>(wire.data()), wire.size()})) {
         _configurationDetail =
-            QStringLiteral("Unicore command '%1' could not be written").arg(QString::fromStdString(_command));
+            QStringLiteral("Unicore command '%1' could not be written").arg(QString::fromStdString(_command.text));
         return false;
     }
-    const auto result = awaitCommand(step, [this] { return _replyOutcome; });
-    _commandActive = false;
+    const auto result = awaitCommand(step, [this] { return _command.outcome; });
+    _command.active = false;
     if (result.evidence.outcome != GPSCommandOutcome::Acknowledged &&
         result.evidence.outcome != GPSCommandOutcome::ReadbackVerified) {
         if (result.evidence.outcome != GPSCommandOutcome::Cancelled) {
@@ -107,10 +104,10 @@ bool GPSNativeUnicore::_execute(std::string command, Reply reply)
                                          ? QStringLiteral("was rejected or its readback did not match")
                                          : QStringLiteral("failed");
                 _configurationDetail =
-                    QStringLiteral("Unicore command '%1' %2").arg(QString::fromStdString(_command), failure);
+                    QStringLiteral("Unicore command '%1' %2").arg(QString::fromStdString(_command.text), failure);
             }
             log(GPSProtocolLogLevel::Warning, "Unicore command failed (%d): %s",
-                static_cast<int>(result.evidence.outcome), _command.c_str());
+                static_cast<int>(result.evidence.outcome), _command.text.c_str());
         }
         return false;
     }
@@ -143,9 +140,9 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
     _monitorBase = false;
     _baseValid = false;
     _lastBaseEpoch.reset();
-    _commandActive = false;
+    _command.active = false;
     _base = config.output_mode == OutputMode::RTCM;
-    _averaging = _base && !config.base.useFixedBase;
+    _averaging = _base && !std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode);
     setRTCMEnabled(false);
     resetIOError();
     resetStream();
@@ -163,8 +160,9 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
                            "persistent changes are not supported"));
     }
     if (_averaging &&
-        (config.base.surveyMode != GPSBaseStationConfig::SurveyMode::ReceiverManaged ||
-         config.base.receiverAveragingDurationSecs == 0 || config.base.receiverAveragingDurationSecs > 3600)) {
+        (!std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode) ||
+         std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs == 0 ||
+         std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs > 3600)) {
         log(GPSProtocolLogLevel::Warning,
             "Unicore supports receiver-managed averaging, not accuracy-controlled survey");
         return _configurationFailed(
@@ -177,7 +175,7 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
     }
     _baseConfig = config.base;
     if (_base && !_averaging) {
-        _fixedECEF = toEcef(config.base.fixedPosition);
+        _fixedECEF = toEcef(std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position);
     }
     const Operation operation(*this, 45000);
     if (!_identify(baud) || !_execute("UNLOG")) {
@@ -201,7 +199,8 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
     mode.imbue(std::locale::classic());
     if (_averaging) {
         // Distance=0 forces newly averaged coordinates; it is NOT an accuracy threshold.
-        mode << "MODE BASE TIME " << config.base.receiverAveragingDurationSecs << " 0";
+        mode << "MODE BASE TIME "
+             << std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs << " 0";
         _expectedMode = Mode::AveragingBase;
     } else {
         mode << std::fixed << std::setprecision(4) << "MODE BASE " << _fixedECEF.x << ' ' << _fixedECEF.y << ' '
@@ -260,12 +259,12 @@ void GPSNativeUnicore::_handleVersion(std::string_view body)
     if (model.empty() || model.size() > 32 || firmware.empty() || firmware.size() > 32) {
         return;
     }
-    if (_commandActive && _expectedReply == Reply::Version && _replyOutcome == GPSCommandOutcome::Pending) {
+    if (_command.active && _command.expected == Reply::Version && _command.outcome == GPSCommandOutcome::Pending) {
         _model = model;
         _firmware = firmware;
-        _replyOutcome =
+        _command.outcome =
             supportedFirmware(model, firmware) ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected;
-        if (_replyOutcome == GPSCommandOutcome::Rejected) {
+        if (_command.outcome == GPSCommandOutcome::Rejected) {
             _configurationDetail =
                 QStringLiteral(
                     "Unsupported Unicore receiver '%1' firmware '%2'; requires UM980 R4.10Build7923+ "
@@ -287,8 +286,8 @@ void GPSNativeUnicore::_handleMode(std::string_view body)
     const bool matches = _expectedMode == Mode::Rover           ? starts("MODE ROVER")
                          : _expectedMode == Mode::AveragingBase ? starts("MODE BASE TIME")
                                                                 : mode == "MODE BASE";
-    if (_commandActive && _expectedReply == Reply::Mode && _replyOutcome == GPSCommandOutcome::Pending) {
-        _replyOutcome = matches ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected;
+    if (_command.active && _command.expected == Reply::Mode && _command.outcome == GPSCommandOutcome::Pending) {
+        _command.outcome = matches ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected;
     } else if (_ready && !matches) {
         _invalidateBase();
     }
@@ -317,9 +316,9 @@ void GPSNativeUnicore::_handlePosition(std::string_view body)
     const auto radius = std::hypot(*x, *y, *z);
     const bool fixed = fields[0] == "SOL_COMPUTED" && fields[1] == "FIXEDPOS" && radius > 6000000 && radius < 7000000;
     const bool matches = _averaging || samePosition(coordinates, _fixedECEF);
-    if (_commandActive && _expectedReply == Reply::FixedPosition && fixed &&
-        _replyOutcome == GPSCommandOutcome::Pending) {
-        _replyOutcome = matches ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected;
+    if (_command.active && _command.expected == Reply::FixedPosition && fixed &&
+        _command.outcome == GPSCommandOutcome::Pending) {
+        _command.outcome = matches ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected;
     }
     if (_ready && _baseValid && (!fixed || !matches || !samePosition(coordinates, _baseECEF))) {
         _invalidateBase();
@@ -391,19 +390,19 @@ void GPSNativeUnicore::servicePendingCommands()
 int GPSNativeUnicore::handleReceiverLine(std::string_view line)
 {
     if (line.starts_with("$command,")) {
-        if (!_commandActive || !validChecksum(line, false)) {
+        if (!_command.active || !validChecksum(line, false)) {
             return 0;
         }
         const auto response = line.find(",response: ", 9);
-        if (response == std::string_view::npos || !equalCommand(line.substr(9, response - 9), _command)) {
+        if (response == std::string_view::npos || !equalCommand(line.substr(9, response - 9), _command.text)) {
             return 0;
         }
         const auto status = line.substr(response + 11, line.find('*') - response - 11);
-        if (_replyOutcome == GPSCommandOutcome::Pending) {
+        if (_command.outcome == GPSCommandOutcome::Pending) {
             if (status != "OK") {
-                _replyOutcome = GPSCommandOutcome::Rejected;
-            } else if (_expectedReply == Reply::Acknowledgment) {
-                _replyOutcome = GPSCommandOutcome::Acknowledged;
+                _command.outcome = GPSCommandOutcome::Rejected;
+            } else if (_command.expected == Reply::Acknowledgment) {
+                _command.outcome = GPSCommandOutcome::Acknowledged;
             }
         }
         return GPSDecodedBatch::PROTOCOL_ACTIVITY;

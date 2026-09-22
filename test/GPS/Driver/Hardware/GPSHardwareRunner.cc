@@ -108,19 +108,26 @@ QJsonObject requestedConfig(const GPSReceiverConfig& config)
                        {"allow_persistent_changes", config.allowPersistentChanges},
                        {"constellation_mask", static_cast<qint64>(config.constellationMask)}};
     if (config.role == GPSReceiverConfig::Role::RTKBase) {
-        if (config.base.useFixedBase) {
+        if (std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode)) {
             result.insert("base_mode", "fixed");
-            result.insert("latitude_deg", config.base.fixedPosition.latitudeDegrees);
-            result.insert("longitude_deg", config.base.fixedPosition.longitudeDegrees);
-            result.insert("ellipsoid_altitude_m", config.base.fixedPosition.altitudeMeters);
-        } else if (config.base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
+            result.insert("latitude_deg",
+                          std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position.latitudeDegrees);
+            result.insert("longitude_deg",
+                          std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position.longitudeDegrees);
+            result.insert("ellipsoid_altitude_m",
+                          std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position.altitudeMeters);
+        } else if (std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode)) {
             result.insert("base_mode", "receiver-averaging");
-            result.insert("averaging_maximum_s", static_cast<qint64>(config.base.receiverAveragingDurationSecs));
+            result.insert("averaging_maximum_s",
+                          static_cast<qint64>(
+                              std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs));
             result.insert("survey_accuracy_m", QJsonValue::Null);
         } else {
             result.insert("base_mode", "survey");
-            result.insert("survey_duration_s", static_cast<qint64>(config.base.surveyInDurationSecs));
-            result.insert("survey_accuracy_m", config.base.surveyInAccMeters);
+            result.insert("survey_duration_s",
+                          static_cast<qint64>(std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs));
+            result.insert("survey_accuracy_m",
+                          std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters);
         }
     }
     result.insert("dynamic_model", config.dynamicModel ? QJsonValue(*config.dynamicModel) : QJsonValue::Null);
@@ -229,20 +236,24 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
                 valid = valid && parser.isSet(name) && ok && std::isfinite(value);
                 return value;
             };
-            options.config.base.useFixedBase = true;
-            options.config.base.fixedPosition = {.latitudeDegrees = coordinate("latitude"),
-                                                 .longitudeDegrees = coordinate("longitude"),
-                                                 .altitudeMeters = static_cast<float>(coordinate("altitude"))};
+            options.config.base.mode = GPSBaseStationConfig::Fixed{};
+            std::get<GPSBaseStationConfig::Fixed>(options.config.base.mode).position = {
+                .latitudeDegrees = coordinate("latitude"),
+                .longitudeDegrees = coordinate("longitude"),
+                .altitudeMeters = static_cast<float>(coordinate("altitude"))};
         } else if (baseMode == "receiver-averaging") {
-            options.config.base.surveyMode = GPSBaseStationConfig::SurveyMode::ReceiverManaged;
-            options.config.base.receiverAveragingDurationSecs =
+            options.config.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
+            std::get<GPSBaseStationConfig::ReceiverAveraging>(options.config.base.mode).maximumDurationSecs =
                 static_cast<uint32_t>(integer("averaging-duration", 1, 3600));
         } else {
-            options.config.base.surveyInDurationSecs = integer("survey-duration", 1, 86400);
+            std::get<GPSBaseStationConfig::SurveyIn>(options.config.base.mode).durationSecs =
+                integer("survey-duration", 1, 86400);
             bool accuracyValid = false;
-            options.config.base.surveyInAccMeters = parser.value("survey-accuracy").toDouble(&accuracyValid);
-            valid = valid && accuracyValid && std::isfinite(options.config.base.surveyInAccMeters) &&
-                    options.config.base.surveyInAccMeters > 0;
+            std::get<GPSBaseStationConfig::SurveyIn>(options.config.base.mode).accuracyMeters =
+                parser.value("survey-accuracy").toDouble(&accuracyValid);
+            valid = valid && accuracyValid &&
+                    std::isfinite(std::get<GPSBaseStationConfig::SurveyIn>(options.config.base.mode).accuracyMeters) &&
+                    std::get<GPSBaseStationConfig::SurveyIn>(options.config.base.mode).accuracyMeters > 0;
         }
     } else if (parser.isSet("base-mode") || parser.isSet("survey-duration") || parser.isSet("survey-accuracy") ||
                parser.isSet("averaging-duration") || parser.isSet("latitude") || parser.isSet("longitude") ||
@@ -491,11 +502,12 @@ int run(const Options& options)
         GPSDriverSinks sinks;
         sinks.onPosition = [&](const GPSPositionReport& position) {
             ++positions;
-            lastPosition = {{"fix_type", static_cast<int>(position.fixType)},
-                            {"latitude_deg", position.latitudeDegrees},
-                            {"longitude_deg", position.longitudeDegrees},
-                            {"ellipsoid_altitude_m", position.altitudeEllipsoidMeters},
-                            {"horizontal_accuracy_m", position.horizontalAccuracyMeters}};
+            const auto& navigation = position.navigation;
+            lastPosition = {{"fix_type", static_cast<int>(navigation.fixType)},
+                            {"latitude_deg", navigation.latitudeDegrees},
+                            {"longitude_deg", navigation.longitudeDegrees},
+                            {"ellipsoid_altitude_m", navigation.altitudeEllipsoidMeters},
+                            {"horizontal_accuracy_m", navigation.horizontalAccuracyMeters}};
         };
         sinks.onSatelliteInfo = [&](const GPSSatelliteReport&) { ++satellites; };
         sinks.onSatelliteUsage = [&](const GPSSatelliteUsageReport&) { ++satelliteUsage; };
@@ -642,7 +654,8 @@ int run(const Options& options)
             }
             checks.append(check("position_observation", positions > 0 ? "passed" : "inconclusive",
                                 "Decoded position messages observed; does not certify fix quality"));
-            if (config.role == GPSReceiverConfig::Role::RTKBase && !config.base.useFixedBase) {
+            if (config.role == GPSReceiverConfig::Role::RTKBase &&
+                !std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode)) {
                 checks.append(check("survey_observation", surveys.isEmpty() ? "inconclusive" : "passed",
                                     "Freshness is reported separately; retained completion is not a fresh survey"));
                 checks.append(check("fresh_survey", "inconclusive",

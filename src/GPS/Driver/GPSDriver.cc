@@ -92,15 +92,21 @@ struct GPSDriver::State
 {
     GPSNativePositionReport position;
     GPSNativeSatelliteReport satellites;
-    GPSNativeIntegrityReport integrity;
+    GPSIntegrityReport integrity;
     GPSNativeData::SatelliteSnapshot satelliteSnapshot;
     std::unique_ptr<GPSProtocol> driver;
     std::vector<GPSConfigurationEvidence> evidence;
     QString configurationError;
     bool configuring = false;
-    int updates = 0;
-    bool usefulData = false;
-    bool activity = false;
+
+    struct ReceiveCycle
+    {
+        int updates = 0;
+        bool usefulData = false;
+        bool activity = false;
+    };
+
+    ReceiveCycle cycle;
 };
 
 GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks)
@@ -148,7 +154,7 @@ bool GPSDriver::configure()
     io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) {
         const int timeout = deadline.remainingMilliseconds(MonotonicClock::nowUs());
         const auto result = _transport.read(bytes.data(), static_cast<int>(bytes.size()), timeout);
-        _state->activity |= result.status == GPSReadStatus::Data && result.bytesRead > 0;
+        _state->cycle.activity |= result.status == GPSReadStatus::Data && result.bytesRead > 0;
         return result;
     };
     io.write = [this](std::span<const uint8_t> bytes, GPSDeadline deadline) {
@@ -186,17 +192,17 @@ bool GPSDriver::configure()
         }
     };
     io.decoded = [this](const GPSDecodedBatch& batch) {
-        _state->activity |= !batch.events.empty();
+        _state->cycle.activity |= !batch.events.empty();
         for (const auto& event : batch.events) {
             std::visit(
                 [this](const auto& report) {
                     using Report = std::decay_t<decltype(report)>;
-                    if constexpr (std::is_same_v<Report, GPSNativeIntegrityReport>) {
+                    if constexpr (std::is_same_v<Report, GPSIntegrityReport>) {
                         _state->integrity = report;
                     } else if constexpr (std::is_same_v<Report, GPSNativePositionReport>) {
                         if (!_state->configuring) {
-                            _state->usefulData = true;
-                            _state->updates |= 1;
+                            _state->cycle.usefulData = true;
+                            _state->cycle.updates |= 1;
                             if (_sinks.onPosition) {
                                 _sinks.onPosition(
                                     GPSNativeData::position(report, _state->integrity, MonotonicClock::nowUs()));
@@ -204,8 +210,8 @@ bool GPSDriver::configure()
                         }
                     } else if constexpr (std::is_same_v<Report, GPSNativeSatelliteReport>) {
                         if (!_state->configuring) {
-                            _state->usefulData = true;
-                            _state->updates |= 2;
+                            _state->cycle.usefulData = true;
+                            _state->cycle.updates |= 2;
                             const auto snapshot = _state->satelliteSnapshot.update(report, MonotonicClock::nowUs());
                             if (_sinks.onSatelliteInfo) {
                                 _sinks.onSatelliteInfo(snapshot);
@@ -213,19 +219,19 @@ bool GPSDriver::configure()
                         }
                     } else if constexpr (std::is_same_v<Report, GPSSatelliteUsageReport>) {
                         if (!_state->configuring) {
-                            _state->usefulData = true;
-                            _state->updates |= 2;
+                            _state->cycle.usefulData = true;
+                            _state->cycle.updates |= 2;
                             if (_sinks.onSatelliteUsage) {
                                 _sinks.onSatelliteUsage(report);
                             }
                         }
                     } else if constexpr (std::is_same_v<Report, GPSNativeSurveyReport>) {
-                        _state->usefulData = true;
+                        _state->cycle.usefulData = true;
                         if (_sinks.onSurveyIn) {
                             _sinks.onSurveyIn(GPSNativeData::survey(report));
                         }
                     } else if constexpr (std::is_same_v<Report, GPSRTCMReport>) {
-                        _state->usefulData = true;
+                        _state->cycle.usefulData = true;
                         if (!_state->configuring && _sinks.onRTCM) {
                             _sinks.onRTCM(std::span(report.bytes).first(report.size));
                         }
@@ -292,9 +298,7 @@ GPSReceiveResult GPSDriver::receiveOutcome(unsigned timeoutMs)
     if (!_state->driver) {
         return {GPSReceiveStatus::NotConfigured, 0, -1};
     }
-    _state->updates = 0;
-    _state->usefulData = false;
-    _state->activity = false;
+    _state->cycle = {};
     _publishExpiredSatellites();
     const int result = _state->driver->receive(timeoutMs);
     _publishExpiredSatellites();
@@ -303,18 +307,18 @@ GPSReceiveResult GPSDriver::receiveOutcome(unsigned timeoutMs)
         return {error == -ECANCELED ? GPSReceiveStatus::Cancelled
                 : error == -EPROTO  ? GPSReceiveStatus::ProtocolError
                                     : GPSReceiveStatus::TransportError,
-                _state->updates, error, _state->driver->ioErrorDetail()};
+                _state->cycle.updates, error, _state->driver->ioErrorDetail()};
     }
     if (_transport.isCancelled()) {
-        return {GPSReceiveStatus::Cancelled, _state->updates, -ECANCELED};
+        return {GPSReceiveStatus::Cancelled, _state->cycle.updates, -ECANCELED};
     }
     if (_transport.fatalError()) {
-        return {GPSReceiveStatus::TransportError, _state->updates, -EIO};
+        return {GPSReceiveStatus::TransportError, _state->cycle.updates, -EIO};
     }
-    return {_state->usefulData               ? GPSReceiveStatus::Data
-            : _state->activity || result > 0 ? GPSReceiveStatus::Activity
-                                             : GPSReceiveStatus::Idle,
-            _state->updates, 0};
+    return {_state->cycle.usefulData               ? GPSReceiveStatus::Data
+            : _state->cycle.activity || result > 0 ? GPSReceiveStatus::Activity
+                                                   : GPSReceiveStatus::Idle,
+            _state->cycle.updates, 0};
 }
 
 void GPSDriver::_publishExpiredSatellites()

@@ -205,8 +205,9 @@ void GPSDriverReentrancyTest::_configurationCallbacks()
         nestedReceive = driverPointer->receiveOutcome(0);
     };
     GPSDriver driver(GPSType::femto, transport,
-                     {.base = {.useFixedBase = true,
-                               .fixedPosition = {.latitudeDegrees = 0, .longitudeDegrees = 0, .altitudeMeters = 0}}},
+                     {.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 0,
+                                                                                .longitudeDegrees = 0,
+                                                                                .altitudeMeters = 0}}}},
                      std::move(sinks));
     driverPointer = &driver;
     expectLogMessage(

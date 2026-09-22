@@ -31,12 +31,17 @@
  *
  ****************************************************************************/
 
+#include <cmath>
+#include <cstddef>
 #include <numbers>
+#include <string.h>
 
 #include "LittleEndian.h"
-#include "SBFPrivate.h"
+#include "RTCMFramer.h"
+#include "SBF/GPSDriverSBF.h"
 
 namespace {
+constexpr double DNU = 100000.0;
 sbf_buf_t decodeBlock(std::span<const uint8_t> bytes)
 {
     sbf_buf_t value{};
@@ -282,7 +287,7 @@ int GPSNativeSBF::payloadRxDone()
             // PVTGeodetic Datum 0 is WGS84/ITRS. Datum 19 is the correction provider's unspecified datum.
             if (_buf.payload_pvt_geodetic.datum != 0) {
                 epoch->position = {};
-                epoch->position.fix_type = GPSPositionReport::FixType::NoFix;
+                epoch->position.navigation.fixType = GPSPositionReport::FixType::NoFix;
                 if (_configured) {
                     log(GPSProtocolLogLevel::Warning, "Unsupported Septentrio position datum: %u",
                         unsigned(_buf.payload_pvt_geodetic.datum));
@@ -300,41 +305,41 @@ int GPSNativeSBF::payloadRxDone()
             }
 
             if (_buf.payload_pvt_geodetic.mode_type < 1) {
-                _gps_position->fix_type = GPSPositionReport::FixType::NoFix;
+                _gps_position->navigation.fixType = GPSPositionReport::FixType::NoFix;
 
             } else {
                 switch (_buf.payload_pvt_geodetic.mode_type) {
                     case 2:
                     case 6:
-                        _gps_position->fix_type = GPSPositionReport::FixType::Differential;
+                        _gps_position->navigation.fixType = GPSPositionReport::FixType::Differential;
                         break;
 
                     case 5:
                     case 8:
-                        _gps_position->fix_type = GPSPositionReport::FixType::RTKFloat;
+                        _gps_position->navigation.fixType = GPSPositionReport::FixType::RTKFloat;
                         break;
 
                     case 4:
                     case 7:
-                        _gps_position->fix_type = GPSPositionReport::FixType::RTKFixed;
+                        _gps_position->navigation.fixType = GPSPositionReport::FixType::RTKFixed;
                         break;
 
                     default:
-                        _gps_position->fix_type = GPSPositionReport::FixType::Fix3D;
+                        _gps_position->navigation.fixType = GPSPositionReport::FixType::Fix3D;
                         break;
                 }
             }
 
             if (_buf.payload_pvt_geodetic.error != 0) {
-                _gps_position->fix_type = GPSPositionReport::FixType::NoFix;
+                _gps_position->navigation.fixType = GPSPositionReport::FixType::NoFix;
             } else if (_buf.payload_pvt_geodetic.mode_2d &&
-                       _gps_position->fix_type >= GPSPositionReport::FixType::Fix3D) {
-                _gps_position->fix_type = GPSPositionReport::FixType::Fix2D;
+                       _gps_position->navigation.fixType >= GPSPositionReport::FixType::Fix3D) {
+                _gps_position->navigation.fixType = GPSPositionReport::FixType::Fix2D;
             }
 
             // Check fix and error code
-            _gps_position->vel_ned_valid =
-                _gps_position->fix_type > GPSPositionReport::FixType::NoFix && _buf.payload_pvt_geodetic.error == 0;
+            _gps_position->vel_ned_valid = _gps_position->navigation.fixType > GPSPositionReport::FixType::NoFix &&
+                                           _buf.payload_pvt_geodetic.error == 0;
 
             // Check boundaries and invalidate GPS velocities
             // We're not just checking for the do-not-use value (-2*10^10) but for any value beyond the specified max
@@ -353,73 +358,79 @@ int GPSNativeSBF::payloadRxDone()
                                           std::isfinite(pvt.longitude) && std::abs(pvt.longitude) <= std::numbers::pi &&
                                           std::isfinite(pvt.height) && std::abs(pvt.height) <= DNU;
             if (!coordinatesValid || !std::isfinite(pvt.undulation) || std::abs(pvt.undulation) > DNU) {
-                _gps_position->fix_type = GPSPositionReport::FixType::NoFix;
+                _gps_position->navigation.fixType = GPSPositionReport::FixType::NoFix;
             }
 
             if (_buf.payload_pvt_geodetic.nr_sv < 255) {  // 255 = do not use value
-                _gps_position->satellites_used = _buf.payload_pvt_geodetic.nr_sv;
+                _gps_position->navigation.satellitesUsed = _buf.payload_pvt_geodetic.nr_sv;
 
                 if (_satellite_info) {
-                    publishSatelliteUsage(_gps_position->satellites_used);
+                    publishSatelliteUsage(_gps_position->navigation.satellitesUsed);
                 }
 
             } else {
-                _gps_position->satellites_used = UINT8_MAX;
+                _gps_position->navigation.satellitesUsed = UINT8_MAX;
                 if (_satellite_info) {
                     publishSatelliteUsage(std::nullopt);
                 }
             }
 
-            _gps_position->latitude_deg = _buf.payload_pvt_geodetic.latitude * GPS_RAD_TO_DEG;
-            _gps_position->longitude_deg = _buf.payload_pvt_geodetic.longitude * GPS_RAD_TO_DEG;
-            _gps_position->altitude_ellipsoid_m = _buf.payload_pvt_geodetic.height;
-            _gps_position->altitude_msl_m =
+            _gps_position->navigation.latitudeDegrees = _buf.payload_pvt_geodetic.latitude * GPS_RAD_TO_DEG;
+            _gps_position->navigation.longitudeDegrees = _buf.payload_pvt_geodetic.longitude * GPS_RAD_TO_DEG;
+            _gps_position->navigation.altitudeEllipsoidMeters = _buf.payload_pvt_geodetic.height;
+            _gps_position->navigation.altitudeMslMeters =
                 _buf.payload_pvt_geodetic.height - static_cast<double>(_buf.payload_pvt_geodetic.undulation);
 
             /* H and V accuracy are reported in 2DRMS, but based off the uBlox reporting we expect RMS.
              * Devide by 100 from cm to m and in addition divide by 2 to get RMS. */
-            _gps_position->eph = _buf.payload_pvt_geodetic.h_accuracy != UINT16_MAX
-                                     ? static_cast<float>(_buf.payload_pvt_geodetic.h_accuracy) / 200.0f
-                                     : NAN;
+            _gps_position->navigation.horizontalAccuracyMeters =
+                _buf.payload_pvt_geodetic.h_accuracy != UINT16_MAX
+                    ? static_cast<float>(_buf.payload_pvt_geodetic.h_accuracy) / 200.0f
+                    : NAN;
             _gps_position->accuracy_timestamp = nowUs();
-            _gps_position->epv = _buf.payload_pvt_geodetic.v_accuracy != UINT16_MAX
-                                     ? static_cast<float>(_buf.payload_pvt_geodetic.v_accuracy) / 200.0f
-                                     : NAN;
+            _gps_position->navigation.verticalAccuracyMeters =
+                _buf.payload_pvt_geodetic.v_accuracy != UINT16_MAX
+                    ? static_cast<float>(_buf.payload_pvt_geodetic.v_accuracy) / 200.0f
+                    : NAN;
 
             _gps_position->vel_n_m_s = static_cast<float>(_buf.payload_pvt_geodetic.vn);
             _gps_position->vel_e_m_s = static_cast<float>(_buf.payload_pvt_geodetic.ve);
             _gps_position->vel_d_m_s = -1.0f * static_cast<float>(_buf.payload_pvt_geodetic.vu);
-            _gps_position->vel_m_s = sqrtf(_gps_position->vel_n_m_s * _gps_position->vel_n_m_s +
-                                           _gps_position->vel_e_m_s * _gps_position->vel_e_m_s);
+            _gps_position->navigation.speedMetersPerSecond = sqrtf(_gps_position->vel_n_m_s * _gps_position->vel_n_m_s +
+                                                                   _gps_position->vel_e_m_s * _gps_position->vel_e_m_s);
 
             const float course = _buf.payload_pvt_geodetic.cog;
-            _gps_position->cog_rad =
+            _gps_position->navigation.courseRadians =
                 std::isfinite(course) && course >= 0.0f && course <= 360.0f ? course * GPS_DEG_TO_RAD : NAN;
             _gps_position->courseAccuracyRadians = 1.0f * GPS_DEG_TO_RAD;
 
             // WNc/TOW is GNSS system time, not UTC. Without receiver UTC/leap information,
             // retain the epoch key internally and let the facade use reception UTC.
-            _gps_position->time_utc_usec = 0;
-            _gps_position->timestamp = nowUs();
+            _gps_position->navigation.utcTimeUs = 0;
+            _gps_position->navigation.timestampUs = nowUs();
 
             // In RTCM mode, PVTGeodetic is used to get base station survey-in
             if (_configured && _output_mode == OutputMode::RTCM) {
                 // Mode bit 6 means automatic base determination is still in progress, not completed.
                 // Septentrio PolaRx5TR 5.5.0 Reference Guide, SBF Mode definition (p. 382).
-                const bool active = !_baseConfig.useFixedBase && pvt.mode_base_fixed;
+                const bool active =
+                    !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) && pvt.mode_base_fixed;
                 const bool valid =
                     !pvt.mode_base_fixed && pvt.mode_type == 3 && !pvt.mode_2d && !pvt.error && coordinatesValid;
-                if (!_baseConfig.useFixedBase && (active || _survey_active)) {
+                if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) &&
+                    (active || _survey_active)) {
                     _survey_duration = (nowUs() - _survey_activation_date) / 1000000;
                 }
                 _survey_active = active;
                 GPSNativeSurveyReport status{};
                 // PVT accuracy describes the navigation solution, not the averaged base survey.
                 status.altitudeDatum = GPSNativeSurveyReport::AltitudeDatum::Ellipsoid;
-                status.latitude = coordinatesValid && !pvt.error ? _gps_position->latitude_deg : NAN;
-                status.longitude = coordinatesValid && !pvt.error ? _gps_position->longitude_deg : NAN;
-                status.altitude = coordinatesValid && !pvt.error ? _gps_position->altitude_ellipsoid_m : NAN;
-                status.duration = _baseConfig.useFixedBase ? 0 : _survey_duration;
+                status.latitude = coordinatesValid && !pvt.error ? _gps_position->navigation.latitudeDegrees : NAN;
+                status.longitude = coordinatesValid && !pvt.error ? _gps_position->navigation.longitudeDegrees : NAN;
+                status.altitude =
+                    coordinatesValid && !pvt.error ? _gps_position->navigation.altitudeEllipsoidMeters : NAN;
+                status.duration =
+                    std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? 0 : _survey_duration;
                 status.flags = static_cast<uint8_t>(valid) | (static_cast<uint8_t>(active) << 1);
                 surveyInStatus(status);
                 ret |= 4;  // RTCM infos have been updated
@@ -440,18 +451,20 @@ int GPSNativeSBF::payloadRxDone()
             break;
         }
         case SBF_ID_DOP:
-            _gps_position->hdop = _buf.payload_dop.hDOP != UINT16_MAX ? _buf.payload_dop.hDOP * 0.01f : NAN;
-            _gps_position->vdop = _buf.payload_dop.vDOP != UINT16_MAX ? _buf.payload_dop.vDOP * 0.01f : NAN;
+            _gps_position->navigation.horizontalDop =
+                _buf.payload_dop.hDOP != UINT16_MAX ? _buf.payload_dop.hDOP * 0.01f : NAN;
+            _gps_position->navigation.verticalDop =
+                _buf.payload_dop.vDOP != UINT16_MAX ? _buf.payload_dop.vDOP * 0.01f : NAN;
             _gps_position->dop_timestamp = nowUs();
             break;
 
         case SBF_ID_AttEuler: {
             const auto& attitude = _buf.payload_att_euler;
-            _gps_position->heading = NAN;
+            _gps_position->navigation.headingRadians = NAN;
             _gps_position->heading_timestamp = nowUs();
             if (!attitude.error_not_requested && !attitude.error_aux1 && !attitude.error_aux2 && attitude.mode >= 1 &&
                 attitude.mode <= 4 && std::isfinite(attitude.heading) && std::abs(attitude.heading) <= 360) {
-                _gps_position->heading = std::remainder(attitude.heading, 360.0f) * GPS_DEG_TO_RAD;
+                _gps_position->navigation.headingRadians = std::remainder(attitude.heading, 360.0f) * GPS_DEG_TO_RAD;
             }
             break;
         }
@@ -460,7 +473,7 @@ int GPSNativeSBF::payloadRxDone()
             const float variance = covariance.cov_headhead;
             const bool valid = !covariance.error_not_requested && !covariance.error_aux1 && !covariance.error_aux2 &&
                                std::isfinite(variance) && variance >= 0;
-            _gps_position->heading_accuracy = valid ? std::sqrt(variance) * GPS_DEG_TO_RAD : NAN;
+            _gps_position->navigation.headingAccuracyRadians = valid ? std::sqrt(variance) * GPS_DEG_TO_RAD : NAN;
             break;
         }
 
@@ -503,7 +516,7 @@ void GPSNativeSBF::finishEpoch(std::optional<NavigationEpoch>& epoch)
 {
     if (epoch->hasPosition && (!_lastPublishedEpoch || epoch->receiverTimeMs > *_lastPublishedEpoch)) {
         *_gps_position = epoch->position;
-        _gps_position->timestamp = epoch->receiptUs;
+        _gps_position->navigation.timestampUs = epoch->receiptUs;
         _decoded.updates |= 1;
         _decoded.events.emplace_back(*_gps_position);
     }
@@ -538,4 +551,18 @@ void GPSNativeSBF::decodeInit()
 int GPSNativeSBF::decodeByte(uint8_t byte)
 {
     return parseChar(byte);
+}
+
+GPSNativeSBF::GPSNativeSBF(GPSProtocolIO io, struct GPSNativePositionReport* gps_position,
+                           GPSNativeSatelliteReport* satellite_info)
+    : GPSProtocol(std::move(io))
+    , _gps_position(gps_position)
+    , _satellite_info(satellite_info)
+{
+    decodeInit();
+}
+
+int GPSNativeSBF::receive(unsigned timeout)
+{
+    return ioError() ? ioError() : (_configured ? receiveDecoded(timeout) : 0);
 }

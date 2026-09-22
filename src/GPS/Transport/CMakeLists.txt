@@ -6,7 +6,7 @@ target_link_libraries(
     PUBLIC Qt6::Core
     PRIVATE QGCLoggingCategory
 )
-target_sources(QGCGPSTransport PUBLIC FILE_SET HEADERS FILES GPSTransport.h GPSTransportResult.h GPSIOStatus.h)
+target_sources(QGCGPSTransport PUBLIC FILE_SET HEADERS FILES GPSTransport.h GPSTransportResult.h)
 
 if(NOT DEFINED QGC_GPS_COMPONENTS_ENABLED OR "ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
     qt_add_library(

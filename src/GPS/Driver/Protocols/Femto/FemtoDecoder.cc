@@ -31,11 +31,25 @@
  *
  ****************************************************************************/
 
-#include "FemtoPrivate.h"
+#include <cmath>
+#include <cstddef>
+#include <ctime>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "CRC32.h"
+#include "Femto/GPSDriverFemto.h"
 #include "LittleEndian.h"
+#include "NMEAFields.h"
 #include "NMEASentence.h"
+#include "RTCMFramer.h"
 
 namespace {
+constexpr uint8_t FEMTO_PREAMBLE1 = 0xaa;
+constexpr uint8_t FEMTO_PREAMBLE2 = 0x44;
+constexpr uint8_t FEMTO_PREAMBLE3 = 0x12;
 inline femto_uav_gps_t decodePosition(std::span<const uint8_t> bytes)
 {
     femto_uav_gps_t value{};
@@ -80,54 +94,53 @@ int GPSNativeFemto::handleMessage(int len)
         if (_femto_msg.payloadLength < Femto::GPS_PAYLOAD_SIZE) {
             return 0;
         }
-        const auto position = decodePosition({_femto_msg.data, _femto_msg.payloadLength});
+        const auto wire = decodePosition({_femto_msg.data, _femto_msg.payloadLength});
 
-        _gps_position->time_utc_usec = position.time_utc_usec;
-        _gps_position->latitude_deg = position.lat / 1e7;
-        _gps_position->longitude_deg = position.lon / 1e7;
-        _gps_position->altitude_msl_m = position.alt / 1e3;
-        _gps_position->altitude_ellipsoid_m = position.alt_ellipsoid / 1e3;
-        _gps_position->speedAccuracyMetersPerSecond = position.s_variance_m_s;
-        _gps_position->courseAccuracyRadians = position.c_variance_rad;
-        _gps_position->eph = position.eph;
+        _gps_position->navigation.utcTimeUs = wire.time_utc_usec;
+        _gps_position->navigation.latitudeDegrees = wire.lat / 1e7;
+        _gps_position->navigation.longitudeDegrees = wire.lon / 1e7;
+        _gps_position->navigation.altitudeMslMeters = wire.alt / 1e3;
+        _gps_position->navigation.altitudeEllipsoidMeters = wire.alt_ellipsoid / 1e3;
+        _gps_position->speedAccuracyMetersPerSecond = wire.s_variance_m_s;
+        _gps_position->courseAccuracyRadians = wire.c_variance_rad;
+        _gps_position->navigation.horizontalAccuracyMeters = wire.eph;
         _gps_position->accuracy_timestamp = nowUs();
-        _gps_position->epv = position.epv;
-        _gps_position->hdop = position.hdop;
+        _gps_position->navigation.verticalAccuracyMeters = wire.epv;
+        _gps_position->navigation.horizontalDop = wire.hdop;
         _gps_position->dop_timestamp = nowUs();
-        _gps_position->vdop = position.vdop;
-        _integrity.noise_per_ms = position.noise_per_ms;
-        _integrity.rf_timestamp = nowUs();
-        _integrity.jamming_indicator = position.jamming_indicator;
-        _integrity.rf_timestamp = nowUs();
+        _gps_position->navigation.verticalDop = wire.vdop;
+        _integrity.rf.noisePerMillisecond = wire.noise_per_ms;
+        _integrity.rf.timestampUs = nowUs();
+        _integrity.rf.jammingIndicator = wire.jamming_indicator;
+        _integrity.rf.timestampUs = nowUs();
         publishIntegrity();
-        _gps_position->vel_m_s = position.vel_m_s;
-        _gps_position->vel_n_m_s = position.vel_n_m_s;
-        _gps_position->vel_e_m_s = position.vel_e_m_s;
-        _gps_position->vel_d_m_s = position.vel_d_m_s;
-        _gps_position->cog_rad = position.cog_rad;
-        _gps_position->timestamp_time_relative = position.timestamp_time_relative;
-        _gps_position->fix_type = GPSPositionReport::fixTypeFromValue(position.fix_type);
-        _gps_position->vel_ned_valid = position.vel_ned_valid;
-        _gps_position->satellites_used = position.satellites_used;
+        _gps_position->navigation.speedMetersPerSecond = wire.vel_m_s;
+        _gps_position->vel_n_m_s = wire.vel_n_m_s;
+        _gps_position->vel_e_m_s = wire.vel_e_m_s;
+        _gps_position->vel_d_m_s = wire.vel_d_m_s;
+        _gps_position->navigation.courseRadians = wire.cog_rad;
+        _gps_position->timestamp_time_relative = wire.timestamp_time_relative;
+        _gps_position->navigation.fixType = GPSPositionReport::fixTypeFromValue(wire.fix_type);
+        _gps_position->vel_ned_valid = wire.vel_ned_valid;
+        _gps_position->navigation.satellitesUsed = wire.satellites_used;
 
-        if (position.heading_type == 6) {
-            float heading = position.heading;
+        if (wire.heading_type == 6) {
+            float heading = wire.heading;
             heading *= GPS_PI / 180.0f;  // deg to rad, now in range [0, 2pi]
-            heading -= _heading_offset;  // range: [-pi, 3pi]
 
             if (heading > GPS_PI) {
                 heading -= 2.f * GPS_PI;  // final range is [-pi, pi]
             }
 
-            _gps_position->heading = heading;
+            _gps_position->navigation.headingRadians = heading;
             _gps_position->heading_timestamp = nowUs();
 
         } else {
-            _gps_position->heading = NAN;
+            _gps_position->navigation.headingRadians = NAN;
             _gps_position->heading_timestamp = nowUs();
         }
 
-        _gps_position->timestamp = nowUs();
+        _gps_position->navigation.timestampUs = nowUs();
 
         ret = 1;
 
@@ -337,7 +350,7 @@ void GPSNativeFemto::sendSurveyInStatusUpdate(bool active, bool valid, double la
     status.latitude = latitude;
     status.longitude = longitude;
     status.altitude = altitude;
-    status.duration = !_baseConfig.useFixedBase ? _survey_duration : 0;
+    status.duration = !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? _survey_duration : 0;
     status.mean_accuracy = 0;  // unknown
     status.flags = (int) valid | ((int) active << 1);
     surveyInStatus(status);
@@ -353,5 +366,29 @@ void GPSNativeFemto::flushDecoded()
 {
     if (_rtcm_parsing) {
         drainRTCM(*_rtcm_parsing);
+    }
+}
+
+GPSNativeFemto::GPSNativeFemto(GPSProtocolIO io, struct GPSNativePositionReport* gps_position,
+                               GPSNativeSatelliteReport* satellite_info)
+    : GPSProtocol(std::move(io))
+    , _gps_position(gps_position)
+    , _satellite_info(satellite_info)
+{
+    decodeInit();
+}
+
+int GPSNativeFemto::receive(unsigned timeout)
+{
+    const int result = receiveDecoded(timeout);
+    serviceControls();
+    return ioError() ? ioError() : result;
+}
+
+void GPSNativeFemto::servicePendingCommands()
+{
+    if (_rtcmActivationPending) {
+        _rtcmActivationPending = false;
+        activateRTCMOutput();
     }
 }

@@ -12,8 +12,8 @@ SettingsGroupLayout {
 
     readonly property var  _autoConnectSettings: QGroundControl.settingsManager.autoConnectSettings
     property var positionManager: QGroundControl.qgcPositionManger
-    readonly property var _health: root.positionManager.nmeaHealth
     readonly property var nmeaInput: root.positionManager.nmeaInput
+    readonly property var _health: root.nmeaInput ? root.nmeaInput.health : null
     readonly property var _serialPortManager: QGroundControl.serialPortManager
     readonly property var _serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
     readonly property var _serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
@@ -57,8 +57,8 @@ SettingsGroupLayout {
         visible: root._health !== null
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
-        text: root.positionManager.nmeaReceiving ? qsTr("Receiving NMEA data")
-              : root.positionManager.nmeaHasData ? qsTr("NMEA stream idle")
+        text: root.nmeaInput && root.nmeaInput.receiving ? qsTr("Receiving NMEA data")
+              : root.nmeaInput && root.nmeaInput.hasData ? qsTr("NMEA stream idle")
               : root._serialSource ? qsTr("Waiting for NMEA data") : qsTr("Listening for NMEA UDP data")
     }
 

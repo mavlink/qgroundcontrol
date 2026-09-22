@@ -9,7 +9,6 @@
 #include <QtNetwork/QSslError>
 #include <QtNetwork/QSslSocket>
 
-#include "NTRIPHttpRequest.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPTlsPolicy_p.h"
 #include "QGCLoggingCategory.h"

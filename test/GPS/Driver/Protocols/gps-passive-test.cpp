@@ -143,23 +143,23 @@ void navigation()
     }
     const auto fixes = receiver.reports<GPSNativePositionReport>();
     CHECK(fixes.size() == 1);
-    CHECK(fixes[0].fix_type == GPSPositionReport::FixType::RTKFixed);
-    CHECK(std::abs(fixes[0].latitude_deg - 48.1173) < 1e-8);
-    CHECK(fixes[0].altitude_msl_m == 0);
-    CHECK(std::isnan(fixes[0].altitude_ellipsoid_m));
-    CHECK(std::abs(fixes[0].eph - 0.5) < 1e-6);
+    CHECK(fixes[0].navigation.fixType == GPSPositionReport::FixType::RTKFixed);
+    CHECK(std::abs(fixes[0].navigation.latitudeDegrees - 48.1173) < 1e-8);
+    CHECK(fixes[0].navigation.altitudeMslMeters == 0);
+    CHECK(std::isnan(fixes[0].navigation.altitudeEllipsoidMeters));
+    CHECK(std::abs(fixes[0].navigation.horizontalAccuracyMeters - 0.5) < 1e-6);
     CHECK(receiver.reports<GPSSatelliteUsageReport>().back().usedCount == 0);
     receiver.events.clear();
     receiver.clock += 1000000;
     feed(driver, sentence("GNGGA,123520,4807.038,N,01131.000,E,1,,0.9,1.0,M,2.0,M,,"));
-    CHECK(std::isnan(receiver.reports<GPSNativePositionReport>().back().eph));
+    CHECK(std::isnan(receiver.reports<GPSNativePositionReport>().back().navigation.horizontalAccuracyMeters));
     CHECK(!receiver.reports<GPSSatelliteUsageReport>().back().usedCount);
-    const auto positionTime = receiver.position.timestamp;
+    const auto positionTime = receiver.position.navigation.timestampUs;
     receiver.clock += 1000;
     feed(driver, sentence("GNGST,123520,0,0,0,0,0.6,0.8,1.0"));
     CHECK(receiver.reports<GPSNativePositionReport>().size() == 2);
-    CHECK(receiver.position.timestamp == positionTime);
-    CHECK(std::abs(receiver.position.eph - 1.0) < 1e-6);
+    CHECK(receiver.position.navigation.timestampUs == positionTime);
+    CHECK(std::abs(receiver.position.navigation.horizontalAccuracyMeters - 1.0) < 1e-6);
     receiver.events.clear();
     auto corrupt = gga;
     corrupt[10] ^= 1;
@@ -168,8 +168,9 @@ void navigation()
     CHECK(receiver.reports<GPSNativePositionReport>().empty());
     feed(driver, sentence("GNGGA,123521,,,,,0,00,0.9,,M,,M,,"));
     CHECK(receiver.reports<GPSNativePositionReport>().size() == 1);
-    CHECK(receiver.position.fix_type == GPSPositionReport::FixType::NoFix);
-    CHECK(std::isnan(receiver.position.latitude_deg) && std::isnan(receiver.position.longitude_deg));
+    CHECK(receiver.position.navigation.fixType == GPSPositionReport::FixType::NoFix);
+    CHECK(std::isnan(receiver.position.navigation.latitudeDegrees) &&
+          std::isnan(receiver.position.navigation.longitudeDegrees));
     CHECK(receiver.reports<GPSSatelliteUsageReport>().back().usedCount == 0);
     receiver.events.clear();
     feed(driver, std::string(10000, 'A') + "\n" + gga);
@@ -183,8 +184,9 @@ void navigation()
         receiver.events.clear();
         feed(driver, sentence(body));
         const auto invalid = receiver.reports<GPSNativePositionReport>();
-        CHECK(invalid.size() == 1 && invalid.front().fix_type == GPSPositionReport::FixType::NoFix);
-        CHECK(std::isnan(invalid.front().latitude_deg) && std::isnan(invalid.front().eph));
+        CHECK(invalid.size() == 1 && invalid.front().navigation.fixType == GPSPositionReport::FixType::NoFix);
+        CHECK(std::isnan(invalid.front().navigation.latitudeDegrees) &&
+              std::isnan(invalid.front().navigation.horizontalAccuracyMeters));
     }
 }
 

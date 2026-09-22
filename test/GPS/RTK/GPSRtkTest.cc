@@ -169,7 +169,7 @@ void GPSRtkTest::_snapshotUsageEvidence()
     QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), expectedUsage < 0 ? 0 : expectedUsage);
     receiver._satelliteUsageUpdate({});
     QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
-    receiver._onGPSDisconnect();
+    receiver.disconnectGPS();
     QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
     QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
 }
@@ -395,7 +395,7 @@ void GPSRtkTest::_connectionNotificationSupersedesAttempt()
         QVERIFY(receiver->hasReceiver());
         QCOMPARE(receiver->_session.provider, replacement);
         QCOMPARE(receiver->activeManufacturer(), 7);
-        QVERIFY(!receiver->_session.configuration.allowPersistentChanges);
+        QVERIFY(!receiver->_session.provider->_config.allowPersistentChanges);
         QCOMPARE(receiver->findChildren<GPSProvider*>().size(), 1);
     } else {
         QVERIFY(!receiver->hasReceiver());
@@ -472,13 +472,13 @@ void GPSRtkTest::_factNotificationRetiresSession()
         }
     });
     if (report == QStringLiteral("survey")) {
-        GPSSurveyInStatus survey;
+        GPSSurveyReport survey;
         survey.duration = std::chrono::seconds(123);
         survey.valid = true;
         survey.active = true;
-        survey.coordinate = QGeoCoordinate(47, 8);
+        survey.position = {.latitudeDegrees = 47, .longitudeDegrees = 8};
         survey.meanAccuracyMeters = 1.5;
-        receiver->_onGPSSurveyInStatus(survey);
+        receiver->_onGPSSurveyReport(survey);
     } else if (report == QStringLiteral("satellites")) {
         GPSSatelliteReport satellites;
         satellites.timestampUs = 1;
@@ -608,11 +608,10 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
     QVERIFY(!receiver.connected());
     emit first->receiverReady();
-    GPSSurveyInStatus survey{};
+    GPSSurveyReport survey{};
     survey.valid = true;
     survey.active = true;
-    survey.coordinate = QGeoCoordinate(47.0, 8.0);
-    survey.altitudeEllipsoidMeters = 500.0;
+    survey.position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500};
     survey.duration = std::chrono::seconds(4294967295LL);
     survey.meanAccuracyMeters = 1.5;
     emit first->surveyInStatus(survey);
@@ -884,30 +883,25 @@ void GPSRtkTest::_receiverSettingsMapping()
     QVERIFY(!config.allowPersistentChanges);
     if (manufacturer == 7) {
         QCOMPARE(config.role, GPSReceiverConfig::Role::Passive);
-        QVERIFY(!config.base.useFixedBase);
-        QCOMPARE(config.base.surveyInAccMeters, 0.0);
-        QCOMPARE(config.base.surveyInDurationSecs, int64_t(0));
-        QVERIFY(qIsNaN(config.base.fixedPosition.latitudeDegrees));
-        QVERIFY(qIsNaN(config.base.fixedPosition.longitudeDegrees));
-        QVERIFY(qIsNaN(config.base.fixedPosition.altitudeMeters));
-        QCOMPARE(config.base.fixedBaseAccuracyMeters, 0.0f);
-        QCOMPARE(config.base.surveyMode, GPSBaseStationConfig::SurveyMode::AccuracyControlled);
-        QCOMPARE(config.base.receiverAveragingDurationSecs, uint32_t(60));
+        QCOMPARE(config.base, GPSBaseStationConfig{});
     } else {
         QCOMPARE(config.role, GPSReceiverConfig::Role::RTKBase);
-        QCOMPARE(config.base.useFixedBase, baseMode == 1);
+        QCOMPARE(std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode), baseMode == 1);
         if (baseMode == 1) {
-            QCOMPARE(config.base.fixedPosition.latitudeDegrees, 47.5);
-            QCOMPARE(config.base.fixedPosition.longitudeDegrees, 8.25);
-            QCOMPARE(config.base.fixedPosition.altitudeMeters, 512.0f);
-            QCOMPARE(config.base.fixedBaseAccuracyMeters, 1.5f);
+            const auto& fixed = std::get<GPSBaseStationConfig::Fixed>(config.base.mode);
+            QCOMPARE(fixed.position.latitudeDegrees, 47.5);
+            QCOMPARE(fixed.position.longitudeDegrees, 8.25);
+            QCOMPARE(fixed.position.altitudeMeters, 512.0f);
+            QCOMPARE(fixed.accuracyMeters, 1.5f);
         } else if (baseMode == 2) {
-            QCOMPARE(config.base.surveyMode, GPSBaseStationConfig::SurveyMode::ReceiverManaged);
-            QCOMPARE(config.base.receiverAveragingDurationSecs, uint32_t(321));
+            QVERIFY(std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode));
+            QCOMPARE(std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs,
+                     uint32_t(321));
         } else {
-            QCOMPARE(config.base.surveyMode, GPSBaseStationConfig::SurveyMode::AccuracyControlled);
-            QCOMPARE(config.base.surveyInAccMeters, 1.75);
-            QCOMPARE(config.base.surveyInDurationSecs, int64_t(195));
+            QVERIFY(std::holds_alternative<GPSBaseStationConfig::SurveyIn>(config.base.mode));
+            const auto& survey = std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode);
+            QCOMPARE(survey.accuracyMeters, 1.75);
+            QCOMPARE(survey.durationSecs, int64_t(195));
         }
     }
 }
@@ -1021,7 +1015,7 @@ void GPSRtkTest::_explicitSerialSelectionAndDisconnect()
     QVERIFY(!ports.reservePort(openedDevice));
     QPointer<GPSProvider> provider = receiver._session.provider;
     emit provider->receiverReady();
-    GPSSurveyInStatus survey;
+    GPSSurveyReport survey;
     survey.active = true;
     survey.valid = true;
     emit provider->surveyInStatus(survey);

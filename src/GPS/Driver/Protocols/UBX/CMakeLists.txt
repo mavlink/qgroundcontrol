@@ -10,10 +10,8 @@ qt_add_library(
     UBXMessageSchema.h
     UBXMessages.h
     UBXNavigationEpoch.h
-    UBXPrivate.h
     UBXReceiverController.h
     UBXReceiverProfile.h
-    UBXWire.h
 )
 set_target_properties(
     QGCGPSUBX

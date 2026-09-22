@@ -8,6 +8,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEvent>
 #include <QtCore/QRegularExpression>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
 
 #include "GPSDriver.h"
@@ -22,19 +23,18 @@
 #endif
 
 Q_DECLARE_METATYPE(GPSBaseStationConfig)
-Q_DECLARE_METATYPE(GPSSurveyReport)
 
 void GPSProviderTest::_queuedPayloadsOwnSnapshots()
 {
     GPSProvider provider({}, GPSType::ublox, {});
     for (const auto name : {"GPSSatelliteReport", "GPSSatelliteUsageReport", "GPSPositionReport::FixType",
-                            "GPSConnectionError", "GPSSurveyInStatus"}) {
+                            "GPSConnectionError", "GPSSurveyReport"}) {
         QVERIFY2(QMetaType::fromName(name).isValid(), name);
     }
     GPSSatelliteReport satellites;
     GPSSatelliteUsageReport usage;
     auto fixType = GPSPositionReport::FixType::Unknown;
-    GPSSurveyInStatus survey;
+    GPSSurveyReport survey;
     GPSConnectionError error = GPSConnectionError::None;
     QString configurationDetail;
     QObject receiver;
@@ -48,7 +48,7 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
         &provider, &GPSProvider::fixTypeChanged, &receiver, [&](GPSPositionReport::FixType value) { fixType = value; },
         Qt::QueuedConnection);
     connect(
-        &provider, &GPSProvider::surveyInStatus, &receiver, [&](const GPSSurveyInStatus& value) { survey = value; },
+        &provider, &GPSProvider::surveyInStatus, &receiver, [&](const GPSSurveyReport& value) { survey = value; },
         Qt::QueuedConnection);
     connect(
         &provider, &GPSProvider::connectionError, &receiver, [&](GPSConnectionError value) { error = value; },
@@ -69,7 +69,7 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
         GPSSurveyReport progress;
         progress.duration = std::chrono::seconds(4294967295LL);
         progress.meanAccuracyMeters = 1.234;
-        provider._handleSurveyIn(progress);
+        provider.surveyInStatus(progress);
         progress.meanAccuracyMeters = 0;
         QString detail = QStringLiteral("Settings may be saved; reconnect failed");
         emit provider.configurationError(detail);
@@ -133,23 +133,21 @@ void GPSProviderTest::_surveyReportProjection()
     GPSProvider provider({}, GPSType::ublox, {});
     QSignalSpy reports(&provider, &GPSProvider::surveyInStatus);
 
-    provider._handleSurveyIn(report);
+    provider.surveyInStatus(report);
 
     QCOMPARE(reports.size(), 1);
-    const auto status = qvariant_cast<GPSSurveyInStatus>(reports.first().first());
-    QCOMPARE(status.coordinate.isValid(), coordinateValid);
+    const auto status = qvariant_cast<GPSSurveyReport>(reports.first().first());
+    const QGeoCoordinate coordinate(status.position.latitudeDegrees, status.position.longitudeDegrees);
+    QCOMPARE(coordinate.isValid(), coordinateValid);
     if (coordinateValid) {
-        QCOMPARE(status.coordinate.latitude(), report.position.latitudeDegrees);
-        QCOMPARE(status.coordinate.longitude(), report.position.longitudeDegrees);
-        QCOMPARE(status.coordinate.type(), QGeoCoordinate::Coordinate2D);
+        QCOMPARE(status.position.latitudeDegrees, report.position.latitudeDegrees);
+        QCOMPARE(status.position.longitudeDegrees, report.position.longitudeDegrees);
     }
-    QVERIFY(std::isnan(status.coordinate.altitude()));
     if (std::isnan(report.position.altitudeMeters)) {
-        QVERIFY(std::isnan(status.altitudeEllipsoidMeters));
+        QVERIFY(std::isnan(status.position.altitudeMeters));
     } else {
-        QCOMPARE(status.altitudeEllipsoidMeters, report.position.altitudeMeters);
+        QCOMPARE(status.position.altitudeMeters, report.position.altitudeMeters);
     }
-    QCOMPARE(status.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
     QCOMPARE(status.meanAccuracyMeters, report.meanAccuracyMeters);
     QCOMPARE(status.duration, report.duration);
     QCOMPARE(status.valid, report.valid);
@@ -509,8 +507,8 @@ void GPSProviderTest::_ancillaryTraffic()
             return transport;
         },
         GPSType::septentrio,
-        {.base = {.useFixedBase = true,
-                  .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}});
+        {.base = {.mode = GPSBaseStationConfig::Fixed{
+                      .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}});
     connect(
         &provider, &GPSProvider::receiverReady, &provider,
         [&] {
@@ -545,22 +543,20 @@ void GPSProviderTest::_ancillaryTraffic()
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss_data()
 {
     QTest::addColumn<GPSBaseStationConfig>("config");
-    QTest::newRow("survey") << GPSBaseStationConfig{.surveyInAccMeters = 2, .surveyInDurationSecs = 180};
-    QTest::newRow("minimum-survey") << GPSBaseStationConfig{.surveyInAccMeters = 0.0001, .surveyInDurationSecs = 1};
-    QTest::newRow("maximum-survey") << GPSBaseStationConfig{.surveyInAccMeters = 429496.7295,
-                                                            .surveyInDurationSecs = 4294967295LL};
+    QTest::newRow("survey") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{2, 180}};
+    QTest::newRow("minimum-survey") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{0.0001, 1}};
+    QTest::newRow("maximum-survey") << GPSBaseStationConfig{
+        .mode = GPSBaseStationConfig::SurveyIn{429496.7295, 4294967295LL}};
     QTest::newRow("fixed") << GPSBaseStationConfig{
-        .useFixedBase = true,
-        .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
-        .fixedBaseAccuracyMeters = 1};
+        .mode = GPSBaseStationConfig::Fixed{
+            .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}, .accuracyMeters = 1}};
     QTest::newRow("fixed-wire-limits") << GPSBaseStationConfig{
-        .useFixedBase = true,
-        .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 21474836.0f},
-        .fixedBaseAccuracyMeters = 429496.71875f};
-    QTest::newRow("fixed-unknown-accuracy")
-        << GPSBaseStationConfig{.useFixedBase = true,
-                                .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
-                                .fixedBaseAccuracyMeters = 0};
+        .mode = GPSBaseStationConfig::Fixed{
+            .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 21474836.0f},
+            .accuracyMeters = 429496.71875f}};
+    QTest::newRow("fixed-unknown-accuracy") << GPSBaseStationConfig{
+        .mode = GPSBaseStationConfig::Fixed{
+            .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}, .accuracyMeters = 0}};
 }
 
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
@@ -583,15 +579,12 @@ void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
     QCOMPARE(ready.size(), 1);
     QCOMPARE(errors.size(), 1);
     QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
-    if (config.useFixedBase) {
+    if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.mode)) {
         QCOMPARE(surveys.size(), 1);
-        const auto status = qvariant_cast<GPSSurveyInStatus>(surveys.first().first());
-        QCOMPARE(status.coordinate.type(), QGeoCoordinate::Coordinate2D);
-        QCOMPARE(status.coordinate.latitude(), config.fixedPosition.latitudeDegrees);
-        QCOMPARE(status.coordinate.longitude(), config.fixedPosition.longitudeDegrees);
-        QVERIFY(std::isnan(status.coordinate.altitude()));
-        QCOMPARE(status.altitudeEllipsoidMeters, config.fixedPosition.altitudeMeters);
-        QCOMPARE(status.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
+        const auto status = qvariant_cast<GPSSurveyReport>(surveys.first().first());
+        QCOMPARE(status.position.latitudeDegrees, fixed->position.latitudeDegrees);
+        QCOMPARE(status.position.longitudeDegrees, fixed->position.longitudeDegrees);
+        QCOMPARE(status.position.altitudeMeters, fixed->position.altitudeMeters);
         QVERIFY(!status.meanAccuracyMeters.has_value());
         QCOMPARE(status.duration.count(), 0);
         QVERIFY(status.valid);

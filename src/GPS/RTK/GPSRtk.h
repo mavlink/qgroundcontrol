@@ -95,16 +95,14 @@ private slots:
     void _satelliteUsageUpdate(const GPSSatelliteUsageReport& msg);
     void _fixTypeChanged(GPSPositionReport::FixType fixType);
     void _onGPSConnect();
-    void _onGPSDisconnect();
     void _onGPSConnectionError(GPSConnectionError error);
-    void _onGPSSurveyInStatus(const GPSSurveyInStatus& status);
+    void _onGPSSurveyReport(const GPSSurveyReport& status);
 
 private:
     struct ReceiverSession
     {
         QPointer<GPSProvider> provider;
         GPSCorrectionSourceRegistration corrections;
-        GPSReceiverConfig configuration;
         QString serialDevice;
         std::optional<int> countOnlySatelliteUsage;
         int manufacturer = 0;

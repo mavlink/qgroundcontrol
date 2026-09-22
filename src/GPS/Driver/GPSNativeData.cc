@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 
 #include "GPSNativeData_p.h"
 
@@ -24,46 +25,25 @@ GPSSatellite satelliteObservation(const GPSNativeSatelliteData& source, GPSConst
 }  // namespace
 
 namespace GPSNativeData {
-GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativeIntegrityReport& diagnostic,
-                           uint64_t nowUs)
+GPSPositionReport position(const GPSNativePositionReport& source, const GPSIntegrityReport& diagnostic, uint64_t nowUs)
 {
-    GPSPositionReport result;
-    result.timestampUs = source.timestamp;
-    result.utcTimeUs = source.time_utc_usec;
-    result.fixType = GPSPositionReport::fixTypeFromValue(static_cast<int>(source.fix_type));
-    result.latitudeDegrees = source.latitude_deg;
-    result.longitudeDegrees = source.longitude_deg;
-    result.altitudeMslMeters = source.altitude_msl_m;
-    result.altitudeEllipsoidMeters = source.altitude_ellipsoid_m;
-    result.horizontalAccuracyMeters = source.eph;
-    result.verticalAccuracyMeters = source.epv;
-    result.horizontalDop = source.hdop;
-    result.verticalDop = source.vdop;
-    if (source.vel_ned_valid) {
-        result.speedMetersPerSecond = source.vel_m_s;
-        result.courseRadians = source.cog_rad;
+    GPSPositionReport result{.navigation = source.navigation, .integrity = diagnostic};
+    auto& navigation = result.navigation;
+    navigation.fixType = GPSPositionReport::fixTypeFromValue(static_cast<int>(navigation.fixType));
+    if (!source.vel_ned_valid) {
+        navigation.speedMetersPerSecond = NAN;
+        navigation.courseRadians = NAN;
     }
-    result.headingRadians = source.heading;
-    result.headingAccuracyRadians = source.heading_accuracy;
-    if (source.satellites_used != std::numeric_limits<uint8_t>::max()) {
-        result.satellitesUsed = source.satellites_used;
+    if (navigation.satellitesUsed == std::numeric_limits<uint8_t>::max()) {
+        navigation.satellitesUsed.reset();
     }
     auto& integrity = result.integrity;
-    integrity.timestampUs = diagnostic.timestamp;
-    integrity.jammingTimestampUs = diagnostic.jamming_state_timestamp;
-    integrity.spoofingTimestampUs = diagnostic.spoofing_state_timestamp;
-    integrity.rfTimestampUs = diagnostic.rf_timestamp;
-    integrity.correctionTimestampUs = diagnostic.corrections_timestamp;
-    integrity.jamming = GPSIntegrityReport::jammingStateFromValue(static_cast<int>(diagnostic.jamming_state));
-    integrity.spoofing = GPSIntegrityReport::spoofingStateFromValue(static_cast<int>(diagnostic.spoofing_state));
-    integrity.correctionUse =
-        GPSIntegrityReport::correctionUseFromValue(static_cast<int>(diagnostic.corrections_msg_used));
-    integrity.noisePerMillisecond = diagnostic.noise_per_ms;
-    integrity.automaticGainControl = diagnostic.automatic_gain_control;
-    integrity.jammingIndicator = diagnostic.jamming_indicator;
-    integrity.correctionCrcFailed = diagnostic.corrections_crc_failed;
+    integrity.jamming.state = GPSIntegrityReport::jammingStateFromValue(static_cast<int>(diagnostic.jamming.state));
+    integrity.spoofing.state = GPSIntegrityReport::spoofingStateFromValue(static_cast<int>(diagnostic.spoofing.state));
+    integrity.corrections.use =
+        GPSIntegrityReport::correctionUseFromValue(static_cast<int>(diagnostic.corrections.use));
     // Navigation epochs retain their first receipt; diagnostics may arrive before that epoch is published.
-    integrity = integrity.freshAt(nowUs ? nowUs : std::max(source.timestamp, diagnostic.timestamp));
+    integrity = integrity.freshAt(nowUs ? nowUs : std::max(navigation.timestampUs, diagnostic.timestampUs));
     return result;
 }
 

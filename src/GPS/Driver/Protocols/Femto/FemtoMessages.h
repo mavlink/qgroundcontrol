@@ -74,57 +74,6 @@ typedef struct
     uint8_t heading_type;    /**< 0 invalid,5 for float,6 for fix*/
 } femto_uav_gps_t;
 
-/**
- * femto_msg_header_t is femto data header
- */
-typedef struct
-{
-    uint8_t preamble[3];    /**< Frame header preamble 0xaa 0x44 0x12 */
-    uint8_t headerlength;   /**< Frame header length ,from the beginning 0xaa */
-    uint16_t messageid;     /**< Frame message id ,example the FEMTO_MSG_ID_UAVGPS 8001*/
-    uint8_t messagetype;    /**< Frame message id type */
-    uint8_t portaddr;       /**< Frame message port address */
-    uint16_t messagelength; /**< Frame message data length,from the beginning headerlength+1,end headerlength +
-                               messagelength*/
-    uint16_t sequence;
-    uint8_t idletime;       /**< Frame message idle module time */
-    uint8_t timestatus;
-    uint16_t week;
-    uint32_t tow;
-    uint32_t recvstatus;
-    uint16_t resv;
-    uint16_t recvswver;
-} femto_msg_header_t;
-
-/**
- *  uav status data
- */
-typedef struct
-{
-    int32_t master_ant_status;
-    int32_t slave_ant_status;
-    uint16_t master_ant_power;
-    uint16_t slave_ant_power;
-    uint32_t jam_status;
-    uint32_t spoofing_status;
-    uint16_t reserved16_1;
-    uint16_t diff_age; /**< in unit of second*/
-    uint32_t base_id;
-    uint32_t reserved32_1;
-    uint32_t reserved32_2;
-    uint32_t sat_number;
-
-    struct femto_uav_sat_status_data_t
-    {
-        uint8_t svid;
-        uint8_t system_id;
-        uint8_t cn0;  /**< in unit of dB-Hz*/
-        uint8_t ele;  /**< in unit of degree*/
-        uint16_t azi; /**< in unit of degree*/
-        uint16_t status;
-    } sat_status[64]; /**< uav status of all satellites */
-} femto_uav_status_t;
-
 namespace Femto {
 inline constexpr size_t HEADER_SIZE = 28;
 inline constexpr size_t GPS_PAYLOAD_SIZE = 88;

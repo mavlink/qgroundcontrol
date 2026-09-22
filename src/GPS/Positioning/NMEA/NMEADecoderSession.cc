@@ -2,13 +2,13 @@
 
 #include <algorithm>
 #include <chrono>
+#include <utility>
 
 #include <QtCore/QIODevice>
 #include <QtCore/QPointer>
 
 #include "MonotonicClock.h"
 #include "NMEAPositionSource.h"
-#include "NMEASatelliteAdapter.h"
 #include "NMEAStreamSplitter.h"
 #include "QGCLoggingCategory.h"
 #include "QtRuntimeScheduler.h"
@@ -18,6 +18,8 @@ QGC_LOGGING_CATEGORY(NMEADecoderSessionLog, "GPS.NMEA.NMEADecoderSession")
 NMEADecoderSession::NMEADecoderSession(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
+    , _satelliteFlushTask(_scheduler, this)
+    , _satelliteDeliveryTask(_scheduler, this)
     , _health(this, _scheduler)
     , _satellites(this, _health.freshnessTimeoutMs(), _scheduler)
     , _activityTask(_scheduler, this)
@@ -27,7 +29,6 @@ NMEADecoderSession::NMEADecoderSession(QObject* parent, RuntimeScheduler* schedu
         _scheduler = nullptr;
         stop();
     });
-    connect(&_health, &GPSSourceHealth::satellitesChanged, this, &NMEADecoderSession::satellitesChanged);
     connect(&_satellites, &GPSSatelliteStore::observationChanged, &_health,
             &GPSSourceHealth::applySatelliteObservation);
     connect(&_satellites, &GPSSatelliteStore::observationChanged, this,
@@ -52,7 +53,7 @@ NMEADecoderSession::~NMEADecoderSession()
 
 QGeoPositionInfoSource* NMEADecoderSession::positionSource() const
 {
-    return _positionSource.get();
+    return _decoders.position.get();
 }
 
 bool NMEADecoderSession::start(QIODevice* device)
@@ -66,28 +67,34 @@ bool NMEADecoderSession::start(QIODevice* device)
     }
     const quint64 session = ++_sessionId;
     _active = true;
-    _stream = std::make_unique<NMEAStreamSplitter>(device, nullptr, _scheduler);
-    connect(_stream.get(), &NMEAStreamSplitter::dataReceived, this, &NMEADecoderSession::_receivedData);
+    _decoders.stream = std::make_unique<NMEAStreamSplitter>(device, nullptr, _scheduler);
+    connect(_decoders.stream.get(), &NMEAStreamSplitter::dataReceived, this, [this, session](quint64 receivedAtUs) {
+        if (_active && session == _sessionId) {
+            _receivedData(receivedAtUs);
+        }
+    });
     connect(
-        _stream.get(), &NMEAStreamSplitter::closed, this,
+        _decoders.stream.get(), &NMEAStreamSplitter::closed, this,
         [this, session]() {
             if (_active && session == _sessionId) {
                 stop();
             }
         },
         Qt::QueuedConnection);
-    _satelliteAdapter = std::make_unique<NMEASatelliteAdapter>(nullptr, _scheduler);
-    connect(_satelliteAdapter.get(), &NMEASatelliteAdapter::observationReceived, this,
-            [this, session](const GPSSatelliteObservation& observation) {
+    _satellitesOpen = true;
+    connect(_decoders.stream.get(), &NMEAStreamSplitter::sentenceReceived, this,
+            [this, session](const NMEASentenceEnvelope& sentence) {
                 if (_active && session == _sessionId) {
-                    _updateSatellites(observation);
+                    _ingestSatellites(sentence);
                 }
             });
-    connect(_stream.get(), &NMEAStreamSplitter::sentenceReceived, _satelliteAdapter.get(),
-            &NMEASatelliteAdapter::ingest);
-    connect(_stream.get(), &NMEAStreamSplitter::closed, _satelliteAdapter.get(), &NMEASatelliteAdapter::close);
-    _positionSource = std::make_unique<NMEAPositionSource>(_stream->positionDevice(), nullptr, _scheduler);
-    connect(_positionSource.get(), &NMEAPositionSource::observationReceived, &_health,
+    connect(_decoders.stream.get(), &NMEAStreamSplitter::closed, this, [this, session]() {
+        if (session == _sessionId) {
+            _closeSatellites();
+        }
+    });
+    _decoders.position = std::make_unique<NMEAPositionSource>(_decoders.stream->positionDevice(), nullptr, _scheduler);
+    connect(_decoders.position.get(), &NMEAPositionSource::observationReceived, &_health,
             [this, session](GPSObservation observation) {
                 if (!_active || session != _sessionId) {
                     return;
@@ -95,9 +102,9 @@ bool NMEADecoderSession::start(QIODevice* device)
                 observation.sessionId = _sessionId;
                 _health.updateObservation(observation);
             });
-    connect(_positionSource.get(), &QGeoPositionInfoSource::errorOccurred, &_health,
-            [this](QGeoPositionInfoSource::Error error) {
-                if (error != QGeoPositionInfoSource::NoError) {
+    connect(_decoders.position.get(), &QGeoPositionInfoSource::errorOccurred, &_health,
+            [this, session](QGeoPositionInfoSource::Error error) {
+                if (_active && session == _sessionId && error != QGeoPositionInfoSource::NoError) {
                     _health.invalidatePosition();
                 }
             });
@@ -109,7 +116,7 @@ bool NMEADecoderSession::start(QIODevice* device)
     if (!guard || !_active || session != _sessionId) {
         return false;
     }
-    _positionSource->startUpdates();
+    _decoders.position->startUpdates();
     return guard && _active && session == _sessionId;
 }
 
@@ -147,16 +154,12 @@ void NMEADecoderSession::stop()
     _activityTask.cancel();
     _lastDataTimestampUs = 0;
     _receiving = false;
+    _closeSatellites();
     const QPointer<NMEADecoderSession> guard(this);
-    _positionSource.reset();
-    if (!guard || _active || retiredSession != _sessionId) {
-        return;
+    {
+        // The retiring decoder may install a replacement from its destruction notification.
+        auto retired = std::exchange(_decoders, {});
     }
-    _satelliteAdapter.reset();
-    if (!guard || _active || retiredSession != _sessionId) {
-        return;
-    }
-    _stream.reset();
     if (!guard || _active || retiredSession != _sessionId) {
         return;
     }
@@ -169,6 +172,95 @@ void NMEADecoderSession::stop()
     }
 }
 
+void NMEADecoderSession::_closeSatellites()
+{
+    _satellitesOpen = false;
+    _satelliteFlushTask.cancel();
+    _satelliteDeliveryTask.cancel();
+    _satelliteAssembler.clear();
+    _pendingSatellites.clear();
+}
+
+void NMEADecoderSession::_ingestSatellites(const NMEASentenceEnvelope& sentence)
+{
+    if (!_satellitesOpen || !_scheduler) {
+        return;
+    }
+    auto update = _satelliteAssembler.ingest(sentence.sentence(), sentence.receivedAtUs(), _scheduler->nowUs());
+    _queueSatellites(std::move(update.completed));
+    _scheduleSatelliteFlush();
+}
+
+void NMEADecoderSession::_flushSatellites()
+{
+    if (!_satellitesOpen || !_scheduler) {
+        return;
+    }
+    _queueSatellites(_satelliteAssembler.flushDue(_scheduler->nowUs()));
+    _scheduleSatelliteFlush();
+}
+
+void NMEADecoderSession::_scheduleSatelliteFlush()
+{
+    _satelliteFlushTask.cancel();
+    if (const auto deadline = _satelliteAssembler.deadlineUs(); deadline && _scheduler) {
+        const auto now = _scheduler->nowUs();
+        _satelliteFlushTask.schedule(std::chrono::microseconds(*deadline > now ? *deadline - now : 0),
+                                     [this]() { _flushSatellites(); });
+    }
+}
+
+void NMEADecoderSession::_queueSatellites(NMEA::SatelliteEpoch epoch)
+{
+    GPSSatelliteObservation observation;
+    observation.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
+    for (const auto& system : epoch) {
+        GPSSatelliteProvenance provenance;
+        provenance.constellation = system.constellation;
+        provenance.inViewTimestampUs = system.inViewTimestampUs;
+        provenance.inUseTimestampUs = system.inUseTimestampUs;
+        if (system.usedIds) {
+            provenance.usedSatelliteIds = QList<int>(system.usedIds->begin(), system.usedIds->end());
+            provenance.satellitesUsed = static_cast<int>(system.usedIds->size());
+        }
+        for (const auto& value : system.satellites) {
+            GPSSatellite satellite;
+            satellite.id = value.id;
+            satellite.prn = value.prn;
+            satellite.constellation = value.constellation;
+            satellite.elevationDegrees = value.elevation;
+            satellite.normalizedAzimuthDegrees = value.azimuth;
+            satellite.signalStrength = value.signal;
+            observation.satellites.append(satellite);
+        }
+        observation.provenance.append(provenance);
+        observation.monotonicTimestampUs =
+            std::max<quint64>({observation.monotonicTimestampUs, system.inViewTimestampUs, system.inUseTimestampUs});
+    }
+    if (observation.provenance.isEmpty()) {
+        return;
+    }
+    constexpr qsizetype MAX_PENDING_EPOCHS = 64;
+    if (_pendingSatellites.size() >= MAX_PENDING_EPOCHS) {
+        _pendingSatellites.removeFirst();
+    }
+    _pendingSatellites.append(observation);
+    if (!_satelliteDeliveryTask.active()) {
+        _satelliteDeliveryTask.schedule(std::chrono::microseconds::zero(), [this]() { _deliverSatellites(); });
+    }
+}
+
+void NMEADecoderSession::_deliverSatellites()
+{
+    if (!_satellitesOpen || _pendingSatellites.isEmpty()) {
+        return;
+    }
+    const auto observation = _pendingSatellites.takeFirst();
+    if (!_pendingSatellites.isEmpty()) {
+        _satelliteDeliveryTask.schedule(std::chrono::microseconds::zero(), [this]() { _deliverSatellites(); });
+    }
+    _updateSatellites(observation);
+}
 void NMEADecoderSession::_receivedData(quint64 receivedAtUs)
 {
     if (!_active || !_scheduler || !receivedAtUs || receivedAtUs > _scheduler->nowUs()) {

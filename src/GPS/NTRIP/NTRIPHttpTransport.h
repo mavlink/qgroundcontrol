@@ -10,7 +10,7 @@
 
 #include "MonotonicClock.h"
 #include "NTRIPConfiguration.h"
-#include "NTRIPHttpDecoder.h"
+#include "NTRIPHttpCodec.h"
 #include "NTRIPTransport.h"
 #include "RTCMFrameDecoder.h"
 

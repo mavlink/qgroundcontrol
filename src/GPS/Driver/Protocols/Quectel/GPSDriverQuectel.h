@@ -54,17 +54,26 @@ private:
     void _publishSurvey();
     int _fail(const char* reason);
 
-    ReplyHandler _replyHandler;
-    GPSCommandOutcome _reply = GPSCommandOutcome::Pending;
+    struct PendingReply
+    {
+        ReplyHandler handler;
+        GPSCommandOutcome outcome = GPSCommandOutcome::Pending;
+    };
+
+    struct SurveySession
+    {
+        std::string restartCommand;
+        std::optional<unsigned> lastTow = std::nullopt;
+        std::optional<GPSNativeSurveyReport> report = std::nullopt;
+        SurveyPhase phase = SurveyPhase::Off;
+    };
+
+    PendingReply _pendingReply;
+    SurveySession _survey;
     std::string _firmware;
-    std::string _surveyRestartCommand;
     EcefMeters _fixedECEF;
     OutputMode _outputMode = OutputMode::GPS;
     unsigned _receiverRole = 0;
-    uint64_t _lastSurveyUs = 0;
-    std::optional<unsigned> _lastSurveyTow;
-    std::optional<GPSNativeSurveyReport> _surveyReport;
-    SurveyPhase _surveyPhase = SurveyPhase::Off;
     bool _baseMatches = false;
     bool _baseHasDistance = false;
     bool _persistentSaveAcknowledged = false;

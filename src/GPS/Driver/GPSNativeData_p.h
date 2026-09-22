@@ -2,13 +2,12 @@
 
 #include "../Core/GPSSatelliteState.h"
 #include "GPSDriverReports.h"
-#include "GPSNativeIntegrityReport.h"
 #include "GPSNativePositionReport.h"
 #include "GPSNativeSatelliteReport.h"
 #include "GPSNativeSurveyReport.h"
 
 namespace GPSNativeData {
-GPSPositionReport position(const GPSNativePositionReport& source, const GPSNativeIntegrityReport& diagnostic,
+GPSPositionReport position(const GPSNativePositionReport& source, const GPSIntegrityReport& diagnostic,
                            uint64_t nowUs = 0);
 GPSSurveyReport survey(const GPSNativeSurveyReport& source);
 

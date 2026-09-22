@@ -51,6 +51,7 @@ struct GPSObservation
 
     /// The owner separately enforces freshness and session authorization.
     [[nodiscard]] std::optional<GPSObservation> projected(PositionUse use) const;
+    bool hasNavigationSolution() const;
     bool usable() const;
     QGeoCoordinate coordinate() const;
     double heading() const;

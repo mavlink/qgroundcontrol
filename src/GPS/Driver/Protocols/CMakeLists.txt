@@ -46,7 +46,6 @@ qt_add_library(
     GPSProtocol.cc
     GPSProtocol.h
     GPSProtocolTime.h
-    GPSBaseProtocol.h
     GPSAsciiProtocol.cc
     GPSAsciiProtocol.h
 )
@@ -57,7 +56,6 @@ target_sources(
            FILES
            GPSProtocol.h
            GPSProtocolTime.h
-           GPSBaseProtocol.h
            GPSAsciiProtocol.h
            NMEA/GPSNMEAReport.h
 )
@@ -78,7 +76,7 @@ target_link_libraries(
 add_library(QGCGPSNative INTERFACE)
 add_library(QGC::GPSNative ALIAS QGCGPSNative)
 target_link_libraries(QGCGPSNative INTERFACE QGCGPSNativeCommon)
-target_sources(QGCGPSNative INTERFACE FILE_SET HEADERS FILES GPSProtocol.h GPSProtocolTime.h GPSBaseProtocol.h)
+target_sources(QGCGPSNative INTERFACE FILE_SET HEADERS FILES GPSProtocol.h GPSProtocolTime.h)
 set(_native_targets QGCGPSNativeContracts QGCGPSNativeCommon)
 foreach(
     family

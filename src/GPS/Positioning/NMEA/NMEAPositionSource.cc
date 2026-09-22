@@ -346,8 +346,7 @@ void NMEAPositionSource::_resetDecoder()
     _lossTask.cancel();
     _errorTask.cancel();
     _pendingLoss.reset();
-    _pendingObservation.reset();
-    _pendingRequested = false;
+    _pendingFix = {};
     _lastObservation = {};
     _error = NoError;
     _decoder = std::make_unique<NMEATimestampedPositionDecoder>(
@@ -361,15 +360,15 @@ void NMEAPositionSource::_resetDecoder()
                 if (generation != _generation || (!_started && !_requestTask.active())) {
                     return;
                 }
-                _pendingRequested |= _requestTask.active();
+                _pendingFix.requested |= _requestTask.active();
                 if (!static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->hasFix(update)) {
                     if (!_started && _requestTask.active()) {
                         _decoder->requestUpdate(DEFAULT_REQUEST_TIMEOUT_MS);
                     }
                     return;
                 }
-                _pendingObservation = update;
-                if (_pendingRequested) {
+                _pendingFix.position = update;
+                if (_pendingFix.requested) {
                     _publicationTask.cancel();
                 }
                 _schedulePublication();
@@ -396,8 +395,7 @@ void NMEAPositionSource::_fixLost(GPSObservation observation)
         return;
     }
     _publicationTask.cancel();
-    _pendingObservation.reset();
-    _pendingRequested = false;
+    _pendingFix = {};
     _pendingLoss = std::move(observation);
     if (!_lossTask.active()) {
         const auto generation = _generation;
@@ -423,11 +421,11 @@ void NMEAPositionSource::_publishLoss()
 
 void NMEAPositionSource::_schedulePublication()
 {
-    if (!_scheduler || _publicationTask.active() || !_pendingObservation) {
+    if (!_scheduler || _publicationTask.active() || !_pendingFix.position) {
         return;
     }
     const auto generation = _generation;
-    const auto delay = std::chrono::milliseconds(_pendingRequested ? 0 : updateInterval());
+    const auto delay = std::chrono::milliseconds(_pendingFix.requested ? 0 : updateInterval());
     _publicationTask.schedule(delay, [this, generation]() {
         if (generation == _generation) {
             _publishPending();
@@ -446,14 +444,13 @@ void NMEAPositionSource::_publishPending()
             return;
         }
     }
-    if (!_pendingObservation) {
+    if (!_pendingFix.position) {
         return;
     }
     const auto observation =
-        static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->observation(*_pendingObservation);
-    const bool requested = _pendingRequested;
-    _pendingObservation.reset();
-    _pendingRequested = false;
+        static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->observation(*_pendingFix.position);
+    const bool requested = _pendingFix.requested;
+    _pendingFix = {};
     if (!observation.receiverFixValid.value_or(true)) {
         return;
     }
@@ -519,9 +516,9 @@ void NMEAPositionSource::stopUpdates()
         _lossTask.cancel();
         _pendingLoss.reset();
         _decoder->stopUpdates();
-        if (!_pendingRequested) {
+        if (!_pendingFix.requested) {
             _publicationTask.cancel();
-            _pendingObservation.reset();
+            _pendingFix.position.reset();
         }
     }
 }

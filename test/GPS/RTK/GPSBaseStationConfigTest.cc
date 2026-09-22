@@ -55,21 +55,21 @@ private slots:
         QTest::addColumn<QString>("expected");
         QTest::newRow("invalid-survey") << GPSBaseStationConfig{}
                                         << QStringLiteral("Enter a valid survey-in accuracy and duration");
-        QTest::newRow("valid-survey") << GPSBaseStationConfig{.surveyInAccMeters = 1, .surveyInDurationSecs = 60}
+        QTest::newRow("valid-survey") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{1, 60}}
                                       << QString();
-        QTest::newRow("invalid-fixed") << GPSBaseStationConfig{.useFixedBase = true}
+        QTest::newRow("invalid-fixed") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::Fixed{}}
                                        << QStringLiteral("Enter a valid fixed base position and accuracy");
-        QTest::newRow("valid-fixed") << GPSBaseStationConfig{.useFixedBase = true,
-                                                             .fixedPosition = {.latitudeDegrees = 0,
-                                                                               .longitudeDegrees = 0,
-                                                                               .altitudeMeters = 0}}
-                                     << QString();
+        QTest::newRow("valid-fixed")
+            << GPSBaseStationConfig{.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 0,
+                                                                                     .longitudeDegrees = 0,
+                                                                                     .altitudeMeters = 0}}}
+            << QString();
         QTest::newRow("fixed-unavailable-accuracy")
-            << GPSBaseStationConfig{.useFixedBase = true,
-                                    .fixedPosition = {.latitudeDegrees = 47,
-                                                      .longitudeDegrees = 8,
-                                                      .altitudeMeters = 500},
-                                    .fixedBaseAccuracyMeters = std::numeric_limits<float>::quiet_NaN()}
+            << GPSBaseStationConfig{.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 47,
+                                                                                     .longitudeDegrees = 8,
+                                                                                     .altitudeMeters = 500},
+                                                                        .accuracyMeters =
+                                                                            std::numeric_limits<float>::quiet_NaN()}}
             << QStringLiteral("Enter a valid fixed base position and accuracy");
     }
 
@@ -96,29 +96,28 @@ private slots:
                                           << QStringLiteral("This receiver does not support the requested role");
         QTest::newRow("invalid-survey") << GPSType::ublox << GPSReceiverConfig{}
                                         << QStringLiteral("Enter a valid survey-in accuracy and duration");
-        QTest::newRow("invalid-fixed") << GPSType::ublox << GPSReceiverConfig{.base = {.useFixedBase = true}}
+        QTest::newRow("invalid-fixed") << GPSType::ublox
+                                       << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::Fixed{}}}
                                        << QStringLiteral("Enter a valid fixed base position and accuracy");
         QTest::newRow("unsupported-constellations")
             << GPSType::septentrio
-            << GPSReceiverConfig{.base = {.surveyInAccMeters = 1, .surveyInDurationSecs = 60}, .constellationMask = 1}
+            << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{1, 60}}, .constellationMask = 1}
             << QStringLiteral("This receiver cannot configure constellations");
         QTest::newRow("invalid-constellations")
             << GPSType::ublox << GPSReceiverConfig{.role = Role::Position, .constellationMask = 32}
             << QStringLiteral("Unsupported constellation selection");
         QTest::newRow("unsupported-dynamic-model")
             << GPSType::septentrio
-            << GPSReceiverConfig{.base = {.surveyInAccMeters = 1, .surveyInDurationSecs = 60}, .dynamicModel = 0}
+            << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{1, 60}}, .dynamicModel = 0}
             << QStringLiteral("This receiver role cannot configure a dynamic model");
         QTest::newRow("invalid-dynamic-model")
             << GPSType::ublox << GPSReceiverConfig{.role = Role::Position, .dynamicModel = 1}
             << QStringLiteral("Unsupported receiver dynamic model");
-        QTest::newRow("unsupported-heading")
-            << GPSType::ublox << GPSReceiverConfig{.role = Role::Position, .headingOffsetRadians = 0.0f}
-            << QStringLiteral("This receiver role cannot configure a heading offset");
-        QTest::newRow("unsupported-role-precedes-invalid-heading")
-            << GPSType::septentrio
-            << GPSReceiverConfig{.role = Role::Position,
-                                 .headingOffsetRadians = std::numeric_limits<float>::quiet_NaN()}
+        QTest::newRow("unsupported-persistent-configuration")
+            << GPSType::ublox << GPSReceiverConfig{.role = Role::Position, .allowPersistentChanges = true}
+            << QStringLiteral("This driver does not support persistent receiver configuration");
+        QTest::newRow("unsupported-role-precedes-invalid-dynamic-model")
+            << GPSType::septentrio << GPSReceiverConfig{.role = Role::Position, .dynamicModel = 1}
             << QStringLiteral("This receiver does not support the requested role");
     }
 

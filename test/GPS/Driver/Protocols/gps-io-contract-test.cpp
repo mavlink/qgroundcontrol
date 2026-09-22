@@ -430,9 +430,8 @@ static void sharedResults()
     CHECK(messages == (QStringList{QStringLiteral("Gerät"), QStringLiteral("Gerät 2")}));
 }
 
-static std::unique_ptr<GPSBaseProtocol> createReceiver(unsigned family, ScriptedIO& io,
-                                                       GPSNativePositionReport& position,
-                                                       GPSNativeSatelliteReport& satellites)
+static std::unique_ptr<GPSProtocol> createReceiver(unsigned family, ScriptedIO& io, GPSNativePositionReport& position,
+                                                   GPSNativeSatelliteReport& satellites)
 {
     switch (family) {
 #if QGC_GPS_ENABLE_UBX
@@ -506,8 +505,8 @@ void GPSProtocolIOContractTest::_protocol()
                             continue;
                         }
                         GPSProtocol::GPSConfig config{};
-                        config.base.surveyInAccMeters = 1;
-                        config.base.surveyInDurationSecs = 60;
+                        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+                        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
                         config.output_mode = mode;
                         unsigned baudrate = 115200;
                         const int result = receiver->configure(baudrate, config);

@@ -38,19 +38,16 @@
 #include <optional>
 
 #include "FemtoMessages.h"
-#include "GPSBaseProtocol.h"
+#include "GPSProtocol.h"
 #include "NMEAFramer.h"
 #include "RTCMFramer.h"
 
-class GPSNativeFemto : public GPSBaseProtocol
+class GPSNativeFemto : public GPSProtocol
 {
 public:
-    /**
-     * @param heading_offset heading offset in radians [-pi, pi]. It is substracted from the measurement.
-     */
     GPSNativeFemto(GPSProtocolIO io, struct GPSNativePositionReport* gps_position,
-                   GPSNativeSatelliteReport* satellite_info = nullptr, float heading_offset = 0.f);
-    virtual ~GPSNativeFemto();
+                   GPSNativeSatelliteReport* satellite_info = nullptr);
+    ~GPSNativeFemto() override = default;
 
     bool receiverReady() const override { return _configure_done; }
 
@@ -110,7 +107,7 @@ private:
     femto_msg_t _femto_msg;
     NMEA::Framer _nmeaFramer{_femto_msg.data};
     GPSNativeSatelliteReport* _satellite_info{nullptr};
-    float _heading_offset;
+    uint32_t _survey_duration = 0;
 
     std::optional<RTCMStreamDecoder> _rtcm_parsing;
     OutputMode _output_mode{OutputMode::GPS};

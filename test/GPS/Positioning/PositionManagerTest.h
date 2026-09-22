@@ -1,8 +1,11 @@
 #pragma once
 
+#include <QtCore/QPointer>
+
 #include "UnitTest.h"
 
 class QIODevice;
+class NMEASourceManager;
 
 class PositionManagerTest : public UnitTest
 {
@@ -29,4 +32,6 @@ private slots:
 
 private:
     QIODevice* _nmeaDevice = nullptr;
+    NMEASourceManager* _nmeaInput = nullptr;
+    QPointer<NMEASourceManager> _previousNmeaInput;
 };

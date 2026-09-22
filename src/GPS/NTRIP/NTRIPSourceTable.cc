@@ -192,22 +192,6 @@ void NTRIPSourceTableModel::updateDistances(const QGeoCoordinate& from)
     });
 }
 
-void NTRIPSourceTableModel::sortByDistance()
-{
-    _mutate([this]() {
-        if (_mountpoints.size() < 2) {
-            return;
-        }
-        const QPointer<NTRIPSourceTableModel> guard(this);
-        beginResetModel();
-        if (!guard) {
-            return;
-        }
-        _sortByDistance();
-        endResetModel();
-    });
-}
-
 void NTRIPSourceTableModel::_sortByDistance()
 {
     // Distance ordering: known distances ascending, unknown (negative) last.

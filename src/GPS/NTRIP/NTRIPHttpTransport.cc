@@ -11,7 +11,6 @@
 #include "NMEAUtils.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
-#include "NTRIPHttpRequest.h"
 #include "NTRIPTlsPolicy_p.h"
 #include "QGCLoggingCategory.h"
 

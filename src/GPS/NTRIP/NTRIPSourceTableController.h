@@ -11,7 +11,7 @@
 #include <QtPositioning/QGeoCoordinate>
 
 #include "NTRIPConfiguration.h"
-#include "NTRIPHttpDecoder.h"
+#include "NTRIPHttpCodec.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableControllerLog)
 

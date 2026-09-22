@@ -9,7 +9,7 @@ if(NOT TARGET QGCNetworkClient)
     )
 endif()
 
-qt_add_library(QGCGPSNTRIPHttp STATIC NTRIPConfiguration.cc NTRIPHttpDecoder.cc NTRIPHttpRequest.cc)
+qt_add_library(QGCGPSNTRIPHttp STATIC NTRIPConfiguration.cc NTRIPHttpCodec.cc)
 add_library(QGC::GPSNTRIPHttp ALIAS QGCGPSNTRIPHttp)
 set_target_properties(QGCGPSNTRIPHttp PROPERTIES AUTOMOC ON)
 target_compile_features(QGCGPSNTRIPHttp PUBLIC cxx_std_20)
@@ -18,16 +18,7 @@ target_link_libraries(
     PUBLIC Qt6::Core Qt6::Network
     PRIVATE QGCNetworkClient
 )
-target_sources(
-    QGCGPSNTRIPHttp
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           NTRIPConfiguration.h
-           NTRIPError.h
-           NTRIPHttpDecoder.h
-           NTRIPHttpRequest.h
-)
+target_sources(QGCGPSNTRIPHttp PUBLIC FILE_SET HEADERS FILES NTRIPConfiguration.h NTRIPError.h NTRIPHttpCodec.h)
 
 if(DEFINED QGC_GPS_COMPONENTS_ENABLED AND NOT "NTRIP" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
     return()

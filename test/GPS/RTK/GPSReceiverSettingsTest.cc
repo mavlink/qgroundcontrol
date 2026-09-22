@@ -57,12 +57,14 @@ public:
         permissions.append(allowPersistentChanges);
         selectedType = GPSRtk::typeForManufacturer(_settings->baseReceiverManufacturers()->rawValue().toInt());
         selectedMode = _settings->useFixedBasePosition()->rawValue().toInt();
-        fixedPosition = {
-            .useFixedBase = selectedMode == static_cast<int>(BaseModeDefinition::Mode::BaseFixed),
-            .fixedPosition = {.latitudeDegrees = _settings->fixedBasePositionLatitude()->rawValue().toDouble(),
-                              .longitudeDegrees = _settings->fixedBasePositionLongitude()->rawValue().toDouble(),
-                              .altitudeMeters = _settings->fixedBasePositionAltitude()->rawValue().toFloat()},
-            .fixedBaseAccuracyMeters = _settings->fixedBasePositionAccuracy()->rawValue().toFloat()};
+        fixedPosition = {};
+        if (selectedMode == static_cast<int>(BaseModeDefinition::Mode::BaseFixed)) {
+            fixedPosition.mode = GPSBaseStationConfig::Fixed{
+                .position = {.latitudeDegrees = _settings->fixedBasePositionLatitude()->rawValue().toDouble(),
+                             .longitudeDegrees = _settings->fixedBasePositionLongitude()->rawValue().toDouble(),
+                             .altitudeMeters = _settings->fixedBasePositionAltitude()->rawValue().toFloat()},
+                .accuracyMeters = _settings->fixedBasePositionAccuracy()->rawValue().toFloat()};
+        }
         if (connectSucceeds) {
             setConnected(true);
         }
@@ -210,11 +212,12 @@ void GPSReceiverSettingsTest::_surveySaveWorkflow()
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
     QCOMPARE(receiver.selectedType, GPSRtk::typeForManufacturer(manufacturer));
     QCOMPARE(receiver.selectedMode, static_cast<int>(BaseModeDefinition::Mode::BaseFixed));
-    QVERIFY(receiver.fixedPosition.useFixedBase);
-    QCOMPARE(receiver.fixedPosition.fixedPosition.latitudeDegrees, 47.123456789);
-    QCOMPARE(receiver.fixedPosition.fixedPosition.longitudeDegrees, 8.987654321);
-    QCOMPARE(receiver.fixedPosition.fixedPosition.altitudeMeters, 512.25f);
-    QCOMPARE(receiver.fixedPosition.fixedBaseAccuracyMeters, 0.75f);
+    QVERIFY(std::holds_alternative<GPSBaseStationConfig::Fixed>(receiver.fixedPosition.mode));
+    const auto& fixedPosition = std::get<GPSBaseStationConfig::Fixed>(receiver.fixedPosition.mode);
+    QCOMPARE(fixedPosition.position.latitudeDegrees, 47.123456789);
+    QCOMPARE(fixedPosition.position.longitudeDegrees, 8.987654321);
+    QCOMPARE(fixedPosition.position.altitudeMeters, 512.25f);
+    QCOMPARE(fixedPosition.accuracyMeters, 0.75f);
     QCOMPARE(gpsValidateReceiverConfig(*receiver.selectedType, {.base = receiver.fixedPosition}),
              GPSReceiverConfigError::None);
 }

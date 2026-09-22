@@ -32,12 +32,49 @@
  ****************************************************************************/
 
 #include <chrono>
+#include <ctime>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "AshtechPrivate.h"
+#include "Ashtech/GPSDriverAshtech.h"
 #include "NMEA/GPSNMEAReport.h"
-#include "NMEA/GPSNMEASatelliteReport.h"
+#include "NMEAFields.h"
+#include "NMEASentence.h"
+#include "RTCMFramer.h"
 
 namespace {
+struct ZdaFields
+{
+    double time = 0.0;
+    int day = 0;
+    int month = 0;
+    int year = 0;
+    int zoneHour = 0;
+    int zoneMinute = 0;
+};
+
+struct PashrPositionFields
+{
+    double time = 0.0;
+    double latitude = 0.0;
+    double longitude = 0.0;
+    double altitude = 0.0;
+    int satellites = 0;
+    int quality = 0;
+    double trackDegrees = 0.0;
+    double groundSpeedKnots = 0.0;
+    double correctionAge = 0.0;
+    double horizontalDop = 99.9;
+    double verticalDop = 99.9;
+    double positionDop = 99.9;
+    double timeDop = 99.9;
+    double verticalVelocity = 0.0;
+    char northSouth = '?';
+    char eastWest = '?';
+};
+
 std::optional<uint64_t> receiptUtc(std::string_view date, std::string_view time)
 {
     if (date.size() != 10 || date[2] != '.' || date[5] != '.') {
@@ -108,68 +145,39 @@ int GPSNativeAshtech::handleMessage(int len)
         Fields 5 and 6 together yield the total offset. For example, if field 5 is -5 and field 6 is +15, local time is
         5 hours and 15 minutes earlier than GMT.
         */
-        double ashtech_time = 0.0;
-        int day = 0, month = 0, year = 0, local_time_off_hour = 0, local_time_off_min = 0;
-        (void) local_time_off_min;
-        (void) local_time_off_hour;
-
-        bufptr.read(ashtech_time);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        bufptr.read(day);
+        ZdaFields data;
+        bufptr.read(data.time);
+        bufptr.read(data.day);
+        bufptr.read(data.month);
+        bufptr.read(data.year);
+        bufptr.read(data.zoneHour);
+        bufptr.read(data.zoneMinute);
 
         if (!bufptr.valid()) {
             return 0;
         }
 
-        bufptr.read(month);
-
-        if (!bufptr.valid()) {
+        if (data.time < 0 || data.time >= 240000 || data.year < 1980 || data.year > 9999 || data.month < 1 ||
+            data.month > 12 || data.day < 1 || data.day > 31) {
             return 0;
         }
-
-        bufptr.read(year);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        bufptr.read(local_time_off_hour);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        bufptr.read(local_time_off_min);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        if (ashtech_time < 0 || ashtech_time >= 240000 || year < 1980 || year > 9999 || month < 1 || month > 12 ||
-            day < 1 || day > 31) {
-            return 0;
-        }
-        int ashtech_hour = static_cast<int>(ashtech_time / 10000);
-        int ashtech_minute = static_cast<int>((ashtech_time - ashtech_hour * 10000) / 100);
-        double ashtech_sec = static_cast<double>(ashtech_time - ashtech_hour * 10000 - ashtech_minute * 100);
+        int ashtech_hour = static_cast<int>(data.time / 10000);
+        int ashtech_minute = static_cast<int>((data.time - ashtech_hour * 10000) / 100);
+        double ashtech_sec = static_cast<double>(data.time - ashtech_hour * 10000 - ashtech_minute * 100);
         if (ashtech_minute > 59 || ashtech_sec >= 60.0) {
             return 0;
         }
         uint64_t usecs = static_cast<uint64_t>((ashtech_sec - static_cast<uint64_t>(ashtech_sec)) * 1000000);
 
         tm timeinfo{};
-        timeinfo.tm_year = year - 1900;
-        timeinfo.tm_mon = month - 1;
-        timeinfo.tm_mday = day;
+        timeinfo.tm_year = data.year - 1900;
+        timeinfo.tm_mon = data.month - 1;
+        timeinfo.tm_mday = data.day;
         timeinfo.tm_hour = ashtech_hour;
         timeinfo.tm_min = ashtech_minute;
         timeinfo.tm_sec = int(ashtech_sec);
         _utcReference = timeFromUtc(timeinfo, usecs * 1000);
-        _gps_position->time_utc_usec = _utcReference;
+        _gps_position->navigation.utcTimeUs = _utcReference;
 
         _last_timestamp_time = nowUs();
     }
@@ -197,13 +205,12 @@ int GPSNativeAshtech::handleMessage(int len)
 
         if (bufptr.read(heading)) {
             heading *= GPS_PI / 180.0f;  // deg to rad, now in range [0, 2pi]
-            heading -= _heading_offset;  // range: [-pi, 3pi]
 
             if (heading > GPS_PI) {
                 heading -= 2.f * GPS_PI;  // final range is [-pi, pi]
             }
 
-            _gps_position->heading = heading;
+            _gps_position->navigation.headingRadians = heading;
             _gps_position->heading_timestamp = nowUs();
         }
 
@@ -244,152 +251,73 @@ int GPSNativeAshtech::handleMessage(int len)
          * Ashtech would return empty space as coordinate (lat, lon or alt) if it doesn't have a fix yet
          */
         int coordinatesFound = 0;
-        double ashtech_time = 0.0, lat = 0.0, lon = 0.0, alt = 0.0;
-        int num_of_sv = 0, fix_quality = 0;
-        double track_true = 0.0, ground_speed = 0.0, age_of_corr = 0.0;
-        double hdop = 99.9, vdop = 99.9, pdop = 99.9, tdop = 99.9, vertic_vel = 0.0;
-        char ns = '?', ew = '?';
-
-        (void) ashtech_time;
-        (void) num_of_sv;
-        (void) age_of_corr;
-        (void) pdop;
-        (void) tdop;
-
-        bufptr.read(fix_quality);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        bufptr.read(num_of_sv);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        bufptr.read(ashtech_time);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        if (bufptr.read(lat)) {
+        PashrPositionFields data;
+        bufptr.read(data.quality);
+        bufptr.read(data.satellites);
+        bufptr.read(data.time);
+        if (bufptr.read(data.latitude)) {
             ++coordinatesFound;
         }
-        if (!bufptr.valid()) {
-            return 0;
-        }
 
-        bufptr.read(ns);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        if (bufptr.read(lon)) {
+        bufptr.read(data.northSouth);
+        if (bufptr.read(data.longitude)) {
             ++coordinatesFound;
         }
-        if (!bufptr.valid()) {
-            return 0;
-        }
 
-        bufptr.read(ew);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        if (bufptr.read(alt)) {
+        bufptr.read(data.eastWest);
+        if (bufptr.read(data.altitude)) {
             ++coordinatesFound;
         }
-        if (!bufptr.valid()) {
-            return 0;
-        }
 
-        bufptr.read(age_of_corr);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        bufptr.read(track_true);
+        bufptr.read(data.correctionAge);
+        bufptr.read(data.trackDegrees);
+        bufptr.read(data.groundSpeedKnots);
+        bufptr.read(data.verticalVelocity);
+        bufptr.read(data.positionDop);
+        bufptr.read(data.horizontalDop);
+        bufptr.read(data.verticalDop);
+        bufptr.read(data.timeDop);
 
         if (!bufptr.valid()) {
             return 0;
         }
 
-        bufptr.read(ground_speed);
-
-        if (!bufptr.valid()) {
+        if (data.quality < 0 || data.quality > 23 || data.satellites < 0 || data.satellites > 255 ||
+            data.latitude < 0 || data.latitude > 9000 || data.longitude < 0 || data.longitude > 18000 ||
+            (data.northSouth != 'N' && data.northSouth != 'S') || (data.eastWest != 'E' && data.eastWest != 'W')) {
             return 0;
         }
-
-        bufptr.read(vertic_vel);
-
-        if (!bufptr.valid()) {
-            return 0;
+        if (data.northSouth == 'S') {
+            data.latitude = -data.latitude;
         }
 
-        bufptr.read(pdop);
-
-        if (!bufptr.valid()) {
-            return 0;
+        if (data.eastWest == 'W') {
+            data.longitude = -data.longitude;
         }
 
-        bufptr.read(hdop);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        bufptr.read(vdop);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        bufptr.read(tdop);
-
-        if (!bufptr.valid()) {
-            return 0;
-        }
-
-        if (fix_quality < 0 || fix_quality > 23 || num_of_sv < 0 || num_of_sv > 255 || lat < 0 || lat > 9000 ||
-            lon < 0 || lon > 18000 || (ns != 'N' && ns != 'S') || (ew != 'E' && ew != 'W')) {
-            return 0;
-        }
-        if (ns == 'S') {
-            lat = -lat;
-        }
-
-        if (ew == 'W') {
-            lon = -lon;
-        }
-
-        _gps_position->latitude_deg = NMEA::degreesFromDegreesMinutes(lat);
-        _gps_position->longitude_deg = NMEA::degreesFromDegreesMinutes(lon);
-        _gps_position->altitude_ellipsoid_m = alt;
-        _gps_position->altitude_msl_m = NAN;
-        _gps_position->hdop = static_cast<float>(hdop);
+        _gps_position->navigation.latitudeDegrees = NMEA::degreesFromDegreesMinutes(data.latitude);
+        _gps_position->navigation.longitudeDegrees = NMEA::degreesFromDegreesMinutes(data.longitude);
+        _gps_position->navigation.altitudeEllipsoidMeters = data.altitude;
+        _gps_position->navigation.altitudeMslMeters = NAN;
+        _gps_position->navigation.horizontalDop = static_cast<float>(data.horizontalDop);
         _gps_position->dop_timestamp = nowUs();
-        _gps_position->vdop = static_cast<float>(vdop);
+        _gps_position->navigation.verticalDop = static_cast<float>(data.verticalDop);
 
         if (coordinatesFound < 3) {
-            _gps_position->fix_type = GPSPositionReport::FixType::NoFix;
+            _gps_position->navigation.fixType = GPSPositionReport::FixType::NoFix;
 
         } else {
-            if (fix_quality == 9 || fix_quality == 10) {  // SBAS differential or BeiDou differential
-                _gps_position->fix_type = GPSPositionReport::FixType::Differential;
+            if (data.quality == 9 || data.quality == 10) {  // SBAS differential or BeiDou differential
+                _gps_position->navigation.fixType = GPSPositionReport::FixType::Differential;
 
-            } else if (fix_quality == 12 || fix_quality == 22) {  // RTK float or RTK float dithered
-                _gps_position->fix_type = GPSPositionReport::FixType::RTKFloat;
+            } else if (data.quality == 12 || data.quality == 22) {  // RTK float or RTK float dithered
+                _gps_position->navigation.fixType = GPSPositionReport::FixType::RTKFloat;
 
-            } else if (fix_quality == 13 || fix_quality == 23) {  // RTK fixed or RTK fixed dithered
-                _gps_position->fix_type = GPSPositionReport::FixType::RTKFixed;
+            } else if (data.quality == 13 || data.quality == 23) {  // RTK fixed or RTK fixed dithered
+                _gps_position->navigation.fixType = GPSPositionReport::FixType::RTKFixed;
 
             } else {
-                _gps_position->fix_type = GPSPositionReport::fixTypeFromValue(3 + fix_quality);
+                _gps_position->navigation.fixType = GPSPositionReport::fixTypeFromValue(3 + data.quality);
             }
 
             _got_pashr_pos_message = true;
@@ -400,22 +328,22 @@ int GPSNativeAshtech::handleMessage(int len)
             }
         }
 
-        _gps_position->timestamp = nowUs();
+        _gps_position->navigation.timestampUs = nowUs();
         const auto fields = NMEA::sentence(message);
         _applyMetadata(fields ? NMEA::utcMilliseconds(fields->fields[4]) : std::nullopt);
-        _gps_position->satellites_used = static_cast<uint8_t>(num_of_sv);
+        _gps_position->navigation.satellitesUsed = static_cast<uint8_t>(data.satellites);
 
-        float track_rad = static_cast<float>(track_true) * GPS_PI / 180.0f;
+        float track_rad = static_cast<float>(data.trackDegrees) * GPS_PI / 180.0f;
 
-        float velocity_ms = static_cast<float>(ground_speed) / 1.9438445f; /** knots to m/s */
+        float velocity_ms = static_cast<float>(data.groundSpeedKnots) / 1.9438445f; /** knots to m/s */
         float velocity_north = static_cast<float>(velocity_ms) * cosf(track_rad);
         float velocity_east = static_cast<float>(velocity_ms) * sinf(track_rad);
 
-        _gps_position->vel_m_s = velocity_ms;                       /** GPS ground speed (m/s) */
+        _gps_position->navigation.speedMetersPerSecond = velocity_ms; /** GPS ground speed (m/s) */
         _gps_position->vel_n_m_s = velocity_north;                  /** GPS ground speed in m/s */
         _gps_position->vel_e_m_s = velocity_east;                   /** GPS ground speed in m/s */
-        _gps_position->vel_d_m_s = static_cast<float>(-vertic_vel); /** GPS ground speed in m/s */
-        _gps_position->cog_rad =
+        _gps_position->vel_d_m_s = static_cast<float>(-data.verticalVelocity); /** GPS ground speed in m/s */
+        _gps_position->navigation.courseRadians =
             track_rad; /** Course over ground (NOT heading, but direction of movement) in rad, -PI..PI */
         _gps_position->vel_ned_valid = true; /** Flag to indicate if NED speed is valid */
         _gps_position->courseAccuracyRadians = 0.1f;
@@ -432,8 +360,8 @@ int GPSNativeAshtech::handleMessage(int len)
         _gps_position->speedAccuracyMetersPerSecond = NAN;
         if (_positionEpoch.matches(_accuracyReceipt, METADATA_MAX_AGE_US)) {
             _expireMetadata();
-            _gps_position->eph = _accuracy.horizontalAccuracy;
-            _gps_position->epv = _accuracy.verticalAccuracy;
+            _gps_position->navigation.horizontalAccuracyMeters = _accuracy.horizontalAccuracy;
+            _gps_position->navigation.verticalAccuracyMeters = _accuracy.verticalAccuracy;
             _gps_position->accuracy_timestamp = _accuracyReceipt.receivedAtUs;
             ret |= 1;
         }
@@ -510,11 +438,12 @@ int GPSNativeAshtech::handleMessage(int len)
             }
         }
 
-        if (_output_mode != OutputMode::RTCM || !_configure_done || _baseConfig.useFixedBase ||
+        if (_output_mode != OutputMode::RTCM || !_configure_done ||
+            std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ||
             _board != AshtechBoard::trimble_mb_two || !_surveyReceiptRequested) {
             return 0;
         }
-        if (*interval != _baseConfig.surveyInDurationSecs) {
+        if (*interval != std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).durationSecs) {
             return 0;
         }
         if (started) {
@@ -549,7 +478,8 @@ int GPSNativeAshtech::handleMessage(int len)
     }
 
     if (ret == 1) {
-        _gps_position->timestamp_time_relative = (int32_t) (_last_timestamp_time - _gps_position->timestamp);
+        _gps_position->timestamp_time_relative =
+            (int32_t) (_last_timestamp_time - _gps_position->navigation.timestampUs);
     }
 
     // handle survey-in status update
@@ -594,13 +524,13 @@ void GPSNativeAshtech::sendSurveyInStatusUpdate(bool active, bool valid, double 
                                                 float altitude)
 {
     GPSNativeSurveyReport status{};
-    if (_baseConfig.useFixedBase) {
+    if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
         status.altitudeDatum = GPSNativeSurveyReport::AltitudeDatum::Ellipsoid;
     }
     status.latitude = latitude;
     status.longitude = longitude;
     status.altitude = altitude;
-    status.duration = !_baseConfig.useFixedBase ? _survey_duration : 0;
+    status.duration = !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? _survey_duration : 0;
     status.mean_accuracy = 0;  // unknown
     status.flags = (int) valid | ((int) active << 1);
     surveyInStatus(status);
@@ -645,15 +575,15 @@ void GPSNativeAshtech::_expireMetadata()
     const auto now = nowUs();
     if (!_gps_position->heading_timestamp ||
         !NMEA::freshAt(_gps_position->heading_timestamp, now, METADATA_MAX_AGE_US)) {
-        _gps_position->heading = NAN;
-        _gps_position->heading_accuracy = NAN;
+        _gps_position->navigation.headingRadians = NAN;
+        _gps_position->navigation.headingAccuracyRadians = NAN;
     }
     if (!_accuracyReceipt.time || !NMEA::freshAt(_accuracyReceipt.receivedAtUs, now, METADATA_MAX_AGE_US)) {
-        _gps_position->eph = NAN;
-        _gps_position->epv = NAN;
+        _gps_position->navigation.horizontalAccuracyMeters = NAN;
+        _gps_position->navigation.verticalAccuracyMeters = NAN;
     }
     if (!_utcReference || !NMEA::freshAt(_last_timestamp_time, now, METADATA_MAX_AGE_US)) {
-        _gps_position->time_utc_usec = 0;
+        _gps_position->navigation.utcTimeUs = 0;
     }
 }
 
@@ -663,9 +593,52 @@ void GPSNativeAshtech::_applyMetadata(std::optional<int> time)
     const auto now = nowUs();
     _positionEpoch = {time, now};
     const bool matches = _accuracyReceipt.matches(_positionEpoch, METADATA_MAX_AGE_US);
-    _gps_position->eph = matches ? _accuracy.horizontalAccuracy : NAN;
-    _gps_position->epv = matches ? _accuracy.verticalAccuracy : NAN;
+    _gps_position->navigation.horizontalAccuracyMeters = matches ? _accuracy.horizontalAccuracy : NAN;
+    _gps_position->navigation.verticalAccuracyMeters = matches ? _accuracy.verticalAccuracy : NAN;
     _gps_position->accuracy_timestamp = matches ? _accuracyReceipt.receivedAtUs : 0;
-    _gps_position->time_utc_usec =
+    _gps_position->navigation.utcTimeUs =
         NMEA::utcAtTimeOfDay(_utcReference, _last_timestamp_time, time, now, METADATA_MAX_AGE_US);
+}
+
+GPSNativeAshtech::GPSNativeAshtech(GPSProtocolIO io, GPSNativePositionReport* gps_position,
+                                   GPSNativeSatelliteReport* satellite_info)
+    : GPSProtocol(std::move(io))
+    , _gps_position(gps_position)
+    , _satellite_info(satellite_info)
+{
+    decodeInit();
+}
+
+void GPSNativeAshtech::receiveWait(unsigned timeout_min)
+{
+    uint64_t time_started = nowUs();
+
+    while (nowUs() < time_started + timeout_min * 1000) {
+        receive(timeout_min);
+        if (ioError()) {
+            return;
+        }
+    }
+}
+
+int GPSNativeAshtech::receive(unsigned timeout)
+{
+    if (const auto deadline = _satelliteAssembler.deadlineUs()) {
+        timeout = std::min(timeout, static_cast<unsigned>(remainingMilliseconds(*deadline)));
+    }
+    const int result = receiveDecoded(timeout);
+    serviceControls();
+    return ioError() ? ioError() : result;
+}
+
+void GPSNativeAshtech::servicePendingCommands()
+{
+    if (_correctionSetupPending) {
+        _correctionSetupPending = false;
+        activateCorrectionOutput();
+    }
+    if (_rtcmActivationPending) {
+        _rtcmActivationPending = false;
+        activateRTCMOutput();
+    }
 }

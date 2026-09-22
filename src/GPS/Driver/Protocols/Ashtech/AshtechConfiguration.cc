@@ -31,9 +31,18 @@
  *
  ****************************************************************************/
 
+#include <ctime>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <QtCore/QScopeGuard>
 
-#include "AshtechPrivate.h"
+#include "Ashtech/GPSDriverAshtech.h"
+#include "NMEAFields.h"
+#include "NMEASentence.h"
+#include "RTCMFramer.h"
 
 void GPSNativeAshtech::activateRTCMOutput()
 {
@@ -321,11 +330,13 @@ void GPSNativeAshtech::activateCorrectionOutput()
 
     char buffer[100];
 
-    if (!_baseConfig.useFixedBase) {
+    if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
         // setup the base reference: average the position over N seconds
         const char avg_pos[] = "$PASHS,POS,AVG,%u\r\n";
         // alternatively use the current position as reference: "$PASHS,POS,CUR\r\n"
-        int len = snprintf(buffer, sizeof(buffer), avg_pos, static_cast<unsigned>(_baseConfig.surveyInDurationSecs));
+        int len =
+            snprintf(buffer, sizeof(buffer), avg_pos,
+                     static_cast<unsigned>(std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).durationSecs));
 
         _surveyReceiptRequested = true;
         _surveyReceiptStartUtc.reset();
@@ -361,9 +372,9 @@ void GPSNativeAshtech::activateCorrectionOutput()
         }
 
     } else {
-        const GPSBaseStationConfig& settings = _baseConfig;
+        const auto& settings = std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode);
         char ns, ew;
-        double latitude = settings.fixedPosition.latitudeDegrees;
+        double latitude = settings.position.latitudeDegrees;
 
         if (latitude < 0.) {
             latitude = -latitude;
@@ -376,7 +387,7 @@ void GPSNativeAshtech::activateCorrectionOutput()
         // convert to ddmm.mmmmmm format
         latitude = ((int) latitude) * 100. + (latitude - ((int) latitude)) * 60.;
 
-        double longitude = settings.fixedPosition.longitudeDegrees;
+        double longitude = settings.position.longitudeDegrees;
 
         if (longitude < 0.) {
             longitude = -longitude;
@@ -390,7 +401,7 @@ void GPSNativeAshtech::activateCorrectionOutput()
         longitude = ((int) longitude) * 100. + (longitude - ((int) longitude)) * 60.;
 
         int len = snprintf(buffer, sizeof(buffer), "$PASHS,POS,%.8f,%c,%.8f,%c,%.5f,PC1", latitude, ns, longitude, ew,
-                           (double) settings.fixedPosition.altitudeMeters);
+                           (double) settings.position.altitudeMeters);
 
         if (len >= 0 && len < (int) sizeof(buffer)) {
             if (writeAckedCommand(buffer, len, ASH_RESPONSE_TIMEOUT) != 0) {
@@ -407,8 +418,8 @@ void GPSNativeAshtech::activateCorrectionOutput()
         if (ioError()) {
             return;
         }
-        sendSurveyInStatusUpdate(false, true, settings.fixedPosition.latitudeDegrees,
-                                 settings.fixedPosition.longitudeDegrees, settings.fixedPosition.altitudeMeters);
+        sendSurveyInStatusUpdate(false, true, settings.position.latitudeDegrees, settings.position.longitudeDegrees,
+                                 settings.position.altitudeMeters);
     }
     _correction_output_activated = true;
 }

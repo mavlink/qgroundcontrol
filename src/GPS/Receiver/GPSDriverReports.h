@@ -34,6 +34,15 @@ struct GPSIntegrityReport
         NotUsed,
         Used
     };
+    enum class CorrectionProtocol
+    {
+        Unknown,
+        RTCM3,
+        SPARTN,
+        HAS,
+        PMP,
+        QZSSL6,
+    };
 
     static constexpr JammingState jammingStateFromValue(int value)
     {
@@ -56,19 +65,40 @@ struct GPSIntegrityReport
                    : CorrectionUse::Unknown;
     }
 
-    // Receipt of this diagnostic update, not a freshness timestamp for every retained field.
+    struct Jamming
+    {
+        uint64_t timestampUs = 0;
+        JammingState state = JammingState::Unknown;
+    };
+
+    struct Spoofing
+    {
+        uint64_t timestampUs = 0;
+        SpoofingState state = SpoofingState::Unknown;
+    };
+
+    struct RF
+    {
+        uint64_t timestampUs = 0;
+        std::optional<int32_t> noisePerMillisecond = std::nullopt;
+        std::optional<uint16_t> automaticGainControl = std::nullopt;
+        std::optional<int32_t> jammingIndicator = std::nullopt;
+    };
+
+    struct Corrections
+    {
+        uint64_t timestampUs = 0;
+        CorrectionUse use = CorrectionUse::Unknown;
+        std::optional<bool> crcFailed = std::nullopt;
+        CorrectionProtocol protocol = CorrectionProtocol::Unknown;
+    };
+
+    // Receipt of this update; the retained diagnostic groups have independent receipts.
     uint64_t timestampUs = 0;
-    uint64_t jammingTimestampUs = 0;
-    uint64_t spoofingTimestampUs = 0;
-    uint64_t rfTimestampUs = 0;
-    uint64_t correctionTimestampUs = 0;
-    JammingState jamming = JammingState::Unknown;
-    SpoofingState spoofing = SpoofingState::Unknown;
-    CorrectionUse correctionUse = CorrectionUse::Unknown;
-    std::optional<int32_t> noisePerMillisecond = std::nullopt;
-    std::optional<uint16_t> automaticGainControl = std::nullopt;
-    std::optional<int32_t> jammingIndicator = std::nullopt;
-    std::optional<bool> correctionCrcFailed = std::nullopt;
+    Jamming jamming{};
+    Spoofing spoofing{};
+    RF rf{};
+    Corrections corrections{};
 
     /// Project independent diagnostic groups at the consumer's monotonic time.
     GPSIntegrityReport freshAt(uint64_t nowUs, std::chrono::microseconds maximumAge = std::chrono::seconds(5)) const
@@ -78,26 +108,23 @@ struct GPSIntegrityReport
             return receipt && receipt <= nowUs && maximumAge.count() > 0 &&
                    nowUs - receipt < static_cast<uint64_t>(maximumAge.count());
         };
-        if (!fresh(jammingTimestampUs)) {
-            result.jamming = JammingState::Unknown;
+        if (!fresh(jamming.timestampUs)) {
+            result.jamming.state = JammingState::Unknown;
         }
-        if (!fresh(spoofingTimestampUs)) {
-            result.spoofing = SpoofingState::Unknown;
+        if (!fresh(spoofing.timestampUs)) {
+            result.spoofing.state = SpoofingState::Unknown;
         }
-        if (!fresh(rfTimestampUs)) {
-            result.noisePerMillisecond.reset();
-            result.automaticGainControl.reset();
-            result.jammingIndicator.reset();
+        if (!fresh(rf.timestampUs)) {
+            result.rf = RF{.timestampUs = rf.timestampUs};
         }
-        if (!fresh(correctionTimestampUs)) {
-            result.correctionUse = CorrectionUse::Unknown;
-            result.correctionCrcFailed.reset();
+        if (!fresh(corrections.timestampUs)) {
+            result.corrections = Corrections{.timestampUs = corrections.timestampUs};
         }
         return result;
     }
 };
 
-struct GPSPositionReport
+struct GPSNavigationValues
 {
     enum class FixType
     {
@@ -136,7 +163,16 @@ struct GPSPositionReport
     float headingRadians = std::numeric_limits<float>::quiet_NaN();
     float headingAccuracyRadians = std::numeric_limits<float>::quiet_NaN();
     std::optional<uint8_t> satellitesUsed = std::nullopt;
-    GPSIntegrityReport integrity;
+};
+
+struct GPSPositionReport
+{
+    using FixType = GPSNavigationValues::FixType;
+
+    static constexpr FixType fixTypeFromValue(int value) { return GPSNavigationValues::fixTypeFromValue(value); }
+
+    GPSNavigationValues navigation{};
+    GPSIntegrityReport integrity{};
 };
 Q_DECLARE_METATYPE(GPSPositionReport)
 Q_DECLARE_METATYPE(GPSPositionReport::FixType)
@@ -172,3 +208,4 @@ struct GPSSurveyReport
     bool valid = false;
     bool active = false;
 };
+Q_DECLARE_METATYPE(GPSSurveyReport)

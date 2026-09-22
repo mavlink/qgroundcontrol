@@ -1,13 +1,4 @@
-qt_add_library(
-    QGCGPSFemto
-    STATIC
-    FemtoConfiguration.cc
-    FemtoDecoder.cc
-    FemtoMessages.h
-    FemtoPrivate.h
-    GPSDriverFemto.cc
-    GPSDriverFemto.h
-)
+qt_add_library(QGCGPSFemto STATIC FemtoConfiguration.cc FemtoDecoder.cc FemtoMessages.h GPSDriverFemto.h)
 set_target_properties(
     QGCGPSFemto
     PROPERTIES AUTOMOC OFF

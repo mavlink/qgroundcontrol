@@ -116,7 +116,7 @@ static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fix
     receiver.noise_bytes = noise_bytes;
     GPSNativePositionReport position{};
     GPSNativeSatelliteReport satellites{};
-    std::unique_ptr<GPSBaseProtocol> driver;
+    std::unique_ptr<GPSProtocol> driver;
     if (septentrio) {
 #if QGC_GPS_ENABLE_SBF
         driver = std::make_unique<GPSNativeSBF>(receiver.io(), &position, &satellites);
@@ -128,11 +128,12 @@ static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fix
     }
     CHECK(driver);
     GPSProtocol::GPSConfig config{};
-    config.base = {.useFixedBase = fixed,
-                   .surveyInAccMeters = 1.25,
-                   .surveyInDurationSecs = 60,
-                   .fixedPosition = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-                   .fixedBaseAccuracyMeters = 1.0f};
+    config.base = {
+        .mode = fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
+                            .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
+                            .accuracyMeters = 1.0f}}
+                      : GPSBaseStationConfig::Mode{
+                            GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1.25, .durationSecs = 60}}};
     config.output_mode = mode;
     unsigned baudrate = 115200;
     const int result = driver->configure(baudrate, config);
@@ -150,6 +151,7 @@ static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fix
     CHECK(gps_test_warnings.empty());
     const bool base = mode == GPSProtocol::OutputMode::RTCM;
     if (septentrio) {
+        CHECK(receiver.sent("setAttitudeOffset, 0.000, 0.000") == !base);
         CHECK(receiver.sent("setPVTMode, Rover, All, auto") == !base);
         CHECK(receiver.sent("setPVTMode, Static") == base);
         CHECK(receiver.sent("setDataInOut, USB1, Auto, RTCMv3+SBF") == (mode != GPSProtocol::OutputMode::GPS));
@@ -201,10 +203,12 @@ void sbfRequiredBaseCommands()
                 GPSNativeSBF driver(io, &position, &satellites);
                 GPSProtocol::GPSConfig config{};
                 config.output_mode = GPSProtocol::OutputMode::RTCM;
-                config.base = {.useFixedBase = fixed,
-                               .surveyInAccMeters = 1,
-                               .surveyInDurationSecs = 60,
-                               .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}};
+                config.base = {
+                    .mode =
+                        fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
+                                    .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
+                              : GPSBaseStationConfig::Mode{
+                                    GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}}};
                 unsigned baudrate = 115200;
                 CHECK(driver.configure(baudrate, config) < 0);
                 CHECK(!driver.receiverReady());
@@ -232,8 +236,8 @@ void sbfSelectedPortAndPrecision()
         GPSNativeSBF driver(peer.io(), &position);
         GPSProtocol::GPSConfig config;
         config.output_mode = GPSProtocol::OutputMode::RTCM;
-        config.base.useFixedBase = true;
-        config.base.fixedPosition = {47.397742491, -8.545593291, 500.125f};
+        config.base.mode = GPSBaseStationConfig::Fixed{};
+        std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position = {47.397742491, -8.545593291, 500.125f};
         unsigned baud = 115200;
         CHECK(driver.configure(baud, config) == 0);
         CHECK(peer.sent(std::string("setDataInOut, ") + port + ", Auto, RTCMv3+SBF"));
@@ -260,7 +264,7 @@ void sbfDatumRejection()
         GPSNativeSBF driver(io, &position);
         GPSProtocol::GPSConfig config;
         config.output_mode = GPSProtocol::OutputMode::RTCM;
-        config.base = {.surveyInAccMeters = 1, .surveyInDurationSecs = 60};
+        config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
         unsigned baud = 115200;
         CHECK(driver.configure(baud, config) == 0);
         std::vector<uint8_t> frame(96);
@@ -302,9 +306,9 @@ void sbfFrameOwnership()
     };
     GPSNativeSBF driver(io, &position, &satellites);
     GPSProtocol::GPSConfig config{};
-    config.base = {.useFixedBase = true,
-                   .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
-                   .fixedBaseAccuracyMeters = 1};
+    config.base = {
+        .mode = GPSBaseStationConfig::Fixed{
+            .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}, .accuracyMeters = 1}};
     config.output_mode = GPSProtocol::OutputMode::RTCM;
     unsigned baudrate = 115200;
     CHECK(driver.configure(baudrate, config) == 0);
@@ -330,7 +334,7 @@ void sbfFrameOwnership()
     gps_test_time += 200000;
     driver.consume({});
     CHECK(fixCount == 1);
-    CHECK(std::abs(position.latitude_deg - 0.5 * GPS_RAD_TO_DEG) < 1e-6);
+    CHECK(std::abs(position.navigation.latitudeDegrees - 0.5 * GPS_RAD_TO_DEG) < 1e-6);
     driver.consume(correction);
     CHECK(correctionCount == 1);
     CHECK(fixCount == 1);
@@ -354,9 +358,7 @@ void sbfSurveyEvidence()
     GPSNativeSBF driver(io, &position);
     GPSProtocol::GPSConfig config{};
     config.output_mode = GPSProtocol::OutputMode::RTCM;
-    config.base = {.surveyInAccMeters = 1,
-                   .surveyInDurationSecs = 60,
-                   .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}};
+    config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
     unsigned baudrate = 115200;
     uint32_t tow = 0;
     std::vector<uint8_t> frame(94);
@@ -384,20 +386,23 @@ void sbfSurveyEvidence()
         gps_test_time += 200000;
         driver.consume({});
         if (horizontal == UINT16_MAX) {
-            CHECK(std::isnan(position.eph));
+            CHECK(std::isnan(position.navigation.horizontalAccuracyMeters));
         } else {
-            CHECK(position.eph == horizontal / 200.0f);
+            CHECK(position.navigation.horizontalAccuracyMeters == horizontal / 200.0f);
         }
         if (vertical == UINT16_MAX) {
-            CHECK(std::isnan(position.epv));
+            CHECK(std::isnan(position.navigation.verticalAccuracyMeters));
         } else {
-            CHECK(position.epv == vertical / 200.0f);
+            CHECK(position.navigation.verticalAccuracyMeters == vertical / 200.0f);
         }
         return surveys.back().duration;
     };
 
     for (bool fixed : {false, true, false}) {
-        config.base.useFixedBase = fixed;
+        config.base.mode =
+            fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
+                        .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
+                  : GPSBaseStationConfig::Mode{GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
         CHECK(driver.configure(baudrate, config) == 0);
         CHECK(driver.receiverReady());
         // A standalone solution without the determination flag is not a completed fixed base.
@@ -475,7 +480,7 @@ void baseMixedFraming(bool septentrio)
     }
     GPSProtocol::GPSConfig config;
     config.output_mode = GPSProtocol::OutputMode::RTCM;
-    config.base = {.surveyInAccMeters = 1, .surveyInDurationSecs = 60};
+    config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
     unsigned baud = 115200;
     CHECK(driver->configure(baud, config) == 0);
     driver->consume({});

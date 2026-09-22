@@ -1,12 +1,14 @@
 #pragma once
 
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
 #include <map>
 #include <optional>
 #include <utility>
 
 #include "GPSSatelliteObservation.h"
+#include "MonotonicClock.h"
 
 /// Timestamp acceptance and constellation retention, independent of notification scheduling.
 class GPSSatelliteState
@@ -81,17 +83,13 @@ public:
                 const auto report = std::find_if(reports.cbegin(), reports.cend(), [constellation](const auto& value) {
                     return value.constellation == constellation;
                 });
-                if ((report == reports.cend() || !report->inViewTimestampUs) && state.viewReceiptUs <= fullReceipt) {
-                    state.viewRetiredThroughUs = std::max(state.viewRetiredThroughUs, fullReceipt);
-                    state.viewReceiptUs = 0;
-                    state.satellites.clear();
+                if ((report == reports.cend() || !report->inViewTimestampUs) &&
+                    state.view.receivedAtUs <= fullReceipt) {
+                    state.view.retire(fullReceipt);
                 }
-                if ((report == reports.cend() || !report->inUseTimestampUs) && state.useReceiptUs <= fullReceipt) {
-                    state.useRetiredThroughUs = std::max(state.useRetiredThroughUs, fullReceipt);
-                    state.useReceiptUs = 0;
-                    state.usedCount.reset();
-                    state.used.clear();
-                    state.usedIds.reset();
+                if ((report == reports.cend() || !report->inUseTimestampUs) &&
+                    state.usage.receivedAtUs <= fullReceipt) {
+                    state.usage.retire(fullReceipt);
                 }
             }
         }
@@ -104,20 +102,20 @@ public:
             const auto bucket = satellitesByConstellation.find(report.constellation);
             const auto& satellites = bucket != satellitesByConstellation.end() ? bucket->second : emptySatellites;
             if ((fullSnapshot || report.inViewTimestampUs >= _fullSnapshotReceiptUs) &&
-                _accept(report.inViewTimestampUs, state.viewReceiptUs, state.viewRetiredThroughUs, nowUs)) {
-                state.viewReceiptUs = report.inViewTimestampUs;
-                state.satellites = satellites;
+                _accept(report.inViewTimestampUs, state.view.receivedAtUs, state.view.retiredThroughUs, nowUs)) {
+                state.view.receivedAtUs = report.inViewTimestampUs;
+                state.view.satellites = satellites;
             }
             if ((fullSnapshot || report.inUseTimestampUs >= _fullSnapshotReceiptUs) &&
                 (!report.satellitesUsed || *report.satellitesUsed >= 0) &&
-                _accept(report.inUseTimestampUs, state.useReceiptUs, state.useRetiredThroughUs, nowUs)) {
-                state.useReceiptUs = report.inUseTimestampUs;
-                state.usedCount = report.satellitesUsed;
-                state.usedIds = report.satellitesUsed ? report.usedSatelliteIds : std::nullopt;
-                state.used.clear();
+                _accept(report.inUseTimestampUs, state.usage.receivedAtUs, state.usage.retiredThroughUs, nowUs)) {
+                state.usage.receivedAtUs = report.inUseTimestampUs;
+                state.usage.count = report.satellitesUsed;
+                state.usage.ids = report.satellitesUsed ? report.usedSatelliteIds : std::nullopt;
+                state.usage.flags.clear();
                 for (const auto& satellite : satellites) {
                     if (report.satellitesUsed && satellite.used) {
-                        state.used[{satellite.id, satellite.prn}] = *satellite.used;
+                        state.usage.flags[{satellite.id, satellite.prn}] = *satellite.used;
                     }
                 }
             }
@@ -129,25 +127,25 @@ public:
         _expire(nowUs);
         GPSSatelliteObservation observation;
         for (const auto& [constellation, state] : _constellations) {
-            if (!state.viewReceiptUs && !state.useReceiptUs) {
+            if (!state.view.receivedAtUs && !state.usage.receivedAtUs) {
                 continue;
             }
             observation.provenance.append(
-                {constellation, state.viewReceiptUs, state.useReceiptUs, state.usedCount, state.usedIds});
-            for (auto satellite : state.satellites) {
-                const auto used = state.used.find({satellite.id, satellite.prn});
+                {constellation, state.view.receivedAtUs, state.usage.receivedAtUs, state.usage.count, state.usage.ids});
+            for (auto satellite : state.view.satellites) {
+                const auto used = state.usage.flags.find({satellite.id, satellite.prn});
                 satellite.used = std::nullopt;
-                if (state.useReceiptUs) {
-                    if (state.usedIds) {
-                        satellite.used = state.usedIds->contains(satellite.id);
-                    } else if (used != state.used.cend()) {
+                if (state.usage.receivedAtUs) {
+                    if (state.usage.ids) {
+                        satellite.used = state.usage.ids->contains(satellite.id);
+                    } else if (used != state.usage.flags.cend()) {
                         satellite.used = used->second;
                     }
                 }
                 observation.satellites.append(satellite);
             }
             observation.monotonicTimestampUs =
-                std::max({observation.monotonicTimestampUs, state.viewReceiptUs, state.useReceiptUs});
+                std::max({observation.monotonicTimestampUs, state.view.receivedAtUs, state.usage.receivedAtUs});
         }
         return observation;
     }
@@ -156,7 +154,7 @@ public:
     {
         std::optional<quint64> deadline;
         for (const auto& [constellation, state] : _constellations) {
-            for (const auto receipt : {state.viewReceiptUs, state.useReceiptUs}) {
+            for (const auto receipt : {state.view.receivedAtUs, state.usage.receivedAtUs}) {
                 if (receipt) {
                     const auto expiry = receipt + quint64(_freshnessTimeoutMs) * 1000;
                     deadline = deadline ? std::min(*deadline, expiry) : expiry;
@@ -167,22 +165,39 @@ public:
     }
 
 private:
+    struct ViewState
+    {
+        quint64 receivedAtUs = 0;
+        quint64 retiredThroughUs = 0;
+        QList<GPSSatellite> satellites = {};
+
+        void retire(quint64 throughUs) { *this = ViewState{.retiredThroughUs = std::max(retiredThroughUs, throughUs)}; }
+    };
+
+    struct UsageState
+    {
+        quint64 receivedAtUs = 0;
+        quint64 retiredThroughUs = 0;
+        std::map<std::pair<int, int>, bool> flags = {};
+        std::optional<int> count = std::nullopt;
+        std::optional<QList<int>> ids = std::nullopt;
+
+        void retire(quint64 throughUs)
+        {
+            *this = UsageState{.retiredThroughUs = std::max(retiredThroughUs, throughUs)};
+        }
+    };
+
     struct ConstellationState
     {
-        quint64 viewReceiptUs = 0;
-        quint64 useReceiptUs = 0;
-        quint64 viewRetiredThroughUs = 0;
-        quint64 useRetiredThroughUs = 0;
-        QList<GPSSatellite> satellites;
-        std::map<std::pair<int, int>, bool> used;
-        std::optional<int> usedCount;
-        std::optional<QList<int>> usedIds;
+        ViewState view;
+        UsageState usage;
     };
 
     quint64 _remaining(quint64 receipt, quint64 nowUs) const
     {
-        const auto lifetime = quint64(_freshnessTimeoutMs) * 1000;
-        return receipt && receipt <= nowUs && nowUs - receipt < lifetime ? lifetime - (nowUs - receipt) : 0;
+        return static_cast<quint64>(
+            MonotonicClock::remaining(receipt, nowUs, std::chrono::milliseconds(_freshnessTimeoutMs)).count());
     }
 
     bool _accept(quint64 receipt, quint64 current, quint64& retired, quint64 nowUs) const
@@ -200,17 +215,11 @@ private:
     void _expire(quint64 nowUs)
     {
         for (auto& [constellation, state] : _constellations) {
-            if (state.viewReceiptUs && !_remaining(state.viewReceiptUs, nowUs)) {
-                state.viewRetiredThroughUs = std::max(state.viewRetiredThroughUs, state.viewReceiptUs);
-                state.viewReceiptUs = 0;
-                state.satellites.clear();
+            if (state.view.receivedAtUs && !_remaining(state.view.receivedAtUs, nowUs)) {
+                state.view.retire(state.view.receivedAtUs);
             }
-            if (state.useReceiptUs && !_remaining(state.useReceiptUs, nowUs)) {
-                state.useRetiredThroughUs = std::max(state.useRetiredThroughUs, state.useReceiptUs);
-                state.useReceiptUs = 0;
-                state.usedCount.reset();
-                state.used.clear();
-                state.usedIds.reset();
+            if (state.usage.receivedAtUs && !_remaining(state.usage.receivedAtUs, nowUs)) {
+                state.usage.retire(state.usage.receivedAtUs);
             }
         }
     }

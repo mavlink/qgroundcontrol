@@ -101,11 +101,9 @@ GPSProtocol::GPSConfig baseConfig(bool fixed)
 {
     GPSProtocol::GPSConfig config{};
     config.output_mode = GPSProtocol::OutputMode::RTCM;
-    config.base.useFixedBase = fixed;
-    config.base.surveyMode = fixed ? GPSBaseStationConfig::SurveyMode::AccuracyControlled
-                                   : GPSBaseStationConfig::SurveyMode::ReceiverManaged;
-    config.base.receiverAveragingDurationSecs = 60;
-    config.base.fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500};
+    config.base.mode = fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
+                                   .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
+                             : GPSBaseStationConfig::Mode{GPSBaseStationConfig::ReceiverAveraging{}};
     return config;
 }
 
@@ -182,13 +180,13 @@ void rejectBeforeMutation()
         GPSNativeUnicore driver(receiver.io(), nullptr);
         auto config = baseConfig(false);
         if (variant == 0) {
-            config.base.surveyMode = GPSBaseStationConfig::SurveyMode::AccuracyControlled;
-            config.base.surveyInAccMeters = 1;
-            config.base.surveyInDurationSecs = 60;
+            config.base.mode = GPSBaseStationConfig::SurveyIn{};
+            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
         } else if (variant == 1) {
-            config.base.receiverAveragingDurationSecs = 3601;
+            std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs = 3601;
         } else if (variant == 2) {
-            config.base.receiverAveragingDurationSecs = 0;
+            std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs = 0;
         } else if (variant == 3) {
             config.dynamicModel = 1;
         } else {
@@ -484,7 +482,7 @@ void scheduledAveragingAndBoot()
         receiver.initialTow = 604798000;
         GPSNativeUnicore driver(receiver.io(), nullptr);
         auto config = baseConfig(false);
-        config.base.receiverAveragingDurationSecs = 1;
+        std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs = 1;
         unsigned baud = 115200;
         CHECK(driver.configure(baud, config) == 0);
         const auto commands = receiver.commands.size();

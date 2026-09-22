@@ -218,3 +218,56 @@ void GPSSatelliteStoreTest::_fullSnapshotsReplaceAndDeltasPreserve()
     QCOMPARE(store.observation().satellitesInViewCount(), 1);
     QCOMPARE(store.observation().satellites.first().constellation, GPSConstellation::Galileo);
 }
+
+void GPSSatelliteStoreTest::_independentRetirement_data()
+{
+    QTest::addColumn<bool>("retireView");
+    QTest::addColumn<bool>("fullSnapshot");
+    QTest::newRow("expired-view") << true << false;
+    QTest::newRow("expired-usage") << false << false;
+    QTest::newRow("omitted-view") << true << true;
+    QTest::newRow("omitted-usage") << false << true;
+}
+
+void GPSSatelliteStoreTest::_independentRetirement()
+{
+    QFETCH(bool, retireView);
+    QFETCH(bool, fullSnapshot);
+    ManualScheduler scheduler;
+    GPSSatelliteStore store(nullptr, 5000, &scheduler);
+    store.beginSession(QStringLiteral("receiver"), 1);
+    GPSSatelliteObservation initial;
+    initial.sessionId = 1;
+    initial.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
+    initial.satellites = {makeSatellite(GPSConstellation::GPS, 3)};
+    initial.provenance = {{GPSConstellation::GPS, scheduler.nowUs(), scheduler.nowUs(), 1, QList<int>{3}}};
+    store.updateObservation(initial);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+
+    GPSSatelliteObservation retained;
+    retained.sessionId = 1;
+    retained.updateMode = fullSnapshot ? GPSSatelliteObservation::UpdateMode::FullSnapshot
+                                       : GPSSatelliteObservation::UpdateMode::ConstellationDelta;
+    if (retireView) {
+        retained.provenance = {{GPSConstellation::GPS, 0, scheduler.nowUs(), 1, QList<int>{3}}};
+    } else {
+        retained.satellites = {makeSatellite(GPSConstellation::GPS, 3, std::nullopt)};
+        retained.provenance = {{GPSConstellation::GPS, scheduler.nowUs(), 0, std::nullopt}};
+    }
+    store.updateObservation(retained);
+    if (!fullSnapshot) {
+        QVERIFY(scheduler.advanceBy(std::chrono::seconds(4)));
+    }
+    const auto verifyRetained = [&]() {
+        const auto accepted = store.observation();
+        QCOMPARE(accepted.satellitesInViewCount(), retireView ? -1 : 1);
+        QCOMPARE(accepted.satellitesInUseCount(), retireView ? 1 : -1);
+        if (!retireView) {
+            QVERIFY(!accepted.satellites.first().used);
+        }
+    };
+    verifyRetained();
+    store.setFreshnessTimeoutMs(10000);
+    store.updateObservation(initial);
+    verifyRetained();
+}

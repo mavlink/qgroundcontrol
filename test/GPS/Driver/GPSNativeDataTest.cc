@@ -10,15 +10,14 @@
 #include "GPSProtocol.h"
 #include "UnitTest.h"
 
-Q_DECLARE_METATYPE(GPSNativeIntegrityReport)
+Q_DECLARE_METATYPE(GPSIntegrityReport)
 Q_DECLARE_METATYPE(GPSNativeSatelliteData)
 Q_DECLARE_METATYPE(GPSEllipsoidPosition)
 
-static_assert(std::is_same_v<decltype(GPSNativePositionReport::fix_type), GPSPositionReport::FixType>);
-static_assert(std::is_same_v<decltype(GPSNativeIntegrityReport::jamming_state), GPSIntegrityReport::JammingState>);
-static_assert(std::is_same_v<decltype(GPSNativeIntegrityReport::spoofing_state), GPSIntegrityReport::SpoofingState>);
-static_assert(
-    std::is_same_v<decltype(GPSNativeIntegrityReport::corrections_msg_used), GPSIntegrityReport::CorrectionUse>);
+static_assert(std::is_same_v<decltype(GPSNavigationValues::fixType), GPSPositionReport::FixType>);
+static_assert(std::is_same_v<decltype(GPSIntegrityReport::Jamming::state), GPSIntegrityReport::JammingState>);
+static_assert(std::is_same_v<decltype(GPSIntegrityReport::Spoofing::state), GPSIntegrityReport::SpoofingState>);
+static_assert(std::is_same_v<decltype(GPSIntegrityReport::Corrections::use), GPSIntegrityReport::CorrectionUse>);
 
 namespace {
 
@@ -118,30 +117,30 @@ void GPSNativeDataTest::_ellipsoidEcefConversion()
 void GPSNativeDataTest::_unreportedPosition()
 {
     const auto report = GPSNativeData::position({}, {});
-    QCOMPARE(report.timestampUs, uint64_t{0});
-    QCOMPARE(report.utcTimeUs, uint64_t{0});
-    QCOMPARE(report.fixType, GPSPositionReport::FixType::Unknown);
-    QVERIFY(std::isnan(report.latitudeDegrees));
-    QVERIFY(std::isnan(report.longitudeDegrees));
-    QVERIFY(std::isnan(report.altitudeMslMeters));
-    QVERIFY(std::isnan(report.altitudeEllipsoidMeters));
-    QVERIFY(std::isnan(report.horizontalAccuracyMeters));
-    QVERIFY(std::isnan(report.verticalAccuracyMeters));
-    QVERIFY(std::isnan(report.horizontalDop));
-    QVERIFY(std::isnan(report.verticalDop));
-    QVERIFY(std::isnan(report.speedMetersPerSecond));
-    QVERIFY(std::isnan(report.courseRadians));
-    QVERIFY(std::isnan(report.headingRadians));
-    QVERIFY(std::isnan(report.headingAccuracyRadians));
-    QVERIFY(!report.satellitesUsed.has_value());
+    QCOMPARE(report.navigation.timestampUs, uint64_t{0});
+    QCOMPARE(report.navigation.utcTimeUs, uint64_t{0});
+    QCOMPARE(report.navigation.fixType, GPSPositionReport::FixType::Unknown);
+    QVERIFY(std::isnan(report.navigation.latitudeDegrees));
+    QVERIFY(std::isnan(report.navigation.longitudeDegrees));
+    QVERIFY(std::isnan(report.navigation.altitudeMslMeters));
+    QVERIFY(std::isnan(report.navigation.altitudeEllipsoidMeters));
+    QVERIFY(std::isnan(report.navigation.horizontalAccuracyMeters));
+    QVERIFY(std::isnan(report.navigation.verticalAccuracyMeters));
+    QVERIFY(std::isnan(report.navigation.horizontalDop));
+    QVERIFY(std::isnan(report.navigation.verticalDop));
+    QVERIFY(std::isnan(report.navigation.speedMetersPerSecond));
+    QVERIFY(std::isnan(report.navigation.courseRadians));
+    QVERIFY(std::isnan(report.navigation.headingRadians));
+    QVERIFY(std::isnan(report.navigation.headingAccuracyRadians));
+    QVERIFY(!report.navigation.satellitesUsed.has_value());
     QCOMPARE(report.integrity.timestampUs, uint64_t{0});
-    QCOMPARE(report.integrity.jamming, GPSIntegrityReport::JammingState::Unknown);
-    QCOMPARE(report.integrity.spoofing, GPSIntegrityReport::SpoofingState::Unknown);
-    QCOMPARE(report.integrity.correctionUse, GPSIntegrityReport::CorrectionUse::Unknown);
-    QVERIFY(!report.integrity.noisePerMillisecond.has_value());
-    QVERIFY(!report.integrity.automaticGainControl.has_value());
-    QVERIFY(!report.integrity.jammingIndicator.has_value());
-    QVERIFY(!report.integrity.correctionCrcFailed.has_value());
+    QCOMPARE(report.integrity.jamming.state, GPSIntegrityReport::JammingState::Unknown);
+    QCOMPARE(report.integrity.spoofing.state, GPSIntegrityReport::SpoofingState::Unknown);
+    QCOMPARE(report.integrity.corrections.use, GPSIntegrityReport::CorrectionUse::Unknown);
+    QVERIFY(!report.integrity.rf.noisePerMillisecond.has_value());
+    QVERIFY(!report.integrity.rf.automaticGainControl.has_value());
+    QVERIFY(!report.integrity.rf.jammingIndicator.has_value());
+    QVERIFY(!report.integrity.corrections.crcFailed.has_value());
 }
 
 void GPSNativeDataTest::_positionValues_data()
@@ -173,42 +172,42 @@ void GPSNativeDataTest::_positionValues()
     QFETCH(double, altitudeEllipsoid);
     QFETCH(float, quality);
     GPSNativePositionReport source;
-    source.timestamp = timestamp;
-    source.time_utc_usec = utcTime;
-    source.latitude_deg = latitude;
-    source.longitude_deg = longitude;
-    source.altitude_msl_m = altitudeMsl;
-    source.altitude_ellipsoid_m = altitudeEllipsoid;
-    source.eph = quality;
-    source.epv = quality * 2;
-    source.hdop = quality * 3;
-    source.vdop = quality * 4;
-    source.heading = quality * 5;
-    source.heading_accuracy = quality * 6;
-    GPSNativeIntegrityReport diagnostic;
-    diagnostic.timestamp = 4'294'967'299;
+    source.navigation.timestampUs = timestamp;
+    source.navigation.utcTimeUs = utcTime;
+    source.navigation.latitudeDegrees = latitude;
+    source.navigation.longitudeDegrees = longitude;
+    source.navigation.altitudeMslMeters = altitudeMsl;
+    source.navigation.altitudeEllipsoidMeters = altitudeEllipsoid;
+    source.navigation.horizontalAccuracyMeters = quality;
+    source.navigation.verticalAccuracyMeters = quality * 2;
+    source.navigation.horizontalDop = quality * 3;
+    source.navigation.verticalDop = quality * 4;
+    source.navigation.headingRadians = quality * 5;
+    source.navigation.headingAccuracyRadians = quality * 6;
+    GPSIntegrityReport diagnostic;
+    diagnostic.timestampUs = 4'294'967'299;
     const auto report = GPSNativeData::position(source, diagnostic);
-    QCOMPARE(report.timestampUs, timestamp);
-    QCOMPARE(report.utcTimeUs, utcTime);
-    QCOMPARE(report.latitudeDegrees, latitude);
-    QCOMPARE(report.longitudeDegrees, longitude);
+    QCOMPARE(report.navigation.timestampUs, timestamp);
+    QCOMPARE(report.navigation.utcTimeUs, utcTime);
+    QCOMPARE(report.navigation.latitudeDegrees, latitude);
+    QCOMPARE(report.navigation.longitudeDegrees, longitude);
     if (std::isnan(altitudeMsl)) {
-        QVERIFY(std::isnan(report.altitudeMslMeters));
+        QVERIFY(std::isnan(report.navigation.altitudeMslMeters));
     } else {
-        QCOMPARE(report.altitudeMslMeters, altitudeMsl);
+        QCOMPARE(report.navigation.altitudeMslMeters, altitudeMsl);
     }
     if (std::isnan(altitudeEllipsoid)) {
-        QVERIFY(std::isnan(report.altitudeEllipsoidMeters));
+        QVERIFY(std::isnan(report.navigation.altitudeEllipsoidMeters));
     } else {
-        QCOMPARE(report.altitudeEllipsoidMeters, altitudeEllipsoid);
+        QCOMPARE(report.navigation.altitudeEllipsoidMeters, altitudeEllipsoid);
     }
-    QCOMPARE(report.horizontalAccuracyMeters, quality);
-    QCOMPARE(report.verticalAccuracyMeters, quality * 2);
-    QCOMPARE(report.horizontalDop, quality * 3);
-    QCOMPARE(report.verticalDop, quality * 4);
-    QCOMPARE(report.headingRadians, quality * 5);
-    QCOMPARE(report.headingAccuracyRadians, quality * 6);
-    QCOMPARE(report.integrity.timestampUs, diagnostic.timestamp);
+    QCOMPARE(report.navigation.horizontalAccuracyMeters, quality);
+    QCOMPARE(report.navigation.verticalAccuracyMeters, quality * 2);
+    QCOMPARE(report.navigation.horizontalDop, quality * 3);
+    QCOMPARE(report.navigation.verticalDop, quality * 4);
+    QCOMPARE(report.navigation.headingRadians, quality * 5);
+    QCOMPARE(report.navigation.headingAccuracyRadians, quality * 6);
+    QCOMPARE(report.integrity.timestampUs, diagnostic.timestampUs);
 }
 
 void GPSNativeDataTest::_velocityValidity_data()
@@ -231,17 +230,17 @@ void GPSNativeDataTest::_velocityValidity()
     QFETCH(float, speed);
     QFETCH(float, course);
     GPSNativePositionReport source;
-    source.fix_type = fix;
+    source.navigation.fixType = fix;
     source.vel_ned_valid = valid;
-    source.vel_m_s = speed;
-    source.cog_rad = course;
+    source.navigation.speedMetersPerSecond = speed;
+    source.navigation.courseRadians = course;
     const auto report = GPSNativeData::position(source, {});
     if (valid) {
-        QCOMPARE(report.speedMetersPerSecond, speed);
-        QCOMPARE(report.courseRadians, course);
+        QCOMPARE(report.navigation.speedMetersPerSecond, speed);
+        QCOMPARE(report.navigation.courseRadians, course);
     } else {
-        QVERIFY(std::isnan(report.speedMetersPerSecond));
-        QVERIFY(std::isnan(report.courseRadians));
+        QVERIFY(std::isnan(report.navigation.speedMetersPerSecond));
+        QVERIFY(std::isnan(report.navigation.courseRadians));
     }
 }
 
@@ -271,8 +270,8 @@ void GPSNativeDataTest::_fixTypes()
     QFETCH(GPSPositionReport::FixType, expected);
     GPSNativePositionReport source;
     QCOMPARE(GPSPositionReport::fixTypeFromValue(native), expected);
-    source.fix_type = static_cast<GPSPositionReport::FixType>(native);
-    QCOMPARE(GPSNativeData::position(source, {}).fixType, expected);
+    source.navigation.fixType = static_cast<GPSPositionReport::FixType>(native);
+    QCOMPARE(GPSNativeData::position(source, {}).navigation.fixType, expected);
 }
 
 void GPSNativeDataTest::_integrityStates_data()
@@ -300,106 +299,108 @@ void GPSNativeDataTest::_integrityStates()
     QFETCH(GPSIntegrityReport::JammingState, jamming);
     QFETCH(GPSIntegrityReport::SpoofingState, spoofing);
     QFETCH(GPSIntegrityReport::CorrectionUse, correctionUse);
-    GPSNativeIntegrityReport diagnostic;
+    GPSIntegrityReport diagnostic;
     QCOMPARE(GPSIntegrityReport::jammingStateFromValue(native), jamming);
     QCOMPARE(GPSIntegrityReport::spoofingStateFromValue(native), spoofing);
     QCOMPARE(GPSIntegrityReport::correctionUseFromValue(native), correctionUse);
-    diagnostic.jamming_state = static_cast<GPSIntegrityReport::JammingState>(native);
-    diagnostic.spoofing_state = static_cast<GPSIntegrityReport::SpoofingState>(native);
-    diagnostic.corrections_msg_used = static_cast<GPSIntegrityReport::CorrectionUse>(native);
-    diagnostic.jamming_state_timestamp = 100;
-    diagnostic.spoofing_state_timestamp = 100;
-    diagnostic.corrections_timestamp = 100;
-    const auto integrity = GPSNativeData::position({.timestamp = 100}, diagnostic).integrity;
-    QCOMPARE(integrity.jamming, jamming);
-    QCOMPARE(integrity.spoofing, spoofing);
-    QCOMPARE(integrity.correctionUse, correctionUse);
+    diagnostic.jamming.state = static_cast<GPSIntegrityReport::JammingState>(native);
+    diagnostic.spoofing.state = static_cast<GPSIntegrityReport::SpoofingState>(native);
+    diagnostic.corrections.use = static_cast<GPSIntegrityReport::CorrectionUse>(native);
+    diagnostic.jamming.timestampUs = 100;
+    diagnostic.spoofing.timestampUs = 100;
+    diagnostic.corrections.timestampUs = 100;
+    const auto integrity = GPSNativeData::position({.navigation = {.timestampUs = 100}}, diagnostic).integrity;
+    QCOMPARE(integrity.jamming.state, jamming);
+    QCOMPARE(integrity.spoofing.state, spoofing);
+    QCOMPARE(integrity.corrections.use, correctionUse);
 }
 
 void GPSNativeDataTest::_integrityReceipts()
 {
-    GPSNativeIntegrityReport diagnostic;
-    diagnostic.timestamp = 7'000'000;
-    diagnostic.jamming_state = GPSIntegrityReport::JammingState::Critical;
-    diagnostic.jamming_state_timestamp = 1'000'000;
-    diagnostic.spoofing_state = GPSIntegrityReport::SpoofingState::Indicated;
-    diagnostic.spoofing_state_timestamp = 7'000'000;
-    diagnostic.rf_timestamp = 3'000'000;
-    diagnostic.noise_per_ms = 0;
-    diagnostic.corrections_timestamp = 6'000'000;
-    diagnostic.corrections_crc_failed = false;
-    diagnostic.corrections_msg_used = GPSIntegrityReport::CorrectionUse::Used;
-    const auto report = GPSNativeData::position({.timestamp = 7'000'000}, diagnostic);
-    QCOMPARE(report.integrity.jamming, GPSIntegrityReport::JammingState::Unknown);
-    QCOMPARE(report.integrity.jammingTimestampUs, uint64_t{1'000'000});
-    QCOMPARE(report.integrity.spoofing, GPSIntegrityReport::SpoofingState::Indicated);
-    QCOMPARE(report.integrity.spoofingTimestampUs, uint64_t{7'000'000});
-    QCOMPARE(report.integrity.noisePerMillisecond, std::optional<int32_t>{0});
-    QCOMPARE(report.integrity.rfTimestampUs, uint64_t{3'000'000});
-    QCOMPARE(report.integrity.correctionCrcFailed, std::optional<bool>{false});
-    QCOMPARE(report.integrity.correctionTimestampUs, uint64_t{6'000'000});
-    const auto earlierEpoch = GPSNativeData::position({.timestamp = 6'500'000}, diagnostic);
-    QCOMPARE(earlierEpoch.integrity.spoofing, GPSIntegrityReport::SpoofingState::Indicated);
-    QCOMPARE(earlierEpoch.integrity.jamming, GPSIntegrityReport::JammingState::Unknown);
-    const auto delayedPublication = GPSNativeData::position({.timestamp = 6'500'000}, diagnostic, 8'000'000);
-    QVERIFY(!delayedPublication.integrity.noisePerMillisecond);
-    QCOMPARE(delayedPublication.integrity.spoofing, GPSIntegrityReport::SpoofingState::Indicated);
-    QCOMPARE(delayedPublication.integrity.rfTimestampUs, uint64_t{3'000'000});
+    GPSIntegrityReport diagnostic;
+    diagnostic.timestampUs = 7'000'000;
+    diagnostic.jamming.state = GPSIntegrityReport::JammingState::Critical;
+    diagnostic.jamming.timestampUs = 1'000'000;
+    diagnostic.spoofing.state = GPSIntegrityReport::SpoofingState::Indicated;
+    diagnostic.spoofing.timestampUs = 7'000'000;
+    diagnostic.rf.timestampUs = 3'000'000;
+    diagnostic.rf.noisePerMillisecond = 0;
+    diagnostic.corrections.timestampUs = 6'000'000;
+    diagnostic.corrections.crcFailed = false;
+    diagnostic.corrections.use = GPSIntegrityReport::CorrectionUse::Used;
+    diagnostic.corrections.protocol = GPSIntegrityReport::CorrectionProtocol::RTCM3;
+    const auto report = GPSNativeData::position({.navigation = {.timestampUs = 7'000'000}}, diagnostic);
+    QCOMPARE(report.integrity.jamming.state, GPSIntegrityReport::JammingState::Unknown);
+    QCOMPARE(report.integrity.jamming.timestampUs, uint64_t{1'000'000});
+    QCOMPARE(report.integrity.spoofing.state, GPSIntegrityReport::SpoofingState::Indicated);
+    QCOMPARE(report.integrity.spoofing.timestampUs, uint64_t{7'000'000});
+    QCOMPARE(report.integrity.rf.noisePerMillisecond, std::optional<int32_t>{0});
+    QCOMPARE(report.integrity.rf.timestampUs, uint64_t{3'000'000});
+    QCOMPARE(report.integrity.corrections.crcFailed, std::optional<bool>{false});
+    QCOMPARE(report.integrity.corrections.protocol, GPSIntegrityReport::CorrectionProtocol::RTCM3);
+    QCOMPARE(report.integrity.corrections.timestampUs, uint64_t{6'000'000});
+    const auto earlierEpoch = GPSNativeData::position({.navigation = {.timestampUs = 6'500'000}}, diagnostic);
+    QCOMPARE(earlierEpoch.integrity.spoofing.state, GPSIntegrityReport::SpoofingState::Indicated);
+    QCOMPARE(earlierEpoch.integrity.jamming.state, GPSIntegrityReport::JammingState::Unknown);
+    const auto delayedPublication =
+        GPSNativeData::position({.navigation = {.timestampUs = 6'500'000}}, diagnostic, 8'000'000);
+    QVERIFY(!delayedPublication.integrity.rf.noisePerMillisecond);
+    QCOMPARE(delayedPublication.integrity.spoofing.state, GPSIntegrityReport::SpoofingState::Indicated);
+    QCOMPARE(delayedPublication.integrity.rf.timestampUs, uint64_t{3'000'000});
 
     const auto later = report.integrity.freshAt(8'000'000);
-    QVERIFY(!later.noisePerMillisecond);
-    QCOMPARE(later.spoofing, GPSIntegrityReport::SpoofingState::Indicated);
-    QCOMPARE(later.correctionUse, GPSIntegrityReport::CorrectionUse::Used);
-    QCOMPARE(report.integrity.noisePerMillisecond, std::optional<int32_t>{0});
+    QVERIFY(!later.rf.noisePerMillisecond);
+    QCOMPARE(later.spoofing.state, GPSIntegrityReport::SpoofingState::Indicated);
+    QCOMPARE(later.corrections.use, GPSIntegrityReport::CorrectionUse::Used);
+    QCOMPARE(report.integrity.rf.noisePerMillisecond, std::optional<int32_t>{0});
+    QCOMPARE(report.integrity.freshAt(11'000'000).corrections.protocol,
+             GPSIntegrityReport::CorrectionProtocol::Unknown);
     const auto future = report.integrity.freshAt(6'500'000);
-    QCOMPARE(future.spoofing, GPSIntegrityReport::SpoofingState::Unknown);
-    QCOMPARE(future.correctionUse, GPSIntegrityReport::CorrectionUse::Used);
+    QCOMPARE(future.spoofing.state, GPSIntegrityReport::SpoofingState::Unknown);
+    QCOMPARE(future.corrections.use, GPSIntegrityReport::CorrectionUse::Used);
 }
 
 void GPSNativeDataTest::_optionalValues_data()
 {
     QTest::addColumn<uint8_t>("satellites");
-    QTest::addColumn<GPSNativeIntegrityReport>("diagnostic");
-    QTest::newRow("unreported") << uint8_t{255} << GPSNativeIntegrityReport{};
+    QTest::addColumn<GPSIntegrityReport>("diagnostic");
+    QTest::newRow("unreported") << uint8_t{255} << GPSIntegrityReport{};
     QTest::newRow("explicit-zero-false") << uint8_t{0}
-                                         << GPSNativeIntegrityReport{.noise_per_ms = 0,
-                                                                     .automatic_gain_control = 0,
-                                                                     .jamming_indicator = 0,
-                                                                     .corrections_crc_failed = false};
-    QTest::newRow("reported") << uint8_t{18}
-                              << GPSNativeIntegrityReport{
-                                     .noise_per_ms = 42,
-                                     .automatic_gain_control = 12345,
-                                     .jamming_indicator = 77,
-                                     .corrections_crc_failed = true,
-                                     .corrections_msg_used = GPSIntegrityReport::CorrectionUse::Used};
+                                         << GPSIntegrityReport{.rf = {.noisePerMillisecond = 0,
+                                                                      .automaticGainControl = 0,
+                                                                      .jammingIndicator = 0},
+                                                               .corrections = {.crcFailed = false}};
+    QTest::newRow("reported")
+        << uint8_t{18}
+        << GPSIntegrityReport{.rf = {.noisePerMillisecond = 42, .automaticGainControl = 12345, .jammingIndicator = 77},
+                              .corrections = {.use = GPSIntegrityReport::CorrectionUse::Used, .crcFailed = true}};
     QTest::newRow("largest-reported") << uint8_t{254}
-                                      << GPSNativeIntegrityReport{
-                                             .noise_per_ms = (std::numeric_limits<int32_t>::max)(),
-                                             .automatic_gain_control = (std::numeric_limits<uint16_t>::max)(),
-                                             .jamming_indicator = (std::numeric_limits<int32_t>::max)()};
+                                      << GPSIntegrityReport{
+                                             .rf = {.noisePerMillisecond = (std::numeric_limits<int32_t>::max)(),
+                                                    .automaticGainControl = (std::numeric_limits<uint16_t>::max)(),
+                                                    .jammingIndicator = (std::numeric_limits<int32_t>::max)()}};
     QTest::newRow("correction-use-without-crc")
-        << uint8_t{255} << GPSNativeIntegrityReport{.corrections_msg_used = GPSIntegrityReport::CorrectionUse::Used};
+        << uint8_t{255} << GPSIntegrityReport{.corrections = {.use = GPSIntegrityReport::CorrectionUse::Used}};
 }
 
 void GPSNativeDataTest::_optionalValues()
 {
     QFETCH(uint8_t, satellites);
-    QFETCH(GPSNativeIntegrityReport, diagnostic);
+    QFETCH(GPSIntegrityReport, diagnostic);
     GPSNativePositionReport source;
-    source.timestamp = 100;
-    diagnostic.rf_timestamp = 100;
-    diagnostic.corrections_timestamp = 100;
-    source.satellites_used = satellites;
+    source.navigation.timestampUs = 100;
+    diagnostic.rf.timestampUs = 100;
+    diagnostic.corrections.timestampUs = 100;
+    source.navigation.satellitesUsed = satellites;
     const auto report = GPSNativeData::position(source, diagnostic);
-    QCOMPARE(report.satellitesUsed.has_value(), satellites != 255);
+    QCOMPARE(report.navigation.satellitesUsed.has_value(), satellites != 255);
     if (satellites != 255) {
-        QCOMPARE(*report.satellitesUsed, satellites);
+        QCOMPARE(*report.navigation.satellitesUsed, satellites);
     }
-    QCOMPARE(report.integrity.noisePerMillisecond, diagnostic.noise_per_ms);
-    QCOMPARE(report.integrity.automaticGainControl, diagnostic.automatic_gain_control);
-    QCOMPARE(report.integrity.jammingIndicator, diagnostic.jamming_indicator);
-    QCOMPARE(report.integrity.correctionCrcFailed, diagnostic.corrections_crc_failed);
+    QCOMPARE(report.integrity.rf.noisePerMillisecond, diagnostic.rf.noisePerMillisecond);
+    QCOMPARE(report.integrity.rf.automaticGainControl, diagnostic.rf.automaticGainControl);
+    QCOMPARE(report.integrity.rf.jammingIndicator, diagnostic.rf.jammingIndicator);
+    QCOMPARE(report.integrity.corrections.crcFailed, diagnostic.corrections.crcFailed);
 }
 
 void GPSNativeDataTest::_satelliteCounts_data()

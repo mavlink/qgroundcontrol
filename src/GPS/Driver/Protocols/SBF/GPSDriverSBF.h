@@ -43,22 +43,17 @@
 
 #pragma once
 
-#include "GPSBaseProtocol.h"
+#include "GPSProtocol.h"
 #include "RTCMFramer.h"
 #include "SBFMessages.h"
 
-class GPSNativeSBF : public GPSBaseProtocol
+class GPSNativeSBF : public GPSProtocol
 {
 public:
-    /**
-     * @param heading_offset heading offset in radians [-pi, pi]. It is subtracted from the measurement.
-     * @param pitch_offset pitch_offset in deg [-90, 90]. This will be send as a cmd to the receiver.
-     */
     GPSNativeSBF(GPSProtocolIO io, struct GPSNativePositionReport* gps_position,
-                 GPSNativeSatelliteReport* satellite_info = nullptr, float heading_offset = 0.f,
-                 float pitch_offset = 0.f);
+                 GPSNativeSatelliteReport* satellite_info = nullptr);
 
-    virtual ~GPSNativeSBF();
+    ~GPSNativeSBF() override = default;
 
     bool receiverReady() const override { return _configured; }
 
@@ -131,8 +126,7 @@ private:
     OutputMode _output_mode{OutputMode::GPS};
     std::optional<RTCMStreamDecoder> _rtcm_parsing;
 
-    const float _heading_offset;
-    const float _pitch_offset;
+    uint32_t _survey_duration = 0;
     bool _survey_active{false};
     uint64_t _survey_activation_date{0};
 };

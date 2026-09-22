@@ -142,40 +142,40 @@ void independentIntegrityAndUtc()
                     continue;
                 }
                 CHECK(decoded.batch.events.size() == 1);
-                const auto& actual = std::get<GPSNativeIntegrityReport>(decoded.batch.events.front());
-                CHECK(static_cast<unsigned>(actual.spoofing_state) == expected.spoofing);
-                CHECK(static_cast<unsigned>(actual.jamming_state) == expected.jamming);
-                CHECK(actual.noise_per_ms.value_or(-1) == expected.noise);
-                CHECK(actual.automatic_gain_control.has_value() == (expected.agc >= 0));
+                const auto& actual = std::get<GPSIntegrityReport>(decoded.batch.events.front());
+                CHECK(static_cast<unsigned>(actual.spoofing.state) == expected.spoofing);
+                CHECK(static_cast<unsigned>(actual.jamming.state) == expected.jamming);
+                CHECK(actual.rf.noisePerMillisecond.value_or(-1) == expected.noise);
+                CHECK(actual.rf.automaticGainControl.has_value() == (expected.agc >= 0));
                 if (expected.agc >= 0) {
-                    CHECK(*actual.automatic_gain_control == expected.agc);
+                    CHECK(*actual.rf.automaticGainControl == expected.agc);
                 }
-                CHECK(actual.jamming_indicator.value_or(-1) == expected.indicator);
-                CHECK(actual.spoofing_state_timestamp != 0);
+                CHECK(actual.rf.jammingIndicator.value_or(-1) == expected.indicator);
+                CHECK(actual.spoofing.timestampUs != 0);
                 if (expected.noise >= 0) {
-                    CHECK(actual.rf_timestamp != 0 && actual.jamming_state_timestamp != 0);
+                    CHECK(actual.rf.timestampUs != 0 && actual.jamming.timestampUs != 0);
                 }
-                CHECK(actual.corrections_crc_failed.has_value() == (expected.crcFailed >= 0));
+                CHECK(actual.corrections.crcFailed.has_value() == (expected.crcFailed >= 0));
                 if (expected.crcFailed >= 0) {
-                    CHECK(*actual.corrections_crc_failed == static_cast<bool>(expected.crcFailed));
-                    CHECK(static_cast<int>(actual.corrections_msg_used) == expected.correctionUse);
-                    CHECK(actual.corrections_protocol == GPSNativeIntegrityReport::CORRECTIONS_PROTOCOL_RTCM3);
-                    CHECK(actual.corrections_timestamp != 0);
+                    CHECK(*actual.corrections.crcFailed == static_cast<bool>(expected.crcFailed));
+                    CHECK(static_cast<int>(actual.corrections.use) == expected.correctionUse);
+                    CHECK(actual.corrections.protocol == GPSIntegrityReport::CorrectionProtocol::RTCM3);
+                    CHECK(actual.corrections.timestampUs != 0);
                 }
             }
         }
         for (const auto& expected : GPSFixture::utc) {
             auto remaining = std::span(utcBytes).subspan(expected.offset, expected.size);
-            const auto previousUtc = position.time_utc_usec;
+            const auto previousUtc = position.navigation.utcTimeUs;
             auto corrupt = std::vector<uint8_t>(remaining.begin(), remaining.end());
             corrupt.back() ^= 1;
             CHECK(ubx.consume(corrupt) == 0);
-            CHECK(position.time_utc_usec == previousUtc);
+            CHECK(position.navigation.utcTimeUs == previousUtc);
             while (!remaining.empty()) {
                 const auto count = std::min(chunkSize, remaining.size());
                 ubx.consume(remaining.first(count));
                 remaining = remaining.subspan(count);
-                CHECK(position.time_utc_usec == (remaining.empty() ? expected.microseconds : previousUtc));
+                CHECK(position.navigation.utcTimeUs == (remaining.empty() ? expected.microseconds : previousUtc));
             }
         }
     }
@@ -187,7 +187,7 @@ void relativeUtcUnavailable()
     GPSNativeUBX ubx(noDevice(), &position, nullptr);
     ubx.setDecodeContext({.navigation = true});
     ubx.consume(fixture("nav-pvt.ubx"));
-    CHECK(position.time_utc_usec != 0);
+    CHECK(position.navigation.utcTimeUs != 0);
     const auto original = fixture("relative.ubx");
     for (const uint32_t tow : {UBXNavigationEpoch::WEEK_MS - 1, 0u, 1000u}) {
         const auto frame = timed(original, tow, 4);
@@ -225,8 +225,8 @@ void navigationEpochs()
         CHECK(observations.empty());
         ubx.consume(endEpoch(UBXNavigationEpoch::WEEK_MS - 1000));
         CHECK(observations.size() == 1);
-        CHECK(std::abs(observations.back().latitude_deg - 53.337816927) < 1e-9);
-        CHECK(std::abs(observations.back().hdop - 0.58) < 1e-6);
+        CHECK(std::abs(observations.back().navigation.latitudeDegrees - 53.337816927) < 1e-9);
+        CHECK(std::abs(observations.back().navigation.horizontalDop - 0.58) < 1e-6);
         ubx.consume(pvt);
         ubx.consume(endEpoch(UBXNavigationEpoch::WEEK_MS - 1000));
         CHECK(observations.size() == 1);
@@ -235,10 +235,10 @@ void navigationEpochs()
         ubx.consume({});
         CHECK(observations.size() == 2);
         CHECK(observations.back().dop_timestamp == 0);
-        CHECK(std::isnan(observations.back().hdop));
-        CHECK(std::isnan(observations.back().heading));
-        CHECK(std::isnan(observations.back().heading_accuracy));
-        CHECK(std::abs(observations.back().latitude_deg - 53.4507228) < 1e-8);
+        CHECK(std::isnan(observations.back().navigation.horizontalDop));
+        CHECK(std::isnan(observations.back().navigation.headingRadians));
+        CHECK(std::isnan(observations.back().navigation.headingAccuracyRadians));
+        CHECK(std::abs(observations.back().navigation.latitudeDegrees - 53.4507228) < 1e-8);
         // Adjacent epochs can interleave without donating DOP to one another.
         ubx.consume(timed(pvt, 1000));
         ubx.consume(timed(dop, 2000));
@@ -261,8 +261,8 @@ void navigationEpochs()
         gps_test_time += UBXNavigationEpoch::MAX_AGE_US;
         ubx.consume({});
         CHECK(observations.size() == 5);
-        CHECK(observations.back().fix_type == GPSPositionReport::FixType::RTKFixed);
-        CHECK(std::abs(observations.back().latitude_deg - 53.4507228) < 1e-8);
+        CHECK(observations.back().navigation.fixType == GPSPositionReport::FixType::RTKFixed);
+        CHECK(std::abs(observations.back().navigation.latitudeDegrees - 53.4507228) < 1e-8);
     }
 }
 #endif
@@ -295,23 +295,23 @@ void independentSbfValidity()
             gps_test_time += 200000;
             sbf.consume({});
             CHECK(observations == 1);
-            CHECK(position.time_utc_usec == 0);
-            CHECK(matches(position.latitude_deg, expected.latitude, 1e-9));
-            CHECK(matches(position.longitude_deg, expected.longitude, 1e-9));
-            CHECK(matches(position.altitude_ellipsoid_m, expected.ellipsoid));
-            CHECK(matches(position.altitude_msl_m, expected.msl));
-            CHECK(matches(position.eph, expected.horizontalAccuracy));
-            CHECK(matches(position.epv, expected.verticalAccuracy));
+            CHECK(position.navigation.utcTimeUs == 0);
+            CHECK(matches(position.navigation.latitudeDegrees, expected.latitude, 1e-9));
+            CHECK(matches(position.navigation.longitudeDegrees, expected.longitude, 1e-9));
+            CHECK(matches(position.navigation.altitudeEllipsoidMeters, expected.ellipsoid));
+            CHECK(matches(position.navigation.altitudeMslMeters, expected.msl));
+            CHECK(matches(position.navigation.horizontalAccuracyMeters, expected.horizontalAccuracy));
+            CHECK(matches(position.navigation.verticalAccuracyMeters, expected.verticalAccuracy));
             CHECK(matches(position.vel_n_m_s, expected.north));
             CHECK(matches(position.vel_e_m_s, expected.east));
             CHECK(matches(position.vel_d_m_s, expected.down));
-            CHECK(matches(position.cog_rad, expected.course));
-            CHECK(matches(position.hdop, expected.hdop));
-            CHECK(matches(position.vdop, expected.vdop));
+            CHECK(matches(position.navigation.courseRadians, expected.course));
+            CHECK(matches(position.navigation.horizontalDop, expected.hdop));
+            CHECK(matches(position.navigation.verticalDop, expected.vdop));
             CHECK(matches(position.speedAccuracyMetersPerSecond, expected.speedAccuracy));
-            CHECK(matches(position.heading, expected.heading));
-            CHECK(matches(position.heading_accuracy, expected.headingAccuracy));
-            CHECK(position.satellites_used == expected.satellites);
+            CHECK(matches(position.navigation.headingRadians, expected.heading));
+            CHECK(matches(position.navigation.headingAccuracyRadians, expected.headingAccuracy));
+            CHECK(position.navigation.satellitesUsed == expected.satellites);
             CHECK(position.vel_ned_valid == expected.velocityAvailable);
             using Fix = GPSPositionReport::FixType;
             const auto fix = expected.error            ? Fix::NoFix
@@ -319,7 +319,7 @@ void independentSbfValidity()
                              : expected.mode == 4      ? Fix::RTKFixed
                              : expected.mode == 5      ? Fix::RTKFloat
                                                        : Fix::Fix3D;
-            CHECK(position.fix_type == fix);
+            CHECK(position.navigation.fixType == fix);
         }
     }
     GPSNativePositionReport position{};
@@ -330,7 +330,7 @@ void independentSbfValidity()
         sbf.consume(std::span(invalidTimes).subspan(expected.offset, expected.size));
         gps_test_time += 200000;
         CHECK(sbf.decode({}).batch.events.empty());
-        CHECK(position.timestamp == 0);
+        CHECK(position.navigation.timestampUs == 0);
     }
     const auto valid = fixture("synthetic-valid.sbf");
     auto corrupt = valid;
@@ -338,15 +338,15 @@ void independentSbfValidity()
     sbf.consume(corrupt);
     gps_test_time += 200000;
     CHECK(sbf.decode({}).batch.events.empty());
-    CHECK(position.timestamp == 0);
+    CHECK(position.navigation.timestampUs == 0);
 
     GPSNativeSBF recovered(noDevice(), &position, nullptr);
     recovered.consume(invalidTimes);
     recovered.consume(valid);
     gps_test_time += 200000;
     recovered.consume({});
-    CHECK(position.timestamp != 0);
-    CHECK(matches(position.latitude_deg, GPSFixture::sbfEpochs[0].latitude, 1e-9));
+    CHECK(position.navigation.timestampUs != 0);
+    CHECK(matches(position.navigation.latitudeDegrees, GPSFixture::sbfEpochs[0].latitude, 1e-9));
 }
 #endif
 
@@ -366,9 +366,9 @@ void independentSequences()
             ubx.consume({navigation.data() + offset, 1});
             ++offset;
         }
-        CHECK(std::abs(position.latitude_deg - expected.latitude) < 1e-8);
-        CHECK(std::abs(position.longitude_deg - expected.longitude) < 1e-8);
-        CHECK(std::abs(position.altitude_msl_m - expected.altitude) < 1e-6);
+        CHECK(std::abs(position.navigation.latitudeDegrees - expected.latitude) < 1e-8);
+        CHECK(std::abs(position.navigation.longitudeDegrees - expected.longitude) < 1e-8);
+        CHECK(std::abs(position.navigation.altitudeMslMeters - expected.altitude) < 1e-6);
     }
     ubx.consume(std::span(navigation).subspan(offset));
     CHECK(satellites.count == std::size(GPSFixture::satellites));
@@ -401,7 +401,7 @@ void independentSequences()
         CHECK(!RTCMFramer::isValidFrame(std::span<const uint8_t>(corrupt)));
     }
     ubx.consume(mixed);
-    CHECK(std::abs(position.latitude_deg - 32.0658325) < 1e-8);
+    CHECK(std::abs(position.navigation.latitudeDegrees - 32.0658325) < 1e-8);
     const auto nmea = fixture("gga.nmea");
     const auto sentence = NMEA::sentence({reinterpret_cast<const char*>(nmea.data()), nmea.size()});
     CHECK(sentence);
@@ -422,12 +422,12 @@ void independentSequences()
     sbf.consume({});
     CHECK(std::abs(position.speedAccuracyMetersPerSecond - std::sqrt(GPSFixture::speedVariance)) < 1e-7);
     // Attitude blocks for a different epoch must not create another position.
-    const auto previousTimestamp = position.timestamp;
+    const auto previousTimestamp = position.navigation.timestampUs;
     sbf.consume(fixture("attitude.sbf"));
     gps_test_time += 200000;
     sbf.consume({});
-    CHECK(position.timestamp == previousTimestamp);
-    CHECK(std::isnan(position.heading));
+    CHECK(position.navigation.timestampUs == previousTimestamp);
+    CHECK(std::isnan(position.navigation.headingRadians));
 #endif
 }
 #endif
@@ -509,26 +509,26 @@ void GPSProtocolFixtureTest::_protocol()
         for (auto byte : pvt) {
             ubx.consume({&byte, 1});
         }
-        CHECK(std::abs(position.latitude_deg - 53.4507228) < 1e-8);
-        CHECK(std::abs(position.longitude_deg + 2.2402855) < 1e-8);
-        CHECK(std::abs(position.altitude_msl_m - 42.701) < 1e-6);
+        CHECK(std::abs(position.navigation.latitudeDegrees - 53.4507228) < 1e-8);
+        CHECK(std::abs(position.navigation.longitudeDegrees + 2.2402855) < 1e-8);
+        CHECK(std::abs(position.navigation.altitudeMslMeters - 42.701) < 1e-6);
         CHECK(std::abs(position.vel_n_m_s + 0.007) < 1e-6);
-        CHECK(position.satellites_used == 26);
+        CHECK(position.navigation.satellitesUsed == 26);
         ubx.consume(fixture("nav-dop.ubx"));
-        CHECK(std::abs(position.hdop - 0.58) < 1e-6);
+        CHECK(std::abs(position.navigation.horizontalDop - 0.58) < 1e-6);
         ubx.consume(fixture("nav-sat.ubx"));
         CHECK(satellites.count == 43);
-        const auto timestamp = position.timestamp;
+        const auto timestamp = position.navigation.timestampUs;
         auto corrupt = pvt;
         corrupt[30] ^= 1;
         CHECK(ubx.consume(corrupt) == 0);
-        CHECK(position.timestamp == timestamp);
-        position.fix_type = GPSPositionReport::FixType::RTKFixed;
+        CHECK(position.navigation.timestampUs == timestamp);
+        position.navigation.fixType = GPSPositionReport::FixType::RTKFixed;
         ubx.consume(fixture("nav-hpposllh.ubx"));
-        CHECK(std::abs(position.latitude_deg - 53.337816927) < 1e-9);
-        CHECK(std::abs(position.longitude_deg + 2.056673696) < 1e-9);
-        CHECK(std::abs(position.altitude_msl_m - 233.5227) < 1e-6);
-        CHECK(std::abs(position.eph - 0.335) < 1e-6);
+        CHECK(std::abs(position.navigation.latitudeDegrees - 53.337816927) < 1e-9);
+        CHECK(std::abs(position.navigation.longitudeDegrees + 2.056673696) < 1e-9);
+        CHECK(std::abs(position.navigation.altitudeMslMeters - 233.5227) < 1e-6);
+        CHECK(std::abs(position.navigation.horizontalAccuracyMeters - 0.335) < 1e-6);
 #endif
 #if QGC_GPS_ENABLE_SBF
         GPSNativeSBF sbf(noDevice(), &position, &satellites);
@@ -538,11 +538,11 @@ void GPSProtocolFixtureTest::_protocol()
         }
         gps_test_time += 200000;
         sbf.consume({});
-        CHECK(std::abs(position.latitude_deg - 0.9310293523340808 * 180 / M_PI) < 1e-8);
-        CHECK(std::abs(position.longitude_deg + 0.03921206770879602 * 180 / M_PI) < 1e-8);
-        CHECK(std::abs(position.altitude_ellipsoid_m - 131.18596542546626) < 1e-5);
-        CHECK(position.satellites_used == 36);
-        CHECK(std::isnan(position.cog_rad));
+        CHECK(std::abs(position.navigation.latitudeDegrees - 0.9310293523340808 * 180 / M_PI) < 1e-8);
+        CHECK(std::abs(position.navigation.longitudeDegrees + 0.03921206770879602 * 180 / M_PI) < 1e-8);
+        CHECK(std::abs(position.navigation.altitudeEllipsoidMeters - 131.18596542546626) < 1e-5);
+        CHECK(position.navigation.satellitesUsed == 36);
+        CHECK(std::isnan(position.navigation.courseRadians));
 #endif
     } catch (const std::exception& error) {
         QFAIL(error.what());

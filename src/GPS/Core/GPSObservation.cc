@@ -2,8 +2,7 @@
 
 std::optional<GPSObservation> GPSObservation::projected(PositionUse use) const
 {
-    if (!position.isValid() || !receiverFixValid.value_or(true) || fixQuality == FixQuality::NoFix ||
-        (use != PositionUse::Gga && !usable())) {
+    if (!hasNavigationSolution() || (use != PositionUse::Gga && !usable())) {
         return std::nullopt;
     }
     GPSObservation accepted = *this;
@@ -45,12 +44,16 @@ std::optional<GPSObservation> GPSObservation::projected(PositionUse use) const
     return accepted;
 }
 
+bool GPSObservation::hasNavigationSolution() const
+{
+    return position.isValid() && receiverFixValid.value_or(true) && fixQuality != FixQuality::NoFix;
+}
+
 bool GPSObservation::usable() const
 {
     const double accuracy = position.attribute(QGeoPositionInfo::HorizontalAccuracy);
-    return receiverFixValid.value_or(true) && fixQuality != FixQuality::NoFix && position.isValid() &&
-           position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy) && qIsFinite(accuracy) && accuracy > 0 &&
-           accuracy <= 100;
+    return hasNavigationSolution() && position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy) &&
+           qIsFinite(accuracy) && accuracy > 0 && accuracy <= 100;
 }
 
 QGeoCoordinate GPSObservation::coordinate() const

@@ -3,14 +3,14 @@
 #include <array>
 #include <string_view>
 
-#include "GPSBaseProtocol.h"
+#include "GPSProtocol.h"
 #include "NMEA/NMEAMetadata.h"
 #include "NMEA/NMEASatelliteEpoch.h"
 #include "NMEA/NMEASentence.h"
 #include "RTCM/RTCMFramer.h"
 
 /// Mixed ASCII and RTCM input. Binary frame payloads never enter the line parser.
-class GPSAsciiProtocol : public GPSBaseProtocol
+class GPSAsciiProtocol : public GPSProtocol
 {
 public:
     GPSAsciiProtocol(GPSProtocolIO io, GPSNativePositionReport* position,

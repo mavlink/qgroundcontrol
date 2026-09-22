@@ -75,7 +75,6 @@ public:
     /// Returns global selection, not output admission.
     /// Scoped outputs may admit ingress even when false.
     bool acceptIngress(const GPSCorrectionIngress& ingress);
-    QString sourceInstance(GPSCorrectionSource source) const;
 
     Policy policy() const { return configuration().policy; }
 

@@ -84,7 +84,6 @@ public:
 
     void parseSourceTable(const QString& raw);
     void updateDistances(const QGeoCoordinate& from);
-    void sortByDistance();
     void clear();
 
 signals:

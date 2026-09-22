@@ -33,15 +33,14 @@ GPSNativeQuectel::GPSNativeQuectel(GPSProtocolIO io, GPSNativePositionReport* po
 
 GPSCommandOutcome GPSNativeQuectel::_transact(const std::string& command, ReplyHandler handler, unsigned timeoutMs)
 {
-    _reply = GPSCommandOutcome::Pending;
-    _replyHandler = std::move(handler);
-    const auto clearReply = qScopeGuard([this] { _replyHandler = {}; });
+    _pendingReply = {.handler = std::move(handler)};
+    const auto clearReply = qScopeGuard([this] { _pendingReply.handler = {}; });
     const GPSConfigurationStep step{command, std::chrono::milliseconds(timeoutMs)};
     const std::string bytes = frame(command);
     if (!writeCommand(step, {reinterpret_cast<const uint8_t*>(bytes.data()), bytes.size()})) {
         return ioError() == ReadCancelled ? GPSCommandOutcome::Cancelled : GPSCommandOutcome::TransportError;
     }
-    return awaitCommand(step, [this] { return _reply; }).evidence.outcome;
+    return awaitCommand(step, [this] { return _pendingReply.outcome; }).evidence.outcome;
 }
 
 bool GPSNativeQuectel::_acknowledge(const std::string& command, unsigned timeoutMs)
@@ -123,18 +122,21 @@ bool GPSNativeQuectel::_verifyBase(bool requireMatch)
                if (valid) {
                    _baseHasDistance = reply.size() == 9;
                }
-               if (matches && _baseConfig.useFixedBase) {
+               if (matches && std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
                    matches = mode == 2 && count == 0 && accuracy == 0 && std::abs(ecef.x - _fixedECEF.x) <= 0.00011 &&
                              std::abs(ecef.y - _fixedECEF.y) <= 0.00011 && std::abs(ecef.z - _fixedECEF.z) <= 0.00011;
                } else if (matches) {
-                   matches = mode == 1 && count == _baseConfig.surveyInDurationSecs &&
-                             std::abs(accuracy - _baseConfig.surveyInAccMeters) <= 0.000000001 && distance == 0;
+                   matches =
+                       mode == 1 && count == std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).durationSecs &&
+                       std::abs(accuracy - std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).accuracyMeters) <=
+                           0.000000001 &&
+                       distance == 0;
                    if (matches) {
                        // Re-execute precisely the read configuration, including otherwise ignored ECEF fields.
-                       _surveyRestartCommand = "PQTMCFGSVIN,W";
+                       _survey.restartCommand = "PQTMCFGSVIN,W";
                        for (size_t index = 2; index < reply.size(); ++index) {
-                           _surveyRestartCommand.push_back(',');
-                           _surveyRestartCommand.append(reply[index]);
+                           _survey.restartCommand.push_back(',');
+                           _survey.restartCommand.append(reply[index]);
                        }
                    }
                }
@@ -148,11 +150,12 @@ std::string GPSNativeQuectel::_baseCommand() const
     std::ostringstream command;
     command.imbue(std::locale::classic());
     command << std::fixed << "PQTMCFGSVIN,W,";
-    if (_baseConfig.useFixedBase) {
+    if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
         command << "2,0,0," << std::setprecision(4) << _fixedECEF.x << ',' << _fixedECEF.y << ',' << _fixedECEF.z;
     } else {
-        command << "1," << _baseConfig.surveyInDurationSecs << ',' << std::setprecision(9)
-                << _baseConfig.surveyInAccMeters << ",0,0,0";
+        command << "1," << std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).durationSecs << ','
+                << std::setprecision(9) << std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).accuracyMeters
+                << ",0,0,0";
     }
     if (_baseHasDistance) {
         command << ",0";
@@ -168,7 +171,8 @@ bool GPSNativeQuectel::_saveConfiguration()
         _persistentSaveUncertain = false;
         log(GPSProtocolLogLevel::Debug, "LG290P acknowledged saving configuration to nonvolatile memory");
     } else {
-        _persistentSaveUncertain = _reply != GPSCommandOutcome::Rejected && _commandWrite.evidence.acceptedBytes > 0;
+        _persistentSaveUncertain =
+            _pendingReply.outcome != GPSCommandOutcome::Rejected && _commandWrite.evidence.acceptedBytes > 0;
     }
     return saved;
 }
@@ -208,7 +212,7 @@ bool GPSNativeQuectel::_setMessageRate(std::string_view name, unsigned rate, std
 bool GPSNativeQuectel::_restart(bool requireRoleMatch, bool startSurveySession)
 {
     _revokeSurvey();
-    _surveyPhase = startSurveySession ? SurveyPhase::AwaitingBoot : SurveyPhase::Off;
+    _survey.phase = startSurveySession ? SurveyPhase::AwaitingBoot : SurveyPhase::Off;
     log(GPSProtocolLogLevel::Debug, "Restarting LG290P and verifying its saved configuration");
     const Operation operation(*this, RESTART_TIMEOUT_MS);
     const uint64_t deadline = nowUs() + uint64_t(RESTART_TIMEOUT_MS) * 1000;
@@ -245,7 +249,7 @@ bool GPSNativeQuectel::_restart(bool requireRoleMatch, bool startSurveySession)
 int GPSNativeQuectel::_fail(const char* reason)
 {
     _configured = false;
-    _surveyPhase = SurveyPhase::Off;
+    _survey.phase = SurveyPhase::Off;
     _revokeSurvey();
     consume({});
     QString detail = QString::fromUtf8(reason);
@@ -272,21 +276,19 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
 {
     resetIOError();
     _configured = false;
-    _surveyPhase = SurveyPhase::Off;
+    _survey.phase = SurveyPhase::Off;
     _revokeSurvey();
     consume({});
-    _lastSurveyTow.reset();
+    _survey = {};
     _persistentSaveAcknowledged = false;
     _persistentSaveUncertain = false;
     _firmware.clear();
-    _surveyRestartCommand.clear();
     resetStream();
     setRTCMEnabled(false);
+    const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&config.base.mode);
     if (!validateConfiguration(config, false, true) || config.gnss_systems != GNSSSystemsMask::RECEIVER_DEFAULTS ||
-        (config.output_mode == OutputMode::RTCM &&
-         (config.base.surveyMode != GPSBaseStationConfig::SurveyMode::AccuracyControlled ||
-          (!config.base.useFixedBase &&
-           (config.base.surveyInDurationSecs > 86400 || config.base.surveyInAccMeters > 1000))))) {
+        (config.output_mode == OutputMode::RTCM && survey &&
+         (survey->durationSecs > 86400 || survey->accuracyMeters > 1000))) {
         return _fail(
             "Unsupported LG290P configuration: use native 1 Hz observation count (maximum 86400) and "
             "3D position accuracy threshold (maximum 1000 m), not receiver-managed survey");
@@ -294,8 +296,8 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
     const Operation operation(*this, CONFIGURATION_TIMEOUT_MS);
     _outputMode = config.output_mode;
     _baseConfig = config.base;
-    if (_baseConfig.useFixedBase) {
-        _fixedECEF = toEcef(_baseConfig.fixedPosition);
+    if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
+        _fixedECEF = toEcef(std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position);
     }
     bool identified = false;
     const std::array<unsigned, 6> candidates{460800, 115200, 230400, 921600, 57600, 9600};
@@ -372,11 +374,11 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
             }
             baseChanged = true;
         }
-        if (!_baseConfig.useFixedBase && !baseChanged) {
+        if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) && !baseChanged) {
             log(GPSProtocolLogLevel::Debug,
                 "LG290P survey uses accepted 1 Hz observations, not wall time; accuracy filters individual 3D fixes. "
                 "The receiver itself stores converged coordinates");
-            if (!_acknowledge(_surveyRestartCommand)) {
+            if (!_acknowledge(_survey.restartCommand)) {
                 return _fail("LG290P rejected restarting the unchanged, externally saved survey");
             }
             restarted = false;
@@ -389,7 +391,7 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
         return _fail("LG290P restart/readback failed; saved role or base settings do not match the request");
     }
     if (_outputMode == OutputMode::RTCM) {
-        _surveyPhase = SurveyPhase::Monitoring;
+        _survey.phase = SurveyPhase::Monitoring;
         _publishSurvey();
         if (!_setMessageRate("PQTMSVINSTATUS", 1, "1") || !_setMessageRate("RTCM3-1005", 1) ||
             !_setMessageRate("RTCM3-107X", 1, "0")) {
@@ -403,6 +405,6 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
     }
     _configured = true;
     _expireSurvey();
-    setRTCMEnabled(_surveyReport && (_surveyReport->flags & 1));
+    setRTCMEnabled(_survey.report && (_survey.report->flags & 1));
     return 0;
 }

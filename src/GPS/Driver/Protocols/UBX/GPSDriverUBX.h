@@ -49,14 +49,14 @@
 
 #pragma once
 
-#include "GPSBaseProtocol.h"
+#include "GPSProtocol.h"
 #include "UBXFrameDecoder.h"
 #include "UBXMessages.h"
 #include "UBXNavigationEpoch.h"
 #include "UBXReceiverController.h"
 #include "UBXReceiverProfile.h"
 
-class GPSNativeUBX : public GPSBaseProtocol
+class GPSNativeUBX : public GPSProtocol
 {
 public:
     GPSNativeUBX(GPSProtocolIO io, GPSNativePositionReport* gps_position, GPSNativeSatelliteReport* satellite_info);
@@ -76,11 +76,11 @@ public:
 
     using Board = UBX::Board;
 
-    const Board& board() const { return _board; }
+    const Board& board() const { return _identity.board; }
 
-    const char* modelName() const { return _model_name; }
+    const char* modelName() const { return _identity.modelName; }
 
-    const char* firmwareVersion() const { return _firmware_version; }
+    const char* firmwareVersion() const { return _identity.firmwareVersion; }
     enum class BaseStationCapability : uint8_t
     {
         Unknown,
@@ -102,9 +102,7 @@ public:
 private:
     void servicePendingCommands() override;
     bool _rtcmActivationPending = false;
-    bool _comms_request_pending = false;
     uint16_t _pendingDisableMessage = 0;
-    GPSReceiverSettingSet _valsetSettings;
     GPSReceiverSettingSet _pendingCommandSettings;
     UBX::ReceiverController _controller;
 
@@ -161,7 +159,7 @@ private:
     int configureDevicePreV27(const GNSSSystemsMask& gnssSystems);
 
     /**
-     * Add a configuration value to the pending CFG-VALSET in _tx_cfg_valset_buf.
+     * Add a configuration value to the pending CFG-VALSET batch.
      * The value width on the wire comes from the key ID's size field, not from T; T documents the
      * call site and must agree with the key.
      * @param key_id one of the UBX_CFG_KEY_* constants
@@ -192,25 +190,13 @@ private:
      * Add a fixed list of 1-byte configuration values
      * @return true on success, false if buffer too small
      */
-    template <size_t N>
-    bool cfgValset(const CfgValsetItem (&items)[N])
-    {
-        return cfgValsetItems(items, N);
-    }
-
-    bool cfgValsetItems(const CfgValsetItem* items, size_t count);
+    bool cfgValset(std::span<const CfgValsetItem> items);
 
     /**
      * Add the same 1-byte value for a list of keys
      * @return true on success, false if buffer too small
      */
-    template <size_t N>
-    bool cfgValset(const uint32_t (&keys)[N], uint8_t value)
-    {
-        return cfgValsetKeys(keys, N, value);
-    }
-
-    bool cfgValsetKeys(const uint32_t* keys, size_t count, uint8_t value);
+    bool cfgValset(std::span<const uint32_t> keys, uint8_t value);
 
     /**
      * Add a configuration value that is port-specific (MSGOUT messages).
@@ -225,13 +211,7 @@ private:
     bool cfgValsetPort(uint32_t key_id, uint8_t value);
 
     /** cfgValsetPort() for a list of I2C key IDs sharing one value */
-    template <size_t N>
-    bool cfgValsetPort(const uint32_t (&keys)[N], uint8_t value)
-    {
-        return cfgValsetPortKeys(keys, N, value);
-    }
-
-    bool cfgValsetPortKeys(const uint32_t* keys, size_t count, uint8_t value);
+    bool cfgValsetPort(std::span<const uint32_t> keys, uint8_t value);
 
     /**
      * Reset the parse state machine for a fresh start
@@ -239,7 +219,7 @@ private:
     void decodeInit(void);
 
     /**
-     * Start a new CFG-VALSET in _tx_cfg_valset_buf (header only, no config values yet)
+     * Start a new CFG-VALSET batch (header only, no config values yet)
      */
     void initCfgValset();
 
@@ -265,14 +245,10 @@ private:
     int disableTimeMode();
     int verifyConfigValue(uint32_t key, uint8_t value);
     int waitForSurveyStop();
-    bool _timeModeUnsupported = false;
     bool _valsetAckAmbiguous = false;
-    bool _timeModeReadbackPending = false;
-    bool _timeModeReadbackReady = false;
-    uint8_t _timeModeReadback = 0;
 
     /**
-     * restartSurveyIn for protocol version < 27 (_proto_ver_27_or_higher == false)
+     * restartSurveyIn for protocol version < 27
      */
     int restartSurveyInPreV27();
 
@@ -320,8 +296,6 @@ private:
     void waitForGnssReset();
 
     uint64_t _disable_cmd_last{0};
-    uint64_t _next_comms_poll{0};
-    uint64_t _comms_poll_deadline{0};
     GPSNativePositionReport* _gps_position{nullptr};
     GPSNativeSatelliteReport* _satellite_info{nullptr};
     UBX::FrameDecoder _frameDecoder;
@@ -331,19 +305,48 @@ private:
     UBXNavigationEpoch _navigationEpochs;
     bool _assembleEpochs = false;
     bool _epochHasHighPrecision = false;
-    uint8_t _tx_cfg_valset_buf[UBX_CFG_VALSET_BUF_SIZE]{};
-    int _tx_cfg_valset_size{0};
+
+    struct ReceiverIdentity
+    {
+        Board board = Board::unknown;
+        bool isM8p = false;
+        bool protocol27 = false;
+        bool timeModeUnsupported = false;
+        char modelName[30]{};
+        char firmwareVersion[30]{};
+    };
+
+    struct ValsetBatch
+    {
+        std::array<uint8_t, UBX_CFG_VALSET_BUF_SIZE> bytes{0, UBX_CFG_LAYER_RAM};
+        int size = 4;
+        GPSReceiverSettingSet settings{};
+    };
+
+    struct CommsPoll
+    {
+        bool pending = false;
+        uint64_t nextUs = 0;
+        uint64_t deadlineUs = 0;
+    };
+
+    struct TimeModeReadback
+    {
+        bool pending = false;
+        std::optional<uint8_t> response = std::nullopt;
+    };
+
+    ReceiverIdentity _identity;
+    ValsetBatch _valset;
+    CommsPoll _comms;
+    TimeModeReadback _timeModeReadback;
 
     bool _configured{false};
     bool _decodeNavigation = false;
     bool _survey_in_stopped{false};
-    bool _is_m8p{false};
-    char _model_name[30]{};
-    char _firmware_version[30]{};
     bool _got_posllh{false};
     bool _got_velned{false};
     bool _got_sec_sig{false};             ///< SEC-SIG jammingState supersedes deprecated MON-RF flags
-    bool _proto_ver_27_or_higher{false};  ///< true if protocol version 27 or higher detected
     bool _use_nav_pvt{false};
 
     uint8_t _dyn_model{7};  ///< ublox Dynamic platform model default 7: airborne with <2g acceleration
@@ -351,8 +354,6 @@ private:
     bool _last_ack_rejected{false};
 
     uint64_t _last_timestamp_time{0};
-
-    Board _board{Board::unknown};
 
     OutputMode _output_mode{OutputMode::GPS};
 

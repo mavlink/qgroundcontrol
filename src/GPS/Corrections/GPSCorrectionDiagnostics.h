@@ -88,5 +88,3 @@ struct GPSCorrectionEvent
     quint64 bytes = 0;
 };
 Q_DECLARE_METATYPE(GPSCorrectionEvent)
-
-GPSCorrectionReason gpsCorrectionReason(GPSCorrectionOutcome outcome);

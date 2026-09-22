@@ -722,24 +722,31 @@ void GPSPositionServiceTest::_adapterReentrantDeactivation()
     QFETCH(int, error);
     ManualScheduler scheduler;
     PositionSource source;
-    GPSPositionSourceAdapter adapter(nullptr, &scheduler);
-    adapter.configure(&source, nullptr, QStringLiteral("source"), false);
-    adapter.setActive(true);
+    GPSPositionService service(nullptr, &scheduler);
+    service.setInternalPositionSource(&source, Status::WaitingForFix);
     source.publish(fix(scheduler).position);
-    const auto connection =
-        connect(&adapter, &GPSPositionSourceAdapter::backendError, &adapter, [&]() { adapter.setActive(false); });
+    auto* health = service.sourceHealth();
+    if (error == QGeoPositionInfoSource::NoError) {
+        source.fail(QGeoPositionInfoSource::AccessError);
+    }
+    bool deactivated = false;
+    const auto connection = connect(&service, &GPSPositionService::selectionChanged, &service, [&]() {
+        if (!std::exchange(deactivated, true)) {
+            service.setSourceMode(Mode::ReceiverOnly);
+        }
+    });
     if (error == QGeoPositionInfoSource::NoError) {
         source.publish(fix(scheduler).position);
     } else {
         source.fail(QGeoPositionInfoSource::Error(error));
     }
     QVERIFY(!source.active);
-    QCOMPARE(adapter.health()->state(), GPSSourceHealth::State::NoData);
-    QVERIFY(!adapter.health()->acceptedObservation());
+    QCOMPARE(health->state(), GPSSourceHealth::State::NoData);
+    QVERIFY(!health->acceptedObservation());
     disconnect(connection);
-    adapter.setActive(true);
+    service.setSourceMode(Mode::InternalOnly);
     source.publish(fix(scheduler).position);
-    QVERIFY(adapter.health()->acceptedObservation());
+    QVERIFY(service.acceptedObservation());
 }
 
 void GPSPositionServiceTest::_adapterReentrantReplacement()
@@ -747,12 +754,12 @@ void GPSPositionServiceTest::_adapterReentrantReplacement()
     ManualScheduler scheduler;
     PositionSource first;
     auto next = std::make_unique<PositionSource>();
-    GPSPositionSourceAdapter adapter(nullptr, &scheduler);
-    adapter.configure(&first, nullptr, QStringLiteral("first"), false);
-    adapter.setActive(true);
+    GPSPositionService service(nullptr, &scheduler);
+    service.setInternalPositionSource(&first, Status::WaitingForFix);
     first.onStop = [&]() { next.reset(); };
-    adapter.configure(next.get(), nullptr, QStringLiteral("next"), false);
-    QVERIFY(!adapter.source());
+    service.setInternalPositionSource(next.get(), Status::WaitingForFix);
+    QCOMPARE(service.selectedSource(), Kind::None);
+    QVERIFY(!service.sourceHealth());
 }
 
 UT_REGISTER_TEST(GPSPositionServiceTest, TestLabel::Unit)
@@ -918,18 +925,20 @@ void GPSPositionServiceTest::_adapterNestedBackendEvent()
     QFETCH(bool, restart);
     ManualScheduler scheduler;
     PositionSource source;
-    GPSPositionSourceAdapter adapter(nullptr, &scheduler);
-    adapter.configure(&source, nullptr, QStringLiteral("source"), false);
-    adapter.setActive(true);
+    GPSPositionService service(nullptr, &scheduler);
+    service.setInternalPositionSource(&source, Status::WaitingForFix);
     source.publish(fix(scheduler).position);
+    if (!outerError) {
+        source.fail(QGeoPositionInfoSource::AccessError);
+    }
     bool nested = false;
-    connect(&adapter, &GPSPositionSourceAdapter::backendError, &adapter, [&]() {
+    connect(&service, &GPSPositionService::selectionChanged, &service, [&]() {
         if (std::exchange(nested, true)) {
             return;
         }
         if (restart) {
-            adapter.setActive(false);
-            adapter.setActive(true);
+            service.setSourceMode(Mode::ReceiverOnly);
+            service.setSourceMode(Mode::InternalOnly);
         } else {
             source.publish(fix(scheduler, 48).position);
         }
@@ -939,18 +948,19 @@ void GPSPositionServiceTest::_adapterNestedBackendEvent()
     } else {
         source.publish(fix(scheduler).position);
     }
-    const auto accepted = adapter.health()->acceptedObservation();
+    QVERIFY(nested);
+    const auto accepted = service.acceptedObservation();
     if (restart) {
         QVERIFY(!accepted);
-        QCOMPARE(adapter.health()->state(), GPSSourceHealth::State::NoData);
+        QCOMPARE(service.sourceHealth()->state(), GPSSourceHealth::State::NoData);
     } else {
         QVERIFY(accepted);
         QCOMPARE(accepted->position.coordinate().latitude(), 48);
     }
     QVERIFY(source.active);
     source.publish(fix(scheduler, 49).position);
-    QVERIFY(adapter.health()->acceptedObservation());
-    QCOMPARE(adapter.health()->acceptedObservation()->position.coordinate().latitude(), 49);
+    QVERIFY(service.acceptedObservation());
+    QCOMPARE(service.acceptedObservation()->position.coordinate().latitude(), 49);
 }
 
 void GPSPositionServiceTest::_accuracyNotifiesOnlyChanges()
@@ -978,4 +988,23 @@ void GPSPositionServiceTest::_accuracyNotifiesOnlyChanges()
     source.publish(position);
     QCOMPARE(accuracy.size(), 3);
     QCOMPARE(positions.size(), 5);
+}
+
+void GPSPositionServiceTest::_destructionDisconnectsBindings()
+{
+    ManualScheduler scheduler;
+    auto first = std::make_unique<PositionSource>();
+    PositionSource second;
+    auto service = std::make_unique<GPSPositionService>(nullptr, &scheduler);
+    auto receiver = service->registerPositionSource(Kind::Receiver, first.get(), nullptr);
+    auto nmea = service->registerPositionSource(Kind::Nmea, &second, nullptr);
+    service->setSourceMode(Mode::Automatic);
+    QVERIFY(first->active && second.active);
+    second.onStop = [&]() { first.reset(); };
+    int publications = 0;
+    connect(service.get(), &GPSPositionService::positionInfoUpdated, this, [&]() { ++publications; });
+    service.reset();
+    QVERIFY(!first);
+    QVERIFY(!second.active);
+    QCOMPARE(publications, 0);
 }

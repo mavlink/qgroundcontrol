@@ -22,7 +22,7 @@
 #include "NMEAUtils.h"
 #include "NTRIPConnectionStats.h"
 #include "NTRIPGgaProvider.h"
-#include "NTRIPHttpDecoder.h"
+#include "NTRIPHttpCodec.h"
 #include "NTRIPHttpTransport.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
@@ -1496,7 +1496,7 @@ void NTRIPReentrancyTest::modelMutationReentry()
         } else if (action == 2) {
             model.updateDistances(QGeoCoordinate(52, 13));
         } else {
-            model.sortByDistance();
+            model.updateDistances({});
         }
     };
     if (aboutToReset) {
@@ -1512,6 +1512,11 @@ void NTRIPReentrancyTest::modelMutationReentry()
     }
     if (action == 2) {
         QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::DistanceKmRole).toDouble(), 0.0);
+    } else if (action == 3) {
+        QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP1"));
+        for (int row = 0; row < model.rowCount(); ++row) {
+            QCOMPARE(model.data(model.index(row), NTRIPSourceTableModel::DistanceKmRole).toDouble(), -1.0);
+        }
     }
 }
 

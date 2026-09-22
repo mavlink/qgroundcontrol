@@ -31,7 +31,23 @@
  *
  ****************************************************************************/
 
-#include "FemtoPrivate.h"
+#include <cmath>
+#include <cstddef>
+#include <ctime>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "CRC32.h"
+#include "Femto/GPSDriverFemto.h"
+#include "NMEAFields.h"
+#include "NMEASentence.h"
+#include "RTCMFramer.h"
+
+namespace {
+constexpr unsigned FEMTO_RESPONSE_TIMEOUT = 200;
+}
 
 int GPSNativeFemto::writeAckedCommandFemto(const char* command, const char* reply, const unsigned int timeout)
 {
@@ -159,7 +175,7 @@ void GPSNativeFemto::activateCorrectionOutput()
     if (_output_mode != OutputMode::RTCM || _correction_output_activated) {
         return;
     }
-    if (!_baseConfig.useFixedBase) {
+    if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
         if (writeAckedCommandFemto("POSAVE ON \r\n", "<POSAVE OK", FEMTO_RESPONSE_TIMEOUT) != 0 ||
             writeAckedCommandFemto("LOG GPGGA 1 \r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) != 0) {
             controlFailed();
@@ -170,11 +186,11 @@ void GPSNativeFemto::activateCorrectionOutput()
         sendSurveyInStatusUpdate(true, false);
         return;
     }
-    const auto& settings = _baseConfig;
+    const auto& settings = std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode);
     char buffer[100];
     const int length =
-        snprintf(buffer, sizeof(buffer), "FIX POSITION %.8lf %.8lf %.5f\r\n", settings.fixedPosition.latitudeDegrees,
-                 settings.fixedPosition.longitudeDegrees, double(settings.fixedPosition.altitudeMeters));
+        snprintf(buffer, sizeof(buffer), "FIX POSITION %.8lf %.8lf %.5f\r\n", settings.position.latitudeDegrees,
+                 settings.position.longitudeDegrees, double(settings.position.altitudeMeters));
     if (length < 0 || length >= int(sizeof(buffer)) ||
         writeAckedCommandFemto(buffer, "FIX OK", FEMTO_RESPONSE_TIMEOUT) != 0 ||
         writeAckedCommandFemto("LOG GPGGA 1 \r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) != 0) {
@@ -183,8 +199,8 @@ void GPSNativeFemto::activateCorrectionOutput()
     }
     activateRTCMOutput();
     if (_correction_output_activated) {
-        sendSurveyInStatusUpdate(false, true, settings.fixedPosition.latitudeDegrees,
-                                 settings.fixedPosition.longitudeDegrees, settings.fixedPosition.altitudeMeters);
+        sendSurveyInStatusUpdate(false, true, settings.position.latitudeDegrees, settings.position.longitudeDegrees,
+                                 settings.position.altitudeMeters);
     }
 }
 

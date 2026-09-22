@@ -345,15 +345,6 @@
 
 /*** u-blox protocol binary message and payload definitions ***/
 
-/* General: Header */
-typedef struct
-{
-    uint8_t sync1;
-    uint8_t sync2;
-    uint16_t msg;
-    uint16_t length;
-} ubx_header_t;
-
 /* General: Checksum */
 typedef struct
 {
@@ -555,45 +546,17 @@ typedef struct
 /* Rx MON-HW (ubx6) */
 typedef struct
 {
-    uint32_t pinSel;
-    uint32_t pinBank;
-    uint32_t pinDir;
-    uint32_t pinVal;
     uint16_t noisePerMS;
     uint16_t agcCnt;
-    uint8_t aStatus;
-    uint8_t aPower;
-    uint8_t flags;
-    uint8_t reserved1;
-    uint32_t usedMask;
-    uint8_t VP[25];
     uint8_t jamInd;
-    uint16_t reserved3;
-    uint32_t pinIrq;
-    uint32_t pullH;
-    uint32_t pullL;
 } ubx_payload_rx_mon_hw_ubx6_t;
 
 /* Rx MON-HW (ubx7+) */
 typedef struct
 {
-    uint32_t pinSel;
-    uint32_t pinBank;
-    uint32_t pinDir;
-    uint32_t pinVal;
     uint16_t noisePerMS;
     uint16_t agcCnt;
-    uint8_t aStatus;
-    uint8_t aPower;
-    uint8_t flags;
-    uint8_t reserved1;
-    uint32_t usedMask;
-    uint8_t VP[17];
     uint8_t jamInd;
-    uint16_t reserved3;
-    uint32_t pinIrq;
-    uint32_t pullH;
-    uint32_t pullL;
 } ubx_payload_rx_mon_hw_ubx7_t;
 
 /* Rx MON-RF (replaces MON-HW, protocol 27+) */
@@ -715,15 +678,6 @@ typedef struct
                           be set to 1 */
     uint16_t timeRef;  /**< Alignment to reference time: 0 = UTC time, 1 = GPS time */
 } ubx_payload_tx_cfg_rate_t;
-
-/* Tx CFG-VALSET (protocol version 27+) */
-typedef struct
-{
-    uint8_t version; /**< Message version, set to 0 */
-    uint8_t layers;  /**< The layers where the configuration should be applied (@see UBX_CFG_LAYER_*) */
-    uint8_t reserved1[2];
-    uint8_t cfgData; /**< configuration data (key and value pairs, max 64) */
-} ubx_payload_tx_cfg_valset_t;
 
 /* Tx CFG-NAV5 */
 typedef struct
@@ -904,20 +858,6 @@ typedef struct
 
 /*** END OF u-blox protocol binary message and payload definitions ***/
 
-/* Decoder state */
-typedef enum
-{
-    UBX_DECODE_SYNC1 = 0,
-    UBX_DECODE_SYNC2,
-    UBX_DECODE_CLASS,
-    UBX_DECODE_ID,
-    UBX_DECODE_LENGTH1,
-    UBX_DECODE_LENGTH2,
-    UBX_DECODE_PAYLOAD,
-    UBX_DECODE_CHKSUM1,
-    UBX_DECODE_CHKSUM2,
-} ubx_decode_state_t;
-
 /* Rx message state */
 typedef enum
 {
@@ -927,20 +867,9 @@ typedef enum
     UBX_RXMSG_ERROR_LENGTH
 } ubx_rxmsg_state_t;
 
-/* ACK state */
-typedef enum
-{
-    UBX_ACK_IDLE = 0,
-    UBX_ACK_WAITING,
-    UBX_ACK_GOT_ACK,
-    UBX_ACK_GOT_NAK
-} ubx_ack_state_t;
-
 namespace UBX {
 template <typename T>
 inline constexpr size_t WIRE_SIZE = 0;
-template <>
-inline constexpr size_t WIRE_SIZE<ubx_header_t> = 6;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_checksum_t> = 2;
 template <>
@@ -991,8 +920,6 @@ template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_prt_t> = 20;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_rate_t> = 6;
-template <>
-inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_valset_t> = 5;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_nav5_t> = 36;
 template <>

@@ -5,19 +5,40 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QByteArrayView>
 #include <QtCore/QDateTime>
+#include <QtCore/QString>
+#include <QtCore/QUrl>
 #include <QtNetwork/QHttpHeaders>
 
 #include "NTRIPError.h"
+
+struct NTRIPConnectionConfig;
+
+enum class NTRIPHttpPurpose
+{
+    Corrections,
+    SourceTable,
+};
+
+struct NTRIPHttpRequest
+{
+    using Purpose = NTRIPHttpPurpose;
+
+    QByteArray bytes;
+    QString error;
+    QUrl url;
+    QHttpHeaders headers;
+    /// Credentials are present and the channel is not TLS - caller must warn.
+    bool credentialsInClear = false;
+
+    [[nodiscard]] static NTRIPHttpRequest build(const NTRIPConnectionConfig& config,
+                                                Purpose purpose = Purpose::Corrections);
+};
 
 /// Private transport parser; buffers framing, never correction payloads.
 class NTRIPHttpDecoder
 {
 public:
-    enum class Purpose
-    {
-        Corrections,
-        SourceTable,
-    };
+    using Purpose = NTRIPHttpPurpose;
 
     explicit NTRIPHttpDecoder(Purpose purpose = Purpose::Corrections)
         : _purpose(purpose)

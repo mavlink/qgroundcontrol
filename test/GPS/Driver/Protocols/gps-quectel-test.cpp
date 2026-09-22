@@ -52,16 +52,17 @@ GPSProtocol::GPSConfig surveyConfig()
 {
     GPSProtocol::GPSConfig config;
     config.output_mode = GPSProtocol::OutputMode::RTCM;
-    config.base.surveyInDurationSecs = 60;
-    config.base.surveyInAccMeters = 15;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 15;
     return config;
 }
 
 GPSProtocol::GPSConfig fixedConfig()
 {
     auto config = surveyConfig();
-    config.base.useFixedBase = true;
-    config.base.fixedPosition = {.latitudeDegrees = 0, .longitudeDegrees = 90, .altitudeMeters = 100};
+    config.base.mode = GPSBaseStationConfig::Fixed{};
+    std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position = {
+        .latitudeDegrees = 0, .longitudeDegrees = 90, .altitudeMeters = 100};
     return config;
 }
 
@@ -133,8 +134,8 @@ void positionAndEvidence()
     CHECK(receiver.outcomes[5].evidence.outcome == GPSCommandOutcome::Acknowledged);
     CHECK(receiver.outcomes[6].evidence.outcome == GPSCommandOutcome::ReadbackVerified);
     feed(driver, "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47\r\n", 1);
-    CHECK(std::abs(position.latitude_deg - 48.1173) < 1e-7);
-    CHECK(std::abs(position.altitude_ellipsoid_m - 592.3) < 0.01);
+    CHECK(std::abs(position.navigation.latitudeDegrees - 48.1173) < 1e-7);
+    CHECK(std::abs(position.navigation.altitudeEllipsoidMeters - 592.3) < 0.01);
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 0);
     noPersistence(receiver);
@@ -343,7 +344,7 @@ void malformedAndMixedFraming()
     feed(driver, "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47\r\n");
     feed(driver, COMPLETE);
     CHECK(receiver.surveys.size() == 2);
-    CHECK(std::abs(position.latitude_deg - 48.1173) < 1e-7);
+    CHECK(std::abs(position.navigation.latitudeDegrees - 48.1173) < 1e-7);
     CHECK(RTCMFramer::isValidFrame(std::span<const uint8_t>(CORRECTION)));
     for (const auto byte : CORRECTION) {
         driver.consume({&byte, 1});
@@ -388,7 +389,7 @@ void scheduledShortSurvey()
             };
             GPSNativeQuectel driver(std::move(io), nullptr);
             auto config = surveyConfig();
-            config.base.surveyInDurationSecs = 1;
+            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 1;
             unsigned baud = 460800;
             CHECK(driver.configure(baud, config) == 0);
             CHECK(savedBaseVerified);
@@ -568,11 +569,11 @@ void restartAndConfigurationSafety()
     for (unsigned variation = 0; variation < 3; ++variation) {
         auto config = surveyConfig();
         if (variation == 0) {
-            config.base.surveyMode = GPSBaseStationConfig::SurveyMode::ReceiverManaged;
+            config.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
         } else if (variation == 1) {
-            config.base.surveyInDurationSecs = 86401;
+            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 86401;
         } else {
-            config.base.surveyInAccMeters = 1000.01;
+            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1000.01;
         }
         CHECK(driver.configure(baud, config) < 0);
         CHECK(receiver.commands.empty());
@@ -699,8 +700,8 @@ void managedBaseValuesAndNoUnnecessarySaves()
         GPSNativeQuectel driver(receiver.io(), nullptr);
         auto config = surveyConfig();
         config.allowPersistentChanges = true;
-        config.base.surveyInDurationSecs = 3600;
-        config.base.surveyInAccMeters = 1.25;
+        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 3600;
+        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1.25;
         unsigned baud = 460800;
         CHECK(driver.configure(baud, config) == 0);
         CHECK(receiver.saves == 1);
@@ -869,7 +870,8 @@ void managedPersistenceScope()
         GPSNativeQuectel driver(receiver.io(), nullptr);
         auto config = fixedConfig();
         config.allowPersistentChanges = true;
-        config.base.fixedPosition = {.latitudeDegrees = latitude, .longitudeDegrees = 45, .altitudeMeters = 0};
+        std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position = {
+            .latitudeDegrees = latitude, .longitudeDegrees = 45, .altitudeMeters = 0};
         unsigned baud = 460800;
         CHECK(driver.configure(baud, config) == 0);
         CHECK(receiver.savedBase == expected);

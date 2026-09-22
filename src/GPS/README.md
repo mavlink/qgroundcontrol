@@ -22,6 +22,15 @@ serial reservation remains alive until the worker exits, preventing a replacemen
 from opening the same device too early. Do not replace this with a GUI-thread wait or release
 the reservation merely because cancellation was requested.
 
+NMEA device, decoder, and registration lifetime belongs to one input session in
+`NMEASourceManager`. The application positioning facade handles permissions and platform source
+creation, not a second device installation handshake. The reusable positioning service owns its
+source bindings and selection policy; callbacks preserve the binding and backend generations.
+
+Retire owned state into a local before synchronous notifications can install its replacement.
+Destruction then touches only retired objects. Keep generation counters outside resettable session
+values, and keep last-notified values separate from the currently published position.
+
 ## Protocol contracts
 
 A binary frame owns its payload until completion. Do not also interpret RTCM payload bytes as
@@ -43,6 +52,15 @@ Hide or reject unsupported controls rather than silently accepting settings that
 In particular, bounded correction writes can be unsupported even when receiver configuration
 and reading are supported by a platform transport.
 
+Base configuration selects one fixed-position, survey-in, or receiver-averaging payload. Settings
+retain their persisted identifiers at the adapter boundary; a runtime request does not carry
+parameters for three modes simultaneously. Unsupported heading-offset requests are not exposed.
+Explicit receiver commands that clear retained offsets are still required.
+
+Decoded navigation and integrity payloads are shared across the native/facade boundary. Native
+epoch metadata and facade validation remain separate. Normalize native survey units and datum once,
+then deliver the normalized report by value rather than creating a second Qt-only survey payload.
+
 ## Accepted observations
 
 `GPSObservation` keeps the coordinate, fix quality, optional metadata, altitude datum, and
@@ -54,6 +72,11 @@ request the appropriate projection rather than reconstructing coordinates from u
 - Session identifiers and registration tokens reject retired producers.
 - Satellite view, satellite usage, accuracy, and integrity can have independent lifetimes.
 - Unknown measurements stay absent; zero is a valid coordinate and is not a general sentinel.
+
+Satellite view and usage state have separate retirement watermarks. Clearing or expiring one group
+must not clear the other or allow a queued older report to resurrect retired values. Integrity
+groups likewise retain their own receipt times; a new RF diagnostic does not refresh old spoofing
+or correction-use status.
 
 The normal position lifetime is five seconds. A live vehicle heartbeat does not refresh its
 GPS or fused position. Raw vehicle GPS observations use their own MSL altitude; fused observations
@@ -78,6 +101,9 @@ Where horizontal-only reporting is allowed, the transmitted altitude remains unk
 GGA source selection checks fresh accepted observations. Available fix quality and DOP are
 preserved; unavailable satellite-use counts or DOP are left empty rather than manufactured.
 A visible-satellite count is not automatically a used-satellite count.
+The default RTK base does not install a GGA provider because it has only ellipsoid altitude.
+The persisted RTK source option and injection API remain available for a provider with proven MSL
+altitude; an absent provider follows the same eligibility and fallback rules.
 
 ## Connection and correction health
 
@@ -101,6 +127,21 @@ Explicit NTRIP stop cancels deferred configuration/reconnect work. A new user-re
 gets a new retry budget; automatic retries within that session share its existing budget.
 Streaming and finite source-table fetches share endpoint/request policy but need not share their
 entire transport implementation.
+
+## Source organization
+
+Keep receiver-family build switches and reusable library targets independent. Related private
+declarations and small implementation fragments can share a file without collapsing those targets.
+The native NMEA report adapters must not introduce native dependencies into the independent NMEA
+parser. Transport result types must not introduce Qt dependencies into transaction-only headers.
+
+Wire DTOs contain values that consumers actually use. Their explicit wire lengths and offsets are
+independent of C++ object size: pruning a field does not change the packet format. Keep byte-order
+conversion and bounds checks explicit, including for unused portions of a receiver message.
+
+State structs describe one lifetime or reset operation. They do not synchronize threads, replace
+source authorization, or justify combining distinct freshness clocks. Avoid generic receiver or
+epoch frameworks when a local record, shared branch, or existing-owner helper removes duplication.
 
 ## Regression coverage
 

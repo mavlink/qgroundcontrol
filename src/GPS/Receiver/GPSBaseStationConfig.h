@@ -1,26 +1,36 @@
 #pragma once
 
 #include <cstdint>
+#include <variant>
 
 #include "GPSEllipsoidPosition.h"
 
 /// Configuration used only by the RTK base-station role.
 struct GPSBaseStationConfig
 {
-    enum class SurveyMode
+    struct SurveyIn
     {
-        AccuracyControlled,
-        ReceiverManaged,
+        double accuracyMeters = 0.0;
+        int64_t durationSecs = 0;
+        bool operator==(const SurveyIn&) const = default;
     };
 
-    bool useFixedBase = false;
-    double surveyInAccMeters = 0.0;
-    int64_t surveyInDurationSecs = 0;
-    GPSEllipsoidPosition fixedPosition{};
-    float fixedBaseAccuracyMeters = 0.0f;
-    SurveyMode surveyMode = SurveyMode::AccuracyControlled;
-    /// Maximum receiver-managed averaging time, not a minimum duration or an accuracy guarantee.
-    uint32_t receiverAveragingDurationSecs = 60;
+    struct Fixed
+    {
+        GPSEllipsoidPosition position{};
+        float accuracyMeters = 0.0f;
+        bool operator==(const Fixed&) const = default;
+    };
+
+    struct ReceiverAveraging
+    {
+        /// Maximum receiver-managed time, not a minimum duration or an accuracy guarantee.
+        uint32_t maximumDurationSecs = 60;
+        bool operator==(const ReceiverAveraging&) const = default;
+    };
+
+    using Mode = std::variant<SurveyIn, Fixed, ReceiverAveraging>;
+    Mode mode = SurveyIn{};
 
     bool operator==(const GPSBaseStationConfig&) const = default;
 };

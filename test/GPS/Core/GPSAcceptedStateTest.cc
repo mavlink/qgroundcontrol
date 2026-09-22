@@ -1,18 +1,16 @@
 #include <algorithm>
+#include <cmath>
 #include <memory>
-#include <type_traits>
 
 #include <QtTest/QTest>
 
+#include "GPSDriverReports.h"
 #include "GPSObservation.h"
 #include "GPSSatelliteStore.h"
 #include "GPSSourceHealth.h"
-#include "GPSSurveyInStatus.h"
 #include "ManualScheduler.h"
 #include "MonotonicClock.h"
 #include "UnitTest.h"
-
-static_assert(std::is_same_v<decltype(GPSObservation::altitudeDatum), decltype(GPSSurveyInStatus::altitudeDatum)>);
 
 class GPSAcceptedStateTest : public UnitTest
 {
@@ -34,7 +32,7 @@ private slots:
     void _receiptDeadlineBoundaries();
     void _satelliteNormalization_data();
     void _satelliteNormalization();
-    void _surveyStatusRetainsUnitsAndProvenance();
+    void _surveyReportRetainsUnits();
     void _schedulerDestructionClearsAcceptedState();
 };
 
@@ -386,28 +384,21 @@ void GPSAcceptedStateTest::_satelliteNormalization()
     QCOMPARE(normalized.observation().satellitesInUseCount(), -1);
 }
 
-void GPSAcceptedStateTest::_surveyStatusRetainsUnitsAndProvenance()
+void GPSAcceptedStateTest::_surveyReportRetainsUnits()
 {
-    GPSSurveyInStatus status;
-    QVERIFY(!status.coordinate.isValid());
+    GPSSurveyReport status;
+    QVERIFY(std::isnan(status.position.latitudeDegrees));
     QVERIFY(!status.meanAccuracyMeters);
-    QCOMPARE(status.altitudeDatum, GPSAltitudeDatum::Unknown);
 
-    status.coordinate = QGeoCoordinate(47, 8);
-    status.altitudeEllipsoidMeters = 500;
+    status.position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500};
     status.meanAccuracyMeters = 4000000.001;
     status.duration = std::chrono::seconds(4294967295LL);
-    status.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
-    status.sessionId = 42;
-    status.monotonicTimestampUs = 100;
-    const auto restored = QVariant::fromValue(status).value<GPSSurveyInStatus>();
-    QCOMPARE(restored.coordinate, QGeoCoordinate(47, 8));
-    QCOMPARE(restored.altitudeEllipsoidMeters, 500.0f);
+    const auto restored = QVariant::fromValue(status).value<GPSSurveyReport>();
+    QCOMPARE(restored.position.latitudeDegrees, 47.0);
+    QCOMPARE(restored.position.longitudeDegrees, 8.0);
+    QCOMPARE(restored.position.altitudeMeters, 500.0f);
     QCOMPARE(restored.meanAccuracyMeters.value(), 4000000.001);
     QCOMPARE(restored.duration.count(), 4294967295LL);
-    QCOMPARE(restored.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
-    QCOMPARE(restored.sessionId, quint64{42});
-    QCOMPARE(restored.monotonicTimestampUs, quint64{100});
 }
 
 void GPSAcceptedStateTest::_schedulerDestructionClearsAcceptedState()

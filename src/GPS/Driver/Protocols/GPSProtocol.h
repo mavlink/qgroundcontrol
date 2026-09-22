@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2012-2014 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2012-2018 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -335,7 +335,7 @@ protected:
 
     void publishIntegrity()
     {
-        _integrity.timestamp = nowUs();
+        _integrity.timestampUs = nowUs();
         _decoded.events.emplace_back(_integrity);
         _decoded.updates |= GPSDecodedBatch::PROTOCOL_ACTIVITY;
     }
@@ -408,10 +408,11 @@ protected:
     static EcefMeters toEcef(const GPSEllipsoidPosition& position);
     static GPSEllipsoidPosition fromEcef(const EcefMeters& position);
 
+    GPSBaseStationConfig _baseConfig;
     bool _commandCompleted = true;
     GPSCommandResult _commandWrite;
     GPSDecodedBatch _decoded;
-    GPSNativeIntegrityReport _integrity;
+    GPSIntegrityReport _integrity;
     GPSProtocolIO _io;
     int _io_error = 0;
     QString _ioErrorDetail;

@@ -19,7 +19,6 @@ target_sources(
            GPSSourceHealth.h
            GPSSatelliteStore.h
            GPSSatelliteState.h
-           GPSSurveyInStatus.h
 )
 target_sources(
     QGCGPSCore

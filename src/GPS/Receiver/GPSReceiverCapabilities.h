@@ -13,7 +13,6 @@ struct GPSReceiverCapabilities
     bool rtkBase = false;
     uint32_t constellationMask = 0;
     bool dynamicModel = false;
-    bool headingOffset = false;
     bool surveyIn = false;
     bool receiverAveraging = false;
     bool passive = false;

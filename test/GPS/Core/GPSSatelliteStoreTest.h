@@ -12,4 +12,6 @@ private slots:
     void _timerKeepsFreshConstellation();
     void _sessionsAndReentrantDelivery();
     void _unknownUsageRetiresPreviousCount();
+    void _independentRetirement_data();
+    void _independentRetirement();
 };

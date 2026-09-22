@@ -67,8 +67,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     };
     GPSProtocol::GPSConfig fixed;
     fixed.output_mode = GPSProtocol::OutputMode::RTCM;
-    fixed.base.useFixedBase = true;
-    fixed.base.fixedPosition = {.latitudeDegrees = 0, .longitudeDegrees = 90, .altitudeMeters = 100};
+    fixed.base.mode = GPSBaseStationConfig::Fixed{};
+    std::get<GPSBaseStationConfig::Fixed>(fixed.base.mode).position = {
+        .latitudeDegrees = 0, .longitudeDegrees = 90, .altitudeMeters = 100};
     const bool fixedMode = size != 0 && (data[0] & 1);
 #if QGC_GPS_ENABLE_UBX
     GPSNativeUBX ubx(io, &position, &satellites);
@@ -93,7 +94,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     GPSNativeUnicore operationalUnicore(operationalIO(unicorePeer.io()), &position, &satellites);
     GPSProtocol::GPSConfig averaging;
     averaging.output_mode = GPSProtocol::OutputMode::RTCM;
-    averaging.base.surveyMode = GPSBaseStationConfig::SurveyMode::ReceiverManaged;
+    averaging.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
     unsigned unicoreBaud = 115200;
     if (operationalUnicore.configure(unicoreBaud, fixedMode ? fixed : averaging)) {
         std::abort();
@@ -110,8 +111,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     GPSNativeQuectel operationalQuectel(operationalIO(quectelPeer.io()), &position, &satellites);
     GPSProtocol::GPSConfig survey;
     survey.output_mode = GPSProtocol::OutputMode::RTCM;
-    survey.base.surveyInAccMeters = 15;
-    survey.base.surveyInDurationSecs = 60;
+    std::get<GPSBaseStationConfig::SurveyIn>(survey.base.mode).accuracyMeters = 15;
+    std::get<GPSBaseStationConfig::SurveyIn>(survey.base.mode).durationSecs = 60;
     unsigned quectelBaud = 460800;
     if (operationalQuectel.configure(quectelBaud, fixedMode ? fixed : survey)) {
         std::abort();
