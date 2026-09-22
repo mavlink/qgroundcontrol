@@ -15,6 +15,8 @@ private slots:
     void _lateFixLossDoesNotRejectRecovery_data();
     void _lateFixLossDoesNotRejectRecovery();
     void _fixLossPreservesPendingRequest();
+    void _rejectedFixKeepsOriginalRequestDeadline_data();
+    void _rejectedFixKeepsOriginalRequestDeadline();
     void _fixLossCanDestroySource();
     void _gllRecoversFromFixLoss();
     void _schedulerCanBeDestroyed();

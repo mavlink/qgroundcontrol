@@ -42,7 +42,6 @@ class VehicleDistanceSensorFactGroup;
 class VehicleEFIFactGroup;
 class VehicleEstimatorStatusFactGroup;
 class VehicleGeneratorFactGroup;
-class VehicleGPS2FactGroup;
 class VehicleGPSFactGroup;
 class VehicleGPSAggregateFactGroup;
 class VehicleHygrometerFactGroup;
@@ -1098,7 +1097,7 @@ public:
 
     VehicleFactGroup*               _vehicleFactGroup;
     VehicleGPSFactGroup*                _gpsFactGroup               = nullptr;
-    VehicleGPS2FactGroup*               _gps2FactGroup              = nullptr;
+    VehicleGPSFactGroup* _gps2FactGroup = nullptr;
     VehicleGPSAggregateFactGroup*       _gpsAggregateFactGroup      = nullptr;
     VehicleWindFactGroup*               _windFactGroup              = nullptr;
     VehicleVibrationFactGroup*          _vibrationFactGroup         = nullptr;

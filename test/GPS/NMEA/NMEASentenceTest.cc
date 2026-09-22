@@ -12,6 +12,36 @@
 
 Q_DECLARE_METATYPE(NMEA::GGA)
 
+void NMEASentenceTest::_fixQuality_data()
+{
+    QTest::addColumn<unsigned>("quality");
+    QTest::addColumn<GPSFixQuality>("autonomous");
+    QTest::addColumn<GPSFixQuality>("expected");
+    const std::array qualities{
+        GPSFixQuality::NoFix,        GPSFixQuality::Unknown,  GPSFixQuality::Differential,
+        GPSFixQuality::Unknown,      GPSFixQuality::RTKFixed, GPSFixQuality::RTKFloat,
+        GPSFixQuality::Extrapolated, GPSFixQuality::Unknown,  GPSFixQuality::Unknown,
+    };
+    for (auto autonomous : {GPSFixQuality::Unknown, GPSFixQuality::Fix2D, GPSFixQuality::Fix3D}) {
+        for (unsigned quality = 0; quality < qualities.size(); ++quality) {
+            const auto name = QByteArray::number(int(autonomous)) + '-' + QByteArray::number(quality);
+            QTest::newRow(name.constData())
+                << quality << autonomous << (quality == NMEA::GgaQuality::GPS ? autonomous : qualities[quality]);
+        }
+    }
+    QTest::newRow("unsupported") << 255u << GPSFixQuality::Fix3D << GPSFixQuality::Unknown;
+}
+
+void NMEASentenceTest::_fixQuality()
+{
+    QFETCH(unsigned, quality);
+    QFETCH(GPSFixQuality, autonomous);
+    QFETCH(GPSFixQuality, expected);
+    QCOMPARE(NMEA::fixQuality(quality, autonomous), expected);
+    QCOMPARE(gpsFixQualityFromValue(7), GPSFixQuality::Unknown);
+    QCOMPARE(gpsFixQualityFromValue(8), GPSFixQuality::Extrapolated);
+}
+
 void NMEASentenceTest::_incrementalFraming_data()
 {
     QTest::addColumn<QByteArray>("input");

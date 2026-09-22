@@ -6,11 +6,8 @@
 
 #include "NMEA/GPSNMEAReport.h"
 
-GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, GPSNativePositionReport* position,
-                                   GPSNativeSatelliteReport* satellites)
-    : GPSProtocol(std::move(io))
-    , _position(position ? position : &_fallbackPosition)
-    , _satellites(satellites)
+GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
+    : GPSProtocol(std::move(io), satelliteInfoEnabled)
 {}
 
 void GPSAsciiProtocol::resetStream()
@@ -66,6 +63,9 @@ int GPSAsciiProtocol::decodeByte(uint8_t byte)
         _discardLine = false;
         _lineEnded = false;
         _drainSatellites();
+        if (updates & 1) {
+            publishPosition(*_position);
+        }
         return updates;
     }
     if (byte == '$' || byte == '#') {

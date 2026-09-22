@@ -39,9 +39,7 @@ void GPSProtocolAllocationTest::_runtimeDelivery()
             }
         }
     };
-    GPSNativePositionReport position;
-    GPSNativeSatelliteReport satellites;
-    GPSNativeUBX driver(io, &position, &satellites);
+    GPSNativeUBX driver(io);
     receiver = &driver;
     driver.setDecodeContext({.navigation = true, .useNavPvt = true});
     driver.consume(frame);

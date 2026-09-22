@@ -4,12 +4,14 @@
 #include <thread>
 #include <type_traits>
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
 #include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
 #include <QtTest/QTest>
 
+#include "GPSSocketWait_p.h"
 #include "GPSStreamWrite_p.h"
 #include "TCPGPSTransport.h"
 #include "UnitTest.h"
@@ -68,6 +70,18 @@ public:
 
     bool setBaudrate(unsigned) override { return false; }
 };
+
+class OpenFailureSocket : public QTcpSocket
+{
+public:
+    OpenFailureSocket()
+    {
+        open(QIODevice::ReadWrite);
+        setSocketState(QAbstractSocket::ConnectedState);
+        setErrorString(QStringLiteral("connection failed"));
+        connect(this, &QTcpSocket::disconnected, this, [this]() { setErrorString(QStringLiteral("aborted")); });
+    }
+};
 }  // namespace
 
 class GPSStreamTransportTest : public UnitTest
@@ -75,6 +89,34 @@ class GPSStreamTransportTest : public UnitTest
     Q_OBJECT
 
 private slots:
+
+    void _socketOpenFailure_data()
+    {
+        QTest::addColumn<bool>("cancelled");
+        QTest::addColumn<bool>("expired");
+        QTest::addColumn<GPSOpenStatus>("status");
+        QTest::newRow("socket-error") << false << false << GPSOpenStatus::Error;
+        QTest::newRow("timeout") << false << true << GPSOpenStatus::TimedOut;
+        QTest::newRow("cancelled") << true << false << GPSOpenStatus::Cancelled;
+        QTest::newRow("cancelled-and-expired") << true << true << GPSOpenStatus::Cancelled;
+    }
+
+    void _socketOpenFailure()
+    {
+        QFETCH(bool, cancelled);
+        QFETCH(bool, expired);
+        QFETCH(GPSOpenStatus, status);
+        std::atomic_bool stop = cancelled;
+        StreamWriteTransport transport(stop);
+        OpenFailureSocket socket;
+        const auto result = gpsSocketOpenFailure(transport, socket,
+                                                 expired ? QDeadlineTimer(0) : QDeadlineTimer(QDeadlineTimer::Forever));
+        QCOMPARE(result.status, status);
+        QCOMPARE(result.detail, expired ? QCoreApplication::translate("GPSTransport", "Receiver connection timed out")
+                                        : QStringLiteral("connection failed"));
+        QCOMPARE(socket.state(), QAbstractSocket::UnconnectedState);
+        QCOMPARE(socket.errorString(), QStringLiteral("aborted"));
+    }
 
     void _defaultWriteContract()
     {

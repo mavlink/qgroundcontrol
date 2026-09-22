@@ -12,7 +12,8 @@
 class QIODevice;
 class QNmeaPositionInfoSource;
 
-/// Owns the Qt decoder over a borrowed stream, discarding standby parser state on restart.
+/// Owns publication cadence and single-request deadlines over a continuous Qt decoder.
+/// The borrowed stream retains buffered explicit requests; ordinary restarts discard standby parser state.
 class NMEAPositionSource : public QGeoPositionInfoSource
 {
     Q_OBJECT

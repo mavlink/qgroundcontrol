@@ -108,7 +108,7 @@ public:
             return completeCommand(ioError() == ReadCancelled ? GPSCommandOutcome::Cancelled
                                                               : GPSCommandOutcome::TransportError);
         }
-        return awaitCommand(step, [this] { return _reply; });
+        return awaitCommand([this] { return _reply; });
     }
 
     GPSCommandResult attemptWithin(unsigned timeout)
@@ -119,8 +119,7 @@ public:
 
     GPSCommandResult awaitAgain()
     {
-        return awaitCommand({"must not replace completed evidence", std::chrono::milliseconds(100)},
-                            [this] { return _reply; });
+        return awaitCommand([this] { return _reply; });
     }
 
     bool awaiting() const { return _awaiting; }
@@ -308,7 +307,7 @@ static void commandAttempts()
     CommandProbe nestedReceiver(nested.io());
     nested.onCompletion = [&] {
         if (nested.completions.size() == 1) {
-            nestedReceiver.beginCommandWrite("next");
+            nestedReceiver.beginCommandWrite({"next", std::chrono::milliseconds(100)});
         }
     };
     CHECK(nestedReceiver.attempt().evidence.outcome == GPSCommandOutcome::Acknowledged);
@@ -360,7 +359,7 @@ static void ashtechAcknowledgementReturnsImmediately()
     };
     io.commandFinished = [&](const auto& result) { completions.push_back(result); };
     GPSNativePositionReport position;
-    GPSNativeAshtech receiver(std::move(io), &position, nullptr);
+    GPSNativeAshtech receiver(captureGPSReports(std::move(io), position), false);
     unsigned baud = 115200;
     CHECK(receiver.configure(baud, {}) < 0);
     CHECK(writes == (std::vector<std::string>{"$PASHQ,PRT\r\n", "$PASHQ,RID\r\n"}));
@@ -396,7 +395,7 @@ static void sharedResults()
         };
         io.commandFinished = [&](const auto& command) { completion = command; };
         IOProbe probe(std::move(io));
-        probe.beginCommandWrite("probe");
+        probe.beginCommandWrite({"probe", std::chrono::milliseconds(100)});
         CHECK(probe.write(payload, sizeof(payload)) < 0);
         CHECK(probe.ioError() == -EIO);
         CHECK(probe.ioErrorDetail() == detail);
@@ -436,19 +435,19 @@ static std::unique_ptr<GPSProtocol> createReceiver(unsigned family, ScriptedIO& 
     switch (family) {
 #if QGC_GPS_ENABLE_UBX
         case 0:
-            return std::make_unique<GPSNativeUBX>(io.io(), &position, &satellites);
+            return std::make_unique<GPSNativeUBX>(captureGPSReports(io.io(), position, &satellites));
 #endif
 #if QGC_GPS_ENABLE_ASHTECH
         case 1:
-            return std::make_unique<GPSNativeAshtech>(io.io(), &position, &satellites);
+            return std::make_unique<GPSNativeAshtech>(captureGPSReports(io.io(), position, &satellites));
 #endif
 #if QGC_GPS_ENABLE_SBF
         case 2:
-            return std::make_unique<GPSNativeSBF>(io.io(), &position, &satellites);
+            return std::make_unique<GPSNativeSBF>(captureGPSReports(io.io(), position, &satellites));
 #endif
 #if QGC_GPS_ENABLE_FEMTO
         case 3:
-            return std::make_unique<GPSNativeFemto>(io.io(), &position, &satellites);
+            return std::make_unique<GPSNativeFemto>(captureGPSReports(io.io(), position, &satellites));
 #endif
         default:
             return {};

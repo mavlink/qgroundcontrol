@@ -29,6 +29,41 @@ constexpr int DAY_MS = std::chrono::milliseconds(std::chrono::days(1)).count();
 QGC_LOGGING_CATEGORY(NMEAPositionSourceLog, "GPS.NMEA.NMEAPositionSource")
 QGC_LOGGING_CATEGORY(NMEATimestampedPositionDecoderLog, "GPS.NMEA.NMEATimestampedPositionDecoder")
 
+class NMEADecoderDevice : public QIODevice
+{
+public:
+    explicit NMEADecoderDevice(QIODevice* input)
+        : _input(input)
+    {
+        if (_input) {
+            open(ReadOnly | Unbuffered);
+            connect(_input, &QIODevice::readyRead, this, &QIODevice::readyRead);
+            connect(_input, &QIODevice::aboutToClose, this, &QIODevice::close);
+            connect(_input, &QIODevice::readChannelFinished, this, &QIODevice::readChannelFinished);
+            connect(_input, &QObject::destroyed, this, &QIODevice::close);
+        }
+    }
+
+    bool isSequential() const override { return true; }
+
+    qint64 bytesAvailable() const override { return _input && !_startingRequest ? _input->bytesAvailable() : 0; }
+
+    bool canReadLine() const override { return _input && _input->canReadLine(); }
+
+    void setStartingRequest(bool starting) { _startingRequest = starting; }
+
+protected:
+    qint64 readData(char* data, qint64 size) override { return _input ? _input->read(data, size) : -1; }
+
+    qint64 readLineData(char* data, qint64 size) override { return _input ? _input->readLine(data, size) : -1; }
+
+    qint64 writeData(const char*, qint64) override { return -1; }
+
+private:
+    QPointer<QIODevice> _input;
+    bool _startingRequest = false;
+};
+
 class NMEATimestampedPositionDecoder : public QNmeaPositionInfoSource
 {
 public:
@@ -36,16 +71,25 @@ public:
                                             std::function<void(GPSObservation)> fixLost)
         : QNmeaPositionInfoSource(RealTimeMode)
         , _input(device)
+        , _decoderDevice(device)
         , _scheduler(scheduler)
         , _fixLost(std::move(fixLost))
     {
         qCDebug(NMEATimestampedPositionDecoderLog) << this;
         if (device) {
-            setDevice(device);
+            setDevice(&_decoderDevice);
         }
     }
 
     ~NMEATimestampedPositionDecoder() override { qCDebug(NMEATimestampedPositionDecoderLog) << this; }
+
+    void startRequestedUpdates()
+    {
+        // Qt startUpdates discards buffered data, but an explicit request must retain it.
+        _decoderDevice.setStartingRequest(true);
+        startUpdates();
+        _decoderDevice.setStartingRequest(false);
+    }
 
     bool hasFix(const QGeoPositionInfo& position) const
     {
@@ -228,26 +272,10 @@ private:
     static GPSObservation::FixQuality _fixQuality(const EpochMetadata& epoch)
     {
         using Quality = GPSObservation::FixQuality;
-        switch (epoch.ggaQuality.value_or(NMEA::GgaQuality::GPS)) {
-            case NMEA::GgaQuality::INVALID:
-                return Quality::NoFix;
-            case NMEA::GgaQuality::GPS:
-                if (epoch.dimension == NMEA::FixDimension::TWO_D)
-                    return Quality::Fix2D;
-                if (epoch.dimension == NMEA::FixDimension::THREE_D)
-                    return Quality::Fix3D;
-                return Quality::Unknown;
-            case NMEA::GgaQuality::DIFFERENTIAL:
-                return Quality::Differential;
-            case NMEA::GgaQuality::RTK_FIXED:
-                return Quality::RTKFixed;
-            case NMEA::GgaQuality::RTK_FLOAT:
-                return Quality::RTKFloat;
-            case NMEA::GgaQuality::ESTIMATED:
-                return Quality::Extrapolated;
-            default:
-                return Quality::Unknown;
-        }
+        const auto autonomous = epoch.dimension == NMEA::FixDimension::TWO_D     ? Quality::Fix2D
+                                : epoch.dimension == NMEA::FixDimension::THREE_D ? Quality::Fix3D
+                                                                                 : Quality::Unknown;
+        return NMEA::fixQuality(epoch.ggaQuality.value_or(NMEA::GgaQuality::GPS), autonomous);
     }
 
     static void _mergeAttributes(QGeoPositionInfo& target, const QGeoPositionInfo& source,
@@ -306,6 +334,7 @@ private:
     }
 
     QPointer<QIODevice> _input;
+    NMEADecoderDevice _decoderDevice;
     QPointer<RuntimeScheduler> _scheduler;
     QHash<QTime, EpochMetadata> _epochs;
     QTime _currentEpoch;
@@ -360,13 +389,10 @@ void NMEAPositionSource::_resetDecoder()
                 if (generation != _generation || (!_started && !_requestTask.active())) {
                     return;
                 }
-                _pendingFix.requested |= _requestTask.active();
                 if (!static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->hasFix(update)) {
-                    if (!_started && _requestTask.active()) {
-                        _decoder->requestUpdate(DEFAULT_REQUEST_TIMEOUT_MS);
-                    }
                     return;
                 }
+                _pendingFix.requested |= _requestTask.active();
                 _pendingFix.position = update;
                 if (_pendingFix.requested) {
                     _publicationTask.cancel();
@@ -374,10 +400,6 @@ void NMEAPositionSource::_resetDecoder()
                 _schedulePublication();
             });
     connect(_decoder.get(), &QGeoPositionInfoSource::errorOccurred, this, [this, generation](Error error) {
-        // The outer request task owns deadlines, including after Qt rejects a retained fix.
-        if (error == UpdateTimeoutError) {
-            return;
-        }
         if (_scheduler) {
             _errorTask.schedule(std::chrono::microseconds::zero(), [this, generation, error]() {
                 if (generation == _generation) {
@@ -460,6 +482,8 @@ void NMEAPositionSource::_publishPending()
         _lastObservation = observation;
         if (!_started) {
             _decoder->stopUpdates();
+            _publicationTask.cancel();
+            _pendingFix = {};
         }
         const QPointer<NMEAPositionSource> guard(this);
         const auto generation = _generation;
@@ -548,6 +572,7 @@ void NMEAPositionSource::requestUpdate(int timeout)
                               if (generation != _generation) {
                                   return;
                               }
+                              _pendingFix.requested = false;
                               if (!_started) {
                                   _decoder->stopUpdates();
                               }
@@ -555,6 +580,6 @@ void NMEAPositionSource::requestUpdate(int timeout)
                               emit errorOccurred(_error);
                           });
     if (!_started) {
-        _decoder->requestUpdate(timeout == 0 ? DEFAULT_REQUEST_TIMEOUT_MS : timeout);
+        static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->startRequestedUpdates();
     }
 }

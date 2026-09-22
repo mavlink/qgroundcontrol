@@ -215,29 +215,29 @@ void NMEADecoderSession::_queueSatellites(NMEA::SatelliteEpoch epoch)
     GPSSatelliteObservation observation;
     observation.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
     for (const auto& system : epoch) {
-        GPSSatelliteProvenance provenance;
-        provenance.constellation = system.constellation;
-        provenance.inViewTimestampUs = system.inViewTimestampUs;
-        provenance.inUseTimestampUs = system.inUseTimestampUs;
+        GPSSatelliteConstellation constellation;
+        constellation.constellation = system.constellation;
+        constellation.view.receivedAtUs = system.inViewTimestampUs;
+        constellation.usage.receivedAtUs = system.inUseTimestampUs;
         if (system.usedIds) {
-            provenance.usedSatelliteIds = QList<int>(system.usedIds->begin(), system.usedIds->end());
-            provenance.satellitesUsed = static_cast<int>(system.usedIds->size());
+            constellation.usage.ids = QList<int>(system.usedIds->begin(), system.usedIds->end());
+            constellation.usage.count = static_cast<int>(system.usedIds->size());
         }
         for (const auto& value : system.satellites) {
             GPSSatellite satellite;
             satellite.id = value.id;
             satellite.prn = value.prn;
-            satellite.constellation = value.constellation;
+            satellite.constellation = system.constellation;
             satellite.elevationDegrees = value.elevation;
             satellite.normalizedAzimuthDegrees = value.azimuth;
             satellite.signalStrength = value.signal;
-            observation.satellites.append(satellite);
+            constellation.view.satellites.append(satellite);
         }
-        observation.provenance.append(provenance);
+        observation.constellations.append(constellation);
         observation.monotonicTimestampUs =
             std::max<quint64>({observation.monotonicTimestampUs, system.inViewTimestampUs, system.inUseTimestampUs});
     }
-    if (observation.provenance.isEmpty()) {
+    if (observation.constellations.isEmpty()) {
         return;
     }
     constexpr qsizetype MAX_PENDING_EPOCHS = 64;

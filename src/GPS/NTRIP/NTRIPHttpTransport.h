@@ -43,6 +43,7 @@ private:
     void _connect();
     void _fail(NTRIPError code, const QString& msg, std::chrono::milliseconds retryAfter = {});
     void _retireSocket();
+    void _stopTimers();
     bool _write(const QByteArray& bytes);
     void _sendHttpRequest();
     void _readBytes();

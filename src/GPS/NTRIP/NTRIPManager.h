@@ -153,6 +153,7 @@ private:
 
     void _startTransport();
     void _teardownTransport();
+    bool _stopStreaming();
 
     // Reconnect backoff (inlined; was NTRIPReconnectPolicy). The single-shot
     // timer fires reconnectRequested → ReconnectDue; exhausting the attempt

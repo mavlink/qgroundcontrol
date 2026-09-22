@@ -59,7 +59,7 @@
 class GPSNativeUBX : public GPSProtocol
 {
 public:
-    GPSNativeUBX(GPSProtocolIO io, GPSNativePositionReport* gps_position, GPSNativeSatelliteReport* satellite_info);
+    explicit GPSNativeUBX(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
     virtual ~GPSNativeUBX();
 
@@ -67,10 +67,6 @@ public:
 
     int receive(unsigned timeout) override;
     int decodeByte(uint8_t byte) override;
-
-    const GPSNativePositionReport* positionReport() const override { return _gps_position; }
-
-    const GPSNativeSatelliteReport* satelliteReport() const override { return _satellite_info; }
 
     bool receiverReady() const override { return _configured; }
 
@@ -103,7 +99,6 @@ private:
     void servicePendingCommands() override;
     bool _rtcmActivationPending = false;
     uint16_t _pendingDisableMessage = 0;
-    GPSReceiverSettingSet _pendingCommandSettings;
     UBX::ReceiverController _controller;
 
     /** Like receive(), but reports a negative device read separately from a timeout. */
@@ -135,7 +130,7 @@ private:
      * Note: this is deprecated with protocol version >= 27
      * @return true on success, false on write error
      */
-    bool configureMessageRate(const uint16_t msg, const uint8_t rate);
+    bool configureMessageRate(const uint16_t msg, const uint8_t rate, bool required = true);
 
     /**
      * Combines the configure_message_rate & wait_for_ack calls.
@@ -164,7 +159,7 @@ private:
      * call site and must agree with the key.
      * @param key_id one of the UBX_CFG_KEY_* constants
      * @param value configuration value
-     * @return true on success, false if buffer too small
+     * @return false for an invalid value or full batch; failure prevents sending until initCfgValset()
      */
     template <typename T>
     bool cfgValset(uint32_t key_id, T value)
@@ -227,14 +222,14 @@ private:
      * Send the CFG-VALSET built up by initCfgValset() and cfgValset*() calls
      * @return true on success
      */
-    bool sendCfgValset();
+    bool sendCfgValset(bool required = true, unsigned timeout = UBX_CONFIG_TIMEOUT);
 
     /**
      * sendCfgValset() followed by waitForAck()
-     * @param report_ack_error log a NAK or timeout
-     * @return 0 on ACK, <0 if sending failed or no ACK was received
+     * @param required whether receiver acknowledgement is required by the configuration policy
+     * @return retained evidence for this attempt
      */
-    int sendCfgValsetAcked(bool report_ack_error = true);
+    GPSCommandResult sendCfgValsetAcked(bool required = true);
 
     /**
      * Start or restart the survey-in procees. This is only used in RTCM ouput mode.
@@ -278,17 +273,21 @@ private:
      * Send a message
      * @return true on success, false on write error (errno set)
      */
-    bool sendMessage(const uint16_t msg, const uint8_t* payload, const uint16_t length);
+    bool sendMessage(uint16_t msg, const uint8_t* payload, uint16_t length,
+                     GPSConfigurationStep step = {{}, std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)});
 
-    bool sendMessage(uint16_t msg, std::span<const uint8_t> payload)
+    bool sendMessage(uint16_t msg, std::span<const uint8_t> payload,
+                     GPSConfigurationStep step = {{}, std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)})
     {
-        return payload.size() <= UINT16_MAX && sendMessage(msg, payload.data(), static_cast<uint16_t>(payload.size()));
+        return payload.size() <= UINT16_MAX &&
+               sendMessage(msg, payload.data(), static_cast<uint16_t>(payload.size()), std::move(step));
     }
 
     /**
      * Wait for message acknowledge
      */
-    int waitForAck(const uint16_t msg, const unsigned timeout, const bool report);
+    GPSCommandResult waitForAck(uint16_t msg);
+    GPSCommandResult verifyCfgValset(GPSConfigurationStep step);
 
     /**
      * Wait out the GNSS subsystem reset that follows a constellation change
@@ -296,8 +295,6 @@ private:
     void waitForGnssReset();
 
     uint64_t _disable_cmd_last{0};
-    GPSNativePositionReport* _gps_position{nullptr};
-    GPSNativeSatelliteReport* _satellite_info{nullptr};
     UBX::FrameDecoder _frameDecoder;
     int decodeValidatedPayload(uint16_t message, std::span<const uint8_t> payload);
     void flushDecoded() override;
@@ -316,13 +313,6 @@ private:
         char firmwareVersion[30]{};
     };
 
-    struct ValsetBatch
-    {
-        std::array<uint8_t, UBX_CFG_VALSET_BUF_SIZE> bytes{0, UBX_CFG_LAYER_RAM};
-        int size = 4;
-        GPSReceiverSettingSet settings{};
-    };
-
     struct CommsPoll
     {
         bool pending = false;
@@ -337,7 +327,7 @@ private:
     };
 
     ReceiverIdentity _identity;
-    ValsetBatch _valset;
+    UBX::CheckedValsetBatch<UBX_CFG_VALSET_BUF_SIZE> _valset;
     CommsPoll _comms;
     TimeModeReadback _timeModeReadback;
 
@@ -350,8 +340,6 @@ private:
     bool _use_nav_pvt{false};
 
     uint8_t _dyn_model{7};  ///< ublox Dynamic platform model default 7: airborne with <2g acceleration
-
-    bool _last_ack_rejected{false};
 
     uint64_t _last_timestamp_time{0};
 

@@ -105,6 +105,8 @@ public:
     std::vector<unsigned> hostBauds;
     bool reject_start = false;
     bool fail_poll_write = false;
+    uint32_t fail_valset_key = 0;
+    GPSWriteStatus valset_write_failure = GPSWriteStatus::Error;
     int poll_read_error = 0;
     QString poll_read_detail = QStringLiteral("Receiver link lost: Gerät");
     unsigned failed_reads = 0;
@@ -457,6 +459,17 @@ public:
                 return {GPSWriteStatus::Unsupported};
             }
 
+            if (fail_valset_key && outgoing.size() == 6 && littleEndian(outgoing, 2, 2) == UBX_MSG_CFG_VALSET &&
+                input.size() >= 4) {
+                UBX::ConfigurationValueCursor cursor(input.subspan(4));
+                while (const auto entry = cursor.next()) {
+                    if (entry->key == fail_valset_key) {
+                        outgoing.clear();
+                        return {valset_write_failure, 3, 1};
+                    }
+                }
+            }
+
             outgoing.insert(outgoing.end(), bytes, bytes + size);
 
             if (outgoing.size() >= 6 && outgoing.size() == littleEndian(outgoing, 4, 2) + 8) {
@@ -503,7 +516,7 @@ struct Fixture
     GPSBaseStationConfig base;
 
     Fixture()
-        : driver(receiver.io(), &position, nullptr)
+        : driver(captureGPSReports(receiver.io(), position), false)
     {
         gps_test_time = 0;
         gps_test_warnings.clear();
@@ -895,7 +908,7 @@ static void receiverSettings()
                 }
             }
         };
-        GPSNativeUBX driver(io, &position, nullptr);
+        GPSNativeUBX driver(captureGPSReports(io, position), false);
         GPSProtocol::GPSConfig config{};
         config.dynamicModel = 4;
         config.output_mode = GPSProtocol::OutputMode::GPS;
@@ -1016,21 +1029,25 @@ static void invalidConfiguration()
 static void explicitNoFix()
 {
     Receiver receiver;
-    GPSNativePositionReport position;
-    GPSNativeUBX driver(receiver.io(), &position, nullptr);
+    GPSProtocolTestProbe<GPSNativeUBX> driver(receiver.io(), false);
+    const auto& position = driver.workingPosition();
     CHECK(position.navigation.fixType == GPSPositionReport::FixType::Unknown);
     driver.setDecodeContext({.navigation = true});
     Bytes payload(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
     payload[20] = 3;
     for (const uint8_t flags : std::array<uint8_t, 4>{0, 2, 0x40, 0x80}) {
         payload[21] = UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK;
-        CHECK(driver.decode(packet(UBX_MSG_NAV_PVT, payload)).batch.events.size() == 1);
+        const auto valid = driver.decode(packet(UBX_MSG_NAV_PVT, payload));
+        CHECK(valid.batch.events.size() == 1);
+        CHECK(std::get<GPSNativePositionReport>(valid.batch.events.front()).navigation.fixType ==
+              GPSPositionReport::FixType::Fix3D);
         CHECK(position.navigation.fixType == GPSPositionReport::FixType::Fix3D);
         payload[21] = flags;
         const auto decoded = driver.decode(packet(UBX_MSG_NAV_PVT, payload));
         CHECK(decoded.batch.events.size() == 1);
         CHECK(std::get<GPSNativePositionReport>(decoded.batch.events.front()).navigation.fixType ==
               GPSPositionReport::FixType::NoFix);
+        CHECK(!std::get<GPSNativePositionReport>(decoded.batch.events.front()).vel_ned_valid);
         CHECK(!position.vel_ned_valid);
     }
 }
@@ -1048,7 +1065,7 @@ static void baudDiscovery()
                     receiver.loseBaudAck = loseAck;
                     receiver.protocol = "27.31";
                     GPSNativePositionReport position;
-                    GPSNativeUBX driver(receiver.io(), &position, nullptr);
+                    GPSNativeUBX driver(captureGPSReports(receiver.io(), position), false);
                     GPSProtocol::GPSConfig config{};
                     unsigned baud = fixed ? initialBaud : 0;
                     CHECK(driver.configure(baud, config) == 0);
@@ -1084,7 +1101,7 @@ static void baudDiscovery()
             receiver.receiverBaud = 9600;
             receiver.loseBaudAck = loseAck;
             GPSNativePositionReport position;
-            GPSNativeUBX driver(receiver.io(), &position, nullptr);
+            GPSNativeUBX driver(captureGPSReports(receiver.io(), position), false);
             unsigned baud = 0;
             CHECK(driver.configure(baud, {}) == 0);
             CHECK(receiver.unidentifiedWrites == 0);
@@ -1114,7 +1131,7 @@ static void discoveryFailures()
         receiver.readback_mode = scenario == 9 ? 1 : 0;
         receiver.module = scenario == 7 ? "NEO-M9N" : "ZED-F9P";
         GPSNativePositionReport position;
-        GPSNativeUBX driver(receiver.io(), &position, nullptr);
+        GPSNativeUBX driver(captureGPSReports(receiver.io(), position), false);
         GPSProtocol::GPSConfig config{};
         if (scenario == 7) {
             config.output_mode = GPSProtocol::OutputMode::RTCM;
@@ -1159,7 +1176,7 @@ static void navigationFixFlags()
                 do {
                     gps_test_time = 1000000;
                     GPSNativePositionReport position;
-                    GPSNativeUBX driver(makeGPSProtocolTestIO(), &position, nullptr);
+                    GPSNativeUBX driver(captureGPSReports(makeGPSProtocolTestIO(), position), false);
                     driver.setDecodeContext({.navigation = true, .useNavPvt = !legacy, .assembleEpochs = true});
                     Bytes pvt(92);
                     (void) LittleEndian::write<uint32_t>(pvt, 0, 1000);
@@ -1204,9 +1221,8 @@ static void navigationFixFlags()
 static void transactionalFrames()
 {
     Receiver receiver;
-    GPSNativePositionReport position{};
-    GPSNativeSatelliteReport satellites{};
-    GPSNativeUBX driver(receiver.io(), &position, &satellites);
+    GPSProtocolTestProbe<GPSNativeUBX> driver(receiver.io());
+    const auto& satellites = driver.workingSatellites();
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config{};
     config.output_mode = GPSProtocol::OutputMode::GPS;
@@ -1237,8 +1253,13 @@ static void transactionalFrames()
     CHECK(driver.decode(packet(UBX_MSG_NAV_SAT, Bytes(7, 0))).batch.events.empty());
     CHECK(satellites.entries[0].id == 17);
     CHECK(std::get<GPSNativeSatelliteReport>(decoded.batch.events[0]).entries[0].id == 17);
-    CHECK(driver.decode(packet(UBX_MSG_NAV_SAT, Bytes{0, 0, 0, 0, 1, 0, 0, 0})).batch.events.size() == 1);
+    const auto empty = driver.decode(packet(UBX_MSG_NAV_SAT, Bytes{0, 0, 0, 0, 1, 0, 0, 0}));
+    CHECK(empty.batch.events.size() == 1);
+    CHECK(std::get<GPSNativeSatelliteReport>(empty.batch.events.front()).count == 0);
     CHECK(satellites.count == 0);
+    GPSNativeUBX withoutSatellites(receiver.io(), false);
+    withoutSatellites.setDecodeContext({.navigation = true});
+    CHECK(withoutSatellites.decode(valid).batch.events.empty());
     const std::string originalModel = driver.modelName();
     Bytes version(70, 0);
     const std::string module = "MOD=NEO-M9N";
@@ -1296,7 +1317,7 @@ static void transactionalFrames()
             recovered.emplace_back(report.bytes.begin(), report.bytes.begin() + report.size);
         }
     };
-    GPSNativeUBX recoveryDriver(io, &position, nullptr);
+    GPSNativeUBX recoveryDriver(io, false);
     recoveryDriver.setDecodeContext({.corrections = true});
     verifyRTCMRecovery(recoveryDriver, recovered);
 }
@@ -1326,7 +1347,7 @@ static void controlDeadline()
         }
         return write(bytes, deadline);
     };
-    GPSNativeUBX driver(io, &position, nullptr);
+    GPSNativeUBX driver(captureGPSReports(io, position), false);
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config{};
     config.output_mode = GPSProtocol::OutputMode::GPS;
@@ -1339,6 +1360,47 @@ static void controlDeadline()
     CHECK(verifyWrite);
     CHECK(receiver.comms_polls == 1);
     CHECK(driver.ioError() == 0);
+}
+
+static void identificationWriteBudget()
+{
+    for (bool expireWrite : {false, true}) {
+        gps_test_time = 1000000;
+        std::vector<uint64_t> writeDeadlines;
+        std::vector<GPSCommandResult> completions;
+        uint64_t replyDeadline = 0;
+        auto io = makeGPSProtocolTestIO();
+        io.read = [&](std::span<uint8_t>, GPSDeadline deadline) {
+            if (!writeDeadlines.empty()) {
+                replyDeadline = deadline.untilUs;
+            }
+            gps_test_time = deadline.untilUs;
+            return GPSReadResult{GPSReadStatus::TimedOut};
+        };
+        io.write = [&](std::span<const uint8_t> bytes, GPSDeadline deadline) {
+            if (gps_test_time >= deadline.untilUs) {
+                return GPSWriteResult{GPSWriteStatus::TimedOut};
+            }
+            CHECK(deadline.remainingMilliseconds(gps_test_time) <= 250);
+            writeDeadlines.push_back(deadline.untilUs);
+            gps_test_time = expireWrite ? deadline.untilUs : gps_test_time + 40000;
+            return GPSWriteResult{GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())};
+        };
+        io.commandFinished = [&](const GPSCommandResult& result) { completions.push_back(result); };
+        GPSNativeUBX driver(std::move(io), false);
+        unsigned baud = 115200;
+        CHECK(driver.configure(baud, {}) < 0);
+        CHECK(completions.size() == 1);
+        const auto& evidence = completions.front().evidence;
+        CHECK(evidence.command == std::to_string(UBX_MSG_MON_VER));
+        CHECK(evidence.startedAtUs == 1020000);
+        CHECK(writeDeadlines == std::vector<uint64_t>(expireWrite ? 1 : 2, evidence.startedAtUs + 250000));
+        CHECK(evidence.acceptedBytes == (expireWrite ? 6 : 8));
+        CHECK(evidence.writtenBytes == evidence.acceptedBytes && evidence.uncertainBytes == 0);
+        CHECK(evidence.outcome == (expireWrite ? GPSCommandOutcome::TransportError : GPSCommandOutcome::TimedOut));
+        CHECK(replyDeadline == (expireWrite ? 0 : evidence.startedAtUs + 2000000));
+        CHECK(evidence.finishedAtUs == evidence.startedAtUs + (expireWrite ? 250000 : 2000000));
+    }
 }
 
 static void reentrantPayload()
@@ -1365,7 +1427,7 @@ static void reentrantPayload()
             }
         }
     };
-    GPSNativeUBX driver(std::move(io), &position, nullptr);
+    GPSNativeUBX driver(captureGPSReports(std::move(io), position), false);
     active = &driver;
     driver.setDecodeContext({.navigation = true, .corrections = true});
     const std::string warning = "txbuf alloc";
@@ -1524,6 +1586,74 @@ static void checkedWireCodecs()
     CHECK(!UBX::MessageCodec<ubx_payload_rx_nav_sat_part2_t>::block(Bytes(12), 1));
     const auto ack = UBX::MessageCodec<ubx_payload_rx_ack_ack_t>::decode(Bytes{6, 0x24});
     CHECK(ack && ack->msg == UBX_MSG_CFG_NAV5);
+
+    for (const auto [key, value] : std::array<UBX::ConfigurationValue, 5>{
+             {{0x50000001, 0}, {0x10000001, 2}, {0x20000001, 256}, {0x30000001, 65536}, {0x00000001, 0}}}) {
+        UBX::CheckedValsetBatch<32> batch;
+        CHECK(batch.append(0x20000001, 1));
+        const auto previousSize = batch.size;
+        CHECK(!batch.append(key, value));
+        CHECK(!batch.append(0x20000002, 2));
+        CHECK(batch.size == previousSize && batch.payload().empty());
+    }
+    UBX::CheckedValsetBatch<28> batch;
+    CHECK(batch.payload().empty());
+    CHECK(batch.append(0x10000001, 1));
+    CHECK(batch.append(0x20000002, 255));
+    CHECK(batch.append(0x30000003, 65535));
+    CHECK(batch.append(0x40000004, UINT32_MAX));
+    CHECK(batch.size == batch.bytes.size());
+    auto values = batch.bytes;
+    CHECK(!UBX::decodeConfigurationValues(values));  // VALSET headers cannot masquerade as VALGET.
+    values[0] = 1;
+    values[1] = 0;
+    const auto decoded = UBX::decodeConfigurationValues(values);
+    CHECK(decoded && decoded->count == 4);
+    CHECK(decoded->values[0] == 1 && decoded->values[1] == 255 && decoded->values[2] == 65535 &&
+          decoded->values[3] == UINT32_MAX);
+    for (size_t length = 1; length < values.size(); ++length) {
+        if (length != 4 && length != 9 && length != 14 && length != 20) {
+            CHECK(!UBX::decodeConfigurationValues(std::span(values).first(length)));
+        }
+    }
+    values[8] = 2;
+    CHECK(!UBX::decodeConfigurationValues(values));
+    CHECK(!batch.append(0x20000005, 0));
+    CHECK(batch.payload().empty());
+    batch = {};
+    CHECK(batch.append(0x20000005, 0));
+    CHECK(!batch.payload().empty());
+}
+
+static void optionalCommandWriteEvidence()
+{
+    for (const auto key : {UBX_CFG_KEY_CFG_UART1INPROT_SPARTN, UBX_CFG_KEY_ODO_USE_ODO}) {
+        for (const auto failure : {GPSWriteStatus::Error, GPSWriteStatus::Cancelled}) {
+            Receiver receiver;
+            receiver.fail_valset_key = key;
+            receiver.valset_write_failure = failure;
+            std::vector<GPSCommandResult> completions;
+            auto io = receiver.io();
+            io.commandFinished = [&](const GPSCommandResult& result) { completions.push_back(result); };
+            GPSNativeUBX driver(std::move(io), false);
+            GPSProtocol::GPSConfig config;
+            unsigned baud = 115200;
+            CHECK(driver.configure(baud, config) < 0);
+            CHECK(!completions.empty());
+            const auto& result = completions.back();
+            CHECK(result.evidence.command == std::to_string(UBX_MSG_CFG_VALSET));
+            CHECK(!result.evidence.required);
+            CHECK(result.evidence.outcome == (failure == GPSWriteStatus::Cancelled
+                                                  ? GPSCommandOutcome::Cancelled
+                                                  : GPSCommandOutcome::TransportError));
+            CHECK(result.evidence.acceptedBytes == 9 && result.evidence.writtenBytes == 7);
+            CHECK(result.evidence.uncertainBytes == 2);
+            CHECK(!result.affectedSettings.contains(GPSReceiverSetting::DynamicModel));
+            const auto count = completions.size();
+            driver.finishConfigurationEvidence();
+            CHECK(completions.size() == count);
+        }
+    }
 }
 
 const auto& testCases()
@@ -1535,6 +1665,7 @@ const auto& testCases()
     } cases[] = {
         {"isolated-frame-control", isolatedFrameAndControl},
         {"checked-wire-codecs", checkedWireCodecs},
+        {"optional-command-write-evidence", optionalCommandWriteEvidence},
         {"position-f9p", [] { positionMode(false, true); }},
         {"receiver-settings", receiverSettings},
         {"native-configuration-validation", invalidConfiguration},
@@ -1544,6 +1675,7 @@ const auto& testCases()
         {"position-m8n", [] { positionMode(true, false); }},
         {"position-stop-failures", [] { positionModeFailure(); }},
         {"control-deadline", controlDeadline},
+        {"identification-write-budget", identificationWriteBudget},
         {"explicit-no-fix", explicitNoFix},
         {"read-only-baud-discovery", baudDiscovery},
         {"discovery-failures-and-late-acks", discoveryFailures},

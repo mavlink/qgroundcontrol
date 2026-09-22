@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <utility>
 
-#include <QtCore/QCoreApplication>
 #include <QtCore/QScopeGuard>
 #include <QtNetwork/QTcpSocket>
 
@@ -42,14 +41,7 @@ GPSOpenResult TCPGPSTransport::open()
         qCWarning(TCPGPSTransportLog) << "Failed to connect to GPS receiver" << _host << _port
                                       << _socket->errorString();
     }
-    const auto result = GPSOpenResult{isCancelled()                  ? GPSOpenStatus::Cancelled
-                                      : connectDeadline.hasExpired() ? GPSOpenStatus::TimedOut
-                                                                     : GPSOpenStatus::Error,
-                                      connectDeadline.hasExpired()
-                                          ? QCoreApplication::translate("GPSTransport", "Receiver connection timed out")
-                                          : _socket->errorString()};
-    _socket->abort();
-    return result;
+    return gpsSocketOpenFailure(*this, *_socket, connectDeadline);
 }
 
 bool TCPGPSTransport::fatalError() const

@@ -332,56 +332,51 @@ void GPSAcceptedStateTest::_satelliteNormalization()
     QFETCH(bool, empty);
     QFETCH(bool, unknownUsage);
     ManualScheduler scheduler;
-    GPSSatelliteStore native(nullptr, 1000, &scheduler);
-    GPSSatelliteStore normalized(nullptr, 1000, &scheduler);
-    native.beginSession(QStringLiteral("receiver"), 1);
-    normalized.beginSession(QStringLiteral("receiver"), 1);
+    GPSSatelliteStore store(nullptr, 1000, &scheduler);
+    store.beginSession(QStringLiteral("receiver"), 1);
     GPSSatelliteObservation report;
     report.sessionId = 1;
     report.monotonicTimestampUs = scheduler.nowUs();
     using Constellation = GPSConstellation;
-    if (!empty) {
+    const auto receipt = report.monotonicTimestampUs;
+    if (empty) {
+        report.constellations = {{Constellation::Unknown, {receipt, {}}, {receipt, 0}}};
+    } else {
         GPSSatellite gps;
         gps.id = 1;
-        gps.constellation = Constellation::GPS;
         gps.used = false;
         GPSSatellite galileo;
         galileo.id = 2;
-        galileo.constellation = Constellation::Galileo;
         galileo.used = unknownUsage ? std::nullopt : std::optional<bool>(true);
-        report.satellites = {gps, galileo};
-    }
-    native.updateObservation(report);
-    const auto receipt = report.monotonicTimestampUs;
-    if (empty) {
-        report.provenance = {{Constellation::Unknown, receipt, receipt, 0}};
-    } else {
-        report.provenance = {
-            {Constellation::GPS, receipt, receipt, 0},
-            {Constellation::Galileo, receipt, unknownUsage ? 0 : receipt,
-             unknownUsage ? std::nullopt : std::optional<int>(1)},
+        report.constellations = {
+            {Constellation::GPS, {receipt, {gps}}, {receipt, 0}},
+            {Constellation::Galileo,
+             {receipt, {galileo}},
+             {unknownUsage ? 0 : receipt, unknownUsage ? std::nullopt : std::optional<int>(1)}},
         };
     }
-    normalized.updateObservation(report);
-    const auto actual = native.observation();
-    const auto expected = normalized.observation();
-    QCOMPARE(actual.satellitesInViewCount(), expected.satellitesInViewCount());
-    QCOMPARE(actual.satellitesInUseCount(), expected.satellitesInUseCount());
-    QCOMPARE(actual.satellites.size(), expected.satellites.size());
-    QCOMPARE(actual.provenance.size(), expected.provenance.size());
-    for (qsizetype index = 0; index < actual.satellites.size(); ++index) {
-        QCOMPARE(actual.satellites[index].id, expected.satellites[index].id);
-        QCOMPARE(actual.satellites[index].used, expected.satellites[index].used);
-    }
-    for (qsizetype index = 0; index < actual.provenance.size(); ++index) {
-        QCOMPARE(actual.provenance[index].inViewTimestampUs, expected.provenance[index].inViewTimestampUs);
-        QCOMPARE(actual.provenance[index].inUseTimestampUs, expected.provenance[index].inUseTimestampUs);
-        QCOMPARE(actual.provenance[index].satellitesUsed, expected.provenance[index].satellitesUsed);
-        QCOMPARE(actual.provenance[index].usedSatelliteIds, expected.provenance[index].usedSatelliteIds);
+    store.updateObservation(report);
+    const auto actual = store.observation();
+    QCOMPARE(actual.satellitesInViewCount(), empty ? 0 : 2);
+    QCOMPARE(actual.satellitesInUseCount(), empty || unknownUsage ? 0 : 1);
+    QCOMPARE(actual.constellations.size(), report.constellations.size());
+    for (qsizetype index = 0; index < actual.constellations.size(); ++index) {
+        const auto& accepted = actual.constellations[index];
+        const auto& input = report.constellations[index];
+        QCOMPARE(accepted.view.receivedAtUs, input.view.receivedAtUs);
+        QCOMPARE(accepted.usage.receivedAtUs, input.usage.receivedAtUs);
+        QCOMPARE(accepted.usage.count, input.usage.count);
+        QCOMPARE(accepted.usage.ids, input.usage.ids);
+        QCOMPARE(accepted.view.satellites.size(), input.view.satellites.size());
+        for (qsizetype satellite = 0; satellite < accepted.view.satellites.size(); ++satellite) {
+            QCOMPARE(accepted.view.satellites[satellite].id, input.view.satellites[satellite].id);
+            QCOMPARE(accepted.view.satellites[satellite].used, input.view.satellites[satellite].used);
+            QCOMPARE(accepted.view.satellites[satellite].constellation, input.constellation);
+        }
     }
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
-    QCOMPARE(native.observation().satellitesInViewCount(), -1);
-    QCOMPARE(normalized.observation().satellitesInUseCount(), -1);
+    QCOMPARE(store.observation().satellitesInViewCount(), -1);
+    QCOMPARE(store.observation().satellitesInUseCount(), -1);
 }
 
 void GPSAcceptedStateTest::_surveyReportRetainsUnits()
@@ -410,23 +405,23 @@ void GPSAcceptedStateTest::_schedulerDestructionClearsAcceptedState()
     GPSSatelliteObservation report;
     report.sessionId = 1;
     report.monotonicTimestampUs = scheduler->nowUs();
-    report.satellites = {GPSSatellite{}};
+    report.constellations = {{GPSConstellation::Unknown, {report.monotonicTimestampUs, {GPSSatellite{}}}, {}}};
     satellites.updateObservation(report);
     GPSObservation fix;
     fix.monotonicTimestampUs = scheduler->nowUs();
     fix.position = QGeoPositionInfo(QGeoCoordinate(47, 8, 500), QDateTime::currentDateTimeUtc());
     fix.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1.0);
     health.updateObservation(fix);
-    QCOMPARE(satellites.observation().satellites.size(), 1);
+    QCOMPARE(satellites.observation().satellitesInViewCount(), 1);
     QVERIFY(health.usable());
     scheduler.reset();
-    QVERIFY(satellites.observation().satellites.isEmpty());
+    QVERIFY(satellites.observation().constellations.isEmpty());
     QVERIFY(!health.usable());
     satellites.updateObservation(report);
     satellites.clear();
     satellites.reset();
     satellites.beginSession(QStringLiteral("replacement"), 2);
-    QVERIFY(satellites.observation().satellites.isEmpty());
+    QVERIFY(satellites.observation().constellations.isEmpty());
 }
 
 UT_REGISTER_TEST(GPSAcceptedStateTest, TestLabel::Unit)

@@ -6,6 +6,8 @@
 #include "GPSBaseStationConfig.h"
 #include "GPSType.h"
 
+struct GPSReceiverCapabilities;
+
 /// Receiver requests supported by the wrapper; absent options retain wrapper defaults.
 struct GPSReceiverConfig
 {
@@ -50,6 +52,10 @@ enum class GPSReceiverConfigError
 
 /// Check the selected base mode against the existing receiver wire-unit limits.
 [[nodiscard]] GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& config);
+
+/// Physical option validation only; does not qualify a receiver family for a public role.
+[[nodiscard]] GPSReceiverConfigError gpsValidateReceiverPhysicalConfig(const GPSReceiverConfig& config,
+                                                                       const GPSReceiverCapabilities& capabilities);
 
 /// Precedence: valid role, recognized receiver, supported role, RTK base, constellations, dynamic model.
 /// For each optional request, unsupported takes precedence over an invalid value.

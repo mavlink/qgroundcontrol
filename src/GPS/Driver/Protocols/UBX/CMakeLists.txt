@@ -4,6 +4,7 @@ qt_add_library(
     GPSDriverUBX.cc
     GPSDriverUBX.h
     UBXConfiguration.cc
+    UBXConfigurationValues.h
     UBXDecoder.cc
     UBXFrameDecoder.h
     UBXMessageCodec.h

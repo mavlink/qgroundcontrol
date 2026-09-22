@@ -650,7 +650,8 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit first->satelliteUsageUpdate({.usedCount = 12});
     emit first->fixTypeChanged(GPSPositionReport::FixType::Unknown);
     emit first->receiverReady();
-    emit first->configurationError(QStringLiteral("Retired receiver configuration failure"));
+    emit first->connectionError(GPSConnectionError::ConfigFailed,
+                                QStringLiteral("Retired receiver configuration failure"));
     emit first->connectionError(GPSConnectionError::DeviceError);
     receiver.connectReceiver(GPSType::ublox, blockedFactory(secondGate), QStringLiteral("serial:test-base"));
     QVERIFY(!receiver.connected());
@@ -1277,18 +1278,23 @@ void GPSRtkTest::_configurationDiagnosticRetained()
     QVERIFY(receiver.connectReceiver(GPSType::quectel, blockedFactory(gate), {}, 115200, true));
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> provider = receiver._session.provider;
-    emit provider->configurationError(detail);
-    emit provider->connectionError(GPSConnectionError::ConfigFailed);
+    receiver._setError(GPSConnectionError::ConfigFailed, QStringLiteral("An earlier configuration error"));
+    QSignalSpy messages(&receiver, &GPSRtk::errorMessageChanged);
+    emit provider->connectionError(GPSConnectionError::ConfigFailed, detail);
     expectLogMessage("GPS.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("GPS receiver did not accept configuration")));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     verifyExpectedLogMessage();
+    QCOMPARE(messages.size(), 1);
     QVERIFY(!receiver.connected());
     QCOMPARE(receiver.gpsRtkFactGroup()->lastError()->rawValue().toInt(),
              static_cast<int>(GPSConnectionError::ConfigFailed));
     QVERIFY(!receiver.errorMessage().isEmpty());
     if (!detail.isEmpty()) {
         QVERIFY(receiver.errorMessage().contains(detail));
+    } else {
+        QCOMPARE(receiver.errorMessage(),
+                 GPSRtk::tr("Receiver configuration failed. Check the receiver type, baud rate, and base mode."));
     }
     const QString message = receiver.errorMessage();
     gate->release.release();

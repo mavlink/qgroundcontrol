@@ -107,8 +107,7 @@ void GPSProvider::run()
 
     if (!driver.configure()) {
         if (!_requestStop) {
-            emit configurationError(driver.configurationError());
-            emit connectionError(GPSConnectionError::ConfigFailed);
+            emit connectionError(GPSConnectionError::ConfigFailed, driver.configurationError());
         }
         return;
     }

@@ -1219,6 +1219,12 @@ int GPSNativeUBX::decodeValidatedPayload(uint16_t message, std::span<const uint8
         message != UBX_MSG_NAV_HPPOSLLH && message != UBX_MSG_NAV_VELNED) {
         return (updates & ~1) | GPSDecodedBatch::PROTOCOL_ACTIVITY;
     }
+    if (updates & 1) {
+        publishPosition(*_gps_position);
+    }
+    if ((updates & 2) && _satellite_info) {
+        publishSatellites(*_satellite_info);
+    }
     return updates;
 }
 

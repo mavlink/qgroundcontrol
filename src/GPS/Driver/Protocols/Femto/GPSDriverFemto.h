@@ -45,18 +45,13 @@
 class GPSNativeFemto : public GPSProtocol
 {
 public:
-    GPSNativeFemto(GPSProtocolIO io, struct GPSNativePositionReport* gps_position,
-                   GPSNativeSatelliteReport* satellite_info = nullptr);
+    explicit GPSNativeFemto(GPSProtocolIO io, bool satelliteInfoEnabled = true);
     ~GPSNativeFemto() override = default;
 
     bool receiverReady() const override { return _configure_done; }
 
     int receive(unsigned timeout) override;
     int decodeByte(uint8_t byte) override;
-
-    const GPSNativePositionReport* positionReport() const override { return _gps_position; }
-
-    const GPSNativeSatelliteReport* satelliteReport() const override { return _satellite_info; }
 
     int configure(unsigned& baudrate, const GPSConfig& config) override;
 
@@ -102,11 +97,9 @@ private:
     void sendSurveyInStatusUpdate(bool active, bool valid, double latitude = (double) NAN,
                                   double longitude = (double) NAN, float altitude = NAN);
 
-    struct GPSNativePositionReport* _gps_position{nullptr};
     FemtoDecodeState _decode_state{FemtoDecodeState::pream_ble1};
     femto_msg_t _femto_msg;
     NMEA::Framer _nmeaFramer{_femto_msg.data};
-    GPSNativeSatelliteReport* _satellite_info{nullptr};
     uint32_t _survey_duration = 0;
 
     std::optional<RTCMStreamDecoder> _rtcm_parsing;

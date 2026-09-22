@@ -15,8 +15,7 @@
 class GPSNativeUnicore final : public GPSAsciiProtocol
 {
 public:
-    GPSNativeUnicore(GPSProtocolIO io, GPSNativePositionReport* position,
-                     GPSNativeSatelliteReport* satellites = nullptr);
+    explicit GPSNativeUnicore(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
     int configure(unsigned& baud, const GPSConfig& config) override;
 

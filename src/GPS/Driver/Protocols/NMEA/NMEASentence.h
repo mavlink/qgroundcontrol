@@ -11,6 +11,8 @@
 #include <string_view>
 #include <type_traits>
 
+#include "GPSFixQuality.h"
+
 namespace NMEA {
 constexpr int DECIMAL_BASE = 10;
 constexpr int HEX_BASE = 16;
@@ -62,6 +64,9 @@ constexpr unsigned NO_FIX = 1;
 constexpr unsigned TWO_D = 2;
 constexpr unsigned THREE_D = 3;
 }  // namespace FixDimension
+
+/// Autonomous GGA does not distinguish 2D/3D; the caller supplies its independently resolved quality.
+GPSFixQuality fixQuality(unsigned quality, GPSFixQuality autonomous);
 
 template <class T>
 std::optional<T> number(std::string_view field, int base = DECIMAL_BASE)

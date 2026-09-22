@@ -59,6 +59,7 @@ public:
     void retire(GPSCorrectionSource source, qint64 now);
     void clear();
     bool selected(const GPSCorrectionFrame& frame, qint64 now) const;
+    std::optional<SourceIdentity> activeIdentity(qint64 now) const;
     GPSCorrectionSource activeSource(qint64 now) const;
     QString activeInstance(qint64 now) const;
 

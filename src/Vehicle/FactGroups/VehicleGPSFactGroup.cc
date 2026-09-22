@@ -35,8 +35,9 @@ GPSObservation::FixQuality fixQuality(int fixType)
 
 }  // namespace
 
-VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent, RuntimeScheduler* scheduler)
+VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent, RuntimeScheduler* scheduler, ReceiverIndex receiver)
     : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
+    , _receiver(receiver)
     , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _positionHealth(new GPSSourceHealth(this, _scheduler))
 {
@@ -84,13 +85,24 @@ void VehicleGPSFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_
 
     switch (message.msgid) {
     case MAVLINK_MSG_ID_GPS_RAW_INT:
-        _handleGpsRaw(message);
+        if (_receiver == ReceiverIndex::Primary) {
+            _handleGpsRaw(message);
+        }
+        break;
+    case MAVLINK_MSG_ID_GPS2_RAW:
+        if (_receiver == ReceiverIndex::Secondary) {
+            _handleGpsRaw(message);
+        }
         break;
     case MAVLINK_MSG_ID_HIGH_LATENCY:
-        _handleHighLatency(message);
+        if (_receiver == ReceiverIndex::Primary) {
+            _handleHighLatency(message);
+        }
         break;
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
-        _handleHighLatency2(message);
+        if (_receiver == ReceiverIndex::Primary) {
+            _handleHighLatency2(message);
+        }
         break;
     case MAVLINK_MSG_ID_GNSS_INTEGRITY:
         _handleGnssIntegrity(message);
@@ -199,7 +211,7 @@ void VehicleGPSFactGroup::_handleGnssIntegrity(const mavlink_message_t& message)
     mavlink_gnss_integrity_t gnssIntegrity;
     mavlink_msg_gnss_integrity_decode(&message, &gnssIntegrity);
 
-    if (gnssIntegrity.id != _gnssIntegrityId) {
+    if (gnssIntegrity.id != static_cast<uint8_t>(_receiver)) {
         return;
     }
 

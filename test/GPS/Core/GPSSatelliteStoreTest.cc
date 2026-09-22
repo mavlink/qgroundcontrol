@@ -26,27 +26,30 @@ void GPSSatelliteStoreTest::_constellationRetirement()
     GPSSatelliteObservation raw;
     raw.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
     raw.sessionId = 1;
-    raw.satellites = {makeSatellite(GPSConstellation::GPS, 3), makeSatellite(GPSConstellation::Galileo, 3, false)};
-    raw.provenance = {{GPSConstellation::GPS, nowUs - 400000, nowUs - 400000, 1},
-                      {GPSConstellation::Galileo, nowUs - 10000, nowUs - 10000, 0}};
+    raw.constellations = {
+        {GPSConstellation::GPS, {nowUs - 400000, {makeSatellite(GPSConstellation::GPS, 3)}}, {nowUs - 400000, 1}},
+        {GPSConstellation::Galileo,
+         {nowUs - 10000, {makeSatellite(GPSConstellation::Galileo, 3, false)}},
+         {nowUs - 10000, 0}},
+    };
     store.updateObservation(raw);
     QCOMPARE(store.observation().satellitesInViewCount(), 2);
     QCOMPARE(store.observation().satellitesInUseCount(), 1);
     store.setFreshnessTimeoutMs(100);
     QCOMPARE(store.observation().satellitesInViewCount(), 1);
-    QCOMPARE(store.observation().satellites.first().constellation, GPSConstellation::Galileo);
+    QCOMPARE(store.observation().constellations.first().constellation, GPSConstellation::Galileo);
     QCOMPARE(store.observation().satellitesInUseCount(), 0);
-    QCOMPARE(store.observation().provenance.first().inViewTimestampUs, nowUs - 10000);
+    QCOMPARE(store.observation().constellations.first().view.receivedAtUs, nowUs - 10000);
     store.setFreshnessTimeoutMs(500);
     store.updateObservation(raw);
     QCOMPARE(store.observation().satellitesInViewCount(), 1);
-    raw.provenance[0].inViewTimestampUs = MonotonicClock::nowUs() + 1000000;
+    raw.constellations[0].view.receivedAtUs = MonotonicClock::nowUs() + 1000000;
     store.updateObservation(raw);
     QCOMPARE(store.observation().satellitesInViewCount(), 1);
-    raw.provenance[0].inViewTimestampUs = MonotonicClock::nowUs();
+    raw.constellations[0].view.receivedAtUs = MonotonicClock::nowUs();
     store.updateObservation(raw);
     QCOMPARE(store.observation().satellitesInViewCount(), 2);
-    QVERIFY(!store.observation().satellites.first().used.has_value());
+    QVERIFY(!store.observation().constellations.first().view.satellites.first().used.has_value());
 }
 
 void GPSSatelliteStoreTest::_viewAndUseExpireIndependently()
@@ -59,8 +62,8 @@ void GPSSatelliteStoreTest::_viewAndUseExpireIndependently()
     GPSSatelliteObservation raw;
     raw.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
     raw.sessionId = 1;
-    raw.satellites = {makeSatellite(GPSConstellation::GPS, 2)};
-    raw.provenance = {{GPSConstellation::GPS, nowUs - 10000, nowUs - 400000, 1}};
+    raw.constellations = {
+        {GPSConstellation::GPS, {nowUs - 10000, {makeSatellite(GPSConstellation::GPS, 2)}}, {nowUs - 400000, 1}}};
     store.updateObservation(raw);
     GPSObservation fix;
     fix.position = QGeoPositionInfo(QGeoCoordinate(47.0, 8.0, 500.0), QDateTime::currentDateTimeUtc());
@@ -71,14 +74,14 @@ void GPSSatelliteStoreTest::_viewAndUseExpireIndependently()
     store.setFreshnessTimeoutMs(100);
     QCOMPARE(store.observation().satellitesInViewCount(), 1);
     QCOMPARE(store.observation().satellitesInUseCount(), -1);
-    QVERIFY(!store.observation().satellites.first().used.has_value());
+    QVERIFY(!store.observation().constellations.first().view.satellites.first().used.has_value());
     QCOMPARE(health.satellitesInViewCount(), 1);
     QCOMPARE(health.satellitesInUseCount(), 8);
-    raw.provenance[0].inUseTimestampUs = MonotonicClock::nowUs();
-    raw.provenance[0].satellitesUsed = 0;
-    raw.satellites[0].used = false;
+    raw.constellations[0].usage.receivedAtUs = MonotonicClock::nowUs();
+    raw.constellations[0].usage.count = 0;
+    raw.constellations[0].view.satellites[0].used = false;
     store.updateObservation(raw);
-    QCOMPARE(store.observation().satellites.first().used, std::optional<bool>(false));
+    QCOMPARE(store.observation().constellations.first().view.satellites.first().used, std::optional<bool>(false));
     QCOMPARE(store.observation().satellitesInUseCount(), 0);
     store.clear();
     QCOMPARE(health.satellitesInViewCount(), -1);
@@ -96,14 +99,15 @@ void GPSSatelliteStoreTest::_timerKeepsFreshConstellation()
     GPSSatelliteObservation raw;
     raw.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
     raw.sessionId = 1;
-    raw.satellites = {makeSatellite(GPSConstellation::GPS, 1), makeSatellite(GPSConstellation::Galileo, 2)};
-    raw.provenance = {{GPSConstellation::GPS, nowUs - 900000, nowUs - 900000, 1},
-                      {GPSConstellation::Galileo, nowUs, nowUs, 1}};
+    raw.constellations = {
+        {GPSConstellation::GPS, {nowUs - 900000, {makeSatellite(GPSConstellation::GPS, 1)}}, {nowUs - 900000, 1}},
+        {GPSConstellation::Galileo, {nowUs, {makeSatellite(GPSConstellation::Galileo, 2)}}, {nowUs, 1}},
+    };
     store.updateObservation(raw);
     QCOMPARE(store.observation().satellitesInViewCount(), 2);
     QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInViewCount(), 1, 700);
-    QCOMPARE(store.observation().satellites.first().constellation, GPSConstellation::Galileo);
-    QCOMPARE(store.observation().provenance.first().inViewTimestampUs, nowUs);
+    QCOMPARE(store.observation().constellations.first().constellation, GPSConstellation::Galileo);
+    QCOMPARE(store.observation().constellations.first().view.receivedAtUs, nowUs);
     QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInViewCount(), -1, 2000);
 }
 
@@ -112,7 +116,8 @@ void GPSSatelliteStoreTest::_sessionsAndReentrantDelivery()
     GPSSatelliteStore store;
     store.beginSession(QStringLiteral("receiver"), 1);
     const auto satellite = makeSatellite(GPSConstellation::Unknown, 4);
-    GPSSatelliteObservation raw{MonotonicClock::nowUs(), 1, {satellite}};
+    const auto receipt = MonotonicClock::nowUs();
+    GPSSatelliteObservation raw{receipt, 1, {{GPSConstellation::Unknown, {receipt, {satellite}}, {receipt, 1}}}};
     store.updateObservation(raw);
     const auto accepted = store.observation();
     store.beginSession(QStringLiteral("replacement"), 2);
@@ -145,37 +150,38 @@ void GPSSatelliteStoreTest::_unknownUsageRetiresPreviousCount()
     GPSSatelliteObservation report;
     report.sessionId = 1;
     report.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
-    report.satellites = {makeSatellite(GPSConstellation::GPS, 3)};
     const auto firstReceipt = scheduler.nowUs();
-    report.provenance = {{GPSConstellation::GPS, firstReceipt, firstReceipt, 1, QList<int>{3}}};
+    report.constellations = {{GPSConstellation::GPS,
+                              {firstReceipt, {makeSatellite(GPSConstellation::GPS, 3)}},
+                              {firstReceipt, 1, QList<int>{3}}}};
     store.updateObservation(report);
     QCOMPARE(store.observation().satellitesInUseCount(), 1);
-    QCOMPARE(store.observation().satellites.first().used, std::optional<bool>(true));
+    QCOMPARE(store.observation().constellations.first().view.satellites.first().used, std::optional<bool>(true));
 
-    report.provenance[0].inUseTimestampUs = 0;
-    report.provenance[0].satellitesUsed.reset();
+    report.constellations[0].usage.receivedAtUs = 0;
+    report.constellations[0].usage.count.reset();
     store.updateObservation(report);
     QCOMPARE(store.observation().satellitesInUseCount(), 1);
 
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
-    report.provenance[0].inUseTimestampUs = scheduler.nowUs();
+    report.constellations[0].usage.receivedAtUs = scheduler.nowUs();
     store.updateObservation(report);
     QCOMPARE(store.observation().satellitesInUseCount(), -1);
-    QVERIFY(!store.observation().provenance.first().usedSatelliteIds);
-    QVERIFY(!store.observation().satellites.first().used);
+    QVERIFY(!store.observation().constellations.first().usage.ids);
+    QVERIFY(!store.observation().constellations.first().view.satellites.first().used);
 
-    report.provenance[0].inUseTimestampUs = firstReceipt;
-    report.provenance[0].satellitesUsed = 1;
+    report.constellations[0].usage.receivedAtUs = firstReceipt;
+    report.constellations[0].usage.count = 1;
     store.updateObservation(report);
     QCOMPARE(store.observation().satellitesInUseCount(), -1);
 
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
-    report.provenance[0].inUseTimestampUs = scheduler.nowUs();
-    report.provenance[0].satellitesUsed = 0;
-    report.provenance[0].usedSatelliteIds = QList<int>{};
+    report.constellations[0].usage.receivedAtUs = scheduler.nowUs();
+    report.constellations[0].usage.count = 0;
+    report.constellations[0].usage.ids = QList<int>{};
     store.updateObservation(report);
     QCOMPARE(store.observation().satellitesInUseCount(), 0);
-    QCOMPARE(store.observation().satellites.first().used, std::optional<bool>(false));
+    QCOMPARE(store.observation().constellations.first().view.satellites.first().used, std::optional<bool>(false));
 }
 
 UT_REGISTER_TEST(GPSSatelliteStoreTest, TestLabel::Unit)
@@ -186,37 +192,49 @@ void GPSSatelliteStoreTest::_fullSnapshotsReplaceAndDeltasPreserve()
     store.beginSession(QStringLiteral("receiver"), 1);
     const auto now = MonotonicClock::nowUs();
     GPSSatelliteObservation full{
-        now - 10000, 1, {makeSatellite(GPSConstellation::GPS, 1), makeSatellite(GPSConstellation::Galileo, 2)}};
+        now - 10000,
+        1,
+        {{GPSConstellation::GPS, {now - 10000, {makeSatellite(GPSConstellation::GPS, 1)}}, {now - 10000, 1}},
+         {GPSConstellation::Galileo, {now - 10000, {makeSatellite(GPSConstellation::Galileo, 2)}}, {now - 10000, 1}}}};
     store.updateObservation(full);
     QCOMPARE(store.observation().satellitesInViewCount(), 2);
-    GPSSatelliteObservation delta{now - 9000, 1, {makeSatellite(GPSConstellation::GPS, 3)}};
+    GPSSatelliteObservation delta{
+        now - 9000,
+        1,
+        {{GPSConstellation::GPS, {now - 9000, {makeSatellite(GPSConstellation::GPS, 3)}}, {now - 9000, 1}}}};
     delta.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
     store.updateObservation(delta);
     QCOMPARE(store.observation().satellitesInViewCount(), 2);
-    QCOMPARE(store.observation().satellites[0].id, 3);
+    QCOMPARE(store.observation().constellations[0].view.satellites[0].id, 3);
     full.monotonicTimestampUs = now - 8000;
-    full.satellites = {makeSatellite(GPSConstellation::GPS, 4, std::nullopt)};
+    full.constellations = {
+        {GPSConstellation::GPS, {now - 8000, {makeSatellite(GPSConstellation::GPS, 4, std::nullopt)}}, {}}};
     store.updateObservation(full);
     QCOMPARE(store.observation().satellitesInViewCount(), 1);
-    QCOMPARE(store.observation().satellites[0].id, 4);
-    QVERIFY(!store.observation().satellites[0].used);
+    QCOMPARE(store.observation().constellations[0].view.satellites[0].id, 4);
+    QVERIFY(!store.observation().constellations[0].view.satellites[0].used);
     QCOMPARE(store.observation().satellitesInUseCount(), -1);
     // A retired constellation cannot be restored by an older queued delta.
-    delta.satellites = {makeSatellite(GPSConstellation::Galileo, 2)};
+    delta.constellations = {
+        {GPSConstellation::Galileo, {now - 9000, {makeSatellite(GPSConstellation::Galileo, 2)}}, {now - 9000, 1}}};
     store.updateObservation(delta);
     QCOMPARE(store.observation().satellitesInViewCount(), 1);
     full.monotonicTimestampUs = now - 7000;
-    full.satellites.clear();
+    full.constellations = {{GPSConstellation::Unknown, {now - 7000, {}}, {now - 7000, 0}}};
     store.updateObservation(full);
     QCOMPARE(store.observation().satellitesInViewCount(), 0);
     QCOMPARE(store.observation().satellitesInUseCount(), 0);
     // Full snapshots also cannot overwrite a newer delta already accepted for that constellation.
     delta.monotonicTimestampUs = now - 5000;
+    delta.constellations[0].view.receivedAtUs = now - 5000;
+    delta.constellations[0].usage.receivedAtUs = now - 5000;
     store.updateObservation(delta);
     full.monotonicTimestampUs = now - 6000;
+    full.constellations[0].view.receivedAtUs = now - 6000;
+    full.constellations[0].usage.receivedAtUs = now - 6000;
     store.updateObservation(full);
     QCOMPARE(store.observation().satellitesInViewCount(), 1);
-    QCOMPARE(store.observation().satellites.first().constellation, GPSConstellation::Galileo);
+    QCOMPARE(store.observation().constellations.last().constellation, GPSConstellation::Galileo);
 }
 
 void GPSSatelliteStoreTest::_independentRetirement_data()
@@ -239,8 +257,9 @@ void GPSSatelliteStoreTest::_independentRetirement()
     GPSSatelliteObservation initial;
     initial.sessionId = 1;
     initial.updateMode = GPSSatelliteObservation::UpdateMode::ConstellationDelta;
-    initial.satellites = {makeSatellite(GPSConstellation::GPS, 3)};
-    initial.provenance = {{GPSConstellation::GPS, scheduler.nowUs(), scheduler.nowUs(), 1, QList<int>{3}}};
+    initial.constellations = {{GPSConstellation::GPS,
+                               {scheduler.nowUs(), {makeSatellite(GPSConstellation::GPS, 3)}},
+                               {scheduler.nowUs(), 1, QList<int>{3}}}};
     store.updateObservation(initial);
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
 
@@ -249,10 +268,10 @@ void GPSSatelliteStoreTest::_independentRetirement()
     retained.updateMode = fullSnapshot ? GPSSatelliteObservation::UpdateMode::FullSnapshot
                                        : GPSSatelliteObservation::UpdateMode::ConstellationDelta;
     if (retireView) {
-        retained.provenance = {{GPSConstellation::GPS, 0, scheduler.nowUs(), 1, QList<int>{3}}};
+        retained.constellations = {{GPSConstellation::GPS, {}, {scheduler.nowUs(), 1, QList<int>{3}}}};
     } else {
-        retained.satellites = {makeSatellite(GPSConstellation::GPS, 3, std::nullopt)};
-        retained.provenance = {{GPSConstellation::GPS, scheduler.nowUs(), 0, std::nullopt}};
+        retained.constellations = {
+            {GPSConstellation::GPS, {scheduler.nowUs(), {makeSatellite(GPSConstellation::GPS, 3, std::nullopt)}}, {}}};
     }
     store.updateObservation(retained);
     if (!fullSnapshot) {
@@ -263,7 +282,7 @@ void GPSSatelliteStoreTest::_independentRetirement()
         QCOMPARE(accepted.satellitesInViewCount(), retireView ? -1 : 1);
         QCOMPARE(accepted.satellitesInUseCount(), retireView ? 1 : -1);
         if (!retireView) {
-            QVERIFY(!accepted.satellites.first().used);
+            QVERIFY(!accepted.constellations.first().view.satellites.first().used);
         }
     };
     verifyRetained();

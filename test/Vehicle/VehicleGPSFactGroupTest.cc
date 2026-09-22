@@ -5,8 +5,8 @@
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "UnitTest.h"
-#include "VehicleGPS2FactGroup.h"
 #include "VehicleGPSFactGroup.h"
+#include "development/mavlink_msg_gnss_integrity.h"
 
 namespace {
 
@@ -40,10 +40,8 @@ mavlink_message_t gpsMessage(bool secondary, uint16_t yaw, uint8_t fixType)
 
 std::unique_ptr<VehicleGPSFactGroup> receiver(bool secondary, RuntimeScheduler* scheduler)
 {
-    if (secondary) {
-        return std::make_unique<VehicleGPS2FactGroup>(nullptr, scheduler);
-    }
-    return std::make_unique<VehicleGPSFactGroup>(nullptr, scheduler);
+    using Index = VehicleGPSFactGroup::ReceiverIndex;
+    return std::make_unique<VehicleGPSFactGroup>(nullptr, scheduler, secondary ? Index::Secondary : Index::Primary);
 }
 
 }  // namespace
@@ -58,6 +56,8 @@ private slots:
     void _fixValidityAndFreshness_data();
     void _fixValidityAndFreshness();
     void _highLatencyAccuracyUnits();
+    void _receiverDispatch_data();
+    void _receiverDispatch();
 };
 
 void VehicleGPSFactGroupTest::_rawNormalization_data()
@@ -146,6 +146,53 @@ void VehicleGPSFactGroupTest::_highLatencyAccuracyUnits()
     QCOMPARE(gps.horizontalAccuracy()->rawValue().toDouble(), 12.3);
     QCOMPARE(gps.verticalAccuracy()->rawValue().toDouble(), 23.4);
     QVERIFY(!gps.acceptedObservation());
+}
+
+void VehicleGPSFactGroupTest::_receiverDispatch_data()
+{
+    _fixValidityAndFreshness_data();
+}
+
+void VehicleGPSFactGroupTest::_receiverDispatch()
+{
+    QFETCH(bool, secondary);
+    ManualScheduler scheduler;
+    auto gps = receiver(secondary, &scheduler);
+    gps->handleMessage(nullptr, gpsMessage(!secondary, 0, GPS_FIX_TYPE_3D_FIX));
+    QVERIFY(!gps->acceptedObservation());
+    QVERIFY(qIsNaN(gps->lat()->rawValue().toDouble()));
+    gps->handleMessage(nullptr, gpsMessage(secondary, 0, GPS_FIX_TYPE_3D_FIX));
+    QVERIFY(gps->acceptedObservation());
+
+    mavlink_high_latency_t highLatency{};
+    highLatency.latitude = 480000000;
+    highLatency.longitude = 90000000;
+    highLatency.altitude_amsl = 300;
+    highLatency.gps_fix_type = GPS_FIX_TYPE_3D_FIX;
+    mavlink_message_t message{};
+    mavlink_msg_high_latency_encode(1, 1, &message, &highLatency);
+    gps->handleMessage(nullptr, message);
+    QCOMPARE(gps->lat()->rawValue().toDouble(), secondary ? 47.0 : 48.0);
+    mavlink_high_latency2_t highLatency2{};
+    highLatency2.latitude = 490000000;
+    highLatency2.longitude = 100000000;
+    highLatency2.altitude = 400;
+    mavlink_msg_high_latency2_encode(1, 1, &message, &highLatency2);
+    gps->handleMessage(nullptr, message);
+    QCOMPARE(gps->lat()->rawValue().toDouble(), secondary ? 47.0 : 49.0);
+
+    mavlink_gnss_integrity_t integrity{};
+    integrity.id = secondary ? 0 : 1;
+    integrity.jamming_state = 3;
+    mavlink_msg_gnss_integrity_encode(1, 1, &message, &integrity);
+    gps->handleMessage(nullptr, message);
+    QCOMPARE(gps->jammingState()->rawValue().toInt(), 255);
+    QCOMPARE(gps->gnssIntegrityTimestampUs(), quint64(0));
+    integrity.id = secondary ? 1 : 0;
+    mavlink_msg_gnss_integrity_encode(1, 1, &message, &integrity);
+    gps->handleMessage(nullptr, message);
+    QCOMPARE(gps->jammingState()->rawValue().toInt(), 3);
+    QCOMPARE(gps->gnssIntegrityTimestampUs(), scheduler.nowUs());
 }
 
 UT_REGISTER_TEST(VehicleGPSFactGroupTest, TestLabel::Unit)

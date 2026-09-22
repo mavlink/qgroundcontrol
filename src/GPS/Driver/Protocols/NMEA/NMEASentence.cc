@@ -173,6 +173,26 @@ std::optional<int> utcMilliseconds(std::string_view field)
     return static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(wholeSeconds).count()) + milliseconds;
 }
 
+GPSFixQuality fixQuality(unsigned quality, GPSFixQuality autonomous)
+{
+    switch (quality) {
+        case GgaQuality::INVALID:
+            return GPSFixQuality::NoFix;
+        case GgaQuality::GPS:
+            return autonomous;
+        case GgaQuality::DIFFERENTIAL:
+            return GPSFixQuality::Differential;
+        case GgaQuality::RTK_FIXED:
+            return GPSFixQuality::RTKFixed;
+        case GgaQuality::RTK_FLOAT:
+            return GPSFixQuality::RTKFloat;
+        case GgaQuality::ESTIMATED:
+            return GPSFixQuality::Extrapolated;
+        default:
+            return GPSFixQuality::Unknown;
+    }
+}
+
 std::optional<NavigationStatus> navigationStatus(const Sentence& input)
 {
     const auto type = input.type();

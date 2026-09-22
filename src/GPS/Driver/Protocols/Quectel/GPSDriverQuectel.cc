@@ -24,9 +24,8 @@ using QuectelCodec::readback;
 using QuectelCodec::rejected;
 }  // namespace
 
-GPSNativeQuectel::GPSNativeQuectel(GPSProtocolIO io, GPSNativePositionReport* position,
-                                   GPSNativeSatelliteReport* satellites)
-    : GPSAsciiProtocol(std::move(io), position, satellites)
+GPSNativeQuectel::GPSNativeQuectel(GPSProtocolIO io, bool satelliteInfoEnabled)
+    : GPSAsciiProtocol(std::move(io), satelliteInfoEnabled)
 {
     setRTCMEnabled(false);
 }
@@ -40,7 +39,7 @@ GPSCommandOutcome GPSNativeQuectel::_transact(const std::string& command, ReplyH
     if (!writeCommand(step, {reinterpret_cast<const uint8_t*>(bytes.data()), bytes.size()})) {
         return ioError() == ReadCancelled ? GPSCommandOutcome::Cancelled : GPSCommandOutcome::TransportError;
     }
-    return awaitCommand(step, [this] { return _pendingReply.outcome; }).evidence.outcome;
+    return awaitCommand([this] { return _pendingReply.outcome; }).evidence.outcome;
 }
 
 bool GPSNativeQuectel::_acknowledge(const std::string& command, unsigned timeoutMs)
@@ -217,7 +216,7 @@ bool GPSNativeQuectel::_restart(bool requireRoleMatch, bool startSurveySession)
     const Operation operation(*this, RESTART_TIMEOUT_MS);
     const uint64_t deadline = nowUs() + uint64_t(RESTART_TIMEOUT_MS) * 1000;
     const auto bytes = frame("PQTMSRR");
-    beginCommandWrite("PQTMSRR");
+    beginCommandWrite({"PQTMSRR", std::chrono::milliseconds(RESTART_TIMEOUT_MS)});
     if (write(bytes.data(), static_cast<int>(bytes.size())) != static_cast<int>(bytes.size())) {
         return false;
     }

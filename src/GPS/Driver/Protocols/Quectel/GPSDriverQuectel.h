@@ -14,8 +14,7 @@
 class GPSNativeQuectel final : public GPSAsciiProtocol
 {
 public:
-    GPSNativeQuectel(GPSProtocolIO io, GPSNativePositionReport* position,
-                     GPSNativeSatelliteReport* satellites = nullptr);
+    explicit GPSNativeQuectel(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
     int configure(unsigned& baud, const GPSConfig& config) override;
 

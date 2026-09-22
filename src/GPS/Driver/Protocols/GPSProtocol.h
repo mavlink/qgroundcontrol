@@ -45,6 +45,7 @@
 #include <cstdint>
 #include <cstring>
 #include <ctime>
+#include <functional>
 #include <numbers>
 #include <span>
 
@@ -52,6 +53,8 @@
 
 #include "GPSBaseStationConfig.h"
 #include "GPSEllipsoidPosition.h"
+#include "GPSNativePositionReport.h"
+#include "GPSNativeSatelliteReport.h"
 #include "GPSProtocolIO.h"
 #include "RTCMStreamDecoder.h"
 
@@ -104,7 +107,7 @@ public:
         bool allowPersistentChanges = false;
     };
 
-    explicit GPSProtocol(GPSProtocolIO io);
+    explicit GPSProtocol(GPSProtocolIO io, bool satelliteInfoEnabled = true);
     GPSProtocol(const GPSProtocol&) = delete;
     GPSProtocol& operator=(const GPSProtocol&) = delete;
     GPSProtocol(GPSProtocol&&) = delete;
@@ -145,10 +148,6 @@ protected:
     virtual int decodeByte(uint8_t) { return 0; }
 
     virtual void flushDecoded() {}
-
-    virtual const GPSNativePositionReport* positionReport() const { return nullptr; }
-
-    virtual const GPSNativeSatelliteReport* satelliteReport() const { return nullptr; }
 
     class Operation
     {
@@ -209,11 +208,10 @@ protected:
     /// Start one command attempt; its write time counts toward the subsequent awaitCommand deadline.
     bool writeCommand(GPSConfigurationStep step, std::span<const uint8_t> bytes);
 
-    GPSCommandResult awaitCommand(GPSConfigurationStep step, const std::function<GPSCommandOutcome()>& reply);
-    GPSCommandResult awaitCommand(GPSConfigurationStep step, const std::function<void()>& pump,
-                                  const std::function<GPSCommandOutcome()>& reply);
+    GPSCommandResult awaitCommand(const std::function<GPSCommandOutcome()>& reply);
+    GPSCommandResult awaitCommand(const std::function<void()>& pump, const std::function<GPSCommandOutcome()>& reply);
 
-    void beginCommandWrite(std::string command = {}, GPSReceiverSettingSet settings = {}, bool required = true);
+    void beginCommandWrite(GPSConfigurationStep step);
 
     void failCommandWrite(GPSCommandOutcome outcome) { (void) completeCommand(outcome); }
 
@@ -274,9 +272,11 @@ protected:
             _ioErrorDetail.clear();
             return _io_error = -EINVAL;
         }
-        const auto result = _io.write ? _io.write({static_cast<const uint8_t*>(buf), static_cast<size_t>(buf_length)},
-                                                  _operationDeadline)
-                                      : GPSWriteResult{};
+        const GPSDeadline deadline{
+            std::min(_operationDeadline.untilUs, _commandCompleted ? UINT64_MAX : _commandDeadline.untilUs)};
+        const auto result =
+            _io.write ? _io.write({static_cast<const uint8_t*>(buf), static_cast<size_t>(buf_length)}, deadline)
+                      : GPSWriteResult{};
         _ioErrorDetail = result.detail;
         _commandWrite.evidence.acceptedBytes += result.acceptedBytes;
         _commandWrite.evidence.writtenBytes += result.writtenBytes;
@@ -346,6 +346,12 @@ protected:
         _decoded.events.emplace_back(report);
     }
 
+    void publishPosition(const GPSNativePositionReport& report)
+    {
+        _decoded.updates |= 1;
+        _decoded.events.emplace_back(report);
+    }
+
     void publishSatelliteUsage(std::optional<int> count)
     {
         _decoded.updates |= 2;
@@ -409,8 +415,13 @@ protected:
     static GPSEllipsoidPosition fromEcef(const EcefMeters& position);
 
     GPSBaseStationConfig _baseConfig;
+    GPSNativePositionReport _workingPosition;
+    GPSNativeSatelliteReport _workingSatellites;
+    GPSNativePositionReport* const _gps_position = &_workingPosition;
+    GPSNativeSatelliteReport* const _satellite_info;
     bool _commandCompleted = true;
     GPSCommandResult _commandWrite;
+    GPSDeadline _commandDeadline;
     GPSDecodedBatch _decoded;
     GPSIntegrityReport _integrity;
     GPSProtocolIO _io;

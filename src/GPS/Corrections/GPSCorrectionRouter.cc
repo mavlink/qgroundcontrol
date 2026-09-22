@@ -113,14 +113,12 @@ QVariantList GPSCorrectionRouter::sourceInstanceDiagnostics() const
 {
     const qint64 nowMs = _clock();
     QVariantList result;
-    const auto activeSource = _selector.activeSource(nowMs);
-    const auto activeInstance = _selector.activeInstance(nowMs);
+    const auto active = _selector.activeIdentity(nowMs);
     for (const auto& source : _selector.sources()) {
         const qint64 age = GPSCorrectionFrame::ageMs(source.lastRoutableMs, nowMs);
         const bool usable = age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS;
-        const bool selected =
-            usable && (_selector.configuration().policy == GPSCorrectionSelector::Policy::All ||
-                       (source.identity.category == activeSource && source.identity.instance == activeInstance));
+        const bool selected = usable && (_selector.configuration().policy == GPSCorrectionSelector::Policy::All ||
+                                         source.identity == active);
         result.append(QVariantMap{{QStringLiteral("source"), static_cast<int>(source.identity.category)},
                                   {QStringLiteral("instanceId"), source.identity.instance},
                                   {QStringLiteral("session"), QVariant::fromValue(source.session)},
@@ -506,15 +504,20 @@ void GPSCorrectionSelector::_select(qint64 now)
 
 QString GPSCorrectionSelector::activeInstance(qint64 now) const
 {
-    const auto active = _active ? _sources.constFind(*_active) : _sources.cend();
-    return active != _sources.cend() && _eligible(active.value(), now) ? active->identity.instance : QString();
+    const auto active = activeIdentity(now);
+    return active ? active->instance : QString();
 }
 
 GPSCorrectionSource GPSCorrectionSelector::activeSource(qint64 now) const
 {
+    const auto active = activeIdentity(now);
+    return active ? active->category : GPSCorrectionSource::Unknown;
+}
+
+std::optional<GPSCorrectionSelector::SourceIdentity> GPSCorrectionSelector::activeIdentity(qint64 now) const
+{
     const auto active = _active ? _sources.constFind(*_active) : _sources.cend();
-    return active != _sources.cend() && _eligible(active.value(), now) ? active->identity.category
-                                                                       : GPSCorrectionSource::Unknown;
+    return active != _sources.cend() && _eligible(active.value(), now) ? _active : std::nullopt;
 }
 
 void GPSCorrectionSelector::configure(const Configuration& configuration, qint64 now)
@@ -567,10 +570,5 @@ bool GPSCorrectionSelector::selected(const GPSCorrectionFrame& frame, qint64 now
     if (_configuration.policy == Policy::All) {
         return true;
     }
-    const SourceIdentity identity{frame.source, frame.sourceInstance};
-    if (_active != identity) {
-        return false;
-    }
-    const auto active = _sources.constFind(identity);
-    return active != _sources.cend() && _eligible(active.value(), now);
+    return activeIdentity(now) == SourceIdentity{frame.source, frame.sourceInstance};
 }

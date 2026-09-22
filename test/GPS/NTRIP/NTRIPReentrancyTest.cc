@@ -153,6 +153,7 @@ private slots:
     void filterConfigurationUpdatesWithoutReconnect();
     void invalidFetchRetiresPendingReply();
     void sourceTableSuccessAndCache();
+    void sourceTablePublishesSortedRowsOnce();
     void legacySourceTable_data();
     void legacySourceTable();
     void validFrameWatchdog_data();
@@ -161,6 +162,8 @@ private slots:
     void sourceTableIdentity();
     void abortCallbackSupersedesReplacement();
     void abortCallbackDeletesReply();
+    void legacyAbortCallbackRetiresAttempt_data();
+    void legacyAbortCallbackRetiresAttempt();
     void deletedReplyPublishesError();
     void fetchNotificationReentry_data();
     void fetchNotificationReentry();
@@ -1057,12 +1060,12 @@ void NTRIPReentrancyTest::invalidFetchRetiresPendingReply()
 {
     NTRIPSourceTableController controller;
     controller.fetch(config());
-    const auto previous = controller._reply;
+    const auto previous = controller._activeReply();
     QVERIFY(previous);
     const auto revision = controller._fetchRevision;
     controller.fetch({});
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
-    QVERIFY(!controller._reply);
+    QVERIFY(!controller._activeReply());
     QVERIFY(!previous->isRunning());
     controller._onReplyFinished(previous, revision);
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
@@ -1097,20 +1100,20 @@ void NTRIPReentrancyTest::sourceTableSuccessAndCache()
     QCOMPARE(distanceAt(0), -1.0);
     controller.fetch(configuration, QGeoCoordinate(40, -74));
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
-    QVERIFY(!controller._reply);
+    QVERIFY(!controller._activeReply());
     QVERIFY(controller._cacheAge.isValid());
     QCOMPARE(distanceAt(0), 0.0);
     QVERIFY(distanceAt(1) > 1000);
     QCOMPARE(model->data(model->index(0, 0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP1"));
 
     controller.fetch(configuration, QGeoCoordinate(52, 13));
-    QVERIFY(!controller._reply);
+    QVERIFY(!controller._activeReply());
     QCOMPARE(distanceAt(0), 0.0);
     QVERIFY(distanceAt(1) > 1000);
     QCOMPARE(model->data(model->index(0, 0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP2"));
 
     controller.fetch(configuration);
-    QVERIFY(!controller._reply);
+    QVERIFY(!controller._activeReply());
     QCOMPARE(distanceAt(0), -1.0);
     QCOMPARE(distanceAt(1), -1.0);
 
@@ -1120,6 +1123,43 @@ void NTRIPReentrancyTest::sourceTableSuccessAndCache()
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
     QVERIFY(!controller._cacheAge.isValid());
     QCOMPARE(controller.mountpointModel()->rowCount(), 0);
+}
+
+void NTRIPReentrancyTest::sourceTablePublishesSortedRowsOnce()
+{
+    NTRIPSourceTableController controller;
+    auto* model = controller.mountpointModel();
+    QAbstractItemModelTester tester(model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+    QSignalSpy resets(model, &QAbstractItemModel::modelReset);
+    QSignalSpy counts(qobject_cast<NTRIPSourceTableModel*>(model), &NTRIPSourceTableModel::countChanged);
+    const auto makeRow = [](const QString& name, const QString& latitude, const QString& longitude) {
+        return QStringLiteral("STR;%1;Id;RTCM 3.2;;2;GPS;NET;USA;%2;%3;0;1;gen;none;B;N;4800\r\n")
+            .arg(name, latitude, longitude);
+    };
+    const QString table = makeRow(QStringLiteral("unknown-a"), QStringLiteral("0"), QStringLiteral("0")) +
+                          makeRow(QStringLiteral("far"), QStringLiteral("52"), QStringLiteral("13")) +
+                          makeRow(QStringLiteral("near-a"), QStringLiteral("40"), QStringLiteral("-74")) +
+                          makeRow(QStringLiteral("unknown-b"), QStringLiteral("999"), QStringLiteral("13")) +
+                          makeRow(QStringLiteral("near-b"), QStringLiteral("40"), QStringLiteral("-74")) +
+                          QStringLiteral("ENDSOURCETABLE\r\n");
+    connect(model, &QAbstractItemModel::modelReset, this, [&]() {
+        QStringList names;
+        for (int row = 0; row < model->rowCount(); ++row) {
+            names.append(model->data(model->index(row, 0), NTRIPSourceTableModel::MountpointRole).toString());
+        }
+        QCOMPARE(names, (QStringList{QStringLiteral("near-a"), QStringLiteral("near-b"), QStringLiteral("far"),
+                                     QStringLiteral("unknown-a"), QStringLiteral("unknown-b")}));
+        for (int row : {0, 1, 3, 4}) {
+            QCOMPARE(model->data(model->index(row, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble(),
+                     row < 2 ? 0.0 : -1.0);
+        }
+        QVERIFY(model->data(model->index(2, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble() > 1000);
+    });
+    controller.fetch(config(), QGeoCoordinate(40, -74));
+    controller.injectSourceTableForTest(table);
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    QCOMPARE(resets.size(), 1);
+    QCOMPARE(counts.size(), 1);
 }
 
 void NTRIPReentrancyTest::legacySourceTable_data()
@@ -1156,7 +1196,7 @@ void NTRIPReentrancyTest::legacySourceTable()
             }
             ++requests;
             QVERIFY(request.startsWith("GET / HTTP/1.1\r\n"));
-            if (controller._legacySocket) {
+            if (controller._activeLegacySocket()) {
                 fallbackSeen = true;
             }
             if (fallbackSeen && cancel) {
@@ -1169,8 +1209,8 @@ void NTRIPReentrancyTest::legacySourceTable()
     controller.fetch(configuration);
     if (cancel) {
         QTRY_VERIFY_WITH_TIMEOUT(fallbackSeen, TestTimeout::mediumMs());
-        QVERIFY(!controller._reply);
-        QVERIFY(!controller._legacySocket);
+        QVERIFY(!controller._activeReply());
+        QVERIFY(!controller._activeLegacySocket());
         QCOMPARE(controller.mountpointModel()->rowCount(), 0);
     } else {
         QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
@@ -1181,7 +1221,7 @@ void NTRIPReentrancyTest::legacySourceTable()
         const int completedRequests = requests;
         controller.fetch(configuration);
         QCOMPARE(requests, completedRequests);
-        QVERIFY(!controller._legacySocket);
+        QVERIFY(!controller._activeLegacySocket());
     }
 }
 
@@ -1297,35 +1337,35 @@ void NTRIPReentrancyTest::sourceTableIdentity()
     QFETCH(bool, cached);
     NTRIPSourceTableController controller;
     controller.fetch(initial);
-    const auto previous = controller._reply;
+    const auto previous = controller._activeReply();
     QVERIFY(previous);
     if (cached) {
         controller.injectSourceTableForTest(
             QStringLiteral("STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\r\n"
                            "ENDSOURCETABLE\r\n"));
         QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
-        QVERIFY(!controller._reply);
+        QVERIFY(!controller._activeReply());
     }
     const auto revision = controller._fetchRevision;
     controller.fetch(replacement);
     if (sameCaster && cached) {
         QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
-        QVERIFY(!controller._reply);
+        QVERIFY(!controller._activeReply());
         QCOMPARE(controller.mountpointModel()->rowCount(), 1);
         return;
     }
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
-    QVERIFY(controller._reply);
+    QVERIFY(controller._activeReply());
     if (sameCaster) {
-        QCOMPARE(controller._reply, previous);
+        QCOMPARE(controller._activeReply(), previous);
         QCOMPARE(controller._fetchRevision, revision);
     } else {
-        QVERIFY(controller._reply != previous);
+        QVERIFY(controller._activeReply() != previous);
         QVERIFY(controller._fetchRevision > revision);
         QVERIFY(!previous->isRunning());
         QVERIFY(!controller._cacheAge.isValid());
     }
-    const auto request = controller._reply->request();
+    const auto request = controller._activeReply()->request();
     QCOMPARE(request.rawHeader("Authorization"),
              "Basic " + (replacement.username + QLatin1Char(':') + replacement.password).toUtf8().toBase64());
     QCOMPARE(request.url().port(), replacement.port);
@@ -1336,34 +1376,77 @@ void NTRIPReentrancyTest::abortCallbackSupersedesReplacement()
 {
     NTRIPSourceTableController controller;
     controller.fetch(config());
-    const auto previous = controller._reply;
+    const auto previous = controller._activeReply();
     auto replacement = config();
     replacement.port = 2102;
     connect(previous, &QNetworkReply::finished, this, [&]() { controller.fetch(replacement); });
     controller.fetch({});
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
-    QVERIFY(controller._reply && controller._reply != previous);
-    QCOMPARE(controller._reply->url().port(), 2102);
+    QVERIFY(controller._activeReply() && controller._activeReply() != previous);
+    QCOMPARE(controller._activeReply()->url().port(), 2102);
 }
 
 void NTRIPReentrancyTest::abortCallbackDeletesReply()
 {
     NTRIPSourceTableController controller;
     controller.fetch(config());
-    const auto previous = controller._reply;
+    const auto previous = controller._activeReply();
     connect(previous, &QNetworkReply::finished, this, [previous]() { delete previous.data(); });
     controller.fetch({});
     QVERIFY(!previous);
-    QVERIFY(!controller._reply);
+    QVERIFY(!controller._activeReply());
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
+}
+
+void NTRIPReentrancyTest::legacyAbortCallbackRetiresAttempt_data()
+{
+    QTest::addColumn<bool>("destroy");
+    QTest::newRow("replace") << false;
+    QTest::newRow("delete") << true;
+}
+
+void NTRIPReentrancyTest::legacyAbortCallbackRetiresAttempt()
+{
+    QFETCH(bool, destroy);
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    auto configuration = config();
+    configuration.port = server.serverPort();
+    auto controller = std::make_unique<NTRIPSourceTableController>();
+    controller->fetch(configuration);
+    controller->_abortReply();
+    controller->_startLegacyFetch(controller->_fetchRevision);
+    const auto socket = controller->_activeLegacySocket();
+    QVERIFY(socket);
+    QTRY_COMPARE_WITH_TIMEOUT(socket->state(), QAbstractSocket::ConnectedState, TestTimeout::shortMs());
+    int callbacks = 0;
+    connect(socket, &QTcpSocket::disconnected, this, [&]() {
+        ++callbacks;
+        if (destroy) {
+            controller.reset();
+        } else {
+            controller->fetch(configuration);
+        }
+    });
+    controller->cancel();
+    QCOMPARE(callbacks, 1);
+    if (destroy) {
+        QVERIFY(!controller);
+        QTRY_VERIFY_WITH_TIMEOUT(!socket, TestTimeout::shortMs());
+    } else {
+        QCOMPARE(controller->fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
+        QVERIFY(controller->_activeReply());
+        QVERIFY(!controller->_activeLegacySocket());
+        QVERIFY(controller->fetchError().isEmpty());
+    }
 }
 
 void NTRIPReentrancyTest::deletedReplyPublishesError()
 {
     NTRIPSourceTableController controller;
     controller.fetch(config());
-    delete controller._reply.data();
-    QVERIFY(!controller._reply);
+    delete controller._activeReply().data();
+    QVERIFY(!controller._activeReply());
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
     QVERIFY(!controller.fetchError().isEmpty());
 }
@@ -1391,7 +1474,7 @@ void NTRIPReentrancyTest::fetchNotificationReentry()
     controller->fetch(config());
     if (!destroy) {
         QCOMPARE(controller->fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
-        QVERIFY(!controller->_reply);
+        QVERIFY(!controller->_activeReply());
     }
 }
 

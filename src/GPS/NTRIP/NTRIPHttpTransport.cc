@@ -70,10 +70,7 @@ void NTRIPHttpTransport::start()
 {
     const QPointer<NTRIPHttpTransport> guard(this);
     const quint64 attempt = ++_attempt;
-    _connectTimeoutTimer.stop();
-    _dataWatchdogTimer.stop();
-    _validFrameWatchdogTimer.stop();
-    _errorBodyTimer.stop();
+    _stopTimers();
     _retireSocket();
     if (!guard || _attempt != attempt) {
         return;
@@ -90,12 +87,17 @@ void NTRIPHttpTransport::stop()
 {
     ++_attempt;
     _stopped = true;
+    _stopTimers();
+
+    _retireSocket();
+}
+
+void NTRIPHttpTransport::_stopTimers()
+{
     _connectTimeoutTimer.stop();
     _dataWatchdogTimer.stop();
     _validFrameWatchdogTimer.stop();
     _errorBodyTimer.stop();
-
-    _retireSocket();
 }
 
 void NTRIPHttpTransport::_retireSocket()
@@ -169,10 +171,7 @@ void NTRIPHttpTransport::_fail(NTRIPError code, const QString& msg, std::chrono:
     const quint64 attempt = _attempt;
     // Abort may synchronously emit disconnected.
     _stopped = true;
-    _connectTimeoutTimer.stop();
-    _dataWatchdogTimer.stop();
-    _validFrameWatchdogTimer.stop();
-    _errorBodyTimer.stop();
+    _stopTimers();
     emit error(NTRIPFailure{code, msg, retryAfter});
     if (guard && _attempt == attempt && socket && _socket == socket) {
         socket->abort();

@@ -22,8 +22,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     gps_test_warnings.clear();
     gps_test_time = 1000000;
-    GPSNativePositionReport position{};
-    GPSNativeSatelliteReport satellites{};
     GPSProtocolIO io;
     io.read = [](auto, auto) -> GPSReadResult { std::abort(); };
     io.write = [](auto, auto) -> GPSWriteResult { std::abort(); };
@@ -72,26 +70,26 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         .latitudeDegrees = 0, .longitudeDegrees = 90, .altitudeMeters = 100};
     const bool fixedMode = size != 0 && (data[0] & 1);
 #if QGC_GPS_ENABLE_UBX
-    GPSNativeUBX ubx(io, &position, &satellites);
-    GPSNativeUBX operationalUbx(io, &position, &satellites);
+    GPSNativeUBX ubx(io);
+    GPSNativeUBX operationalUbx(io);
     operationalUbx.setDecodeContext({true, true, true});
-    GPSNativeUBX epochUbx(io, &position, &satellites);
+    GPSNativeUBX epochUbx(io);
     epochUbx.setDecodeContext({true, true, true, true});
 #endif
 #if QGC_GPS_ENABLE_ASHTECH
-    GPSNativeAshtech ashtech(io, &position, &satellites);
+    GPSNativeAshtech ashtech(io);
 #endif
 #if QGC_GPS_ENABLE_SBF
-    GPSNativeSBF sbf(io, &position, &satellites);
+    GPSNativeSBF sbf(io);
 #endif
 #if QGC_GPS_ENABLE_FEMTO
-    GPSNativeFemto femto(io, &position, &satellites);
+    GPSNativeFemto femto(io);
 #endif
 #if QGC_GPS_ENABLE_UNICORE
-    GPSNativeUnicore unicore(io, &position, &satellites);
+    GPSNativeUnicore unicore(io);
     GPSTest::UnicoreReceiver unicorePeer;
     unicorePeer.chunk = GPS_READ_BUFFER_SIZE;
-    GPSNativeUnicore operationalUnicore(operationalIO(unicorePeer.io()), &position, &satellites);
+    GPSNativeUnicore operationalUnicore(operationalIO(unicorePeer.io()));
     GPSProtocol::GPSConfig averaging;
     averaging.output_mode = GPSProtocol::OutputMode::RTCM;
     averaging.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
@@ -101,14 +99,14 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     }
 #endif
 #if QGC_GPS_ENABLE_QUECTEL
-    GPSNativeQuectel quectel(io, &position, &satellites);
+    GPSNativeQuectel quectel(io);
     GPSTest::QuectelReceiver quectelPeer;
     quectelPeer.role = 2;
     quectelPeer.chunk = GPS_READ_BUFFER_SIZE;
     if (fixedMode) {
         quectelPeer.base = "2,0,0,0.0000,6378237.0000,0.0000,0";
     }
-    GPSNativeQuectel operationalQuectel(operationalIO(quectelPeer.io()), &position, &satellites);
+    GPSNativeQuectel operationalQuectel(operationalIO(quectelPeer.io()));
     GPSProtocol::GPSConfig survey;
     survey.output_mode = GPSProtocol::OutputMode::RTCM;
     std::get<GPSBaseStationConfig::SurveyIn>(survey.base.mode).accuracyMeters = 15;
@@ -119,7 +117,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     }
 #endif
 #if QGC_GPS_ENABLE_PASSIVE
-    GPSNativePassive passive(io, &position, &satellites);
+    GPSNativePassive passive(io);
 #endif
     GPSProtocol* protocols[] = {
 #if QGC_GPS_ENABLE_UBX

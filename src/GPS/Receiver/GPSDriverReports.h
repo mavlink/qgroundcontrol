@@ -9,6 +9,7 @@
 #include <QtCore/QMetaType>
 
 #include "../GPSConstellation.h"
+#include "../GPSFixQuality.h"
 #include "GPSEllipsoidPosition.h"
 #include "GPSSatelliteUsageReport.h"
 
@@ -126,25 +127,9 @@ struct GPSIntegrityReport
 
 struct GPSNavigationValues
 {
-    enum class FixType
-    {
-        Unknown,
-        NoFix,
-        Fix2D,
-        Fix3D,
-        Differential,
-        RTKFloat,
-        RTKFixed,
-        Extrapolated = 8
-    };
+    using FixType = GPSFixQuality;
 
-    static constexpr FixType fixTypeFromValue(int value)
-    {
-        return (value >= static_cast<int>(FixType::Unknown) && value <= static_cast<int>(FixType::RTKFixed)) ||
-                       value == static_cast<int>(FixType::Extrapolated)
-                   ? static_cast<FixType>(value)
-                   : FixType::Unknown;
-    }
+    static constexpr FixType fixTypeFromValue(int value) { return gpsFixQualityFromValue(value); }
 
     uint64_t timestampUs = 0;
     uint64_t utcTimeUs = 0;

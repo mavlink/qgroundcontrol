@@ -105,7 +105,7 @@ void malformedMessages()
     GPSNativeSatelliteReport satellites{};
     const std::array<uint8_t, 2> shortPayload{};
 #if QGC_GPS_ENABLE_SBF
-    GPSNativeSBF sbf(noDevice(), &position, &satellites);
+    GPSNativeSBF sbf(captureGPSReports(noDevice(), position, &satellites));
     sbf_payload_pvt_geodetic_t fix{};
     fix.mode_type = 1;
     fix.latitude = 0.5;
@@ -138,7 +138,7 @@ void malformedMessages()
 
 #endif
 #if QGC_GPS_ENABLE_FEMTO
-    GPSNativeFemto femto(noDevice(), &position, &satellites);
+    GPSNativeFemto femto(captureGPSReports(noDevice(), position, &satellites));
     femto_uav_gps_t gps{};
     gps.lat = 470000000;
     gps.lon = 80000000;
@@ -272,7 +272,7 @@ public:
     GPSNativeAshtech driver;
 
     AshtechReceiver()
-        : driver(io(), &position, nullptr)
+        : driver(captureGPSReports(io(), position), false)
     {}
 
     GPSProtocolIO io()
@@ -505,8 +505,6 @@ void ashtechSurveyReceipts()
 
 void ashtechMetadata()
 {
-    GPSNativePositionReport position{};
-    GPSNativeSatelliteReport satellites{};
     auto io = noDevice();
     GPSNativeSatelliteReport gpsSatellites;
     io.decoded = [&](const GPSDecodedBatch& batch) {
@@ -517,7 +515,8 @@ void ashtechMetadata()
             }
         }
     };
-    GPSNativeAshtech driver(std::move(io), &position, &satellites);
+    GPSProtocolTestProbe<GPSNativeAshtech> driver(std::move(io));
+    const auto& position = driver.workingPosition();
     const auto gga = nmeaPacket("GPGGA,123519,4700.0,N,00800.0,E,1,08,0.9,500.0,M,0,M,,");
     CHECK(driver.consume(gga) & 1);
     CHECK(position.navigation.latitudeDegrees == 47.0);
@@ -551,7 +550,7 @@ void ashtechMetadata()
     CHECK(gpsSatellites.entries[0].signal == 0);
     CHECK(gpsSatellites.entries[0].azimuth == 0);
     CHECK(gpsSatellites.entries[0].elevation == 0);
-    driver.consume(nmeaPacket("GPZDA,172809.456,12,07,2026,00,00"));
+    CHECK(!(driver.consume(nmeaPacket("GPZDA,172809.456,12,07,2026,00,00")) & 1));
     CHECK(position.navigation.utcTimeUs % 1000000 >= 455999 && position.navigation.utcTimeUs % 1000000 <= 456001);
 
     driver.consume(nmeaPacket("GPGST,172810.0,0,0,0,0,0.3,0.4,0.6"));
@@ -642,13 +641,13 @@ void invalidFamilyConfiguration()
         GPSNativePositionReport position{};
         std::vector<std::unique_ptr<GPSProtocol>> drivers;
 #if QGC_GPS_ENABLE_ASHTECH
-        drivers.push_back(std::make_unique<GPSNativeAshtech>(noDevice(), &position, nullptr));
+        drivers.push_back(std::make_unique<GPSNativeAshtech>(captureGPSReports(noDevice(), position), false));
 #endif
 #if QGC_GPS_ENABLE_SBF
-        drivers.push_back(std::make_unique<GPSNativeSBF>(noDevice(), &position));
+        drivers.push_back(std::make_unique<GPSNativeSBF>(captureGPSReports(noDevice(), position), false));
 #endif
 #if QGC_GPS_ENABLE_FEMTO
-        drivers.push_back(std::make_unique<GPSNativeFemto>(noDevice(), &position));
+        drivers.push_back(std::make_unique<GPSNativeFemto>(captureGPSReports(noDevice(), position), false));
 #endif
         for (const auto& driver : drivers) {
             unsigned baudrate = 9600;
@@ -677,7 +676,7 @@ void sbfEpochMetadata()
             }
         }
     };
-    GPSNativeSBF driver(io, &position, &satellites);
+    GPSNativeSBF driver(captureGPSReports(io, position, &satellites));
     sbf_payload_pvt_geodetic_t fix{};
     fix.mode_type = 1;
     fix.mode_2d = 1;
@@ -744,7 +743,7 @@ void sbfInvalidCoordinates()
             }
         }
     };
-    GPSNativeSBF driver(io, &position, &satellites);
+    GPSNativeSBF driver(captureGPSReports(io, position, &satellites));
     sbf_payload_pvt_geodetic_t fix{};
     fix.mode_type = 1;
     fix.latitude = 0.5;

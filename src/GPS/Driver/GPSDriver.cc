@@ -45,16 +45,15 @@ QGC_LOGGING_CATEGORY(GPSNativeDriversLog, "GPS.Drivers")
 
 namespace {
 template <typename Protocol>
-std::unique_ptr<GPSProtocol> makeProtocol(GPSProtocolIO io, GPSNativePositionReport* position,
-                                          GPSNativeSatelliteReport* satellites)
+std::unique_ptr<GPSProtocol> makeProtocol(GPSProtocolIO io)
 {
-    return std::make_unique<Protocol>(std::move(io), position, satellites);
+    return std::make_unique<Protocol>(std::move(io));
 }
 
 struct ProtocolFactory
 {
     GPSType type;
-    std::unique_ptr<GPSProtocol> (*create)(GPSProtocolIO, GPSNativePositionReport*, GPSNativeSatelliteReport*);
+    std::unique_ptr<GPSProtocol> (*create)(GPSProtocolIO);
 };
 
 constexpr std::array PROTOCOL_FACTORIES{
@@ -90,8 +89,6 @@ auto findProtocolFactory(GPSType type)
 
 struct GPSDriver::State
 {
-    GPSNativePositionReport position;
-    GPSNativeSatelliteReport satellites;
     GPSIntegrityReport integrity;
     GPSNativeData::SatelliteSnapshot satelliteSnapshot;
     std::unique_ptr<GPSProtocol> driver;
@@ -253,7 +250,7 @@ bool GPSDriver::configure()
         qCWarning(GPSDriverLog) << "Unsupported GPS type:" << static_cast<int>(_type);
         return false;
     }
-    _state->driver = factory->create(std::move(io), &_state->position, &_state->satellites);
+    _state->driver = factory->create(std::move(io));
     if (_type == GPSType::trimble && !_config.baudRate) {
         baudrate = 115200;
     }

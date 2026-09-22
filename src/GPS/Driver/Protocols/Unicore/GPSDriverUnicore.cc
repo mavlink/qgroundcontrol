@@ -73,9 +73,8 @@ bool supportedFirmware(std::string_view model, std::string_view firmware)
 }
 }  // namespace
 
-GPSNativeUnicore::GPSNativeUnicore(GPSProtocolIO io, GPSNativePositionReport* position,
-                                   GPSNativeSatelliteReport* satellites)
-    : GPSAsciiProtocol(std::move(io), position, satellites)
+GPSNativeUnicore::GPSNativeUnicore(GPSProtocolIO io, bool satelliteInfoEnabled)
+    : GPSAsciiProtocol(std::move(io), satelliteInfoEnabled)
 {
     setRTCMEnabled(false);
 }
@@ -92,7 +91,7 @@ bool GPSNativeUnicore::_execute(std::string command, Reply reply)
             QStringLiteral("Unicore command '%1' could not be written").arg(QString::fromStdString(_command.text));
         return false;
     }
-    const auto result = awaitCommand(step, [this] { return _command.outcome; });
+    const auto result = awaitCommand([this] { return _command.outcome; });
     _command.active = false;
     if (result.evidence.outcome != GPSCommandOutcome::Acknowledged &&
         result.evidence.outcome != GPSCommandOutcome::ReadbackVerified) {
@@ -159,10 +158,7 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
             QStringLiteral("Invalid Unicore receiver configuration: check the role, base position and survey settings; "
                            "persistent changes are not supported"));
     }
-    if (_averaging &&
-        (!std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode) ||
-         std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs == 0 ||
-         std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs > 3600)) {
+    if (_averaging && !std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode)) {
         log(GPSProtocolLogLevel::Warning,
             "Unicore supports receiver-managed averaging, not accuracy-controlled survey");
         return _configurationFailed(

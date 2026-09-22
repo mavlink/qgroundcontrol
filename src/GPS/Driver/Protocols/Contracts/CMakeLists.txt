@@ -18,6 +18,7 @@ target_sources(
               GPSNativeSatelliteReport.h
               GPSNativeSurveyReport.h
               GPSProtocolIO.h
+              GPSRawAckMatcher.h
               GPSReceiverSettingId.h
 )
 

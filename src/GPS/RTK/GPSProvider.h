@@ -45,8 +45,7 @@ signals:
     void fixTypeChanged(GPSPositionReport::FixType fixType);
     void RTCMDataUpdate(const QByteArray& message, qint64 receivedAtMs);
     void surveyInStatus(const GPSSurveyReport& report);
-    void connectionError(GPSConnectionError error);
-    void configurationError(const QString& detail);
+    void connectionError(GPSConnectionError error, const QString& detail = {});
     void receiverReady();
 
 private:

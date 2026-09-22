@@ -124,8 +124,8 @@ void independentIntegrityAndUtc()
     const auto utcBytes = fixture("synthetic-timeutc.ubx");
     for (const size_t chunkSize : {1u, 7u, 256u}) {
         gps_test_time += 1000000;
-        GPSNativePositionReport position{};
-        GPSNativeUBX ubx(noDevice(), &position, nullptr);
+        GPSProtocolTestProbe<GPSNativeUBX> ubx(noDevice(), false);
+        const auto& position = ubx.workingPosition();
         ubx.setDecodeContext({.navigation = true, .useNavPvt = false});
         for (const auto& expected : GPSFixture::integrity) {
             auto remaining = std::span(integrityBytes).subspan(expected.offset, expected.size);
@@ -173,7 +173,8 @@ void independentIntegrityAndUtc()
             CHECK(position.navigation.utcTimeUs == previousUtc);
             while (!remaining.empty()) {
                 const auto count = std::min(chunkSize, remaining.size());
-                ubx.consume(remaining.first(count));
+                const auto decoded = ubx.decode(remaining.first(count));
+                CHECK(decoded.batch.events.empty());
                 remaining = remaining.subspan(count);
                 CHECK(position.navigation.utcTimeUs == (remaining.empty() ? expected.microseconds : previousUtc));
             }
@@ -184,7 +185,7 @@ void independentIntegrityAndUtc()
 void relativeUtcUnavailable()
 {
     GPSNativePositionReport position{};
-    GPSNativeUBX ubx(noDevice(), &position, nullptr);
+    GPSNativeUBX ubx(captureGPSReports(noDevice(), position), false);
     ubx.setDecodeContext({.navigation = true});
     ubx.consume(fixture("nav-pvt.ubx"));
     CHECK(position.navigation.utcTimeUs != 0);
@@ -214,7 +215,7 @@ void navigationEpochs()
                 }
             }
         };
-        GPSNativeUBX ubx(std::move(io), &position, &satellites);
+        GPSNativeUBX ubx(captureGPSReports(std::move(io), position, &satellites));
         ubx.setDecodeContext({.navigation = true, .assembleEpochs = true});
         const auto pvt = timed(fixture("nav-pvt.ubx"), UBXNavigationEpoch::WEEK_MS - 1000);
         const auto dop = timed(fixture("nav-dop.ubx"), UBXNavigationEpoch::WEEK_MS - 1000);
@@ -283,7 +284,7 @@ void independentSbfValidity()
                     }
                 }
             };
-            GPSNativeSBF sbf(std::move(io), &position, nullptr);
+            GPSNativeSBF sbf(captureGPSReports(std::move(io), position), false);
             const auto bytes = fixture(expected.filename);
             auto remaining = std::span(bytes);
             while (!remaining.empty()) {
@@ -323,7 +324,7 @@ void independentSbfValidity()
         }
     }
     GPSNativePositionReport position{};
-    GPSNativeSBF sbf(noDevice(), &position, nullptr);
+    GPSNativeSBF sbf(captureGPSReports(noDevice(), position), false);
     const auto invalidTimes = fixture("synthetic-invalid-time.sbf");
     for (const auto& expected : GPSFixture::invalidSbfTimes) {
         CHECK(expected.week == UINT16_MAX || expected.tow >= 604800000);
@@ -340,7 +341,7 @@ void independentSbfValidity()
     CHECK(sbf.decode({}).batch.events.empty());
     CHECK(position.navigation.timestampUs == 0);
 
-    GPSNativeSBF recovered(noDevice(), &position, nullptr);
+    GPSNativeSBF recovered(captureGPSReports(noDevice(), position), false);
     recovered.consume(invalidTimes);
     recovered.consume(valid);
     gps_test_time += 200000;
@@ -356,7 +357,7 @@ void independentSequences()
     GPSNativePositionReport position{};
     GPSNativeSatelliteReport satellites{};
 #if QGC_GPS_ENABLE_UBX
-    GPSNativeUBX ubx(noDevice(), &position, &satellites);
+    GPSNativeUBX ubx(captureGPSReports(noDevice(), position, &satellites));
     ubx.setDecodeContext({.navigation = true});
     const auto navigation = fixture("navigation.ubx");
     size_t offset = 0;
@@ -414,7 +415,7 @@ void independentSequences()
 
 #endif
 #if QGC_GPS_ENABLE_SBF
-    GPSNativeSBF sbf(noDevice(), &position, &satellites);
+    GPSNativeSBF sbf(captureGPSReports(noDevice(), position, &satellites));
     for (auto byte : fixture("geodetic.sbf")) {
         sbf.consume({&byte, 1});
     }
@@ -492,7 +493,7 @@ void GPSProtocolFixtureTest::_protocol()
             std::vector<uint8_t> longPayload(schema.maximum + 1);
             CHECK(!UBX::validPayload(schema.message, longPayload));
         }
-        GPSNativeUBX ubx(noDevice(), &position, &satellites);
+        GPSNativeUBX ubx(captureGPSReports(noDevice(), position, &satellites));
         ubx.setDecodeContext({.navigation = true});
         std::vector<uint8_t> relative(72);
         relative[0] = 0xb5;
@@ -515,6 +516,7 @@ void GPSProtocolFixtureTest::_protocol()
         CHECK(std::abs(position.vel_n_m_s + 0.007) < 1e-6);
         CHECK(position.navigation.satellitesUsed == 26);
         ubx.consume(fixture("nav-dop.ubx"));
+        ubx.consume(pvt);
         CHECK(std::abs(position.navigation.horizontalDop - 0.58) < 1e-6);
         ubx.consume(fixture("nav-sat.ubx"));
         CHECK(satellites.count == 43);
@@ -523,7 +525,10 @@ void GPSProtocolFixtureTest::_protocol()
         corrupt[30] ^= 1;
         CHECK(ubx.consume(corrupt) == 0);
         CHECK(position.navigation.timestampUs == timestamp);
-        position.navigation.fixType = GPSPositionReport::FixType::RTKFixed;
+        auto fixedPvt = pvt;
+        fixedPvt[6 + 21] = UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK | UBX_RX_NAV_PVT_FLAGS_DIFFSOLN | 0x80;
+        checksum(fixedPvt);
+        ubx.consume(fixedPvt);
         ubx.consume(fixture("nav-hpposllh.ubx"));
         CHECK(std::abs(position.navigation.latitudeDegrees - 53.337816927) < 1e-9);
         CHECK(std::abs(position.navigation.longitudeDegrees + 2.056673696) < 1e-9);
@@ -531,7 +536,7 @@ void GPSProtocolFixtureTest::_protocol()
         CHECK(std::abs(position.navigation.horizontalAccuracyMeters - 0.335) < 1e-6);
 #endif
 #if QGC_GPS_ENABLE_SBF
-        GPSNativeSBF sbf(noDevice(), &position, &satellites);
+        GPSNativeSBF sbf(captureGPSReports(noDevice(), position, &satellites));
         const auto geodetic = fixture("pvt-geodetic.sbf");
         for (auto byte : geodetic) {
             sbf.consume({&byte, 1});

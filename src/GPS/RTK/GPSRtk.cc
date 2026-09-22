@@ -86,7 +86,7 @@ bool GPSRtk::_publishDisconnected(quint64 generation)
     return guard && _session.generation == generation;
 }
 
-void GPSRtk::_onGPSConnectionError(GPSConnectionError error)
+void GPSRtk::_onGPSConnectionError(GPSConnectionError error, const QString& detail)
 {
     switch (error) {
         case GPSConnectionError::OpenFailed:
@@ -95,11 +95,10 @@ void GPSRtk::_onGPSConnectionError(GPSConnectionError error)
             break;
         case GPSConnectionError::ConfigFailed:
             qCWarning(GPSRtkLog) << "GPS receiver did not accept configuration";
-            if (_gpsRtkFactGroup->lastError()->rawValue().toInt() != static_cast<int>(error) ||
-                _errorMessage.isEmpty()) {
-                _setError(error,
-                          tr("Receiver configuration failed. Check the receiver type, baud rate, and base mode."));
-            }
+            _setError(error,
+                      detail.isEmpty()
+                          ? tr("Receiver configuration failed. Check the receiver type, baud rate, and base mode.")
+                          : tr("Receiver configuration failed: %1").arg(detail));
             break;
         case GPSConnectionError::DeviceError:
             qCWarning(GPSRtkLog) << "GPS device error, connection lost";
@@ -455,18 +454,14 @@ bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transp
     (void) connectCurrent(&GPSProvider::satelliteUsageUpdate, std::bind_front(&GPSRtk::_satelliteUsageUpdate, this));
     (void) connectCurrent(&GPSProvider::fixTypeChanged, std::bind_front(&GPSRtk::_fixTypeChanged, this));
     (void) connectCurrent(&GPSProvider::surveyInStatus, std::bind_front(&GPSRtk::_onGPSSurveyReport, this));
-    (void) connectCurrent(&GPSProvider::configurationError, [this](const QString& detail) {
-        if (!detail.isEmpty()) {
-            _setError(GPSConnectionError::ConfigFailed, tr("Receiver configuration failed: %1").arg(detail));
-        }
-    });
-    (void) connectCurrent(&GPSProvider::connectionError, [this, guard](GPSConnectionError error) {
-        const quint64 retiredGeneration = ++_session.generation;
-        _retireSession(retiredGeneration);
-        if (guard && _session.generation == retiredGeneration && _publishDisconnected(retiredGeneration)) {
-            _onGPSConnectionError(error);
-        }
-    });
+    (void) connectCurrent(
+        &GPSProvider::connectionError, [this, guard](GPSConnectionError error, const QString& detail) {
+            const quint64 retiredGeneration = ++_session.generation;
+            _retireSession(retiredGeneration);
+            if (guard && _session.generation == retiredGeneration && _publishDisconnected(retiredGeneration)) {
+                _onGPSConnectionError(error, detail);
+            }
+        });
     (void) connectCurrent(&GPSProvider::receiverReady, std::bind_front(&GPSRtk::_onGPSConnect, this));
     _session.started = true;
     provider->start();

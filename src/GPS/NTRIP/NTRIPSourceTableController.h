@@ -1,17 +1,17 @@
 #pragma once
 
 #include <functional>
+#include <memory>
+#include <optional>
 
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
-#include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
 
 #include "NTRIPConfiguration.h"
-#include "NTRIPHttpCodec.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableControllerLog)
 
@@ -74,7 +74,10 @@ private:
     void _onReplyFinished(QNetworkReply* reply, quint64 revision);
     void _onSourceTableReceived(const QString& table);
     void _onFetchError(const QString& error);
+    void _completeFetch(quint64 revision, QString table, std::optional<QString> error = std::nullopt);
     void _abortReply();
+    QPointer<QNetworkReply> _activeReply() const;
+    QPointer<QTcpSocket> _activeLegacySocket() const;
     void _startLegacyFetch(quint64 revision);
     void _readLegacyReply(quint64 revision);
     void _finishLegacyFetch(const QString& error = {});
@@ -82,12 +85,8 @@ private:
 
     NTRIPSourceTableModel* _model = nullptr;
     QNetworkAccessManager* _networkManager = nullptr;
-    QPointer<QNetworkReply> _reply;
-    QPointer<QTcpSocket> _legacySocket;
-    QTimer _legacyTimeout;
-    NTRIPHttpDecoder _legacyDecoder{NTRIPHttpDecoder::Purpose::SourceTable};
-    QByteArray _legacyBody;
-    bool _replyTooLarge = false;
+    struct FetchAttempt;
+    std::unique_ptr<FetchAttempt> _attempt;
     QGeoCoordinate _sortCoord;
     FetchStatus _fetchStatus = FetchStatus::Idle;
     QString _fetchError;

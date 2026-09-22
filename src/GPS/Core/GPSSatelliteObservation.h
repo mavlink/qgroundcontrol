@@ -21,15 +21,26 @@ struct GPSSatellite
     std::optional<double> azimuthDegrees() const;
 };
 
-/// Independent original receipts; zero means no accepted report.
-struct GPSSatelliteProvenance
+struct GPSSatelliteConstellation
 {
+    struct View
+    {
+        quint64 receivedAtUs = 0;
+        QList<GPSSatellite> satellites = {};
+    };
+
+    struct Usage
+    {
+        quint64 receivedAtUs = 0;
+        std::optional<int> count = std::nullopt;
+        // An empty GSA list is known, independent of visibility.
+        std::optional<QList<int>> ids = std::nullopt;
+    };
+
     GPSConstellation constellation = GPSConstellation::Unknown;
-    quint64 inViewTimestampUs = 0;
-    quint64 inUseTimestampUs = 0;
-    std::optional<int> satellitesUsed;
-    // An empty GSA list is known, independent of visibility.
-    std::optional<QList<int>> usedSatelliteIds = std::nullopt;
+    // Independent original receipts; zero means no accepted report.
+    View view;
+    Usage usage;
 };
 
 struct GPSSatelliteObservation
@@ -41,8 +52,7 @@ struct GPSSatelliteObservation
     };
     quint64 monotonicTimestampUs = 0;
     quint64 sessionId = 0;
-    QList<GPSSatellite> satellites;
-    QList<GPSSatelliteProvenance> provenance = {};
+    QList<GPSSatelliteConstellation> constellations = {};
     quint64 revision = 0;  // Orders publications independently of receiver timestamps.
     QString sourceId = {};
     UpdateMode updateMode = UpdateMode::FullSnapshot;

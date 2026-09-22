@@ -139,18 +139,20 @@ QHash<int, QByteArray> NTRIPSourceTableModel::roleNames() const
     };
 }
 
-void NTRIPSourceTableModel::parseSourceTable(const QString& raw)
+void NTRIPSourceTableModel::parseSourceTable(const QString& raw, const QGeoCoordinate& from)
 {
-    _mutate([this, raw]() {
+    _mutate([this, raw, from]() {
         QList<NTRIPMountpoint> mountpoints;
         const QStringList lines = raw.split('\n');
         for (const QString& line : lines) {
             const QString trimmed = line.trimmed();
             NTRIPMountpoint mp;
             if (NTRIPMountpoint::fromSourceTableLine(trimmed, mp)) {
+                mp.updateDistance(from);
                 mountpoints.append(mp);
             }
         }
+        _sortByDistance(mountpoints);
 
         const QPointer<NTRIPSourceTableModel> guard(this);
         beginResetModel();
@@ -187,12 +189,12 @@ void NTRIPSourceTableModel::updateDistances(const QGeoCoordinate& from)
         for (NTRIPMountpoint& mp : _mountpoints) {
             mp.updateDistance(from);
         }
-        _sortByDistance();
+        _sortByDistance(_mountpoints);
         endResetModel();
     });
 }
 
-void NTRIPSourceTableModel::_sortByDistance()
+void NTRIPSourceTableModel::_sortByDistance(QList<NTRIPMountpoint>& mountpoints)
 {
     // Distance ordering: known distances ascending, unknown (negative) last.
     const auto less = [](const NTRIPMountpoint& a, const NTRIPMountpoint& b) {
@@ -208,7 +210,7 @@ void NTRIPSourceTableModel::_sortByDistance()
         return a.distanceKm < b.distanceKm;
     };
 
-    std::stable_sort(_mountpoints.begin(), _mountpoints.end(), less);
+    std::stable_sort(mountpoints.begin(), mountpoints.end(), less);
 }
 
 void NTRIPSourceTableModel::clear()

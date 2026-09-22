@@ -69,6 +69,12 @@ GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiver
         (config.role == GPSReceiverConfig::Role::Passive && !capabilities.passive)) {
         return GPSReceiverConfigError::UnsupportedRole;
     }
+    return gpsValidateReceiverPhysicalConfig(config, capabilities);
+}
+
+GPSReceiverConfigError gpsValidateReceiverPhysicalConfig(const GPSReceiverConfig& config,
+                                                         const GPSReceiverCapabilities& capabilities)
+{
     if (config.allowPersistentChanges && !capabilities.persistentConfiguration) {
         return GPSReceiverConfigError::UnsupportedPersistentConfiguration;
     }

@@ -82,7 +82,8 @@ public:
     QVariant data(const QModelIndex& index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    void parseSourceTable(const QString& raw);
+    /// Publish parsed rows with distances and stable ordering in a single reset.
+    void parseSourceTable(const QString& raw, const QGeoCoordinate& from = {});
     void updateDistances(const QGeoCoordinate& from);
     void clear();
 
@@ -94,7 +95,7 @@ private:
 
     /// Reset observers may request another mutation; finish the current notification first.
     void _mutate(std::function<void()> mutation);
-    void _sortByDistance();
+    static void _sortByDistance(QList<NTRIPMountpoint>& mountpoints);
 
     QList<NTRIPMountpoint> _mountpoints;
     std::deque<std::function<void()>> _pendingMutations;

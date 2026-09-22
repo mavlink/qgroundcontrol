@@ -52,7 +52,7 @@
 class GPSNativeAshtech : public GPSProtocol
 {
 public:
-    GPSNativeAshtech(GPSProtocolIO io, GPSNativePositionReport* gps_position, GPSNativeSatelliteReport* satellite_info);
+    explicit GPSNativeAshtech(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
     ~GPSNativeAshtech() override = default;
 
@@ -62,10 +62,6 @@ public:
 
     int receive(unsigned timeout) override;
     int decodeByte(uint8_t byte) override;
-
-    const GPSNativePositionReport* positionReport() const override { return _gps_position; }
-
-    const GPSNativeSatelliteReport* satelliteReport() const override { return _satellite_info; }
 
 private:
     void flushDecoded() override;
@@ -125,7 +121,7 @@ private:
      */
     int writeAckedCommand(const void* buf, int buf_length, unsigned timeout);
 
-    int waitForReply(NMEACommand command, const unsigned timeout);
+    int waitForReply(NMEACommand command);
 
     bool _correction_output_activated{false};
     bool _configure_done{false};
@@ -148,9 +144,6 @@ private:
     bool _surveyReceiptRequested = false;
     std::optional<uint64_t> _surveyReceiptStartUtc;
 
-    GPSNativePositionReport* _gps_position{nullptr};
-
-    GPSNativeSatelliteReport* _satellite_info{nullptr};
     NMEA::SatelliteAssembler _satelliteAssembler;
     NMEA::SatelliteEpoch _pendingSatellites;
 

@@ -13,18 +13,21 @@ std::optional<double> GPSSatellite::azimuthDegrees() const
 
 int GPSSatelliteObservation::satellitesInViewCount() const
 {
-    return std::any_of(provenance.cbegin(), provenance.cend(),
-                       [](const auto& report) { return report.inViewTimestampUs != 0; })
-               ? static_cast<int>(satellites.size())
-               : -1;
+    int count = -1;
+    for (const auto& system : constellations) {
+        if (system.view.receivedAtUs) {
+            count = std::max(0, count) + static_cast<int>(system.view.satellites.size());
+        }
+    }
+    return count;
 }
 
 int GPSSatelliteObservation::satellitesInUseCount() const
 {
     int count = -1;
-    for (const auto& report : provenance) {
-        if (report.inUseTimestampUs && report.satellitesUsed) {
-            count = std::max(0, count) + *report.satellitesUsed;
+    for (const auto& system : constellations) {
+        if (system.usage.receivedAtUs && system.usage.count) {
+            count = std::max(0, count) + *system.usage.count;
         }
     }
     return count;

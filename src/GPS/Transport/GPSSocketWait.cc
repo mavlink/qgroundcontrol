@@ -1,12 +1,25 @@
 #include <algorithm>
 #include <limits>
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QEventLoop>
 #include <QtCore/QTimer>
 #include <QtNetwork/QAbstractSocket>
 
 #include "GPSSocketWait_p.h"
 #include "GPSTransport.h"
+
+GPSOpenResult gpsSocketOpenFailure(const GPSTransport& transport, QAbstractSocket& socket, QDeadlineTimer deadline)
+{
+    const bool timedOut = deadline.hasExpired();
+    const GPSOpenResult result{
+        transport.isCancelled() ? GPSOpenStatus::Cancelled
+        : timedOut              ? GPSOpenStatus::TimedOut
+                                : GPSOpenStatus::Error,
+        timedOut ? QCoreApplication::translate("GPSTransport", "Receiver connection timed out") : socket.errorString()};
+    socket.abort();
+    return result;
+}
 
 bool gpsWaitForSocket(const GPSTransport& transport, QAbstractSocket* socket, const std::function<bool()>& ready,
                       QDeadlineTimer deadline, int cancellationPollMs)

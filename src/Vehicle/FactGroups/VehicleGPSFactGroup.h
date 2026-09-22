@@ -32,7 +32,14 @@ class VehicleGPSFactGroup : public FactGroup
     Q_PROPERTY(Fact* postProcessingQuality  READ postProcessingQuality  CONSTANT)
 
 public:
-    explicit VehicleGPSFactGroup(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
+    enum class ReceiverIndex
+    {
+        Primary,
+        Secondary,
+    };
+
+    explicit VehicleGPSFactGroup(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr,
+                                 ReceiverIndex receiver = ReceiverIndex::Primary);
 
     Fact *lat() { return &_latFact; }
     Fact *lon() { return &_lonFact; }
@@ -67,7 +74,7 @@ public:
 signals:
     void gnssIntegrityReceived();
 
-protected:
+private:
     void _handleGpsRaw(const mavlink_message_t& message);
     void _handleHighLatency(const mavlink_message_t &message);
     void _handleHighLatency2(const mavlink_message_t &message);
@@ -93,11 +100,9 @@ protected:
     Fact _gnssSignalQualityFact = Fact(0, QStringLiteral("gnssSignalQuality"), FactMetaData::valueTypeUint8);
     Fact _postProcessingQualityFact = Fact(0, QStringLiteral("postProcessingQuality"), FactMetaData::valueTypeUint8);
 
-    uint8_t _gnssIntegrityId {};
-
-private:
     void _updateGpsObservation(GPSObservation observation, int fixType, int satellitesVisible, double yaw = qQNaN());
 
+    const ReceiverIndex _receiver;
     QPointer<RuntimeScheduler> _scheduler;
     GPSSourceHealth* _positionHealth = nullptr;
     quint64 _gnssIntegrityTimestampUs = 0;

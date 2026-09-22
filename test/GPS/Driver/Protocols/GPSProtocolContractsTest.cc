@@ -13,6 +13,7 @@
 #include <QtCore/QTime>
 
 #include "GPSProtocolFeatures.h"
+#include "GPSReceiverCapabilities.h"
 #include "NMEAConstellation.h"
 #include "NMEASatelliteEpoch.h"
 #include "NMEASentence.h"
@@ -69,9 +70,7 @@ void verifyDriverContract()
         ++operations;
         return false;
     };
-    GPSNativePositionReport position;
-    GPSNativeSatelliteReport satellites;
-    Driver driver(std::move(io), &position, &satellites);
+    Driver driver(std::move(io));
     constexpr std::array<uint8_t, 8> noise{0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00};
     const auto decoded = driver.decode(noise);
     QCOMPARE(decoded.bytesConsumed, noise.size());
@@ -123,6 +122,24 @@ private slots:
     void _ggaValidity();
     void _navigationStatus_data();
     void _navigationStatus();
+
+    void _physicalValidationKeepsRoleQualification()
+    {
+        GPSReceiverConfig config;
+        config.role = GPSReceiverConfig::Role::Position;
+        for (auto type : {GPSType::trimble, GPSType::septentrio, GPSType::femto}) {
+            const auto capabilities = gpsReceiverCapabilities(type, config.role);
+            QCOMPARE(gpsValidateReceiverPhysicalConfig(config, capabilities), GPSReceiverConfigError::None);
+            QCOMPARE(gpsValidateReceiverConfig(type, config), GPSReceiverConfigError::UnsupportedRole);
+        }
+        config.role = GPSReceiverConfig::Role::RTKBase;
+        const auto capabilities = gpsReceiverCapabilities(GPSType::ublox, config.role);
+        QCOMPARE(gpsValidateReceiverPhysicalConfig(config, capabilities), GPSReceiverConfigError::InvalidSurveyIn);
+        QCOMPARE(gpsValidateReceiverConfig(GPSType::ublox, config), GPSReceiverConfigError::InvalidSurveyIn);
+        config.base.mode = GPSBaseStationConfig::Fixed{{47, 8, 500}, 1};
+        QCOMPARE(gpsValidateReceiverPhysicalConfig(config, capabilities), GPSReceiverConfigError::None);
+        QCOMPARE(gpsValidateReceiverConfig(GPSType::ublox, config), GPSReceiverConfigError::None);
+    }
 };
 
 void GPSProtocolContractsTest::_satelliteIds_data()

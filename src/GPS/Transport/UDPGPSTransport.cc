@@ -4,7 +4,6 @@
 #include <cstring>
 #include <utility>
 
-#include <QtCore/QCoreApplication>
 #include <QtCore/QDeadlineTimer>
 #include <QtNetwork/QNetworkDatagram>
 #include <QtNetwork/QUdpSocket>
@@ -48,14 +47,7 @@ GPSOpenResult UDPGPSTransport::open()
     if (!isCancelled()) {
         qCWarning(UDPGPSTransportLog) << "Failed to open UDP GPS receiver" << _host << _port << _socket->errorString();
     }
-    const auto result = GPSOpenResult{isCancelled()                  ? GPSOpenStatus::Cancelled
-                                      : connectDeadline.hasExpired() ? GPSOpenStatus::TimedOut
-                                                                     : GPSOpenStatus::Error,
-                                      connectDeadline.hasExpired()
-                                          ? QCoreApplication::translate("GPSTransport", "Receiver connection timed out")
-                                          : _socket->errorString()};
-    _socket->abort();
-    return result;
+    return gpsSocketOpenFailure(*this, *_socket, connectDeadline);
 }
 
 bool UDPGPSTransport::fatalError() const

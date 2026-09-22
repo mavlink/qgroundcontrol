@@ -35,6 +35,7 @@
 #include <cstddef>
 #include <string.h>
 
+#include "GPSRawAckMatcher.h"
 #include "RTCMFramer.h"
 #include "SBF/GPSDriverSBF.h"
 
@@ -147,6 +148,7 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
     if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
         return -1;
     }
+    std::string outputConfirmation = msg;
 
     // Septentrio's WGS84/Default selects the global datum except when external corrections supply a datum.
     if (!sendMessageAndWaitForAck("setGeodeticDatum, WGS84\n", SBF_CONFIG_TIMEOUT)) {
@@ -178,22 +180,22 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
         if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
             return -1;
         }
+        outputConfirmation = msg;
     }
 
-    int i = 0;
-
-    do {
-        ++i;
-
-        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-            if (i >= 5) {
-                return -1;  // connection and/or baudrate detection failed
-            }
-
-        } else {
-            response_detected = true;
+    // Preserve the receiver's historical second application after the first required ACK.
+    // Navigation confirms its SBF stream; base mode confirms the selected input/output port.
+    constexpr unsigned OUTPUT_CONFIRMATION_ATTEMPTS = 5;
+    bool outputConfirmed = false;
+    for (unsigned attempt = 0; attempt < OUTPUT_CONFIRMATION_ATTEMPTS && !ioError(); ++attempt) {
+        if (sendMessageAndWaitForAck(outputConfirmation.c_str(), SBF_CONFIG_TIMEOUT)) {
+            outputConfirmed = true;
+            break;
         }
-    } while (i < 5 && !response_detected);
+    }
+    if (!outputConfirmed) {
+        return -1;
+    }
 
     if (_output_mode == OutputMode::RTCM) {
         if (!_rtcm_parsing) {
@@ -264,27 +266,21 @@ bool GPSNativeSBF::sendMessageAndWaitForAck(const char* msg, int timeout, GPSRec
     if (!writeCommand(step, {reinterpret_cast<const uint8_t*>(msg), strlen(msg)})) {
         return false;
     }
-    const std::string expected = "$R: " + std::string(msg);
-    std::string received;
-    GPSCommandOutcome response = GPSCommandOutcome::Pending;
+    std::string_view command(msg);
+    while (command.ends_with('\r') || command.ends_with('\n')) {
+        command.remove_suffix(1);
+    }
+    const std::string expected = "$R: " + std::string(command);
+    GPSRawAckMatcher matcher(expected, "$R?");
     const auto result = awaitCommand(
-        step,
         [&] {
             uint8_t bytes[GPS_READ_BUFFER_SIZE];
             const int count = read(bytes, sizeof(bytes), timeout);
             if (count <= 0) {
                 return;
             }
-            received.append(reinterpret_cast<const char*>(bytes), count);
-            if (received.find(expected) != std::string::npos) {
-                response = GPSCommandOutcome::Acknowledged;
-            } else if (received.find("$R?") != std::string::npos) {
-                response = GPSCommandOutcome::Rejected;
-            }
-            if (received.size() > expected.size()) {
-                received.erase(0, received.size() - expected.size());
-            }
+            matcher.append(std::span(bytes).first(count));
         },
-        [&] { return response; });
+        [&] { return matcher.outcome(); });
     return result.evidence.outcome == GPSCommandOutcome::Acknowledged;
 }

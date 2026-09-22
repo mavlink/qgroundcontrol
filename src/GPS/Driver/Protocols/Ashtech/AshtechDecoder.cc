@@ -541,11 +541,17 @@ int GPSNativeAshtech::decodeByte(uint8_t byte)
     const int length = parseChar(byte);
     const int result = length > 0 ? handleMessage(length) : 0;
     _drainSatellites();
+    if (result & 1) {
+        publishPosition(*_gps_position);
+    }
     return result;
 }
 
 void GPSNativeAshtech::_queueSatellites(NMEA::SatelliteEpoch epoch)
 {
+    if (!_satellite_info) {
+        return;
+    }
     _pendingSatellites.insert(_pendingSatellites.end(), std::make_move_iterator(epoch.begin()),
                               std::make_move_iterator(epoch.end()));
 }
@@ -600,11 +606,8 @@ void GPSNativeAshtech::_applyMetadata(std::optional<int> time)
         NMEA::utcAtTimeOfDay(_utcReference, _last_timestamp_time, time, now, METADATA_MAX_AGE_US);
 }
 
-GPSNativeAshtech::GPSNativeAshtech(GPSProtocolIO io, GPSNativePositionReport* gps_position,
-                                   GPSNativeSatelliteReport* satellite_info)
-    : GPSProtocol(std::move(io))
-    , _gps_position(gps_position)
-    , _satellite_info(satellite_info)
+GPSNativeAshtech::GPSNativeAshtech(GPSProtocolIO io, bool satelliteInfoEnabled)
+    : GPSProtocol(std::move(io), satelliteInfoEnabled)
 {
     decodeInit();
 }

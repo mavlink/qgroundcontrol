@@ -13,8 +13,7 @@
 class GPSAsciiProtocol : public GPSProtocol
 {
 public:
-    GPSAsciiProtocol(GPSProtocolIO io, GPSNativePositionReport* position,
-                     GPSNativeSatelliteReport* satellites = nullptr);
+    explicit GPSAsciiProtocol(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
     int receive(unsigned timeout) override;
 
@@ -29,8 +28,6 @@ protected:
     int decodeByte(uint8_t byte) override;
     void flushDecoded() override;
 
-    const GPSNativePositionReport* positionReport() const override { return _position; }
-
 private:
     int _handleNmea(std::string_view line);
     void _expireVdop(uint64_t now);
@@ -40,9 +37,8 @@ private:
 
     static constexpr size_t MAX_LINE_SIZE = 4096;
     static constexpr uint64_t METADATA_MAX_AGE_US = 2000000;
-    GPSNativePositionReport _fallbackPosition;
-    GPSNativePositionReport* _position;
-    GPSNativeSatelliteReport* _satellites;
+    GPSNativePositionReport* const _position = _gps_position;
+    GPSNativeSatelliteReport* const _satellites = _satellite_info;
     RTCMStreamDecoder _rtcm;
     NMEA::SatelliteAssembler _satelliteAssembler;
     NMEA::SatelliteEpoch _pendingSatellites;

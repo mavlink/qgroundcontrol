@@ -519,6 +519,61 @@ void NMEAPositionSourceTest::_fixLossPreservesPendingRequest()
     QCOMPARE(source.lastObservation().position.timestamp().time(), QTime(9, 27, 52));
 }
 
+void NMEAPositionSourceTest::_rejectedFixKeepsOriginalRequestDeadline_data()
+{
+    QTest::addColumn<int>("recoveryAtMs");
+    QTest::newRow("just-before-deadline") << 999;
+    QTest::newRow("at-deadline") << 1000;
+    QTest::newRow("after-deadline") << 1001;
+}
+
+void NMEAPositionSourceTest::_rejectedFixKeepsOriginalRequestDeadline()
+{
+    QFETCH(int, recoveryAtMs);
+    ManualScheduler scheduler;
+    SequentialTestDevice device(&scheduler);
+    NMEAPositionSource source(&device, nullptr, &scheduler);
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    QSignalSpy observations(&source, &NMEAPositionSource::observationReceived);
+    QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
+    const auto requestAtUs = scheduler.nowUs();
+    source.requestUpdate(1000);
+    QSignalSpy decoded(source._decoder.get(), &QGeoPositionInfoSource::positionUpdated);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(400)));
+    // The loss sentence flushes Qt's retained old fix after the wrapper has invalidated its epoch.
+    device.feed(kFix + NMEAUtils::repairChecksum("$GPGGA,092751.000,,,,,0,0,,,,,,,"));
+    QCOMPARE(decoded.size(), 1);
+    QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
+    QCOMPARE(observations.size(), 1);
+    QCOMPARE(observations.first().first().value<GPSObservation>().receiverFixValid, std::optional<bool>(false));
+    QVERIFY(updates.isEmpty());
+    QVERIFY(errors.isEmpty());
+
+    source.stopUpdates();
+    source.startUpdates();
+    source.stopUpdates();
+    QVERIFY(scheduler.advanceToUs(requestAtUs + recoveryAtMs * 1000));
+    const bool timely = recoveryAtMs < 1000;
+    QCOMPARE(errors.size(), timely ? 0 : 1);
+    // Advancing to the following epoch publishes recovery synchronously, without Qt timer sleeps.
+    device.feed(NMEAUtils::repairChecksum("$GPRMC,092752.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A") +
+                NMEAUtils::repairChecksum("$GPGGA,092752.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,") +
+                NMEAUtils::repairChecksum("$GPRMC,092753.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A"));
+    QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
+    QCOMPARE(updates.size(), timely ? 1 : 0);
+    QCOMPARE(observations.size(), timely ? 2 : 1);
+    if (timely) {
+        QCOMPARE(source.lastObservation().position.timestamp().time(), QTime(9, 27, 52));
+    }
+    QVERIFY(scheduler.advanceToUs(requestAtUs + 2'000'000));
+    device.feed(NMEAUtils::repairChecksum("$GPRMC,092754.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A"));
+    QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
+    QCOMPARE(updates.size(), timely ? 1 : 0);
+    QCOMPARE(observations.size(), timely ? 2 : 1);
+    QCOMPARE(errors.size(), timely ? 0 : 1);
+    QCOMPARE(source.error(), timely ? QGeoPositionInfoSource::NoError : QGeoPositionInfoSource::UpdateTimeoutError);
+}
+
 void NMEAPositionSourceTest::_fixLossCanDestroySource()
 {
     SequentialTestDevice device;

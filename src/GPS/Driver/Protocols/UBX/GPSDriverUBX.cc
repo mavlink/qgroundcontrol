@@ -39,12 +39,8 @@
 #include "NMEASentence.h"
 #include "RTCMFramer.h"
 
-GPSNativeUBX::GPSNativeUBX(GPSProtocolIO io, GPSNativePositionReport* gps_position,
-                           GPSNativeSatelliteReport* satellite_info)
-    : GPSProtocol(std::move(io))
-    , _gps_position(gps_position)
-    , _satellite_info(satellite_info)
-
+GPSNativeUBX::GPSNativeUBX(GPSProtocolIO io, bool satelliteInfoEnabled)
+    : GPSProtocol(std::move(io), satelliteInfoEnabled)
 {
     decodeInit();
 }
@@ -190,8 +186,7 @@ void GPSNativeUBX::setDecodeContext(DecodeContext context)
 void GPSNativeUBX::publishEpoch(const GPSNativePositionReport& report)
 {
     *_gps_position = report;
-    _decoded.updates |= 1;
-    _decoded.events.emplace_back(report);
+    publishPosition(report);
 }
 
 void GPSNativeUBX::flushDecoded()

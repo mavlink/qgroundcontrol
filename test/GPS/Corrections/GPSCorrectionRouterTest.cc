@@ -1123,6 +1123,14 @@ void GPSCorrectionRouterTest::explicitAllAndSinkResults()
     QVERIFY(router.acceptIngress(update));
     QCOMPARE(router.statistics().at(static_cast<int>(GPSCorrectionSource::Udp)).submittedBytes,
              quint64(update.frame().data.size()));
+    for (const auto& row : router.sourceInstanceDiagnostics()) {
+        QVERIFY(row.toMap().value(QStringLiteral("selected")).toBool());
+    }
+    now += GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS;
+    for (const auto& row : router.sourceInstanceDiagnostics()) {
+        QVERIFY(!row.toMap().value(QStringLiteral("usable")).toBool());
+        QVERIFY(!row.toMap().value(QStringLiteral("selected")).toBool());
+    }
 }
 
 void GPSCorrectionRouterTest::emptyOutputRemovesRegistration_data()

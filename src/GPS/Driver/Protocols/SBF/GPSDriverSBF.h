@@ -50,8 +50,7 @@
 class GPSNativeSBF : public GPSProtocol
 {
 public:
-    GPSNativeSBF(GPSProtocolIO io, struct GPSNativePositionReport* gps_position,
-                 GPSNativeSatelliteReport* satellite_info = nullptr);
+    explicit GPSNativeSBF(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
     ~GPSNativeSBF() override = default;
 
@@ -59,10 +58,6 @@ public:
 
     int receive(unsigned timeout) override;
     int decodeByte(uint8_t byte) override;
-
-    const GPSNativePositionReport* positionReport() const override { return _gps_position; }
-
-    const GPSNativeSatelliteReport* satelliteReport() const override { return _satellite_info; }
 
     int configure(unsigned& baudrate, const GPSConfig& config) override;
 
@@ -116,8 +111,6 @@ private:
     bool sendMessageAndWaitForAck(const char* msg, int timeout, GPSReceiverSettingSet settings = {},
                                   bool required = true);
 
-    GPSNativePositionReport* _gps_position{nullptr};
-    GPSNativeSatelliteReport* _satellite_info{nullptr};
     bool _configured{false};
     sbf_decode_state_t _decode_state{SBF_DECODE_SYNC1};
     uint16_t _rx_payload_index{0};

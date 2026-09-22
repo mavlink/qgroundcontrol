@@ -11,6 +11,7 @@
 
 #include "GPSAsciiProtocol.h"
 #include "GPSProtocolFeatures.h"
+#include "GPSProtocolTestIO.h"
 #if QGC_GPS_ENABLE_QUECTEL
 #include "Quectel/QuectelCodec_p.h"
 #endif
@@ -87,7 +88,7 @@ void GPSAsciiProtocolTest::_vdopEpoch()
             }
         }
     };
-    AsciiReceiver receiver(std::move(io), &position);
+    AsciiReceiver receiver(captureGPSReports(std::move(io), position), false);
     const auto gst = "GPGST," + firstUtc + ",0,0,0,0,0.3,0.4,0.6";
     feed(receiver, gst);
     QVERIFY(!published);
@@ -96,7 +97,6 @@ void GPSAsciiProtocolTest::_vdopEpoch()
     QCOMPARE(published->navigation.horizontalAccuracyMeters, 0.5f);
     const auto positionReceipt = published->navigation.timestampUs;
     feed(receiver, GSA);
-    QCOMPARE(position.navigation.verticalDop, 0.6f);
     ++now;
     feed(receiver, gst);
     QCOMPARE(published->navigation.timestampUs, positionReceipt);
@@ -120,7 +120,7 @@ void GPSAsciiProtocolTest::_vdopReceiptIsNotRenewed()
     GPSNativePositionReport position;
     GPSProtocolIO io;
     io.nowUs = [&now] { return now; };
-    AsciiReceiver receiver(std::move(io), &position);
+    AsciiReceiver receiver(captureGPSReports(std::move(io), position), false);
     feed(receiver, gga("123519"));
     feed(receiver, GSA);
     for (unsigned second = 1; second <= 7; ++second) {
@@ -150,7 +150,7 @@ void GPSAsciiProtocolTest::_unassociatedGsa()
     GPSNativePositionReport position;
     GPSProtocolIO io;
     io.nowUs = [&now] { return now; };
-    AsciiReceiver receiver(std::move(io), &position);
+    AsciiReceiver receiver(captureGPSReports(std::move(io), position), false);
     if (ageUs) {
         feed(receiver, gga("123519"));
         now = static_cast<uint64_t>(static_cast<qint64>(now) + ageUs);
@@ -247,7 +247,7 @@ void GPSAsciiProtocolTest::_unicoreFailureDetails()
     GPSTest::UnicoreReceiver peer;
     peer.fault = static_cast<GPSTest::UnicoreReceiver::Fault>(fault);
     peer.faultCommand = "UNLOG";
-    GPSNativeUnicore receiver(peer.io(), nullptr);
+    GPSNativeUnicore receiver(peer.io(), false);
     unsigned baud = 115200;
     QVERIFY(receiver.configure(baud, {}) < 0);
     QVERIFY(!receiver.receiverReady());
@@ -277,7 +277,7 @@ void GPSAsciiProtocolTest::_unicoreUnsupportedDetails()
     GPSTest::UnicoreReceiver peer;
     peer.version = GPSTest::unicoreNative("VERSIONA",
                                           "\"UM982\",\"R5.00Build20000\",\"auth\",\"serial\",\"efuse\",\"2024/08/08\"");
-    GPSNativeUnicore receiver(peer.io(), nullptr);
+    GPSNativeUnicore receiver(peer.io(), false);
     unsigned baud = 115200;
     QVERIFY(receiver.configure(baud, {}) < 0);
     QVERIFY(receiver.ioErrorDetail().contains("Unsupported Unicore receiver"));

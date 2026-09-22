@@ -21,10 +21,8 @@ class IntegrityReceiver : public VehicleGPSFactGroup
 {
 public:
     IntegrityReceiver(uint8_t id, RuntimeScheduler* scheduler)
-        : VehicleGPSFactGroup(nullptr, scheduler)
-    {
-        _gnssIntegrityId = id;
-    }
+        : VehicleGPSFactGroup(nullptr, scheduler, id == 0 ? ReceiverIndex::Primary : ReceiverIndex::Secondary)
+    {}
 };
 
 mavlink_message_t integrityMessage(uint8_t id, uint8_t spoofing, uint8_t jamming, uint8_t authentication)

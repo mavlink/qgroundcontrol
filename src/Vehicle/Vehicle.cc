@@ -63,7 +63,6 @@
 #include "VehicleDistanceSensorFactGroup.h"
 #include "VehicleEFIFactGroup.h"
 #include "VehicleEstimatorStatusFactGroup.h"
-#include "VehicleGPS2FactGroup.h"
 #include "VehicleGPSAggregateFactGroup.h"
 #include "VehicleGPSFactGroup.h"
 #include "VehicleGeneratorFactGroup.h"
@@ -312,7 +311,7 @@ void Vehicle::_commonInit(LinkInterface* link)
     connect(QGCCorePlugin::instance(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
 
     _gpsFactGroup                   = new VehicleGPSFactGroup(this);
-    _gps2FactGroup                  = new VehicleGPS2FactGroup(this);
+    _gps2FactGroup = new VehicleGPSFactGroup(this, nullptr, VehicleGPSFactGroup::ReceiverIndex::Secondary);
     _gpsAggregateFactGroup          = new VehicleGPSAggregateFactGroup(this);
     _positionHealth = new GPSSourceHealth(this);
     _windFactGroup                  = new VehicleWindFactGroup(this);

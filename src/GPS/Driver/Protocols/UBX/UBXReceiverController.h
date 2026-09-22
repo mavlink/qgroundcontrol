@@ -7,6 +7,7 @@
 
 #include "GPSCommandTransaction.h"
 #include "LittleEndian.h"
+#include "UBXConfigurationValues.h"
 #include "UBXReceiverProfile.h"
 
 namespace UBX {
@@ -29,25 +30,14 @@ inline std::optional<ConfigurationValues> decodeConfigurationValues(std::span<co
         return std::nullopt;
     }
     ConfigurationValues result;
-    for (size_t offset = 4; offset < payload.size();) {
-        const auto key = LittleEndian::read<uint32_t>(payload, offset);
-        if (!key || result.count == result.keys.size()) {
+    ConfigurationValueCursor cursor(payload.subspan(4));
+    while (!cursor.empty()) {
+        const auto entry = cursor.next();
+        if (!entry || result.count == result.keys.size()) {
             return std::nullopt;
         }
-        offset += 4;
-        const auto width = configurationValueBytes(*key);
-        if (!width || payload.size() - offset < width) {
-            return std::nullopt;
-        }
-        uint32_t value = 0;
-        for (unsigned byte = 0; byte < width; ++byte) {
-            value |= uint32_t(payload[offset++]) << (8 * byte);
-        }
-        if ((*key >> 28) == 1 && value > 1) {
-            return std::nullopt;
-        }
-        result.keys[result.count] = *key;
-        result.values[result.count++] = value;
+        result.keys[result.count] = entry->key;
+        result.values[result.count++] = entry->value;
     }
     return result;
 }

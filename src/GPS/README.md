@@ -30,6 +30,12 @@ source bindings and selection policy; callbacks preserve the binding and backend
 Retire owned state into a local before synchronous notifications can install its replacement.
 Destruction then touches only retired objects. Keep generation counters outside resettable session
 values, and keep last-notified values separate from the currently published position.
+Receiver failures carry category and diagnostic together. Publishing an error must not depend on
+another queued callback having already stored part of that error in a Fact.
+
+The NMEA wrapper owns single-shot request completion and its deadline. Its internal Qt decoder
+acquires data while continuous updates or a pending request need it; rejecting a retained fix
+must not start a second request timer or extend the caller's deadline.
 
 ## Protocol contracts
 
@@ -46,6 +52,11 @@ Receiver command construction must preserve the selected connection port, requir
 termination, and coordinate precision. A write, acknowledgement, readback, and operational
 receiver observation are different evidence levels. An acknowledgement alone does not prove
 that a requested survey duration or datum was applied.
+Initialize command metadata, requiredness, affected settings, and the absolute deadline before
+the first write. Optional commands remain optional in failure evidence, including failed writes.
+Reply correlation and connection-wide ambiguity remain receiver-specific even when attempt
+bookkeeping is shared. A failed VALSET append invalidates that batch; do not send a partial command
+or claim that an unencoded setting was requested.
 
 Capabilities describe implemented behavior, not everything a receiver family might support.
 Hide or reject unsupported controls rather than silently accepting settings that have no effect.
@@ -60,6 +71,9 @@ Explicit receiver commands that clear retained offsets are still required.
 Decoded navigation and integrity payloads are shared across the native/facade boundary. Native
 epoch metadata and facade validation remain separate. Normalize native survey units and datum once,
 then deliver the normalized report by value rather than creating a second Qt-only survey payload.
+Protocols own their working reports and publish owned events explicitly. Satellite output enablement
+is a configuration option, not an external scratch pointer. Update masks describe emitted reports;
+they must not serve as a separate instruction to copy mutable state later.
 
 ## Accepted observations
 
@@ -77,11 +91,23 @@ Satellite view and usage state have separate retirement watermarks. Clearing or 
 must not clear the other or allow a queued older report to resurrect retired values. Integrity
 groups likewise retain their own receipt times; a new RF diagnostic does not refresh old spoofing
 or correction-use status.
+Observations contain constellation records with view and usage payloads, rather than a flat list
+joined to separate provenance. Native mixed-constellation snapshots are normalized at their adapter
+boundary; NMEA epochs retain their existing grouping. A full snapshot's omissions retire state,
+whereas a constellation delta leaves other constellations unchanged. A zero view receipt means no
+view report; a nonzero receipt with no satellites is a known empty view.
+
+`GPSFixQuality` is the shared navigation classification; value 7 remains reserved and extrapolated
+fixes use value 8. NMEA autonomous fixes require a caller-provided dimension policy: native GGA
+retains its 3D assumption, while Qt uses fresh epoch-local GSA evidence or Unknown. MAVLink wire
+values still need explicit conversion, particularly static and PPP classifications.
 
 The normal position lifetime is five seconds. A live vehicle heartbeat does not refresh its
 GPS or fused position. Raw vehicle GPS observations use their own MSL altitude; fused observations
 use a separately received global-position sample. HIGH_LATENCY2 position errors are distances,
 not dimensionless dilution-of-precision values.
+Both vehicle receivers use `VehicleGPSFactGroup` with an explicit receiver index. Raw-message and
+integrity IDs are filtered per receiver; high-latency messages update only the primary receiver.
 
 ### Altitude and consumer policy
 
@@ -127,6 +153,9 @@ Explicit NTRIP stop cancels deferred configuration/reconnect work. A new user-re
 gets a new retry budget; automatic retries within that session share its existing budget.
 Streaming and finite source-table fetches share endpoint/request policy but need not share their
 entire transport implementation.
+Source-table fetches prepare distances and stable ordering before publishing a single model reset.
+Retire attempt resources before abort callbacks can start a replacement; cache identity and the
+operation revision do not belong to the retiring network attempt.
 
 ## Source organization
 

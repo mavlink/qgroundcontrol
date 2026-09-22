@@ -13,6 +13,35 @@ Q_DECLARE_LOGGING_CATEGORY(GPSNativeDriversLog)
 #endif
 using SurveyInStatus = GPSNativeSurveyReport;
 
+template <typename Driver>
+class GPSProtocolTestProbe : public Driver
+{
+public:
+    using Driver::Driver;
+
+    const GPSNativePositionReport& workingPosition() const { return this->_workingPosition; }
+
+    const GPSNativeSatelliteReport& workingSatellites() const { return this->_workingSatellites; }
+};
+
+inline GPSProtocolIO captureGPSReports(GPSProtocolIO io, GPSNativePositionReport& position,
+                                       GPSNativeSatelliteReport* satellites = nullptr)
+{
+    io.decoded = [&position, satellites, sink = std::move(io.decoded)](const GPSDecodedBatch& batch) {
+        for (const auto& event : batch.events) {
+            if (const auto* report = std::get_if<GPSNativePositionReport>(&event)) {
+                position = *report;
+            } else if (const auto* satellite = std::get_if<GPSNativeSatelliteReport>(&event); satellite && satellites) {
+                *satellites = *satellite;
+            }
+        }
+        if (sink) {
+            sink(batch);
+        }
+    };
+    return io;
+}
+
 inline GPSProtocolIO makeGPSProtocolTestIO()
 {
     GPSProtocolIO io;

@@ -359,7 +359,14 @@ void GPSNativeFemto::sendSurveyInStatusUpdate(bool active, bool valid, double la
 int GPSNativeFemto::decodeByte(uint8_t byte)
 {
     const int length = parseChar(byte);
-    return length > 0 ? handleMessage(length) : 0;
+    const int result = length > 0 ? handleMessage(length) : 0;
+    if (result & 1) {
+        publishPosition(*_gps_position);
+    }
+    if ((result & 2) && _satellite_info) {
+        publishSatellites(*_satellite_info);
+    }
+    return result;
 }
 
 void GPSNativeFemto::flushDecoded()
@@ -369,11 +376,8 @@ void GPSNativeFemto::flushDecoded()
     }
 }
 
-GPSNativeFemto::GPSNativeFemto(GPSProtocolIO io, struct GPSNativePositionReport* gps_position,
-                               GPSNativeSatelliteReport* satellite_info)
-    : GPSProtocol(std::move(io))
-    , _gps_position(gps_position)
-    , _satellite_info(satellite_info)
+GPSNativeFemto::GPSNativeFemto(GPSProtocolIO io, bool satelliteInfoEnabled)
+    : GPSProtocol(std::move(io), satelliteInfoEnabled)
 {
     decodeInit();
 }

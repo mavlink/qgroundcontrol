@@ -90,16 +90,16 @@ int GPSNativeAshtech::writeAckedCommand(const void* buf, int buf_length, unsigne
         return -1;
     }
 
-    return waitForReply(NMEACommand::Acked, timeout);
+    return waitForReply(NMEACommand::Acked);
 }
 
-int GPSNativeAshtech::waitForReply(NMEACommand command, const unsigned timeout)
+int GPSNativeAshtech::waitForReply(NMEACommand command)
 {
     _command_state = NMEACommandState::waiting;
     _waiting_for_command = command;
     const auto clearReply = qScopeGuard([this] { _command_state = NMEACommandState::idle; });
 
-    const auto result = awaitCommand({_commandWrite.evidence.command, std::chrono::milliseconds(timeout)}, [this] {
+    const auto result = awaitCommand([this] {
         return _command_state == NMEACommandState::received ? GPSCommandOutcome::Acknowledged
                : _command_state == NMEACommandState::nack   ? GPSCommandOutcome::Rejected
                                                             : GPSCommandOutcome::Pending;
@@ -164,7 +164,7 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
             writeCommand({port_config, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
                          {reinterpret_cast<const uint8_t*>(port_config), sizeof(port_config) - 1});
 
-            if (waitForReply(NMEACommand::PRT, ASH_RESPONSE_TIMEOUT) == 0) {
+            if (waitForReply(NMEACommand::PRT) == 0) {
                 success = true;
                 break;
             }
@@ -201,7 +201,7 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
             writeCommand({port_config, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
                          {reinterpret_cast<const uint8_t*>(port_config), sizeof(port_config) - 1});
 
-            if (waitForReply(NMEACommand::PRT, ASH_RESPONSE_TIMEOUT) == 0) {
+            if (waitForReply(NMEACommand::PRT) == 0) {
                 success = true;
                 break;
             }
@@ -238,7 +238,7 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
 
     if (writeCommand({board_identification, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
                      {reinterpret_cast<const uint8_t*>(board_identification), sizeof(board_identification) - 1})) {
-        if (waitForReply(NMEACommand::RID, ASH_RESPONSE_TIMEOUT) != 0) {
+        if (waitForReply(NMEACommand::RID) != 0) {
             return -1;
         }
     }
@@ -343,7 +343,7 @@ void GPSNativeAshtech::activateCorrectionOutput()
         writeCommand({buffer, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
                      {reinterpret_cast<const uint8_t*>(buffer), static_cast<size_t>(len)});
 
-        if (waitForReply(NMEACommand::RECEIPT, ASH_RESPONSE_TIMEOUT) != 0) {
+        if (waitForReply(NMEACommand::RECEIPT) != 0) {
             _surveyReceiptRequested = false;
             _surveyReceiptStartUtc.reset();
             controlFailed();

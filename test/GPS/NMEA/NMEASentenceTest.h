@@ -20,4 +20,6 @@ private slots:
     void _incrementalFraming_data();
     void _incrementalFraming();
     void _incrementalReset();
+    void _fixQuality_data();
+    void _fixQuality();
 };

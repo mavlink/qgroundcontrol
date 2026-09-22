@@ -95,7 +95,7 @@ private slots:
     void _satelliteUsageUpdate(const GPSSatelliteUsageReport& msg);
     void _fixTypeChanged(GPSPositionReport::FixType fixType);
     void _onGPSConnect();
-    void _onGPSConnectionError(GPSConnectionError error);
+    void _onGPSConnectionError(GPSConnectionError error, const QString& detail);
     void _onGPSSurveyReport(const GPSSurveyReport& status);
 
 private:

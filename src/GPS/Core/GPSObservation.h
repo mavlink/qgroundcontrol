@@ -8,21 +8,12 @@
 #include <QtPositioning/QGeoPositionInfo>
 
 #include "GPSAltitudeDatum.h"
+#include "GPSFixQuality.h"
 
 /// Receiver-independent data. Unknown metadata remains absent, never a manufactured zero.
 struct GPSObservation
 {
-    enum class FixQuality
-    {
-        Unknown,
-        NoFix,
-        Fix2D,
-        Fix3D,
-        Differential,
-        RTKFloat,
-        RTKFixed,
-        Extrapolated
-    };
+    using FixQuality = GPSFixQuality;
 
     enum class PositionUse
     {

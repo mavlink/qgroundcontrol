@@ -80,7 +80,7 @@ struct Receiver
             CHECK(batch.events.size() <= GPSDecodedBatch::MAX_EVENTS);
             events.insert(events.end(), batch.events.begin(), batch.events.end());
         };
-        return io;
+        return captureGPSReports(std::move(io), position, &satellites);
     }
 
     template <typename T>
@@ -104,7 +104,7 @@ void feed(GPSNativePassive& driver, std::string_view text)
 void configuration()
 {
     Receiver receiver;
-    GPSNativePassive driver(receiver.io(), &receiver.position, &receiver.satellites);
+    GPSNativePassive driver(receiver.io());
     GPSProtocol::GPSConfig config;
     unsigned baud = 0;
     CHECK(driver.configure(baud, config) < 0);
@@ -133,7 +133,7 @@ void configuration()
 void navigation()
 {
     Receiver receiver;
-    GPSNativePassive driver(receiver.io(), &receiver.position, &receiver.satellites);
+    GPSNativePassive driver(receiver.io());
     const auto gga = sentence("GNGGA,123519,4807.038,N,01131.000,E,4,00,0.9,0.0,M,,M,,");
     const auto gst = sentence("GNGST,123519,0,0,0,0,0.3,0.4,0.6");
     feed(driver, gst);
@@ -198,7 +198,7 @@ void corrections()
     const auto binary = frame(payload);
     for (size_t split = 0; split <= binary.size(); ++split) {
         Receiver receiver;
-        GPSNativePassive driver(receiver.io(), &receiver.position);
+        GPSNativePassive driver(receiver.io(), false);
         driver.consume(std::span(binary).first(split));
         driver.consume(std::span(binary).subspan(split));
         CHECK(receiver.reports<GPSNativePositionReport>().empty());
@@ -209,7 +209,7 @@ void corrections()
         CHECK(receiver.writes == 0 && receiver.reads == 0);
     }
     Receiver receiver;
-    GPSNativePassive driver(receiver.io(), &receiver.position);
+    GPSNativePassive driver(receiver.io(), false);
     auto corrupt = binary;
     corrupt.back() ^= 1;
     driver.consume(corrupt);
@@ -235,7 +235,7 @@ void corrections()
 void satellites()
 {
     Receiver receiver;
-    GPSNativePassive driver(receiver.io(), &receiver.position, &receiver.satellites);
+    GPSNativePassive driver(receiver.io());
     feed(driver, sentence("GPGSV,2,1,05,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60"));
     CHECK(receiver.reports<GPSNativeSatelliteReport>().empty());
     feed(driver, sentence("GPGSV,2,2,05,05,50,60,70"));
@@ -255,7 +255,7 @@ void satellites()
 void satelliteEpochBoundaries()
 {
     Receiver receiver;
-    GPSNativePassive driver(receiver.io(), &receiver.position, &receiver.satellites);
+    GPSNativePassive driver(receiver.io());
     const auto send = [&](const char* body) { feed(driver, sentence(body)); };
     send("GPGSV,2,1,05,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60,1");
     send("GLGSV,1,1,01,65,10,20,30,1");
@@ -314,7 +314,7 @@ void satelliteEpochBoundaries()
 void satelliteBatchDeadline()
 {
     Receiver receiver;
-    GPSNativePassive driver(receiver.io(), &receiver.position, &receiver.satellites);
+    GPSNativePassive driver(receiver.io());
     feed(driver, sentence("GLGSV,1,1,01,65,10,20,30"));
     for (int page = 1; page <= 10; ++page) {
         feed(driver,

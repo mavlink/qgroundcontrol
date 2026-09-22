@@ -365,16 +365,7 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to,
         case ConnectionStatus::Disconnected:
         case ConnectionStatus::Error:
             _cancelReconnect();
-            _teardownTransport();
-            if (!current()) {
-                return;
-            }
-            _ggaProvider.stop();
-            if (!current()) {
-                return;
-            }
-            _stats.stop();
-            if (!current()) {
+            if (!_stopStreaming()) {
                 return;
             }
             _applyUdpForwarderConfig({});
@@ -414,16 +405,7 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to,
             break;
 
         case ConnectionStatus::Reconnecting:
-            _teardownTransport();
-            if (!current()) {
-                return;
-            }
-            _ggaProvider.stop();
-            if (!current()) {
-                return;
-            }
-            _stats.stop();
-            if (current()) {
+            if (_stopStreaming()) {
                 _scheduleReconnect(retryAfter);
             }
             break;
@@ -434,6 +416,23 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to,
 // -----------------------------------------------------------------------------
 // Entry-action helpers
 // -----------------------------------------------------------------------------
+
+bool NTRIPManager::_stopStreaming()
+{
+    const QPointer<NTRIPManager> guard(this);
+    const quint64 revision = _stateRevision;
+    const auto current = [this, guard, revision]() { return guard && _stateRevision == revision; };
+    _teardownTransport();
+    if (!current()) {
+        return false;
+    }
+    _ggaProvider.stop();
+    if (!current()) {
+        return false;
+    }
+    _stats.stop();
+    return current();
+}
 
 void NTRIPManager::_teardownTransport()
 {

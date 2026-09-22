@@ -21,6 +21,12 @@ struct GPSCommandResult
 {
     GPSConfigurationEvidence evidence{};
     GPSReceiverSettingSet affectedSettings = {};
+
+    bool succeeded() const
+    {
+        return evidence.outcome == GPSCommandOutcome::Acknowledged ||
+               evidence.outcome == GPSCommandOutcome::ReadbackVerified;
+    }
 };
 
 /// One attempt under a single absolute deadline. Retry decisions belong to the configuration policy.

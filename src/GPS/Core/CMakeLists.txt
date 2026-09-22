@@ -30,4 +30,5 @@ target_sources(
            ..
            FILES
            ../GPSConstellation.h
+           ../GPSFixQuality.h
 )
