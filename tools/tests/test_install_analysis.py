@@ -146,7 +146,7 @@ def test_devcontainer_adds_analysis_without_retargeting_application_builders():
     variants = json.loads((root / "deploy/docker/variants.json").read_text())["variants"]
     assert next(v for v in variants if v["id"] == "ubuntu")["target"] == "linux"
     assert all(v["target"] != "qgc-dev" for v in variants)
-    assert "FROM linux AS qgc-dev" in dockerfile
+    assert "FROM qgc-dev-android-${TARGETARCH} AS qgc-dev" in dockerfile
     assert " AS linux-analysis" not in dockerfile
     assert " AS devcontainer" not in dockerfile
     assert "arm64) QT_HOST=linux_arm64; QT_ARCH=linux_gcc_arm64" in dockerfile

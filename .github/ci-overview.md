@@ -110,6 +110,12 @@ architectures. A source/docs-only push neither cancels nor invalidates a pending
 meaningful image build.
 
 Both native platforms run the same shared container build and smoke checks.
+The amd64 variant adds configured Android SDK/NDK/Java and Qt kits for arm64-v8a,
+armeabi-v7a, and x86_64 using the existing Android builder's shared provisioner.
+Its non-root, offline smoke compiles/links Qt for each ABI and exercises APK packaging;
+it does not build QGC. The official NDK requires an x86-64 Linux host, so native ARM64
+retains desktop/analysis support and directs Android users to `--platform linux/amd64`.
+Desktop Qt remains the default; `qgc-android` selects Android per command.
 Only after validation do trusted jobs export untagged image digests, recheck the
 exact registry images, and collect digest artifacts. A final serialized job validates
 both source identities before promoting one OCI index and reporting its digest.

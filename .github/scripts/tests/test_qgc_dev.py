@@ -48,6 +48,8 @@ def test_triggers_cover_only_image_input_closure():
         ("tools/qgc_tools/python_env.py", True),
         ("tools/uv.lock", True),
         ("deploy/docker/docker-bake.hcl", True),
+        ("deploy/docker/install_android.py", True),
+        ("deploy/docker/qgc-android.sh", True),
         (".github/scripts/ccache_helper.py", True),
         (".devcontainer/devcontainer.json", True),
     ],

@@ -35,6 +35,8 @@ IMAGE_INPUTS = (
     "deploy/docker/Dockerfile",
     "deploy/docker/docker-bake.hcl",
     "deploy/docker/install_analysis.py",
+    "deploy/docker/install_android.py",
+    "deploy/docker/qgc-android.sh",
     "deploy/docker/smoke_dev.py",
     "deploy/docker/lib/**",
     "deploy/docker/entrypoint.*",

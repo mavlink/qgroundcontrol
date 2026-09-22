@@ -76,7 +76,8 @@ ccache uses the pinned, signature-verified release from `.github/scripts/ccache_
 The locked Python `dev` profile includes `just`, build, lint and test tools.
 Git and the GitHub CLI are prebuilt too, without separate devcontainer feature installs.
 Linux GStreamer libraries come from the existing system dependency installer,
-satisfying the configured minimum; mobile and Apple SDK versions do not apply here.
+satisfying the configured minimum. The amd64 image also includes Android tooling;
+Apple SDKs are not included.
 Existing application builder tags and Docker Hub flows are unchanged.
 
 `ghcr.io/mavlink/qgc-dev:latest` is one multi-platform OCI index for native
@@ -99,6 +100,52 @@ Image checks verify native executable architectures, configured tool versions, C
 LLVM linkage, Python imports, and real Qt compilation plus clang-tidy/Clazy execution
 as a non-root user. The prebuilt environment is used by `just` without runtime
 SDK provisioning or Python synchronization.
+
+### Android development
+
+The __linux/amd64__ variant of this same image includes the configured Java JDK,
+Android command-line tools, platform tools, SDK platform, build-tools, official NDK,
+and Qt Android kits for __arm64-v8a__, __armeabi-v7a__, and __x86_64__ (emulator
+target). Versions and Qt modules come from `.github/build-config.json`, using the
+same provisioning helper as the existing Android application builder.
+SDK licenses are accepted during image creation.
+
+The official NDK's Linux host tools are x86-64 only. Native __linux/arm64__
+qgc-dev provides Linux desktop development and analysis, __not Android builds__.
+On Apple Silicon select `--platform linux/amd64`; Docker Desktop supplies emulation
+(Rosetta when enabled). This still uses `ghcr.io/mavlink/qgc-dev`, not another image.
+The image does not include an emulator, system images, Android Studio, or the x86
+Qt target. Running an emulator requires a separate appropriately accelerated host.
+
+Java, `sdkmanager`, `adb`, `aapt2`, `zipalign`, and `apksigner` work in non-login
+shells as the non-root image user. `JAVA_HOME`, `ANDROID_SDK_ROOT`,
+`ANDROID_NDK_ROOT`/`ANDROID_NDK`, and `ANDROID_BUILD_TOOLS_DIR` point at preinstalled
+tools. Qt target kits are under `/opt/qt-android/<ABI>`. Desktop `QT_ROOT_DIR`,
+`qt-cmake`, `just configure`, and `just release` remain native Linux defaults.
+Use `qgc-android <ABI> <command>` to supply the Android preset's target Qt root,
+host Qt path, and configured SDK settings for that command only:
+
+```sh
+docker run --rm -it --platform linux/amd64 \
+  -v "$PWD:/workspaces/qgroundcontrol" ghcr.io/mavlink/qgc-dev:latest \
+  bash -c 'qgc-android arm64-v8a cmake --preset Android -B build/android-arm64 &&
+           qgc-android arm64-v8a cmake --build build/android-arm64 --parallel 4'
+```
+
+Initialize submodules and writable checkout ownership as for the desktop example.
+Use separate build directories for each ABI. Android SDK/NDK/Qt installation is
+not repeated at runtime. A full QGC build can still download project dependencies,
+Android GStreamer/OpenSSL, and Gradle/Maven packages; those caches and release-signing
+credentials are not bundled.
+
+The existing shared image smoke test compiles and links a small Qt Android library
+for all three installed ABIs and checks their ELF architectures. It also exercises
+resource compilation, APK alignment, signing with a disposable test key, and signature
+verification offline as non-root. This is a bounded toolchain test, not a full QGC
+APK build or emulator boot test. Native ARM64 checks the explicit Android limitation
+instead, without installing unusable cross-compiler binaries.
+
+### Local image builds
 
 To build and load the host platform using the same Bake target as CI, run from the
 repository root (use `linux/amd64` on an x86-64 Docker host):
