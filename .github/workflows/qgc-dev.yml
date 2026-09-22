@@ -1,0 +1,163 @@
+name: qgc-dev
+
+on:
+  push:
+    branches: [master]
+    paths: &image-inputs
+      - '.github/workflows/qgc-dev.yml'
+      - '.github/actions/qgc-dev/**'
+      - '.github/scripts/qgc_dev.py'
+      - '.github/build-config.json'
+      - '.github/scripts/ccache_helper.py'
+      - '.github/scripts/ci_bootstrap.py'
+      - '.devcontainer/**'
+      - '.dockerignore'
+      - 'deploy/docker/Dockerfile'
+      - 'deploy/docker/docker-bake.hcl'
+      - 'deploy/docker/install_analysis.py'
+      - 'deploy/docker/smoke_dev.py'
+      - 'deploy/docker/lib/**'
+      - 'deploy/docker/entrypoint.*'
+      - 'tools/setup/read_config.py'
+      - 'tools/setup/install_qt.py'
+      - 'tools/setup/install_dependencies/**'
+      - 'tools/common/**'
+      - 'tools/qgc_tools/**'
+      - 'tools/_bootstrap.py'
+      - 'tools/pyproject.toml'
+      - 'tools/uv.lock'
+  pull_request:
+    paths: *image-inputs
+  workflow_dispatch:
+  release:
+    types: [published]
+  workflow_call:
+    inputs:
+      release_tag:
+        description: Exact published stable QGC tag
+        required: true
+        type: string
+
+concurrency:
+  group: qgc-dev-${{ inputs.release_tag || github.event.release.tag_name || format('{0}-{1}', github.event_name, github.ref) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    if: github.event_name != 'release' || (!github.event.release.draft && !github.event.release.prerelease)
+    runs-on: runs-on=${{ github.run_id }}/runner=linux-x64-builder
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      source: ${{ steps.plan.outputs.source }}
+      tag: ${{ steps.plan.outputs.tag }}
+      publish: ${{ steps.plan.outputs.publish }}
+    steps:
+      - uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v4
+      - id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.event.release.tag_name }}
+        run: python3 .github/scripts/qgc_dev.py plan
+
+  validate:
+    needs: plan
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: runs-on=${{ github.run_id }}/runner=${{ matrix.pool }}
+    timeout-minutes: 120
+    steps:
+      - uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.plan.outputs.source }}
+          persist-credentials: false
+      - uses: ./.github/actions/qgc-dev
+        with:
+          platform: ${{ matrix.platform }}
+          scope: ${{ matrix.scope }}
+          revision: ${{ needs.plan.outputs.source }}
+
+  build-digests:
+    needs: [plan, validate]
+    if: needs.plan.outputs.publish == 'true'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: runs-on=${{ github.run_id }}/runner=${{ matrix.pool }}
+    timeout-minutes: 45
+    steps:
+      - uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.plan.outputs.source }}
+          persist-credentials: false
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - uses: ./.github/actions/qgc-dev
+        with:
+          platform: ${{ matrix.platform }}
+          scope: ${{ matrix.scope }}
+          revision: ${{ needs.plan.outputs.source }}
+          publish: 'true'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: qgc-dev-digest-${{ matrix.scope }}
+          path: qgc-dev-digest.json
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: [plan, build-digests]
+    if: needs.plan.outputs.publish == 'true'
+    runs-on: runs-on=${{ github.run_id }}/runner=linux-x64-builder
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: qgc-dev-digest-*
+          path: digests
+      - name: Validate and promote complete index
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_REVISION: ${{ needs.plan.outputs.source }}
+          IMAGE_TAG: ${{ needs.plan.outputs.tag }}
+          IMAGE_MATRIX: ${{ needs.plan.outputs.matrix }}
+        run: python3 .github/scripts/qgc_dev.py publish

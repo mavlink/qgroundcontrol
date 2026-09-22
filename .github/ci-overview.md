@@ -69,6 +69,7 @@ uploaded separately. The master-only continuous build still publishes fuzzer bin
 | `build-profile.yml` | CMake build profiling |
 | `custom-build.yml` | Custom build validation |
 | `docker.yml` | Docker image builds |
+| `qgc-dev.yml` | Native amd64/ARM64 development image validation and publication |
 | `pre-commit.yml` | Linting and formatting checks |
 | `check-links.yml` | Markdown link validation |
 | `ci-scripts.yml` | Lints workflows, validates runner images, and runs the CI Python script tests (see [Tests](#tests)) |
@@ -91,6 +92,30 @@ uploaded separately. The master-only continuous build still publishes fuzzer bin
 | `welcome.yml` | New contributor welcome |
 
 ## Managed Runner Images
+
+The existing development container is built as `qgc-dev` using
+`deploy/docker/docker-bake.hcl`. That definition supplies the native platform matrix;
+the on-demand `linux-x64-builder` and `linux-arm64-builder` pools build without QEMU.
+All `qgc-dev.yml` jobs use RunsOn, including planning and publication on
+`linux-x64-builder`. There are no GitHub-hosted fallbacks; independent forks
+must configure RunsOn to run this workflow.
+Magic Cache starts before Buildx, with platform-scoped GHA v2 cache imports and exports.
+
+Meaningful image-input pushes to master publish `ghcr.io/mavlink/qgc-dev:latest`.
+PRs and manual dispatches validate without registry writes. Stable releases publish
+their exact QGC tag from the released commit, through the reusable workflow called
+explicitly by `release.yml` or the manually published release event. Stable tags
+never update `latest`; an existing stable index must match the source and both
+architectures. A source/docs-only push neither cancels nor invalidates a pending
+meaningful image build.
+
+Both native platforms run the same shared container build and smoke checks.
+Only after validation do trusted jobs export untagged image digests, recheck the
+exact registry images, and collect digest artifacts. A final serialized job validates
+both source identities before promoting one OCI index and reporting its digest.
+The GHCR package must be public (set package visibility on initial publication);
+no architecture-specific public tags or additional image products are created.
+Application builder and analyzer consumers remain independent.
 
 The manual `runner-images.yml` workflow builds a QGC-specific Ubuntu 24 x64 AMI from the current
 RunsOn base image and then boots it for a focused smoke test. It only publishes from the default
