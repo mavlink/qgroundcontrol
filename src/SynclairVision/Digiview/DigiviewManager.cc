@@ -618,7 +618,7 @@ bool DigiviewManager::clearDetectionTracking(
         0,
         0,
         0.0f, 0.0f, 0.0f,
-        0, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
         0,
         0,
         0
@@ -821,8 +821,10 @@ void DigiviewManager::sendDetectionParameters(
 
 bool DigiviewManager::sendTrackedDetectionParameters(
     uint8_t index, uint8_t score, uint8_t total_detections, int16_t type,
-    float yaw_global, float pitch_global, uint8_t rel_frame_of_reference,
-    float yaw_rel, float pitch_rel,
+    float moss_global_yaw, float moss_global_pitch,
+    float moss_relative_yaw, float moss_relative_pitch,
+    float autopilot_global_yaw, float autopilot_global_pitch,
+    float autopilot_relative_yaw, float autopilot_relative_pitch,
     float latitude, float longitude, float altitude,
     float distance, float width, float height,
     uint16_t track_id, quint64 publish_timestamp_us, uint8_t view_id)
@@ -831,11 +833,14 @@ bool DigiviewManager::sendTrackedDetectionParameters(
     Q_UNUSED(score);
     Q_UNUSED(total_detections);
     Q_UNUSED(type);
-    Q_UNUSED(yaw_global);
-    Q_UNUSED(pitch_global);
-    Q_UNUSED(rel_frame_of_reference);
-    Q_UNUSED(yaw_rel);
-    Q_UNUSED(pitch_rel);
+    Q_UNUSED(moss_global_yaw);
+    Q_UNUSED(moss_global_pitch);
+    Q_UNUSED(moss_relative_yaw);
+    Q_UNUSED(moss_relative_pitch);
+    Q_UNUSED(autopilot_global_yaw);
+    Q_UNUSED(autopilot_global_pitch);
+    Q_UNUSED(autopilot_relative_yaw);
+    Q_UNUSED(autopilot_relative_pitch);
     Q_UNUSED(latitude);
     Q_UNUSED(longitude);
     Q_UNUSED(altitude);
@@ -969,8 +974,10 @@ bool DigiviewManager::sendSingleTargetTrackingParameters(
     uint8_t command, QString stream_name, uint8_t cam_id,
     float x_offset, float y_offset,
     uint8_t detection_id, uint16_t zoom_level, float confidence,
-    float yaw_global, float pitch_global,
-    uint8_t rel_frame_of_reference, float yaw_rel, float pitch_rel,
+    float moss_global_yaw, float moss_global_pitch,
+    float moss_relative_yaw, float moss_relative_pitch,
+    float autopilot_global_yaw, float autopilot_global_pitch,
+    float autopilot_relative_yaw, float autopilot_relative_pitch,
     quint64 publish_timestamp_us, uint8_t status, uint8_t lock_target)
 {
     if ((command > CMD_NONE)
@@ -989,11 +996,14 @@ bool DigiviewManager::sendSingleTargetTrackingParameters(
     payload.detection_id = detection_id;
     payload.zoom_level = zoom_level;
     payload.confidence = confidence;
-    payload.yaw_global = yaw_global;
-    payload.pitch_global = pitch_global;
-    payload.rel_frame_of_reference = rel_frame_of_reference;
-    payload.yaw_rel = yaw_rel;
-    payload.pitch_rel = pitch_rel;
+    payload.moss_global_yaw = moss_global_yaw;
+    payload.moss_global_pitch = moss_global_pitch;
+    payload.moss_relative_yaw = moss_relative_yaw;
+    payload.moss_relative_pitch = moss_relative_pitch;
+    payload.autopilot_global_yaw = autopilot_global_yaw;
+    payload.autopilot_global_pitch = autopilot_global_pitch;
+    payload.autopilot_relative_yaw = autopilot_relative_yaw;
+    payload.autopilot_relative_pitch = autopilot_relative_pitch;
     payload.publish_timestamp_us = static_cast<uint64_t>(publish_timestamp_us);
     payload.status = status;
     payload.lock_target = lock_target;
@@ -1136,7 +1146,10 @@ bool DigiviewManager::setSingleTargetTrackingTarget(int camId, float xOffset, fl
         0.0f,
         0.0f,
         0.0f,
-        0,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
         0.0f,
         0.0f,
         0,
@@ -1232,7 +1245,10 @@ bool DigiviewManager::stopSingleTargetTracking(int camId)
         0.0f,
         0.0f,
         0.0f,
-        0,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
         0.0f,
         0.0f,
         0,
@@ -1906,11 +1922,14 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             payload.score,
             payload.total_detections,
             payload.type,
-            payload.yaw_global,
-            payload.pitch_global,
-            payload.rel_frame_of_reference,
-            payload.yaw_rel,
-            payload.pitch_rel,
+            payload.moss_global_yaw,
+            payload.moss_global_pitch,
+            payload.moss_relative_yaw,
+            payload.moss_relative_pitch,
+            payload.autopilot_global_yaw,
+            payload.autopilot_global_pitch,
+            payload.autopilot_relative_yaw,
+            payload.autopilot_relative_pitch,
             payload.latitude,
             payload.longitude,
             payload.altitude,
@@ -2130,8 +2149,14 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             << "det =" << payload.detection_id
             << "zoom =" << payload.zoom_level
             << "conf =" << payload.confidence
-            << "yaw =" << payload.yaw_global
-            << "pitch =" << payload.pitch_global
+            << "mossGlobalYaw =" << payload.moss_global_yaw
+            << "mossGlobalPitch =" << payload.moss_global_pitch
+            << "mossRelativeYaw =" << payload.moss_relative_yaw
+            << "mossRelativePitch =" << payload.moss_relative_pitch
+            << "autopilotGlobalYaw =" << payload.autopilot_global_yaw
+            << "autopilotGlobalPitch =" << payload.autopilot_global_pitch
+            << "autopilotRelativeYaw =" << payload.autopilot_relative_yaw
+            << "autopilotRelativePitch =" << payload.autopilot_relative_pitch
             << "status =" << payload.status
             << "lock =" << payload.lock_target;
 
@@ -2144,11 +2169,14 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             payload.detection_id,
             payload.zoom_level,
             payload.confidence,
-            payload.yaw_global,
-            payload.pitch_global,
-            payload.rel_frame_of_reference,
-            payload.yaw_rel,
-            payload.pitch_rel,
+            payload.moss_global_yaw,
+            payload.moss_global_pitch,
+            payload.moss_relative_yaw,
+            payload.moss_relative_pitch,
+            payload.autopilot_global_yaw,
+            payload.autopilot_global_pitch,
+            payload.autopilot_relative_yaw,
+            payload.autopilot_relative_pitch,
             payload.publish_timestamp_us,
             payload.status,
             payload.lock_target);

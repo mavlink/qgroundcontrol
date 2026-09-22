@@ -195,8 +195,10 @@ public:
         uint8_t missed_redetection_penalty);
     Q_INVOKABLE bool sendTrackedDetectionParameters(
         uint8_t index, uint8_t score, uint8_t total_detections, int16_t type,
-        float yaw_global, float pitch_global, uint8_t rel_frame_of_reference,
-        float yaw_rel, float pitch_rel,
+        float moss_global_yaw, float moss_global_pitch,
+        float moss_relative_yaw, float moss_relative_pitch,
+        float autopilot_global_yaw, float autopilot_global_pitch,
+        float autopilot_relative_yaw, float autopilot_relative_pitch,
         float latitude, float longitude, float altitude,
         float distance, float width, float height,
         uint16_t track_id, quint64 publish_timestamp_us, uint8_t view_id);
@@ -222,8 +224,10 @@ public:
         uint8_t command, QString stream_name, uint8_t cam_id,
         float x_offset, float y_offset,
         uint8_t detection_id, uint16_t zoom_level, float confidence,
-        float yaw_global, float pitch_global,
-        uint8_t rel_frame_of_reference, float yaw_rel, float pitch_rel,
+        float moss_global_yaw, float moss_global_pitch,
+        float moss_relative_yaw, float moss_relative_pitch,
+        float autopilot_global_yaw, float autopilot_global_pitch,
+        float autopilot_relative_yaw, float autopilot_relative_pitch,
         quint64 publish_timestamp_us, uint8_t status, uint8_t lock_target);
     Q_INVOKABLE bool setSingleTargetTrackingTarget(int cam_id, float x_offset, float y_offset);
     Q_INVOKABLE bool setCameraCursorTarget(int cam_id, float x_offset, float y_offset);
@@ -315,8 +319,10 @@ signals:
         uint8_t missed_redetection_penalty);
     void trackedDetectionParametersReceived(
         uint8_t index, uint8_t score, uint8_t total_detections, int16_t type,
-        float yaw_global, float pitch_global, uint8_t rel_frame_of_reference,
-        float yaw_rel, float pitch_rel,
+        float moss_global_yaw, float moss_global_pitch,
+        float moss_relative_yaw, float moss_relative_pitch,
+        float autopilot_global_yaw, float autopilot_global_pitch,
+        float autopilot_relative_yaw, float autopilot_relative_pitch,
         float latitude, float longitude, float altitude,
         float distance, float width, float height,
         uint16_t track_id, quint64 publish_timestamp_us, uint8_t view_id);
@@ -342,8 +348,10 @@ signals:
         uint8_t command, const QString& stream_name, uint8_t cam_id,
         float x_offset, float y_offset,
         uint8_t detection_id, uint16_t zoom_level, float confidence,
-        float yaw_global, float pitch_global,
-        uint8_t rel_frame_of_reference, float yaw_rel, float pitch_rel,
+        float moss_global_yaw, float moss_global_pitch,
+        float moss_relative_yaw, float moss_relative_pitch,
+        float autopilot_global_yaw, float autopilot_global_pitch,
+        float autopilot_relative_yaw, float autopilot_relative_pitch,
         quint64 publish_timestamp_us, uint8_t status, uint8_t lock_target);
     void calibrationParametersReceived(
         uint8_t cam_id, uint8_t calib_command, uint8_t calib_status,

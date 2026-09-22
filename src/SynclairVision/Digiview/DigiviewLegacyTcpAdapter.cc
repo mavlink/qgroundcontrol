@@ -145,7 +145,8 @@ bool intervalRequest(const mavlink_command_long_t& command, message& nativeMessa
     if (parameterType == TRACKED_DETECTION) {
         pack_tracked_detection_parameters(
             nativeMessage, 0, std::numeric_limits<uint8_t>::max(), 0, -2, 0.0F, 0.0F,
-            static_cast<uint8_t>(command.param4), 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+            0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F,
+            0.0F, 0.0F, 0.0F, 0.0F);
     } else if (parameterType == CALIBRATION) {
         pack_calibration_parameters(nativeMessage, static_cast<uint8_t>(command.param3), CALIBRATION_CMD_NONE,
                                     CALIBRATION_STATUS_NOT_STARTED, 0, 0);
@@ -322,8 +323,10 @@ QByteArray DigiviewLegacyTcpAdapter::encode(const mavlink_message_t& mavlinkMess
         pack_set_single_target_tracking_parameters(
             nativeMessage, u8_to_enum<single_target_tracker_command>(parameters.command), parameters.stream_name,
             parameters.cam_id, parameters.x_offset, parameters.y_offset, parameters.detection_id,
-            parameters.zoom_level, parameters.confidence, parameters.yaw_global, parameters.pitch_global,
-            parameters.rel_frame_of_reference, parameters.yaw_rel, parameters.pitch_rel,
+            parameters.zoom_level, parameters.confidence, parameters.moss_global_yaw, parameters.moss_global_pitch,
+            parameters.moss_relative_yaw, parameters.moss_relative_pitch, parameters.autopilot_global_yaw,
+            parameters.autopilot_global_pitch, parameters.autopilot_relative_yaw,
+            parameters.autopilot_relative_pitch,
             parameters.lock_target != 0U);
         break;
     }
@@ -534,11 +537,14 @@ DigiviewLegacyTcpAdapter::DecodeResult DigiviewLegacyTcpAdapter::decode(
         parameters.score = nativeParameters.score;
         parameters.total_detections = nativeParameters.total_detections;
         parameters.type = nativeParameters.type;
-        parameters.yaw_global = nativeParameters.yaw_global;
-        parameters.pitch_global = nativeParameters.pitch_global;
-        parameters.rel_frame_of_reference = nativeParameters.rel_frame_of_reference;
-        parameters.yaw_rel = nativeParameters.yaw_rel;
-        parameters.pitch_rel = nativeParameters.pitch_rel;
+        parameters.moss_global_yaw = nativeParameters.moss_global_yaw;
+        parameters.moss_global_pitch = nativeParameters.moss_global_pitch;
+        parameters.moss_relative_yaw = nativeParameters.moss_relative_yaw;
+        parameters.moss_relative_pitch = nativeParameters.moss_relative_pitch;
+        parameters.autopilot_global_yaw = nativeParameters.autopilot_global_yaw;
+        parameters.autopilot_global_pitch = nativeParameters.autopilot_global_pitch;
+        parameters.autopilot_relative_yaw = nativeParameters.autopilot_relative_yaw;
+        parameters.autopilot_relative_pitch = nativeParameters.autopilot_relative_pitch;
         parameters.latitude = nativeParameters.latitude;
         parameters.longitude = nativeParameters.longitude;
         parameters.altitude = nativeParameters.altitude;
@@ -613,11 +619,14 @@ DigiviewLegacyTcpAdapter::DecodeResult DigiviewLegacyTcpAdapter::decode(
         parameters.detection_id = nativeParameters.detection_id;
         parameters.zoom_level = nativeParameters.zoom_level;
         parameters.confidence = nativeParameters.confidence;
-        parameters.yaw_global = nativeParameters.yaw_global;
-        parameters.pitch_global = nativeParameters.pitch_global;
-        parameters.rel_frame_of_reference = nativeParameters.rel_frame_of_reference;
-        parameters.yaw_rel = nativeParameters.yaw_rel;
-        parameters.pitch_rel = nativeParameters.pitch_rel;
+        parameters.moss_global_yaw = nativeParameters.moss_global_yaw;
+        parameters.moss_global_pitch = nativeParameters.moss_global_pitch;
+        parameters.moss_relative_yaw = nativeParameters.moss_relative_yaw;
+        parameters.moss_relative_pitch = nativeParameters.moss_relative_pitch;
+        parameters.autopilot_global_yaw = nativeParameters.autopilot_global_yaw;
+        parameters.autopilot_global_pitch = nativeParameters.autopilot_global_pitch;
+        parameters.autopilot_relative_yaw = nativeParameters.autopilot_relative_yaw;
+        parameters.autopilot_relative_pitch = nativeParameters.autopilot_relative_pitch;
         parameters.publish_timestamp_us = nativeParameters.publish_timestamp_us;
         parameters.status = enum_to_u8(nativeParameters.status);
         parameters.lock_target = nativeParameters.lock_target ? 1U : 0U;
