@@ -13,6 +13,7 @@ If the QML paths are omitted they are derived from <enums_h_output>'s directory.
 import re
 import sys
 from pathlib import Path
+from textwrap import indent
 
 _tools_dir = Path(__file__).resolve().parents[1]
 if str(_tools_dir) not in sys.path:
@@ -25,6 +26,10 @@ ensure_tools_dir(__file__)
 from common.io import write_text_if_changed  # noqa: E402
 
 ENUM_DECL_RE = re.compile(r"^\s*typedef\s+enum\s+([A-Z_][A-Z0-9_]*)\b", re.MULTILINE)
+ENUM_DEFINITION_RE = re.compile(
+    r"^\s*typedef\s+enum\s+([A-Z_][A-Z0-9_]*)\s*(\{.*?\})\s*\1\s*;",
+    re.MULTILINE | re.DOTALL,
+)
 
 
 def extract_enum_block(dialect_header_path):
@@ -130,9 +135,16 @@ extern "C" {
     return "".join(parts), enum_names
 
 
-def build_qml_header(enum_names):
-    using_lines = "\n".join(f"    using ::{n};" for n in enum_names)
-    q_enum_lines = "\n".join(f"    Q_ENUM_NS({n})" for n in enum_names)
+def build_qml_header(enums_header):
+    # moc only registers enumerators for enums declared inside the namespace; it does not
+    # follow `using ::NAME;` aliases, which left every Q_ENUM_NS with an empty key table and
+    # made `MAVLinkEnums.X` evaluate to undefined in QML. Copy the deduplicated enum bodies
+    # verbatim (values and aliases intact) without the HAVE_ENUM guards, which the global
+    # C header already provides.
+    enum_lines = "\n\n".join(
+        indent(f"enum {name}\n{body};\nQ_ENUM_NS({name})", "    ")
+        for name, body in ENUM_DEFINITION_RE.findall(enums_header)
+    )
     return f"""\
 #pragma once
 
@@ -149,9 +161,7 @@ namespace MAVLinkEnums {{
     Q_NAMESPACE
     QML_NAMED_ELEMENT(MAVLinkEnums)
 
-{using_lines}
-
-{q_enum_lines}
+{enum_lines}
 }}
 """
 
@@ -197,7 +207,7 @@ def main():
     written: list[Path] = []
     if write_text_if_changed(enums_h_path, enums_h):
         written.append(enums_h_path)
-    if write_text_if_changed(qml_h_path, build_qml_header(enum_names)):
+    if write_text_if_changed(qml_h_path, build_qml_header(enums_h)):
         written.append(qml_h_path)
     if write_text_if_changed(qml_cc_path, build_qml_anchor_cc()):
         written.append(qml_cc_path)
