@@ -190,4 +190,54 @@ void RequestMessageTest::_duplicateWhileQueued()
     QCOMPARE(_mockLink->receivedMavCommandCount(MAV_CMD_REQUEST_MESSAGE), queuedRequestCase.expectedSendCount);
 }
 
+void RequestMessageTest::_availableModesResultHandler(void* resultHandlerData, MAV_RESULT commandResult,
+                                                      Vehicle::RequestMessageResultHandlerFailureCode_t /*failureCode*/,
+                                                      const mavlink_message_t& message)
+{
+    auto* receivedModeIndexes = static_cast<QList<int>*>(resultHandlerData);
+    QCOMPARE(commandResult, MAV_RESULT_ACCEPTED);
+    receivedModeIndexes->append(mavlink_msg_available_modes_get_mode_index(&message));
+}
+
+void RequestMessageTest::_staleAvailableModesIgnored()
+{
+    Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
+    vehicle->_deleteGimbalController();
+    vehicle->_deleteCameraManager();
+    _mockLink->setRequestMessageNoResponse(MAVLINK_MSG_ID_AVAILABLE_MODES);
+
+    const auto respondWithAvailableMode = [this](uint8_t modeIndex) {
+        char modeName[MAVLINK_MSG_AVAILABLE_MODES_FIELD_MODE_NAME_LEN] = "Mode";
+        mavlink_message_t msg{};
+        (void) mavlink_msg_available_modes_pack_chan(_mockLink->vehicleId(), MAV_COMP_ID_AUTOPILOT1,
+                                                     _mockLink->outgoingMavlinkChannel(), &msg, 3, modeIndex, 0,
+                                                     modeIndex, 0, modeName);
+        _mockLink->respondWithMavlinkMessage(msg);
+    };
+
+    constexpr uint8_t requestedModeIndex = 2;
+    QList<int> receivedModeIndexes;
+    const int previousRequestCount = _mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_AVAILABLE_MODES);
+    vehicle->requestMessage(_availableModesResultHandler, &receivedModeIndexes, MAV_COMP_ID_AUTOPILOT1,
+                            MAVLINK_MSG_ID_AVAILABLE_MODES, requestedModeIndex);
+    QVERIFY_TRUE_WAIT(
+        _mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_AVAILABLE_MODES) == previousRequestCount + 1,
+        TestTimeout::shortMs());
+
+    // Field order with two links: a second copy of the previous mode, then the ack for this request
+    respondWithAvailableMode(requestedModeIndex - 1);
+    mavlink_message_t ack{};
+    (void) mavlink_msg_command_ack_pack_chan(_mockLink->vehicleId(), MAV_COMP_ID_AUTOPILOT1,
+                                             _mockLink->outgoingMavlinkChannel(), &ack, MAV_CMD_REQUEST_MESSAGE,
+                                             MAV_RESULT_ACCEPTED, 0, 0, 0, 0);
+    _mockLink->respondWithMavlinkMessage(ack);
+    QVERIFY_TRUE_WAIT(vehicle->_findMavCommandListEntryIndex(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_REQUEST_MESSAGE) == -1,
+                      TestTimeout::shortMs());
+    QVERIFY(receivedModeIndexes.isEmpty());
+
+    respondWithAvailableMode(requestedModeIndex);
+    QVERIFY_TRUE_WAIT(!receivedModeIndexes.isEmpty(), TestTimeout::shortMs());
+    QCOMPARE(receivedModeIndexes, QList<int>{requestedModeIndex});
+}
+
 UT_REGISTER_TEST(RequestMessageTest, TestLabel::Integration, TestLabel::Vehicle)

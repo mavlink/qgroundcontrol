@@ -22,6 +22,7 @@ private slots:
     void _compIdAllFailure();
     void _duplicateCommand();
     void _duplicateWhileQueued();
+    void _staleAvailableModesIgnored();
 
 private:
     struct TestCase_t
@@ -44,6 +45,9 @@ private:
     static void _compIdAllRequestMessageResultHandler(void* resultHandlerData, MAV_RESULT commandResult,
                                                       Vehicle::RequestMessageResultHandlerFailureCode_t failureCode,
                                                       const mavlink_message_t& message);
+    static void _availableModesResultHandler(void* resultHandlerData, MAV_RESULT commandResult,
+                                             Vehicle::RequestMessageResultHandlerFailureCode_t failureCode,
+                                             const mavlink_message_t& message);
 
     static TestCase_t _rgTestCases[];
 };
