@@ -24,14 +24,11 @@
 
 namespace {
 
-// Literal reference vectors: N4 EN R1.6 sections 3.1 and 7.3.1, and the captured ACK at
-// https://s-taka.org/control-command-for-gnss-receiver-um982/ . Other packets are synthetic.
+// Literal reference vector: N4 EN R1.6 section 3.1. Other packets are synthetic.
 constexpr std::string_view VERSION =
     "#VERSIONA,79,GPS,FINE,2326,378237000,15434,0,18,889;"
     "\"UM982\",\"R4.10Build15434\",\"HRPT00-S10C-P\","
     "\"2310415000012-LR23A2225208904\",\"ff2740966a10124c\",\"2024/08/08\"*769fd54f\r\n";
-constexpr std::string_view MODE_ROVER = "#MODE,81,GPS,FINE,2230,547967000,0,0,18,518;MODE ROVER SURVEY,*1B\r\n";
-constexpr std::string_view ACK_UNLOG = "$command,unlog,response: OK*21\r\n";
 
 std::string checked(std::string body, bool crc)
 {
