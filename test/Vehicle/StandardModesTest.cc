@@ -1,5 +1,8 @@
 #include "StandardModesTest.h"
 
+#include <QtCore/QRegularExpression>
+#include <QtTest/QSignalSpy>
+
 #include "MAVLinkLib.h"
 #include "MockLinkWorker.h"
 #include "QGCMAVLink.h"
@@ -47,6 +50,22 @@ void StandardModesTest::_singleModeDoesNotDependOnPeriodicTelemetry()
         this, MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AVAILABLE_MODES, 1);
     QTRY_VERIFY_WITH_TIMEOUT(_singleModeReceived, TestTimeout::shortMs());
     QVERIFY(_singleModeValid);
+}
+
+void StandardModesTest::_duplicateDeliveryDoesNotDuplicateModes()
+{
+    _mockLink->setDuplicateResponses(true);
+
+    QSignalSpy flightModesSpy(_vehicle, &Vehicle::flightModesChanged);
+    _mockLink->bumpAvailableModesMonitorSequence();
+    QVERIFY(flightModesSpy.wait(TestTimeout::longMs()));
+
+    // ensureUniqueModeNames renames duplicate entries to "<name> (N)"
+    static const QRegularExpression renamedDuplicate(QStringLiteral(" \\(\\d+\\)$"));
+    for (const QString& mode : _vehicle->flightModes()) {
+        QVERIFY2(!renamedDuplicate.match(mode).hasMatch(), qPrintable(mode));
+    }
+    QVERIFY2(!renamedDuplicate.match(_vehicle->flightMode()).hasMatch(), qPrintable(_vehicle->flightMode()));
 }
 
 UT_REGISTER_TEST(StandardModesTest, TestLabel::Integration, TestLabel::Vehicle)

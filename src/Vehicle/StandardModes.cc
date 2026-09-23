@@ -1,5 +1,7 @@
 #include "StandardModes.h"
 
+#include <algorithm>
+
 #include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
@@ -71,15 +73,24 @@ void StandardModes::gotMessage(MAV_RESULT result, VehicleTypes::RequestMessageRe
             "cannotBeSet:" << cannotBeSet <<
             "custom_mode:" << availableModes.custom_mode;
 
-        _modeList += FirmwareFlightMode{
-            name,
-            availableModes.standard_mode,
-            availableModes.custom_mode,
-            !cannotBeSet,
-            advanced,
-            true,  // fixed wing - Since we don't know at this point we assume fixed wing support
-            true   // multi-rotor - Since we don't know at this point we assume multi-rotor support as well
-        };
+        const auto existingMode =
+            std::find_if(_modeList.cbegin(), _modeList.cend(), [&availableModes](const FirmwareFlightMode& mode) {
+                return mode.custom_mode == availableModes.custom_mode;
+            });
+        if (existingMode == _modeList.cend()) {
+            _modeList += FirmwareFlightMode{
+                name, availableModes.standard_mode, availableModes.custom_mode, !cannotBeSet, advanced,
+                true,  // fixed wing - Since we don't know at this point we assume fixed wing support
+                true   // multi-rotor - Since we don't know at this point we assume multi-rotor support as well
+            };
+        } else if (existingMode->mode_name == name) {
+            qCDebug(StandardModesLog) << "Ignoring duplicate mode - name:" << name
+                                      << "custom_mode:" << availableModes.custom_mode;
+        } else {
+            qCWarning(StandardModesLog) << "Ignoring mode with conflicting name - custom_mode:"
+                                        << availableModes.custom_mode << "existing:" << existingMode->mode_name
+                                        << "new:" << name;
+        }
 
         if (availableModes.mode_index >= availableModes.number_modes) { // We are done
             qCDebug(StandardModesLog) << "Completed, num modes:" << availableModes.number_modes;

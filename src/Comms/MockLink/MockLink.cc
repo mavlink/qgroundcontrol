@@ -1104,6 +1104,9 @@ void MockLink::respondWithMavlinkMessage(const mavlink_message_t &msg)
         const int cBuffer = mavlink_msg_to_send_buffer(buffer, &msg);
         const QByteArray bytes(reinterpret_cast<char*>(buffer), cBuffer);
         emit bytesReceived(this, bytes);
+        if (_duplicateResponses) {
+            emit bytesReceived(this, bytes);
+        }
     }
 }
 

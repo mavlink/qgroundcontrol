@@ -131,6 +131,9 @@ public:
     /// delayed flight mode and causes QGC to re-query standard modes.
     void bumpAvailableModesMonitorSequence() { ++_availableModesMonitorSeqNumber; }
 
+    /// Unit test support: sends every vehicle->QGC message twice, as when two links receive the same traffic.
+    void setDuplicateResponses(bool duplicate) { _duplicateResponses = duplicate; }
+
     enum RequestMessageFailureMode_t {
         FailRequestMessageNone,
         FailRequestMessageCommandAcceptedMsgNotSent,
@@ -431,6 +434,7 @@ private:
 
     double _vehicleAltitudeAMSL = _defaultVehicleHomeAltitude;
     std::atomic<bool> _commLost = false;
+    std::atomic<bool> _duplicateResponses = false;
     bool _mavlinkV2Upgraded = false;    ///< True once outgoing traffic has switched from v1 to v2
     bool _signingEnabled = false;
     bool _highLatencyTransmissionEnabled = true;

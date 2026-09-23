@@ -183,6 +183,19 @@ void RequestMessageCoordinator::handleReceivedMessage(const mavlink_message_t& m
         auto resultHandler      = pInfo->resultHandler;
         auto resultHandlerData  = pInfo->resultHandlerData;
 
+        // A duplicate of the previous mode (e.g. from a second link) must not satisfy this request.
+        // pInfo->param1 is REQUEST_MESSAGE param2 (mode index); 0 requests all modes, so anything matches.
+        if (message.msgid == MAVLINK_MSG_ID_AVAILABLE_MODES) {
+            const uint8_t requestedModeIndex = static_cast<uint8_t>(pInfo->param1);
+            const uint8_t receivedModeIndex = mavlink_msg_available_modes_get_mode_index(&message);
+            if (requestedModeIndex != 0 && receivedModeIndex != requestedModeIndex) {
+                qCDebug(RequestMessageCoordinatorLog)
+                    << "ignoring AVAILABLE_MODES for other mode - received:" << receivedModeIndex
+                    << "requested:" << requestedModeIndex;
+                return;
+            }
+        }
+
         pInfo->messageReceived = true;
         pInfo->message = message;
 
