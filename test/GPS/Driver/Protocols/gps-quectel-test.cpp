@@ -24,9 +24,8 @@
     } while (0)
 
 namespace {
-// Fixed manufacturer examples: GNSS Protocol Specification V1.1 §§2.3.9, 2.3.23,
+// Fixed manufacturer examples: GNSS Protocol Specification V1.1 §2.3.23
 // and Base Station Mode Application Note V1.1 §3.2.2. These are not emitted by a driver encoder.
-constexpr std::string_view IDENTITY = "$PQTMVERNO,LG290P03AANR01A03S,2024/04/30,10:53:07*18\r\n";
 constexpr std::string_view BOOT = "$PQTMVER,1,MODULE,LG290P03AANR01A03S,2024/04/30,10:53:07*32\r\n";
 constexpr std::string_view PROGRESS =
     "$PQTMSVINSTATUS,1,291264000,1,,11,1,60,-2005560.2218,5411825.5447,2706139.7061,1.8691*0C\r\n";
