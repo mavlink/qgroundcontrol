@@ -152,6 +152,31 @@ def test_ci_script_checkout_includes_the_devcontainer_definition():
     assert ".devcontainer" in checkout["with"]["sparse-checkout"].splitlines()
 
 
+def test_devcontainer_installs_supported_editor_extensions():
+    dev = json.loads((ROOT / ".devcontainer/devcontainer.json").read_text())
+    extensions = set(dev["customizations"]["vscode"]["extensions"])
+    recommendations = json.loads((ROOT / ".vscode/extensions.json").read_text())
+    assert {
+        "ms-vscode.cmake-tools",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-python.python",
+        "TheQtCompany.qt-qml",
+    } <= extensions
+    assert "TheQtCompany.qt-qml" in recommendations["recommendations"]
+    assert "QML.qml-official" not in extensions | set(recommendations["recommendations"])
+    assert "GitHub.copilot" not in extensions
+    assert (
+        "setup_vscode.py --python-interpreter /opt/qgc-venv/bin/python" in dev["postCreateCommand"]
+    )
+    assert "image" not in dev
+    assert not dev.get("mounts")
+
+
+def test_qml_tasktree_dependency_is_in_shared_qt_modules():
+    config = json.loads((ROOT / ".github/build-config.json").read_text())
+    assert "qttasktree" in config["qt"]["modules"].split()
+
+
 @pytest.mark.skipif(not shutil.which("docker"), reason="Docker Buildx not installed")
 def test_actual_bake_definition():
     result = subprocess.run(

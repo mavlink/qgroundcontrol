@@ -101,6 +101,35 @@ LLVM linkage, Python imports, and real Qt compilation plus clang-tidy/Clazy exec
 as a non-root user. The prebuilt environment is used by `just` without runtime
 SDK provisioning or Python synchronization.
 
+### VS Code workflow
+
+Install Docker and the VS Code Dev Containers extension, open a normal QGC clone,
+then run __Dev Containers: Reopen in Container__. The checked-in configuration
+builds the canonical `qgc-dev` target on first use; it does not pull a published
+image. Qt and build tools are installed during image creation, not each application
+build. Post-create initializes submodules and creates missing VS Code workspace
+files without overwriting existing settings. Linked Git worktrees require access
+to their external Git metadata; a normal clone needs no extra mounts.
+
+Wait for extension installation to finish, then use the Command Palette:
+
+1. __CMake: Select Configure Preset__ -> __Linux Debug__ or __Linux Release__.
+2. __CMake: Configure__.
+3. __CMake: Select Build Preset__ -> `Linux-debug` or `Linux`, respectively.
+4. __Tasks: Run Build Task__ to build QGC.
+
+These presets use the native compiler on both amd64 and ARM64. Outputs are
+`build/Linux-debug/Debug/QGroundControl` and `build/Linux/Release/QGroundControl`.
+Changing application code does not require rebuilding the container. After changing
+the image definition or its dependencies, use __Dev Containers: Rebuild Container__.
+If a first-open task runs before CMake Tools finishes installing, wait for installation
+and use __Developer: Reload Window__ before retrying.
+
+The result is a Linux executable, including on macOS hosts. GUI launching requires
+separate display forwarding or a remote desktop; this configuration does not provide
+either. Copilot is optional and managed through VS Code rather than forced by the
+container extension list.
+
 ### Android development
 
 The __linux/amd64__ variant of this same image includes the configured Java JDK,

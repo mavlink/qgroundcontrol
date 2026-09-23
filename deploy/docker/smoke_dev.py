@@ -65,7 +65,7 @@ def android_smoke(config: dict, work: Path) -> None:
     (work / "CMakeLists.txt").write_text(
         "cmake_minimum_required(VERSION 3.25)\n"
         "project(android_smoke LANGUAGES CXX)\n"
-        f"find_package(Qt6 {config['qt']['version']} EXACT REQUIRED COMPONENTS Core)\n"
+        f"find_package(Qt6 {config['qt']['version']} EXACT REQUIRED COMPONENTS Core TaskTree Qml)\n"
         "set(CMAKE_AUTOMOC ON)\n"
         "add_library(android_smoke SHARED main.cpp)\n"
         "target_link_libraries(android_smoke PRIVATE Qt6::Core)\n"
@@ -215,7 +215,7 @@ def main() -> None:
     (work / "CMakeLists.txt").write_text(
         "cmake_minimum_required(VERSION 3.25)\n"
         "project(dev_smoke LANGUAGES CXX)\n"
-        f"find_package(Qt6 {config['qt']['version']} EXACT REQUIRED COMPONENTS Core)\n"
+        f"find_package(Qt6 {config['qt']['version']} EXACT REQUIRED COMPONENTS Core TaskTree Qml)\n"
         "set(CMAKE_EXPORT_COMPILE_COMMANDS ON)\n"
         "add_executable(dev_smoke main.cpp)\n"
         "target_link_libraries(dev_smoke PRIVATE Qt6::Core)\n"
