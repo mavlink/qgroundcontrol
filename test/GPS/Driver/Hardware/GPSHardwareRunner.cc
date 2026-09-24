@@ -23,8 +23,6 @@
 #include "GPSReceiverCapabilities.h"
 #include "MonotonicClock.h"
 #include "ScriptedUBXReceiver.h"
-#include "TCPGPSTransport.h"
-#include "UDPGPSTransport.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
 #endif
@@ -42,7 +40,6 @@ struct Options
     QString action;
     QString transport;
     QString device;
-    QString host;
     QString model;
     QString surveyState;
     QString fault;
@@ -53,8 +50,6 @@ struct Options
     int observeMs = 1000;
     int cancelAfterMs = 50;
     int timeoutMs = 15000;
-    quint16 port = 0;
-    quint16 localPort = 0;
 };
 
 QString saveEvidence(const QJsonObject& report, const QString& path)
@@ -139,7 +134,6 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     options.action = parser.value("action");
     options.transport = parser.value("transport");
     options.device = parser.value("device");
-    options.host = parser.value("host");
     options.model = parser.value("model");
     options.surveyState = parser.value("survey-state");
     options.fault = parser.value("fault");
@@ -151,7 +145,7 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     }
     const QString role = parser.value("role");
     if (!QStringList{"plan", "configure", "role-cycle", "suite", "cancel"}.contains(options.action) ||
-        !QStringList{"scripted", "serial", "tcp", "udp"}.contains(options.transport) ||
+        !QStringList{"scripted", "serial"}.contains(options.transport) ||
         !QStringList{"ublox", "trimble", "septentrio", "femto", "unicore", "quectel", "passive"}.contains(family) ||
         !QStringList{"base", "position", "passive"}.contains(role) ||
         !QStringList{"f9p", "m8p"}.contains(options.model) ||
@@ -213,8 +207,6 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
         // Role and base changes can require multiple receiver restarts within the driver's 45-second budget.
         options.timeoutMs = 60000;
     }
-    options.port = static_cast<quint16>(integer("port", 0, 65535));
-    options.localPort = static_cast<quint16>(integer("local-port", 0, 65535));
     options.config.baudRate = static_cast<uint32_t>(integer("baud", 0, 4000000));
     options.config.allowPersistentChanges = parser.isSet("allow-save");
     options.config.constellationMask = static_cast<uint32_t>(integer("constellations", 0, 31));
@@ -274,9 +266,6 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
         return "Serial transport is disabled in this build";
     }
 #endif
-    if ((options.transport == "tcp" || options.transport == "udp") && (options.host.isEmpty() || options.port == 0)) {
-        return "An explicit --host and nonzero --port are required for network transports";
-    }
     if (options.action != "plan" && options.transport != "scripted" && !parser.isSet("allow-reconfigure")) {
         return "Physical operations require --allow-reconfigure; no device was opened";
     }
@@ -333,12 +322,6 @@ std::unique_ptr<GPSTransport> physicalTransport(const Options& options, const st
         return std::make_unique<SerialGPSTransport>(options.device, stop);
     }
 #endif
-    if (options.transport == "tcp") {
-        return std::make_unique<TCPGPSTransport>(options.host, options.port, stop);
-    }
-    if (options.transport == "udp") {
-        return std::make_unique<UDPGPSTransport>(options.host, options.port, stop, options.localPort);
-    }
     return {};
 }
 
@@ -390,10 +373,7 @@ int run(const Options& options)
             "script",
             QJsonObject{{"model", options.model}, {"survey_state", options.surveyState}, {"fault", options.fault}});
     } else {
-        report.insert("endpoint", QJsonObject{{"device", options.device},
-                                              {"host", options.host},
-                                              {"port", options.port},
-                                              {"local_port", options.localPort}});
+        report.insert("endpoint", QJsonObject{{"device", options.device}, {"transport", options.transport}});
     }
     report.insert("outcome", "running");
     if (!options.outputPath.isEmpty()) {
@@ -709,7 +689,7 @@ int main(int argc, char* argv[])
     parser.addHelpOption();
     parser.addOptions({
         {{"a", "action"}, "plan|configure|role-cycle|suite|cancel", "action", "plan"},
-        {"transport", "scripted|serial|tcp|udp", "transport", "scripted"},
+        {"transport", "scripted|serial", "transport", "scripted"},
         {"family", "ublox|trimble|septentrio|femto|unicore|quectel|passive", "family", "ublox"},
         {"role", "base|position|passive", "role", "base"},
         {"allow-reconfigure", "Authorize physical receiver writes and role changes"},
@@ -717,9 +697,6 @@ int main(int argc, char* argv[])
         {"output", "New JSON evidence path (atomic progress snapshots; never overwrites a previous run)", "path"},
         {"device", "Explicit serial device path", "path"},
         {"baud", "Serial baud rate (0 for managed detection; passive requires an explicit rate)", "baud", "0"},
-        {"host", "Explicit TCP/UDP peer host", "host"},
-        {"port", "TCP/UDP peer port", "port", "0"},
-        {"local-port", "UDP local port (0 allocates one)", "port", "0"},
         {"survey-duration", "Requested survey minimum seconds", "seconds", "60"},
         {"survey-accuracy", "Requested survey accuracy limit, metres", "metres", "2"},
         {"base-mode", "survey|fixed|receiver-averaging", "mode", "survey"},

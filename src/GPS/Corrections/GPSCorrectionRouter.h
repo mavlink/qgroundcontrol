@@ -48,16 +48,9 @@ public:
     using Statistics = GPSCorrectionLedger::Statistics;
     using Destination = GPSCorrectionLedger::Destination;
     using Source = GPSCorrectionSelector::Source;
-    enum class Completion
-    {
-        AdmissionOnly,
-        Reported
-    };
-
     struct Output
     {
         GPSCorrectionSource scope = GPSCorrectionSource::Unknown;
-        Completion completion = Completion::AdmissionOnly;
         FanoutSink admit;
     };
 
@@ -86,13 +79,10 @@ public:
 
     GPSCorrectionSource activeSource() const { return _selector.activeSource(_clock()); }
 
-    /// Configures scope and completion atomically.
-    /// Scoped outputs bypass global selection, but retain filtering and freshness checks.
+    /// Configures output admission atomically. Scoped outputs bypass global selection, but retain filtering and
+    /// freshness checks.
     void setOutput(const QString& id, Output output);
     void removeSink(const QString& id);
-    /// Synchronous completion evidence is validated after admission returns.
-    bool recordDelivery(const GPSCorrectionDelivery& delivery);
-    void invalidateDestination(const QString& id, quint64 session);
     void shutdown();
 
     const std::array<Statistics, 4>& statistics() const { return _ledger.statistics(); }
@@ -111,8 +101,7 @@ public:
     static constexpr qint64 SWITCH_HOLD_DOWN_MS = GPSCorrectionSelector::SWITCH_HOLD_DOWN_MS;
     static constexpr qsizetype MAX_SOURCE_INSTANCES = GPSCorrectionSelector::MAX_SOURCE_INSTANCES;
     static constexpr qsizetype MAX_EVENTS = GPSCorrectionLedger::MAX_EVENTS;
-    static constexpr qsizetype MAX_PENDING_DELIVERIES = GPSCorrectionLedger::MAX_PENDING_DELIVERIES;
-    // Registered outputs and outstanding deliveries retain their statistics independently of this history limit.
+    // Registered outputs retain their statistics independently of this history limit.
     static constexpr qsizetype MAX_DESTINATION_HISTORY = GPSCorrectionLedger::MAX_DESTINATION_HISTORY;
 
 signals:
@@ -129,28 +118,6 @@ private:
 
     static int _sourceIndex(GPSCorrectionSource source);
     bool _submit(const GPSCorrectionFrame& frame, bool selected);
-    enum class RetirementKind
-    {
-        Destination,
-        Output,
-    };
-
-    struct Retirement
-    {
-        RetirementKind kind = RetirementKind::Destination;
-        QString id;
-        quint64 session = 0;
-        bool operator==(const Retirement&) const = default;
-    };
-
-    struct AdmissionContext
-    {
-        quint64 deliveryId = 0;
-        QList<GPSCorrectionDelivery> deliveries;
-        QList<Retirement> retirements;
-        bool retireDelivery = false;
-    };
-
     struct StreamIdentity
     {
         GPSCorrectionSelector::SourceIdentity source;
@@ -158,17 +125,12 @@ private:
         bool operator==(const StreamIdentity&) const = default;
     };
 
-    void _deferRetirement(Retirement retirement);
-    void _finishAdmission();
-
     Clock _clock;
     GPSCorrectionSelector _selector;
     GPSCorrectionLedger _ledger;
     std::array<QString, 4> _configuredInstances;
     QMap<QString, Output> _sinks;
     std::optional<StreamIdentity> _lastSubmittedStream = std::nullopt;
-    quint64 _nextDelivery = 0;
-    std::optional<AdmissionContext> _admission;
     quint64 _revision = 0;
     bool _shutdown = false;
     bool _submitting = false;

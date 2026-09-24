@@ -30,7 +30,7 @@ private:
 
     GPSSatelliteState _state;
     GPSSatelliteObservation _observation;
-    QPointer<RuntimeScheduler> _scheduler;
+    RuntimeScheduler* const _scheduler;
     ScheduledTask _expiryTask;
     quint64 _revision = 0;
 };

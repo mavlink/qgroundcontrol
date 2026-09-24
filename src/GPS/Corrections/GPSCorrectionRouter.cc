@@ -13,18 +13,13 @@ QGC_LOGGING_CATEGORY(GPSCorrectionRouterLog, "GPS.Corrections.GPSCorrectionRoute
 QGC_LOGGING_CATEGORY(GPSCorrectionSelectorLog, "GPS.Corrections.GPSCorrectionSelector")
 
 namespace {
-QVariantMap deliveryDiagnostics(const GPSCorrectionLedger::DeliveryCounters& counters, QVariantMap details)
+QVariantMap admissionDiagnostics(const GPSCorrectionLedger::AdmissionCounters& counters, QVariantMap details)
 {
     details.insert({
         {QStringLiteral("queuedFrames"), QVariant::fromValue(counters.queuedFrames)},
         {QStringLiteral("queuedBytes"), QVariant::fromValue(counters.queuedBytes)},
-        {QStringLiteral("writtenFrames"), QVariant::fromValue(counters.writtenFrames)},
-        {QStringLiteral("writtenBytes"), QVariant::fromValue(counters.writtenBytes)},
-        {QStringLiteral("transportAcceptedBytes"), QVariant::fromValue(counters.transportAcceptedBytes)},
         {QStringLiteral("droppedFrames"), QVariant::fromValue(counters.droppedFrames)},
         {QStringLiteral("droppedBytes"), QVariant::fromValue(counters.droppedBytes)},
-        {QStringLiteral("unconfirmedFrames"), QVariant::fromValue(counters.unconfirmedFrames)},
-        {QStringLiteral("unconfirmedBytes"), QVariant::fromValue(counters.unconfirmedBytes)},
     });
     return details;
 }
@@ -89,7 +84,7 @@ QVariantList GPSCorrectionRouter::sourceDiagnostics() const
     for (int index = 0; index < static_cast<int>(statistics.size()); ++index) {
         const auto& stats = statistics[index];
         const qint64 age = GPSCorrectionFrame::ageMs(stats.lastValidMs, nowMs);
-        result.append(deliveryDiagnostics(
+        result.append(admissionDiagnostics(
             stats, {{QStringLiteral("source"), index},
                     {QStringLiteral("session"), QVariant::fromValue(stats.session)},
                     {QStringLiteral("active"), stats.active},
@@ -133,12 +128,9 @@ QVariantList GPSCorrectionRouter::destinationDiagnostics() const
 {
     QVariantList result;
     for (const auto& destination : _ledger.destinations()) {
-        result.append(deliveryDiagnostics(
+        result.append(admissionDiagnostics(
             destination, {{QStringLiteral("destinationId"), destination.id},
-                          {QStringLiteral("destinationSession"), QVariant::fromValue(destination.session)},
-                          {QStringLiteral("reportsWrites"), destination.reportsWrites},
-                          {QStringLiteral("pendingFrames"), QVariant::fromValue(destination.pendingFrames)},
-                          {QStringLiteral("pendingBytes"), QVariant::fromValue(destination.pendingBytes)}}));
+                          {QStringLiteral("destinationSession"), QVariant::fromValue(destination.session)}}));
     }
     return result;
 }
@@ -201,7 +193,7 @@ GPSCorrectionRouter::Output GPSCorrectionRouter::admissionOnlyOutput(const QStri
     if (!sink) {
         return {};
     }
-    return {scope, Completion::AdmissionOnly, [id, sink = std::move(sink)](const GPSCorrectionFrame& frame) {
+    return {scope, [id, sink = std::move(sink)](const GPSCorrectionFrame& frame) {
                 const quint64 queued = sink(frame);
                 return QList<Admission>{
                     {id,
@@ -221,69 +213,14 @@ void GPSCorrectionRouter::setOutput(const QString& id, Output output)
     }
     ++_revision;
     _sinks.insert(id, std::move(output));
-    _ledger.registerOutput(id, _sinks[id].completion == Completion::Reported);
+    _ledger.registerOutput(id);
 }
 
 void GPSCorrectionRouter::removeSink(const QString& id)
 {
     ++_revision;
     _sinks.remove(id);
-    _ledger.removeOutput(id, _admission ? _admission->deliveryId : 0);
-    _deferRetirement({RetirementKind::Output, id});
-}
-
-bool GPSCorrectionRouter::recordDelivery(const GPSCorrectionDelivery& delivery)
-{
-    if (_admission && delivery.deliveryId == _admission->deliveryId &&
-        _admission->deliveries.size() < MAX_PENDING_DELIVERIES) {
-        _admission->deliveries.append(delivery);
-        return true;
-    }
-    return _ledger.recordDelivery(delivery);
-}
-
-void GPSCorrectionRouter::invalidateDestination(const QString& id, quint64 session)
-{
-    _ledger.invalidateDestination(id, session, _admission ? _admission->deliveryId : 0);
-    _deferRetirement({RetirementKind::Destination, id, session});
-}
-
-void GPSCorrectionRouter::_deferRetirement(Retirement retirement)
-{
-    if (!_admission || retirement.id.isEmpty() || _admission->retireDelivery ||
-        _admission->retirements.contains(retirement)) {
-        return;
-    }
-    if (_admission->retirements.size() < MAX_PENDING_DELIVERIES) {
-        _admission->retirements.append(std::move(retirement));
-    } else {
-        _admission->retireDelivery = true;
-        qCWarning(GPSCorrectionRouterLog) << "Retirement limit reached; settling in-flight admissions as unconfirmed";
-    }
-}
-
-void GPSCorrectionRouter::_finishAdmission()
-{
-    const auto admission = std::exchange(_admission, std::nullopt);
-    if (!admission) {
-        return;
-    }
-    for (const auto& delivery : admission->deliveries) {
-        _ledger.recordDelivery(delivery);
-    }
-    for (const auto& retirement : admission->retirements) {
-        switch (retirement.kind) {
-            case RetirementKind::Destination:
-                _ledger.invalidateDestination(retirement.id, retirement.session);
-                break;
-            case RetirementKind::Output:
-                _ledger.invalidateDelivery(admission->deliveryId, retirement.id);
-                break;
-        }
-    }
-    if (admission->retireDelivery) {
-        _ledger.invalidateDelivery(admission->deliveryId);
-    }
+    _ledger.removeOutput(id);
 }
 
 void GPSCorrectionRouter::recordRejectedFrame(GPSCorrectionFrame frame, GPSCorrectionReason reason)
@@ -291,7 +228,6 @@ void GPSCorrectionRouter::recordRejectedFrame(GPSCorrectionFrame frame, GPSCorre
     if (_shutdown || frame.data.isEmpty()) {
         return;
     }
-    frame.deliveryId = ++_nextDelivery;
     _ledger.received(frame);
     _ledger.filtered(frame);
     _ledger.recordDrop(frame, reason, frame.data.size());
@@ -302,7 +238,6 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
     if (_shutdown || _submitting || frame.data.isEmpty()) {
         return false;
     }
-    frame.deliveryId = ++_nextDelivery;
     _ledger.received(frame);
     const qint64 now = _clock();
     const qint64 age = GPSCorrectionFrame::ageMs(frame.receivedAtMs, now);
@@ -367,18 +302,6 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
             continue;
         }
         attempted = true;
-        if (it->completion == Completion::Reported && !_ledger.admissionAvailable()) {
-            submissionFailure = GPSCorrectionReason::DiagnosticsBackpressure;
-            _ledger.recordDrop(frame, submissionFailure, frame.data.size(), it.key(), 0, false);
-            continue;
-        }
-        _admission.emplace();
-        _admission->deliveryId = frame.deliveryId;
-        const auto finishAdmission = qScopeGuard([guard] {
-            if (guard) {
-                guard->_finishAdmission();
-            }
-        });
         const QList<Admission> admissions = it->admit(frame);
         if (!guard) {
             return false;
@@ -400,8 +323,7 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
             const auto& submitted = admission.submission;
             const quint64 bytes = (std::min) (submitted.queuedBytes, static_cast<quint64>(frame.data.size()));
             const bool complete = admission.complete && bytes == static_cast<quint64>(frame.data.size());
-            if (!_ledger.admitted(frame, it.key(), admission.destination, submitted.destinationSession, bytes, complete,
-                                  it->completion == Completion::Reported)) {
+            if (!_ledger.admitted(frame, admission.destination, submitted.destinationSession, bytes, complete)) {
                 continue;
             }
             logicalQueuedBytes = (std::max) (logicalQueuedBytes, bytes);
@@ -415,10 +337,6 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
             }
         }
         if (_shutdown || revision != _revision) {
-            for (const auto& admission : admissions) {
-                _deferRetirement(
-                    {RetirementKind::Destination, admission.destination, admission.submission.destinationSession});
-            }
             break;
         }
     }
@@ -441,10 +359,7 @@ void GPSCorrectionRouter::shutdown()
     _shutdown = true;
     _selector.clear();
     _sinks.clear();
-    _ledger.shutdown(_admission ? _admission->deliveryId : 0);
-    if (_admission) {
-        _admission->retireDelivery = true;
-    }
+    _ledger.shutdown();
 }
 
 GPSCorrectionSelector::GPSCorrectionSelector()

@@ -2,21 +2,14 @@
 
 #include "Ashtech/GPSDriverAshtech.h"
 #include "Femto/GPSDriverFemto.h"
-#include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "SBF/GPSDriverSBF.h"
 #include "UBX/GPSDriverUBX.h"
-#if QGC_GPS_ENABLE_UNICORE
 #include "Support/UnicoreReceiverModel.h"
 #include "Unicore/GPSDriverUnicore.h"
-#endif
-#if QGC_GPS_ENABLE_QUECTEL
 #include "Quectel/GPSDriverQuectel.h"
 #include "Support/QuectelReceiverModel.h"
-#endif
-#if QGC_GPS_ENABLE_PASSIVE
 #include "Passive/GPSDriverPassive.h"
-#endif
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
@@ -69,23 +62,14 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     std::get<GPSBaseStationConfig::Fixed>(fixed.base.mode).position = {
         .latitudeDegrees = 0, .longitudeDegrees = 90, .altitudeMeters = 100};
     const bool fixedMode = size != 0 && (data[0] & 1);
-#if QGC_GPS_ENABLE_UBX
     GPSNativeUBX ubx(io);
     GPSNativeUBX operationalUbx(io);
     operationalUbx.setDecodeContext({true, true, true});
     GPSNativeUBX epochUbx(io);
     epochUbx.setDecodeContext({true, true, true, true});
-#endif
-#if QGC_GPS_ENABLE_ASHTECH
     GPSNativeAshtech ashtech(io);
-#endif
-#if QGC_GPS_ENABLE_SBF
     GPSNativeSBF sbf(io);
-#endif
-#if QGC_GPS_ENABLE_FEMTO
     GPSNativeFemto femto(io);
-#endif
-#if QGC_GPS_ENABLE_UNICORE
     GPSNativeUnicore unicore(io);
     GPSTest::UnicoreReceiver unicorePeer;
     unicorePeer.chunk = GPS_READ_BUFFER_SIZE;
@@ -97,8 +81,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     if (operationalUnicore.configure(unicoreBaud, fixedMode ? fixed : averaging)) {
         std::abort();
     }
-#endif
-#if QGC_GPS_ENABLE_QUECTEL
     GPSNativeQuectel quectel(io);
     GPSTest::QuectelReceiver quectelPeer;
     quectelPeer.role = 2;
@@ -115,32 +97,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     if (operationalQuectel.configure(quectelBaud, fixedMode ? fixed : survey)) {
         std::abort();
     }
-#endif
-#if QGC_GPS_ENABLE_PASSIVE
     GPSNativePassive passive(io);
-#endif
     GPSProtocol* protocols[] = {
-#if QGC_GPS_ENABLE_UBX
         &ubx,     &operationalUbx,     &epochUbx,
-#endif
-#if QGC_GPS_ENABLE_ASHTECH
         &ashtech,
-#endif
-#if QGC_GPS_ENABLE_SBF
         &sbf,
-#endif
-#if QGC_GPS_ENABLE_FEMTO
         &femto,
-#endif
-#if QGC_GPS_ENABLE_UNICORE
         &unicore, &operationalUnicore,
-#endif
-#if QGC_GPS_ENABLE_QUECTEL
         &quectel, &operationalQuectel,
-#endif
-#if QGC_GPS_ENABLE_PASSIVE
         &passive,
-#endif
     };
     decoding = true;
     const auto startedAt = clock;

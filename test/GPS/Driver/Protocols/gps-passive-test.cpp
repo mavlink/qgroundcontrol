@@ -215,10 +215,8 @@ void satellites()
     driver.consume({});
     const auto reports = receiver.reports<GPSNativeSatelliteReport>();
     CHECK(reports.size() == 2);
-    CHECK(reports[0].constellation == GPSConstellation::GPS);
-    CHECK(reports[0].count == 5);
-    CHECK(reports[0].entries[0].signal == 30);
-    CHECK(!reports[0].entries[0].used);
+    CHECK(reports[0].constellations[0].constellation == GPSConstellation::GPS);
+    CHECK(reports[0].constellations[0].inView == 5);
     CHECK(receiver.reports<GPSNativePositionReport>().empty());
     CHECK(receiver.writes == 0);
 }
@@ -236,19 +234,20 @@ void satelliteEpochBoundaries()
     send("GNRMC,120001.00,V,,,,,,,090926,,,N");
     auto reports = receiver.reports<GPSNativeSatelliteReport>();
     CHECK(reports.size() == 3);
-    CHECK(reports[0].constellation == GPSConstellation::GPS && reports[0].count == 6);
-    CHECK(reports[0].entries[5].id == 7);
-    CHECK(reports[1].constellation == GPSConstellation::GLONASS && reports[1].count == 1);
-    CHECK(reports[0].timestamp == 1000000);
+    CHECK(reports[0].constellations[0].constellation == GPSConstellation::GPS &&
+          reports[0].constellations[0].inView == 6);
+    CHECK(reports[1].constellations[0].constellation == GPSConstellation::GLONASS &&
+          reports[1].constellations[0].inView == 1);
+    CHECK(reports[0].constellations[0].inViewTimestampUs == 1000000);
     receiver.events.clear();
     feed(driver, nmeaSentence("GPGSA,A,3,01,,,,,,,,,,,,1.0,0.8,0.6"));
     receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
     driver.consume({});
     reports = receiver.reports<GPSNativeSatelliteReport>();
     CHECK(reports.size() == 2);
-    CHECK(reports[0].timestamp == 0 && reports[0].usage);
-    CHECK(reports[0].usage->count == 1 && reports[0].usage->ids[0] == 1);
-    CHECK(reports[1].usage && reports[1].usage->count == 0);
+    CHECK(reports[0].constellations[0].inViewTimestampUs == 0);
+    CHECK(reports[0].constellations[0].inUse == 1);
+    CHECK(reports[1].constellations[0].inUse == 0);
 
     receiver.events.clear();
     send("GPGSV,2,1,05,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60");
@@ -256,7 +255,7 @@ void satelliteEpochBoundaries()
     receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
     driver.consume({});
     reports = receiver.reports<GPSNativeSatelliteReport>();
-    CHECK(reports.size() == 1 && reports[0].constellation == GPSConstellation::GLONASS);
+    CHECK(reports.size() == 1 && reports[0].constellations[0].constellation == GPSConstellation::GLONASS);
     receiver.events.clear();
     send("GPGSV,2,2,05,05,50,60,70");
     receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
@@ -266,7 +265,7 @@ void satelliteEpochBoundaries()
     receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
     driver.consume({});
     reports = receiver.reports<GPSNativeSatelliteReport>();
-    CHECK(reports.size() == 2 && reports[0].count == 0);
+    CHECK(reports.size() == 2 && reports[0].constellations[0].inView == 0);
 
     receiver.events.clear();
     // More systems than one batch can drain: no complete epoch may overrun MAX_EVENTS.
@@ -296,8 +295,8 @@ void satelliteBatchDeadline()
     driver.consume({});
     const auto reports = receiver.reports<GPSNativeSatelliteReport>();
     CHECK(reports.size() == 1);
-    CHECK(reports[0].constellation == GPSConstellation::GLONASS);
-    CHECK(reports[0].timestamp == 1000000);
+    CHECK(reports[0].constellations[0].constellation == GPSConstellation::GLONASS);
+    CHECK(reports[0].constellations[0].inViewTimestampUs == 1000000);
 }
 }  // namespace
 

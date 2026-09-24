@@ -28,7 +28,6 @@ struct GPSCorrectionFrame
     bool validated = false;
     bool filtered = false;
     QString sourceInstance = {};
-    quint64 deliveryId = 0;
 
     static qint64 monotonicNowMs() { return static_cast<qint64>(MonotonicClock::nowUs() / 1000); }
 

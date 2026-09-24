@@ -28,16 +28,6 @@ if(NOT TARGET QGCGPSReceiver)
 endif()
 endblock()
 add_subdirectory(Contracts)
-if(NOT QGC_GPS_ENABLE_UBX
-   AND NOT QGC_GPS_ENABLE_ASHTECH
-   AND NOT QGC_GPS_ENABLE_SBF
-   AND NOT QGC_GPS_ENABLE_FEMTO
-   AND NOT QGC_GPS_ENABLE_UNICORE
-   AND NOT QGC_GPS_ENABLE_QUECTEL
-   AND NOT QGC_GPS_ENABLE_PASSIVE
-)
-    message(FATAL_ERROR "At least one GPS receiver family must be enabled")
-endif()
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Geo/GeographicLib.cmake")
 
 qt_add_library(
@@ -127,24 +117,21 @@ foreach(
     Quectel
     Passive
 )
-    string(TOUPPER "${family}" option_name)
-    if(QGC_GPS_ENABLE_${option_name})
-        qgc_add_gps_family(${family} ${QGC_GPS_FAMILY_${family}_SOURCES})
-        target_sources(QGCGPS${family} PUBLIC FILE_SET HEADERS BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}" FILES
-                                              "${family}/GPSDriver${family}.h"
+    qgc_add_gps_family(${family} ${QGC_GPS_FAMILY_${family}_SOURCES})
+    target_sources(QGCGPS${family} PUBLIC FILE_SET HEADERS BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}" FILES
+                                          "${family}/GPSDriver${family}.h"
+    )
+    get_target_property(family_sources QGCGPS${family} SOURCES)
+    foreach(source IN LISTS family_sources)
+        if(source MATCHES "\\.h$"
+           AND NOT source MATCHES "(Private|_p)\\.h$"
+           AND NOT IS_ABSOLUTE "${source}"
         )
-        get_target_property(family_sources QGCGPS${family} SOURCES)
-        foreach(source IN LISTS family_sources)
-            if(source MATCHES "\\.h$"
-               AND NOT source MATCHES "(Private|_p)\\.h$"
-               AND NOT IS_ABSOLUTE "${source}"
-            )
-                target_sources(QGCGPS${family} PUBLIC FILE_SET HEADERS FILES "${source}")
-            endif()
-        endforeach()
-        target_link_libraries(QGCGPSNative INTERFACE QGCGPS${family})
-        target_sources(QGCGPSNative INTERFACE FILE_SET HEADERS FILES "${family}/GPSDriver${family}.h")
-        list(APPEND _native_targets QGCGPS${family})
-    endif()
+            target_sources(QGCGPS${family} PUBLIC FILE_SET HEADERS FILES "${source}")
+        endif()
+    endforeach()
+    target_link_libraries(QGCGPSNative INTERFACE QGCGPS${family})
+    target_sources(QGCGPSNative INTERFACE FILE_SET HEADERS FILES "${family}/GPSDriver${family}.h")
+    list(APPEND _native_targets QGCGPS${family})
 endforeach()
 set_property(TARGET QGCGPSNative PROPERTY QGC_GPS_NATIVE_TARGETS "${_native_targets}")

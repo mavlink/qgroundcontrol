@@ -244,19 +244,6 @@ void VehicleGPSAggregateFactGroupTest::_receiverDestruction()
     QVERIFY(scheduler.advanceBy(5s));
 }
 
-void VehicleGPSAggregateFactGroupTest::_schedulerDestruction()
-{
-    auto scheduler = std::make_unique<ManualScheduler>();
-    IntegrityReceiver gps(0, scheduler.get());
-    VehicleGPSAggregateFactGroup aggregate(nullptr, scheduler.get());
-    aggregate.bindToGps(&gps, nullptr);
-    gps.handleMessage(nullptr, integrityMessage(0, 1, 1, 3));
-    scheduler.reset();
-    verifyAggregate(aggregate, 255, 255, 255, false);
-    gps.handleMessage(nullptr, integrityMessage(0, 3, 3, 2));
-    verifyAggregate(aggregate, 255, 255, 255, false);
-}
-
 void VehicleGPSAggregateFactGroupTest::_reentrantRebind()
 {
     ManualScheduler scheduler;

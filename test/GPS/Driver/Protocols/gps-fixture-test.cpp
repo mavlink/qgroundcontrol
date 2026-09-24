@@ -8,7 +8,6 @@
 #include <string_view>
 #include <vector>
 
-#include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "LittleEndian.h"
 #include "NMEASentence.h"
@@ -107,7 +106,6 @@ void independentNmeaFields()
     }
 }
 
-#if QGC_GPS_ENABLE_UBX
 void independentIntegrityAndUtc()
 {
     const auto integrityBytes = fixture("synthetic-integrity.ubx");
@@ -253,9 +251,7 @@ void navigationEpochs()
         CHECK(std::abs(observations.back().navigation.latitudeDegrees - 53.4507228) < 1e-8);
     }
 }
-#endif
 
-#if QGC_GPS_ENABLE_SBF
 void independentSbfValidity()
 {
     for (const auto& expected : GPSFixture::sbfEpochs) {
@@ -336,14 +332,11 @@ void independentSbfValidity()
     CHECK(position.navigation.timestampUs != 0);
     CHECK(matches(position.navigation.latitudeDegrees, GPSFixture::sbfEpochs[0].latitude, 1e-9));
 }
-#endif
 
-#if QGC_GPS_ENABLE_UBX || QGC_GPS_ENABLE_SBF
 void independentSequences()
 {
     GPSNativePositionReport position{};
     GPSNativeSatelliteReport satellites{};
-#if QGC_GPS_ENABLE_UBX
     GPSNativeUBX ubx(captureGPSReports(noDevice(), position, &satellites));
     ubx.setDecodeContext({.navigation = true});
     const auto navigation = fixture("navigation.ubx");
@@ -359,18 +352,17 @@ void independentSequences()
         CHECK(std::abs(position.navigation.altitudeMslMeters - expected.altitude) < 1e-6);
     }
     ubx.consume(std::span(navigation).subspan(offset));
-    CHECK(satellites.count == std::size(GPSFixture::satellites));
+    int satelliteCount = 0;
     constexpr GPSConstellation systems[] = {
         GPSConstellation::GPS,     GPSConstellation::SBAS, GPSConstellation::Galileo, GPSConstellation::BeiDou,
         GPSConstellation::Unknown, GPSConstellation::QZSS, GPSConstellation::GLONASS};
-    for (size_t i = 0; i < satellites.count; ++i) {
-        const auto& expected = GPSFixture::satellites[i];
-        const auto& actual = satellites.entries[i];
-        CHECK(actual.id == expected.id && actual.signal == expected.signal);
-        CHECK(actual.elevation == expected.elevation && actual.azimuth == expected.azimuth);
-        CHECK(actual.used == expected.used);
-        CHECK(expected.gnss < std::size(systems) && actual.constellation == systems[expected.gnss]);
+    for (uint8_t i = 0; i < satellites.count; ++i) {
+        const auto& actual = satellites.constellations[i];
+        satelliteCount += actual.inView;
+        CHECK(std::any_of(std::begin(systems), std::end(systems),
+                          [&](GPSConstellation constellation) { return constellation == actual.constellation; }));
     }
+    CHECK(satelliteCount == static_cast<int>(std::size(GPSFixture::satellites)));
     const auto relative = ubx.decode(fixture("relative.ubx")).batch;
     CHECK(relative.events.empty());
     CHECK(relative.updates == GPSDecodedBatch::PROTOCOL_ACTIVITY);
@@ -399,8 +391,6 @@ void independentSequences()
     CHECK(std::abs(gga->altitude - GPSFixture::ggaAltitude) < 1e-6);
     CHECK(gga->satellitesUsed == GPSFixture::ggaSatellites);
 
-#endif
-#if QGC_GPS_ENABLE_SBF
     GPSNativeSBF sbf(captureGPSReports(noDevice(), position, &satellites));
     for (auto byte : fixture("geodetic.sbf")) {
         sbf.consume({&byte, 1});
@@ -415,9 +405,7 @@ void independentSequences()
     sbf.consume({});
     CHECK(position.navigation.timestampUs == previousTimestamp);
     CHECK(std::isnan(position.navigation.headingRadians));
-#endif
 }
-#endif
 
 void scalarWireValues()
 {
@@ -456,15 +444,10 @@ void GPSProtocolFixtureTest::_protocol()
     try {
         scalarWireValues();
         independentNmeaFields();
-#if QGC_GPS_ENABLE_SBF
         independentSbfValidity();
-#endif
-#if QGC_GPS_ENABLE_UBX || QGC_GPS_ENABLE_SBF
         independentSequences();
         GPSNativePositionReport position{};
         GPSNativeSatelliteReport satellites{};
-#endif
-#if QGC_GPS_ENABLE_UBX
         independentIntegrityAndUtc();
         relativeUtcUnavailable();
         navigationEpochs();
@@ -505,7 +488,11 @@ void GPSProtocolFixtureTest::_protocol()
         ubx.consume(pvt);
         CHECK(std::abs(position.navigation.horizontalDop - 0.58) < 1e-6);
         ubx.consume(fixture("nav-sat.ubx"));
-        CHECK(satellites.count == 43);
+        int satelliteCount = 0;
+        for (uint8_t index = 0; index < satellites.count; ++index) {
+            satelliteCount += satellites.constellations[index].inView;
+        }
+        CHECK(satelliteCount == 43);
         const auto timestamp = position.navigation.timestampUs;
         auto corrupt = pvt;
         corrupt[30] ^= 1;
@@ -520,8 +507,6 @@ void GPSProtocolFixtureTest::_protocol()
         CHECK(std::abs(position.navigation.longitudeDegrees + 2.056673696) < 1e-9);
         CHECK(std::abs(position.navigation.altitudeMslMeters - 233.5227) < 1e-6);
         CHECK(std::abs(position.navigation.horizontalAccuracyMeters - 0.335) < 1e-6);
-#endif
-#if QGC_GPS_ENABLE_SBF
         GPSNativeSBF sbf(captureGPSReports(noDevice(), position, &satellites));
         const auto geodetic = fixture("pvt-geodetic.sbf");
         for (auto byte : geodetic) {
@@ -534,7 +519,6 @@ void GPSProtocolFixtureTest::_protocol()
         CHECK(std::abs(position.navigation.altitudeEllipsoidMeters - 131.18596542546626) < 1e-5);
         CHECK(position.navigation.satellitesUsed == 36);
         CHECK(std::isnan(position.navigation.courseRadians));
-#endif
     } catch (const std::exception& error) {
         QFAIL(error.what());
     }

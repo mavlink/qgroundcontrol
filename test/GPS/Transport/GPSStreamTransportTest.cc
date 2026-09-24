@@ -4,17 +4,12 @@
 #include <thread>
 #include <type_traits>
 
-#include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
-#include <QtNetwork/QTcpServer>
-#include <QtNetwork/QTcpSocket>
 #include <QtTest/QTest>
 
-#include "GPSSocketWait_p.h"
 #include "GPSStreamWrite_p.h"
 #include "ScriptedGPSTransport.h"
-#include "TCPGPSTransport.h"
 #include "UnitTest.h"
 
 static_assert(std::is_enum_v<GPSOpenStatus>);
@@ -78,17 +73,6 @@ protected:
     std::optional<bool> handleBaudrate(unsigned) override { return false; }
 };
 
-class OpenFailureSocket : public QTcpSocket
-{
-public:
-    OpenFailureSocket()
-    {
-        open(QIODevice::ReadWrite);
-        setSocketState(QAbstractSocket::ConnectedState);
-        setErrorString(QStringLiteral("connection failed"));
-        connect(this, &QTcpSocket::disconnected, this, [this]() { setErrorString(QStringLiteral("aborted")); });
-    }
-};
 }  // namespace
 
 class GPSStreamTransportTest : public UnitTest
@@ -96,34 +80,6 @@ class GPSStreamTransportTest : public UnitTest
     Q_OBJECT
 
 private slots:
-
-    void _socketOpenFailure_data()
-    {
-        QTest::addColumn<bool>("cancelled");
-        QTest::addColumn<bool>("expired");
-        QTest::addColumn<GPSOpenStatus>("status");
-        QTest::newRow("socket-error") << false << false << GPSOpenStatus::Error;
-        QTest::newRow("timeout") << false << true << GPSOpenStatus::TimedOut;
-        QTest::newRow("cancelled") << true << false << GPSOpenStatus::Cancelled;
-        QTest::newRow("cancelled-and-expired") << true << true << GPSOpenStatus::Cancelled;
-    }
-
-    void _socketOpenFailure()
-    {
-        QFETCH(bool, cancelled);
-        QFETCH(bool, expired);
-        QFETCH(GPSOpenStatus, status);
-        std::atomic_bool stop = cancelled;
-        StreamWriteTransport transport(stop);
-        OpenFailureSocket socket;
-        const auto result = gpsSocketOpenFailure(transport, socket,
-                                                 expired ? QDeadlineTimer(0) : QDeadlineTimer(QDeadlineTimer::Forever));
-        QCOMPARE(result.status, status);
-        QCOMPARE(result.detail, expired ? QCoreApplication::translate("GPSTransport", "Receiver connection timed out")
-                                        : QStringLiteral("connection failed"));
-        QCOMPARE(socket.state(), QAbstractSocket::UnconnectedState);
-        QCOMPARE(socket.errorString(), QStringLiteral("aborted"));
-    }
 
     void _defaultWriteContract()
     {
@@ -135,29 +91,6 @@ private slots:
         stop = true;
         QCOMPARE(transport.writeConfiguration(&byte, 1, QDeadlineTimer(transport.configurationWriteTimeout())).status,
                  GPSWriteStatus::Cancelled);
-    }
-
-    void _serialCorrectionAllowance_data()
-    {
-        QTest::addColumn<int>("length");
-        QTest::addColumn<qint64>("baud");
-        QTest::addColumn<qint64>("expectedMs");
-        QTest::newRow("low-baud-frame") << 1029 << qint64(9600) << qint64(1172);
-        QTest::newRow("high-baud-frame") << 1029 << qint64(38400) << qint64(368);
-        QTest::newRow("empty") << 0 << qint64(9600) << qint64(200);
-        QTest::newRow("negative-length") << -1 << qint64(9600) << qint64(200);
-        QTest::newRow("zero-baud") << 1029 << qint64(0) << qint64(200);
-        QTest::newRow("negative-baud") << 1029 << qint64(-1) << qint64(200);
-        QTest::newRow("round-up") << 1 << qint64(115200) << qint64(101);
-        QTest::newRow("bounded-allowance") << 1000000 << qint64(9600) << qint64(3000);
-    }
-
-    void _serialCorrectionAllowance()
-    {
-        QFETCH(int, length);
-        QFETCH(qint64, baud);
-        QFETCH(qint64, expectedMs);
-        QCOMPARE(GPSTransport::serialCorrectionWriteTimeout(length, baud), std::chrono::milliseconds(expectedMs));
     }
 
     void _writeResultCounts_data()
@@ -257,53 +190,34 @@ private slots:
 
     void writes_data()
     {
-        QTest::addColumn<bool>("serial");
         QTest::addColumn<QByteArray>("outcome");
-        for (bool serial : {false, true}) {
-            for (const QByteArray outcome : {"complete", "expired", "cancelled", "cancelled-forever", "timeout"}) {
-                QTest::newRow(((serial ? "serial-" : "tcp-") + outcome).constData()) << serial << outcome;
-            }
+        for (const QByteArray outcome : {"complete", "expired", "cancelled", "cancelled-forever", "timeout"}) {
+            QTest::newRow(outcome.constData()) << outcome;
         }
     }
 
     void writes()
     {
-        QFETCH(bool, serial);
         QFETCH(QByteArray, outcome);
         std::atomic_bool stop = false;
         QFile master;
-        QTcpServer server;
-        QTcpSocket* peer = nullptr;
         std::unique_ptr<GPSTransport> transport;
-        if (serial) {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
-            const int descriptor = posix_openpt(O_RDWR | O_NOCTTY | O_CLOEXEC | O_NONBLOCK);
-            QVERIFY(descriptor >= 0);
-            if (!master.open(descriptor, QIODevice::ReadWrite, QFileDevice::AutoCloseHandle)) {
-                close(descriptor);
-                QFAIL("Cannot open pseudo-terminal");
-            }
-            QVERIFY(grantpt(descriptor) == 0);
-            QVERIFY(unlockpt(descriptor) == 0);
-            const char* slave = ptsname(descriptor);
-            QVERIFY(slave);
-            transport = std::make_unique<SerialGPSTransport>(QString::fromLocal8Bit(slave), stop);
+        const int descriptor = posix_openpt(O_RDWR | O_NOCTTY | O_CLOEXEC | O_NONBLOCK);
+        QVERIFY(descriptor >= 0);
+        if (!master.open(descriptor, QIODevice::ReadWrite, QFileDevice::AutoCloseHandle)) {
+            close(descriptor);
+            QFAIL("Cannot open pseudo-terminal");
+        }
+        QVERIFY(grantpt(descriptor) == 0);
+        QVERIFY(unlockpt(descriptor) == 0);
+        const char* slave = ptsname(descriptor);
+        QVERIFY(slave);
+        transport = std::make_unique<SerialGPSTransport>(QString::fromLocal8Bit(slave), stop);
 #else
-            QSKIP("Desktop serial integration requires a Linux pseudo-terminal");
+        QSKIP("Desktop serial integration requires a Linux pseudo-terminal");
 #endif
-        } else {
-            QVERIFY(server.listen(QHostAddress::LocalHost));
-            transport = std::make_unique<TCPGPSTransport>(QStringLiteral("127.0.0.1"), server.serverPort(), stop);
-        }
         QCOMPARE(transport->open().status, GPSOpenStatus::Opened);
-        if (!serial) {
-            QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::shortMs());
-            peer = server.nextPendingConnection();
-            QVERIFY(peer);
-            if (outcome != "complete") {
-                peer->setReadBufferSize(1);
-            }
-        }
         const uint8_t byte = 42;
         QCOMPARE(transport->writeBounded(nullptr, 1, QDeadlineTimer(100)).status, GPSWriteStatus::InvalidData);
         QCOMPARE(transport->writeBounded(&byte, -1, QDeadlineTimer(100)).status, GPSWriteStatus::InvalidData);
@@ -332,17 +246,13 @@ private slots:
             }
             QByteArray received;
             const auto readPeer = [&]() {
-                if (peer) {
-                    received.append(peer->readAll());
-                } else {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
-                    char bytes[2048];
-                    const auto count = ::read(master.handle(), bytes, sizeof(bytes));
-                    if (count > 0) {
-                        received.append(bytes, count);
-                    }
-#endif
+                char bytes[2048];
+                const auto count = ::read(master.handle(), bytes, sizeof(bytes));
+                if (count > 0) {
+                    received.append(bytes, count);
                 }
+#endif
                 return received == expected;
             };
             QTRY_VERIFY_WITH_TIMEOUT(readPeer(), TestTimeout::shortMs());

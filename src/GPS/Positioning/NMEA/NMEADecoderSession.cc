@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <iterator>
 #include <utility>
 
 #include <QtCore/QIODevice>
@@ -9,7 +10,6 @@
 
 #include "MonotonicClock.h"
 #include "NMEAPositionSource.h"
-#include "NMEAStreamSplitter.h"
 #include "QGCLoggingCategory.h"
 #include "QtRuntimeScheduler.h"
 
@@ -25,10 +25,6 @@ NMEADecoderSession::NMEADecoderSession(QObject* parent, RuntimeScheduler* schedu
     , _activityTask(_scheduler, this)
 {
     qCDebug(NMEADecoderSessionLog) << this;
-    connect(_scheduler, &QObject::destroyed, this, [this]() {
-        _scheduler = nullptr;
-        stop();
-    });
     connect(&_satellites, &GPSSatelliteStore::observationChanged, &_health,
             &GPSSourceHealth::applySatelliteObservation);
     connect(&_satellites, &GPSSatelliteStore::observationChanged, this,
@@ -45,9 +41,6 @@ NMEADecoderSession::~NMEADecoderSession()
     blockSignals(true);
     _health.blockSignals(true);
     _satellites.blockSignals(true);
-    if (_scheduler) {
-        _scheduler->disconnect(this);
-    }
     stop();
 }
 
@@ -61,20 +54,19 @@ bool NMEADecoderSession::start(QIODevice* device)
     const QPointer<NMEADecoderSession> guard(this);
     const QPointer<QIODevice> deviceGuard(device);
     stop();
-    if (!guard || _active || !_scheduler || !deviceGuard || !deviceGuard->isReadable() ||
-        deviceGuard->thread() != thread() || _scheduler->thread() != thread()) {
+    if (!guard || _active || !deviceGuard || !deviceGuard->isReadable() || deviceGuard->thread() != thread()) {
         return false;
     }
     const quint64 session = ++_sessionId;
     _active = true;
-    _decoders.stream = std::make_unique<NMEAStreamSplitter>(device, nullptr, _scheduler);
-    connect(_decoders.stream.get(), &NMEAStreamSplitter::dataReceived, this, [this, session](quint64 receivedAtUs) {
+    _decoders.position = std::make_unique<NMEAPositionSource>(device, nullptr, _scheduler);
+    connect(_decoders.position.get(), &NMEAPositionSource::dataReceived, this, [this, session](quint64 receivedAtUs) {
         if (_active && session == _sessionId) {
             _receivedData(receivedAtUs);
         }
     });
     connect(
-        _decoders.stream.get(), &NMEAStreamSplitter::closed, this,
+        _decoders.position.get(), &NMEAPositionSource::closed, this,
         [this, session]() {
             if (_active && session == _sessionId) {
                 stop();
@@ -82,18 +74,17 @@ bool NMEADecoderSession::start(QIODevice* device)
         },
         Qt::QueuedConnection);
     _satellitesOpen = true;
-    connect(_decoders.stream.get(), &NMEAStreamSplitter::sentenceReceived, this,
+    connect(_decoders.position.get(), &NMEAPositionSource::sentenceReceived, this,
             [this, session](const NMEASentenceEnvelope& sentence) {
                 if (_active && session == _sessionId) {
                     _ingestSatellites(sentence);
                 }
             });
-    connect(_decoders.stream.get(), &NMEAStreamSplitter::closed, this, [this, session]() {
+    connect(_decoders.position.get(), &NMEAPositionSource::closed, this, [this, session]() {
         if (session == _sessionId) {
             _closeSatellites();
         }
     });
-    _decoders.position = std::make_unique<NMEAPositionSource>(_decoders.stream->positionDevice(), nullptr, _scheduler);
     connect(_decoders.position.get(), &NMEAPositionSource::observationReceived, &_health,
             [this, session](GPSObservation observation) {
                 if (!_active || session != _sessionId) {
@@ -183,7 +174,7 @@ void NMEADecoderSession::_closeSatellites()
 
 void NMEADecoderSession::_ingestSatellites(const NMEASentenceEnvelope& sentence)
 {
-    if (!_satellitesOpen || !_scheduler) {
+    if (!_satellitesOpen) {
         return;
     }
     auto update = _satelliteAssembler.ingest(sentence.sentence(), sentence.receivedAtUs(), _scheduler->nowUs());
@@ -193,7 +184,7 @@ void NMEADecoderSession::_ingestSatellites(const NMEASentenceEnvelope& sentence)
 
 void NMEADecoderSession::_flushSatellites()
 {
-    if (!_satellitesOpen || !_scheduler) {
+    if (!_satellitesOpen) {
         return;
     }
     _queueSatellites(_satelliteAssembler.flushDue(_scheduler->nowUs()));
@@ -203,7 +194,7 @@ void NMEADecoderSession::_flushSatellites()
 void NMEADecoderSession::_scheduleSatelliteFlush()
 {
     _satelliteFlushTask.cancel();
-    if (const auto deadline = _satelliteAssembler.deadlineUs(); deadline && _scheduler) {
+    if (const auto deadline = _satelliteAssembler.deadlineUs()) {
         const auto now = _scheduler->nowUs();
         _satelliteFlushTask.schedule(std::chrono::microseconds(*deadline > now ? *deadline - now : 0),
                                      [this]() { _flushSatellites(); });
@@ -218,20 +209,10 @@ void NMEADecoderSession::_queueSatellites(NMEA::SatelliteEpoch epoch)
         GPSSatelliteConstellation constellation;
         constellation.constellation = system.constellation;
         constellation.view.receivedAtUs = system.inViewTimestampUs;
+        constellation.view.count = system.inView;
         constellation.usage.receivedAtUs = system.inUseTimestampUs;
         if (system.usedIds) {
-            constellation.usage.ids = QList<int>(system.usedIds->begin(), system.usedIds->end());
             constellation.usage.count = static_cast<int>(system.usedIds->size());
-        }
-        for (const auto& value : system.satellites) {
-            GPSSatellite satellite;
-            satellite.id = value.id;
-            satellite.prn = value.prn;
-            satellite.constellation = system.constellation;
-            satellite.elevationDegrees = value.elevation;
-            satellite.normalizedAzimuthDegrees = value.azimuth;
-            satellite.signalStrength = value.signal;
-            constellation.view.satellites.append(satellite);
         }
         observation.constellations.append(constellation);
         observation.monotonicTimestampUs =
@@ -261,9 +242,10 @@ void NMEADecoderSession::_deliverSatellites()
     }
     _updateSatellites(observation);
 }
+
 void NMEADecoderSession::_receivedData(quint64 receivedAtUs)
 {
-    if (!_active || !_scheduler || !receivedAtUs || receivedAtUs > _scheduler->nowUs()) {
+    if (!_active || !receivedAtUs || receivedAtUs > _scheduler->nowUs()) {
         return;
     }
     const bool previouslyReceived = hasReceivedData();

@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <map>
 #include <optional>
-#include <utility>
 
 #include "GPSSatelliteObservation.h"
 #include "MonotonicClock.h"
@@ -69,23 +68,16 @@ public:
                 continue;
             }
             auto& state = _constellations[report.constellation];
-            if ((fullSnapshot || report.view.receivedAtUs >= _fullSnapshotReceiptUs) &&
+            if ((fullSnapshot || report.view.receivedAtUs >= _fullSnapshotReceiptUs) && report.view.count >= 0 &&
                 _accept(report.view.receivedAtUs, state.view.receivedAtUs, state.view.retiredThroughUs, nowUs)) {
                 state.view.receivedAtUs = report.view.receivedAtUs;
-                state.view.satellites = report.view.satellites;
+                state.view.count = report.view.count;
             }
             if ((fullSnapshot || report.usage.receivedAtUs >= _fullSnapshotReceiptUs) &&
                 (!report.usage.count || *report.usage.count >= 0) &&
                 _accept(report.usage.receivedAtUs, state.usage.receivedAtUs, state.usage.retiredThroughUs, nowUs)) {
                 state.usage.receivedAtUs = report.usage.receivedAtUs;
                 state.usage.count = report.usage.count;
-                state.usage.ids = report.usage.count ? report.usage.ids : std::nullopt;
-                state.usage.flags.clear();
-                for (const auto& satellite : report.view.satellites) {
-                    if (report.usage.count && satellite.used) {
-                        state.usage.flags[{satellite.id, satellite.prn}] = *satellite.used;
-                    }
-                }
             }
         }
     }
@@ -101,20 +93,8 @@ public:
             auto& system = observation.constellations.emplaceBack();
             system.constellation = constellation;
             system.view.receivedAtUs = state.view.receivedAtUs;
-            system.usage = {state.usage.receivedAtUs, state.usage.count, state.usage.ids};
-            for (auto satellite : state.view.satellites) {
-                satellite.constellation = constellation;
-                const auto used = state.usage.flags.find({satellite.id, satellite.prn});
-                satellite.used = std::nullopt;
-                if (state.usage.receivedAtUs) {
-                    if (state.usage.ids) {
-                        satellite.used = state.usage.ids->contains(satellite.id);
-                    } else if (used != state.usage.flags.cend()) {
-                        satellite.used = used->second;
-                    }
-                }
-                system.view.satellites.append(satellite);
-            }
+            system.view.count = state.view.count;
+            system.usage = {state.usage.receivedAtUs, state.usage.count};
             observation.monotonicTimestampUs =
                 std::max({observation.monotonicTimestampUs, state.view.receivedAtUs, state.usage.receivedAtUs});
         }
@@ -140,7 +120,7 @@ private:
     {
         quint64 receivedAtUs = 0;
         quint64 retiredThroughUs = 0;
-        QList<GPSSatellite> satellites = {};
+        int count = 0;
 
         void retire(quint64 throughUs) { *this = ViewState{.retiredThroughUs = std::max(retiredThroughUs, throughUs)}; }
     };
@@ -149,9 +129,7 @@ private:
     {
         quint64 receivedAtUs = 0;
         quint64 retiredThroughUs = 0;
-        std::map<std::pair<int, int>, bool> flags = {};
         std::optional<int> count = std::nullopt;
-        std::optional<QList<int>> ids = std::nullopt;
 
         void retire(quint64 throughUs)
         {

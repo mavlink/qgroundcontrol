@@ -8,33 +8,18 @@
 
 #include "GPSConstellation.h"
 
-struct GPSSatellite
-{
-    int id = 0;
-    int prn = 0;
-    GPSConstellation constellation = GPSConstellation::Unknown;
-    std::optional<bool> used;
-    std::optional<double> elevationDegrees;
-    std::optional<int> signalStrength;
-    std::optional<double> normalizedAzimuthDegrees;
-
-    std::optional<double> azimuthDegrees() const;
-};
-
 struct GPSSatelliteConstellation
 {
     struct View
     {
         quint64 receivedAtUs = 0;
-        QList<GPSSatellite> satellites = {};
+        int count = 0;
     };
 
     struct Usage
     {
         quint64 receivedAtUs = 0;
         std::optional<int> count = std::nullopt;
-        // An empty GSA list is known, independent of visibility.
-        std::optional<QList<int>> ids = std::nullopt;
     };
 
     GPSConstellation constellation = GPSConstellation::Unknown;

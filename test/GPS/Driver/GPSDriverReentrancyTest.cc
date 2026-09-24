@@ -10,7 +10,6 @@
 #include <QtTest/QTest>
 
 #include "GPSDriver.h"
-#include "GPSProtocolFeatures.h"
 #include "ScriptedGPSTransport.h"
 #include "UnitTest.h"
 
@@ -71,7 +70,6 @@ class GPSDriverReentrancyTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _factoryCoverage();
     void _recursiveConfiguration_data();
     void _recursiveConfiguration();
     void _recursiveReceive();
@@ -79,24 +77,6 @@ private slots:
     void _satelliteExpiry_data();
     void _satelliteExpiry();
 };
-
-void GPSDriverReentrancyTest::_factoryCoverage()
-{
-    const std::array expected{
-        std::pair{GPSType::ublox, bool(QGC_GPS_ENABLE_UBX)},
-        std::pair{GPSType::trimble, bool(QGC_GPS_ENABLE_ASHTECH)},
-        std::pair{GPSType::septentrio, bool(QGC_GPS_ENABLE_SBF)},
-        std::pair{GPSType::femto, bool(QGC_GPS_ENABLE_FEMTO)},
-        std::pair{GPSType::unicore, bool(QGC_GPS_ENABLE_UNICORE)},
-        std::pair{GPSType::quectel, bool(QGC_GPS_ENABLE_QUECTEL)},
-        std::pair{GPSType::passive, bool(QGC_GPS_ENABLE_PASSIVE)},
-    };
-    for (const auto& [type, enabled] : expected) {
-        QCOMPARE(GPSDriver::supportsType(type), enabled);
-    }
-    QVERIFY(!GPSDriver::supportsType(static_cast<GPSType>(-1)));
-    QVERIFY(!GPSDriver::supportsType(static_cast<GPSType>(255)));
-}
 
 void GPSDriverReentrancyTest::_recursiveConfiguration_data()
 {
@@ -107,9 +87,6 @@ void GPSDriverReentrancyTest::_recursiveConfiguration_data()
 
 void GPSDriverReentrancyTest::_recursiveConfiguration()
 {
-    if (!GPSDriver::supportsType(GPSType::passive)) {
-        QSKIP("Passive receiver support is disabled");
-    }
     QFETCH(bool, failAfterCallback);
     ReentrancyTransport transport;
     GPSDriver* driverPointer = nullptr;
@@ -158,9 +135,6 @@ void GPSDriverReentrancyTest::_recursiveConfiguration()
 
 void GPSDriverReentrancyTest::_recursiveReceive()
 {
-    if (!GPSDriver::supportsType(GPSType::passive)) {
-        QSKIP("Passive receiver support is disabled");
-    }
     ReentrancyTransport transport;
     GPSDriver* driverPointer = nullptr;
     std::optional<GPSReceiveResult> nestedResult;
@@ -187,9 +161,6 @@ void GPSDriverReentrancyTest::_recursiveReceive()
 
 void GPSDriverReentrancyTest::_configurationCallbacks()
 {
-    if (!GPSDriver::supportsType(GPSType::femto)) {
-        QSKIP("Femto receiver support is disabled");
-    }
     ReentrancyTransport transport;
     transport.acknowledgeFemto = true;
     GPSDriver* driverPointer = nullptr;
@@ -234,9 +205,6 @@ void GPSDriverReentrancyTest::_satelliteExpiry_data()
 
 void GPSDriverReentrancyTest::_satelliteExpiry()
 {
-    if (!GPSDriver::supportsType(GPSType::passive)) {
-        QSKIP("Passive receiver support is disabled");
-    }
     QFETCH(bool, positionTraffic);
     ReentrancyTransport transport;
     GPSSatelliteReport latest;
@@ -251,7 +219,7 @@ void GPSDriverReentrancyTest::_satelliteExpiry()
     QVERIFY(driver.configure());
     transport.incoming = SATELLITES + POSITION;
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Data);
-    QCOMPARE(latest.count, uint16_t{1});
+    QCOMPARE(latest.inView, 1);
     QVERIFY(latest.timestampUs != 0);
     QCOMPARE(unavailableReports, 0);
 
@@ -266,7 +234,7 @@ void GPSDriverReentrancyTest::_satelliteExpiry()
                              EXPIRY_TIMEOUT_MS);
     QCOMPARE(unavailableReports, 1);
     QCOMPARE(latest.timestampUs, uint64_t{0});
-    QCOMPARE(latest.count, uint16_t{0});
+    QCOMPARE(latest.inView, 0);
     QCOMPARE(result.status, positionTraffic ? GPSReceiveStatus::Data : GPSReceiveStatus::Idle);
     if (!positionTraffic) {
         QCOMPARE(result.updates, 0);
@@ -277,7 +245,7 @@ void GPSDriverReentrancyTest::_satelliteExpiry()
 
     transport.incoming = SATELLITES + NEXT_POSITION;
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Data);
-    QCOMPARE(latest.count, uint16_t{1});
+    QCOMPARE(latest.inView, 1);
     QVERIFY(latest.timestampUs != 0);
     QCOMPARE(transport.writes, 0);
 }

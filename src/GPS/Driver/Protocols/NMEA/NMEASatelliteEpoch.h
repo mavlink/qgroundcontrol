@@ -14,11 +14,7 @@ struct Sentence;
 struct SatelliteData
 {
     uint16_t id = 0;
-    uint16_t prn = 0;
     GPSConstellation constellation = GPSConstellation::Unknown;
-    std::optional<double> elevation;
-    std::optional<double> azimuth;
-    std::optional<int> signal;
 };
 
 struct SatelliteSystem
@@ -26,7 +22,7 @@ struct SatelliteSystem
     GPSConstellation constellation = GPSConstellation::Unknown;
     uint64_t inViewTimestampUs = 0;
     uint64_t inUseTimestampUs = 0;
-    std::vector<SatelliteData> satellites = {};
+    int inView = 0;
     std::optional<std::set<int>> usedIds;
 };
 

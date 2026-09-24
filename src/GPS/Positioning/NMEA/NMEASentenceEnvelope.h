@@ -47,11 +47,3 @@ private:
 
     std::shared_ptr<const Data> _data;
 };
-
-/// Supplies the envelope belonging to the last line read by Qt's position decoder.
-class NMEASentenceProvider
-{
-public:
-    virtual ~NMEASentenceProvider() = default;
-    virtual std::optional<NMEASentenceEnvelope> lastReadSentence() const = 0;
-};

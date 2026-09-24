@@ -12,32 +12,17 @@
 
 #include "GPSNativeData_p.h"
 #include "GPSProtocol.h"
-#include "GPSProtocolFeatures.h"
 #include "GPSTransport.h"
 #include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 
-#if QGC_GPS_ENABLE_UBX
 #include "UBX/GPSDriverUBX.h"
-#endif
-#if QGC_GPS_ENABLE_ASHTECH
 #include "Ashtech/GPSDriverAshtech.h"
-#endif
-#if QGC_GPS_ENABLE_SBF
 #include "SBF/GPSDriverSBF.h"
-#endif
-#if QGC_GPS_ENABLE_FEMTO
 #include "Femto/GPSDriverFemto.h"
-#endif
-#if QGC_GPS_ENABLE_UNICORE
 #include "Unicore/GPSDriverUnicore.h"
-#endif
-#if QGC_GPS_ENABLE_QUECTEL
 #include "Quectel/GPSDriverQuectel.h"
-#endif
-#if QGC_GPS_ENABLE_PASSIVE
 #include "Passive/GPSDriverPassive.h"
-#endif
 
 QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.Driver.GPSDriver")
 QGC_LOGGING_CATEGORY(GPSNativeDriversLog, "GPS.Driver.Protocols")
@@ -58,27 +43,13 @@ struct ProtocolFactory
 };
 
 constexpr std::array PROTOCOL_FACTORIES{
-#if QGC_GPS_ENABLE_UBX
     ProtocolFactory{GPSType::ublox, &makeProtocol<GPSNativeUBX>},
-#endif
-#if QGC_GPS_ENABLE_ASHTECH
     ProtocolFactory{GPSType::trimble, &makeProtocol<GPSNativeAshtech>, 115200},
-#endif
-#if QGC_GPS_ENABLE_SBF
     ProtocolFactory{GPSType::septentrio, &makeProtocol<GPSNativeSBF>},
-#endif
-#if QGC_GPS_ENABLE_FEMTO
     ProtocolFactory{GPSType::femto, &makeProtocol<GPSNativeFemto>},
-#endif
-#if QGC_GPS_ENABLE_UNICORE
     ProtocolFactory{GPSType::unicore, &makeProtocol<GPSNativeUnicore>, 0, 0},
-#endif
-#if QGC_GPS_ENABLE_QUECTEL
     ProtocolFactory{GPSType::quectel, &makeProtocol<GPSNativeQuectel>, 0, 0},
-#endif
-#if QGC_GPS_ENABLE_PASSIVE
     ProtocolFactory{GPSType::passive, &makeProtocol<GPSNativePassive>, 0, 0},
-#endif
 };
 
 auto findProtocolFactory(GPSType type)
@@ -116,11 +87,6 @@ GPSDriver::GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverCon
 {}
 
 GPSDriver::~GPSDriver() = default;
-
-bool GPSDriver::supportsType(GPSType type)
-{
-    return findProtocolFactory(type) != PROTOCOL_FACTORIES.end();
-}
 
 const std::vector<GPSConfigurationEvidence>& GPSDriver::configurationEvidence() const
 {

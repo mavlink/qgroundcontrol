@@ -211,7 +211,6 @@ void PositionManagerTest::_nmeaLifecycleDiagnostics_data()
     QTest::newRow("device-replaced") << 3 << QStringLiteral("device replacement");
     QTest::newRow("device-cleared") << 4 << QStringLiteral("device cleared");
     QTest::newRow("shutdown") << 5 << QStringLiteral("position manager shutdown");
-    QTest::newRow("scheduler-destroyed") << 6 << QStringLiteral("scheduler destroyed");
 }
 
 void PositionManagerTest::_nmeaLifecycleDiagnostics()
@@ -270,9 +269,6 @@ void PositionManagerTest::_nmeaLifecycleDiagnostics()
             break;
         case 5:
             service.reset();
-            break;
-        case 6:
-            scheduler.reset();
             break;
     }
     QTRY_VERIFY_WITH_TIMEOUT(originalHealth.isNull(), TestTimeout::shortMs());
@@ -375,32 +371,6 @@ void PositionManagerTest::_facadeUsesInjectedScheduler()
     auto* session = input.health()->parent();
     QVERIFY(session);
     QVERIFY(session->findChildren<RuntimeScheduler*>().isEmpty());
-}
-
-void PositionManagerTest::_facadeSchedulerDestruction()
-{
-    auto scheduler = std::make_unique<ManualScheduler>();
-    QGCPositionManager manager(nullptr, scheduler.get());
-    manager.init();
-    SequentialTestDevice device;
-    NMEASourceManager input(nullptr, &manager);
-    input._startDecoder(&device);
-    QVERIFY(input.health());
-    scheduler.reset();
-    QVERIFY(!input.health());
-    QVERIFY(!manager.acceptedObservation());
-    QCOMPARE(manager.selectedSource(), GPSPositionService::SelectedSource::None);
-    expectLogMessage("GPS.PositionManager.QGCPositionManager", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Positioning requires a live scheduler")));
-    manager.init();
-    verifyExpectedLogMessage();
-    expectLogMessage(
-        "GPS.NMEA.NMEASourceManager", QtWarningMsg,
-        QRegularExpression(QStringLiteral("NMEA device requires matching thread affinity and a live scheduler")));
-    input._startDecoder(&device);
-    verifyExpectedLogMessage();
-    QVERIFY(!input.health());
-    QVERIFY(manager.findChildren<RuntimeScheduler*>().isEmpty());
 }
 
 void PositionManagerTest::_simulatedHomeSelection_data()

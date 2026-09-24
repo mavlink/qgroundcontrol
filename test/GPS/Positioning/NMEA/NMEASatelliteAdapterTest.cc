@@ -10,9 +10,8 @@
 #include "NMEAConstellation.h"
 #include "NMEADecoderSession.h"
 #include "NMEASentence.h"
-#include "NMEAStreamSplitter.h"
+#include "NMEASentenceEnvelope.h"
 #include "NMEAUtils.h"
-#include "QtRuntimeScheduler.h"
 #include "ReadTimestamp.h"
 
 namespace {
@@ -125,17 +124,8 @@ void NMEASatelliteAdapterTest::_combinedTalkerReports()
     for (const auto& constellation : observation.constellations) {
         QVERIFY(constellation.constellation != GPSConstellation::Unknown);
         QCOMPARE(constellation.view.receivedAtUs, firstReceipt);
-        for (const auto& satellite : constellation.view.satellites) {
-            QCOMPARE(satellite.constellation, constellation.constellation);
-            QCOMPARE(satellite.id, constellation.constellation == GPSConstellation::SBAS ? 120 : 1);
-            QCOMPARE(satellite.used, std::optional<bool>(true));
-            if (constellation.constellation == GPSConstellation::GPS) {
-                QCOMPARE(satellite.signalStrength, std::optional<int>(45));
-            }
-            if (constellation.constellation == GPSConstellation::Galileo) {
-                QCOMPARE(satellite.signalStrength, std::optional<int>(50));
-            }
-        }
+        QCOMPARE(constellation.view.count, 1);
+        QCOMPARE(constellation.usage.count, std::optional<int>(1));
     }
 }
 
@@ -166,18 +156,13 @@ void NMEASatelliteAdapterTest::_modernConstellationsAndSignals()
     QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInViewCount(), 11, TestTimeout::shortMs());
     QCOMPARE(store.observation().satellitesInUseCount(), 6);
     const auto observation = store.observation();
-    int galileoSignals = 0;
+    int galileoSatellites = 0;
     for (const auto& constellation : observation.constellations) {
         if (constellation.constellation == GPSConstellation::Galileo) {
-            for (const auto& satellite : constellation.view.satellites) {
-                if (satellite.id == 2) {
-                    ++galileoSignals;
-                    QCOMPARE(satellite.signalStrength, std::optional<int>(40));
-                }
-            }
+            galileoSatellites = constellation.view.count;
         }
     }
-    QCOMPARE(galileoSignals, 1);
+    QCOMPARE(galileoSatellites, 5);
 
     // A new epoch must replace the previous signal lists, including an explicit no-fix report.
     reports.clear();
@@ -249,7 +234,7 @@ void NMEASatelliteAdapterTest::_incompleteReportIsDiscarded()
     const auto report = reports.first().first().value<GPSSatelliteObservation>();
     QCOMPARE(report.satellitesInViewCount(), 1);
     QCOMPARE(report.constellations.first().constellation, GPSConstellation::GPS);
-    QCOMPARE(report.constellations.first().view.satellites.first().id, 2);
+    QCOMPARE(report.constellations.first().view.count, 1);
 }
 
 void NMEASatelliteAdapterTest::_epochTimeNormalization_data()
@@ -421,13 +406,10 @@ void NMEASatelliteAdapterTest::_gsvDoesNotClearFreshUsedReport()
     feed(input, {"$GPGSV,1,1,01,02,40,100,45", "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
     QTRY_VERIFY_WITH_TIMEOUT(
         session.satelliteObservation().satellitesInViewCount() > 0 &&
-            session.satelliteObservation().constellations.first().view.satellites.first().signalStrength == 45,
+            session.satelliteObservation().constellations.first().view.receivedAtUs > initialReceipt,
         TestTimeout::mediumMs());
     QCOMPARE(session.satelliteObservation().satellitesInUseCount(), 1);
-    QCOMPARE(session.satelliteObservation().constellations.first().view.satellites.first().used,
-             std::optional<bool>(true));
     QCOMPARE(session.satelliteObservation().constellations.first().usage.receivedAtUs, initialReceipt);
-    QVERIFY(session.satelliteObservation().constellations.first().view.receivedAtUs > initialReceipt);
 }
 
 void NMEASatelliteAdapterTest::_identicalReportsAndGsaWithoutView()
@@ -445,15 +427,7 @@ void NMEASatelliteAdapterTest::_identicalReportsAndGsaWithoutView()
     feed(input, {"$GPGSV,1,1,02,02,0,0,0,03,,,", "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
     QTRY_COMPARE_WITH_TIMEOUT(session.satelliteObservation().satellitesInViewCount(), 2, TestTimeout::shortMs());
     const auto previous = session.satelliteObservation();
-    const auto& view = previous.constellations.first().view.satellites;
-    QCOMPARE(view[0].used, std::optional<bool>(true));
-    QCOMPARE(view[1].used, std::optional<bool>(false));
-    QCOMPARE(view[0].signalStrength, std::optional<int>(0));
-    QCOMPARE(view[0].elevationDegrees, std::optional<double>(0));
-    QCOMPARE(view[0].azimuthDegrees(), std::optional<double>(0));
-    QVERIFY(!view[1].signalStrength);
-    QVERIFY(!view[1].elevationDegrees);
-    QVERIFY(!view[1].azimuthDegrees());
+    QCOMPARE(previous.satellitesInUseCount(), 1);
     input.receivedAtUs = MonotonicClock::nowUs();
     feed(input, {"$GPGSV,1,1,02,02,0,0,0,03,,,", "$GNRMC,120003.00,V,,,,,,,090926,,,N"});
     QTRY_VERIFY_WITH_TIMEOUT(session.satelliteObservation().revision > previous.revision, TestTimeout::shortMs());
@@ -519,22 +493,11 @@ void NMEASatelliteAdapterTest::_qtLegacyEquivalence()
     QCOMPARE(store.observation().satellitesInViewCount(), qtSatellites.size());
     QCOMPARE(store.observation().satellitesInUseCount(), qtUse.last().first().value<QList<QGeoSatelliteInfo>>().size());
     const auto observation = store.observation();
-    qsizetype index = 0;
+    int groupedCount = 0;
     for (const auto& group : observation.constellations) {
-        for (const auto& actual : group.view.satellites) {
-            const auto& reference = qtSatellites[index++];
-            const auto constellation = reference.satelliteSystem() == QGeoSatelliteInfo::GPS
-                                           ? GPSConstellation::GPS
-                                           : GPSConstellation::GLONASS;
-            QCOMPARE(group.constellation, constellation);
-            QCOMPARE(actual.constellation, constellation);
-            // QGC stores constellation-local IDs; Qt retains the legacy GLONASS offset.
-            QCOMPARE(actual.id, NMEA::satelliteId(constellation, reference.satelliteIdentifier()));
-            QCOMPARE(actual.signalStrength, std::optional<int>(reference.signalStrength()));
-            QCOMPARE(actual.elevationDegrees, std::optional<double>(reference.attribute(QGeoSatelliteInfo::Elevation)));
-            QCOMPARE(actual.azimuthDegrees(), std::optional<double>(reference.attribute(QGeoSatelliteInfo::Azimuth)));
-        }
+        groupedCount += group.view.count;
     }
+    QCOMPARE(groupedCount, qtSatellites.size());
 }
 
 void NMEASatelliteAdapterTest::_reentrantStopKeepsReplacement()
@@ -553,8 +516,7 @@ void NMEASatelliteAdapterTest::_reentrantStopKeepsReplacement()
     QVERIFY(session.positionSource());
     feed(replacementInput, {"$GPGSV,1,1,01,02,40,100,45", "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
     QTRY_COMPARE_WITH_TIMEOUT(session.satelliteObservation().satellitesInViewCount(), 1, TestTimeout::shortMs());
-    QCOMPARE(session.satelliteObservation().constellations.first().view.satellites.first().signalStrength,
-             std::optional<int>(45));
+    QCOMPARE(session.satelliteObservation().constellations.first().view.count, 1);
 }
 
 void NMEASatelliteAdapterTest::_identityResolution_data()
@@ -621,17 +583,12 @@ void NMEASatelliteAdapterTest::_mixedLegacyIdentities()
     QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInViewCount(), 2, TestTimeout::shortMs());
     QCOMPARE(store.observation().satellitesInUseCount(), 2);
     for (const auto& constellation : store.observation().constellations) {
-        for (const auto& satellite : constellation.view.satellites) {
-            QCOMPARE(satellite.used, std::optional<bool>(true));
-            if (satellite.id == 2) {
-                QCOMPARE(satellite.constellation, GPSConstellation::GPS);
-                QCOMPARE(satellite.signalStrength, std::optional<int>(0));
-            } else {
-                QCOMPARE(satellite.id, 1);
-                QCOMPARE(satellite.constellation, GPSConstellation::GLONASS);
-                QVERIFY(!satellite.signalStrength);
-            }
-        }
+        // A complete GP view also reports the SBAS legacy range, here as a known-empty view.
+        const int expected = constellation.constellation == GPSConstellation::GPS ||
+                                     constellation.constellation == GPSConstellation::GLONASS
+                                 ? 1
+                                 : 0;
+        QCOMPARE(constellation.view.count, expected);
     }
 }
 
@@ -656,11 +613,6 @@ void NMEASatelliteAdapterTest::_ambiguousLegacyIdentities()
                  "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
     QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInViewCount(), 3, TestTimeout::shortMs());
     QCOMPARE(store.observation().satellitesInUseCount(), -1);
-    for (const auto& constellation : store.observation().constellations) {
-        for (const auto& satellite : constellation.view.satellites) {
-            QVERIFY(!satellite.used.has_value());
-        }
-    }
     input.receivedAtUs = MonotonicClock::nowUs() - 50000;
     feed(input, {gsa("GN", {"201", "202"}, "5"), gsa("BD", {"201"}), "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
     QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInUseCount(), 3, TestTimeout::shortMs());
@@ -693,8 +645,6 @@ void NMEASatelliteAdapterTest::_explicitZeroAndUnknownCoverage()
     QCOMPARE(observation.constellations.last().usage.count, std::optional<int>(0));
     QCOMPARE(observation.constellations.first().constellation, GPSConstellation::GPS);
     QCOMPARE(observation.constellations.first().usage.count, std::optional<int>(0));
-    QVERIFY(observation.constellations.first().usage.ids.has_value());
-    QVERIFY(observation.constellations.first().usage.ids->isEmpty());
 }
 
 void NMEASatelliteAdapterTest::_canonicalIdentities()
@@ -710,34 +660,5 @@ void NMEASatelliteAdapterTest::_canonicalIdentities()
                  "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
     QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInViewCount(), 4, TestTimeout::shortMs());
     QCOMPARE(store.observation().satellitesInUseCount(), 4);
-    for (const auto& constellation : store.observation().constellations) {
-        for (const auto& satellite : constellation.view.satellites) {
-            QCOMPARE(satellite.id, 1);
-            QCOMPARE(satellite.used, std::optional<bool>(true));
-            QVERIFY(satellite.prn > 0);
-        }
-    }
-}
-
-void NMEASatelliteAdapterTest::_schedulerCanBeDestroyed()
-{
-    QBuffer input;
-    QVERIFY(input.open(QIODevice::ReadOnly));
-    auto scheduler = std::make_unique<QtRuntimeScheduler>();
-    NMEADecoderSession adapter(nullptr, scheduler.get());
-    QVERIFY(adapter.start(&input));
-    QSignalSpy updates(&adapter, &NMEADecoderSession::satellitesReceived);
-    feed(input, {"$GPGSV,1,1,01,01,45,100,30"});
-    scheduler.reset();
-    QVERIFY(!adapter.positionSource());
-    for (const auto& update : updates) {
-        const auto observation = update.first().value<GPSSatelliteObservation>();
-        for (const auto& constellation : observation.constellations) {
-            QVERIFY(constellation.view.satellites.isEmpty());
-        }
-    }
-    const auto count = updates.size();
-    feed(input, {"$GPGSA,A,1,,,,,,,,,,,,,99.9,99.9,99.9"});
-    adapter.stop();
-    QCOMPARE(updates.size(), count);
+    QCOMPARE(store.observation().constellations.size(), 4);
 }

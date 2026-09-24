@@ -226,7 +226,6 @@ private slots:
         QFETCH(int, timeout);
         std::atomic_bool stop = false;
         SerialGPSTransport transport(QStringLiteral("test"), stop);
-        QVERIFY(!transport.supportsCorrectionWrites());
         QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
         const uint8_t payload = 42;
         const auto result = transport.writeBounded(&payload, 1, QDeadlineTimer(timeout));

@@ -179,14 +179,7 @@ inline ubx_payload_rx_nav_svinfo_part2_t detail::decodeFields<ubx_payload_rx_nav
 {
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_svinfo_part2_t value{};
-    value.chn = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
-    value.svid = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
     value.flags = LittleEndian::read<uint8_t>(bytes, 2).value_or(0);
-    value.quality = LittleEndian::read<uint8_t>(bytes, 3).value_or(0);
-    value.cno = LittleEndian::read<uint8_t>(bytes, 4).value_or(0);
-    value.elev = LittleEndian::read<int8_t>(bytes, 5).value_or(0);
-    value.azim = LittleEndian::read<int16_t>(bytes, 6).value_or(0);
-    value.prRes = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
     return value;
 }
 
@@ -210,11 +203,6 @@ inline ubx_payload_rx_nav_sat_part2_t detail::decodeFields<ubx_payload_rx_nav_sa
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_sat_part2_t value{};
     value.gnssId = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
-    value.svId = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
-    value.cno = LittleEndian::read<uint8_t>(bytes, 2).value_or(0);
-    value.elev = LittleEndian::read<int8_t>(bytes, 3).value_or(0);
-    value.azim = LittleEndian::read<int16_t>(bytes, 4).value_or(0);
-    value.prRes = LittleEndian::read<int16_t>(bytes, 6).value_or(0);
     value.flags = LittleEndian::read<uint32_t>(bytes, 8).value_or(0);
     return value;
 }

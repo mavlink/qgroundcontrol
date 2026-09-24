@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <chrono>
 #include <cstdint>
 #include <limits>
@@ -8,7 +7,6 @@
 
 #include <QtCore/QMetaType>
 
-#include "../GPSConstellation.h"
 #include "../GPSFixQuality.h"
 #include "GPSEllipsoidPosition.h"
 #include "GPSSatelliteUsageReport.h"
@@ -160,24 +158,10 @@ Q_DECLARE_METATYPE(GPSPositionReport::FixType)
 
 struct GPSSatelliteReport
 {
-    struct Satellite
-    {
-        uint16_t id = 0;
-        uint16_t prn = 0;
-        std::optional<bool> used = std::nullopt;
-        std::optional<float> elevationDegrees = std::nullopt;
-        std::optional<float> azimuthDegrees = std::nullopt;
-        std::optional<uint8_t> signalStrength = std::nullopt;
-        GPSConstellation constellation = GPSConstellation::Unknown;
-        uint64_t inViewTimestampUs = 0;
-        uint64_t inUseTimestampUs = 0;
-    };
-
-    static constexpr uint16_t MAX_SATELLITES = 128;
     // Latest accepted view receipt. Zero means no view coverage, not an explicitly empty view.
     uint64_t timestampUs = 0;
-    uint16_t count = 0;
-    std::array<Satellite, MAX_SATELLITES> satellites{};
+    int inView = 0;
+    std::optional<int> used = std::nullopt;
 };
 Q_DECLARE_METATYPE(GPSSatelliteReport)
 

@@ -24,7 +24,6 @@ private slots:
     void _consumerPolicies();
     void _consumerMaximumAge();
     void _policySelectionGates();
-    void _schedulerDestruction();
     void _sourceAndHealthLifetime();
     void _notificationsCanSwitchOrDelete_data();
     void _notificationsCanSwitchOrDelete();
@@ -41,6 +40,5 @@ private slots:
     void _accuracyNotifiesOnlyChanges();
     void _rawRegistrationCarriesSession();
     void _registrationRetiresFromWorker();
-    void _foreignSchedulerRejected();
     void _destructionDisconnectsBindings();
 };

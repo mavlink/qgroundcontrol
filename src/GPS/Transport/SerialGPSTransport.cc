@@ -224,8 +224,3 @@ bool SerialGPSTransport::setBaudrate(unsigned baudrate)
 {
     return !isCancelled() && !fatalError() && _serial->setBaudRate(baudrate);
 }
-
-std::chrono::milliseconds SerialGPSTransport::correctionWriteTimeout(int length) const
-{
-    return serialCorrectionWriteTimeout(length, _serial ? _serial->baudRate() : 0);
-}

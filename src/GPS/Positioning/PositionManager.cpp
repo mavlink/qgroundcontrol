@@ -32,10 +32,6 @@ QGCPositionManager* QGCPositionManager::instance()
 
 void QGCPositionManager::init()
 {
-    if (!scheduler()) {
-        qCWarning(QGCPositionManagerLog) << "Positioning requires a live scheduler";
-        return;
-    }
     if (QGC::runningUnitTests()) {
         setSimulatedPositionSource(new SimulatedPosition(this, scheduler()));
     } else {
@@ -45,10 +41,6 @@ void QGCPositionManager::init()
 
 void QGCPositionManager::_setupPositionSources()
 {
-    if (!scheduler()) {
-        qCWarning(QGCPositionManagerLog) << "Positioning requires a live scheduler";
-        return;
-    }
     auto* platformSource = QGCCorePlugin::instance()->createPositionSource(this);
     const bool custom = platformSource != nullptr;
     if (!custom) {

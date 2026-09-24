@@ -11,5 +11,4 @@ private slots:
     void _closeRetiresHealth();
     void _ordinaryDeviceUsesSessionClock();
     void _delayedInputRetainsReceiptAge();
-    void _schedulerDestructionRetiresSession();
 };

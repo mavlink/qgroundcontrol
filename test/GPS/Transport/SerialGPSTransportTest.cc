@@ -146,40 +146,6 @@ void SerialGPSTransportTest::_testPendingWriteDeadline()
 #endif
 }
 
-void SerialGPSTransportTest::_testLowBaudCorrectionAllowance_data()
-{
-    QTest::addColumn<unsigned>("baud");
-    QTest::addColumn<int>("minimumWireMs");
-    QTest::newRow("9600-max-rtcm") << 9600u << 1072;
-    QTest::newRow("38400-max-rtcm") << 38400u << 268;
-}
-
-void SerialGPSTransportTest::_testLowBaudCorrectionAllowance()
-{
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-    QFETCH(unsigned, baud);
-    QFETCH(int, minimumWireMs);
-    QFile master;
-    const QString slave = openPseudoTerminal(master);
-    QVERIFY(!slave.isEmpty());
-    std::atomic_bool stop = false;
-    SerialGPSTransport transport(slave, stop);
-    QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
-    QVERIFY(transport.setBaudrate(baud));
-    const QByteArray payload(1029, 'x');
-    const auto allowance = transport.correctionWriteTimeout(payload.size());
-    QVERIFY(allowance.count() >= minimumWireMs + 100);
-    QVERIFY(allowance.count() <= 3000);
-    const auto result = transport.writeBounded(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
-                                               QDeadlineTimer(allowance));
-    QCOMPARE(result.status, GPSWriteStatus::Completed);
-    QCOMPARE(result.writtenBytes, payload.size());
-    QCOMPARE(result.uncertainBytes(), 0);
-#else
-    QSKIP("Serial baud policy coverage requires a Linux pseudo-terminal");
-#endif
-}
-
 UT_REGISTER_TEST(SerialGPSTransportTest, TestLabel::Unit)
 
 void SerialGPSTransportTest::_inputBudgetEndsStream()

@@ -34,8 +34,21 @@ constexpr size_t GGA_GEOID_SEPARATION = 11;
 constexpr size_t GGA_GEOID_UNITS = 12;
 constexpr size_t GGA_MIN_FIELDS = GGA_GEOID_UNITS + 1;
 constexpr size_t RMC_STATUS = 2;
+constexpr size_t RMC_LATITUDE = 3;
+constexpr size_t RMC_LATITUDE_HEMISPHERE = 4;
+constexpr size_t RMC_LONGITUDE = 5;
+constexpr size_t RMC_LONGITUDE_HEMISPHERE = 6;
+constexpr size_t RMC_SPEED_KNOTS = 7;
+constexpr size_t RMC_COURSE = 8;
+constexpr size_t RMC_DATE = 9;
+constexpr size_t RMC_MIN_FIELDS = RMC_DATE + 1;
+constexpr size_t GLL_LATITUDE = 1;
+constexpr size_t GLL_LATITUDE_HEMISPHERE = 2;
+constexpr size_t GLL_LONGITUDE = 3;
+constexpr size_t GLL_LONGITUDE_HEMISPHERE = 4;
 constexpr size_t GLL_TIME = 5;
 constexpr size_t GLL_STATUS = 6;
+constexpr size_t GLL_MIN_FIELDS = GLL_STATUS + 1;
 constexpr size_t GSA_DIMENSION = 2;
 constexpr size_t GSA_FIRST_SATELLITE = 3;
 constexpr size_t GSA_SATELLITE_SLOTS = 12;
@@ -43,6 +56,14 @@ constexpr size_t GSA_HDOP = GSA_FIRST_SATELLITE + GSA_SATELLITE_SLOTS + 1;
 constexpr size_t GSA_VDOP = GSA_HDOP + 1;
 constexpr size_t GSA_MIN_FIELDS = GSA_VDOP + 1;
 constexpr size_t GSA_SYSTEM_ID = GSA_MIN_FIELDS;
+constexpr size_t VTG_TRUE_COURSE = 1;
+constexpr size_t VTG_SPEED_KNOTS = 5;
+constexpr size_t VTG_SPEED_KMH = 7;
+constexpr size_t VTG_MIN_FIELDS = VTG_SPEED_KMH + 1;
+constexpr size_t ZDA_DAY = 2;
+constexpr size_t ZDA_MONTH = 3;
+constexpr size_t ZDA_YEAR = 4;
+constexpr size_t ZDA_MIN_FIELDS = ZDA_YEAR + 1;
 constexpr size_t GST_LATITUDE_ERROR = 6;
 constexpr size_t GST_LONGITUDE_ERROR = 7;
 constexpr size_t GST_ALTITUDE_ERROR = 8;
@@ -161,6 +182,52 @@ struct GGA
 std::optional<GGA> gga(const Sentence& input);
 
 std::optional<int> utcMilliseconds(std::string_view field);
+
+struct UtcDate
+{
+    int year = 0;
+    unsigned month = 0;
+    unsigned day = 0;
+};
+
+std::optional<UtcDate> rmcDate(std::string_view field);
+
+struct RMC
+{
+    double latitude = NAN;
+    double longitude = NAN;
+    std::optional<int> utcMilliseconds;
+    std::optional<UtcDate> date;
+    double speedMetersPerSecond = NAN;
+    double courseDegrees = NAN;
+};
+
+std::optional<RMC> rmc(const Sentence& input);
+
+struct GLL
+{
+    double latitude = NAN;
+    double longitude = NAN;
+    std::optional<int> utcMilliseconds;
+};
+
+std::optional<GLL> gll(const Sentence& input);
+
+struct VTG
+{
+    double speedMetersPerSecond = NAN;
+    double courseDegrees = NAN;
+};
+
+std::optional<VTG> vtg(const Sentence& input);
+
+struct ZDA
+{
+    std::optional<int> utcMilliseconds;
+    UtcDate date;
+};
+
+std::optional<ZDA> zda(const Sentence& input);
 
 struct NavigationStatus
 {

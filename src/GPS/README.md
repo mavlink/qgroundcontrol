@@ -8,7 +8,7 @@ and correction delivery. Keep these boundaries when adding receiver families or 
 | Layer | Responsibility | Execution and ownership |
 | --- | --- | --- |
 | `Driver/Protocols` | Frame decoding, receiver commands, native reports | Synchronous, injected I/O; no application singleton or QML dependency |
-| `Transport` | Serial/TCP/UDP I/O, bounded writes, cancellation | Owned by the receiver worker that uses it |
+| `Transport` | Serial receiver I/O, bounded configuration writes, cancellation | Owned by the receiver worker that uses it |
 | `Driver` | Translate native report batches into application types | Receiver worker; publish owned values, not views into decoder buffers |
 | `RTK/GPSProvider` | Configure and receive from one physical receiver | Worker thread; cancellation does not imply that the worker has already exited |
 | `RTK/GPSRtk` | Authorize the current session and expose Facts | Application thread; retire registrations before asynchronous worker cleanup |
@@ -33,9 +33,10 @@ values, and keep last-notified values separate from the currently published posi
 Receiver failures carry category and diagnostic together. Publishing an error must not depend on
 another queued callback having already stored part of that error in a Fact.
 
-The NMEA wrapper owns single-shot request completion and its deadline. Its internal Qt decoder
-acquires data while continuous updates or a pending request need it; rejecting a retained fix
-must not start a second request timer or extend the caller's deadline.
+NMEA positioning uses one native framer and parser in `NMEAPositionSource`. It publishes Qt positions,
+accepted observations, and parsed sentences for satellite assembly, and owns single-shot request
+completion and its deadline; rejecting a retained fix must not start a second request timer or extend
+the caller's deadline.
 
 ## Protocol contracts
 
@@ -60,8 +61,8 @@ or claim that an unencoded setting was requested.
 
 Capabilities describe implemented behavior, not everything a receiver family might support.
 Hide or reject unsupported controls rather than silently accepting settings that have no effect.
-In particular, bounded correction writes can be unsupported even when receiver configuration
-and reading are supported by a platform transport.
+Bounded transport writes serve receiver configuration; runtime correction routing is handled by
+correction outputs, not receiver transports.
 
 Base configuration selects one fixed-position, survey-in, or receiver-averaging payload. Settings
 retain their persisted identifiers at the adapter boundary; a runtime request does not carry
@@ -93,15 +94,16 @@ Satellite view and usage state have separate retirement watermarks. Clearing or 
 must not clear the other or allow a queued older report to resurrect retired values. Integrity
 groups likewise retain their own receipt times; a new RF diagnostic does not refresh old spoofing
 or correction-use status.
-Observations contain constellation records with view and usage payloads, rather than a flat list
-joined to separate provenance. Native mixed-constellation snapshots are normalized at their adapter
-boundary; NMEA epochs retain their existing grouping. A full snapshot's omissions retire state,
-whereas a constellation delta leaves other constellations unchanged. A zero view receipt means no
-view report; a nonzero receipt with no satellites is a known empty view.
+Observations contain constellation records with independent view and usage counts rather than
+per-satellite detail; consumers display only satellites in view and in use. Native mixed-constellation
+snapshots are normalized at their adapter boundary, and NMEA epochs count each satellite once across
+repeated signal reports. A full snapshot's omissions retire state, whereas a constellation delta leaves
+other constellations unchanged. A zero view receipt means no view report; a nonzero receipt with count
+0 is a known empty view.
 
 `GPSFixQuality` is the shared navigation classification; value 7 remains reserved and extrapolated
 fixes use value 8. NMEA autonomous fixes require a caller-provided dimension policy: native GGA
-retains its 3D assumption, while Qt uses fresh epoch-local GSA evidence or Unknown. MAVLink wire
+retains its 3D assumption, while GCS NMEA input uses fresh epoch-local GSA evidence or Unknown. MAVLink wire
 values still need explicit conversion, particularly static and PPP classifications.
 
 The normal position lifetime is five seconds. A live vehicle heartbeat does not refresh its
@@ -141,7 +143,7 @@ Keep these states distinct:
 2. Bytes received.
 3. Valid RTCM frame received.
 4. Frame admitted by filtering and source selection.
-5. Output accepted or delivered to a particular destination.
+5. Output queued to a particular destination.
 
 Nonempty invalid data must not indefinitely satisfy the valid-correction deadline. Filtering
 all valid messages is different from receiving corrupt data and needs a different diagnosis.
@@ -161,8 +163,9 @@ operation revision do not belong to the retiring network attempt.
 
 ## Source organization
 
-Keep receiver-family build switches and reusable library targets independent. Related private
-declarations and small implementation fragments can share a file without collapsing those targets.
+Every receiver family is always built; each keeps its own library target so the standalone
+qualification runner and fuzzers link only what they exercise. Related private declarations and small
+implementation fragments can share a file without collapsing those targets.
 Satellite observation and retention value types live in `Receiver`, which depends only on Qt Core, so
 the native driver and standalone hardware tools can use them; `Core` schedules and publishes accepted
 satellite state. Declare such dependencies through targets rather than relative includes.
@@ -184,10 +187,12 @@ and `test/FollowMe`. Use the repository's [testing guide](../../test/README.md) 
 [development commands](../../tools/README.md).
 
 Prefer scripted I/O that parses complete commands and emits realistic acknowledgements.
-Exercise malformed-prefix recovery through drivers as well as the standalone framer, compare
-native and Qt NMEA validity behavior, and use injected clocks for freshness boundaries.
+Exercise malformed-prefix recovery through drivers as well as the standalone framer, and use
+injected clocks for freshness boundaries.
 Preserve cancellation, reentrancy, source replacement, and reservation-lifetime coverage.
 Hardware validation remains necessary for receiver firmware-specific survey and datum behavior.
+`test/GPS/Driver/Hardware` provides a serial qualification runner that records configuration evidence;
+Linux test builds run its scripted check, and it opens a physical receiver only when invoked manually.
 Ashtech averaging completion is correlated with a current start receipt, requested interval,
 and ordered completion rather than accepting any retained completion line. Confirm this receipt
 sequence against the deployed receiver firmware. Septentrio configuration explicitly selects

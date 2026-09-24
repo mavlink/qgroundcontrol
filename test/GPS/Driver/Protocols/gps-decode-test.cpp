@@ -12,7 +12,6 @@
 #include "Ashtech/GPSDriverAshtech.h"
 #include "CRC32.h"
 #include "Femto/GPSDriverFemto.h"
-#include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "NMEA/GPSNMEAReport.h"
 #include "NMEAFields.h"
@@ -83,13 +82,11 @@ std::vector<uint8_t> femtoPacket(uint16_t id, std::span<const uint8_t> payload)
     return packet;
 }
 
-#if QGC_GPS_ENABLE_SBF || QGC_GPS_ENABLE_FEMTO
 void malformedMessages()
 {
     GPSNativePositionReport position{};
     GPSNativeSatelliteReport satellites{};
     const std::array<uint8_t, 2> shortPayload{};
-#if QGC_GPS_ENABLE_SBF
     GPSNativeSBF sbf(captureGPSReports(noDevice(), position, &satellites));
     sbf_payload_pvt_geodetic_t fix{};
     fix.mode_type = 1;
@@ -121,8 +118,6 @@ void malformedMessages()
     CHECK(sbf.consume({}) & 1);
     CHECK(std::abs(position.navigation.courseRadians - GPS_PI / 2) < 0.00001);
 
-#endif
-#if QGC_GPS_ENABLE_FEMTO
     GPSNativeFemto femto(captureGPSReports(noDevice(), position, &satellites));
     femto_uav_gps_t gps{};
     gps.lat = 470000000;
@@ -144,9 +139,7 @@ void malformedMessages()
         CHECK(femto.consume(valid) & 1);
     }
     CHECK(femto.consume(femtoPacket(FEMTO_MSG_ID_UAVSTATUS, shortPayload)) == 0);
-#endif
 }
-#endif
 
 class ReadProbe : public GPSProtocol
 {
@@ -218,7 +211,6 @@ void absoluteDeadline()
     CHECK(now == 1010000);
 }
 
-#if QGC_GPS_ENABLE_ASHTECH
 constexpr std::string_view ASHTECH_SURVEY_STARTED = "PASHR,RECEIPT,POS,AVG,STARTED,INTERVAL,100,114502.56,28.12.2011";
 constexpr std::string_view ASHTECH_SURVEY_FINISHED =
     "PASHR,RECEIPT,POS,AVG,100,FINISHED,114642.81,28.12.2011,5542.5178481,N,03739.2954994,E,176.334,OK,CONTINUOUS,100."
@@ -490,7 +482,7 @@ void ashtechMetadata()
     io.decoded = [&](const GPSDecodedBatch& batch) {
         for (const auto& event : batch.events) {
             if (const auto* report = std::get_if<GPSNativeSatelliteReport>(&event);
-                report && report->constellation == GPSConstellation::GPS) {
+                report && report->count && report->constellations[0].constellation == GPSConstellation::GPS) {
                 gpsSatellites = *report;
             }
         }
@@ -519,17 +511,11 @@ void ashtechMetadata()
     CHECK(!(driver.consume(nmeaPacket("GPGSV,1,1,01,01,,,")) & GPSDecodedBatch::SATELLITES_UPDATE));
     gps_test_time += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
     CHECK(driver.consume({}) & GPSDecodedBatch::SATELLITES_UPDATE);
-    CHECK(gpsSatellites.count == 1);
-    CHECK(!gpsSatellites.entries[0].signal);
-    CHECK(!gpsSatellites.entries[0].azimuth);
-    CHECK(!gpsSatellites.entries[0].elevation);
-    CHECK(!gpsSatellites.entries[0].used);
+    CHECK(gpsSatellites.constellations[0].inView == 1);
     CHECK(!(driver.consume(nmeaPacket("GPGSV,1,1,01,01,0,0,0")) & GPSDecodedBatch::SATELLITES_UPDATE));
     gps_test_time += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
     CHECK(driver.consume({}) & GPSDecodedBatch::SATELLITES_UPDATE);
-    CHECK(gpsSatellites.entries[0].signal == 0);
-    CHECK(gpsSatellites.entries[0].azimuth == 0);
-    CHECK(gpsSatellites.entries[0].elevation == 0);
+    CHECK(gpsSatellites.constellations[0].inView == 1);
     CHECK(!(driver.consume(nmeaPacket("GPZDA,172809.456,12,07,2026,00,00")) & 1));
     CHECK(position.navigation.utcTimeUs % 1000000 >= 455999 && position.navigation.utcTimeUs % 1000000 <= 456001);
 
@@ -571,7 +557,6 @@ void ashtechMixedFramingAndFixedCommand()
                                     [](const auto& command) { return command.starts_with("$PASHS,POS,4700."); });
     CHECK(fixed != receiver.commands.end() && fixed->ends_with(",PC1\r\n"));
 }
-#endif
 
 void invalidFamilyConfiguration()
 {
@@ -620,15 +605,9 @@ void invalidFamilyConfiguration()
     for (const auto& config : invalid) {
         GPSNativePositionReport position{};
         std::vector<std::unique_ptr<GPSProtocol>> drivers;
-#if QGC_GPS_ENABLE_ASHTECH
         drivers.push_back(std::make_unique<GPSNativeAshtech>(captureGPSReports(noDevice(), position), false));
-#endif
-#if QGC_GPS_ENABLE_SBF
         drivers.push_back(std::make_unique<GPSNativeSBF>(captureGPSReports(noDevice(), position), false));
-#endif
-#if QGC_GPS_ENABLE_FEMTO
         drivers.push_back(std::make_unique<GPSNativeFemto>(captureGPSReports(noDevice(), position), false));
-#endif
         for (const auto& driver : drivers) {
             unsigned baudrate = 9600;
             CHECK(driver->configure(baudrate, config) < 0);
@@ -638,7 +617,6 @@ void invalidFamilyConfiguration()
     }
 }
 
-#if QGC_GPS_ENABLE_SBF
 void sbfEpochMetadata()
 {
     GPSNativePositionReport position;
@@ -762,7 +740,6 @@ void sbfInvalidCoordinates()
         check(payload);
     }
 }
-#endif
 
 }  // namespace
 
@@ -785,18 +762,12 @@ void GPSProtocolDecodeTest::_protocol()
         absoluteDeadline();
         invalidFamilyConfiguration();
         nmeaFixQualities();
-#if QGC_GPS_ENABLE_SBF || QGC_GPS_ENABLE_FEMTO
         malformedMessages();
-#endif
-#if QGC_GPS_ENABLE_SBF
         sbfEpochMetadata();
         sbfInvalidCoordinates();
-#endif
-#if QGC_GPS_ENABLE_ASHTECH
         ashtechMetadata();
         ashtechMixedFramingAndFixedCommand();
         ashtechSurveyReceipts();
-#endif
     } catch (const std::exception& error) {
         QFAIL(error.what());
     }
@@ -804,16 +775,12 @@ void GPSProtocolDecodeTest::_protocol()
 
 void GPSProtocolDecodeTest::_commandEvidence()
 {
-#if QGC_GPS_ENABLE_ASHTECH
     gps_test_warnings.clear();
     try {
         ashtechCommandEvidence();
     } catch (const std::exception& error) {
         QFAIL(error.what());
     }
-#else
-    QSKIP("Ashtech protocol is disabled");
-#endif
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolDecodeTest, TestLabel::Unit)

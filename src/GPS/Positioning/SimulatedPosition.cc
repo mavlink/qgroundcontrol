@@ -31,10 +31,6 @@ SimulatedPosition::SimulatedPosition(QObject* parent, RuntimeScheduler* schedule
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this,
                    &SimulatedPosition::_vehicleAdded);
 
-    if (_scheduler->thread() != thread()) {
-        qCWarning(SimulatedPositionLog) << "Scheduler must share the simulated source thread";
-        _scheduler = nullptr;
-    }
 }
 
 SimulatedPosition::~SimulatedPosition()
@@ -44,7 +40,7 @@ SimulatedPosition::~SimulatedPosition()
 
 void SimulatedPosition::startUpdates()
 {
-    if (!_scheduler || _updateTask.active()) {
+    if (_updateTask.active()) {
         return;
     }
     _lastUpdateUs = _scheduler->nowUs();
@@ -69,9 +65,6 @@ void SimulatedPosition::_scheduleUpdate()
 
 void SimulatedPosition::_updatePosition()
 {
-    if (!_scheduler) {
-        return;
-    }
     const quint64 nowUs = _scheduler->nowUs();
     const auto elapsed = std::chrono::microseconds(nowUs - _lastUpdateUs);
     _lastUpdateUs = nowUs;

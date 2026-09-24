@@ -3,7 +3,6 @@
 #include "AutoConnectSettings.h"
 #include "GPSBaseStationConfig.h"
 #include "GPSCorrectionManager.h"
-#include "GPSDriver.h"
 #include "GPSProvider.h"
 #include "GPSRTKFactGroup.h"
 #include "GPSReceiverConfig.h"
@@ -180,10 +179,6 @@ bool GPSRtk::connectGPS(const QString& device, QStringView gps_type, uint32_t ba
 
 bool GPSRtk::_connectSerialGPS(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges)
 {
-    if (!GPSDriver::supportsType(type)) {
-        _setError(GPSConnectionError::ConfigFailed, tr("The selected receiver type is unavailable in this build."));
-        return false;
-    }
     const QString endpoint = device.trimmed();
     if (endpoint.isEmpty() || !_serialPorts) {
         _setError(GPSConnectionError::OpenFailed, tr("Select an available serial device."));
@@ -368,10 +363,6 @@ bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transp
     const auto currentOperation = [guard, generation]() {
         return guard && !guard->_destroying && guard->_generation == generation;
     };
-    if (!GPSDriver::supportsType(type)) {
-        _setError(GPSConnectionError::ConfigFailed, tr("The selected receiver type is unavailable in this build."));
-        return false;
-    }
     RTKSettings* const settings = SettingsManager::instance()->rtkSettings();
     GPSReceiverConfig config;
     const QString configError = _receiverConfig(type, settings, baudRate, config, allowPersistentChanges);
@@ -516,20 +507,8 @@ GPSRtk::SatelliteCounts GPSRtk::countSatellites(const GPSSatelliteReport& msg)
     if (msg.timestampUs == 0) {
         return counts;
     }
-    counts.inView = (std::min) (msg.count, GPSSatelliteReport::MAX_SATELLITES);
-    if (msg.count > GPSSatelliteReport::MAX_SATELLITES) {
-        return counts;
-    }
-    counts.used = 0;
-    for (int i = 0; i < counts.inView; ++i) {
-        if (!msg.satellites[i].used) {
-            counts.used.reset();
-            break;
-        }
-        if (*msg.satellites[i].used) {
-            ++*counts.used;
-        }
-    }
+    counts.inView = std::max(0, msg.inView);
+    counts.used = counts.inView == 0 ? std::optional<int>{0} : msg.used;
     return counts;
 }
 

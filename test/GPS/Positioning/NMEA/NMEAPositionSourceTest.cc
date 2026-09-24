@@ -1,10 +1,8 @@
 #include "NMEAPositionSourceTest.h"
 
 #include <QtCore/QBuffer>
-#include <QtCore/QEvent>
 #include <QtCore/QIODevice>
 #include <QtCore/QTimeZone>
-#include <QtPositioning/QNmeaPositionInfoSource>
 #include <QtTest/QSignalSpy>
 
 #include "GPSSourceHealth.h"
@@ -13,7 +11,6 @@
 #include "NMEAPositionSource.h"
 #include "NMEASentence.h"
 #include "NMEAUtils.h"
-#include "QtRuntimeScheduler.h"
 #include "SequentialTestDevice.h"
 
 namespace {
@@ -58,14 +55,9 @@ void NMEAPositionSourceTest::_dateOrdering()
     QFETCH(bool, dateFirst);
     QFETCH(bool, useZda);
     SequentialTestDevice device;
-    SequentialTestDevice qtDevice;
     NMEAPositionSource source(&device);
-    QNmeaPositionInfoSource qtSource(QNmeaPositionInfoSource::RealTimeMode);
-    qtSource.setDevice(&qtDevice);
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
-    QSignalSpy qtUpdates(&qtSource, &QGeoPositionInfoSource::positionUpdated);
     source.startUpdates();
-    qtSource.startUpdates();
     const auto fix = [&](const QDateTime& timestamp) {
         const auto time = timestamp.time().toString(u"hhmmss.zzz").toLatin1();
         const auto date = timestamp.date().toString(useZda ? u"dd,MM,yyyy" : u"ddMMyy").toLatin1();
@@ -79,23 +71,18 @@ void NMEAPositionSourceTest::_dateOrdering()
     const QDateTime midnight(QDate(2012, 1, 1), QTime(0, 0), QTimeZone::UTC);
     for (const auto& timestamp : {midnight.addMSecs(-1), midnight.addMSecs(1)}) {
         updates.clear();
-        qtUpdates.clear();
         const auto sentences = fix(timestamp);
         device.feed(sentences);
-        qtDevice.feed(sentences);
         if (useZda && !dateFirst && timestamp > midnight) {
-            // Qt discards the undated GGA across midnight before ZDA establishes the new date.
-            // A repeated fix must recover without restarting either source.
             const auto repeatedGga = sentences.first(sentences.indexOf('\n') + 1);
             device.feed(repeatedGga);
-            qtDevice.feed(repeatedGga);
         }
-        QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty() && !qtUpdates.isEmpty(), TestTimeout::shortMs());
+        QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::shortMs());
         const auto observation = source.lastObservation();
-        const auto reference = qtUpdates.last().first().value<QGeoPositionInfo>();
         QCOMPARE(observation.position.timestamp(), timestamp);
-        QCOMPARE(observation.position.timestamp(), reference.timestamp());
-        QCOMPARE(observation.position.coordinate(), reference.coordinate());
+        QVERIFY(qAbs(observation.position.coordinate().latitude() - 53.36133666666666) < 0.0000001);
+        QVERIFY(qAbs(observation.position.coordinate().longitude() + 6.50562) < 0.0000001);
+        QVERIFY(qAbs(observation.position.coordinate().altitude() - 61.7) < 0.0000001);
         QCOMPARE(observation.fixQuality, GPSObservation::FixQuality::Unknown);
         QCOMPARE(observation.satellitesUsed, std::optional<unsigned>(8));
     }
@@ -157,24 +144,21 @@ void NMEAPositionSourceTest::_requestTimeoutAndRecovery()
 
 void NMEAPositionSourceTest::_queuedUpdateCannotSurviveRestart()
 {
-    SequentialTestDevice device;
-    NMEAPositionSource source(&device);
+    ManualScheduler scheduler;
+    SequentialTestDevice device(&scheduler);
+    NMEAPositionSource source(&device, nullptr, &scheduler);
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     source.startUpdates();
-    QSignalSpy decoded(source._decoder.get(), &QGeoPositionInfoSource::positionUpdated);
     device.feed(kFix);
-    if (decoded.isEmpty()) {
-        QVERIFY(decoded.wait(TestTimeout::mediumMs()));
-    }
     QVERIFY(source.lastKnownPosition().isValid());
     QVERIFY(updates.isEmpty());
     source.stopUpdates();
     source.startUpdates();
-    QCoreApplication::sendPostedEvents(&source, QEvent::MetaCall);
     QVERIFY(updates.isEmpty());
     QVERIFY(!source.lastKnownPosition().isValid());
     device.feed(kFix);
-    QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::mediumMs());
+    QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
+    QCOMPARE(updates.size(), 1);
 }
 
 UT_REGISTER_TEST(NMEAPositionSourceTest, TestLabel::Unit)
@@ -407,9 +391,7 @@ void NMEAPositionSourceTest::_fixLoss()
     QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
     QSignalSpy observations(&source, &NMEAPositionSource::observationReceived);
     source.startUpdates();
-    QSignalSpy decoded(source._decoder.get(), &QGeoPositionInfoSource::positionUpdated);
     device.feed(kFix);
-    QTRY_VERIFY_WITH_TIMEOUT(!decoded.isEmpty(), TestTimeout::shortMs());
     if (pending) {
         QVERIFY(updates.isEmpty());
         QVERIFY(source._publicationTask.active());
@@ -482,23 +464,6 @@ void NMEAPositionSourceTest::_lateFixLossDoesNotRejectRecovery()
     QVERIFY(observations.back().front().value<GPSObservation>().receiverFixValid.value_or(true));
 }
 
-void NMEAPositionSourceTest::_schedulerCanBeDestroyed()
-{
-    SequentialTestDevice device;
-    auto scheduler = std::make_unique<QtRuntimeScheduler>();
-    NMEAPositionSource source(&device, nullptr, scheduler.get());
-    QSignalSpy observations(&source, &NMEAPositionSource::observationReceived);
-    source.requestUpdate(1000);
-    QVERIFY(source._requestTask.active());
-    scheduler.reset();
-    QVERIFY(!source._requestTask.active());
-    source.stopUpdates();
-    source.startUpdates();
-    device.feed(kFix);
-    source.requestUpdate(1000);
-    QVERIFY(observations.isEmpty());
-}
-
 void NMEAPositionSourceTest::_fixLossPreservesPendingRequest()
 {
     SequentialTestDevice device;
@@ -538,11 +503,8 @@ void NMEAPositionSourceTest::_rejectedFixKeepsOriginalRequestDeadline()
     QSignalSpy errors(&source, &QGeoPositionInfoSource::errorOccurred);
     const auto requestAtUs = scheduler.nowUs();
     source.requestUpdate(1000);
-    QSignalSpy decoded(source._decoder.get(), &QGeoPositionInfoSource::positionUpdated);
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(400)));
-    // The loss sentence flushes Qt's retained old fix after the wrapper has invalidated its epoch.
     device.feed(kFix + NMEAUtils::repairChecksum("$GPGGA,092751.000,,,,,0,0,,,,,,,"));
-    QCOMPARE(decoded.size(), 1);
     QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
     QCOMPARE(observations.size(), 1);
     QCOMPARE(observations.first().first().value<GPSObservation>().receiverFixValid, std::optional<bool>(false));

@@ -37,7 +37,7 @@ private slots:
 private:
     void _scheduleUpdate();
 
-    QPointer<RuntimeScheduler> _scheduler;
+    RuntimeScheduler* const _scheduler;
     ScheduledTask _updateTask;
     quint64 _lastUpdateUs = 0;
     QGeoPositionInfo _lastPosition;

@@ -114,7 +114,7 @@ private:
 
     int _freshnessTimeoutMs = FRESHNESS_TIMEOUT_MS;
     PositionState _position;
-    QPointer<RuntimeScheduler> _scheduler;
+    RuntimeScheduler* const _scheduler;
     ScheduledTask _positionTask;
     ScheduledTask _fixSatellitesTask;
     SatelliteCounts _satelliteCounts;

@@ -3,7 +3,6 @@
 #include <limits>
 #include <type_traits>
 
-#include <QtCore/QList>
 #include <QtTest/QTest>
 
 #include "GPSFixQuality.h"
@@ -12,7 +11,6 @@
 #include "UnitTest.h"
 
 Q_DECLARE_METATYPE(GPSIntegrityReport)
-Q_DECLARE_METATYPE(GPSNativeSatelliteData)
 Q_DECLARE_METATYPE(GPSEllipsoidPosition)
 
 static_assert(std::is_same_v<decltype(GPSNavigationValues::fixType), GPSPositionReport::FixType>);
@@ -28,16 +26,6 @@ struct CoordinateConversions : GPSProtocol
     using GPSProtocol::fromEcef;
     using GPSProtocol::toEcef;
 };
-
-QList<uint16_t> satelliteIds(const GPSSatelliteReport& report)
-{
-    QList<uint16_t> ids;
-    for (uint16_t i = 0; i < report.count; ++i) {
-        ids.append(report.satellites[i].id);
-    }
-    std::sort(ids.begin(), ids.end());
-    return ids;
-}
 
 }  // namespace
 
@@ -62,9 +50,6 @@ private slots:
     void _optionalValues();
     void _satelliteCounts_data();
     void _satelliteCounts();
-    void _satelliteMetadata_data();
-    void _satelliteMetadata();
-    void _satelliteConstellationOverride();
     void _satelliteSnapshotScopes();
     void _satelliteSnapshotBounds();
     void _satelliteSnapshotExpiry();
@@ -406,280 +391,205 @@ void GPSNativeDataTest::_optionalValues()
 
 void GPSNativeDataTest::_satelliteCounts_data()
 {
-    QTest::addColumn<uint16_t>("nativeCount");
-    QTest::addColumn<uint16_t>("expectedCount");
-    constexpr uint16_t LIMIT = GPSSatelliteReport::MAX_SATELLITES;
-    QTest::newRow("empty") << uint16_t{0} << uint16_t{0};
-    QTest::newRow("one") << uint16_t{1} << uint16_t{1};
+    QTest::addColumn<int>("nativeCount");
+    QTest::addColumn<int>("expectedCount");
+    constexpr int LIMIT = GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES;
+    QTest::newRow("empty") << 0 << 0;
+    QTest::newRow("one") << 1 << 1;
     QTest::newRow("limit") << LIMIT << LIMIT;
-    QTest::newRow("above-limit") << uint16_t{LIMIT + 1} << LIMIT;
-    QTest::newRow("maximum-count") << (std::numeric_limits<uint16_t>::max)() << LIMIT;
+    QTest::newRow("above-limit") << (LIMIT + 1) << LIMIT;
+    QTest::newRow("negative") << -1 << 0;
 }
 
 void GPSNativeDataTest::_satelliteCounts()
 {
-    QFETCH(uint16_t, nativeCount);
-    QFETCH(uint16_t, expectedCount);
+    QFETCH(int, nativeCount);
+    QFETCH(int, expectedCount);
     GPSNativeSatelliteReport source;
-    source.timestamp = 4'294'967'297;
-    source.count = nativeCount;
-    for (uint16_t i = 0; i < source.entries.size(); ++i) {
-        source.entries[i].id = 300 + i;
-        source.entries[i].prn = 500 + i;
-        source.entries[i].used = (i % 2) != 0;
-    }
+    auto* system = source.ensureConstellation(GPSConstellation::Unknown);
+    QVERIFY(system);
+    system->inViewTimestampUs = 4'294'967'297;
+    system->inView = nativeCount;
+    system->inUseTimestampUs = system->inViewTimestampUs;
+    system->inUse = nativeCount;
     GPSNativeData::SatelliteSnapshot snapshot;
     const auto report = snapshot.update(source);
-    QCOMPARE(report.timestampUs, source.timestamp);
-    QCOMPARE(report.count, expectedCount);
-    for (uint16_t i = 0; i < expectedCount; ++i) {
-        QCOMPARE(report.satellites[i].id, uint16_t(300 + i));
-        QCOMPARE(report.satellites[i].prn, uint16_t(500 + i));
-        QCOMPARE(report.satellites[i].used, std::optional<bool>{(i % 2) != 0});
-    }
-    for (uint16_t i = expectedCount; i < report.satellites.size(); ++i) {
-        const auto& entry = report.satellites[i];
-        QCOMPARE(entry.id, uint16_t{0});
-        QCOMPARE(entry.prn, uint16_t{0});
-        QVERIFY(!entry.used.has_value());
-        QVERIFY(!entry.elevationDegrees.has_value());
-        QVERIFY(!entry.azimuthDegrees.has_value());
-        QVERIFY(!entry.signalStrength.has_value());
-    }
-}
-
-void GPSNativeDataTest::_satelliteMetadata_data()
-{
-    QTest::addColumn<GPSNativeSatelliteData>("entry");
-    QTest::addColumn<bool>("elevationKnown");
-    QTest::addColumn<bool>("azimuthKnown");
-    QTest::addColumn<bool>("signalKnown");
-    const auto row = [](const char* name, double elevation, double azimuth, int signal, bool elevationKnown,
-                        bool azimuthKnown, bool signalKnown) {
-        QTest::newRow(name) << GPSNativeSatelliteData{.id = 300,
-                                                      .prn = 501,
-                                                      .used = false,
-                                                      .elevation = elevation,
-                                                      .azimuth = azimuth,
-                                                      .signal = signal}
-                            << elevationKnown << azimuthKnown << signalKnown;
-    };
-    QTest::newRow("unreported") << GPSNativeSatelliteData{.id = 300, .prn = 501} << false << false << false;
-    row("explicit-zero-false", 0, 0, 0, true, true, true);
-    row("negative-elevation", -10.5, 180.25, 45, true, true, true);
-    row("lower-boundaries", -90, 0, 0, true, true, true);
-    row("upper-boundaries", 90, 360, 255, true, true, true);
-    row("below-elevation-limit", -90.001, 180, 45, false, true, true);
-    row("above-elevation-limit", 90.001, 180, 45, false, true, true);
-    row("below-azimuth-limit", 45, -0.001, 45, true, false, true);
-    row("above-azimuth-limit", 45, 360.001, 45, true, false, true);
-    row("below-signal-limit", 45, 180, -1, true, true, false);
-    row("above-signal-limit", 45, 180, 256, true, true, false);
-    row("nan-angles", std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), 45, false,
-        false, true);
-    row("infinite-angles", -std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity(), 45, false,
-        false, true);
-}
-
-void GPSNativeDataTest::_satelliteMetadata()
-{
-    QFETCH(GPSNativeSatelliteData, entry);
-    QFETCH(bool, elevationKnown);
-    QFETCH(bool, azimuthKnown);
-    QFETCH(bool, signalKnown);
-    GPSNativeSatelliteReport source;
-    source.timestamp = 100;
-    source.count = 1;
-    source.entries[0] = entry;
-    GPSNativeData::SatelliteSnapshot snapshot;
-    const auto report = snapshot.update(source);
-    QCOMPARE(report.count, uint16_t{1});
-    const auto& satellite = report.satellites[0];
-    QCOMPARE(satellite.id, entry.id);
-    QCOMPARE(satellite.prn, entry.prn);
-    QCOMPARE(satellite.used, entry.used);
-    QCOMPARE(satellite.inViewTimestampUs, source.timestamp);
-    QCOMPARE(satellite.inUseTimestampUs, entry.used ? source.timestamp : uint64_t{0});
-    QCOMPARE(satellite.elevationDegrees.has_value(), elevationKnown);
-    QCOMPARE(satellite.azimuthDegrees.has_value(), azimuthKnown);
-    QCOMPARE(satellite.signalStrength.has_value(), signalKnown);
-    if (elevationKnown) {
-        QCOMPARE(*satellite.elevationDegrees, static_cast<float>(*entry.elevation));
-    }
-    if (azimuthKnown) {
-        QCOMPARE(*satellite.azimuthDegrees, static_cast<float>(*entry.azimuth));
-    }
-    if (signalKnown) {
-        QCOMPARE(*satellite.signalStrength, static_cast<uint8_t>(*entry.signal));
-    }
-}
-
-void GPSNativeDataTest::_satelliteConstellationOverride()
-{
-    GPSNativeSatelliteReport source;
-    source.timestamp = 100;
-    source.count = 1;
-    source.constellation = GPSConstellation::GPS;
-    source.entries[0] = {.id = 1,
-                         .prn = 2,
-                         .constellation = GPSConstellation::GLONASS,
-                         .used = false,
-                         .elevation = 10.123456789,
-                         .azimuth = 123.123456789,
-                         .signal = 0};
-    GPSNativeData::SatelliteSnapshot snapshot;
-    const auto report = snapshot.update(source);
-    QCOMPARE(report.count, uint16_t{1});
-    const auto& satellite = report.satellites[0];
-    QCOMPARE(satellite.constellation, GPSConstellation::GPS);
-    QCOMPARE(satellite.prn, uint16_t{2});
-    QCOMPARE(satellite.used, std::optional<bool>{false});
-    QCOMPARE(satellite.signalStrength, std::optional<uint8_t>{0});
-    QCOMPARE(satellite.elevationDegrees.value(), static_cast<float>(*source.entries[0].elevation));
-    QCOMPARE(satellite.azimuthDegrees.value(), static_cast<float>(*source.entries[0].azimuth));
-    QCOMPARE(satellite.inViewTimestampUs, source.timestamp);
-    QCOMPARE(satellite.inUseTimestampUs, source.timestamp);
+    QCOMPARE(report.timestampUs, system->inViewTimestampUs);
+    QCOMPARE(report.inView, expectedCount);
+    QCOMPARE(report.used, std::optional<int>{expectedCount});
 }
 
 void GPSNativeDataTest::_satelliteSnapshotScopes()
 {
     GPSNativeData::SatelliteSnapshot snapshot;
     GPSNativeSatelliteReport whole;
-    whole.timestamp = 100;
-    whole.count = 3;
-    whole.entries[0] = {.id = 1, .constellation = GPSConstellation::GPS, .used = false, .signal = 0};
-    whole.entries[1] = {.id = 33, .constellation = GPSConstellation::SBAS};
-    whole.entries[2] = {.id = 65, .constellation = GPSConstellation::GLONASS};
-    QCOMPARE(satelliteIds(snapshot.update(whole)), (QList<uint16_t>{1, 33, 65}));
+    auto* gps = whole.ensureConstellation(GPSConstellation::GPS);
+    QVERIFY(gps);
+    gps->inViewTimestampUs = 100;
+    gps->inView = 1;
+    gps->inUseTimestampUs = 100;
+    gps->inUse = 0;
+    auto* sbas = whole.ensureConstellation(GPSConstellation::SBAS);
+    QVERIFY(sbas);
+    sbas->inViewTimestampUs = 100;
+    sbas->inView = 1;
+    auto* glonass = whole.ensureConstellation(GPSConstellation::GLONASS);
+    QVERIFY(glonass);
+    glonass->inViewTimestampUs = 100;
+    glonass->inView = 1;
+    auto report = snapshot.update(whole);
+    QCOMPARE(report.timestampUs, uint64_t{100});
+    QCOMPARE(report.inView, 3);
+    QVERIFY(!report.used);
 
     GPSNativeSatelliteReport scoped;
-    scoped.timestamp = 200;
-    scoped.constellation = GPSConstellation::GLONASS;
-    scoped.count = 1;
-    scoped.entries[0].id = 66;
-    auto report = snapshot.update(scoped);
+    scoped.fullSnapshot = false;
+    glonass = scoped.ensureConstellation(GPSConstellation::GLONASS);
+    QVERIFY(glonass);
+    glonass->inViewTimestampUs = 200;
+    glonass->inView = 1;
+    glonass->inUseTimestampUs = 200;
+    glonass->inUse = 1;
+    report = snapshot.update(scoped);
     QCOMPARE(report.timestampUs, uint64_t{200});
-    QCOMPARE(satelliteIds(report), (QList<uint16_t>{1, 33, 66}));
-    const auto gps = std::find_if(report.satellites.begin(), report.satellites.begin() + report.count,
-                                  [](const auto& entry) { return entry.id == 1; });
-    QVERIFY(gps != report.satellites.begin() + report.count);
-    QCOMPARE(gps->used, std::optional<bool>{false});
-    QCOMPARE(gps->signalStrength, std::optional<uint8_t>{0});
+    QCOMPARE(report.inView, 3);
+    QVERIFY(!report.used);
 
-    scoped.count = 0;
-    scoped.timestamp = 300;
-    scoped.constellation = GPSConstellation::Galileo;
+    scoped = {};
+    scoped.fullSnapshot = false;
+    auto* galileo = scoped.ensureConstellation(GPSConstellation::Galileo);
+    QVERIFY(galileo);
+    galileo->inViewTimestampUs = 300;
+    galileo->inView = 0;
     report = snapshot.update(scoped);
     QCOMPARE(report.timestampUs, uint64_t{300});
-    QCOMPARE(satelliteIds(report), (QList<uint16_t>{1, 33, 66}));
-    scoped.constellation = GPSConstellation::GLONASS;
-    QCOMPARE(satelliteIds(snapshot.update(scoped)), (QList<uint16_t>{1, 33}));
+    QCOMPARE(report.inView, 3);
+    scoped.constellations[0].constellation = GPSConstellation::GLONASS;
+    report = snapshot.update(scoped);
+    QCOMPARE(report.inView, 2);
 
-    whole.count = 1;
-    whole.timestamp = 400;
-    whole.entries[0] = {.id = 301, .constellation = GPSConstellation::Galileo};
-    QCOMPARE(satelliteIds(snapshot.update(whole)), (QList<uint16_t>{301}));
-    scoped.constellation = GPSConstellation::SBAS;
-    scoped.timestamp = 500;
-    QCOMPARE(satelliteIds(snapshot.update(scoped)), (QList<uint16_t>{301}));
-    whole.count = 0;
-    whole.timestamp = 600;
-    QCOMPARE(snapshot.update(whole).count, uint16_t{0});
-    QCOMPARE(snapshot.update(scoped).count, uint16_t{0});
+    whole = {};
+    galileo = whole.ensureConstellation(GPSConstellation::Galileo);
+    QVERIFY(galileo);
+    galileo->inViewTimestampUs = 400;
+    galileo->inView = 1;
+    galileo->inUseTimestampUs = 400;
+    galileo->inUse = 0;
+    report = snapshot.update(whole);
+    QCOMPARE(report.inView, 1);
+    QCOMPARE(report.used, std::optional<int>{0});
+
+    whole = {};
+    auto* empty = whole.ensureConstellation(GPSConstellation::Unknown);
+    QVERIFY(empty);
+    empty->inViewTimestampUs = 600;
+    empty->inView = 0;
+    report = snapshot.update(whole);
+    QCOMPARE(report.inView, 0);
+    QCOMPARE(report.used, std::optional<int>{0});
 }
 
 void GPSNativeDataTest::_satelliteSnapshotBounds()
 {
     GPSNativeData::SatelliteSnapshot snapshot;
     GPSNativeSatelliteReport full;
-    full.timestamp = 4'294'967'296;
-    full.constellation = GPSConstellation::GPS;
-    full.count = GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES;
-    for (uint16_t i = 0; i < full.count; ++i) {
-        full.entries[i].id = i + 1;
-    }
-    QCOMPARE(snapshot.update(full).count, GPSSatelliteReport::MAX_SATELLITES);
+    auto* gps = full.ensureConstellation(GPSConstellation::GPS);
+    QVERIFY(gps);
+    gps->inViewTimestampUs = 4'294'967'296;
+    gps->inView = GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES;
+    gps->inUseTimestampUs = gps->inViewTimestampUs;
+    gps->inUse = GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES;
+    QCOMPARE(snapshot.update(full).inView, int(GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES));
     GPSNativeSatelliteReport extra;
-    extra.constellation = GPSConstellation::Galileo;
-    extra.timestamp = 4'294'967'297;
-    extra.count = 1;
-    extra.entries[0].id = 301;
+    extra.fullSnapshot = false;
+    auto* galileo = extra.ensureConstellation(GPSConstellation::Galileo);
+    QVERIFY(galileo);
+    galileo->inViewTimestampUs = 4'294'967'297;
+    galileo->inView = 1;
+    galileo->inUseTimestampUs = galileo->inViewTimestampUs;
+    galileo->inUse = 1;
     const auto report = snapshot.update(extra);
-    QCOMPARE(report.count, GPSSatelliteReport::MAX_SATELLITES);
-    QCOMPARE(report.timestampUs, extra.timestamp);
-    full.count = 0;
-    full.timestamp = extra.timestamp + 1;
-    QCOMPARE(satelliteIds(snapshot.update(full)), (QList<uint16_t>{301}));
+    QCOMPARE(report.inView, int(GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES) + 1);
+    QCOMPARE(report.timestampUs, galileo->inViewTimestampUs);
+    full = {};
+    auto* emptyGps = full.ensureConstellation(GPSConstellation::GPS);
+    QVERIFY(emptyGps);
+    emptyGps->inViewTimestampUs = galileo->inViewTimestampUs + 1;
+    QCOMPARE(snapshot.update(full).inView, 0);
 }
 
 void GPSNativeDataTest::_satelliteSnapshotExpiry()
 {
     GPSNativeData::SatelliteSnapshot state;
     GPSNativeSatelliteReport gps;
-    gps.constellation = GPSConstellation::GPS;
-    gps.timestamp = 1'000'000;
-    gps.count = 1;
-    gps.entries[0] = {.id = 1, .used = false, .signal = 0};
+    gps.fullSnapshot = false;
+    auto* gpsGroup = gps.ensureConstellation(GPSConstellation::GPS);
+    QVERIFY(gpsGroup);
+    gpsGroup->inViewTimestampUs = 1'000'000;
+    gpsGroup->inView = 1;
+    gpsGroup->inUseTimestampUs = 1'000'000;
+    gpsGroup->inUse = 0;
     state.update(gps);
     GPSNativeSatelliteReport glonass;
-    glonass.constellation = GPSConstellation::GLONASS;
-    glonass.timestamp = 4'000'000;
-    glonass.count = 1;
-    glonass.entries[0].id = 65;
+    glonass.fullSnapshot = false;
+    auto* glonassGroup = glonass.ensureConstellation(GPSConstellation::GLONASS);
+    QVERIFY(glonassGroup);
+    glonassGroup->inViewTimestampUs = 4'000'000;
+    glonassGroup->inView = 1;
+    glonassGroup->inUseTimestampUs = 4'000'000;
+    glonassGroup->inUse = 1;
     auto snapshot = state.update(glonass);
-    QCOMPARE(snapshot.count, uint16_t{2});
-    QCOMPARE(snapshot.satellites[0].inViewTimestampUs, gps.timestamp);
-    QCOMPARE(snapshot.satellites[0].inUseTimestampUs, gps.timestamp);
+    QCOMPARE(snapshot.inView, 2);
+    QCOMPARE(snapshot.used, std::optional<int>{1});
 
-    glonass.timestamp = 6'000'000;
+    glonassGroup->inViewTimestampUs = 6'000'000;
+    glonassGroup->inUseTimestampUs = 6'000'000;
     snapshot = state.update(glonass);
-    QCOMPARE(satelliteIds(snapshot), (QList<uint16_t>{65}));
-    QCOMPARE(satelliteIds(state.update(gps)), (QList<uint16_t>{65}));  // Retired receipts cannot resurrect a view.
-    gps.timestamp = 6'000'001;
+    QCOMPARE(snapshot.inView, 1);
+    QCOMPARE(snapshot.used, std::optional<int>{1});
+    QCOMPARE(state.update(gps).inView, 1);  // Retired receipts cannot resurrect a view.
+    gpsGroup->inViewTimestampUs = 6'000'001;
+    gpsGroup->inUseTimestampUs = 0;
+    gpsGroup->inUse.reset();
     snapshot = state.update(gps);
-    QCOMPARE(snapshot.count, uint16_t{2});
-    QCOMPARE(snapshot.satellites[0].signalStrength, std::optional<uint8_t>{0});
-    QCOMPARE(snapshot.satellites[0].used, std::optional<bool>{false});
+    QCOMPARE(snapshot.inView, 2);
+    QVERIFY(!snapshot.used);
 
     GPSNativeSatelliteReport usage;
-    usage.constellation = GPSConstellation::GPS;
-    usage.usage = GPSNativeSatelliteReport::Usage{};
-    usage.usage->timestamp = 7'000'000;
-    usage.usage->count = 1;
-    usage.usage->ids[0] = 1;
+    usage.fullSnapshot = false;
+    auto* usageGroup = usage.ensureConstellation(GPSConstellation::GPS);
+    QVERIFY(usageGroup);
+    usageGroup->inUseTimestampUs = 7'000'000;
+    usageGroup->inUse = 1;
     GPSNativeData::SatelliteSnapshot usageOnly;
     const auto unavailableView = usageOnly.update(usage);
     QCOMPARE(unavailableView.timestampUs, uint64_t{0});
-    QCOMPARE(unavailableView.count, uint16_t{0});
+    QCOMPARE(unavailableView.inView, 0);
     snapshot = state.update(usage);
-    QCOMPARE(snapshot.satellites[0].used, std::optional<bool>{true});
-    QCOMPARE(snapshot.satellites[0].inViewTimestampUs, gps.timestamp);
-    QCOMPARE(snapshot.satellites[0].inUseTimestampUs, usage.usage->timestamp);
-    gps.timestamp = 7'500'000;
-    gps.entries[0].used.reset();
+    QCOMPARE(snapshot.used, std::optional<int>{2});
+    gpsGroup->inViewTimestampUs = 7'500'000;
     snapshot = state.update(gps);
-    QCOMPARE(snapshot.satellites[0].used, std::optional<bool>{true});
-    gps.timestamp = 12'000'000;
+    QCOMPARE(snapshot.used, std::optional<int>{2});
+    gpsGroup->inViewTimestampUs = 12'000'000;
     snapshot = state.update(gps);
-    QCOMPARE(snapshot.count, uint16_t{1});
-    QVERIFY(!snapshot.satellites[0].used);
-    QCOMPARE(snapshot.satellites[0].inUseTimestampUs, uint64_t{0});
-    gps.count = 0;
-    gps.timestamp++;
-    QCOMPARE(state.update(gps).count, uint16_t{0});
-    QVERIFY(!state.expire(gps.timestamp + 4'999'999));
-    const auto expired = state.expire(gps.timestamp + 5'000'000);
+    QCOMPARE(snapshot.inView, 1);
+    QVERIFY(!snapshot.used);
+    gpsGroup->inView = 0;
+    ++gpsGroup->inViewTimestampUs;
+    QCOMPARE(state.update(gps).inView, 0);
+    QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + 4'999'999));
+    const auto expired = state.expire(gpsGroup->inViewTimestampUs + 5'000'000);
     QVERIFY(expired);
-    QCOMPARE(expired->count, uint16_t{0});
-    QVERIFY(!state.expire(gps.timestamp + 6'000'000));
+    QCOMPARE(expired->inView, 0);
+    QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + 6'000'000));
 
-    gps.timestamp += 7'000'000;
-    gps.count = 1;
+    gpsGroup->inViewTimestampUs += 7'000'000;
+    gpsGroup->inView = 1;
     state.update(gps);
-    const auto gone = state.expire(gps.timestamp + 5'000'000);
+    const auto gone = state.expire(gpsGroup->inViewTimestampUs + 5'000'000);
     QVERIFY(gone);
-    QCOMPARE(gone->count, uint16_t{0});
-    QVERIFY(!state.expire(gps.timestamp + 5'000'001));
+    QCOMPARE(gone->inView, 0);
+    QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + 5'000'001));
 }
 
 void GPSNativeDataTest::_surveyProjection_data()

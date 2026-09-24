@@ -12,7 +12,6 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QTime>
 
-#include "GPSProtocolFeatures.h"
 #include "GPSReceiverCapabilities.h"
 #include "NMEAConstellation.h"
 #include "NMEASatelliteEpoch.h"
@@ -20,27 +19,13 @@
 #include "NMEAUtils.h"
 #include "UnitTest.h"
 
-#if QGC_GPS_ENABLE_UBX
 #include "UBX/GPSDriverUBX.h"
-#endif
-#if QGC_GPS_ENABLE_ASHTECH
 #include "Ashtech/GPSDriverAshtech.h"
-#endif
-#if QGC_GPS_ENABLE_SBF
 #include "SBF/GPSDriverSBF.h"
-#endif
-#if QGC_GPS_ENABLE_FEMTO
 #include "Femto/GPSDriverFemto.h"
-#endif
-#if QGC_GPS_ENABLE_UNICORE
 #include "Unicore/GPSDriverUnicore.h"
-#endif
-#if QGC_GPS_ENABLE_QUECTEL
 #include "Quectel/GPSDriverQuectel.h"
-#endif
-#if QGC_GPS_ENABLE_PASSIVE
 #include "Passive/GPSDriverPassive.h"
-#endif
 
 namespace {
 template <typename Driver>
@@ -90,27 +75,13 @@ private slots:
 
     void _families()
     {
-#if QGC_GPS_ENABLE_UBX
         verifyDriverContract<GPSNativeUBX>();
-#endif
-#if QGC_GPS_ENABLE_ASHTECH
         verifyDriverContract<GPSNativeAshtech>();
-#endif
-#if QGC_GPS_ENABLE_SBF
         verifyDriverContract<GPSNativeSBF>();
-#endif
-#if QGC_GPS_ENABLE_FEMTO
         verifyDriverContract<GPSNativeFemto>();
-#endif
-#if QGC_GPS_ENABLE_UNICORE
         verifyDriverContract<GPSNativeUnicore>();
-#endif
-#if QGC_GPS_ENABLE_QUECTEL
         verifyDriverContract<GPSNativeQuectel>();
-#endif
-#if QGC_GPS_ENABLE_PASSIVE
         verifyDriverContract<GPSNativePassive>();
-#endif
     }
 
     void _satelliteIds_data();
@@ -271,8 +242,7 @@ void GPSProtocolContractsTest::_nmeaWireContract()
                                   [](const auto& system) { return system.constellation == GPSConstellation::GPS; });
     QVERIFY(gps != epoch.end());
     QCOMPARE(gps->inViewTimestampUs, uint64_t{1000});
-    QCOMPARE(gps->satellites.size(), size_t{1});
-    QCOMPARE(gps->satellites.front().id, 1);
+    QCOMPARE(gps->inView, 1);
     assembler.clear();
     QVERIFY(assembler.flush().empty());
 }

@@ -19,7 +19,6 @@ private slots:
     void _rejectedFixKeepsOriginalRequestDeadline();
     void _fixLossCanDestroySource();
     void _gllRecoversFromFixLoss();
-    void _schedulerCanBeDestroyed();
     void _gstAccuracy_data();
     void _gstAccuracy();
     void _fixMetadata_data();

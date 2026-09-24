@@ -136,8 +136,6 @@ void GPSCorrectionManagerTest::_mavlinkDestinationAdmissions()
             QCOMPARE(destination.value(QStringLiteral("queuedBytes")).toULongLong(), 180ULL);
             QCOMPARE(destination.value(QStringLiteral("droppedBytes")).toULongLong(), quint64(bytes.size() - 180));
         }
-        QCOMPARE(destination.value(QStringLiteral("writtenBytes")).toULongLong(), 0ULL);
-        QVERIFY(!destination.value(QStringLiteral("reportsWrites")).toBool());
     }
     QCOMPARE(outputs, 2);
 }
@@ -451,12 +449,11 @@ void GPSCorrectionManagerTest::_outputsEnabledAfterLinkHistoryChurn()
 
     GPSCorrectionFrame receiverFrame;
     corrections.setOutput(
-        QStringLiteral("localReceiver"),
-        {.completion = GPSCorrectionRouter::Completion::Reported, .admit = [&](const GPSCorrectionFrame& frame) {
-             receiverFrame = frame;
-             return QList<GPSCorrectionRouter::Admission>{
-                 {QStringLiteral("localReceiver"), {quint64(frame.data.size()), 1, GPSCorrectionReason::None}}};
-         }});
+        QStringLiteral("localReceiver"), {.admit = [&](const GPSCorrectionFrame& frame) {
+            receiverFrame = frame;
+            return QList<GPSCorrectionRouter::Admission>{
+                {QStringLiteral("localReceiver"), {quint64(frame.data.size()), 1, GPSCorrectionReason::None}}};
+        }});
     QUdpSocket udpDestination;
     QVERIFY(udpDestination.bind(QHostAddress::LocalHost, 0));
     corrections.configureNtripUdpOutput(true, QStringLiteral("127.0.0.1"), udpDestination.localPort());
@@ -503,7 +500,6 @@ void GPSCorrectionManagerTest::_ntripUdpOutputIsSourceSpecific()
         return QVariantMap();
     };
     QCOMPARE(outputStats().value(QStringLiteral("queuedBytes")).toULongLong(), quint64(data.size()));
-    QVERIFY(!outputStats().value(QStringLiteral("reportsWrites")).toBool());
     corrections.acceptIngress(ntrip.token().event(data, now, 1005, true, true));
     const auto retired = ntrip.token();
     ntrip.reset();

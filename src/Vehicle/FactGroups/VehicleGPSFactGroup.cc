@@ -121,7 +121,7 @@ void VehicleGPSFactGroup::_updateGpsObservation(GPSObservation observation, int 
                                                 double yawValue)
 {
     observation.receivedAt = QDateTime::currentDateTimeUtc();
-    observation.monotonicTimestampUs = _scheduler ? _scheduler->nowUs() : 0;
+    observation.monotonicTimestampUs = _scheduler->nowUs();
     observation.position.setTimestamp(observation.receivedAt);
     observation.altitudeDatum = GPSAltitudeDatum::MeanSeaLevel;
     observation.fixQuality = fixQuality(fixType);
@@ -215,7 +215,7 @@ void VehicleGPSFactGroup::_handleGnssIntegrity(const mavlink_message_t& message)
         return;
     }
 
-    const quint64 receiptUs = _scheduler ? _scheduler->nowUs() : 0;
+    const quint64 receiptUs = _scheduler->nowUs();
     systemErrors()->setRawValue         (gnssIntegrity.system_errors);
     spoofingState()->setRawValue        (gnssIntegrity.spoofing_state);
     jammingState()->setRawValue         (gnssIntegrity.jamming_state);

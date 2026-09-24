@@ -61,7 +61,7 @@ private:
 
     QPointer<VehicleGPSFactGroup> _gps1;
     QPointer<VehicleGPSFactGroup> _gps2;
-    QPointer<RuntimeScheduler> _scheduler;
+    RuntimeScheduler* const _scheduler;
     ScheduledTask _expiryTask;
     quint64 _bindingRevision = 0;
     quint64 _updateRevision = 0;

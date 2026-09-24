@@ -4,14 +4,12 @@
 #include <chrono>
 #include <cmath>
 
-#include <QtCore/QHash>
 #include <QtCore/QIODevice>
+#include <QtCore/QPointer>
 #include <QtCore/QTimeZone>
-#include <QtPositioning/QNmeaPositionInfoSource>
 
 #include "MonotonicClock.h"
 #include "NMEAMetadata.h"
-#include "NMEASentenceEnvelope.h"
 #include "QGCLoggingCategory.h"
 #include "QtRuntimeScheduler.h"
 #include "ReadTimestamp.h"
@@ -21,331 +19,81 @@ constexpr int DEFAULT_REQUEST_TIMEOUT_MS = std::chrono::milliseconds(std::chrono
 constexpr quint64 METADATA_MAX_AGE_US = std::chrono::microseconds(std::chrono::seconds(2)).count();
 constexpr quint64 UNTIMED_METADATA_MAX_AGE_US = std::chrono::microseconds(std::chrono::seconds(1)).count();
 constexpr qsizetype MAX_RETAINED_EPOCHS = 32;
+constexpr qsizetype MAX_READ_BYTES_PER_TURN = 32 * 1024;
+constexpr qsizetype MAX_SENTENCE_BYTES = 1024;
 constexpr double USER_EQUIVALENT_RANGE_ERROR_METERS = 5.1;
+constexpr double NMEA_ACCURACY_SCALE = 2.0;
 constexpr int HALF_DAY_MS = std::chrono::milliseconds(std::chrono::hours(12)).count();
 constexpr int DAY_MS = std::chrono::milliseconds(std::chrono::days(1)).count();
+
+QDate qtDate(const NMEA::UtcDate& date)
+{
+    return QDate(date.year, static_cast<int>(date.month), static_cast<int>(date.day));
+}
+
+QTime qtTime(int timeMs)
+{
+    return QTime::fromMSecsSinceStartOfDay(timeMs);
+}
+
+std::optional<double> nonnegativeNumber(std::string_view field)
+{
+    const auto value = NMEA::number<double>(field);
+    return value && *value >= 0.0 ? value : std::nullopt;
+}
+
+void setFiniteAttribute(QGeoPositionInfo& position, QGeoPositionInfo::Attribute attribute, double value)
+{
+    if (std::isfinite(value)) {
+        position.setAttribute(attribute, value);
+    } else {
+        position.removeAttribute(attribute);
+    }
+}
+
+void mergeCoordinate(QGeoPositionInfo& position, double latitude, double longitude, std::optional<double> altitude)
+{
+    QGeoCoordinate coordinate(latitude, longitude);
+    if (!coordinate.isValid()) {
+        return;
+    }
+    if (altitude && std::isfinite(*altitude)) {
+        coordinate.setAltitude(*altitude);
+    } else if (const auto previous = position.coordinate();
+               previous.type() == QGeoCoordinate::Coordinate3D && std::isfinite(previous.altitude())) {
+        coordinate.setAltitude(previous.altitude());
+    }
+    position.setCoordinate(coordinate);
+}
+
+void markReceipt(GPSObservation& observation, quint64 receivedAtUs)
+{
+    observation.monotonicTimestampUs =
+        observation.monotonicTimestampUs == 0 ? receivedAtUs : std::min(observation.monotonicTimestampUs, receivedAtUs);
+}
+
+void applyHorizontalFallback(QGeoPositionInfo& position, std::optional<double> dop)
+{
+    if (dop && *dop > 0.0) {
+        position.setAttribute(QGeoPositionInfo::HorizontalAccuracy,
+                              *dop * USER_EQUIVALENT_RANGE_ERROR_METERS * NMEA_ACCURACY_SCALE);
+    } else {
+        position.removeAttribute(QGeoPositionInfo::HorizontalAccuracy);
+    }
+}
+
+void applyVerticalFallback(QGeoPositionInfo& position, std::optional<double> dop)
+{
+    if (dop && *dop >= 0.0) {
+        position.setAttribute(QGeoPositionInfo::VerticalAccuracy,
+                              *dop * USER_EQUIVALENT_RANGE_ERROR_METERS * NMEA_ACCURACY_SCALE);
+    } else {
+        position.removeAttribute(QGeoPositionInfo::VerticalAccuracy);
+    }
+}
 }  // namespace
 
 QGC_LOGGING_CATEGORY(NMEAPositionSourceLog, "GPS.NMEA.NMEAPositionSource")
-QGC_LOGGING_CATEGORY(NMEATimestampedPositionDecoderLog, "GPS.NMEA.NMEATimestampedPositionDecoder")
-
-class NMEADecoderDevice : public QIODevice
-{
-public:
-    explicit NMEADecoderDevice(QIODevice* input)
-        : _input(input)
-    {
-        if (_input) {
-            open(ReadOnly | Unbuffered);
-            connect(_input, &QIODevice::readyRead, this, &QIODevice::readyRead);
-            connect(_input, &QIODevice::aboutToClose, this, &QIODevice::close);
-            connect(_input, &QIODevice::readChannelFinished, this, &QIODevice::readChannelFinished);
-            connect(_input, &QObject::destroyed, this, &QIODevice::close);
-        }
-    }
-
-    bool isSequential() const override { return true; }
-
-    qint64 bytesAvailable() const override { return _input && !_startingRequest ? _input->bytesAvailable() : 0; }
-
-    bool canReadLine() const override { return _input && _input->canReadLine(); }
-
-    void setStartingRequest(bool starting) { _startingRequest = starting; }
-
-protected:
-    qint64 readData(char* data, qint64 size) override { return _input ? _input->read(data, size) : -1; }
-
-    qint64 readLineData(char* data, qint64 size) override { return _input ? _input->readLine(data, size) : -1; }
-
-    qint64 writeData(const char*, qint64) override { return -1; }
-
-private:
-    QPointer<QIODevice> _input;
-    bool _startingRequest = false;
-};
-
-class NMEATimestampedPositionDecoder : public QNmeaPositionInfoSource
-{
-public:
-    explicit NMEATimestampedPositionDecoder(QIODevice* device, RuntimeScheduler* scheduler,
-                                            std::function<void(GPSObservation)> fixLost)
-        : QNmeaPositionInfoSource(RealTimeMode)
-        , _input(device)
-        , _decoderDevice(device)
-        , _scheduler(scheduler)
-        , _fixLost(std::move(fixLost))
-    {
-        qCDebug(NMEATimestampedPositionDecoderLog) << this;
-        if (device) {
-            setDevice(&_decoderDevice);
-        }
-    }
-
-    ~NMEATimestampedPositionDecoder() override { qCDebug(NMEATimestampedPositionDecoderLog) << this; }
-
-    void startRequestedUpdates()
-    {
-        // Qt startUpdates discards buffered data, but an explicit request must retain it.
-        _decoderDevice.setStartingRequest(true);
-        startUpdates();
-        _decoderDevice.setStartingRequest(false);
-    }
-
-    bool hasFix(const QGeoPositionInfo& position) const
-    {
-        const auto epoch = _epochs.constFind(position.timestamp().time());
-        return !_invalidThroughSequence ||
-               (_navigationValid && epoch != _epochs.cend() && epoch->navigationSequence > _invalidThroughSequence);
-    }
-
-    GPSObservation observation(const QGeoPositionInfo& position) const
-    {
-        GPSObservation result;
-        const auto epoch = _epochs.constFind(position.timestamp().time());
-        if (epoch != _epochs.cend()) {
-            result = epoch->observation;
-        }
-        // Qt propagates attributes between epochs. Retain only attributes decoded for this epoch.
-        result.position.setCoordinate(position.coordinate());
-        result.position.setTimestamp(position.timestamp());
-        if (!hasFix(position)) {
-            result.receiverFixValid = false;
-            result.fixQuality = GPSObservation::FixQuality::NoFix;
-        }
-        result.sourceId = QStringLiteral("NMEA");
-        result.receivedAt = _receiptTime(result.monotonicTimestampUs);
-        return result;
-    }
-
-protected:
-    bool parsePosInfoFromNmeaData(const char* data, int size, QGeoPositionInfo* position, bool* hasFix) override
-    {
-        auto envelope = std::optional<NMEASentenceEnvelope>();
-        if (const auto* provider = dynamic_cast<NMEASentenceProvider*>(_input.data())) {
-            envelope = provider->lastReadSentence();
-            if (envelope && QByteArrayView(envelope->bytes()) != QByteArrayView(data, size)) {
-                envelope.reset();
-            }
-        }
-        if (!envelope) {
-            envelope = NMEASentenceEnvelope::parse(
-                QByteArray(data, size),
-                ReadTimestamp::from(_input, _scheduler ? _scheduler->nowUs() : ReadTimestamp::nowUs()));
-        }
-        if (!envelope) {
-            return false;
-        }
-        bool parsed = QNmeaPositionInfoSource::parsePosInfoFromNmeaData(data, size, position, hasFix);
-        const auto& decoded = envelope->sentence();
-        const auto& fields = decoded.fields;
-        const auto type = decoded.type();
-        const quint64 receivedAtUs = envelope->receivedAtUs();
-        const auto accuracy = NMEA::gst(decoded);
-        const quint64 sequence = ++_sentenceSequence;
-        if (const auto navigation = NMEA::navigationStatus(decoded)) {
-            const auto time = navigation->utcMilliseconds;
-            const QTime epoch = time ? QTime::fromMSecsSinceStartOfDay(*time) : QTime();
-            const QDate date = position->timestamp().date();
-            if (!_acceptNavigationStatus(epoch, date, receivedAtUs)) {
-                return false;
-            }
-            if (!navigation->valid) {
-                _navigationValid = false;
-                _invalidThroughSequence = sequence;
-                GPSObservation loss;
-                loss.position = *position;
-                loss.receiverFixValid = false;
-                loss.fixQuality = GPSObservation::FixQuality::NoFix;
-                loss.monotonicTimestampUs = receivedAtUs;
-                loss.sourceId = QStringLiteral("NMEA");
-                loss.receivedAt = _receiptTime(receivedAtUs);
-                _fixLost(std::move(loss));
-            } else if (parsed && *hasFix && epoch.isValid()) {
-                _navigationValid = true;
-                _epochs[epoch].navigationSequence = sequence;
-            }
-        }
-        if (accuracy) {
-            const auto time = NMEA::utcMilliseconds(fields[NMEA::Field::UTC_TIME]);
-            if (!time) {
-                return false;
-            }
-            position->setTimestamp(QDateTime(QDate(), QTime::fromMSecsSinceStartOfDay(*time), QTimeZone::UTC));
-            if (std::isfinite(accuracy->horizontalAccuracy)) {
-                position->setAttribute(QGeoPositionInfo::HorizontalAccuracy, accuracy->horizontalAccuracy);
-            }
-            if (std::isfinite(accuracy->verticalAccuracy)) {
-                position->setAttribute(QGeoPositionInfo::VerticalAccuracy, accuracy->verticalAccuracy);
-            }
-            *hasFix = false;
-            parsed = true;
-        }
-        if (parsed && position->timestamp().time().isValid() &&
-            (type == "GGA" || type == "RMC" || type == "GLL" || type == "GST")) {
-            const QTime epoch = position->timestamp().time();
-            _currentEpoch = epoch;
-            auto& epochData = _epochs[epoch];
-            auto& metadata = epochData.observation;
-            const QDate date = position->timestamp().date();
-            const bool expired = metadata.monotonicTimestampUs && receivedAtUs > metadata.monotonicTimestampUs &&
-                                 !NMEA::freshAt(metadata.monotonicTimestampUs, receivedAtUs, METADATA_MAX_AGE_US);
-            if (expired || (date.isValid() && metadata.position.timestamp().date().isValid() &&
-                            metadata.position.timestamp().date() != date)) {
-                // Measurement expiry must preserve navigation ordering, including a fix just decoded above.
-                const auto navigationSequence = epochData.navigationSequence;
-                epochData = {};
-                epochData.navigationSequence = navigationSequence;
-            }
-            if (date.isValid()) {
-                metadata.position.setTimestamp(position->timestamp());
-            }
-            _mergeAttributes(metadata.position, *position, metadata.accuracyTimestampUs && !accuracy);
-            if (accuracy) {
-                metadata.accuracyTimestampUs = receivedAtUs;
-            }
-            // The first contributing sentence owns receipt age, including fragmented arrivals.
-            metadata.monotonicTimestampUs = metadata.monotonicTimestampUs == 0
-                                                ? receivedAtUs
-                                                : std::min(metadata.monotonicTimestampUs, receivedAtUs);
-            if (type == "GGA" && decoded.count >= NMEA::Field::GGA_MIN_FIELDS) {
-                const auto fix = NMEA::gga(decoded);
-                if (fix) {
-                    epochData.ggaQuality = fix->quality;
-                    metadata.fixQuality = _fixQuality(epochData);
-                }
-                metadata.satellitesUsed = fix ? fix->satellitesUsed : std::nullopt;
-                metadata.horizontalDop =
-                    fix && std::isfinite(fix->hdop) && fix->hdop > 0 ? std::optional<double>(fix->hdop) : std::nullopt;
-                metadata.dopTimestampUs = receivedAtUs;
-                metadata.altitudeEllipsoidMeters.reset();
-                metadata.altitudeDatum = GPSAltitudeDatum::Unknown;
-                if (fix && std::isfinite(fix->altitude)) {
-                    metadata.altitudeDatum = GPSAltitudeDatum::MeanSeaLevel;
-                    if (std::isfinite(fix->geoidSeparation))
-                        metadata.altitudeEllipsoidMeters = fix->altitude + fix->geoidSeparation;
-                }
-            }
-            if (_epochs.size() > MAX_RETAINED_EPOCHS) {
-                const auto oldest =
-                    std::min_element(_epochs.cbegin(), _epochs.cend(), [](const auto& lhs, const auto& rhs) {
-                        return lhs.observation.monotonicTimestampUs < rhs.observation.monotonicTimestampUs;
-                    });
-                _epochs.erase(oldest);
-            }
-        } else if (parsed && (type == "GSA" || type == "VTG") && _currentEpoch.isValid()) {
-            auto epoch = _epochs.find(_currentEpoch);
-            // GSA has no UTC field. Associate only with the preceding, fresh epoch in this stream;
-            // never carry its DOP forward into the next timed fix.
-            if (epoch != _epochs.end() &&
-                NMEA::freshAt(epoch->observation.monotonicTimestampUs, receivedAtUs, UNTIMED_METADATA_MAX_AGE_US - 1)) {
-                _mergeAttributes(epoch->observation.position, *position, epoch->observation.accuracyTimestampUs != 0);
-                if (type != "GSA" || decoded.count < NMEA::Field::GSA_MIN_FIELDS) {
-                    return parsed;
-                }
-                if (!epoch->observation.horizontalDop) {
-                    epoch->observation.horizontalDop = _nonnegativeNumber(fields[NMEA::Field::GSA_HDOP]);
-                }
-                epoch->observation.verticalDop = _nonnegativeNumber(fields[NMEA::Field::GSA_VDOP]);
-                epoch->dimension = NMEA::number<unsigned>(fields[NMEA::Field::GSA_DIMENSION]);
-                epoch->observation.fixQuality = _fixQuality(*epoch);
-            }
-        }
-        return parsed;
-    }
-
-private:
-    QDateTime _receiptTime(quint64 timestampUs) const
-    {
-        const auto nowUs = _scheduler ? _scheduler->nowUs() : ReadTimestamp::nowUs();
-        const auto ageMs = MonotonicClock::ageMilliseconds(timestampUs, nowUs);
-        return ageMs >= 0 ? QDateTime::currentDateTimeUtc().addMSecs(-ageMs) : QDateTime();
-    }
-
-    struct EpochMetadata
-    {
-        GPSObservation observation;
-        std::optional<unsigned> ggaQuality;
-        std::optional<unsigned> dimension;
-        quint64 navigationSequence = 0;
-    };
-
-    static GPSObservation::FixQuality _fixQuality(const EpochMetadata& epoch)
-    {
-        using Quality = GPSObservation::FixQuality;
-        const auto autonomous = epoch.dimension == NMEA::FixDimension::TWO_D     ? Quality::Fix2D
-                                : epoch.dimension == NMEA::FixDimension::THREE_D ? Quality::Fix3D
-                                                                                 : Quality::Unknown;
-        return NMEA::fixQuality(epoch.ggaQuality.value_or(NMEA::GgaQuality::GPS), autonomous);
-    }
-
-    static void _mergeAttributes(QGeoPositionInfo& target, const QGeoPositionInfo& source,
-                                 bool preserveAccuracy = false)
-    {
-        for (auto attribute :
-             {QGeoPositionInfo::Direction, QGeoPositionInfo::GroundSpeed, QGeoPositionInfo::VerticalSpeed,
-              QGeoPositionInfo::MagneticVariation, QGeoPositionInfo::HorizontalAccuracy,
-              QGeoPositionInfo::VerticalAccuracy, QGeoPositionInfo::DirectionAccuracy}) {
-            if (preserveAccuracy && target.hasAttribute(attribute) &&
-                (attribute == QGeoPositionInfo::HorizontalAccuracy ||
-                 attribute == QGeoPositionInfo::VerticalAccuracy)) {
-                continue;
-            }
-            if (source.hasAttribute(attribute)) {
-                target.setAttribute(attribute, source.attribute(attribute));
-            }
-        }
-    }
-
-    static std::optional<double> _nonnegativeNumber(std::string_view field)
-    {
-        const auto value = NMEA::number<double>(field);
-        return value && *value >= 0 ? value : std::nullopt;
-    }
-
-    bool _acceptNavigationStatus(const QTime& time, const QDate& date, quint64 receivedAtUs)
-    {
-        if (!receivedAtUs || receivedAtUs < _statusReceiptUs) {
-            return false;
-        }
-        if (time.isValid() && _statusTime.isValid()) {
-            if (date.isValid() && _statusDate.isValid()) {
-                if (QDateTime(date, time, QTimeZone::UTC) < QDateTime(_statusDate, _statusTime, QTimeZone::UTC)) {
-                    return false;
-                }
-            } else {
-                int difference = _statusTime.msecsTo(time);
-                // Undated GGA timestamps wrap at midnight; ordinary negative deltas are late sentences.
-                if (difference < -HALF_DAY_MS) {
-                    difference += DAY_MS;
-                } else if (difference > HALF_DAY_MS) {
-                    difference -= DAY_MS;
-                }
-                if (difference < 0) {
-                    return false;
-                }
-            }
-        }
-        _statusReceiptUs = receivedAtUs;
-        if (time.isValid()) {
-            _statusTime = time;
-            _statusDate = date;
-        }
-        return true;
-    }
-
-    QPointer<QIODevice> _input;
-    NMEADecoderDevice _decoderDevice;
-    QPointer<RuntimeScheduler> _scheduler;
-    QHash<QTime, EpochMetadata> _epochs;
-    QTime _currentEpoch;
-    std::function<void(GPSObservation)> _fixLost;
-    quint64 _sentenceSequence = 0;
-    quint64 _invalidThroughSequence = 0;
-    quint64 _statusReceiptUs = 0;
-    QTime _statusTime;
-    QDate _statusDate;
-    bool _navigationValid = true;
-};
 
 NMEAPositionSource::NMEAPositionSource(QIODevice* device, QObject* parent, RuntimeScheduler* scheduler)
     : QGeoPositionInfoSource(parent)
@@ -357,6 +105,14 @@ NMEAPositionSource::NMEAPositionSource(QIODevice* device, QObject* parent, Runti
     , _errorTask(_scheduler, this)
 {
     qCDebug(NMEAPositionSourceLog) << this;
+    if (_device) {
+        connect(_device, &QIODevice::readyRead, this, &NMEAPositionSource::_readAvailableData);
+        connect(_device, &QIODevice::aboutToClose, this, &NMEAPositionSource::_closeInput);
+        connect(_device, &QObject::destroyed, this, [this]() {
+            _device = nullptr;
+            _closeInput();
+        });
+    }
     _resetDecoder();
 }
 
@@ -365,6 +121,8 @@ NMEAPositionSource::~NMEAPositionSource()
     qCDebug(NMEAPositionSourceLog) << this;
     _requestTask.cancel();
     _publicationTask.cancel();
+    _lossTask.cancel();
+    _errorTask.cancel();
 }
 
 void NMEAPositionSource::_resetDecoder()
@@ -377,38 +135,480 @@ void NMEAPositionSource::_resetDecoder()
     _pendingLoss.reset();
     _pendingFix = {};
     _lastObservation = {};
+    _lastKnownPosition = {};
+    _epochs.clear();
+    _currentEpochMs.reset();
+    _dateReference = {};
+    _dateReferenceTimeMs.reset();
+    _statusReceiptUs = 0;
+    _statusTimeMs.reset();
+    _statusDate = {};
+    _sentenceSequence = 0;
+    _invalidThroughSequence = 0;
+    _navigationValid = true;
+    _sentence.clear();
+    _sentenceTimestampUs = 0;
+    _drainPending = false;
+    _closed = !_device || !_device->isReadable();
     _error = NoError;
-    _decoder = std::make_unique<NMEATimestampedPositionDecoder>(
-        _device, _scheduler, [this](GPSObservation loss) { _fixLost(std::move(loss)); });
-    _decoder->setUserEquivalentRangeError(USER_EQUIVALENT_RANGE_ERROR_METERS);
-    // Qt owns epoch merging; the outer source owns requested publication cadence.
-    _decoder->setUpdateInterval(0);
-    const quint64 generation = _generation;
-    connect(_decoder.get(), &QGeoPositionInfoSource::positionUpdated, this,
-            [this, generation](const QGeoPositionInfo& update) {
-                if (generation != _generation || (!_started && !_requestTask.active())) {
-                    return;
-                }
-                if (!static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->hasFix(update)) {
-                    return;
-                }
-                _pendingFix.requested |= _requestTask.active();
-                _pendingFix.position = update;
-                if (_pendingFix.requested) {
-                    _publicationTask.cancel();
-                }
-                _schedulePublication();
-            });
-    connect(_decoder.get(), &QGeoPositionInfoSource::errorOccurred, this, [this, generation](Error error) {
-        if (_scheduler) {
-            _errorTask.schedule(std::chrono::microseconds::zero(), [this, generation, error]() {
-                if (generation == _generation) {
-                    _error = error;
-                    emit errorOccurred(error);
-                }
-            });
+}
+
+void NMEAPositionSource::_discardAvailableData()
+{
+    if (!_device || !_device->isReadable()) {
+        return;
+    }
+    _sentence.clear();
+    const QPointer<NMEAPositionSource> guard(this);
+    while (_device && _device->isReadable() && _device->bytesAvailable() > 0) {
+        const QByteArray data = _device->read(MAX_READ_BYTES_PER_TURN);
+        if (data.isEmpty()) {
+            return;
         }
-    });
+        const quint64 receivedAtUs = ReadTimestamp::from(_device, _scheduler->nowUs());
+        emit dataReceived(receivedAtUs);
+        if (!guard || _closed) {
+            return;
+        }
+    }
+}
+
+void NMEAPositionSource::_readAvailableData()
+{
+    if (_closed || _drainPending || (!_started && !_requestTask.active())) {
+        return;
+    }
+    if (!_device || !_device->isReadable()) {
+        _closeInput();
+        return;
+    }
+    const QPointer<NMEAPositionSource> guard(this);
+    qsizetype remaining = MAX_READ_BYTES_PER_TURN;
+    while (remaining > 0 && _device && _device->isReadable() && _device->bytesAvailable() > 0) {
+        const QByteArray data = _device->read(remaining);
+        remaining -= data.size();
+        if (data.isEmpty()) {
+            return;
+        }
+        const quint64 receivedAtUs = ReadTimestamp::from(_device, _scheduler->nowUs());
+        emit dataReceived(receivedAtUs);
+        if (!guard || _closed) {
+            return;
+        }
+        QList<NMEASentenceEnvelope> sentences;
+        for (const char byte : data) {
+            if (byte == '$') {
+                _sentence = "$";
+                _sentenceTimestampUs = receivedAtUs;
+            } else if (!_sentence.isEmpty()) {
+                _sentence.append(byte);
+                if (byte == '\n') {
+                    if (auto sentence = NMEASentenceEnvelope::parse(_sentence, _sentenceTimestampUs)) {
+                        sentences.append(std::move(*sentence));
+                    }
+                    _sentence.clear();
+                } else if (_sentence.size() > MAX_SENTENCE_BYTES || (byte != '\r' && (byte < ' ' || byte > '~'))) {
+                    _sentence.clear();
+                }
+            }
+        }
+        for (const auto& sentence : sentences) {
+            _processSentence(sentence);
+            if (!guard || _closed) {
+                return;
+            }
+            emit sentenceReceived(sentence);
+            if (!guard || _closed) {
+                return;
+            }
+        }
+    }
+    if (_device && _device->isReadable() && _device->bytesAvailable() > 0) {
+        _drainPending = true;
+        QMetaObject::invokeMethod(
+            this,
+            [this]() {
+                _drainPending = false;
+                _readAvailableData();
+            },
+            Qt::QueuedConnection);
+    }
+}
+
+void NMEAPositionSource::_closeInput()
+{
+    const QPointer<NMEAPositionSource> guard(this);
+    if (_closed) {
+        return;
+    }
+    _closed = true;
+    _sentence.clear();
+    _publicationTask.cancel();
+    _pendingFix = {};
+    if (_started || _requestTask.active()) {
+        _errorTask.cancel();
+        _error = ClosedError;
+        emit errorOccurred(_error);
+        if (!guard) {
+            return;
+        }
+    }
+    if (guard) {
+        emit closed();
+    }
+}
+
+QDate NMEAPositionSource::_dateForTime(int timeMs) const
+{
+    if (!_dateReference.isValid() || !_dateReferenceTimeMs) {
+        return {};
+    }
+    if (*_dateReferenceTimeMs - timeMs < -HALF_DAY_MS) {
+        return _dateReference.addDays(-1);
+    }
+    if (*_dateReferenceTimeMs - timeMs > HALF_DAY_MS) {
+        return _dateReference.addDays(1);
+    }
+    return _dateReference;
+}
+
+void NMEAPositionSource::_setDateReference(const QDate& date, int timeMs)
+{
+    if (!date.isValid()) {
+        return;
+    }
+    _dateReference = date;
+    _dateReferenceTimeMs = timeMs;
+}
+
+void NMEAPositionSource::_handleDatedSentence(const NMEASentenceEnvelope& envelope)
+{
+    const auto dated = NMEA::zda(envelope.sentence());
+    if (!dated || !dated->utcMilliseconds) {
+        return;
+    }
+    const QDate date = qtDate(dated->date);
+    if (!_acceptNavigationStatus(dated->utcMilliseconds, date, envelope.receivedAtUs())) {
+        return;
+    }
+    _setDateReference(date, *dated->utcMilliseconds);
+    if (auto epoch = _epochs.find(*dated->utcMilliseconds); epoch != _epochs.end()) {
+        epoch->observation.position.setTimestamp(QDateTime(date, qtTime(*dated->utcMilliseconds), QTimeZone::UTC));
+        _queueEpoch(*dated->utcMilliseconds);
+    }
+}
+
+QDateTime NMEAPositionSource::_timestamp(int timeMs) const
+{
+    const QDate date = _dateForTime(timeMs);
+    return date.isValid() ? QDateTime(date, qtTime(timeMs), QTimeZone::UTC) : QDateTime();
+}
+
+QDateTime NMEAPositionSource::_receiptTime(quint64 timestampUs) const
+{
+    const auto nowUs = _scheduler->nowUs();
+    const auto ageMs = MonotonicClock::ageMilliseconds(timestampUs, nowUs);
+    return ageMs >= 0 ? QDateTime::currentDateTimeUtc().addMSecs(-ageMs) : QDateTime();
+}
+
+bool NMEAPositionSource::_acceptNavigationStatus(std::optional<int> timeMs, const QDate& date, quint64 receivedAtUs)
+{
+    if (!receivedAtUs || receivedAtUs < _statusReceiptUs) {
+        return false;
+    }
+    if (timeMs && _statusTimeMs) {
+        if (date.isValid() && _statusDate.isValid()) {
+            if (QDateTime(date, qtTime(*timeMs), QTimeZone::UTC) <
+                QDateTime(_statusDate, qtTime(*_statusTimeMs), QTimeZone::UTC)) {
+                return false;
+            }
+        } else {
+            int difference = *_statusTimeMs - *timeMs;
+            if (difference < -HALF_DAY_MS) {
+                difference += DAY_MS;
+            } else if (difference > HALF_DAY_MS) {
+                difference -= DAY_MS;
+            }
+            if (difference > 0) {
+                return false;
+            }
+        }
+    }
+    _statusReceiptUs = receivedAtUs;
+    if (timeMs) {
+        _statusTimeMs = timeMs;
+        _statusDate = date;
+    }
+    return true;
+}
+
+void NMEAPositionSource::_resetExpiredEpoch(EpochMetadata& epoch, const QDateTime& timestamp, quint64 receivedAtUs)
+{
+    const bool expired = epoch.observation.monotonicTimestampUs &&
+                         receivedAtUs > epoch.observation.monotonicTimestampUs &&
+                         !NMEA::freshAt(epoch.observation.monotonicTimestampUs, receivedAtUs, METADATA_MAX_AGE_US);
+    const bool dateChanged = timestamp.date().isValid() && epoch.observation.position.timestamp().date().isValid() &&
+                             epoch.observation.position.timestamp().date() != timestamp.date();
+    if (!expired && !dateChanged) {
+        return;
+    }
+    const auto navigationSequence = epoch.navigationSequence;
+    epoch = {};
+    epoch.navigationSequence = navigationSequence;
+}
+
+GPSObservation::FixQuality NMEAPositionSource::_fixQuality(const EpochMetadata& epoch)
+{
+    using Quality = GPSObservation::FixQuality;
+    const auto autonomous = epoch.dimension == NMEA::FixDimension::TWO_D     ? Quality::Fix2D
+                            : epoch.dimension == NMEA::FixDimension::THREE_D ? Quality::Fix3D
+                                                                             : Quality::Unknown;
+    return NMEA::fixQuality(epoch.ggaQuality.value_or(NMEA::GgaQuality::GPS), autonomous);
+}
+
+void NMEAPositionSource::_processSentence(const NMEASentenceEnvelope& envelope)
+{
+    const auto& sentence = envelope.sentence();
+    const auto type = sentence.type();
+    const quint64 receivedAtUs = envelope.receivedAtUs();
+    const quint64 sequence = ++_sentenceSequence;
+
+    if (type == "ZDA") {
+        _handleDatedSentence(envelope);
+        return;
+    }
+
+    if (const auto navigation = NMEA::navigationStatus(sentence)) {
+        QDate date;
+        if (navigation->utcMilliseconds) {
+            if (type == "RMC") {
+                if (const auto dateField = NMEA::rmcDate(sentence.fields[NMEA::Field::RMC_DATE])) {
+                    date = qtDate(*dateField);
+                }
+            }
+            if (!date.isValid()) {
+                date = _dateForTime(*navigation->utcMilliseconds);
+            }
+        }
+        if (!_acceptNavigationStatus(navigation->utcMilliseconds, date, receivedAtUs)) {
+            return;
+        }
+        if (navigation->utcMilliseconds && date.isValid() && type == "RMC") {
+            _setDateReference(date, *navigation->utcMilliseconds);
+        }
+        if (!navigation->valid) {
+            _navigationValid = false;
+            _invalidThroughSequence = sequence;
+            GPSObservation loss;
+            if (navigation->utcMilliseconds && date.isValid()) {
+                loss.position.setTimestamp(QDateTime(date, qtTime(*navigation->utcMilliseconds), QTimeZone::UTC));
+            }
+            loss.receiverFixValid = false;
+            loss.fixQuality = GPSObservation::FixQuality::NoFix;
+            loss.monotonicTimestampUs = receivedAtUs;
+            loss.sourceId = QStringLiteral("NMEA");
+            loss.receivedAt = _receiptTime(receivedAtUs);
+            _fixLost(std::move(loss));
+            return;
+        }
+        _navigationValid = true;
+    }
+
+    _handlePositionSentence(envelope);
+    _handleAccuracy(envelope);
+    _handleUntimedMetadata(envelope);
+}
+
+void NMEAPositionSource::_handlePositionSentence(const NMEASentenceEnvelope& envelope)
+{
+    const auto& sentence = envelope.sentence();
+    const quint64 receivedAtUs = envelope.receivedAtUs();
+    std::optional<int> timeMs;
+
+    if (const auto rmc = NMEA::rmc(sentence)) {
+        if (!rmc->utcMilliseconds) {
+            return;
+        }
+        timeMs = rmc->utcMilliseconds;
+        if (rmc->date) {
+            _setDateReference(qtDate(*rmc->date), *timeMs);
+        }
+        auto& epoch = _epochs[*timeMs];
+        const QDateTime timestamp = _timestamp(*timeMs);
+        _resetExpiredEpoch(epoch, timestamp, receivedAtUs);
+        epoch.navigationSequence = _sentenceSequence;
+        auto& observation = epoch.observation;
+        observation.position.setTimestamp(timestamp);
+        mergeCoordinate(observation.position, rmc->latitude, rmc->longitude, std::nullopt);
+        setFiniteAttribute(observation.position, QGeoPositionInfo::GroundSpeed, rmc->speedMetersPerSecond);
+        setFiniteAttribute(observation.position, QGeoPositionInfo::Direction, rmc->courseDegrees);
+        observation.receiverFixValid = true;
+        observation.fixQuality = _fixQuality(epoch);
+        markReceipt(observation, receivedAtUs);
+        _currentEpochMs = timeMs;
+    } else if (const auto fix = NMEA::gga(sentence)) {
+        timeMs = NMEA::utcMilliseconds(sentence.fields[NMEA::Field::UTC_TIME]);
+        if (!timeMs || fix->quality == NMEA::GgaQuality::INVALID) {
+            return;
+        }
+        auto& epoch = _epochs[*timeMs];
+        const QDateTime timestamp = _timestamp(*timeMs);
+        _resetExpiredEpoch(epoch, timestamp, receivedAtUs);
+        epoch.navigationSequence = _sentenceSequence;
+        epoch.ggaQuality = fix->quality;
+        auto& observation = epoch.observation;
+        observation.position.setTimestamp(timestamp);
+        mergeCoordinate(observation.position, fix->latitude, fix->longitude,
+                        std::isfinite(fix->altitude) ? std::optional<double>(fix->altitude) : std::nullopt);
+        observation.receiverFixValid = true;
+        observation.fixQuality = _fixQuality(epoch);
+        observation.satellitesUsed = fix->satellitesUsed;
+        observation.horizontalDop =
+            std::isfinite(fix->hdop) && fix->hdop > 0.0 ? std::optional<double>(fix->hdop) : std::nullopt;
+        observation.dopTimestampUs = receivedAtUs;
+        observation.altitudeEllipsoidMeters.reset();
+        observation.altitudeDatum = GPSAltitudeDatum::Unknown;
+        if (std::isfinite(fix->altitude)) {
+            observation.altitudeDatum = GPSAltitudeDatum::MeanSeaLevel;
+            if (std::isfinite(fix->geoidSeparation)) {
+                observation.altitudeEllipsoidMeters = fix->altitude + fix->geoidSeparation;
+            }
+        }
+        if (!observation.accuracyTimestampUs ||
+            !NMEA::freshAt(observation.accuracyTimestampUs, receivedAtUs, METADATA_MAX_AGE_US)) {
+            observation.accuracyTimestampUs = 0;
+            applyHorizontalFallback(observation.position, observation.horizontalDop);
+            applyVerticalFallback(observation.position, observation.verticalDop);
+        }
+        markReceipt(observation, receivedAtUs);
+        _currentEpochMs = timeMs;
+    } else if (const auto gll = NMEA::gll(sentence)) {
+        if (!gll->utcMilliseconds) {
+            return;
+        }
+        timeMs = gll->utcMilliseconds;
+        auto& epoch = _epochs[*timeMs];
+        const QDateTime timestamp = _timestamp(*timeMs);
+        _resetExpiredEpoch(epoch, timestamp, receivedAtUs);
+        epoch.navigationSequence = _sentenceSequence;
+        auto& observation = epoch.observation;
+        observation.position.setTimestamp(timestamp);
+        mergeCoordinate(observation.position, gll->latitude, gll->longitude, std::nullopt);
+        observation.receiverFixValid = true;
+        observation.fixQuality = _fixQuality(epoch);
+        markReceipt(observation, receivedAtUs);
+        _currentEpochMs = timeMs;
+    } else {
+        return;
+    }
+
+    _queueEpoch(*timeMs);
+    _trimEpochs();
+}
+
+void NMEAPositionSource::_handleAccuracy(const NMEASentenceEnvelope& envelope)
+{
+    const auto accuracy = NMEA::gst(envelope.sentence());
+    if (!accuracy) {
+        return;
+    }
+    const auto timeMs = NMEA::utcMilliseconds(envelope.sentence().fields[NMEA::Field::UTC_TIME]);
+    if (!timeMs) {
+        return;
+    }
+    auto& epoch = _epochs[*timeMs];
+    const QDateTime timestamp = _timestamp(*timeMs);
+    _resetExpiredEpoch(epoch, timestamp, envelope.receivedAtUs());
+    auto& observation = epoch.observation;
+    if (timestamp.isValid()) {
+        observation.position.setTimestamp(timestamp);
+    }
+    setFiniteAttribute(observation.position, QGeoPositionInfo::HorizontalAccuracy, accuracy->horizontalAccuracy);
+    setFiniteAttribute(observation.position, QGeoPositionInfo::VerticalAccuracy, accuracy->verticalAccuracy);
+    observation.accuracyTimestampUs = envelope.receivedAtUs();
+    markReceipt(observation, envelope.receivedAtUs());
+    if (_currentEpochMs == timeMs) {
+        _queueEpoch(*timeMs);
+    }
+    _trimEpochs();
+}
+
+void NMEAPositionSource::_handleUntimedMetadata(const NMEASentenceEnvelope& envelope)
+{
+    if (!_currentEpochMs) {
+        return;
+    }
+    auto epoch = _epochs.find(*_currentEpochMs);
+    if (epoch == _epochs.end() || !NMEA::freshAt(epoch->observation.monotonicTimestampUs, envelope.receivedAtUs(),
+                                                 UNTIMED_METADATA_MAX_AGE_US - 1)) {
+        return;
+    }
+
+    const auto& sentence = envelope.sentence();
+    const auto type = sentence.type();
+    auto& observation = epoch->observation;
+    if (type == "GSA") {
+        if (sentence.count < NMEA::Field::GSA_MIN_FIELDS) {
+            return;
+        }
+        const auto hdop = nonnegativeNumber(sentence.fields[NMEA::Field::GSA_HDOP]);
+        const auto vdop = nonnegativeNumber(sentence.fields[NMEA::Field::GSA_VDOP]);
+        if (!observation.horizontalDop) {
+            observation.horizontalDop = hdop;
+        }
+        observation.verticalDop = vdop;
+        observation.dopTimestampUs = envelope.receivedAtUs();
+        epoch->dimension = NMEA::number<unsigned>(sentence.fields[NMEA::Field::GSA_DIMENSION]);
+        observation.fixQuality = _fixQuality(*epoch);
+        if (!observation.accuracyTimestampUs) {
+            applyHorizontalFallback(observation.position, hdop);
+            applyVerticalFallback(observation.position, vdop);
+        }
+    } else if (const auto velocity = NMEA::vtg(sentence)) {
+        setFiniteAttribute(observation.position, QGeoPositionInfo::GroundSpeed, velocity->speedMetersPerSecond);
+        setFiniteAttribute(observation.position, QGeoPositionInfo::Direction, velocity->courseDegrees);
+    } else {
+        return;
+    }
+    _queueEpoch(*_currentEpochMs);
+}
+
+void NMEAPositionSource::_queueEpoch(int timeMs)
+{
+    auto epoch = _epochs.find(timeMs);
+    if (epoch == _epochs.end() || epoch->published || !_navigationValid ||
+        epoch->navigationSequence <= _invalidThroughSequence || !epoch->observation.position.isValid() ||
+        !epoch->observation.receiverFixValid.value_or(true) ||
+        epoch->observation.fixQuality == GPSObservation::FixQuality::NoFix) {
+        return;
+    }
+
+    GPSObservation observation = epoch->observation;
+    observation.sourceId = QStringLiteral("NMEA");
+    observation.receivedAt = _receiptTime(observation.monotonicTimestampUs);
+    if (_pendingFix.requested && _publicationTask.active() && _pendingFix.epochTimeMs &&
+        *_pendingFix.epochTimeMs != timeMs) {
+        return;
+    }
+    _lastKnownPosition = observation.position;
+    _pendingFix.requested |= _requestTask.active();
+    _pendingFix.observation = observation;
+    _pendingFix.position = observation.position;
+    _pendingFix.epochTimeMs = timeMs;
+    if (_pendingFix.requested) {
+        _publicationTask.cancel();
+    }
+    _schedulePublication();
+}
+
+void NMEAPositionSource::_trimEpochs()
+{
+    while (_epochs.size() > MAX_RETAINED_EPOCHS) {
+        const auto oldest = std::min_element(_epochs.cbegin(), _epochs.cend(), [](const auto& lhs, const auto& rhs) {
+            return lhs.observation.monotonicTimestampUs < rhs.observation.monotonicTimestampUs;
+        });
+        _epochs.erase(oldest);
+    }
 }
 
 void NMEAPositionSource::_fixLost(GPSObservation observation)
@@ -421,7 +621,6 @@ void NMEAPositionSource::_fixLost(GPSObservation observation)
     _pendingLoss = std::move(observation);
     if (!_lossTask.active()) {
         const auto generation = _generation;
-        // Qt is still decoding a line. Notify consumers only after its parser stack unwinds.
         _lossTask.schedule(std::chrono::microseconds::zero(), [this, generation]() {
             if (generation == _generation) {
                 _publishLoss();
@@ -443,7 +642,7 @@ void NMEAPositionSource::_publishLoss()
 
 void NMEAPositionSource::_schedulePublication()
 {
-    if (!_scheduler || _publicationTask.active() || !_pendingFix.position) {
+    if (_publicationTask.active() || !_pendingFix.position) {
         return;
     }
     const auto generation = _generation;
@@ -466,12 +665,12 @@ void NMEAPositionSource::_publishPending()
             return;
         }
     }
-    if (!_pendingFix.position) {
+    if (!_pendingFix.observation) {
         return;
     }
-    const auto observation =
-        static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->observation(*_pendingFix.position);
+    const auto observation = *_pendingFix.observation;
     const bool requested = _pendingFix.requested;
+    const auto epochTimeMs = _pendingFix.epochTimeMs;
     _pendingFix = {};
     if (!observation.receiverFixValid.value_or(true)) {
         return;
@@ -480,10 +679,10 @@ void NMEAPositionSource::_publishPending()
         _requestTask.cancel();
         _error = NoError;
         _lastObservation = observation;
-        if (!_started) {
-            _decoder->stopUpdates();
-            _publicationTask.cancel();
-            _pendingFix = {};
+        if (epochTimeMs) {
+            if (auto epoch = _epochs.find(*epochTimeMs); epoch != _epochs.end()) {
+                epoch->published = true;
+            }
         }
         const QPointer<NMEAPositionSource> guard(this);
         const auto generation = _generation;
@@ -494,6 +693,17 @@ void NMEAPositionSource::_publishPending()
     }
 }
 
+void NMEAPositionSource::_publishError(Error error)
+{
+    const auto generation = _generation;
+    _errorTask.schedule(std::chrono::microseconds::zero(), [this, generation, error]() {
+        if (generation == _generation) {
+            _error = error;
+            emit errorOccurred(error);
+        }
+    });
+}
+
 void NMEAPositionSource::setUpdateInterval(int msec)
 {
     QGeoPositionInfoSource::setUpdateInterval(msec == 0 ? 0 : (std::max) (msec, minimumUpdateInterval()));
@@ -501,19 +711,19 @@ void NMEAPositionSource::setUpdateInterval(int msec)
     _schedulePublication();
 }
 
-QGeoPositionInfo NMEAPositionSource::lastKnownPosition(bool satelliteOnly) const
+QGeoPositionInfo NMEAPositionSource::lastKnownPosition(bool /*satelliteOnly*/) const
 {
-    return _decoder->lastKnownPosition(satelliteOnly);
+    return _lastKnownPosition;
 }
 
 QGeoPositionInfoSource::PositioningMethods NMEAPositionSource::supportedPositioningMethods() const
 {
-    return _decoder->supportedPositioningMethods();
+    return SatellitePositioningMethods;
 }
 
 int NMEAPositionSource::minimumUpdateInterval() const
 {
-    return _decoder->minimumUpdateInterval();
+    return 0;
 }
 
 QGeoPositionInfoSource::Error NMEAPositionSource::error() const
@@ -523,14 +733,22 @@ QGeoPositionInfoSource::Error NMEAPositionSource::error() const
 
 void NMEAPositionSource::startUpdates()
 {
-    if (_started || !_scheduler) {
+    if (_started) {
         return;
     }
+    const QPointer<NMEAPositionSource> guard(this);
     if (!_requestTask.active()) {
         _resetDecoder();
+        _discardAvailableData();
+        if (!guard) {
+            return;
+        }
+    }
+    if (_closed || !_device || !_device->isReadable()) {
+        _publishError(ClosedError);
+        return;
     }
     _started = true;
-    _decoder->startUpdates();
 }
 
 void NMEAPositionSource::stopUpdates()
@@ -539,27 +757,26 @@ void NMEAPositionSource::stopUpdates()
     if (!_requestTask.active()) {
         _lossTask.cancel();
         _pendingLoss.reset();
-        _decoder->stopUpdates();
         if (!_pendingFix.requested) {
             _publicationTask.cancel();
             _pendingFix.position.reset();
+            _pendingFix.observation.reset();
+            _pendingFix.epochTimeMs.reset();
         }
     }
 }
 
 void NMEAPositionSource::requestUpdate(int timeout)
 {
-    if (_requestTask.active() || !_scheduler) {
+    if (_requestTask.active()) {
         return;
     }
     if (timeout < 0 || (timeout > 0 && timeout < minimumUpdateInterval())) {
-        const auto generation = _generation;
-        _errorTask.schedule(std::chrono::microseconds::zero(), [this, generation]() {
-            if (generation == _generation) {
-                _error = UpdateTimeoutError;
-                emit errorOccurred(_error);
-            }
-        });
+        _publishError(UpdateTimeoutError);
+        return;
+    }
+    if (!_device || !_device->isReadable()) {
+        _publishError(ClosedError);
         return;
     }
     if (!_started) {
@@ -573,13 +790,10 @@ void NMEAPositionSource::requestUpdate(int timeout)
                                   return;
                               }
                               _pendingFix.requested = false;
-                              if (!_started) {
-                                  _decoder->stopUpdates();
-                              }
                               _error = UpdateTimeoutError;
                               emit errorOccurred(_error);
                           });
-    if (!_started) {
-        static_cast<NMEATimestampedPositionDecoder*>(_decoder.get())->startRequestedUpdates();
+    if (!_started && _device && _device->bytesAvailable() > 0) {
+        QMetaObject::invokeMethod(this, &NMEAPositionSource::_readAvailableData, Qt::QueuedConnection);
     }
 }

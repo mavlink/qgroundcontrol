@@ -33,7 +33,6 @@ private slots:
     void _satelliteNormalization_data();
     void _satelliteNormalization();
     void _surveyReportRetainsUnits();
-    void _schedulerDestructionClearsAcceptedState();
 };
 
 void GPSAcceptedStateTest::_receiptDeadlineBoundaries()
@@ -340,18 +339,12 @@ void GPSAcceptedStateTest::_satelliteNormalization()
     using Constellation = GPSConstellation;
     const auto receipt = report.monotonicTimestampUs;
     if (empty) {
-        report.constellations = {{Constellation::Unknown, {receipt, {}}, {receipt, 0}}};
+        report.constellations = {{Constellation::Unknown, {receipt, 0}, {receipt, 0}}};
     } else {
-        GPSSatellite gps;
-        gps.id = 1;
-        gps.used = false;
-        GPSSatellite galileo;
-        galileo.id = 2;
-        galileo.used = unknownUsage ? std::nullopt : std::optional<bool>(true);
         report.constellations = {
-            {Constellation::GPS, {receipt, {gps}}, {receipt, 0}},
+            {Constellation::GPS, {receipt, 1}, {receipt, 0}},
             {Constellation::Galileo,
-             {receipt, {galileo}},
+             {receipt, 1},
              {unknownUsage ? 0 : receipt, unknownUsage ? std::nullopt : std::optional<int>(1)}},
         };
     }
@@ -364,15 +357,9 @@ void GPSAcceptedStateTest::_satelliteNormalization()
         const auto& accepted = actual.constellations[index];
         const auto& input = report.constellations[index];
         QCOMPARE(accepted.view.receivedAtUs, input.view.receivedAtUs);
+        QCOMPARE(accepted.view.count, input.view.count);
         QCOMPARE(accepted.usage.receivedAtUs, input.usage.receivedAtUs);
         QCOMPARE(accepted.usage.count, input.usage.count);
-        QCOMPARE(accepted.usage.ids, input.usage.ids);
-        QCOMPARE(accepted.view.satellites.size(), input.view.satellites.size());
-        for (qsizetype satellite = 0; satellite < accepted.view.satellites.size(); ++satellite) {
-            QCOMPARE(accepted.view.satellites[satellite].id, input.view.satellites[satellite].id);
-            QCOMPARE(accepted.view.satellites[satellite].used, input.view.satellites[satellite].used);
-            QCOMPARE(accepted.view.satellites[satellite].constellation, input.constellation);
-        }
     }
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
     QCOMPARE(store.observation().satellitesInViewCount(), -1);
@@ -394,34 +381,6 @@ void GPSAcceptedStateTest::_surveyReportRetainsUnits()
     QCOMPARE(restored.position.altitudeMeters, 500.0f);
     QCOMPARE(restored.meanAccuracyMeters.value(), 4000000.001);
     QCOMPARE(restored.duration.count(), 4294967295LL);
-}
-
-void GPSAcceptedStateTest::_schedulerDestructionClearsAcceptedState()
-{
-    auto scheduler = std::make_unique<ManualScheduler>();
-    GPSSatelliteStore satellites(nullptr, 5000, scheduler.get());
-    GPSSourceHealth health(nullptr, scheduler.get());
-    satellites.beginSession(QStringLiteral("receiver"), 1);
-    GPSSatelliteObservation report;
-    report.sessionId = 1;
-    report.monotonicTimestampUs = scheduler->nowUs();
-    report.constellations = {{GPSConstellation::Unknown, {report.monotonicTimestampUs, {GPSSatellite{}}}, {}}};
-    satellites.updateObservation(report);
-    GPSObservation fix;
-    fix.monotonicTimestampUs = scheduler->nowUs();
-    fix.position = QGeoPositionInfo(QGeoCoordinate(47, 8, 500), QDateTime::currentDateTimeUtc());
-    fix.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1.0);
-    health.updateObservation(fix);
-    QCOMPARE(satellites.observation().satellitesInViewCount(), 1);
-    QVERIFY(health.usable());
-    scheduler.reset();
-    QVERIFY(satellites.observation().constellations.isEmpty());
-    QVERIFY(!health.usable());
-    satellites.updateObservation(report);
-    satellites.clear();
-    satellites.reset();
-    satellites.beginSession(QStringLiteral("replacement"), 2);
-    QVERIFY(satellites.observation().constellations.isEmpty());
 }
 
 UT_REGISTER_TEST(GPSAcceptedStateTest, TestLabel::Unit)

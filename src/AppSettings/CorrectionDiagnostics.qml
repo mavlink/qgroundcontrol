@@ -43,20 +43,6 @@ SettingsGroupLayout {
             return qsTr("Queue full");
         case GPSCorrectionEventModel.InvalidFrame:
             return qsTr("Invalid frame");
-        case GPSCorrectionEventModel.Cancelled:
-            return qsTr("Connection cancelled");
-        case GPSCorrectionEventModel.SourceChanged:
-            return qsTr("Source changed");
-        case GPSCorrectionEventModel.WriteFailed:
-            return qsTr("Write failed");
-        case GPSCorrectionEventModel.PartialWrite:
-            return qsTr("Incomplete write");
-        case GPSCorrectionEventModel.InvalidDelivery:
-            return qsTr("Unmatched delivery report");
-        case GPSCorrectionEventModel.DeliveryUnconfirmed:
-            return qsTr("Connection ended before the write result was available");
-        case GPSCorrectionEventModel.DiagnosticsBackpressure:
-            return qsTr("Delivery tracking full");
         default:
             return qsTr("Unknown");
         }
@@ -85,10 +71,6 @@ SettingsGroupLayout {
             return qsTr("Selected");
         case GPSCorrectionEventModel.Queued:
             return qsTr("Queued");
-        case GPSCorrectionEventModel.Written:
-            return qsTr("Written");
-        case GPSCorrectionEventModel.Unconfirmed:
-            return qsTr("Unconfirmed");
         case GPSCorrectionEventModel.Dropped:
             return qsTr("Dropped");
         default:
@@ -138,14 +120,14 @@ SettingsGroupLayout {
     QGCLabel {
         Layout.fillWidth: true
         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-        text: qsTr("Queued bytes have been submitted to an output. Written bytes reached an output transport; they do not confirm that a receiver applied the corrections or obtained a fix. Vehicle writes are unconfirmed.")
+        text: qsTr("Queued bytes have been admitted to an output. They do not confirm that a receiver applied the corrections or obtained a fix.")
         wrapMode: Text.WordWrap
     }
 
     QGCLabel {
         Layout.fillWidth: true
         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-        text: qsTr("Received/dropped source bytes measure frame-candidate evidence, not raw transport traffic. Recovered frames can overlap rejected candidates. Drop events count separate selection, admission, and delivery losses; one frame may contribute more than once.")
+        text: qsTr("Received/dropped source bytes measure frame-candidate evidence, not raw transport traffic. Recovered frames can overlap rejected candidates. Drop events count separate selection and admission losses; one frame may contribute more than once.")
         wrapMode: Text.WordWrap
     }
 
@@ -157,7 +139,7 @@ SettingsGroupLayout {
 
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-            text: qsTr("%1 — frames: received %2, validated %3, selected %4, queued %5, written %6; drop events %7").arg(root.sourceName(modelData.source)).arg(modelData.receivedFrames).arg(modelData.validatedFrames).arg(modelData.selectedFrames).arg(modelData.queuedFrames).arg(modelData.writtenFrames).arg(modelData.droppedFrames)
+            text: qsTr("%1 — frames: received %2, validated %3, selected %4, queued %5; drop events %6").arg(root.sourceName(modelData.source)).arg(modelData.receivedFrames).arg(modelData.validatedFrames).arg(modelData.selectedFrames).arg(modelData.queuedFrames).arg(modelData.droppedFrames)
             wrapMode: Text.WordWrap
         }
     }
@@ -171,7 +153,7 @@ SettingsGroupLayout {
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
             objectName: "correctionDestination_" + modelData.destinationId
-            text: qsTr("%1 — queued %2 B, written %3, dropped %4 B, pending %5 B, unconfirmed %6 B").arg(root.destinationName(modelData.destinationId)).arg(modelData.queuedBytes).arg(modelData.reportsWrites ? qsTr("%1 B").arg(modelData.writtenBytes) : qsTr("unconfirmed")).arg(modelData.droppedBytes).arg(modelData.pendingBytes).arg(modelData.unconfirmedBytes)
+            text: qsTr("%1 — queued %2 B, dropped %3 B").arg(root.destinationName(modelData.destinationId)).arg(modelData.queuedBytes).arg(modelData.droppedBytes)
             wrapMode: Text.WordWrap
         }
     }

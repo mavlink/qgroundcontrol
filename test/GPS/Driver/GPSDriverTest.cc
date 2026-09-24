@@ -165,18 +165,18 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
     };
     QCOMPARE(feed("GPGSV,1,1,01,01,10,20,30").status, GPSReceiveStatus::Data);
     QCOMPARE(snapshots.size(), size_t(2));
-    QCOMPARE(snapshots[0].count, 1);
-    QCOMPARE(snapshots[1].count, 1);  // Empty SBAS scope must not clear GPS.
+    QCOMPARE(snapshots[0].inView, 1);
+    QCOMPARE(snapshots[1].inView, 1);  // Empty SBAS scope must not clear GPS.
     QCOMPARE(feed("GLGSV,1,1,01,65,20,30,40").updates, GPSReceiveResult::SATELLITES_UPDATE);
-    QCOMPARE(snapshots.back().count, 2);
+    QCOMPARE(snapshots.back().inView, 2);
     QCOMPARE(feed("GPGSV,1,1,02,01,10,20,30,33,15,25,35").status, GPSReceiveStatus::Data);
-    QCOMPARE(snapshots.back().count, 3);
+    QCOMPARE(snapshots.back().inView, 3);
     QCOMPARE(feed("GLGSV,1,1,00").status, GPSReceiveStatus::Data);
-    QCOMPARE(snapshots.back().count, 2);
+    QCOMPARE(snapshots.back().inView, 2);
     QCOMPARE(feed("GPGSV,1,1,00").status, GPSReceiveStatus::Data);
     QCOMPARE(snapshots.size(), size_t(2));
-    QCOMPARE(snapshots[0].count, 1);
-    QCOMPARE(snapshots[1].count, 0);
+    QCOMPARE(snapshots[0].inView, 1);
+    QCOMPARE(snapshots[1].inView, 0);
 }
 
 void GPSDriverTest::_nativeIntegrityProvenance()

@@ -87,11 +87,6 @@ std::chrono::milliseconds GPSEvidenceTransport::configurationWriteTimeout() cons
     return _transport.configurationWriteTimeout();
 }
 
-std::chrono::milliseconds GPSEvidenceTransport::correctionWriteTimeout(int length) const
-{
-    return _transport.correctionWriteTimeout(length);
-}
-
 void GPSEvidenceTransport::_recordWrite(const uint8_t* data, int length, const GPSWriteResult& result)
 {
     _acceptedBytes += result.acceptedBytes;

@@ -68,9 +68,6 @@ public:
     GPSDriver(const GPSDriver&) = delete;
     GPSDriver& operator=(const GPSDriver&) = delete;
 
-    /// Whether this build contains the requested native protocol implementation.
-    static bool supportsType(GPSType type);
-
     /// Create and configure the underlying driver. Reentrant calls fail without replacing the active driver.
     bool configure();
 

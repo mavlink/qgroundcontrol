@@ -6,9 +6,8 @@
 
 #include "NMEAFramer.h"
 #include "NMEASentence.h"
-#include "NMEAStreamSplitter.h"
+#include "NMEASentenceEnvelope.h"
 #include "NMEAUtils.h"
-#include "SequentialTestDevice.h"
 
 Q_DECLARE_METATYPE(NMEA::GGA)
 
@@ -269,12 +268,6 @@ void NMEASentenceTest::_frameValidation()
     QCOMPARE(NMEA::sentence(view).has_value(), valid);
     QCOMPARE(NMEAUtils::verifyChecksum(input), valid);
     QCOMPARE(NMEASentenceEnvelope::parse(input, 1).has_value(), valid);
-    SequentialTestDevice device;
-    NMEAStreamSplitter splitter(&device);
-    int received = 0;
-    connect(&splitter, &NMEAStreamSplitter::sentenceReceived, this, [&](const auto&) { ++received; });
-    device.feed(input.endsWith('\n') ? input : input + '\n');
-    QCOMPARE(received, valid ? 1 : 0);
 }
 
 void NMEASentenceTest::_borrowedBytesAreOwned()

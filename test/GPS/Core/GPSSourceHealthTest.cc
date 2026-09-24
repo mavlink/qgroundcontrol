@@ -3,7 +3,6 @@
 #include <memory>
 
 #include <QtCore/QScopeGuard>
-#include <QtCore/QThread>
 #include <QtTest/QSignalSpy>
 
 #include "GPSSatelliteObservation.h"
@@ -39,7 +38,7 @@ GPSSatelliteObservation satellites(int inView, int inUse)
     auto& system = result.constellations.emplaceBack();
     system.constellation = GPSConstellation::GPS;
     system.view.receivedAtUs = 1;
-    system.view.satellites = QList<GPSSatellite>(inView);
+    system.view.count = inView;
     system.usage.receivedAtUs = 1;
     system.usage.count = inUse;
     return result;
@@ -280,42 +279,6 @@ void GPSSourceHealthTest::_invalidatedPositionTimeout()
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
     health.setFreshnessTimeoutMs(1000);
     QCOMPARE(health.state(), GPSSourceHealth::State::Stale);
-}
-
-void GPSSourceHealthTest::_schedulerDestructionClearsAcceptedState()
-{
-    auto scheduler = std::make_unique<ManualScheduler>();
-    GPSSourceHealth health(nullptr, scheduler.get());
-    auto fix = observation(position(), *scheduler);
-    health.updateObservation(fix);
-    QVERIFY(health.usable());
-    scheduler.reset();
-    QCOMPARE(health.state(), GPSSourceHealth::State::NoData);
-    QVERIFY(!health.acceptedObservation());
-    health.updateObservation(fix);
-    QVERIFY(!health.usable());
-}
-
-void GPSSourceHealthTest::_foreignSchedulerRejected()
-{
-    QThread worker;
-    ManualScheduler scheduler;
-    const auto owner = QThread::currentThread();
-    const auto fix = observation(position(), scheduler);
-    QVERIFY(scheduler.moveToThread(&worker));
-    worker.start();
-    const auto cleanup = qScopeGuard([&]() {
-        QMetaObject::invokeMethod(&scheduler, [&]() { scheduler.moveToThread(owner); }, Qt::BlockingQueuedConnection);
-        worker.quit();
-        worker.wait();
-    });
-    expectLogMessage("GPS.Core.GPSSourceHealth", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Scheduler must share the store thread")));
-    GPSSourceHealth health(nullptr, &scheduler);
-    verifyExpectedLogMessage();
-    health.updateObservation(fix);
-    QVERIFY(!health.usable());
-    QVERIFY(!health.acceptedObservation());
 }
 
 void GPSSourceHealthTest::_satelliteCountsNotifyOnlyOnChange()

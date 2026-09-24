@@ -588,25 +588,6 @@ void GPSPositionServiceTest::_policySelectionGates()
     QVERIFY(!service.acceptedObservation(Use::Gga));
 }
 
-void GPSPositionServiceTest::_schedulerDestruction()
-{
-    auto scheduler = std::make_unique<ManualScheduler>();
-    GPSPositionService service(nullptr, scheduler.get());
-    PositionSource source;
-    auto registration = service.registerPositionSource(Kind::Receiver, &source, nullptr);
-    source.publish(fix(*scheduler).position);
-    QVERIFY(service.acceptedObservation());
-    scheduler.reset();
-    QVERIFY(!source.active);
-    QVERIFY(!service.acceptedObservation());
-    QCOMPARE(service.selectedSource(), Kind::None);
-    QSignalSpy reports(&service, &GPSPositionService::positionInfoUpdated);
-    source.publish(QGeoPositionInfo(QGeoCoordinate(48, 8, 500), QDateTime::currentDateTimeUtc()));
-    QVERIFY(reports.isEmpty());
-    QVERIFY(!service.registerPositionSource(Kind::Nmea, &source, nullptr));
-    registration.reset();
-}
-
 void GPSPositionServiceTest::_notificationsCanSwitchOrDelete_data()
 {
     QTest::addColumn<int>("mode");
@@ -835,27 +816,6 @@ void GPSPositionServiceTest::_registrationRetiresFromWorker()
     worker->start();
     QVERIFY(worker->wait(TestTimeout::mediumMs()));
     QTRY_COMPARE_WITH_TIMEOUT(service.selectedSource(), Kind::None, TestTimeout::mediumMs());
-    QVERIFY(!source.active);
-}
-
-void GPSPositionServiceTest::_foreignSchedulerRejected()
-{
-    QThread worker;
-    ManualScheduler scheduler;
-    auto* owner = QThread::currentThread();
-    scheduler.moveToThread(&worker);
-    worker.start();
-    const auto cleanup = qScopeGuard([&]() {
-        QMetaObject::invokeMethod(&scheduler, [&]() { scheduler.moveToThread(owner); }, Qt::BlockingQueuedConnection);
-        worker.quit();
-        worker.wait();
-    });
-    expectLogMessage("GPS.PositionManager.GPSPositionService", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Scheduler must share")));
-    GPSPositionService service(nullptr, &scheduler);
-    verifyExpectedLogMessage();
-    PositionSource source;
-    QVERIFY(!service.registerPositionSource(Kind::Receiver, &source, nullptr));
     QVERIFY(!source.active);
 }
 

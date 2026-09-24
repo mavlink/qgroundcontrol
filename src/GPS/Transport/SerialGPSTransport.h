@@ -28,15 +28,6 @@ public:
     /// True once the port hits an error the receive loop should stop retrying past.
     bool fatalError() const override;
 
-    bool supportsCorrectionWrites() const override
-    {
-#ifdef Q_OS_ANDROID
-        return false;
-#else
-        return true;
-#endif
-    }
-
     GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
 #ifdef Q_OS_ANDROID
     /// Synchronous configuration writes use the backend timeout; bounded writes are unsupported.
@@ -44,7 +35,6 @@ public:
 #endif
     std::chrono::milliseconds configurationWriteTimeout() const override;
     GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
-    std::chrono::milliseconds correctionWriteTimeout(int length) const override;
     bool setBaudrate(unsigned baudrate) override;
 
 private:

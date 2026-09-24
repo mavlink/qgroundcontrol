@@ -22,7 +22,6 @@ public:
     GPSWriteResult writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
     GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
     std::chrono::milliseconds configurationWriteTimeout() const override;
-    std::chrono::milliseconds correctionWriteTimeout(int length) const override;
 
     QJsonObject evidence() const;
     QJsonArray requestedSettings(const GPSReceiverConfig& config) const;

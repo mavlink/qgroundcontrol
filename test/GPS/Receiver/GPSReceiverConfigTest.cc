@@ -131,9 +131,8 @@ void GPSReceiverConfigTest::_reportDefaults()
     QVERIFY(!integrity.corrections.crcFailed);
 
     const GPSSatelliteReport satellites;
-    QCOMPARE(satellites.count, uint16_t{0});
-    QVERIFY(!satellites.satellites.front().used);
-    QVERIFY(!satellites.satellites.front().signalStrength);
+    QCOMPARE(satellites.inView, 0);
+    QVERIFY(!satellites.used);
 
     const GPSSurveyReport survey;
     QVERIFY(std::isnan(survey.position.latitudeDegrees));

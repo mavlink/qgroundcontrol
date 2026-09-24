@@ -21,18 +21,3 @@ target_sources(
               GPSRawAckMatcher.h
               GPSReceiverSettingId.h
 )
-
-foreach(
-    family
-    UBX
-    ASHTECH
-    SBF
-    FEMTO
-    UNICORE
-    QUECTEL
-    PASSIVE
-)
-    option(QGC_GPS_ENABLE_${family} "Build the ${family} GPS receiver protocol" ON)
-endforeach()
-configure_file(GPSProtocolFeatures.h.in GPSProtocolFeatures.h)
-target_include_directories(QGCGPSNativeContracts INTERFACE ${CMAKE_CURRENT_BINARY_DIR})

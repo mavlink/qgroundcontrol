@@ -12,7 +12,6 @@
 class QIODevice;
 class QGeoPositionInfoSource;
 class NMEAPositionSource;
-class NMEAStreamSplitter;
 
 /// Owns NMEA decoders and health independently of connection policy and device ownership.
 class NMEADecoderSession : public QObject
@@ -55,11 +54,10 @@ private:
     void _queueSatellites(NMEA::SatelliteEpoch epoch);
     void _deliverSatellites();
 
-    QPointer<RuntimeScheduler> _scheduler;
+    RuntimeScheduler* const _scheduler;
 
     struct Decoders
     {
-        std::unique_ptr<NMEAStreamSplitter> stream;
         std::unique_ptr<NMEAPositionSource> position;
     } _decoders;
 

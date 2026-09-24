@@ -16,6 +16,27 @@ constexpr unsigned HOURS_PER_DAY = 24;
 constexpr unsigned MINUTES_PER_HOUR = 60;
 constexpr unsigned SECONDS_PER_MINUTE = 60;
 constexpr size_t FIRST_MILLISECOND_DIGIT_WEIGHT = 100;
+constexpr double KNOTS_TO_METERS_PER_SECOND = 0.5144444444444445;
+constexpr double KILOMETERS_PER_HOUR_TO_METERS_PER_SECOND = 1.0 / 3.6;
+
+std::optional<NMEA::UtcDate> dateFromParts(unsigned day, unsigned month, int year)
+{
+    if (!std::chrono::year_month_day{std::chrono::year{year}, std::chrono::month{month}, std::chrono::day{day}}.ok())
+        return {};
+    return NMEA::UtcDate{year, month, day};
+}
+
+std::optional<double> nonnegativeDegrees(std::string_view field)
+{
+    const auto value = NMEA::number<double>(field);
+    return value && *value >= 0.0 && *value <= 360.0 ? value : std::nullopt;
+}
+
+std::optional<double> nonnegativeSpeed(std::string_view field, double scale)
+{
+    const auto value = NMEA::number<double>(field);
+    return value && *value >= 0.0 ? std::optional<double>(*value * scale) : std::nullopt;
+}
 }  // namespace
 
 namespace NMEA {
@@ -171,6 +192,81 @@ std::optional<int> utcMilliseconds(std::string_view field)
     const auto wholeSeconds =
         std::chrono::hours(*hours) + std::chrono::minutes(*minutes) + std::chrono::seconds(*seconds);
     return static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(wholeSeconds).count()) + milliseconds;
+}
+
+std::optional<UtcDate> rmcDate(std::string_view field)
+{
+    if (field.size() != 6)
+        return {};
+    for (const char digit : field) {
+        if (digit < '0' || digit > '9')
+            return {};
+    }
+    const auto day = number<unsigned>(field.substr(0, 2));
+    const auto month = number<unsigned>(field.substr(2, 2));
+    const auto year = number<unsigned>(field.substr(4, 2));
+    if (!day || !month || !year)
+        return {};
+    return dateFromParts(*day, *month, 2000 + static_cast<int>(*year));
+}
+
+std::optional<RMC> rmc(const Sentence& input)
+{
+    if (input.type() != "RMC" || input.count < Field::RMC_MIN_FIELDS || input.fields[Field::RMC_STATUS] != "A")
+        return {};
+    const auto& f = input.fields;
+    const auto latitude = coordinate(f[Field::RMC_LATITUDE], f[Field::RMC_LATITUDE_HEMISPHERE], true);
+    const auto longitude = coordinate(f[Field::RMC_LONGITUDE], f[Field::RMC_LONGITUDE_HEMISPHERE], false);
+    if (!latitude || !longitude)
+        return {};
+    RMC result;
+    result.latitude = *latitude;
+    result.longitude = *longitude;
+    result.utcMilliseconds = utcMilliseconds(f[Field::UTC_TIME]);
+    result.date = rmcDate(f[Field::RMC_DATE]);
+    result.speedMetersPerSecond = nonnegativeSpeed(f[Field::RMC_SPEED_KNOTS], KNOTS_TO_METERS_PER_SECOND).value_or(NAN);
+    result.courseDegrees = nonnegativeDegrees(f[Field::RMC_COURSE]).value_or(NAN);
+    return result;
+}
+
+std::optional<GLL> gll(const Sentence& input)
+{
+    if (input.type() != "GLL" || input.count < Field::GLL_MIN_FIELDS || input.fields[Field::GLL_STATUS] != "A")
+        return {};
+    const auto& f = input.fields;
+    const auto latitude = coordinate(f[Field::GLL_LATITUDE], f[Field::GLL_LATITUDE_HEMISPHERE], true);
+    const auto longitude = coordinate(f[Field::GLL_LONGITUDE], f[Field::GLL_LONGITUDE_HEMISPHERE], false);
+    if (!latitude || !longitude)
+        return {};
+    return GLL{*latitude, *longitude, utcMilliseconds(f[Field::GLL_TIME])};
+}
+
+std::optional<VTG> vtg(const Sentence& input)
+{
+    if (input.type() != "VTG" || input.count < Field::VTG_MIN_FIELDS)
+        return {};
+    VTG result;
+    result.courseDegrees = nonnegativeDegrees(input.fields[Field::VTG_TRUE_COURSE]).value_or(NAN);
+    const auto speedKmh =
+        nonnegativeSpeed(input.fields[Field::VTG_SPEED_KMH], KILOMETERS_PER_HOUR_TO_METERS_PER_SECOND);
+    const auto speedKnots = nonnegativeSpeed(input.fields[Field::VTG_SPEED_KNOTS], KNOTS_TO_METERS_PER_SECOND);
+    result.speedMetersPerSecond = speedKmh.value_or(speedKnots.value_or(NAN));
+    return result;
+}
+
+std::optional<ZDA> zda(const Sentence& input)
+{
+    if (input.type() != "ZDA" || input.count < Field::ZDA_MIN_FIELDS)
+        return {};
+    const auto day = number<unsigned>(input.fields[Field::ZDA_DAY]);
+    const auto month = number<unsigned>(input.fields[Field::ZDA_MONTH]);
+    const auto year = number<int>(input.fields[Field::ZDA_YEAR]);
+    if (!day || !month || !year)
+        return {};
+    const auto date = dateFromParts(*day, *month, *year);
+    if (!date)
+        return {};
+    return ZDA{utcMilliseconds(input.fields[Field::UTC_TIME]), *date};
 }
 
 GPSFixQuality fixQuality(unsigned quality, GPSFixQuality autonomous)

@@ -17,28 +17,16 @@ GPSSourceHealth::GPSSourceHealth(QObject* parent, RuntimeScheduler* scheduler)
     , _fixSatellitesTask(_scheduler, this)
 {
     qCDebug(GPSSourceHealthLog) << this;
-    if (_scheduler->thread() != thread()) {
-        qCWarning(GPSSourceHealthLog) << "Scheduler must share the store thread";
-        _scheduler = nullptr;
-        return;
-    }
-    connect(_scheduler, &QObject::destroyed, this, [this]() {
-        _scheduler = nullptr;
-        reset();
-    });
 }
 
 GPSSourceHealth::~GPSSourceHealth()
 {
     qCDebug(GPSSourceHealthLog) << this;
-    if (_scheduler) {
-        _scheduler->disconnect(this);
-    }
 }
 
 qint64 GPSSourceHealth::_age(quint64 timestampUs) const
 {
-    return _scheduler ? MonotonicClock::ageMilliseconds(timestampUs, _scheduler->nowUs()) : -1;
+    return MonotonicClock::ageMilliseconds(timestampUs, _scheduler->nowUs());
 }
 
 double GPSSourceHealth::horizontalAccuracy() const
@@ -66,7 +54,7 @@ std::chrono::microseconds GPSSourceHealth::_remaining(quint64 timestampUs,
 {
     const auto sourceLifetime = std::chrono::milliseconds(_freshnessTimeoutMs);
     const auto lifetime = maximumAge ? std::min(sourceLifetime, *maximumAge) : sourceLifetime;
-    return _scheduler && lifetime > std::chrono::milliseconds::zero()
+    return lifetime > std::chrono::milliseconds::zero()
                ? MonotonicClock::remaining(timestampUs, _scheduler->nowUs(), lifetime)
                : std::chrono::microseconds::zero();
 }

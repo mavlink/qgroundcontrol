@@ -10,16 +10,11 @@
 #include <QtCore/QStringList>
 
 #include "GPSAsciiProtocol.h"
-#include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "ProtocolTestPackets.h"
-#if QGC_GPS_ENABLE_QUECTEL
 #include "Quectel/QuectelCodec_p.h"
-#endif
-#if QGC_GPS_ENABLE_UNICORE
 #include "Support/UnicoreReceiverModel.h"
 #include "Unicore/GPSDriverUnicore.h"
-#endif
 
 namespace {
 class AsciiReceiver final : public GPSAsciiProtocol
@@ -180,7 +175,6 @@ void GPSAsciiProtocolTest::_boundedFields()
 
 void GPSAsciiProtocolTest::_quectelCodec()
 {
-#if QGC_GPS_ENABLE_QUECTEL
     const QByteArray body("PQTMCFGMSGRATE,OK,GGA,1,");
     const QByteArray wire =
         QByteArray::fromStdString(nmeaSentence({body.constData(), static_cast<size_t>(body.size())}));
@@ -210,29 +204,21 @@ void GPSAsciiProtocolTest::_quectelCodec()
         QVERIFY(!QuectelCodec::number(invalid, value));
         QCOMPARE(value, 0.125);
     }
-#else
-    QSKIP("Quectel is disabled");
-#endif
 }
 
 void GPSAsciiProtocolTest::_unicoreFailureDetails_data()
 {
     QTest::addColumn<int>("fault");
     QTest::addColumn<QString>("expected");
-#if QGC_GPS_ENABLE_UNICORE
     using Fault = GPSTest::UnicoreReceiver::Fault;
     QTest::newRow("rejected") << int(Fault::Reject) << QStringLiteral("Unicore command 'UNLOG' was rejected");
     QTest::newRow("timeout") << int(Fault::Silence) << QStringLiteral("Unicore command 'UNLOG' timed out");
     QTest::newRow("transport") << int(Fault::WriteError) << QStringLiteral("Unicore test write failure");
     QTest::newRow("cancelled") << int(Fault::Cancel) << QString();
-#else
-    QTest::newRow("disabled") << 0 << QString();
-#endif
 }
 
 void GPSAsciiProtocolTest::_unicoreFailureDetails()
 {
-#if QGC_GPS_ENABLE_UNICORE
     QFETCH(int, fault);
     QFETCH(QString, expected);
     gps_test_time = 0;
@@ -257,14 +243,10 @@ void GPSAsciiProtocolTest::_unicoreFailureDetails()
             QCOMPARE(receiver.ioErrorDetail(), expected);
         }
     }
-#else
-    QSKIP("Unicore is disabled");
-#endif
 }
 
 void GPSAsciiProtocolTest::_unicoreUnsupportedDetails()
 {
-#if QGC_GPS_ENABLE_UNICORE
     gps_test_time = 0;
     gps_test_warnings.clear();
     GPSTest::UnicoreReceiver peer;
@@ -287,9 +269,6 @@ void GPSAsciiProtocolTest::_unicoreUnsupportedDetails()
     QCOMPARE(receiver.configure(baud, {}), 0);
     QVERIFY(receiver.ioErrorDetail().isEmpty());
     QVERIFY(receiver.receiverReady());
-#else
-    QSKIP("Unicore is disabled");
-#endif
 }
 
 UT_REGISTER_TEST(GPSAsciiProtocolTest, TestLabel::Unit)

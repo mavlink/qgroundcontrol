@@ -12,7 +12,6 @@
 
 #include "Ashtech/GPSDriverAshtech.h"
 #include "Femto/GPSDriverFemto.h"
-#include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "NMEAUtils.h"
 #include "SBF/GPSDriverSBF.h"
@@ -335,7 +334,6 @@ static void commandAttempts()
 
 static void ashtechAcknowledgementReturnsImmediately()
 {
-#if QGC_GPS_ENABLE_ASHTECH
     gps_test_time = 1000000;
     std::string reply = NMEAUtils::repairChecksum("$PASHR,PRT,A,115200").toStdString();
     std::vector<std::string> writes;
@@ -369,7 +367,6 @@ static void ashtechAcknowledgementReturnsImmediately()
     CHECK(completions[0].evidence.finishedAtUs == 1001000 + uint64_t(reads) * 1000);
     CHECK(completions[1].evidence.outcome == GPSCommandOutcome::Cancelled);
     CHECK(receiver.ioError() == GPSProtocol::ReadCancelled);
-#endif
 }
 
 static void sharedResults()
@@ -433,22 +430,14 @@ static std::unique_ptr<GPSProtocol> createReceiver(unsigned family, ScriptedIO& 
                                                    GPSNativeSatelliteReport& satellites)
 {
     switch (family) {
-#if QGC_GPS_ENABLE_UBX
         case 0:
             return std::make_unique<GPSNativeUBX>(captureGPSReports(io.io(), position, &satellites));
-#endif
-#if QGC_GPS_ENABLE_ASHTECH
         case 1:
             return std::make_unique<GPSNativeAshtech>(captureGPSReports(io.io(), position, &satellites));
-#endif
-#if QGC_GPS_ENABLE_SBF
         case 2:
             return std::make_unique<GPSNativeSBF>(captureGPSReports(io.io(), position, &satellites));
-#endif
-#if QGC_GPS_ENABLE_FEMTO
         case 3:
             return std::make_unique<GPSNativeFemto>(captureGPSReports(io.io(), position, &satellites));
-#endif
         default:
             return {};
     }

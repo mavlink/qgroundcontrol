@@ -19,12 +19,6 @@ constexpr int MAX_GSV_PAGES = 64;
 constexpr int MAX_GSV_SATELLITES = MAX_GSV_PAGES * GSV_SATELLITES_PER_PAGE;
 constexpr int MAX_GSV_SIGNAL_ID = 15;
 constexpr int MAX_GSV_SATELLITE_ID = 999;
-constexpr size_t GSV_ELEVATION_OFFSET = 1;
-constexpr size_t GSV_AZIMUTH_OFFSET = 2;
-constexpr size_t GSV_SIGNAL_OFFSET = 3;
-constexpr double MAX_ELEVATION_DEGREES = 90.0;
-constexpr double MAX_AZIMUTH_DEGREES = 360.0;
-constexpr int MAX_SIGNAL_STRENGTH = 99;
 
 bool validNavigation(const NMEA::Sentence& input)
 {
@@ -100,16 +94,6 @@ std::optional<GSV> gsv(const Sentence& input)
         if (satellite.constellation == GPSConstellation::Unknown)
             return {};
         satellite.id = satelliteId(satellite.constellation, *id);
-        satellite.prn = *id;
-        if (const auto value = number<double>(f[index + GSV_ELEVATION_OFFSET]);
-            value && *value >= 0 && *value <= MAX_ELEVATION_DEGREES)
-            satellite.elevation = value;
-        if (const auto value = number<double>(f[index + GSV_AZIMUTH_OFFSET]);
-            value && *value >= 0 && *value <= MAX_AZIMUTH_DEGREES)
-            satellite.azimuth = value;
-        if (const auto value = number<int>(f[index + GSV_SIGNAL_OFFSET]);
-            value && *value >= 0 && *value <= MAX_SIGNAL_STRENGTH)
-            satellite.signal = value;
         result.satellites.push_back(satellite);
     }
     return result;
@@ -227,7 +211,7 @@ SatelliteEpoch SatelliteAssembler::flush()
 {
     _batchStartedUs.reset();
     std::map<GPSConstellation, SatelliteSystem> systems;
-    std::map<GPSConstellation, std::map<int, SatelliteData>> satellites;
+    std::map<GPSConstellation, std::set<int>> satellites;
     const auto includeView = [&systems](GPSConstellation constellation, uint64_t timestamp) {
         auto& out = systems[constellation];
         out.constellation = constellation;
@@ -245,16 +229,12 @@ SatelliteEpoch SatelliteAssembler::flush()
             }
             for (const auto& satellite : report.satellites) {
                 includeView(satellite.constellation, report.timestamp);
-                auto& view = satellites[satellite.constellation];
-                const auto existing = view.find(satellite.id);
-                if (existing == view.end() || satellite.signal.value_or(-1) > existing->second.signal.value_or(-1))
-                    view[satellite.id] = satellite;
+                satellites[satellite.constellation].insert(satellite.id);
             }
         }
     }
     for (auto& [system, view] : satellites) {
-        for (auto& [id, satellite] : view)
-            systems[system].satellites.push_back(std::move(satellite));
+        systems[system].inView = static_cast<int>(view.size());
     }
     for (const auto& [system, used] : _used) {
         auto& out = systems[system];

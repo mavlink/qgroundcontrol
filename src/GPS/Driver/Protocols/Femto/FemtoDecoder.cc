@@ -139,17 +139,13 @@ int GPSNativeFemto::handleMessage(int len)
             return 0;
         }
 
-        _satellites->timestamp = nowUs();
-        _satellites->count = std::min<uint32_t>(count, GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES);
-
-        for (size_t i = 0; i < _satellites->count; i++) {
-            _satellites->entries[i].id = LittleEndian::read<uint8_t>(status, 40 + i * 8 + 0).value_or(0);
-            _satellites->entries[i].used.reset();
-            _satellites->entries[i].elevation = LittleEndian::read<uint8_t>(status, 40 + i * 8 + 3).value_or(0);
-            _satellites->entries[i].azimuth = LittleEndian::read<uint16_t>(status, 40 + i * 8 + 4).value_or(0);
-            _satellites->entries[i].signal = LittleEndian::read<uint8_t>(status, 40 + i * 8 + 2).value_or(0);
-            _satellites->entries[i].prn = LittleEndian::read<uint8_t>(status, 40 + i * 8 + 0).value_or(0);
+        *_satellites = {};
+        auto* system = _satellites->ensureConstellation(GPSConstellation::Unknown);
+        if (!system) {
+            return 0;
         }
+        system->inViewTimestampUs = nowUs();
+        system->inView = static_cast<int>(std::min<uint32_t>(count, GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES));
 
         ret = 2;
 

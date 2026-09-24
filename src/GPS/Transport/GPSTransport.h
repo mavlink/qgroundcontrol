@@ -8,7 +8,7 @@
 
 #include "GPSTransportResult.h"
 
-/// Byte link the GPS driver reads and writes through (serial, TCP, ...).
+/// Byte link the GPS driver reads and writes through.
 /// Implemented by the owner of the physical connection and consumed by GPSDriver,
 /// keeping the native protocol drivers decoupled from the concrete transport.
 /// Construct, use, and destroy on one owner thread. Blocking socket waits dispatch
@@ -30,16 +30,13 @@ public:
     /// Nonzero when the link cannot follow baud-rate changes (for example, a serial bridge).
     virtual unsigned fixedBaudrate() const { return 0; }
 
-    /// Runtime RTCM injection requires a cancellable bounded writer, not just configuration writes.
-    virtual bool supportsCorrectionWrites() const { return false; }
-
     /// A nonpositive timeout polls immediately available input. Failures never carry usable stream bytes.
     virtual GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) = 0;
 
     virtual std::chrono::milliseconds configurationWriteTimeout() const;
 
     /// Configuration-only entry point: honor the command deadline capped by the transport limit.
-    /// Configuration writes preserve the same progress evidence as correction writes.
+    /// Configuration writes preserve progress evidence.
     /// Android serial explicitly overrides this with its synchronous backend; Unsupported never falls back.
     virtual GPSWriteResult writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline);
 
@@ -47,10 +44,6 @@ public:
     /// A failed operation that accepted bytes retires the connection; open a new session before writing again.
     /// An unsupported implementation rejects without invoking an unbounded writer.
     virtual GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline);
-    /// Runtime correction allowance; serial links account for the current wire speed.
-    virtual std::chrono::milliseconds correctionWriteTimeout(int length) const;
-    static std::chrono::milliseconds serialCorrectionWriteTimeout(int length, qint64 baud);
-
     /// Set the link baud rate. Returns true on success.
     virtual bool setBaudrate(unsigned baudrate) = 0;
 

@@ -73,7 +73,7 @@ GPSPositionService::SourceBinding::~SourceBinding()
 
 QObject* GPSPositionService::SourceBinding::source() const
 {
-    return owner->_scheduler && (providedHealth || rawBindingAllowed) ? producer.data() : nullptr;
+    return providedHealth || rawBindingAllowed ? producer.data() : nullptr;
 }
 
 GPSSourceHealth* GPSPositionService::SourceBinding::health()
@@ -238,7 +238,7 @@ void GPSPositionService::SourceBinding::updatePosition(const QGeoPositionInfo& p
     GPSObservation observation;
     observation.position = position;
     observation.receivedAt = QDateTime::currentDateTimeUtc();
-    observation.monotonicTimestampUs = owner->_scheduler ? owner->_scheduler->nowUs() : 0;
+    observation.monotonicTimestampUs = owner->_scheduler->nowUs();
     observation.sourceId = identity;
     observation.sessionId = sessionId;
     fallbackHealth.updateObservation(observation);
@@ -250,35 +250,14 @@ GPSPositionService::GPSPositionService(QObject* parent, RuntimeScheduler* schedu
     , _recoveryTask(_scheduler, this)
 {
     qCDebug(GPSPositionServiceLog) << this;
-    if (_scheduler->thread() != thread()) {
-        qCWarning(GPSPositionServiceLog) << "Scheduler must share the positioning service thread";
-        _scheduler = nullptr;
-        return;
-    }
     for (const auto kind : SOURCE_KINDS) {
         _bindings[static_cast<size_t>(kind)] = std::make_unique<SourceBinding>(this, kind);
     }
-    connect(_scheduler, &QObject::destroyed, this, [this]() {
-        _scheduler = nullptr;
-        _recoveryTask.cancel();
-        _recovery = {};
-        const QPointer<GPSPositionService> guard(this);
-        for (const auto kind : SOURCE_KINDS) {
-            _binding(kind).disconnectSource();
-            if (!guard) {
-                return;
-            }
-        }
-        _selectPositionSource();
-    });
 }
 
 GPSPositionService::~GPSPositionService()
 {
     qCDebug(GPSPositionServiceLog) << this;
-    if (_scheduler) {
-        _scheduler->disconnect(this);
-    }
     _recoveryTask.cancel();
     // Stopping one backend can destroy another while bindings themselves are being destroyed.
     for (const auto& binding : _bindings) {
@@ -378,7 +357,7 @@ void GPSPositionService::_retireRegistration(int kindValue, quint64 token)
 
 bool GPSPositionService::_canBindSource(SelectedSource kind, QObject* source, GPSSourceHealth* health) const
 {
-    if (!_scheduler || QThread::currentThread() != thread() || (source && source->thread() != thread()) ||
+    if (QThread::currentThread() != thread() || (source && source->thread() != thread()) ||
         (health && health->thread() != thread())) {
         return false;
     }
@@ -395,7 +374,7 @@ bool GPSPositionService::_canBindSource(SelectedSource kind, QObject* source, GP
 
 void GPSPositionService::_setBinding(SelectedSource kind, QObject* source, GPSSourceHealth* health, quint64 sessionId)
 {
-    if ((source && !_scheduler) || QThread::currentThread() != thread() || (source && source->thread() != thread()) ||
+    if (QThread::currentThread() != thread() || (source && source->thread() != thread()) ||
         (health && health->thread() != thread())) {
         qCWarning(GPSPositionServiceLog) << "Position source changes require matching thread affinity";
         return;
@@ -438,7 +417,7 @@ void GPSPositionService::setSourceMode(SourceMode mode)
 
 QObject* GPSPositionService::_sourceFor(SelectedSource source) const
 {
-    return _scheduler ? _binding(source).source() : nullptr;
+    return _binding(source).source();
 }
 
 void GPSPositionService::_selectPositionSource()
@@ -513,13 +492,13 @@ GPSPositionService::SelectedSource GPSPositionService::_choosePositionSource()
             break;
         }
     }
-    const qint64 nowMs = _scheduler ? _scheduler->nowMs() : 0;
+    const qint64 nowMs = _scheduler->nowMs();
     if (best && *best != _selectedKind && currentAvailable && _acceptedSourceObservation(_selectedKind)) {
         if (_recovery.candidate != best) {
             _recovery = {best, nowMs};
         }
         const auto remaining = RECOVERY_DELAY - std::chrono::milliseconds(nowMs - _recovery.sinceMs);
-        if (remaining > std::chrono::milliseconds::zero() && _scheduler) {
+        if (remaining > std::chrono::milliseconds::zero()) {
             _recoveryTask.schedule(remaining, [this]() { _selectPositionSource(); });
             return _selectedKind;
         }
@@ -584,7 +563,7 @@ void GPSPositionService::_updateSourceActivity()
 {
     const QPointer<GPSPositionService> guard(this);
     for (const auto kind : SOURCE_KINDS) {
-        _binding(kind).setActive(_scheduler && (_sourceMode == SourceMode::Automatic || _selectedKind == kind));
+        _binding(kind).setActive(_sourceMode == SourceMode::Automatic || _selectedKind == kind);
         if (!guard || _selectionPending) {
             return;
         }

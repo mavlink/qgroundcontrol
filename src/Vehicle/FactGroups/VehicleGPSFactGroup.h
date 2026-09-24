@@ -103,7 +103,7 @@ private:
     void _updateGpsObservation(GPSObservation observation, int fixType, int satellitesVisible, double yaw = qQNaN());
 
     const ReceiverIndex _receiver;
-    QPointer<RuntimeScheduler> _scheduler;
+    RuntimeScheduler* const _scheduler;
     GPSSourceHealth* _positionHealth = nullptr;
     quint64 _gnssIntegrityTimestampUs = 0;
 };

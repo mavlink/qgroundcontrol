@@ -26,7 +26,6 @@ private slots:
     void _simulatedPosition_data();
     void _simulatedPosition();
     void _facadeUsesInjectedScheduler();
-    void _facadeSchedulerDestruction();
     void _simulatedHomeSelection_data();
     void _simulatedHomeSelection();
 

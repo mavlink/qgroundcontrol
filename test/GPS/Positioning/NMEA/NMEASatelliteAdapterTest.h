@@ -11,7 +11,6 @@ private slots:
     void _gsvFields();
     void _combinedTalkerReports_data();
     void _combinedTalkerReports();
-    void _schedulerCanBeDestroyed();
     void _canonicalIdentities();
     void _identityResolution_data();
     void _identityResolution();

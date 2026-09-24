@@ -59,10 +59,9 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
         Qt::QueuedConnection);
     auto worker = std::unique_ptr<QThread>(QThread::create([&]() {
         GPSSatelliteReport snapshot;
-        snapshot.count = 1;
-        snapshot.satellites[0].used = true;
+        snapshot.inView = 1;
+        snapshot.used = 1;
         emit provider.satelliteInfoUpdate(snapshot);
-        snapshot.satellites[0].used = false;
         GPSSatelliteUsageReport count{.timestampUs = 123, .usedCount = 7};
         emit provider.satelliteUsageUpdate(count);
         count.usedCount.reset();
@@ -82,11 +81,11 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
         worker->wait();
     }
     QVERIFY(timely);
-    QCOMPARE(satellites.count, 0);
+    QCOMPARE(satellites.inView, 0);
     QCOMPARE(survey.duration.count(), 0);
     QCoreApplication::sendPostedEvents(&receiver, QEvent::MetaCall);
-    QCOMPARE(satellites.count, 1);
-    QCOMPARE(satellites.satellites[0].used, std::optional<bool>{true});
+    QCOMPARE(satellites.inView, 1);
+    QCOMPARE(satellites.used, std::optional<int>{1});
     QCOMPARE(usage.timestampUs, uint64_t{123});
     QCOMPARE(usage.usedCount, std::optional<int>{7});
     QCOMPARE(fixType, GPSPositionReport::FixType::Fix3D);
@@ -395,9 +394,6 @@ protected:
 
 void GPSProviderTest::_positionFixTransitions()
 {
-    if (!GPSDriver::supportsType(GPSType::passive)) {
-        QSKIP("Passive receiver support is disabled");
-    }
     for (int session = 0; session < 2; ++session) {
         GPSProvider provider([](const std::atomic_bool& stop) { return std::make_unique<FixSequenceTransport>(stop); },
                              GPSType::passive, {.role = GPSReceiverConfig::Role::Passive, .baudRate = 115200});
@@ -421,9 +417,6 @@ void GPSProviderTest::_positionFixTransitions()
 
 void GPSProviderTest::_satelliteExpiryDoesNotRenewLiveness()
 {
-    if (!GPSDriver::supportsType(GPSType::passive)) {
-        QSKIP("Passive receiver support is disabled");
-    }
     std::atomic<qint64> lastPositionAtMs = -1;
     GPSProvider provider(
         [&](const std::atomic_bool& stop) {
@@ -436,7 +429,7 @@ void GPSProviderTest::_satelliteExpiryDoesNotRenewLiveness()
     connect(
         &provider, &GPSProvider::satelliteInfoUpdate, &provider,
         [&](const GPSSatelliteReport& report) {
-            if (report.timestampUs && report.count) {
+            if (report.timestampUs && report.inView) {
                 freshView = true;
             } else if (!report.timestampUs && freshView.load()) {
                 expiredView = true;

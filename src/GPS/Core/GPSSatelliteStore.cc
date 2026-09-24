@@ -15,24 +15,11 @@ GPSSatelliteStore::GPSSatelliteStore(QObject* parent, int freshnessTimeoutMs, Ru
     , _expiryTask(_scheduler, this)
 {
     qCDebug(GPSSatelliteStoreLog) << this;
-    if (_scheduler->thread() != thread()) {
-        qCWarning(GPSSatelliteStoreLog) << "Scheduler must share the store thread";
-        _scheduler = nullptr;
-        return;
-    }
-    connect(_scheduler, &QObject::destroyed, this, [this]() {
-        _scheduler = nullptr;
-        _state.reset();
-        _publish();
-    });
 }
 
 GPSSatelliteStore::~GPSSatelliteStore()
 {
     qCDebug(GPSSatelliteStoreLog) << this;
-    if (_scheduler) {
-        _scheduler->disconnect(this);
-    }
 }
 
 void GPSSatelliteStore::beginSession(const QString& sourceId, quint64 sessionId)
@@ -56,7 +43,7 @@ void GPSSatelliteStore::reset()
 
 void GPSSatelliteStore::clear()
 {
-    _state.clear(_scheduler ? _scheduler->nowUs() : 0);
+    _state.clear(_scheduler->nowUs());
     _publish();
 }
 
@@ -70,7 +57,7 @@ void GPSSatelliteStore::setFreshnessTimeoutMs(int timeoutMs)
 
 void GPSSatelliteStore::updateObservation(const GPSSatelliteObservation& observation)
 {
-    if (!_scheduler || _observation.sourceId.isEmpty() || observation.sessionId != _observation.sessionId ||
+    if (_observation.sourceId.isEmpty() || observation.sessionId != _observation.sessionId ||
         (!observation.sourceId.isEmpty() && observation.sourceId != _observation.sourceId)) {
         return;
     }
@@ -80,7 +67,7 @@ void GPSSatelliteStore::updateObservation(const GPSSatelliteObservation& observa
 
 void GPSSatelliteStore::_publish()
 {
-    const quint64 nowUs = _scheduler ? _scheduler->nowUs() : 0;
+    const quint64 nowUs = _scheduler->nowUs();
     auto snapshot = _state.snapshot(nowUs);
     snapshot.sourceId = _observation.sourceId;
     snapshot.sessionId = _observation.sessionId;

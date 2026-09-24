@@ -44,10 +44,6 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
 #endif
     if (_positionManager) {
         connect(_positionManager, &QObject::destroyed, this, [this]() { _stop("position manager shutdown"); });
-        if (_positionManager->scheduler()) {
-            connect(_positionManager->scheduler(), &QObject::destroyed, this,
-                    [this]() { _stop("scheduler destroyed"); });
-        }
         _positionManager->setNmeaInput(this);
     }
 }
@@ -144,9 +140,8 @@ void NMEASourceManager::_startDecoder(QIODevice* device)
     if (_destroying) {
         return;
     }
-    if (!_positionManager || !_positionManager->scheduler() || QThread::currentThread() != thread() ||
-        (device && device->thread() != thread())) {
-        qCWarning(NMEASourceManagerLog) << "NMEA device requires matching thread affinity and a live scheduler";
+    if (!_positionManager || QThread::currentThread() != thread() || (device && device->thread() != thread())) {
+        qCWarning(NMEASourceManagerLog) << "NMEA device requires matching thread affinity";
         return;
     }
     const QPointer<NMEASourceManager> guard(this);

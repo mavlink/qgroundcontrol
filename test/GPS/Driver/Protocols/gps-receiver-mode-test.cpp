@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "Femto/GPSDriverFemto.h"
-#include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
 #include "GPSRawAckMatcher.h"
 #include "LittleEndian.h"
@@ -175,13 +174,9 @@ static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fix
     GPSNativeSatelliteReport satellites{};
     std::unique_ptr<GPSProtocol> driver;
     if (septentrio) {
-#if QGC_GPS_ENABLE_SBF
         driver = std::make_unique<GPSNativeSBF>(captureGPSReports(receiver.io(), position, &satellites));
-#endif
     } else {
-#if QGC_GPS_ENABLE_FEMTO
         driver = std::make_unique<GPSNativeFemto>(captureGPSReports(receiver.io(), position, &satellites));
-#endif
     }
     CHECK(driver);
     GPSProtocol::GPSConfig config{};
@@ -228,7 +223,6 @@ static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fix
     CHECK(receiver.transport_calls == calls);
 }
 
-#if QGC_GPS_ENABLE_SBF
 void sbfConfirmationPolicy()
 {
     for (bool base : {false, true}) {
@@ -406,9 +400,7 @@ void sbfDatumRejection()
         CHECK(std::isnan(surveys.back().survey.position.latitudeDegrees));
     }
 }
-#endif
 
-#if QGC_GPS_ENABLE_SBF
 void sbfFrameOwnership()
 {
     Receiver receiver;
@@ -567,7 +559,6 @@ void sbfSurveyEvidence()
     driver.consume(frame);
     CHECK(surveys.empty());
 }
-#endif
 
 void baseMixedFraming(bool septentrio)
 {
@@ -589,13 +580,9 @@ void baseMixedFraming(bool septentrio)
     };
     std::unique_ptr<GPSProtocol> driver;
     if (septentrio) {
-#if QGC_GPS_ENABLE_SBF
         driver = std::make_unique<GPSNativeSBF>(captureGPSReports(io, position), false);
-#endif
     } else {
-#if QGC_GPS_ENABLE_FEMTO
         driver = std::make_unique<GPSNativeFemto>(captureGPSReports(io, position), false);
-#endif
     }
     GPSProtocol::GPSConfig config;
     config.output_mode = GPSProtocol::OutputMode::RTCM;
@@ -632,9 +619,6 @@ void GPSProtocolReceiverModesTest::_protocol()
     try {
         rawAcknowledgements();
         for (bool septentrio : {false, true}) {
-            if ((septentrio && !QGC_GPS_ENABLE_SBF) || (!septentrio && !QGC_GPS_ENABLE_FEMTO)) {
-                continue;
-            }
             for (bool fixed : {false, true}) {
                 receiverMode(septentrio, GPSProtocol::OutputMode::GPS, fixed);
                 receiverMode(septentrio, GPSProtocol::OutputMode::RTCM, fixed);
@@ -649,19 +633,15 @@ void GPSProtocolReceiverModesTest::_protocol()
                 }
             }
         }
-#if QGC_GPS_ENABLE_SBF
         sbfConfirmationPolicy();
         sbfRequiredBaseCommands();
         sbfSelectedPortAndPrecision();
         sbfDatumRejection();
         sbfFrameOwnership();
         sbfSurveyEvidence();
-#endif
-#if QGC_GPS_ENABLE_FEMTO
         receiverMode(false, GPSProtocol::OutputMode::GPS, true, {}, false, 1);
         receiverMode(false, GPSProtocol::OutputMode::GPS, true, {}, false, GPS_READ_BUFFER_SIZE,
                      2 * GPS_READ_BUFFER_SIZE - 3);
-#endif
     } catch (const std::exception& error) {
         QFAIL(error.what());
     }

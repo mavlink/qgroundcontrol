@@ -193,7 +193,7 @@ private:
     void _externalPositionChanged();
     void _publishPosition(const std::optional<GPSObservation>& observation);
 
-    QPointer<RuntimeScheduler> _scheduler;
+    RuntimeScheduler* const _scheduler;
     ScheduledTask _recoveryTask;
     std::array<std::unique_ptr<SourceBinding>, 5> _bindings;
 

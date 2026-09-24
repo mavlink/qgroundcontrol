@@ -93,82 +93,88 @@ def main() -> None:
             if sys.platform != "win32":
                 assert report["interrupted"]
 
-    for transport, endpoint in (
-        ("serial", ["--device", "not-a-real-device"]),
-        ("tcp", ["--host", "127.0.0.1", "--port", "1"]),
-        ("udp", ["--host", "127.0.0.1", "--port", "1"]),
-    ):
-        if serial_disabled and transport == "serial":
-            report = run(binary, ["--transport", transport, *endpoint], 2)
-            assert "disabled" in report["detail"]
-            continue
-        report = run(binary, ["--transport", transport, *endpoint], 0)
+    serial_endpoint = ["--transport", "serial", "--device", "not-a-real-device"]
+    if serial_disabled:
+        report = run(binary, serial_endpoint, 2)
+        assert "disabled" in report["detail"]
+    else:
+        report = run(binary, serial_endpoint, 0)
         assert report["outcome"] == "not_run" and "stages" not in report
         report = run(
             binary,
-            ["--action", "suite", "--transport", transport, *endpoint],
+            ["--action", "suite", *serial_endpoint],
             2,
         )
         assert report["outcome"] == "rejected" and "stages" not in report
     for family in ("trimble", "septentrio", "femto"):
         report = run(binary, ["--action", "role-cycle", "--family", family], 2)
         assert "does not support Position" in report["detail"]
-    endpoint = ["--transport", "tcp", "--host", "127.0.0.1", "--port", "1"]
-    for family, mode in (("unicore", "receiver-averaging"), ("quectel", "survey")):
-        report = run(binary, [*endpoint, "--family", family, "--base-mode", mode], 0)
-        assert report["outcome"] == "not_run" and "stages" not in report
-        assert report["requested"]["base_mode"] == mode
-        assert report["requested"]["allow_persistent_changes"] is False
+    if not serial_disabled:
+        endpoint = serial_endpoint
+        for family, mode in (("unicore", "receiver-averaging"), ("quectel", "survey")):
+            report = run(binary, [*endpoint, "--family", family, "--base-mode", mode], 0)
+            assert report["outcome"] == "not_run" and "stages" not in report
+            assert report["requested"]["base_mode"] == mode
+            assert report["requested"]["allow_persistent_changes"] is False
+            report = run(
+                binary,
+                [
+                    *endpoint,
+                    "--family",
+                    family,
+                    "--base-mode",
+                    "fixed",
+                    "--latitude",
+                    "0",
+                    "--longitude",
+                    "0",
+                    "--altitude",
+                    "0",
+                ],
+                0,
+            )
+            assert report["requested"]["ellipsoid_altitude_m"] == 0
         report = run(
+            binary, [*endpoint, "--family", "passive", "--role", "passive", "--baud", "115200"], 0
+        )
+        assert report["requested"]["role"] == "passive"
+        assert "base_mode" not in report["requested"]
+        run(binary, [*endpoint, "--family", "unicore"], 2)
+        run(binary, [*endpoint, "--family", "quectel", "--base-mode", "receiver-averaging"], 2)
+        run(binary, [*endpoint, "--family", "passive", "--role", "passive"], 2)
+        run(binary, [*endpoint, "--family", "unicore", "--base-mode", "fixed"], 2)
+        report = run(binary, [*endpoint, "--family", "quectel", "--allow-save"], 0)
+        assert report["requested"]["allow_persistent_changes"] is True
+        assert report["deadlines"]["open_and_configure_ms"] == 60000
+        report = run(binary, [*endpoint, "--family", "quectel", "--timeout-ms", "1000"], 0)
+        assert report["deadlines"]["open_and_configure_ms"] == 1000
+        run(
             binary,
             [
                 *endpoint,
                 "--family",
-                family,
-                "--base-mode",
-                "fixed",
-                "--latitude",
-                "0",
-                "--longitude",
-                "0",
-                "--altitude",
-                "0",
+                "passive",
+                "--role",
+                "passive",
+                "--baud",
+                "115200",
+                "--allow-save",
             ],
-            0,
+            2,
         )
-        assert report["requested"]["ellipsoid_altitude_m"] == 0
-    report = run(
-        binary, [*endpoint, "--family", "passive", "--role", "passive", "--baud", "115200"], 0
-    )
-    assert report["requested"]["role"] == "passive"
-    assert "base_mode" not in report["requested"]
-    run(binary, [*endpoint, "--family", "unicore"], 2)
-    run(binary, [*endpoint, "--family", "quectel", "--base-mode", "receiver-averaging"], 2)
-    run(binary, [*endpoint, "--family", "passive", "--role", "passive"], 2)
-    run(binary, [*endpoint, "--family", "unicore", "--base-mode", "fixed"], 2)
-    report = run(binary, [*endpoint, "--family", "quectel", "--allow-save"], 0)
-    assert report["requested"]["allow_persistent_changes"] is True
-    assert report["deadlines"]["open_and_configure_ms"] == 60000
-    report = run(binary, [*endpoint, "--family", "quectel", "--timeout-ms", "1000"], 0)
-    assert report["deadlines"]["open_and_configure_ms"] == 1000
-    run(
-        binary,
-        [*endpoint, "--family", "passive", "--role", "passive", "--baud", "115200", "--allow-save"],
-        2,
-    )
-    run(
-        binary,
-        [
-            *endpoint,
-            "--family",
-            "unicore",
-            "--base-mode",
-            "receiver-averaging",
-            "--survey-accuracy",
-            "2",
-        ],
-        2,
-    )
+        run(
+            binary,
+            [
+                *endpoint,
+                "--family",
+                "unicore",
+                "--base-mode",
+                "receiver-averaging",
+                "--survey-accuracy",
+                "2",
+            ],
+            2,
+        )
     for action in ("configure", "role-cycle", "suite"):
         rejected = run(binary, ["--action", action, "--dynamic-model", "2"], 2)
         assert rejected["outcome"] == "rejected" and "stages" not in rejected

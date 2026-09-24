@@ -83,11 +83,11 @@ void GPSRtkTest::_testCountSatellitesClampsToMax()
 {
     GPSSatelliteReport msg;
     msg.timestampUs = 1;
-    msg.count = 250;
+    msg.inView = 250;
 
     const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
 
-    QCOMPARE(counts.inView, GPSSatelliteReport::MAX_SATELLITES);
+    QCOMPARE(counts.inView, 250);
     QVERIFY(!counts.used);
 }
 
@@ -95,13 +95,8 @@ void GPSRtkTest::_testCountSatellitesCountsUsed()
 {
     GPSSatelliteReport msg;
     msg.timestampUs = 1;
-    msg.count = 6;
-    for (uint16_t i = 0; i < msg.count; ++i) {
-        msg.satellites[i].used = false;
-    }
-    msg.satellites[1].used = true;
-    msg.satellites[3].used = true;
-    msg.satellites[5].used = true;
+    msg.inView = 6;
+    msg.used = 3;
 
     const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
 
@@ -113,10 +108,8 @@ void GPSRtkTest::_testCountSatellitesIgnoresUsedBeyondCount()
 {
     GPSSatelliteReport msg;
     msg.timestampUs = 1;
-    msg.count = 2;
-    msg.satellites[0].used = true;
-    msg.satellites[1].used = false;
-    msg.satellites[5].used = true;
+    msg.inView = 2;
+    msg.used = 1;
 
     const GPSRtk::SatelliteCounts counts = GPSRtk::countSatellites(msg);
 
@@ -127,27 +120,24 @@ void GPSRtkTest::_testCountSatellitesIgnoresUsedBeyondCount()
 void GPSRtkTest::_snapshotUsageEvidence_data()
 {
     QTest::addColumn<int>("count");
-    QTest::addColumn<QList<int>>("flags");
+    QTest::addColumn<int>("usedValue");
     QTest::addColumn<int>("expectedUsage");
-    QTest::newRow("all-unknown") << 3 << QList<int>{-1, -1, -1} << -1;
-    QTest::newRow("partially-known") << 3 << QList<int>{0, 1, -1} << -1;
-    QTest::newRow("known-zero") << 3 << QList<int>{0, 0, 0} << 0;
-    QTest::newRow("known-used") << 3 << QList<int>{1, 0, 1} << 2;
-    QTest::newRow("empty-clears") << 0 << QList<int>{} << 0;
+    QTest::newRow("unknown") << 3 << -1 << -1;
+    QTest::newRow("known-zero") << 3 << 0 << 0;
+    QTest::newRow("known-used") << 3 << 2 << 2;
+    QTest::newRow("empty-clears") << 0 << -1 << 0;
 }
 
 void GPSRtkTest::_snapshotUsageEvidence()
 {
     QFETCH(int, count);
-    QFETCH(QList<int>, flags);
+    QFETCH(int, usedValue);
     QFETCH(int, expectedUsage);
     GPSSatelliteReport snapshot;
     snapshot.timestampUs = 1;
-    snapshot.count = static_cast<uint16_t>(count);
-    for (qsizetype i = 0; i < flags.size(); ++i) {
-        if (flags[i] >= 0) {
-            snapshot.satellites[i].used = flags[i] != 0;
-        }
+    snapshot.inView = count;
+    if (usedValue >= 0) {
+        snapshot.used = usedValue;
     }
     const auto counts = GPSRtk::countSatellites(snapshot);
     QCOMPARE(counts.inView, count);
@@ -180,7 +170,7 @@ void GPSRtkTest::_countOnlyUsagePreservesInView()
     auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
     GPSSatelliteReport snapshot;
     snapshot.timestampUs = 1;
-    snapshot.count = 15;
+    snapshot.inView = 15;
     receiver._satelliteInfoUpdate(snapshot);
     QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
     for (const auto count : {std::optional<int>{12}, std::optional<int>{0}, std::optional<int>{}}) {
@@ -210,9 +200,8 @@ void GPSRtkTest::_unavailableSatelliteCoverage()
     auto* facts = receiver.gpsRtkFactGroup();
     GPSSatelliteReport report;
     report.timestampUs = 1;
-    report.count = 2;
-    report.satellites[0].used = true;
-    report.satellites[1].used = false;
+    report.inView = 2;
+    report.used = 1;
     receiver._satelliteInfoUpdate(report);
     QCOMPARE(facts->numSatellites()->rawValue().toInt(), 2);
     QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), 1);
@@ -224,7 +213,7 @@ void GPSRtkTest::_unavailableSatelliteCoverage()
     const bool unavailable = coverage == QStringLiteral("unavailable");
     const bool usageExpired = coverage == QStringLiteral("usage-expired");
     report.timestampUs = unavailable ? 0 : 3;
-    report.count = usageExpired ? 2 : 0;
+    report.inView = usageExpired ? 2 : 0;
     const auto counts = GPSRtk::countSatellites(report);
     QCOMPARE(counts.inView, unavailable ? -1 : usageExpired ? 2 : 0);
     QCOMPARE(counts.used.value_or(-1), unavailable || usageExpired ? -1 : 0);
@@ -482,8 +471,8 @@ void GPSRtkTest::_factNotificationRetiresSession()
     } else if (report == QStringLiteral("satellites")) {
         GPSSatelliteReport satellites;
         satellites.timestampUs = 1;
-        satellites.count = 1;
-        satellites.satellites[0].used = true;
+        satellites.inView = 1;
+        satellites.used = 1;
         receiver->_satelliteInfoUpdate(satellites);
     } else if (report == QStringLiteral("ready")) {
         receiver->_onGPSConnect();
@@ -617,8 +606,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit first->surveyInStatus(survey);
     GPSSatelliteReport satellites;
     satellites.timestampUs = 1;
-    satellites.count = 2;
-    satellites.satellites[0].used = true;
+    satellites.inView = 2;
     emit first->satelliteInfoUpdate(satellites);
     emit first->satelliteUsageUpdate({.usedCount = 7});
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);

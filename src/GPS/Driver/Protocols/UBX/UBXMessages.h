@@ -455,14 +455,7 @@ typedef struct
 /* Rx NAV-SVINFO Part 2 (repeated) */
 typedef struct
 {
-    uint8_t chn;     /**< Channel number, 255 for SVs not assigned to a channel */
-    uint8_t svid;    /**< Satellite ID */
-    uint8_t flags;   /**< svUsed, diffCorr, orbitAvail, orbitEph, unhealthy, orbitAlm, orbitAop, smoothed */
-    uint8_t quality; /**< 0: no signal, 1: search, 2: aquited, 3: unusable, 5-7: locked */
-    uint8_t cno;     /**< Carrier to Noise Ratio (Signal Strength) [dbHz] */
-    int8_t elev;     /**< Elevation [deg] */
-    int16_t azim;    /**< Azimuth [deg] */
-    int32_t prRes;   /**< Pseudo range residual [cm] */
+    uint8_t flags; /**< svUsed, diffCorr, orbitAvail, orbitEph, unhealthy, orbitAlm, orbitAop, smoothed */
 } ubx_payload_rx_nav_svinfo_part2_t;
 
 /* Rx NAV-SAT Part 1 */
@@ -478,11 +471,6 @@ typedef struct
 typedef struct
 {
     uint8_t gnssId; /**< GNSS identifier */
-    uint8_t svId;   /**< Satellite ID */
-    uint8_t cno;    /**< Carrier to Noise Ratio (Signal Strength) [dbHz] */
-    int8_t elev;    /**< Elevation [deg] range: +/-90 */
-    int16_t azim;   /**< Azimuth [deg] range: 0-360 */
-    int16_t prRes;  /**< Pseudo range residual [0.1 m] */
     uint32_t flags; /**< bits 2..0 qualityInd, bit 3 svUsed, bits 5..4 health, bit 6 diffCorr, bit 7 smoothed */
 } ubx_payload_rx_nav_sat_part2_t;
 
