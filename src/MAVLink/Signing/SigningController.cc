@@ -143,7 +143,7 @@ bool SigningController::initSigningImmediate(QByteArrayView key, MAVLinkSigning:
     return ok;
 }
 
-std::optional<SigningFailure> SigningController::tryBeginEnable(uint8_t expectedSysId, const QString& kName,
+std::optional<SigningFailure> SigningController::tryBeginEnable(quint32 expectedSysId, const QString& kName,
                                                                 const MAVLinkSigning::SigningKey& keyBytes)
 {
     {
@@ -182,7 +182,7 @@ std::optional<SigningFailure> SigningController::tryBeginEnable(uint8_t expected
     return std::nullopt;
 }
 
-std::optional<SigningFailure> SigningController::tryBeginDisable(uint8_t expectedSysId)
+std::optional<SigningFailure> SigningController::tryBeginDisable(quint32 expectedSysId)
 {
     {
         QMutexLocker<QRecursiveMutex> locker(&_fsmMutex);
