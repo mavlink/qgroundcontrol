@@ -17,4 +17,5 @@ private slots:
     void _ageAndRecovery();
     void _resetDuringPositionNotification();
     void _logsOnlyHealthTransitions();
+    void _satelliteCountsNotifyOnlyOnChange();
 };

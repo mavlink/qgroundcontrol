@@ -6,6 +6,7 @@
 #include <QtCore/QThread>
 #include <QtTest/QSignalSpy>
 
+#include "GPSSatelliteObservation.h"
 #include "GPSSourceHealth.h"
 #include "LogManager.h"
 #include "ManualScheduler.h"
@@ -29,6 +30,18 @@ GPSObservation observation(const QGeoPositionInfo& position, const RuntimeSchedu
     result.receivedAt = QDateTime::currentDateTimeUtc().addMSecs(-ageMs);
     const quint64 now = scheduler.nowUs();
     result.monotonicTimestampUs = ageMs < 0 ? now + 1000000 : now - static_cast<quint64>(ageMs) * 1000;
+    return result;
+}
+
+GPSSatelliteObservation satellites(int inView, int inUse)
+{
+    GPSSatelliteObservation result;
+    auto& system = result.constellations.emplaceBack();
+    system.constellation = GPSConstellation::GPS;
+    system.view.receivedAtUs = 1;
+    system.view.satellites = QList<GPSSatellite>(inView);
+    system.usage.receivedAtUs = 1;
+    system.usage.count = inUse;
     return result;
 }
 }  // namespace
@@ -303,4 +316,22 @@ void GPSSourceHealthTest::_foreignSchedulerRejected()
     health.updateObservation(fix);
     QVERIFY(!health.usable());
     QVERIFY(!health.acceptedObservation());
+}
+
+void GPSSourceHealthTest::_satelliteCountsNotifyOnlyOnChange()
+{
+    ManualScheduler scheduler;
+    GPSSourceHealth health(nullptr, &scheduler);
+    QSignalSpy changes(&health, &GPSSourceHealth::satellitesChanged);
+
+    health.applySatelliteObservation(satellites(8, 5));
+    QCOMPARE(changes.count(), 1);
+    health.applySatelliteObservation(satellites(8, 5));
+    QCOMPARE(changes.count(), 1);
+    health.applySatelliteObservation(satellites(8, 6));
+    QCOMPARE(changes.count(), 2);
+    QCOMPARE(health.satellitesInViewCount(), 8);
+    QCOMPARE(health.satellitesInUseCount(), 6);
+    health.applySatelliteObservation(satellites(9, 6));
+    QCOMPARE(changes.count(), 3);
 }

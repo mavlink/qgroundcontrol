@@ -210,8 +210,12 @@ void GPSSourceHealth::clearSatellites()
 void GPSSourceHealth::applySatelliteObservation(const GPSSatelliteObservation& observation)
 {
     // The observation store owns report expiry; the fix's independent GGA count retains its own deadline.
+    const int previousInView = satellitesInViewCount();
+    const int previousInUse = satellitesInUseCount();
     _satelliteCounts = {observation.satellitesInViewCount(), observation.satellitesInUseCount()};
-    emit satellitesChanged();
+    if (previousInView != satellitesInViewCount() || previousInUse != satellitesInUseCount()) {
+        emit satellitesChanged();
+    }
 }
 
 GPSSourceHealth::State GPSSourceHealth::_updatedPositionState() const
