@@ -33,7 +33,6 @@ public:
     bool setBaudrate(unsigned baudrate) override;
 
 protected:
-    /// Android's synchronous backend can honor the deadline only before submission.
     GPSWriteResult writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
 
 private:
@@ -47,8 +46,6 @@ private:
     QString _device;
     std::unique_ptr<QSerialPort> _serial;
     bool _inputOverflow = false;
-#ifndef Q_OS_ANDROID
     qint64 _acceptedTotal = 0;
     qint64 _writtenTotal = 0;
-#endif
 };

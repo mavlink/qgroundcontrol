@@ -195,6 +195,7 @@ struct JniMethodCache
     jmethodID isDeviceNameOpen = nullptr;
     jmethodID read = nullptr;
     jmethodID write = nullptr;
+    jmethodID writeWithProgress = nullptr;
     jmethodID writeAsync = nullptr;
     jmethodID setParameters = nullptr;
     jmethodID getCarrierDetect = nullptr;
@@ -240,6 +241,7 @@ static bool cacheMethodIds(JNIEnv* env, jclass javaClass)
         {&s_methods.isDeviceNameOpen, "isDeviceNameOpen", "(Ljava/lang/String;)Z"},
         {&s_methods.read, "read", "(III)[B"},
         {&s_methods.write, "write", "(I[BII)I"},
+        {&s_methods.writeWithProgress, "writeWithProgress", "(I[BII)I"},
         {&s_methods.writeAsync, "writeAsync", "(I[BI)I"},
         {&s_methods.setParameters, "setParameters", "(IIIII)Z"},
         {&s_methods.getCarrierDetect, "getCarrierDetect", "(I)Z"},
@@ -781,6 +783,42 @@ int write(int deviceId, const char* data, int length, int timeout, bool async)
 
     if (ctx.env.checkAndClearExceptions()) {
         qCWarning(AndroidSerialLog) << "Exception occurred while calling write/writeAsync";
+        return -1;
+    }
+
+    return static_cast<int>(result);
+}
+
+int writeWithProgress(int deviceId, const char* data, int length, int timeout)
+{
+    if (!data || length <= 0) {
+        qCWarning(AndroidSerialLog) << "Invalid data or length in writeWithProgress";
+        return -1;
+    }
+
+    JniContext ctx;
+    if (!getContext(ctx, "writeWithProgress"))
+        return -1;
+
+    AndroidInterface::JniLocalRef<jbyteArray> jarray(ctx.env.jniEnv(),
+                                                     ctx.env->NewByteArray(static_cast<jsize>(length)));
+    if (!jarray.get()) {
+        qCWarning(AndroidSerialLog) << "Failed to create jbyteArray in writeWithProgress";
+        return -1;
+    }
+
+    ctx.env->SetByteArrayRegion(jarray.get(), 0, static_cast<jsize>(length), reinterpret_cast<const jbyte*>(data));
+    if (ctx.env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while setting byte array region in writeWithProgress";
+        return -1;
+    }
+
+    const jint result =
+        ctx.env->CallStaticIntMethod(ctx.cls, s_methods.writeWithProgress, static_cast<jint>(deviceId), jarray.get(),
+                                     static_cast<jint>(length), static_cast<jint>(timeout));
+
+    if (ctx.env.checkAndClearExceptions()) {
+        qCWarning(AndroidSerialLog) << "Exception occurred while calling writeWithProgress";
         return -1;
     }
 

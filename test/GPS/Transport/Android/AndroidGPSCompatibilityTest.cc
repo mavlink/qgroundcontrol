@@ -7,6 +7,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QThread>
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "AndroidSerial.h"
@@ -142,6 +143,12 @@ int write(int, const char*, int length, int, bool)
     ++writeCalls;
     return writeStep(length);
 }
+
+int writeWithProgress(int, const char*, int length, int)
+{
+    ++writeCalls;
+    return writeStep(length);
+}
 }  // namespace AndroidSerial
 
 class AndroidGPSCompatibilityTest : public UnitTest
@@ -163,41 +170,120 @@ private slots:
         activePort = nullptr;
     }
 
-    void legacyWriteResults_data()
+    void backendWriteResults_data()
     {
-        QTest::addColumn<int>("count");
-        QTest::newRow("complete") << 4;
-        QTest::newRow("short") << 2;
-        QTest::newRow("failure") << -1;
-        QTest::newRow("no-progress") << 0;
+        QTest::addColumn<int>("step");
+        QTest::addColumn<int>("status");
+        QTest::addColumn<int>("written");
+        QTest::addColumn<bool>("fatal");
+        QTest::newRow("complete") << 4 << int(GPSWriteStatus::Completed) << 4 << false;
+        QTest::newRow("partial-then-complete") << 2 << int(GPSWriteStatus::Completed) << 4 << false;
+        QTest::newRow("failure") << -1 << int(GPSWriteStatus::Error) << 0 << true;
+        QTest::newRow("no-progress") << 0 << int(GPSWriteStatus::TimedOut) << 0 << true;
     }
 
-    void legacyWriteResults()
+    void backendWriteResults()
     {
-        QFETCH(int, count);
+        QFETCH(int, step);
+        QFETCH(int, status);
+        QFETCH(int, written);
+        QFETCH(bool, fatal);
         std::atomic_bool stop = false;
         SerialGPSTransport transport(QStringLiteral("test"), stop);
         QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
-        writeStep = [count](int) { return count; };
+        writeStep = [step](int length) { return step < 0 ? -1 : (std::min) (step, length); };
         const uint8_t payload[4]{};
-        if (count < 0) {
+        if (step < 0) {
             expectLogMessage("Android.AndroidSerialPort", QtWarningMsg,
                              QRegularExpression(QStringLiteral("^Failed to write to port")));
         }
         const auto result = transport.write(payload, 4, QDeadlineTimer(100));
-        if (count < 0) {
+        if (step < 0) {
             verifyExpectedLogMessage();
         }
-        QCOMPARE(writeCalls, 1);
-        QCOMPARE(result.status, count == 4 ? GPSWriteStatus::Completed : GPSWriteStatus::Error);
+        QCOMPARE(int(result.status), status);
         QCOMPARE(result.acceptedBytes, 4);
-        QCOMPARE(result.writtenBytes, (std::max) (count, 0));
-        QCOMPARE(result.uncertainBytes(), 4 - (std::max) (count, 0));
-        QCOMPARE(transport.fatalError(), count != 4);
-        if (count != 4) {
-            QCOMPARE(transport.write(payload, 4, QDeadlineTimer(100)).acceptedBytes, 0);
-            QCOMPARE(writeCalls, 1);
+        QCOMPARE(result.writtenBytes, written);
+        QCOMPARE(result.uncertainBytes(), 4 - written);
+        QCOMPARE(transport.fatalError(), fatal);
+        if (step == 2) {
+            QCOMPARE(writeCalls, 2);
         }
+        if (fatal) {
+            const int calls = writeCalls;
+            QCOMPARE(transport.write(payload, 4, QDeadlineTimer(100)).acceptedBytes, 0);
+            QCOMPARE(writeCalls, calls);
+        }
+    }
+
+    void writesAreBufferedAndReported()
+    {
+        QSerialPort port(QStringLiteral("test"));
+        QVERIFY(port.open(QIODevice::ReadWrite));
+        QSignalSpy written(&port, &QIODevice::bytesWritten);
+        QCOMPARE(port.write("abc", 3), 3);
+        QCOMPARE(writeCalls, 0);
+        QCOMPARE(port.bytesToWrite(), 3);
+        QTRY_COMPARE_WITH_TIMEOUT(port.bytesToWrite(), 0, TestTimeout::shortMs());
+        QCOMPARE(writeCalls, 1);
+        QCOMPARE(written.size(), 1);
+        QCOMPARE(written.first().first().toLongLong(), 3);
+        QVERIFY(!port.waitForBytesWritten(10));
+    }
+
+    void writeWaitTimeoutKeepsPendingBytes()
+    {
+        QSerialPort port(QStringLiteral("test"));
+        QVERIFY(port.open(QIODevice::ReadWrite));
+        QSignalSpy written(&port, &QIODevice::bytesWritten);
+        writeStep = [](int length) { return (std::min) (length, 1); };
+        QCOMPARE(port.write("abc", 3), 3);
+        writeStep = [](int) { return 0; };
+        QVERIFY(!port.waitForBytesWritten(10));
+        QCOMPARE(port.error(), QSerialPort::TimeoutError);
+        QCOMPARE(port.bytesToWrite(), 3);
+        port.clearError();
+        writeStep = [](int length) { return (std::min) (length, 1); };
+        QVERIFY(!port.waitForBytesWritten(10));
+        QCOMPARE(port.bytesToWrite(), 2);
+        QCOMPARE(port.error(), QSerialPort::TimeoutError);
+        QCOMPARE(written.size(), 1);
+        writeStep = [](int length) { return length; };
+        QVERIFY(port.waitForBytesWritten(10));
+        QCOMPARE(port.bytesToWrite(), 0);
+        QCOMPARE(written.size(), 2);
+    }
+
+    void closeSendsPendingWrites()
+    {
+        QSerialPort port(QStringLiteral("test"));
+        QVERIFY(port.open(QIODevice::ReadWrite));
+        QCOMPARE(port.write("abc", 3), 3);
+        QCOMPARE(writeCalls, 0);
+        port.close();
+        QCOMPARE(writeCalls, 1);
+    }
+
+    void posixWriteTimeoutReportsProgress()
+    {
+        posixBackend = true;
+        const int master = ::posix_openpt(O_RDWR | O_NOCTTY);
+        QVERIFY(master >= 0);
+        const auto closeMaster = qScopeGuard([master] { ::close(master); });
+        QCOMPARE(::grantpt(master), 0);
+        QCOMPARE(::unlockpt(master), 0);
+        QSerialPort port(QString::fromLocal8Bit(::ptsname(master)));
+        QVERIFY(port.open(QIODevice::ReadWrite));
+        QSignalSpy written(&port, &QIODevice::bytesWritten);
+        const QByteArray payload(1024 * 1024, 'x');
+        QCOMPARE(port.write(payload), payload.size());
+        QVERIFY(!port.waitForBytesWritten(50));
+        QCOMPARE(port.error(), QSerialPort::TimeoutError);
+        QVERIFY(port.bytesToWrite() > 0);
+        QVERIFY(port.bytesToWrite() < payload.size());
+        QCOMPARE(written.size(), 1);
+        QCOMPARE(written.first().first().toLongLong(), payload.size() - port.bytesToWrite());
+        port.clear(QSerialPort::Output);
     }
 
     void expiredConfigurationSendsNothing()

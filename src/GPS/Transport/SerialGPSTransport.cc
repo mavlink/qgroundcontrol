@@ -1,10 +1,7 @@
 #include "SerialGPSTransport.h"
 
-#include "QGCLoggingCategory.h"
-
-#ifndef Q_OS_ANDROID
 #include "GPSStreamWrite_p.h"
-#endif
+#include "QGCLoggingCategory.h"
 
 #ifdef Q_OS_ANDROID
 #include "qserialport.h"
@@ -47,13 +44,11 @@ GPSOpenResult SerialGPSTransport::open()
             _inputOverflow = _inputOverflow || _serial->bytesAvailable() >= kReadBufferBytes;
         },
         Qt::DirectConnection);
-#ifndef Q_OS_ANDROID
     _acceptedTotal = 0;
     _writtenTotal = 0;
     QObject::connect(
         _serial.get(), &QSerialPort::bytesWritten, _serial.get(), [this](qint64 count) { _writtenTotal += count; },
         Qt::DirectConnection);
-#endif
     _serial->setPortName(_device);
     const QDeadlineTimer openDeadline(kOpenTimeoutMs);
     while (!_serial->open(QIODevice::ReadWrite)) {
@@ -148,26 +143,6 @@ QString SerialGPSTransport::_errorDetail() const
 
 GPSWriteResult SerialGPSTransport::writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline)
 {
-#ifdef Q_OS_ANDROID
-    Q_UNUSED(deadline);
-    if (fatalError()) {
-        return {GPSWriteStatus::Error, 0, 0, _errorDetail()};
-    }
-    const qint64 count = _serial->write(reinterpret_cast<const char*>(buffer), length);
-    const int written = static_cast<int>(std::clamp(count, qint64(0), qint64(length)));
-    GPSWriteStatus status = GPSWriteStatus::Error;
-    if (isCancelled()) {
-        status = GPSWriteStatus::Cancelled;
-    } else if (count == length && !fatalError()) {
-        status = GPSWriteStatus::Completed;
-    }
-    // A failed backend write can have delivered bytes without reporting their count.
-    const GPSWriteResult result{status, length, written, status == GPSWriteStatus::Error ? _errorDetail() : QString()};
-    if (status != GPSWriteStatus::Completed) {
-        _serial->close();
-    }
-    return result;
-#else
     const qint64 previousAccepted = _acceptedTotal;
     return GPSStreamWrite::writeBounded(
         *this, _serial.get(), buffer, length, deadline, kWriteBufferBytes,
@@ -185,7 +160,6 @@ GPSWriteResult SerialGPSTransport::writeData(const uint8_t* buffer, int length, 
             return confirmed - previousAccepted;
         },
         [this]() { return _errorDetail(); }, [this]() { _serial->close(); });
-#endif
 }
 
 bool SerialGPSTransport::setBaudrate(unsigned baudrate)
