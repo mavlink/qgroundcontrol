@@ -2,20 +2,20 @@
 
 #include <cerrno>
 #include <cmath>
-#include <cstring>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEvent>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QThread>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
 
 #include "GPSDriver.h"
 #include "GPSProvider.h"
-#include "GPSReceiverConfigValidation.h"
-#include "GPSTransport.h"
+#include "GPSReceiverConfig.h"
 #include "NMEAUtils.h"
+#include "ScriptedGPSTransport.h"
 #include "ScriptedSBFReceiver.h"
 #include "UnitTest.h"
 #ifndef QGC_NO_SERIAL_LINK
@@ -164,12 +164,12 @@ struct TransportTrace
     bool factoryAliveDuringDestruction = false;
 };
 
-class TestTransport : public GPSTransport
+class TestTransport : public ScriptedGPSTransport
 {
 public:
     TestTransport(const std::atomic_bool& requestStop, TransportTrace& trace, std::function<void()> stop,
                   bool openResult, bool cancelInOpen)
-        : GPSTransport(requestStop)
+        : ScriptedGPSTransport(requestStop)
         , _trace(trace)
         , _stop(stop)
         , _openResult(openResult)
@@ -184,23 +184,23 @@ public:
         _trace.factoryAliveDuringDestruction = !_trace.factoryLifetime.expired();
     }
 
-    GPSOpenResult open() override
+protected:
+    std::optional<GPSOpenResult> handleOpen() override
     {
         _trace.openedOn = QThread::currentThread();
         // Stop before receiver configuration; this test exercises transport ownership only.
         if (_cancelInOpen) {
             _stop();
         }
-        return {_openResult ? GPSOpenStatus::Opened : GPSOpenStatus::Error};
+        return GPSOpenResult{_openResult ? GPSOpenStatus::Opened : GPSOpenStatus::Error};
     }
 
-    bool fatalError() const override { return false; }
+    std::optional<GPSReadResult> handleRead(uint8_t*, int, int) override { return GPSReadResult{GPSReadStatus::Error}; }
 
-    GPSReadResult read(uint8_t*, int, int) override { return {GPSReadStatus::Error}; }
-
-    GPSWriteResult writeBounded(const uint8_t*, int, QDeadlineTimer) override { return {GPSWriteStatus::Error}; }
-
-    bool setBaudrate(unsigned) override { return true; }
+    std::optional<GPSWriteResult> handleWrite(const QByteArray&, QDeadlineTimer) override
+    {
+        return GPSWriteResult{GPSWriteStatus::Error};
+    }
 
 private:
     TransportTrace& _trace;
@@ -289,129 +289,107 @@ void GPSProviderTest::_cancelledProviderDoesNotCreateTransport()
 UT_REGISTER_TEST(GPSProviderTest, TestLabel::Unit)
 
 namespace {
-class FemtoAckTransport : public GPSTransport
+class FemtoAckTransport : public ScriptedGPSTransport
 {
 public:
-    using GPSTransport::GPSTransport;
+    explicit FemtoAckTransport(const std::atomic_bool& stop)
+        : ScriptedGPSTransport(stop)
+    {}
 
-    GPSOpenResult open() override { return {GPSOpenStatus::Opened}; }
-
-    bool fatalError() const override { return false; }
-
-    bool setBaudrate(unsigned) override { return true; }
-
-    GPSWriteResult writeBounded(const uint8_t* bytes, int size, QDeadlineTimer deadline) override
+protected:
+    std::optional<GPSReadResult> handleRead(uint8_t* bytes, int size, int) override
     {
-        if (isCancelled() || deadline.hasExpired()) {
-            return {isCancelled() ? GPSWriteStatus::Cancelled : GPSWriteStatus::TimedOut};
+        if (!hasQueuedReadData()) {
+            return GPSReadResult{GPSReadStatus::Error, 0, QStringLiteral("Scripted receiver connection lost")};
         }
-        const QByteArray command(reinterpret_cast<const char*>(bytes), size);
-        _reply = '<' + command.split(' ').first().trimmed() + " OK";
-        _reply.append(char(0));
-        return {GPSWriteStatus::Completed, size, size};
+        return readQueued(bytes, size);
     }
 
-    GPSReadResult read(uint8_t* bytes, int size, int) override
+    std::optional<GPSWriteResult> handleWrite(const QByteArray& command, QDeadlineTimer) override
     {
-        if (_reply.isEmpty()) {
-            return {GPSReadStatus::Error, 0, QStringLiteral("Scripted receiver connection lost")};
-        }
-        const auto count = qMin(size, static_cast<int>(_reply.size()));
-        std::memcpy(bytes, _reply.constData(), count);
-        _reply.remove(0, count);
-        return {GPSReadStatus::Data, count};
+        QByteArray reply = '<' + command.split(' ').first().trimmed() + " OK";
+        reply.append(char(0));
+        clearReadQueue();
+        queueReadChunk(reply);
+        const int size = command.size();
+        return GPSWriteResult{GPSWriteStatus::Completed, size, size};
     }
-
-private:
-    QByteArray _reply;
 };
 
-class ExpiringSatelliteTransport : public GPSTransport
+class ExpiringSatelliteTransport : public ScriptedGPSTransport
 {
 public:
     static constexpr int POSITION_AT_MS = 2000;
 
     ExpiringSatelliteTransport(const std::atomic_bool& stop, std::atomic<qint64>& lastPositionAtMs)
-        : GPSTransport(stop)
+        : ScriptedGPSTransport(stop)
         , _lastPositionAtMs(lastPositionAtMs)
     {}
 
     GPSOpenResult open() override
     {
         _elapsed.start();
-        _pending = "$GPGSV,1,1,01,01,10,20,30*79\r\n" + position();
+        _sentPosition = false;
+        clearReadQueue();
+        queueReadChunk("$GPGSV,1,1,01,01,10,20,30*79\r\n" + position());
         _lastPositionAtMs = 0;
-        return {GPSOpenStatus::Opened};
+        return ScriptedGPSTransport::open();
     }
 
-    bool fatalError() const override { return false; }
-
-    bool setBaudrate(unsigned) override { return true; }
-
-    GPSReadResult read(uint8_t* bytes, int size, int timeoutMs) override
+protected:
+    std::optional<GPSReadResult> handleRead(uint8_t* bytes, int size, int timeoutMs) override
     {
-        if (_pending.isEmpty() && timeoutMs > 0) {
+        if (!hasQueuedReadData() && timeoutMs > 0) {
             const qint64 untilPosition =
                 _sentPosition ? timeoutMs : qMax(qint64{0}, POSITION_AT_MS - _elapsed.elapsed());
             QThread::msleep(static_cast<unsigned long>(qMin(qint64{timeoutMs}, untilPosition)));
         }
         if (isCancelled()) {
-            return {GPSReadStatus::Cancelled};
+            return GPSReadResult{GPSReadStatus::Cancelled};
         }
         if (!_sentPosition && _elapsed.elapsed() >= POSITION_AT_MS) {
             _sentPosition = true;
-            _pending.append(position());
+            queueReadChunk(position());
             _lastPositionAtMs = _elapsed.elapsed();
         }
-        if (_pending.isEmpty()) {
-            return {GPSReadStatus::TimedOut};
-        }
-        const int count = qMin(size, static_cast<int>(_pending.size()));
-        std::memcpy(bytes, _pending.constData(), static_cast<size_t>(count));
-        _pending.remove(0, count);
-        return {GPSReadStatus::Data, count};
+        return readQueued(bytes, size);
     }
 
 private:
     static QByteArray position() { return "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47\r\n"; }
 
     QElapsedTimer _elapsed;
-    QByteArray _pending;
     bool _sentPosition = false;
     std::atomic<qint64>& _lastPositionAtMs;
 };
 
-class FixSequenceTransport : public GPSTransport
+class FixSequenceTransport : public ScriptedGPSTransport
 {
 public:
-    using GPSTransport::GPSTransport;
+    explicit FixSequenceTransport(const std::atomic_bool& stop)
+        : ScriptedGPSTransport(stop)
+    {}
 
     GPSOpenResult open() override
     {
+        clearReadQueue();
+        QByteArray pending;
         for (const int quality : {0, 0, 1, 1, 4, 4, 0}) {
-            _pending += NMEAUtils::repairChecksum("$GPGGA,123519,4807.038,N,01131.000,E," +
-                                                  QByteArray::number(quality) + ",08,0.9,545.4,M,46.9,M,,");
+            pending += NMEAUtils::repairChecksum("$GPGGA,123519,4807.038,N,01131.000,E," + QByteArray::number(quality) +
+                                                 ",08,0.9,545.4,M,46.9,M,,");
         }
-        return {GPSOpenStatus::Opened};
+        queueReadChunk(pending);
+        return ScriptedGPSTransport::open();
     }
 
-    bool fatalError() const override { return false; }
-
-    bool setBaudrate(unsigned) override { return true; }
-
-    GPSReadResult read(uint8_t* bytes, int size, int) override
+protected:
+    std::optional<GPSReadResult> handleRead(uint8_t* bytes, int size, int) override
     {
-        if (_pending.isEmpty()) {
-            return {GPSReadStatus::Cancelled};
+        if (!hasQueuedReadData()) {
+            return GPSReadResult{GPSReadStatus::Cancelled};
         }
-        const auto count = qMin(size, static_cast<int>(_pending.size()));
-        std::memcpy(bytes, _pending.constData(), static_cast<size_t>(count));
-        _pending.remove(0, count);
-        return {GPSReadStatus::Data, count};
+        return readQueued(bytes, size);
     }
-
-private:
-    QByteArray _pending;
 };
 }  // namespace
 

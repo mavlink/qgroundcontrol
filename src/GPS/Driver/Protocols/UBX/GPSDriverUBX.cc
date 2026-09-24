@@ -75,7 +75,9 @@ int GPSNativeUBX::receiveInternal(unsigned timeout, bool& read_error)
         bool ready_to_return =
             (_timeModeReadback.pending && _timeModeReadback.response.has_value()) ||
             (_controller.readbackPending() && _controller.readbackReady()) ||
-            (_configured ? (_assembleEpochs ? (handled & 1) : (_got_posllh && _got_velned)) : handled);
+            (_configured ? (_decodeContext.assembleEpochs ? (handled & GPSDecodedBatch::POSITION_UPDATE)
+                                                          : (_got_posllh && _got_velned))
+                         : handled);
 
         /* return success if ready */
         if (ready_to_return) {
@@ -85,11 +87,11 @@ int GPSNativeUBX::receiveInternal(unsigned timeout, bool& read_error)
         }
 
         /* Wait for only UBX_PACKET_TIMEOUT if something already received. */
-        int ret =
-            read(buf, sizeof(buf),
-                 std::min<int>((_got_posllh || _got_velned) ? UBX_PACKET_TIMEOUT
-                                                            : (_assembleEpochs ? std::min(timeout, 200U) : timeout),
-                               remainingMilliseconds(time_started + uint64_t(timeout) * 1000)));
+        int ret = read(buf, sizeof(buf),
+                       std::min<int>((_got_posllh || _got_velned)
+                                         ? UBX_PACKET_TIMEOUT
+                                         : (_decodeContext.assembleEpochs ? std::min(timeout, 200U) : timeout),
+                                     remainingMilliseconds(time_started + uint64_t(timeout) * 1000)));
 
         if (ret < 0) {
             read_error = true;
@@ -171,10 +173,8 @@ void GPSNativeUBX::servicePendingCommands()
 
 void GPSNativeUBX::setDecodeContext(DecodeContext context)
 {
-    _decodeNavigation = context.navigation;
-    _assembleEpochs = context.assembleEpochs;
+    _decodeContext = context;
     _navigationEpochs = {};
-    _use_nav_pvt = context.useNavPvt;
     if (context.corrections) {
         _rtcm_parsing.emplace();
     } else {
@@ -185,7 +185,7 @@ void GPSNativeUBX::setDecodeContext(DecodeContext context)
 
 void GPSNativeUBX::publishEpoch(const GPSNativePositionReport& report)
 {
-    *_gps_position = report;
+    _position = report;
     publishPosition(report);
 }
 
@@ -194,7 +194,7 @@ void GPSNativeUBX::flushDecoded()
     if (_rtcm_parsing) {
         drainRTCM(*_rtcm_parsing);
     }
-    if (_assembleEpochs) {
+    if (_decodeContext.assembleEpochs) {
         _navigationEpochs.expire(nowUs(), [this](const auto& report) { publishEpoch(report); });
     }
 }

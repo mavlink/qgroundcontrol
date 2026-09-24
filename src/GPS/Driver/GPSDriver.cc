@@ -13,7 +13,6 @@
 #include "GPSNativeData_p.h"
 #include "GPSProtocol.h"
 #include "GPSProtocolFeatures.h"
-#include "GPSReceiverConfigValidation.h"
 #include "GPSTransport.h"
 #include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
@@ -54,6 +53,8 @@ struct ProtocolFactory
 {
     GPSType type;
     std::unique_ptr<GPSProtocol> (*create)(GPSProtocolIO);
+    unsigned autoBaudRate = 0;
+    uint8_t defaultDynamicModel = 7;
 };
 
 constexpr std::array PROTOCOL_FACTORIES{
@@ -61,7 +62,7 @@ constexpr std::array PROTOCOL_FACTORIES{
     ProtocolFactory{GPSType::ublox, &makeProtocol<GPSNativeUBX>},
 #endif
 #if QGC_GPS_ENABLE_ASHTECH
-    ProtocolFactory{GPSType::trimble, &makeProtocol<GPSNativeAshtech>},
+    ProtocolFactory{GPSType::trimble, &makeProtocol<GPSNativeAshtech>, 115200},
 #endif
 #if QGC_GPS_ENABLE_SBF
     ProtocolFactory{GPSType::septentrio, &makeProtocol<GPSNativeSBF>},
@@ -70,13 +71,13 @@ constexpr std::array PROTOCOL_FACTORIES{
     ProtocolFactory{GPSType::femto, &makeProtocol<GPSNativeFemto>},
 #endif
 #if QGC_GPS_ENABLE_UNICORE
-    ProtocolFactory{GPSType::unicore, &makeProtocol<GPSNativeUnicore>},
+    ProtocolFactory{GPSType::unicore, &makeProtocol<GPSNativeUnicore>, 0, 0},
 #endif
 #if QGC_GPS_ENABLE_QUECTEL
-    ProtocolFactory{GPSType::quectel, &makeProtocol<GPSNativeQuectel>},
+    ProtocolFactory{GPSType::quectel, &makeProtocol<GPSNativeQuectel>, 0, 0},
 #endif
 #if QGC_GPS_ENABLE_PASSIVE
-    ProtocolFactory{GPSType::passive, &makeProtocol<GPSNativePassive>},
+    ProtocolFactory{GPSType::passive, &makeProtocol<GPSNativePassive>, 0, 0},
 #endif
 };
 
@@ -199,7 +200,7 @@ bool GPSDriver::configure()
                     } else if constexpr (std::is_same_v<Report, GPSNativePositionReport>) {
                         if (!_state->configuring) {
                             _state->cycle.usefulData = true;
-                            _state->cycle.updates |= 1;
+                            _state->cycle.updates |= GPSReceiveResult::POSITION_UPDATE;
                             if (_sinks.onPosition) {
                                 _sinks.onPosition(
                                     GPSNativeData::position(report, _state->integrity, MonotonicClock::nowUs()));
@@ -208,7 +209,7 @@ bool GPSDriver::configure()
                     } else if constexpr (std::is_same_v<Report, GPSNativeSatelliteReport>) {
                         if (!_state->configuring) {
                             _state->cycle.usefulData = true;
-                            _state->cycle.updates |= 2;
+                            _state->cycle.updates |= GPSReceiveResult::SATELLITES_UPDATE;
                             const auto snapshot = _state->satelliteSnapshot.update(report, MonotonicClock::nowUs());
                             if (_sinks.onSatelliteInfo) {
                                 _sinks.onSatelliteInfo(snapshot);
@@ -217,7 +218,7 @@ bool GPSDriver::configure()
                     } else if constexpr (std::is_same_v<Report, GPSSatelliteUsageReport>) {
                         if (!_state->configuring) {
                             _state->cycle.usefulData = true;
-                            _state->cycle.updates |= 2;
+                            _state->cycle.updates |= GPSReceiveResult::SATELLITES_UPDATE;
                             if (_sinks.onSatelliteUsage) {
                                 _sinks.onSatelliteUsage(report);
                             }
@@ -225,7 +226,7 @@ bool GPSDriver::configure()
                     } else if constexpr (std::is_same_v<Report, GPSNativeSurveyReport>) {
                         _state->cycle.usefulData = true;
                         if (_sinks.onSurveyIn) {
-                            _sinks.onSurveyIn(GPSNativeData::survey(report));
+                            _sinks.onSurveyIn(report.survey);
                         }
                     } else if constexpr (std::is_same_v<Report, GPSRTCMReport>) {
                         _state->cycle.usefulData = true;
@@ -251,13 +252,12 @@ bool GPSDriver::configure()
         return false;
     }
     _state->driver = factory->create(std::move(io));
-    if (_type == GPSType::trimble && !_config.baudRate) {
-        baudrate = 115200;
+    if (factory->autoBaudRate && !_config.baudRate) {
+        baudrate = factory->autoBaudRate;
     }
     GPSProtocol::GPSConfig config{};
     config.base = _config.base;
-    const bool asciiReceiver = _type == GPSType::unicore || _type == GPSType::quectel || _type == GPSType::passive;
-    config.dynamicModel = static_cast<uint8_t>(_config.dynamicModel.value_or(asciiReceiver ? 0 : 7));
+    config.dynamicModel = static_cast<uint8_t>(_config.dynamicModel.value_or(factory->defaultDynamicModel));
     config.output_mode =
         _config.role == GPSReceiverConfig::Role::RTKBase ? GPSProtocol::OutputMode::RTCM : GPSProtocol::OutputMode::GPS;
     config.gnss_systems = static_cast<GPSProtocol::GNSSSystemsMask>(_config.constellationMask);

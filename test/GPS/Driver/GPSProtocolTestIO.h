@@ -19,9 +19,9 @@ class GPSProtocolTestProbe : public Driver
 public:
     using Driver::Driver;
 
-    const GPSNativePositionReport& workingPosition() const { return this->_workingPosition; }
+    const GPSNativePositionReport& workingPosition() const { return this->_position; }
 
-    const GPSNativeSatelliteReport& workingSatellites() const { return this->_workingSatellites; }
+    const GPSNativeSatelliteReport& workingSatellites() const { return this->_satelliteStorage; }
 };
 
 inline GPSProtocolIO captureGPSReports(GPSProtocolIO io, GPSNativePositionReport& position,

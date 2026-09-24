@@ -69,8 +69,10 @@ parameters for three modes simultaneously. Unsupported heading-offset requests a
 Explicit receiver commands that clear retained offsets are still required.
 
 Decoded navigation and integrity payloads are shared across the native/facade boundary. Native
-epoch metadata and facade validation remain separate. Normalize native survey units and datum once,
-then deliver the normalized report by value rather than creating a second Qt-only survey payload.
+epoch metadata and facade validation remain separate. Native survey events carry a timestamp plus a
+normalized `GPSSurveyReport` by value; altitude is populated only when the receiver reports WGS84
+ellipsoid height. Native position events carry only consumer-visible navigation values and velocity
+validity; do not add decoded fields that no consumer reads.
 Protocols own their working reports and publish owned events explicitly. Satellite output enablement
 is a configuration option, not an external scratch pointer. Update masks describe emitted reports;
 they must not serve as a separate instruction to copy mutable state later.

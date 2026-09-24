@@ -124,7 +124,7 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
     _positionEpoch = {};
     _accuracyReceipt = {};
     _accuracy = {};
-    *_gps_position = {};
+    _position = {};
     _satelliteAssembler.clear();
     _pendingSatellites.clear();
     _command_state = NMEACommandState::idle;
@@ -308,13 +308,7 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
 
     if (_output_mode == OutputMode::RTCM && _board == AshtechBoard::trimble_mb_two) {
         GPSNativeSurveyReport status{};
-        status.latitude = status.longitude = (double) NAN;
-        status.altitude = NAN;
-        status.duration = 0;
-        status.mean_accuracy = 0;
-        const bool valid = false;
-        const bool active = true;
-        status.flags = (int) valid | ((int) active << 1);
+        status.survey.active = true;
         surveyInStatus(status);
     }
 

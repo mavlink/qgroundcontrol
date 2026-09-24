@@ -37,8 +37,6 @@ private:
 
     static constexpr size_t MAX_LINE_SIZE = 4096;
     static constexpr uint64_t METADATA_MAX_AGE_US = 2000000;
-    GPSNativePositionReport* const _position = _gps_position;
-    GPSNativeSatelliteReport* const _satellites = _satellite_info;
     RTCMStreamDecoder _rtcm;
     NMEA::SatelliteAssembler _satelliteAssembler;
     NMEA::SatelliteEpoch _pendingSatellites;

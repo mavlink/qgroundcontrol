@@ -105,10 +105,10 @@ void GPSSatelliteStoreTest::_timerKeepsFreshConstellation()
     };
     store.updateObservation(raw);
     QCOMPARE(store.observation().satellitesInViewCount(), 2);
-    QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInViewCount(), 1, 700);
+    QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInViewCount(), 1, TestTimeout::shortMs());
     QCOMPARE(store.observation().constellations.first().constellation, GPSConstellation::Galileo);
     QCOMPARE(store.observation().constellations.first().view.receivedAtUs, nowUs);
-    QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInViewCount(), -1, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInViewCount(), -1, TestTimeout::mediumMs());
 }
 
 void GPSSatelliteStoreTest::_sessionsAndReentrantDelivery()

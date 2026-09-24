@@ -6,7 +6,7 @@
 #include <QtCore/QJsonObject>
 #include <QtTest/QTest>
 
-#include "GPSReceiverConfigValidation.h"
+#include "GPSReceiverConfig.h"
 #include "UnitTest.h"
 
 class GPSBaseStationConfigTest : public UnitTest
@@ -77,7 +77,7 @@ private slots:
     {
         QFETCH(GPSBaseStationConfig, config);
         QFETCH(QString, expected);
-        QCOMPARE(gpsBaseStationConfigError(config), expected);
+        QCOMPARE(gpsReceiverConfigErrorText(gpsValidateBaseStationConfig(config)), expected);
     }
 
     void _receiverDiagnostic_data()

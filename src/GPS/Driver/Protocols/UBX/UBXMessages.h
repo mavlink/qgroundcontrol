@@ -424,18 +424,8 @@ typedef struct
     int32_t hMSL;     /**< Height above mean sea level [mm] */
     uint32_t hAcc;    /**< Horizontal accuracy estimate [mm] */
     uint32_t vAcc;    /**< Vertical accuracy estimate [mm] */
-    int32_t velN;     /**< NED north velocity [mm/s]*/
-    int32_t velE;     /**< NED east velocity [mm/s]*/
-    int32_t velD;     /**< NED down velocity [mm/s]*/
     int32_t gSpeed;   /**< Ground Speed (2-D) [mm/s] */
     int32_t headMot;  /**< Heading of motion (2-D) [1e-5 deg] */
-    uint32_t sAcc;    /**< Speed accuracy estimate [mm/s] */
-    uint32_t headAcc; /**< Heading accuracy estimate (motion and vehicle) [1e-5 deg] */
-    uint16_t pDOP;    /**< Position DOP [0.01] */
-    uint16_t reserved2;
-    uint32_t reserved3;
-    int32_t headVeh;    /**< (ubx8+ only) Heading of vehicle (2-D) [1e-5 deg] */
-    uint32_t reserved4; /**< (ubx8+ only) */
 } ubx_payload_rx_nav_pvt_t;
 
 /* Rx NAV-TIMEUTC */
@@ -533,14 +523,8 @@ typedef struct
 typedef struct
 {
     uint32_t iTOW;   /**< GPS Time of Week [ms] */
-    int32_t velN;    /**< North velocity component [cm/s]*/
-    int32_t velE;    /**< East velocity component [cm/s]*/
-    int32_t velD;    /**< Down velocity component [cm/s]*/
-    uint32_t speed;  /**< Speed (3-D) [cm/s] */
     uint32_t gSpeed; /**< Ground speed (2-D) [cm/s] */
     int32_t heading; /**< Heading of motion 2-D [1e-5 deg] */
-    uint32_t sAcc;   /**< Speed accuracy estimate [cm/s] */
-    uint32_t cAcc;   /**< Course / Heading accuracy estimate [1e-5 deg] */
 } ubx_payload_rx_nav_velned_t;
 
 /* Rx MON-HW (ubx6) */
@@ -765,24 +749,11 @@ typedef struct
 {
     uint8_t version;       /**< message version (expected 0x01) */
     uint8_t reserved0;
-    uint16_t refStationId; /**< Reference station ID. Must be in the range 0..4095 */
     uint32_t iTOW;         /**< [ms] GPS time of week of the navigation epoch */
-    int32_t relPosN;       /**< [cm] North component of relative position vector */
-    int32_t relPosE;       /**< [cm] East component of relative position vector */
-    int32_t relPosD;       /**< [cm] Down component of relative position vector */
     int32_t relPosLength;  /**< [cm] Length of the relative position vector */
     int32_t relPosHeading; /**< [1e-5 deg] Heading of the relative position vector */
-    uint32_t reserved1;
-    int8_t relPosHPN;      /**< [0.1 mm] High-precision North component of relative position vector */
-    int8_t relPosHPE;      /**< [0.1 mm] High-precision East component of relative position vector */
-    int8_t relPosHPD;      /**< [0.1 mm] High-precision Down component of relative position vector */
     int8_t relPosHPLength; /**< [0.1 mm] High-precision component of the length of the relative position vector */
-    uint32_t accN;         /**< [0.1 mm] Accuracy of relative position North component */
-    uint32_t accE;         /**< [0.1 mm] Accuracy of relative position East component */
-    uint32_t accD;         /**< [0.1 mm] Accuracy of relative position Down component */
-    uint32_t accLength;    /**< [0.1 mm] Accuracy of the length of the relative position vector */
     uint32_t accHeading;   /**< [1e-5 deg] Accuracy of the heading of the relative position vector */
-    uint32_t reserved2;
     uint32_t flags;
 } ubx_payload_rx_nav_relposned_t;
 
@@ -792,18 +763,9 @@ typedef struct
     uint8_t version;       /**< message version (expected 0x02) */
     uint8_t reserved0[3];
     uint32_t iTOW;         /**< [ms] GPS time of week of the navigation epoch */
-    int32_t relPosN;       /**< [mm] North component of the vector from antenna 1 to antenna 2 */
-    int32_t relPosE;       /**< [mm] East component of the vector from antenna 1 to antenna 2 */
-    int32_t relPosD;       /**< [mm] Down component of the vector from antenna 1 to antenna 2 */
     int32_t relPosLength;  /**< [mm] Length of the vector from antenna 1 to antenna 2 */
     int32_t relPosHeading; /**< [1e-5 deg] Heading of the vector from antenna 1 to antenna 2 */
-    uint8_t reserved1[4];
-    uint32_t accN;         /**< [mm] Accuracy of the relative position North component */
-    uint32_t accE;         /**< [mm] Accuracy of the relative position East component */
-    uint32_t accD;         /**< [mm] Accuracy of the relative position Down component */
-    uint32_t accLength;    /**< [mm] Accuracy of the length of the relative position vector */
     uint32_t accHeading;   /**< [1e-5 deg] Accuracy of the heading of the relative position vector */
-    uint8_t reserved2[4];
     uint32_t flags;
 } ubx_payload_rx_nav_daheading_t;
 

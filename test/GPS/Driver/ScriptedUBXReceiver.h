@@ -7,10 +7,10 @@
 #include <QtCore/QHash>
 #include <QtCore/QList>
 
-#include "GPSTransport.h"
+#include "../ScriptedGPSTransport.h"
 
 /// Stateful UBX peer: receiver configuration survives destruction of a GPSDriver.
-class ScriptedUBXReceiver : public GPSTransport
+class ScriptedUBXReceiver : public ScriptedGPSTransport
 {
 public:
     enum class Model
@@ -60,16 +60,10 @@ public:
 
     ScriptedUBXReceiver(Model model, std::atomic_bool& stopRequested);
 
-    GPSOpenResult open() override { return {GPSOpenStatus::Opened}; }
-
     bool fatalError() const override { return _readError; }
 
     unsigned fixedBaudrate() const override { return 115200; }
 
-    bool setBaudrate(unsigned) override { return true; }
-
-    GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
-    GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
     void queueFrame(uint8_t messageClass, uint8_t messageId, const QByteArray& payload);
 
     bool modern() const { return _modern; }
@@ -112,6 +106,8 @@ private:
         bool disableAck = false;
     };
 
+    std::optional<GPSReadResult> handleRead(uint8_t* buffer, int length, int timeoutMs) override;
+    std::optional<GPSWriteResult> handleWrite(const QByteArray& bytes, QDeadlineTimer deadline) override;
     bool _handleFrame(const QByteArray& frame);
     QHash<quint32, quint64> _valsetValues(const QByteArray& payload);
     bool _replyToSetting(uint8_t messageId, DisableReply reply, bool disable = false);

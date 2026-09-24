@@ -332,16 +332,11 @@ void GPSNativeUnicore::_handlePosition(std::string_view body)
 void GPSNativeUnicore::_publishBase(bool valid, bool active)
 {
     GPSNativeSurveyReport report{};
-    report.latitude = NAN;
-    report.longitude = NAN;
-    report.altitude = NAN;
-    report.flags = static_cast<uint8_t>(valid) | (static_cast<uint8_t>(active) << 1);
+    report.survey.valid = valid;
+    report.survey.active = active;
     if (valid) {
         const auto position = fromEcef(_baseECEF);
-        report.latitude = position.latitudeDegrees;
-        report.longitude = position.longitudeDegrees;
-        report.altitude = position.altitudeMeters;
-        report.altitudeDatum = GPSNativeSurveyReport::AltitudeDatum::Ellipsoid;
+        report.survey.position = position;
     }
     // BESTNAV's instantaneous sigmas and BASEPOS monitoring are not averaging accuracy or elapsed time.
     surveyInStatus(report);

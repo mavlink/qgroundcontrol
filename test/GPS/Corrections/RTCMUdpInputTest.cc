@@ -152,7 +152,7 @@ void RTCMUdpInputTest::_testPassthroughWithoutValidation()
     const QByteArray payload = QByteArrayLiteral("not-rtcm-at-all");
     QVERIFY(sendDatagram(input.port(), payload));
 
-    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, TestTimeout::mediumMs());
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, payload);
 }
 
@@ -317,7 +317,7 @@ void RTCMUdpInputTest::_testEmitsOneSignalPerFrame()
     const QByteArray garbage = QByteArrayLiteral("\x01\x02\x03");
     QVERIFY(sendDatagram(input.port(), garbage + frame1 + frame2));
 
-    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 2, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 2, TestTimeout::mediumMs());
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, frame1);
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(1).at(0)).data, frame2);
 }
@@ -339,7 +339,7 @@ void RTCMUdpInputTest::_testDropsBadCrcFrame()
                      QRegularExpression(QStringLiteral("Dropped 1 RTCM frame")));
     QVERIFY(sendDatagram(input.port(), frame1 + corrupted + frame2));
 
-    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 2, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 2, TestTimeout::mediumMs());
     verifyExpectedLogMessage();
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, frame1);
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(1).at(0)).data, frame2);
@@ -365,7 +365,7 @@ void RTCMUdpInputTest::_testFrameSplitAcrossDatagrams()
     QCOMPARE(sender.writeDatagram(frame.left(split), QHostAddress::LocalHost, input.port()), split);
     QCOMPARE(sender.writeDatagram(frame.mid(split), QHostAddress::LocalHost, input.port()), frame.size() - split);
 
-    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, TestTimeout::mediumMs());
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, frame);
 }
 

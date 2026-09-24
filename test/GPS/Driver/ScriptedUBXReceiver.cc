@@ -7,6 +7,8 @@
 #include <QtCore/QThread>
 #include <QtCore/QtEndian>
 
+#include "Protocols/ProtocolTestPackets.h"
+
 namespace {
 constexpr uint8_t CFG_CLASS = 0x06;
 constexpr uint8_t CFG_TMODE3 = 0x71;
@@ -30,7 +32,7 @@ QByteArray padded(const QByteArray& text, qsizetype size)
 }  // namespace
 
 ScriptedUBXReceiver::ScriptedUBXReceiver(Model model, std::atomic_bool& stopRequested)
-    : GPSTransport(stopRequested)
+    : ScriptedGPSTransport(stopRequested)
     , _stopRequested(stopRequested)
 {
     QByteArray hardware = "00080000";
@@ -101,11 +103,11 @@ void ScriptedUBXReceiver::queueFrame(uint8_t messageClass, uint8_t messageId, co
     _incoming.append({_frame(messageClass, messageId, payload)});
 }
 
-GPSReadResult ScriptedUBXReceiver::read(uint8_t* buffer, int length, int timeoutMs)
+std::optional<GPSReadResult> ScriptedUBXReceiver::handleRead(uint8_t* buffer, int length, int timeoutMs)
 {
     if (isCancelled() || _readError) {
         ++failedReads;
-        return {isCancelled() ? GPSReadStatus::Cancelled : GPSReadStatus::Error};
+        return GPSReadResult{isCancelled() ? GPSReadStatus::Cancelled : GPSReadStatus::Error};
     }
     if (_incoming.isEmpty()) {
         // Simulate a blocking transport timeout, not an unsolicited receiver response.
@@ -117,9 +119,9 @@ GPSReadResult ScriptedUBXReceiver::read(uint8_t* buffer, int length, int timeout
         }
         if (isCancelled()) {
             ++failedReads;
-            return {GPSReadStatus::Cancelled};
+            return GPSReadResult{GPSReadStatus::Cancelled};
         }
-        return {GPSReadStatus::TimedOut};
+        return GPSReadResult{GPSReadStatus::TimedOut};
     }
 
     int count = 0;
@@ -138,18 +140,12 @@ GPSReadResult ScriptedUBXReceiver::read(uint8_t* buffer, int length, int timeout
             _incoming.removeFirst();
         }
     } while (coalesceReplies && count < length && !_incoming.isEmpty());
-    return {GPSReadStatus::Data, count};
+    return GPSReadResult{GPSReadStatus::Data, count};
 }
 
-GPSWriteResult ScriptedUBXReceiver::writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline)
+std::optional<GPSWriteResult> ScriptedUBXReceiver::handleWrite(const QByteArray& bytes, QDeadlineTimer)
 {
-    if (isCancelled()) {
-        return {GPSWriteStatus::Cancelled};
-    }
-    if (deadline.hasExpired()) {
-        return {GPSWriteStatus::TimedOut};
-    }
-    _outgoing.append(reinterpret_cast<const char*>(buffer), length);
+    _outgoing.append(bytes);
     while (_outgoing.size() >= 6) {
         const auto payloadSize = qFromLittleEndian<quint16>(_outgoing.constData() + 4);
         const auto frameSize = payloadSize + 8;
@@ -159,29 +155,19 @@ GPSWriteResult ScriptedUBXReceiver::writeBounded(const uint8_t* buffer, int leng
         const QByteArray frame = _outgoing.first(frameSize);
         _outgoing.remove(0, frameSize);
         if (!_handleFrame(frame)) {
-            return {GPSWriteStatus::Error};
+            return GPSWriteResult{GPSWriteStatus::Error};
         }
     }
-    return {GPSWriteStatus::Completed, length, length};
+    const int length = bytes.size();
+    return GPSWriteResult{GPSWriteStatus::Completed, length, length};
 }
 
 QByteArray ScriptedUBXReceiver::_frame(uint8_t messageClass, uint8_t messageId, const QByteArray& payload)
 {
-    QByteArray result = QByteArray::fromHex("b562");
-    result.append(static_cast<char>(messageClass));
-    result.append(static_cast<char>(messageId));
-    result.append(static_cast<char>(payload.size() & 0xff));
-    result.append(static_cast<char>((payload.size() >> 8) & 0xff));
-    result.append(payload);
-    uint8_t a = 0;
-    uint8_t b = 0;
-    for (qsizetype i = 2; i < result.size(); ++i) {
-        a += static_cast<uint8_t>(result[i]);
-        b += a;
-    }
-    result.append(static_cast<char>(a));
-    result.append(static_cast<char>(b));
-    return result;
+    const auto frame =
+        ubxFrame(uint16_t(messageClass) | (uint16_t(messageId) << 8),
+                 {reinterpret_cast<const uint8_t*>(payload.constData()), static_cast<size_t>(payload.size())});
+    return QByteArray(reinterpret_cast<const char*>(frame.data()), static_cast<qsizetype>(frame.size()));
 }
 
 void ScriptedUBXReceiver::_queueAck(uint8_t messageId, bool accepted, bool disableAck)

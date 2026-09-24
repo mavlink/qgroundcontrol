@@ -39,6 +39,7 @@
 #include <string.h>
 
 #include "Ashtech/GPSDriverAshtech.h"
+#include "GPSFixQuality.h"
 #include "NMEA/GPSNMEAReport.h"
 #include "NMEAFields.h"
 #include "NMEASentence.h"
@@ -115,7 +116,7 @@ int GPSNativeAshtech::handleMessage(int len)
     const std::string_view message{reinterpret_cast<const char*>(_rx_buffer), static_cast<size_t>(len)};
     NMEAFields::Cursor bufptr(message.substr(7));
     int ret = 0;
-    if (_satellite_info) {
+    if (_satellites) {
         if (const auto sentence = NMEA::sentence(message)) {
             auto update = _satelliteAssembler.ingest(*sentence, nowUs());
             _queueSatellites(std::move(update.completed));
@@ -177,7 +178,7 @@ int GPSNativeAshtech::handleMessage(int len)
         timeinfo.tm_min = ashtech_minute;
         timeinfo.tm_sec = int(ashtech_sec);
         _utcReference = timeFromUtc(timeinfo, usecs * 1000);
-        _gps_position->navigation.utcTimeUs = _utcReference;
+        _position.navigation.utcTimeUs = _utcReference;
 
         _last_timestamp_time = nowUs();
     }
@@ -188,7 +189,7 @@ int GPSNativeAshtech::handleMessage(int len)
         if (!fix) {
             return 0;
         }
-        applyNMEAGGA(*_gps_position, *fix, nowUs());
+        applyNMEAGGA(_position, *fix, nowUs());
         _applyMetadata(NMEA::utcMilliseconds(parsed->fields[NMEA::Field::UTC_TIME]));
         ret = 1;
 
@@ -210,8 +211,8 @@ int GPSNativeAshtech::handleMessage(int len)
                 heading -= 2.f * GPS_PI;  // final range is [-pi, pi]
             }
 
-            _gps_position->navigation.headingRadians = heading;
-            _gps_position->heading_timestamp = nowUs();
+            _position.navigation.headingRadians = heading;
+            _headingTimestamp = nowUs();
         }
 
     } else if (message.starts_with("$PASHR,POS,") && (uiCalcComma == 18)) {
@@ -295,29 +296,28 @@ int GPSNativeAshtech::handleMessage(int len)
             data.longitude = -data.longitude;
         }
 
-        _gps_position->navigation.latitudeDegrees = NMEA::degreesFromDegreesMinutes(data.latitude);
-        _gps_position->navigation.longitudeDegrees = NMEA::degreesFromDegreesMinutes(data.longitude);
-        _gps_position->navigation.altitudeEllipsoidMeters = data.altitude;
-        _gps_position->navigation.altitudeMslMeters = NAN;
-        _gps_position->navigation.horizontalDop = static_cast<float>(data.horizontalDop);
-        _gps_position->dop_timestamp = nowUs();
-        _gps_position->navigation.verticalDop = static_cast<float>(data.verticalDop);
+        _position.navigation.latitudeDegrees = NMEA::degreesFromDegreesMinutes(data.latitude);
+        _position.navigation.longitudeDegrees = NMEA::degreesFromDegreesMinutes(data.longitude);
+        _position.navigation.altitudeEllipsoidMeters = data.altitude;
+        _position.navigation.altitudeMslMeters = NAN;
+        _position.navigation.horizontalDop = static_cast<float>(data.horizontalDop);
+        _position.navigation.verticalDop = static_cast<float>(data.verticalDop);
 
         if (coordinatesFound < 3) {
-            _gps_position->navigation.fixType = GPSPositionReport::FixType::NoFix;
+            _position.navigation.fixType = GPSPositionReport::FixType::NoFix;
 
         } else {
             if (data.quality == 9 || data.quality == 10) {  // SBAS differential or BeiDou differential
-                _gps_position->navigation.fixType = GPSPositionReport::FixType::Differential;
+                _position.navigation.fixType = GPSPositionReport::FixType::Differential;
 
             } else if (data.quality == 12 || data.quality == 22) {  // RTK float or RTK float dithered
-                _gps_position->navigation.fixType = GPSPositionReport::FixType::RTKFloat;
+                _position.navigation.fixType = GPSPositionReport::FixType::RTKFloat;
 
             } else if (data.quality == 13 || data.quality == 23) {  // RTK fixed or RTK fixed dithered
-                _gps_position->navigation.fixType = GPSPositionReport::FixType::RTKFixed;
+                _position.navigation.fixType = GPSPositionReport::FixType::RTKFixed;
 
             } else {
-                _gps_position->navigation.fixType = GPSPositionReport::fixTypeFromValue(3 + data.quality);
+                _position.navigation.fixType = gpsFixQualityFromValue(3 + data.quality);
             }
 
             _got_pashr_pos_message = true;
@@ -328,25 +328,18 @@ int GPSNativeAshtech::handleMessage(int len)
             }
         }
 
-        _gps_position->navigation.timestampUs = nowUs();
+        _position.navigation.timestampUs = nowUs();
         const auto fields = NMEA::sentence(message);
         _applyMetadata(fields ? NMEA::utcMilliseconds(fields->fields[4]) : std::nullopt);
-        _gps_position->navigation.satellitesUsed = static_cast<uint8_t>(data.satellites);
+        _position.navigation.satellitesUsed = static_cast<uint8_t>(data.satellites);
 
         float track_rad = static_cast<float>(data.trackDegrees) * GPS_PI / 180.0f;
 
         float velocity_ms = static_cast<float>(data.groundSpeedKnots) / 1.9438445f; /** knots to m/s */
-        float velocity_north = static_cast<float>(velocity_ms) * cosf(track_rad);
-        float velocity_east = static_cast<float>(velocity_ms) * sinf(track_rad);
-
-        _gps_position->navigation.speedMetersPerSecond = velocity_ms; /** GPS ground speed (m/s) */
-        _gps_position->vel_n_m_s = velocity_north;                  /** GPS ground speed in m/s */
-        _gps_position->vel_e_m_s = velocity_east;                   /** GPS ground speed in m/s */
-        _gps_position->vel_d_m_s = static_cast<float>(-data.verticalVelocity); /** GPS ground speed in m/s */
-        _gps_position->navigation.courseRadians =
+        _position.navigation.speedMetersPerSecond = velocity_ms;                    /** GPS ground speed (m/s) */
+        _position.navigation.courseRadians =
             track_rad; /** Course over ground (NOT heading, but direction of movement) in rad, -PI..PI */
-        _gps_position->vel_ned_valid = true; /** Flag to indicate if NED speed is valid */
-        _gps_position->courseAccuracyRadians = 0.1f;
+        _position.velocityValid = true; /** Flag to indicate if NED speed is valid */
         ret = 1;
 
     } else if ((memcmp(_rx_buffer + 3, "GST,", 3) == 0) && (uiCalcComma == 8)) {
@@ -357,13 +350,11 @@ int GPSNativeAshtech::handleMessage(int len)
         }
         _accuracy = *error;
         _accuracyReceipt = {NMEA::utcMilliseconds(parsed->fields[NMEA::Field::UTC_TIME]), nowUs()};
-        _gps_position->speedAccuracyMetersPerSecond = NAN;
         if (_positionEpoch.matches(_accuracyReceipt, METADATA_MAX_AGE_US)) {
             _expireMetadata();
-            _gps_position->navigation.horizontalAccuracyMeters = _accuracy.horizontalAccuracy;
-            _gps_position->navigation.verticalAccuracyMeters = _accuracy.verticalAccuracy;
-            _gps_position->accuracy_timestamp = _accuracyReceipt.receivedAtUs;
-            ret |= 1;
+            _position.navigation.horizontalAccuracyMeters = _accuracy.horizontalAccuracy;
+            _position.navigation.verticalAccuracyMeters = _accuracy.verticalAccuracy;
+            ret |= GPSDecodedBatch::POSITION_UPDATE;
         }
 
     } else if (message.starts_with("$PASHR,NAK*")) {
@@ -477,11 +468,6 @@ int GPSNativeAshtech::handleMessage(int len)
         }
     }
 
-    if (ret == 1) {
-        _gps_position->timestamp_time_relative =
-            (int32_t) (_last_timestamp_time - _gps_position->navigation.timestampUs);
-    }
-
     // handle survey-in status update
     if (_survey_in_start != 0) {
         const uint64_t now = nowUs();
@@ -524,15 +510,15 @@ void GPSNativeAshtech::sendSurveyInStatusUpdate(bool active, bool valid, double 
                                                 float altitude)
 {
     GPSNativeSurveyReport status{};
+    status.survey.position.latitudeDegrees = latitude;
+    status.survey.position.longitudeDegrees = longitude;
     if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
-        status.altitudeDatum = GPSNativeSurveyReport::AltitudeDatum::Ellipsoid;
+        status.survey.position.altitudeMeters = altitude;
     }
-    status.latitude = latitude;
-    status.longitude = longitude;
-    status.altitude = altitude;
-    status.duration = !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? _survey_duration : 0;
-    status.mean_accuracy = 0;  // unknown
-    status.flags = (int) valid | ((int) active << 1);
+    status.survey.duration = std::chrono::seconds(
+        !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? _survey_duration : 0);
+    status.survey.valid = valid;
+    status.survey.active = active;
     surveyInStatus(status);
 }
 
@@ -541,15 +527,15 @@ int GPSNativeAshtech::decodeByte(uint8_t byte)
     const int length = parseChar(byte);
     const int result = length > 0 ? handleMessage(length) : 0;
     _drainSatellites();
-    if (result & 1) {
-        publishPosition(*_gps_position);
+    if (result & GPSDecodedBatch::POSITION_UPDATE) {
+        publishPosition(_position);
     }
     return result;
 }
 
 void GPSNativeAshtech::_queueSatellites(NMEA::SatelliteEpoch epoch)
 {
-    if (!_satellite_info) {
+    if (!_satellites) {
         return;
     }
     _pendingSatellites.insert(_pendingSatellites.end(), std::make_move_iterator(epoch.begin()),
@@ -560,8 +546,8 @@ void GPSNativeAshtech::_drainSatellites()
 {
     size_t count = 0;
     while (count < _pendingSatellites.size() && _decoded.events.size() + 2 < GPSDecodedBatch::MAX_EVENTS) {
-        *_satellite_info = gpsNMEASatelliteReport(_pendingSatellites[count++]);
-        publishSatellites(*_satellite_info);
+        *_satellites = gpsNMEASatelliteReport(_pendingSatellites[count++]);
+        publishSatellites(*_satellites);
     }
     _pendingSatellites.erase(_pendingSatellites.begin(), _pendingSatellites.begin() + count);
 }
@@ -579,17 +565,16 @@ void GPSNativeAshtech::flushDecoded()
 void GPSNativeAshtech::_expireMetadata()
 {
     const auto now = nowUs();
-    if (!_gps_position->heading_timestamp ||
-        !NMEA::freshAt(_gps_position->heading_timestamp, now, METADATA_MAX_AGE_US)) {
-        _gps_position->navigation.headingRadians = NAN;
-        _gps_position->navigation.headingAccuracyRadians = NAN;
+    if (!_headingTimestamp || !NMEA::freshAt(_headingTimestamp, now, METADATA_MAX_AGE_US)) {
+        _position.navigation.headingRadians = NAN;
+        _position.navigation.headingAccuracyRadians = NAN;
     }
     if (!_accuracyReceipt.time || !NMEA::freshAt(_accuracyReceipt.receivedAtUs, now, METADATA_MAX_AGE_US)) {
-        _gps_position->navigation.horizontalAccuracyMeters = NAN;
-        _gps_position->navigation.verticalAccuracyMeters = NAN;
+        _position.navigation.horizontalAccuracyMeters = NAN;
+        _position.navigation.verticalAccuracyMeters = NAN;
     }
     if (!_utcReference || !NMEA::freshAt(_last_timestamp_time, now, METADATA_MAX_AGE_US)) {
-        _gps_position->navigation.utcTimeUs = 0;
+        _position.navigation.utcTimeUs = 0;
     }
 }
 
@@ -599,10 +584,9 @@ void GPSNativeAshtech::_applyMetadata(std::optional<int> time)
     const auto now = nowUs();
     _positionEpoch = {time, now};
     const bool matches = _accuracyReceipt.matches(_positionEpoch, METADATA_MAX_AGE_US);
-    _gps_position->navigation.horizontalAccuracyMeters = matches ? _accuracy.horizontalAccuracy : NAN;
-    _gps_position->navigation.verticalAccuracyMeters = matches ? _accuracy.verticalAccuracy : NAN;
-    _gps_position->accuracy_timestamp = matches ? _accuracyReceipt.receivedAtUs : 0;
-    _gps_position->navigation.utcTimeUs =
+    _position.navigation.horizontalAccuracyMeters = matches ? _accuracy.horizontalAccuracy : NAN;
+    _position.navigation.verticalAccuracyMeters = matches ? _accuracy.verticalAccuracy : NAN;
+    _position.navigation.utcTimeUs =
         NMEA::utcAtTimeOfDay(_utcReference, _last_timestamp_time, time, now, METADATA_MAX_AGE_US);
 }
 

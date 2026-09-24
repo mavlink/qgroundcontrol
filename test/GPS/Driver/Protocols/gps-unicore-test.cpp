@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -23,6 +24,16 @@
     } while (0)
 
 namespace {
+
+int surveyFlags(const GPSNativeSurveyReport& report)
+{
+    return (report.survey.valid ? 1 : 0) | (report.survey.active ? 2 : 0);
+}
+
+uint32_t surveyDuration(const GPSNativeSurveyReport& report)
+{
+    return static_cast<uint32_t>(report.survey.duration.count());
+}
 
 // Literal reference vector: N4 EN R1.6 section 3.1. Other packets are synthetic.
 constexpr std::string_view VERSION =
@@ -210,13 +221,13 @@ void fixedBaseAndTransition()
     CHECK(receiver.sent("MODE BASE 4315616."));
     CHECK(receiver.sent("BESTNAVXYZA") && receiver.sent("RTCM1005 1") && receiver.sent("RTCM1124 1"));
     CHECK(!receiver.surveys.empty());
-    CHECK(receiver.surveys.back().flags == 1);
-    CHECK(!receiver.surveys.back().accuracyKnown);
-    CHECK(receiver.surveys.back().duration == 0);
-    CHECK(receiver.surveys.back().altitudeDatum == GPSNativeSurveyReport::AltitudeDatum::Ellipsoid);
-    CHECK(std::abs(receiver.surveys.back().latitude - 47) < 1e-7);
-    CHECK(std::abs(receiver.surveys.back().longitude - 8) < 1e-7);
-    CHECK(std::abs(receiver.surveys.back().altitude - 500) < 0.01);
+    CHECK(surveyFlags(receiver.surveys.back()) == 1);
+    CHECK(!receiver.surveys.back().survey.meanAccuracyMeters.has_value());
+    CHECK(surveyDuration(receiver.surveys.back()) == 0);
+    CHECK(!std::isnan(receiver.surveys.back().survey.position.altitudeMeters));
+    CHECK(std::abs(receiver.surveys.back().survey.position.latitudeDegrees - 47) < 1e-7);
+    CHECK(std::abs(receiver.surveys.back().survey.position.longitudeDegrees - 8) < 1e-7);
+    CHECK(std::abs(receiver.surveys.back().survey.position.altitudeMeters - 500) < 0.01);
     CHECK(std::any_of(receiver.results.begin(), receiver.results.end(), [](const auto& result) {
         return result.evidence.command == "BESTNAVXYZA" &&
                result.evidence.outcome == GPSCommandOutcome::ReadbackVerified;
@@ -246,18 +257,19 @@ void averagingEvidenceAndRestart()
     unsigned rate = 115200;
     CHECK(driver.configure(rate, baseConfig(false)) == 0);
     CHECK(receiver.sent("MODE BASE TIME 60 0"));
-    CHECK(receiver.surveys.back().flags == 2);
-    CHECK(std::isnan(receiver.surveys.back().latitude));
-    CHECK(std::isnan(receiver.surveys.back().longitude));
-    CHECK(std::isnan(receiver.surveys.back().altitude));
-    CHECK(!receiver.surveys.back().accuracyKnown && receiver.surveys.back().duration == 0);
+    CHECK(surveyFlags(receiver.surveys.back()) == 2);
+    CHECK(std::isnan(receiver.surveys.back().survey.position.latitudeDegrees));
+    CHECK(std::isnan(receiver.surveys.back().survey.position.longitudeDegrees));
+    CHECK(std::isnan(receiver.surveys.back().survey.position.altitudeMeters));
+    CHECK(!receiver.surveys.back().survey.meanAccuracyMeters.has_value() &&
+          surveyDuration(receiver.surveys.back()) == 0);
     gps_test_time += 7200000000ULL;
     driver.consume(correction());
     CHECK(receiver.rtcmCount == 0);
-    CHECK(receiver.surveys.back().flags == 2);
+    CHECK(surveyFlags(receiver.surveys.back()) == 2);
     driver.consume(correction(position("FIXEDPOS", receiver.coordinates)));
     CHECK(receiver.rtcmCount == 0);
-    CHECK(receiver.surveys.back().flags == 2);
+    CHECK(surveyFlags(receiver.surveys.back()) == 2);
 
     // BASEPOS is a real-time monitoring solution, not evidence of a frozen average.
     consume(driver, native("BASEPOSA", "SOL_COMPUTED,SINGLE,47,8,450,50,WGS84,0.001,0.001,0.001"));
@@ -266,23 +278,24 @@ void averagingEvidenceAndRestart()
     const auto calls = receiver.calls;
     consume(driver, position("FIXEDPOS", receiver.coordinates));
     CHECK(receiver.calls == calls);
-    CHECK(receiver.surveys.back().flags == 1);
-    CHECK(!receiver.surveys.back().accuracyKnown && receiver.surveys.back().duration == 0);
+    CHECK(surveyFlags(receiver.surveys.back()) == 1);
+    CHECK(!receiver.surveys.back().survey.meanAccuracyMeters.has_value() &&
+          surveyDuration(receiver.surveys.back()) == 0);
     driver.consume(correction());
     CHECK(receiver.rtcmCount == 1);
 
     // Loss of the receiver's fixed solution cannot silently resume with a previous average.
     consume(driver, position("SINGLE", receiver.coordinates, 378239000));
     CHECK(!driver.receiverReady());
-    CHECK(receiver.surveys.back().flags == 0);
-    CHECK(std::isnan(receiver.surveys.back().latitude));
-    CHECK(std::isnan(receiver.surveys.back().longitude));
-    CHECK(std::isnan(receiver.surveys.back().altitude));
+    CHECK(surveyFlags(receiver.surveys.back()) == 0);
+    CHECK(std::isnan(receiver.surveys.back().survey.position.latitudeDegrees));
+    CHECK(std::isnan(receiver.surveys.back().survey.position.longitudeDegrees));
+    CHECK(std::isnan(receiver.surveys.back().survey.position.altitudeMeters));
     consume(driver, position("FIXEDPOS", receiver.coordinates));
     driver.consume(correction());
     CHECK(receiver.rtcmCount == 1);
     CHECK(driver.configure(rate, baseConfig(false)) == 0);
-    CHECK(receiver.surveys.back().flags == 2);
+    CHECK(surveyFlags(receiver.surveys.back()) == 2);
     CHECK(std::count(receiver.commands.begin(), receiver.commands.end(), "MODE BASE TIME 60 0") == 2);
     driver.consume(correction());
     CHECK(receiver.rtcmCount == 1);
@@ -390,7 +403,7 @@ void corruptStatusAndExpiry()
         driver.consume(correction());
         CHECK(receiver.calls == calls);
         CHECK(receiver.rtcmCount == 0);
-        CHECK(receiver.surveys.back().flags == 2);
+        CHECK(surveyFlags(receiver.surveys.back()) == 2);
         consume(driver, position("FIXEDPOS", receiver.coordinates, 378239000));
         driver.consume(correction());
         CHECK(receiver.rtcmCount == 1);
@@ -398,7 +411,7 @@ void corruptStatusAndExpiry()
         driver.consume(correction());
         CHECK(receiver.rtcmCount == 1);
         CHECK(!driver.receiverReady());
-        CHECK(receiver.surveys.back().flags == 0);
+        CHECK(surveyFlags(receiver.surveys.back()) == 0);
     }
 }
 
@@ -424,7 +437,7 @@ void restartAndReadErrors()
         CHECK(!driver.receiverReady());
         driver.consume(correction());
         CHECK(receiver.rtcmCount == 0);
-        CHECK(receiver.surveys.back().flags == 0);
+        CHECK(surveyFlags(receiver.surveys.back()) == 0);
     }
 }
 
@@ -438,9 +451,9 @@ void measurementFreshnessAndRollover()
         CHECK(driver.configure(baud, baseConfig(false)) == 0);
         const auto complete = GPSTest::unicorePosition("FIXEDPOS", receiver.coordinates, 604799000, 2326);
         consume(driver, complete, 1);
-        CHECK(receiver.surveys.back().flags == 1);
-        CHECK(!receiver.surveys.back().accuracyKnown);
-        CHECK(receiver.surveys.back().duration == 0);
+        CHECK(surveyFlags(receiver.surveys.back()) == 1);
+        CHECK(!receiver.surveys.back().survey.meanAccuracyMeters.has_value());
+        CHECK(surveyDuration(receiver.surveys.back()) == 0);
         const auto reports = receiver.surveys.size();
         const auto receipt = receiver.surveys.back().timestamp;
         gps_test_time += 4000000;
@@ -450,7 +463,7 @@ void measurementFreshnessAndRollover()
         if (rollover) {
             consume(driver, GPSTest::unicorePosition("FIXEDPOS", receiver.coordinates, 0, 2327));
             CHECK(driver.receiverReady());
-            CHECK(receiver.surveys.back().flags == 1);
+            CHECK(surveyFlags(receiver.surveys.back()) == 1);
             CHECK(receiver.surveys.back().timestamp > receipt);
             driver.consume(correction());
             CHECK(receiver.rtcmCount == 1);
@@ -460,12 +473,12 @@ void measurementFreshnessAndRollover()
             driver.consume({});
         }
         CHECK(!driver.receiverReady());
-        CHECK(receiver.surveys.back().flags == 0);
-        CHECK(!receiver.surveys.back().accuracyKnown);
-        CHECK(receiver.surveys.back().duration == 0);
-        CHECK(std::isnan(receiver.surveys.back().latitude));
-        CHECK(std::isnan(receiver.surveys.back().longitude));
-        CHECK(std::isnan(receiver.surveys.back().altitude));
+        CHECK(surveyFlags(receiver.surveys.back()) == 0);
+        CHECK(!receiver.surveys.back().survey.meanAccuracyMeters.has_value());
+        CHECK(surveyDuration(receiver.surveys.back()) == 0);
+        CHECK(std::isnan(receiver.surveys.back().survey.position.latitudeDegrees));
+        CHECK(std::isnan(receiver.surveys.back().survey.position.longitudeDegrees));
+        CHECK(std::isnan(receiver.surveys.back().survey.position.altitudeMeters));
         consume(driver, complete);
         const auto count = receiver.rtcmCount;
         driver.consume(correction());
@@ -491,9 +504,9 @@ void scheduledAveragingAndBoot()
             driver.receive(1000);
             CHECK(driver.receiverReady());
         }
-        CHECK(receiver.surveys.back().flags == 1);
-        CHECK(receiver.surveys.back().duration == 0);
-        CHECK(!receiver.surveys.back().accuracyKnown);
+        CHECK(surveyFlags(receiver.surveys.back()) == 1);
+        CHECK(surveyDuration(receiver.surveys.back()) == 0);
+        CHECK(!receiver.surveys.back().survey.meanAccuracyMeters.has_value());
         CHECK(receiver.commands.size() == commands);
         driver.consume(correction());
         CHECK(receiver.rtcmCount == 1);
@@ -502,8 +515,8 @@ void scheduledAveragingAndBoot()
             CHECK(slices < 100);
             driver.receive(1000);
         }
-        CHECK(receiver.surveys.back().flags == 0);
-        CHECK(std::isnan(receiver.surveys.back().altitude));
+        CHECK(surveyFlags(receiver.surveys.back()) == 0);
+        CHECK(std::isnan(receiver.surveys.back().survey.position.altitudeMeters));
         driver.consume(correction());
         CHECK(receiver.rtcmCount == 1);
     }

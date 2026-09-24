@@ -129,8 +129,6 @@ struct GPSNavigationValues
 {
     using FixType = GPSFixQuality;
 
-    static constexpr FixType fixTypeFromValue(int value) { return gpsFixQualityFromValue(value); }
-
     uint64_t timestampUs = 0;
     uint64_t utcTimeUs = 0;
     FixType fixType = FixType::Unknown;
@@ -153,8 +151,6 @@ struct GPSNavigationValues
 struct GPSPositionReport
 {
     using FixType = GPSNavigationValues::FixType;
-
-    static constexpr FixType fixTypeFromValue(int value) { return GPSNavigationValues::fixTypeFromValue(value); }
 
     GPSNavigationValues navigation{};
     GPSIntegrityReport integrity{};

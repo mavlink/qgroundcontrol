@@ -107,7 +107,6 @@ private:
         std::optional<int> countOnlySatelliteUsage;
         int manufacturer = 0;
         int baseMode = -1;
-        quint64 generation = 0;
         bool started = false;
     };
 
@@ -118,12 +117,14 @@ private:
 #endif
     bool _connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory, const QString& sourceInstance,
                           uint32_t baudRate, bool allowPersistentChanges, const QString& serialDevice = {});
-    void _retireSession(quint64 generation);
+    void _retireSession();
     bool _publishDisconnected(quint64 generation);
     bool _publishFacts(std::initializer_list<std::pair<Fact*, QVariant>> updates, quint64 generation);
     void _setError(GPSConnectionError error, const QString& message = {});
 
     ReceiverSession _session;
+    // Supersedes in-progress operations and publications; survives session retirement.
+    quint64 _generation = 0;
     // Fact setters can still be unwinding after a notification deletes their receiver owner.
     std::shared_ptr<GPSRTKFactGroup> _gpsRtkFactGroup;
     QPointer<GPSCorrectionManager> _correctionManager;

@@ -300,7 +300,7 @@ private:
     void flushDecoded() override;
     void publishEpoch(const GPSNativePositionReport& report);
     UBXNavigationEpoch _navigationEpochs;
-    bool _assembleEpochs = false;
+    DecodeContext _decodeContext;
     bool _epochHasHighPrecision = false;
 
     struct ReceiverIdentity
@@ -332,16 +332,12 @@ private:
     TimeModeReadback _timeModeReadback;
 
     bool _configured{false};
-    bool _decodeNavigation = false;
     bool _survey_in_stopped{false};
     bool _got_posllh{false};
     bool _got_velned{false};
     bool _got_sec_sig{false};             ///< SEC-SIG jammingState supersedes deprecated MON-RF flags
-    bool _use_nav_pvt{false};
 
     uint8_t _dyn_model{7};  ///< ublox Dynamic platform model default 7: airborne with <2g acceleration
-
-    uint64_t _last_timestamp_time{0};
 
     OutputMode _output_mode{OutputMode::GPS};
 

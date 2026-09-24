@@ -52,7 +52,7 @@
  */
 
 GPSProtocol::GPSProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
-    : _satellite_info(satelliteInfoEnabled ? &_workingSatellites : nullptr)
+    : _satellites(satelliteInfoEnabled ? &_satelliteStorage : nullptr)
     , _io(std::move(io))
 {
     if (!_io.nowUs) {
@@ -110,7 +110,7 @@ uint64_t GPSProtocol::timeFromUtc(tm& utc, int32_t nsec)
 {
     const time_t epoch = gpsTimeToEpoch(utc);
 
-    if (epoch > GPS_EPOCH_SECS) {
+    if (epoch > GPS_UTC_PLAUSIBILITY_FLOOR_SECS) {
         return static_cast<uint64_t>(epoch) * 1000000ULL + nsec / 1000;
     }
 

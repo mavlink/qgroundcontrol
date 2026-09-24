@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <optional>
 
+#include <QtCore/QString>
+
 #include "GPSBaseStationConfig.h"
 #include "GPSType.h"
 
@@ -60,3 +62,8 @@ enum class GPSReceiverConfigError
 /// Precedence: valid role, recognized receiver, supported role, RTK base, constellations, dynamic model.
 /// For each optional request, unsupported takes precedence over an invalid value.
 [[nodiscard]] GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiverConfig& config);
+
+/// Translated diagnostic; empty for GPSReceiverConfigError::None.
+[[nodiscard]] QString gpsReceiverConfigErrorText(GPSReceiverConfigError error);
+/// An empty diagnostic means the receiver supports the role and all supplied settings.
+[[nodiscard]] QString gpsReceiverConfigError(GPSType type, const GPSReceiverConfig& config);

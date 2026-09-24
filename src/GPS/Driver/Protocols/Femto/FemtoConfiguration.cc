@@ -138,7 +138,7 @@ int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
             return -1;
         }
 
-        if (_satellite_info) {
+        if (_satellites) {
             if (writeAckedCommandFemto("LOG UAVSTATUSB 1\r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
             } else if (!ioError()) {
                 log(GPSProtocolLogLevel::Warning, "Femto: command LOG UAVSTATUSB 1 failed");

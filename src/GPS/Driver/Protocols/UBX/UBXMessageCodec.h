@@ -136,18 +136,8 @@ inline ubx_payload_rx_nav_pvt_t detail::decodeFields<ubx_payload_rx_nav_pvt_t>(s
     value.hMSL = LittleEndian::read<int32_t>(bytes, 36).value_or(0);
     value.hAcc = LittleEndian::read<uint32_t>(bytes, 40).value_or(0);
     value.vAcc = LittleEndian::read<uint32_t>(bytes, 44).value_or(0);
-    value.velN = LittleEndian::read<int32_t>(bytes, 48).value_or(0);
-    value.velE = LittleEndian::read<int32_t>(bytes, 52).value_or(0);
-    value.velD = LittleEndian::read<int32_t>(bytes, 56).value_or(0);
     value.gSpeed = LittleEndian::read<int32_t>(bytes, 60).value_or(0);
     value.headMot = LittleEndian::read<int32_t>(bytes, 64).value_or(0);
-    value.sAcc = LittleEndian::read<uint32_t>(bytes, 68).value_or(0);
-    value.headAcc = LittleEndian::read<uint32_t>(bytes, 72).value_or(0);
-    value.pDOP = LittleEndian::read<uint16_t>(bytes, 76).value_or(0);
-    value.reserved2 = LittleEndian::read<uint16_t>(bytes, 78).value_or(0);
-    value.reserved3 = LittleEndian::read<uint32_t>(bytes, 80).value_or(0);
-    value.headVeh = LittleEndian::read<int32_t>(bytes, 84).value_or(0);
-    value.reserved4 = LittleEndian::read<uint32_t>(bytes, 88).value_or(0);
     return value;
 }
 
@@ -281,14 +271,8 @@ inline ubx_payload_rx_nav_velned_t detail::decodeFields<ubx_payload_rx_nav_velne
     const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
     ubx_payload_rx_nav_velned_t value{};
     value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
-    value.velN = LittleEndian::read<int32_t>(bytes, 4).value_or(0);
-    value.velE = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
-    value.velD = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
-    value.speed = LittleEndian::read<uint32_t>(bytes, 16).value_or(0);
     value.gSpeed = LittleEndian::read<uint32_t>(bytes, 20).value_or(0);
     value.heading = LittleEndian::read<int32_t>(bytes, 24).value_or(0);
-    value.sAcc = LittleEndian::read<uint32_t>(bytes, 28).value_or(0);
-    value.cAcc = LittleEndian::read<uint32_t>(bytes, 32).value_or(0);
     return value;
 }
 
@@ -472,24 +456,11 @@ inline ubx_payload_rx_nav_relposned_t detail::decodeFields<ubx_payload_rx_nav_re
     ubx_payload_rx_nav_relposned_t value{};
     value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
     value.reserved0 = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
-    value.refStationId = LittleEndian::read<uint16_t>(bytes, 2).value_or(0);
     value.iTOW = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
-    value.relPosN = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
-    value.relPosE = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
-    value.relPosD = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
     value.relPosLength = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
     value.relPosHeading = LittleEndian::read<int32_t>(bytes, 24).value_or(0);
-    value.reserved1 = LittleEndian::read<uint32_t>(bytes, 28).value_or(0);
-    value.relPosHPN = LittleEndian::read<int8_t>(bytes, 32).value_or(0);
-    value.relPosHPE = LittleEndian::read<int8_t>(bytes, 33).value_or(0);
-    value.relPosHPD = LittleEndian::read<int8_t>(bytes, 34).value_or(0);
     value.relPosHPLength = LittleEndian::read<int8_t>(bytes, 35).value_or(0);
-    value.accN = LittleEndian::read<uint32_t>(bytes, 36).value_or(0);
-    value.accE = LittleEndian::read<uint32_t>(bytes, 40).value_or(0);
-    value.accD = LittleEndian::read<uint32_t>(bytes, 44).value_or(0);
-    value.accLength = LittleEndian::read<uint32_t>(bytes, 48).value_or(0);
     value.accHeading = LittleEndian::read<uint32_t>(bytes, 52).value_or(0);
-    value.reserved2 = LittleEndian::read<uint32_t>(bytes, 56).value_or(0);
     value.flags = LittleEndian::read<uint32_t>(bytes, 60).value_or(0);
     return value;
 }
@@ -505,22 +476,9 @@ inline ubx_payload_rx_nav_daheading_t detail::decodeFields<ubx_payload_rx_nav_da
         value.reserved0[i] = LittleEndian::read<uint8_t>(bytes, 1 + i * 1).value_or(0);
     }
     value.iTOW = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
-    value.relPosN = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
-    value.relPosE = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
-    value.relPosD = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
     value.relPosLength = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
     value.relPosHeading = LittleEndian::read<int32_t>(bytes, 24).value_or(0);
-    for (size_t i = 0; i < 4; ++i) {
-        value.reserved1[i] = LittleEndian::read<uint8_t>(bytes, 28 + i * 1).value_or(0);
-    }
-    value.accN = LittleEndian::read<uint32_t>(bytes, 32).value_or(0);
-    value.accE = LittleEndian::read<uint32_t>(bytes, 36).value_or(0);
-    value.accD = LittleEndian::read<uint32_t>(bytes, 40).value_or(0);
-    value.accLength = LittleEndian::read<uint32_t>(bytes, 44).value_or(0);
     value.accHeading = LittleEndian::read<uint32_t>(bytes, 48).value_or(0);
-    for (size_t i = 0; i < 4; ++i) {
-        value.reserved2[i] = LittleEndian::read<uint8_t>(bytes, 52 + i * 1).value_or(0);
-    }
     value.flags = LittleEndian::read<uint32_t>(bytes, 56).value_or(0);
     return value;
 }

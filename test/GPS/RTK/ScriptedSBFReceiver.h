@@ -2,41 +2,32 @@
 
 #include <algorithm>
 #include <cstring>
+#include <span>
+#include <vector>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QThread>
-#include <QtCore/QtEndian>
 
-#include "GPSTransport.h"
+#include "Driver/Protocols/ProtocolTestPackets.h"
+#include "ScriptedGPSTransport.h"
 
-class ScriptedSBFReceiver : public GPSTransport
+class ScriptedSBFReceiver : public ScriptedGPSTransport
 {
 public:
-    using GPSTransport::GPSTransport;
+    using ScriptedGPSTransport::ScriptedGPSTransport;
 
-    GPSOpenResult open() override { return {GPSOpenStatus::Opened}; }
-
-    bool fatalError() const override { return false; }
-
-    bool setBaudrate(unsigned) override { return true; }
-
-    GPSWriteResult writeBounded(const uint8_t* bytes, int length, QDeadlineTimer deadline) override
+protected:
+    std::optional<GPSWriteResult> handleWrite(const QByteArray& command, QDeadlineTimer) override
     {
-        if (isCancelled()) {
-            return {GPSWriteStatus::Cancelled};
-        }
-        if (deadline.hasExpired()) {
-            return {GPSWriteStatus::TimedOut};
-        }
-        const QByteArray command(reinterpret_cast<const char*>(bytes), length);
         reply = command == "\n\r" ? QByteArray("USB1>") : "$R: " + command;
-        return {GPSWriteStatus::Completed, length, length};
+        const int length = command.size();
+        return GPSWriteResult{GPSWriteStatus::Completed, length, length};
     }
 
-    GPSReadResult read(uint8_t* bytes, int length, int timeoutMs) override
+    std::optional<GPSReadResult> handleRead(uint8_t* bytes, int length, int timeoutMs) override
     {
         if (isCancelled()) {
-            return {GPSReadStatus::Cancelled};
+            return GPSReadResult{GPSReadStatus::Cancelled};
         }
         if (reply.isEmpty() && streaming) {
             if (timeoutMs > 0) {
@@ -46,21 +37,21 @@ public:
             reply = streamReads == 8 && sendUsage ? pvt(12, streamReads) : block(4001, 32, streamReads);
         }
         if (reply.isEmpty()) {
-            return {GPSReadStatus::TimedOut};
+            return GPSReadResult{GPSReadStatus::TimedOut};
         }
         const auto count = std::min(length, static_cast<int>(reply.size()));
         std::memcpy(bytes, reply.constData(), static_cast<size_t>(count));
         reply.remove(0, count);
-        return {GPSReadStatus::Data, count};
+        return GPSReadResult{GPSReadStatus::Data, count};
     }
 
+public:
     static QByteArray pvt(uint8_t used, uint32_t tow)
     {
-        auto bytes = block(4007, 96, tow);
-        bytes[14] = 0x41;  // Valid fixed-base solution.
-        bytes[74] = static_cast<char>(used);
-        checksum(bytes);
-        return bytes;
+        std::vector<uint8_t> payload(82);
+        payload[0] = 0x41;  // Valid fixed-base solution.
+        payload[60] = used;
+        return block(4007, payload, tow);
     }
 
     bool streaming = false;
@@ -69,28 +60,14 @@ public:
     QByteArray reply;
 
 private:
-    static void checksum(QByteArray& bytes)
-    {
-        uint16_t crc = 0;
-        for (qsizetype i = 4; i < bytes.size(); ++i) {
-            crc ^= static_cast<uint16_t>(static_cast<uint8_t>(bytes[i])) << 8;
-            for (int bit = 0; bit < 8; ++bit) {
-                crc = static_cast<uint16_t>((crc << 1) ^ ((crc & 0x8000) ? 0x1021 : 0));
-            }
-        }
-        qToLittleEndian<uint16_t>(crc, bytes.data() + 2);
-    }
-
     static QByteArray block(uint16_t id, int length, uint32_t tow)
     {
-        QByteArray bytes(length, '\0');
-        bytes[0] = '$';
-        bytes[1] = '@';
-        qToLittleEndian<uint16_t>(id, bytes.data() + 4);
-        qToLittleEndian<uint16_t>(static_cast<uint16_t>(length), bytes.data() + 6);
-        qToLittleEndian<uint32_t>(tow, bytes.data() + 8);
-        qToLittleEndian<uint16_t>(2300, bytes.data() + 12);
-        checksum(bytes);
-        return bytes;
+        return block(id, std::vector<uint8_t>(static_cast<size_t>(length - 14)), tow);
+    }
+
+    static QByteArray block(uint16_t id, const std::vector<uint8_t>& payload, uint32_t tow)
+    {
+        const auto bytes = sbfBlock(id, std::span<const uint8_t>(payload.data(), payload.size()), tow, 2300);
+        return QByteArray(reinterpret_cast<const char*>(bytes.data()), static_cast<qsizetype>(bytes.size()));
     }
 };

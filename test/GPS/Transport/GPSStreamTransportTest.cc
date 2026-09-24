@@ -13,6 +13,7 @@
 
 #include "GPSSocketWait_p.h"
 #include "GPSStreamWrite_p.h"
+#include "ScriptedGPSTransport.h"
 #include "TCPGPSTransport.h"
 #include "UnitTest.h"
 
@@ -55,20 +56,26 @@ protected:
     }
 };
 
-class StreamWriteTransport : public GPSTransport
+class StreamWriteTransport : public ScriptedGPSTransport
 {
 public:
-    using GPSTransport::GPSTransport;
+    explicit StreamWriteTransport(const std::atomic_bool& stop)
+        : ScriptedGPSTransport(stop)
+    {}
 
     bool failed = false;
 
-    GPSOpenResult open() override { return {GPSOpenStatus::Unsupported}; }
-
     bool fatalError() const override { return failed; }
 
-    GPSReadResult read(uint8_t*, int, int) override { return {GPSReadStatus::Closed}; }
+protected:
+    std::optional<GPSOpenResult> handleOpen() override { return GPSOpenResult{GPSOpenStatus::Unsupported}; }
 
-    bool setBaudrate(unsigned) override { return false; }
+    std::optional<GPSReadResult> handleRead(uint8_t*, int, int) override
+    {
+        return GPSReadResult{GPSReadStatus::Closed};
+    }
+
+    std::optional<bool> handleBaudrate(unsigned) override { return false; }
 };
 
 class OpenFailureSocket : public QTcpSocket
@@ -290,7 +297,7 @@ private slots:
         }
         QCOMPARE(transport->open().status, GPSOpenStatus::Opened);
         if (!serial) {
-            QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), 1000);
+            QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::shortMs());
             peer = server.nextPendingConnection();
             QVERIFY(peer);
             if (outcome != "complete") {
@@ -338,7 +345,7 @@ private slots:
                 }
                 return received == expected;
             };
-            QTRY_VERIFY_WITH_TIMEOUT(readPeer(), 1000);
+            QTRY_VERIFY_WITH_TIMEOUT(readPeer(), TestTimeout::shortMs());
             QVERIFY(!transport->fatalError());
             return;
         }

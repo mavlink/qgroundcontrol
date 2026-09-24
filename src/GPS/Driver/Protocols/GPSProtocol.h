@@ -62,9 +62,7 @@ inline constexpr int GPS_READ_BUFFER_SIZE = 150;
 inline constexpr float GPS_PI = std::numbers::pi_v<float>;
 inline constexpr float GPS_DEG_TO_RAD = GPS_PI / 180.0f;
 inline constexpr double GPS_RAD_TO_DEG = 180.0 / std::numbers::pi;
-
-// TODO: this number seems wrong
-#define GPS_EPOCH_SECS ((time_t) 1234567890ULL)
+inline constexpr time_t GPS_UTC_PLAUSIBILITY_FLOOR_SECS = static_cast<time_t>(1234567890ULL);
 
 class GPSProtocol
 {
@@ -342,19 +340,19 @@ protected:
 
     void publishSatellites(const GPSNativeSatelliteReport& report)
     {
-        _decoded.updates |= 2;
+        _decoded.updates |= GPSDecodedBatch::SATELLITES_UPDATE;
         _decoded.events.emplace_back(report);
     }
 
     void publishPosition(const GPSNativePositionReport& report)
     {
-        _decoded.updates |= 1;
+        _decoded.updates |= GPSDecodedBatch::POSITION_UPDATE;
         _decoded.events.emplace_back(report);
     }
 
     void publishSatelliteUsage(std::optional<int> count)
     {
-        _decoded.updates |= 2;
+        _decoded.updates |= GPSDecodedBatch::SATELLITES_UPDATE;
         _decoded.events.emplace_back(GPSSatelliteUsageReport{nowUs(), count});
     }
 
@@ -390,14 +388,8 @@ protected:
         });
     }
 
-    /** got a relative position message from the device */
-    void gotRelativePositionMessage(GPSNativeRelativeReport& gnss_relative)
-    {
-        _decoded.events.emplace_back(gnss_relative);
-    }
-
     /**
-     * Convert a broken-down UTC time to microseconds since the Unix epoch, if the date is after the GPS epoch.
+     * Convert a broken-down UTC time to microseconds since the Unix epoch, if the date is plausible.
      * @param utc broken-down UTC time (normalized in place)
      * @param nsec sub-second part [ns], may be negative
      * @return microseconds since the Unix epoch, 0 if the date is implausible
@@ -415,10 +407,9 @@ protected:
     static GPSEllipsoidPosition fromEcef(const EcefMeters& position);
 
     GPSBaseStationConfig _baseConfig;
-    GPSNativePositionReport _workingPosition;
-    GPSNativeSatelliteReport _workingSatellites;
-    GPSNativePositionReport* const _gps_position = &_workingPosition;
-    GPSNativeSatelliteReport* const _satellite_info;
+    GPSNativePositionReport _position;
+    GPSNativeSatelliteReport _satelliteStorage;
+    GPSNativeSatelliteReport* const _satellites;
     bool _commandCompleted = true;
     GPSCommandResult _commandWrite;
     GPSDeadline _commandDeadline;

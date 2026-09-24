@@ -6,6 +6,7 @@
 #include <QtCore/QList>
 #include <QtTest/QTest>
 
+#include "GPSFixQuality.h"
 #include "GPSNativeData_p.h"
 #include "GPSProtocol.h"
 #include "UnitTest.h"
@@ -231,7 +232,7 @@ void GPSNativeDataTest::_velocityValidity()
     QFETCH(float, course);
     GPSNativePositionReport source;
     source.navigation.fixType = fix;
-    source.vel_ned_valid = valid;
+    source.velocityValid = valid;
     source.navigation.speedMetersPerSecond = speed;
     source.navigation.courseRadians = course;
     const auto report = GPSNativeData::position(source, {});
@@ -269,7 +270,7 @@ void GPSNativeDataTest::_fixTypes()
     QFETCH(int, native);
     QFETCH(GPSPositionReport::FixType, expected);
     GPSNativePositionReport source;
-    QCOMPARE(GPSPositionReport::fixTypeFromValue(native), expected);
+    QCOMPARE(gpsFixQualityFromValue(native), expected);
     source.navigation.fixType = static_cast<GPSPositionReport::FixType>(native);
     QCOMPARE(GPSNativeData::position(source, {}).navigation.fixType, expected);
 }
@@ -683,53 +684,44 @@ void GPSNativeDataTest::_satelliteSnapshotExpiry()
 
 void GPSNativeDataTest::_surveyProjection_data()
 {
-    QTest::addColumn<GPSNativeSurveyReport::AltitudeDatum>("datum");
+    QTest::addColumn<bool>("altitudeKnown");
     QTest::addColumn<bool>("accuracyKnown");
-    QTest::addColumn<uint32_t>("accuracyMillimeters");
     QTest::addColumn<double>("accuracyMeters");
     QTest::addColumn<uint32_t>("duration");
-    QTest::addColumn<uint8_t>("flags");
     QTest::addColumn<bool>("valid");
     QTest::addColumn<bool>("active");
-    using Datum = GPSNativeSurveyReport::AltitudeDatum;
     const double unknown = std::numeric_limits<double>::quiet_NaN();
-    QTest::newRow("unknown-datum-and-accuracy")
-        << Datum::Unknown << false << uint32_t{1250} << unknown << uint32_t{0} << uint8_t{0} << false << false;
-    QTest::newRow("msl-is-not-ellipsoid")
-        << Datum::MeanSeaLevel << false << uint32_t{0} << unknown << uint32_t{180} << uint8_t{1} << true << false;
-    QTest::newRow("ellipsoid-and-known-zero-accuracy")
-        << Datum::Ellipsoid << true << uint32_t{0} << 0.0 << uint32_t{180} << uint8_t{2} << false << true;
-    QTest::newRow("millimeters-to-meters")
-        << Datum::Ellipsoid << true << uint32_t{1250} << 1.25 << uint32_t{180} << uint8_t{3} << true << true;
-    QTest::newRow("full-width-values") << Datum::Ellipsoid << true << (std::numeric_limits<uint32_t>::max)()
-                                       << 4'294'967.295 << (std::numeric_limits<uint32_t>::max)() << uint8_t{0xfd}
+    QTest::newRow("position-without-altitude") << false << false << unknown << uint32_t{0} << false << false;
+    QTest::newRow("zero-accuracy") << true << true << 0.0 << uint32_t{180} << false << true;
+    QTest::newRow("millimeters-to-meters") << true << true << 1.25 << uint32_t{180} << true << true;
+    QTest::newRow("full-width-values") << true << true << 4'294'967.295 << (std::numeric_limits<uint32_t>::max)()
                                        << true << false;
-    QTest::newRow("reserved-flags") << Datum::Ellipsoid << false << uint32_t{0} << unknown << uint32_t{0}
-                                    << uint8_t{0xfc} << false << false;
 }
 
 void GPSNativeDataTest::_surveyProjection()
 {
-    QFETCH(GPSNativeSurveyReport::AltitudeDatum, datum);
+    QFETCH(bool, altitudeKnown);
     QFETCH(bool, accuracyKnown);
-    QFETCH(uint32_t, accuracyMillimeters);
     QFETCH(double, accuracyMeters);
     QFETCH(uint32_t, duration);
-    QFETCH(uint8_t, flags);
     QFETCH(bool, valid);
     QFETCH(bool, active);
-    const GPSNativeSurveyReport source{.altitudeDatum = datum,
-                                       .accuracyKnown = accuracyKnown,
-                                       .latitude = -47.123456789,
-                                       .longitude = 179.987654321,
-                                       .altitude = -25.5f,
-                                       .mean_accuracy = accuracyMillimeters,
-                                       .duration = duration,
-                                       .flags = flags};
-    const auto report = GPSNativeData::survey(source);
+    GPSNativeSurveyReport source;
+    source.survey.position.latitudeDegrees = -47.123456789;
+    source.survey.position.longitudeDegrees = 179.987654321;
+    if (altitudeKnown) {
+        source.survey.position.altitudeMeters = -25.5f;
+    }
+    if (accuracyKnown) {
+        source.survey.meanAccuracyMeters = accuracyMeters;
+    }
+    source.survey.duration = std::chrono::seconds(duration);
+    source.survey.valid = valid;
+    source.survey.active = active;
+    const auto& report = source.survey;
     QCOMPARE(report.position.latitudeDegrees, -47.123456789);
     QCOMPARE(report.position.longitudeDegrees, 179.987654321);
-    if (datum == GPSNativeSurveyReport::AltitudeDatum::Ellipsoid) {
+    if (altitudeKnown) {
         QCOMPARE(report.position.altitudeMeters, -25.5f);
     } else {
         QVERIFY(std::isnan(report.position.altitudeMeters));

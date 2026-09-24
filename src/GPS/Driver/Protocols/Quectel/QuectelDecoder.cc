@@ -67,9 +67,6 @@ void GPSNativeQuectel::_revokeSurvey()
     if (_survey.report) {
         _survey.report.reset();
         GPSNativeSurveyReport report{};
-        report.latitude = NAN;
-        report.longitude = NAN;
-        report.altitude = NAN;
         surveyInStatus(report);
     }
 }
@@ -87,7 +84,7 @@ void GPSNativeQuectel::_publishSurvey()
     if (_survey.phase == SurveyPhase::Monitoring && _survey.report) {
         // A status buffered during boot verification keeps its original receipt time.
         _decoded.events.emplace_back(*_survey.report);
-        setRTCMEnabled(_configured && (_survey.report->flags & 1));
+        setRTCMEnabled(_configured && _survey.report->survey.valid);
     }
 }
 
@@ -146,22 +143,18 @@ bool GPSNativeQuectel::_handleSurvey(std::string_view body)
     const bool valid = validity == 2 && (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ||
                                          observations >= configuredCount);
     GPSNativeSurveyReport report{};
-    report.latitude = std::numeric_limits<double>::quiet_NaN();
-    report.longitude = std::numeric_limits<double>::quiet_NaN();
-    report.altitude = std::numeric_limits<float>::quiet_NaN();
-    report.altitudeDatum = GPSNativeSurveyReport::AltitudeDatum::Ellipsoid;
     // Fixed mode's MeanAcc=0 describes supplied coordinates, not measured position uncertainty.
-    report.accuracyKnown = !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) && validity != 0 &&
-                           observations != 0 && coordinatesKnown;
-    report.mean_accuracy = report.accuracyKnown ? static_cast<uint32_t>(std::llround(accuracy * 1000)) : 0;
+    if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) && validity != 0 && observations != 0 &&
+        coordinatesKnown) {
+        report.survey.meanAccuracyMeters = static_cast<double>(std::llround(accuracy * 1000)) / 1000.0;
+    }
     // Base positioning is fixed at 1 Hz. Gaps do not count as accepted observation seconds.
-    report.duration = observations;
-    report.flags = valid ? 1 : validity == 1 ? 2 : 0;
+    report.survey.duration = std::chrono::seconds(observations);
+    report.survey.valid = valid;
+    report.survey.active = validity == 1 && !valid;
     if (coordinatesKnown && validity != 0) {
         const auto position = fromEcef(ecef);
-        report.latitude = position.latitudeDegrees;
-        report.longitude = position.longitudeDegrees;
-        report.altitude = position.altitudeMeters;
+        report.survey.position = position;
     }
     report.timestamp = nowUs();
     _survey.report = report;

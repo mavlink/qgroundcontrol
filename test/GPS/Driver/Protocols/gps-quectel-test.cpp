@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
-#include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <map>
@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "GPSProtocolTestIO.h"
+#include "ProtocolTestPackets.h"
 #include "Quectel/GPSDriverQuectel.h"
 #include "RTCMFramer.h"
 #include "Support/QuectelReceiverModel.h"
@@ -34,17 +35,6 @@ constexpr std::string_view COMPLETE =
 constexpr std::array<uint8_t, 25> CORRECTION{0xD3, 0x00, 0x13, 0x3E, 0xD1, 0x22, 0x03, 0x3A, 0x22,
                                              0x66, 0xA8, 0xEE, 0x8B, 0x4A, 0x8C, 0x4D, 0x35, 0x07,
                                              0xA1, 0xBD, 0xDF, 0xBF, 0xBB, 0x0A, 0x12};
-
-std::string sentence(std::string_view body)
-{
-    unsigned checksum = 0;
-    for (const char value : body) {
-        checksum ^= static_cast<unsigned char>(value);
-    }
-    std::array<char, 8> tail{};
-    std::snprintf(tail.data(), tail.size(), "*%02X\r\n", checksum);
-    return '$' + std::string(body) + tail.data();
-}
 
 using Receiver = GPSTest::QuectelReceiver;
 
@@ -77,20 +67,37 @@ void feed(GPSNativeQuectel& driver, std::string_view line, size_t chunk = 3)
 
 void revoked(const GPSNativeSurveyReport& report)
 {
-    CHECK(report.flags == 0);
-    CHECK(!report.accuracyKnown);
-    CHECK(report.duration == 0);
-    CHECK(std::isnan(report.latitude));
-    CHECK(std::isnan(report.longitude));
-    CHECK(std::isnan(report.altitude));
-    CHECK(report.altitudeDatum == GPSNativeSurveyReport::AltitudeDatum::Unknown);
+    CHECK(!report.survey.valid);
+    CHECK(!report.survey.active);
+    CHECK(!report.survey.meanAccuracyMeters);
+    CHECK(report.survey.duration == std::chrono::seconds(0));
+    CHECK(std::isnan(report.survey.position.latitudeDegrees));
+    CHECK(std::isnan(report.survey.position.longitudeDegrees));
+    CHECK(std::isnan(report.survey.position.altitudeMeters));
+}
+
+int surveyFlags(const GPSNativeSurveyReport& report)
+{
+    return (report.survey.valid ? 1 : 0) | (report.survey.active ? 2 : 0);
+}
+
+uint32_t surveyDuration(const GPSNativeSurveyReport& report)
+{
+    return static_cast<uint32_t>(report.survey.duration.count());
+}
+
+uint32_t surveyMeanAccuracyMillimeters(const GPSNativeSurveyReport& report)
+{
+    return report.survey.meanAccuracyMeters
+               ? static_cast<uint32_t>(std::llround(*report.survey.meanAccuracyMeters * 1000))
+               : 0;
 }
 
 std::string surveyStatus(unsigned tow, unsigned validity, unsigned observations, unsigned count = 60)
 {
-    return sentence("PQTMSVINSTATUS,1," + std::to_string(tow) + ',' + std::to_string(validity) + ",,11," +
-                    std::to_string(observations) + ',' + std::to_string(count) +
-                    ",-2005559.8481,5411823.1873,2706139.3995,1.8075");
+    return nmeaSentence("PQTMSVINSTATUS,1," + std::to_string(tow) + ',' + std::to_string(validity) + ",,11," +
+                        std::to_string(observations) + ',' + std::to_string(count) +
+                        ",-2005559.8481,5411823.1873,2706139.3995,1.8075");
 }
 
 void receiveUntil(GPSNativeQuectel& driver, uint64_t deadline)
@@ -143,8 +150,8 @@ void positionAndEvidence()
 
 void identityAndRoleSafety()
 {
-    for (const std::string& identity : {sentence("PQTMVERNO,LG580P03AANR01A03S,2024/04/30,10:53:07"),
-                                        sentence("PQTMVERNO,LG290P99AANR01A03S,2024/04/30,10:53:07"),
+    for (const std::string& identity : {nmeaSentence("PQTMVERNO,LG580P03AANR01A03S,2024/04/30,10:53:07"),
+                                        nmeaSentence("PQTMVERNO,LG290P99AANR01A03S,2024/04/30,10:53:07"),
                                         std::string("$PQTMVERNO,LG290P03AANR01A03S,2024/04/30,10:53:07*00\r\n")}) {
         gps_test_time = 0;
         Receiver receiver;
@@ -179,23 +186,23 @@ void fixedECEF()
     CHECK(!receiver.sent("PQTMCFGSVIN,W"));
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 0);
-    feed(driver, sentence("PQTMSVINSTATUS,1,288282000,2,,00,0,0,0.0000,6378237.0000,0.0000,0.0000"));
+    feed(driver, nmeaSentence("PQTMSVINSTATUS,1,288282000,2,,00,0,0,0.0000,6378237.0000,0.0000,0.0000"));
     CHECK(receiver.surveys.size() == 1);
-    CHECK(receiver.surveys.back().flags == 1);
-    CHECK(!receiver.surveys.back().accuracyKnown);
-    CHECK(std::abs(receiver.surveys.back().latitude) < 0.000001);
-    CHECK(std::abs(receiver.surveys.back().longitude - 90) < 0.000001);
-    CHECK(std::abs(receiver.surveys.back().altitude - 100) < 0.001);
-    CHECK(receiver.surveys.back().altitudeDatum == GPSNativeSurveyReport::AltitudeDatum::Ellipsoid);
+    CHECK(surveyFlags(receiver.surveys.back()) == 1);
+    CHECK(!receiver.surveys.back().survey.meanAccuracyMeters.has_value());
+    CHECK(std::abs(receiver.surveys.back().survey.position.latitudeDegrees) < 0.000001);
+    CHECK(std::abs(receiver.surveys.back().survey.position.longitudeDegrees - 90) < 0.000001);
+    CHECK(std::abs(receiver.surveys.back().survey.position.altitudeMeters - 100) < 0.001);
+    CHECK(!std::isnan(receiver.surveys.back().survey.position.altitudeMeters));
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 1);
-    feed(driver, sentence("PQTMSVINSTATUS,1,288283000,2,,00,0,0,0.0000,6378238.0000,0.0000,0.0000"));
+    feed(driver, nmeaSentence("PQTMSVINSTATUS,1,288283000,2,,00,0,0,0.0000,6378238.0000,0.0000,0.0000"));
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 1);
     CHECK(receiver.surveys.size() == 2);
     revoked(receiver.surveys.back());
-    feed(driver, sentence("PQTMSVINSTATUS,1,288284000,2,,00,0,0,0.0000,6378237.0000,0.0000,0.0000"));
-    CHECK(receiver.surveys.back().flags == 1);
+    feed(driver, nmeaSentence("PQTMSVINSTATUS,1,288284000,2,,00,0,0,0.0000,6378237.0000,0.0000,0.0000"));
+    CHECK(surveyFlags(receiver.surveys.back()) == 1);
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 2);
     CHECK(std::any_of(receiver.outcomes.begin(), receiver.outcomes.end(), [](const auto& result) {
@@ -220,25 +227,25 @@ void surveyLifecycle()
     CHECK(receiver.surveys.empty());
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 0);
-    feed(driver, sentence("PQTMSVINSTATUS,1,291263500,1,,11,0,60,0,0,0,0"));
-    CHECK(receiver.surveys.back().flags == 2);
-    CHECK(std::isnan(receiver.surveys.back().latitude));
-    CHECK(std::isnan(receiver.surveys.back().longitude));
-    CHECK(std::isnan(receiver.surveys.back().altitude));
-    CHECK(!receiver.surveys.back().accuracyKnown);
+    feed(driver, nmeaSentence("PQTMSVINSTATUS,1,291263500,1,,11,0,60,0,0,0,0"));
+    CHECK(surveyFlags(receiver.surveys.back()) == 2);
+    CHECK(std::isnan(receiver.surveys.back().survey.position.latitudeDegrees));
+    CHECK(std::isnan(receiver.surveys.back().survey.position.longitudeDegrees));
+    CHECK(std::isnan(receiver.surveys.back().survey.position.altitudeMeters));
+    CHECK(!receiver.surveys.back().survey.meanAccuracyMeters.has_value());
     receiver.chunk = 1;
     receiver.queued = PROGRESS;
     CHECK(driver.receive(1000) & GPSDecodedBatch::PROTOCOL_ACTIVITY);
-    CHECK(receiver.surveys.back().flags == 2);
-    CHECK(receiver.surveys.back().duration == 1);
-    CHECK(receiver.surveys.back().accuracyKnown);
-    CHECK(receiver.surveys.back().mean_accuracy == 1869);
+    CHECK(surveyFlags(receiver.surveys.back()) == 2);
+    CHECK(surveyDuration(receiver.surveys.back()) == 1);
+    CHECK(receiver.surveys.back().survey.meanAccuracyMeters.has_value());
+    CHECK(surveyMeanAccuracyMillimeters(receiver.surveys.back()) == 1869);
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 0);
     feed(driver, COMPLETE, 2);
-    CHECK(receiver.surveys.back().flags == 1);
-    CHECK(receiver.surveys.back().duration == 60);
-    CHECK(receiver.surveys.back().mean_accuracy == 1808);
+    CHECK(surveyFlags(receiver.surveys.back()) == 1);
+    CHECK(surveyDuration(receiver.surveys.back()) == 60);
+    CHECK(surveyMeanAccuracyMillimeters(receiver.surveys.back()) == 1808);
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 1);
     gps_test_time += 5000001;
@@ -248,12 +255,12 @@ void surveyLifecycle()
     const auto expiredReports = receiver.surveys.size();
     feed(driver, COMPLETE);
     CHECK(receiver.surveys.size() == expiredReports);
-    feed(driver, sentence("PQTMSVINSTATUS,1,291324000,0,,11,0,60,0,0,0,0"));
-    CHECK(receiver.surveys.back().flags == 0);
-    CHECK(!receiver.surveys.back().accuracyKnown);
-    CHECK(std::isnan(receiver.surveys.back().latitude));
-    CHECK(std::isnan(receiver.surveys.back().longitude));
-    CHECK(std::isnan(receiver.surveys.back().altitude));
+    feed(driver, nmeaSentence("PQTMSVINSTATUS,1,291324000,0,,11,0,60,0,0,0,0"));
+    CHECK(surveyFlags(receiver.surveys.back()) == 0);
+    CHECK(!receiver.surveys.back().survey.meanAccuracyMeters.has_value());
+    CHECK(std::isnan(receiver.surveys.back().survey.position.latitudeDegrees));
+    CHECK(std::isnan(receiver.surveys.back().survey.position.longitudeDegrees));
+    CHECK(std::isnan(receiver.surveys.back().survey.position.altitudeMeters));
     feed(driver, COMPLETE);
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 1);
@@ -261,19 +268,19 @@ void surveyLifecycle()
     feed(driver, COMPLETE);
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 1);
-    CHECK(receiver.surveys.back().flags == 0);
+    CHECK(surveyFlags(receiver.surveys.back()) == 0);
     feed(driver, surveyStatus(291325000, 1, 1));
     feed(driver, surveyStatus(291326000, 2, 60));
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 2);
-    feed(driver, sentence("PQTMSVINSTATUS,1,291327000,2,,11,60,60,nan,0,0,1"));
+    feed(driver, nmeaSentence("PQTMSVINSTATUS,1,291327000,2,,11,60,60,nan,0,0,1"));
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 2);
     revoked(receiver.surveys.back());
     feed(driver, COMPLETE);
-    CHECK(receiver.surveys.back().flags == 0);
+    CHECK(surveyFlags(receiver.surveys.back()) == 0);
     feed(driver, surveyStatus(291328000, 2, 60));
-    CHECK(receiver.surveys.back().flags == 1);
+    CHECK(surveyFlags(receiver.surveys.back()) == 1);
     feed(driver, BOOT);
     CHECK(!driver.receiverReady());
     revoked(receiver.surveys.back());
@@ -293,13 +300,13 @@ void numericStatusFields()
         GPSNativeQuectel driver(receiver.io(), false);
         unsigned baud = 460800;
         CHECK(driver.configure(baud, surveyConfig()) == 0);
-        feed(driver, sentence("PQTMSVINSTATUS,1,291324000,2,,11,60,60,6.378137e6,-0.0,0.0000,1.25e-1"));
+        feed(driver, nmeaSentence("PQTMSVINSTATUS,1,291324000,2,,11,60,60,6.378137e6,-0.0,0.0000,1.25e-1"));
         CHECK(!receiver.surveys.empty());
-        CHECK(receiver.surveys.back().flags == 1);
-        CHECK(receiver.surveys.back().mean_accuracy == 125);
-        CHECK(std::abs(receiver.surveys.back().latitude) < 1e-7);
-        CHECK(std::abs(receiver.surveys.back().longitude) < 1e-7);
-        feed(driver, sentence("PQTMSVINSTATUS,1,291325000,2,,11,60,60," + std::string(invalid) + ",0,0,1"));
+        CHECK(surveyFlags(receiver.surveys.back()) == 1);
+        CHECK(surveyMeanAccuracyMillimeters(receiver.surveys.back()) == 125);
+        CHECK(std::abs(receiver.surveys.back().survey.position.latitudeDegrees) < 1e-7);
+        CHECK(std::abs(receiver.surveys.back().survey.position.longitudeDegrees) < 1e-7);
+        feed(driver, nmeaSentence("PQTMSVINSTATUS,1,291325000,2,,11,60,60," + std::string(invalid) + ",0,0,1"));
         revoked(receiver.surveys.back());
         driver.consume(CORRECTION);
         CHECK(receiver.corrections == 0);
@@ -316,14 +323,14 @@ void malformedAndMixedFraming()
     CHECK(driver.configure(baud, surveyConfig()) == 0);
     const auto writes = receiver.commands.size();
     for (const auto& line : {std::string("$PQTMSVINSTATUS,1,1000,2,,11,60,60,6378137,0,0,1*00\r\n"),
-                             sentence("PQTMSVINSTATUS,2,1000,2,,11,60,60,6378137,0,0,1"),
-                             sentence("PQTMSVINSTATUS,1,1001,2,,11,60,60,nan,0,0,1"),
-                             sentence("PQTMSVINSTATUS,1,1002,2,,11,60,60,6378137,0,0,-1"),
-                             sentence("PQTMSVINSTATUS,1,1003,2,,11,60,60,6378137,0,0,1,extra"),
-                             sentence("PQTMSVINSTATUS,1,1004,2,,11,60,60,6378137,0,0"),
-                             sentence("PQTMSVINSTATUS,1,1005,9,,11,60,60,6378137,0,0,1"),
-                             sentence("PQTMSVINSTATUS,1,604800000,2,,11,60,60,6378137,0,0,1"),
-                             sentence("PQTMSVINSTATUS,1,1006,2,,11,4294967296,60,6378137,0,0,1")}) {
+                             nmeaSentence("PQTMSVINSTATUS,2,1000,2,,11,60,60,6378137,0,0,1"),
+                             nmeaSentence("PQTMSVINSTATUS,1,1001,2,,11,60,60,nan,0,0,1"),
+                             nmeaSentence("PQTMSVINSTATUS,1,1002,2,,11,60,60,6378137,0,0,-1"),
+                             nmeaSentence("PQTMSVINSTATUS,1,1003,2,,11,60,60,6378137,0,0,1,extra"),
+                             nmeaSentence("PQTMSVINSTATUS,1,1004,2,,11,60,60,6378137,0,0"),
+                             nmeaSentence("PQTMSVINSTATUS,1,1005,9,,11,60,60,6378137,0,0,1"),
+                             nmeaSentence("PQTMSVINSTATUS,1,604800000,2,,11,60,60,6378137,0,0,1"),
+                             nmeaSentence("PQTMSVINSTATUS,1,1006,2,,11,4294967296,60,6378137,0,0,1")}) {
         feed(driver, line);
     }
     CHECK(receiver.surveys.empty());
@@ -381,7 +388,8 @@ void scheduledShortSurvey()
             const auto captureDecoded = io.decoded;
             io.decoded = [&](const GPSDecodedBatch& batch) {
                 for (const auto& event : batch.events) {
-                    if (const auto* report = std::get_if<GPSNativeSurveyReport>(&event); report && report->flags == 1) {
+                    if (const auto* report = std::get_if<GPSNativeSurveyReport>(&event);
+                        report && surveyFlags(*report) == 1) {
                         CHECK(savedBaseVerified);
                     }
                 }
@@ -394,11 +402,11 @@ void scheduledShortSurvey()
             CHECK(driver.configure(baud, config) == 0);
             CHECK(savedBaseVerified);
             CHECK(receiver.nativeStoredSurvey);
-            CHECK(receiver.surveys.back().flags == 1);
-            CHECK(receiver.surveys.back().duration == 1);
-            CHECK(receiver.surveys.back().mean_accuracy == 1250);
+            CHECK(surveyFlags(receiver.surveys.back()) == 1);
+            CHECK(surveyDuration(receiver.surveys.back()) == 1);
+            CHECK(surveyMeanAccuracyMillimeters(receiver.surveys.back()) == 1250);
             CHECK(std::none_of(receiver.surveys.begin(), receiver.surveys.end(),
-                               [](const auto& report) { return report.flags == 2; }));
+                               [](const auto& report) { return surveyFlags(report) == 2; }));
             if (previouslyEnabled) {
                 CHECK(receiver.surveys.front().timestamp < savedBaseVerifiedAt);
             }
@@ -429,7 +437,7 @@ void measurementOrderAndRollover()
     CHECK(driver.configure(baud, surveyConfig()) == 0);
     const auto complete = surveyStatus(604799000, 2, 60);
     feed(driver, complete);
-    CHECK(receiver.surveys.back().flags == 1);
+    CHECK(surveyFlags(receiver.surveys.back()) == 1);
     const size_t reports = receiver.surveys.size();
     const auto receivedAt = receiver.surveys.back().timestamp;
     gps_test_time += 4000000;
@@ -444,20 +452,20 @@ void measurementOrderAndRollover()
     CHECK(receiver.corrections == 0);
 
     feed(driver, surveyStatus(0, 1, 1));
-    CHECK(receiver.surveys.back().flags == 2);
+    CHECK(surveyFlags(receiver.surveys.back()) == 2);
     feed(driver, surveyStatus(604798000, 2, 60));
-    CHECK(receiver.surveys.back().flags == 2);
+    CHECK(surveyFlags(receiver.surveys.back()) == 2);
     feed(driver, surveyStatus(0, 2, 60));  // Same measurement epoch cannot change an accepted observation.
-    CHECK(receiver.surveys.back().flags == 2);
+    CHECK(surveyFlags(receiver.surveys.back()) == 2);
     feed(driver, surveyStatus(1000, 2, 60));
-    CHECK(receiver.surveys.back().flags == 1);
+    CHECK(surveyFlags(receiver.surveys.back()) == 1);
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 1);
     feed(driver, surveyStatus(2000, 0, 0));
-    CHECK(receiver.surveys.back().flags == 0);
+    CHECK(surveyFlags(receiver.surveys.back()) == 0);
     feed(driver, surveyStatus(0, 1, 1));
     feed(driver, surveyStatus(1000, 2, 60));
-    CHECK(receiver.surveys.back().flags == 0);
+    CHECK(surveyFlags(receiver.surveys.back()) == 0);
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 1);
 }
@@ -471,7 +479,7 @@ void cancellationRevokesPublishedState()
     unsigned baud = 460800;
     CHECK(driver.configure(baud, surveyConfig()) == 0);
     feed(driver, COMPLETE);
-    CHECK(receiver.surveys.back().flags == 1);
+    CHECK(surveyFlags(receiver.surveys.back()) == 1);
     receiver.failed = true;
     receiver.fault = Receiver::Fault::Cancel;
     CHECK(driver.receive(1000) == GPSProtocol::ReadCancelled);
@@ -480,7 +488,7 @@ void cancellationRevokesPublishedState()
     feed(driver, surveyStatus(291324000, 2, 60));
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 0);
-    CHECK(receiver.surveys.back().flags == 0);
+    CHECK(surveyFlags(receiver.surveys.back()) == 0);
 }
 
 void transactionFailures()
@@ -671,7 +679,7 @@ void managedChanges()
         driver.consume(CORRECTION);
         CHECK(receiver.corrections == 0);
         if (fixed) {
-            feed(driver, sentence("PQTMSVINSTATUS,1,1000,2,,00,0,0,0.0000,6378237.0000,0.0000,0.0000"));
+            feed(driver, nmeaSentence("PQTMSVINSTATUS,1,1000,2,,00,0,0,0.0000,6378237.0000,0.0000,0.0000"));
         } else {
             feed(driver, PROGRESS);
             feed(driver, COMPLETE);
@@ -725,7 +733,7 @@ void managedBaseValuesAndNoUnnecessarySaves()
         noPersistence(receiver);
     }
     Receiver receiver;
-    receiver.identity = sentence("PQTMVERNO,LG580P03AANR01A03S,2024/04/30,10:53:07");
+    receiver.identity = nmeaSentence("PQTMVERNO,LG580P03AANR01A03S,2024/04/30,10:53:07");
     auto config = fixedConfig();
     config.allowPersistentChanges = true;
     GPSNativeQuectel driver(receiver.io(), false);
@@ -797,8 +805,8 @@ void managedReadbackFailures()
             receiver.failureOccurrence = afterSave ? 1 : roleReadback ? 3 : 2;
             receiver.failAfterSaves = afterSave ? 1 : 0;
             receiver.fault = Receiver::Fault::Readback;
-            receiver.wrongReadback =
-                roleReadback ? sentence("PQTMCFGRCVRMODE,OK,1") : sentence("PQTMCFGSVIN,OK,2,0,0,1,6378237,0,0");
+            receiver.wrongReadback = roleReadback ? nmeaSentence("PQTMCFGRCVRMODE,OK,1")
+                                                  : nmeaSentence("PQTMCFGSVIN,OK,2,0,0,1,6378237,0,0");
             GPSNativeQuectel driver(receiver.io(), false);
             auto config = fixedConfig();
             config.allowPersistentChanges = true;

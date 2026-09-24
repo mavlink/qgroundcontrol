@@ -66,7 +66,7 @@ private:
     void decodeInit(void);
 
     /**
-     * check the message if whether is 8001,memcpy data to _gps_position
+     * check the message if whether is 8001,memcpy data to _position
      */
     int handleMessage(int len);
 

@@ -22,7 +22,7 @@ void GPSAsciiProtocol::resetStream()
     _positionTime.reset();
     _vdopReceivedAtUs.reset();
     _accuracy = {};
-    *_position = {};
+    _position = {};
     if (_satellites) {
         *_satellites = {};
     }
@@ -63,8 +63,8 @@ int GPSAsciiProtocol::decodeByte(uint8_t byte)
         _discardLine = false;
         _lineEnded = false;
         _drainSatellites();
-        if (updates & 1) {
-            publishPosition(*_position);
+        if (updates & GPSDecodedBatch::POSITION_UPDATE) {
+            publishPosition(_position);
         }
         return updates;
     }
@@ -96,9 +96,9 @@ int GPSAsciiProtocol::_handleNmea(std::string_view line)
     _publishSatellites(satelliteUpdate.completed);
     const auto navigation = NMEA::navigationStatus(*sentence);
     if (navigation && !navigation->valid) {
-        *_position = {};
-        _position->navigation.timestampUs = now;
-        _position->navigation.fixType = GPSPositionReport::FixType::NoFix;
+        _position = {};
+        _position.navigation.timestampUs = now;
+        _position.navigation.fixType = GPSPositionReport::FixType::NoFix;
         _positionTime = navigation->utcMilliseconds;
         _accuracyReceipt = {};
         _vdopReceivedAtUs.reset();
@@ -107,46 +107,43 @@ int GPSAsciiProtocol::_handleNmea(std::string_view line)
             const auto count = NMEA::number<unsigned>(sentence->fields[NMEA::Field::GGA_SATELLITES_USED]);
             if (count && *count < UINT8_MAX) {
                 used = static_cast<int>(*count);
-                _position->navigation.satellitesUsed = static_cast<uint8_t>(*count);
+                _position.navigation.satellitesUsed = static_cast<uint8_t>(*count);
             }
         }
         publishSatelliteUsage(used);
-        updates |= 1;
+        updates |= GPSDecodedBatch::POSITION_UPDATE;
     } else if (const auto fix = NMEA::gga(*sentence)) {
         const auto positionTime = navigation ? navigation->utcMilliseconds : std::nullopt;
         if (!positionTime || positionTime != _positionTime) {
             _vdopReceivedAtUs.reset();
         }
         _expireVdop(now);
-        applyNMEAGGA(*_position, *fix, now);
+        applyNMEAGGA(_position, *fix, now);
         _positionTime = positionTime;
         const bool matchingAccuracy = _accuracyReceipt.matches({_positionTime, now}, METADATA_MAX_AGE_US);
-        _position->navigation.horizontalAccuracyMeters = matchingAccuracy ? _accuracy.horizontalAccuracy : NAN;
-        _position->navigation.verticalAccuracyMeters = matchingAccuracy ? _accuracy.verticalAccuracy : NAN;
-        _position->accuracy_timestamp = matchingAccuracy ? _accuracyReceipt.receivedAtUs : 0;
+        _position.navigation.horizontalAccuracyMeters = matchingAccuracy ? _accuracy.horizontalAccuracy : NAN;
+        _position.navigation.verticalAccuracyMeters = matchingAccuracy ? _accuracy.verticalAccuracy : NAN;
         publishSatelliteUsage(fix->satellitesUsed ? std::optional<int>(*fix->satellitesUsed) : std::nullopt);
-        updates |= 1;
+        updates |= GPSDecodedBatch::POSITION_UPDATE;
     } else if (const auto accuracy = NMEA::gst(*sentence)) {
         _accuracyReceipt = {NMEA::utcMilliseconds(sentence->fields[NMEA::Field::UTC_TIME]), now};
         _accuracy = *accuracy;
-        if (NMEA::EpochReceipt{_positionTime, _position->navigation.timestampUs}.matches(_accuracyReceipt,
-                                                                                         METADATA_MAX_AGE_US)) {
+        if (NMEA::EpochReceipt{_positionTime, _position.navigation.timestampUs}.matches(_accuracyReceipt,
+                                                                                        METADATA_MAX_AGE_US)) {
             _expireVdop(now);
-            _position->navigation.horizontalAccuracyMeters = _accuracy.horizontalAccuracy;
-            _position->navigation.verticalAccuracyMeters = _accuracy.verticalAccuracy;
-            _position->accuracy_timestamp = now;
-            updates |= 1;
+            _position.navigation.horizontalAccuracyMeters = _accuracy.horizontalAccuracy;
+            _position.navigation.verticalAccuracyMeters = _accuracy.verticalAccuracy;
+            updates |= GPSDecodedBatch::POSITION_UPDATE;
         }
     } else if (sentence->type() == "GSA" && satelliteUpdate.accepted && _positionTime &&
-               now >= _position->navigation.timestampUs &&
-               now - _position->navigation.timestampUs <= METADATA_MAX_AGE_US) {
+               now >= _position.navigation.timestampUs &&
+               now - _position.navigation.timestampUs <= METADATA_MAX_AGE_US) {
         // GSA has no UTC field, so it can only supplement the preceding fresh GGA.
         const auto hdop = NMEA::number<float>(sentence->fields[NMEA::Field::GSA_HDOP]);
         const auto vdop = NMEA::number<float>(sentence->fields[NMEA::Field::GSA_VDOP]);
-        _position->navigation.horizontalDop = hdop && *hdop >= 0 ? *hdop : NAN;
-        _position->navigation.verticalDop = vdop && *vdop >= 0 ? *vdop : NAN;
+        _position.navigation.horizontalDop = hdop && *hdop >= 0 ? *hdop : NAN;
+        _position.navigation.verticalDop = vdop && *vdop >= 0 ? *vdop : NAN;
         _vdopReceivedAtUs = now;
-        _position->dop_timestamp = now;
     }
     return updates;
 }
@@ -156,7 +153,7 @@ void GPSAsciiProtocol::_expireVdop(uint64_t now)
     // GGA refreshes HDOP only; it must not renew an older GSA's VDOP.
     if (!_vdopReceivedAtUs || now < *_vdopReceivedAtUs || now - *_vdopReceivedAtUs > METADATA_MAX_AGE_US) {
         _vdopReceivedAtUs.reset();
-        _position->navigation.verticalDop = NAN;
+        _position.navigation.verticalDop = NAN;
     }
 }
 

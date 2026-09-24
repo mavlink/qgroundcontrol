@@ -4,7 +4,7 @@
 
 #include <QtCore/QByteArray>
 
-#include "RTCMFramer.h"
+#include "../Driver/Protocols/ProtocolTestPackets.h"
 
 namespace GpsTestHelpers {
 
@@ -20,12 +20,9 @@ inline QByteArray buildRtcmFrame(uint16_t messageId, int extraPayloadBytes = 0)
     for (int index = 0; index < extraPayloadBytes; ++index) {
         frame.append(static_cast<char>(index & 0xff));
     }
-    const uint32_t crc =
-        RTCMFramer::crc24q({reinterpret_cast<const uint8_t*>(frame.constData()), static_cast<size_t>(frame.size())});
-    frame.append(static_cast<char>(crc >> 16));
-    frame.append(static_cast<char>(crc >> 8));
-    frame.append(static_cast<char>(crc));
-    return frame;
+    const auto packet =
+        rtcmPacket({reinterpret_cast<const uint8_t*>(frame.constData()) + 3, static_cast<size_t>(frame.size() - 3)});
+    return QByteArray(reinterpret_cast<const char*>(packet.data()), static_cast<qsizetype>(packet.size()));
 }
 
 }  // namespace GpsTestHelpers

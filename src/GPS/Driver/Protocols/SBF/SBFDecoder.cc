@@ -296,7 +296,6 @@ int GPSNativeSBF::payloadRxDone()
                     _rtcm_parsing.reset();
                     if (_output_mode == OutputMode::RTCM) {
                         GPSNativeSurveyReport status{};
-                        status.latitude = status.longitude = status.altitude = NAN;
                         surveyInStatus(status);
                     }
                 }
@@ -337,7 +336,7 @@ int GPSNativeSBF::payloadRxDone()
             }
 
             // Check fix and error code
-            position.vel_ned_valid =
+            position.velocityValid =
                 position.navigation.fixType > GPSPositionReport::FixType::NoFix && _buf.payload_pvt_geodetic.error == 0;
 
             // Check boundaries and invalidate GPS velocities
@@ -345,7 +344,7 @@ int GPSNativeSBF::payloadRxDone()
             // values
             if (fabsf(_buf.payload_pvt_geodetic.vn) > 600.0f || fabsf(_buf.payload_pvt_geodetic.ve) > 600.0f ||
                 fabsf(_buf.payload_pvt_geodetic.vu) > 600.0f) {
-                position.vel_ned_valid = false;
+                position.velocityValid = false;
             }
 
             // Check boundaries and invalidate position
@@ -363,13 +362,13 @@ int GPSNativeSBF::payloadRxDone()
             if (_buf.payload_pvt_geodetic.nr_sv < 255) {  // 255 = do not use value
                 position.navigation.satellitesUsed = _buf.payload_pvt_geodetic.nr_sv;
 
-                if (_satellite_info) {
+                if (_satellites) {
                     publishSatelliteUsage(position.navigation.satellitesUsed);
                 }
 
             } else {
                 position.navigation.satellitesUsed = UINT8_MAX;
-                if (_satellite_info) {
+                if (_satellites) {
                     publishSatelliteUsage(std::nullopt);
                 }
             }
@@ -386,22 +385,19 @@ int GPSNativeSBF::payloadRxDone()
                 _buf.payload_pvt_geodetic.h_accuracy != UINT16_MAX
                     ? static_cast<float>(_buf.payload_pvt_geodetic.h_accuracy) / 200.0f
                     : NAN;
-            position.accuracy_timestamp = nowUs();
             position.navigation.verticalAccuracyMeters =
                 _buf.payload_pvt_geodetic.v_accuracy != UINT16_MAX
                     ? static_cast<float>(_buf.payload_pvt_geodetic.v_accuracy) / 200.0f
                     : NAN;
 
-            position.vel_n_m_s = static_cast<float>(_buf.payload_pvt_geodetic.vn);
-            position.vel_e_m_s = static_cast<float>(_buf.payload_pvt_geodetic.ve);
-            position.vel_d_m_s = -1.0f * static_cast<float>(_buf.payload_pvt_geodetic.vu);
+            const float velocityNorth = static_cast<float>(_buf.payload_pvt_geodetic.vn);
+            const float velocityEast = static_cast<float>(_buf.payload_pvt_geodetic.ve);
             position.navigation.speedMetersPerSecond =
-                sqrtf(position.vel_n_m_s * position.vel_n_m_s + position.vel_e_m_s * position.vel_e_m_s);
+                sqrtf(velocityNorth * velocityNorth + velocityEast * velocityEast);
 
             const float course = _buf.payload_pvt_geodetic.cog;
             position.navigation.courseRadians =
                 std::isfinite(course) && course >= 0.0f && course <= 360.0f ? course * GPS_DEG_TO_RAD : NAN;
-            position.courseAccuracyRadians = 1.0f * GPS_DEG_TO_RAD;
 
             // WNc/TOW is GNSS system time, not UTC. Without receiver UTC/leap information,
             // retain the epoch key internally and let the facade use reception UTC.
@@ -423,13 +419,16 @@ int GPSNativeSBF::payloadRxDone()
                 _survey_active = active;
                 GPSNativeSurveyReport status{};
                 // PVT accuracy describes the navigation solution, not the averaged base survey.
-                status.altitudeDatum = GPSNativeSurveyReport::AltitudeDatum::Ellipsoid;
-                status.latitude = coordinatesValid && !pvt.error ? position.navigation.latitudeDegrees : NAN;
-                status.longitude = coordinatesValid && !pvt.error ? position.navigation.longitudeDegrees : NAN;
-                status.altitude = coordinatesValid && !pvt.error ? position.navigation.altitudeEllipsoidMeters : NAN;
-                status.duration =
-                    std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? 0 : _survey_duration;
-                status.flags = static_cast<uint8_t>(valid) | (static_cast<uint8_t>(active) << 1);
+                if (coordinatesValid && !pvt.error) {
+                    status.survey.position.latitudeDegrees = position.navigation.latitudeDegrees;
+                    status.survey.position.longitudeDegrees = position.navigation.longitudeDegrees;
+                    status.survey.position.altitudeMeters =
+                        static_cast<float>(position.navigation.altitudeEllipsoidMeters);
+                }
+                status.survey.duration = std::chrono::seconds(
+                    std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? 0 : _survey_duration);
+                status.survey.valid = valid;
+                status.survey.active = active;
                 surveyInStatus(status);
                 ret |= 4;  // RTCM infos have been updated
             }
@@ -439,26 +438,17 @@ int GPSNativeSBF::payloadRxDone()
         }
 
         case SBF_ID_VelCovGeodetic: {
-            const auto& covariance = _buf.payload_vel_col_geodetic;
-            const std::array variances{covariance.cov_vn_vn, covariance.cov_ve_ve, covariance.cov_vu_vu};
-            const bool valid = !covariance.error && std::all_of(variances.begin(), variances.end(), [](float variance) {
-                return std::isfinite(variance) && variance >= 0;
-            });
-            position.speedAccuracyMetersPerSecond =
-                valid ? std::sqrt(*std::max_element(variances.begin(), variances.end())) : NAN;
             break;
         }
         case SBF_ID_DOP:
             position.navigation.horizontalDop =
                 _buf.payload_dop.hDOP != UINT16_MAX ? _buf.payload_dop.hDOP * 0.01f : NAN;
             position.navigation.verticalDop = _buf.payload_dop.vDOP != UINT16_MAX ? _buf.payload_dop.vDOP * 0.01f : NAN;
-            position.dop_timestamp = nowUs();
             break;
 
         case SBF_ID_AttEuler: {
             const auto& attitude = _buf.payload_att_euler;
             position.navigation.headingRadians = NAN;
-            position.heading_timestamp = nowUs();
             if (!attitude.error_not_requested && !attitude.error_aux1 && !attitude.error_aux2 && attitude.mode >= 1 &&
                 attitude.mode <= 4 && std::isfinite(attitude.heading) && std::abs(attitude.heading) <= 360) {
                 position.navigation.headingRadians = std::remainder(attitude.heading, 360.0f) * GPS_DEG_TO_RAD;

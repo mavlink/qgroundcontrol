@@ -259,11 +259,11 @@ void NTRIPReentrancyTest::nmeaLogsMetadataOnly()
     configuration.port = server.serverPort();
     NTRIPHttpTransport transport(configuration, {});
     transport.start();
-    QTRY_VERIFY(server.hasPendingConnections());
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
     QVERIFY(peer);
     QByteArray request;
-    QTRY_VERIFY((request += peer->readAll()).endsWith("\r\n\r\n"));
+    QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).endsWith("\r\n\r\n"), TestTimeout::mediumMs());
 
     const DebugCapture logs("GPS.NTRIPHttpTransport");
     const QByteArray gga = "$GPGGA,120000,4723.8620,N,00832.7360,E,1,12,1.0,100.0,M,0.0,M,,";
@@ -272,7 +272,7 @@ void NTRIPReentrancyTest::nmeaLogsMetadataOnly()
     _expectDebugMessage("GPS.NTRIPHttpTransport", metadata);
     transport.sendNMEA(gga + "\r\n");
     _verifyDebugMessage();
-    QTRY_COMPARE(peer->bytesAvailable(), expected.size());
+    QTRY_COMPARE_WITH_TIMEOUT(peer->bytesAvailable(), expected.size(), TestTimeout::mediumMs());
     QCOMPARE(peer->readAll(), expected);
     QCOMPARE(logs.messages(), QStringList{metadata});
     transport.stop();
@@ -389,7 +389,7 @@ void NTRIPReentrancyTest::failureCanRestart()
     transport->_processHttpBytes("HTTP/1.1 503 Unavailable\r\nRetry-After: 17\r\nContent-Length: " +
                                      QByteArray(deferred ? "100" : "0") + "\r\n\r\n",
                                  123);
-    QTRY_COMPARE(failures, 1);
+    QTRY_COMPARE_WITH_TIMEOUT(failures, 1, TestTimeout::mediumMs());
     if (action == 2) {
         QVERIFY(transport->_socket);
         QVERIFY(transport->_socket != previous);
@@ -431,10 +431,10 @@ void NTRIPReentrancyTest::legacyCaster()
     QSignalSpy frames(&transport, &NTRIPTransport::correctionFrameReceived);
     QSignalSpy errors(&transport, &NTRIPTransport::error);
     transport.start();
-    QTRY_VERIFY(server.hasPendingConnections());
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
     QByteArray request;
-    QTRY_VERIFY((request += peer->readAll()).endsWith("\r\n\r\n"));
+    QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).endsWith("\r\n\r\n"), TestTimeout::mediumMs());
     const bool accepted =
         request.startsWith("GET /TEST HTTP/1.1\r\n") && request.contains("\r\nUser-Agent: NTRIP ") &&
         (!authenticated ||
@@ -446,7 +446,7 @@ void NTRIPReentrancyTest::legacyCaster()
     } else {
         peer->disconnectFromHost();
     }
-    QTRY_VERIFY(!frames.isEmpty() || !errors.isEmpty());
+    QTRY_VERIFY_WITH_TIMEOUT(!frames.isEmpty() || !errors.isEmpty(), TestTimeout::mediumMs());
     QVERIFY(errors.isEmpty());
     QCOMPARE(connected.size(), 1);
     QCOMPARE(plaintext.size(), authenticated ? 1 : 0);
@@ -604,7 +604,7 @@ void NTRIPReentrancyTest::errorBodyDeadline()
     drip.setInterval(NTRIPHttpTransport::kErrorBodyTimeout / 5);
     connect(&drip, &QTimer::timeout, &transport, [&]() { transport._processHttpBytes("x", 123); });
     drip.start();
-    QTRY_COMPARE(errors.size(), 1);
+    QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
     drip.stop();
     const auto failure = qvariant_cast<NTRIPFailure>(errors.first().first());
     QCOMPARE(failure.code, NTRIPError::HttpError);
@@ -663,7 +663,7 @@ void NTRIPReentrancyTest::pendingErrorRetiresAttempt()
     QObject context;
     QTimer::singleShot(NTRIPHttpTransport::kErrorBodyTimeout + std::chrono::milliseconds{50}, &context,
                        [&]() { deadlinePassed = true; });
-    QTRY_VERIFY(deadlinePassed);
+    QTRY_VERIFY_WITH_TIMEOUT(deadlinePassed, TestTimeout::mediumMs());
     QVERIFY(errors.isEmpty());
 }
 
@@ -973,10 +973,10 @@ void NTRIPReentrancyTest::socketTermination()
     QSignalSpy errors(&transport, &NTRIPTransport::error);
     QSignalSpy frames(&transport, &NTRIPTransport::correctionFrameReceived);
     transport.start();
-    QTRY_VERIFY(server.hasPendingConnections());
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
     QVERIFY(peer);
-    QTRY_VERIFY(peer->bytesAvailable() > 0);
+    QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
     peer->readAll();
     const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005);
     const QByteArray body = frame.repeated(4000);
@@ -993,7 +993,7 @@ void NTRIPReentrancyTest::socketTermination()
     }
     QCOMPARE(peer->write(wire), wire.size());
     peer->disconnectFromHost();
-    QTRY_COMPARE(errors.size(), 1);
+    QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
     QCOMPARE(frames.size(), 4000);
     QCOMPARE(qvariant_cast<NTRIPFailure>(errors[0][0]).code,
              mode == 2 || mode == 4 ? NTRIPError::InvalidHttpResponse : NTRIPError::ServerDisconnected);
@@ -1015,14 +1015,14 @@ void NTRIPReentrancyTest::filterConfigurationUpdatesWithoutReconnect()
     QSignalSpy connected(&transport, &NTRIPTransport::connected);
     QSignalSpy observed(&transport, &NTRIPTransport::correctionFrameReceived);
     transport.start();
-    QTRY_VERIFY(server.hasPendingConnections());
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
-    QTRY_VERIFY(peer->bytesAvailable() > 0);
+    QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
     QVERIFY(peer->readAll().startsWith("GET /TEST HTTP/1.1"));
     const auto frames = GpsTestHelpers::buildRtcmFrame(1005) + GpsTestHelpers::buildRtcmFrame(1077);
     const auto response = QByteArrayLiteral("HTTP/1.1 200 OK\r\n\r\n") + frames;
     QCOMPARE(peer->write(response), response.size());
-    QTRY_COMPARE(observed.size(), 2);
+    QTRY_COMPARE_WITH_TIMEOUT(observed.size(), 2, TestTimeout::mediumMs());
     auto first = qvariant_cast<RTCMDecodedFrame>(observed[0][0]);
     auto second = qvariant_cast<RTCMDecodedFrame>(observed[1][0]);
     QVERIFY(first.valid && !first.filtered);
@@ -1035,7 +1035,7 @@ void NTRIPReentrancyTest::filterConfigurationUpdatesWithoutReconnect()
     const NTRIPRtcmFilterConfig replacement{.whitelist = QStringLiteral("1077")};
     transport.setRtcmWhitelist(replacement.messageIds());
     QCOMPARE(peer->write(frames), frames.size());
-    QTRY_COMPARE(observed.size(), 4);
+    QTRY_COMPARE_WITH_TIMEOUT(observed.size(), 4, TestTimeout::mediumMs());
     first = qvariant_cast<RTCMDecodedFrame>(observed[2][0]);
     second = qvariant_cast<RTCMDecodedFrame>(observed[3][0]);
     QVERIFY(first.valid && first.filtered);
@@ -1044,7 +1044,7 @@ void NTRIPReentrancyTest::filterConfigurationUpdatesWithoutReconnect()
 
     transport.setRtcmWhitelist(NTRIPRtcmFilterConfig{}.messageIds());
     QCOMPARE(peer->write(frames), frames.size());
-    QTRY_COMPARE(observed.size(), 6);
+    QTRY_COMPARE_WITH_TIMEOUT(observed.size(), 6, TestTimeout::mediumMs());
     first = qvariant_cast<RTCMDecodedFrame>(observed[4][0]);
     second = qvariant_cast<RTCMDecodedFrame>(observed[5][0]);
     QVERIFY(first.valid && !first.filtered);
@@ -1084,14 +1084,15 @@ void NTRIPReentrancyTest::sourceTableSuccessAndCache()
     configuration.port = server.serverPort();
     NTRIPSourceTableController controller;
     controller.fetch(configuration);
-    QTRY_VERIFY(server.hasPendingConnections());
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
     std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
-    QTRY_VERIFY(peer->bytesAvailable() > 0);
+    QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::mediumMs());
     QVERIFY(peer->readAll().startsWith("GET / HTTP/1.1"));
     const QByteArray response =
         "HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(table.size()) + "\r\n\r\n" + table;
     QCOMPARE(peer->write(response), response.size());
-    QTRY_COMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
     auto* model = controller.mountpointModel();
     QCOMPARE(model->rowCount(), 2);
     const auto distanceAt = [model](int row) {
@@ -1540,7 +1541,7 @@ void NTRIPReentrancyTest::modelResetReentry()
     QVERIFY(handled);
     QCOMPARE(countChangesAfterDeletion, 0);
     if (action != 1) {
-        QTRY_COMPARE(publications, 1);
+        QTRY_COMPARE_WITH_TIMEOUT(publications, 1, TestTimeout::mediumMs());
         QCOMPARE(controller->fetchStatus(), action == 0 ? NTRIPSourceTableController::FetchStatus::Error
                                                         : NTRIPSourceTableController::FetchStatus::Success);
     }
@@ -1668,9 +1669,9 @@ void NTRIPReentrancyTest::statisticsExpireDuringSilence()
     QSignalSpy rateChanges(&stats, &NTRIPConnectionStats::dataRateChanged);
     stats.start();
     stats.recordMessage(2048);
-    QTRY_VERIFY(stats.dataRateBytesPerSec() > 0.0);
+    QTRY_VERIFY_WITH_TIMEOUT(stats.dataRateBytesPerSec() > 0.0, TestTimeout::mediumMs());
     rateChanges.clear();
-    QTRY_COMPARE(stats.dataRateBytesPerSec(), 0.0);
+    QTRY_COMPARE_WITH_TIMEOUT(stats.dataRateBytesPerSec(), 0.0, TestTimeout::mediumMs());
     QVERIFY(!rateChanges.isEmpty());
     QCOMPARE(stats.bytesReceived(), quint64(2048));
     QCOMPARE(stats.messagesReceived(), quint32(1));
@@ -1877,7 +1878,7 @@ void NTRIPReentrancyTest::ggaSourceChangesPreserveCadence()
     });
     // Keep changing sources until three scheduled sends survive reconfiguration.
     reconfigure.start(0);
-    QTRY_COMPARE(transport.sentNmea.size(), 4);
+    QTRY_COMPARE_WITH_TIMEOUT(transport.sentNmea.size(), 4, TestTimeout::mediumMs());
     reconfigure.stop();
     provider.stop();
     QVERIFY(sourceChanges > 3);
@@ -1914,7 +1915,7 @@ void NTRIPReentrancyTest::ggaIntervalChangesRestartCadence()
     elapsed.start();
     provider.configure({Source::RTKBase, std::chrono::milliseconds{updatedIntervalMs}});
     QCOMPARE(transport.sentNmea.size(), 1);
-    QVERIFY(sourceChanged.wait());
+    QVERIFY(sourceChanged.wait(TestTimeout::mediumMs()));
     provider.stop();
     QCOMPARE(transport.sentNmea.size(), 2);
     QCOMPARE(sourceChanged.first().first().toString(), QStringLiteral("RTK"));
@@ -1938,11 +1939,11 @@ void NTRIPReentrancyTest::ggaConfigurationPreservesFastRetry()
     QVERIFY(transport.sentNmea.isEmpty());
     provider.configure({Source::RTKBase, std::chrono::milliseconds{100}});
     QVERIFY(transport.sentNmea.isEmpty());
-    QVERIFY(sourceChanged.wait());
+    QVERIFY(sourceChanged.wait(TestTimeout::mediumMs()));
     QVERIFY(elapsed.elapsed() >= NTRIPGgaProvider::kFastRetryInterval.count() * 4 / 5);
     QCOMPARE(transport.sentNmea.size(), 1);
     QCOMPARE(provider.currentSource(), QStringLiteral("RTK"));
-    QTRY_COMPARE(transport.sentNmea.size(), 2);
+    QTRY_COMPARE_WITH_TIMEOUT(transport.sentNmea.size(), 2, TestTimeout::mediumMs());
     provider.stop();
 }
 

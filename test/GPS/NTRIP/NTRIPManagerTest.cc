@@ -310,7 +310,7 @@ void NTRIPManagerTest::testReconnectSignalFires()
     mgr._reconnectTimer.setInterval(50ms);
     mgr._reconnectTimer.start();
     QSignalSpy spy(&mgr._reconnectTimer, &QChronoTimer::timeout);
-    QVERIFY(spy.wait(2000));
+    QVERIFY(spy.wait(TestTimeout::mediumMs()));
     QCOMPARE(spy.count(), 1);
     QVERIFY(!mgr._reconnectTimer.isActive());
 }

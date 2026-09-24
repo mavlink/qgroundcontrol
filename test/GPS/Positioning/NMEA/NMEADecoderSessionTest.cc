@@ -31,7 +31,7 @@ void NMEADecoderSessionTest::_decoderSessionRestart()
     input.feed(QByteArray::fromHex("b5620000") + FIX.first(19));
     QVERIFY(!session.health()->usable());
     input.feed(FIX.mid(19));
-    QTRY_VERIFY_WITH_TIMEOUT(session.health()->usable(), 5000);
+    QTRY_VERIFY_WITH_TIMEOUT(session.health()->usable(), TestTimeout::mediumMs());
     QVERIFY(session.health()->coordinate().isValid());
 
     session.stop();
@@ -42,7 +42,7 @@ void NMEADecoderSessionTest::_decoderSessionRestart()
     session.positionSource()->startUpdates();
     input.feed(NMEAUtils::repairChecksum("$GPRMC,092751.000,A,5321.6802,N,00630.3372,W,2.0,31.66,280511,,,A"));
     QSignalSpy fixes(session.positionSource(), &QGeoPositionInfoSource::positionUpdated);
-    QTRY_VERIFY_WITH_TIMEOUT(!fixes.isEmpty(), 5000);
+    QTRY_VERIFY_WITH_TIMEOUT(!fixes.isEmpty(), TestTimeout::mediumMs());
     const auto position = fixes.last().first().value<QGeoPositionInfo>();
     QVERIFY(!position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy));
 }
@@ -54,9 +54,9 @@ void NMEADecoderSessionTest::_fixLossInvalidatesHealth()
     QVERIFY(session.start(&input));
     session.positionSource()->startUpdates();
     input.feed(FIX);
-    QTRY_VERIFY_WITH_TIMEOUT(session.health()->usable(), 1000);
+    QTRY_VERIFY_WITH_TIMEOUT(session.health()->usable(), TestTimeout::shortMs());
     input.feed(NMEAUtils::repairChecksum("$GPGGA,092751.000,,,,,0,0,,,,,,,"));
-    QTRY_COMPARE_WITH_TIMEOUT(session.health()->state(), GPSSourceHealth::State::Invalid, 1000);
+    QTRY_COMPARE_WITH_TIMEOUT(session.health()->state(), GPSSourceHealth::State::Invalid, TestTimeout::shortMs());
     QVERIFY(!session.health()->acceptedObservation());
 }
 

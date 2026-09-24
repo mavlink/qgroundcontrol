@@ -27,6 +27,16 @@
     } while (0)
 
 namespace {
+int surveyFlags(const GPSNativeSurveyReport& report)
+{
+    return (report.survey.valid ? 1 : 0) | (report.survey.active ? 2 : 0);
+}
+
+uint32_t surveyDuration(const GPSNativeSurveyReport& report)
+{
+    return static_cast<uint32_t>(report.survey.duration.count());
+}
+
 class Receiver
 {
 public:
@@ -392,8 +402,8 @@ void sbfDatumRejection()
         CHECK(driver.ioError() == -EPROTO);
         CHECK(driver.ioErrorDetail().contains("datum"));
         CHECK(!driver.receiverReady());
-        CHECK(surveys.size() == 1 && surveys.back().flags == 0);
-        CHECK(std::isnan(surveys.back().latitude));
+        CHECK(surveys.size() == 1 && surveyFlags(surveys.back()) == 0);
+        CHECK(std::isnan(surveys.back().survey.position.latitudeDegrees));
     }
 }
 #endif
@@ -490,9 +500,8 @@ void sbfSurveyEvidence()
         surveys.clear();
         driver.consume(frame);
         CHECK(surveys.size() == 1);
-        CHECK(surveys.back().flags == flags);
-        CHECK(!surveys.back().accuracyKnown);
-        CHECK(surveys.back().altitudeDatum == GPSNativeSurveyReport::AltitudeDatum::Ellipsoid);
+        CHECK(surveyFlags(surveys.back()) == flags);
+        CHECK(!surveys.back().survey.meanAccuracyMeters.has_value());
         gps_test_time += 200000;
         driver.consume({});
         if (horizontal == UINT16_MAX) {
@@ -505,7 +514,7 @@ void sbfSurveyEvidence()
         } else {
             CHECK(position.navigation.verticalAccuracyMeters == vertical / 200.0f);
         }
-        return surveys.back().duration;
+        return surveyDuration(surveys.back());
     };
 
     for (bool fixed : {false, true, false}) {
@@ -521,8 +530,8 @@ void sbfSurveyEvidence()
         CHECK(fixed ? progress == 0 : progress > 0);
         const auto completed = publish(3, 1);
         CHECK(fixed ? completed == 0 : completed >= progress);
-        CHECK(std::abs(surveys.back().latitude - 0.5 * GPS_RAD_TO_DEG) < 1e-6);
-        CHECK(surveys.back().altitude == 500);
+        CHECK(std::abs(surveys.back().survey.position.latitudeDegrees - 0.5 * GPS_RAD_TO_DEG) < 1e-6);
+        CHECK(surveys.back().survey.position.altitudeMeters == 500);
         CHECK(publish(3, 1, 0, 0) == completed);
         CHECK(publish(3, 1, UINT16_MAX, UINT16_MAX) == completed);
         CHECK(publish(3, 1, UINT16_MAX, 200) == completed);
@@ -533,7 +542,7 @@ void sbfSurveyEvidence()
         }
         frame[15] = 9;
         CHECK(publish(3, 0) == completed);
-        CHECK(std::isnan(surveys.back().latitude));
+        CHECK(std::isnan(surveys.back().survey.position.latitudeDegrees));
         const auto failedProgress = publish(0x41, fixed ? 0 : 2);
         CHECK(fixed ? failedProgress == 0 : failedProgress > completed);
         frame[15] = 0;
@@ -544,9 +553,9 @@ void sbfSurveyEvidence()
             for (double invalid : {double(NAN), double(INFINITY), -2e10}) {
                 (void) LittleEndian::write<double>(frame, offset, invalid);
                 publish(3, 0);
-                CHECK(std::isnan(surveys.back().latitude));
-                CHECK(std::isnan(surveys.back().longitude));
-                CHECK(std::isnan(surveys.back().altitude));
+                CHECK(std::isnan(surveys.back().survey.position.latitudeDegrees));
+                CHECK(std::isnan(surveys.back().survey.position.longitudeDegrees));
+                CHECK(std::isnan(surveys.back().survey.position.altitudeMeters));
             }
             (void) LittleEndian::write<double>(frame, offset, original);
         }
@@ -596,9 +605,7 @@ void baseMixedFraming(bool septentrio)
     driver->consume({});
     otherReports = 0;
     const std::string body = "GPGGA,123519,4807.038,N,01131.000,E,7,08,0.9,545.4,M,46.9,M,,";
-    char suffix[8];
-    std::snprintf(suffix, sizeof(suffix), "*%02X\r\n", NMEA::checksum(body));
-    const auto text = "$" + body + suffix;
+    const auto text = nmeaSentence(body);
     const auto binary = rtcmPacket({reinterpret_cast<const uint8_t*>(text.data()), text.size()});
     driver->consume(binary);
     CHECK(frames == std::vector<std::vector<uint8_t>>{binary});

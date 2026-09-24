@@ -13,6 +13,8 @@ struct ConfigurationValue
 {
     uint32_t key;
     uint32_t value;
+
+    bool operator==(const ConfigurationValue&) const = default;
 };
 
 /// Reads only key/value entries; VALSET and VALGET validate their different headers separately.

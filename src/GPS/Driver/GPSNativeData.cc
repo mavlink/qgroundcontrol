@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "GPSFixQuality.h"
 #include "GPSNativeData_p.h"
 
 namespace {
@@ -29,8 +30,8 @@ GPSPositionReport position(const GPSNativePositionReport& source, const GPSInteg
 {
     GPSPositionReport result{.navigation = source.navigation, .integrity = diagnostic};
     auto& navigation = result.navigation;
-    navigation.fixType = GPSPositionReport::fixTypeFromValue(static_cast<int>(navigation.fixType));
-    if (!source.vel_ned_valid) {
+    navigation.fixType = gpsFixQualityFromValue(static_cast<int>(navigation.fixType));
+    if (!source.velocityValid) {
         navigation.speedMetersPerSecond = NAN;
         navigation.courseRadians = NAN;
     }
@@ -44,23 +45,6 @@ GPSPositionReport position(const GPSNativePositionReport& source, const GPSInteg
         GPSIntegrityReport::correctionUseFromValue(static_cast<int>(diagnostic.corrections.use));
     // Navigation epochs retain their first receipt; diagnostics may arrive before that epoch is published.
     integrity = integrity.freshAt(nowUs ? nowUs : std::max(navigation.timestampUs, diagnostic.timestampUs));
-    return result;
-}
-
-GPSSurveyReport survey(const GPSNativeSurveyReport& source)
-{
-    GPSSurveyReport result;
-    result.position.latitudeDegrees = source.latitude;
-    result.position.longitudeDegrees = source.longitude;
-    if (source.altitudeDatum == GPSNativeSurveyReport::AltitudeDatum::Ellipsoid) {
-        result.position.altitudeMeters = source.altitude;
-    }
-    if (source.accuracyKnown) {
-        result.meanAccuracyMeters = static_cast<double>(source.mean_accuracy) / 1000.0;
-    }
-    result.duration = std::chrono::seconds(source.duration);
-    result.valid = (source.flags & 1) != 0;
-    result.active = (source.flags & 2) != 0;
     return result;
 }
 

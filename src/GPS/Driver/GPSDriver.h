@@ -43,6 +43,9 @@ enum class GPSReceiveStatus
 
 struct GPSReceiveResult
 {
+    static constexpr int POSITION_UPDATE = 1;
+    static constexpr int SATELLITES_UPDATE = 2;
+
     GPSReceiveStatus status = GPSReceiveStatus::NotConfigured;
     int updates = 0;
     int errorCode = 0;

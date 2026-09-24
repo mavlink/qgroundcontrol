@@ -39,23 +39,6 @@ static uint32_t littleEndian(const Bytes& bytes, size_t offset, size_t width)
     return value;
 }
 
-static Bytes packet(uint16_t message, const Bytes& payload)
-{
-    Bytes bytes{
-        0xb5, 0x62, uint8_t(message), uint8_t(message >> 8), uint8_t(payload.size()), uint8_t(payload.size() >> 8)};
-    bytes.insert(bytes.end(), payload.begin(), payload.end());
-    uint8_t a = 0, b = 0;
-
-    for (size_t i = 2; i < bytes.size(); ++i) {
-        a += bytes[i];
-        b += a;
-    }
-
-    bytes.push_back(a);
-    bytes.push_back(b);
-    return bytes;
-}
-
 enum class SurveyReply
 {
     stopped,
@@ -139,7 +122,7 @@ public:
             payload.push_back(0);
         }
 
-        Bytes bytes = packet(UBX_MSG_NAV_SVIN, payload);
+        Bytes bytes = ubxFrame(UBX_MSG_NAV_SVIN, payload);
 
         if (reply == SurveyReply::bad_checksum) {
             bytes.back() ^= 0xff;
@@ -151,7 +134,7 @@ public:
     void bufferWarning(bool valid_checksum = true)
     {
         const std::string warning = "txbuf alloc";
-        Bytes bytes = packet(UBX_MSG_INF_ERROR, Bytes(warning.begin(), warning.end()));
+        Bytes bytes = ubxFrame(UBX_MSG_INF_ERROR, Bytes(warning.begin(), warning.end()));
 
         if (!valid_checksum) {
             bytes.back() ^= 0xff;
@@ -172,7 +155,7 @@ private:
     {
         const auto message = uint16_t(littleEndian(bytes, 2, 2));
         const Bytes payload(bytes.begin() + 6, bytes.end() - 2);
-        CHECK(bytes == packet(message, payload));  // Validate outgoing framing/checksum.
+        CHECK(bytes == ubxFrame(message, payload));  // Validate outgoing framing/checksum.
         if (message == UBX_MSG_MON_VER) {
             identityBauds.push_back(hostBaud);
         }
@@ -196,13 +179,13 @@ private:
                 return;
             }
             if (readback_mode == 2) {
-                queue(packet(UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
+                queue(ubxFrame(UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
                 return;
             }
             Bytes response(40, 0);
             response[0] = readback_mode == 3 ? 1 : 0;
             response[2] = modes.empty() ? 0 : modes.back();
-            queue(packet(message, response));
+            queue(ubxFrame(message, response));
             return;
         }
         if (message == UBX_MSG_CFG_VALGET) {
@@ -213,7 +196,7 @@ private:
                 return;
             }
             if (readback_mode == 2) {
-                queue(packet(UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
+                queue(ubxFrame(UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
                 return;
             }
             Bytes response{1, uint8_t(readback_mode == 3 ? 1 : 0), 0, 0};
@@ -234,7 +217,7 @@ private:
             } else if (readback_mode == 5) {
                 response.pop_back();
             }
-            Bytes message_bytes = packet(message, response);
+            Bytes message_bytes = ubxFrame(message, response);
             if (readback_mode == 6) {
                 message_bytes.back() ^= 1;
             }
@@ -261,7 +244,7 @@ private:
                 version.resize(100);
                 std::copy(extension.begin(), extension.end(), version.begin() + 70);
             }
-            auto response = packet(message, version);
+            auto response = ubxFrame(message, version);
             if (corruptIdentity) {
                 response.back() ^= 1;
             } else {
@@ -319,7 +302,7 @@ private:
                 reject = reject_disable && mode == 0;
             }
 
-            queue(packet(reject ? UBX_MSG_ACK_NAK : UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
+            queue(ubxFrame(reject ? UBX_MSG_ACK_NAK : UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
             return;
         }
 
@@ -350,7 +333,7 @@ private:
                 return;
             }
             if (nakAfterBaudChange) {
-                queue(packet(UBX_MSG_ACK_NAK, {uint8_t(message), uint8_t(message >> 8)}));
+                queue(ubxFrame(UBX_MSG_ACK_NAK, {uint8_t(message), uint8_t(message >> 8)}));
             }
         }
 
@@ -401,12 +384,12 @@ private:
                 current_settings[rate->first] = receiverBaud;
             }
             if (loseBaudAck) {
-                heldBaudAck = packet(UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)});
+                heldBaudAck = ubxFrame(UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)});
                 return;
             }
         }
 
-        queue(packet(reject ? UBX_MSG_ACK_NAK : UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
+        queue(ubxFrame(reject ? UBX_MSG_ACK_NAK : UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
     }
 
 public:
@@ -671,7 +654,7 @@ static void positionMode(bool legacy, bool base_capable)
     store(24, 100000000);
     store(28, 200000000);
     store(40, 800);
-    f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
+    f.receiver.queue(ubxFrame(UBX_MSG_NAV_PVT, pvt));
     CHECK(f.driver.receive(500) & 1);
     CHECK(f.position.navigation.fixType == GPSPositionReport::FixType::Fix3D);
     CHECK(f.position.navigation.latitudeDegrees == 20.0);
@@ -731,7 +714,7 @@ static void integrityReceipts()
     Bytes mon_rf(UBX::WIRE_SIZE<ubx_payload_rx_mon_rf_t>, 0);
     mon_rf[1] = 1;
     mon_rf[5] = 3;
-    f.receiver.queue(packet(UBX_MSG_MON_RF, mon_rf));
+    f.receiver.queue(ubxFrame(UBX_MSG_MON_RF, mon_rf));
     f.driver.receive(100);
     CHECK(f.receiver.integrityCount == 1);
     CHECK(f.position.navigation.timestampUs == 0);
@@ -741,7 +724,7 @@ static void integrityReceipts()
 
     Bytes nav_status(UBX::WIRE_SIZE<ubx_payload_rx_nav_status_t>, 0);
     nav_status[7] = 1 << UBX_RX_NAV_STATUS_SPOOFDETSTATE_SHIFT;
-    f.receiver.queue(packet(UBX_MSG_NAV_STATUS, nav_status));
+    f.receiver.queue(ubxFrame(UBX_MSG_NAV_STATUS, nav_status));
     f.driver.receive(100);
     const auto spoof_stamp = f.receiver.integrity.spoofing.timestampUs;
     CHECK(spoof_stamp != 0);
@@ -752,18 +735,18 @@ static void integrityReceipts()
     pvt[21] = 1;
     for (int i = 0; i < 10; ++i) {
         gps_test_time += 1000000;
-        f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
+        f.receiver.queue(ubxFrame(UBX_MSG_NAV_PVT, pvt));
         CHECK(f.driver.receive(100) & 1);
         CHECK(f.position.navigation.timestampUs > rf_stamp);
         CHECK(f.receiver.integrity.jamming.timestampUs == rf_stamp);
         CHECK(f.receiver.integrity.spoofing.timestampUs == spoof_stamp);
     }
-    Bytes corrupt = packet(UBX_MSG_MON_RF, mon_rf);
+    Bytes corrupt = ubxFrame(UBX_MSG_MON_RF, mon_rf);
     corrupt.back() ^= 0xff;
     f.receiver.queue(corrupt);
     f.driver.receive(100);
     CHECK(f.receiver.integrity.jamming.timestampUs == rf_stamp);
-    f.receiver.queue(packet(UBX_MSG_MON_RF, mon_rf));
+    f.receiver.queue(ubxFrame(UBX_MSG_MON_RF, mon_rf));
     f.driver.receive(100);
     CHECK(f.receiver.integrity.jamming.state == GPSIntegrityReport::JammingState::Critical);
     CHECK(f.receiver.integrity.jamming.timestampUs > rf_stamp);
@@ -771,35 +754,35 @@ static void integrityReceipts()
     Bytes sec_sig(4, 0);
     sec_sig[0] = 2;
     sec_sig[1] = 1 | (3 << 1);
-    f.receiver.queue(packet(UBX_MSG_SEC_SIG, sec_sig));
+    f.receiver.queue(ubxFrame(UBX_MSG_SEC_SIG, sec_sig));
     f.driver.receive(100);
     CHECK(f.receiver.integrity.jamming.state == GPSIntegrityReport::JammingState::Critical);
     const auto sec_stamp = f.receiver.integrity.jamming.timestampUs;
     gps_test_time += 6000000;
-    f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
+    f.receiver.queue(ubxFrame(UBX_MSG_NAV_PVT, pvt));
     CHECK(f.driver.receive(100) & 1);
     CHECK(f.receiver.integrity.jamming.timestampUs == sec_stamp);
-    f.receiver.queue(packet(UBX_MSG_SEC_SIG, sec_sig));
+    f.receiver.queue(ubxFrame(UBX_MSG_SEC_SIG, sec_sig));
     f.driver.receive(100);
     CHECK(f.receiver.integrity.jamming.state == GPSIntegrityReport::JammingState::Critical);
     CHECK(f.receiver.integrity.jamming.timestampUs > sec_stamp);
 
     Bytes rtcm(UBX::WIRE_SIZE<ubx_payload_rx_rxm_rtcm_t>, 0);
     rtcm[1] = 2 << UBX_RX_RXM_RTCM_MSGUSED_SHIFT;
-    f.receiver.queue(packet(UBX_MSG_RXM_RTCM, rtcm));
+    f.receiver.queue(ubxFrame(UBX_MSG_RXM_RTCM, rtcm));
     f.driver.receive(100);
     CHECK(f.receiver.integrity.corrections.use == GPSIntegrityReport::CorrectionUse::Used);
     const auto correction_stamp = f.receiver.integrity.corrections.timestampUs;
     CHECK(correction_stamp != 0);
     gps_test_time += 6000000;
-    f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
+    f.receiver.queue(ubxFrame(UBX_MSG_NAV_PVT, pvt));
     CHECK(f.driver.receive(100) & 1);
     CHECK(f.receiver.integrity.corrections.timestampUs == correction_stamp);
     Bytes cor(UBX::WIRE_SIZE<ubx_payload_rx_rxm_cor_t>, 0);
     cor[0] = 1;
     cor[4] = 29;
     cor[5] = 1;  // msgUsed=2 in statusInfo bits 8..7.
-    f.receiver.queue(packet(UBX_MSG_RXM_COR, cor));
+    f.receiver.queue(ubxFrame(UBX_MSG_RXM_COR, cor));
     f.driver.receive(100);
     CHECK(f.receiver.integrity.corrections.protocol == GPSIntegrityReport::CorrectionProtocol::PMP);
     CHECK(f.receiver.integrity.corrections.use == GPSIntegrityReport::CorrectionUse::Used);
@@ -809,7 +792,7 @@ static void integrityReceipts()
 static void commsDiagnostics()
 {
     Fixture f;
-    const Bytes reply = packet(UBX_MSG_MON_COMMS, commsPayload());
+    const Bytes reply = ubxFrame(UBX_MSG_MON_COMMS, commsPayload());
     f.receiver.queue(reply);
     f.driver.receive(100);
     CHECK(gps_test_warnings.empty());
@@ -836,17 +819,17 @@ static void commsDiagnostics()
 static void invalidCommsDiagnostics()
 {
     Bytes payload = commsPayload();
-    Bytes corrupt = packet(UBX_MSG_MON_COMMS, payload);
+    Bytes corrupt = ubxFrame(UBX_MSG_MON_COMMS, payload);
     corrupt.back() ^= 0xff;
-    std::vector<Bytes> invalid{corrupt, packet(UBX_MSG_MON_COMMS, Bytes(7, 0)), packet(UBX_MSG_MON_COMMS, Bytes(87, 0)),
-                               packet(UBX_MSG_MON_COMMS, Bytes(368, 0))};
+    std::vector<Bytes> invalid{corrupt, ubxFrame(UBX_MSG_MON_COMMS, Bytes(7, 0)),
+                               ubxFrame(UBX_MSG_MON_COMMS, Bytes(87, 0)), ubxFrame(UBX_MSG_MON_COMMS, Bytes(368, 0))};
     payload[0] = 1;
-    invalid.push_back(packet(UBX_MSG_MON_COMMS, payload));
+    invalid.push_back(ubxFrame(UBX_MSG_MON_COMMS, payload));
     payload[0] = 0;
     payload[1] = 3;
-    invalid.push_back(packet(UBX_MSG_MON_COMMS, payload));
+    invalid.push_back(ubxFrame(UBX_MSG_MON_COMMS, payload));
     payload[1] = 255;
-    invalid.push_back(packet(UBX_MSG_MON_COMMS, payload));
+    invalid.push_back(ubxFrame(UBX_MSG_MON_COMMS, payload));
 
     for (const auto& reply : invalid) {
         Fixture f;
@@ -857,7 +840,7 @@ static void invalidCommsDiagnostics()
         f.driver.receive(100);
         CHECK(gps_test_warnings.empty());
         // Malformed input must not consume the pending reply or lose framing.
-        f.receiver.queue(packet(UBX_MSG_MON_COMMS, Bytes(8, 0)));
+        f.receiver.queue(ubxFrame(UBX_MSG_MON_COMMS, Bytes(8, 0)));
         f.driver.receive(100);
         CHECK(gps_test_warnings ==
               QStringList{"MON-COMMS after txbuf: txErrors=0x00 ports=0 (snapshot after warning)"});
@@ -872,7 +855,7 @@ static void expiredCommsDiagnostics()
     CHECK(f.receiver.comms_polls == 1);
     gps_test_warnings.clear();
     gps_test_time += 2000000;
-    f.receiver.queue(packet(UBX_MSG_MON_COMMS, commsPayload()));
+    f.receiver.queue(ubxFrame(UBX_MSG_MON_COMMS, commsPayload()));
     f.driver.receive(100);
     CHECK(gps_test_warnings.empty());
     // Expiration must allow a later warning to obtain a fresh snapshot.
@@ -881,7 +864,7 @@ static void expiredCommsDiagnostics()
     f.driver.receive(100);
     CHECK(f.receiver.comms_polls == 2);
     gps_test_warnings.clear();
-    f.receiver.queue(packet(UBX_MSG_MON_COMMS, Bytes(8, 0)));
+    f.receiver.queue(ubxFrame(UBX_MSG_MON_COMMS, Bytes(8, 0)));
     f.driver.receive(100);
     CHECK(gps_test_warnings.size() == 1);
 }
@@ -1037,18 +1020,18 @@ static void explicitNoFix()
     payload[20] = 3;
     for (const uint8_t flags : std::array<uint8_t, 4>{0, 2, 0x40, 0x80}) {
         payload[21] = UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK;
-        const auto valid = driver.decode(packet(UBX_MSG_NAV_PVT, payload));
+        const auto valid = driver.decode(ubxFrame(UBX_MSG_NAV_PVT, payload));
         CHECK(valid.batch.events.size() == 1);
         CHECK(std::get<GPSNativePositionReport>(valid.batch.events.front()).navigation.fixType ==
               GPSPositionReport::FixType::Fix3D);
         CHECK(position.navigation.fixType == GPSPositionReport::FixType::Fix3D);
         payload[21] = flags;
-        const auto decoded = driver.decode(packet(UBX_MSG_NAV_PVT, payload));
+        const auto decoded = driver.decode(ubxFrame(UBX_MSG_NAV_PVT, payload));
         CHECK(decoded.batch.events.size() == 1);
         CHECK(std::get<GPSNativePositionReport>(decoded.batch.events.front()).navigation.fixType ==
               GPSPositionReport::FixType::NoFix);
-        CHECK(!std::get<GPSNativePositionReport>(decoded.batch.events.front()).vel_ned_valid);
-        CHECK(!position.vel_ned_valid);
+        CHECK(!std::get<GPSNativePositionReport>(decoded.batch.events.front()).velocityValid);
+        CHECK(!position.velocityValid);
     }
 }
 
@@ -1186,7 +1169,7 @@ static void navigationFixFlags()
                     (void) LittleEndian::write<int32_t>(pvt, 28, 470000000);
                     (void) LittleEndian::write<int32_t>(pvt, 60, 12000);
                     if (!legacy) {
-                        CHECK(driver.decode(packet(UBX_MSG_NAV_PVT, pvt)).batch.events.empty());
+                        CHECK(driver.decode(ubxFrame(UBX_MSG_NAV_PVT, pvt)).batch.events.empty());
                     } else {
                         std::array<Bytes, 3> payloads{Bytes(28), Bytes(52), Bytes(36)};
                         constexpr std::array<uint16_t, 3> MESSAGES{UBX_MSG_NAV_POSLLH, UBX_MSG_NAV_SOL,
@@ -1200,16 +1183,16 @@ static void navigationFixFlags()
                         payloads[1][11] = static_cast<uint8_t>(flags);
                         (void) LittleEndian::write<uint32_t>(payloads[2], 20, 1200);
                         for (const unsigned index : order) {
-                            CHECK(driver.decode(packet(MESSAGES[index], payloads[index])).batch.events.empty());
+                            CHECK(driver.decode(ubxFrame(MESSAGES[index], payloads[index])).batch.events.empty());
                         }
                     }
                     Bytes end(4);
                     (void) LittleEndian::write<uint32_t>(end, 0, 1000);
-                    const auto decoded = driver.decode(packet(UBX::NAV_EOE, end));
+                    const auto decoded = driver.decode(ubxFrame(UBX::NAV_EOE, end));
                     CHECK(decoded.batch.events.size() == 1);
                     const auto& fix = std::get<GPSNativePositionReport>(decoded.batch.events.front());
                     CHECK(fix.navigation.fixType == expected);
-                    CHECK(fix.vel_ned_valid == (expected != Fix::NoFix && expected != Fix::Unknown));
+                    CHECK(fix.velocityValid == (expected != Fix::NoFix && expected != Fix::Unknown));
                     CHECK(fix.navigation.latitudeDegrees == 47 && fix.navigation.longitudeDegrees == 8);
                     CHECK(std::abs(fix.navigation.speedMetersPerSecond - 12) < 1e-5f);
                 } while (legacy && std::next_permutation(order.begin(), order.end()));
@@ -1233,9 +1216,9 @@ static void transactionalFrames()
     payload[8] = 0;
     payload[9] = 17;
     payload[10] = 35;
-    const auto valid = packet(UBX_MSG_NAV_SAT, payload);
+    const auto valid = ubxFrame(UBX_MSG_NAV_SAT, payload);
     payload[9] = 23;
-    auto corrupt = packet(UBX_MSG_NAV_SAT, payload);
+    auto corrupt = ubxFrame(UBX_MSG_NAV_SAT, payload);
     corrupt.back() ^= 1;
     Bytes joined = valid;
     joined.insert(joined.end(), corrupt.begin(), corrupt.end());
@@ -1248,12 +1231,12 @@ static void transactionalFrames()
     CHECK(satellites.entries[0].id == 17);
     CHECK(driver.decode(std::span(valid).last(1)).batch.events.size() == 1);
     payload[5] = 2;  // A valid checksum cannot make an incomplete counted payload valid.
-    CHECK(driver.decode(packet(UBX_MSG_NAV_SAT, payload)).batch.events.empty());
+    CHECK(driver.decode(ubxFrame(UBX_MSG_NAV_SAT, payload)).batch.events.empty());
     CHECK(satellites.entries[0].id == 17);
-    CHECK(driver.decode(packet(UBX_MSG_NAV_SAT, Bytes(7, 0))).batch.events.empty());
+    CHECK(driver.decode(ubxFrame(UBX_MSG_NAV_SAT, Bytes(7, 0))).batch.events.empty());
     CHECK(satellites.entries[0].id == 17);
     CHECK(std::get<GPSNativeSatelliteReport>(decoded.batch.events[0]).entries[0].id == 17);
-    const auto empty = driver.decode(packet(UBX_MSG_NAV_SAT, Bytes{0, 0, 0, 0, 1, 0, 0, 0}));
+    const auto empty = driver.decode(ubxFrame(UBX_MSG_NAV_SAT, Bytes{0, 0, 0, 0, 1, 0, 0, 0}));
     CHECK(empty.batch.events.size() == 1);
     CHECK(std::get<GPSNativeSatelliteReport>(empty.batch.events.front()).count == 0);
     CHECK(satellites.count == 0);
@@ -1264,7 +1247,7 @@ static void transactionalFrames()
     Bytes version(70, 0);
     const std::string module = "MOD=NEO-M9N";
     std::copy(module.begin(), module.end(), version.begin() + 40);
-    auto badVersion = packet(UBX_MSG_MON_VER, version);
+    auto badVersion = ubxFrame(UBX_MSG_MON_VER, version);
     badVersion.back() ^= 1;
     CHECK(driver.decode(badVersion).batch.events.empty());
     CHECK(driver.modelName() == originalModel);
@@ -1272,7 +1255,7 @@ static void transactionalFrames()
     Bytes baseVersion(40, 0);
     const std::string firmware = "SPG 4.04";
     std::copy(firmware.begin(), firmware.end(), baseVersion.begin());
-    CHECK(driver.decode(packet(UBX_MSG_MON_VER, baseVersion)).batch.events.empty());
+    CHECK(driver.decode(ubxFrame(UBX_MSG_MON_VER, baseVersion)).batch.events.empty());
     CHECK(driver.firmwareVersion() == firmware);
 
     Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
@@ -1282,7 +1265,7 @@ static void transactionalFrames()
     Bytes epochs;
     for (uint8_t index = 1; index <= 20; ++index) {
         pvt[23] = index;
-        const auto frame = packet(UBX_MSG_NAV_PVT, pvt);
+        const auto frame = ubxFrame(UBX_MSG_NAV_PVT, pvt);
         epochs.insert(epochs.end(), frame.begin(), frame.end());
     }
     size_t offset = 0;
@@ -1302,7 +1285,7 @@ static void transactionalFrames()
     const auto crc = RTCMFramer::crc24q(correction);
     correction.insert(correction.end(), {uint8_t(crc >> 16), uint8_t(crc >> 8), uint8_t(crc)});
     std::copy(correction.begin(), correction.end(), pvt.begin() + 40);
-    const auto embedded = driver.decode(packet(UBX_MSG_NAV_PVT, pvt));
+    const auto embedded = driver.decode(ubxFrame(UBX_MSG_NAV_PVT, pvt));
     CHECK(embedded.batch.events.size() == 1);
     CHECK(std::holds_alternative<GPSNativePositionReport>(embedded.batch.events.front()));
     const auto standalone = driver.decode(correction);
@@ -1419,7 +1402,7 @@ static void reentrantPayload()
         if (!reentered && message == u"ubx msg: txbuf alloc") {
             reentered = true;
             active->setDecodeContext({.navigation = true, .corrections = true});
-            for (auto byte : packet(UBX_MSG_INF_WARNING, Bytes{'o', 'k'})) {
+            for (auto byte : ubxFrame(UBX_MSG_INF_WARNING, Bytes{'o', 'k'})) {
                 active->decodeByte(byte);
             }
             for (auto byte : std::span(correction).first(4)) {
@@ -1431,7 +1414,7 @@ static void reentrantPayload()
     active = &driver;
     driver.setDecodeContext({.navigation = true, .corrections = true});
     const std::string warning = "txbuf alloc";
-    CHECK(driver.decode(packet(UBX_MSG_INF_WARNING, Bytes(warning.begin(), warning.end()))).batch.events.empty());
+    CHECK(driver.decode(ubxFrame(UBX_MSG_INF_WARNING, Bytes(warning.begin(), warning.end()))).batch.events.empty());
     CHECK(reentered);
     CHECK(warnings == (QStringList{"ubx msg: txbuf alloc", "ubx msg: ok"}));
     const auto decoded = driver.decode(std::span(correction).subspan(4));
@@ -1446,7 +1429,7 @@ static void isolatedFrameAndControl()
 {
     UBX::FrameDecoder decoder;
     const Bytes payload = {0x06, 0x24};
-    const auto bytes = packet(UBX_MSG_ACK_ACK, payload);
+    const auto bytes = ubxFrame(UBX_MSG_ACK_ACK, payload);
     std::optional<UBX::Frame> frame;
     for (size_t index = 0; index < bytes.size(); ++index) {
         frame = decoder.consume(bytes[index]);
@@ -1462,7 +1445,7 @@ static void isolatedFrameAndControl()
     }
     CHECK(decoder.idle());
     CHECK(retained.payload[0] == 6);
-    const auto longFrame = packet(UBX_MSG_INF_NOTICE, Bytes(4096, 0xa5));
+    const auto longFrame = ubxFrame(UBX_MSG_INF_NOTICE, Bytes(4096, 0xa5));
     for (auto byte : longFrame) {
         frame = decoder.consume(byte);
     }
@@ -1514,16 +1497,14 @@ static void isolatedFrameAndControl()
     controller.beginReadback(keys);
     UBX::ConfigurationValues values;
     values.count = 2;
-    values.keys[0] = values.keys[1] = keys[0];
+    values.values[0].key = values.values[1].key = keys[0];
     controller.accept(values);
     CHECK(!controller.readbackReady());
-    values.keys[0] = keys[1];
-    values.keys[1] = keys[0];
-    values.values[0] = 200;
-    values.values[1] = 4;
+    values.values[0] = {.key = keys[1], .value = 200};
+    values.values[1] = {.key = keys[0], .value = 4};
     controller.accept(values);
     CHECK(controller.readbackReady());
-    CHECK(controller.readback().values[0] == 4 && controller.readback().values[1] == 200);
+    CHECK(controller.readback().values[0].value == 4 && controller.readback().values[1].value == 200);
     CHECK(!UBX::decodeConfigurationValues(Bytes{1, 0, 0, 0, 1}));
 }
 
@@ -1609,8 +1590,8 @@ static void checkedWireCodecs()
     values[1] = 0;
     const auto decoded = UBX::decodeConfigurationValues(values);
     CHECK(decoded && decoded->count == 4);
-    CHECK(decoded->values[0] == 1 && decoded->values[1] == 255 && decoded->values[2] == 65535 &&
-          decoded->values[3] == UINT32_MAX);
+    CHECK(decoded->values[0].value == 1 && decoded->values[1].value == 255 && decoded->values[2].value == 65535 &&
+          decoded->values[3].value == UINT32_MAX);
     for (size_t length = 1; length < values.size(); ++length) {
         if (length != 4 && length != 9 && length != 14 && length != 20) {
             CHECK(!UBX::decodeConfigurationValues(std::span(values).first(length)));

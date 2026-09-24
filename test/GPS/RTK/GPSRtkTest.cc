@@ -20,13 +20,13 @@
 #include "GPSManager.h"
 #include "GPSRTKFactGroup.h"
 #include "GPSRtk.h"
-#include "GPSTransport.h"
 #include "GpsTestHelpers.h"
 #include "LogManager.h"
 #include "QGCLoggingCategoryManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "RTCMMavlink.h"
 #include "RTKSettings.h"
+#include "ScriptedGPSTransport.h"
 #include "SettingsManager.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
@@ -1143,36 +1143,33 @@ struct PassiveTransportState
     QSemaphore releaseRead;
 };
 
-class PassiveTestTransport : public GPSTransport
+class PassiveTestTransport : public ScriptedGPSTransport
 {
 public:
     PassiveTestTransport(const std::atomic_bool& stop, std::shared_ptr<PassiveTransportState> state)
-        : GPSTransport(stop)
+        : ScriptedGPSTransport(stop)
         , _state(std::move(state))
     {}
 
-    GPSOpenResult open() override { return {GPSOpenStatus::Opened}; }
-
-    bool fatalError() const override { return false; }
-
-    bool setBaudrate(unsigned baud) override
+protected:
+    std::optional<bool> handleBaudrate(unsigned baud) override
     {
         _state->baud = baud;
         ++_state->baudChanges;
         return true;
     }
 
-    GPSReadResult read(uint8_t*, int, int) override
+    std::optional<GPSReadResult> handleRead(uint8_t*, int, int) override
     {
         _state->reading.release();
         _state->releaseRead.acquire();
-        return {GPSReadStatus::Cancelled};
+        return GPSReadResult{GPSReadStatus::Cancelled};
     }
 
-    GPSWriteResult writeBounded(const uint8_t*, int, QDeadlineTimer) override
+    std::optional<GPSWriteResult> handleWrite(const QByteArray&, QDeadlineTimer) override
     {
         ++_state->writes;
-        return {GPSWriteStatus::Error};
+        return GPSWriteResult{GPSWriteStatus::Error};
     }
 
 private:

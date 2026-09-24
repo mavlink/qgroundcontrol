@@ -77,6 +77,45 @@ add_library(QGCGPSNative INTERFACE)
 add_library(QGC::GPSNative ALIAS QGCGPSNative)
 target_link_libraries(QGCGPSNative INTERFACE QGCGPSNativeCommon)
 target_sources(QGCGPSNative INTERFACE FILE_SET HEADERS FILES GPSProtocol.h GPSProtocolTime.h)
+
+# Adds one receiver family protocol library; sources are relative to this directory.
+function(qgc_add_gps_family family)
+    qt_add_library(QGCGPS${family} STATIC ${ARGN})
+    set_target_properties(
+        QGCGPS${family}
+        PROPERTIES AUTOMOC OFF
+                   AUTOUIC OFF
+                   AUTORCC OFF
+    )
+    target_link_libraries(QGCGPS${family} PUBLIC QGCGPSNativeCommon)
+    add_library(QGC::GPS${family} ALIAS QGCGPS${family})
+endfunction()
+
+set(QGC_GPS_FAMILY_UBX_SOURCES
+    UBX/GPSDriverUBX.cc
+    UBX/GPSDriverUBX.h
+    UBX/UBXConfiguration.cc
+    UBX/UBXConfigurationValues.h
+    UBX/UBXDecoder.cc
+    UBX/UBXFrameDecoder.h
+    UBX/UBXMessageCodec.h
+    UBX/UBXMessageSchema.h
+    UBX/UBXMessages.h
+    UBX/UBXNavigationEpoch.h
+    UBX/UBXReceiverController.h
+    UBX/UBXReceiverProfile.h
+)
+set(QGC_GPS_FAMILY_Ashtech_SOURCES Ashtech/AshtechConfiguration.cc Ashtech/AshtechDecoder.cc Ashtech/GPSDriverAshtech.h)
+set(QGC_GPS_FAMILY_SBF_SOURCES SBF/GPSDriverSBF.h SBF/SBFConfiguration.cc SBF/SBFDecoder.cc SBF/SBFMessages.h)
+set(QGC_GPS_FAMILY_Femto_SOURCES Femto/FemtoConfiguration.cc Femto/FemtoDecoder.cc Femto/FemtoMessages.h
+                                 Femto/GPSDriverFemto.h
+)
+set(QGC_GPS_FAMILY_Unicore_SOURCES Unicore/GPSDriverUnicore.cc Unicore/GPSDriverUnicore.h)
+set(QGC_GPS_FAMILY_Quectel_SOURCES Quectel/GPSDriverQuectel.cc Quectel/GPSDriverQuectel.h Quectel/QuectelDecoder.cc
+                                   Quectel/QuectelCodec_p.h
+)
+set(QGC_GPS_FAMILY_Passive_SOURCES Passive/GPSDriverPassive.cc Passive/GPSDriverPassive.h)
+
 set(_native_targets QGCGPSNativeContracts QGCGPSNativeCommon)
 foreach(
     family
@@ -90,7 +129,7 @@ foreach(
 )
     string(TOUPPER "${family}" option_name)
     if(QGC_GPS_ENABLE_${option_name})
-        add_subdirectory(${family})
+        qgc_add_gps_family(${family} ${QGC_GPS_FAMILY_${family}_SOURCES})
         target_sources(QGCGPS${family} PUBLIC FILE_SET HEADERS BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}" FILES
                                               "${family}/GPSDriver${family}.h"
         )
@@ -100,7 +139,7 @@ foreach(
                AND NOT source MATCHES "(Private|_p)\\.h$"
                AND NOT IS_ABSOLUTE "${source}"
             )
-                target_sources(QGCGPS${family} PUBLIC FILE_SET HEADERS FILES "${family}/${source}")
+                target_sources(QGCGPS${family} PUBLIC FILE_SET HEADERS FILES "${source}")
             endif()
         endforeach()
         target_link_libraries(QGCGPSNative INTERFACE QGCGPS${family})

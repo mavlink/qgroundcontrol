@@ -41,6 +41,7 @@
 
 #include "CRC32.h"
 #include "Femto/GPSDriverFemto.h"
+#include "GPSFixQuality.h"
 #include "LittleEndian.h"
 #include "NMEAFields.h"
 #include "NMEASentence.h"
@@ -58,8 +59,6 @@ inline femto_uav_gps_t decodePosition(std::span<const uint8_t> bytes)
     value.lon = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
     value.alt = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
     value.alt_ellipsoid = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
-    value.s_variance_m_s = LittleEndian::read<float>(bytes, 24).value_or(0);
-    value.c_variance_rad = LittleEndian::read<float>(bytes, 28).value_or(0);
     value.eph = LittleEndian::read<float>(bytes, 32).value_or(0);
     value.epv = LittleEndian::read<float>(bytes, 36).value_or(0);
     value.hdop = LittleEndian::read<float>(bytes, 40).value_or(0);
@@ -67,14 +66,10 @@ inline femto_uav_gps_t decodePosition(std::span<const uint8_t> bytes)
     value.noise_per_ms = LittleEndian::read<int32_t>(bytes, 48).value_or(0);
     value.jamming_indicator = LittleEndian::read<int32_t>(bytes, 52).value_or(0);
     value.vel_m_s = LittleEndian::read<float>(bytes, 56).value_or(0);
-    value.vel_n_m_s = LittleEndian::read<float>(bytes, 60).value_or(0);
-    value.vel_e_m_s = LittleEndian::read<float>(bytes, 64).value_or(0);
-    value.vel_d_m_s = LittleEndian::read<float>(bytes, 68).value_or(0);
     value.cog_rad = LittleEndian::read<float>(bytes, 72).value_or(0);
-    value.timestamp_time_relative = LittleEndian::read<int32_t>(bytes, 76).value_or(0);
     value.heading = LittleEndian::read<float>(bytes, 80).value_or(0);
     value.fix_type = LittleEndian::read<uint8_t>(bytes, 84).value_or(0);
-    value.vel_ned_valid = LittleEndian::read<uint8_t>(bytes, 85).value_or(0);
+    value.velocityValid = LittleEndian::read<uint8_t>(bytes, 85).value_or(0);
     value.satellites_used = LittleEndian::read<uint8_t>(bytes, 86).value_or(0);
     value.heading_type = LittleEndian::read<uint8_t>(bytes, 87).value_or(0);
     return value;
@@ -96,33 +91,25 @@ int GPSNativeFemto::handleMessage(int len)
         }
         const auto wire = decodePosition({_femto_msg.data, _femto_msg.payloadLength});
 
-        _gps_position->navigation.utcTimeUs = wire.time_utc_usec;
-        _gps_position->navigation.latitudeDegrees = wire.lat / 1e7;
-        _gps_position->navigation.longitudeDegrees = wire.lon / 1e7;
-        _gps_position->navigation.altitudeMslMeters = wire.alt / 1e3;
-        _gps_position->navigation.altitudeEllipsoidMeters = wire.alt_ellipsoid / 1e3;
-        _gps_position->speedAccuracyMetersPerSecond = wire.s_variance_m_s;
-        _gps_position->courseAccuracyRadians = wire.c_variance_rad;
-        _gps_position->navigation.horizontalAccuracyMeters = wire.eph;
-        _gps_position->accuracy_timestamp = nowUs();
-        _gps_position->navigation.verticalAccuracyMeters = wire.epv;
-        _gps_position->navigation.horizontalDop = wire.hdop;
-        _gps_position->dop_timestamp = nowUs();
-        _gps_position->navigation.verticalDop = wire.vdop;
+        _position.navigation.utcTimeUs = wire.time_utc_usec;
+        _position.navigation.latitudeDegrees = wire.lat / 1e7;
+        _position.navigation.longitudeDegrees = wire.lon / 1e7;
+        _position.navigation.altitudeMslMeters = wire.alt / 1e3;
+        _position.navigation.altitudeEllipsoidMeters = wire.alt_ellipsoid / 1e3;
+        _position.navigation.horizontalAccuracyMeters = wire.eph;
+        _position.navigation.verticalAccuracyMeters = wire.epv;
+        _position.navigation.horizontalDop = wire.hdop;
+        _position.navigation.verticalDop = wire.vdop;
         _integrity.rf.noisePerMillisecond = wire.noise_per_ms;
         _integrity.rf.timestampUs = nowUs();
         _integrity.rf.jammingIndicator = wire.jamming_indicator;
         _integrity.rf.timestampUs = nowUs();
         publishIntegrity();
-        _gps_position->navigation.speedMetersPerSecond = wire.vel_m_s;
-        _gps_position->vel_n_m_s = wire.vel_n_m_s;
-        _gps_position->vel_e_m_s = wire.vel_e_m_s;
-        _gps_position->vel_d_m_s = wire.vel_d_m_s;
-        _gps_position->navigation.courseRadians = wire.cog_rad;
-        _gps_position->timestamp_time_relative = wire.timestamp_time_relative;
-        _gps_position->navigation.fixType = GPSPositionReport::fixTypeFromValue(wire.fix_type);
-        _gps_position->vel_ned_valid = wire.vel_ned_valid;
-        _gps_position->navigation.satellitesUsed = wire.satellites_used;
+        _position.navigation.speedMetersPerSecond = wire.vel_m_s;
+        _position.navigation.courseRadians = wire.cog_rad;
+        _position.navigation.fixType = gpsFixQualityFromValue(wire.fix_type);
+        _position.velocityValid = wire.velocityValid;
+        _position.navigation.satellitesUsed = wire.satellites_used;
 
         if (wire.heading_type == 6) {
             float heading = wire.heading;
@@ -132,19 +119,17 @@ int GPSNativeFemto::handleMessage(int len)
                 heading -= 2.f * GPS_PI;  // final range is [-pi, pi]
             }
 
-            _gps_position->navigation.headingRadians = heading;
-            _gps_position->heading_timestamp = nowUs();
+            _position.navigation.headingRadians = heading;
 
         } else {
-            _gps_position->navigation.headingRadians = NAN;
-            _gps_position->heading_timestamp = nowUs();
+            _position.navigation.headingRadians = NAN;
         }
 
-        _gps_position->navigation.timestampUs = nowUs();
+        _position.navigation.timestampUs = nowUs();
 
         ret = 1;
 
-    } else if (_satellite_info && messageid == FEMTO_MSG_ID_UAVSTATUS) { /**< set satellite info */
+    } else if (_satellites && messageid == FEMTO_MSG_ID_UAVSTATUS) { /**< set satellite info */
         if (_femto_msg.payloadLength < Femto::STATUS_HEADER_SIZE) {
             return 0;
         }
@@ -154,16 +139,16 @@ int GPSNativeFemto::handleMessage(int len)
             return 0;
         }
 
-        _satellite_info->timestamp = nowUs();
-        _satellite_info->count = std::min<uint32_t>(count, GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES);
+        _satellites->timestamp = nowUs();
+        _satellites->count = std::min<uint32_t>(count, GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES);
 
-        for (size_t i = 0; i < _satellite_info->count; i++) {
-            _satellite_info->entries[i].id = LittleEndian::read<uint8_t>(status, 40 + i * 8 + 0).value_or(0);
-            _satellite_info->entries[i].used.reset();
-            _satellite_info->entries[i].elevation = LittleEndian::read<uint8_t>(status, 40 + i * 8 + 3).value_or(0);
-            _satellite_info->entries[i].azimuth = LittleEndian::read<uint16_t>(status, 40 + i * 8 + 4).value_or(0);
-            _satellite_info->entries[i].signal = LittleEndian::read<uint8_t>(status, 40 + i * 8 + 2).value_or(0);
-            _satellite_info->entries[i].prn = LittleEndian::read<uint8_t>(status, 40 + i * 8 + 0).value_or(0);
+        for (size_t i = 0; i < _satellites->count; i++) {
+            _satellites->entries[i].id = LittleEndian::read<uint8_t>(status, 40 + i * 8 + 0).value_or(0);
+            _satellites->entries[i].used.reset();
+            _satellites->entries[i].elevation = LittleEndian::read<uint8_t>(status, 40 + i * 8 + 3).value_or(0);
+            _satellites->entries[i].azimuth = LittleEndian::read<uint16_t>(status, 40 + i * 8 + 4).value_or(0);
+            _satellites->entries[i].signal = LittleEndian::read<uint8_t>(status, 40 + i * 8 + 2).value_or(0);
+            _satellites->entries[i].prn = LittleEndian::read<uint8_t>(status, 40 + i * 8 + 0).value_or(0);
         }
 
         ret = 2;
@@ -180,7 +165,7 @@ int GPSNativeFemto::handleMessage(int len)
             sendSurveyInStatusUpdate(false, true, fix->latitude, fix->longitude, fix->altitude + fix->geoidSeparation);
             _rtcmActivationPending = true;
         }
-        if (_satellite_info) {
+        if (_satellites) {
             publishSatelliteUsage(fix->satellitesUsed);
         }
     }
@@ -346,13 +331,13 @@ void GPSNativeFemto::sendSurveyInStatusUpdate(bool active, bool valid, double la
                                               float altitude)
 {
     GPSNativeSurveyReport status;
-    status.altitudeDatum = GPSNativeSurveyReport::AltitudeDatum::Ellipsoid;
-    status.latitude = latitude;
-    status.longitude = longitude;
-    status.altitude = altitude;
-    status.duration = !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? _survey_duration : 0;
-    status.mean_accuracy = 0;  // unknown
-    status.flags = (int) valid | ((int) active << 1);
+    status.survey.position.latitudeDegrees = latitude;
+    status.survey.position.longitudeDegrees = longitude;
+    status.survey.position.altitudeMeters = altitude;
+    status.survey.duration = std::chrono::seconds(
+        !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? _survey_duration : 0);
+    status.survey.valid = valid;
+    status.survey.active = active;
     surveyInStatus(status);
 }
 
@@ -360,11 +345,11 @@ int GPSNativeFemto::decodeByte(uint8_t byte)
 {
     const int length = parseChar(byte);
     const int result = length > 0 ? handleMessage(length) : 0;
-    if (result & 1) {
-        publishPosition(*_gps_position);
+    if (result & GPSDecodedBatch::POSITION_UPDATE) {
+        publishPosition(_position);
     }
-    if ((result & 2) && _satellite_info) {
-        publishSatellites(*_satellite_info);
+    if ((result & GPSDecodedBatch::SATELLITES_UPDATE) && _satellites) {
+        publishSatellites(*_satellites);
     }
     return result;
 }

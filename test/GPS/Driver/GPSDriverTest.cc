@@ -14,7 +14,8 @@
 #include "../RTK/ScriptedSBFReceiver.h"
 #include "GPSBaseStationConfig.h"
 #include "GPSDriver.h"
-#include "GPSTransport.h"
+#include "Protocols/ProtocolTestPackets.h"
+#include "ScriptedGPSTransport.h"
 #include "ScriptedUBXReceiver.h"
 
 Q_DECLARE_METATYPE(GPSBaseStationConfig)
@@ -38,18 +39,14 @@ const std::atomic_bool neverStop{false};
 
 QByteArray nmeaFrame(const QByteArray& body)
 {
-    uint8_t checksum = 0;
-    for (const char byte : body) {
-        checksum ^= static_cast<uint8_t>(byte);
-    }
-    return '$' + body + '*' + QByteArray::number(checksum, 16).rightJustified(2, '0').toUpper() + "\r\n";
+    return QByteArray::fromStdString(nmeaSentence({body.constData(), static_cast<size_t>(body.size())}));
 }
 
-class FakeGPSTransport : public GPSTransport
+class FakeGPSTransport : public ScriptedGPSTransport
 {
 public:
     FakeGPSTransport()
-        : GPSTransport(neverStop)
+        : ScriptedGPSTransport(neverStop)
     {}
 
     GPSOpenResult open() override
@@ -58,9 +55,8 @@ public:
         return {GPSOpenStatus::Opened};
     }
 
-    bool fatalError() const override { return false; }
-
-    GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override
+protected:
+    std::optional<GPSReadResult> handleRead(uint8_t* buffer, int length, int timeoutMs) override
     {
         lastReadLength = length;
         lastReadTimeoutMs = timeoutMs;
@@ -69,22 +65,19 @@ public:
         }
         if (acknowledgeAshtech && scriptedRead.isEmpty() && timeoutMs > 0) {
             QThread::msleep(static_cast<unsigned long>(timeoutMs));
-            return {GPSReadStatus::TimedOut};
+            return GPSReadResult{GPSReadStatus::TimedOut};
         }
         const int n = qMin(static_cast<int>(scriptedRead.size()), length);
-        (void) memcpy(buffer, scriptedRead.constData(), static_cast<size_t>(n));
+        (void) std::memcpy(buffer, scriptedRead.constData(), static_cast<size_t>(n));
         if (acknowledgeFemto || acknowledgeAshtech) {
             scriptedRead.remove(0, n);
         }
-        return {GPSReadStatus::Data, n};
+        return GPSReadResult{GPSReadStatus::Data, n};
     }
 
-    GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override
+    std::optional<GPSWriteResult> handleWrite(const QByteArray& bytes, QDeadlineTimer) override
     {
-        if (deadline.hasExpired()) {
-            return {GPSWriteStatus::TimedOut};
-        }
-        lastWrite = QByteArray(reinterpret_cast<const char*>(buffer), length);
+        lastWrite = bytes;
         if (acknowledgeFemto) {
             scriptedRead = '<' + lastWrite.split(' ').first().trimmed() + " OK" + char(0);
         } else if (acknowledgeAshtech) {
@@ -95,16 +88,18 @@ public:
         if (writeOverride) {
             return *writeOverride;
         }
+        const int length = bytes.size();
         return writeOk ? GPSWriteResult{GPSWriteStatus::Completed, length, length}
                        : GPSWriteResult{GPSWriteStatus::Error};
     }
 
-    bool setBaudrate(unsigned baudrate) override
+    std::optional<bool> handleBaudrate(unsigned baudrate) override
     {
         lastBaudrate = baudrate;
         return baudrateOk;
     }
 
+public:
     std::optional<GPSReadResult> readOverride;
     std::optional<GPSWriteResult> writeOverride;
     QByteArray scriptedRead;
@@ -119,20 +114,12 @@ public:
     bool acknowledgeAshtech = false;
 };
 
-class ConfigurationProbeTransport : public GPSTransport
+class ConfigurationProbeTransport : public ScriptedGPSTransport
 {
 public:
     ConfigurationProbeTransport()
-        : GPSTransport(neverStop)
+        : ScriptedGPSTransport(neverStop)
     {}
-
-    GPSOpenResult open() override { return {GPSOpenStatus::Opened}; }
-
-    bool fatalError() const override { return false; }
-
-    bool setBaudrate(unsigned) override { return true; }
-
-    GPSReadResult read(uint8_t*, int, int) override { return {GPSReadStatus::TimedOut}; }
 
     std::chrono::milliseconds configurationWriteTimeout() const override { return cap; }
 
@@ -180,7 +167,7 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
     QCOMPARE(snapshots.size(), size_t(2));
     QCOMPARE(snapshots[0].count, 1);
     QCOMPARE(snapshots[1].count, 1);  // Empty SBAS scope must not clear GPS.
-    QCOMPARE(feed("GLGSV,1,1,01,65,20,30,40").updates, 2);
+    QCOMPARE(feed("GLGSV,1,1,01,65,20,30,40").updates, GPSReceiveResult::SATELLITES_UPDATE);
     QCOMPARE(snapshots.back().count, 2);
     QCOMPARE(feed("GPGSV,1,1,02,01,10,20,30,33,15,25,35").status, GPSReceiveStatus::Data);
     QCOMPARE(snapshots.back().count, 3);
@@ -261,7 +248,7 @@ void GPSDriverTest::_femtoSatelliteUsage()
         transport.scriptedRead = nmeaFrame("GPGGA,123519,4807.038,N,01131.000,E,1," + count + ",0.9,545.4,M,46.9,M,,");
         const auto result = driver.receiveOutcome(20);
         QCOMPARE(result.status, GPSReceiveStatus::Data);
-        QCOMPARE(result.updates & 2, 2);
+        QCOMPARE(result.updates & GPSReceiveResult::SATELLITES_UPDATE, GPSReceiveResult::SATELLITES_UPDATE);
     }
     QCOMPARE(usage.size(), size_t(3));
     QCOMPARE(usage[0].usedCount, std::optional<int>{12});
@@ -338,7 +325,7 @@ void GPSDriverTest::_sbfSatelliteUsage()
         receiver.reply = ScriptedSBFReceiver::pvt(used, ++tow);
         const auto result = driver.receiveOutcome(20);
         QCOMPARE(result.status, GPSReceiveStatus::Data);
-        QCOMPARE(result.updates & 2, 2);
+        QCOMPARE(result.updates & GPSReceiveResult::SATELLITES_UPDATE, GPSReceiveResult::SATELLITES_UPDATE);
     }
     QCOMPARE(usage.size(), size_t(3));
     QCOMPARE(usage[0].usedCount, std::optional<int>{12});

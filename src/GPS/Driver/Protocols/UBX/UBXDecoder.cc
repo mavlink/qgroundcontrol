@@ -119,10 +119,10 @@ bool GPSNativeUBX::payloadRxInit(uint16_t message, std::span<const uint8_t> payl
             break;
 
         case UBX_MSG_NAV_PVT:
-            if (!_decodeNavigation) {
-                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+            if (!_decodeContext.navigation) {
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeContext.navigation
 
-            } else if (!_use_nav_pvt) {
+            } else if (!_decodeContext.useNavPvt) {
                 state = UBX_RXMSG_DISABLE;  // disable if not using NAV-PVT
             }
 
@@ -142,10 +142,10 @@ bool GPSNativeUBX::payloadRxInit(uint16_t message, std::span<const uint8_t> payl
         case UBX_MSG_NAV_SOL:
         case UBX_MSG_NAV_TIMEUTC:
         case UBX_MSG_NAV_VELNED:
-            if (!_decodeNavigation) {
-                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+            if (!_decodeContext.navigation) {
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeContext.navigation
 
-            } else if (_use_nav_pvt) {
+            } else if (_decodeContext.useNavPvt) {
                 state = UBX_RXMSG_DISABLE;  // disable if using NAV-PVT instead
             }
 
@@ -161,20 +161,19 @@ bool GPSNativeUBX::payloadRxInit(uint16_t message, std::span<const uint8_t> payl
         case UBX_MSG_SEC_SIG:
         case UBX_MSG_RXM_RTCM:
         case UBX_MSG_RXM_COR:
-            if (!_decodeNavigation) {
-                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
+            if (!_decodeContext.navigation) {
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeContext.navigation
             }
 
             break;
 
         case UBX_MSG_NAV_SAT:
         case UBX_MSG_NAV_SVINFO:
-            if (_satellite_info == nullptr) {
+            if (_satellites == nullptr) {
                 state = UBX_RXMSG_DISABLE;  // disable if sat info not requested
 
-            } else if (!_decodeNavigation) {
-                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeNavigation
-
+            } else if (!_decodeContext.navigation) {
+                state = UBX_RXMSG_IGNORE;  // ignore if not _decodeContext.navigation
             }
 
             break;
@@ -218,11 +217,11 @@ void GPSNativeUBX::decodeNavSat(std::span<const uint8_t> payload)
         return;
     }
     const auto header = *decoded_header;
-    _satellite_info->count = std::min<size_t>(header.numSvs, _satellite_info->entries.size());
+    _satellites->count = std::min<size_t>(header.numSvs, _satellites->entries.size());
     constexpr GPSConstellation systems[] = {
         GPSConstellation::GPS,     GPSConstellation::SBAS, GPSConstellation::Galileo, GPSConstellation::BeiDou,
         GPSConstellation::Unknown, GPSConstellation::QZSS, GPSConstellation::GLONASS, GPSConstellation::NavIC};
-    for (size_t index = 0; index < _satellite_info->count; ++index) {
+    for (size_t index = 0; index < _satellites->count; ++index) {
         auto decoded_wire = UBX::MessageCodec<ubx_payload_rx_nav_sat_part2_t>::block(
             payload, UBX::WIRE_SIZE<std::remove_cv_t<decltype(header)>> +
                          index * UBX::WIRE_SIZE<ubx_payload_rx_nav_sat_part2_t>);
@@ -230,7 +229,7 @@ void GPSNativeUBX::decodeNavSat(std::span<const uint8_t> payload)
             return;
         }
         const auto wire = *decoded_wire;
-        auto& satellite = _satellite_info->entries[index];
+        auto& satellite = _satellites->entries[index];
         satellite.constellation = wire.gnssId < std::size(systems) ? systems[wire.gnssId] : GPSConstellation::Unknown;
         satellite.id = satellite.prn = wire.svId;
         satellite.used = (wire.flags & 8) != 0;
@@ -247,8 +246,8 @@ void GPSNativeUBX::decodeNavSvinfo(std::span<const uint8_t> payload)
         return;
     }
     const auto header = *decoded_header;
-    _satellite_info->count = std::min<size_t>(header.numCh, _satellite_info->entries.size());
-    for (size_t index = 0; index < _satellite_info->count; ++index) {
+    _satellites->count = std::min<size_t>(header.numCh, _satellites->entries.size());
+    for (size_t index = 0; index < _satellites->count; ++index) {
         auto decoded_wire = UBX::MessageCodec<ubx_payload_rx_nav_svinfo_part2_t>::block(
             payload, UBX::WIRE_SIZE<std::remove_cv_t<decltype(header)>> +
                          index * UBX::WIRE_SIZE<ubx_payload_rx_nav_svinfo_part2_t>);
@@ -256,7 +255,7 @@ void GPSNativeUBX::decodeNavSvinfo(std::span<const uint8_t> payload)
             return;
         }
         const auto wire = *decoded_wire;
-        auto& satellite = _satellite_info->entries[index];
+        auto& satellite = _satellites->entries[index];
         satellite.id = satellite.prn = wire.svid;
         satellite.used = (wire.flags & 1) != 0;
         satellite.elevation = wire.elev;
@@ -398,12 +397,12 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             }
             const auto& payload_rx_nav_pvt = *decoded_payload_rx_nav_pvt;
             position.navigation.fixType = navigationFix(payload_rx_nav_pvt.fixType, payload_rx_nav_pvt.flags, true);
-            position.vel_ned_valid = velocityValid(position.navigation.fixType);
+            position.velocityValid = velocityValid(position.navigation.fixType);
 
             position.navigation.satellitesUsed = payload_rx_nav_pvt.numSV;
 
-            if (_assembleEpochs ? !_epochHasHighPrecision
-                                : position.navigation.fixType != GPSPositionReport::FixType::RTKFixed) {
+            if (_decodeContext.assembleEpochs ? !_epochHasHighPrecision
+                                              : position.navigation.fixType != GPSPositionReport::FixType::RTKFixed) {
                 // When RTK is active and solid (fix=6), these values will be filled by HPPOSLLH:
                 position.navigation.latitudeDegrees = payload_rx_nav_pvt.lat * UBX::DEGREES_PER_COORDINATE;
                 position.navigation.longitudeDegrees = payload_rx_nav_pvt.lon * UBX::DEGREES_PER_COORDINATE;
@@ -411,22 +410,14 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                 position.navigation.altitudeEllipsoidMeters = payload_rx_nav_pvt.height * 1e-3;
 
                 position.navigation.horizontalAccuracyMeters = static_cast<float>(payload_rx_nav_pvt.hAcc) * 1e-3f;
-                position.accuracy_timestamp = nowUs();
                 position.navigation.verticalAccuracyMeters = static_cast<float>(payload_rx_nav_pvt.vAcc) * 1e-3f;
 
                 _got_posllh = true;
             }
 
-            position.speedAccuracyMetersPerSecond = static_cast<float>(payload_rx_nav_pvt.sAcc) * 1e-3f;
-
             position.navigation.speedMetersPerSecond = static_cast<float>(payload_rx_nav_pvt.gSpeed) * 1e-3f;
 
-            position.vel_n_m_s = static_cast<float>(payload_rx_nav_pvt.velN) * 1e-3f;
-            position.vel_e_m_s = static_cast<float>(payload_rx_nav_pvt.velE) * 1e-3f;
-            position.vel_d_m_s = static_cast<float>(payload_rx_nav_pvt.velD) * 1e-3f;
-
             position.navigation.courseRadians = static_cast<float>(payload_rx_nav_pvt.headMot) * GPS_DEG_TO_RAD * 1e-5f;
-            position.courseAccuracyRadians = static_cast<float>(payload_rx_nav_pvt.headAcc) * GPS_DEG_TO_RAD * 1e-5f;
 
             // Check if time and date fix flags are good
             if ((payload_rx_nav_pvt.valid & UBX_RX_NAV_PVT_VALID_VALIDDATE) &&
@@ -449,7 +440,6 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             }
 
             position.navigation.timestampUs = nowUs();
-            _last_timestamp_time = position.navigation.timestampUs;
 
             _got_velned = true;
 
@@ -497,7 +487,6 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             position.navigation.altitudeEllipsoidMeters = payload_rx_nav_posllh.height * 1e-3;
             position.navigation.horizontalAccuracyMeters =
                 static_cast<float>(payload_rx_nav_posllh.hAcc) * 1e-3f;  // from mm to m
-            position.accuracy_timestamp = nowUs();
             position.navigation.verticalAccuracyMeters =
                 static_cast<float>(payload_rx_nav_posllh.vAcc) * 1e-3f;  // from mm to m
 
@@ -517,7 +506,8 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             const auto& payload_rx_nav_hpposllh = *decoded_payload_rx_nav_hpposllh;
 
             if (payload_rx_nav_hpposllh.flags == 0 &&
-                (_assembleEpochs || position.navigation.fixType == GPSPositionReport::FixType::RTKFixed)) {
+                (_decodeContext.assembleEpochs ||
+                 position.navigation.fixType == GPSPositionReport::FixType::RTKFixed)) {
                 position.navigation.latitudeDegrees =
                     payload_rx_nav_hpposllh.lat * UBX::DEGREES_PER_COORDINATE +
                     payload_rx_nav_hpposllh.latHp * 1e-9;  // regular precision lat/lon (1e7), plus high precision (1e9)
@@ -532,7 +522,6 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                 position.navigation.horizontalAccuracyMeters = static_cast<float>(payload_rx_nav_hpposllh.hAcc) *
                                                                1e-4f;  // Accuracy estimates, convert from 0.1 mm to m
                 position.navigation.verticalAccuracyMeters = static_cast<float>(payload_rx_nav_hpposllh.vAcc) * 1e-4f;
-                position.accuracy_timestamp = nowUs();
 
                 position.navigation.timestampUs = nowUs();
 
@@ -551,9 +540,7 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             const auto& payload_rx_nav_sol = *decoded_payload_rx_nav_sol;
 
             position.navigation.fixType = navigationFix(payload_rx_nav_sol.gpsFix, payload_rx_nav_sol.flags, false);
-            position.vel_ned_valid = velocityValid(position.navigation.fixType);
-            position.speedAccuracyMetersPerSecond =
-                static_cast<float>(payload_rx_nav_sol.sAcc) * 1e-2f;  // from cm to m
+            position.velocityValid = velocityValid(position.navigation.fixType);
             position.navigation.satellitesUsed = payload_rx_nav_sol.numSV;
 
             ret = 1;
@@ -580,9 +567,8 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                 break;
             }
             const auto& payload_rx_nav_dop = *decoded_payload_rx_nav_dop;
-
             position.navigation.horizontalDop = payload_rx_nav_dop.hDOP * UBX::DOP_PER_UNIT;
-            position.dop_timestamp = nowUs();
+            position.navigation.horizontalDop = payload_rx_nav_dop.hDOP * UBX::DOP_PER_UNIT;
             position.navigation.verticalDop = payload_rx_nav_dop.vDOP * UBX::DOP_PER_UNIT;
 
             ret = 1;
@@ -613,8 +599,6 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                 position.navigation.utcTimeUs = 0;
             }
 
-            _last_timestamp_time = nowUs();
-
             ret = 1;
             break;
         }
@@ -622,7 +606,7 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
         case UBX_MSG_NAV_SVINFO:
 
             // Satellite entries were decoded from the validated payload.
-            _satellite_info->timestamp = nowUs();
+            _satellites->timestamp = nowUs();
 
             ret = 2;
             break;
@@ -638,25 +622,22 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                 const ubx_payload_rx_nav_svin_t& svin = payload_rx_nav_svin;
                 _survey_in_stopped = svin.active == 0 && svin.valid == 0;
 
-                if (!_decodeNavigation) {
+                if (!_decodeContext.navigation) {
                     ret = 1;
                     break;
                 }
 
                 GPSNativeSurveyReport status{};
-                status.accuracyKnown = true;
-                status.altitudeDatum = GPSNativeSurveyReport::AltitudeDatum::Ellipsoid;
                 const auto surveyPosition = fromEcef({
                     .x = (static_cast<double>(svin.meanX) + static_cast<double>(svin.meanXHP) * 0.01) * 0.01,
                     .y = (static_cast<double>(svin.meanY) + static_cast<double>(svin.meanYHP) * 0.01) * 0.01,
                     .z = (static_cast<double>(svin.meanZ) + static_cast<double>(svin.meanZHP) * 0.01) * 0.01,
                 });
-                status.latitude = surveyPosition.latitudeDegrees;
-                status.longitude = surveyPosition.longitudeDegrees;
-                status.altitude = surveyPosition.altitudeMeters;
-                status.duration = svin.dur;
-                status.mean_accuracy = svin.meanAcc / 10;
-                status.flags = (svin.valid & 1) | ((svin.active & 1) << 1);
+                status.survey.position = surveyPosition;
+                status.survey.duration = std::chrono::seconds(svin.dur);
+                status.survey.meanAccuracyMeters = static_cast<double>(svin.meanAcc / 10) / 1000.0;
+                status.survey.valid = (svin.valid & 1) != 0;
+                status.survey.active = (svin.active & 1) != 0;
                 surveyInStatus(status);
 
                 if (svin.valid == 1 && svin.active == 0) {
@@ -675,13 +656,9 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             const auto& payload_rx_nav_velned = *decoded_payload_rx_nav_velned;
 
             position.navigation.speedMetersPerSecond = static_cast<float>(payload_rx_nav_velned.gSpeed) * 1e-2f;
-            position.vel_n_m_s = static_cast<float>(payload_rx_nav_velned.velN) * 1e-2f;  // NED NORTH velocity
-            position.vel_e_m_s = static_cast<float>(payload_rx_nav_velned.velE) * 1e-2f;  // NED EAST velocity
-            position.vel_d_m_s = static_cast<float>(payload_rx_nav_velned.velD) * 1e-2f;  // NED DOWN velocity
             position.navigation.courseRadians =
                 static_cast<float>(payload_rx_nav_velned.heading) * GPS_DEG_TO_RAD * 1e-5f;
-            position.courseAccuracyRadians = static_cast<float>(payload_rx_nav_velned.cAcc) * GPS_DEG_TO_RAD * 1e-5f;
-            position.vel_ned_valid = velocityValid(position.navigation.fixType);
+            position.velocityValid = velocityValid(position.navigation.fixType);
 
             _got_velned = true;
 
@@ -717,46 +694,7 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                 }
 
                 position.navigation.headingRadians = heading_rad;
-                position.heading_timestamp = nowUs();
                 position.navigation.headingAccuracyRadians = heading_acc_rad;
-
-                GPSNativeRelativeReport gps_rel{};
-
-                gps_rel.timestamp_sample = nowUs();  // TODO: adjust with delay estimate
-
-                // iTOW alone has no week/UTC correlation; leave time_utc_usec unavailable.
-                gps_rel.reference_station_id = payload_rx_nav_relposned.refStationId;
-
-                gps_rel.position[0] =
-                    (payload_rx_nav_relposned.relPosN + payload_rx_nav_relposned.relPosHPN * 1e-2f) * 1e-2f;
-                gps_rel.position[1] =
-                    (payload_rx_nav_relposned.relPosE + payload_rx_nav_relposned.relPosHPE * 1e-2f) * 1e-2f;
-                gps_rel.position[2] =
-                    (payload_rx_nav_relposned.relPosD + payload_rx_nav_relposned.relPosHPD * 1e-2f) * 1e-2f;
-
-                gps_rel.position_length = rel_length_m;
-
-                gps_rel.heading = heading_rad;
-                gps_rel.heading_accuracy = heading_acc_rad;
-
-                gps_rel.position_accuracy[0] = payload_rx_nav_relposned.accN * 1e-4f;  // 0.1mm -> m
-                gps_rel.position_accuracy[1] = payload_rx_nav_relposned.accE * 1e-4f;  // 0.1mm -> m
-                gps_rel.position_accuracy[2] = payload_rx_nav_relposned.accD * 1e-4f;  // 0.1mm -> m
-
-                gps_rel.accuracy_length = payload_rx_nav_relposned.accLength * 1e-4f;  // 0.1mm -> m;
-
-                gps_rel.gnss_fix_ok = flags & (1 << 0);
-                gps_rel.differential_solution = flags & (1 << 1);
-                gps_rel.relative_position_valid = flags & (1 << 2);
-                gps_rel.carrier_solution_floating = flags & (1 << 3);
-                gps_rel.carrier_solution_fixed = flags & (1 << 4);
-                gps_rel.moving_base_mode = flags & (1 << 5);
-                gps_rel.reference_position_miss = flags & (1 << 6);
-                gps_rel.reference_observations_miss = flags & (1 << 7);
-                gps_rel.heading_valid = heading_qualified;
-                gps_rel.relative_position_normalized = flags & (1 << 9);
-
-                gotRelativePositionMessage(gps_rel);
 
                 ret = 1;
             }
@@ -790,40 +728,7 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
                 }
 
                 position.navigation.headingRadians = heading_rad;
-                position.heading_timestamp = nowUs();
                 position.navigation.headingAccuracyRadians = heading_acc_rad;
-
-                GPSNativeRelativeReport gps_rel{};
-
-                gps_rel.timestamp_sample = nowUs();
-
-                // time_utc_usec is left at 0 (documented as unavailable): NAV-DAHEADING only carries
-                // iTOW, which cannot be converted to UTC without the week number and leap seconds.
-
-                gps_rel.position[0] = payload_rx_nav_daheading.relPosN * 1e-3f;  // mm -> m
-                gps_rel.position[1] = payload_rx_nav_daheading.relPosE * 1e-3f;
-                gps_rel.position[2] = payload_rx_nav_daheading.relPosD * 1e-3f;
-
-                gps_rel.position_length = rel_length_m;
-
-                gps_rel.heading = heading_rad;
-                gps_rel.heading_accuracy = heading_acc_rad;
-
-                gps_rel.position_accuracy[0] = payload_rx_nav_daheading.accN * 1e-3f;
-                gps_rel.position_accuracy[1] = payload_rx_nav_daheading.accE * 1e-3f;
-                gps_rel.position_accuracy[2] = payload_rx_nav_daheading.accD * 1e-3f;
-
-                gps_rel.accuracy_length = payload_rx_nav_daheading.accLength * 1e-3f;
-
-                // NAV-DAHEADING has no reference station, moving base or normalized position flags
-                gps_rel.gnss_fix_ok = flags & (1 << 0);
-                gps_rel.differential_solution = flags & (1 << 1);
-                gps_rel.relative_position_valid = rel_pos_valid;
-                gps_rel.carrier_solution_floating = flags & (1 << 3);
-                gps_rel.carrier_solution_fixed = carrier_solution_fixed;
-                gps_rel.heading_valid = heading_qualified;
-
-                gotRelativePositionMessage(gps_rel);
 
                 ret = 1;
             }
@@ -1066,10 +971,6 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
         }
     }
 
-    if (ret > 0) {
-        position.timestamp_time_relative = (int32_t) (_last_timestamp_time - position.navigation.timestampUs);
-    }
-
     return ret;
 }
 
@@ -1160,7 +1061,7 @@ int GPSNativeUBX::decodeValidatedPayload(uint16_t message, std::span<const uint8
     if (!UBX::validPayload(message, payload)) {
         return 0;
     }
-    if (message == UBX::NAV_EOE && payload.size() == 4 && _assembleEpochs) {
+    if (message == UBX::NAV_EOE && payload.size() == 4 && _decodeContext.assembleEpochs) {
         uint32_t tow = 0;
         for (unsigned index = 0; index < 4; ++index) {
             tow |= uint32_t(payload[index]) << (index * 8);
@@ -1177,7 +1078,7 @@ int GPSNativeUBX::decodeValidatedPayload(uint16_t message, std::span<const uint8
     const auto publish = [this](const auto& report) { publishEpoch(report); };
     const auto* schema = UBX::messageSchema(message);
     const bool timed = schema && schema->towOffset >= 0;
-    if (_assembleEpochs && timed) {
+    if (_decodeContext.assembleEpochs && timed) {
         const size_t offset = schema->towOffset;
         const auto tow = LittleEndian::read<uint32_t>(payload, offset).value_or(0);
         epoch = _navigationEpochs.find(tow, nowUs(), publish);
@@ -1188,11 +1089,11 @@ int GPSNativeUBX::decodeValidatedPayload(uint16_t message, std::span<const uint8
     }
     switch (message) {
         case UBX_MSG_NAV_SAT:
-            *_satellite_info = {};
+            *_satellites = {};
             decodeNavSat(payload);
             break;
         case UBX_MSG_NAV_SVINFO:
-            *_satellite_info = {};
+            *_satellites = {};
             decodeNavSvinfo(payload);
             break;
         case UBX_MSG_MON_VER:
@@ -1201,7 +1102,7 @@ int GPSNativeUBX::decodeValidatedPayload(uint16_t message, std::span<const uint8
         default:
             break;
     }
-    const int updates = payloadRxDone(message, payload, epoch ? epoch->position : *_gps_position);
+    const int updates = payloadRxDone(message, payload, epoch ? epoch->position : _position);
     if (epoch) {
         if (message == UBX_MSG_NAV_PVT) {
             epoch->positionValid = epoch->velocityValid = true;
@@ -1209,21 +1110,21 @@ int GPSNativeUBX::decodeValidatedPayload(uint16_t message, std::span<const uint8
             epoch->positionValid = true;
         } else if (message == UBX_MSG_NAV_VELNED) {
             epoch->velocityValid = true;
-        } else if (message == UBX_MSG_NAV_HPPOSLLH && (updates & 1)) {
+        } else if (message == UBX_MSG_NAV_HPPOSLLH && (updates & GPSDecodedBatch::POSITION_UPDATE)) {
             epoch->highPrecision = true;
         }
         return GPSDecodedBatch::PROTOCOL_ACTIVITY;
     }
     // ACKs and ancillary metadata are useful protocol activity, not new position epochs.
-    if ((updates & 1) && message != UBX_MSG_NAV_PVT && message != UBX_MSG_NAV_POSLLH &&
+    if ((updates & GPSDecodedBatch::POSITION_UPDATE) && message != UBX_MSG_NAV_PVT && message != UBX_MSG_NAV_POSLLH &&
         message != UBX_MSG_NAV_HPPOSLLH && message != UBX_MSG_NAV_VELNED) {
-        return (updates & ~1) | GPSDecodedBatch::PROTOCOL_ACTIVITY;
+        return (updates & ~GPSDecodedBatch::POSITION_UPDATE) | GPSDecodedBatch::PROTOCOL_ACTIVITY;
     }
-    if (updates & 1) {
-        publishPosition(*_gps_position);
+    if (updates & GPSDecodedBatch::POSITION_UPDATE) {
+        publishPosition(_position);
     }
-    if ((updates & 2) && _satellite_info) {
-        publishSatellites(*_satellite_info);
+    if ((updates & GPSDecodedBatch::SATELLITES_UPDATE) && _satellites) {
+        publishSatellites(*_satellites);
     }
     return updates;
 }

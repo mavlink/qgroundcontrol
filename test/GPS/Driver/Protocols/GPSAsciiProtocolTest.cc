@@ -12,6 +12,7 @@
 #include "GPSAsciiProtocol.h"
 #include "GPSProtocolFeatures.h"
 #include "GPSProtocolTestIO.h"
+#include "ProtocolTestPackets.h"
 #if QGC_GPS_ENABLE_QUECTEL
 #include "Quectel/QuectelCodec_p.h"
 #endif
@@ -33,18 +34,10 @@ public:
     }
 };
 
-QByteArray sentence(const QByteArray& body)
-{
-    unsigned char checksum = 0;
-    for (const char byte : body) {
-        checksum ^= static_cast<unsigned char>(byte);
-    }
-    return '$' + body + '*' + QByteArray::number(checksum, 16).rightJustified(2, '0').toUpper() + "\r\n";
-}
-
 void feed(GPSProtocol& receiver, const QByteArray& body)
 {
-    const auto bytes = sentence(body);
+    const QByteArray bytes =
+        QByteArray::fromStdString(nmeaSentence({body.constData(), static_cast<size_t>(body.size())}));
     receiver.consume({reinterpret_cast<const uint8_t*>(bytes.constData()), static_cast<size_t>(bytes.size())});
 }
 
@@ -104,7 +97,6 @@ void GPSAsciiProtocolTest::_vdopEpoch()
     now = positionReceipt + elapsedUs;
     feed(receiver, gga(nextUtc));
     QCOMPARE(published->navigation.timestampUs, now);
-    QCOMPARE(published->dop_timestamp, now);
     QCOMPARE(published->navigation.horizontalDop, 0.9f);
     if (retained) {
         QCOMPARE(published->navigation.verticalDop, 0.6f);
@@ -190,7 +182,8 @@ void GPSAsciiProtocolTest::_quectelCodec()
 {
 #if QGC_GPS_ENABLE_QUECTEL
     const QByteArray body("PQTMCFGMSGRATE,OK,GGA,1,");
-    const auto wire = sentence(body);
+    const QByteArray wire =
+        QByteArray::fromStdString(nmeaSentence({body.constData(), static_cast<size_t>(body.size())}));
     const std::string_view bodyView(body.constData(), body.size());
     QCOMPARE(QuectelCodec::frame(bodyView), wire.toStdString());
     const std::string_view line(wire.constData(), wire.size() - 2);

@@ -68,21 +68,6 @@ void nmeaFixQualities()
     }
 }
 
-#if QGC_GPS_ENABLE_SBF
-std::vector<uint8_t> sbfPacket(uint16_t id, std::span<const uint8_t> payload, uint32_t tow = 0, uint16_t week = 2435)
-{
-    std::vector<uint8_t> packet(14 + payload.size());
-    (void) LittleEndian::write<uint16_t>(packet, 0, 0x4024);
-    (void) LittleEndian::write<uint16_t>(packet, 4, id);
-    (void) LittleEndian::write<uint16_t>(packet, 6, uint16_t(packet.size()));
-    (void) LittleEndian::write<uint32_t>(packet, 8, tow);
-    (void) LittleEndian::write<uint16_t>(packet, 12, week);
-    std::copy(payload.begin(), payload.end(), packet.begin() + 14);
-    (void) LittleEndian::write<uint16_t>(packet, 2, crc16(packet.data() + 4, packet.size() - 4));
-    return packet;
-}
-#endif
-
 std::vector<uint8_t> femtoPacket(uint16_t id, std::span<const uint8_t> payload)
 {
     std::vector<uint8_t> packet(28 + payload.size() + 4);
@@ -113,25 +98,25 @@ void malformedMessages()
     fix.nr_sv = 12;
     sbf_payload_dop_t dop{};
     sbf_payload_vel_cov_geodetic_t covariance{};
-    sbf.consume(sbfPacket(SBF_ID_DOP, bytes(dop)));
-    sbf.consume(sbfPacket(SBF_ID_VelCovGeodetic, bytes(covariance)));
-    const auto good = sbfPacket(SBF_ID_PVTGeodetic, bytes(fix));
+    sbf.consume(sbfBlock(SBF_ID_DOP, bytes(dop)));
+    sbf.consume(sbfBlock(SBF_ID_VelCovGeodetic, bytes(covariance)));
+    const auto good = sbfBlock(SBF_ID_PVTGeodetic, bytes(fix));
     sbf.consume(good);
     gps_test_time += 200000;
     CHECK(sbf.consume({}) & 1);
     CHECK(std::abs(position.navigation.latitudeDegrees - 0.5 * GPS_RAD_TO_DEG) < 0.00001);
     const auto received = position.navigation.timestampUs;
-    CHECK(sbf.consume(sbfPacket(SBF_ID_PVTGeodetic, shortPayload, 1000)) == 0);
+    CHECK(sbf.consume(sbfBlock(SBF_ID_PVTGeodetic, shortPayload, 1000)) == 0);
     CHECK(position.navigation.timestampUs == received);
     CHECK(!(sbf.consume(good) & 1));  // Duplicate receiver epoch does not republish.
 
     fix.cog = -2.0e10f;
-    sbf.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), 1000));
+    sbf.consume(sbfBlock(SBF_ID_PVTGeodetic, bytes(fix), 1000));
     gps_test_time += 200000;
     CHECK(sbf.consume({}) & 1);
     CHECK(std::isnan(position.navigation.courseRadians));
     fix.cog = 90.0f;
-    sbf.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), 2000));
+    sbf.consume(sbfBlock(SBF_ID_PVTGeodetic, bytes(fix), 2000));
     gps_test_time += 200000;
     CHECK(sbf.consume({}) & 1);
     CHECK(std::abs(position.navigation.courseRadians - GPS_PI / 2) < 0.00001);
@@ -233,22 +218,6 @@ void absoluteDeadline()
     CHECK(now == 1010000);
 }
 
-std::vector<uint8_t> nmeaPacket(std::string_view body)
-{
-    uint8_t checksum = 0;
-    std::vector<uint8_t> result{'$'};
-    for (const auto byte : body) {
-        result.push_back(byte);
-        checksum ^= byte;
-    }
-    result.push_back('*');
-    result.push_back(NMEAFields::hexDigit(checksum >> 4));
-    result.push_back(NMEAFields::hexDigit(checksum));
-    result.push_back('\r');
-    result.push_back('\n');
-    return result;
-}
-
 #if QGC_GPS_ENABLE_ASHTECH
 constexpr std::string_view ASHTECH_SURVEY_STARTED = "PASHR,RECEIPT,POS,AVG,STARTED,INTERVAL,100,114502.56,28.12.2011";
 constexpr std::string_view ASHTECH_SURVEY_FINISHED =
@@ -290,6 +259,7 @@ public:
             ++gps_test_time;
             return GPSReadResult{GPSReadStatus::Data, int(count)};
         };
+
         io.write = [this](std::span<const uint8_t> bytes, GPSDeadline) {
             ++transportCalls;
             const std::string command(reinterpret_cast<const char*>(bytes.data()), bytes.size());
@@ -351,6 +321,16 @@ public:
     }
 };
 
+int surveyFlags(const GPSNativeSurveyReport& report)
+{
+    return (report.survey.valid ? 1 : 0) | (report.survey.active ? 2 : 0);
+}
+
+uint32_t surveyDuration(const GPSNativeSurveyReport& report)
+{
+    return static_cast<uint32_t>(report.survey.duration.count());
+}
+
 void ashtechCommandEvidence()
 {
     for (const std::string command : {"$PASHS,POP,20\r\n", "$PASHS,NME,ALL,A,OFF\r\n"}) {
@@ -384,7 +364,7 @@ void ashtechSurveyReceipts()
     AshtechReceiver receiver;
     receiver.configure();
     receiver.startSurvey();
-    CHECK(!receiver.surveys.empty() && receiver.surveys.back().flags == 2);
+    CHECK(!receiver.surveys.empty() && surveyFlags(receiver.surveys.back()) == 2);
     receiver.surveys.clear();
 
     std::vector<std::string> malformed{"PASHR,RECEIPT,", "PASHR,RECEIPT,POS,AVG,100,FINISHED",
@@ -440,9 +420,9 @@ void ashtechSurveyReceipts()
         CHECK(receiver.surveys.empty());
     }
     receiver.driver.consume(completeFrame);
-    CHECK(receiver.surveys.size() == 1 && receiver.surveys.back().flags == 1);
-    CHECK(!receiver.surveys.back().accuracyKnown);
-    CHECK(std::abs(receiver.surveys.back().latitude - (55 + 42.5178481 / 60)) < 1e-8);
+    CHECK(receiver.surveys.size() == 1 && surveyFlags(receiver.surveys.back()) == 1);
+    CHECK(!receiver.surveys.back().survey.meanAccuracyMeters.has_value());
+    CHECK(std::abs(receiver.surveys.back().survey.position.latitudeDegrees - (55 + 42.5178481 / 60)) < 1e-8);
     receiver.driver.receive(1);
     receiver.surveys.clear();
     const auto completedCommands = receiver.commands.size();
@@ -456,11 +436,11 @@ void ashtechSurveyReceipts()
     receiver.driver.consume(nmeaPacket("PASHR,RECEIPT,POS,AVG,100,FINISHED,114642.81,28.12.2011,"));
     gps_test_time += 2000000;
     receiver.driver.consume(nmeaPacket("GPHDT,121.2,T"));
-    CHECK(receiver.surveys.size() == 1 && receiver.surveys.back().flags == 2);
-    CHECK(receiver.surveys.back().duration >= 2);
+    CHECK(receiver.surveys.size() == 1 && surveyFlags(receiver.surveys.back()) == 2);
+    CHECK(surveyDuration(receiver.surveys.back()) >= 2);
     receiver.surveys.clear();
     receiver.driver.consume(nmeaPacket(ASHTECH_SURVEY_FAILED));
-    CHECK(receiver.surveys.size() == 1 && receiver.surveys.back().flags == 0);
+    CHECK(receiver.surveys.size() == 1 && surveyFlags(receiver.surveys.back()) == 0);
     const auto afterFailure = receiver.commands.size();
     receiver.driver.receive(1);
     CHECK(receiver.commands.size() == afterFailure);
@@ -536,17 +516,17 @@ void ashtechMetadata()
         CHECK(driver.consume(nmeaPacket(missingCoordinate)) & 1);
         CHECK(position.navigation.fixType == GPSPositionReport::FixType::NoFix);
     }
-    CHECK(!(driver.consume(nmeaPacket("GPGSV,1,1,01,01,,,")) & 2));
+    CHECK(!(driver.consume(nmeaPacket("GPGSV,1,1,01,01,,,")) & GPSDecodedBatch::SATELLITES_UPDATE));
     gps_test_time += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
-    CHECK(driver.consume({}) & 2);
+    CHECK(driver.consume({}) & GPSDecodedBatch::SATELLITES_UPDATE);
     CHECK(gpsSatellites.count == 1);
     CHECK(!gpsSatellites.entries[0].signal);
     CHECK(!gpsSatellites.entries[0].azimuth);
     CHECK(!gpsSatellites.entries[0].elevation);
     CHECK(!gpsSatellites.entries[0].used);
-    CHECK(!(driver.consume(nmeaPacket("GPGSV,1,1,01,01,0,0,0")) & 2));
+    CHECK(!(driver.consume(nmeaPacket("GPGSV,1,1,01,01,0,0,0")) & GPSDecodedBatch::SATELLITES_UPDATE));
     gps_test_time += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
-    CHECK(driver.consume({}) & 2);
+    CHECK(driver.consume({}) & GPSDecodedBatch::SATELLITES_UPDATE);
     CHECK(gpsSatellites.entries[0].signal == 0);
     CHECK(gpsSatellites.entries[0].azimuth == 0);
     CHECK(gpsSatellites.entries[0].elevation == 0);
@@ -586,7 +566,7 @@ void ashtechMixedFramingAndFixedCommand()
     verifyRTCMRecovery(receiver.driver, receiver.corrections);
     receiver.startSurvey();
     CHECK(receiver.driver.ioError() == 0);
-    CHECK(receiver.surveys.size() == 1 && receiver.surveys.back().flags == 1);
+    CHECK(receiver.surveys.size() == 1 && surveyFlags(receiver.surveys.back()) == 1);
     const auto fixed = std::find_if(receiver.commands.begin(), receiver.commands.end(),
                                     [](const auto& command) { return command.starts_with("$PASHS,POS,4700."); });
     CHECK(fixed != receiver.commands.end() && fixed->ends_with(",PC1\r\n"));
@@ -694,11 +674,11 @@ void sbfEpochMetadata()
     speed.cov_vn_vn = 9;
     sbf_payload_dop_t dop{};
     dop.hDOP = 125;
-    driver.consume(sbfPacket(SBF_ID_AttCovEuler, bytes(accuracy), 1000));
-    driver.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), 1000));
-    driver.consume(sbfPacket(SBF_ID_DOP, bytes(dop), 2000));  // Adjacent receiver epochs must remain independent.
-    driver.consume(sbfPacket(SBF_ID_AttEuler, bytes(heading), 1000));
-    driver.consume(sbfPacket(SBF_ID_VelCovGeodetic, bytes(speed), 1000));
+    driver.consume(sbfBlock(SBF_ID_AttCovEuler, bytes(accuracy), 1000));
+    driver.consume(sbfBlock(SBF_ID_PVTGeodetic, bytes(fix), 1000));
+    driver.consume(sbfBlock(SBF_ID_DOP, bytes(dop), 2000));  // Adjacent receiver epochs must remain independent.
+    driver.consume(sbfBlock(SBF_ID_AttEuler, bytes(heading), 1000));
+    driver.consume(sbfBlock(SBF_ID_VelCovGeodetic, bytes(speed), 1000));
     CHECK(fixes.empty());
     gps_test_time += 200000;
     driver.consume({});
@@ -710,11 +690,10 @@ void sbfEpochMetadata()
     CHECK(std::isnan(fixes[0].navigation.horizontalAccuracyMeters));
     CHECK(std::abs(fixes[0].navigation.headingAccuracyRadians * GPS_RAD_TO_DEG - 2) < 1e-5);
     CHECK(std::abs(fixes[0].navigation.headingRadians * GPS_RAD_TO_DEG - 90) < 1e-5);
-    CHECK(fixes[0].speedAccuracyMetersPerSecond == 3);
     CHECK(fixes[0].navigation.utcTimeUs == 0);  // GNSS time cannot be labeled UTC without a receiver UTC offset.
     fix.mode_2d = 0;
     fix.nr_sv = 0;
-    driver.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), 3000));
+    driver.consume(sbfBlock(SBF_ID_PVTGeodetic, bytes(fix), 3000));
     gps_test_time += 200000;
     driver.consume({});
     CHECK(fixes.size() == 2);
@@ -722,9 +701,8 @@ void sbfEpochMetadata()
     CHECK(fixes.back().navigation.fixType == GPSPositionReport::FixType::Fix3D);
     CHECK(std::isnan(fixes.back().navigation.headingRadians));
     CHECK(std::isnan(fixes.back().navigation.headingAccuracyRadians));
-    CHECK(std::isnan(fixes.back().speedAccuracyMetersPerSecond));
-    CHECK(driver.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), UINT32_MAX)) == 0);
-    CHECK(driver.consume(sbfPacket(SBF_ID_PVTGeodetic, bytes(fix), 4000, UINT16_MAX)) == 0);
+    CHECK(driver.consume(sbfBlock(SBF_ID_PVTGeodetic, bytes(fix), UINT32_MAX)) == 0);
+    CHECK(driver.consume(sbfBlock(SBF_ID_PVTGeodetic, bytes(fix), 4000, UINT16_MAX)) == 0);
     gps_test_time += 200000;
     driver.consume({});
     CHECK(fixes.size() == 2);
@@ -752,7 +730,7 @@ void sbfInvalidCoordinates()
     uint32_t tow = 1000;
     auto check = [&](const auto& payload) {
         const auto previous = reports.size();
-        driver.consume(sbfPacket(SBF_ID_PVTGeodetic, payload, tow));
+        driver.consume(sbfBlock(SBF_ID_PVTGeodetic, payload, tow));
         tow += 1000;
         gps_test_time += 200000;
         driver.consume({});

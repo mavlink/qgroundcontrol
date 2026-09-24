@@ -16,11 +16,10 @@ inline void applyNMEAGGA(GPSNativePositionReport& report, const NMEA::GGA& fix, 
     report.navigation.altitudeMslMeters = fix.altitude;
     report.navigation.altitudeEllipsoidMeters = fix.altitude + fix.geoidSeparation;
     report.navigation.horizontalDop = fix.hdop;
-    report.dop_timestamp = receivedAtUs;
     report.navigation.satellitesUsed = fix.satellitesUsed.value_or(std::numeric_limits<uint8_t>::max());
     report.navigation.fixType = NMEA::fixQuality(fix.quality, GPSFixQuality::Fix3D);
     report.navigation.timestampUs = receivedAtUs;
-    report.vel_ned_valid = false;
+    report.velocityValid = false;
 }
 
 inline GPSNativeSatelliteReport gpsNMEASatelliteReport(const NMEA::SatelliteSystem& system)

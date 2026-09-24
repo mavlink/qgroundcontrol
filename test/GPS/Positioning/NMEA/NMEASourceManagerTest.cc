@@ -536,7 +536,8 @@ void NMEASourceManagerTest::_udpActivityAndSatellites()
         QSignalSpy ready(source._input.udp.get(), &QIODevice::readyRead);
         const QByteArray otherData("other sender\n");
         QCOMPARE(replacement.writeDatagram(otherData, QHostAddress::LocalHost, port), otherData.size());
-        QVERIFY(!ready.wait(100));
+        // Tight negative window: this only rejects an immediate datagram from the wrong peer.
+        QVERIFY_NO_SIGNAL_WAIT(ready, 100);
         QVERIFY(peerChanges.isEmpty());
     }
     QTRY_VERIFY_WITH_TIMEOUT(!(position.nmeaInput() && position.nmeaInput()->receiving()), TestTimeout::mediumMs());

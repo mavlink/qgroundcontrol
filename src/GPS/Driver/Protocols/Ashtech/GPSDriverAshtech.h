@@ -132,6 +132,7 @@ private:
     uint8_t _rx_buffer[ASHTECH_RECV_BUFFER_SIZE];
     NMEA::Framer _nmeaFramer{_rx_buffer};
     uint64_t _last_timestamp_time{0};
+    uint64_t _headingTimestamp{0};
     uint64_t _utcReference = 0;
     NMEA::EpochReceipt _positionEpoch;
     NMEA::EpochReceipt _accuracyReceipt;

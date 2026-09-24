@@ -11,7 +11,7 @@
 
 #include "GPSDriver.h"
 #include "GPSProtocolFeatures.h"
-#include "GPSTransport.h"
+#include "ScriptedGPSTransport.h"
 #include "UnitTest.h"
 
 namespace {
@@ -20,45 +20,43 @@ const QByteArray POSITION = "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4
 const QByteArray NEXT_POSITION = "$GPGGA,123520,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*4D\r\n";
 const QByteArray SATELLITES = "$GPGSV,1,1,01,01,10,20,30*79\r\n";
 
-class ReentrancyTransport : public GPSTransport
+class ReentrancyTransport : public ScriptedGPSTransport
 {
 public:
     ReentrancyTransport()
-        : GPSTransport(NEVER_STOP)
+        : ScriptedGPSTransport(NEVER_STOP)
     {}
 
-    GPSOpenResult open() override { return {GPSOpenStatus::Opened}; }
-
-    bool fatalError() const override { return false; }
-
-    GPSReadResult read(uint8_t* buffer, int length, int) override
+protected:
+    std::optional<GPSReadResult> handleRead(uint8_t* buffer, int length, int) override
     {
         ++reads;
         if (incoming.isEmpty()) {
-            return {GPSReadStatus::TimedOut};
+            return GPSReadResult{GPSReadStatus::TimedOut};
         }
         const int count = qMin(length, static_cast<int>(incoming.size()));
         std::memcpy(buffer, incoming.constData(), static_cast<size_t>(count));
         incoming.remove(0, count);
-        return {GPSReadStatus::Data, count};
+        return GPSReadResult{GPSReadStatus::Data, count};
     }
 
-    GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer) override
+    std::optional<GPSWriteResult> handleWrite(const QByteArray& bytes, QDeadlineTimer) override
     {
         ++writes;
         if (acknowledgeFemto) {
-            const QByteArray command(reinterpret_cast<const char*>(buffer), length);
-            incoming = '<' + command.split(' ').first().trimmed() + " OK" + char(0);
+            incoming = '<' + bytes.split(' ').first().trimmed() + " OK" + char(0);
         }
-        return {GPSWriteStatus::Completed, length, length};
+        const int length = bytes.size();
+        return GPSWriteResult{GPSWriteStatus::Completed, length, length};
     }
 
-    bool setBaudrate(unsigned) override
+    std::optional<bool> handleBaudrate(unsigned) override
     {
         ++baudChanges;
         return baudOk;
     }
 
+public:
     QByteArray incoming;
     int reads = 0;
     int writes = 0;

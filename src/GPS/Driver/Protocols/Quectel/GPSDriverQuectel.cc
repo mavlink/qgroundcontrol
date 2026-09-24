@@ -404,6 +404,6 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
     }
     _configured = true;
     _expireSurvey();
-    setRTCMEnabled(_survey.report && (_survey.report->flags & 1));
+    setRTCMEnabled(_survey.report && _survey.report->survey.valid);
     return 0;
 }
