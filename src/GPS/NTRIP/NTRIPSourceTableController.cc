@@ -16,7 +16,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkClient.h"
 
-QGC_LOGGING_CATEGORY(NTRIPSourceTableControllerLog, "GPS.NTRIPSourceTableController")
+QGC_LOGGING_CATEGORY(NTRIPSourceTableControllerLog, "GPS.NTRIP.NTRIPSourceTableController")
 
 struct NTRIPSourceTableController::FetchAttempt
 {

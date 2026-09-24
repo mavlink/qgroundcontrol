@@ -6,7 +6,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(NTRIPConnectionStatsLog, "GPS.NTRIPConnectionStats")
+QGC_LOGGING_CATEGORY(NTRIPConnectionStatsLog, "GPS.NTRIP.NTRIPConnectionStats")
 
 NTRIPConnectionStats::NTRIPConnectionStats(QObject* parent) : QObject(parent), _rateTimer(this)
 {

@@ -153,7 +153,7 @@ void NTRIPConnectionStatsTest::testInvalidReceiptTimestamp()
 {
     QFETCH(qint64, receivedAtMs);
     NTRIPConnectionStats stats;
-    expectLogMessage("GPS.NTRIPConnectionStats", QtWarningMsg,
+    expectLogMessage("GPS.NTRIP.NTRIPConnectionStats", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Invalid RTCM receipt timestamp")));
     stats.recordMessage(100, 1005, receivedAtMs);
     verifyExpectedLogMessage();
@@ -162,7 +162,7 @@ void NTRIPConnectionStatsTest::testInvalidReceiptTimestamp()
 
     stats.recordMessage(100, 1005, static_cast<qint64>(MonotonicClock::nowUs() / 1000) - 6000);
     QVERIFY(stats.dataStale());
-    expectLogMessage("GPS.NTRIPConnectionStats", QtWarningMsg,
+    expectLogMessage("GPS.NTRIP.NTRIPConnectionStats", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Invalid RTCM receipt timestamp")));
     stats.recordMessage(100, 1005, receivedAtMs);
     verifyExpectedLogMessage();

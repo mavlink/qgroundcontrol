@@ -14,7 +14,7 @@
 #include "NTRIPTlsPolicy_p.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIPHttpTransport")
+QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIP.NTRIPHttpTransport")
 
 NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, const NTRIPRtcmFilterConfig& filter,
                                        QObject* parent)

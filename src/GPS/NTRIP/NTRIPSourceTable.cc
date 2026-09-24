@@ -7,7 +7,7 @@
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(NTRIPSourceTableLog, "GPS.NTRIPSourceTable")
+QGC_LOGGING_CATEGORY(NTRIPSourceTableLog, "GPS.NTRIP.NTRIPSourceTable")
 
 bool NTRIPMountpoint::fromSourceTableLine(const QString& line, NTRIPMountpoint& out)
 {

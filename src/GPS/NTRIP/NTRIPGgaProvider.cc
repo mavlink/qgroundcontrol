@@ -7,7 +7,7 @@
 #include "NTRIPTransport.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(NTRIPGgaProviderLog, "GPS.NTRIPGgaProvider")
+QGC_LOGGING_CATEGORY(NTRIPGgaProviderLog, "GPS.NTRIP.NTRIPGgaProvider")
 
 namespace {
 QString sourceName(NTRIPGgaProvider::PositionSource source)

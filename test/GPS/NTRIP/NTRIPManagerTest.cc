@@ -135,7 +135,7 @@ void NTRIPManagerTest::testNewSessionRetryBudget()
     QCOMPARE(transport->startCount, 1);
     QVERIFY(settings->ntripServerConnectEnabled()->rawValue().toBool());
     QCOMPARE(manager._reconnectAttempts, action == 2 ? 3 : 0);
-    expectLogMessage("GPS.NTRIPManager", QtWarningMsg,
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("NTRIP error:.*retry budget")));
     transport->simulateError(NTRIPError::SocketError, QStringLiteral("retry budget"));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
@@ -331,7 +331,7 @@ void NTRIPManagerTest::testDuplicateTransportErrorsScheduleOneRetry()
     mgr.setTransportForTest(transport);
     mgr.startNTRIP();
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
-    expectLogMessage("GPS.NTRIPManager", QtWarningMsg,
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("NTRIP error:.*first failure")));
     transport->simulateError(NTRIPError::SocketError, QStringLiteral("first failure"));
     transport->simulateError(NTRIPError::ServerDisconnected, QStringLiteral("duplicate failure"));
@@ -410,7 +410,8 @@ void NTRIPManagerTest::testRetryPolicy()
     manager.setTransportForTest(transport);
     manager.startNTRIP();
     manager._reconnectAttempts = attempts;
-    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:.*retry test")));
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("NTRIP error:.*retry test")));
     transport->simulateError(code, QStringLiteral("retry test"), std::chrono::milliseconds{retryAfterMs});
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     verifyExpectedLogMessage();
@@ -428,7 +429,7 @@ void NTRIPManagerTest::testRetryPolicy()
     manager.setTransportForTest(replacement);
     manager.startNTRIP();
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
-    expectLogMessage("GPS.NTRIPManager", QtWarningMsg,
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("NTRIP error:.*fresh failure")));
     replacement->simulateError(NTRIPError::SocketError, QStringLiteral("fresh failure"));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
@@ -469,7 +470,7 @@ void NTRIPManagerTest::testHttpRetryAfterReachesManager()
     QVERIFY(peer);
     QTRY_VERIFY_WITH_TIMEOUT(peer->bytesAvailable() > 0, TestTimeout::shortMs());
     peer->readAll();
-    expectLogMessage("GPS.NTRIPManager", QtWarningMsg,
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("NTRIP error:.*%1").arg(status)));
     const QByteArray body = compressed ? QByteArray::fromHex("1f8b080000000000000303000000000000000000") : QByteArray();
     const QByteArray encoding = compressed ? QByteArray("Content-Encoding: gzip\r\n") : QByteArray();
@@ -530,7 +531,8 @@ void NTRIPManagerTest::testRetryPublicationSuperseded()
     } else {
         first->onStop = restart;
     }
-    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:.*superseded")));
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("NTRIP error:.*superseded")));
     first->simulateError(NTRIPError::HttpError, QStringLiteral("superseded"), std::chrono::seconds(300));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     verifyExpectedLogMessage();
@@ -551,7 +553,7 @@ void NTRIPManagerTest::testMissingMountpointDoesNotStartTransport()
     mgr._settings = settings;
     auto* transport = new MockNTRIPTransport(&mgr);
     mgr.setTransportForTest(transport);
-    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("Select a mountpoint")));
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("Select a mountpoint")));
     mgr.startNTRIP();
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
     QCOMPARE(transport->startCount, 0);
@@ -725,7 +727,7 @@ void NTRIPManagerTest::testGgaSettingsUseInjectedProviders()
     QCOMPARE(transport->sentNmea.size(), 1);
     QSignalSpy transitions(&manager, &NTRIPManager::connectionStatusChanged);
 
-    expectLogMessage("GPS.NTRIPManager", QtWarningMsg,
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Inject GGA position providers before initializing NTRIP")));
     manager.setGgaPositionProvider(Source::GCSPosition, []() { return PositionResult{}; });
     verifyExpectedLogMessage();
@@ -896,7 +898,8 @@ void NTRIPManagerTest::testTransportDiagnosticsReachManager()
     const auto filtered = GpsTestHelpers::buildRtcmFrame(1077);
     auto rejected = GpsTestHelpers::buildRtcmFrame(1087);
     rejected.back() ^= 1;
-    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("Invalid RTCM frame")));
+    expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Invalid RTCM frame")));
     const QByteArray body = accepted + filtered + rejected;
     const QByteArray response = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" +
                                 QByteArray::number(body.size(), 16) + "\r\n" + body + "\r\n";

@@ -241,7 +241,7 @@ void GPSRtkTest::_unavailableSatelliteCoverage()
 void GPSRtkTest::_logsFixTransitionsWithoutCoordinates()
 {
     GPSRtk receiver;
-    const QString category = QStringLiteral("GPS.GPSRtk");
+    const QString category = QStringLiteral("GPS.RTK.GPSRtk");
     auto* logging = QGCLoggingCategoryManager::instance();
     const bool wasEnabled = logging->isCategoryEnabled(category);
     if (!wasEnabled) {
@@ -253,16 +253,16 @@ void GPSRtkTest::_logsFixTransitionsWithoutCoordinates()
         }
     });
     const auto initialCount = LogManager::capturedMessages(category).size();
-    expectLogMessage("GPS.GPSRtk", QtDebugMsg, QRegularExpression(QStringLiteral("Receiver fix changed:")));
+    expectLogMessage("GPS.RTK.GPSRtk", QtDebugMsg, QRegularExpression(QStringLiteral("Receiver fix changed:")));
     receiver._fixTypeChanged(GPSPositionReport::FixType::Fix3D);
     verifyExpectedLogMessage();
     QCOMPARE(LogManager::capturedMessages(category).size(), initialCount + 1);
-    expectLogMessage("GPS.GPSRtk", QtDebugMsg, QRegularExpression(QStringLiteral("Receiver fix changed: 1")));
+    expectLogMessage("GPS.RTK.GPSRtk", QtDebugMsg, QRegularExpression(QStringLiteral("Receiver fix changed: 1")));
     receiver._fixTypeChanged(GPSPositionReport::FixType::NoFix);
     verifyExpectedLogMessage();
     QCOMPARE(LogManager::capturedMessages(category).size(), initialCount + 2);
     receiver.disconnectGPS();
-    expectLogMessage("GPS.GPSRtk", QtDebugMsg, QRegularExpression(QStringLiteral("Receiver fix changed: 1")));
+    expectLogMessage("GPS.RTK.GPSRtk", QtDebugMsg, QRegularExpression(QStringLiteral("Receiver fix changed: 1")));
     receiver._fixTypeChanged(GPSPositionReport::FixType::NoFix);
     verifyExpectedLogMessage();
     QCOMPARE(LogManager::capturedMessages(category).size(), initialCount + 3);
@@ -576,7 +576,7 @@ void GPSRtkTest::_failedOpenNeverConnects()
     GPSRtk receiver;
     auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
     QSignalSpy connected(facts->connected(), &Fact::rawValueChanged);
-    expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+    expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
     receiver.connectReceiver(GPSType::ublox, {});
     QVERIFY(!receiver.connected());
@@ -685,7 +685,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QVERIFY(firstGate->sawCancellation);
     QVERIFY(receiver.connected());
 
-    expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+    expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("GPS device error, connection lost")));
     const auto second = receiver._session.provider;
     emit second->connectionError(GPSConnectionError::DeviceError);
@@ -1278,7 +1278,7 @@ void GPSRtkTest::_configurationDiagnosticRetained()
     receiver._setError(GPSConnectionError::ConfigFailed, QStringLiteral("An earlier configuration error"));
     QSignalSpy messages(&receiver, &GPSRtk::errorMessageChanged);
     emit provider->connectionError(GPSConnectionError::ConfigFailed, detail);
-    expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+    expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("GPS receiver did not accept configuration")));
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     verifyExpectedLogMessage();

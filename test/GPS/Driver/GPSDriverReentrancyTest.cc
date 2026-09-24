@@ -129,7 +129,7 @@ void GPSDriverReentrancyTest::_recursiveConfiguration()
     QVERIFY(driver.configure());
     transport.incoming = POSITION;
     expectLogMessage(
-        "GPS.GPSDriver", QtWarningMsg,
+        "GPS.Driver.GPSDriver", QtWarningMsg,
         QRegularExpression(QStringLiteral("Receiver operation already in progress; configuration rejected")));
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Data);
     verifyExpectedLogMessage();
@@ -142,9 +142,9 @@ void GPSDriverReentrancyTest::_recursiveConfiguration()
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Idle);
 
     if (failAfterCallback) {
-        expectLogMessage("GPS.Drivers", QtWarningMsg,
+        expectLogMessage("GPS.Driver.Protocols", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Could not set the passive input baud rate")));
-        expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+        expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Driver configuration failed for type")));
         QVERIFY(!driver.configure());
         verifyExpectedLogMessage();
@@ -171,7 +171,7 @@ void GPSDriverReentrancyTest::_recursiveReceive()
     driverPointer = &driver;
     QVERIFY(driver.configure());
     transport.incoming = POSITION;
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Receiver operation already in progress; receive rejected")));
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Data);
     verifyExpectedLogMessage();
@@ -209,9 +209,9 @@ void GPSDriverReentrancyTest::_configurationCallbacks()
                      std::move(sinks));
     driverPointer = &driver;
     expectLogMessage(
-        "GPS.GPSDriver", QtWarningMsg,
+        "GPS.Driver.GPSDriver", QtWarningMsg,
         QRegularExpression(QStringLiteral("Receiver operation already in progress; configuration rejected")));
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Receiver operation already in progress; receive rejected")));
     QVERIFY(driver.configure());
     verifyExpectedLogMessage();

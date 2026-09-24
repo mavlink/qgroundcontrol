@@ -276,7 +276,7 @@ void GPSDriverTest::_receiveOutcomes()
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Activity);
     const QString detail = QStringLiteral("Receiver disconnected: Gerät");
     transport.readOverride = GPSReadResult{GPSReadStatus::Error, 0, detail};
-    expectLogMessage("GPS.Drivers", QtWarningMsg,
+    expectLogMessage("GPS.Driver.Protocols", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Receiver read failed \\(status %1, code %2\\): %3")
                                             .arg(static_cast<int>(GPSReadStatus::Error))
                                             .arg(-EIO)
@@ -296,7 +296,7 @@ void GPSDriverTest::_receiveOutcomes()
     const auto cancelled = driver.receiveOutcome(0);
     QCOMPARE(cancelled.status, GPSReceiveStatus::Cancelled);
     QCOMPARE(cancelled.detail, transport.readOverride->detail);
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
     QCOMPARE(driver.configurationError(), transport.readOverride->detail);
@@ -373,7 +373,7 @@ void GPSDriverTest::_configurationDeadline()
     transport.cap = std::chrono::milliseconds(capMs);
     transport.delayReturn = delayReturn;
     GPSDriver driver(GPSType::ublox, transport, {.role = GPSReceiverConfig::Role::Position}, {});
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
     QVERIFY(transport.budgetMs > 0);
@@ -444,7 +444,7 @@ void GPSDriverTest::_configurationWriteEvidence()
     FakeGPSTransport transport;
     transport.writeOverride = result;
     GPSDriver driver(GPSType::ublox, transport, {.role = GPSReceiverConfig::Role::Position}, {});
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
     QCOMPARE(driver.configurationError(), result.detail);
@@ -509,8 +509,8 @@ void GPSDriverTest::_freshSurveyAndEvidence()
     GPSDriver driver(GPSType::ublox, receiver,
                      {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .durationSecs = 180}}}, {});
     if (stuck) {
-        expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression("Time mode did not stop"));
-        expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
+        expectLogMessage("GPS.Driver.Protocols", QtWarningMsg, QRegularExpression("Time mode did not stop"));
+        expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
     }
     QCOMPARE(driver.configure(), !stuck);
     if (stuck) {
@@ -642,9 +642,10 @@ void GPSDriverTest::_ubloxDisableFailure()
     GPSDriver position(GPSType::ublox, receiver, {.role = GPSReceiverConfig::Role::Position}, sinks);
     const bool readFailure = reply == ScriptedUBXReceiver::DisableReply::ReadError;
     if (readFailure) {
-        expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("Receiver read failed")));
+        expectLogMessage("GPS.Driver.Protocols", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Receiver read failed")));
     }
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Driver configuration failed for type")));
     QVERIFY(!position.configure());
     if (readFailure) {
@@ -736,10 +737,10 @@ void GPSDriverTest::_ubloxAmbiguousAcknowledgements()
     const GPSReceiverConfig config{.role = GPSReceiverConfig::Role::Position, .constellationMask = sbas ? 3u : 0u};
     GPSDriver position(GPSType::ublox, receiver, config, {});
     if (delayOptional) {
-        expectLogMessage("GPS.Drivers", QtWarningMsg,
+        expectLogMessage("GPS.Driver.Protocols", QtWarningMsg,
                          QRegularExpression(QStringLiteral("CFG-SEC-JAMDET_SENSITIVITY_HI not supported")));
     }
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Driver configuration failed for type")));
     QVERIFY(!position.configure());
     if (delayOptional) {
@@ -797,9 +798,10 @@ void GPSDriverTest::_ubloxReadbackFailure()
     GPSDriver position(GPSType::ublox, receiver, {.role = GPSReceiverConfig::Role::Position}, {});
     const bool readFailure = reply == ScriptedUBXReceiver::ReadbackReply::ReadError;
     if (readFailure) {
-        expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("Receiver read failed")));
+        expectLogMessage("GPS.Driver.Protocols", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Receiver read failed")));
     }
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Driver configuration failed for type")));
     QVERIFY(!position.configure());
     if (readFailure) {
@@ -866,9 +868,10 @@ void GPSDriverTest::_ubloxSbasConfiguration()
     const bool readFailure = settingReply == Setting::ReadError || readbackReply == Readback::ReadError;
     if (!success) {
         if (readFailure) {
-            expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QStringLiteral("Receiver read failed")));
+            expectLogMessage("GPS.Driver.Protocols", QtWarningMsg,
+                             QRegularExpression(QStringLiteral("Receiver read failed")));
         }
-        expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+        expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Driver configuration failed for type")));
     }
     QCOMPARE(position.configure(), success);
@@ -943,7 +946,7 @@ void GPSDriverTest::_testInvalidFixedBaseRejected()
                                                          .longitudeDegrees = coordinate.longitude(),
                                                          .altitudeMeters = static_cast<float>(altitude)}}};
     GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{.base = config}, GPSDriverSinks{});
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg,
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Enter a valid fixed base position and accuracy")));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
@@ -1012,7 +1015,7 @@ void GPSDriverTest::_testInvalidConfiguration()
     QFETCH(QString, message);
     FakeGPSTransport transport;
     GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{.base = config}, GPSDriverSinks{});
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(message)));
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(message)));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
     QVERIFY(transport.lastWrite.isEmpty());
@@ -1064,7 +1067,7 @@ void GPSDriverTest::_nativeConfigurationRejectedBeforeIo()
     FakeGPSTransport transport;
     GPSDriver driver(static_cast<GPSType>(type), transport, config, {});
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::NotConfigured);
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(message)));
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(message)));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::NotConfigured);

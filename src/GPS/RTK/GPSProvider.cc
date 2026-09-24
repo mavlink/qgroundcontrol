@@ -12,7 +12,7 @@
 #include "RTCMFramer.h"
 #endif
 
-QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.GPSProvider")
+QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.RTK.GPSProvider")
 
 GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
                          QObject* parent)

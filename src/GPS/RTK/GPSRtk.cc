@@ -24,7 +24,7 @@
 
 #include <QtCore/QPointer>
 
-QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.GPSRtk")
+QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.RTK.GPSRtk")
 
 GPSRtk::GPSRtk(QObject* parent)
     : QObject(parent)

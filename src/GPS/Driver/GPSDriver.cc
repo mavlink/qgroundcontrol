@@ -39,8 +39,8 @@
 #include "Passive/GPSDriverPassive.h"
 #endif
 
-QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.GPSDriver")
-QGC_LOGGING_CATEGORY(GPSNativeDriversLog, "GPS.Drivers")
+QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.Driver.GPSDriver")
+QGC_LOGGING_CATEGORY(GPSNativeDriversLog, "GPS.Driver.Protocols")
 
 namespace {
 template <typename Protocol>

@@ -120,8 +120,8 @@ void NTRIPTlsTest::_expectTlsWarnings(bool allowSelfSigned, bool mismatched)
                   allowSelfSigned ? QStringLiteral("Accepting self-signed certificate (user opted in)")
                                   : QStringLiteral("Rejecting self-signed certificate (enable 'Accept self-signed "
                                                    "certificates' to allow)"))));
-    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, selfSigned);
-    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, policy);
+    expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg, selfSigned);
+    expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg, policy);
 }
 
 void NTRIPTlsTest::_verifyTlsWarnings()

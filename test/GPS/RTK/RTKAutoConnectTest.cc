@@ -173,7 +173,7 @@ void RTKAutoConnectTest::_failedOpenRetriesWithoutUnplug()
     QSignalSpy attempts(&discovery, &RTKAutoConnect::connectRequested);
     connect(&discovery, &RTKAutoConnect::connectRequested, &receiver,
             [&]() { receiver.connectReceiver(GPSType::ublox, {}); });
-    expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+    expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
     discovery.update();
     discovery.update();
@@ -186,7 +186,7 @@ void RTKAutoConnectTest::_failedOpenRetriesWithoutUnplug()
     discovery.update();
     QCOMPARE(attempts.size(), 1);
     discovery._retryDeadline.setRemainingTime(0);
-    expectLogMessage("GPS.GPSRtk", QtWarningMsg,
+    expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
     discovery.update();
     QCOMPARE(attempts.size(), 2);

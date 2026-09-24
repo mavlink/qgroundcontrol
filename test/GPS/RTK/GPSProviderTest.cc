@@ -544,7 +544,7 @@ void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
         QStringLiteral("Receiver read failed (status %1, code %2): Scripted receiver connection lost")
             .arg(static_cast<int>(GPSReadStatus::Error))
             .arg(-EIO);
-    expectLogMessage("GPS.Drivers", QtWarningMsg, QRegularExpression(QRegularExpression::escape(diagnostic)));
+    expectLogMessage("GPS.Driver.Protocols", QtWarningMsg, QRegularExpression(QRegularExpression::escape(diagnostic)));
     GPSProvider provider(
         [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); },
         GPSType::femto, GPSReceiverConfig{.base = config});
@@ -584,7 +584,7 @@ void GPSProviderTest::_unsupportedPositionRoleReportsConfigFailure()
     const GPSReceiverConfig config{.role = GPSReceiverConfig::Role::Position};
     const QString error = gpsReceiverConfigError(type, config);
     QVERIFY(!error.isEmpty());
-    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(error)));
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(error)));
     GPSProvider provider(
         [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); }, type,
         config);

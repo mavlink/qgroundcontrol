@@ -239,7 +239,7 @@ void NTRIPReentrancyTest::warningRetiresAttempt()
         QStringLiteral("Sending credentials without TLS \u2014 data is not encrypted");
     const QRegularExpression warningPattern(
         QRegularExpression::anchoredPattern(QRegularExpression::escape(warningMessage)));
-    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, warningPattern);
+    expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg, warningPattern);
     transport->_sendHttpRequest();
     verifyExpectedLogMessage();
     QCOMPARE(notifications, 1);
@@ -265,11 +265,11 @@ void NTRIPReentrancyTest::nmeaLogsMetadataOnly()
     QByteArray request;
     QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).endsWith("\r\n\r\n"), TestTimeout::mediumMs());
 
-    const DebugCapture logs("GPS.NTRIPHttpTransport");
+    const DebugCapture logs("GPS.NTRIP.NTRIPHttpTransport");
     const QByteArray gga = "$GPGGA,120000,4723.8620,N,00832.7360,E,1,12,1.0,100.0,M,0.0,M,,";
     const QByteArray expected = gga + "*77\r\n";
     const QString metadata = QStringLiteral("Queued NMEA bytes: %1").arg(expected.size());
-    _expectDebugMessage("GPS.NTRIPHttpTransport", metadata);
+    _expectDebugMessage("GPS.NTRIP.NTRIPHttpTransport", metadata);
     transport.sendNMEA(gga + "\r\n");
     _verifyDebugMessage();
     QTRY_COMPARE_WITH_TIMEOUT(peer->bytesAvailable(), expected.size(), TestTimeout::mediumMs());
@@ -423,7 +423,7 @@ void NTRIPReentrancyTest::legacyCaster()
     }
     const QRegularExpression warningPattern(QStringLiteral("Sending credentials without TLS"));
     if (authenticated) {
-        expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, warningPattern);
+        expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg, warningPattern);
     }
     NTRIPHttpTransport transport(configuration, {});
     QSignalSpy connected(&transport, &NTRIPTransport::connected);
@@ -1709,7 +1709,7 @@ void NTRIPReentrancyTest::ggaSourceSelection()
 void NTRIPReentrancyTest::ggaSelectionDiagnostics()
 {
     using Source = NTRIPGgaProvider::PositionSource;
-    const DebugCapture logs("GPS.NTRIPGgaProvider");
+    const DebugCapture logs("GPS.NTRIP.NTRIPGgaProvider");
     NTRIPGgaProvider provider;
     MockNTRIPTransport transport;
     bool vehicleAvailable = false;
@@ -1730,7 +1730,7 @@ void NTRIPReentrancyTest::ggaSelectionDiagnostics()
     });
 
     QStringList expected{QStringLiteral("GGA source selection: requested=Auto no eligible source")};
-    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    _expectDebugMessage("GPS.NTRIP.NTRIPGgaProvider", expected.last());
     provider.start(&transport);
     _verifyDebugMessage();
     provider._sendGGA();
@@ -1739,7 +1739,7 @@ void NTRIPReentrancyTest::ggaSelectionDiagnostics()
 
     gcsAvailable = true;
     expected.append(QStringLiteral("GGA source selection: requested=Auto provider=GCSPosition fallback=yes"));
-    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    _expectDebugMessage("GPS.NTRIP.NTRIPGgaProvider", expected.last());
     provider._sendGGA();
     _verifyDebugMessage();
     QCOMPARE(logs.messages(), expected);
@@ -1755,7 +1755,7 @@ void NTRIPReentrancyTest::ggaSelectionDiagnostics()
 
     vehicleAvailable = true;
     expected.append(QStringLiteral("GGA source selection: requested=Auto provider=VehicleGPS fallback=no"));
-    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    _expectDebugMessage("GPS.NTRIP.NTRIPGgaProvider", expected.last());
     provider._sendGGA();
     _verifyDebugMessage();
     QCOMPARE(logs.messages(), expected);
@@ -1764,7 +1764,7 @@ void NTRIPReentrancyTest::ggaSelectionDiagnostics()
     provider.configure({Source::GCSPosition});
     QCOMPARE(logs.messages(), expected);
     expected.append(QStringLiteral("GGA source selection: requested=GCSPosition provider=GCSPosition fallback=no"));
-    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    _expectDebugMessage("GPS.NTRIP.NTRIPGgaProvider", expected.last());
     provider._sendGGA();
     _verifyDebugMessage();
     QCOMPARE(logs.messages(), expected);
@@ -1773,7 +1773,7 @@ void NTRIPReentrancyTest::ggaSelectionDiagnostics()
 
     provider.configure({Source::RTKBase});
     expected.append(QStringLiteral("GGA source selection: requested=RTKBase no eligible source"));
-    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    _expectDebugMessage("GPS.NTRIP.NTRIPGgaProvider", expected.last());
     provider._sendGGA();
     _verifyDebugMessage();
     provider._sendGGA();
@@ -1784,7 +1784,7 @@ void NTRIPReentrancyTest::ggaSelectionDiagnostics()
     gcsAvailable = false;
     provider.configure({Source::Auto});
     expected.append(QStringLiteral("GGA source selection: requested=Auto no eligible source"));
-    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    _expectDebugMessage("GPS.NTRIP.NTRIPGgaProvider", expected.last());
     provider._sendGGA();
     _verifyDebugMessage();
     QCOMPARE(logs.messages(), expected);
@@ -1792,7 +1792,7 @@ void NTRIPReentrancyTest::ggaSelectionDiagnostics()
     provider._sendGGA();
     QCOMPARE(logs.messages(), expected);
     expected.append(QStringLiteral("GGA source selection: requested=Auto no eligible source"));
-    _expectDebugMessage("GPS.NTRIPGgaProvider", expected.last());
+    _expectDebugMessage("GPS.NTRIP.NTRIPGgaProvider", expected.last());
     provider.start(&transport);
     _verifyDebugMessage();
     QCOMPARE(logs.messages(), expected);
@@ -1810,7 +1810,7 @@ void NTRIPReentrancyTest::ggaDiagnosticRetiresProvider_data()
 void NTRIPReentrancyTest::ggaDiagnosticRetiresProvider()
 {
     QFETCH(int, action);
-    DebugCapture logs("GPS.NTRIPGgaProvider");
+    DebugCapture logs("GPS.NTRIP.NTRIPGgaProvider");
     auto provider = std::make_unique<NTRIPGgaProvider>();
     MockNTRIPTransport transport;
     provider->setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, []() {
@@ -1830,7 +1830,7 @@ void NTRIPReentrancyTest::ggaDiagnosticRetiresProvider()
             provider->start(&transport);
         }
     };
-    _expectDebugMessage("GPS.NTRIPGgaProvider",
+    _expectDebugMessage("GPS.NTRIP.NTRIPGgaProvider",
                         QStringLiteral("GGA source selection: requested=Auto provider=VehicleGPS fallback=no"));
     provider->start(&transport);
     _verifyDebugMessage();
@@ -1949,7 +1949,7 @@ void NTRIPReentrancyTest::ggaConfigurationPreservesFastRetry()
 
 void NTRIPReentrancyTest::ggaCallbackStopsProvider()
 {
-    const DebugCapture logs("GPS.NTRIPGgaProvider");
+    const DebugCapture logs("GPS.NTRIP.NTRIPGgaProvider");
     NTRIPGgaProvider provider;
     MockNTRIPTransport transport;
     provider.setPositionProvider(NTRIPGgaProvider::PositionSource::VehicleGPS, [&]() {

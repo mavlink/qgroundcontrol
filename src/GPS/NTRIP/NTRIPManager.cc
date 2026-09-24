@@ -19,7 +19,7 @@
 #include "SettingsManager.h"
 #include "Vehicle.h"
 
-QGC_LOGGING_CATEGORY(NTRIPManagerLog, "GPS.NTRIPManager")
+QGC_LOGGING_CATEGORY(NTRIPManagerLog, "GPS.NTRIP.NTRIPManager")
 
 Q_APPLICATION_STATIC(NTRIPManager, _ntripManagerInstance);
 
