@@ -7,7 +7,7 @@ APMSubMotorComponentController::APMSubMotorComponentController(QObject *parent)
     (void) connect(_vehicle, &Vehicle::textMessageReceived, this, &APMSubMotorComponentController::_handleNewMessages);
 }
 
-void APMSubMotorComponentController::_handleNewMessages(int sysid, int componentid, int severity, const QString &text, const QString &description)
+void APMSubMotorComponentController::_handleNewMessages(quint32 sysid, int componentid, int severity, const QString &text, const QString &description)
 {
     Q_UNUSED(sysid); Q_UNUSED(componentid); Q_UNUSED(severity); Q_UNUSED(description);
 

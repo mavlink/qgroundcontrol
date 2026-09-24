@@ -758,7 +758,7 @@ void VehicleCameraControl::factChanged(Fact* pFact)
     _updateRanges(pFact);
 }
 
-void VehicleCameraControl::_mavCommandResult(int vehicleId, int component, int command, int result, int failureCode)
+void VehicleCameraControl::_mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode)
 {
     Q_UNUSED(failureCode);
 
@@ -1267,11 +1267,11 @@ void VehicleCameraControl::_requestAllParameters()
     if (sharedLink) {
         mavlink_message_t msg;
         mavlink_msg_param_ext_request_list_pack_chan(
-                    static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+                    MAVLinkProtocol::instance()->getSystemId(),
                     static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
                     sharedLink->mavlinkChannel(),
                     &msg,
-                    static_cast<uint8_t>(_vehicle->id()),
+                    _vehicle->id(),
                     static_cast<uint8_t>(compID()));
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }

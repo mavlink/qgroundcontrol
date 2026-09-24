@@ -194,17 +194,20 @@ void QGCCameraParamIO::_sendParameter()
         }
 
         (void) memcpy(&p.param_value[0], &union_value.bytes[0], MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN);
-        p.target_system = static_cast<uint8_t>(_vehicle->id());
         p.target_component = static_cast<uint8_t>(_control->compID());
         (void) qstrncpy(p.param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_ID_LEN);
 
         mavlink_message_t msg{};
-        (void) mavlink_msg_param_ext_set_encode_chan(
-            static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+        (void) mavlink_msg_param_ext_set_pack_chan(
+            MAVLinkProtocol::instance()->getSystemId(),
             static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
             sharedLink->mavlinkChannel(),
             &msg,
-            &p
+            _vehicle->id(),
+            p.target_component,
+            p.param_id,
+            p.param_value,
+            p.param_type
         );
         (void) _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
@@ -354,11 +357,11 @@ void QGCCameraParamIO::paramRequest(bool reset)
         (void) strncpy(param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
         mavlink_message_t msg{};
         (void) mavlink_msg_param_ext_request_read_pack_chan(
-            static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+            MAVLinkProtocol::instance()->getSystemId(),
             static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
             sharedLink->mavlinkChannel(),
             &msg,
-            static_cast<uint8_t>(_vehicle->id()),
+            _vehicle->id(),
             static_cast<uint8_t>(_control->compID()),
             param_id,
             -1

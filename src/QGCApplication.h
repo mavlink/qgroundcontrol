@@ -143,7 +143,7 @@ private:
     bool _uiTestMode = false;    ///< true: QML UI test harness registered its engine via setQmlAppEngine()
     bool _fakeMobile = false;    ///< true: Fake ui into displaying mobile interface
     bool _logOutput = false;    ///< true: Log Qt debug output to file
-    quint8 _systemId = 0; ///< MAVLink system ID, 0 means not set
+    quint32 _systemId = 0; ///< MAVLink system ID, 0 means not set
     QTime _lastRebootMessageTime;    ///< showRebootAppMessage() debounce state
 
     static constexpr int _missingParamsDelayedDisplayTimerTimeout = 1000;   ///< Timeout to wait for next missing fact to come in before display

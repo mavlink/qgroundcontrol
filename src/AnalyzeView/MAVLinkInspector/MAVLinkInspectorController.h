@@ -50,7 +50,7 @@ public:
     explicit MAVLinkInspectorController(QObject *parent = nullptr);
     ~MAVLinkInspectorController();
 
-    Q_INVOKABLE void setActiveSystem(int systemId);
+    Q_INVOKABLE void setActiveSystem(quint32 systemId);
     Q_INVOKABLE void setMessageInterval(int32_t rate) const;
 
     QmlObjectListModel *systems() const { return _systems; }
@@ -76,8 +76,8 @@ private slots:
     void _vehicleRemoved(const Vehicle *vehicle);
 
 private:
-    QGCMAVLinkSystem *_findVehicle(uint8_t id);
-    uint8_t _selectedSystemID() const;
+    QGCMAVLinkSystem *_findVehicle(quint32 id);
+    quint32 _selectedSystemID() const;
     uint8_t _selectedComponentID() const;
 
     QStringList _timeScales;

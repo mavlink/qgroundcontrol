@@ -12,16 +12,16 @@ class QGCMAVLinkSystem : public QObject
     Q_OBJECT
     // QML_ELEMENT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
-    Q_PROPERTY(quint8               id          READ id                             CONSTANT)
+    Q_PROPERTY(quint32              id          READ id                             CONSTANT)
     Q_PROPERTY(QmlObjectListModel   *messages   READ messages                       CONSTANT)
     Q_PROPERTY(QList<int>           compIDs     READ compIDs                        NOTIFY compIDsChanged)
     Q_PROPERTY(QStringList          compIDsStr  READ compIDsStr                     NOTIFY compIDsChanged)
     Q_PROPERTY(int                  selected    READ selected   WRITE setSelected   NOTIFY selectedChanged)
 public:
-    QGCMAVLinkSystem(quint8 id, QObject *parent = nullptr);
+    QGCMAVLinkSystem(quint32 id, QObject *parent = nullptr);
     ~QGCMAVLinkSystem();
 
-    quint8 id() const { return _systemID; }
+    quint32 id() const { return _systemID; }
     QmlObjectListModel *messages() const { return _messages; }
     QList<int> compIDs() const { return _compIDs; }
     QStringList compIDsStr() const { return _compIDsStr; }
@@ -42,7 +42,7 @@ private:
     void _resetSelection();
 
 private:
-    quint8 _systemID = 0;
+    quint32 _systemID = 0;
     QmlObjectListModel *_messages = nullptr; ///< List of QGCMAVLinkMessage
     QList<int> _compIDs;
     QStringList _compIDsStr;

@@ -118,9 +118,9 @@ signals:
     void setAllCalButtonsEnabled(bool enabled);
 
 private slots:
-    void _handleTextMessage(int sysid, int componentid, int severity, const QString &text, const QString &description);
+    void _handleTextMessage(quint32 sysid, int componentid, int severity, const QString &text, const QString &description);
     void _mavlinkMessageReceived(LinkInterface *link, const mavlink_message_t &message);
-    void _mavCommandResult(int vehicleId, int component, int command, int result, int failureCode);
+    void _mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode);
 
 private:
     void _startLogCalibration();

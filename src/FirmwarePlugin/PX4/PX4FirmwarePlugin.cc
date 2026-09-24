@@ -298,7 +298,7 @@ void PX4FirmwarePlugin::guidedModeLand(Vehicle* vehicle) const
     _setFlightModeAndValidate(vehicle, landFlightMode());
 }
 
-void PX4FirmwarePlugin::_mavCommandResult(int vehicleId, int component, int command, int result, int failureCode)
+void PX4FirmwarePlugin::_mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode)
 {
     Q_UNUSED(vehicleId); Q_UNUSED(component); Q_UNUSED(failureCode);
 

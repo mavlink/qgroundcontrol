@@ -69,7 +69,7 @@ public:
 
     void close();
     bool valid() const { return ((_file.exists()) && (_record != nullptr)); }
-    bool create(MAVLinkLogManager *manager, QStringView path, uint8_t id);
+    bool create(MAVLinkLogManager *manager, QStringView path, quint32 id);
     MAVLinkLogFiles *record() { return _record; }
     QString fileName() const { return _fileName; }
     bool processStreamData(uint16_t _sequence, uint8_t first_message, const QByteArray &in);
@@ -187,9 +187,9 @@ private slots:
     void _uploadFinished();
     void _dataAvailable();
     void _uploadProgress(qint64 bytesSent, qint64 bytesTotal);
-    void _mavlinkLogData(Vehicle *vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t first_message, const QByteArray &data, bool acked);
+    void _mavlinkLogData(Vehicle *vehicle, quint32 target_system, uint8_t target_component, uint16_t sequence, uint8_t first_message, const QByteArray &data, bool acked);
     void _armedChanged(bool armed);
-    void _mavCommandResult(int vehicleId, int component, int command, int result, int failureCode);
+    void _mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode);
 
 private:
     bool _sendLog(const QString &logFile);

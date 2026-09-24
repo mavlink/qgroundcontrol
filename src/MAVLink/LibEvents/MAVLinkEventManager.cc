@@ -91,11 +91,14 @@ EventHandler &MAVLinkEventManager::_eventHandlerForCompId(uint8_t compid)
             return;
         }
         mavlink_message_t message;
-        mavlink_msg_request_event_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+        mavlink_msg_request_event_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
                                               MAVLinkProtocol::getComponentId(),
                                               sharedLink->mavlinkChannel(),
                                               &message,
-                                              &msg);
+                                              _vehicle->id(),
+                                              msg.target_component,
+                                              msg.first_sequence,
+                                              msg.last_sequence);
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
     };
 

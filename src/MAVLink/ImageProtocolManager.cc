@@ -16,7 +16,7 @@ ImageProtocolManager::~ImageProtocolManager()
     // qCDebug(ImageProtocolManagerLog) << Q_FUNC_INFO << this;
 }
 
-bool ImageProtocolManager::requestImage(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t &message)
+bool ImageProtocolManager::requestImage(quint32 system_id, uint8_t component_id, uint8_t chan, mavlink_message_t &message)
 {
     // Check if there is already an image transmission going on
     if (_imageHandshake.packets != 0) {
@@ -34,7 +34,7 @@ bool ImageProtocolManager::requestImage(uint8_t system_id, uint8_t component_id,
     return true;
 }
 
-void ImageProtocolManager::cancelRequest(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t &message)
+void ImageProtocolManager::cancelRequest(quint32 system_id, uint8_t component_id, uint8_t chan, mavlink_message_t &message)
 {
     constexpr mavlink_data_transmission_handshake_t data{};
     (void) mavlink_msg_data_transmission_handshake_encode_chan(system_id, component_id, chan, &message, &data);

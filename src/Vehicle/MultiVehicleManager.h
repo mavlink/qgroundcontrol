@@ -30,9 +30,9 @@ public:
     static MultiVehicleManager *instance();
 
     void init();
-    Q_INVOKABLE Vehicle *getVehicleById(int vehicleId) const;
-    Q_INVOKABLE void      selectVehicle(int vehicleId);
-    Q_INVOKABLE void    deselectVehicle(int vehicleId);
+    Q_INVOKABLE Vehicle *getVehicleById(quint32 vehicleId) const;
+    Q_INVOKABLE void      selectVehicle(quint32 vehicleId);
+    Q_INVOKABLE void    deselectVehicle(quint32 vehicleId);
     Q_INVOKABLE void    deselectAllVehicles();
     QmlObjectListModel *vehicles() const { return _vehicles; }
     QmlObjectListModel *selectedVehicles() const { return _selectedVehicles; }
@@ -55,11 +55,11 @@ private slots:
     void _setActiveVehiclePhase2(Vehicle *vehicle);
     void _vehicleParametersReadyChanged(bool parametersReady);
     void _sendGCSHeartbeat();
-    void _vehicleHeartbeatInfo(LinkInterface *link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
+    void _vehicleHeartbeatInfo(LinkInterface *link, quint32 vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
 
 private:
-    bool _vehicleExists(int vehicleId);
-    bool _vehicleSelected(int vehicleId);
+    bool _vehicleExists(quint32 vehicleId);
+    bool _vehicleSelected(quint32 vehicleId);
     void _setActiveVehicle(Vehicle *vehicle);
     void _setActiveVehicleAvailable(bool activeVehicleAvailable);
     void _setParameterReadyVehicleAvailable(bool parametersReady);
@@ -71,7 +71,7 @@ private:
     bool _activeVehicleAvailable = false;           ///< true: An active vehicle is available
     bool _parameterReadyVehicleAvailable = false;   ///< true: An active vehicle with ready parameters is available
     Vehicle *_activeVehicle = nullptr;              ///< Currently active vehicle from a ui perspective
-    QList<int> _ignoreVehicleIds;                   ///< List of vehicle id for which we ignore further communication
+    QList<quint32> _ignoreVehicleIds;               ///< List of vehicle id for which we ignore further communication
     bool _initialized = false;
 
     static constexpr int kGCSHeartbeatRateMSecs = 1000;  ///< Heartbeat rate

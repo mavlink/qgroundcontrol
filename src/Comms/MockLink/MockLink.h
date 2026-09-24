@@ -50,7 +50,7 @@ public:
     Q_INVOKABLE void setCommLost(bool commLost) { _commLost = commLost; }
     Q_INVOKABLE void simulateConnectionRemoved();
 
-    int vehicleId() const { return _vehicleSystemId; }
+    quint32 vehicleId() const { return _vehicleSystemId; }
     MAV_AUTOPILOT getFirmwareType() const { return _firmwareType; }
 
     double vehicleLatitude() const { return _vehicleLatitude; }
@@ -373,7 +373,7 @@ private:
     const bool _stayMavlinkV1 = false;  ///< Test-only: never upgrade outgoing traffic to MAVLink v2
     const bool _ftpCapability = false;  ///< Test-only: advertise MAV_PROTOCOL_CAPABILITY_FTP
     const bool _sendRadioStatusEnabled = true; ///< Stream RADIO_STATUS at 1Hz (marks the link as a radio link)
-    const uint8_t _vehicleSystemId = 0;
+    const quint32 _vehicleSystemId = 0;
     const double _vehicleLatitude = 0.0;
     const double _vehicleLongitude = 0.0;
     // These are just set for reporting the fields in _respondWithAutopilotVersion()

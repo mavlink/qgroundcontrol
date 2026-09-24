@@ -116,7 +116,7 @@ class Vehicle : public VehicleFactGroup, public VehicleTypes
 
 public:
     Vehicle(LinkInterface*          link,
-            int                     vehicleId,
+            quint32                 vehicleId,
             int                     defaultComponentId,
             MAV_AUTOPILOT           firmwareType,
             MAV_TYPE                vehicleType,
@@ -142,7 +142,7 @@ public:
     };
     Q_ENUM(CheckList)
 
-    Q_PROPERTY(int                  id                          READ id                                                             CONSTANT)
+    Q_PROPERTY(quint32              id                          READ id                                                             CONSTANT)
     Q_PROPERTY(AutoPilotPlugin*     autopilotPlugin             MEMBER _autopilotPlugin                                             CONSTANT)
     Q_PROPERTY(QGeoCoordinate       coordinate                  READ coordinate                                                     NOTIFY coordinateChanged)
     Q_PROPERTY(QGeoCoordinate       homePosition                READ homePosition                                                   NOTIFY homePositionChanged)
@@ -429,7 +429,7 @@ public:
     void sendJoystickAuxRcOverrideThreadSafe(const std::array<uint16_t, kAuxRcOverrideChannelCount> &channelValues, const std::array<bool, kAuxRcOverrideChannelCount> &channelEnabled, bool useRcOverride);
 
     // Property accesors
-    int id() const{ return _systemID; }
+    quint32 id() const{ return _systemID; }
     int compId() const{ return _compID; }
     MAV_AUTOPILOT firmwareType() const { return _firmwareType; }
     MAV_TYPE vehicleType() const { return _vehicleType; }
@@ -811,7 +811,7 @@ signals:
     void servoOutputsChanged(QVector<int> servoValues);
 
     // Mavlink Log Download
-    void mavlinkLogData                 (Vehicle* vehicle, uint8_t target_system, uint8_t target_component, uint16_t sequence, uint8_t first_message, QByteArray data, bool acked);
+    void mavlinkLogData                 (Vehicle* vehicle, quint32 target_system, uint8_t target_component, uint16_t sequence, uint8_t first_message, QByteArray data, bool acked);
 
     /// Signalled in response to usage of sendMavCommand
     ///     @param vehicleId        Vehicle which command was sent to
@@ -819,7 +819,7 @@ signals:
     ///     @param command          Command which was sent
     ///     @param ackResult        MAV_RESULT returned in ack
     ///     @param failureCode      More detailed failure code Vehicle::MavCmdResultFailureCode_t
-    void mavCommandResult               (int vehicleId, int targetComponent, int command, int ackResult, int failureCode);
+    void mavCommandResult               (quint32 vehicleId, int targetComponent, int command, int ackResult, int failureCode);
 
     // MAVlink Serial Data
     void mavlinkSerialControl           (uint8_t device, uint8_t flags, uint16_t timeout, uint32_t baudrate, QByteArray data);
@@ -857,7 +857,7 @@ private slots:
     void _updateHobbsMeter                  ();
     void _vehicleParamLoaded                (bool ready);
     void _sendQGCTimeToVehicle              ();
-    void _mavlinkMessageStatus              (int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
+    void _mavlinkMessageStatus              (quint32 uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
     void _orbitTelemetryTimeout             ();
     void _updateFlightTime                  ();
     void _gotProgressUpdate                 (float progressValue);
@@ -917,7 +917,7 @@ private:
     /// Stops command processing timers to prevent callbacks during vehicle destruction.
     void _stopCommandProcessing();
 
-    int     _systemID;                    ///< Mavlink system id
+    quint32 _systemID;                    ///< Mavlink system id
     int     _defaultComponentId;
     bool    _offlineEditingVehicle = false; ///< true: This Vehicle is a "disconnected" vehicle for ui use while offline editing
 
@@ -1225,7 +1225,7 @@ public:
     // StatusTextHandler* statusTextHandler() { return m_statusTextHandler; }
 
 signals:
-    void textMessageReceived(int sysid, int componentid, int severity, QString text, QString description);
+    void textMessageReceived(quint32 sysid, int componentid, int severity, QString text, QString description);
 
     void messagesReceivedChanged();
     void messagesSentChanged();

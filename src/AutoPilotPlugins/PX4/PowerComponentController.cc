@@ -18,7 +18,7 @@ void PowerComponentController::_stopCalibration(void)
     disconnect(_vehicle, &Vehicle::textMessageReceived, this, &PowerComponentController::_handleVehicleTextMessage);
 }
 
-void PowerComponentController::_handleVehicleTextMessage(int vehicleId, int /* compId */, int /* severity */, QString text, const QString &description)
+void PowerComponentController::_handleVehicleTextMessage(quint32 vehicleId, int /* compId */, int /* severity */, QString text, const QString &description)
 {
     Q_UNUSED(description);
 

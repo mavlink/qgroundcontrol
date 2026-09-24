@@ -32,7 +32,11 @@ message(STATUS "QGC: Building MAVLink")
 
 include(CPMPatchCache)
 
-set(_mavlink_patch "${CMAKE_CURRENT_LIST_DIR}/mavlink-deterministic-mavgen.patch")
+# C generator support for independent SYSID32 and TARGET32 headers.
+# Payload structs retain their wire layout; target access uses the generic helper.
+set(_mavlink_patches "${CMAKE_CURRENT_LIST_DIR}/mavlink-deterministic-mavgen.patch"
+                     "${CMAKE_CURRENT_LIST_DIR}/mavlink-sysid32.patch"
+)
 qgc_cpm_patch_cache_key(
     _mavlink_cache_key
     GIT_REPOSITORY
@@ -40,7 +44,7 @@ qgc_cpm_patch_cache_key(
     GIT_TAG
     "${QGC_MAVLINK_GIT_TAG}"
     PATCHES
-    "${_mavlink_patch}"
+    ${_mavlink_patches}
 )
 
 CPMAddPackage(
@@ -51,7 +55,7 @@ CPMAddPackage(
     CUSTOM_CACHE_KEY "${_mavlink_cache_key}"
     OPTIONS "MAVLINK_DIALECT ${QGC_MAVLINK_DIALECT}" "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
     # Use the locked generator environment and make mavgen hashes deterministic.
-    PATCHES "${_mavlink_patch}"
+    PATCHES ${_mavlink_patches}
 )
 
 qgc_require_cpm_added(mavlink)

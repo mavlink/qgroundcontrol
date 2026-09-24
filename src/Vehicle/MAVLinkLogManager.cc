@@ -110,7 +110,7 @@ void MAVLinkLogProcessor::close()
     }
 }
 
-bool MAVLinkLogProcessor::create(MAVLinkLogManager *manager, QStringView path, uint8_t id)
+bool MAVLinkLogProcessor::create(MAVLinkLogManager *manager, QStringView path, quint32 id)
 {
     _fileName = _fileName.asprintf(
         "%s/%03d-%s%s",
@@ -792,7 +792,7 @@ void MAVLinkLogManager::_uploadProgress(qint64 bytesSent, qint64 bytesTotal)
     qCDebug(MAVLinkLogManagerLog) << bytesSent << "of" << bytesTotal;
 }
 
-void MAVLinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system*/, uint8_t /*target_component*/, uint16_t sequence, uint8_t first_message, const QByteArray &data, bool /*acked*/)
+void MAVLinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, quint32 /*target_system*/, uint8_t /*target_component*/, uint16_t sequence, uint8_t first_message, const QByteArray &data, bool /*acked*/)
 {
     if (!_logProcessor || !_logProcessor->valid()) {
         qCDebug(MAVLinkLogManagerLog) << "MAVLink log data received when not expected.";
@@ -811,7 +811,7 @@ void MAVLinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_s
     emit logRunningChanged();
 }
 
-void MAVLinkLogManager::_mavCommandResult(int vehicleId, int component, int command, int result, int failureCode)
+void MAVLinkLogManager::_mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode)
 {
     Q_UNUSED(vehicleId); Q_UNUSED(component); Q_UNUSED(failureCode)
 
@@ -858,7 +858,7 @@ bool MAVLinkLogManager::_createNewLog()
     delete _logProcessor;
     _logProcessor = new MAVLinkLogProcessor();
 
-    if (_logProcessor->create(this, _logPath, static_cast<uint8_t>(_vehicle->id()))) {
+    if (_logProcessor->create(this, _logPath, _vehicle->id())) {
         _insertNewLog(_logProcessor->record());
         emit logFilesChanged();
     } else {

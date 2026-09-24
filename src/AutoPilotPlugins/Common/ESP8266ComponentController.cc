@@ -291,7 +291,7 @@ void ESP8266ComponentController::_restoreDefaults() const
     qCDebug(ESP8266ComponentControllerLog) << "_restoreDefaults()";
 }
 
-void ESP8266ComponentController::_mavCommandResult(int vehicleId, int component, int command, int result, int failureCode)
+void ESP8266ComponentController::_mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode)
 {
     Q_UNUSED(vehicleId); Q_UNUSED(failureCode);
 

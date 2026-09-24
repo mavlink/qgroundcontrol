@@ -1,0 +1,42 @@
+--- a/libs/cpp/protocol/receive.h
++++ b/libs/cpp/protocol/receive.h
+@@ -30,7 +30,7 @@
+                                                             ///< disable the timer
+     };
+ 
+-    ReceiveProtocol(const Callbacks& callbacks, uint8_t our_system_id, uint8_t our_component_id, uint8_t system_id,
++    ReceiveProtocol(const Callbacks& callbacks, uint32_t our_system_id, uint8_t our_component_id, uint32_t system_id,
+                     uint8_t component_id)
+         : _callbacks(callbacks),
+           _our_system_id(our_system_id),
+@@ -142,7 +142,7 @@
+     void requestEvent(uint16_t sequence)
+     {
+         mavlink_request_event_t msg{};
+-        msg.target_system = _system_id;
++        msg.target_system = _system_id > UINT8_MAX ? UINT8_MAX : _system_id;
+         msg.target_component = _component_id;
+         msg.first_sequence = msg.last_sequence = sequence;
+ 
+@@ -181,7 +181,7 @@
+         mavlink_response_event_error_t event_error;
+         mavlink_msg_response_event_error_decode(&message, &event_error);
+ 
+-        if (event_error.target_system != _our_system_id || event_error.target_component != _our_component_id) {
++        if (mavlink_msg_get_target_sysid(&message, mavlink_get_msg_entry(message.msgid)) != _our_system_id || event_error.target_component != _our_component_id) {
+             return;
+         }
+ 
+@@ -222,10 +222,10 @@
+     bool _has_current_sequence{false};
+     uint32_t _latest_current_sequence;  ///< latest received sequence number via mavlink_current_event_sequence_t
+ 
+-    uint8_t _our_system_id;
++    uint32_t _our_system_id;
+     uint8_t _our_component_id;
+ 
+-    uint8_t _system_id;
++    uint32_t _system_id;
+     uint8_t _component_id;
+ };
+ 

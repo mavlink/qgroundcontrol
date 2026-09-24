@@ -1,0 +1,1090 @@
+--- a/pymavlink/generator/mavgen_c.py
++++ b/pymavlink/generator/mavgen_c.py
+@@ -217,8 +217,8 @@
+ }}
+  * @return length of the message in bytes (excluding serial stream start sign)
+  */
+-${MSG_ATTRIBUTE}static inline uint16_t mavlink_msg_${name_lower}_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+-                              ${{arg_fields: ${array_const}${type} ${array_prefix}${name},}})
++${MSG_ATTRIBUTE}static inline uint16_t mavlink_msg_${name_lower}_pack(${sysid_arg_type} system_id, uint8_t component_id, mavlink_message_t* msg,
++                              ${{arg_fields: ${array_const}${arg_type} ${array_prefix}${name},}})
+ {
+ #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+     char buf[MAVLINK_MSG_ID_${name}_LEN];
+@@ -237,7 +237,7 @@
+ #endif
+ 
+     msg->msgid = MAVLINK_MSG_ID_${name};
+-    return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC);
++    return mavlink_finalize_message${target_suffix}(msg, system_id, component_id, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC${target_args});
+ }
+ 
+ /**
+@@ -251,8 +251,8 @@
+ }}
+  * @return length of the message in bytes (excluding serial stream start sign)
+  */
+-static inline uint16_t mavlink_msg_${name_lower}_pack_status(uint8_t system_id, uint8_t component_id, mavlink_status_t *_status, mavlink_message_t* msg,
+-                              ${{arg_fields: ${array_const}${type} ${array_prefix}${name},}})
++static inline uint16_t mavlink_msg_${name_lower}_pack_status(${sysid_arg_type} system_id, uint8_t component_id, mavlink_status_t *_status, mavlink_message_t* msg,
++                              ${{arg_fields: ${array_const}${arg_type} ${array_prefix}${name},}})
+ {
+ #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+     char buf[MAVLINK_MSG_ID_${name}_LEN];
+@@ -272,9 +272,9 @@
+ 
+     msg->msgid = MAVLINK_MSG_ID_${name};
+ #if MAVLINK_CRC_EXTRA
+-    return mavlink_finalize_message_buffer(msg, system_id, component_id, _status, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC);
++    return mavlink_finalize_message_buffer${target_suffix}(msg, system_id, component_id, _status, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC${target_args});
+ #else
+-    return mavlink_finalize_message_buffer(msg, system_id, component_id, _status, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN);
++    return mavlink_finalize_message_buffer${target_suffix}(msg, system_id, component_id, _status, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, 0${target_args});
+ #endif
+ }
+ 
+@@ -288,9 +288,9 @@
+ }}
+  * @return length of the message in bytes (excluding serial stream start sign)
+  */
+-${MSG_ATTRIBUTE}static inline uint16_t mavlink_msg_${name_lower}_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
++${MSG_ATTRIBUTE}static inline uint16_t mavlink_msg_${name_lower}_pack_chan(${sysid_arg_type} system_id, uint8_t component_id, uint8_t chan,
+                                mavlink_message_t* msg,
+-                                   ${{arg_fields:${array_const}${type} ${array_prefix}${name},}})
++                                   ${{arg_fields:${array_const}${arg_type} ${array_prefix}${name},}})
+ {
+ #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+     char buf[MAVLINK_MSG_ID_${name}_LEN];
+@@ -309,7 +309,7 @@
+ #endif
+ 
+     msg->msgid = MAVLINK_MSG_ID_${name};
+-    return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC);
++    return mavlink_finalize_message_chan${target_suffix}(msg, system_id, component_id, chan, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC${target_args});
+ }
+ 
+ /**
+@@ -320,7 +320,7 @@
+  * @param msg The MAVLink message to compress the data into
+  * @param ${name_lower} C-struct to read the message contents from
+  */
+-${MSG_ATTRIBUTE}static inline uint16_t mavlink_msg_${name_lower}_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_${name_lower}_t* ${name_lower})
++${MSG_ATTRIBUTE}static inline uint16_t mavlink_msg_${name_lower}_encode(${sysid_arg_type} system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_${name_lower}_t* ${name_lower})
+ {
+     return mavlink_msg_${name_lower}_pack(system_id, component_id, msg,${{arg_fields: ${name_lower}->${name},}});
+ }
+@@ -334,7 +334,7 @@
+  * @param msg The MAVLink message to compress the data into
+  * @param ${name_lower} C-struct to read the message contents from
+  */
+-${MSG_ATTRIBUTE}static inline uint16_t mavlink_msg_${name_lower}_encode_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, const mavlink_${name_lower}_t* ${name_lower})
++${MSG_ATTRIBUTE}static inline uint16_t mavlink_msg_${name_lower}_encode_chan(${sysid_arg_type} system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, const mavlink_${name_lower}_t* ${name_lower})
+ {
+     return mavlink_msg_${name_lower}_pack_chan(system_id, component_id, chan, msg,${{arg_fields: ${name_lower}->${name},}});
+ }
+@@ -348,7 +348,7 @@
+  * @param msg The MAVLink message to compress the data into
+  * @param ${name_lower} C-struct to read the message contents from
+  */
+-static inline uint16_t mavlink_msg_${name_lower}_encode_status(uint8_t system_id, uint8_t component_id, mavlink_status_t* _status, mavlink_message_t* msg, const mavlink_${name_lower}_t* ${name_lower})
++static inline uint16_t mavlink_msg_${name_lower}_encode_status(${sysid_arg_type} system_id, uint8_t component_id, mavlink_status_t* _status, mavlink_message_t* msg, const mavlink_${name_lower}_t* ${name_lower})
+ {
+     return mavlink_msg_${name_lower}_pack_status(system_id, component_id, _status, msg, ${{arg_fields: ${name_lower}->${name},}});
+ }
+@@ -362,7 +362,7 @@
+  */
+ #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+ 
+-${MSG_ATTRIBUTE}static inline void mavlink_msg_${name_lower}_send(mavlink_channel_t chan,${{arg_fields: ${array_const}${type} ${array_prefix}${name},}})
++${MSG_ATTRIBUTE}static inline void mavlink_msg_${name_lower}_send(mavlink_channel_t chan,${{arg_fields: ${array_const}${arg_type} ${array_prefix}${name},}})
+ {
+ #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+     char buf[MAVLINK_MSG_ID_${name}_LEN];
+@@ -370,14 +370,14 @@
+ }}
+ ${{array_fields:    _mav_put_${type}_array(buf, ${wire_offset}, ${name}, ${array_length});
+ }}
+-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_${name}, buf, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC);
++    _mav_finalize_message_chan_send${target_suffix}(chan, MAVLINK_MSG_ID_${name}, buf, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC${target_args});
+ #else
+     mavlink_${name_lower}_t packet;
+ ${{scalar_fields:    packet.${name} = ${putname};
+ }}
+ ${{array_fields:    mav_array_memcpy(packet.${name}, ${name}, sizeof(${type})*${array_length});
+ }}
+-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_${name}, (const char *)&packet, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC);
++    _mav_finalize_message_chan_send${target_suffix}(chan, MAVLINK_MSG_ID_${name}, (const char *)&packet, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC${target_args});
+ #endif
+ }
+ 
+@@ -403,7 +403,7 @@
+   is usually the receive buffer for the channel, and allows a reply to an
+   incoming message with minimum stack space usage.
+  */
+-${MSG_ATTRIBUTE}static inline void mavlink_msg_${name_lower}_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan, ${{arg_fields: ${array_const}${type} ${array_prefix}${name},}})
++${MSG_ATTRIBUTE}static inline void mavlink_msg_${name_lower}_send_buf(mavlink_message_t *msgbuf, mavlink_channel_t chan, ${{arg_fields: ${array_const}${arg_type} ${array_prefix}${name},}})
+ {
+ #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+     char *buf = (char *)msgbuf;
+@@ -411,14 +411,14 @@
+ }}
+ ${{array_fields:    _mav_put_${type}_array(buf, ${wire_offset}, ${name}, ${array_length});
+ }}
+-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_${name}, buf, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC);
++    _mav_finalize_message_chan_send${target_suffix}(chan, MAVLINK_MSG_ID_${name}, buf, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC${target_args});
+ #else
+     mavlink_${name_lower}_t *packet = (mavlink_${name_lower}_t *)msgbuf;
+ ${{scalar_fields:    packet->${name} = ${putname};
+ }}
+ ${{array_fields:    mav_array_memcpy(packet->${name}, ${name}, sizeof(${type})*${array_length});
+ }}
+-    _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_${name}, (const char *)packet, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC);
++    _mav_finalize_message_chan_send${target_suffix}(chan, MAVLINK_MSG_ID_${name}, (const char *)packet, MAVLINK_MSG_ID_${name}_MIN_LEN, MAVLINK_MSG_ID_${name}_LEN, MAVLINK_MSG_ID_${name}_CRC${target_args});
+ #endif
+ }
+ #endif
+@@ -427,7 +427,7 @@
+ 
+ // MESSAGE ${name} UNPACKING
+ 
+-${{fields:
++${{getter_fields:
+ /**
+  * @brief Get field ${name} from ${name_lower} message
+  *
+@@ -435,7 +435,7 @@
+  */
+ ${MSG_ATTRIBUTE}static inline ${return_type} mavlink_msg_${name_lower}_get_${name}(const mavlink_message_t* msg${get_arg})
+ {
+-    return _MAV_RETURN_${type}${array_tag}(msg, ${array_return_arg} ${wire_offset});
++    ${target_check}return _MAV_RETURN_${type}${array_tag}(msg, ${array_return_arg} ${wire_offset});
+ }
+ }}
+ 
+@@ -448,13 +448,14 @@
+ ${MSG_ATTRIBUTE}static inline void mavlink_msg_${name_lower}_decode(const mavlink_message_t* msg, mavlink_${name_lower}_t* ${name_lower})
+ {
+ #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+-${{ordered_fields:    ${decode_left}mavlink_msg_${name_lower}_get_${name}(msg${decode_right});
++${{ordered_fields:    ${decode_left}${decode_call};
+ }}
+ #else
+         uint8_t len = msg->len < MAVLINK_MSG_ID_${name}_LEN? msg->len : MAVLINK_MSG_ID_${name}_LEN;
+         memset(${name_lower}, 0, MAVLINK_MSG_ID_${name}_LEN);
+     memcpy(${name_lower}, _MAV_PAYLOAD(msg), len);
+ #endif
++${decode_post}
+ }
+ ''', m)
+     f.close()
+@@ -679,17 +680,48 @@
+     xml.message_name_array = xml.message_name_array[:-2]
+ 
+     # add some extra field attributes for convenience with arrays
++    sysid32_capable = (xml.wire_protocol_version == mavparse.PROTOCOL_2_0)
+     for m in xml.message:
+         m.msg_name = m.name
+         if xml.crc_extra:
+             m.crc_extra_arg = ", %s" % m.crc_extra
+         else:
+             m.crc_extra_arg = ""
++        # messages with a target_system field pass the (possibly 32 bit)
++        # target through to finalize so it can go in the extended header.
++        # MAVLink1 fixed headers have no extended header support
++        m.sysid_arg_type = 'uint32_t' if sysid32_capable else 'uint8_t'
++        if sysid32_capable and m.target_system_fieldname is not None:
++            m.target_suffix = '_target'
++            m.target_args = ', %s' % m.target_system_fieldname
++            # The header overrides payload targets. Keep the non-broadcast
++            # sentinel only for system IDs that do not fit in the struct.
++            m.decode_post = ('    if (msg->incompat_flags & MAVLINK_IFLAG_TARGET32) {\n'
++                             '        // This uint8_t field cannot retain a wide target. The sentinel is NOT reserved.\n'
++                             '        // For routing use mavlink_msg_get_target_sysid(msg, mavlink_get_msg_entry(msg->msgid)).\n'
++                             '        // To relay after edits, pass that full target to _pack*(); _encode*() loses it.\n'
++                             '        %s->%s = mavlink_msg_target_field(msg->target_sysid);\n'
++                             % (m.name_lower, m.target_system_fieldname))
++            m.decode_post += '    }\n'
++        else:
++            m.target_suffix = ''
++            m.target_args = ''
++            m.decode_post = ''
++        # Target-system access must use the generic header-aware helper.
++        m.getter_fields = [f for f in m.fields if not f.is_target_system]
+         for f in m.fields:
+             if f.print_format is None:
+                 f.c_print_format = 'NULL'
+             else:
+                 f.c_print_format = '"%s"' % f.print_format
++            # target_system args widen to uint32_t; targets > 255 travel in
++            # the extended header, with a non-broadcast payload sentinel. Use the generic
++            # mavlink_msg_get_target_system() to retrieve the full target.
++            f.arg_type = f.type
++            f.target_check = ''
++            if sysid32_capable:
++                if f.is_target_system:
++                    f.arg_type = 'uint32_t'
+             if f.array_length != 0:
+                 f.array_suffix = '[%u]' % f.array_length
+                 f.array_prefix = '*'
+@@ -727,6 +759,13 @@
+                     f.c_test_value = "%sLL" % f.test_value                    
+                 else:
+                     f.c_test_value = f.test_value
++            # Decode the wire payload before decode_post replaces the legacy payload target
++            # for an extended target with the non-broadcast sentinel in both aligned and byte-swap
++            # builds. The full target remains available from the generic getter.
++            if f.is_target_system:
++                f.decode_call = '_MAV_RETURN_uint8_t(msg, %u)' % f.wire_offset
++            else:
++                f.decode_call = 'mavlink_msg_%s_get_%s(msg%s)' % (m.name_lower, f.name, f.decode_right)
+         if m.needs_pack:
+             m.MAVPACKED_START = "MAVPACKED("
+             m.MAVPACKED_END = ")"
+@@ -747,7 +786,12 @@
+         for f in m.fields:
+             if not f.omit_arg:
+                 m.arg_fields.append(f)
+-                f.putname = f.name
++                if sysid32_capable and f.is_target_system:
++                    # targets > 255 go in the extended header; the payload
++                    # byte must not be interpreted as broadcast
++                    f.putname = 'mavlink_msg_target_field(%s)' % f.name
++                else:
++                    f.putname = f.name
+             else:
+                 f.putname = f.const_value
+ 
+--- a/pymavlink/generator/mavparse.py
++++ b/pymavlink/generator/mavparse.py
+@@ -398,6 +398,8 @@
+             m.message_flags = 0
+             m.target_system_ofs = 0
+             m.target_component_ofs = 0
++            m.target_system_fieldname = None
++            m.target_component_fieldname = None
+             m.field_offsets = {}
+             
+             if self.sort_fields:
+@@ -438,12 +440,18 @@
+                 if f.name.find('[') != -1:
+                     raise MAVParseError("invalid field name with array descriptor %s" % f.name)
+                 # having flags for target_system and target_component helps a lot for routing code
++                f.is_target_system = False
++                f.is_target_component = False
+                 if is_target_system_field(m, f):
+                     m.message_flags |= FLAG_HAVE_TARGET_SYSTEM
+                     m.target_system_ofs = f.wire_offset
++                    m.target_system_fieldname = f.name
++                    f.is_target_system = True
+                 elif f.name == 'target_component':
+                     m.message_flags |= FLAG_HAVE_TARGET_COMPONENT
+                     m.target_component_ofs = f.wire_offset
++                    m.target_component_fieldname = f.name
++                    f.is_target_component = True
+             m.num_fields = len(m.fieldnames)
+             if m.num_fields > 64:
+                 raise MAVParseError("num_fields=%u : Maximum number of field names allowed is %u" % (
+--- a/pymavlink/generator/C/include_v2.0/mavlink_helpers.h
++++ b/pymavlink/generator/C/include_v2.0/mavlink_helpers.h
+@@ -120,6 +120,68 @@
+ 	return length;
+ }
+ 
++/**
++ * @brief pack a wire header from discrete header fields
++ *
++ * buf must be at least MAVLINK_MAX_HEADER_LEN bytes
++ * @return header length in bytes, including the magic byte
++ */
++MAVLINK_HELPER uint8_t _mav_header_pack(uint8_t *buf, uint8_t magic, uint8_t len,
++					uint8_t incompat_flags, uint8_t compat_flags,
++					uint8_t seq, uint32_t sysid, uint8_t compid, uint32_t msgid,
++					uint32_t target_sysid)
++{
++	buf[0] = magic;
++	buf[1] = len;
++	if (magic == MAVLINK_STX_MAVLINK1) {
++		if (sysid > 255 || target_sysid > 255 || msgid > 255) {
++			// 32 bit IDs cannot be represented in MAVLink1; never truncate
++			return 0;
++		}
++		buf[2] = seq;
++		buf[3] = sysid & 0xFF;
++		buf[4] = compid;
++		buf[5] = msgid & 0xFF;
++		return MAVLINK_CORE_HEADER_MAVLINK1_LEN+1;
++	}
++	uint8_t ofs = 2;
++	buf[ofs++] = incompat_flags;
++	buf[ofs++] = compat_flags;
++	buf[ofs++] = seq;
++	buf[ofs++] = sysid & 0xFF;
++	if (incompat_flags & MAVLINK_IFLAG_SYSID32) {
++		buf[ofs++] = (sysid >> 8) & 0xFF;
++		buf[ofs++] = (sysid >> 16) & 0xFF;
++		buf[ofs++] = (sysid >> 24) & 0xFF;
++	}
++	buf[ofs++] = compid;
++	buf[ofs++] = msgid & 0xFF;
++	buf[ofs++] = (msgid >> 8) & 0xFF;
++	buf[ofs++] = (msgid >> 16) & 0xFF;
++	if (incompat_flags & MAVLINK_IFLAG_TARGET32) {
++		buf[ofs++] = target_sysid & 0xFF;
++		buf[ofs++] = (target_sysid >> 8) & 0xFF;
++		buf[ofs++] = (target_sysid >> 16) & 0xFF;
++		buf[ofs++] = (target_sysid >> 24) & 0xFF;
++	}
++	return ofs;
++}
++
++/**
++ * @brief serialize the wire header of a message, handling the
++ * SYSID32 and TARGET32 extended headers
++ *
++ * buf must be at least MAVLINK_MAX_HEADER_LEN bytes
++ * @return header length in bytes, including the magic byte
++ */
++MAVLINK_HELPER uint8_t mavlink_header_to_send_buffer(uint8_t *buf, const mavlink_message_t *msg)
++{
++	return _mav_header_pack(buf, msg->magic, msg->len,
++				msg->incompat_flags, msg->compat_flags,
++				msg->seq, msg->sysid, msg->compid, msg->msgid,
++				msg->target_sysid);
++}
++
+ #ifndef MAVLINK_NO_SIGNATURE_CHECK
+ /**
+  * @brief check a signature block for a packet
+@@ -131,16 +193,19 @@
+ 	if (signing == NULL) {
+ 		return true;
+ 	}
+-        const uint8_t *p = (const uint8_t *)&msg->magic;
++	// the message struct layout no longer matches the wire header, so
++	// re-serialize the (possibly extended) header for the hash
++	uint8_t header[MAVLINK_MAX_HEADER_LEN];
++	const uint8_t header_len = mavlink_header_to_send_buffer(header, msg);
+ 	const uint8_t *psig = msg->signature;
+         const uint8_t *incoming_signature = psig+7;
+ 	mavlink_sha256_ctx ctx;
+ 	uint8_t signature[6];
+ 	uint16_t i;
+-        
++
+ 	mavlink_sha256_init(&ctx);
+ 	mavlink_sha256_update(&ctx, signing->secret_key, sizeof(signing->secret_key));
+-	mavlink_sha256_update(&ctx, p, MAVLINK_NUM_HEADER_BYTES);
++	mavlink_sha256_update(&ctx, header, header_len);
+ 	mavlink_sha256_update(&ctx, _MAV_PAYLOAD(msg), msg->len);
+ 	mavlink_sha256_update(&ctx, msg->ck, 2);
+ 	mavlink_sha256_update(&ctx, psig, 1+6);
+@@ -212,6 +277,12 @@
+ #endif
+ 
+ 
++/** Record a parse or output framing error. */
++static inline void _mav_parse_error(mavlink_status_t *status)
++{
++    status->parse_error++;
++}
++
+ /**
+  * @brief Finalize a MAVLink message with channel assignment
+  *
+@@ -224,8 +295,9 @@
+  * @param system_id Id of the sending (this) system, 1-127
+  * @param length Message length
+  */
+-MAVLINK_HELPER uint16_t mavlink_finalize_message_buffer(mavlink_message_t* msg, uint8_t system_id, uint8_t component_id,
+-						      mavlink_status_t* status, uint8_t min_length, uint8_t length, uint8_t crc_extra)
++MAVLINK_HELPER uint16_t mavlink_finalize_message_buffer_target(mavlink_message_t* msg, uint32_t system_id, uint8_t component_id,
++						      mavlink_status_t* status, uint8_t min_length, uint8_t length, uint8_t crc_extra,
++						      uint32_t target_sysid)
+ {
+ 	bool mavlink1 = (status->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1) != 0;
+ #ifndef MAVLINK_NO_SIGN_PACKET
+@@ -234,11 +306,16 @@
+ 	bool signing = false;
+ #endif
+ 	uint8_t signature_len = signing? MAVLINK_SIGNATURE_BLOCK_LEN : 0;
+-        uint8_t header_len = MAVLINK_CORE_HEADER_LEN+1;
+-	uint8_t buf[MAVLINK_CORE_HEADER_LEN+1];
++	uint8_t buf[MAVLINK_MAX_HEADER_LEN];
+ 	if (mavlink1) {
++		if (system_id > 255 || target_sysid > 255 || msg->msgid > 255) {
++			// 32 bit IDs and extended message IDs cannot be represented in MAVLink1. Never
++			// truncate: a masked sysid would alias another system
++			// and a zeroed target would become a broadcast
++			_mav_parse_error(status);
++			return 0;
++		}
+ 		msg->magic = MAVLINK_STX_MAVLINK1;
+-		header_len = MAVLINK_CORE_HEADER_MAVLINK1_LEN+1;
+ 	} else {
+ 		msg->magic = MAVLINK_STX;
+ 	}
+@@ -246,32 +323,26 @@
+ 	msg->sysid = system_id;
+ 	msg->compid = component_id;
+ 	msg->incompat_flags = 0;
++	msg->target_sysid = 0;
+ 	if (signing) {
+ 		msg->incompat_flags |= MAVLINK_IFLAG_SIGNED;
++	}
++	if (!mavlink1) {
++		if (system_id > 255) {
++			msg->incompat_flags |= MAVLINK_IFLAG_SYSID32;
++		}
++		if (target_sysid > 255) {
++			msg->incompat_flags |= MAVLINK_IFLAG_TARGET32;
++			msg->target_sysid = target_sysid;
++		}
+ 	}
+ 	msg->compat_flags = 0;
+ 	msg->seq = status->current_tx_seq;
+ 	status->current_tx_seq = status->current_tx_seq + 1;
+ 
+ 	// form the header as a byte array for the crc
+-	buf[0] = msg->magic;
+-	buf[1] = msg->len;
+-	if (mavlink1) {
+-		buf[2] = msg->seq;
+-		buf[3] = msg->sysid;
+-		buf[4] = msg->compid;
+-		buf[5] = msg->msgid & 0xFF;
+-	} else {
+-		buf[2] = msg->incompat_flags;
+-		buf[3] = msg->compat_flags;
+-		buf[4] = msg->seq;
+-		buf[5] = msg->sysid;
+-		buf[6] = msg->compid;
+-		buf[7] = msg->msgid & 0xFF;
+-		buf[8] = (msg->msgid >> 8) & 0xFF;
+-		buf[9] = (msg->msgid >> 16) & 0xFF;
+-	}
+-	
++	const uint8_t header_len = mavlink_header_to_send_buffer(buf, msg);
++
+ 	uint16_t checksum = crc_calculate(&buf[1], header_len-1);
+ 	crc_accumulate_buffer(&checksum, _MAV_PAYLOAD(msg), msg->len);
+ 	crc_accumulate(crc_extra, &checksum);
+@@ -293,25 +364,42 @@
+ 	return msg->len + header_len + 2 + signature_len;
+ }
+ 
+-MAVLINK_HELPER uint16_t mavlink_finalize_message_chan(mavlink_message_t* msg, uint8_t system_id, uint8_t component_id,
++MAVLINK_HELPER uint16_t mavlink_finalize_message_buffer(mavlink_message_t* msg, uint32_t system_id, uint8_t component_id,
++						      mavlink_status_t* status, uint8_t min_length, uint8_t length, uint8_t crc_extra)
++{
++	return mavlink_finalize_message_buffer_target(msg, system_id, component_id, status, min_length, length, crc_extra, 0);
++}
++
++MAVLINK_HELPER uint16_t mavlink_finalize_message_chan_target(mavlink_message_t* msg, uint32_t system_id, uint8_t component_id,
++						      uint8_t chan, uint8_t min_length, uint8_t length, uint8_t crc_extra,
++						      uint32_t target_sysid)
++{
++	mavlink_status_t *status = mavlink_get_channel_status(chan);
++	return mavlink_finalize_message_buffer_target(msg, system_id, component_id, status, min_length, length, crc_extra,
++						      target_sysid);
++}
++
++MAVLINK_HELPER uint16_t mavlink_finalize_message_chan(mavlink_message_t* msg, uint32_t system_id, uint8_t component_id,
+ 						      uint8_t chan, uint8_t min_length, uint8_t length, uint8_t crc_extra)
+ {
+-	mavlink_status_t *status = mavlink_get_channel_status(chan);
+-	return mavlink_finalize_message_buffer(msg, system_id, component_id, status, min_length, length, crc_extra);
++	return mavlink_finalize_message_chan_target(msg, system_id, component_id, chan, min_length, length, crc_extra, 0);
+ }
+ 
+ /**
+  * @brief Finalize a MAVLink message with MAVLINK_COMM_0 as default channel
+  */
+-MAVLINK_HELPER uint16_t mavlink_finalize_message(mavlink_message_t* msg, uint8_t system_id, uint8_t component_id, 
++MAVLINK_HELPER uint16_t mavlink_finalize_message_target(mavlink_message_t* msg, uint32_t system_id, uint8_t component_id,
++						 uint8_t min_length, uint8_t length, uint8_t crc_extra,
++						 uint32_t target_sysid)
++{
++    return mavlink_finalize_message_chan_target(msg, system_id, component_id, MAVLINK_COMM_0, min_length, length, crc_extra,
++						target_sysid);
++}
++
++MAVLINK_HELPER uint16_t mavlink_finalize_message(mavlink_message_t* msg, uint32_t system_id, uint8_t component_id,
+ 						 uint8_t min_length, uint8_t length, uint8_t crc_extra)
+ {
+     return mavlink_finalize_message_chan(msg, system_id, component_id, MAVLINK_COMM_0, min_length, length, crc_extra);
+-}
+-
+-static inline void _mav_parse_error(mavlink_status_t *status)
+-{
+-    status->parse_error++;
+ }
+ 
+ #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+@@ -320,53 +408,49 @@
+ /**
+  * @brief Finalize a MAVLink message with channel assignment and send
+  */
+-MAVLINK_HELPER void _mav_finalize_message_chan_send(mavlink_channel_t chan, uint32_t msgid,
+-                                                    const char *packet, 
+-						    uint8_t min_length, uint8_t length, uint8_t crc_extra)
++MAVLINK_HELPER void _mav_finalize_message_chan_send_target(mavlink_channel_t chan, uint32_t msgid,
++                                                    const char *packet,
++						    uint8_t min_length, uint8_t length, uint8_t crc_extra,
++						    uint32_t target_sysid)
+ {
+ 	uint16_t checksum;
+-	uint8_t buf[MAVLINK_NUM_HEADER_BYTES];
++	uint8_t buf[MAVLINK_MAX_HEADER_LEN];
+ 	uint8_t ck[2];
+ 	mavlink_status_t *status = mavlink_get_channel_status(chan);
+-        uint8_t header_len = MAVLINK_CORE_HEADER_LEN;
++	uint8_t header_len;
+ 	uint8_t signature_len = 0;
+ 	uint8_t signature[MAVLINK_SIGNATURE_BLOCK_LEN];
+ 	bool mavlink1 = (status->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1) != 0;
+ 	bool signing = 	(!mavlink1) && status->signing && (status->signing->flags & MAVLINK_SIGNING_FLAG_SIGN_OUTGOING);
++	uint8_t incompat_flags = 0;
+ 
+         if (mavlink1) {
+             length = min_length;
+-            if (msgid > 255) {
+-                // can't send 16 bit messages
++            if (msgid > 255 || mavlink_system.sysid > 255 || target_sysid > 255) {
++                // can't send 16 bit msgids or 32 bit IDs in MAVLink1
+                 _mav_parse_error(status);
+                 return;
+             }
+-            header_len = MAVLINK_CORE_HEADER_MAVLINK1_LEN;
+-            buf[0] = MAVLINK_STX_MAVLINK1;
+-            buf[1] = length;
+-            buf[2] = status->current_tx_seq;
+-            buf[3] = mavlink_system.sysid;
+-            buf[4] = mavlink_system.compid;
+-            buf[5] = msgid & 0xFF;
+         } else {
+-	    uint8_t incompat_flags = 0;
+ 	    if (signing) {
+ 		incompat_flags |= MAVLINK_IFLAG_SIGNED;
+ 	    }
++	    if (mavlink_system.sysid > 255) {
++		incompat_flags |= MAVLINK_IFLAG_SYSID32;
++	    }
++	    if (target_sysid > 255) {
++		incompat_flags |= MAVLINK_IFLAG_TARGET32;
++	    }
+             length = _mav_trim_payload(packet, length);
+-            buf[0] = MAVLINK_STX;
+-            buf[1] = length;
+-            buf[2] = incompat_flags;
+-            buf[3] = 0; // compat_flags
+-            buf[4] = status->current_tx_seq;
+-            buf[5] = mavlink_system.sysid;
+-            buf[6] = mavlink_system.compid;
+-            buf[7] = msgid & 0xFF;
+-            buf[8] = (msgid >> 8) & 0xFF;
+-            buf[9] = (msgid >> 16) & 0xFF;
+         }
++	header_len = _mav_header_pack(buf,
++				      mavlink1?MAVLINK_STX_MAVLINK1:MAVLINK_STX, length,
++				      incompat_flags, 0,
++				      status->current_tx_seq,
++				      mavlink_system.sysid, mavlink_system.compid, msgid,
++				      target_sysid);
+ 	status->current_tx_seq++;
+-	checksum = crc_calculate((const uint8_t*)&buf[1], header_len);
++	checksum = crc_calculate((const uint8_t*)&buf[1], header_len-1);
+ 	crc_accumulate_buffer(&checksum, packet, length);
+ 	crc_accumulate(crc_extra, &checksum);
+ 	ck[0] = (uint8_t)(checksum & 0xFF);
+@@ -375,19 +459,26 @@
+ #ifndef MAVLINK_NO_SIGN_PACKET
+ 	if (signing) {
+ 		// possibly add a signature
+-		signature_len = mavlink_sign_packet(status->signing, signature, buf, header_len+1,
++		signature_len = mavlink_sign_packet(status->signing, signature, buf, header_len,
+ 						    (const uint8_t *)packet, length, ck);
+ 	}
+ #endif
+ 
+-	MAVLINK_START_UART_SEND(chan, header_len + 3 + (uint16_t)length + (uint16_t)signature_len);
+-	_mavlink_send_uart(chan, (const char *)buf, header_len+1);
++	MAVLINK_START_UART_SEND(chan, header_len + 2 + (uint16_t)length + (uint16_t)signature_len);
++	_mavlink_send_uart(chan, (const char *)buf, header_len);
+ 	_mavlink_send_uart(chan, packet, length);
+ 	_mavlink_send_uart(chan, (const char *)ck, 2);
+ 	if (signature_len != 0) {
+ 		_mavlink_send_uart(chan, (const char *)signature, signature_len);
+ 	}
+-	MAVLINK_END_UART_SEND(chan, header_len + 3 + (uint16_t)length + (uint16_t)signature_len);
++	MAVLINK_END_UART_SEND(chan, header_len + 2 + (uint16_t)length + (uint16_t)signature_len);
++}
++
++MAVLINK_HELPER void _mav_finalize_message_chan_send(mavlink_channel_t chan, uint32_t msgid,
++                                                    const char *packet,
++						    uint8_t min_length, uint8_t length, uint8_t crc_extra)
++{
++	_mav_finalize_message_chan_send_target(chan, msgid, packet, min_length, length, crc_extra, 0);
+ }
+ 
+ /**
+@@ -403,39 +494,22 @@
+ 	ck[1] = (uint8_t)(msg->checksum >> 8);
+ 	// XXX use the right sequence here
+ 
+-        uint8_t header_len;
++        // we can't send the structure directly as its layout does not match the wire header
++        uint8_t buf[MAVLINK_MAX_HEADER_LEN];
++        const uint8_t header_len = mavlink_header_to_send_buffer(buf, msg);
++        if (header_len == 0) {
++                // unrepresentable (32 bit IDs in a MAVLink1 message)
++                return;
++        }
+         uint8_t signature_len;
+-        
++
+         if (msg->magic == MAVLINK_STX_MAVLINK1) {
+-            header_len = MAVLINK_CORE_HEADER_MAVLINK1_LEN + 1;
+             signature_len = 0;
+-            MAVLINK_START_UART_SEND(chan, header_len + msg->len + 2 + signature_len);
+-            // we can't send the structure directly as it has extra mavlink2 elements in it
+-            uint8_t buf[MAVLINK_CORE_HEADER_MAVLINK1_LEN + 1];
+-            buf[0] = msg->magic;
+-            buf[1] = msg->len;
+-            buf[2] = msg->seq;
+-            buf[3] = msg->sysid;
+-            buf[4] = msg->compid;
+-            buf[5] = msg->msgid & 0xFF;
+-            _mavlink_send_uart(chan, (const char*)buf, header_len);
+         } else {
+-            header_len = MAVLINK_CORE_HEADER_LEN + 1;
+             signature_len = (msg->incompat_flags & MAVLINK_IFLAG_SIGNED)?MAVLINK_SIGNATURE_BLOCK_LEN:0;
+-            MAVLINK_START_UART_SEND(chan, header_len + msg->len + 2 + signature_len);
+-            uint8_t buf[MAVLINK_CORE_HEADER_LEN + 1];
+-            buf[0] = msg->magic;
+-            buf[1] = msg->len;
+-            buf[2] = msg->incompat_flags;
+-            buf[3] = msg->compat_flags;
+-            buf[4] = msg->seq;
+-            buf[5] = msg->sysid;
+-            buf[6] = msg->compid;
+-            buf[7] = msg->msgid & 0xFF;
+-            buf[8] = (msg->msgid >> 8) & 0xFF;
+-            buf[9] = (msg->msgid >> 16) & 0xFF;
+-            _mavlink_send_uart(chan, (const char *)buf, header_len);
+         }
++        MAVLINK_START_UART_SEND(chan, header_len + msg->len + 2 + signature_len);
++        _mavlink_send_uart(chan, (const char *)buf, header_len);
+ 	_mavlink_send_uart(chan, _MAV_PAYLOAD(msg), msg->len);
+ 	_mavlink_send_uart(chan, (const char *)ck, 2);
+         if (signature_len != 0) {
+@@ -450,45 +524,31 @@
+  */
+ MAVLINK_HELPER uint16_t mavlink_msg_to_send_buffer(uint8_t *buf, const mavlink_message_t *msg)
+ {
+-	uint8_t signature_len, header_len;
++	uint8_t signature_len;
+ 	uint8_t *ck;
+         uint8_t length = msg->len;
+-        
++        const uint8_t header_len = mavlink_header_to_send_buffer(buf, msg);
++        if (header_len == 0) {
++                // unrepresentable (32 bit IDs in a MAVLink1 message)
++                return 0;
++        }
++
+ 	if (msg->magic == MAVLINK_STX_MAVLINK1) {
+ 		signature_len = 0;
+-		header_len = MAVLINK_CORE_HEADER_MAVLINK1_LEN;
+-		buf[0] = msg->magic;
+-		buf[1] = length;
+-		buf[2] = msg->seq;
+-		buf[3] = msg->sysid;
+-		buf[4] = msg->compid;
+-		buf[5] = msg->msgid & 0xFF;
+-		memcpy(&buf[6], _MAV_PAYLOAD(msg), msg->len);
+-		ck = buf + header_len + 1 + (uint16_t)msg->len;
+ 	} else {
+ 		length = _mav_trim_payload(_MAV_PAYLOAD(msg), length);
+-		header_len = MAVLINK_CORE_HEADER_LEN;
+-		buf[0] = msg->magic;
+ 		buf[1] = length;
+-		buf[2] = msg->incompat_flags;
+-		buf[3] = msg->compat_flags;
+-		buf[4] = msg->seq;
+-		buf[5] = msg->sysid;
+-		buf[6] = msg->compid;
+-		buf[7] = msg->msgid & 0xFF;
+-		buf[8] = (msg->msgid >> 8) & 0xFF;
+-		buf[9] = (msg->msgid >> 16) & 0xFF;
+-		memcpy(&buf[10], _MAV_PAYLOAD(msg), length);
+-		ck = buf + header_len + 1 + (uint16_t)length;
+ 		signature_len = (msg->incompat_flags & MAVLINK_IFLAG_SIGNED)?MAVLINK_SIGNATURE_BLOCK_LEN:0;
+ 	}
++	memcpy(&buf[header_len], _MAV_PAYLOAD(msg), length);
++	ck = buf + header_len + (uint16_t)length;
+ 	ck[0] = (uint8_t)(msg->checksum & 0xFF);
+ 	ck[1] = (uint8_t)(msg->checksum >> 8);
+ 	if (signature_len > 0) {
+ 		memcpy(&ck[2], msg->signature, signature_len);
+ 	}
+ 
+-	return header_len + 1 + 2 + (uint16_t)length + (uint16_t)signature_len;
++	return header_len + 2 + (uint16_t)length + (uint16_t)signature_len;
+ }
+ 
+ union __mavlink_bitfield {
+@@ -578,6 +638,62 @@
+ }
+ 
+ /**
++ * Get the effective target system, preferring an explicit header target.
++ * target_system_ptr points to a decoded payload target field, or is NULL if
++ * there is no payload target. target_system must point to writable storage.
++ * Returns true for any present target, including zero (broadcast). If neither
++ * target is present, returns false and leaves *target_system unchanged.
++ */
++MAVLINK_HELPER bool mavlink_msg_get_target_system(const mavlink_message_t *msg, const uint8_t *target_system_ptr, uint32_t *target_system)
++{
++    if (msg->incompat_flags & MAVLINK_IFLAG_TARGET32) {
++        *target_system = msg->target_sysid;
++        return true;
++    }
++    if (target_system_ptr == NULL) {
++        return false;
++    }
++    *target_system = *target_system_ptr;
++    return true;
++}
++
++/*
++  return the target system ID of a message, taking the TARGET32
++  extended header into account. Returns 0 (broadcast) if the message
++  has no target. The entry may be NULL
++*/
++MAVLINK_HELPER uint32_t mavlink_msg_get_target_sysid(const mavlink_message_t *msg, const mavlink_msg_entry_t *entry)
++{
++	if (msg->incompat_flags & MAVLINK_IFLAG_TARGET32) {
++		return msg->target_sysid;
++	}
++	if (entry == NULL || !(entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_SYSTEM)) {
++		return 0;
++	}
++	if (entry->target_system_ofs >= msg->len) {
++		// zero-trimmed
++		return 0;
++	}
++	return (uint8_t)_MAV_PAYLOAD(msg)[entry->target_system_ofs];
++}
++
++/*
++  return the target component ID from the payload. Returns 0 (broadcast) if the message
++  has no target component. The entry may be NULL
++*/
++MAVLINK_HELPER uint8_t mavlink_msg_get_target_compid(const mavlink_message_t *msg, const mavlink_msg_entry_t *entry)
++{
++	if (entry == NULL || !(entry->flags & MAV_MSG_ENTRY_FLAG_HAVE_TARGET_COMPONENT)) {
++		return 0;
++	}
++	if (entry->target_component_ofs >= msg->len) {
++		// zero-trimmed
++		return 0;
++	}
++	return (uint8_t)_MAV_PAYLOAD(msg)[entry->target_component_ofs];
++}
++
++/**
+  * This is a variant of mavlink_frame_char() but with caller supplied
+  * parsing buffers. It is useful when you want to create a MAVLink
+  * parser in a library that doesn't use any global variables
+@@ -644,6 +760,10 @@
+                         if (status->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1) {
+                             rxmsg->incompat_flags = 0;
+                             rxmsg->compat_flags = 0;
++                            // MAVLink1 skips the GOT_LENGTH state, so clear the
++                            // target IDs here too; a stale target from a previous
++                            // frame would make this one unrepresentable on send
++                            rxmsg->target_sysid = 0;
+                             status->parse_state = MAVLINK_PARSE_STATE_GOT_COMPAT_FLAGS;
+                         } else {
+                             status->parse_state = MAVLINK_PARSE_STATE_GOT_LENGTH;
+@@ -660,6 +780,10 @@
+ 			status->parse_state = MAVLINK_PARSE_STATE_IDLE;
+ 			break;
+ 		}
++		if (!(rxmsg->incompat_flags & MAVLINK_IFLAG_TARGET32)) {
++			// don't leave stale target IDs in re-used buffers
++			rxmsg->target_sysid = 0;
++		}
+ 		mavlink_update_checksum(rxmsg, c);
+ 		status->parse_state = MAVLINK_PARSE_STATE_GOT_INCOMPAT_FLAGS;
+ 		break;
+@@ -678,6 +802,28 @@
+                 
+ 	case MAVLINK_PARSE_STATE_GOT_SEQ:
+ 		rxmsg->sysid = c;
++		mavlink_update_checksum(rxmsg, c);
++		if (rxmsg->incompat_flags & MAVLINK_IFLAG_SYSID32) {
++			status->parse_state = MAVLINK_PARSE_STATE_GOT_SYSID1;
++		} else {
++			status->parse_state = MAVLINK_PARSE_STATE_GOT_SYSID;
++		}
++		break;
++
++	case MAVLINK_PARSE_STATE_GOT_SYSID1:
++		rxmsg->sysid |= ((uint32_t)c) << 8;
++		mavlink_update_checksum(rxmsg, c);
++		status->parse_state = MAVLINK_PARSE_STATE_GOT_SYSID2;
++		break;
++
++	case MAVLINK_PARSE_STATE_GOT_SYSID2:
++		rxmsg->sysid |= ((uint32_t)c) << 16;
++		mavlink_update_checksum(rxmsg, c);
++		status->parse_state = MAVLINK_PARSE_STATE_GOT_SYSID3;
++		break;
++
++	case MAVLINK_PARSE_STATE_GOT_SYSID3:
++		rxmsg->sysid |= ((uint32_t)c) << 24;
+ 		mavlink_update_checksum(rxmsg, c);
+ 		status->parse_state = MAVLINK_PARSE_STATE_GOT_SYSID;
+ 		break;
+@@ -719,7 +865,9 @@
+ 	case MAVLINK_PARSE_STATE_GOT_MSGID2:
+ 		rxmsg->msgid |= ((uint32_t)c)<<16;
+ 		mavlink_update_checksum(rxmsg, c);
+-		if(rxmsg->len > 0){
++		if (rxmsg->incompat_flags & MAVLINK_IFLAG_TARGET32) {
++			status->parse_state = MAVLINK_PARSE_STATE_GOT_MSGID3_TARGET32;
++		} else if(rxmsg->len > 0){
+ 			status->parse_state = MAVLINK_PARSE_STATE_GOT_MSGID3;
+ 		} else {
+ 			status->parse_state = MAVLINK_PARSE_STATE_GOT_PAYLOAD;
+@@ -735,6 +883,34 @@
+ #endif
+ 		break;
+                 
++	case MAVLINK_PARSE_STATE_GOT_MSGID3_TARGET32:
++		rxmsg->target_sysid = c;
++		mavlink_update_checksum(rxmsg, c);
++		status->parse_state = MAVLINK_PARSE_STATE_GOT_TARGET_SYSID1;
++		break;
++
++	case MAVLINK_PARSE_STATE_GOT_TARGET_SYSID1:
++		rxmsg->target_sysid |= ((uint32_t)c) << 8;
++		mavlink_update_checksum(rxmsg, c);
++		status->parse_state = MAVLINK_PARSE_STATE_GOT_TARGET_SYSID2;
++		break;
++
++	case MAVLINK_PARSE_STATE_GOT_TARGET_SYSID2:
++		rxmsg->target_sysid |= ((uint32_t)c) << 16;
++		mavlink_update_checksum(rxmsg, c);
++		status->parse_state = MAVLINK_PARSE_STATE_GOT_TARGET_SYSID3;
++		break;
++
++	case MAVLINK_PARSE_STATE_GOT_TARGET_SYSID3:
++		rxmsg->target_sysid |= ((uint32_t)c) << 24;
++		mavlink_update_checksum(rxmsg, c);
++		if (rxmsg->len > 0) {
++			status->parse_state = MAVLINK_PARSE_STATE_GOT_MSGID3;
++		} else {
++			status->parse_state = MAVLINK_PARSE_STATE_GOT_PAYLOAD;
++		}
++		break;
++
+ 	case MAVLINK_PARSE_STATE_GOT_MSGID3:
+ 		_MAV_PAYLOAD_NON_CONST(rxmsg)[status->packet_idx++] = (char)c;
+ 		mavlink_update_checksum(rxmsg, c);
+--- a/pymavlink/generator/C/include_v2.0/mavlink_types.h
++++ b/pymavlink/generator/C/include_v2.0/mavlink_types.h
+@@ -24,15 +24,26 @@
+ #define MAVLINK_MAX_PAYLOAD_LEN 255 ///< Maximum payload length
+ #endif
+ 
+-#define MAVLINK_CORE_HEADER_LEN 9 ///< Length of core header (of the comm. layer)
++#define MAVLINK_CORE_HEADER_LEN 9 ///< Length of minimum core header (of the comm. layer)
+ #define MAVLINK_CORE_HEADER_MAVLINK1_LEN 5 ///< Length of MAVLink1 core header (of the comm. layer)
+-#define MAVLINK_NUM_HEADER_BYTES (MAVLINK_CORE_HEADER_LEN + 1) ///< Length of all header bytes, including core and stx
++#define MAVLINK_NUM_HEADER_BYTES (MAVLINK_CORE_HEADER_LEN + 1) ///< Length of minimum header bytes, including core and stx
+ #define MAVLINK_NUM_CHECKSUM_BYTES 2
+-#define MAVLINK_NUM_NON_PAYLOAD_BYTES (MAVLINK_NUM_HEADER_BYTES + MAVLINK_NUM_CHECKSUM_BYTES)
++#define MAVLINK_NUM_NON_PAYLOAD_BYTES (MAVLINK_NUM_HEADER_BYTES + MAVLINK_NUM_CHECKSUM_BYTES) ///< Minimum framing length, excluding header extensions and signature; use MAVLINK_MAX_PACKET_LEN for packet buffers
+ 
+ #define MAVLINK_SIGNATURE_BLOCK_LEN 13
+ 
+-#define MAVLINK_MAX_PACKET_LEN (MAVLINK_MAX_PAYLOAD_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES + MAVLINK_SIGNATURE_BLOCK_LEN) ///< Maximum packet length
++// extra bytes when the source system ID grows from 1 to 4 bytes
++#define MAVLINK_SYSID32_HEADER_EXTRA 3
++// Wide targets use this non-broadcast payload value; 255 is not a reserved ID.
++// Routing and relays must use the full-width header target.
++#define MAVLINK_TARGET_SYSTEM_SENTINEL UINT8_MAX
++
++// target extension is target_sysid[4]
++#define MAVLINK_TARGET32_HEADER_EXTRA 4
++#define MAVLINK_MAX_EXT_HEADER_BYTES (MAVLINK_SYSID32_HEADER_EXTRA + MAVLINK_TARGET32_HEADER_EXTRA)
++#define MAVLINK_MAX_HEADER_LEN (MAVLINK_NUM_HEADER_BYTES + MAVLINK_MAX_EXT_HEADER_BYTES)
++
++#define MAVLINK_MAX_PACKET_LEN (MAVLINK_MAX_PAYLOAD_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES + MAVLINK_MAX_EXT_HEADER_BYTES + MAVLINK_SIGNATURE_BLOCK_LEN) ///< Maximum packet length
+ 
+ /**
+  * Old-style 4 byte param union
+@@ -100,7 +111,7 @@
+  */
+ MAVPACKED(
+ typedef struct __mavlink_system {
+-    uint8_t sysid;   ///< Used by the MAVLink message_xx_send() convenience function
++    uint32_t sysid;  ///< Used by the MAVLink message_xx_send() convenience function
+     uint8_t compid;  ///< Used by the MAVLink message_xx_send() convenience function
+ }) mavlink_system_t;
+ 
+@@ -112,12 +123,13 @@
+ 	uint8_t incompat_flags; ///< flags that must be understood
+ 	uint8_t compat_flags;   ///< flags that can be ignored if not understood
+ 	uint8_t seq;            ///< Sequence of packet
+-	uint8_t sysid;          ///< ID of message sender system/aircraft
++	uint32_t sysid;         ///< ID of message sender system/aircraft
+ 	uint8_t compid;         ///< ID of the message sender component
+ 	uint32_t msgid:24;      ///< ID of message in payload
+ 	uint64_t payload64[(MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES+7)/8];
+ 	uint8_t ck[2];          ///< incoming checksum bytes
+ 	uint8_t signature[MAVLINK_SIGNATURE_BLOCK_LEN];
++	uint32_t target_sysid;  ///< extended target system ID, valid only when (incompat_flags & MAVLINK_IFLAG_TARGET32)
+ }) mavlink_message_t;
+ 
+ typedef enum {
+@@ -200,7 +212,15 @@
+     MAVLINK_PARSE_STATE_GOT_CRC1,
+     MAVLINK_PARSE_STATE_GOT_BAD_CRC1,
+     MAVLINK_PARSE_STATE_SIGNATURE_WAIT,
+-    MAVLINK_PARSE_STATE_SIGNATURE_WAIT_BAD_CRC
++    MAVLINK_PARSE_STATE_SIGNATURE_WAIT_BAD_CRC,
++    // new states appended to keep existing state numbering stable
++    MAVLINK_PARSE_STATE_GOT_SYSID1,           // got 1 of 4 sysid bytes (SYSID32)
++    MAVLINK_PARSE_STATE_GOT_SYSID2,           // got 2 of 4 sysid bytes
++    MAVLINK_PARSE_STATE_GOT_SYSID3,           // got 3 of 4 sysid bytes, GOT_SYSID follows
++    MAVLINK_PARSE_STATE_GOT_MSGID3_TARGET32, // got full msgid, extended target follows
++    MAVLINK_PARSE_STATE_GOT_TARGET_SYSID1,    // got 1 of 4 target sysid bytes
++    MAVLINK_PARSE_STATE_GOT_TARGET_SYSID2,    // got 2 of 4 target sysid bytes
++    MAVLINK_PARSE_STATE_GOT_TARGET_SYSID3,    // got 3 of 4 target sysid bytes
+ } mavlink_parse_state_t; ///< The state machine for the comm parser
+ 
+ typedef enum {
+@@ -276,7 +296,7 @@
+     uint16_t num_signing_streams;
+     struct __mavlink_signing_stream {
+         uint8_t link_id;              ///< ID of the link (MAVLINK_CHANNEL)
+-        uint8_t sysid;                ///< Remote system ID
++        uint32_t sysid;               ///< Remote system ID
+         uint8_t compid;               ///< Remote component ID
+         uint8_t timestamp_bytes[6];   ///< Timestamp, in microseconds since UNIX epoch GMT
+     } stream[MAVLINK_MAX_SIGNING_STREAMS];
+@@ -305,8 +325,11 @@
+ /*
+   incompat_flags bits
+  */
+-#define MAVLINK_IFLAG_SIGNED  0x01
+-#define MAVLINK_IFLAG_MASK    0x01 // mask of all understood bits
++#define MAVLINK_IFLAG_SIGNED    0x01 // this message has a MAVLink2 signature attached
++#define MAVLINK_IFLAG_SYSID32   0x02 // source system ID in this message's header is 32 bit
++// Targeting is independent of whether the source system ID is extended.
++#define MAVLINK_IFLAG_TARGET32  0x04 // this message has target sysid in an extended header
++#define MAVLINK_IFLAG_MASK      0x07 // mask of all understood bits
+ 
+ #ifdef MAVLINK_USE_CXX_NAMESPACE
+ } // namespace mavlink
+--- a/pymavlink/generator/C/include_v2.0/protocol.h
++++ b/pymavlink/generator/C/include_v2.0/protocol.h
+@@ -41,6 +41,19 @@
+ #define MAVLINK_WIP
+ #endif
+ 
++#define MAVLINK_HAVE_GET_TARGET_SYSTEM
++#define MAVLINK_HAVE_GET_TARGET_SYSID
++
++/**
++ * @brief Map a full system target to its legacy uint8_t payload field.
++ * Wide targets use the non-broadcast sentinel; also pass the full target to
++ * the _target() send/finalize helper so it is retained in the header.
++ */
++static inline uint8_t mavlink_msg_target_field(uint32_t target_system)
++{
++    return target_system > UINT8_MAX ? MAVLINK_TARGET_SYSTEM_SENTINEL : (uint8_t)target_system;
++}
++
+ /* option to provide alternative implementation of mavlink_helpers.h */
+ #ifdef MAVLINK_SEPARATE_HELPERS
+ 
+@@ -51,17 +64,37 @@
+     MAVLINK_HELPER mavlink_status_t* mavlink_get_channel_status(uint8_t chan);
+     #endif
+     MAVLINK_HELPER void mavlink_reset_channel_status(uint8_t chan);
+-    MAVLINK_HELPER uint16_t mavlink_finalize_message_buffer(mavlink_message_t* msg, uint8_t system_id, uint8_t component_id,
++    MAVLINK_HELPER uint8_t _mav_header_pack(uint8_t *buf, uint8_t magic, uint8_t len,
++                                            uint8_t incompat_flags, uint8_t compat_flags,
++                                            uint8_t seq, uint32_t sysid, uint8_t compid, uint32_t msgid,
++                                            uint32_t target_sysid);
++    MAVLINK_HELPER uint8_t mavlink_header_to_send_buffer(uint8_t *buf, const mavlink_message_t *msg);
++    MAVLINK_HELPER uint16_t mavlink_finalize_message_buffer_target(mavlink_message_t* msg, uint32_t system_id, uint8_t component_id,
++                                                            mavlink_status_t* status, uint8_t min_length, uint8_t length, uint8_t crc_extra,
++                                                            uint32_t target_sysid);
++    MAVLINK_HELPER uint16_t mavlink_finalize_message_buffer(mavlink_message_t* msg, uint32_t system_id, uint8_t component_id,
+                                                             mavlink_status_t* status, uint8_t min_length, uint8_t length, uint8_t crc_extra);
+-    MAVLINK_HELPER uint16_t mavlink_finalize_message_chan(mavlink_message_t* msg, uint8_t system_id, uint8_t component_id,
++    MAVLINK_HELPER uint16_t mavlink_finalize_message_chan_target(mavlink_message_t* msg, uint32_t system_id, uint8_t component_id,
++                                                          uint8_t chan, uint8_t min_length, uint8_t length, uint8_t crc_extra,
++                                                          uint32_t target_sysid);
++    MAVLINK_HELPER uint16_t mavlink_finalize_message_chan(mavlink_message_t* msg, uint32_t system_id, uint8_t component_id,
+                                                           uint8_t chan, uint8_t min_length, uint8_t length, uint8_t crc_extra);
+-    MAVLINK_HELPER uint16_t mavlink_finalize_message(mavlink_message_t* msg, uint8_t system_id, uint8_t component_id,
++    MAVLINK_HELPER uint16_t mavlink_finalize_message_target(mavlink_message_t* msg, uint32_t system_id, uint8_t component_id,
++                                                     uint8_t min_length, uint8_t length, uint8_t crc_extra,
++                                                     uint32_t target_sysid);
++    MAVLINK_HELPER uint16_t mavlink_finalize_message(mavlink_message_t* msg, uint32_t system_id, uint8_t component_id,
+                                                      uint8_t min_length, uint8_t length, uint8_t crc_extra);
+     #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
++    MAVLINK_HELPER void _mav_finalize_message_chan_send_target(mavlink_channel_t chan, uint32_t msgid, const char *packet,
++                                                        uint8_t min_length, uint8_t length, uint8_t crc_extra,
++                                                        uint32_t target_sysid);
+     MAVLINK_HELPER void _mav_finalize_message_chan_send(mavlink_channel_t chan, uint32_t msgid, const char *packet,
+                                                         uint8_t min_length, uint8_t length, uint8_t crc_extra);
+     #endif
+     MAVLINK_HELPER uint16_t mavlink_msg_to_send_buffer(uint8_t *buffer, const mavlink_message_t *msg);
++    MAVLINK_HELPER bool mavlink_msg_get_target_system(const mavlink_message_t *msg, const uint8_t *target_system_ptr, uint32_t *target_system);
++    MAVLINK_HELPER uint32_t mavlink_msg_get_target_sysid(const mavlink_message_t *msg, const mavlink_msg_entry_t *entry);
++    MAVLINK_HELPER uint8_t mavlink_msg_get_target_compid(const mavlink_message_t *msg, const mavlink_msg_entry_t *entry);
+     MAVLINK_HELPER void mavlink_start_checksum(mavlink_message_t* msg);
+     MAVLINK_HELPER void mavlink_update_checksum(mavlink_message_t* msg, uint8_t c);
+     MAVLINK_HELPER uint8_t mavlink_frame_char_buffer(mavlink_message_t* rxmsg, 
+@@ -96,7 +129,14 @@
+ 		return msg->len + MAVLINK_CORE_HEADER_MAVLINK1_LEN+1 + 2;
+ 	}
+     	uint16_t signature_len = (msg->incompat_flags & MAVLINK_IFLAG_SIGNED)?MAVLINK_SIGNATURE_BLOCK_LEN:0;
+-	return msg->len + MAVLINK_NUM_NON_PAYLOAD_BYTES + signature_len;
++	uint16_t ext_header_len = 0;
++	if (msg->incompat_flags & MAVLINK_IFLAG_SYSID32) {
++		ext_header_len += MAVLINK_SYSID32_HEADER_EXTRA;
++	}
++	if (msg->incompat_flags & MAVLINK_IFLAG_TARGET32) {
++		ext_header_len += MAVLINK_TARGET32_HEADER_EXTRA;
++	}
++	return msg->len + MAVLINK_NUM_NON_PAYLOAD_BYTES + ext_header_len + signature_len;
+ }
+ 
+ #if MAVLINK_NEED_BYTE_SWAP
+@@ -282,10 +322,10 @@
+ _MAV_MSG_RETURN_TYPE(int64_t,  8)
+ _MAV_MSG_RETURN_TYPE(float,    4)
+ _MAV_MSG_RETURN_TYPE(double,   8)
+-#else // nicely aligned, no swap
++#else // native byte order; the packed message payload may still be unaligned
+ #define _MAV_MSG_RETURN_TYPE(TYPE) \
+ static inline TYPE _MAV_RETURN_## TYPE(const mavlink_message_t *msg, uint8_t ofs) \
+-{ return *(const TYPE *)(&_MAV_PAYLOAD(msg)[ofs]);}
++{ TYPE r; memcpy(&r, &_MAV_PAYLOAD(msg)[ofs], sizeof(TYPE)); return r; }
+ 
+ _MAV_MSG_RETURN_TYPE(uint16_t)
+ _MAV_MSG_RETURN_TYPE(int16_t)
+@@ -347,5 +387,3 @@
+ _MAV_RETURN_ARRAY(int64_t,  i64)
+ _MAV_RETURN_ARRAY(float,    f)
+ _MAV_RETURN_ARRAY(double,   d)
+-
+-

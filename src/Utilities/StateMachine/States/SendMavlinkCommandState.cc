@@ -61,7 +61,7 @@ void SendMavlinkCommandState::onWaitEntered()
                               static_cast<float>(_param7));
 }
 
-void SendMavlinkCommandState::_mavCommandResult(int vehicleId, int targetComponent, int command, int ackResult, int failureCode)
+void SendMavlinkCommandState::_mavCommandResult(quint32 vehicleId, int targetComponent, int command, int ackResult, int failureCode)
 {
     Q_UNUSED(vehicleId);
     Q_UNUSED(targetComponent);

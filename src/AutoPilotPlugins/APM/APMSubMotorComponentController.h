@@ -21,7 +21,7 @@ signals:
     void motorDetectionMessagesChanged();
 
 private slots:
-    void _handleNewMessages(int sysid, int componentid, int severity, const QString &text, const QString &description);
+    void _handleNewMessages(quint32 sysid, int componentid, int severity, const QString &text, const QString &description);
 
 private:
     QString _motorDetectionMessages;
