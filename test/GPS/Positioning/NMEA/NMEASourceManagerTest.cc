@@ -531,6 +531,35 @@ void NMEASourceManagerTest::_tcpClientConnectsAndReconnects()
     QVERIFY(!source._input.tcp);
 }
 
+void NMEASourceManagerTest::_tcpEndpointChangeUpdatesStatus()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->autoConnectSettings();
+    QTcpServer first;
+    QTcpServer second;
+    QVERIFY(first.listen(QHostAddress::LocalHost));
+    QVERIFY(second.listen(QHostAddress::LocalHost));
+    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceTcp);
+    saved.setFactValue(settings->nmeaTcpHost(), QStringLiteral("127.0.0.1"));
+    saved.setFactValue(settings->nmeaTcpPort(), first.serverPort());
+    QGCPositionManager position;
+    NMEASourceManager source(settings, &position);
+    source.update();
+    QCOMPARE(source.connectionState(), NMEASourceManager::ConnectionState::WaitingForDevice);
+    QVERIFY(source.connectionStatusText().contains(QString::number(first.serverPort())));
+
+    // The endpoint changes before the first connection completes, so the state stays WaitingForDevice.
+    QSignalSpy states(&source, &NMEASourceManager::connectionStateChanged);
+    settings->nmeaTcpPort()->setRawValue(second.serverPort());
+    source.update();
+    QCOMPARE(source.connectionState(), NMEASourceManager::ConnectionState::WaitingForDevice);
+    QVERIFY(source.connectionStatusText().contains(QString::number(second.serverPort())));
+    QVERIFY(!states.isEmpty());
+    settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceDisabled);
+    source.update();
+    QCOMPARE(source.connectionState(), NMEASourceManager::ConnectionState::Disabled);
+}
+
 void NMEASourceManagerTest::_udpActivityAndSatellites_data()
 {
     QTest::addColumn<bool>("replaceSender");

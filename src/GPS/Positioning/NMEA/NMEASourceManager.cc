@@ -29,6 +29,7 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
     , _positionManager(positionManager)
 {
     qCDebug(NMEASourceManagerLog) << this;
+    _statusText = connectionStatusText();
     if (_settings) {
         for (auto* fact : {_settings->nmeaSource(), _settings->nmeaUdpPort(), _settings->autoConnectNmeaPort(),
                            _settings->autoConnectNmeaBaud(), _settings->nmeaTcpHost(), _settings->nmeaTcpPort()}) {
@@ -224,11 +225,14 @@ QString NMEASourceManager::connectionStatusText() const
 
 void NMEASourceManager::_setConnectionState(ConnectionState state, const QString& error)
 {
-    if (_connectionState == state && _errorMessage == error) {
-        return;
-    }
+    const bool stateChanged = _connectionState != state || _errorMessage != error;
     _connectionState = state;
     _errorMessage = error;
+    const QString statusText = connectionStatusText();
+    if (!stateChanged && statusText == _statusText) {
+        return;
+    }
+    _statusText = statusText;
     _notifications.emitSignal(this, &NMEASourceManager::connectionStateChanged);
 }
 

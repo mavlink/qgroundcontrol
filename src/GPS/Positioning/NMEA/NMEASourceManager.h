@@ -112,6 +112,8 @@ private:
     GPSNotificationQueue _notifications{this};
     ConnectionState _connectionState = ConnectionState::Disabled;
     QString _errorMessage;
+    /// Last published connectionStatusText; it also depends on the TCP endpoint, not only on the state.
+    QString _statusText;
 #ifndef QGC_NO_SERIAL_LINK
     void _updateSerialRouting();
     SerialPortManager::ReservationPtr _autoConnectExclusion;
