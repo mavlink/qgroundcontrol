@@ -17,7 +17,6 @@ public:
         LocalReceiver = 1,
         Ntrip = 2,
         Udp = 3,
-        All = 4,
     };
     Q_ENUM(CorrectionSource)
 

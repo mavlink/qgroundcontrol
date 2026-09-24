@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <array>
 #include <functional>
 #include <utility>
 
@@ -72,7 +71,7 @@ private slots:
     void sessionAndReceiptValidation();
     void nonRoutablePeersRemainObserved_data();
     void nonRoutablePeersRemainObserved();
-    void explicitAllAndSinkResults();
+    void sinkResults();
     void emptyOutputRemovesRegistration_data();
     void emptyOutputRemovesRegistration();
     void sourceChangePrecedesSubmission_data();
@@ -244,8 +243,8 @@ void GPSCorrectionRouterTest::atomicConfigurationAndReplacement()
     QSignalSpy changes(&router, &GPSCorrectionRouter::sourceInvalidated);
     const GPSCorrectionRouter::Configuration requested{GPSCorrectionRouter::Policy::Manual, GPSCorrectionSource::Udp,
                                                        QStringLiteral("peer")};
-    const GPSCorrectionRouter::Configuration replacement{
-        GPSCorrectionRouter::Policy::All, GPSCorrectionSource::Unknown, {}};
+    const GPSCorrectionRouter::Configuration replacement{GPSCorrectionRouter::Policy::Manual,
+                                                         GPSCorrectionSource::Ntrip, QStringLiteral("caster")};
     connect(&router, &GPSCorrectionRouter::sourceInvalidated, &router, [&]() {
         QVERIFY(router.configuration() == requested);
         router.applyConfiguration(replacement);
@@ -789,40 +788,36 @@ void GPSCorrectionRouterTest::nonRoutablePeersRemainObserved()
              filtered ? GPSCorrectionReason::MessageFiltered : GPSCorrectionReason::Expired);
 }
 
-void GPSCorrectionRouterTest::explicitAllAndSinkResults()
+void GPSCorrectionRouterTest::sinkResults()
 {
     qint64 now = 100000;
     GPSCorrectionRouter router(nullptr, [&now]() { return now; });
-    router.applyConfiguration({GPSCorrectionRouter::Policy::All});
     quint64 bytes = 0;
     setAdmissionOutput(router, QStringLiteral("accepted"), [&bytes](const GPSCorrectionFrame& update) {
         bytes += update.data.size();
         return update.data.size();
     });
     setAdmissionOutput(router, QStringLiteral("unavailable"), [](const GPSCorrectionFrame&) { return quint64(0); });
-    const std::array sources = {router.registerSource(GPSCorrectionSource::LocalReceiver),
-                                router.registerSource(GPSCorrectionSource::Ntrip),
-                                router.registerSource(GPSCorrectionSource::Udp)};
-    for (const auto& source : sources) {
-        const auto update = ingress(source, now);
-        QVERIFY(router.acceptIngress(update));
-        QCOMPARE(router.statistics().at(static_cast<int>(source.token().source())).submittedBytes,
-                 quint64(update.frame().data.size()));
-    }
-    QCOMPARE(bytes, quint64(GpsTestHelpers::buildRtcmFrame(1005, 20).size() * 3));
-    router.removeSink(QStringLiteral("accepted"));
-    const auto update = ingress(sources.back(), now);
+    const auto source = router.registerSource(GPSCorrectionSource::Udp);
+    const auto submittedBytes = [&router]() {
+        return router.statistics().at(static_cast<int>(GPSCorrectionSource::Udp)).submittedBytes;
+    };
+    const auto update = ingress(source, now);
+    const auto frameBytes = quint64(update.frame().data.size());
     QVERIFY(router.acceptIngress(update));
-    QCOMPARE(router.statistics().at(static_cast<int>(GPSCorrectionSource::Udp)).submittedBytes,
-             quint64(update.frame().data.size()));
-    for (const auto& row : router.sourceInstanceDiagnostics()) {
-        QVERIFY(row.toMap().value(QStringLiteral("selected")).toBool());
-    }
+    QCOMPARE(submittedBytes(), frameBytes);
+    QCOMPARE(bytes, frameBytes);
+    router.removeSink(QStringLiteral("accepted"));
+    QVERIFY(router.acceptIngress(ingress(source, now)));
+    QCOMPARE(submittedBytes(), frameBytes);
+    QCOMPARE(bytes, frameBytes);
+    const auto rows = router.sourceInstanceDiagnostics();
+    QCOMPARE(rows.size(), 1);
+    QVERIFY(rows.first().toMap().value(QStringLiteral("selected")).toBool());
     now += GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS;
-    for (const auto& row : router.sourceInstanceDiagnostics()) {
-        QVERIFY(!row.toMap().value(QStringLiteral("usable")).toBool());
-        QVERIFY(!row.toMap().value(QStringLiteral("selected")).toBool());
-    }
+    const auto expired = router.sourceInstanceDiagnostics().first().toMap();
+    QVERIFY(!expired.value(QStringLiteral("usable")).toBool());
+    QVERIFY(!expired.value(QStringLiteral("selected")).toBool());
 }
 
 void GPSCorrectionRouterTest::emptyOutputRemovesRegistration_data()

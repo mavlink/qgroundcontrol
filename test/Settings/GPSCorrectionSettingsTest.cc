@@ -126,7 +126,7 @@ void GPSCorrectionSettingsTest::_qmlRegistration()
             readonly property SettingsFact sourceFact: corrections.correctionSource as SettingsFact
             readonly property bool sourceVisible: sourceFact.userVisible
             readonly property int automatic: GPSCorrectionSettings.Automatic
-            readonly property int all: GPSCorrectionSettings.All
+            readonly property int udp: GPSCorrectionSettings.Udp
         }
     )",
                       QUrl());
@@ -141,14 +141,14 @@ void GPSCorrectionSettingsTest::_qmlRegistration()
     QCOMPARE(object->property("sourceVisible").toBool(),
              settings->gpsCorrectionSettings()->correctionSource()->property("userVisible").toBool());
     QCOMPARE(object->property("automatic").toInt(), int(GPSCorrectionSettings::Automatic));
-    QCOMPARE(object->property("all").toInt(), int(GPSCorrectionSettings::All));
+    QCOMPARE(object->property("udp").toInt(), int(GPSCorrectionSettings::Udp));
 }
 
 void GPSCorrectionSettingsTest::_routingDefaults()
 {
     GPSCorrectionSettings corrections;
     QCOMPARE(corrections.correctionSource()->rawValue().toInt(), int(GPSCorrectionSettings::Automatic));
-    QCOMPARE(corrections.correctionSource()->enumValues(), QVariantList({0U, 1U, 2U, 3U, 4U}));
+    QCOMPARE(corrections.correctionSource()->enumValues(), QVariantList({0U, 1U, 2U, 3U}));
     QVERIFY(corrections.correctionSourceInstance()->rawValue().toString().isEmpty());
 }
 
@@ -162,7 +162,6 @@ void GPSCorrectionSettingsTest::_routingPanel_data()
     QTest::newRow("local") << int(GPSCorrectionSettings::LocalReceiver) << true << true << true;
     QTest::newRow("ntrip") << int(GPSCorrectionSettings::Ntrip) << true << true << true;
     QTest::newRow("udp") << int(GPSCorrectionSettings::Udp) << true << true << true;
-    QTest::newRow("all") << int(GPSCorrectionSettings::All) << false << true << true;
     QTest::newRow("source-hidden") << int(GPSCorrectionSettings::Udp) << true << false << true;
     QTest::newRow("instance-hidden") << int(GPSCorrectionSettings::Udp) << true << true << false;
     QTest::newRow("both-hidden") << int(GPSCorrectionSettings::Udp) << true << false << false;
@@ -223,6 +222,7 @@ void GPSCorrectionSettingsTest::_routingPanel()
         QVERIFY(QMetaObject::invokeMethod(sourceControl, "activated", Q_ARG(int, source)));
         QCOMPARE(settings->correctionSourceInstance()->rawValue().toString(),
                  instanceVisible ? QString() : QStringLiteral("offline-stream"));
+        QVERIFY(!streamControl->property("visible").toBool());
     }
 }
 
@@ -294,6 +294,7 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
         return row ? row->property("text").toString() : QString();
     };
     QTRY_COMPARE_WITH_TIMEOUT(comboBox->property("count").toInt(), 3, TestTimeout::mediumMs());
+    QVERIFY(streamControl->isVisible());
     QTRY_COMPARE_WITH_TIMEOUT(streamControl->property("currentText").toString(), waitingLabel, TestTimeout::mediumMs());
     QCOMPARE(streamControl->property("currentIndex").toInt(), 2);
     QCOMPARE(streamControl->property("currentValue").toString(), QStringLiteral("b"));
@@ -381,12 +382,14 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     QTRY_COMPARE_WITH_TIMEOUT(streamControl->property("currentText").toString(),
                               QCoreApplication::translate("CorrectionRoutingSettings", "Automatic within source"),
                               TestTimeout::mediumMs());
+    QVERIFY(!streamControl->isVisible());
     QCOMPARE(selectionChanged.size(), 1);
 
     settings->correctionSourceInstance()->setRawValue(QStringLiteral("external"));
     QTRY_COMPARE_WITH_TIMEOUT(streamControl->property("currentValue").toString(), QStringLiteral("external"),
                               TestTimeout::mediumMs());
     QTRY_COMPARE_WITH_TIMEOUT(comboBox->property("count").toInt(), 2, TestTimeout::mediumMs());
+    QVERIFY(streamControl->isVisible());
     QCOMPARE(streamControl->property("currentText").toString(),
              QCoreApplication::translate("CorrectionRoutingSettings", "Unavailable: %1").arg("external"));
 
@@ -405,6 +408,20 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     QCOMPARE(streamControl->property("currentValue").toString(), QStringLiteral("z"));
     QCOMPARE(settings->correctionSourceInstance()->rawValue().toString(), QStringLiteral("z"));
     QCOMPARE(selectionChanged.size(), 3);
+
+    QVERIFY(comboBox->setProperty("currentIndex", 0));
+    QVERIFY(QMetaObject::invokeMethod(comboBox, "activated", Q_ARG(int, 0)));
+    QVERIFY(settings->correctionSourceInstance()->rawValue().toString().isEmpty());
+    QTRY_COMPARE_WITH_TIMEOUT(comboBox->property("count").toInt(), 4, TestTimeout::mediumMs());
+    QVERIFY(streamControl->isVisible());
+    udpListener.reset();
+    QTRY_VERIFY_WITH_TIMEOUT(!streamControl->isVisible(), TestTimeout::mediumMs());
+    udpListener = corrections.registerSource(GPSCorrectionSource::Udp);
+    receivePeer(QStringLiteral("a"));
+    QTRY_COMPARE_WITH_TIMEOUT(comboBox->property("count").toInt(), 2, TestTimeout::mediumMs());
+    QVERIFY(!streamControl->isVisible());
+    receivePeer(QStringLiteral("b"));
+    QTRY_VERIFY_WITH_TIMEOUT(streamControl->isVisible(), TestTimeout::mediumMs());
 }
 
 UT_REGISTER_TEST(GPSCorrectionSettingsTest, TestLabel::Unit)

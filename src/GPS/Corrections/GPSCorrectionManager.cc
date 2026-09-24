@@ -110,9 +110,6 @@ void GPSCorrectionManager::_applyRoutingSettings()
             configuration.source = GPSCorrectionSource::Udp;
             configuration.policy = RoutingPolicy::Manual;
             break;
-        case GPSCorrectionSettings::All:
-            configuration.policy = RoutingPolicy::All;
-            break;
         case GPSCorrectionSettings::Automatic:
             break;
         default:

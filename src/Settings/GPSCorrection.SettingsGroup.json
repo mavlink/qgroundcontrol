@@ -5,10 +5,10 @@
         {
             "name": "correctionSource",
             "shortDesc": "Vehicle correction source",
-            "longDesc": "Automatic selects one fresh stream for vehicles, preferring the local base station, then NTRIP, then UDP. Manual selection never falls back to another source category. All forwards every fresh stream and may mix base stations. NTRIP UDP forwarding is independent.",
+            "longDesc": "Automatic selects one fresh stream for vehicles, preferring the local base station, then NTRIP, then UDP. Manual selection never falls back to another source category. NTRIP UDP forwarding is independent.",
             "type": "uint8",
-            "enumStrings": "Automatic,Local base station,NTRIP,UDP,All sources",
-            "enumValues": "0,1,2,3,4",
+            "enumStrings": "Automatic,Local base station,NTRIP,UDP",
+            "enumValues": "0,1,2,3",
             "default": 0,
             "label": "Vehicle correction source"
         },

@@ -112,8 +112,7 @@ QVariantList GPSCorrectionRouter::sourceInstanceDiagnostics() const
     for (const auto& source : _selector.sources()) {
         const qint64 age = GPSCorrectionFrame::ageMs(source.lastRoutableMs, nowMs);
         const bool usable = age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS;
-        const bool selected = usable && (_selector.configuration().policy == GPSCorrectionSelector::Policy::All ||
-                                         source.identity == active);
+        const bool selected = usable && source.identity == active;
         result.append(QVariantMap{{QStringLiteral("source"), static_cast<int>(source.identity.category)},
                                   {QStringLiteral("instanceId"), source.identity.instance},
                                   {QStringLiteral("session"), QVariant::fromValue(source.session)},
@@ -138,8 +137,7 @@ QVariantList GPSCorrectionRouter::destinationDiagnostics() const
 void GPSCorrectionRouter::applyConfiguration(const Configuration& configuration)
 {
     if (_shutdown || _sourceIndex(configuration.source) < 0 ||
-        (configuration.policy != Policy::Automatic && configuration.policy != Policy::Manual &&
-         configuration.policy != Policy::All) ||
+        (configuration.policy != Policy::Automatic && configuration.policy != Policy::Manual) ||
         configuration == this->configuration()) {
         return;
     }
@@ -476,8 +474,5 @@ void GPSCorrectionSelector::observe(const GPSCorrectionFrame& frame, bool routab
 
 bool GPSCorrectionSelector::selected(const GPSCorrectionFrame& frame, qint64 now) const
 {
-    if (_configuration.policy == Policy::All) {
-        return true;
-    }
     return activeIdentity(now) == SourceIdentity{frame.source, frame.sourceInstance};
 }

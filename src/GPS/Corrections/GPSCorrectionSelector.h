@@ -18,8 +18,7 @@ public:
     enum class Policy
     {
         Automatic,
-        Manual,
-        All
+        Manual
     };
     Q_ENUM(Policy)
 
