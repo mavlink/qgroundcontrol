@@ -58,6 +58,10 @@ public:
             case State::Length2:
                 checksum(byte);
                 _frame.length |= uint16_t(byte) << 8;
+                if (_frame.length > _frame.payload.size()) {
+                    reset();
+                    break;
+                }
                 _index = 0;
                 _state = _frame.length ? State::Payload : State::Checksum1;
                 break;

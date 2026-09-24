@@ -1465,6 +1465,23 @@ static void isolatedFrameAndControl()
     }
     CHECK(frame && frame->message == UBX_MSG_ACK_ACK && frame->length == 2);
 
+    Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
+    pvt[20] = 3;
+    pvt[21] = UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK;
+    const auto validUbx = ubxFrame(UBX_MSG_NAV_PVT, pvt);
+    const auto validRtcm = rtcmPacket(std::array<uint8_t, 2>{0x3e, 0xd0});
+    Bytes stream{0xb5, 0x62, 0x01, 0x07, 0x01, 0x10};
+    stream.insert(stream.end(), validUbx.begin(), validUbx.end());
+    stream.insert(stream.end(), validRtcm.begin(), validRtcm.end());
+    GPSNativeUBX receiver(makeGPSProtocolTestIO(), false);
+    receiver.setDecodeContext({.navigation = true, .corrections = true});
+    const auto recovered = receiver.decode(stream);
+    CHECK(recovered.bytesConsumed == stream.size());
+    CHECK(recovered.batch.events.size() == 2);
+    CHECK(std::holds_alternative<GPSNativePositionReport>(recovered.batch.events[0]));
+    CHECK(std::holds_alternative<GPSRTCMReport>(recovered.batch.events[1]));
+    CHECK(receiver.ioError() == 0);
+
     for (size_t prefix = 1; prefix <= 4; ++prefix) {
         decoder.reset();
         for (size_t i = 0; i < prefix; ++i) {
