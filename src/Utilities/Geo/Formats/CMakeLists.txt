@@ -25,20 +25,33 @@ qt_add_resources(QGCGeoFormats "kml_schema"
         ogckml22.xsd
 )
 
-CPMAddPackage(
-    NAME Shapelib
-    VERSION 1.6.3
-    GITHUB_REPOSITORY OSGeo/shapelib
-    GIT_TAG v1.6.3
-    OPTIONS
-        "BUILD_SHAPELIB_CONTRIB OFF"
-        "BUILD_APPS OFF"
-        "BUILD_TESTING OFF"
-)
+if(QGC_USE_SYSTEM_LIBS OR QGC_SYSTEM_LIBS_ONLY)
+    # System shapelib (ALT: libshape-devel) ships libshp.so + shapefil.h without a CMake config.
+    find_library(SHAPELIB_LIBRARY NAMES shp)
+    find_path(SHAPELIB_INCLUDE_DIR NAMES shapefil.h)
+    if(NOT SHAPELIB_LIBRARY OR NOT SHAPELIB_INCLUDE_DIR)
+        message(FATAL_ERROR "QGC: Shapelib (required dependency) was not resolved from system")
+    endif()
+    add_library(shp SHARED IMPORTED)
+    set_target_properties(shp PROPERTIES
+        IMPORTED_LOCATION "${SHAPELIB_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${SHAPELIB_INCLUDE_DIR}")
+else()
+    CPMAddPackage(
+        NAME Shapelib
+        VERSION 1.6.3
+        GITHUB_REPOSITORY OSGeo/shapelib
+        GIT_TAG v1.6.3
+        OPTIONS
+            "BUILD_SHAPELIB_CONTRIB OFF"
+            "BUILD_APPS OFF"
+            "BUILD_TESTING OFF"
+    )
 
-qgc_require_cpm_added(Shapelib)
+    qgc_require_cpm_added(Shapelib)
 
-qgc_disable_dependency_warnings(shp)
+    qgc_disable_dependency_warnings(shp)
+endif()
 
 target_link_libraries(QGCGeoFormats
     PUBLIC

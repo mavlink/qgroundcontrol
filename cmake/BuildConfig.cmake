@@ -1,59 +1,34 @@
 # ============================================================================
-# BuildConfig.cmake - Read .github/build-config.json
+# BuildConfig.cmake - Build configuration (hardcoded for offline tarball builds)
 # ============================================================================
 
 include_guard(GLOBAL)
 
-set(QGC_BUILD_CONFIG_FILE "${CMAKE_SOURCE_DIR}/.github/build-config.json")
+# Hardcoded build configuration. The gear-built tarball has no .git, and the
+# .github directory is export-ignored, so .github/build-config.json is absent.
+set(QGC_CONFIG_QT_VERSION "6.11.2" CACHE STRING "qt.version")
+set(QGC_CONFIG_QT_MINIMUM_VERSION "6.11.0" CACHE STRING "qt.minimum_version")
+set(QGC_CONFIG_GSTREAMER_VERSION "1.28.4" CACHE STRING "gstreamer.version.default")
+set(QGC_CONFIG_GSTREAMER_MIN_VERSION "1.20.0" CACHE STRING "gstreamer.version.minimum")
+set(QGC_CONFIG_GSTREAMER_ANDROID_VERSION "1.28.4" CACHE STRING "gstreamer.version.android")
+set(QGC_CONFIG_GSTREAMER_IOS_VERSION "1.28.4" CACHE STRING "gstreamer.version.ios")
+set(QGC_CONFIG_GSTREAMER_MACOS_VERSION "1.28.4" CACHE STRING "gstreamer.version.macos")
+set(QGC_CONFIG_GSTREAMER_WIN_VERSION "1.28.4" CACHE STRING "gstreamer.version.windows")
+set(QGC_CONFIG_NDK_VERSION "r27c" CACHE STRING "android.ndk_version")
+set(QGC_CONFIG_NDK_FULL_VERSION "27.2.12479018" CACHE STRING "android.ndk_full_version")
+set(QGC_CONFIG_JAVA_VERSION "21" CACHE STRING "android.java_version")
+set(QGC_CONFIG_ANDROID_PLATFORM "36" CACHE STRING "android.platform")
+set(QGC_CONFIG_ANDROID_MIN_SDK "28" CACHE STRING "android.min_sdk")
+set(QGC_CONFIG_CMAKE_MINIMUM "3.25" CACHE STRING "build.cmake_minimum_version")
+set(QGC_CONFIG_MACOS_DEPLOYMENT_TARGET "13.0" CACHE STRING "apple.macos_deployment_target")
+set(QGC_CONFIG_IOS_DEPLOYMENT_TARGET "17.0" CACHE STRING "apple.ios_deployment_target")
 
-if(NOT EXISTS "${QGC_BUILD_CONFIG_FILE}")
-    message(FATAL_ERROR "QGC: BuildConfig: Config file not found: ${QGC_BUILD_CONFIG_FILE}")
-endif()
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${QGC_BUILD_CONFIG_FILE}")
-
-file(READ "${QGC_BUILD_CONFIG_FILE}" QGC_BUILD_CONFIG_CONTENT)
-
-# Extract value from JSON using CMake's native JSON parser; supports dotted paths
-function(qgc_config_get_value VAR_NAME JSON_KEY)
-    if(NOT ARGC EQUAL 2
-       OR NOT VAR_NAME MATCHES "^[A-Za-z_][A-Za-z0-9_]*$"
-       OR NOT JSON_KEY
-    )
-        message(FATAL_ERROR
-            "qgc_config_get_value: a valid output variable and non-empty JSON key are required")
-    endif()
-    string(REPLACE "." ";" _path "${JSON_KEY}")
-    string(JSON _type ERROR_VARIABLE _err TYPE "${QGC_BUILD_CONFIG_CONTENT}" ${_path})
-    if(_err)
-        message(FATAL_ERROR "QGC: BuildConfig: Key '${JSON_KEY}' not found in ${QGC_BUILD_CONFIG_FILE}")
-    endif()
-    if(_type STREQUAL "ARRAY" OR _type STREQUAL "OBJECT")
-        message(FATAL_ERROR
-            "QGC: BuildConfig: Key '${JSON_KEY}' must be scalar, got ${_type}")
-    endif()
-    string(JSON _value ERROR_VARIABLE _err GET "${QGC_BUILD_CONFIG_CONTENT}" ${_path})
-    if(_err)
-        message(FATAL_ERROR "QGC: BuildConfig: Key '${JSON_KEY}' not found in ${QGC_BUILD_CONFIG_FILE}")
-    endif()
-    set(${VAR_NAME} "${_value}" CACHE STRING "${JSON_KEY}" FORCE)
-endfunction()
-
-qgc_config_get_value(QGC_CONFIG_QT_VERSION "qt.version")
-qgc_config_get_value(QGC_CONFIG_QT_MINIMUM_VERSION "qt.minimum_version")
-qgc_config_get_value(QGC_CONFIG_GSTREAMER_VERSION         "gstreamer.version.default")
-qgc_config_get_value(QGC_CONFIG_GSTREAMER_MIN_VERSION     "gstreamer.version.minimum")
-qgc_config_get_value(QGC_CONFIG_GSTREAMER_ANDROID_VERSION "gstreamer.version.android")
-qgc_config_get_value(QGC_CONFIG_GSTREAMER_IOS_VERSION     "gstreamer.version.ios")
-qgc_config_get_value(QGC_CONFIG_GSTREAMER_MACOS_VERSION   "gstreamer.version.macos")
-qgc_config_get_value(QGC_CONFIG_GSTREAMER_WIN_VERSION     "gstreamer.version.windows")
-qgc_config_get_value(QGC_CONFIG_NDK_VERSION "android.ndk_version")
-qgc_config_get_value(QGC_CONFIG_NDK_FULL_VERSION "android.ndk_full_version")
-qgc_config_get_value(QGC_CONFIG_JAVA_VERSION "android.java_version")
-qgc_config_get_value(QGC_CONFIG_ANDROID_PLATFORM "android.platform")
-qgc_config_get_value(QGC_CONFIG_ANDROID_MIN_SDK "android.min_sdk")
-qgc_config_get_value(QGC_CONFIG_CMAKE_MINIMUM "build.cmake_minimum_version")
-qgc_config_get_value(QGC_CONFIG_MACOS_DEPLOYMENT_TARGET "apple.macos_deployment_target")
-qgc_config_get_value(QGC_CONFIG_IOS_DEPLOYMENT_TARGET "apple.ios_deployment_target")
+# Minimal build-config JSON: the GStreamer plugin policy parses
+# gstreamer.plugins.common + gstreamer.plugins.<platform> from
+# QGC_BUILD_CONFIG_CONTENT (cmake/GStreamer/PluginPolicy.cmake).
+set(QGC_BUILD_CONFIG_CONTENT [=[
+{"gstreamer":{"plugins":{"common":["app","coreelements","isomp4","libav","matroska","mpegtsdemux","multifile","opengl","openh264","playback","rtp","rtpmanager","rtsp","sdpelem","tcp","typefindfunctions","udp","videoparsersbad","vpx","videoconvertscale","videoconvert","videoscale"],"android":["androidmedia","dav1d"],"apple":["applemedia","dav1d"],"windows":["d3d","d3d11","d3d12","dav1d","nvcodec"],"linux":["nvcodec","qsv","va","vulkan"]}}}
+]=] CACHE STRING "build-config.json content (gstreamer plugins)")
 
 # Extract patch versions from platform strings (e.g., "1.22.12" -> QGC_GSTREAMER_PATCH_1_22=12)
 foreach(_gst_ver_var QGC_CONFIG_GSTREAMER_ANDROID_VERSION QGC_CONFIG_GSTREAMER_IOS_VERSION QGC_CONFIG_GSTREAMER_MACOS_VERSION QGC_CONFIG_GSTREAMER_WIN_VERSION)
