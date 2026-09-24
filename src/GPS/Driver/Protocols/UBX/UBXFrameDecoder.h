@@ -82,7 +82,7 @@ public:
                 }
                 break;
             case State::Checksum2: {
-                const bool valid = _checksumB == byte && _frame.length <= _frame.payload.size();
+                const bool valid = _checksumB == byte;
                 reset();
                 if (valid) {
                     return _frame;

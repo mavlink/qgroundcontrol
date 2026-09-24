@@ -78,6 +78,26 @@ bool velocityValid(GPSPositionReport::FixType fix)
 {
     return fix != GPSPositionReport::FixType::Unknown && fix != GPSPositionReport::FixType::NoFix;
 }
+
+/// Fixed-size satellite blocks follow the header; a truncated block ends the report at the preceding entry.
+template <typename Header, typename Block, typename Count, typename Assign>
+void decodeSatelliteBlocks(std::span<const uint8_t> payload, GPSNativeSatelliteReport& report, Count count,
+                           Assign assign)
+{
+    const auto header = UBX::MessageCodec<Header>::block(payload);
+    if (!header) {
+        return;
+    }
+    report.count = std::min<size_t>(count(*header), report.entries.size());
+    for (size_t index = 0; index < report.count; ++index) {
+        const auto block =
+            UBX::MessageCodec<Block>::block(payload, UBX::WIRE_SIZE<Header> + index * UBX::WIRE_SIZE<Block>);
+        if (!block) {
+            return;
+        }
+        assign(report.entries[index], *block);
+    }
+}
 }  // namespace
 
 int GPSNativeUBX::parseChar(uint8_t byte)
@@ -212,56 +232,33 @@ bool GPSNativeUBX::payloadRxInit(uint16_t message, std::span<const uint8_t> payl
 
 void GPSNativeUBX::decodeNavSat(std::span<const uint8_t> payload)
 {
-    auto decoded_header = UBX::MessageCodec<ubx_payload_rx_nav_sat_part1_t>::block(payload);
-    if (!decoded_header) {
-        return;
-    }
-    const auto header = *decoded_header;
-    _satellites->count = std::min<size_t>(header.numSvs, _satellites->entries.size());
     constexpr GPSConstellation systems[] = {
         GPSConstellation::GPS,     GPSConstellation::SBAS, GPSConstellation::Galileo, GPSConstellation::BeiDou,
         GPSConstellation::Unknown, GPSConstellation::QZSS, GPSConstellation::GLONASS, GPSConstellation::NavIC};
-    for (size_t index = 0; index < _satellites->count; ++index) {
-        auto decoded_wire = UBX::MessageCodec<ubx_payload_rx_nav_sat_part2_t>::block(
-            payload, UBX::WIRE_SIZE<std::remove_cv_t<decltype(header)>> +
-                         index * UBX::WIRE_SIZE<ubx_payload_rx_nav_sat_part2_t>);
-        if (!decoded_wire) {
-            return;
-        }
-        const auto wire = *decoded_wire;
-        auto& satellite = _satellites->entries[index];
-        satellite.constellation = wire.gnssId < std::size(systems) ? systems[wire.gnssId] : GPSConstellation::Unknown;
-        satellite.id = satellite.prn = wire.svId;
-        satellite.used = (wire.flags & 8) != 0;
-        satellite.elevation = wire.elev;
-        satellite.azimuth = wire.azim;
-        satellite.signal = wire.cno;
-    }
+    decodeSatelliteBlocks<ubx_payload_rx_nav_sat_part1_t, ubx_payload_rx_nav_sat_part2_t>(
+        payload, *_satellites, [](const auto& header) { return header.numSvs; },
+        [&systems](auto& satellite, const auto& wire) {
+            satellite.constellation =
+                wire.gnssId < std::size(systems) ? systems[wire.gnssId] : GPSConstellation::Unknown;
+            satellite.id = satellite.prn = wire.svId;
+            satellite.used = (wire.flags & 8) != 0;
+            satellite.elevation = wire.elev;
+            satellite.azimuth = wire.azim;
+            satellite.signal = wire.cno;
+        });
 }
 
 void GPSNativeUBX::decodeNavSvinfo(std::span<const uint8_t> payload)
 {
-    auto decoded_header = UBX::MessageCodec<ubx_payload_rx_nav_svinfo_part1_t>::block(payload);
-    if (!decoded_header) {
-        return;
-    }
-    const auto header = *decoded_header;
-    _satellites->count = std::min<size_t>(header.numCh, _satellites->entries.size());
-    for (size_t index = 0; index < _satellites->count; ++index) {
-        auto decoded_wire = UBX::MessageCodec<ubx_payload_rx_nav_svinfo_part2_t>::block(
-            payload, UBX::WIRE_SIZE<std::remove_cv_t<decltype(header)>> +
-                         index * UBX::WIRE_SIZE<ubx_payload_rx_nav_svinfo_part2_t>);
-        if (!decoded_wire) {
-            return;
-        }
-        const auto wire = *decoded_wire;
-        auto& satellite = _satellites->entries[index];
-        satellite.id = satellite.prn = wire.svid;
-        satellite.used = (wire.flags & 1) != 0;
-        satellite.elevation = wire.elev;
-        satellite.azimuth = wire.azim;
-        satellite.signal = wire.cno;
-    }
+    decodeSatelliteBlocks<ubx_payload_rx_nav_svinfo_part1_t, ubx_payload_rx_nav_svinfo_part2_t>(
+        payload, *_satellites, [](const auto& header) { return header.numCh; },
+        [](auto& satellite, const auto& wire) {
+            satellite.id = satellite.prn = wire.svid;
+            satellite.used = (wire.flags & 1) != 0;
+            satellite.elevation = wire.elev;
+            satellite.azimuth = wire.azim;
+            satellite.signal = wire.cno;
+        });
 }
 
 void GPSNativeUBX::decodeMonVer(std::span<const uint8_t> payload)
@@ -1058,7 +1055,8 @@ void GPSNativeUBX::calcChecksum(const uint8_t* buffer, const uint16_t length, ub
 
 int GPSNativeUBX::decodeValidatedPayload(uint16_t message, std::span<const uint8_t> payload)
 {
-    if (!UBX::validPayload(message, payload)) {
+    const auto* schema = UBX::messageSchema(message);
+    if (!UBX::validPayload(message, payload, schema)) {
         return 0;
     }
     if (message == UBX::NAV_EOE && payload.size() == 4 && _decodeContext.assembleEpochs) {
@@ -1076,7 +1074,6 @@ int GPSNativeUBX::decodeValidatedPayload(uint16_t message, std::span<const uint8
     }
     UBXNavigationEpoch::Epoch* epoch = nullptr;
     const auto publish = [this](const auto& report) { publishEpoch(report); };
-    const auto* schema = UBX::messageSchema(message);
     const bool timed = schema && schema->towOffset >= 0;
     if (_decodeContext.assembleEpochs && timed) {
         const size_t offset = schema->towOffset;

@@ -117,10 +117,6 @@ private:
     float relPosHeadingToYaw(int32_t heading) const;
 
     /**
-     * While parsing add every byte (except the sync bytes) to the checksum
-     */
-
-    /**
      * Calculate & add checksum for given buffer
      */
     void calcChecksum(const uint8_t* buffer, const uint16_t length, ubx_checksum_t* checksum);
@@ -142,7 +138,6 @@ private:
     /**
      * Send configuration values and desired message rates
      * @param config The configuration includes GNSS systems to use and protocol for interfaces
-     * @param uart2_baudrate Baudrate of F9P's UART2 port
      * @return 0 on success, <0 on error
      */
     int configureDevice(const GPSConfig& config);
@@ -232,7 +227,7 @@ private:
     GPSCommandResult sendCfgValsetAcked(bool required = true);
 
     /**
-     * Start or restart the survey-in procees. This is only used in RTCM ouput mode.
+     * Start or restart the survey-in process. This is only used in RTCM output mode.
      * It will be called automatically after configuring.
      * @return 0 on success, <0 on error
      */
@@ -240,38 +235,29 @@ private:
     int disableTimeMode();
     int verifyConfigValue(uint32_t key, uint8_t value);
     int waitForSurveyStop();
-    bool _valsetAckAmbiguous = false;
 
     /**
      * restartSurveyIn for protocol version < 27
      */
     int restartSurveyInPreV27();
 
-    /**
-     * Parse the binary UBX packet
-     */
+    /** Route one received byte to the RTCM or UBX frame decoder. */
     int parseChar(const uint8_t b);
 
-    /**
-     * Start payload rx
-     */
+    /** Decide whether a validated message is decoded, ignored, or scheduled for disabling. */
     bool payloadRxInit(uint16_t message, std::span<const uint8_t> payload);
 
-    /**
-     * Add payload rx byte
-     */
+    /** Decoders for variable-length payloads that fill identity or satellite working state. */
     void decodeMonVer(std::span<const uint8_t> payload);
     void decodeNavSat(std::span<const uint8_t> payload);
     void decodeNavSvinfo(std::span<const uint8_t> payload);
 
-    /**
-     * Finish payload rx
-     */
+    /** Decode a handled payload into the working reports; nonzero when the payload was consumed. */
     int payloadRxDone(uint16_t message, std::span<const uint8_t> payload, GPSNativePositionReport& position);
 
     /**
      * Send a message
-     * @return true on success, false on write error (errno set)
+     * @return true on success, false on write error
      */
     bool sendMessage(uint16_t msg, const uint8_t* payload, uint16_t length,
                      GPSConfigurationStep step = {{}, std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)});
@@ -294,8 +280,6 @@ private:
      */
     void waitForGnssReset();
 
-    uint64_t _disable_cmd_last{0};
-    UBX::FrameDecoder _frameDecoder;
     int decodeValidatedPayload(uint16_t message, std::span<const uint8_t> payload);
     void flushDecoded() override;
     void publishEpoch(const GPSNativePositionReport& report);
@@ -331,6 +315,9 @@ private:
     CommsPoll _comms;
     TimeModeReadback _timeModeReadback;
 
+    uint64_t _disable_cmd_last{0};
+    UBX::FrameDecoder _frameDecoder;
+    bool _valsetAckAmbiguous = false;
     bool _configured{false};
     bool _survey_in_stopped{false};
     bool _got_posllh{false};

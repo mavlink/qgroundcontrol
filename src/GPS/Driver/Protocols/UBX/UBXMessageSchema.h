@@ -62,9 +62,9 @@ constexpr const MessageSchema* messageSchema(uint16_t message)
     return nullptr;
 }
 
-inline bool validPayload(uint16_t message, std::span<const uint8_t> payload)
+/// @param schema messageSchema(message), passed by callers that also need the schema.
+inline bool validPayload(uint16_t message, std::span<const uint8_t> payload, const MessageSchema* schema)
 {
-    const auto* schema = messageSchema(message);
     if (!schema) {
         return true;
     }
@@ -93,6 +93,11 @@ inline bool validPayload(uint16_t message, std::span<const uint8_t> payload)
         return payload[0] == 1;
     }
     return true;
+}
+
+inline bool validPayload(uint16_t message, std::span<const uint8_t> payload)
+{
+    return validPayload(message, payload, messageSchema(message));
 }
 
 static_assert(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t> == 92);
