@@ -25,7 +25,7 @@ A patch release contains fixes to the stable release that are important enough t
 
 ### Patch - Development Stage
 
-Approved fixes to the stable release are commited to the current stable branch.
+Approved fixes to the stable release are committed to the current stable branch.
 These fixes continue to queue up in the stable branch until a patch release is made (see next step).
 
 Commits/changes to the stable branch must also be brought over to the master branch (either through cherry pick or separate pulls).
@@ -50,7 +50,7 @@ The released daily build will always match repo HEAD.
 
 ### Release Stage
 
-When the decision is made to release a new major/minor version the master branch tends to go through an intial lockdown mode.
+When the decision is made to release a new major/minor version the master branch tends to go through an initial lockdown mode.
 在这个地方，只有发布的重要修复被接受为拉取请求。
 
 :::info
@@ -64,15 +64,15 @@ At that point the new stable branch is tagged with the new version tag and the f
 
 ## Custom Builds
 
-A proposed strategy for branching on custom builds can be found [here](custom_build/release_branching_process.md).
+A proposed strategy for branching on custom builds is described in [Custom Build Branching](custom_build/release_branching_process.md).
 
 ## Process to create a new Stable
 
 ### Major/Minor Version
 
 1. Create a branch from master named `Stable_VX.Y` where `X` is the major version number and `Y` is the minor version number.
-2. Create a tag on the HEAD of master name `dX.Y` where the minor version is one greater than the new Stable. For example if you are create a new Stable 4.2 version then the tag would be 'd4.3'. This tag is used to create the version numbers for Android daily builds. Example: `git tag -a d4.3.0 -m "QGroundControl Daily Android Version Base"`.
-3. Create an annotated tag on the newly created Stable branch named `vX.Y.0` with the correct major/minor version number. Example: `git tag -a v4.2.0 -m "QGroundControl v4.2.0"`. Pushing this tag to the repo will start a build.
+2. Create an annotated tag on a master commit after the branch point named `vX.Y.0-dev` where the minor version is one greater than the new Stable. For example if you are creating a new Stable 5.1 version then the tag would be `v5.2.0-dev`. `git describe` uses this tag to derive daily-build version numbers (About dialog, Android `versionCode`, Deb/RPM release fields). The `-dev` suffix keeps it outside the `vX.Y.Z` glob that triggers release builds. Example: `git tag -a v5.2.0-dev -m "QGroundControl v5.2 daily version base"`. A tag push runs the workflows from the tagged commit, so the commit must already contain the `vX.Y.Z` release-tag filters; never place the tag on an older commit whose workflows still trigger on `v*`.
+3. Create an annotated tag on the newly created Stable branch named `vX.Y.0` with the correct major/minor version number. Example: `git tag -a v4.2.0 -m "QGroundControl v4.2.0"`. Pushing this tag to the repo will start a build. CI only publishes a release tag to the S3 `latest/` folder when the tagged commit is reachable from a `Stable*` branch; a `vX.Y.Z` tag pushed anywhere else is ignored.
 4. Once the build completes verify the builds are pushed up to S3 correctly and sanity check that they at least boot correctly. Location on S3 will be `https://qgroundcontrol.s3.us-west-2.amazonaws.com/latest/...`.
 5. Update the `https://qgroundcontrol.s3.us-west-2.amazonaws.com/latest/QGC.version.txt` text file to the latest Stable version. This will notify users that there is a new Stable available the next time they launch QGC.
 6. Note that the cached cloudfront downloads will take up to 24h to refresh. If they need to update earlier, the caches would need to be manually invalidated.

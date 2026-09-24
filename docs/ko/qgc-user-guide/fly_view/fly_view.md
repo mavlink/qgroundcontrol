@@ -161,4 +161,3 @@ QGroundControl 애플리케이션을 포함하여 비디오를 녹화하려면 �
 
 Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
 먼저 비디오 모드로 전환한 다음, 빨간색 버튼을 클릭하여 녹화를 시작합니다.
-

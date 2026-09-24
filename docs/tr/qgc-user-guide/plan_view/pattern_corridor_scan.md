@@ -18,8 +18,8 @@ Bir koridor taraması oluşturmak için:
 
 3. Koridorun uçlarını, sırasıyla taramanın başlangıç ve bitiş noktalarına sürükleyin.
 
-4. Yeni bir köşe noktası oluşturmak için hattın ortasındaki `(+)` semboüne tıklayın.
-   Yeni köşe noktası, istenen koridor yolunu takip edeceği bir noktaya sürüklenebilir.
+4. Click the `(+)` symbol at the centre of a line to create a new vertex.
+   The new vertex can then be dragged into position to follow the path of the desired corridor.
 
 Koridor taraması ayarları bir sonraki bölümde ele alınmıştır.
 
@@ -84,4 +84,3 @@ Ayarlanabilir seçenekler şunlardır:
 ### İstatistikler
 
 _Statistics_ bölümü, hesaplanan tarama alanını, fotoğraf aralığını, fotoğraflar arası boşluğu ve planlanan fotoğraf sayısını gösterir.
-

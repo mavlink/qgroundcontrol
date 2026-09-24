@@ -24,7 +24,7 @@ It is used to organise facts and manage user defined facts.
 User defined facts can be added by overriding `factGroups` function of `FirmwarePlugin` in a custom firmware plugin class.
 These functions return a name to fact group map that is used to identify added fact groups.
 A custom fact group can be added by extending `FactGroup` class.
-FactMetaDatas could be defined using the appopriate `FactGroup` constructor by providing a json file containing necessery information.
+Fact metadata could be defined using the appropriate `FactGroup` constructor by providing a json file containing necessary information.
 
 Changing the metadata of existing facts is also possible by overriding `adjustMetaData` of `FirmwarePlugin` class.
 

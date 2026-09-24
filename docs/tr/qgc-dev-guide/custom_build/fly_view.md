@@ -11,7 +11,7 @@ The Fly View is designed in such a way that it can be cusomtized in multiple way
 
 ### Inset Negotiation using `QGCToolInsets`
 
-An important aspect of the Fly View is that it needs to understand how much central space it has in the middle of it's map window which is not obstructed by ui widgets which are at the edges of the window. It uses this information to pan the map when the vehicle goes out of view. This need to be done not only for the window edges but also for the widgets themselve such that the map pans before it goes under a widget.
+An important aspect of the Fly View is that it needs to understand how much central space it has in the middle of it's map window which is not obstructed by ui widgets which are at the edges of the window. It uses this information to pan the map when the vehicle goes out of view. This need to be done not only for the window edges but also for the widgets themselves such that the map pans before it goes under a widget.
 
 This is done through the use of the [`QGCToolInsets`](https://github.com/mavlink/qgroundcontrol/blob/master/src/QmlControls/QGCToolInsets.qml) object included in each layer. This objects provides inset information for each window edge informing the system as to how much real estate is taken up by edge based ui. Each layer is given the insets of the layer below it through `parentToolInsets` and then reports back the new insets taking into account the layer below and it's own additions through `toolInsets`. The final results total inset is then given to the map so it can do the right thing. The best way to understand this is to look at both the upstream and custom example code.
 
@@ -21,7 +21,7 @@ The base layer for the view is also the most complex from ui interactions and bu
 
 ### `FlyViewWidgetsOverlay.qml`
 
-This layer contains all the remaining controls of the fly view. You have the ability to hide the controls through use of [`QGCFlyViewOptions`](https://github.com/mavlink/qgroundcontrol/blob/master/src/API/QGCOptions.h). But in order to change the layout of the upstream controls you must use a resource override. If you look at the source you'll see that the controls themselves are well encapsulated such that it should not be that difficult to create your own override which repositions them and/or adds your own ui. While maintaining a connection to the upstream implementaions of the controls.
+This layer contains all the remaining controls of the fly view. You have the ability to hide the controls through use of [`QGCFlyViewOptions`](https://github.com/mavlink/qgroundcontrol/blob/master/src/API/QGCOptions.h). But in order to change the layout of the upstream controls you must use a resource override. If you look at the source you'll see that the controls themselvess are well encapsulated such that it should not be that difficult to create your own override which repositions them and/or adds your own ui. While maintaining a connection to the upstream implementations of the controls.
 
 ### `FlyViewCustomLayer.qml`
 
@@ -31,7 +31,7 @@ This provides the simplest customization ability to the Fly View. Allowing you t
 
 ### Simple customization
 
-The best place to start is using a custom layer override plus turning off ui elements from the widgets layer (if needed). I would recommend trying to stick with only this if at all possible. It provides the greatest abilty to not get screwed by upstream changes in the layers below.
+The best place to start is using a custom layer override plus turning off ui elements from the widgets layer (if needed). I would recommend trying to stick with only this if at all possible. It provides the greatest ability to not get screwed by upstream changes in the layers below.
 
 ### Moderate complexity customization
 

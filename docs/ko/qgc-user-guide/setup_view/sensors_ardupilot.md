@@ -30,7 +30,7 @@ To set the orientation(s) and compasses used:
 
 2. **자동조종장치 방향**을 선택합니다.
 
-3. **나침반 1(기본/외부) > 방향**에서 _방향_을 선택하거나 **나침반2(보조, 외부) > 나침반 사용**을 선택하여 대신 내부 나침반).
+3. **나침반 1(기본/외부) > 방향**에서 _방&#xD5A5;_&#xC744; 선택하거나 **나침반2(보조, 외부) > 나침반 사용**을 선택하여 대신 내부 나침반).
 
 4. **OK** 버튼을 클릭합니다.
 
@@ -103,4 +103,3 @@ CompassMot only works well if you have a battery current monitor because the mag
 1. **CompassMot** 버튼을 클릭합니다.
 
 2. 화면의 대화상자를 따라 진행합니다.
-

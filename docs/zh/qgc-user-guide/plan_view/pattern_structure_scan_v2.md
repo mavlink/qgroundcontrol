@@ -35,12 +35,12 @@ To create a scan:
    The region shown in green must be modified so that it surrounds the structure.
 
    - Drag the opaque vertices on the map to the edge of the structure (example circled in mauve above).
-   - If the structure footprint is more than a simple square you can click the semi-transparent circles between the vertices to create a new vertix.
+   - If the structure footprint is more than a simple square you can click the semi-transparent circles between the vertices to create a new vertex.
 
-3. You can also change to a circular footprint by clicking on the central "vertix" (marked in red) and selecting _Circle_ in the popup menu.
+3. You can also change to a circular footprint by clicking on the central "vertex" (marked in red) and selecting _Circle_ in the popup menu.
 
    - From the popup menu you can switch back to a polygon footprint and change the radius and/or position of the scan.
-   - Drag the central vertix to position the centre of the circle.
+   - Drag the central vertex to position the centre of the circle.
 
 4. The rest of the configuration is handled using the _Structure Scan_ editor on the right hand side of the view.
    First select whether you want to perform a manual scan, a scan using a particular camera, or a scan using a custom camera definition.
@@ -61,7 +61,7 @@ The user can always configure the following settings:
   - The vehicle will ascend to this altitude after completing the scan and then move to the next waypoint.
 - **Scan Bottom Alt:** Use this setting to avoid obstacles around the base of the structure.
   This adjust the bottom of the structure to be above the ground, and hence the altitude of the first scan (the height of the lowest layer flight path is shown in the scan statistics as _Bottom Layer Alt_.
-- **Rotate Entry Point:** Move the start/finish point to the next vertix/position on the flight path.
+- **Rotate Entry Point:** Move the start/finish point to the next vertex/position on the flight path.
 
 The remaining settings depend on the _camera mode_:
 
