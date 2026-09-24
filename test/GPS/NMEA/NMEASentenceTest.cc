@@ -1,15 +1,41 @@
 #include "NMEASentenceTest.h"
 
 #include <array>
+#include <memory>
 
 #include <QtCore/QTime>
 
 #include "NMEAFramer.h"
+#include "NMEALineFramer.h"
+#include "NMEANavigationEpoch.h"
 #include "NMEASentence.h"
-#include "NMEASentenceEnvelope.h"
 #include "NMEAUtils.h"
 
 Q_DECLARE_METATYPE(NMEA::GGA)
+
+namespace {
+/// Owns the bytes that a parsed sentence's field views reference.
+struct OwnedSentence
+{
+    QByteArray bytes;
+    NMEA::Sentence parsed;
+
+    const NMEA::Sentence& sentence() const { return parsed; }
+};
+
+std::unique_ptr<OwnedSentence> ownedSentence(const QByteArray& input)
+{
+    auto result = std::make_unique<OwnedSentence>();
+    result->bytes = input;
+    result->bytes.detach();
+    const auto sentence = NMEA::sentence({result->bytes.constData(), static_cast<size_t>(result->bytes.size())});
+    if (!sentence) {
+        return nullptr;
+    }
+    result->parsed = *sentence;
+    return result;
+}
+}  // namespace
 
 void NMEASentenceTest::_fixQuality_data()
 {
@@ -88,6 +114,189 @@ void NMEASentenceTest::_incrementalReset()
         QCOMPARE(framer.addByte(static_cast<uint8_t>(byte)), size_t(0));
     }
     QCOMPARE(framer.addByte('1'), size_t(5));
+}
+
+void NMEASentenceTest::_lineFraming_data()
+{
+    QTest::addColumn<QList<QByteArray>>("chunks");
+    QTest::addColumn<int>("maxLine");
+    QTest::addColumn<QList<QByteArray>>("expectedLines");
+    QTest::addColumn<QList<QByteArray>>("expectedParsed");
+
+    const QByteArray valid("$GNTXT,p*0D");
+    const int exactMaxLine = static_cast<int>(valid.size());
+    QTest::newRow("overlong-resync") << QList<QByteArray>{QByteArray("$") + QByteArray(12, 'A') + "\n" + valid + "\n"}
+                                     << exactMaxLine << QList<QByteArray>{valid} << QList<QByteArray>{valid};
+    QTest::newRow("exact-boundary") << QList<QByteArray>{valid + "\n"} << exactMaxLine << QList<QByteArray>{valid}
+                                    << QList<QByteArray>{valid};
+    QTest::newRow("control-discards-line") << QList<QByteArray>{QByteArray("$GNTXT,p\x01*0D\n") + valid + "\n"} << 64
+                                           << QList<QByteArray>{valid} << QList<QByteArray>{valid};
+    QTest::newRow("bad-checksum-then-valid") << QList<QByteArray>{QByteArray("$GNTXT,p*00\n") + valid + "\n"} << 64
+                                             << QList<QByteArray>{"$GNTXT,p*00", valid} << QList<QByteArray>{valid};
+    QTest::newRow("embedded-start-restarts") << QList<QByteArray>{QByteArray("$GNTXT,partial") + valid + "\n"} << 64
+                                             << QList<QByteArray>{valid} << QList<QByteArray>{valid};
+    QTest::newRow("split-across-reads") << QList<QByteArray>{"$GNT", "XT,p*0", "D\r\n"} << 64
+                                        << QList<QByteArray>{valid} << QList<QByteArray>{valid};
+    QTest::newRow("crlf-and-lf") << QList<QByteArray>{valid + "\r\n" + valid + "\n"} << 64
+                                 << QList<QByteArray>{valid, valid} << QList<QByteArray>{valid, valid};
+}
+
+void NMEASentenceTest::_lineFraming()
+{
+    QFETCH(QList<QByteArray>, chunks);
+    QFETCH(int, maxLine);
+    QFETCH(QList<QByteArray>, expectedLines);
+    QFETCH(QList<QByteArray>, expectedParsed);
+
+    std::array<char, 128> storage{};
+    NMEA::LineFramer framer(std::span<char>(storage.data(), static_cast<size_t>(maxLine)));
+    QList<QByteArray> lines;
+    QList<QByteArray> parsed;
+    for (const auto& chunk : chunks) {
+        for (const char byte : chunk) {
+            const auto update = framer.addByte(static_cast<uint8_t>(byte));
+            if (!update.line) {
+                continue;
+            }
+            const auto line = QByteArray(update.line->data(), static_cast<qsizetype>(update.line->size()));
+            lines.append(line);
+            if (NMEA::sentence(std::string_view(line.constData(), static_cast<size_t>(line.size())))) {
+                parsed.append(line);
+            }
+        }
+    }
+    QCOMPARE(lines, expectedLines);
+    QCOMPARE(parsed, expectedParsed);
+}
+
+void NMEASentenceTest::_navigationFreshnessBoundaries()
+{
+    const auto rmc =
+        ownedSentence(NMEAUtils::repairChecksum("$GPRMC,000000.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A"));
+    const auto gga =
+        ownedSentence(NMEAUtils::repairChecksum("$GPGGA,000000.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,"));
+    const auto gsa = ownedSentence(NMEAUtils::repairChecksum("$GPGSA,A,3,02,,,,,,,,,,,,1.0,1.03,0.6"));
+    const auto gst = ownedSentence(NMEAUtils::repairChecksum("$GPGST,000000.000,1,1,1,0,3,4,6"));
+    QVERIFY(rmc && gga && gsa && gst);
+
+    const auto gsaFresh = [&](quint64 ageUs) {
+        NMEA::NavigationEpochAssembler assembler({.metadataMaxAgeUs = 2000000,
+                                                  .untimedMetadataMaxAgeUs = 999999,
+                                                  .autonomousFixQuality = GPSFixQuality::Unknown,
+                                                  .useGsaDimensionForAutonomousFix = true,
+                                                  .requirePositionTime = true,
+                                                  .reconstructDate = true,
+                                                  .enforceNavigationOrder = true,
+                                                  .untimedMetadataUsesPositionReceipt = false});
+        if (!assembler.ingest(rmc->sentence(), 1000000) || !assembler.ingest(gga->sentence(), 1000000)) {
+            return std::optional<NMEA::NavigationUpdate>();
+        }
+        return assembler.ingest(gsa->sentence(), 1000000 + ageUs);
+    };
+    QVERIFY(gsaFresh(999999).has_value());
+    QVERIFY(!gsaFresh(1000000).has_value());
+
+    const auto gstFresh = [&](quint64 ageUs) {
+        NMEA::NavigationEpochAssembler assembler({.metadataMaxAgeUs = 2000000,
+                                                  .untimedMetadataMaxAgeUs = 999999,
+                                                  .autonomousFixQuality = GPSFixQuality::Unknown,
+                                                  .useGsaDimensionForAutonomousFix = true,
+                                                  .requirePositionTime = true,
+                                                  .reconstructDate = true,
+                                                  .enforceNavigationOrder = true,
+                                                  .untimedMetadataUsesPositionReceipt = false});
+        if (!assembler.ingest(rmc->sentence(), 1000000)) {
+            return false;
+        }
+        assembler.ingest(gst->sentence(), 1000000);
+        const auto update = assembler.ingest(gga->sentence(), 1000000 + ageUs);
+        return update && update->epoch.horizontalAccuracyMeters.has_value();
+    };
+    QVERIFY(gstFresh(1999999));
+    QVERIFY(!gstFresh(2000001));
+}
+
+void NMEASentenceTest::_navigationDateRollover_data()
+{
+    QTest::addColumn<bool>("useZda");
+    QTest::addColumn<bool>("dateFirst");
+    QTest::addColumn<QByteArray>("datedTime");
+    QTest::addColumn<QDate>("datedDate");
+    QTest::addColumn<QByteArray>("ggaTime");
+    QTest::addColumn<QDate>("expectedDate");
+
+    QTest::newRow("rmc-before-next-day") << false << true << QByteArray("235959.000") << QDate(2011, 5, 27)
+                                         << QByteArray("000001.000") << QDate(2011, 5, 28);
+    QTest::newRow("zda-before-next-day") << true << true << QByteArray("235959.000") << QDate(2011, 5, 27)
+                                         << QByteArray("000001.000") << QDate(2011, 5, 28);
+    QTest::newRow("rmc-after-same-epoch") << false << false << QByteArray("235959.000") << QDate(2011, 5, 27)
+                                          << QByteArray("235959.000") << QDate(2011, 5, 27);
+    QTest::newRow("zda-after-same-epoch") << true << false << QByteArray("235959.000") << QDate(2011, 5, 27)
+                                          << QByteArray("235959.000") << QDate(2011, 5, 27);
+}
+
+void NMEASentenceTest::_navigationDateRollover()
+{
+    QFETCH(bool, useZda);
+    QFETCH(bool, dateFirst);
+    QFETCH(QByteArray, datedTime);
+    QFETCH(QDate, datedDate);
+    QFETCH(QByteArray, ggaTime);
+    QFETCH(QDate, expectedDate);
+
+    const auto dateString = datedDate.toString(useZda ? u"dd,MM,yyyy" : u"ddMMyy").toLatin1();
+    const auto dated = ownedSentence(NMEAUtils::repairChecksum(
+        useZda ? "$GPZDA," + datedTime + ',' + dateString + ",00,00"
+               : "$GPRMC," + datedTime + ",A,5321.6802,N,00630.3372,W,0.02,31.66," + dateString + ",,,A"));
+    const auto gga = ownedSentence(
+        NMEAUtils::repairChecksum("$GPGGA," + ggaTime + ",5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,"));
+    QVERIFY(dated && gga);
+    NMEA::NavigationEpochAssembler assembler({.metadataMaxAgeUs = 2000000,
+                                              .untimedMetadataMaxAgeUs = 999999,
+                                              .autonomousFixQuality = GPSFixQuality::Unknown,
+                                              .useGsaDimensionForAutonomousFix = true,
+                                              .requirePositionTime = true,
+                                              .reconstructDate = true,
+                                              .enforceNavigationOrder = true,
+                                              .untimedMetadataUsesPositionReceipt = false});
+    std::optional<NMEA::NavigationUpdate> update;
+    if (dateFirst) {
+        update = assembler.ingest(dated->sentence(), 1000000);
+        update = assembler.ingest(gga->sentence(), 1000001);
+    } else {
+        update = assembler.ingest(gga->sentence(), 1000000);
+        update = assembler.ingest(dated->sentence(), 1000001);
+    }
+    QVERIFY(update);
+    QCOMPARE(update->epoch.date, expectedDate);
+}
+
+void NMEASentenceTest::_navigationFixLoss_data()
+{
+    QTest::addColumn<QByteArray>("body");
+    QTest::newRow("gga-quality-zero") << QByteArray("$GPGGA,092751.000,,,,,0,0,,,,,,,");
+    QTest::newRow("rmc-status-void") << QByteArray("$GPRMC,092751.000,V,,,,,,,280511,,,N");
+}
+
+void NMEASentenceTest::_navigationFixLoss()
+{
+    QFETCH(QByteArray, body);
+    const auto sentence = ownedSentence(NMEAUtils::repairChecksum(body));
+    QVERIFY(sentence);
+    NMEA::NavigationEpochAssembler assembler({.metadataMaxAgeUs = 2000000,
+                                              .untimedMetadataMaxAgeUs = 999999,
+                                              .autonomousFixQuality = GPSFixQuality::Unknown,
+                                              .useGsaDimensionForAutonomousFix = true,
+                                              .requirePositionTime = true,
+                                              .reconstructDate = true,
+                                              .enforceNavigationOrder = true,
+                                              .untimedMetadataUsesPositionReceipt = false});
+    const auto update = assembler.ingest(sentence->sentence(), 42);
+    QVERIFY(update);
+    QVERIFY(update->type == NMEA::NavigationUpdate::Type::FixLoss);
+    QCOMPARE(update->epoch.receiverFixValid, false);
+    QCOMPARE(update->epoch.fixQuality, GPSFixQuality::NoFix);
+    QCOMPARE(update->epoch.receivedAtUs, quint64(42));
 }
 
 void NMEASentenceTest::_utcMilliseconds_data()
@@ -267,19 +476,4 @@ void NMEASentenceTest::_frameValidation()
     QCOMPARE(frame && frame->hasValidChecksum(), valid);
     QCOMPARE(NMEA::sentence(view).has_value(), valid);
     QCOMPARE(NMEAUtils::verifyChecksum(input), valid);
-    QCOMPARE(NMEASentenceEnvelope::parse(input, 1).has_value(), valid);
-}
-
-void NMEASentenceTest::_borrowedBytesAreOwned()
-{
-    std::optional<NMEASentenceEnvelope> retained;
-    {
-        QByteArray storage("$GNTXT,p*0D\r\n");
-        retained = NMEASentenceEnvelope::parse(QByteArray::fromRawData(storage.constData(), storage.size()), 42);
-        QVERIFY(retained);
-        storage.fill('x');
-    }
-    QCOMPARE(retained->bytes(), QByteArray("$GNTXT,p*0D\r\n"));
-    QCOMPARE(retained->sentence().fields[1], std::string_view("p"));
-    QCOMPARE(retained->receivedAtUs(), quint64(42));
 }

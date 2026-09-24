@@ -10,6 +10,7 @@
 #include "MonotonicClock.h"
 #include "NMEAPositionSource.h"
 #include "NMEASentence.h"
+#include "NMEASentenceEnvelope.h"
 #include "NMEAUtils.h"
 #include "SequentialTestDevice.h"
 
@@ -159,6 +160,21 @@ void NMEAPositionSourceTest::_queuedUpdateCannotSurviveRestart()
     device.feed(kFix);
     QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
     QCOMPARE(updates.size(), 1);
+}
+
+void NMEAPositionSourceTest::_sentenceEnvelopeOwnsBytes()
+{
+    std::optional<NMEASentenceEnvelope> retained;
+    {
+        QByteArray storage("$GNTXT,p*0D\r\n");
+        retained = NMEASentenceEnvelope::parse(QByteArray::fromRawData(storage.constData(), storage.size()), 42);
+        QVERIFY(retained);
+        storage.fill('x');
+    }
+    QCOMPARE(retained->bytes(), QByteArray("$GNTXT,p*0D\r\n"));
+    QCOMPARE(retained->sentence().fields[1], std::string_view("p"));
+    QCOMPARE(retained->receivedAtUs(), quint64(42));
+    QVERIFY(!NMEASentenceEnvelope::parse(QByteArray("$GNTXT,p*00"), 1));
 }
 
 UT_REGISTER_TEST(NMEAPositionSourceTest, TestLabel::Unit)

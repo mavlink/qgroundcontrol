@@ -7,9 +7,8 @@
 
 #include <QtCore/QMetaType>
 
-#include "../GPSFixQuality.h"
 #include "GPSEllipsoidPosition.h"
-#include "GPSSatelliteUsageReport.h"
+#include "GPSFixQuality.h"
 
 struct GPSIntegrityReport
 {
@@ -158,10 +157,12 @@ Q_DECLARE_METATYPE(GPSPositionReport::FixType)
 
 struct GPSSatelliteReport
 {
-    // Latest accepted view receipt. Zero means no view coverage, not an explicitly empty view.
+    // Latest accepted view receipt. Zero plus absent inView means no view coverage.
     uint64_t timestampUs = 0;
-    int inView = 0;
+    std::optional<int> inView = std::nullopt;
     std::optional<int> used = std::nullopt;
+
+    bool operator==(const GPSSatelliteReport&) const = default;
 };
 Q_DECLARE_METATYPE(GPSSatelliteReport)
 

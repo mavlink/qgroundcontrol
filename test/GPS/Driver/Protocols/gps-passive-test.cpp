@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "GPSAsciiProtocol.h"
 #include "GPSProtocolTestIO.h"
-#include "Passive/GPSDriverPassive.h"
 #include "ProtocolTestPackets.h"
 #include "UnitTest.h"
 
@@ -119,12 +119,12 @@ void navigation()
     CHECK(fixes[0].navigation.altitudeMslMeters == 0);
     CHECK(std::isnan(fixes[0].navigation.altitudeEllipsoidMeters));
     CHECK(std::abs(fixes[0].navigation.horizontalAccuracyMeters - 0.5) < 1e-6);
-    CHECK(receiver.reports<GPSSatelliteUsageReport>().back().usedCount == 0);
+    CHECK(receiver.reports<GPSNativeSatelliteUsageReport>().back().usedCount == 0);
     receiver.events.clear();
     receiver.clock += 1000000;
     feed(driver, nmeaSentence("GNGGA,123520,4807.038,N,01131.000,E,1,,0.9,1.0,M,2.0,M,,"));
     CHECK(std::isnan(receiver.reports<GPSNativePositionReport>().back().navigation.horizontalAccuracyMeters));
-    CHECK(!receiver.reports<GPSSatelliteUsageReport>().back().usedCount);
+    CHECK(!receiver.reports<GPSNativeSatelliteUsageReport>().back().usedCount);
     const auto positionTime = receiver.position.navigation.timestampUs;
     receiver.clock += 1000;
     feed(driver, nmeaSentence("GNGST,123520,0,0,0,0,0.6,0.8,1.0"));
@@ -142,7 +142,7 @@ void navigation()
     CHECK(receiver.position.navigation.fixType == GPSPositionReport::FixType::NoFix);
     CHECK(std::isnan(receiver.position.navigation.latitudeDegrees) &&
           std::isnan(receiver.position.navigation.longitudeDegrees));
-    CHECK(receiver.reports<GPSSatelliteUsageReport>().back().usedCount == 0);
+    CHECK(receiver.reports<GPSNativeSatelliteUsageReport>().back().usedCount == 0);
     receiver.events.clear();
     feed(driver, std::string(10000, 'A') + "\n" + gga);
     CHECK(receiver.reports<GPSNativePositionReport>().size() == 1);

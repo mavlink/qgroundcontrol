@@ -12,7 +12,7 @@
 #include <QtCore/qnumeric.h>
 #include <QtPositioning/QGeoCoordinate>
 
-#include "../Core/GPSObservation.h"
+#include "GPSObservation.h"
 
 class NTRIPTransport;
 

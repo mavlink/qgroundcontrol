@@ -8,13 +8,4 @@ target_link_libraries(
     PRIVATE QGCLoggingCategory
 )
 
-target_sources(
-    QGCGPSCore
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           GPSAltitudeDatum.h
-           GPSObservation.h
-           GPSSourceHealth.h
-           GPSSatelliteStore.h
-)
+target_sources(QGCGPSCore PUBLIC FILE_SET HEADERS FILES GPSObservation.h GPSSourceHealth.h GPSSatelliteStore.h)

@@ -475,7 +475,6 @@ int run(const Options& options)
         QJsonObject lastPosition;
         int positions = 0;
         int satellites = 0;
-        int satelliteUsage = 0;
         int correctionFrames = 0;
         QElapsedTimer elapsed;
         elapsed.start();
@@ -490,7 +489,6 @@ int run(const Options& options)
                             {"horizontal_accuracy_m", navigation.horizontalAccuracyMeters}};
         };
         sinks.onSatelliteInfo = [&](const GPSSatelliteReport&) { ++satellites; };
-        sinks.onSatelliteUsage = [&](const GPSSatelliteUsageReport&) { ++satelliteUsage; };
         sinks.onRTCM = [&](std::span<const uint8_t>) { ++correctionFrames; };
         sinks.onSurveyIn = [&](const GPSSurveyReport& survey) {
             const bool prior = survey.duration.count() > elapsed.elapsed() / 1000 + 2;
@@ -523,7 +521,6 @@ int run(const Options& options)
             stage.insert("position_messages", positions);
             stage.insert("last_position", lastPosition);
             stage.insert("satellite_messages", satellites);
-            stage.insert("satellite_usage_messages", satelliteUsage);
             stage.insert("correction_frames", correctionFrames);
             stage.insert("survey_observations", surveys);
             stage.insert("wire_evidence", evidence.evidence());

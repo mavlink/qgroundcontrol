@@ -7,6 +7,7 @@ class NMEAPositionSourceTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _sentenceEnvelopeOwnsBytes();
     void _dateOrdering_data();
     void _dateOrdering();
     void _fixLoss_data();

@@ -131,7 +131,7 @@ void GPSReceiverConfigTest::_reportDefaults()
     QVERIFY(!integrity.corrections.crcFailed);
 
     const GPSSatelliteReport satellites;
-    QCOMPARE(satellites.inView, 0);
+    QVERIFY(!satellites.inView);
     QVERIFY(!satellites.used);
 
     const GPSSurveyReport survey;

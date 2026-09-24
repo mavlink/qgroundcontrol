@@ -75,16 +75,6 @@ public:
 
     GPSRTKFactGroup* gpsRtkFactGroup();
 
-    struct SatelliteCounts
-    {
-        int inView = -1;
-        std::optional<int> used;
-    };
-
-    /// Zero receipt means unavailable. Timestamped empty snapshots explicitly report zero view and usage counts.
-    /// Nonempty snapshots provide exact usage only when every used flag is known.
-    static SatelliteCounts countSatellites(const GPSSatelliteReport& msg);
-
 signals:
     void receiverChanged();
     void errorMessageChanged();
@@ -92,7 +82,6 @@ signals:
 
 private slots:
     void _satelliteInfoUpdate(const GPSSatelliteReport& msg);
-    void _satelliteUsageUpdate(const GPSSatelliteUsageReport& msg);
     void _fixTypeChanged(GPSPositionReport::FixType fixType);
     void _onGPSConnect();
     void _onGPSConnectionError(GPSConnectionError error, const QString& detail);
@@ -104,7 +93,6 @@ private:
         QPointer<GPSProvider> provider;
         GPSCorrectionSourceRegistration corrections;
         QString serialDevice;
-        std::optional<int> countOnlySatelliteUsage;
         int manufacturer = 0;
         int baseMode = -1;
         bool started = false;

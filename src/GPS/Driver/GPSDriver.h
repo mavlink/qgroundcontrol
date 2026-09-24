@@ -25,8 +25,6 @@ struct GPSDriverSinks
     /// Borrowed until the synchronous callback returns.
     std::function<void(std::span<const uint8_t>)> onRTCM;
     std::function<void(const GPSSurveyReport&)> onSurveyIn;
-    /// Count-only observations do not imply a list of satellites in view.
-    std::function<void(const GPSSatelliteUsageReport&)> onSatelliteUsage;
 };
 
 enum class GPSReceiveStatus
@@ -84,6 +82,7 @@ public:
 
 private:
     void _publishExpiredSatellites();
+    void _publishSatellites(const GPSSatelliteReport& report);
 
     GPSType _type;
     GPSTransport& _transport;

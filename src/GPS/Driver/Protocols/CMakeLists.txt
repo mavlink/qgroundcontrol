@@ -18,10 +18,10 @@ if(NOT TARGET QGCGPSTransport)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Transport" "${CMAKE_CURRENT_BINARY_DIR}/Transport")
 endif()
 if(NOT TARGET QGCGPSNMEAProtocol)
-    add_subdirectory(NMEA)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../NMEA" "${CMAKE_CURRENT_BINARY_DIR}/NMEA")
 endif()
 if(NOT TARGET QGCGPSRTCM)
-    add_subdirectory(RTCM)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../RTCM" "${CMAKE_CURRENT_BINARY_DIR}/RTCM")
 endif()
 if(NOT TARGET QGCGPSReceiver)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Receiver" "${CMAKE_CURRENT_BINARY_DIR}/Receiver")
@@ -30,63 +30,19 @@ endblock()
 add_subdirectory(Contracts)
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Geo/GeographicLib.cmake")
 
-qt_add_library(
-    QGCGPSNativeCommon
-    STATIC
-    GPSProtocol.cc
+set(_native_headers
     GPSProtocol.h
     GPSProtocolTime.h
-    GPSAsciiProtocol.cc
     GPSAsciiProtocol.h
-)
-target_sources(
-    QGCGPSNativeCommon
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           GPSProtocol.h
-           GPSProtocolTime.h
-           GPSAsciiProtocol.h
-           NMEA/GPSNMEAReport.h
-)
-set_target_properties(
-    QGCGPSNativeCommon
-    PROPERTIES AUTOMOC OFF
-               AUTOUIC OFF
-               AUTORCC OFF
-)
-target_include_directories(QGCGPSNativeCommon PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-                                                     "${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Math"
-)
-target_link_libraries(
-    QGCGPSNativeCommon
-    PUBLIC QGCWire QGCClock QGCGPSNativeContracts QGCGPSNMEAProtocol QGCGPSRTCM
-    PRIVATE GeographicLib::GeographicLib
-)
-add_library(QGCGPSNative INTERFACE)
-add_library(QGC::GPSNative ALIAS QGCGPSNative)
-target_link_libraries(QGCGPSNative INTERFACE QGCGPSNativeCommon)
-target_sources(QGCGPSNative INTERFACE FILE_SET HEADERS FILES GPSProtocol.h GPSProtocolTime.h)
-
-# Adds one receiver family protocol library; sources are relative to this directory.
-function(qgc_add_gps_family family)
-    qt_add_library(QGCGPS${family} STATIC ${ARGN})
-    set_target_properties(
-        QGCGPS${family}
-        PROPERTIES AUTOMOC OFF
-                   AUTOUIC OFF
-                   AUTORCC OFF
-    )
-    target_link_libraries(QGCGPS${family} PUBLIC QGCGPSNativeCommon)
-    add_library(QGC::GPS${family} ALIAS QGCGPS${family})
-endfunction()
-
-set(QGC_GPS_FAMILY_UBX_SOURCES
-    UBX/GPSDriverUBX.cc
+    GPSNMEAReport.h
+    Ashtech/GPSDriverAshtech.h
+    Femto/FemtoMessages.h
+    Femto/GPSDriverFemto.h
+    Quectel/GPSDriverQuectel.h
+    SBF/GPSDriverSBF.h
+    SBF/SBFMessages.h
     UBX/GPSDriverUBX.h
-    UBX/UBXConfiguration.cc
     UBX/UBXConfigurationValues.h
-    UBX/UBXDecoder.cc
     UBX/UBXFrameDecoder.h
     UBX/UBXMessageCodec.h
     UBX/UBXMessageSchema.h
@@ -94,44 +50,41 @@ set(QGC_GPS_FAMILY_UBX_SOURCES
     UBX/UBXNavigationEpoch.h
     UBX/UBXReceiverController.h
     UBX/UBXReceiverProfile.h
+    Unicore/GPSDriverUnicore.h
 )
-set(QGC_GPS_FAMILY_Ashtech_SOURCES Ashtech/AshtechConfiguration.cc Ashtech/AshtechDecoder.cc Ashtech/GPSDriverAshtech.h)
-set(QGC_GPS_FAMILY_SBF_SOURCES SBF/GPSDriverSBF.h SBF/SBFConfiguration.cc SBF/SBFDecoder.cc SBF/SBFMessages.h)
-set(QGC_GPS_FAMILY_Femto_SOURCES Femto/FemtoConfiguration.cc Femto/FemtoDecoder.cc Femto/FemtoMessages.h
-                                 Femto/GPSDriverFemto.h
+qt_add_library(
+    QGCGPSNative
+    STATIC
+    ${_native_headers}
+    GPSProtocol.cc
+    GPSAsciiProtocol.cc
+    Ashtech/AshtechConfiguration.cc
+    Ashtech/AshtechDecoder.cc
+    Femto/FemtoConfiguration.cc
+    Femto/FemtoDecoder.cc
+    Quectel/GPSDriverQuectel.cc
+    Quectel/QuectelCodec_p.h
+    Quectel/QuectelDecoder.cc
+    SBF/SBFConfiguration.cc
+    SBF/SBFDecoder.cc
+    UBX/GPSDriverUBX.cc
+    UBX/UBXConfiguration.cc
+    UBX/UBXDecoder.cc
+    Unicore/GPSDriverUnicore.cc
 )
-set(QGC_GPS_FAMILY_Unicore_SOURCES Unicore/GPSDriverUnicore.cc Unicore/GPSDriverUnicore.h)
-set(QGC_GPS_FAMILY_Quectel_SOURCES Quectel/GPSDriverQuectel.cc Quectel/GPSDriverQuectel.h Quectel/QuectelDecoder.cc
-                                   Quectel/QuectelCodec_p.h
+add_library(QGC::GPSNative ALIAS QGCGPSNative)
+target_sources(QGCGPSNative PUBLIC FILE_SET HEADERS FILES ${_native_headers})
+set_target_properties(
+    QGCGPSNative
+    PROPERTIES AUTOMOC OFF
+               AUTOUIC OFF
+               AUTORCC OFF
 )
-set(QGC_GPS_FAMILY_Passive_SOURCES Passive/GPSDriverPassive.cc Passive/GPSDriverPassive.h)
-
-set(_native_targets QGCGPSNativeContracts QGCGPSNativeCommon)
-foreach(
-    family
-    UBX
-    Ashtech
-    SBF
-    Femto
-    Unicore
-    Quectel
-    Passive
+target_include_directories(QGCGPSNative PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+                                               "${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Math"
 )
-    qgc_add_gps_family(${family} ${QGC_GPS_FAMILY_${family}_SOURCES})
-    target_sources(QGCGPS${family} PUBLIC FILE_SET HEADERS BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}" FILES
-                                          "${family}/GPSDriver${family}.h"
-    )
-    get_target_property(family_sources QGCGPS${family} SOURCES)
-    foreach(source IN LISTS family_sources)
-        if(source MATCHES "\\.h$"
-           AND NOT source MATCHES "(Private|_p)\\.h$"
-           AND NOT IS_ABSOLUTE "${source}"
-        )
-            target_sources(QGCGPS${family} PUBLIC FILE_SET HEADERS FILES "${source}")
-        endif()
-    endforeach()
-    target_link_libraries(QGCGPSNative INTERFACE QGCGPS${family})
-    target_sources(QGCGPSNative INTERFACE FILE_SET HEADERS FILES "${family}/GPSDriver${family}.h")
-    list(APPEND _native_targets QGCGPS${family})
-endforeach()
-set_property(TARGET QGCGPSNative PROPERTY QGC_GPS_NATIVE_TARGETS "${_native_targets}")
+target_link_libraries(
+    QGCGPSNative
+    PUBLIC QGCWire QGCClock QGCGPSNativeContracts QGCGPSNMEAProtocol QGCGPSRTCM
+    PRIVATE GeographicLib::GeographicLib
+)

@@ -7,8 +7,14 @@
 #include <QtCore/QString>
 #include <QtPositioning/QGeoPositionInfo>
 
-#include "GPSAltitudeDatum.h"
 #include "GPSFixQuality.h"
+
+enum class GPSAltitudeDatum
+{
+    Unknown = 0,
+    MeanSeaLevel = 1,
+    Ellipsoid = 2
+};
 
 /// Receiver-independent data. Unknown metadata remains absent, never a manufactured zero.
 struct GPSObservation

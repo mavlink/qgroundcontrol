@@ -19,14 +19,8 @@ private slots:
     void _manualNotificationSupersedesAttempt();
     void _receiverFramesAreValidated_data();
     void _receiverFramesAreValidated();
-    void _testCountSatellitesClampsToMax();
-    void _testCountSatellitesCountsUsed();
-    void _testCountSatellitesIgnoresUsedBeyondCount();
-    void _countOnlyUsagePreservesInView();
     void _snapshotUsageEvidence_data();
     void _snapshotUsageEvidence();
-    void _unavailableSatelliteCoverage_data();
-    void _unavailableSatelliteCoverage();
     void _currentBaseSaveValidity_data();
     void _currentBaseSaveValidity();
     void _logsFixTransitionsWithoutCoordinates();

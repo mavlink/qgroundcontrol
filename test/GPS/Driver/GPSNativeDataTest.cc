@@ -53,6 +53,8 @@ private slots:
     void _satelliteSnapshotScopes();
     void _satelliteSnapshotBounds();
     void _satelliteSnapshotExpiry();
+    void _satelliteUsageCombination();
+    void _satelliteUsageExpiryFallback();
     void _surveyProjection_data();
     void _surveyProjection();
 };
@@ -415,7 +417,7 @@ void GPSNativeDataTest::_satelliteCounts()
     GPSNativeData::SatelliteSnapshot snapshot;
     const auto report = snapshot.update(source);
     QCOMPARE(report.timestampUs, system->inViewTimestampUs);
-    QCOMPARE(report.inView, expectedCount);
+    QCOMPARE(report.inView, std::optional<int>{expectedCount});
     QCOMPARE(report.used, std::optional<int>{expectedCount});
 }
 
@@ -439,7 +441,7 @@ void GPSNativeDataTest::_satelliteSnapshotScopes()
     glonass->inView = 1;
     auto report = snapshot.update(whole);
     QCOMPARE(report.timestampUs, uint64_t{100});
-    QCOMPARE(report.inView, 3);
+    QCOMPARE(report.inView, std::optional<int>{3});
     QVERIFY(!report.used);
 
     GPSNativeSatelliteReport scoped;
@@ -452,7 +454,7 @@ void GPSNativeDataTest::_satelliteSnapshotScopes()
     glonass->inUse = 1;
     report = snapshot.update(scoped);
     QCOMPARE(report.timestampUs, uint64_t{200});
-    QCOMPARE(report.inView, 3);
+    QCOMPARE(report.inView, std::optional<int>{3});
     QVERIFY(!report.used);
 
     scoped = {};
@@ -463,10 +465,10 @@ void GPSNativeDataTest::_satelliteSnapshotScopes()
     galileo->inView = 0;
     report = snapshot.update(scoped);
     QCOMPARE(report.timestampUs, uint64_t{300});
-    QCOMPARE(report.inView, 3);
+    QCOMPARE(report.inView, std::optional<int>{3});
     scoped.constellations[0].constellation = GPSConstellation::GLONASS;
     report = snapshot.update(scoped);
-    QCOMPARE(report.inView, 2);
+    QCOMPARE(report.inView, std::optional<int>{2});
 
     whole = {};
     galileo = whole.ensureConstellation(GPSConstellation::Galileo);
@@ -476,7 +478,7 @@ void GPSNativeDataTest::_satelliteSnapshotScopes()
     galileo->inUseTimestampUs = 400;
     galileo->inUse = 0;
     report = snapshot.update(whole);
-    QCOMPARE(report.inView, 1);
+    QCOMPARE(report.inView, std::optional<int>{1});
     QCOMPARE(report.used, std::optional<int>{0});
 
     whole = {};
@@ -485,7 +487,7 @@ void GPSNativeDataTest::_satelliteSnapshotScopes()
     empty->inViewTimestampUs = 600;
     empty->inView = 0;
     report = snapshot.update(whole);
-    QCOMPARE(report.inView, 0);
+    QCOMPARE(report.inView, std::optional<int>{0});
     QCOMPARE(report.used, std::optional<int>{0});
 }
 
@@ -499,7 +501,7 @@ void GPSNativeDataTest::_satelliteSnapshotBounds()
     gps->inView = GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES;
     gps->inUseTimestampUs = gps->inViewTimestampUs;
     gps->inUse = GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES;
-    QCOMPARE(snapshot.update(full).inView, int(GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES));
+    QCOMPARE(snapshot.update(full).inView, std::optional<int>{int(GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES)});
     GPSNativeSatelliteReport extra;
     extra.fullSnapshot = false;
     auto* galileo = extra.ensureConstellation(GPSConstellation::Galileo);
@@ -509,13 +511,13 @@ void GPSNativeDataTest::_satelliteSnapshotBounds()
     galileo->inUseTimestampUs = galileo->inViewTimestampUs;
     galileo->inUse = 1;
     const auto report = snapshot.update(extra);
-    QCOMPARE(report.inView, int(GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES) + 1);
+    QCOMPARE(report.inView, std::optional<int>{int(GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES) + 1});
     QCOMPARE(report.timestampUs, galileo->inViewTimestampUs);
     full = {};
     auto* emptyGps = full.ensureConstellation(GPSConstellation::GPS);
     QVERIFY(emptyGps);
     emptyGps->inViewTimestampUs = galileo->inViewTimestampUs + 1;
-    QCOMPARE(snapshot.update(full).inView, 0);
+    QCOMPARE(snapshot.update(full).inView, std::optional<int>{0});
 }
 
 void GPSNativeDataTest::_satelliteSnapshotExpiry()
@@ -539,20 +541,20 @@ void GPSNativeDataTest::_satelliteSnapshotExpiry()
     glonassGroup->inUseTimestampUs = 4'000'000;
     glonassGroup->inUse = 1;
     auto snapshot = state.update(glonass);
-    QCOMPARE(snapshot.inView, 2);
+    QCOMPARE(snapshot.inView, std::optional<int>{2});
     QCOMPARE(snapshot.used, std::optional<int>{1});
 
     glonassGroup->inViewTimestampUs = 6'000'000;
     glonassGroup->inUseTimestampUs = 6'000'000;
     snapshot = state.update(glonass);
-    QCOMPARE(snapshot.inView, 1);
+    QCOMPARE(snapshot.inView, std::optional<int>{1});
     QCOMPARE(snapshot.used, std::optional<int>{1});
-    QCOMPARE(state.update(gps).inView, 1);  // Retired receipts cannot resurrect a view.
+    QCOMPARE(state.update(gps).inView, std::optional<int>{1});  // Retired receipts cannot resurrect a view.
     gpsGroup->inViewTimestampUs = 6'000'001;
     gpsGroup->inUseTimestampUs = 0;
     gpsGroup->inUse.reset();
     snapshot = state.update(gps);
-    QCOMPARE(snapshot.inView, 2);
+    QCOMPARE(snapshot.inView, std::optional<int>{2});
     QVERIFY(!snapshot.used);
 
     GPSNativeSatelliteReport usage;
@@ -564,7 +566,7 @@ void GPSNativeDataTest::_satelliteSnapshotExpiry()
     GPSNativeData::SatelliteSnapshot usageOnly;
     const auto unavailableView = usageOnly.update(usage);
     QCOMPARE(unavailableView.timestampUs, uint64_t{0});
-    QCOMPARE(unavailableView.inView, 0);
+    QVERIFY(!unavailableView.inView);
     snapshot = state.update(usage);
     QCOMPARE(snapshot.used, std::optional<int>{2});
     gpsGroup->inViewTimestampUs = 7'500'000;
@@ -572,15 +574,15 @@ void GPSNativeDataTest::_satelliteSnapshotExpiry()
     QCOMPARE(snapshot.used, std::optional<int>{2});
     gpsGroup->inViewTimestampUs = 12'000'000;
     snapshot = state.update(gps);
-    QCOMPARE(snapshot.inView, 1);
+    QCOMPARE(snapshot.inView, std::optional<int>{1});
     QVERIFY(!snapshot.used);
     gpsGroup->inView = 0;
     ++gpsGroup->inViewTimestampUs;
-    QCOMPARE(state.update(gps).inView, 0);
+    QCOMPARE(state.update(gps).inView, std::optional<int>{0});
     QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + 4'999'999));
     const auto expired = state.expire(gpsGroup->inViewTimestampUs + 5'000'000);
     QVERIFY(expired);
-    QCOMPARE(expired->inView, 0);
+    QVERIFY(!expired->inView);
     QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + 6'000'000));
 
     gpsGroup->inViewTimestampUs += 7'000'000;
@@ -588,8 +590,71 @@ void GPSNativeDataTest::_satelliteSnapshotExpiry()
     state.update(gps);
     const auto gone = state.expire(gpsGroup->inViewTimestampUs + 5'000'000);
     QVERIFY(gone);
-    QCOMPARE(gone->inView, 0);
+    QVERIFY(!gone->inView);
     QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + 5'000'001));
+}
+
+void GPSNativeDataTest::_satelliteUsageCombination()
+{
+    GPSNativeData::SatelliteSnapshot snapshot;
+    auto countOnly = snapshot.update(GPSNativeSatelliteUsageReport{.timestampUs = 100, .usedCount = 12});
+    QVERIFY(!countOnly.inView);
+    QCOMPARE(countOnly.used, std::optional<int>{12});
+
+    GPSNativeSatelliteReport view;
+    auto* gps = view.ensureConstellation(GPSConstellation::GPS);
+    QVERIFY(gps);
+    gps->inViewTimestampUs = 200;
+    gps->inView = 4;
+    auto report = snapshot.update(view);
+    QCOMPARE(report.inView, std::optional<int>{4});
+    QCOMPARE(report.used, std::optional<int>{12});
+
+    gps->inViewTimestampUs = 300;
+    gps->inUseTimestampUs = 300;
+    gps->inUse = 2;
+    report = snapshot.update(view);
+    QCOMPARE(report.inView, std::optional<int>{4});
+    QCOMPARE(report.used, std::optional<int>{2});
+
+    countOnly = snapshot.update(GPSNativeSatelliteUsageReport{.timestampUs = 400, .usedCount = 7});
+    QCOMPARE(countOnly.inView, std::optional<int>{4});
+    QCOMPARE(countOnly.used, std::optional<int>{7});
+
+    countOnly = snapshot.update(GPSNativeSatelliteUsageReport{.timestampUs = 500});
+    QCOMPARE(countOnly.inView, std::optional<int>{4});
+    QVERIFY(!countOnly.used);
+
+    gps->inViewTimestampUs = 600;
+    gps->inView = 0;
+    gps->inUseTimestampUs = 0;
+    gps->inUse.reset();
+    report = snapshot.update(view);
+    QCOMPARE(report.inView, std::optional<int>{0});
+    QCOMPARE(report.used, std::optional<int>{0});
+}
+
+void GPSNativeDataTest::_satelliteUsageExpiryFallback()
+{
+    GPSNativeData::SatelliteSnapshot snapshot;
+    auto countOnly = snapshot.update(GPSNativeSatelliteUsageReport{.timestampUs = 500'000, .usedCount = 9});
+    QVERIFY(!countOnly.inView);
+    QCOMPARE(countOnly.used, std::optional<int>{9});
+
+    GPSNativeSatelliteReport view;
+    auto* gps = view.ensureConstellation(GPSConstellation::GPS);
+    QVERIFY(gps);
+    gps->inViewTimestampUs = 1'000'000;
+    gps->inView = 3;
+    auto report = snapshot.update(view);
+    QCOMPARE(report.inView, std::optional<int>{3});
+    QCOMPARE(report.used, std::optional<int>{9});
+
+    QVERIFY(!snapshot.expire(5'999'999));
+    const auto expired = snapshot.expire(6'000'000);
+    QVERIFY(expired);
+    QVERIFY(!expired->inView);
+    QCOMPARE(expired->used, std::optional<int>{9});
 }
 
 void GPSNativeDataTest::_surveyProjection_data()

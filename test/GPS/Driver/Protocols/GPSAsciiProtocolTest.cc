@@ -6,11 +6,15 @@
 #include <string_view>
 #include <utility>
 
+#include <QtCore/QBuffer>
 #include <QtCore/QByteArray>
 #include <QtCore/QStringList>
+#include <QtTest/QSignalSpy>
 
 #include "GPSAsciiProtocol.h"
 #include "GPSProtocolTestIO.h"
+#include "NMEAPositionSource.h"
+#include "NMEAUtils.h"
 #include "ProtocolTestPackets.h"
 #include "Quectel/QuectelCodec_p.h"
 #include "Support/UnicoreReceiverModel.h"
@@ -171,6 +175,54 @@ void GPSAsciiProtocolTest::_boundedFields()
         QCOMPARE(QString::fromLatin1(fields[index].data(), fields[index].size()), expected[index]);
     }
     QCOMPARE(NMEA::splitFields("a", {}), size_t(0));
+}
+
+void GPSAsciiProtocolTest::_positionSourceEquivalence()
+{
+    const QList<QByteArray> bodies{
+        "$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,2.0,31.66,280511,,,A",
+        "$GPGSA,A,3,02,,,,,,,,,,,,1.0,1.03,0.6",
+        "$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,",
+        "$GPGST,092750.000,1,1,1,0,3,4,6",
+        "$GPVTG,31.66,T,,M,1.08,N,2.0,K",
+    };
+    QByteArray wire;
+    uint64_t now = 1000000;
+    GPSNativePositionReport nativePosition;
+    GPSProtocolIO io;
+    io.nowUs = [&now] { return now; };
+    AsciiReceiver receiver(captureGPSReports(std::move(io), nativePosition), false);
+    for (const auto& body : bodies) {
+        const auto sentence = NMEAUtils::repairChecksum(body);
+        wire += sentence;
+        receiver.consume(
+            {reinterpret_cast<const uint8_t*>(sentence.constData()), static_cast<size_t>(sentence.size())});
+    }
+
+    QBuffer device(&wire);
+    QVERIFY(device.open(QIODevice::ReadOnly));
+    NMEAPositionSource source(&device);
+    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
+    source.requestUpdate(1000);
+    emit device.readyRead();
+    QTRY_COMPARE_WITH_TIMEOUT(updates.size(), 1, TestTimeout::shortMs());
+    const auto observation = source.lastObservation();
+
+    QCOMPARE(nativePosition.navigation.fixType, GPSPositionReport::FixType::Fix3D);
+    QCOMPARE(observation.fixQuality, GPSObservation::FixQuality::Fix3D);
+    QVERIFY(qAbs(nativePosition.navigation.latitudeDegrees - observation.position.coordinate().latitude()) < 1e-9);
+    QVERIFY(qAbs(nativePosition.navigation.longitudeDegrees - observation.position.coordinate().longitude()) < 1e-9);
+    QVERIFY(qAbs(nativePosition.navigation.altitudeMslMeters - observation.position.coordinate().altitude()) < 1e-9);
+    QCOMPARE(nativePosition.navigation.satellitesUsed, std::optional<uint8_t>(8));
+    QCOMPARE(observation.satellitesUsed, std::optional<int>(8));
+    QCOMPARE(nativePosition.navigation.horizontalDop, 1.03f);
+    QCOMPARE(nativePosition.navigation.verticalDop, 0.6f);
+    QCOMPARE(observation.horizontalDop, std::optional<double>(1.03));
+    QCOMPARE(observation.verticalDop, std::optional<double>(0.6));
+    QCOMPARE(nativePosition.navigation.horizontalAccuracyMeters, 5.0f);
+    QCOMPARE(nativePosition.navigation.verticalAccuracyMeters, 6.0f);
+    QCOMPARE(observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy), 5.0);
+    QCOMPARE(observation.position.attribute(QGeoPositionInfo::VerticalAccuracy), 6.0);
 }
 
 void GPSAsciiProtocolTest::_quectelCodec()

@@ -38,7 +38,7 @@ add_library(QGC::GPSNTRIP ALIAS QGCGPSNTRIP)
 set_target_properties(QGCGPSNTRIP PROPERTIES AUTOMOC ON)
 target_link_libraries(
     QGCGPSNTRIP
-    PUBLIC QGCGPSNTRIPHttp QGCGPSRTCM QGCClock QGCIO Qt6::Positioning
+    PUBLIC QGCGPSCore QGCGPSNTRIPHttp QGCGPSRTCM QGCClock QGCIO Qt6::Positioning
     PRIVATE QGCGPSNMEAProtocol QGCNetworkClient QGCLoggingCategory
 )
 target_sources(

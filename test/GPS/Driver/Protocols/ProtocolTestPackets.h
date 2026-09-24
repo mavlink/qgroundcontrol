@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "../../../../src/GPS/Driver/Protocols/Femto/FemtoMessages.h"
-#include "../../../../src/GPS/Driver/Protocols/RTCM/RTCMFramer.h"
 #include "../../../../src/GPS/Driver/Protocols/SBF/SBFMessages.h"
+#include "../../../../src/GPS/RTCM/RTCMFramer.h"
 #include "../../../../src/Utilities/Parsing/Wire/LittleEndian.h"
 
 // Fixtures encode documented offsets independently of decoded object alignment.

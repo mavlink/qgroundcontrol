@@ -10,19 +10,18 @@
 
 #include <QtCore/QScopedValueRollback>
 
+#include "Ashtech/GPSDriverAshtech.h"
+#include "Femto/GPSDriverFemto.h"
+#include "GPSAsciiProtocol.h"
 #include "GPSNativeData_p.h"
 #include "GPSProtocol.h"
 #include "GPSTransport.h"
 #include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
-
-#include "UBX/GPSDriverUBX.h"
-#include "Ashtech/GPSDriverAshtech.h"
-#include "SBF/GPSDriverSBF.h"
-#include "Femto/GPSDriverFemto.h"
-#include "Unicore/GPSDriverUnicore.h"
 #include "Quectel/GPSDriverQuectel.h"
-#include "Passive/GPSDriverPassive.h"
+#include "SBF/GPSDriverSBF.h"
+#include "UBX/GPSDriverUBX.h"
+#include "Unicore/GPSDriverUnicore.h"
 
 QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.Driver.GPSDriver")
 QGC_LOGGING_CATEGORY(GPSNativeDriversLog, "GPS.Driver.Protocols")
@@ -63,6 +62,7 @@ struct GPSDriver::State
 {
     GPSIntegrityReport integrity;
     GPSNativeData::SatelliteSnapshot satelliteSnapshot;
+    std::optional<GPSSatelliteReport> lastSatellites;
     std::unique_ptr<GPSProtocol> driver;
     std::vector<GPSConfigurationEvidence> evidence;
     QString configurationError;
@@ -176,18 +176,13 @@ bool GPSDriver::configure()
                         if (!_state->configuring) {
                             _state->cycle.usefulData = true;
                             _state->cycle.updates |= GPSReceiveResult::SATELLITES_UPDATE;
-                            const auto snapshot = _state->satelliteSnapshot.update(report, MonotonicClock::nowUs());
-                            if (_sinks.onSatelliteInfo) {
-                                _sinks.onSatelliteInfo(snapshot);
-                            }
+                            _publishSatellites(_state->satelliteSnapshot.update(report, MonotonicClock::nowUs()));
                         }
-                    } else if constexpr (std::is_same_v<Report, GPSSatelliteUsageReport>) {
+                    } else if constexpr (std::is_same_v<Report, GPSNativeSatelliteUsageReport>) {
                         if (!_state->configuring) {
                             _state->cycle.usefulData = true;
                             _state->cycle.updates |= GPSReceiveResult::SATELLITES_UPDATE;
-                            if (_sinks.onSatelliteUsage) {
-                                _sinks.onSatelliteUsage(report);
-                            }
+                            _publishSatellites(_state->satelliteSnapshot.update(report, MonotonicClock::nowUs()));
                         }
                     } else if constexpr (std::is_same_v<Report, GPSNativeSurveyReport>) {
                         _state->cycle.usefulData = true;
@@ -286,9 +281,20 @@ GPSReceiveResult GPSDriver::receiveOutcome(unsigned timeoutMs)
 
 void GPSDriver::_publishExpiredSatellites()
 {
-    const auto expired = _state->satelliteSnapshot.expire(MonotonicClock::nowUs());
-    if (expired && _sinks.onSatelliteInfo) {
+    if (const auto expired = _state->satelliteSnapshot.expire(MonotonicClock::nowUs())) {
         // Cache retirement is a notification, not new receiver traffic or navigation liveness.
-        _sinks.onSatelliteInfo(*expired);
+        _publishSatellites(*expired);
+    }
+}
+
+void GPSDriver::_publishSatellites(const GPSSatelliteReport& report)
+{
+    // Count-only usage can repeat every fix; consumers only need changed counts.
+    if (_state->lastSatellites == report) {
+        return;
+    }
+    _state->lastSatellites = report;
+    if (_sinks.onSatelliteInfo) {
+        _sinks.onSatelliteInfo(report);
     }
 }

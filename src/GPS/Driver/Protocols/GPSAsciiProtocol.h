@@ -4,10 +4,11 @@
 #include <string_view>
 
 #include "GPSProtocol.h"
-#include "NMEA/NMEAMetadata.h"
-#include "NMEA/NMEASatelliteEpoch.h"
-#include "NMEA/NMEASentence.h"
-#include "RTCM/RTCMFramer.h"
+#include "NMEALineFramer.h"
+#include "NMEANavigationEpoch.h"
+#include "NMEASatelliteEpoch.h"
+#include "NMEASentence.h"
+#include "RTCMFramer.h"
 
 /// Mixed ASCII and RTCM input. Binary frame payloads never enter the line parser.
 class GPSAsciiProtocol : public GPSProtocol
@@ -30,7 +31,6 @@ protected:
 
 private:
     int _handleNmea(std::string_view line);
-    void _expireVdop(uint64_t now);
     void _publishSatellites(const NMEA::SatelliteEpoch& epoch);
     void _drainSatellites();
     void _drainRTCM();
@@ -41,12 +41,21 @@ private:
     NMEA::SatelliteAssembler _satelliteAssembler;
     NMEA::SatelliteEpoch _pendingSatellites;
     std::array<char, MAX_LINE_SIZE> _line{};
-    size_t _lineSize = 0;
-    bool _discardLine = false;
-    bool _lineEnded = false;
+    NMEA::LineFramer _lineFramer;
+    NMEA::NavigationEpochAssembler _navigationAssembler;
     bool _rtcmEnabled = true;
-    NMEA::EpochReceipt _accuracyReceipt;
-    std::optional<int> _positionTime;
-    std::optional<uint64_t> _vdopReceivedAtUs;
-    NMEA::GST _accuracy;
+};
+
+/// Read-only receiver input; setting the local serial baud rate never sends a receiver command.
+class GPSNativePassive : public GPSAsciiProtocol
+{
+public:
+    using GPSAsciiProtocol::GPSAsciiProtocol;
+
+    int configure(unsigned& baud, const GPSConfig& config) override;
+
+    bool receiverReady() const override { return _configured; }
+
+private:
+    bool _configured = false;
 };

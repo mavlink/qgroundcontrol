@@ -40,7 +40,7 @@
 
 #include "Ashtech/GPSDriverAshtech.h"
 #include "GPSFixQuality.h"
-#include "NMEA/GPSNMEAReport.h"
+#include "GPSNMEAReport.h"
 #include "NMEAFields.h"
 #include "NMEASentence.h"
 #include "RTCMFramer.h"

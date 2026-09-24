@@ -2,14 +2,14 @@
 
 #include "Ashtech/GPSDriverAshtech.h"
 #include "Femto/GPSDriverFemto.h"
+#include "GPSAsciiProtocol.h"
 #include "GPSProtocolTestIO.h"
-#include "SBF/GPSDriverSBF.h"
-#include "UBX/GPSDriverUBX.h"
-#include "Support/UnicoreReceiverModel.h"
-#include "Unicore/GPSDriverUnicore.h"
 #include "Quectel/GPSDriverQuectel.h"
+#include "SBF/GPSDriverSBF.h"
 #include "Support/QuectelReceiverModel.h"
-#include "Passive/GPSDriverPassive.h"
+#include "Support/UnicoreReceiverModel.h"
+#include "UBX/GPSDriverUBX.h"
+#include "Unicore/GPSDriverUnicore.h"
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {

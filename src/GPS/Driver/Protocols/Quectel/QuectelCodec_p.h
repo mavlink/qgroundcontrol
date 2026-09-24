@@ -5,7 +5,7 @@
 #include <string_view>
 
 #include "GPSCommandTransaction.h"
-#include "NMEA/NMEASentence.h"
+#include "NMEASentence.h"
 
 namespace QuectelCodec {
 

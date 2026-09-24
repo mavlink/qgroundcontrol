@@ -27,12 +27,11 @@ Q_DECLARE_METATYPE(GPSBaseStationConfig)
 void GPSProviderTest::_queuedPayloadsOwnSnapshots()
 {
     GPSProvider provider({}, GPSType::ublox, {});
-    for (const auto name : {"GPSSatelliteReport", "GPSSatelliteUsageReport", "GPSPositionReport::FixType",
-                            "GPSConnectionError", "GPSSurveyReport"}) {
+    for (const auto name :
+         {"GPSSatelliteReport", "GPSPositionReport::FixType", "GPSConnectionError", "GPSSurveyReport"}) {
         QVERIFY2(QMetaType::fromName(name).isValid(), name);
     }
     GPSSatelliteReport satellites;
-    GPSSatelliteUsageReport usage;
     auto fixType = GPSPositionReport::FixType::Unknown;
     GPSSurveyReport survey;
     GPSConnectionError error = GPSConnectionError::None;
@@ -41,9 +40,6 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
     connect(
         &provider, &GPSProvider::satelliteInfoUpdate, &receiver,
         [&](const GPSSatelliteReport& value) { satellites = value; }, Qt::QueuedConnection);
-    connect(
-        &provider, &GPSProvider::satelliteUsageUpdate, &receiver,
-        [&](const GPSSatelliteUsageReport& value) { usage = value; }, Qt::QueuedConnection);
     connect(
         &provider, &GPSProvider::fixTypeChanged, &receiver, [&](GPSPositionReport::FixType value) { fixType = value; },
         Qt::QueuedConnection);
@@ -60,11 +56,8 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
     auto worker = std::unique_ptr<QThread>(QThread::create([&]() {
         GPSSatelliteReport snapshot;
         snapshot.inView = 1;
-        snapshot.used = 1;
+        snapshot.used = 7;
         emit provider.satelliteInfoUpdate(snapshot);
-        GPSSatelliteUsageReport count{.timestampUs = 123, .usedCount = 7};
-        emit provider.satelliteUsageUpdate(count);
-        count.usedCount.reset();
         emit provider.fixTypeChanged(GPSPositionReport::FixType::Fix3D);
         GPSSurveyReport progress;
         progress.duration = std::chrono::seconds(4294967295LL);
@@ -81,13 +74,11 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
         worker->wait();
     }
     QVERIFY(timely);
-    QCOMPARE(satellites.inView, 0);
+    QVERIFY(!satellites.inView);
     QCOMPARE(survey.duration.count(), 0);
     QCoreApplication::sendPostedEvents(&receiver, QEvent::MetaCall);
-    QCOMPARE(satellites.inView, 1);
-    QCOMPARE(satellites.used, std::optional<int>{1});
-    QCOMPARE(usage.timestampUs, uint64_t{123});
-    QCOMPARE(usage.usedCount, std::optional<int>{7});
+    QCOMPARE(satellites.inView, std::optional<int>{1});
+    QCOMPARE(satellites.used, std::optional<int>{7});
     QCOMPARE(fixType, GPSPositionReport::FixType::Fix3D);
     QCOMPARE(survey.duration.count(), 4294967295LL);
     QCOMPARE(survey.meanAccuracyMeters.value(), 1.234);
@@ -429,7 +420,7 @@ void GPSProviderTest::_satelliteExpiryDoesNotRenewLiveness()
     connect(
         &provider, &GPSProvider::satelliteInfoUpdate, &provider,
         [&](const GPSSatelliteReport& report) {
-            if (report.timestampUs && report.inView) {
+            if (report.timestampUs && report.inView.value_or(0)) {
                 freshView = true;
             } else if (!report.timestampUs && freshView.load()) {
                 expiredView = true;
@@ -488,10 +479,10 @@ void GPSProviderTest::_ancillaryTraffic()
         },
         Qt::DirectConnection);
     connect(
-        &provider, &GPSProvider::satelliteUsageUpdate, &provider, [&](const auto&) { provider.stop(); },
+        &provider, &GPSProvider::satelliteInfoUpdate, &provider, [&](const auto&) { provider.stop(); },
         Qt::DirectConnection);
     QSignalSpy ready(&provider, &GPSProvider::receiverReady);
-    QSignalSpy usage(&provider, &GPSProvider::satelliteUsageUpdate);
+    QSignalSpy satellites(&provider, &GPSProvider::satelliteInfoUpdate);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     const bool finished = provider.wait(TestTimeout::mediumMs());
@@ -501,10 +492,12 @@ void GPSProviderTest::_ancillaryTraffic()
     }
     QVERIFY(finished);
     QCOMPARE(ready.size(), 1);
-    QCOMPARE(usage.size(), sendUsage ? 1 : 0);
+    QCOMPARE(satellites.size(), sendUsage ? 1 : 0);
     QCOMPARE(errors.size(), sendUsage ? 0 : 1);
     if (sendUsage) {
-        QCOMPARE(qvariant_cast<GPSSatelliteUsageReport>(usage.first().first()).usedCount, std::optional<int>{12});
+        const auto report = qvariant_cast<GPSSatelliteReport>(satellites.first().first());
+        QVERIFY(!report.inView);
+        QCOMPARE(report.used, std::optional<int>{12});
     } else {
         QVERIFY(streamingTime.elapsed() >= GPSProvider::kUsefulDataTimeoutMs);
         QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);

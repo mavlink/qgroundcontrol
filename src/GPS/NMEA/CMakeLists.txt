@@ -1,4 +1,12 @@
-qt_add_library(QGCGPSNMEAProtocol STATIC NMEASentence.cc NMEAConstellation.cc NMEASatelliteEpoch.cc NMEAUtils.cc)
+qt_add_library(
+    QGCGPSNMEAProtocol
+    STATIC
+    NMEASentence.cc
+    NMEAConstellation.cc
+    NMEASatelliteEpoch.cc
+    NMEANavigationEpoch.cc
+    NMEAUtils.cc
+)
 add_library(QGC::GPSNMEAProtocol ALIAS QGCGPSNMEAProtocol)
 set_target_properties(
     QGCGPSNMEAProtocol
@@ -19,7 +27,9 @@ target_sources(
            NMEASatelliteEpoch.h
            NMEAFields.h
            NMEAFramer.h
+           NMEALineFramer.h
            NMEAMetadata.h
+           NMEANavigationEpoch.h
            NMEAUtils.h
 )
 target_sources(
@@ -29,8 +39,8 @@ target_sources(
            TYPE
            HEADERS
            BASE_DIRS
-           ../../..
+           ..
            FILES
-           ../../../GPSConstellation.h
-           ../../../GPSFixQuality.h
+           ../GPSConstellation.h
+           ../GPSFixQuality.h
 )

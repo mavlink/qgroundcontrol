@@ -1,13 +1,16 @@
 #pragma once
 
+#include <array>
 #include <optional>
 
-#include <QtCore/QDate>
+#include <QtCore/QDateTime>
 #include <QtCore/QHash>
 #include <QtCore/QPointer>
 #include <QtPositioning/QGeoPositionInfoSource>
 
 #include "GPSObservation.h"
+#include "NMEALineFramer.h"
+#include "NMEANavigationEpoch.h"
 #include "NMEASentenceEnvelope.h"
 #include "RuntimeScheduler.h"
 #include "ScheduledTask.h"
@@ -45,34 +48,16 @@ public slots:
     void requestUpdate(int timeout = 0) override;
 
 private:
-    struct EpochMetadata
-    {
-        GPSObservation observation;
-        std::optional<unsigned> ggaQuality;
-        std::optional<unsigned> dimension;
-        quint64 navigationSequence = 0;
-        bool published = false;
-    };
-
     void _resetDecoder();
     void _readAvailableData();
     void _discardAvailableData();
     void _closeInput();
     void _processSentence(const NMEASentenceEnvelope& envelope);
-    void _handlePositionSentence(const NMEASentenceEnvelope& envelope);
-    void _handleUntimedMetadata(const NMEASentenceEnvelope& envelope);
-    void _handleAccuracy(const NMEASentenceEnvelope& envelope);
-    void _handleDatedSentence(const NMEASentenceEnvelope& envelope);
-    void _queueEpoch(int timeMs);
-    void _trimEpochs();
-    QDate _dateForTime(int timeMs) const;
-    void _setDateReference(const QDate& date, int timeMs);
-    QDateTime _timestamp(int timeMs) const;
+    void _queueEpoch(const NMEA::NavigationEpoch& epoch);
     QDateTime _receiptTime(quint64 timestampUs) const;
-    bool _acceptNavigationStatus(std::optional<int> timeMs, const QDate& date, quint64 receivedAtUs);
-    static void _resetExpiredEpoch(EpochMetadata& epoch, const QDateTime& timestamp, quint64 receivedAtUs);
-    static GPSObservation::FixQuality _fixQuality(const EpochMetadata& epoch);
-    void _fixLost(GPSObservation observation);
+    static GPSObservation _observation(const NMEA::NavigationEpoch& epoch, const QDateTime& receivedAt);
+    static GPSObservation _lossObservation(const NMEA::NavigationEpoch& epoch, const QDateTime& receivedAt);
+    void _fixLost(const GPSObservation& observation);
     void _publishLoss();
     void _publishPending();
     void _schedulePublication();
@@ -93,20 +78,14 @@ private:
         std::optional<GPSObservation> observation;
         std::optional<QGeoPositionInfo> position;
         std::optional<int> epochTimeMs;
+        quint64 epochRevision = 0;
         bool requested = false;
     } _pendingFix;
 
-    QHash<int, EpochMetadata> _epochs;
-    std::optional<int> _currentEpochMs;
-    QDate _dateReference;
-    std::optional<int> _dateReferenceTimeMs;
-    quint64 _statusReceiptUs = 0;
-    std::optional<int> _statusTimeMs;
-    QDate _statusDate;
-    quint64 _sentenceSequence = 0;
-    quint64 _invalidThroughSequence = 0;
-    bool _navigationValid = true;
-    QByteArray _sentence;
+    QHash<int, quint64> _publishedEpochs;
+    std::array<char, 1024> _sentenceBuffer{};
+    NMEA::LineFramer _lineFramer;
+    NMEA::NavigationEpochAssembler _navigationAssembler;
     quint64 _sentenceTimestampUs = 0;
     bool _closed = false;
     bool _drainPending = false;

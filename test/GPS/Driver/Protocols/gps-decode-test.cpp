@@ -12,8 +12,8 @@
 #include "Ashtech/GPSDriverAshtech.h"
 #include "CRC32.h"
 #include "Femto/GPSDriverFemto.h"
+#include "GPSNMEAReport.h"
 #include "GPSProtocolTestIO.h"
-#include "NMEA/GPSNMEAReport.h"
 #include "NMEAFields.h"
 #include "NMEASentence.h"
 #include "ProtocolTestPackets.h"
@@ -622,14 +622,14 @@ void sbfEpochMetadata()
     GPSNativePositionReport position;
     GPSNativeSatelliteReport satellites;
     std::vector<GPSNativePositionReport> fixes;
-    std::vector<GPSSatelliteUsageReport> usage;
+    std::vector<GPSNativeSatelliteUsageReport> usage;
     auto io = makeGPSProtocolTestIO();
     io.decoded = [&](const GPSDecodedBatch& batch) {
         for (const auto& event : batch.events) {
             if (const auto* fix = std::get_if<GPSNativePositionReport>(&event)) {
                 fixes.push_back(*fix);
             }
-            if (const auto* count = std::get_if<GPSSatelliteUsageReport>(&event)) {
+            if (const auto* count = std::get_if<GPSNativeSatelliteUsageReport>(&event)) {
                 usage.push_back(*count);
             }
         }

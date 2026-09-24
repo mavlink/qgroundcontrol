@@ -52,9 +52,8 @@
 #include <QtCore/QString>
 
 #include "GPSBaseStationConfig.h"
+#include "GPSDecodedBatch.h"
 #include "GPSEllipsoidPosition.h"
-#include "GPSNativePositionReport.h"
-#include "GPSNativeSatelliteReport.h"
 #include "GPSProtocolIO.h"
 #include "RTCMStreamDecoder.h"
 
@@ -353,7 +352,7 @@ protected:
     void publishSatelliteUsage(std::optional<int> count)
     {
         _decoded.updates |= GPSDecodedBatch::SATELLITES_UPDATE;
-        _decoded.events.emplace_back(GPSSatelliteUsageReport{nowUs(), count});
+        _decoded.events.emplace_back(GPSNativeSatelliteUsageReport{nowUs(), count});
     }
 
     void surveyInStatus(GPSNativeSurveyReport& status)

@@ -84,9 +84,9 @@ if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
             FATAL_ERROR "QGC_BUILD_GPS_PROTOCOL_FUZZER requires a Clang driver with libFuzzer and sanitizer runtimes"
         )
     endif()
-    get_target_property(native_targets QGCGPSNative QGC_GPS_NATIVE_TARGETS)
-    list(APPEND native_targets QGCGPSNMEAProtocol QGCGPSReceiver QGCGPSTransport QGCGPSRTCM)
-    foreach(native_target IN LISTS native_targets)
+    foreach(native_target QGCGPSNative QGCGPSNativeContracts QGCGPSNMEAProtocol QGCGPSReceiver QGCGPSTransport
+                          QGCGPSRTCM
+    )
         get_target_property(native_type ${native_target} TYPE)
         if(native_type STREQUAL "INTERFACE_LIBRARY")
             set(_sanitizer_scope INTERFACE)

@@ -41,7 +41,6 @@ public:
 
 signals:
     void satelliteInfoUpdate(const GPSSatelliteReport& message);
-    void satelliteUsageUpdate(const GPSSatelliteUsageReport& message);
     void fixTypeChanged(GPSPositionReport::FixType fixType);
     void RTCMDataUpdate(const QByteArray& message, qint64 receivedAtMs);
     void surveyInStatus(const GPSSurveyReport& report);

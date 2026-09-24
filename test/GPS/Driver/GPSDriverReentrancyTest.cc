@@ -209,17 +209,22 @@ void GPSDriverReentrancyTest::_satelliteExpiry()
     ReentrancyTransport transport;
     GPSSatelliteReport latest;
     int unavailableReports = 0;
+    bool viewCoverageSeen = false;
     GPSDriverSinks sinks;
     sinks.onSatelliteInfo = [&](const GPSSatelliteReport& report) {
         latest = report;
-        unavailableReports += report.timestampUs == 0;
+        if (report.inView) {
+            viewCoverageSeen = true;
+        } else if (viewCoverageSeen) {
+            ++unavailableReports;
+        }
     };
     GPSDriver driver(GPSType::passive, transport, {.role = GPSReceiverConfig::Role::Passive, .baudRate = 115200},
                      std::move(sinks));
     QVERIFY(driver.configure());
     transport.incoming = SATELLITES + POSITION;
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Data);
-    QCOMPARE(latest.inView, 1);
+    QCOMPARE(latest.inView, std::optional<int>{1});
     QVERIFY(latest.timestampUs != 0);
     QCOMPARE(unavailableReports, 0);
 
@@ -234,7 +239,7 @@ void GPSDriverReentrancyTest::_satelliteExpiry()
                              EXPIRY_TIMEOUT_MS);
     QCOMPARE(unavailableReports, 1);
     QCOMPARE(latest.timestampUs, uint64_t{0});
-    QCOMPARE(latest.inView, 0);
+    QVERIFY(!latest.inView);
     QCOMPARE(result.status, positionTraffic ? GPSReceiveStatus::Data : GPSReceiveStatus::Idle);
     if (!positionTraffic) {
         QCOMPARE(result.updates, 0);
@@ -245,7 +250,7 @@ void GPSDriverReentrancyTest::_satelliteExpiry()
 
     transport.incoming = SATELLITES + NEXT_POSITION;
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Data);
-    QCOMPARE(latest.inView, 1);
+    QCOMPARE(latest.inView, std::optional<int>{1});
     QVERIFY(latest.timestampUs != 0);
     QCOMPARE(transport.writes, 0);
 }

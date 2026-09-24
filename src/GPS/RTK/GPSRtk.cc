@@ -443,7 +443,6 @@ bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transp
         },
         Qt::QueuedConnection);
     (void) connectCurrent(&GPSProvider::satelliteInfoUpdate, std::bind_front(&GPSRtk::_satelliteInfoUpdate, this));
-    (void) connectCurrent(&GPSProvider::satelliteUsageUpdate, std::bind_front(&GPSRtk::_satelliteUsageUpdate, this));
     (void) connectCurrent(&GPSProvider::fixTypeChanged, std::bind_front(&GPSRtk::_fixTypeChanged, this));
     (void) connectCurrent(&GPSProvider::surveyInStatus, std::bind_front(&GPSRtk::_onGPSSurveyReport, this));
     (void) connectCurrent(
@@ -501,37 +500,19 @@ GPSRTKFactGroup* GPSRtk::gpsRtkFactGroup()
     return _gpsRtkFactGroup.get();
 }
 
-GPSRtk::SatelliteCounts GPSRtk::countSatellites(const GPSSatelliteReport& msg)
-{
-    SatelliteCounts counts;
-    if (msg.timestampUs == 0) {
-        return counts;
-    }
-    counts.inView = std::max(0, msg.inView);
-    counts.used = counts.inView == 0 ? std::optional<int>{0} : msg.used;
-    return counts;
-}
-
 void GPSRtk::_satelliteInfoUpdate(const GPSSatelliteReport& msg)
 {
     const quint64 generation = ++_generation;
-    const SatelliteCounts counts = countSatellites(msg);
+    const int inView = msg.inView.value_or(-1);
+    const int used = msg.used.value_or(-1);
     qCDebug(GPSRtkLog) << QStringLiteral("%1 in view, %2 used")
-                              .arg(counts.inView)
-                              .arg(counts.used ? QString::number(*counts.used) : QStringLiteral("unknown"));
-    const int used = counts.used.value_or(_session.countOnlySatelliteUsage.value_or(-1));
-    _publishFacts({{_gpsRtkFactGroup->numSatellites(), counts.inView}, {_gpsRtkFactGroup->numSatellitesUsed(), used}},
+                              .arg(inView)
+                              .arg(msg.used ? QString::number(used) : QStringLiteral("unknown"));
+    _publishFacts({{_gpsRtkFactGroup->numSatellites(), inView}, {_gpsRtkFactGroup->numSatellitesUsed(), used}},
                   generation);
 }
 
 void GPSRtk::_fixTypeChanged(GPSPositionReport::FixType fixType)
 {
     qCDebug(GPSRtkLog) << "Receiver fix changed:" << static_cast<int>(fixType);
-}
-
-void GPSRtk::_satelliteUsageUpdate(const GPSSatelliteUsageReport& msg)
-{
-    // A count-only observation cannot change the independently reported satellites in view.
-    _session.countOnlySatelliteUsage = msg.usedCount;
-    _publishFacts({{_gpsRtkFactGroup->numSatellitesUsed(), msg.usedCount.value_or(-1)}}, ++_generation);
 }

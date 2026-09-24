@@ -30,7 +30,6 @@ target_sources(
            GPSType.h
            GPSDriverReports.h
            GPSConfigurationEvidence.h
-           GPSSatelliteUsageReport.h
            GPSSatelliteObservation.h
            GPSSatelliteState.h
 )

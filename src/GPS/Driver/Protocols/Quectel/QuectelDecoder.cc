@@ -3,7 +3,7 @@
 #include <limits>
 
 #include "GPSDriverQuectel.h"
-#include "NMEA/NMEAFields.h"
+#include "NMEAFields.h"
 #include "QuectelCodec_p.h"
 
 namespace {

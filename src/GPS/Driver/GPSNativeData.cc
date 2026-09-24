@@ -48,7 +48,17 @@ GPSSatelliteReport SatelliteSnapshot::update(const GPSNativeSatelliteReport& sou
     }
     _latestReceiptUs = nowUs ? nowUs : std::max<uint64_t>(_latestReceiptUs, observation.monotonicTimestampUs);
     _state.updateObservation(observation, _latestReceiptUs);
-    return _snapshot(_latestReceiptUs);
+    return _snapshot(_latestReceiptUs, UsageSelection::ViewThenCountOnly);
+}
+
+GPSSatelliteReport SatelliteSnapshot::update(const GPSNativeSatelliteUsageReport& source, uint64_t nowUs)
+{
+    const uint64_t receipt = nowUs ? nowUs : source.timestampUs;
+    _countOnlyUsage = source.usedCount;
+    _countOnlyUsageReceiptUs = receipt;
+    _latestReceiptUs = std::max(_latestReceiptUs, receipt);
+    _countOnlyUsageIsLatest = true;
+    return _snapshot(_latestReceiptUs, UsageSelection::CountOnly);
 }
 
 std::optional<GPSSatelliteReport> SatelliteSnapshot::expire(uint64_t nowUs)
@@ -58,35 +68,57 @@ std::optional<GPSSatelliteReport> SatelliteSnapshot::expire(uint64_t nowUs)
         return std::nullopt;
     }
     _latestReceiptUs = nowUs;
-    return _snapshot(nowUs);
+    return _snapshot(nowUs, UsageSelection::ViewThenCountOnly);
 }
 
-GPSSatelliteReport SatelliteSnapshot::_snapshot(uint64_t nowUs)
+SatelliteSnapshot::SatelliteProjection SatelliteSnapshot::_project(uint64_t nowUs)
 {
     const auto accepted = _state.snapshot(nowUs);
-    GPSSatelliteReport snapshot;
+    SatelliteProjection projection;
     bool usedKnown = true;
     int used = 0;
+    int inView = 0;
     for (const auto& system : accepted.constellations) {
-        snapshot.timestampUs = std::max<uint64_t>(snapshot.timestampUs, system.view.receivedAtUs);
         if (!system.view.receivedAtUs) {
             continue;
         }
-        snapshot.inView += system.view.count;
+        projection.report.timestampUs = std::max<uint64_t>(projection.report.timestampUs, system.view.receivedAtUs);
+        inView += system.view.count;
         if (system.view.count <= 0) {
+            projection.viewUsageReceiptUs = std::max<uint64_t>(projection.viewUsageReceiptUs, system.view.receivedAtUs);
             continue;
         }
         if (system.usage.receivedAtUs && system.usage.count) {
             used += *system.usage.count;
+            projection.viewUsageReceiptUs =
+                std::max<uint64_t>(projection.viewUsageReceiptUs, system.usage.receivedAtUs);
         } else {
             usedKnown = false;
         }
     }
-    if (snapshot.timestampUs && snapshot.inView == 0) {
-        snapshot.used = 0;
-    } else if (snapshot.timestampUs && usedKnown) {
-        snapshot.used = used;
+    if (projection.report.timestampUs) {
+        projection.report.inView = inView;
+        if (inView == 0) {
+            projection.viewUsed = 0;
+            projection.viewUsageReceiptUs = projection.report.timestampUs;
+        } else if (usedKnown) {
+            projection.viewUsed = used;
+        }
     }
-    return snapshot;
+    return projection;
+}
+
+GPSSatelliteReport SatelliteSnapshot::_snapshot(uint64_t nowUs, UsageSelection usageSelection)
+{
+    auto projection = _project(nowUs);
+    _countOnlyUsageIsLatest = _countOnlyUsageReceiptUs && _countOnlyUsageReceiptUs >= projection.viewUsageReceiptUs;
+    if (usageSelection == UsageSelection::CountOnly || (_countOnlyUsageIsLatest && !projection.viewUsed)) {
+        projection.report.used = _countOnlyUsage;
+    } else if (projection.viewUsed) {
+        projection.report.used = projection.viewUsed;
+    } else {
+        projection.report.used = _countOnlyUsage;
+    }
+    return projection.report;
 }
 }  // namespace GPSNativeData

@@ -3,7 +3,7 @@
 #include <array>
 #include <optional>
 
-#include "GPSNativePositionReport.h"
+#include "GPSDecodedBatch.h"
 
 /// Two receiver epochs tolerate reordered navigation messages without mixing their fields.
 class UBXNavigationEpoch

@@ -164,19 +164,19 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
         return driver.receiveOutcome(20);
     };
     QCOMPARE(feed("GPGSV,1,1,01,01,10,20,30").status, GPSReceiveStatus::Data);
-    QCOMPARE(snapshots.size(), size_t(2));
-    QCOMPARE(snapshots[0].inView, 1);
-    QCOMPARE(snapshots[1].inView, 1);  // Empty SBAS scope must not clear GPS.
+    // The empty SBAS scope must not clear GPS; its unchanged counts are not republished.
+    QCOMPARE(snapshots.size(), size_t(1));
+    QCOMPARE(snapshots[0].inView, std::optional<int>{1});
     QCOMPARE(feed("GLGSV,1,1,01,65,20,30,40").updates, GPSReceiveResult::SATELLITES_UPDATE);
-    QCOMPARE(snapshots.back().inView, 2);
+    QCOMPARE(snapshots.back().inView, std::optional<int>{2});
     QCOMPARE(feed("GPGSV,1,1,02,01,10,20,30,33,15,25,35").status, GPSReceiveStatus::Data);
-    QCOMPARE(snapshots.back().inView, 3);
+    QCOMPARE(snapshots.back().inView, std::optional<int>{3});
     QCOMPARE(feed("GLGSV,1,1,00").status, GPSReceiveStatus::Data);
-    QCOMPARE(snapshots.back().inView, 2);
+    QCOMPARE(snapshots.back().inView, std::optional<int>{2});
     QCOMPARE(feed("GPGSV,1,1,00").status, GPSReceiveStatus::Data);
     QCOMPARE(snapshots.size(), size_t(2));
-    QCOMPARE(snapshots[0].inView, 1);
-    QCOMPARE(snapshots[1].inView, 0);
+    QCOMPARE(snapshots[0].inView, std::optional<int>{1});
+    QCOMPARE(snapshots[1].inView, std::optional<int>{0});
 }
 
 void GPSDriverTest::_nativeIntegrityProvenance()
@@ -233,11 +233,9 @@ void GPSDriverTest::_femtoSatelliteUsage()
 {
     FakeGPSTransport transport;
     transport.acknowledgeFemto = true;
-    std::vector<GPSSatelliteUsageReport> usage;
-    int snapshots = 0;
+    std::vector<GPSSatelliteReport> reports;
     GPSDriverSinks sinks;
-    sinks.onSatelliteInfo = [&](const auto&) { ++snapshots; };
-    sinks.onSatelliteUsage = [&](const auto& report) { usage.push_back(report); };
+    sinks.onSatelliteInfo = [&](const auto& report) { reports.push_back(report); };
     GPSDriver driver(GPSType::femto, transport,
                      {.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 47,
                                                                                 .longitudeDegrees = 8,
@@ -250,12 +248,12 @@ void GPSDriverTest::_femtoSatelliteUsage()
         QCOMPARE(result.status, GPSReceiveStatus::Data);
         QCOMPARE(result.updates & GPSReceiveResult::SATELLITES_UPDATE, GPSReceiveResult::SATELLITES_UPDATE);
     }
-    QCOMPARE(usage.size(), size_t(3));
-    QCOMPARE(usage[0].usedCount, std::optional<int>{12});
-    QCOMPARE(usage[1].usedCount, std::optional<int>{0});
-    QVERIFY(!usage[2].usedCount);
-    QVERIFY(usage[0].timestampUs > 0);
-    QCOMPARE(snapshots, 0);
+    QCOMPARE(reports.size(), size_t(3));
+    QVERIFY(!reports[0].inView);
+    QCOMPARE(reports[0].used, std::optional<int>{12});
+    QCOMPARE(reports[1].used, std::optional<int>{0});
+    QVERIFY(!reports[2].used);
+    QCOMPARE(reports[0].timestampUs, uint64_t{0});
 }
 
 void GPSDriverTest::_receiveOutcomes()
@@ -309,11 +307,9 @@ void GPSDriverTest::_receiveOutcomes()
 void GPSDriverTest::_sbfSatelliteUsage()
 {
     ScriptedSBFReceiver receiver(neverStop);
-    std::vector<GPSSatelliteUsageReport> usage;
-    int snapshots = 0;
+    std::vector<GPSSatelliteReport> reports;
     GPSDriverSinks sinks;
-    sinks.onSatelliteUsage = [&](const auto& report) { usage.push_back(report); };
-    sinks.onSatelliteInfo = [&](const auto&) { ++snapshots; };
+    sinks.onSatelliteInfo = [&](const auto& report) { reports.push_back(report); };
     GPSDriver driver(GPSType::septentrio, receiver,
                      {.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 47,
                                                                                 .longitudeDegrees = 8,
@@ -327,11 +323,11 @@ void GPSDriverTest::_sbfSatelliteUsage()
         QCOMPARE(result.status, GPSReceiveStatus::Data);
         QCOMPARE(result.updates & GPSReceiveResult::SATELLITES_UPDATE, GPSReceiveResult::SATELLITES_UPDATE);
     }
-    QCOMPARE(usage.size(), size_t(3));
-    QCOMPARE(usage[0].usedCount, std::optional<int>{12});
-    QCOMPARE(usage[1].usedCount, std::optional<int>{0});
-    QVERIFY(!usage[2].usedCount);
-    QCOMPARE(snapshots, 0);
+    QCOMPARE(reports.size(), size_t(3));
+    QVERIFY(!reports[0].inView);
+    QCOMPARE(reports[0].used, std::optional<int>{12});
+    QCOMPARE(reports[1].used, std::optional<int>{0});
+    QVERIFY(!reports[2].used);
 }
 
 void GPSDriverTest::_rtcmActivationRejected()

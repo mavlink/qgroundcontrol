@@ -23,7 +23,6 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
 {
     qCDebug(GPSProviderLog) << this;
     (void) qRegisterMetaType<GPSSatelliteReport>("GPSSatelliteReport");
-    (void) qRegisterMetaType<GPSSatelliteUsageReport>("GPSSatelliteUsageReport");
     (void) qRegisterMetaType<GPSPositionReport::FixType>("GPSPositionReport::FixType");
     (void) qRegisterMetaType<GPSConnectionError>("GPSConnectionError");
     (void) qRegisterMetaType<GPSSurveyReport>("GPSSurveyReport");
@@ -94,7 +93,6 @@ void GPSProvider::run()
             }
         };
     sinks.onSatelliteInfo = [this](const GPSSatelliteReport& message) { emit satelliteInfoUpdate(message); };
-    sinks.onSatelliteUsage = [this](const GPSSatelliteUsageReport& message) { emit satelliteUsageUpdate(message); };
     sinks.onRTCM = [this](std::span<const uint8_t> message) {
         const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
         emit RTCMDataUpdate(

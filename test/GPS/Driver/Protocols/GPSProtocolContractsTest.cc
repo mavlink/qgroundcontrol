@@ -12,20 +12,19 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QTime>
 
+#include "Ashtech/GPSDriverAshtech.h"
+#include "Femto/GPSDriverFemto.h"
+#include "GPSAsciiProtocol.h"
 #include "GPSReceiverCapabilities.h"
 #include "NMEAConstellation.h"
 #include "NMEASatelliteEpoch.h"
 #include "NMEASentence.h"
 #include "NMEAUtils.h"
-#include "UnitTest.h"
-
-#include "UBX/GPSDriverUBX.h"
-#include "Ashtech/GPSDriverAshtech.h"
-#include "SBF/GPSDriverSBF.h"
-#include "Femto/GPSDriverFemto.h"
-#include "Unicore/GPSDriverUnicore.h"
 #include "Quectel/GPSDriverQuectel.h"
-#include "Passive/GPSDriverPassive.h"
+#include "SBF/GPSDriverSBF.h"
+#include "UBX/GPSDriverUBX.h"
+#include "Unicore/GPSDriverUnicore.h"
+#include "UnitTest.h"
 
 namespace {
 template <typename Driver>

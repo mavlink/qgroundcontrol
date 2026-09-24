@@ -14,9 +14,6 @@ target_sources(
               GPSCommandTransaction.h
               GPSDeadline.h
               GPSDecodedBatch.h
-              GPSNativePositionReport.h
-              GPSNativeSatelliteReport.h
-              GPSNativeSurveyReport.h
               GPSProtocolIO.h
               GPSRawAckMatcher.h
               GPSReceiverSettingId.h
