@@ -32,6 +32,7 @@ private slots:
     void _testTryDetectKeyCooldown();
     void _testChannelKeyName();
     void _testInitSigningWithPersistedTimestamp();
+    void _testStripSignatureForRetransmitProducesValidCrc_data();
     void _testStripSignatureForRetransmitProducesValidCrc();
     void _testTryDetectKeyInstallsSecureCallback();
     void _testRefreshOutgoingTimestamp();

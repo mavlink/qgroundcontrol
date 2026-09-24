@@ -24,7 +24,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 include(CPMPatchCache)
 
 set(_libevents_repository "https://github.com/mavlink/libevents.git")
-set(_libevents_tag 840a88ea226d4eb0fd4c391ce860317422756435)
+set(_libevents_tag 0ef305faa4cffdb09f01ca862ebfc108b7ff0cd5)
 # Exposes the event ID on HealthAndArmingChecks::Check so warning acknowledgements survive changing message values.
 # Remove once upstream libevents provides it.
 set(_libevents_patch "${CMAKE_CURRENT_LIST_DIR}/libevents-check-event-id.patch")
