@@ -93,6 +93,14 @@ def main() -> None:
             if sys.platform != "win32":
                 assert report["interrupted"]
 
+    tcp_endpoint = ["--transport", "tcp", "--device", "127.0.0.1:1"]
+    report = run(binary, tcp_endpoint, 0)
+    assert report["outcome"] == "not_run" and "stages" not in report
+    for device in ("127.0.0.1", "127.0.0.1:0", "127.0.0.1:65536"):
+        report = run(binary, ["--transport", "tcp", "--device", device], 2)
+        assert "host:port" in report["detail"]
+    report = run(binary, ["--action", "configure", *tcp_endpoint], 2)
+    assert "allow-reconfigure" in report["detail"]
     serial_endpoint = ["--transport", "serial", "--device", "not-a-real-device"]
     if serial_disabled:
         report = run(binary, serial_endpoint, 2)

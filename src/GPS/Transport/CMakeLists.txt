@@ -9,15 +9,18 @@ target_link_libraries(
 target_sources(QGCGPSTransport PUBLIC FILE_SET HEADERS FILES GPSTransport.h GPSTransportResult.h)
 
 if(NOT DEFINED QGC_GPS_COMPONENTS_ENABLED OR "ReceiverTransports" IN_LIST QGC_GPS_COMPONENTS_ENABLED)
+    find_package(Qt6 6.8 REQUIRED COMPONENTS Network)
+    qt_add_library(QGCGPSReceiverTransports STATIC TCPGPSTransport.cc GPSStreamWrite_p.h)
+    add_library(QGC::GPSReceiverTransports ALIAS QGCGPSReceiverTransports)
+    target_compile_features(QGCGPSReceiverTransports PUBLIC cxx_std_20)
+    target_link_libraries(
+        QGCGPSReceiverTransports
+        PUBLIC QGCGPSTransport Qt6::Network
+        PRIVATE QGCLoggingCategory
+    )
+    target_sources(QGCGPSReceiverTransports PUBLIC FILE_SET HEADERS FILES TCPGPSTransport.h)
     if(NOT QGC_NO_SERIAL_LINK)
-        qt_add_library(QGCGPSReceiverTransports STATIC SerialGPSTransport.cc GPSStreamWrite_p.h)
-        add_library(QGC::GPSReceiverTransports ALIAS QGCGPSReceiverTransports)
-        target_compile_features(QGCGPSReceiverTransports PUBLIC cxx_std_20)
-        target_link_libraries(
-            QGCGPSReceiverTransports
-            PUBLIC QGCGPSTransport
-            PRIVATE QGCLoggingCategory
-        )
+        target_sources(QGCGPSReceiverTransports PRIVATE SerialGPSTransport.cc)
         target_sources(QGCGPSReceiverTransports PUBLIC FILE_SET HEADERS FILES SerialGPSTransport.h)
         if(ANDROID)
             target_link_libraries(QGCGPSReceiverTransports PRIVATE QGCAndroidSerialPort)
@@ -25,9 +28,6 @@ if(NOT DEFINED QGC_GPS_COMPONENTS_ENABLED OR "ReceiverTransports" IN_LIST QGC_GP
             target_link_libraries(QGCGPSReceiverTransports PRIVATE Qt6::SerialPort)
         endif()
     else()
-        add_library(QGCGPSReceiverTransports INTERFACE)
-        add_library(QGC::GPSReceiverTransports ALIAS QGCGPSReceiverTransports)
-        target_link_libraries(QGCGPSReceiverTransports INTERFACE QGCGPSTransport)
-        target_compile_definitions(QGCGPSReceiverTransports INTERFACE QGC_NO_SERIAL_LINK)
+        target_compile_definitions(QGCGPSReceiverTransports PUBLIC QGC_NO_SERIAL_LINK)
     endif()
 endif()

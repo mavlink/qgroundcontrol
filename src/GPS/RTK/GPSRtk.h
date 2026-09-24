@@ -33,12 +33,20 @@ class GPSRtk : public QObject
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
     Q_PROPERTY(int activeManufacturer READ activeManufacturer NOTIFY receiverChanged)
     Q_PROPERTY(int activeBaseMode READ activeBaseMode NOTIFY receiverChanged)
-    Q_PROPERTY(QString activeSerialDevice READ activeSerialDevice NOTIFY receiverChanged)
+    Q_PROPERTY(QString activeEndpoint READ activeEndpoint NOTIFY receiverChanged)
     Q_PROPERTY(QString receiverIdentity READ receiverIdentity NOTIFY receiverChanged)
 
     friend class GPSRtkTest;
 
 public:
+    /// Values of RTKSettings::connectionType.
+    enum ConnectionType
+    {
+        Serial = 0,
+        Tcp = 1,
+    };
+    Q_ENUM(ConnectionType)
+
     explicit GPSRtk(QObject* parent = nullptr);
     ~GPSRtk();
 
@@ -69,7 +77,8 @@ public:
 
     int activeBaseMode() const { return _session.baseMode; }
 
-    QString activeSerialDevice() const { return _session.serialDevice; }
+    /// Serial device or TCP host:port of the active receiver.
+    QString activeEndpoint() const { return _session.endpoint; }
 
     QString receiverIdentity() const { return _session.identity; }
 
@@ -98,6 +107,7 @@ private:
         QPointer<GPSProvider> provider;
         GPSCorrectionSourceRegistration corrections;
         QString serialDevice;
+        QString endpoint;
         QString identity;
         int manufacturer = 0;
         int baseMode = -1;
@@ -109,8 +119,10 @@ private:
 #ifndef QGC_NO_SERIAL_LINK
     bool _connectSerialGPS(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges);
 #endif
+    bool _connectTcpGPS(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges);
     bool _connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory, const QString& sourceInstance,
-                          uint32_t baudRate, bool allowPersistentChanges, const QString& serialDevice = {});
+                          uint32_t baudRate, bool allowPersistentChanges, const QString& serialDevice = {},
+                          const QString& endpoint = {});
     void _retireSession();
     bool _publishDisconnected(quint64 generation);
     bool _publishFacts(std::initializer_list<std::pair<Fact*, QVariant>> updates, quint64 generation);

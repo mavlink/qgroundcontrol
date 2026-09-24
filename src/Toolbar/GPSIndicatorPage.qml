@@ -147,10 +147,10 @@ ToolIndicatorPage {
                     labelText: root._receiver.receiverIdentity
                 }
                 LabelledLabel {
-                    objectName: "rtkReceiverPort"
-                    visible: root._receiver.hasReceiver && root._receiver.activeSerialDevice.length > 0
-                    label: qsTr("Port")
-                    labelText: root._receiver.activeSerialDevice
+                    objectName: "rtkReceiverEndpoint"
+                    visible: root._receiver.hasReceiver && root._receiver.activeEndpoint.length > 0
+                    label: qsTr("Connection")
+                    labelText: root._receiver.activeEndpoint
                 }
                 LabelledLabel {
                     objectName: "rtkFixType"

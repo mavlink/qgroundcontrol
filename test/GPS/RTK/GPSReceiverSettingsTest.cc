@@ -106,6 +106,9 @@ struct SettingsFixture
         saved.setFactValue(settings->fixedBasePositionAltitude(), 0);
         saved.setFactValue(settings->fixedBasePositionAccuracy(), 0);
         saved.setFactValue(settings->compactRtcmCorrections(), false);
+        saved.setFactValue(settings->connectionType(), GPSRtk::Serial);
+        saved.setFactValue(settings->tcpHost(), QString());
+        saved.setFactValue(settings->tcpPort(), 0);
     }
 };
 
@@ -256,6 +259,39 @@ void GPSReceiverSettingsTest::_unavailablePositionCannotBeSaved()
     QVERIFY(!result);
     QCOMPARE(settings.settings->fixedBasePositionLatitude()->rawValue().toDouble(), 0.0);
     QCOMPARE(settings.settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.0);
+}
+
+void GPSReceiverSettingsTest::_tcpConnectionFields()
+{
+    SettingsFixture settings(4);
+    ReceiverSettingsController receiver(settings.settings);
+    GPSRTKFactGroup facts;
+    QQmlEngine engine;
+    QString error;
+    auto panel = createPanel(engine, receiver, settings, facts, error);
+    QVERIFY2(panel, qPrintable(error));
+    auto* host = panel->findChild<QQuickItem*>(QStringLiteral("rtkTcpHost"));
+    auto* port = panel->findChild<QQuickItem*>(QStringLiteral("rtkTcpPort"));
+    auto* device = panel->findChild<QQuickItem*>(QStringLiteral("rtkSerialDevice"));
+    auto* connectionType = panel->findChild<QQuickItem*>(QStringLiteral("rtkConnectionType"));
+    auto* consent = panel->findChild<QObject*>(QStringLiteral("rtkPersistentChangesCheckBox"));
+    QVERIFY(host && port && device && connectionType && consent);
+    QVERIFY(connectionType->isVisible());
+    QVERIFY(device->isVisible());
+    QVERIFY(!host->isVisible() && !port->isVisible());
+    settings.settings->connectionType()->setRawValue(GPSRtk::Tcp);
+    QVERIFY(host->isVisible() && port->isVisible());
+    QVERIFY(!device->isVisible());
+    settings.settings->baseReceiverManufacturers()->setRawValue(6);
+    QVERIFY(consent->property("visible").toBool());
+    for (Fact* fact : {settings.settings->tcpHost(), settings.settings->tcpPort()}) {
+        QVERIFY(QMetaObject::invokeMethod(consent, "click"));
+        QVERIFY(consent->property("checked").toBool());
+        fact->setRawValue(fact == settings.settings->tcpPort() ? QVariant(2101) : QVariant(QStringLiteral("bridge")));
+        QVERIFY(!consent->property("checked").toBool());
+    }
+    receiver.setConnected(true);
+    QVERIFY(!host->isEnabled() && !port->isEnabled());
 }
 
 void GPSReceiverSettingsTest::_compactCorrectionsToggle()
@@ -481,10 +517,9 @@ void GPSReceiverSettingsTest::_disconnectedPage()
                              TestTimeout::shortMs());
     auto* connect = page->findChild<QQuickItem*>(QStringLiteral("rtkConnectButton"));
     QVERIFY(connect);
-    QCOMPARE(connect->isVisible(), receiver->serialSupported());
-    if (receiver->serialSupported()) {
-        QVERIFY(connect->isEnabled());
-    }
+    // TCP connections are available even without serial support.
+    QVERIFY(connect->isVisible());
+    QVERIFY(connect->isEnabled());
     QVERIFY(item->width() <= width + 1);
 }
 

@@ -9,6 +9,8 @@
 #include <QtCore/QScopeGuard>
 #include <QtCore/QSemaphore>
 #include <QtCore/QTimer>
+#include <QtNetwork/QTcpServer>
+#include <QtNetwork/QTcpSocket>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQml/QQmlExpression>
@@ -28,6 +30,7 @@
 #include "RTKSettings.h"
 #include "ScriptedGPSTransport.h"
 #include "SettingsManager.h"
+#include "TCPGPSTransport.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 #endif
@@ -667,10 +670,11 @@ void GPSRtkTest::_receiverFramesAreValidated()
 void GPSRtkTest::_runtimeSettingsDoNotRequireAppRestart_data()
 {
     QTest::addColumn<QString>("name");
-    for (const auto* name : {"baseReceiverManufacturers", "serialDevice", "serialBaudRate", "useFixedBasePosition",
-                             "surveyInAccuracyLimit", "surveyInMinObservationDuration", "receiverAveragingDuration",
-                             "fixedBasePositionLatitude", "fixedBasePositionLongitude", "fixedBasePositionAltitude",
-                             "fixedBasePositionAccuracy", "compactRtcmCorrections"}) {
+    for (const auto* name :
+         {"baseReceiverManufacturers", "serialDevice", "serialBaudRate", "useFixedBasePosition",
+          "surveyInAccuracyLimit", "surveyInMinObservationDuration", "receiverAveragingDuration",
+          "fixedBasePositionLatitude", "fixedBasePositionLongitude", "fixedBasePositionAltitude",
+          "fixedBasePositionAccuracy", "compactRtcmCorrections", "connectionType", "tcpHost", "tcpPort"}) {
         QTest::newRow(name) << QString::fromLatin1(name);
     }
 }
@@ -701,6 +705,91 @@ void GPSRtkTest::_compactCorrectionsFollowReceiverSupport()
         QVERIFY(GPSRtk::_receiverConfig(GPSType::septentrio, settings, 115200, config).isEmpty());
         QVERIFY(!config.base.compactObservations);
     }
+}
+
+void GPSRtkTest::_tcpPassiveConnection()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->rtkSettings();
+    auto* autoConnect = SettingsManager::instance()->autoConnectSettings()->autoConnectRTKGPS();
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost));
+    saved.setFactValue(settings->baseReceiverManufacturers(), 7);
+    saved.setFactValue(settings->connectionType(), GPSRtk::Tcp);
+    saved.setFactValue(settings->tcpHost(), QStringLiteral("127.0.0.1"));
+    saved.setFactValue(settings->tcpPort(), server.serverPort());
+    saved.setFactValue(autoConnect, true);
+    GPSCorrectionManager corrections;
+    GPSRtk receiver;
+    receiver.setCorrectionManager(&corrections);
+    QVERIFY(receiver.connectConfiguredGPS());
+    QVERIFY(!autoConnect->rawValue().toBool());
+    const QString endpoint = QStringLiteral("127.0.0.1:%1").arg(server.serverPort());
+    QCOMPARE(receiver.activeEndpoint(), endpoint);
+    QCOMPARE(receiver._session.provider->_config.baudRate, TCPGPSTransport::FIXED_BAUDRATE);
+    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
+    QTcpSocket* peer = server.nextPendingConnection();
+    QVERIFY(peer);
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.connected(), TestTimeout::mediumMs());
+    const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    QCOMPARE(peer->write(frame), frame.size());
+    QTRY_COMPARE_WITH_TIMEOUT(corrections.sources()[static_cast<int>(GPSCorrectionSource::LocalReceiver)]
+                                  .toMap()
+                                  .value(QStringLiteral("validatedFrames"))
+                                  .toULongLong(),
+                              1ULL, TestTimeout::mediumMs());
+    const auto instances = corrections.sourceInstances();
+    QCOMPARE(instances.size(), 1);
+    QCOMPARE(instances.first().toMap().value(QStringLiteral("instanceId")).toString(),
+             QStringLiteral("tcp:%1").arg(endpoint));
+    receiver.disconnectConfiguredGPS();
+    QVERIFY(!receiver.hasReceiver());
+    QVERIFY(receiver.activeEndpoint().isEmpty());
+    QTRY_COMPARE_WITH_TIMEOUT(peer->state(), QAbstractSocket::UnconnectedState, TestTimeout::mediumMs());
+}
+
+void GPSRtkTest::_tcpConnectionErrors_data()
+{
+    QTest::addColumn<QString>("host");
+    QTest::addColumn<bool>("validPort");
+    QTest::addColumn<bool>("attempted");
+    QTest::newRow("missing-host") << QString() << true << false;
+    QTest::newRow("missing-port") << QStringLiteral("127.0.0.1") << false << false;
+    QTest::newRow("refused") << QStringLiteral("127.0.0.1") << true << true;
+}
+
+void GPSRtkTest::_tcpConnectionErrors()
+{
+    QFETCH(QString, host);
+    QFETCH(bool, validPort);
+    QFETCH(bool, attempted);
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->rtkSettings();
+    auto* autoConnect = SettingsManager::instance()->autoConnectSettings()->autoConnectRTKGPS();
+    quint16 port = 0;
+    {
+        QTcpServer server;
+        QVERIFY(server.listen(QHostAddress::LocalHost));
+        port = server.serverPort();
+    }
+    saved.setFactValue(settings->baseReceiverManufacturers(), 7);
+    saved.setFactValue(settings->connectionType(), GPSRtk::Tcp);
+    saved.setFactValue(settings->tcpHost(), host);
+    saved.setFactValue(settings->tcpPort(), validPort ? port : 0);
+    saved.setFactValue(autoConnect, true);
+    GPSRtk receiver;
+    QCOMPARE(receiver.connectConfiguredGPS(), attempted);
+    QCOMPARE(autoConnect->rawValue().toBool(), !attempted);
+    if (attempted) {
+        ignoreLogMessage("GPS.Transport.TCPGPSTransport", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Failed to connect to GPS receiver")));
+        expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg, QRegularExpression(QStringLiteral("Failed to open")));
+        QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver(), TestTimeout::mediumMs());
+        verifyExpectedLogMessage();
+    }
+    QVERIFY(!receiver.hasReceiver());
+    QCOMPARE(receiver._connectionError, GPSConnectionError::OpenFailed);
+    QVERIFY(!receiver.errorMessage().isEmpty());
 }
 
 void GPSRtkTest::_manufacturerIds_data()
@@ -907,7 +996,7 @@ void GPSRtkTest::_explicitSerialSelectionAndDisconnect()
     QCOMPARE(manual.size(), 1);
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
     QCOMPARE(openedDevice, QStringLiteral("/test/selected"));
-    QCOMPARE(receiver.activeSerialDevice(), openedDevice);
+    QCOMPARE(receiver.activeEndpoint(), openedDevice);
     QCOMPARE(receiver.activeManufacturer(), manufacturer);
     QVERIFY(!autoConnect->autoConnectRTKGPS()->rawValue().toBool());
     QVERIFY(ports.isPortReserved(openedDevice));

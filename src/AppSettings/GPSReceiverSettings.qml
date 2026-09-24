@@ -30,6 +30,7 @@ SettingsGroupLayout {
         || (baseMode === BaseModeDefinition.BaseSurveyIn && presentation.surveyIn)
         || (baseMode === BaseModeDefinition.BaseReceiverAveraging && presentation.receiverAveraging)
     readonly property bool _editable: !receiver.hasReceiver
+    readonly property bool _tcp: !receiver.serialSupported || settings.connectionType.rawValue === GPSRtk.Tcp
 
     implicitWidth: ScreenTools.defaultFontPixelWidth * 56
     heading: qsTr("RTK GPS Settings")
@@ -131,10 +132,44 @@ SettingsGroupLayout {
         }
     }
 
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.receiver.serialSupported && root.settings.connectionType.userVisible
+        Explanation { text: root.settings.connectionType.shortDescription }
+        FactComboBox {
+            objectName: "rtkConnectionType"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            fact: root.settings.connectionType
+            indexModel: false
+            enabled: root._editable
+        }
+    }
+
+    SettingField {
+        objectName: "rtkTcpHost"
+        fact: root.settings.tcpHost
+        enabled: root._editable
+        visible: root._tcp
+    }
+
+    SettingField {
+        objectName: "rtkTcpPort"
+        fact: root.settings.tcpPort
+        enabled: root._editable
+        visible: root._tcp
+    }
+
+    Explanation {
+        visible: root._tcp
+        text: qsTr("Connect to a receiver's TCP port or a serial-to-TCP bridge. A bridge must already run the receiver link at 115200 baud; QGroundControl cannot change a bridge's rate.")
+    }
+
     FactSerialPortSettings {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        visible: root.receiver.serialSupported
+        visible: root.receiver.serialSupported && !root._tcp
         deviceFact: root.settings.serialDevice
         baudFact: root.settings.serialBaudRate
         serialPorts: root.serialPorts
@@ -150,7 +185,7 @@ SettingsGroupLayout {
     Explanation {
         visible: root._editable
         text: !root.presentation.specificReceiver
-              ? qsTr("Select a specific receiver type, device, and baud rate to connect manually. Auto detects the rate of configurable receivers.")
+              ? qsTr("Select a specific receiver type and its connection to connect manually. Auto baud detects the rate of configurable receivers.")
               : qsTr("Connect only the selected receiver. USB adapter identity does not identify its GNSS manufacturer. Manual connections disable auto-connect.")
     }
 
@@ -308,7 +343,7 @@ SettingsGroupLayout {
         Layout.minimumWidth: 0
         text: qsTr("Allow flash save and restart")
         focusPolicy: Qt.StrongFocus
-        visible: root.receiver.serialSupported && root.presentation.persistentConfiguration
+        visible: root.presentation.persistentConfiguration
         enabled: root._editable
         checked: root.consent.allowed
         onClicked: root.consent.allowed = checked
@@ -322,7 +357,7 @@ SettingsGroupLayout {
 
     Explanation {
         objectName: "rtkPersistentConsentWarning"
-        visible: root.receiver.serialSupported && root.presentation.persistentConfiguration
+        visible: root.presentation.persistentConfiguration
         text: qsTr("For this connection only, allow QGroundControl to write requested base role or base-setting changes to receiver flash and restart it. Changes may remain saved even if reconnecting fails. No factory reset is performed. Permission is cleared after each attempt and is never used by auto-connect. To use the receiver as a rover again, restore its role with Quectel QGNSS or $PQTMCFGRCVRMODE,W,1 followed by $PQTMSAVEPAR.")
     }
 
@@ -333,7 +368,6 @@ SettingsGroupLayout {
         wrapMode: Text.Wrap
         focusPolicy: Qt.StrongFocus
         text: root.receiver.hasReceiver ? qsTr("Disconnect") : qsTr("Connect")
-        visible: root.receiver.serialSupported
         enabled: root.receiver.hasReceiver || (root.presentation.specificReceiver && root.modeCompatible)
         onClicked: {
             if (root.receiver.hasReceiver) {
@@ -361,6 +395,18 @@ SettingsGroupLayout {
     }
     Connections {
         target: root.settings.serialBaudRate
+        function onRawValueChanged() { root.clearConsent() }
+    }
+    Connections {
+        target: root.settings.connectionType
+        function onRawValueChanged() { root.clearConsent() }
+    }
+    Connections {
+        target: root.settings.tcpHost
+        function onRawValueChanged() { root.clearConsent() }
+    }
+    Connections {
+        target: root.settings.tcpPort
         function onRawValueChanged() { root.clearConsent() }
     }
 }

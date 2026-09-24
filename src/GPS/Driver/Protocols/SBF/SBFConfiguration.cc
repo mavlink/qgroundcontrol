@@ -130,8 +130,8 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
         return -1;  // connection and/or baudrate detection failed
     }
 
-    // Set baudrate, unless we're connected over USB
-    if (strncmp(com_port, "USB1", 4) != 0 && strncmp(com_port, "USB2", 4) != 0) {
+    // Only serial COM ports have a baud rate; USB and IP connection descriptors do not.
+    if (strncmp(com_port, "COM", 3) == 0) {
         snprintf(msg, sizeof(msg), SBF_CONFIG_BAUDRATE, com_port, baudrate);
 
         if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {

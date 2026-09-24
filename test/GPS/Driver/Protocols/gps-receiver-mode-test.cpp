@@ -326,7 +326,7 @@ void sbfRequiredBaseCommands()
 
 void sbfSelectedPortAndPrecision()
 {
-    for (const auto* port : {"COM1", "USB2"}) {
+    for (const auto* port : {"COM1", "USB2", "IP10", "IPS1"}) {
         Receiver peer;
         peer.septentrio = true;
         peer.port = port;
@@ -340,6 +340,7 @@ void sbfSelectedPortAndPrecision()
         CHECK(peer.sent(std::string("setDataInOut, ") + port + ", Auto, RTCMv3+SBF"));
         CHECK(peer.sent(std::string("setSBFOutput, Stream1, ") + port + ", +PVTGeodetic"));
         CHECK(peer.sent("setStaticPosGeodetic, Geodetic1, 47.397742491, -8.545593291, 500.1250, WGS84"));
+        CHECK(peer.sent("setCOMSettings") == std::string_view(port).starts_with("COM"));
     }
 }
 

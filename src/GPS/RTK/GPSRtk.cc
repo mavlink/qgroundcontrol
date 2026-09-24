@@ -11,6 +11,7 @@
 #include "RTCMFramer.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
+#include "TCPGPSTransport.h"
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
@@ -99,7 +100,8 @@ void GPSRtk::_onGPSConnectionError(GPSConnectionError error, const QString& deta
     switch (error) {
         case GPSConnectionError::OpenFailed:
             qCWarning(GPSRtkLog) << "Failed to open GPS receiver transport";
-            _setError(error, tr("Failed to open the receiver. Check the device, permissions, and other connections."));
+            _setError(error, tr("Failed to open the receiver. Check the device or network address, permissions, and "
+                                "other connections."));
             break;
         case GPSConnectionError::ConfigFailed:
             qCWarning(GPSRtkLog) << "GPS receiver did not accept configuration";
@@ -200,9 +202,21 @@ bool GPSRtk::_connectSerialGPS(const QString& device, GPSType type, uint32_t bau
         [endpoint, reservation, factory = _serialTransportFactory](const std::atomic_bool& requestStop) {
             return factory(endpoint, requestStop);
         },
-        QStringLiteral("serial:%1").arg(endpoint), baudRate, allowPersistentChanges, endpoint);
+        QStringLiteral("serial:%1").arg(endpoint), baudRate, allowPersistentChanges, endpoint, endpoint);
 }
 #endif
+
+bool GPSRtk::_connectTcpGPS(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges)
+{
+    const QString endpoint = QStringLiteral("%1:%2").arg(host).arg(port);
+    // Bridges keep their own serial rate, so drivers use the transport's fixed rate.
+    return _connectReceiver(
+        type,
+        [host, port](const std::atomic_bool& requestStop) {
+            return std::make_unique<TCPGPSTransport>(host, port, requestStop);
+        },
+        QStringLiteral("tcp:%1").arg(endpoint), TCPGPSTransport::FIXED_BAUDRATE, allowPersistentChanges, {}, endpoint);
+}
 
 bool GPSRtk::serialSupported() const
 {
@@ -238,7 +252,6 @@ bool GPSRtk::connectConfiguredGPS(bool allowPersistentChanges)
         return false;
     }
     ++_generation;
-#ifndef QGC_NO_SERIAL_LINK
     const QPointer<GPSRtk> guard(this);
     const quint64 generation = _generation;
     auto* settings = SettingsManager::instance()->rtkSettings();
@@ -251,24 +264,36 @@ bool GPSRtk::connectConfiguredGPS(bool allowPersistentChanges)
         _setError(GPSConnectionError::OpenFailed, tr("Disconnect the current receiver before connecting another."));
         return false;
     }
+    const bool tcp = !serialSupported() || settings->connectionType()->rawValue().toInt() == Tcp;
+    const QString host = settings->tcpHost()->rawValue().toString().trimmed();
+    const uint tcpPort = settings->tcpPort()->rawValue().toUInt();
+    if (tcp && (host.isEmpty() || tcpPort == 0 || tcpPort > 65535)) {
+        _setError(GPSConnectionError::OpenFailed, tr("Enter the receiver's TCP host and port."));
+        return false;
+    }
+#ifndef QGC_NO_SERIAL_LINK
     const QString device = settings->serialDevice()->rawValue().toString().trimmed();
-    const auto ports = _serialPorts ? _serialPorts->availablePorts() : QList<SerialPortManager::Port>{};
-    if (!guard || _generation != generation) {
-        return false;
-    }
-    const auto port = std::find_if(ports.cbegin(), ports.cend(),
-                                   [&device](const auto& candidate) { return candidate.systemLocation == device; });
-    if (device.isEmpty() || port == ports.cend() || port->bootloader) {
-        _setError(GPSConnectionError::OpenFailed, tr("Select an available serial device that is not a bootloader."));
-        return false;
-    }
     // Zero asks configurable receivers to detect the rate.
     const auto baud = settings->serialBaudRate()->rawValue().toULongLong();
-    if ((baud != 0 && (baud < 1200 || baud > 4000000)) || (baud == 0 && *type == GPSType::passive)) {
-        _setError(GPSConnectionError::ConfigFailed,
-                  gpsReceiverConfigErrorText(GPSReceiverConfigError::InvalidBaudRate));
-        return false;
+    if (!tcp) {
+        const auto ports = _serialPorts ? _serialPorts->availablePorts() : QList<SerialPortManager::Port>{};
+        if (!guard || _generation != generation) {
+            return false;
+        }
+        const auto port = std::find_if(ports.cbegin(), ports.cend(),
+                                       [&device](const auto& candidate) { return candidate.systemLocation == device; });
+        if (device.isEmpty() || port == ports.cend() || port->bootloader) {
+            _setError(GPSConnectionError::OpenFailed,
+                      tr("Select an available serial device that is not a bootloader."));
+            return false;
+        }
+        if ((baud != 0 && (baud < 1200 || baud > 4000000)) || (baud == 0 && *type == GPSType::passive)) {
+            _setError(GPSConnectionError::ConfigFailed,
+                      gpsReceiverConfigErrorText(GPSReceiverConfigError::InvalidBaudRate));
+            return false;
+        }
     }
+#endif
     emit manualConnectionRequested();
     if (!guard || _generation != generation) {
         return false;
@@ -277,10 +302,12 @@ bool GPSRtk::connectConfiguredGPS(bool allowPersistentChanges)
     if (!guard || _generation != generation) {
         return false;
     }
+    if (tcp) {
+        return _connectTcpGPS(host, static_cast<quint16>(tcpPort), *type, allowPersistentChanges);
+    }
+#ifndef QGC_NO_SERIAL_LINK
     return _connectSerialGPS(device, *type, static_cast<uint32_t>(baud), allowPersistentChanges);
 #else
-    Q_UNUSED(allowPersistentChanges);
-    _setError(GPSConnectionError::OpenFailed, tr("Serial receiver connections are unavailable in this build."));
     return false;
 #endif
 }
@@ -367,7 +394,7 @@ bool GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transpo
 
 bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory,
                               const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
-                              const QString& serialDevice)
+                              const QString& serialDevice, const QString& endpoint)
 {
     const QPointer<GPSRtk> guard(this);
     const quint64 generation = _generation;
@@ -410,6 +437,7 @@ bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transp
                             ? static_cast<int>(BaseModeDefinition::Mode::BaseReceiverAveraging)
                             : static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn);
     _session.serialDevice = serialDevice;
+    _session.endpoint = endpoint;
     _session.provider = new GPSProvider(std::move(transportFactory), type, config, this);
     const QPointer<GPSProvider> provider = _session.provider;
     (void) connect(

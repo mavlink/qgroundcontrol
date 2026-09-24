@@ -12,6 +12,35 @@
             "label": "GPS manufacturers for settings"
         },
         {
+            "name": "connectionType",
+            "shortDesc": "Receiver connection",
+            "longDesc": "Serial connects a receiver on a local port. TCP connects a receiver's network port or a serial-to-TCP bridge.",
+            "type": "uint8",
+            "enumStrings": "Serial,TCP",
+            "enumValues": "0,1",
+            "default": 0,
+            "label": "Receiver connection"
+        },
+        {
+            "name": "tcpHost",
+            "shortDesc": "Receiver host",
+            "longDesc": "Host name or address of the receiver or serial-to-TCP bridge.",
+            "type": "string",
+            "default": "",
+            "label": "Receiver host"
+        },
+        {
+            "name": "tcpPort",
+            "shortDesc": "Receiver TCP port",
+            "longDesc": "TCP port of the receiver or serial-to-TCP bridge.",
+            "type": "uint32",
+            "default": 0,
+            "min": 0,
+            "max": 65535,
+            "decimalPlaces": 0,
+            "label": "Receiver TCP port"
+        },
+        {
             "name": "serialDevice",
             "shortDesc": "Serial device",
             "longDesc": "Explicitly selected receiver port. Generic USB serial adapters are not automatically identified as GNSS receivers.",

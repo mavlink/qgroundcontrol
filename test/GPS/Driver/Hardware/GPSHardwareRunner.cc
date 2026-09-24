@@ -25,6 +25,7 @@
 #include "MonotonicClock.h"
 #include "RTCMFramer.h"
 #include "ScriptedUBXReceiver.h"
+#include "TCPGPSTransport.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
 #endif
@@ -146,7 +147,7 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     }
     const QString role = parser.value("role");
     if (!QStringList{"plan", "configure", "suite", "cancel"}.contains(options.action) ||
-        !QStringList{"scripted", "serial"}.contains(options.transport) ||
+        !QStringList{"scripted", "serial", "tcp"}.contains(options.transport) ||
         !QStringList{"ublox", "trimble", "septentrio", "femto", "unicore", "quectel", "passive"}.contains(family) ||
         !QStringList{"base", "passive"}.contains(role) || !QStringList{"f9p", "m8p"}.contains(options.model) ||
         !QStringList{"fresh", "retained", "none"}.contains(options.surveyState) ||
@@ -254,6 +255,14 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     if (options.transport == "serial" && options.device.isEmpty()) {
         return "--device is required for serial";
     }
+    if (options.transport == "tcp") {
+        const auto separator = options.device.lastIndexOf(':');
+        bool portValid = false;
+        const uint port = separator > 0 ? options.device.mid(separator + 1).toUInt(&portValid) : 0;
+        if (!portValid || port == 0 || port > 65535) {
+            return "--device must be host:port for tcp";
+        }
+    }
 #ifdef QGC_NO_SERIAL_LINK
     if (options.transport == "serial") {
         return "Serial transport is disabled in this build";
@@ -310,6 +319,11 @@ QJsonObject configurationEvidence(const GPSDriver& driver)
 
 std::unique_ptr<GPSTransport> physicalTransport(const Options& options, const std::atomic_bool& stop)
 {
+    if (options.transport == "tcp") {
+        const auto separator = options.device.lastIndexOf(':');
+        return std::make_unique<TCPGPSTransport>(
+            options.device.left(separator), static_cast<quint16>(options.device.mid(separator + 1).toUInt()), stop);
+    }
 #ifndef QGC_NO_SERIAL_LINK
     if (options.transport == "serial") {
         return std::make_unique<SerialGPSTransport>(options.device, stop);
@@ -686,14 +700,14 @@ int main(int argc, char* argv[])
     parser.addHelpOption();
     parser.addOptions({
         {{"a", "action"}, "plan|configure|suite|cancel", "action", "plan"},
-        {"transport", "scripted|serial", "transport", "scripted"},
+        {"transport", "scripted|serial|tcp", "transport", "scripted"},
         {"family", "ublox|trimble|septentrio|femto|unicore|quectel|passive", "family", "ublox"},
         {"role", "base|passive", "role", "base"},
         {"allow-reconfigure", "Authorize physical receiver writes and role changes"},
         {"allow-save", "Explicitly permit LG290P settings to be saved to flash and the receiver restarted"},
         {"compact-rtcm", "Request compact MSM4 instead of MSM7 RTCM observations from a supporting base"},
         {"output", "New JSON evidence path (atomic progress snapshots; never overwrites a previous run)", "path"},
-        {"device", "Explicit serial device path", "path"},
+        {"device", "Explicit serial device path, or host:port for tcp", "path"},
         {"baud", "Serial baud rate (0 for managed detection; passive requires an explicit rate)", "baud", "0"},
         {"survey-duration", "Requested survey minimum seconds", "seconds", "60"},
         {"survey-accuracy", "Requested survey accuracy limit, metres", "metres", "2"},

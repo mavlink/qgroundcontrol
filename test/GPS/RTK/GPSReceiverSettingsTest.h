@@ -11,6 +11,7 @@ private slots:
     void _surveySaveWorkflow();
     void _unavailablePositionCannotBeSaved_data();
     void _unavailablePositionCannotBeSaved();
+    void _tcpConnectionFields();
     void _compactCorrectionsToggle();
     void _consentIsOneUse();
     void _warningWidth_data();

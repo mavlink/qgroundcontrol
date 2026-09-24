@@ -38,6 +38,9 @@ private slots:
     void _configurationDiagnosticRetained_data();
     void _configurationDiagnosticRetained();
     void _qmlConsentIsOneUse();
+    void _tcpPassiveConnection();
+    void _tcpConnectionErrors_data();
+    void _tcpConnectionErrors();
 #ifndef QGC_NO_SERIAL_LINK
     void _explicitSerialSelectionAndDisconnect_data();
     void _explicitSerialSelectionAndDisconnect();
