@@ -4642,7 +4642,7 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/MissionManager/BlankPlanCreator.cc" line="6"/>
       <source>No Template</source>
-      <translation type="unfinished">No Template</translation>
+      <translation>Без шаблона</translation>
     </message>
   </context>
   <context>
@@ -5660,12 +5660,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/MissionManager/CorridorScanComplexItem.cc" line="105"/>
       <source>%1 does not support loading this complex mission item type: %2:%3</source>
-      <translation type="unfinished">%1 does not support loading this complex mission item type: %2:%3</translation>
+      <translation>%1 не поддерживает загрузку данного сложного типа элемента полётного задания: %2:%3</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/CorridorScanComplexItem.cc" line="112"/>
       <source>%1 complex item version %2 not supported</source>
-      <translation type="unfinished">%1 complex item version %2 not supported</translation>
+      <translation>%1: версия сложного элемента %2 не поддерживается</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/CorridorScanComplexItem.h" line="48"/>
@@ -5695,12 +5695,12 @@ Click Ok to start the auto-tuning process.
     <message>
       <location filename="../src/PlanView/CorridorScanEditor.qml" line="36"/>
       <source>Turnaround dist</source>
-      <translation type="unfinished">Turnaround dist</translation>
+      <translation>Расстояние разворота</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CorridorScanEditor.qml" line="13"/>
       <source>Use the Polyline Tools to create the polyline which defines the corridor.</source>
-      <translation type="unfinished">Use the Polyline Tools to create the polyline which defines the corridor.</translation>
+      <translation>Используйте инструменты полилинии для создания полилинии, которая определяет коридор.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CorridorScanEditor.qml" line="47"/>
@@ -8143,49 +8143,49 @@ VTOL</translation>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="28"/>
       <source>GeoFence</source>
-      <translation type="unfinished">GeoFence</translation>
+      <translation>Геозона</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="56"/>
       <source>GeoFencing allows you to set a virtual fence around the area you want to fly in.</source>
-      <translation type="unfinished">GeoFencing allows you to set a virtual fence around the area you want to fly in.</translation>
+      <translation>Геозоны позволяют установить виртуальную границу вокруг области, в которой вы хотите летать.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="57"/>
       <source>This vehicle does not support GeoFence.</source>
-      <translation type="unfinished">This vehicle does not support GeoFence.</translation>
+      <translation>Этот борт не поддерживает геозоны.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="107"/>
       <source>Insert GeoFence</source>
-      <translation type="unfinished">Insert GeoFence</translation>
+      <translation>Добавить геозону</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="112"/>
       <source>Polygon Fence</source>
-      <translation type="unfinished">Polygon Fence</translation>
+      <translation>Полигональная геозона</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="124"/>
       <source>Circular Fence</source>
-      <translation type="unfinished">Circular Fence</translation>
+      <translation>Круговая геозона</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="138"/>
       <source>Polygon Fences</source>
-      <translation type="unfinished">Polygon Fences</translation>
+      <translation>Полигональные геозоны</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="142"/>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="217"/>
       <source>None</source>
-      <translation type="unfinished">None</translation>
+      <translation>Отсутствуют</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="153"/>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="229"/>
       <source>Inclusion</source>
-      <translation type="unfinished">Inclusion</translation>
+      <translation>Включение</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="169"/>
@@ -8208,7 +8208,7 @@ VTOL</translation>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="213"/>
       <source>Circular Fences</source>
-      <translation type="unfinished">Circular Fences</translation>
+      <translation>Круговые геозоны</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="269"/>
@@ -8218,17 +8218,17 @@ VTOL</translation>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="305"/>
       <source>Breach Return Point</source>
-      <translation type="unfinished">Breach Return Point</translation>
+      <translation>Точка возврата при нарушении</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="309"/>
       <source>Add Breach Return Point</source>
-      <translation type="unfinished">Add Breach Return Point</translation>
+      <translation>Добавить точку возврата при нарушении</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="318"/>
       <source>Remove Breach Return Point</source>
-      <translation type="unfinished">Remove Breach Return Point</translation>
+      <translation>Удалить точку возврата при нарушении</translation>
     </message>
     <message>
       <location filename="../src/PlanView/GeoFenceEditor.qml" line="333"/>
@@ -11086,22 +11086,22 @@ VTOL</translation>
     <message>
       <location filename="../src/QmlControls/LogReplayStatusBar.qml" line="19"/>
       <source>Log Replay</source>
-      <translation type="unfinished">Log Replay</translation>
+      <translation>Воспроизведение лога</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/LogReplayStatusBar.qml" line="19"/>
       <source>You must close all connections prior to replaying a log.</source>
-      <translation type="unfinished">You must close all connections prior to replaying a log.</translation>
+      <translation>Необходимо закрыть все подключения перед воспроизведением лога.</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/LogReplayStatusBar.qml" line="30"/>
       <source>Select Telemetery Log</source>
-      <translation type="unfinished">Select Telemetery Log</translation>
+      <translation>Выберите лог телеметрии</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/LogReplayStatusBar.qml" line="31"/>
       <source>Telemetry Logs (*.%1)</source>
-      <translation type="unfinished">Telemetry Logs (*.%1)</translation>
+      <translation>Логи телеметрии (*.%1)</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/LogReplayStatusBar.qml" line="31"/>
@@ -11121,7 +11121,7 @@ VTOL</translation>
     <message>
       <location filename="../src/QmlControls/LogReplayStatusBar.qml" line="106"/>
       <source>Load Telemetry Log</source>
-      <translation type="unfinished">Load Telemetry Log</translation>
+      <translation>Загрузить лог телеметрии</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/LogReplayStatusBar.qml" line="112"/>
@@ -12622,7 +12622,7 @@ VTOL</translation>
     <message>
       <location filename="../src/QmlControls/MissionCommandDialog.qml" line="11"/>
       <source>Select Mission Command</source>
-      <translation type="unfinished">Select Mission Command</translation>
+      <translation>Выбор команды полётного задания</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/MissionCommandDialog.qml" line="24"/>
@@ -12712,63 +12712,63 @@ VTOL</translation>
     <message>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="59"/>
       <source>Alt Frame</source>
-      <translation type="unfinished">Alt Frame</translation>
+      <translation>Опорная высота</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="88"/>
       <source>Waypoints Altitude</source>
-      <translation type="unfinished">Waypoints Altitude</translation>
+      <translation>Высота путевых точек</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="94"/>
       <source>Flight Speed</source>
-      <translation type="unfinished">Flight Speed</translation>
+      <translation>Скорость полёта</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="111"/>
       <source>Expected Vehicle Speeds</source>
-      <translation type="unfinished">Expected Vehicle Speeds</translation>
+      <translation>Ожидаемые скорости борта</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="124"/>
       <source>The following speed values are used to calculate total mission time. They do not affect the flight speed for the mission.</source>
-      <translation type="unfinished">The following speed values are used to calculate total mission time. They do not affect the flight speed for the mission.</translation>
+      <translation>Следующие значения скорости используются для расчёта общего времени полётного задания. Они не влияют на реальную скорость полёта.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="129"/>
       <source>FW - Flight speed</source>
-      <translation type="unfinished">FW - Flight speed</translation>
+      <translation>FW — скорость полёта</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="129"/>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="137"/>
       <source>Flight speed</source>
-      <translation type="unfinished">Flight speed</translation>
+      <translation>Скорость полёта</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="137"/>
       <source>MR - Flight speed</source>
-      <translation type="unfinished">MR - Flight speed</translation>
+      <translation>MR — скорость полёта</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="145"/>
       <source>MR - Ascent speed</source>
-      <translation type="unfinished">MR - Ascent speed</translation>
+      <translation>MR — скорость набора высоты</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="145"/>
       <source>Ascent speed</source>
-      <translation type="unfinished">Ascent speed</translation>
+      <translation>Скорость набора высоты</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="152"/>
       <source>MR - Descent speed</source>
-      <translation type="unfinished">MR - Descent speed</translation>
+      <translation>MR — скорость снижения</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionDefaultsEditor.qml" line="152"/>
       <source>Descent speed</source>
-      <translation type="unfinished">Descent speed</translation>
+      <translation>Скорость снижения</translation>
     </message>
   </context>
   <context>
@@ -16070,47 +16070,47 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/PlanView/PlanInfoEditor.qml" line="45"/>
       <source>Plan File</source>
-      <translation type="unfinished">Plan File</translation>
+      <translation>Файл плана</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanInfoEditor.qml" line="50"/>
       <source>Untitled</source>
-      <translation type="unfinished">Untitled</translation>
+      <translation>Без названия</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanInfoEditor.qml" line="72"/>
       <source>Vehicle Info</source>
-      <translation type="unfinished">Vehicle Info</translation>
+      <translation>Информация о борте</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanInfoEditor.qml" line="114"/>
       <source>Expected Home Position</source>
-      <translation type="unfinished">Expected Home Position</translation>
+      <translation>Ожидаемая точка Home</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanInfoEditor.qml" line="136"/>
       <source>Click in map to set position</source>
-      <translation type="unfinished">Click in map to set position</translation>
+      <translation>Нажмите на карту, чтобы задать положение</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanInfoEditor.qml" line="144"/>
       <source>Drag to move home position. Click to set new position.</source>
-      <translation type="unfinished">Drag to move home position. Click to set new position.</translation>
+      <translation>Перетащите, чтобы переместить точку Home. Нажмите, чтобы задать новое положение.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanInfoEditor.qml" line="157"/>
       <source>Altitude (AMSL)</source>
-      <translation type="unfinished">Altitude (AMSL)</translation>
+      <translation>Высота (AMSL)</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanInfoEditor.qml" line="178"/>
       <source>Actual position/alt set by vehicle at flight time.</source>
-      <translation type="unfinished">Actual position/alt set by vehicle at flight time.</translation>
+      <translation>Фактическое положение/высота задаются бортом во время полёта.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanInfoEditor.qml" line="188"/>
       <source>Plan Templates</source>
-      <translation type="unfinished">Plan Templates</translation>
+      <translation>Шаблоны плана</translation>
     </message>
   </context>
   <context>
@@ -17392,83 +17392,83 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="137"/>
       <source>Ok</source>
-      <translation type="unfinished">Ok</translation>
+      <translation>ОК</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="140"/>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="149"/>
       <source>Open</source>
-      <translation type="unfinished">Open</translation>
+      <translation>Открыть</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="143"/>
       <source>Save</source>
-      <translation type="unfinished">Save</translation>
+      <translation>Сохранить</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="146"/>
       <source>Apply</source>
-      <translation type="unfinished">Apply</translation>
+      <translation>Применить</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="152"/>
       <source>Save All</source>
-      <translation type="unfinished">Save All</translation>
+      <translation>Сохранить всё</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="155"/>
       <source>Yes</source>
-      <translation type="unfinished">Yes</translation>
+      <translation>Да</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="158"/>
       <source>Yes to All</source>
-      <translation type="unfinished">Yes to All</translation>
+      <translation>Да для всех</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="161"/>
       <source>Retry</source>
-      <translation type="unfinished">Retry</translation>
+      <translation>Повторить</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="164"/>
       <source>Reset</source>
-      <translation type="unfinished">Reset</translation>
+      <translation>Сбросить</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="167"/>
       <source>Restore to Defaults</source>
-      <translation type="unfinished">Restore to Defaults</translation>
+      <translation>Восстановить значения по умолчанию</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="170"/>
       <source>Ignore</source>
-      <translation type="unfinished">Ignore</translation>
+      <translation>Игнорировать</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="176"/>
       <source>Cancel</source>
-      <translation type="unfinished">Cancel</translation>
+      <translation>Отмена</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="179"/>
       <source>Close</source>
-      <translation type="unfinished">Close</translation>
+      <translation>Закрыть</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="182"/>
       <source>No</source>
-      <translation type="unfinished">No</translation>
+      <translation>Нет</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="185"/>
       <source>No to All</source>
-      <translation type="unfinished">No to All</translation>
+      <translation>Нет для всех</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCPopupDialog.qml" line="188"/>
       <source>Abort</source>
-      <translation type="unfinished">Abort</translation>
+      <translation>Прервать</translation>
     </message>
   </context>
   <context>
@@ -19851,7 +19851,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="49"/>
       <source>Move &apos;%1&apos; %2 to the %3 location. %4</source>
-      <translation type="unfinished">Move &apos;%1&apos; %2 to the %3 location. %4</translation>
+      <translation>Переместите точку &apos;%1&apos; (%2) в точку %3. %4</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="50"/>
@@ -19866,27 +19866,27 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="51"/>
       <source>Takeoff</source>
-      <translation type="unfinished">Takeoff</translation>
+      <translation>Взлёт</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="52"/>
       <source>desired</source>
-      <translation type="unfinished">desired</translation>
+      <translation>желаемого положения</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="52"/>
       <source>climbout</source>
-      <translation type="unfinished">climbout</translation>
+      <translation>начала набора высоты</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="53"/>
       <source>Ensure distance from launch to transition direction is far enough to complete transition.</source>
-      <translation type="unfinished">Ensure distance from launch to transition direction is far enough to complete transition.</translation>
+      <translation>Убедитесь, что расстояние от точки старта до точки направления перехода достаточно для завершения перехода.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="60"/>
       <source>Ensure clear of obstacles and into the wind.</source>
-      <translation type="unfinished">Ensure clear of obstacles and into the wind.</translation>
+      <translation>Убедитесь, что место свободно от препятствий и ориентировано против ветра.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="67"/>
@@ -19896,37 +19896,37 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="78"/>
       <source>Click in map to set planned Takeoff location.</source>
-      <translation type="unfinished">Click in map to set planned Takeoff location.</translation>
+      <translation>Нажмите на карте, чтобы установить планируемое расположение взлёта.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="79"/>
       <source>Click in map to set planned Launch location.</source>
-      <translation type="unfinished">Click in map to set planned Launch location.</translation>
+      <translation>Нажмите на карте, чтобы установить планируемое расположение запуска.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="159"/>
       <source>Alt Frame</source>
-      <translation type="unfinished">Alt Frame</translation>
+      <translation>Опорная высота</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="172"/>
       <source>Altitude%1</source>
-      <translation type="unfinished">Altitude%1</translation>
+      <translation>Высота%1</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="176"/>
       <source> (%1)</source>
-      <translation type="unfinished"> (%1)</translation>
+      <translation> (%1)</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="182"/>
       <source>Actual AMSL alt sent: %1 %2</source>
-      <translation type="unfinished">Actual AMSL alt sent: %1 %2</translation>
+      <translation>Фактически отправленная высота AMSL: %1 %2</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SimpleItemEditor.qml" line="243"/>
       <source>Flight Speed</source>
-      <translation type="unfinished">Flight Speed</translation>
+      <translation>Скорость полёта</translation>
     </message>
   </context>
   <context>
@@ -20054,7 +20054,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="58"/>
       <source>Use the Polygon Tools to create the polygon which outlines the structure.</source>
-      <translation type="unfinished">Use the Polygon Tools to create the polygon which outlines the structure.</translation>
+      <translation>Используйте инструменты полигона для создания многоугольника, который очерчивает структуру.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="73"/>
@@ -20069,7 +20069,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="84"/>
       <source>Note: Polygon respresents structure surface not vehicle flight path.</source>
-      <translation type="unfinished">Note: Polygon respresents structure surface not vehicle flight path.</translation>
+      <translation>Примечание: Полигон представляет собой поверхность конструкции, а не траекторию полёта борта.</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="91"/>
@@ -20091,7 +20091,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
       <location filename="../src/PlanView/StructureScanEditor.qml" line="103"/>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="204"/>
       <source>Trigger Distance</source>
-      <translation type="unfinished">Trigger Distance</translation>
+      <translation>Расстояние триггера</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="109"/>
@@ -20116,17 +20116,17 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="139"/>
       <source>Scan Bottom Alt</source>
-      <translation type="unfinished">Scan Bottom Alt</translation>
+      <translation>Нижняя высота сканирования</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="146"/>
       <source>Entrance/Exit Alt</source>
-      <translation type="unfinished">Entrance/Exit Alt</translation>
+      <translation>Высота входа/выхода</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="154"/>
       <source>Gimbal Pitch</source>
-      <translation type="unfinished">Gimbal Pitch</translation>
+      <translation>Наклон гимбала</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="170"/>
@@ -20146,12 +20146,12 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="192"/>
       <source>Top Layer Alt</source>
-      <translation type="unfinished">Top Layer Alt</translation>
+      <translation>Высота верхнего слоя</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="195"/>
       <source>Bottom Layer Alt</source>
-      <translation type="unfinished">Bottom Layer Alt</translation>
+      <translation>Высота нижнего слоя</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="198"/>
@@ -20248,7 +20248,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
       <location filename="../src/MissionManager/SurveyComplexItem.cc" line="178"/>
       <location filename="../src/MissionManager/SurveyComplexItem.cc" line="234"/>
       <source>%1 does not support loading this complex mission item type: %2:%3</source>
-      <translation type="unfinished">%1 does not support loading this complex mission item type: %2:%3</translation>
+      <translation>%1 не поддерживает загрузку данного сложного типа элемента полётного задания: %2:%3</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/SurveyComplexItem.cc" line="282"/>
@@ -20958,88 +20958,88 @@ If a vehicle still has this key configured, you will no longer be able to commun
       <location filename="../src/Settings/UnitsSettings.cc" line="13"/>
       <location filename="../src/Settings/UnitsSettings.cc" line="45"/>
       <source>Feet</source>
-      <translation type="unfinished">Feet</translation>
+      <translation>Футы</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="13"/>
       <location filename="../src/Settings/UnitsSettings.cc" line="45"/>
       <source>Meters</source>
-      <translation type="unfinished">Meters</translation>
+      <translation>Метры</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="18"/>
       <source>Horizontal Distance</source>
-      <translation type="unfinished">Horizontal Distance</translation>
+      <translation>Горизонтальное расстояние</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="19"/>
       <source>Display unit for horizontal distances and ranges.</source>
-      <translation type="unfinished">Display unit for horizontal distances and ranges.</translation>
+      <translation>Единица измерения горизонтальных расстояний и дальности.</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="50"/>
       <source>Vertical Distance</source>
-      <translation type="unfinished">Vertical Distance</translation>
+      <translation>Вертикальное расстояние</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="51"/>
       <source>Display unit for altitudes and vertical heights.</source>
-      <translation type="unfinished">Display unit for altitudes and vertical heights.</translation>
+      <translation>Единица измерения высоты и вертикальных расстояний.</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="76"/>
       <source>SquareFeet</source>
-      <translation type="unfinished">SquareFeet</translation>
+      <translation>Квадратные футы</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="76"/>
       <source>SquareMeters</source>
-      <translation type="unfinished">SquareMeters</translation>
+      <translation>Квадратные метры</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="76"/>
       <source>SquareKilometers</source>
-      <translation type="unfinished">SquareKilometers</translation>
+      <translation>Квадратные километры</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="76"/>
       <source>Hectares</source>
-      <translation type="unfinished">Hectares</translation>
+      <translation>Гектары</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="76"/>
       <source>Acres</source>
-      <translation type="unfinished">Acres</translation>
+      <translation>Акры</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="76"/>
       <source>SquareMiles</source>
-      <translation type="unfinished">SquareMiles</translation>
+      <translation>Квадратные мили</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="86"/>
       <source>Area</source>
-      <translation type="unfinished">Area</translation>
+      <translation>Площадь</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="87"/>
       <source>Display unit for area measurements.</source>
-      <translation type="unfinished">Display unit for area measurements.</translation>
+      <translation>Единица измерения площади.</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="113"/>
       <source>Knots</source>
-      <translation type="unfinished">Knots</translation>
+      <translation>Узлы</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="122"/>
       <source>Speed</source>
-      <translation type="unfinished">Speed</translation>
+      <translation>Скорость</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="123"/>
       <source>Display unit for speed and velocity values.</source>
-      <translation type="unfinished">Display unit for speed and velocity values.</translation>
+      <translation>Единица измерения скорости.</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="149"/>
@@ -21059,7 +21059,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="154"/>
       <source>Display unit for temperature readings.</source>
-      <translation type="unfinished">Display unit for temperature readings.</translation>
+      <translation>Единица измерения температуры.</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="180"/>
@@ -21069,7 +21069,7 @@ If a vehicle still has this key configured, you will no longer be able to commun
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="180"/>
       <source>Kilograms</source>
-      <translation type="unfinished">Kilograms</translation>
+      <translation>Килограммы</translation>
     </message>
     <message>
       <location filename="../src/Settings/UnitsSettings.cc" line="180"/>
