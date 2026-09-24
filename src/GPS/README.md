@@ -163,6 +163,9 @@ operation revision do not belong to the retiring network attempt.
 
 Keep receiver-family build switches and reusable library targets independent. Related private
 declarations and small implementation fragments can share a file without collapsing those targets.
+Satellite observation and retention value types live in `Receiver`, which depends only on Qt Core, so
+the native driver and standalone hardware tools can use them; `Core` schedules and publishes accepted
+satellite state. Declare such dependencies through targets rather than relative includes.
 The native NMEA report adapters must not introduce native dependencies into the independent NMEA
 parser. Transport result types must not introduce Qt dependencies into transaction-only headers.
 

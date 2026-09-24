@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../Core/GPSSatelliteState.h"
 #include "GPSDriverReports.h"
 #include "GPSNativePositionReport.h"
 #include "GPSNativeSatelliteReport.h"
 #include "GPSNativeSurveyReport.h"
+#include "GPSSatelliteState.h"
 
 namespace GPSNativeData {
 GPSPositionReport position(const GPSNativePositionReport& source, const GPSIntegrityReport& diagnostic,
