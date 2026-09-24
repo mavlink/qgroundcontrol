@@ -20,6 +20,7 @@ private slots:
     void testOverride();
     void testAllTrees();
     void testUnknownCommandFallbacks();
+    void testBadCommandSkipped();
 
 private:
     QString _rawName(int id) const;
