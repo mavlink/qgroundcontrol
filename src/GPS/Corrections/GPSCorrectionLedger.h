@@ -29,13 +29,9 @@ public:
         bool active = false;
         quint64 receivedBytes = 0;
         quint64 validatedFrames = 0;
-        quint64 filteredFrames = 0;
-        quint64 submittedBytes = 0;
         qint64 lastValidMs = 0;
         quint64 receivedFrames = 0;
-        quint64 validatedBytes = 0;
         quint64 selectedFrames = 0;
-        quint64 selectedBytes = 0;
     };
 
     struct Destination : AdmissionCounters
@@ -58,7 +54,6 @@ public:
 
     void received(const GPSCorrectionFrame& frame);
     void validated(const GPSCorrectionFrame& frame);
-    void filtered(const GPSCorrectionFrame& frame);
     void selected(const GPSCorrectionFrame& frame);
     void queued(const GPSCorrectionFrame& frame, quint64 bytes, bool complete);
     void registerOutput(const QString& id);

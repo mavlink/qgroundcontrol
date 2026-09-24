@@ -87,17 +87,10 @@ QVariantList GPSCorrectionRouter::sourceDiagnostics() const
         // Freshness is published as a state rather than an age so unchanged diagnostics stay equal.
         result.append(admissionDiagnostics(
             stats, {{QStringLiteral("source"), index},
-                    {QStringLiteral("session"), QVariant::fromValue(stats.session)},
                     {QStringLiteral("active"), stats.active},
-                    {QStringLiteral("receivedBytes"), QVariant::fromValue(stats.receivedBytes)},
                     {QStringLiteral("receivedFrames"), QVariant::fromValue(stats.receivedFrames)},
-                    {QStringLiteral("validatedBytes"), QVariant::fromValue(stats.validatedBytes)},
                     {QStringLiteral("selectedFrames"), QVariant::fromValue(stats.selectedFrames)},
-                    {QStringLiteral("selectedBytes"), QVariant::fromValue(stats.selectedBytes)},
                     {QStringLiteral("validatedFrames"), QVariant::fromValue(stats.validatedFrames)},
-                    {QStringLiteral("filteredFrames"), QVariant::fromValue(stats.filteredFrames)},
-                    {QStringLiteral("routedFrames"), QVariant::fromValue(stats.selectedFrames)},
-                    {QStringLiteral("submittedBytes"), QVariant::fromValue(stats.submittedBytes)},
                     {QStringLiteral("usable"),
                      stats.active && age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS}}));
     }
@@ -115,7 +108,6 @@ QVariantList GPSCorrectionRouter::sourceInstanceDiagnostics() const
         const bool selected = usable && source.identity == active;
         result.append(QVariantMap{{QStringLiteral("source"), static_cast<int>(source.identity.category)},
                                   {QStringLiteral("instanceId"), source.identity.instance},
-                                  {QStringLiteral("session"), QVariant::fromValue(source.session)},
                                   {QStringLiteral("active"), true},
                                   {QStringLiteral("usable"), usable},
                                   {QStringLiteral("selected"), selected}});
@@ -127,9 +119,7 @@ QVariantList GPSCorrectionRouter::destinationDiagnostics() const
 {
     QVariantList result;
     for (const auto& destination : _ledger.destinations()) {
-        result.append(admissionDiagnostics(
-            destination, {{QStringLiteral("destinationId"), destination.id},
-                          {QStringLiteral("destinationSession"), QVariant::fromValue(destination.session)}}));
+        result.append(admissionDiagnostics(destination, {{QStringLiteral("destinationId"), destination.id}}));
     }
     return result;
 }
@@ -227,7 +217,6 @@ void GPSCorrectionRouter::recordRejectedFrame(GPSCorrectionFrame frame, GPSCorre
         return;
     }
     _ledger.received(frame);
-    _ledger.filtered(frame);
     _ledger.recordDrop(frame, reason, frame.data.size());
 }
 
@@ -240,7 +229,6 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
     const qint64 now = _clock();
     const qint64 age = GPSCorrectionFrame::ageMs(frame.receivedAtMs, now);
     if (age < 0) {
-        _ledger.filtered(frame);
         _ledger.recordDrop(frame, GPSCorrectionReason::InvalidTimestamp, frame.data.size());
         return false;
     }
@@ -250,18 +238,15 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
     const bool routable = !frame.filtered && age < FRESHNESS_TIMEOUT_MS;
     _selector.observe(frame, routable, now);
     if (!routable) {
-        _ledger.filtered(frame);
         _ledger.recordDrop(frame, frame.filtered ? GPSCorrectionReason::MessageFiltered : GPSCorrectionReason::Expired,
                            frame.data.size());
         return false;
     }
-    if (frame.validated && frame.messageId == 0 && frame.data.size() >= 8 &&
-        static_cast<quint8>(frame.data[0]) == 0xD3) {
-        frame.messageId = (static_cast<quint8>(frame.data[3]) << 4) | (static_cast<quint8>(frame.data[4]) >> 4);
+    if (frame.validated && frame.messageId == 0) {
+        frame.messageId = RTCMFramer::frameMessageId(frame.data);
     }
     const bool selected = _selector.selected(frame, now);
     if (!selected) {
-        _ledger.filtered(frame);
         _ledger.recordDrop(frame, GPSCorrectionReason::NotSelected, frame.data.size());
     } else {
         _ledger.selected(frame);

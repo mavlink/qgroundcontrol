@@ -54,24 +54,15 @@ void GPSCorrectionLedger::validated(const GPSCorrectionFrame& frame)
 {
     if (auto* stats = _currentStatistics(frame)) {
         ++stats->validatedFrames;
-        stats->validatedBytes += frame.data.size();
         stats->lastValidMs = (std::max) (stats->lastValidMs, frame.receivedAtMs);
     }
     recordEvent(frame, GPSCorrectionStage::Validated, GPSCorrectionReason::None, frame.data.size());
-}
-
-void GPSCorrectionLedger::filtered(const GPSCorrectionFrame& frame)
-{
-    if (auto* stats = _currentStatistics(frame)) {
-        ++stats->filteredFrames;
-    }
 }
 
 void GPSCorrectionLedger::selected(const GPSCorrectionFrame& frame)
 {
     if (auto* stats = _currentStatistics(frame)) {
         ++stats->selectedFrames;
-        stats->selectedBytes += frame.data.size();
     }
     recordEvent(frame, GPSCorrectionStage::Selected, GPSCorrectionReason::None, frame.data.size());
 }
@@ -174,9 +165,6 @@ bool GPSCorrectionLedger::admitted(const GPSCorrectionFrame& frame, const QStrin
     destination.lastActivityMs = _clock();
     if (!bytes) {
         return true;
-    }
-    if (auto* stats = _currentStatistics(frame)) {
-        stats->submittedBytes += bytes;
     }
     destination.queuedFrames += complete ? 1 : 0;
     destination.queuedBytes += bytes;

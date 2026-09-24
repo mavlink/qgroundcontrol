@@ -25,10 +25,6 @@ SettingsGroupLayout {
         switch (reason) {
         case GPSCorrectionEventModel.None:
             return "";
-        case GPSCorrectionEventModel.InactiveSource:
-            return qsTr("Inactive source");
-        case GPSCorrectionEventModel.SessionMismatch:
-            return qsTr("Previous source session");
         case GPSCorrectionEventModel.InvalidTimestamp:
             return qsTr("Invalid receipt time");
         case GPSCorrectionEventModel.Expired:
@@ -39,8 +35,6 @@ SettingsGroupLayout {
             return qsTr("Source not selected");
         case GPSCorrectionEventModel.DestinationUnavailable:
             return qsTr("Destination unavailable");
-        case GPSCorrectionEventModel.QueueFull:
-            return qsTr("Queue full");
         case GPSCorrectionEventModel.InvalidFrame:
             return qsTr("Invalid frame");
         default:
@@ -59,6 +53,13 @@ SettingsGroupLayout {
         default:
             return qsTr("Unclassified");
         }
+    }
+
+    function dataRate(bytesPerSecond) {
+        //: Data rate in bytes per second
+        if (bytesPerSecond < 1024) return qsTr("%1 B/s").arg(bytesPerSecond)
+        //: Data rate in kilobytes per second
+        return qsTr("%1 KB/s").arg((bytesPerSecond / 1024).toFixed(1))
     }
 
     function stageName(stage) {
@@ -127,7 +128,7 @@ SettingsGroupLayout {
     QGCLabel {
         Layout.fillWidth: true
         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-        text: qsTr("Received/dropped source bytes measure frame-candidate evidence, not raw transport traffic. Recovered frames can overlap rejected candidates. Drop events count separate selection and admission losses; one frame may contribute more than once.")
+        text: qsTr("Received rates measure frame-candidate bytes, not raw transport traffic. Recovered frames can overlap rejected candidates. Drop events count separate selection and admission losses; one frame may contribute more than once.")
         wrapMode: Text.WordWrap
     }
 
@@ -139,7 +140,8 @@ SettingsGroupLayout {
 
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-            text: qsTr("%1 — frames: received %2, validated %3, selected %4, queued %5; drop events %6").arg(root.sourceName(modelData.source)).arg(modelData.receivedFrames).arg(modelData.validatedFrames).arg(modelData.selectedFrames).arg(modelData.queuedFrames).arg(modelData.droppedFrames)
+            objectName: "correctionSource_" + modelData.source
+            text: qsTr("%1 — received %2; frames: received %3, validated %4, selected %5, queued %6; drop events %7").arg(root.sourceName(modelData.source)).arg(root.dataRate(modelData.receivedBytesPerSecond)).arg(modelData.receivedFrames).arg(modelData.validatedFrames).arg(modelData.selectedFrames).arg(modelData.queuedFrames).arg(modelData.droppedFrames)
             wrapMode: Text.WordWrap
         }
     }

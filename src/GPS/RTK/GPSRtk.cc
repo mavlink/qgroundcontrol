@@ -435,10 +435,8 @@ bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transp
                 return;
             }
             const bool valid = RTCMFramer::isValidFrame(data);
-            const int messageId =
-                data.size() >= 5 ? (static_cast<quint8>(data[3]) << 4) | (static_cast<quint8>(data[4]) >> 4) : 0;
             correctionManager->acceptIngress(
-                token.event(data, receivedAtMs, messageId, valid, false,
+                token.event(data, receivedAtMs, RTCMFramer::frameMessageId(data), valid, false,
                             valid ? GPSCorrectionReason::None : GPSCorrectionReason::InvalidFrame));
         },
         Qt::QueuedConnection);

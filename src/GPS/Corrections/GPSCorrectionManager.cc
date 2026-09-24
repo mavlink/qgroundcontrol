@@ -39,7 +39,10 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent)
     _diagnosticsTimer.setInterval(100);
     connect(&_diagnosticsTimer, &QTimer::timeout, this, &GPSCorrectionManager::_refreshDiagnostics);
     _healthTimer.setInterval(1000);
-    connect(&_healthTimer, &QTimer::timeout, this, &GPSCorrectionManager::_refreshDiagnostics);
+    connect(&_healthTimer, &QTimer::timeout, this, [this]() {
+        _updateReceivedByteRates(GPSCorrectionFrame::monotonicNowMs());
+        _refreshDiagnostics();
+    });
     _healthTimer.start();
 }
 
@@ -236,7 +239,7 @@ void GPSCorrectionManager::_refreshDiagnostics()
             return;
         }
     }
-    if (auto sources = _router.sourceDiagnostics(); sources != _sources) {
+    if (auto sources = _sourceDiagnostics(); sources != _sources) {
         _sources = std::move(sources);
         emit sourcesChanged();
         if (!guard) {
@@ -262,9 +265,39 @@ void GPSCorrectionManager::_scheduleSourcesChanged()
     }
 }
 
+void GPSCorrectionManager::_updateReceivedByteRates(qint64 nowMs)
+{
+    const auto& statistics = _router.statistics();
+    const qint64 elapsedMs = nowMs - _receivedBytesSampleMs;
+    for (size_t index = 0; index < statistics.size(); ++index) {
+        const auto& stats = statistics[index];
+        auto& sample = _receivedBytesSamples[index];
+        // Counters restart with each source session.
+        const quint64 received = stats.session == sample.session && stats.receivedBytes >= sample.bytes
+                                     ? stats.receivedBytes - sample.bytes
+                                     : stats.receivedBytes;
+        _receivedByteRates[index] = _receivedBytesSampleMs > 0 && elapsedMs > 0
+                                        ? static_cast<quint64>(qRound64(received * 1000.0 / elapsedMs))
+                                        : 0;
+        sample = {stats.session, stats.receivedBytes};
+    }
+    _receivedBytesSampleMs = nowMs;
+}
+
+QVariantList GPSCorrectionManager::_sourceDiagnostics() const
+{
+    QVariantList sources = _router.sourceDiagnostics();
+    for (qsizetype index = 0; index < sources.size() && index < qsizetype(_receivedByteRates.size()); ++index) {
+        auto source = sources[index].toMap();
+        source.insert(QStringLiteral("receivedBytesPerSecond"), QVariant::fromValue(_receivedByteRates[index]));
+        sources[index] = source;
+    }
+    return sources;
+}
+
 QVariantList GPSCorrectionManager::sources() const
 {
-    return _router.sourceDiagnostics();
+    return _sourceDiagnostics();
 }
 
 QVariantList GPSCorrectionManager::sourceInstances() const
@@ -285,6 +318,7 @@ void GPSCorrectionManager::shutdown()
     const QPointer<GPSCorrectionManager> guard(this);
     _shutdown = true;
     _finalDiagnosticsPending = true;
+    _receivedByteRates.fill(0);
     _healthTimer.stop();
     _diagnosticsTimer.stop();
     _rtcmMavlink.setOutputProvider({});

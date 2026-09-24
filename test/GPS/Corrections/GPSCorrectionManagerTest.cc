@@ -403,7 +403,7 @@ void GPSCorrectionManagerTest::_sourceSelectionAndSessions()
     QCOMPARE(routed.size(), 3);
     const auto stats = corrections.sources().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap();
     QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), quint64(1));
-    QCOMPARE(stats.value(QStringLiteral("routedFrames")).toULongLong(), quint64(1));
+    QCOMPARE(stats.value(QStringLiteral("selectedFrames")).toULongLong(), quint64(1));
     QVERIFY(stats.value(QStringLiteral("usable")).toBool());
 }
 
@@ -418,19 +418,19 @@ void GPSCorrectionManagerTest::_filteredAndExpiredFrames()
     corrections.acceptIngress(frame);
     auto stats = corrections.sources().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap();
     QVERIFY(stats.value(QStringLiteral("usable")).toBool());
-    QCOMPARE(stats.value(QStringLiteral("filteredFrames")).toULongLong(), quint64(1));
+    QCOMPARE(stats.value(QStringLiteral("droppedFrames")).toULongLong(), quint64(1));
     QVERIFY(routed.isEmpty());
     frame = ntrip.token().event(data, now - 6000, 1005, true);
     corrections.acceptIngress(frame);
     stats = corrections.sources().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap();
     // Older deliveries cannot expire newer observations.
     QVERIFY(stats.value(QStringLiteral("usable")).toBool());
-    QCOMPARE(stats.value(QStringLiteral("filteredFrames")).toULongLong(), quint64(2));
+    QCOMPARE(stats.value(QStringLiteral("droppedFrames")).toULongLong(), quint64(2));
     QVERIFY(routed.isEmpty());
     frame = ntrip.token().event(data, now + 60000, 1005, true);
     corrections.acceptIngress(frame);
     stats = corrections.sources().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap();
-    QCOMPARE(stats.value(QStringLiteral("filteredFrames")).toULongLong(), quint64(3));
+    QCOMPARE(stats.value(QStringLiteral("droppedFrames")).toULongLong(), quint64(3));
     QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), quint64(2));
     QVERIFY(routed.isEmpty());
 }
@@ -625,6 +625,37 @@ void GPSCorrectionManagerTest::_diagnosticsNotifyOnlyOnChange()
     QCOMPARE(topology.size(), 1);
     QCOMPARE(counters.size(), 1);
     QCOMPARE(destinations.size(), 1);
+}
+
+void GPSCorrectionManagerTest::_receivedByteRates()
+{
+    GPSCorrectionManager corrections;
+    QSignalSpy counters(&corrections, &GPSCorrectionManager::sourcesChanged);
+    auto ntrip = corrections.registerSource(GPSCorrectionSource::Ntrip);
+    const auto rate = [&corrections]() {
+        return corrections.sources()
+            .at(static_cast<int>(GPSCorrectionSource::Ntrip))
+            .toMap()
+            .value(QStringLiteral("receivedBytesPerSecond"))
+            .toULongLong();
+    };
+    const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    corrections._updateReceivedByteRates(1000);
+    corrections.acceptIngress(ntrip.token().event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    QCOMPARE(rate(), 0ULL);
+    corrections._updateReceivedByteRates(1500);
+    QCOMPARE(rate(), quint64(frame.size() * 2));
+    corrections._refreshDiagnostics();
+    const qsizetype published = counters.size();
+    corrections._updateReceivedByteRates(2500);
+    QCOMPARE(rate(), 0ULL);
+    corrections._refreshDiagnostics();
+    QCOMPARE(counters.size(), published + 1);
+    ntrip.reset();
+    ntrip = corrections.registerSource(GPSCorrectionSource::Ntrip);
+    corrections.acceptIngress(ntrip.token().event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections._updateReceivedByteRates(3500);
+    QCOMPARE(rate(), quint64(frame.size()));
 }
 
 UT_REGISTER_TEST(GPSCorrectionManagerTest, TestLabel::Unit)

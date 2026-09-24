@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
@@ -73,6 +75,9 @@ private:
 
     void _scheduleSourcesChanged();
     void _refreshDiagnostics();
+    /// Samples received source bytes; the health timer provides the one-second cadence.
+    void _updateReceivedByteRates(qint64 nowMs);
+    QVariantList _sourceDiagnostics() const;
 
     GPSCorrectionRouter _router;
     GPSCorrectionEventModel _eventModel;
@@ -87,6 +92,16 @@ private:
     QVariantList _sources;
     QVariantList _sourceInstances;
     QVariantList _destinations;
+
+    struct ReceivedBytesSample
+    {
+        quint64 session = 0;
+        quint64 bytes = 0;
+    };
+
+    std::array<ReceivedBytesSample, 4> _receivedBytesSamples{};
+    std::array<quint64, 4> _receivedByteRates{};
+    qint64 _receivedBytesSampleMs = 0;
     quint64 _udpConfigurationRevision = 0;
     int _ingressDepth = 0;
     bool _finalDiagnosticsPending = false;

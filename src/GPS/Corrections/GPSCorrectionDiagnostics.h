@@ -20,14 +20,11 @@ Q_DECLARE_METATYPE(GPSCorrectionStage)
 enum class GPSCorrectionReason
 {
     None,
-    InactiveSource,
-    SessionMismatch,
     InvalidTimestamp,
     Expired,
     MessageFiltered,
     NotSelected,
     DestinationUnavailable,
-    QueueFull,
     InvalidFrame,
 };
 Q_DECLARE_METATYPE(GPSCorrectionReason)

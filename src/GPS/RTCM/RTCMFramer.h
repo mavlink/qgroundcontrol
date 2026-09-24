@@ -59,7 +59,19 @@ public:
     uint16_t messageId() const
     {
         const uint16_t available = _frameSize ? _frameSize : _size;
-        return available >= 5 && payloadLength() >= 2 ? (_bytes[3] << 4) | (_bytes[4] >> 4) : 0;
+        return payloadLength() >= 2 ? frameMessageId(std::span<const uint8_t>(_bytes.data(), available)) : 0;
+    }
+
+    /// Message number from a frame header; zero when the header is incomplete.
+    static uint16_t frameMessageId(std::span<const uint8_t> bytes)
+    {
+        return bytes.size() >= HEADER_SIZE + 2 && bytes[0] == PREAMBLE ? (bytes[3] << 4) | (bytes[4] >> 4) : 0;
+    }
+
+    static uint16_t frameMessageId(QByteArrayView bytes)
+    {
+        return frameMessageId(std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(bytes.data()),
+                                                       static_cast<size_t>(bytes.size())));
     }
 
     bool valid() const { return _valid; }

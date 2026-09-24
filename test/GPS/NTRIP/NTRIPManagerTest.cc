@@ -913,7 +913,7 @@ void NTRIPManagerTest::testTransportDiagnosticsReachManager()
     verifyExpectedLogMessage();
     const auto stats = corrections.sources()[static_cast<int>(GPSCorrectionSource::Ntrip)].toMap();
     QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), 2);
-    QCOMPARE(stats.value(QStringLiteral("filteredFrames")).toULongLong(), 2);
+    QCOMPARE(stats.value(QStringLiteral("selectedFrames")).toULongLong(), 1);
     QCOMPARE(routed.size(), 1);
     QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), quint64(accepted.size()));
     mgr.stopNTRIP();

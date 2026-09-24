@@ -23,14 +23,11 @@ public:
     enum Reason
     {
         None = static_cast<int>(GPSCorrectionReason::None),
-        InactiveSource = static_cast<int>(GPSCorrectionReason::InactiveSource),
-        SessionMismatch = static_cast<int>(GPSCorrectionReason::SessionMismatch),
         InvalidTimestamp = static_cast<int>(GPSCorrectionReason::InvalidTimestamp),
         Expired = static_cast<int>(GPSCorrectionReason::Expired),
         MessageFiltered = static_cast<int>(GPSCorrectionReason::MessageFiltered),
         NotSelected = static_cast<int>(GPSCorrectionReason::NotSelected),
         DestinationUnavailable = static_cast<int>(GPSCorrectionReason::DestinationUnavailable),
-        QueueFull = static_cast<int>(GPSCorrectionReason::QueueFull),
         InvalidFrame = static_cast<int>(GPSCorrectionReason::InvalidFrame),
     };
     Q_ENUM(Reason)
