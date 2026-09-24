@@ -64,7 +64,7 @@ public:
     Q_PROPERTY(QObject* serialPortManager READ serialPortManager CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager     READ    multiVehicleManager     CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager        READ    mapEngineManager        CONSTANT)
-    Q_PROPERTY(QGCPositionManager*  qgcPositionManger       READ    qgcPositionManger       CONSTANT)
+    Q_PROPERTY(QGCPositionManager*  positionManager         READ    positionManager         CONSTANT)
     Q_PROPERTY(VideoManager*        videoManager            READ    videoManager            CONSTANT)
     Q_PROPERTY(SettingsManager*     settingsManager         READ    settingsManager         CONSTANT)
     Q_PROPERTY(ADSBVehicleManager*  adsbVehicleManager      READ    adsbVehicleManager      CONSTANT)
@@ -159,7 +159,7 @@ public:
 
     QGCMapEngineManager* mapEngineManager() { return _mapEngineManager; }
 
-    QGCPositionManager* qgcPositionManger() { return _qgcPositionManager; }
+    QGCPositionManager* positionManager() { return _positionManager; }
 
     MissionCommandTree* missionCommandTree() { return _missionCommandTree; }
 
@@ -225,7 +225,7 @@ private:
     QGCMapEngineManager*    _mapEngineManager       = nullptr;
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
     NTRIPManager*           _ntripManager           = nullptr;
-    QGCPositionManager*     _qgcPositionManager     = nullptr;
+    QGCPositionManager*     _positionManager        = nullptr;
     MissionCommandTree*     _missionCommandTree     = nullptr;
     MAVLinkSigningKeys*     _mavlinkSigningKeys     = nullptr;
     VideoManager*           _videoManager           = nullptr;

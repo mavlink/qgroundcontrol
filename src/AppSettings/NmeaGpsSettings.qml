@@ -11,7 +11,7 @@ SettingsGroupLayout {
     visible: root._autoConnectSettings.nmeaSource.userVisible && root._autoConnectSettings.autoConnectNmeaBaud.userVisible
 
     readonly property var  _autoConnectSettings: QGroundControl.settingsManager.autoConnectSettings
-    property var positionManager: QGroundControl.qgcPositionManger
+    property var positionManager: QGroundControl.positionManager
     readonly property var nmeaInput: root.positionManager.nmeaInput
     readonly property var _health: root.nmeaInput ? root.nmeaInput.health : null
     readonly property var _serialPortManager: QGroundControl.serialPortManager

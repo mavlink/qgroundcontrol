@@ -8,8 +8,8 @@ SettingsGroupLayout {
     heading: qsTr("GCS Position")
     visible: _gcsPosition.isValid
 
-    property var  _gcsPosition: QGroundControl.qgcPositionManger.gcsPosition
-    property real _horizontalAccuracy: QGroundControl.qgcPositionManger.gcsPositionHorizontalAccuracy
+    property var  _gcsPosition: QGroundControl.positionManager.gcsPosition
+    property real _horizontalAccuracy: QGroundControl.positionManager.gcsPositionHorizontalAccuracy
 
     LabelledLabel {
         Layout.fillWidth: true

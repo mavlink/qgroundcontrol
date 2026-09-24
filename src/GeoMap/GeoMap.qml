@@ -195,7 +195,7 @@ Item {
     MapPositionTracker {
         id: _positionTracker
 
-        gcsPosition: QGroundControl.qgcPositionManger.gcsPosition
+        gcsPosition: QGroundControl.positionManager.gcsPosition
         vehicleCoordinate: root._activeVehicleCoordinate
         centerGCSWhenVehicleValid: QGroundControl.settingsManager.flyViewSettings.keepMapCenteredOnVehicle.rawValue
         userInteracting: panHandler.active || orbitHandler.active || shiftOrbitHandler.active
@@ -572,8 +572,8 @@ Item {
         height: gcsImage.height
         visible: gcsIndicator._gcsPosition.isValid
 
-        readonly property var _gcsPosition: QGroundControl.qgcPositionManger.gcsPosition
-        readonly property real _gcsHeading: QGroundControl.qgcPositionManger.gcsHeading
+        readonly property var _gcsPosition: QGroundControl.positionManager.gcsPosition
+        readonly property real _gcsHeading: QGroundControl.positionManager.gcsHeading
 
         Image {
             id: gcsImage
