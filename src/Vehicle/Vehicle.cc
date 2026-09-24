@@ -2755,13 +2755,15 @@ void Vehicle::_updateHomepoint()
     if(setHomeCmdSupported && updateHomeActivated){
         QGeoCoordinate gcsPosition = GPSManager::instance()->positionManager()->gcsPosition();
         if (coordinate().isValid() && gcsPosition.isValid()) {
-            sendMavCommand(defaultComponentId(),
-                           MAV_CMD_DO_SET_HOME, false,
-                           0,
-                           0, 0, 0,
-                           static_cast<float>(gcsPosition.latitude()) ,
-                           static_cast<float>(gcsPosition.longitude()),
-                           static_cast<float>(gcsPosition.altitude()));
+            if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+                sendMavCommandInt(defaultComponentId(), MAV_CMD_DO_SET_HOME, MAV_FRAME_GLOBAL, false, 0, 0, 0, 0,
+                                  gcsPosition.latitude(), gcsPosition.longitude(),
+                                  static_cast<float>(gcsPosition.altitude()));
+            } else {
+                sendMavCommand(defaultComponentId(), MAV_CMD_DO_SET_HOME, false, 0, 0, 0, 0,
+                               static_cast<float>(gcsPosition.latitude()), static_cast<float>(gcsPosition.longitude()),
+                               static_cast<float>(gcsPosition.altitude()));
+            }
         }
     }
 }
