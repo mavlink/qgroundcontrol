@@ -253,6 +253,29 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
     return _submit(frame, selected);
 }
 
+bool GPSCorrectionRouter::_sameDestinations(const QSet<QString>* current, const QList<Admission>& admissions)
+{
+    if (!current) {
+        return false;
+    }
+    // Admission lists are small, so a quadratic distinct count avoids a per-frame set allocation.
+    qsizetype distinct = 0;
+    for (qsizetype index = 0; index < admissions.size(); ++index) {
+        const auto& destination = admissions.at(index).destination;
+        if (destination.isEmpty()) {
+            continue;
+        }
+        if (!current->contains(destination)) {
+            return false;
+        }
+        const bool repeated =
+            std::any_of(admissions.cbegin(), admissions.cbegin() + index,
+                        [&destination](const Admission& earlier) { return earlier.destination == destination; });
+        distinct += repeated ? 0 : 1;
+    }
+    return distinct == current->size();
+}
+
 bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected)
 {
     const QPointer<GPSCorrectionRouter> guard(this);
@@ -277,7 +300,8 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
         if (!guard) {
             return false;
         }
-        if (!_shutdown && revision == _revision) {
+        if (!_shutdown && revision == _revision &&
+            !_sameDestinations(_ledger.outputDestinations(it.key()), admissions)) {
             QSet<QString> destinations;
             for (const auto& admission : admissions) {
                 if (!admission.destination.isEmpty()) {

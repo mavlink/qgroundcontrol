@@ -29,6 +29,8 @@ void GPSMavlinkOutputTest::_admissionFollowsLinkLifetime()
     QVERIFY(!destinations.first().id.isEmpty());
     QVERIFY(destinations.first().session > 0);
     QCOMPARE(output().first().session, destinations.first().session);
+    // An unchanged link topology reuses the published outputs instead of rebuilding them per frame.
+    QVERIFY(output().isSharedWith(destinations));
 
     const GpsRtcmPacket packet{0, QByteArray(RTCMMavlinkPacket::kFragmentLen, 'R')};
     QVERIFY(destinations.first().submit(packet));

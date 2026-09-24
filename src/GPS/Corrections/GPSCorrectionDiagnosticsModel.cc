@@ -37,7 +37,8 @@ QVariant GPSCorrectionDiagnosticsModel::data(const QModelIndex& index, int role)
 
 QHash<int, QByteArray> GPSCorrectionDiagnosticsModel::roleNames() const
 {
-    return {{RowRole, QByteArrayLiteral("row")}};
+    static const QHash<int, QByteArray> roles{{RowRole, QByteArrayLiteral("row")}};
+    return roles;
 }
 
 void GPSCorrectionDiagnosticsModel::setRows(const QVariantList& rows)

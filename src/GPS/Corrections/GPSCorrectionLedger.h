@@ -64,6 +64,14 @@ public:
     void queued(const GPSCorrectionFrame& frame, quint64 bytes, bool complete);
     void registerOutput(const QString& id);
     void updateOutputDestinations(const QString& id, const QSet<QString>& destinations);
+
+    /// Destinations last reported by output @a id, or null when it is not registered.
+    const QSet<QString>* outputDestinations(const QString& id) const
+    {
+        const auto it = _outputDestinations.constFind(id);
+        return it == _outputDestinations.cend() ? nullptr : &it.value();
+    }
+
     void removeOutput(const QString& id);
 
     bool admitted(const GPSCorrectionFrame& frame, const QString& destination, quint64 session, quint64 bytes,

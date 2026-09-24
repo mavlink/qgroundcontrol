@@ -112,6 +112,7 @@ private:
     void recordRejectedFrame(GPSCorrectionFrame frame, GPSCorrectionReason reason);
 
     static int _sourceIndex(GPSCorrectionSource source);
+    static bool _sameDestinations(const QSet<QString>* current, const QList<Admission>& admissions);
     bool _submit(const GPSCorrectionFrame& frame, bool selected);
 
     Clock _clock;
