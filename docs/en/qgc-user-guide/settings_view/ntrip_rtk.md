@@ -8,8 +8,9 @@ corrections to connected vehicles over MAVLink.
 
 Shows the current NTRIP connection state (connected/connecting/disconnected) with the time since
 the last correction, message and byte counters, the received RTCM message types, data rate, and a
-Connect/Disconnect button. After a connection error the button becomes **Retry**, and a separate
-**Disconnect** button stops further attempts.
+Connect/Disconnect button. Dropped connections reconnect automatically with an increasing delay.
+Rejected credentials and TLS certificate failures stop instead, because they need a settings
+change: the button becomes **Retry**, and a separate **Disconnect** button stops further attempts.
 If no position is available to send to the caster while corrections are not arriving, QGC warns
 that network (VRS) mountpoints need a GGA position.
 

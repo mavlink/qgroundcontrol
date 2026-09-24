@@ -78,6 +78,8 @@ bool isRetryable(NTRIPError error)
     switch (error) {
         case NTRIPError::AuthFailed:
         case NTRIPError::InvalidConfig:
+        // Certificate verification fails the same way until the user changes the TLS settings.
+        case NTRIPError::SslError:
             return false;
         default:
             return true;

@@ -407,6 +407,7 @@ void NTRIPManagerTest::testRetryPolicy_data()
     QTest::newRow("authentication-with-hint") << qint64(17000) << 0 << true << NTRIPError::AuthFailed << 0;
     QTest::newRow("invalid-config") << qint64(0) << 0 << true << NTRIPError::InvalidConfig << 0;
     QTest::newRow("invalid-config-with-hint") << qint64(17000) << 0 << true << NTRIPError::InvalidConfig << 0;
+    QTest::newRow("tls-certificate") << qint64(0) << 0 << true << NTRIPError::SslError << 0;
 }
 
 void NTRIPManagerTest::testRetryPolicy()
