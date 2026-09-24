@@ -484,8 +484,8 @@ struct Fixture
     GPSNativeUBX driver;
     GPSBaseStationConfig base;
 
-    Fixture()
-        : driver(captureGPSReports(receiver.io(), position), false)
+    explicit Fixture(bool satelliteInfo = false)
+        : driver(captureGPSReports(receiver.io(), position), satelliteInfo)
     {
         gps_test_time = 0;
         gps_test_warnings.clear();
@@ -853,7 +853,7 @@ static void invalidConfiguration()
     }};
     for (bool legacy : {false, true}) {
         for (bool compact : {false, true}) {
-            Fixture f;
+            Fixture f(true);
             f.receiver.legacy = legacy;
             f.receiver.module = legacy ? "NEO-M8P" : "ZED-F9P";
             f.base = fixed.base;
@@ -871,6 +871,8 @@ static void invalidConfiguration()
             for (const auto& message : msm4) {
                 CHECK(rate(message) == (compact ? 1u : 0u));
             }
+            // The 1 Hz base rate keeps satellite reports within their freshness window.
+            CHECK(rate({UBX_CFG_KEY_MSGOUT_UBX_NAV_SAT_I2C, UBX_MSG_NAV_SVINFO}) == 2u);
         }
     }
 }

@@ -46,6 +46,8 @@
 namespace {
 // Base stations always use the stationary navigation model.
 constexpr uint8_t STATIONARY_DYNAMIC_MODEL = 2;
+/// Satellite report divisor at the 1 Hz base rate: every 2 s, as during a 5 Hz survey.
+constexpr uint8_t BASE_SATELLITE_INFO_RATE = 2;
 
 // RTCM3 message sets for a base: the station/bias messages plus GPS, GLONASS, Galileo and BeiDou
 // observations as MSM7 (1077/1087/1097/1127) or compact MSM4 (1074/1084/1094/1124).
@@ -948,6 +950,8 @@ int GPSNativeUBX::activateRTCMOutput()
 
     /* For base stations we switch to 1 Hz update rate, which is enough for RTCM output.
      * For the survey-in, we still want 5/10 Hz, because this speeds up the process */
+    // The rover-rate satellite divisors would space satellite reports beyond their 5 s freshness at 1 Hz.
+    const uint8_t satelliteRate = _satellites != nullptr ? BASE_SATELLITE_INFO_RATE : 0;
 
     if (_identity.protocol27) {
         initCfgValset();
@@ -958,6 +962,7 @@ int GPSNativeUBX::activateRTCMOutput()
         cfgValsetPort(compact ? RTCM_BASE_MSM4_MSGOUT_I2C : RTCM_BASE_MSM7_MSGOUT_I2C, 1);
         cfgValsetPort(compact ? RTCM_MSM7_OBSERVATIONS_MSGOUT_I2C : RTCM_MSM4_OBSERVATIONS_MSGOUT_I2C, 0);
         cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C, 0);
+        cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_SAT_I2C, satelliteRate);
 
         if (!sendCfgValset(false)) {
             return -1;
@@ -978,6 +983,7 @@ int GPSNativeUBX::activateRTCMOutput()
         }
 
         configureMessageRate(UBX_MSG_NAV_SVIN, 0);
+        configureMessageRate(UBX_MSG_NAV_SVINFO, satelliteRate);
 
         // stationary RTK reference station ARP (can be sent at lower rate)
         if (!configureMessageRate(UBX_MSG_RTCM3_1005, 5)) {
