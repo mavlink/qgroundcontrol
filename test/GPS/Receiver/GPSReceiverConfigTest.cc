@@ -287,6 +287,7 @@ void GPSReceiverConfigTest::_capabilities()
     QCOMPARE(actual.receiverAveraging, expected.receiverAveraging);
     QCOMPARE(actual.passive, expected.passive);
     QCOMPARE(actual.persistentConfiguration, expected.persistentConfiguration);
+    QCOMPARE(actual.compactObservations, expected.compactObservations);
 }
 
 void GPSReceiverConfigTest::_receiverValidation_data()
@@ -327,6 +328,18 @@ void GPSReceiverConfigTest::_receiverValidation_data()
                                         << GPSReceiverConfig{.base = {.mode =
                                                                           GPSBaseStationConfig::ReceiverAveraging{1}}}
                                         << Error::None;
+    QTest::newRow("compact-observations")
+        << GPSType::ublox << GPSReceiverConfig{.base = {.mode = VALID_SURVEY.mode, .compactObservations = true}}
+        << Error::None;
+    for (const auto type : {GPSType::septentrio, GPSType::unicore, GPSType::quectel}) {
+        QTest::newRow(qPrintable(QStringLiteral("unsupported-compact-observations-%1").arg(static_cast<int>(type))))
+            << type << GPSReceiverConfig{.base = {.mode = VALID_FIXED.mode, .compactObservations = true}}
+            << Error::UnsupportedCompactObservations;
+    }
+    QTest::newRow("passive-rejects-compact-observations")
+        << GPSType::passive
+        << GPSReceiverConfig{.role = Role::Passive, .base = {.compactObservations = true}, .baudRate = 115200}
+        << Error::UnsupportedBaseMode;
     QTest::newRow("unsupported-receiver-averaging")
         << GPSType::ublox << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::ReceiverAveraging{1}}}
         << Error::UnsupportedBaseMode;

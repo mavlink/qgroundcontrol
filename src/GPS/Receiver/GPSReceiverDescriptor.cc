@@ -36,7 +36,7 @@ constexpr std::array DESCRIPTORS{
         .type = GPSType::ublox,
         .manufacturerId = 4,
         .detectionKey = "blox",
-        .capabilities = {.recognized = true, .rtkBase = true, .surveyIn = true},
+        .capabilities = {.recognized = true, .rtkBase = true, .surveyIn = true, .compactObservations = true},
         .surveyAccuracy = Accuracy::PositionAccuracy,
         .surveyDuration = Duration::ElapsedTime,
         .configurableSurveyDuration = true,
@@ -100,6 +100,7 @@ QVariantMap gpsReceiverPresentation(int manufacturer)
         capabilities.rtkBase |= descriptor.capabilities.rtkBase;
         capabilities.surveyIn |= descriptor.capabilities.surveyIn;
         capabilities.receiverAveraging |= descriptor.capabilities.receiverAveraging;
+        capabilities.compactObservations |= descriptor.capabilities.compactObservations;
         surveyAccuracy |= descriptor.surveyAccuracy != Accuracy::Unavailable;
         surveyDuration |= descriptor.configurableSurveyDuration;
         fixedBaseAccuracy |= descriptor.fixedBaseAccuracy;
@@ -111,6 +112,7 @@ QVariantMap gpsReceiverPresentation(int manufacturer)
         {QStringLiteral("rtkBase"), capabilities.rtkBase},
         {QStringLiteral("surveyIn"), capabilities.surveyIn},
         {QStringLiteral("receiverAveraging"), capabilities.receiverAveraging},
+        {QStringLiteral("compactObservations"), capabilities.compactObservations},
         {QStringLiteral("passive"), selected && selected->capabilities.passive},
         {QStringLiteral("surveyAccuracy"), surveyAccuracy},
         {QStringLiteral("surveyDuration"), surveyDuration},

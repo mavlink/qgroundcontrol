@@ -48,11 +48,25 @@ namespace {
 constexpr uint8_t STATIONARY_DYNAMIC_MODEL = 2;
 
 // RTCM3 message sets for a base: the station/bias messages plus GPS, GLONASS, Galileo and BeiDou
-// observations as MSM4 or MSM7 (1074/1084/1094/1124 vs 1077/1087/1097/1127)
-static constexpr uint32_t RTCM_BASE_MSGOUT_I2C[] = {
+// observations as MSM7 (1077/1087/1097/1127) or compact MSM4 (1074/1084/1094/1124).
+constexpr uint32_t RTCM_BASE_MSM7_MSGOUT_I2C[] = {
     UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1005_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1077_I2C,
     UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1087_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1230_I2C,
     UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1097_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1127_I2C};
+constexpr uint32_t RTCM_BASE_MSM4_MSGOUT_I2C[] = {
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1005_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1074_I2C,
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1084_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1230_I2C,
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1094_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1124_I2C};
+constexpr uint32_t RTCM_MSM7_OBSERVATIONS_MSGOUT_I2C[] = {
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1077_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1087_I2C,
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1097_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1127_I2C};
+constexpr uint32_t RTCM_MSM4_OBSERVATIONS_MSGOUT_I2C[] = {
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1074_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1084_I2C,
+    UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1094_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1124_I2C};
+constexpr uint16_t RTCM_MSM7_OBSERVATION_MESSAGES[] = {UBX_MSG_RTCM3_1077, UBX_MSG_RTCM3_1087, UBX_MSG_RTCM3_1097,
+                                                       UBX_MSG_RTCM3_1127};
+constexpr uint16_t RTCM_MSM4_OBSERVATION_MESSAGES[] = {UBX_MSG_RTCM3_1074, UBX_MSG_RTCM3_1084, UBX_MSG_RTCM3_1094,
+                                                       UBX_MSG_RTCM3_1124};
 
 uint32_t fixedAccuracyWireUnits(float accuracyMeters)
 {
@@ -89,7 +103,7 @@ int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
     _comms.pending = false;
     _rtcmActivationPending = false;
     _rtcm_parsing.reset();
-    if (!validateConfiguration(config)) {
+    if (!validateConfiguration(config, {.compactObservations = true})) {
         return -1;
     }
 
@@ -658,15 +672,14 @@ int GPSNativeUBX::disableTimeMode()
                      {"UBX-CFG-TMODE3 disabled readback", std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)})) {
         return -1;
     }
-    const auto result =
-        awaitCommand([this] {
-            if (_controller.lateRejection()) {
-                return GPSCommandOutcome::Rejected;
-            }
-            return !_timeModeReadback.response.has_value() ? GPSCommandOutcome::Pending
-                   : _timeModeReadback.response == 0       ? GPSCommandOutcome::ReadbackVerified
-                                                           : GPSCommandOutcome::Rejected;
-        });
+    const auto result = awaitCommand([this] {
+        if (_controller.lateRejection()) {
+            return GPSCommandOutcome::Rejected;
+        }
+        return !_timeModeReadback.response.has_value() ? GPSCommandOutcome::Pending
+               : _timeModeReadback.response == 0       ? GPSCommandOutcome::ReadbackVerified
+                                                       : GPSCommandOutcome::Rejected;
+    });
     return result.evidence.outcome == GPSCommandOutcome::ReadbackVerified ? 0 : -1;
 }
 
@@ -681,15 +694,14 @@ int GPSNativeUBX::verifyConfigValue(uint32_t key, uint8_t value)
                      {"UBX-CFG-VALGET " + std::to_string(key), std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)})) {
         return -1;
     }
-    const auto result =
-        awaitCommand([this, value] {
-            if (_controller.lateRejection()) {
-                return GPSCommandOutcome::Rejected;
-            }
-            return !_controller.readbackReady()                      ? GPSCommandOutcome::Pending
-                   : _controller.readback().values[0].value == value ? GPSCommandOutcome::ReadbackVerified
-                                                                     : GPSCommandOutcome::Rejected;
-        });
+    const auto result = awaitCommand([this, value] {
+        if (_controller.lateRejection()) {
+            return GPSCommandOutcome::Rejected;
+        }
+        return !_controller.readbackReady()                      ? GPSCommandOutcome::Pending
+               : _controller.readback().values[0].value == value ? GPSCommandOutcome::ReadbackVerified
+                                                                 : GPSCommandOutcome::Rejected;
+    });
     return result.evidence.outcome == GPSCommandOutcome::ReadbackVerified ? 0 : -1;
 }
 
@@ -730,13 +742,15 @@ int GPSNativeUBX::restartSurveyInPreV27()
 {
     ubx_payload_tx_cfg_tmode3_t payload_tx_cfg_tmode3{};
 
-    // disable RTCM (MSM7) output
+    // Disable RTCM output, including observations from a previous session in the other MSM format.
     configureMessageRate(UBX_MSG_RTCM3_1005, 0);
-    configureMessageRate(UBX_MSG_RTCM3_1077, 0);
-    configureMessageRate(UBX_MSG_RTCM3_1087, 0);
     configureMessageRate(UBX_MSG_RTCM3_1230, 0);
-    configureMessageRate(UBX_MSG_RTCM3_1097, 0);
-    configureMessageRate(UBX_MSG_RTCM3_1127, 0);
+    for (const uint16_t message : RTCM_MSM7_OBSERVATION_MESSAGES) {
+        configureMessageRate(message, 0);
+    }
+    for (const uint16_t message : RTCM_MSM4_OBSERVATION_MESSAGES) {
+        configureMessageRate(message, 0);
+    }
 
     if (disableTimeMode() < 0 ||
         (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) && waitForSurveyStop() < 0)) {
@@ -801,9 +815,10 @@ int GPSNativeUBX::restartSurveyIn()
         return restartSurveyInPreV27();
     }
 
-    // disable RTCM output
+    // Disable RTCM output, including observations from a previous session in the other MSM format.
     initCfgValset();
-    cfgValsetPort(RTCM_BASE_MSGOUT_I2C, 0);
+    cfgValsetPort(RTCM_BASE_MSM7_MSGOUT_I2C, 0);
+    cfgValsetPort(RTCM_MSM4_OBSERVATIONS_MSGOUT_I2C, 0);
     sendCfgValsetAcked(false);
 
     if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
@@ -939,7 +954,9 @@ int GPSNativeUBX::activateRTCMOutput()
 
         cfgValset<uint16_t>(UBX_CFG_KEY_RATE_MEAS, 1000);
 
-        cfgValsetPort(RTCM_BASE_MSGOUT_I2C, 1);
+        const bool compact = _baseConfig.compactObservations;
+        cfgValsetPort(compact ? RTCM_BASE_MSM4_MSGOUT_I2C : RTCM_BASE_MSM7_MSGOUT_I2C, 1);
+        cfgValsetPort(compact ? RTCM_MSM7_OBSERVATIONS_MSGOUT_I2C : RTCM_MSM4_OBSERVATIONS_MSGOUT_I2C, 0);
         cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C, 0);
 
         if (!sendCfgValset(false)) {
@@ -967,28 +984,12 @@ int GPSNativeUBX::activateRTCMOutput()
             return -1;
         }
 
-        // GPS
-        if (!configureMessageRate(UBX_MSG_RTCM3_1077, 1)) {
-            return -1;
-        }
-
-        // GLONASS
-        if (!configureMessageRate(UBX_MSG_RTCM3_1087, 1)) {
-            return -1;
-        }
-
-        // GLONASS code-phase biases
-        if (!configureMessageRate(UBX_MSG_RTCM3_1230, 1)) {
-            return -1;
-        }
-
-        // Galileo
-        if (!configureMessageRate(UBX_MSG_RTCM3_1097, 1)) {
-            return -1;
-        }
-
-        // BeiDou
-        if (!configureMessageRate(UBX_MSG_RTCM3_1127, 1)) {
+        const auto& observations =
+            _baseConfig.compactObservations ? RTCM_MSM4_OBSERVATION_MESSAGES : RTCM_MSM7_OBSERVATION_MESSAGES;
+        // GPS and GLONASS observations, then GLONASS code-phase biases, Galileo and BeiDou observations.
+        if (!configureMessageRate(observations[0], 1) || !configureMessageRate(observations[1], 1) ||
+            !configureMessageRate(UBX_MSG_RTCM3_1230, 1) || !configureMessageRate(observations[2], 1) ||
+            !configureMessageRate(observations[3], 1)) {
             return -1;
         }
     }

@@ -123,6 +123,7 @@ protected:
     {
         bool receiverAveraging = false;
         bool persistentChanges = false;
+        bool compactObservations = false;
     };
 
     [[nodiscard]] bool validateConfiguration(const GPSConfig& config, ConfigurationSupport support) const;

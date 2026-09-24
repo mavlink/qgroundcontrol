@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+
 #include <QtCore/QString>
 
 #include "GPSBaseStationConfig.h"
@@ -38,6 +39,7 @@ enum class GPSReceiverConfigError
     InvalidReceiverAveraging,
     InvalidBaudRate,
     UnsupportedPersistentConfiguration,
+    UnsupportedCompactObservations,
 };
 
 /// Check the selected base mode against the existing receiver wire-unit limits.

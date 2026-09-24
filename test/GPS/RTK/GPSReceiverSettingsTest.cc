@@ -105,6 +105,7 @@ struct SettingsFixture
         saved.setFactValue(settings->fixedBasePositionLongitude(), 0);
         saved.setFactValue(settings->fixedBasePositionAltitude(), 0);
         saved.setFactValue(settings->fixedBasePositionAccuracy(), 0);
+        saved.setFactValue(settings->compactRtcmCorrections(), false);
     }
 };
 
@@ -255,6 +256,31 @@ void GPSReceiverSettingsTest::_unavailablePositionCannotBeSaved()
     QVERIFY(!result);
     QCOMPARE(settings.settings->fixedBasePositionLatitude()->rawValue().toDouble(), 0.0);
     QCOMPARE(settings.settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.0);
+}
+
+void GPSReceiverSettingsTest::_compactCorrectionsToggle()
+{
+    SettingsFixture settings(4);
+    ReceiverSettingsController receiver(settings.settings);
+    GPSRTKFactGroup facts;
+    QQmlEngine engine;
+    QString error;
+    auto panel = createPanel(engine, receiver, settings, facts, error);
+    QVERIFY2(panel, qPrintable(error));
+    auto* toggle = panel->findChild<QQuickItem*>(QStringLiteral("rtkCompactRtcm"));
+    QVERIFY(toggle);
+    QVERIFY(toggle->isVisible());
+    QVERIFY(toggle->isEnabled());
+    QVERIFY(QMetaObject::invokeMethod(toggle, "click"));
+    QVERIFY(settings.settings->compactRtcmCorrections()->rawValue().toBool());
+    for (const int manufacturer : {2, 5, 6, 7}) {
+        settings.settings->baseReceiverManufacturers()->setRawValue(manufacturer);
+        QVERIFY2(!toggle->isVisible(), qPrintable(QString::number(manufacturer)));
+    }
+    settings.settings->baseReceiverManufacturers()->setRawValue(4);
+    QVERIFY(toggle->isVisible());
+    receiver.setConnected(true);
+    QVERIFY(!toggle->isEnabled());
 }
 
 void GPSReceiverSettingsTest::_consentIsOneUse()

@@ -28,6 +28,7 @@ private slots:
     void _manufacturerIds();
     void _runtimeSettingsDoNotRequireAppRestart_data();
     void _runtimeSettingsDoNotRequireAppRestart();
+    void _compactCorrectionsFollowReceiverSupport();
     void _receiverSettingsMapping_data();
     void _receiverSettingsMapping();
     void _invalidReceiverSettings_data();

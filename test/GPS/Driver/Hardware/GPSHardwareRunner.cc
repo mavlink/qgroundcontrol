@@ -14,6 +14,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QMap>
 #include <QtCore/QSaveFile>
 #include <QtCore/QTextStream>
 #include <QtCore/QtEndian>
@@ -22,6 +23,7 @@
 #include "GPSEvidenceTransport.h"
 #include "GPSReceiverCapabilities.h"
 #include "MonotonicClock.h"
+#include "RTCMFramer.h"
 #include "ScriptedUBXReceiver.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
@@ -102,6 +104,7 @@ QJsonObject requestedConfig(const GPSReceiverConfig& config)
                        {"baud_rate", static_cast<qint64>(config.baudRate)},
                        {"allow_persistent_changes", config.allowPersistentChanges}};
     if (config.role == GPSReceiverConfig::Role::RTKBase) {
+        result.insert("compact_observations", config.base.compactObservations);
         if (std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode)) {
             result.insert("base_mode", "fixed");
             result.insert("latitude_deg",
@@ -199,6 +202,10 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     }
     options.config.baudRate = static_cast<uint32_t>(integer("baud", 0, 4000000));
     options.config.allowPersistentChanges = parser.isSet("allow-save");
+    options.config.base.compactObservations = parser.isSet("compact-rtcm");
+    if (options.config.base.compactObservations && options.config.role != GPSReceiverConfig::Role::RTKBase) {
+        return "--compact-rtcm requires --role base";
+    }
     const QString baseMode = parser.value("base-mode");
     if (!QStringList{"survey", "fixed", "receiver-averaging"}.contains(baseMode)) {
         return "Unsupported base mode";
@@ -456,6 +463,8 @@ int run(const Options& options)
         int positions = 0;
         int satellites = 0;
         int correctionFrames = 0;
+        QMap<int, int> correctionMessages;
+        QMap<int, qint64> correctionBytes;
         QElapsedTimer elapsed;
         elapsed.start();
         GPSDriverSinks sinks;
@@ -469,7 +478,12 @@ int run(const Options& options)
                             {"horizontal_accuracy_m", navigation.horizontalAccuracyMeters}};
         };
         sinks.onSatelliteInfo = [&](const GPSSatelliteReport&) { ++satellites; };
-        sinks.onRTCM = [&](std::span<const uint8_t>) { ++correctionFrames; };
+        sinks.onRTCM = [&](std::span<const uint8_t> frame) {
+            ++correctionFrames;
+            const int messageId = RTCMFramer::frameMessageId(frame);
+            ++correctionMessages[messageId];
+            correctionBytes[messageId] += static_cast<qint64>(frame.size());
+        };
         sinks.onSurveyIn = [&](const GPSSurveyReport& survey) {
             const bool prior = survey.duration.count() > elapsed.elapsed() / 1000 + 2;
             QString observation = "indeterminate";
@@ -502,6 +516,12 @@ int run(const Options& options)
             stage.insert("last_position", lastPosition);
             stage.insert("satellite_messages", satellites);
             stage.insert("correction_frames", correctionFrames);
+            QJsonObject messages;
+            for (auto it = correctionMessages.cbegin(); it != correctionMessages.cend(); ++it) {
+                messages.insert(QString::number(it.key()),
+                                QJsonObject{{"frames", it.value()}, {"bytes", correctionBytes.value(it.key())}});
+            }
+            stage.insert("correction_messages", messages);
             stage.insert("survey_observations", surveys);
             stage.insert("wire_evidence", evidence.evidence());
             if (options.family == GPSType::ublox) {
@@ -671,6 +691,7 @@ int main(int argc, char* argv[])
         {"role", "base|passive", "role", "base"},
         {"allow-reconfigure", "Authorize physical receiver writes and role changes"},
         {"allow-save", "Explicitly permit LG290P settings to be saved to flash and the receiver restarted"},
+        {"compact-rtcm", "Request compact MSM4 instead of MSM7 RTCM observations from a supporting base"},
         {"output", "New JSON evidence path (atomic progress snapshots; never overwrites a previous run)", "path"},
         {"device", "Explicit serial device path", "path"},
         {"baud", "Serial baud rate (0 for managed detection; passive requires an explicit rate)", "baud", "0"},

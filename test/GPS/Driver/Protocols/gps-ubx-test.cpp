@@ -838,6 +838,41 @@ static void invalidConfiguration()
                       : f.receiver.current_settings.at(UBX_CFG_KEY_TMODE_FIXED_POS_ACC)) == 4294967040u);
     }
 
+    // Compact bases send MSM4 and switch off MSM7 left over from an earlier session, and vice versa.
+    constexpr std::array<std::pair<uint32_t, uint16_t>, 4> msm7{{
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1077_I2C, UBX_MSG_RTCM3_1077},
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1087_I2C, UBX_MSG_RTCM3_1087},
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1097_I2C, UBX_MSG_RTCM3_1097},
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1127_I2C, UBX_MSG_RTCM3_1127},
+    }};
+    constexpr std::array<std::pair<uint32_t, uint16_t>, 4> msm4{{
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1074_I2C, UBX_MSG_RTCM3_1074},
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1084_I2C, UBX_MSG_RTCM3_1084},
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1094_I2C, UBX_MSG_RTCM3_1094},
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1124_I2C, UBX_MSG_RTCM3_1124},
+    }};
+    for (bool legacy : {false, true}) {
+        for (bool compact : {false, true}) {
+            Fixture f;
+            f.receiver.legacy = legacy;
+            f.receiver.module = legacy ? "NEO-M8P" : "ZED-F9P";
+            f.base = fixed.base;
+            f.base.compactObservations = compact;
+            CHECK(f.configure() == 0);
+            CHECK(f.driver.receiverReady());
+            const auto rate = [&](const std::pair<uint32_t, uint16_t>& message) -> unsigned {
+                // UART1 follows the I2C key.
+                return legacy ? f.receiver.message_rates.at(message.second)
+                              : f.receiver.current_settings.at(message.first + 1);
+            };
+            for (const auto& message : msm7) {
+                CHECK(rate(message) == (compact ? 0u : 1u));
+            }
+            for (const auto& message : msm4) {
+                CHECK(rate(message) == (compact ? 1u : 0u));
+            }
+        }
+    }
 }
 
 static void explicitNoFix()

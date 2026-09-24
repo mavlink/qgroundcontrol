@@ -349,6 +349,9 @@ QString GPSRtk::_receiverConfig(GPSType type, RTKSettings* settings, uint32_t ba
         default:
             return tr("Select a supported base mode.");
     }
+    // The option is hidden for receivers that cannot send MSM4, so it never blocks their connection.
+    config.base.compactObservations = settings->compactRtcmCorrections()->rawValue().toBool() &&
+                                      gpsReceiverCapabilities(type, config.role).compactObservations;
     return gpsReceiverConfigError(type, config);
 }
 

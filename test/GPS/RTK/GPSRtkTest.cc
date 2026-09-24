@@ -670,7 +670,7 @@ void GPSRtkTest::_runtimeSettingsDoNotRequireAppRestart_data()
     for (const auto* name : {"baseReceiverManufacturers", "serialDevice", "serialBaudRate", "useFixedBasePosition",
                              "surveyInAccuracyLimit", "surveyInMinObservationDuration", "receiverAveragingDuration",
                              "fixedBasePositionLatitude", "fixedBasePositionLongitude", "fixedBasePositionAltitude",
-                             "fixedBasePositionAccuracy"}) {
+                             "fixedBasePositionAccuracy", "compactRtcmCorrections"}) {
         QTest::newRow(name) << QString::fromLatin1(name);
     }
 }
@@ -683,6 +683,24 @@ void GPSRtkTest::_runtimeSettingsDoNotRequireAppRestart()
     QVERIFY(fact);
     QVERIFY(!fact->qgcRebootRequired());
     QVERIFY(!fact->vehicleRebootRequired());
+}
+
+void GPSRtkTest::_compactCorrectionsFollowReceiverSupport()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->rtkSettings();
+    saved.setFactValue(settings->useFixedBasePosition(), static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn));
+    saved.setFactValue(settings->surveyInAccuracyLimit(), 2.0);
+    saved.setFactValue(settings->surveyInMinObservationDuration(), 60);
+    for (const bool compact : {false, true}) {
+        saved.setFactValue(settings->compactRtcmCorrections(), compact);
+        GPSReceiverConfig config;
+        QVERIFY(GPSRtk::_receiverConfig(GPSType::ublox, settings, 115200, config).isEmpty());
+        QCOMPARE(config.base.compactObservations, compact);
+        // Receivers without MSM4 support ignore the hidden option instead of failing to connect.
+        QVERIFY(GPSRtk::_receiverConfig(GPSType::septentrio, settings, 115200, config).isEmpty());
+        QVERIFY(!config.base.compactObservations);
+    }
 }
 
 void GPSRtkTest::_manufacturerIds_data()

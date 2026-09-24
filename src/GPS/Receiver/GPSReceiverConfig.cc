@@ -81,6 +81,9 @@ GPSReceiverConfigError gpsValidateReceiverPhysicalConfig(const GPSReceiverConfig
             (std::holds_alternative<GPSBaseStationConfig::SurveyIn>(config.base.mode) && !capabilities.surveyIn)) {
             return GPSReceiverConfigError::UnsupportedBaseMode;
         }
+        if (config.base.compactObservations && !capabilities.compactObservations) {
+            return GPSReceiverConfigError::UnsupportedCompactObservations;
+        }
         const GPSReceiverConfigError error = gpsValidateBaseStationConfig(config.base);
         if (error != GPSReceiverConfigError::None) {
             return error;
@@ -124,6 +127,9 @@ QString gpsReceiverConfigErrorText(GPSReceiverConfigError error)
         case GPSReceiverConfigError::UnsupportedPersistentConfiguration:
             return QCoreApplication::translate("GPSReceiverConfig",
                                                "This driver does not support persistent receiver configuration");
+        case GPSReceiverConfigError::UnsupportedCompactObservations:
+            return QCoreApplication::translate("GPSReceiverConfig",
+                                               "This receiver cannot send compact (MSM4) RTCM corrections");
     }
     return QCoreApplication::translate("GPSReceiverConfig", "Invalid GPS receiver configuration");
 }

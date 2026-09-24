@@ -120,6 +120,14 @@
             "units": "m",
             "decimalPlaces": 2,
             "label": "Base Position Accuracy"
+        },
+        {
+            "name": "compactRtcmCorrections",
+            "shortDesc": "Compact RTCM corrections (MSM4)",
+            "longDesc": "Send MSM4 instead of MSM7 observation messages from base receivers that support it. Uses about a third less correction bandwidth, useful on slow telemetry links, but omits Doppler and uses lower measurement resolution.",
+            "type": "bool",
+            "default": false,
+            "label": "Compact RTCM corrections (MSM4)"
         }
     ]
 }

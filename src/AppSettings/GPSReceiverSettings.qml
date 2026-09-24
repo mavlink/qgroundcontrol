@@ -257,6 +257,27 @@ SettingsGroupLayout {
         visible: root.baseMode === BaseModeDefinition.BaseFixed && root.presentation.fixedBaseAccuracy
     }
 
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.presentation.compactObservations && !root.presentation.passive
+                 && root.settings.compactRtcmCorrections.userVisible
+        Explanation { text: root.settings.compactRtcmCorrections.shortDescription }
+        FactCheckBoxSlider {
+            objectName: "rtkCompactRtcm"
+            text: ""
+            Accessible.name: root.settings.compactRtcmCorrections.shortDescription
+            enabled: root._editable
+            fact: root.settings.compactRtcmCorrections
+        }
+    }
+
+    Explanation {
+        visible: root.presentation.compactObservations && !root.presentation.passive
+                 && root.settings.compactRtcmCorrections.userVisible
+        text: qsTr("Uses about a third less correction bandwidth, for example on slow telemetry radios. Doppler is omitted and measurements use lower resolution.")
+    }
+
     ColumnLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0

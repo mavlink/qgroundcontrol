@@ -31,6 +31,8 @@ struct GPSBaseStationConfig
 
     using Mode = std::variant<SurveyIn, Fixed, ReceiverAveraging>;
     Mode mode = SurveyIn{};
+    /// MSM4 instead of MSM7 observations: about a third less correction bandwidth, without Doppler.
+    bool compactObservations = false;
 
     bool operator==(const GPSBaseStationConfig&) const = default;
 };

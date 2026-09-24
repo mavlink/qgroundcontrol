@@ -42,4 +42,5 @@ public:
     DEFINE_SETTINGFACT(fixedBasePositionLongitude)
     DEFINE_SETTINGFACT(fixedBasePositionAltitude)
     DEFINE_SETTINGFACT(fixedBasePositionAccuracy)
+    DEFINE_SETTINGFACT(compactRtcmCorrections)
 };

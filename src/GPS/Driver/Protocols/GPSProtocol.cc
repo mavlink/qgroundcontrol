@@ -73,7 +73,8 @@ bool GPSProtocol::validateConfiguration(const GPSConfig& config, ConfigurationSu
                                      .allowPersistentChanges = config.allowPersistentChanges};
     const GPSReceiverCapabilities supported{.surveyIn = true,
                                             .receiverAveraging = support.receiverAveraging,
-                                            .persistentConfiguration = support.persistentChanges};
+                                            .persistentConfiguration = support.persistentChanges,
+                                            .compactObservations = support.compactObservations};
     const auto error = gpsValidateReceiverPhysicalConfig(physical, supported);
     if (error != GPSReceiverConfigError::None) {
         log(GPSProtocolLogLevel::Warning, "Invalid receiver physical configuration (%d)", static_cast<int>(error));
