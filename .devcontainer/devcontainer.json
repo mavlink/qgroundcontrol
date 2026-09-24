@@ -2,7 +2,7 @@
   "build": {
     "context": "..",
     "dockerfile": "../deploy/docker/Dockerfile",
-    "target": "devcontainer"
+    "target": "qgc-dev"
   },
   "customizations": {
     "vscode": {
@@ -10,17 +10,12 @@
         "llvm-vs-code-extensions.vscode-clangd",
         "ms-vscode.cmake-tools",
         "twxs.cmake",
-        "QML.qml-official",
-        "ms-python.python",
-        "GitHub.copilot"
+        "TheQtCompany.qt-qml",
+        "ms-python.python"
       ]
     }
   },
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
-  },
-  "name": "QGroundControl Dev",
+  "name": "qgc-dev",
   "overrideCommand": true,
   "postCreateCommand": "git submodule update --init --recursive && /opt/qgc-venv/bin/python tools/setup/setup_vscode.py --python-interpreter /opt/qgc-venv/bin/python",
   "remoteUser": "vscode",

@@ -3,7 +3,7 @@
   "qt": {
     "version": "6.11.1",
     "minimum_version": "6.11.0",
-    "modules": "qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver"
+    "modules": "qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver qttasktree"
   },
   "android": {
     "platform": "36",

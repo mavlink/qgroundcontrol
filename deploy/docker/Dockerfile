@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
 # Single source for the QGC builder images. Pick a variant with --target:
 #   docker build -f deploy/docker/Dockerfile --target linux       .   # x86_64 AppImage
+#   docker buildx bake -f deploy/docker/docker-bake.hcl qgc-dev
 #   docker build -f deploy/docker/Dockerfile --target linux-cross .   # aarch64 cross
 #   docker build -f deploy/docker/Dockerfile --target android     .   # Android APK
 # run_docker.py / plan_docker_builds.py drive --target + build-args; non-Ubuntu
@@ -10,6 +11,7 @@
 # Digest-pinned for reproducibility (re-resolve via `docker buildx imagetools
 # inspect` when bumping); BASE_REF/SETUP_BASE overridden for non-Ubuntu distros.
 ARG BASE_REF=ubuntu:24.04@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54
+ARG TARGETARCH
 FROM ${BASE_REF} AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -66,16 +68,24 @@ WORKDIR /project/build
 # Login shell so /etc/profile.d/*.sh (Qt paths, toolchain pins) are sourced.
 SHELL ["/bin/bash", "-lc"]
 
-# ---------- linux: native x86_64 AppImage build ----------
+# ---------- linux: native desktop build ----------
 # DEP_PLATFORM selects the install_dependencies backend (debian = apt/Ubuntu &
 # Debian; fedora = dnf; arch = pacman). Non-Ubuntu distros set it via build args.
 FROM base AS linux
+ARG TARGETARCH
 ARG DEP_PLATFORM=debian
 # Persist for entrypoint.sh: Fedora/Arch builds skip the appimagelint compat check.
 ENV QGC_DEP_PLATFORM=${DEP_PLATFORM}
-RUN python3 /tmp/tools/setup/install_qt.py install --from-config --host linux --target desktop --arch linux_gcc_64 --outdir /opt/Qt && \
+RUN case "${TARGETARCH}" in \
+        amd64) QT_HOST=linux; QT_ARCH=linux_gcc_64 ;; \
+        arm64) QT_HOST=linux_arm64; QT_ARCH=linux_gcc_arm64 ;; \
+        *) echo "Unsupported native architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac && \
+    python3 /tmp/tools/setup/install_qt.py install --from-config --host "${QT_HOST}" --target desktop --arch "${QT_ARCH}" --outdir /opt/Qt && \
     QT_VERSION=$(python3 /tmp/tools/setup/read_config.py --get qt.version) && \
-    { echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_64"; \
+    QT_ARCH_DIR=$(python3 /tmp/tools/setup/install_qt.py resolve-arch --arch "${QT_ARCH}") && \
+    ln -s "/opt/Qt/${QT_VERSION}/${QT_ARCH_DIR}" /opt/qt && \
+    { echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/${QT_ARCH_DIR}"; \
       echo 'export PATH=$QT_ROOT_DIR/bin:$PATH'; } > /etc/profile.d/qt.sh
 COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
 RUN python3 /tmp/tools/setup/install_dependencies --platform "${DEP_PLATFORM}" && \
@@ -84,8 +94,48 @@ COPY deploy/docker/entrypoint.sh deploy/docker/entrypoint.py /
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]
 
-# ---------- devcontainer: interactive, non-root desktop development ----------
-FROM linux AS devcontainer
+# Official Android NDK Linux host binaries are x86_64 only. Keep the native ARM
+# desktop image free of unusable Android binaries and Android environment variables.
+FROM linux AS qgc-dev-android-amd64
+COPY --from=base /tmp/tools/ /opt/qgc-bootstrap/tools/
+COPY deploy/docker/install_android.py /opt/qgc-bootstrap/deploy/docker/
+RUN python3 /opt/qgc-bootstrap/deploy/docker/install_android.py \
+        --abis arm64-v8a armeabi-v7a x86_64 && \
+    rm -rf /var/lib/apt/lists/*
+ENV JAVA_HOME=/opt/java ANDROID_HOME=/opt/android-sdk ANDROID_SDK_ROOT=/opt/android-sdk
+ENV ANDROID_NDK_ROOT=/opt/android-ndk ANDROID_NDK_HOME=/opt/android-ndk ANDROID_NDK=/opt/android-ndk
+ENV ANDROID_BUILD_TOOLS_DIR=/opt/android-build-tools
+ENV PATH="/opt/java/bin:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/android-build-tools:${PATH}"
+
+FROM linux AS qgc-dev-android-arm64
+# Native ARM64 is desktop/analysis only; qgc-android directs users to --platform linux/amd64.
+
+# ---------- qgc-dev: non-root desktop development and supported mobile tools ----------
+# These are internal stages of the same multi-platform image, not public products.
+# hadolint ignore=DL3006
+FROM qgc-dev-android-${TARGETARCH} AS qgc-dev
+COPY --from=base /tmp/tools/ /opt/qgc-bootstrap/tools/
+COPY deploy/docker/install_analysis.py /opt/qgc-bootstrap/deploy/docker/
+COPY .github/scripts/ccache_helper.py .github/scripts/ci_bootstrap.py /opt/qgc-bootstrap/.github/scripts/
+RUN python3 /opt/qgc-bootstrap/deploy/docker/install_analysis.py && \
+    LLVM_VERSION=$(python3 /opt/qgc-bootstrap/tools/setup/read_config.py --get analysis.llvm_version) && \
+    ln -s "/usr/lib/llvm-${LLVM_VERSION}" /opt/llvm && \
+    TMPDIR=/opt/qgc-bootstrap python3 /opt/qgc-bootstrap/.github/scripts/ccache_helper.py install && \
+    rm -rf /opt/qgc-bootstrap/clazy-build /var/lib/apt/lists/*
+RUN UV_PROJECT_ENVIRONMENT=/opt/qgc-venv uv sync \
+        --project /opt/qgc-tools --python /opt/qgc-venv/bin/python \
+        --group dev --no-default-groups --no-install-project --frozen --inexact
+ENV QT_ROOT_DIR=/opt/qt
+ENV PATH="/opt/qgc-venv/bin:/opt/clazy/bin:/opt/llvm/bin:/opt/qt/bin:${PATH}"
+ENV UV_PROJECT_ENVIRONMENT=/opt/qgc-venv UV_NO_SYNC=true UV_PYTHON_DOWNLOADS=never
+ENV UV_PYTHON=/opt/qgc-venv/bin/python
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN python3 /opt/qgc-bootstrap/deploy/docker/install_analysis.py --verify && \
+    qt-cmake --version && \
+    python3 -c "import jinja2, httpx, defusedxml, lxml, fastcrc" && \
+    ccache --version
+
+COPY --chmod=755 deploy/docker/qgc-android.sh /usr/local/bin/qgc-android
 ARG DEV_USER=vscode
 ARG USER_UID=1000
 ARG USER_GID=1000
@@ -101,6 +151,11 @@ RUN if getent passwd "${USER_UID}" >/dev/null; then \
 ENV SHELL=/bin/bash
 WORKDIR /workspaces/qgroundcontrol
 USER ${DEV_USER}
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN python3 /opt/qgc-bootstrap/deploy/docker/install_analysis.py --verify && \
+    qt-cmake --version && \
+    python3 -c "import jinja2, httpx, defusedxml, lxml, fastcrc" && \
+    ccache --version
 ENTRYPOINT []
 CMD ["/bin/bash"]
 
@@ -138,54 +193,20 @@ CMD ["Release"]
 # ---------- android: Android APK build (SDK/NDK + Qt android target) ----------
 FROM base AS android
 COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
-# The Java version is centralized in build-config and package revisions vary by base image.
-# hadolint ignore=DL3008
-RUN python3 /tmp/tools/setup/install_dependencies --platform debian && \
-    python3 /tmp/tools/setup/read_config.py --export bash > /etc/profile.d/qgc.sh && \
-    . /etc/profile.d/qgc.sh && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends openjdk-${ANDROID_JAVA_VERSION}-jdk && \
-    rm -rf /var/lib/apt/lists/*
-
+COPY deploy/docker/install_android.py /tmp/deploy/docker/
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV ANDROID_HOME=$ANDROID_SDK_ROOT
-# sdkmanager closes the license-input pipe; pipefail would treat yes's SIGPIPE as a failure.
-# hadolint ignore=DL4006
-RUN . /etc/profile.d/qgc.sh && \
-    mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
-    wget "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" -O /opt/cmdline-tools.zip && \
-    # Pinned to android_cmdline_tools 14742923 (.github/build-config.json); update both together.
-    echo "04453066b540409d975c676d781da1477479dde3761310f1a7eb92a1dfb15af7  /opt/cmdline-tools.zip" | sha256sum -c - && \
-    unzip /opt/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
-    mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
-    rm -rf $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools && \
-    rm /opt/cmdline-tools.zip && \
-    yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses && \
-    $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
-        "platform-tools" \
-        "platforms;android-${ANDROID_PLATFORM}" \
-        "build-tools;${ANDROID_BUILD_TOOLS}" \
-        "ndk;${ANDROID_NDK_FULL_VERSION}" && \
-    echo "export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/${ANDROID_NDK_FULL_VERSION}" >> /etc/profile.d/qgc.sh && \
-    echo "export ANDROID_BUILD_TOOLS_DIR=$ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}" >> /etc/profile.d/qgc.sh
-
 ENV QT_PATH="/opt/Qt"
 ENV QT_HOST="linux"
 ENV QT_HOST_ARCH="linux_gcc_64"
 ENV QT_HOST_DIR="gcc_64"
 ENV QT_TARGET="android"
 ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
-# aqtinstall: --arch=linux_gcc_64 but creates gcc_64/ dir.
-RUN python3 /tmp/tools/setup/install_qt.py install --from-config --host "$QT_HOST" --target desktop --arch "$QT_HOST_ARCH" --outdir /opt/Qt && \
-    python3 /tmp/tools/setup/install_qt.py install --from-config --host all_os --target "$QT_TARGET" --arch "$QT_TARGET_ARCH_ARM64" --outdir /opt/Qt --autodesktop && \
-    . /etc/profile.d/qgc.sh && \
-    echo "export QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64" >> /etc/profile.d/qgc.sh && \
-    echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_DIR" >> /etc/profile.d/qgc.sh
-
-RUN . /etc/profile.d/qgc.sh && \
-    JAVA_BIN="$(readlink -f "$(command -v javac)")" && \
-    JAVA_HOME="$(dirname "$(dirname "${JAVA_BIN}")")" && \
-    echo "export JAVA_HOME=${JAVA_HOME}" >> /etc/profile.d/qgc.sh
+RUN python3 /tmp/tools/setup/install_dependencies --platform debian && \
+    python3 /tmp/deploy/docker/install_android.py --tools /tmp/tools && \
+    python3 /tmp/tools/setup/read_config.py --export bash > /etc/profile.d/qgc.sh && \
+    cat /opt/qgc-android/env.sh >> /etc/profile.d/qgc.sh && \
+    rm -rf /var/lib/apt/lists/* /tmp/deploy
 RUN echo 'export PATH=$JAVA_HOME/bin:/usr/lib/ccache:$QT_HOST_PATH/bin:$QT_ROOT_DIR_ARM64/bin:$PATH:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_BUILD_TOOLS_DIR:$ANDROID_NDK_ROOT' >> /etc/profile.d/qgc.sh
 
 RUN rm -rf /tmp/tools
