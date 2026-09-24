@@ -84,6 +84,7 @@ QVariantList GPSCorrectionRouter::sourceDiagnostics() const
     for (int index = 0; index < static_cast<int>(statistics.size()); ++index) {
         const auto& stats = statistics[index];
         const qint64 age = GPSCorrectionFrame::ageMs(stats.lastValidMs, nowMs);
+        // Freshness is published as a state rather than an age so unchanged diagnostics stay equal.
         result.append(admissionDiagnostics(
             stats, {{QStringLiteral("source"), index},
                     {QStringLiteral("session"), QVariant::fromValue(stats.session)},
@@ -97,7 +98,6 @@ QVariantList GPSCorrectionRouter::sourceDiagnostics() const
                     {QStringLiteral("filteredFrames"), QVariant::fromValue(stats.filteredFrames)},
                     {QStringLiteral("routedFrames"), QVariant::fromValue(stats.selectedFrames)},
                     {QStringLiteral("submittedBytes"), QVariant::fromValue(stats.submittedBytes)},
-                    {QStringLiteral("ageMs"), age},
                     {QStringLiteral("usable"),
                      stats.active && age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS}}));
     }
@@ -415,12 +415,6 @@ void GPSCorrectionSelector::_select(qint64 now)
         _active = _candidate;
         _candidate.reset();
     }
-}
-
-QString GPSCorrectionSelector::activeInstance(qint64 now) const
-{
-    const auto active = activeIdentity(now);
-    return active ? active->instance : QString();
 }
 
 GPSCorrectionSource GPSCorrectionSelector::activeSource(qint64 now) const

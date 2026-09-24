@@ -14,6 +14,7 @@ private slots:
     void _ntripUdpOutputEndpointChanges_data();
     void _ntripUdpOutputEndpointChanges();
     void _sourceTopologyDoesNotNotifyOnCounters();
+    void _diagnosticsNotifyOnlyOnChange();
     void _sourceSelectionAndSessions();
     void _filteredAndExpiredFrames();
     void _udpSettingsAndShutdown();

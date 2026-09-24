@@ -603,4 +603,24 @@ void GPSCorrectionManagerTest::_sourceTopologyDoesNotNotifyOnCounters()
     QVERIFY(corrections.sourceInstances().isEmpty());
 }
 
+void GPSCorrectionManagerTest::_diagnosticsNotifyOnlyOnChange()
+{
+    GPSCorrectionManager corrections;
+    QSignalSpy topology(&corrections, &GPSCorrectionManager::sourceInstancesChanged);
+    QSignalSpy counters(&corrections, &GPSCorrectionManager::sourcesChanged);
+    QSignalSpy destinations(&corrections, &GPSCorrectionManager::destinationsChanged);
+    auto ntrip = corrections.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster/mount"));
+    corrections.acceptIngress(ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20),
+                                                  GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections._refreshDiagnostics();
+    QCOMPARE(topology.size(), 1);
+    QCOMPARE(counters.size(), 1);
+    QCOMPARE(destinations.size(), 1);
+    QVERIFY(!corrections.destinations().isEmpty());
+    corrections._refreshDiagnostics();
+    QCOMPARE(topology.size(), 1);
+    QCOMPARE(counters.size(), 1);
+    QCOMPARE(destinations.size(), 1);
+}
+
 UT_REGISTER_TEST(GPSCorrectionManagerTest, TestLabel::Unit)

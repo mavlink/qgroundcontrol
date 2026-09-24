@@ -75,7 +75,6 @@ public:
 
     QString selectedInstance() const { return configuration().instance; }
 
-    QString activeInstance() const { return _selector.activeInstance(_clock()); }
 
     GPSCorrectionSource activeSource() const { return _selector.activeSource(_clock()); }
 

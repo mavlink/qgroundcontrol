@@ -33,6 +33,16 @@ void setAdmissionOutput(GPSCorrectionRouter& router, const QString& id, GPSCorre
     router.setOutput(id, GPSCorrectionRouter::admissionOnlyOutput(id, scope, std::move(submit)));
 }
 
+QString selectedInstance(const GPSCorrectionRouter& router)
+{
+    for (const auto& value : router.sourceInstanceDiagnostics()) {
+        const auto instance = value.toMap();
+        if (instance.value(QStringLiteral("selected")).toBool()) {
+            return instance.value(QStringLiteral("instanceId")).toString();
+        }
+    }
+    return {};
+}
 }  // namespace
 
 class GPSCorrectionRouterTest : public UnitTest
@@ -136,7 +146,6 @@ void GPSCorrectionRouterTest::diagnosticsSampleClockOnce()
     const auto sources = router.sourceDiagnostics();
     QCOMPARE(samples, 1);
     const auto source = sources[2].toMap();
-    QCOMPARE(source.value(QStringLiteral("ageMs")).toLongLong(), 0);
     QVERIFY(source.value(QStringLiteral("usable")).toBool());
     const auto instances = router.sourceInstanceDiagnostics();
     QCOMPARE(samples, 2);
@@ -149,16 +158,13 @@ void GPSCorrectionRouterTest::diagnosticsSampleClockOnce()
     QVERIFY(destination.value(QStringLiteral("queuedBytes")).toULongLong() > 0);
 
     QCOMPARE(samples, 2);
-    QCOMPARE(router.activeInstance(), QStringLiteral("caster"));
 
     now += GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS;
     QVERIFY(!router.sourceDiagnostics()[2].toMap().value(QStringLiteral("usable")).toBool());
     QVERIFY(!router.sourceInstanceDiagnostics().first().toMap().value(QStringLiteral("selected")).toBool());
-    QVERIFY(router.activeInstance().isEmpty());
     QVERIFY(instance.value(QStringLiteral("selected")).toBool());
     now = 99999;
     const auto future = router.sourceDiagnostics()[2].toMap();
-    QCOMPARE(future.value(QStringLiteral("ageMs")).toLongLong(), -1);
     QVERIFY(!future.value(QStringLiteral("usable")).toBool());
     QVERIFY(!router.sourceInstanceDiagnostics().first().toMap().value(QStringLiteral("selected")).toBool());
 }
@@ -656,7 +662,7 @@ void GPSCorrectionRouterTest::automaticSelectionAndFailover()
     QVERIFY(!router.acceptIngress(ingress(ntrip, now)));
     ++now;
     QVERIFY(router.acceptIngress(ingress(ntrip, now)));
-    QCOMPARE(router.activeInstance(), QStringLiteral("caster/mount"));
+    QCOMPARE(selectedInstance(router), QStringLiteral("caster/mount"));
     QVERIFY(!router.acceptIngress(ingress(udp, now, QStringLiteral("peer-a"))));
     QVERIFY(!router.acceptIngress(ingress(local, now)));
     now += GPSCorrectionRouter::SWITCH_HOLD_DOWN_MS;
@@ -687,7 +693,8 @@ void GPSCorrectionRouterTest::peerSelectionDoesNotInterleave()
                        now);
     QVERIFY(!observe(QStringLiteral("first")));
     QVERIFY(observe(QStringLiteral("second")));
-    QCOMPARE(selector.activeInstance(now), QStringLiteral("second"));
+    QVERIFY(selector.activeIdentity(now));
+    QCOMPARE(selector.activeIdentity(now)->instance, QStringLiteral("second"));
     selector.configure({GPSCorrectionSelector::Policy::Manual, GPSCorrectionSource::Udp, QStringLiteral("absent")},
                        now);
     QVERIFY(!observe(QStringLiteral("first")));
@@ -711,7 +718,7 @@ void GPSCorrectionRouterTest::sessionAndReceiptValidation()
     QVERIFY(!router.acceptIngress(ingress(registration, now - GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS)));
     QVERIFY(!router.acceptIngress(
         registration.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true, true)));
-    QVERIFY(router.activeInstance().isEmpty());
+    QVERIFY(selectedInstance(router).isEmpty());
     QVERIFY(router.acceptIngress(ingress(registration, now)));
     const auto& stats = router.statistics().at(static_cast<int>(GPSCorrectionSource::Ntrip));
     QCOMPARE(stats.filteredFrames, quint64(3));
@@ -743,7 +750,7 @@ void GPSCorrectionRouterTest::sourceIdentityOrderingAndRetirement()
     QCOMPARE(selector.activeSource(now), GPSCorrectionSource::Ntrip);
     selector.retire(GPSCorrectionSource::Ntrip, now);
     QCOMPARE(selector.activeSource(now), GPSCorrectionSource::Udp);
-    QVERIFY(selector.activeInstance(now).isEmpty());
+    QVERIFY(selector.activeIdentity(now)->instance.isEmpty());
     QVERIFY(selector.selected(frame(GPSCorrectionSource::Udp, 1, now), now));
     QVERIFY(!selector.selected(frame(GPSCorrectionSource::Udp, 1, now, sharedInstance), now));
 }
@@ -935,7 +942,7 @@ void GPSCorrectionRouterTest::boundedPeerHistory()
         QVERIFY(!router.acceptIngress(ingress(source, now, QString::number(i))));
         QVERIFY(router.sources().size() <= GPSCorrectionRouter::MAX_SOURCE_INSTANCES);
     }
-    QCOMPARE(router.activeInstance(), QStringLiteral("selected"));
+    QCOMPARE(selectedInstance(router), QStringLiteral("selected"));
     router.shutdown();
     QVERIFY(!router.acceptIngress(ingress(source, now, QStringLiteral("selected"))));
     QVERIFY(router.sources().isEmpty());

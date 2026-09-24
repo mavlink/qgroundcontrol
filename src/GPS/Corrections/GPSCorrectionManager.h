@@ -24,9 +24,8 @@ class GPSCorrectionManager : public QObject
     Q_PROPERTY(RTCMMavlink* rtcmMavlink READ rtcmMavlink CONSTANT)
     Q_PROPERTY(QVariantList sources READ sources NOTIFY sourcesChanged)
     Q_PROPERTY(QVariantList sourceInstances READ sourceInstances NOTIFY sourceInstancesChanged)
-    Q_PROPERTY(QString activeInstance READ activeInstance NOTIFY sourcesChanged)
     Q_PROPERTY(GPSCorrectionEventModel* events READ events CONSTANT)
-    Q_PROPERTY(QVariantList destinations READ destinations NOTIFY sourcesChanged)
+    Q_PROPERTY(QVariantList destinations READ destinations NOTIFY destinationsChanged)
 
     friend class GPSCorrectionManagerTest;
 
@@ -51,8 +50,6 @@ public:
 
     RoutingPolicy routingPolicy() const;
 
-    QString activeInstance() const { return _router.activeInstance(); }
-
     void removeSink(const QString& id);
     void setOutput(const QString& id, GPSCorrectionRouter::Output output);
 
@@ -66,6 +63,7 @@ public:
 signals:
     void sourcesChanged();
     void sourceInstancesChanged();
+    void destinationsChanged();
     void correctionRouted(const GPSCorrectionFrame& frame);
     void selectedSourceChanged();
 
@@ -75,7 +73,6 @@ private:
 
     void _scheduleSourcesChanged();
     void _refreshDiagnostics();
-    void _refreshSourceInstances(const QVariantList& instances);
 
     GPSCorrectionRouter _router;
     GPSCorrectionEventModel _eventModel;
@@ -86,7 +83,10 @@ private:
     GPSCorrectionSourceRegistration _udpRegistration;
     UdpForwarder _ntripUdpOutput{this};
     QPointer<GPSCorrectionSettings> _settings;
-    QVariantList _lastSourceInstances;
+    // Last published diagnostics; notifications fire only when a list changes.
+    QVariantList _sources;
+    QVariantList _sourceInstances;
+    QVariantList _destinations;
     quint64 _udpConfigurationRevision = 0;
     int _ingressDepth = 0;
     bool _finalDiagnosticsPending = false;

@@ -228,14 +228,27 @@ void GPSCorrectionManager::setOutput(const QString& id, GPSCorrectionRouter::Out
 void GPSCorrectionManager::_refreshDiagnostics()
 {
     const QPointer<GPSCorrectionManager> guard(this);
-    const auto events = _router.events();
-    const auto instances = _router.sourceInstanceDiagnostics();
-    _eventModel.setEvents(events);
-    if (guard) {
-        _refreshSourceInstances(instances);
+    _eventModel.setEvents(_router.events());
+    if (!guard) {
+        return;
     }
-    if (guard) {
+    if (auto instances = _router.sourceInstanceDiagnostics(); instances != _sourceInstances) {
+        _sourceInstances = std::move(instances);
+        emit sourceInstancesChanged();
+        if (!guard) {
+            return;
+        }
+    }
+    if (auto sources = _router.sourceDiagnostics(); sources != _sources) {
+        _sources = std::move(sources);
         emit sourcesChanged();
+        if (!guard) {
+            return;
+        }
+    }
+    if (auto destinations = _router.destinationDiagnostics(); destinations != _destinations) {
+        _destinations = std::move(destinations);
+        emit destinationsChanged();
     }
 }
 
@@ -255,14 +268,6 @@ void GPSCorrectionManager::_scheduleSourcesChanged()
 QVariantList GPSCorrectionManager::sources() const
 {
     return _router.sourceDiagnostics();
-}
-
-void GPSCorrectionManager::_refreshSourceInstances(const QVariantList& instances)
-{
-    if (instances != _lastSourceInstances) {
-        _lastSourceInstances = instances;
-        emit sourceInstancesChanged();
-    }
 }
 
 QVariantList GPSCorrectionManager::sourceInstances() const
