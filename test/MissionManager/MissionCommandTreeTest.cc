@@ -1,12 +1,13 @@
 #include "MissionCommandTreeTest.h"
 
+#include <QtCore/QRegularExpression>
+
+#include "Fixtures/RAIIFixtures.h"
 #include "MissionCommandList.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
-
-#include <QtCore/QRegularExpression>
 
 void MissionCommandTreeTest::init()
 {
@@ -207,6 +208,34 @@ void MissionCommandTreeTest::testUnknownCommandFallbacks()
     QCOMPARE(_commandTree->rawName(unknownCommand), QStringLiteral("MAV_CMD(9999)"));
     QVERIFY(!_commandTree->isLandCommand(unknownCommand));
     QVERIFY(!_commandTree->isTakeoffCommand(unknownCommand));
+}
+
+void MissionCommandTreeTest::testBadCommandSkipped()
+{
+    // Middle entry has an enum strings/values count mismatch, as a broken translation produces
+    const QByteArray json = R"({
+        "version": 1,
+        "fileType": "MavCmdInfo",
+        "mavCmdInfo": [
+            { "id": 1, "rawName": "UNITTEST_1" },
+            { "id": 2, "rawName": "UNITTEST_2",
+              "param1": { "label": "param1", "enumStrings": "1,2", "enumValues": "1,2,3" } },
+            { "id": 3, "rawName": "UNITTEST_3" }
+        ]
+    })";
+    TestFixtures::TempFileFixture jsonFile(QStringLiteral("test_XXXXXX.json"));
+    QVERIFY(jsonFile.isValid());
+    QVERIFY(jsonFile.write(json));
+    QVERIFY(jsonFile.file()->flush());
+
+    expectLogMessage("MissionManager.MissionCommandList", QtWarningMsg, QRegularExpression("count mismatch"));
+    const MissionCommandList commandList(jsonFile.path(), true);
+    verifyExpectedLogMessage();
+
+    QVERIFY(commandList.getUIInfo(static_cast<MAV_CMD>(1)));
+    QVERIFY(!commandList.getUIInfo(static_cast<MAV_CMD>(2)));
+    QVERIFY(commandList.getUIInfo(static_cast<MAV_CMD>(3)));
+    QCOMPARE(commandList.commandIds(), (QList<MAV_CMD>{static_cast<MAV_CMD>(1), static_cast<MAV_CMD>(3)}));
 }
 
 UT_REGISTER_TEST(MissionCommandTreeTest, TestLabel::Unit, TestLabel::MissionManager)

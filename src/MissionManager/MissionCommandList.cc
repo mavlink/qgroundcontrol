@@ -52,7 +52,8 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename, bool b
         if (!uiInfo->loadJsonInfo(info.toObject(), baseCommandList, uiInfoErrorString)) {
             uiInfo->deleteLater();
             qCWarning(MissionCommandListLog) << jsonFilename << uiInfoErrorString;
-            return;
+            // Skip only this entry; one bad entry (e.g. from a broken translation) must not drop the whole list
+            continue;
         }
 
         // Update list of known categories

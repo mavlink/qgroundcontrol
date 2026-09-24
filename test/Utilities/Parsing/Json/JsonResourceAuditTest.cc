@@ -1,12 +1,15 @@
 #include "JsonResourceAuditTest.h"
 
 #include <QtCore/QDirIterator>
+#include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QTranslator>
 
 #include "CameraMetaData.h"
 #include "FactMetaData.h"
+#include "JsonParsing.h"
 #include "LogManager.h"
 #include "MissionCommandList.h"
 #include "PowerModulePresetController.h"
@@ -29,8 +32,30 @@ void JsonResourceAuditTest::_verifyNoWarnings(const QString& jsonPath, const QSt
     QFAIL(qPrintable(QStringLiteral("Warnings parsing %1:\n  %2").arg(jsonPath, warnings.join(QStringLiteral("\n  ")))));
 }
 
+void JsonResourceAuditTest::_allResourceJsonParsesClean_test_data()
+{
+    QTest::addColumn<QString>("translationFile");
+
+    QTest::newRow("untranslated") << QString();
+
+    // A translation can break a file that parses clean untranslated, e.g. by dropping an enum string
+    QDirIterator it(QStringLiteral(":/i18n"), {QStringLiteral("qgc_json_*.qm")}, QDir::Files);
+    while (it.hasNext()) {
+        const QString translationFile = it.next();
+        QTest::newRow(qPrintable(QFileInfo(translationFile).completeBaseName())) << translationFile;
+    }
+}
+
 void JsonResourceAuditTest::_allResourceJsonParsesClean_test()
 {
+    QFETCH(QString, translationFile);
+
+    // Loading an empty path clears the translator, so no row depends on the host locale or the previous row
+    QTranslator* const translator = JsonParsing::translator();
+    const bool translationLoaded = translator->load(translationFile);
+    QVERIFY2(translationLoaded || translationFile.isEmpty(), qPrintable(translationFile));
+    const auto translatorGuard = qScopeGuard([translator] { (void) translator->load(QString()); });
+
     LogManager::setCaptureEnabled(true);
     const auto captureGuard = qScopeGuard([] { LogManager::setCaptureEnabled(false); });
 
