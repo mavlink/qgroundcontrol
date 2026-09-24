@@ -26,6 +26,8 @@ private slots:
     void _testBrowseGatedByHost();
     void _testSelfSignedGatedByTls();
     void _testErrorActionRetries();
+    void _testConnectionActionIsIdempotent_data();
+    void _testConnectionActionIsIdempotent();
     void _testMountpointLockedWhileActive();
 
 private:

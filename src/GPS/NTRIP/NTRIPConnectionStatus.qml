@@ -80,11 +80,19 @@ ColumnLayout {
         buttonEnabled: !!root.ntripManager
                        && root._status !== NTRIPManager.Connecting
                        && (root._isActive || root.canConnect)
+        // Explicit targets keep repeated clicks idempotent while the manager debounces the setting change.
         onClicked: {
-            if (root._status === NTRIPManager.Error)
+            switch (root._status) {
+            case NTRIPManager.Error:
                 root.ntripManager.retryNTRIP()
-            else
-                root.enabledFact.rawValue = !root._isActive
+                break
+            case NTRIPManager.Disconnected:
+                root.enabledFact.rawValue = true
+                break
+            default:
+                root.enabledFact.rawValue = false
+                break
+            }
         }
     }
 

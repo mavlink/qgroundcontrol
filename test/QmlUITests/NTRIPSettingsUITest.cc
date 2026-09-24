@@ -9,10 +9,37 @@
 #include <QtTest/QTest>
 
 #include "Fact.h"
+#include "NTRIPManager.h"
 #include "NTRIPSettings.h"
 #include "SettingsManager.h"
 
 UT_REGISTER_TEST(NTRIPSettingsUITest, TestLabel::Integration)
+
+namespace {
+constexpr char kMockNtripManager[] = R"(
+    import QtQml
+    import QGroundControl
+    QtObject {
+        property int connectionStatus: NTRIPManager.Error
+        property string statusMessage: "Connection failed"
+        property string ggaSource: "Vehicle GPS"
+        property string securityWarning: ""
+        property QtObject connectionStats: QtObject {
+            property bool dataStale: false
+            property real correctionAgeSec: 0.5
+            property int messagesReceived: 1
+            property var messageCountsById: [[1005, 1]]
+            property real bytesReceived: 25
+            property real dataRateBytesPerSec: 25
+        }
+        property int retryCount: 0
+        function retryNTRIP() {
+            retryCount++
+            connectionStatus = NTRIPManager.Connecting
+        }
+    }
+)";
+}  // namespace
 
 void NTRIPSettingsUITest::init()
 {
@@ -119,20 +146,7 @@ void NTRIPSettingsUITest::_testErrorActionRetries()
     QQmlEngine engine;
     engine.addImportPath(QStringLiteral("qrc:/qml"));
     QQmlComponent mockComponent(&engine);
-    mockComponent.setData(R"(
-        import QtQml
-        import QGroundControl
-        QtObject {
-            property int connectionStatus: NTRIPManager.Error
-            property string statusMessage: "Connection failed"
-            property int retryCount: 0
-            function retryNTRIP() {
-                retryCount++
-                connectionStatus = NTRIPManager.Connecting
-            }
-        }
-    )",
-                          QUrl());
+    mockComponent.setData(QByteArray(kMockNtripManager), QUrl());
     QTRY_VERIFY_WITH_TIMEOUT(!mockComponent.isLoading(), TestTimeout::mediumMs());
     std::unique_ptr<QObject> manager(mockComponent.create());
     QVERIFY2(manager, qPrintable(mockComponent.errorString()));
@@ -167,6 +181,56 @@ void NTRIPSettingsUITest::_testErrorActionRetries()
     QVERIFY(QMetaObject::invokeMethod(disconnect, "click"));
     QVERIFY(!enabled.rawValue().toBool());
     QCOMPARE(manager->property("retryCount").toInt(), 1);
+}
+
+void NTRIPSettingsUITest::_testConnectionActionIsIdempotent_data()
+{
+    QTest::addColumn<int>("status");
+    QTest::addColumn<bool>("enabledBefore");
+    QTest::addColumn<bool>("enabledAfter");
+    QTest::newRow("disconnect") << static_cast<int>(NTRIPManager::ConnectionStatus::Connected) << true << false;
+    QTest::newRow("cancel-reconnect") << static_cast<int>(NTRIPManager::ConnectionStatus::Reconnecting) << true
+                                      << false;
+    QTest::newRow("connect") << static_cast<int>(NTRIPManager::ConnectionStatus::Disconnected) << false << true;
+}
+
+void NTRIPSettingsUITest::_testConnectionActionIsIdempotent()
+{
+    QFETCH(int, status);
+    QFETCH(bool, enabledBefore);
+    QFETCH(bool, enabledAfter);
+    QQuickWindow window;
+    window.resize(640, 400);
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent mockComponent(&engine);
+    mockComponent.setData(QByteArray(kMockNtripManager), QUrl());
+    QTRY_VERIFY_WITH_TIMEOUT(!mockComponent.isLoading(), TestTimeout::mediumMs());
+    std::unique_ptr<QObject> manager(mockComponent.createWithInitialProperties(
+        {{QStringLiteral("connectionStatus"), status}, {QStringLiteral("statusMessage"), QString()}}));
+    QVERIFY2(manager, qPrintable(mockComponent.errorString()));
+    Fact enabled(0, QStringLiteral("enabled"), FactMetaData::valueTypeBool);
+    enabled.setRawValue(enabledBefore);
+    SettingsManager::instance()->ntripSettings()->ntripServerHostAddress()->setRawValue(
+        QStringLiteral("caster.example.com"));
+    QQmlComponent component(&engine,
+                            QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NtripConnectionSettings.qml")));
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    std::unique_ptr<QObject> panel(
+        component.createWithInitialProperties({{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                                               {QStringLiteral("visible"), true},
+                                               {QStringLiteral("_ntripMgr"), QVariant::fromValue(manager.get())},
+                                               {QStringLiteral("_enabled"), QVariant::fromValue(&enabled)}}));
+    QVERIFY2(panel, qPrintable(component.errorString()));
+    auto* button = panel->findChild<QObject*>(QStringLiteral("ntripConnectButton"));
+    QVERIFY(button);
+    QVERIFY(button->property("enabled").toBool());
+    // The manager applies the setting after a debounce, so its status still reflects the first click.
+    for (int click = 0; click < 2; ++click) {
+        QVERIFY(QMetaObject::invokeMethod(button, "click"));
+        QCOMPARE(enabled.rawValue().toBool(), enabledAfter);
+    }
+    QCOMPARE(manager->property("retryCount").toInt(), 0);
 }
 
 void NTRIPSettingsUITest::_testMountpointLockedWhileActive()
