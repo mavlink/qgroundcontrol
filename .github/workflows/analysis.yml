@@ -120,7 +120,7 @@ jobs:
       - name: Cache matching Clazy
         id: clazy-cache
         if: matrix.tool == 'clazy'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .cache/clazy
           key: clazy-ubuntu-24.04-${{ runner.arch }}-${{ steps.toolchain.outputs.llvm_version }}-${{ steps.toolchain.outputs.clazy_sha256 }}-v1
