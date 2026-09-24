@@ -110,6 +110,8 @@ ColumnLayout {
         font.pointSize:   ScreenTools.smallFontPointSize
         visible:          root._dataStale && root._connected
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 0
     }
 
     LabelledLabel {
@@ -149,6 +151,8 @@ ColumnLayout {
 
         RTCMMessageChips {
             Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            Layout.preferredWidth: 0
             messageCounts:    root._stats ? root._stats.messageCountsById : []
         }
     }
@@ -171,6 +175,8 @@ ColumnLayout {
         visible:        root._connected
                         && root._stats && root._stats.bytesReceived > root._dataWarningLimitBytes
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 0
     }
 
     LabelledLabel {
@@ -196,6 +202,8 @@ ColumnLayout {
         visible:        root._connected && root.ntripManager && root._ggaSource === ""
                         && (!root._stats || root._stats.dataStale || root._stats.messagesReceived === 0)
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 0
     }
 
     QGCLabel {
@@ -206,5 +214,7 @@ ColumnLayout {
         font.pointSize: ScreenTools.smallFontPointSize
         visible:        root._connected && root._securityWarning !== ""
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 0
     }
 }

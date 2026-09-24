@@ -63,6 +63,8 @@ SettingsGroupLayout {
         objectName: "nmeaConnectionStatus"
         visible: root.nmeaInput && (root.nmeaInput.errorMessage.length > 0 || !root._health)
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 0
         wrapMode: Text.WordWrap
         textFormat: Text.PlainText
         text: root.nmeaInput ? root.nmeaInput.connectionStatusText : ""

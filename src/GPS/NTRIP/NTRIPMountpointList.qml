@@ -50,8 +50,10 @@ QGCListView {
             anchors.verticalCenter: parent.verticalCenter
             anchors.margins: ScreenTools.defaultFontPixelWidth
 
+            // The filling details label lets this column take the free space, keeping buttons right-aligned.
             ColumnLayout {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 spacing: 0
 
                 RowLayout {
@@ -73,6 +75,9 @@ QGCListView {
                 }
 
                 QGCLabel {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    elide: Text.ElideRight
                     textFormat: Text.PlainText
                     text: {
                         const parts = []

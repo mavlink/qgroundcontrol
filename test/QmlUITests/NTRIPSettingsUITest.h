@@ -29,6 +29,8 @@ private slots:
     void _testConnectionActionIsIdempotent_data();
     void _testConnectionActionIsIdempotent();
     void _testMountpointLockedWhileActive();
+    void _testLongStatusWrapsWithinPanel();
+    void _testMountpointButtonsAligned();
 
 private:
     bool _navigateToNtripPage();

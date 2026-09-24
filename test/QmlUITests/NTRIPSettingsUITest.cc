@@ -1,16 +1,19 @@
 #include "NTRIPSettingsUITest.h"
 
+#include <functional>
 #include <memory>
 
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtQuickTest/quicktest.h>
 #include <QtTest/QTest>
 
 #include "Fact.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
+#include "NTRIPSourceTable.h"
 #include "SettingsManager.h"
 
 UT_REGISTER_TEST(NTRIPSettingsUITest, TestLabel::Integration)
@@ -39,6 +42,18 @@ constexpr char kMockNtripManager[] = R"(
         }
     }
 )";
+
+QList<QQuickItem*> findItems(QQuickItem* root, const std::function<bool(QQuickItem*)>& match)
+{
+    QList<QQuickItem*> found;
+    for (auto* child : root->childItems()) {
+        if (match(child)) {
+            found.append(child);
+        }
+        found.append(findItems(child, match));
+    }
+    return found;
+}
 }  // namespace
 
 void NTRIPSettingsUITest::init()
@@ -247,4 +262,90 @@ void NTRIPSettingsUITest::_testMountpointLockedWhileActive()
     QVERIFY(!list->property("enabled").toBool());
     QVERIFY(panel->setProperty("_isActive", false));
     QVERIFY(list->property("enabled").toBool());
+}
+
+void NTRIPSettingsUITest::_testLongStatusWrapsWithinPanel()
+{
+    QQuickWindow window;
+    window.resize(640, 400);
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent mockComponent(&engine);
+    mockComponent.setData(QByteArray(kMockNtripManager), QUrl());
+    QTRY_VERIFY_WITH_TIMEOUT(!mockComponent.isLoading(), TestTimeout::mediumMs());
+    std::unique_ptr<QObject> manager(mockComponent.create());
+    QVERIFY2(manager, qPrintable(mockComponent.errorString()));
+    Fact enabled(0, QStringLiteral("enabled"), FactMetaData::valueTypeBool);
+    enabled.setRawValue(true);
+    QQmlComponent component(&engine,
+                            QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NtripConnectionSettings.qml")));
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    std::unique_ptr<QObject> panel(
+        component.createWithInitialProperties({{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                                               {QStringLiteral("visible"), true},
+                                               {QStringLiteral("_ntripMgr"), QVariant::fromValue(manager.get())},
+                                               {QStringLiteral("_enabled"), QVariant::fromValue(&enabled)}}));
+    QVERIFY2(panel, qPrintable(component.errorString()));
+    auto* panelItem = qobject_cast<QQuickItem*>(panel.get());
+    QVERIFY(panelItem);
+    panelItem->setWidth(480);
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window, TestTimeout::mediumMs()));
+    const qreal shortWidth = panelItem->implicitWidth();
+
+    const QString longMessage =
+        QStringLiteral("Reconnecting in 30s: ") + QStringLiteral("certificate rejected ").repeated(20);
+    QVERIFY(manager->setProperty("statusMessage", longMessage));
+    const auto statusLabel = [&]() -> QQuickItem* {
+        const auto labels = findItems(panelItem, [&](QQuickItem* item) {
+            return item->property("text").toString() == longMessage && item->property("lineCount").isValid();
+        });
+        return labels.isEmpty() ? nullptr : labels.first();
+    };
+    QTRY_VERIFY_WITH_TIMEOUT(statusLabel(), TestTimeout::mediumMs());
+    QVERIFY(QQuickTest::qWaitForPolish(&window, TestTimeout::mediumMs()));
+    // The message wraps inside the panel instead of widening every settings group on the page.
+    QCOMPARE(panelItem->implicitWidth(), shortWidth);
+    QVERIFY(statusLabel()->property("lineCount").toInt() > 1);
+    const auto buttons = findItems(
+        panelItem, [](QQuickItem* item) { return item->objectName() == QLatin1String("ntripConnectButton"); });
+    QCOMPARE(buttons.size(), 1);
+    const QPointF buttonRight = buttons.first()->mapToItem(panelItem, QPointF(buttons.first()->width(), 0));
+    QVERIFY2(buttonRight.x() <= panelItem->width(), qPrintable(QString::number(buttonRight.x())));
+}
+
+void NTRIPSettingsUITest::_testMountpointButtonsAligned()
+{
+    NTRIPSourceTableModel model;
+    model.parseSourceTable(QStringLiteral(
+        "STR;LONG;Long;RTCM 3.3;1005(1),1077(1);2;GPS+GLO+GAL+BDS+SBAS+QZSS;NET;FRA;0;0;0;0;gen;none;B;N;15200;\r\n"
+        "STR;S;Short;RTCM 3.3;1005(1);2;GPS;NET;FRA;0;0;0;0;gen;none;N;N;0;\r\n"
+        "ENDSOURCETABLE\r\n"));
+    QCOMPARE(model.rowCount(), 2);
+    QQuickWindow window;
+    window.resize(640, 400);
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qml/QGroundControl/GPS/NTRIP/NTRIPMountpointList.qml")));
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    std::unique_ptr<QObject> list(
+        component.createWithInitialProperties({{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                                               {QStringLiteral("width"), 480},
+                                               {QStringLiteral("height"), 300},
+                                               {QStringLiteral("model"), QVariant::fromValue(&model)}}));
+    QVERIFY2(list, qPrintable(component.errorString()));
+    auto* listItem = qobject_cast<QQuickItem*>(list.get());
+    QVERIFY(listItem);
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window, TestTimeout::mediumMs()));
+    const auto buttons = [&]() {
+        return findItems(listItem, [](QQuickItem* item) {
+            return item->inherits("QQuickAbstractButton") && item->isVisible() && item->width() > 0;
+        });
+    };
+    QTRY_COMPARE_WITH_TIMEOUT(buttons().size(), 2, TestTimeout::mediumMs());
+    const auto right = [listItem](QQuickItem* button) {
+        return button->mapToItem(listItem, QPointF(button->width(), 0)).x();
+    };
+    QTRY_COMPARE_WITH_TIMEOUT(right(buttons().at(0)), right(buttons().at(1)), TestTimeout::mediumMs());
 }

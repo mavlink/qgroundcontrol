@@ -25,6 +25,8 @@ RowLayout {
 
     QGCLabel {
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 0
         text:             root.statusText
         textFormat:       Text.PlainText
         wrapMode:         Text.WordWrap
