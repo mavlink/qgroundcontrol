@@ -16,6 +16,8 @@ private slots:
     void _sourceTopologyDoesNotNotifyOnCounters();
     void _diagnosticsNotifyOnlyOnChange();
     void _receivedByteRates();
+    void _sourceMessageCounts();
+    void _diagnosticsModelUpdatesInPlace();
     void _sourceSelectionAndSessions();
     void _filteredAndExpiredFrames();
     void _udpSettingsAndShutdown();

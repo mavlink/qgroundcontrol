@@ -1,20 +1,33 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
 
+/// NTRIP connection status and control: connection-state row with the
+/// connect/retry action, the disconnect-on-error action, and live stream details.
 ColumnLayout {
     id: root
 
-    property var rtcmMavlink: null
+    required property var  ntripManager
+    required property Fact enabledFact
 
-    property var    _ntripMgr:      QGroundControl.gpsManager.ntrip
-    readonly property int  _status: root._ntripMgr ? root._ntripMgr.connectionStatus : NTRIPManager.Disconnected
-    readonly property var  _stats:  root._ntripMgr ? root._ntripMgr.connectionStats : null
-    readonly property bool _connected: root._status === NTRIPManager.Connected
-    property bool   _dataStale:     root._stats ? root._stats.dataStale : false
-    property string _valueNA:       qsTr("-.--")
+    /// Caller-supplied gate for the connect button (e.g. "host field non-empty").
+    /// The Connecting state is still forced-disabled regardless of this flag.
+    property bool canConnect: true
+    property var  rtcmMavlink: null
+
+    readonly property bool   _isActive:  root.enabledFact ? root.enabledFact.rawValue : false
+    readonly property int    _status:    root.ntripManager ? root.ntripManager.connectionStatus : NTRIPManager.Disconnected
+    readonly property var    _stats:     root.ntripManager ? root.ntripManager.connectionStats : null
+    readonly property bool   _connected: root._status === NTRIPManager.Connected
+    readonly property bool   _dataStale: root._stats ? root._stats.dataStale : false
+    readonly property string _ggaSource: root.ntripManager && root.ntripManager.ggaSource ? root.ntripManager.ggaSource : ""
+    readonly property string _securityWarning: root.ntripManager && root.ntripManager.securityWarning ? root.ntripManager.securityWarning : ""
+    readonly property string _mountpoint: QGroundControl.settingsManager.ntripSettings.ntripMountpoint.valueString
+    readonly property string _valueNA:   qsTr("-.--")
 
     readonly property real _dataWarningLimitBytes: 50 * 1024 * 1024  // 50 MB
 
@@ -34,10 +47,53 @@ ColumnLayout {
         return qsTr("%1 KB/s").arg((bytesPerSec / 1024).toFixed(1))
     }
 
-    spacing:      ScreenTools.defaultFontPixelHeight / 2
-    visible:      root._status !== NTRIPManager.Disconnected
+    spacing: ScreenTools.defaultFontPixelHeight / 2
 
     QGCPalette { id: qgcPal }
+
+    ConnectionStatusRow {
+        Layout.fillWidth: true
+        buttonObjectName: "ntripConnectButton"
+        statusColor: {
+            switch (root._status) {
+            case NTRIPManager.Connected:    return qgcPal.colorGreen
+            case NTRIPManager.Connecting:
+            case NTRIPManager.Reconnecting: return qgcPal.colorOrange
+            case NTRIPManager.Error:        return qgcPal.colorRed
+            default:                        return qgcPal.colorGrey
+            }
+        }
+        statusText: {
+            if (!root.ntripManager) return qsTr("Unavailable")
+            return root.ntripManager.statusMessage || qsTr("Disconnected")
+        }
+        buttonText: {
+            if (!root.ntripManager) return ""
+            switch (root._status) {
+            case NTRIPManager.Connecting:   return qsTr("Connecting…")
+            case NTRIPManager.Reconnecting: return qsTr("Cancel reconnect")
+            case NTRIPManager.Connected:    return qsTr("Disconnect")
+            case NTRIPManager.Error:        return qsTr("Retry")
+            default:                        return qsTr("Connect")
+            }
+        }
+        buttonEnabled: !!root.ntripManager
+                       && root._status !== NTRIPManager.Connecting
+                       && (root._isActive || root.canConnect)
+        onClicked: {
+            if (root._status === NTRIPManager.Error)
+                root.ntripManager.retryNTRIP()
+            else
+                root.enabledFact.rawValue = !root._isActive
+        }
+    }
+
+    QGCButton {
+        objectName: "ntripDisconnectButton"
+        text:       qsTr("Disconnect")
+        visible:    root._isActive && root._status === NTRIPManager.Error
+        onClicked:  root.enabledFact.rawValue = false
+    }
 
     QGCLabel {
         text:             qsTr("Connected but no data received recently")
@@ -49,10 +105,10 @@ ColumnLayout {
     }
 
     LabelledLabel {
-        label:     qsTr("Mountpoint")
-        labelText: QGroundControl.settingsManager.ntripSettings.ntripMountpoint.valueString
-        visible:   QGroundControl.settingsManager.ntripSettings.ntripMountpoint.valueString !== ""
-                   && root._connected
+        label:           qsTr("Mountpoint")
+        labelText:       root._mountpoint
+        labelTextFormat: Text.PlainText
+        visible:         root._mountpoint !== "" && root._connected
     }
 
     LabelledLabel {
@@ -83,36 +139,9 @@ ColumnLayout {
             color: qgcPal.colorGrey
         }
 
-        Flow {
+        RTCMMessageChips {
             Layout.fillWidth: true
-            spacing: ScreenTools.defaultFontPixelWidth / 2
-
-            Repeater {
-                model: root._stats ? root._stats.messageCountsById : []
-
-                delegate: Rectangle {
-                    id: chip
-                    required property var modelData
-
-                    readonly property string _idLabel: chip.modelData[0] === 0
-                        ? qsTr("unknown")
-                        : chip.modelData[0].toString()
-
-                    implicitWidth:  chipLabel.implicitWidth + ScreenTools.defaultFontPixelWidth * 1.2
-                    implicitHeight: chipLabel.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.3
-                    radius:         implicitHeight / 2
-                    color:          qgcPal.windowShade
-                    border.color:   qgcPal.groupBorder
-                    border.width:   1
-
-                    QGCLabel {
-                        id: chipLabel
-                        anchors.centerIn: parent
-                        text: qsTr("%1 × %2").arg(chip._idLabel).arg(chip.modelData[1])
-                        font.pointSize: ScreenTools.smallFontPointSize
-                    }
-                }
-            }
+            messageCounts:    root._stats ? root._stats.messageCountsById : []
         }
     }
 
@@ -144,10 +173,10 @@ ColumnLayout {
     }
 
     LabelledLabel {
-        label:     qsTr("GGA Source")
-        labelText: (root._ntripMgr ? root._ntripMgr.ggaSource : "")
-        visible:   root._connected
-                   && (root._ntripMgr ? root._ntripMgr.ggaSource : "")
+        label:           qsTr("GGA Source")
+        labelText:       root._ggaSource
+        labelTextFormat: Text.PlainText
+        visible:         root._connected && root._ggaSource !== ""
     }
 
     QGCLabel {
@@ -156,29 +185,18 @@ ColumnLayout {
         wrapMode:       Text.WordWrap
         color:          qgcPal.colorOrange
         font.pointSize: ScreenTools.smallFontPointSize
-        visible:        root._connected && root._ntripMgr && root._ntripMgr.ggaSource === ""
+        visible:        root._connected && root.ntripManager && root._ggaSource === ""
                         && (!root._stats || root._stats.dataStale || root._stats.messagesReceived === 0)
         Layout.fillWidth: true
     }
 
     QGCLabel {
-        text:           root._ntripMgr ? root._ntripMgr.securityWarning : ""
+        text:           root._securityWarning
+        textFormat:     Text.PlainText
         wrapMode:       Text.WordWrap
         color:          qgcPal.colorOrange
         font.pointSize: ScreenTools.smallFontPointSize
-        visible:        root._connected
-                        && root._ntripMgr
-                        && root._ntripMgr.securityWarning !== ""
-        Layout.fillWidth: true
-    }
-
-    QGCLabel {
-        text:           (root._ntripMgr ? root._ntripMgr.statusMessage : "")
-        wrapMode:       Text.WordWrap
-        color:          qgcPal.colorRed
-        font.pointSize: ScreenTools.smallFontPointSize
-        visible:        root._status === NTRIPManager.Error
-                        && (root._ntripMgr ? root._ntripMgr.statusMessage : "") !== ""
+        visible:        root._connected && root._securityWarning !== ""
         Layout.fillWidth: true
     }
 }

@@ -32,6 +32,10 @@ public:
         qint64 lastValidMs = 0;
         quint64 receivedFrames = 0;
         quint64 selectedFrames = 0;
+        quint64 receivedBytesPerSecond = 0;
+        quint64 sampledReceivedBytes = 0;
+        /// Validated frames by RTCM message ID; IDs are 12-bit, so the map is naturally bounded.
+        QMap<int, quint64> messageCounts;
     };
 
     struct Destination : AdmissionCounters
@@ -52,6 +56,8 @@ public:
 
     const QList<GPSCorrectionEvent>& events() const { return _events; }
 
+    /// Samples received bytes per source; callers provide the sampling cadence.
+    void sampleReceivedByteRates(qint64 nowMs);
     void received(const GPSCorrectionFrame& frame);
     void validated(const GPSCorrectionFrame& frame);
     void selected(const GPSCorrectionFrame& frame);
@@ -80,4 +86,5 @@ private:
     QMap<QString, Destination> _destinations;
     QList<GPSCorrectionEvent> _events;
     quint64 _nextEvent = 0;
+    qint64 _rateSampleMs = 0;
 };

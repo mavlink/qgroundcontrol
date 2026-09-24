@@ -869,11 +869,11 @@ void NTRIPManagerTest::testNtripOnlyUdpForwardingBypassesSelectionOnce()
     QCOMPARE(routed.size(), 1);
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(routed[0][0]).source, GPSCorrectionSource::LocalReceiver);
     QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), quint64(localFrame.size()));
-    const auto ntripStats = corrections.sources()[static_cast<int>(GPSCorrectionSource::Ntrip)].toMap();
+    const auto ntripStats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)].toMap();
     QCOMPARE(ntripStats.value(QStringLiteral("receivedFrames")).toULongLong(), 1);
     QCOMPARE(ntripStats.value(QStringLiteral("selectedFrames")).toULongLong(), 0);
     QVariantMap forwarding;
-    for (const auto& destination : corrections.destinations()) {
+    for (const auto& destination : corrections.destinationDiagnostics()) {
         const auto stats = destination.toMap();
         if (stats.value(QStringLiteral("destinationId")).toString() == QStringLiteral("ntripUdp")) {
             forwarding = stats;
@@ -919,13 +919,13 @@ void NTRIPManagerTest::testTransportDiagnosticsReachManager()
     const QByteArray response = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" +
                                 QByteArray::number(body.size(), 16) + "\r\n" + body + "\r\n";
     QCOMPARE(peer->write(response), response.size());
-    QTRY_COMPARE_WITH_TIMEOUT(corrections.sources()[static_cast<int>(GPSCorrectionSource::Ntrip)]
+    QTRY_COMPARE_WITH_TIMEOUT(corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)]
                                   .toMap()
                                   .value(QStringLiteral("receivedFrames"))
                                   .toULongLong(),
                               3, TestTimeout::shortMs());
     verifyExpectedLogMessage();
-    const auto stats = corrections.sources()[static_cast<int>(GPSCorrectionSource::Ntrip)].toMap();
+    const auto stats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)].toMap();
     QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), 2);
     QCOMPARE(stats.value(QStringLiteral("selectedFrames")).toULongLong(), 1);
     QCOMPARE(routed.size(), 1);

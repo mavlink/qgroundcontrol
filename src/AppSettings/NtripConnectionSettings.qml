@@ -3,7 +3,6 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.FactControls
 import QGroundControl.GPS.NTRIP
 
 SettingsGroupLayout {
@@ -17,30 +16,12 @@ SettingsGroupLayout {
     property Fact _enabled:  _ntrip.ntripServerConnectEnabled
     property var  _ntripMgr: QGroundControl.gpsManager.ntrip
     readonly property var _corrections: QGroundControl.gpsManager.corrections
-    property bool _isActive: _enabled.rawValue
-    property bool _hasHost:  _ntrip.ntripServerHostAddress.rawValue !== ""
-
-    NTRIPConnectionStatusRow {
-        Layout.fillWidth: true
-        ntripManager:     root._ntripMgr
-        canConnect:       root._isActive || root._hasHost
-        onClicked: {
-            if (root._ntripMgr.connectionStatus === NTRIPManager.Error)
-                root._ntripMgr.retryNTRIP()
-            else
-                root._enabled.rawValue = !root._isActive
-        }
-    }
-
-    QGCButton {
-        objectName: "ntripDisconnectButton"
-        text: qsTr("Disconnect")
-        visible: root._isActive && root._ntripMgr.connectionStatus === NTRIPManager.Error
-        onClicked: root._enabled.rawValue = false
-    }
 
     NTRIPConnectionStatus {
         Layout.fillWidth: true
+        ntripManager:     root._ntripMgr
+        enabledFact:      root._enabled
+        canConnect:       root._ntrip.ntripServerHostAddress.rawValue !== ""
         rtcmMavlink:      root._corrections ? root._corrections.rtcmMavlink : null
     }
 }

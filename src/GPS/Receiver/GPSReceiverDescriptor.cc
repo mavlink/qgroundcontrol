@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <array>
 
+#include <QtCore/QHash>
+
 namespace {
 using Accuracy = GPSReceiverDescriptor::SurveyAccuracy;
 using Duration = GPSReceiverDescriptor::SurveyDuration;
@@ -85,7 +87,8 @@ const GPSReceiverDescriptor* gpsReceiverDescriptorForManufacturer(int manufactur
     return entry == DESCRIPTORS.end() ? nullptr : &*entry;
 }
 
-QVariantMap gpsReceiverPresentation(int manufacturer)
+namespace {
+QVariantMap buildPresentation(int manufacturer)
 {
     const auto* selected = gpsReceiverDescriptorForManufacturer(manufacturer);
     GPSReceiverCapabilities capabilities;
@@ -126,4 +129,20 @@ QVariantMap gpsReceiverPresentation(int manufacturer)
         {QStringLiteral("restartOnConnect"), selected && selected->restartOnConnect},
         {QStringLiteral("surveyMaySavePosition"), selected && selected->surveyMaySavePosition},
     };
+}
+}  // namespace
+
+const QVariantMap& gpsReceiverPresentation(int manufacturer)
+{
+    // Immutable after first use, so QML bindings share one map per receiver family.
+    static const QHash<int, QVariantMap> presentations = [] {
+        QHash<int, QVariantMap> result{{0, buildPresentation(0)}};
+        for (const auto& descriptor : DESCRIPTORS) {
+            result.insert(descriptor.manufacturerId, buildPresentation(descriptor.manufacturerId));
+        }
+        return result;
+    }();
+    static const QVariantMap unknown = buildPresentation(-1);
+    const auto presentation = presentations.constFind(manufacturer);
+    return presentation != presentations.cend() ? *presentation : unknown;
 }

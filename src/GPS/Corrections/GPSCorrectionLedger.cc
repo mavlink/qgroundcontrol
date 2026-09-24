@@ -41,6 +41,18 @@ void GPSCorrectionLedger::endSource(GPSCorrectionSource source)
     }
 }
 
+void GPSCorrectionLedger::sampleReceivedByteRates(qint64 nowMs)
+{
+    const qint64 elapsedMs = nowMs - _rateSampleMs;
+    for (auto& stats : _statistics) {
+        const quint64 received = stats.receivedBytes - stats.sampledReceivedBytes;
+        stats.receivedBytesPerSecond =
+            _rateSampleMs > 0 && elapsedMs > 0 ? static_cast<quint64>(qRound64(received * 1000.0 / elapsedMs)) : 0;
+        stats.sampledReceivedBytes = stats.receivedBytes;
+    }
+    _rateSampleMs = nowMs;
+}
+
 void GPSCorrectionLedger::received(const GPSCorrectionFrame& frame)
 {
     if (auto* stats = _currentStatistics(frame)) {
@@ -54,6 +66,7 @@ void GPSCorrectionLedger::validated(const GPSCorrectionFrame& frame)
 {
     if (auto* stats = _currentStatistics(frame)) {
         ++stats->validatedFrames;
+        ++stats->messageCounts[frame.messageId];
         stats->lastValidMs = (std::max) (stats->lastValidMs, frame.receivedAtMs);
     }
     recordEvent(frame, GPSCorrectionStage::Validated, GPSCorrectionReason::None, frame.data.size());
@@ -84,13 +97,16 @@ void GPSCorrectionLedger::registerOutput(const QString& id)
 
 void GPSCorrectionLedger::updateOutputDestinations(const QString& id, const QSet<QString>& destinations)
 {
-    if (_outputDestinations.contains(id)) {
-        _outputDestinations.insert(id, destinations);
+    if (const auto it = _outputDestinations.find(id); it != _outputDestinations.end() && *it != destinations) {
+        *it = destinations;
     }
 }
 
 void GPSCorrectionLedger::pruneDestinationHistory()
 {
+    if (_destinations.size() <= MAX_DESTINATION_HISTORY) {
+        return;
+    }
     QSet<QString> live;
     for (auto it = _outputDestinations.cbegin(); it != _outputDestinations.cend(); ++it) {
         live.insert(it.key());
@@ -176,6 +192,7 @@ void GPSCorrectionLedger::shutdown()
 {
     for (auto& stats : _statistics) {
         stats.active = false;
+        stats.receivedBytesPerSecond = 0;
     }
     _outputDestinations.clear();
     pruneDestinationHistory();

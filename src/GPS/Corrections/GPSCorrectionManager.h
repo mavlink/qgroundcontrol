@@ -1,16 +1,16 @@
 #pragma once
 
-#include <array>
-
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "GPSCorrectionDiagnosticsModel.h"
 #include "GPSCorrectionEventModel.h"
 #include "GPSCorrectionFrame.h"
 #include "GPSCorrectionRouter.h"
+#include "GPSNotificationQueue.h"
 #include "RTCMMavlink.h"
 #include "RTCMUdpInput.h"
 #include "UdpForwarder.h"
@@ -24,10 +24,10 @@ class GPSCorrectionManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_PROPERTY(RTCMMavlink* rtcmMavlink READ rtcmMavlink CONSTANT)
-    Q_PROPERTY(QVariantList sources READ sources NOTIFY sourcesChanged)
+    Q_PROPERTY(GPSCorrectionDiagnosticsModel* sources READ sourceModel CONSTANT)
     Q_PROPERTY(QVariantList sourceInstances READ sourceInstances NOTIFY sourceInstancesChanged)
     Q_PROPERTY(GPSCorrectionEventModel* events READ events CONSTANT)
-    Q_PROPERTY(QVariantList destinations READ destinations NOTIFY destinationsChanged)
+    Q_PROPERTY(GPSCorrectionDiagnosticsModel* destinations READ destinationModel CONSTANT)
 
     friend class GPSCorrectionManagerTest;
 
@@ -50,24 +50,25 @@ public:
 
     GPSCorrectionSource selectedSource() const { return _router.selectedSource(); }
 
-    RoutingPolicy routingPolicy() const;
-
     void removeSink(const QString& id);
     void setOutput(const QString& id, GPSCorrectionRouter::Output output);
 
     GPSCorrectionEventModel* events() { return &_eventModel; }
 
-    QVariantList destinations() const;
+    GPSCorrectionDiagnosticsModel* sourceModel() { return &_sourceModel; }
 
-    QVariantList sources() const;
-    QVariantList sourceInstances() const;
+    GPSCorrectionDiagnosticsModel* destinationModel() { return &_destinationModel; }
+
+    /// Live per-category diagnostics, indexed by GPSCorrectionSource; the models publish them in batches.
+    QVariantList sourceDiagnostics() const { return _router.sourceDiagnostics(); }
+
+    QVariantList destinationDiagnostics() const { return _router.destinationDiagnostics(); }
+
+    QVariantList sourceInstances() const { return _router.sourceInstanceDiagnostics(); }
 
 signals:
-    void sourcesChanged();
     void sourceInstancesChanged();
-    void destinationsChanged();
     void correctionRouted(const GPSCorrectionFrame& frame);
-    void selectedSourceChanged();
 
 private:
     void _applyRoutingSettings();
@@ -75,12 +76,11 @@ private:
 
     void _scheduleSourcesChanged();
     void _refreshDiagnostics();
-    /// Samples received source bytes; the health timer provides the one-second cadence.
-    void _updateReceivedByteRates(qint64 nowMs);
-    QVariantList _sourceDiagnostics() const;
 
     GPSCorrectionRouter _router;
     GPSCorrectionEventModel _eventModel;
+    GPSCorrectionDiagnosticsModel _sourceModel{QStringLiteral("source"), this};
+    GPSCorrectionDiagnosticsModel _destinationModel{QStringLiteral("destinationId"), this};
     QTimer _diagnosticsTimer;
     QTimer _healthTimer;
     RTCMMavlink _rtcmMavlink;
@@ -88,20 +88,8 @@ private:
     GPSCorrectionSourceRegistration _udpRegistration;
     UdpForwarder _ntripUdpOutput{this};
     QPointer<GPSCorrectionSettings> _settings;
-    // Last published diagnostics; notifications fire only when a list changes.
-    QVariantList _sources;
+    // Last published instances; notifications fire only when the list changes.
     QVariantList _sourceInstances;
-    QVariantList _destinations;
-
-    struct ReceivedBytesSample
-    {
-        quint64 session = 0;
-        quint64 bytes = 0;
-    };
-
-    std::array<ReceivedBytesSample, 4> _receivedBytesSamples{};
-    std::array<quint64, 4> _receivedByteRates{};
-    qint64 _receivedBytesSampleMs = 0;
     quint64 _udpConfigurationRevision = 0;
     int _ingressDepth = 0;
     bool _finalDiagnosticsPending = false;

@@ -93,6 +93,11 @@
             ]
         },
         {
+            "component": "GPSReceiverStatus",
+            "sectionName": "RTK GPS Status",
+            "keywords": ["rtk", "base station", "receiver", "status", "fix", "satellites", "jamming", "spoofing"]
+        },
+        {
             "component": "GPSReceiverSettings",
             "sectionName": "RTK GPS Receiver",
             "keywords": ["rtk", "base station", "receiver", "survey-in", "fixed position", "u-blox", "septentrio", "serial", "tcp"]

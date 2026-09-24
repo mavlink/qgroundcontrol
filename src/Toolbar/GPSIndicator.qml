@@ -15,9 +15,7 @@ Item {
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property bool   _rtkConnected:  QGroundControl.gpsManager.gpsRtk.facts.connected.value
     readonly property var _rtkFacts: QGroundControl.gpsManager.gpsRtk.facts
-    // Jamming Warning/Critical and any spoofing indication.
-    readonly property bool _rtkInterference: _rtkConnected
-                                             && (_rtkFacts.jammingState.rawValue >= 2 || _rtkFacts.spoofingState.rawValue >= 2)
+    readonly property bool _rtkInterference: _rtkConnected && _rtkFacts.interferenceWarning
 
     QGCPalette { id: qgcPal }
 

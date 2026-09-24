@@ -23,6 +23,17 @@ QVariantMap admissionDiagnostics(const GPSCorrectionLedger::AdmissionCounters& c
     });
     return details;
 }
+
+/// [messageId, count] pairs in ascending ID order; ID 0 is an unidentified frame.
+QVariantList messageCountDiagnostics(const QMap<int, quint64>& counts)
+{
+    QVariantList result;
+    result.reserve(counts.size());
+    for (auto it = counts.cbegin(); it != counts.cend(); ++it) {
+        result.append(QVariant(QVariantList{it.key(), QVariant::fromValue(it.value())}));
+    }
+    return result;
+}
 }  // namespace
 
 GPSCorrectionRouter::GPSCorrectionRouter(QObject* parent, Clock clock)
@@ -35,7 +46,6 @@ GPSCorrectionRouter::GPSCorrectionRouter(QObject* parent, Clock clock)
 
 GPSCorrectionRouter::~GPSCorrectionRouter()
 {
-    _notifications.close();
     qCDebug(GPSCorrectionRouterLog) << this;
 }
 
@@ -51,7 +61,6 @@ quint64 GPSCorrectionRouter::beginSourceSession(GPSCorrectionSource source, cons
     if (index < 0 || _shutdown) {
         return 0;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
     endSourceSession(source);
     const quint64 session = _ledger.beginSource(source);
     _configuredInstances[index] = instance;
@@ -67,10 +76,6 @@ void GPSCorrectionRouter::endSourceSession(GPSCorrectionSource source)
     ++_revision;
     _ledger.endSource(source);
     _selector.retire(source, _clock());
-    if (_lastSubmittedStream && _lastSubmittedStream->source.category == source) {
-        _lastSubmittedStream.reset();
-        _notifications.emitSignal(this, &GPSCorrectionRouter::sourceInvalidated);
-    }
 }
 
 QVariantList GPSCorrectionRouter::sourceDiagnostics() const
@@ -88,6 +93,8 @@ QVariantList GPSCorrectionRouter::sourceDiagnostics() const
                     {QStringLiteral("receivedFrames"), QVariant::fromValue(stats.receivedFrames)},
                     {QStringLiteral("selectedFrames"), QVariant::fromValue(stats.selectedFrames)},
                     {QStringLiteral("validatedFrames"), QVariant::fromValue(stats.validatedFrames)},
+                    {QStringLiteral("receivedBytesPerSecond"), QVariant::fromValue(stats.receivedBytesPerSecond)},
+                    {QStringLiteral("messageCounts"), messageCountDiagnostics(stats.messageCounts)},
                     {QStringLiteral("usable"),
                      stats.active && age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS}}));
     }
@@ -130,16 +137,10 @@ void GPSCorrectionRouter::applyConfiguration(const Configuration& configuration)
     }
     ++_revision;
     _selector.configure(configuration, _clock());
-    if (_lastSubmittedStream) {
-        _lastSubmittedStream.reset();
-        _notifications.emitSignal(this, &GPSCorrectionRouter::sourceInvalidated);
-    }
 }
 
 GPSCorrectionSourceRegistration GPSCorrectionRouter::registerSource(GPSCorrectionSource source, const QString& instance)
 {
-    // Invalidation observers run after the registration exists.
-    const GPSNotificationQueue::Scope publish(_notifications);
     const quint64 session = beginSourceSession(source, instance);
     return session ? GPSCorrectionSourceRegistration(GPSCorrectionSourceToken(this, source, session, instance))
                    : GPSCorrectionSourceRegistration();
@@ -231,6 +232,9 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
         return false;
     }
     if (frame.validated) {
+        if (frame.messageId == 0) {
+            frame.messageId = RTCMFramer::frameMessageId(frame.data);
+        }
         _ledger.validated(frame);
     }
     const bool routable = !frame.filtered && age < FRESHNESS_TIMEOUT_MS;
@@ -239,9 +243,6 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
         _ledger.recordDrop(frame, frame.filtered ? GPSCorrectionReason::MessageFiltered : GPSCorrectionReason::Expired,
                            frame.data.size());
         return false;
-    }
-    if (frame.validated && frame.messageId == 0) {
-        frame.messageId = RTCMFramer::frameMessageId(frame.data);
     }
     const bool selected = _selector.selected(frame, now);
     if (!selected) {
@@ -263,17 +264,6 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
             guard->_submitting = false;
         }
     });
-    const StreamIdentity stream{{frame.source, frame.sourceInstance}, frame.session};
-    if (selected && _lastSubmittedStream != stream) {
-        _lastSubmittedStream = stream;
-        emit sourceSelected(frame.source, frame.sourceInstance);
-        if (!guard) {
-            return false;
-        }
-        if (_shutdown || revision != _revision) {
-            return false;
-        }
-    }
     quint64 logicalQueuedBytes = 0;
     bool completeSubmission = false;
     bool attempted = false;

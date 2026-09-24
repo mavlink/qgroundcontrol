@@ -71,7 +71,7 @@ qt_add_qml_module(
     URI QGroundControl.GPS.NTRIP
     VERSION 1.0
     RESOURCE_PREFIX /qml
-    QML_FILES NTRIPConnectionStatus.qml NTRIPConnectionStatusRow.qml NTRIPMountpointList.qml
+    QML_FILES NTRIPConnectionStatus.qml NTRIPMountpointList.qml RTCMMessageChips.qml
     NO_PLUGIN
 )
 

@@ -7,7 +7,9 @@ corrections to connected vehicles over MAVLink.
 ## Connection Status
 
 Shows the current NTRIP connection state (connected/connecting/disconnected) with the time since
-the last correction, message and byte counters, data rate, and a Connect/Disconnect button.
+the last correction, message and byte counters, the received RTCM message types, data rate, and a
+Connect/Disconnect button. After a connection error the button becomes **Retry**, and a separate
+**Disconnect** button stops further attempts.
 If no position is available to send to the caster while corrections are not arriving, QGC warns
 that network (VRS) mountpoints need a GGA position.
 
@@ -77,8 +79,9 @@ of up to 30 seconds. A replugged serial receiver is retried immediately. Press *
 the connection settings, or enable auto-connect to stop reconnecting. Automatic attempts never reuse
 flash-save permission.
 
-When connected, the RTK GPS toolbar indicator shows the receiver's fix, model and firmware (when
-the receiver reports them), connection, satellites, and survey-in progress. The receiver's own
+The **RTK GPS Status** section on this page and the RTK GPS toolbar indicator show the receiver's
+fix, model and firmware (when the receiver reports them), connection, satellites, and survey-in
+progress. The receiver's own
 position solution is also available as the [GCS position](comm_links.md#gcs-position) and as the
 _RTK Receiver_ GGA source. Base receivers report only a time fix once their position is fixed or surveyed, so QGC uses
 the fixed position or completed survey-in position instead. That position has only ellipsoid height, so it is not
@@ -94,8 +97,9 @@ receiver's jamming and spoofing state when it reports them.
 
 ## Correction Diagnostics
 
-Shows each correction stream's state, each source's received data rate and frame counters, and the
-bytes queued or dropped for each vehicle link. Queued bytes were accepted by an output; they do not
+Shows each correction stream's state, each source's received data rate, frame counters, and the
+count of each validated RTCM message type received in the current session, and the bytes queued or
+dropped for each vehicle link. Queued bytes were accepted by an output; they do not
 confirm that the vehicle applied the corrections. Enable **Show recent correction events** for a
 per-frame history.
 

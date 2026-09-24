@@ -206,16 +206,6 @@ void GPSRtk::setSerialPortManager(SerialPortManager* serialPorts)
     }
 }
 
-bool GPSRtk::connectGPS(const QString& device, QStringView gps_type, uint32_t baudRate, bool allowPersistentChanges)
-{
-    if (_destroying) {
-        return false;
-    }
-    const GPSNotificationQueue::Scope publish(_notifications);
-    _connection->reset();
-    return _connectGPS(device, gps_type, baudRate, allowPersistentChanges);
-}
-
 bool GPSRtk::_connectGPS(const QString& device, QStringView gps_type, uint32_t baudRate, bool allowPersistentChanges)
 {
     for (const auto& entry : gpsReceiverDescriptors()) {
@@ -287,6 +277,11 @@ int GPSRtk::manufacturerForType(GPSType type)
 QVariantMap GPSRtk::capabilitiesForManufacturer(int manufacturer) const
 {
     return gpsReceiverPresentation(manufacturer);
+}
+
+QVariantMap GPSRtk::activePresentation() const
+{
+    return gpsReceiverPresentation(_session.manufacturer);
 }
 
 bool GPSRtk::connectConfiguredGPS(bool allowPersistentChanges)
@@ -523,11 +518,6 @@ void GPSRtk::_disconnect(bool clearError)
     if (clearError) {
         _setError(GPSConnectionError::None);
     }
-}
-
-GPSRTKFactGroup* GPSRtk::gpsRtkFactGroup()
-{
-    return _gpsRtkFactGroup.get();
 }
 
 void GPSRtk::_satelliteInfoUpdate(const GPSSatelliteReport& msg)

@@ -2,6 +2,7 @@
 
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "GPSCorrectionDiagnosticsModel.h"
 #include "GPSCorrectionEventModel.h"
 #include "GPSPositionService.h"
 #include "GPSRTKFactGroup.h"
@@ -28,6 +29,13 @@ struct GPSRTKFactGroupQmlType
 {
     Q_GADGET
     QML_FOREIGN(GPSRTKFactGroup)
+    QML_ANONYMOUS
+};
+
+struct GPSCorrectionDiagnosticsModelQmlType
+{
+    Q_GADGET
+    QML_FOREIGN(GPSCorrectionDiagnosticsModel)
     QML_ANONYMOUS
 };
 

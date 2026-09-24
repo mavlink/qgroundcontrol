@@ -5,6 +5,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.GPS.NTRIP
 
 SettingsGroupLayout {
     id: root
@@ -114,6 +115,7 @@ SettingsGroupLayout {
                 return qsTr("%1 — %2: %3").arg(root.sourceName(modelData.source))
                                          .arg(modelData.instanceId || qsTr("Default stream")).arg(status);
             }
+            textFormat: Text.PlainText
             wrapMode: Text.WordWrap
         }
     }
@@ -135,14 +137,29 @@ SettingsGroupLayout {
     Repeater {
         model: root.corrections.sources
 
-        QGCLabel {
-            required property var modelData
+        ColumnLayout {
+            id: sourceRow
+
+            required property var row
 
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-            objectName: "correctionSource_" + modelData.source
-            text: qsTr("%1 — received %2; frames: received %3, validated %4, selected %5, queued %6; drop events %7").arg(root.sourceName(modelData.source)).arg(root.dataRate(modelData.receivedBytesPerSecond)).arg(modelData.receivedFrames).arg(modelData.validatedFrames).arg(modelData.selectedFrames).arg(modelData.queuedFrames).arg(modelData.droppedFrames)
-            wrapMode: Text.WordWrap
+            spacing: ScreenTools.defaultFontPixelHeight / 4
+
+            QGCLabel {
+                Layout.fillWidth: true
+                objectName: "correctionSource_" + sourceRow.row.source
+                text: qsTr("%1 — received %2; frames: received %3, validated %4, selected %5, queued %6; drop events %7").arg(root.sourceName(sourceRow.row.source)).arg(root.dataRate(sourceRow.row.receivedBytesPerSecond)).arg(sourceRow.row.receivedFrames).arg(sourceRow.row.validatedFrames).arg(sourceRow.row.selectedFrames).arg(sourceRow.row.queuedFrames).arg(sourceRow.row.droppedFrames)
+                textFormat: Text.PlainText
+                wrapMode: Text.WordWrap
+            }
+
+            RTCMMessageChips {
+                Layout.fillWidth: true
+                objectName: "correctionSourceMessages_" + sourceRow.row.source
+                messageCounts: sourceRow.row.messageCounts
+                visible: sourceRow.row.messageCounts.length > 0
+            }
         }
     }
 
@@ -150,12 +167,13 @@ SettingsGroupLayout {
         model: root.corrections.destinations
 
         QGCLabel {
-            required property var modelData
+            required property var row
 
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-            objectName: "correctionDestination_" + modelData.destinationId
-            text: qsTr("%1 — queued %2 B, dropped %3 B").arg(root.destinationName(modelData.destinationId)).arg(modelData.queuedBytes).arg(modelData.droppedBytes)
+            objectName: "correctionDestination_" + row.destinationId
+            text: qsTr("%1 — queued %2 B, dropped %3 B").arg(root.destinationName(row.destinationId)).arg(row.queuedBytes).arg(row.droppedBytes)
+            textFormat: Text.PlainText
             wrapMode: Text.WordWrap
         }
     }
@@ -193,6 +211,7 @@ SettingsGroupLayout {
                 required property int stage
 
                 text: qsTr("%1. %2 — %3, %4 B%5\nSource: %6 (session %7); destination: %8 (session %9)").arg(eventSequence).arg(root.sourceName(source)).arg(root.stageName(stage)).arg(bytes).arg(reason === GPSCorrectionEventModel.None ? "" : qsTr(" — %1").arg(root.reasonName(reason))).arg(sourceInstance || root.sourceName(source)).arg(sourceSession).arg(root.destinationName(destinationId)).arg(destinationSession)
+                textFormat: Text.PlainText
                 width: ListView.view.width
                 wrapMode: Text.WordWrap
             }

@@ -13,7 +13,6 @@
 #include "GPSCorrectionLedger.h"
 #include "GPSCorrectionSelector.h"
 #include "GPSCorrectionSourceRegistration.h"
-#include "GPSNotificationQueue.h"
 
 /// Selects one correction stream and submits complete frames to injected outputs.
 /// All calls and sink callbacks run on the owning thread. Submission is not receiver acknowledgement.
@@ -74,9 +73,6 @@ public:
 
     GPSCorrectionSource selectedSource() const { return configuration().source; }
 
-    QString selectedInstance() const { return configuration().instance; }
-
-
     GPSCorrectionSource activeSource() const { return _selector.activeSource(_clock()); }
 
     /// Configures output admission atomically. Scoped outputs bypass global selection, but retain filtering and
@@ -86,6 +82,8 @@ public:
     void shutdown();
 
     const std::array<Statistics, 4>& statistics() const { return _ledger.statistics(); }
+
+    void sampleReceivedByteRates(qint64 nowMs) { _ledger.sampleReceivedByteRates(nowMs); }
 
     QList<Source> sources() const { return _selector.sources(); }
 
@@ -105,9 +103,6 @@ public:
     static constexpr qsizetype MAX_DESTINATION_HISTORY = GPSCorrectionLedger::MAX_DESTINATION_HISTORY;
 
 signals:
-    /// Emitted before invoking outputs for a different stream or source session.
-    void sourceSelected(GPSCorrectionSource source, const QString& instance);
-    void sourceInvalidated();
     void frameRouted(const GPSCorrectionFrame& frame);
 
 private:
@@ -118,22 +113,13 @@ private:
 
     static int _sourceIndex(GPSCorrectionSource source);
     bool _submit(const GPSCorrectionFrame& frame, bool selected);
-    struct StreamIdentity
-    {
-        GPSCorrectionSelector::SourceIdentity source;
-        quint64 session = 0;
-        bool operator==(const StreamIdentity&) const = default;
-    };
 
     Clock _clock;
     GPSCorrectionSelector _selector;
     GPSCorrectionLedger _ledger;
     std::array<QString, 4> _configuredInstances;
     QMap<QString, Output> _sinks;
-    std::optional<StreamIdentity> _lastSubmittedStream = std::nullopt;
     quint64 _revision = 0;
     bool _shutdown = false;
-    // sourceSelected stays synchronous: outputs must observe it before the first frame of a new stream.
-    GPSNotificationQueue _notifications{this};
     bool _submitting = false;
 };

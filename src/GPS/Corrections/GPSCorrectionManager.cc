@@ -18,11 +18,6 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent)
     , _udpInput(0, this)
 {
     qCDebug(GPSCorrectionManagerLog) << this;
-    const auto selectionChanged = [this]() {
-        _notifications.emitSignal(this, &GPSCorrectionManager::selectedSourceChanged);
-    };
-    connect(&_router, &GPSCorrectionRouter::sourceSelected, this, selectionChanged);
-    connect(&_router, &GPSCorrectionRouter::sourceInvalidated, this, selectionChanged);
     connect(&_router, &GPSCorrectionRouter::frameRouted, this, [this](const GPSCorrectionFrame& frame) {
         _notifications.emitEvent(this, &GPSCorrectionManager::correctionRouted, frame);
     });
@@ -45,10 +40,12 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent)
     connect(&_diagnosticsTimer, &QTimer::timeout, this, &GPSCorrectionManager::_refreshDiagnostics);
     _healthTimer.setInterval(1000);
     connect(&_healthTimer, &QTimer::timeout, this, [this]() {
-        _updateReceivedByteRates(GPSCorrectionFrame::monotonicNowMs());
+        _router.sampleReceivedByteRates(GPSCorrectionFrame::monotonicNowMs());
         _refreshDiagnostics();
     });
     _healthTimer.start();
+    _sourceModel.setRows(_router.sourceDiagnostics());
+    _destinationModel.setRows(_router.destinationDiagnostics());
 }
 
 GPSCorrectionManager::~GPSCorrectionManager()
@@ -202,11 +199,6 @@ void GPSCorrectionManager::acceptIngress(const GPSCorrectionIngress& ingress)
     _router.acceptIngress(ingress);
 }
 
-GPSCorrectionManager::RoutingPolicy GPSCorrectionManager::routingPolicy() const
-{
-    return _router.policy();
-}
-
 void GPSCorrectionManager::removeSink(const QString& id)
 {
     const GPSNotificationQueue::Scope publish(_notifications);
@@ -233,17 +225,17 @@ void GPSCorrectionManager::_refreshDiagnostics()
     if (!guard) {
         return;
     }
+    _sourceModel.setRows(_router.sourceDiagnostics());
+    if (!guard) {
+        return;
+    }
+    _destinationModel.setRows(_router.destinationDiagnostics());
+    if (!guard) {
+        return;
+    }
     if (auto instances = _router.sourceInstanceDiagnostics(); instances != _sourceInstances) {
         _sourceInstances = std::move(instances);
         _notifications.emitSignal(this, &GPSCorrectionManager::sourceInstancesChanged);
-    }
-    if (auto sources = _sourceDiagnostics(); sources != _sources) {
-        _sources = std::move(sources);
-        _notifications.emitSignal(this, &GPSCorrectionManager::sourcesChanged);
-    }
-    if (auto destinations = _router.destinationDiagnostics(); destinations != _destinations) {
-        _destinations = std::move(destinations);
-        _notifications.emitSignal(this, &GPSCorrectionManager::destinationsChanged);
     }
 }
 
@@ -260,51 +252,6 @@ void GPSCorrectionManager::_scheduleSourcesChanged()
     }
 }
 
-void GPSCorrectionManager::_updateReceivedByteRates(qint64 nowMs)
-{
-    const auto& statistics = _router.statistics();
-    const qint64 elapsedMs = nowMs - _receivedBytesSampleMs;
-    for (size_t index = 0; index < statistics.size(); ++index) {
-        const auto& stats = statistics[index];
-        auto& sample = _receivedBytesSamples[index];
-        // Counters restart with each source session.
-        const quint64 received = stats.session == sample.session && stats.receivedBytes >= sample.bytes
-                                     ? stats.receivedBytes - sample.bytes
-                                     : stats.receivedBytes;
-        _receivedByteRates[index] = _receivedBytesSampleMs > 0 && elapsedMs > 0
-                                        ? static_cast<quint64>(qRound64(received * 1000.0 / elapsedMs))
-                                        : 0;
-        sample = {stats.session, stats.receivedBytes};
-    }
-    _receivedBytesSampleMs = nowMs;
-}
-
-QVariantList GPSCorrectionManager::_sourceDiagnostics() const
-{
-    QVariantList sources = _router.sourceDiagnostics();
-    for (qsizetype index = 0; index < sources.size() && index < qsizetype(_receivedByteRates.size()); ++index) {
-        auto source = sources[index].toMap();
-        source.insert(QStringLiteral("receivedBytesPerSecond"), QVariant::fromValue(_receivedByteRates[index]));
-        sources[index] = source;
-    }
-    return sources;
-}
-
-QVariantList GPSCorrectionManager::sources() const
-{
-    return _sourceDiagnostics();
-}
-
-QVariantList GPSCorrectionManager::sourceInstances() const
-{
-    return _router.sourceInstanceDiagnostics();
-}
-
-QVariantList GPSCorrectionManager::destinations() const
-{
-    return _router.destinationDiagnostics();
-}
-
 void GPSCorrectionManager::shutdown()
 {
     if (_shutdown) {
@@ -314,7 +261,6 @@ void GPSCorrectionManager::shutdown()
     const QPointer<GPSCorrectionManager> guard(this);
     _shutdown = true;
     _finalDiagnosticsPending = true;
-    _receivedByteRates.fill(0);
     _healthTimer.stop();
     _diagnosticsTimer.stop();
     _rtcmMavlink.setOutputProvider({});

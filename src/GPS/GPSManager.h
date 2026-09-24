@@ -31,7 +31,7 @@ public:
     void init();
     void shutdown();
 
-    GPSRtk* gpsRtk() { return _gpsRtk; }
+    GPSRtk* gpsRtk() const { return _gpsRtk; }
 
     GPSCorrectionManager* corrections() const { return _corrections; }
 

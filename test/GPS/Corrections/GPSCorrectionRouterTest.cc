@@ -74,8 +74,6 @@ private slots:
     void sinkResults();
     void emptyOutputRemovesRegistration_data();
     void emptyOutputRemovesRegistration();
-    void sourceChangePrecedesSubmission_data();
-    void sourceChangePrecedesSubmission();
     void endingSelectedSessionInvalidatesOutput();
     void teardownAndReentrancy();
     void boundedPeerHistory();
@@ -239,26 +237,21 @@ void GPSCorrectionRouterTest::atomicConfigurationAndReplacement()
     qint64 now = 100000;
     GPSCorrectionRouter router(nullptr, [&]() { return now; });
     auto source = router.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
-    QVERIFY(router.acceptIngress(source.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true)));
-    QSignalSpy changes(&router, &GPSCorrectionRouter::sourceInvalidated);
+    const auto update = source.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true);
+    QVERIFY(router.acceptIngress(update));
     const GPSCorrectionRouter::Configuration requested{GPSCorrectionRouter::Policy::Manual, GPSCorrectionSource::Udp,
                                                        QStringLiteral("peer")};
     const GPSCorrectionRouter::Configuration replacement{GPSCorrectionRouter::Policy::Manual,
                                                          GPSCorrectionSource::Ntrip, QStringLiteral("caster")};
-    connect(&router, &GPSCorrectionRouter::sourceInvalidated, &router, [&]() {
-        QVERIFY(router.configuration() == requested);
-        router.applyConfiguration(replacement);
-    });
     router.applyConfiguration(requested);
-    QCOMPARE(changes.size(), 1);
+    QVERIFY(router.configuration() == requested);
+    QVERIFY(!router.acceptIngress(update));
+    router.applyConfiguration(replacement);
     QVERIFY(router.configuration() == replacement);
+    QVERIFY(router.acceptIngress(update));
     QPointer<GPSCorrectionRouter> destroyed = new GPSCorrectionRouter;
     auto registration = destroyed->registerSource(GPSCorrectionSource::Ntrip);
-    destroyed->acceptIngress(registration.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20),
-                                                        GPSCorrectionFrame::monotonicNowMs(), 1005, true));
-    connect(destroyed, &GPSCorrectionRouter::sourceInvalidated, destroyed, [&]() { delete destroyed.data(); });
-    destroyed->applyConfiguration(requested);
-    QVERIFY(destroyed.isNull());
+    delete destroyed.data();
     QVERIFY(!registration.token().valid());
 }
 
@@ -515,13 +508,8 @@ void GPSCorrectionRouterTest::registrationMoveAssignment()
     const auto retained = first.token();
     const auto retired = second.token();
     QVERIFY(router.acceptIngress(ingress(second, now)));
-    bool replacementVisibleDuringRetirement = false;
-    connect(&router, &GPSCorrectionRouter::sourceInvalidated, &router, [&] {
-        replacementVisibleDuringRetirement =
-            second.token().source() == GPSCorrectionSource::Ntrip && second.token().valid() && !first.token().valid();
-    });
     second = std::move(first);
-    QVERIFY(replacementVisibleDuringRetirement);
+    QCOMPARE(second.token().source(), GPSCorrectionSource::Ntrip);
     QVERIFY(!first.token().valid());
     QVERIFY(second.token().valid());
     QVERIFY(retained.valid());
@@ -847,42 +835,6 @@ void GPSCorrectionRouterTest::emptyOutputRemovesRegistration()
     QCOMPARE(submissions, 1);
 }
 
-void GPSCorrectionRouterTest::sourceChangePrecedesSubmission_data()
-{
-    QTest::addColumn<QString>("first");
-    QTest::addColumn<QString>("second");
-    QTest::newRow("named-peers") << QStringLiteral("first") << QStringLiteral("second");
-    QTest::newRow("empty-and-delimiters") << QString() << QStringLiteral("3/peer#2");
-    QTest::newRow("case-sensitive") << QStringLiteral("Peer") << QStringLiteral("peer");
-}
-
-void GPSCorrectionRouterTest::sourceChangePrecedesSubmission()
-{
-    QFETCH(QString, first);
-    QFETCH(QString, second);
-    qint64 now = 100000;
-    GPSCorrectionRouter router(nullptr, [&now]() { return now; });
-    QStringList calls;
-    connect(&router, &GPSCorrectionRouter::sourceSelected, this,
-            [&calls](GPSCorrectionSource, const QString&) { calls.append(QStringLiteral("clear")); });
-    setAdmissionOutput(router, QStringLiteral("receiver"), [&calls](const GPSCorrectionFrame& update) {
-        calls.append(QStringLiteral("submit"));
-        return update.data.size();
-    });
-    auto source = router.registerSource(GPSCorrectionSource::Udp);
-    router.applyConfiguration({GPSCorrectionRouter::Policy::Manual, GPSCorrectionSource::Udp, first});
-    QVERIFY(calls.isEmpty());
-    QVERIFY(router.acceptIngress(ingress(source, now, first)));
-    QVERIFY(router.acceptIngress(ingress(source, now, first)));
-    router.applyConfiguration({GPSCorrectionRouter::Policy::Manual, GPSCorrectionSource::Udp, second});
-    QVERIFY(router.acceptIngress(ingress(source, now, second)));
-    source = router.registerSource(GPSCorrectionSource::Udp);
-    QVERIFY(router.acceptIngress(ingress(source, now, second)));
-    QCOMPARE(calls, QStringList({QStringLiteral("clear"), QStringLiteral("submit"), QStringLiteral("submit"),
-                                 QStringLiteral("clear"), QStringLiteral("submit"), QStringLiteral("clear"),
-                                 QStringLiteral("submit")}));
-}
-
 void GPSCorrectionRouterTest::teardownAndReentrancy()
 {
     qint64 now = 100000;
@@ -914,16 +866,14 @@ void GPSCorrectionRouterTest::endingSelectedSessionInvalidatesOutput()
     GPSCorrectionRouter router(nullptr, [&now]() { return now; });
     auto source = router.registerSource(GPSCorrectionSource::Ntrip);
     const auto update = ingress(source, now);
-    QSignalSpy invalidated(&router, &GPSCorrectionRouter::sourceInvalidated);
     QVERIFY(router.acceptIngress(update));
     auto udp = router.registerSource(GPSCorrectionSource::Udp);
     udp.reset();
-    QVERIFY(invalidated.isEmpty());
+    QVERIFY(router.acceptIngress(update));
     source.reset();
-    QCOMPARE(invalidated.size(), 1);
     QVERIFY(!router.acceptIngress(update));
     source.reset();
-    QCOMPARE(invalidated.size(), 1);
+    QVERIFY(!router.acceptIngress(update));
 }
 
 void GPSCorrectionRouterTest::boundedPeerHistory()

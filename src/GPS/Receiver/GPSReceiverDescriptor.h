@@ -40,4 +40,4 @@ struct GPSReceiverDescriptor
 [[nodiscard]] std::span<const GPSReceiverDescriptor> gpsReceiverDescriptors();
 [[nodiscard]] const GPSReceiverDescriptor* gpsReceiverDescriptor(GPSType type);
 [[nodiscard]] const GPSReceiverDescriptor* gpsReceiverDescriptorForManufacturer(int manufacturer);
-[[nodiscard]] QVariantMap gpsReceiverPresentation(int manufacturer);
+[[nodiscard]] const QVariantMap& gpsReceiverPresentation(int manufacturer);

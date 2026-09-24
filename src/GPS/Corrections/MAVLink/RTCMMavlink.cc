@@ -1,10 +1,10 @@
 #include "RTCMMavlink.h"
 
+#include <algorithm>
 #include <utility>
 
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QSet>
 
 #include "QGCLoggingCategory.h"
 
@@ -57,12 +57,13 @@ QList<RTCMMavlink::Admission> RTCMMavlink::submitToOutputs(QByteArrayView data)
     if (!current()) {
         return admissions;
     }
-    QSet<QString> seen;
+    admissions.reserve(outputs.size());
     for (const auto& output : outputs) {
-        if (output.id.isEmpty() || !output.submit || seen.contains(output.id)) {
+        if (output.id.isEmpty() || !output.submit ||
+            std::any_of(admissions.cbegin(), admissions.cend(),
+                        [&output](const Admission& admitted) { return admitted.id == output.id; })) {
             continue;
         }
-        seen.insert(output.id);
         Admission admission{output.id, output.session, 0, true};
         for (const auto& packet : packed.packets) {
             if (!current()) {

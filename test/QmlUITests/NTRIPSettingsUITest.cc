@@ -155,7 +155,6 @@ void NTRIPSettingsUITest::_testErrorActionRetries()
     QVERIFY(disconnect);
     const auto errorStatus = manager->property("connectionStatus");
     QCOMPARE(button->property("text").toString(), QStringLiteral("Retry"));
-    QVERIFY(panel->property("_isActive").toBool());
     QTRY_VERIFY_WITH_TIMEOUT(disconnect->property("visible").toBool(), TestTimeout::shortMs());
     QVERIFY(QMetaObject::invokeMethod(button, "click"));
     QCOMPARE(manager->property("retryCount").toInt(), 1);
@@ -164,7 +163,6 @@ void NTRIPSettingsUITest::_testErrorActionRetries()
     QTRY_VERIFY_WITH_TIMEOUT(!disconnect->property("visible").toBool(), TestTimeout::shortMs());
     QVERIFY(manager->setProperty("connectionStatus", errorStatus));
     QCOMPARE(manager->property("connectionStatus"), errorStatus);
-    QVERIFY(panel->property("_isActive").toBool());
     QTRY_VERIFY_WITH_TIMEOUT(disconnect->property("visible").toBool(), TestTimeout::shortMs());
     QVERIFY(QMetaObject::invokeMethod(disconnect, "click"));
     QVERIFY(!enabled.rawValue().toBool());

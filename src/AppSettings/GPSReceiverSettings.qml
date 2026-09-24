@@ -34,11 +34,16 @@ SettingsGroupLayout {
     readonly property bool _editable: !_active
     readonly property bool _tcp: !receiver.serialSupported || settings.connectionType.rawValue === GPSRtk.Tcp
 
+    // Consent covers exactly one receiver configuration; changing any part of it revokes consent.
+    readonly property string _consentScope: JSON.stringify([
+        manufacturer, baseMode, settings.connectionType.rawValue, settings.serialDevice.rawValue,
+        settings.serialBaudRate.rawValue, settings.tcpHost.rawValue, settings.tcpPort.rawValue
+    ])
+
     implicitWidth: ScreenTools.defaultFontPixelWidth * 56
     heading: qsTr("RTK GPS Settings")
 
-    onManufacturerChanged: clearConsent()
-    onBaseModeChanged: clearConsent()
+    on_ConsentScopeChanged: clearConsent()
     onReceiverChanged: clearConsent()
     onSettingsChanged: clearConsent()
     Component.onDestruction: clearConsent()
@@ -397,25 +402,5 @@ SettingsGroupLayout {
     Connections {
         target: root.receiver
         function onReceiverChanged() { root.clearConsent() }
-    }
-    Connections {
-        target: root.settings.serialDevice
-        function onRawValueChanged() { root.clearConsent() }
-    }
-    Connections {
-        target: root.settings.serialBaudRate
-        function onRawValueChanged() { root.clearConsent() }
-    }
-    Connections {
-        target: root.settings.connectionType
-        function onRawValueChanged() { root.clearConsent() }
-    }
-    Connections {
-        target: root.settings.tcpHost
-        function onRawValueChanged() { root.clearConsent() }
-    }
-    Connections {
-        target: root.settings.tcpPort
-        function onRawValueChanged() { root.clearConsent() }
     }
 }

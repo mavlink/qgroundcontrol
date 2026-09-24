@@ -568,14 +568,24 @@ void GPSRtkTest::_receiverIntegrityFacts()
     QCOMPARE(facts->jammingState()->rawValue().toInt(), 2);
     QCOMPARE(facts->spoofingState()->rawValue().toInt(), 2);
     QCOMPARE(facts->jammingState()->enumStringValue(), QStringLiteral("Warning"));
+    QVERIFY(facts->interferenceWarning());
     report.integrity = {};
     receiver._positionUpdate(report);
     QCOMPARE(facts->jammingState()->rawValue().toInt(), 0);
+    QVERIFY(!facts->interferenceWarning());
+    report.integrity.jamming.state = GPSIntegrityReport::JammingState::Ok;
+    report.integrity.spoofing.state = GPSIntegrityReport::SpoofingState::None;
+    receiver._positionUpdate(report);
+    QVERIFY(!facts->interferenceWarning());
+    QSignalSpy interference(facts, &GPSRTKFactGroup::interferenceWarningChanged);
     report.integrity.jamming.state = GPSIntegrityReport::JammingState::Critical;
     receiver._positionUpdate(report);
+    QVERIFY(facts->interferenceWarning());
+    QVERIFY(!interference.isEmpty());
     receiver.disconnectGPS();
     QCOMPARE(facts->jammingState()->rawValue().toInt(), 0);
     QCOMPARE(facts->spoofingState()->rawValue().toInt(), 0);
+    QVERIFY(!facts->interferenceWarning());
 }
 
 void GPSRtkTest::_surveyedBasePositionIsGcsPosition()
@@ -815,7 +825,7 @@ void GPSRtkTest::_receiverFramesAreValidated()
     QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
     emit receiver._session.provider->RTCMDataUpdate(frame, receivedAtMs);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
-    const auto stats = corrections.sources()[static_cast<int>(GPSCorrectionSource::LocalReceiver)].toMap();
+    const auto stats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::LocalReceiver)].toMap();
     QCOMPARE(stats.value(QStringLiteral("receivedFrames")).toULongLong(), 1);
     QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), valid ? 1 : 0);
     QCOMPARE(routed.size(), valid && !expired ? 1 : 0);
@@ -895,7 +905,7 @@ void GPSRtkTest::_tcpPassiveConnection()
     QTRY_VERIFY_WITH_TIMEOUT(receiver.connected(), TestTimeout::mediumMs());
     const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
     QCOMPARE(peer->write(frame), frame.size());
-    QTRY_COMPARE_WITH_TIMEOUT(corrections.sources()[static_cast<int>(GPSCorrectionSource::LocalReceiver)]
+    QTRY_COMPARE_WITH_TIMEOUT(corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::LocalReceiver)]
                                   .toMap()
                                   .value(QStringLiteral("validatedFrames"))
                                   .toULongLong(),
@@ -1357,7 +1367,7 @@ void GPSRtkTest::_manualSerialErrors()
     } else {
         QVERIFY(ports.canReservePort(port.systemLocation));
     }
-    QVERIFY(!receiver.connectGPS(port.systemLocation, QStringLiteral("USB serial"), 115200));
+    QVERIFY(!receiver._connectGPS(port.systemLocation, QStringLiteral("USB serial"), 115200));
     QVERIFY(!opened);
 }
 
@@ -1374,7 +1384,7 @@ void GPSRtkTest::_serialReservationSurvivesDelayedStop()
         return blockedFactory(gate)(stop);
     };
     const auto releaseWorker = qScopeGuard([&] { gate->release.release(); });
-    QVERIFY(receiver.connectGPS(QStringLiteral("/test/selected"), QStringLiteral("passive"), 115200));
+    QVERIFY(receiver._connectGPS(QStringLiteral("/test/selected"), QStringLiteral("passive"), 115200));
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> provider = receiver._session.provider;
     emit provider->receiverReady();

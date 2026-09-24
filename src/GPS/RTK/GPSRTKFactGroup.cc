@@ -3,6 +3,7 @@
 #include <cmath>
 #include <limits>
 
+#include "GPSDriverReports.h"
 #include "GPSReceiverConfig.h"
 #include "QGCLoggingCategory.h"
 
@@ -31,11 +32,25 @@ GPSRTKFactGroup::GPSRTKFactGroup(QObject *parent)
          {&_validFact, &_currentLatitudeFact, &_currentLongitudeFact, &_currentAltitudeFact, &_currentAccuracyFact}) {
         connect(fact, &Fact::rawValueChanged, this, &GPSRTKFactGroup::currentBasePositionChanged);
     }
+    for (Fact* fact : {&_jammingStateFact, &_spoofingStateFact}) {
+        connect(fact, &Fact::rawValueChanged, this, &GPSRTKFactGroup::interferenceWarningChanged);
+    }
 }
 
 GPSRTKFactGroup::~GPSRTKFactGroup()
 {
     // qCDebug(GPSRTKFactGroupLog) << Q_FUNC_INFO << this;
+}
+
+bool GPSRTKFactGroup::interferenceWarning() const
+{
+    using JammingState = GPSIntegrityReport::JammingState;
+    using SpoofingState = GPSIntegrityReport::SpoofingState;
+    const int jamming = _jammingStateFact.rawValue().toInt();
+    const int spoofing = _spoofingStateFact.rawValue().toInt();
+    return jamming == static_cast<int>(JammingState::Warning) || jamming == static_cast<int>(JammingState::Critical) ||
+           spoofing == static_cast<int>(SpoofingState::Indicated) ||
+           spoofing == static_cast<int>(SpoofingState::Multiple);
 }
 
 bool GPSRTKFactGroup::canSaveCurrentBasePosition() const

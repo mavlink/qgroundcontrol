@@ -1,4 +1,3 @@
-# Header-only, so libraries below Core (such as Corrections) can share it without Qt Positioning.
 add_library(QGCGPSNotifications INTERFACE)
 target_sources(QGCGPSNotifications INTERFACE FILE_SET HEADERS FILES GPSNotificationQueue.h)
 target_link_libraries(QGCGPSNotifications INTERFACE Qt6::Core)

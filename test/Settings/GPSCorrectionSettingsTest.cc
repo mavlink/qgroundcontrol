@@ -300,6 +300,11 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     QCOMPARE(streamControl->property("currentValue").toString(), QStringLiteral("b"));
     QCOMPARE(selectionStatus->property("text").toString(), noSelection);
     QTRY_VERIFY_WITH_TIMEOUT(findItem(QStringLiteral("correctionStreamState_3_b")), TestTimeout::mediumMs());
+    QVERIFY(!findItem(QStringLiteral("correctionSourceMessages_2"))->isVisible());
+    auto* udpMessages = findItem(QStringLiteral("correctionSourceMessages_3"));
+    QVERIFY(udpMessages);
+    QTRY_VERIFY_WITH_TIMEOUT(udpMessages->isVisible(), TestTimeout::mediumMs());
+    QCOMPARE(udpMessages->property("messageCounts").toList().value(0).toList().value(0).toInt(), 1005);
     QVERIFY2(
         streamStatus(QStringLiteral("b"))
             .contains(QCoreApplication::translate("CorrectionDiagnostics", "Active; waiting for fresh corrections")),

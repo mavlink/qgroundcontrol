@@ -55,6 +55,8 @@ With an active vehicle, the indicator shows vehicle GPS information (for example
 
 When there is no active vehicle but RTK is connected, the indicator switches to RTK status so you can still monitor the correction link.
 
+The dropdown also shows the [GCS position](../settings_view/comm_links.md#gcs-position) source in use and its status.
+
 When the vehicle reports RTK status (`GPS_RTK`), the dropdown also shows the RTK baseline (distance from the base), the
 correction rate, and the satellites used in the RTK solution. For a connected RTK receiver it shows the receiver's
 jamming and spoofing state when the receiver reports them; the toolbar's _RTK_ label turns orange for jamming warnings

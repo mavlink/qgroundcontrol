@@ -16,10 +16,6 @@ ToolIndicatorPage {
     property string valueNA: qsTr("–.––", "No data to display")
     property var rtkSettings: QGroundControl.settingsManager.rtkSettings
     readonly property var _receiver: QGroundControl.gpsManager.gpsRtk
-    readonly property bool _rtkConnected: _receiver.facts.connected.value
-    readonly property var _activePresentation: _receiver.capabilitiesForManufacturer(_receiver.activeManufacturer)
-    readonly property bool _averagingConnected: _receiver.activeBaseMode === BaseModeDefinition.BaseReceiverAveraging
-    readonly property bool _surveyConnected: _receiver.activeBaseMode === BaseModeDefinition.BaseSurveyIn
     readonly property real _preferredStatusWidth: ScreenTools.defaultFontPixelWidth * 36
     readonly property real _preferredSettingsWidth: ScreenTools.defaultFontPixelWidth * 56
     property real availableWidth: drawer && drawer.parent
@@ -28,8 +24,9 @@ ToolIndicatorPage {
                                     ? root.Window.window.width - ScreenTools.defaultFontPixelHeight * 4
                                     : _preferredStatusWidth + _preferredSettingsWidth + spacing * 2 + 1
     readonly property bool _compact: availableWidth < _preferredStatusWidth + _preferredSettingsWidth + spacing * 2 + 1
-    readonly property real _settingsWidth: Math.max(0, Math.min(_preferredSettingsWidth,
-        availableWidth - (_compact ? 0 : _preferredStatusWidth) - spacing * 2 - 1))
+    // Settings stay usable, rather than collapsing, on windows narrower than the reserved margins.
+    readonly property real _settingsWidth: Math.max(ScreenTools.defaultFontPixelWidth * 30,
+        Math.min(_preferredSettingsWidth, availableWidth - (_compact ? 0 : _preferredStatusWidth) - spacing * 2 - 1))
     property alias _allowPersistentChanges: connectionConsent.allowed
     property var _settingsPanel: null
 
@@ -146,88 +143,20 @@ ToolIndicatorPage {
                 }
             }
 
-            SettingsGroupLayout {
+            GPSReceiverStatus {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                heading: qsTr("RTK GPS Status")
-                visible: root._rtkConnected || root._receiver.hasReceiver || root._receiver.reconnecting
-                         || !root.activeVehicle
+                receiver: root._receiver
+                showWhenDisconnected: !root.activeVehicle
+                disconnectedText: qsTr("No RTK receiver connected. Expand for settings.")
+            }
 
-                QGCLabel {
-                    objectName: "rtkReceiverStatus"
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 0
-                    wrapMode: Text.Wrap
-                    text: !root._rtkConnected
-                          ? (root._receiver.hasReceiver ? qsTr("Connecting to receiver...")
-                             : root._receiver.reconnecting ? qsTr("Receiver connection lost. Reconnecting...")
-                             : qsTr("No RTK receiver connected. Expand for settings."))
-                          : root._activePresentation.passive ? qsTr("Passive RTCM/NMEA input connected")
-                          : root._averagingConnected ? qsTr("Receiver-managed averaging — no accuracy guarantee")
-                          : root._receiver.activeBaseMode === BaseModeDefinition.BaseFixed ? qsTr("Fixed base position")
-                          : root._receiver.facts.active.value ? qsTr("Survey-in Active") : qsTr("Receiver connected")
-                }
-                LabelledLabel {
-                    objectName: "rtkReceiverIdentity"
-                    visible: root._rtkConnected && root._receiver.receiverIdentity.length > 0
-                    label: qsTr("Receiver")
-                    labelText: root._receiver.receiverIdentity
-                }
-                LabelledLabel {
-                    objectName: "rtkReceiverEndpoint"
-                    visible: root._receiver.hasReceiver && root._receiver.activeEndpoint.length > 0
-                    label: qsTr("Connection")
-                    labelText: root._receiver.activeEndpoint
-                }
-                LabelledLabel {
-                    objectName: "rtkFixType"
-                    visible: root._rtkConnected
-                    label: qsTr("Receiver Fix")
-                    labelText: root._receiver.facts.fixType.rawValue === 0
-                               ? root.na : root._receiver.facts.fixType.enumStringValue
-                }
-                LabelledLabel {
-                    objectName: "rtkSatellitesInView"
-                    visible: root._rtkConnected
-                    label: qsTr("Satellites in View")
-                    labelText: root._receiver.facts.numSatellites.rawValue < 0
-                               ? root.na : root._receiver.facts.numSatellites.valueString
-                }
-                LabelledLabel {
-                    objectName: "rtkSatellitesUsed"
-                    visible: root._rtkConnected
-                    label: qsTr("Satellites Used")
-                    labelText: root._receiver.facts.numSatellitesUsed.rawValue < 0
-                               ? root.na : root._receiver.facts.numSatellitesUsed.valueString
-                }
-                LabelledLabel {
-                    objectName: "rtkJamming"
-                    visible: root._rtkConnected && root._receiver.facts.jammingState.rawValue > 0
-                    label: qsTr("Jamming")
-                    labelText: root._receiver.facts.jammingState.enumStringValue
-                }
-                LabelledLabel {
-                    objectName: "rtkSpoofing"
-                    visible: root._rtkConnected && root._receiver.facts.spoofingState.rawValue > 0
-                    label: qsTr("Spoofing")
-                    labelText: root._receiver.facts.spoofingState.enumStringValue
-                }
-                LabelledLabel {
-                    objectName: "rtkSurveyDuration"
-                    label: root._activePresentation.acceptedObservationTime ? qsTr("Accepted observation time") : qsTr("Duration")
-                    visible: root._rtkConnected && root._activePresentation.reportsSurveyDuration
-                             && root._surveyConnected
-                    //: %1 is Survey-In duration in seconds
-                    labelText: qsTr("%1 s").arg(root._receiver.facts.currentDuration.value)
-                }
-                LabelledLabel {
-                    objectName: "rtkSurveyAccuracy"
-                    label: root._receiver.facts.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
-                    labelText: root._receiver.facts.currentAccuracy.valueString + " " + root._receiver.facts.currentAccuracy.units
-                    visible: root._rtkConnected && root._surveyConnected
-                             && root._receiver.facts.currentAccuracy.value > 0
-                }
+            GcsPositionStatus {
+                objectName: "gpsIndicatorGcsPosition"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                sourceEditable: false
+                showCoordinates: false
             }
 
             QGCLabel {

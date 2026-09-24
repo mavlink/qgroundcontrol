@@ -19,6 +19,7 @@ class GPSRTKFactGroup : public FactGroup
     Q_PROPERTY(Fact* jammingState READ jammingState CONSTANT)
     Q_PROPERTY(Fact* spoofingState READ spoofingState CONSTANT)
     Q_PROPERTY(bool canSaveCurrentBasePosition READ canSaveCurrentBasePosition NOTIFY currentBasePositionChanged)
+    Q_PROPERTY(bool interferenceWarning READ interferenceWarning NOTIFY interferenceWarningChanged)
 
 public:
     explicit GPSRTKFactGroup(QObject* parent = nullptr);
@@ -53,8 +54,12 @@ public:
     /// A valid receiver status alone does not establish usable coordinates or accuracy.
     bool canSaveCurrentBasePosition() const;
 
+    /// Jamming at Warning or Critical, or any spoofing indication.
+    bool interferenceWarning() const;
+
 signals:
     void currentBasePositionChanged();
+    void interferenceWarningChanged();
 
 private:
     Fact _connectedFact = Fact(0, QStringLiteral("connected"), FactMetaData::valueTypeBool);

@@ -47,6 +47,7 @@ class GPSRtk : public QObject
     Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY receiverChanged)
     Q_PROPERTY(QGeoCoordinate basePosition READ basePosition NOTIFY basePositionChanged)
     Q_PROPERTY(bool basePositionFinal READ basePositionFinal NOTIFY basePositionChanged)
+    Q_PROPERTY(QVariantMap activePresentation READ activePresentation NOTIFY receiverChanged)
 
     friend class GPSRtkTest;
     friend class RTKConnectionPolicy;
@@ -65,9 +66,6 @@ public:
     ~GPSRtk();
 
 #ifndef QGC_NO_SERIAL_LINK
-    /// Connects outside the connection policy, which forgets any manual or auto-connected ownership.
-    bool connectGPS(const QString& device, QStringView gps_type, uint32_t baudRate = 0,
-                    bool allowPersistentChanges = false);
     void setSerialPortManager(SerialPortManager* serialPorts);
 #endif
     /// Inject before connecting; the caller retains ownership.
@@ -117,10 +115,13 @@ public:
 
     Q_INVOKABLE QVariantMap capabilitiesForManufacturer(int manufacturer) const;
 
+    /// Presentation capabilities of the connected receiver family.
+    QVariantMap activePresentation() const;
+
     static std::optional<GPSType> typeForManufacturer(int manufacturer);
     static int manufacturerForType(GPSType type);
 
-    GPSRTKFactGroup* gpsRtkFactGroup();
+    GPSRTKFactGroup* gpsRtkFactGroup() const { return _gpsRtkFactGroup.get(); }
 
 signals:
     void receiverChanged();
