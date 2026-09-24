@@ -79,7 +79,7 @@ void NMEAPositionSourceTest::_dateOrdering()
             device.feed(repeatedGga);
         }
         QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::shortMs());
-        const auto observation = source.lastObservation();
+        const auto observation = source._lastObservation;
         QCOMPARE(observation.position.timestamp(), timestamp);
         QVERIFY(qAbs(observation.position.coordinate().latitude() - 53.36133666666666) < 0.0000001);
         QVERIFY(qAbs(observation.position.coordinate().longitude() + 6.50562) < 0.0000001);
@@ -214,13 +214,13 @@ void NMEAPositionSourceTest::_fixDimensionOrdering()
     }
     device.feed(input);
     QTRY_COMPARE_WITH_TIMEOUT(updates.size(), 1, TestTimeout::shortMs());
-    QCOMPARE(source.lastObservation().fixQuality, expected);
-    QVERIFY(source.lastObservation().usable());
+    QCOMPARE(source._lastObservation.fixQuality, expected);
+    QVERIFY(source._lastObservation.usable());
     updates.clear();
     device.feed(NMEAUtils::repairChecksum("$GPRMC,092751.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A") +
                 NMEAUtils::repairChecksum("$GPGGA,092751.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,"));
     QTRY_COMPARE_WITH_TIMEOUT(updates.size(), 1, TestTimeout::shortMs());
-    QCOMPARE(source.lastObservation().fixQuality, GPSObservation::FixQuality::Unknown);
+    QCOMPARE(source._lastObservation.fixQuality, GPSObservation::FixQuality::Unknown);
 }
 
 void NMEAPositionSourceTest::_bufferedRequest_data()
@@ -257,7 +257,7 @@ void NMEAPositionSourceTest::_bufferedRequest()
     QCOMPARE(device->bytesAvailable(), kFix.size());
     emit device->readyRead();
     QTRY_COMPARE_WITH_TIMEOUT(updates.size(), 1, TestTimeout::shortMs());
-    QCOMPARE(source.lastObservation().position.timestamp().time(), QTime(9, 27, 50));
+    QCOMPARE(source._lastObservation.position.timestamp().time(), QTime(9, 27, 50));
     QCOMPARE(source.error(), QGeoPositionInfoSource::NoError);
     QCOMPARE(errors.size(), retry ? 1 : 0);
     QVERIFY(!source._requestTask.active());
@@ -288,7 +288,7 @@ void NMEAPositionSourceTest::_fixMetadata()
                                                      QByteArray::number(quality) + ",8,1.03,61.7,M,55.2,M,,");
     device.feed(rmc + gga + NMEAUtils::repairChecksum("$GPGSA,A,3,02,,,,,,,,,,,,1.0,1.03,0.6"));
     QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::mediumMs());
-    const auto observation = source.lastObservation();
+    const auto observation = source._lastObservation;
     QCOMPARE(observation.fixQuality, expected);
     QCOMPARE(observation.satellitesUsed, std::optional<int>(8));
     QCOMPARE(observation.horizontalDop, std::optional<double>(1.03));
@@ -307,11 +307,11 @@ void NMEAPositionSourceTest::_metadataDoesNotCrossEpochs()
     source.startUpdates();
     device.feed(kFix);
     QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::mediumMs());
-    QVERIFY(source.lastObservation().satellitesUsed.has_value());
+    QVERIFY(source._lastObservation.satellitesUsed.has_value());
     updates.clear();
     device.feed(NMEAUtils::repairChecksum("$GPRMC,092751.000,A,5321.6802,N,00630.3372,W,2.0,31.66,280511,,,A"));
     QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::mediumMs());
-    const auto observation = source.lastObservation();
+    const auto observation = source._lastObservation;
     QCOMPARE(observation.fixQuality, GPSObservation::FixQuality::Unknown);
     QVERIFY(!observation.satellitesUsed);
     QVERIFY(!observation.horizontalDop);
@@ -351,7 +351,7 @@ void NMEAPositionSourceTest::_gstAccuracy()
     device.feed((beforeFix ? gst + fix : fix + gst) +
                 NMEAUtils::repairChecksum("$GPGSA,A,3,02,,,,,,,,,,,,1.0,1.03,0.6"));
     QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::mediumMs());
-    const auto observation = source.lastObservation();
+    const auto observation = source._lastObservation;
     QCOMPARE(observation.position.timestamp().time(), QTime::fromString(QString::fromLatin1(time), u"hhmmss.z"));
     if (validChecksum) {
         QCOMPARE(observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy), 5.0);
@@ -365,8 +365,8 @@ void NMEAPositionSourceTest::_gstAccuracy()
                                           ",A,5321.6802,N,00630.3372,W,0.02,31.66," +
                                           nextEpoch.date().toString(u"ddMMyy").toLatin1() + ",,,A"));
     QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::mediumMs());
-    QVERIFY(!source.lastObservation().position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy));
-    QCOMPARE(source.lastObservation().position.timestamp(), nextEpoch);
+    QVERIFY(!source._lastObservation.position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy));
+    QCOMPARE(source._lastObservation.position.timestamp(), nextEpoch);
 }
 
 void NMEAPositionSourceTest::_fixLoss_data()
@@ -414,7 +414,7 @@ void NMEAPositionSourceTest::_fixLoss()
     const auto previousUpdates = updates.size();
     device.feed(lossSentence);
     QTRY_COMPARE_WITH_TIMEOUT(health.state(), GPSSourceHealth::State::Invalid, TestTimeout::shortMs());
-    QCOMPARE(source.lastObservation().receiverFixValid, std::optional<bool>(false));
+    QCOMPARE(source._lastObservation.receiverFixValid, std::optional<bool>(false));
     QVERIFY(!source._publicationTask.active());
     QVERIFY(!source._pendingFix.position);
     source.setUpdateInterval(0);
@@ -425,7 +425,7 @@ void NMEAPositionSourceTest::_fixLoss()
     device.feed(recovery);
     QTRY_VERIFY_WITH_TIMEOUT(health.usable(), TestTimeout::shortMs());
     QCOMPARE(updates.size(), previousUpdates + 1);
-    QCOMPARE(source.lastObservation().position.timestamp().time(), QTime(9, 27, 52));
+    QCOMPARE(source._lastObservation.position.timestamp().time(), QTime(9, 27, 52));
     QVERIFY(observations.size() >= 2);
 }
 
@@ -471,7 +471,7 @@ void NMEAPositionSourceTest::_lateFixLossDoesNotRejectRecovery()
                                           date.toString(u"ddMMyy").toLatin1() + ",,,A") +
                 NMEAUtils::repairChecksum("$GPGGA," + utc + ",5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,"));
     QTRY_COMPARE_WITH_TIMEOUT(observations.size(), 2, TestTimeout::shortMs());
-    QCOMPARE(source.lastObservation().position.timestamp(), QDateTime(date, time, QTimeZone::UTC));
+    QCOMPARE(source._lastObservation.position.timestamp(), QDateTime(date, time, QTimeZone::UTC));
     QVERIFY(health.usable());
     QCOMPARE(observations.front().front().value<GPSObservation>().receiverFixValid, std::optional<bool>(false));
     QVERIFY(observations.back().front().value<GPSObservation>().receiverFixValid.value_or(true));
@@ -488,13 +488,13 @@ void NMEAPositionSourceTest::_fixLossPreservesPendingRequest()
     QTRY_COMPARE_WITH_TIMEOUT(observations.size(), 1, TestTimeout::shortMs());
     QVERIFY(updates.isEmpty());
     QVERIFY(source._requestTask.active());
-    QCOMPARE(source.lastObservation().receiverFixValid, std::optional<bool>(false));
+    QCOMPARE(source._lastObservation.receiverFixValid, std::optional<bool>(false));
     device.feed(NMEAUtils::repairChecksum("$GPRMC,092752.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A") +
                 NMEAUtils::repairChecksum("$GPGGA,092752.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,"));
     QTRY_COMPARE_WITH_TIMEOUT(updates.size(), 1, TestTimeout::shortMs());
     QCOMPARE(observations.size(), 2);
     QVERIFY(!source._requestTask.active());
-    QCOMPARE(source.lastObservation().position.timestamp().time(), QTime(9, 27, 52));
+    QCOMPARE(source._lastObservation.position.timestamp().time(), QTime(9, 27, 52));
 }
 
 void NMEAPositionSourceTest::_rejectedFixKeepsOriginalRequestDeadline_data()
@@ -538,7 +538,7 @@ void NMEAPositionSourceTest::_rejectedFixKeepsOriginalRequestDeadline()
     QCOMPARE(updates.size(), timely ? 1 : 0);
     QCOMPARE(observations.size(), timely ? 2 : 1);
     if (timely) {
-        QCOMPARE(source.lastObservation().position.timestamp().time(), QTime(9, 27, 52));
+        QCOMPARE(source._lastObservation.position.timestamp().time(), QTime(9, 27, 52));
     }
     QVERIFY(scheduler.advanceToUs(requestAtUs + 2'000'000));
     device.feed(NMEAUtils::repairChecksum("$GPRMC,092754.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A"));
@@ -578,5 +578,5 @@ void NMEAPositionSourceTest::_gllRecoversFromFixLoss()
     device.feed(NMEAUtils::repairChecksum("$GPGST,092752.000,1,1,1,0,3,4,6") +
                 NMEAUtils::repairChecksum("$GPGLL,5321.6802,N,00630.3372,W,092752.000,A"));
     QTRY_VERIFY_WITH_TIMEOUT(health.usable(), TestTimeout::shortMs());
-    QCOMPARE(source.lastObservation().position.timestamp().time(), QTime(9, 27, 52));
+    QCOMPARE(source._lastObservation.position.timestamp().time(), QTime(9, 27, 52));
 }

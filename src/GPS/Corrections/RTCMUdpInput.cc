@@ -93,11 +93,6 @@ void RTCMUdpInput::setPort(quint16 port)
     configure(port, _validateRtcm);
 }
 
-void RTCMUdpInput::setValidation(bool validate)
-{
-    configure(_port, validate);
-}
-
 void RTCMUdpInput::configure(quint16 port, bool validate)
 {
     if (_port == port && _validateRtcm == validate) {

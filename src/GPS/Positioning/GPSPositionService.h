@@ -106,13 +106,6 @@ public:
 
     QGeoPositionInfoSource::Error gcsPositioningError() const { return _gcsPositioningError; }
 
-    /// Local arrival time of the last position update which passed the accuracy gates and was
-    /// copied into gcsPosition. Invalid until the first such update arrives. This is the local
-    /// clock rather than the position source's own timestamp, which on some platforms (e.g.
-    /// Android) is offset from the system clock.
-    ///     @return Arrival time, in UTC, of the last position update applied to gcsPosition.
-    QDateTime gcsPositionTimestamp() const { return _published.timestamp; }
-
     int updateInterval() const { return _updateInterval; }
 
     /// Raw Qt positioning sources require an exclusive binding; shared producers must supply health.
@@ -224,10 +217,7 @@ private:
         qreal horizontalAccuracy = std::numeric_limits<qreal>::infinity();
     } _notified;
 
-    struct PublishedPosition : NotifiedPosition
-    {
-        QDateTime timestamp;
-    } _published;
+    NotifiedPosition _published;
 
     quint64 _selectedBindingRevision = 0;
     quint64 _selectionObservationRevision = 0;

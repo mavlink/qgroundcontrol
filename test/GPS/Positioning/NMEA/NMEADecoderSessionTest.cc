@@ -34,7 +34,7 @@ void NMEADecoderSessionTest::_decoderSessionRestart()
 
     session.stop();
     QVERIFY(input.isOpen());
-    QCOMPARE(session.satelliteObservation().satellitesInViewCount(), -1);
+    QCOMPARE(session._satelliteObservation().satellitesInViewCount(), -1);
     QCOMPARE(session.health()->state(), GPSSourceHealth::State::NoData);
     QVERIFY(session.start(&input));
     session.positionSource()->startUpdates();

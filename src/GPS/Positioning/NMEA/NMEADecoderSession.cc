@@ -27,12 +27,6 @@ NMEADecoderSession::NMEADecoderSession(QObject* parent, RuntimeScheduler* schedu
     qCDebug(NMEADecoderSessionLog) << this;
     connect(&_satellites, &GPSSatelliteStore::observationChanged, &_health,
             &GPSSourceHealth::applySatelliteObservation);
-    connect(&_satellites, &GPSSatelliteStore::observationChanged, this,
-            [this](const GPSSatelliteObservation& observation) {
-                if (observation.sessionId == _sessionId) {
-                    emit satellitesReceived(observation);
-                }
-            });
 }
 
 NMEADecoderSession::~NMEADecoderSession()

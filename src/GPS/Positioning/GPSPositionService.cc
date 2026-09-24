@@ -680,7 +680,6 @@ void GPSPositionService::_publishPosition(const std::optional<GPSObservation>& o
 {
     if (observation) {
         _published.position = observation->position.coordinate();
-        _published.timestamp = observation->receivedAt;
         _published.heading = observation->heading();
         _published.horizontalAccuracy = observation->position.attribute(QGeoPositionInfo::HorizontalAccuracy);
     } else {

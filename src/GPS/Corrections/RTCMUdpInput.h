@@ -39,7 +39,6 @@ public:
     /// Change the listen port. If already running, restarts automatically.
     void setPort(quint16 port);
 
-    void setValidation(bool validate);
     /// Changes start a fresh stream, restarting the listener if running.
     void configure(quint16 port, bool validate);
 

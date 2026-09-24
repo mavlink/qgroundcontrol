@@ -205,7 +205,6 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
     verifyExpectedLogMessage();
     QVERIFY(!manager->gcsPositionUsable());
     QVERIFY(!positioning->acceptedObservation());
-    QVERIFY(!positioning->gcsPositionTimestamp().isValid());
 
     QTRY_VERIFY_WITH_TIMEOUT(
         ([&]() {

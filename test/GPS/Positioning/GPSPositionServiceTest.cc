@@ -253,7 +253,7 @@ void GPSPositionServiceTest::_sourcesShareAcceptance()
     source.publish(observation.position);
     QCOMPARE(service.gcsPosition(), observation.coordinate());
     QCOMPARE(service.gcsHeading(), observation.heading());
-    QVERIFY(service.gcsPositionTimestamp().isValid());
+    QVERIFY(service.acceptedObservation());
     QCOMPARE(service._currentHealth.data()->observation().altitudeDatum, GPSAltitudeDatum::Unknown);
     const auto remoteId = service.acceptedObservation(GPSObservation::PositionUse::RemoteID);
     QVERIFY(remoteId);
@@ -276,7 +276,6 @@ void GPSPositionServiceTest::_sourcesShareAcceptance()
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(5)));
     QCOMPARE(service.sourceStatus(), Status::Stale);
     QVERIFY(!service.gcsPosition().isValid());
-    QVERIFY(!service.gcsPositionTimestamp().isValid());
     QVERIFY(qIsNaN(service.gcsHeading()));
     source.publish(fix(scheduler).position);
     QCOMPARE(service.sourceStatus(), Status::Active);

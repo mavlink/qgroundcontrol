@@ -136,7 +136,6 @@ void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
     QVERIFY(!pm.gcsPosition().isValid());
     QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::UpdateTimeoutError);
     QVERIFY(!pm.acceptedObservation());
-    QVERIFY(!pm.gcsPositionTimestamp().isValid());
     QVERIFY(qIsInf(pm.gcsPositionHorizontalAccuracy()));
     feed();
     QTRY_VERIFY_WITH_TIMEOUT((scheduler.advanceBy(std::chrono::microseconds::zero()), pm.gcsPosition().isValid()),

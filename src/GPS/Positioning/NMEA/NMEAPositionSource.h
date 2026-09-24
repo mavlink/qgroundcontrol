@@ -22,6 +22,7 @@ class NMEAPositionSource : public QGeoPositionInfoSource
 {
     Q_OBJECT
 
+    friend class GPSAsciiProtocolTest;
     friend class NMEAPositionSourceTest;
 
 public:
@@ -33,8 +34,6 @@ public:
     PositioningMethods supportedPositioningMethods() const override;
     int minimumUpdateInterval() const override;
     Error error() const override;
-
-    GPSObservation lastObservation() const { return _lastObservation; }
 
 signals:
     void dataReceived(quint64 receivedAtUs);

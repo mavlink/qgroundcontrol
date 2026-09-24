@@ -206,7 +206,7 @@ void GPSAsciiProtocolTest::_positionSourceEquivalence()
     source.requestUpdate(1000);
     emit device.readyRead();
     QTRY_COMPARE_WITH_TIMEOUT(updates.size(), 1, TestTimeout::shortMs());
-    const auto observation = source.lastObservation();
+    const auto observation = source._lastObservation;
 
     QCOMPARE(nativePosition.navigation.fixType, GPSPositionReport::FixType::Fix3D);
     QCOMPARE(observation.fixQuality, GPSObservation::FixQuality::Fix3D);

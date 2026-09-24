@@ -104,7 +104,7 @@ void NMEASatelliteAdapterTest::_combinedTalkerReports()
     NMEADecoderSession adapter;
     QVERIFY(adapter.start(&input));
     auto& store = adapter._satellites;
-    QSignalSpy reports(&adapter, &NMEADecoderSession::satellitesReceived);
+    QSignalSpy reports(&adapter._satellites, &GPSSatelliteStore::observationChanged);
     const quint64 firstReceipt = MonotonicClock::nowUs() - 1000000;
     input.receivedAtUs = firstReceipt;
     const QList<QByteArray> dedicated{"$GPGSV,1,1,01,01,40,100,45,1"};
@@ -136,7 +136,7 @@ void NMEASatelliteAdapterTest::_modernConstellationsAndSignals()
     NMEADecoderSession adapter;
     QVERIFY(adapter.start(&input));
     auto& store = adapter._satellites;
-    QSignalSpy reports(&adapter, &NMEADecoderSession::satellitesReceived);
+    QSignalSpy reports(&adapter._satellites, &GPSSatelliteStore::observationChanged);
     feed(input, {
                     "$GNGSA,A,3,44,02,,,,,,,,,,,1.0,0.8,0.6,1",
                     "$GNGSA,A,3,65,,,,,,,,,,,,1.0,0.8,0.6,2",
@@ -183,7 +183,7 @@ void NMEASatelliteAdapterTest::_interleavedDeadlineReports()
     QVERIFY(input.open(QIODevice::ReadOnly));
     QVERIFY(adapter.start(&input));
     auto& store = adapter._satellites;
-    QSignalSpy reports(&adapter, &NMEADecoderSession::satellitesReceived);
+    QSignalSpy reports(&adapter._satellites, &GPSSatelliteStore::observationChanged);
     const auto ingest = [&](const QByteArray& body) {
         const auto sentence = NMEASentenceEnvelope::parse(NMEAUtils::repairChecksum(body), scheduler.nowUs());
         QVERIFY(sentence);
@@ -222,7 +222,7 @@ void NMEASatelliteAdapterTest::_incompleteReportIsDiscarded()
     QVERIFY(input.open(QIODevice::ReadOnly));
     NMEADecoderSession adapter;
     QVERIFY(adapter.start(&input));
-    QSignalSpy reports(&adapter, &NMEADecoderSession::satellitesReceived);
+    QSignalSpy reports(&adapter._satellites, &GPSSatelliteStore::observationChanged);
     // A missing first fragment and an interrupted report must never become a complete sky view.
     feed(input, {"$" + talker + "GSV,2,2,05,05,10,100,20,1",
                  "$" + talker + "GSV,2,1,05,01,10,100,20,02,10,100,20,03,10,100,20,04,10,100,20,7",
@@ -257,7 +257,7 @@ void NMEASatelliteAdapterTest::_epochTimeNormalization()
     QVERIFY(input.open(QIODevice::ReadOnly));
     NMEADecoderSession adapter;
     QVERIFY(adapter.start(&input));
-    QSignalSpy reports(&adapter, &NMEADecoderSession::satellitesReceived);
+    QSignalSpy reports(&adapter._satellites, &GPSSatelliteStore::observationChanged);
     feed(input,
          {"$GPRMC,120000.0,V,,,,,,,140926,,,N", "$GPGSV,2,1,05,01,10,100,30,02,20,100,30,03,30,100,30,04,40,100,30",
           "$GPGGA," + time + ",,,,,0,0,,,,,,,", "$GPGSV,2,2,05,05,50,100,30", "$GPRMC,120002.0,V,,,,,,,140926,,,N",
@@ -280,7 +280,7 @@ void NMEASatelliteAdapterTest::_idleBatchAndSourceClose()
     QVERIFY(input.open(QIODevice::ReadOnly));
     NMEADecoderSession adapter;
     QVERIFY(adapter.start(&input));
-    QSignalSpy ready(&adapter, &NMEADecoderSession::satellitesReceived);
+    QSignalSpy ready(&adapter._satellites, &GPSSatelliteStore::observationChanged);
     // GSV-only sources have no position timestamps to delimit their batches.
     feed(input, {"$GPGSV,1,1,01,02,40,100,30"});
     QTRY_VERIFY_WITH_TIMEOUT(!ready.isEmpty(), TestTimeout::shortMs());
@@ -303,7 +303,7 @@ void NMEASatelliteAdapterTest::_preservesReceiptAgeAcrossReports()
     QVERIFY(input.open(QIODevice::ReadOnly));
     NMEADecoderSession adapter;
     QVERIFY(adapter.start(&input));
-    QSignalSpy reports(&adapter, &NMEADecoderSession::satellitesReceived);
+    QSignalSpy reports(&adapter._satellites, &GPSSatelliteStore::observationChanged);
     const quint64 oldTimestamp = MonotonicClock::nowUs() - 2000000;
     input.receivedAtUs = oldTimestamp;
     feed(input, {"$GPGSV,1,1,01,02,40,100,30"});
@@ -343,7 +343,7 @@ void NMEASatelliteAdapterTest::_decoderRejectsDelayedSatelliteBatch()
     QVERIFY(input.open(QIODevice::ReadOnly));
     NMEADecoderSession session;
     QVERIFY(session.start(&input));
-    QSignalSpy changes(&session, &NMEADecoderSession::satellitesReceived);
+    QSignalSpy changes(&session._satellites, &GPSSatelliteStore::observationChanged);
     input.receivedAtUs = MonotonicClock::nowUs() - 6000000;
     feed(input, {"$GPGSV,1,1,01,02,40,100,30", "$GPGSA,A,3,02,,,,,,,,,,,,1.0,0.8,0.6"});
     input.receivedAtUs = MonotonicClock::nowUs();
@@ -386,8 +386,8 @@ void NMEASatelliteAdapterTest::_decoderKeepsFreshConstellation()
     feed(input, {"$GAGSV,1,1,01,03,40,100,30", "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
     QTRY_COMPARE_WITH_TIMEOUT(session.health()->satellitesInViewCount(), 2, TestTimeout::shortMs());
     QTRY_COMPARE_WITH_TIMEOUT(session.health()->satellitesInViewCount(), 1, TestTimeout::mediumMs());
-    QCOMPARE(session.satelliteObservation().satellitesInViewCount(), 1);
-    QCOMPARE(session.satelliteObservation().constellations.first().constellation, GPSConstellation::Galileo);
+    QCOMPARE(session._satelliteObservation().satellitesInViewCount(), 1);
+    QCOMPARE(session._satelliteObservation().constellations.first().constellation, GPSConstellation::Galileo);
     QCOMPARE(session.health()->satellitesInUseCount(), -1);
 }
 
@@ -401,15 +401,15 @@ void NMEASatelliteAdapterTest::_gsvDoesNotClearFreshUsedReport()
     input.receivedAtUs = initialReceipt;
     feed(input,
          {"$GPGSV,1,1,01,02,40,100,30", "$GPGSA,A,3,02,,,,,,,,,,,,1.0,0.8,0.6", "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
-    QTRY_COMPARE_WITH_TIMEOUT(session.satelliteObservation().satellitesInUseCount(), 1, TestTimeout::shortMs());
+    QTRY_COMPARE_WITH_TIMEOUT(session._satelliteObservation().satellitesInUseCount(), 1, TestTimeout::shortMs());
     input.receivedAtUs = MonotonicClock::nowUs();
     feed(input, {"$GPGSV,1,1,01,02,40,100,45", "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
     QTRY_VERIFY_WITH_TIMEOUT(
-        session.satelliteObservation().satellitesInViewCount() > 0 &&
-            session.satelliteObservation().constellations.first().view.receivedAtUs > initialReceipt,
+        session._satelliteObservation().satellitesInViewCount() > 0 &&
+            session._satelliteObservation().constellations.first().view.receivedAtUs > initialReceipt,
         TestTimeout::mediumMs());
-    QCOMPARE(session.satelliteObservation().satellitesInUseCount(), 1);
-    QCOMPARE(session.satelliteObservation().constellations.first().usage.receivedAtUs, initialReceipt);
+    QCOMPARE(session._satelliteObservation().satellitesInUseCount(), 1);
+    QCOMPARE(session._satelliteObservation().constellations.first().usage.receivedAtUs, initialReceipt);
 }
 
 void NMEASatelliteAdapterTest::_identicalReportsAndGsaWithoutView()
@@ -420,20 +420,20 @@ void NMEASatelliteAdapterTest::_identicalReportsAndGsaWithoutView()
     QVERIFY(session.start(&input));
     input.receivedAtUs = MonotonicClock::nowUs() - 100000;
     feed(input, {"$GPGSA,A,3,02,,,,,,,,,,,,1.0,0.8,0.6", "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
-    QTRY_COMPARE_WITH_TIMEOUT(session.satelliteObservation().satellitesInUseCount(), 1, TestTimeout::shortMs());
-    QCOMPARE(session.satelliteObservation().satellitesInViewCount(), -1);
+    QTRY_COMPARE_WITH_TIMEOUT(session._satelliteObservation().satellitesInUseCount(), 1, TestTimeout::shortMs());
+    QCOMPARE(session._satelliteObservation().satellitesInViewCount(), -1);
     const auto useReceipt = input.receivedAtUs;
     input.receivedAtUs = MonotonicClock::nowUs() - 50000;
     feed(input, {"$GPGSV,1,1,02,02,0,0,0,03,,,", "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
-    QTRY_COMPARE_WITH_TIMEOUT(session.satelliteObservation().satellitesInViewCount(), 2, TestTimeout::shortMs());
-    const auto previous = session.satelliteObservation();
+    QTRY_COMPARE_WITH_TIMEOUT(session._satelliteObservation().satellitesInViewCount(), 2, TestTimeout::shortMs());
+    const auto previous = session._satelliteObservation();
     QCOMPARE(previous.satellitesInUseCount(), 1);
     input.receivedAtUs = MonotonicClock::nowUs();
     feed(input, {"$GPGSV,1,1,02,02,0,0,0,03,,,", "$GNRMC,120003.00,V,,,,,,,090926,,,N"});
-    QTRY_VERIFY_WITH_TIMEOUT(session.satelliteObservation().revision > previous.revision, TestTimeout::shortMs());
-    QCOMPARE(session.satelliteObservation().constellations.first().view.receivedAtUs, input.receivedAtUs);
-    QCOMPARE(session.satelliteObservation().constellations.first().usage.receivedAtUs, useReceipt);
-    QSignalSpy publications(&session, &NMEADecoderSession::satellitesReceived);
+    QTRY_VERIFY_WITH_TIMEOUT(session._satelliteObservation().revision > previous.revision, TestTimeout::shortMs());
+    QCOMPARE(session._satelliteObservation().constellations.first().view.receivedAtUs, input.receivedAtUs);
+    QCOMPARE(session._satelliteObservation().constellations.first().usage.receivedAtUs, useReceipt);
+    QSignalSpy publications(&session._satellites, &GPSSatelliteStore::observationChanged);
     session.stop();
     const auto retired = session.sessionId();
     const auto count = publications.size();
@@ -515,8 +515,8 @@ void NMEASatelliteAdapterTest::_reentrantStopKeepsReplacement()
     QVERIFY(replaced);
     QVERIFY(session.positionSource());
     feed(replacementInput, {"$GPGSV,1,1,01,02,40,100,45", "$GNRMC,120002.00,V,,,,,,,090926,,,N"});
-    QTRY_COMPARE_WITH_TIMEOUT(session.satelliteObservation().satellitesInViewCount(), 1, TestTimeout::shortMs());
-    QCOMPARE(session.satelliteObservation().constellations.first().view.count, 1);
+    QTRY_COMPARE_WITH_TIMEOUT(session._satelliteObservation().satellitesInViewCount(), 1, TestTimeout::shortMs());
+    QCOMPARE(session._satelliteObservation().constellations.first().view.count, 1);
 }
 
 void NMEASatelliteAdapterTest::_identityResolution_data()
@@ -618,7 +618,7 @@ void NMEASatelliteAdapterTest::_ambiguousLegacyIdentities()
     QTRY_COMPARE_WITH_TIMEOUT(store.observation().satellitesInUseCount(), 3, TestTimeout::shortMs());
     const quint64 usedReceipt = input.receivedAtUs;
     input.receivedAtUs = MonotonicClock::nowUs();
-    QSignalSpy reports(&adapter, &NMEADecoderSession::satellitesReceived);
+    QSignalSpy reports(&adapter._satellites, &GPSSatelliteStore::observationChanged);
     feed(input, {gsa("GN", ids), "$PQGSV,1,1,02,201,0,0,0,202,,,", "$GNRMC,120003.00,V,,,,,,,090926,,,N"});
     QTRY_COMPARE_WITH_TIMEOUT(reports.size(), 1, TestTimeout::shortMs());
     QCOMPARE(store.observation().satellitesInUseCount(), 3);
@@ -633,7 +633,7 @@ void NMEASatelliteAdapterTest::_explicitZeroAndUnknownCoverage()
     QVERIFY(input.open(QIODevice::ReadOnly));
     NMEADecoderSession adapter;
     QVERIFY(adapter.start(&input));
-    QSignalSpy reports(&adapter, &NMEADecoderSession::satellitesReceived);
+    QSignalSpy reports(&adapter._satellites, &GPSSatelliteStore::observationChanged);
     feed(input,
          {gsa("GN", {}), gsa("GN", {}, "0"), "$GNGSV,1,1,00,,,,,,,,,,,,,,,,", "$GNRMC,120001.00,V,,,,,,,090926,,,N"});
     // The following explicit GPS empty report is the only report with known coverage.

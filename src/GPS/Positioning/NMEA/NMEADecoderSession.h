@@ -17,6 +17,7 @@ class NMEAPositionSource;
 class NMEADecoderSession : public QObject
 {
     Q_OBJECT
+    friend class NMEADecoderSessionTest;
     friend class NMEASatelliteAdapterTest;
 
 public:
@@ -32,8 +33,6 @@ public:
 
     const GPSSourceHealth* health() const { return &_health; }
 
-    GPSSatelliteObservation satelliteObservation() const { return _satellites.observation(); }
-
     bool receiving() const { return _receiving; }
 
     bool hasReceivedData() const { return _lastDataTimestampUs != 0; }
@@ -42,9 +41,9 @@ public:
 
 signals:
     void activityChanged();
-    void satellitesReceived(const GPSSatelliteObservation& observation);
 
 private:
+    GPSSatelliteObservation _satelliteObservation() const { return _satellites.observation(); }
     void _receivedData(quint64 receivedAtUs);
     void _updateSatellites(const GPSSatelliteObservation& observation);
     void _ingestSatellites(const NMEASentenceEnvelope& sentence);
