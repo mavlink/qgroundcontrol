@@ -47,14 +47,22 @@ GPSRtk::~GPSRtk()
     qCDebug(GPSRtkLog) << this;
 }
 
-void GPSRtk::_onGPSConnect()
+void GPSRtk::_onGPSConnect(const QString& identity)
 {
     const QPointer<GPSRtk> guard(this);
     const quint64 generation = ++_generation;
     _setError(GPSConnectionError::None);
-    if (guard && _generation == generation) {
-        _publishFacts({{_gpsRtkFactGroup->connected(), true}}, generation);
+    if (!guard || _generation != generation) {
+        return;
     }
+    if (std::exchange(_session.identity, identity) != identity) {
+        qCDebug(GPSRtkLog) << "Receiver identity:" << identity;
+        emit receiverChanged();
+        if (!guard || _generation != generation) {
+            return;
+        }
+    }
+    _publishFacts({{_gpsRtkFactGroup->connected(), true}}, generation);
 }
 
 bool GPSRtk::_publishFacts(std::initializer_list<std::pair<Fact*, QVariant>> updates, quint64 generation)
@@ -75,11 +83,11 @@ bool GPSRtk::_publishDisconnected(quint64 generation)
     const QPointer<GPSRtk> guard(this);
     const auto reset = [](Fact* fact) { return std::pair<Fact*, QVariant>(fact, fact->rawDefaultValue()); };
     auto& facts = *_gpsRtkFactGroup;
-    if (!_publishFacts(
-            {reset(facts.connected()), reset(facts.valid()), reset(facts.active()), reset(facts.currentDuration()),
-             reset(facts.currentAccuracy()), reset(facts.currentLatitude()), reset(facts.currentLongitude()),
-             reset(facts.currentAltitude()), reset(facts.numSatellites()), reset(facts.numSatellitesUsed())},
-            generation)) {
+    if (!_publishFacts({reset(facts.connected()), reset(facts.valid()), reset(facts.active()),
+                        reset(facts.currentDuration()), reset(facts.currentAccuracy()), reset(facts.currentLatitude()),
+                        reset(facts.currentLongitude()), reset(facts.currentAltitude()), reset(facts.numSatellites()),
+                        reset(facts.numSatellitesUsed()), reset(facts.fixType())},
+                       generation)) {
         return false;
     }
     emit receiverChanged();
@@ -112,10 +120,8 @@ void GPSRtk::_onGPSConnectionError(GPSConnectionError error, const QString& deta
 
 void GPSRtk::_setError(GPSConnectionError error, const QString& message)
 {
-    const quint64 generation = _generation;
-    const bool changed = _errorMessage != message;
-    _errorMessage = message;
-    if (_publishFacts({{_gpsRtkFactGroup->lastError(), static_cast<int>(error)}}, generation) && changed) {
+    _connectionError = error;
+    if (std::exchange(_errorMessage, message) != message) {
         emit errorMessageChanged();
     }
 }
@@ -256,9 +262,11 @@ bool GPSRtk::connectConfiguredGPS(bool allowPersistentChanges)
         _setError(GPSConnectionError::OpenFailed, tr("Select an available serial device that is not a bootloader."));
         return false;
     }
+    // Zero asks configurable receivers to detect the rate.
     const auto baud = settings->serialBaudRate()->rawValue().toULongLong();
-    if (baud < 1200 || baud > 4000000) {
-        _setError(GPSConnectionError::ConfigFailed, tr("Select a baud rate between 1200 and 4000000."));
+    if ((baud != 0 && (baud < 1200 || baud > 4000000)) || (baud == 0 && *type == GPSType::passive)) {
+        _setError(GPSConnectionError::ConfigFailed,
+                  gpsReceiverConfigErrorText(GPSReceiverConfigError::InvalidBaudRate));
         return false;
     }
     emit manualConnectionRequested();
@@ -513,4 +521,6 @@ void GPSRtk::_satelliteInfoUpdate(const GPSSatelliteReport& msg)
 void GPSRtk::_fixTypeChanged(GPSPositionReport::FixType fixType)
 {
     qCDebug(GPSRtkLog) << "Receiver fix changed:" << static_cast<int>(fixType);
+    const quint64 generation = ++_generation;
+    _publishFacts({{_gpsRtkFactGroup->fixType(), static_cast<int>(fixType)}}, generation);
 }

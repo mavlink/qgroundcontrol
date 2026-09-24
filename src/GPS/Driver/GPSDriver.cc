@@ -97,6 +97,11 @@ const QString& GPSDriver::configurationError() const
     return _state->configurationError;
 }
 
+QString GPSDriver::receiverIdentity() const
+{
+    return _state->driver ? QString::fromStdString(_state->driver->receiverIdentity()).trimmed() : QString();
+}
+
 bool GPSDriver::configure()
 {
     if (_operationInProgress) {

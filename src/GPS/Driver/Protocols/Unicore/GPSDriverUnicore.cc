@@ -435,3 +435,8 @@ int GPSNativeUnicore::handleReceiverLine(std::string_view line)
     }
     return GPSDecodedBatch::PROTOCOL_ACTIVITY;
 }
+
+std::string GPSNativeUnicore::receiverIdentity() const
+{
+    return _model.empty() || _firmware.empty() ? _model + _firmware : _model + ' ' + _firmware;
+}

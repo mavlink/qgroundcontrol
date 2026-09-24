@@ -25,6 +25,8 @@ public:
 
     std::string_view firmware() const { return _firmware; }
 
+    std::string receiverIdentity() const override;
+
 protected:
     int handleReceiverLine(std::string_view line) override;
     int decodeByte(uint8_t byte) override;

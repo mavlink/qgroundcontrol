@@ -23,7 +23,7 @@ GPSRTKFactGroup::GPSRTKFactGroup(QObject *parent)
     _addFact(&_activeFact);
     _addFact(&_numSatellitesFact);
     _addFact(&_numSatellitesUsedFact);
-    _addFact(&_lastErrorFact);
+    _addFact(&_fixTypeFact);
 
     for (Fact* fact :
          {&_validFact, &_currentLatitudeFact, &_currentLongitudeFact, &_currentAltitudeFact, &_currentAccuracyFact}) {

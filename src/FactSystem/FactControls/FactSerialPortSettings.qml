@@ -15,6 +15,8 @@ ColumnLayout {
     property var serialBaudRates: []
     property int minimumBaud: 1
     property int maximumBaud: 4000000
+    /// Offers rate 0 as "Auto" for consumers that can detect the baud rate.
+    property bool allowAutoBaud: false
     property bool editable: true
     property string deviceObjectName: "serialDevice"
     property string baudObjectName: "serialBaudRate"
@@ -29,9 +31,9 @@ ColumnLayout {
             devices.push({ value: "", label: qsTr("<none available>") })
         return devices
     }
-    readonly property var _rates: root.serialBaudRates.map(Number).filter((rate, index, rates) =>
-        Number.isInteger(rate) && rate >= root.minimumBaud && rate <= root.maximumBaud
-        && rates.indexOf(rate) === index)
+    readonly property var _rates: (root.allowAutoBaud ? [0] : []).concat(root.serialBaudRates.map(Number).filter(
+        (rate, index, rates) => Number.isInteger(rate) && rate >= root.minimumBaud && rate <= root.maximumBaud
+        && rates.indexOf(rate) === index))
     readonly property int _baudIndex: _rates.indexOf(Number(baudFact.rawValue))
     readonly property bool customBaud: _customRequested || _baudIndex < 0
     property bool _customRequested: false
@@ -67,7 +69,7 @@ ColumnLayout {
         Layout.minimumWidth: 0
         enabled: root.editable
         readonly property bool isCustomBaud: root.customBaud
-        model: root._rates.map(rate => String(rate)).concat([qsTr("Custom")])
+        model: root._rates.map(rate => rate === 0 ? qsTr("Auto") : String(rate)).concat([qsTr("Custom")])
         currentIndex: root.customBaud ? root._rates.length : root._baudIndex
         onActivated: index => {
             root._customRequested = index === root._rates.length

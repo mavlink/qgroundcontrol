@@ -114,6 +114,9 @@ public:
      */
     virtual bool receiverReady() const { return true; }
 
+    /// Model and firmware reported during configuration; empty when the family does not report them.
+    virtual std::string receiverIdentity() const { return {}; }
+
 protected:
     /// Optional base-station requests a protocol implements beyond survey-in and fixed positions.
     struct ConfigurationSupport

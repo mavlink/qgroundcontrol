@@ -8,9 +8,6 @@
 #include "GPSTransport.h"
 #include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
-#ifdef SIMULATE_RTCM_OUTPUT
-#include "RTCMFramer.h"
-#endif
 
 QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.RTK.GPSProvider")
 
@@ -47,24 +44,6 @@ void GPSProvider::run()
     if (_requestStop) {
         return;
     }
-#ifdef SIMULATE_RTCM_OUTPUT
-    while (!_requestStop) {
-        for (const int size : {30, 170, 240}) {
-            QByteArray frame(size, '\0');
-            frame[0] = static_cast<char>(RTCMFramer::PREAMBLE);
-            frame[2] = static_cast<char>(size - RTCMFramer::HEADER_SIZE - RTCMFramer::CRC_SIZE);
-            const uint32_t crc = RTCMFramer::crc24q(
-                {reinterpret_cast<const uint8_t*>(frame.constData()), static_cast<size_t>(size - 3)});
-            frame[size - 3] = static_cast<char>(crc >> 16);
-            frame[size - 2] = static_cast<char>(crc >> 8);
-            frame[size - 1] = static_cast<char>(crc);
-            emit RTCMDataUpdate(frame, static_cast<qint64>(MonotonicClock::nowUs() / 1000));
-            QThread::msleep(4);
-        }
-        QThread::msleep(100);
-    }
-    return;
-#endif
 
     auto transport = transportFactory ? transportFactory(_requestStop) : nullptr;
     if (_requestStop) {
@@ -112,7 +91,7 @@ void GPSProvider::run()
     if (_requestStop) {
         return;
     }
-    emit receiverReady();
+    emit receiverReady(driver.receiverIdentity());
 
     usefulDataReceived();
     bool cancelled = false;

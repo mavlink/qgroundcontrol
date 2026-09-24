@@ -18,7 +18,6 @@ ToolIndicatorPage {
     readonly property var _receiver: QGroundControl.gpsManager.gpsRtk
     readonly property bool _rtkConnected: _receiver.facts.connected.value
     readonly property var _activePresentation: _receiver.capabilitiesForManufacturer(_receiver.activeManufacturer)
-    readonly property var _serialPortManager: QGroundControl.serialPortManager
     readonly property bool _averagingConnected: _receiver.activeBaseMode === BaseModeDefinition.BaseReceiverAveraging
     readonly property real _preferredStatusWidth: ScreenTools.defaultFontPixelWidth * 36
     readonly property real _preferredSettingsWidth: ScreenTools.defaultFontPixelWidth * 56
@@ -142,6 +141,25 @@ ToolIndicatorPage {
                           : root._receiver.facts.active.value ? qsTr("Survey-in Active") : qsTr("Receiver connected")
                 }
                 LabelledLabel {
+                    objectName: "rtkReceiverIdentity"
+                    visible: root._rtkConnected && root._receiver.receiverIdentity.length > 0
+                    label: qsTr("Receiver")
+                    labelText: root._receiver.receiverIdentity
+                }
+                LabelledLabel {
+                    objectName: "rtkReceiverPort"
+                    visible: root._receiver.hasReceiver && root._receiver.activeSerialDevice.length > 0
+                    label: qsTr("Port")
+                    labelText: root._receiver.activeSerialDevice
+                }
+                LabelledLabel {
+                    objectName: "rtkFixType"
+                    visible: root._rtkConnected
+                    label: qsTr("Receiver Fix")
+                    labelText: root._receiver.facts.fixType.rawValue === 0
+                               ? root.na : root._receiver.facts.fixType.enumStringValue
+                }
+                LabelledLabel {
                     objectName: "rtkSatellitesInView"
                     visible: root._rtkConnected
                     label: qsTr("Satellites in View")
@@ -194,11 +212,8 @@ ToolIndicatorPage {
                 Layout.minimumWidth: 0
                 receiver: root._receiver
                 settings: root.rtkSettings
-                baseFacts: root._receiver.facts
-                autoConnectFact: QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
-                serialPorts: root._serialPortManager ? root._serialPortManager.serialPorts : []
-                serialBaudRates: root._serialPortManager ? root._serialPortManager.serialBaudRates : []
                 consent: connectionConsent
+                showErrorMessage: false
                 Component.onCompleted: root._settingsPanel = settingsPanel
                 Component.onDestruction: root._settingsPanel = null
             }

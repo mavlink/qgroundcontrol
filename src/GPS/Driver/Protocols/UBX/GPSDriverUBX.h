@@ -77,6 +77,8 @@ public:
     const char* modelName() const { return _identity.modelName; }
 
     const char* firmwareVersion() const { return _identity.firmwareVersion; }
+
+    std::string receiverIdentity() const override;
     enum class BaseStationCapability : uint8_t
     {
         Unknown,

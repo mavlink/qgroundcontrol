@@ -10,13 +10,17 @@ import QGroundControl.FactControls
 SettingsGroupLayout {
     id: root
 
-    required property var receiver
-    required property var settings
-    required property var baseFacts
-    required property var autoConnectFact
-    property var serialPorts: []
-    property var serialBaudRates: []
+    property var receiver: QGroundControl.gpsManager.gpsRtk
+    property var settings: QGroundControl.settingsManager.rtkSettings
+    property var baseFacts: receiver.facts
+    property var autoConnectFact: QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
+    property var serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
+    property var serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
     property var consent: QtObject { property bool allowed: false }
+    /// Hosts that already show receiver errors elsewhere can hide the inline message.
+    property bool showErrorMessage: true
+
+    readonly property var _serialPortManager: QGroundControl.serialPortManager
 
     readonly property int manufacturer: settings.baseReceiverManufacturers.rawValue
     readonly property int baseMode: settings.useFixedBasePosition.rawValue
@@ -136,6 +140,7 @@ SettingsGroupLayout {
         serialPorts: root.serialPorts
         serialBaudRates: root.serialBaudRates
         minimumBaud: 1200
+        allowAutoBaud: !root.presentation.passive
         editable: root._editable
         deviceObjectName: "rtkSerialDevice"
         baudObjectName: "rtkSerialBaudRate"
@@ -145,7 +150,7 @@ SettingsGroupLayout {
     Explanation {
         visible: root._editable
         text: !root.presentation.specificReceiver
-              ? qsTr("Select a specific receiver type, device, and baud rate to connect manually.")
+              ? qsTr("Select a specific receiver type, device, and baud rate to connect manually. Auto detects the rate of configurable receivers.")
               : qsTr("Connect only the selected receiver. USB adapter identity does not identify its GNSS manufacturer. Manual connections disable auto-connect.")
     }
 
@@ -297,7 +302,7 @@ SettingsGroupLayout {
     Explanation {
         objectName: "rtkPersistentConsentWarning"
         visible: root.receiver.serialSupported && root.presentation.persistentConfiguration
-        text: qsTr("For this connection only, allow QGroundControl to write requested role or base-setting changes to receiver flash and restart it. Changes may remain saved even if reconnecting fails. No factory reset is performed. Permission is cleared after each attempt and is never used by auto-connect.")
+        text: qsTr("For this connection only, allow QGroundControl to write requested base role or base-setting changes to receiver flash and restart it. Changes may remain saved even if reconnecting fails. No factory reset is performed. Permission is cleared after each attempt and is never used by auto-connect. To use the receiver as a rover again, restore its role with Quectel QGNSS or $PQTMCFGRCVRMODE,W,1 followed by $PQTMSAVEPAR.")
     }
 
     QGCButton {
@@ -317,6 +322,12 @@ SettingsGroupLayout {
                 root.connectSelectedReceiver()
             }
         }
+    }
+
+    Explanation {
+        objectName: "rtkErrorMessage"
+        visible: root.showErrorMessage && text.length > 0
+        text: root.receiver.errorMessage || ""
     }
 
     Connections {

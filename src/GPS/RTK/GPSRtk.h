@@ -34,6 +34,7 @@ class GPSRtk : public QObject
     Q_PROPERTY(int activeManufacturer READ activeManufacturer NOTIFY receiverChanged)
     Q_PROPERTY(int activeBaseMode READ activeBaseMode NOTIFY receiverChanged)
     Q_PROPERTY(QString activeSerialDevice READ activeSerialDevice NOTIFY receiverChanged)
+    Q_PROPERTY(QString receiverIdentity READ receiverIdentity NOTIFY receiverChanged)
 
     friend class GPSRtkTest;
 
@@ -70,6 +71,8 @@ public:
 
     QString activeSerialDevice() const { return _session.serialDevice; }
 
+    QString receiverIdentity() const { return _session.identity; }
+
     Q_INVOKABLE QVariantMap capabilitiesForManufacturer(int manufacturer) const;
 
     static std::optional<GPSType> typeForManufacturer(int manufacturer);
@@ -85,7 +88,7 @@ signals:
 private slots:
     void _satelliteInfoUpdate(const GPSSatelliteReport& msg);
     void _fixTypeChanged(GPSPositionReport::FixType fixType);
-    void _onGPSConnect();
+    void _onGPSConnect(const QString& identity = {});
     void _onGPSConnectionError(GPSConnectionError error, const QString& detail);
     void _onGPSSurveyReport(const GPSSurveyReport& status);
 
@@ -95,6 +98,7 @@ private:
         QPointer<GPSProvider> provider;
         GPSCorrectionSourceRegistration corrections;
         QString serialDevice;
+        QString identity;
         int manufacturer = 0;
         int baseMode = -1;
         bool started = false;
@@ -119,6 +123,7 @@ private:
     std::shared_ptr<GPSRTKFactGroup> _gpsRtkFactGroup;
     QPointer<GPSCorrectionManager> _correctionManager;
     QString _errorMessage;
+    GPSConnectionError _connectionError = GPSConnectionError::None;
     bool _destroying = false;
 #ifndef QGC_NO_SERIAL_LINK
     QPointer<SerialPortManager> _serialPorts;

@@ -93,6 +93,12 @@
             ]
         },
         {
+            "component": "GPSReceiverSettings",
+            "sectionName": "RTK GPS Receiver",
+            "showWhen": "QGroundControl.gpsManager.gpsRtk.serialSupported",
+            "keywords": ["rtk", "base station", "receiver", "survey-in", "fixed position", "u-blox", "septentrio", "serial"]
+        },
+        {
             "component": "CorrectionRoutingSettings",
             "sectionName": "Correction Routing",
             "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible && (QGroundControl.settingsManager.gpsCorrectionSettings.correctionSource as SettingsFact).userVisible",

@@ -47,6 +47,14 @@ GPSNativeUBX::GPSNativeUBX(GPSProtocolIO io, bool satelliteInfoEnabled)
 
 GPSNativeUBX::~GPSNativeUBX() {}
 
+std::string GPSNativeUBX::receiverIdentity() const
+{
+    const std::string model(_identity.modelName, strnlen(_identity.modelName, sizeof(_identity.modelName)));
+    const std::string firmware(_identity.firmwareVersion,
+                               strnlen(_identity.firmwareVersion, sizeof(_identity.firmwareVersion)));
+    return model.empty() || firmware.empty() ? model + firmware : model + ' ' + firmware;
+}
+
 int  // -1 = error, 0 = no message handled, 1 = message handled, 2 = sat info message handled
 GPSNativeUBX::receive(unsigned timeout)
 {

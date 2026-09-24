@@ -191,9 +191,8 @@ void GPSRtkTest::_connectionNotificationSupersedesAttempt_data()
 {
     QTest::addColumn<QString>("phase");
     QTest::addColumn<QString>("action");
-    for (const QString& phase :
-         {QStringLiteral("retired"), QStringLiteral("manufacturer"), QStringLiteral("error-fact"),
-          QStringLiteral("error-message"), QStringLiteral("installed")}) {
+    for (const QString& phase : {QStringLiteral("retired"), QStringLiteral("manufacturer"),
+                                 QStringLiteral("error-message"), QStringLiteral("installed")}) {
         for (const QString& action :
              {QStringLiteral("replace"), QStringLiteral("disconnect"), QStringLiteral("delete")}) {
             QTest::newRow(qPrintable(phase + '-' + action)) << phase << action;
@@ -260,8 +259,6 @@ void GPSRtkTest::_connectionNotificationSupersedesAttempt()
     };
     if (phase == QStringLiteral("manufacturer")) {
         connect(settings->baseReceiverManufacturers(), &Fact::rawValueChanged, &observer, supersede);
-    } else if (phase == QStringLiteral("error-fact")) {
-        connect(receiver->gpsRtkFactGroup()->lastError(), &Fact::rawValueChanged, &observer, supersede);
     } else if (phase == QStringLiteral("error-message")) {
         connect(receiver.get(), &GPSRtk::errorMessageChanged, &observer, supersede);
     } else {
@@ -292,7 +289,7 @@ void GPSRtkTest::_factNotificationRetiresSession_data()
     QTest::addColumn<QString>("report");
     QTest::addColumn<QString>("action");
     for (const QString& report : {QStringLiteral("survey"), QStringLiteral("satellites"), QStringLiteral("ready"),
-                                  QStringLiteral("disconnect"), QStringLiteral("error")}) {
+                                  QStringLiteral("disconnect"), QStringLiteral("fix")}) {
         for (const QString& action :
              {QStringLiteral("replace"), QStringLiteral("disconnect"), QStringLiteral("delete")}) {
             QTest::newRow(qPrintable(report + '-' + action)) << report << action;
@@ -340,7 +337,7 @@ void GPSRtkTest::_factNotificationRetiresSession()
     }
     Fact* trigger = report == QStringLiteral("survey")       ? facts->currentDuration()
                     : report == QStringLiteral("satellites") ? facts->numSatellites()
-                    : report == QStringLiteral("error")      ? facts->lastError()
+                    : report == QStringLiteral("fix")        ? facts->fixType()
                                                              : facts->connected();
     connect(trigger, &Fact::rawValueChanged, &observer, [&] {
         if (std::exchange(handled, true)) {
@@ -374,7 +371,7 @@ void GPSRtkTest::_factNotificationRetiresSession()
     } else if (report == QStringLiteral("disconnect")) {
         receiver->disconnectGPS();
     } else {
-        receiver->_setError(GPSConnectionError::ConfigFailed, QStringLiteral("old session failure"));
+        receiver->_fixTypeChanged(GPSFixQuality::Fix3D);
     }
     QVERIFY(handled);
     QVERIFY(first && !first->parent());
@@ -467,7 +464,7 @@ void GPSRtkTest::_failedOpenNeverConnects()
     QTRY_VERIFY_WITH_TIMEOUT(!receiver.hasReceiver(), TestTimeout::mediumMs());
     QVERIFY(!receiver.connected());
     QVERIFY(connected.isEmpty());
-    QCOMPARE(facts->lastError()->rawValue().toInt(), static_cast<int>(GPSConnectionError::OpenFailed));
+    QCOMPARE(static_cast<int>(receiver._connectionError), static_cast<int>(GPSConnectionError::OpenFailed));
     verifyExpectedLogMessage();
 }
 
@@ -549,7 +546,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(!receiver.connected());
     QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
-    QCOMPARE(facts->lastError()->rawValue().toInt(), static_cast<int>(GPSConnectionError::None));
+    QCOMPARE(static_cast<int>(receiver._connectionError), static_cast<int>(GPSConnectionError::None));
     QVERIFY(receiver.errorMessage().isEmpty());
     QCOMPARE(rtcm->totalBytesSent(), bytesBefore);
     emit receiver._session.provider->receiverReady();
@@ -838,8 +835,7 @@ void GPSRtkTest::_invalidReceiverSettings()
         QVERIFY(!opened);
         QVERIFY(!receiver.hasReceiver());
         QVERIFY(!receiver.errorMessage().isEmpty());
-        QCOMPARE(receiver.gpsRtkFactGroup()->lastError()->rawValue().toInt(),
-                 static_cast<int>(GPSConnectionError::ConfigFailed));
+        QCOMPARE(static_cast<int>(receiver._connectionError), static_cast<int>(GPSConnectionError::ConfigFailed));
     }
 }
 
@@ -849,11 +845,13 @@ void GPSRtkTest::_explicitSerialSelectionAndDisconnect_data()
     QTest::addColumn<int>("manufacturer");
     QTest::addColumn<bool>("unplug");
     QTest::addColumn<bool>("allowPersistentChanges");
-    QTest::newRow("unicore-disconnect") << 5 << false << false;
-    QTest::newRow("quectel-disconnect") << 6 << false << false;
-    QTest::newRow("quectel-one-use-consent") << 6 << false << true;
-    QTest::newRow("passive-disconnect") << 7 << false << false;
-    QTest::newRow("passive-unplug") << 7 << true << false;
+    QTest::addColumn<uint>("baud");
+    QTest::newRow("unicore-disconnect") << 5 << false << false << 115200U;
+    QTest::newRow("unicore-auto-baud") << 5 << false << false << 0U;
+    QTest::newRow("quectel-disconnect") << 6 << false << false << 115200U;
+    QTest::newRow("quectel-one-use-consent") << 6 << false << true << 115200U;
+    QTest::newRow("passive-disconnect") << 7 << false << false << 115200U;
+    QTest::newRow("passive-unplug") << 7 << true << false << 115200U;
 }
 
 void GPSRtkTest::_explicitSerialSelectionAndDisconnect()
@@ -861,13 +859,14 @@ void GPSRtkTest::_explicitSerialSelectionAndDisconnect()
     QFETCH(int, manufacturer);
     QFETCH(bool, unplug);
     QFETCH(bool, allowPersistentChanges);
+    QFETCH(uint, baud);
     TestFixtures::SettingsFixture saved;
     auto* settings = SettingsManager::instance()->rtkSettings();
     auto* autoConnect = SettingsManager::instance()->autoConnectSettings();
     saved.setFactValue(settings->baseReceiverManufacturers(), manufacturer);
     saved.setFactValue(settings->useFixedBasePosition(), manufacturer == 5 ? 2 : 0);
     saved.setFactValue(settings->serialDevice(), QStringLiteral("/test/selected"));
-    saved.setFactValue(settings->serialBaudRate(), 115200);
+    saved.setFactValue(settings->serialBaudRate(), baud);
     saved.setFactValue(autoConnect->autoConnectRTKGPS(), true);
     const QList<SerialPortManager::Port> inventory{
         {QStringLiteral("/test/unselected"), QStringLiteral("unselected"), QGCSerialPortInfo::BoardTypeUnknown,
@@ -897,13 +896,17 @@ void GPSRtkTest::_explicitSerialSelectionAndDisconnect()
     QVERIFY(!ports.isPortReserved(QStringLiteral("/test/unselected")));
     QVERIFY(!ports.reservePort(openedDevice));
     QPointer<GPSProvider> provider = receiver._session.provider;
-    emit provider->receiverReady();
+    QCOMPARE(provider->_config.baudRate, baud);
+    QSignalSpy receiverChanges(&receiver, &GPSRtk::receiverChanged);
+    emit provider->receiverReady(QStringLiteral("ZED-F9P HPG 1.32"));
     GPSSurveyReport survey;
     survey.active = true;
     survey.valid = true;
     emit provider->surveyInStatus(survey);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(receiver.connected());
+    QCOMPARE(receiver.receiverIdentity(), QStringLiteral("ZED-F9P HPG 1.32"));
+    QCOMPARE(receiverChanges.size(), 1);
     QCOMPARE(receiver.gpsRtkFactGroup()->active()->rawValue().toBool(), manufacturer != 7);
     QCOMPARE(receiver.gpsRtkFactGroup()->valid()->rawValue().toBool(), manufacturer != 7);
     gate->release.release();
@@ -916,6 +919,7 @@ void GPSRtkTest::_explicitSerialSelectionAndDisconnect()
     }
     QVERIFY(!receiver.hasReceiver());
     QVERIFY(!receiver.connected());
+    QVERIFY(receiver.receiverIdentity().isEmpty());
     QVERIFY(!receiver.gpsRtkFactGroup()->active()->rawValue().toBool());
     QVERIFY(!receiver.gpsRtkFactGroup()->valid()->rawValue().toBool());
     QTRY_VERIFY_WITH_TIMEOUT(provider.isNull(), TestTimeout::mediumMs());
@@ -925,8 +929,8 @@ void GPSRtkTest::_explicitSerialSelectionAndDisconnect()
 void GPSRtkTest::_manualSerialErrors_data()
 {
     QTest::addColumn<QString>("reason");
-    for (const auto* reason :
-         {"all", "missing", "empty", "bootloader", "busy", "single-port", "invalid-baud", "unsupported-mode"}) {
+    for (const auto* reason : {"all", "missing", "empty", "bootloader", "busy", "single-port", "invalid-baud",
+                               "passive-auto-baud", "unsupported-mode"}) {
         QTest::newRow(reason) << QString::fromLatin1(reason);
     }
 }
@@ -937,11 +941,15 @@ void GPSRtkTest::_manualSerialErrors()
     TestFixtures::SettingsFixture saved;
     auto* settings = SettingsManager::instance()->rtkSettings();
     auto* autoConnect = SettingsManager::instance()->autoConnectSettings();
-    saved.setFactValue(settings->baseReceiverManufacturers(), reason == QStringLiteral("all") ? 0 : 5);
+    saved.setFactValue(settings->baseReceiverManufacturers(), reason == QStringLiteral("all")                 ? 0
+                                                              : reason == QStringLiteral("passive-auto-baud") ? 7
+                                                                                                              : 5);
     saved.setFactValue(settings->useFixedBasePosition(), reason == QStringLiteral("unsupported-mode") ? 0 : 2);
     saved.setFactValue(settings->serialDevice(),
                        reason == QStringLiteral("empty") ? QString() : QStringLiteral("/test/selected"));
-    saved.setFactValue(settings->serialBaudRate(), reason == QStringLiteral("invalid-baud") ? 0 : 115200);
+    saved.setFactValue(settings->serialBaudRate(), reason == QStringLiteral("invalid-baud")        ? 1000
+                                                   : reason == QStringLiteral("passive-auto-baud") ? 0
+                                                                                                   : 115200);
     saved.setFactValue(autoConnect->autoConnectRTKGPS(), false);
     SerialPortManager::Port port{
         QStringLiteral("/test/selected"), QStringLiteral("selected"), QGCSerialPortInfo::BoardTypeUnknown, {}};
@@ -970,7 +978,7 @@ void GPSRtkTest::_manualSerialErrors()
     QVERIFY(!receiver.connected());
     QVERIFY(!receiver.errorMessage().isEmpty());
     QVERIFY(!opened);
-    QVERIFY(receiver.gpsRtkFactGroup()->lastError()->rawValue().toInt() != 0);
+    QVERIFY(static_cast<int>(receiver._connectionError) != 0);
     if (reservation) {
         QVERIFY(ports.isPortReserved(reservation->systemLocation));
     } else {
@@ -1166,8 +1174,7 @@ void GPSRtkTest::_configurationDiagnosticRetained()
     verifyExpectedLogMessage();
     QCOMPARE(messages.size(), 1);
     QVERIFY(!receiver.connected());
-    QCOMPARE(receiver.gpsRtkFactGroup()->lastError()->rawValue().toInt(),
-             static_cast<int>(GPSConnectionError::ConfigFailed));
+    QCOMPARE(static_cast<int>(receiver._connectionError), static_cast<int>(GPSConnectionError::ConfigFailed));
     QVERIFY(!receiver.errorMessage().isEmpty());
     if (!detail.isEmpty()) {
         QVERIFY(receiver.errorMessage().contains(detail));
@@ -1190,8 +1197,7 @@ void GPSRtkTest::_qmlConsentIsOneUse()
     saved.setFactValue(settings->serialDevice(), QStringLiteral("/test/absent"));
     auto* receiver = GPSManager::instance()->gpsRtk();
     QVERIFY(!receiver->hasReceiver());
-    const auto originalError =
-        static_cast<GPSConnectionError>(receiver->gpsRtkFactGroup()->lastError()->rawValue().toInt());
+    const auto originalError = receiver->_connectionError;
     const QString originalMessage = receiver->errorMessage();
 #ifndef QGC_NO_SERIAL_LINK
     SerialPortManager ports(nullptr, [] { return QList<SerialPortManager::Port>{}; });

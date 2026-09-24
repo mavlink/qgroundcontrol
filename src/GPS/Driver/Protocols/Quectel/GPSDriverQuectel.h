@@ -20,6 +20,8 @@ public:
 
     bool receiverReady() const override { return _configured && !ioError(); }
 
+    std::string receiverIdentity() const override { return _firmware; }
+
     int receive(unsigned timeout) override;
 
 protected:

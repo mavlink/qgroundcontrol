@@ -45,7 +45,8 @@ signals:
     void RTCMDataUpdate(const QByteArray& message, qint64 receivedAtMs);
     void surveyInStatus(const GPSSurveyReport& report);
     void connectionError(GPSConnectionError error, const QString& detail = {});
-    void receiverReady();
+    /// identity is the receiver model and firmware, or empty when the family does not report them.
+    void receiverReady(const QString& identity = {});
 
 private:
     friend class GPSProviderTest;

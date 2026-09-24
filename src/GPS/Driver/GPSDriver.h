@@ -80,6 +80,9 @@ public:
     /// Diagnostic from the latest configure() failure; cleared when a new attempt starts.
     [[nodiscard]] const QString& configurationError() const;
 
+    /// Receiver model and firmware reported by the configured protocol; empty when unknown.
+    [[nodiscard]] QString receiverIdentity() const;
+
 private:
     void _publishExpiredSatellites();
     void _publishSatellites(const GPSSatelliteReport& report);

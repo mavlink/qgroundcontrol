@@ -22,10 +22,10 @@
         {
             "name": "serialBaudRate",
             "shortDesc": "Baud rate",
-            "longDesc": "Serial rate for an explicitly selected receiver. Passive input requires the rate already configured on the receiver.",
+            "longDesc": "Serial rate for an explicitly selected receiver. Auto (0) lets configurable receivers detect the rate; passive input requires the rate already configured on the receiver.",
             "type": "uint32",
             "default": 115200,
-            "min": 1200,
+            "min": 0,
             "max": 4000000,
             "decimalPlaces": 0,
             "label": "Baud rate"

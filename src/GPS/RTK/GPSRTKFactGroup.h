@@ -5,34 +5,44 @@
 class GPSRTKFactGroup : public FactGroup
 {
     Q_OBJECT
-    Q_PROPERTY(Fact *connected          READ connected          CONSTANT)
-    Q_PROPERTY(Fact *currentDuration    READ currentDuration    CONSTANT)
-    Q_PROPERTY(Fact *currentAccuracy    READ currentAccuracy    CONSTANT)
-    Q_PROPERTY(Fact *currentLatitude    READ currentLatitude    CONSTANT)
-    Q_PROPERTY(Fact *currentLongitude   READ currentLongitude   CONSTANT)
-    Q_PROPERTY(Fact *currentAltitude    READ currentAltitude    CONSTANT)
-    Q_PROPERTY(Fact *valid              READ valid              CONSTANT)
-    Q_PROPERTY(Fact *active             READ active             CONSTANT)
-    Q_PROPERTY(Fact *numSatellites      READ numSatellites      CONSTANT)
-    Q_PROPERTY(Fact *numSatellitesUsed  READ numSatellitesUsed  CONSTANT)
-    Q_PROPERTY(Fact *lastError          READ lastError          CONSTANT)
+    Q_PROPERTY(Fact* connected READ connected CONSTANT)
+    Q_PROPERTY(Fact* currentDuration READ currentDuration CONSTANT)
+    Q_PROPERTY(Fact* currentAccuracy READ currentAccuracy CONSTANT)
+    Q_PROPERTY(Fact* currentLatitude READ currentLatitude CONSTANT)
+    Q_PROPERTY(Fact* currentLongitude READ currentLongitude CONSTANT)
+    Q_PROPERTY(Fact* currentAltitude READ currentAltitude CONSTANT)
+    Q_PROPERTY(Fact* valid READ valid CONSTANT)
+    Q_PROPERTY(Fact* active READ active CONSTANT)
+    Q_PROPERTY(Fact* numSatellites READ numSatellites CONSTANT)
+    Q_PROPERTY(Fact* numSatellitesUsed READ numSatellitesUsed CONSTANT)
+    Q_PROPERTY(Fact* fixType READ fixType CONSTANT)
     Q_PROPERTY(bool canSaveCurrentBasePosition READ canSaveCurrentBasePosition NOTIFY currentBasePositionChanged)
 
 public:
-    explicit GPSRTKFactGroup(QObject *parent = nullptr);
+    explicit GPSRTKFactGroup(QObject* parent = nullptr);
     ~GPSRTKFactGroup();
 
-    Fact *connected() { return &_connectedFact; }
-    Fact *currentDuration() { return &_currentDurationFact; }
-    Fact *currentAccuracy() { return &_currentAccuracyFact; }
-    Fact *currentLatitude() { return &_currentLatitudeFact; }
-    Fact *currentLongitude() { return &_currentLongitudeFact; }
-    Fact *currentAltitude()  { return &_currentAltitudeFact; }
-    Fact *valid() { return &_validFact; }
-    Fact *active() { return &_activeFact; }
-    Fact *numSatellites() { return &_numSatellitesFact; }
-    Fact *numSatellitesUsed() { return &_numSatellitesUsedFact; }
-    Fact *lastError() { return &_lastErrorFact; }
+    Fact* connected() { return &_connectedFact; }
+
+    Fact* currentDuration() { return &_currentDurationFact; }
+
+    Fact* currentAccuracy() { return &_currentAccuracyFact; }
+
+    Fact* currentLatitude() { return &_currentLatitudeFact; }
+
+    Fact* currentLongitude() { return &_currentLongitudeFact; }
+
+    Fact* currentAltitude() { return &_currentAltitudeFact; }
+
+    Fact* valid() { return &_validFact; }
+
+    Fact* active() { return &_activeFact; }
+
+    Fact* numSatellites() { return &_numSatellitesFact; }
+
+    Fact* numSatellitesUsed() { return &_numSatellitesUsedFact; }
+
+    Fact* fixType() { return &_fixTypeFact; }
 
     /// A valid receiver status alone does not establish usable coordinates or accuracy.
     bool canSaveCurrentBasePosition() const;
@@ -51,5 +61,5 @@ private:
     Fact _activeFact = Fact(0, QStringLiteral("active"), FactMetaData::valueTypeBool);
     Fact _numSatellitesFact = Fact(0, QStringLiteral("numSatellites"), FactMetaData::valueTypeInt32);
     Fact _numSatellitesUsedFact = Fact(0, QStringLiteral("numSatellitesUsed"), FactMetaData::valueTypeInt32);
-    Fact _lastErrorFact = Fact(0, QStringLiteral("lastError"), FactMetaData::valueTypeUint32);
+    Fact _fixTypeFact = Fact(0, QStringLiteral("fixType"), FactMetaData::valueTypeUint32);
 };

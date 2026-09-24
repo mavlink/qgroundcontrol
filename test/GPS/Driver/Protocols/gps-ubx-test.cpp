@@ -1068,6 +1068,8 @@ static void transactionalFrames()
     std::copy(firmware.begin(), firmware.end(), baseVersion.begin());
     CHECK(driver.decode(ubxFrame(UBX_MSG_MON_VER, baseVersion)).batch.events.empty());
     CHECK(driver.firmwareVersion() == firmware);
+    const std::string model = driver.modelName();
+    CHECK(driver.receiverIdentity() == (model.empty() ? firmware : model + ' ' + firmware));
 
     Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
     pvt[20] = 3;

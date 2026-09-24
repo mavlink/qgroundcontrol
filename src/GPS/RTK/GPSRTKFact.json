@@ -75,11 +75,12 @@
     "default":          -1
 },
 {
-    "name":             "lastError",
-    "shortDesc": "Last Connection Error",
+    "name":             "fixType",
+    "shortDesc": "Receiver Fix",
+    "longDesc": "Latest fix reported by the receiver. Unknown when the receiver family does not report position in its current role.",
     "type":             "uint32",
-    "enumStrings":      "None,Failed to open device,Configuration rejected,Device error",
-    "enumValues":       "0,1,2,3",
+    "enumStrings":      "Unknown,No Fix,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Extrapolated",
+    "enumValues":       "0,1,2,3,4,5,6,8",
     "default":          0
 }
 ]

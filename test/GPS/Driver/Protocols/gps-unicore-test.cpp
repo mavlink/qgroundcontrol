@@ -146,6 +146,7 @@ void identityAndRole()
             CHECK(rate == receiver.availableBaud);
             CHECK(driver.model() == model);
             CHECK(driver.firmware() == "R4.10Build15434");
+            CHECK(driver.receiverIdentity() == std::string(model) + " R4.10Build15434");
             const auto mutation = std::find(receiver.commands.begin(), receiver.commands.end(), "UNLOG");
             CHECK(mutation != receiver.commands.end());
             CHECK(std::all_of(receiver.commands.begin(), mutation,
