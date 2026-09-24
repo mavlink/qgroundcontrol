@@ -592,6 +592,44 @@ Item {
         }
     }
 
+    QGCPalette { id: geoMapPalette }
+
+    /// RTK base station antenna (parity with the FlightMap marker)
+    GeoMapItem {
+        id: rtkBaseIndicator
+
+        scene: geoScene
+        surfaceModel: patchModel
+        coordinate: rtkBaseIndicator._receiver.basePosition
+        anchorPoint: Qt.point(rtkBaseBadge.width / 2, rtkBaseBadge.height / 2)
+        width: rtkBaseBadge.width
+        height: rtkBaseBadge.height
+        visible: coordinate.isValid
+
+        readonly property var _receiver: QGroundControl.gpsManager.gpsRtk
+
+        Rectangle {
+            id: rtkBaseBadge
+            width: ScreenTools.defaultFontPixelHeight * 1.5
+            height: width
+            radius: width / 2
+            color: rtkBaseIndicator._receiver.basePositionFinal ? geoMapPalette.mapIndicator
+                                                                : geoMapPalette.mapIndicatorChild
+            border.color: geoMapPalette.mapWidgetBorderDark
+            border.width: 1
+
+            QGCColoredImage {
+                anchors.centerIn: parent
+                width: parent.width * 0.65
+                height: width
+                source: "/qmlimages/Gps.svg"
+                sourceSize.height: height
+                fillMode: Image.PreserveAspectFit
+                color: geoMapPalette.mapWidgetBorderLight
+            }
+        }
+    }
+
     DebugView {
         objectName: "geoMapRenderStats"
         anchors.left: parent.left

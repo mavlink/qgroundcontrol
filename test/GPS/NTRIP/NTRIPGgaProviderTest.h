@@ -12,7 +12,7 @@ private slots:
     void testSourceClearedOnStopAndFreshStart();
     void _invalidProviderAltitude_data();
     void _invalidProviderAltitude();
-    void testDefaultRTKBaseProvider();
+    void testRTKReceiverProvider();
     void _activeVehicleAndCommunicationLoss();
     void _vehicleFixLossAndExpiry();
     void _providerMetadata_data();

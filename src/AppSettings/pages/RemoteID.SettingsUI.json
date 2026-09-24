@@ -115,7 +115,8 @@
                 "latitude",
                 "longitude",
                 "hdop",
-                "gcs position"
+                "gcs position",
+                "position source"
             ]
         },
         {

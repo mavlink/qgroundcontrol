@@ -11,6 +11,7 @@ private slots:
     void _udpActivityAndSatellites_data();
     void _udpActivityAndSatellites();
     void _udpSwitchAndDisable();
+    void _tcpClientConnectsAndReconnects();
     void _bindFailureAndTeardown();
     void _notificationSupersedesLifecycle_data();
     void _notificationSupersedesLifecycle();

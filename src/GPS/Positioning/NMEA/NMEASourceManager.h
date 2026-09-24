@@ -2,10 +2,12 @@
 
 #include <memory>
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "GPSNotificationQueue.h"
 #include "GPSPositionSourceRegistration.h"
 
 #ifndef QGC_NO_SERIAL_LINK
@@ -16,6 +18,7 @@ class QSerialPort;
 class AutoConnectSettings;
 class QGCPositionManager;
 class UdpIODevice;
+class QTcpSocket;
 class QIODevice;
 class NMEADecoderSession;
 class GPSSourceHealth;
@@ -73,6 +76,8 @@ private:
     void _startDecoder(QIODevice* device);
     void _retireDecoder(const char* reason);
 
+    static constexpr int kTcpConnectTimeoutMs = 10000;
+
     QPointer<AutoConnectSettings> _settings;
     QPointer<QGCPositionManager> _positionManager;
 
@@ -95,11 +100,16 @@ private:
         qint32 serialBaud = 0;
 #endif
         std::unique_ptr<UdpIODevice> udp;
+        std::unique_ptr<QTcpSocket> tcp;
+        QString tcpHost;
+        quint16 tcpPort = 0;
+        QElapsedTimer tcpConnecting;
         DecoderBinding binding;
     } _input;
     quint64 _revision = 0;
     quint64 _decoderGeneration = 0;
     bool _destroying = false;
+    GPSNotificationQueue _notifications{this};
     ConnectionState _connectionState = ConnectionState::Disabled;
     QString _errorMessage;
 #ifndef QGC_NO_SERIAL_LINK

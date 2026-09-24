@@ -56,6 +56,15 @@ ColumnLayout {
     }
 
     LabelledLabel {
+        objectName: "ntripCorrectionAge"
+        label:     qsTr("Last correction")
+        //: %1 is the time in seconds since the last correction was received
+        labelText: root._stats ? qsTr("%1 s ago").arg(root._stats.correctionAgeSec.toFixed(1)) : root._valueNA
+        visible:   root._connected
+                   && root._stats && root._stats.correctionAgeSec >= 0
+    }
+
+    LabelledLabel {
         label:     qsTr("Messages")
         labelText: root._stats ? root._stats.messagesReceived : ""
         visible:   root._connected
@@ -128,7 +137,7 @@ ColumnLayout {
     }
 
     LabelledLabel {
-        label:     qsTr("Queued to vehicle links (all sources)")
+        label:     qsTr("Queued to vehicle links (any source)")
         labelText: root.rtcmMavlink ? root._formatDataSize(root.rtcmMavlink.totalBytesSubmitted) : root._valueNA
         visible:   root._connected
                    && root.rtcmMavlink && root.rtcmMavlink.totalBytesSubmitted > 0
@@ -139,6 +148,17 @@ ColumnLayout {
         labelText: (root._ntripMgr ? root._ntripMgr.ggaSource : "")
         visible:   root._connected
                    && (root._ntripMgr ? root._ntripMgr.ggaSource : "")
+    }
+
+    QGCLabel {
+        objectName:     "ntripNoGgaPosition"
+        text:           qsTr("No position is available to send to the caster. Network (VRS) mountpoints send corrections only after receiving a position; check the GGA position source.")
+        wrapMode:       Text.WordWrap
+        color:          qgcPal.colorOrange
+        font.pointSize: ScreenTools.smallFontPointSize
+        visible:        root._connected && root._ntripMgr && root._ntripMgr.ggaSource === ""
+                        && (!root._stats || root._stats.dataStale || root._stats.messagesReceived === 0)
+        Layout.fillWidth: true
     }
 
     QGCLabel {

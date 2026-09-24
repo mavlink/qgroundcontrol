@@ -148,27 +148,44 @@ void NTRIPManagerTest::testNewSessionRetryBudget()
 
 void NTRIPManagerTest::testStatusCallbackStopsTransition()
 {
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    saved.setFactValue(settings->ntripServerConnectEnabled(), true);
     NTRIPManager manager;
+    manager._settings = settings;
     auto* transport = new MockNTRIPTransport(&manager);
+    transport->autoConnect = false;
     manager.setTransportForTest(transport);
+    QList<NTRIPManager::ConnectionStatus> observed;
     connect(&manager, &NTRIPManager::connectionStatusChanged, this, [&]() {
+        observed.append(manager.connectionStatus());
         if (manager.connectionStatus() == NTRIPManager::ConnectionStatus::Connecting) {
             manager.stopNTRIP();
         }
     });
     manager.startNTRIP();
+    // Observers see the settled state after the transport has started, never a half-entered state.
+    QCOMPARE(observed, (QList<NTRIPManager::ConnectionStatus>{NTRIPManager::ConnectionStatus::Connecting,
+                                                              NTRIPManager::ConnectionStatus::Disconnected}));
+    QCOMPARE(transport->startCount, 1);
+    QCOMPARE(transport->stopCount, 1);
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
-    QCOMPARE(transport->startCount, 0);
     QVERIFY(!manager._transport);
 }
 
-void NTRIPManagerTest::testCasterCallbackStopsTransition()
+void NTRIPManagerTest::testConnectedCallbackStopsTransition()
 {
     NTRIPManager manager;
     auto* transport = new MockNTRIPTransport(&manager);
     manager._transport = transport;
     manager._connectionStatus = NTRIPManager::ConnectionStatus::Connecting;
-    connect(&manager, &NTRIPManager::casterStatusChanged, this, [&]() { manager.stopNTRIP(); });
+    connect(&manager, &NTRIPManager::connectionStatusChanged, this, [&]() {
+        if (manager.connectionStatus() == NTRIPManager::ConnectionStatus::Connected) {
+            manager.stopNTRIP();
+        }
+    });
     manager._dispatch(NTRIPManager::Event::TransportConnected);
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
     QCOMPARE(transport->stopCount, 1);
@@ -492,7 +509,6 @@ void NTRIPManagerTest::testHttpRetryAfterReachesManager()
 void NTRIPManagerTest::testRetryPublicationSuperseded_data()
 {
     QTest::addColumn<int>("phase");
-    QTest::newRow("caster-status") << 0;
     QTest::newRow("reconnecting-status") << 1;
     QTest::newRow("transport-stop") << 2;
 }
@@ -521,9 +537,7 @@ void NTRIPManagerTest::testRetryPublicationSuperseded()
         manager.setTransportForTest(replacement);
         manager.startNTRIP();
     };
-    if (phase == 0) {
-        connect(&manager, &NTRIPManager::casterStatusChanged, this, restart);
-    } else if (phase == 1) {
+    if (phase == 1) {
         connect(&manager, &NTRIPManager::connectionStatusChanged, this, [&]() {
             if (manager.connectionStatus() == NTRIPManager::ConnectionStatus::Reconnecting) {
                 restart();

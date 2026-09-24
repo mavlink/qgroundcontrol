@@ -3,6 +3,7 @@
 #include <utility>
 
 #include <QtCore/QThread>
+#include <QtNetwork/QTcpSocket>
 
 #include "AutoConnectSettings.h"
 #include "GPSSourceHealth.h"
@@ -30,7 +31,7 @@ NMEASourceManager::NMEASourceManager(AutoConnectSettings* settings, QGCPositionM
     qCDebug(NMEASourceManagerLog) << this;
     if (_settings) {
         for (auto* fact : {_settings->nmeaSource(), _settings->nmeaUdpPort(), _settings->autoConnectNmeaPort(),
-                           _settings->autoConnectNmeaBaud()}) {
+                           _settings->autoConnectNmeaBaud(), _settings->nmeaTcpHost(), _settings->nmeaTcpPort()}) {
             connect(fact, &Fact::rawValueChanged, this, [this]() { ++_revision; });
         }
     }
@@ -65,6 +66,7 @@ NMEASourceManager::~NMEASourceManager()
 {
     qCDebug(NMEASourceManagerLog) << "NMEA source manager shutdown:" << this;
     _destroying = true;
+    _notifications.close();
     _stop("shutdown");
 }
 
@@ -75,6 +77,7 @@ void NMEASourceManager::stop()
 
 void NMEASourceManager::_stop(const char* reason, bool resetStatus)
 {
+    const GPSNotificationQueue::Scope publish(_notifications);
     const quint64 revision = ++_revision;
     const quint64 generation = ++_decoderGeneration;
     const QPointer<NMEASourceManager> guard(this);
@@ -84,6 +87,13 @@ void NMEASourceManager::_stop(const char* reason, bool resetStatus)
     if (retired.binding.decoder) {
         retired.binding.decoder->disconnect(this);
         qCDebug(NMEASourceManagerLog) << "NMEA decoder retired:" << reason << "generation:" << generation;
+    }
+    if (retired.tcp) {
+        qCDebug(NMEASourceManagerLog) << "NMEA input retired:"
+                                      << "reason:" << reason << "source: TCP"
+                                      << "server:" << retired.tcpHost << "port:" << retired.tcpPort;
+        retired.tcp->disconnect(this);
+        retired.tcp->abort();
     }
     if (retired.udp) {
         qCDebug(NMEASourceManagerLog) << "NMEA input retired:"
@@ -102,14 +112,11 @@ void NMEASourceManager::_stop(const char* reason, bool resetStatus)
     if (!guard || _revision != revision || _decoderGeneration != generation) {
         return;
     }
-    if (retired.binding.decoder && !_destroying) {
-        emit sourceChanged();
-        if (!guard || _revision != revision || _decoderGeneration != generation) {
-            return;
-        }
-        emit activityChanged();
+    if (retired.binding.decoder) {
+        _notifications.emitSignal(this, &NMEASourceManager::sourceChanged);
+        _notifications.emitSignal(this, &NMEASourceManager::activityChanged);
     }
-    if (guard && _revision == revision && _decoderGeneration == generation && resetStatus) {
+    if (resetStatus) {
         _setConnectionState(ConnectionState::Disabled);
     }
 }
@@ -127,11 +134,9 @@ void NMEASourceManager::_retireDecoder(const char* reason)
     qCDebug(NMEASourceManagerLog) << "NMEA decoder retired:" << reason << "generation:" << generation;
     const QPointer<NMEASourceManager> guard(this);
     retired.registration.reset();
-    if (guard && generation == _decoderGeneration && !_destroying) {
-        emit sourceChanged();
-        if (guard && generation == _decoderGeneration) {
-            emit activityChanged();
-        }
+    if (guard && generation == _decoderGeneration) {
+        _notifications.emitSignal(this, &NMEASourceManager::sourceChanged);
+        _notifications.emitSignal(this, &NMEASourceManager::activityChanged);
     }
 }
 
@@ -140,6 +145,7 @@ void NMEASourceManager::_startDecoder(QIODevice* device)
     if (_destroying) {
         return;
     }
+    const GPSNotificationQueue::Scope publish(_notifications);
     if (!_positionManager || QThread::currentThread() != thread() || (device && device->thread() != thread())) {
         qCWarning(NMEASourceManagerLog) << "NMEA device requires matching thread affinity";
         return;
@@ -180,7 +186,7 @@ void NMEASourceManager::_startDecoder(QIODevice* device)
         _input.binding.registration = std::move(registration);
         qCDebug(NMEASourceManagerLog) << "NMEA decoder installed:" << "generation:" << generation
                                       << "registered:" << bool(_input.binding.registration);
-        emit sourceChanged();
+        _notifications.emitSignal(this, &NMEASourceManager::sourceChanged);
     }
 }
 
@@ -205,7 +211,9 @@ QString NMEASourceManager::connectionStatusText() const
         case ConnectionState::Disabled:
             return tr("NMEA input is disabled");
         case ConnectionState::WaitingForDevice:
-            return tr("Waiting for the selected NMEA serial device");
+            return _input.source == AutoConnectSettings::NmeaSourceTcp
+                       ? tr("Connecting to NMEA TCP server %1:%2").arg(_input.tcpHost).arg(_input.tcpPort)
+                       : tr("Waiting for the selected NMEA serial device");
         case ConnectionState::Connected:
             return tr("NMEA input is open");
         case ConnectionState::Error:
@@ -221,9 +229,7 @@ void NMEASourceManager::_setConnectionState(ConnectionState state, const QString
     }
     _connectionState = state;
     _errorMessage = error;
-    if (!_destroying) {
-        emit connectionStateChanged();
-    }
+    _notifications.emitSignal(this, &NMEASourceManager::connectionStateChanged);
 }
 
 void NMEASourceManager::update()
@@ -231,6 +237,7 @@ void NMEASourceManager::update()
     if (_destroying) {
         return;
     }
+    const GPSNotificationQueue::Scope publish(_notifications);
     const QPointer<NMEASourceManager> guard(this);
     quint64 revision = ++_revision;
     const auto current = [guard, &revision]() {
@@ -298,6 +305,85 @@ void NMEASourceManager::update()
             const bool installed = bool(_input.binding.registration);
             _setConnectionState(installed ? ConnectionState::Connected : ConnectionState::Error,
                                 installed ? QString() : tr("The NMEA decoder could not be started."));
+        }
+        return;
+    }
+    if (source == AutoConnectSettings::NmeaSourceTcp) {
+        const QString host = _settings->nmeaTcpHost()->rawValue().toString().trimmed();
+        const uint port = _settings->nmeaTcpPort()->rawValue().toUInt();
+        if (_input.tcp && (_input.tcpHost != host || _input.tcpPort != port)) {
+            if (!retire("TCP server setting changed")) {
+                return;
+            }
+            _input.source = source;
+        }
+        if (host.isEmpty() || port == 0 || port > 65535) {
+            _setConnectionState(ConnectionState::Error, tr("Enter the NMEA TCP server host and port."));
+            return;
+        }
+        if (_input.tcp) {
+            const auto state = _input.tcp->state();
+            const bool connecting =
+                state == QAbstractSocket::HostLookupState || state == QAbstractSocket::ConnectingState;
+            if (state == QAbstractSocket::ConnectedState ||
+                (connecting && !_input.tcpConnecting.hasExpired(kTcpConnectTimeoutMs))) {
+                return;
+            }
+            const QString message = connecting ? tr("Timed out connecting to NMEA TCP server %1:%2").arg(host).arg(port)
+                                               : tr("NMEA TCP connection to %1:%2 closed").arg(host).arg(port);
+            if (!retire(connecting ? "TCP connection timed out" : "TCP connection closed")) {
+                return;
+            }
+            _input.source = source;
+            // The next update retries.
+            _setConnectionState(ConnectionState::Error, message);
+            return;
+        }
+        auto socket = std::make_unique<QTcpSocket>();
+        const QPointer<QTcpSocket> socketGuard(socket.get());
+        connect(socket.get(), &QTcpSocket::connected, this, [this, socketGuard]() {
+            if (!socketGuard || _input.tcp.get() != socketGuard) {
+                return;
+            }
+            qCDebug(NMEASourceManagerLog) << "NMEA input started:"
+                                          << "source: TCP"
+                                          << "server:" << _input.tcpHost << "port:" << _input.tcpPort;
+            const QPointer<NMEASourceManager> connectedGuard(this);
+            _startDecoder(socketGuard);
+            if (connectedGuard && socketGuard && _input.tcp.get() == socketGuard) {
+                const bool installed = bool(_input.binding.registration);
+                _setConnectionState(installed ? ConnectionState::Connected : ConnectionState::Error,
+                                    installed ? QString() : tr("The NMEA decoder could not be started."));
+            }
+        });
+        connect(
+            socket.get(), &QTcpSocket::errorOccurred, this,
+            [this, socketGuard](QAbstractSocket::SocketError error) {
+                if (!socketGuard || _input.tcp.get() != socketGuard) {
+                    return;
+                }
+                qCDebug(NMEASourceManagerLog) << "NMEA TCP error:"
+                                              << "server:" << _input.tcpHost << "port:" << _input.tcpPort
+                                              << "error:" << error << socketGuard->errorString();
+                const QString message = tr("NMEA TCP connection to %1:%2 failed: %3")
+                                            .arg(_input.tcpHost)
+                                            .arg(_input.tcpPort)
+                                            .arg(socketGuard->errorString());
+                const QPointer<NMEASourceManager> errorGuard(this);
+                const quint64 errorRevision = _revision + 1;
+                _stop("TCP error", false);
+                if (errorGuard && _revision == errorRevision) {
+                    _setConnectionState(ConnectionState::Error, message);
+                }
+            },
+            Qt::QueuedConnection);
+        _input.tcpHost = host;
+        _input.tcpPort = static_cast<quint16>(port);
+        _input.tcpConnecting.start();
+        _input.tcp = std::move(socket);
+        _setConnectionState(ConnectionState::WaitingForDevice);
+        if (current() && _input.tcp) {
+            _input.tcp->connectToHost(host, static_cast<quint16>(port), QIODevice::ReadOnly);
         }
         return;
     }

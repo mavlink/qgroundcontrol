@@ -76,7 +76,7 @@
             "shortDesc": "GGA Position Source",
             "longDesc": "Position source for NMEA GGA sentences sent to the NTRIP caster. Auto selects the best available source.",
             "type": "uint8",
-            "enumStrings": "Auto,Vehicle GPS,Vehicle EKF,RTK Base Station,GCS Position",
+            "enumStrings": "Auto,Vehicle GPS,Vehicle EKF,RTK Receiver,GCS Position",
             "enumValues": "0,1,2,3,4",
             "default": 0,
             "label": "GGA Position Source"

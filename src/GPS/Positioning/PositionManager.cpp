@@ -4,9 +4,11 @@
 #include <QtCore/QPermissions>
 
 #include "AppMessages.h"
+#include "AutoConnectSettings.h"
 #include "NMEASourceManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
 #include "SimulatedPosition.h"
 
 QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "GPS.PositionManager.QGCPositionManager")
@@ -32,6 +34,14 @@ QGCPositionManager* QGCPositionManager::instance()
 
 void QGCPositionManager::init()
 {
+    if (!_sourceSettingConnection) {
+        Fact* const sourceSetting = SettingsManager::instance()->autoConnectSettings()->gcsPositionSource();
+        const auto applySource = [this, sourceSetting]() {
+            setSourceMode(static_cast<SourceMode>(sourceSetting->rawValue().toInt()));
+        };
+        _sourceSettingConnection = connect(sourceSetting, &Fact::rawValueChanged, this, applySource);
+        applySource();
+    }
     if (QGC::runningUnitTests()) {
         setSimulatedPositionSource(new SimulatedPosition(this, scheduler()));
     } else {

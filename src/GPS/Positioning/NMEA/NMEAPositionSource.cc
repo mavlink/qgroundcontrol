@@ -18,8 +18,6 @@ constexpr int DEFAULT_REQUEST_TIMEOUT_MS = std::chrono::milliseconds(std::chrono
 constexpr quint64 METADATA_MAX_AGE_US = std::chrono::microseconds(std::chrono::seconds(2)).count();
 constexpr quint64 UNTIMED_METADATA_MAX_AGE_US = std::chrono::microseconds(std::chrono::seconds(1)).count();
 constexpr qsizetype MAX_READ_BYTES_PER_TURN = 32 * 1024;
-constexpr double USER_EQUIVALENT_RANGE_ERROR_METERS = 5.1;
-constexpr double NMEA_ACCURACY_SCALE = 2.0;
 
 QTime qtTime(int timeMs)
 {
@@ -38,8 +36,7 @@ void setFiniteAttribute(QGeoPositionInfo& position, QGeoPositionInfo::Attribute 
 void applyHorizontalFallback(QGeoPositionInfo& position, std::optional<double> dop)
 {
     if (dop && *dop > 0.0) {
-        position.setAttribute(QGeoPositionInfo::HorizontalAccuracy,
-                              *dop * USER_EQUIVALENT_RANGE_ERROR_METERS * NMEA_ACCURACY_SCALE);
+        position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, GPSObservation::accuracyFromDop(*dop));
     } else {
         position.removeAttribute(QGeoPositionInfo::HorizontalAccuracy);
     }
@@ -48,8 +45,7 @@ void applyHorizontalFallback(QGeoPositionInfo& position, std::optional<double> d
 void applyVerticalFallback(QGeoPositionInfo& position, std::optional<double> dop)
 {
     if (dop && *dop >= 0.0) {
-        position.setAttribute(QGeoPositionInfo::VerticalAccuracy,
-                              *dop * USER_EQUIVALENT_RANGE_ERROR_METERS * NMEA_ACCURACY_SCALE);
+        position.setAttribute(QGeoPositionInfo::VerticalAccuracy, GPSObservation::accuracyFromDop(*dop));
     } else {
         position.removeAttribute(QGeoPositionInfo::VerticalAccuracy);
     }
@@ -159,27 +155,29 @@ void NMEAPositionSource::_readAvailableData()
         if (!guard || _closed) {
             return;
         }
-        QList<NMEASentenceEnvelope> sentences;
         for (const char byte : data) {
             const auto framed = _lineFramer.addByte(static_cast<uint8_t>(byte));
             if (framed.started) {
                 _sentenceTimestampUs = receivedAtUs;
             }
-            if (framed.line) {
-                const auto line = *framed.line;
-                QByteArray bytes(line.data(), static_cast<qsizetype>(line.size()));
-                bytes.append(framed.endedWithCarriageReturn ? "\r\n" : "\n");
-                if (auto sentence = NMEASentenceEnvelope::parse(std::move(bytes), _sentenceTimestampUs)) {
-                    sentences.append(std::move(*sentence));
-                }
+            if (!framed.line) {
+                continue;
             }
-        }
-        for (const auto& sentence : sentences) {
-            _processSentence(sentence);
+            const auto line = *framed.line;
+            const char* ending = framed.endedWithCarriageReturn ? "\r\n" : "\n";
+            QByteArray bytes;
+            bytes.reserve(static_cast<qsizetype>(line.size()) + 2);
+            bytes.append(line.data(), static_cast<qsizetype>(line.size())).append(ending);
+            // Publish each sentence as it completes rather than after the whole read.
+            const auto sentence = NMEASentenceEnvelope::parse(std::move(bytes), _sentenceTimestampUs);
+            if (!sentence) {
+                continue;
+            }
+            _processSentence(*sentence);
             if (!guard || _closed) {
                 return;
             }
-            emit sentenceReceived(sentence);
+            emit sentenceReceived(*sentence);
             if (!guard || _closed) {
                 return;
             }
@@ -253,8 +251,6 @@ GPSObservation NMEAPositionSource::_observation(const NMEA::NavigationEpoch& epo
     }
     observation.horizontalDop = epoch.horizontalDop && *epoch.horizontalDop > 0.0 ? epoch.horizontalDop : std::nullopt;
     observation.verticalDop = epoch.verticalDop;
-    observation.dopTimestampUs = epoch.dopReceivedAtUs;
-    observation.accuracyTimestampUs = epoch.accuracyReceivedAtUs;
     if (epoch.horizontalAccuracyMeters) {
         setFiniteAttribute(observation.position, QGeoPositionInfo::HorizontalAccuracy, *epoch.horizontalAccuracyMeters);
     } else if (!epoch.accuracyReceivedAtUs) {

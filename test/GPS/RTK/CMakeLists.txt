@@ -25,6 +25,6 @@ add_qgc_test(
 )
 
 if(NOT QGC_NO_SERIAL_LINK)
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE RTKAutoConnectTest.cc RTKAutoConnectTest.h)
-    add_qgc_test(RTKAutoConnectTest LABELS Unit RESOURCE_LOCK Settings)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE RTKConnectionPolicyTest.cc RTKConnectionPolicyTest.h)
+    add_qgc_test(RTKConnectionPolicyTest LABELS Unit RESOURCE_LOCK Settings)
 endif()

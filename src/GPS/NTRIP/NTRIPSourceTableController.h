@@ -11,16 +11,17 @@
 #include <QtCore/QPointer>
 #include <QtPositioning/QGeoCoordinate>
 
+#include "GPSNotificationQueue.h"
 #include "NTRIPConfiguration.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableControllerLog)
 
 class NTRIPSourceTableModel;
 class NTRIPSourceTableControllerTest;
-class QNetworkAccessManager;
-class QNetworkReply;
 class QTcpSocket;
 
+/// Fetches caster source tables over the same HTTP request builder and decoder as the correction
+/// stream, so HTTP/1.x and NTRIP v1 "SOURCETABLE 200 OK" responses share one path.
 class NTRIPSourceTableController : public QObject
 {
     Q_OBJECT
@@ -71,20 +72,18 @@ private:
     void injectSourceTableForTest(const QString& table);
     void injectFetchErrorForTest(const QString& error);
 
-    void _onReplyFinished(QNetworkReply* reply, quint64 revision);
     void _onSourceTableReceived(const QString& table);
     void _onFetchError(const QString& error);
     void _completeFetch(quint64 revision, QString table, std::optional<QString> error = std::nullopt);
-    void _abortReply();
-    QPointer<QNetworkReply> _activeReply() const;
-    QPointer<QTcpSocket> _activeLegacySocket() const;
-    void _startLegacyFetch(quint64 revision);
-    void _readLegacyReply(quint64 revision);
-    void _finishLegacyFetch(const QString& error = {});
+    void _abortFetch();
+    QPointer<QTcpSocket> _activeSocket() const;
+    QByteArray _activeRequest() const;
+    void _startFetch(quint64 revision, const QByteArray& request);
+    void _readReply(quint64 revision);
+    void _finishFetch(const QString& error = {});
     bool _deferModelMutation(std::function<void()> action);
 
     NTRIPSourceTableModel* _model = nullptr;
-    QNetworkAccessManager* _networkManager = nullptr;
     struct FetchAttempt;
     std::unique_ptr<FetchAttempt> _attempt;
     QGeoCoordinate _sortCoord;
@@ -94,4 +93,5 @@ private:
     quint64 _fetchRevision = 0;
 
     NTRIPConnectionConfig _lastFetchConfig;  ///< Mountpoint is excluded from source-table identity.
+    GPSNotificationQueue _notifications{this};
 };

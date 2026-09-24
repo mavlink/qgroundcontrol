@@ -32,7 +32,8 @@ Configure drone Remote ID broadcast settings to comply with FAA or EU regulation
 
 ## GCS Position
 
-Read-only display of current GCS latitude, longitude, and HDOP.
+Selects the GCS position source and shows the source in use, its status, and the current latitude,
+longitude, and horizontal accuracy. See [Comm Links](comm_links.md#gcs-position).
 
 ## GPS Location
 

@@ -29,7 +29,9 @@ SettingsGroupLayout {
         || (baseMode === BaseModeDefinition.BaseFixed && presentation.rtkBase)
         || (baseMode === BaseModeDefinition.BaseSurveyIn && presentation.surveyIn)
         || (baseMode === BaseModeDefinition.BaseReceiverAveraging && presentation.receiverAveraging)
-    readonly property bool _editable: !receiver.hasReceiver
+    // A pending automatic reconnect keeps the saved connection; stop it before editing.
+    readonly property bool _active: receiver.hasReceiver || receiver.reconnecting === true
+    readonly property bool _editable: !_active
     readonly property bool _tcp: !receiver.serialSupported || settings.connectionType.rawValue === GPSRtk.Tcp
 
     implicitWidth: ScreenTools.defaultFontPixelWidth * 56
@@ -109,11 +111,12 @@ SettingsGroupLayout {
     RowLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        visible: root.autoConnectFact.userVisible
-        Explanation { text: qsTr("Auto-connect known receivers") }
+        // Auto-connect discovers known serial receivers only.
+        visible: root.receiver.serialSupported && !root._tcp && root.autoConnectFact.userVisible
+        Explanation { text: qsTr("Auto-connect known serial receivers") }
         FactCheckBoxSlider {
             text: ""
-            Accessible.name: qsTr("Auto-connect known receivers")
+            Accessible.name: qsTr("Auto-connect known serial receivers")
             fact: root.autoConnectFact
         }
     }
@@ -135,15 +138,21 @@ SettingsGroupLayout {
     ColumnLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        visible: root.receiver.serialSupported && root.settings.connectionType.userVisible
+        visible: root.settings.connectionType.userVisible
         Explanation { text: root.settings.connectionType.shortDescription }
         FactComboBox {
             objectName: "rtkConnectionType"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
+            visible: root.receiver.serialSupported
             fact: root.settings.connectionType
             indexModel: false
             enabled: root._editable
+        }
+        Explanation {
+            objectName: "rtkTcpOnly"
+            visible: !root.receiver.serialSupported
+            text: qsTr("TCP (serial receivers are not supported on this platform)")
         }
     }
 
@@ -367,10 +376,10 @@ SettingsGroupLayout {
         Layout.minimumWidth: 0
         wrapMode: Text.Wrap
         focusPolicy: Qt.StrongFocus
-        text: root.receiver.hasReceiver ? qsTr("Disconnect") : qsTr("Connect")
-        enabled: root.receiver.hasReceiver || (root.presentation.specificReceiver && root.modeCompatible)
+        text: root._active ? qsTr("Disconnect") : qsTr("Connect")
+        enabled: root._active || (root.presentation.specificReceiver && root.modeCompatible)
         onClicked: {
-            if (root.receiver.hasReceiver) {
+            if (root._active) {
                 root.clearConsent()
                 root.receiver.disconnectConfiguredGPS()
             } else {

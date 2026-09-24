@@ -7,13 +7,12 @@ class GPSCorrectionManager;
 class GPSRtk;
 class NMEASourceManager;
 class NTRIPManager;
-class RTKAutoConnect;
 class QTimer;
 
 class GPSManager : public QObject
 {
     Q_OBJECT
-    friend class RTKAutoConnectTest;
+    friend class RTKConnectionPolicyTest;
     QML_ELEMENT
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("GPSCorrectionManager.h")
@@ -44,9 +43,6 @@ private:
     void _updateConnections();
     QTimer* _connectionTimer = nullptr;
     NMEASourceManager* _nmeaSources = nullptr;
-#ifndef QGC_NO_SERIAL_LINK
-    RTKAutoConnect* _rtkAutoConnect = nullptr;
-#endif
     GPSCorrectionManager* _corrections = nullptr;
     GPSRtk* _gpsRtk = nullptr;
     NTRIPManager* _ntripManager = nullptr;

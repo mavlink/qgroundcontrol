@@ -48,12 +48,23 @@
             "keywords": "auto connect,librepilot"
         },
         {
+            "name": "gcsPositionSource",
+            "shortDesc": "GCS position source",
+            "longDesc": "Source of the ground station position. Automatic uses the connected RTK receiver, then the NMEA GPS, then this device, and switches when the preferred source loses its fix.",
+            "type": "uint32",
+            "enumStrings": "Automatic,RTK receiver,NMEA GPS,This device",
+            "enumValues": "0,1,2,3",
+            "default": 0,
+            "label": "GCS position source",
+            "keywords": "gcs position,ground station position,gps,rtk,nmea,location"
+        },
+        {
             "name": "nmeaSource",
             "shortDesc": "NMEA GPS source for GCS position",
             "longDesc": "NMEA GPS source for GCS position",
             "type": "uint32",
-            "enumStrings": "Disabled,UDP Port,Serial Port",
-            "enumValues": "0,1,2",
+            "enumStrings": "Disabled,UDP Port,Serial Port,TCP Client",
+            "enumValues": "0,1,2,3",
             "default": 0,
             "label": "NMEA GPS source for GCS position"
         },
@@ -108,6 +119,24 @@
             "type": "uint32",
             "default": 14401,
             "label": "Udp port to receive NMEA streams"
+        },
+        {
+            "name": "nmeaTcpHost",
+            "shortDesc": "NMEA TCP server host",
+            "longDesc": "Host name or address of a receiver or bridge that serves an NMEA stream over TCP.",
+            "type": "string",
+            "default": "",
+            "label": "NMEA TCP server host"
+        },
+        {
+            "name": "nmeaTcpPort",
+            "shortDesc": "NMEA TCP server port",
+            "type": "uint32",
+            "default": 0,
+            "min": 0,
+            "max": 65535,
+            "decimalPlaces": 0,
+            "label": "NMEA TCP server port"
         }
     ]
 }

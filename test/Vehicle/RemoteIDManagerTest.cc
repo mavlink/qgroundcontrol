@@ -195,7 +195,7 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
     if (error != QGeoPositionInfoSource::NoError) {
         source.fail(static_cast<QGeoPositionInfoSource::Error>(error));
     } else if (status == GPSPositionService::SourceStatus::Stale) {
-        positioning->sourceHealth()->setFreshnessTimeoutMs(1);
+        positioning->_currentHealth->setFreshnessTimeoutMs(1);
     } else {
         fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 101);
         source.publish(fix);
@@ -204,7 +204,7 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     verifyExpectedLogMessage();
     QVERIFY(!manager->gcsPositionUsable());
-    QVERIFY(!positioning->geoPositionInfo().isValid());
+    QVERIFY(!positioning->acceptedObservation());
     QVERIFY(!positioning->gcsPositionTimestamp().isValid());
 
     QTRY_VERIFY_WITH_TIMEOUT(
@@ -217,7 +217,7 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
         })(),
         5000);
 
-    positioning->sourceHealth()->setFreshnessTimeoutMs(5000);
+    positioning->_currentHealth->setFreshnessTimeoutMs(5000);
     fix.setTimestamp(QDateTime::currentDateTimeUtc());
     fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
     source.publish(fix);

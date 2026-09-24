@@ -476,6 +476,37 @@ void NMEASentenceTest::_ggaHdopValidation()
     }
 }
 
+void NMEASentenceTest::_gstFieldCounts_data()
+{
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<bool>("parsed");
+    QTest::addColumn<double>("vertical");
+    QTest::newRow("standard") << QByteArray("$GPGST,000000.000,1,1,1,0,3,4,6") << true << 6.0;
+    QTest::newRow("no-altitude") << QByteArray("$GPGST,000000.000,1,1,1,0,3,4") << true << qQNaN();
+    QTest::newRow("proprietary-suffix") << QByteArray("$GPGST,000000.000,1,1,1,0,3,4,6,9") << true << 6.0;
+    QTest::newRow("missing-longitude") << QByteArray("$GPGST,000000.000,1,1,1,0,3") << false << qQNaN();
+}
+
+void NMEASentenceTest::_gstFieldCounts()
+{
+    QFETCH(QByteArray, body);
+    QFETCH(bool, parsed);
+    QFETCH(double, vertical);
+    const auto sentence = ownedSentence(NMEAUtils::repairChecksum(body));
+    QVERIFY(sentence);
+    const auto gst = NMEA::gst(sentence->sentence());
+    QCOMPARE(gst.has_value(), parsed);
+    if (!gst) {
+        return;
+    }
+    QCOMPARE(gst->horizontalAccuracy, 5.0);
+    if (qIsNaN(vertical)) {
+        QVERIFY(qIsNaN(gst->verticalAccuracy));
+    } else {
+        QCOMPARE(gst->verticalAccuracy, vertical);
+    }
+}
+
 UT_REGISTER_TEST(NMEASentenceTest, TestLabel::Unit)
 
 void NMEASentenceTest::_frameValidation_data()

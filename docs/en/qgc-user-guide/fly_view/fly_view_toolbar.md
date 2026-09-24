@@ -55,6 +55,14 @@ With an active vehicle, the indicator shows vehicle GPS information (for example
 
 When there is no active vehicle but RTK is connected, the indicator switches to RTK status so you can still monitor the correction link.
 
+When the vehicle reports RTK status (`GPS_RTK`), the dropdown also shows the RTK baseline (distance from the base), the
+correction rate, and the satellites used in the RTK solution. For a connected RTK receiver it shows the receiver's
+jamming and spoofing state when the receiver reports them; the toolbar's _RTK_ label turns orange for jamming warnings
+or any spoofing indication.
+
+A connected RTK base station is marked on the Fly and Plan maps. The marker shows the fixed or completed survey-in
+position, or the survey-in position so far (labelled _surveying_).
+
 ### GPS Resilience
 
 The GPS Resilience indicator appears when the vehicle reports GPS resilience telemetry (authentication, spoofing, or jamming state). The dropdown provides summary status and per-GPS details when available.

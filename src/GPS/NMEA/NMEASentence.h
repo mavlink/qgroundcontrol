@@ -67,7 +67,6 @@ constexpr size_t ZDA_MIN_FIELDS = ZDA_YEAR + 1;
 constexpr size_t GST_LATITUDE_ERROR = 6;
 constexpr size_t GST_LONGITUDE_ERROR = 7;
 constexpr size_t GST_ALTITUDE_ERROR = 8;
-constexpr size_t GST_FIELDS = GST_ALTITUDE_ERROR + 1;
 }  // namespace Field
 
 namespace GgaQuality {

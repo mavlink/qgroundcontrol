@@ -118,34 +118,53 @@ void NTRIPGgaProviderTest::testSourceClearedOnStopAndFreshStart()
     QVERIFY(provider.currentSource().isEmpty());
 }
 
-void NTRIPGgaProviderTest::testDefaultRTKBaseProvider()
+void NTRIPGgaProviderTest::testRTKReceiverProvider()
 {
     TestFixtures::SettingsFixture saved;
-    configureNtrip(saved, Source::RTKBase);
-    auto* facts = qobject_cast<GPSRTKFactGroup*>(GPSManager::instance()->gpsRtk()->gpsRtkFactGroup());
-    QVERIFY(facts);
-    saved.setFactValue(facts->valid(), true);
-    saved.setFactValue(facts->currentLatitude(), 47.3977);
-    saved.setFactValue(facts->currentLongitude(), 8.5456);
-    saved.setFactValue(facts->currentAltitude(), 450.0);
-
+    configureNtrip(saved, Source::RTKReceiver);
+    auto* receiver = GPSManager::instance()->gpsRtk();
     auto* manager = GPSManager::instance()->ntrip();
-    auto* transport = new MockNTRIPTransport(manager);
-    manager->setTransportForTest(transport);
-    manager->startNTRIP();
+    const auto start = [manager]() {
+        auto* transport = new MockNTRIPTransport(manager);
+        manager->setTransportForTest(transport);
+        manager->startNTRIP();
+        return transport;
+    };
+    auto* transport = start();
     QCOMPARE(manager->connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
     QVERIFY(manager->ggaSource().isEmpty());
     QVERIFY(transport->sentNmea.isEmpty());
-    QCOMPARE(facts->currentAltitude()->rawValue().toDouble(), 450.0);
     manager->stopNTRIP();
 
-    facts->valid()->setRawValue(false);
-    transport = new MockNTRIPTransport(manager);
-    manager->setTransportForTest(transport);
-    manager->startNTRIP();
+    GPSPositionReport report;
+    report.navigation.fixType = GPSFixQuality::RTKFixed;
+    report.navigation.latitudeDegrees = 47.3977;
+    report.navigation.longitudeDegrees = 8.5456;
+    report.navigation.altitudeMslMeters = 450.0;
+    report.navigation.horizontalAccuracyMeters = 0.02f;
+    report.navigation.horizontalDop = 0.7f;
+    report.navigation.satellitesUsed = 21;
+    const auto retire = qScopeGuard([receiver]() { receiver->disconnectGPS(); });
+    QVERIFY(
+        QMetaObject::invokeMethod(receiver, "_positionUpdate", Qt::DirectConnection, Q_ARG(GPSPositionReport, report)));
+    transport = start();
+    QCOMPARE(manager->ggaSource(), QStringLiteral("RTK Receiver"));
+    QCOMPARE(transport->sentNmea.size(), 1);
+    const auto& wire = transport->sentNmea.first();
+    const auto decoded = NMEA::sentence(std::string_view(wire.constData(), wire.size()));
+    QVERIFY(decoded);
+    const auto fix = NMEA::gga(*decoded);
+    QVERIFY(fix);
+    QVERIFY(qAbs(fix->latitude - 47.3977) < 1e-6);
+    QVERIFY(qAbs(fix->longitude - 8.5456) < 1e-6);
+    QCOMPARE(fix->quality, NMEA::GgaQuality::RTK_FIXED);
+    QCOMPARE(fix->satellitesUsed, std::optional<unsigned>(21));
+    manager->stopNTRIP();
+
+    receiver->disconnectGPS();
+    transport = start();
     QVERIFY(manager->ggaSource().isEmpty());
     QVERIFY(transport->sentNmea.isEmpty());
-    manager->stopNTRIP();
 }
 
 void NTRIPGgaProviderTest::_invalidProviderAltitude_data()

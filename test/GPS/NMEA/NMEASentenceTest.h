@@ -30,4 +30,6 @@ private slots:
     void _fixQuality();
     void _ggaHdopValidation_data();
     void _ggaHdopValidation();
+    void _gstFieldCounts_data();
+    void _gstFieldCounts();
 };

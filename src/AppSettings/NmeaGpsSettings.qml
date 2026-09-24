@@ -8,8 +8,10 @@ import QGroundControl.FactControls
 SettingsGroupLayout {
     id: root
     heading: qsTr("NMEA GPS")
-    visible: root._autoConnectSettings.nmeaSource.userVisible && root._autoConnectSettings.autoConnectNmeaBaud.userVisible
+    visible: root.nmeaSettingsVisible
 
+    readonly property bool nmeaSettingsVisible: root._autoConnectSettings.nmeaSource.userVisible
+                                                && root._autoConnectSettings.autoConnectNmeaBaud.userVisible
     readonly property var  _autoConnectSettings: QGroundControl.settingsManager.autoConnectSettings
     property var positionManager: QGroundControl.positionManager
     readonly property var nmeaInput: root.positionManager.nmeaInput
@@ -18,6 +20,7 @@ SettingsGroupLayout {
     readonly property var _serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
     readonly property var _serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
     readonly property bool _serialSource: root._autoConnectSettings.nmeaSource.rawValue === AutoConnectSettings.NmeaSourceSerial
+    readonly property bool _tcpSource: root._autoConnectSettings.nmeaSource.rawValue === AutoConnectSettings.NmeaSourceTcp
 
     LabelledFactComboBox {
         label: qsTr("Source")
@@ -42,6 +45,20 @@ SettingsGroupLayout {
         fact: root._autoConnectSettings.nmeaUdpPort
     }
 
+    LabelledFactTextField {
+        objectName: "nmeaTcpHost"
+        visible: root._tcpSource
+        label: qsTr("NMEA TCP server host")
+        fact: root._autoConnectSettings.nmeaTcpHost
+    }
+
+    LabelledFactTextField {
+        objectName: "nmeaTcpPort"
+        visible: root._tcpSource
+        label: qsTr("NMEA TCP server port")
+        fact: root._autoConnectSettings.nmeaTcpPort
+    }
+
     QGCLabel {
         objectName: "nmeaConnectionStatus"
         visible: root.nmeaInput && (root.nmeaInput.errorMessage.length > 0 || !root._health)
@@ -59,7 +76,7 @@ SettingsGroupLayout {
         wrapMode: Text.WordWrap
         text: root.nmeaInput && root.nmeaInput.receiving ? qsTr("Receiving NMEA data")
               : root.nmeaInput && root.nmeaInput.hasData ? qsTr("NMEA stream idle")
-              : root._serialSource ? qsTr("Waiting for NMEA data") : qsTr("Listening for NMEA UDP data")
+              : root._serialSource || root._tcpSource ? qsTr("Waiting for NMEA data") : qsTr("Listening for NMEA UDP data")
     }
 
     QGCLabel {

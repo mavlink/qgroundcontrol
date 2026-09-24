@@ -16,6 +16,18 @@
             ]
         },
         {
+            "component": "GcsPositionStatus",
+            "sectionName": "GCS Position",
+            "keywords": [
+                "gcs position",
+                "ground station position",
+                "position source",
+                "rtk",
+                "nmea",
+                "gps"
+            ]
+        },
+        {
             "component": "NmeaGpsSettings",
             "sectionName": "NMEA GPS",
             "keywords": [

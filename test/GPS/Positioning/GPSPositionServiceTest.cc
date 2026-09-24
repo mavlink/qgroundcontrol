@@ -47,11 +47,11 @@ void GPSPositionServiceTest::_sharedProducerRoles()
     QCOMPARE(service.selectedSource(), Kind::Receiver);
     QVERIFY(service.gcsPosition().isValid());
 
-    QSignalSpy reports(&service, &GPSPositionService::positionInfoUpdated);
+    QSignalSpy reports(&service, &GPSPositionService::gcsPositionChanged);
     health.updateObservation(fix(scheduler, 48, 2));
-    QCOMPARE(reports.size(), 2);
-    QVERIFY(!reports.first().first().value<QGeoPositionInfo>().isValid());
-    QVERIFY(reports.last().first().value<QGeoPositionInfo>().isValid());
+    // Clearing the previous source's fix and publishing the new one is a single notification.
+    QCOMPARE(reports.size(), 1);
+    QCOMPARE(reports.last().first().value<QGeoCoordinate>().latitude(), 48);
     QCOMPARE(service.selectedSource(), Kind::Nmea);
     QCOMPARE(service.selectedSourceName(), QStringLiteral("NMEA"));
     QCOMPARE(service.gcsPosition().latitude(), 48);
@@ -59,7 +59,7 @@ void GPSPositionServiceTest::_sharedProducerRoles()
     QCOMPARE(service.acceptedObservation()->sessionId, 2u);
     reports.clear();
     health.updateObservation(fix(scheduler, 48, 2));
-    QCOMPARE(reports.size(), 1);
+    QVERIFY(reports.isEmpty());
 
     service.setSourceMode(Mode::ReceiverOnly);
     QCOMPARE(service.selectedSource(), Kind::Receiver);
@@ -127,7 +127,6 @@ void GPSPositionServiceTest::_selectionStatusMatchesPublication_data()
     QTest::addColumn<int>("mode");
     QTest::newRow("receiver-only") << int(Mode::ReceiverOnly);
     QTest::newRow("nmea-only") << int(Mode::NmeaOnly);
-    QTest::newRow("legacy-priority") << int(Mode::LegacyPriority);
 }
 
 void GPSPositionServiceTest::_selectionStatusMatchesPublication()
@@ -146,11 +145,9 @@ void GPSPositionServiceTest::_selectionStatusMatchesPublication()
     secondary.updateObservation(fix(scheduler, 48));
     const auto checkPublication = [&]() {
         QCOMPARE(service.sourceStatus() == Status::Active, service.gcsPosition().isValid());
-        QCOMPARE(service.sourceStatus() == Status::Active, service.geoPositionInfo().isValid());
     };
     connect(&service, &GPSPositionService::selectionChanged, &service, checkPublication);
     connect(&service, &GPSPositionService::gcsPositionChanged, &service, checkPublication);
-    connect(&service, &GPSPositionService::positionInfoUpdated, &service, checkPublication);
     service.setSourceMode(Mode(mode));
     QCOMPARE(service.sourceStatus(), Status::WaitingForFix);
     QVERIFY(!service.acceptedObservation());
@@ -159,7 +156,7 @@ void GPSPositionServiceTest::_selectionStatusMatchesPublication()
     selectedHealth.updateObservation(fix(scheduler));
     QCOMPARE(service.sourceStatus(), Status::Active);
     QVERIFY(service.acceptedObservation());
-    QSignalSpy reports(&service, &GPSPositionService::positionInfoUpdated);
+    QSignalSpy reports(&service, &GPSPositionService::gcsPositionChanged);
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(5)));
     QCOMPARE(service.sourceStatus(), Status::Stale);
     QVERIFY(!service.gcsPosition().isValid());
@@ -199,11 +196,10 @@ void GPSPositionServiceTest::_automaticRejectionMatchesPublication()
     QVERIFY(service.gcsPosition().isValid());
 
     QSignalSpy selections(&service, &GPSPositionService::selectionChanged);
-    QSignalSpy positions(&service, &GPSPositionService::positionInfoUpdated);
+    QSignalSpy positions(&service, &GPSPositionService::gcsPositionChanged);
     const auto checkPublication = [&]() {
         const bool active = service.sourceStatus() == Status::Active;
         QCOMPARE(service.gcsPosition().isValid(), active);
-        QCOMPARE(service.geoPositionInfo().isValid(), active);
         QCOMPARE(service.acceptedObservation().has_value(), active);
     };
     connect(&service, &GPSPositionService::selectionChanged, &service, checkPublication);
@@ -258,7 +254,7 @@ void GPSPositionServiceTest::_sourcesShareAcceptance()
     QCOMPARE(service.gcsPosition(), observation.coordinate());
     QCOMPARE(service.gcsHeading(), observation.heading());
     QVERIFY(service.gcsPositionTimestamp().isValid());
-    QCOMPARE(service.sourceHealth()->observation().altitudeDatum, GPSAltitudeDatum::Unknown);
+    QCOMPARE(service._currentHealth.data()->observation().altitudeDatum, GPSAltitudeDatum::Unknown);
     const auto remoteId = service.acceptedObservation(GPSObservation::PositionUse::RemoteID);
     QVERIFY(remoteId);
     QVERIFY(remoteId->position.coordinate().isValid());
@@ -266,7 +262,7 @@ void GPSPositionServiceTest::_sourcesShareAcceptance()
     QVERIFY(!remoteId->position.hasAttribute(QGeoPositionInfo::VerticalAccuracy));
     QCOMPARE(remoteId->altitudeDatum, GPSAltitudeDatum::Unknown);
     if (Kind(kind) == Kind::Internal) {
-        QCOMPARE(service.sourceHealth()->observation().sourceId,
+        QCOMPARE(service._currentHealth.data()->observation().sourceId,
                  custom ? QStringLiteral("Plugin") : QStringLiteral("Platform"));
         QCOMPARE(service.updateInterval(), source.minimumUpdateInterval());
     }
@@ -274,7 +270,7 @@ void GPSPositionServiceTest::_sourcesShareAcceptance()
     source.publish(observation.position);
     QCOMPARE(service.sourceStatus(), Status::InvalidFix);
     QVERIFY(!service.gcsPosition().isValid());
-    QVERIFY(!service.geoPositionInfo().isValid());
+    QVERIFY(!service.acceptedObservation());
     source.publish(fix(scheduler).position);
     QVERIFY(service.gcsPosition().isValid());
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(5)));
@@ -301,7 +297,7 @@ void GPSPositionServiceTest::_registrationReplacementAndSessions()
     auto moved = std::move(first);
     QVERIFY(!first);
     moved.reset();
-    QCOMPARE(service.sourceHealth(), &health);
+    QCOMPARE(service._currentHealth.data(), &health);
     QVERIFY(!service.gcsPosition().isValid());
     health.updateObservation(fix(scheduler, 47, 11));
     QVERIFY(!service.gcsPosition().isValid());
@@ -309,7 +305,7 @@ void GPSPositionServiceTest::_registrationReplacementAndSessions()
     QCOMPARE(service.gcsPosition().latitude(), 48);
     QCOMPARE(service.acceptedObservation()->sessionId, quint64(12));
     second.reset();
-    QVERIFY(!service.sourceHealth());
+    QVERIFY(!service._currentHealth.data());
     health.updateObservation(fix(scheduler, 47, 12));
     QVERIFY(!service.gcsPosition().isValid());
 }
@@ -328,10 +324,8 @@ void GPSPositionServiceTest::_automaticFailoverAndRecovery()
     auto nmeaRegistration = service.registerPositionSource(Kind::Nmea, &nmea, &secondary);
     primary.updateObservation(fix(scheduler));
     secondary.updateObservation(fix(scheduler, 48));
-    primary.invalidatePosition();
     QCOMPARE(service.selectedSource(), Kind::Receiver);
-    QVERIFY(!service.gcsPosition().isValid());
-    service.setSourceMode(Mode::Automatic);
+    primary.invalidatePosition();
     QCOMPARE(service.selectedSource(), Kind::Nmea);
     QCOMPARE(service.gcsPosition().latitude(), 48);
     primary.setFreshnessTimeoutMs(60000);
@@ -391,30 +385,28 @@ void GPSPositionServiceTest::_standbyReportsDoNotRepublish()
     auto nmeaRegistration = service.registerPositionSource(Kind::Nmea, &nmea, &secondary);
     service.setSourceMode(Mode::Automatic);
     primary.updateObservation(fix(scheduler));
-    QSignalSpy reports(&service, &GPSPositionService::positionInfoUpdated);
     QSignalSpy coordinates(&service, &GPSPositionService::gcsPositionChanged);
     secondary.updateObservation(fix(scheduler, 48));
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
     secondary.updateObservation(fix(scheduler, 49));
-    QCOMPARE(reports.size(), 0);
+    QCOMPARE(coordinates.size(), 0);
 
     primary.updateObservation(fix(scheduler));
-    QCOMPARE(reports.size(), 1);
     QCOMPARE(coordinates.size(), 0);
     QCOMPARE(service.acceptedObservation()->monotonicTimestampUs, scheduler.nowUs());
     primary.invalidatePosition();
     QCOMPARE(service.selectedSource(), Kind::Nmea);
     QCOMPARE(service.gcsPosition().latitude(), 49);
-    reports.clear();
+    coordinates.clear();
 
     primary.updateObservation(fix(scheduler));
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(4999)));
     QCOMPARE(service.selectedSource(), Kind::Nmea);
-    QVERIFY(reports.isEmpty());
+    QVERIFY(coordinates.isEmpty());
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
     QCOMPARE(service.selectedSource(), Kind::Receiver);
-    QCOMPARE(reports.size(), 2);
-    QVERIFY(reports.last().first().value<QGeoPositionInfo>().isValid());
+    QCOMPARE(coordinates.size(), 1);
+    QCOMPARE(coordinates.last().first().value<QGeoCoordinate>().latitude(), 47);
 }
 
 void GPSPositionServiceTest::_consumerPolicies_data()
@@ -508,11 +500,7 @@ void GPSPositionServiceTest::_consumerPolicies()
             QCOMPARE(accepted->satellitesUsed, observation.satellitesUsed);
             QCOMPARE(accepted->horizontalDop, observation.horizontalDop);
         }
-        QCOMPARE(service.geoPositionInfo().isValid(), horizontalAccuracy);
         QCOMPARE(service.gcsPosition().isValid(), horizontalAccuracy);
-        if (horizontalAccuracy) {
-            QCOMPARE(service.geoPositionInfo(), observation.position);
-        }
     }
     QCOMPARE(health.observation().position, observation.position);
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(4999)));
@@ -563,6 +551,7 @@ void GPSPositionServiceTest::_policySelectionGates()
     GPSSourceHealth firstHealth(nullptr, &scheduler);
     GPSSourceHealth replacementHealth(nullptr, &scheduler);
     GPSPositionService service(nullptr, &scheduler);
+    service.setSourceMode(Mode::ReceiverOnly);
     auto oldRegistration = service.registerPositionSource(Kind::Receiver, &first, &firstHealth, 1);
     firstHealth.updateObservation(fix(scheduler, 47, 1));
     replacementHealth.updateObservation(fix(scheduler, 48, 2));
@@ -591,7 +580,6 @@ void GPSPositionServiceTest::_policySelectionGates()
 void GPSPositionServiceTest::_notificationsCanSwitchOrDelete_data()
 {
     QTest::addColumn<int>("mode");
-    QTest::newRow("legacy") << int(Mode::LegacyPriority);
     QTest::newRow("automatic") << int(Mode::Automatic);
 }
 
@@ -677,7 +665,7 @@ void GPSPositionServiceTest::_backendTimeoutPreservesFreshness()
         source.publish(fix(scheduler).position);
     }
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
-    QSignalSpy positions(&service, &GPSPositionService::positionInfoUpdated);
+    QSignalSpy positions(&service, &GPSPositionService::gcsPositionChanged);
     source.fail(QGeoPositionInfoSource::UpdateTimeoutError);
     QCOMPARE(service.gcsPositioningError(), QGeoPositionInfoSource::UpdateTimeoutError);
     QCOMPARE(service.sourceStatus(), hasFix ? Status::Active : Status::WaitingForFix);
@@ -706,7 +694,7 @@ void GPSPositionServiceTest::_adapterReentrantDeactivation()
     GPSPositionService service(nullptr, &scheduler);
     service.setInternalPositionSource(&source, Status::WaitingForFix);
     source.publish(fix(scheduler).position);
-    auto* health = service.sourceHealth();
+    auto* health = service._currentHealth.data();
     if (error == QGeoPositionInfoSource::NoError) {
         source.fail(QGeoPositionInfoSource::AccessError);
     }
@@ -740,7 +728,7 @@ void GPSPositionServiceTest::_adapterReentrantReplacement()
     first.onStop = [&]() { next.reset(); };
     service.setInternalPositionSource(next.get(), Status::WaitingForFix);
     QCOMPARE(service.selectedSource(), Kind::None);
-    QVERIFY(!service.sourceHealth());
+    QVERIFY(!service._currentHealth.data());
 }
 
 UT_REGISTER_TEST(GPSPositionServiceTest, TestLabel::Unit)
@@ -749,9 +737,7 @@ void GPSPositionServiceTest::_nestedObservationNotifications_data()
 {
     QTest::addColumn<Mode>("mode");
     QTest::addColumn<bool>("fromHealth");
-    QTest::newRow("legacy") << Mode::LegacyPriority << false;
     QTest::newRow("automatic") << Mode::Automatic << false;
-    QTest::newRow("legacy-health-callback") << Mode::LegacyPriority << true;
     QTest::newRow("automatic-health-callback") << Mode::Automatic << true;
 }
 
@@ -823,7 +809,7 @@ void GPSPositionServiceTest::_sharedHealthLoss_data()
 {
     QTest::addColumn<Mode>("mode");
     QTest::addColumn<bool>("retireReceiver");
-    for (const auto mode : {Mode::LegacyPriority, Mode::Automatic, Mode::ReceiverOnly, Mode::NmeaOnly}) {
+    for (const auto mode : {Mode::Automatic, Mode::ReceiverOnly, Mode::NmeaOnly}) {
         for (const bool retireReceiver : {false, true}) {
             const auto name = QByteArray::number(int(mode)) + (retireReceiver ? "-retire-receiver" : "-retire-nmea");
             QTest::newRow(name.constData()) << mode << retireReceiver;
@@ -912,7 +898,7 @@ void GPSPositionServiceTest::_adapterNestedBackendEvent()
     const auto accepted = service.acceptedObservation();
     if (restart) {
         QVERIFY(!accepted);
-        QCOMPARE(service.sourceHealth()->state(), GPSSourceHealth::State::NoData);
+        QCOMPARE(service._currentHealth.data()->state(), GPSSourceHealth::State::NoData);
     } else {
         QVERIFY(accepted);
         QCOMPARE(accepted->position.coordinate().latitude(), 48);
@@ -930,13 +916,11 @@ void GPSPositionServiceTest::_accuracyNotifiesOnlyChanges()
     GPSPositionService service(nullptr, &scheduler);
     auto registration = service.registerPositionSource(Kind::Receiver, &source, nullptr);
     QSignalSpy accuracy(&service, &GPSPositionService::gcsPositionHorizontalAccuracyChanged);
-    QSignalSpy positions(&service, &GPSPositionService::positionInfoUpdated);
     auto position = fix(scheduler).position;
     source.publish(position);
     QCOMPARE(accuracy.size(), 1);
     source.publish(position);
     QCOMPARE(accuracy.size(), 1);
-    QCOMPARE(positions.size(), 2);
     position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 2);
     source.publish(position);
     QCOMPARE(accuracy.size(), 2);
@@ -947,7 +931,6 @@ void GPSPositionServiceTest::_accuracyNotifiesOnlyChanges()
     QVERIFY(qIsInf(accuracy.last().first().toDouble()));
     source.publish(position);
     QCOMPARE(accuracy.size(), 3);
-    QCOMPARE(positions.size(), 5);
 }
 
 void GPSPositionServiceTest::_destructionDisconnectsBindings()
@@ -962,7 +945,7 @@ void GPSPositionServiceTest::_destructionDisconnectsBindings()
     QVERIFY(first->active && second.active);
     second.onStop = [&]() { first.reset(); };
     int publications = 0;
-    connect(service.get(), &GPSPositionService::positionInfoUpdated, this, [&]() { ++publications; });
+    connect(service.get(), &GPSPositionService::gcsPositionChanged, this, [&]() { ++publications; });
     service.reset();
     QVERIFY(!first);
     QVERIFY(!second.active);

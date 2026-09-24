@@ -27,8 +27,7 @@ Q_DECLARE_METATYPE(GPSBaseStationConfig)
 void GPSProviderTest::_queuedPayloadsOwnSnapshots()
 {
     GPSProvider provider({}, GPSType::ublox, {});
-    for (const auto name :
-         {"GPSSatelliteReport", "GPSPositionReport::FixType", "GPSConnectionError", "GPSSurveyReport"}) {
+    for (const auto name : {"GPSSatelliteReport", "GPSPositionReport", "GPSConnectionError", "GPSSurveyReport"}) {
         QVERIFY2(QMetaType::fromName(name).isValid(), name);
     }
     GPSSatelliteReport satellites;
@@ -41,8 +40,8 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
         &provider, &GPSProvider::satelliteInfoUpdate, &receiver,
         [&](const GPSSatelliteReport& value) { satellites = value; }, Qt::QueuedConnection);
     connect(
-        &provider, &GPSProvider::fixTypeChanged, &receiver, [&](GPSPositionReport::FixType value) { fixType = value; },
-        Qt::QueuedConnection);
+        &provider, &GPSProvider::positionUpdate, &receiver,
+        [&](const GPSPositionReport& value) { fixType = value.navigation.fixType; }, Qt::QueuedConnection);
     connect(
         &provider, &GPSProvider::surveyInStatus, &receiver, [&](const GPSSurveyReport& value) { survey = value; },
         Qt::QueuedConnection);
@@ -58,7 +57,10 @@ void GPSProviderTest::_queuedPayloadsOwnSnapshots()
         snapshot.inView = 1;
         snapshot.used = 7;
         emit provider.satelliteInfoUpdate(snapshot);
-        emit provider.fixTypeChanged(GPSPositionReport::FixType::Fix3D);
+        GPSPositionReport position;
+        position.navigation.fixType = GPSPositionReport::FixType::Fix3D;
+        emit provider.positionUpdate(position);
+        position.navigation.fixType = GPSPositionReport::FixType::NoFix;
         GPSSurveyReport progress;
         progress.duration = std::chrono::seconds(4294967295LL);
         progress.meanAccuracyMeters = 1.234;
@@ -388,7 +390,7 @@ void GPSProviderTest::_positionFixTransitions()
     for (int session = 0; session < 2; ++session) {
         GPSProvider provider([](const std::atomic_bool& stop) { return std::make_unique<FixSequenceTransport>(stop); },
                              GPSType::passive, {.role = GPSReceiverConfig::Role::Passive, .baudRate = 115200});
-        QSignalSpy fixes(&provider, &GPSProvider::fixTypeChanged);
+        QSignalSpy positions(&provider, &GPSProvider::positionUpdate);
         provider.start();
         const bool finished = provider.wait(TestTimeout::shortMs());
         if (!finished) {
@@ -396,12 +398,16 @@ void GPSProviderTest::_positionFixTransitions()
             QVERIFY(provider.wait(TestTimeout::longMs()));
         }
         QVERIFY(finished);
-        QCOMPARE(fixes.size(), 4);
-        const QList<GPSPositionReport::FixType> expected{
-            GPSPositionReport::FixType::NoFix, GPSPositionReport::FixType::Fix3D, GPSPositionReport::FixType::RTKFixed,
-            GPSPositionReport::FixType::NoFix};
+        using Fix = GPSPositionReport::FixType;
+        const QList<Fix> expected{Fix::NoFix,    Fix::NoFix,    Fix::Fix3D, Fix::Fix3D,
+                                  Fix::RTKFixed, Fix::RTKFixed, Fix::NoFix};
+        QCOMPARE(positions.size(), expected.size());
         for (qsizetype i = 0; i < expected.size(); ++i) {
-            QCOMPARE(qvariant_cast<GPSPositionReport::FixType>(fixes[i].first()), expected[i]);
+            const auto report = qvariant_cast<GPSPositionReport>(positions[i].first());
+            QCOMPARE(report.navigation.fixType, expected[i]);
+            if (expected[i] != Fix::NoFix) {
+                QVERIFY(qAbs(report.navigation.latitudeDegrees - 48.1173) < 1e-6);
+            }
         }
     }
 }
@@ -427,7 +433,7 @@ void GPSProviderTest::_satelliteExpiryDoesNotRenewLiveness()
             }
         },
         Qt::DirectConnection);
-    QSignalSpy fixes(&provider, &GPSProvider::fixTypeChanged);
+    QSignalSpy positions(&provider, &GPSProvider::positionUpdate);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     elapsed.start();
     provider.start();
@@ -439,7 +445,7 @@ void GPSProviderTest::_satelliteExpiryDoesNotRenewLiveness()
     QVERIFY(finished);
     QVERIFY(freshView.load());
     QVERIFY(expiredView.load());
-    QCOMPARE(fixes.size(), 1);
+    QCOMPARE(positions.size(), 2);
     QCOMPARE(errors.size(), 1);
     QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
     // An expiry credited as new traffic would add another complete inactivity window.

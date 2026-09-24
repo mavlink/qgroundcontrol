@@ -4,6 +4,9 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QThread>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQml/QQmlExpression>
@@ -20,6 +23,7 @@
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverDescriptor.h"
 #include "GPSRtk.h"
+#include "GPSTransport.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
@@ -30,6 +34,7 @@ class ReceiverSettingsController : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool hasReceiver READ hasReceiver NOTIFY receiverChanged)
+    Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY receiverChanged)
     Q_PROPERTY(bool serialSupported READ serialSupported CONSTANT)
 
 public:
@@ -38,6 +43,14 @@ public:
     {}
 
     bool hasReceiver() const { return _hasReceiver; }
+
+    bool reconnecting() const { return _reconnecting; }
+
+    void setReconnecting(bool reconnecting)
+    {
+        _reconnecting = reconnecting;
+        emit receiverChanged();
+    }
 
     bool serialSupported() const { return true; }
 
@@ -71,7 +84,11 @@ public:
         return connectSucceeds;
     }
 
-    Q_INVOKABLE void disconnectConfiguredGPS() { setConnected(false); }
+    Q_INVOKABLE void disconnectConfiguredGPS()
+    {
+        _reconnecting = false;
+        setConnected(false);
+    }
 
     bool connectSucceeds = true;
     QList<bool> permissions;
@@ -85,6 +102,7 @@ signals:
 private:
     RTKSettings* _settings;
     bool _hasReceiver = false;
+    bool _reconnecting = false;
 };
 
 namespace {
@@ -259,6 +277,64 @@ void GPSReceiverSettingsTest::_unavailablePositionCannotBeSaved()
     QVERIFY(!result);
     QCOMPARE(settings.settings->fixedBasePositionLatitude()->rawValue().toDouble(), 0.0);
     QCOMPARE(settings.settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.0);
+}
+
+void GPSReceiverSettingsTest::_rtkBaseMapMarker()
+{
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->rtkSettings();
+    saved.setFactValue(settings->baseReceiverManufacturers(), settings->baseReceiverManufacturers()->rawValue());
+    saved.setFactValue(settings->useFixedBasePosition(), static_cast<int>(BaseModeDefinition::Mode::BaseFixed));
+    saved.setFactValue(settings->fixedBasePositionLatitude(), 47.5);
+    saved.setFactValue(settings->fixedBasePositionLongitude(), 8.25);
+    saved.setFactValue(settings->fixedBasePositionAccuracy(), 0.5);
+    auto* receiver = GPSManager::instance()->gpsRtk();
+    const auto retire = qScopeGuard([receiver]() { receiver->disconnectGPS(); });
+    QQmlEngine engine;
+    configureEngine(engine);
+    QQmlComponent component(&engine, sourceUrl(QStringLiteral("../FlightMap/MapItems/RTKBaseMapItem.qml")));
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    std::unique_ptr<QQmlPropertyMap> map(QQmlPropertyMap::create());
+    map->insert(QStringLiteral("isSatelliteMap"), false);
+    std::unique_ptr<QObject> marker(
+        component.createWithInitialProperties({{QStringLiteral("map"), QVariant::fromValue(map.get())}}));
+    QVERIFY2(marker, qPrintable(component.errorString()));
+    // Map items stay hidden outside a map, so check the bound position that drives visibility.
+    QVERIFY(!marker->property("coordinate").value<QGeoCoordinate>().isValid());
+    QVERIFY(receiver->connectReceiver(GPSType::ublox, [](const std::atomic_bool& stop) {
+        while (!stop.load()) {
+            QThread::msleep(1);
+        }
+        return std::unique_ptr<GPSTransport>{};
+    }));
+    QCOMPARE(marker->property("coordinate").value<QGeoCoordinate>(), QGeoCoordinate(47.5, 8.25));
+    QVERIFY(marker->property("_final").toBool());
+    QVERIFY(marker->findChild<QObject*>(QStringLiteral("rtkBaseMarker")));
+    receiver->disconnectGPS();
+    QVERIFY(!marker->property("coordinate").value<QGeoCoordinate>().isValid());
+}
+
+void GPSReceiverSettingsTest::_reconnectingOffersDisconnect()
+{
+    SettingsFixture settings(4);
+    ReceiverSettingsController receiver(settings.settings);
+    GPSRTKFactGroup facts;
+    QQmlEngine engine;
+    QString error;
+    auto panel = createPanel(engine, receiver, settings, facts, error);
+    QVERIFY2(panel, qPrintable(error));
+    auto* connect = panel->findChild<QQuickItem*>(QStringLiteral("rtkConnectButton"));
+    auto* device = panel->findChild<QQuickItem*>(QStringLiteral("rtkSerialDevice"));
+    QVERIFY(connect && device);
+    receiver.setReconnecting(true);
+    QCOMPARE(connect->property("text").toString(), QCoreApplication::translate("GPSReceiverSettings", "Disconnect"));
+    QVERIFY(connect->isEnabled());
+    QVERIFY(!device->isEnabled());
+    QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
+    QVERIFY(!receiver.reconnecting());
+    QVERIFY(device->isEnabled());
+    QCOMPARE(connect->property("text").toString(), QCoreApplication::translate("GPSReceiverSettings", "Connect"));
+    QVERIFY(receiver.permissions.isEmpty());
 }
 
 void GPSReceiverSettingsTest::_tcpConnectionFields()

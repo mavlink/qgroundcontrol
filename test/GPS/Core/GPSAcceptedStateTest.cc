@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <memory>
+#include <numbers>
 
 #include <QtTest/QTest>
 
@@ -33,6 +35,7 @@ private slots:
     void _satelliteNormalization_data();
     void _satelliteNormalization();
     void _surveyReportRetainsUnits();
+    void _navigationObservation();
 };
 
 void GPSAcceptedStateTest::_receiptDeadlineBoundaries()
@@ -384,5 +387,52 @@ void GPSAcceptedStateTest::_surveyReportRetainsUnits()
 }
 
 UT_REGISTER_TEST(GPSAcceptedStateTest, TestLabel::Unit)
+
+void GPSAcceptedStateTest::_navigationObservation()
+{
+    GPSNavigationValues navigation;
+    navigation.fixType = GPSFixQuality::RTKFloat;
+    navigation.utcTimeUs = 1'700'000'000'123'000ULL;
+    navigation.latitudeDegrees = 47.5;
+    navigation.longitudeDegrees = 8.25;
+    navigation.altitudeMslMeters = 450;
+    navigation.altitudeEllipsoidMeters = 497.5;
+    navigation.horizontalAccuracyMeters = 0.3f;
+    navigation.verticalAccuracyMeters = 0.6f;
+    navigation.horizontalDop = 0.8f;
+    navigation.speedMetersPerSecond = 2;
+    navigation.courseRadians = -std::numbers::pi_v<float> / 2;
+    navigation.satellitesUsed = 18;
+    const auto observation = GPSObservation::fromNavigation(navigation, 1234);
+    QVERIFY(observation.usable());
+    QCOMPARE(observation.monotonicTimestampUs, quint64(1234));
+    QCOMPARE(observation.fixQuality, GPSFixQuality::RTKFloat);
+    QCOMPARE(observation.position.timestamp().toMSecsSinceEpoch(), qint64(1'700'000'000'123));
+    QCOMPARE(observation.coordinate(), QGeoCoordinate(47.5, 8.25, 450));
+    QCOMPARE(observation.altitudeDatum, GPSAltitudeDatum::MeanSeaLevel);
+    QCOMPARE(observation.altitudeEllipsoidMeters, std::optional<double>(497.5));
+    QCOMPARE(observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy), qreal(0.3f));
+    QCOMPARE(observation.horizontalDop, std::optional<double>(0.8f));
+    QCOMPARE(observation.satellitesUsed, std::optional<int>(18));
+    QVERIFY(qAbs(observation.heading() - 270) < 1e-3);
+    QVERIFY(!observation.verticalDop);
+
+    // NMEA receivers without GST report only DOP.
+    navigation.fixType = GPSFixQuality::Differential;
+    navigation.horizontalAccuracyMeters = std::numeric_limits<float>::quiet_NaN();
+    navigation.horizontalDop = 0.5f;
+    const auto dopOnly = GPSObservation::fromNavigation(navigation, 1236);
+    QVERIFY(dopOnly.usable());
+    QCOMPARE(dopOnly.position.attribute(QGeoPositionInfo::HorizontalAccuracy), GPSObservation::accuracyFromDop(0.5f));
+
+    navigation.fixType = GPSFixQuality::NoFix;
+    navigation.altitudeMslMeters = std::numeric_limits<double>::quiet_NaN();
+    navigation.utcTimeUs = 0;
+    const auto lost = GPSObservation::fromNavigation(navigation, 1235);
+    QVERIFY(!lost.hasNavigationSolution());
+    QCOMPARE(lost.altitudeDatum, GPSAltitudeDatum::Unknown);
+    QVERIFY(lost.position.timestamp().isValid());
+    QVERIFY(!GPSObservation::fromNavigation(GPSNavigationValues{}, 1).position.isValid());
+}
 
 #include "GPSAcceptedStateTest.moc"

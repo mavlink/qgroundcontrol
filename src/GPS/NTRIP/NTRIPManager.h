@@ -9,6 +9,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "GPSCorrectionSourceRegistration.h"
+#include "GPSNotificationQueue.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPConnectionStats.h"
 #include "NTRIPGgaProvider.h"
@@ -37,7 +38,6 @@ class NTRIPManager : public QObject
     Q_PROPERTY(ConnectionStatus connectionStatus READ connectionStatus NOTIFY connectionStatusChanged)
     Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged)
     Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged)
-    Q_PROPERTY(CasterStatus casterStatus READ casterStatus NOTIFY casterStatusChanged)
     Q_PROPERTY(QString ggaSource READ ggaSource NOTIFY ggaSourceChanged)
     Q_PROPERTY(NTRIPSourceTableController* sourceTableController READ sourceTableController CONSTANT)
     Q_PROPERTY(NTRIPConnectionStats* connectionStats READ connectionStats CONSTANT)
@@ -53,14 +53,6 @@ public:
         Error = 4
     };
     Q_ENUM(ConnectionStatus)
-
-    enum class CasterStatus
-    {
-        CasterConnected,
-        CasterNoLocation,
-        CasterError
-    };
-    Q_ENUM(CasterStatus)
 
     /// State-machine events. Each represents an external stimulus; the
     /// transition table in NTRIPManager.cc maps (state, event) → next state.
@@ -92,7 +84,6 @@ public:
 
     QString securityWarning() const { return _securityWarning; }
 
-    CasterStatus casterStatus() const { return _casterStatus; }
 
     QString ggaSource() const { return _ggaProvider.currentSource(); }
 
@@ -128,7 +119,6 @@ signals:
     void connectionStatusChanged();
     void statusMessageChanged();
     void securityWarningChanged();
-    void casterStatusChanged(CasterStatus status);
     void ggaSourceChanged();
 
 private:
@@ -136,9 +126,8 @@ private:
     /// Events with no matching row for the current state are ignored (debug log).
     bool _dispatch(Event ev, const QString& detail = {}, std::chrono::milliseconds retryAfter = {});
 
-    /// Commit a state change. Updates _connectionStatus/_statusMessage and
-    /// emits change signals *before* invoking entry actions so recursive
-    /// dispatches from entry actions observe the new state, not the old.
+    /// Commit a state change before invoking entry actions, so recursive dispatches from entry
+    /// actions observe the new state. Change signals are delivered after the outermost operation.
     void _enterState(ConnectionStatus to, const QString& detail, std::chrono::milliseconds retryAfter = {});
 
     /// Per-state side effects (start transport, tear down, schedule reconnect, etc.).
@@ -185,7 +174,6 @@ private:
     ConnectionStatus _connectionStatus = ConnectionStatus::Disconnected;
     QString _statusMessage;
     QString _securityWarning;
-    CasterStatus _casterStatus = CasterStatus::CasterError;
 
     QPointer<NTRIPTransport> _injectedTransport;
     QPointer<NTRIPTransport> _transport;
@@ -205,4 +193,5 @@ private:
     bool _initialized = false;
     bool _shutdown = false;
     quint64 _stateRevision = 0;
+    GPSNotificationQueue _notifications{this};
 };

@@ -1,5 +1,8 @@
 #include "GPSManager.h"
 
+#include <QtCore/QApplicationStatic>
+#include <QtCore/QTimer>
+
 #include "AppMessages.h"
 #include "GPSCorrectionManager.h"
 #include "GPSMavlinkOutput.h"
@@ -12,16 +15,11 @@
 #include "NTRIPManager.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
+#include "RTKConnectionPolicy.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
 #include "VehicleGPSFactGroup.h"
 #include "VehicleLinkManager.h"
-#ifndef QGC_NO_SERIAL_LINK
-#include "RTKAutoConnect.h"
-#include "SerialPortManager.h"
-#endif
-#include <QtCore/QApplicationStatic>
-#include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(GPSManagerLog, "GPS.GPSManager")
 
@@ -101,6 +99,10 @@ void GPSManager::_configureGgaProviders()
         return vehicle ? ggaPosition(vehicle->acceptedPositionObservation(), QStringLiteral("Vehicle EKF"))
                        : PositionResult{};
     });
+    _ntripManager->setGgaPositionProvider(Source::RTKReceiver, [this]() -> PositionResult {
+        return ggaPosition(_gpsRtk->acceptedPositionObservation(GPSObservation::PositionUse::Gga),
+                           QStringLiteral("RTK Receiver"));
+    });
     _ntripManager->setGgaPositionProvider(Source::GCSPosition, []() -> PositionResult {
         auto* manager = QGCPositionManager::instance();
         return manager ? ggaPosition(manager->acceptedObservation(GPSObservation::PositionUse::Gga),
@@ -115,16 +117,11 @@ void GPSManager::init()
         return;
     }
     _configureGgaProviders();
+    _gpsRtk->setPositionService(QGCPositionManager::instance());
     _corrections->init(SettingsManager::instance()->gpsCorrectionSettings());
     _ntripManager->init();
     auto* settings = SettingsManager::instance()->autoConnectSettings();
     _nmeaSources = new NMEASourceManager(settings, QGCPositionManager::instance(), this);
-#ifndef QGC_NO_SERIAL_LINK
-    _rtkAutoConnect = new RTKAutoConnect(settings, _gpsRtk, SerialPortManager::instance(), this);
-    connect(_rtkAutoConnect, &RTKAutoConnect::connectRequested, this,
-            [this](const QString& device, const QString& name) { _gpsRtk->connectGPS(device, name); });
-    connect(_rtkAutoConnect, &RTKAutoConnect::disconnectRequested, _gpsRtk, &GPSRtk::disconnectGPS);
-#endif
     _connectionTimer = new QTimer(this);
     _connectionTimer->setInterval(1000);
     connect(_connectionTimer, &QTimer::timeout, this, &GPSManager::_updateConnections);
@@ -143,11 +140,7 @@ void GPSManager::_updateConnections()
     if (!guard || _shutdown) {
         return;
     }
-#ifndef QGC_NO_SERIAL_LINK
-    if (_rtkAutoConnect) {
-        _rtkAutoConnect->update();
-    }
-#endif
+    _gpsRtk->connectionPolicy()->update();
 }
 
 void GPSManager::shutdown()
@@ -163,11 +156,6 @@ void GPSManager::shutdown()
     if (_nmeaSources) {
         _nmeaSources->stop();
     }
-#ifndef QGC_NO_SERIAL_LINK
-    if (_rtkAutoConnect) {
-        _rtkAutoConnect->stop();
-    }
-#endif
     _gpsRtk->disconnectGPS();
     _ntripManager->shutdown();
     _corrections->shutdown();

@@ -45,5 +45,5 @@ private slots:
     void testNtripOnlyUdpForwardingBypassesSelectionOnce();
     void testTransportDiagnosticsReachManager();
     void testStatusCallbackStopsTransition();
-    void testCasterCallbackStopsTransition();
+    void testConnectedCallbackStopsTransition();
 };

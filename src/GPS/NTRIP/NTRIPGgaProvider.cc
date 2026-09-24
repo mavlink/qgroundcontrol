@@ -19,8 +19,8 @@ QString sourceName(NTRIPGgaProvider::PositionSource source)
             return QStringLiteral("VehicleGPS");
         case NTRIPGgaProvider::PositionSource::VehicleEKF:
             return QStringLiteral("VehicleEKF");
-        case NTRIPGgaProvider::PositionSource::RTKBase:
-            return QStringLiteral("RTKBase");
+        case NTRIPGgaProvider::PositionSource::RTKReceiver:
+            return QStringLiteral("RTKReceiver");
         case NTRIPGgaProvider::PositionSource::GCSPosition:
             return QStringLiteral("GCSPosition");
     }
@@ -181,7 +181,7 @@ NTRIPGgaProvider::SelectedPosition NTRIPGgaProvider::_getBestPosition(PositionSo
     static constexpr PositionSource kPriority[] = {
         PositionSource::VehicleGPS,
         PositionSource::VehicleEKF,
-        PositionSource::RTKBase,
+        PositionSource::RTKReceiver,
         PositionSource::GCSPosition,
     };
     const QPointer<const NTRIPGgaProvider> guard(this);

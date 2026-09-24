@@ -95,8 +95,7 @@
         {
             "component": "GPSReceiverSettings",
             "sectionName": "RTK GPS Receiver",
-            "showWhen": "QGroundControl.gpsManager.gpsRtk.serialSupported",
-            "keywords": ["rtk", "base station", "receiver", "survey-in", "fixed position", "u-blox", "septentrio", "serial"]
+            "keywords": ["rtk", "base station", "receiver", "survey-in", "fixed position", "u-blox", "septentrio", "serial", "tcp"]
         },
         {
             "component": "CorrectionRoutingSettings",

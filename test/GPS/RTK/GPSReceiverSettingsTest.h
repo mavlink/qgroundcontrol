@@ -11,6 +11,8 @@ private slots:
     void _surveySaveWorkflow();
     void _unavailablePositionCannotBeSaved_data();
     void _unavailablePositionCannotBeSaved();
+    void _reconnectingOffersDisconnect();
+    void _rtkBaseMapMarker();
     void _tcpConnectionFields();
     void _compactCorrectionsToggle();
     void _consentIsOneUse();

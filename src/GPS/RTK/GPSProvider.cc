@@ -1,7 +1,6 @@
 #include "GPSProvider.h"
 
 #include <algorithm>
-#include <optional>
 #include <utility>
 
 #include "GPSDriver.h"
@@ -20,7 +19,7 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
 {
     qCDebug(GPSProviderLog) << this;
     (void) qRegisterMetaType<GPSSatelliteReport>("GPSSatelliteReport");
-    (void) qRegisterMetaType<GPSPositionReport::FixType>("GPSPositionReport::FixType");
+    (void) qRegisterMetaType<GPSPositionReport>("GPSPositionReport");
     (void) qRegisterMetaType<GPSConnectionError>("GPSConnectionError");
     (void) qRegisterMetaType<GPSSurveyReport>("GPSSurveyReport");
     if (_config.role == GPSReceiverConfig::Role::RTKBase) {
@@ -64,13 +63,7 @@ void GPSProvider::run()
         inactivity.setRemainingTime(kUsefulDataTimeoutMs, Qt::PreciseTimer);
     };
     GPSDriverSinks sinks;
-    sinks.onPosition =
-        [this, lastFixType = std::optional<GPSPositionReport::FixType>{}](const GPSPositionReport& message) mutable {
-            if (lastFixType != message.navigation.fixType) {
-                lastFixType = message.navigation.fixType;
-                emit fixTypeChanged(message.navigation.fixType);
-            }
-        };
+    sinks.onPosition = [this](const GPSPositionReport& message) { emit positionUpdate(message); };
     sinks.onSatelliteInfo = [this](const GPSSatelliteReport& message) { emit satelliteInfoUpdate(message); };
     sinks.onRTCM = [this](std::span<const uint8_t> message) {
         const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);

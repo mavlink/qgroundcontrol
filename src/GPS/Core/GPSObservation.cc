@@ -1,5 +1,98 @@
 #include "GPSObservation.h"
 
+#include <algorithm>
+#include <cmath>
+
+#include <QtCore/QTimeZone>
+#include <QtCore/QtMath>
+
+#include "GPSDriverReports.h"
+#include "GPSEllipsoidPosition.h"
+
+GPSObservation GPSObservation::fromNavigation(const GPSNavigationValues& navigation, quint64 receivedAtUs)
+{
+    GPSObservation observation;
+    observation.receivedAt = QDateTime::currentDateTimeUtc();
+    observation.monotonicTimestampUs = receivedAtUs;
+    observation.fixQuality = navigation.fixType;
+    observation.receiverFixValid = navigation.fixType != FixQuality::Unknown && navigation.fixType != FixQuality::NoFix;
+    if (qIsFinite(navigation.latitudeDegrees) && qIsFinite(navigation.longitudeDegrees)) {
+        QGeoCoordinate coordinate(navigation.latitudeDegrees, navigation.longitudeDegrees);
+        if (qIsFinite(navigation.altitudeMslMeters)) {
+            coordinate.setAltitude(navigation.altitudeMslMeters);
+            observation.altitudeDatum = GPSAltitudeDatum::MeanSeaLevel;
+        }
+        const QDateTime timestamp =
+            navigation.utcTimeUs
+                ? QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(navigation.utcTimeUs / 1000), QTimeZone::UTC)
+                : observation.receivedAt;
+        observation.position = QGeoPositionInfo(coordinate, timestamp);
+    }
+    const auto setAttribute = [&observation](QGeoPositionInfo::Attribute attribute, double value, bool allowZero) {
+        if (qIsFinite(value) && (value > 0 || (allowZero && value == 0))) {
+            observation.position.setAttribute(attribute, value);
+        }
+    };
+    // Receivers without a metric estimate, such as NMEA without GST, fall back to DOP.
+    const auto accuracy = [](float meters, float dop) {
+        return qIsFinite(meters) && meters > 0 ? meters : (qIsFinite(dop) && dop > 0 ? accuracyFromDop(dop) : qQNaN());
+    };
+    setAttribute(QGeoPositionInfo::HorizontalAccuracy,
+                 accuracy(navigation.horizontalAccuracyMeters, navigation.horizontalDop), false);
+    setAttribute(QGeoPositionInfo::VerticalAccuracy,
+                 accuracy(navigation.verticalAccuracyMeters, navigation.verticalDop), false);
+    setAttribute(QGeoPositionInfo::GroundSpeed, navigation.speedMetersPerSecond, true);
+    if (qIsFinite(navigation.courseRadians)) {
+        const double degrees = std::fmod(qRadiansToDegrees(static_cast<double>(navigation.courseRadians)), 360.0);
+        observation.position.setAttribute(QGeoPositionInfo::Direction, degrees < 0 ? degrees + 360.0 : degrees);
+    }
+    if (qIsFinite(navigation.altitudeEllipsoidMeters)) {
+        observation.altitudeEllipsoidMeters = navigation.altitudeEllipsoidMeters;
+    }
+    if (navigation.satellitesUsed) {
+        observation.satellitesUsed = static_cast<int>(*navigation.satellitesUsed);
+    }
+    if (qIsFinite(navigation.horizontalDop) && navigation.horizontalDop > 0) {
+        observation.horizontalDop = navigation.horizontalDop;
+    }
+    if (qIsFinite(navigation.verticalDop) && navigation.verticalDop > 0) {
+        observation.verticalDop = navigation.verticalDop;
+    }
+    observation.sourceId = QStringLiteral("RTK receiver");
+    return observation;
+}
+
+GPSObservation GPSObservation::fromSurveyedPosition(const GPSEllipsoidPosition& position, double accuracyMeters,
+                                                    quint64 receivedAtUs)
+{
+    // A declared position with no stated accuracy is still a precise, operator-supplied position.
+    constexpr double MINIMUM_ACCURACY_METERS = 0.01;
+    GPSObservation observation;
+    observation.receivedAt = QDateTime::currentDateTimeUtc();
+    observation.monotonicTimestampUs = receivedAtUs;
+    observation.fixQuality = FixQuality::Fix3D;
+    observation.receiverFixValid = true;
+    observation.sourceId = QStringLiteral("RTK base");
+    if (qIsFinite(position.latitudeDegrees) && qIsFinite(position.longitudeDegrees) && qIsFinite(accuracyMeters)) {
+        // Only ellipsoid height is known, so the ground-station coordinate stays two-dimensional.
+        observation.position = QGeoPositionInfo(QGeoCoordinate(position.latitudeDegrees, position.longitudeDegrees),
+                                                observation.receivedAt);
+        observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy,
+                                          std::max(accuracyMeters, MINIMUM_ACCURACY_METERS));
+    }
+    if (qIsFinite(position.altitudeMeters)) {
+        observation.altitudeEllipsoidMeters = position.altitudeMeters;
+    }
+    return observation;
+}
+
+double GPSObservation::accuracyFromDop(double dop)
+{
+    constexpr double USER_EQUIVALENT_RANGE_ERROR_METERS = 5.1;
+    constexpr double CONFIDENCE_SCALE = 2.0;
+    return dop * USER_EQUIVALENT_RANGE_ERROR_METERS * CONFIDENCE_SCALE;
+}
+
 std::optional<GPSObservation> GPSObservation::projected(PositionUse use) const
 {
     if (!hasNavigationSolution() || (use != PositionUse::Gga && !usable())) {

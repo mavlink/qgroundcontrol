@@ -9,6 +9,8 @@
 #include <QtQml/QQmlEngine>
 #include <QtTest/QSignalSpy>
 
+#include "AutoConnectSettings.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "LogManager.h"
 #include "ManualScheduler.h"
 #include "NMEASourceManager.h"
@@ -16,6 +18,7 @@
 #include "PositionManager.h"
 #include "QGCLoggingCategoryManager.h"
 #include "SequentialTestDevice.h"
+#include "SettingsManager.h"
 #include "SimulatedPosition.h"
 #include "Vehicle.h"
 
@@ -79,7 +82,7 @@ void PositionManagerTest::_resetNmeaSourceTearsDownAndClearsState()
     device->feed(kNmeaSentences);
     QTRY_VERIFY_WITH_TIMEOUT(pm->gcsPosition().isValid(), TestTimeout::mediumMs());
 
-    QSignalSpy positionInfoSpy(pm, &QGCPositionManager::positionInfoUpdated);
+    QSignalSpy positionInfoSpy(pm, &QGCPositionManager::gcsPositionChanged);
     QVERIFY(positionInfoSpy.isValid());
 
     _nmeaInput->stop();
@@ -106,7 +109,7 @@ void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
     QGCPositionManager pm(nullptr, &scheduler);
     NMEASourceManager input(nullptr, &pm);
     input._startDecoder(&device);
-    pm.sourceHealth()->setFreshnessTimeoutMs(300);
+    pm._currentHealth->setFreshnessTimeoutMs(300);
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(10)));
     QCOMPARE(pm.sourceStatus(), GPSPositionService::SourceStatus::WaitingForFix);
     QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::NoError);
@@ -132,7 +135,7 @@ void PositionManagerTest::_nmeaUpdatesStayHealthyUntilStale()
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
     QVERIFY(!pm.gcsPosition().isValid());
     QCOMPARE(pm.gcsPositioningError(), QGeoPositionInfoSource::UpdateTimeoutError);
-    QVERIFY(!pm.geoPositionInfo().isValid());
+    QVERIFY(!pm.acceptedObservation());
     QVERIFY(!pm.gcsPositionTimestamp().isValid());
     QVERIFY(qIsInf(pm.gcsPositionHorizontalAccuracy()));
     feed();
@@ -155,7 +158,7 @@ void PositionManagerTest::_qmlPositionProperties()
         QtObject {
             required property GPSPositionService service
             readonly property real latitude: service.gcsPosition.latitude
-            readonly property bool usable: service.sourceHealth ? service.sourceHealth.usable : false
+            readonly property bool usable: service.gcsPosition.isValid
         }
     )",
                       QUrl());
@@ -322,7 +325,7 @@ void PositionManagerTest::_simulatedPosition()
     QCOMPARE(service.gcsPosition().type(), QGeoCoordinate::Coordinate3D);
     QVERIFY(qAbs(origin.distanceTo(service.gcsPosition()) - 0.5 * intervalMs / 1000.0) < 0.001);
     QVERIFY(qAbs(service.gcsPosition().altitude() - origin.altitude() - 0.1 * intervalMs / 1000.0) < 0.001);
-    const auto timestamp = service.geoPositionInfo().timestamp();
+    const auto timestamp = service.acceptedObservation()->position.timestamp();
     QCOMPARE(timestamp.timeSpec(), Qt::UTC);
     QVERIFY(timestamp >= before);
     QVERIFY(timestamp <= QDateTime::currentDateTimeUtc());
@@ -350,7 +353,7 @@ void PositionManagerTest::_facadeUsesInjectedScheduler()
     ManualScheduler scheduler;
     QGCPositionManager manager(nullptr, &scheduler);
     manager.init();
-    QSignalSpy reports(&manager, &GPSPositionService::positionInfoUpdated);
+    QSignalSpy reports(&manager, &GPSPositionService::gcsPositionChanged);
     QVERIFY(!manager.acceptedObservation());
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(999)));
     QVERIFY(reports.isEmpty());
@@ -371,6 +374,30 @@ void PositionManagerTest::_facadeUsesInjectedScheduler()
     auto* session = input.health()->parent();
     QVERIFY(session);
     QVERIFY(session->findChildren<RuntimeScheduler*>().isEmpty());
+}
+
+void PositionManagerTest::_sourceSettingSelectsMode()
+{
+    using Mode = GPSPositionService::SourceMode;
+    TestFixtures::SettingsFixture saved;
+    Fact* const setting = SettingsManager::instance()->autoConnectSettings()->gcsPositionSource();
+    saved.setFactValue(setting, static_cast<int>(Mode::NmeaOnly));
+    ManualScheduler scheduler;
+    QGCPositionManager manager(nullptr, &scheduler);
+    QCOMPARE(manager.sourceMode(), Mode::Automatic);
+    manager.init();
+    QCOMPARE(manager.sourceMode(), Mode::NmeaOnly);
+    QCOMPARE(manager.sourceStatus(), GPSPositionService::SourceStatus::NoSource);
+    QSignalSpy modes(&manager, &GPSPositionService::sourceModeChanged);
+    manager.init();
+    setting->setRawValue(static_cast<int>(Mode::InternalOnly));
+    QCOMPARE(manager.sourceMode(), Mode::InternalOnly);
+    QCOMPARE(modes.size(), 1);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+    QCOMPARE(manager.selectedSource(), GPSPositionService::SelectedSource::Simulated);
+    setting->setRawValue(static_cast<int>(Mode::Automatic));
+    QCOMPARE(manager.sourceMode(), Mode::Automatic);
+    QCOMPARE(modes.size(), 2);
 }
 
 void PositionManagerTest::_simulatedHomeSelection_data()

@@ -316,11 +316,14 @@ std::optional<NavigationStatus> navigationStatus(const Sentence& input)
 
 std::optional<GST> gst(const Sentence& input)
 {
-    if (input.type() != "GST" || input.count != Field::GST_FIELDS)
+    // Receivers may omit the trailing altitude error or append proprietary fields.
+    if (input.type() != "GST" || input.count <= Field::GST_LONGITUDE_ERROR)
         return {};
     const auto latitude = number<double>(input.fields[Field::GST_LATITUDE_ERROR]);
     const auto longitude = number<double>(input.fields[Field::GST_LONGITUDE_ERROR]);
-    const auto altitude = number<double>(input.fields[Field::GST_ALTITUDE_ERROR]);
+    const auto altitude = input.count > Field::GST_ALTITUDE_ERROR
+                              ? number<double>(input.fields[Field::GST_ALTITUDE_ERROR])
+                              : std::nullopt;
     GST result;
     if (latitude && longitude && *latitude >= 0 && *longitude >= 0)
         result.horizontalAccuracy = std::hypot(*latitude, *longitude);

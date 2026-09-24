@@ -356,10 +356,8 @@ void NMEAPositionSourceTest::_gstAccuracy()
     if (validChecksum) {
         QCOMPARE(observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy), 5.0);
         QCOMPARE(observation.position.attribute(QGeoPositionInfo::VerticalAccuracy), 6.0);
-        QVERIFY(observation.accuracyTimestampUs != 0);
     } else {
         QVERIFY(observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy) != 5.0);
-        QCOMPARE(observation.accuracyTimestampUs, 0U);
     }
     updates.clear();
     const auto nextEpoch = observation.position.timestamp().addSecs(1);
@@ -368,7 +366,6 @@ void NMEAPositionSourceTest::_gstAccuracy()
                                           nextEpoch.date().toString(u"ddMMyy").toLatin1() + ",,,A"));
     QTRY_VERIFY_WITH_TIMEOUT(!updates.isEmpty(), TestTimeout::mediumMs());
     QVERIFY(!source.lastObservation().position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy));
-    QCOMPARE(source.lastObservation().accuracyTimestampUs, 0U);
     QCOMPARE(source.lastObservation().position.timestamp(), nextEpoch);
 }
 

@@ -16,6 +16,8 @@ class GPSRTKFactGroup : public FactGroup
     Q_PROPERTY(Fact* numSatellites READ numSatellites CONSTANT)
     Q_PROPERTY(Fact* numSatellitesUsed READ numSatellitesUsed CONSTANT)
     Q_PROPERTY(Fact* fixType READ fixType CONSTANT)
+    Q_PROPERTY(Fact* jammingState READ jammingState CONSTANT)
+    Q_PROPERTY(Fact* spoofingState READ spoofingState CONSTANT)
     Q_PROPERTY(bool canSaveCurrentBasePosition READ canSaveCurrentBasePosition NOTIFY currentBasePositionChanged)
 
 public:
@@ -44,6 +46,10 @@ public:
 
     Fact* fixType() { return &_fixTypeFact; }
 
+    Fact* jammingState() { return &_jammingStateFact; }
+
+    Fact* spoofingState() { return &_spoofingStateFact; }
+
     /// A valid receiver status alone does not establish usable coordinates or accuracy.
     bool canSaveCurrentBasePosition() const;
 
@@ -62,4 +68,6 @@ private:
     Fact _numSatellitesFact = Fact(0, QStringLiteral("numSatellites"), FactMetaData::valueTypeInt32);
     Fact _numSatellitesUsedFact = Fact(0, QStringLiteral("numSatellitesUsed"), FactMetaData::valueTypeInt32);
     Fact _fixTypeFact = Fact(0, QStringLiteral("fixType"), FactMetaData::valueTypeUint32);
+    Fact _jammingStateFact = Fact(0, QStringLiteral("jammingState"), FactMetaData::valueTypeUint8);
+    Fact _spoofingStateFact = Fact(0, QStringLiteral("spoofingState"), FactMetaData::valueTypeUint8);
 };

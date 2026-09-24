@@ -39,7 +39,7 @@ set_target_properties(QGCGPSNTRIP PROPERTIES AUTOMOC ON)
 target_link_libraries(
     QGCGPSNTRIP
     PUBLIC QGCGPSCore QGCGPSNTRIPHttp QGCGPSRTCM QGCClock QGCIO Qt6::Positioning
-    PRIVATE QGCGPSNMEAProtocol QGCNetworkClient QGCLoggingCategory
+    PRIVATE QGCGPSNMEAProtocol QGCLoggingCategory
 )
 target_sources(
     QGCGPSNTRIP

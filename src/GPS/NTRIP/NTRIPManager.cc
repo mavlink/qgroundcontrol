@@ -98,7 +98,8 @@ NTRIPManager::NTRIPManager(QObject* parent) : QObject(parent)
     _settingsDebounceTimer.setInterval(kSettingsDebounceMs);
     connect(&_settingsDebounceTimer, &QChronoTimer::timeout, this, &NTRIPManager::_onSettingChanged);
 
-    connect(&_ggaProvider, &NTRIPGgaProvider::sourceChanged, this, &NTRIPManager::ggaSourceChanged);
+    connect(&_ggaProvider, &NTRIPGgaProvider::sourceChanged, this,
+            [this]() { _notifications.emitSignal(this, &NTRIPManager::ggaSourceChanged); });
 
     connect(&_sourceTableController, &NTRIPSourceTableController::mountpointSelected, this,
             [this](const QString& mountpoint) {
@@ -117,6 +118,7 @@ NTRIPManager::NTRIPManager(QObject* parent) : QObject(parent)
 NTRIPManager::~NTRIPManager()
 {
     qCDebug(NTRIPManagerLog) << "NTRIPManager destroyed";
+    _notifications.close();
     shutdown();
 }
 
@@ -243,6 +245,7 @@ void NTRIPManager::retryNTRIP()
     if (_shutdown || !_settings || _connectionStatus != ConnectionStatus::Error) {
         return;
     }
+    const GPSNotificationQueue::Scope publish(_notifications);
     const QPointer<NTRIPManager> guard(this);
     const quint64 revision = _stateRevision;
     _settings->ntripServerConnectEnabled()->setRawValue(true);
@@ -257,6 +260,7 @@ void NTRIPManager::shutdown()
         return;
     }
     _shutdown = true;
+    const GPSNotificationQueue::Scope publish(_notifications);
     const QPointer<NTRIPManager> guard(this);
     _sourceTableController.cancel();
     if (guard) {
@@ -284,6 +288,7 @@ void NTRIPManager::fetchMountpoints()
 
 bool NTRIPManager::_dispatch(Event ev, const QString& detail, std::chrono::milliseconds retryAfter)
 {
+    const GPSNotificationQueue::Scope publish(_notifications);
     for (const auto& row : kTransitions) {
         if (row.from == _connectionStatus && row.event == ev) {
             _enterState(row.to, detail, retryAfter);
@@ -297,8 +302,7 @@ bool NTRIPManager::_dispatch(Event ev, const QString& detail, std::chrono::milli
 
 void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail, std::chrono::milliseconds retryAfter)
 {
-    const QPointer<NTRIPManager> guard(this);
-    const quint64 revision = ++_stateRevision;
+    ++_stateRevision;
     const ConnectionStatus from = _connectionStatus;
     const bool stateChanged = (from != to);
     const QString msg = detail.isEmpty() ? _defaultMessageFor(to) : detail;
@@ -314,16 +318,10 @@ void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail, std::
 
     if (stateChanged) {
         qCDebug(NTRIPManagerLog) << "NTRIP state" << static_cast<int>(from) << "→" << static_cast<int>(to) << msg;
-        emit connectionStatusChanged();
-    }
-    if (!guard || _stateRevision != revision) {
-        return;
+        _notifications.emitSignal(this, &NTRIPManager::connectionStatusChanged);
     }
     if (msgChanged) {
-        emit statusMessageChanged();
-    }
-    if (!guard || _stateRevision != revision) {
-        return;
+        _notifications.emitSignal(this, &NTRIPManager::statusMessageChanged);
     }
 
     // Entry action runs on every dispatched transition, including self-transitions
@@ -365,18 +363,12 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to,
                 return;
             }
             _setSecurityWarning({});
-            if (!current()) {
-                return;
-            }
             _runningConfig = {};
             break;
 
         case ConnectionStatus::Connecting:
             _cancelReconnect();
             _setSecurityWarning({});
-            if (!current()) {
-                return;
-            }
             _teardownTransport();
             if (current()) {
                 _startTransport();
@@ -385,11 +377,6 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to,
 
         case ConnectionStatus::Connected:
             _resetReconnectAttempts();
-            _casterStatus = CasterStatus::CasterConnected;
-            emit casterStatusChanged(_casterStatus);
-            if (!current()) {
-                return;
-            }
             _ggaProvider.start(_transport);
             if (current()) {
                 _stats.start();
@@ -493,10 +480,7 @@ void NTRIPManager::_startTransport()
     const QString msg = tr("Connecting to %1:%2...").arg(connection.host).arg(connection.port);
     if (_statusMessage != msg) {
         _statusMessage = msg;
-        emit statusMessageChanged();
-    }
-    if (!sameState()) {
-        return;
+        _notifications.emitSignal(this, &NTRIPManager::statusMessageChanged);
     }
 
     _stats.reset();
@@ -578,22 +562,10 @@ void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
 {
     const auto code = failure.code;
     const auto& detail = failure.detail;
-    const QPointer<NTRIPManager> guard(this);
-    const quint64 revision = _stateRevision;
     if (_connectionStatus != ConnectionStatus::Connecting && _connectionStatus != ConnectionStatus::Connected) {
         return;
     }
     qCWarning(NTRIPManagerLog) << "NTRIP error:" << static_cast<int>(code) << detail;
-
-    const CasterStatus caster =
-        (code == NTRIPError::NoLocation) ? CasterStatus::CasterNoLocation : CasterStatus::CasterError;
-    if (_casterStatus != caster) {
-        _casterStatus = caster;
-        emit casterStatusChanged(_casterStatus);
-    }
-    if (!guard || _stateRevision != revision) {
-        return;
-    }
 
     if (_isEnabled() && isRetryable(code)) {
         const int backoffMs = _reconnectBackoffMs(failure.retryAfter);
@@ -617,7 +589,7 @@ void NTRIPManager::_setSecurityWarning(const QString& warning)
         return;
     }
     _securityWarning = warning;
-    emit securityWarningChanged();
+    _notifications.emitSignal(this, &NTRIPManager::securityWarningChanged);
 }
 
 void NTRIPManager::_rtcmDataReceived(const RTCMDecodedFrame& frame)
@@ -644,6 +616,7 @@ bool NTRIPManager::_isEnabled() const
 
 void NTRIPManager::_onSettingChanged()
 {
+    const GPSNotificationQueue::Scope publish(_notifications);
     const QPointer<NTRIPManager> guard(this);
     const quint64 revision = _stateRevision;
     if (!_settings || _shutdown) {

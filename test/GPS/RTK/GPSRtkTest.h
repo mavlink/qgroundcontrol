@@ -10,13 +10,17 @@ private slots:
     void _testCoreAvailableWithoutReceiver();
     void _failedOpenNeverConnects();
     void _retiredWorkerCannotUpdateReplacement();
+    void _receiverPublishesGcsPosition();
+    void _fixedBasePositionIsGcsPosition();
+    void _receiverIntegrityFacts();
+    void _surveyedBasePositionIsGcsPosition();
     void _workerCanOutliveManager();
-    void _connectionNotificationSupersedesAttempt_data();
-    void _connectionNotificationSupersedesAttempt();
+    void _notificationsFollowCompletedConnection_data();
+    void _notificationsFollowCompletedConnection();
     void _factNotificationRetiresSession_data();
     void _factNotificationRetiresSession();
-    void _manualNotificationSupersedesAttempt_data();
-    void _manualNotificationSupersedesAttempt();
+    void _settingNotificationFollowsConnection_data();
+    void _settingNotificationFollowsConnection();
     void _receiverFramesAreValidated_data();
     void _receiverFramesAreValidated();
     void _snapshotUsageEvidence_data();
@@ -39,6 +43,8 @@ private slots:
     void _configurationDiagnosticRetained();
     void _qmlConsentIsOneUse();
     void _tcpPassiveConnection();
+    void _manualConnectionReconnectsAfterLoss();
+    void _disconnectStopsReconnect();
     void _tcpConnectionErrors_data();
     void _tcpConnectionErrors();
 #ifndef QGC_NO_SERIAL_LINK

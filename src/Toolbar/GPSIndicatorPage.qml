@@ -19,6 +19,7 @@ ToolIndicatorPage {
     readonly property bool _rtkConnected: _receiver.facts.connected.value
     readonly property var _activePresentation: _receiver.capabilitiesForManufacturer(_receiver.activeManufacturer)
     readonly property bool _averagingConnected: _receiver.activeBaseMode === BaseModeDefinition.BaseReceiverAveraging
+    readonly property bool _surveyConnected: _receiver.activeBaseMode === BaseModeDefinition.BaseSurveyIn
     readonly property real _preferredStatusWidth: ScreenTools.defaultFontPixelWidth * 36
     readonly property real _preferredSettingsWidth: ScreenTools.defaultFontPixelWidth * 56
     property real availableWidth: drawer && drawer.parent
@@ -111,6 +112,30 @@ ToolIndicatorPage {
                                : root.valueNA
                 }
                 LabelledLabel {
+                    objectName: "vehicleGpsRtkBaseline"
+                    label: qsTr("RTK baseline")
+                    visible: root.activeVehicle && Number.isFinite(root.activeVehicle.gps.rtkBaseline.value)
+                    labelText: root.activeVehicle
+                               ? qsTr("%1 %2").arg(root.activeVehicle.gps.rtkBaseline.valueString)
+                                             .arg(root.activeVehicle.gps.rtkBaseline.units)
+                               : root.valueNA
+                }
+                LabelledLabel {
+                    objectName: "vehicleGpsRtkRate"
+                    label: qsTr("RTK correction rate")
+                    visible: root.activeVehicle && Number.isFinite(root.activeVehicle.gps.rtkRate.value)
+                    labelText: root.activeVehicle
+                               ? qsTr("%1 %2").arg(root.activeVehicle.gps.rtkRate.valueString)
+                                             .arg(root.activeVehicle.gps.rtkRate.units)
+                               : root.valueNA
+                }
+                LabelledLabel {
+                    objectName: "vehicleGpsRtkSatellites"
+                    label: qsTr("RTK satellites")
+                    visible: root.activeVehicle && root.activeVehicle.gps.rtkSatellites.value >= 0
+                    labelText: root.activeVehicle ? root.activeVehicle.gps.rtkSatellites.valueString : root.na
+                }
+                LabelledLabel {
                     label: qsTr("Course Over Ground")
                     labelText: root.activeVehicle ? root.activeVehicle.gps.courseOverGround.valueString : root.valueNA
                 }
@@ -125,7 +150,8 @@ ToolIndicatorPage {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 heading: qsTr("RTK GPS Status")
-                visible: root._rtkConnected || root._receiver.hasReceiver || !root.activeVehicle
+                visible: root._rtkConnected || root._receiver.hasReceiver || root._receiver.reconnecting
+                         || !root.activeVehicle
 
                 QGCLabel {
                     objectName: "rtkReceiverStatus"
@@ -135,9 +161,11 @@ ToolIndicatorPage {
                     wrapMode: Text.Wrap
                     text: !root._rtkConnected
                           ? (root._receiver.hasReceiver ? qsTr("Connecting to receiver...")
-                                                       : qsTr("No RTK receiver connected. Expand for settings."))
+                             : root._receiver.reconnecting ? qsTr("Receiver connection lost. Reconnecting...")
+                             : qsTr("No RTK receiver connected. Expand for settings."))
                           : root._activePresentation.passive ? qsTr("Passive RTCM/NMEA input connected")
                           : root._averagingConnected ? qsTr("Receiver-managed averaging — no accuracy guarantee")
+                          : root._receiver.activeBaseMode === BaseModeDefinition.BaseFixed ? qsTr("Fixed base position")
                           : root._receiver.facts.active.value ? qsTr("Survey-in Active") : qsTr("Receiver connected")
                 }
                 LabelledLabel {
@@ -174,16 +202,30 @@ ToolIndicatorPage {
                                ? root.na : root._receiver.facts.numSatellitesUsed.valueString
                 }
                 LabelledLabel {
+                    objectName: "rtkJamming"
+                    visible: root._rtkConnected && root._receiver.facts.jammingState.rawValue > 0
+                    label: qsTr("Jamming")
+                    labelText: root._receiver.facts.jammingState.enumStringValue
+                }
+                LabelledLabel {
+                    objectName: "rtkSpoofing"
+                    visible: root._rtkConnected && root._receiver.facts.spoofingState.rawValue > 0
+                    label: qsTr("Spoofing")
+                    labelText: root._receiver.facts.spoofingState.enumStringValue
+                }
+                LabelledLabel {
+                    objectName: "rtkSurveyDuration"
                     label: root._activePresentation.acceptedObservationTime ? qsTr("Accepted observation time") : qsTr("Duration")
                     visible: root._rtkConnected && root._activePresentation.reportsSurveyDuration
-                             && !root._averagingConnected
+                             && root._surveyConnected
                     //: %1 is Survey-In duration in seconds
                     labelText: qsTr("%1 s").arg(root._receiver.facts.currentDuration.value)
                 }
                 LabelledLabel {
+                    objectName: "rtkSurveyAccuracy"
                     label: root._receiver.facts.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
                     labelText: root._receiver.facts.currentAccuracy.valueString + " " + root._receiver.facts.currentAccuracy.units
-                    visible: root._rtkConnected && !root._activePresentation.passive && !root._averagingConnected
+                    visible: root._rtkConnected && root._surveyConnected
                              && root._receiver.facts.currentAccuracy.value > 0
                 }
             }

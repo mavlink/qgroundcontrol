@@ -24,6 +24,8 @@ GPSRTKFactGroup::GPSRTKFactGroup(QObject *parent)
     _addFact(&_numSatellitesFact);
     _addFact(&_numSatellitesUsedFact);
     _addFact(&_fixTypeFact);
+    _addFact(&_jammingStateFact);
+    _addFact(&_spoofingStateFact);
 
     for (Fact* fact :
          {&_validFact, &_currentLatitudeFact, &_currentLongitudeFact, &_currentAltitudeFact, &_currentAccuracyFact}) {

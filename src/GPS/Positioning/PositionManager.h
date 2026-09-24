@@ -34,5 +34,6 @@ private:
     void _checkPermission();
     QPointer<NMEASourceManager> _nmeaInput;
     QMetaObject::Connection _nmeaInputDestroyedConnection;
+    QMetaObject::Connection _sourceSettingConnection;
     bool _destroying = false;
 };

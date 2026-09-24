@@ -16,10 +16,12 @@ class AutoConnectSettings : public SettingsGroup
 public:
     AutoConnectSettings(QObject* parent = nullptr);
 
-    enum NmeaSource {
+    enum NmeaSource
+    {
         NmeaSourceDisabled = 0,
         NmeaSourceUdp,
         NmeaSourceSerial,
+        NmeaSourceTcp,
     };
     Q_ENUM(NmeaSource)
 
@@ -30,6 +32,7 @@ public:
     DEFINE_SETTINGFACT(autoConnectSiKRadio)
     DEFINE_SETTINGFACT(autoConnectRTKGPS)
     DEFINE_SETTINGFACT(autoConnectLibrePilot)
+    DEFINE_SETTINGFACT(gcsPositionSource)
     DEFINE_SETTINGFACT(nmeaSource)
     DEFINE_SETTINGFACT(autoConnectNmeaPort)
     DEFINE_SETTINGFACT(autoConnectNmeaBaud)
@@ -37,4 +40,6 @@ public:
     DEFINE_SETTINGFACT(udpTargetHostIP)
     DEFINE_SETTINGFACT(udpTargetHostPort)
     DEFINE_SETTINGFACT(nmeaUdpPort)
+    DEFINE_SETTINGFACT(nmeaTcpHost)
+    DEFINE_SETTINGFACT(nmeaTcpPort)
 };

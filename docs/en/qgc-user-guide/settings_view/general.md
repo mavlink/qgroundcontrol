@@ -107,12 +107,16 @@ Settings include:
 _QGroundControl_ will automatically use an internal GPS to display its own location on the map with a purple `Q` icon (if the GPS provides a heading, this will be also indicated by the icon).
 It may also use the GPS as a location source for _Follow Me Mode_ - currently supported on [PX4 Multicopters only](https://docs.px4.io/en/flight_modes/follow_me.html).
 
-You can also configure QGC to connect to an external GPS device via a serial or UDP port.
+You can also configure QGC to connect to an external GPS device via a serial port, a UDP port, or a TCP server.
 The GPS device must support the ASCII NMEA format - this is normally the case.
 
 ::: tip
 A higher quality external GPS system may be useful even if the ground station has internal GPS support.
 :::
+
+A connected [RTK GPS receiver](ntrip_rtk.md#rtk-gps-receiver) can also provide the ground station
+position. The [GCS Position](comm_links.md#gcs-position) setting chooses between the RTK receiver,
+the NMEA GPS device, and internal positioning, or picks the best available source automatically.
 
 Use the _NMEA GPS Device_ drop-down selector to manually select the GPS device and other options:
 
@@ -129,6 +133,8 @@ Use the _NMEA GPS Device_ drop-down selector to manually select the GPS device a
 
   - **NMEA GPS Device:** _UDP Port_.
   - **NMEA Stream UDP Port**: The UDP port on which QGC will listen for NMEA data (QGC binds the port as a server)
+  - Or **NMEA GPS Device:** _TCP Client_, with **NMEA TCP server host** and **NMEA TCP server port**: QGC
+    connects to a receiver or bridge that serves NMEA over TCP, and reconnects if the connection drops.
 
 Connection status is separate from position quality. An occupied UDP port, inaccessible serial
 device, or port reserved by another connection is reported even before a GPS fix is available.

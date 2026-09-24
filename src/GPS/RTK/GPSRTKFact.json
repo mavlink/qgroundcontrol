@@ -82,6 +82,24 @@
     "enumStrings":      "Unknown,No Fix,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Extrapolated",
     "enumValues":       "0,1,2,3,4,5,6,8",
     "default":          0
+},
+{
+    "name":             "jammingState",
+    "shortDesc": "Receiver Jamming",
+    "longDesc": "Interference state reported by the RTK receiver. Unknown when the receiver does not report it or the report is stale.",
+    "type":             "uint8",
+    "enumStrings":      "Unknown,OK,Warning,Critical",
+    "enumValues":       "0,1,2,3",
+    "default":          0
+},
+{
+    "name":             "spoofingState",
+    "shortDesc": "Receiver Spoofing",
+    "longDesc": "Spoofing detection state reported by the RTK receiver. Unknown when the receiver does not report it or the report is stale.",
+    "type":             "uint8",
+    "enumStrings":      "Unknown,None,Indicated,Multiple indications",
+    "enumValues":       "0,1,2,3",
+    "default":          0
 }
 ]
 }
