@@ -61,17 +61,17 @@ void TerrainQueryCoordinator::_doSetHomeTerrainReceived(bool success, QList<doub
         if (_doSetHomeCoordinate.isValid()
             && terrainAltitude <= kSetHomeTerrainAltMax
             && terrainAltitude >= kSetHomeTerrainAltMin) {
-            _vehicle->sendMavCommand(
-                _vehicle->defaultComponentId(),
-                MAV_CMD_DO_SET_HOME,
-                true, // show error if fails
-                0,
-                0,
-                0,
-                static_cast<float>(qQNaN()),
-                _doSetHomeCoordinate.latitude(),
-                _doSetHomeCoordinate.longitude(),
-                terrainAltitude);
+            if (_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+                _vehicle->sendMavCommandInt(_vehicle->defaultComponentId(), MAV_CMD_DO_SET_HOME, MAV_FRAME_GLOBAL,
+                                            true,  // show error if fails
+                                            0, 0, 0, static_cast<float>(qQNaN()), _doSetHomeCoordinate.latitude(),
+                                            _doSetHomeCoordinate.longitude(), static_cast<float>(terrainAltitude));
+            } else {
+                _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_SET_HOME,
+                                         true,  // show error if fails
+                                         0, 0, 0, static_cast<float>(qQNaN()), _doSetHomeCoordinate.latitude(),
+                                         _doSetHomeCoordinate.longitude(), terrainAltitude);
+            }
         } else if (_doSetHomeCoordinate.isValid()) {
             qCDebug(TerrainQueryCoordinatorLog) << "_doSetHomeTerrainReceived: elevation data out of limits";
         } else {

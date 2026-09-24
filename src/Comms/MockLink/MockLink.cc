@@ -2332,6 +2332,10 @@ void MockLink::_handleCommandInt(const mavlink_message_t &msg)
         // Unit test support: accept ROI commands so tests can verify Vehicle::guidedModeROI
         commandResult = MAV_RESULT_ACCEPTED;
         break;
+    case MAV_CMD_DO_SET_HOME:
+        // Unit test support: accept so tests can verify how Vehicle sends set home
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
     case MAV_CMD_DO_SET_MODE:
         // Preserve the armed flag like real firmware does
         _mavBaseMode = (_mavBaseMode & MAV_MODE_FLAG_SAFETY_ARMED) | static_cast<uint8_t>(request.param1);

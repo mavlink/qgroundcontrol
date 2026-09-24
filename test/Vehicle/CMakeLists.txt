@@ -39,6 +39,8 @@ target_sources(
             SendMavCommandWithSignallingTest.h
             SetEstimatorOriginTest.cc
             SetEstimatorOriginTest.h
+            SetHomeTest.cc
+            SetHomeTest.h
             StandardModesTest.cc
             StandardModesTest.h
             TrajectoryPointsTest.cc
@@ -80,6 +82,7 @@ add_qgc_test(RequestMessageTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TI
 add_qgc_test(SendMavCommandWithHandlerTest LABELS Integration Vehicle)
 add_qgc_test(SendMavCommandWithSignallingTest LABELS Integration Vehicle)
 add_qgc_test(SetEstimatorOriginTest LABELS Integration Vehicle)
+add_qgc_test(SetHomeTest LABELS Integration Vehicle)
 add_qgc_test(StandardModesTest LABELS Integration Vehicle)
 add_qgc_test(TrajectoryPointsTest LABELS Unit Vehicle)
 add_qgc_test(VehicleDistanceSensorFactGroupTest LABELS Integration Vehicle)
