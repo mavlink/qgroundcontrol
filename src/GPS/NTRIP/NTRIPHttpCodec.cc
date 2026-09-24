@@ -522,6 +522,9 @@ NTRIPHttpDecoder::Result NTRIPHttpDecoder::finish()
                (_state == State::IcyHeaders && _line.isEmpty() && _headers.isEmpty()) || _state == State::Complete) {
         _state = State::Complete;
         result.complete = true;
+    } else if (_state == State::Identity || _state == State::ChunkSize || _state == State::ChunkData ||
+               _state == State::ChunkEnd || _state == State::Trailers) {
+        _fail(result, tr("Caster closed the connection mid-transfer"));
     } else if (_state != State::Failed) {
         _fail(result, tr("Caster disconnected before completing the HTTP response"));
     }

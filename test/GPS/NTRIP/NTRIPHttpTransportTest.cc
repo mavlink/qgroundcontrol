@@ -711,6 +711,9 @@ void NTRIPHttpTransportTest::testRemoteCloseEmitsSingleError()
     QCOMPARE(transport._socket->state(), QAbstractSocket::UnconnectedState);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(errors.size(), 1);
-    QCOMPARE(qvariant_cast<NTRIPFailure>(errors.first().first()).code, NTRIPError::InvalidHttpResponse);
+    const auto failure = qvariant_cast<NTRIPFailure>(errors.first().first());
+    QCOMPARE(failure.code, NTRIPError::InvalidHttpResponse);
+    QCOMPARE(failure.detail, QCoreApplication::translate("NTRIPHttpTransport",
+                                                         "Caster disconnected before completing the HTTP response"));
     QVERIFY(!transport._connectTimeoutTimer.isActive());
 }

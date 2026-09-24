@@ -993,8 +993,13 @@ void NTRIPReentrancyTest::socketTermination()
     peer->disconnectFromHost();
     QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
     QCOMPARE(frames.size(), 4000);
-    QCOMPARE(qvariant_cast<NTRIPFailure>(errors[0][0]).code,
-             mode == 2 || mode == 4 ? NTRIPError::InvalidHttpResponse : NTRIPError::ServerDisconnected);
+    const auto failure = qvariant_cast<NTRIPFailure>(errors[0][0]);
+    QCOMPARE(failure.code, mode == 2 || mode == 4 ? NTRIPError::InvalidHttpResponse : NTRIPError::ServerDisconnected);
+    if (mode == 2 || mode == 4) {
+        // Truncation after the stream started reads as a mid-transfer close, not a missing HTTP response.
+        QCOMPARE(failure.detail,
+                 QCoreApplication::translate("NTRIPHttpTransport", "Caster closed the connection mid-transfer"));
+    }
     QVERIFY(!transport._connectTimeoutTimer.isActive());
     QVERIFY(!transport._dataWatchdogTimer.isActive());
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
