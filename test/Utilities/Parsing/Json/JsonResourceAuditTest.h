@@ -7,6 +7,7 @@
 /// "fileType" header, so new files are covered automatically - a file the app can load
 /// is in resources (and found here), a file not in resources can't be loaded by the app
 /// either. Turns silent parse-warning fallbacks (e.g. strict key validation) into CI failures.
+/// Runs once untranslated and once per JSON translation file.
 class JsonResourceAuditTest : public UnitTest
 {
     Q_OBJECT
@@ -15,6 +16,7 @@ public:
     JsonResourceAuditTest() = default;
 
 private slots:
+    void _allResourceJsonParsesClean_test_data();
     void _allResourceJsonParsesClean_test();
 
 private:
