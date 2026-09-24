@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
+import QGroundControl.AppSettings
 import QGroundControl.Controls
 
 // Used with a connected vehicle and as the standalone receiver indicator.

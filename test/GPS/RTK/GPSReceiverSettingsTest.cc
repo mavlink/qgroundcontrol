@@ -136,7 +136,7 @@ std::unique_ptr<QObject> createPanel(QQmlEngine& engine, ReceiverSettingsControl
                                      SettingsFixture& settings, GPSRTKFactGroup& facts, QString& error)
 {
     configureEngine(engine);
-    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSReceiverSettings.qml")));
+    QQmlComponent component(&engine, sourceUrl(QStringLiteral("../AppSettings/GPSReceiverSettings.qml")));
     if (!QTest::qWaitFor([&]() { return !component.isLoading(); }, TestTimeout::mediumMs())) {
         error = QStringLiteral("Receiver settings component did not finish loading");
         return {};

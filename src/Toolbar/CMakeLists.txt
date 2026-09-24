@@ -17,7 +17,6 @@ qt_add_qml_module(
               GimbalIndicator.qml
               GPSIndicator.qml
               GPSIndicatorPage.qml
-              GPSReceiverSettings.qml
               GPSResilienceIndicator.qml
               JoystickIndicator.qml
               MainStatusIndicator.qml

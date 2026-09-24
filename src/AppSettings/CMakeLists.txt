@@ -124,6 +124,7 @@ qt_add_qml_module(
               CorrectionDiagnostics.qml
               DebugWindow.qml
               GcsPositionStatus.qml
+              GPSReceiverSettings.qml
               HelpSettings.qml
               LinkConfigurationManager.qml
               LogReplaySettings.qml
