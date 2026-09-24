@@ -12835,7 +12835,7 @@ VTOL</translation>
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="295"/>
       <source>Item #%1</source>
-      <translation>항목 1</translation>
+      <translation>항목 #%1</translation>
     </message>
   </context>
   <context>
@@ -16370,7 +16370,7 @@ Note that this will also completely reset everything, including UAVCAN nodes, al
     <message>
       <location filename="../src/MissionManager/PlanMasterController.cc" line="691"/>
       <source>Plan Files (*.%1)</source>
-      <translation>계획 파일 (*.*)</translation>
+      <translation>계획 파일 (*.%1)</translation>
     </message>
   </context>
   <context>
@@ -16629,7 +16629,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
       <location filename="../src/PlanView/PlanView.qml" line="90"/>
       <location filename="../src/PlanView/PlanView.qml" line="95"/>
       <source>Unable to %1</source>
-      <translation>라이딩 종료 불가</translation>
+      <translation>%1 불가</translation>
     </message>
     <message>
       <location filename="../src/PlanView/PlanView.qml" line="90"/>
@@ -16897,9 +16897,7 @@ Click &apos;Ok&apos; to upload the Plan anyway.</source>
     <message>
       <location filename="../src/QGCApplication.cc" line="322"/>
       <source>The current user does not have the correct permissions to access serial devices. You should also remove modemmanager since it also interferes.&lt;br/&gt;&lt;br/&gt;If you are using Ubuntu, execute the following commands to fix these issues:&lt;br/&gt;&lt;pre&gt;sudo usermod -a -G dialout $USER&lt;br/&gt;sudo apt-get remove modemmanager&lt;/pre&gt;</source>
-      <translation>%1을(를) 루트 계정으로 실행하고 있습니다. 이러한 %1와(과) 문제를 일으킬 수 있기 때문에 실행할 수 없습니다. %1을(를) 종료합니다. Ubuntu에서 시리얼 포트 관련 문제가 있다면 다음 명령이 문제를 해결할 수 있습니다:
-sudo usermod -a -G dialout $USER
-sudo apt-get remove modemmanager</translation>
+      <translation>현재 사용자에게 시리얼 장치에 접근할 수 있는 권한이 없습니다. modemmanager도 간섭을 일으키므로 제거해야 합니다.&lt;br/&gt;&lt;br/&gt;Ubuntu를 사용하는 경우 다음 명령을 실행하여 이 문제를 해결하십시오:&lt;br/&gt;&lt;pre&gt;sudo usermod -a -G dialout $USER&lt;br/&gt;sudo apt-get remove modemmanager&lt;/pre&gt;</translation>
     </message>
     <message>
       <location filename="../src/QGCApplication.cc" line="348"/>
@@ -17047,7 +17045,7 @@ sudo apt-get remove modemmanager</translation>
     <message>
       <location filename="../src/QmlControls/QGCFileDialog.qml" line="178"/>
       <source>Path: %1</source>
-      <translation>경로: %@</translation>
+      <translation>경로: %1</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/QGCFileDialog.qml" line="209"/>
