@@ -15,7 +15,7 @@ SettingsGroupLayout {
 
     property var  _ntrip:    QGroundControl.settingsManager.ntripSettings
     property Fact _enabled:  _ntrip.ntripServerConnectEnabled
-    property var  _ntripMgr: QGroundControl.ntripManager
+    property var  _ntripMgr: QGroundControl.gpsManager.ntrip
     readonly property var _corrections: QGroundControl.gpsManager.corrections
     property bool _isActive: _enabled.rawValue
     property bool _hasHost:  _ntrip.ntripServerHostAddress.rawValue !== ""

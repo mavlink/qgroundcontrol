@@ -4,7 +4,6 @@
 #include <chrono>
 #include <utility>
 
-#include <QtCore/QApplicationStatic>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QUrl>
 #include <QtCore/QtMath>
@@ -20,13 +19,6 @@
 #include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(NTRIPManagerLog, "GPS.NTRIP.NTRIPManager")
-
-Q_APPLICATION_STATIC(NTRIPManager, _ntripManagerInstance);
-
-NTRIPManager* NTRIPManager::instance()
-{
-    return _ntripManagerInstance();
-}
 
 // -----------------------------------------------------------------------------
 // Transition table

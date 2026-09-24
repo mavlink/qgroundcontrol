@@ -16,7 +16,7 @@ SettingsGroupLayout {
     QGCPalette { id: qgcPal }
 
     property var  _ntrip:       QGroundControl.settingsManager.ntripSettings
-    property var  _ntripMgr:    QGroundControl.ntripManager
+    property var  _ntripMgr:    QGroundControl.gpsManager.ntrip
     property bool _isActive:    _ntrip.ntripServerConnectEnabled.rawValue
     property bool _hasHost:     _ntrip.ntripServerHostAddress.rawValue !== ""
     property real _textFieldWidth: ScreenTools.defaultFontPixelWidth * 30

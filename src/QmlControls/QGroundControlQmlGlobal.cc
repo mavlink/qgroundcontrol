@@ -11,7 +11,6 @@
 #include "QGCMapEngineManager.h"
 #include "ADSBVehicleManager.h"
 #include "AudioOutput.h"
-#include "NTRIPManager.h"
 #include "MAVLinkSigningKeys.h"
 #include "MissionCommandTree.h"
 #include "VideoManager.h"
@@ -39,11 +38,10 @@ QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsContr
 QGeoCoordinate QGroundControlQmlGlobal::_coord = QGeoCoordinate(0.0,0.0);
 double QGroundControlQmlGlobal::_zoom = 2;
 
-QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
+QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject* parent)
     : QObject(parent)
     , _mapEngineManager(QGCMapEngineManager::instance())
     , _adsbVehicleManager(ADSBVehicleManager::instance())
-    , _ntripManager(NTRIPManager::instance())
     , _positionManager(QGCPositionManager::instance())
     , _missionCommandTree(MissionCommandTree::instance())
     , _mavlinkSigningKeys(MAVLinkSigningKeys::instance())

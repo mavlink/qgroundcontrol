@@ -13,6 +13,7 @@
 
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSCorrectionManager.h"
+#include "GPSManager.h"
 #include "GpsTestHelpers.h"
 #include "MockNTRIPTransport.h"
 #include "MonotonicClock.h"
@@ -23,15 +24,15 @@
 
 void NTRIPManagerTest::cleanup()
 {
-    // Tests share the NTRIPManager singleton; leave it Disconnected so order
+    // Tests share the application NTRIPManager; leave it Disconnected so order
     // cannot leak state between cases.
-    NTRIPManager::instance()->stopNTRIP();
+    GPSManager::instance()->ntrip()->stopNTRIP();
     UnitTest::cleanup();
 }
 
 void NTRIPManagerTest::testInitialStateIsDisconnected()
 {
-    NTRIPManager* mgr = NTRIPManager::instance();
+    NTRIPManager* mgr = GPSManager::instance()->ntrip();
     QVERIFY(mgr != nullptr);
 
     // Whatever singleton construction order produced, the public-facing
@@ -43,7 +44,7 @@ void NTRIPManagerTest::testInitialStateIsDisconnected()
 
 void NTRIPManagerTest::testStopFromIdleIsNoop()
 {
-    NTRIPManager* mgr = NTRIPManager::instance();
+    NTRIPManager* mgr = GPSManager::instance()->ntrip();
     QVERIFY(mgr != nullptr);
 
     // Calling stopNTRIP() while idle must not crash or emit spurious state

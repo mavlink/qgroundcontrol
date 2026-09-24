@@ -83,11 +83,7 @@ public:
     explicit NTRIPManager(QObject* parent = nullptr);
     ~NTRIPManager() override;
 
-    static NTRIPManager* instance();
-
-    /// Explicit post-construction init. Must be called from QGCApplication after
-    /// SettingsManager is ready — matches QGCPositionManager::init(). Do not rely
-    /// on the singleton constructor for anything that touches other singletons.
+    /// Called by GPSManager::init() once SettingsManager is ready and the correction manager is injected.
     void init();
 
     ConnectionStatus connectionStatus() const { return _connectionStatus; }

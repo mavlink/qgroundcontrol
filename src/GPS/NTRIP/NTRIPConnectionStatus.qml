@@ -9,7 +9,7 @@ ColumnLayout {
 
     property var rtcmMavlink: null
 
-    property var    _ntripMgr:      QGroundControl.ntripManager
+    property var    _ntripMgr:      QGroundControl.gpsManager.ntrip
     readonly property int  _status: root._ntripMgr ? root._ntripMgr.connectionStatus : NTRIPManager.Disconnected
     readonly property var  _stats:  root._ntripMgr ? root._ntripMgr.connectionStats : null
     readonly property bool _connected: root._status === NTRIPManager.Connected

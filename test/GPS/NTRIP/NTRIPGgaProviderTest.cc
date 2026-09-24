@@ -83,12 +83,11 @@ void NTRIPGgaProviderTest::initTestCase()
     TestFixtures::SettingsFixture saved;
     saved.setFactValue(SettingsManager::instance()->ntripSettings()->ntripServerConnectEnabled(), false);
     GPSManager::instance()->init();
-    NTRIPManager::instance()->init();
 }
 
 void NTRIPGgaProviderTest::cleanup()
 {
-    NTRIPManager::instance()->stopNTRIP();
+    GPSManager::instance()->ntrip()->stopNTRIP();
     UnitTest::cleanup();
 }
 
@@ -130,7 +129,7 @@ void NTRIPGgaProviderTest::testDefaultRTKBaseProvider()
     saved.setFactValue(facts->currentLongitude(), 8.5456);
     saved.setFactValue(facts->currentAltitude(), 450.0);
 
-    auto* manager = NTRIPManager::instance();
+    auto* manager = GPSManager::instance()->ntrip();
     auto* transport = new MockNTRIPTransport(manager);
     manager->setTransportForTest(transport);
     manager->startNTRIP();
@@ -193,7 +192,7 @@ void NTRIPGgaProviderTest::_activeVehicleAndCommunicationLoss()
     TestFixtures::SettingsFixture saved;
     configureNtrip(saved, Source::VehicleGPS);
     auto* settings = SettingsManager::instance()->ntripSettings();
-    auto* ntrip = NTRIPManager::instance();
+    auto* ntrip = GPSManager::instance()->ntrip();
     Vehicle first(nullptr, 17, MAV_COMP_ID_AUTOPILOT1, MAV_AUTOPILOT_GENERIC, MAV_TYPE_GENERIC);
     Vehicle second(nullptr, 18, MAV_COMP_ID_AUTOPILOT1, MAV_AUTOPILOT_GENERIC, MAV_TYPE_GENERIC);
     auto* manager = MultiVehicleManager::instance();
@@ -315,7 +314,7 @@ void NTRIPGgaProviderTest::_gcsObservation()
     health.updateObservation(observation);
     QVERIFY(!qIsFinite(positioning->gcsPosition().altitude()));
 
-    auto* manager = NTRIPManager::instance();
+    auto* manager = GPSManager::instance()->ntrip();
     auto* transport = new MockNTRIPTransport(manager);
     manager->setTransportForTest(transport);
     manager->startNTRIP();
@@ -373,7 +372,7 @@ void NTRIPGgaProviderTest::_gcsSelectionAndFreshness()
         positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &producer, &health);
     positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
 
-    auto* manager = NTRIPManager::instance();
+    auto* manager = GPSManager::instance()->ntrip();
     const auto checkGga = [&](bool accepted) {
         auto* transport = new MockNTRIPTransport(manager);
         manager->setTransportForTest(transport);
@@ -428,7 +427,7 @@ void NTRIPGgaProviderTest::_vehicleFixLossAndExpiry()
     QVERIFY(receiveMessage(vehicle, gpsMessage(vehicle.id())));
     QVERIFY(receiveMessage(vehicle, fusedMessage(vehicle.id())));
 
-    auto* manager = NTRIPManager::instance();
+    auto* manager = GPSManager::instance()->ntrip();
     const auto checkSource = [&](const QString& expected) {
         auto* transport = new MockNTRIPTransport(manager);
         manager->setTransportForTest(transport);

@@ -66,7 +66,7 @@ GPSManager::GPSManager(QObject* parent)
     : QObject(parent)
     , _corrections(new GPSCorrectionManager(this))
     , _gpsRtk(new GPSRtk(this))
-    , _ntripManager(NTRIPManager::instance())
+    , _ntripManager(new NTRIPManager(this))
 {
     qCDebug(GPSManagerLog) << this;
     _corrections->rtcmMavlink()->setOutputProvider(createGpsMavlinkOutputProvider());
@@ -116,6 +116,7 @@ void GPSManager::init()
     }
     _configureGgaProviders();
     _corrections->init(SettingsManager::instance()->gpsCorrectionSettings());
+    _ntripManager->init();
     auto* settings = SettingsManager::instance()->autoConnectSettings();
     _nmeaSources = new NMEASourceManager(settings, QGCPositionManager::instance(), this);
 #ifndef QGC_NO_SERIAL_LINK
@@ -168,8 +169,6 @@ void GPSManager::shutdown()
     }
 #endif
     _gpsRtk->disconnectGPS();
-    if (_ntripManager) {
-        _ntripManager->shutdown();
-    }
+    _ntripManager->shutdown();
     _corrections->shutdown();
 }

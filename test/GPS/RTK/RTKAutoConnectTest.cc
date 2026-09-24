@@ -407,7 +407,7 @@ void RTKAutoConnectTest::_shutdownDuringConnectionTick()
     spare.close();
     auto* applicationCorrections = GPSManager::instance()->corrections();
     const auto restoreCorrections = qScopeGuard(
-        [applicationCorrections] { NTRIPManager::instance()->setCorrectionManager(applicationCorrections); });
+        [applicationCorrections] { GPSManager::instance()->ntrip()->setCorrectionManager(applicationCorrections); });
     int enumerations = 0;
     SerialPortManager ports(nullptr, [&] {
         ++enumerations;
