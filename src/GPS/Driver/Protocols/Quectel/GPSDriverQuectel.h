@@ -16,9 +16,9 @@ class GPSNativeQuectel final : public GPSAsciiProtocol
 public:
     explicit GPSNativeQuectel(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
-    int configure(unsigned& baud, const GPSConfig& config) override;
+    bool configure(unsigned& baud, const GPSConfig& config) override;
 
-    bool receiverReady() const override { return _configured && !ioError(); }
+    bool receiverReady() const override { return _configured && !hasIOError(); }
 
     std::string receiverIdentity() const override { return _firmware; }
 
@@ -30,6 +30,7 @@ protected:
     int handleReceiverLine(std::string_view line) override;
 
 private:
+    const QLoggingCategory& logCategory() const override;
     enum class SurveyPhase
     {
         Off,
@@ -40,7 +41,8 @@ private:
 
     using ReplyHandler = std::function<GPSCommandOutcome(std::string_view)>;
 
-    GPSCommandOutcome _transact(const std::string& command, ReplyHandler handler, unsigned timeoutMs = 1000);
+    GPSCommandResult _transact(const std::string& command, ReplyHandler handler, unsigned timeoutMs = 1000);
+    GPSCommandResult _acknowledgement(const std::string& command, unsigned timeoutMs = 1000);
     bool _acknowledge(const std::string& command, unsigned timeoutMs = 1000);
     bool _identify(unsigned timeoutMs = 1000);
     bool _verifyRole(bool requireMatch = true);
@@ -53,13 +55,7 @@ private:
     void _revokeSurvey();
     void _expireSurvey();
     void _publishSurvey();
-    int _fail(const char* reason);
-
-    struct PendingReply
-    {
-        ReplyHandler handler;
-        GPSCommandOutcome outcome = GPSCommandOutcome::Pending;
-    };
+    bool _fail(const char* reason);
 
     struct SurveySession
     {
@@ -69,7 +65,7 @@ private:
         SurveyPhase phase = SurveyPhase::Off;
     };
 
-    PendingReply _pendingReply;
+    ReplyHandler _replyHandler;
     SurveySession _survey;
     std::string _firmware;
     EcefMeters _fixedECEF;

@@ -11,46 +11,38 @@
 #include "GPSRawAckMatcher.h"
 #include "NMEAFields.h"
 #include "NMEASentence.h"
+#include "QGCLoggingCategory.h"
 #include "RTCMFramer.h"
+
+QGC_LOGGING_CATEGORY(GPSNativeFemtoLog, "GPS.Driver.Protocols.Femto")
 
 namespace {
 constexpr unsigned FEMTO_RESPONSE_TIMEOUT = 200;
 }
 
-int GPSNativeFemto::writeAckedCommandFemto(const char* command, const char* reply, const unsigned int timeout)
+const QLoggingCategory& GPSNativeFemto::logCategory() const
 {
-    const GPSConfigurationStep step{command, std::chrono::milliseconds(timeout)};
-    const size_t command_length = strlen(command);
-    uint8_t buf[GPS_READ_BUFFER_SIZE];
-    GPSRawAckMatcher matcher(reply, "<ERROR");
-    if (!matcher.valid() || !writeCommand(step, {reinterpret_cast<const uint8_t*>(command), command_length})) {
-        return -1;
-    }
-
-    const auto result = awaitCommand(
-        [&] {
-            const int count = read(buf, sizeof(buf), timeout);
-            if (count <= 0) {
-                return;
-            }
-            matcher.append(std::span(buf).first(count));
-        },
-        [&] { return matcher.outcome(); });
-    return result.evidence.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
+    return GPSNativeFemtoLog();
 }
 
-int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
+bool GPSNativeFemto::writeAckedCommandFemto(const char* command, const char* reply)
+{
+    GPSRawAckMatcher matcher(reply, "<ERROR");
+    const GPSConfigurationStep step{command, std::chrono::milliseconds(FEMTO_RESPONSE_TIMEOUT)};
+    return transact(step, command, matcher).evidence.outcome == GPSCommandOutcome::Acknowledged;
+}
+
+bool GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
 {
     _configure_done = false;
     resetIOError();
-    _survey_duration = 0;
-    _survey_in_start = 0;
+    _surveyClock.reset();
     _correction_output_activated = false;
     _rtcmActivationPending = false;
     _rtcm_parsing.reset();
     decodeInit();
     if (!validateConfiguration(config)) {
-        return -1;
+        return false;
     }
     _baseConfig = config.base;
     constexpr unsigned supportedBaudrate = 115200;
@@ -59,8 +51,8 @@ int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
     if (baudrate == 0 || baudrate == supportedBaudrate) {
         setBaudrate(supportedBaudrate);
         for (int run = 0; run < 2; ++run) {
-            if (writeAckedCommandFemto("UNLOGALL THISPORT\r\n", "<UNLOGALL OK", FEMTO_RESPONSE_TIMEOUT) == 0 &&
-                writeAckedCommandFemto("VERSION\r\n", "<VERSION OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
+            if (writeAckedCommandFemto("UNLOGALL THISPORT\r\n", "<UNLOGALL OK") &&
+                writeAckedCommandFemto("VERSION\r\n", "<VERSION OK")) {
                 success = true;
                 break;
             }
@@ -68,7 +60,7 @@ int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
     }
 
     if (!success) {
-        return -1;
+        return false;
     }
 
     baudrate = supportedBaudrate;
@@ -83,7 +75,7 @@ int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
 
     _configure_done = true;
 
-    return ioError();
+    return !hasIOError();
 }
 
 void GPSNativeFemto::activateCorrectionOutput()
@@ -92,14 +84,13 @@ void GPSNativeFemto::activateCorrectionOutput()
         return;
     }
     if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
-        if (writeAckedCommandFemto("POSAVE ON \r\n", "<POSAVE OK", FEMTO_RESPONSE_TIMEOUT) != 0 ||
-            writeAckedCommandFemto("LOG GPGGA 1 \r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) != 0) {
+        if (!writeAckedCommandFemto("POSAVE ON \r\n", "<POSAVE OK") ||
+            !writeAckedCommandFemto("LOG GPGGA 1 \r\n", "<LOG OK")) {
             controlFailed();
             return;
         }
-        _survey_duration = 0;
-        _survey_in_start = nowUs();
-        sendSurveyInStatusUpdate(true, false);
+        _surveyClock.start(nowUs());
+        publishSurvey(true, false, _surveyClock.duration());
         return;
     }
     const auto& settings = std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode);
@@ -107,22 +98,20 @@ void GPSNativeFemto::activateCorrectionOutput()
     const int length =
         snprintf(buffer, sizeof(buffer), "FIX POSITION %.8lf %.8lf %.5f\r\n", settings.position.latitudeDegrees,
                  settings.position.longitudeDegrees, double(settings.position.altitudeMeters));
-    if (length < 0 || length >= int(sizeof(buffer)) ||
-        writeAckedCommandFemto(buffer, "FIX OK", FEMTO_RESPONSE_TIMEOUT) != 0 ||
-        writeAckedCommandFemto("LOG GPGGA 1 \r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) != 0) {
+    if (length < 0 || length >= int(sizeof(buffer)) || !writeAckedCommandFemto(buffer, "FIX OK") ||
+        !writeAckedCommandFemto("LOG GPGGA 1 \r\n", "<LOG OK")) {
         controlFailed();
         return;
     }
     activateRTCMOutput();
     if (_correction_output_activated) {
-        sendSurveyInStatusUpdate(false, true, settings.position.latitudeDegrees, settings.position.longitudeDegrees,
-                                 settings.position.altitudeMeters);
+        publishSurvey(false, true, {}, settings.position);
     }
 }
 
 void GPSNativeFemto::activateRTCMOutput()
 {
-    if (writeAckedCommandFemto("LOG RTCM 1\r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) != 0) {
+    if (!writeAckedCommandFemto("LOG RTCM 1\r\n", "<LOG OK")) {
         controlFailed();
         return;
     }

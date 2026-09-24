@@ -568,7 +568,7 @@ int run(const Options& options)
                                        : result.status == GPSReceiveStatus::TransportError ? "terminal_transport_error"
                                                                                            : "not_configured";
                 checks.append(check("receive_outcome", "failed", detail));
-                stage.insert("receive_error_code", result.errorCode);
+                stage.insert("receive_error_detail", result.detail);
                 stage.insert("transport_healthy_at_receive_failure", !evidence.fatalError());
                 return true;
             };

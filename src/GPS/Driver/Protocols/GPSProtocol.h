@@ -1,14 +1,15 @@
 #pragma once
 
 #include <algorithm>
-#include <cerrno>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <ctime>
 #include <functional>
 #include <numbers>
+#include <optional>
 #include <span>
+#include <string_view>
 
 #include <QtCore/QString>
 
@@ -17,6 +18,8 @@
 #include "GPSEllipsoidPosition.h"
 #include "GPSProtocolIO.h"
 #include "RTCMStreamDecoder.h"
+
+class GPSRawAckMatcher;
 
 inline constexpr int GPS_READ_BUFFER_SIZE = 150;
 inline constexpr float GPS_PI = std::numbers::pi_v<float>;
@@ -27,9 +30,9 @@ inline constexpr time_t GPS_UTC_PLAUSIBILITY_FLOOR_SECS = static_cast<time_t>(12
 class GPSProtocol
 {
 public:
-    static constexpr int ReadCancelled = -ECANCELED;
+    GPSProtocolError ioError() const { return _ioError; }
 
-    int ioError() const { return _io_error; }
+    bool hasIOError() const { return _ioError != GPSProtocolError::None; }
 
     const QString& ioErrorDetail() const { return _ioErrorDetail; }
 
@@ -48,22 +51,12 @@ public:
     GPSProtocol& operator=(GPSProtocol&&) = delete;
     virtual ~GPSProtocol() = default;
 
-    /**
-     * configure the device
-     * @param baud Input and output parameter: if set to 0, the baudrate will be automatically detected and set to
-     *             the detected baudrate. If not 0, a fixed baudrate is used.
-     * @param config GPS Config
-     * @return 0 on success, <0 otherwise
-     */
-    virtual int configure(unsigned& baud, const GPSConfig& config) = 0;
+    /// Configures the receiver. A zero @a baud requests detection and returns the detected rate.
+    /// @return true when the receiver is ready; on failure, ioError() and ioErrorDetail() describe any I/O fault.
+    [[nodiscard]] virtual bool configure(unsigned& baud, const GPSConfig& config) = 0;
 
-    /**
-     * receive & handle new data from the device
-     * @param timeout [ms]
-     * @return <0 on error, otherwise a bitset:
-     *         bit 0 set: got gps position update
-     *         bit 1 set: got satellite info update
-     */
+    /// Reads and decodes for up to @a timeout ms.
+    /// @return GPSDecodedBatch update flags; failures are reported through ioError(), never the return value.
     virtual int receive(unsigned timeout) = 0;
     virtual int consume(std::span<const uint8_t> bytes);
     GPSDecodeResult decode(std::span<const uint8_t> bytes);
@@ -116,31 +109,25 @@ protected:
         GPSDeadline _previous;
     };
 
-    template <typename... Args>
-    void log(GPSProtocolLogLevel level, const char* format, Args... args) const
-    {
-        if (!_io.log) {
-            return;
-        }
-        if constexpr (sizeof...(Args) == 0) {
-            _io.log(level, QString::fromUtf8(format));
-        } else {
-            _io.log(level, QString::asprintf(format, args...));
-        }
-    }
+    /// Category for this receiver family. Driver categories are children of GPS.Driver.Protocols, so enabling
+    /// the parent enables every driver.
+    virtual const QLoggingCategory& logCategory() const;
+
+    /// printf-style message; GCC and Clang check the format against its arguments.
+    void log(GPSProtocolLogLevel level, const char* format, ...) const Q_ATTRIBUTE_FORMAT_PRINTF(3, 4);
 
     uint64_t nowUs() const { return _io.nowUs(); }
 
     void waitFor(std::chrono::microseconds duration)
     {
-        if (_io_error) {
+        if (hasIOError()) {
             return;
         }
         const auto now = nowUs();
         const auto remaining = _operationDeadline.untilUs > now ? _operationDeadline.untilUs - now : 0;
         duration = std::min(duration, std::chrono::microseconds(std::min<uint64_t>(remaining, INT64_MAX)));
         if (_io.wait && !_io.wait(duration)) {
-            _io_error = ReadCancelled;
+            _ioError = GPSProtocolError::Cancelled;
             _ioErrorDetail.clear();
         }
     }
@@ -149,16 +136,36 @@ protected:
 
     void serviceControls();
 
+    /// Reads until updates arrive, the timeout expires, or I/O fails. @return update flags.
     int receiveDecoded(unsigned timeout);
 
     /// Read one bounded chunk, then return to the command matcher even when it contains only an ACK.
+    /// @return update flags.
     int readAndDecode(unsigned timeout);
 
     /// Start one command attempt; its write time counts toward the subsequent awaitCommand deadline.
     bool writeCommand(GPSConfigurationStep step, std::span<const uint8_t> bytes);
 
+    /// Decodes received traffic until @a reply resolves, the command deadline expires, or I/O fails.
     GPSCommandResult awaitCommand(const std::function<GPSCommandOutcome()>& reply);
-    GPSCommandResult awaitCommand(const std::function<void()>& pump, const std::function<GPSCommandOutcome()>& reply);
+
+    /// Writes @a wire and waits until the decoder calls resolveReply(), the step times out, or I/O fails.
+    /// Received traffic keeps decoding while the reply is pending.
+    GPSCommandResult transact(GPSConfigurationStep step, std::string_view wire);
+
+    /// As above, and also resolves the reply from raw received bytes for replies that need not be complete frames.
+    GPSCommandResult transact(GPSConfigurationStep step, std::string_view wire, GPSRawAckMatcher& reply);
+
+    /// True while a transact() reply is outstanding and unresolved.
+    bool replyPending() const { return _reply == GPSCommandOutcome::Pending; }
+
+    /// Resolves the outstanding transact() reply; Pending and later replies are ignored.
+    void resolveReply(GPSCommandOutcome outcome)
+    {
+        if (replyPending()) {
+            _reply = outcome;
+        }
+    }
 
     void beginCommandWrite(GPSConfigurationStep step);
 
@@ -169,19 +176,12 @@ protected:
 
     int remainingMilliseconds(uint64_t deadline) const { return GPSDeadline{deadline}.remainingMilliseconds(nowUs()); }
 
-    /**
-     * read from device
-     * @param buf: pointer to read buffer
-     * @param buf_length: size of read buffer
-     * @param timeout: timeout in ms
-     * @return: 0 for nothing read, or poll timed out
-     *	    < 0 for error
-     *	    > 0 number of bytes read
-     */
+    /// Reads up to @a buf_length bytes within @a timeout ms.
+    /// @return bytes read, 0 when nothing arrived, or -1 after an I/O failure recorded in ioError().
     int read(uint8_t* buf, int buf_length, int timeout)
     {
-        if (_io_error) {
-            return _io_error;
+        if (hasIOError()) {
+            return -1;
         }
         if (!buf || buf_length <= 0) {
             return 0;
@@ -196,30 +196,28 @@ protected:
         if (result.status == GPSReadStatus::TimedOut && result.bytesRead == 0) {
             return 0;
         }
-        _io_error = result.status == GPSReadStatus::Cancelled ? ReadCancelled : -EIO;
-        if (_io_error != ReadCancelled && _io.log) {
-            _io.log(GPSProtocolLogLevel::Warning, QStringLiteral("Receiver read failed (status %1, code %2): %3")
-                                                      .arg(static_cast<int>(result.status))
-                                                      .arg(_io_error)
-                                                      .arg(_ioErrorDetail));
+        _ioError =
+            result.status == GPSReadStatus::Cancelled ? GPSProtocolError::Cancelled : GPSProtocolError::Transport;
+        if (_ioError != GPSProtocolError::Cancelled && _io.log) {
+            _io.log(logCategory(), GPSProtocolLogLevel::Warning,
+                    QStringLiteral("Receiver read failed (status %1): %2")
+                        .arg(static_cast<int>(result.status))
+                        .arg(_ioErrorDetail));
         }
-        return _io_error;
+        return -1;
     }
 
-    /**
-     * write to the device
-     * @param buf
-     * @param buf_length
-     * @return num written bytes, -1 on error
-     */
-    int write(const void* buf, int buf_length)
+    /// Writes all of @a buf under the current command deadline.
+    /// @return true when every byte was accepted and written. An unsupported write fails without a sticky error.
+    [[nodiscard]] bool write(const void* buf, int buf_length)
     {
-        if (_io_error) {
-            return _io_error;
+        if (hasIOError()) {
+            return false;
         }
         if (!buf || buf_length < 0) {
             _ioErrorDetail.clear();
-            return _io_error = -EINVAL;
+            _ioError = GPSProtocolError::InvalidArgument;
+            return false;
         }
         const GPSDeadline deadline{
             std::min(_operationDeadline.untilUs, _commandCompleted ? UINT64_MAX : _commandDeadline.untilUs)};
@@ -232,54 +230,66 @@ protected:
         _commandWrite.evidence.uncertainBytes += result.uncertainBytes();
         if (result.status == GPSWriteStatus::Completed && result.acceptedBytes == buf_length &&
             result.writtenBytes == buf_length && result.uncertainBytes() == 0) {
-            return result.writtenBytes;
+            return true;
         }
         if (result.status == GPSWriteStatus::Unsupported && result.acceptedBytes == 0 && result.writtenBytes == 0) {
             failCommandWrite(GPSCommandOutcome::TransportError);
-            return -1;
+            return false;
         }
-        _io_error = result.status == GPSWriteStatus::Cancelled ? ReadCancelled : -EIO;
+        _ioError =
+            result.status == GPSWriteStatus::Cancelled ? GPSProtocolError::Cancelled : GPSProtocolError::Transport;
         failCommandWrite(result.status == GPSWriteStatus::Cancelled ? GPSCommandOutcome::Cancelled
                                                                     : GPSCommandOutcome::TransportError);
-        return _io_error;
+        return false;
     }
 
-    /**
-     * set the Baudrate
-     * @param baudrate
-     * @return 0 on success, <0 otherwise
-     */
-    int setBaudrate(int baudrate)
+    /// Changes the link baud rate. An unsupported change fails without a sticky error.
+    bool setBaudrate(unsigned baudrate)
     {
-        if (_io_error) {
-            return _io_error;
+        if (hasIOError()) {
+            return false;
         }
         _ioErrorDetail.clear();
         const auto result = _io.setBaudrate ? _io.setBaudrate(baudrate) : GPSBaudStatus::Unsupported;
         if (result == GPSBaudStatus::Configured) {
-            return 0;
+            return true;
         }
-        if (result == GPSBaudStatus::Unsupported) {
-            return -1;
+        if (result != GPSBaudStatus::Unsupported) {
+            _ioError = result == GPSBaudStatus::Cancelled ? GPSProtocolError::Cancelled : GPSProtocolError::Transport;
         }
-        _io_error = result == GPSBaudStatus::Cancelled ? ReadCancelled : -EIO;
-        return _io_error;
+        return false;
     }
 
     // A new configuration attempt starts a new I/O transaction. After a terminal
     // error, no command may be written until the caller explicitly retries.
     void resetIOError()
     {
-        _io_error = 0;
+        _ioError = GPSProtocolError::None;
         _ioErrorDetail.clear();
     }
 
     void controlFailed()
     {
-        if (!_io_error) {
-            _io_error = -EPROTO;
+        if (!hasIOError()) {
+            _ioError = GPSProtocolError::Protocol;
             _ioErrorDetail.clear();
         }
+    }
+
+    /// The command outcome that reports the sticky I/O failure; Pending while I/O is healthy.
+    GPSCommandOutcome ioCommandOutcome() const
+    {
+        switch (_ioError) {
+            case GPSProtocolError::None:
+                return GPSCommandOutcome::Pending;
+            case GPSProtocolError::Cancelled:
+                return GPSCommandOutcome::Cancelled;
+            case GPSProtocolError::Transport:
+            case GPSProtocolError::Protocol:
+            case GPSProtocolError::InvalidArgument:
+                return GPSCommandOutcome::TransportError;
+        }
+        return GPSCommandOutcome::TransportError;
     }
 
     void publishIntegrity()
@@ -307,10 +317,22 @@ protected:
         _decoded.events.emplace_back(GPSNativeSatelliteUsageReport{nowUs(), count});
     }
 
-    void surveyInStatus(GPSNativeSurveyReport& status)
+    void publishSurvey(GPSNativeSurveyReport& status)
     {
         status.timestamp = nowUs();
         _decoded.events.emplace_back(status);
+    }
+
+    /// Publishes survey-in progress; unknown coordinates remain NaN.
+    void publishSurvey(bool active, bool valid, std::chrono::seconds duration,
+                       const GPSEllipsoidPosition& position = {})
+    {
+        GPSNativeSurveyReport status{};
+        status.survey.position = position;
+        status.survey.duration = duration;
+        status.survey.valid = valid;
+        status.survey.active = active;
+        publishSurvey(status);
     }
 
     /** got an RTCM message from the device */
@@ -367,8 +389,10 @@ protected:
     GPSDecodedBatch _decoded;
     GPSIntegrityReport _integrity;
     GPSProtocolIO _io;
-    int _io_error = 0;
+    GPSProtocolError _ioError = GPSProtocolError::None;
     QString _ioErrorDetail;
     GPSDeadline _operationDeadline;
+    std::optional<GPSCommandOutcome> _reply;
+    GPSRawAckMatcher* _rawReply = nullptr;
     bool _servicingControls = false;
 };

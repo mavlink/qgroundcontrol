@@ -1,15 +1,22 @@
 #include "GPSProtocol.h"
 
+#include <cstdarg>
 #include <math.h>
 #include <stdlib.h>
 #include <thread>
 #include <time.h>
 
+#include <QtCore/QScopeGuard>
+
 #include "GPSProtocolTime.h"
+#include "GPSRawAckMatcher.h"
 #include "GPSReceiverCapabilities.h"
 #include "GPSReceiverConfig.h"
 #include "MonotonicClock.h"
+#include "QGCLoggingCategory.h"
 #include <GeographicLib/Geocentric.hpp>
+
+QGC_LOGGING_CATEGORY(GPSNativeDriversLog, "GPS.Driver.Protocols")
 
 GPSProtocol::GPSProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     : _satellites(satelliteInfoEnabled ? &_satelliteStorage : nullptr)
@@ -24,6 +31,23 @@ GPSProtocol::GPSProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
             return true;
         };
     }
+}
+
+const QLoggingCategory& GPSProtocol::logCategory() const
+{
+    return GPSNativeDriversLog();
+}
+
+void GPSProtocol::log(GPSProtocolLogLevel level, const char* format, ...) const
+{
+    if (!_io.log) {
+        return;
+    }
+    va_list arguments;
+    va_start(arguments, format);
+    const QString message = QString::vasprintf(format, arguments);
+    va_end(arguments);
+    _io.log(logCategory(), level, message);
 }
 
 bool GPSProtocol::validateConfiguration(const GPSConfig& config, ConfigurationSupport support) const
@@ -77,26 +101,19 @@ int GPSProtocol::readAndDecode(unsigned timeout)
     uint8_t buffer[GPS_READ_BUFFER_SIZE];
     const int count = read(buffer, sizeof(buffer), static_cast<int>(timeout));
     if (count < 0) {
-        return count;
+        return 0;
     }
-    const int updates = consume({buffer, static_cast<size_t>(count)});
-    return ioError() ? ioError() : updates;
+    return consume({buffer, static_cast<size_t>(count)});
 }
 
 bool GPSProtocol::writeCommand(GPSConfigurationStep step, std::span<const uint8_t> bytes)
 {
     const Operation operation(*this, static_cast<unsigned>(step.timeout.count()));
     beginCommandWrite(std::move(step));
-    return write(bytes.data(), static_cast<int>(bytes.size())) == static_cast<int>(bytes.size());
+    return write(bytes.data(), static_cast<int>(bytes.size()));
 }
 
 GPSCommandResult GPSProtocol::awaitCommand(const std::function<GPSCommandOutcome()>& reply)
-{
-    return awaitCommand([this] { readAndDecode(remainingMilliseconds(_commandDeadline.untilUs)); }, reply);
-}
-
-GPSCommandResult GPSProtocol::awaitCommand(const std::function<void()>& pump,
-                                           const std::function<GPSCommandOutcome()>& reply)
 {
     if (_commandCompleted) {
         return _commandWrite;
@@ -104,18 +121,41 @@ GPSCommandResult GPSProtocol::awaitCommand(const std::function<void()>& pump,
     const Operation operation(*this, remainingMilliseconds(_commandDeadline.untilUs));
     _operationDeadline.untilUs = std::min(_operationDeadline.untilUs, _commandDeadline.untilUs);
     const auto outcome = GPSCommandTransaction::await(
-        _operationDeadline.untilUs, [this] { return nowUs(); }, reply, pump,
-        [this] {
-            return ioError() == ReadCancelled ? GPSCommandOutcome::Cancelled
-                   : ioError()                ? GPSCommandOutcome::TransportError
-                                              : GPSCommandOutcome::Pending;
-        });
+        _operationDeadline.untilUs, [this] { return nowUs(); }, reply,
+        [this] { readAndDecode(remainingMilliseconds(_commandDeadline.untilUs)); },
+        [this] { return ioCommandOutcome(); });
     return completeCommand(outcome);
+}
+
+GPSCommandResult GPSProtocol::transact(GPSConfigurationStep step, std::string_view wire)
+{
+    const auto clearReply = qScopeGuard([this] {
+        _reply.reset();
+        _rawReply = nullptr;
+    });
+    if (hasIOError()) {
+        GPSCommandResult failed;
+        failed.evidence.command = std::move(step.command);
+        failed.evidence.required = step.required;
+        failed.evidence.outcome = ioCommandOutcome();
+        return failed;
+    }
+    _reply = GPSCommandOutcome::Pending;
+    if (!writeCommand(std::move(step), {reinterpret_cast<const uint8_t*>(wire.data()), wire.size()})) {
+        return completeCommand(hasIOError() ? ioCommandOutcome() : GPSCommandOutcome::TransportError);
+    }
+    return awaitCommand([this] { return _reply.value_or(GPSCommandOutcome::Pending); });
+}
+
+GPSCommandResult GPSProtocol::transact(GPSConfigurationStep step, std::string_view wire, GPSRawAckMatcher& reply)
+{
+    _rawReply = &reply;
+    return transact(std::move(step), wire);
 }
 
 void GPSProtocol::beginCommandWrite(GPSConfigurationStep step)
 {
-    if (ioError()) {
+    if (hasIOError()) {
         return;
     }
     failCommandWrite(GPSCommandOutcome::Written);
@@ -152,16 +192,16 @@ int GPSProtocol::receiveDecoded(unsigned timeout)
     const uint64_t deadline = _operationDeadline.untilUs;
     do {
         const int handled = readAndDecode(static_cast<unsigned>(remainingMilliseconds(deadline)));
-        if (handled) {
+        if (handled || hasIOError()) {
             return handled;
         }
     } while (nowUs() < deadline);
-    return -1;
+    return 0;
 }
 
 void GPSProtocol::serviceControls()
 {
-    if (_servicingControls || ioError()) {
+    if (_servicingControls || hasIOError()) {
         return;
     }
     _servicingControls = true;
@@ -184,6 +224,10 @@ GPSDecodeResult GPSProtocol::decode(std::span<const uint8_t> bytes)
         if (updates > 0) {
             _decoded.updates |= updates;
         }
+    }
+    if (_rawReply) {
+        _rawReply->append(bytes.first(consumed));
+        resolveReply(_rawReply->outcome());
     }
     GPSDecodeResult result{consumed, std::move(_decoded)};
     _decoded = {};

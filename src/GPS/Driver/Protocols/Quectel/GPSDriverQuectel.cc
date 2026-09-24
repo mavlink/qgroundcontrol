@@ -9,7 +9,10 @@
 
 #include <QtCore/QScopeGuard>
 
+#include "QGCLoggingCategory.h"
 #include "QuectelCodec_p.h"
+
+QGC_LOGGING_CATEGORY(GPSNativeQuectelLog, "GPS.Driver.Protocols.Quectel")
 
 namespace {
 // Quectel LG290P(03)&LGx80P(03) GNSS Protocol Specification V1.1:
@@ -26,37 +29,42 @@ using QuectelCodec::readback;
 using QuectelCodec::rejected;
 }  // namespace
 
+const QLoggingCategory& GPSNativeQuectel::logCategory() const
+{
+    return GPSNativeQuectelLog();
+}
+
 GPSNativeQuectel::GPSNativeQuectel(GPSProtocolIO io, bool satelliteInfoEnabled)
     : GPSAsciiProtocol(std::move(io), satelliteInfoEnabled)
 {
     setRTCMEnabled(false);
 }
 
-GPSCommandOutcome GPSNativeQuectel::_transact(const std::string& command, ReplyHandler handler, unsigned timeoutMs)
+GPSCommandResult GPSNativeQuectel::_transact(const std::string& command, ReplyHandler handler, unsigned timeoutMs)
 {
-    _pendingReply = {.handler = std::move(handler)};
-    const auto clearReply = qScopeGuard([this] { _pendingReply.handler = {}; });
-    const GPSConfigurationStep step{command, std::chrono::milliseconds(timeoutMs)};
-    const std::string bytes = frame(command);
-    if (!writeCommand(step, {reinterpret_cast<const uint8_t*>(bytes.data()), bytes.size()})) {
-        return ioError() == ReadCancelled ? GPSCommandOutcome::Cancelled : GPSCommandOutcome::TransportError;
-    }
-    return awaitCommand([this] { return _pendingReply.outcome; }).evidence.outcome;
+    _replyHandler = std::move(handler);
+    const auto clearReply = qScopeGuard([this] { _replyHandler = {}; });
+    return transact({command, std::chrono::milliseconds(timeoutMs)}, frame(command));
+}
+
+GPSCommandResult GPSNativeQuectel::_acknowledgement(const std::string& command, unsigned timeoutMs)
+{
+    const std::string name = command.substr(0, command.find(','));
+    return _transact(
+        command,
+        [name](std::string_view body) {
+            const Fields reply(body);
+            if (reply.size() == 2 && reply[0] == name && reply[1] == "OK") {
+                return GPSCommandOutcome::Acknowledged;
+            }
+            return rejected(reply, name) ? GPSCommandOutcome::Rejected : GPSCommandOutcome::Pending;
+        },
+        timeoutMs);
 }
 
 bool GPSNativeQuectel::_acknowledge(const std::string& command, unsigned timeoutMs)
 {
-    const std::string name = command.substr(0, command.find(','));
-    return _transact(
-               command,
-               [name](std::string_view body) {
-                   const Fields reply(body);
-                   if (reply.size() == 2 && reply[0] == name && reply[1] == "OK") {
-                       return GPSCommandOutcome::Acknowledged;
-                   }
-                   return rejected(reply, name) ? GPSCommandOutcome::Rejected : GPSCommandOutcome::Pending;
-               },
-               timeoutMs) == GPSCommandOutcome::Acknowledged;
+    return _acknowledgement(command, timeoutMs).evidence.outcome == GPSCommandOutcome::Acknowledged;
 }
 
 bool GPSNativeQuectel::_identify(unsigned timeoutMs)
@@ -77,7 +85,8 @@ bool GPSNativeQuectel::_identify(unsigned timeoutMs)
                               ? GPSCommandOutcome::ReadbackVerified
                               : GPSCommandOutcome::Rejected;
                },
-               timeoutMs) == GPSCommandOutcome::ReadbackVerified;
+               timeoutMs)
+               .evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
 bool GPSNativeQuectel::_verifyRole(bool requireMatch)
@@ -91,7 +100,7 @@ bool GPSNativeQuectel::_verifyRole(bool requireMatch)
                    _receiverRole = mode;
                }
                return readback(reply, "PQTMCFGRCVRMODE", valid && (!requireMatch || mode == BASE_ROLE));
-           }) == GPSCommandOutcome::ReadbackVerified;
+           }).evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
 bool GPSNativeQuectel::_verifyBase(bool requireMatch)
@@ -102,7 +111,7 @@ bool GPSNativeQuectel::_verifyBase(bool requireMatch)
             unsigned interval = 0;
             return readback(reply, "PQTMCFGFIXRATE",
                             reply.size() == 3 && number(reply[2], interval) && interval == 1000);
-        }) != GPSCommandOutcome::ReadbackVerified) {
+        }).evidence.outcome != GPSCommandOutcome::ReadbackVerified) {
         return false;
     }
     return _transact("PQTMCFGSVIN,R", [this, requireMatch](std::string_view body) {
@@ -142,7 +151,7 @@ bool GPSNativeQuectel::_verifyBase(bool requireMatch)
                }
                _baseMatches = matches;
                return readback(reply, "PQTMCFGSVIN", valid && (!requireMatch || matches));
-           }) == GPSCommandOutcome::ReadbackVerified;
+           }).evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
 std::string GPSNativeQuectel::_baseCommand() const
@@ -165,14 +174,15 @@ std::string GPSNativeQuectel::_baseCommand() const
 
 bool GPSNativeQuectel::_saveConfiguration()
 {
-    const bool saved = _acknowledge("PQTMSAVEPAR", 5000);
+    const auto result = _acknowledgement("PQTMSAVEPAR", 5000);
+    const bool saved = result.evidence.outcome == GPSCommandOutcome::Acknowledged;
     if (saved) {
         _persistentSaveAcknowledged = true;
         _persistentSaveUncertain = false;
         log(GPSProtocolLogLevel::Debug, "LG290P acknowledged saving configuration to nonvolatile memory");
     } else {
         _persistentSaveUncertain =
-            _pendingReply.outcome != GPSCommandOutcome::Rejected && _commandWrite.evidence.acceptedBytes > 0;
+            result.evidence.outcome != GPSCommandOutcome::Rejected && result.evidence.acceptedBytes > 0;
     }
     return saved;
 }
@@ -206,7 +216,7 @@ bool GPSNativeQuectel::_setMessageRate(std::string_view name, unsigned rate, std
                                reply.size() == (version.empty() ? 4 : 5) && reply[2] == name &&
                                    number(reply[3], value) && value == rate &&
                                    (version.empty() || reply[4] == version));
-           }) == GPSCommandOutcome::ReadbackVerified;
+           }).evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
 bool GPSNativeQuectel::_restart(bool requireRoleMatch)
@@ -218,7 +228,7 @@ bool GPSNativeQuectel::_restart(bool requireRoleMatch)
     const uint64_t deadline = nowUs() + uint64_t(RESTART_TIMEOUT_MS) * 1000;
     const auto bytes = frame("PQTMSRR");
     beginCommandWrite({"PQTMSRR", std::chrono::milliseconds(RESTART_TIMEOUT_MS)});
-    if (write(bytes.data(), static_cast<int>(bytes.size())) != static_cast<int>(bytes.size())) {
+    if (!write(bytes.data(), static_cast<int>(bytes.size()))) {
         return false;
     }
     // PQTMSRR has no documented ACK. Do not inflate successful transport completion to acknowledgment.
@@ -229,7 +239,7 @@ bool GPSNativeQuectel::_restart(bool requireRoleMatch)
     _restartRejected = false;
     do {
         waitFor(std::chrono::milliseconds(200));
-        if (ioError()) {
+        if (hasIOError()) {
             break;
         }
         const bool identified = _identify(700);
@@ -241,12 +251,12 @@ bool GPSNativeQuectel::_restart(bool requireRoleMatch)
             _expectingBoot = false;
             return _verifyRole(requireRoleMatch);
         }
-    } while (!ioError() && nowUs() < deadline);
+    } while (!hasIOError() && nowUs() < deadline);
     _expectingBoot = false;
     return false;
 }
 
-int GPSNativeQuectel::_fail(const char* reason)
+bool GPSNativeQuectel::_fail(const char* reason)
 {
     _configured = false;
     _survey.phase = SurveyPhase::Off;
@@ -265,14 +275,14 @@ int GPSNativeQuectel::_fail(const char* reason)
         _ioErrorDetail = persistence + uncertain + detail +
                          QStringLiteral(" Receiver settings may have changed; no rollback was attempted.");
         log(GPSProtocolLogLevel::Warning, "%s", qPrintable(_ioErrorDetail));
-    } else if (ioError() != ReadCancelled) {
+    } else if (ioError() != GPSProtocolError::Cancelled) {
         _ioErrorDetail = detail;
         log(GPSProtocolLogLevel::Warning, "%s", reason);
     }
-    return ioError();
+    return false;
 }
 
-int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
+bool GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
 {
     resetIOError();
     _configured = false;
@@ -301,7 +311,7 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
     const std::array<unsigned, 6> candidates{460800, 115200, 230400, 921600, 57600, 9600};
     for (const unsigned candidate : candidates) {
         const unsigned selected = baud == 0 ? candidate : baud;
-        if (setBaudrate(static_cast<int>(selected)) < 0) {
+        if (!setBaudrate(selected)) {
             return _fail("Cannot configure LG290P host serial speed");
         }
         resetStream();
@@ -310,7 +320,7 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
             identified = true;
             break;
         }
-        if (ioError() || !_firmware.empty() || baud != 0) {
+        if (hasIOError() || !_firmware.empty() || baud != 0) {
             break;
         }
     }
@@ -398,5 +408,5 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
     _configured = true;
     _expireSurvey();
     setRTCMEnabled(_survey.report && _survey.report->survey.valid);
-    return 0;
+    return true;
 }

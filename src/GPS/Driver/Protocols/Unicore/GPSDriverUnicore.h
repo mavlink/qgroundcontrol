@@ -17,9 +17,9 @@ class GPSNativeUnicore final : public GPSAsciiProtocol
 public:
     explicit GPSNativeUnicore(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
-    int configure(unsigned& baud, const GPSConfig& config) override;
+    bool configure(unsigned& baud, const GPSConfig& config) override;
 
-    bool receiverReady() const override { return _ready && !ioError(); }
+    bool receiverReady() const override { return _ready && !hasIOError(); }
 
     std::string_view model() const { return _model; }
 
@@ -34,6 +34,7 @@ protected:
     void servicePendingCommands() override;
 
 private:
+    const QLoggingCategory& logCategory() const override;
     enum class Reply
     {
         Acknowledgment,
@@ -51,7 +52,7 @@ private:
 
     bool _execute(std::string command, Reply reply = Reply::Acknowledgment);
     bool _identify(unsigned& baud);
-    int _configurationFailed(const QString& reason = {});
+    bool _configurationFailed(const QString& reason = {});
     void _handleVersion(std::string_view body);
     void _handleMode(std::string_view body);
     void _handlePosition(std::string_view body);
@@ -69,9 +70,9 @@ private:
     {
         std::string text;
         Reply expected = Reply::Acknowledgment;
-        GPSCommandOutcome outcome = GPSCommandOutcome::Pending;
-        bool active = false;
     };
+
+    bool _awaitingReply(Reply reply) const { return replyPending() && _command.expected == reply; }
 
     Command _command;
     QString _configurationDetail;

@@ -14,7 +14,7 @@ public:
 
     virtual ~GPSNativeUBX();
 
-    int configure(unsigned& baudrate, const GPSConfig& config) override;
+    bool configure(unsigned& baudrate, const GPSConfig& config) override;
 
     int receive(unsigned timeout) override;
     int decodeByte(uint8_t byte) override;
@@ -49,18 +49,19 @@ public:
     void setDecodeContext(DecodeContext context);
 
 private:
+    const QLoggingCategory& logCategory() const override;
     void servicePendingCommands() override;
     bool _rtcmActivationPending = false;
     uint16_t _pendingDisableMessage = 0;
     UBX::ReceiverController _controller;
 
-    /** Like receive(), but reports a negative device read separately from a timeout. */
-    int receiveInternal(unsigned timeout, bool& read_error);
+    /** Reads until the configured completion condition, a timeout, or an I/O failure; returns update flags. */
+    int receiveInternal(unsigned timeout);
 
     void requestCommsDiagnostics();
     void logCommsDiagnostics(std::span<const uint8_t> payload);
 
-    int activateRTCMOutput();
+    bool activateRTCMOutput();
 
     /**
      * Convert a relative position heading into a vehicle heading.
@@ -75,29 +76,19 @@ private:
     void calcChecksum(const uint8_t* buffer, const uint16_t length, ubx_checksum_t* checksum);
 
     /**
-     * Configure message rate.
-     * Note: this is deprecated with protocol version >= 27
-     * @return true on success, false on write error
-     */
-    bool configureMessageRate(const uint16_t msg, const uint8_t rate, bool required = true);
-
-    /**
-     * Combines the configure_message_rate & wait_for_ack calls.
-     * Note: this is deprecated with protocol version >= 27
+     * Send configuration values and desired message rates
      * @return true on success
      */
-    inline bool configureMessageRateAndAck(uint16_t msg, uint8_t rate, bool report_ack_error = false);
+    bool configureDevice();
 
-    /**
-     * Send configuration values and desired message rates
-     * @return 0 on success, <0 on error
-     */
-    int configureDevice();
-    /**
-     * Send configuration values and desired message rates (for protocol version < 27)
-     * @return 0 on success, <0 on error
-     */
-    int configureDevicePreV27();
+    /// Pre-protocol-27 configuration through CFG-MSG/CFG-RATE (UBXLegacyConfiguration.cc).
+    bool configureDevicePreV27();
+    bool restartSurveyInPreV27();
+    bool activateRTCMOutputPreV27();
+    /// CFG-MSG rate; deprecated with protocol version >= 27. @return true when written.
+    bool configureMessageRate(uint16_t msg, uint8_t rate, bool required = true);
+    /// CFG-MSG rate followed by its acknowledgement.
+    bool configureMessageRateAndAck(uint16_t msg, uint8_t rate, bool report_ack_error = false);
 
     /**
      * Add a configuration value to the pending CFG-VALSET batch.
@@ -157,7 +148,7 @@ private:
     /**
      * Reset the parse state machine for a fresh start
      */
-    void decodeInit(void);
+    void decodeInit();
 
     /**
      * Start a new CFG-VALSET batch (header only, no config values yet)
@@ -180,17 +171,12 @@ private:
     /**
      * Start or restart the survey-in process. This is only used in RTCM output mode.
      * It will be called automatically after configuring.
-     * @return 0 on success, <0 on error
+     * @return true on success
      */
-    int restartSurveyIn();
-    int disableTimeMode();
-    int verifyConfigValue(uint32_t key, uint8_t value);
-    int waitForSurveyStop();
-
-    /**
-     * restartSurveyIn for protocol version < 27
-     */
-    int restartSurveyInPreV27();
+    bool restartSurveyIn();
+    bool disableTimeMode();
+    bool verifyConfigValue(uint32_t key, uint8_t value);
+    bool waitForSurveyStop();
 
     /** Route one received byte to the RTCM or UBX frame decoder. */
     int parseChar(const uint8_t b);
@@ -203,8 +189,14 @@ private:
     void decodeNavSat(std::span<const uint8_t> payload);
     void decodeNavSvinfo(std::span<const uint8_t> payload);
 
-    /** Decode a handled payload into the working reports; nonzero when the payload was consumed. */
+    /** Decode a handled payload into the working reports: 0 unhandled, 1 handled, 2 satellite information. */
     int payloadRxDone(uint16_t message, std::span<const uint8_t> payload, GPSNativePositionReport& position);
+    int decodeNavPvt(std::span<const uint8_t> payload, GPSNativePositionReport& position);
+    int decodeNavigation(uint16_t message, std::span<const uint8_t> payload, GPSNativePositionReport& position);
+    int decodeHeading(uint16_t message, std::span<const uint8_t> payload, GPSNativePositionReport& position);
+    int decodeSurveyIn(std::span<const uint8_t> payload);
+    int decodeIntegrity(uint16_t message, std::span<const uint8_t> payload);
+    int decodeControl(uint16_t message, std::span<const uint8_t> payload);
 
     /**
      * Send a message

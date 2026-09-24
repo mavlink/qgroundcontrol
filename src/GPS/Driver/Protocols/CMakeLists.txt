@@ -34,6 +34,7 @@ set(_native_headers
     GPSProtocol.h
     GPSProtocolTime.h
     GPSAsciiProtocol.h
+    GPSSurveyClock.h
     GPSNMEAReport.h
     Ashtech/GPSDriverAshtech.h
     Femto/FemtoMessages.h
@@ -69,7 +70,9 @@ qt_add_library(
     SBF/SBFDecoder.cc
     UBX/GPSDriverUBX.cc
     UBX/UBXConfiguration.cc
+    UBX/UBXConfiguration_p.h
     UBX/UBXDecoder.cc
+    UBX/UBXLegacyConfiguration.cc
     Unicore/GPSDriverUnicore.cc
 )
 add_library(QGC::GPSNative ALIAS QGCGPSNative)
@@ -86,5 +89,5 @@ target_include_directories(QGCGPSNative PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 target_link_libraries(
     QGCGPSNative
     PUBLIC QGCWire QGCClock QGCGPSNativeContracts QGCGPSNMEAProtocol QGCGPSRTCM
-    PRIVATE GeographicLib::GeographicLib
+    PRIVATE GeographicLib::GeographicLib QGCLoggingCategory
 )

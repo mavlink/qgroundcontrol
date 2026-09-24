@@ -4,7 +4,15 @@
 #include <string.h>
 
 #include "NMEASentence.h"
+#include "QGCLoggingCategory.h"
 #include "RTCMFramer.h"
+
+QGC_LOGGING_CATEGORY(GPSNativeUBXLog, "GPS.Driver.Protocols.UBX")
+
+const QLoggingCategory& GPSNativeUBX::logCategory() const
+{
+    return GPSNativeUBXLog();
+}
 
 GPSNativeUBX::GPSNativeUBX(GPSProtocolIO io, bool satelliteInfoEnabled)
     : GPSProtocol(std::move(io), satelliteInfoEnabled)
@@ -22,22 +30,18 @@ std::string GPSNativeUBX::receiverIdentity() const
     return model.empty() || firmware.empty() ? model + firmware : model + ' ' + firmware;
 }
 
-int  // -1 = error, 0 = no message handled, 1 = message handled, 2 = sat info message handled
-GPSNativeUBX::receive(unsigned timeout)
+int GPSNativeUBX::receive(unsigned timeout)
 {
-    bool read_error;
-    const int result = receiveInternal(timeout, read_error);
+    const int result = receiveInternal(timeout);
     serviceControls();
-    return ioError() ? ioError() : result;
+    return result;
 }
 
-int GPSNativeUBX::receiveInternal(unsigned timeout, bool& read_error)
+int GPSNativeUBX::receiveInternal(unsigned timeout)
 {
     const Operation operation(*this, timeout);
-    read_error = false;
-    if (ioError()) {
-        read_error = true;
-        return ioError();
+    if (hasIOError()) {
+        return 0;
     }
     uint8_t buf[GPS_READ_BUFFER_SIZE];
 
@@ -69,8 +73,7 @@ int GPSNativeUBX::receiveInternal(unsigned timeout, bool& read_error)
                                      remainingMilliseconds(time_started + uint64_t(timeout) * 1000)));
 
         if (ret < 0) {
-            read_error = true;
-            return -1;
+            return handled;
 
         } else if (ret > 0) {
             //
@@ -83,7 +86,7 @@ int GPSNativeUBX::receiveInternal(unsigned timeout, bool& read_error)
 
         /* abort after timeout if no useful packets received */
         if (nowUs() >= _operationDeadline.untilUs) {
-            return handled ? handled : -1;
+            return handled;
         }
     }
 }
@@ -96,8 +99,8 @@ void GPSNativeUBX::servicePendingCommands()
     }
     if (_rtcmActivationPending) {
         _rtcmActivationPending = false;
-        if (activateRTCMOutput() < 0 && !ioError()) {
-            _io_error = -EPROTO;
+        if (!activateRTCMOutput()) {
+            controlFailed();
         }
     }
     if (_pendingDisableMessage) {

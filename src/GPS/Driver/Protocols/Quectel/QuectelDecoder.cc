@@ -20,8 +20,8 @@ int GPSNativeQuectel::handleReceiverLine(std::string_view line)
     if (body.empty()) {
         return 0;
     }
-    if (_pendingReply.handler && _pendingReply.outcome == GPSCommandOutcome::Pending) {
-        _pendingReply.outcome = _pendingReply.handler(body);
+    if (_replyHandler && replyPending()) {
+        resolveReply(_replyHandler(body));
     }
     if (_expectingBoot && body.starts_with("PQTMSRR,") && QuectelCodec::rejected(Fields(body), "PQTMSRR")) {
         _restartRejected = true;
@@ -67,13 +67,13 @@ void GPSNativeQuectel::_revokeSurvey()
     if (_survey.report) {
         _survey.report.reset();
         GPSNativeSurveyReport report{};
-        surveyInStatus(report);
+        publishSurvey(report);
     }
 }
 
 void GPSNativeQuectel::_expireSurvey()
 {
-    if (_survey.report && (ioError() || nowUs() - _survey.report->timestamp > STATUS_MAX_AGE_US)) {
+    if (_survey.report && (hasIOError() || nowUs() - _survey.report->timestamp > STATUS_MAX_AGE_US)) {
         _revokeSurvey();
     }
 }
@@ -166,7 +166,7 @@ int GPSNativeQuectel::receive(unsigned timeout)
     _expireSurvey();
     // Re-evaluate stale status before each transport read, even when one caller gives a large timeout.
     const int result = GPSAsciiProtocol::receive(std::min(timeout, 1000U));
-    if (ioError()) {
+    if (hasIOError()) {
         _configured = false;
         _survey.phase = SurveyPhase::Off;
         _revokeSurvey();

@@ -6,8 +6,15 @@
 #include <utility>
 
 #include "GPSNMEAReport.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(GPSNativePassiveLog, "GPS.Driver.Protocols.Passive")
 
 GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
+    : GPSAsciiProtocol(std::move(io), satelliteInfoEnabled, Navigation::StandardNMEA)
+{}
+
+GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, bool satelliteInfoEnabled, Navigation navigation)
     : GPSProtocol(std::move(io), satelliteInfoEnabled)
     , _lineFramer(_line, {.requireStart = false, .hashStartsLine = true})
     , _navigationAssembler({.metadataMaxAgeUs = METADATA_MAX_AGE_US,
@@ -18,6 +25,7 @@ GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
                             .reconstructDate = false,
                             .enforceNavigationOrder = false,
                             .untimedMetadataUsesPositionReceipt = true})
+    , _navigation(navigation)
 {}
 
 void GPSAsciiProtocol::resetStream()
@@ -40,7 +48,7 @@ int GPSAsciiProtocol::receive(unsigned timeout)
     }
     const int result = receiveDecoded(timeout);
     serviceControls();
-    return ioError() ? ioError() : result;
+    return result;
 }
 
 int GPSAsciiProtocol::decodeByte(uint8_t byte)
@@ -75,6 +83,9 @@ int GPSAsciiProtocol::_handleNmea(std::string_view line)
     int updates = GPSDecodedBatch::PROTOCOL_ACTIVITY;
     auto satelliteUpdate = _satelliteAssembler.ingest(*sentence, now);
     _publishSatellites(satelliteUpdate.completed);
+    if (_navigation == Navigation::ReceiverSpecific) {
+        return updates;
+    }
     const auto navigation = NMEA::navigationStatus(*sentence);
     const auto update = sentence->type() == "GSA" && navigation && navigation->valid && !satelliteUpdate.accepted
                             ? std::optional<NMEA::NavigationUpdate>()
@@ -144,22 +155,27 @@ void GPSAsciiProtocol::_drainRTCM()
     drainRTCM(_rtcm, _rtcmEnabled);
 }
 
-int GPSNativePassive::configure(unsigned& baud, const GPSConfig& config)
+const QLoggingCategory& GPSNativePassive::logCategory() const
+{
+    return GPSNativePassiveLog();
+}
+
+bool GPSNativePassive::configure(unsigned& baud, const GPSConfig& config)
 {
     _configured = false;
     resetIOError();
     resetStream();
     if (config.allowPersistentChanges || config.base != GPSBaseStationConfig{} || baud < 1200 || baud > 4000000) {
         log(GPSProtocolLogLevel::Warning, "Passive input requires an explicit baud rate and no receiver configuration");
-        return -1;
+        return false;
     }
-    if (setBaudrate(baud) < 0) {
-        if (ioError() != ReadCancelled) {
+    if (!setBaudrate(baud)) {
+        if (ioError() != GPSProtocolError::Cancelled) {
             log(GPSProtocolLogLevel::Warning, "Could not set the passive input baud rate");
         }
-        return -1;
+        return false;
     }
     setRTCMEnabled(true);
     _configured = true;
-    return 0;
+    return true;
 }

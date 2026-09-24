@@ -141,7 +141,7 @@ void identityAndRole()
             GPSNativePositionReport positionReport;
             GPSNativeUnicore driver(captureGPSReports(receiver.io(), positionReport), false);
             unsigned rate = baud;
-            CHECK(driver.configure(rate, baseConfig(false)) == 0);
+            CHECK(driver.configure(rate, baseConfig(false)));
             CHECK(driver.receiverReady());
             CHECK(rate == receiver.availableBaud);
             CHECK(driver.model() == model);
@@ -181,7 +181,7 @@ void rejectBeforeMutation()
         receiver.version = native("VERSIONA", body);
         GPSNativeUnicore driver(receiver.io(), false);
         unsigned rate = 115200;
-        CHECK(driver.configure(rate, baseConfig(false)) < 0);
+        CHECK(!driver.configure(rate, baseConfig(false)));
         CHECK(!driver.receiverReady());
         CHECK(receiver.commands == std::vector<std::string>{"VERSIONA"});
     }
@@ -200,7 +200,7 @@ void rejectBeforeMutation()
             std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs = 0;
         }
         unsigned rate = 115200;
-        CHECK(driver.configure(rate, config) < 0);
+        CHECK(!driver.configure(rate, config));
         CHECK(receiver.calls == 0);
         CHECK(!driver.receiverReady());
     }
@@ -212,7 +212,7 @@ void fixedBaseAndTransition()
     Receiver receiver;
     GPSNativeUnicore driver(receiver.io(), false);
     unsigned rate = 115200;
-    CHECK(driver.configure(rate, baseConfig(true)) == 0);
+    CHECK(driver.configure(rate, baseConfig(true)));
     CHECK(driver.receiverReady());
     CHECK(receiver.sent("MODE BASE 4315616."));
     CHECK(receiver.sent("BESTNAVXYZA") && receiver.sent("RTCM1005 1") && receiver.sent("RTCM1124 1"));
@@ -239,7 +239,7 @@ void fixedBaseAndTransition()
     corrupt.back() ^= 1;
     driver.consume(corrupt);
     CHECK(receiver.rtcmCount == 1);
-    CHECK(driver.configure(rate, baseConfig(false)) == 0);
+    CHECK(driver.configure(rate, baseConfig(false)));
     CHECK(driver.receiverReady() && receiver.role == "MODE BASE TIME");
     driver.consume(frame);
     CHECK(receiver.rtcmCount == 1);
@@ -251,7 +251,7 @@ void averagingEvidenceAndRestart()
     Receiver receiver;
     GPSNativeUnicore driver(receiver.io(), false);
     unsigned rate = 115200;
-    CHECK(driver.configure(rate, baseConfig(false)) == 0);
+    CHECK(driver.configure(rate, baseConfig(false)));
     CHECK(receiver.sent("MODE BASE TIME 60 0"));
     CHECK(surveyFlags(receiver.surveys.back()) == 2);
     CHECK(std::isnan(receiver.surveys.back().survey.position.latitudeDegrees));
@@ -290,7 +290,7 @@ void averagingEvidenceAndRestart()
     consume(driver, position("FIXEDPOS", receiver.coordinates));
     driver.consume(correction());
     CHECK(receiver.rtcmCount == 1);
-    CHECK(driver.configure(rate, baseConfig(false)) == 0);
+    CHECK(driver.configure(rate, baseConfig(false)));
     CHECK(surveyFlags(receiver.surveys.back()) == 2);
     CHECK(std::count(receiver.commands.begin(), receiver.commands.end(), "MODE BASE TIME 60 0") == 2);
     driver.consume(correction());
@@ -312,7 +312,7 @@ void commandFailures()
             receiver.faultCommand = command;
             GPSNativeUnicore driver(receiver.io(), false);
             unsigned rate = 115200;
-            CHECK(driver.configure(rate, baseConfig(false)) < 0);
+            CHECK(!driver.configure(rate, baseConfig(false)));
             CHECK(!driver.receiverReady());
             CHECK(receiver.commands.back().starts_with(command));
             CHECK(!receiver.results.empty());
@@ -324,7 +324,7 @@ void commandFailures()
             CHECK(receiver.results.back().evidence.outcome == expected);
             CHECK(receiver.results.back().evidence.required);
             if (fault == Receiver::Fault::Cancel) {
-                CHECK(driver.ioError() == GPSProtocol::ReadCancelled);
+                CHECK(driver.ioError() == GPSProtocolError::Cancelled);
                 CHECK(gps_test_warnings.empty());
             }
             if (fault == Receiver::Fault::WriteError) {
@@ -359,7 +359,7 @@ void readbackFailures()
         }
         GPSNativeUnicore driver(receiver.io(), false);
         unsigned rate = 115200;
-        CHECK(driver.configure(rate, baseConfig(true)) < 0);
+        CHECK(!driver.configure(rate, baseConfig(true)));
         CHECK(!driver.receiverReady());
         CHECK(receiver.results.back().evidence.outcome ==
               (variant < 2 ? GPSCommandOutcome::Rejected : GPSCommandOutcome::TimedOut));
@@ -379,7 +379,7 @@ void corruptStatusAndExpiry()
         Receiver receiver;
         GPSNativeUnicore driver(receiver.io(), false);
         unsigned rate = 115200;
-        CHECK(driver.configure(rate, baseConfig(false)) == 0);
+        CHECK(driver.configure(rate, baseConfig(false)));
         std::string data = position("FIXEDPOS", receiver.coordinates);
         if (variant == 0) {
             data[data.find('*') + 1] = 'Z';
@@ -418,7 +418,7 @@ void restartAndReadErrors()
         Receiver receiver;
         GPSNativeUnicore driver(receiver.io(), false);
         unsigned rate = 115200;
-        CHECK(driver.configure(rate, baseConfig(true)) == 0);
+        CHECK(driver.configure(rate, baseConfig(true)));
         if (variant == 0) {
             consume(driver, VERSION);
         } else if (variant == 1) {
@@ -427,7 +427,8 @@ void restartAndReadErrors()
             consume(driver, position("FIXEDPOS", receiver.coordinates, 1000));
         } else {
             receiver.readError = true;
-            CHECK(driver.receive(100) < 0);
+            CHECK(driver.receive(100) == 0);
+            CHECK(driver.ioError() == GPSProtocolError::Transport);
             CHECK(driver.ioErrorDetail() == QStringLiteral("Unicore test disconnect"));
         }
         CHECK(!driver.receiverReady());
@@ -444,7 +445,7 @@ void measurementFreshnessAndRollover()
         Receiver receiver;
         GPSNativeUnicore driver(receiver.io(), false);
         unsigned baud = 115200;
-        CHECK(driver.configure(baud, baseConfig(false)) == 0);
+        CHECK(driver.configure(baud, baseConfig(false)));
         const auto complete = GPSTest::unicorePosition("FIXEDPOS", receiver.coordinates, 604799000, 2326);
         consume(driver, complete, 1);
         CHECK(surveyFlags(receiver.surveys.back()) == 1);
@@ -493,7 +494,7 @@ void scheduledAveragingAndBoot()
         auto config = baseConfig(false);
         std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs = 1;
         unsigned baud = 115200;
-        CHECK(driver.configure(baud, config) == 0);
+        CHECK(driver.configure(baud, config));
         const auto commands = receiver.commands.size();
         for (unsigned slices = 0; gps_test_time < 2500000; ++slices) {
             CHECK(slices < 100);

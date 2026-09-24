@@ -1,6 +1,5 @@
 #include "GPSProviderTest.h"
 
-#include <cerrno>
 #include <cmath>
 
 #include <QtCore/QCoreApplication>
@@ -532,11 +531,10 @@ void GPSProviderTest::_configuredReceiverReportsReadyThenLoss_data()
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
 {
     QFETCH(GPSBaseStationConfig, config);
-    const QString diagnostic =
-        QStringLiteral("Receiver read failed (status %1, code %2): Scripted receiver connection lost")
-            .arg(static_cast<int>(GPSReadStatus::Error))
-            .arg(-EIO);
-    expectLogMessage("GPS.Driver.Protocols", QtWarningMsg, QRegularExpression(QRegularExpression::escape(diagnostic)));
+    const QString diagnostic = QStringLiteral("Receiver read failed (status %1): Scripted receiver connection lost")
+                                   .arg(static_cast<int>(GPSReadStatus::Error));
+    expectLogMessage("GPS.Driver.Protocols.Femto", QtWarningMsg,
+                     QRegularExpression(QRegularExpression::escape(diagnostic)));
     GPSProvider provider(
         [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); },
         GPSType::femto, GPSReceiverConfig{.base = config});

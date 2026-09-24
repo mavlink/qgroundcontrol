@@ -105,7 +105,7 @@ public:
     using GPSProtocol::GPSProtocol;
     using GPSProtocol::read;
 
-    int configure(unsigned&, const GPSConfig&) override { return 0; }
+    bool configure(unsigned&, const GPSConfig&) override { return true; }
 
     int receive(unsigned) override { return 0; }
 
@@ -257,16 +257,17 @@ public:
                           : GPSBaseStationConfig::Mode{
                                 GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 100}}};
         unsigned baudrate = 115200;
-        CHECK(driver.configure(baudrate, config) == 0);
+        CHECK(driver.configure(baudrate, config));
         CHECK(driver.receiverReady());
         driver.consume({});
         surveys.clear();
     }
 
-    int startSurvey()
+    bool startSurvey()
     {
         driver.consume(nmeaPacket("PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,"));
-        return driver.receive(1);
+        (void) driver.receive(1);
+        return !driver.hasIOError();
     }
 };
 
@@ -406,13 +407,13 @@ void ashtechSurveyReceipts()
           std::string_view{"PASHR,RECEIPT,POS,AVG,STARTED,INTERVAL,100,,28.12.2011"}, ASHTECH_SURVEY_FAILED}) {
         receiver.configure();
         receiver.surveyReply = body;
-        CHECK(receiver.startSurvey() < 0);
+        CHECK(!receiver.startSurvey());
         CHECK(receiver.results.back().evidence.command == "$PASHS,POS,AVG,100\r\n");
         CHECK(receiver.results.back().evidence.outcome == GPSCommandOutcome::TimedOut);
     }
     receiver.configure();
     receiver.surveyReply = ASHTECH_SURVEY_FINISHED;
-    CHECK(receiver.startSurvey() < 0);
+    CHECK(!receiver.startSurvey());
     CHECK(receiver.surveys.empty());
     receiver.configure(true);
     receiver.driver.consume(nmeaPacket(finished));
@@ -424,7 +425,7 @@ void ashtechSurveyReceipts()
     GPSProtocol::GPSConfig invalid{};
     unsigned baudrate = 115200;
     const auto calls = receiver.transportCalls;
-    CHECK(receiver.driver.configure(baudrate, invalid) < 0);
+    CHECK(!receiver.driver.configure(baudrate, invalid));
     CHECK(!receiver.driver.receiverReady());
     CHECK(receiver.transportCalls == calls);
 }
@@ -447,9 +448,10 @@ void ashtechMetadata()
     CHECK(driver.consume(gga) & 1);
     CHECK(position.navigation.latitudeDegrees == 47.0);
     const auto received = position.navigation.timestampUs;
-    CHECK(driver.consume(nmeaPacket("GPGGA,123519,,N,,E,1,08,0.9,,M,,M,,")) == 0);
+    CHECK(!(driver.consume(nmeaPacket("GPGGA,123519,,N,,E,1,08,0.9,,M,,M,,")) & GPSDecodedBatch::POSITION_UPDATE));
     CHECK(position.navigation.timestampUs == received);
-    CHECK(driver.consume(nmeaPacket("PASHR,POS,bad,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1")) == 0);
+    CHECK(!(driver.consume(nmeaPacket("PASHR,POS,bad,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1")) &
+            GPSDecodedBatch::POSITION_UPDATE));
     CHECK(driver.consume(gga) & 1);
     CHECK(driver.consume(nmeaPacket("PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,")) & 1);
     CHECK(position.navigation.altitudeEllipsoidMeters == 18.9);
@@ -493,6 +495,44 @@ void ashtechMetadata()
     CHECK(position.navigation.horizontalAccuracyMeters == 0.5f && position.navigation.timestampUs == positionReceipt);
 }
 
+void ashtechFraming()
+{
+    const std::string sentence = nmeaSentence("PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,");
+    const auto packet = [](std::string_view text) { return std::vector<uint8_t>(text.begin(), text.end()); };
+    {
+        GPSProtocolTestProbe<GPSNativeAshtech> driver(noDevice());
+        int updates = 0;
+        for (const uint8_t byte : packet(sentence)) {
+            updates |= driver.consume({&byte, 1});
+        }
+        CHECK(updates & GPSDecodedBatch::POSITION_UPDATE);
+        CHECK(driver.workingPosition().navigation.altitudeEllipsoidMeters == 18.9);
+    }
+    {
+        GPSProtocolTestProbe<GPSNativeAshtech> driver(noDevice());
+        auto corrupted = sentence;
+        auto& checksum = corrupted[corrupted.find('*') + 1];
+        checksum = checksum == '0' ? '1' : '0';
+        CHECK(!(driver.consume(packet(corrupted)) & GPSDecodedBatch::POSITION_UPDATE));
+        CHECK(driver.workingPosition().navigation.timestampUs == 0);
+        CHECK(driver.consume(packet("$GPGGA,123519,47" + sentence)) & GPSDecodedBatch::POSITION_UPDATE);
+    }
+    {
+        size_t satelliteReports = 0;
+        auto io = noDevice();
+        io.decoded = [&](const GPSDecodedBatch& batch) {
+            for (const auto& event : batch.events) {
+                satelliteReports += std::holds_alternative<GPSNativeSatelliteReport>(event);
+            }
+        };
+        GPSNativeAshtech driver(std::move(io), false);
+        driver.consume(nmeaPacket("GPGSV,1,1,01,01,40,080,45"));
+        gps_test_time += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+        driver.consume({});
+        CHECK(satelliteReports == 0);
+    }
+}
+
 void ashtechMixedFramingAndFixedCommand()
 {
     gps_test_time = 1000000;
@@ -505,7 +545,7 @@ void ashtechMixedFramingAndFixedCommand()
     CHECK(receiver.corrections == std::vector<std::vector<uint8_t>>{binary});
     verifyRTCMRecovery(receiver.driver, receiver.corrections);
     receiver.startSurvey();
-    CHECK(receiver.driver.ioError() == 0);
+    CHECK(!receiver.driver.hasIOError());
     CHECK(receiver.surveys.size() == 1 && surveyFlags(receiver.surveys.back()) == 1);
     const auto fixed = std::find_if(receiver.commands.begin(), receiver.commands.end(),
                                     [](const auto& command) { return command.starts_with("$PASHS,POS,4700."); });
@@ -561,7 +601,7 @@ void invalidFamilyConfiguration()
         drivers.push_back(std::make_unique<GPSNativeFemto>(captureGPSReports(noDevice(), position), false));
         for (const auto& driver : drivers) {
             unsigned baudrate = 9600;
-            CHECK(driver->configure(baudrate, config) < 0);
+            CHECK(!driver->configure(baudrate, config));
             CHECK(!driver->receiverReady());
             CHECK(baudrate == 9600);
         }
@@ -700,6 +740,7 @@ void GPSProtocolDecodeTest::_protocol()
         sbfEpochMetadata();
         sbfInvalidCoordinates();
         ashtechMetadata();
+        ashtechFraming();
         ashtechMixedFramingAndFixedCommand();
         ashtechSurveyReceipts();
     } catch (const std::exception& error) {

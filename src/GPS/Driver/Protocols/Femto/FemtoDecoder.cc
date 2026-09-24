@@ -13,8 +13,7 @@
 
 int GPSNativeFemto::handleMessage(int len)
 {
-    int ret = 0;
-    uint16_t messageid = _femto_msg.messageId;
+    const uint16_t messageid = _femto_msg.messageId;
 
     if (messageid == FEMTO_MSG_ID_GPGGA && len >= 6 &&
         (memcmp(_femto_msg.data + 3, "GGA,", 3) == 0)) { /**< GPGGA only used in base station, for survey-in */
@@ -23,9 +22,13 @@ int GPSNativeFemto::handleMessage(int len)
         if (!fix) {
             return 0;
         }
-        if (!_correction_output_activated && fix->quality == 7) {
-            _survey_in_start = 0;
-            sendSurveyInStatusUpdate(false, true, fix->latitude, fix->longitude, fix->altitude + fix->geoidSeparation);
+        // Only a survey started by this configuration may complete it; earlier GGA output is stale.
+        if (!_correction_output_activated && _surveyClock.running() && fix->quality == 7) {
+            _surveyClock.stop(nowUs());
+            publishSurvey(false, true, _surveyClock.duration(),
+                          {.latitudeDegrees = fix->latitude,
+                           .longitudeDegrees = fix->longitude,
+                           .altitudeMeters = static_cast<float>(fix->altitude + fix->geoidSeparation)});
             _rtcmActivationPending = true;
         }
         if (_satellites) {
@@ -33,18 +36,11 @@ int GPSNativeFemto::handleMessage(int len)
         }
     }
 
-    // handle survey-in status update
-    if (_survey_in_start != 0) {
-        const uint64_t now = nowUs();
-        uint32_t survey_in_duration = (now - _survey_in_start) / 1000000;
-
-        if (survey_in_duration != _survey_duration) {
-            _survey_duration = survey_in_duration;
-            sendSurveyInStatusUpdate(true, false);
-        }
+    if (_surveyClock.update(nowUs())) {
+        publishSurvey(true, false, _surveyClock.duration());
     }
 
-    return ret;
+    return 0;
 }
 
 int GPSNativeFemto::parseChar(uint8_t temp)
@@ -72,20 +68,6 @@ int GPSNativeFemto::parseChar(uint8_t temp)
 void GPSNativeFemto::decodeInit()
 {
     _nmeaFramer.reset();
-}
-
-void GPSNativeFemto::sendSurveyInStatusUpdate(bool active, bool valid, double latitude, double longitude,
-                                              float altitude)
-{
-    GPSNativeSurveyReport status;
-    status.survey.position.latitudeDegrees = latitude;
-    status.survey.position.longitudeDegrees = longitude;
-    status.survey.position.altitudeMeters = altitude;
-    status.survey.duration = std::chrono::seconds(
-        !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? _survey_duration : 0);
-    status.survey.valid = valid;
-    status.survey.active = active;
-    surveyInStatus(status);
 }
 
 int GPSNativeFemto::decodeByte(uint8_t byte)
@@ -118,7 +100,7 @@ int GPSNativeFemto::receive(unsigned timeout)
 {
     const int result = receiveDecoded(timeout);
     serviceControls();
-    return ioError() ? ioError() : result;
+    return result;
 }
 
 void GPSNativeFemto::servicePendingCommands()

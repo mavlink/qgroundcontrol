@@ -9,7 +9,6 @@ inline uint64_t gps_test_time = 0;
 inline QStringList gps_test_warnings;
 #else
 #include <QtCore/QLoggingCategory>
-Q_DECLARE_LOGGING_CATEGORY(GPSNativeDriversLog)
 #endif
 using SurveyInStatus = GPSNativeSurveyReport;
 
@@ -51,7 +50,7 @@ inline GPSProtocolIO makeGPSProtocolTestIO()
         gps_test_time += delay.count();
         return true;
     };
-    io.log = [](GPSProtocolLogLevel level, QStringView message) {
+    io.log = [](const QLoggingCategory&, GPSProtocolLogLevel level, QStringView message) {
         if (level == GPSProtocolLogLevel::Warning) {
             gps_test_warnings.push_back(message.toString());
         }
@@ -66,9 +65,9 @@ inline GPSProtocolIO makeGPSProtocolTestIO()
         std::this_thread::sleep_for(delay);
         return true;
     };
-    io.log = [](GPSProtocolLogLevel level, QStringView message) {
+    io.log = [](const QLoggingCategory& category, GPSProtocolLogLevel level, QStringView message) {
         if (level == GPSProtocolLogLevel::Warning) {
-            qCWarning(GPSNativeDriversLog) << message;
+            QMessageLogger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE, QT_MESSAGELOG_FUNC).warning(category) << message;
         }
     };
 #endif

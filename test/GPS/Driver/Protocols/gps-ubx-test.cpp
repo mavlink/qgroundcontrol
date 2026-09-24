@@ -85,7 +85,7 @@ public:
     bool fail_poll_write = false;
     uint32_t fail_valset_key = 0;
     GPSWriteStatus valset_write_failure = GPSWriteStatus::Error;
-    int poll_read_error = 0;
+    GPSProtocolError poll_read_error = GPSProtocolError::None;
     QString poll_read_detail = QStringLiteral("Receiver link lost: Gerät");
     unsigned failed_reads = 0;
     size_t read_chunk = 7;  // Exercise packet fragmentation through the real parser.
@@ -389,11 +389,12 @@ public:
             const int size = static_cast<int>(bytes.size());
             CHECK(timeout >= 0);
 
-            if (polls > 0 && poll_read_error < 0) {
+            if (polls > 0 && poll_read_error != GPSProtocolError::None) {
                 ++failed_reads;
                 gps_test_time += 1000;
-                return {poll_read_error == GPSProtocol::ReadCancelled ? GPSReadStatus::Cancelled : GPSReadStatus::Error,
-                        0, poll_read_detail};
+                return {
+                    poll_read_error == GPSProtocolError::Cancelled ? GPSReadStatus::Cancelled : GPSReadStatus::Error, 0,
+                    poll_read_detail};
             }
 
             if (incoming.empty()) {
@@ -493,7 +494,7 @@ struct Fixture
         std::get<GPSBaseStationConfig::SurveyIn>(base.mode).durationSecs = 60;
     }
 
-    int configure()
+    bool configure()
     {
         unsigned baudrate = 115200;
         GPSProtocol::GPSConfig config{};
@@ -503,7 +504,7 @@ struct Fixture
 
     void success(unsigned expected_polls)
     {
-        CHECK(configure() == 0);
+        CHECK(configure());
         CHECK(driver.receiverReady());
         CHECK(receiver.modes == std::vector<uint32_t>({0, 1}));
         CHECK(receiver.polls == expected_polls);
@@ -518,7 +519,7 @@ struct Fixture
 
     void timeout()
     {
-        CHECK(configure() < 0);
+        CHECK(!configure());
         CHECK(!driver.receiverReady());
         CHECK(receiver.modes == std::vector<uint32_t>({0}));
         CHECK(receiver.starts == 0);
@@ -529,10 +530,10 @@ struct Fixture
         CHECK(receiver.rtcm_enables == 0);
     }
 
-    void readFailure(int error)
+    void readFailure(GPSProtocolError error)
     {
         receiver.poll_read_error = error;
-        CHECK(configure() < 0);
+        CHECK(!configure());
         CHECK(!driver.receiverReady());
         CHECK(receiver.failed_reads == 1);
         CHECK(receiver.polls == 1);
@@ -543,16 +544,16 @@ struct Fixture
         CHECK(gps_test_time - receiver.disabled_at < 100000);
 
         const auto warnings = gps_test_warnings;
-        if (error == GPSProtocol::ReadCancelled) {
+        if (error == GPSProtocolError::Cancelled) {
             CHECK(warnings.empty());
         } else {
-            CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1, code %2): %3")
+            CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1): %2")
                                               .arg(static_cast<int>(GPSReadStatus::Error))
-                                              .arg(-EIO)
                                               .arg(receiver.poll_read_detail)});
         }
+        CHECK(driver.ioError() == error);
         CHECK(driver.ioErrorDetail() == receiver.poll_read_detail);
-        CHECK(driver.receive(10) < 0);
+        CHECK(driver.receive(10) == 0);
         CHECK(receiver.failed_reads == 1);
         CHECK(gps_test_warnings == warnings);
     }
@@ -560,23 +561,24 @@ struct Fixture
 
 static void receiveFailureLogging()
 {
-    for (const int error : {GPSProtocol::ReadCancelled, -EIO}) {
+    for (const GPSProtocolError error : {GPSProtocolError::Cancelled, GPSProtocolError::Transport}) {
         Fixture f;
-        CHECK(f.configure() == 0);
+        CHECK(f.configure());
         f.receiver.poll_read_error = error;
         gps_test_warnings.clear();
-        CHECK(f.driver.receive(10) == error);
+        CHECK(f.driver.receive(10) == 0);
+        CHECK(f.driver.ioError() == error);
         CHECK(f.driver.ioErrorDetail() == f.receiver.poll_read_detail);
         const auto warnings = gps_test_warnings;
-        if (error == GPSProtocol::ReadCancelled) {
+        if (error == GPSProtocolError::Cancelled) {
             CHECK(warnings.empty());
         } else {
-            CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1, code %2): %3")
+            CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1): %2")
                                               .arg(static_cast<int>(GPSReadStatus::Error))
-                                              .arg(-EIO)
                                               .arg(f.receiver.poll_read_detail)});
         }
-        CHECK(f.driver.receive(10) == error);
+        CHECK(f.driver.receive(10) == 0);
+        CHECK(f.driver.ioError() == error);
         CHECK(f.receiver.failed_reads == 1);
         CHECK(gps_test_warnings == warnings);
     }
@@ -609,7 +611,7 @@ static Bytes commsPayload()
 static void integrityReceipts()
 {
     Fixture f;
-    CHECK(f.configure() == 0);
+    CHECK(f.configure());
     // This test inspects individual decoder mutations; epoch assembly has separate coverage.
     f.driver.setDecodeContext({.navigation = true});
     Bytes mon_rf(UBX::WIRE_SIZE<ubx_payload_rx_mon_rf_t>, 0);
@@ -704,7 +706,8 @@ static void commsDiagnostics()
     CHECK(gps_test_warnings == QStringList{"ubx msg: txbuf alloc"});
     gps_test_warnings.clear();
     f.receiver.queue(reply);
-    CHECK(f.driver.receive(100) < 0);  // Diagnostic traffic alone is not a position update.
+    CHECK((f.driver.receive(100) & GPSDecodedBatch::POSITION_UPDATE) ==
+          0);  // Diagnostic traffic alone is not a position update.
     const QStringList expected{"MON-COMMS after txbuf: txErrors=0x02 ports=2 (snapshot after warning)",
                                "MON-COMMS USB port=0x0300 txPending=11800 txUsage=100% txPeakUsage=101% "
                                "rxPending=12 rxUsage=3% overrunErrs=4 skipped=123456",
@@ -811,16 +814,16 @@ static void invalidConfiguration()
         for (bool wasReady : {false, true}) {
             Fixture f;
             if (wasReady) {
-                CHECK(f.configure() == 0);
+                CHECK(f.configure());
                 CHECK(f.driver.receiverReady());
             }
             f.receiver.transport_operations = 0;
             gps_test_warnings.clear();
             unsigned baudrate = 115200;
-            CHECK(f.driver.configure(baudrate, config) < 0);
+            CHECK(!f.driver.configure(baudrate, config));
             CHECK(f.receiver.transport_operations == 0);
             CHECK(!f.driver.receiverReady());
-            CHECK(f.driver.ioError() == 0);
+            CHECK(!f.driver.hasIOError());
             CHECK(baudrate == 115200);
             CHECK(gps_test_warnings.size() == 1);
         }
@@ -832,7 +835,7 @@ static void invalidConfiguration()
         f.receiver.module = legacy ? "NEO-M8P" : "ZED-F9P";
         f.base = fixed.base;
         std::get<GPSBaseStationConfig::Fixed>(f.base.mode).accuracyMeters = 429496.71875f;
-        CHECK(f.configure() == 0);
+        CHECK(f.configure());
         CHECK(f.driver.receiverReady());
         CHECK((legacy ? f.receiver.legacy_fixed_accuracy
                       : f.receiver.current_settings.at(UBX_CFG_KEY_TMODE_FIXED_POS_ACC)) == 4294967040u);
@@ -858,7 +861,7 @@ static void invalidConfiguration()
             f.receiver.module = legacy ? "NEO-M8P" : "ZED-F9P";
             f.base = fixed.base;
             f.base.compactObservations = compact;
-            CHECK(f.configure() == 0);
+            CHECK(f.configure());
             CHECK(f.driver.receiverReady());
             const auto rate = [&](const std::pair<uint32_t, uint16_t>& message) -> unsigned {
                 // UART1 follows the I2C key.
@@ -953,7 +956,7 @@ static void baudDiscovery()
                     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
                     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
                     unsigned baud = fixed ? initialBaud : 0;
-                    CHECK(driver.configure(baud, config) == 0);
+                    CHECK(driver.configure(baud, config));
                     CHECK(driver.receiverReady());
                     CHECK(receiver.unidentifiedWrites == 0);
                     CHECK(baud == (fixed ? initialBaud : 115200));
@@ -1000,7 +1003,7 @@ static void discoveryFailures()
         std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
         std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
         unsigned baud = 0;
-        CHECK(driver.configure(baud, config) < 0);
+        CHECK(!driver.configure(baud, config));
         CHECK(!driver.receiverReady());
         CHECK(receiver.unidentifiedWrites == 0);
         if (scenario < 3 || scenario == 7) {
@@ -1089,7 +1092,7 @@ static void transactionalFrames()
     GPSProtocol::GPSConfig config{};
     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
-    CHECK(driver.configure(baud, config) == 0);
+    CHECK(driver.configure(baud, config));
     Bytes payload(20, 0);
     payload[4] = 1;
     payload[5] = 1;
@@ -1217,7 +1220,7 @@ static void controlDeadline()
     GPSProtocol::GPSConfig config{};
     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
-    CHECK(driver.configure(baud, config) == 0);
+    CHECK(driver.configure(baud, config));
     driver.receive(10);  // Drain the configuration responses before the timed warning.
     receiver.read_chunk = GPS_READ_BUFFER_SIZE;
     receiver.bufferWarning();
@@ -1225,7 +1228,7 @@ static void controlDeadline()
     driver.receive(10);
     CHECK(verifyWrite);
     CHECK(receiver.comms_polls == 1);
-    CHECK(driver.ioError() == 0);
+    CHECK(!driver.hasIOError());
 }
 
 static void identificationWriteBudget()
@@ -1258,7 +1261,7 @@ static void identificationWriteBudget()
         GPSProtocol::GPSConfig config;
         std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
         std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
-        CHECK(driver.configure(baud, config) < 0);
+        CHECK(!driver.configure(baud, config));
         CHECK(completions.size() == 1);
         const auto& evidence = completions.front().evidence;
         CHECK(evidence.command == std::to_string(UBX_MSG_MON_VER));
@@ -1283,7 +1286,7 @@ static void reentrantPayload()
     Bytes correction{0xd3, 0, 2, 0x3e, 0xd0};
     const auto crc = RTCMFramer::crc24q(correction);
     correction.insert(correction.end(), {uint8_t(crc >> 16), uint8_t(crc >> 8), uint8_t(crc)});
-    io.log = [&](GPSProtocolLogLevel, QStringView message) {
+    io.log = [&](const QLoggingCategory&, GPSProtocolLogLevel, QStringView message) {
         warnings.push_back(message.toString());
         if (!reentered && message == u"ubx msg: txbuf alloc") {
             reentered = true;
@@ -1366,7 +1369,7 @@ static void isolatedFrameAndControl()
     CHECK(recovered.batch.events.size() == 2);
     CHECK(std::holds_alternative<GPSNativePositionReport>(recovered.batch.events[0]));
     CHECK(std::holds_alternative<GPSRTCMReport>(recovered.batch.events[1]));
-    CHECK(receiver.ioError() == 0);
+    CHECK(!receiver.hasIOError());
 
     for (size_t prefix = 1; prefix <= 4; ++prefix) {
         decoder.reset();
@@ -1524,7 +1527,7 @@ static void optionalCommandWriteEvidence()
             std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
             std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
             unsigned baud = 115200;
-            CHECK(driver.configure(baud, config) < 0);
+            CHECK(!driver.configure(baud, config));
             CHECK(!completions.empty());
             const auto& result = completions.back();
             CHECK(result.evidence.command == std::to_string(UBX_MSG_CFG_VALSET));
@@ -1606,17 +1609,12 @@ const auto& testCases()
         {"poll-read-failure",
          [] {
              Fixture f;
-             f.readFailure(-1);
-         }},
-        {"poll-read-errno",
-         [] {
-             Fixture f;
-             f.readFailure(-EIO);
+             f.readFailure(GPSProtocolError::Transport);
          }},
         {"poll-read-cancelled",
          [] {
              Fixture f;
-             f.readFailure(GPSProtocol::ReadCancelled);
+             f.readFailure(GPSProtocolError::Cancelled);
          }},
         {"silent-then-stopped",
          [] {
@@ -1679,7 +1677,7 @@ const auto& testCases()
          [] {
              Fixture f;
              f.receiver.reject_disable = true;
-             CHECK(f.configure() < 0);
+             CHECK(!f.configure());
              CHECK(!f.driver.receiverReady());
              CHECK(f.receiver.modes == std::vector<uint32_t>({0}));
              CHECK(f.receiver.polls == 0 && f.receiver.starts == 0);
@@ -1688,7 +1686,7 @@ const auto& testCases()
          [] {
              Fixture f;
              f.receiver.reject_start = true;
-             CHECK(f.configure() < 0);
+             CHECK(!f.configure());
              CHECK(!f.driver.receiverReady());
              CHECK(f.receiver.modes == std::vector<uint32_t>({0, 1}));
              CHECK(f.receiver.polls == 1 && f.receiver.starts == 1);
@@ -1697,7 +1695,7 @@ const auto& testCases()
          [] {
              Fixture f;
              f.receiver.fail_poll_write = true;
-             CHECK(f.configure() < 0);
+             CHECK(!f.configure());
              CHECK(!f.driver.receiverReady());
              CHECK(f.receiver.modes == std::vector<uint32_t>({0}));
              CHECK(f.receiver.starts == 0);
@@ -1718,7 +1716,7 @@ const auto& testCases()
              f.driver.receive(100);
              CHECK(f.receiver.status_callbacks == 1);
              CHECK(f.receiver.rtcm_enables == 1);
-             CHECK(f.driver.ioError() == 0);
+             CHECK(!f.driver.hasIOError());
          }},
         {"fixed-base-does-not-poll",
          [] {
@@ -1726,7 +1724,7 @@ const auto& testCases()
              f.base = {.mode = GPSBaseStationConfig::Fixed{
                            .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
                            .accuracyMeters = 1.0f}};
-             CHECK(f.configure() == 0);
+             CHECK(f.configure());
              CHECK(f.driver.receiverReady());
              CHECK(f.receiver.modes == std::vector<uint32_t>({2}));
              CHECK(f.receiver.polls == 0 && f.receiver.starts == 0);

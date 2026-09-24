@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cerrno>
 #include <chrono>
 #include <thread>
 #include <type_traits>
@@ -24,7 +23,6 @@
 #include "Unicore/GPSDriverUnicore.h"
 
 QGC_LOGGING_CATEGORY(GPSDriverLog, "GPS.Driver.GPSDriver")
-QGC_LOGGING_CATEGORY(GPSNativeDriversLog, "GPS.Driver.Protocols")
 
 namespace {
 template <typename Protocol>
@@ -147,11 +145,12 @@ bool GPSDriver::configure()
         }
         return !_transport.isCancelled();
     };
-    io.log = [](GPSProtocolLogLevel level, QStringView message) {
+    io.log = [](const QLoggingCategory& category, GPSProtocolLogLevel level, QStringView message) {
+        const QMessageLogger logger(QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE, QT_MESSAGELOG_FUNC);
         if (level == GPSProtocolLogLevel::Debug) {
-            qCDebug(GPSNativeDriversLog) << message;
+            logger.debug(category) << message;
         } else {
-            qCWarning(GPSNativeDriversLog) << message;
+            logger.warning(category) << message;
         }
     };
     io.commandFinished = [this](const GPSCommandResult& result) {
@@ -224,14 +223,14 @@ bool GPSDriver::configure()
     config.base = _config.base;
     config.allowPersistentChanges = _config.allowPersistentChanges;
     _state->configuring = true;
-    const int result = _state->driver->configure(baudrate, config);
+    const bool configured = _state->driver->configure(baudrate, config);
     _state->driver->finishConfigurationEvidence();
-    if (result >= 0) {
+    if (configured) {
         // Configuration can finish by publishing a fixed-base or survey-start event without another read.
         _state->driver->consume({});
     }
     _state->configuring = false;
-    if (result < 0) {
+    if (!configured) {
         _state->configurationError = _state->driver->ioErrorDetail();
         if (_state->configurationError.isEmpty()) {
             _state->configurationError = QStringLiteral("Receiver configuration failed");
@@ -250,33 +249,37 @@ GPSReceiveResult GPSDriver::receiveOutcome(unsigned timeoutMs)
     if (_operationInProgress) {
         const QString detail = QStringLiteral("Receiver operation already in progress; receive rejected");
         qCWarning(GPSDriverLog) << detail;
-        return {GPSReceiveStatus::Busy, 0, -EBUSY, detail};
+        return {GPSReceiveStatus::Busy, 0, detail};
     }
     const QScopedValueRollback operation(_operationInProgress, true);
     if (!_state->driver) {
-        return {GPSReceiveStatus::NotConfigured, 0, -1};
+        return {GPSReceiveStatus::NotConfigured, 0};
     }
     _state->cycle = {};
     _publishExpiredSatellites();
     const int result = _state->driver->receive(timeoutMs);
     _publishExpiredSatellites();
-    const int error = _state->driver->ioError() ? _state->driver->ioError() : (result < -1 ? result : 0);
-    if (error) {
-        return {error == -ECANCELED ? GPSReceiveStatus::Cancelled
-                : error == -EPROTO  ? GPSReceiveStatus::ProtocolError
-                                    : GPSReceiveStatus::TransportError,
-                _state->cycle.updates, error, _state->driver->ioErrorDetail()};
+    switch (_state->driver->ioError()) {
+        case GPSProtocolError::None:
+            break;
+        case GPSProtocolError::Cancelled:
+            return {GPSReceiveStatus::Cancelled, _state->cycle.updates, _state->driver->ioErrorDetail()};
+        case GPSProtocolError::Protocol:
+            return {GPSReceiveStatus::ProtocolError, _state->cycle.updates, _state->driver->ioErrorDetail()};
+        case GPSProtocolError::Transport:
+        case GPSProtocolError::InvalidArgument:
+            return {GPSReceiveStatus::TransportError, _state->cycle.updates, _state->driver->ioErrorDetail()};
     }
     if (_transport.isCancelled()) {
-        return {GPSReceiveStatus::Cancelled, _state->cycle.updates, -ECANCELED};
+        return {GPSReceiveStatus::Cancelled, _state->cycle.updates};
     }
     if (_transport.fatalError()) {
-        return {GPSReceiveStatus::TransportError, _state->cycle.updates, -EIO};
+        return {GPSReceiveStatus::TransportError, _state->cycle.updates};
     }
     return {_state->cycle.usefulData               ? GPSReceiveStatus::Data
             : _state->cycle.activity || result > 0 ? GPSReceiveStatus::Activity
                                                    : GPSReceiveStatus::Idle,
-            _state->cycle.updates, 0};
+            _state->cycle.updates};
 }
 
 void GPSDriver::_publishExpiredSatellites()

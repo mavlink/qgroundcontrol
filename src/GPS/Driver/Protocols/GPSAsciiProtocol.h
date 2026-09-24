@@ -19,6 +19,15 @@ public:
     int receive(unsigned timeout) override;
 
 protected:
+    /// Who turns sentences into positions: this base from standard NMEA, or the derived receiver protocol.
+    enum class Navigation
+    {
+        StandardNMEA,
+        ReceiverSpecific,
+    };
+
+    GPSAsciiProtocol(GPSProtocolIO io, bool satelliteInfoEnabled, Navigation navigation);
+
     void resetStream();
 
     void setRTCMEnabled(bool enabled) { _rtcmEnabled = enabled; }
@@ -43,6 +52,7 @@ private:
     std::array<char, MAX_LINE_SIZE> _line{};
     NMEA::LineFramer _lineFramer;
     NMEA::NavigationEpochAssembler _navigationAssembler;
+    Navigation _navigation = Navigation::StandardNMEA;
     bool _rtcmEnabled = true;
 };
 
@@ -52,10 +62,11 @@ class GPSNativePassive : public GPSAsciiProtocol
 public:
     using GPSAsciiProtocol::GPSAsciiProtocol;
 
-    int configure(unsigned& baud, const GPSConfig& config) override;
+    bool configure(unsigned& baud, const GPSConfig& config) override;
 
     bool receiverReady() const override { return _configured; }
 
 private:
+    const QLoggingCategory& logCategory() const override;
     bool _configured = false;
 };

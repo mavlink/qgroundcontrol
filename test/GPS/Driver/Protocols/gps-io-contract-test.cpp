@@ -12,10 +12,13 @@
 
 #include "Ashtech/GPSDriverAshtech.h"
 #include "Femto/GPSDriverFemto.h"
+#include "GPSAsciiProtocol.h"
 #include "GPSProtocolTestIO.h"
 #include "NMEAUtils.h"
+#include "Quectel/GPSDriverQuectel.h"
 #include "SBF/GPSDriverSBF.h"
 #include "UBX/GPSDriverUBX.h"
+#include "Unicore/GPSDriverUnicore.h"
 #include "UnitTest.h"
 
 #define CHECK(condition)                          \
@@ -35,7 +38,7 @@ struct ScriptedIO
         Baud
     };
     Operation fault;
-    int error;
+    GPSProtocolError error;
     bool failed = false;
     unsigned operations = 0;
     QString detail = QStringLiteral("Receiver connection lost: Gerät disconnected");
@@ -53,7 +56,7 @@ struct ScriptedIO
         auto result = makeGPSProtocolTestIO();
         result.read = [this](std::span<uint8_t>, GPSDeadline deadline) -> GPSReadResult {
             if (fail(Operation::Read)) {
-                return {error == GPSProtocol::ReadCancelled ? GPSReadStatus::Cancelled : GPSReadStatus::Error, 0,
+                return {error == GPSProtocolError::Cancelled ? GPSReadStatus::Cancelled : GPSReadStatus::Error, 0,
                         detail};
             }
             gps_test_time = deadline.untilUs + 1000;
@@ -61,15 +64,15 @@ struct ScriptedIO
         };
         result.write = [this](std::span<const uint8_t> bytes, GPSDeadline) -> GPSWriteResult {
             if (fail(Operation::Write)) {
-                return {error == GPSProtocol::ReadCancelled ? GPSWriteStatus::Cancelled : GPSWriteStatus::Error, 0, 0,
+                return {error == GPSProtocolError::Cancelled ? GPSWriteStatus::Cancelled : GPSWriteStatus::Error, 0, 0,
                         detail};
             }
             return {GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())};
         };
         result.setBaudrate = [this](unsigned) {
-            return !fail(Operation::Baud)                ? GPSBaudStatus::Configured
-                   : error == GPSProtocol::ReadCancelled ? GPSBaudStatus::Cancelled
-                                                         : GPSBaudStatus::Error;
+            return !fail(Operation::Baud)                 ? GPSBaudStatus::Configured
+                   : error == GPSProtocolError::Cancelled ? GPSBaudStatus::Cancelled
+                                                          : GPSBaudStatus::Error;
         };
         return result;
     }
@@ -85,7 +88,7 @@ public:
     using GPSProtocol::resetIOError;
     using GPSProtocol::write;
 
-    int configure(unsigned&, const GPSConfig&) override { return 0; }
+    bool configure(unsigned&, const GPSConfig&) override { return true; }
 
     int receive(unsigned timeout) override { return receiveDecoded(timeout); }
 };
@@ -104,8 +107,8 @@ public:
             "SET", std::chrono::milliseconds(100), {GPSReceiverSetting::OutputRateHz}, required};
         static constexpr std::array<uint8_t, 3> bytes{'S', 'E', 'T'};
         if (!writeCommand(step, bytes)) {
-            return completeCommand(ioError() == ReadCancelled ? GPSCommandOutcome::Cancelled
-                                                              : GPSCommandOutcome::TransportError);
+            return completeCommand(ioError() == GPSProtocolError::Cancelled ? GPSCommandOutcome::Cancelled
+                                                                            : GPSCommandOutcome::TransportError);
         }
         return awaitCommand([this] { return _reply; });
     }
@@ -247,7 +250,8 @@ static void commandAttempts()
         CHECK(!receiver.awaiting());
         receiver.finishConfigurationEvidence();
         if (readStatus != GPSReadStatus::Data) {
-            CHECK(receiver.receive(100) < 0);
+            CHECK(receiver.receive(100) == 0);
+            CHECK(receiver.hasIOError());
         } else {
             CHECK(gps_test_time == 1100000);  // Writing did not buy a second read deadline.
         }
@@ -276,9 +280,10 @@ static void commandAttempts()
         CHECK(receiver.awaitAgain().evidence.outcome == attemptResult.evidence.outcome);
         receiver.finishConfigurationEvidence();
         if (failure.status != GPSWriteStatus::Unsupported) {
-            CHECK(receiver.receive(100) < 0);
+            CHECK(receiver.receive(100) == 0);
+            CHECK(receiver.hasIOError());
         } else {
-            CHECK(receiver.ioError() == 0);  // Unsupported is a rejected attempt, not a poisoned connection.
+            CHECK(!receiver.hasIOError());  // Unsupported is a rejected attempt, not a poisoned connection.
         }
         CHECK(failed.completions.size() == 1);
         CHECK(failed.transcript == std::vector<std::string>{"write/1100000"});
@@ -362,14 +367,14 @@ static void ashtechAcknowledgementReturnsImmediately()
     GPSProtocol::GPSConfig config;
     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
-    CHECK(receiver.configure(baud, config) < 0);
+    CHECK(!receiver.configure(baud, config));
     CHECK(writes == (std::vector<std::string>{"$PASHQ,PRT\r\n", "$PASHQ,RID\r\n"}));
     CHECK(reads > 1);
     CHECK(completions.size() == 2);
     CHECK(completions[0].evidence.outcome == GPSCommandOutcome::Acknowledged);
     CHECK(completions[0].evidence.finishedAtUs == 1001000 + uint64_t(reads) * 1000);
     CHECK(completions[1].evidence.outcome == GPSCommandOutcome::Cancelled);
-    CHECK(receiver.ioError() == GPSProtocol::ReadCancelled);
+    CHECK(receiver.ioError() == GPSProtocolError::Cancelled);
 }
 
 static void sharedResults()
@@ -396,13 +401,13 @@ static void sharedResults()
         io.commandFinished = [&](const auto& command) { completion = command; };
         IOProbe probe(std::move(io));
         probe.beginCommandWrite({"probe", std::chrono::milliseconds(100)});
-        CHECK(probe.write(payload, sizeof(payload)) < 0);
-        CHECK(probe.ioError() == -EIO);
+        CHECK(!probe.write(payload, sizeof(payload)));
+        CHECK(probe.ioError() == GPSProtocolError::Transport);
         CHECK(probe.ioErrorDetail() == detail);
         CHECK(completion.evidence.acceptedBytes == result.acceptedBytes);
         CHECK(completion.evidence.writtenBytes == result.writtenBytes);
         CHECK(completion.evidence.uncertainBytes == result.uncertainBytes());
-        CHECK(probe.write(payload, sizeof(payload)) < 0);
+        CHECK(!probe.write(payload, sizeof(payload)));
         CHECK(writes == 1);
         probe.resetIOError();
         CHECK(probe.ioErrorDetail().isEmpty());
@@ -417,12 +422,15 @@ static void sharedResults()
         io.read = [&](std::span<uint8_t>, GPSDeadline) { return result; };
         IOProbe probe(std::move(io));
         uint8_t byte;
-        CHECK(probe.read(&byte, 1, 0) == -EIO);
+        CHECK(probe.read(&byte, 1, 0) == -1);
+        CHECK(probe.ioError() == GPSProtocolError::Transport);
         CHECK(probe.ioErrorDetail() == detail);
     }
     QStringList messages;
     GPSProtocolIO io;
-    io.log = [&](GPSProtocolLogLevel, QStringView message) { messages.push_back(message.toString()); };
+    io.log = [&](const QLoggingCategory&, GPSProtocolLogLevel, QStringView message) {
+        messages.push_back(message.toString());
+    };
     IOProbe probe(std::move(io));
     probe.log(GPSProtocolLogLevel::Warning, "Gerät");
     probe.log(GPSProtocolLogLevel::Warning, "%s %d", "Gerät", 2);
@@ -446,6 +454,36 @@ static std::unique_ptr<GPSProtocol> createReceiver(unsigned family, ScriptedIO& 
     }
 }
 
+/// Every driver logs under its own child of GPS.Driver.Protocols, so a single family can be enabled.
+template <typename Driver>
+void checkLogCategory(const char* expected)
+{
+    QStringList categories;
+    auto io = makeGPSProtocolTestIO();
+    io.log = [&categories](const QLoggingCategory& category, GPSProtocolLogLevel, QStringView) {
+        categories.push_back(QString::fromLatin1(category.categoryName()));
+    };
+    Driver driver(std::move(io), false);
+    // No family supports both persistent changes and receiver-managed averaging, so validation rejects this.
+    GPSProtocol::GPSConfig config{.base = {.mode = GPSBaseStationConfig::ReceiverAveraging{}},
+                                  .allowPersistentChanges = true};
+    unsigned baud = 115200;
+    CHECK(!driver.configure(baud, config));
+    CHECK(!categories.empty());
+    CHECK(categories.count(QString::fromLatin1(expected)) == categories.size());
+}
+
+void driverLogCategories()
+{
+    checkLogCategory<GPSNativeUBX>("GPS.Driver.Protocols.UBX");
+    checkLogCategory<GPSNativeSBF>("GPS.Driver.Protocols.SBF");
+    checkLogCategory<GPSNativeAshtech>("GPS.Driver.Protocols.Ashtech");
+    checkLogCategory<GPSNativeFemto>("GPS.Driver.Protocols.Femto");
+    checkLogCategory<GPSNativeQuectel>("GPS.Driver.Protocols.Quectel");
+    checkLogCategory<GPSNativeUnicore>("GPS.Driver.Protocols.Unicore");
+    checkLogCategory<GPSNativePassive>("GPS.Driver.Protocols.Passive");
+}
+
 }  // namespace
 
 class GPSProtocolIOContractTest : public UnitTest
@@ -465,6 +503,7 @@ void GPSProtocolIOContractTest::_protocol()
         commandAttempts();
         ashtechAcknowledgementReturnsImmediately();
         sharedResults();
+        driverLogCategories();
         CHECK(GPSDeadline{}.remainingMilliseconds(0) == INT32_MAX);
         CHECK(GPSDeadline{0}.remainingMilliseconds(0) == 0);
         CHECK(GPSDeadline{1}.remainingMilliseconds(0) == 1);
@@ -484,7 +523,7 @@ void GPSProtocolIOContractTest::_protocol()
         for (unsigned family = 0; family != 4; ++family) {
             for (const auto fault :
                  {ScriptedIO::Operation::Read, ScriptedIO::Operation::Write, ScriptedIO::Operation::Baud}) {
-                for (const int error : {GPSProtocol::ReadCancelled, -EIO}) {
+                for (const auto error : {GPSProtocolError::Cancelled, GPSProtocolError::Transport}) {
                     gps_test_time = 0;
                     gps_test_warnings.clear();
                     ScriptedIO io{fault, error};
@@ -498,21 +537,20 @@ void GPSProtocolIOContractTest::_protocol()
                     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
                     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
                     unsigned baudrate = 115200;
-                    const int result = receiver->configure(baudrate, config);
+                    const bool configured = receiver->configure(baudrate, config);
                     CHECK(io.failed);
-                    CHECK(result < 0);
+                    CHECK(!configured);
                     CHECK(receiver->ioError() == error);
                     CHECK(receiver->ioErrorDetail() == (fault == ScriptedIO::Operation::Baud ? QString() : io.detail));
                     const auto warnings = gps_test_warnings;
-                    if (fault == ScriptedIO::Operation::Read && error != GPSProtocol::ReadCancelled) {
-                        CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1, code %2): %3")
+                    if (fault == ScriptedIO::Operation::Read && error != GPSProtocolError::Cancelled) {
+                        CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1): %2")
                                                           .arg(static_cast<int>(GPSReadStatus::Error))
-                                                          .arg(error)
                                                           .arg(io.detail)});
                     } else {
                         CHECK(warnings.empty());
                     }
-                    CHECK(receiver->receive(10) < 0);
+                    CHECK(receiver->receive(10) == 0);
                     CHECK(receiver->ioError() == error);
                     CHECK(receiver->ioErrorDetail() == (fault == ScriptedIO::Operation::Baud ? QString() : io.detail));
                     CHECK(gps_test_warnings == warnings);

@@ -1,6 +1,5 @@
 #include "GPSDriverTest.h"
 
-#include <cerrno>
 #include <cstring>
 #include <limits>
 #include <optional>
@@ -280,10 +279,9 @@ void GPSDriverTest::_receiveOutcomes()
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Activity);
     const QString detail = QStringLiteral("Receiver disconnected: Gerät");
     transport.readOverride = GPSReadResult{GPSReadStatus::Error, 0, detail};
-    expectLogMessage("GPS.Driver.Protocols", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Receiver read failed \\(status %1, code %2\\): %3")
+    expectLogMessage("GPS.Driver.Protocols.Femto", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Receiver read failed \\(status %1\\): %2")
                                             .arg(static_cast<int>(GPSReadStatus::Error))
-                                            .arg(-EIO)
                                             .arg(QRegularExpression::escape(detail))));
     const auto failed = driver.receiveOutcome(0);
     verifyExpectedLogMessage();
@@ -521,7 +519,7 @@ void GPSDriverTest::_freshSurveyAndEvidence()
     GPSDriver driver(GPSType::ublox, receiver,
                      {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .durationSecs = 180}}}, {});
     if (stuck) {
-        expectLogMessage("GPS.Driver.Protocols", QtWarningMsg, QRegularExpression("Time mode did not stop"));
+        expectLogMessage("GPS.Driver.Protocols.UBX", QtWarningMsg, QRegularExpression("Time mode did not stop"));
         expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
     }
     QCOMPARE(driver.configure(), !stuck);

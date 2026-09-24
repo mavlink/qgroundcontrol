@@ -3,23 +3,30 @@
 #include <string.h>
 
 #include "GPSRawAckMatcher.h"
+#include "QGCLoggingCategory.h"
 #include "RTCMFramer.h"
 #include "SBF/GPSDriverSBF.h"
+
+QGC_LOGGING_CATEGORY(GPSNativeSBFLog, "GPS.Driver.Protocols.SBF")
 
 namespace {
 constexpr int SBF_CONFIG_TIMEOUT = 1000;
 constexpr size_t MSG_SIZE = 100;
 }  // namespace
 
-int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
+const QLoggingCategory& GPSNativeSBF::logCategory() const
+{
+    return GPSNativeSBFLog();
+}
+
+bool GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
 {
     _configured = false;
     resetIOError();
-    _survey_duration = 0;
+    _surveyClock.reset();
     _survey_active = false;
-    _survey_activation_date = 0;
     if (!validateConfiguration(config)) {
-        return -1;
+        return false;
     }
     _baseConfig = config.base;
     char buf[GPS_READ_BUFFER_SIZE];
@@ -39,12 +46,12 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
     // Disable previous output for now so we can detect the COM port
     for (int i = 1; i <= 2; i++) {
         snprintf(msg, sizeof(msg), SBF_CONFIG_DISABLE_OUTPUT, "COM", i);
-        sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT, {}, false);
+        sendMessageAndWaitForAck(msg, false);
     }
 
     for (int i = 1; i <= 4; i++) {
         snprintf(msg, sizeof(msg), SBF_CONFIG_DISABLE_OUTPUT, "USB", i);
-        sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT, {}, false);
+        sendMessageAndWaitForAck(msg, false);
     }
 
     char com_port[5]{};
@@ -59,7 +66,7 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
         int ret = read(reinterpret_cast<uint8_t*>(buf) + offset, sizeof(buf) - offset - 1, SBF_CONFIG_TIMEOUT);
 
         if (ret < 0) {
-            return ret;
+            return false;
         }
 
         offset += ret;
@@ -81,28 +88,25 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
 
     } while (time_started + 1000 * SBF_CONFIG_TIMEOUT > nowUs() && !response_detected);
 
-    if (response_detected) {
-        log(GPSProtocolLogLevel::Debug, "Septentrio GNSS receiver COM port: %s", com_port);
-        response_detected = false;  // for future use
-
-    } else {
+    if (!response_detected) {
         log(GPSProtocolLogLevel::Warning, "No COM port detected");
-        return -1;
+        return false;
     }
+    log(GPSProtocolLogLevel::Debug, "Septentrio GNSS receiver COM port: %s", com_port);
 
     // Delete all sbf outputs on current COM port to remove clutter data
     snprintf(msg, sizeof(msg), SBF_CONFIG_RESET, com_port);
 
-    if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-        return -1;  // connection and/or baudrate detection failed
+    if (!sendMessageAndWaitForAck(msg)) {
+        return false;  // connection and/or baudrate detection failed
     }
 
     // Only serial COM ports have a baud rate; USB and IP connection descriptors do not.
     if (strncmp(com_port, "COM", 3) == 0) {
         snprintf(msg, sizeof(msg), SBF_CONFIG_BAUDRATE, com_port, baudrate);
 
-        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-            return -1;  // connection and/or baudrate detection failed
+        if (!sendMessageAndWaitForAck(msg)) {
+            return false;  // connection and/or baudrate detection failed
         }
     }
 
@@ -111,28 +115,28 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
     // Define/inquire the type of data that the receiver should accept/send on a given connection descriptor
     snprintf(msg, sizeof(msg), SBF_DATA_IO, com_port);
 
-    if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-        return -1;
+    if (!sendMessageAndWaitForAck(msg)) {
+        return false;
     }
     std::string outputConfirmation = msg;
 
     // Septentrio's WGS84/Default selects the global datum except when external corrections supply a datum.
-    if (!sendMessageAndWaitForAck("setGeodeticDatum, WGS84\n", SBF_CONFIG_TIMEOUT)) {
-        return -1;
+    if (!sendMessageAndWaitForAck("setGeodeticDatum, WGS84\n")) {
+        return false;
     }
 
     // Preserve the receiver's historical second application after the first required ACK.
     // Navigation confirms its SBF stream; base mode confirms the selected input/output port.
     constexpr unsigned OUTPUT_CONFIRMATION_ATTEMPTS = 5;
     bool outputConfirmed = false;
-    for (unsigned attempt = 0; attempt < OUTPUT_CONFIRMATION_ATTEMPTS && !ioError(); ++attempt) {
-        if (sendMessageAndWaitForAck(outputConfirmation.c_str(), SBF_CONFIG_TIMEOUT)) {
+    for (unsigned attempt = 0; attempt < OUTPUT_CONFIRMATION_ATTEMPTS && !hasIOError(); ++attempt) {
+        if (sendMessageAndWaitForAck(outputConfirmation.c_str())) {
             outputConfirmed = true;
             break;
         }
     }
     if (!outputConfirmed) {
-        return -1;
+        return false;
     }
 
     if (!_rtcm_parsing) {
@@ -141,8 +145,8 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
     _rtcm_parsing->reset();
 
     snprintf(msg, sizeof(msg), SBF_CONFIG_OUTPUT_RTCM3, com_port);
-    if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-        return -1;
+    if (!sendMessageAndWaitForAck(msg)) {
+        return false;
     }
 
     if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
@@ -150,67 +154,52 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
                  std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position.latitudeDegrees,
                  std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position.longitudeDegrees,
                  static_cast<double>(std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position.altitudeMeters));
-        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-            return -1;
+        if (!sendMessageAndWaitForAck(msg)) {
+            return false;
         }
 
         snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATIC_OFFSET, 0.0, 0.0, 0.0);
-        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-            return -1;
+        if (!sendMessageAndWaitForAck(msg)) {
+            return false;
         }
 
-        if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATIC1, SBF_CONFIG_TIMEOUT)) {
-            return -1;
+        if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATIC1)) {
+            return false;
         }
-        if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATIC2, SBF_CONFIG_TIMEOUT)) {
-            return -1;
+        if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATIC2)) {
+            return false;
         }
     } else {
-        if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_SURVEY_IN, SBF_CONFIG_TIMEOUT)) {
-            return -1;
+        if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_SURVEY_IN)) {
+            return false;
         }
     }
 
     snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATUS, com_port);
-    if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-        return -1;
+    if (!sendMessageAndWaitForAck(msg)) {
+        return false;
     }
-    _survey_activation_date = std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? 0 : nowUs();
+    if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
+        _surveyClock.start(nowUs());
+    }
 
-    _configured = true;
-    return ioError();
+    _configured = !hasIOError();
+    return _configured;
 }
 
 bool GPSNativeSBF::sendMessage(const char* msg)
 {
-    // Send message
-
-    int length = static_cast<int>(strlen(msg));
-
-    return (write(msg, length) == length);
+    return write(msg, static_cast<int>(strlen(msg)));
 }
 
-bool GPSNativeSBF::sendMessageAndWaitForAck(const char* msg, int timeout, GPSReceiverSettingSet settings, bool required)
+bool GPSNativeSBF::sendMessageAndWaitForAck(const char* msg, bool required)
 {
-    const GPSConfigurationStep step{msg, std::chrono::milliseconds(timeout), settings, required};
-    if (!writeCommand(step, {reinterpret_cast<const uint8_t*>(msg), strlen(msg)})) {
-        return false;
-    }
     std::string_view command(msg);
     while (command.ends_with('\r') || command.ends_with('\n')) {
         command.remove_suffix(1);
     }
     const std::string expected = "$R: " + std::string(command);
     GPSRawAckMatcher matcher(expected, "$R?");
-    const auto result = awaitCommand(
-        [&] {
-            uint8_t bytes[GPS_READ_BUFFER_SIZE];
-            const int count = read(bytes, sizeof(bytes), timeout);
-            if (count <= 0) {
-                return;
-            }
-            matcher.append(std::span(bytes).first(count));
-        },
-        [&] { return matcher.outcome(); });
-    return result.evidence.outcome == GPSCommandOutcome::Acknowledged;
+    const GPSConfigurationStep step{msg, std::chrono::milliseconds(SBF_CONFIG_TIMEOUT), {}, required};
+    return transact(step, msg, matcher).evidence.outcome == GPSCommandOutcome::Acknowledged;
 }

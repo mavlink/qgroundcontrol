@@ -46,7 +46,6 @@ struct GPSReceiveResult
 
     GPSReceiveStatus status = GPSReceiveStatus::NotConfigured;
     int updates = 0;
-    int errorCode = 0;
     QString detail = {};
 
     [[nodiscard]] bool terminal() const

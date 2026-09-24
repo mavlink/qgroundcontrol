@@ -1,6 +1,5 @@
 #include <array>
 #include <atomic>
-#include <cerrno>
 #include <cstring>
 #include <optional>
 #include <utility>
@@ -119,7 +118,7 @@ void GPSDriverReentrancyTest::_recursiveConfiguration()
     QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Idle);
 
     if (failAfterCallback) {
-        expectLogMessage("GPS.Driver.Protocols", QtWarningMsg,
+        expectLogMessage("GPS.Driver.Protocols.Passive", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Could not set the passive input baud rate")));
         expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Driver configuration failed for type")));
@@ -151,7 +150,6 @@ void GPSDriverReentrancyTest::_recursiveReceive()
     verifyExpectedLogMessage();
     QVERIFY(nestedResult);
     QCOMPARE(nestedResult->status, GPSReceiveStatus::Busy);
-    QCOMPARE(nestedResult->errorCode, -EBUSY);
     QCOMPARE(nestedResult->updates, 0);
     QVERIFY(!nestedResult->terminal());
     QVERIFY(!nestedResult->detail.isEmpty());

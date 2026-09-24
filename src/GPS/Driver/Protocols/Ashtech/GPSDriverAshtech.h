@@ -3,35 +3,40 @@
 #include <math.h>
 #include <optional>
 
-#include "GPSProtocol.h"
-#include "NMEAFramer.h"
+#include "GPSAsciiProtocol.h"
+#include "GPSSurveyClock.h"
 #include "NMEAMetadata.h"
-#include "NMEASatelliteEpoch.h"
-#include "RTCMFramer.h"
 
-#define ASHTECH_RECV_BUFFER_SIZE 512
-#define ASH_RESPONSE_TIMEOUT 200  // ms, timeout for waiting for a response
-
-class GPSNativeAshtech : public GPSProtocol
+/// Ashtech/Trimble proprietary commands and $PASHR,POS positions over the shared NMEA/RTCM stream.
+class GPSNativeAshtech : public GPSAsciiProtocol
 {
 public:
     explicit GPSNativeAshtech(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
     ~GPSNativeAshtech() override = default;
 
-    int configure(unsigned& baudrate, const GPSConfig& config) override;
+    bool configure(unsigned& baudrate, const GPSConfig& config) override;
 
     bool receiverReady() const override { return _configure_done; }
 
-    int receive(unsigned timeout) override;
-    int decodeByte(uint8_t byte) override;
-
 private:
+    static constexpr unsigned ASH_RESPONSE_TIMEOUT = 200;  // ms, timeout for waiting for a response
+
+    const QLoggingCategory& logCategory() const override;
+    int handleReceiverLine(std::string_view line) override;
+
+    /// Sentence handlers return update flags, or nullopt when the sentence is rejected.
+    std::optional<int> _handleTime(std::string_view message);
+    std::optional<int> _handleGGA(const NMEA::Sentence& sentence);
+    void _handleHeading(std::string_view message);
+    std::optional<int> _handlePosition(std::string_view message, const NMEA::Sentence& sentence);
+    std::optional<int> _handleAccuracy(const NMEA::Sentence& sentence);
+    void _handleCommandReply(std::string_view message);
+    std::optional<int> _handleSurveyReceipt(const NMEA::Sentence& sentence);
+    void _updateSurveyDuration();
     void flushDecoded() override;
     void _expireMetadata();
     void _applyMetadata(std::optional<int> time);
-    void _queueSatellites(NMEA::SatelliteEpoch epoch);
-    void _drainSatellites();
     void servicePendingCommands() override;
     bool _correctionSetupPending = false;
     bool _rtcmActivationPending = false;
@@ -46,15 +51,7 @@ private:
         Acked,   // Command that returns a (N)Ack
         PRT,     // port config
         RID,     // board identification
-        RECEIPT  // board identification
-    };
-
-    enum class NMEACommandState
-    {
-        idle,
-        waiting,
-        nack,
-        received
+        RECEIPT  // survey receipt
     };
 
     /**
@@ -64,27 +61,15 @@ private:
 
     void activateRTCMOutput();
 
-    void decodeInit(void);
-
-    int handleMessage(int len);
-
-    int parseChar(uint8_t b);
-
     /**
      * receive data for at least the specified amount of time
      */
     void receiveWait(unsigned timeout_min);
 
-    void sendSurveyInStatusUpdate(bool active, bool valid, double latitude = static_cast<double>(NAN),
-                                  double longitude = static_cast<double>(NAN), float altitude = NAN);
+    /// Writes @a command, normalized to one CR/LF-terminated line, and waits for @a reply or a NAK.
+    bool sendCommand(std::string_view command, NMEACommand reply = NMEACommand::Acked);
 
-    /**
-     * Write a command and wait for a (N)Ack
-     * @return 0 on success, <0 otherwise
-     */
-    int writeAckedCommand(const void* buf, int buf_length, unsigned timeout);
-
-    int waitForReply(NMEACommand command);
+    bool _awaitingReply(NMEACommand reply) const { return replyPending() && _waiting_for_command == reply; }
 
     bool _correction_output_activated{false};
     bool _configure_done{false};
@@ -92,8 +77,6 @@ private:
 
     char _port{'A'};                    /**< port we are connected to (e.g. 'A') */
 
-    uint8_t _rx_buffer[ASHTECH_RECV_BUFFER_SIZE];
-    NMEA::Framer _nmeaFramer{_rx_buffer};
     uint64_t _last_timestamp_time{0};
     uint64_t _headingTimestamp{0};
     uint64_t _utcReference = 0;
@@ -103,19 +86,11 @@ private:
     // ZDA/GST output is requested every three seconds.
     static constexpr uint64_t METADATA_MAX_AGE_US = 5000000;
 
-    uint32_t _survey_duration = 0;
-    uint64_t _survey_in_start{0};
+    GPSSurveyClock _surveyClock;
     bool _surveyReceiptRequested = false;
     std::optional<uint64_t> _surveyReceiptStartUtc;
 
-    NMEA::SatelliteAssembler _satelliteAssembler;
-    NMEA::SatelliteEpoch _pendingSatellites;
-
     AshtechBoard _board{AshtechBoard::other}; /**< board we are connected to */
 
-    NMEACommand _waiting_for_command;
-
-    NMEACommandState _command_state{NMEACommandState::idle};
-
-    std::optional<RTCMStreamDecoder> _rtcm_parsing;
+    NMEACommand _waiting_for_command{NMEACommand::Acked};
 };

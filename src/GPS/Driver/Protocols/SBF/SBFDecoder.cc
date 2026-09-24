@@ -9,6 +9,26 @@
 
 namespace {
 constexpr double DNU = 100000.0;
+
+GPSPositionReport::FixType fixType(uint8_t mode)
+{
+    switch (mode) {
+        case 0:
+            return GPSPositionReport::FixType::NoFix;
+        case 2:
+        case 6:
+            return GPSPositionReport::FixType::Differential;
+        case 5:
+        case 8:
+            return GPSPositionReport::FixType::RTKFloat;
+        case 4:
+        case 7:
+            return GPSPositionReport::FixType::RTKFixed;
+        default:
+            return GPSPositionReport::FixType::Fix3D;
+    }
+}
+
 sbf_buf_t decodeBlock(std::span<const uint8_t> bytes)
 {
     sbf_buf_t value{};
@@ -152,8 +172,6 @@ uint16_t crc16(const uint8_t* data_p, uint32_t length)
 
 int GPSNativeSBF::payloadRxDone()
 {
-    int ret = 0;
-
     _buf = decodeBlock(std::span<const uint8_t>(_wire).first(_rx_payload_index));
     if (_buf.length < 14 || _buf.length > _rx_payload_index || _buf.crc16 != crc16(_wire.data() + 4, _buf.length - 4)) {
         return 0;
@@ -169,158 +187,100 @@ int GPSNativeSBF::payloadRxDone()
     if (!epoch) {
         return GPSDecodedBatch::PROTOCOL_ACTIVITY;
     }
-    auto& position = epoch->position;
     epoch->hasPosition = true;
+    const auto& pvt = _buf.payload_pvt_geodetic;
 
     // PVTGeodetic Datum 0 is WGS84/ITRS. Datum 19 is the correction provider's unspecified datum.
-    if (_buf.payload_pvt_geodetic.datum != 0) {
+    if (pvt.datum != 0) {
         epoch->position = {};
         epoch->position.navigation.fixType = GPSPositionReport::FixType::NoFix;
         if (_configured) {
-            log(GPSProtocolLogLevel::Warning, "Unsupported Septentrio position datum: %u",
-                unsigned(_buf.payload_pvt_geodetic.datum));
+            log(GPSProtocolLogLevel::Warning, "Unsupported Septentrio position datum: %u", unsigned(pvt.datum));
             controlFailed();
             _ioErrorDetail = QStringLiteral("Septentrio position datum is not WGS84/ITRS");
             _configured = false;
             _rtcm_parsing.reset();
-            GPSNativeSurveyReport status{};
-            surveyInStatus(status);
+            publishSurvey(false, false, {});
         }
         return GPSDecodedBatch::PROTOCOL_ACTIVITY;
     }
 
-            if (_buf.payload_pvt_geodetic.mode_type < 1) {
-                position.navigation.fixType = GPSPositionReport::FixType::NoFix;
+    const bool coordinatesValid = applyPvtGeodetic(pvt, epoch->position);
+    // In RTCM mode, PVTGeodetic is used to get base station survey-in
+    if (_configured) {
+        publishSurveyStatus(pvt, epoch->position, coordinatesValid);
+    }
+    return GPSDecodedBatch::PROTOCOL_ACTIVITY;
+}
 
-            } else {
-                switch (_buf.payload_pvt_geodetic.mode_type) {
-                    case 2:
-                    case 6:
-                        position.navigation.fixType = GPSPositionReport::FixType::Differential;
-                        break;
+bool GPSNativeSBF::applyPvtGeodetic(const sbf_payload_pvt_geodetic_t& pvt, GPSNativePositionReport& position)
+{
+    position.navigation.fixType = fixType(pvt.mode_type);
+    if (pvt.error != 0) {
+        position.navigation.fixType = GPSPositionReport::FixType::NoFix;
+    } else if (pvt.mode_2d && position.navigation.fixType >= GPSPositionReport::FixType::Fix3D) {
+        position.navigation.fixType = GPSPositionReport::FixType::Fix2D;
+    }
 
-                    case 5:
-                    case 8:
-                        position.navigation.fixType = GPSPositionReport::FixType::RTKFloat;
-                        break;
+    // Any value beyond the specified maximum is invalid, not only the do-not-use value (-2*10^10).
+    position.velocityValid = position.navigation.fixType > GPSPositionReport::FixType::NoFix && pvt.error == 0 &&
+                             !(fabsf(pvt.vn) > 600.0f || fabsf(pvt.ve) > 600.0f || fabsf(pvt.vu) > 600.0f);
 
-                    case 4:
-                    case 7:
-                        position.navigation.fixType = GPSPositionReport::FixType::RTKFixed;
-                        break;
+    const bool coordinatesValid = std::isfinite(pvt.latitude) && std::abs(pvt.latitude) <= std::numbers::pi / 2 &&
+                                  std::isfinite(pvt.longitude) && std::abs(pvt.longitude) <= std::numbers::pi &&
+                                  std::isfinite(pvt.height) && std::abs(pvt.height) <= DNU;
+    if (!coordinatesValid || !std::isfinite(pvt.undulation) || std::abs(pvt.undulation) > DNU) {
+        position.navigation.fixType = GPSPositionReport::FixType::NoFix;
+    }
 
-                    default:
-                        position.navigation.fixType = GPSPositionReport::FixType::Fix3D;
-                        break;
-                }
-            }
+    const bool satellitesKnown = pvt.nr_sv < 255;  // 255 = do not use value
+    position.navigation.satellitesUsed = satellitesKnown ? pvt.nr_sv : UINT8_MAX;
+    if (_satellites) {
+        publishSatelliteUsage(satellitesKnown ? std::optional<int>(pvt.nr_sv) : std::nullopt);
+    }
 
-            if (_buf.payload_pvt_geodetic.error != 0) {
-                position.navigation.fixType = GPSPositionReport::FixType::NoFix;
-            } else if (_buf.payload_pvt_geodetic.mode_2d &&
-                       position.navigation.fixType >= GPSPositionReport::FixType::Fix3D) {
-                position.navigation.fixType = GPSPositionReport::FixType::Fix2D;
-            }
+    position.navigation.latitudeDegrees = pvt.latitude * GPS_RAD_TO_DEG;
+    position.navigation.longitudeDegrees = pvt.longitude * GPS_RAD_TO_DEG;
+    position.navigation.altitudeEllipsoidMeters = pvt.height;
+    position.navigation.altitudeMslMeters = pvt.height - static_cast<double>(pvt.undulation);
 
-            // Check fix and error code
-            position.velocityValid =
-                position.navigation.fixType > GPSPositionReport::FixType::NoFix && _buf.payload_pvt_geodetic.error == 0;
+    // Accuracy is reported as 2DRMS in cm; halve it for the RMS convention used by the other drivers.
+    position.navigation.horizontalAccuracyMeters =
+        pvt.h_accuracy != UINT16_MAX ? static_cast<float>(pvt.h_accuracy) / 200.0f : NAN;
+    position.navigation.verticalAccuracyMeters =
+        pvt.v_accuracy != UINT16_MAX ? static_cast<float>(pvt.v_accuracy) / 200.0f : NAN;
 
-            // Check boundaries and invalidate GPS velocities
-            // We're not just checking for the do-not-use value (-2*10^10) but for any value beyond the specified max
-            // values
-            if (fabsf(_buf.payload_pvt_geodetic.vn) > 600.0f || fabsf(_buf.payload_pvt_geodetic.ve) > 600.0f ||
-                fabsf(_buf.payload_pvt_geodetic.vu) > 600.0f) {
-                position.velocityValid = false;
-            }
+    position.navigation.speedMetersPerSecond = sqrtf(pvt.vn * pvt.vn + pvt.ve * pvt.ve);
+    position.navigation.courseRadians =
+        std::isfinite(pvt.cog) && pvt.cog >= 0.0f && pvt.cog <= 360.0f ? pvt.cog * GPS_DEG_TO_RAD : NAN;
 
-            // Check boundaries and invalidate position
-            // We're not just checking for the do-not-use value (-2*10^10) but for any value beyond the specified max
-            // values
-            const auto& pvt = _buf.payload_pvt_geodetic;
-            const bool coordinatesValid = std::isfinite(pvt.latitude) &&
-                                          std::abs(pvt.latitude) <= std::numbers::pi / 2 &&
-                                          std::isfinite(pvt.longitude) && std::abs(pvt.longitude) <= std::numbers::pi &&
-                                          std::isfinite(pvt.height) && std::abs(pvt.height) <= DNU;
-            if (!coordinatesValid || !std::isfinite(pvt.undulation) || std::abs(pvt.undulation) > DNU) {
-                position.navigation.fixType = GPSPositionReport::FixType::NoFix;
-            }
+    // WNc/TOW is GNSS system time, not UTC. Without receiver UTC/leap information,
+    // retain the epoch key internally and let the facade use reception UTC.
+    position.navigation.utcTimeUs = 0;
+    position.navigation.timestampUs = nowUs();
+    return coordinatesValid;
+}
 
-            if (_buf.payload_pvt_geodetic.nr_sv < 255) {  // 255 = do not use value
-                position.navigation.satellitesUsed = _buf.payload_pvt_geodetic.nr_sv;
-
-                if (_satellites) {
-                    publishSatelliteUsage(position.navigation.satellitesUsed);
-                }
-
-            } else {
-                position.navigation.satellitesUsed = UINT8_MAX;
-                if (_satellites) {
-                    publishSatelliteUsage(std::nullopt);
-                }
-            }
-
-            position.navigation.latitudeDegrees = _buf.payload_pvt_geodetic.latitude * GPS_RAD_TO_DEG;
-            position.navigation.longitudeDegrees = _buf.payload_pvt_geodetic.longitude * GPS_RAD_TO_DEG;
-            position.navigation.altitudeEllipsoidMeters = _buf.payload_pvt_geodetic.height;
-            position.navigation.altitudeMslMeters =
-                _buf.payload_pvt_geodetic.height - static_cast<double>(_buf.payload_pvt_geodetic.undulation);
-
-            /* H and V accuracy are reported in 2DRMS, but based off the uBlox reporting we expect RMS.
-             * Devide by 100 from cm to m and in addition divide by 2 to get RMS. */
-            position.navigation.horizontalAccuracyMeters =
-                _buf.payload_pvt_geodetic.h_accuracy != UINT16_MAX
-                    ? static_cast<float>(_buf.payload_pvt_geodetic.h_accuracy) / 200.0f
-                    : NAN;
-            position.navigation.verticalAccuracyMeters =
-                _buf.payload_pvt_geodetic.v_accuracy != UINT16_MAX
-                    ? static_cast<float>(_buf.payload_pvt_geodetic.v_accuracy) / 200.0f
-                    : NAN;
-
-            const float velocityNorth = static_cast<float>(_buf.payload_pvt_geodetic.vn);
-            const float velocityEast = static_cast<float>(_buf.payload_pvt_geodetic.ve);
-            position.navigation.speedMetersPerSecond =
-                sqrtf(velocityNorth * velocityNorth + velocityEast * velocityEast);
-
-            const float course = _buf.payload_pvt_geodetic.cog;
-            position.navigation.courseRadians =
-                std::isfinite(course) && course >= 0.0f && course <= 360.0f ? course * GPS_DEG_TO_RAD : NAN;
-
-            // WNc/TOW is GNSS system time, not UTC. Without receiver UTC/leap information,
-            // retain the epoch key internally and let the facade use reception UTC.
-            position.navigation.utcTimeUs = 0;
-            position.navigation.timestampUs = nowUs();
-
-            // In RTCM mode, PVTGeodetic is used to get base station survey-in
-            if (_configured) {
-                // Mode bit 6 means automatic base determination is still in progress, not completed.
-                // Septentrio PolaRx5TR 5.5.0 Reference Guide, SBF Mode definition (p. 382).
-                const bool active =
-                    !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) && pvt.mode_base_fixed;
-                const bool valid =
-                    !pvt.mode_base_fixed && pvt.mode_type == 3 && !pvt.mode_2d && !pvt.error && coordinatesValid;
-                if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) &&
-                    (active || _survey_active)) {
-                    _survey_duration = (nowUs() - _survey_activation_date) / 1000000;
-                }
-                _survey_active = active;
-                GPSNativeSurveyReport status{};
-                // PVT accuracy describes the navigation solution, not the averaged base survey.
-                if (coordinatesValid && !pvt.error) {
-                    status.survey.position.latitudeDegrees = position.navigation.latitudeDegrees;
-                    status.survey.position.longitudeDegrees = position.navigation.longitudeDegrees;
-                    status.survey.position.altitudeMeters =
-                        static_cast<float>(position.navigation.altitudeEllipsoidMeters);
-                }
-                status.survey.duration = std::chrono::seconds(
-                    std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? 0 : _survey_duration);
-                status.survey.valid = valid;
-                status.survey.active = active;
-                surveyInStatus(status);
-                ret |= 4;  // RTCM infos have been updated
-            }
-
-    return ret | GPSDecodedBatch::PROTOCOL_ACTIVITY;
+void GPSNativeSBF::publishSurveyStatus(const sbf_payload_pvt_geodetic_t& pvt, const GPSNativePositionReport& position,
+                                       bool coordinatesValid)
+{
+    // Mode bit 6 means automatic base determination is still in progress, not completed.
+    // Septentrio PolaRx5TR 5.5.0 Reference Guide, SBF Mode definition (p. 382).
+    const bool active = !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) && pvt.mode_base_fixed;
+    const bool valid = !pvt.mode_base_fixed && pvt.mode_type == 3 && !pvt.mode_2d && !pvt.error && coordinatesValid;
+    // The final update on the active-to-inactive transition freezes the survey duration.
+    if (active || _survey_active) {
+        (void) _surveyClock.update(nowUs());
+    }
+    _survey_active = active;
+    // PVT accuracy describes the navigation solution, not the averaged base survey.
+    GPSEllipsoidPosition surveyPosition;
+    if (coordinatesValid && !pvt.error) {
+        surveyPosition = {.latitudeDegrees = position.navigation.latitudeDegrees,
+                          .longitudeDegrees = position.navigation.longitudeDegrees,
+                          .altitudeMeters = static_cast<float>(position.navigation.altitudeEllipsoidMeters)};
+    }
+    publishSurvey(active, valid, _surveyClock.duration(), surveyPosition);
 }
 
 GPSNativeSBF::NavigationEpoch* GPSNativeSBF::navigationEpoch(uint64_t receiverTimeMs)
@@ -396,5 +356,5 @@ GPSNativeSBF::GPSNativeSBF(GPSProtocolIO io, bool satelliteInfoEnabled)
 
 int GPSNativeSBF::receive(unsigned timeout)
 {
-    return ioError() ? ioError() : (_configured ? receiveDecoded(timeout) : 0);
+    return _configured && !hasIOError() ? receiveDecoded(timeout) : 0;
 }

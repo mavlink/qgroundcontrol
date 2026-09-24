@@ -934,7 +934,8 @@ void GPSRtkTest::_manualConnectionReconnectsAfterLoss()
     ignoreLogMessage("GPS.RTK.GPSRtk", QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
     ignoreLogMessage("GPS.Transport.TCPGPSTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to connect to GPS receiver")));
-    ignoreLogMessage("GPS.Driver.Protocols", QtWarningMsg, QRegularExpression(QStringLiteral("Receiver read failed")));
+    ignoreLogMessage("GPS.Driver.Protocols.Passive", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Receiver read failed")));
     GPSRtk receiver;
     auto* policy = receiver._connection;
     const auto tick = [policy]() {
@@ -988,7 +989,8 @@ void GPSRtkTest::_disconnectStopsReconnect()
     ignoreLogMessage("GPS.RTK.GPSRtk", QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
     ignoreLogMessage("GPS.Transport.TCPGPSTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to connect to GPS receiver")));
-    ignoreLogMessage("GPS.Driver.Protocols", QtWarningMsg, QRegularExpression(QStringLiteral("Receiver read failed")));
+    ignoreLogMessage("GPS.Driver.Protocols.Passive", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Receiver read failed")));
     for (const bool viaAutoConnect : {false, true}) {
         GPSRtk receiver;
         QVERIFY(receiver.connectConfiguredGPS());

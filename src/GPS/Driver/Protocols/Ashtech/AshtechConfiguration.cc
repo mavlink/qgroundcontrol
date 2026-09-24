@@ -1,15 +1,21 @@
-#include <ctime>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <QtCore/QScopeGuard>
+#include <cmath>
+#include <cstdio>
+#include <string>
+#include <string_view>
 
 #include "Ashtech/GPSDriverAshtech.h"
-#include "NMEAFields.h"
-#include "NMEASentence.h"
-#include "RTCMFramer.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(GPSNativeAshtechLog, "GPS.Driver.Protocols.Ashtech")
+
+namespace {
+constexpr std::string_view PORT_CONFIG_QUERY = "$PASHQ,PRT";  // ask for the current port configuration
+}
+
+const QLoggingCategory& GPSNativeAshtech::logCategory() const
+{
+    return GPSNativeAshtechLog();
+}
 
 void GPSNativeAshtech::activateRTCMOutput()
 {
@@ -35,51 +41,31 @@ void GPSNativeAshtech::activateRTCMOutput()
         "$PASHS,RT3,1087,%c,ON,1\r\n",
     };
 
-    for (unsigned int conf_i = 0; conf_i < sizeof(rtcm_options) / sizeof(rtcm_options[0]); conf_i++) {
-        int str_len = snprintf(buffer, sizeof(buffer), rtcm_options[conf_i], _port);
-
-        if (writeAckedCommand(buffer, str_len, ASH_RESPONSE_TIMEOUT) != 0) {
+    for (const char* option : rtcm_options) {
+        const int length = snprintf(buffer, sizeof(buffer), option, _port);
+        if (!sendCommand({buffer, static_cast<size_t>(length)})) {
             controlFailed();
             return;
         }
     }
 }
 
-int GPSNativeAshtech::writeAckedCommand(const void* buf, int buf_length, unsigned timeout)
+bool GPSNativeAshtech::sendCommand(std::string_view command, NMEACommand reply)
 {
-    std::string command(static_cast<const char*>(buf), buf_length);
-    while (!command.empty() && (command.back() == '\r' || command.back() == '\n')) {
-        command.pop_back();
+    while (command.ends_with('\r') || command.ends_with('\n')) {
+        command.remove_suffix(1);
     }
-    command += "\r\n";
-    if (!writeCommand({command, std::chrono::milliseconds(timeout)},
-                      {reinterpret_cast<const uint8_t*>(command.data()), command.size()})) {
-        return -1;
-    }
-
-    return waitForReply(NMEACommand::Acked);
+    const std::string line = std::string(command) + "\r\n";
+    _waiting_for_command = reply;
+    return transact({line, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)}, line).evidence.outcome ==
+           GPSCommandOutcome::Acknowledged;
 }
 
-int GPSNativeAshtech::waitForReply(NMEACommand command)
-{
-    _command_state = NMEACommandState::waiting;
-    _waiting_for_command = command;
-    const auto clearReply = qScopeGuard([this] { _command_state = NMEACommandState::idle; });
-
-    const auto result = awaitCommand([this] {
-        return _command_state == NMEACommandState::received ? GPSCommandOutcome::Acknowledged
-               : _command_state == NMEACommandState::nack   ? GPSCommandOutcome::Rejected
-                                                            : GPSCommandOutcome::Pending;
-    });
-    return result.evidence.outcome == GPSCommandOutcome::Acknowledged ? 0 : -1;
-}
-
-int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
+bool GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
 {
     _configure_done = false;
     resetIOError();
-    _survey_duration = 0;
-    _survey_in_start = 0;
+    _surveyClock.reset();
     _surveyReceiptRequested = false;
     _surveyReceiptStartUtc.reset();
     _correction_output_activated = false;
@@ -91,14 +77,10 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
     _positionEpoch = {};
     _accuracyReceipt = {};
     _accuracy = {};
-    _position = {};
-    _satelliteAssembler.clear();
-    _pendingSatellites.clear();
-    _command_state = NMEACommandState::idle;
-    _rtcm_parsing.reset();
-    decodeInit();
+    setRTCMEnabled(false);
+    resetStream();
     if (!validateConfiguration(config)) {
-        return -1;
+        return false;
     }
     _baseConfig = config.base;
 
@@ -124,13 +106,8 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
 
         setBaudrate(test_baudrate);
 
-        const char port_config[] = "$PASHQ,PRT\r\n";  // ask for the current port configuration
-
-        for (int run = 0; run < 2; ++run) {           // try several times
-            writeCommand({port_config, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
-                         {reinterpret_cast<const uint8_t*>(port_config), sizeof(port_config) - 1});
-
-            if (waitForReply(NMEACommand::PRT) == 0) {
+        for (int run = 0; run < 2; ++run) {  // try several times
+            if (sendCommand(PORT_CONFIG_QUERY, NMEACommand::PRT)) {
                 success = true;
                 break;
             }
@@ -138,7 +115,7 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
     }
 
     if (!success) {
-        return -1;
+        return false;
     }
 
     // We successfully got a response and know to which port we are connected. Now set the desired baudrate
@@ -154,27 +131,23 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         int len = snprintf(baud_config_str, sizeof(baud_config_str), baud_config, _port);
         writeCommand({baud_config_str, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
                      {reinterpret_cast<const uint8_t*>(baud_config_str), static_cast<size_t>(len)});
-        decodeInit();
+        resetStream();
         receiveWait(200);
-        decodeInit();
+        resetStream();
         setBaudrate(baudrate);
 
         success = false;
 
         for (int run = 0; run < 10; ++run) {
             // We ask for the port config again. If we get a reply, we know that the changed settings work.
-            const char port_config[] = "$PASHQ,PRT\r\n";
-            writeCommand({port_config, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
-                         {reinterpret_cast<const uint8_t*>(port_config), sizeof(port_config) - 1});
-
-            if (waitForReply(NMEACommand::PRT) == 0) {
+            if (sendCommand(PORT_CONFIG_QUERY, NMEACommand::PRT)) {
                 success = true;
                 break;
             }
         }
 
         if (!success) {
-            return -1;
+            return false;
         }
     }
 
@@ -199,27 +172,13 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
     //		Reset the full configuration (however it will lead to a reboot and requires about 15s waiting time)
     //			$PASHS,RST
 
-    // get the board identification
-    const char board_identification[] = "$PASHQ,RID\r\n";
-
-    if (writeCommand({board_identification, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
-                     {reinterpret_cast<const uint8_t*>(board_identification), sizeof(board_identification) - 1})) {
-        if (waitForReply(NMEACommand::RID) != 0) {
-            return -1;
-        }
+    if (!sendCommand("$PASHQ,RID", NMEACommand::RID)) {  // board identification
+        return false;
     }
 
-    // Now configure the messages we want
-
-    const char update_rate[] = "$PASHS,POP,20\r\n";  // set internal update rate to 20 Hz
-
-    if (writeAckedCommand(update_rate, sizeof(update_rate) - 1, ASH_RESPONSE_TIMEOUT) != 0) {
-        // for some reason we don't get a response here
-    }
-
-    const char solo_mode[] = "$PASHS,SNS,SOL\r\n";
-    if (writeAckedCommand(solo_mode, sizeof(solo_mode) - 1, ASH_RESPONSE_TIMEOUT) != 0) {
-    }
+    // Now configure the messages we want. Some receivers do not acknowledge these, so failures are not fatal.
+    (void) sendCommand("$PASHS,POP,20");  // set internal update rate to 20 Hz
+    (void) sendCommand("$PASHS,SNS,SOL");
 
     char buffer[40];
     const char* config_options[] = {
@@ -233,27 +192,20 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         "$PASHS,NME,GSV,%c,ON,1\r\n"      // satellite status
     };
 
-    for (unsigned int conf_i = 0; conf_i < sizeof(config_options) / sizeof(config_options[0]); conf_i++) {
-        int len = snprintf(buffer, sizeof(buffer), config_options[conf_i], _port);
-
-        if (writeAckedCommand(buffer, len, ASH_RESPONSE_TIMEOUT) != 0) {
-            // some commands are not acked (e.g. GSV), so don't make this fatal
-        }
+    for (const char* option : config_options) {
+        const int length = snprintf(buffer, sizeof(buffer), option, _port);
+        // some commands are not acked (e.g. GSV), so don't make this fatal
+        (void) sendCommand({buffer, static_cast<size_t>(length)});
     }
 
-    if (!_rtcm_parsing) {
-        _rtcm_parsing.emplace();
-    }
-    _rtcm_parsing->reset();
+    setRTCMEnabled(true);
 
     if (_board == AshtechBoard::trimble_mb_two) {
-        GPSNativeSurveyReport status{};
-        status.survey.active = true;
-        surveyInStatus(status);
+        publishSurvey(true, false, {});
     }
 
     _configure_done = true;
-    return ioError();
+    return !hasIOError();
 }
 
 void GPSNativeAshtech::activateCorrectionOutput()
@@ -274,14 +226,11 @@ void GPSNativeAshtech::activateCorrectionOutput()
 
         _surveyReceiptRequested = true;
         _surveyReceiptStartUtc.reset();
-        writeCommand({buffer, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
-                     {reinterpret_cast<const uint8_t*>(buffer), static_cast<size_t>(len)});
-
-        if (waitForReply(NMEACommand::RECEIPT) != 0) {
+        if (!sendCommand({buffer, static_cast<size_t>(len)}, NMEACommand::RECEIPT)) {
             _surveyReceiptRequested = false;
             _surveyReceiptStartUtc.reset();
             controlFailed();
-            if (ioError() != ReadCancelled && _ioErrorDetail.isEmpty()) {
+            if (ioError() != GPSProtocolError::Cancelled && _ioErrorDetail.isEmpty()) {
                 _ioErrorDetail = QStringLiteral("No matching Ashtech survey-start receipt");
             }
             return;
@@ -292,53 +241,34 @@ void GPSNativeAshtech::activateCorrectionOutput()
             "$PASHS,STI,0001\r\n"              // enter a base ID
         };
 
-        for (unsigned int conf_i = 0; conf_i < sizeof(config_options) / sizeof(config_options[0]); conf_i++) {
-            if (writeAckedCommand(config_options[conf_i], strlen(config_options[conf_i]), ASH_RESPONSE_TIMEOUT) != 0) {
+        for (const char* option : config_options) {
+            if (!sendCommand(option)) {
                 controlFailed();
                 return;
             }
         }
 
         if (!_rtcmActivationPending) {
-            _survey_duration = 0;  // use it as counter how long survey-in has been active
-            _survey_in_start = nowUs();
-            sendSurveyInStatusUpdate(true, false);
+            _surveyClock.start(nowUs());
+            publishSurvey(true, false, _surveyClock.duration());
         }
 
     } else {
         const auto& settings = std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode);
-        char ns, ew;
-        double latitude = settings.position.latitudeDegrees;
+        // Unsigned ddmm.mmmmmm with a hemisphere letter.
+        const auto degreesMinutes = [](double degrees) {
+            const double magnitude = std::abs(degrees);
+            const double whole = std::trunc(magnitude);
+            return whole * 100.0 + (magnitude - whole) * 60.0;
+        };
+        const double latitude = settings.position.latitudeDegrees;
+        const double longitude = settings.position.longitudeDegrees;
+        const int len = snprintf(buffer, sizeof(buffer), "$PASHS,POS,%.8f,%c,%.8f,%c,%.5f,PC1",
+                                 degreesMinutes(latitude), latitude < 0.0 ? 'S' : 'N', degreesMinutes(longitude),
+                                 longitude < 0.0 ? 'W' : 'E', static_cast<double>(settings.position.altitudeMeters));
 
-        if (latitude < 0.) {
-            latitude = -latitude;
-            ns = 'S';
-
-        } else {
-            ns = 'N';
-        }
-
-        // convert to ddmm.mmmmmm format
-        latitude = ((int) latitude) * 100. + (latitude - ((int) latitude)) * 60.;
-
-        double longitude = settings.position.longitudeDegrees;
-
-        if (longitude < 0.) {
-            longitude = -longitude;
-            ew = 'W';
-
-        } else {
-            ew = 'E';
-        }
-
-        // convert to ddmm.mmmmmm format
-        longitude = ((int) longitude) * 100. + (longitude - ((int) longitude)) * 60.;
-
-        int len = snprintf(buffer, sizeof(buffer), "$PASHS,POS,%.8f,%c,%.8f,%c,%.5f,PC1", latitude, ns, longitude, ew,
-                           (double) settings.position.altitudeMeters);
-
-        if (len >= 0 && len < (int) sizeof(buffer)) {
-            if (writeAckedCommand(buffer, len, ASH_RESPONSE_TIMEOUT) != 0) {
+        if (len >= 0 && len < static_cast<int>(sizeof(buffer))) {
+            if (!sendCommand({buffer, static_cast<size_t>(len)})) {
                 controlFailed();
                 return;
             }
@@ -349,11 +279,10 @@ void GPSNativeAshtech::activateCorrectionOutput()
         }
 
         activateRTCMOutput();
-        if (ioError()) {
+        if (hasIOError()) {
             return;
         }
-        sendSurveyInStatusUpdate(false, true, settings.position.latitudeDegrees, settings.position.longitudeDegrees,
-                                 settings.position.altitudeMeters);
+        publishSurvey(false, true, {}, settings.position);
     }
     _correction_output_activated = true;
 }

@@ -4,6 +4,7 @@
 
 #include "FemtoMessages.h"
 #include "GPSProtocol.h"
+#include "GPSSurveyClock.h"
 #include "NMEAFramer.h"
 #include "RTCMFramer.h"
 
@@ -18,9 +19,10 @@ public:
     int receive(unsigned timeout) override;
     int decodeByte(uint8_t byte) override;
 
-    int configure(unsigned& baudrate, const GPSConfig& config) override;
+    bool configure(unsigned& baudrate, const GPSConfig& config) override;
 
 private:
+    const QLoggingCategory& logCategory() const override;
     void flushDecoded() override;
     void servicePendingCommands() override;
     bool _rtcmActivationPending = false;
@@ -28,7 +30,7 @@ private:
     /**
      * when Constructor is work, initialize parameters
      */
-    void decodeInit(void);
+    void decodeInit();
 
     /**
      * check the message if whether is 8001,memcpy data to _position
@@ -40,11 +42,8 @@ private:
      */
     int parseChar(uint8_t b);
 
-    /**
-     * Write a command and wait for a (N)Ack
-     * @return 0 on success, <0 otherwise
-     */
-    int writeAckedCommandFemto(const char* command, const char* reply, const unsigned timeout);
+    /// Writes a command and waits for @a reply, or "<ERROR" as a rejection.
+    bool writeAckedCommandFemto(const char* command, const char* reply);
 
     /**
      * enable output of correction output
@@ -56,19 +55,11 @@ private:
      */
     void activateRTCMOutput();
 
-    /**
-     * update survery in status of QGC RTK GPS
-     */
-    void sendSurveyInStatusUpdate(bool active, bool valid, double latitude = (double) NAN,
-                                  double longitude = (double) NAN, float altitude = NAN);
-
     femto_msg_t _femto_msg;
     NMEA::Framer _nmeaFramer{_femto_msg.data};
-    uint32_t _survey_duration = 0;
+    GPSSurveyClock _surveyClock;
 
     std::optional<RTCMStreamDecoder> _rtcm_parsing;
     bool _configure_done{false};
     bool _correction_output_activated{false};
-
-    uint64_t _survey_in_start{0};
 };

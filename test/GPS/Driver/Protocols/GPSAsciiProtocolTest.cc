@@ -26,10 +26,10 @@ class AsciiReceiver final : public GPSAsciiProtocol
 public:
     using GPSAsciiProtocol::GPSAsciiProtocol;
 
-    int configure(unsigned&, const GPSConfig&) override
+    bool configure(unsigned&, const GPSConfig&) override
     {
         resetStream();
-        return 0;
+        return true;
     }
 };
 
@@ -282,12 +282,12 @@ void GPSAsciiProtocolTest::_unicoreFailureDetails()
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config;
     config.base.mode = GPSBaseStationConfig::ReceiverAveraging{1};
-    QVERIFY(receiver.configure(baud, config) < 0);
+    QVERIFY(!receiver.configure(baud, config));
     QVERIFY(!receiver.receiverReady());
     QVERIFY(!peer.results.empty());
     QCOMPARE(peer.results.back().evidence.command, std::string("UNLOG"));
     if (peer.fault == GPSTest::UnicoreReceiver::Fault::Cancel) {
-        QCOMPARE(receiver.ioError(), GPSProtocol::ReadCancelled);
+        QCOMPARE(receiver.ioError(), GPSProtocolError::Cancelled);
         QVERIFY(receiver.ioErrorDetail().isEmpty());
         QVERIFY(gps_test_warnings.empty());
         QCOMPARE(peer.results.back().evidence.outcome, GPSCommandOutcome::Cancelled);
@@ -310,13 +310,13 @@ void GPSAsciiProtocolTest::_unicoreUnsupportedDetails()
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config;
     config.base.mode = GPSBaseStationConfig::ReceiverAveraging{1};
-    QVERIFY(receiver.configure(baud, config) < 0);
+    QVERIFY(!receiver.configure(baud, config));
     QVERIFY(receiver.ioErrorDetail().contains("Unsupported Unicore receiver"));
     QVERIFY(receiver.ioErrorDetail().contains("R5.00Build20000"));
     QVERIFY(receiver.ioErrorDetail().contains("R4.10Build7650"));
     QCOMPARE(peer.commands.size(), size_t(1));
     peer.version = GPSTest::UNICORE_VERSION;
-    QCOMPARE(receiver.configure(baud, config), 0);
+    QVERIFY(receiver.configure(baud, config));
     QVERIFY(receiver.ioErrorDetail().isEmpty());
     QVERIFY(receiver.receiverReady());
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GPSProtocol.h"
+#include "GPSSurveyClock.h"
 #include "RTCMFramer.h"
 #include "SBFMessages.h"
 
@@ -16,9 +17,10 @@ public:
     int receive(unsigned timeout) override;
     int decodeByte(uint8_t byte) override;
 
-    int configure(unsigned& baudrate, const GPSConfig& config) override;
+    bool configure(unsigned& baudrate, const GPSConfig& config) override;
 
 private:
+    const QLoggingCategory& logCategory() const override;
     /**
      * @brief Parse the binary SBF packet
      */
@@ -49,25 +51,24 @@ private:
     /**
      * @brief Parses incoming SBF blocks
      */
-    int payloadRxDone(void);
+    int payloadRxDone();
+
+    /// Fills @a position from one PVTGeodetic block. @return whether its coordinates are usable.
+    bool applyPvtGeodetic(const sbf_payload_pvt_geodetic_t& pvt, GPSNativePositionReport& position);
+    void publishSurveyStatus(const sbf_payload_pvt_geodetic_t& pvt, const GPSNativePositionReport& position,
+                             bool coordinatesValid);
 
     /**
      * @brief Reset the parse state machine for a fresh start
      */
-    void decodeInit(void);
+    void decodeInit();
 
-    /**
-     * @brief Send a message
-     * @return true on success, false on write error (errno set)
-     */
+    /// @return true when every byte was written.
     bool sendMessage(const char* msg);
 
-    /**
-     * @brief Send a message and waits for acknowledge
-     * @return true on success, false on write error (errno set) or ack wait timeout
-     */
-    bool sendMessageAndWaitForAck(const char* msg, int timeout, GPSReceiverSettingSet settings = {},
-                                  bool required = true);
+    /// Sends a command and waits for the receiver to echo it as "$R: <command>".
+    /// @return true when acknowledged; false after a rejection ("$R?"), timeout, or I/O failure.
+    bool sendMessageAndWaitForAck(const char* msg, bool required = true);
 
     bool _configured{false};
     sbf_decode_state_t _decode_state{SBF_DECODE_SYNC1};
@@ -76,9 +77,8 @@ private:
     std::array<uint8_t, 110> _wire{};
     std::optional<RTCMStreamDecoder> _rtcm_parsing;
 
-    uint32_t _survey_duration = 0;
+    GPSSurveyClock _surveyClock;
     bool _survey_active{false};
-    uint64_t _survey_activation_date{0};
 };
 
 uint16_t crc16(const uint8_t* buf, uint32_t len);
