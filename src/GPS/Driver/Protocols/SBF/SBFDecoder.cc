@@ -84,64 +84,6 @@ sbf_buf_t decodeBlock(std::span<const uint8_t> bytes)
             value.payload_pvt_geodetic.h_accuracy = LittleEndian::read<uint16_t>(bytes, 90).value_or(0);
             value.payload_pvt_geodetic.v_accuracy = LittleEndian::read<uint16_t>(bytes, 92).value_or(0);
             break;
-        case SBF_ID_VelCovGeodetic:
-            value.payload_vel_col_geodetic.mode_type = (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 0) & 15;
-            value.payload_vel_col_geodetic.mode_reserved =
-                (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 4) & 3;
-            value.payload_vel_col_geodetic.mode_base_fixed =
-                (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 6) & 1;
-            value.payload_vel_col_geodetic.mode_2d = (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 7) & 1;
-            value.payload_vel_col_geodetic.error = LittleEndian::read<uint8_t>(bytes, 15).value_or(0);
-            value.payload_vel_col_geodetic.cov_vn_vn = LittleEndian::read<float>(bytes, 16).value_or(0);
-            value.payload_vel_col_geodetic.cov_ve_ve = LittleEndian::read<float>(bytes, 20).value_or(0);
-            value.payload_vel_col_geodetic.cov_vu_vu = LittleEndian::read<float>(bytes, 24).value_or(0);
-            value.payload_vel_col_geodetic.cov_dt_dt = LittleEndian::read<float>(bytes, 28).value_or(0);
-            value.payload_vel_col_geodetic.cov_vn_ve = LittleEndian::read<float>(bytes, 32).value_or(0);
-            value.payload_vel_col_geodetic.cov_vn_vu = LittleEndian::read<float>(bytes, 36).value_or(0);
-            value.payload_vel_col_geodetic.cov_vn_dt = LittleEndian::read<float>(bytes, 40).value_or(0);
-            value.payload_vel_col_geodetic.cov_ve_vu = LittleEndian::read<float>(bytes, 44).value_or(0);
-            value.payload_vel_col_geodetic.cov_ve_dt = LittleEndian::read<float>(bytes, 48).value_or(0);
-            value.payload_vel_col_geodetic.cov_vu_dt = LittleEndian::read<float>(bytes, 52).value_or(0);
-            break;
-        case SBF_ID_DOP:
-            value.payload_dop.nr_sv = LittleEndian::read<uint8_t>(bytes, 14).value_or(0);
-            value.payload_dop.reserved = LittleEndian::read<uint8_t>(bytes, 15).value_or(0);
-            value.payload_dop.pDOP = LittleEndian::read<uint16_t>(bytes, 16).value_or(0);
-            value.payload_dop.tDOP = LittleEndian::read<uint16_t>(bytes, 18).value_or(0);
-            value.payload_dop.hDOP = LittleEndian::read<uint16_t>(bytes, 20).value_or(0);
-            value.payload_dop.vDOP = LittleEndian::read<uint16_t>(bytes, 22).value_or(0);
-            value.payload_dop.hpl = LittleEndian::read<float>(bytes, 24).value_or(0);
-            value.payload_dop.vpl = LittleEndian::read<float>(bytes, 28).value_or(0);
-            break;
-        case SBF_ID_AttEuler:
-            value.payload_att_euler.nr_sv = LittleEndian::read<uint8_t>(bytes, 14).value_or(0);
-            value.payload_att_euler.error_aux1 = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 0) & 3;
-            value.payload_att_euler.error_aux2 = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 2) & 3;
-            value.payload_att_euler.error_reserved = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 4) & 7;
-            value.payload_att_euler.error_not_requested = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 7) & 1;
-            value.payload_att_euler.mode = LittleEndian::read<uint16_t>(bytes, 16).value_or(0);
-            value.payload_att_euler.reserved = LittleEndian::read<uint16_t>(bytes, 18).value_or(0);
-            value.payload_att_euler.heading = LittleEndian::read<float>(bytes, 20).value_or(0);
-            value.payload_att_euler.pitch = LittleEndian::read<float>(bytes, 24).value_or(0);
-            value.payload_att_euler.roll = LittleEndian::read<float>(bytes, 28).value_or(0);
-            value.payload_att_euler.pitch_dot = LittleEndian::read<float>(bytes, 32).value_or(0);
-            value.payload_att_euler.roll_dot = LittleEndian::read<float>(bytes, 36).value_or(0);
-            value.payload_att_euler.heading_dot = LittleEndian::read<float>(bytes, 40).value_or(0);
-            break;
-        case SBF_ID_AttCovEuler:
-            value.payload_att_cov_euler.reserved = LittleEndian::read<uint8_t>(bytes, 14).value_or(0);
-            value.payload_att_cov_euler.error_aux1 = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 0) & 3;
-            value.payload_att_cov_euler.error_aux2 = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 2) & 3;
-            value.payload_att_cov_euler.error_reserved = (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 4) & 7;
-            value.payload_att_cov_euler.error_not_requested =
-                (LittleEndian::read<uint8_t>(bytes, 15).value_or(0) >> 7) & 1;
-            value.payload_att_cov_euler.cov_headhead = LittleEndian::read<float>(bytes, 16).value_or(0);
-            value.payload_att_cov_euler.cov_pitchpitch = LittleEndian::read<float>(bytes, 20).value_or(0);
-            value.payload_att_cov_euler.cov_rollroll = LittleEndian::read<float>(bytes, 24).value_or(0);
-            value.payload_att_cov_euler.cov_headpitch = LittleEndian::read<float>(bytes, 28).value_or(0);
-            value.payload_att_cov_euler.cov_headroll = LittleEndian::read<float>(bytes, 32).value_or(0);
-            value.payload_att_cov_euler.cov_pitchroll = LittleEndian::read<float>(bytes, 36).value_or(0);
-            break;
         default:
             break;
     }
@@ -250,27 +192,9 @@ int GPSNativeSBF::payloadRxDone()
         return 0;
     }
 
-    size_t requiredLength = 0;
-    switch (_buf.msg_id) {
-        case SBF_ID_PVTGeodetic:
-            requiredLength = 94;
-            break;
-        case SBF_ID_VelCovGeodetic:
-            requiredLength = 56;
-            break;
-        case SBF_ID_DOP:
-            requiredLength = 32;
-            break;
-        case SBF_ID_AttEuler:
-            requiredLength = 44;
-            break;
-        case SBF_ID_AttCovEuler:
-            requiredLength = 40;
-            break;
-        default:
-            return 0;
-    }
-    if (_buf.length < requiredLength || _buf.TOW >= WEEK_MS || _buf.WNc == UINT16_MAX) {
+    // Base stations output only PVTGeodetic, which carries the survey-in status.
+    if (_buf.msg_id != SBF_ID_PVTGeodetic || _buf.length < PVT_GEODETIC_LENGTH || _buf.TOW >= WEEK_MS ||
+        _buf.WNc == UINT16_MAX) {
         return 0;
     }
 
@@ -279,28 +203,24 @@ int GPSNativeSBF::payloadRxDone()
         return GPSDecodedBatch::PROTOCOL_ACTIVITY;
     }
     auto& position = epoch->position;
-    switch (_buf.msg_id) {
-        case SBF_ID_PVTGeodetic: {
-            epoch->hasPosition = true;
+    epoch->hasPosition = true;
 
-            // PVTGeodetic Datum 0 is WGS84/ITRS. Datum 19 is the correction provider's unspecified datum.
-            if (_buf.payload_pvt_geodetic.datum != 0) {
-                epoch->position = {};
-                epoch->position.navigation.fixType = GPSPositionReport::FixType::NoFix;
-                if (_configured) {
-                    log(GPSProtocolLogLevel::Warning, "Unsupported Septentrio position datum: %u",
-                        unsigned(_buf.payload_pvt_geodetic.datum));
-                    controlFailed();
-                    _ioErrorDetail = QStringLiteral("Septentrio position datum is not WGS84/ITRS");
-                    _configured = false;
-                    _rtcm_parsing.reset();
-                    if (_output_mode == OutputMode::RTCM) {
-                        GPSNativeSurveyReport status{};
-                        surveyInStatus(status);
-                    }
-                }
-                break;
-            }
+    // PVTGeodetic Datum 0 is WGS84/ITRS. Datum 19 is the correction provider's unspecified datum.
+    if (_buf.payload_pvt_geodetic.datum != 0) {
+        epoch->position = {};
+        epoch->position.navigation.fixType = GPSPositionReport::FixType::NoFix;
+        if (_configured) {
+            log(GPSProtocolLogLevel::Warning, "Unsupported Septentrio position datum: %u",
+                unsigned(_buf.payload_pvt_geodetic.datum));
+            controlFailed();
+            _ioErrorDetail = QStringLiteral("Septentrio position datum is not WGS84/ITRS");
+            _configured = false;
+            _rtcm_parsing.reset();
+            GPSNativeSurveyReport status{};
+            surveyInStatus(status);
+        }
+        return GPSDecodedBatch::PROTOCOL_ACTIVITY;
+    }
 
             if (_buf.payload_pvt_geodetic.mode_type < 1) {
                 position.navigation.fixType = GPSPositionReport::FixType::NoFix;
@@ -405,7 +325,7 @@ int GPSNativeSBF::payloadRxDone()
             position.navigation.timestampUs = nowUs();
 
             // In RTCM mode, PVTGeodetic is used to get base station survey-in
-            if (_configured && _output_mode == OutputMode::RTCM) {
+            if (_configured) {
                 // Mode bit 6 means automatic base determination is still in progress, not completed.
                 // Septentrio PolaRx5TR 5.5.0 Reference Guide, SBF Mode definition (p. 382).
                 const bool active =
@@ -432,42 +352,6 @@ int GPSNativeSBF::payloadRxDone()
                 surveyInStatus(status);
                 ret |= 4;  // RTCM infos have been updated
             }
-
-            //
-            break;
-        }
-
-        case SBF_ID_VelCovGeodetic: {
-            break;
-        }
-        case SBF_ID_DOP:
-            position.navigation.horizontalDop =
-                _buf.payload_dop.hDOP != UINT16_MAX ? _buf.payload_dop.hDOP * 0.01f : NAN;
-            position.navigation.verticalDop = _buf.payload_dop.vDOP != UINT16_MAX ? _buf.payload_dop.vDOP * 0.01f : NAN;
-            break;
-
-        case SBF_ID_AttEuler: {
-            const auto& attitude = _buf.payload_att_euler;
-            position.navigation.headingRadians = NAN;
-            if (!attitude.error_not_requested && !attitude.error_aux1 && !attitude.error_aux2 && attitude.mode >= 1 &&
-                attitude.mode <= 4 && std::isfinite(attitude.heading) && std::abs(attitude.heading) <= 360) {
-                position.navigation.headingRadians = std::remainder(attitude.heading, 360.0f) * GPS_DEG_TO_RAD;
-            }
-            break;
-        }
-        case SBF_ID_AttCovEuler: {
-            const auto& covariance = _buf.payload_att_cov_euler;
-            const float variance = covariance.cov_headhead;
-            const bool valid = !covariance.error_not_requested && !covariance.error_aux1 && !covariance.error_aux2 &&
-                               std::isfinite(variance) && variance >= 0;
-            position.navigation.headingAccuracyRadians = valid ? std::sqrt(variance) * GPS_DEG_TO_RAD : NAN;
-            break;
-        }
-
-        default:
-
-            break;
-    }
 
     return ret | GPSDecodedBatch::PROTOCOL_ACTIVITY;
 }

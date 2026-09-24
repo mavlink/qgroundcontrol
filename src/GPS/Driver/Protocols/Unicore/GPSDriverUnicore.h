@@ -9,7 +9,7 @@
 
 #include "GPSAsciiProtocol.h"
 
-/// Native N4 ASCII controller for UM980/UM982, R4.10 firmware with the documented rover modes.
+/// Native N4 ASCII controller for UM980/UM982, R4.10 firmware with the documented base modes.
 /// Averaging has a maximum time, not an accuracy target; completion requires receiver FIXEDPOS evidence.
 /// Commands affect the current port and are never saved to flash by this controller. Not hardware-qualified.
 class GPSNativeUnicore final : public GPSAsciiProtocol

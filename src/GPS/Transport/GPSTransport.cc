@@ -16,12 +16,7 @@ GPSTransport::~GPSTransport()
     qCDebug(GPSTransportLog) << this;
 }
 
-GPSWriteResult GPSTransport::writeBounded(const uint8_t*, int, QDeadlineTimer)
-{
-    return {isCancelled() ? GPSWriteStatus::Cancelled : GPSWriteStatus::Unsupported};
-}
-
-GPSWriteResult GPSTransport::writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline)
+GPSWriteResult GPSTransport::write(const uint8_t* buffer, int length, QDeadlineTimer deadline)
 {
     if (isCancelled()) {
         return {GPSWriteStatus::Cancelled};
@@ -29,11 +24,14 @@ GPSWriteResult GPSTransport::writeConfiguration(const uint8_t* buffer, int lengt
     if (!buffer || length < 0) {
         return {GPSWriteStatus::InvalidData};
     }
+    if (length == 0) {
+        return {GPSWriteStatus::Completed};
+    }
     if (deadline.hasExpired()) {
         return {GPSWriteStatus::TimedOut};
     }
     const QDeadlineTimer cap(configurationWriteTimeout(), Qt::PreciseTimer);
-    return writeBounded(buffer, length, std::min(deadline, cap));
+    return writeData(buffer, length, std::min(deadline, cap));
 }
 
 std::chrono::milliseconds GPSTransport::configurationWriteTimeout() const

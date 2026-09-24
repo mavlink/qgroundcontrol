@@ -146,25 +146,13 @@ QString SerialGPSTransport::_errorDetail() const
                      : QStringLiteral("Serial GPS connection is closed");
 }
 
-#ifdef Q_OS_ANDROID
-GPSWriteResult SerialGPSTransport::writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline)
+GPSWriteResult SerialGPSTransport::writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline)
 {
-    if (isCancelled()) {
-        return {GPSWriteStatus::Cancelled};
-    }
-    if (!buffer || length < 0) {
-        return {GPSWriteStatus::InvalidData};
-    }
-    if (deadline.hasExpired()) {
-        return {GPSWriteStatus::TimedOut};
-    }
+#ifdef Q_OS_ANDROID
+    Q_UNUSED(deadline);
     if (fatalError()) {
         return {GPSWriteStatus::Error, 0, 0, _errorDetail()};
     }
-    if (length == 0) {
-        return {GPSWriteStatus::Completed};
-    }
-    // The synchronous Android backend can honor the caller's deadline only before submission.
     const qint64 count = _serial->write(reinterpret_cast<const char*>(buffer), length);
     const int written = static_cast<int>(std::clamp(count, qint64(0), qint64(length)));
     GPSWriteStatus status = GPSWriteStatus::Error;
@@ -179,26 +167,6 @@ GPSWriteResult SerialGPSTransport::writeConfiguration(const uint8_t* buffer, int
         _serial->close();
     }
     return result;
-}
-#endif
-
-GPSWriteResult SerialGPSTransport::writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline)
-{
-#ifdef Q_OS_ANDROID
-    if (isCancelled()) {
-        return {GPSWriteStatus::Cancelled};
-    }
-    if (!buffer || length < 0) {
-        return {GPSWriteStatus::InvalidData};
-    }
-    if (fatalError() || _serial->bytesToWrite() != 0) {
-        return {GPSWriteStatus::Error, 0, 0, _errorDetail()};
-    }
-    if (length == 0) {
-        return {GPSWriteStatus::Completed};
-    }
-    Q_UNUSED(deadline);
-    return {GPSWriteStatus::Unsupported, 0, 0, QStringLiteral("Android serial does not support bounded writes")};
 #else
     const qint64 previousAccepted = _acceptedTotal;
     return GPSStreamWrite::writeBounded(

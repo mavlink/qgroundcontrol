@@ -68,16 +68,9 @@ GPSReadResult GPSEvidenceTransport::read(uint8_t* buffer, int length, int timeou
     return result;
 }
 
-GPSWriteResult GPSEvidenceTransport::writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline)
+GPSWriteResult GPSEvidenceTransport::writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline)
 {
-    const auto result = _transport.writeBounded(buffer, length, deadline);
-    _recordWrite(buffer, length, result);
-    return result;
-}
-
-GPSWriteResult GPSEvidenceTransport::writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline)
-{
-    const auto result = _transport.writeConfiguration(buffer, length, deadline);
+    const auto result = _transport.write(buffer, length, deadline);
     _recordWrite(buffer, length, result);
     return result;
 }
@@ -175,16 +168,6 @@ QJsonArray GPSEvidenceTransport::requestedSettings(const GPSReceiverConfig& conf
         config.role == GPSReceiverConfig::Role::RTKBase && survey) {
         setting("survey_duration_s", survey->durationSecs, 0x40030010, 0x71, 24, 4);
         setting("survey_accuracy_0.1mm", static_cast<quint64>(survey->accuracyMeters * 10000), 0x40030011, 0x71, 28, 4);
-    }
-    if (config.dynamicModel) {
-        setting("dynamic_model", *config.dynamicModel, 0x20110021, 0x24, 2, 1);
-    }
-    if (config.constellationMask) {
-        setting("gps_enabled", (config.constellationMask & 1) != 0, 0x1031001f, -1, -1, 0);
-        setting("sbas_enabled", (config.constellationMask & 2) != 0, 0x10310020, -1, -1, 0);
-        setting("galileo_enabled", (config.constellationMask & 4) != 0, 0x10310021, -1, -1, 0);
-        setting("beidou_enabled", (config.constellationMask & 8) != 0, 0x10310022, -1, -1, 0);
-        setting("glonass_enabled", (config.constellationMask & 16) != 0, 0x10310025, -1, -1, 0);
     }
     return result;
 }

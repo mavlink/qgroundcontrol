@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "Ashtech/GPSDriverAshtech.h"
-#include "CRC32.h"
 #include "Femto/GPSDriverFemto.h"
 #include "GPSNMEAReport.h"
 #include "GPSProtocolTestIO.h"
@@ -67,21 +66,6 @@ void nmeaFixQualities()
     }
 }
 
-std::vector<uint8_t> femtoPacket(uint16_t id, std::span<const uint8_t> payload)
-{
-    std::vector<uint8_t> packet(28 + payload.size() + 4);
-    packet[0] = 0xaa;
-    packet[1] = 0x44;
-    packet[2] = 0x12;
-    packet[3] = 28;
-    (void) LittleEndian::write<uint16_t>(packet, 4, id);
-    (void) LittleEndian::write<uint16_t>(packet, 8, uint16_t(payload.size()));
-    std::copy(payload.begin(), payload.end(), packet.begin() + 28);
-    (void) LittleEndian::write<uint32_t>(packet, packet.size() - 4,
-                                         QGC::crc32Update({packet.data(), packet.size() - 4}));
-    return packet;
-}
-
 void malformedMessages()
 {
     GPSNativePositionReport position{};
@@ -93,10 +77,6 @@ void malformedMessages()
     fix.latitude = 0.5;
     fix.longitude = 1.0;
     fix.nr_sv = 12;
-    sbf_payload_dop_t dop{};
-    sbf_payload_vel_cov_geodetic_t covariance{};
-    sbf.consume(sbfBlock(SBF_ID_DOP, bytes(dop)));
-    sbf.consume(sbfBlock(SBF_ID_VelCovGeodetic, bytes(covariance)));
     const auto good = sbfBlock(SBF_ID_PVTGeodetic, bytes(fix));
     sbf.consume(good);
     gps_test_time += 200000;
@@ -117,28 +97,6 @@ void malformedMessages()
     gps_test_time += 200000;
     CHECK(sbf.consume({}) & 1);
     CHECK(std::abs(position.navigation.courseRadians - GPS_PI / 2) < 0.00001);
-
-    GPSNativeFemto femto(captureGPSReports(noDevice(), position, &satellites));
-    femto_uav_gps_t gps{};
-    gps.lat = 470000000;
-    gps.lon = 80000000;
-    gps.fix_type = 3;
-    gps.satellites_used = 14;
-    const auto valid = femtoPacket(FEMTO_MSG_ID_UAVGPS, bytes(gps));
-    CHECK(femto.consume(valid) & 1);
-    CHECK(position.navigation.latitudeDegrees == 47.0);
-    gps_test_time += 1000;
-    const auto femtoReceived = position.navigation.timestampUs;
-    CHECK(femto.consume(femtoPacket(FEMTO_MSG_ID_UAVGPS, shortPayload)) == 0);
-    CHECK(position.navigation.timestampUs == femtoReceived);
-    CHECK(femto.consume(valid) & 1);
-    for (uint8_t length : {uint8_t{0}, uint8_t{3}, uint8_t{255}}) {
-        auto invalid = valid;
-        invalid[3] = length;
-        CHECK(femto.consume(invalid) == 0);
-        CHECK(femto.consume(valid) & 1);
-    }
-    CHECK(femto.consume(femtoPacket(FEMTO_MSG_ID_UAVSTATUS, shortPayload)) == 0);
 }
 
 class ReadProbe : public GPSProtocol
@@ -290,10 +248,9 @@ public:
         return io;
     }
 
-    void configure(GPSProtocol::OutputMode mode = GPSProtocol::OutputMode::RTCM, bool fixed = false)
+    void configure(bool fixed = false)
     {
         GPSProtocol::GPSConfig config{};
-        config.output_mode = mode;
         config.base = {
             .mode = fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
                                 .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
@@ -334,7 +291,7 @@ void ashtechCommandEvidence()
                 receiver.failedCommand = command;
                 receiver.silentFailure = outcome == GPSCommandOutcome::TimedOut;
             }
-            receiver.configure(GPSProtocol::OutputMode::GPS);
+            receiver.configure();
             CHECK(receiver.results.size() == receiver.commands.size());
             for (size_t index = 0; index < receiver.results.size(); ++index) {
                 CHECK(receiver.results[index].evidence.command == receiver.commands[index]);
@@ -457,17 +414,14 @@ void ashtechSurveyReceipts()
     receiver.surveyReply = ASHTECH_SURVEY_FINISHED;
     CHECK(receiver.startSurvey() < 0);
     CHECK(receiver.surveys.empty());
-    for (auto mode : {GPSProtocol::OutputMode::GPS, GPSProtocol::OutputMode::RTCM}) {
-        receiver.configure(mode, true);
-        receiver.driver.consume(nmeaPacket(finished));
-        CHECK(receiver.surveys.empty());
-        const auto count = receiver.commands.size();
-        receiver.driver.receive(1);
-        CHECK(receiver.commands.size() == count);
-    }
+    receiver.configure(true);
+    receiver.driver.consume(nmeaPacket(finished));
+    CHECK(receiver.surveys.empty());
+    const auto count = receiver.commands.size();
+    receiver.driver.receive(1);
+    CHECK(receiver.commands.size() == count);
 
     GPSProtocol::GPSConfig invalid{};
-    invalid.output_mode = GPSProtocol::OutputMode::RTCM;
     unsigned baudrate = 115200;
     const auto calls = receiver.transportCalls;
     CHECK(receiver.driver.configure(baudrate, invalid) < 0);
@@ -543,7 +497,7 @@ void ashtechMixedFramingAndFixedCommand()
 {
     gps_test_time = 1000000;
     AshtechReceiver receiver;
-    receiver.configure(GPSProtocol::OutputMode::RTCM, true);
+    receiver.configure(true);
     const auto embedded = nmeaPacket("PASHR,POS,2,12,172810.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,");
     const auto binary = rtcmPacket(embedded);
     receiver.driver.consume(binary);
@@ -562,7 +516,6 @@ void invalidFamilyConfiguration()
 {
     using Config = GPSProtocol::GPSConfig;
     Config valid{};
-    valid.output_mode = GPSProtocol::OutputMode::RTCM;
     valid.base = {
         .mode = GPSBaseStationConfig::Fixed{
             .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}, .accuracyMeters = 1}};
@@ -598,8 +551,6 @@ void invalidFamilyConfiguration()
         add(&GPSBaseStationConfig::SurveyIn::durationSecs, value);
     }
     valid.base = {};
-    invalid.push_back(valid);
-    valid.output_mode = static_cast<GPSProtocol::OutputMode>(255);
     invalid.push_back(valid);
 
     for (const auto& config : invalid) {
@@ -643,20 +594,7 @@ void sbfEpochMetadata()
     fix.height = 10;
     fix.nr_sv = UINT8_MAX;
     fix.h_accuracy = UINT16_MAX;
-    sbf_payload_att_euler heading{};
-    heading.heading = 90;
-    heading.mode = 2;
-    sbf_payload_att_cov_euler accuracy{};
-    accuracy.cov_headhead = 4;
-    sbf_payload_vel_cov_geodetic_t speed{};
-    speed.cov_vn_vn = 9;
-    sbf_payload_dop_t dop{};
-    dop.hDOP = 125;
-    driver.consume(sbfBlock(SBF_ID_AttCovEuler, bytes(accuracy), 1000));
     driver.consume(sbfBlock(SBF_ID_PVTGeodetic, bytes(fix), 1000));
-    driver.consume(sbfBlock(SBF_ID_DOP, bytes(dop), 2000));  // Adjacent receiver epochs must remain independent.
-    driver.consume(sbfBlock(SBF_ID_AttEuler, bytes(heading), 1000));
-    driver.consume(sbfBlock(SBF_ID_VelCovGeodetic, bytes(speed), 1000));
     CHECK(fixes.empty());
     gps_test_time += 200000;
     driver.consume({});
@@ -666,8 +604,6 @@ void sbfEpochMetadata()
     CHECK(usage.size() == 1 && !usage[0].usedCount);
     CHECK(std::isnan(fixes[0].navigation.horizontalDop));
     CHECK(std::isnan(fixes[0].navigation.horizontalAccuracyMeters));
-    CHECK(std::abs(fixes[0].navigation.headingAccuracyRadians * GPS_RAD_TO_DEG - 2) < 1e-5);
-    CHECK(std::abs(fixes[0].navigation.headingRadians * GPS_RAD_TO_DEG - 90) < 1e-5);
     CHECK(fixes[0].navigation.utcTimeUs == 0);  // GNSS time cannot be labeled UTC without a receiver UTC offset.
     fix.mode_2d = 0;
     fix.nr_sv = 0;
@@ -677,8 +613,6 @@ void sbfEpochMetadata()
     CHECK(fixes.size() == 2);
     CHECK(fixes.back().navigation.satellitesUsed == 0);
     CHECK(fixes.back().navigation.fixType == GPSPositionReport::FixType::Fix3D);
-    CHECK(std::isnan(fixes.back().navigation.headingRadians));
-    CHECK(std::isnan(fixes.back().navigation.headingAccuracyRadians));
     CHECK(driver.consume(sbfBlock(SBF_ID_PVTGeodetic, bytes(fix), UINT32_MAX)) == 0);
     CHECK(driver.consume(sbfBlock(SBF_ID_PVTGeodetic, bytes(fix), 4000, UINT16_MAX)) == 0);
     gps_test_time += 200000;

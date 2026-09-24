@@ -7,10 +7,7 @@
 enum class GPSReceiverSetting
 {
     Unknown,
-    ConstellationMask,
-    DynamicModel,
     OutputRateHz,
-    HeadingOffsetDeg,
 };
 
 class GPSReceiverSettingSet

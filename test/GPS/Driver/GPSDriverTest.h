@@ -23,16 +23,6 @@ private slots:
     void _freshSurveyAndEvidence();
     void _ubloxRoleTransition_data();
     void _ubloxRoleTransition();
-    void _ubloxDisableFailure_data();
-    void _ubloxDisableFailure();
-    void _ubloxPositionNonBase_data();
-    void _ubloxPositionNonBase();
-    void _ubloxAmbiguousAcknowledgements_data();
-    void _ubloxAmbiguousAcknowledgements();
-    void _ubloxReadbackFailure_data();
-    void _ubloxReadbackFailure();
-    void _ubloxSbasConfiguration_data();
-    void _ubloxSbasConfiguration();
     void _ubloxBaseRoleDefaults_data();
     void _ubloxBaseRoleDefaults();
     void _testReceiveUnconfiguredReturnsError();

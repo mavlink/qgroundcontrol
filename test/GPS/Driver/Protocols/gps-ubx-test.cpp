@@ -59,15 +59,10 @@ public:
     unsigned readback_requests = 0;
     std::vector<SurveyReply> replies{SurveyReply::stopped};
     bool reject_disable = false;
-    bool reject_constellations = false;
-    bool timeout_constellations = false;
-    bool timeout_constellation_retry = false;
-    unsigned constellation_requests = 0;
     unsigned transport_operations = 0;
     uint16_t legacy_measurement_interval = 0;
     uint8_t legacy_dynamic_model = 0;
     uint32_t legacy_fixed_accuracy = 0;
-    unsigned legacy_constellation_requests = 0;
     bool legacy = false;
     std::string module = "ZED-F9P";
     std::string hardware;
@@ -269,9 +264,6 @@ private:
             if (message == UBX_MSG_CFG_NAV5) {
                 legacy_dynamic_model = payload.at(2);
             }
-            if (message == UBX_MSG_CFG_GNSS) {
-                ++legacy_constellation_requests;
-            }
             if (message == UBX_MSG_CFG_PRT) {
                 CHECK(payload.size() == 40);
                 CHECK(payload[0] == UBX_TX_CFG_PRT_PORTID && payload[20] == UBX_TX_CFG_PRT_PORTID_USB);
@@ -337,13 +329,7 @@ private:
             }
         }
 
-        if (settings.count(UBX_CFG_KEY_SIGNAL_GPS_ENA)) {
-            ++constellation_requests;
-            if (timeout_constellations || (timeout_constellation_retry && constellation_requests == 2)) {
-                return;
-            }
-        }
-        bool reject = reject_constellations && settings.count(UBX_CFG_KEY_SIGNAL_GPS_ENA);
+        bool reject = false;
         const auto mode = settings.find(UBX_CFG_KEY_TMODE_MODE);
 
         if (mode != settings.end()) {
@@ -507,11 +493,10 @@ struct Fixture
         std::get<GPSBaseStationConfig::SurveyIn>(base.mode).durationSecs = 60;
     }
 
-    int configure(GPSProtocol::OutputMode output = GPSProtocol::OutputMode::RTCM)
+    int configure()
     {
         unsigned baudrate = 115200;
         GPSProtocol::GPSConfig config{};
-        config.output_mode = output;
         config.base = base;
         return driver.configure(baudrate, config);
     }
@@ -597,90 +582,6 @@ static void receiveFailureLogging()
     }
 }
 
-static void positionMode(bool legacy, bool base_capable)
-{
-    Fixture f;
-    f.receiver.legacy = legacy;
-    f.receiver.module = legacy ? (base_capable ? "NEO-M8P" : "NEO-M8N") : (base_capable ? "ZED-F9P" : "NEO-M9N");
-
-    f.receiver.replies = {SurveyReply::active, SurveyReply::valid, SurveyReply::stopped};
-    if (base_capable) {
-        // Model settings left behind by a previous base session.
-        f.receiver.current_settings[UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X] = 1;
-        f.receiver.current_settings[UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X] = 1;
-        f.receiver.current_settings[UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C + 1] = 5;
-        f.receiver.current_settings[UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C + 3] = 5;
-        f.receiver.message_rates[UBX_MSG_NAV_SVIN] = 5;
-    }
-    // A configured fixed base must not be re-applied when selecting GPS output.
-    f.base = {.mode = GPSBaseStationConfig::Fixed{
-                  .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-                  .accuracyMeters = 1.0f}};
-    CHECK(f.configure(GPSProtocol::OutputMode::GPS) == 0);
-    CHECK(f.driver.receiverReady());
-    CHECK(f.receiver.modes == (base_capable ? std::vector<uint32_t>{0} : std::vector<uint32_t>{}));
-    CHECK(f.receiver.polls == 0);
-    CHECK(f.receiver.readback_requests == (base_capable ? 1u : 0u));
-    CHECK(f.receiver.starts == 0);
-    CHECK(f.receiver.rtcm_enables == 0);
-    CHECK(f.receiver.status_callbacks == 0);
-    CHECK(gps_test_warnings.empty());
-    if (base_capable) {
-        if (legacy) {
-            CHECK(f.receiver.message_rates.at(UBX_MSG_NAV_SVIN) == 0);
-        } else {
-            CHECK(f.receiver.current_settings.at(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C + 1) == 0);
-            CHECK(f.receiver.current_settings.at(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C + 3) == 0);
-        }
-    }
-    if (!legacy && base_capable) {
-        CHECK(f.receiver.current_settings.at(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X) == 0);
-        CHECK(f.receiver.current_settings.at(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X) == 0);
-
-    } else if (!legacy) {
-        CHECK(f.receiver.current_settings.count(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X) == 0);
-        CHECK(f.receiver.current_settings.count(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X) == 0);
-    }
-
-    Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
-    pvt[20] = 3;
-    pvt[21] = 1;
-    pvt[23] = 12;
-    const auto store = [&](size_t offset, uint32_t value) {
-        for (size_t i = 0; i < 4; ++i) {
-            pvt[offset + i] = uint8_t(value >> (8 * i));
-        }
-    };
-    store(24, 100000000);
-    store(28, 200000000);
-    store(40, 800);
-    f.receiver.queue(ubxFrame(UBX_MSG_NAV_PVT, pvt));
-    CHECK(f.driver.receive(500) & 1);
-    CHECK(f.position.navigation.fixType == GPSPositionReport::FixType::Fix3D);
-    CHECK(f.position.navigation.latitudeDegrees == 20.0);
-    CHECK(f.position.navigation.longitudeDegrees == 10.0);
-    CHECK(f.position.navigation.satellitesUsed == 12);
-}
-
-static void positionModeFailure()
-{
-    for (bool legacy : {false, true}) {
-        for (int failure = 0; failure < (legacy ? 4 : 7); ++failure) {
-            Fixture f;
-            f.receiver.legacy = legacy;
-            f.receiver.module = legacy ? "NEO-M8P" : "ZED-F9P";
-            f.receiver.reject_disable = failure == 0;
-            f.receiver.readback_mode = failure;
-            CHECK(f.configure(GPSProtocol::OutputMode::GPS) < 0);
-            CHECK(!f.driver.receiverReady());
-            CHECK(f.receiver.modes == std::vector<uint32_t>{0});
-            CHECK(f.receiver.starts == 0 && f.receiver.rtcm_enables == 0);
-            CHECK(f.receiver.status_callbacks == 0);
-            CHECK(gps_test_warnings.empty());
-        }
-    }
-}
-
 static Bytes commsPayload()
 {
     Bytes payload(88, 0);
@@ -708,7 +609,7 @@ static Bytes commsPayload()
 static void integrityReceipts()
 {
     Fixture f;
-    CHECK(f.configure(GPSProtocol::OutputMode::GPS) == 0);
+    CHECK(f.configure() == 0);
     // This test inspects individual decoder mutations; epoch assembly has separate coverage.
     f.driver.setDecodeContext({.navigation = true});
     Bytes mon_rf(UBX::WIRE_SIZE<ubx_payload_rx_mon_rf_t>, 0);
@@ -869,77 +770,12 @@ static void expiredCommsDiagnostics()
     CHECK(gps_test_warnings.size() == 1);
 }
 
-static void receiverSettings()
-{
-    for (int scenario = 0; scenario < 6; ++scenario) {
-        gps_test_time = 0;
-        gps_test_warnings.clear();
-        Receiver receiver;
-        receiver.legacy = scenario == 2;
-        receiver.module = receiver.legacy ? "NEO-M8P" : scenario == 1 ? "NEO-M9N" : "ZED-F9P";
-        receiver.reject_constellations = scenario == 3 || scenario == 5;
-        receiver.timeout_constellations = scenario == 4;
-        receiver.timeout_constellation_retry = scenario == 5;
-        GPSNativePositionReport position{};
-        std::map<GPSReceiverSetting, std::vector<GPSCommandOutcome>> outcomes;
-        auto io = receiver.io();
-        io.commandFinished = [&](const GPSCommandResult& command) {
-            for (auto setting : {GPSReceiverSetting::DynamicModel, GPSReceiverSetting::OutputRateHz,
-                                 GPSReceiverSetting::ConstellationMask}) {
-                if (command.affectedSettings.contains(setting)) {
-                    outcomes[setting].push_back(command.evidence.outcome);
-                }
-            }
-        };
-        GPSNativeUBX driver(captureGPSReports(io, position), false);
-        GPSProtocol::GPSConfig config{};
-        config.dynamicModel = 4;
-        config.output_mode = GPSProtocol::OutputMode::GPS;
-        config.gnss_systems = static_cast<GPSProtocol::GNSSSystemsMask>(5);
-        unsigned baudrate = 115200;
-        CHECK((driver.configure(baudrate, config) == 0) == (scenario < 4));
-        if (scenario >= 3) {
-            CHECK(outcomes.at(GPSReceiverSetting::DynamicModel).back() == GPSCommandOutcome::Acknowledged);
-            CHECK(outcomes.at(GPSReceiverSetting::OutputRateHz).back() == GPSCommandOutcome::Acknowledged);
-            const auto& constellationOutcomes = outcomes.at(GPSReceiverSetting::ConstellationMask);
-            const auto expected = scenario == 3 ? GPSCommandOutcome::Rejected : GPSCommandOutcome::TimedOut;
-            CHECK(std::find(constellationOutcomes.begin(), constellationOutcomes.end(), expected) !=
-                  constellationOutcomes.end());
-        }
-        if (scenario < 2) {
-            CHECK(receiver.current_settings.at(UBX_CFG_KEY_NAVSPG_DYNMODEL) == 4);
-            CHECK(receiver.current_settings.at(UBX_CFG_KEY_RATE_MEAS) == (scenario == 1 ? 125 : 200));
-            CHECK(receiver.current_settings.at(UBX_CFG_KEY_SIGNAL_GPS_ENA) == 1);
-            CHECK(receiver.current_settings.at(UBX_CFG_KEY_SIGNAL_GAL_ENA) == 1);
-            CHECK(receiver.current_settings.at(UBX_CFG_KEY_SIGNAL_BDS_ENA) == 0);
-            CHECK(gps_test_warnings.empty());
-        } else if (scenario >= 4) {
-            CHECK(!driver.receiverReady());
-            CHECK(receiver.constellation_requests == (scenario == 4 ? 1 : 2));
-            CHECK(receiver.current_settings.count(UBX_CFG_KEY_SIGNAL_SBAS_ENA) == 0);
-        } else {
-            CHECK(driver.receiverReady());
-            if (receiver.legacy) {
-                CHECK(receiver.legacy_measurement_interval == 200);
-                CHECK(receiver.legacy_dynamic_model == 4);
-                CHECK(receiver.legacy_constellation_requests == 1);
-            } else {
-                CHECK(receiver.current_settings.count(UBX_CFG_KEY_SIGNAL_GPS_ENA) == 0);
-                CHECK(receiver.current_settings.count(UBX_CFG_KEY_SIGNAL_GAL_ENA) == 0);
-                CHECK(receiver.current_settings.at(UBX_CFG_KEY_SIGNAL_SBAS_ENA) == 0);
-            }
-        }
-    }
-}
-
 static void invalidConfiguration()
 {
     using Config = GPSProtocol::GPSConfig;
-    const Config fixed{.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 47,
-                                                                                 .longitudeDegrees = 8,
-                                                                                 .altitudeMeters = 500},
-                                                                    .accuracyMeters = 1}},
-                       .output_mode = GPSProtocol::OutputMode::RTCM};
+    const Config fixed{.base = {.mode = GPSBaseStationConfig::Fixed{
+                                    .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
+                                    .accuracyMeters = 1}}};
     const auto nan = std::numeric_limits<double>::quiet_NaN();
     const auto infinity = std::numeric_limits<float>::infinity();
     std::vector<Config> invalid;
@@ -965,15 +801,12 @@ static void invalidConfiguration()
     }
     for (double accuracy : {nan, double(infinity), 0.0, -1.0, 429496.7296}) {
         invalid.push_back(
-            {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = accuracy, .durationSecs = 60}},
-             .output_mode = GPSProtocol::OutputMode::RTCM});
+            {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = accuracy, .durationSecs = 60}}});
     }
     for (int64_t duration : {int64_t(0), int64_t(-1), int64_t(UINT32_MAX) + 1}) {
         invalid.push_back(
-            {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = duration}},
-             .output_mode = GPSProtocol::OutputMode::RTCM});
+            {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = duration}}});
     }
-    invalid.push_back({.output_mode = static_cast<GPSProtocol::OutputMode>(99)});
     for (const auto& config : invalid) {
         for (bool wasReady : {false, true}) {
             Fixture f;
@@ -1004,9 +837,7 @@ static void invalidConfiguration()
         CHECK((legacy ? f.receiver.legacy_fixed_accuracy
                       : f.receiver.current_settings.at(UBX_CFG_KEY_TMODE_FIXED_POS_ACC)) == 4294967040u);
     }
-    Fixture position;
-    position.base = {.mode = GPSBaseStationConfig::Fixed{}};
-    CHECK(position.configure(GPSProtocol::OutputMode::GPS) == 0);
+
 }
 
 static void explicitNoFix()
@@ -1050,6 +881,8 @@ static void baudDiscovery()
                     GPSNativePositionReport position;
                     GPSNativeUBX driver(captureGPSReports(receiver.io(), position), false);
                     GPSProtocol::GPSConfig config{};
+                    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+                    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
                     unsigned baud = fixed ? initialBaud : 0;
                     CHECK(driver.configure(baud, config) == 0);
                     CHECK(driver.receiverReady());
@@ -1057,7 +890,7 @@ static void baudDiscovery()
                     CHECK(baud == (fixed ? initialBaud : 115200));
                     CHECK(receiver.receiverBaud == baud);
                     CHECK(receiver.hostBaud == baud);
-                    CHECK(receiver.current_settings.at(UBX_CFG_KEY_NAVSPG_DYNMODEL) == 0);
+                    CHECK(receiver.current_settings.at(UBX_CFG_KEY_NAVSPG_DYNMODEL) == 2);
                     CHECK(receiver.current_settings.at(UBX_CFG_KEY_RATE_MEAS) == 200);
                     if (fixed) {
                         CHECK(receiver.hostBauds == std::vector<unsigned>{initialBaud});
@@ -1071,27 +904,6 @@ static void baudDiscovery()
                     CHECK(gps_test_time < 15000000);
                 }
             }
-        }
-    }
-    for (const bool oldReceiver : {false, true}) {
-        for (const bool loseAck : {false, true}) {
-            gps_test_time = 1000000;
-            Receiver receiver;
-            receiver.legacy = true;
-            receiver.module = oldReceiver ? "u-blox6" : "NEO-M8N";
-            receiver.hardware = oldReceiver ? "00040007" : "00080000";
-            receiver.protocol = oldReceiver ? "" : "15.00";
-            receiver.receiverBaud = 9600;
-            receiver.loseBaudAck = loseAck;
-            GPSNativePositionReport position;
-            GPSNativeUBX driver(captureGPSReports(receiver.io(), position), false);
-            unsigned baud = 0;
-            CHECK(driver.configure(baud, {}) == 0);
-            CHECK(receiver.unidentifiedWrites == 0);
-            CHECK(baud == (oldReceiver ? 38400U : 115200U));
-            CHECK(receiver.receiverBaud == baud);
-            CHECK(receiver.legacy_measurement_interval == 200);
-            CHECK(receiver.current_settings.empty());
         }
     }
 }
@@ -1116,10 +928,8 @@ static void discoveryFailures()
         GPSNativePositionReport position;
         GPSNativeUBX driver(captureGPSReports(receiver.io(), position), false);
         GPSProtocol::GPSConfig config{};
-        if (scenario == 7) {
-            config.output_mode = GPSProtocol::OutputMode::RTCM;
-            config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
-        }
+        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
         unsigned baud = 0;
         CHECK(driver.configure(baud, config) < 0);
         CHECK(!driver.receiverReady());
@@ -1208,7 +1018,8 @@ static void transactionalFrames()
     const auto& satellites = driver.workingSatellites();
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config{};
-    config.output_mode = GPSProtocol::OutputMode::GPS;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
     CHECK(driver.configure(baud, config) == 0);
     Bytes payload(20, 0);
     payload[4] = 1;
@@ -1333,7 +1144,8 @@ static void controlDeadline()
     GPSNativeUBX driver(captureGPSReports(io, position), false);
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config{};
-    config.output_mode = GPSProtocol::OutputMode::GPS;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
     CHECK(driver.configure(baud, config) == 0);
     driver.receive(10);  // Drain the configuration responses before the timed warning.
     receiver.read_chunk = GPS_READ_BUFFER_SIZE;
@@ -1372,7 +1184,10 @@ static void identificationWriteBudget()
         io.commandFinished = [&](const GPSCommandResult& result) { completions.push_back(result); };
         GPSNativeUBX driver(std::move(io), false);
         unsigned baud = 115200;
-        CHECK(driver.configure(baud, {}) < 0);
+        GPSProtocol::GPSConfig config;
+        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+        CHECK(driver.configure(baud, config) < 0);
         CHECK(completions.size() == 1);
         const auto& evidence = completions.front().evidence;
         CHECK(evidence.command == std::to_string(UBX_MSG_MON_VER));
@@ -1635,6 +1450,8 @@ static void optionalCommandWriteEvidence()
             io.commandFinished = [&](const GPSCommandResult& result) { completions.push_back(result); };
             GPSNativeUBX driver(std::move(io), false);
             GPSProtocol::GPSConfig config;
+            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
             unsigned baud = 115200;
             CHECK(driver.configure(baud, config) < 0);
             CHECK(!completions.empty());
@@ -1646,7 +1463,6 @@ static void optionalCommandWriteEvidence()
                                                   : GPSCommandOutcome::TransportError));
             CHECK(result.evidence.acceptedBytes == 9 && result.evidence.writtenBytes == 7);
             CHECK(result.evidence.uncertainBytes == 2);
-            CHECK(!result.affectedSettings.contains(GPSReceiverSetting::DynamicModel));
             const auto count = completions.size();
             driver.finishConfigurationEvidence();
             CHECK(completions.size() == count);
@@ -1664,14 +1480,8 @@ const auto& testCases()
         {"isolated-frame-control", isolatedFrameAndControl},
         {"checked-wire-codecs", checkedWireCodecs},
         {"optional-command-write-evidence", optionalCommandWriteEvidence},
-        {"position-f9p", [] { positionMode(false, true); }},
-        {"receiver-settings", receiverSettings},
         {"native-configuration-validation", invalidConfiguration},
         {"integrity-original-receipts", integrityReceipts},
-        {"position-m9n", [] { positionMode(false, false); }},
-        {"position-m8p", [] { positionMode(true, true); }},
-        {"position-m8n", [] { positionMode(true, false); }},
-        {"position-stop-failures", [] { positionModeFailure(); }},
         {"control-deadline", controlDeadline},
         {"identification-write-budget", identificationWriteBudget},
         {"explicit-no-fix", explicitNoFix},

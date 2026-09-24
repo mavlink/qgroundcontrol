@@ -81,9 +81,9 @@ void configuration()
     CHECK(driver.configure(baud, config) < 0);
     CHECK(receiver.baud == 0);
     baud = 115200;
-    config.output_mode = GPSProtocol::OutputMode::RTCM;
+    config.allowPersistentChanges = true;
     CHECK(driver.configure(baud, config) < 0);
-    config.output_mode = GPSProtocol::OutputMode::GPS;
+    config.allowPersistentChanges = false;
     CHECK(driver.configure(baud, config) == 0);
     CHECK(driver.receiverReady());
     CHECK(receiver.baud == 115200);

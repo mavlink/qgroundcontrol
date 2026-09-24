@@ -154,7 +154,5 @@ private:
 
     NMEACommandState _command_state{NMEACommandState::idle};
 
-    OutputMode _output_mode{OutputMode::GPS};
-
     std::optional<RTCMStreamDecoder> _rtcm_parsing;
 };

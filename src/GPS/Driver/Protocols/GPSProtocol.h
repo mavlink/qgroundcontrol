@@ -74,33 +74,9 @@ public:
 
     void finishConfigurationEvidence() { failCommandWrite(GPSCommandOutcome::Written); }
 
-    enum class OutputMode : uint8_t
-    {
-        GPS = 0,  ///< normal GPS output
-        RTCM = 2  ///< request RTCM output. This is used for (fixed position) base stations
-    };
-
-    /**
-     * Receiver constellation selection
-     * No bits set should keep the receiver's default config
-     */
-    enum class GNSSSystemsMask : int32_t
-    {
-        RECEIVER_DEFAULTS = 0,
-        ENABLE_GPS = 1 << 0,
-        ENABLE_SBAS = 1 << 1,
-        ENABLE_GALILEO = 1 << 2,
-        ENABLE_BEIDOU = 1 << 3,
-        ENABLE_GLONASS = 1 << 4,
-        ENABLE_NAVIC = 1 << 5
-    };
-
     struct GPSConfig
     {
         GPSBaseStationConfig base{};
-        uint8_t dynamicModel = 0;
-        OutputMode output_mode = OutputMode::GPS;
-        GNSSSystemsMask gnss_systems = GNSSSystemsMask::RECEIVER_DEFAULTS;
         bool allowPersistentChanges = false;
     };
 
@@ -139,8 +115,19 @@ public:
     virtual bool receiverReady() const { return true; }
 
 protected:
-    [[nodiscard]] bool validateConfiguration(const GPSConfig& config, bool allowReceiverAveraging = false,
-                                             bool supportsPersistentChanges = false) const;
+    /// Optional base-station requests a protocol implements beyond survey-in and fixed positions.
+    struct ConfigurationSupport
+    {
+        bool receiverAveraging = false;
+        bool persistentChanges = false;
+    };
+
+    [[nodiscard]] bool validateConfiguration(const GPSConfig& config, ConfigurationSupport support) const;
+
+    [[nodiscard]] bool validateConfiguration(const GPSConfig& config) const
+    {
+        return validateConfiguration(config, ConfigurationSupport{});
+    }
 
     virtual int decodeByte(uint8_t) { return 0; }
 
@@ -420,8 +407,3 @@ protected:
     GPSDeadline _operationDeadline;
     bool _servicingControls = false;
 };
-
-inline bool operator&(GPSProtocol::GNSSSystemsMask a, GPSProtocol::GNSSSystemsMask b)
-{
-    return static_cast<int32_t>(a) & static_cast<int32_t>(b);
-}

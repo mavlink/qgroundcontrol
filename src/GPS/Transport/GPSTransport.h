@@ -35,20 +35,18 @@ public:
 
     virtual std::chrono::milliseconds configurationWriteTimeout() const;
 
-    /// Configuration-only entry point: honor the command deadline capped by the transport limit.
-    /// Configuration writes preserve progress evidence.
-    /// Android serial explicitly overrides this with its synchronous backend; Unsupported never falls back.
-    virtual GPSWriteResult writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline);
-
-    /// Counts describe transport progress, never receiver acknowledgement. Implementations must honor the deadline.
+    /// Receiver configuration write under the command deadline, capped by configurationWriteTimeout().
+    /// Counts describe transport progress, never receiver acknowledgement.
     /// A failed operation that accepted bytes retires the connection; open a new session before writing again.
-    /// An unsupported implementation rejects without invoking an unbounded writer.
-    virtual GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline);
+    GPSWriteResult write(const uint8_t* buffer, int length, QDeadlineTimer deadline);
     /// Set the link baud rate. Returns true on success.
     virtual bool setBaudrate(unsigned baudrate) = 0;
 
 protected:
     static constexpr int kCancellationPollMs = 50;
+
+    /// Receives a non-empty valid buffer and an unexpired, capped deadline that implementations must honor.
+    virtual GPSWriteResult writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline) = 0;
 
 private:
     const std::atomic_bool& _requestStop;

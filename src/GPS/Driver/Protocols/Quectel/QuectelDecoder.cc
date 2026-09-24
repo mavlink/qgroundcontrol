@@ -111,8 +111,7 @@ bool GPSNativeQuectel::_handleSurvey(std::string_view body)
         }
     }
     _survey.lastTow = tow;
-    if ((_survey.phase != SurveyPhase::Verifying && _survey.phase != SurveyPhase::Monitoring) ||
-        _outputMode != OutputMode::RTCM) {
+    if (_survey.phase != SurveyPhase::Verifying && _survey.phase != SurveyPhase::Monitoring) {
         return false;
     }
     if (!number(reply[3], validity) || validity > 2 || !reply[4].empty() || !number(reply[6], observations) ||

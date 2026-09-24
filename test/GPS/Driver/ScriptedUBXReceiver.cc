@@ -217,7 +217,7 @@ QHash<quint32, quint64> ScriptedUBXReceiver::_valsetValues(const QByteArray& pay
         } else if (key == TMODE_FIXED_POS_ACC) {
             fixedAccuracy = static_cast<uint32_t>(value);
         } else if (key == NAVSPG_DYNMODEL) {
-            dynamicModel = static_cast<unsigned>(value);
+            navigationModel = static_cast<unsigned>(value);
         }
         offset += size;
     }
@@ -328,7 +328,7 @@ bool ScriptedUBXReceiver::_handleFrame(const QByteArray& frame)
         surveyDuration = qFromLittleEndian<quint32>(payload.constData() + 24);
         surveyAccuracy = qFromLittleEndian<quint32>(payload.constData() + 28);
     } else if (messageId == 0x24 && payload.size() == 36) {
-        dynamicModel = static_cast<uint8_t>(payload[2]);
+        navigationModel = static_cast<uint8_t>(payload[2]);
     }
     if (rejectRtcmActivation && messageId == 0x08 && payload.size() == 6 &&
         qFromLittleEndian<quint16>(payload.constData()) == 1000) {

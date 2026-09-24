@@ -322,8 +322,7 @@ int GPSNativeAshtech::handleMessage(int len)
 
             _got_pashr_pos_message = true;
             // we got a valid position, activate correction output if needed
-            if (_configure_done && _output_mode == OutputMode::RTCM && _board == AshtechBoard::trimble_mb_two &&
-                !_correction_output_activated) {
+            if (_configure_done && _board == AshtechBoard::trimble_mb_two && !_correction_output_activated) {
                 _correctionSetupPending = true;
             }
         }
@@ -429,8 +428,7 @@ int GPSNativeAshtech::handleMessage(int len)
             }
         }
 
-        if (_output_mode != OutputMode::RTCM || !_configure_done ||
-            std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ||
+        if (!_configure_done || std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ||
             _board != AshtechBoard::trimble_mb_two || !_surveyReceiptRequested) {
             return 0;
         }

@@ -588,34 +588,6 @@ inline ubx_payload_rx_mon_rf_t detail::decodeFields<ubx_payload_rx_mon_rf_t>(std
 }
 
 template <>
-inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_gnss_t::ubx_payload_tx_cgf_gnss_block_t>> encode(
-    const ubx_payload_tx_cfg_gnss_t::ubx_payload_tx_cgf_gnss_block_t& value)
-{
-    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_gnss_t::ubx_payload_tx_cgf_gnss_block_t>> bytes{};
-    (void) LittleEndian::write(bytes, 0, value.gnssId);
-    (void) LittleEndian::write(bytes, 1, value.resTrkCh);
-    (void) LittleEndian::write(bytes, 2, value.maxTrkCh);
-    (void) LittleEndian::write(bytes, 3, value.reserved1);
-    (void) LittleEndian::write(bytes, 4, value.flags);
-    return bytes;
-}
-
-template <>
-inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_gnss_t>> encode(const ubx_payload_tx_cfg_gnss_t& value)
-{
-    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_gnss_t>> bytes{};
-    (void) LittleEndian::write(bytes, 0, value.msgVer);
-    (void) LittleEndian::write(bytes, 1, value.numTrkChHw);
-    (void) LittleEndian::write(bytes, 2, value.numTrkChUse);
-    (void) LittleEndian::write(bytes, 3, value.numConfigBlocks);
-    for (size_t i = 0; i < 7; ++i) {
-        const auto block = encode(value.block[i]);
-        std::copy(block.begin(), block.end(), bytes.begin() + 4 + i * 8);
-    }
-    return bytes;
-}
-
-template <>
 inline ubx_payload_rx_ack_ack_t detail::decodeFields<ubx_payload_rx_ack_ack_t>(std::span<const uint8_t> input,
                                                                                size_t offset)
 {

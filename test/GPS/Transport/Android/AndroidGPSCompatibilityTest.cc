@@ -184,7 +184,7 @@ private slots:
             expectLogMessage("Android.AndroidSerialPort", QtWarningMsg,
                              QRegularExpression(QStringLiteral("^Failed to write to port")));
         }
-        const auto result = transport.writeConfiguration(payload, 4, QDeadlineTimer(100));
+        const auto result = transport.write(payload, 4, QDeadlineTimer(100));
         if (count < 0) {
             verifyExpectedLogMessage();
         }
@@ -195,7 +195,7 @@ private slots:
         QCOMPARE(result.uncertainBytes(), 4 - (std::max) (count, 0));
         QCOMPARE(transport.fatalError(), count != 4);
         if (count != 4) {
-            QCOMPARE(transport.writeConfiguration(payload, 4, QDeadlineTimer(100)).acceptedBytes, 0);
+            QCOMPARE(transport.write(payload, 4, QDeadlineTimer(100)).acceptedBytes, 0);
             QCOMPARE(writeCalls, 1);
         }
     }
@@ -206,38 +206,10 @@ private slots:
         SerialGPSTransport transport(QStringLiteral("test"), stop);
         QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
         const uint8_t payload = 42;
-        QCOMPARE(transport.writeConfiguration(&payload, 1, QDeadlineTimer(0)).status, GPSWriteStatus::TimedOut);
+        QCOMPARE(transport.write(&payload, 1, QDeadlineTimer(0)).status, GPSWriteStatus::TimedOut);
         QCOMPARE(writeCalls, 0);
         stop = true;
-        QCOMPARE(transport.writeConfiguration(&payload, 1, QDeadlineTimer(100)).status, GPSWriteStatus::Cancelled);
-        QCOMPARE(writeCalls, 0);
-    }
-
-    void boundedWritesSendNothing_data()
-    {
-        QTest::addColumn<int>("timeout");
-        QTest::newRow("bounded") << 100;
-        QTest::newRow("expired") << 0;
-        QTest::newRow("forever") << -1;
-    }
-
-    void boundedWritesSendNothing()
-    {
-        QFETCH(int, timeout);
-        std::atomic_bool stop = false;
-        SerialGPSTransport transport(QStringLiteral("test"), stop);
-        QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
-        const uint8_t payload = 42;
-        const auto result = transport.writeBounded(&payload, 1, QDeadlineTimer(timeout));
-        QCOMPARE(result.status, GPSWriteStatus::Unsupported);
-        QVERIFY(result.detail.contains(QStringLiteral("Android serial does not support bounded writes")));
-        QCOMPARE(result.acceptedBytes, 0);
-        QCOMPARE(result.writtenBytes, 0);
-        QCOMPARE(result.uncertainBytes(), 0);
-        QCOMPARE(writeCalls, 0);
-        QVERIFY(!transport.fatalError());
-        stop = true;
-        QCOMPARE(transport.writeConfiguration(&payload, 1, QDeadlineTimer(100)).status, GPSWriteStatus::Cancelled);
+        QCOMPARE(transport.write(&payload, 1, QDeadlineTimer(100)).status, GPSWriteStatus::Cancelled);
         QCOMPARE(writeCalls, 0);
     }
 
@@ -251,7 +223,7 @@ private slots:
             return length;
         };
         const uint8_t payload[4]{};
-        const auto result = transport.writeConfiguration(payload, 4, QDeadlineTimer(100));
+        const auto result = transport.write(payload, 4, QDeadlineTimer(100));
         QCOMPARE(result.status, GPSWriteStatus::Cancelled);
         QCOMPARE(result.writtenBytes, 4);
         QCOMPARE(result.uncertainBytes(), 0);

@@ -106,9 +106,6 @@ def main() -> None:
             2,
         )
         assert report["outcome"] == "rejected" and "stages" not in report
-    for family in ("trimble", "septentrio", "femto"):
-        report = run(binary, ["--action", "role-cycle", "--family", family], 2)
-        assert "does not support Position" in report["detail"]
     if not serial_disabled:
         endpoint = serial_endpoint
         for family, mode in (("unicore", "receiver-averaging"), ("quectel", "survey")):
@@ -175,10 +172,6 @@ def main() -> None:
             ],
             2,
         )
-    for action in ("configure", "role-cycle", "suite"):
-        rejected = run(binary, ["--action", action, "--dynamic-model", "2"], 2)
-        assert rejected["outcome"] == "rejected" and "stages" not in rejected
-    run(binary, ["--role", "position", "--dynamic-model", "1"], 2)
     run(binary, ["--survey-accuracy", "nan"], 2)
     run(binary, ["--observe-ms", "-1"], 2)
     run(binary, ["--backend", "legacy", "--action", "suite"], 2)
@@ -194,8 +187,6 @@ def main() -> None:
                 model,
                 "--observe-ms",
                 "20",
-                "--constellations",
-                "1",
             ],
             3,
         )
@@ -203,12 +194,7 @@ def main() -> None:
         assert report["outcome"] == "inconclusive"
         assert report["scripted_wire_valid"]
         stages = report["stages"]
-        assert [stage["name"] for stage in stages] == [
-            "base_initial",
-            "position",
-            "base_return",
-            "reconnected_base",
-        ]
+        assert [stage["name"] for stage in stages] == ["configured", "reconnected_base"]
         for stage in stages:
             checks = {item["name"]: item for item in stage["checks"]}
             assert checks["configure_return"]["status"] == "passed", stage
@@ -218,43 +204,17 @@ def main() -> None:
             settings = {item["setting"]: item for item in stage["requested_setting_observations"]}
             assert settings["time_mode"]["matching_write_observed"], stage
             assert not settings["time_mode"]["transaction_correlation_verified"]
-            if stage["name"] == "position":
-                assert settings["time_mode"]["readback"] == "matching_value_observed", stage
-            else:
-                assert settings["survey_duration_s"]["matching_write_observed"], stage
-                assert settings["survey_accuracy_0.1mm"]["matching_write_observed"], stage
-                assert stage["survey_observations"], stage
-                assert any(
-                    item["origin_assessment"] == "consistent_with_fresh"
-                    for item in stage["survey_observations"]
-                ), stage
-                assert not any(item["fresh_survey_proven"] for item in stage["survey_observations"])
+            assert settings["survey_duration_s"]["matching_write_observed"], stage
+            assert settings["survey_accuracy_0.1mm"]["matching_write_observed"], stage
+            assert stage["survey_observations"], stage
+            assert any(
+                item["origin_assessment"] == "consistent_with_fresh"
+                for item in stage["survey_observations"]
+            ), stage
+            assert not any(item["fresh_survey_proven"] for item in stage["survey_observations"])
         checks = {item["name"]: item for item in stages[-1]["checks"]}
         assert checks["reconnect"]["status"] == "passed"
         assert checks["receive_cancellation"]["status"] == "passed"
-        commands = stages[1]["configuration_evidence"]["commands"]
-        assert any(item["outcome"] == "readback_verified" for item in commands)
-        position = run(
-            binary,
-            [
-                "--action",
-                "configure",
-                "--role",
-                "position",
-                "--model",
-                model,
-                "--dynamic-model",
-                "2",
-                "--observe-ms",
-                "20",
-            ],
-            3,
-        )
-        settings = {
-            item["setting"]: item
-            for item in position["stages"][0]["requested_setting_observations"]
-        }
-        assert settings["dynamic_model"]["matching_write_observed"], position
 
     retained = run(
         binary,
@@ -276,7 +236,7 @@ def main() -> None:
     for fault in ("nak", "wrong-readback", "cancel"):
         failed = run(
             binary,
-            ["--action", "configure", "--role", "position", "--fault", fault, "--observe-ms", "20"],
+            ["--action", "configure", "--fault", fault, "--observe-ms", "20"],
             1,
         )
         assert failed["outcome"] == "failed"

@@ -140,8 +140,8 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
     _baseValid = false;
     _lastBaseEpoch.reset();
     _command.active = false;
-    _base = config.output_mode == OutputMode::RTCM;
-    _averaging = _base && !std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode);
+    _base = true;
+    _averaging = !std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode);
     setRTCMEnabled(false);
     resetIOError();
     resetStream();
@@ -153,7 +153,7 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
         consume({});
     }
 
-    if (!validateConfiguration(config, true)) {
+    if (!validateConfiguration(config, {.receiverAveraging = true})) {
         return _configurationFailed(
             QStringLiteral("Invalid Unicore receiver configuration: check the role, base position and survey settings; "
                            "persistent changes are not supported"));
@@ -164,13 +164,8 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
         return _configurationFailed(
             QStringLiteral("Unicore requires receiver-managed averaging with a duration between 1 and 3600 seconds"));
     }
-    if (config.gnss_systems != GNSSSystemsMask::RECEIVER_DEFAULTS || config.dynamicModel != 0) {
-        log(GPSProtocolLogLevel::Warning, "Unicore requires receiver-default constellations and dynamic model");
-        return _configurationFailed(
-            QStringLiteral("Unicore requires receiver-default constellations and dynamic model"));
-    }
     _baseConfig = config.base;
-    if (_base && !_averaging) {
+    if (!_averaging) {
         _fixedECEF = toEcef(std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position);
     }
     const Operation operation(*this, 45000);
@@ -186,10 +181,6 @@ int GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
         if (!_execute(command)) {
             return _configurationFailed();
         }
-    }
-    if (!_base) {
-        _ready = true;
-        return 0;
     }
     std::ostringstream mode;
     mode.imbue(std::locale::classic());

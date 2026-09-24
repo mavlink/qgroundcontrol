@@ -98,10 +98,9 @@ QJsonObject requestedConfig(const GPSReceiverConfig& config)
 {
     QJsonObject result{{"role", config.role == GPSReceiverConfig::Role::RTKBase   ? "base"
                                 : config.role == GPSReceiverConfig::Role::Passive ? "passive"
-                                                                                  : "position"},
+                                                                                  : "invalid"},
                        {"baud_rate", static_cast<qint64>(config.baudRate)},
-                       {"allow_persistent_changes", config.allowPersistentChanges},
-                       {"constellation_mask", static_cast<qint64>(config.constellationMask)}};
+                       {"allow_persistent_changes", config.allowPersistentChanges}};
     if (config.role == GPSReceiverConfig::Role::RTKBase) {
         if (std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode)) {
             result.insert("base_mode", "fixed");
@@ -125,7 +124,6 @@ QJsonObject requestedConfig(const GPSReceiverConfig& config)
                           std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters);
         }
     }
-    result.insert("dynamic_model", config.dynamicModel ? QJsonValue(*config.dynamicModel) : QJsonValue::Null);
     return result;
 }
 
@@ -144,11 +142,10 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
         return "--output requires a nonempty path";
     }
     const QString role = parser.value("role");
-    if (!QStringList{"plan", "configure", "role-cycle", "suite", "cancel"}.contains(options.action) ||
+    if (!QStringList{"plan", "configure", "suite", "cancel"}.contains(options.action) ||
         !QStringList{"scripted", "serial"}.contains(options.transport) ||
         !QStringList{"ublox", "trimble", "septentrio", "femto", "unicore", "quectel", "passive"}.contains(family) ||
-        !QStringList{"base", "position", "passive"}.contains(role) ||
-        !QStringList{"f9p", "m8p"}.contains(options.model) ||
+        !QStringList{"base", "passive"}.contains(role) || !QStringList{"f9p", "m8p"}.contains(options.model) ||
         !QStringList{"fresh", "retained", "none"}.contains(options.surveyState) ||
         !QStringList{"none", "nak", "wrong-readback", "cancel", "rtcm-nak", "rtcm-nak-cancel"}.contains(
             options.fault)) {
@@ -172,14 +169,7 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     }
     options.config.role = role == "base"      ? GPSReceiverConfig::Role::RTKBase
                           : role == "passive" ? GPSReceiverConfig::Role::Passive
-                                              : GPSReceiverConfig::Role::Position;
-    const bool roleCycle = options.action == "role-cycle" || options.action == "suite";
-    if (!gpsReceiverCapabilities(options.family, options.config.role).position && (roleCycle || role == "position")) {
-        return "This receiver does not support Position or base -> Position -> base cycles";
-    }
-    if (roleCycle && role != "base") {
-        return "Role cycles must begin with --role base";
-    }
+                                              : static_cast<GPSReceiverConfig::Role>(-1);
     if (options.transport == "scripted" && options.family != GPSType::ublox) {
         return "The scripted peer supports UBX only";
     }
@@ -209,7 +199,6 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     }
     options.config.baudRate = static_cast<uint32_t>(integer("baud", 0, 4000000));
     options.config.allowPersistentChanges = parser.isSet("allow-save");
-    options.config.constellationMask = static_cast<uint32_t>(integer("constellations", 0, 31));
     const QString baseMode = parser.value("base-mode");
     if (!QStringList{"survey", "fixed", "receiver-averaging"}.contains(baseMode)) {
         return "Unsupported base mode";
@@ -251,9 +240,6 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
                parser.isSet("averaging-duration") || parser.isSet("latitude") || parser.isSet("longitude") ||
                parser.isSet("altitude")) {
         return "Base options require --role base";
-    }
-    if (parser.isSet("dynamic-model")) {
-        options.config.dynamicModel = integer("dynamic-model", 0, 8);
     }
     if (!valid || gpsValidateReceiverConfig(options.family, options.config) != GPSReceiverConfigError::None) {
         return "Invalid receiver configuration or numeric option";
@@ -426,9 +412,6 @@ int run(const Options& options)
     }
 
     QStringList stages{"configured"};
-    if (options.action == "role-cycle" || options.action == "suite") {
-        stages = {"base_initial", "position", "base_return"};
-    }
     if (options.action == "suite") {
         stages.append("reconnected_base");
     }
@@ -467,9 +450,6 @@ int run(const Options& options)
             }
         }
         GPSReceiverConfig config = options.config;
-        if (name == "position") {
-            config.role = GPSReceiverConfig::Role::Position;
-        }
         stage.insert("requested", requestedConfig(config));
         QJsonArray surveys;
         QJsonObject lastPosition;
@@ -671,7 +651,7 @@ int run(const Options& options)
                   QJsonArray{"No survey restart or full requested-settings verification inferred.",
                              "No radio correction delivery, antenna accuracy, or physical power-cycle "
                              "validation.",
-                             "Last requested receiver role/settings may remain active; no implicit rollback."});
+                             "Last requested receiver base settings may remain active; no implicit rollback."});
     return output(report, failed ? 1 : 3, options.outputPath);
 }
 }  // namespace
@@ -685,10 +665,10 @@ int main(int argc, char* argv[])
         "Opt-in native GPS receiver validation. Default action prints a plan and opens nothing.");
     parser.addHelpOption();
     parser.addOptions({
-        {{"a", "action"}, "plan|configure|role-cycle|suite|cancel", "action", "plan"},
+        {{"a", "action"}, "plan|configure|suite|cancel", "action", "plan"},
         {"transport", "scripted|serial", "transport", "scripted"},
         {"family", "ublox|trimble|septentrio|femto|unicore|quectel|passive", "family", "ublox"},
-        {"role", "base|position|passive", "role", "base"},
+        {"role", "base|passive", "role", "base"},
         {"allow-reconfigure", "Authorize physical receiver writes and role changes"},
         {"allow-save", "Explicitly permit LG290P settings to be saved to flash and the receiver restarted"},
         {"output", "New JSON evidence path (atomic progress snapshots; never overwrites a previous run)", "path"},
@@ -702,8 +682,6 @@ int main(int argc, char* argv[])
         {"latitude", "Fixed base latitude, degrees", "degrees"},
         {"longitude", "Fixed base longitude, degrees", "degrees"},
         {"altitude", "Fixed base ellipsoid altitude, metres", "metres"},
-        {"constellations", "Requested mask (0 retains defaults)", "mask", "0"},
-        {"dynamic-model", "Requested UBX dynamic model (single Position configuration only)", "model"},
         {"observe-ms", "Per-stage observation window", "milliseconds", "1000"},
         {"timeout-ms", "Cancellation deadline for each open/configure operation", "milliseconds", "15000"},
         {"cancel-after-ms", "Delay before requesting blocked-receive cancellation", "milliseconds", "50"},

@@ -17,6 +17,8 @@ namespace {
 // V1.1 §3.2 explicitly permits re-executing an unchanged survey and rebooting without saving.
 constexpr unsigned CONFIGURATION_TIMEOUT_MS = 45000;
 constexpr unsigned RESTART_TIMEOUT_MS = 8000;
+// PQTMCFGRCVRMODE value for the base-station role.
+constexpr unsigned BASE_ROLE = 2;
 using QuectelCodec::Fields;
 using QuectelCodec::frame;
 using QuectelCodec::number;
@@ -80,8 +82,7 @@ bool GPSNativeQuectel::_identify(unsigned timeoutMs)
 
 bool GPSNativeQuectel::_verifyRole(bool requireMatch)
 {
-    const unsigned expected = _outputMode == OutputMode::RTCM ? 2 : 1;
-    return _transact("PQTMCFGRCVRMODE,R", [this, expected, requireMatch](std::string_view body) {
+    return _transact("PQTMCFGRCVRMODE,R", [this, requireMatch](std::string_view body) {
                const Fields reply(body);
                unsigned mode = 0;
                const bool valid = reply.size() == 3 && reply[0] == "PQTMCFGRCVRMODE" && reply[1] == "OK" &&
@@ -89,7 +90,7 @@ bool GPSNativeQuectel::_verifyRole(bool requireMatch)
                if (valid) {
                    _receiverRole = mode;
                }
-               return readback(reply, "PQTMCFGRCVRMODE", valid && (!requireMatch || mode == expected));
+               return readback(reply, "PQTMCFGRCVRMODE", valid && (!requireMatch || mode == BASE_ROLE));
            }) == GPSCommandOutcome::ReadbackVerified;
 }
 
@@ -208,10 +209,10 @@ bool GPSNativeQuectel::_setMessageRate(std::string_view name, unsigned rate, std
            }) == GPSCommandOutcome::ReadbackVerified;
 }
 
-bool GPSNativeQuectel::_restart(bool requireRoleMatch, bool startSurveySession)
+bool GPSNativeQuectel::_restart(bool requireRoleMatch)
 {
     _revokeSurvey();
-    _survey.phase = startSurveySession ? SurveyPhase::AwaitingBoot : SurveyPhase::Off;
+    _survey.phase = SurveyPhase::AwaitingBoot;
     log(GPSProtocolLogLevel::Debug, "Restarting LG290P and verifying its saved configuration");
     const Operation operation(*this, RESTART_TIMEOUT_MS);
     const uint64_t deadline = nowUs() + uint64_t(RESTART_TIMEOUT_MS) * 1000;
@@ -285,15 +286,13 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
     resetStream();
     setRTCMEnabled(false);
     const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&config.base.mode);
-    if (!validateConfiguration(config, false, true) || config.gnss_systems != GNSSSystemsMask::RECEIVER_DEFAULTS ||
-        (config.output_mode == OutputMode::RTCM && survey &&
-         (survey->durationSecs > 86400 || survey->accuracyMeters > 1000))) {
+    if (!validateConfiguration(config, {.persistentChanges = true}) ||
+        (survey && (survey->durationSecs > 86400 || survey->accuracyMeters > 1000))) {
         return _fail(
             "Unsupported LG290P configuration: use native 1 Hz observation count (maximum 86400) and "
             "3D position accuracy threshold (maximum 1000 m), not receiver-managed survey");
     }
     const Operation operation(*this, CONFIGURATION_TIMEOUT_MS);
-    _outputMode = config.output_mode;
     _baseConfig = config.base;
     if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
         _fixedECEF = toEcef(std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position);
@@ -326,76 +325,70 @@ int GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
     if (config.allowPersistentChanges) {
         // Work from saved settings, not another client's uncommitted changes. A role
         // readback alone cannot distinguish a pending role from the active one.
-        if (!_restart(false, _outputMode == OutputMode::RTCM)) {
+        if (!_restart(false)) {
             return _fail("LG290P saved role query after restart failed; no persistent change was attempted");
         }
         restarted = true;
     }
-    const unsigned expectedRole = _outputMode == OutputMode::RTCM ? 2 : 1;
-    if (_receiverRole != expectedRole) {
+    if (_receiverRole != BASE_ROLE) {
         if (!config.allowPersistentChanges) {
             return _fail(
-                "LG290P role mismatch: save the requested rover/base role externally, reboot and reconnect. "
+                "LG290P role mismatch: save the requested base role externally, reboot and reconnect. "
                 "Alternatively, explicitly allow persistent changes for this connection");
         }
         std::string roleCommand{"PQTMCFGRCVRMODE,W,"};
-        roleCommand.append(std::to_string(expectedRole));
+        roleCommand.append(std::to_string(BASE_ROLE));
         if (!_acknowledge(roleCommand) || !_verifyRole()) {
             return _fail("LG290P role change was rejected or its readback did not match");
         }
         if (!_saveConfiguration()) {
             return _fail("LG290P role save failed; receiver activation is not verified");
         }
-        if (!_restart(true, _outputMode == OutputMode::RTCM)) {
+        if (!_restart()) {
             return _fail("LG290P saved role could not be verified after restart");
         }
         restarted = true;
     }
     bool baseChanged = false;
-    if (_outputMode == OutputMode::RTCM) {
-        if (!_verifyBase(false)) {
-            return _fail("LG290P base settings query failed; no base change was attempted");
+    if (!_verifyBase(false)) {
+        return _fail("LG290P base settings query failed; no base change was attempted");
+    }
+    if (!_baseMatches && !config.allowPersistentChanges) {
+        return _fail(
+            "LG290P base settings mismatch: provision/save the requested ECEF coordinates or survey "
+            "observation count/accuracy externally, or explicitly allow persistent changes for this connection");
+    }
+    if (!_baseMatches) {
+        if (!_acknowledge(_baseCommand()) || !_verifyBase()) {
+            return _fail("LG290P base change was rejected or its readback did not match");
         }
-        if (!_baseMatches && !config.allowPersistentChanges) {
-            return _fail(
-                "LG290P base settings mismatch: provision/save the requested ECEF coordinates or survey "
-                "observation count/accuracy externally, or explicitly allow persistent changes for this connection");
+        if (!_saveConfiguration()) {
+            return _fail("LG290P base save failed; receiver activation is not verified");
         }
-        if (!_baseMatches) {
-            if (!_acknowledge(_baseCommand()) || !_verifyBase()) {
-                return _fail("LG290P base change was rejected or its readback did not match");
-            }
-            if (!_saveConfiguration()) {
-                return _fail("LG290P base save failed; receiver activation is not verified");
-            }
-            if (!_restart(true, true) || !_verifyBase()) {
-                return _fail("LG290P saved base settings could not be verified after restart");
-            }
-            baseChanged = true;
+        if (!_restart() || !_verifyBase()) {
+            return _fail("LG290P saved base settings could not be verified after restart");
         }
-        if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) && !baseChanged) {
-            log(GPSProtocolLogLevel::Debug,
-                "LG290P survey uses accepted 1 Hz observations, not wall time; accuracy filters individual 3D fixes. "
-                "The receiver itself stores converged coordinates");
-            if (!_acknowledge(_survey.restartCommand)) {
-                return _fail("LG290P rejected restarting the unchanged, externally saved survey");
-            }
-            restarted = false;
+        baseChanged = true;
+    }
+    if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) && !baseChanged) {
+        log(GPSProtocolLogLevel::Debug,
+            "LG290P survey uses accepted 1 Hz observations, not wall time; accuracy filters individual 3D fixes. "
+            "The receiver itself stores converged coordinates");
+        if (!_acknowledge(_survey.restartCommand)) {
+            return _fail("LG290P rejected restarting the unchanged, externally saved survey");
         }
+        restarted = false;
     }
     // A role readback can reflect an unsaved, not-yet-active change. Reboot and read back
     // the saved role before claiming that the receiver actually operates in that role.
-    if ((!restarted && !_restart(true, _outputMode == OutputMode::RTCM)) ||
-        (_outputMode == OutputMode::RTCM && !baseChanged && !_verifyBase())) {
+    if ((!restarted && !_restart()) || (!baseChanged && !_verifyBase())) {
         return _fail("LG290P restart/readback failed; saved role or base settings do not match the request");
     }
-    if (_outputMode == OutputMode::RTCM) {
-        _survey.phase = SurveyPhase::Monitoring;
-        _publishSurvey();
-        if (!_setMessageRate("PQTMSVINSTATUS", 1, "1") || !_setMessageRate("RTCM3-1005", 1) ||
-            !_setMessageRate("RTCM3-107X", 1, "0")) {
-            return _fail("LG290P base message output configuration/readback failed");
-        }
+    _survey.phase = SurveyPhase::Monitoring;
+    _publishSurvey();
+    if (!_setMessageRate("PQTMSVINSTATUS", 1, "1") || !_setMessageRate("RTCM3-1005", 1) ||
+        !_setMessageRate("RTCM3-107X", 1, "0")) {
+        return _fail("LG290P base message output configuration/readback failed");
     }
     for (const std::string_view name : {"GGA", "GST", "GSA", "GSV"}) {
         if (!_setMessageRate(name, 1)) {

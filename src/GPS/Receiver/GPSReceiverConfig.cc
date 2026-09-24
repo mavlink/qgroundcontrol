@@ -10,8 +10,7 @@
 
 GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type, GPSReceiverConfig::Role role)
 {
-    if (role != GPSReceiverConfig::Role::RTKBase && role != GPSReceiverConfig::Role::Position &&
-        role != GPSReceiverConfig::Role::Passive) {
+    if (role != GPSReceiverConfig::Role::RTKBase && role != GPSReceiverConfig::Role::Passive) {
         return {};
     }
 
@@ -19,9 +18,7 @@ GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type, GPSReceiverConfig:
     if (!descriptor) {
         return {};
     }
-    auto capabilities = descriptor->capabilities;
-    capabilities.dynamicModel &= role == GPSReceiverConfig::Role::Position;
-    return capabilities;
+    return descriptor->capabilities;
 }
 
 GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& config)
@@ -58,16 +55,14 @@ GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& 
 
 GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiverConfig& config)
 {
-    if (config.role != GPSReceiverConfig::Role::RTKBase && config.role != GPSReceiverConfig::Role::Position &&
-        config.role != GPSReceiverConfig::Role::Passive) {
+    if (config.role != GPSReceiverConfig::Role::RTKBase && config.role != GPSReceiverConfig::Role::Passive) {
         return GPSReceiverConfigError::InvalidRole;
     }
     const GPSReceiverCapabilities capabilities = gpsReceiverCapabilities(type, config.role);
     if (!capabilities.recognized) {
         return GPSReceiverConfigError::UnknownReceiver;
     }
-    if ((config.role == GPSReceiverConfig::Role::Position && !capabilities.position) ||
-        (config.role == GPSReceiverConfig::Role::RTKBase && !capabilities.rtkBase) ||
+    if ((config.role == GPSReceiverConfig::Role::RTKBase && !capabilities.rtkBase) ||
         (config.role == GPSReceiverConfig::Role::Passive && !capabilities.passive)) {
         return GPSReceiverConfigError::UnsupportedRole;
     }
@@ -97,23 +92,6 @@ GPSReceiverConfigError gpsValidateReceiverPhysicalConfig(const GPSReceiverConfig
     if ((config.baudRate != 0 && (config.baudRate < 1200 || config.baudRate > 4000000)) ||
         (config.role == GPSReceiverConfig::Role::Passive && config.baudRate == 0)) {
         return GPSReceiverConfigError::InvalidBaudRate;
-    }
-    if (config.constellationMask != 0) {
-        if (capabilities.constellationMask == 0) {
-            return GPSReceiverConfigError::UnsupportedConstellations;
-        }
-        if ((config.constellationMask & ~capabilities.constellationMask) != 0) {
-            return GPSReceiverConfigError::InvalidConstellations;
-        }
-    }
-    if (config.dynamicModel.has_value()) {
-        if (!capabilities.dynamicModel) {
-            return GPSReceiverConfigError::UnsupportedDynamicModel;
-        }
-        const int model = *config.dynamicModel;
-        if (model != 0 && (model < 2 || model > 8)) {
-            return GPSReceiverConfigError::InvalidDynamicModel;
-        }
     }
     return GPSReceiverConfigError::None;
 }
@@ -146,15 +124,6 @@ QString gpsReceiverConfigErrorText(GPSReceiverConfigError error)
         case GPSReceiverConfigError::UnsupportedPersistentConfiguration:
             return QCoreApplication::translate("GPSReceiverConfig",
                                                "This driver does not support persistent receiver configuration");
-        case GPSReceiverConfigError::UnsupportedConstellations:
-            return QCoreApplication::translate("GPSReceiverConfig", "This receiver cannot configure constellations");
-        case GPSReceiverConfigError::InvalidConstellations:
-            return QCoreApplication::translate("GPSReceiverConfig", "Unsupported constellation selection");
-        case GPSReceiverConfigError::UnsupportedDynamicModel:
-            return QCoreApplication::translate("GPSReceiverConfig",
-                                               "This receiver role cannot configure a dynamic model");
-        case GPSReceiverConfigError::InvalidDynamicModel:
-            return QCoreApplication::translate("GPSReceiverConfig", "Unsupported receiver dynamic model");
     }
     return QCoreApplication::translate("GPSReceiverConfig", "Invalid GPS receiver configuration");
 }

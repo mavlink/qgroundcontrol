@@ -29,13 +29,12 @@ public:
     bool fatalError() const override;
 
     GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
-#ifdef Q_OS_ANDROID
-    /// Synchronous configuration writes use the backend timeout; bounded writes are unsupported.
-    GPSWriteResult writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
-#endif
     std::chrono::milliseconds configurationWriteTimeout() const override;
-    GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
     bool setBaudrate(unsigned baudrate) override;
+
+protected:
+    /// Android's synchronous backend can honor the deadline only before submission.
+    GPSWriteResult writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
 
 private:
     static constexpr int kOpenTimeoutMs = 30000;

@@ -57,7 +57,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         return services;
     };
     GPSProtocol::GPSConfig fixed;
-    fixed.output_mode = GPSProtocol::OutputMode::RTCM;
     fixed.base.mode = GPSBaseStationConfig::Fixed{};
     std::get<GPSBaseStationConfig::Fixed>(fixed.base.mode).position = {
         .latitudeDegrees = 0, .longitudeDegrees = 90, .altitudeMeters = 100};
@@ -75,7 +74,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     unicorePeer.chunk = GPS_READ_BUFFER_SIZE;
     GPSNativeUnicore operationalUnicore(operationalIO(unicorePeer.io()));
     GPSProtocol::GPSConfig averaging;
-    averaging.output_mode = GPSProtocol::OutputMode::RTCM;
     averaging.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
     unsigned unicoreBaud = 115200;
     if (operationalUnicore.configure(unicoreBaud, fixedMode ? fixed : averaging)) {
@@ -90,7 +88,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     }
     GPSNativeQuectel operationalQuectel(operationalIO(quectelPeer.io()));
     GPSProtocol::GPSConfig survey;
-    survey.output_mode = GPSProtocol::OutputMode::RTCM;
     std::get<GPSBaseStationConfig::SurveyIn>(survey.base.mode).accuracyMeters = 15;
     std::get<GPSBaseStationConfig::SurveyIn>(survey.base.mode).durationSecs = 60;
     unsigned quectelBaud = 460800;

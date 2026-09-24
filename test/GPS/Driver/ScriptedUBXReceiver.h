@@ -82,7 +82,7 @@ public:
     unsigned timeMode = 0;
     unsigned sbasEnabled = 0;
     unsigned sbasL1caEnabled = 0;
-    unsigned dynamicModel = 0;
+    unsigned navigationModel = 0;
     unsigned surveyDuration = 0;
     unsigned surveyAccuracy = 0;
     uint32_t fixedAccuracy = 0;

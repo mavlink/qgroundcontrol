@@ -86,7 +86,6 @@ int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
         return -1;
     }
     _baseConfig = config.base;
-    _output_mode = config.output_mode;
     constexpr unsigned supportedBaudrate = 115200;
     bool success = false;
 
@@ -109,45 +108,11 @@ int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
     decodeInit();
 
     /** init rtcm parsing */
-    if (_output_mode == OutputMode::RTCM) {
-        if (!_rtcm_parsing) {
-            _rtcm_parsing.emplace();
-        }
-
-        _rtcm_parsing->reset();
+    if (!_rtcm_parsing) {
+        _rtcm_parsing.emplace();
     }
-
-    if (_output_mode == OutputMode::GPS) {
-        // Stop base averaging and release its fixed position before enabling navigation output.
-        if (writeAckedCommandFemto("POSAVE OFF\r\n", "<POSAVE OK", FEMTO_RESPONSE_TIMEOUT) != 0 ||
-            writeAckedCommandFemto("FIX NONE\r\n", "<FIX OK", FEMTO_RESPONSE_TIMEOUT) != 0) {
-            return -1;
-        }
-
-        if (writeAckedCommandFemto("LOG UAVGPSB 0.1\r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
-            /** 20Hz need authorization in femtomes device */
-            if (writeAckedCommandFemto("LOG UAVGPSB 0.05\r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
-            } else if (!ioError()) {
-                log(GPSProtocolLogLevel::Warning, "Femto: command LOG UAVGPSB 0.05 failed,maybe no authorization");
-            }
-
-        } else {
-            if (!ioError()) {
-                log(GPSProtocolLogLevel::Warning, "Femto: command LOG UAVGPSB 0.1 failed");
-            }
-            return -1;
-        }
-
-        if (_satellites) {
-            if (writeAckedCommandFemto("LOG UAVSTATUSB 1\r\n", "<LOG OK", FEMTO_RESPONSE_TIMEOUT) == 0) {
-            } else if (!ioError()) {
-                log(GPSProtocolLogLevel::Warning, "Femto: command LOG UAVSTATUSB 1 failed");
-            }
-        }
-
-    } else { /**< RTCM mode for base station */
-        activateCorrectionOutput();
-    }
+    _rtcm_parsing->reset();
+    activateCorrectionOutput();
 
     _configure_done = true;
 
@@ -156,7 +121,7 @@ int GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
 
 void GPSNativeFemto::activateCorrectionOutput()
 {
-    if (_output_mode != OutputMode::RTCM || _correction_output_activated) {
+    if (_correction_output_activated) {
         return;
     }
     if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {

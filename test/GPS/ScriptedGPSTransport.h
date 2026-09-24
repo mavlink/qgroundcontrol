@@ -39,24 +39,6 @@ public:
         return readQueued(buffer, length);
     }
 
-    GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline) override
-    {
-        if (length < 0 || (!buffer && length > 0)) {
-            return {GPSWriteStatus::InvalidData};
-        }
-        if (isCancelled()) {
-            return {GPSWriteStatus::Cancelled};
-        }
-        if (deadline.hasExpired()) {
-            return {GPSWriteStatus::TimedOut};
-        }
-        const QByteArray bytes = length > 0 ? QByteArray(reinterpret_cast<const char*>(buffer), length) : QByteArray();
-        if (const auto result = handleWrite(bytes, deadline)) {
-            return *result;
-        }
-        return {GPSWriteStatus::Unsupported};
-    }
-
     bool setBaudrate(unsigned baudrate) override
     {
         if (const auto accepted = handleBaudrate(baudrate)) {
@@ -77,6 +59,14 @@ public:
     bool hasQueuedReadData() const { return !_readSteps.empty(); }
 
 protected:
+    GPSWriteResult writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline) override
+    {
+        if (const auto result = handleWrite(QByteArray(reinterpret_cast<const char*>(buffer), length), deadline)) {
+            return *result;
+        }
+        return {GPSWriteStatus::Unsupported};
+    }
+
     GPSReadResult readQueued(uint8_t* buffer, int length)
     {
         if (_readSteps.empty()) {

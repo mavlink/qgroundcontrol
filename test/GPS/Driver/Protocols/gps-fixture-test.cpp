@@ -291,10 +291,11 @@ void independentSbfValidity()
                               std::hypot(static_cast<float>(expected.north), static_cast<float>(expected.east))));
             }
             CHECK(matches(position.navigation.courseRadians, expected.course));
-            CHECK(matches(position.navigation.horizontalDop, expected.hdop));
-            CHECK(matches(position.navigation.verticalDop, expected.vdop));
-            CHECK(matches(position.navigation.headingRadians, expected.heading));
-            CHECK(matches(position.navigation.headingAccuracyRadians, expected.headingAccuracy));
+            // Base stations output only PVTGeodetic; DOP and attitude blocks in the capture are ignored.
+            CHECK(std::isnan(position.navigation.horizontalDop));
+            CHECK(std::isnan(position.navigation.verticalDop));
+            CHECK(std::isnan(position.navigation.headingRadians));
+            CHECK(std::isnan(position.navigation.headingAccuracyRadians));
             CHECK(position.navigation.satellitesUsed == expected.satellites);
             CHECK(position.velocityValid == expected.velocityAvailable);
             using Fix = GPSPositionReport::FixType;

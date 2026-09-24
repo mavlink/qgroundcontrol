@@ -36,7 +36,6 @@
 #include <cstdint>
 
 #define UBX_CONFIG_TIMEOUT 250      // ms, timeout for waiting ACK
-#define UBX_GNSS_RESET_TIME 500000  // us, GNSS subsystem reset after a constellation change
 #define UBX_PACKET_TIMEOUT 8        // ms, if now data during this delay assume that full update received
 
 // Bound configuration batches independently of received message sizes.
@@ -87,7 +86,6 @@
 #define UBX_ID_CFG_RATE 0x08    // deprecated in protocol version >= 27 -> use CFG_VALSET
 #define UBX_ID_CFG_NAV5 0x24    // deprecated in protocol version >= 27 -> use CFG_VALSET
 #define UBX_ID_CFG_TMODE3 0x71  // deprecated in protocol version >= 27 -> use CFG_VALSET
-#define UBX_ID_CFG_GNSS 0x3E
 #define UBX_ID_CFG_VALSET 0x8A
 #define UBX_ID_CFG_VALGET 0x8B
 #define UBX_ID_MON_COMMS 0x36
@@ -136,7 +134,6 @@
 #define UBX_MSG_CFG_RATE ((UBX_CLASS_CFG) | UBX_ID_CFG_RATE << 8)
 #define UBX_MSG_CFG_NAV5 ((UBX_CLASS_CFG) | UBX_ID_CFG_NAV5 << 8)
 #define UBX_MSG_CFG_TMODE3 ((UBX_CLASS_CFG) | UBX_ID_CFG_TMODE3 << 8)
-#define UBX_MSG_CFG_GNSS ((UBX_CLASS_CFG) | UBX_ID_CFG_GNSS << 8)
 #define UBX_MSG_CFG_VALGET ((UBX_CLASS_CFG) | UBX_ID_CFG_VALGET << 8)
 #define UBX_MSG_CFG_VALSET ((UBX_CLASS_CFG) | UBX_ID_CFG_VALSET << 8)
 #define UBX_MSG_MON_COMMS ((UBX_CLASS_MON) | UBX_ID_MON_COMMS << 8)
@@ -216,20 +213,6 @@
 
 /* TX CFG-GNSS message contents
  */
-#define UBX_TX_CFG_GNSS_GNSSID_GPS 0                /**< gnssId of GPS */
-#define UBX_TX_CFG_GNSS_GNSSID_SBAS 1               /**< gnssId of SBAS */
-#define UBX_TX_CFG_GNSS_GNSSID_GALILEO 2            /**< gnssId of Galileo */
-#define UBX_TX_CFG_GNSS_GNSSID_BEIDOU 3             /**< gnssId of BeiDou */
-#define UBX_TX_CFG_GNSS_GNSSID_IMES 4               /**< gnssId of IMES */
-#define UBX_TX_CFG_GNSS_GNSSID_QZSS 5               /**< gnssId of QZSS */
-#define UBX_TX_CFG_GNSS_GNSSID_GLONASS 6            /**< gnssId of GLONASS */
-#define UBX_TX_CFG_GNSS_FLAGS_ENABLE 0x00000001     /**< Enable this GNSS system */
-#define UBX_TX_CFG_GNSS_FLAGS_GPS_L1CA 0x00010000   /**< GPS: Use L1C/A Signal */
-#define UBX_TX_CFG_GNSS_FLAGS_SBAS_L1CA 0x00010000  /**< SBAS: Use L1C/A Signal */
-#define UBX_TX_CFG_GNSS_FLAGS_GALILEO_E1 0x00010000 /**< Galileo: Use E1 Signal */
-#define UBX_TX_CFG_GNSS_FLAGS_BEIDOU_B1I 0x00010000 /**< BeiDou: Use B1I Signal */
-#define UBX_TX_CFG_GNSS_FLAGS_QZSS_L1CA 0x00010000  /**< QZSS: Use L1C/A Signal */
-#define UBX_TX_CFG_GNSS_FLAGS_GLONASS_L1 0x00010000 /**< GLONASS: Use L1 Signal */
 
 /* Key ID's for CFG-VAL{GET,SET,DEL} */
 
@@ -309,30 +292,6 @@
 #define UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1230_I2C 0x20910303
 #define UBX_CFG_KEY_MSGOUT_UBX_NAV_TIMEGPS_I2C 0x20910047
 
-#define UBX_CFG_KEY_SIGNAL_GPS_ENA 0x1031001f            /**< GPS enable */
-#define UBX_CFG_KEY_SIGNAL_GPS_L2C_ENA 0x10310003        /**< GPS L2C (only on u-blox F9 platform products) */
-#define UBX_CFG_KEY_SIGNAL_GPS_L5_ENA 0x10310004         /**< GPS L5 (only on u-blox F9-15B) */
-#define UBX_CFG_KEY_SIGNAL_SBAS_ENA 0x10310020           /**< SBAS enable */
-#define UBX_CFG_KEY_SIGNAL_SBAS_L1CA_ENA 0x10310005      /**< SBAS L1C/A */
-#define UBX_CFG_KEY_SIGNAL_GAL_ENA 0x10310021            /**< Galileo enable */
-#define UBX_CFG_KEY_SIGNAL_GAL_E5B_ENA 0x1031000a        /**< Galileo E5b (only on u-blox F9 platform products) */
-#define UBX_CFG_KEY_SIGNAL_GAL_E5A_ENA 0x10310009        /**< Galileo E5a (only on u-blox F9-15B) */
-#define UBX_CFG_KEY_SIGNAL_GAL_E6_ENA 0x1031000b         /**< Galileo E6 (only on u-blox F9-15B and X20) */
-#define UBX_CFG_KEY_SIGNAL_BDS_ENA 0x10310022            /**< BeiDou Enable */
-#define UBX_CFG_KEY_SIGNAL_BDS_B1C_ENA 0x1031000f        /**< BeiDou B1C (only on u-blox F9-15B) */
-#define UBX_CFG_KEY_SIGNAL_BDS_B2A_ENA 0x10310028        /**< BeiDou B2a  (only on u-blox F9-15B) */
-#define UBX_CFG_KEY_SIGNAL_BDS_B2_ENA 0x1031000e         /**< BeiDou B2I (only on u-blox F9 platform products) */
-#define UBX_CFG_KEY_SIGNAL_BDS_B3_ENA 0x10310010         /**< BeiDou B3I (only on u-blox F9-15B) */
-#define UBX_CFG_KEY_SIGNAL_QZSS_ENA 0x10310024           /**< QZSS enable */
-#define UBX_CFG_KEY_SIGNAL_QZSS_L1CA_ENA 0x10310012      /**< QZSS L1C/A */
-#define UBX_CFG_KEY_SIGNAL_QZSS_L1S_ENA 0x10310014       /**< QZSS L1S */
-#define UBX_CFG_KEY_SIGNAL_QZSS_L5_ENA 0x10310017        /**< QZSS L5 (only on u-blox F9-15B) */
-#define UBX_CFG_KEY_SIGNAL_QZSS_L2C_ENA 0x10310015       /**< QZSS L2C (only on u-blox F9 platform products) */
-#define UBX_CFG_KEY_SIGNAL_GLO_ENA 0x10310025            /**< GLONASS enable */
-#define UBX_CFG_KEY_SIGNAL_GLO_L1_ENA 0x10310018         /**< GLONASS L1 */
-#define UBX_CFG_KEY_SIGNAL_GLO_L2_ENA 0x1031001a         /**< GLONASS L2 (only on u-blox F9 platform products) */
-#define UBX_CFG_KEY_SIGNAL_NAVIC_ENA 0x10310026          /**< NavIC enable (only on u-blox F9-15B)*/
-#define UBX_CFG_KEY_SIGNAL_NAVIC_L5_ENA 0x1031001d       /**< NavIC L5 (only on u-blox F9-15B) */
 
 #define UBX_CFG_KEY_SIGNAL_L5_HEALTH_OVERRIDE 0x10320001 /**< GPS L5 health override value */
 
@@ -713,25 +672,6 @@ typedef struct
     uint8_t reserved3[8];
 } ubx_payload_tx_cfg_tmode3_t;
 
-typedef struct
-{
-    uint8_t msgVer;          /**< Message version (expected 0x00) */
-    uint8_t numTrkChHw;      /**< Number of tracking channels available (read only) */
-    uint8_t numTrkChUse;     /**< Number of tracking channels to use (0xFF for numTrkChHw) */
-    uint8_t numConfigBlocks; /**< Count of repeated blocks */
-
-    struct ubx_payload_tx_cgf_gnss_block_t
-    {
-        uint8_t gnssId;   /**< GNSS ID */
-        uint8_t resTrkCh; /**< Number of reseved (minimum) tracking channels */
-        uint8_t maxTrkCh; /**< Maximum number or tracking channels */
-        uint8_t reserved1;
-        uint32_t flags;   /**< Bitfield flags (see UBX_TX_CFG_GNSS_FLAGS_*) */
-    };
-
-    ubx_payload_tx_cgf_gnss_block_t block[7]; /**< GPS, SBAS, Galileo, BeiDou, IMES 0-8, QZSS, GLONASS */
-} ubx_payload_tx_cfg_gnss_t;
-
 /* NAV RELPOSNED (protocol version 27+) */
 typedef struct
 {
@@ -877,8 +817,6 @@ inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_msg_t> = 3;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_tmode3_t> = 40;
 template <>
-inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_gnss_t> = 60;
-template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_relposned_t> = 64;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_daheading_t> = 60;
@@ -888,8 +826,6 @@ template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_comms_port_t> = 40;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_comms_t> = 328;
-template <>
-inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_gnss_t::ubx_payload_tx_cgf_gnss_block_t> = 8;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t> = 24;
 }  // namespace UBX

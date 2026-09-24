@@ -66,20 +66,14 @@ GPSProtocol::GPSProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     }
 }
 
-bool GPSProtocol::validateConfiguration(const GPSConfig& config, bool allowReceiverAveraging,
-                                        bool supportsPersistentChanges) const
+bool GPSProtocol::validateConfiguration(const GPSConfig& config, ConfigurationSupport support) const
 {
-    if (config.output_mode != OutputMode::GPS && config.output_mode != OutputMode::RTCM) {
-        log(GPSProtocolLogLevel::Warning, "Invalid receiver output mode");
-        return false;
-    }
-    const GPSReceiverConfig physical{.role = config.output_mode == OutputMode::RTCM ? GPSReceiverConfig::Role::RTKBase
-                                                                                    : GPSReceiverConfig::Role::Position,
+    const GPSReceiverConfig physical{.role = GPSReceiverConfig::Role::RTKBase,
                                      .base = config.base,
                                      .allowPersistentChanges = config.allowPersistentChanges};
     const GPSReceiverCapabilities supported{.surveyIn = true,
-                                            .receiverAveraging = allowReceiverAveraging,
-                                            .persistentConfiguration = supportsPersistentChanges};
+                                            .receiverAveraging = support.receiverAveraging,
+                                            .persistentConfiguration = support.persistentChanges};
     const auto error = gpsValidateReceiverPhysicalConfig(physical, supported);
     if (error != GPSReceiverConfigError::None) {
         log(GPSProtocolLogLevel::Warning, "Invalid receiver physical configuration (%d)", static_cast<int>(error));

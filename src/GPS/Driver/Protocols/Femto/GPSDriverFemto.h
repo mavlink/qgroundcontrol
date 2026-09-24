@@ -97,13 +97,11 @@ private:
     void sendSurveyInStatusUpdate(bool active, bool valid, double latitude = (double) NAN,
                                   double longitude = (double) NAN, float altitude = NAN);
 
-    FemtoDecodeState _decode_state{FemtoDecodeState::pream_ble1};
     femto_msg_t _femto_msg;
     NMEA::Framer _nmeaFramer{_femto_msg.data};
     uint32_t _survey_duration = 0;
 
     std::optional<RTCMStreamDecoder> _rtcm_parsing;
-    OutputMode _output_mode{OutputMode::GPS};
     bool _configure_done{false};
     bool _correction_output_activated{false};
 

@@ -26,6 +26,4 @@ private slots:
     void _cancelledFactoryDoesNotOpenTransport();
     void _configuredReceiverReportsReadyThenLoss_data();
     void _configuredReceiverReportsReadyThenLoss();
-    void _unsupportedPositionRoleReportsConfigFailure_data();
-    void _unsupportedPositionRoleReportsConfigFailure();
 };

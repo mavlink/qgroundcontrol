@@ -1,8 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <optional>
-
 #include <QtCore/QString>
 
 #include "GPSBaseStationConfig.h"
@@ -16,18 +14,12 @@ struct GPSReceiverConfig
     enum class Role
     {
         RTKBase,
-        /// Only receivers with a verified base-to-rover transition support this role.
-        Position,
         /// Receive NMEA/RTCM without issuing receiver configuration commands.
         Passive,
     };
 
     Role role = Role::RTKBase;
     GPSBaseStationConfig base{};
-    /// Zero retains receiver defaults. Bits: GPS=1, SBAS=2, Galileo=4, BeiDou=8, GLONASS=16.
-    uint32_t constellationMask = 0;
-    /// UBX models 0 and 2..8; an explicit zero is distinct from an absent request.
-    std::optional<int> dynamicModel{};
     /// Zero selects managed-driver baud detection; passive serial input requires an explicit rate.
     uint32_t baudRate = 0;
     /// Per-connection consent to persistent receiver settings and the required restart.
@@ -42,10 +34,6 @@ enum class GPSReceiverConfigError
     UnsupportedRole,
     InvalidSurveyIn,
     InvalidFixedBase,
-    UnsupportedConstellations,
-    InvalidConstellations,
-    UnsupportedDynamicModel,
-    InvalidDynamicModel,
     UnsupportedBaseMode,
     InvalidReceiverAveraging,
     InvalidBaudRate,
@@ -59,8 +47,7 @@ enum class GPSReceiverConfigError
 [[nodiscard]] GPSReceiverConfigError gpsValidateReceiverPhysicalConfig(const GPSReceiverConfig& config,
                                                                        const GPSReceiverCapabilities& capabilities);
 
-/// Precedence: valid role, recognized receiver, supported role, RTK base, constellations, dynamic model.
-/// For each optional request, unsupported takes precedence over an invalid value.
+/// Precedence: valid role, recognized receiver, supported role, persistent permission, base mode, baud rate.
 [[nodiscard]] GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiverConfig& config);
 
 /// Translated diagnostic; empty for GPSReceiverConfigError::None.

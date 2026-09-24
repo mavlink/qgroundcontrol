@@ -96,7 +96,8 @@ private slots:
     void _physicalValidationKeepsRoleQualification()
     {
         GPSReceiverConfig config;
-        config.role = GPSReceiverConfig::Role::Position;
+        config.role = GPSReceiverConfig::Role::Passive;
+        config.baudRate = 115200;
         for (auto type : {GPSType::trimble, GPSType::septentrio, GPSType::femto}) {
             const auto capabilities = gpsReceiverCapabilities(type, config.role);
             QCOMPARE(gpsValidateReceiverPhysicalConfig(config, capabilities), GPSReceiverConfigError::None);

@@ -87,38 +87,25 @@ private slots:
         QTest::addColumn<QString>("expected");
         using Role = GPSReceiverConfig::Role;
 
-        QTest::newRow("valid") << GPSType::ublox << GPSReceiverConfig{.role = Role::Position} << QString();
+        QTest::newRow("valid") << GPSType::ublox
+                               << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{1, 60}}}
+                               << QString();
         QTest::newRow("unknown-receiver")
             << static_cast<GPSType>(-1) << GPSReceiverConfig{} << QStringLiteral("Unsupported GPS receiver type");
         QTest::newRow("invalid-role") << GPSType::ublox << GPSReceiverConfig{.role = static_cast<Role>(-1)}
                                       << QStringLiteral("Unsupported GPS receiver role");
-        QTest::newRow("unsupported-role") << GPSType::septentrio << GPSReceiverConfig{.role = Role::Position}
+        QTest::newRow("unsupported-role") << GPSType::ublox << GPSReceiverConfig{.role = Role::Passive}
                                           << QStringLiteral("This receiver does not support the requested role");
         QTest::newRow("invalid-survey") << GPSType::ublox << GPSReceiverConfig{}
                                         << QStringLiteral("Enter a valid survey-in accuracy and duration");
         QTest::newRow("invalid-fixed") << GPSType::ublox
                                        << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::Fixed{}}}
                                        << QStringLiteral("Enter a valid fixed base position and accuracy");
-        QTest::newRow("unsupported-constellations")
-            << GPSType::septentrio
-            << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{1, 60}}, .constellationMask = 1}
-            << QStringLiteral("This receiver cannot configure constellations");
-        QTest::newRow("invalid-constellations")
-            << GPSType::ublox << GPSReceiverConfig{.role = Role::Position, .constellationMask = 32}
-            << QStringLiteral("Unsupported constellation selection");
-        QTest::newRow("unsupported-dynamic-model")
-            << GPSType::septentrio
-            << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{1, 60}}, .dynamicModel = 0}
-            << QStringLiteral("This receiver role cannot configure a dynamic model");
-        QTest::newRow("invalid-dynamic-model")
-            << GPSType::ublox << GPSReceiverConfig{.role = Role::Position, .dynamicModel = 1}
-            << QStringLiteral("Unsupported receiver dynamic model");
         QTest::newRow("unsupported-persistent-configuration")
-            << GPSType::ublox << GPSReceiverConfig{.role = Role::Position, .allowPersistentChanges = true}
+            << GPSType::ublox
+            << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{1, 60}},
+                                 .allowPersistentChanges = true}
             << QStringLiteral("This driver does not support persistent receiver configuration");
-        QTest::newRow("unsupported-role-precedes-invalid-dynamic-model")
-            << GPSType::septentrio << GPSReceiverConfig{.role = Role::Position, .dynamicModel = 1}
-            << QStringLiteral("This receiver does not support the requested role");
     }
 
     void _receiverDiagnostic()

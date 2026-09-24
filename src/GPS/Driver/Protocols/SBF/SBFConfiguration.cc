@@ -65,7 +65,6 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
 
     setBaudrate(SBF_TX_CFG_PRT_BAUDRATE);
     baudrate = SBF_TX_CFG_PRT_BAUDRATE;
-    _output_mode = config.output_mode;
 
     // Make sure we can send commands to the receiver
     sendMessage(SBF_CONFIG_FORCE_INPUT);
@@ -155,34 +154,6 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
         return -1;
     }
 
-    // Set the type of dynamics the GNSS antenna is subjected to.
-    if (_output_mode != OutputMode::RTCM) {
-        // Release a previously configured static base position before starting navigation.
-        if (!sendMessageAndWaitForAck("setPVTMode, Rover, All, auto\n", SBF_CONFIG_TIMEOUT)) {
-            return -1;
-        }
-
-        // Specify the offsets that the receiver applies to the computed attitude angles.
-        snprintf(msg, sizeof(msg), SBF_CONFIG_ATTITUDE_OFFSET, 0.0, 0.0);
-
-        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT, {GPSReceiverSetting::HeadingOffsetDeg})) {
-            return -1;
-        }
-
-        snprintf(msg, sizeof(msg), SBF_CONFIG_RECEIVER_DYNAMICS, "high");
-
-        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-            return -1;
-        }
-
-        snprintf(msg, sizeof(msg), SBF_CONFIG, com_port);
-
-        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-            return -1;
-        }
-        outputConfirmation = msg;
-    }
-
     // Preserve the receiver's historical second application after the first required ACK.
     // Navigation confirms its SBF stream; base mode confirms the selected input/output port.
     constexpr unsigned OUTPUT_CONFIRMATION_ATTEMPTS = 5;
@@ -197,55 +168,47 @@ int GPSNativeSBF::configure(unsigned& baudrate, const GPSConfig& config)
         return -1;
     }
 
-    if (_output_mode == OutputMode::RTCM) {
-        if (!_rtcm_parsing) {
-            _rtcm_parsing.emplace();
-        }
+    if (!_rtcm_parsing) {
+        _rtcm_parsing.emplace();
+    }
+    _rtcm_parsing->reset();
 
-        _rtcm_parsing->reset();
+    snprintf(msg, sizeof(msg), SBF_CONFIG_OUTPUT_RTCM3, com_port);
+    if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
+        return -1;
     }
 
-    if (_output_mode != OutputMode::GPS) {
-        snprintf(msg, sizeof(msg), SBF_CONFIG_OUTPUT_RTCM3, com_port);
+    if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
+        snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATIC_COORDINATES,
+                 std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position.latitudeDegrees,
+                 std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position.longitudeDegrees,
+                 static_cast<double>(std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position.altitudeMeters));
         if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
+            return -1;
+        }
+
+        snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATIC_OFFSET, 0.0, 0.0, 0.0);
+        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
+            return -1;
+        }
+
+        if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATIC1, SBF_CONFIG_TIMEOUT)) {
+            return -1;
+        }
+        if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATIC2, SBF_CONFIG_TIMEOUT)) {
+            return -1;
+        }
+    } else {
+        if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_SURVEY_IN, SBF_CONFIG_TIMEOUT)) {
             return -1;
         }
     }
 
-    if (_output_mode == OutputMode::RTCM) {
-        if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
-            snprintf(
-                msg, sizeof(msg), SBF_CONFIG_RTCM_STATIC_COORDINATES,
-                std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position.latitudeDegrees,
-                std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position.longitudeDegrees,
-                static_cast<double>(std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position.altitudeMeters));
-            if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-                return -1;
-            }
-
-            snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATIC_OFFSET, 0.0, 0.0, 0.0);
-            if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-                return -1;
-            }
-
-            if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATIC1, SBF_CONFIG_TIMEOUT)) {
-                return -1;
-            }
-            if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_STATIC2, SBF_CONFIG_TIMEOUT)) {
-                return -1;
-            }
-        } else {
-            if (!sendMessageAndWaitForAck(SBF_CONFIG_RTCM_SURVEY_IN, SBF_CONFIG_TIMEOUT)) {
-                return -1;
-            }
-        }
-
-        snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATUS, com_port);
-        if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
-            return -1;
-        }
-        _survey_activation_date = std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? 0 : nowUs();
+    snprintf(msg, sizeof(msg), SBF_CONFIG_RTCM_STATUS, com_port);
+    if (!sendMessageAndWaitForAck(msg, SBF_CONFIG_TIMEOUT)) {
+        return -1;
     }
+    _survey_activation_date = std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ? 0 : nowUs();
 
     _configured = true;
     return ioError();

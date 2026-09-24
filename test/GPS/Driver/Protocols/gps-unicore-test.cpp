@@ -111,7 +111,6 @@ using Receiver = GPSTest::UnicoreReceiver;
 GPSProtocol::GPSConfig baseConfig(bool fixed)
 {
     GPSProtocol::GPSConfig config{};
-    config.output_mode = GPSProtocol::OutputMode::RTCM;
     config.base.mode = fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
                                    .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
                              : GPSBaseStationConfig::Mode{GPSBaseStationConfig::ReceiverAveraging{}};
@@ -142,7 +141,7 @@ void identityAndRole()
             GPSNativePositionReport positionReport;
             GPSNativeUnicore driver(captureGPSReports(receiver.io(), positionReport), false);
             unsigned rate = baud;
-            CHECK(driver.configure(rate, {}) == 0);
+            CHECK(driver.configure(rate, baseConfig(false)) == 0);
             CHECK(driver.receiverReady());
             CHECK(rate == receiver.availableBaud);
             CHECK(driver.model() == model);
@@ -152,9 +151,9 @@ void identityAndRole()
             CHECK(std::all_of(receiver.commands.begin(), mutation,
                               [](const auto& command) { return command == "VERSIONA"; }));
             CHECK(receiver.sent("MODE ROVER"));
-            CHECK(receiver.role == "MODE ROVER SURVEY");
+            CHECK(receiver.role == "MODE BASE TIME");
             CHECK(receiver.sent("GPGGA 1") && receiver.sent("GPGST 1") && receiver.sent("GPGSV 1"));
-            CHECK(!receiver.sent("SAVECONFIG") && !receiver.sent("FRESET") && !receiver.sent("RTCM"));
+            CHECK(!receiver.sent("SAVECONFIG") && !receiver.sent("FRESET") && receiver.sent("RTCM1074 1"));
             CHECK(receiver.results.back().evidence.outcome == GPSCommandOutcome::Acknowledged);
             CHECK(std::any_of(receiver.results.begin(), receiver.results.end(), [](const auto& result) {
                 return result.evidence.command == "MODE" &&
@@ -181,11 +180,11 @@ void rejectBeforeMutation()
         receiver.version = native("VERSIONA", body);
         GPSNativeUnicore driver(receiver.io(), false);
         unsigned rate = 115200;
-        CHECK(driver.configure(rate, {}) < 0);
+        CHECK(driver.configure(rate, baseConfig(false)) < 0);
         CHECK(!driver.receiverReady());
         CHECK(receiver.commands == std::vector<std::string>{"VERSIONA"});
     }
-    for (unsigned variant = 0; variant < 5; ++variant) {
+    for (unsigned variant = 0; variant < 3; ++variant) {
         resetClock();
         Receiver receiver;
         GPSNativeUnicore driver(receiver.io(), false);
@@ -198,10 +197,6 @@ void rejectBeforeMutation()
             std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs = 3601;
         } else if (variant == 2) {
             std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs = 0;
-        } else if (variant == 3) {
-            config.dynamicModel = 1;
-        } else {
-            config.gnss_systems = GPSProtocol::GNSSSystemsMask::ENABLE_GPS;
         }
         unsigned rate = 115200;
         CHECK(driver.configure(rate, config) < 0);
@@ -243,8 +238,8 @@ void fixedBaseAndTransition()
     corrupt.back() ^= 1;
     driver.consume(corrupt);
     CHECK(receiver.rtcmCount == 1);
-    CHECK(driver.configure(rate, {}) == 0);
-    CHECK(driver.receiverReady() && receiver.role == "MODE ROVER SURVEY");
+    CHECK(driver.configure(rate, baseConfig(false)) == 0);
+    CHECK(driver.receiverReady() && receiver.role == "MODE BASE TIME");
     driver.consume(frame);
     CHECK(receiver.rtcmCount == 1);
 }

@@ -38,7 +38,6 @@ struct ProtocolFactory
     GPSType type;
     std::unique_ptr<GPSProtocol> (*create)(GPSProtocolIO);
     unsigned autoBaudRate = 0;
-    uint8_t defaultDynamicModel = 7;
 };
 
 constexpr std::array PROTOCOL_FACTORIES{
@@ -46,9 +45,9 @@ constexpr std::array PROTOCOL_FACTORIES{
     ProtocolFactory{GPSType::trimble, &makeProtocol<GPSNativeAshtech>, 115200},
     ProtocolFactory{GPSType::septentrio, &makeProtocol<GPSNativeSBF>},
     ProtocolFactory{GPSType::femto, &makeProtocol<GPSNativeFemto>},
-    ProtocolFactory{GPSType::unicore, &makeProtocol<GPSNativeUnicore>, 0, 0},
-    ProtocolFactory{GPSType::quectel, &makeProtocol<GPSNativeQuectel>, 0, 0},
-    ProtocolFactory{GPSType::passive, &makeProtocol<GPSNativePassive>, 0, 0},
+    ProtocolFactory{GPSType::unicore, &makeProtocol<GPSNativeUnicore>},
+    ProtocolFactory{GPSType::quectel, &makeProtocol<GPSNativeQuectel>},
+    ProtocolFactory{GPSType::passive, &makeProtocol<GPSNativePassive>},
 };
 
 auto findProtocolFactory(GPSType type)
@@ -127,7 +126,7 @@ bool GPSDriver::configure()
         if (_transport.isCancelled() || remaining == 0) {
             return GPSWriteResult{_transport.isCancelled() ? GPSWriteStatus::Cancelled : GPSWriteStatus::TimedOut};
         }
-        return _transport.writeConfiguration(bytes.data(), static_cast<int>(bytes.size()), deadline.toQDeadlineTimer());
+        return _transport.write(bytes.data(), static_cast<int>(bytes.size()), deadline.toQDeadlineTimer());
     };
     io.setBaudrate = [this](unsigned baud) {
         if (_transport.isCancelled()) {
@@ -218,10 +217,6 @@ bool GPSDriver::configure()
     }
     GPSProtocol::GPSConfig config{};
     config.base = _config.base;
-    config.dynamicModel = static_cast<uint8_t>(_config.dynamicModel.value_or(factory->defaultDynamicModel));
-    config.output_mode =
-        _config.role == GPSReceiverConfig::Role::RTKBase ? GPSProtocol::OutputMode::RTCM : GPSProtocol::OutputMode::GPS;
-    config.gnss_systems = static_cast<GPSProtocol::GNSSSystemsMask>(_config.constellationMask);
     config.allowPersistentChanges = _config.allowPersistentChanges;
     _state->configuring = true;
     const int result = _state->driver->configure(baudrate, config);

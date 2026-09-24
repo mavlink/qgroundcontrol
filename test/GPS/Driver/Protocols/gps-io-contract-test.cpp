@@ -359,7 +359,10 @@ static void ashtechAcknowledgementReturnsImmediately()
     GPSNativePositionReport position;
     GPSNativeAshtech receiver(captureGPSReports(std::move(io), position), false);
     unsigned baud = 115200;
-    CHECK(receiver.configure(baud, {}) < 0);
+    GPSProtocol::GPSConfig config;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+    CHECK(receiver.configure(baud, config) < 0);
     CHECK(writes == (std::vector<std::string>{"$PASHQ,PRT\r\n", "$PASHQ,RID\r\n"}));
     CHECK(reads > 1);
     CHECK(completions.size() == 2);
@@ -482,43 +485,37 @@ void GPSProtocolIOContractTest::_protocol()
             for (const auto fault :
                  {ScriptedIO::Operation::Read, ScriptedIO::Operation::Write, ScriptedIO::Operation::Baud}) {
                 for (const int error : {GPSProtocol::ReadCancelled, -EIO}) {
-                    for (const auto mode : {GPSProtocol::OutputMode::GPS, GPSProtocol::OutputMode::RTCM}) {
-                        gps_test_time = 0;
-                        gps_test_warnings.clear();
-                        ScriptedIO io{fault, error};
-                        GPSNativePositionReport position{};
-                        GPSNativeSatelliteReport satellites{};
-                        auto receiver = createReceiver(family, io, position, satellites);
-                        if (!receiver) {
-                            continue;
-                        }
-                        GPSProtocol::GPSConfig config{};
-                        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
-                        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
-                        config.output_mode = mode;
-                        unsigned baudrate = 115200;
-                        const int result = receiver->configure(baudrate, config);
-                        CHECK(io.failed);
-                        CHECK(result < 0);
-                        CHECK(receiver->ioError() == error);
-                        CHECK(receiver->ioErrorDetail() ==
-                              (fault == ScriptedIO::Operation::Baud ? QString() : io.detail));
-                        const auto warnings = gps_test_warnings;
-                        if (fault == ScriptedIO::Operation::Read && error != GPSProtocol::ReadCancelled) {
-                            CHECK(warnings ==
-                                  QStringList{QStringLiteral("Receiver read failed (status %1, code %2): %3")
-                                                  .arg(static_cast<int>(GPSReadStatus::Error))
-                                                  .arg(error)
-                                                  .arg(io.detail)});
-                        } else {
-                            CHECK(warnings.empty());
-                        }
-                        CHECK(receiver->receive(10) < 0);
-                        CHECK(receiver->ioError() == error);
-                        CHECK(receiver->ioErrorDetail() ==
-                              (fault == ScriptedIO::Operation::Baud ? QString() : io.detail));
-                        CHECK(gps_test_warnings == warnings);
+                    gps_test_time = 0;
+                    gps_test_warnings.clear();
+                    ScriptedIO io{fault, error};
+                    GPSNativePositionReport position{};
+                    GPSNativeSatelliteReport satellites{};
+                    auto receiver = createReceiver(family, io, position, satellites);
+                    if (!receiver) {
+                        continue;
                     }
+                    GPSProtocol::GPSConfig config{};
+                    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+                    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+                    unsigned baudrate = 115200;
+                    const int result = receiver->configure(baudrate, config);
+                    CHECK(io.failed);
+                    CHECK(result < 0);
+                    CHECK(receiver->ioError() == error);
+                    CHECK(receiver->ioErrorDetail() == (fault == ScriptedIO::Operation::Baud ? QString() : io.detail));
+                    const auto warnings = gps_test_warnings;
+                    if (fault == ScriptedIO::Operation::Read && error != GPSProtocol::ReadCancelled) {
+                        CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1, code %2): %3")
+                                                          .arg(static_cast<int>(GPSReadStatus::Error))
+                                                          .arg(error)
+                                                          .arg(io.detail)});
+                    } else {
+                        CHECK(warnings.empty());
+                    }
+                    CHECK(receiver->receive(10) < 0);
+                    CHECK(receiver->ioError() == error);
+                    CHECK(receiver->ioErrorDetail() == (fault == ScriptedIO::Operation::Baud ? QString() : io.detail));
+                    CHECK(gps_test_warnings == warnings);
                 }
             }
         }

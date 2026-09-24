@@ -556,44 +556,6 @@ void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
     }
 }
 
-void GPSProviderTest::_unsupportedPositionRoleReportsConfigFailure_data()
-{
-    QTest::addColumn<GPSType>("type");
-    QTest::newRow("trimble") << GPSType::trimble;
-    QTest::newRow("septentrio") << GPSType::septentrio;
-    QTest::newRow("femto") << GPSType::femto;
-}
-
-void GPSProviderTest::_unsupportedPositionRoleReportsConfigFailure()
-{
-    QFETCH(GPSType, type);
-    const GPSReceiverConfig config{.role = GPSReceiverConfig::Role::Position};
-    const QString error = gpsReceiverConfigError(type, config);
-    QVERIFY(!error.isEmpty());
-    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(error)));
-    GPSProvider provider(
-        [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); }, type,
-        config);
-    QSignalSpy ready(&provider, &GPSProvider::receiverReady);
-    QSignalSpy errors(&provider, &GPSProvider::connectionError);
-    QObject observer;
-    QList<QPair<GPSConnectionError, QString>> failures;
-    connect(
-        &provider, &GPSProvider::connectionError, &observer,
-        [&failures](GPSConnectionError category, const QString& detail) { failures.append({category, detail}); },
-        Qt::QueuedConnection);
-    provider.start();
-    QVERIFY(provider.wait(TestTimeout::mediumMs()));
-    verifyExpectedLogMessage();
-    QVERIFY(ready.isEmpty());
-    QCOMPARE(errors.size(), 1);
-    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::ConfigFailed);
-    QCOMPARE(errors.first()[1].toString(), error);
-    QVERIFY(failures.isEmpty());
-    QCoreApplication::sendPostedEvents(&observer, QEvent::MetaCall);
-    QCOMPARE(failures, (QList<QPair<GPSConnectionError, QString>>{{GPSConnectionError::ConfigFailed, error}}));
-}
-
 void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
 {
     TransportTrace trace;

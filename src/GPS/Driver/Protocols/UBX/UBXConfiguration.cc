@@ -44,6 +44,9 @@
 #include "UBXMessageSchema.h"
 
 namespace {
+// Base stations always use the stationary navigation model.
+constexpr uint8_t STATIONARY_DYNAMIC_MODEL = 2;
+
 // RTCM3 message sets for a base: the station/bias messages plus GPS, GLONASS, Galileo and BeiDou
 // observations as MSM4 or MSM7 (1074/1084/1094/1124 vs 1077/1087/1097/1127)
 static constexpr uint32_t RTCM_BASE_MSGOUT_I2C[] = {
@@ -75,7 +78,6 @@ GPSNativeUBX::BaseStationCapability GPSNativeUBX::baseStationCapability() const
 int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
 {
     _baseConfig = config.base;
-    _dyn_model = config.dynamicModel;
     resetIOError();
     _identity.timeModeUnsupported = false;
     _valsetAckAmbiguous = false;
@@ -90,7 +92,6 @@ int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
     if (!validateConfiguration(config)) {
         return -1;
     }
-    _output_mode = config.output_mode;
 
     const bool auto_baudrate = baudrate == 0;
     const auto identify = [this] {
@@ -126,7 +127,7 @@ int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
     if (!detectedBaud || _identity.board == Board::unknown) {
         return -1;
     }
-    if (_output_mode == OutputMode::RTCM && baseStationCapability() == BaseStationCapability::Unsupported) {
+    if (baseStationCapability() == BaseStationCapability::Unsupported) {
         return -1;
     }
 
@@ -150,10 +151,8 @@ int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
         for (auto& port : ports) {
             port.mode = UBX_TX_CFG_PRT_MODE;
             port.baudRate = detectedBaud;
-            port.inProtoMask = _output_mode == OutputMode::GPS ? UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM
-                                                               : UBX_TX_CFG_PRT_PROTO_UBX;
-            port.outProtoMask = _output_mode == OutputMode::GPS ? UBX_TX_CFG_PRT_PROTO_UBX
-                                                                : UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM;
+            port.inProtoMask = UBX_TX_CFG_PRT_PROTO_UBX;
+            port.outProtoMask = UBX_TX_CFG_PRT_PROTO_UBX | UBX_TX_CFG_PRT_PROTO_RTCM;
         }
         ports[0].portID = UBX_TX_CFG_PRT_PORTID;
         ports[1].portID = UBX_TX_CFG_PRT_PORTID_USB;
@@ -203,55 +202,27 @@ int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
     }
     baudrate = desiredBaud;
 
-    if (_output_mode == OutputMode::RTCM) {
-        if (!_rtcm_parsing) {
-            _rtcm_parsing.emplace();
-        }
-
-        _rtcm_parsing->reset();
+    if (!_rtcm_parsing) {
+        _rtcm_parsing.emplace();
     }
-
-    if (_output_mode == OutputMode::RTCM) {
-        // RTCM mode force stationary dynamic model
-        _dyn_model = 2;
-    }
+    _rtcm_parsing->reset();
 
     int ret;
 
     /* Configure the device, use config commands depending on protocol version */
     if (_identity.protocol27) {
-        ret = configureDevice(config);
+        ret = configureDevice();
 
     } else {
-        ret = configureDevicePreV27(config.gnss_systems);
+        ret = configureDevicePreV27();
     }
 
     if (ret != 0) {
         return ret;
     }
 
-    // A position source must leave any previous base-station time mode.
-    if (_output_mode != OutputMode::RTCM) {
-        if (disableTimeMode() < 0) {
-            return -1;
-        }
-        if (!_identity.timeModeUnsupported) {
-            if (_identity.protocol27) {
-                initCfgValset();
-                cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C, 0);
-                if (!sendCfgValsetAcked().succeeded()) {
-                    return -1;
-                }
-            } else if (!configureMessageRateAndAck(UBX_MSG_NAV_SVIN, 0, true)) {
-                return -1;
-            }
-        }
-    }
-
-    if (_output_mode == OutputMode::RTCM) {
-        if (restartSurveyIn() < 0) {
-            return -1;
-        }
+    if (restartSurveyIn() < 0) {
+        return -1;
     }
 
     _configured = true;
@@ -260,9 +231,8 @@ int GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
     return 0;
 }
 
-int GPSNativeUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
+int GPSNativeUBX::configureDevicePreV27()
 {
-    ubx_payload_tx_cfg_gnss_t payload_tx_cfg_gnss{};
     ubx_payload_tx_cfg_nav5_t payload_tx_cfg_nav5{};
     ubx_payload_tx_cfg_rate_t payload_tx_cfg_rate{};
 
@@ -283,7 +253,7 @@ int GPSNativeUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
     /* send a NAV5 message to set the options for the internal filter */
     payload_tx_cfg_nav5 = {};
     payload_tx_cfg_nav5.mask = UBX_TX_CFG_NAV5_MASK;
-    payload_tx_cfg_nav5.dynModel = _dyn_model;
+    payload_tx_cfg_nav5.dynModel = STATIONARY_DYNAMIC_MODEL;
     payload_tx_cfg_nav5.fixMode = UBX_TX_CFG_NAV5_FIXMODE;
 
     if (!sendMessage(UBX_MSG_CFG_NAV5, UBX::encode(payload_tx_cfg_nav5))) {
@@ -292,85 +262,6 @@ int GPSNativeUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
 
     if (!waitForAck(UBX_MSG_CFG_NAV5).succeeded()) {
         return -1;
-    }
-
-    /* configure active GNSS systems (number of channels and used signals taken from U-Center default) */
-    if (static_cast<int32_t>(gnssSystems) != 0) {
-        payload_tx_cfg_gnss = {};
-        payload_tx_cfg_gnss.msgVer = 0x00;
-        payload_tx_cfg_gnss.numTrkChHw = 0x00;    // read only
-        payload_tx_cfg_gnss.numTrkChUse = 0xFF;   // use max number of HW channels
-        payload_tx_cfg_gnss.numConfigBlocks = 7;  // always configure all systems
-
-        // GPS and QZSS should always be enabled and disabled together, according to uBlox
-        payload_tx_cfg_gnss.block[0].gnssId = UBX_TX_CFG_GNSS_GNSSID_GPS;
-        payload_tx_cfg_gnss.block[1].gnssId = UBX_TX_CFG_GNSS_GNSSID_QZSS;
-
-        if (gnssSystems & GNSSSystemsMask::ENABLE_GPS) {
-            payload_tx_cfg_gnss.block[0].resTrkCh = 8;
-            payload_tx_cfg_gnss.block[0].maxTrkCh = 16;
-            payload_tx_cfg_gnss.block[0].flags = UBX_TX_CFG_GNSS_FLAGS_GPS_L1CA | UBX_TX_CFG_GNSS_FLAGS_ENABLE;
-            payload_tx_cfg_gnss.block[1].resTrkCh = 0;
-            payload_tx_cfg_gnss.block[1].maxTrkCh = 3;
-            payload_tx_cfg_gnss.block[1].flags = UBX_TX_CFG_GNSS_FLAGS_QZSS_L1CA | UBX_TX_CFG_GNSS_FLAGS_ENABLE;
-        }
-
-        payload_tx_cfg_gnss.block[2].gnssId = UBX_TX_CFG_GNSS_GNSSID_SBAS;
-
-        if (gnssSystems & GNSSSystemsMask::ENABLE_SBAS) {
-            payload_tx_cfg_gnss.block[2].resTrkCh = 1;
-            payload_tx_cfg_gnss.block[2].maxTrkCh = 3;
-            payload_tx_cfg_gnss.block[2].flags = UBX_TX_CFG_GNSS_FLAGS_SBAS_L1CA | UBX_TX_CFG_GNSS_FLAGS_ENABLE;
-        }
-
-        payload_tx_cfg_gnss.block[3].gnssId = UBX_TX_CFG_GNSS_GNSSID_GALILEO;
-
-        if (gnssSystems & GNSSSystemsMask::ENABLE_GALILEO) {
-            payload_tx_cfg_gnss.block[3].resTrkCh = 4;
-            payload_tx_cfg_gnss.block[3].maxTrkCh = 8;
-            payload_tx_cfg_gnss.block[3].flags = UBX_TX_CFG_GNSS_FLAGS_GALILEO_E1 | UBX_TX_CFG_GNSS_FLAGS_ENABLE;
-        }
-
-        payload_tx_cfg_gnss.block[4].gnssId = UBX_TX_CFG_GNSS_GNSSID_BEIDOU;
-
-        if (gnssSystems & GNSSSystemsMask::ENABLE_BEIDOU) {
-            payload_tx_cfg_gnss.block[4].resTrkCh = 8;
-            payload_tx_cfg_gnss.block[4].maxTrkCh = 16;
-            payload_tx_cfg_gnss.block[4].flags = UBX_TX_CFG_GNSS_FLAGS_BEIDOU_B1I | UBX_TX_CFG_GNSS_FLAGS_ENABLE;
-        }
-
-        payload_tx_cfg_gnss.block[5].gnssId = UBX_TX_CFG_GNSS_GNSSID_GLONASS;
-
-        if (gnssSystems & GNSSSystemsMask::ENABLE_GLONASS) {
-            payload_tx_cfg_gnss.block[5].resTrkCh = 8;
-            payload_tx_cfg_gnss.block[5].maxTrkCh = 14;
-            payload_tx_cfg_gnss.block[5].flags = UBX_TX_CFG_GNSS_FLAGS_GLONASS_L1 | UBX_TX_CFG_GNSS_FLAGS_ENABLE;
-        }
-
-        // IMES always disabled
-        payload_tx_cfg_gnss.block[6].gnssId = UBX_TX_CFG_GNSS_GNSSID_IMES;
-        payload_tx_cfg_gnss.block[6].flags = 0;
-
-        // send message
-        if (!sendMessage(UBX_MSG_CFG_GNSS, UBX::encode(payload_tx_cfg_gnss))) {
-            return -1;
-        }
-
-        if (!waitForAck(UBX_MSG_CFG_GNSS).succeeded() && !ioError()) {
-            // The receiver rejects the configuration as a whole if it names a constellation it
-            // cannot receive, e.g. BeiDou on a SAM-M8Q, or more of them than it can track at
-            // once. Keep the receiver's own selection rather than losing the fix over it.
-            log(GPSProtocolLogLevel::Warning, "GNSS constellation config rejected, keeping receiver config");
-        }
-
-        // On u-blox 8 the Galileo change only takes effect once the configuration has been
-        // saved and the receiver hardware reset, which we cannot do without dropping the
-        // rest of this session's configuration
-        if ((gnssSystems & GNSSSystemsMask::ENABLE_GALILEO) && !ioError()) {
-            log(GPSProtocolLogLevel::Warning, "Galileo needs a receiver power cycle to take effect");
-        }
-
-        waitForGnssReset();
     }
 
     /* configure message rates */
@@ -426,19 +317,17 @@ int GPSNativeUBX::configureDevicePreV27(const GNSSSystemsMask& gnssSystems)
     return 0;
 }
 
-int GPSNativeUBX::configureDevice(const GPSConfig& config)
+int GPSNativeUBX::configureDevice()
 {
     // There is no RTCM or USB interface on M10
     if (UBX::receiverProfile(_identity.board).usb) {
         initCfgValset();
 
-        const uint8_t enable_corrections_in = (_output_mode == OutputMode::RTCM) ? 0 : 1;
-
-        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1INPROT_RTCM3X, enable_corrections_in);
+        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1INPROT_RTCM3X, 0);
 
         // USB
         cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_UBX, 1);
-        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_RTCM3X, enable_corrections_in);
+        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_RTCM3X, 0);
         cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_NMEA, 0);
         cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBOUTPROT_UBX, 1);
 
@@ -447,8 +336,8 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
         // Only RTCM-output-capable receivers expose these keys. M9 SPG rejects
         // the entire VALSET if they are included, even with a value of zero.
         if (UBX::receiverProfile(_identity.board).rtcmOutput) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X, _output_mode != OutputMode::GPS);
-            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X, _output_mode != OutputMode::GPS);
+            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X, 1);
+            cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X, 1);
         }
 
         if (!sendCfgValsetAcked().succeeded()) {
@@ -458,8 +347,8 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
         // Optional SPARTN input (PointPerfect). Sent separately so modules without
         // SPARTN support can NACK without failing the rest of configuration.
         initCfgValset();
-        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1INPROT_SPARTN, enable_corrections_in);
-        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_SPARTN, enable_corrections_in);
+        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1INPROT_SPARTN, 0);
+        cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_SPARTN, 0);
 
         sendCfgValsetAcked(false);
     }
@@ -468,7 +357,7 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
     initCfgValset();
     cfgValset<uint8_t>(UBX_CFG_KEY_NAVSPG_FIXMODE, 3 /* Auto 2d/3d */);
     cfgValset<uint8_t>(UBX_CFG_KEY_NAVSPG_UTCSTANDARD, 3 /* USNO (U.S. Naval Observatory derived from GPS) */);
-    cfgValset<uint8_t>(UBX_CFG_KEY_NAVSPG_DYNMODEL, _dyn_model);
+    cfgValset<uint8_t>(UBX_CFG_KEY_NAVSPG_DYNMODEL, STATIONARY_DYNAMIC_MODEL);
 
     // measurement rate
     // M9N max rate is 8Hz for all satellites, above 8Hz the number of used satellites is restricted to 16.
@@ -548,181 +437,14 @@ int GPSNativeUBX::configureDevice(const GPSConfig& config)
         }
     }
 
-    // configure active GNSS systems (leave signal bands as is)
-    // Note: For M10 configuration if changing from default. As per the
-    //       MAX-M10S integration guide UBX-20053088 - R03, see section
-    //       2.1.1.3 GNSS signal configuration for details on some restrictions.
-    //       Implementing these restrictions are a TODO item for M10.
-    if (static_cast<int32_t>(config.gnss_systems) != 0) {
-        initCfgValset();
-
-        // GPS and QZSS should always be enabled and disabled together, according to uBlox
-        if (config.gnss_systems & GNSSSystemsMask::ENABLE_GPS) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_ENA, 1);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_ENA, 1);
-
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_L1CA_ENA, 1);
-
-            // M9 (SPG) has no CFG-SIGNAL key for QZSS L1S
-            if (_identity.board != Board::u_blox9) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_L1S_ENA, 1);
-            }
-
-            if (_identity.board == Board::u_blox_X20) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L2C_ENA, 1);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L5_ENA, 1);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_L2C_ENA, 1);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_L5_ENA, 1);
-
-            } else if (_identity.board == Board::u_blox9_F9P_L1L2) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L2C_ENA, 1);
-
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_L2C_ENA, 1);
-
-            } else if (_identity.board == Board::u_blox9_F9P_L1L5 || _identity.board == Board::u_blox10_L1L5) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L5_ENA, 1);
-
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_L5_ENA, 1);
-            }
-
-        } else {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_ENA, 0);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_ENA, 0);
-
-            if (_identity.board == Board::u_blox_X20) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L2C_ENA, 0);
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L5_ENA, 0);
-
-            } else if (_identity.board == Board::u_blox9_F9P_L1L2) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L2C_ENA, 0);
-
-            } else if (_identity.board == Board::u_blox9_F9P_L1L5 || _identity.board == Board::u_blox10_L1L5) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_L5_ENA, 0);
-            }
-        }
-
-        const uint8_t galileo = config.gnss_systems & GNSSSystemsMask::ENABLE_GALILEO;
-        cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_ENA, galileo);
-        if (_identity.board == Board::u_blox_X20) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_E5A_ENA, galileo);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_E6_ENA, galileo);
-        } else if (_identity.board == Board::u_blox9_F9P_L1L2) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_E5B_ENA, galileo);
-        } else if (_identity.board == Board::u_blox9_F9P_L1L5 || _identity.board == Board::u_blox10_L1L5) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_E5A_ENA, galileo);
-        }
-
-        const uint8_t beidou = config.gnss_systems & GNSSSystemsMask::ENABLE_BEIDOU;
-        cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_ENA, beidou);
-        if (_identity.board == Board::u_blox_X20) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B1C_ENA, beidou);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B2A_ENA, beidou);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B3_ENA, beidou);
-        } else if (_identity.board == Board::u_blox9_F9P_L1L2) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B2_ENA, beidou);
-        } else if (_identity.board == Board::u_blox9_F9P_L1L5 || _identity.board == Board::u_blox10_L1L5) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_B2A_ENA, beidou);
-        }
-
-        // GLONASS is not supported on DAN-F10N and X20
-        if (_identity.board != Board::u_blox10_L1L5 && _identity.board != Board::u_blox_X20) {
-            const uint8_t glonass = config.gnss_systems & GNSSSystemsMask::ENABLE_GLONASS;
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GLO_ENA, glonass);
-            if (glonass) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GLO_L1_ENA, 1);
-            }
-            if (_identity.board == Board::u_blox9_F9P_L1L2) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GLO_L2_ENA, glonass);
-            }
-        }
-
-        if (_identity.board == Board::u_blox9_F9P_L1L5 || _identity.board == Board::u_blox10_L1L5 ||
-            _identity.board == Board::u_blox_X20) {
-            const uint8_t navic = config.gnss_systems & GNSSSystemsMask::ENABLE_NAVIC;
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_NAVIC_ENA, navic);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_NAVIC_L5_ENA, navic);
-        }
-
-        if (!sendCfgValset()) {
-            return -1;
-        }
-
-        if (!waitForAck(UBX_MSG_CFG_VALSET).succeeded()) {
-            if (_valsetAckAmbiguous || ioError()) {
-                return -1;
-            }
-            // The receiver NAKs the whole message and applies nothing if it does not know a
-            // single key, so a signal key missing on this generation would leave the receiver
-            // unconfigured. Retry with the constellation enables, those exist everywhere.
-            log(GPSProtocolLogLevel::Warning, "GNSS signal config rejected, retrying without signal bands");
-
-            initCfgValset();
-
-            const uint8_t use_gps = (config.gnss_systems & GNSSSystemsMask::ENABLE_GPS) ? 1 : 0;
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GPS_ENA, use_gps);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_QZSS_ENA, use_gps);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GAL_ENA,
-                               (config.gnss_systems & GNSSSystemsMask::ENABLE_GALILEO) ? 1 : 0);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_BDS_ENA,
-                               (config.gnss_systems & GNSSSystemsMask::ENABLE_BEIDOU) ? 1 : 0);
-
-            if (_identity.board != Board::u_blox10_L1L5 && _identity.board != Board::u_blox_X20) {
-                cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_GLO_ENA,
-                                   (config.gnss_systems & GNSSSystemsMask::ENABLE_GLONASS) ? 1 : 0);
-            }
-
-            if (!sendCfgValset()) {
-                return -1;
-            }
-
-            if (!waitForAck(UBX_MSG_CFG_VALSET).succeeded()) {
-                if (_valsetAckAmbiguous || ioError()) {
-                    return -1;
-                }
-                // Keep going with whatever the receiver already has, a refused constellation
-                // selection must not cost us the fix
-                log(GPSProtocolLogLevel::Warning, "GNSS constellation config rejected, keeping receiver config");
-            }
-        }
-
-        waitForGnssReset();
-
-        // send SBAS config separately, because it seems to be buggy (with u-center, too)
-        initCfgValset();
-
-        if (config.gnss_systems & GNSSSystemsMask::ENABLE_SBAS) {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_SBAS_ENA, 1);
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_SBAS_L1CA_ENA, 1);
-
-        } else {
-            cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_SBAS_ENA, 0);
-        }
-
-        if (!sendCfgValset()) {
-            return -1;
-        }
-
-        const uint8_t enabled = (config.gnss_systems & GNSSSystemsMask::ENABLE_SBAS) ? 1 : 0;
-        if (!waitForAck(UBX_MSG_CFG_VALSET).succeeded() ||
-            verifyConfigValue(UBX_CFG_KEY_SIGNAL_SBAS_ENA, enabled) < 0 ||
-            (enabled && verifyConfigValue(UBX_CFG_KEY_SIGNAL_SBAS_L1CA_ENA, 1) < 0)) {
-            return -1;
-        }
-
-        waitForGnssReset();
-    }
-
     // GPS L5 is broadcast unhealthy while it is pre-operational, so tell the receiver to take
     // the L1 health flag instead. The key is not in any interface description, only in app note
     // UBX-21038688, so it gets a message of its own rather than putting the constellation
     // config at the mercy of a firmware that has never heard of it.
     if (_identity.board == Board::u_blox9_F9P_L1L5 || _identity.board == Board::u_blox10_L1L5 ||
         _identity.board == Board::u_blox_X20) {
-        const bool use_gps =
-            (static_cast<int32_t>(config.gnss_systems) == 0) || (config.gnss_systems & GNSSSystemsMask::ENABLE_GPS);
-
         initCfgValset();
-        cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_L5_HEALTH_OVERRIDE, use_gps ? 1 : 0);
+        cfgValset<uint8_t>(UBX_CFG_KEY_SIGNAL_L5_HEALTH_OVERRIDE, 1);
 
         if (!sendCfgValsetAcked(false).succeeded() && !ioError()) {
             log(GPSProtocolLogLevel::Warning, "GPS L5 health override not supported by this receiver");
@@ -860,14 +582,8 @@ bool GPSNativeUBX::cfgValsetRaw(uint32_t key_id, uint32_t value)
     if (!_valset.append(key_id, value)) {
         return false;
     }
-    if (key_id == UBX_CFG_KEY_NAVSPG_DYNMODEL) {
-        _valset.settings.add(GPSReceiverSetting::DynamicModel);
-    }
     if (key_id == UBX_CFG_KEY_RATE_MEAS || key_id == UBX_CFG_KEY_RATE_NAV) {
         _valset.settings.add(GPSReceiverSetting::OutputRateHz);
-    }
-    if ((key_id & 0xffff0000u) == 0x10310000u) {
-        _valset.settings.add(GPSReceiverSetting::ConstellationMask);
     }
 
     return true;
@@ -1081,10 +797,6 @@ int GPSNativeUBX::restartSurveyInPreV27()
 
 int GPSNativeUBX::restartSurveyIn()
 {
-    if (_output_mode != OutputMode::RTCM) {
-        return -1;
-    }
-
     if (!_identity.protocol27) {
         return restartSurveyInPreV27();
     }
@@ -1202,21 +914,6 @@ GPSCommandResult GPSNativeUBX::verifyCfgValset(GPSConfigurationStep step)
     return result;
 }
 
-void GPSNativeUBX::waitForGnssReset()
-{
-    // Changing the enabled constellations resets the GNSS subsystem, and every u-blox
-    // interface description asks for 0.5 s after the acknowledgement before the next
-    // command. Keep reading while we wait, the receiver is still streaming.
-    const uint64_t time_started = nowUs();
-
-    while (nowUs() < time_started + UBX_GNSS_RESET_TIME) {
-        receive(UBX_CONFIG_TIMEOUT);
-        if (ioError()) {
-            return;
-        }
-    }
-}
-
 void GPSNativeUBX::requestCommsDiagnostics()
 {
     const uint64_t now = nowUs();
@@ -1327,12 +1024,8 @@ bool GPSNativeUBX::configureMessageRateAndAck(uint16_t msg, uint8_t rate, bool r
 
 bool GPSNativeUBX::sendMessage(uint16_t msg, const uint8_t* payload, uint16_t length, GPSConfigurationStep step)
 {
-    if (msg == UBX_MSG_CFG_NAV5) {
-        step.affectedSettings.add(GPSReceiverSetting::DynamicModel);
-    } else if (msg == UBX_MSG_CFG_RATE) {
+    if (msg == UBX_MSG_CFG_RATE) {
         step.affectedSettings.add(GPSReceiverSetting::OutputRateHz);
-    } else if (msg == UBX_MSG_CFG_GNSS) {
-        step.affectedSettings.add(GPSReceiverSetting::ConstellationMask);
     }
     if (step.command.empty()) {
         step.command = std::to_string(msg);

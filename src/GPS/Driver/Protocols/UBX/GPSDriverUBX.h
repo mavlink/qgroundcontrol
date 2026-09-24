@@ -137,16 +137,14 @@ private:
 
     /**
      * Send configuration values and desired message rates
-     * @param config The configuration includes GNSS systems to use and protocol for interfaces
      * @return 0 on success, <0 on error
      */
-    int configureDevice(const GPSConfig& config);
+    int configureDevice();
     /**
      * Send configuration values and desired message rates (for protocol version < 27)
-     * @param gnssSystems Set of GNSS systems to use
      * @return 0 on success, <0 on error
      */
-    int configureDevicePreV27(const GNSSSystemsMask& gnssSystems);
+    int configureDevicePreV27();
 
     /**
      * Add a configuration value to the pending CFG-VALSET batch.
@@ -278,7 +276,6 @@ private:
     /**
      * Wait out the GNSS subsystem reset that follows a constellation change
      */
-    void waitForGnssReset();
 
     int decodeValidatedPayload(uint16_t message, std::span<const uint8_t> payload);
     void flushDecoded() override;
@@ -323,10 +320,6 @@ private:
     bool _got_posllh{false};
     bool _got_velned{false};
     bool _got_sec_sig{false};             ///< SEC-SIG jammingState supersedes deprecated MON-RF flags
-
-    uint8_t _dyn_model{7};  ///< ublox Dynamic platform model default 7: airborne with <2g acceleration
-
-    OutputMode _output_mode{OutputMode::GPS};
 
     std::optional<RTCMStreamDecoder> _rtcm_parsing;
 };

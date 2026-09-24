@@ -82,6 +82,7 @@ private:
     std::optional<uint64_t> _lastPublishedEpoch;
     static constexpr uint64_t EPOCH_MAX_AGE_US = 200000;
     static constexpr uint64_t WEEK_MS = 604800000;
+    static constexpr uint16_t PVT_GEODETIC_LENGTH = 94;
 
     /**
      * @brief Add payload rx byte
@@ -116,7 +117,6 @@ private:
     uint16_t _rx_payload_index{0};
     sbf_buf_t _buf;
     std::array<uint8_t, 110> _wire{};
-    OutputMode _output_mode{OutputMode::GPS};
     std::optional<RTCMStreamDecoder> _rtcm_parsing;
 
     uint32_t _survey_duration = 0;

@@ -86,10 +86,10 @@ private slots:
         std::atomic_bool stop = false;
         StreamWriteTransport transport(stop);
         const uint8_t byte = 1;
-        QCOMPARE(transport.writeConfiguration(&byte, 1, QDeadlineTimer(transport.configurationWriteTimeout())).status,
+        QCOMPARE(transport.write(&byte, 1, QDeadlineTimer(transport.configurationWriteTimeout())).status,
                  GPSWriteStatus::Unsupported);
         stop = true;
-        QCOMPARE(transport.writeConfiguration(&byte, 1, QDeadlineTimer(transport.configurationWriteTimeout())).status,
+        QCOMPARE(transport.write(&byte, 1, QDeadlineTimer(transport.configurationWriteTimeout())).status,
                  GPSWriteStatus::Cancelled);
     }
 
@@ -219,11 +219,11 @@ private slots:
 #endif
         QCOMPARE(transport->open().status, GPSOpenStatus::Opened);
         const uint8_t byte = 42;
-        QCOMPARE(transport->writeBounded(nullptr, 1, QDeadlineTimer(100)).status, GPSWriteStatus::InvalidData);
-        QCOMPARE(transport->writeBounded(&byte, -1, QDeadlineTimer(100)).status, GPSWriteStatus::InvalidData);
-        QCOMPARE(transport->writeBounded(&byte, 0, QDeadlineTimer(0)).status, GPSWriteStatus::Completed);
+        QCOMPARE(transport->write(nullptr, 1, QDeadlineTimer(100)).status, GPSWriteStatus::InvalidData);
+        QCOMPARE(transport->write(&byte, -1, QDeadlineTimer(100)).status, GPSWriteStatus::InvalidData);
+        QCOMPARE(transport->write(&byte, 0, QDeadlineTimer(0)).status, GPSWriteStatus::Completed);
         if (outcome == "expired") {
-            const auto result = transport->writeBounded(&byte, 1, QDeadlineTimer(0));
+            const auto result = transport->write(&byte, 1, QDeadlineTimer(0));
             QCOMPARE(result.status, GPSWriteStatus::TimedOut);
             QCOMPARE(result.acceptedBytes, 0);
             QCOMPARE(result.writtenBytes, 0);
@@ -236,8 +236,8 @@ private slots:
             // Consecutive writes must not credit a previous operation's signals.
             for (int size : {1, 127, 3, 512, 17, 1029, 2}) {
                 const QByteArray payload(size, static_cast<char>(size));
-                const auto result = transport->writeBounded(reinterpret_cast<const uint8_t*>(payload.constData()), size,
-                                                            QDeadlineTimer(1000));
+                const auto result =
+                    transport->write(reinterpret_cast<const uint8_t*>(payload.constData()), size, QDeadlineTimer(1000));
                 QCOMPARE(result.status, GPSWriteStatus::Completed);
                 QCOMPARE(result.acceptedBytes, size);
                 QCOMPARE(result.writtenBytes, size);
@@ -259,9 +259,7 @@ private slots:
             QVERIFY(!transport->fatalError());
             return;
         }
-        QCOMPARE(transport->writeConfiguration(&byte, 1, QDeadlineTimer(transport->configurationWriteTimeout()))
-                     .writtenBytes,
-                 1);
+        QCOMPARE(transport->write(&byte, 1, QDeadlineTimer(transport->configurationWriteTimeout())).writtenBytes, 1);
         const QByteArray payload(16 * 1024 * 1024, 'x');
         std::jthread cancellation;
         const bool cancelled = outcome.startsWith("cancelled");
@@ -274,7 +272,7 @@ private slots:
         }
         QElapsedTimer elapsed;
         elapsed.start();
-        const auto result = transport->writeBounded(
+        const auto result = transport->write(
             reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
             outcome == "cancelled-forever" ? QDeadlineTimer(QDeadlineTimer::Forever) : QDeadlineTimer(100));
         QCOMPARE(result.status, cancelled ? GPSWriteStatus::Cancelled : GPSWriteStatus::TimedOut);
@@ -286,7 +284,7 @@ private slots:
         QVERIFY(result.uncertainBytes() <= 4096);
         QVERIFY(transport->fatalError());
         stop = false;
-        QCOMPARE(transport->writeBounded(&byte, 1, QDeadlineTimer(100)).acceptedBytes, 0);
+        QCOMPARE(transport->write(&byte, 1, QDeadlineTimer(100)).acceptedBytes, 0);
     }
 };
 

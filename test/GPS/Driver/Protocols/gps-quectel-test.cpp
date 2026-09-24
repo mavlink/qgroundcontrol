@@ -41,7 +41,6 @@ using Receiver = GPSTest::QuectelReceiver;
 GPSProtocol::GPSConfig surveyConfig()
 {
     GPSProtocol::GPSConfig config;
-    config.output_mode = GPSProtocol::OutputMode::RTCM;
     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 15;
     return config;
@@ -122,11 +121,12 @@ void positionAndEvidence()
 {
     gps_test_time = 0;
     Receiver receiver;
+    receiver.role = 2;
     GPSNativePositionReport position{};
     GPSNativeQuectel driver(captureGPSReports(receiver.io(), position), false);
     unsigned baud = 0;
     CHECK(!driver.receiverReady());
-    CHECK(driver.configure(baud, {}) == 0);
+    CHECK(driver.configure(baud, surveyConfig()) == 0);
     CHECK(baud == 460800);
     CHECK(driver.receiverReady());
     CHECK(receiver.commands[0] == "PQTMVERNO");
@@ -137,9 +137,17 @@ void positionAndEvidence()
     }
     CHECK(receiver.sent("PQTMSRR"));
     CHECK(receiver.outcomes[0].evidence.outcome == GPSCommandOutcome::ReadbackVerified);
-    CHECK(receiver.outcomes[2].evidence.outcome == GPSCommandOutcome::Written);
-    CHECK(receiver.outcomes[5].evidence.outcome == GPSCommandOutcome::Acknowledged);
-    CHECK(receiver.outcomes[6].evidence.outcome == GPSCommandOutcome::ReadbackVerified);
+    CHECK(std::any_of(receiver.outcomes.begin(), receiver.outcomes.end(), [](const auto& outcome) {
+        return outcome.evidence.command == "PQTMSRR" && outcome.evidence.outcome == GPSCommandOutcome::Written;
+    }));
+    CHECK(std::any_of(receiver.outcomes.begin(), receiver.outcomes.end(), [](const auto& outcome) {
+        return outcome.evidence.command.starts_with("PQTMCFGMSGRATE,W,GGA") &&
+               outcome.evidence.outcome == GPSCommandOutcome::Acknowledged;
+    }));
+    CHECK(std::any_of(receiver.outcomes.begin(), receiver.outcomes.end(), [](const auto& outcome) {
+        return outcome.evidence.command.starts_with("PQTMCFGMSGRATE,R,GGA") &&
+               outcome.evidence.outcome == GPSCommandOutcome::ReadbackVerified;
+    }));
     feed(driver, "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47\r\n", 1);
     CHECK(std::abs(position.navigation.latitudeDegrees - 48.1173) < 1e-7);
     CHECK(std::abs(position.navigation.altitudeEllipsoidMeters - 592.3) < 0.01);
@@ -158,20 +166,18 @@ void identityAndRoleSafety()
         receiver.identity = identity;
         GPSNativeQuectel driver(receiver.io(), false);
         unsigned baud = 460800;
-        CHECK(driver.configure(baud, {}) < 0);
+        CHECK(driver.configure(baud, surveyConfig()) < 0);
         CHECK(receiver.commands.size() == 1);
         CHECK(!driver.receiverReady());
     }
-    for (const bool requestBase : {false, true}) {
-        Receiver receiver;
-        receiver.role = requestBase ? 1 : 2;
-        GPSNativeQuectel driver(receiver.io(), false);
-        unsigned baud = 460800;
-        CHECK(driver.configure(baud, requestBase ? surveyConfig() : GPSProtocol::GPSConfig{}) < 0);
-        CHECK(receiver.commands.size() == 2);
-        CHECK(!driver.receiverReady());
-        noPersistence(receiver);
-    }
+    Receiver receiver;
+    receiver.role = 1;
+    GPSNativeQuectel driver(receiver.io(), false);
+    unsigned baud = 460800;
+    CHECK(driver.configure(baud, surveyConfig()) < 0);
+    CHECK(receiver.commands.size() == 2);
+    CHECK(!driver.receiverReady());
+    noPersistence(receiver);
 }
 
 void fixedECEF()
@@ -498,11 +504,12 @@ void transactionFailures()
         gps_test_time = 0;
         gps_test_warnings.clear();
         Receiver receiver;
+        receiver.role = 2;
         receiver.failure = fault == Receiver::Fault::Readback ? "PQTMCFGMSGRATE,R,GGA" : "PQTMCFGMSGRATE,W,GGA";
         receiver.fault = fault;
         GPSNativeQuectel driver(receiver.io(), false);
         unsigned baud = 460800;
-        CHECK(driver.configure(baud, {}) < 0);
+        CHECK(driver.configure(baud, surveyConfig()) < 0);
         CHECK(!driver.receiverReady());
         CHECK(receiver.sent(receiver.failure));
         CHECK(!receiver.sent("PQTMCFGMSGRATE,W,GST"));
@@ -629,19 +636,8 @@ void roleTransition()
     feed(driver, COMPLETE);
     driver.consume(CORRECTION);
     CHECK(receiver.corrections == 1);
-    receiver.commands.clear();
-    CHECK(driver.configure(baud, {}) < 0);
-    CHECK(receiver.commands.size() == 2);
-    CHECK(!driver.receiverReady());
     driver.consume(CORRECTION);
-    CHECK(receiver.corrections == 1);
-    // An externally saved/rebooted role can be used on the next explicit retry.
-    receiver.role = 1;
-    receiver.savedRole = 1;
-    CHECK(driver.configure(baud, {}) == 0);
-    CHECK(driver.receiverReady());
-    driver.consume(CORRECTION);
-    CHECK(receiver.corrections == 1);
+    CHECK(receiver.corrections == 2);
     noPersistence(receiver);
 }
 
@@ -686,16 +682,6 @@ void managedChanges()
         }
         driver.consume(CORRECTION);
         CHECK(receiver.corrections == 1);
-        GPSProtocol::GPSConfig rover;
-        CHECK(driver.configure(baud, rover) < 0);
-        CHECK(receiver.saves == 2);
-        CHECK(!driver.receiverReady());
-        rover.allowPersistentChanges = true;
-        CHECK(driver.configure(baud, rover) == 0);
-        CHECK(receiver.savedRole == 1);
-        CHECK(receiver.saves == 3);
-        driver.consume(CORRECTION);
-        CHECK(receiver.corrections == 1);
     }
 }
 
@@ -718,13 +704,13 @@ void managedBaseValuesAndNoUnnecessarySaves()
         CHECK(driver.configure(baud, config) == 0);
         CHECK(receiver.saves == 1);
     }
-    for (const auto configType : {0, 1, 2}) {
+    for (const auto configType : {1, 2}) {
         Receiver receiver;
-        receiver.role = configType == 0 ? 1 : 2;
+        receiver.role = 2;
         if (configType == 2) {
             receiver.base = "2,0,0,0.0000,6378237.0000,0.0000,0";
         }
-        auto config = configType == 0 ? GPSProtocol::GPSConfig{} : configType == 1 ? surveyConfig() : fixedConfig();
+        auto config = configType == 1 ? surveyConfig() : fixedConfig();
         config.allowPersistentChanges = true;
         GPSNativeQuectel driver(receiver.io(), false);
         unsigned baud = 460800;
@@ -826,18 +812,6 @@ void managedReadbackFailures()
 
 void managedPersistenceScope()
 {
-    {
-        Receiver receiver;
-        receiver.role = 2;
-        GPSNativeQuectel driver(receiver.io(), false);
-        receiver.savedRole = 1;  // A pending role readback must not trigger an unnecessary save.
-        GPSProtocol::GPSConfig config;
-        config.allowPersistentChanges = true;
-        unsigned baud = 460800;
-        CHECK(driver.configure(baud, config) == 0);
-        CHECK(receiver.savedRole == 1);
-        noPersistence(receiver);
-    }
     {
         Receiver receiver;
         receiver.role = 2;

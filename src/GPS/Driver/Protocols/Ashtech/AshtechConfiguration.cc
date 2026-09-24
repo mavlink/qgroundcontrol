@@ -134,7 +134,6 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         return -1;
     }
     _baseConfig = config.base;
-    _output_mode = config.output_mode;
 
     /* Try different baudrates (115200 is the default for Trimble) and request the baudrate that we want.
      *
@@ -251,22 +250,8 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         // for some reason we don't get a response here
     }
 
-    // Enable dual antenna mode (2: both antennas are L1/L2 GNSS capable, flex mode, avoids the need to determine
-    // the baseline length through a prior calibration stage)
-    // Needs to be set before other commands
-    const bool use_dual_mode = _output_mode != OutputMode::RTCM && _board == AshtechBoard::trimble_mb_two;
-
-    if (use_dual_mode) {
-        const char duo_mode[] = "$PASHS,SNS,DUO,2\r\n";
-
-        if (writeAckedCommand(duo_mode, sizeof(duo_mode) - 1, ASH_RESPONSE_TIMEOUT) != 0) {
-        }
-
-    } else {
-        const char solo_mode[] = "$PASHS,SNS,SOL\r\n";
-
-        if (writeAckedCommand(solo_mode, sizeof(solo_mode) - 1, ASH_RESPONSE_TIMEOUT) != 0) {
-        }
+    const char solo_mode[] = "$PASHS,SNS,SOL\r\n";
+    if (writeAckedCommand(solo_mode, sizeof(solo_mode) - 1, ASH_RESPONSE_TIMEOUT) != 0) {
     }
 
     char buffer[40];
@@ -289,24 +274,12 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         }
     }
 
-    if (use_dual_mode) {
-        // enable heading output
-        const char heading_output[] = "$PASHS,NME,HDT,%c,ON,0.05\r\n";
-        int len = snprintf(buffer, sizeof(buffer), heading_output, _port);
-
-        if (writeAckedCommand(buffer, len, ASH_RESPONSE_TIMEOUT) != 0) {
-        }
+    if (!_rtcm_parsing) {
+        _rtcm_parsing.emplace();
     }
+    _rtcm_parsing->reset();
 
-    if (_output_mode == OutputMode::RTCM) {
-        if (!_rtcm_parsing) {
-            _rtcm_parsing.emplace();
-        }
-
-        _rtcm_parsing->reset();
-    }
-
-    if (_output_mode == OutputMode::RTCM && _board == AshtechBoard::trimble_mb_two) {
+    if (_board == AshtechBoard::trimble_mb_two) {
         GPSNativeSurveyReport status{};
         status.survey.active = true;
         surveyInStatus(status);
@@ -318,7 +291,7 @@ int GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
 
 void GPSNativeAshtech::activateCorrectionOutput()
 {
-    if (_correction_output_activated || _output_mode != OutputMode::RTCM) {
+    if (_correction_output_activated) {
         return;
     }
 

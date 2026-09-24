@@ -46,7 +46,7 @@ private:
     std::string _baseCommand() const;
     bool _saveConfiguration();
     bool _setMessageRate(std::string_view name, unsigned rate, std::string_view version = {});
-    bool _restart(bool requireRoleMatch = true, bool startSurveySession = false);
+    bool _restart(bool requireRoleMatch = true);
     bool _handleSurvey(std::string_view body);
     void _revokeSurvey();
     void _expireSurvey();
@@ -71,7 +71,6 @@ private:
     SurveySession _survey;
     std::string _firmware;
     EcefMeters _fixedECEF;
-    OutputMode _outputMode = OutputMode::GPS;
     unsigned _receiverRole = 0;
     bool _baseMatches = false;
     bool _baseHasDistance = false;
