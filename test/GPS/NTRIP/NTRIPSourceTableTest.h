@@ -16,4 +16,6 @@ private slots:
     void _testEmptyTable();
     void _testCoordinateValidity_data();
     void _testCoordinateValidity();
+    void _testTableTerminator_data();
+    void _testTableTerminator();
 };

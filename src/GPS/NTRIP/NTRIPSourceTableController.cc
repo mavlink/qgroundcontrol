@@ -164,7 +164,7 @@ void NTRIPSourceTableController::_onReplyFinished(QNetworkReply* reply, quint64 
          reply->error() == QNetworkReply::ProtocolInvalidOperationError ||
          reply->error() == QNetworkReply::RemoteHostClosedError || reply->error() == QNetworkReply::TimeoutError);
     const QString networkErrorMsg = networkError ? reply->errorString() : QString();
-    const QString body = networkError ? QString() : QString::fromUtf8(reply->readAll());
+    const QByteArray body = networkError ? QByteArray() : reply->readAll();
     if (networkError) {
         if (legacyEnvelope) {
             // QNAM cannot expose a v1 SOURCETABLE status line. Retry once with the same TLS/auth policy.
@@ -178,12 +178,12 @@ void NTRIPSourceTableController::_onReplyFinished(QNetworkReply* reply, quint64 
         return;
     }
 
-    if (!body.contains(QStringLiteral("ENDSOURCETABLE"))) {
+    if (!ntripSourceTableComplete(body)) {
         _completeFetch(revision, {}, tr("Response does not contain a valid source table"));
         return;
     }
 
-    _completeFetch(revision, body);
+    _completeFetch(revision, QString::fromUtf8(body));
 }
 
 void NTRIPSourceTableController::_startLegacyFetch(quint64 revision)
@@ -272,8 +272,7 @@ void NTRIPSourceTableController::_readLegacyReply(quint64 revision)
             return;
         }
         _attempt->legacyBody += result.body;
-        if (_attempt->legacyBody.startsWith("ENDSOURCETABLE\r\n") ||
-            _attempt->legacyBody.contains("\nENDSOURCETABLE\r\n")) {
+        if (ntripSourceTableComplete(_attempt->legacyBody)) {
             _finishLegacyFetch();
             return;
         }

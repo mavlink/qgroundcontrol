@@ -114,6 +114,27 @@ void NTRIPSourceTableTest::_testEmptyTable()
     QCOMPARE(model.count(), 0);
 }
 
+void NTRIPSourceTableTest::_testTableTerminator_data()
+{
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<bool>("complete");
+    const QByteArray row = "STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800";
+    QTest::newRow("crlf") << row + "\r\nENDSOURCETABLE\r\n" << true;
+    QTest::newRow("lf") << row + "\nENDSOURCETABLE\n" << true;
+    QTest::newRow("no-final-newline") << row + "\r\nENDSOURCETABLE" << true;
+    QTest::newRow("empty-table") << QByteArray("ENDSOURCETABLE\r\n") << true;
+    QTest::newRow("partial") << row + "\r\nENDSOURCE" << false;
+    QTest::newRow("inside-row") << QByteArray("STR;ENDSOURCETABLE;Id\r\n") << false;
+    QTest::newRow("prefix-of-line") << row + "\r\nENDSOURCETABLES\r\n" << false;
+}
+
+void NTRIPSourceTableTest::_testTableTerminator()
+{
+    QFETCH(QByteArray, body);
+    QFETCH(bool, complete);
+    QCOMPARE(ntripSourceTableComplete(body), complete);
+}
+
 UT_REGISTER_TEST(NTRIPSourceTableTest, TestLabel::Unit)
 
 void NTRIPSourceTableTest::_testCoordinateValidity_data()

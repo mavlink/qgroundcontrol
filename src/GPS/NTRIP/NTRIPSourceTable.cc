@@ -9,6 +9,19 @@
 
 QGC_LOGGING_CATEGORY(NTRIPSourceTableLog, "GPS.NTRIP.NTRIPSourceTable")
 
+bool ntripSourceTableComplete(QByteArrayView body)
+{
+    static constexpr QByteArrayView terminator("ENDSOURCETABLE");
+    for (qsizetype offset = body.indexOf(terminator); offset >= 0; offset = body.indexOf(terminator, offset + 1)) {
+        const qsizetype end = offset + terminator.size();
+        if ((offset == 0 || body.at(offset - 1) == '\n') &&
+            (end == body.size() || body.at(end) == '\r' || body.at(end) == '\n')) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool NTRIPMountpoint::fromSourceTableLine(const QString& line, NTRIPMountpoint& out)
 {
     // Need >= 18 fields; split keeps empty fields, so a trailing ';' is harmless

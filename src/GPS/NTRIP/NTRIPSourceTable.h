@@ -4,6 +4,7 @@
 #include <functional>
 
 #include <QtCore/QAbstractListModel>
+#include <QtCore/QByteArrayView>
 #include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
@@ -11,6 +12,9 @@
 #include <QtPositioning/QGeoCoordinate>
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableLog)
+
+/// True once an ENDSOURCETABLE line arrives, with CRLF, LF, or no final line ending.
+bool ntripSourceTableComplete(QByteArrayView body);
 
 /// Parsed NTRIP source-table STR row. Plain value type — all fields are immutable
 /// after parse except distanceKm, which is recomputed by updateDistances().

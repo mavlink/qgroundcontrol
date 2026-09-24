@@ -160,7 +160,8 @@ std::optional<GGA> gga(const Sentence& input)
     GGA result{latitude.value_or(NAN), longitude.value_or(NAN)};
     result.quality = *quality;
     result.satellitesUsed = satellites;
-    result.hdop = number<double>(f[Field::GGA_HDOP]).value_or(NAN);
+    if (const auto hdop = number<double>(f[Field::GGA_HDOP]); hdop && *hdop >= 0)
+        result.hdop = *hdop;
     if (f[Field::GGA_ALTITUDE_UNITS] == "M")
         result.altitude = number<double>(f[Field::GGA_ALTITUDE]).value_or(NAN);
     if (f[Field::GGA_GEOID_UNITS] == "M")

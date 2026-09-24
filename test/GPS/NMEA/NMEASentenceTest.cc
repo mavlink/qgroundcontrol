@@ -450,6 +450,32 @@ void NMEASentenceTest::_repairChecksum()
     QCOMPARE(NMEAUtils::repairChecksum(input), expected);
 }
 
+void NMEASentenceTest::_ggaHdopValidation_data()
+{
+    QTest::addColumn<QByteArray>("hdop");
+    QTest::addColumn<double>("expected");
+    QTest::newRow("valid") << QByteArray("1.03") << 1.03;
+    QTest::newRow("zero") << QByteArray("0.0") << 0.0;
+    QTest::newRow("negative") << QByteArray("-1.03") << qQNaN();
+    QTest::newRow("empty") << QByteArray() << qQNaN();
+}
+
+void NMEASentenceTest::_ggaHdopValidation()
+{
+    QFETCH(QByteArray, hdop);
+    QFETCH(double, expected);
+    const auto sentence = ownedSentence(
+        NMEAUtils::repairChecksum("$GPGGA,000000.000,5321.6802,N,00630.3372,W,1,8," + hdop + ",61.7,M,55.2,M,,"));
+    QVERIFY(sentence);
+    const auto fix = NMEA::gga(sentence->sentence());
+    QVERIFY(fix);
+    if (qIsNaN(expected)) {
+        QVERIFY(qIsNaN(fix->hdop));
+    } else {
+        QCOMPARE(fix->hdop, expected);
+    }
+}
+
 UT_REGISTER_TEST(NMEASentenceTest, TestLabel::Unit)
 
 void NMEASentenceTest::_frameValidation_data()

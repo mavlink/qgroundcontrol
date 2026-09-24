@@ -28,4 +28,6 @@ private slots:
     void _navigationFixLoss();
     void _fixQuality_data();
     void _fixQuality();
+    void _ggaHdopValidation_data();
+    void _ggaHdopValidation();
 };
