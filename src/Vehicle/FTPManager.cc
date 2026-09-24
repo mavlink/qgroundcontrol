@@ -4,6 +4,7 @@
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
+#include "VehicleSigningController.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
@@ -772,7 +773,14 @@ void FTPManager::_openFileROAckOrNak(const MavlinkFTP::Request* ackOrNak)
 uint8_t FTPManager::_readChunkSize(void) const
 {
     const SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
-    return (sharedLink && sharedLink->isRadioLink()) ? kRadioReadChunkSize : kFullReadChunkSize;
+    if (!sharedLink || !sharedLink->isRadioLink()) {
+        return kFullReadChunkSize;
+    }
+
+    // Treat a link that is switching signing on or off as signed, packets may carry a signature either way
+    const VehicleSigningController* const signing = _vehicle->signingController();
+    const bool signedLink = signing && (signing->signingStatus().state != SigningStatus::State::Off);
+    return signedLink ? kRadioReadChunkSizeSigned : kRadioReadChunkSize;
 }
 
 void FTPManager::_burstReadFileWorker(bool firstRequest)
