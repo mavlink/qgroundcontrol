@@ -12,6 +12,7 @@ private slots:
     void testFetchInvalidConfigTriggersError();
     void testFetchErrorInvalidatesCache();
     void testFetchValidHostGoesInProgress();
+    void testFetchWarnsForPlaintextCredentials();
     void testFetchAbortsOversizedSourceTable();
     void testFetchCertificatePolicyChanges_data();
     void testFetchCertificatePolicyChanges();

@@ -33,7 +33,9 @@ starts a fresh retry budget.
 - **Browse** — fetch available mountpoints from the server and display them in a list with format, navigation system, country, bitrate, and distance information
 
 Source-table discovery supports HTTP and legacy NTRIP source-table responses. A mountpoint with
-missing or invalid coordinates has an unknown distance, rather than a fabricated location.
+missing or invalid coordinates has an unknown distance, rather than a fabricated location. When
+**Browse** sends a username or password without TLS encryption, QGC warns that the credentials are
+not encrypted.
 
 ## Options
 

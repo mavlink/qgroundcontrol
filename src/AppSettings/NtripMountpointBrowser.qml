@@ -51,6 +51,16 @@ SettingsGroupLayout {
     }
 
     QGCLabel {
+        objectName:         "ntripSourceTableSecurityWarning"
+        Layout.fillWidth:   true
+        visible:            text !== ""
+        text:               root._ntripMgr.sourceTableController.securityWarning
+        textFormat:         Text.PlainText
+        color:              qgcPal.colorOrange
+        wrapMode:           Text.WordWrap
+    }
+
+    QGCLabel {
         Layout.fillWidth:   true
         visible:            root._ntripMgr.sourceTableController.fetchStatus === NTRIPSourceTableController.Error
         text:               root._ntripMgr.sourceTableController.fetchError

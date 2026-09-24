@@ -27,6 +27,7 @@ class NTRIPSourceTableController : public QObject
     Q_OBJECT
     Q_PROPERTY(FetchStatus fetchStatus READ fetchStatus NOTIFY fetchStatusChanged)
     Q_PROPERTY(QString fetchError READ fetchError NOTIFY fetchErrorChanged)
+    Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged)
     Q_PROPERTY(QAbstractListModel* mountpointModel READ mountpointModel NOTIFY mountpointModelChanged)
 
 public:
@@ -50,6 +51,9 @@ public:
 
     QString fetchError() const { return _fetchError; }
 
+    /// Set while the latest fetch sends caster credentials without TLS.
+    QString securityWarning() const { return _securityWarning; }
+
     QAbstractListModel* mountpointModel() const;
 
     void fetch(const NTRIPConnectionConfig& config, const QGeoCoordinate& sortCoord = {});
@@ -59,6 +63,7 @@ public:
 signals:
     void fetchStatusChanged();
     void fetchErrorChanged();
+    void securityWarningChanged();
     void mountpointModelChanged();
     /// Emitted when the user picks a mountpoint. The manager/QML layer persists
     /// it to NTRIPSettings — this controller does not write settings directly.
@@ -81,6 +86,7 @@ private:
     void _startFetch(quint64 revision, const QByteArray& request);
     void _readReply(quint64 revision);
     void _finishFetch(const QString& error = {});
+    void _setSecurityWarning(const QString& warning);
     bool _deferModelMutation(std::function<void()> action);
 
     NTRIPSourceTableModel* _model = nullptr;
@@ -89,6 +95,7 @@ private:
     QGeoCoordinate _sortCoord;
     FetchStatus _fetchStatus = FetchStatus::Idle;
     QString _fetchError;
+    QString _securityWarning;
     QElapsedTimer _cacheAge;
     quint64 _fetchRevision = 0;
 

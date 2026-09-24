@@ -93,6 +93,11 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
         _completeFetch(revision, {}, request.error);
         return;
     }
+    if (request.credentialsInClear) {
+        qCWarning(NTRIPSourceTableControllerLog) << "Sending source-table credentials without TLS";
+    }
+    _setSecurityWarning(request.credentialsInClear ? tr("Credentials are being sent without TLS encryption.")
+                                                   : QString());
     _startFetch(revision, request.bytes);
     if (current() && _activeSocket()) {
         _notifications.emitSignal(this, &NTRIPSourceTableController::fetchErrorChanged);
@@ -199,6 +204,15 @@ void NTRIPSourceTableController::_finishFetch(const QString& error)
     }
     _completeFetch(_fetchRevision, QString::fromUtf8(_attempt->body),
                    error.isEmpty() ? std::nullopt : std::optional(error));
+}
+
+void NTRIPSourceTableController::_setSecurityWarning(const QString& warning)
+{
+    if (_securityWarning == warning) {
+        return;
+    }
+    _securityWarning = warning;
+    _notifications.emitSignal(this, &NTRIPSourceTableController::securityWarningChanged);
 }
 
 void NTRIPSourceTableController::_completeFetch(quint64 revision, QString table, std::optional<QString> error)

@@ -1,6 +1,7 @@
 #include "NTRIPSourceTableControllerTest.h"
 
 #include <QtCore/QAbstractItemModel>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QUrl>
 #include <QtHttpServer/QHttpServer>
 #include <QtHttpServer/QHttpServerResponse>
@@ -150,6 +151,32 @@ void NTRIPSourceTableControllerTest::testFetchValidHostGoesInProgress()
 
     QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
     QVERIFY(statusSpy.count() >= 1);
+}
+
+void NTRIPSourceTableControllerTest::testFetchWarnsForPlaintextCredentials()
+{
+    NTRIPSourceTableController ctrl;
+    QSignalSpy warnings(&ctrl, &NTRIPSourceTableController::securityWarningChanged);
+    auto config = casterConfig(QStringLiteral("caster.example.com"));
+    config.useTls = false;
+    ctrl.fetch(config);
+    QVERIFY(ctrl.securityWarning().isEmpty());
+    QCOMPARE(warnings.count(), 0);
+
+    config.username = QStringLiteral("user");
+    config.password = QStringLiteral("secret");
+    expectLogMessage("GPS.NTRIP.NTRIPSourceTableController", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("without TLS")));
+    ctrl.fetch(config);
+    verifyExpectedLogMessage();
+    QVERIFY(!ctrl.securityWarning().isEmpty());
+    QCOMPARE(warnings.count(), 1);
+
+    config.username.clear();
+    config.password.clear();
+    ctrl.fetch(config);
+    QVERIFY(ctrl.securityWarning().isEmpty());
+    QCOMPARE(warnings.count(), 2);
 }
 
 void NTRIPSourceTableControllerTest::testFetchAbortsOversizedSourceTable()

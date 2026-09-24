@@ -1328,6 +1328,9 @@ void NTRIPReentrancyTest::sourceTableIdentity()
     QFETCH(NTRIPConnectionConfig, replacement);
     QFETCH(bool, sameCaster);
     QFETCH(bool, cached);
+    // The identity rows use credentials over plain HTTP, which the controller reports.
+    ignoreLogMessage("GPS.NTRIP.NTRIPSourceTableController", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("credentials without TLS")));
     NTRIPSourceTableController controller;
     controller.fetch(initial);
     const auto previous = controller._activeSocket();
