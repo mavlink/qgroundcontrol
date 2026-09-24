@@ -21,6 +21,22 @@ function(qgc_set_qt_resource_alias)
 endfunction()
 
 # ----------------------------------------------------------------------------
+# _qgc_write_if_changed
+# Writes a generated build-dir file only when its content differs, so the mtime
+# stays stable across reconfigures. AUTOMOC re-runs moc for every target when
+# its executable (the moccache launcher) is newer than the generated files.
+# ----------------------------------------------------------------------------
+function(_qgc_write_if_changed path content)
+    if(EXISTS "${path}")
+        file(READ "${path}" _existing)
+        if(_existing STREQUAL content)
+            return()
+        endif()
+    endif()
+    file(WRITE "${path}" "${content}")
+endfunction()
+
+# ----------------------------------------------------------------------------
 # qgc_config_caching
 # Configures compiler caching using ccache or sccache if available
 # ----------------------------------------------------------------------------
@@ -77,7 +93,7 @@ function(qgc_config_caching)
                 string(APPEND _wrapper "export CCACHE_DIR=\"\${CCACHE_DIR:-${CMAKE_SOURCE_DIR}/.ccache}\"\n")
                 string(APPEND _wrapper "export CCACHE_BASEDIR=\"\${CCACHE_BASEDIR:-${CMAKE_SOURCE_DIR}}\"\n")
                 string(APPEND _wrapper "exec \"${QGC_CACHE_PROGRAM}\" \"$@\"\n")
-                file(WRITE "${_ccache_wrapper}" "${_wrapper}")
+                _qgc_write_if_changed("${_ccache_wrapper}" "${_wrapper}")
                 # cmakelang 0.6.13 does not recognize file(CHMOD).
                 # cmake-lint: disable=E1126
                 file(
@@ -137,7 +153,7 @@ function(_qgc_write_moccache_stats_script python moccache_py out_var)
         string(APPEND _body "if not defined MOCCACHE_BASEDIR set \"MOCCACHE_BASEDIR=${CMAKE_BINARY_DIR}\"\r\n")
         string(APPEND _body "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\"\r\n")
         string(APPEND _body "exit /b 0\r\n")
-        file(WRITE "${_script}" "${_body}")
+        _qgc_write_if_changed("${_script}" "${_body}")
     else()
         set(_script "${CMAKE_BINARY_DIR}/moccache-stats")
         set(_body "#!/bin/sh\n")
@@ -147,7 +163,7 @@ function(_qgc_write_moccache_stats_script python moccache_py out_var)
         string(APPEND _body
                "\"${python}\" \"${moccache_py}\" --show-stats --build-dir \"${CMAKE_BINARY_DIR}\" || true\n"
         )
-        file(WRITE "${_script}" "${_body}")
+        _qgc_write_if_changed("${_script}" "${_body}")
         # cmakelang 0.6.13 does not recognize file(CHMOD).
         # cmake-lint: disable=E1126
         file(
@@ -245,7 +261,7 @@ function(qgc_config_moccache)
         string(APPEND _wrapper "if not defined MOCCACHE_MAX_SIZE set \"MOCCACHE_MAX_SIZE=256M\"\r\n")
         string(APPEND _wrapper "\"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" %*\r\n")
         string(APPEND _wrapper "exit /b %ERRORLEVEL%\r\n")
-        file(WRITE "${_moccache_wrapper}" "${_wrapper}")
+        _qgc_write_if_changed("${_moccache_wrapper}" "${_wrapper}")
     else()
         set(_moccache_wrapper "${CMAKE_BINARY_DIR}/moccache-launcher")
         set(_wrapper "#!/bin/sh\n")
@@ -255,7 +271,7 @@ function(qgc_config_moccache)
         string(APPEND _wrapper
                "exec \"${QGC_MOCCACHE_PYTHON}\" \"${_moccache_py}\" --real-moc \"${_real_moc}\" \"$@\"\n"
         )
-        file(WRITE "${_moccache_wrapper}" "${_wrapper}")
+        _qgc_write_if_changed("${_moccache_wrapper}" "${_wrapper}")
         file(
             CHMOD
             "${_moccache_wrapper}"

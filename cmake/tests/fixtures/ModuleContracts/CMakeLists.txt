@@ -61,12 +61,10 @@ if(TEST_CASE STREQUAL "compiler-warnings-project-targets")
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         foreach(_generated_warning IN ITEMS shadow unused-parameter)
             if(NOT "-Wno-error=${_generated_warning}" IN_LIST _library_compile_options)
-                message(FATAL_ERROR
-                    "AUTOMOC library lacks generated-code exception: ${_generated_warning}")
+                message(FATAL_ERROR "AUTOMOC library lacks generated-code exception: ${_generated_warning}")
             endif()
             if("-Wno-error=${_generated_warning}" IN_LIST _compile_options)
-                message(FATAL_ERROR
-                    "Main target unexpectedly received library exception: ${_generated_warning}")
+                message(FATAL_ERROR "Main target unexpectedly received library exception: ${_generated_warning}")
             endif()
         endforeach()
     endif()
@@ -84,7 +82,10 @@ if(TEST_CASE STREQUAL "compiler-warnings-project-targets")
 endif()
 
 if(TEST_CASE STREQUAL "coverage-project-targets")
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
+    set(CMAKE_BUILD_TYPE
+        Debug
+        CACHE STRING "" FORCE
+    )
     set(QGC_ENABLE_COVERAGE ON)
     set(QGC_COVERAGE_LINE_THRESHOLD 30)
     set(QGC_COVERAGE_BRANCH_THRESHOLD 20)
@@ -120,7 +121,10 @@ if(TEST_CASE STREQUAL "coverage-project-targets")
 endif()
 
 if(TEST_CASE STREQUAL "coverage-invalid-threshold")
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
+    set(CMAKE_BUILD_TYPE
+        Debug
+        CACHE STRING "" FORCE
+    )
     set(QGC_ENABLE_COVERAGE ON)
     set(QGC_COVERAGE_LINE_THRESHOLD 101)
     set(QGC_COVERAGE_BRANCH_THRESHOLD 20)
@@ -129,7 +133,10 @@ if(TEST_CASE STREQUAL "coverage-invalid-threshold")
 endif()
 
 if(TEST_CASE STREQUAL "coverage-clean-without-gcovr")
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
+    set(CMAKE_BUILD_TYPE
+        Debug
+        CACHE STRING "" FORCE
+    )
     set(QGC_ENABLE_COVERAGE ON)
     set(QGC_COVERAGE_LINE_THRESHOLD 30)
     set(QGC_COVERAGE_BRANCH_THRESHOLD 20)
@@ -145,15 +152,24 @@ if(TEST_CASE STREQUAL "coverage-clean-without-gcovr")
 endif()
 
 if(TEST_CASE STREQUAL "coverage-release-request")
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
+    set(CMAKE_BUILD_TYPE
+        Release
+        CACHE STRING "" FORCE
+    )
     set(QGC_ENABLE_COVERAGE ON)
     include("${QGC_MODULE_DIR}/modules/Coverage.cmake")
     return()
 endif()
 
 if(TEST_CASE STREQUAL "sanitizer-project-targets")
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
-    set(QGC_ENABLE_ASAN ON CACHE BOOL "" FORCE)
+    set(CMAKE_BUILD_TYPE
+        Debug
+        CACHE STRING "" FORCE
+    )
+    set(QGC_ENABLE_ASAN
+        ON
+        CACHE BOOL "" FORCE
+    )
     set(QGC_BUILD_TESTING OFF)
     add_executable(${PROJECT_NAME} main.cpp)
     add_library(ProjectLibrary STATIC main.cpp)
@@ -174,8 +190,14 @@ if(TEST_CASE STREQUAL "sanitizer-project-targets")
 endif()
 
 if(TEST_CASE STREQUAL "sanitizer-release-request")
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
-    set(QGC_ENABLE_ASAN ON CACHE BOOL "" FORCE)
+    set(CMAKE_BUILD_TYPE
+        Release
+        CACHE STRING "" FORCE
+    )
+    set(QGC_ENABLE_ASAN
+        ON
+        CACHE BOOL "" FORCE
+    )
     set(QGC_BUILD_TESTING OFF)
     include("${QGC_MODULE_DIR}/modules/Sanitizers.cmake")
     return()
@@ -186,10 +208,8 @@ if(TEST_CASE STREQUAL "coverage-clean")
     file(MAKE_DIRECTORY "${_coverage_dir}/nested")
     file(WRITE "${_coverage_dir}/one.gcda" "data")
     file(WRITE "${_coverage_dir}/nested/two.profraw" "data")
-    execute_process(
-        COMMAND "${CMAKE_COMMAND}" "-DQGC_COVERAGE_BUILD_DIR=${_coverage_dir}" -P
-                "${QGC_MODULE_DIR}/modules/CleanCoverage.cmake"
-        COMMAND_ERROR_IS_FATAL ANY
+    execute_process(COMMAND "${CMAKE_COMMAND}" "-DQGC_COVERAGE_BUILD_DIR=${_coverage_dir}" -P
+                            "${QGC_MODULE_DIR}/modules/CleanCoverage.cmake" COMMAND_ERROR_IS_FATAL ANY
     )
     if(EXISTS "${_coverage_dir}/one.gcda" OR EXISTS "${_coverage_dir}/nested/two.profraw")
         message(FATAL_ERROR "Coverage data was not removed")
@@ -217,6 +237,8 @@ endif()
 if(TEST_CASE MATCHES "^helpers-")
     include("${QGC_MODULE_DIR}/Helpers.cmake")
     if(TEST_CASE STREQUAL "helpers-cpm-added")
+        # CPM names this variable <PackageName>_ADDED.
+        # cmake-lint: disable=C0103
         set(Example_ADDED TRUE)
         qgc_require_cpm_added(Example)
     elseif(TEST_CASE STREQUAL "helpers-moccache-targets")
@@ -258,6 +280,22 @@ if(TEST_CASE MATCHES "^helpers-")
             message(FATAL_ERROR "Non-AUTOMOC target received moccache")
         endif()
         set_target_properties(AutomocTarget CustomMocTarget PROPERTIES AUTOMOC OFF)
+    elseif(TEST_CASE STREQUAL "helpers-write-if-changed")
+        set(_file "${CMAKE_CURRENT_BINARY_DIR}/write-if-changed.txt")
+        file(REMOVE "${_file}")
+        _qgc_write_if_changed("${_file}" "first\n")
+        # Microseconds so a same-second rewrite is still detected.
+        file(TIMESTAMP "${_file}" _first_mtime "%Y-%m-%dT%H:%M:%S.%f" UTC)
+        _qgc_write_if_changed("${_file}" "first\n")
+        file(TIMESTAMP "${_file}" _second_mtime "%Y-%m-%dT%H:%M:%S.%f" UTC)
+        if(NOT _first_mtime STREQUAL _second_mtime)
+            message(FATAL_ERROR "Unchanged content rewrote the file: ${_first_mtime} -> ${_second_mtime}")
+        endif()
+        _qgc_write_if_changed("${_file}" "second\n")
+        file(READ "${_file}" _content)
+        if(NOT _content STREQUAL "second\n")
+            message(FATAL_ERROR "Changed content was not written: ${_content}")
+        endif()
     elseif(TEST_CASE STREQUAL "helpers-cpm-missing")
         qgc_require_cpm_added(Example)
     elseif(TEST_CASE STREQUAL "helpers-cpm-invalid-name")
@@ -420,7 +458,10 @@ if(TEST_CASE MATCHES "^qgc-test-")
     add_executable(${PROJECT_NAME} main.cpp)
     set(QGC_BUILD_TESTING ON)
     if(TEST_CASE STREQUAL "qgc-test-invalid-parallel-level")
-        set(QGC_TEST_PARALLEL_LEVEL 0 CACHE STRING "" FORCE)
+        set(QGC_TEST_PARALLEL_LEVEL
+            0
+            CACHE STRING "" FORCE
+        )
     endif()
     include(CTest)
     include("${QGC_MODULE_DIR}/QGCTest.cmake")

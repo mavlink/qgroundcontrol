@@ -1,6 +1,7 @@
 set(_qgc_cmake_fixture_source "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/ModuleContracts")
 set(_qgc_cmake_fixture_root "${CMAKE_CURRENT_BINARY_DIR}/ModuleContracts")
 
+# Registers a test that configures the ModuleContracts fixture for test_case and expects success.
 function(qgc_add_cmake_contract_test test_name test_case)
     add_test(
         NAME "CMake.${test_name}"
@@ -11,15 +12,14 @@ function(qgc_add_cmake_contract_test test_name test_case)
     set_tests_properties("CMake.${test_name}" PROPERTIES LABELS "CMake;Unit")
 endfunction()
 
+# Registers a test that configures the ModuleContracts fixture and expects an error matching expected_regex.
 function(qgc_add_cmake_failure_contract_test test_name test_case expected_regex)
     add_test(
         NAME "CMake.${test_name}"
         COMMAND
-            "${CMAKE_COMMAND}" "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}"
-            "-DSOURCE_DIR=${_qgc_cmake_fixture_source}"
-            "-DBINARY_DIR=${_qgc_cmake_fixture_root}/${test_name}"
-            "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake" "-DTEST_CASE=${test_case}"
-            "-DEXPECTED_REGEX=${expected_regex}" -P
+            "${CMAKE_COMMAND}" "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}" "-DSOURCE_DIR=${_qgc_cmake_fixture_source}"
+            "-DBINARY_DIR=${_qgc_cmake_fixture_root}/${test_name}" "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake"
+            "-DTEST_CASE=${test_case}" "-DEXPECTED_REGEX=${expected_regex}" -P
             "${CMAKE_CURRENT_SOURCE_DIR}/run_expected_failure_test.cmake"
     )
     set_tests_properties("CMake.${test_name}" PROPERTIES LABELS "CMake;Unit")
@@ -34,6 +34,7 @@ qgc_add_cmake_contract_test(SanitizerProjectTargets sanitizer-project-targets)
 qgc_add_cmake_contract_test(CoverageClean coverage-clean)
 qgc_add_cmake_contract_test(HelpersCpmAdded helpers-cpm-added)
 qgc_add_cmake_contract_test(HelpersMoccacheTargets helpers-moccache-targets)
+qgc_add_cmake_contract_test(HelpersWriteIfChanged helpers-write-if-changed)
 qgc_add_cmake_contract_test(PythonVenvStaleCache python-venv-stale-cache)
 qgc_add_cmake_contract_test(QmlCodegenValid qml-codegen-valid)
 qgc_add_cmake_contract_test(QmlCodegenConfigureValid qml-codegen-configure-valid)
@@ -42,10 +43,8 @@ qgc_add_cmake_contract_test(QGCTestTimeoutZero qgc-test-timeout-zero)
 add_test(
     NAME CMake.CustomDirEscape
     COMMAND
-        "${CMAKE_COMMAND}" "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}"
-        "-DSOURCE_DIR=${PROJECT_SOURCE_DIR}"
-        "-DBINARY_DIR=${_qgc_cmake_fixture_root}/custom-dir-escape"
-        "-DCONFIGURE_ARGUMENT=-DQGC_CUSTOM_DIR=../outside"
+        "${CMAKE_COMMAND}" "-DCMAKE_EXECUTABLE=${CMAKE_COMMAND}" "-DSOURCE_DIR=${PROJECT_SOURCE_DIR}"
+        "-DBINARY_DIR=${_qgc_cmake_fixture_root}/custom-dir-escape" "-DCONFIGURE_ARGUMENT=-DQGC_CUSTOM_DIR=../outside"
         "-DEXPECTED_REGEX=QGC_CUSTOM_DIR must be a non-empty path" -P
         "${CMAKE_CURRENT_SOURCE_DIR}/run_expected_failure_test.cmake"
 )
@@ -78,9 +77,7 @@ foreach(qgc_failure_case IN LISTS _qgc_expected_failure_cases)
     list(GET _qgc_failure_parts 0 _qgc_test_name)
     list(GET _qgc_failure_parts 1 _qgc_test_case)
     list(GET _qgc_failure_parts 2 _qgc_expected_regex)
-    qgc_add_cmake_failure_contract_test(
-        "${_qgc_test_name}" "${_qgc_test_case}" "${_qgc_expected_regex}"
-    )
+    qgc_add_cmake_failure_contract_test("${_qgc_test_name}" "${_qgc_test_case}" "${_qgc_expected_regex}")
 endforeach()
 
 add_test(
@@ -92,3 +89,27 @@ add_test(
         "${CMAKE_CURRENT_SOURCE_DIR}/run_multi_config_test.cmake"
 )
 set_tests_properties(CMake.QGCTestMultiConfig PROPERTIES LABELS "CMake;Unit")
+
+add_test(
+    NAME CMake.MoccacheLauncherStable
+    COMMAND
+        "${CMAKE_COMMAND}" "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake"
+        "-DFIXTURE_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/MoccacheLauncher"
+        "-DFIXTURE_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/MoccacheLauncher" -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/run_moccache_launcher_test.cmake"
+)
+set_tests_properties(CMake.MoccacheLauncherStable PROPERTIES LABELS "CMake;Unit" SKIP_REGULAR_EXPRESSION
+                                                             "QGC_TEST_SKIPPED"
+)
+
+add_test(
+    NAME CMake.GitConfigureDepends
+    COMMAND
+        "${CMAKE_COMMAND}" "-DQGC_MODULE_DIR=${PROJECT_SOURCE_DIR}/cmake"
+        "-DFIXTURE_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/fixtures/GitConfigureDepends"
+        "-DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/GitConfigureDepends" -P
+        "${CMAKE_CURRENT_SOURCE_DIR}/run_git_configure_depends_test.cmake"
+)
+set_tests_properties(CMake.GitConfigureDepends PROPERTIES LABELS "CMake;Unit" SKIP_REGULAR_EXPRESSION
+                                                          "QGC_TEST_SKIPPED"
+)
