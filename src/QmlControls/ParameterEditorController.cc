@@ -471,7 +471,7 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
 
             if (wpParams.size() == 5) {
                 // QGC tab-delimited: VehicleId ComponentId Name Value Type
-                int vehicleId   = wpParams.at(0).toInt();
+                quint32 vehicleId = wpParams.at(0).toUInt();
                 componentId     = wpParams.at(1).toInt();
                 paramName       = wpParams.at(2);
                 fileValueStr    = wpParams.at(3);

@@ -7,5 +7,6 @@ class MAVLinkLogManagerTest : public VehicleTestManualConnect
     Q_OBJECT
 
 private slots:
+    void _testInitMAVLinkLogManager_data();
     void _testInitMAVLinkLogManager();
 };
