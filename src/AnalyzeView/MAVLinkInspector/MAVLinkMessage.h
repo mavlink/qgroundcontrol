@@ -33,8 +33,9 @@ public:
     /// Extract the instance field value from a raw mavlink message, or empty string if none.
     static QString extractInstanceValue(const mavlink_message_t &message);
 
-    quint32 id() const { return _message.msgid;  }
-    quint8 sysId() const { return _message.sysid; }
+    quint32 id() const { return _message.msgid; }
+
+    quint32 sysId() const { return _message.sysid; }
     quint8 compId() const { return _message.compid; }
     QString name() const { return _name;  }
     QString instanceValue() const { return _instanceValue; }

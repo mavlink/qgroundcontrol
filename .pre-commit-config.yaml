@@ -41,9 +41,9 @@ repos:
       - id: check-executables-have-shebangs
       - id: trailing-whitespace
         args: ['--markdown-linebreak-ext=md']
-        exclude: ^(translations/|test/GPS/Driver/Protocols/(corpus|fixtures)/.*\.(bin|gps|nmea|sbf|ubx)$)
+        exclude: ^(translations/|src/MAVLink/.*\.patch$|test/GPS/Driver/Protocols/(corpus|fixtures)/.*\.(bin|gps|nmea|sbf|ubx)$)
       - id: end-of-file-fixer
-        exclude: ^(translations/.*\.ts|.*\.(png|jpg|jpeg|gif|svg|ico|bin|dat)|test/GPS/Driver/Protocols/(corpus|fixtures)/.*\.(gps|nmea|sbf|ubx))$
+        exclude: ^(src/MAVLink/.*\.patch$|translations/.*\.ts|.*\.(png|jpg|jpeg|gif|svg|ico|bin|dat)|test/GPS/Driver/Protocols/(corpus|fixtures)/.*\.(gps|nmea|sbf|ubx))$
       - id: mixed-line-ending
         args: ['--fix=lf']
         exclude: (\.(bat|ps1)$|^test/GPS/Driver/Protocols/(corpus|fixtures)/.*\.(bin|gps|nmea|sbf|ubx)$)
