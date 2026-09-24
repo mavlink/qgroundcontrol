@@ -17,7 +17,7 @@ runs:
     # JavaScript actions receive runner-injected URLs that can override the
     # shell environment. RunsOn < 3.1 does this on Windows despite the S3 flag.
     - name: Detect Actions cache backend
-      uses: actions/github-script@v8
+      uses: actions/github-script@v9
       with:
         script: |
           const env = process.env;
@@ -41,7 +41,7 @@ runs:
           core.info(`Actions cache backend: ${backend}`);
 
     - name: Setup uv and Python ${{ inputs.python-version }}
-      uses: astral-sh/setup-uv@v8.1.0
+      uses: astral-sh/setup-uv@v10.2.0
       with:
         # These inputs are evaluated again during nested post-job cleanup.
         enable-cache: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}

@@ -54,7 +54,7 @@ runs:
         INPUTS_BUILD_DIR: ${{ inputs.build-dir }}
 
     - name: Upload to Codecov
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       with:
         files: ${{ inputs.build-dir }}/coverage.xml
         flags: ${{ inputs.flags }}
