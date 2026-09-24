@@ -157,7 +157,7 @@ def test_link_cache_has_restore_and_save_with_fork_read_only_policy() -> None:
 
 @pytest.mark.parametrize(
     "workflow",
-    ["linux", "windows", "android", "docker", "custom-build", "vm-builds"],
+    ["linux", "windows", "android", "docker", "custom-build", "vm-builds", "analysis"],
 )
 def test_runs_on_cache_setup_includes_fork_pull_requests(workflow: str) -> None:
     jobs = yaml.safe_load(_read(f".github/workflows/{workflow}.yml"))["jobs"]
