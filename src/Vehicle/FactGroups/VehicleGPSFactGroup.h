@@ -1,9 +1,12 @@
 #pragma once
 
+#include <chrono>
+
 #include <QtCore/QPointer>
 
 #include "FactGroup.h"
 #include "GPSObservation.h"
+#include "ScheduledTask.h"
 
 class GPSSourceHealth;
 class RuntimeScheduler;
@@ -30,6 +33,9 @@ class VehicleGPSFactGroup : public FactGroup
     Q_PROPERTY(Fact* systemQuality          READ systemQuality          CONSTANT)
     Q_PROPERTY(Fact* gnssSignalQuality      READ gnssSignalQuality      CONSTANT)
     Q_PROPERTY(Fact* postProcessingQuality  READ postProcessingQuality  CONSTANT)
+    Q_PROPERTY(Fact* rtkBaseline READ rtkBaseline CONSTANT)
+    Q_PROPERTY(Fact* rtkRate READ rtkRate CONSTANT)
+    Q_PROPERTY(Fact* rtkSatellites READ rtkSatellites CONSTANT)
 
 public:
     enum class ReceiverIndex
@@ -45,11 +51,7 @@ public:
     Fact *lon() { return &_lonFact; }
     Fact *mgrs() { return &_mgrsFact; }
     Fact *hdop() { return &_hdopFact; }
-    Fact* vdop() { return &_vdopFact; }
-
-    Fact* horizontalAccuracy() { return &_horizontalAccuracyFact; }
-
-    Fact* verticalAccuracy() { return &_verticalAccuracyFact; }
+    Fact *vdop() { return &_vdopFact; }
     Fact *courseOverGround() { return &_courseOverGroundFact; }
     Fact *yaw() { return &_yawFact; }
     Fact *count() { return &_countFact; }
@@ -62,6 +64,19 @@ public:
     Fact *systemQuality() { return &_systemQualityFact; }
     Fact *gnssSignalQuality() { return &_gnssSignalQualityFact; }
     Fact *postProcessingQuality() { return &_postProcessingQualityFact; }
+
+    Fact* horizontalAccuracy() { return &_horizontalAccuracyFact; }
+
+    Fact* verticalAccuracy() { return &_verticalAccuracyFact; }
+
+    /// GPS_RTK (primary) or GPS2_RTK (secondary); cleared when the vehicle stops reporting them.
+    Fact* rtkBaseline() { return &_rtkBaselineFact; }
+
+    Fact* rtkRate() { return &_rtkRateFact; }
+
+    Fact* rtkSatellites() { return &_rtkSatellitesFact; }
+
+    static constexpr std::chrono::seconds RTK_STATUS_TIMEOUT{5};
 
     /// Receipt time in the scheduler's monotonic clock domain; zero until an integrity report arrives.
     quint64 gnssIntegrityTimestampUs() const { return _gnssIntegrityTimestampUs; }
@@ -79,6 +94,8 @@ private:
     void _handleHighLatency(const mavlink_message_t &message);
     void _handleHighLatency2(const mavlink_message_t &message);
     void _handleGnssIntegrity(const mavlink_message_t& message);
+    void _handleGpsRtk(const mavlink_message_t& message);
+    void _clearRtkStatus();
 
     Fact _latFact = Fact(0, QStringLiteral("lat"), FactMetaData::valueTypeDouble);
     Fact _lonFact = Fact(0, QStringLiteral("lon"), FactMetaData::valueTypeDouble);
@@ -99,11 +116,15 @@ private:
     Fact _systemQualityFact = Fact(0, QStringLiteral("systemQuality"), FactMetaData::valueTypeUint8);
     Fact _gnssSignalQualityFact = Fact(0, QStringLiteral("gnssSignalQuality"), FactMetaData::valueTypeUint8);
     Fact _postProcessingQualityFact = Fact(0, QStringLiteral("postProcessingQuality"), FactMetaData::valueTypeUint8);
+    Fact _rtkBaselineFact = Fact(0, QStringLiteral("rtkBaseline"), FactMetaData::valueTypeDouble);
+    Fact _rtkRateFact = Fact(0, QStringLiteral("rtkRate"), FactMetaData::valueTypeDouble);
+    Fact _rtkSatellitesFact = Fact(0, QStringLiteral("rtkSatellites"), FactMetaData::valueTypeInt32);
 
     void _updateGpsObservation(GPSObservation observation, int fixType, int satellitesVisible, double yaw = qQNaN());
 
     const ReceiverIndex _receiver;
     RuntimeScheduler* const _scheduler;
     GPSSourceHealth* _positionHealth = nullptr;
+    ScheduledTask _rtkStatusExpiry;
     quint64 _gnssIntegrityTimestampUs = 0;
 };

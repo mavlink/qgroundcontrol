@@ -1,5 +1,7 @@
 #include "VehicleGPSFactGroup.h"
 
+#include <cmath>
+
 #include <QtPositioning/QGeoCoordinate>
 
 #include "GPSSourceHealth.h"
@@ -40,6 +42,7 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent, RuntimeScheduler* sche
     , _receiver(receiver)
     , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _positionHealth(new GPSSourceHealth(this, _scheduler))
+    , _rtkStatusExpiry(_scheduler, this)
 {
     _addFact(&_latFact);
     _addFact(&_lonFact);
@@ -60,6 +63,9 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent, RuntimeScheduler* sche
     _addFact(&_systemQualityFact);
     _addFact(&_gnssSignalQualityFact);
     _addFact(&_postProcessingQualityFact);
+    _addFact(&_rtkBaselineFact);
+    _addFact(&_rtkRateFact);
+    _addFact(&_rtkSatellitesFact);
 
     _latFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _lonFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
@@ -77,6 +83,7 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent, RuntimeScheduler* sche
     _systemQualityFact.setRawValue(255);
     _gnssSignalQualityFact.setRawValue(255);
     _postProcessingQualityFact.setRawValue(255);
+    _clearRtkStatus();
 }
 
 void VehicleGPSFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
@@ -106,6 +113,16 @@ void VehicleGPSFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_
         break;
     case MAVLINK_MSG_ID_GNSS_INTEGRITY:
         _handleGnssIntegrity(message);
+        break;
+    case MAVLINK_MSG_ID_GPS_RTK:
+        if (_receiver == ReceiverIndex::Primary) {
+            _handleGpsRtk(message);
+        }
+        break;
+    case MAVLINK_MSG_ID_GPS2_RTK:
+        if (_receiver == ReceiverIndex::Secondary) {
+            _handleGpsRtk(message);
+        }
         break;
     default:
         break;
@@ -227,4 +244,34 @@ void VehicleGPSFactGroup::_handleGnssIntegrity(const mavlink_message_t& message)
 
     _gnssIntegrityTimestampUs = receiptUs;
     emit gnssIntegrityReceived();
+}
+
+void VehicleGPSFactGroup::_handleGpsRtk(const mavlink_message_t& message)
+{
+    const auto apply = [this](const auto& rtk) {
+        // Baseline length is independent of whether the components are ECEF or NED.
+        const double a = rtk.baseline_a_mm;
+        const double b = rtk.baseline_b_mm;
+        const double c = rtk.baseline_c_mm;
+        rtkBaseline()->setRawValue(std::sqrt(a * a + b * b + c * c) / 1000.0);
+        rtkRate()->setRawValue(rtk.rtk_rate);
+        rtkSatellites()->setRawValue(rtk.nsats);
+    };
+    if (message.msgid == MAVLINK_MSG_ID_GPS2_RTK) {
+        mavlink_gps2_rtk_t rtk;
+        mavlink_msg_gps2_rtk_decode(&message, &rtk);
+        apply(rtk);
+    } else {
+        mavlink_gps_rtk_t rtk;
+        mavlink_msg_gps_rtk_decode(&message, &rtk);
+        apply(rtk);
+    }
+    (void) _rtkStatusExpiry.schedule(RTK_STATUS_TIMEOUT, [this]() { _clearRtkStatus(); });
+}
+
+void VehicleGPSFactGroup::_clearRtkStatus()
+{
+    _rtkBaselineFact.setRawValue(qQNaN());
+    _rtkRateFact.setRawValue(qQNaN());
+    _rtkSatellitesFact.setRawValue(-1);
 }

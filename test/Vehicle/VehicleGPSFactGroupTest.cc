@@ -38,6 +38,28 @@ mavlink_message_t gpsMessage(bool secondary, uint16_t yaw, uint8_t fixType)
     return message;
 }
 
+mavlink_message_t rtkMessage(bool secondary)
+{
+    const auto fill = [](auto& rtk) {
+        rtk.baseline_a_mm = 3000;
+        rtk.baseline_b_mm = -4000;
+        rtk.baseline_c_mm = 0;
+        rtk.rtk_rate = 1;
+        rtk.nsats = 17;
+    };
+    mavlink_message_t message{};
+    if (secondary) {
+        mavlink_gps2_rtk_t rtk{};
+        fill(rtk);
+        mavlink_msg_gps2_rtk_encode(1, 1, &message, &rtk);
+    } else {
+        mavlink_gps_rtk_t rtk{};
+        fill(rtk);
+        mavlink_msg_gps_rtk_encode(1, 1, &message, &rtk);
+    }
+    return message;
+}
+
 std::unique_ptr<VehicleGPSFactGroup> receiver(bool secondary, RuntimeScheduler* scheduler)
 {
     using Index = VehicleGPSFactGroup::ReceiverIndex;
@@ -58,6 +80,8 @@ private slots:
     void _highLatencyAccuracyUnits();
     void _receiverDispatch_data();
     void _receiverDispatch();
+    void _rtkStatus_data();
+    void _rtkStatus();
 };
 
 void VehicleGPSFactGroupTest::_rawNormalization_data()
@@ -196,4 +220,35 @@ void VehicleGPSFactGroupTest::_receiverDispatch()
 }
 
 UT_REGISTER_TEST(VehicleGPSFactGroupTest, TestLabel::Unit)
+
+void VehicleGPSFactGroupTest::_rtkStatus_data()
+{
+    QTest::addColumn<bool>("secondary");
+    QTest::newRow("primary") << false;
+    QTest::newRow("secondary") << true;
+}
+
+void VehicleGPSFactGroupTest::_rtkStatus()
+{
+    QFETCH(bool, secondary);
+    ManualScheduler scheduler;
+    auto gps = receiver(secondary, &scheduler);
+    QVERIFY(qIsNaN(gps->rtkBaseline()->rawValue().toDouble()));
+    QCOMPARE(gps->rtkSatellites()->rawValue().toInt(), -1);
+    gps->handleMessage(nullptr, rtkMessage(!secondary));
+    QVERIFY(qIsNaN(gps->rtkBaseline()->rawValue().toDouble()));
+    gps->handleMessage(nullptr, rtkMessage(secondary));
+    QCOMPARE(gps->rtkBaseline()->rawValue().toDouble(), 5.0);
+    QCOMPARE(gps->rtkRate()->rawValue().toDouble(), 1.0);
+    QCOMPARE(gps->rtkSatellites()->rawValue().toInt(), 17);
+    QVERIFY(scheduler.advanceBy(VehicleGPSFactGroup::RTK_STATUS_TIMEOUT - std::chrono::milliseconds(1)));
+    gps->handleMessage(nullptr, rtkMessage(secondary));
+    QVERIFY(scheduler.advanceBy(VehicleGPSFactGroup::RTK_STATUS_TIMEOUT - std::chrono::milliseconds(1)));
+    QCOMPARE(gps->rtkSatellites()->rawValue().toInt(), 17);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    QVERIFY(qIsNaN(gps->rtkBaseline()->rawValue().toDouble()));
+    QVERIFY(qIsNaN(gps->rtkRate()->rawValue().toDouble()));
+    QCOMPARE(gps->rtkSatellites()->rawValue().toInt(), -1);
+}
+
 #include "VehicleGPSFactGroupTest.moc"
