@@ -14,10 +14,11 @@ namespace {
 EventHandler makeStubEventHandler()
 {
     return EventHandler(
-        /*parent*/ nullptr,
+        /*parent*/
+        nullptr,
         /*profile*/ QString(),
         /*handleEventCB*/ [](auto) {},
-        /*sendRequestCB*/ [](auto&) {},
+        /*sendRequestCB*/ [](auto&, uint32_t) {},
         /*ourSystemId*/ 1, /*ourComponentId*/ 1,
         /*systemId*/ 1, /*componentId*/ 1);
 }

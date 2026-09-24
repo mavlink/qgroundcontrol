@@ -30,6 +30,10 @@ Q_APPLICATION_STATIC(MAVLinkProtocol, _mavlinkProtocolInstance);
 
 MAVLinkProtocol::MAVLinkProtocol(QObject* parent) : QObject(parent), _tempLogFile(new QFile(this))
 {
+    // Bound memory for arbitrary sender IDs, retaining the most recently active streams.
+    for (auto& sequences : _lastIndex) {
+        sequences.setMaxCost(4096);
+    }
     qCDebug(MAVLinkProtocolLog) << this;
 }
 
@@ -64,6 +68,7 @@ void MAVLinkProtocol::resetMetadataForLink(LinkInterface* link)
     _totalLossCounter[channel] = 0;
     _runningLossPercent[channel] = 0.f;
 
+    resetSequenceTracking(link);
     link->setDecodedFirstMavlinkPacket(false);
 }
 
@@ -71,8 +76,7 @@ void MAVLinkProtocol::resetSequenceTracking(LinkInterface* link)
 {
     // Clear per-(sysid,compid) sequence state so next packet isn't counted as a gap.
     const uint8_t channel = link->mavlinkChannel();
-    _firstMessageSeen[channel].clear();
-    std::memset(_lastIndex[channel], 0, sizeof(_lastIndex[channel]));
+    _lastIndex[channel].clear();
 }
 
 void MAVLinkProtocol::logSentBytes(const LinkInterface* link, const QByteArray& data)
@@ -157,18 +161,17 @@ void MAVLinkProtocol::_updateCounters(uint8_t mavlinkChannel, const mavlink_mess
 {
     _totalReceiveCounter[mavlinkChannel]++;
 
-    uint8_t& lastSeq = _lastIndex[mavlinkChannel][message.sysid][message.compid];
-
-    const QPair<uint8_t, uint8_t> key(message.sysid, message.compid);
+    const QPair<quint32, uint8_t> key(message.sysid, message.compid);
+    auto& sequences = _lastIndex[mavlinkChannel];
+    auto* const previous = sequences.object(key);
     uint8_t expectedSeq;
-    if (!_firstMessageSeen[mavlinkChannel].contains(key)) {
-        _firstMessageSeen[mavlinkChannel].insert(key);
+    if (!previous) {
         expectedSeq = message.seq;
-    } else if (message.seq == lastSeq) {
+    } else if (message.seq == *previous) {
         // v1/v2 of the same message share sequence numbers — duplicate seq isn't loss.
         return;
     } else {
-        expectedSeq = lastSeq + 1;
+        expectedSeq = *previous + 1;
     }
 
     uint64_t lostMessages;
@@ -179,7 +182,11 @@ void MAVLinkProtocol::_updateCounters(uint8_t mavlinkChannel, const mavlink_mess
     }
     _totalLossCounter[mavlinkChannel] += lostMessages;
 
-    lastSeq = message.seq;
+    if (previous) {
+        *previous = message.seq;
+    } else {
+        sequences.insert(key, new uint8_t(message.seq));
+    }
 
     const uint64_t totalSent = _totalReceiveCounter[mavlinkChannel] + _totalLossCounter[mavlinkChannel];
     const float currentLossPercent = (static_cast<double>(_totalLossCounter[mavlinkChannel]) / totalSent) * 100.0f;
@@ -251,6 +258,15 @@ void MAVLinkProtocol::_logData(LinkInterface* link, const mavlink_message_t& mes
             if (mavlink_msg_heartbeat_get_base_mode(&message) & MAV_MODE_FLAG_DECODE_POSITION_SAFETY) {
                 _vehicleWasArmed = true;
             }
+        }
+    }
+
+    // Keep foreign traffic in the log, but do not discover vehicles from headers addressed elsewhere.
+    if (message.incompat_flags & MAVLINK_IFLAG_TARGET32) {
+        const uint8_t targetComponent = mavlink_msg_get_target_compid(&message, mavlink_get_msg_entry(message.msgid));
+        if ((message.target_sysid != 0 && message.target_sysid != getSystemId()) ||
+            (targetComponent != 0 && targetComponent != getComponentId())) {
+            return;
         }
     }
 
@@ -527,7 +543,7 @@ void MAVLinkProtocol::_vehicleCountChanged()
     }
 }
 
-int MAVLinkProtocol::getSystemId() const
+quint32 MAVLinkProtocol::getSystemId() const
 {
-    return SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->rawValue().toInt();
+    return SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->rawValue().toUInt();
 }

@@ -3,16 +3,16 @@
 # Event logging, health reporting, and arming checks
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        EventHandler.cc
-        EventHandler.h
-        HealthAndArmingCheckReport.cc
-        HealthAndArmingCheckReport.h
-        LibEvents.cc
-        LibEvents.h
-        MAVLinkEventManager.cc
-        MAVLinkEventManager.h
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE EventHandler.cc
+            EventHandler.h
+            HealthAndArmingCheckReport.cc
+            HealthAndArmingCheckReport.h
+            LibEvents.cc
+            LibEvents.h
+            MAVLinkEventManager.cc
+            MAVLinkEventManager.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -24,7 +24,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 CPMAddPackage(
     NAME libevents
     GITHUB_REPOSITORY mavlink/libevents
-    GIT_TAG 840a88ea226d4eb0fd4c391ce860317422756435
+    GIT_TAG 0ef305faa4cffdb09f01ca862ebfc108b7ff0cd5
     SOURCE_SUBDIR libs/cpp
 )
 

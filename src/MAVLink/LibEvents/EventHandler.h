@@ -23,15 +23,13 @@ class EventHandler : public QObject
     Q_OBJECT
 
 public:
-    using send_request_event_message_f = std::function<void(const mavlink_request_event_t &msg)>;
+    using send_request_event_message_f =
+        std::function<void(const mavlink_request_event_t& msg, uint32_t targetSystemId)>;
     using handle_event_f = std::function<void(std::unique_ptr<events::parser::ParsedEvent>)>;
 
-    EventHandler(QObject *parent,
-                 const QString &profile,
-                 handle_event_f handleEventCB,
-                 send_request_event_message_f sendRequestCB,
-                 uint8_t ourSystemId, uint8_t ourComponentId,
-                 uint8_t systemId, uint8_t componentId);
+    EventHandler(QObject* parent, const QString& profile, handle_event_f handleEventCB,
+                 send_request_event_message_f sendRequestCB, quint32 ourSystemId, uint8_t ourComponentId,
+                 quint32 systemId, uint8_t componentId);
     ~EventHandler() override;
 
     void handleEvents(const mavlink_message_t &message);

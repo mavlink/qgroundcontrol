@@ -124,10 +124,23 @@ extern "C" {
     return "".join(parts), enum_bodies
 
 
+def qml_enum_base(body):
+    # mavgen emits literal values. MSVC otherwise truncates enums wider than 32 bits.
+    body = re.sub(r"/\*.*?\*/|//[^\n]*", "", body, flags=re.DOTALL)
+    values = [
+        int(value, 0) for value in re.findall(r"=\s*(-?(?:0[xX][0-9a-fA-F]+|[0-9]+))\s*,", body)
+    ]
+    signed = any(value < 0 for value in values)
+    limit = 1 << (31 if signed else 32)
+    if all(-(1 << 31) <= value < limit for value in values):
+        return ""
+    return " : qint64" if signed else " : quint64"
+
+
 def build_qml_header(enum_bodies):
     # moc ignores `using ::NAME;`, so the enums must be declared inside the namespace.
     enum_lines = "\n\n".join(
-        indent(f"enum {name}\n{body};\nQ_ENUM_NS({name})", "    ")
+        indent(f"enum {name}{qml_enum_base(body)}\n{body};\nQ_ENUM_NS({name})", "    ")
         for name, body in enum_bodies.items()
     )
     return f"""\

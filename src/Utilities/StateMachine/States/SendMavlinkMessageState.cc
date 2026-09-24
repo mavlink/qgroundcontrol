@@ -38,7 +38,7 @@ void SendMavlinkMessageState::_sendMessage()
 
     mavlink_message_t message{};
 
-    const uint8_t systemId = MAVLinkProtocol::instance()->getSystemId();
+    const quint32 systemId = MAVLinkProtocol::instance()->getSystemId();
     const uint8_t componentId [[maybe_unused]] = MAVLinkProtocol::getComponentId();
     const uint8_t channel = sharedLink->mavlinkChannel();
 

@@ -25,6 +25,17 @@ void MAVLinkEnumsQmlTest::_metaObjectExposesEveryEnumerator()
     QCOMPARE(chargeState.keyToValue("MAV_BATTERY_CHARGE_STATE_OK"), static_cast<int>(MAV_BATTERY_CHARGE_STATE_OK));
     QCOMPARE(chargeState.keyToValue("MAV_BATTERY_CHARGE_STATE_CRITICAL"),
              static_cast<int>(MAV_BATTERY_CHARGE_STATE_CRITICAL));
+
+#ifdef HAVE_ENUM_EFI_PERFORMANCE_STATUS_FLAGS
+    const QMetaEnum efiFlags = QMetaEnum::fromType<MAVLinkEnums::EFI_PERFORMANCE_STATUS_FLAGS>();
+    QVERIFY(efiFlags.is64Bit());
+    const auto preheat = efiFlags.keyToValue64("EFI_PERFORMANCE_STATUS_FLAGS_PREHEAT_ACTIVE");
+    QVERIFY(preheat.has_value());
+    QCOMPARE(*preheat, quint64{1} << 32);
+    const auto egrFault = efiFlags.keyToValue64("EFI_PERFORMANCE_STATUS_FLAGS_EGR_SYSTEM_FAULT");
+    QVERIFY(egrFault.has_value());
+    QCOMPARE(*egrFault, quint64{1} << 39);
+#endif
 }
 
 void MAVLinkEnumsQmlTest::_qmlReadsMavlinkValues()
