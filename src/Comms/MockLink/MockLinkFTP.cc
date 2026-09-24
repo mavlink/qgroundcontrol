@@ -152,13 +152,13 @@ void MockLinkFTP::_openCommand(uint8_t senderSystemId, uint8_t senderComponentId
     if (path.startsWith(sizePrefix)) {
         const QString sizeString = path.right(path.length() - sizePrefix.length());
         tmpFilename = _createTestTempFile(sizeString.toInt());
-    } else if (path == "/general.json") {
+    } else if (path == "/general.json" || path == "general.json") {
         tmpFilename = QStringLiteral(":MockLink/General.MetaData.json");
-    } else if (path == "/general.json.xz") {
+    } else if (path == "/general.json.xz" || path == "general.json.xz") {
         tmpFilename = QStringLiteral(":MockLink/General.MetaData.json.xz");
-    } else if (path == "/parameter.json") {
+    } else if (path == "/parameter.json" || path == "parameter.json") {
         tmpFilename = QStringLiteral(":MockLink/Parameter.MetaData.json");
-    } else if (path == "/parameter.json.xz") {
+    } else if (path == "/parameter.json.xz" || path == "parameter.json.xz") {
         tmpFilename = QStringLiteral(":MockLink/Parameter.MetaData.json.xz");
     } else if (path == "@PARAM/param.pck" || path.startsWith("@PARAM/param.pck?")) {
         if (!_paramPckEnabled) {

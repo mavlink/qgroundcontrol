@@ -3,6 +3,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -34,6 +35,52 @@ void FTPManagerTest::_testCaseWorker(const TestCase_t& testCase)
     QCOMPARE(spyDownloadComplete.count(), 1);
     QList<QVariant> arguments = spyDownloadComplete.takeFirst();
     QVERIFY2(arguments[1].toString().isEmpty(), qPrintable(arguments[1].toString()));
+    _disconnectMockLink();
+}
+
+void FTPManagerTest::_testDownloadUri_data()
+{
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<int>("fromCompId");
+    QTest::addColumn<bool>("absolutePath");
+
+    QTest::newRow("plain-absolute") << "/general.json" << int(MAV_COMP_ID_AUTOPILOT1) << true;
+    QTest::newRow("plain-relative") << "mocklink-size-239" << int(MAV_COMP_ID_AUTOPILOT1) << false;
+    QTest::newRow("scheme-absolute") << "mftp:///general.json" << int(MAV_COMP_ID_AUTOPILOT1) << true;
+    QTest::newRow("scheme-relative") << "mftp://mocklink-size-239" << int(MAV_COMP_ID_AUTOPILOT1) << false;
+    QTest::newRow("component-absolute") << "mftp://[;comp=1]/general.json" << int(MAV_COMP_ID_CAMERA) << true;
+    QTest::newRow("component-relative") << "mftp://[;comp=1]mocklink-size-239" << int(MAV_COMP_ID_CAMERA) << false;
+    QTest::newRow("uppercase-scheme") << "MFTP://[;comp=1]/general.json" << int(MAV_COMP_ID_CAMERA) << true;
+    QTest::newRow("default-component") << "mftp:///general.json" << int(MAV_COMP_ID_ALL) << true;
+}
+
+void FTPManagerTest::_testDownloadUri()
+{
+    QFETCH(QString, uri);
+    QFETCH(int, fromCompId);
+    QFETCH(bool, absolutePath);
+
+    _connectMockLinkNoInitialConnectSequence();
+    QVERIFY(_vehicle);
+    FTPManager* ftpManager = _vehicle->ftpManager();
+    QTemporaryDir destination;
+    QVERIFY(destination.isValid());
+    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
+    QVERIFY(ftpManager->download(fromCompId, uri, destination.path()));
+    QVERIFY_SIGNAL_WAIT(spyDownloadComplete, TestTimeout::longMs());
+    QCOMPARE(spyDownloadComplete.count(), 1);
+    const QList<QVariant> arguments = spyDownloadComplete.takeFirst();
+    QVERIFY2(arguments[1].toString().isEmpty(), qPrintable(arguments[1].toString()));
+
+    if (absolutePath) {
+        QFile expectedFile(QStringLiteral(":MockLink/General.MetaData.json"));
+        QVERIFY(expectedFile.open(QIODevice::ReadOnly));
+        QFile downloadedFile(arguments[0].toString());
+        QVERIFY(downloadedFile.open(QIODevice::ReadOnly));
+        QCOMPARE(downloadedFile.readAll(), expectedFile.readAll());
+    } else {
+        _verifyFileContentsAndDelete(arguments[0].toString(), 239);
+    }
     _disconnectMockLink();
 }
 

@@ -1336,7 +1336,7 @@ bool FTPManager::_parseURI(uint8_t fromCompId, const QString& uri, QString& pars
     // Pull scheme off the front if there
     QString ftpPrefix(QStringLiteral("%1://").arg(mavlinkFTPScheme));
     if (parsedURI.startsWith(ftpPrefix, Qt::CaseInsensitive)) {
-        parsedURI = parsedURI.right(parsedURI.length() - ftpPrefix.length() + 1);
+        parsedURI = parsedURI.mid(ftpPrefix.length());
     }
     if (parsedURI.contains("://")) {
         qCWarning(FTPManagerLog) << "Incorrect uri scheme or format" << uri;
