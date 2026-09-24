@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 
@@ -57,6 +59,7 @@ QGCListView {
 
                     QGCLabel {
                         text:       entry.mountpoint
+                        textFormat: Text.PlainText
                         font.bold:  true
                         color:      entry.mountpoint === root.selectedMountpoint
                                         ? qgcPal.buttonHighlightText : qgcPal.text
@@ -70,8 +73,9 @@ QGCListView {
                 }
 
                 QGCLabel {
+                    textFormat: Text.PlainText
                     text: {
-                        var parts = []
+                        const parts = []
                         if (entry.format) parts.push(entry.format)
                         if (entry.navSystem) parts.push(entry.navSystem)
                         if (entry.country) parts.push(entry.country)

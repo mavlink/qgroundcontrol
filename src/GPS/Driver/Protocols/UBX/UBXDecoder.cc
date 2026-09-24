@@ -406,8 +406,8 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             if (_decodeContext.assembleEpochs ? !_epochHasHighPrecision
                                               : position.navigation.fixType != GPSPositionReport::FixType::RTKFixed) {
                 // When RTK is active and solid (fix=6), these values will be filled by HPPOSLLH:
-                position.navigation.latitudeDegrees = payload_rx_nav_pvt.lat * UBX::DEGREES_PER_COORDINATE;
-                position.navigation.longitudeDegrees = payload_rx_nav_pvt.lon * UBX::DEGREES_PER_COORDINATE;
+                position.navigation.latitudeDegrees = UBX::latitudeDegrees(payload_rx_nav_pvt.lat);
+                position.navigation.longitudeDegrees = UBX::longitudeDegrees(payload_rx_nav_pvt.lon);
                 position.navigation.altitudeMslMeters = payload_rx_nav_pvt.hMSL * 1e-3;
                 position.navigation.altitudeEllipsoidMeters = payload_rx_nav_pvt.height * 1e-3;
 
@@ -483,8 +483,8 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             }
             const auto& payload_rx_nav_posllh = *decoded_payload_rx_nav_posllh;
 
-            position.navigation.latitudeDegrees = payload_rx_nav_posllh.lat * UBX::DEGREES_PER_COORDINATE;
-            position.navigation.longitudeDegrees = payload_rx_nav_posllh.lon * UBX::DEGREES_PER_COORDINATE;
+            position.navigation.latitudeDegrees = UBX::latitudeDegrees(payload_rx_nav_posllh.lat);
+            position.navigation.longitudeDegrees = UBX::longitudeDegrees(payload_rx_nav_posllh.lon);
             position.navigation.altitudeMslMeters = payload_rx_nav_posllh.hMSL * 1e-3;
             position.navigation.altitudeEllipsoidMeters = payload_rx_nav_posllh.height * 1e-3;
             position.navigation.horizontalAccuracyMeters =
@@ -510,11 +510,11 @@ GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, 
             if (payload_rx_nav_hpposllh.flags == 0 &&
                 (_decodeContext.assembleEpochs ||
                  position.navigation.fixType == GPSPositionReport::FixType::RTKFixed)) {
+                // Regular precision lat/lon (1e-7 deg) plus high precision components (1e-9 deg).
                 position.navigation.latitudeDegrees =
-                    payload_rx_nav_hpposllh.lat * UBX::DEGREES_PER_COORDINATE +
-                    payload_rx_nav_hpposllh.latHp * 1e-9;  // regular precision lat/lon (1e7), plus high precision (1e9)
+                    UBX::latitudeDegrees(payload_rx_nav_hpposllh.lat) + payload_rx_nav_hpposllh.latHp * 1e-9;
                 position.navigation.longitudeDegrees =
-                    payload_rx_nav_hpposllh.lon * UBX::DEGREES_PER_COORDINATE + payload_rx_nav_hpposllh.lonHp * 1e-9;
+                    UBX::longitudeDegrees(payload_rx_nav_hpposllh.lon) + payload_rx_nav_hpposllh.lonHp * 1e-9;
                 position.navigation.altitudeMslMeters =
                     payload_rx_nav_hpposllh.hMSL * 1e-3 +
                     payload_rx_nav_hpposllh.hMSLHp *

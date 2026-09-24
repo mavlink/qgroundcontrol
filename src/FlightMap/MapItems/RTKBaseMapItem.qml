@@ -16,12 +16,14 @@ MapQuickItem {
 
     coordinate: root._receiver.basePosition
     visible: coordinate.isValid
-    anchorPoint.x: badge.width / 2
+    // The label can be wider than the badge, which stays centered over the coordinate.
+    anchorPoint.x: marker.width / 2
     anchorPoint.y: badge.height / 2
 
     QGCPalette { id: qgcPal }
 
     sourceItem: Item {
+        id: marker
         width: Math.max(badge.width, baseLabel.width)
         height: badge.height + baseLabel.height
 

@@ -82,11 +82,12 @@ int NTRIPSourceTableModel::rowCount(const QModelIndex& parent) const
 
 QVariant NTRIPSourceTableModel::data(const QModelIndex& index, int role) const
 {
-    if (index.row() < 0 || index.row() >= _mountpoints.size()) {
+    if (!index.isValid() || index.model() != this || index.column() != 0 || index.row() < 0 ||
+        index.row() >= _mountpoints.size()) {
         return {};
     }
     const NTRIPMountpoint& mp = _mountpoints.at(index.row());
-    switch (role) {
+    switch (static_cast<Roles>(role)) {
         case MountpointRole:
             return mp.mountpoint;
         case IdentifierRole:
@@ -123,9 +124,8 @@ QVariant NTRIPSourceTableModel::data(const QModelIndex& index, int role) const
             return mp.bitrate;
         case DistanceKmRole:
             return mp.distanceKm;
-        default:
-            return {};
     }
+    return {};
 }
 
 QHash<int, QByteArray> NTRIPSourceTableModel::roleNames() const

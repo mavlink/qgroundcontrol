@@ -901,6 +901,38 @@ static void explicitNoFix()
     }
 }
 
+static void outOfRangeCoordinates()
+{
+    Receiver receiver;
+    GPSProtocolTestProbe<GPSNativeUBX> driver(receiver.io(), false);
+    const auto& position = driver.workingPosition();
+    driver.setDecodeContext({.navigation = true});
+    Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
+    pvt[20] = 3;
+    pvt[21] = UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK;
+    const auto decodePvt = [&](int32_t longitude, int32_t latitude) {
+        (void) LittleEndian::write<int32_t>(pvt, 24, longitude);
+        (void) LittleEndian::write<int32_t>(pvt, 28, latitude);
+        (void) driver.decode(ubxFrame(UBX_MSG_NAV_PVT, pvt));
+    };
+    decodePvt(-1800000000, 900000000);
+    CHECK(position.navigation.latitudeDegrees == 90 && position.navigation.longitudeDegrees == -180);
+    decodePvt(80000000, 900000001);
+    CHECK(std::isnan(position.navigation.latitudeDegrees));
+    CHECK(position.navigation.longitudeDegrees == 8);
+    decodePvt(-1800000001, 470000000);
+    CHECK(position.navigation.latitudeDegrees == 47);
+    CHECK(std::isnan(position.navigation.longitudeDegrees));
+
+    driver.setDecodeContext({.navigation = true, .useNavPvt = false});
+    Bytes posllh(UBX::WIRE_SIZE<ubx_payload_rx_nav_posllh_t>, 0);
+    (void) LittleEndian::write<int32_t>(posllh, 4, (std::numeric_limits<int32_t>::max)());
+    (void) LittleEndian::write<int32_t>(posllh, 8, (std::numeric_limits<int32_t>::min)());
+    (void) driver.decode(ubxFrame(UBX_MSG_NAV_POSLLH, posllh));
+    CHECK(std::isnan(position.navigation.latitudeDegrees));
+    CHECK(std::isnan(position.navigation.longitudeDegrees));
+}
+
 static void baudDiscovery()
 {
     for (const unsigned initialBaud : {9600U, 115200U}) {
@@ -1522,6 +1554,7 @@ const auto& testCases()
         {"control-deadline", controlDeadline},
         {"identification-write-budget", identificationWriteBudget},
         {"explicit-no-fix", explicitNoFix},
+        {"out-of-range-coordinates", outOfRangeCoordinates},
         {"read-only-baud-discovery", baudDiscovery},
         {"discovery-failures-and-late-acks", discoveryFailures},
         {"navigation-fix-flags-and-ordering", navigationFixFlags},
