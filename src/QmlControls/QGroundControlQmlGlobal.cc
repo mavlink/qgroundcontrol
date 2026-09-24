@@ -18,7 +18,6 @@
 #include "MultiVehicleManager.h"
 #include "LoggingCategoryModel.h"
 #include "GPSManager.h"
-#include "GPSRtk.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 #endif
@@ -54,7 +53,6 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     , _settingsManager(SettingsManager::instance())
     , _corePlugin(QGCCorePlugin::instance())
     , _globalPalette(new QGCPalette(this))
-    , _gpsRtkFactGroup(GPSManager::instance()->gpsRtk()->gpsRtkFactGroup())
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     // setParent(nullptr);

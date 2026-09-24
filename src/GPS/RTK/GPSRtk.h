@@ -25,7 +25,9 @@ class GPSRtk : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("Managed by GPSManager")
+    Q_MOC_INCLUDE("GPSRTKFactGroup.h")
 
+    Q_PROPERTY(GPSRTKFactGroup* facts READ gpsRtkFactGroup CONSTANT)
     Q_PROPERTY(bool hasReceiver READ hasReceiver NOTIFY receiverChanged)
     Q_PROPERTY(bool serialSupported READ serialSupported CONSTANT)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)

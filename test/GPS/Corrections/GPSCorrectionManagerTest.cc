@@ -350,7 +350,7 @@ void GPSCorrectionManagerTest::_qmlForwarderAvailableBeforeInit()
         import QGroundControl
         QtObject {
             readonly property var forwarder: QGroundControl.gpsManager.corrections.rtcmMavlink
-            readonly property var legacyBaseFacts: QGroundControl.gpsRtk
+            readonly property var baseFacts: QGroundControl.gpsManager.gpsRtk.facts
         }
     )",
                       QUrl());
@@ -359,8 +359,7 @@ void GPSCorrectionManagerTest::_qmlForwarderAvailableBeforeInit()
     std::unique_ptr<QObject> root(component.create());
     QVERIFY2(root, qPrintable(component.errorString()));
     QCOMPARE(root->property("forwarder").value<RTCMMavlink*>(), GPSManager::instance()->corrections()->rtcmMavlink());
-    QCOMPARE(root->property("legacyBaseFacts").value<FactGroup*>(),
-             GPSManager::instance()->gpsRtk()->gpsRtkFactGroup());
+    QCOMPARE(root->property("baseFacts").value<FactGroup*>(), GPSManager::instance()->gpsRtk()->gpsRtkFactGroup());
 }
 
 void GPSCorrectionManagerTest::_sourceSelectionAndSessions()

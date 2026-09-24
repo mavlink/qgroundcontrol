@@ -11,9 +11,9 @@ QtObject {
 
     readonly property QtObject forwarder: root.corrections.rtcmMavlink
     readonly property real totalBytesSubmitted: root.corrections.rtcmMavlink.totalBytesSubmitted
-    readonly property bool canSaveBasePosition: QGroundControl.gpsRtk.canSaveCurrentBasePosition
-    readonly property int satellitesInView: QGroundControl.gpsRtk.numSatellites.rawValue
-    readonly property int satellitesUsed: QGroundControl.gpsRtk.numSatellitesUsed.rawValue
+    readonly property bool canSaveBasePosition: QGroundControl.gpsManager.gpsRtk.facts.canSaveCurrentBasePosition
+    readonly property int satellitesInView: QGroundControl.gpsManager.gpsRtk.facts.numSatellites.rawValue
+    readonly property int satellitesUsed: QGroundControl.gpsManager.gpsRtk.facts.numSatellitesUsed.rawValue
 
     readonly property real bytesReceived: root.stats.bytesReceived
     readonly property real messagesReceived: root.stats.messagesReceived

@@ -164,7 +164,8 @@ void GPSRtkTest::_testCoreAvailableWithoutReceiver()
     QVERIFY(facts);
     QVERIFY(!facts->connected()->rawValue().toBool());
     QVERIFY(QFile::exists(QStringLiteral(":/json/Vehicle/GPSRTKFact.json")));
-    QVERIFY(QGroundControlQmlGlobal::staticMetaObject.indexOfProperty("gpsRtk") >= 0);
+    QCOMPARE(rtk.property("facts").value<GPSRTKFactGroup*>(), facts);
+    QCOMPARE(QGroundControlQmlGlobal::staticMetaObject.indexOfProperty("gpsRtk"), -1);
 }
 
 namespace {

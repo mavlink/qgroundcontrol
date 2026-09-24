@@ -9,7 +9,6 @@
 #include "QmlUnitsConversion.h"
 
 class ADSBVehicleManager;
-class GPSRTKFactGroup;
 class GPSManager;
 class LinkManager;
 class MAVLinkSigningKeys;
@@ -26,7 +25,6 @@ class QmlObjectListModel;
 
 Q_MOC_INCLUDE("ADSBVehicleManager.h")
 Q_MOC_INCLUDE("NTRIPManager.h")
-Q_MOC_INCLUDE("GPSRTKFactGroup.h")
 Q_MOC_INCLUDE("GPSManager.h")
 Q_MOC_INCLUDE("LinkManager.h")
 Q_MOC_INCLUDE("MAVLinkSigningKeys.h")
@@ -74,7 +72,6 @@ public:
     Q_PROPERTY(QGCCorePlugin*       corePlugin              READ    corePlugin              CONSTANT)
     Q_PROPERTY(MissionCommandTree*  missionCommandTree      READ    missionCommandTree      CONSTANT)
     Q_PROPERTY(MAVLinkSigningKeys*   mavlinkSigningKeys      READ    mavlinkSigningKeys      CONSTANT)
-    Q_PROPERTY(GPSRTKFactGroup* gpsRtk READ gpsRtkFactGroup CONSTANT)
     Q_PROPERTY(GPSManager* gpsManager READ gpsManager CONSTANT)
     Q_PROPERTY(QGCPalette*          globalPalette           MEMBER  _globalPalette          CONSTANT)   ///< This palette will always return enabled colors
     Q_PROPERTY(QmlUnitsConversion*  unitsConversion         READ    unitsConversion         CONSTANT)
@@ -174,7 +171,6 @@ public:
 
     SettingsManager* settingsManager() { return _settingsManager; }
 
-    GPSRTKFactGroup* gpsRtkFactGroup() { return _gpsRtkFactGroup; }
 
     GPSManager* gpsManager() const;
 
@@ -238,7 +234,6 @@ private:
     SettingsManager*        _settingsManager        = nullptr;
     QGCCorePlugin*          _corePlugin             = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
-    GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;
 
     double                  _flightMapInitialZoom   = 17.0;
     QmlUnitsConversion      _unitsConversion;

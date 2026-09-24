@@ -15,7 +15,7 @@ ToolIndicatorPage {
     property string valueNA: qsTr("–.––", "No data to display")
     property var rtkSettings: QGroundControl.settingsManager.rtkSettings
     readonly property var _receiver: QGroundControl.gpsManager.gpsRtk
-    readonly property bool _rtkConnected: QGroundControl.gpsRtk.connected.value
+    readonly property bool _rtkConnected: _receiver.facts.connected.value
     readonly property var _activePresentation: _receiver.capabilitiesForManufacturer(_receiver.activeManufacturer)
     readonly property var _serialPortManager: QGroundControl.serialPortManager
     readonly property bool _averagingConnected: _receiver.activeBaseMode === BaseModeDefinition.BaseReceiverAveraging
@@ -138,34 +138,34 @@ ToolIndicatorPage {
                                                        : qsTr("No RTK receiver connected. Expand for settings."))
                           : root._activePresentation.passive ? qsTr("Passive RTCM/NMEA input connected")
                           : root._averagingConnected ? qsTr("Receiver-managed averaging — no accuracy guarantee")
-                          : QGroundControl.gpsRtk.active.value ? qsTr("Survey-in Active") : qsTr("Receiver connected")
+                          : root._receiver.facts.active.value ? qsTr("Survey-in Active") : qsTr("Receiver connected")
                 }
                 LabelledLabel {
                     objectName: "rtkSatellitesInView"
                     visible: root._rtkConnected
                     label: qsTr("Satellites in View")
-                    labelText: QGroundControl.gpsRtk.numSatellites.rawValue < 0
-                               ? root.na : QGroundControl.gpsRtk.numSatellites.valueString
+                    labelText: root._receiver.facts.numSatellites.rawValue < 0
+                               ? root.na : root._receiver.facts.numSatellites.valueString
                 }
                 LabelledLabel {
                     objectName: "rtkSatellitesUsed"
                     visible: root._rtkConnected
                     label: qsTr("Satellites Used")
-                    labelText: QGroundControl.gpsRtk.numSatellitesUsed.rawValue < 0
-                               ? root.na : QGroundControl.gpsRtk.numSatellitesUsed.valueString
+                    labelText: root._receiver.facts.numSatellitesUsed.rawValue < 0
+                               ? root.na : root._receiver.facts.numSatellitesUsed.valueString
                 }
                 LabelledLabel {
                     label: root._activePresentation.acceptedObservationTime ? qsTr("Accepted observation time") : qsTr("Duration")
                     visible: root._rtkConnected && root._activePresentation.reportsSurveyDuration
                              && !root._averagingConnected
                     //: %1 is Survey-In duration in seconds
-                    labelText: qsTr("%1 s").arg(QGroundControl.gpsRtk.currentDuration.value)
+                    labelText: qsTr("%1 s").arg(root._receiver.facts.currentDuration.value)
                 }
                 LabelledLabel {
-                    label: QGroundControl.gpsRtk.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
-                    labelText: QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.gpsRtk.currentAccuracy.units
+                    label: root._receiver.facts.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
+                    labelText: root._receiver.facts.currentAccuracy.valueString + " " + root._receiver.facts.currentAccuracy.units
                     visible: root._rtkConnected && !root._activePresentation.passive && !root._averagingConnected
-                             && QGroundControl.gpsRtk.currentAccuracy.value > 0
+                             && root._receiver.facts.currentAccuracy.value > 0
                 }
             }
 
@@ -193,7 +193,7 @@ ToolIndicatorPage {
                 Layout.minimumWidth: 0
                 receiver: root._receiver
                 settings: root.rtkSettings
-                baseFacts: QGroundControl.gpsRtk
+                baseFacts: root._receiver.facts
                 autoConnectFact: QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
                 serialPorts: root._serialPortManager ? root._serialPortManager.serialPorts : []
                 serialBaudRates: root._serialPortManager ? root._serialPortManager.serialBaudRates : []

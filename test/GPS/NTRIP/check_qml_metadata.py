@@ -85,9 +85,11 @@ def check_metadata(text: str) -> list[str]:
     for name in ("canSaveCurrentBasePosition", "numSatellites", "numSatellitesUsed"):
         if name not in rtk:
             errors.append(f"GPSRTKFactGroup: missing property {name}")
-    global_properties = named_blocks(components.get("QGroundControlQmlGlobal", ""), "Property")
-    if not re.search(r'\btype:\s*"GPSRTKFactGroup"', global_properties.get("gpsRtk", "")):
-        errors.append("QGroundControl.gpsRtk: expected precise GPSRTKFactGroup type")
+    receiver = named_blocks(components.get("GPSRtk", ""), "Property")
+    if not re.search(r'\btype:\s*"GPSRTKFactGroup"', receiver.get("facts", "")):
+        errors.append("GPSRtk.facts: expected precise GPSRTKFactGroup type")
+    if "gpsRtk" in named_blocks(components.get("QGroundControlQmlGlobal", ""), "Property"):
+        errors.append("QGroundControl.gpsRtk: obsolete alias for GPSRtk.facts")
     return errors
 
 
