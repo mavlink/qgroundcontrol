@@ -239,7 +239,7 @@ void GPSCorrectionManagerTest::_settingsOwnRouting()
     });
     corrections.init(settings);
     QVERIFY(routingAppliedBeforeIngress);
-    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
+    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
     settings->correctionSource()->setRawValue(GPSCorrectionSettings::Ntrip);
     QCOMPARE(corrections._router.policy(), GPSCorrectionManager::RoutingPolicy::Manual);
     QCOMPARE(corrections.selectedSource(), GPSCorrectionSource::Ntrip);
@@ -454,7 +454,7 @@ void GPSCorrectionManagerTest::_diagnosticsModelUpdatesInPlace()
 void GPSCorrectionManagerTest::_sourceSelectionAndSessions()
 {
     GPSCorrectionManager corrections;
-    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
+    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
     const QByteArray data = GpsTestHelpers::buildRtcmFrame(1005, 20);
     const auto initial =
         corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::LocalReceiver)).toMap();
@@ -496,7 +496,7 @@ void GPSCorrectionManagerTest::_sourceSelectionAndSessions()
 void GPSCorrectionManagerTest::_filteredAndExpiredFrames()
 {
     GPSCorrectionManager corrections;
-    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
+    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
     auto ntrip = corrections.registerSource(GPSCorrectionSource::Ntrip);
     const auto data = GpsTestHelpers::buildRtcmFrame(1005, 20);
     const auto now = GPSCorrectionFrame::monotonicNowMs();

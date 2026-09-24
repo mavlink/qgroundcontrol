@@ -18,9 +18,6 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent)
     , _udpInput(0, this)
 {
     qCDebug(GPSCorrectionManagerLog) << this;
-    connect(&_router, &GPSCorrectionRouter::frameRouted, this, [this](const GPSCorrectionFrame& frame) {
-        _notifications.emitEvent(this, &GPSCorrectionManager::correctionRouted, frame);
-    });
     _router.setOutput(QStringLiteral("mavlink"), {.admit = [this](const GPSCorrectionFrame& frame) {
                           QList<GPSCorrectionRouter::Admission> results;
                           for (const auto& admission : _rtcmMavlink.submitToOutputs(frame.data)) {

@@ -30,6 +30,8 @@ class GPSCorrectionManager : public QObject
     Q_PROPERTY(GPSCorrectionDiagnosticsModel* destinations READ destinationModel CONSTANT)
 
     friend class GPSCorrectionManagerTest;
+    friend class GPSRtkTest;
+    friend class NTRIPManagerTest;
 
 public:
     using RoutingPolicy = GPSCorrectionRouter::Policy;
@@ -68,7 +70,6 @@ public:
 
 signals:
     void sourceInstancesChanged();
-    void correctionRouted(const GPSCorrectionFrame& frame);
 
 private:
     void _applyRoutingSettings();

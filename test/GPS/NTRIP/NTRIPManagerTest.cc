@@ -596,7 +596,7 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     NTRIPManager mgr;
     mgr.setCorrectionManager(&corrections);
     QCOMPARE(mgr.metaObject()->indexOfProperty("rtcmMavlink"), -1);
-    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
+    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
     auto* first = new MockNTRIPTransport(&mgr);
     first->autoConnect = false;
     QSignalSpy observed(first, &NTRIPTransport::correctionFrameReceived);
@@ -784,7 +784,7 @@ void NTRIPManagerTest::testFactChangesReconfigureTransport()
     mgr.init();
     QCOMPARE(first->startCount, 1);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
-    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
+    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
     first->simulateRtcmData(GpsTestHelpers::buildRtcmFrame(1005), 1005);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(routed.size(), 1);
@@ -856,7 +856,7 @@ void NTRIPManagerTest::testNtripOnlyUdpForwardingBypassesSelectionOnce()
     auto* transport = new MockNTRIPTransport(&mgr);
     mgr.setTransportForTest(transport);
     mgr.startNTRIP();
-    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
+    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
     const auto localFrame = GpsTestHelpers::buildRtcmFrame(1005);
     const auto udpFrame = GpsTestHelpers::buildRtcmFrame(1077);
     const auto ntripFrame = GpsTestHelpers::buildRtcmFrame(1087);
@@ -903,7 +903,7 @@ void NTRIPManagerTest::testTransportDiagnosticsReachManager()
     NTRIPManager mgr;
     mgr.setCorrectionManager(&corrections);
     mgr._settings = settings;
-    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
+    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
     mgr.startNTRIP();
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::shortMs());
     QTcpSocket* peer = server.nextPendingConnection();

@@ -653,7 +653,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     GPSCorrectionManager corrections;
     GPSRtk receiver;
     receiver.setCorrectionManager(&corrections);
-    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
+    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
     const auto releaseWorkers = qScopeGuard([&]() {
         firstGate->release.release();
         secondGate->release.release();
@@ -822,7 +822,7 @@ void GPSRtkTest::_receiverFramesAreValidated()
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
     const auto receivedAtMs =
         GPSCorrectionFrame::monotonicNowMs() - (expired ? GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS : 0);
-    QSignalSpy routed(&corrections, &GPSCorrectionManager::correctionRouted);
+    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
     emit receiver._session.provider->RTCMDataUpdate(frame, receivedAtMs);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     const auto stats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::LocalReceiver)].toMap();

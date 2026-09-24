@@ -75,13 +75,6 @@ public:
              [object, signal, ... values = std::forward<Arguments>(arguments)]() { (object->*signal)(values...); });
     }
 
-    /// Queues an event signal; every emission is delivered.
-    template <typename Object, typename... Parameters, typename... Arguments>
-    void emitEvent(Object* object, void (Object::*signal)(Parameters...), Arguments&&... arguments)
-    {
-        post(0, [object, signal, ... values = std::forward<Arguments>(arguments)]() { (object->*signal)(values...); });
-    }
-
     /// Drops pending notifications and ignores later ones, for owner teardown.
     void close()
     {
