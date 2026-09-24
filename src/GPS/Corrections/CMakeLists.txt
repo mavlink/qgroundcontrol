@@ -10,7 +10,7 @@ set_target_properties(QGCGPSCorrections PROPERTIES AUTOMOC ON POSITION_INDEPENDE
 target_compile_features(QGCGPSCorrections PUBLIC cxx_std_20)
 target_link_libraries(
     QGCGPSCorrections
-    PUBLIC Qt6::Core QGCGPSRTCM QGCClock
+    PUBLIC Qt6::Core QGCGPSNotifications QGCGPSRTCM QGCClock
     PRIVATE QGCLoggingCategory
 )
 target_sources(

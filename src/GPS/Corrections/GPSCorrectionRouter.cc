@@ -35,6 +35,7 @@ GPSCorrectionRouter::GPSCorrectionRouter(QObject* parent, Clock clock)
 
 GPSCorrectionRouter::~GPSCorrectionRouter()
 {
+    _notifications.close();
     qCDebug(GPSCorrectionRouterLog) << this;
 }
 
@@ -50,12 +51,8 @@ quint64 GPSCorrectionRouter::beginSourceSession(GPSCorrectionSource source, cons
     if (index < 0 || _shutdown) {
         return 0;
     }
-    const QPointer<GPSCorrectionRouter> guard(this);
-    const quint64 revisionAfterEnd = _revision + 1;
+    const GPSNotificationQueue::Scope publish(_notifications);
     endSourceSession(source);
-    if (!guard || _shutdown || _revision != revisionAfterEnd) {
-        return 0;
-    }
     const quint64 session = _ledger.beginSource(source);
     _configuredInstances[index] = instance;
     return session;
@@ -72,7 +69,7 @@ void GPSCorrectionRouter::endSourceSession(GPSCorrectionSource source)
     _selector.retire(source, _clock());
     if (_lastSubmittedStream && _lastSubmittedStream->source.category == source) {
         _lastSubmittedStream.reset();
-        emit sourceInvalidated();
+        _notifications.emitSignal(this, &GPSCorrectionRouter::sourceInvalidated);
     }
 }
 
@@ -135,16 +132,17 @@ void GPSCorrectionRouter::applyConfiguration(const Configuration& configuration)
     _selector.configure(configuration, _clock());
     if (_lastSubmittedStream) {
         _lastSubmittedStream.reset();
-        emit sourceInvalidated();
+        _notifications.emitSignal(this, &GPSCorrectionRouter::sourceInvalidated);
     }
 }
 
 GPSCorrectionSourceRegistration GPSCorrectionRouter::registerSource(GPSCorrectionSource source, const QString& instance)
 {
-    const QPointer<GPSCorrectionRouter> guard(this);
+    // Invalidation observers run after the registration exists.
+    const GPSNotificationQueue::Scope publish(_notifications);
     const quint64 session = beginSourceSession(source, instance);
-    return guard && session ? GPSCorrectionSourceRegistration(GPSCorrectionSourceToken(this, source, session, instance))
-                            : GPSCorrectionSourceRegistration();
+    return session ? GPSCorrectionSourceRegistration(GPSCorrectionSourceToken(this, source, session, instance))
+                   : GPSCorrectionSourceRegistration();
 }
 
 bool GPSCorrectionRouter::isCurrentSource(GPSCorrectionSource source, quint64 session, const QString& instance) const

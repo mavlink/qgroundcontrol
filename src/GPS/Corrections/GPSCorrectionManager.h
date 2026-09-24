@@ -106,4 +106,5 @@ private:
     int _ingressDepth = 0;
     bool _finalDiagnosticsPending = false;
     bool _shutdown = false;
+    GPSNotificationQueue _notifications{this};
 };

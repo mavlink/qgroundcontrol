@@ -13,6 +13,7 @@
 #include "GPSCorrectionLedger.h"
 #include "GPSCorrectionSelector.h"
 #include "GPSCorrectionSourceRegistration.h"
+#include "GPSNotificationQueue.h"
 
 /// Selects one correction stream and submits complete frames to injected outputs.
 /// All calls and sink callbacks run on the owning thread. Submission is not receiver acknowledgement.
@@ -132,5 +133,7 @@ private:
     std::optional<StreamIdentity> _lastSubmittedStream = std::nullopt;
     quint64 _revision = 0;
     bool _shutdown = false;
+    // sourceSelected stays synchronous: outputs must observe it before the first frame of a new stream.
+    GPSNotificationQueue _notifications{this};
     bool _submitting = false;
 };
