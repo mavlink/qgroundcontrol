@@ -24,6 +24,7 @@
 #include "GPSReceiverDescriptor.h"
 #include "GPSRtk.h"
 #include "GPSTransport.h"
+#include "MAVLinkLib.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
@@ -717,6 +718,17 @@ void GPSReceiverSettingsTest::_vehicleAccuracyFacts()
     auto* gps = qobject_cast<VehicleGPSFactGroup*>(vehicle.gpsFactGroup());
     QVERIFY(gps);
     gps->setLiveUpdates(true);
+    // The page shows vehicle GPS status only once the vehicle reports GPS telemetry.
+    mavlink_gps_raw_int_t raw{};
+    raw.fix_type = GPS_FIX_TYPE_3D_FIX;
+    raw.eph = UINT16_MAX;
+    raw.epv = UINT16_MAX;
+    raw.cog = UINT16_MAX;
+    raw.satellites_visible = 10;
+    mavlink_message_t message{};
+    mavlink_msg_gps_raw_int_encode(1, 1, &message, &raw);
+    gps->handleMessage(&vehicle, message);
+    QVERIFY(gps->telemetryAvailable());
     gps->hdop()->setRawValue(0.8);
     gps->vdop()->setRawValue(1.2);
     gps->horizontalAccuracy()->setRawValue(2.5);

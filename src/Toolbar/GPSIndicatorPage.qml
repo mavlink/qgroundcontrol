@@ -16,6 +16,7 @@ ToolIndicatorPage {
     property string valueNA: qsTr("–.––", "No data to display")
     property var rtkSettings: QGroundControl.settingsManager.rtkSettings
     readonly property var _receiver: QGroundControl.gpsManager.gpsRtk
+    readonly property bool _vehicleGps: !!activeVehicle && !!activeVehicle.gps && activeVehicle.gps.telemetryAvailable
     readonly property real _preferredStatusWidth: ScreenTools.defaultFontPixelWidth * 36
     readonly property real _preferredSettingsWidth: ScreenTools.defaultFontPixelWidth * 56
     property real availableWidth: drawer && drawer.parent
@@ -66,7 +67,7 @@ ToolIndicatorPage {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 heading: qsTr("Vehicle GPS Status")
-                visible: root.activeVehicle
+                visible: root._vehicleGps
 
                 LabelledLabel {
                     label: qsTr("Satellites")
@@ -147,7 +148,7 @@ ToolIndicatorPage {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 receiver: root._receiver
-                showWhenDisconnected: !root.activeVehicle
+                showWhenDisconnected: !root._vehicleGps
                 disconnectedText: qsTr("No RTK receiver connected. Expand for settings.")
             }
 

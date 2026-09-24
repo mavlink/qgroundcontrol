@@ -53,7 +53,7 @@ The GPS/RTK GPS indicator shows satellite and GNSS status in the toolbar, and th
 
 With an active vehicle, the indicator shows vehicle GPS information (for example, satellite count and HDOP), and the expanded page provides access to RTK-related settings.
 
-When there is no active vehicle but RTK is connected, the indicator switches to RTK status so you can still monitor the correction link.
+When there is no active vehicle, or the active vehicle does not report GPS, the indicator shows RTK receiver status so you can still monitor the correction link.
 
 The dropdown also shows the [GCS position](../settings_view/comm_links.md#gcs-position) source in use and its status.
 
