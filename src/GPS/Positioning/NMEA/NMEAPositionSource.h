@@ -52,7 +52,8 @@ private:
     void _discardAvailableData();
     void _closeInput();
     void _processSentence(const NMEASentenceEnvelope& envelope);
-    void _queueEpoch(const NMEA::NavigationEpoch& epoch);
+    void _queueEpoch(const NMEA::NavigationEpoch& epoch, bool altitudeWaitExpired = false);
+    void _clearAltitudeWait();
     QDateTime _receiptTime(quint64 timestampUs) const;
     static GPSObservation _observation(const NMEA::NavigationEpoch& epoch, const QDateTime& receivedAt);
     static GPSObservation _lossObservation(const NMEA::NavigationEpoch& epoch, const QDateTime& receivedAt);
@@ -70,6 +71,9 @@ private:
     ScheduledTask _publicationTask;
     ScheduledTask _lossTask;
     ScheduledTask _errorTask;
+    ScheduledTask _altitudeWaitTask;
+    /// Latest epoch waiting for its GGA altitude; see _queueEpoch().
+    std::optional<NMEA::NavigationEpoch> _altitudeWaitEpoch;
     std::optional<GPSObservation> _pendingLoss;
 
     struct PendingFix
@@ -86,6 +90,8 @@ private:
     NMEA::LineFramer _lineFramer;
     NMEA::NavigationEpochAssembler _navigationAssembler;
     quint64 _sentenceTimestampUs = 0;
+    /// Receipt time of the latest queued epoch that carried mean-sea-level altitude.
+    quint64 _altitudeReceiptUs = 0;
     bool _closed = false;
     bool _drainPending = false;
     Error _error = NoError;

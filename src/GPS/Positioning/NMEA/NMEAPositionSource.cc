@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <utility>
 
 #include <QtCore/QIODevice>
 #include <QtCore/QPointer>
@@ -15,6 +16,10 @@
 
 namespace {
 constexpr int DEFAULT_REQUEST_TIMEOUT_MS = std::chrono::milliseconds(std::chrono::minutes(5)).count();
+/// A stream that reported altitude this recently is expected to report it for the next epoch too.
+constexpr quint64 ALTITUDE_STREAM_WINDOW_US = std::chrono::microseconds(std::chrono::milliseconds(1500)).count();
+/// Longest wait for an epoch's GGA before publishing the epoch without altitude.
+constexpr std::chrono::milliseconds ALTITUDE_WAIT{250};
 constexpr quint64 METADATA_MAX_AGE_US = std::chrono::microseconds(std::chrono::seconds(2)).count();
 constexpr quint64 UNTIMED_METADATA_MAX_AGE_US = std::chrono::microseconds(std::chrono::seconds(1)).count();
 constexpr qsizetype MAX_READ_BYTES_PER_TURN = 32 * 1024;
@@ -62,6 +67,7 @@ NMEAPositionSource::NMEAPositionSource(QIODevice* device, QObject* parent, Runti
     , _publicationTask(_scheduler, this)
     , _lossTask(_scheduler, this)
     , _errorTask(_scheduler, this)
+    , _altitudeWaitTask(_scheduler, this)
     , _lineFramer(_sentenceBuffer)
     , _navigationAssembler({.metadataMaxAgeUs = METADATA_MAX_AGE_US,
                             .untimedMetadataMaxAgeUs = UNTIMED_METADATA_MAX_AGE_US - 1,
@@ -91,6 +97,7 @@ NMEAPositionSource::~NMEAPositionSource()
     _publicationTask.cancel();
     _lossTask.cancel();
     _errorTask.cancel();
+    _altitudeWaitTask.cancel();
 }
 
 void NMEAPositionSource::_resetDecoder()
@@ -108,6 +115,8 @@ void NMEAPositionSource::_resetDecoder()
     _lineFramer.reset();
     _navigationAssembler.reset();
     _sentenceTimestampUs = 0;
+    _clearAltitudeWait();
+    _altitudeReceiptUs = 0;
     _drainPending = false;
     _closed = !_device || !_device->isReadable();
     _error = NoError;
@@ -304,7 +313,13 @@ void NMEAPositionSource::_processSentence(const NMEASentenceEnvelope& envelope)
     _queueEpoch(update->epoch);
 }
 
-void NMEAPositionSource::_queueEpoch(const NMEA::NavigationEpoch& epoch)
+void NMEAPositionSource::_clearAltitudeWait()
+{
+    _altitudeWaitTask.cancel();
+    _altitudeWaitEpoch.reset();
+}
+
+void NMEAPositionSource::_queueEpoch(const NMEA::NavigationEpoch& epoch, bool altitudeWaitExpired)
 {
     if (!epoch.timeMs || _publishedEpochs.value(*epoch.timeMs) == epoch.revision) {
         return;
@@ -314,6 +329,29 @@ void NMEAPositionSource::_queueEpoch(const NMEA::NavigationEpoch& epoch)
     if (!observation.position.isValid() || !observation.receiverFixValid.value_or(true) ||
         observation.fixQuality == GPSObservation::FixQuality::NoFix) {
         return;
+    }
+    // Receivers commonly send RMC before GGA. Publishing the RMC-only start of an epoch would briefly drop the
+    // altitude that GGA reporting and Remote ID require, so briefly wait for this epoch's GGA instead.
+    if (observation.altitudeDatum == GPSAltitudeDatum::MeanSeaLevel) {
+        _altitudeReceiptUs = epoch.receivedAtUs;
+        _clearAltitudeWait();
+    } else if (!altitudeWaitExpired && _altitudeReceiptUs && epoch.receivedAtUs >= _altitudeReceiptUs &&
+               epoch.receivedAtUs - _altitudeReceiptUs < ALTITUDE_STREAM_WINDOW_US) {
+        _altitudeWaitEpoch = epoch;
+        // A newer partial epoch replaces the waiting one without extending the original deadline.
+        if (!_altitudeWaitTask.active()) {
+            const auto generation = _generation;
+            _altitudeWaitTask.schedule(ALTITUDE_WAIT, [this, generation]() {
+                if (generation == _generation && _altitudeWaitEpoch) {
+                    const auto waiting = *std::exchange(_altitudeWaitEpoch, std::nullopt);
+                    _queueEpoch(waiting, true);
+                }
+            });
+        }
+        return;
+    } else if (!altitudeWaitExpired) {
+        // A newer epoch that cannot wait supersedes a waiting one, so publication stays in receiver time order.
+        _clearAltitudeWait();
     }
 
     if (_pendingFix.requested && _publicationTask.active() && _pendingFix.epochTimeMs &&
@@ -339,6 +377,9 @@ void NMEAPositionSource::_fixLost(const GPSObservation& observation)
     }
     _publicationTask.cancel();
     _pendingFix = {};
+    // After a loss there is no fix to protect, so recovery publishes without waiting for altitude.
+    _clearAltitudeWait();
+    _altitudeReceiptUs = 0;
     _pendingLoss = observation;
     if (!_lossTask.active()) {
         const auto generation = _generation;
@@ -477,6 +518,7 @@ void NMEAPositionSource::stopUpdates()
     if (!_requestTask.active()) {
         _lossTask.cancel();
         _pendingLoss.reset();
+        _clearAltitudeWait();
         if (!_pendingFix.requested) {
             _publicationTask.cancel();
             _pendingFix.position.reset();

@@ -321,6 +321,70 @@ void NMEAPositionSourceTest::_metadataDoesNotCrossEpochs()
     QCOMPARE(observation.altitudeDatum, GPSAltitudeDatum::Unknown);
 }
 
+void NMEAPositionSourceTest::_partialEpochWaitsForAltitude()
+{
+    ManualScheduler scheduler;
+    SequentialTestDevice device(&scheduler);
+    NMEAPositionSource source(&device, nullptr, &scheduler);
+    QSignalSpy observations(&source, &NMEAPositionSource::observationReceived);
+    source.startUpdates();
+    const auto rmc = [](const QByteArray& time) {
+        return NMEAUtils::repairChecksum("$GPRMC," + time + ",A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A");
+    };
+    const auto gga = [](const QByteArray& time) {
+        return NMEAUtils::repairChecksum("$GPGGA," + time + ",5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,");
+    };
+    const auto latest = [&observations]() { return observations.last().first().value<GPSObservation>(); };
+
+    device.feed(rmc("092750.000") + gga("092750.000"));
+    QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
+    QCOMPARE(observations.size(), 1);
+    QCOMPARE(latest().altitudeDatum, GPSAltitudeDatum::MeanSeaLevel);
+
+    // The RMC-only start of the next epoch keeps the previous fix until that epoch's GGA arrives.
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(200)));
+    device.feed(rmc("092750.200"));
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(20)));
+    QCOMPARE(observations.size(), 1);
+    device.feed(gga("092750.200"));
+    QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
+    QCOMPARE(observations.size(), 2);
+    QCOMPARE(latest().altitudeDatum, GPSAltitudeDatum::MeanSeaLevel);
+    QCOMPARE(latest().position.timestamp().time(), QTime(9, 27, 50, 200));
+
+    // A GGA that never arrives delays the epoch by a bounded wait instead of dropping it.
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(200)));
+    device.feed(rmc("092750.400"));
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(249)));
+    QCOMPARE(observations.size(), 2);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    QCOMPARE(observations.size(), 3);
+    QCOMPARE(latest().altitudeDatum, GPSAltitudeDatum::Unknown);
+    QCOMPARE(latest().position.timestamp().time(), QTime(9, 27, 50, 400));
+
+    // Once the stream has not reported altitude for a while, altitude-less epochs publish immediately.
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
+    device.feed(rmc("092752.400"));
+    QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
+    QCOMPARE(observations.size(), 4);
+
+    // An epoch published immediately after the altitude window closes supersedes one still waiting.
+    device.feed(rmc("092753.000") + gga("092753.000"));
+    QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
+    QCOMPARE(observations.size(), 5);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1400)));
+    device.feed(rmc("092754.400"));
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(200)));
+    QCOMPARE(observations.size(), 5);
+    device.feed(rmc("092754.600"));
+    QVERIFY(scheduler.advanceBy(std::chrono::microseconds::zero()));
+    QCOMPARE(observations.size(), 6);
+    QCOMPARE(latest().position.timestamp().time(), QTime(9, 27, 54, 600));
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(100)));
+    QCOMPARE(observations.size(), 6);
+    QCOMPARE(latest().position.timestamp().time(), QTime(9, 27, 54, 600));
+}
+
 void NMEAPositionSourceTest::_gstAccuracy_data()
 {
     QTest::addColumn<bool>("beforeFix");

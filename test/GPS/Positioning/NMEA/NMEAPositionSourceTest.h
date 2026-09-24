@@ -29,6 +29,7 @@ private slots:
     void _bufferedRequest_data();
     void _bufferedRequest();
     void _metadataDoesNotCrossEpochs();
+    void _partialEpochWaitsForAltitude();
     void _restartClearsParserState();
     void _pendingRequestSurvivesStopAndStart();
     void _requestTimeoutAndRecovery();
