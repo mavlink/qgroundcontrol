@@ -492,15 +492,33 @@ ApplicationWindow {
 
     Popup {
         id:                 criticalVehicleMessagePopup
+        objectName:         "criticalVehicleMessage_popup"
         y:                  ScreenTools.toolbarHeight + ScreenTools.defaultFontPixelHeight
         x:                  Math.round((mainWindow.width - width) * 0.5)
         width:              mainWindow.width  * 0.55
         height:             criticalVehicleMessageText.contentHeight + ScreenTools.defaultFontPixelHeight * 2
         modal:              false
-        focus:              true
 
         property alias  criticalVehicleMessage:             criticalVehicleMessageText.text
         property bool   additionalCriticalMessagesReceived: false
+
+        function acknowledge() {
+            close()
+            if (additionalCriticalMessagesReceived) {
+                additionalCriticalMessagesReceived = false
+                flyView.dropMainStatusIndicatorTool()
+            } else if (QGroundControl.multiVehicleManager.activeVehicle) {
+                QGroundControl.multiVehicleManager.activeVehicle.resetErrorLevelMessages()
+            }
+        }
+
+        // Must stay a child of the Popup: a window-level Shortcut is blocked while a
+        // CloseOnEscape popup is open, so Escape would silently stop working.
+        Shortcut {
+            sequences:      [ StandardKey.Cancel ]
+            enabled:        criticalVehicleMessagePopup.opened
+            onActivated:    criticalVehicleMessagePopup.acknowledge()
+        }
 
         background: Rectangle {
             anchors.fill:   parent
@@ -558,6 +576,7 @@ ApplicationWindow {
 
         QGCLabel {
             id:                 criticalVehicleMessageText
+            objectName:         "criticalVehicleMessage_text"
             width:              criticalVehicleMessagePopup.width - ScreenTools.defaultFontPixelHeight
             anchors.centerIn:   parent
             wrapMode:           Text.WordWrap
@@ -567,15 +586,7 @@ ApplicationWindow {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: {
-                criticalVehicleMessagePopup.close()
-                if (criticalVehicleMessagePopup.additionalCriticalMessagesReceived) {
-                    criticalVehicleMessagePopup.additionalCriticalMessagesReceived = false;
-                    flyView.dropMainStatusIndicatorTool();
-                } else if (QGroundControl.multiVehicleManager.activeVehicle) {
-                    QGroundControl.multiVehicleManager.activeVehicle.resetErrorLevelMessages();
-                }
-            }
+            onClicked: criticalVehicleMessagePopup.acknowledge()
         }
     }
 
