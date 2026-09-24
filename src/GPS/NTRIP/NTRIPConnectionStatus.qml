@@ -19,14 +19,19 @@ ColumnLayout {
     readonly property real _dataWarningLimitBytes: 50 * 1024 * 1024  // 50 MB
 
     function _formatDataSize(bytes) {
-        if (bytes < 1024) return bytes + " B"
-        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB"
-        return (bytes / 1048576).toFixed(1) + " MB"
+        //: Data size in bytes
+        if (bytes < 1024) return qsTr("%1 B").arg(bytes)
+        //: Data size in kilobytes
+        if (bytes < 1048576) return qsTr("%1 KB").arg((bytes / 1024).toFixed(1))
+        //: Data size in megabytes
+        return qsTr("%1 MB").arg((bytes / 1048576).toFixed(1))
     }
 
     function _formatDataRate(bytesPerSec) {
-        if (bytesPerSec < 1024) return bytesPerSec.toFixed(0) + " B/s"
-        return (bytesPerSec / 1024).toFixed(1) + " KB/s"
+        //: Data rate in bytes per second
+        if (bytesPerSec < 1024) return qsTr("%1 B/s").arg(bytesPerSec.toFixed(0))
+        //: Data rate in kilobytes per second
+        return qsTr("%1 KB/s").arg((bytesPerSec / 1024).toFixed(1))
     }
 
     spacing:      ScreenTools.defaultFontPixelHeight / 2
@@ -104,8 +109,10 @@ ColumnLayout {
 
     LabelledLabel {
         label:     qsTr("Data Received")
-        labelText: root._stats ? (root._formatDataSize(root._stats.bytesReceived) + " ("
-                   + root._formatDataRate(root._stats.dataRateBytesPerSec) + ")") : root._valueNA
+        //: %1 is the total data size, %2 is the current data rate
+        labelText: root._stats ? qsTr("%1 (%2)").arg(root._formatDataSize(root._stats.bytesReceived))
+                                               .arg(root._formatDataRate(root._stats.dataRateBytesPerSec))
+                               : root._valueNA
         visible:   root._connected
                    && root._stats && root._stats.bytesReceived > 0
     }

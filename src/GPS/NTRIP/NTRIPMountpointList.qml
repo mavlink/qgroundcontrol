@@ -75,9 +75,12 @@ QGCListView {
                         if (entry.format) parts.push(entry.format)
                         if (entry.navSystem) parts.push(entry.navSystem)
                         if (entry.country) parts.push(entry.country)
-                        if (entry.bitrate > 0) parts.push(entry.bitrate + " bps")
-                        if (entry.distanceKm >= 0) parts.push(entry.distanceKm.toFixed(1) + " km")
-                        return parts.join(" · ")
+                        //: Mountpoint bitrate in bits per second
+                        if (entry.bitrate > 0) parts.push(qsTr("%1 bps").arg(entry.bitrate))
+                        //: Distance to the mountpoint in kilometers
+                        if (entry.distanceKm >= 0) parts.push(qsTr("%1 km").arg(entry.distanceKm.toFixed(1)))
+                        //: Separator between mountpoint details
+                        return parts.join(qsTr(" · "))
                     }
                     font.pointSize: ScreenTools.smallFontPointSize
                     color:  entry.mountpoint === root.selectedMountpoint
