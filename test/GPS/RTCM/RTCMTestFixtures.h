@@ -4,9 +4,9 @@
 
 #include <QtCore/QByteArray>
 
-#include "../Driver/Protocols/ProtocolTestPackets.h"
+#include "../Protocols/Support/ProtocolTestPackets.h"
 
-namespace GpsTestHelpers {
+namespace GPSTestHelpers {
 
 inline QByteArray buildRtcmFrame(uint16_t messageId, int extraPayloadBytes = 0)
 {
@@ -25,4 +25,4 @@ inline QByteArray buildRtcmFrame(uint16_t messageId, int extraPayloadBytes = 0)
     return QByteArray(reinterpret_cast<const char*>(packet.data()), static_cast<qsizetype>(packet.size()));
 }
 
-}  // namespace GpsTestHelpers
+}  // namespace GPSTestHelpers

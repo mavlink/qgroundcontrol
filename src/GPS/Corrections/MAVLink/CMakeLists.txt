@@ -1,10 +1,10 @@
-qt_add_library(QGCGPSRTCMMavlink STATIC RTCMMavlink.cc RTCMMavlinkPacket.cc)
-add_library(QGC::GPSRTCMMavlink ALIAS QGCGPSRTCMMavlink)
-set_target_properties(QGCGPSRTCMMavlink PROPERTIES AUTOMOC ON POSITION_INDEPENDENT_CODE ON)
-target_compile_features(QGCGPSRTCMMavlink PUBLIC cxx_std_20)
+qt_add_library(QGCGPSRTCMMAVLink STATIC RTCMMAVLink.cc RTCMMAVLinkPacket.cc)
+add_library(QGC::GPSRTCMMAVLink ALIAS QGCGPSRTCMMAVLink)
+set_target_properties(QGCGPSRTCMMAVLink PROPERTIES AUTOMOC ON POSITION_INDEPENDENT_CODE ON)
+target_compile_features(QGCGPSRTCMMAVLink PUBLIC cxx_std_20)
 target_link_libraries(
-    QGCGPSRTCMMavlink
+    QGCGPSRTCMMAVLink
     PUBLIC Qt6::Core QGCIO
     PRIVATE QGCLoggingCategory
 )
-target_sources(QGCGPSRTCMMavlink PUBLIC FILE_SET HEADERS FILES RTCMMavlink.h RTCMMavlinkPacket.h)
+target_sources(QGCGPSRTCMMAVLink PUBLIC FILE_SET HEADERS FILES RTCMMAVLink.h RTCMMAVLinkPacket.h)

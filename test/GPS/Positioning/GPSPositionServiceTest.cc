@@ -8,7 +8,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "GPSPositionService.h"
-#include "GpsTestHelpers.h"
+#include "GPSTestHelpers.h"
 #include "ManualScheduler.h"
 
 namespace {
@@ -16,7 +16,7 @@ using Kind = GPSPositionService::SelectedSource;
 using Mode = GPSPositionService::SourceMode;
 using Status = GPSPositionService::SourceStatus;
 
-using GpsTestHelpers::PositionSource;
+using GPSTestHelpers::PositionSource;
 
 GPSObservation fix(ManualScheduler& scheduler, double latitude = 47, quint64 session = 0)
 {

@@ -55,7 +55,7 @@
         {
             "name": "GNSS Receiver",
             "qml": "GNSSReceiverSettings.qml",
-            "icon": "qrc:/qmlimages/Gps.svg",
+            "icon": "qrc:/qmlimages/GPS.svg",
             "pageDefinition": "GNSSReceiver.SettingsUI.json"
         },
         {

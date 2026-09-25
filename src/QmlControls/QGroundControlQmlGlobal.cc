@@ -91,7 +91,7 @@ GPSManager* QGroundControlQmlGlobal::gpsManager() const
     return GPSManager::instance();
 }
 
-QGCPositionManager* QGroundControlQmlGlobal::positionManager() const
+PositionManager* QGroundControlQmlGlobal::positionManager() const
 {
     return GPSManager::instance()->positionManager();
 }

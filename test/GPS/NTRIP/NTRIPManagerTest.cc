@@ -11,14 +11,14 @@
 #include <QtTest/QTest>
 
 #include "GPSCorrectionManager.h"
-#include "GpsTestHelpers.h"
+#include "GPSTestHelpers.h"
 #include "ManualScheduler.h"
 #include "MockNTRIPTransport.h"
 #include "MonotonicClock.h"
 #include "NTRIPManager.h"
 #include "NTRIPNetworkMonitor.h"
 #include "RTCMDecodedFrame.h"
-#include "ScriptedNtripCaster.h"
+#include "ScriptedNTRIPCaster.h"
 
 namespace {
 constexpr std::chrono::milliseconds SettingsDebounce{250};
@@ -678,7 +678,7 @@ void NTRIPManagerTest::testHttpRetryAfterReachesManager()
 {
     QFETCH(int, status);
     QFETCH(bool, compressed);
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     ManualScheduler scheduler;
     NTRIPManager manager(nullptr, &scheduler);
@@ -781,7 +781,7 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
 {
     GPSCorrectionManager corrections;
     corrections.rtcmMavlink()->setOutputProvider([]() {
-        return QList<RTCMMavlink::Output>{{QStringLiteral("test"), 1, [](const GpsRtcmPacket&) { return true; }}};
+        return QList<RTCMMAVLink::Output>{{QStringLiteral("test"), 1, [](const GPSRTCMPacket&) { return true; }}};
     });
     NTRIPManager mgr;
     auto configuration = testConfiguration(false);
@@ -802,7 +802,7 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     configuration.enabled = true;
     mgr.setConfiguration(configuration);
     QTRY_COMPARE_WITH_TIMEOUT(first->startCount, 1, TestTimeout::shortMs());
-    const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005);
+    const QByteArray frame = GPSTestHelpers::buildRtcmFrame(1005);
     const qint64 receivedAtMs = GPSCorrectionFrame::monotonicNowMs() - 10;
     first->simulateRtcmData(frame, 1005, receivedAtMs);
     QCOMPARE(observed.size(), 1);
@@ -815,7 +815,7 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(routed.size(), 1);
     const auto original = qvariant_cast<GPSCorrectionFrame>(routed[0][0]);
-    QCOMPARE(original.source, GPSCorrectionSource::Ntrip);
+    QCOMPARE(original.source, GPSCorrectionSource::NTRIP);
     QCOMPARE(original.sourceInstance, QStringLiteral("ntrips://caster.example.com:2101/TEST"));
     QCOMPARE(original.receivedAtMs, receivedAtMs);
     QVERIFY(original.validated);
@@ -934,7 +934,7 @@ void NTRIPManagerTest::testFactChangesReconfigureTransport()
     QCOMPARE(first->startCount, 1);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
     QSignalSpy routed(&corrections.router(), &GPSCorrectionRouter::frameRouted);
-    first->simulateRtcmData(GpsTestHelpers::buildRtcmFrame(1005), 1005);
+    first->simulateRtcmData(GPSTestHelpers::buildRtcmFrame(1005), 1005);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(routed.size(), 1);
     const auto original = qvariant_cast<GPSCorrectionFrame>(routed[0][0]);
@@ -957,9 +957,9 @@ void NTRIPManagerTest::testFactChangesReconfigureTransport()
     QCOMPARE(active->stopCount, 0);
     if (setting == QStringLiteral("whitelist")) {
         QCOMPARE(active->lastWhitelist, QVector<int>{1077});
-        active->simulateRtcmData(GpsTestHelpers::buildRtcmFrame(1005), 1005);
+        active->simulateRtcmData(GPSTestHelpers::buildRtcmFrame(1005), 1005);
     }
-    const auto frame = GpsTestHelpers::buildRtcmFrame(1077);
+    const auto frame = GPSTestHelpers::buildRtcmFrame(1077);
     const qint64 receivedAtMs = GPSCorrectionFrame::monotonicNowMs() - 10;
     active->simulateRtcmData(frame, 1077, receivedAtMs);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
@@ -979,7 +979,7 @@ void NTRIPManagerTest::testFactChangesReconfigureTransport()
 
 void NTRIPManagerTest::testTransportDiagnosticsReachManager()
 {
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     GPSCorrectionManager corrections;
     NTRIPManager mgr;
@@ -994,9 +994,9 @@ void NTRIPManagerTest::testTransportDiagnosticsReachManager()
     auto* connection = caster.waitForConnection(TestTimeout::shortMs());
     QVERIFY(connection && connection->peer);
     QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.1"));
-    const auto accepted = GpsTestHelpers::buildRtcmFrame(1005);
-    const auto filtered = GpsTestHelpers::buildRtcmFrame(1077);
-    auto rejected = GpsTestHelpers::buildRtcmFrame(1087);
+    const auto accepted = GPSTestHelpers::buildRtcmFrame(1005);
+    const auto filtered = GPSTestHelpers::buildRtcmFrame(1077);
+    auto rejected = GPSTestHelpers::buildRtcmFrame(1087);
     rejected.back() ^= 1;
     expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Invalid RTCM frame")));
@@ -1005,10 +1005,10 @@ void NTRIPManagerTest::testTransportDiagnosticsReachManager()
                                 QByteArray::number(body.size(), 16) + "\r\n" + body + "\r\n";
     QCOMPARE(connection->write(response), response.size());
     QTRY_COMPARE_WITH_TIMEOUT(
-        corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)].receivedFrames, 3,
+        corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::NTRIP)].receivedFrames, 3,
         TestTimeout::shortMs());
     verifyExpectedLogMessage();
-    const auto stats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)];
+    const auto stats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::NTRIP)];
     QCOMPARE(stats.validatedFrames, 2);
     QCOMPARE(stats.selectedFrames, 1);
     QCOMPARE(routed.size(), 1);

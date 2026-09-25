@@ -21,7 +21,7 @@ void RTCMFramerTest::_frameAccess()
 {
     QFETCH(int, messageId);
     QFETCH(int, extraPayload);
-    const auto frame = GpsTestHelpers::buildRtcmFrame(static_cast<uint16_t>(messageId), extraPayload);
+    const auto frame = GPSTestHelpers::buildRtcmFrame(static_cast<uint16_t>(messageId), extraPayload);
     RTCMFramer framer;
     for (qsizetype index = 0; index < frame.size(); ++index) {
         QCOMPARE(framer.addByte(static_cast<uint8_t>(frame[index])), index == frame.size() - 1);
@@ -36,7 +36,7 @@ void RTCMFramerTest::_frameAccess()
 
     const auto savedFrame = QByteArrayView(framer.frame()).toByteArray();
     framer.reset();
-    const auto replacement = GpsTestHelpers::buildRtcmFrame(1006, extraPayload);
+    const auto replacement = GPSTestHelpers::buildRtcmFrame(1006, extraPayload);
     for (const char byte : replacement) {
         framer.addByte(static_cast<uint8_t>(byte));
     }

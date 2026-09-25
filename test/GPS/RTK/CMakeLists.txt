@@ -4,10 +4,8 @@ target_sources(
             BlockedTransportGate.h
             GPSProviderTest.cc
             GPSProviderTest.h
-            GPSRtkTest.cc
-            GPSRtkTest.h
-            GPSReceiverSettingsTest.cc
-            GPSReceiverSettingsTest.h
+            GPSRTKTest.cc
+            GPSRTKTest.h
             ScriptedProvider.h
 )
 
@@ -17,8 +15,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSDriver QGCGPSReceiverT
 
 add_qgc_test(GPSProviderTest LABELS Unit GPS)
 add_qgc_test(GPSBaseStationConfigTest LABELS Unit GPS RTK)
-add_qgc_test(GPSRtkTest LABELS Unit GPS)
-add_qgc_test(GPSReceiverSettingsTest LABELS Unit GPS RTK)
+add_qgc_test(GPSRTKTest LABELS Unit GPS)
 
 if(NOT QGC_NO_SERIAL_LINK)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE RTKConnectionPolicyTest.cc RTKConnectionPolicyTest.h)

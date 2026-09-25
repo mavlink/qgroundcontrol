@@ -2,7 +2,7 @@
 
 #include <QtTest/QTest>
 
-#include "GpsMavlinkTestHelpers.h"
+#include "GPSMAVLinkTestHelpers.h"
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "UnitTest.h"
@@ -13,8 +13,8 @@ namespace {
 
 mavlink_message_t gpsMessage(bool secondary, uint16_t yaw, uint8_t fixType)
 {
-    using GpsTestHelpers::GpsReceiver;
-    return GpsTestHelpers::gpsRawMessage({.latitudeE7 = 470000000,
+    using GPSTestHelpers::GPSReceiverIndex;
+    return GPSTestHelpers::gpsRawMessage({.latitudeE7 = 470000000,
                                           .longitudeE7 = 80000000,
                                           .altitudeMm = 123456,
                                           .fixType = fixType,
@@ -25,7 +25,7 @@ mavlink_message_t gpsMessage(bool secondary, uint16_t yaw, uint8_t fixType)
                                           .yaw = yaw,
                                           .horizontalAccuracyMm = 3500,
                                           .verticalAccuracyMm = 6000},
-                                         secondary ? GpsReceiver::Secondary : GpsReceiver::Primary);
+                                         secondary ? GPSReceiverIndex::Secondary : GPSReceiverIndex::Primary);
 }
 
 mavlink_message_t rtkMessage(bool secondary)

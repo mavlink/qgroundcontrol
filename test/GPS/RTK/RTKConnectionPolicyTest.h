@@ -29,6 +29,6 @@ private slots:
     void _connectSavedKeepsDiscovery_data();
     void _connectSavedKeepsDiscovery();
     void _shutdownDuringConnectionTick();
-    void _manualRetryRecreatesGpsRtkSession();
+    void _manualRetryRecreatesGPSRTKSession();
     void _serialPolicyIntegrationUsesSelectedPort();
 };

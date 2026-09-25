@@ -9,8 +9,8 @@ void GPSCorrectionRouterTest::diagnosticsKeepHealthDomainsIndependent()
 {
     constexpr qint64 now = 100000;
     GPSCorrectionRouter router(nullptr, [] { return now; });
-    auto ntrip = router.registerSource(GPSCorrectionSource::Ntrip);
-    const RTCMDecodedFrame filtered{GpsTestHelpers::buildRtcmFrame(1005), 1005, now, true, true};
+    auto ntrip = router.registerSource(GPSCorrectionSource::NTRIP);
+    const RTCMDecodedFrame filtered{GPSTestHelpers::buildRtcmFrame(1005), 1005, now, true, true};
     QVERIFY(!router.acceptIngress(ntrip.event(filtered)));
     auto udp = router.registerSource(GPSCorrectionSource::Udp);
     QVERIFY(router.acceptIngress(udp.event(QByteArrayLiteral("raw"), now, 0, false)));
@@ -30,14 +30,14 @@ void GPSCorrectionRouterTest::managerSourceSelectionAndSessions()
     constexpr qint64 now = 100000;
     GPSCorrectionRouter router(nullptr, [] { return now; });
     QSignalSpy routed(&router, &GPSCorrectionRouter::frameRouted);
-    const QByteArray data = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    const QByteArray data = GPSTestHelpers::buildRtcmFrame(1005, 20);
     const auto initial = router.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::LocalReceiver));
     QVERIFY(!initial.active);
     QVERIFY(!router.acceptIngress(GPSCorrectionSourceRegistration::Weak().event(data, now, 1005, true)));
     QVERIFY(routed.isEmpty());
 
     auto local = router.registerSource(GPSCorrectionSource::LocalReceiver);
-    auto ntrip = router.registerSource(GPSCorrectionSource::Ntrip);
+    auto ntrip = router.registerSource(GPSCorrectionSource::NTRIP);
     const auto oldSource = ntrip.weak();
     auto frame = oldSource.event(data, now, 0, true);
     QVERIFY(router.acceptIngress(frame));
@@ -50,11 +50,11 @@ void GPSCorrectionRouterTest::managerSourceSelectionAndSessions()
     QVERIFY(router.acceptIngress(local.event(data, now, 1005, true)));
     QCOMPARE(routed.size(), 2);
 
-    router.applyConfiguration({GPSCorrectionRouter::Policy::Manual, GPSCorrectionSource::Ntrip, {}});
+    router.applyConfiguration({GPSCorrectionRouter::Policy::Manual, GPSCorrectionSource::NTRIP, {}});
     ntrip.reset();
     QVERIFY(!router.acceptIngress(frame));
     QCOMPARE(routed.size(), 2);
-    ntrip = router.registerSource(GPSCorrectionSource::Ntrip);
+    ntrip = router.registerSource(GPSCorrectionSource::NTRIP);
     QVERIFY(ntrip.generation() != oldSource.generation());
     QVERIFY(!router.acceptIngress(frame));
     QCOMPARE(routed.size(), 2);
@@ -62,7 +62,7 @@ void GPSCorrectionRouterTest::managerSourceSelectionAndSessions()
     frame = ntrip.event(data, now, 0, true);
     QVERIFY(router.acceptIngress(frame));
     QCOMPARE(routed.size(), 3);
-    const auto stats = router.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip));
+    const auto stats = router.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::NTRIP));
     QCOMPARE(stats.validatedFrames, quint64(1));
     QCOMPARE(stats.selectedFrames, quint64(1));
     QVERIFY(stats.usable);
@@ -73,23 +73,23 @@ void GPSCorrectionRouterTest::managerFilteredAndExpiredFrames()
     constexpr qint64 now = 100000;
     GPSCorrectionRouter router(nullptr, [] { return now; });
     QSignalSpy routed(&router, &GPSCorrectionRouter::frameRouted);
-    auto ntrip = router.registerSource(GPSCorrectionSource::Ntrip);
-    const auto data = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    auto ntrip = router.registerSource(GPSCorrectionSource::NTRIP);
+    const auto data = GPSTestHelpers::buildRtcmFrame(1005, 20);
 
     QVERIFY(!router.acceptIngress(ntrip.event(data, now, 1005, true, true)));
-    auto stats = router.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip));
+    auto stats = router.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::NTRIP));
     QVERIFY(stats.usable);
     QCOMPARE(stats.droppedFrames, quint64(1));
     QVERIFY(routed.isEmpty());
 
     QVERIFY(!router.acceptIngress(ntrip.event(data, now - 6000, 1005, true)));
-    stats = router.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip));
+    stats = router.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::NTRIP));
     QVERIFY(stats.usable);
     QCOMPARE(stats.droppedFrames, quint64(2));
     QVERIFY(routed.isEmpty());
 
     QVERIFY(!router.acceptIngress(ntrip.event(data, now + 60000, 1005, true)));
-    stats = router.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip));
+    stats = router.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::NTRIP));
     QCOMPARE(stats.droppedFrames, quint64(3));
     QCOMPARE(stats.validatedFrames, quint64(2));
     QVERIFY(routed.isEmpty());
@@ -99,11 +99,11 @@ void GPSCorrectionRouterTest::managerReceivedByteRates()
 {
     qint64 now = 100000;
     GPSCorrectionRouter router(nullptr, [&]() { return now; });
-    auto ntrip = router.registerSource(GPSCorrectionSource::Ntrip);
+    auto ntrip = router.registerSource(GPSCorrectionSource::NTRIP);
     const auto rate = [&router]() {
-        return router.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip)).receivedBytesPerSecond;
+        return router.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::NTRIP)).receivedBytesPerSecond;
     };
-    const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    const auto frame = GPSTestHelpers::buildRtcmFrame(1005, 20);
 
     router.sampleReceivedByteRates(now);
     QVERIFY(router.acceptIngress(ntrip.event(frame, now, 1005, true)));
@@ -116,7 +116,7 @@ void GPSCorrectionRouterTest::managerReceivedByteRates()
     QCOMPARE(rate(), 0ULL);
 
     ntrip.reset();
-    ntrip = router.registerSource(GPSCorrectionSource::Ntrip);
+    ntrip = router.registerSource(GPSCorrectionSource::NTRIP);
     QVERIFY(router.acceptIngress(ntrip.event(frame, now, 1005, true)));
     now += 1000;
     router.sampleReceivedByteRates(now);

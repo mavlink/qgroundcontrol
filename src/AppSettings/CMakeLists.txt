@@ -138,9 +138,9 @@ qt_add_qml_module(
               SigningKeyManager.qml
               MockLink.qml
               MockLinkSettings.qml
-              NtripConnectionSettings.qml
-              NtripMountpointBrowser.qml
-              NtripServerSettings.qml
+              NTRIPConnectionSettings.qml
+              NTRIPMountpointBrowser.qml
+              NTRIPServerSettings.qml
               OfflineMapEditor.qml
               OfflineMapInfo.qml
               OfflineMapSettings.qml

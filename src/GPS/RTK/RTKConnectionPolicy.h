@@ -7,8 +7,8 @@
 #include <QtCore/QString>
 
 #include "GPSProvider.h"
+#include "GPSRTK.h"
 #include "GPSRevision.h"
-#include "GPSRtk.h"
 #include "RTKConnectionTarget.h"
 
 class RuntimeScheduler;
@@ -31,13 +31,13 @@ enum class RTKSessionOutcome
 class RTKConnectionPolicy : public QObject
 {
     Q_OBJECT
-    friend class GPSRtkTest;
+    friend class GPSRTKTest;
 
 public:
     explicit RTKConnectionPolicy(RTKConnectionTarget& receiver, QObject* parent = nullptr,
                                  RuntimeScheduler* scheduler = nullptr);
 
-    void setConfiguration(const GPSRtk::Configuration& configuration);
+    void setConfiguration(const GPSRTK::Configuration& configuration);
 
     /// Connects from the saved settings and turns auto-connect off. Flash-save consent is one-use.
     bool connectConfigured(bool allowPersistentChanges);
@@ -84,7 +84,7 @@ private:
 
     RTKConnectionTarget& _receiver;
     RuntimeScheduler* const _scheduler;
-    GPSRtk::Configuration _configuration;
+    GPSRTK::Configuration _configuration;
     Owner _owner = Owner::None;
     // A manual connection that reached the receiver once is retried after a loss.
     bool _established = false;

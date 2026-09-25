@@ -9,7 +9,7 @@
 #include <QtTest/QTest>
 
 #include "Fact.h"
-#include "GpsQmlTestHelpers.h"
+#include "GPSQmlTestHelpers.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
 #include "NTRIPSourceTable.h"
@@ -166,13 +166,13 @@ void NTRIPSettingsUITest::_testErrorActionRetries()
 {
     QQuickWindow window;
     window.resize(640, 400);
-    GpsTestHelpers::QmlEngine engine;
+    GPSTestHelpers::QmlEngine engine;
     std::unique_ptr<QObject> manager = engine.create(QByteArray(kMockNtripManager));
     QVERIFY2(manager, qPrintable(engine.lastError()));
     Fact enabled(0, QStringLiteral("enabled"), FactMetaData::valueTypeBool);
     enabled.setRawValue(true);
     std::unique_ptr<QObject> panel =
-        engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NtripConnectionSettings.qml")),
+        engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NTRIPConnectionSettings.qml")),
                       {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                        {QStringLiteral("visible"), true},
                        {QStringLiteral("_ntripMgr"), QVariant::fromValue(manager.get())},
@@ -218,7 +218,7 @@ void NTRIPSettingsUITest::_testConnectionActionIsIdempotent()
     QFETCH(bool, enabledAfter);
     QQuickWindow window;
     window.resize(640, 400);
-    GpsTestHelpers::QmlEngine engine;
+    GPSTestHelpers::QmlEngine engine;
     std::unique_ptr<QObject> manager =
         engine.create(QByteArray(kMockNtripManager),
                       {{QStringLiteral("connectionStatus"), status}, {QStringLiteral("statusMessage"), QString()}});
@@ -228,7 +228,7 @@ void NTRIPSettingsUITest::_testConnectionActionIsIdempotent()
     SettingsManager::instance()->ntripSettings()->ntripServerHostAddress()->setRawValue(
         QStringLiteral("caster.example.com"));
     std::unique_ptr<QObject> panel =
-        engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NtripConnectionSettings.qml")),
+        engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NTRIPConnectionSettings.qml")),
                       {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                        {QStringLiteral("visible"), true},
                        {QStringLiteral("_ntripMgr"), QVariant::fromValue(manager.get())},
@@ -247,9 +247,9 @@ void NTRIPSettingsUITest::_testConnectionActionIsIdempotent()
 
 void NTRIPSettingsUITest::_testMountpointLockedWhileActive()
 {
-    GpsTestHelpers::QmlEngine engine;
+    GPSTestHelpers::QmlEngine engine;
     std::unique_ptr<QObject> panel =
-        engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NtripMountpointBrowser.qml")),
+        engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NTRIPMountpointBrowser.qml")),
                       {{QStringLiteral("_isActive"), true}});
     QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* list = panel->findChild<QObject*>(QStringLiteral("ntripMountpointList"));
@@ -263,13 +263,13 @@ void NTRIPSettingsUITest::_testLongStatusWrapsWithinPanel()
 {
     QQuickWindow window;
     window.resize(640, 400);
-    GpsTestHelpers::QmlEngine engine;
+    GPSTestHelpers::QmlEngine engine;
     std::unique_ptr<QObject> manager = engine.create(QByteArray(kMockNtripManager));
     QVERIFY2(manager, qPrintable(engine.lastError()));
     Fact enabled(0, QStringLiteral("enabled"), FactMetaData::valueTypeBool);
     enabled.setRawValue(true);
     std::unique_ptr<QObject> panel =
-        engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NtripConnectionSettings.qml")),
+        engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NTRIPConnectionSettings.qml")),
                       {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                        {QStringLiteral("visible"), true},
                        {QStringLiteral("_ntripMgr"), QVariant::fromValue(manager.get())},
@@ -313,7 +313,7 @@ void NTRIPSettingsUITest::_testMountpointButtonsAligned()
     QCOMPARE(model.rowCount(), 2);
     QQuickWindow window;
     window.resize(640, 400);
-    GpsTestHelpers::QmlEngine engine;
+    GPSTestHelpers::QmlEngine engine;
     std::unique_ptr<QObject> list =
         engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/GPS/NTRIP/NTRIPMountpointList.qml")),
                       {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},

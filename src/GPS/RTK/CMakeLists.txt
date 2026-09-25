@@ -3,13 +3,13 @@ if(DEFINED QGC_GPS_COMPONENTS_ENABLED AND NOT "RTK" IN_LIST QGC_GPS_COMPONENTS_E
     return()
 endif()
 
-qt_add_library(QGCGPSRTK STATIC GPSProvider.cc GPSRtk.cc RTKConnectionPolicy.cc)
+qt_add_library(QGCGPSRTK STATIC GPSProvider.cc GPSRTK.cc RTKConnectionPolicy.cc)
 add_library(QGC::GPSRTK ALIAS QGCGPSRTK)
 set_target_properties(QGCGPSRTK PROPERTIES AUTOMOC ON)
 target_compile_features(QGCGPSRTK PUBLIC cxx_std_20)
 target_link_libraries(
     QGCGPSRTK
-    PUBLIC QGCGPSCore QGCGPSCorrections QGCGPSPositioning QGCGPSReceiver QGCGPSTransport
+    PUBLIC QGCGPSCommon QGCGPSCorrections QGCGPSPositioning QGCGPSReceiver QGCGPSSupport QGCGPSTransport
     PRIVATE QGCGPSCorrectionService QGCGPSDriver QGCGPSReceiverTransports QGCGPSRTCM QGCLoggingCategory QGCTiming
 )
 target_sources(
@@ -18,12 +18,12 @@ target_sources(
            HEADERS
            FILES
            GPSProvider.h
-           GPSRtk.h
+           GPSRTK.h
            GPSSerialPorts.h
            RTKConnectionPolicy.h
            RTKConnectionTarget.h
 )
-# GPSRtk.h declares its serial API only in builds with serial links.
+# GPSRTK.h declares its serial API only in builds with serial links.
 if(QGC_NO_SERIAL_LINK)
     target_compile_definitions(QGCGPSRTK PUBLIC QGC_NO_SERIAL_LINK)
 endif()

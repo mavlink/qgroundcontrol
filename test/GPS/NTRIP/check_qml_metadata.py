@@ -28,7 +28,7 @@ PROPERTIES = {
     ),
     "NTRIPSourceTableController": (GPS_MODULE, {"fetchStatus", "fetchError", "mountpointModel"}),
     "GPSManager": (APP_MODULE, {"corrections", "gpsRtk", "gpsRtkFacts"}),
-    "GPSRtk": (GPS_MODULE, {"hasReceiver", "activeRole", "activePresentation"}),
+    "GPSRTK": (GPS_MODULE, {"hasReceiver", "activeRole", "activePresentation"}),
     "GPSCorrectionManager": (GPS_MODULE, {"rtcmMavlink"}),
     "NTRIPManager": (GPS_MODULE, {"connectionStatus", "connectionStats", "sourceTableController"}),
 }

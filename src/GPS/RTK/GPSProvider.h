@@ -50,7 +50,7 @@ public:
     ~GPSProvider() override;
 
     /// Starts the session once; later calls are ignored.
-    // Virtual so GPSRtk tests can inject a provider that emits scripted signals without a worker thread.
+    // Virtual so GPSRTK tests can inject a provider that emits scripted signals without a worker thread.
     virtual void start();
 
     /// Requests cooperative cancellation; blocking transport calls observe it within their polling interval.

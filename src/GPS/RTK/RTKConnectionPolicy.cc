@@ -16,24 +16,24 @@
 QGC_LOGGING_CATEGORY(RTKConnectionPolicyLog, "GPS.RTK.RTKConnectionPolicy")
 
 namespace {
-GPSRtk::ConnectionType selectedConnection(const GPSRtk::Configuration& configuration)
+GPSRTK::ConnectionType selectedConnection(const GPSRTK::Configuration& configuration)
 {
     const auto saved = configuration.connectionType;
 #ifdef QGC_NO_SERIAL_LINK
-    return saved == GPSRtk::Udp ? GPSRtk::Udp : GPSRtk::Tcp;
+    return saved == GPSRTK::Udp ? GPSRTK::Udp : GPSRTK::Tcp;
 #else
-    return saved == GPSRtk::Tcp || saved == GPSRtk::Udp ? saved : GPSRtk::Serial;
+    return saved == GPSRTK::Tcp || saved == GPSRTK::Udp ? saved : GPSRTK::Serial;
 #endif
 }
 
-GPSRtk::ReceiverRole selectedRole(const GPSRtk::Configuration& configuration)
+GPSRTK::ReceiverRole selectedRole(const GPSRTK::Configuration& configuration)
 {
     const auto saved = configuration.receiverRole;
-    return saved == GPSRtk::PositionOnly || saved == GPSRtk::Passive ? saved : GPSRtk::ConfiguredBase;
+    return saved == GPSRTK::PositionOnly || saved == GPSRTK::Passive ? saved : GPSRTK::ConfiguredBase;
 }
 
-bool savedConnectionChanged(const GPSRtk::Configuration& oldConfiguration,
-                            const GPSRtk::Configuration& newConfiguration)
+bool savedConnectionChanged(const GPSRTK::Configuration& oldConfiguration,
+                            const GPSRTK::Configuration& newConfiguration)
 {
     return oldConfiguration.receiverRole != newConfiguration.receiverRole ||
            oldConfiguration.connectionType != newConfiguration.connectionType ||
@@ -53,7 +53,7 @@ RTKConnectionPolicy::RTKConnectionPolicy(RTKConnectionTarget& receiver, QObject*
     , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
 {}
 
-void RTKConnectionPolicy::setConfiguration(const GPSRtk::Configuration& configuration)
+void RTKConnectionPolicy::setConfiguration(const GPSRTK::Configuration& configuration)
 {
     if (_configuration == configuration) {
         return;
@@ -233,7 +233,7 @@ void RTKConnectionPolicy::_retryManual()
     if (_connectConfigured(false, false) || !operation.isCurrent()) {
         return;
     }
-    _waitingForPort = selectedConnection(_configuration) == GPSRtk::Serial &&
+    _waitingForPort = selectedConnection(_configuration) == GPSRTK::Serial &&
                       _receiver.connectionError() == GPSConnectionError::OpenFailed;
     _scheduleRetry();
 }
@@ -242,8 +242,8 @@ bool RTKConnectionPolicy::_connectConfigured(bool allowPersistentChanges, bool u
 {
     const auto operation = _revision.current(this);
     const auto role = selectedRole(_configuration);
-    const auto type = role == GPSRtk::ConfiguredBase
-                          ? GPSRtk::typeForManufacturer(_configuration.baseReceiverManufacturer)
+    const auto type = role == GPSRTK::ConfiguredBase
+                          ? GPSRTK::typeForManufacturer(_configuration.baseReceiverManufacturer)
                           : std::optional(GPSType::passive);
     if (!type) {
         _receiver.setConnectionError(GPSConnectionError::ConfigFailed,
@@ -256,16 +256,16 @@ bool RTKConnectionPolicy::_connectConfigured(bool allowPersistentChanges, bool u
         return false;
     }
     const auto connection = selectedConnection(_configuration);
-    const bool tcp = connection == GPSRtk::Tcp;
+    const bool tcp = connection == GPSRTK::Tcp;
     const QString host = _configuration.tcpHost.trimmed();
     const uint tcpPort = _configuration.tcpPort;
     if (tcp && (host.isEmpty() || tcpPort == 0 || tcpPort > 65535)) {
         _receiver.setConnectionError(GPSConnectionError::OpenFailed, tr("Enter the receiver's TCP host and port."));
         return false;
     }
-    if (connection == GPSRtk::Udp) {
+    if (connection == GPSRTK::Udp) {
         const uint udpPort = _configuration.udpPort;
-        if (role == GPSRtk::ConfiguredBase) {
+        if (role == GPSRTK::ConfiguredBase) {
             _receiver.setConnectionError(
                 GPSConnectionError::ConfigFailed,
                 tr("A configured base needs a serial or TCP connection. UDP only receives data."));
@@ -329,8 +329,8 @@ bool RTKConnectionPolicy::_autoConnectEnabled() const
     return false;
 #else
     // Discovery configures known base receivers; it would replace a network or passive receiver.
-    return _configuration.autoConnect && selectedConnection(_configuration) == GPSRtk::Serial &&
-           selectedRole(_configuration) == GPSRtk::ConfiguredBase;
+    return _configuration.autoConnect && selectedConnection(_configuration) == GPSRTK::Serial &&
+           selectedRole(_configuration) == GPSRTK::ConfiguredBase;
 #endif
 }
 

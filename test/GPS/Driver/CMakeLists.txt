@@ -8,22 +8,14 @@ option(QGC_BUILD_GPS_HARDWARE_TESTS "Build the GPS receiver qualification runner
        ${_qgc_gps_hardware_tests_default}
 )
 
-add_subdirectory(Protocols)
-
-target_sources(
-    ${CMAKE_PROJECT_NAME}
-    PRIVATE GPSDriverTest.cc
-            GPSDriverTest.h
-            GPSDriverReentrancyTest.cc
-            GPSDecodedDataTest.cc
-            Support/SBFReceiverModel.h
-            Support/ScriptedReceiver.cc
-            Support/UBXReceiverModel.cc
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverTest.cc GPSDriverTest.h GPSDriverReentrancyTest.cc
+                                             GPSDecodedDataTest.cc GPSSatelliteStateTest.cc
 )
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSProtocols)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSDriver QGCGPSProtocols)
 add_qgc_test(GPSDriverTest LABELS Unit GPS TIMEOUT 240)
 add_qgc_test(GPSDriverReentrancyTest LABELS Unit GPS)
 add_qgc_test(GPSDecodedDataTest LABELS Unit GPS)
+add_qgc_test(GPSSatelliteStateTest LABELS Unit GPS)
 
 # The runner opens a physical receiver only when invoked manually; its CTest uses a scripted receiver.
 if(QGC_BUILD_GPS_HARDWARE_TESTS)

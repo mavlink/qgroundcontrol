@@ -1,10 +1,16 @@
-if(NOT TARGET QGCGPSProtocols)
-    add_subdirectory(Protocols)
-endif()
-qt_add_library(QGCGPSDriver STATIC GPSDriver.cc GPSDecodedData.cc GPSDecodedData_p.h)
+qt_add_library(
+    QGCGPSDriver
+    STATIC
+    GPSDriver.cc
+    GPSDecodedData.cc
+    GPSDecodedData_p.h
+    GPSSatelliteObservation.cc
+    GPSSatelliteObservation.h
+    GPSSatelliteState.h
+)
 target_sources(QGCGPSDriver PUBLIC FILE_SET HEADERS FILES GPSDriver.h)
 target_link_libraries(
     QGCGPSDriver
-    PUBLIC QGCGPSReceiver
-    PRIVATE QGCGPSTransport QGCLoggingCategory QGCGPSProtocols
+    PUBLIC QGCGPSCommon QGCGPSProtocolContracts QGCGPSReceiver
+    PRIVATE QGCClock QGCGPSTransport QGCLoggingCategory QGCGPSProtocols
 )

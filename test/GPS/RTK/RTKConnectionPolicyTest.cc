@@ -10,7 +10,7 @@
 
 #include "GPSManager.h"
 #include "GPSNotificationQueue.h"
-#include "GPSRtk.h"
+#include "GPSRTK.h"
 #include "GPSSerialPortManagerAdapter.h"
 #include "GPSTransport.h"
 #include "ManualScheduler.h"
@@ -36,32 +36,32 @@ Port genericPort(const QString& location)
     return {location, location.section(QLatin1Char('/'), -1), QGCSerialPortInfo::BoardTypeUnknown, {}};
 }
 
-GPSRtk::Configuration serialConfiguration(bool autoConnect = true)
+GPSRTK::Configuration serialConfiguration(bool autoConnect = true)
 {
-    GPSRtk::Configuration configuration;
+    GPSRTK::Configuration configuration;
     configuration.autoConnect = autoConnect;
-    configuration.receiverRole = GPSRtk::ConfiguredBase;
-    configuration.connectionType = GPSRtk::Serial;
-    configuration.baseReceiverManufacturer = GPSRtk::manufacturerForType(GPSType::ublox);
+    configuration.receiverRole = GPSRTK::ConfiguredBase;
+    configuration.connectionType = GPSRTK::Serial;
+    configuration.baseReceiverManufacturer = GPSRTK::manufacturerForType(GPSType::ublox);
     configuration.serialDevice = QStringLiteral("/test/rtk");
     configuration.serialBaudRate = 115200;
     configuration.baseMode = static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn);
     return configuration;
 }
 
-GPSRtk::Configuration passiveSerialConfiguration(bool autoConnect = false)
+GPSRTK::Configuration passiveSerialConfiguration(bool autoConnect = false)
 {
     auto configuration = serialConfiguration(autoConnect);
-    configuration.receiverRole = GPSRtk::Passive;
+    configuration.receiverRole = GPSRTK::Passive;
     configuration.serialDevice = QStringLiteral("/test/manual");
     return configuration;
 }
 
-GPSRtk::Configuration tcpConfiguration(bool autoConnect = false)
+GPSRTK::Configuration tcpConfiguration(bool autoConnect = false)
 {
     auto configuration = serialConfiguration(autoConnect);
-    configuration.receiverRole = GPSRtk::Passive;
-    configuration.connectionType = GPSRtk::Tcp;
+    configuration.receiverRole = GPSRTK::Passive;
+    configuration.connectionType = GPSRTK::Tcp;
     configuration.tcpHost = QStringLiteral("rtk.test");
     configuration.tcpPort = 2101;
     return configuration;
@@ -225,7 +225,7 @@ public:
 struct PolicyHarness
 {
     explicit PolicyHarness(
-        const GPSRtk::Configuration& configuration,
+        const GPSRTK::Configuration& configuration,
         SerialPortManager::Enumerator enumerator = [] { return QList<Port>{}; })
         : target(std::move(enumerator))
         , policy(target, nullptr, &scheduler)
@@ -242,7 +242,7 @@ struct PolicyHarness
 void RTKConnectionPolicyTest::init()
 {
     UnitTest::init();
-    ignoreLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
+    ignoreLogMessage("GPS.RTK.GPSRTK", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport|session ended")));
 }
 
@@ -303,11 +303,11 @@ void RTKConnectionPolicyTest::_connectConfiguredValidationErrors()
         configuration = tcpConfiguration(false);
         configuration.tcpPort = 0;
     } else if (reason == QStringLiteral("udp-port")) {
-        configuration.receiverRole = GPSRtk::Passive;
-        configuration.connectionType = GPSRtk::Udp;
+        configuration.receiverRole = GPSRTK::Passive;
+        configuration.connectionType = GPSRTK::Udp;
         configuration.udpPort = 0;
     } else if (reason == QStringLiteral("base-over-udp")) {
-        configuration.connectionType = GPSRtk::Udp;
+        configuration.connectionType = GPSRTK::Udp;
         configuration.udpPort = 14401;
     } else if (reason == QStringLiteral("serial-empty")) {
         configuration.serialDevice.clear();
@@ -417,7 +417,7 @@ void RTKConnectionPolicyTest::_excludedPorts()
     QFETCH(QString, reason);
     auto configuration = serialConfiguration(true);
     if (reason == QStringLiteral("passive-role")) {
-        configuration.receiverRole = GPSRtk::PositionOnly;
+        configuration.receiverRole = GPSRTK::PositionOnly;
     }
     Port port = rtkPort();
     port.bootloader = reason == QStringLiteral("bootloader");
@@ -485,7 +485,7 @@ void RTKConnectionPolicyTest::_autoRetryBacksOffAndRespectsReservations()
     failedAttempt();
 
     auto configuration = serialConfiguration(true);
-    configuration.receiverRole = GPSRtk::Passive;
+    configuration.receiverRole = GPSRTK::Passive;
     harness.policy.setConfiguration(configuration);
     QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(30)));
     const auto attempts = harness.target.calls.size();
@@ -736,10 +736,10 @@ void RTKConnectionPolicyTest::_shutdownDuringConnectionTick()
     QVERIFY(!manager.gpsRtk()->hasReceiver());
 }
 
-void RTKConnectionPolicyTest::_manualRetryRecreatesGpsRtkSession()
+void RTKConnectionPolicyTest::_manualRetryRecreatesGPSRTKSession()
 {
     ManualScheduler scheduler;
-    GPSRtk receiver(nullptr, &scheduler);
+    GPSRTK receiver(nullptr, &scheduler);
     ScriptedProviderFactory providers;
     receiver.setProviderFactory(providers.providerFactory());
     receiver.setConfiguration(tcpConfiguration(false));
@@ -755,7 +755,7 @@ void RTKConnectionPolicyTest::_manualRetryRecreatesGpsRtkSession()
     QVERIFY(!receiver.reconnecting());
 
     first->fail(GPSConnectionError::DeviceError);
-    QCOMPARE(receiver.errorMessage(), GPSRtk::tr("Receiver connection lost. Reconnecting automatically."));
+    QCOMPARE(receiver.errorMessage(), GPSRTK::tr("Receiver connection lost. Reconnecting automatically."));
     QVERIFY(receiver.reconnecting());
     QVERIFY(!receiver.hasReceiver());
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
@@ -779,7 +779,7 @@ void RTKConnectionPolicyTest::_serialPolicyIntegrationUsesSelectedPort()
     };
     SerialPortManager ports(nullptr, [&] { return inventory; });
     ManualScheduler scheduler;
-    GPSRtk receiver(nullptr, &scheduler);
+    GPSRTK receiver(nullptr, &scheduler);
     ScriptedProviderFactory providers;
     receiver.setProviderFactory(providers.providerFactory());
     auto configuration = serialConfiguration(true);
@@ -787,7 +787,7 @@ void RTKConnectionPolicyTest::_serialPolicyIntegrationUsesSelectedPort()
     receiver.setConfiguration(configuration);
     GPSSerialPortManagerAdapter serialPorts(&ports);
     receiver.setSerialPorts(&serialPorts);
-    QSignalSpy autoDisabled(&receiver, &GPSRtk::autoConnectDisabled);
+    QSignalSpy autoDisabled(&receiver, &GPSRTK::autoConnectDisabled);
 
     QVERIFY(receiver.connectConfiguredGPS());
     QCOMPARE(autoDisabled.size(), 1);
@@ -811,7 +811,7 @@ void RTKConnectionPolicyTest::_serialPolicyIntegrationUsesSelectedPort()
 
     inventory.removeLast();
     emit ports.portsEnumerated({QStringLiteral("/test/unselected")});
-    QCOMPARE(receiver.errorMessage(), GPSRtk::tr("Receiver unplugged. Reconnecting when it is plugged back in."));
+    QCOMPARE(receiver.errorMessage(), GPSRTK::tr("Receiver unplugged. Reconnecting when it is plugged back in."));
     QVERIFY(receiver.reconnecting());
     QVERIFY(!receiver.hasReceiver());
     provider->finish();
@@ -838,13 +838,13 @@ void RTKConnectionPolicyTest::_serialPolicyIntegrationUsesSelectedPort()
                              TestTimeout::mediumMs());
     QCOMPARE(receiver.activeEndpoint(), QStringLiteral("/test/discovered"));
     emit ports.portsEnumerated({QStringLiteral("/test/unselected")});
-    QCOMPARE(receiver.errorMessage(), GPSRtk::tr("Receiver unplugged."));
+    QCOMPARE(receiver.errorMessage(), GPSRTK::tr("Receiver unplugged."));
     QVERIFY(!receiver.reconnecting());
 
     // A connection the policy does not own leaves the next step to the user.
     QVERIFY(receiver.connectSerial(QStringLiteral("/test/unselected"), GPSType::ublox, 115200, false));
     emit ports.portsEnumerated({});
-    QCOMPARE(receiver.errorMessage(), GPSRtk::tr("Receiver unplugged. Select a device and reconnect."));
+    QCOMPARE(receiver.errorMessage(), GPSRTK::tr("Receiver unplugged. Select a device and reconnect."));
     QVERIFY(!receiver.reconnecting());
 #else
     QSKIP("Manual serial connection requires serial support");

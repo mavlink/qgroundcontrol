@@ -238,9 +238,9 @@ void Vehicle::_commonInit(LinkInterface* link)
     connect(this, &Vehicle::vehicleTypeChanged,     this, &Vehicle::inFwdFlightChanged);
     connect(this, &Vehicle::vtolInFwdFlightChanged, this, &Vehicle::inFwdFlightChanged);
 
-    QGCPositionManager* const positionManager = GPSManager::instance()->positionManager();
-    connect(positionManager, &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceHeadingGCS);
-    connect(positionManager, &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateHomepoint);
+    PositionManager* const positionManager = GPSManager::instance()->positionManager();
+    connect(positionManager, &PositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceHeadingGCS);
+    connect(positionManager, &PositionManager::gcsPositionChanged, this, &Vehicle::_updateHomepoint);
 
     _missionManager = new MissionManager(this);
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);

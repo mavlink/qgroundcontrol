@@ -3,7 +3,7 @@
 #include <QtCore/QScopeGuard>
 
 #include "GPSManager.h"
-#include "GpsTestHelpers.h"
+#include "GPSTestHelpers.h"
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "MockLink.h"
@@ -18,7 +18,7 @@ namespace {
 constexpr const char* kValidFullOperatorID = "FIN87astrdge12k8-xyz";
 constexpr const char* kValidPublicOperatorID = "FIN87astrdge12k8";
 
-using GpsTestHelpers::PositionSource;
+using GPSTestHelpers::PositionSource;
 
 }  // namespace
 

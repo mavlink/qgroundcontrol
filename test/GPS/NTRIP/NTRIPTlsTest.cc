@@ -21,7 +21,7 @@
 #include "NTRIPTlsPolicy_p.h"
 #include "NTRIPTlsTestFixtures.h"
 #include "RTCMDecodedFrame.h"
-#include "ScriptedNtripCaster.h"
+#include "ScriptedNTRIPCaster.h"
 #include "UnitTest.h"
 
 namespace {
@@ -209,9 +209,9 @@ void NTRIPTlsTest::certificatePolicy()
     QFETCH(bool, mismatched);
     QFETCH(bool, chunked);
     QFETCH(bool, sourceTable);
-    ScriptedNtripCaster caster(ScriptedNtripCaster::Transport::Tls, mismatched
-                                                                        ? ScriptedNtripCaster::Certificate::Mismatched
-                                                                        : ScriptedNtripCaster::Certificate::Loopback);
+    ScriptedNTRIPCaster caster(ScriptedNTRIPCaster::Transport::Tls, mismatched
+                                                                        ? ScriptedNTRIPCaster::Certificate::Mismatched
+                                                                        : ScriptedNTRIPCaster::Certificate::Loopback);
     QVERIFY(caster.isListening());
     auto configuration = caster.connectionConfig();
     QVERIFY(!configuration.allowSelfSignedCerts);
@@ -279,8 +279,8 @@ void NTRIPTlsTest::certificatePolicy()
     QVERIFY(connected.isEmpty());
     QVERIFY(frames.isEmpty());
 
-    const QByteArray first = GpsTestHelpers::buildRtcmFrame(1005);
-    const QByteArray second = GpsTestHelpers::buildRtcmFrame(1077);
+    const QByteArray first = GPSTestHelpers::buildRtcmFrame(1005);
+    const QByteArray second = GPSTestHelpers::buildRtcmFrame(1077);
     const QByteArray response = chunked ? "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" + chunk(first)
                                         : "HTTP/1.1 200 OK\r\nContent-Type: gnss/data\r\n\r\n" + first;
     QCOMPARE(connection->write(response), response.size());
@@ -321,7 +321,7 @@ void NTRIPTlsTest::sourceTablePolicyChanges()
     // The certificate policy is the subject here; the session reports each TLS decision.
     ignoreLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^(TLS error:|Accepting self-signed|Rejecting self-signed)")));
-    ScriptedNtripCaster caster(ScriptedNtripCaster::Transport::Tls);
+    ScriptedNTRIPCaster caster(ScriptedNTRIPCaster::Transport::Tls);
     QVERIFY(caster.isListening());
     auto configuration = caster.connectionConfig();
     configuration.allowSelfSignedCerts = true;
@@ -382,7 +382,7 @@ void NTRIPTlsTest::retireAttempt()
     QVERIFY(server.listen(QHostAddress::LocalHost));
     auto configuration = connectionConfig(server);
     configuration.allowSelfSignedCerts = true;
-    auto transport = std::make_unique<NTRIPHttpTransport>(configuration, NTRIPRtcmFilterConfig{});
+    auto transport = std::make_unique<NTRIPHttpTransport>(configuration, NTRIPRTCMFilterConfig{});
     QPointer<NTRIPHttpTransport> alive = transport.get();
     QSignalSpy connected(transport.get(), &NTRIPTransport::connected);
     QSignalSpy frames(transport.get(), &NTRIPTransport::correctionFrameReceived);
@@ -475,7 +475,7 @@ void NTRIPTlsTest::restartRetiresAttempt()
         QTRY_VERIFY_WITH_TIMEOUT((request += retiredPeer->readAll()).endsWith("\r\n\r\n"), timeoutMs());
         _verifyTlsWarnings();
         // Queue an old-attempt response without dispatching the client's readyRead before restart.
-        const QByteArray stale = "HTTP/1.1 200 OK\r\n\r\n" + GpsTestHelpers::buildRtcmFrame(1005);
+        const QByteArray stale = "HTTP/1.1 200 OK\r\n\r\n" + GPSTestHelpers::buildRtcmFrame(1005);
         QCOMPARE(retiredPeer->write(stale), stale.size());
         retiredPeer->flush();
         _expectTlsWarnings(true);
@@ -496,7 +496,7 @@ void NTRIPTlsTest::restartRetiresAttempt()
     QVERIFY(frames.isEmpty());
     QVERIFY(errors.isEmpty());
 
-    const QByteArray current = GpsTestHelpers::buildRtcmFrame(1077);
+    const QByteArray current = GPSTestHelpers::buildRtcmFrame(1077);
     const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n" + current;
     QCOMPARE(peer->write(response), response.size());
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 1, timeoutMs());
@@ -514,7 +514,7 @@ void NTRIPTlsTest::restartRetiresAttempt()
 void NTRIPTlsTest::reconnectFromTlsFailure()
 {
     bool restarted = false;
-    ScriptedNtripCaster caster(ScriptedNtripCaster::Transport::Tls, ScriptedNtripCaster::Certificate::Mismatched);
+    ScriptedNTRIPCaster caster(ScriptedNTRIPCaster::Transport::Tls, ScriptedNTRIPCaster::Certificate::Mismatched);
     QVERIFY(caster.isListening());
     auto configuration = caster.connectionConfig();
     configuration.allowSelfSignedCerts = true;
@@ -530,7 +530,7 @@ void NTRIPTlsTest::reconnectFromTlsFailure()
         QVERIFY(failure.detail.contains(QSslError(QSslError::HostNameMismatch).errorString()));
         restarted = true;
         _verifyTlsWarnings();
-        caster.setCertificate(ScriptedNtripCaster::Certificate::Loopback);
+        caster.setCertificate(ScriptedNTRIPCaster::Certificate::Loopback);
         _expectTlsWarnings(true);
         transport.start();
     });
@@ -545,7 +545,7 @@ void NTRIPTlsTest::reconnectFromTlsFailure()
     _verifyTlsWarnings();
     QVERIFY(connected.isEmpty());
     QCOMPARE(errors.size(), 1);
-    const QByteArray expected = GpsTestHelpers::buildRtcmFrame(1005);
+    const QByteArray expected = GPSTestHelpers::buildRtcmFrame(1005);
     const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n" + expected;
     QCOMPARE(connection->write(response), response.size());
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 1, timeoutMs());

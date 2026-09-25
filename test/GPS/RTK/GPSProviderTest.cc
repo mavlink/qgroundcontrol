@@ -13,13 +13,13 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
 
-#include "Driver/Support/FemtoReceiverModel.h"
-#include "Driver/Support/SBFReceiverModel.h"
-#include "Driver/Support/ScriptedReceiver.h"
 #include "GPSDriver.h"
 #include "GPSProvider.h"
 #include "GPSReceiverConfig.h"
 #include "NMEAUtils.h"
+#include "Protocols/Support/FemtoReceiverModel.h"
+#include "Protocols/Support/SBFReceiverModel.h"
+#include "Protocols/Support/ScriptedReceiver.h"
 #include "UnitTest.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"

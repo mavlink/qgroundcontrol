@@ -14,10 +14,10 @@ class LinkManager;
 class MAVLinkSigningKeys;
 class MissionCommandTree;
 class MultiVehicleManager;
+class PositionManager;
 class QGCCorePlugin;
 class QGCMapEngineManager;
 class QGCPalette;
-class QGCPositionManager;
 class SettingsManager;
 class VideoManager;
 class QmlObjectListModel;
@@ -28,10 +28,10 @@ Q_MOC_INCLUDE("LinkManager.h")
 Q_MOC_INCLUDE("MAVLinkSigningKeys.h")
 Q_MOC_INCLUDE("MissionCommandTree.h")
 Q_MOC_INCLUDE("MultiVehicleManager.h")
+Q_MOC_INCLUDE("PositionManager.h")
 Q_MOC_INCLUDE("QGCCorePlugin.h")
 Q_MOC_INCLUDE("QGCMapEngineManager.h")
 Q_MOC_INCLUDE("QGCPalette.h")
-Q_MOC_INCLUDE("PositionManager.h")
 Q_MOC_INCLUDE("SettingsManager.h")
 Q_MOC_INCLUDE("VideoManager.h")
 
@@ -62,7 +62,7 @@ public:
     Q_PROPERTY(QObject* serialPortManager READ serialPortManager CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager     READ    multiVehicleManager     CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager        READ    mapEngineManager        CONSTANT)
-    Q_PROPERTY(QGCPositionManager* positionManager READ positionManager CONSTANT)
+    Q_PROPERTY(PositionManager* positionManager READ positionManager CONSTANT)
     Q_PROPERTY(VideoManager*        videoManager            READ    videoManager            CONSTANT)
     Q_PROPERTY(SettingsManager*     settingsManager         READ    settingsManager         CONSTANT)
     Q_PROPERTY(ADSBVehicleManager*  adsbVehicleManager      READ    adsbVehicleManager      CONSTANT)
@@ -156,7 +156,7 @@ public:
 
     QGCMapEngineManager* mapEngineManager() { return _mapEngineManager; }
 
-    QGCPositionManager* positionManager() const;
+    PositionManager* positionManager() const;
 
     MissionCommandTree* missionCommandTree() { return _missionCommandTree; }
 

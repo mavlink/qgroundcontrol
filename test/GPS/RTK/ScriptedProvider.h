@@ -10,7 +10,7 @@
 #include <QtCore/QString>
 
 #include "GPSProvider.h"
-#include "GPSRtk.h"
+#include "GPSRTK.h"
 
 class ScriptedProvider : public GPSProvider
 {
@@ -117,7 +117,7 @@ private:
 class ScriptedProviderFactory
 {
 public:
-    GPSRtk::ProviderFactory providerFactory()
+    GPSRTK::ProviderFactory providerFactory()
     {
         return [this](GPSProvider::TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
                       QObject* parent) {

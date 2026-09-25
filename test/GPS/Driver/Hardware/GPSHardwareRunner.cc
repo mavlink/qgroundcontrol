@@ -23,9 +23,9 @@
 #include "GPSEvidenceTransport.h"
 #include "GPSReceiverCapabilities.h"
 #include "MonotonicClock.h"
+#include "Protocols/Support/ScriptedReceiver.h"
+#include "Protocols/Support/UBXReceiverModel.h"
 #include "RTCMFramer.h"
-#include "Support/ScriptedReceiver.h"
-#include "Support/UBXReceiverModel.h"
 #include "TCPGPSTransport.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"

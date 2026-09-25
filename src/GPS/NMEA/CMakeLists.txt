@@ -16,7 +16,7 @@ set_target_properties(
                POSITION_INDEPENDENT_CODE ON
 )
 target_compile_features(QGCGPSNMEAProtocol PUBLIC cxx_std_20)
-target_link_libraries(QGCGPSNMEAProtocol PUBLIC Qt6::Core)
+target_link_libraries(QGCGPSNMEAProtocol PUBLIC Qt6::Core QGCGPSCommon)
 target_sources(
     QGCGPSNMEAProtocol
     PUBLIC FILE_SET
@@ -31,16 +31,4 @@ target_sources(
            NMEAMetadata.h
            NMEANavigationEpoch.h
            NMEAUtils.h
-)
-target_sources(
-    QGCGPSNMEAProtocol
-    PUBLIC FILE_SET
-           satellite_types
-           TYPE
-           HEADERS
-           BASE_DIRS
-           ..
-           FILES
-           ../GPSConstellation.h
-           ../GPSFixQuality.h
 )

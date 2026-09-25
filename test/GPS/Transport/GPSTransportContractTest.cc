@@ -17,7 +17,7 @@
 #include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QUdpSocket>
 
-#include "Driver/Support/ScriptedReceiver.h"
+#include "Protocols/Support/ScriptedReceiver.h"
 #include "TCPGPSTransport.h"
 #include "UDPGPSTransport.h"
 #include "UnitTest.h"

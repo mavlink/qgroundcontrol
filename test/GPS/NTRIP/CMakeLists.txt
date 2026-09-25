@@ -3,7 +3,7 @@ target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE MockNTRIPTransport.h
             NTRIPTestSupport.h
-            ScriptedNtripCaster.h
+            ScriptedNTRIPCaster.h
             NTRIPManagerTest.cc
             NTRIPManagerTest.h
             NTRIPSourceTableTest.cc
@@ -51,8 +51,8 @@ if(TARGET QGroundControlModule AND TARGET GPSModule)
             "${CMAKE_COMMAND}" -E env --modify "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::qmllint>"
             "$<TARGET_FILE:Python3::Interpreter>" "${CMAKE_SOURCE_DIR}/tools/analyze.py" --tool qmllint --qml-build
             --build-dir "${CMAKE_BINARY_DIR}" test/GPS/NTRIP/NTRIPQmlMetadata.qml
-            src/AppSettings/NtripConnectionSettings.qml src/GPS/NTRIP/NTRIPConnectionStatus.qml
-            src/GPS/NTRIP/RTCMMessageChips.qml
+            src/AppSettings/NTRIPConnectionSettings.qml src/GPS/Qml/NTRIPConnectionStatus.qml
+            src/GPS/Qml/RTCMMessageChips.qml
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
     set_tests_properties(NTRIPQmlMetadata NTRIPQmlLint PROPERTIES LABELS "Unit;GPS;QML" TIMEOUT 60)

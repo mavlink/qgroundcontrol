@@ -22,7 +22,7 @@
 #include "NTRIPSettings.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
-#include "ScriptedNtripCaster.h"
+#include "ScriptedNTRIPCaster.h"
 #include "SettingsManager.h"
 
 static NTRIPConnectionConfig casterConfig(const QString& host, int port = 2101)
@@ -216,7 +216,7 @@ void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges()
         QSKIP("No TLS backend available");
     }
 
-    ScriptedNtripCaster caster(ScriptedNtripCaster::Transport::Tls);
+    ScriptedNTRIPCaster caster(ScriptedNTRIPCaster::Transport::Tls);
     QVERIFY(caster.isListening());
 
     NTRIPConnectionConfig config = caster.connectionConfig(QString());

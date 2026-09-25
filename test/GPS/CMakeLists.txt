@@ -3,7 +3,7 @@
 # Tests for GPS/GNSS positioning and RTK corrections
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GpsMavlinkTestHelpers.h GpsQmlTestHelpers.h GpsTestHelpers.h
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSMAVLinkTestHelpers.h GPSQmlTestHelpers.h GPSTestHelpers.h
                                              SequentialTestDevice.h
 )
 
@@ -15,15 +15,14 @@ add_subdirectory(NTRIP)
 add_subdirectory(Positioning)
 add_subdirectory(RTCM)
 add_subdirectory(Corrections)
+add_subdirectory(Protocols)
 add_subdirectory(Driver)
 add_subdirectory(Receiver)
 add_subdirectory(RTK)
 add_subdirectory(Transport)
 
-add_subdirectory(Core)
-
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManagerTest.cc)
-add_qgc_test(GPSManagerTest LABELS Unit GPS)
+add_subdirectory(Support)
+add_subdirectory(App)
 
 # Every GPS suite carries the GPS label so `ctest -L GPS` selects all of them. Reading another directory's test
 # properties needs CMake 3.28.

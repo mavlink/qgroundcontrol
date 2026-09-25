@@ -16,7 +16,7 @@
 #include "NTRIPSourceTableController.h"
 #include "NTRIPSourceTableControllerTest.h"
 #include "NTRIPTestSupport.h"
-#include "ScriptedNtripCaster.h"
+#include "ScriptedNTRIPCaster.h"
 
 using namespace NTRIPTestSupport;
 
@@ -41,7 +41,7 @@ void NTRIPSourceTableControllerTest::sourceTableSuccessAndCache()
         "STR;MP1;Id1;RTCM 3.2;details;2;GPS;NET;USA;40.0;-74.0;0;1;gen;none;B;N;4800;misc\r\n"
         "STR;MP2;Id2;RTCM 3.2;details;2;GPS;NET;DEU;52.0;13.0;0;1;gen;none;B;N;4800;misc\r\n"
         "ENDSOURCETABLE\r\n";
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     auto configuration = caster.connectionConfig();
     configuration.mountpoint.clear();
@@ -139,7 +139,7 @@ void NTRIPSourceTableControllerTest::v1SourceTable()
 {
     QFETCH(QByteArray, separator);
     QFETCH(bool, cancel);
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     auto configuration = caster.connectionConfig();
     configuration.mountpoint.clear();
@@ -295,7 +295,7 @@ void NTRIPSourceTableControllerTest::sourceTableIdentity()
 
 void NTRIPSourceTableControllerTest::abortCallbackSupersedesReplacement()
 {
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     NTRIPSourceTableController controller;
     auto configuration = config();
@@ -324,7 +324,7 @@ void NTRIPSourceTableControllerTest::socketAbortCallbackRetiresAttempt_data()
 void NTRIPSourceTableControllerTest::socketAbortCallbackRetiresAttempt()
 {
     QFETCH(bool, destroy);
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     auto configuration = caster.connectionConfig();
     auto controller = std::make_unique<NTRIPSourceTableController>();

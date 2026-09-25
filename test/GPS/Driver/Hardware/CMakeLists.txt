@@ -10,8 +10,10 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         find_package(Qt6 6.8 REQUIRED COMPONENTS SerialPort)
     endif()
     add_subdirectory("${QGC_SOURCE_ROOT}/src/Utilities/Logging/Category" LoggingCategory)
+    add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Common" Common)
     add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Receiver" Receiver)
     add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Transport" Transport)
+    add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Protocols" Protocols)
     add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Driver" Driver)
 endif()
 
@@ -22,12 +24,14 @@ endif()
 add_executable(
     QGCGPSHardwareRunner
     GPSHardwareRunner.cc GPSEvidenceTransport.cc GPSEvidenceTransport.h
-    "${CMAKE_CURRENT_SOURCE_DIR}/../Support/ScriptedReceiver.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../Support/UBXReceiverModel.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../Protocols/Support/ScriptedReceiver.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../Protocols/Support/UBXReceiverModel.cc"
 )
 target_compile_features(QGCGPSHardwareRunner PRIVATE cxx_std_20)
-target_include_directories(QGCGPSHardwareRunner PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
-target_link_libraries(QGCGPSHardwareRunner PRIVATE QGCGPSDriver QGCGPSReceiverTransports QGCGPSRTCM QGC::Clock)
+target_include_directories(QGCGPSHardwareRunner PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+target_link_libraries(QGCGPSHardwareRunner PRIVATE QGCGPSDriver QGCGPSProtocolContracts QGCGPSReceiverTransports
+                                                   QGCGPSRTCM QGC::Clock
+)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_test(NAME GPSHardwareRunner.Scripted COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_runner.py"

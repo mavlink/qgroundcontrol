@@ -300,7 +300,7 @@ void RemoteIDManager::_sendSystem()
             _updateGcsPositionStatus(false, "The provided coordinates for FIXED position are invalid.");
         }
     } else {
-        QGCPositionManager* positionManager = GPSManager::instance()->positionManager();
+        PositionManager* positionManager = GPSManager::instance()->positionManager();
         const auto observation = positionManager->acceptedObservation(GPSObservation::PositionUse::RemoteID,
                                                                       std::chrono::milliseconds{ALLOWED_GPS_DELAY});
         if (observation) {

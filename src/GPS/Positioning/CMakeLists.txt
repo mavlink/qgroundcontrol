@@ -1,28 +1,27 @@
 # ============================================================================
 # Positioning Module
-# Manages GPS/GNSS position sources and simulated position data
+# GPS observations, source health, and GCS position source selection policy
 # ============================================================================
 
-if(TARGET ${CMAKE_PROJECT_NAME})
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE PositionManager.cpp PositionManager.h SimulatedPosition.cc
-                                                 SimulatedPosition.h
-    )
-
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-endif()
-
-qt_add_library(QGCGPSPositioning STATIC GPSPositionBackendAdapter.cc GPSPositionService.cc)
+qt_add_library(QGCGPSPositioning STATIC GPSObservation.cc GPSPositionBackendAdapter.cc GPSPositionService.cc
+               GPSSourceHealth.cc
+)
 add_library(QGC::GPSPositioning ALIAS QGCGPSPositioning)
 set_target_properties(QGCGPSPositioning PROPERTIES AUTOMOC ON)
 target_compile_features(QGCGPSPositioning PUBLIC cxx_std_20)
 target_link_libraries(
     QGCGPSPositioning
-    PUBLIC QGCGPSCore
+    PUBLIC QGCGPSCommon QGCGPSSupport QGCTiming Qt6::Positioning
     PRIVATE QGCLoggingCategory
 )
-target_sources(QGCGPSPositioning PUBLIC FILE_SET HEADERS FILES GPSPositionBackendAdapter.h GPSPositionService.h
-                                        GPSPositionSourceRegistration.h
+target_sources(
+    QGCGPSPositioning
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           GPSObservation.h
+           GPSPositionBackendAdapter.h
+           GPSPositionService.h
+           GPSPositionSourceRegistration.h
+           GPSSourceHealth.h
 )
-if(TARGET ${CMAKE_PROJECT_NAME})
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSPositioning)
-endif()

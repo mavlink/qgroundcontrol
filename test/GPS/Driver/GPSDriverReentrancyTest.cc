@@ -9,7 +9,7 @@
 #include <QtTest/QTest>
 
 #include "GPSDriver.h"
-#include "Support/ScriptedReceiver.h"
+#include "Protocols/Support/ScriptedReceiver.h"
 #include "UnitTest.h"
 
 namespace {

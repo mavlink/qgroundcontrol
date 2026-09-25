@@ -11,17 +11,17 @@
             "keywords": ["corrections", "rtk", "status", "selected stream", "data rate", "ntrip"]
         },
         {
-            "component": "NtripConnectionSettings",
+            "component": "NTRIPConnectionSettings",
             "sectionName": "NTRIP Connection",
             "keywords": ["ntrip", "rtk", "connection status", "corrections"]
         },
         {
-            "component": "NtripServerSettings",
+            "component": "NTRIPServerSettings",
             "sectionName": "NTRIP Server",
             "keywords": ["ntrip server", "rtk", "caster", "host", "port", "username", "password", "tls"]
         },
         {
-            "component": "NtripMountpointBrowser",
+            "component": "NTRIPMountpointBrowser",
             "sectionName": "NTRIP Mountpoint",
             "keywords": ["mountpoint", "browse", "stream", "source table"]
         },

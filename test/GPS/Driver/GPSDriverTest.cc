@@ -14,10 +14,10 @@
 #include "GPSBaseStationConfig.h"
 #include "GPSDriver.h"
 #include "GPSReceiverDescriptor.h"
-#include "Protocols/ProtocolTestPackets.h"
-#include "Support/SBFReceiverModel.h"
-#include "Support/ScriptedReceiver.h"
-#include "Support/UBXReceiverModel.h"
+#include "Protocols/Support/ProtocolTestPackets.h"
+#include "Protocols/Support/SBFReceiverModel.h"
+#include "Protocols/Support/ScriptedReceiver.h"
+#include "Protocols/Support/UBXReceiverModel.h"
 
 Q_DECLARE_METATYPE(GPSBaseStationConfig)
 Q_DECLARE_METATYPE(GPSReceiverConfig)

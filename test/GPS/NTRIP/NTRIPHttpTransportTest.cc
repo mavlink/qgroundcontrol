@@ -14,7 +14,7 @@
 #include <QtNetwork/QTcpServer>
 #include <QtTest/QSignalSpy>
 
-#include "GpsTestHelpers.h"
+#include "GPSTestHelpers.h"
 #include "ManualScheduler.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
@@ -22,7 +22,7 @@
 #include "NTRIPHttpSession.h"
 #include "NTRIPHttpTransport.h"
 #include "RTCMDecodedFrame.h"
-#include "ScriptedNtripCaster.h"
+#include "ScriptedNTRIPCaster.h"
 
 static_assert(std::is_same_v<NTRIPHttpRequest::Purpose, NTRIPHttpDecoder::Purpose>);
 
@@ -176,7 +176,7 @@ void NTRIPHttpTransportTest::testTlsFatalErrorEmitsSingleError()
         QSKIP("No TLS backend available");
     }
 
-    ScriptedNtripCaster caster(ScriptedNtripCaster::Transport::Tls);
+    ScriptedNTRIPCaster caster(ScriptedNTRIPCaster::Transport::Tls);
     QVERIFY(caster.isListening());
 
     NTRIPConnectionConfig cfg;
@@ -227,8 +227,8 @@ void NTRIPHttpTransportTest::_testWhitelist()
             receivedIds.append(frame.messageId);
         }
     });
-    transport._parseRtcm(GpsTestHelpers::buildRtcmFrame(1005) + GpsTestHelpers::buildRtcmFrame(1077) +
-                         GpsTestHelpers::buildRtcmFrame(1087));
+    transport._parseRtcm(GPSTestHelpers::buildRtcmFrame(1005) + GPSTestHelpers::buildRtcmFrame(1077) +
+                         GPSTestHelpers::buildRtcmFrame(1087));
     QCOMPARE(receivedIds, expectedIds);
 }
 
@@ -286,8 +286,8 @@ void NTRIPHttpTransportTest::_testFilterNoWhitelist()
         received.append(frame.data);
     });
 
-    QByteArray stream = GpsTestHelpers::buildRtcmFrame(1005, 4) + GpsTestHelpers::buildRtcmFrame(1077, 8) +
-                        GpsTestHelpers::buildRtcmFrame(1087, 2);
+    QByteArray stream = GPSTestHelpers::buildRtcmFrame(1005, 4) + GPSTestHelpers::buildRtcmFrame(1077, 8) +
+                        GPSTestHelpers::buildRtcmFrame(1087, 2);
     t._parseRtcm(stream);
 
     QCOMPARE(received.size(), 3);
@@ -300,8 +300,8 @@ void NTRIPHttpTransportTest::_testFilterWithWhitelist()
     NTRIPHttpTransport t(cfg, {.whitelist = QStringLiteral("1005,1087")});
     QSignalSpy detailed(&t, &NTRIPTransport::correctionFrameReceived);
 
-    QByteArray stream = GpsTestHelpers::buildRtcmFrame(1005, 4) + GpsTestHelpers::buildRtcmFrame(1077, 8) +
-                        GpsTestHelpers::buildRtcmFrame(1087, 2);
+    QByteArray stream = GPSTestHelpers::buildRtcmFrame(1005, 4) + GPSTestHelpers::buildRtcmFrame(1077, 8) +
+                        GPSTestHelpers::buildRtcmFrame(1087, 2);
     t._parseRtcm(stream.first(1), 100);
     t._parseRtcm(stream.sliced(1), 200);
 
@@ -325,11 +325,11 @@ void NTRIPHttpTransportTest::_testFilterRejectsInvalidFrame_data()
 {
     QTest::addColumn<QByteArray>("bad");
     QTest::addColumn<bool>("embedded");
-    auto badCrc = GpsTestHelpers::buildRtcmFrame(1005, 4);
+    auto badCrc = GPSTestHelpers::buildRtcmFrame(1005, 4);
     badCrc.back() ^= 0xff;
     QTest::newRow("bad-crc") << badCrc << false;
-    const auto good = GpsTestHelpers::buildRtcmFrame(1077, 2);
-    auto enclosing = GpsTestHelpers::buildRtcmFrame(1005, good.size());
+    const auto good = GPSTestHelpers::buildRtcmFrame(1077, 2);
+    auto enclosing = GPSTestHelpers::buildRtcmFrame(1005, good.size());
     enclosing.replace(5, good.size(), good);
     enclosing.back() ^= 0xff;
     QTest::newRow("embedded-frame-at-end-of-stream") << enclosing << true;
@@ -347,7 +347,7 @@ void NTRIPHttpTransportTest::_testFilterRejectsInvalidFrame()
 
     QSignalSpy detailed(&t, &NTRIPTransport::correctionFrameReceived);
 
-    const QByteArray good = GpsTestHelpers::buildRtcmFrame(1077, 2);
+    const QByteArray good = GPSTestHelpers::buildRtcmFrame(1077, 2);
     expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Invalid RTCM frame")));
     t._parseRtcm(embedded ? bad : bad + good, 123);
@@ -377,7 +377,7 @@ void NTRIPHttpTransportTest::_testFrameCallbackRetiresTransport()
     NTRIPConnectionConfig config;
     config.host = QStringLiteral("127.0.0.1");
     config.mountpoint = QStringLiteral("TEST");
-    auto transport = std::make_unique<NTRIPHttpTransport>(config, NTRIPRtcmFilterConfig{});
+    auto transport = std::make_unique<NTRIPHttpTransport>(config, NTRIPRTCMFilterConfig{});
     int acceptedFrames = 0;
     connect(transport.get(), &NTRIPTransport::correctionFrameReceived, this, [&](const RTCMDecodedFrame& result) {
         QVERIFY(result.valid && !result.filtered);
@@ -391,7 +391,7 @@ void NTRIPHttpTransportTest::_testFrameCallbackRetiresTransport()
             transport->stop();
         }
     });
-    const auto frame = GpsTestHelpers::buildRtcmFrame(1005);
+    const auto frame = GPSTestHelpers::buildRtcmFrame(1005);
 
     transport->_parseRtcm(frame + frame, 123);
 
@@ -613,7 +613,7 @@ void NTRIPHttpTransportTest::testStreamingRequiresMountpoint()
 
 void NTRIPHttpTransportTest::testConnectionWaitsForHttpResponse()
 {
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     NTRIPConnectionConfig config = caster.connectionConfig();
     ManualScheduler scheduler;
@@ -626,7 +626,7 @@ void NTRIPHttpTransportTest::testConnectionWaitsForHttpResponse()
     QVERIFY(connection->waitForRequest().startsWith("GET /TEST HTTP/1.1\r\n"));
     QVERIFY(connected.isEmpty());
     QVERIFY(transport._connectTimeoutTask.active());
-    const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 4);
+    const QByteArray frame = GPSTestHelpers::buildRtcmFrame(1005, 4);
     const QByteArray response = "HTTP/1.1 200 OK\r\nContent-Type: gnss/data\r\n\r\n" + frame;
     QCOMPARE(connection->write(response), response.size());
     QTRY_COMPARE_WITH_TIMEOUT(connected.size(), 1, TestTimeout::mediumMs());
@@ -646,7 +646,7 @@ void NTRIPHttpTransportTest::testConnectionWaitsForHttpResponse()
 
 void NTRIPHttpTransportTest::testHandshakeTimeoutClosesSocket()
 {
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     NTRIPConnectionConfig config = caster.connectionConfig();
     ManualScheduler scheduler;
@@ -671,7 +671,7 @@ void NTRIPHttpTransportTest::testHandshakeTimeoutClosesSocket()
 
 void NTRIPHttpTransportTest::testRemoteCloseEmitsSingleError()
 {
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     NTRIPConnectionConfig config = caster.connectionConfig();
     NTRIPHttpTransport transport(config, {});

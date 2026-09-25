@@ -24,7 +24,7 @@ SettingsGroupLayout {
     readonly property var _serialPortManager: QGroundControl.serialPortManager
 
     readonly property int role: settings.receiverRole.rawValue
-    readonly property bool configuredBase: role === GPSRtk.ConfiguredBase
+    readonly property bool configuredBase: role === GPSRTK.ConfiguredBase
     readonly property int manufacturer: settings.baseReceiverManufacturers.rawValue
     readonly property int baseMode: settings.useFixedBasePosition.rawValue
     readonly property gpsReceiverPresentation presentation: receiver.capabilitiesFor(role, manufacturer)
@@ -36,9 +36,9 @@ SettingsGroupLayout {
     readonly property bool _active: receiver.hasReceiver || receiver.reconnecting === true
     readonly property bool _editable: !_active
     readonly property int _connection: settings.connectionType.rawValue
-    readonly property bool _udp: _connection === GPSRtk.Udp
+    readonly property bool _udp: _connection === GPSRTK.Udp
     // Platforms without serial links connect a saved serial selection over TCP.
-    readonly property bool _tcp: !_udp && (!receiver.serialSupported || _connection === GPSRtk.Tcp)
+    readonly property bool _tcp: !_udp && (!receiver.serialSupported || _connection === GPSRTK.Tcp)
     readonly property bool _serial: !_udp && !_tcp
     // UDP only receives, so a receiver QGroundControl configures needs serial or TCP.
     readonly property bool _connectionSupported: !(configuredBase && _udp)
@@ -140,9 +140,9 @@ SettingsGroupLayout {
 
     Explanation {
         objectName: "receiverRoleExplanation"
-        text: root.role === GPSRtk.PositionOnly
+        text: root.role === GPSRTK.PositionOnly
               ? qsTr("QGroundControl never configures this receiver. Its NMEA output provides the ground station position; RTCM output is ignored.")
-              : root.role === GPSRtk.Passive
+              : root.role === GPSRTK.Passive
                 ? qsTr("QGroundControl never configures this receiver. Its NMEA output provides the ground station position and its RTCM output is forwarded to vehicles. Configure the receiver's output externally and select its existing baud rate. No survey-in status is inferred.")
                 : qsTr("QGroundControl configures a supported receiver as an RTK base station and forwards its RTCM corrections to vehicles.")
     }
@@ -189,7 +189,7 @@ SettingsGroupLayout {
         }
         Explanation {
             objectName: "rtkTcpOnly"
-            visible: !root.receiver.serialSupported && root._connection === GPSRtk.Serial
+            visible: !root.receiver.serialSupported && root._connection === GPSRTK.Serial
             text: qsTr("Serial receivers are not supported on this platform, so the receiver connects over TCP.")
         }
     }

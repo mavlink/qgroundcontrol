@@ -18,7 +18,7 @@
 #include "GPSCorrectionManager.h"
 #include "GPSCorrectionRouter.h"
 #include "GPSCorrectionSettings.h"
-#include "GpsQmlTestHelpers.h"
+#include "GPSQmlTestHelpers.h"
 #include "NTRIPSettings.h"
 #include "QmlUITestBase.h"
 #include "RAIIFixtures.h"
@@ -152,7 +152,7 @@ void GPSCorrectionSettingsTest::_qmlRegistration()
     auto* settings = SettingsManager::instance();
     QVERIFY(settings->gpsCorrectionSettings());
     QCOMPARE(settings->property("gpsCorrectionSettings").value<QObject*>(), settings->gpsCorrectionSettings());
-    GpsTestHelpers::QmlEngine engine;
+    GPSTestHelpers::QmlEngine engine;
     std::unique_ptr<QObject> object = engine.create(QByteArray(R"(
         import QtQml
         import QGroundControl
@@ -222,7 +222,7 @@ void GPSCorrectionSettingsTest::_routingPanel()
     sourceFact->setUserVisible(sourceVisible);
     instanceFact->setUserVisible(instanceVisible);
 
-    GpsTestHelpers::QmlEngine engine;
+    GPSTestHelpers::QmlEngine engine;
     std::unique_ptr<QObject> panel = engine.create(QByteArray(R"(
         import QGroundControl.AppSettings
         CorrectionRoutingSettings {}
@@ -263,7 +263,7 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     corrections.applyRoutingConfiguration(
         {GPSCorrectionManager::RoutingPolicy::Manual, GPSCorrectionSource::Udp, QStringLiteral("b")});
     auto udpListener = corrections.registerSource(GPSCorrectionSource::Udp);
-    const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    const QByteArray frame = GPSTestHelpers::buildRtcmFrame(1005, 20);
     const auto receivePeer = [&](const QString& instance, qint64 ageMs = 0) {
         corrections.acceptIngress(udpListener.event(frame, GPSCorrectionFrame::monotonicNowMs() - ageMs, 1005, true,
                                                     false, GPSCorrectionReason::None, instance));
@@ -273,7 +273,7 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     receivePeer(QStringLiteral("a"), expiredAgeMs);
     receivePeer(QStringLiteral("b"), expiredAgeMs);
 
-    GpsTestHelpers::QmlEngine engine;
+    GPSTestHelpers::QmlEngine engine;
     std::unique_ptr<QObject> panel =
         engine.create(QByteArray(R"(
         import QtQuick.Layouts

@@ -9,7 +9,7 @@
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
-#include "GpsTestHelpers.h"
+#include "GPSTestHelpers.h"
 #include "LogManager.h"
 #include "RTCMUdpInput.h"
 
@@ -55,7 +55,7 @@ void RTCMUdpInputTest::_testSocketErrors()
     QSignalSpy runningChanges(&input, &RTCMUdpInput::runningChanged);
     QSignalSpy reads(socket, &QUdpSocket::readyRead);
     QUdpSocket sender;
-    const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    const auto frame = GPSTestHelpers::buildRtcmFrame(1005, 20);
     const auto prefix = frame.first(5);
     QCOMPARE(sender.writeDatagram(prefix, QHostAddress::LocalHost, input.port()), prefix.size());
     QTRY_VERIFY_WITH_TIMEOUT(!reads.isEmpty(), TestTimeout::mediumMs());
@@ -201,7 +201,7 @@ void RTCMUdpInputTest::_testValidationResetsStream()
     QVERIFY(input.start());
     QSignalSpy frames(&input, &RTCMUdpInput::frameReceived);
     QUdpSocket sender;
-    const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    const auto frame = GPSTestHelpers::buildRtcmFrame(1005, 20);
     const auto prefix = frame.first(5);
     QCOMPARE(sender.writeDatagram(prefix, QHostAddress::LocalHost, input.port()), prefix.size());
     QVERIFY(QMetaObject::invokeMethod(&input, "_readDatagrams", Qt::DirectConnection));
@@ -234,8 +234,8 @@ void RTCMUdpInputTest::_testReentrantDrainPreservesOrder()
             QVERIFY(QMetaObject::invokeMethod(&input, "_readDatagrams", Qt::DirectConnection));
         }
     });
-    const auto first = GpsTestHelpers::buildRtcmFrame(1005, 20);
-    const auto second = GpsTestHelpers::buildRtcmFrame(1077, 40);
+    const auto first = GPSTestHelpers::buildRtcmFrame(1005, 20);
+    const auto second = GPSTestHelpers::buildRtcmFrame(1077, 40);
     const auto head = first + second.first(5);
     const auto tail = second.sliced(5);
     QUdpSocket sender;
@@ -287,7 +287,7 @@ void RTCMUdpInputTest::_testDrainInterruption()
                 break;
         }
     });
-    const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    const auto frame = GPSTestHelpers::buildRtcmFrame(1005, 20);
     QVERIFY(sendDatagram(input->port(), frame + frame));
     QVERIFY(QMetaObject::invokeMethod(input, "_readDatagrams", Qt::DirectConnection));
     QVERIFY(interrupted);
@@ -311,9 +311,9 @@ void RTCMUdpInputTest::_testEmitsOneSignalPerFrame()
     QSignalSpy spy(&input, &RTCMUdpInput::frameReceived);
 
     // One datagram carrying two frames plus leading garbage: each frame must be
-    // emitted separately so RTCMMavlink assigns it its own sequence.
-    const QByteArray frame1 = GpsTestHelpers::buildRtcmFrame(1005, 4);
-    const QByteArray frame2 = GpsTestHelpers::buildRtcmFrame(1077, 200);
+    // emitted separately so RTCMMAVLink assigns it its own sequence.
+    const QByteArray frame1 = GPSTestHelpers::buildRtcmFrame(1005, 4);
+    const QByteArray frame2 = GPSTestHelpers::buildRtcmFrame(1077, 200);
     const QByteArray garbage = QByteArrayLiteral("\x01\x02\x03");
     QVERIFY(sendDatagram(input.port(), garbage + frame1 + frame2));
 
@@ -330,10 +330,10 @@ void RTCMUdpInputTest::_testDropsBadCrcFrame()
     QSignalSpy spy(&input, &RTCMUdpInput::frameReceived);
     QSignalSpy rejected(&input, &RTCMUdpInput::frameRejected);
 
-    const QByteArray frame1 = GpsTestHelpers::buildRtcmFrame(1005, 4);
-    QByteArray corrupted = GpsTestHelpers::buildRtcmFrame(1077, 8);
+    const QByteArray frame1 = GPSTestHelpers::buildRtcmFrame(1005, 4);
+    QByteArray corrupted = GPSTestHelpers::buildRtcmFrame(1077, 8);
     corrupted[corrupted.size() - 1] = static_cast<char>(corrupted[corrupted.size() - 1] ^ 0xFF);
-    const QByteArray frame2 = GpsTestHelpers::buildRtcmFrame(1087, 2);
+    const QByteArray frame2 = GPSTestHelpers::buildRtcmFrame(1087, 2);
 
     expectLogMessage("GPS.Corrections.RTCMUdpInput", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Dropped 1 RTCM frame")));
@@ -359,7 +359,7 @@ void RTCMUdpInputTest::_testFrameSplitAcrossDatagrams()
 
     // Parser state must carry across datagrams so a frame split by the sender
     // still comes out whole.
-    const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 6);
+    const QByteArray frame = GPSTestHelpers::buildRtcmFrame(1005, 6);
     const int split = frame.size() / 2;
     QUdpSocket sender;
     QCOMPARE(sender.writeDatagram(frame.left(split), QHostAddress::LocalHost, input.port()), split);
@@ -376,10 +376,10 @@ void RTCMUdpInputTest::_testRecoversBufferedFrames()
     QVERIFY(input.start());
     QSignalSpy frames(&input, &RTCMUdpInput::frameReceived);
     QSignalSpy rejected(&input, &RTCMUdpInput::frameRejected);
-    const auto first = GpsTestHelpers::buildRtcmFrame(1005, 4);
-    const auto second = GpsTestHelpers::buildRtcmFrame(1087, 2);
+    const auto first = GPSTestHelpers::buildRtcmFrame(1005, 4);
+    const auto second = GPSTestHelpers::buildRtcmFrame(1087, 2);
     const auto payload = first + second;
-    auto corrupted = GpsTestHelpers::buildRtcmFrame(1006, static_cast<int>(payload.size()));
+    auto corrupted = GPSTestHelpers::buildRtcmFrame(1006, static_cast<int>(payload.size()));
     corrupted.replace(5, payload.size(), payload);
     corrupted.chop(3);
     const auto crc =
@@ -412,8 +412,8 @@ void RTCMUdpInputTest::_testInterleavedSenders()
     QSignalSpy envelopes(&input, &RTCMUdpInput::frameReceived);
     QUdpSocket senderA;
     QUdpSocket senderB;
-    const QByteArray frameA = GpsTestHelpers::buildRtcmFrame(1005, 20);
-    const QByteArray frameB = GpsTestHelpers::buildRtcmFrame(1077, 40);
+    const QByteArray frameA = GPSTestHelpers::buildRtcmFrame(1005, 20);
+    const QByteArray frameB = GPSTestHelpers::buildRtcmFrame(1077, 40);
     const int split = 5;
     QCOMPARE(senderA.writeDatagram(frameA.first(split), QHostAddress::LocalHost, input.port()), split);
     QCOMPARE(senderB.writeDatagram(frameB, QHostAddress::LocalHost, input.port()), frameB.size());
@@ -439,7 +439,7 @@ void RTCMUdpInputTest::_testBurstYieldsBetweenDrains()
     QVERIFY(input.start());
     QSignalSpy frames(&input, &RTCMUdpInput::frameReceived);
     QUdpSocket sender;
-    const QByteArray payload = GpsTestHelpers::buildRtcmFrame(1005, 20);
+    const QByteArray payload = GPSTestHelpers::buildRtcmFrame(1005, 20);
     for (int i = 0; i < 40; ++i) {
         QCOMPARE(sender.writeDatagram(payload, QHostAddress::LocalHost, input.port()), payload.size());
     }

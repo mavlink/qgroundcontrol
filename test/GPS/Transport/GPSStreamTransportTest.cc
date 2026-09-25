@@ -8,8 +8,8 @@
 #include <QtCore/QFile>
 #include <QtTest/QTest>
 
-#include "Driver/Support/ScriptedReceiver.h"
 #include "GPSStreamWrite_p.h"
+#include "Protocols/Support/ScriptedReceiver.h"
 #include "UnitTest.h"
 
 static_assert(std::is_enum_v<GPSOpenStatus>);

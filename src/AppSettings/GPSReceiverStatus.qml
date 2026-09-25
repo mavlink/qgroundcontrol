@@ -34,8 +34,8 @@ SettingsGroupLayout {
               ? (root.receiver.hasReceiver ? qsTr("Connecting to receiver...")
                  : root.receiver.reconnecting ? qsTr("Receiver connection lost. Reconnecting...")
                  : root.disconnectedText)
-              : root.receiver.activeRole === GPSRtk.PositionOnly ? qsTr("Position-only receiver connected")
-              : root.receiver.activeRole === GPSRtk.Passive ? qsTr("Passive RTCM/NMEA input connected")
+              : root.receiver.activeRole === GPSRTK.PositionOnly ? qsTr("Position-only receiver connected")
+              : root.receiver.activeRole === GPSRTK.Passive ? qsTr("Passive RTCM/NMEA input connected")
               : root.receiver.activeBaseMode === BaseModeDefinition.BaseReceiverAveraging
                 ? qsTr("Receiver-managed averaging — no accuracy guarantee")
               : root.receiver.activeBaseMode === BaseModeDefinition.BaseFixed ? qsTr("Fixed base position")

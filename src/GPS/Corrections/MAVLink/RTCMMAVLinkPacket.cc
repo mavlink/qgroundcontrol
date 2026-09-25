@@ -1,0 +1,51 @@
+#include "RTCMMAVLinkPacket.h"
+
+#include <algorithm>
+#include <utility>
+
+uint8_t RTCMMAVLinkPacket::_makeFlags(bool fragmented, uint8_t fragmentId, uint8_t sequenceId)
+{
+    uint8_t flags = static_cast<uint8_t>((sequenceId & 0x1FU) << 3);
+    if (fragmented) {
+        flags |= 0x01U;
+        flags |= static_cast<uint8_t>((fragmentId & 0x03U) << 1);
+    }
+    return flags;
+}
+
+RTCMMAVLinkPacket::PackResult RTCMMAVLinkPacket::pack(QByteArrayView data, uint8_t sequenceId)
+{
+    PackResult result;
+    result.nextSequenceId = sequenceId;
+
+    if (data.isEmpty()) {
+        return result;
+    }
+
+    // Oversized frames require stream reconstruction, not wrapped fragment IDs.
+    const bool fragmented = data.size() > kFragmentLen && data.size() <= kMaxAssembledLen;
+    uint8_t fragmentId = 0;
+    qsizetype start = 0;
+    while (start < data.size()) {
+        const qsizetype length = (std::min) (data.size() - start, kFragmentLen);
+        GPSRTCMPacket packet;
+        packet.flags = _makeFlags(fragmented, fragmentId, result.nextSequenceId);
+        packet.data = data.mid(start, length).toByteArray();
+        result.packets.append(std::move(packet));
+        if (fragmented) {
+            ++fragmentId;
+        } else {
+            ++result.nextSequenceId;
+        }
+        start += length;
+    }
+
+    // Full fragments need a terminator unless all four are present.
+    if (fragmented) {
+        if ((data.size() % kFragmentLen) == 0 && fragmentId < kMaxFragments) {
+            result.packets.append(GPSRTCMPacket{_makeFlags(true, fragmentId, sequenceId), {}});
+        }
+        ++result.nextSequenceId;
+    }
+    return result;
+}

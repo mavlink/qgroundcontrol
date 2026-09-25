@@ -8,7 +8,7 @@
 
 #include "NTRIPConfiguration.h"
 #include "NTRIPHttpSession.h"
-#include "ScriptedNtripCaster.h"
+#include "ScriptedNTRIPCaster.h"
 #include "UnitTest.h"
 
 namespace {
@@ -34,7 +34,7 @@ private slots:
 
 void NTRIPHttpSessionTest::responseEndsWithClosed()
 {
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     NTRIPHttpSession session;
     QByteArray received;
@@ -72,7 +72,7 @@ void NTRIPHttpSessionTest::responseEndsWithClosed()
 
 void NTRIPHttpSessionTest::refusedConnectionFailsOnce()
 {
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     const quint16 port = caster.port();
     caster.close();
@@ -93,7 +93,7 @@ void NTRIPHttpSessionTest::refusedConnectionFailsOnce()
 
 void NTRIPHttpSessionTest::abortIsSilent()
 {
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     NTRIPHttpSession session;
     QSignalSpy established(&session, &NTRIPHttpSession::established);
@@ -113,7 +113,7 @@ void NTRIPHttpSessionTest::abortIsSilent()
 
 void NTRIPHttpSessionTest::retireFromDeliveryDetachesOwner()
 {
-    ScriptedNtripCaster caster;
+    ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     auto owner = std::make_unique<QObject>();
     QPointer<NTRIPHttpSession> session = new NTRIPHttpSession(owner.get());

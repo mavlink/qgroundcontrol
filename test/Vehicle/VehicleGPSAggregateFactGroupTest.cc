@@ -7,7 +7,7 @@
 
 #include <QtTest/QSignalSpy>
 
-#include "GpsMavlinkTestHelpers.h"
+#include "GPSMAVLinkTestHelpers.h"
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "VehicleGPSAggregateFactGroup.h"
@@ -211,7 +211,7 @@ void VehicleGPSAggregateFactGroupTest::_onlyIntegrityRefreshesReceipt()
     const quint64 receipt = gps.gnssIntegrityTimestampUs();
     QVERIFY(scheduler.advanceBy(4s));
     gps.handleMessage(nullptr, integrityMessage(1, 3, 3, 2));
-    gps.handleMessage(nullptr, GpsTestHelpers::gpsRawMessage({}));
+    gps.handleMessage(nullptr, GPSTestHelpers::gpsRawMessage({}));
     QCOMPARE(gps.gnssIntegrityTimestampUs(), receipt);
     QVERIFY(scheduler.advanceBy(1s));
     verifyAggregate(aggregate, 255, 255, 255, false);

@@ -1371,9 +1371,9 @@ class TestRealPageDefinitions:
         components = {group.component for group in page.groups if group.component}
         assert components == {
             "CorrectionsStatus",
-            "NtripConnectionSettings",
-            "NtripServerSettings",
-            "NtripMountpointBrowser",
+            "NTRIPConnectionSettings",
+            "NTRIPServerSettings",
+            "NTRIPMountpointBrowser",
             "CorrectionRoutingSettings",
             "CorrectionDiagnostics",
         }

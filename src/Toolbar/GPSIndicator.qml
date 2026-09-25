@@ -22,7 +22,7 @@ Item {
     readonly property bool _rtkInterference: _rtkConnected && _rtkFacts.interferenceWarning
     readonly property int _receiverSatellites: _rtkFacts.numSatellitesUsed.rawValue
     readonly property string _receiverDetail: {
-        if (_receiver.activeRole === GPSRtk.ConfiguredBase) {
+        if (_receiver.activeRole === GPSRTK.ConfiguredBase) {
             return _rtkFacts.active.value ? qsTr("Survey", "Base survey-in in progress") : qsTr("Base")
         }
         switch (_rtkFacts.fixType.rawValue) {
@@ -96,7 +96,7 @@ Item {
                 width:              height
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
-                source:             "/qmlimages/Gps.svg"
+                source:             "/qmlimages/GPS.svg"
                 fillMode:           Image.PreserveAspectFit
                 sourceSize.height:  height
                 opacity:            (control._vehicleGps ? control._activeVehicle.gps.count.value >= 0
@@ -138,7 +138,7 @@ Item {
                 width:              parent.height * 0.95
                 height:             width
                 anchors.centerIn:   parent
-                source:             "/qmlimages/GpsAuthentication.svg"
+                source:             "/qmlimages/GPSAuthentication.svg"
                 fillMode:           Image.PreserveAspectFit
                 sourceSize.height:  height
                 color:              control._authenticationColor
@@ -150,7 +150,7 @@ Item {
                 width:              parent.height * 0.55
                 height:             width
                 anchors.centerIn:   parent
-                source:             "/qmlimages/GpsInterference.svg"
+                source:             "/qmlimages/GPSInterference.svg"
                 fillMode:           Image.PreserveAspectFit
                 sourceSize.height:  height
                 color:              control._interferenceColor
