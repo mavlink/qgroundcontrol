@@ -16,4 +16,15 @@ public:
 
 private slots:
     void _noChangeLatLonSentAsInt32Max();
+    void _pauseSendsCommandInt();
+    void _changeHeadingSendsCommandInt();
+    void _changeAltitudeSendsCommandInt();
+    void _changeAltitudeAfterPauseSendsCommandInt();
+
+private:
+    /// Checks the last COMMAND_INT is a DO_REPOSITION to Hold that keeps the current latitude/longitude
+    void _verifyRepositionCommandInt(float yaw, float amslAltitude);
+
+    /// AMSL altitude that guidedModeChangeAltitude targets for the given change
+    double _changedAmslAltitude(double altitudeChange) const;
 };
