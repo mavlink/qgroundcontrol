@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <atomic>
 #include <cstdio>
 #include <cstring>
 #include <iomanip>
@@ -10,6 +9,7 @@
 #include <optional>
 #include <sstream>
 #include <stdexcept>
+#include <stop_token>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -119,7 +119,7 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
     QStringList warnings;
     GPSTestClock& clock;
     ReceiverEventQueue events{clock};
-    std::atomic_bool stop{false};
+    std::stop_source stop;
     ScriptedReceiver scripted;
 
     explicit UnicoreReceiver(GPSTestClock& testClock)
@@ -310,7 +310,7 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
             events.advanceTo(clock.nowUs() + delay.count());
             return !cancel;
         };
-        scripted.setReadHandler([this](uint8_t*, int, int) -> std::optional<GPSReadResult> {
+        scripted.setReadHandler([this](uint8_t*, int, std::chrono::milliseconds) -> std::optional<GPSReadResult> {
             ++calls;
             if (cancel) {
                 return std::optional<GPSReadResult>{GPSReadResult{GPSReadStatus::Cancelled}};

@@ -25,7 +25,8 @@ GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& 
 {
     constexpr double MAX_UNSIGNED_VALUE = (std::numeric_limits<uint32_t>::max)();
     if (const auto* averaging = std::get_if<GPSBaseStationConfig::ReceiverAveraging>(&config.mode)) {
-        if (averaging->maximumDurationSecs < 1 || averaging->maximumDurationSecs > 3600) {
+        if (averaging->maximumDuration < std::chrono::seconds{1} ||
+            averaging->maximumDuration > std::chrono::hours{1}) {
             return GPSReceiverConfigError::InvalidReceiverAveraging;
         }
         return GPSReceiverConfigError::None;
@@ -46,7 +47,8 @@ GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& 
         const auto& survey = std::get<GPSBaseStationConfig::SurveyIn>(config.mode);
         const double accuracyUnits = survey.accuracyMeters * 10000.0;
         if (!std::isfinite(accuracyUnits) || accuracyUnits < 1 || accuracyUnits > MAX_UNSIGNED_VALUE ||
-            survey.durationSecs < 1 || survey.durationSecs > (std::numeric_limits<uint32_t>::max)()) {
+            survey.duration < std::chrono::seconds{1} ||
+            survey.duration > std::chrono::seconds((std::numeric_limits<uint32_t>::max)())) {
             return GPSReceiverConfigError::InvalidSurveyIn;
         }
     }

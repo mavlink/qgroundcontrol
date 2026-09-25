@@ -41,10 +41,9 @@
 
 /*** SBF protocol binary message and payload definitions ***/
 
-typedef struct
+struct sbf_payload_pvt_geodetic_t
 {
-    uint8_t mode_type
-        : 4;                     /**< Bit field indicating the PVT mode type, as follows:
+    uint8_t mode;                /**< Bit field indicating the PVT mode. Bits 0-3 are the PVT mode type (mode_type()):
                                       0: No PVT available (the Error field indicates the cause of the absence of the PVT solution)
                                       1: Stand-Alone PVT
                                       2: Differential PVT
@@ -54,10 +53,11 @@ typedef struct
                                       6: SBAS aided PVT
                                       7: moving-base RTK with fixed ambiguities
                                       8: moving-base RTK with float ambiguities
-                                      10:Precise Point Positioning (PPP) */
-    uint8_t mode_reserved : 2;   /**< Reserved */
-    uint8_t mode_base_fixed : 1; /**< Automatic static base position determination is still in progress (Mode bit 6). */
-    uint8_t mode_2d : 1;         /**< 2D/3D flag: set in 2D mode(height assumed constant and not computed). */
+                                      10:Precise Point Positioning (PPP)
+                                      Bits 4-5 are reserved.
+                                      Bit 6 (mode_base_fixed()): automatic static base position determination is
+                                      still in progress.
+                                      Bit 7 (mode_2d()): set in 2D mode (height assumed constant and not computed). */
     uint8_t error;               /**< PVT error code. The following values are defined:
                                        0: No Error
                                        1: Not enough measurements
@@ -126,11 +126,17 @@ typedef struct
     uint16_t latency;
     uint16_t h_accuracy;
     uint16_t v_accuracy;
-} sbf_payload_pvt_geodetic_t;
+
+    uint8_t mode_type() const { return mode & 0x0f; }
+
+    bool mode_base_fixed() const { return mode & 0x40; }
+
+    bool mode_2d() const { return mode & 0x80; }
+};
 
 /* General message and payload buffer */
 
-typedef struct
+struct sbf_buf_t
 {
     uint16_t sync;  /** The Sync field is a 2-byte array always set to 0x24, 0x40. The first byte of every SBF block has
                         hexadecimal value 24 (decimal 36, ASCII '$'). The second byte of every SBF block has hexadecimal
@@ -139,10 +145,10 @@ typedef struct
                      to the last byte of the block. The generator polynomial for this CRC is the so-called CRC-CCITT
                      polynomial: x 16 + x 12 + x 5 + x 0 . The CRC is computed in the forward direction using a seed of
                      0, no reverse and no final XOR. */
-    uint16_t msg_id
-        : 13;       /** The ID field is a 2-byte block ID, which uniquely identifies the block type and its contents */
-    uint8_t msg_revision : 3; /** block revision number, starting from 0 at the initial block definition, and
-                                 incrementing each time backwards - compatible changes are performed to the block  */
+    uint16_t id;    /** The ID field is a 2-byte block ID, which uniquely identifies the block type and its contents:
+                        bits 0-12 are the block number (msg_id()), bits 13-15 the block revision number, starting from 0
+                        at the initial block definition, and incrementing each time backwards - compatible changes are
+                        performed to the block */
     uint16_t length;          /** The Length field is a 2-byte unsigned integer containing the size of the SBF block.
                                   It is the total number of bytes in the SBF block including the header.
                                   It is always a multiple of 4. */
@@ -156,7 +162,9 @@ typedef struct
     sbf_payload_pvt_geodetic_t payload_pvt_geodetic;
 
     uint8_t padding[16];
-} sbf_buf_t;
+
+    uint16_t msg_id() const { return id & 0x1fff; }
+};
 
 /*** END OF SBF protocol binary message and payload definitions ***/
 

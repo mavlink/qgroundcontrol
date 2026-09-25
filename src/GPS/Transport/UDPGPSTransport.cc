@@ -2,18 +2,21 @@
 
 #include <algorithm>
 #include <cstring>
+#include <utility>
 
 #include <QtNetwork/QNetworkDatagram>
 #include <QtNetwork/QUdpSocket>
 
+#include "GPSSocketWait_p.h"
+#include "GPSStreamRead_p.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(UDPGPSTransportLog, "GPS.Transport.UDPGPSTransport")
 
-UDPGPSTransport::UDPGPSTransport(quint16 port, const std::atomic_bool& requestStop, int peerIdleTimeoutMs)
-    : GPSTransport(requestStop)
+UDPGPSTransport::UDPGPSTransport(quint16 port, std::stop_token stopToken, std::chrono::milliseconds peerIdleTimeout)
+    : GPSTransport(std::move(stopToken))
     , _port(port)
-    , _peerIdleTimeoutMs(peerIdleTimeoutMs)
+    , _peerIdleTimeout(peerIdleTimeout)
 {
     qCDebug(UDPGPSTransportLog) << this;
 }
@@ -52,7 +55,7 @@ void UDPGPSTransport::_receivePending()
         const bool selected =
             _peerPort != 0 && datagram.senderPort() == _peerPort && datagram.senderAddress() == _peerAddress;
         if (!selected) {
-            if (_peerPort != 0 && _peerIdle.isValid() && _peerIdle.elapsed() < _peerIdleTimeoutMs) {
+            if (_peerPort != 0 && _peerIdle.isValid() && _peerIdle.durationElapsed() < _peerIdleTimeout) {
                 continue;
             }
             qCDebug(UDPGPSTransportLog) << "Receiving from UDP sender" << datagram.senderAddress()
@@ -70,40 +73,24 @@ void UDPGPSTransport::_receivePending()
     }
 }
 
-GPSReadResult UDPGPSTransport::read(uint8_t* buffer, int length, int timeoutMs)
+GPSReadResult UDPGPSTransport::read(uint8_t* buffer, int length, std::chrono::milliseconds timeout)
 {
-    if (isCancelled()) {
-        return {GPSReadStatus::Cancelled};
-    }
-    if (!buffer || length < 0) {
-        return {GPSReadStatus::InvalidData};
-    }
-    if (!_socket) {
-        return {GPSReadStatus::Closed};
-    }
-    if (length == 0) {
-        return {fatalError() ? GPSReadStatus::Closed : GPSReadStatus::Data};
-    }
-    const QDeadlineTimer deadline((std::max) (timeoutMs, 0), Qt::PreciseTimer);
-    _receivePending();
-    while (_pending.isEmpty()) {
-        if (isCancelled()) {
-            return {GPSReadStatus::Cancelled};
-        }
-        if (fatalError()) {
-            return {GPSReadStatus::Closed, 0, _socket->errorString()};
-        }
-        if (deadline.hasExpired()) {
-            return {GPSReadStatus::TimedOut};
-        }
-        (void) _socket->waitForReadyRead(
-            static_cast<int>((std::min) (qint64(kCancellationPollMs), deadline.remainingTime())));
+    const auto buffered = [this]() {
         _receivePending();
-    }
-    const auto count = static_cast<int>((std::min) (qsizetype(length), _pending.size()));
-    std::memcpy(buffer, _pending.constData(), static_cast<size_t>(count));
-    _pending.remove(0, count);
-    return {GPSReadStatus::Data, count};
+        return !_pending.isEmpty();
+    };
+    return GPSStreamRead::readBounded(
+        *this, buffer, length, timeout, [this]() { return !_socket; },
+        [this, &buffered](QDeadlineTimer deadline) {
+            return buffered() || GPSSocketWait::waitFor(*this, _socket.get(), buffered, deadline);
+        },
+        [this](uint8_t* bytes, int count) {
+            const qsizetype taken = (std::min) (qsizetype(count), _pending.size());
+            std::memcpy(bytes, _pending.constData(), static_cast<size_t>(taken));
+            _pending.remove(0, taken);
+            return qint64(taken);
+        },
+        [this]() { return GPSReadResult{GPSReadStatus::Closed, 0, _socket ? _socket->errorString() : QString()}; });
 }
 
 GPSWriteResult UDPGPSTransport::writeData(const uint8_t*, int, QDeadlineTimer)

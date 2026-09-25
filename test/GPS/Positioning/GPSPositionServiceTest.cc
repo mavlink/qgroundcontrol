@@ -1,5 +1,6 @@
 #include "GPSPositionServiceTest.h"
 
+#include <chrono>
 #include <memory>
 #include <utility>
 
@@ -10,6 +11,8 @@
 #include "GPSPositionService.h"
 #include "GPSTestHelpers.h"
 #include "ManualScheduler.h"
+
+using namespace std::chrono_literals;
 
 namespace {
 using Kind = GPSPositionService::SelectedSource;
@@ -225,7 +228,7 @@ void GPSPositionServiceTest::_sourcesShareAcceptance()
     if (Kind(kind) == Kind::Internal) {
         QCOMPARE(service.selectedHealth()->observation().sourceId,
                  custom ? QStringLiteral("Plugin") : QStringLiteral("Platform"));
-        QCOMPARE(service.updateInterval(), source.minimumUpdateInterval());
+        QCOMPARE(service.updateInterval(), std::chrono::milliseconds(source.minimumUpdateInterval()));
     }
     observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 101);
     source.publish(observation.position);
@@ -274,18 +277,18 @@ void GPSPositionServiceTest::_automaticFailoverAndRecovery()
     ManualScheduler scheduler;
     GPSSourceHealth primary(nullptr, &scheduler);
     PositionSource internal;
-    primary.setFreshnessTimeoutMs(1000);
+    primary.setFreshnessTimeout(1000ms);
     GPSPositionService service(nullptr, &scheduler);
     auto receiverRegistration = service.registerPositionSource(Kind::Receiver, &primary);
     service.setInternalPositionSource(&internal, Status::WaitingForFix);
-    service.sourceHealth(Kind::Internal)->setFreshnessTimeoutMs(60000);
+    service.sourceHealth(Kind::Internal)->setFreshnessTimeout(60000ms);
     primary.updateObservation(fix(scheduler));
     internal.publish(fix(scheduler, 48).position);
     QCOMPARE(service.selectedSource(), Kind::Receiver);
     primary.invalidatePosition();
     QCOMPARE(service.selectedSource(), Kind::Internal);
     QCOMPARE(service.gcsPosition().latitude(), 48);
-    primary.setFreshnessTimeoutMs(60000);
+    primary.setFreshnessTimeout(60000ms);
     primary.updateObservation(fix(scheduler));
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
     primary.invalidatePosition();
@@ -340,11 +343,11 @@ void GPSPositionServiceTest::_standbyReportsDoNotRepublish()
     ManualScheduler scheduler;
     GPSSourceHealth primary(nullptr, &scheduler);
     PositionSource internal;
-    primary.setFreshnessTimeoutMs(60000);
+    primary.setFreshnessTimeout(60000ms);
     GPSPositionService service(nullptr, &scheduler);
     auto receiverRegistration = service.registerPositionSource(Kind::Receiver, &primary);
     service.setInternalPositionSource(&internal, Status::WaitingForFix);
-    service.sourceHealth(Kind::Internal)->setFreshnessTimeoutMs(60000);
+    service.sourceHealth(Kind::Internal)->setFreshnessTimeout(60000ms);
     service.setSourceMode(Mode::Automatic);
     primary.updateObservation(fix(scheduler));
     QSignalSpy coordinates(&service, &GPSPositionService::gcsPositionChanged);
@@ -474,13 +477,12 @@ void GPSPositionServiceTest::_consumerPolicies()
 
 void GPSPositionServiceTest::_consumerMaximumAge()
 {
-    using namespace std::chrono_literals;
     using Use = GPSObservation::PositionUse;
     ManualScheduler serviceClock;
     ManualScheduler sourceClock;
     QVERIFY(sourceClock.advanceBy(1h));
     GPSSourceHealth health(nullptr, &sourceClock);
-    health.setFreshnessTimeoutMs(10000);
+    health.setFreshnessTimeout(10000ms);
     GPSPositionService service(nullptr, &serviceClock);
     auto registration = service.registerPositionSource(Kind::Receiver, &health, 7);
     const auto observation = fix(sourceClock, 47, 7);
@@ -497,7 +499,7 @@ void GPSPositionServiceTest::_consumerMaximumAge()
     QVERIFY(service.acceptedObservation(Use::RemoteID));
     health.updateObservation(fix(sourceClock, 48, 7));
     QVERIFY(service.acceptedObservation(Use::RemoteID, 5000ms));
-    health.setFreshnessTimeoutMs(1000);
+    health.setFreshnessTimeout(1000ms);
     QVERIFY(sourceClock.advanceBy(1s));
     QVERIFY(!service.acceptedObservation(Use::RemoteID, 5000ms));
 }
@@ -516,7 +518,7 @@ void GPSPositionServiceTest::_policySelectionGates()
     auto registration = service.registerPositionSource(Kind::Receiver, &replacementHealth, 2);
     oldRegistration.reset();
     firstHealth.updateObservation(fix(scheduler, 49, 1));
-    replacementHealth.setFreshnessTimeoutMs(10000);
+    replacementHealth.setFreshnessTimeout(10000ms);
     for (const auto use : {Use::GroundStation, Use::Motion, Use::RemoteID, Use::Gga}) {
         QVERIFY(!service.acceptedObservation(use));
     }

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -12,6 +13,8 @@
 #include "ManualScheduler.h"
 #include "MonotonicClock.h"
 #include "UnitTest.h"
+
+using namespace std::chrono_literals;
 
 class GPSAcceptedStateTest : public UnitTest
 {
@@ -36,7 +39,6 @@ private slots:
 
 void GPSAcceptedStateTest::_receiptDeadlineBoundaries()
 {
-    using namespace std::chrono_literals;
     QCOMPARE(MonotonicClock::remaining(0, 100, 10us), 0us);
     QCOMPARE(MonotonicClock::remaining(101, 100, 10us), 0us);
     QCOMPARE(MonotonicClock::remaining(100, 100, 0us), 0us);
@@ -206,7 +208,7 @@ void GPSAcceptedStateTest::_freshnessReconfiguration()
         health.invalidatePosition();
     }
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
-    health.setFreshnessTimeoutMs(timeoutMs);
+    health.setFreshnessTimeout(std::chrono::milliseconds(timeoutMs));
     QCOMPARE(bool(health.acceptedObservation()), !invalidate);
     if (!invalidate) {
         QCOMPARE(health.acceptedObservation()->satellitesUsed, std::optional<int>(12));
@@ -216,7 +218,7 @@ void GPSAcceptedStateTest::_freshnessReconfiguration()
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
     QVERIFY(!health.acceptedObservation());
     QCOMPARE(health.state(), GPSSourceHealth::State::Stale);
-    health.setFreshnessTimeoutMs(timeoutMs * 2);
+    health.setFreshnessTimeout(std::chrono::milliseconds(timeoutMs * 2));
     QCOMPARE(health.observation().satellitesUsed, std::optional<int>(12));
 }
 
@@ -245,11 +247,11 @@ void GPSAcceptedStateTest::_futureReceiptRemainsRejected()
     health.updateObservation(observation);
     QCOMPARE(health.state(), GPSSourceHealth::State::Invalid);
     QVERIFY(!health.acceptedObservation(use));
-    health.setFreshnessTimeoutMs(10000);
+    health.setFreshnessTimeout(10000ms);
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
     QVERIFY(!health.acceptedObservation(use));
     for (const int timeoutMs : {1000, 10000, 5000}) {
-        health.setFreshnessTimeoutMs(timeoutMs);
+        health.setFreshnessTimeout(std::chrono::milliseconds(timeoutMs));
         QVERIFY(!health.acceptedObservation(use));
         QCOMPARE(health.state(), GPSSourceHealth::State::Invalid);
     }
@@ -270,11 +272,10 @@ void GPSAcceptedStateTest::_maximumAge_data()
 void GPSAcceptedStateTest::_maximumAge()
 {
     QFETCH(int, sourceLifetimeMs);
-    using namespace std::chrono_literals;
     using Use = GPSObservation::PositionUse;
     ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
-    health.setFreshnessTimeoutMs(sourceLifetimeMs);
+    health.setFreshnessTimeout(std::chrono::milliseconds(sourceLifetimeMs));
     GPSObservation observation;
     observation.monotonicTimestampUs = scheduler.nowUs();
     observation.receivedAt = QDateTime::fromMSecsSinceEpoch(1000).toUTC();

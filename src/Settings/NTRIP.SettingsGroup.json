@@ -72,6 +72,14 @@
             "label": "Accept self-signed certificates"
         },
         {
+            "name": "ntripPinnedCertificate",
+            "shortDesc": "Trusted self-signed caster certificate",
+            "longDesc": "Internal, not shown in the UI: host:port and SHA-256 digest of the self-signed TLS certificate trusted on first connection. Cleared when self-signed certificates are no longer accepted.",
+            "type": "string",
+            "default": "",
+            "label": "Trusted caster certificate"
+        },
+        {
             "name": "ntripGgaPositionSource",
             "shortDesc": "Position reported to the caster. Network (VRS) mountpoints need it; Auto selects the best available source.",
             "longDesc": "Position source for NMEA GGA sentences sent to the NTRIP caster. Auto selects the best available source.",

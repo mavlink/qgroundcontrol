@@ -32,9 +32,9 @@ private:
         return GPSWriteResult{GPSWriteStatus::Completed, size, size};
     }
 
-    void onTransportReadWait(ScriptedReceiver& receiver, int timeoutMs) override
+    void onTransportReadWait(ScriptedReceiver& receiver, std::chrono::milliseconds timeout) override
     {
-        Q_UNUSED(timeoutMs)
+        Q_UNUSED(timeout)
         if (failIdleReads) {
             receiver.failNextRead(GPSReadResult{GPSReadStatus::Error, 0, idleReadDetail});
         }
@@ -42,7 +42,7 @@ private:
 
     void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline) override
     {
-        onTransportReadWait(receiver, deadline.remainingMilliseconds(_clock.nowUs()));
+        onTransportReadWait(receiver, deadline.remaining(_clock.nowUs()));
         if (!receiver.hasQueuedReadData()) {
             _clock.advanceTo(deadline.untilUs + 1);
         }

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <csignal>
 #include <memory>
+#include <stop_token>
 #include <thread>
 #include <utility>
 
@@ -27,9 +28,12 @@
 #include "Protocols/Support/UBXReceiverModel.h"
 #include "RTCMFramer.h"
 #include "TCPGPSTransport.h"
+
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
 #endif
+
+using namespace std::chrono_literals;
 
 namespace {
 std::atomic_flag interrupted = ATOMIC_FLAG_INIT;
@@ -117,14 +121,16 @@ QJsonObject requestedConfig(const GPSReceiverConfig& config)
                           std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position.altitudeMeters);
         } else if (std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode)) {
             result.insert("base_mode", "receiver-averaging");
-            result.insert("averaging_maximum_s",
-                          static_cast<qint64>(
-                              std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs));
+            result.insert(
+                "averaging_maximum_s",
+                static_cast<qint64>(
+                    std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDuration.count()));
             result.insert("survey_accuracy_m", QJsonValue::Null);
         } else {
             result.insert("base_mode", "survey");
-            result.insert("survey_duration_s",
-                          static_cast<qint64>(std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs));
+            result.insert(
+                "survey_duration_s",
+                static_cast<qint64>(std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration.count()));
             result.insert("survey_accuracy_m",
                           std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters);
         }
@@ -233,11 +239,11 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
                 .altitudeMeters = static_cast<float>(coordinate("altitude"))};
         } else if (baseMode == "receiver-averaging") {
             options.config.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
-            std::get<GPSBaseStationConfig::ReceiverAveraging>(options.config.base.mode).maximumDurationSecs =
-                static_cast<uint32_t>(integer("averaging-duration", 1, 3600));
+            std::get<GPSBaseStationConfig::ReceiverAveraging>(options.config.base.mode).maximumDuration =
+                std::chrono::seconds(integer("averaging-duration", 1, 3600));
         } else {
-            std::get<GPSBaseStationConfig::SurveyIn>(options.config.base.mode).durationSecs =
-                integer("survey-duration", 1, 86400);
+            std::get<GPSBaseStationConfig::SurveyIn>(options.config.base.mode).duration =
+                std::chrono::seconds(integer("survey-duration", 1, 86400));
             bool accuracyValid = false;
             std::get<GPSBaseStationConfig::SurveyIn>(options.config.base.mode).accuracyMeters =
                 parser.value("survey-accuracy").toDouble(&accuracyValid);
@@ -318,16 +324,17 @@ QJsonObject configurationEvidence(const GPSDriver& driver)
     return {{"source", "native_driver"}, {"commands", commands}};
 }
 
-std::unique_ptr<GPSTransport> physicalTransport(const Options& options, const std::atomic_bool& stop)
+std::unique_ptr<GPSTransport> physicalTransport(const Options& options, std::stop_token stopToken)
 {
     if (options.transport == "tcp") {
         const auto separator = options.device.lastIndexOf(':');
-        return std::make_unique<TCPGPSTransport>(
-            options.device.left(separator), static_cast<quint16>(options.device.mid(separator + 1).toUInt()), stop);
+        return std::make_unique<TCPGPSTransport>(options.device.left(separator),
+                                                 static_cast<quint16>(options.device.mid(separator + 1).toUInt()),
+                                                 std::move(stopToken));
     }
 #ifndef QGC_NO_SERIAL_LINK
     if (options.transport == "serial") {
-        return std::make_unique<SerialGPSTransport>(options.device, stop);
+        return std::make_unique<SerialGPSTransport>(options.device, std::move(stopToken));
     }
 #endif
     return {};
@@ -402,7 +409,7 @@ int run(const Options& options)
         return output(report, 0, options.outputPath);
     }
 
-    std::atomic_bool stop = false;
+    std::stop_source stop;
     std::atomic_bool deadlineExpired = false;
     std::atomic<qint64> operationDeadline = 0;
     const auto now = [] { return static_cast<qint64>(MonotonicClock::nowUs() / 1000); };
@@ -412,7 +419,7 @@ int run(const Options& options)
             const bool signalReceived = interrupted.test(std::memory_order_relaxed);
             if (signalReceived || (deadline != 0 && now() >= deadline)) {
                 deadlineExpired.store(!signalReceived);
-                stop.store(true);
+                stop.request_stop();
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
@@ -434,7 +441,7 @@ int run(const Options& options)
             receiver->disableReply = UBXReceiverModel::DisableReply::Cancelled;
         }
     } else {
-        physical = physicalTransport(options, stop);
+        physical = physicalTransport(options, stop.get_token());
     }
 
     QStringList stages{"configured"};
@@ -452,10 +459,10 @@ int run(const Options& options)
         operationDeadline.store(now() + options.timeoutMs);
         if (name == "reconnected_base" && !scripted) {
             physical.reset();
-            physical = physicalTransport(options, stop);
+            physical = physicalTransport(options, stop.get_token());
         }
         GPSTransport& transport = scripted ? static_cast<GPSTransport&>(*scriptedTransport) : *physical;
-        GPSEvidenceTransport evidence(transport, stop);
+        GPSEvidenceTransport evidence(transport, stop.get_token());
         QJsonObject stage{{"name", name}};
         QJsonArray checks;
         if (name == stages.first() || name == "reconnected_base") {
@@ -556,7 +563,7 @@ int run(const Options& options)
         };
         stage.insert("phase", configured ? "observing" : "configuration_failed");
         if (const QString error = checkpoint(); !error.isEmpty()) {
-            stop.store(true);
+            stop.request_stop();
             return evidenceError(report, error);
         }
         if (!configured) {
@@ -584,8 +591,8 @@ int run(const Options& options)
             QElapsedTimer observation;
             observation.start();
             qint64 lastCheckpointMs = 0;
-            while (!stop.load() && !evidence.fatalError() && observation.elapsed() < options.observeMs) {
-                const auto result = driver.receiveOutcome(50);
+            while (!stop.stop_requested() && !evidence.fatalError() && observation.elapsed() < options.observeMs) {
+                const auto result = driver.receiveOutcome(50ms);
                 if (recordReceive(result)) {
                     break;
                 }
@@ -596,13 +603,13 @@ int run(const Options& options)
                 }
                 if (!options.outputPath.isEmpty() && observation.elapsed() - lastCheckpointMs >= 1000) {
                     if (const QString error = checkpoint(); !error.isEmpty()) {
-                        stop.store(true);
+                        stop.request_stop();
                         return evidenceError(report, error);
                     }
                     lastCheckpointMs = observation.elapsed();
                 }
             }
-            if (stop.load()) {
+            if (stop.stop_requested()) {
                 failed = true;
                 checks.append(check("observation_window", "failed", "Observation interrupted or deadline expired"));
             }
@@ -611,7 +618,7 @@ int run(const Options& options)
             if (receiveFailed && cancellationRequested) {
                 checks.append(check("receive_cancellation", "not_run", "Prior terminal receive failure"));
             }
-            if (!failed && !stop.load() && cancellationRequested) {
+            if (!failed && !stop.stop_requested() && cancellationRequested) {
                 if (scripted) {
                     injectMeasurements(*receiver, options, config, true);
                 }
@@ -621,28 +628,28 @@ int run(const Options& options)
                 int receiveCalls = 0;
                 GPSReceiveResult result;
                 do {
-                    result = driver.receiveOutcome(2000);
+                    result = driver.receiveOutcome(2000ms);
                     ++receiveCalls;
                     if (recordReceive(result)) {
                         break;
                     }
-                } while (result.status != GPSReceiveStatus::Cancelled && !stop.load() && !evidence.fatalError() &&
-                         cancellation.elapsed() < options.cancelAfterMs + 500);
+                } while (result.status != GPSReceiveStatus::Cancelled && !stop.stop_requested() &&
+                         !evidence.fatalError() && cancellation.elapsed() < options.cancelAfterMs + 500);
                 const qint64 cancelMs = cancellation.elapsed();
                 operationDeadline.store(0);
-                const bool timely =
-                    !receiveFailed && stop.load() && !evidence.fatalError() && cancelMs < options.cancelAfterMs + 500;
+                const bool timely = !receiveFailed && stop.stop_requested() && !evidence.fatalError() &&
+                                    cancelMs < options.cancelAfterMs + 500;
                 const bool cancelled = timely && result.status == GPSReceiveStatus::Cancelled;
                 checks.append(check("receive_cancellation", cancelled ? "passed" : "failed",
                                     QString("Receive loop returned after %1 ms across %2 calls; stop requested=%3. "
                                             "Cancellation requires a typed cancellation outcome.")
                                         .arg(cancelMs)
                                         .arg(receiveCalls)
-                                        .arg(stop.load())));
+                                        .arg(stop.stop_requested())));
                 stage.insert("cancellation_ms", cancelMs);
                 failed = failed || !cancelled;
                 // Cancellation is the final operation; never send a cleanup configuration.
-                stop.store(true);
+                stop.request_stop();
             }
             if (evidence.fatalError()) {
                 failed = true;
@@ -669,11 +676,11 @@ int run(const Options& options)
         report.remove("active_stage");
         report.insert("stages", results);
         if (const QString error = saveEvidence(report, options.outputPath); !error.isEmpty()) {
-            stop.store(true);
+            stop.request_stop();
             return evidenceError(report, error);
         }
         operationDeadline.store(0);
-        if (failed || stop.load()) {
+        if (failed || stop.stop_requested()) {
             break;
         }
     }

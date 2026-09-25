@@ -1,6 +1,7 @@
 #include "NMEASentenceTest.h"
 
 #include <array>
+#include <chrono>
 #include <memory>
 
 #include <QtCore/QTime>
@@ -11,7 +12,7 @@
 #include "NMEASentence.h"
 #include "NMEAUtils.h"
 
-Q_DECLARE_METATYPE(NMEA::GGA)
+using namespace std::chrono_literals;
 
 namespace {
 /// Owns the bytes that a parsed sentence's field views reference.
@@ -180,8 +181,8 @@ void NMEASentenceTest::_navigationFreshnessBoundaries()
     QVERIFY(rmc && gga && gsa && gst);
 
     const auto gsaFresh = [&](quint64 ageUs) {
-        NMEA::NavigationEpochAssembler assembler({.metadataMaxAgeUs = 2000000,
-                                                  .untimedMetadataMaxAgeUs = 999999,
+        NMEA::NavigationEpochAssembler assembler({.metadataMaxAge = 2000000us,
+                                                  .untimedMetadataMaxAge = 999999us,
                                                   .autonomousFixQuality = GPSFixQuality::Unknown,
                                                   .useGsaDimensionForAutonomousFix = true,
                                                   .requirePositionTime = true,
@@ -197,8 +198,8 @@ void NMEASentenceTest::_navigationFreshnessBoundaries()
     QVERIFY(!gsaFresh(1000000).has_value());
 
     const auto gstFresh = [&](quint64 ageUs) {
-        NMEA::NavigationEpochAssembler assembler({.metadataMaxAgeUs = 2000000,
-                                                  .untimedMetadataMaxAgeUs = 999999,
+        NMEA::NavigationEpochAssembler assembler({.metadataMaxAge = 2000000us,
+                                                  .untimedMetadataMaxAge = 999999us,
                                                   .autonomousFixQuality = GPSFixQuality::Unknown,
                                                   .useGsaDimensionForAutonomousFix = true,
                                                   .requirePositionTime = true,
@@ -251,8 +252,8 @@ void NMEASentenceTest::_navigationDateRollover()
     const auto gga = ownedSentence(
         NMEAUtils::repairChecksum("$GPGGA," + ggaTime + ",5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,"));
     QVERIFY(dated && gga);
-    NMEA::NavigationEpochAssembler assembler({.metadataMaxAgeUs = 2000000,
-                                              .untimedMetadataMaxAgeUs = 999999,
+    NMEA::NavigationEpochAssembler assembler({.metadataMaxAge = 2000000us,
+                                              .untimedMetadataMaxAge = 999999us,
                                               .autonomousFixQuality = GPSFixQuality::Unknown,
                                               .useGsaDimensionForAutonomousFix = true,
                                               .requirePositionTime = true,
@@ -283,8 +284,8 @@ void NMEASentenceTest::_navigationFixLoss()
     QFETCH(QByteArray, body);
     const auto sentence = ownedSentence(NMEAUtils::repairChecksum(body));
     QVERIFY(sentence);
-    NMEA::NavigationEpochAssembler assembler({.metadataMaxAgeUs = 2000000,
-                                              .untimedMetadataMaxAgeUs = 999999,
+    NMEA::NavigationEpochAssembler assembler({.metadataMaxAge = 2000000us,
+                                              .untimedMetadataMaxAge = 999999us,
                                               .autonomousFixQuality = GPSFixQuality::Unknown,
                                               .useGsaDimensionForAutonomousFix = true,
                                               .requirePositionTime = true,

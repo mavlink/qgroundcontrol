@@ -22,7 +22,7 @@ SettingsGroupLayout {
         return destinationId || qsTr("Unselected");
     }
 
-    function reasonName(reason) {
+    function reasonName(reason: int): string {
         switch (reason) {
         case GPSCorrectionEventModel.None:
             return "";
@@ -43,7 +43,7 @@ SettingsGroupLayout {
         }
     }
 
-    function stageName(stage) {
+    function stageName(stage: int): string {
         switch (stage) {
         case GPSCorrectionEventModel.Received:
             return qsTr("Received");

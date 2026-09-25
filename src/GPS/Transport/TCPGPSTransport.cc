@@ -1,16 +1,13 @@
 #include "TCPGPSTransport.h"
 
-#include <algorithm>
-#include <functional>
-#include <limits>
 #include <utility>
 
 #include <QtCore/QCoreApplication>
-#include <QtCore/QEventLoop>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QTimer>
 #include <QtNetwork/QTcpSocket>
 
+#include "GPSSocketWait_p.h"
+#include "GPSStreamRead_p.h"
 #include "GPSStreamWrite_p.h"
 #include "QGCLoggingCategory.h"
 
@@ -28,49 +25,10 @@ GPSOpenResult socketOpenFailure(const GPSTransport& transport, QAbstractSocket& 
     socket.abort();
     return result;
 }
-
-bool waitForSocket(const GPSTransport& transport, QAbstractSocket* socket, const std::function<bool()>& ready,
-                   QDeadlineTimer deadline, int cancellationPollMs)
-{
-    if (!socket || transport.isCancelled() || transport.fatalError()) {
-        return false;
-    }
-    if (ready()) {
-        return true;
-    }
-    if (deadline.hasExpired()) {
-        return false;
-    }
-
-    // Short waitForConnected calls abort DNS/connection progress on timeout.
-    QEventLoop loop;
-    QTimer cancellation;
-    QTimer timeout;
-    const auto check = [&]() {
-        if (transport.isCancelled() || transport.fatalError() || deadline.hasExpired() || ready()) {
-            loop.quit();
-        }
-    };
-    QObject::connect(socket, &QAbstractSocket::stateChanged, &loop, check);
-    QObject::connect(socket, &QAbstractSocket::errorOccurred, &loop, check);
-    QObject::connect(socket, &QAbstractSocket::readyRead, &loop, check);
-    QObject::connect(socket, &QAbstractSocket::bytesWritten, &loop, check);
-    QObject::connect(&cancellation, &QTimer::timeout, &loop, check);
-    QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
-    timeout.setSingleShot(true);
-    timeout.setTimerType(Qt::PreciseTimer);
-    cancellation.start(cancellationPollMs);
-    if (!deadline.isForever()) {
-        timeout.start(
-            static_cast<int>((std::min) (deadline.remainingTime(), qint64((std::numeric_limits<int>::max)()))));
-    }
-    loop.exec();
-    return !transport.isCancelled() && !transport.fatalError() && ready();
-}
 }  // namespace
 
-TCPGPSTransport::TCPGPSTransport(QString host, quint16 port, const std::atomic_bool& requestStop)
-    : GPSTransport(requestStop)
+TCPGPSTransport::TCPGPSTransport(QString host, quint16 port, std::stop_token stopToken)
+    : GPSTransport(std::move(stopToken))
     , _host(std::move(host))
     , _port(port)
 {
@@ -87,13 +45,13 @@ GPSOpenResult TCPGPSTransport::open()
     if (isCancelled()) {
         return {GPSOpenStatus::Cancelled};
     }
-    const QDeadlineTimer connectDeadline(kConnectTimeoutMs);
+    const QDeadlineTimer connectDeadline(kConnectTimeout);
     _socket = std::make_unique<QTcpSocket>();
     _socket->setReadBufferSize(kReadBufferBytes);
     _socket->connectToHost(_host, _port);
-    if (waitForSocket(
+    if (GPSSocketWait::waitFor(
             *this, _socket.get(), [this]() { return _socket->state() == QAbstractSocket::ConnectedState; },
-            connectDeadline, kCancellationPollMs)) {
+            connectDeadline)) {
         return {GPSOpenStatus::Opened};
     }
     if (!isCancelled()) {
@@ -108,40 +66,26 @@ bool TCPGPSTransport::fatalError() const
     return !_socket || _socket->state() == QAbstractSocket::UnconnectedState;
 }
 
-GPSReadResult TCPGPSTransport::read(uint8_t* buffer, int length, int timeoutMs)
+GPSReadResult TCPGPSTransport::read(uint8_t* buffer, int length, std::chrono::milliseconds timeout)
 {
-    if (isCancelled()) {
-        return {GPSReadStatus::Cancelled};
-    }
-    if (!buffer || length < 0) {
-        return {GPSReadStatus::InvalidData};
-    }
-    if (!_socket) {
-        return {GPSReadStatus::Closed};
-    }
-    if (length == 0) {
-        return {fatalError() ? GPSReadStatus::Closed : GPSReadStatus::Data};
-    }
-    if (timeoutMs <= 0 && _socket->bytesAvailable() == 0 && !fatalError()) {
-        // bytesAvailable() only sees Qt's buffer; immediate polls must also service kernel input.
-        _socket->waitForReadyRead(0);
-    }
-    if (_socket->bytesAvailable() == 0 && !waitForSocket(
-                                              *this, _socket.get(), [this]() { return _socket->bytesAvailable() > 0; },
-                                              QDeadlineTimer((std::max) (timeoutMs, 0)), kCancellationPollMs)) {
-        return {isCancelled()  ? GPSReadStatus::Cancelled
-                : fatalError() ? GPSReadStatus::Closed
-                               : GPSReadStatus::TimedOut,
-                0, fatalError() ? _socket->errorString() : QString()};
-    }
-    const auto count = _socket->read(reinterpret_cast<char*>(buffer), length);
-    return {count < 0 ? GPSReadStatus::Error : GPSReadStatus::Data, static_cast<int>((std::max) (count, qint64(0))),
-            count < 0 ? _socket->errorString() : QString()};
+    return GPSStreamRead::readBounded(
+        *this, buffer, length, timeout, [this]() { return !_socket; },
+        [this](QDeadlineTimer deadline) {
+            if (deadline.hasExpired() && _socket->bytesAvailable() == 0 && !fatalError()) {
+                // bytesAvailable() only sees Qt's buffer; immediate polls must also service kernel input.
+                _socket->waitForReadyRead(0);
+            }
+            return _socket->bytesAvailable() > 0 ||
+                   GPSSocketWait::waitFor(
+                       *this, _socket.get(), [this]() { return _socket->bytesAvailable() > 0; }, deadline);
+        },
+        [this](uint8_t* bytes, int count) { return _socket->read(reinterpret_cast<char*>(bytes), count); },
+        [this]() { return GPSReadResult{GPSReadStatus::Closed, 0, _socket ? _socket->errorString() : QString()}; });
 }
 
 std::chrono::milliseconds TCPGPSTransport::configurationWriteTimeout() const
 {
-    return std::chrono::milliseconds(kWriteTimeoutMs);
+    return kWriteTimeout;
 }
 
 GPSWriteResult TCPGPSTransport::writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline)
@@ -157,9 +101,7 @@ GPSWriteResult TCPGPSTransport::writeData(const uint8_t* buffer, int length, QDe
     return GPSStreamWrite::writeBounded(
         *this, _socket.get(), buffer, length, deadline, kWriteBufferBytes,
         [this](QDeadlineTimer remaining) {
-            waitForSocket(
-                *this, _socket.get(), [this]() { return _socket->bytesToWrite() == 0; }, remaining,
-                kCancellationPollMs);
+            GPSSocketWait::waitFor(*this, _socket.get(), [this]() { return _socket->bytesToWrite() == 0; }, remaining);
         },
         [&drained](int) { return drained; },
         [this]() { return _socket ? _socket->errorString() : QStringLiteral("GPS socket is closed"); },

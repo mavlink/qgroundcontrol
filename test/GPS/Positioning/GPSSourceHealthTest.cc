@@ -1,5 +1,6 @@
 #include "GPSSourceHealthTest.h"
 
+#include <chrono>
 #include <memory>
 
 #include <QtCore/QScopeGuard>
@@ -9,6 +10,8 @@
 #include "LogManager.h"
 #include "ManualScheduler.h"
 #include "QGCLoggingCategoryManager.h"
+
+using namespace std::chrono_literals;
 
 namespace {
 QGeoPositionInfo position()
@@ -84,7 +87,7 @@ void GPSSourceHealthTest::_ageAndRecovery()
 {
     ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
-    health.setFreshnessTimeoutMs(100);
+    health.setFreshnessTimeout(100ms);
     QCOMPARE(health.state(), GPSSourceHealth::State::NoData);
     QCOMPARE(scheduler.pendingCount(), 0);
     const auto before = QDateTime::currentDateTimeUtc();
@@ -170,7 +173,7 @@ void GPSSourceHealthTest::_logsOnlyHealthTransitions()
 
     expectLogMessage("GPS.Core.GPSSourceHealth", QtDebugMsg,
                      QRegularExpression(QStringLiteral("Position health changed:.*Usable.*Stale")));
-    health.setFreshnessTimeoutMs(50);
+    health.setFreshnessTimeout(50ms);
     verifyExpectedLogMessage();
     QCOMPARE(health.state(), GPSSourceHealth::State::Stale);
     QCOMPARE(logCount(), initialCount + 2);
@@ -214,7 +217,7 @@ void GPSSourceHealthTest::_retainedMeasurementExpires()
     QFETCH(QString, quality);
     ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
-    health.setFreshnessTimeoutMs(100);
+    health.setFreshnessTimeout(100ms);
     GPSObservation observation;
     observation.position = position();
     observation.monotonicTimestampUs = scheduler.nowUs();
@@ -252,19 +255,19 @@ void GPSSourceHealthTest::_invalidatedPositionTimeout()
     observation.monotonicTimestampUs = scheduler.nowUs();
     health.updateObservation(observation);
     health.invalidatePosition();
-    health.setFreshnessTimeoutMs(1000);
+    health.setFreshnessTimeout(1000ms);
     QSignalSpy updates(&health, &GPSSourceHealth::positionChanged);
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(999)));
     QCOMPARE(health.state(), GPSSourceHealth::State::Invalid);
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
     QCOMPARE(health.state(), GPSSourceHealth::State::Stale);
     QCOMPARE(updates.count(), 1);
-    health.setFreshnessTimeoutMs(5000);
+    health.setFreshnessTimeout(5000ms);
     QCOMPARE(health.state(), GPSSourceHealth::State::Stale);
     observation.monotonicTimestampUs = scheduler.nowUs();
     health.updateObservation(observation);
     health.invalidatePosition();
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
-    health.setFreshnessTimeoutMs(1000);
+    health.setFreshnessTimeout(1000ms);
     QCOMPARE(health.state(), GPSSourceHealth::State::Stale);
 }

@@ -87,4 +87,3 @@ private:
     GPSCorrectionFrame _frame;
     GPSCorrectionReason _rejection = GPSCorrectionReason::None;
 };
-Q_DECLARE_METATYPE(GPSCorrectionIngress)

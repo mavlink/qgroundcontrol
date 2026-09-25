@@ -10,6 +10,8 @@
 
 QGC_LOGGING_CATEGORY(AshtechProtocolLog, "GPS.Driver.Protocols.Ashtech")
 
+using namespace std::chrono_literals;
+
 namespace {
 constexpr std::string_view PORT_CONFIG_QUERY = "$PASHQ,PRT";  // ask for the current port configuration
 
@@ -33,9 +35,7 @@ GPSConfigurationSequence::Command AshtechProtocol::command(std::string_view text
         text.remove_suffix(1);
     }
     const std::string line = std::string(text) + "\r\n";
-    return {.step = {line, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT), {}, required},
-            .wire = line,
-            .reply = std::move(reply)};
+    return {.step = {line, ASH_RESPONSE_TIMEOUT, {}, required}, .wire = line, .reply = std::move(reply)};
 }
 
 bool AshtechProtocol::sendCommand(std::string_view text, GPSReplyMatcher reply)
@@ -131,10 +131,9 @@ bool AshtechProtocol::configure(unsigned& baudrate, const GPSConfig& config)
     if (baudrate != desired_baudrate) {
         baudrate = desired_baudrate;
         const std::string speed = forPort("$PASHS,SPD,%c,9\r\n", _port);  // configure baudrate to 115200
-        writeCommand({speed, std::chrono::milliseconds(ASH_RESPONSE_TIMEOUT)},
-                     {reinterpret_cast<const uint8_t*>(speed.data()), speed.size()});
+        writeCommand({speed, ASH_RESPONSE_TIMEOUT}, {reinterpret_cast<const uint8_t*>(speed.data()), speed.size()});
         resetStream();
-        receiveWait(200);
+        receiveWait(200ms);
         resetStream();
         setBaudrate(baudrate);
 
@@ -213,9 +212,9 @@ void AshtechProtocol::activateCorrectionOutput()
         // setup the base reference: average the position over N seconds
         const char avg_pos[] = "$PASHS,POS,AVG,%u\r\n";
         // alternatively use the current position as reference: "$PASHS,POS,CUR\r\n"
-        int len =
-            snprintf(buffer, sizeof(buffer), avg_pos,
-                     static_cast<unsigned>(std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).durationSecs));
+        int len = snprintf(
+            buffer, sizeof(buffer), avg_pos,
+            static_cast<unsigned>(std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).duration.count()));
 
         _surveyReceiptRequested = true;
         _surveyReceiptStartUtc.reset();

@@ -88,7 +88,7 @@ void RTKConnectionPolicy::reset()
     _autoPort.clear();
     _waitingPorts.clear();
     _retryDeadlineUs.reset();
-    _retryDelayMs = kInitialRetryDelayMs;
+    _retryBackoff.reset();
     if (wasReconnecting) {
         qCDebug(RTKConnectionPolicyLog) << "Automatic reconnect cancelled";
         emit reconnectingChanged();
@@ -151,7 +151,7 @@ void RTKConnectionPolicy::receiverReady()
     }
     _waitingForPort = false;
     _retryDeadlineUs.reset();
-    _retryDelayMs = kInitialRetryDelayMs;
+    _retryBackoff.reset();
 }
 
 RTKSessionOutcome RTKConnectionPolicy::sessionEnded(bool portRemoved)
@@ -184,9 +184,9 @@ RTKSessionOutcome RTKConnectionPolicy::sessionEnded(bool portRemoved)
 
 void RTKConnectionPolicy::_scheduleRetry()
 {
-    qCDebug(RTKConnectionPolicyLog) << "Retrying the receiver connection in" << _retryDelayMs << "ms";
-    _retryDeadlineUs = _scheduler->nowUs() + static_cast<quint64>(_retryDelayMs) * 1000;
-    _retryDelayMs = (std::min) (_retryDelayMs * 2, kMaxRetryDelayMs);
+    const auto delay = _retryBackoff.next();
+    qCDebug(RTKConnectionPolicyLog) << "Retrying the receiver connection in" << delay.count() << "ms";
+    _retryDeadlineUs = _scheduler->nowUs() + static_cast<quint64>(std::chrono::microseconds(delay).count());
 }
 
 void RTKConnectionPolicy::update()
@@ -408,7 +408,8 @@ void RTKConnectionPolicy::_updateAutoConnection()
         auto it = _waitingPorts.find(port.systemLocation);
         if (it == _waitingPorts.end()) {
             _waitingPorts[port.systemLocation] = _scheduler->nowUs();
-        } else if (_scheduler->nowUs() >= *it + static_cast<quint64>(kConnectDelayMs) * 1000) {
+        } else if (_scheduler->nowUs() >=
+                   *it + static_cast<quint64>(std::chrono::microseconds(kConnectDelay).count())) {
             connectPort(port);
             return;
         }

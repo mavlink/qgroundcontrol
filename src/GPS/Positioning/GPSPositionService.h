@@ -24,15 +24,12 @@ class GPSPositionService : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(SourceMode sourceMode READ sourceMode NOTIFY sourceModeChanged)
-    Q_PROPERTY(SelectedSource selectedSource READ selectedSource NOTIFY selectionChanged)
-    Q_PROPERTY(QString selectedSourceName READ selectedSourceName NOTIFY selectionChanged)
-    Q_PROPERTY(SourceStatus sourceStatus READ sourceStatus NOTIFY selectionChanged)
-    Q_PROPERTY(QString sourceStatusText READ sourceStatusText NOTIFY selectionChanged)
-    Q_PROPERTY(QGeoCoordinate gcsPosition READ gcsPosition NOTIFY gcsPositionChanged)
-    Q_PROPERTY(qreal gcsHeading READ gcsHeading NOTIFY gcsHeadingChanged)
+    Q_PROPERTY(QString selectedSourceName READ selectedSourceName NOTIFY selectionChanged FINAL)
+    Q_PROPERTY(QString sourceStatusText READ sourceStatusText NOTIFY selectionChanged FINAL)
+    Q_PROPERTY(QGeoCoordinate gcsPosition READ gcsPosition NOTIFY gcsPositionChanged FINAL)
+    Q_PROPERTY(qreal gcsHeading READ gcsHeading NOTIFY gcsHeadingChanged FINAL)
     Q_PROPERTY(qreal gcsPositionHorizontalAccuracy READ gcsPositionHorizontalAccuracy NOTIFY
-                   gcsPositionHorizontalAccuracyChanged)
+                   gcsPositionHorizontalAccuracyChanged FINAL)
 
     friend class GPSPositionSourceRegistration;
 
@@ -101,7 +98,7 @@ public:
 
     QGeoPositionInfoSource::Error gcsPositioningError() const { return _gcsPositioningError; }
 
-    int updateInterval() const { return _updateInterval; }
+    std::chrono::milliseconds updateInterval() const { return _updateInterval; }
 
     /// Health of the producer registered for @a kind, or null when none is.
     GPSSourceHealth* sourceHealth(SelectedSource kind) const;
@@ -145,7 +142,7 @@ private:
         GPSSourceHealth* health() const { return producer.data(); }
 
         QGeoPositionInfoSource* backend() const;
-        int updateInterval() const;
+        std::chrono::milliseconds updateInterval() const;
 
         GPSPositionService* owner;
         SelectedSource kind;
@@ -204,7 +201,7 @@ private:
     bool _selectionPublicationPending = false;
     bool _forceSourceRefresh = false;
     bool _usingPluginSource = false;
-    int _updateInterval = 0;
+    std::chrono::milliseconds _updateInterval{0};
     std::optional<GPSObservation> _acceptedSourceObservation(
         SelectedSource source, GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation,
         std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;

@@ -1,11 +1,13 @@
 #pragma once
 
+#include <chrono>
 #include <optional>
 
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
+#include "ExponentialBackoff.h"
 #include "GPSProvider.h"
 #include "GPSRTK.h"
 #include "GPSRevision.h"
@@ -92,14 +94,11 @@ private:
     QString _autoPort;
     QMap<QString, quint64> _waitingPorts;
     std::optional<quint64> _retryDeadlineUs;
-    int _retryDelayMs = kInitialRetryDelayMs;
+    ExponentialBackoff _retryBackoff{std::chrono::seconds(1), 2, std::chrono::seconds(30)};
     GPSRevision _revision;
 #ifdef Q_OS_WIN
-    static constexpr int kConnectDelayMs = 6000;
+    static constexpr std::chrono::milliseconds kConnectDelay{6000};
 #else
-    static constexpr int kConnectDelayMs = 1000;
+    static constexpr std::chrono::milliseconds kConnectDelay{1000};
 #endif
-
-    static constexpr int kInitialRetryDelayMs = 1000;
-    static constexpr int kMaxRetryDelayMs = 30000;
 };

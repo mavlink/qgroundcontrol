@@ -1,4 +1,5 @@
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -20,6 +21,8 @@
 #include "UBX/UBXProtocol.h"
 #include "Unicore/UnicoreProtocol.h"
 #include "UnitTest.h"
+
+using namespace std::chrono_literals;
 
 #define CHECK(condition)                          \
     do {                                          \
@@ -92,7 +95,7 @@ public:
 
     bool configure(unsigned&, const GPSConfig&) override { return true; }
 
-    int receive(unsigned timeout) override { return receiveDecoded(timeout); }
+    int receive(std::chrono::milliseconds timeout) override { return receiveDecoded(timeout); }
 };
 
 class CommandProbe : public IOProbe
@@ -115,7 +118,7 @@ public:
         return awaitCommand([this] { return _reply; });
     }
 
-    GPSCommandResult attemptWithin(unsigned timeout)
+    GPSCommandResult attemptWithin(std::chrono::milliseconds timeout)
     {
         const Operation operation(*this, timeout);
         return attempt();
@@ -257,7 +260,7 @@ static void commandAttempts(GPSTestClock& clock)
         CHECK(!receiver.awaiting());
         receiver.finishConfigurationEvidence();
         if (readStatus != GPSReadStatus::Data) {
-            CHECK(receiver.receive(100) == 0);
+            CHECK(receiver.receive(100ms) == 0);
             CHECK(receiver.hasIOError());
         } else {
             CHECK(clock.nowUs() == 1100000);  // Writing did not buy a second read deadline.
@@ -287,7 +290,7 @@ static void commandAttempts(GPSTestClock& clock)
         CHECK(receiver.awaitAgain().evidence.outcome == attemptResult.evidence.outcome);
         receiver.finishConfigurationEvidence();
         if (failure.status != GPSWriteStatus::Unsupported) {
-            CHECK(receiver.receive(100) == 0);
+            CHECK(receiver.receive(100ms) == 0);
             CHECK(receiver.hasIOError());
         } else {
             CHECK(!receiver.hasIOError());  // Unsupported is a rejected attempt, not a poisoned connection.
@@ -308,7 +311,7 @@ static void commandAttempts(GPSTestClock& clock)
     clock.reset(1000000);
     CommandIO outerDeadline(clock);
     CommandProbe bounded(outerDeadline.io());
-    CHECK(bounded.attemptWithin(50).evidence.outcome == GPSCommandOutcome::TimedOut);
+    CHECK(bounded.attemptWithin(50ms).evidence.outcome == GPSCommandOutcome::TimedOut);
     CHECK(outerDeadline.transcript == (std::vector<std::string>{"write/1050000", "read/1050000"}));
     CHECK(clock.nowUs() == 1050000);
 
@@ -373,7 +376,7 @@ static void ashtechAcknowledgementReturnsImmediately(GPSTestClock& clock)
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config;
     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
-    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 60s;
     CHECK(!receiver.configure(baud, config));
     CHECK(writes == (std::vector<std::string>{"$PASHQ,PRT\r\n", "$PASHQ,RID\r\n"}));
     CHECK(reads > 1);
@@ -429,7 +432,7 @@ static void sharedResults(GPSTestClock& clock)
         io.read = [&](std::span<uint8_t>, GPSDeadline) { return result; };
         IOProbe probe(std::move(io));
         uint8_t byte;
-        CHECK(probe.read(&byte, 1, 0) == -1);
+        CHECK(probe.read(&byte, 1, 0ms) == -1);
         CHECK(probe.ioError() == GPSProtocolError::Transport);
         CHECK(probe.ioErrorDetail() == detail);
     }
@@ -516,14 +519,16 @@ void GPSProtocolIOContractTest::_protocol()
         ashtechAcknowledgementReturnsImmediately(clock);
         sharedResults(clock);
         driverLogCategories(clock);
-        CHECK(GPSDeadline{}.remainingMilliseconds(0) == INT32_MAX);
-        CHECK(GPSDeadline{0}.remainingMilliseconds(0) == 0);
-        CHECK(GPSDeadline{1}.remainingMilliseconds(0) == 1);
-        CHECK(GPSDeadline{1000}.remainingMilliseconds(0) == 1);
-        CHECK(GPSDeadline{1001}.remainingMilliseconds(0) == 2);
-        CHECK(GPSDeadline{1000}.remainingMilliseconds(1001) == 0);
-        CHECK(GPSDeadline{UINT64_MAX}.remainingMilliseconds(UINT64_MAX - 1001) == 2);
-        CHECK(GPSDeadline{UINT64_MAX}.remainingMilliseconds(UINT64_MAX) == 0);
+        CHECK(GPSDeadline{}.remaining(0) == std::chrono::milliseconds(INT32_MAX));
+        CHECK(GPSDeadline{0}.remaining(0) == 0ms);
+        CHECK(GPSDeadline{1}.remaining(0) == 1ms);
+        CHECK(GPSDeadline{1000}.remaining(0) == 1ms);
+        CHECK(GPSDeadline{1001}.remaining(0) == 2ms);
+        CHECK(GPSDeadline{1000}.remaining(1001) == 0ms);
+        CHECK(GPSDeadline{UINT64_MAX}.remaining(UINT64_MAX - 1001) == 2ms);
+        CHECK(GPSDeadline{UINT64_MAX}.remaining(UINT64_MAX) == 0ms);
+        CHECK(GPSDeadline::after(1000, 2ms).untilUs == 3000);
+        CHECK(GPSDeadline::after(1000, -1ms).untilUs == 1000);
         CHECK(GPSDeadline{}.toQDeadlineTimer().isForever());
         CHECK(GPSDeadline{0}.toQDeadlineTimer().hasExpired());
         const auto liveDeadline = std::chrono::steady_clock::now() + std::chrono::minutes(1);
@@ -549,10 +554,10 @@ void GPSProtocolIOContractTest::_protocol()
                     }
                     GPSProtocol::GPSConfig config{};
                     if (family == 4) {
-                        config.base.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDurationSecs = 60};
+                        config.base.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDuration = 60s};
                     } else if (family != 6) {
                         std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
-                        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+                        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 60s;
                     }
                     unsigned baudrate = family == 6 ? 115200 : 0;
                     const bool configured = receiver->configure(baudrate, config);
@@ -572,7 +577,7 @@ void GPSProtocolIOContractTest::_protocol()
                     } else if (family < 4) {
                         CHECK(warnings.empty());
                     }
-                    CHECK(receiver->receive(10) == 0);
+                    CHECK(receiver->receive(10ms) == 0);
                     CHECK(receiver->ioError() == error);
                     if (fault != ScriptedIO::Operation::Baud) {
                         CHECK(!receiver->ioErrorDetail().isEmpty());

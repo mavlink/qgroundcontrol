@@ -10,9 +10,6 @@
 #include "GPSProtocol.h"
 #include "UnitTest.h"
 
-Q_DECLARE_METATYPE(GPSIntegrityReport)
-Q_DECLARE_METATYPE(GPSEllipsoidPosition)
-
 static_assert(std::is_same_v<decltype(GPSNavigationValues::fixType), GPSPositionReport::FixType>);
 static_assert(std::is_same_v<decltype(GPSIntegrityReport::Jamming::state), GPSIntegrityReport::JammingState>);
 static_assert(std::is_same_v<decltype(GPSIntegrityReport::Spoofing::state), GPSIntegrityReport::SpoofingState>);

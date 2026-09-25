@@ -1,11 +1,11 @@
 #pragma once
 
-#include <atomic>
 #include <chrono>
 #include <deque>
 #include <functional>
 #include <optional>
 #include <span>
+#include <stop_token>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QDeadlineTimer>
@@ -47,14 +47,15 @@ public:
         virtual GPSWriteResult handleCommand(ScriptedReceiver& receiver, const QByteArray& command,
                                              const WriteContext& context);
         virtual std::optional<bool> handleBaudrate(ScriptedReceiver& receiver, unsigned baudrate);
-        virtual void onTransportReadWait(ScriptedReceiver& receiver, int timeoutMs);
+        virtual void onTransportReadWait(ScriptedReceiver& receiver, std::chrono::milliseconds timeout);
         virtual void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline);
         virtual int readChunkSize(const ScriptedReceiver& receiver, int requested, int available) const;
         virtual bool coalesceReads(const ScriptedReceiver& receiver) const;
     };
 
-    explicit ScriptedReceiver(const std::atomic_bool& requestStop, Model* model = nullptr);
-    ScriptedReceiver(std::atomic_bool& requestStop, Model& model);
+    explicit ScriptedReceiver(std::stop_token stopToken, Model* model = nullptr);
+    /// cancel() requests a stop through stopSource.
+    ScriptedReceiver(std::stop_source stopSource, Model& model);
     ~ScriptedReceiver() override;
 
     GPSOpenResult open() override;
@@ -67,7 +68,7 @@ public:
 
     bool setBaudrate(unsigned baudrate) override;
 
-    GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
+    GPSReadResult read(uint8_t* buffer, int length, std::chrono::milliseconds timeout) override;
 
     GPSProtocolIO makeIO(GPSProtocolIO io);
 
@@ -87,7 +88,7 @@ public:
 
     void setOpenHandler(std::function<std::optional<GPSOpenResult>()> handler) { _openHandler = std::move(handler); }
 
-    void setReadHandler(std::function<std::optional<GPSReadResult>(uint8_t*, int, int)> handler)
+    void setReadHandler(std::function<std::optional<GPSReadResult>(uint8_t*, int, std::chrono::milliseconds)> handler)
     {
         _readHandler = std::move(handler);
     }
@@ -137,7 +138,8 @@ protected:
     GPSWriteResult writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
 
 private:
-    GPSReadResult _read(uint8_t* buffer, int length, int timeoutMs, std::optional<GPSDeadline> deadline);
+    GPSReadResult _read(uint8_t* buffer, int length, std::chrono::milliseconds timeout,
+                        std::optional<GPSDeadline> deadline);
     GPSWriteResult _write(const QByteArray& bytes, const WriteContext& context);
     GPSReadResult _readOne(uint8_t* buffer, int length);
     void _attachModel(Model* model);
@@ -150,7 +152,7 @@ private:
     };
 
     Model* _model = nullptr;
-    std::atomic_bool* _mutableStop = nullptr;
+    std::stop_source _cancelSource{std::nostopstate};
     std::deque<ReadStep> _readSteps;
     QList<QByteArray> _commands;
     QByteArray _pendingWrites;
@@ -159,7 +161,7 @@ private:
     std::optional<GPSReadResult> _nextReadResult;
     std::optional<GPSWriteResult> _nextWriteResult;
     std::function<std::optional<GPSOpenResult>()> _openHandler;
-    std::function<std::optional<GPSReadResult>(uint8_t*, int, int)> _readHandler;
+    std::function<std::optional<GPSReadResult>(uint8_t*, int, std::chrono::milliseconds)> _readHandler;
     std::function<std::optional<GPSWriteResult>(const QByteArray&, const WriteContext&)> _writeHandler;
     std::function<std::chrono::milliseconds()> _configurationWriteTimeoutHandler;
     std::function<std::optional<bool>(unsigned)> _baudrateHandler;

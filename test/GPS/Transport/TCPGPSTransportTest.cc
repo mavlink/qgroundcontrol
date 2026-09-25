@@ -1,6 +1,8 @@
 #include "TCPGPSTransportTest.h"
 
+#include <chrono>
 #include <memory>
+#include <stop_token>
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QSemaphore>
@@ -11,16 +13,18 @@
 
 #include "TCPGPSTransport.h"
 
+using namespace std::chrono_literals;
+
 void TCPGPSTransportTest::_transferTimeoutAndPeerClose()
 {
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
-    std::atomic_bool stop = false;
-    TCPGPSTransport transport(QStringLiteral("localhost"), server.serverPort(), stop);
+    std::stop_source stop;
+    TCPGPSTransport transport(QStringLiteral("localhost"), server.serverPort(), stop.get_token());
     uint8_t buffer[64]{};
-    QCOMPARE(transport.read(buffer, 0, 0).status, GPSReadStatus::Closed);
+    QCOMPARE(transport.read(buffer, 0, 0ms).status, GPSReadStatus::Closed);
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
-    QCOMPARE(transport.read(buffer, 0, 0).status, GPSReadStatus::Data);
+    QCOMPARE(transport.read(buffer, 0, 0ms).status, GPSReadStatus::Data);
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::shortMs());
     auto* peer = server.nextPendingConnection();
     QVERIFY(peer);
@@ -31,7 +35,7 @@ void TCPGPSTransportTest::_transferTimeoutAndPeerClose()
 
     const QByteArray payload = QByteArray::fromHex("b56201020300d300ff");
     QCOMPARE(peer->write(payload), payload.size());
-    const int received = transport.read(buffer, sizeof(buffer), TestTimeout::shortMs()).bytesRead;
+    const int received = transport.read(buffer, sizeof(buffer), TestTimeout::shortDuration()).bytesRead;
     QCOMPARE(received, payload.size());
     QCOMPARE(QByteArray(reinterpret_cast<char*>(buffer), received), payload);
     QCOMPARE(transport
@@ -43,18 +47,18 @@ void TCPGPSTransportTest::_transferTimeoutAndPeerClose()
     QCOMPARE(peer->readAll(), payload);
 
     // Exercise the transport timeout contract without spending the normal driver timeout.
-    QCOMPARE(transport.read(buffer, sizeof(buffer), 20).bytesRead, 0);
+    QCOMPARE(transport.read(buffer, sizeof(buffer), 20ms).bytesRead, 0);
     QVERIFY(!transport.fatalError());
     // Preserve the final buffered bytes even after the peer's orderly disconnect is observed.
     QCOMPARE(peer->write(payload), payload.size());
     peer->disconnectFromHost();
     QTRY_VERIFY_WITH_TIMEOUT(transport.fatalError(), TestTimeout::shortMs());
-    QCOMPARE(transport.read(buffer, 0, 0).status, GPSReadStatus::Closed);
-    const auto finalRead = transport.read(buffer, sizeof(buffer), 0);
+    QCOMPARE(transport.read(buffer, 0, 0ms).status, GPSReadStatus::Closed);
+    const auto finalRead = transport.read(buffer, sizeof(buffer), 0ms);
     QCOMPARE(finalRead.status, GPSReadStatus::Data);
     QCOMPARE(finalRead.bytesRead, payload.size());
     QCOMPARE(QByteArray(reinterpret_cast<char*>(buffer), finalRead.bytesRead), payload);
-    QCOMPARE(transport.read(buffer, sizeof(buffer), 0).status, GPSReadStatus::Closed);
+    QCOMPARE(transport.read(buffer, sizeof(buffer), 0ms).status, GPSReadStatus::Closed);
     QVERIFY(transport
                 .write(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
                        QDeadlineTimer(TestTimeout::shortMs()))
@@ -75,13 +79,16 @@ void TCPGPSTransportTest::_cancelWait()
     QFETCH(QString, phase);
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
-    std::atomic_bool stop = phase == QStringLiteral("before-open");
-    TCPGPSTransport transport(QStringLiteral("localhost"), server.serverPort(), stop);
+    std::stop_source stop;
+    if (phase == QStringLiteral("before-open")) {
+        stop.request_stop();
+    }
+    TCPGPSTransport transport(QStringLiteral("localhost"), server.serverPort(), stop.get_token());
     QElapsedTimer elapsed;
     if (phase == QStringLiteral("before-open")) {
         QCOMPARE(transport.open().status, GPSOpenStatus::Cancelled);
     } else if (phase == QStringLiteral("connecting")) {
-        QTimer::singleShot(0, &server, [&]() { stop = true; });
+        QTimer::singleShot(0, &server, [&]() { stop.request_stop(); });
         elapsed.start();
         QVERIFY(transport.open().status != GPSOpenStatus::Opened);
         QVERIFY(elapsed.elapsed() < TestTimeout::shortMs());
@@ -91,11 +98,11 @@ void TCPGPSTransportTest::_cancelWait()
         auto* peer = server.nextPendingConnection();
         QVERIFY(peer);
         peer->setReadBufferSize(1);
-        QTimer::singleShot(0, &server, [&]() { stop = true; });
+        QTimer::singleShot(0, &server, [&]() { stop.request_stop(); });
         elapsed.start();
         if (phase == QStringLiteral("read")) {
             uint8_t buffer[8]{};
-            QVERIFY(transport.read(buffer, sizeof(buffer), TestTimeout::longMs()).status != GPSReadStatus::Data);
+            QVERIFY(transport.read(buffer, sizeof(buffer), TestTimeout::longDuration()).status != GPSReadStatus::Data);
         } else {
             // Exceed the kernel send buffer to keep bytes pending until cancellation.
             const QByteArray payload(8 * 1024 * 1024, 'x');
@@ -106,10 +113,10 @@ void TCPGPSTransportTest::_cancelWait()
         }
         QVERIFY(elapsed.elapsed() < TestTimeout::shortMs());
     }
-    QVERIFY(stop);
+    QVERIFY(stop.stop_requested());
     QVERIFY(transport.isCancelled());
     uint8_t byte{};
-    QVERIFY(transport.read(&byte, 1, TestTimeout::shortMs()).status != GPSReadStatus::Data);
+    QVERIFY(transport.read(&byte, 1, TestTimeout::shortDuration()).status != GPSReadStatus::Data);
     QCOMPARE(transport.write(&byte, 1, QDeadlineTimer(TestTimeout::shortMs())).status, GPSWriteStatus::Cancelled);
 }
 
@@ -119,15 +126,15 @@ void TCPGPSTransportTest::_refusedConnection()
     QVERIFY(server.listen(QHostAddress::LocalHost));
     const quint16 port = server.serverPort();
     server.close();
-    std::atomic_bool stop = false;
-    TCPGPSTransport transport(QStringLiteral("127.0.0.1"), port, stop);
+    std::stop_source stop;
+    TCPGPSTransport transport(QStringLiteral("127.0.0.1"), port, stop.get_token());
     expectLogMessage("GPS.Transport.TCPGPSTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to connect to GPS receiver")));
     QVERIFY(transport.open().status != GPSOpenStatus::Opened);
     verifyExpectedLogMessage();
     QVERIFY(transport.fatalError());
     uint8_t byte{};
-    QCOMPARE(transport.read(&byte, 0, 0).status, GPSReadStatus::Closed);
+    QCOMPARE(transport.read(&byte, 0, 0ms).status, GPSReadStatus::Closed);
 }
 
 void TCPGPSTransportTest::_boundedWriteEvidence_data()
@@ -142,8 +149,8 @@ void TCPGPSTransportTest::_boundedWriteEvidence()
     QFETCH(bool, cancel);
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
-    std::atomic_bool stop = false;
-    TCPGPSTransport transport(QStringLiteral("localhost"), server.serverPort(), stop);
+    std::stop_source stop;
+    TCPGPSTransport transport(QStringLiteral("localhost"), server.serverPort(), stop.get_token());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::shortMs());
     auto* peer = server.nextPendingConnection();
@@ -151,7 +158,7 @@ void TCPGPSTransportTest::_boundedWriteEvidence()
     peer->setReadBufferSize(1);
     const QByteArray payload(8 * 1024 * 1024, 'x');
     if (cancel) {
-        QTimer::singleShot(0, &server, [&]() { stop = true; });
+        QTimer::singleShot(0, &server, [&]() { stop.request_stop(); });
     }
     QElapsedTimer elapsed;
     elapsed.start();
@@ -168,7 +175,7 @@ void TCPGPSTransportTest::_boundedWriteEvidence()
              0);
     QCOMPARE(result.writtenBytes + result.uncertainBytes(), result.acceptedBytes);
     QVERIFY(elapsed.elapsed() < 1000);
-    QCOMPARE(stop.load(), cancel);
+    QCOMPARE(stop.stop_requested(), cancel);
 }
 
 UT_REGISTER_TEST(TCPGPSTransportTest, TestLabel::Unit)
@@ -177,8 +184,8 @@ void TCPGPSTransportTest::_boundedIngressPreservesStream()
 {
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
-    std::atomic_bool stop = false;
-    TCPGPSTransport transport(QStringLiteral("localhost"), server.serverPort(), stop);
+    std::stop_source stop;
+    TCPGPSTransport transport(QStringLiteral("localhost"), server.serverPort(), stop.get_token());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::shortMs());
     auto* peer = server.nextPendingConnection();
@@ -197,7 +204,7 @@ void TCPGPSTransportTest::_boundedIngressPreservesStream()
     uint8_t bytes[4096]{};
     const QDeadlineTimer deadline(TestTimeout::mediumMs());
     while (received.size() < payload.size() && !deadline.hasExpired()) {
-        const auto result = transport.read(bytes, sizeof(bytes), 100);
+        const auto result = transport.read(bytes, sizeof(bytes), 100ms);
         QVERIFY(result.status == GPSReadStatus::Data || result.status == GPSReadStatus::TimedOut);
         received.append(reinterpret_cast<const char*>(bytes), result.bytesRead);
         QVERIFY(transport._socket->bytesAvailable() <= TCPGPSTransport::kReadBufferBytes);
@@ -217,8 +224,8 @@ void TCPGPSTransportTest::_immediateRead()
     QFETCH(int, timeout);
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
-    std::atomic_bool stop = false;
-    TCPGPSTransport transport(QStringLiteral("127.0.0.1"), server.serverPort(), stop);
+    std::stop_source stop;
+    TCPGPSTransport transport(QStringLiteral("127.0.0.1"), server.serverPort(), stop.get_token());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     if (!server.hasPendingConnections()) {
         QVERIFY(server.waitForNewConnection(TestTimeout::shortMs()));
@@ -229,7 +236,7 @@ void TCPGPSTransportTest::_immediateRead()
     QVERIFY(peer->waitForBytesWritten(TestTimeout::shortMs()));
     // Do not dispatch receiver events before polling; the bytes are still in the kernel.
     uint8_t bytes[16]{};
-    const auto result = transport.read(bytes, sizeof(bytes), timeout);
+    const auto result = transport.read(bytes, sizeof(bytes), std::chrono::milliseconds(timeout));
     QCOMPARE(result.status, GPSReadStatus::Data);
     QCOMPARE(QByteArray(reinterpret_cast<char*>(bytes), result.bytesRead), QByteArray("reply"));
 }
@@ -247,13 +254,13 @@ void TCPGPSTransportTest::_cancelFromAnotherThread()
     QTcpServer server;
     QVERIFY(server.listen(QHostAddress::LocalHost));
     const auto port = server.serverPort();
-    std::atomic_bool stop = false;
+    std::stop_source stop;
     QSemaphore waiting;
     GPSOpenStatus opened = GPSOpenStatus::Error;
     GPSReadStatus readStatus = GPSReadStatus::Error;
     GPSWriteResult written;
     std::unique_ptr<QThread> worker(QThread::create([&] {
-        TCPGPSTransport transport(QStringLiteral("127.0.0.1"), port, stop);
+        TCPGPSTransport transport(QStringLiteral("127.0.0.1"), port, stop.get_token());
         opened = transport.open().status;
         QObject context;
         // Runs only once the blocking transport call pumps its worker event loop.
@@ -264,14 +271,14 @@ void TCPGPSTransportTest::_cancelFromAnotherThread()
                                       QDeadlineTimer(TestTimeout::mediumMs()));
         } else {
             uint8_t byte{};
-            readStatus = transport.read(&byte, 1, TestTimeout::mediumMs()).status;
+            readStatus = transport.read(&byte, 1, TestTimeout::mediumDuration()).status;
         }
     }));
     worker->start();
     const bool entered = waiting.tryAcquire(1, TestTimeout::mediumMs());
     QElapsedTimer elapsed;
     elapsed.start();
-    stop = true;
+    stop.request_stop();
     const bool timely = worker->wait(TestTimeout::shortMs());
     if (!timely) {
         worker->wait();

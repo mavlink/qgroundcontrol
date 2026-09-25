@@ -24,7 +24,7 @@ inline constexpr int SBAS_FIRST_PRN = 120;
 }  // namespace SatelliteIds
 
 /// Canonical constellation-local identifier; preserve unknown/vendor ranges unchanged.
-inline int satelliteId(GPSConstellation constellation, int wireId)
+[[nodiscard]] inline int satelliteId(GPSConstellation constellation, int wireId)
 {
     namespace Id = SatelliteIds;
 
@@ -57,7 +57,7 @@ inline int satelliteId(GPSConstellation constellation, int wireId)
     }
 }
 
-GPSConstellation satelliteConstellation(std::string_view talker, std::optional<int> systemId,
-                                        std::optional<int> satelliteId);
+[[nodiscard]] GPSConstellation satelliteConstellation(std::string_view talker, std::optional<int> systemId,
+                                                      std::optional<int> satelliteId);
 
 }  // namespace NMEA

@@ -14,10 +14,10 @@ class GPSSatelliteState
 {
 public:
     /// Receipt age at which a constellation's view or usage count is retired.
-    static constexpr int FRESHNESS_TIMEOUT_MS = 5000;
+    static constexpr std::chrono::milliseconds FRESHNESS_TIMEOUT{5000};
 
-    explicit GPSSatelliteState(int freshnessTimeoutMs = FRESHNESS_TIMEOUT_MS)
-        : _freshnessTimeoutMs(std::max(1, freshnessTimeoutMs))
+    explicit GPSSatelliteState(std::chrono::milliseconds freshnessTimeout = FRESHNESS_TIMEOUT)
+        : _freshnessTimeout(std::max(std::chrono::milliseconds{1}, freshnessTimeout))
     {}
 
     void reset()
@@ -33,9 +33,12 @@ public:
         _clearedThroughUs = nowUs;
     }
 
-    void setFreshnessTimeoutMs(int value) { _freshnessTimeoutMs = std::max(1, value); }
+    void setFreshnessTimeout(std::chrono::milliseconds value)
+    {
+        _freshnessTimeout = std::max(std::chrono::milliseconds{1}, value);
+    }
 
-    int freshnessTimeoutMs() const { return _freshnessTimeoutMs; }
+    std::chrono::milliseconds freshnessTimeout() const { return _freshnessTimeout; }
 
     void updateObservation(const GPSSatelliteObservation& observation, quint64 nowUs)
     {
@@ -48,7 +51,7 @@ public:
         }
         if (fullSnapshot) {
             if (!fullReceipt || fullReceipt > nowUs || fullReceipt <= _clearedThroughUs ||
-                fullReceipt < _fullSnapshotReceiptUs || !_remaining(fullReceipt, nowUs)) {
+                fullReceipt < _fullSnapshotReceiptUs || _expired(fullReceipt, nowUs)) {
                 return;
             }
             _fullSnapshotReceiptUs = fullReceipt;
@@ -110,7 +113,8 @@ public:
         for (const auto& [constellation, state] : _constellations) {
             for (const auto receipt : {state.view.receivedAtUs, state.usage.receivedAtUs}) {
                 if (receipt) {
-                    const auto expiry = receipt + quint64(_freshnessTimeoutMs) * 1000;
+                    const auto expiry =
+                        receipt + static_cast<quint64>(std::chrono::microseconds(_freshnessTimeout).count());
                     deadline = deadline ? std::min(*deadline, expiry) : expiry;
                 }
             }
@@ -146,10 +150,9 @@ private:
         UsageState usage;
     };
 
-    quint64 _remaining(quint64 receipt, quint64 nowUs) const
+    bool _expired(quint64 receipt, quint64 nowUs) const
     {
-        return static_cast<quint64>(
-            MonotonicClock::remaining(receipt, nowUs, std::chrono::milliseconds(_freshnessTimeoutMs)).count());
+        return MonotonicClock::remaining(receipt, nowUs, _freshnessTimeout) == std::chrono::microseconds::zero();
     }
 
     bool _accept(quint64 receipt, quint64 current, quint64& retired, quint64 nowUs) const
@@ -157,7 +160,7 @@ private:
         if (!receipt || receipt <= _clearedThroughUs || receipt <= retired || receipt < current || receipt > nowUs) {
             return false;
         }
-        if (!_remaining(receipt, nowUs)) {
+        if (_expired(receipt, nowUs)) {
             retired = std::max(retired, receipt);
             return false;
         }
@@ -167,17 +170,17 @@ private:
     void _expire(quint64 nowUs)
     {
         for (auto& [constellation, state] : _constellations) {
-            if (state.view.receivedAtUs && !_remaining(state.view.receivedAtUs, nowUs)) {
+            if (state.view.receivedAtUs && _expired(state.view.receivedAtUs, nowUs)) {
                 state.view.retire(state.view.receivedAtUs);
             }
-            if (state.usage.receivedAtUs && !_remaining(state.usage.receivedAtUs, nowUs)) {
+            if (state.usage.receivedAtUs && _expired(state.usage.receivedAtUs, nowUs)) {
                 state.usage.retire(state.usage.receivedAtUs);
             }
         }
     }
 
     std::map<GPSConstellation, ConstellationState> _constellations;
-    int _freshnessTimeoutMs;
+    std::chrono::milliseconds _freshnessTimeout;
     quint64 _clearedThroughUs = 0;
     quint64 _fullSnapshotReceiptUs = 0;
 };

@@ -56,9 +56,9 @@ public:
     /// @return true when the receiver is ready; on failure, ioError() and ioErrorDetail() describe any I/O fault.
     [[nodiscard]] virtual bool configure(unsigned& baud, const GPSConfig& config) = 0;
 
-    /// Reads and decodes for up to @a timeout ms.
+    /// Reads and decodes for up to @a timeout.
     /// @return GPSDecodedBatch update flags; failures are reported through ioError(), never the return value.
-    virtual int receive(unsigned timeout) = 0;
+    virtual int receive(std::chrono::milliseconds timeout) = 0;
     virtual int consume(std::span<const uint8_t> bytes);
     GPSDecodeResult decode(std::span<const uint8_t> bytes);
 
@@ -95,12 +95,12 @@ protected:
     class Operation
     {
     public:
-        Operation(GPSProtocol& driver, unsigned timeoutMs)
+        Operation(GPSProtocol& driver, std::chrono::milliseconds timeout)
             : _driver(driver)
             , _previous(driver._operationDeadline)
         {
             _driver._operationDeadline.untilUs =
-                std::min(_previous.untilUs, driver.nowUs() + uint64_t(timeoutMs) * 1000);
+                std::min(_previous.untilUs, GPSDeadline::after(driver.nowUs(), timeout).untilUs);
         }
 
         ~Operation() { _driver._operationDeadline = _previous; }
@@ -138,11 +138,11 @@ protected:
     void serviceControls();
 
     /// Reads until updates arrive, the timeout expires, or I/O fails. @return update flags.
-    int receiveDecoded(unsigned timeout);
+    int receiveDecoded(std::chrono::milliseconds timeout);
 
     /// Read one bounded chunk, then return to the command matcher even when it contains only an ACK.
     /// @return update flags.
-    int readAndDecode(unsigned timeout);
+    int readAndDecode(std::chrono::milliseconds timeout);
 
     /// Start one command attempt; its write time counts toward the subsequent awaitCommand deadline.
     bool writeCommand(GPSConfigurationStep step, std::span<const uint8_t> bytes);
@@ -189,11 +189,14 @@ protected:
     /// Retire before notifying observers; repeated completion returns the retained evidence without republishing.
     GPSCommandResult completeCommand(GPSCommandOutcome outcome);
 
-    int remainingMilliseconds(uint64_t deadline) const { return GPSDeadline{deadline}.remainingMilliseconds(nowUs()); }
+    std::chrono::milliseconds remainingUntil(uint64_t deadlineUs) const
+    {
+        return GPSDeadline{deadlineUs}.remaining(nowUs());
+    }
 
-    /// Reads up to @a buf_length bytes within @a timeout ms.
+    /// Reads up to @a buf_length bytes within @a timeout.
     /// @return bytes read, 0 when nothing arrived, or -1 after an I/O failure recorded in ioError().
-    int read(uint8_t* buf, int buf_length, int timeout)
+    int read(uint8_t* buf, int buf_length, std::chrono::milliseconds timeout)
     {
         if (hasIOError()) {
             return -1;
@@ -201,7 +204,7 @@ protected:
         if (!buf || buf_length <= 0) {
             return 0;
         }
-        GPSDeadline deadline{std::min(_operationDeadline.untilUs, nowUs() + uint64_t(std::max(timeout, 0)) * 1000)};
+        GPSDeadline deadline{std::min(_operationDeadline.untilUs, GPSDeadline::after(nowUs(), timeout).untilUs)};
         const auto result =
             _io.read ? _io.read({buf, static_cast<size_t>(buf_length)}, deadline) : GPSReadResult{GPSReadStatus::Error};
         _ioErrorDetail = result.detail;
@@ -432,8 +435,8 @@ protected:
         double z = 0;
     };
 
-    static EcefMeters toEcef(const GPSEllipsoidPosition& position);
-    static GPSEllipsoidPosition fromEcef(const EcefMeters& position);
+    [[nodiscard]] static EcefMeters toEcef(const GPSEllipsoidPosition& position);
+    [[nodiscard]] static GPSEllipsoidPosition fromEcef(const EcefMeters& position);
 
     GPSBaseStationConfig _baseConfig;
     GPSDecodedPosition _position;

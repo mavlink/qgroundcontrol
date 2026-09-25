@@ -12,17 +12,18 @@ import QGroundControl.GPS
 ColumnLayout {
     id: root
 
-    required property var  ntripManager
+    required property NTRIPManager ntripManager
     required property Fact enabledFact
 
     /// Caller-supplied gate for the connect button (e.g. "host field non-empty").
     /// The Connecting state is still forced-disabled regardless of this flag.
     property bool canConnect: true
-    property var  rtcmMavlink: null
+    /// Supplies the bytes queued to vehicle links.
+    property GPSCorrectionManager corrections: null
 
     readonly property bool   _isActive:  root.enabledFact ? root.enabledFact.rawValue : false
     readonly property int    _status:    root.ntripManager ? root.ntripManager.connectionStatus : NTRIPManager.Disconnected
-    readonly property var    _stats:     root.ntripManager ? root.ntripManager.connectionStats : null
+    readonly property NTRIPConnectionStats _stats: root.ntripManager ? root.ntripManager.connectionStats : null
     readonly property bool   _connected: root._status === NTRIPManager.Connected
     readonly property bool   _dataStale: root._stats ? root._stats.dataStale : false
     readonly property string _ggaSource: root.ntripManager && root.ntripManager.ggaSource ? root.ntripManager.ggaSource : ""
@@ -32,7 +33,7 @@ ColumnLayout {
 
     readonly property real _dataWarningLimitBytes: 50 * 1024 * 1024  // 50 MB
 
-    function _formatDataSize(bytes) {
+    function _formatDataSize(bytes: real): string {
         //: Data size in bytes
         if (bytes < 1024) return qsTr("%1 B").arg(bytes)
         //: Data size in kilobytes
@@ -175,9 +176,10 @@ ColumnLayout {
 
     LabelledLabel {
         label:     qsTr("Queued to vehicle links (any source)")
-        labelText: root.rtcmMavlink ? root._formatDataSize(root.rtcmMavlink.totalBytesSubmitted) : root._valueNA
+        labelText: root.corrections ? root._formatDataSize(root.corrections.rtcmMavlink.totalBytesSubmitted)
+                                    : root._valueNA
         visible:   root._connected
-                   && root.rtcmMavlink && root.rtcmMavlink.totalBytesSubmitted > 0
+                   && root.corrections && root.corrections.rtcmMavlink.totalBytesSubmitted > 0
     }
 
     LabelledLabel {

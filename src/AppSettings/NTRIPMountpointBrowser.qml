@@ -15,8 +15,9 @@ SettingsGroupLayout {
 
     QGCPalette { id: qgcPal }
 
+    // NTRIPSettings is not registered for QML, and SettingsGroup is not either.
     property var  _ntrip:       QGroundControl.settingsManager.ntripSettings
-    property var  _ntripMgr:    QGroundControl.gpsManager.ntrip
+    property NTRIPManager _ntripMgr: QGroundControl.gpsManager.ntrip
     property bool _isActive:    _ntrip.ntripServerConnectEnabled.rawValue
     property bool _hasHost:     _ntrip.ntripServerHostAddress.rawValue !== ""
     property real _textFieldWidth: ScreenTools.defaultFontPixelWidth * 30
@@ -76,7 +77,7 @@ SettingsGroupLayout {
         objectName:             "ntripMountpointList"
         Layout.fillWidth:       true
         enabled:                !root._isActive
-        visible:                root._ntripMgr.sourceTableController.mountpointModel && root._ntripMgr.sourceTableController.mountpointModel.count > 0
+        visible:                count > 0
         model:                  root._ntripMgr.sourceTableController.mountpointModel
         selectedMountpoint:     root._ntrip.ntripMountpoint.rawValue
         onMountpointSelected:   (mountpoint) => root._ntripMgr.selectMountpoint(mountpoint)

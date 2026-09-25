@@ -4,11 +4,15 @@
 #include <cstdint>
 
 namespace MonotonicClock {
+/// Time since the steady-clock epoch; the same clock domain as nowUs().
+inline std::chrono::microseconds now()
+{
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch());
+}
+
 inline uint64_t nowUs()
 {
-    return static_cast<uint64_t>(
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch())
-            .count());
+    return static_cast<uint64_t>(now().count());
 }
 
 /// A missing or future timestamp has no valid age. Both arguments must share a clock domain.

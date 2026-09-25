@@ -9,8 +9,8 @@
 struct RTCMMessageCount
 {
     Q_GADGET
-    Q_PROPERTY(int messageId MEMBER messageId)
-    Q_PROPERTY(quint64 count MEMBER count)
+    Q_PROPERTY(int messageId MEMBER messageId FINAL)
+    Q_PROPERTY(quint64 count MEMBER count FINAL)
 
 public:
     int messageId = 0;
@@ -21,7 +21,7 @@ public:
 
 /// Per-ID counts from an associative container, in ascending message-ID order.
 template <typename Counts>
-QList<RTCMMessageCount> rtcmMessageCounts(const Counts& counts)
+[[nodiscard]] QList<RTCMMessageCount> rtcmMessageCounts(const Counts& counts)
 {
     QList<RTCMMessageCount> result;
     result.reserve(counts.size());

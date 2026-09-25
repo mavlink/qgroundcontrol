@@ -1,5 +1,7 @@
 #include "RemoteIDManagerTest.h"
 
+#include <chrono>
+
 #include <QtCore/QScopeGuard>
 
 #include "GPSManager.h"
@@ -12,6 +14,8 @@
 #include "RemoteIDSettings.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+
+using namespace std::chrono_literals;
 
 namespace {
 
@@ -196,7 +200,7 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
     if (error != QGeoPositionInfoSource::NoError) {
         source.fail(static_cast<QGeoPositionInfoSource::Error>(error));
     } else if (status == GPSPositionService::SourceStatus::Stale) {
-        positioning->selectedHealth()->setFreshnessTimeoutMs(1);
+        positioning->selectedHealth()->setFreshnessTimeout(1ms);
     } else {
         fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 101);
         source.publish(fix);
@@ -217,7 +221,7 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
         })(),
         5000);
 
-    positioning->selectedHealth()->setFreshnessTimeoutMs(5000);
+    positioning->selectedHealth()->setFreshnessTimeout(5000ms);
     fix.setTimestamp(QDateTime::currentDateTimeUtc());
     fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
     source.publish(fix);
@@ -359,7 +363,7 @@ void RemoteIDManagerTest::_liveGpsArrivalBudget()
     });
     ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
-    health.setFreshnessTimeoutMs(60000);
+    health.setFreshnessTimeout(60000ms);
     auto registration = positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &health);
     positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
     settings->region()->setRawValue(int(RemoteIDSettings::RegionOperation::FAA));

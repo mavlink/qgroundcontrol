@@ -16,7 +16,7 @@ public:
 
     bool configure(unsigned& baudrate, const GPSConfig& config) override;
 
-    int receive(unsigned timeout) override;
+    int receive(std::chrono::milliseconds timeout) override;
     int decodeByte(uint8_t byte) override;
 
     bool receiverReady() const override { return _configured; }
@@ -56,7 +56,7 @@ private:
     UBX::ReceiverController _controller;
 
     /** Reads until the configured completion condition, a timeout, or an I/O failure; returns update flags. */
-    int receiveInternal(unsigned timeout);
+    int receiveInternal(std::chrono::milliseconds timeout);
 
     void requestCommsDiagnostics();
     void logCommsDiagnostics(std::span<const uint8_t> payload);
@@ -69,11 +69,6 @@ private:
      * @return heading normalized to [-pi, pi]
      */
     float relPosHeadingToYaw(int32_t heading) const;
-
-    /**
-     * Calculate & add checksum for given buffer
-     */
-    void calcChecksum(const uint8_t* buffer, const uint16_t length, ubx_checksum_t* checksum);
 
     /**
      * Send configuration values and desired message rates
@@ -159,7 +154,7 @@ private:
      * Send the CFG-VALSET built up by initCfgValset() and cfgValset*() calls
      * @return true on success
      */
-    bool sendCfgValset(bool required = true, unsigned timeout = UBX_CONFIG_TIMEOUT);
+    bool sendCfgValset(bool required = true, std::chrono::milliseconds timeout = UBX_CONFIG_TIMEOUT);
 
     /**
      * sendCfgValset() followed by waitForAck()
@@ -203,10 +198,10 @@ private:
      * @return true on success, false on write error
      */
     bool sendMessage(uint16_t msg, const uint8_t* payload, uint16_t length,
-                     GPSConfigurationStep step = {{}, std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)});
+                     GPSConfigurationStep step = {{}, UBX_CONFIG_TIMEOUT});
 
     bool sendMessage(uint16_t msg, std::span<const uint8_t> payload,
-                     GPSConfigurationStep step = {{}, std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)})
+                     GPSConfigurationStep step = {{}, UBX_CONFIG_TIMEOUT})
     {
         return payload.size() <= UINT16_MAX &&
                sendMessage(msg, payload.data(), static_cast<uint16_t>(payload.size()), std::move(step));

@@ -1,6 +1,7 @@
 #include <chrono>
 #include <limits>
 #include <memory>
+#include <stop_token>
 #include <thread>
 #include <type_traits>
 
@@ -54,8 +55,9 @@ protected:
 void configureStreamWriteTransport(ScriptedReceiver& transport)
 {
     transport.setOpenResult(GPSOpenResult{GPSOpenStatus::Unsupported});
-    transport.setReadHandler(
-        [](uint8_t*, int, int) -> std::optional<GPSReadResult> { return GPSReadResult{GPSReadStatus::Closed}; });
+    transport.setReadHandler([](uint8_t*, int, std::chrono::milliseconds) -> std::optional<GPSReadResult> {
+        return GPSReadResult{GPSReadStatus::Closed};
+    });
     transport.setBaudrateResult(false);
 }
 
@@ -69,13 +71,13 @@ private slots:
 
     void _defaultWriteContract()
     {
-        std::atomic_bool stop = false;
-        ScriptedReceiver transport(stop);
+        std::stop_source stop;
+        ScriptedReceiver transport(stop.get_token());
         configureStreamWriteTransport(transport);
         const uint8_t byte = 1;
         QCOMPARE(transport.write(&byte, 1, QDeadlineTimer(transport.configurationWriteTimeout())).status,
                  GPSWriteStatus::Unsupported);
-        stop = true;
+        stop.request_stop();
         QCOMPARE(transport.write(&byte, 1, QDeadlineTimer(transport.configurationWriteTimeout())).status,
                  GPSWriteStatus::Cancelled);
     }
@@ -134,8 +136,8 @@ private slots:
         QFETCH(int, uncertain);
         QFETCH(int, retirements);
 
-        std::atomic_bool stop = false;
-        ScriptedReceiver transport(stop);
+        std::stop_source stop;
+        ScriptedReceiver transport(stop.get_token());
         configureStreamWriteTransport(transport);
         StreamWriteDevice device;
         device.rejectWrite = rejectWrite;
@@ -154,7 +156,7 @@ private slots:
                 if (status == GPSWriteStatus::Error) {
                     transport.setFatalError(true);
                 } else if (status == GPSWriteStatus::Cancelled) {
-                    stop = true;
+                    stop.request_stop();
                 } else if (status == GPSWriteStatus::TimedOut) {
                     // Expire the helper's deadline without a wall-clock delay.
                     remaining.setRemainingTime(0);
@@ -187,7 +189,7 @@ private slots:
     void writes()
     {
         QFETCH(QByteArray, outcome);
-        std::atomic_bool stop = false;
+        std::stop_source stop;
         QFile master;
         std::unique_ptr<GPSTransport> transport;
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
@@ -201,7 +203,7 @@ private slots:
         QVERIFY(unlockpt(descriptor) == 0);
         const char* slave = ptsname(descriptor);
         QVERIFY(slave);
-        transport = std::make_unique<SerialGPSTransport>(QString::fromLocal8Bit(slave), stop);
+        transport = std::make_unique<SerialGPSTransport>(QString::fromLocal8Bit(slave), stop.get_token());
 #else
         QSKIP("Desktop serial integration requires a Linux pseudo-terminal");
 #endif
@@ -255,7 +257,7 @@ private slots:
             cancellation = std::jthread([&]() {
                 // Cancel after submission, before the bounded deadline expires.
                 std::this_thread::sleep_for(std::chrono::milliseconds(30));
-                stop = true;
+                stop.request_stop();
             });
         }
         QElapsedTimer elapsed;
@@ -271,7 +273,6 @@ private slots:
         QVERIFY(result.uncertainBytes() >= 0);
         QVERIFY(result.uncertainBytes() <= 4096);
         QVERIFY(transport->fatalError());
-        stop = false;
         QCOMPARE(transport->write(&byte, 1, QDeadlineTimer(100)).acceptedBytes, 0);
     }
 };

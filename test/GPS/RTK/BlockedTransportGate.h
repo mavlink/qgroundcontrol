@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <memory>
+#include <stop_token>
 
 #include <QtCore/QSemaphore>
 
@@ -17,10 +18,10 @@ struct BlockedTransportGate
 
 inline GPSProvider::TransportFactory blockedTransportFactory(const std::shared_ptr<BlockedTransportGate>& gate)
 {
-    return [gate](const std::atomic_bool& stop) {
+    return [gate](std::stop_token stopToken) {
         gate->entered.release();
         gate->release.acquire();
-        gate->sawCancellation = stop.load();
+        gate->sawCancellation = stopToken.stop_requested();
         return std::unique_ptr<GPSTransport>{};
     };
 }

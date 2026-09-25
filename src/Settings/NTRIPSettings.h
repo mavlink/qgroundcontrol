@@ -20,6 +20,7 @@ public:
     DEFINE_SETTINGFACT(ntripWhitelist)
     DEFINE_SETTINGFACT(ntripUseTls)
     DEFINE_SETTINGFACT(ntripAllowSelfSignedCerts)
+    DEFINE_SETTINGFACT(ntripPinnedCertificate)
     DEFINE_SETTINGFACT(ntripGgaPositionSource)
     DEFINE_SETTINGFACT(ntripGgaIntervalSec)
 };

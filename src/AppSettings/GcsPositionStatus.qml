@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtPositioning
 
 import QGroundControl
 import QGroundControl.Controls
@@ -13,8 +14,9 @@ SettingsGroupLayout {
     property bool sourceEditable: true
     property bool showCoordinates: true
 
+    // Typed access would not resolve gcsPosition: the application module's type information lacks QtPositioning.
     readonly property var _positionManager: QGroundControl.positionManager
-    property var  _gcsPosition: root._positionManager.gcsPosition
+    property geoCoordinate _gcsPosition: root._positionManager.gcsPosition
     property real _horizontalAccuracy: root._positionManager.gcsPositionHorizontalAccuracy
 
     LabelledFactComboBox {

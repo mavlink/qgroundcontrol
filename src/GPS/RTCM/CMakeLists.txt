@@ -8,6 +8,7 @@ set_target_properties(
                POSITION_INDEPENDENT_CODE ON
 )
 target_compile_features(QGCGPSRTCM PUBLIC cxx_std_20)
+target_include_directories(QGCGPSRTCM PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Math")
 target_link_libraries(
     QGCGPSRTCM
     PUBLIC Qt6::Core

@@ -53,9 +53,9 @@ bool number(std::string_view text, T& result)
     return true;
 }
 
-std::string frame(std::string_view body);
-std::string_view checkedBody(std::string_view line);
-bool rejected(const Fields& reply, std::string_view command);
+[[nodiscard]] std::string frame(std::string_view body);
+[[nodiscard]] std::string_view checkedBody(std::string_view line);
+[[nodiscard]] bool rejected(const Fields& reply, std::string_view command);
 GPSCommandOutcome readback(const Fields& reply, std::string_view command, bool matches);
 
 }  // namespace QuectelCodec

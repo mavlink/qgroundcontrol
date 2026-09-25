@@ -3,7 +3,6 @@
 #include <optional>
 
 #include <QtCore/QDateTime>
-#include <QtCore/QMetaType>
 #include <QtCore/QString>
 #include <QtPositioning/QGeoPositionInfo>
 
@@ -53,13 +52,12 @@ struct GPSObservation
     static GPSObservation fromSurveyedPosition(const GPSEllipsoidPosition& position, double accuracyMeters,
                                                quint64 receivedAtUs);
     /// Nominal accuracy in meters for receivers that report only DOP (DOP x 5.1 m UERE x 2).
-    static double accuracyFromDop(double dop);
+    [[nodiscard]] static double accuracyFromDop(double dop);
 
     /// The owner separately enforces freshness and session authorization.
     [[nodiscard]] std::optional<GPSObservation> projected(PositionUse use) const;
-    bool hasNavigationSolution() const;
-    bool usable() const;
-    QGeoCoordinate coordinate() const;
-    double heading() const;
+    [[nodiscard]] bool hasNavigationSolution() const;
+    [[nodiscard]] bool usable() const;
+    [[nodiscard]] QGeoCoordinate coordinate() const;
+    [[nodiscard]] double heading() const;
 };
-Q_DECLARE_METATYPE(GPSObservation)

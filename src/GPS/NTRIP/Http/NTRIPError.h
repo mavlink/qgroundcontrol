@@ -29,10 +29,9 @@ Q_ENUM_NS(NTRIPError)
 
 using NTRIPError = NTRIPErrors::NTRIPError;
 
-struct NTRIPFailure
+struct [[nodiscard]] NTRIPFailure
 {
     NTRIPError code = NTRIPError::Unknown;
     QString detail;
     std::chrono::milliseconds retryAfter{0};
 };
-Q_DECLARE_METATYPE(NTRIPFailure)

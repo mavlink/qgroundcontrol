@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -39,7 +40,7 @@ enum class GPSReceiveStatus
     Busy,
 };
 
-struct GPSReceiveResult
+struct [[nodiscard]] GPSReceiveResult
 {
     static constexpr int POSITION_UPDATE = 1;
     static constexpr int SATELLITES_UPDATE = 2;
@@ -66,7 +67,7 @@ public:
     GPSDriver& operator=(const GPSDriver&) = delete;
 
     /// Whether a native protocol exists for @a type.
-    static bool supportsType(GPSType type);
+    [[nodiscard]] static bool supportsType(GPSType type);
 
     /// Create and configure the underlying driver. Reentrant calls fail without replacing the active driver.
     bool configure();
@@ -74,7 +75,7 @@ public:
     /// Useful reports are Data even without a registered sink. Diagnostics/partial input are Activity,
     /// never proof of navigation liveness. Terminal failures take precedence over reports in the same cycle.
     /// Reentrant calls return Busy without touching the transport or active decoder.
-    [[nodiscard]] GPSReceiveResult receiveOutcome(unsigned timeoutMs);
+    [[nodiscard]] GPSReceiveResult receiveOutcome(std::chrono::milliseconds timeout);
 
     /// Latest non-reentrant configure() attempt; remains available after failure. Caller-thread access only.
     [[nodiscard]] const std::vector<GPSConfigurationEvidence>& configurationEvidence() const;

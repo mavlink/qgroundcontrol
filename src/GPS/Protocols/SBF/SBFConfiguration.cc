@@ -11,7 +11,7 @@
 QGC_LOGGING_CATEGORY(SBFProtocolLog, "GPS.Driver.Protocols.SBF")
 
 namespace {
-constexpr int SBF_CONFIG_TIMEOUT = 1000;
+constexpr std::chrono::milliseconds SBF_CONFIG_TIMEOUT{1000};
 constexpr size_t MSG_SIZE = 100;
 
 std::string printed(const char* format, ...) Q_ATTRIBUTE_FORMAT_PRINTF(1, 2);
@@ -33,7 +33,7 @@ GPSConfigurationSequence::Command command(const std::string& message, bool requi
     while (echoed.ends_with('\r') || echoed.ends_with('\n')) {
         echoed.remove_suffix(1);
     }
-    return {.step = {message, std::chrono::milliseconds(SBF_CONFIG_TIMEOUT), {}, required},
+    return {.step = {message, SBF_CONFIG_TIMEOUT, {}, required},
             .wire = message,
             .reply = GPSConfigurationSequence::RawReply{"$R: " + std::string(echoed), "$R?"},
             .attempts = attempts};
@@ -162,7 +162,7 @@ bool SBFProtocol::detectPort(char (&com_port)[5])
             offset = 1;
         }
 
-    } while (time_started + 1000 * SBF_CONFIG_TIMEOUT > nowUs() && !response_detected);
+    } while (GPSDeadline::after(time_started, SBF_CONFIG_TIMEOUT).untilUs > nowUs() && !response_detected);
 
     if (!response_detected) {
         log(GPSProtocolLogLevel::Warning, "No COM port detected");

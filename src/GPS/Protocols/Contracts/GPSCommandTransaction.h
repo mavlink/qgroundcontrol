@@ -17,12 +17,12 @@ struct GPSConfigurationStep
     bool required = true;
 };
 
-struct GPSCommandResult
+struct [[nodiscard]] GPSCommandResult
 {
     GPSConfigurationEvidence evidence{};
     GPSReceiverSettingSet affectedSettings = {};
 
-    bool succeeded() const
+    [[nodiscard]] bool succeeded() const
     {
         return evidence.outcome == GPSCommandOutcome::Acknowledged ||
                evidence.outcome == GPSCommandOutcome::ReadbackVerified;

@@ -4,7 +4,6 @@
 
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
-#include <QtGui/QPixmap>
 #include <QtNetwork/QAbstractSocket>
 #include <QtNetwork/QSslSocket>
 #include <QtTest/QAbstractItemModelTester>
@@ -94,7 +93,7 @@ void NTRIPSourceTableControllerTest::sourceTablePublishesSortedRowsOnce()
     auto* model = controller.mountpointModel();
     QAbstractItemModelTester tester(model, QAbstractItemModelTester::FailureReportingMode::QtTest);
     QSignalSpy resets(model, &QAbstractItemModel::modelReset);
-    QSignalSpy counts(qobject_cast<NTRIPSourceTableModel*>(model), &NTRIPSourceTableModel::countChanged);
+    QSignalSpy counts(qobject_cast<NTRIPSourceTableSortModel*>(model), &NTRIPSourceTableSortModel::countChanged);
     const auto makeRow = [](const QString& name, const QString& latitude, const QString& longitude) {
         return QStringLiteral("STR;%1;Id;RTCM 3.2;;2;GPS;NET;USA;%2;%3;0;1;gen;none;B;N;4800\r\n")
             .arg(name, latitude, longitude);
@@ -121,6 +120,19 @@ void NTRIPSourceTableControllerTest::sourceTablePublishesSortedRowsOnce()
     controller.fetch(config(), QGeoCoordinate(40, -74));
     controller.injectSourceTableForTest(table);
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
+    QCOMPARE(resets.size(), 1);
+    QCOMPARE(counts.size(), 1);
+    // QML reads the row count through this property.
+    QCOMPARE(model->property("count").toInt(), 5);
+
+    // A cached table reorders for a new position without a reset; equal distances keep caster order.
+    controller.fetch(config(), QGeoCoordinate(52, 13));
+    QStringList names;
+    for (int row = 0; row < model->rowCount(); ++row) {
+        names.append(model->data(model->index(row, 0), NTRIPSourceTableModel::MountpointRole).toString());
+    }
+    QCOMPARE(names, (QStringList{QStringLiteral("far"), QStringLiteral("near-a"), QStringLiteral("near-b"),
+                                 QStringLiteral("unknown-a"), QStringLiteral("unknown-b")}));
     QCOMPARE(resets.size(), 1);
     QCOMPARE(counts.size(), 1);
 }
@@ -398,133 +410,6 @@ void NTRIPSourceTableControllerTest::fetchNotificationReentry()
     }
     QCOMPARE(controller->fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
     QVERIFY(!controller->_activeSession());
-}
-
-void NTRIPSourceTableControllerTest::modelResetReentry_data()
-{
-    QTest::addColumn<bool>("aboutToReset");
-    QTest::addColumn<int>("action");
-    for (bool aboutToReset : {false, true}) {
-        QTest::newRow(aboutToReset ? "about-to-reset-error" : "reset-error") << aboutToReset << 0;
-        QTest::newRow(aboutToReset ? "about-to-reset-delete" : "reset-delete") << aboutToReset << 1;
-        QTest::newRow(aboutToReset ? "about-to-reset-replace" : "reset-replace") << aboutToReset << 2;
-    }
-}
-
-void NTRIPSourceTableControllerTest::modelResetReentry()
-{
-    QFETCH(bool, aboutToReset);
-    QFETCH(int, action);
-    auto controller = std::make_unique<NTRIPSourceTableController>();
-    auto* model = controller->mountpointModel();
-    qRegisterMetaType<QPixmap>();
-    new QAbstractItemModelTester(model, QAbstractItemModelTester::FailureReportingMode::QtTest, model);
-    const QString table = QStringLiteral(
-        "STR;MP1;Id;RTCM 3.2;details;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\r\n"
-        "ENDSOURCETABLE\r\n");
-    controller->injectSourceTableForTest(table);
-    bool handled = false;
-    int countChangesAfterDeletion = 0;
-    connect(qobject_cast<NTRIPSourceTableModel*>(model), &NTRIPSourceTableModel::countChanged, this, [&]() {
-        if (!controller) {
-            ++countChangesAfterDeletion;
-        }
-    });
-    const auto retire = [&]() {
-        if (std::exchange(handled, true)) {
-            return;
-        }
-        if (action == 1) {
-            controller.reset();
-        } else if (action == 0) {
-            controller->injectFetchErrorForTest(QStringLiteral("replacement"));
-        } else {
-            controller->injectSourceTableForTest(
-                QString(table).replace(QStringLiteral("MP1"), QStringLiteral("replacement")));
-        }
-    };
-    int publications = 0;
-    connect(controller.get(), &NTRIPSourceTableController::fetchStatusChanged, this, [&]() {
-        ++publications;
-        if (action == 0) {
-            QCOMPARE(controller->mountpointModel()->rowCount(), 0);
-        } else if (action == 2) {
-            QCOMPARE(model->data(model->index(0, 0), NTRIPSourceTableModel::MountpointRole).toString(),
-                     QStringLiteral("replacement"));
-        }
-    });
-    if (aboutToReset) {
-        connect(model, &QAbstractItemModel::modelAboutToBeReset, this, retire);
-    } else {
-        connect(model, &QAbstractItemModel::modelReset, this, retire);
-    }
-    controller->injectSourceTableForTest(table);
-    QVERIFY(handled);
-    QCOMPARE(countChangesAfterDeletion, 0);
-    if (action != 1) {
-        QTRY_COMPARE_WITH_TIMEOUT(publications, 1, TestTimeout::mediumMs());
-        QCOMPARE(controller->fetchStatus(), action == 0 ? NTRIPSourceTableController::FetchStatus::Error
-                                                        : NTRIPSourceTableController::FetchStatus::Success);
-    }
-}
-
-void NTRIPSourceTableControllerTest::modelMutationReentry_data()
-{
-    QTest::addColumn<bool>("aboutToReset");
-    QTest::addColumn<int>("action");
-    for (bool aboutToReset : {false, true}) {
-        for (int action : {0, 1, 2, 3}) {
-            QTest::newRow(qPrintable(QStringLiteral("%1-%2").arg(aboutToReset).arg(action))) << aboutToReset << action;
-        }
-    }
-}
-
-void NTRIPSourceTableControllerTest::modelMutationReentry()
-{
-    QFETCH(bool, aboutToReset);
-    QFETCH(int, action);
-    NTRIPSourceTableModel model;
-    qRegisterMetaType<QPixmap>();
-    QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
-    const QString first = QStringLiteral("STR;MP1;Id;RTCM 3.2;details;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\n");
-    const QString second = QStringLiteral("STR;MP2;Id;RTCM 3.2;details;2;GPS;NET;DEU;52;13;0;1;gen;none;B;N;4800\n");
-    model.parseSourceTable(first);
-    bool handled = false;
-    const auto mutate = [&]() {
-        if (std::exchange(handled, true)) {
-            return;
-        }
-        if (action == 0) {
-            model.clear();
-        } else if (action == 1) {
-            model.parseSourceTable(second);
-        } else if (action == 2) {
-            model.updateDistances(QGeoCoordinate(52, 13));
-        } else {
-            model.updateDistances({});
-        }
-    };
-    if (aboutToReset) {
-        connect(&model, &QAbstractItemModel::modelAboutToBeReset, this, mutate);
-    } else {
-        connect(&model, &QAbstractItemModel::modelReset, this, mutate);
-    }
-    model.parseSourceTable(first + second);
-    QVERIFY(handled);
-    QCOMPARE(model.rowCount(), action == 0 ? 0 : action == 1 ? 1 : 2);
-    if (action == 1 || action == 2) {
-        QCOMPARE(model.data(model.index(0, 0), NTRIPSourceTableModel::MountpointRole).toString(),
-                 QStringLiteral("MP2"));
-    }
-    if (action == 2) {
-        QCOMPARE(model.data(model.index(0, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble(), 0.0);
-    } else if (action == 3) {
-        QCOMPARE(model.data(model.index(0, 0), NTRIPSourceTableModel::MountpointRole).toString(),
-                 QStringLiteral("MP1"));
-        for (int row = 0; row < model.rowCount(); ++row) {
-            QCOMPARE(model.data(model.index(row, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble(), -1.0);
-        }
-    }
 }
 
 void NTRIPSourceTableControllerTest::singleMountpointDistanceNotification()

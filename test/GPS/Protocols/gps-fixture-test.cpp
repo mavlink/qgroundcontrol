@@ -218,7 +218,7 @@ void navigationEpochs(GPSTestClock& clock)
         ubx.consume(endEpoch(UBXNavigationEpoch::WEEK_MS - 1000));
         CHECK(observations.size() == 1);
         ubx.consume(timed(pvt, 0));
-        clock.advanceBy(UBXNavigationEpoch::MAX_AGE_US);
+        clock.advanceBy(static_cast<uint64_t>(UBXNavigationEpoch::MAX_AGE.count()));
         ubx.consume({});
         CHECK(observations.size() == 2);
         CHECK(std::isnan(observations.back().navigation.horizontalDop));
@@ -237,14 +237,14 @@ void navigationEpochs(GPSTestClock& clock)
         CHECK(std::abs(observations.back().navigation.horizontalDop - 0.58) < 1e-6);
         // Metadata-only epochs never manufacture a position.
         ubx.consume(timed(dop, 3000));
-        clock.advanceBy(UBXNavigationEpoch::MAX_AGE_US);
+        clock.advanceBy(static_cast<uint64_t>(UBXNavigationEpoch::MAX_AGE.count()));
         ubx.consume({});
         CHECK(observations.size() == 4);
         auto fixed = timed(pvt, 4000);
         fixed[6 + 21] = 0x81;
         ubxChecksum(fixed);
         ubx.consume(fixed);
-        clock.advanceBy(UBXNavigationEpoch::MAX_AGE_US);
+        clock.advanceBy(static_cast<uint64_t>(UBXNavigationEpoch::MAX_AGE.count()));
         ubx.consume({});
         CHECK(observations.size() == 5);
         CHECK(observations.back().navigation.fixType == GPSPositionReport::FixType::RTKFixed);

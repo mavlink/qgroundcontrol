@@ -12,16 +12,17 @@ SettingsGroupLayout {
     heading:            qsTr("NTRIP Connection")
     visible:            _ntrip.userVisible
 
+    // NTRIPSettings is not registered for QML, and SettingsGroup is not either.
     property var  _ntrip:    QGroundControl.settingsManager.ntripSettings
     property Fact _enabled:  _ntrip.ntripServerConnectEnabled
-    property var  _ntripMgr: QGroundControl.gpsManager.ntrip
-    readonly property var _corrections: QGroundControl.gpsManager.corrections
+    property NTRIPManager _ntripMgr: QGroundControl.gpsManager.ntrip
+    readonly property GPSCorrectionManager _corrections: QGroundControl.gpsManager.corrections
 
     NTRIPConnectionStatus {
         Layout.fillWidth: true
         ntripManager:     root._ntripMgr
         enabledFact:      root._enabled
         canConnect:       root._ntrip.ntripServerHostAddress.rawValue !== ""
-        rtcmMavlink:      root._corrections ? root._corrections.rtcmMavlink : null
+        corrections:      root._corrections
     }
 }

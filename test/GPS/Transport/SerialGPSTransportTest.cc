@@ -1,15 +1,17 @@
 #include "SerialGPSTransportTest.h"
 
-#include <QtCore/QElapsedTimer>
-#include <QtCore/QFile>
-
-#include <atomic>
 #include <cerrno>
 #include <chrono>
 #include <cstdint>
+#include <stop_token>
 #include <thread>
 
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QFile>
+
 #include "SerialGPSTransport.h"
+
+using namespace std::chrono_literals;
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include <cstdlib>
@@ -38,23 +40,23 @@ QString openPseudoTerminal(QFile& master)
 
 void SerialGPSTransportTest::_testReadAbortsWhenStopRequested()
 {
-    std::atomic_bool stop{false};
-    SerialGPSTransport transport(QStringLiteral("/dev/null"), stop);
+    std::stop_source stop;
+    SerialGPSTransport transport(QStringLiteral("/dev/null"), stop.get_token());
     QVERIFY(!transport.isCancelled());
-    stop = true;
+    stop.request_stop();
     QCOMPARE(transport.open().status, GPSOpenStatus::Cancelled);
 
     uint8_t buffer[16] = {};
-    QVERIFY(transport.read(buffer, static_cast<int>(sizeof(buffer)), 100).status != GPSReadStatus::Data);
+    QVERIFY(transport.read(buffer, static_cast<int>(sizeof(buffer)), 100ms).status != GPSReadStatus::Data);
     QVERIFY(transport.isCancelled());
 }
 
 void SerialGPSTransportTest::_testWriteAbortsWhenStopRequested()
 {
-    std::atomic_bool stop{false};
-    SerialGPSTransport transport(QStringLiteral("/dev/null"), stop);
+    std::stop_source stop;
+    SerialGPSTransport transport(QStringLiteral("/dev/null"), stop.get_token());
     QVERIFY(!transport.isCancelled());
-    stop = true;
+    stop.request_stop();
 
     const uint8_t payload[4] = {1, 2, 3, 4};
     QCOMPARE(transport.write(payload, sizeof(payload), QDeadlineTimer(TestTimeout::shortMs())).status,
@@ -78,15 +80,15 @@ void SerialGPSTransportTest::_testCancelPendingOperation()
     QFile master;
     const QString slave = openPseudoTerminal(master);
     QVERIFY2(!slave.isEmpty(), "Cannot create a pseudo-terminal for serial cancellation testing");
-    std::atomic_bool stop = false;
-    SerialGPSTransport transport(slave, stop);
+    std::stop_source stop;
+    SerialGPSTransport transport(slave, stop.get_token());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     // Keep the peer unread so writes fill the kernel buffer and remain pending.
     const QByteArray payload(4 * 1024 * 1024, 'x');
     std::jthread cancellation([&]() {
         // Trigger cancellation after the blocking operation has entered its wait.
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        stop = true;
+        stop.request_stop();
     });
     QElapsedTimer elapsed;
     elapsed.start();
@@ -101,9 +103,9 @@ void SerialGPSTransportTest::_testCancelPendingOperation()
         QVERIFY(result.uncertainBytes() > 0);
         QCOMPARE(result.writtenBytes + result.uncertainBytes(), result.acceptedBytes);
     } else {
-        QVERIFY(transport.read(&byte, 1, TestTimeout::longMs()).status != GPSReadStatus::Data);
+        QVERIFY(transport.read(&byte, 1, TestTimeout::longDuration()).status != GPSReadStatus::Data);
     }
-    QVERIFY(stop.load());
+    QVERIFY(stop.stop_requested());
     QVERIFY(elapsed.elapsed() < TestTimeout::shortMs());
 #else
     QSKIP("In-flight serial cancellation requires a Linux pseudo-terminal");
@@ -116,8 +118,8 @@ void SerialGPSTransportTest::_testPendingWriteDeadline()
     QFile master;
     const QString slave = openPseudoTerminal(master);
     QVERIFY2(!slave.isEmpty(), "Cannot create a pseudo-terminal for serial write deadline testing");
-    std::atomic_bool stop = false;
-    SerialGPSTransport transport(slave, stop);
+    std::stop_source stop;
+    SerialGPSTransport transport(slave, stop.get_token());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     const QByteArray payload(4 * 1024 * 1024, 'x');
     QElapsedTimer elapsed;
@@ -131,7 +133,7 @@ void SerialGPSTransportTest::_testPendingWriteDeadline()
     QVERIFY(result.uncertainBytes() > 0);
     QCOMPARE(result.writtenBytes + result.uncertainBytes(), result.acceptedBytes);
     QVERIFY(elapsed.elapsed() < 1000);
-    QVERIFY(!stop.load());
+    QVERIFY(!stop.stop_requested());
     QVERIFY(elapsed.elapsed() < TestTimeout::shortMs());
     QVERIFY(transport.fatalError());
     QCOMPARE(
@@ -155,8 +157,8 @@ void SerialGPSTransportTest::_inputBudgetEndsStream()
     QVERIFY(!slave.isEmpty());
     const int descriptor = master.handle();
     QVERIFY(fcntl(descriptor, F_SETFL, fcntl(descriptor, F_GETFL) | O_NONBLOCK) >= 0);
-    std::atomic_bool stop = false;
-    SerialGPSTransport transport(slave, stop);
+    std::stop_source stop;
+    SerialGPSTransport transport(slave, stop.get_token());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     std::jthread sender([descriptor](std::stop_token stopping) {
         const QByteArray payload(SerialGPSTransport::kReadBufferBytes + 4096, 'x');
@@ -175,11 +177,11 @@ void SerialGPSTransportTest::_inputBudgetEndsStream()
     // Let the device's owner thread receive while its decoder is stalled.
     QTRY_VERIFY_WITH_TIMEOUT(transport.fatalError(), TestTimeout::shortMs());
     uint8_t bytes[16]{};
-    const auto result = transport.read(bytes, sizeof(bytes), 0);
+    const auto result = transport.read(bytes, sizeof(bytes), 0ms);
     QCOMPARE(result.status, GPSReadStatus::Overflow);
     QCOMPARE(result.bytesRead, 0);
     QVERIFY(!result.detail.isEmpty());
-    QCOMPARE(transport.read(bytes, sizeof(bytes), 0).status, GPSReadStatus::Overflow);
+    QCOMPARE(transport.read(bytes, sizeof(bytes), 0ms).status, GPSReadStatus::Overflow);
     QCOMPARE(transport.write(bytes, sizeof(bytes), QDeadlineTimer(TestTimeout::shortMs())).acceptedBytes, 0);
 #else
     QSKIP("Serial ingress budget coverage requires a Linux pseudo-terminal");
@@ -192,8 +194,8 @@ void SerialGPSTransportTest::_consecutiveWrites()
     QFile master;
     const QString slave = openPseudoTerminal(master);
     QVERIFY(!slave.isEmpty());
-    std::atomic_bool stop = false;
-    SerialGPSTransport transport(slave, stop);
+    std::stop_source stop;
+    SerialGPSTransport transport(slave, stop.get_token());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     QByteArray expected;
     for (int size : {1, 127, 3, 512, 17, 1029, 2}) {

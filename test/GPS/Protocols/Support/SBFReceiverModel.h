@@ -44,10 +44,10 @@ private:
         return GPSWriteResult{GPSWriteStatus::Completed, length, length};
     }
 
-    void onTransportReadWait(ScriptedReceiver& receiver, int timeoutMs) override
+    void onTransportReadWait(ScriptedReceiver& receiver, std::chrono::milliseconds timeout) override
     {
         if (reply.isEmpty() && streaming) {
-            if (timeoutMs > 0) {
+            if (timeout > std::chrono::milliseconds::zero()) {
                 QThread::msleep(1);
             }
             ++streamReads;
@@ -60,7 +60,7 @@ private:
 
     void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline) override
     {
-        onTransportReadWait(receiver, deadline.remainingMilliseconds(_clock.nowUs()));
+        onTransportReadWait(receiver, deadline.remaining(_clock.nowUs()));
         if (!receiver.hasQueuedReadData()) {
             _clock.advanceTo(deadline.untilUs + 1);
         }

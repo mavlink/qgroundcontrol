@@ -60,7 +60,7 @@ private:
     void _invalidateBase();
     void _expireBase();
 
-    static constexpr unsigned COMMAND_TIMEOUT_MS = 1500;
+    static constexpr std::chrono::milliseconds COMMAND_TIMEOUT{1500};
     static constexpr uint64_t BASE_STATUS_TIMEOUT_US = 5000000;
 
     std::string _model;

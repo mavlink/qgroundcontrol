@@ -3,7 +3,7 @@
 #include "NMEASentence.h"
 
 namespace NMEAFields {
-constexpr char hexDigit(unsigned value)
+[[nodiscard]] constexpr char hexDigit(unsigned value)
 {
     return "0123456789ABCDEF"[value & 0xf];
 }

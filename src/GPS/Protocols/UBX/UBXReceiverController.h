@@ -23,7 +23,7 @@ struct ConfigurationValues
     size_t count = 0;
 };
 
-inline std::optional<ConfigurationValues> decodeConfigurationValues(std::span<const uint8_t> payload)
+[[nodiscard]] inline std::optional<ConfigurationValues> decodeConfigurationValues(std::span<const uint8_t> payload)
 {
     if (payload.size() < 4 || payload[0] != 1 || payload[1] || payload[2] || payload[3]) {
         return std::nullopt;

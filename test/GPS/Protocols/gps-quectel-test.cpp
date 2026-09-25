@@ -10,12 +10,15 @@
 #include <string_view>
 #include <vector>
 
+#include "Checksums.h"
 #include "Quectel/QuectelProtocol.h"
 #include "RTCMFramer.h"
 #include "Support/GPSProtocolTestIO.h"
 #include "Support/ProtocolTestPackets.h"
 #include "Support/QuectelReceiverModel.h"
 #include "UnitTest.h"
+
+using namespace std::chrono_literals;
 
 #define CHECK(condition)                                                                                 \
     do {                                                                                                 \
@@ -41,7 +44,7 @@ using Receiver = GPSTest::QuectelReceiver;
 GPSProtocol::GPSConfig surveyConfig()
 {
     GPSProtocol::GPSConfig config;
-    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 60s;
     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 15;
     return config;
 }
@@ -104,7 +107,7 @@ void receiveUntil(QuectelProtocol& driver, const GPSTestClock& clock, uint64_t d
     unsigned slices = 0;
     while (clock.nowUs() < deadline) {
         CHECK(++slices < 1000);
-        driver.receive(1000);
+        driver.receive(1000ms);
         CHECK(driver.receiverReady());
     }
 }
@@ -241,7 +244,7 @@ void surveyLifecycle(GPSTestClock& clock)
     CHECK(!receiver.surveys.back().survey.meanAccuracyMeters.has_value());
     receiver.chunk = 1;
     receiver.queued = PROGRESS;
-    CHECK(driver.receive(1000) & GPSDecodedBatch::PROTOCOL_ACTIVITY);
+    CHECK(driver.receive(1000ms) & GPSDecodedBatch::PROTOCOL_ACTIVITY);
     CHECK(surveyFlags(receiver.surveys.back()) == 2);
     CHECK(surveyDuration(receiver.surveys.back()) == 1);
     CHECK(receiver.surveys.back().survey.meanAccuracyMeters.has_value());
@@ -345,7 +348,7 @@ void malformedAndMixedFraming(GPSTestClock& clock)
     nested[0] = 0xd3;
     nested[2] = static_cast<uint8_t>(PROGRESS.size());
     std::copy(PROGRESS.begin(), PROGRESS.end(), nested.begin() + 3);
-    const auto crc = RTCMFramer::crc24q(nested);
+    const auto crc = QGC::crc24q(nested);
     nested.push_back(crc >> 16);
     nested.push_back(crc >> 8);
     nested.push_back(crc);
@@ -403,7 +406,7 @@ void scheduledShortSurvey(GPSTestClock& clock)
             };
             QuectelProtocol driver(std::move(io), false);
             auto config = surveyConfig();
-            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 1;
+            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 1s;
             unsigned baud = 460800;
             CHECK(driver.configure(baud, config));
             CHECK(savedBaseVerified);
@@ -488,7 +491,7 @@ void cancellationRevokesPublishedState(GPSTestClock& clock)
     CHECK(surveyFlags(receiver.surveys.back()) == 1);
     receiver.failed = true;
     receiver.fault = Receiver::Fault::Cancel;
-    CHECK(driver.receive(1000) == 0);
+    CHECK(driver.receive(1000ms) == 0);
     CHECK(driver.ioError() == GPSProtocolError::Cancelled);
     CHECK(!driver.receiverReady());
     revoked(receiver.surveys.back());
@@ -586,7 +589,7 @@ void restartAndConfigurationSafety(GPSTestClock& clock)
         if (variation == 0) {
             config.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
         } else if (variation == 1) {
-            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 86401;
+            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 86401s;
         } else {
             std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1000.01;
         }
@@ -693,7 +696,7 @@ void managedBaseValuesAndNoUnnecessarySaves(GPSTestClock& clock)
         QuectelProtocol driver(receiver.io(), false);
         auto config = surveyConfig();
         config.allowPersistentChanges = true;
-        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 3600;
+        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 3600s;
         std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1.25;
         unsigned baud = 460800;
         CHECK(driver.configure(baud, config));

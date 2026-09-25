@@ -3,6 +3,10 @@
 #include <functional>
 #include <memory>
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QEvent>
+#include <QtCore/QPointer>
+#include <QtCore/QRegularExpression>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtQuickTest/quicktest.h>
@@ -10,6 +14,8 @@
 
 #include "Fact.h"
 #include "GPSQmlTestHelpers.h"
+#include "ManualScheduler.h"
+#include "MockNTRIPTransport.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
 #include "NTRIPSourceTable.h"
@@ -18,30 +24,37 @@
 UT_REGISTER_TEST(NTRIPSettingsUITest, TestLabel::Integration)
 
 namespace {
-constexpr char kMockNtripManager[] = R"(
-    import QtQml
-    import QGroundControl
-    import QGroundControl.GPS
-    QtObject {
-        property int connectionStatus: NTRIPManager.Error
-        property string statusMessage: "Connection failed"
-        property string ggaSource: "Vehicle GPS"
-        property string securityWarning: ""
-        property QtObject connectionStats: QtObject {
-            property bool dataStale: false
-            property real correctionAgeSec: 0.5
-            property int messagesReceived: 1
-            property var messageCountsById: [{ messageId: 1005, count: 1 }]
-            property real bytesReceived: 25
-            property real dataRateBytesPerSec: 25
-        }
-        property int retryCount: 0
-        function retryNTRIP() {
-            retryCount++
-            connectionStatus = NTRIPManager.Connecting
-        }
+/// An NTRIP manager whose caster connections are scripted; reconnect timers fire only when a test advances them.
+struct ScriptedNTRIP
+{
+    ScriptedNTRIP()
+    {
+        NTRIPManager::Configuration configuration;
+        configuration.enabled = true;
+        configuration.stream.connection.host = QStringLiteral("caster.example.com");
+        configuration.stream.connection.port = 2101;
+        configuration.stream.connection.mountpoint = QStringLiteral("TEST");
+        manager.setConfiguration(configuration);
     }
-)";
+
+    /// The transport the next connection attempt opens.
+    MockNTRIPTransport* nextTransport(bool autoConnect = false)
+    {
+        auto* transport = new MockNTRIPTransport(&manager);
+        transport->autoConnect = autoConnect;
+        manager.setTransportForTest(transport);
+        return transport;
+    }
+
+    ManualScheduler scheduler;
+    NTRIPManager manager{nullptr, &scheduler};
+};
+
+/// Transport signals reach the manager through queued connections.
+void deliverTransportSignals()
+{
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+}
 
 QList<QQuickItem*> findItems(QQuickItem* root, const std::function<bool(QQuickItem*)>& match)
 {
@@ -164,18 +177,30 @@ void NTRIPSettingsUITest::_testSelfSignedGatedByTls()
 
 void NTRIPSettingsUITest::_testErrorActionRetries()
 {
+    const auto fail = [this](MockNTRIPTransport* transport) {
+        expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("NTRIP error:.*Connection failed")));
+        transport->simulateError(NTRIPError::AuthFailed, QStringLiteral("Connection failed"));
+        deliverTransportSignals();
+        verifyExpectedLogMessage();
+    };
+    ScriptedNTRIP ntrip;
+    MockNTRIPTransport* first = ntrip.nextTransport();
+    ntrip.manager.init();
+    fail(first);
+    QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+    QPointer<MockNTRIPTransport> retry = ntrip.nextTransport();
+
     QQuickWindow window;
     window.resize(640, 400);
     GPSTestHelpers::QmlEngine engine;
-    std::unique_ptr<QObject> manager = engine.create(QByteArray(kMockNtripManager));
-    QVERIFY2(manager, qPrintable(engine.lastError()));
     Fact enabled(0, QStringLiteral("enabled"), FactMetaData::valueTypeBool);
     enabled.setRawValue(true);
     std::unique_ptr<QObject> panel =
         engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NTRIPConnectionSettings.qml")),
                       {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                        {QStringLiteral("visible"), true},
-                       {QStringLiteral("_ntripMgr"), QVariant::fromValue(manager.get())},
+                       {QStringLiteral("_ntripMgr"), QVariant::fromValue(&ntrip.manager)},
                        {QStringLiteral("_enabled"), QVariant::fromValue(&enabled)}});
     QVERIFY2(panel, qPrintable(engine.lastError()));
     window.show();
@@ -184,20 +209,22 @@ void NTRIPSettingsUITest::_testErrorActionRetries()
     auto* disconnect = panel->findChild<QObject*>(QStringLiteral("ntripDisconnectButton"));
     QVERIFY(button);
     QVERIFY(disconnect);
-    const auto errorStatus = manager->property("connectionStatus");
     QCOMPARE(button->property("text").toString(), QStringLiteral("Retry"));
     QTRY_VERIFY_WITH_TIMEOUT(disconnect->property("visible").toBool(), TestTimeout::shortMs());
     QVERIFY(QMetaObject::invokeMethod(button, "click"));
-    QCOMPARE(manager->property("retryCount").toInt(), 1);
+    QVERIFY(retry);
+    QCOMPARE(retry->startCount, 1);
+    QCOMPARE(first->startCount, 1);
+    QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
     QVERIFY(enabled.rawValue().toBool());
     QVERIFY(!button->property("enabled").toBool());
     QTRY_VERIFY_WITH_TIMEOUT(!disconnect->property("visible").toBool(), TestTimeout::shortMs());
-    QVERIFY(manager->setProperty("connectionStatus", errorStatus));
-    QCOMPARE(manager->property("connectionStatus"), errorStatus);
+    fail(retry);
+    QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
     QTRY_VERIFY_WITH_TIMEOUT(disconnect->property("visible").toBool(), TestTimeout::shortMs());
     QVERIFY(QMetaObject::invokeMethod(disconnect, "click"));
     QVERIFY(!enabled.rawValue().toBool());
-    QCOMPARE(manager->property("retryCount").toInt(), 1);
+    QCOMPARE(retry->startCount, 1);
 }
 
 void NTRIPSettingsUITest::_testConnectionActionIsIdempotent_data()
@@ -216,13 +243,24 @@ void NTRIPSettingsUITest::_testConnectionActionIsIdempotent()
     QFETCH(int, status);
     QFETCH(bool, enabledBefore);
     QFETCH(bool, enabledAfter);
+    ScriptedNTRIP ntrip;
+    if (status != static_cast<int>(NTRIPManager::ConnectionStatus::Disconnected)) {
+        MockNTRIPTransport* transport = ntrip.nextTransport(true);
+        ntrip.manager.init();
+        if (status == static_cast<int>(NTRIPManager::ConnectionStatus::Reconnecting)) {
+            expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
+                             QRegularExpression(QStringLiteral("NTRIP error:.*caster closed")));
+            transport->simulateError(NTRIPError::ServerDisconnected, QStringLiteral("caster closed"));
+            deliverTransportSignals();
+            verifyExpectedLogMessage();
+        }
+    }
+    QCOMPARE(static_cast<int>(ntrip.manager.connectionStatus()), status);
+    // A click that started a connection attempt would open this transport.
+    QPointer<MockNTRIPTransport> unexpected = ntrip.nextTransport();
     QQuickWindow window;
     window.resize(640, 400);
     GPSTestHelpers::QmlEngine engine;
-    std::unique_ptr<QObject> manager =
-        engine.create(QByteArray(kMockNtripManager),
-                      {{QStringLiteral("connectionStatus"), status}, {QStringLiteral("statusMessage"), QString()}});
-    QVERIFY2(manager, qPrintable(engine.lastError()));
     Fact enabled(0, QStringLiteral("enabled"), FactMetaData::valueTypeBool);
     enabled.setRawValue(enabledBefore);
     SettingsManager::instance()->ntripSettings()->ntripServerHostAddress()->setRawValue(
@@ -231,7 +269,7 @@ void NTRIPSettingsUITest::_testConnectionActionIsIdempotent()
         engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NTRIPConnectionSettings.qml")),
                       {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                        {QStringLiteral("visible"), true},
-                       {QStringLiteral("_ntripMgr"), QVariant::fromValue(manager.get())},
+                       {QStringLiteral("_ntripMgr"), QVariant::fromValue(&ntrip.manager)},
                        {QStringLiteral("_enabled"), QVariant::fromValue(&enabled)}});
     QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* button = panel->findChild<QObject*>(QStringLiteral("ntripConnectButton"));
@@ -242,7 +280,9 @@ void NTRIPSettingsUITest::_testConnectionActionIsIdempotent()
         QVERIFY(QMetaObject::invokeMethod(button, "click"));
         QCOMPARE(enabled.rawValue().toBool(), enabledAfter);
     }
-    QCOMPARE(manager->property("retryCount").toInt(), 0);
+    QCOMPARE(static_cast<int>(ntrip.manager.connectionStatus()), status);
+    QVERIFY(unexpected);
+    QCOMPARE(unexpected->startCount, 0);
 }
 
 void NTRIPSettingsUITest::_testMountpointLockedWhileActive()
@@ -261,18 +301,27 @@ void NTRIPSettingsUITest::_testMountpointLockedWhileActive()
 
 void NTRIPSettingsUITest::_testLongStatusWrapsWithinPanel()
 {
+    const auto fail = [this](MockNTRIPTransport* transport, const QString& detail) {
+        expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:")));
+        transport->simulateError(NTRIPError::AuthFailed, detail);
+        deliverTransportSignals();
+        verifyExpectedLogMessage();
+    };
+    ScriptedNTRIP ntrip;
+    MockNTRIPTransport* first = ntrip.nextTransport();
+    ntrip.manager.init();
+    fail(first, QStringLiteral("Connection failed"));
+    QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
     QQuickWindow window;
     window.resize(640, 400);
     GPSTestHelpers::QmlEngine engine;
-    std::unique_ptr<QObject> manager = engine.create(QByteArray(kMockNtripManager));
-    QVERIFY2(manager, qPrintable(engine.lastError()));
     Fact enabled(0, QStringLiteral("enabled"), FactMetaData::valueTypeBool);
     enabled.setRawValue(true);
     std::unique_ptr<QObject> panel =
         engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/AppSettings/NTRIPConnectionSettings.qml")),
                       {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                        {QStringLiteral("visible"), true},
-                       {QStringLiteral("_ntripMgr"), QVariant::fromValue(manager.get())},
+                       {QStringLiteral("_ntripMgr"), QVariant::fromValue(&ntrip.manager)},
                        {QStringLiteral("_enabled"), QVariant::fromValue(&enabled)}});
     QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* panelItem = qobject_cast<QQuickItem*>(panel.get());
@@ -282,9 +331,12 @@ void NTRIPSettingsUITest::_testLongStatusWrapsWithinPanel()
     QVERIFY(QTest::qWaitForWindowExposed(&window, TestTimeout::mediumMs()));
     const qreal shortWidth = panelItem->implicitWidth();
 
-    const QString longMessage =
-        QStringLiteral("Reconnecting in 30s: ") + QStringLiteral("certificate rejected ").repeated(20);
-    QVERIFY(manager->setProperty("statusMessage", longMessage));
+    const QString longMessage = QStringLiteral("certificate rejected ").repeated(20);
+    MockNTRIPTransport* retry = ntrip.nextTransport();
+    ntrip.manager.retryNTRIP();
+    fail(retry, longMessage);
+    QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+    QCOMPARE(ntrip.manager.statusMessage(), longMessage);
     const auto statusLabel = [&]() -> QQuickItem* {
         const auto labels = findItems(panelItem, [&](QQuickItem* item) {
             return item->property("text").toString() == longMessage && item->property("lineCount").isValid();

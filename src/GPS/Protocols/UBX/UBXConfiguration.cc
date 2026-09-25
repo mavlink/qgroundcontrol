@@ -1,8 +1,10 @@
 #include <cmath>
 #include <string.h>
+#include <tuple>
 
 #include <QtCore/QScopeGuard>
 
+#include "Checksums.h"
 #include "LittleEndian.h"
 #include "NMEASentence.h"
 #include "RTCMFramer.h"
@@ -10,6 +12,8 @@
 #include "UBXConfiguration_p.h"
 #include "UBXMessageCodec.h"
 #include "UBXMessageSchema.h"
+
+using namespace std::chrono_literals;
 
 namespace {
 // RTCM3 message sets for a base: the station/bias messages plus GPS, GLONASS, Galileo and BeiDou
@@ -64,7 +68,7 @@ bool UBXProtocol::configure(unsigned& baudrate, const GPSConfig& config)
     const bool auto_baudrate = baudrate == 0;
     const auto identify = [this] {
         // Slow factory NMEA output can delay a MON-VER response by over a second.
-        const Operation operation(*this, 2000);
+        const Operation operation(*this, 2000ms);
         _identity.board = Board::unknown;
         return sendMessage(UBX_MSG_MON_VER, nullptr, 0, {{}, std::chrono::milliseconds(2000)}) &&
                waitForAck(UBX_MSG_MON_VER).succeeded();
@@ -72,7 +76,7 @@ bool UBXProtocol::configure(unsigned& baudrate, const GPSConfig& config)
     constexpr unsigned BAUD_RATES[] = {38400, 57600, 9600, 115200, 230400, 460800, 921600};
     const auto detection = detectBaud(BAUD_RATES, baudrate, [this, &identify](unsigned) {
         decodeInit();
-        receiveInternal(20);
+        receiveInternal(20ms);
         decodeInit();
         if (hasIOError()) {
             return BaudProbe::Stop;
@@ -101,7 +105,7 @@ bool UBXProtocol::configure(unsigned& baudrate, const GPSConfig& config)
         };
         initCfgValset();
         cfgValset(UART1_UBX);
-        if (!sendCfgValset(true, 2000) || !waitForAck(UBX_MSG_CFG_VALSET).succeeded()) {
+        if (!sendCfgValset(true, 2000ms) || !waitForAck(UBX_MSG_CFG_VALSET).succeeded()) {
             return false;
         }
     } else {
@@ -130,8 +134,7 @@ bool UBXProtocol::configure(unsigned& baudrate, const GPSConfig& config)
             for (auto& port : ports) {
                 port.baudRate = desiredBaud;
             }
-            if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(ports),
-                             {{}, std::chrono::milliseconds(UBX_CONFIG_TIMEOUT), {}, false})) {
+            if (!sendMessage(UBX_MSG_CFG_PRT, UBX::encode(ports), {{}, UBX_CONFIG_TIMEOUT, {}, false})) {
                 return false;
             }
         }
@@ -151,9 +154,7 @@ bool UBXProtocol::configure(unsigned& baudrate, const GPSConfig& config)
             return false;
         }
         if (modern && !acknowledged &&
-            !verifyCfgValset(
-                 {"UBX-CFG-VALSET readback", std::chrono::milliseconds(UBX_CONFIG_TIMEOUT), _valset.settings})
-                 .succeeded()) {
+            !verifyCfgValset({"UBX-CFG-VALSET readback", UBX_CONFIG_TIMEOUT, _valset.settings}).succeeded()) {
             return false;
         }
     }
@@ -208,7 +209,7 @@ bool UBXProtocol::configureDevice()
         cfgValset<uint8_t>(UBX_CFG_KEY_CFG_UART1INPROT_SPARTN, 0);
         cfgValset<uint8_t>(UBX_CFG_KEY_CFG_USBINPROT_SPARTN, 0);
 
-        sendCfgValsetAcked(false);
+        std::ignore = sendCfgValsetAcked(false);  // Optional; a NAK is tolerated.
     }
 
     /* set configuration parameters */
@@ -262,7 +263,7 @@ bool UBXProtocol::configureDevice()
         cfgValset(odo_keys, 0);
     }
 
-    sendCfgValsetAcked(false);
+    std::ignore = sendCfgValsetAcked(false);  // Optional; a NAK is tolerated.
 
     // RTK (optional, as only RTK devices like F9P support it)
     initCfgValset();
@@ -272,7 +273,7 @@ bool UBXProtocol::configureDevice()
         return false;
     }
 
-    waitForAck(UBX_MSG_CFG_VALSET);
+    std::ignore = waitForAck(UBX_MSG_CFG_VALSET);  // Optional; a NAK is tolerated.
 
     // Jamming detection. Firmware with CFG-SEC-JAMDET (F9 HPG 1.50+, F9 L1L5, F20/X20) has
     // detection always on and no CFG-ITFM; everything older has CFG-ITFM and no JAMDET key.
@@ -350,7 +351,7 @@ bool UBXProtocol::configureDevice()
          (_identity.board == Board::u_blox9_F9P_L1L5))) {
         initCfgValset();
         cfgValsetPort(UBX_CFG_KEY_MSGOUT_UBX_RXM_RTCM_I2C, 1);
-        sendCfgValsetAcked(false);
+        std::ignore = sendCfgValsetAcked(false);  // Optional; a NAK is tolerated.
     }
 
     // UBX-SEC-SIG carries jammingState. MON-RF jammingState is always 0 on
@@ -397,7 +398,7 @@ bool UBXProtocol::configureDevice()
         initCfgValset();
         cfgValset<uint8_t>(UBX_CFG_KEY_NAVCOR_ENABLE_HOST, 1);
         cfgValset<uint8_t>(UBX_CFG_KEY_NAVCOR_ENABLE_GAL_HAS, 0);
-        sendCfgValsetAcked(false);
+        std::ignore = sendCfgValsetAcked(false);  // Optional; a NAK is tolerated.
     }
 
     return true;
@@ -408,17 +409,15 @@ void UBXProtocol::initCfgValset()
     _valset = {};
 }
 
-bool UBXProtocol::sendCfgValset(bool required, unsigned timeout)
+bool UBXProtocol::sendCfgValset(bool required, std::chrono::milliseconds timeout)
 {
     const auto payload = _valset.payload();
     if (payload.empty() || (_valsetAckAmbiguous && !_controller.configurationReadbackRequired())) {
-        beginCommandWrite(
-            {std::to_string(UBX_MSG_CFG_VALSET), std::chrono::milliseconds(timeout), _valset.settings, required});
+        beginCommandWrite({std::to_string(UBX_MSG_CFG_VALSET), timeout, _valset.settings, required});
         failCommandWrite(GPSCommandOutcome::Rejected);
         return false;
     }
-    return sendMessage(UBX_MSG_CFG_VALSET, payload,
-                       {{}, std::chrono::milliseconds(timeout), _valset.settings, required});
+    return sendMessage(UBX_MSG_CFG_VALSET, payload, {{}, timeout, _valset.settings, required});
 }
 
 GPSCommandResult UBXProtocol::sendCfgValsetAcked(bool required)
@@ -512,8 +511,7 @@ bool UBXProtocol::disableTimeMode()
     }
     _timeModeReadback = {.pending = true};
     const auto clearReadback = qScopeGuard([this] { _timeModeReadback.pending = false; });
-    if (!sendMessage(UBX_MSG_CFG_TMODE3, nullptr, 0,
-                     {"UBX-CFG-TMODE3 disabled readback", std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)})) {
+    if (!sendMessage(UBX_MSG_CFG_TMODE3, nullptr, 0, {"UBX-CFG-TMODE3 disabled readback", UBX_CONFIG_TIMEOUT})) {
         return false;
     }
     const auto result = awaitCommand([this] {
@@ -534,8 +532,7 @@ bool UBXProtocol::verifyConfigValue(uint32_t key, uint8_t value)
     const auto clearReadback = qScopeGuard([this] { _controller.finishReadback(); });
     std::array<uint8_t, 8> request{};
     (void) LittleEndian::write(request, 4, key);
-    if (!sendMessage(UBX_MSG_CFG_VALGET, request,
-                     {"UBX-CFG-VALGET " + std::to_string(key), std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)})) {
+    if (!sendMessage(UBX_MSG_CFG_VALGET, request, {"UBX-CFG-VALGET " + std::to_string(key), UBX_CONFIG_TIMEOUT})) {
         return false;
     }
     const auto result = awaitCommand([this, value] {
@@ -555,15 +552,14 @@ bool UBXProtocol::waitForSurveyStop()
     const uint64_t stop_deadline = nowUs() + 3000000;
 
     while (!_survey_in_stopped && nowUs() < stop_deadline) {
-        if (!sendMessage(UBX_MSG_NAV_SVIN, nullptr, 0,
-                         {"UBX-NAV-SVIN stopped", std::chrono::milliseconds(UBX_CONFIG_TIMEOUT)})) {
+        if (!sendMessage(UBX_MSG_NAV_SVIN, nullptr, 0, {"UBX-NAV-SVIN stopped", UBX_CONFIG_TIMEOUT})) {
             return false;
         }
 
         const uint64_t poll_deadline = nowUs() + 100000;
 
         while (!_survey_in_stopped && nowUs() < poll_deadline) {
-            receiveInternal(100);
+            receiveInternal(100ms);
 
             if (hasIOError()) {
                 return false;
@@ -591,7 +587,7 @@ bool UBXProtocol::restartSurveyIn()
     initCfgValset();
     cfgValsetPort(RTCM_BASE_MSM7_MSGOUT_I2C, 0);
     cfgValsetPort(RTCM_MSM4_OBSERVATIONS_MSGOUT_I2C, 0);
-    sendCfgValsetAcked(false);
+    std::ignore = sendCfgValsetAcked(false);  // Optional; a NAK is tolerated.
 
     if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
         // Reapplying survey-in mode does not restart an existing survey.
@@ -601,8 +597,9 @@ bool UBXProtocol::restartSurveyIn()
 
         initCfgValset();
         cfgValset<uint8_t>(UBX_CFG_KEY_TMODE_MODE, 1 /* Survey-in */);
-        cfgValset<uint32_t>(UBX_CFG_KEY_TMODE_SVIN_MIN_DUR,
-                            std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).durationSecs);
+        cfgValset<uint32_t>(
+            UBX_CFG_KEY_TMODE_SVIN_MIN_DUR,
+            static_cast<uint32_t>(std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).duration.count()));
         cfgValset<uint32_t>(
             UBX_CFG_KEY_TMODE_SVIN_ACC_LIMIT,
             UBX::surveyAccuracyWireUnits(std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).accuracyMeters));
@@ -639,13 +636,12 @@ bool UBXProtocol::restartSurveyIn()
 
 GPSCommandResult UBXProtocol::waitForAck(uint16_t msg)
 {
-    const Operation operation(*this, remainingMilliseconds(_commandDeadline.untilUs));
+    const Operation operation(*this, remainingUntil(_commandDeadline.untilUs));
     _operationDeadline.untilUs = std::min(_operationDeadline.untilUs, _commandDeadline.untilUs);
     _controller.beginAcknowledgement(msg);
     if (msg == UBX_MSG_CFG_VALSET && _controller.configurationReadbackRequired()) {
         _controller.finishAcknowledgement();
-        return verifyCfgValset({"UBX-CFG-VALSET readback",
-                                std::chrono::milliseconds(remainingMilliseconds(_commandDeadline.untilUs)),
+        return verifyCfgValset({"UBX-CFG-VALSET readback", remainingUntil(_commandDeadline.untilUs),
                                 _commandWrite.affectedSettings, _commandWrite.evidence.required});
     }
     const auto clearAcknowledgement = qScopeGuard([this] { _controller.finishAcknowledgement(); });
@@ -658,7 +654,7 @@ GPSCommandResult UBXProtocol::waitForAck(uint16_t msg)
 
 GPSCommandResult UBXProtocol::verifyCfgValset(GPSConfigurationStep step)
 {
-    const Operation operation(*this, static_cast<unsigned>(step.timeout.count()));
+    const Operation operation(*this, step.timeout);
     UBX::ConfigurationValueCursor cursor(std::span<const uint8_t>(_valset.bytes).subspan(4, _valset.size - 4));
     GPSCommandResult result;
     while (!cursor.empty()) {
@@ -742,16 +738,15 @@ bool UBXProtocol::sendMessage(uint16_t msg, const uint8_t* payload, uint16_t len
     beginCommandWrite(std::move(step));
     // Identity replies can need two seconds, but multipart writes retain their shorter shared cap.
     const Operation operation(*this, UBX_CONFIG_TIMEOUT);
-    _operationDeadline.untilUs =
-        std::min(_operationDeadline.untilUs, _commandWrite.evidence.startedAtUs + uint64_t(UBX_CONFIG_TIMEOUT) * 1000);
+    _operationDeadline.untilUs = std::min(
+        _operationDeadline.untilUs, GPSDeadline::after(_commandWrite.evidence.startedAtUs, UBX_CONFIG_TIMEOUT).untilUs);
     std::array<uint8_t, 6> header{UBX_SYNC1, UBX_SYNC2};
     (void) LittleEndian::write(header, 2, msg);
     (void) LittleEndian::write(header, 4, length);
-    ubx_checksum_t checksum = {0, 0};
-    calcChecksum(header.data() + 2, header.size() - 2, &checksum);
+    auto checksum = QGC::fletcher8(std::span(header).subspan(2));
 
     if (payload != nullptr) {
-        calcChecksum(payload, length, &checksum);
+        checksum = QGC::fletcher8({payload, length}, checksum);
     }
 
     // Send message
@@ -763,7 +758,7 @@ bool UBXProtocol::sendMessage(uint16_t msg, const uint8_t* payload, uint16_t len
         return false;
     }
 
-    const std::array<uint8_t, 2> checksumBytes{checksum.ck_a, checksum.ck_b};
+    const std::array<uint8_t, 2> checksumBytes{checksum.a, checksum.b};
     if (!write(checksumBytes.data(), static_cast<int>(checksumBytes.size()))) {
         return false;
     }

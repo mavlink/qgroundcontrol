@@ -8,6 +8,8 @@
 
 #include <QtCore/QByteArrayView>
 
+#include "Checksums.h"
+
 /// Bounded RTCM framing shared by receiver codecs and correction inputs.
 /// Drain nextFrame() after completion to recover buffered suffixes.
 class RTCMFramer
@@ -63,12 +65,12 @@ public:
     }
 
     /// Message number from a frame header; zero when the header is incomplete.
-    static uint16_t frameMessageId(std::span<const uint8_t> bytes)
+    [[nodiscard]] static uint16_t frameMessageId(std::span<const uint8_t> bytes)
     {
         return bytes.size() >= HEADER_SIZE + 2 && bytes[0] == PREAMBLE ? (bytes[3] << 4) | (bytes[4] >> 4) : 0;
     }
 
-    static uint16_t frameMessageId(QByteArrayView bytes)
+    [[nodiscard]] static uint16_t frameMessageId(QByteArrayView bytes)
     {
         return frameMessageId(std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(bytes.data()),
                                                        static_cast<size_t>(bytes.size())));
@@ -76,34 +78,19 @@ public:
 
     bool valid() const { return _valid; }
 
-    static bool isValidFrame(std::span<const uint8_t> bytes)
+    [[nodiscard]] static bool isValidFrame(std::span<const uint8_t> bytes)
     {
         if (bytes.size() < HEADER_SIZE + 2 + CRC_SIZE || bytes[0] != PREAMBLE || (bytes[1] & 0xfc)) {
             return false;
         }
         const size_t payloadSize = ((bytes[1] & 3) << 8) | bytes[2];
-        return bytes.size() == HEADER_SIZE + payloadSize + CRC_SIZE && crc24q(bytes) == 0;
+        return bytes.size() == HEADER_SIZE + payloadSize + CRC_SIZE && QGC::crc24q(bytes) == 0;
     }
 
-    static bool isValidFrame(QByteArrayView bytes)
+    [[nodiscard]] static bool isValidFrame(QByteArrayView bytes)
     {
         return isValidFrame(std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(bytes.data()),
                                                      static_cast<size_t>(bytes.size())));
-    }
-
-    static uint32_t crc24q(std::span<const uint8_t> bytes)
-    {
-        uint32_t crc = 0;
-        for (const uint8_t byte : bytes) {
-            crc ^= uint32_t(byte) << 16;
-            for (int bit = 0; bit < 8; ++bit) {
-                crc <<= 1;
-                if (crc & 0x1000000) {
-                    crc ^= 0x1864cfb;
-                }
-            }
-        }
-        return crc & 0xffffff;
     }
 
 private:

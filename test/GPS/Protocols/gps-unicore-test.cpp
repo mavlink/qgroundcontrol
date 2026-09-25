@@ -10,11 +10,13 @@
 #include <string>
 #include <vector>
 
-#include "RTCMFramer.h"
+#include "Checksums.h"
 #include "Support/GPSProtocolTestIO.h"
 #include "Support/UnicoreReceiverModel.h"
 #include "Unicore/UnicoreProtocol.h"
 #include "UnitTest.h"
+
+using namespace std::chrono_literals;
 
 #define CHECK(condition)                                                                                 \
     do {                                                                                                 \
@@ -90,7 +92,7 @@ std::vector<uint8_t> correction(std::string_view payload = "\x43\x20")
 {
     std::vector<uint8_t> bytes{0xd3, static_cast<uint8_t>(payload.size() >> 8), static_cast<uint8_t>(payload.size())};
     bytes.insert(bytes.end(), payload.begin(), payload.end());
-    const auto crc = RTCMFramer::crc24q(bytes);
+    const auto crc = QGC::crc24q(bytes);
     bytes.push_back(crc >> 16);
     bytes.push_back(crc >> 8);
     bytes.push_back(crc);
@@ -187,11 +189,11 @@ void rejectBeforeMutation(GPSTestClock& clock)
         if (variant == 0) {
             config.base.mode = GPSBaseStationConfig::SurveyIn{};
             std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
-            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 60s;
         } else if (variant == 1) {
-            std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs = 3601;
+            std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDuration = 3601s;
         } else if (variant == 2) {
-            std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs = 0;
+            std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDuration = 0s;
         }
         unsigned rate = 115200;
         CHECK(!driver.configure(rate, config));
@@ -421,7 +423,7 @@ void restartAndReadErrors(GPSTestClock& clock)
             consume(driver, position("FIXEDPOS", receiver.coordinates, 1000));
         } else {
             receiver.readError = true;
-            CHECK(driver.receive(100) == 0);
+            CHECK(driver.receive(100ms) == 0);
             CHECK(driver.ioError() == GPSProtocolError::Transport);
             CHECK(driver.ioErrorDetail() == QStringLiteral("Unicore test disconnect"));
         }
@@ -486,13 +488,13 @@ void scheduledAveragingAndBoot(GPSTestClock& clock)
         receiver.initialTow = 604798000;
         UnicoreProtocol driver(receiver.io(), false);
         auto config = baseConfig(false);
-        std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs = 1;
+        std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDuration = 1s;
         unsigned baud = 115200;
         CHECK(driver.configure(baud, config));
         const auto commands = receiver.commands.size();
         for (unsigned slices = 0; clock.nowUs() < 2500000; ++slices) {
             CHECK(slices < 100);
-            driver.receive(1000);
+            driver.receive(1000ms);
             CHECK(driver.receiverReady());
         }
         CHECK(surveyFlags(receiver.surveys.back()) == 1);
@@ -504,7 +506,7 @@ void scheduledAveragingAndBoot(GPSTestClock& clock)
         receiver.events.schedule(500000, [&receiver] { receiver.boot(); });
         for (unsigned slices = 0; driver.receiverReady(); ++slices) {
             CHECK(slices < 100);
-            driver.receive(1000);
+            driver.receive(1000ms);
         }
         CHECK(surveyFlags(receiver.surveys.back()) == 0);
         CHECK(std::isnan(receiver.surveys.back().survey.position.altitudeMeters));

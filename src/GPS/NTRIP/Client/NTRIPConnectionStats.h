@@ -13,15 +13,15 @@
 class NTRIPConnectionStats : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(quint64 bytesReceived READ bytesReceived NOTIFY bytesReceivedChanged)
-    Q_PROPERTY(quint32 messagesReceived READ messagesReceived NOTIFY messagesReceivedChanged)
-    Q_PROPERTY(double dataRateBytesPerSec READ dataRateBytesPerSec NOTIFY dataRateChanged)
-    Q_PROPERTY(double correctionAgeSec READ correctionAgeSec NOTIFY correctionAgeChanged)
-    Q_PROPERTY(bool dataStale READ dataStale NOTIFY dataStaleChanged)
+    Q_PROPERTY(quint64 bytesReceived READ bytesReceived NOTIFY bytesReceivedChanged FINAL)
+    Q_PROPERTY(quint32 messagesReceived READ messagesReceived NOTIFY messagesReceivedChanged FINAL)
+    Q_PROPERTY(double dataRateBytesPerSec READ dataRateBytesPerSec NOTIFY dataRateChanged FINAL)
+    Q_PROPERTY(double correctionAgeSec READ correctionAgeSec NOTIFY correctionAgeChanged FINAL)
+    Q_PROPERTY(bool dataStale READ dataStale NOTIFY dataStaleChanged FINAL)
     /// Per-RTCM-message-ID counts since the current connection started.
     /// Returned as a list of [id, count] pairs sorted ascending by id so the
     /// QML Repeater can render deterministic chips without re-sorting.
-    Q_PROPERTY(QList<RTCMMessageCount> messageCountsById READ messageCountsById NOTIFY messageCountsByIdChanged)
+    Q_PROPERTY(QList<RTCMMessageCount> messageCountsById READ messageCountsById NOTIFY messageCountsByIdChanged FINAL)
 
 public:
     explicit NTRIPConnectionStats(QObject* parent = nullptr);
@@ -54,7 +54,7 @@ signals:
     void messageCountsByIdChanged();
 
 private:
-    void _updateDataStale(qint64 nowMs);
+    void _updateDataStale(std::chrono::milliseconds now);
 
     /// UI indicator only, measured from the last receipt or stream start; routing freshness is separate.
     static constexpr std::chrono::milliseconds kStaleThreshold{5000};
@@ -65,8 +65,9 @@ private:
     quint32 _prevMessagesReceived = 0;
     bool _dataStale = false;
     bool _messageCountsDirty = false;
-    qint64 _lastReceivedAtMs = 0;
-    qint64 _startedAtMs = 0;
+    /// Monotonic receipt times since the steady-clock epoch; zero when unset.
+    std::chrono::milliseconds _lastReceivedAt{0};
+    std::chrono::milliseconds _startedAt{0};
     QChronoTimer _rateTimer;
     // Per-ID counts.
     QHash<int, quint32> _messageCountsById;

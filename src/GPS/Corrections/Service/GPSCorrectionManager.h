@@ -24,14 +24,15 @@ class RuntimeScheduler;
 class GPSCorrectionManager : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(RTCMMAVLink* rtcmMavlink READ rtcmMavlink CONSTANT)
-    Q_PROPERTY(QAbstractItemModel* sources READ sourceModel CONSTANT)
-    Q_PROPERTY(QList<GPSCorrectionStreamDiagnostic> sourceInstances READ sourceInstances NOTIFY sourceInstancesChanged)
-    Q_PROPERTY(bool hasSelectedStream READ hasSelectedStream NOTIFY sourceInstancesChanged)
-    Q_PROPERTY(GPSCorrectionStreamDiagnostic selectedStream READ selectedStream NOTIFY sourceInstancesChanged)
-    Q_PROPERTY(quint64 selectedBytesPerSecond READ selectedBytesPerSecond NOTIFY selectedBytesPerSecondChanged)
-    Q_PROPERTY(GPSCorrectionEventModel* events READ events CONSTANT)
-    Q_PROPERTY(QAbstractItemModel* destinations READ destinationModel CONSTANT)
+    Q_PROPERTY(RTCMMAVLink* rtcmMavlink READ rtcmMavlink CONSTANT FINAL)
+    Q_PROPERTY(QAbstractItemModel* sources READ sourceModel CONSTANT FINAL)
+    Q_PROPERTY(
+        QList<GPSCorrectionStreamDiagnostic> sourceInstances READ sourceInstances NOTIFY sourceInstancesChanged FINAL)
+    Q_PROPERTY(bool hasSelectedStream READ hasSelectedStream NOTIFY sourceInstancesChanged FINAL)
+    Q_PROPERTY(GPSCorrectionStreamDiagnostic selectedStream READ selectedStream NOTIFY sourceInstancesChanged FINAL)
+    Q_PROPERTY(quint64 selectedBytesPerSecond READ selectedBytesPerSecond NOTIFY selectedBytesPerSecondChanged FINAL)
+    Q_PROPERTY(GPSCorrectionEventModel* events READ events CONSTANT FINAL)
+    Q_PROPERTY(QAbstractItemModel* destinations READ destinationModel CONSTANT FINAL)
 
 public:
     using RoutingPolicy = GPSCorrectionRouter::Policy;

@@ -6,6 +6,7 @@
 #include <cstring>
 #include <memory>
 #include <stdexcept>
+#include <stop_token>
 #include <thread>
 
 #include <QtCore/QCoreApplication>
@@ -13,6 +14,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEventLoop>
 #include <QtCore/QFile>
+#include <QtCore/QTimer>
 #include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QUdpSocket>
@@ -21,6 +23,8 @@
 #include "TCPGPSTransport.h"
 #include "UDPGPSTransport.h"
 #include "UnitTest.h"
+
+using namespace std::chrono_literals;
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && !defined(QGC_NO_SERIAL_LINK)
 #include <fcntl.h>
@@ -47,7 +51,7 @@ public:
     virtual QByteArray peerRead(qsizetype bytes) = 0;
     virtual void closePeer() = 0;
 
-    std::atomic_bool stop{false};
+    std::stop_source stop;
     std::unique_ptr<GPSTransport> transport;
     bool bidirectional = true;
     bool terminalPeer = true;
@@ -62,7 +66,8 @@ public:
         if (!_server.listen(QHostAddress::LocalHost)) {
             throw std::runtime_error("Cannot listen for TCP transport contract");
         }
-        transport = std::make_unique<TCPGPSTransport>(QStringLiteral("127.0.0.1"), _server.serverPort(), stop);
+        transport =
+            std::make_unique<TCPGPSTransport>(QStringLiteral("127.0.0.1"), _server.serverPort(), stop.get_token());
         if (transport->open().status != GPSOpenStatus::Opened) {
             throw std::runtime_error("Cannot open TCP transport contract");
         }
@@ -111,7 +116,7 @@ public:
         }
         _port = reservation.localPort();
         reservation.close();
-        transport = std::make_unique<UDPGPSTransport>(_port, stop, 50);
+        transport = std::make_unique<UDPGPSTransport>(_port, stop.get_token(), 50ms);
         if (transport->open().status != GPSOpenStatus::Opened) {
             throw std::runtime_error("Cannot open UDP transport contract");
         }
@@ -141,9 +146,9 @@ class StreamEndpoint final : public ContractEndpoint
 public:
     StreamEndpoint()
     {
-        auto receiver = std::make_unique<ScriptedReceiver>(stop);
+        auto receiver = std::make_unique<ScriptedReceiver>(stop.get_token());
         _receiver = receiver.get();
-        _receiver->setReadHandler([this](uint8_t*, int, int) -> std::optional<GPSReadResult> {
+        _receiver->setReadHandler([this](uint8_t*, int, std::chrono::milliseconds) -> std::optional<GPSReadResult> {
             if (_closed) {
                 return GPSReadResult{GPSReadStatus::Closed};
             }
@@ -215,7 +220,7 @@ public:
         if (slave.isEmpty()) {
             throw std::runtime_error("Cannot create serial pseudo-terminal");
         }
-        transport = std::make_unique<SerialGPSTransport>(slave, stop);
+        transport = std::make_unique<SerialGPSTransport>(slave, stop.get_token());
         if (transport->open().status != GPSOpenStatus::Opened) {
             throw std::runtime_error("Cannot open serial transport contract");
         }
@@ -271,19 +276,19 @@ std::unique_ptr<ContractEndpoint> makeEndpoint(TransportKind kind)
     return {};
 }
 
-QByteArray readTransport(GPSTransport& transport, qsizetype bytes, int timeoutMs)
+QByteArray readTransport(GPSTransport& transport, qsizetype bytes, std::chrono::milliseconds timeout)
 {
     QByteArray received;
     std::array<uint8_t, 64> buffer{};
     const QDeadlineTimer deadline(TestTimeout::mediumMs());
     while (received.size() < bytes && !deadline.hasExpired()) {
         const auto desired = std::min<qsizetype>(static_cast<qsizetype>(buffer.size()), bytes - received.size());
-        const auto result = transport.read(buffer.data(), static_cast<int>(desired), timeoutMs);
+        const auto result = transport.read(buffer.data(), static_cast<int>(desired), timeout);
         if (result.status != GPSReadStatus::Data || result.bytesRead <= 0) {
             break;
         }
         received.append(reinterpret_cast<const char*>(buffer.data()), result.bytesRead);
-        timeoutMs = 0;
+        timeout = 0ms;
     }
     return received;
 }
@@ -309,6 +314,8 @@ private slots:
     void _emptyReadTimesOut();
     void _cancelRead_data();
     void _cancelRead();
+    void _stopWakesBlockedNetworkRead_data();
+    void _stopWakesBlockedNetworkRead();
     void _writeReachesPeer_data();
     void _writeReachesPeer();
     void _closedPeerIsTerminal_data();
@@ -329,7 +336,7 @@ void GPSTransportContractTest::_readDeliversBytes()
     }
     const QByteArray payload("abcdef");
     QVERIFY(endpoint->peerWrite(payload));
-    QCOMPARE(readTransport(*endpoint->transport, payload.size(), TestTimeout::shortMs()), payload);
+    QCOMPARE(readTransport(*endpoint->transport, payload.size(), TestTimeout::shortDuration()), payload);
 }
 
 void GPSTransportContractTest::_emptyReadTimesOut_data()
@@ -347,7 +354,7 @@ void GPSTransportContractTest::_emptyReadTimesOut()
     std::array<uint8_t, 8> buffer{};
     QElapsedTimer elapsed;
     elapsed.start();
-    const auto result = endpoint->transport->read(buffer.data(), static_cast<int>(buffer.size()), 20);
+    const auto result = endpoint->transport->read(buffer.data(), static_cast<int>(buffer.size()), 20ms);
     QCOMPARE(result.status, GPSReadStatus::TimedOut);
     QVERIFY(elapsed.elapsed() < TestTimeout::shortMs());
     QVERIFY(!endpoint->transport->fatalError());
@@ -370,15 +377,48 @@ void GPSTransportContractTest::_cancelRead()
     }
     std::jthread cancellation([&] {
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        endpoint->stop = true;
+        endpoint->stop.request_stop();
     });
     std::array<uint8_t, 8> buffer{};
     QElapsedTimer elapsed;
     elapsed.start();
     const auto result =
-        endpoint->transport->read(buffer.data(), static_cast<int>(buffer.size()), TestTimeout::longMs());
+        endpoint->transport->read(buffer.data(), static_cast<int>(buffer.size()), TestTimeout::longDuration());
     QCOMPARE(result.status, GPSReadStatus::Cancelled);
     QVERIFY(elapsed.elapsed() < TestTimeout::shortMs());
+}
+
+void GPSTransportContractTest::_stopWakesBlockedNetworkRead_data()
+{
+    QTest::addColumn<int>("kind");
+    QTest::newRow("TCP") << static_cast<int>(TransportKind::Tcp);
+    QTest::newRow("UDP") << static_cast<int>(TransportKind::Udp);
+}
+
+void GPSTransportContractTest::_stopWakesBlockedNetworkRead()
+{
+    QFETCH(int, kind);
+    auto endpoint = makeEndpoint(static_cast<TransportKind>(kind));
+    QElapsedTimer clock;
+    clock.start();
+    std::atomic<qint64> stoppedAtNs = -1;
+    std::jthread stopper;
+    QObject context;
+    // Posted events run only once the read is waiting in its event loop.
+    QTimer::singleShot(0, &context, [&] {
+        stopper = std::jthread([&] {
+            stoppedAtNs = clock.nsecsElapsed();
+            endpoint->stop.request_stop();
+        });
+    });
+    std::array<uint8_t, 8> buffer{};
+    const auto result =
+        endpoint->transport->read(buffer.data(), static_cast<int>(buffer.size()), TestTimeout::longDuration());
+    const qint64 returnedAtNs = clock.nsecsElapsed();
+    QCOMPARE(result.status, GPSReadStatus::Cancelled);
+    const double latencyMs = static_cast<double>(returnedAtNs - stoppedAtNs.load()) / 1e6;
+    // A stop issued as the wait begins would take a full 50 ms poll to observe; request_stop() must wake the wait.
+    QVERIFY2(latencyMs < 40.0, qPrintable(QStringLiteral("stop latency %1 ms").arg(latencyMs)));
 }
 
 void GPSTransportContractTest::_writeReachesPeer_data()
@@ -420,7 +460,7 @@ void GPSTransportContractTest::_closedPeerIsTerminal()
     }
     endpoint->closePeer();
     std::array<uint8_t, 8> buffer{};
-    const auto result = endpoint->transport->read(buffer.data(), static_cast<int>(buffer.size()), 20);
+    const auto result = endpoint->transport->read(buffer.data(), static_cast<int>(buffer.size()), 20ms);
     QVERIFY(result.status == GPSReadStatus::Closed || result.status == GPSReadStatus::Error ||
             result.status == GPSReadStatus::Cancelled);
     QVERIFY(endpoint->transport->fatalError() || result.status != GPSReadStatus::Data);

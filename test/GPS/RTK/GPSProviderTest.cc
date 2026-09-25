@@ -1,8 +1,11 @@
 #include "GPSProviderTest.h"
 
+#include <chrono>
 #include <cmath>
 #include <memory>
 #include <optional>
+#include <stop_token>
+#include <utility>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
@@ -25,14 +28,11 @@
 #include "SerialPortManager.h"
 #endif
 
-Q_DECLARE_METATYPE(GPSBaseStationConfig)
+using namespace std::chrono_literals;
 
 void GPSProviderTest::_queuedPayloadsOwnSnapshots()
 {
     GPSProvider provider({}, GPSType::ublox, {});
-    for (const auto name : {"GPSSatelliteReport", "GPSPositionReport", "GPSConnectionError", "GPSSurveyReport"}) {
-        QVERIFY2(QMetaType::fromName(name).isValid(), name);
-    }
     GPSSatelliteReport satellites;
     auto fixType = GPSPositionReport::FixType::Unknown;
     GPSSurveyReport survey;
@@ -162,9 +162,9 @@ struct TransportTrace
 class TestTransport : public ScriptedReceiver
 {
 public:
-    TestTransport(const std::atomic_bool& requestStop, TransportTrace& trace, std::function<void()> stop,
-                  bool openResult, bool cancelInOpen)
-        : ScriptedReceiver(requestStop)
+    TestTransport(std::stop_token stopToken, TransportTrace& trace, std::function<void()> stop, bool openResult,
+                  bool cancelInOpen)
+        : ScriptedReceiver(std::move(stopToken))
         , _trace(trace)
         , _stop(stop)
         , _openResult(openResult)
@@ -178,8 +178,9 @@ public:
             }
             return GPSOpenResult{_openResult ? GPSOpenStatus::Opened : GPSOpenStatus::Error};
         });
-        setReadHandler(
-            [](uint8_t*, int, int) -> std::optional<GPSReadResult> { return GPSReadResult{GPSReadStatus::Error}; });
+        setReadHandler([](uint8_t*, int, std::chrono::milliseconds) -> std::optional<GPSReadResult> {
+            return GPSReadResult{GPSReadStatus::Error};
+        });
         setWriteHandler([](const QByteArray&, const ScriptedReceiver::WriteContext&) {
             return std::optional<GPSWriteResult>{GPSWriteResult{GPSWriteStatus::Error}};
         });
@@ -217,14 +218,14 @@ void GPSProviderTest::_transportLifetimeStaysOnWorker()
     trace.factoryLifetime = lifetime;
     std::function<void()> stopProvider;
     GPSProvider provider(
-        [&, lifetime = std::move(lifetime)](const std::atomic_bool& requestStop) {
-            return std::make_unique<TestTransport>(requestStop, trace, stopProvider, openResult, cancelInOpen);
+        [&, lifetime = std::move(lifetime)](std::stop_token stopToken) {
+            return std::make_unique<TestTransport>(std::move(stopToken), trace, stopProvider, openResult, cancelInOpen);
         },
         GPSType::ublox, GPSReceiverConfig{});
     stopProvider = [&provider]() { provider.stop(); };
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
-    QVERIFY(provider.wait(TestTimeout::shortMs()));
+    QVERIFY(provider.wait(TestTimeout::shortDuration()));
     QVERIFY(trace.constructedOn && trace.constructedOn != QThread::currentThread());
     QCOMPARE(trace.openedOn, trace.constructedOn);
     QCOMPARE(trace.destroyedOn, trace.constructedOn);
@@ -248,12 +249,12 @@ void GPSProviderTest::_missingTransportReportsOpenFailure()
     QFETCH(bool, hasFactory);
     GPSProvider::TransportFactory factory;
     if (hasFactory) {
-        factory = [](const std::atomic_bool&) { return std::unique_ptr<GPSTransport>{}; };
+        factory = [](std::stop_token) { return std::unique_ptr<GPSTransport>{}; };
     }
     GPSProvider provider(std::move(factory), GPSType::ublox, GPSReceiverConfig{});
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
-    QVERIFY(provider.wait(TestTimeout::shortMs()));
+    QVERIFY(provider.wait(TestTimeout::shortDuration()));
     QCOMPARE(errors.count(), 1);
     QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::OpenFailed);
 }
@@ -262,7 +263,7 @@ void GPSProviderTest::_cancelledProviderDoesNotCreateTransport()
 {
     bool created = false;
     GPSProvider provider(
-        [&](const std::atomic_bool&) {
+        [&](std::stop_token) {
             created = true;
             return std::unique_ptr<GPSTransport>{};
         },
@@ -270,7 +271,7 @@ void GPSProviderTest::_cancelledProviderDoesNotCreateTransport()
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.stop();
     provider.start();
-    QVERIFY(provider.wait(TestTimeout::shortMs()));
+    QVERIFY(provider.wait(TestTimeout::shortDuration()));
     QVERIFY(!created);
     QVERIFY(errors.isEmpty());
 }
@@ -278,21 +279,19 @@ void GPSProviderTest::_cancelledProviderDoesNotCreateTransport()
 void GPSProviderTest::_workerLifecycle()
 {
     QSemaphore entered;
-    QSemaphore idle;
     QThread* sessionThread = nullptr;
     bool tokenStopped = false;
     auto provider = std::make_unique<GPSProvider>(
-        [&](const std::atomic_bool& requestStop) {
+        [&](std::stop_token stopToken) {
             sessionThread = QThread::currentThread();
+            QSemaphore stopped;
+            const std::stop_callback wake(stopToken, [&stopped] { stopped.release(); });
             entered.release();
-            while (!requestStop) {
-                (void) idle.tryAcquire(1, 10);
-            }
-            tokenStopped = requestStop;
+            tokenStopped = stopped.tryAcquire(1, TestTimeout::mediumMs()) && stopToken.stop_requested();
             return std::unique_ptr<GPSTransport>{};
         },
         GPSType::ublox, GPSReceiverConfig{});
-    QVERIFY(provider->wait(0));
+    QVERIFY(provider->wait(0ms));
     QVERIFY(!provider->isRunning());
     QSignalSpy finished(provider.get(), &GPSProvider::finished);
     provider->start();
@@ -301,9 +300,9 @@ void GPSProviderTest::_workerLifecycle()
     QVERIFY(provider->isRunning());
     QVERIFY(sessionThread != QThread::currentThread());
     QCOMPARE(provider->thread(), QThread::currentThread());
-    QVERIFY(!provider->wait(1));
+    QVERIFY(!provider->wait(1ms));
     provider->stop();
-    QVERIFY(provider->wait(TestTimeout::shortMs()));
+    QVERIFY(provider->wait(TestTimeout::shortDuration()));
     QVERIFY(tokenStopped);
     QVERIFY(finished.isEmpty());
     QTRY_COMPARE_WITH_TIMEOUT(finished.size(), 1, TestTimeout::shortMs());
@@ -317,8 +316,8 @@ namespace {
 class FemtoAckTransport : public ScriptedReceiver
 {
 public:
-    explicit FemtoAckTransport(const std::atomic_bool& stop)
-        : ScriptedReceiver(stop)
+    explicit FemtoAckTransport(std::stop_token stopToken)
+        : ScriptedReceiver(std::move(stopToken))
     {
         _model.failIdleReads = true;
         setModel(&_model);
@@ -334,15 +333,16 @@ class ExpiringSatelliteTransport : public ScriptedReceiver
 public:
     static constexpr int POSITION_AT_MS = 2000;
 
-    ExpiringSatelliteTransport(const std::atomic_bool& stop, std::atomic<qint64>& lastPositionAtMs)
-        : ScriptedReceiver(stop)
+    ExpiringSatelliteTransport(std::stop_token stopToken, std::atomic<qint64>& lastPositionAtMs)
+        : ScriptedReceiver(std::move(stopToken))
         , _lastPositionAtMs(lastPositionAtMs)
     {
-        setReadHandler([this](uint8_t*, int, int timeoutMs) -> std::optional<GPSReadResult> {
-            if (!hasQueuedReadData() && timeoutMs > 0) {
-                const qint64 untilPosition =
-                    _sentPosition ? timeoutMs : qMax(qint64{0}, POSITION_AT_MS - _elapsed.elapsed());
-                QThread::msleep(static_cast<unsigned long>(qMin(qint64{timeoutMs}, untilPosition)));
+        setReadHandler([this](uint8_t*, int, std::chrono::milliseconds timeout) -> std::optional<GPSReadResult> {
+            if (!hasQueuedReadData() && timeout > 0ms) {
+                const auto untilPosition =
+                    _sentPosition ? timeout
+                                  : std::max(0ms, std::chrono::milliseconds(POSITION_AT_MS - _elapsed.elapsed()));
+                QThread::sleep(std::min(timeout, untilPosition));
             }
             if (isCancelled()) {
                 return GPSReadResult{GPSReadStatus::Cancelled};
@@ -378,10 +378,10 @@ private:
 class FixSequenceTransport : public ScriptedReceiver
 {
 public:
-    explicit FixSequenceTransport(const std::atomic_bool& stop)
-        : ScriptedReceiver(stop)
+    explicit FixSequenceTransport(std::stop_token stopToken)
+        : ScriptedReceiver(std::move(stopToken))
     {
-        setReadHandler([this](uint8_t*, int, int) -> std::optional<GPSReadResult> {
+        setReadHandler([this](uint8_t*, int, std::chrono::milliseconds) -> std::optional<GPSReadResult> {
             if (!hasQueuedReadData()) {
                 return GPSReadResult{GPSReadStatus::Cancelled};
             }
@@ -406,14 +406,15 @@ public:
 void GPSProviderTest::_positionFixTransitions()
 {
     for (int session = 0; session < 2; ++session) {
-        GPSProvider provider([](const std::atomic_bool& stop) { return std::make_unique<FixSequenceTransport>(stop); },
-                             GPSType::passive, {.role = GPSReceiverConfig::Role::Passive, .baudRate = 115200});
+        GPSProvider provider(
+            [](std::stop_token stopToken) { return std::make_unique<FixSequenceTransport>(std::move(stopToken)); },
+            GPSType::passive, {.role = GPSReceiverConfig::Role::Passive, .baudRate = 115200});
         QSignalSpy positions(&provider, &GPSProvider::positionUpdate);
         provider.start();
-        const bool finished = provider.wait(TestTimeout::shortMs());
+        const bool finished = provider.wait(TestTimeout::shortDuration());
         if (!finished) {
             provider.stop();
-            QVERIFY(provider.wait(TestTimeout::longMs()));
+            QVERIFY(provider.wait(TestTimeout::longDuration()));
         }
         QVERIFY(finished);
         using Fix = GPSPositionReport::FixType;
@@ -434,8 +435,8 @@ void GPSProviderTest::_satelliteExpiryDoesNotRenewLiveness()
 {
     std::atomic<qint64> lastPositionAtMs = -1;
     GPSProvider provider(
-        [&](const std::atomic_bool& stop) {
-            return std::make_unique<ExpiringSatelliteTransport>(stop, lastPositionAtMs);
+        [&](std::stop_token stopToken) {
+            return std::make_unique<ExpiringSatelliteTransport>(std::move(stopToken), lastPositionAtMs);
         },
         GPSType::passive, {.role = GPSReceiverConfig::Role::Passive, .baudRate = 115200});
     std::atomic_bool freshView = false;
@@ -455,10 +456,10 @@ void GPSProviderTest::_satelliteExpiryDoesNotRenewLiveness()
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     elapsed.start();
     provider.start();
-    const bool finished = provider.wait(TestTimeout::longMs());
+    const bool finished = provider.wait(TestTimeout::longDuration());
     if (!finished) {
         provider.stop();
-        QVERIFY(provider.wait(TestTimeout::longMs()));
+        QVERIFY(provider.wait(TestTimeout::longDuration()));
     }
     QVERIFY(finished);
     QVERIFY(freshView.load());
@@ -468,9 +469,9 @@ void GPSProviderTest::_satelliteExpiryDoesNotRenewLiveness()
     QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
     // An expiry credited as new traffic would add another complete inactivity window.
     QVERIFY(lastPositionAtMs.load() >= ExpiringSatelliteTransport::POSITION_AT_MS);
-    const qint64 expectedDeadline = lastPositionAtMs.load() + GPSProvider::kUsefulDataTimeoutMs;
-    QVERIFY(elapsed.elapsed() >= expectedDeadline);
-    QVERIFY(elapsed.elapsed() < expectedDeadline + GPSProvider::kGPSReceiveTimeout);
+    const auto expectedDeadline = std::chrono::milliseconds(lastPositionAtMs.load()) + GPSProvider::kUsefulDataTimeout;
+    QVERIFY(elapsed.durationElapsed() >= expectedDeadline);
+    QVERIFY(elapsed.durationElapsed() < expectedDeadline + GPSProvider::kGPSReceiveTimeout);
 }
 
 void GPSProviderTest::_ancillaryTraffic_data()
@@ -488,9 +489,9 @@ void GPSProviderTest::_ancillaryTraffic()
     SBFReceiverModel* peer = model.get();
     QElapsedTimer streamingTime;
     GPSProvider provider(
-        [model, sendUsage](const std::atomic_bool& stop) {
+        [model, sendUsage](std::stop_token stopToken) {
             model->sendUsage = sendUsage;
-            return std::make_unique<ScriptedReceiver>(stop, model.get());
+            return std::make_unique<ScriptedReceiver>(std::move(stopToken), model.get());
         },
         GPSType::septentrio,
         {.base = {.mode = GPSBaseStationConfig::Fixed{
@@ -509,7 +510,7 @@ void GPSProviderTest::_ancillaryTraffic()
     QSignalSpy satellites(&provider, &GPSProvider::satelliteInfoUpdate);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
-    const bool finished = provider.wait(TestTimeout::mediumMs());
+    const bool finished = provider.wait(TestTimeout::mediumDuration());
     if (!finished) {
         provider.stop();
         provider.wait();
@@ -523,7 +524,7 @@ void GPSProviderTest::_ancillaryTraffic()
         QVERIFY(!report.inView);
         QCOMPARE(report.used, std::optional<int>{12});
     } else {
-        QVERIFY(streamingTime.elapsed() >= GPSProvider::kUsefulDataTimeoutMs);
+        QVERIFY(streamingTime.durationElapsed() >= GPSProvider::kUsefulDataTimeout);
         QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
     }
 }
@@ -531,10 +532,10 @@ void GPSProviderTest::_ancillaryTraffic()
 void GPSProviderTest::_configuredReceiverReportsReadyThenLoss_data()
 {
     QTest::addColumn<GPSBaseStationConfig>("config");
-    QTest::newRow("survey") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{2, 180}};
-    QTest::newRow("minimum-survey") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{0.0001, 1}};
+    QTest::newRow("survey") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{2, 180s}};
+    QTest::newRow("minimum-survey") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{0.0001, 1s}};
     QTest::newRow("maximum-survey") << GPSBaseStationConfig{
-        .mode = GPSBaseStationConfig::SurveyIn{429496.7295, 4294967295LL}};
+        .mode = GPSBaseStationConfig::SurveyIn{429496.7295, 4294967295s}};
     QTest::newRow("fixed") << GPSBaseStationConfig{
         .mode = GPSBaseStationConfig::Fixed{
             .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}, .accuracyMeters = 1}};
@@ -555,13 +556,13 @@ void GPSProviderTest::_configuredReceiverReportsReadyThenLoss()
     expectLogMessage("GPS.Driver.Protocols.Femto", QtWarningMsg,
                      QRegularExpression(QRegularExpression::escape(diagnostic)));
     GPSProvider provider(
-        [](const std::atomic_bool& requestStop) { return std::make_unique<FemtoAckTransport>(requestStop); },
+        [](std::stop_token stopToken) { return std::make_unique<FemtoAckTransport>(std::move(stopToken)); },
         GPSType::femto, GPSReceiverConfig{.base = config});
     QSignalSpy ready(&provider, &GPSProvider::receiverReady);
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     QSignalSpy surveys(&provider, &GPSProvider::surveyInStatus);
     provider.start();
-    QVERIFY(provider.wait(TestTimeout::mediumMs()));
+    QVERIFY(provider.wait(TestTimeout::mediumDuration()));
     verifyExpectedLogMessage();
     QCOMPARE(ready.size(), 1);
     QCOMPARE(errors.size(), 1);
@@ -584,15 +585,15 @@ void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
     TransportTrace trace;
     std::function<void()> stopProvider;
     GPSProvider provider(
-        [&](const std::atomic_bool& requestStop) {
+        [&](std::stop_token stopToken) {
             stopProvider();
-            return std::make_unique<TestTransport>(requestStop, trace, []() {}, true, false);
+            return std::make_unique<TestTransport>(std::move(stopToken), trace, []() {}, true, false);
         },
         GPSType::ublox, GPSReceiverConfig{});
     stopProvider = [&provider]() { provider.stop(); };
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
-    QVERIFY(provider.wait(TestTimeout::shortMs()));
+    QVERIFY(provider.wait(TestTimeout::shortDuration()));
     QVERIFY(trace.constructedOn && trace.constructedOn != QThread::currentThread());
     QVERIFY(!trace.openedOn);
     QCOMPARE(trace.destroyedOn, trace.constructedOn);
@@ -618,7 +619,7 @@ void GPSProviderTest::_finishedReceiverReleasesReservation()
     auto reservation = ports.reservePort(QStringLiteral("/test/gps"));
     QVERIFY(reservation);
     GPSProvider provider(
-        [reservation = std::move(reservation)](const std::atomic_bool&) { return std::unique_ptr<GPSTransport>{}; },
+        [reservation = std::move(reservation)](std::stop_token) { return std::unique_ptr<GPSTransport>{}; },
         GPSType::ublox, GPSReceiverConfig{});
     if (cancelled) {
         provider.stop();
@@ -626,7 +627,7 @@ void GPSProviderTest::_finishedReceiverReleasesReservation()
     QVERIFY(!ports.canReservePort(QStringLiteral("/test/mavlink")));
     inventory.clear();
     provider.start();
-    QVERIFY(provider.wait(TestTimeout::shortMs()));
+    QVERIFY(provider.wait(TestTimeout::shortDuration()));
     QVERIFY(!ports.anyPortReserved());
     QVERIFY(ports.reservePort(QStringLiteral("/test/mavlink")));
     QTRY_VERIFY_WITH_TIMEOUT(ports.availablePorts().isEmpty(), TestTimeout::mediumMs());

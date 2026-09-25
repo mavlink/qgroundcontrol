@@ -1,12 +1,15 @@
 #include "UDPGPSTransportTest.h"
 
 #include <array>
-#include <atomic>
+#include <chrono>
+#include <stop_token>
 
 #include <QtCore/QRegularExpression>
 #include <QtNetwork/QUdpSocket>
 
 #include "UDPGPSTransport.h"
+
+using namespace std::chrono_literals;
 
 namespace {
 quint16 reserveUdpPort()
@@ -20,27 +23,27 @@ quint16 reserveUdpPort()
     return port;
 }
 
-QByteArray readAll(UDPGPSTransport& transport, int timeoutMs)
+QByteArray readAll(UDPGPSTransport& transport, std::chrono::milliseconds timeout)
 {
     std::array<uint8_t, 256> buffer{};
     QByteArray received;
     for (;;) {
-        const auto result = transport.read(buffer.data(), static_cast<int>(buffer.size()), timeoutMs);
+        const auto result = transport.read(buffer.data(), static_cast<int>(buffer.size()), timeout);
         if (result.status != GPSReadStatus::Data || result.bytesRead == 0) {
             return received;
         }
         received.append(reinterpret_cast<const char*>(buffer.data()), result.bytesRead);
-        timeoutMs = 0;
+        timeout = 0ms;
     }
 }
 }  // namespace
 
 void UDPGPSTransportTest::_receivesSelectedSender()
 {
-    std::atomic_bool stop = false;
+    std::stop_source stop;
     const quint16 port = reserveUdpPort();
     QVERIFY(port != 0);
-    UDPGPSTransport transport(port, stop);
+    UDPGPSTransport transport(port, stop.get_token());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     QVERIFY(!transport.fatalError());
     QUdpSocket first;
@@ -51,17 +54,17 @@ void UDPGPSTransportTest::_receivesSelectedSender()
     QCOMPARE(second.writeDatagram("ignored", QHostAddress::LocalHost, port), 7);
     QCOMPARE(first.writeDatagram("00\r\n", QHostAddress::LocalHost, port), 4);
     QByteArray received;
-    QTRY_COMPARE_WITH_TIMEOUT((received += readAll(transport, 20), received), QByteArray("$GPGGA,1*00\r\n"),
+    QTRY_COMPARE_WITH_TIMEOUT((received += readAll(transport, 20ms), received), QByteArray("$GPGGA,1*00\r\n"),
                               TestTimeout::mediumMs());
-    QCOMPARE(readAll(transport, 0), QByteArray());
+    QCOMPARE(readAll(transport, 0ms), QByteArray());
 }
 
 void UDPGPSTransportTest::_idleSenderIsReplaced()
 {
-    std::atomic_bool stop = false;
+    std::stop_source stop;
     const quint16 port = reserveUdpPort();
     QVERIFY(port != 0);
-    UDPGPSTransport transport(port, stop, 50);
+    UDPGPSTransport transport(port, stop.get_token(), 50ms);
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     QUdpSocket first;
     QUdpSocket second;
@@ -69,18 +72,18 @@ void UDPGPSTransportTest::_idleSenderIsReplaced()
     QVERIFY(second.bind(QHostAddress::LocalHost, 0));
     QCOMPARE(first.writeDatagram("$partial", QHostAddress::LocalHost, port), 8);
     QByteArray received;
-    QTRY_COMPARE_WITH_TIMEOUT((received += readAll(transport, 20), received), QByteArray("$partial"),
+    QTRY_COMPARE_WITH_TIMEOUT((received += readAll(transport, 20ms), received), QByteArray("$partial"),
                               TestTimeout::mediumMs());
     // Once the selected sender is idle, another sender takes over without inheriting its bytes.
     QTRY_VERIFY_WITH_TIMEOUT(
-        second.writeDatagram("$next", QHostAddress::LocalHost, port) == 5 && readAll(transport, 20).endsWith("$next"),
+        second.writeDatagram("$next", QHostAddress::LocalHost, port) == 5 && readAll(transport, 20ms).endsWith("$next"),
         TestTimeout::mediumMs());
 }
 
 void UDPGPSTransportTest::_receiveOnlyLink()
 {
-    std::atomic_bool stop = false;
-    UDPGPSTransport transport(0, stop);
+    std::stop_source stop;
+    UDPGPSTransport transport(0, stop.get_token());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     QCOMPARE(transport.fixedBaudrate(), GPSTransport::BRIDGE_BAUDRATE);
     QVERIFY(transport.setBaudrate(GPSTransport::BRIDGE_BAUDRATE));
@@ -90,18 +93,18 @@ void UDPGPSTransportTest::_receiveOnlyLink()
     QCOMPARE(written.status, GPSWriteStatus::Unsupported);
     QCOMPARE(written.acceptedBytes, 0);
     std::array<uint8_t, 8> buffer{};
-    QCOMPARE(transport.read(buffer.data(), static_cast<int>(buffer.size()), 0).status, GPSReadStatus::TimedOut);
+    QCOMPARE(transport.read(buffer.data(), static_cast<int>(buffer.size()), 0ms).status, GPSReadStatus::TimedOut);
 }
 
 void UDPGPSTransportTest::_cancelledRead()
 {
-    std::atomic_bool stop = false;
-    UDPGPSTransport transport(0, stop);
+    std::stop_source stop;
+    UDPGPSTransport transport(0, stop.get_token());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
-    stop = true;
+    stop.request_stop();
     std::array<uint8_t, 8> buffer{};
-    QCOMPARE(transport.read(buffer.data(), static_cast<int>(buffer.size()), 1000).status, GPSReadStatus::Cancelled);
-    UDPGPSTransport unopened(0, stop);
+    QCOMPARE(transport.read(buffer.data(), static_cast<int>(buffer.size()), 1000ms).status, GPSReadStatus::Cancelled);
+    UDPGPSTransport unopened(0, stop.get_token());
     QCOMPARE(unopened.open().status, GPSOpenStatus::Cancelled);
 }
 
@@ -109,8 +112,8 @@ void UDPGPSTransportTest::_portInUse()
 {
     QUdpSocket owner;
     QVERIFY(owner.bind(QHostAddress::AnyIPv4, 0));
-    std::atomic_bool stop = false;
-    UDPGPSTransport transport(owner.localPort(), stop);
+    std::stop_source stop;
+    UDPGPSTransport transport(owner.localPort(), stop.get_token());
     expectLogMessage("GPS.Transport.UDPGPSTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Cannot listen for receiver data on UDP port")));
     const auto opened = transport.open();

@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "../../../../src/GPS/Protocols/SBF/SBFMessages.h"
-#include "../../../../src/GPS/RTCM/RTCMFramer.h"
+#include "../../../../src/Utilities/Math/Checksums.h"
 #include "../../../../src/Utilities/Parsing/Wire/LittleEndian.h"
 
 // Fixtures encode documented offsets independently of decoded object alignment.
@@ -79,7 +79,7 @@ inline std::vector<uint8_t> rtcmPacket(std::span<const uint8_t> payload)
 {
     std::vector<uint8_t> result{0xd3, static_cast<uint8_t>(payload.size() >> 8), static_cast<uint8_t>(payload.size())};
     result.insert(result.end(), payload.begin(), payload.end());
-    const auto crc = RTCMFramer::crc24q(result);
+    const auto crc = QGC::crc24q(result);
     result.insert(result.end(), {uint8_t(crc >> 16), uint8_t(crc >> 8), uint8_t(crc)});
     return result;
 }
@@ -142,7 +142,7 @@ void verifyRTCMRecovery(Driver& driver, std::vector<std::vector<uint8_t>>& frame
 inline std::vector<uint8_t> bytes(const sbf_payload_pvt_geodetic_t& v)
 {
     std::vector<uint8_t> b(80);
-    b[0] = v.mode_type | (v.mode_2d << 7);
+    b[0] = v.mode;
     (void) LittleEndian::write<double>(b, 2, v.latitude);
     (void) LittleEndian::write<double>(b, 10, v.longitude);
     (void) LittleEndian::write<double>(b, 18, v.height);

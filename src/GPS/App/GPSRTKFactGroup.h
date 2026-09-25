@@ -9,22 +9,23 @@
 class GPSRTKFactGroup : public FactGroup
 {
     Q_OBJECT
-    QML_ANONYMOUS
-    Q_PROPERTY(Fact* connected READ connected CONSTANT)
-    Q_PROPERTY(Fact* currentDuration READ currentDuration CONSTANT)
-    Q_PROPERTY(Fact* currentAccuracy READ currentAccuracy CONSTANT)
-    Q_PROPERTY(Fact* currentLatitude READ currentLatitude CONSTANT)
-    Q_PROPERTY(Fact* currentLongitude READ currentLongitude CONSTANT)
-    Q_PROPERTY(Fact* currentAltitude READ currentAltitude CONSTANT)
-    Q_PROPERTY(Fact* valid READ valid CONSTANT)
-    Q_PROPERTY(Fact* active READ active CONSTANT)
-    Q_PROPERTY(Fact* numSatellites READ numSatellites CONSTANT)
-    Q_PROPERTY(Fact* numSatellitesUsed READ numSatellitesUsed CONSTANT)
-    Q_PROPERTY(Fact* fixType READ fixType CONSTANT)
-    Q_PROPERTY(Fact* jammingState READ jammingState CONSTANT)
-    Q_PROPERTY(Fact* spoofingState READ spoofingState CONSTANT)
-    Q_PROPERTY(bool canSaveCurrentBasePosition READ canSaveCurrentBasePosition NOTIFY currentBasePositionChanged)
-    Q_PROPERTY(bool interferenceWarning READ interferenceWarning NOTIFY interferenceWarningChanged)
+    QML_ELEMENT
+    QML_UNCREATABLE("Provided by GPSManager")
+    Q_PROPERTY(Fact* connected READ connected CONSTANT FINAL)
+    Q_PROPERTY(Fact* currentDuration READ currentDuration CONSTANT FINAL)
+    Q_PROPERTY(Fact* currentAccuracy READ currentAccuracy CONSTANT FINAL)
+    Q_PROPERTY(Fact* currentLatitude READ currentLatitude CONSTANT FINAL)
+    Q_PROPERTY(Fact* currentLongitude READ currentLongitude CONSTANT FINAL)
+    Q_PROPERTY(Fact* currentAltitude READ currentAltitude CONSTANT FINAL)
+    Q_PROPERTY(Fact* valid READ valid CONSTANT FINAL)
+    Q_PROPERTY(Fact* active READ active CONSTANT FINAL)
+    Q_PROPERTY(Fact* numSatellites READ numSatellites CONSTANT FINAL)
+    Q_PROPERTY(Fact* numSatellitesUsed READ numSatellitesUsed CONSTANT FINAL)
+    Q_PROPERTY(Fact* fixType READ fixType CONSTANT FINAL)
+    Q_PROPERTY(Fact* jammingState READ jammingState CONSTANT FINAL)
+    Q_PROPERTY(Fact* spoofingState READ spoofingState CONSTANT FINAL)
+    Q_PROPERTY(bool canSaveCurrentBasePosition READ canSaveCurrentBasePosition NOTIFY currentBasePositionChanged FINAL)
+    Q_PROPERTY(bool interferenceWarning READ interferenceWarning NOTIFY interferenceWarningChanged FINAL)
 
 public:
     /// Follows @a receiver's status when one is given.

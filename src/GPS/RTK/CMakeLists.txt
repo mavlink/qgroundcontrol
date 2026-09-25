@@ -3,7 +3,15 @@ if(DEFINED QGC_GPS_COMPONENTS_ENABLED AND NOT "RTK" IN_LIST QGC_GPS_COMPONENTS_E
     return()
 endif()
 
-qt_add_library(QGCGPSRTK STATIC GPSProvider.cc GPSRTK.cc RTKConnectionPolicy.cc)
+qt_add_library(
+    QGCGPSRTK
+    STATIC
+    GPSProvider.cc
+    GPSReceiverSession.cc
+    GPSReceiverSession.h
+    GPSRTK.cc
+    RTKConnectionPolicy.cc
+)
 add_library(QGC::GPSRTK ALIAS QGCGPSRTK)
 set_target_properties(QGCGPSRTK PROPERTIES AUTOMOC ON)
 target_compile_features(QGCGPSRTK PUBLIC cxx_std_20)

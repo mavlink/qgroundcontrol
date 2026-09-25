@@ -17,7 +17,7 @@
 QGC_LOGGING_CATEGORY(FemtoProtocolLog, "GPS.Driver.Protocols.Femto")
 
 namespace {
-constexpr unsigned FEMTO_RESPONSE_TIMEOUT = 200;
+constexpr std::chrono::milliseconds FEMTO_RESPONSE_TIMEOUT{200};
 }
 
 const QLoggingCategory& FemtoProtocol::logCategory() const
@@ -28,7 +28,7 @@ const QLoggingCategory& FemtoProtocol::logCategory() const
 bool FemtoProtocol::writeAckedCommandFemto(const char* command, const char* reply)
 {
     GPSRawAckMatcher matcher(reply, "<ERROR");
-    const GPSConfigurationStep step{command, std::chrono::milliseconds(FEMTO_RESPONSE_TIMEOUT)};
+    const GPSConfigurationStep step{command, FEMTO_RESPONSE_TIMEOUT};
     return transact(step, command, matcher).evidence.outcome == GPSCommandOutcome::Acknowledged;
 }
 

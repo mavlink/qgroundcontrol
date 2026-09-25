@@ -19,7 +19,7 @@
 class NTRIPTransport;
 class RuntimeScheduler;
 
-struct PositionResult
+struct [[nodiscard]] PositionResult
 {
     QGeoCoordinate coordinate;
     QString source;
@@ -30,7 +30,7 @@ struct PositionResult
 
     /// GGA needs MSL altitude. Providers must convert ellipsoid height using
     /// known geoid separation before explicitly declaring it MeanSeaLevel.
-    bool isValid() const
+    [[nodiscard]] bool isValid() const
     {
         return fixQuality != GPSObservation::FixQuality::NoFix && coordinate.isValid() &&
                qIsFinite(coordinate.altitude()) && altitudeDatum == GPSAltitudeDatum::MeanSeaLevel;

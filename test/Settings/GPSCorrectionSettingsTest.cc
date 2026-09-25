@@ -268,7 +268,7 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
         corrections.acceptIngress(udpListener.event(frame, GPSCorrectionFrame::monotonicNowMs() - ageMs, 1005, true,
                                                     false, GPSCorrectionReason::None, instance));
     };
-    const qint64 expiredAgeMs = GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS + 1;
+    const qint64 expiredAgeMs = GPSCorrectionRouter::FRESHNESS_TIMEOUT.count() + 1;
     // Expired observations expose peers without real-time waits.
     receivePeer(QStringLiteral("a"), expiredAgeMs);
     receivePeer(QStringLiteral("b"), expiredAgeMs);

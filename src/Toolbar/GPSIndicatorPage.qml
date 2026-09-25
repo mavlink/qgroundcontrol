@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.AppSettings
 import QGroundControl.Controls
+import QGroundControl.GPS
 
 // Drawer of the GPS indicator: vehicle GPS, GNSS receiver, corrections, and GCS position.
 ToolIndicatorPage {
@@ -14,8 +15,8 @@ ToolIndicatorPage {
 
     property string na: qsTr("N/A", "No data to display")
     property string valueNA: qsTr("–.––", "No data to display")
-    property var rtkSettings: QGroundControl.settingsManager.rtkSettings
-    readonly property var _receiver: QGroundControl.gpsManager.gpsRtk
+    property RTKSettings rtkSettings: QGroundControl.settingsManager.rtkSettings
+    readonly property GPSRTK _receiver: QGroundControl.gpsManager.gpsRtk
     readonly property bool _vehicleGps: !!activeVehicle && !!activeVehicle.gps && activeVehicle.gps.telemetryAvailable
     readonly property real _preferredStatusWidth: ScreenTools.defaultFontPixelWidth * 36
     readonly property real _preferredSettingsWidth: ScreenTools.defaultFontPixelWidth * 56
@@ -28,14 +29,7 @@ ToolIndicatorPage {
     // Settings stay usable, rather than collapsing, on windows narrower than the reserved margins.
     readonly property real _settingsWidth: Math.max(ScreenTools.defaultFontPixelWidth * 30,
         Math.min(_preferredSettingsWidth, availableWidth - (_compact ? 0 : _preferredStatusWidth) - spacing * 2 - 1))
-    property alias _allowPersistentChanges: connectionConsent.allowed
-    property var _settingsPanel: null
-
-    function connectSelectedReceiver() {
-        return _settingsPanel ? _settingsPanel.connectSelectedReceiver() : false
-    }
-
-    function errorText() {
+    function errorText(): string {
         if (!activeVehicle) {
             return qsTr("Disconnected")
         }
@@ -51,15 +45,11 @@ ToolIndicatorPage {
         }
     }
 
-    QtObject {
-        id: connectionConsent
-        property bool allowed: false
-    }
-
     // Resilience states 0 and 255 mean the receiver does not know, so only reported states are listed.
     component ResilienceGroup: SettingsGroupLayout {
         id: group
 
+        // Vehicle GPS groups are exposed as FactGroup, which lacks their resilience Facts.
         required property var facts
         readonly property bool jammingReported: !!facts && facts.jammingState.value > 0 && facts.jammingState.value < 255
         readonly property bool spoofingReported: !!facts && facts.spoofingState.value > 0
@@ -241,16 +231,12 @@ ToolIndicatorPage {
             spacing: ScreenTools.defaultFontPixelHeight / 2
 
             GPSReceiverSettings {
-                id: settingsPanel
                 objectName: "gpsReceiverSettings"
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 receiver: root._receiver
                 settings: root.rtkSettings
-                consent: connectionConsent
                 showErrorMessage: false
-                Component.onCompleted: root._settingsPanel = settingsPanel
-                Component.onDestruction: root._settingsPanel = null
             }
             QGCLabel {
                 Layout.fillWidth: true

@@ -17,8 +17,8 @@ GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
 GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, bool satelliteInfoEnabled, Navigation navigation)
     : GPSProtocol(std::move(io), satelliteInfoEnabled)
     , _lineFramer(_line, {.requireStart = false, .hashStartsLine = true})
-    , _navigationAssembler({.metadataMaxAgeUs = METADATA_MAX_AGE_US,
-                            .untimedMetadataMaxAgeUs = METADATA_MAX_AGE_US,
+    , _navigationAssembler({.metadataMaxAge = METADATA_MAX_AGE,
+                            .untimedMetadataMaxAge = METADATA_MAX_AGE,
                             .autonomousFixQuality = GPSFixQuality::Fix3D,
                             .useGsaDimensionForAutonomousFix = false,
                             .requirePositionTime = false,
@@ -41,10 +41,10 @@ void GPSAsciiProtocol::resetStream()
     }
 }
 
-int GPSAsciiProtocol::receive(unsigned timeout)
+int GPSAsciiProtocol::receive(std::chrono::milliseconds timeout)
 {
     if (const auto deadline = _satelliteAssembler.deadlineUs()) {
-        timeout = std::min(timeout, static_cast<unsigned>(remainingMilliseconds(*deadline)));
+        timeout = std::min(timeout, remainingUntil(*deadline));
     }
     const int result = receiveDecoded(timeout);
     serviceControls();

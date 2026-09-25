@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-enum class GPSConfigurationOutcome
+enum class [[nodiscard]] GPSConfigurationOutcome
 {
     Pending,
     Written,

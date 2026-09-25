@@ -13,8 +13,8 @@ ColumnLayout {
 
     required property Fact deviceFact
     required property Fact baudFact
-    property var serialPorts: []
-    property var serialBaudRates: []
+    property list<string> serialPorts
+    property list<string> serialBaudRates
     property int minimumBaud: 1
     property int maximumBaud: 4000000
     /// Offers rate 0 as "Auto" for consumers that can detect the baud rate.
@@ -30,7 +30,7 @@ ColumnLayout {
             devices.push({ value: "", label: qsTr("<none available>") })
         return devices
     }
-    readonly property var _rates: (root.allowAutoBaud ? [0] : []).concat(root.serialBaudRates.map(Number).filter(
+    readonly property list<int> _rates: (root.allowAutoBaud ? [0] : []).concat(root.serialBaudRates.map(Number).filter(
         (rate, index, rates) => Number.isInteger(rate) && rate >= root.minimumBaud && rate <= root.maximumBaud
         && rates.indexOf(rate) === index))
     readonly property int _baudIndex: _rates.indexOf(Number(baudFact.rawValue))

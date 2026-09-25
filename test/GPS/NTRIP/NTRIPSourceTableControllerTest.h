@@ -32,9 +32,5 @@ private slots:
     void deletedSessionPublishesError();
     void fetchNotificationReentry_data();
     void fetchNotificationReentry();
-    void modelResetReentry_data();
-    void modelResetReentry();
-    void modelMutationReentry_data();
-    void modelMutationReentry();
     void singleMountpointDistanceNotification();
 };

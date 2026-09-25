@@ -16,11 +16,11 @@
 class GPSSourceHealth : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(State state READ state NOTIFY positionChanged)
-    Q_PROPERTY(bool usable READ usable NOTIFY positionChanged)
-    Q_PROPERTY(QGeoCoordinate coordinate READ coordinate NOTIFY positionChanged)
-    Q_PROPERTY(double horizontalAccuracy READ horizontalAccuracy NOTIFY positionChanged)
-    Q_PROPERTY(QDateTime receivedAt READ receivedAt NOTIFY positionChanged)
+    Q_PROPERTY(State state READ state NOTIFY positionChanged FINAL)
+    Q_PROPERTY(bool usable READ usable NOTIFY positionChanged FINAL)
+    Q_PROPERTY(QGeoCoordinate coordinate READ coordinate NOTIFY positionChanged FINAL)
+    Q_PROPERTY(double horizontalAccuracy READ horizontalAccuracy NOTIFY positionChanged FINAL)
+    Q_PROPERTY(QDateTime receivedAt READ receivedAt NOTIFY positionChanged FINAL)
 
 public:
     enum class State
@@ -36,11 +36,11 @@ public:
     ~GPSSourceHealth() override;
 
     /// Default position age at which health becomes Stale and the position stops being usable.
-    static constexpr int FRESHNESS_TIMEOUT_MS = 5000;
+    static constexpr std::chrono::milliseconds FRESHNESS_TIMEOUT{5000};
 
-    int freshnessTimeoutMs() const { return _freshnessTimeoutMs; }
+    std::chrono::milliseconds freshnessTimeout() const { return _freshnessTimeout; }
 
-    void setFreshnessTimeoutMs(int timeoutMs);
+    void setFreshnessTimeout(std::chrono::milliseconds timeout);
 
     State state() const { return _position.state; }
 
@@ -72,7 +72,8 @@ private:
     void _setState(State state);
     State _updatedPositionState() const;
     void _schedulePositionExpiry();
-    qint64 _age(quint64 timestampUs) const;
+    /// Empty for a missing or future timestamp.
+    std::optional<std::chrono::milliseconds> _age(quint64 timestampUs) const;
     std::chrono::microseconds _remaining(quint64 timestampUs,
                                          std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
 
@@ -83,7 +84,7 @@ private:
         bool invalidated = true;
     };
 
-    int _freshnessTimeoutMs = FRESHNESS_TIMEOUT_MS;
+    std::chrono::milliseconds _freshnessTimeout = FRESHNESS_TIMEOUT;
     PositionState _position;
     RuntimeScheduler* const _scheduler;
     ScheduledTask _positionTask;

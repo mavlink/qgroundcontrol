@@ -9,6 +9,7 @@
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include "Checksums.h"
 #include "GPSTestHelpers.h"
 #include "LogManager.h"
 #include "RTCMUdpInput.h"
@@ -44,7 +45,6 @@ void RTCMUdpInputTest::_testSocketErrors_data()
 void RTCMUdpInputTest::_testSocketErrors()
 {
     QFETCH(bool, restart);
-    qRegisterMetaType<QAbstractSocket::SocketError>();
     RTCMUdpInput input(0);
     input.configure(input.port(), true);
     QVERIFY(input.start());
@@ -142,18 +142,33 @@ void RTCMUdpInputTest::_testStartNotificationReentrancy()
     }
 }
 
+void RTCMUdpInputTest::_testPassthroughWithoutValidation_data()
+{
+    QTest::addColumn<QHostAddress>("sender");
+    QTest::newRow("ipv4") << QHostAddress(QHostAddress::LocalHost);
+    QTest::newRow("ipv6") << QHostAddress(QHostAddress::LocalHostIPv6);
+}
+
 void RTCMUdpInputTest::_testPassthroughWithoutValidation()
 {
+    QFETCH(QHostAddress, sender);
     RTCMUdpInput input(0);
     QVERIFY(input.start());
     QSignalSpy spy(&input, &RTCMUdpInput::frameReceived);
+    QUdpSocket socket;
+    if (!socket.bind(sender, 0)) {
+        QSKIP("This host has no loopback address of this family");
+    }
 
     // Validation off (default): datagram forwarded as-is, valid RTCM or not.
     const QByteArray payload = QByteArrayLiteral("not-rtcm-at-all");
-    QVERIFY(sendDatagram(input.port(), payload));
+    QCOMPARE(socket.writeDatagram(payload, sender, input.port()), payload.size());
 
     QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, TestTimeout::mediumMs());
-    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, payload);
+    const auto frame = qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0));
+    QCOMPARE(frame.data, payload);
+    // The dual-stack input names IPv4 senders by their IPv4 address, not the IPv4-mapped form.
+    QCOMPARE(frame.sourceInstance, QStringLiteral("%1:%2").arg(sender.toString()).arg(socket.localPort()));
 }
 
 void RTCMUdpInputTest::_testStartupPortReplacement_data()
@@ -382,8 +397,7 @@ void RTCMUdpInputTest::_testRecoversBufferedFrames()
     auto corrupted = GPSTestHelpers::buildRtcmFrame(1006, static_cast<int>(payload.size()));
     corrupted.replace(5, payload.size(), payload);
     corrupted.chop(3);
-    const auto crc =
-        RTCMFramer::crc24q({reinterpret_cast<const uint8_t*>(corrupted.constData()), size_t(corrupted.size())});
+    const auto crc = QGC::crc24q({reinterpret_cast<const uint8_t*>(corrupted.constData()), size_t(corrupted.size())});
     corrupted.append(QByteArray(3, '\0'));
     if (crc == 0) {
         corrupted.back() = '\1';

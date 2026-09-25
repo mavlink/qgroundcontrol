@@ -120,7 +120,8 @@ bool UBXProtocol::restartSurveyInPreV27()
     if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
         payload_tx_cfg_tmode3 = {};
         payload_tx_cfg_tmode3.flags = 1; /* start survey-in */
-        payload_tx_cfg_tmode3.svinMinDur = std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).durationSecs;
+        payload_tx_cfg_tmode3.svinMinDur =
+            static_cast<uint32_t>(std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).duration.count());
         payload_tx_cfg_tmode3.svinAccLimit =
             UBX::surveyAccuracyWireUnits(std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).accuracyMeters);
 
@@ -207,8 +208,7 @@ bool UBXProtocol::configureMessageRate(const uint16_t msg, const uint8_t rate, b
     cfg_msg.msg = msg;
     cfg_msg.rate = rate;
 
-    return sendMessage(UBX_MSG_CFG_MSG, UBX::encode(cfg_msg),
-                       {{}, std::chrono::milliseconds(UBX_CONFIG_TIMEOUT), {}, required});
+    return sendMessage(UBX_MSG_CFG_MSG, UBX::encode(cfg_msg), {{}, UBX_CONFIG_TIMEOUT, {}, required});
 }
 
 bool UBXProtocol::configureMessageRateAndAck(uint16_t msg, uint8_t rate, bool report_ack_error)

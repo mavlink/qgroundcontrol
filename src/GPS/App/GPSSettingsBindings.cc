@@ -1,10 +1,10 @@
 #include "GPSSettingsBindings.h"
 
 #include <chrono>
+#include <type_traits>
 
 #include "Fact.h"
 #include "GPSCorrectionSettings.h"
-#include "GPSRTK.h"
 #include "NTRIPSettings.h"
 #include "QGCLoggingCategory.h"
 #include "RTKSettings.h"
@@ -13,12 +13,53 @@ QGC_LOGGING_CATEGORY(GPSSettingsBindingsLog, "GPS.GPSSettingsBindings")
 
 namespace GPSSettingsBindings {
 
-GPSCorrectionManager::RoutingConfiguration routingConfiguration(GPSCorrectionSettings* settings)
+namespace {
+
+using RoutingConfig = GPSCorrectionManager::RoutingConfiguration;
+using UdpInputConfig = GPSCorrectionManager::UdpInputConfiguration;
+using UdpOutputConfig = GPSCorrectionManager::UdpOutputConfiguration;
+using NTRIPConfig = NTRIPManager::Configuration;
+using RTKConfig = GPSRTK::Configuration;
+
+/// One setting: the Fact it is read from and how its raw value is stored in the configuration.
+template <typename Settings, typename Configuration>
+struct Binding
+{
+    Fact* (Settings::*fact)();
+    void (*apply)(Configuration& configuration, const QVariant& rawValue);
+};
+
+template <typename Object>
+Object& memberAt(Object& object)
+{
+    return object;
+}
+
+template <typename Object, typename Member, typename... Path>
+auto& memberAt(Object& object, Member Object::* member, Path... path)
+{
+    return memberAt(object.*member, path...);
+}
+
+/// Stores the raw value at a member path: assign<&A::b, &B::c> writes a.b.c.
+template <auto... Path>
+constexpr auto assign = [](auto& configuration, const QVariant& rawValue) {
+    auto& destination = memberAt(configuration, Path...);
+    using Value = std::remove_reference_t<decltype(destination)>;
+    if constexpr (std::is_enum_v<Value>) {
+        destination = static_cast<Value>(rawValue.toInt());
+    } else {
+        destination = rawValue.value<Value>();
+    }
+};
+
+template <auto Member>
+constexpr auto assignConnection = assign<&NTRIPConfig::stream, &NTRIPConfiguration::connection, Member>;
+
+void assignCorrectionSource(RoutingConfig& configuration, const QVariant& rawValue)
 {
     using RoutingPolicy = GPSCorrectionManager::RoutingPolicy;
-    GPSCorrectionManager::RoutingConfiguration configuration;
-    configuration.instance = settings->correctionSourceInstance()->rawValue().toString();
-    switch (settings->correctionSource()->rawValue().toInt()) {
+    switch (rawValue.toInt()) {
         case GPSCorrectionSettings::LocalReceiver:
             configuration.source = GPSCorrectionSource::LocalReceiver;
             configuration.policy = RoutingPolicy::Manual;
@@ -37,68 +78,144 @@ GPSCorrectionManager::RoutingConfiguration routingConfiguration(GPSCorrectionSet
             qCWarning(GPSSettingsBindingsLog) << "Invalid correction source; using automatic selection";
             break;
     }
+}
+
+constexpr Binding<GPSCorrectionSettings, RoutingConfig> kRoutingBindings[] = {
+    {&GPSCorrectionSettings::correctionSourceInstance, assign<&RoutingConfig::instance>},
+    {&GPSCorrectionSettings::correctionSource, assignCorrectionSource},
+};
+
+constexpr Binding<GPSCorrectionSettings, UdpInputConfig> kUdpInputBindings[] = {
+    {&GPSCorrectionSettings::rtcmUdpInputEnabled, assign<&UdpInputConfig::enabled>},
+    {&GPSCorrectionSettings::rtcmUdpInputPort, assign<&UdpInputConfig::port>},
+    {&GPSCorrectionSettings::rtcmUdpValidate, assign<&UdpInputConfig::validate>},
+};
+
+constexpr Binding<GPSCorrectionSettings, UdpOutputConfig> kUdpOutputBindings[] = {
+    {&GPSCorrectionSettings::rtcmUdpOutputEnabled, assign<&UdpOutputConfig::enabled>},
+    {&GPSCorrectionSettings::rtcmUdpOutputAddress,
+     [](UdpOutputConfig& configuration, const QVariant& rawValue) {
+         configuration.address = rawValue.toString().trimmed();
+     }},
+    {&GPSCorrectionSettings::rtcmUdpOutputPort, assign<&UdpOutputConfig::port>},
+};
+
+constexpr Binding<NTRIPSettings, NTRIPConfig> kNTRIPBindings[] = {
+    {&NTRIPSettings::ntripServerConnectEnabled, assign<&NTRIPConfig::enabled>},
+    {&NTRIPSettings::ntripServerHostAddress, assignConnection<&NTRIPConnectionConfig::host>},
+    {&NTRIPSettings::ntripServerPort, assignConnection<&NTRIPConnectionConfig::port>},
+    {&NTRIPSettings::ntripUsername, assignConnection<&NTRIPConnectionConfig::username>},
+    {&NTRIPSettings::ntripPassword, assignConnection<&NTRIPConnectionConfig::password>},
+    {&NTRIPSettings::ntripMountpoint, assignConnection<&NTRIPConnectionConfig::mountpoint>},
+    {&NTRIPSettings::ntripUseTls, assignConnection<&NTRIPConnectionConfig::useTls>},
+    {&NTRIPSettings::ntripAllowSelfSignedCerts, assignConnection<&NTRIPConnectionConfig::allowSelfSignedCerts>},
+    {&NTRIPSettings::ntripPinnedCertificate, assignConnection<&NTRIPConnectionConfig::pinnedCertificate>},
+    {&NTRIPSettings::ntripWhitelist,
+     assign<&NTRIPConfig::stream, &NTRIPConfiguration::filter, &NTRIPRTCMFilterConfig::whitelist>},
+    {&NTRIPSettings::ntripGgaPositionSource, assign<&NTRIPConfig::gga, &NTRIPGgaProvider::Configuration::source>},
+    {&NTRIPSettings::ntripGgaIntervalSec,
+     [](NTRIPConfig& configuration, const QVariant& rawValue) {
+         configuration.gga.interval = std::chrono::seconds(rawValue.toUInt());
+     }},
+};
+
+constexpr Binding<RTKSettings, RTKConfig> kRTKBindings[] = {
+    {&RTKSettings::receiverRole, assign<&RTKConfig::receiverRole>},
+    {&RTKSettings::baseReceiverManufacturers, assign<&RTKConfig::baseReceiverManufacturer>},
+    {&RTKSettings::connectionType, assign<&RTKConfig::connectionType>},
+    {&RTKSettings::tcpHost, assign<&RTKConfig::tcpHost>},
+    {&RTKSettings::tcpPort, assign<&RTKConfig::tcpPort>},
+    {&RTKSettings::udpPort, assign<&RTKConfig::udpPort>},
+    {&RTKSettings::serialDevice, assign<&RTKConfig::serialDevice>},
+    {&RTKSettings::serialBaudRate, assign<&RTKConfig::serialBaudRate>},
+    {&RTKSettings::useFixedBasePosition, assign<&RTKConfig::baseMode>},
+    {&RTKSettings::fixedBasePositionLatitude, assign<&RTKConfig::fixedBasePositionLatitude>},
+    {&RTKSettings::fixedBasePositionLongitude, assign<&RTKConfig::fixedBasePositionLongitude>},
+    {&RTKSettings::fixedBasePositionAltitude, assign<&RTKConfig::fixedBasePositionAltitude>},
+    {&RTKSettings::fixedBasePositionAccuracy, assign<&RTKConfig::fixedBasePositionAccuracy>},
+    {&RTKSettings::surveyInAccuracyLimit, assign<&RTKConfig::surveyInAccuracyLimit>},
+    {&RTKSettings::surveyInMinObservationDuration,
+     [](RTKConfig& configuration, const QVariant& rawValue) {
+         configuration.surveyInMinObservationDuration = std::chrono::seconds(rawValue.value<int64_t>());
+     }},
+    {&RTKSettings::receiverAveragingDuration,
+     [](RTKConfig& configuration, const QVariant& rawValue) {
+         configuration.receiverAveragingDuration = std::chrono::seconds(rawValue.value<uint32_t>());
+     }},
+    {&RTKSettings::compactRtcmCorrections, assign<&RTKConfig::compactRtcmCorrections>},
+    {&RTKSettings::autoConnect, assign<&RTKConfig::autoConnect>},
+};
+
+template <typename Settings, typename Configuration, std::size_t N>
+Configuration build(Settings* settings, const Binding<Settings, Configuration> (&table)[N])
+{
+    Configuration configuration;
+    for (const auto& binding : table) {
+        binding.apply(configuration, (settings->*binding.fact)()->rawValue());
+    }
     return configuration;
+}
+
+template <typename Settings, typename Configuration, std::size_t N>
+QList<Fact*> facts(Settings* settings, const Binding<Settings, Configuration> (&table)[N])
+{
+    QList<Fact*> result;
+    result.reserve(N);
+    for (const auto& binding : table) {
+        result.append((settings->*binding.fact)());
+    }
+    return result;
+}
+
+template <typename Settings, typename Configuration, std::size_t N, typename Callback>
+void watch(Settings* settings, const Binding<Settings, Configuration> (&table)[N], const QObject* receiver,
+           const Callback& callback)
+{
+    for (const Fact* fact : facts(settings, table)) {
+        QObject::connect(fact, &Fact::rawValueChanged, receiver, callback);
+    }
+}
+
+}  // namespace
+
+GPSCorrectionManager::RoutingConfiguration routingConfiguration(GPSCorrectionSettings* settings)
+{
+    return build(settings, kRoutingBindings);
 }
 
 GPSCorrectionManager::UdpInputConfiguration udpInputConfiguration(GPSCorrectionSettings* settings)
 {
-    return {
-        .enabled = settings->rtcmUdpInputEnabled()->rawValue().toBool(),
-        .port = static_cast<quint16>(settings->rtcmUdpInputPort()->rawValue().toUInt()),
-        .validate = settings->rtcmUdpValidate()->rawValue().toBool(),
-    };
+    return build(settings, kUdpInputBindings);
 }
 
 GPSCorrectionManager::UdpOutputConfiguration udpOutputConfiguration(GPSCorrectionSettings* settings)
 {
-    return {
-        .enabled = settings->rtcmUdpOutputEnabled()->rawValue().toBool(),
-        .address = settings->rtcmUdpOutputAddress()->rawValue().toString().trimmed(),
-        .port = static_cast<quint16>(settings->rtcmUdpOutputPort()->rawValue().toUInt()),
-    };
+    return build(settings, kUdpOutputBindings);
 }
 
 NTRIPManager::Configuration ntripConfiguration(NTRIPSettings* settings)
 {
-    NTRIPManager::Configuration configuration;
-    configuration.enabled = settings->ntripServerConnectEnabled()->rawValue().toBool();
-    auto& connection = configuration.stream.connection;
-    connection.host = settings->ntripServerHostAddress()->rawValue().toString();
-    connection.port = settings->ntripServerPort()->rawValue().toInt();
-    connection.username = settings->ntripUsername()->rawValue().toString();
-    connection.password = settings->ntripPassword()->rawValue().toString();
-    connection.mountpoint = settings->ntripMountpoint()->rawValue().toString();
-    connection.useTls = settings->ntripUseTls()->rawValue().toBool();
-    connection.allowSelfSignedCerts = settings->ntripAllowSelfSignedCerts()->rawValue().toBool();
-    configuration.stream.filter.whitelist = settings->ntripWhitelist()->rawValue().toString();
-    configuration.gga.source =
-        static_cast<NTRIPGgaProvider::PositionSource>(settings->ntripGgaPositionSource()->rawValue().toUInt());
-    configuration.gga.interval = std::chrono::seconds(settings->ntripGgaIntervalSec()->rawValue().toUInt());
-    return configuration;
+    return build(settings, kNTRIPBindings);
 }
 
 GPSRTK::Configuration rtkConfiguration(RTKSettings* settings)
 {
-    GPSRTK::Configuration configuration;
-    configuration.receiverRole = static_cast<GPSRTK::ReceiverRole>(settings->receiverRole()->rawValue().toInt());
-    configuration.baseReceiverManufacturer = settings->baseReceiverManufacturers()->rawValue().toInt();
-    configuration.connectionType = static_cast<GPSRTK::ConnectionType>(settings->connectionType()->rawValue().toInt());
-    configuration.tcpHost = settings->tcpHost()->rawValue().toString();
-    configuration.tcpPort = settings->tcpPort()->rawValue().toUInt();
-    configuration.udpPort = settings->udpPort()->rawValue().toUInt();
-    configuration.serialDevice = settings->serialDevice()->rawValue().toString();
-    configuration.serialBaudRate = settings->serialBaudRate()->rawValue().toUInt();
-    configuration.baseMode = settings->useFixedBasePosition()->rawValue().toInt();
-    configuration.fixedBasePositionLatitude = settings->fixedBasePositionLatitude()->rawValue().toDouble();
-    configuration.fixedBasePositionLongitude = settings->fixedBasePositionLongitude()->rawValue().toDouble();
-    configuration.fixedBasePositionAltitude = settings->fixedBasePositionAltitude()->rawValue().toFloat();
-    configuration.fixedBasePositionAccuracy = settings->fixedBasePositionAccuracy()->rawValue().toFloat();
-    configuration.surveyInAccuracyLimit = settings->surveyInAccuracyLimit()->rawValue().toDouble();
-    configuration.surveyInMinObservationDuration = settings->surveyInMinObservationDuration()->rawValue().toLongLong();
-    configuration.receiverAveragingDuration = settings->receiverAveragingDuration()->rawValue().toUInt();
-    configuration.compactRtcmCorrections = settings->compactRtcmCorrections()->rawValue().toBool();
-    configuration.autoConnect = settings->autoConnect()->rawValue().toBool();
-    return configuration;
+    return build(settings, kRTKBindings);
+}
+
+QList<Fact*> boundFacts(GPSCorrectionSettings* settings)
+{
+    return facts(settings, kRoutingBindings) + facts(settings, kUdpInputBindings) + facts(settings, kUdpOutputBindings);
+}
+
+QList<Fact*> boundFacts(NTRIPSettings* settings)
+{
+    return facts(settings, kNTRIPBindings);
+}
+
+QList<Fact*> boundFacts(RTKSettings* settings)
+{
+    return facts(settings, kRTKBindings);
 }
 
 void bindCorrections(GPSCorrectionSettings* settings, GPSCorrectionManager* corrections)
@@ -115,17 +232,9 @@ void bindCorrections(GPSCorrectionSettings* settings, GPSCorrectionManager* corr
     const auto applyUdpOutput = [settings, corrections]() {
         corrections->setUdpOutputConfiguration(udpOutputConfiguration(settings));
     };
-    for (const Fact* fact : {settings->correctionSource(), settings->correctionSourceInstance()}) {
-        QObject::connect(fact, &Fact::rawValueChanged, corrections, applyRouting);
-    }
-    for (const Fact* fact :
-         {settings->rtcmUdpInputEnabled(), settings->rtcmUdpInputPort(), settings->rtcmUdpValidate()}) {
-        QObject::connect(fact, &Fact::rawValueChanged, corrections, applyUdpInput);
-    }
-    for (const Fact* fact :
-         {settings->rtcmUdpOutputEnabled(), settings->rtcmUdpOutputAddress(), settings->rtcmUdpOutputPort()}) {
-        QObject::connect(fact, &Fact::rawValueChanged, corrections, applyUdpOutput);
-    }
+    watch(settings, kRoutingBindings, corrections, applyRouting);
+    watch(settings, kUdpInputBindings, corrections, applyUdpInput);
+    watch(settings, kUdpOutputBindings, corrections, applyUdpOutput);
     applyRouting();
     applyUdpInput();
     applyUdpOutput();
@@ -137,26 +246,13 @@ void bindNtrip(NTRIPSettings* settings, NTRIPManager* ntrip)
         return;
     }
     const auto apply = [settings, ntrip]() { ntrip->setConfiguration(ntripConfiguration(settings)); };
-    const Fact* facts[] = {
-        settings->ntripServerConnectEnabled(),
-        settings->ntripServerHostAddress(),
-        settings->ntripServerPort(),
-        settings->ntripUsername(),
-        settings->ntripPassword(),
-        settings->ntripMountpoint(),
-        settings->ntripWhitelist(),
-        settings->ntripUseTls(),
-        settings->ntripAllowSelfSignedCerts(),
-        settings->ntripGgaPositionSource(),
-        settings->ntripGgaIntervalSec(),
-    };
-    for (const Fact* fact : facts) {
-        QObject::connect(fact, &Fact::rawValueChanged, ntrip, apply);
-    }
+    watch(settings, kNTRIPBindings, ntrip, apply);
     QObject::connect(ntrip, &NTRIPManager::mountpointChosen, ntrip,
                      [settings](const QString& mountpoint) { settings->ntripMountpoint()->setRawValue(mountpoint); });
     QObject::connect(ntrip, &NTRIPManager::enableRequested, ntrip,
                      [settings]() { settings->ntripServerConnectEnabled()->setRawValue(true); });
+    QObject::connect(ntrip, &NTRIPManager::certificatePinChanged, ntrip,
+                     [settings](const QString& pin) { settings->ntripPinnedCertificate()->setRawValue(pin); });
     apply();
 }
 
@@ -166,29 +262,7 @@ void bindRtk(RTKSettings* settings, GPSRTK* rtk)
         return;
     }
     const auto apply = [settings, rtk]() { rtk->setConfiguration(rtkConfiguration(settings)); };
-    const Fact* facts[] = {
-        settings->receiverRole(),
-        settings->baseReceiverManufacturers(),
-        settings->surveyInAccuracyLimit(),
-        settings->surveyInMinObservationDuration(),
-        settings->receiverAveragingDuration(),
-        settings->connectionType(),
-        settings->tcpHost(),
-        settings->tcpPort(),
-        settings->udpPort(),
-        settings->autoConnect(),
-        settings->serialDevice(),
-        settings->serialBaudRate(),
-        settings->useFixedBasePosition(),
-        settings->fixedBasePositionLatitude(),
-        settings->fixedBasePositionLongitude(),
-        settings->fixedBasePositionAltitude(),
-        settings->fixedBasePositionAccuracy(),
-        settings->compactRtcmCorrections(),
-    };
-    for (const Fact* fact : facts) {
-        QObject::connect(fact, &Fact::rawValueChanged, rtk, apply);
-    }
+    watch(settings, kRTKBindings, rtk, apply);
     QObject::connect(rtk, &GPSRTK::autoConnectDisabled, rtk,
                      [settings]() { settings->autoConnect()->setRawValue(false); });
     QObject::connect(rtk, &GPSRTK::baseManufacturerDetected, rtk, [settings](int manufacturer) {

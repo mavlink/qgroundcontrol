@@ -29,7 +29,7 @@ public:
         }
     }
 
-    constexpr bool contains(GPSReceiverSetting setting) const
+    [[nodiscard]] constexpr bool contains(GPSReceiverSetting setting) const
     {
         return setting != GPSReceiverSetting::Unknown && (_bits & (uint32_t{1} << static_cast<unsigned>(setting)));
     }

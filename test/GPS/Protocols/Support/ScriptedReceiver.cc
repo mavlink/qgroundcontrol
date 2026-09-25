@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <utility>
 
 #include <QtCore/QThread>
 
@@ -38,10 +39,10 @@ std::optional<bool> ScriptedReceiver::Model::handleBaudrate(ScriptedReceiver& re
     return std::nullopt;
 }
 
-void ScriptedReceiver::Model::onTransportReadWait(ScriptedReceiver& receiver, int timeoutMs)
+void ScriptedReceiver::Model::onTransportReadWait(ScriptedReceiver& receiver, std::chrono::milliseconds timeout)
 {
     Q_UNUSED(receiver)
-    Q_UNUSED(timeoutMs)
+    Q_UNUSED(timeout)
 }
 
 void ScriptedReceiver::Model::onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline)
@@ -62,15 +63,15 @@ bool ScriptedReceiver::Model::coalesceReads(const ScriptedReceiver& receiver) co
     return false;
 }
 
-ScriptedReceiver::ScriptedReceiver(const std::atomic_bool& requestStop, Model* model)
-    : GPSTransport(requestStop)
+ScriptedReceiver::ScriptedReceiver(std::stop_token stopToken, Model* model)
+    : GPSTransport(std::move(stopToken))
 {
     _attachModel(model);
 }
 
-ScriptedReceiver::ScriptedReceiver(std::atomic_bool& requestStop, Model& model)
-    : GPSTransport(requestStop)
-    , _mutableStop(&requestStop)
+ScriptedReceiver::ScriptedReceiver(std::stop_source stopSource, Model& model)
+    : GPSTransport(stopSource.get_token())
+    , _cancelSource(std::move(stopSource))
 {
     _attachModel(&model);
 }
@@ -122,15 +123,15 @@ std::chrono::milliseconds ScriptedReceiver::configurationWriteTimeout() const
     return GPSTransport::configurationWriteTimeout();
 }
 
-GPSReadResult ScriptedReceiver::read(uint8_t* buffer, int length, int timeoutMs)
+GPSReadResult ScriptedReceiver::read(uint8_t* buffer, int length, std::chrono::milliseconds timeout)
 {
-    return _read(buffer, length, timeoutMs, std::nullopt);
+    return _read(buffer, length, timeout, std::nullopt);
 }
 
 GPSProtocolIO ScriptedReceiver::makeIO(GPSProtocolIO io)
 {
     io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) {
-        return _read(bytes.data(), static_cast<int>(bytes.size()), 0, deadline);
+        return _read(bytes.data(), static_cast<int>(bytes.size()), std::chrono::milliseconds::zero(), deadline);
     };
     io.write = [this](std::span<const uint8_t> bytes, GPSDeadline deadline) {
         WriteContext context;
@@ -193,9 +194,7 @@ GPSReadResult ScriptedReceiver::readQueued(uint8_t* buffer, int length)
 
 void ScriptedReceiver::cancel()
 {
-    if (_mutableStop) {
-        _mutableStop->store(true);
-    }
+    _cancelSource.request_stop();
 }
 
 bool ScriptedReceiver::baudrateMatches() const
@@ -218,10 +217,11 @@ GPSWriteResult ScriptedReceiver::writeData(const uint8_t* buffer, int length, QD
     return _write(QByteArray(reinterpret_cast<const char*>(buffer), length), context);
 }
 
-GPSReadResult ScriptedReceiver::_read(uint8_t* buffer, int length, int timeoutMs, std::optional<GPSDeadline> deadline)
+GPSReadResult ScriptedReceiver::_read(uint8_t* buffer, int length, std::chrono::milliseconds timeout,
+                                      std::optional<GPSDeadline> deadline)
 {
     if (_readHandler) {
-        if (const auto result = _readHandler(buffer, length, timeoutMs)) {
+        if (const auto result = _readHandler(buffer, length, timeout)) {
             return *result;
         }
     }
@@ -237,7 +237,7 @@ GPSReadResult ScriptedReceiver::_read(uint8_t* buffer, int length, int timeoutMs
         if (deadline) {
             _model->onProtocolReadWait(*this, *deadline);
         } else {
-            _model->onTransportReadWait(*this, timeoutMs);
+            _model->onTransportReadWait(*this, timeout);
         }
     }
     if (_nextReadResult) {

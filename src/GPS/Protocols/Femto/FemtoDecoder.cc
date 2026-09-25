@@ -96,7 +96,7 @@ FemtoProtocol::FemtoProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     decodeInit();
 }
 
-int FemtoProtocol::receive(unsigned timeout)
+int FemtoProtocol::receive(std::chrono::milliseconds timeout)
 {
     const int result = receiveDecoded(timeout);
     serviceControls();

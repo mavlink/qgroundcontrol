@@ -14,7 +14,7 @@ public:
 
     bool receiverReady() const override { return _configured; }
 
-    int receive(unsigned timeout) override;
+    int receive(std::chrono::milliseconds timeout) override;
     int decodeByte(uint8_t byte) override;
 
     bool configure(unsigned& baudrate, const GPSConfig& config) override;
@@ -39,9 +39,8 @@ private:
     void flushDecoded() override;
     std::array<std::optional<NavigationEpoch>, 2> _epochs;
     std::optional<uint64_t> _lastPublishedEpoch;
-    static constexpr uint64_t EPOCH_MAX_AGE_US = 200000;
+    static constexpr std::chrono::microseconds EPOCH_MAX_AGE{200000};
     static constexpr uint64_t WEEK_MS = 604800000;
-    static constexpr uint16_t PVT_GEODETIC_LENGTH = 94;
 
     /**
      * @brief Add payload rx byte
@@ -79,5 +78,3 @@ private:
     GPSSurveyClock _surveyClock;
     bool _survey_active{false};
 };
-
-uint16_t crc16(const uint8_t* buf, uint32_t len);

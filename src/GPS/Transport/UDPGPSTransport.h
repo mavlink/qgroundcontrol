@@ -1,7 +1,8 @@
 #pragma once
 
-#include <atomic>
+#include <chrono>
 #include <memory>
+#include <stop_token>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QElapsedTimer>
@@ -13,16 +14,17 @@ class QUdpSocket;
 
 /// Receive-only GNSS stream from UDP datagrams, for receivers that QGroundControl does not configure.
 /// The first sender is selected; another sender replaces it only after the selected one stays silent for
-/// kPeerIdleTimeoutMs. Owns its socket on the receiver worker.
+/// kPeerIdleTimeout. Owns its socket on the receiver worker.
 class UDPGPSTransport : public GPSTransport
 {
     friend class UDPGPSTransportTest;
 
 public:
     static constexpr qsizetype kMaxBufferedBytes = 64 * 1024;
-    static constexpr int kPeerIdleTimeoutMs = 5000;
+    static constexpr std::chrono::milliseconds kPeerIdleTimeout{5000};
 
-    UDPGPSTransport(quint16 port, const std::atomic_bool& requestStop, int peerIdleTimeoutMs = kPeerIdleTimeoutMs);
+    UDPGPSTransport(quint16 port, std::stop_token stopToken,
+                    std::chrono::milliseconds peerIdleTimeout = kPeerIdleTimeout);
     ~UDPGPSTransport() override;
 
     GPSOpenResult open() override;
@@ -31,7 +33,7 @@ public:
     /// Datagrams carry no line rate; drivers see the bridge rate.
     unsigned fixedBaudrate() const override { return BRIDGE_BAUDRATE; }
 
-    GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
+    GPSReadResult read(uint8_t* buffer, int length, std::chrono::milliseconds timeout) override;
     bool setBaudrate(unsigned baudrate) override;
 
 protected:
@@ -41,7 +43,7 @@ private:
     void _receivePending();
 
     quint16 _port;
-    int _peerIdleTimeoutMs;
+    std::chrono::milliseconds _peerIdleTimeout;
     std::unique_ptr<QUdpSocket> _socket;
     QByteArray _pending;
     QHostAddress _peerAddress;

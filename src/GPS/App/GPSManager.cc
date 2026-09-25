@@ -71,6 +71,24 @@ GPSManager::CorrectionState GPSManager::correctionState() const
     return _correctionStatus->state();
 }
 
+bool GPSManager::saveCurrentBasePosition()
+{
+    if (!_gpsRtkFacts->canSaveCurrentBasePosition()) {
+        return false;
+    }
+    // Read every value first: a settings observer may reconfigure the receiver, which republishes these Facts.
+    const QVariant latitude = _gpsRtkFacts->currentLatitude()->rawValue();
+    const QVariant longitude = _gpsRtkFacts->currentLongitude()->rawValue();
+    const QVariant altitude = _gpsRtkFacts->currentAltitude()->rawValue();
+    const QVariant accuracy = _gpsRtkFacts->currentAccuracy()->rawValue();
+    RTKSettings* settings = SettingsManager::instance()->rtkSettings();
+    settings->fixedBasePositionLatitude()->setRawValue(latitude);
+    settings->fixedBasePositionLongitude()->setRawValue(longitude);
+    settings->fixedBasePositionAltitude()->setRawValue(altitude);
+    settings->fixedBasePositionAccuracy()->setRawValue(accuracy);
+    return true;
+}
+
 void GPSManager::init()
 {
     if (_connectionTimer || _shutdown) {

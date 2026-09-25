@@ -1,6 +1,5 @@
 #include "NTRIPManager.h"
 
-#include <algorithm>
 #include <chrono>
 #include <utility>
 
@@ -185,6 +184,10 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
         configuration.enabled != _configuration.enabled || configuration.stream != _configuration.stream;
     _configuration = configuration;
     qCDebug(NTRIPManagerLog) << "NTRIP configuration applied:" << _configuration;
+    // Opting out forgets the pinned certificate, so opting in again trusts the caster's current certificate.
+    if (!_configuration.stream.connection.allowSelfSignedCerts) {
+        _setPinnedCertificate({});
+    }
     if (!_initialized) {
         return;
     }
@@ -218,7 +221,7 @@ void NTRIPManager::startNTRIP()
     }
     _settingsDebounceTask.cancel();
     _cancelReconnect();
-    _resetReconnectAttempts();
+    _reconnectBackoff.reset();
     _dispatch(Event::StartRequested);
 }
 
@@ -349,7 +352,7 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to,
             break;
 
         case ConnectionStatus::Connected:
-            _resetReconnectAttempts();
+            _reconnectBackoff.reset();
             if (_session) {
                 _session->startStreaming();
             }
@@ -382,13 +385,6 @@ bool NTRIPManager::_stopStreaming()
     return true;
 }
 
-int NTRIPManager::_reconnectBackoffMs(std::chrono::milliseconds retryAfter) const
-{
-    const int exponentialMs = qMin(kMinReconnectMs * (1 << qMin(_reconnectAttempts, 5)), kMaxReconnectMs);
-    return static_cast<int>(
-        std::clamp(retryAfter, std::chrono::milliseconds{exponentialMs}, std::chrono::milliseconds{300000}).count());
-}
-
 void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
 {
     if (_shouldWaitForNetwork()) {
@@ -396,22 +392,19 @@ void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
         return;
     }
 
-    // Backoff uses the pre-increment attempt count: attempt #1 waits kMinReconnectMs,
-    // #2 waits 2x, etc. Increment, then check the ceiling.
-    const auto backoff = std::chrono::milliseconds{_reconnectBackoffMs(retryAfter)};
-    ++_reconnectAttempts;
+    const ExponentialBackoff beforeAttempt = _reconnectBackoff;
+    const auto backoff = _reconnectBackoff.next(retryAfter);
     if (_reconnectExhausted()) {
         _dispatch(Event::ReconnectGaveUp, tr("Gave up after %1 reconnect attempts").arg(kMaxReconnectAttempts));
         return;
     }
     _pendingReconnectDelay = backoff;
-    _reconnectTask.schedule(backoff, [this]() {
+    _reconnectTask.schedule(backoff, [this, beforeAttempt]() {
         const GPSNotificationQueue::Scope publish(_notifications);
         _pendingReconnectDelay = {};
         if (_shouldWaitForNetwork()) {
-            if (_reconnectAttempts > 0) {
-                --_reconnectAttempts;
-            }
+            // The attempt never ran, so the next one keeps its delay.
+            _reconnectBackoff = beforeAttempt;
             _waitForNetwork();
             return;
         }
@@ -464,6 +457,7 @@ void NTRIPManager::_openSession()
     connect(session, &NTRIPStreamSession::rtcmReceived, this, &NTRIPManager::_rtcmDataReceived);
     connect(session, &NTRIPStreamSession::plaintextCredentialsWarning, this,
             &NTRIPManager::_onPlaintextCredentialsWarning);
+    connect(session, &NTRIPStreamSession::certificatePinned, this, &NTRIPManager::_onCertificatePinned);
 
     if (const QPointer<NTRIPStreamSession> previous = std::exchange(_session, session)) {
         previous->closeTransport();
@@ -523,9 +517,9 @@ void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
     qCWarning(NTRIPManagerLog) << "NTRIP error:" << code << detail;
 
     if (_isEnabled() && isRetryable(code)) {
-        const int backoffMs = _reconnectBackoffMs(failure.retryAfter);
-        qCDebug(NTRIPManagerLog) << "NTRIP reconnecting in" << backoffMs << "ms (attempt" << (_reconnectAttempts + 1)
-                                 << ")";
+        const auto backoffMs = _reconnectBackoff.peek(failure.retryAfter).count();
+        qCDebug(NTRIPManagerLog) << "NTRIP reconnecting in" << backoffMs << "ms (attempt"
+                                 << (_reconnectBackoff.attempts() + 1) << ")";
         _dispatch(Event::TransportError, tr("Reconnecting in %1s: %2").arg(backoffMs / 1000).arg(detail),
                   failure.retryAfter);
     } else {
@@ -536,6 +530,23 @@ void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
 void NTRIPManager::_onPlaintextCredentialsWarning()
 {
     _setSecurityWarning(tr("Credentials are being sent without TLS encryption."));
+}
+
+void NTRIPManager::_onCertificatePinned(const QString& pin)
+{
+    // The running session already trusts the certificate, so storing its pin must not reconnect.
+    _runningConfig.connection.pinnedCertificate = pin;
+    _setPinnedCertificate(pin);
+}
+
+void NTRIPManager::_setPinnedCertificate(const QString& pin)
+{
+    QString& pinned = _configuration.stream.connection.pinnedCertificate;
+    if (pinned == pin) {
+        return;
+    }
+    pinned = pin;
+    _notifications.emitSignal(this, &NTRIPManager::certificatePinChanged, pin);
 }
 
 void NTRIPManager::_setSecurityWarning(const QString& warning)
@@ -566,7 +577,7 @@ void NTRIPManager::_applyConfiguration()
     }
 
     if (!_isEnabled()) {
-        _resetReconnectAttempts();
+        _reconnectBackoff.reset();
         stopNTRIP();
         return;
     }

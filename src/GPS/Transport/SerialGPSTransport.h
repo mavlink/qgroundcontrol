@@ -1,10 +1,11 @@
 #pragma once
 
-#include <QtCore/QString>
-
-#include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <memory>
+#include <stop_token>
+
+#include <QtCore/QString>
 
 #include "GPSTransport.h"
 
@@ -18,17 +19,17 @@ public:
     static constexpr qint64 kWriteBufferBytes = 4 * 1024;
     static constexpr qint64 kReadBufferBytes = 64 * 1024;
 
-    SerialGPSTransport(QString device, const std::atomic_bool& requestStop);
+    SerialGPSTransport(QString device, std::stop_token stopToken);
     ~SerialGPSTransport() override;
 
     /// Open the device, retrying briefly while it settles after startup. Aborts the
-    /// retry promptly if requestStop is set, so a disconnect can't be stalled by it.
+    /// retry promptly once a stop is requested, so a disconnect can't be stalled by it.
     GPSOpenResult open() override;
 
     /// True once the port hits an error the receive loop should stop retrying past.
     bool fatalError() const override;
 
-    GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
+    GPSReadResult read(uint8_t* buffer, int length, std::chrono::milliseconds timeout) override;
     std::chrono::milliseconds configurationWriteTimeout() const override;
     bool setBaudrate(unsigned baudrate) override;
 
@@ -36,9 +37,12 @@ protected:
     GPSWriteResult writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
 
 private:
-    static constexpr int kOpenTimeoutMs = 30000;
-    static constexpr int kOpenRetryMs = 500;
-    static constexpr int kWriteTimeoutMs = 500;
+    /// QSerialPort waits block on the port alone (Qt's single-descriptor poll, or the Android backend's own wait
+    /// condition) and offer no cross-thread wake-up, so serial waits run in slices this long to observe a stop.
+    static constexpr std::chrono::milliseconds kCancellationPoll{50};
+    static constexpr std::chrono::milliseconds kOpenTimeout{30000};
+    static constexpr std::chrono::milliseconds kOpenRetry{500};
+    static constexpr std::chrono::milliseconds kWriteTimeout{500};
 
     QString _errorDetail() const;
     bool _inputBudgetExhausted() const;

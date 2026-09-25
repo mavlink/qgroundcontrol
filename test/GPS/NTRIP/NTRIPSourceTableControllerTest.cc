@@ -283,7 +283,7 @@ void NTRIPSourceTableControllerTest::testCacheTtlPreventsFetch()
     QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
     QVERIFY(statusSpy.count() >= 1);
 
-    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(NTRIPSourceTableController::kCacheTtlMs + 1)));
+    QVERIFY(scheduler.advanceBy(NTRIPSourceTableController::kCacheTtl + std::chrono::milliseconds(1)));
     ctrl.fetch(casterConfig(QStringLiteral("caster.example.com")));
     QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
 }

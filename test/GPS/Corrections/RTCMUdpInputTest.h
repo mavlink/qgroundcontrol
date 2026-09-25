@@ -18,6 +18,7 @@ private slots:
     void _testReentrantDrainPreservesOrder();
     void _testDrainInterruption_data();
     void _testDrainInterruption();
+    void _testPassthroughWithoutValidation_data();
     void _testPassthroughWithoutValidation();
     void _testEmitsOneSignalPerFrame();
     void _testDropsBadCrcFrame();

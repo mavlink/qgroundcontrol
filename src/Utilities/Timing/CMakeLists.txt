@@ -15,4 +15,13 @@ target_link_libraries(
     PRIVATE QGCLoggingCategory
 )
 
-target_sources(QGCTiming PUBLIC FILE_SET HEADERS FILES RuntimeScheduler.h QtRuntimeScheduler.h ScheduledTask.h)
+target_sources(
+    QGCTiming
+    PUBLIC FILE_SET
+           HEADERS
+           FILES
+           ExponentialBackoff.h
+           RuntimeScheduler.h
+           QtRuntimeScheduler.h
+           ScheduledTask.h
+)

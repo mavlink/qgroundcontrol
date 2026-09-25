@@ -13,6 +13,25 @@
 
 QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.Corrections.GPSCorrectionManager")
 
+namespace {
+/// Whether this host's own sockets receive datagrams sent to @a target. The UDP input is dual-stack, so an
+/// IPv4-mapped IPv6 target reaches it as the IPv4 address does.
+bool reachesThisHost(const QHostAddress& target)
+{
+    const auto matches = [&target](const QHostAddress& address) {
+        return !address.isNull() && address.isEqual(target, QHostAddress::TolerantConversion);
+    };
+    if (target.isLoopback() || target.isBroadcast() || matches(QHostAddress::Any)) {
+        return true;
+    }
+    return std::ranges::any_of(QNetworkInterface::allInterfaces(), [&matches](const QNetworkInterface& interface) {
+        return std::ranges::any_of(interface.addressEntries(), [&matches](const QNetworkAddressEntry& entry) {
+            return matches(entry.ip()) || matches(entry.broadcast());
+        });
+    });
+}
+}  // namespace
+
 QDebug operator<<(QDebug debug, const GPSCorrectionManager::UdpInputConfiguration& configuration)
 {
     const QDebugStateSaver saver(debug);
@@ -89,8 +108,7 @@ void GPSCorrectionManager::_applyUdpOutput()
     const QHostAddress target(address);
     // Forwarding to this host's own UDP input would feed the selected stream back into itself.
     const bool loops = _udpInputConfiguration && _udpInputConfiguration->enabled &&
-                       port == _udpInputConfiguration->port &&
-                       (target.isLoopback() || QNetworkInterface::allAddresses().contains(target));
+                       port == _udpInputConfiguration->port && reachesThisHost(target);
     if (enabled && !loops && _udpOutput.isEnabled() && _udpOutput.address() == target.toString() &&
         _udpOutput.port() == port) {
         return;

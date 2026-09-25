@@ -26,7 +26,6 @@ struct NTRIPHttpRequest
     QByteArray bytes;
     QString error;
     QUrl url;
-    QHttpHeaders headers;
     /// Credentials are present and the channel is not TLS - caller must warn.
     bool credentialsInClear = false;
 
@@ -50,14 +49,14 @@ public:
     static constexpr qsizetype MAX_ERROR_BODY_BYTES = 500;
     static constexpr qsizetype MAX_ERROR_PREVIEW_CHARS = 200;
 
-    struct Status
+    struct [[nodiscard]] Status
     {
         int code = 0;
         QString reason;
         bool valid = false;
     };
 
-    struct Result
+    struct [[nodiscard]] Result
     {
         QByteArray body;  ///< Retains valid prefixes when subsequent framing fails.
         bool connected = false;

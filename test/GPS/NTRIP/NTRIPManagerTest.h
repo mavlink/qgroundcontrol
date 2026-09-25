@@ -17,6 +17,9 @@ private slots:
     void testNewSessionRetryBudget_data();
     void testNewSessionRetryBudget();
     void testPlaintextCredentialWarningIsVisibleState();
+    void testCertificatePinWriteBackKeepsConnection();
+    void testOptingOutForgetsCertificatePin_data();
+    void testOptingOutForgetsCertificatePin();
     void testConfigurationDebugRedactsCredentials();
 
     // Reconnect backoff (migrated from NTRIPReconnectPolicyTest after the policy

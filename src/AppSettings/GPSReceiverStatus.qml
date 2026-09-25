@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 
@@ -9,9 +11,9 @@ import QGroundControl.GPS
 SettingsGroupLayout {
     id: root
 
-    property var receiver: QGroundControl.gpsManager.gpsRtk
+    property GPSRTK receiver: QGroundControl.gpsManager.gpsRtk
     /// The receiver's status Facts.
-    property var facts: QGroundControl.gpsManager.gpsRtkFacts
+    property GPSRTKFactGroup facts: QGroundControl.gpsManager.gpsRtkFacts
     /// Keep the group visible without a receiver, showing disconnectedText.
     property bool showWhenDisconnected: false
     property string disconnectedText: qsTr("No GNSS receiver connected.")

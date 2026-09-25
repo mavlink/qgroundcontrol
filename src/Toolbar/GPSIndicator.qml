@@ -1,5 +1,6 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
-import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
@@ -14,10 +15,11 @@ Item {
     anchors.bottom: parent.bottom
 
     property bool   showIndicator:  true
+    // Vehicle exposes its GPS groups as FactGroup, which lacks their GPS Facts, so the vehicle stays untyped.
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property bool _vehicleGps: !!_activeVehicle && !!_activeVehicle.gps && _activeVehicle.gps.telemetryAvailable
-    property var    _receiver:      QGroundControl.gpsManager.gpsRtk
-    property var    _rtkFacts:      QGroundControl.gpsManager.gpsRtkFacts
+    property GPSRTK _receiver:      QGroundControl.gpsManager.gpsRtk
+    property GPSRTKFactGroup _rtkFacts: QGroundControl.gpsManager.gpsRtkFacts
     property bool   _rtkConnected:  _rtkFacts.connected.value
     readonly property bool _rtkInterference: _rtkConnected && _rtkFacts.interferenceWarning
     readonly property int _receiverSatellites: _rtkFacts.numSatellitesUsed.rawValue
@@ -124,7 +126,7 @@ Item {
                 id:         gpsDetail
                 objectName: "gpsDetail"
                 color:      qgcPal.text
-                text:       control._vehicleGps ? control._activeVehicle.gps.hdop.value.toFixed(1) : control._receiverDetail
+                text:       control._vehicleGps ? control._activeVehicle.gps.hdop.valueString : control._receiverDetail
             }
         }
 

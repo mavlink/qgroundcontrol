@@ -5,8 +5,6 @@
 #include <limits>
 #include <optional>
 
-#include <QtCore/QMetaType>
-
 #include "GPSEllipsoidPosition.h"
 #include "GPSFixQuality.h"
 #include "MonotonicClock.h"
@@ -43,21 +41,21 @@ struct GPSIntegrityReport
         QZSSL6,
     };
 
-    static constexpr JammingState jammingStateFromValue(int value)
+    [[nodiscard]] static constexpr JammingState jammingStateFromValue(int value)
     {
         return value >= static_cast<int>(JammingState::Unknown) && value <= static_cast<int>(JammingState::Critical)
                    ? static_cast<JammingState>(value)
                    : JammingState::Unknown;
     }
 
-    static constexpr SpoofingState spoofingStateFromValue(int value)
+    [[nodiscard]] static constexpr SpoofingState spoofingStateFromValue(int value)
     {
         return value >= static_cast<int>(SpoofingState::Unknown) && value <= static_cast<int>(SpoofingState::Multiple)
                    ? static_cast<SpoofingState>(value)
                    : SpoofingState::Unknown;
     }
 
-    static constexpr CorrectionUse correctionUseFromValue(int value)
+    [[nodiscard]] static constexpr CorrectionUse correctionUseFromValue(int value)
     {
         return value >= static_cast<int>(CorrectionUse::Unknown) && value <= static_cast<int>(CorrectionUse::Used)
                    ? static_cast<CorrectionUse>(value)
@@ -155,8 +153,6 @@ struct GPSPositionReport
     GPSNavigationValues navigation{};
     GPSIntegrityReport integrity{};
 };
-Q_DECLARE_METATYPE(GPSPositionReport)
-Q_DECLARE_METATYPE(GPSPositionReport::FixType)
 
 struct GPSSatelliteReport
 {
@@ -167,7 +163,6 @@ struct GPSSatelliteReport
 
     bool operator==(const GPSSatelliteReport&) const = default;
 };
-Q_DECLARE_METATYPE(GPSSatelliteReport)
 
 struct GPSSurveyReport
 {
@@ -177,4 +172,3 @@ struct GPSSurveyReport
     bool valid = false;
     bool active = false;
 };
-Q_DECLARE_METATYPE(GPSSurveyReport)

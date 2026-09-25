@@ -1,6 +1,8 @@
 #include "NTRIPSourceTableTest.h"
 
 #include <QtPositioning/QGeoCoordinate>
+#include <QtTest/QAbstractItemModelTester>
+#include <QtTest/QSignalSpy>
 
 #include "NTRIPSourceTable.h"
 
@@ -85,23 +87,37 @@ void NTRIPSourceTableTest::_testUpdateDistancesAll()
         "ENDSOURCETABLE\r\n";
 
     NTRIPSourceTableModel model;
+    NTRIPSourceTableSortModel sorted(&model);
+    QAbstractItemModelTester tester(&sorted, QAbstractItemModelTester::FailureReportingMode::QtTest);
     model.parseSourceTable(table);
-    QCOMPARE(model.count(), 2);
-
-    const auto distanceAt = [&model](int row) {
-        return model.data(model.index(row, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble();
+    QCOMPARE(sorted.count(), 2);
+    QSignalSpy changes(&model, &QAbstractItemModel::dataChanged);
+    QSignalSpy resets(&sorted, &QAbstractItemModel::modelReset);
+    const auto mountpoints = [](const QAbstractItemModel& rows) {
+        QStringList names;
+        for (int row = 0; row < rows.rowCount(); ++row) {
+            names.append(rows.index(row, 0).data(NTRIPSourceTableModel::MountpointRole).toString());
+        }
+        return names;
     };
 
-    QVERIFY(distanceAt(0) < 0.0);
-    QVERIFY(distanceAt(1) < 0.0);
+    model.updateDistances(QGeoCoordinate(51.5074, -0.1278));
+    QCOMPARE(changes.size(), 1);
+    const auto change = changes.takeFirst();
+    QCOMPARE(qvariant_cast<QModelIndex>(change[0]), model.index(0, 0));
+    QCOMPARE(qvariant_cast<QModelIndex>(change[1]), model.index(1, 0));
+    QCOMPARE(qvariant_cast<QList<int>>(change[2]), QList<int>{NTRIPSourceTableModel::DistanceKmRole});
+    // The source keeps caster order; the sorted view puts the nearest mountpoint first.
+    QCOMPARE(mountpoints(model), (QStringList{QStringLiteral("NYC"), QStringLiteral("LON")}));
+    QCOMPARE(mountpoints(sorted), (QStringList{QStringLiteral("LON"), QStringLiteral("NYC")}));
+    QVERIFY(sorted.index(0, 0).data(NTRIPSourceTableModel::DistanceKmRole).toDouble() < 1.0);
+    QVERIFY(sorted.index(1, 0).data(NTRIPSourceTableModel::DistanceKmRole).toDouble() > 5000.0);
 
-    QGeoCoordinate nycPos(40.7128, -74.0060);
-    model.updateDistances(nycPos);
-
-    // After sortByDistance, the NYC mount is first (closest), London last.
-    QVERIFY(distanceAt(0) >= 0.0);
-    QVERIFY(distanceAt(0) < 1.0);
-    QVERIFY(distanceAt(1) > 5000.0);
+    model.updateDistances(QGeoCoordinate(40.7128, -74.0060));
+    QCOMPARE(mountpoints(sorted), (QStringList{QStringLiteral("NYC"), QStringLiteral("LON")}));
+    model.updateDistances(QGeoCoordinate(40.7128, -74.0060));
+    QCOMPARE(changes.size(), 1);
+    QVERIFY(resets.isEmpty());
 }
 
 void NTRIPSourceTableTest::_testEmptyTable()

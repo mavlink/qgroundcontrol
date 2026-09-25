@@ -1,12 +1,13 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <optional>
 
 namespace NMEA {
-inline bool freshAt(uint64_t receivedAtUs, uint64_t nowUs, uint64_t maximumAgeUs)
+inline bool freshAt(uint64_t receivedAtUs, uint64_t nowUs, std::chrono::microseconds maximumAge)
 {
-    return nowUs >= receivedAtUs && nowUs - receivedAtUs <= maximumAgeUs;
+    return nowUs >= receivedAtUs && std::chrono::microseconds(nowUs - receivedAtUs) <= maximumAge;
 }
 
 struct EpochReceipt
@@ -14,17 +15,17 @@ struct EpochReceipt
     std::optional<int> time;
     uint64_t receivedAtUs = 0;
 
-    bool matches(const EpochReceipt& position, uint64_t maximumAgeUs) const
+    bool matches(const EpochReceipt& position, std::chrono::microseconds maximumAge) const
     {
-        return time && time == position.time && freshAt(receivedAtUs, position.receivedAtUs, maximumAgeUs);
+        return time && time == position.time && freshAt(receivedAtUs, position.receivedAtUs, maximumAge);
     }
 };
 
 /// Resolve a fresh time-of-day against the nearest day in a receiver's UTC reference.
 inline uint64_t utcAtTimeOfDay(uint64_t referenceUtcUs, uint64_t referenceReceiptUs, std::optional<int> timeMs,
-                               uint64_t nowUs, uint64_t maximumAgeUs)
+                               uint64_t nowUs, std::chrono::microseconds maximumAge)
 {
-    if (!referenceUtcUs || !timeMs || !freshAt(referenceReceiptUs, nowUs, maximumAgeUs)) {
+    if (!referenceUtcUs || !timeMs || !freshAt(referenceReceiptUs, nowUs, maximumAge)) {
         return 0;
     }
     constexpr int64_t DAY_US = 86400000000;

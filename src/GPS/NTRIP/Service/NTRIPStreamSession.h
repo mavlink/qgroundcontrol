@@ -54,11 +54,13 @@ signals:
     /// A valid, unfiltered frame, after the statistics recorded it.
     void rtcmReceived(const RTCMDecodedFrame& frame);
     void plaintextCredentialsWarning();
+    /// The caster's self-signed certificate was trusted on first use.
+    void certificatePinned(const QString& pin);
 
 private:
     void _closeTransport();
-    void _onCorrectionFrame(const QPointer<GPSCorrectionManager>& corrections,
-                            const GPSCorrectionSourceRegistration::Weak& source, const RTCMDecodedFrame& frame);
+    void _onCorrectionFrame(GPSCorrectionManager* corrections, const GPSCorrectionSourceRegistration::Weak& source,
+                            const RTCMDecodedFrame& frame);
     bool _isCurrent() const;
 
     NTRIPGgaProvider& _gga;

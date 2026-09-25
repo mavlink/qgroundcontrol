@@ -39,7 +39,7 @@ struct GSV
     std::vector<SatelliteData> satellites = {};
 };
 
-std::optional<GSV> gsv(const Sentence& input);
+[[nodiscard]] std::optional<GSV> gsv(const Sentence& input);
 
 /// Bounded multipart/multisignal assembly; scheduling and delivery remain with the caller.
 class SatelliteAssembler

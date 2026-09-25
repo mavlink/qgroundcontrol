@@ -231,7 +231,8 @@ void UBXReceiverModel::reset(ScriptedReceiver& receiver)
     _identityDelivered = false;
     receiver.setFixedBaudrate(115200);
     receiver.setFatalError(_readError);
-    receiver.setReadHandler([this, &receiver](uint8_t*, int, int) -> std::optional<GPSReadResult> {
+    receiver.setReadHandler([this, &receiver](uint8_t*, int,
+                                              std::chrono::milliseconds) -> std::optional<GPSReadResult> {
         if (lowLevelProtocolBehavior && surveyPolls > 0 && pollReadError != GPSProtocolError::None) {
             ++failedReads;
             return GPSReadResult{
@@ -246,10 +247,10 @@ void UBXReceiverModel::reset(ScriptedReceiver& receiver)
     });
 }
 
-void UBXReceiverModel::onTransportReadWait(ScriptedReceiver& receiver, int timeoutMs)
+void UBXReceiverModel::onTransportReadWait(ScriptedReceiver& receiver, std::chrono::milliseconds timeout)
 {
     Q_UNUSED(receiver)
-    Q_UNUSED(timeoutMs)
+    Q_UNUSED(timeout)
 }
 
 void UBXReceiverModel::onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline)

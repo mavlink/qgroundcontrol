@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <optional>
 
 #include <QtCore/QDebug>
@@ -65,8 +66,8 @@ public:
     QList<Source> sources() const { return _sources.values(); }
 
     /// Frame age at which it is dropped as Expired and its source stops being eligible for selection.
-    static constexpr qint64 FRESHNESS_TIMEOUT_MS = 5000;
-    static constexpr qint64 SWITCH_HOLD_DOWN_MS = 2000;
+    static constexpr std::chrono::milliseconds FRESHNESS_TIMEOUT{5000};
+    static constexpr std::chrono::milliseconds SWITCH_HOLD_DOWN{2000};
     static constexpr qsizetype MAX_SOURCE_INSTANCES = 64;
 
 private:

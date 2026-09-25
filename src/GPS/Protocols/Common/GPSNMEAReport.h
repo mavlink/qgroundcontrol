@@ -40,7 +40,7 @@ inline void applyNMEANavigationEpoch(GPSDecodedPosition& report, const NMEA::Nav
     report.velocityValid = false;
 }
 
-inline GPSDecodedSatellites gpsNMEASatelliteReport(const NMEA::SatelliteSystem& system)
+[[nodiscard]] inline GPSDecodedSatellites gpsNMEASatelliteReport(const NMEA::SatelliteSystem& system)
 {
     GPSDecodedSatellites report;
     report.fullSnapshot = false;

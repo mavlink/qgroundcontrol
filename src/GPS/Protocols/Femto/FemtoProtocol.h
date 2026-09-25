@@ -16,7 +16,7 @@ public:
 
     bool receiverReady() const override { return _configure_done; }
 
-    int receive(unsigned timeout) override;
+    int receive(std::chrono::milliseconds timeout) override;
     int decodeByte(uint8_t byte) override;
 
     bool configure(unsigned& baudrate, const GPSConfig& config) override;

@@ -85,6 +85,12 @@ void NTRIPStreamSession::open(const NTRIPConnectionConfig& connection, GPSCorrec
         }
     });
 
+    connect(transport, &NTRIPTransport::certificatePinned, this, [this](const QString& pin) {
+        if (_transport) {
+            emit certificatePinned(pin);
+        }
+    });
+
     transport->start();
     qCDebug(NTRIPStreamSessionLog) << "NTRIP transport started";
 }
@@ -140,7 +146,7 @@ void NTRIPStreamSession::_closeTransport()
     }
 }
 
-void NTRIPStreamSession::_onCorrectionFrame(const QPointer<GPSCorrectionManager>& corrections,
+void NTRIPStreamSession::_onCorrectionFrame(GPSCorrectionManager* corrections,
                                             const GPSCorrectionSourceRegistration::Weak& source,
                                             const RTCMDecodedFrame& frame)
 {

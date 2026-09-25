@@ -122,7 +122,7 @@ bool QuectelProtocol::_handleSurvey(std::string_view body)
     const bool matches =
         std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)
             ? configuredCount == 0 && observations == 0
-            : configuredCount == std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).durationSecs;
+            : configuredCount == std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).duration.count();
     const double radius = std::hypot(ecef.x, ecef.y, ecef.z);
     const bool coordinatesKnown = radius >= 6000000 && radius <= 7000000;
     if (!matches || (!coordinatesKnown && (validity == 2 || (validity == 1 && observations != 0)))) {
@@ -159,11 +159,11 @@ bool QuectelProtocol::_handleSurvey(std::string_view body)
     return true;
 }
 
-int QuectelProtocol::receive(unsigned timeout)
+int QuectelProtocol::receive(std::chrono::milliseconds timeout)
 {
     _expireSurvey();
     // Re-evaluate stale status before each transport read, even when one caller gives a large timeout.
-    const int result = GPSAsciiProtocol::receive(std::min(timeout, 1000U));
+    const int result = GPSAsciiProtocol::receive(std::min(timeout, std::chrono::milliseconds{1000}));
     if (hasIOError()) {
         _configured = false;
         _survey.phase = SurveyPhase::Off;

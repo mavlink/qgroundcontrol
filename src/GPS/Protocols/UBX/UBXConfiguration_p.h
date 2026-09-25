@@ -14,7 +14,7 @@ inline constexpr uint8_t STATIONARY_DYNAMIC_MODEL = 2;
 inline constexpr uint8_t BASE_SATELLITE_INFO_RATE = 2;
 
 /// Fixed-position accuracy in 0.1 mm.
-inline uint32_t fixedAccuracyWireUnits(float accuracyMeters)
+[[nodiscard]] inline uint32_t fixedAccuracyWireUnits(float accuracyMeters)
 {
     // Match shared validation: multiplying directly by 10000 can round an accepted value past UINT32_MAX.
     const float accuracyMillimeters = accuracyMeters * 1000.0f;
@@ -22,7 +22,7 @@ inline uint32_t fixedAccuracyWireUnits(float accuracyMeters)
 }
 
 /// Survey-in accuracy limit in 0.1 mm.
-inline uint32_t surveyAccuracyWireUnits(double accuracyMeters)
+[[nodiscard]] inline uint32_t surveyAccuracyWireUnits(double accuracyMeters)
 {
     return static_cast<uint32_t>(accuracyMeters * 10000.0);
 }
@@ -39,7 +39,7 @@ struct FixedPositionWire
     int8_t heightHp;
 };
 
-inline FixedPositionWire fixedPositionWire(const GPSEllipsoidPosition& position)
+[[nodiscard]] inline FixedPositionWire fixedPositionWire(const GPSEllipsoidPosition& position)
 {
     const auto latitude = static_cast<int64_t>(position.latitudeDegrees * 1e9);
     const auto longitude = static_cast<int64_t>(position.longitudeDegrees * 1e9);

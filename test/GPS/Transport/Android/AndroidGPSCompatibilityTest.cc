@@ -1,6 +1,8 @@
 #include <atomic>
+#include <chrono>
 #include <fcntl.h>
 #include <functional>
+#include <stop_token>
 #include <thread>
 #include <unistd.h>
 
@@ -15,6 +17,8 @@
 #include "SerialGPSTransport.h"
 #include "UnitTest.h"
 #include "qserialport_p.h"
+
+using namespace std::chrono_literals;
 
 namespace {
 bool posixBackend = false;
@@ -188,8 +192,8 @@ private slots:
         QFETCH(int, status);
         QFETCH(int, written);
         QFETCH(bool, fatal);
-        std::atomic_bool stop = false;
-        SerialGPSTransport transport(QStringLiteral("test"), stop);
+        std::stop_source stop;
+        SerialGPSTransport transport(QStringLiteral("test"), stop.get_token());
         QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
         writeStep = [step](int length) { return step < 0 ? -1 : (std::min) (step, length); };
         const uint8_t payload[4]{};
@@ -288,24 +292,24 @@ private slots:
 
     void expiredConfigurationSendsNothing()
     {
-        std::atomic_bool stop = false;
-        SerialGPSTransport transport(QStringLiteral("test"), stop);
+        std::stop_source stop;
+        SerialGPSTransport transport(QStringLiteral("test"), stop.get_token());
         QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
         const uint8_t payload = 42;
         QCOMPARE(transport.write(&payload, 1, QDeadlineTimer(0)).status, GPSWriteStatus::TimedOut);
         QCOMPARE(writeCalls, 0);
-        stop = true;
+        stop.request_stop();
         QCOMPARE(transport.write(&payload, 1, QDeadlineTimer(100)).status, GPSWriteStatus::Cancelled);
         QCOMPARE(writeCalls, 0);
     }
 
     void cancellationRetiresAttemptedWrite()
     {
-        std::atomic_bool stop = false;
-        SerialGPSTransport transport(QStringLiteral("test"), stop);
+        std::stop_source stop;
+        SerialGPSTransport transport(QStringLiteral("test"), stop.get_token());
         QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
         writeStep = [&](int length) {
-            stop = true;
+            stop.request_stop();
             return length;
         };
         const uint8_t payload[4]{};
@@ -318,21 +322,21 @@ private slots:
 
     void quietReadTimeoutAndCancellation()
     {
-        std::atomic_bool stop = false;
-        SerialGPSTransport transport(QStringLiteral("test"), stop);
+        std::stop_source stop;
+        SerialGPSTransport transport(QStringLiteral("test"), stop.get_token());
         QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
         const auto previous = qInstallMessageHandler(captureWarnings);
         const auto restore = qScopeGuard([previous] { qInstallMessageHandler(previous); });
         uint8_t byte{};
-        QCOMPARE(transport.read(&byte, 1, 125).status, GPSReadStatus::TimedOut);
+        QCOMPARE(transport.read(&byte, 1, 125ms).status, GPSReadStatus::TimedOut);
         QVERIFY2(warnings.isEmpty(), qPrintable(warnings.join(QStringLiteral("; "))));
         QElapsedTimer elapsed;
         elapsed.start();
         std::jthread cancellation([&] {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            stop = true;
+            stop.request_stop();
         });
-        QCOMPARE(transport.read(&byte, 1, 10000).status, GPSReadStatus::Cancelled);
+        QCOMPARE(transport.read(&byte, 1, 10000ms).status, GPSReadStatus::Cancelled);
         QVERIFY(elapsed.elapsed() < 1000);
         QVERIFY2(warnings.isEmpty(), qPrintable(warnings.join(QStringLiteral("; "))));
     }

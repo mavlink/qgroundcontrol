@@ -94,8 +94,8 @@ public:
     QList<GPSCorrectionStreamDiagnostic> sourceInstanceDiagnostics() const;
     QList<GPSCorrectionDestinationDiagnostic> destinationDiagnostics() const;
 
-    static constexpr qint64 FRESHNESS_TIMEOUT_MS = GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS;
-    static constexpr qint64 SWITCH_HOLD_DOWN_MS = GPSCorrectionSelector::SWITCH_HOLD_DOWN_MS;
+    static constexpr std::chrono::milliseconds FRESHNESS_TIMEOUT = GPSCorrectionSelector::FRESHNESS_TIMEOUT;
+    static constexpr std::chrono::milliseconds SWITCH_HOLD_DOWN = GPSCorrectionSelector::SWITCH_HOLD_DOWN;
     static constexpr qsizetype MAX_SOURCE_INSTANCES = GPSCorrectionSelector::MAX_SOURCE_INSTANCES;
     static constexpr qsizetype MAX_EVENTS = GPSCorrectionLedger::MAX_EVENTS;
     // Registered outputs retain their statistics independently of this history limit.

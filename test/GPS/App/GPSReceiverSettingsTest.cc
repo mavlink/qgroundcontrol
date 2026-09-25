@@ -2,7 +2,10 @@
 
 #include <memory>
 
-#include <QtQml/QQmlExpression>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QEvent>
+#include <QtCore/QPointer>
+#include <QtCore/QRegularExpression>
 #include <QtQml/QQmlPropertyMap>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
@@ -15,107 +18,62 @@
 #include "GPSRTK.h"
 #include "GPSRTKFactGroup.h"
 #include "GPSReceiverConfig.h"
-#include "GPSReceiverDescriptor.h"
+#include "GPSSettingsBindings.h"
 #include "MAVLinkLib.h"
 #include "RTKSettings.h"
+#include "ScriptedProvider.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
 #include "VehicleGPSFactGroup.h"
 #include "development/mavlink_msg_gnss_integrity.h"
-
-/// The receiver state the GPS toolbar indicator reads, without a receiver session.
-class IndicatorReceiver : public QObject
-{
-    Q_OBJECT
-    Q_PROPERTY(int activeRole MEMBER activeRole CONSTANT)
-
-public:
-    IndicatorReceiver() { factGroup.setLiveUpdates(true); }
-
-    GPSRTKFactGroup factGroup;
-    int activeRole = GPSRTK::PositionOnly;
-};
-
-/// Records the QML command boundary without opening a device or configuring hardware.
-class ReceiverSettingsController : public QObject
-{
-    Q_OBJECT
-    Q_PROPERTY(bool hasReceiver READ hasReceiver NOTIFY receiverChanged)
-    Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY receiverChanged)
-    Q_PROPERTY(bool serialSupported READ serialSupported CONSTANT)
-
-public:
-    explicit ReceiverSettingsController(RTKSettings* settings)
-        : _settings(settings)
-    {}
-
-    bool hasReceiver() const { return _hasReceiver; }
-
-    bool reconnecting() const { return _reconnecting; }
-
-    void setReconnecting(bool reconnecting)
-    {
-        _reconnecting = reconnecting;
-        emit receiverChanged();
-    }
-
-    bool serialSupported() const { return true; }
-
-    void setConnected(bool connected)
-    {
-        _hasReceiver = connected;
-        emit receiverChanged();
-    }
-
-    Q_INVOKABLE GPSReceiverPresentation capabilitiesFor(int role, int manufacturer) const
-    {
-        return gpsReceiverPresentation(role == GPSRTK::ConfiguredBase ? manufacturer
-                                                                      : GPSRTK::manufacturerForType(GPSType::passive));
-    }
-
-    Q_INVOKABLE bool connectConfiguredGPS(bool allowPersistentChanges = false)
-    {
-        permissions.append(allowPersistentChanges);
-        selectedType = _settings->receiverRole()->rawValue().toInt() == GPSRTK::ConfiguredBase
-                           ? GPSRTK::typeForManufacturer(_settings->baseReceiverManufacturers()->rawValue().toInt())
-                           : std::optional(GPSType::passive);
-        selectedMode = _settings->useFixedBasePosition()->rawValue().toInt();
-        fixedPosition = {};
-        if (selectedMode == static_cast<int>(BaseModeDefinition::Mode::BaseFixed)) {
-            fixedPosition.mode = GPSBaseStationConfig::Fixed{
-                .position = {.latitudeDegrees = _settings->fixedBasePositionLatitude()->rawValue().toDouble(),
-                             .longitudeDegrees = _settings->fixedBasePositionLongitude()->rawValue().toDouble(),
-                             .altitudeMeters = _settings->fixedBasePositionAltitude()->rawValue().toFloat()},
-                .accuracyMeters = _settings->fixedBasePositionAccuracy()->rawValue().toFloat()};
-        }
-        if (connectSucceeds) {
-            setConnected(true);
-        }
-        return connectSucceeds;
-    }
-
-    Q_INVOKABLE void disconnectConfiguredGPS()
-    {
-        _reconnecting = false;
-        setConnected(false);
-    }
-
-    bool connectSucceeds = true;
-    QList<bool> permissions;
-    std::optional<GPSType> selectedType;
-    int selectedMode = -1;
-    GPSBaseStationConfig fixedPosition;
-
-signals:
-    void receiverChanged();
-
-private:
-    RTKSettings* _settings;
-    bool _hasReceiver = false;
-    bool _reconnecting = false;
-};
+#ifndef QGC_NO_SERIAL_LINK
+#include "GPSSerialPortManagerAdapter.h"
+#include "SerialPortManager.h"
+#endif
 
 namespace {
+/// A receiver session that follows the settings; scripted providers stand in for the receiver hardware.
+struct SettingsReceiver
+{
+    explicit SettingsReceiver(RTKSettings* settings)
+    {
+        rtk.setProviderFactory(providers.providerFactory());
+#ifndef QGC_NO_SERIAL_LINK
+        rtk.setSerialPorts(&serialPorts);
+#endif
+        GPSSettingsBindings::bindRtk(settings, &rtk);
+    }
+
+    ScriptedProvider* provider() const { return providers.current(); }
+
+    /// Completes the cancellation of retired workers, which hold their serial port until then.
+    void finishRetired()
+    {
+        for (const QPointer<ScriptedProvider>& retired : providers.providers()) {
+            if (retired && retired->stopped()) {
+                retired->finish();
+            }
+        }
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    }
+
+#ifndef QGC_NO_SERIAL_LINK
+    // Every device the tests select; the panel's own port list decides which ones it shows as available.
+    SerialPortManager ports{nullptr, [] {
+                                QList<SerialPortManager::Port> inventory;
+                                for (const auto* device : {"/test/receiver", "/test/other", "/test/missing"}) {
+                                    inventory.append({.systemLocation = QString::fromLatin1(device),
+                                                      .portName = QString::fromLatin1(device).section(u'/', -1),
+                                                      .boardName = {}});
+                                }
+                                return inventory;
+                            }};
+    GPSSerialPortManagerAdapter serialPorts{&ports};
+#endif
+    ScriptedProviderFactory providers;
+    GPSRTK rtk;
+};
+
 struct SettingsFixture
 {
     TestFixtures::SettingsFixture saved;
@@ -140,41 +98,38 @@ struct SettingsFixture
         saved.setFactValue(settings->fixedBasePositionAccuracy(), 0);
         saved.setFactValue(settings->compactRtcmCorrections(), false);
         saved.setFactValue(settings->connectionType(), GPSRTK::Serial);
-        saved.setFactValue(settings->tcpHost(), QString());
-        saved.setFactValue(settings->tcpPort(), 0);
+        // Builds without serial links connect the saved serial selection over TCP.
+        saved.setFactValue(settings->tcpHost(), QStringLiteral("127.0.0.1"));
+        saved.setFactValue(settings->tcpPort(), 2102);
     }
 };
 
-void setSurvey(GPSRTKFactGroup& facts)
+/// Publishes a surveyed base position on the application's receiver Facts, which GPSManager saves.
+GPSRTKFactGroup* setSurvey(SettingsFixture& settings)
 {
-    facts.currentLatitude()->setRawValue(47.123456789);
-    facts.currentLongitude()->setRawValue(8.987654321);
-    facts.currentAltitude()->setRawValue(512.25f);
-    facts.currentAccuracy()->setRawValue(0.75);
-    facts.valid()->setRawValue(true);
-    facts.connected()->setRawValue(true);
+    GPSRTKFactGroup* facts = GPSManager::instance()->gpsRtkFacts();
+    settings.saved.setFactValue(facts->currentLatitude(), 47.123456789);
+    settings.saved.setFactValue(facts->currentLongitude(), 8.987654321);
+    settings.saved.setFactValue(facts->currentAltitude(), 512.25f);
+    settings.saved.setFactValue(facts->currentAccuracy(), 0.75);
+    settings.saved.setFactValue(facts->valid(), true);
+    settings.saved.setFactValue(facts->connected(), true);
+    return facts;
 }
 
-std::unique_ptr<QObject> createPanel(GPSTestHelpers::QmlEngine& engine, ReceiverSettingsController& receiver,
-                                     SettingsFixture& settings, GPSRTKFactGroup& facts, QString& error)
+std::unique_ptr<QObject> createPanel(GPSTestHelpers::QmlEngine& engine, SettingsReceiver& receiver,
+                                     SettingsFixture& settings, QString& error)
 {
     auto panel = engine.create(
         GPSTestHelpers::sourceQmlUrl(QStringLiteral("AppSettings/GPSReceiverSettings.qml")),
-        {{QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
+        {{QStringLiteral("receiver"), QVariant::fromValue(&receiver.rtk)},
          {QStringLiteral("settings"), QVariant::fromValue(settings.settings)},
-         {QStringLiteral("baseFacts"), QVariant::fromValue(&facts)},
+         {QStringLiteral("baseFacts"), QVariant::fromValue(GPSManager::instance()->gpsRtkFacts())},
          {QStringLiteral("autoConnectFact"), QVariant::fromValue(settings.autoConnect)},
          {QStringLiteral("serialPorts"), QStringList{QStringLiteral("/test/receiver")}},
          {QStringLiteral("serialBaudRates"), QStringList{QStringLiteral("115200"), QStringLiteral("230400")}}});
     error = engine.lastError();
     return panel;
-}
-
-bool invokeBool(QObject* root, const QString& expression, bool& result)
-{
-    QQmlExpression command(qmlContext(root), root, expression);
-    result = command.evaluate().toBool();
-    return !command.hasError();
 }
 }  // namespace
 
@@ -189,11 +144,10 @@ void GPSReceiverSettingsTest::_surveySaveWorkflow()
 {
     QFETCH(int, manufacturer);
     SettingsFixture settings(manufacturer);
-    ReceiverSettingsController receiver(settings.settings);
-    GPSRTKFactGroup facts;
+    SettingsReceiver receiver(settings.settings);
     GPSTestHelpers::QmlEngine engine;
     QString error;
-    auto panel = createPanel(engine, receiver, settings, facts, error);
+    auto panel = createPanel(engine, receiver, settings, error);
     QVERIFY2(panel, qPrintable(error));
     auto* connect = panel->findChild<QQuickItem*>(QStringLiteral("rtkConnectButton"));
     auto* save = panel->findChild<QQuickItem*>(QStringLiteral("rtkSaveBasePosition"));
@@ -201,42 +155,45 @@ void GPSReceiverSettingsTest::_surveySaveWorkflow()
     auto* manufacturerControl = panel->findChild<QQuickItem*>(QStringLiteral("rtkManufacturer"));
     QVERIFY(connect && save && fixed && manufacturerControl);
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
-    QVERIFY(receiver.hasReceiver());
-    QCOMPARE(receiver.selectedType, GPSRTK::typeForManufacturer(manufacturer));
-    QCOMPARE(receiver.selectedMode, static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn));
+    QVERIFY(receiver.rtk.hasReceiver());
+    QCOMPARE(receiver.providers.count(), 1);
+    QCOMPARE(std::optional(receiver.provider()->type()), GPSRTK::typeForManufacturer(manufacturer));
+    QVERIFY(std::holds_alternative<GPSBaseStationConfig::SurveyIn>(receiver.provider()->capturedConfig().base.mode));
+    QVERIFY(!receiver.provider()->capturedConfig().allowPersistentChanges);
     QVERIFY(!fixed->isEnabled());
     QVERIFY(!manufacturerControl->isEnabled());
     QVERIFY(!save->isEnabled());
-    setSurvey(facts);
+    GPSRTKFactGroup* facts = setSurvey(settings);
     QVERIFY(save->isVisible());
     QVERIFY(save->isEnabled());
     QVERIFY(QMetaObject::invokeMethod(save, "click"));
-    QCOMPARE(settings.settings->fixedBasePositionLatitude()->rawValue(), facts.currentLatitude()->rawValue());
-    QCOMPARE(settings.settings->fixedBasePositionLongitude()->rawValue(), facts.currentLongitude()->rawValue());
-    QCOMPARE(settings.settings->fixedBasePositionAltitude()->rawValue(), facts.currentAltitude()->rawValue());
+    QCOMPARE(settings.settings->fixedBasePositionLatitude()->rawValue(), facts->currentLatitude()->rawValue());
+    QCOMPARE(settings.settings->fixedBasePositionLongitude()->rawValue(), facts->currentLongitude()->rawValue());
+    QCOMPARE(settings.settings->fixedBasePositionAltitude()->rawValue(), facts->currentAltitude()->rawValue());
     QCOMPARE(settings.settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.75);
     QCOMPARE(settings.settings->useFixedBasePosition()->rawValue().toInt(), 0);
-    QCOMPARE(receiver.permissions, QList<bool>{false});
 
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
-    QVERIFY(!receiver.hasReceiver());
-    facts.valid()->setRawValue(false);
-    facts.currentLatitude()->setRawValue(qQNaN());
-    facts.currentAccuracy()->setRawValue(qQNaN());
+    QVERIFY(!receiver.rtk.hasReceiver());
+    receiver.finishRetired();
+    facts->valid()->setRawValue(false);
+    facts->currentLatitude()->setRawValue(qQNaN());
+    facts->currentAccuracy()->setRawValue(qQNaN());
     QVERIFY(!save->isEnabled());
     QVERIFY(fixed->isEnabled());
     QVERIFY(QMetaObject::invokeMethod(fixed, "click"));
     QCOMPARE(settings.settings->useFixedBasePosition()->rawValue().toInt(), 1);
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
-    QCOMPARE(receiver.selectedType, GPSRTK::typeForManufacturer(manufacturer));
-    QCOMPARE(receiver.selectedMode, static_cast<int>(BaseModeDefinition::Mode::BaseFixed));
-    QVERIFY(std::holds_alternative<GPSBaseStationConfig::Fixed>(receiver.fixedPosition.mode));
-    const auto& fixedPosition = std::get<GPSBaseStationConfig::Fixed>(receiver.fixedPosition.mode);
+    QCOMPARE(receiver.providers.count(), 2);
+    const ScriptedProvider* provider = receiver.provider();
+    QCOMPARE(std::optional(provider->type()), GPSRTK::typeForManufacturer(manufacturer));
+    QVERIFY(std::holds_alternative<GPSBaseStationConfig::Fixed>(provider->capturedConfig().base.mode));
+    const auto& fixedPosition = std::get<GPSBaseStationConfig::Fixed>(provider->capturedConfig().base.mode);
     QCOMPARE(fixedPosition.position.latitudeDegrees, 47.123456789);
     QCOMPARE(fixedPosition.position.longitudeDegrees, 8.987654321);
     QCOMPARE(fixedPosition.position.altitudeMeters, 512.25f);
     QCOMPARE(fixedPosition.accuracyMeters, 0.75f);
-    QCOMPARE(gpsValidateReceiverConfig(*receiver.selectedType, {.base = receiver.fixedPosition}),
+    QCOMPARE(gpsValidateReceiverConfig(provider->type(), {.base = provider->capturedConfig().base}),
              GPSReceiverConfigError::None);
 }
 
@@ -258,54 +215,57 @@ void GPSReceiverSettingsTest::_unavailablePositionCannotBeSaved()
     QFETCH(QString, field);
     QFETCH(double, value);
     SettingsFixture settings(manufacturer);
-    ReceiverSettingsController receiver(settings.settings);
-    GPSRTKFactGroup facts;
-    setSurvey(facts);
-    facts.property(field.toUtf8().constData()).value<Fact*>()->setRawValue(value);
+    SettingsReceiver receiver(settings.settings);
+    GPSRTKFactGroup* facts = setSurvey(settings);
+    facts->property(field.toUtf8().constData()).value<Fact*>()->setRawValue(value);
     GPSTestHelpers::QmlEngine engine;
     QString error;
-    auto panel = createPanel(engine, receiver, settings, facts, error);
+    auto panel = createPanel(engine, receiver, settings, error);
     QVERIFY2(panel, qPrintable(error));
     auto* save = panel->findChild<QQuickItem*>(QStringLiteral("rtkSaveBasePosition"));
     QVERIFY(save && !save->isEnabled());
-    bool result = true;
-    QVERIFY(invokeBool(panel.get(), QStringLiteral("saveCurrentBasePosition()"), result));
-    QVERIFY(!result);
+    QVERIFY(!GPSManager::instance()->saveCurrentBasePosition());
     QCOMPARE(settings.settings->fixedBasePositionLatitude()->rawValue().toDouble(), 0.0);
+    QCOMPARE(settings.settings->fixedBasePositionLongitude()->rawValue().toDouble(), 0.0);
+    QCOMPARE(settings.settings->fixedBasePositionAltitude()->rawValue().toDouble(), 0.0);
     QCOMPARE(settings.settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.0);
 }
 
 void GPSReceiverSettingsTest::_reconnectingOffersDisconnect()
 {
     SettingsFixture settings(4);
-    ReceiverSettingsController receiver(settings.settings);
-    GPSRTKFactGroup facts;
+    SettingsReceiver receiver(settings.settings);
     GPSTestHelpers::QmlEngine engine;
     QString error;
-    auto panel = createPanel(engine, receiver, settings, facts, error);
+    auto panel = createPanel(engine, receiver, settings, error);
     QVERIFY2(panel, qPrintable(error));
     auto* connect = panel->findChild<QQuickItem*>(QStringLiteral("rtkConnectButton"));
     auto* device = panel->findChild<QQuickItem*>(QStringLiteral("rtkSerialDevice"));
     QVERIFY(connect && device);
-    receiver.setReconnecting(true);
+    QVERIFY(receiver.rtk.connectConfiguredGPS());
+    receiver.provider()->ready();
+    expectLogMessage("GPS.RTK.GPSRTK", QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+    receiver.provider()->fail(GPSConnectionError::DeviceError);
+    verifyExpectedLogMessage();
+    QVERIFY(receiver.rtk.reconnecting());
+    QVERIFY(!receiver.rtk.hasReceiver());
     QCOMPARE(connect->property("text").toString(), QCoreApplication::translate("GPSReceiverSettings", "Disconnect"));
     QVERIFY(connect->isEnabled());
     QVERIFY(!device->isEnabled());
     QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
-    QVERIFY(!receiver.reconnecting());
+    QVERIFY(!receiver.rtk.reconnecting());
     QVERIFY(device->isEnabled());
     QCOMPARE(connect->property("text").toString(), QCoreApplication::translate("GPSReceiverSettings", "Connect"));
-    QVERIFY(receiver.permissions.isEmpty());
+    QCOMPARE(receiver.providers.count(), 1);
 }
 
 void GPSReceiverSettingsTest::_tcpConnectionFields()
 {
     SettingsFixture settings(4);
-    ReceiverSettingsController receiver(settings.settings);
-    GPSRTKFactGroup facts;
+    SettingsReceiver receiver(settings.settings);
     GPSTestHelpers::QmlEngine engine;
     QString error;
-    auto panel = createPanel(engine, receiver, settings, facts, error);
+    auto panel = createPanel(engine, receiver, settings, error);
     QVERIFY2(panel, qPrintable(error));
     auto* host = panel->findChild<QQuickItem*>(QStringLiteral("rtkTcpHost"));
     auto* port = panel->findChild<QQuickItem*>(QStringLiteral("rtkTcpPort"));
@@ -314,8 +274,9 @@ void GPSReceiverSettingsTest::_tcpConnectionFields()
     auto* consent = panel->findChild<QObject*>(QStringLiteral("rtkPersistentChangesCheckBox"));
     QVERIFY(host && port && device && connectionType && consent);
     QVERIFY(connectionType->isVisible());
-    QVERIFY(device->isVisible());
-    QVERIFY(!host->isVisible() && !port->isVisible());
+    const bool serial = receiver.rtk.serialSupported();
+    QCOMPARE(device->isVisible(), serial);
+    QCOMPARE(host->isVisible() && port->isVisible(), !serial);
     settings.settings->connectionType()->setRawValue(GPSRTK::Tcp);
     QVERIFY(host->isVisible() && port->isVisible());
     QVERIFY(!device->isVisible());
@@ -327,18 +288,18 @@ void GPSReceiverSettingsTest::_tcpConnectionFields()
         fact->setRawValue(fact == settings.settings->tcpPort() ? QVariant(2101) : QVariant(QStringLiteral("bridge")));
         QVERIFY(!consent->property("checked").toBool());
     }
-    receiver.setConnected(true);
+    QVERIFY(receiver.rtk.connectConfiguredGPS());
+    QCOMPARE(receiver.rtk.activeEndpoint(), QStringLiteral("bridge:2101"));
     QVERIFY(!host->isEnabled() && !port->isEnabled());
 }
 
 void GPSReceiverSettingsTest::_roleSelectsFields()
 {
     SettingsFixture settings(4);
-    ReceiverSettingsController receiver(settings.settings);
-    GPSRTKFactGroup facts;
+    SettingsReceiver receiver(settings.settings);
     GPSTestHelpers::QmlEngine engine;
     QString error;
-    auto panel = createPanel(engine, receiver, settings, facts, error);
+    auto panel = createPanel(engine, receiver, settings, error);
     QVERIFY2(panel, qPrintable(error));
     auto* role = panel->findChild<QQuickItem*>(QStringLiteral("receiverRole"));
     auto* manufacturer = panel->findChild<QQuickItem*>(QStringLiteral("rtkManufacturer"));
@@ -357,7 +318,7 @@ void GPSReceiverSettingsTest::_roleSelectsFields()
     settings.settings->receiverRole()->setRawValue(GPSRTK::PositionOnly);
     QVERIFY(!manufacturer->isVisible());
     QVERIFY(!survey->isVisible());
-    QVERIFY(device->isVisible());
+    QCOMPARE(device->isVisible(), receiver.rtk.serialSupported());
     QVERIFY(connect->isEnabled());
 
     settings.settings->connectionType()->setRawValue(GPSRTK::Udp);
@@ -365,8 +326,10 @@ void GPSReceiverSettingsTest::_roleSelectsFields()
     QVERIFY(!device->isVisible());
     QVERIFY(connect->isEnabled());
     QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
-    QCOMPARE(receiver.selectedType, std::optional(GPSType::passive));
-    receiver.setConnected(false);
+    QVERIFY(receiver.rtk.hasReceiver());
+    QCOMPARE(receiver.provider()->type(), GPSType::passive);
+    QCOMPARE(receiver.rtk.activeRole(), GPSRTK::PositionOnly);
+    receiver.rtk.disconnectConfiguredGPS();
 
     // UDP cannot carry base configuration.
     settings.settings->receiverRole()->setRawValue(GPSRTK::ConfiguredBase);
@@ -381,11 +344,10 @@ void GPSReceiverSettingsTest::_roleSelectsFields()
 void GPSReceiverSettingsTest::_compactCorrectionsToggle()
 {
     SettingsFixture settings(4);
-    ReceiverSettingsController receiver(settings.settings);
-    GPSRTKFactGroup facts;
+    SettingsReceiver receiver(settings.settings);
     GPSTestHelpers::QmlEngine engine;
     QString error;
-    auto panel = createPanel(engine, receiver, settings, facts, error);
+    auto panel = createPanel(engine, receiver, settings, error);
     QVERIFY2(panel, qPrintable(error));
     auto* toggle = panel->findChild<QQuickItem*>(QStringLiteral("rtkCompactRtcm"));
     QVERIFY(toggle);
@@ -399,19 +361,18 @@ void GPSReceiverSettingsTest::_compactCorrectionsToggle()
     }
     settings.settings->baseReceiverManufacturers()->setRawValue(4);
     QVERIFY(toggle->isVisible());
-    receiver.setConnected(true);
+    QVERIFY(receiver.rtk.connectConfiguredGPS());
+    QVERIFY(receiver.provider()->capturedConfig().base.compactObservations);
     QVERIFY(!toggle->isEnabled());
 }
 
 void GPSReceiverSettingsTest::_consentIsOneUse()
 {
     SettingsFixture settings(6);
-    ReceiverSettingsController receiver(settings.settings);
-    receiver.connectSucceeds = false;
-    GPSRTKFactGroup facts;
+    SettingsReceiver receiver(settings.settings);
     GPSTestHelpers::QmlEngine engine;
     QString error;
-    auto panel = createPanel(engine, receiver, settings, facts, error);
+    auto panel = createPanel(engine, receiver, settings, error);
     QVERIFY2(panel, qPrintable(error));
     auto* consent = panel->findChild<QObject*>(QStringLiteral("rtkPersistentChangesCheckBox"));
     auto* connect = panel->findChild<QObject*>(QStringLiteral("rtkConnectButton"));
@@ -420,10 +381,23 @@ void GPSReceiverSettingsTest::_consentIsOneUse()
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
     QVERIFY(consent->property("checked").toBool());
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
-    QCOMPARE(receiver.permissions, QList<bool>{true});
+    QCOMPARE(receiver.providers.count(), 1);
+    QVERIFY(receiver.provider()->capturedConfig().allowPersistentChanges);
     QVERIFY(!consent->property("checked").toBool());
+    const auto failToOpen = [this, &receiver]() {
+        expectLogMessage("GPS.RTK.GPSRTK", QtWarningMsg, QRegularExpression(QStringLiteral("Failed to open")));
+        receiver.provider()->fail(GPSConnectionError::OpenFailed);
+        verifyExpectedLogMessage();
+        receiver.finishRetired();
+    };
+    // A failed attempt uses up its consent.
+    failToOpen();
+    QVERIFY(!receiver.rtk.hasReceiver());
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
-    QCOMPARE(receiver.permissions, (QList<bool>{true, false}));
+    QCOMPARE(receiver.providers.count(), 2);
+    QVERIFY(!receiver.provider()->capturedConfig().allowPersistentChanges);
+    failToOpen();
+    QVERIFY(!receiver.rtk.hasReceiver());
 
     for (const auto& [fact, value] :
          QList<QPair<Fact*, QVariant>>{{settings.settings->serialDevice(), QStringLiteral("/test/other")},
@@ -438,15 +412,15 @@ void GPSReceiverSettingsTest::_consentIsOneUse()
     QVERIFY(!consent->property("visible").toBool());
     settings.settings->baseReceiverManufacturers()->setRawValue(6);
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
-    receiver.setConnected(true);
+    QVERIFY(receiver.rtk.connectConfiguredGPS());
     QVERIFY(!consent->property("checked").toBool());
     QVERIFY(!consent->property("enabled").toBool());
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
-    QVERIFY(!receiver.hasReceiver());
+    QVERIFY(!receiver.rtk.hasReceiver());
     QVERIFY(!consent->property("checked").toBool());
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
     panel.reset();
-    panel = createPanel(engine, receiver, settings, facts, error);
+    panel = createPanel(engine, receiver, settings, error);
     QVERIFY2(panel, qPrintable(error));
     QVERIFY(!panel->findChild<QObject*>(QStringLiteral("rtkPersistentChangesCheckBox"))->property("checked").toBool());
 }
@@ -502,13 +476,12 @@ void GPSReceiverSettingsTest::_warningWidth()
     QFETCH(int, width);
     QFETCH(bool, longText);
     SettingsFixture settings(6);
-    ReceiverSettingsController receiver(settings.settings);
-    GPSRTKFactGroup facts;
+    SettingsReceiver receiver(settings.settings);
     QQuickWindow window;
     window.resize(width, 800);
     GPSTestHelpers::QmlEngine engine;
     QString error;
-    auto panel = createPanel(engine, receiver, settings, facts, error);
+    auto panel = createPanel(engine, receiver, settings, error);
     QVERIFY2(panel, qPrintable(error));
     auto* item = qobject_cast<QQuickItem*>(panel.get());
     QVERIFY(item);
@@ -640,12 +613,14 @@ void GPSReceiverSettingsTest::_disconnectedPage()
 
 void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
 {
+#ifdef QGC_NO_SERIAL_LINK
+    QSKIP("Serial selection requires serial link support");
+#endif
     SettingsFixture settings(4);
-    ReceiverSettingsController receiver(settings.settings);
-    GPSRTKFactGroup facts;
+    SettingsReceiver receiver(settings.settings);
     GPSTestHelpers::QmlEngine engine;
     QString error;
-    auto panel = createPanel(engine, receiver, settings, facts, error);
+    auto panel = createPanel(engine, receiver, settings, error);
     QVERIFY2(panel, qPrintable(error));
     auto* device = panel->findChild<QObject*>(QStringLiteral("rtkSerialDevice"));
     auto* baud = panel->findChild<QObject*>(QStringLiteral("rtkSerialBaudRate"));
@@ -678,7 +653,9 @@ void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
     settings.settings->receiverRole()->setRawValue(GPSRTK::ConfiguredBase);
     settings.settings->baseReceiverManufacturers()->setRawValue(4);
     settings.settings->serialBaudRate()->setRawValue(230400);
-    receiver.setConnected(true);
+    QVERIFY(receiver.rtk.connectConfiguredGPS());
+    QCOMPARE(receiver.rtk.activeEndpoint(), QStringLiteral("/test/missing"));
+    QCOMPARE(receiver.provider()->capturedConfig().baudRate, 230400u);
     QVERIFY(!device->property("enabled").toBool());
     QVERIFY(!baud->property("enabled").toBool());
     QVERIFY(!custom->property("enabled").toBool());
@@ -827,9 +804,20 @@ void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGPS()
     QFETCH(int, correctionState);
     QFETCH(QString, label);
     QFETCH(QString, detail);
-    IndicatorReceiver receiver;
-    receiver.activeRole = role;
-    auto& facts = receiver.factGroup;
+    ScriptedProviderFactory providers;
+    GPSRTK receiver;
+    receiver.setProviderFactory(providers.providerFactory());
+    GPSRTK::Configuration configuration;
+    configuration.receiverRole = static_cast<GPSRTK::ReceiverRole>(role);
+    configuration.baseReceiverManufacturer = GPSRTK::manufacturerForType(GPSType::ublox);
+    configuration.connectionType = GPSRTK::Tcp;
+    configuration.tcpHost = QStringLiteral("127.0.0.1");
+    configuration.tcpPort = 2101;
+    receiver.setConfiguration(configuration);
+    QVERIFY(receiver.connectConfiguredGPS());
+    QCOMPARE(int(receiver.activeRole()), role);
+    GPSRTKFactGroup facts;
+    facts.setLiveUpdates(true);
     facts.fixType()->setRawValue(fixType);
     facts.numSatellitesUsed()->setRawValue(9);
     facts.active()->setRawValue(surveying);
@@ -840,7 +828,7 @@ void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGPS()
                       {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                        {QStringLiteral("_activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))},
                        {QStringLiteral("_receiver"), QVariant::fromValue(&receiver)},
-                       {QStringLiteral("_rtkFacts"), QVariant::fromValue(&receiver.factGroup)},
+                       {QStringLiteral("_rtkFacts"), QVariant::fromValue(&facts)},
                        {QStringLiteral("_correctionState"), correctionState}});
     QVERIFY2(indicator, qPrintable(engine.lastError()));
     QVERIFY(indicator->property("showIndicator").toBool());
@@ -907,5 +895,3 @@ void GPSReceiverSettingsTest::_resiliencePageGroups()
 }
 
 UT_REGISTER_TEST(GPSReceiverSettingsTest, TestLabel::Unit)
-
-#include "GPSReceiverSettingsTest.moc"

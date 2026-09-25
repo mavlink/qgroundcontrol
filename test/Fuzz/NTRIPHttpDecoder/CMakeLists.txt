@@ -3,7 +3,7 @@ project(QGCNTRIPHttpDecoderFuzz LANGUAGES CXX)
 enable_testing()
 
 option(QGC_NTRIP_LIBFUZZER "Build the NTRIP HTTP decoder with libFuzzer, ASan, and UBSan" OFF)
-find_package(Qt6 6.8 REQUIRED COMPONENTS Core Network)
+find_package(Qt6 6.11 REQUIRED COMPONENTS Core Network)
 
 set(_root "${CMAKE_CURRENT_SOURCE_DIR}/../../..")
 set(QGC_GPS_COMPONENTS_ENABLED NTRIPHttp)

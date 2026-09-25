@@ -2,6 +2,7 @@
 #include <memory>
 #include <utility>
 
+#include <QtCore/QCryptographicHash>
 #include <QtCore/QDateTime>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
@@ -28,6 +29,11 @@ namespace {
 int timeoutMs()
 {
     return TestTimeout::mediumMs();
+}
+
+QString tlsError(QSslError::SslError code)
+{
+    return QRegularExpression::escape(QSslError(code).errorString());
 }
 
 QSslConfiguration serverConfiguration(bool mismatched = false)
@@ -83,8 +89,11 @@ private slots:
     void restartRetiresAttempt_data();
     void restartRetiresAttempt();
     void reconnectFromTlsFailure();
+    void certificatePinning_data();
+    void certificatePinning();
 
 private:
+    void _expectSelfSignedWarning();
     void _expectTlsWarnings(bool allowSelfSigned, bool mismatched = false);
     void _verifyTlsWarnings();
 };
@@ -98,7 +107,7 @@ void NTRIPTlsTest::initTestCase()
     using namespace NTRIPTlsTestFixtures;
     QVERIFY(!QSslKey(PRIVATE_KEY_PEM, QSsl::Rsa, QSsl::Pem).isNull());
     const auto now = QDateTime::currentDateTimeUtc();
-    for (const auto& pem : {SERVER_CERT_PEM, MISMATCHED_CERT_PEM, ISSUED_CERT_PEM}) {
+    for (const auto& pem : {SERVER_CERT_PEM, ROTATED_CERT_PEM, MISMATCHED_CERT_PEM, ISSUED_CERT_PEM}) {
         const QSslCertificate certificate(pem, QSsl::Pem);
         QVERIFY(!certificate.isNull());
         QVERIFY2(certificate.effectiveDate() <= now, "Test certificate is not yet valid");
@@ -106,14 +115,16 @@ void NTRIPTlsTest::initTestCase()
     }
 }
 
+void NTRIPTlsTest::_expectSelfSignedWarning()
+{
+    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^TLS error: \"(?:%1|%2)\"$")
+                                            .arg(tlsError(QSslError::SelfSignedCertificate),
+                                                 tlsError(QSslError::SelfSignedCertificateInChain))));
+}
+
 void NTRIPTlsTest::_expectTlsWarnings(bool allowSelfSigned, bool mismatched)
 {
-    const auto tlsError = [](QSslError::SslError code) {
-        return QRegularExpression::escape(QSslError(code).errorString());
-    };
-    const QRegularExpression selfSigned(
-        QStringLiteral("^TLS error: \"(?:%1|%2)\"$")
-            .arg(tlsError(QSslError::SelfSignedCertificate), tlsError(QSslError::SelfSignedCertificateInChain)));
     const QRegularExpression policy(
         mismatched
             ? QStringLiteral("^TLS error: \"%1\"$").arg(tlsError(QSslError::HostNameMismatch))
@@ -121,7 +132,7 @@ void NTRIPTlsTest::_expectTlsWarnings(bool allowSelfSigned, bool mismatched)
                   allowSelfSigned ? QStringLiteral("Accepting self-signed certificate (user opted in)")
                                   : QStringLiteral("Rejecting self-signed certificate (enable 'Accept self-signed "
                                                    "certificates' to allow)"))));
-    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, selfSigned);
+    _expectSelfSignedWarning();
     expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, policy);
 }
 
@@ -555,6 +566,80 @@ void NTRIPTlsTest::reconnectFromTlsFailure()
     QTRY_COMPARE_WITH_TIMEOUT(connection->peer->state(), QAbstractSocket::UnconnectedState, timeoutMs());
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(errors.size(), 1);
+}
+
+void NTRIPTlsTest::certificatePinning_data()
+{
+    QTest::addColumn<QString>("host");
+    QTest::addColumn<bool>("rotated");
+    QTest::addColumn<bool>("pinned");
+    QTest::addColumn<bool>("accepted");
+    // The pin, when present, holds the loopback certificate for 127.0.0.1; both certificates name both hosts.
+    QTest::newRow("first-connection-pins") << QStringLiteral("127.0.0.1") << false << false << true;
+    QTest::newRow("pinned-certificate-reconnects") << QStringLiteral("127.0.0.1") << false << true << true;
+    QTest::newRow("changed-certificate-rejected") << QStringLiteral("127.0.0.1") << true << true << false;
+    QTest::newRow("host-change-repins") << QStringLiteral("localhost") << true << true << true;
+}
+
+void NTRIPTlsTest::certificatePinning()
+{
+    QFETCH(QString, host);
+    QFETCH(bool, rotated);
+    QFETCH(bool, pinned);
+    QFETCH(bool, accepted);
+    using Certificate = ScriptedNTRIPCaster::Certificate;
+    ScriptedNTRIPCaster caster(ScriptedNTRIPCaster::Transport::Tls,
+                               rotated ? Certificate::Rotated : Certificate::Loopback);
+    QVERIFY(caster.isListening());
+    const auto pinFor = [&caster](const QString& endpointHost, Certificate certificate) {
+        const QSslCertificate leaf(ScriptedNTRIPCaster::certificatePem(certificate), QSsl::Pem);
+        return QStringLiteral("%1:%2|%3")
+            .arg(endpointHost)
+            .arg(caster.port())
+            .arg(QString::fromLatin1(leaf.digest(QCryptographicHash::Sha256).toHex()));
+    };
+    auto configuration = caster.connectionConfig();
+    configuration.host = host;
+    configuration.allowSelfSignedCerts = true;
+    if (pinned) {
+        configuration.pinnedCertificate = pinFor(QStringLiteral("127.0.0.1"), Certificate::Loopback);
+    }
+    const QString presentedPin = pinFor(host, rotated ? Certificate::Rotated : Certificate::Loopback);
+    const bool pinsNewCertificate = accepted && presentedPin != configuration.pinnedCertificate;
+
+    NTRIPHttpTransport transport(configuration, {});
+    QSignalSpy pins(&transport, &NTRIPTransport::certificatePinned);
+    QSignalSpy errors(&transport, &NTRIPTransport::error);
+    _expectSelfSignedWarning();
+    if (pinsNewCertificate) {
+        expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Accepting self-signed certificate \\(user opted in\\)$")));
+    } else if (!accepted) {
+        expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^Rejecting self-signed certificate that differs")));
+    }
+    transport.start();
+
+    if (!accepted) {
+        QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, timeoutMs());
+        const auto failure = qvariant_cast<NTRIPFailure>(errors.first().first());
+        QCOMPARE(failure.code, NTRIPError::SslError);
+        QVERIFY(failure.detail.contains(QStringLiteral("certificate changed")));
+    } else {
+        auto* connection = caster.waitForConnection(timeoutMs());
+        QVERIFY(connection && connection->peer);
+        QVERIFY(connection->waitForRequest(timeoutMs()).startsWith("GET /TEST HTTP/1.1\r\n"));
+        QVERIFY(errors.isEmpty());
+    }
+    verifyExpectedLogMessage();
+    if (pinsNewCertificate || !accepted) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(pins.size(), pinsNewCertificate ? 1 : 0);
+    if (pinsNewCertificate) {
+        QCOMPARE(pins.first().first().toString(), presentedPin);
+    }
+    transport.stop();
 }
 
 UT_REGISTER_TEST(NTRIPTlsTest, TestLabel::Unit)

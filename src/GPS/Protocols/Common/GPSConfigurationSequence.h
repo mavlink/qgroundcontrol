@@ -41,7 +41,7 @@ struct GPSConfigurationSequence
         bool required = true;
     };
 
-    struct Result
+    struct [[nodiscard]] Result
     {
         /// The failed required step, or the step during which an I/O failure ended the sequence.
         std::optional<size_t> failedStep = std::nullopt;
@@ -49,7 +49,7 @@ struct GPSConfigurationSequence
         /// The failed command's last outcome, the I/O failure's outcome, or Pending for a failed custom step.
         GPSCommandOutcome outcome = GPSCommandOutcome::Pending;
 
-        bool succeeded() const { return !failedStep.has_value(); }
+        [[nodiscard]] bool succeeded() const { return !failedStep.has_value(); }
     };
 
     std::vector<std::variant<Command, Custom>> steps;

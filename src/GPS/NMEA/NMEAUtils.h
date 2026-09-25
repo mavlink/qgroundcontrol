@@ -11,10 +11,10 @@ namespace NMEAUtils {
 /// Validate an NMEA sentence's checksum. Accepts sentences of the form
 /// `$BODY*XX` (with no terminator, LF, or CRLF). Returns false if the sentence
 /// is malformed or the checksum does not match.
-bool verifyChecksum(const QByteArray& sentence);
+[[nodiscard]] bool verifyChecksum(const QByteArray& sentence);
 
 /// Rebuild a valid frame with its checksum and CRLF; short or malformed bodies are only terminated.
-QByteArray repairChecksum(const QByteArray& sentence);
+[[nodiscard]] QByteArray repairChecksum(const QByteArray& sentence);
 
 /// Build GPGGA from explicit fix fields and UTC, truncated to whole seconds.
 /// NaN altitude/geoid separation/HDOP and absent satellite count produce empty fields, not defaults.

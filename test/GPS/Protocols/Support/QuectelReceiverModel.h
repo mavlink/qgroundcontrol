@@ -2,12 +2,12 @@
 
 #include <algorithm>
 #include <array>
-#include <atomic>
 #include <cstdio>
 #include <cstring>
 #include <map>
 #include <optional>
 #include <stdexcept>
+#include <stop_token>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -91,7 +91,7 @@ struct QuectelReceiver : public ScriptedReceiver::Model
     QStringList warnings;
     GPSTestClock& clock;
     ReceiverEventQueue events{clock};
-    std::atomic_bool stop{false};
+    std::stop_source stop;
     ScriptedReceiver scripted;
 
     explicit QuectelReceiver(GPSTestClock& testClock)
@@ -302,7 +302,7 @@ struct QuectelReceiver : public ScriptedReceiver::Model
             events.advanceTo(clock.nowUs() + delay.count());
             return !(failed && fault == Fault::Cancel);
         };
-        scripted.setReadHandler([this](uint8_t*, int, int) -> std::optional<GPSReadResult> {
+        scripted.setReadHandler([this](uint8_t*, int, std::chrono::milliseconds) -> std::optional<GPSReadResult> {
             if (failed && fault == Fault::Cancel) {
                 return std::optional<GPSReadResult>{GPSReadResult{GPSReadStatus::Cancelled}};
             }

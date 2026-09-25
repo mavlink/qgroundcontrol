@@ -74,7 +74,7 @@ struct GPSDecodedSatelliteUsage
 };
 
 /// A reported used-satellite count; receivers report UINT8_MAX and above when the count is unknown.
-inline std::optional<uint8_t> gpsSatellitesUsed(std::optional<unsigned> count)
+[[nodiscard]] inline std::optional<uint8_t> gpsSatellitesUsed(std::optional<unsigned> count)
 {
     return count && *count < UINT8_MAX ? std::optional<uint8_t>(static_cast<uint8_t>(*count)) : std::nullopt;
 }
@@ -99,7 +99,7 @@ struct GPSDecodedBatch
     int updates = 0;
 };
 
-struct GPSDecodeResult
+struct [[nodiscard]] GPSDecodeResult
 {
     size_t bytesConsumed = 0;
     GPSDecodedBatch batch;

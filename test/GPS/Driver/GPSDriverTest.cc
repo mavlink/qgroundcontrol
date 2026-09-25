@@ -1,8 +1,10 @@
 #include "GPSDriverTest.h"
 
+#include <chrono>
 #include <cstring>
 #include <limits>
 #include <optional>
+#include <stop_token>
 #include <string>
 #include <utility>
 
@@ -19,12 +21,7 @@
 #include "Protocols/Support/ScriptedReceiver.h"
 #include "Protocols/Support/UBXReceiverModel.h"
 
-Q_DECLARE_METATYPE(GPSBaseStationConfig)
-Q_DECLARE_METATYPE(GPSReceiverConfig)
-Q_DECLARE_METATYPE(GPSWriteResult)
-Q_DECLARE_METATYPE(UBXReceiverModel::Receiver)
-Q_DECLARE_METATYPE(UBXReceiverModel::DisableReply)
-Q_DECLARE_METATYPE(UBXReceiverModel::ReadbackReply)
+using namespace std::chrono_literals;
 
 namespace {
 
@@ -36,7 +33,7 @@ static_assert(static_cast<int>(GPSType::unicore) == 4);
 static_assert(static_cast<int>(GPSType::quectel) == 5);
 static_assert(static_cast<int>(GPSType::passive) == 6);
 
-const std::atomic_bool neverStop{false};
+const std::stop_token neverStop{};
 
 QByteArray nmeaFrame(const QByteArray& body)
 {
@@ -53,23 +50,24 @@ public:
             ++openCalls;
             return GPSOpenResult{GPSOpenStatus::Opened};
         });
-        transport.setReadHandler([this](uint8_t* buffer, int length, int timeoutMs) -> std::optional<GPSReadResult> {
-            lastReadLength = length;
-            lastReadTimeoutMs = timeoutMs;
-            if (readOverride) {
-                return *readOverride;
-            }
-            if (acknowledgeAshtech && scriptedRead.isEmpty() && timeoutMs > 0) {
-                QThread::msleep(static_cast<unsigned long>(timeoutMs));
-                return GPSReadResult{GPSReadStatus::TimedOut};
-            }
-            const int n = qMin(static_cast<int>(scriptedRead.size()), length);
-            (void) std::memcpy(buffer, scriptedRead.constData(), static_cast<size_t>(n));
-            if (acknowledgeFemto || acknowledgeAshtech) {
-                scriptedRead.remove(0, n);
-            }
-            return GPSReadResult{GPSReadStatus::Data, n};
-        });
+        transport.setReadHandler(
+            [this](uint8_t* buffer, int length, std::chrono::milliseconds timeout) -> std::optional<GPSReadResult> {
+                lastReadLength = length;
+                lastReadTimeout = timeout;
+                if (readOverride) {
+                    return *readOverride;
+                }
+                if (acknowledgeAshtech && scriptedRead.isEmpty() && timeout > 0ms) {
+                    QThread::sleep(timeout);
+                    return GPSReadResult{GPSReadStatus::TimedOut};
+                }
+                const int n = qMin(static_cast<int>(scriptedRead.size()), length);
+                (void) std::memcpy(buffer, scriptedRead.constData(), static_cast<size_t>(n));
+                if (acknowledgeFemto || acknowledgeAshtech) {
+                    scriptedRead.remove(0, n);
+                }
+                return GPSReadResult{GPSReadStatus::Data, n};
+            });
         transport.setWriteHandler(
             [this](const QByteArray& bytes, const ScriptedReceiver::WriteContext&) -> std::optional<GPSWriteResult> {
                 lastWrite = bytes;
@@ -103,7 +101,7 @@ public:
     QByteArray scriptedRead;
     int openCalls = 0;
     int lastReadLength = -1;
-    int lastReadTimeoutMs = -1;
+    std::chrono::milliseconds lastReadTimeout{-1};
     QByteArray lastWrite;
     unsigned lastBaudrate = 0;
     bool baudrateOk = true;
@@ -162,7 +160,7 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
         snapshots.clear();
         transport.scriptedRead =
             nmeaFrame(body) + nmeaFrame("GNRMC," + QByteArray::number(++epoch) + ".00,V,,,,,,,090926,,,N");
-        return driver.receiveOutcome(20);
+        return driver.receiveOutcome(20ms);
     };
     QCOMPARE(feed("GPGSV,1,1,01,01,10,20,30").status, GPSReceiveStatus::Data);
     // The empty SBAS scope must not clear GPS; its unchanged counts are not republished.
@@ -182,7 +180,7 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
 
 void GPSDriverTest::_nativeIntegrityProvenance()
 {
-    std::atomic_bool stop = false;
+    std::stop_source stop;
     GPSTestClock clock;
     UBXReceiverModel receiver(UBXReceiverModel::Receiver::F9P, clock);
     ScriptedReceiver transport(stop, receiver);
@@ -211,7 +209,7 @@ void GPSDriverTest::_nativeIntegrityProvenance()
         qToLittleEndian(tow, end.data());
         receiver.queueFrame(0x01, 0x61, end);
         for (int attempt = 0; attempt < 12; ++attempt) {
-            QVERIFY(!driver.receiveOutcome(20).terminal());
+            QVERIFY(!driver.receiveOutcome(20ms).terminal());
             if (!positions.empty()) {
                 break;
             }
@@ -259,7 +257,7 @@ void GPSDriverTest::_femtoSatelliteUsage()
     QVERIFY(driver.configure());
     for (const auto& count : {QByteArray("12"), QByteArray("00"), QByteArray()}) {
         transport.scriptedRead = nmeaFrame("GPGGA,123519,4807.038,N,01131.000,E,1," + count + ",0.9,545.4,M,46.9,M,,");
-        const auto result = driver.receiveOutcome(20);
+        const auto result = driver.receiveOutcome(20ms);
         QCOMPARE(result.status, GPSReceiveStatus::Data);
         QCOMPARE(result.updates & GPSReceiveResult::SATELLITES_UPDATE, GPSReceiveResult::SATELLITES_UPDATE);
     }
@@ -280,32 +278,32 @@ void GPSDriverTest::_receiveOutcomes()
                                                                                 .longitudeDegrees = 8,
                                                                                 .altitudeMeters = 500}}}},
                      {});
-    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::NotConfigured);
+    QCOMPARE(driver.receiveOutcome(0ms).status, GPSReceiveStatus::NotConfigured);
     QVERIFY(driver.configure());
     QVERIFY(driver.configurationError().isEmpty());
     transport.scriptedRead.clear();
-    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Idle);
+    QCOMPARE(driver.receiveOutcome(0ms).status, GPSReceiveStatus::Idle);
     transport.scriptedRead = nmeaFrame("GPTXT,01,01,02,diagnostic");
-    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::Activity);
+    QCOMPARE(driver.receiveOutcome(0ms).status, GPSReceiveStatus::Activity);
     const QString detail = QStringLiteral("Receiver disconnected: Gerät");
     transport.readOverride = GPSReadResult{GPSReadStatus::Error, 0, detail};
     expectLogMessage("GPS.Driver.Protocols.Femto", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Receiver read failed \\(status %1\\): %2")
                                             .arg(static_cast<int>(GPSReadStatus::Error))
                                             .arg(QRegularExpression::escape(detail))));
-    const auto failed = driver.receiveOutcome(0);
+    const auto failed = driver.receiveOutcome(0ms);
     verifyExpectedLogMessage();
     QCOMPARE(failed.status, GPSReceiveStatus::TransportError);
     QCOMPARE(failed.detail, detail);
     QVERIFY(!transport.fatalError());
-    const auto latched = driver.receiveOutcome(0);
+    const auto latched = driver.receiveOutcome(0ms);
     QCOMPARE(latched.status, GPSReceiveStatus::TransportError);
     QCOMPARE(latched.detail, detail);
     transport.readOverride.reset();
     QVERIFY(driver.configure());
     QVERIFY(driver.configurationError().isEmpty());
     transport.readOverride = GPSReadResult{GPSReadStatus::Cancelled, 0, QStringLiteral("Receiver stopped")};
-    const auto cancelled = driver.receiveOutcome(0);
+    const auto cancelled = driver.receiveOutcome(0ms);
     QCOMPARE(cancelled.status, GPSReceiveStatus::Cancelled);
     QCOMPARE(cancelled.detail, transport.readOverride->detail);
     expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
@@ -315,7 +313,7 @@ void GPSDriverTest::_receiveOutcomes()
     transport.readOverride.reset();
     QVERIFY(driver.configure());
     QVERIFY(driver.configurationError().isEmpty());
-    QVERIFY(driver.receiveOutcome(0).detail.isEmpty());
+    QVERIFY(driver.receiveOutcome(0ms).detail.isEmpty());
 }
 
 void GPSDriverTest::_sbfSatelliteUsage()
@@ -335,7 +333,7 @@ void GPSDriverTest::_sbfSatelliteUsage()
     uint32_t tow = 0;
     for (const uint8_t used : {12, 0, 255}) {
         receiver.reply = SBFReceiverModel::pvt(used, ++tow);
-        const auto result = driver.receiveOutcome(20);
+        const auto result = driver.receiveOutcome(20ms);
         QCOMPARE(result.status, GPSReceiveStatus::Data);
         QCOMPARE(result.updates & GPSReceiveResult::SATELLITES_UPDATE, GPSReceiveResult::SATELLITES_UPDATE);
     }
@@ -348,12 +346,12 @@ void GPSDriverTest::_sbfSatelliteUsage()
 
 void GPSDriverTest::_rtcmActivationRejected()
 {
-    std::atomic_bool stop = false;
+    std::stop_source stop;
     GPSTestClock clock;
     UBXReceiverModel receiver(UBXReceiverModel::Receiver::F9P, clock);
     ScriptedReceiver transport(stop, receiver);
     GPSDriver driver(GPSType::ublox, transport,
-                     {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .durationSecs = 1}}}, {});
+                     {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .duration = 1s}}}, {});
     QVERIFY(driver.configure());
     receiver.rejectRtcmActivation = true;
     QByteArray survey(40, '\0');
@@ -362,7 +360,7 @@ void GPSDriverTest::_rtcmActivationRejected()
     receiver.queueFrame(0x01, 0x3b, survey);
     GPSReceiveResult result;
     for (int attempt = 0; attempt < 4; ++attempt) {
-        result = driver.receiveOutcome(20);
+        result = driver.receiveOutcome(20ms);
         if (result.terminal()) {
             break;
         }
@@ -370,9 +368,9 @@ void GPSDriverTest::_rtcmActivationRejected()
     QCOMPARE(result.status, GPSReceiveStatus::ProtocolError);
     QVERIFY(result.terminal());
     QVERIFY(!receiver.readError());
-    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::ProtocolError);
-    stop = true;
-    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::ProtocolError);
+    QCOMPARE(driver.receiveOutcome(0ms).status, GPSReceiveStatus::ProtocolError);
+    stop.request_stop();
+    QCOMPARE(driver.receiveOutcome(0ms).status, GPSReceiveStatus::ProtocolError);
 }
 
 void GPSDriverTest::_configurationDeadline_data()
@@ -495,7 +493,7 @@ void GPSDriverTest::_configurationWriteEvidence()
         QCOMPARE(command.writtenBytes, result.writtenBytes);
         QCOMPARE(command.uncertainBytes, uncertain);
     }
-    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::NotConfigured);
+    QCOMPARE(driver.receiveOutcome(0ms).status, GPSReceiveStatus::NotConfigured);
 }
 
 void GPSDriverTest::_ashtechFixedSurvey()
@@ -514,7 +512,7 @@ void GPSDriverTest::_ashtechFixedSurvey()
     surveys.clear();
     transport.scriptedRead = nmeaFrame(
         "PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0,0.007,-0.001,2.0,1.0,1.7,1.0,");
-    QCOMPARE(driver.receiveOutcome(50).status, GPSReceiveStatus::Data);
+    QCOMPARE(driver.receiveOutcome(50ms).status, GPSReceiveStatus::Data);
     QCOMPARE(surveys.size(), size_t(1));
     const auto& survey = surveys.front();
     QCOMPARE(survey.position.latitudeDegrees, 47);
@@ -540,7 +538,7 @@ void GPSDriverTest::_freshSurveyAndEvidence()
 {
     QFETCH(UBXReceiverModel::Receiver, model);
     QFETCH(bool, stuck);
-    std::atomic_bool stop{false};
+    std::stop_source stop;
     GPSTestClock clock;
     UBXReceiverModel receiver(model, clock);
     ScriptedReceiver transport(stop, receiver);
@@ -548,7 +546,7 @@ void GPSDriverTest::_freshSurveyAndEvidence()
     receiver.retainedSurveyDuration = 329000;
     receiver.surveyStopStuck = stuck;
     GPSDriver driver(GPSType::ublox, transport,
-                     {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .durationSecs = 180}}}, {});
+                     {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .duration = 180s}}}, {});
     if (stuck) {
         expectLogMessage("GPS.Driver.Protocols.UBX", QtWarningMsg, QRegularExpression("Time mode did not stop"));
         expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
@@ -558,7 +556,7 @@ void GPSDriverTest::_freshSurveyAndEvidence()
         verifyExpectedLogMessage();
         verifyExpectedLogMessage();
         QCOMPARE(receiver.timeMode, 0u);
-        QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::NotConfigured);
+        QCOMPARE(driver.receiveOutcome(0ms).status, GPSReceiveStatus::NotConfigured);
     } else {
         QCOMPARE(receiver.timeMode, 1u);
         QCOMPARE(receiver.retainedSurveyDuration, 0u);
@@ -607,7 +605,7 @@ void GPSDriverTest::_ubloxRoleTransition()
     QFETCH(bool, corruptVersion);
     QFETCH(float, fixedAccuracyMeters);
     QFETCH(quint32, fixedAccuracyUnits);
-    std::atomic_bool stopRequested{false};
+    std::stop_source stopRequested;
     GPSTestClock clock;
     UBXReceiverModel receiver(model, clock);
     ScriptedReceiver transport(stopRequested, receiver);
@@ -620,7 +618,7 @@ void GPSDriverTest::_ubloxRoleTransition()
                               .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
                               .accuracyMeters = fixedAccuracyMeters}}
                         : GPSBaseStationConfig::Mode{
-                              GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2.0, .durationSecs = 180}}};
+                              GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2.0, .duration = 180s}}};
         GPSDriver base(GPSType::ublox, transport, config, {});
         QVERIFY(base.configure());
         QCOMPARE(receiver.timeMode, fixed ? 2u : 1u);
@@ -644,12 +642,12 @@ void GPSDriverTest::_ubloxBaseRoleDefaults_data()
 void GPSDriverTest::_ubloxBaseRoleDefaults()
 {
     QFETCH(UBXReceiverModel::Receiver, model);
-    std::atomic_bool stopRequested{false};
+    std::stop_source stopRequested;
     GPSTestClock clock;
     UBXReceiverModel receiver(model, clock);
     ScriptedReceiver transport(stopRequested, receiver);
     const GPSReceiverConfig config{
-        .base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2.0, .durationSecs = 180}}};
+        .base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2.0, .duration = 180s}}};
     GPSDriver base(GPSType::ublox, transport, config, {});
     QVERIFY(base.configure());
     QCOMPARE(receiver.timeMode, 1u);
@@ -664,7 +662,7 @@ void GPSDriverTest::_testReceiveUnconfiguredReturnsError()
 {
     FakeGPSTransport transport;
     GPSDriver driver(GPSType::ublox, transport, GPSReceiverConfig{}, GPSDriverSinks{});
-    QCOMPARE(driver.receiveOutcome(10).status, GPSReceiveStatus::NotConfigured);
+    QCOMPARE(driver.receiveOutcome(10ms).status, GPSReceiveStatus::NotConfigured);
 }
 
 void GPSDriverTest::_testInvalidFixedBaseRejected_data()
@@ -696,7 +694,7 @@ void GPSDriverTest::_testInvalidFixedBaseRejected()
     QVERIFY(transport.lastWrite.isEmpty());
     QCOMPARE(transport.lastBaudrate, 0u);
     QCOMPARE(transport.lastReadLength, -1);
-    QCOMPARE(driver.receiveOutcome(10).status, GPSReceiveStatus::NotConfigured);
+    QCOMPARE(driver.receiveOutcome(10ms).status, GPSReceiveStatus::NotConfigured);
 }
 
 void GPSDriverTest::_testInvalidConfiguration_data()
@@ -705,8 +703,10 @@ void GPSDriverTest::_testInvalidConfiguration_data()
     QTest::addColumn<QString>("message");
     const QString surveyMessage = QStringLiteral("Enter a valid survey-in accuracy and duration");
     const auto survey = [&](const char* name, double accuracy, int64_t duration) {
-        QTest::newRow(name) << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = accuracy,
-                                                                                           .durationSecs = duration}}
+        QTest::newRow(name) << GPSBaseStationConfig{.mode =
+                                                        GPSBaseStationConfig::SurveyIn{
+                                                            .accuracyMeters = accuracy,
+                                                            .duration = std::chrono::seconds(duration)}}
                             << surveyMessage;
     };
     survey("zero-survey-accuracy", 0, 180);
@@ -764,7 +764,7 @@ void GPSDriverTest::_testInvalidConfiguration()
     QVERIFY(transport.lastWrite.isEmpty());
     QCOMPARE(transport.lastBaudrate, 0u);
     QCOMPARE(transport.lastReadLength, -1);
-    QCOMPARE(driver.receiveOutcome(10).status, GPSReceiveStatus::NotConfigured);
+    QCOMPARE(driver.receiveOutcome(10ms).status, GPSReceiveStatus::NotConfigured);
 }
 
 void GPSDriverTest::_nativeConfigurationRejectedBeforeIo_data()
@@ -788,11 +788,11 @@ void GPSDriverTest::_nativeConfigurationRejectedBeforeIo()
     QFETCH(QString, message);
     FakeGPSTransport transport;
     GPSDriver driver(static_cast<GPSType>(type), transport, config, {});
-    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::NotConfigured);
+    QCOMPARE(driver.receiveOutcome(0ms).status, GPSReceiveStatus::NotConfigured);
     expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(message)));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
-    QCOMPARE(driver.receiveOutcome(0).status, GPSReceiveStatus::NotConfigured);
+    QCOMPARE(driver.receiveOutcome(0ms).status, GPSReceiveStatus::NotConfigured);
     QCOMPARE(transport.openCalls, 0);
     QVERIFY(transport.lastWrite.isEmpty());
     QCOMPARE(transport.lastBaudrate, 0u);
@@ -814,13 +814,13 @@ void GPSDriverTest::_passiveInput()
     QCOMPARE(transport.lastBaudrate, 115200u);
     QVERIFY(transport.lastWrite.isEmpty());
     transport.scriptedRead = nmeaFrame("GNGGA,123519,4807.038,N,01131.000,E,4,08,0.9,0.0,M,,M,,");
-    QCOMPARE(driver.receiveOutcome(10).status, GPSReceiveStatus::Data);
+    QCOMPARE(driver.receiveOutcome(10ms).status, GPSReceiveStatus::Data);
     QCOMPARE(positions.size(), size_t{1});
     QCOMPARE(positions.front().navigation.fixType, GPSPositionReport::FixType::RTKFixed);
     QCOMPARE(surveys, 0);
     QVERIFY(transport.lastWrite.isEmpty());
     transport.readOverride = GPSReadResult{GPSReadStatus::Cancelled};
-    QCOMPARE(driver.receiveOutcome(10).status, GPSReceiveStatus::Cancelled);
+    QCOMPARE(driver.receiveOutcome(10ms).status, GPSReceiveStatus::Cancelled);
     QVERIFY(transport.lastWrite.isEmpty());
 }
 

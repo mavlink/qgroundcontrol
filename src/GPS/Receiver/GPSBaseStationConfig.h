@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <variant>
 
@@ -11,7 +12,7 @@ struct GPSBaseStationConfig
     struct SurveyIn
     {
         double accuracyMeters = 0.0;
-        int64_t durationSecs = 0;
+        std::chrono::seconds duration{0};
         bool operator==(const SurveyIn&) const = default;
     };
 
@@ -25,7 +26,7 @@ struct GPSBaseStationConfig
     struct ReceiverAveraging
     {
         /// Maximum receiver-managed time, not a minimum duration or an accuracy guarantee.
-        uint32_t maximumDurationSecs = 60;
+        std::chrono::seconds maximumDuration{60};
         bool operator==(const ReceiverAveraging&) const = default;
     };
 

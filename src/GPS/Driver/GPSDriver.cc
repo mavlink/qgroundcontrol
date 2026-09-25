@@ -123,15 +123,15 @@ bool GPSDriver::configure()
     GPSProtocolIO io;
     io.nowUs = MonotonicClock::nowUs;
     io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) {
-        const int timeout = deadline.remainingMilliseconds(MonotonicClock::nowUs());
-        const auto result = _transport.read(bytes.data(), static_cast<int>(bytes.size()), timeout);
+        const auto result =
+            _transport.read(bytes.data(), static_cast<int>(bytes.size()), deadline.remaining(MonotonicClock::nowUs()));
         _state->cycle.activity |= result.status == GPSReadStatus::Data && result.bytesRead > 0;
         return result;
     };
     io.write = [this](std::span<const uint8_t> bytes, GPSDeadline deadline) {
-        const int remaining = deadline.remainingMilliseconds(MonotonicClock::nowUs());
         // Do not submit another part of a multipart command after its absolute deadline.
-        if (_transport.isCancelled() || remaining == 0) {
+        if (_transport.isCancelled() ||
+            deadline.remaining(MonotonicClock::nowUs()) == std::chrono::milliseconds::zero()) {
             return GPSWriteResult{_transport.isCancelled() ? GPSWriteStatus::Cancelled : GPSWriteStatus::TimedOut};
         }
         return _transport.write(bytes.data(), static_cast<int>(bytes.size()), deadline.toQDeadlineTimer());
@@ -248,7 +248,7 @@ bool GPSDriver::configure()
     return true;
 }
 
-GPSReceiveResult GPSDriver::receiveOutcome(unsigned timeoutMs)
+GPSReceiveResult GPSDriver::receiveOutcome(std::chrono::milliseconds timeout)
 {
     if (_operationInProgress) {
         const QString detail = QStringLiteral("Receiver operation already in progress; receive rejected");
@@ -261,7 +261,7 @@ GPSReceiveResult GPSDriver::receiveOutcome(unsigned timeoutMs)
     }
     _state->cycle = {};
     _publishExpiredSatellites();
-    const int result = _state->driver->receive(timeoutMs);
+    const int result = _state->driver->receive(timeout);
     _publishExpiredSatellites();
     switch (_state->driver->ioError()) {
         case GPSProtocolError::None:

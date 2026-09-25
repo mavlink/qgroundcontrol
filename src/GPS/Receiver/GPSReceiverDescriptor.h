@@ -46,22 +46,22 @@ struct GPSReceiverDescriptor
 struct GPSReceiverPresentation
 {
     Q_GADGET
-    Q_PROPERTY(bool recognized MEMBER recognized)
-    Q_PROPERTY(bool specificReceiver MEMBER specificReceiver)
-    Q_PROPERTY(bool rtkBase MEMBER rtkBase)
-    Q_PROPERTY(bool surveyIn MEMBER surveyIn)
-    Q_PROPERTY(bool receiverAveraging MEMBER receiverAveraging)
-    Q_PROPERTY(bool compactObservations MEMBER compactObservations)
-    Q_PROPERTY(bool passive MEMBER passive)
-    Q_PROPERTY(bool surveyAccuracy MEMBER surveyAccuracy)
-    Q_PROPERTY(bool surveyDuration MEMBER surveyDuration)
-    Q_PROPERTY(bool fixedBaseAccuracy MEMBER fixedBaseAccuracy)
-    Q_PROPERTY(bool observationAccuracyFilter MEMBER observationAccuracyFilter)
-    Q_PROPERTY(bool acceptedObservationTime MEMBER acceptedObservationTime)
-    Q_PROPERTY(bool reportsSurveyDuration MEMBER reportsSurveyDuration)
-    Q_PROPERTY(bool persistentConfiguration MEMBER persistentConfiguration)
-    Q_PROPERTY(bool restartOnConnect MEMBER restartOnConnect)
-    Q_PROPERTY(bool surveyMaySavePosition MEMBER surveyMaySavePosition)
+    Q_PROPERTY(bool recognized MEMBER recognized FINAL)
+    Q_PROPERTY(bool specificReceiver MEMBER specificReceiver FINAL)
+    Q_PROPERTY(bool rtkBase MEMBER rtkBase FINAL)
+    Q_PROPERTY(bool surveyIn MEMBER surveyIn FINAL)
+    Q_PROPERTY(bool receiverAveraging MEMBER receiverAveraging FINAL)
+    Q_PROPERTY(bool compactObservations MEMBER compactObservations FINAL)
+    Q_PROPERTY(bool passive MEMBER passive FINAL)
+    Q_PROPERTY(bool surveyAccuracy MEMBER surveyAccuracy FINAL)
+    Q_PROPERTY(bool surveyDuration MEMBER surveyDuration FINAL)
+    Q_PROPERTY(bool fixedBaseAccuracy MEMBER fixedBaseAccuracy FINAL)
+    Q_PROPERTY(bool observationAccuracyFilter MEMBER observationAccuracyFilter FINAL)
+    Q_PROPERTY(bool acceptedObservationTime MEMBER acceptedObservationTime FINAL)
+    Q_PROPERTY(bool reportsSurveyDuration MEMBER reportsSurveyDuration FINAL)
+    Q_PROPERTY(bool persistentConfiguration MEMBER persistentConfiguration FINAL)
+    Q_PROPERTY(bool restartOnConnect MEMBER restartOnConnect FINAL)
+    Q_PROPERTY(bool surveyMaySavePosition MEMBER surveyMaySavePosition FINAL)
 
 public:
     bool recognized = false;

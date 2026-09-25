@@ -32,7 +32,7 @@ enum class GPSWriteStatus
     InvalidData
 };
 
-enum class GPSBaudStatus
+enum class [[nodiscard]] GPSBaudStatus
 {
     Configured,
     Unsupported,
@@ -40,20 +40,20 @@ enum class GPSBaudStatus
     Error
 };
 
-struct GPSOpenResult
+struct [[nodiscard]] GPSOpenResult
 {
     GPSOpenStatus status = GPSOpenStatus::Unsupported;
     QString detail = {};
 };
 
-struct GPSReadResult
+struct [[nodiscard]] GPSReadResult
 {
     GPSReadStatus status = GPSReadStatus::TimedOut;
     int bytesRead = 0;
     QString detail = {};
 };
 
-struct GPSWriteResult
+struct [[nodiscard]] GPSWriteResult
 {
     GPSWriteStatus status = GPSWriteStatus::Unsupported;
     int acceptedBytes = 0;

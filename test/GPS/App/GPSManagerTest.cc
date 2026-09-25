@@ -1,3 +1,4 @@
+#include <QtCore/QMetaProperty>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
@@ -31,6 +32,8 @@ private slots:
     void _positionManagerLifecycle();
     void _vehicleEstimateTracking();
     void _ntripSettingsBinding();
+    void _settingsBindingsCoverEveryFact_data();
+    void _settingsBindingsCoverEveryFact();
 };
 
 void GPSManagerTest::_correctionStatus()
@@ -137,14 +140,16 @@ void GPSManagerTest::_ntripSettingsBinding()
     auto* settings = SettingsManager::instance()->ntripSettings();
     saved.setFactValue(settings->ntripServerConnectEnabled(), false);
 
-    const NTRIPConfiguration expected{.connection = {.host = QStringLiteral("caster.example.com"),
-                                                     .port = 443,
-                                                     .username = QStringLiteral("user"),
-                                                     .password = QStringLiteral("pass"),
-                                                     .mountpoint = QStringLiteral("MOUNT"),
-                                                     .useTls = true,
-                                                     .allowSelfSignedCerts = true},
-                                      .filter = {.whitelist = QStringLiteral("1005,1077")}};
+    const NTRIPConfiguration expected{
+        .connection = {.host = QStringLiteral("caster.example.com"),
+                       .port = 443,
+                       .username = QStringLiteral("user"),
+                       .password = QStringLiteral("pass"),
+                       .mountpoint = QStringLiteral("MOUNT"),
+                       .useTls = true,
+                       .allowSelfSignedCerts = true,
+                       .pinnedCertificate = QStringLiteral("caster.example.com:443|00ff")},
+        .filter = {.whitelist = QStringLiteral("1005,1077")}};
     saved.setFactValue(settings->ntripServerHostAddress(), expected.connection.host);
     saved.setFactValue(settings->ntripServerPort(), expected.connection.port);
     saved.setFactValue(settings->ntripUsername(), expected.connection.username);
@@ -152,6 +157,7 @@ void GPSManagerTest::_ntripSettingsBinding()
     saved.setFactValue(settings->ntripMountpoint(), expected.connection.mountpoint);
     saved.setFactValue(settings->ntripUseTls(), expected.connection.useTls);
     saved.setFactValue(settings->ntripAllowSelfSignedCerts(), expected.connection.allowSelfSignedCerts);
+    saved.setFactValue(settings->ntripPinnedCertificate(), expected.connection.pinnedCertificate);
     saved.setFactValue(settings->ntripWhitelist(), expected.filter.whitelist);
     saved.setFactValue(settings->ntripGgaPositionSource(),
                        static_cast<int>(NTRIPGgaProvider::PositionSource::GCSPosition));
@@ -168,6 +174,53 @@ void GPSManagerTest::_ntripSettingsBinding()
     QCOMPARE(manager.configuration(), configuration);
     settings->ntripServerConnectEnabled()->setRawValue(true);
     QVERIFY(manager.configuration().enabled);
+}
+
+void GPSManagerTest::_settingsBindingsCoverEveryFact_data()
+{
+    QTest::addColumn<SettingsGroup*>("group");
+    QTest::addColumn<QList<Fact*>>("bound");
+    QTest::addColumn<QStringList>("ignored");
+
+    // Facts the bindings deliberately leave to another consumer. A new setting must be bound or listed here.
+    SettingsManager* const settings = SettingsManager::instance();
+    QTest::newRow("RTK") << static_cast<SettingsGroup*>(settings->rtkSettings())
+                         << GPSSettingsBindings::boundFacts(settings->rtkSettings())
+                         << QStringList{
+                                // GPSManager reads it once at startup.
+                                QStringLiteral("connectOnStartup"),
+                                // PositionManager selects the GCS position source from it.
+                                QStringLiteral("gcsPositionSource"),
+                            };
+    QTest::newRow("NTRIP") << static_cast<SettingsGroup*>(settings->ntripSettings())
+                           << GPSSettingsBindings::boundFacts(settings->ntripSettings()) << QStringList{};
+    QTest::newRow("GPSCorrection") << static_cast<SettingsGroup*>(settings->gpsCorrectionSettings())
+                                   << GPSSettingsBindings::boundFacts(settings->gpsCorrectionSettings())
+                                   << QStringList{};
+}
+
+void GPSManagerTest::_settingsBindingsCoverEveryFact()
+{
+    QFETCH(SettingsGroup*, group);
+    QFETCH(QList<Fact*>, bound);
+    QFETCH(QStringList, ignored);
+
+    QStringList names;
+    const QMetaObject* const metaObject = group->metaObject();
+    for (int i = SettingsGroup::staticMetaObject.propertyCount(); i < metaObject->propertyCount(); ++i) {
+        const QMetaProperty property = metaObject->property(i);
+        if (property.metaType() != QMetaType::fromType<Fact*>()) {
+            continue;
+        }
+        const QString name = QString::fromLatin1(property.name());
+        names.append(name);
+        const qsizetype expected = ignored.contains(name) ? 0 : 1;
+        QVERIFY2(bound.count(property.read(group).value<Fact*>()) == expected,
+                 qPrintable(QStringLiteral("%1 must be bound once or listed as ignored, not both").arg(name)));
+    }
+    for (const QString& name : ignored) {
+        QVERIFY2(names.contains(name), qPrintable(QStringLiteral("Ignored %1 is not a Fact of the group").arg(name)));
+    }
 }
 
 UT_REGISTER_TEST(GPSManagerTest, TestLabel::Unit)

@@ -12,6 +12,8 @@ private slots:
     void _outputsEnabledAfterLinkHistoryChurn();
     void _udpOutputForwardsSelectedStream();
     void _udpOutputSkipsOwnInput();
+    void _udpOutputSkipsHostTargets_data();
+    void _udpOutputSkipsHostTargets();
     void _udpOutputEndpointChanges_data();
     void _udpOutputEndpointChanges();
     void _sourceTopologyDoesNotNotifyOnCounters();

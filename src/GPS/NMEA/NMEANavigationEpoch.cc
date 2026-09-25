@@ -130,7 +130,7 @@ std::optional<NavigationEpoch> NavigationEpochAssembler::expireUntimedMetadata(u
 {
     auto* stored = _current();
     if (!stored || !stored->epoch.verticalDopReceivedAtUs ||
-        freshAt(stored->epoch.verticalDopReceivedAtUs, nowUs, _policy.metadataMaxAgeUs)) {
+        freshAt(stored->epoch.verticalDopReceivedAtUs, nowUs, _policy.metadataMaxAge)) {
         return std::nullopt;
     }
     stored->epoch.verticalDop.reset();
@@ -200,7 +200,7 @@ void NavigationEpochAssembler::_resetEpoch(StoredEpoch& stored, std::optional<in
 void NavigationEpochAssembler::_resetExpiredEpoch(StoredEpoch& stored, const QDate& date, uint64_t receivedAtUs)
 {
     const bool expired = stored.epoch.receivedAtUs && receivedAtUs > stored.epoch.receivedAtUs &&
-                         !freshAt(stored.epoch.receivedAtUs, receivedAtUs, _policy.metadataMaxAgeUs);
+                         !freshAt(stored.epoch.receivedAtUs, receivedAtUs, _policy.metadataMaxAge);
     const bool dateChanged = date.isValid() && stored.epoch.date.isValid() && stored.epoch.date != date;
     if (!expired && !dateChanged) {
         return;
@@ -360,8 +360,7 @@ std::optional<NavigationUpdate> NavigationEpochAssembler::_handlePositionSentenc
         epoch.dopReceivedAtUs = receivedAtUs;
         epoch.fixQuality = _fixQuality(epoch);
         epoch.receiverFixValid = true;
-        if (!epoch.accuracyReceivedAtUs ||
-            !freshAt(epoch.accuracyReceivedAtUs, receivedAtUs, _policy.metadataMaxAgeUs)) {
+        if (!epoch.accuracyReceivedAtUs || !freshAt(epoch.accuracyReceivedAtUs, receivedAtUs, _policy.metadataMaxAge)) {
             epoch.horizontalAccuracyMeters.reset();
             epoch.verticalAccuracyMeters.reset();
             epoch.accuracyReceivedAtUs = 0;
@@ -445,7 +444,7 @@ std::optional<NavigationUpdate> NavigationEpochAssembler::_handleUntimedMetadata
     }
     const auto freshnessReceipt =
         _policy.untimedMetadataUsesPositionReceipt ? stored->epoch.positionReceivedAtUs : stored->epoch.receivedAtUs;
-    if (!freshnessReceipt || !freshAt(freshnessReceipt, receivedAtUs, _policy.untimedMetadataMaxAgeUs)) {
+    if (!freshnessReceipt || !freshAt(freshnessReceipt, receivedAtUs, _policy.untimedMetadataMaxAge)) {
         return std::nullopt;
     }
 

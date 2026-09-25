@@ -13,19 +13,21 @@ struct NTRIPConnectionConfig
     QString mountpoint;
     bool useTls = false;
     bool allowSelfSignedCerts = false;
+    /// "host:port|sha256-hex" of the self-signed certificate trusted on first use; other endpoints ignore it.
+    QString pinnedCertificate;
 
     bool operator==(const NTRIPConnectionConfig&) const = default;
-    QString validationError() const;
-    QString streamValidationError() const;
+    [[nodiscard]] QString validationError() const;
+    [[nodiscard]] QString streamValidationError() const;
 
-    bool isValid() const { return validationError().isEmpty(); }
+    [[nodiscard]] bool isValid() const { return validationError().isEmpty(); }
 };
 
 struct NTRIPRTCMFilterConfig
 {
     QString whitelist;
     bool operator==(const NTRIPRTCMFilterConfig&) const = default;
-    QVector<int> messageIds() const;
+    [[nodiscard]] QVector<int> messageIds() const;
 };
 
 struct NTRIPConfiguration

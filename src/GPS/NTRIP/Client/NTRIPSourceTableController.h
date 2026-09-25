@@ -1,6 +1,6 @@
 #pragma once
 
-#include <functional>
+#include <chrono>
 #include <memory>
 #include <optional>
 
@@ -19,6 +19,7 @@ Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableControllerLog)
 
 class NTRIPHttpSession;
 class NTRIPSourceTableModel;
+class NTRIPSourceTableSortModel;
 class NTRIPSourceTableControllerTest;
 class RuntimeScheduler;
 
@@ -27,10 +28,10 @@ class RuntimeScheduler;
 class NTRIPSourceTableController : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(FetchStatus fetchStatus READ fetchStatus NOTIFY fetchStatusChanged)
-    Q_PROPERTY(QString fetchError READ fetchError NOTIFY fetchErrorChanged)
-    Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged)
-    Q_PROPERTY(QAbstractItemModel* mountpointModel READ mountpointModel NOTIFY mountpointModelChanged)
+    Q_PROPERTY(FetchStatus fetchStatus READ fetchStatus NOTIFY fetchStatusChanged FINAL)
+    Q_PROPERTY(QString fetchError READ fetchError NOTIFY fetchErrorChanged FINAL)
+    Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged FINAL)
+    Q_PROPERTY(QAbstractItemModel* mountpointModel READ mountpointModel NOTIFY mountpointModelChanged FINAL)
 
 public:
     enum class FetchStatus
@@ -42,8 +43,8 @@ public:
     };
     Q_ENUM(FetchStatus)
 
-    static constexpr int kCacheTtlMs = 60000;
-    static constexpr int kFetchTimeoutMs = 10000;
+    static constexpr std::chrono::milliseconds kCacheTtl{60000};
+    static constexpr std::chrono::milliseconds kFetchTimeout{10000};
     static constexpr qint64 kMaxSourceTableBytes = 8 * 1024 * 1024;
 
     explicit NTRIPSourceTableController(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
@@ -88,9 +89,9 @@ private:
     void _readReply(const QByteArray& bytes);
     void _finishFetch(const QString& error = {});
     void _setSecurityWarning(const QString& warning);
-    bool _deferModelMutation(std::function<void()> action);
 
     NTRIPSourceTableModel* _model = nullptr;
+    NTRIPSourceTableSortModel* _sortedModel = nullptr;
     struct FetchAttempt;
     std::unique_ptr<FetchAttempt> _attempt;
     RuntimeScheduler* const _scheduler;

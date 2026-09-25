@@ -11,9 +11,9 @@
 class RTCMMAVLink : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(quint64 totalBytesSent READ totalBytesSent NOTIFY bandwidthChanged)
-    Q_PROPERTY(double bandwidthKBps READ bandwidthKBps NOTIFY bandwidthChanged)
-    Q_PROPERTY(quint64 totalBytesSubmitted READ totalBytesSubmitted NOTIFY deliveryStatsChanged)
+    Q_PROPERTY(quint64 totalBytesSent READ totalBytesSent NOTIFY bandwidthChanged FINAL)
+    Q_PROPERTY(double bandwidthKBps READ bandwidthKBps NOTIFY bandwidthChanged FINAL)
+    Q_PROPERTY(quint64 totalBytesSubmitted READ totalBytesSubmitted NOTIFY deliveryStatsChanged FINAL)
 
 public:
     struct Output

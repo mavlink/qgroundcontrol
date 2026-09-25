@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <chrono>
 #include <optional>
 
 #include "GPSDecodedBatch.h"
@@ -9,7 +10,7 @@
 class UBXNavigationEpoch
 {
 public:
-    static constexpr uint64_t MAX_AGE_US = 200000;
+    static constexpr std::chrono::microseconds MAX_AGE{200000};
     static constexpr uint32_t WEEK_MS = 604800000;
 
     struct Epoch
@@ -58,7 +59,7 @@ public:
             std::swap(_epochs[0], _epochs[1]);
         }
         for (auto& epoch : _epochs) {
-            if (epoch && now >= epoch->receipt && now - epoch->receipt >= MAX_AGE_US) {
+            if (epoch && now >= epoch->receipt && std::chrono::microseconds(now - epoch->receipt) >= MAX_AGE) {
                 finish(epoch, publish);
             }
         }

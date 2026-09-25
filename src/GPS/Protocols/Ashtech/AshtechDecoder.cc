@@ -326,7 +326,7 @@ std::optional<int> AshtechProtocol::_handleAccuracy(const NMEA::Sentence& senten
     }
     _accuracy = *error;
     _accuracyReceipt = {NMEA::utcMilliseconds(sentence.fields[NMEA::Field::UTC_TIME]), nowUs()};
-    if (_positionEpoch.matches(_accuracyReceipt, METADATA_MAX_AGE_US)) {
+    if (_positionEpoch.matches(_accuracyReceipt, METADATA_MAX_AGE)) {
         _expireMetadata();
         _position.navigation.horizontalAccuracyMeters = _accuracy.horizontalAccuracy;
         _position.navigation.verticalAccuracyMeters = _accuracy.verticalAccuracy;
@@ -409,15 +409,16 @@ std::optional<int> AshtechProtocol::_handleSurveyReceipt(const NMEA::Sentence& s
         _board != AshtechBoard::trimble_mb_two || !_surveyReceiptRequested) {
         return std::nullopt;
     }
-    if (*interval != std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).durationSecs) {
+    if (*interval != std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).duration.count()) {
         return std::nullopt;
     }
     if (started) {
         if (!_awaitingReceipt() || _surveyReceiptStartUtc) {
             return std::nullopt;
         }
-        if (_utcReference && NMEA::freshAt(_last_timestamp_time, nowUs(), METADATA_MAX_AGE_US) &&
-            (*receiptTime < _utcReference || *receiptTime - _utcReference > METADATA_MAX_AGE_US)) {
+        if (_utcReference && NMEA::freshAt(_last_timestamp_time, nowUs(), METADATA_MAX_AGE) &&
+            (*receiptTime < _utcReference ||
+             std::chrono::microseconds(*receiptTime - _utcReference) > METADATA_MAX_AGE)) {
             return std::nullopt;
         }
         _surveyReceiptStartUtc = receiptTime;
@@ -458,15 +459,15 @@ void AshtechProtocol::flushDecoded()
 void AshtechProtocol::_expireMetadata()
 {
     const auto now = nowUs();
-    if (!_headingTimestamp || !NMEA::freshAt(_headingTimestamp, now, METADATA_MAX_AGE_US)) {
+    if (!_headingTimestamp || !NMEA::freshAt(_headingTimestamp, now, METADATA_MAX_AGE)) {
         _position.navigation.headingRadians = NAN;
         _position.navigation.headingAccuracyRadians = NAN;
     }
-    if (!_accuracyReceipt.time || !NMEA::freshAt(_accuracyReceipt.receivedAtUs, now, METADATA_MAX_AGE_US)) {
+    if (!_accuracyReceipt.time || !NMEA::freshAt(_accuracyReceipt.receivedAtUs, now, METADATA_MAX_AGE)) {
         _position.navigation.horizontalAccuracyMeters = NAN;
         _position.navigation.verticalAccuracyMeters = NAN;
     }
-    if (!_utcReference || !NMEA::freshAt(_last_timestamp_time, now, METADATA_MAX_AGE_US)) {
+    if (!_utcReference || !NMEA::freshAt(_last_timestamp_time, now, METADATA_MAX_AGE)) {
         _position.navigation.utcTimeUs = 0;
     }
 }
@@ -476,11 +477,11 @@ void AshtechProtocol::_applyMetadata(std::optional<int> time)
     _expireMetadata();
     const auto now = nowUs();
     _positionEpoch = {time, now};
-    const bool matches = _accuracyReceipt.matches(_positionEpoch, METADATA_MAX_AGE_US);
+    const bool matches = _accuracyReceipt.matches(_positionEpoch, METADATA_MAX_AGE);
     _position.navigation.horizontalAccuracyMeters = matches ? _accuracy.horizontalAccuracy : NAN;
     _position.navigation.verticalAccuracyMeters = matches ? _accuracy.verticalAccuracy : NAN;
     _position.navigation.utcTimeUs =
-        NMEA::utcAtTimeOfDay(_utcReference, _last_timestamp_time, time, now, METADATA_MAX_AGE_US);
+        NMEA::utcAtTimeOfDay(_utcReference, _last_timestamp_time, time, now, METADATA_MAX_AGE);
 }
 
 AshtechProtocol::AshtechProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
@@ -489,12 +490,12 @@ AshtechProtocol::AshtechProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     setRTCMEnabled(false);
 }
 
-void AshtechProtocol::receiveWait(unsigned timeout_min)
+void AshtechProtocol::receiveWait(std::chrono::milliseconds timeout)
 {
-    uint64_t time_started = nowUs();
+    const uint64_t until = GPSDeadline::after(nowUs(), timeout).untilUs;
 
-    while (nowUs() < time_started + timeout_min * 1000) {
-        receive(timeout_min);
+    while (nowUs() < until) {
+        receive(timeout);
         if (hasIOError()) {
             return;
         }

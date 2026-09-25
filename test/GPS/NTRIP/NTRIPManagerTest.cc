@@ -265,6 +265,59 @@ void NTRIPManagerTest::testPlaintextCredentialWarningIsVisibleState()
     QCOMPARE(warningSpy.count(), 1);
 }
 
+void NTRIPManagerTest::testCertificatePinWriteBackKeepsConnection()
+{
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    auto configuration = testConfiguration();
+    configuration.stream.connection.useTls = true;
+    configuration.stream.connection.allowSelfSignedCerts = true;
+    auto* transport = injectTransport(manager, true);
+    initialize(manager, configuration);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
+    auto* replacement = injectTransport(manager, true);
+    QSignalSpy pins(&manager, &NTRIPManager::certificatePinChanged);
+
+    const QString pin = QStringLiteral("caster.example.com:2101|") + QString(64, QLatin1Char('a'));
+    emit transport->certificatePinned(pin);
+    QCOMPARE(pins.size(), 1);
+    QCOMPARE(pins.first().first().toString(), pin);
+
+    // The settings store the pin and apply it back; the connection that trusted the certificate stays up.
+    configuration.stream.connection.pinnedCertificate = pin;
+    manager.setConfiguration(configuration);
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
+    QCOMPARE(pins.size(), 1);
+    QCOMPARE(transport->stopCount, 0);
+    QCOMPARE(replacement->startCount, 0);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
+    manager.stopNTRIP();
+}
+
+void NTRIPManagerTest::testOptingOutForgetsCertificatePin_data()
+{
+    QTest::addColumn<bool>("allowSelfSigned");
+    QTest::newRow("opted-in-keeps-pin") << true;
+    QTest::newRow("opted-out-forgets-pin") << false;
+}
+
+void NTRIPManagerTest::testOptingOutForgetsCertificatePin()
+{
+    QFETCH(bool, allowSelfSigned);
+    NTRIPManager manager;
+    QSignalSpy pins(&manager, &NTRIPManager::certificatePinChanged);
+    auto configuration = testConfiguration(false);
+    configuration.stream.connection.allowSelfSignedCerts = allowSelfSigned;
+    configuration.stream.connection.pinnedCertificate =
+        QStringLiteral("caster.example.com:2101|") + QString(64, QLatin1Char('a'));
+    manager.setConfiguration(configuration);
+    QCOMPARE(pins.size(), allowSelfSigned ? 0 : 1);
+    if (!allowSelfSigned) {
+        QVERIFY(pins.first().first().toString().isEmpty());
+    }
+    QCOMPARE(manager.configuration().stream.connection.pinnedCertificate.isEmpty(), !allowSelfSigned);
+}
+
 void NTRIPManagerTest::testConfigurationDebugRedactsCredentials()
 {
     auto configuration = testConfiguration();
@@ -833,7 +886,7 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
     QCOMPARE(routed.size(), 1);
     QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), quint64(frame.size()));
-    const qint64 expiredAgeMs = GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS + 6000;
+    const qint64 expiredAgeMs = GPSCorrectionRouter::FRESHNESS_TIMEOUT.count() + 6000;
     const qint64 expiredAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000) - expiredAgeMs;
     second->simulateRtcmData(frame, 1005, expiredAtMs);
     QCOMPARE(mgr.connectionStats()->messagesReceived(), quint32(0));

@@ -5,6 +5,7 @@
 #include <QtCore/QByteArray>
 
 #include "../Protocols/Support/ProtocolTestPackets.h"
+#include "RTCMFramer.h"
 
 namespace GPSTestHelpers {
 

@@ -191,10 +191,13 @@ void NTRIPHttpTransport::_connect()
     const auto attempt = _attempt.current(this);
     auto* session = new NTRIPHttpSession(this);
     _session = session;
-    const QPointer<NTRIPHttpSession> guard(session);
-    const auto current = [this, guard, attempt]() {
-        return attempt.isCurrent() && guard && _session == guard && !_stopped;
-    };
+    // Only the session's own signals run this check, so the session is alive.
+    const auto current = [this, session, attempt]() { return attempt.isCurrent() && _session == session && !_stopped; };
+    connect(session, &NTRIPHttpSession::certificatePinned, this, [this, current](const QString& pin) {
+        if (current()) {
+            emit certificatePinned(pin);
+        }
+    });
     connect(session, &NTRIPHttpSession::established, this, [this, current]() {
         if (current()) {
             _sendHttpRequest();

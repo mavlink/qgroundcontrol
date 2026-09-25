@@ -183,7 +183,7 @@ private:
     GPSWriteResult handleCommand(ScriptedReceiver& receiver, const QByteArray& command,
                                  const ScriptedReceiver::WriteContext& context) override;
     std::optional<bool> handleBaudrate(ScriptedReceiver& receiver, unsigned baudrate) override;
-    void onTransportReadWait(ScriptedReceiver& receiver, int timeoutMs) override;
+    void onTransportReadWait(ScriptedReceiver& receiver, std::chrono::milliseconds timeout) override;
     void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline) override;
     int readChunkSize(const ScriptedReceiver& receiver, int requested, int available) const override;
     bool coalesceReads(const ScriptedReceiver& receiver) const override;

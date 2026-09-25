@@ -1,6 +1,7 @@
 #include "GPSEvidenceTransport.h"
 
 #include <optional>
+#include <utility>
 
 #include <QtCore/QtEndian>
 
@@ -34,8 +35,8 @@ std::optional<quint64> keyValue(const QByteArray& payload, quint32 requestedKey)
 }
 }  // namespace
 
-GPSEvidenceTransport::GPSEvidenceTransport(GPSTransport& transport, const std::atomic_bool& stop)
-    : GPSTransport(stop)
+GPSEvidenceTransport::GPSEvidenceTransport(GPSTransport& transport, std::stop_token stopToken)
+    : GPSTransport(std::move(stopToken))
     , _transport(transport)
 {}
 
@@ -59,9 +60,9 @@ bool GPSEvidenceTransport::setBaudrate(unsigned baudrate)
     return _transport.setBaudrate(baudrate);
 }
 
-GPSReadResult GPSEvidenceTransport::read(uint8_t* buffer, int length, int timeoutMs)
+GPSReadResult GPSEvidenceTransport::read(uint8_t* buffer, int length, std::chrono::milliseconds timeout)
 {
-    const auto result = _transport.read(buffer, length, timeoutMs);
+    const auto result = _transport.read(buffer, length, timeout);
     if (result.status == GPSReadStatus::Data && result.bytesRead > 0 && result.bytesRead <= length) {
         _observe(_incoming, buffer, result.bytesRead, true);
     }
@@ -166,7 +167,7 @@ QJsonArray GPSEvidenceTransport::requestedSettings(const GPSReceiverConfig& conf
     setting("time_mode", config.role == GPSReceiverConfig::Role::RTKBase ? (fixed ? 2 : 1) : 0, 0x20030001, 0x71, 2, 1);
     if (const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&config.base.mode);
         config.role == GPSReceiverConfig::Role::RTKBase && survey) {
-        setting("survey_duration_s", survey->durationSecs, 0x40030010, 0x71, 24, 4);
+        setting("survey_duration_s", static_cast<quint64>(survey->duration.count()), 0x40030010, 0x71, 24, 4);
         setting("survey_accuracy_0.1mm", static_cast<quint64>(survey->accuracyMeters * 10000), 0x40030011, 0x71, 28, 4);
     }
     return result;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stop_token>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
@@ -12,13 +14,13 @@ struct GPSReceiverConfig;
 class GPSEvidenceTransport final : public GPSTransport
 {
 public:
-    GPSEvidenceTransport(GPSTransport& transport, const std::atomic_bool& stop);
+    GPSEvidenceTransport(GPSTransport& transport, std::stop_token stopToken);
 
     GPSOpenResult open() override;
     bool fatalError() const override;
     unsigned fixedBaudrate() const override;
     bool setBaudrate(unsigned baudrate) override;
-    GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
+    GPSReadResult read(uint8_t* buffer, int length, std::chrono::milliseconds timeout) override;
     std::chrono::milliseconds configurationWriteTimeout() const override;
 
     QJsonObject evidence() const;

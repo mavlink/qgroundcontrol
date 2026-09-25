@@ -41,7 +41,7 @@ inline constexpr std::array RECEIVER_PROFILES = {
     ReceiverProfile{Board::u_blox_X20, true, true, true},
 };
 
-constexpr ReceiverProfile receiverProfile(Board board)
+[[nodiscard]] constexpr ReceiverProfile receiverProfile(Board board)
 {
     for (auto profile : RECEIVER_PROFILES) {
         if (profile.board == board) {
@@ -59,7 +59,7 @@ struct OutputPort
 
 inline constexpr std::array OUTPUT_PORTS = {OutputPort{1, false}, OutputPort{3, true}};
 
-constexpr unsigned configurationValueBytes(uint32_t key)
+[[nodiscard]] constexpr unsigned configurationValueBytes(uint32_t key)
 {
     const unsigned type = key >> 28;
     return type == 1 || type == 2 ? 1 : type == 3 ? 2 : type == 4 ? 4 : 0;

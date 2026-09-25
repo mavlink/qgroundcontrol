@@ -21,7 +21,7 @@ public:
 
     std::string receiverIdentity() const override { return _firmware; }
 
-    int receive(unsigned timeout) override;
+    int receive(std::chrono::milliseconds timeout) override;
 
 protected:
     int decodeByte(uint8_t byte) override;
@@ -38,10 +38,12 @@ private:
         Monitoring,
     };
 
-    GPSCommandResult _transact(const std::string& command, GPSReplyMatcher reply, unsigned timeoutMs = 1000);
-    GPSCommandResult _acknowledgement(const std::string& command, unsigned timeoutMs = 1000);
-    bool _acknowledge(const std::string& command, unsigned timeoutMs = 1000);
-    bool _identify(unsigned timeoutMs = 1000);
+    GPSCommandResult _transact(const std::string& command, GPSReplyMatcher reply,
+                               std::chrono::milliseconds timeout = std::chrono::milliseconds{1000});
+    GPSCommandResult _acknowledgement(const std::string& command,
+                                      std::chrono::milliseconds timeout = std::chrono::milliseconds{1000});
+    bool _acknowledge(const std::string& command, std::chrono::milliseconds timeout = std::chrono::milliseconds{1000});
+    bool _identify(std::chrono::milliseconds timeout = std::chrono::milliseconds{1000});
     bool _verifyRole(bool requireMatch = true);
     bool _verifyBase(bool requireMatch = true);
     std::string _baseCommand() const;

@@ -26,24 +26,12 @@ template <typename Row>
 class GPSCorrectionDiagnosticsModel final : public QRangeModel
 {
 public:
-    // The base only records the address of the range; it reads rows after construction.
+    // A const range keeps the model read-only; the base only records its address and reads rows after construction.
     explicit GPSCorrectionDiagnosticsModel(QObject* parent = nullptr)
-        : QRangeModel(&_rows, parent)
+        : QRangeModel(&std::as_const(_rows), parent)
     {}
 
     const QList<Row>& rows() const { return _rows; }
-
-    // Rows change only through the owner's update functions.
-    Qt::ItemFlags flags(const QModelIndex& index) const override
-    {
-        return QRangeModel::flags(index) & ~Qt::ItemIsEditable;
-    }
-
-    bool setData(const QModelIndex&, const QVariant&, int) override { return false; }
-
-    bool setItemData(const QModelIndex&, const QMap<int, QVariant>&) override { return false; }
-
-    bool clearItemData(const QModelIndex&) override { return false; }
 
     /// Removes stale rows, inserts or moves new ones, and emits dataChanged once for the span of changed rows.
     void setRows(QList<Row> next)

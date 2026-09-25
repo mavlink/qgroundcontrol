@@ -1,12 +1,14 @@
 #include "GPSTransport.h"
 
 #include <algorithm>
+#include <utility>
 
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSTransportLog, "GPS.Transport.GPSTransport")
 
-GPSTransport::GPSTransport(const std::atomic_bool& requestStop) : _requestStop(requestStop)
+GPSTransport::GPSTransport(std::stop_token stopToken)
+    : _stopToken(std::move(stopToken))
 {
     qCDebug(GPSTransportLog) << this;
 }

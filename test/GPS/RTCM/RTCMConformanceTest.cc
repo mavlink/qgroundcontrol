@@ -5,6 +5,7 @@
 #include <QtCore/QList>
 #include <QtTest/QTest>
 
+#include "Checksums.h"
 #include "RTCMDecodedFrame.h"
 #include "RTCMFrameDecoder.h"
 #include "RTCMFramer.h"
@@ -63,9 +64,8 @@ void RTCMConformanceTest::_crc24q()
 {
     QFETCH(QByteArray, bytes);
     QFETCH(quint32, expected);
-    QCOMPARE(
-        RTCMFramer::crc24q({reinterpret_cast<const uint8_t*>(bytes.constData()), static_cast<size_t>(bytes.size())}),
-        expected);
+    QCOMPARE(QGC::crc24q({reinterpret_cast<const uint8_t*>(bytes.constData()), static_cast<size_t>(bytes.size())}),
+             expected);
 }
 
 void RTCMConformanceTest::_sharedCorpus_data()
@@ -251,8 +251,8 @@ void RTCMConformanceTest::_strictValidation_data()
 void RTCMConformanceTest::_strictValidation()
 {
     QFETCH(QByteArray, candidate);
-    const auto crc = RTCMFramer::crc24q(
-        {reinterpret_cast<const uint8_t*>(candidate.constData()), static_cast<size_t>(candidate.size())});
+    const auto crc =
+        QGC::crc24q({reinterpret_cast<const uint8_t*>(candidate.constData()), static_cast<size_t>(candidate.size())});
     candidate.append(static_cast<char>(crc >> 16));
     candidate.append(static_cast<char>(crc >> 8));
     candidate.append(static_cast<char>(crc));

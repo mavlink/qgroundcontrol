@@ -1,7 +1,11 @@
+#include <chrono>
+
 #include <QtTest/QTest>
 
 #include "GPSSatelliteState.h"
 #include "UnitTest.h"
+
+using namespace std::chrono_literals;
 
 namespace {
 
@@ -37,7 +41,7 @@ private slots:
 
 void GPSSatelliteStateTest::_constellationRetirement()
 {
-    GPSSatelliteState state(500);
+    GPSSatelliteState state(500ms);
     const quint64 now = kStartUs;
     auto raw =
         observation(Delta::ConstellationDelta, {{GPSConstellation::GPS, {now - 400000, 1}, {now - 400000, 1}},
@@ -45,14 +49,14 @@ void GPSSatelliteStateTest::_constellationRetirement()
     state.updateObservation(raw, now);
     QCOMPARE(state.snapshot(now).satellitesInViewCount(), 2);
     QCOMPARE(state.snapshot(now).satellitesInUseCount(), 1);
-    state.setFreshnessTimeoutMs(100);
+    state.setFreshnessTimeout(100ms);
     const auto retired = state.snapshot(now);
     QCOMPARE(retired.satellitesInViewCount(), 1);
     QCOMPARE(retired.constellations.first().constellation, GPSConstellation::Galileo);
     QCOMPARE(retired.satellitesInUseCount(), 0);
     QCOMPARE(retired.constellations.first().view.receivedAtUs, now - 10000);
     // A retired report cannot return, and a report from the future is rejected.
-    state.setFreshnessTimeoutMs(500);
+    state.setFreshnessTimeout(500ms);
     state.updateObservation(raw, now);
     QCOMPARE(state.snapshot(now).satellitesInViewCount(), 1);
     raw.constellations[0].view.receivedAtUs = now + 1000000;
@@ -65,11 +69,11 @@ void GPSSatelliteStateTest::_constellationRetirement()
 
 void GPSSatelliteStateTest::_viewAndUseExpireIndependently()
 {
-    GPSSatelliteState state(500);
+    GPSSatelliteState state(500ms);
     const quint64 now = kStartUs;
     auto raw = observation(Delta::ConstellationDelta, {{GPSConstellation::GPS, {now - 10000, 1}, {now - 400000, 1}}});
     state.updateObservation(raw, now);
-    state.setFreshnessTimeoutMs(100);
+    state.setFreshnessTimeout(100ms);
     QCOMPARE(state.snapshot(now).satellitesInViewCount(), 1);
     QCOMPARE(state.snapshot(now).satellitesInUseCount(), -1);
     raw.constellations[0].usage = {now, 0};
@@ -84,7 +88,7 @@ void GPSSatelliteStateTest::_viewAndUseExpireIndependently()
 
 void GPSSatelliteStateTest::_unknownUsageRetiresPreviousCount()
 {
-    GPSSatelliteState state(5000);
+    GPSSatelliteState state(5000ms);
     quint64 now = kStartUs;
     const quint64 firstReceipt = now;
     auto report =
@@ -169,7 +173,7 @@ void GPSSatelliteStateTest::_independentRetirement()
 {
     QFETCH(bool, retireView);
     QFETCH(bool, fullSnapshot);
-    GPSSatelliteState state(5000);
+    GPSSatelliteState state(5000ms);
     quint64 now = kStartUs;
     const auto initial = observation(Delta::ConstellationDelta, {{GPSConstellation::GPS, {now, 1}, {now, 1}}});
     state.updateObservation(initial, now);
@@ -187,7 +191,7 @@ void GPSSatelliteStateTest::_independentRetirement()
         QCOMPARE(accepted.satellitesInUseCount(), retireView ? 1 : -1);
     };
     verifyRetained();
-    state.setFreshnessTimeoutMs(10000);
+    state.setFreshnessTimeout(10000ms);
     state.updateObservation(initial, now);
     verifyRetained();
 }
@@ -205,7 +209,7 @@ void GPSSatelliteStateTest::_normalization()
 {
     QFETCH(bool, empty);
     QFETCH(bool, unknownUsage);
-    GPSSatelliteState state(1000);
+    GPSSatelliteState state(1000ms);
     quint64 now = kStartUs;
     const auto report =
         observation(Delta::FullSnapshot,

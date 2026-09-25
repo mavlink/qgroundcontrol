@@ -20,7 +20,7 @@ public:
     static constexpr qsizetype kMaxFragments = 4;
     static constexpr qsizetype kMaxAssembledLen = kFragmentLen * kMaxFragments;
 
-    struct PackResult
+    struct [[nodiscard]] PackResult
     {
         QList<GPSRTCMPacket> packets;
         uint8_t nextSequenceId = 0;

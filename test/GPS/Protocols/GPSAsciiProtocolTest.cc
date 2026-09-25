@@ -1,6 +1,7 @@
 #include "GPSAsciiProtocolTest.h"
 
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <optional>
 #include <string_view>
@@ -19,6 +20,8 @@
 #include "Support/ProtocolTestPackets.h"
 #include "Support/UnicoreReceiverModel.h"
 #include "Unicore/UnicoreProtocol.h"
+
+using namespace std::chrono_literals;
 
 namespace {
 using AsciiReceiver = GPSTest::AsciiProtocolTestReceiver;
@@ -260,7 +263,7 @@ void GPSAsciiProtocolTest::_unicoreFailureDetails()
     UnicoreProtocol receiver(peer.io(), false);
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config;
-    config.base.mode = GPSBaseStationConfig::ReceiverAveraging{1};
+    config.base.mode = GPSBaseStationConfig::ReceiverAveraging{1s};
     QVERIFY(!receiver.configure(baud, config));
     QVERIFY(!receiver.receiverReady());
     QVERIFY(!peer.results.empty());
@@ -287,7 +290,7 @@ void GPSAsciiProtocolTest::_unicoreUnsupportedDetails()
     UnicoreProtocol receiver(peer.io(), false);
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config;
-    config.base.mode = GPSBaseStationConfig::ReceiverAveraging{1};
+    config.base.mode = GPSBaseStationConfig::ReceiverAveraging{1s};
     QVERIFY(!receiver.configure(baud, config));
     QVERIFY(receiver.ioErrorDetail().contains("Unsupported Unicore receiver"));
     QVERIFY(receiver.ioErrorDetail().contains("R5.00Build20000"));

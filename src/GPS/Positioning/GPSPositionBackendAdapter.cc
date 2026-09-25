@@ -39,7 +39,7 @@ void GPSPositionBackendAdapter::retire()
     }
     _active = false;
     _eventRevision.invalidate();
-    const QPointer<QGeoPositionInfoSource> backend = std::exchange(_backend, nullptr);
+    QGeoPositionInfoSource* const backend = std::exchange(_backend, nullptr);
     if (std::exchange(_updatesStarted, false) && backend) {
         // Stopping may re-enter the owner or delete this adapter; nothing below touches members.
         backend->stopUpdates();
@@ -71,7 +71,7 @@ void GPSPositionBackendAdapter::setActive(bool enabled)
         _backend->setUpdateInterval(0);
     }
 #else
-    _backend->setUpdateInterval(updateInterval());
+    _backend->setUpdateInterval(static_cast<int>(updateInterval().count()));
 #endif
     if (change.isCurrent() && _backend) {
         _updatesStarted = true;
@@ -79,9 +79,9 @@ void GPSPositionBackendAdapter::setActive(bool enabled)
     }
 }
 
-int GPSPositionBackendAdapter::updateInterval() const
+std::chrono::milliseconds GPSPositionBackendAdapter::updateInterval() const
 {
-    return _platform && _backend ? _backend->minimumUpdateInterval() : 0;
+    return std::chrono::milliseconds(_platform && _backend ? _backend->minimumUpdateInterval() : 0);
 }
 
 bool GPSPositionBackendAdapter::_notify(QGeoPositionInfoSource::Error error)

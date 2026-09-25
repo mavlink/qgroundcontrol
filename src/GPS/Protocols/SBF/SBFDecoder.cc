@@ -2,13 +2,46 @@
 #include <cstddef>
 #include <numbers>
 #include <string.h>
+#include <tuple>
 
+#include "Checksums.h"
 #include "LittleEndian.h"
 #include "RTCMFramer.h"
 #include "SBF/SBFProtocol.h"
+#include "WireFields.h"
+
+namespace Wire {
+/// Block header only; the body is decoded according to msg_id().
+template <>
+struct Layout<sbf_buf_t>
+{
+    using T = sbf_buf_t;
+    static constexpr size_t SIZE = 14;
+    static constexpr auto FIELDS = std::tuple{Field<&T::sync, 0>{},   Field<&T::crc16, 2>{}, Field<&T::id, 4>{},
+                                              Field<&T::length, 6>{}, Field<&T::TOW, 8>{},   Field<&T::WNc, 12>{}};
+};
+
+template <>
+struct Layout<sbf_payload_pvt_geodetic_t>
+{
+    using T = sbf_payload_pvt_geodetic_t;
+    static constexpr size_t SIZE = 80;
+    static constexpr auto FIELDS =
+        std::tuple{Field<&T::mode, 0>{},          Field<&T::error, 1>{},         Field<&T::latitude, 2>{},
+                   Field<&T::longitude, 10>{},    Field<&T::height, 18>{},       Field<&T::undulation, 26>{},
+                   Field<&T::vn, 30>{},           Field<&T::ve, 34>{},           Field<&T::vu, 38>{},
+                   Field<&T::cog, 42>{},          Field<&T::rx_clk_bias, 46>{},  Field<&T::RxClkDrift, 54>{},
+                   Field<&T::time_system, 58>{},  Field<&T::datum, 59>{},        Field<&T::nr_sv, 60>{},
+                   Field<&T::wa_corr_info, 61>{}, Field<&T::reference_id, 62>{}, Field<&T::mean_corr_age, 64>{},
+                   Field<&T::signal_info, 66>{},  Field<&T::alert_flag, 70>{},   Field<&T::nr_bases, 71>{},
+                   Field<&T::ppp_info, 72>{},     Field<&T::latency, 74>{},      Field<&T::h_accuracy, 76>{},
+                   Field<&T::v_accuracy, 78>{}};
+};
+}  // namespace Wire
 
 namespace {
 constexpr double DNU = 100000.0;
+constexpr size_t PVT_GEODETIC_LENGTH = Wire::SIZE<sbf_buf_t> + Wire::SIZE<sbf_payload_pvt_geodetic_t>;
 
 GPSPositionReport::FixType fixType(uint8_t mode)
 {
@@ -31,48 +64,9 @@ GPSPositionReport::FixType fixType(uint8_t mode)
 
 sbf_buf_t decodeBlock(std::span<const uint8_t> bytes)
 {
-    sbf_buf_t value{};
-    value.sync = LittleEndian::read<uint16_t>(bytes, 0).value_or(0);
-    value.crc16 = LittleEndian::read<uint16_t>(bytes, 2).value_or(0);
-    const auto id = LittleEndian::read<uint16_t>(bytes, 4).value_or(0);
-    value.msg_id = id & 0x1fff;
-    value.msg_revision = id >> 13;
-    value.length = LittleEndian::read<uint16_t>(bytes, 6).value_or(0);
-    value.TOW = LittleEndian::read<uint32_t>(bytes, 8).value_or(0);
-    value.WNc = LittleEndian::read<uint16_t>(bytes, 12).value_or(0);
-    switch (value.msg_id) {
-        case SBF_ID_PVTGeodetic:
-            value.payload_pvt_geodetic.mode_type = (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 0) & 15;
-            value.payload_pvt_geodetic.mode_reserved = (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 4) & 3;
-            value.payload_pvt_geodetic.mode_base_fixed = (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 6) & 1;
-            value.payload_pvt_geodetic.mode_2d = (LittleEndian::read<uint8_t>(bytes, 14).value_or(0) >> 7) & 1;
-            value.payload_pvt_geodetic.error = LittleEndian::read<uint8_t>(bytes, 15).value_or(0);
-            value.payload_pvt_geodetic.latitude = LittleEndian::read<double>(bytes, 16).value_or(0);
-            value.payload_pvt_geodetic.longitude = LittleEndian::read<double>(bytes, 24).value_or(0);
-            value.payload_pvt_geodetic.height = LittleEndian::read<double>(bytes, 32).value_or(0);
-            value.payload_pvt_geodetic.undulation = LittleEndian::read<float>(bytes, 40).value_or(0);
-            value.payload_pvt_geodetic.vn = LittleEndian::read<float>(bytes, 44).value_or(0);
-            value.payload_pvt_geodetic.ve = LittleEndian::read<float>(bytes, 48).value_or(0);
-            value.payload_pvt_geodetic.vu = LittleEndian::read<float>(bytes, 52).value_or(0);
-            value.payload_pvt_geodetic.cog = LittleEndian::read<float>(bytes, 56).value_or(0);
-            value.payload_pvt_geodetic.rx_clk_bias = LittleEndian::read<double>(bytes, 60).value_or(0);
-            value.payload_pvt_geodetic.RxClkDrift = LittleEndian::read<float>(bytes, 68).value_or(0);
-            value.payload_pvt_geodetic.time_system = LittleEndian::read<uint8_t>(bytes, 72).value_or(0);
-            value.payload_pvt_geodetic.datum = LittleEndian::read<uint8_t>(bytes, 73).value_or(0);
-            value.payload_pvt_geodetic.nr_sv = LittleEndian::read<uint8_t>(bytes, 74).value_or(0);
-            value.payload_pvt_geodetic.wa_corr_info = LittleEndian::read<uint8_t>(bytes, 75).value_or(0);
-            value.payload_pvt_geodetic.reference_id = LittleEndian::read<uint16_t>(bytes, 76).value_or(0);
-            value.payload_pvt_geodetic.mean_corr_age = LittleEndian::read<uint16_t>(bytes, 78).value_or(0);
-            value.payload_pvt_geodetic.signal_info = LittleEndian::read<uint32_t>(bytes, 80).value_or(0);
-            value.payload_pvt_geodetic.alert_flag = LittleEndian::read<uint8_t>(bytes, 84).value_or(0);
-            value.payload_pvt_geodetic.nr_bases = LittleEndian::read<uint8_t>(bytes, 85).value_or(0);
-            value.payload_pvt_geodetic.ppp_info = LittleEndian::read<uint16_t>(bytes, 86).value_or(0);
-            value.payload_pvt_geodetic.latency = LittleEndian::read<uint16_t>(bytes, 88).value_or(0);
-            value.payload_pvt_geodetic.h_accuracy = LittleEndian::read<uint16_t>(bytes, 90).value_or(0);
-            value.payload_pvt_geodetic.v_accuracy = LittleEndian::read<uint16_t>(bytes, 92).value_or(0);
-            break;
-        default:
-            break;
+    auto value = Wire::decode<sbf_buf_t>(bytes);
+    if (value.msg_id() == SBF_ID_PVTGeodetic) {
+        value.payload_pvt_geodetic = Wire::decode<sbf_payload_pvt_geodetic_t>(bytes, Wire::SIZE<sbf_buf_t>);
     }
     return value;
 }
@@ -156,29 +150,16 @@ int SBFProtocol::payloadRxAdd(const uint8_t b)
     return ret;
 }
 
-uint16_t crc16(const uint8_t* data_p, uint32_t length)
-{
-    uint8_t x;
-    uint16_t crc = 0;
-
-    while (length--) {
-        x = crc >> 8 ^ *data_p++;
-        x ^= x >> 4;
-        crc = static_cast<uint16_t>((crc << 8) ^ (x << 12) ^ (x << 5) ^ x);
-    }
-
-    return crc;
-}
-
 int SBFProtocol::payloadRxDone()
 {
     _buf = decodeBlock(std::span<const uint8_t>(_wire).first(_rx_payload_index));
-    if (_buf.length < 14 || _buf.length > _rx_payload_index || _buf.crc16 != crc16(_wire.data() + 4, _buf.length - 4)) {
+    if (_buf.length < Wire::SIZE<sbf_buf_t> || _buf.length > _rx_payload_index ||
+        _buf.crc16 != QGC::crc16Ccitt(std::span<const uint8_t>(_wire).subspan(4, _buf.length - 4))) {
         return 0;
     }
 
     // Base stations output only PVTGeodetic, which carries the survey-in status.
-    if (_buf.msg_id != SBF_ID_PVTGeodetic || _buf.length < PVT_GEODETIC_LENGTH || _buf.TOW >= WEEK_MS ||
+    if (_buf.msg_id() != SBF_ID_PVTGeodetic || _buf.length < PVT_GEODETIC_LENGTH || _buf.TOW >= WEEK_MS ||
         _buf.WNc == UINT16_MAX) {
         return 0;
     }
@@ -215,10 +196,10 @@ int SBFProtocol::payloadRxDone()
 
 bool SBFProtocol::applyPvtGeodetic(const sbf_payload_pvt_geodetic_t& pvt, GPSDecodedPosition& position)
 {
-    position.navigation.fixType = fixType(pvt.mode_type);
+    position.navigation.fixType = fixType(pvt.mode_type());
     if (pvt.error != 0) {
         position.navigation.fixType = GPSPositionReport::FixType::NoFix;
-    } else if (pvt.mode_2d && position.navigation.fixType >= GPSPositionReport::FixType::Fix3D) {
+    } else if (pvt.mode_2d() && position.navigation.fixType >= GPSPositionReport::FixType::Fix3D) {
         position.navigation.fixType = GPSPositionReport::FixType::Fix2D;
     }
 
@@ -266,8 +247,9 @@ void SBFProtocol::publishSurveyStatus(const sbf_payload_pvt_geodetic_t& pvt, con
 {
     // Mode bit 6 means automatic base determination is still in progress, not completed.
     // Septentrio PolaRx5TR 5.5.0 Reference Guide, SBF Mode definition (p. 382).
-    const bool active = !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) && pvt.mode_base_fixed;
-    const bool valid = !pvt.mode_base_fixed && pvt.mode_type == 3 && !pvt.mode_2d && !pvt.error && coordinatesValid;
+    const bool active = !std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) && pvt.mode_base_fixed();
+    const bool valid =
+        !pvt.mode_base_fixed() && pvt.mode_type() == 3 && !pvt.mode_2d() && !pvt.error && coordinatesValid;
     // The final update on the active-to-inactive transition freezes the survey duration.
     if (active || _survey_active) {
         (void) _surveyClock.update(nowUs());
@@ -331,7 +313,7 @@ void SBFProtocol::flushDecoded()
     }
     const auto now = nowUs();
     for (auto& epoch : _epochs) {
-        if (epoch && now >= epoch->receiptUs && now - epoch->receiptUs >= EPOCH_MAX_AGE_US) {
+        if (epoch && now >= epoch->receiptUs && std::chrono::microseconds(now - epoch->receiptUs) >= EPOCH_MAX_AGE) {
             finishEpoch(epoch);
         }
     }
@@ -354,7 +336,7 @@ SBFProtocol::SBFProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     decodeInit();
 }
 
-int SBFProtocol::receive(unsigned timeout)
+int SBFProtocol::receive(std::chrono::milliseconds timeout)
 {
     return _configured && !hasIOError() ? receiveDecoded(timeout) : 0;
 }

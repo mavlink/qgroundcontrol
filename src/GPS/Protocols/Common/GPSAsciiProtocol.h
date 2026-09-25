@@ -16,7 +16,7 @@ class GPSAsciiProtocol : public GPSProtocol
 public:
     explicit GPSAsciiProtocol(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
-    int receive(unsigned timeout) override;
+    int receive(std::chrono::milliseconds timeout) override;
 
 protected:
     /// Who turns sentences into positions: this base from standard NMEA, or the derived receiver protocol.
@@ -45,7 +45,7 @@ private:
     void _drainRTCM();
 
     static constexpr size_t MAX_LINE_SIZE = 4096;
-    static constexpr uint64_t METADATA_MAX_AGE_US = 2000000;
+    static constexpr std::chrono::microseconds METADATA_MAX_AGE{2000000};
     RTCMStreamDecoder _rtcm;
     NMEA::SatelliteAssembler _satelliteAssembler;
     NMEA::SatelliteEpoch _pendingSatellites;

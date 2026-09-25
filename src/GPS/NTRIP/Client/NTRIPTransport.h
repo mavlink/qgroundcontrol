@@ -32,4 +32,7 @@ signals:
 
     /// Warns before admitting a plaintext credential write; observers may cancel.
     void plaintextCredentialsWarning();
+
+    /// A self-signed caster certificate was trusted on first use; the owner persists the pin.
+    void certificatePinned(const QString& pin);
 };

@@ -18,20 +18,16 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
     , _config(config)
 {
     qCDebug(GPSProviderLog) << this;
-    (void) qRegisterMetaType<GPSSatelliteReport>("GPSSatelliteReport");
-    (void) qRegisterMetaType<GPSPositionReport>("GPSPositionReport");
-    (void) qRegisterMetaType<GPSConnectionError>("GPSConnectionError");
-    (void) qRegisterMetaType<GPSSurveyReport>("GPSSurveyReport");
     if (_config.role == GPSReceiverConfig::Role::RTKBase) {
         const auto& base = _config.base;
         if (std::holds_alternative<GPSBaseStationConfig::Fixed>(base.mode)) {
             qCDebug(GPSProviderLog) << "Fixed base configured";
         } else if (const auto* averaging = std::get_if<GPSBaseStationConfig::ReceiverAveraging>(&base.mode)) {
             qCDebug(GPSProviderLog) << "Receiver-managed averaging maximum duration (s):"
-                                    << averaging->maximumDurationSecs;
+                                    << averaging->maximumDuration.count();
         } else if (const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&base.mode)) {
             qCDebug(GPSProviderLog) << "Survey-in accuracy (m):" << survey->accuracyMeters
-                                    << "minimum duration (s):" << survey->durationSecs;
+                                    << "minimum duration (s):" << survey->duration.count();
         }
     }
 }
@@ -56,7 +52,7 @@ void GPSProvider::start()
 
 void GPSProvider::stop()
 {
-    _requestStop = true;
+    _stopSource.request_stop();
 }
 
 bool GPSProvider::wait(QDeadlineTimer deadline)
@@ -68,27 +64,28 @@ void GPSProvider::_runSession()
 {
     // Keep factory captures alive until the transport is destroyed, including on early returns.
     auto transportFactory = std::exchange(_transportFactory, {});
-    if (_requestStop) {
+    const std::stop_token stopToken = _stopSource.get_token();
+    if (stopToken.stop_requested()) {
         return;
     }
 
-    auto transport = transportFactory ? transportFactory(_requestStop) : nullptr;
-    if (_requestStop) {
+    auto transport = transportFactory ? transportFactory(stopToken) : nullptr;
+    if (stopToken.stop_requested()) {
         return;
     }
     if (!transport || transport->open().status != GPSOpenStatus::Opened) {
-        if (!_requestStop) {
+        if (!stopToken.stop_requested()) {
             emit connectionError(GPSConnectionError::OpenFailed);
         }
         return;
     }
-    if (_requestStop) {
+    if (stopToken.stop_requested()) {
         return;
     }
 
-    QDeadlineTimer inactivity(kUsefulDataTimeoutMs, Qt::PreciseTimer);
+    QDeadlineTimer inactivity(kUsefulDataTimeout, Qt::PreciseTimer);
     const auto usefulDataReceived = [&inactivity] {
-        inactivity.setRemainingTime(kUsefulDataTimeoutMs, Qt::PreciseTimer);
+        inactivity.setRemainingTime(kUsefulDataTimeout, Qt::PreciseTimer);
     };
     GPSDriverSinks sinks;
     sinks.onPosition = [this](const GPSPositionReport& message) { emit positionUpdate(message); };
@@ -104,21 +101,22 @@ void GPSProvider::_runSession()
     GPSDriver driver(_type, *transport, _config, std::move(sinks));
 
     if (!driver.configure()) {
-        if (!_requestStop) {
+        if (!stopToken.stop_requested()) {
             emit connectionError(GPSConnectionError::ConfigFailed, driver.configurationError());
         }
         return;
     }
-    if (_requestStop) {
+    if (stopToken.stop_requested()) {
         return;
     }
     emit receiverReady(driver.receiverIdentity());
 
     usefulDataReceived();
     bool cancelled = false;
-    while (!_requestStop && !transport->fatalError() && (!_endsWhenIdle || !inactivity.hasExpired())) {
-        const auto timeout = static_cast<unsigned>(
-            _endsWhenIdle ? std::min(qint64(kGPSReceiveTimeout), inactivity.remainingTime()) : kGPSReceiveTimeout);
+    while (!stopToken.stop_requested() && !transport->fatalError() && (!_endsWhenIdle || !inactivity.hasExpired())) {
+        const auto timeout = _endsWhenIdle
+                                 ? std::min(kGPSReceiveTimeout, std::chrono::milliseconds(inactivity.remainingTime()))
+                                 : kGPSReceiveTimeout;
         const auto result = driver.receiveOutcome(timeout);
         if (result.status == GPSReceiveStatus::Data) {
             usefulDataReceived();
@@ -131,7 +129,7 @@ void GPSProvider::_runSession()
             break;
         }
     }
-    if (!_requestStop && !cancelled) {
+    if (!stopToken.stop_requested() && !cancelled) {
         emit connectionError(GPSConnectionError::DeviceError);
     }
 

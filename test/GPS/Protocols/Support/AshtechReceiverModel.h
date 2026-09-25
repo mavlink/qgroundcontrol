@@ -1,9 +1,9 @@
 #pragma once
 
 #include <algorithm>
-#include <atomic>
 #include <optional>
 #include <stdexcept>
+#include <stop_token>
 #include <string>
 #include <vector>
 
@@ -46,7 +46,7 @@ public:
     GPSDecodedPosition position;
     size_t transportCalls = 0;
     GPSTestClock& clock;
-    std::atomic_bool stop{false};
+    std::stop_source stop;
     ScriptedReceiver scripted;
     AshtechProtocol driver;
 
@@ -66,7 +66,8 @@ public:
         if (receiver.hasQueuedReadData()) {
             return;
         }
-        clock.advanceBy(uint64_t(deadline.remainingMilliseconds(clock.nowUs())) * 1000 + 1);
+        clock.advanceBy(static_cast<uint64_t>(std::chrono::microseconds(deadline.remaining(clock.nowUs())).count()) +
+                        1);
     }
 
     GPSWriteResult handleCommand(ScriptedReceiver& receiver, const QByteArray& bytes,
@@ -101,7 +102,7 @@ public:
         auto io = makeGPSProtocolTestIO(clock);
         scripted.clearReplies();
         scripted.clearCommands();
-        scripted.setReadHandler([this](uint8_t*, int, int) -> std::optional<GPSReadResult> {
+        scripted.setReadHandler([this](uint8_t*, int, std::chrono::milliseconds) -> std::optional<GPSReadResult> {
             ++transportCalls;
             return std::nullopt;
         });
@@ -128,8 +129,8 @@ public:
         config.base = {
             .mode = fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
                                 .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
-                          : GPSBaseStationConfig::Mode{
-                                GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 100}}};
+                          : GPSBaseStationConfig::Mode{GPSBaseStationConfig::SurveyIn{
+                                .accuracyMeters = 1, .duration = std::chrono::seconds{100}}}};
         unsigned baudrate = 115200;
         if (!driver.configure(baudrate, config)) {
             throw std::runtime_error("Ashtech test receiver failed to configure");
@@ -144,7 +145,7 @@ public:
     bool startSurvey()
     {
         driver.consume(nmeaPacket("PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,"));
-        (void) driver.receive(1);
+        (void) driver.receive(std::chrono::milliseconds{1});
         return !driver.hasIOError();
     }
 };

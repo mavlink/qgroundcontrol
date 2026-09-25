@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -8,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "Checksums.h"
 #include "Femto/FemtoProtocol.h"
 #include "GPSRawAckMatcher.h"
 #include "LittleEndian.h"
@@ -16,6 +18,8 @@
 #include "Support/GPSProtocolTestIO.h"
 #include "Support/ProtocolTestPackets.h"
 #include "UnitTest.h"
+
+using namespace std::chrono_literals;
 
 // Keep checks active in Release, too.
 #define CHECK(condition)                                                                                 \
@@ -79,17 +83,17 @@ public:
         auto result = makeGPSProtocolTestIO(_clock, &warnings);
         result.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSReadResult {
             ++transport_calls;
-            const int timeout = deadline.remainingMilliseconds(_clock.nowUs());
+            const auto timeout = deadline.remaining(_clock.nowUs());
             auto* data = bytes.data();
             const int size = static_cast<int>(bytes.size());
-            CHECK(timeout >= 0);
+            CHECK(timeout >= 0ms);
             _clock.advanceBy(1000);
             if (rejected && cancel_read) {
                 ++failed_reads;
                 return {GPSReadStatus::Cancelled};
             }
             if (reply.empty()) {
-                _clock.advanceBy(uint64_t(timeout) * 1000 + 1);
+                _clock.advanceBy(static_cast<uint64_t>(std::chrono::microseconds(timeout).count()) + 1);
                 return {GPSReadStatus::TimedOut};
             }
             // Neither protocol guarantees that an ACK fits in one read or includes a NUL terminator.
@@ -195,7 +199,7 @@ static void receiverMode(GPSTestClock& clock, bool septentrio, bool fixed, const
                             .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
                             .accuracyMeters = 1.0f}}
                       : GPSBaseStationConfig::Mode{
-                            GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1.25, .durationSecs = 60}}};
+                            GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1.25, .duration = 60s}}};
     unsigned baudrate = 115200;
     const bool configured = driver->configure(baudrate, config);
     if (!rejected_command.empty()) {
@@ -243,7 +247,7 @@ void sbfConfirmationPolicy(GPSTestClock& clock)
             receiver.rejected_command = dataIO;
             SBFProtocol driver(receiver.io(), false);
             GPSProtocol::GPSConfig config;
-            config.base.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60};
+            config.base.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s};
             unsigned baud = 115200;
             const bool success = driver.configure(baud, config);
             CHECK(success == (firstFails ? failures == 0 : failures < 5));
@@ -277,7 +281,7 @@ void sbfConfirmationPolicy(GPSTestClock& clock)
     SBFProtocol driver(receiver.io());
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config;
-    config.base.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60};
+    config.base.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s};
     CHECK(!driver.configure(baud, config));
     CHECK(receiver.commands.back() == "setGeodeticDatum, WGS84\n");
 }
@@ -317,7 +321,7 @@ void sbfRequiredBaseCommands(GPSTestClock& clock)
                         fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
                                     .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
                               : GPSBaseStationConfig::Mode{
-                                    GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}}};
+                                    GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}}};
                 unsigned baudrate = 115200;
                 CHECK(!driver.configure(baudrate, config));
                 CHECK(!driver.receiverReady());
@@ -372,7 +376,7 @@ void sbfDatumRejection(GPSTestClock& clock)
         };
         SBFProtocol driver(captureGPSReports(io, position), false);
         GPSProtocol::GPSConfig config;
-        config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
+        config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}};
         unsigned baud = 115200;
         CHECK(driver.configure(baud, config));
         std::vector<uint8_t> frame(96);
@@ -385,7 +389,7 @@ void sbfDatumRejection(GPSTestClock& clock)
         (void) LittleEndian::write<double>(frame, 16, 0.5);
         (void) LittleEndian::write<double>(frame, 24, 1);
         (void) LittleEndian::write<double>(frame, 32, 500);
-        (void) LittleEndian::write<uint16_t>(frame, 2, crc16(frame.data() + 4, frame.size() - 4));
+        (void) LittleEndian::write<uint16_t>(frame, 2, QGC::crc16Ccitt(std::span<const uint8_t>(frame).subspan(4)));
         driver.consume(frame);
         CHECK(driver.ioError() == GPSProtocolError::Protocol);
         CHECK(driver.ioErrorDetail().contains("datum"));
@@ -418,7 +422,7 @@ void sbfFrameOwnership(GPSTestClock& clock)
     unsigned baudrate = 115200;
     CHECK(driver.configure(baudrate, config));
     std::vector<uint8_t> correction{0xd3, 0, 2, 0x3e, 0xd0};
-    const auto checksum = RTCMFramer::crc24q(correction);
+    const auto checksum = QGC::crc24q(correction);
     correction.push_back(checksum >> 16);
     correction.push_back(checksum >> 8);
     correction.push_back(checksum);
@@ -433,7 +437,7 @@ void sbfFrameOwnership(GPSTestClock& clock)
     (void) LittleEndian::write<double>(native, 24, 1);
     // Both checksums are valid; only the outer native frame may own these bytes.
     std::copy(correction.begin(), correction.end(), native.begin() + 60);
-    (void) LittleEndian::write<uint16_t>(native, 2, crc16(native.data() + 4, native.size() - 4));
+    (void) LittleEndian::write<uint16_t>(native, 2, QGC::crc16Ccitt(std::span<const uint8_t>(native).subspan(4)));
     driver.consume(native);
     CHECK(correctionCount == 0);
     clock.advanceBy(200000);
@@ -462,7 +466,7 @@ void sbfSurveyEvidence(GPSTestClock& clock)
     };
     SBFProtocol driver(captureGPSReports(io, position), false);
     GPSProtocol::GPSConfig config{};
-    config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
+    config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}};
     unsigned baudrate = 115200;
     uint32_t tow = 0;
     std::vector<uint8_t> frame(94);
@@ -480,7 +484,7 @@ void sbfSurveyEvidence(GPSTestClock& clock)
         (void) LittleEndian::write<uint32_t>(frame, 8, tow);
         (void) LittleEndian::write<uint16_t>(frame, 90, horizontal);
         (void) LittleEndian::write<uint16_t>(frame, 92, vertical);
-        (void) LittleEndian::write<uint16_t>(frame, 2, crc16(frame.data() + 4, frame.size() - 4));
+        (void) LittleEndian::write<uint16_t>(frame, 2, QGC::crc16Ccitt(std::span<const uint8_t>(frame).subspan(4)));
         surveys.clear();
         driver.consume(frame);
         CHECK(surveys.size() == 1);
@@ -505,7 +509,7 @@ void sbfSurveyEvidence(GPSTestClock& clock)
         config.base.mode =
             fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
                         .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
-                  : GPSBaseStationConfig::Mode{GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
+                  : GPSBaseStationConfig::Mode{GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}};
         CHECK(driver.configure(baudrate, config));
         CHECK(driver.receiverReady());
         // A standalone solution without the determination flag is not a completed fixed base.
@@ -572,7 +576,7 @@ void baseMixedFraming(GPSTestClock& clock, bool septentrio)
         driver = std::make_unique<FemtoProtocol>(captureGPSReports(io, position), false);
     }
     GPSProtocol::GPSConfig config;
-    config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
+    config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}};
     unsigned baud = 115200;
     CHECK(driver->configure(baud, config));
     driver->consume({});
@@ -607,11 +611,11 @@ void configurationDecodesInterleavedTraffic(GPSTestClock& clock)
         GPSDecodedPosition position;
         FemtoProtocol driver(captureGPSReports(io, position));
         GPSProtocol::GPSConfig config;
-        config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
+        config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}};
         unsigned baud = 115200;
         CHECK(driver.configure(baud, config));
         CHECK(usageReports == 1);
-        (void) driver.receive(10);
+        (void) driver.receive(10ms);
         // The fixed-quality GGA predates this configuration's survey, so it must not complete it.
         CHECK(!peer.sent("LOG RTCM"));
         CHECK(std::none_of(surveys.begin(), surveys.end(), [](const auto& survey) { return survey.survey.valid; }));
@@ -628,7 +632,7 @@ void configurationDecodesInterleavedTraffic(GPSTestClock& clock)
         (void) LittleEndian::write<double>(frame, 16, 0.5);
         (void) LittleEndian::write<double>(frame, 24, 1);
         (void) LittleEndian::write<double>(frame, 32, 500);
-        (void) LittleEndian::write<uint16_t>(frame, 2, crc16(frame.data() + 4, frame.size() - 4));
+        (void) LittleEndian::write<uint16_t>(frame, 2, QGC::crc16Ccitt(std::span<const uint8_t>(frame).subspan(4)));
         peer.interleave_on = "setDataInOut";
         peer.interleaved.assign(frame.begin(), frame.end());
         size_t fixCount = 0;
@@ -641,7 +645,7 @@ void configurationDecodesInterleavedTraffic(GPSTestClock& clock)
         GPSDecodedPosition position;
         SBFProtocol driver(captureGPSReports(io, position), false);
         GPSProtocol::GPSConfig config;
-        config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
+        config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}};
         unsigned baud = 115200;
         CHECK(driver.configure(baud, config));
         clock.advanceBy(200000);

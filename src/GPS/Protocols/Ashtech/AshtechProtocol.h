@@ -20,7 +20,7 @@ public:
     bool receiverReady() const override { return _configure_done; }
 
 private:
-    static constexpr unsigned ASH_RESPONSE_TIMEOUT = 200;  // ms, timeout for waiting for a response
+    static constexpr std::chrono::milliseconds ASH_RESPONSE_TIMEOUT{200};  // timeout for waiting for a response
 
     const QLoggingCategory& logCategory() const override;
     int handleReceiverLine(std::string_view line) override;
@@ -55,7 +55,7 @@ private:
     /**
      * receive data for at least the specified amount of time
      */
-    void receiveWait(unsigned timeout_min);
+    void receiveWait(std::chrono::milliseconds timeout);
 
     /// Reply matchers. A NAK rejects any command; $PASHS settings are acknowledged by an ACK, queries by their
     /// $PASHR reply, and the survey receipt by the receipt decoder.
@@ -85,7 +85,7 @@ private:
     NMEA::EpochReceipt _accuracyReceipt;
     NMEA::GST _accuracy;
     // ZDA/GST output is requested every three seconds.
-    static constexpr uint64_t METADATA_MAX_AGE_US = 5000000;
+    static constexpr std::chrono::microseconds METADATA_MAX_AGE{5000000};
 
     GPSSurveyClock _surveyClock;
     bool _awaitingSurveyReceipt = false;

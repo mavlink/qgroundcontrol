@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 #include <QtPositioning/QGeoPositionInfoSource>
 
 #include "ScheduledTask.h"
@@ -20,7 +22,7 @@ public:
 
     PositioningMethods supportedPositioningMethods() const final { return PositioningMethod::AllPositioningMethods; }
 
-    int minimumUpdateInterval() const final { return kUpdateIntervalMsecs; }
+    int minimumUpdateInterval() const final { return static_cast<int>(kUpdateInterval.count()); }
 
     Error error() const final { return QGeoPositionInfoSource::NoError; }
 
@@ -44,7 +46,7 @@ private:
     QMetaObject::Connection _homePositionChangedConnection;
     quint64 _homeRevision = 0;
 
-    static constexpr int kUpdateIntervalMsecs = 1000;
+    static constexpr std::chrono::milliseconds kUpdateInterval{1000};
     static constexpr qreal kHorizontalVelocityMetersPerSec = 0.5;
     static constexpr qreal kVerticalVelocityMetersPerSec = 0.1;
     static constexpr qreal kHeading = 45.;

@@ -1,6 +1,7 @@
 #include "GPSCorrectionEventModel.h"
 
 #include <algorithm>
+#include <utility>
 
 #include <QtCore/QPointer>
 
@@ -8,8 +9,9 @@
 
 QGC_LOGGING_CATEGORY(GPSCorrectionEventModelLog, "GPS.Corrections.GPSCorrectionEventModel")
 
+// A const range keeps the model read-only; the base only records its address and reads rows after construction.
 GPSCorrectionEventModel::GPSCorrectionEventModel(QObject* parent)
-    : QAbstractListModel(parent)
+    : QRangeModel(&std::as_const(_events), parent)
 {
     qCDebug(GPSCorrectionEventModelLog) << this;
 }
@@ -17,60 +19,6 @@ GPSCorrectionEventModel::GPSCorrectionEventModel(QObject* parent)
 GPSCorrectionEventModel::~GPSCorrectionEventModel()
 {
     qCDebug(GPSCorrectionEventModelLog) << this;
-}
-
-int GPSCorrectionEventModel::rowCount(const QModelIndex& parent) const
-{
-    return parent.isValid() ? 0 : static_cast<int>(_events.size());
-}
-
-QVariant GPSCorrectionEventModel::data(const QModelIndex& index, int role) const
-{
-    if (!index.isValid() || index.model() != this || index.column() != 0 || index.row() < 0 ||
-        index.row() >= _events.size()) {
-        return {};
-    }
-    const auto& event = _events.at(index.row());
-    switch (role) {
-        case EventSequenceRole:
-            return QVariant::fromValue(event.sequence);
-        case TimestampMsRole:
-            return event.timestampMs;
-        case SourceRole:
-            return static_cast<int>(event.source);
-        case SourceInstanceRole:
-            return event.sourceInstance;
-        case SourceSessionRole:
-            return QVariant::fromValue(event.sourceSession);
-        case DestinationIdRole:
-            return event.destinationId;
-        case DestinationSessionRole:
-            return QVariant::fromValue(event.destinationSession);
-        case StageRole:
-            return static_cast<int>(event.stage);
-        case ReasonRole:
-            return static_cast<int>(event.reason);
-        case BytesRole:
-            return QVariant::fromValue(event.bytes);
-    }
-    return {};
-}
-
-QHash<int, QByteArray> GPSCorrectionEventModel::roleNames() const
-{
-    static const QHash<int, QByteArray> roles = {
-        {EventSequenceRole, "eventSequence"},
-        {TimestampMsRole, "timestampMs"},
-        {SourceRole, "source"},
-        {SourceInstanceRole, "sourceInstance"},
-        {SourceSessionRole, "sourceSession"},
-        {DestinationIdRole, "destinationId"},
-        {DestinationSessionRole, "destinationSession"},
-        {StageRole, "stage"},
-        {ReasonRole, "reason"},
-        {BytesRole, "bytes"},
-    };
-    return roles;
 }
 
 void GPSCorrectionEventModel::setEvents(const QList<GPSCorrectionEvent>& events)

@@ -86,10 +86,10 @@ constexpr unsigned THREE_D = 3;
 }  // namespace FixDimension
 
 /// Autonomous GGA does not distinguish 2D/3D; the caller supplies its independently resolved quality.
-GPSFixQuality fixQuality(unsigned quality, GPSFixQuality autonomous);
+[[nodiscard]] GPSFixQuality fixQuality(unsigned quality, GPSFixQuality autonomous);
 
 template <class T>
-std::optional<T> number(std::string_view field, int base = DECIMAL_BASE)
+[[nodiscard]] std::optional<T> number(std::string_view field, int base = DECIMAL_BASE)
 {
     if (field.empty())
         return std::nullopt;
@@ -141,7 +141,7 @@ struct Sentence
     std::string_view talker() const { return fields[0].substr(PREFIX_LENGTH, TALKER_LENGTH); }
 };
 
-unsigned char checksum(std::string_view body);
+[[nodiscard]] unsigned char checksum(std::string_view body);
 
 /// Preserve empty fields, including the final field. Return zero on storage overflow.
 size_t splitFields(std::string_view text, std::span<std::string_view> fields);
@@ -152,19 +152,19 @@ struct Frame
     std::string_view body;
     std::string_view checksum;
 
-    bool hasValidChecksum() const;
+    [[nodiscard]] bool hasValidChecksum() const;
 };
 
 /// Split a printable $BODY[*CHECKSUM] frame, accepting no terminator, LF, or CRLF.
 /// Checksum syntax and value are checked separately so malformed checksums can be repaired.
-std::optional<Frame> frame(std::string_view text);
+[[nodiscard]] std::optional<Frame> frame(std::string_view text);
 
-std::optional<Sentence> sentence(std::string_view text);
+[[nodiscard]] std::optional<Sentence> sentence(std::string_view text);
 
 /// Convert a signed ddmm.mmmm (or dddmm.mmmm) value; invalid values return NaN.
-double degreesFromDegreesMinutes(double ddmm);
+[[nodiscard]] double degreesFromDegreesMinutes(double ddmm);
 
-std::optional<double> coordinate(std::string_view field, std::string_view hemisphere, bool latitude);
+[[nodiscard]] std::optional<double> coordinate(std::string_view field, std::string_view hemisphere, bool latitude);
 
 struct GGA
 {
@@ -178,7 +178,7 @@ struct GGA
 };
 
 /// Quality zero is a valid fix-loss observation with empty coordinates and optional hemisphere fields.
-std::optional<GGA> gga(const Sentence& input);
+[[nodiscard]] std::optional<GGA> gga(const Sentence& input);
 
 std::optional<int> utcMilliseconds(std::string_view field);
 
@@ -189,7 +189,7 @@ struct UtcDate
     unsigned day = 0;
 };
 
-std::optional<UtcDate> rmcDate(std::string_view field);
+[[nodiscard]] std::optional<UtcDate> rmcDate(std::string_view field);
 
 struct RMC
 {
@@ -201,7 +201,7 @@ struct RMC
     double courseDegrees = NAN;
 };
 
-std::optional<RMC> rmc(const Sentence& input);
+[[nodiscard]] std::optional<RMC> rmc(const Sentence& input);
 
 struct GLL
 {
@@ -210,7 +210,7 @@ struct GLL
     std::optional<int> utcMilliseconds;
 };
 
-std::optional<GLL> gll(const Sentence& input);
+[[nodiscard]] std::optional<GLL> gll(const Sentence& input);
 
 struct VTG
 {
@@ -218,7 +218,7 @@ struct VTG
     double courseDegrees = NAN;
 };
 
-std::optional<VTG> vtg(const Sentence& input);
+[[nodiscard]] std::optional<VTG> vtg(const Sentence& input);
 
 struct ZDA
 {
@@ -226,7 +226,7 @@ struct ZDA
     UtcDate date;
 };
 
-std::optional<ZDA> zda(const Sentence& input);
+[[nodiscard]] std::optional<ZDA> zda(const Sentence& input);
 
 struct NavigationStatus
 {
@@ -236,7 +236,7 @@ struct NavigationStatus
 
 /// Receiver-declared validity, independent of coordinate availability. A valid flag alone is not a usable fix.
 /// GSA is untimed; malformed/unsupported status fields return no observation.
-std::optional<NavigationStatus> navigationStatus(const Sentence& input);
+[[nodiscard]] std::optional<NavigationStatus> navigationStatus(const Sentence& input);
 
 struct GST
 {
@@ -244,5 +244,5 @@ struct GST
     double verticalAccuracy = NAN;
 };
 
-std::optional<GST> gst(const Sentence& input);
+[[nodiscard]] std::optional<GST> gst(const Sentence& input);
 }  // namespace NMEA

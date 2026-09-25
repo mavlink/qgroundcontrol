@@ -12,7 +12,7 @@ enum class GPSFixQuality
     Extrapolated = 8,
 };
 
-constexpr GPSFixQuality gpsFixQualityFromValue(int value)
+[[nodiscard]] constexpr GPSFixQuality gpsFixQualityFromValue(int value)
 {
     return (value >= static_cast<int>(GPSFixQuality::Unknown) && value <= static_cast<int>(GPSFixQuality::RTKFixed)) ||
                    value == static_cast<int>(GPSFixQuality::Extrapolated)

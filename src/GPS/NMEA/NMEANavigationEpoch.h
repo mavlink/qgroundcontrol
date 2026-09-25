@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -15,8 +16,8 @@ namespace NMEA {
 
 struct NavigationEpochPolicy
 {
-    uint64_t metadataMaxAgeUs = 2000000;
-    uint64_t untimedMetadataMaxAgeUs = 2000000;
+    std::chrono::microseconds metadataMaxAge{2000000};
+    std::chrono::microseconds untimedMetadataMaxAge{2000000};
     GPSFixQuality autonomousFixQuality = GPSFixQuality::Fix3D;
     bool useGsaDimensionForAutonomousFix = false;
     bool requirePositionTime = false;

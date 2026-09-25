@@ -160,9 +160,9 @@ void GPSPositionService::SourceBinding::setActive(bool enabled)
     }
 }
 
-int GPSPositionService::SourceBinding::updateInterval() const
+std::chrono::milliseconds GPSPositionService::SourceBinding::updateInterval() const
 {
-    return adapter ? adapter->updateInterval() : 0;
+    return adapter ? adapter->updateInterval() : std::chrono::milliseconds::zero();
 }
 
 GPSPositionService::GPSPositionService(QObject* parent, RuntimeScheduler* scheduler)
@@ -642,7 +642,7 @@ void GPSPositionService::_clearPosition()
 
 void GPSPositionService::_setPositionSource(SelectedSource source)
 {
-    const QPointer<GPSSourceHealth> nextHealth = _sourceFor(source);
+    GPSSourceHealth* const nextHealth = _sourceFor(source);
     if (!_forceSourceRefresh && _selectedKind == source && _currentHealth == nextHealth &&
         _selectedBindingRevision == _binding(source).generation) {
         _updateSourceActivity();

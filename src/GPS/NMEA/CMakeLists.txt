@@ -17,6 +17,7 @@ set_target_properties(
 )
 target_compile_features(QGCGPSNMEAProtocol PUBLIC cxx_std_20)
 target_link_libraries(QGCGPSNMEAProtocol PUBLIC Qt6::Core QGCGPSCommon)
+target_include_directories(QGCGPSNMEAProtocol PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Math")
 target_sources(
     QGCGPSNMEAProtocol
     PUBLIC FILE_SET

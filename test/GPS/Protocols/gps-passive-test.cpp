@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <stdexcept>
 #include <string>
@@ -9,6 +10,8 @@
 #include "Support/GPSProtocolTestIO.h"
 #include "Support/ProtocolTestPackets.h"
 #include "UnitTest.h"
+
+using namespace std::chrono_literals;
 
 #define CHECK(condition)                          \
     do {                                          \
@@ -86,13 +89,13 @@ void configuration()
     CHECK(driver.configure(baud, config));
     CHECK(driver.receiverReady());
     CHECK(receiver.baud == 115200);
-    CHECK(driver.receive(10) == 0);
+    CHECK(driver.receive(10ms) == 0);
     CHECK(!driver.hasIOError());
     receiver.readStatus = GPSReadStatus::Cancelled;
-    CHECK(driver.receive(10) == 0);
+    CHECK(driver.receive(10ms) == 0);
     CHECK(driver.ioError() == GPSProtocolError::Cancelled);
     const auto reads = receiver.reads;
-    CHECK(driver.receive(10) == 0);
+    CHECK(driver.receive(10ms) == 0);
     CHECK(driver.ioError() == GPSProtocolError::Cancelled);
     CHECK(receiver.reads == reads);
     CHECK(receiver.writes == 0);

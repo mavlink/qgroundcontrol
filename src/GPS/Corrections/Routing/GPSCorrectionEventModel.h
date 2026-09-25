@@ -1,11 +1,17 @@
 #pragma once
 
-#include <QtCore/QAbstractListModel>
+#include <QtCore/QRangeModel>
 
 #include "GPSCorrectionDiagnostics.h"
 
+template <>
+struct QRangeModel::RowOptions<GPSCorrectionEvent>
+{
+    static constexpr auto rowCategory = QRangeModel::RowCategory::MultiRoleItem;
+};
+
 /// A bounded metadata-only history, refreshed in batches by the application facade.
-class GPSCorrectionEventModel : public QAbstractListModel
+class GPSCorrectionEventModel : public QRangeModel
 {
     Q_OBJECT
 
@@ -32,9 +38,10 @@ public:
     };
     Q_ENUM(Reason)
 
+    /// Roles follow the GPSCorrectionEvent property order, as QRangeModel assigns them.
     enum Role
     {
-        EventSequenceRole = Qt::UserRole + 1,
+        EventSequenceRole = Qt::UserRole,
         TimestampMsRole,
         SourceRole,
         SourceInstanceRole,
@@ -49,9 +56,7 @@ public:
 
     explicit GPSCorrectionEventModel(QObject* parent = nullptr);
     ~GPSCorrectionEventModel() override;
-    int rowCount(const QModelIndex& parent = {}) const override;
-    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
-    QHash<int, QByteArray> roleNames() const override;
+    /// Removes events that left the front of the history and appends new ones, without resetting the model.
     void setEvents(const QList<GPSCorrectionEvent>& events);
 
 private:

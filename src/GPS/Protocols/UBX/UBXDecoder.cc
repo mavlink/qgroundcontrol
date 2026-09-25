@@ -834,14 +834,6 @@ float UBXProtocol::relPosHeadingToYaw(int32_t heading) const
     return heading_rad;
 }
 
-void UBXProtocol::calcChecksum(const uint8_t* buffer, const uint16_t length, ubx_checksum_t* checksum)
-{
-    for (uint16_t i = 0; i < length; i++) {
-        checksum->ck_a = checksum->ck_a + buffer[i];
-        checksum->ck_b = checksum->ck_b + checksum->ck_a;
-    }
-}
-
 int UBXProtocol::decodeValidatedPayload(uint16_t message, std::span<const uint8_t> payload)
 {
     const auto* schema = UBX::messageSchema(message);

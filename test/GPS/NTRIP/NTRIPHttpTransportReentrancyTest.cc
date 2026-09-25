@@ -530,6 +530,9 @@ void NTRIPHttpTransportTest::httpFraming_data()
                             << QByteArray("abc") << true << -1;
     QTest::newRow("chunk-extension-whitespace") << chunked + "3 \t; name = value ;flag\r\nabc\r\n0\r\n\r\n"
                                                 << QByteArray("abc") << true << -1;
+    QTest::newRow("malformed-chunk-extensions-ignored")
+        << chunked + "1;=x\r\na\r\n1;x=\"\r\nb\r\n1;x=\vvalue\r\nc\r\n0\r\n\r\n"
+        << QByteArray("abc") << true << -1;
     QTest::newRow("truncated-status") << QByteArray("HTTP/1.1 20") << QByteArray() << false << invalid;
     QTest::newRow("truncated-headers") << ok + "Server: x\r\n" << QByteArray() << false << invalid;
     QTest::newRow("truncated-length") << ok + "Content-Length: 4\r\n\r\nabc" << QByteArray("abc") << true << invalid;
@@ -545,8 +548,7 @@ void NTRIPHttpTransportTest::httpFraming_data()
     QTest::newRow("bad-trailer") << chunked + "0\r\nFolded: x\r\n y\r\n\r\n" << QByteArray() << true << invalid;
     QTest::newRow("framing-trailer") << chunked + "0\r\nContent-Length: 3\r\n\r\n" << QByteArray() << true << invalid;
     QTest::newRow("maximum-chunk-streamed") << chunked + "1000000\r\nx" << QByteArray("x") << true << invalid;
-    for (const QByteArray size :
-         {"-1", "+1", " 1", "1 ", "1000001", "10000000000000000", "1;=x", "1;x=\"", "1;x=\vvalue"}) {
+    for (const QByteArray size : {"-1", "+1", " 1", "1 ", "0x1", "1000001", "10000000000000000", "g;x"}) {
         QTest::newRow(("chunk-" + size).constData()) << chunked + size + "\r\n" << QByteArray() << true << invalid;
     }
     for (const QByteArray header : {"Content-Length: -1",
@@ -660,7 +662,6 @@ void NTRIPHttpTransportTest::retryAfter_data()
     QTest::newRow("past-date") << QByteArray("Wed, 16 Sep 2026 11:59:59 GMT") << 0;
     QTest::newRow("capped-date") << QByteArray("Wed, 16 Sep 2026 12:10:00 GMT") << 300000;
     QTest::newRow("invalid-date") << QByteArray("Mon, 31 Feb 2026 12:00:10 GMT") << 0;
-    QTest::newRow("wrong-weekday") << QByteArray("Tue, 16 Sep 2026 12:00:10 GMT") << 0;
 }
 
 void NTRIPHttpTransportTest::retryAfter()

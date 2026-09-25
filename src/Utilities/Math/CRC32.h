@@ -36,7 +36,7 @@ inline constexpr uint32_t CRC32_TABLE[] = {
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d};
 
 /// Reflected CRC-32 update; the caller supplies the initial state and final complement policy.
-inline uint32_t crc32Update(std::span<const uint8_t> bytes, uint32_t state = 0)
+[[nodiscard]] constexpr uint32_t crc32Update(std::span<const uint8_t> bytes, uint32_t state = 0)
 {
     for (const uint8_t byte : bytes) {
         state = CRC32_TABLE[(state ^ byte) & 0xff] ^ (state >> 8);

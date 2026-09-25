@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QByteArray>
-#include <QtCore/QMetaType>
 
 struct RTCMDecodedFrame
 {
@@ -11,5 +10,3 @@ struct RTCMDecodedFrame
     bool valid = false;
     bool filtered = false;
 };
-
-Q_DECLARE_METATYPE(RTCMDecodedFrame)

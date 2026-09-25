@@ -39,7 +39,7 @@ public:
     void setActive(bool active);
 
     /// Platform backends report their own minimum interval; other backends update as fast as they publish.
-    int updateInterval() const;
+    std::chrono::milliseconds updateInterval() const;
 
     /// Stops updates and detaches from the backend; later events are ignored.
     void retire();

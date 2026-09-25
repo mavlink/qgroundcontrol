@@ -1,5 +1,6 @@
 #include "SerialGPSTransport.h"
 
+#include "GPSStreamRead_p.h"
 #include "GPSStreamWrite_p.h"
 #include "QGCLoggingCategory.h"
 
@@ -17,8 +18,9 @@
 
 QGC_LOGGING_CATEGORY(SerialGPSTransportLog, "GPS.Transport.SerialGPSTransport")
 
-SerialGPSTransport::SerialGPSTransport(QString device, const std::atomic_bool& requestStop)
-    : GPSTransport(requestStop), _device(std::move(device))
+SerialGPSTransport::SerialGPSTransport(QString device, std::stop_token stopToken)
+    : GPSTransport(std::move(stopToken))
+    , _device(std::move(device))
 {
     qCDebug(SerialGPSTransportLog) << this;
 }
@@ -50,7 +52,7 @@ GPSOpenResult SerialGPSTransport::open()
         _serial.get(), &QSerialPort::bytesWritten, _serial.get(), [this](qint64 count) { _writtenTotal += count; },
         Qt::DirectConnection);
     _serial->setPortName(_device);
-    const QDeadlineTimer openDeadline(kOpenTimeoutMs);
+    const QDeadlineTimer openDeadline(kOpenTimeout);
     while (!_serial->open(QIODevice::ReadWrite)) {
         if (isCancelled()) {
             return {GPSOpenStatus::Cancelled};
@@ -62,10 +64,10 @@ GPSOpenResult SerialGPSTransport::open()
             return {openDeadline.hasExpired() ? GPSOpenStatus::TimedOut : GPSOpenStatus::Error, _serial->errorString()};
         }
         qCDebug(SerialGPSTransportLog) << "Cannot open device... retrying";
-        const QDeadlineTimer retryDeadline((std::min) (openDeadline.remainingTime(), qint64(kOpenRetryMs)));
+        const QDeadlineTimer retryDeadline(
+            (std::min) (std::chrono::milliseconds(openDeadline.remainingTime()), kOpenRetry));
         while (!retryDeadline.hasExpired() && !isCancelled()) {
-            QThread::msleep(
-                static_cast<unsigned long>((std::min) (retryDeadline.remainingTime(), qint64(kCancellationPollMs))));
+            QThread::sleep((std::min) (std::chrono::milliseconds(retryDeadline.remainingTime()), kCancellationPoll));
         }
         if (isCancelled()) {
             return {GPSOpenStatus::Cancelled};
@@ -91,41 +93,30 @@ bool SerialGPSTransport::fatalError() const
            ((_serial->error() != QSerialPort::NoError) && (_serial->error() != QSerialPort::TimeoutError));
 }
 
-GPSReadResult SerialGPSTransport::read(uint8_t* buffer, int length, int timeoutMs)
+GPSReadResult SerialGPSTransport::read(uint8_t* buffer, int length, std::chrono::milliseconds timeout)
 {
-    if (isCancelled()) {
-        return {GPSReadStatus::Cancelled};
-    }
-    if (!buffer || length < 0) {
-        return {GPSReadStatus::InvalidData};
-    }
-    if (fatalError()) {
-        return {_inputBudgetExhausted() ? GPSReadStatus::Overflow : GPSReadStatus::Error, 0, _errorDetail()};
-    }
-    if (length == 0) {
-        return {GPSReadStatus::Data};
-    }
-    const QDeadlineTimer deadline((std::max) (timeoutMs, 0));
-    while (_serial->bytesAvailable() == 0) {
-        _serial->waitForReadyRead(static_cast<int>((std::min) (deadline.remainingTime(), qint64(kCancellationPollMs))));
-        if (isCancelled()) {
-            return {GPSReadStatus::Cancelled};
-        }
-        if (fatalError()) {
-            return {_inputBudgetExhausted() ? GPSReadStatus::Overflow : GPSReadStatus::Error, 0, _errorDetail()};
-        }
-        if (_serial->bytesAvailable() == 0 && deadline.hasExpired()) {
-            return {GPSReadStatus::TimedOut};
-        }
-    }
-    const qint64 count = _serial->read(reinterpret_cast<char*>(buffer), length);
-    return {count < 0 ? GPSReadStatus::Error : GPSReadStatus::Data, static_cast<int>((std::max) (count, qint64(0))),
-            count < 0 ? _errorDetail() : QString()};
+    return GPSStreamRead::readBounded(
+        *this, buffer, length, timeout, [this]() { return fatalError(); },
+        [this](QDeadlineTimer deadline) {
+            while (_serial->bytesAvailable() == 0) {
+                _serial->waitForReadyRead(static_cast<int>(
+                    (std::min) (std::chrono::milliseconds(deadline.remainingTime()), kCancellationPoll).count()));
+                if (isCancelled() || fatalError() || (_serial->bytesAvailable() == 0 && deadline.hasExpired())) {
+                    return false;
+                }
+            }
+            return true;
+        },
+        [this](uint8_t* bytes, int count) { return _serial->read(reinterpret_cast<char*>(bytes), count); },
+        [this]() {
+            return GPSReadResult{_inputBudgetExhausted() ? GPSReadStatus::Overflow : GPSReadStatus::Error, 0,
+                                 _errorDetail()};
+        });
 }
 
 std::chrono::milliseconds SerialGPSTransport::configurationWriteTimeout() const
 {
-    return std::chrono::milliseconds(kWriteTimeoutMs);
+    return kWriteTimeout;
 }
 
 bool SerialGPSTransport::_inputBudgetExhausted() const
@@ -147,10 +138,11 @@ GPSWriteResult SerialGPSTransport::writeData(const uint8_t* buffer, int length, 
     return GPSStreamWrite::writeBounded(
         *this, _serial.get(), buffer, length, deadline, kWriteBufferBytes,
         [this](QDeadlineTimer remaining) {
-            _serial->waitForBytesWritten(
-                remaining.isForever()
-                    ? kCancellationPollMs
-                    : static_cast<int>((std::min) (remaining.remainingTime(), qint64(kCancellationPollMs))));
+            _serial->waitForBytesWritten(static_cast<int>(
+                (remaining.isForever()
+                     ? kCancellationPoll
+                     : (std::min) (std::chrono::milliseconds(remaining.remainingTime()), kCancellationPoll))
+                    .count()));
         },
         [this, previousAccepted](int accepted) {
             _acceptedTotal += accepted;

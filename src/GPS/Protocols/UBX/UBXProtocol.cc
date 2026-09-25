@@ -9,6 +9,8 @@
 
 QGC_LOGGING_CATEGORY(UBXProtocolLog, "GPS.Driver.Protocols.UBX")
 
+using namespace std::chrono_literals;
+
 const QLoggingCategory& UBXProtocol::logCategory() const
 {
     return UBXProtocolLog();
@@ -30,14 +32,14 @@ std::string UBXProtocol::receiverIdentity() const
     return model.empty() || firmware.empty() ? model + firmware : model + ' ' + firmware;
 }
 
-int UBXProtocol::receive(unsigned timeout)
+int UBXProtocol::receive(std::chrono::milliseconds timeout)
 {
     const int result = receiveInternal(timeout);
     serviceControls();
     return result;
 }
 
-int UBXProtocol::receiveInternal(unsigned timeout)
+int UBXProtocol::receiveInternal(std::chrono::milliseconds timeout)
 {
     const Operation operation(*this, timeout);
     if (hasIOError()) {
@@ -66,11 +68,11 @@ int UBXProtocol::receiveInternal(unsigned timeout)
         }
 
         /* Wait for only UBX_PACKET_TIMEOUT if something already received. */
-        int ret = read(buf, sizeof(buf),
-                       std::min<int>((_got_posllh || _got_velned)
-                                         ? UBX_PACKET_TIMEOUT
-                                         : (_decodeContext.assembleEpochs ? std::min(timeout, 200U) : timeout),
-                                     remainingMilliseconds(time_started + uint64_t(timeout) * 1000)));
+        const std::chrono::milliseconds slice = (_got_posllh || _got_velned)    ? UBX_PACKET_TIMEOUT
+                                                : _decodeContext.assembleEpochs ? std::min(timeout, 200ms)
+                                                                                : timeout;
+        int ret =
+            read(buf, sizeof(buf), std::min(slice, remainingUntil(GPSDeadline::after(time_started, timeout).untilUs)));
 
         if (ret < 0) {
             return handled;

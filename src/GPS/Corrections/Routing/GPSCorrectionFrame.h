@@ -1,6 +1,7 @@
 #pragma once
 
-#include <limits>
+#include <chrono>
+#include <optional>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QMetaType>
@@ -24,7 +25,6 @@ Q_ENUM_NS(GPSCorrectionSource)
 }  // namespace GPSCorrectionSources
 
 using GPSCorrectionSource = GPSCorrectionSources::GPSCorrectionSource;
-Q_DECLARE_METATYPE(GPSCorrectionSource)
 
 struct GPSCorrectionFrame
 {
@@ -39,13 +39,12 @@ struct GPSCorrectionFrame
 
     static qint64 monotonicNowMs() { return static_cast<qint64>(MonotonicClock::nowUs() / 1000); }
 
-    static qint64 ageMs(qint64 receivedAtMs, qint64 nowMs)
+    /// Empty for a missing or future receipt.
+    static std::optional<std::chrono::milliseconds> age(qint64 receivedAtMs, qint64 nowMs)
     {
-        if (receivedAtMs <= 0 || nowMs < receivedAtMs ||
-            quint64(nowMs) > (std::numeric_limits<quint64>::max)() / 1000) {
-            return -1;
+        if (receivedAtMs <= 0 || nowMs < receivedAtMs) {
+            return std::nullopt;
         }
-        return MonotonicClock::ageMilliseconds(quint64(receivedAtMs) * 1000, quint64(nowMs) * 1000);
+        return std::chrono::milliseconds(nowMs - receivedAtMs);
     }
 };
-Q_DECLARE_METATYPE(GPSCorrectionFrame)

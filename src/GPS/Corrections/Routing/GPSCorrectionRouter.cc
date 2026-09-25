@@ -58,11 +58,11 @@ QList<GPSCorrectionSourceDiagnostic> GPSCorrectionRouter::sourceDiagnostics() co
     result.reserve(static_cast<qsizetype>(statistics.size()));
     for (int index = 0; index < static_cast<int>(statistics.size()); ++index) {
         const auto& stats = statistics[index];
-        const qint64 age = GPSCorrectionFrame::ageMs(stats.lastValidMs, nowMs);
+        const auto age = GPSCorrectionFrame::age(stats.lastValidMs, nowMs);
         result.append({
             .source = index,
             .active = stats.active,
-            .usable = stats.active && age >= 0 && age < FRESHNESS_TIMEOUT_MS,
+            .usable = stats.active && age && *age < FRESHNESS_TIMEOUT,
             .receivedFrames = stats.receivedFrames,
             .validatedFrames = stats.validatedFrames,
             .selectedFrames = stats.selectedFrames,
@@ -83,8 +83,8 @@ QList<GPSCorrectionStreamDiagnostic> GPSCorrectionRouter::sourceInstanceDiagnost
     QList<GPSCorrectionStreamDiagnostic> result;
     const auto active = _selector.activeIdentity(nowMs);
     for (const auto& source : _selector.sources()) {
-        const qint64 age = GPSCorrectionFrame::ageMs(source.lastRoutableMs, nowMs);
-        const bool usable = age >= 0 && age < FRESHNESS_TIMEOUT_MS;
+        const auto age = GPSCorrectionFrame::age(source.lastRoutableMs, nowMs);
+        const bool usable = age && *age < FRESHNESS_TIMEOUT;
         result.append({.source = static_cast<int>(source.identity.category),
                        .instanceId = source.identity.instance,
                        .active = true,
@@ -204,8 +204,8 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
     }
     _ledger.received(frame);
     const qint64 now = _clock();
-    const qint64 age = GPSCorrectionFrame::ageMs(frame.receivedAtMs, now);
-    if (age < 0) {
+    const auto age = GPSCorrectionFrame::age(frame.receivedAtMs, now);
+    if (!age) {
         _ledger.recordDrop(frame, GPSCorrectionReason::InvalidTimestamp, frame.data.size());
         return false;
     }
@@ -215,7 +215,7 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
         }
         _ledger.validated(frame);
     }
-    const bool routable = !frame.filtered && age < FRESHNESS_TIMEOUT_MS;
+    const bool routable = !frame.filtered && *age < FRESHNESS_TIMEOUT;
     _selector.observe(frame, routable, now);
     if (!routable) {
         _ledger.recordDrop(frame, frame.filtered ? GPSCorrectionReason::MessageFiltered : GPSCorrectionReason::Expired,
@@ -348,8 +348,8 @@ int GPSCorrectionSelector::_priority(GPSCorrectionSource source)
 
 bool GPSCorrectionSelector::_eligible(const Source& source, qint64 now) const
 {
-    const qint64 age = GPSCorrectionFrame::ageMs(source.lastRoutableMs, now);
-    if (age < 0 || age >= FRESHNESS_TIMEOUT_MS) {
+    const auto age = GPSCorrectionFrame::age(source.lastRoutableMs, now);
+    if (!age || *age >= FRESHNESS_TIMEOUT) {
         return false;
     }
     return _configuration.policy != Policy::Manual ||
@@ -380,7 +380,7 @@ void GPSCorrectionSelector::_select(qint64 now)
     if (_candidate != best.key()) {
         _candidate = best.key();
         _candidateSinceMs = now;
-    } else if (GPSCorrectionFrame::ageMs(_candidateSinceMs, now) >= SWITCH_HOLD_DOWN_MS) {
+    } else if (const auto held = GPSCorrectionFrame::age(_candidateSinceMs, now); held && *held >= SWITCH_HOLD_DOWN) {
         _active = _candidate;
         _candidate.reset();
     }

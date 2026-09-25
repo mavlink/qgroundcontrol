@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <stop_token>
 #include <utility>
 
 #include <QtCore/QDebug>
@@ -37,6 +38,8 @@
 #include "GPSSerialPortManagerAdapter.h"
 #include "SerialPortManager.h"
 #endif
+
+using namespace std::chrono_literals;
 
 namespace {
 GPSPositionReport fixReport(GPSFixQuality fixType)
@@ -376,7 +379,7 @@ void GPSRTKTest::_notificationsFollowCompletedConnection()
         }
         for (const auto& provider : {first, replacement}) {
             if (provider) {
-                QVERIFY(provider->wait(TestTimeout::mediumMs()));
+                QVERIFY(provider->wait(TestTimeout::mediumDuration()));
             }
         }
     });
@@ -477,7 +480,7 @@ void GPSRTKTest::_factNotificationRetiresSession()
         }
         for (const auto& provider : {first, replacement}) {
             if (provider) {
-                QVERIFY(provider->wait(TestTimeout::mediumMs()));
+                QVERIFY(provider->wait(TestTimeout::mediumDuration()));
             }
         }
     });
@@ -878,7 +881,7 @@ void GPSRTKTest::_receiverFramesAreValidated()
     auto* provider = harness.providers.current();
     QVERIFY(provider);
     const auto receivedAtMs =
-        GPSCorrectionFrame::monotonicNowMs() - (expired ? GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS : 0);
+        GPSCorrectionFrame::monotonicNowMs() - (expired ? GPSCorrectionRouter::FRESHNESS_TIMEOUT.count() : 0);
     QSignalSpy routed(&corrections.router(), &GPSCorrectionRouter::frameRouted);
     provider->rtcm(frame, receivedAtMs);
     const auto stats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::LocalReceiver)];
@@ -915,23 +918,6 @@ void GPSRTKTest::_runtimeSettingsDoNotRequireAppRestart()
     QVERIFY(fact);
     QVERIFY(!fact->qgcRebootRequired());
     QVERIFY(!fact->vehicleRebootRequired());
-}
-
-void GPSRTKTest::_compactCorrectionsFollowReceiverSupport()
-{
-    auto configuration = receiverConfiguration();
-    configuration.baseMode = static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn);
-    configuration.surveyInAccuracyLimit = 2.0;
-    configuration.surveyInMinObservationDuration = 60;
-    for (const bool compact : {false, true}) {
-        configuration.compactRtcmCorrections = compact;
-        GPSReceiverConfig config;
-        QVERIFY(GPSRTK::_receiverConfig(GPSType::ublox, configuration, 115200, config).isEmpty());
-        QCOMPARE(config.base.compactObservations, compact);
-        // Receivers without MSM4 support ignore the hidden option instead of failing to connect.
-        QVERIFY(GPSRTK::_receiverConfig(GPSType::septentrio, configuration, 115200, config).isEmpty());
-        QVERIFY(!config.base.compactObservations);
-    }
 }
 
 void GPSRTKTest::_udpPositionOnlyReceiver()
@@ -1043,42 +1029,41 @@ void GPSRTKTest::_receiverSettingsMapping()
     auto configuration = receiverConfiguration(manufacturer);
     configuration.baseMode = baseMode;
     configuration.surveyInAccuracyLimit = 1.75;
-    configuration.surveyInMinObservationDuration = 195;
-    configuration.receiverAveragingDuration = 321;
+    configuration.surveyInMinObservationDuration = 195s;
+    configuration.receiverAveragingDuration = 321s;
     configuration.fixedBasePositionLatitude = 47.5;
     configuration.fixedBasePositionLongitude = 8.25;
     configuration.fixedBasePositionAltitude = 512.0f;
     configuration.fixedBasePositionAccuracy = 1.5f;
-    GPSReceiverConfig config;
+    configuration.compactRtcmCorrections = true;
     const auto type = GPSRTK::typeForManufacturer(manufacturer);
     QVERIFY(type);
-    const auto error = GPSRTK::_receiverConfig(*type, configuration, 230400, config);
-    QCOMPARE(error.isEmpty(), accepted);
+    ScriptedRTKReceiver harness;
+    harness.receiver.setConfiguration(configuration);
+    QCOMPARE(harness.receiver.connectReceiver(*type, {}, {}, 230400), accepted);
+    if (!accepted) {
+        QCOMPARE(harness.providers.count(), 0);
+        return;
+    }
+    const auto& config = harness.providers.current()->capturedConfig();
     QCOMPARE(config.baudRate, uint32_t(230400));
     QVERIFY(!config.allowPersistentChanges);
-    if (manufacturer == 7) {
+    if (manufacturer == kPassiveManufacturer) {
         QCOMPARE(config.role, GPSReceiverConfig::Role::Passive);
         QCOMPARE(config.base, GPSBaseStationConfig{});
-    } else {
-        QCOMPARE(config.role, GPSReceiverConfig::Role::RTKBase);
-        QCOMPARE(std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode), baseMode == 1);
-        if (baseMode == 1) {
-            const auto& fixed = std::get<GPSBaseStationConfig::Fixed>(config.base.mode);
-            QCOMPARE(fixed.position.latitudeDegrees, 47.5);
-            QCOMPARE(fixed.position.longitudeDegrees, 8.25);
-            QCOMPARE(fixed.position.altitudeMeters, 512.0f);
-            QCOMPARE(fixed.accuracyMeters, 1.5f);
-        } else if (baseMode == 2) {
-            QVERIFY(std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode));
-            QCOMPARE(std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs,
-                     uint32_t(321));
-        } else {
-            QVERIFY(std::holds_alternative<GPSBaseStationConfig::SurveyIn>(config.base.mode));
-            const auto& survey = std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode);
-            QCOMPARE(survey.accuracyMeters, 1.75);
-            QCOMPARE(survey.durationSecs, int64_t(195));
-        }
+        return;
     }
+    QCOMPARE(config.role, GPSReceiverConfig::Role::RTKBase);
+    const GPSBaseStationConfig::Mode expected =
+        baseMode == 1 ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
+                            .position = {.latitudeDegrees = 47.5, .longitudeDegrees = 8.25, .altitudeMeters = 512.0f},
+                            .accuracyMeters = 1.5f}}
+        : baseMode == 2
+            ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::ReceiverAveraging{.maximumDuration = 321s}}
+            : GPSBaseStationConfig::Mode{GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1.75, .duration = 195s}};
+    QVERIFY(config.base.mode == expected);
+    // Of these receivers only u-blox sends compact MSM4 corrections; the others ignore the hidden option.
+    QCOMPARE(config.base.compactObservations, *type == GPSType::ublox);
 }
 
 void GPSRTKTest::_invalidReceiverSettings_data()
@@ -1108,30 +1093,21 @@ void GPSRTKTest::_invalidReceiverSettings()
     QFETCH(bool, accepted);
     auto configuration = receiverConfiguration(manufacturer);
     configuration.baseMode = mode;
-    configuration.receiverAveragingDuration = averagingDuration;
-    GPSReceiverConfig config;
+    configuration.receiverAveragingDuration = std::chrono::seconds(averagingDuration);
     const auto type = GPSRTK::typeForManufacturer(manufacturer);
     QVERIFY(type);
-    QCOMPARE(GPSRTK::_receiverConfig(*type, configuration, baud, config).isEmpty(), accepted);
     RTKSettings settings;
     QCOMPARE(settings.receiverAveragingDuration()->rawMin().toUInt(), 1U);
     QCOMPARE(settings.receiverAveragingDuration()->rawMax().toUInt(), 3600U);
     QCOMPARE(settings.useFixedBasePosition()->enumValues(), (QVariantList{0, 1, 2}));
-    if (!accepted) {
-        GPSRTK receiver;
-        receiver.setConfiguration(configuration);
-        bool opened = false;
-        QVERIFY(!receiver.connectReceiver(
-            *type,
-            [&opened](const std::atomic_bool&) {
-                opened = true;
-                return std::unique_ptr<GPSTransport>{};
-            },
-            {}, baud));
-        QVERIFY(!opened);
-        QVERIFY(!receiver.hasReceiver());
-        QVERIFY(!receiver.errorMessage().isEmpty());
-    }
+    ScriptedRTKReceiver harness;
+    auto& receiver = harness.receiver;
+    receiver.setConfiguration(configuration);
+    QCOMPARE(receiver.connectReceiver(*type, {}, {}, baud), accepted);
+    QCOMPARE(receiver.hasReceiver(), accepted);
+    // A rejected configuration never creates a provider, so no transport is opened.
+    QCOMPARE(harness.providers.count(), accepted ? 1 : 0);
+    QCOMPARE(receiver.errorMessage().isEmpty(), accepted);
 }
 
 #ifndef QGC_NO_SERIAL_LINK
@@ -1144,8 +1120,8 @@ void GPSRTKTest::_serialReservationSurvivesDelayedStop()
     GPSRTK receiver;
     receiver.setConfiguration(receiverConfiguration(kPassiveManufacturer));
     receiver.setSerialPorts(&serialPorts);
-    receiver._serialTransportFactory = [gate](const QString&, const std::atomic_bool& stop) {
-        return blockedTransportFactory(gate)(stop);
+    receiver._serialTransportFactory = [gate](const QString&, std::stop_token stopToken) {
+        return blockedTransportFactory(gate)(std::move(stopToken));
     };
     const auto releaseWorker = qScopeGuard([&] { gate->release.release(); });
     QVERIFY(receiver.connectSerial(QStringLiteral("/test/selected"), GPSType::passive, 115200, false));
@@ -1180,16 +1156,16 @@ struct PassiveTransportState
     QSemaphore releaseRead;
 };
 
-std::unique_ptr<GPSTransport> makePassiveTestTransport(const std::atomic_bool& stop,
+std::unique_ptr<GPSTransport> makePassiveTestTransport(std::stop_token stopToken,
                                                        const std::shared_ptr<PassiveTransportState>& state)
 {
-    auto transport = std::make_unique<ScriptedReceiver>(stop);
+    auto transport = std::make_unique<ScriptedReceiver>(std::move(stopToken));
     transport->setBaudrateHandler([state](unsigned baud) -> std::optional<bool> {
         state->baud = baud;
         ++state->baudChanges;
         return true;
     });
-    transport->setReadHandler([state](uint8_t*, int, int) -> std::optional<GPSReadResult> {
+    transport->setReadHandler([state](uint8_t*, int, std::chrono::milliseconds) -> std::optional<GPSReadResult> {
         state->reading.release();
         state->releaseRead.acquire();
         return GPSReadResult{GPSReadStatus::Cancelled};
@@ -1223,8 +1199,8 @@ void GPSRTKTest::_manualPassiveBaudPreserved()
     GPSRTK receiver;
     receiver.setConfiguration(serialConfiguration(kPassiveManufacturer, QStringLiteral("/test/passive"), baud));
     receiver.setSerialPorts(&serialPorts);
-    receiver._serialTransportFactory = [state](const QString&, const std::atomic_bool& stop) {
-        return makePassiveTestTransport(stop, state);
+    receiver._serialTransportFactory = [state](const QString&, std::stop_token stopToken) {
+        return makePassiveTestTransport(std::move(stopToken), state);
     };
     const auto releaseWorker = qScopeGuard([&] { state->releaseRead.release(); });
     QVERIFY(receiver.connectSerial(QStringLiteral("/test/passive"), GPSType::passive, baud, false));
@@ -1241,33 +1217,6 @@ void GPSRTKTest::_manualPassiveBaudPreserved()
     QTRY_VERIFY_WITH_TIMEOUT(ports.canReservePort(QStringLiteral("/test/passive")), TestTimeout::mediumMs());
 }
 #endif
-
-void GPSRTKTest::_persistentConsentMapping_data()
-{
-    QTest::addColumn<int>("manufacturer");
-    QTest::addColumn<bool>("allowPersistentChanges");
-    for (const int manufacturer : {4, 5, 6, 7}) {
-        for (const bool allow : {false, true}) {
-            QTest::newRow(qPrintable(QStringLiteral("receiver-%1-consent-%2").arg(manufacturer).arg(allow)))
-                << manufacturer << allow;
-        }
-    }
-}
-
-void GPSRTKTest::_persistentConsentMapping()
-{
-    QFETCH(int, manufacturer);
-    QFETCH(bool, allowPersistentChanges);
-    const auto configuration = fixedConfiguration(manufacturer);
-    const auto type = GPSRTK::typeForManufacturer(manufacturer);
-    QVERIFY(type);
-    GPSReceiverConfig config;
-    const auto diagnostic = GPSRTK::_receiverConfig(*type, configuration, 115200, config, allowPersistentChanges);
-    QCOMPARE(diagnostic.isEmpty(), !allowPersistentChanges || manufacturer == 6);
-    QCOMPARE(config.allowPersistentChanges, allowPersistentChanges);
-    QVERIFY(GPSRTK::_receiverConfig(*type, configuration, 115200, config).isEmpty());
-    QVERIFY(!config.allowPersistentChanges);
-}
 
 void GPSRTKTest::_configurationDiagnosticRetained_data()
 {

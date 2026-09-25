@@ -31,6 +31,7 @@ public:
     {
         Loopback,
         Mismatched,
+        Rotated,
     };
 
     class Connection
@@ -159,14 +160,24 @@ public:
         }
     }
 
+    static const QByteArray& certificatePem(Certificate certificate)
+    {
+        switch (certificate) {
+            case Certificate::Mismatched:
+                return NTRIPTlsTestFixtures::MISMATCHED_CERT_PEM;
+            case Certificate::Rotated:
+                return NTRIPTlsTestFixtures::ROTATED_CERT_PEM;
+            case Certificate::Loopback:
+                break;
+        }
+        return NTRIPTlsTestFixtures::SERVER_CERT_PEM;
+    }
+
 private:
     static QSslConfiguration _tlsConfiguration(Certificate certificate)
     {
         QSslConfiguration configuration = QSslConfiguration::defaultConfiguration();
-        const QByteArray& certificatePem = certificate == Certificate::Mismatched
-                                               ? NTRIPTlsTestFixtures::MISMATCHED_CERT_PEM
-                                               : NTRIPTlsTestFixtures::SERVER_CERT_PEM;
-        configuration.setLocalCertificate(QSslCertificate(certificatePem, QSsl::Pem));
+        configuration.setLocalCertificate(QSslCertificate(certificatePem(certificate), QSsl::Pem));
         configuration.setPrivateKey(QSslKey(NTRIPTlsTestFixtures::PRIVATE_KEY_PEM, QSsl::Rsa, QSsl::Pem));
         configuration.setPeerVerifyMode(QSslSocket::VerifyNone);
         return configuration;

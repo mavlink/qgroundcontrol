@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <limits>
 
+#include "Checksums.h"
+
 namespace {
 constexpr double DEGREE_MINUTE_SCALE = 100.0;
 constexpr double MAX_LATITUDE_DEGREES = 90.0;
@@ -42,10 +44,7 @@ std::optional<double> nonnegativeSpeed(std::string_view field, double scale)
 namespace NMEA {
 unsigned char checksum(std::string_view body)
 {
-    unsigned char result = 0;
-    for (const char byte : body)
-        result ^= static_cast<unsigned char>(byte);
-    return result;
+    return QGC::nmeaChecksum({reinterpret_cast<const uint8_t*>(body.data()), body.size()});
 }
 
 size_t splitFields(std::string_view text, std::span<std::string_view> fields)

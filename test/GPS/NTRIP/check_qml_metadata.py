@@ -28,6 +28,10 @@ PROPERTIES = {
     ),
     "NTRIPSourceTableController": (GPS_MODULE, {"fetchStatus", "fetchError", "mountpointModel"}),
     "GPSManager": (APP_MODULE, {"corrections", "gpsRtk", "gpsRtkFacts"}),
+    "GPSRTKFactGroup": (
+        APP_MODULE,
+        {"canSaveCurrentBasePosition", "numSatellites", "numSatellitesUsed"},
+    ),
     "GPSRTK": (GPS_MODULE, {"hasReceiver", "activeRole", "activePresentation"}),
     "GPSCorrectionManager": (GPS_MODULE, {"rtcmMavlink"}),
     "NTRIPManager": (GPS_MODULE, {"connectionStatus", "connectionStats", "sourceTableController"}),
@@ -88,10 +92,6 @@ def check_metadata(text: str) -> list[str]:
     ntrip = components.get("NTRIPManager", "")
     if "rtcmMavlink" in named_blocks(ntrip, "Property"):
         errors.append("NTRIPManager: obsolete rtcmMavlink compatibility property")
-    rtk = named_blocks(components.get("GPSRTKFactGroup", ""), "Property")
-    for name in ("canSaveCurrentBasePosition", "numSatellites", "numSatellitesUsed"):
-        if name not in rtk:
-            errors.append(f"GPSRTKFactGroup: missing property {name}")
     manager = named_blocks(components.get("GPSManager", ""), "Property")
     if not re.search(r'\btype:\s*"GPSRTKFactGroup"', manager.get("gpsRtkFacts", "")):
         errors.append("GPSManager.gpsRtkFacts: expected precise GPSRTKFactGroup type")

@@ -1,8 +1,7 @@
 #include "NTRIPSourceTable.h"
 
-#include <algorithm>
+#include <utility>
 
-#include <QtCore/QPointer>
 #include <QtCore/qnumeric.h>
 
 #include "QGCLoggingCategory.h"
@@ -73,119 +72,82 @@ void NTRIPMountpoint::updateDistance(const QGeoCoordinate& from)
 // NTRIPSourceTableModel
 // ---------------------------------------------------------------------------
 
-// The base only records the address of the rows; it reads them after construction.
+// A const range keeps the model read-only; the base only records its address and reads rows after construction.
 NTRIPSourceTableModel::NTRIPSourceTableModel(QObject* parent)
-    : QRangeModel(&_mountpoints, parent)
+    : QRangeModel(&std::as_const(_mountpoints), parent)
 {}
 
 void NTRIPSourceTableModel::parseSourceTable(const QString& raw, const QGeoCoordinate& from)
 {
-    _mutate([this, raw, from]() {
-        QList<NTRIPMountpoint> mountpoints;
-        const QStringList lines = raw.split('\n');
-        for (const QString& line : lines) {
-            const QString trimmed = line.trimmed();
-            NTRIPMountpoint mp;
-            if (NTRIPMountpoint::fromSourceTableLine(trimmed, mp)) {
-                mp.updateDistance(from);
-                mountpoints.append(mp);
-            }
+    QList<NTRIPMountpoint> mountpoints;
+    const QStringList lines = raw.split('\n');
+    for (const QString& line : lines) {
+        NTRIPMountpoint mp;
+        if (NTRIPMountpoint::fromSourceTableLine(line.trimmed(), mp)) {
+            mp.updateDistance(from);
+            mountpoints.append(mp);
         }
-        _sortByDistance(mountpoints);
-
-        const QPointer<NTRIPSourceTableModel> guard(this);
-        beginResetModel();
-        if (!guard) {
-            return;
-        }
-        _mountpoints = std::move(mountpoints);
-        endResetModel();
-        if (guard) {
-            emit countChanged();
-        }
-    });
+    }
+    beginResetModel();
+    _mountpoints = std::move(mountpoints);
+    endResetModel();
+    emit countChanged();
 }
 
 void NTRIPSourceTableModel::updateDistances(const QGeoCoordinate& from)
 {
-    _mutate([this, from]() {
-        if (_mountpoints.isEmpty()) {
-            return;
+    qsizetype firstChanged = -1;
+    qsizetype lastChanged = -1;
+    for (qsizetype row = 0; row < _mountpoints.size(); ++row) {
+        NTRIPMountpoint& mountpoint = _mountpoints[row];
+        const double previous = mountpoint.distanceKm;
+        mountpoint.updateDistance(from);
+        if (mountpoint.distanceKm != previous) {
+            firstChanged = firstChanged < 0 ? row : firstChanged;
+            lastChanged = row;
         }
-        if (_mountpoints.size() == 1) {
-            const double previous = _mountpoints.first().distanceKm;
-            _mountpoints.first().updateDistance(from);
-            if (previous != _mountpoints.first().distanceKm) {
-                emit dataChanged(index(0, 0), index(0, 0), {DistanceKmRole});
-            }
-            return;
-        }
-        const QPointer<NTRIPSourceTableModel> guard(this);
-        beginResetModel();
-        if (!guard) {
-            return;
-        }
-        for (NTRIPMountpoint& mp : _mountpoints) {
-            mp.updateDistance(from);
-        }
-        _sortByDistance(_mountpoints);
-        endResetModel();
-    });
-}
-
-void NTRIPSourceTableModel::_sortByDistance(QList<NTRIPMountpoint>& mountpoints)
-{
-    // Distance ordering: known distances ascending, unknown (negative) last.
-    const auto less = [](const NTRIPMountpoint& a, const NTRIPMountpoint& b) {
-        if (a.distanceKm < 0 && b.distanceKm < 0) {
-            return false;
-        }
-        if (a.distanceKm < 0) {
-            return false;  // a unknown → sorts after known b
-        }
-        if (b.distanceKm < 0) {
-            return true;  // b unknown → known a sorts before
-        }
-        return a.distanceKm < b.distanceKm;
-    };
-
-    std::stable_sort(mountpoints.begin(), mountpoints.end(), less);
+    }
+    if (firstChanged >= 0) {
+        emit dataChanged(index(static_cast<int>(firstChanged), 0), index(static_cast<int>(lastChanged), 0),
+                         {DistanceKmRole});
+    }
 }
 
 void NTRIPSourceTableModel::clear()
 {
-    _mutate([this]() {
-        if (_mountpoints.isEmpty()) {
-            return;
-        }
-        const QPointer<NTRIPSourceTableModel> guard(this);
-        beginResetModel();
-        if (!guard) {
-            return;
-        }
-        _mountpoints.clear();
-        endResetModel();
-        if (guard) {
-            emit countChanged();
-        }
-    });
-}
-
-void NTRIPSourceTableModel::_mutate(std::function<void()> mutation)
-{
-    _pendingMutations.push_back(std::move(mutation));
-    if (_mutating) {
+    if (_mountpoints.isEmpty()) {
         return;
     }
-    _mutating = true;
-    const QPointer<NTRIPSourceTableModel> guard(this);
-    while (!_pendingMutations.empty()) {
-        auto pending = std::move(_pendingMutations.front());
-        _pendingMutations.pop_front();
-        pending();
-        if (!guard) {
-            return;
-        }
+    beginResetModel();
+    _mountpoints.clear();
+    endResetModel();
+    emit countChanged();
+}
+
+// ---------------------------------------------------------------------------
+// NTRIPSourceTableSortModel
+// ---------------------------------------------------------------------------
+
+NTRIPSourceTableSortModel::NTRIPSourceTableSortModel(NTRIPSourceTableModel* source, QObject* parent)
+    : QSortFilterProxyModel(parent)
+{
+    setSourceModel(source);
+    setSortRole(NTRIPSourceTableModel::DistanceKmRole);
+    sort(0);
+    // Nothing is filtered, and the source announces its count after the proxy has processed the reset.
+    connect(source, &NTRIPSourceTableModel::countChanged, this, &NTRIPSourceTableSortModel::countChanged);
+}
+
+bool NTRIPSourceTableSortModel::lessThan(const QModelIndex& left, const QModelIndex& right) const
+{
+    const double leftKm = left.data(sortRole()).toDouble();
+    const double rightKm = right.data(sortRole()).toDouble();
+    if ((leftKm < 0) != (rightKm < 0)) {
+        return rightKm < 0;
     }
-    _mutating = false;
+    if (leftKm >= 0 && leftKm != rightKm) {
+        return leftKm < rightKm;
+    }
+    // A strict order keeps equal distances in caster order, also when a distance update reinserts rows.
+    return left.row() < right.row();
 }

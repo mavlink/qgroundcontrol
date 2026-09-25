@@ -1,3 +1,4 @@
+#include <chrono>
 #include <limits>
 
 #include <QtCore/QFile>
@@ -8,6 +9,8 @@
 
 #include "GPSReceiverConfig.h"
 #include "UnitTest.h"
+
+using namespace std::chrono_literals;
 
 class GPSBaseStationConfigTest : public UnitTest
 {
@@ -55,7 +58,7 @@ private slots:
         QTest::addColumn<QString>("expected");
         QTest::newRow("invalid-survey") << GPSBaseStationConfig{}
                                         << QStringLiteral("Enter a valid survey-in accuracy and duration");
-        QTest::newRow("valid-survey") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{1, 60}}
+        QTest::newRow("valid-survey") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{1, 60s}}
                                       << QString();
         QTest::newRow("invalid-fixed") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::Fixed{}}
                                        << QStringLiteral("Enter a valid fixed base position and accuracy");
@@ -88,7 +91,7 @@ private slots:
         using Role = GPSReceiverConfig::Role;
 
         QTest::newRow("valid") << GPSType::ublox
-                               << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{1, 60}}}
+                               << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{1, 60s}}}
                                << QString();
         QTest::newRow("unknown-receiver")
             << static_cast<GPSType>(-1) << GPSReceiverConfig{} << QStringLiteral("Unsupported GPS receiver type");
@@ -103,7 +106,7 @@ private slots:
                                        << QStringLiteral("Enter a valid fixed base position and accuracy");
         QTest::newRow("unsupported-persistent-configuration")
             << GPSType::ublox
-            << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{1, 60}},
+            << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{1, 60s}},
                                  .allowPersistentChanges = true}
             << QStringLiteral("This driver does not support persistent receiver configuration");
     }

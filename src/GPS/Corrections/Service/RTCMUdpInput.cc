@@ -13,6 +13,17 @@
 
 QGC_LOGGING_CATEGORY(RTCMUdpInputLog, "GPS.Corrections.RTCMUdpInput")
 
+namespace {
+/// The dual-stack socket reports IPv4 senders as IPv4-mapped IPv6 addresses; identify them by their IPv4 address.
+QHostAddress senderAddress(const QNetworkDatagram& datagram)
+{
+    const QHostAddress sender = datagram.senderAddress();
+    bool ipv4 = false;
+    const quint32 address = sender.toIPv4Address(&ipv4);
+    return ipv4 ? QHostAddress(address) : sender;
+}
+}  // namespace
+
 RTCMUdpInput::RTCMUdpInput(quint16 port, QObject* parent)
     : QObject(parent)
     , _port(port)
@@ -40,7 +51,7 @@ bool RTCMUdpInput::start()
             guard->stop();
         }
     });
-    if (!socket->bind(QHostAddress::AnyIPv4, _port)) {
+    if (!socket->bind(QHostAddress::Any, _port)) {
         qCWarning(RTCMUdpInputLog) << "Failed to bind UDP socket on port" << _port << ":" << socket->errorString();
         return false;
     }
@@ -151,7 +162,8 @@ void RTCMUdpInput::_readDatagrams()
             continue;
         }
         const qint64 receivedAtMs = GPSCorrectionFrame::monotonicNowMs();
-        const QString instance = udpPeerKey(datagram.senderAddress(), datagram.senderPort());
+        const QHostAddress sender = senderAddress(datagram);
+        const QString instance = udpPeerKey(sender, datagram.senderPort());
 
         if (!_validateRtcm) {
             qCDebug(RTCMUdpInputLog) << "Received RTCM datagram:" << data.size() << "bytes";
@@ -160,7 +172,7 @@ void RTCMUdpInput::_readDatagrams()
         }
 
         // Preserve sender boundaries and one MAVLink sequence per frame.
-        const auto peer = _parserForPeer(datagram.senderAddress(), datagram.senderPort());
+        const auto peer = _parserForPeer(sender, datagram.senderPort());
         int framesFound = 0;
         int framesDropped = 0;
         const bool delivered = peer->decoder.feed(data, receivedAtMs, [&](const RTCMDecodedFrame& decoded) {
@@ -221,7 +233,8 @@ std::shared_ptr<RTCMUdpInput::PeerParser> RTCMUdpInput::_parserForPeer(const QHo
 {
     const qint64 now = GPSCorrectionFrame::monotonicNowMs();
     for (auto it = _peerParsers.begin(); it != _peerParsers.end();) {
-        if (GPSCorrectionFrame::ageMs(it.value()->lastReceivedMs, now) >= PEER_IDLE_TIMEOUT_MS) {
+        if (const auto idle = GPSCorrectionFrame::age(it.value()->lastReceivedMs, now);
+            idle && *idle >= PEER_IDLE_TIMEOUT) {
             it = _peerParsers.erase(it);
         } else {
             ++it;

@@ -1,8 +1,6 @@
 #include "GPSProtocolTime.h"
 #include "UnitTest.h"
 
-Q_DECLARE_METATYPE(tm)
-
 static tm calendar(int year, int month, int day, int hour, int minute, int second, int isdst = 0)
 {
     tm utc{};

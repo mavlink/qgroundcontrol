@@ -4,9 +4,7 @@
 #include <utility>
 
 #include <QtCore/QCoreApplication>
-#include <QtCore/QLocale>
 #include <QtCore/QRegularExpression>
-#include <QtCore/QTimeZone>
 
 #include "NTRIPConfiguration.h"
 #include "QGCNetworkClient.h"
@@ -24,132 +22,35 @@ bool isFieldValue(char ch)
     return ch == '\t' || (byte >= 32 && byte != 127);
 }
 
-std::optional<quint64> decimal(QByteArrayView text)
+/// Unsigned integer in the given base, without the sign, whitespace or "0x" prefix toULongLong() would accept.
+std::optional<quint64> unsignedNumber(QByteArrayView text, int base = 10)
 {
-    if (text.isEmpty() || !std::all_of(text.begin(), text.end(), [](char ch) { return ch >= '0' && ch <= '9'; })) {
-        return {};
-    }
+    const auto digit = [base](char ch) {
+        return (ch >= '0' && ch <= '9') || (base == 16 && ((ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F')));
+    };
     bool ok = false;
-    const auto value = text.toULongLong(&ok);
-    return ok ? std::optional<quint64>(value) : std::nullopt;
+    const quint64 value = text.toULongLong(&ok, base);
+    return ok && std::all_of(text.begin(), text.end(), digit) ? std::optional(value) : std::nullopt;
 }
 
-std::chrono::milliseconds retryAfter(QByteArrayView value, const QDateTime& utcNow)
+std::chrono::milliseconds retryAfter(const QHttpHeaders& headers, const QDateTime& utcNow)
 {
-    if (const auto seconds = decimal(value)) {
+    const QByteArrayView value = headers.value(QHttpHeaders::WellKnownHeader::RetryAfter);
+    if (const auto seconds = unsignedNumber(value)) {
         return std::chrono::seconds{std::min<quint64>(*seconds, 300)};
     }
-    // QHttpHeaders date accessors require Qt 6.10; retain Qt 6.8.
-    if (!utcNow.isValid()) {
+    auto deadline = headers.dateTimeValue(QHttpHeaders::WellKnownHeader::RetryAfter);
+    if (!deadline || !utcNow.isValid()) {
         return {};
     }
-    const QString text = QString::fromLatin1(value);
-    static const QRegularExpression imf(
-        QStringLiteral("^(Mon|Tue|Wed|Thu|Fri|Sat|Sun), ([0-9]{2} [A-Z][a-z]{2} [0-9]{4}) "
-                       "([0-9]{2}:[0-9]{2}:[0-9]{2}) GMT\\z"));
-    static const QRegularExpression rfc850(
-        QStringLiteral("^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), "
-                       "([0-9]{2})-([A-Z][a-z]{2})-([0-9]{2}) ([0-9]{2}:[0-9]{2}:[0-9]{2}) GMT\\z"));
-    static const QRegularExpression asctime(
-        QStringLiteral("^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) ([A-Z][a-z]{2}) ( [0-9]|[0-9]{2}) "
-                       "([0-9]{2}:[0-9]{2}:[0-9]{2}) ([0-9]{4})\\z"));
-    const auto locale = QLocale::c();
-    QDate date;
-    QTime time;
-    QString weekday;
-    bool twoDigitYear = false;
-    if (const auto match = imf.match(text); match.hasMatch()) {
-        weekday = match.captured(1);
-        date = locale.toDate(match.captured(2), QStringLiteral("dd MMM yyyy"));
-        time = QTime::fromString(match.captured(3), QStringLiteral("HH:mm:ss"));
-    } else if (const auto legacy = rfc850.match(text); legacy.hasMatch()) {
-        weekday = legacy.captured(1).first(3);
-        const int year = (utcNow.toUTC().date().year() / 100) * 100 + legacy.captured(4).toInt();
-        date = locale.toDate(
-            legacy.captured(2) + QLatin1Char(' ') + legacy.captured(3) + QLatin1Char(' ') + QString::number(year),
-            QStringLiteral("dd MMM yyyy"));
-        time = QTime::fromString(legacy.captured(5), QStringLiteral("HH:mm:ss"));
-        twoDigitYear = true;
-    } else if (const auto timestamp = asctime.match(text); timestamp.hasMatch()) {
-        weekday = timestamp.captured(1);
-        date = locale.toDate(timestamp.captured(3).trimmed() + QLatin1Char(' ') + timestamp.captured(2) +
-                                 QLatin1Char(' ') + timestamp.captured(5),
-                             QStringLiteral("d MMM yyyy"));
-        time = QTime::fromString(timestamp.captured(4), QStringLiteral("HH:mm:ss"));
-    }
-    QDateTime deadline(date, time, QTimeZone::UTC);
-    if (twoDigitYear && deadline > utcNow.addYears(50)) {
-        deadline = deadline.addYears(-100);
-    }
-    if (!deadline.isValid() || locale.toString(deadline.date(), QStringLiteral("ddd")) != weekday) {
-        return {};
-    }
-    return std::chrono::milliseconds{std::clamp(utcNow.msecsTo(deadline), qint64(0), qint64(300000))};
-}
-
-bool validChunkExtensions(QByteArrayView text)
-{
-    if (!std::all_of(text.begin(), text.end(), isFieldValue)) {
-        return false;
-    }
-    while (!text.isEmpty()) {
-        text = text.trimmed();
-        if (text.isEmpty() || text.front() != ';') {
-            return false;
-        }
-        text = text.sliced(1).trimmed();
-        qsizetype length = 0;
-        while (length < text.size() && isToken(text[length])) {
-            ++length;
-        }
-        if (length == 0) {
-            return false;
-        }
-        text = text.sliced(length).trimmed();
-        if (text.isEmpty() || text.front() == ';') {
-            continue;
-        }
-        if (text.front() != '=') {
-            return false;
-        }
-        text = text.sliced(1).trimmed();
-        if (text.isEmpty()) {
-            return false;
-        }
-        if (text.front() == '"') {
-            text = text.sliced(1);
-            bool closed = false;
-            while (!text.isEmpty()) {
-                const char ch = text.front();
-                text = text.sliced(1);
-                if (ch == '"') {
-                    closed = true;
-                    break;
-                }
-                if (ch == '\\') {
-                    if (text.isEmpty() || !isFieldValue(text.front())) {
-                        return false;
-                    }
-                    text = text.sliced(1);
-                } else if (!isFieldValue(ch)) {
-                    return false;
-                }
-            }
-            if (!closed) {
-                return false;
-            }
-        } else {
-            length = 0;
-            while (length < text.size() && isToken(text[length])) {
-                ++length;
-            }
-            if (length == 0) {
-                return false;
-            }
-            text = text.sliced(length);
+    // Qt reads the two-digit RFC 850 year as 19yy; RFC 9110 wants the latest century not over 50 years ahead.
+    if (value.indexOf(',') > 3) {
+        *deadline = deadline->addYears(utcNow.date().year() / 100 * 100 - 1900);
+        if (*deadline > utcNow.addYears(50)) {
+            *deadline = deadline->addYears(-100);
         }
     }
-    return true;
+    return std::chrono::milliseconds{std::clamp(utcNow.msecsTo(*deadline), qint64(0), qint64(300000))};
 }
 
 QString tr(const char* text)
@@ -175,36 +76,16 @@ NTRIPHttpRequest NTRIPHttpRequest::build(const NTRIPConnectionConfig& config, Pu
         return result;
     }
 
-    using Header = QHttpHeaders::WellKnownHeader;
-    auto& headers = result.headers;
-    const QByteArray host = result.url.authority(QUrl::FullyEncoded).toLatin1();
-    if (!headers.append(Header::Host, QLatin1StringView(host.constData(), host.size())) ||
-        !headers.append("Ntrip-Version", "Ntrip/2.0") ||
-        !headers.append(Header::UserAgent, "NTRIP QGroundControl/1.0")) {
-        result.error = QCoreApplication::translate("NTRIPHttpTransport", "Invalid NTRIP request header");
-        return result;
-    }
-
+    // Some legacy casters match these header spellings case-sensitively. The fully encoded URL parts and the
+    // Base64 credentials are always valid field values.
+    result.bytes = "GET " + result.url.path(QUrl::FullyEncoded).toLatin1() + " HTTP/1.1\r\n" +
+                   "Host: " + result.url.authority(QUrl::FullyEncoded).toLatin1() + "\r\n" +
+                   "Ntrip-Version: Ntrip/2.0\r\nUser-Agent: NTRIP QGroundControl/1.0\r\n";
     const bool hasCredentials = !config.username.isEmpty() || !config.password.isEmpty();
     if (hasCredentials) {
-        const QString authorization =
-            QStringLiteral("Basic ") + QGCNetworkHelper::createBasicAuthCredentials(config.username, config.password);
-        if (!headers.append(Header::Authorization, authorization)) {
-            result.error = QCoreApplication::translate("NTRIPHttpTransport", "Invalid NTRIP authorization header");
-            return result;
-        }
-    }
-
-    result.bytes = "GET " + result.url.path(QUrl::FullyEncoded).toLatin1() + " HTTP/1.1\r\n";
-    // Some legacy casters match these spellings case-sensitively.
-    for (const char* name : {"Host", "Ntrip-Version", "User-Agent", "Authorization"}) {
-        if (headers.contains(QLatin1StringView(name))) {
-            const auto value = headers.value(QLatin1StringView(name));
-            result.bytes += name;
-            result.bytes += ": ";
-            result.bytes.append(value.data(), value.size());
-            result.bytes += "\r\n";
-        }
+        result.bytes += "Authorization: Basic " +
+                        QGCNetworkHelper::createBasicAuthCredentials(config.username, config.password).toLatin1() +
+                        "\r\n";
     }
     result.bytes += "\r\n";
     result.credentialsInClear = hasCredentials && !config.useTls;
@@ -365,23 +246,19 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
         return;
     }
     if (_state == State::ChunkSize) {
-        const qsizetype separator = _line.indexOf(';');
-        const QByteArrayView line(_line);
-        auto token = separator < 0 ? line : line.first(separator);
-        if (separator >= 0) {
-            while (token.endsWith(' ') || token.endsWith('\t')) {
-                token = token.chopped(1);
+        // NTRIP uses no chunk extensions, so everything after ';' (and the whitespace before it) is ignored.
+        QByteArrayView size(_line);
+        if (const qsizetype separator = size.indexOf(';'); separator >= 0) {
+            size = size.first(separator);
+            while (size.endsWith(' ') || size.endsWith('\t')) {
+                size.chop(1);
             }
         }
-        const bool hex = !token.isEmpty() && std::all_of(token.begin(), token.end(), [](char ch) {
-            return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
-        });
-        bool ok = false;
-        _remaining = token.toULongLong(&ok, 16);
-        if (!hex || !ok || _remaining > MAX_CHUNK_BYTES ||
-            (separator >= 0 && !validChunkExtensions(line.sliced(separator)))) {
+        const auto length = unsignedNumber(size, 16);
+        if (!length || *length > MAX_CHUNK_BYTES) {
             _fail(result, tr("Invalid or oversized HTTP chunk"));
         } else {
+            _remaining = *length;
             _state = _remaining == 0 ? State::Trailers : State::ChunkData;
         }
         return;
@@ -401,9 +278,8 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
             const QString detail = _status.code == 401 ? tr("Authentication failed (401): check username and password")
                                                        : tr("HTTP %1: %2").arg(_status.code).arg(_status.reason);
             _pendingFailure = NTRIPFailure{code, detail};
-            const auto retries = _headers.values(QHttpHeaders::WellKnownHeader::RetryAfter);
-            if (retries.size() == 1) {
-                _pendingFailure->retryAfter = retryAfter(retries.first(), utcNow);
+            if (_headers.values(QHttpHeaders::WellKnownHeader::RetryAfter).size() == 1) {
+                _pendingFailure->retryAfter = retryAfter(_headers, utcNow);
             }
             if (code == NTRIPError::AuthFailed) {
                 _finishError(result);
@@ -413,7 +289,7 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
         const auto lengths = _headers.values(QHttpHeaders::WellKnownHeader::ContentLength);
         for (const auto& field : lengths) {
             for (const auto& value : field.split(',')) {
-                const auto length = decimal(QByteArrayView(value).trimmed());
+                const auto length = unsignedNumber(QByteArrayView(value).trimmed());
                 if (!length || (_contentLength && *_contentLength != *length)) {
                     _fail(result, tr("Invalid or conflicting HTTP content length"));
                     return;

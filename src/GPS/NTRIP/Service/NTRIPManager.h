@@ -9,6 +9,7 @@
 #include <QtCore/QPointer>
 #include <QtPositioning/QGeoCoordinate>
 
+#include "ExponentialBackoff.h"
 #include "GPSNotificationQueue.h"
 #include "GPSRevision.h"
 #include "NTRIPConfiguration.h"
@@ -37,12 +38,12 @@ class NTRIPManager : public QObject
     Q_OBJECT
     Q_MOC_INCLUDE("NTRIPConnectionStats.h")
     Q_MOC_INCLUDE("NTRIPSourceTableController.h")
-    Q_PROPERTY(ConnectionStatus connectionStatus READ connectionStatus NOTIFY connectionStatusChanged)
-    Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged)
-    Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged)
-    Q_PROPERTY(QString ggaSource READ ggaSource NOTIFY ggaSourceChanged)
-    Q_PROPERTY(NTRIPSourceTableController* sourceTableController READ sourceTableController CONSTANT)
-    Q_PROPERTY(NTRIPConnectionStats* connectionStats READ connectionStats CONSTANT)
+    Q_PROPERTY(ConnectionStatus connectionStatus READ connectionStatus NOTIFY connectionStatusChanged FINAL)
+    Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged FINAL)
+    Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged FINAL)
+    Q_PROPERTY(QString ggaSource READ ggaSource NOTIFY ggaSourceChanged FINAL)
+    Q_PROPERTY(NTRIPSourceTableController* sourceTableController READ sourceTableController CONSTANT FINAL)
+    Q_PROPERTY(NTRIPConnectionStats* connectionStats READ connectionStats CONSTANT FINAL)
 
 public:
     /// Public connection status. Numeric values are stable — QML binds against them.
@@ -147,6 +148,8 @@ signals:
     void mountpointChosen(const QString& mountpoint);
     /// Retrying after an error turns the saved connection on.
     void enableRequested();
+    /// The trusted self-signed caster certificate changed, or was forgotten (empty); the settings should store it.
+    void certificatePinChanged(const QString& pin);
 
 private:
     /// Dispatch an event. Returns true if a transition was found and taken.
@@ -168,11 +171,7 @@ private:
     /// Stops and retires the current session; false when a re-entrant transition superseded the stop.
     bool _stopStreaming();
 
-    // Reconnect backoff (inlined; was NTRIPReconnectPolicy). The single-shot
-    // timer fires reconnectRequested → ReconnectDue; exhausting the attempt
-    // ceiling fires ReconnectGaveUp instead.
-    static constexpr int kMinReconnectMs = 1000;
-    static constexpr int kMaxReconnectMs = 30000;
+    // The single-shot reconnect timer fires ReconnectDue; exhausting the attempt ceiling fires ReconnectGaveUp.
     static constexpr int kMaxReconnectAttempts = 100;
 
     void _scheduleReconnect(std::chrono::milliseconds retryAfter = {});
@@ -183,16 +182,14 @@ private:
     bool _casterIsLoopback() const;
     void _waitForNetwork();
 
-    void _resetReconnectAttempts() { _reconnectAttempts = 0; }
-
-    int _reconnectBackoffMs(std::chrono::milliseconds retryAfter = {}) const;
-
-    bool _reconnectExhausted() const { return _reconnectAttempts >= kMaxReconnectAttempts; }
+    bool _reconnectExhausted() const { return _reconnectBackoff.attempts() >= kMaxReconnectAttempts; }
 
     /// Reconfigure the manager-owned NTRIP sink without restarting transport.
 
     void _onTransportError(const NTRIPFailure& failure);
     void _onPlaintextCredentialsWarning();
+    void _onCertificatePinned(const QString& pin);
+    void _setPinnedCertificate(const QString& pin);
     void _setSecurityWarning(const QString& warning);
     void _rtcmDataReceived(const RTCMDecodedFrame& frame);
     /// Brings the connection in line with the latest configuration.
@@ -226,7 +223,7 @@ private:
 
     static constexpr std::chrono::milliseconds kSettingsDebounceMs{250};
     std::chrono::milliseconds _pendingReconnectDelay{};
-    int _reconnectAttempts = 0;
+    ExponentialBackoff _reconnectBackoff{std::chrono::seconds(1), 2, std::chrono::seconds(30), std::chrono::minutes(5)};
     bool _waitingForNetwork = false;
     bool _initialized = false;
     bool _shutdown = false;

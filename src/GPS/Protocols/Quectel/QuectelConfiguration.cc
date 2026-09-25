@@ -8,12 +8,14 @@
 #include "QuectelCodec_p.h"
 #include "QuectelProtocol.h"
 
+using namespace std::chrono_literals;
+
 namespace {
 // Quectel LG290P(03)&LGx80P(03) GNSS Protocol Specification V1.1:
 // §§2.3.9, 2.3.15, 2.3.22–25, 2.3.28. Base Station Mode Application Note
 // V1.1 §3.2 explicitly permits re-executing an unchanged survey and rebooting without saving.
-constexpr unsigned CONFIGURATION_TIMEOUT_MS = 45000;
-constexpr unsigned RESTART_TIMEOUT_MS = 8000;
+constexpr std::chrono::milliseconds CONFIGURATION_TIMEOUT{45000};
+constexpr std::chrono::milliseconds RESTART_TIMEOUT{8000};
 // PQTMCFGRCVRMODE value for the base-station role.
 constexpr unsigned BASE_ROLE = 2;
 using QuectelCodec::Fields;
@@ -23,12 +25,13 @@ using QuectelCodec::readback;
 using QuectelCodec::rejected;
 }  // namespace
 
-GPSCommandResult QuectelProtocol::_transact(const std::string& command, GPSReplyMatcher reply, unsigned timeoutMs)
+GPSCommandResult QuectelProtocol::_transact(const std::string& command, GPSReplyMatcher reply,
+                                            std::chrono::milliseconds timeout)
 {
-    return transact({command, std::chrono::milliseconds(timeoutMs)}, frame(command), std::move(reply));
+    return transact({command, timeout}, frame(command), std::move(reply));
 }
 
-GPSCommandResult QuectelProtocol::_acknowledgement(const std::string& command, unsigned timeoutMs)
+GPSCommandResult QuectelProtocol::_acknowledgement(const std::string& command, std::chrono::milliseconds timeout)
 {
     const std::string name = command.substr(0, command.find(','));
     return _transact(
@@ -40,15 +43,15 @@ GPSCommandResult QuectelProtocol::_acknowledgement(const std::string& command, u
             }
             return rejected(reply, name) ? GPSCommandOutcome::Rejected : GPSCommandOutcome::Pending;
         },
-        timeoutMs);
+        timeout);
 }
 
-bool QuectelProtocol::_acknowledge(const std::string& command, unsigned timeoutMs)
+bool QuectelProtocol::_acknowledge(const std::string& command, std::chrono::milliseconds timeout)
 {
-    return _acknowledgement(command, timeoutMs).evidence.outcome == GPSCommandOutcome::Acknowledged;
+    return _acknowledgement(command, timeout).evidence.outcome == GPSCommandOutcome::Acknowledged;
 }
 
-bool QuectelProtocol::_identify(unsigned timeoutMs)
+bool QuectelProtocol::_identify(std::chrono::milliseconds timeout)
 {
     return _transact(
                "PQTMVERNO",
@@ -66,7 +69,7 @@ bool QuectelProtocol::_identify(unsigned timeoutMs)
                               ? GPSCommandOutcome::ReadbackVerified
                               : GPSCommandOutcome::Rejected;
                },
-               timeoutMs)
+               timeout)
                .evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
@@ -117,7 +120,8 @@ bool QuectelProtocol::_verifyBase(bool requireMatch)
                              std::abs(ecef.y - _fixedECEF.y) <= 0.00011 && std::abs(ecef.z - _fixedECEF.z) <= 0.00011;
                } else if (matches) {
                    matches =
-                       mode == 1 && count == std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).durationSecs &&
+                       mode == 1 &&
+                       count == std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).duration.count() &&
                        std::abs(accuracy - std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).accuracyMeters) <=
                            0.000000001 &&
                        distance == 0;
@@ -143,7 +147,7 @@ std::string QuectelProtocol::_baseCommand() const
     if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
         command << "2,0,0," << std::setprecision(4) << _fixedECEF.x << ',' << _fixedECEF.y << ',' << _fixedECEF.z;
     } else {
-        command << "1," << std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).durationSecs << ','
+        command << "1," << std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).duration.count() << ','
                 << std::setprecision(9) << std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).accuracyMeters
                 << ",0,0,0";
     }
@@ -155,7 +159,7 @@ std::string QuectelProtocol::_baseCommand() const
 
 bool QuectelProtocol::_saveConfiguration()
 {
-    const auto result = _acknowledgement("PQTMSAVEPAR", 5000);
+    const auto result = _acknowledgement("PQTMSAVEPAR", 5000ms);
     const bool saved = result.evidence.outcome == GPSCommandOutcome::Acknowledged;
     if (saved) {
         _persistentSaveAcknowledged = true;
@@ -205,10 +209,10 @@ bool QuectelProtocol::_restart(bool requireRoleMatch)
     _revokeSurvey();
     _survey.phase = SurveyPhase::AwaitingBoot;
     log(GPSProtocolLogLevel::Debug, "Restarting LG290P and verifying its saved configuration");
-    const Operation operation(*this, RESTART_TIMEOUT_MS);
-    const uint64_t deadline = nowUs() + uint64_t(RESTART_TIMEOUT_MS) * 1000;
+    const Operation operation(*this, RESTART_TIMEOUT);
+    const uint64_t deadline = GPSDeadline::after(nowUs(), RESTART_TIMEOUT).untilUs;
     const auto bytes = frame("PQTMSRR");
-    beginCommandWrite({"PQTMSRR", std::chrono::milliseconds(RESTART_TIMEOUT_MS)});
+    beginCommandWrite({"PQTMSRR", RESTART_TIMEOUT});
     if (!write(bytes.data(), static_cast<int>(bytes.size()))) {
         return false;
     }
@@ -223,7 +227,7 @@ bool QuectelProtocol::_restart(bool requireRoleMatch)
         if (hasIOError()) {
             break;
         }
-        const bool identified = _identify(700);
+        const bool identified = _identify(700ms);
         if (_restartRejected) {
             _ioErrorDetail = QStringLiteral("LG290P rejected PQTMSRR.");
             break;
@@ -278,12 +282,12 @@ bool QuectelProtocol::configure(unsigned& baud, const GPSConfig& config)
     setRTCMEnabled(false);
     const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&config.base.mode);
     if (!validateConfiguration(config, {.persistentChanges = true}) ||
-        (survey && (survey->durationSecs > 86400 || survey->accuracyMeters > 1000))) {
+        (survey && (survey->duration > std::chrono::hours{24} || survey->accuracyMeters > 1000))) {
         return _fail(
             "Unsupported LG290P configuration: use native 1 Hz observation count (maximum 86400) and "
             "3D position accuracy threshold (maximum 1000 m), not receiver-managed survey");
     }
-    const Operation operation(*this, CONFIGURATION_TIMEOUT_MS);
+    const Operation operation(*this, CONFIGURATION_TIMEOUT);
     _baseConfig = config.base;
     if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
         _fixedECEF = toEcef(std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position);

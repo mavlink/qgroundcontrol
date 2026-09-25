@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
@@ -7,11 +6,13 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 
 SettingsGroupLayout {
+    id:                 root
     Layout.fillWidth:   true
     heading:            qsTr("NTRIP Server")
     visible:            _ntrip.ntripServerHostAddress.userVisible || _ntrip.ntripServerPort.userVisible ||
                         _ntrip.ntripUsername.userVisible || _ntrip.ntripPassword.userVisible
 
+    // NTRIPSettings is not registered for QML, and SettingsGroup is not either.
     property var  _ntrip:       QGroundControl.settingsManager.ntripSettings
     property bool _isActive:    _ntrip.ntripServerConnectEnabled.rawValue
     property real _textFieldWidth: ScreenTools.defaultFontPixelWidth * 30
@@ -19,42 +20,42 @@ SettingsGroupLayout {
     LabelledFactTextField {
         objectName:         "ntripHostField"
         Layout.fillWidth:           true
-        textFieldPreferredWidth:    _textFieldWidth
-        fact:               _ntrip.ntripServerHostAddress
-        visible:            fact.userVisible
-        enabled:            !_isActive
+        textFieldPreferredWidth:    root._textFieldWidth
+        fact:               root._ntrip.ntripServerHostAddress
+        visible:            (fact as SettingsFact).userVisible
+        enabled:            !root._isActive
     }
 
     LabelledFactTextField {
         Layout.fillWidth:           true
-        textFieldPreferredWidth:    _textFieldWidth
-        fact:               _ntrip.ntripServerPort
-        visible:            fact.userVisible
-        enabled:            !_isActive
+        textFieldPreferredWidth:    root._textFieldWidth
+        fact:               root._ntrip.ntripServerPort
+        visible:            (fact as SettingsFact).userVisible
+        enabled:            !root._isActive
     }
 
     LabelledFactTextField {
         Layout.fillWidth:           true
-        textFieldPreferredWidth:    _textFieldWidth
+        textFieldPreferredWidth:    root._textFieldWidth
         label:              fact.shortDescription
-        fact:               _ntrip.ntripUsername
-        visible:            fact.userVisible
-        enabled:            !_isActive
+        fact:               root._ntrip.ntripUsername
+        visible:            (fact as SettingsFact).userVisible
+        enabled:            !root._isActive
     }
 
     RowLayout {
         Layout.fillWidth:   true
-        visible:            _ntrip.ntripPassword.userVisible
+        visible:            root._ntrip.ntripPassword.userVisible
         spacing:            ScreenTools.defaultFontPixelWidth * 0.5
 
         LabelledFactTextField {
             id:                 passwordField
             Layout.fillWidth:           true
-            textFieldPreferredWidth:    _textFieldWidth
+            textFieldPreferredWidth:    root._textFieldWidth
             label:              fact.shortDescription
-            fact:               _ntrip.ntripPassword
+            fact:               root._ntrip.ntripPassword
             textField.echoMode: _showPassword ? TextInput.Normal : TextInput.Password
-            enabled:            !_isActive
+            enabled:            !root._isActive
 
             property bool _showPassword: false
         }
@@ -70,17 +71,17 @@ SettingsGroupLayout {
         objectName:         "ntripUseTlsSwitch"
         Layout.fillWidth:   true
         text:               fact.shortDescription
-        fact:               _ntrip.ntripUseTls
-        visible:            fact.userVisible
-        enabled:            !_isActive
+        fact:               root._ntrip.ntripUseTls
+        visible:            (fact as SettingsFact).userVisible
+        enabled:            !root._isActive
     }
 
     FactCheckBoxSlider {
         objectName:         "ntripAcceptSelfSignedSwitch"
         Layout.fillWidth:   true
         text:               fact.shortDescription
-        fact:               _ntrip.ntripAllowSelfSignedCerts
-        visible:            fact.userVisible
-        enabled:            !_isActive && _ntrip.ntripUseTls.rawValue
+        fact:               root._ntrip.ntripAllowSelfSignedCerts
+        visible:            (fact as SettingsFact).userVisible
+        enabled:            !root._isActive && root._ntrip.ntripUseTls.rawValue
     }
 }

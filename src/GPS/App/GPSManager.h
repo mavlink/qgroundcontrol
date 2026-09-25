@@ -23,11 +23,11 @@ class GPSManager : public QObject
     Q_MOC_INCLUDE("GPSRTK.h")
     Q_MOC_INCLUDE("GPSRTKFactGroup.h")
     Q_MOC_INCLUDE("NTRIPManager.h")
-    Q_PROPERTY(GPSCorrectionManager* corrections READ corrections CONSTANT)
-    Q_PROPERTY(GPSRTK* gpsRtk READ gpsRtk CONSTANT)
-    Q_PROPERTY(GPSRTKFactGroup* gpsRtkFacts READ gpsRtkFacts CONSTANT)
-    Q_PROPERTY(NTRIPManager* ntrip READ ntrip CONSTANT)
-    Q_PROPERTY(CorrectionState correctionState READ correctionState NOTIFY correctionStateChanged)
+    Q_PROPERTY(GPSCorrectionManager* corrections READ corrections CONSTANT FINAL)
+    Q_PROPERTY(GPSRTK* gpsRtk READ gpsRtk CONSTANT FINAL)
+    Q_PROPERTY(GPSRTKFactGroup* gpsRtkFacts READ gpsRtkFacts CONSTANT FINAL)
+    Q_PROPERTY(NTRIPManager* ntrip READ ntrip CONSTANT FINAL)
+    Q_PROPERTY(CorrectionState correctionState READ correctionState NOTIFY correctionStateChanged FINAL)
 
 public:
     /// Whether vehicles receive RTK corrections, across NTRIP, UDP input, and the local receiver.
@@ -64,6 +64,10 @@ public:
     PositionManager* positionManager() const { return _positionManager; }
 
     CorrectionState correctionState() const;
+
+    /// Stores the receiver's current position and accuracy as the fixed base position for a later connection.
+    /// Returns false, leaving the settings unchanged, when gpsRtkFacts cannot save the current position.
+    Q_INVOKABLE bool saveCurrentBasePosition();
 
 signals:
     void correctionStateChanged();

@@ -4,12 +4,14 @@
 
 #include "UnicoreProtocol.h"
 
+using namespace std::chrono_literals;
+
 bool UnicoreProtocol::_execute(std::string command, Reply reply)
 {
     _command = {.text = std::move(command), .expected = reply};
     _configurationDetail.clear();
     const auto wire = _command.text + "\r\n";
-    const auto result = transact({_command.text, std::chrono::milliseconds(COMMAND_TIMEOUT_MS)}, wire);
+    const auto result = transact({_command.text, COMMAND_TIMEOUT}, wire);
     if (result.evidence.writtenBytes < static_cast<int>(wire.size())) {
         _configurationDetail =
             QStringLiteral("Unicore command '%1' could not be written").arg(QString::fromStdString(_command.text));
@@ -96,7 +98,7 @@ bool UnicoreProtocol::configure(unsigned& baud, const GPSConfig& config)
     if (!_averaging) {
         _fixedECEF = toEcef(std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position);
     }
-    const Operation operation(*this, 45000);
+    const Operation operation(*this, 45000ms);
     if (!_identify(baud) || !_execute("UNLOG")) {
         return _configurationFailed();
     }
@@ -115,7 +117,7 @@ bool UnicoreProtocol::configure(unsigned& baud, const GPSConfig& config)
     if (_averaging) {
         // Distance=0 forces newly averaged coordinates; it is NOT an accuracy threshold.
         mode << "MODE BASE TIME "
-             << std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs << " 0";
+             << std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDuration.count() << " 0";
         _expectedMode = Mode::AveragingBase;
     } else {
         mode << std::fixed << std::setprecision(4) << "MODE BASE " << _fixedECEF.x << ' ' << _fixedECEF.y << ' '

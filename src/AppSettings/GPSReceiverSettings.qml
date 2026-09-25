@@ -11,17 +11,20 @@ import QGroundControl.GPS
 SettingsGroupLayout {
     id: root
 
-    property var receiver: QGroundControl.gpsManager.gpsRtk
-    property var settings: QGroundControl.settingsManager.rtkSettings
-    property var baseFacts: QGroundControl.gpsManager.gpsRtkFacts
-    property var autoConnectFact: settings.autoConnect
-    property var serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
-    property var serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
-    property var consent: QtObject { property bool allowed: false }
+    property GPSRTK receiver: QGroundControl.gpsManager.gpsRtk
+    // Saving the base position writes GPSManager's receiver Facts to the application's settings, the defaults here.
+    property RTKSettings settings: QGroundControl.settingsManager.rtkSettings
+    property GPSRTKFactGroup baseFacts: QGroundControl.gpsManager.gpsRtkFacts
+    property SettingsFact autoConnectFact: settings.autoConnect as SettingsFact
+    property list<string> serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
+    property list<string> serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
     /// Hosts that already show receiver errors elsewhere can hide the inline message.
     property bool showErrorMessage: true
 
+    // SerialPortManager is absent from builds without serial links, so the C++ exposes it as QObject.
     readonly property var _serialPortManager: QGroundControl.serialPortManager
+    // The user's one-use permission to write receiver flash, for the configuration currently shown.
+    property bool _consentAllowed: false
 
     readonly property int role: settings.receiverRole.rawValue
     readonly property bool configuredBase: role === GPSRTK.ConfiguredBase
@@ -33,7 +36,7 @@ SettingsGroupLayout {
         || (baseMode === BaseModeDefinition.BaseSurveyIn && presentation.surveyIn)
         || (baseMode === BaseModeDefinition.BaseReceiverAveraging && presentation.receiverAveraging)
     // A pending automatic reconnect keeps the saved connection; stop it before editing.
-    readonly property bool _active: receiver.hasReceiver || receiver.reconnecting === true
+    readonly property bool _active: receiver.hasReceiver || receiver.reconnecting
     readonly property bool _editable: !_active
     readonly property int _connection: settings.connectionType.rawValue
     readonly property bool _udp: _connection === GPSRTK.Udp
@@ -56,33 +59,15 @@ SettingsGroupLayout {
     on_ConsentScopeChanged: clearConsent()
     onReceiverChanged: clearConsent()
     onSettingsChanged: clearConsent()
-    Component.onDestruction: clearConsent()
 
     function clearConsent() {
-        if (consent) {
-            consent.allowed = false
-        }
+        _consentAllowed = false
     }
 
-    function connectSelectedReceiver() {
-        const allowPersistentChanges = presentation.persistentConfiguration && consent.allowed
+    function connectSelectedReceiver(): bool {
+        const allowPersistentChanges = presentation.persistentConfiguration && _consentAllowed
         clearConsent()
         return receiver.connectConfiguredGPS(allowPersistentChanges)
-    }
-
-    function saveCurrentBasePosition() {
-        if (!baseFacts.canSaveCurrentBasePosition) {
-            return false
-        }
-        const latitude = baseFacts.currentLatitude.rawValue
-        const longitude = baseFacts.currentLongitude.rawValue
-        const altitude = baseFacts.currentAltitude.rawValue
-        const accuracy = baseFacts.currentAccuracy.rawValue
-        settings.fixedBasePositionLatitude.rawValue = latitude
-        settings.fixedBasePositionLongitude.rawValue = longitude
-        settings.fixedBasePositionAltitude.rawValue = altitude
-        settings.fixedBasePositionAccuracy.rawValue = accuracy
-        return true
     }
 
     component Explanation: QGCLabel {
@@ -126,7 +111,7 @@ SettingsGroupLayout {
     ColumnLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        visible: root.settings.receiverRole.userVisible
+        visible: (root.settings.receiverRole as SettingsFact).userVisible
         Explanation { text: root.settings.receiverRole.shortDescription }
         FactComboBox {
             objectName: "receiverRole"
@@ -163,7 +148,7 @@ SettingsGroupLayout {
     ColumnLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        visible: root.configuredBase && root.settings.baseReceiverManufacturers.userVisible
+        visible: root.configuredBase && (root.settings.baseReceiverManufacturers as SettingsFact).userVisible
         Explanation { text: qsTr("Receiver / settings") }
         FactComboBox {
             objectName: "rtkManufacturer"
@@ -177,7 +162,7 @@ SettingsGroupLayout {
     ColumnLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        visible: root.settings.connectionType.userVisible
+        visible: (root.settings.connectionType as SettingsFact).userVisible
         Explanation { text: root.settings.connectionType.shortDescription }
         FactComboBox {
             objectName: "rtkConnectionType"
@@ -312,7 +297,8 @@ SettingsGroupLayout {
         majorTickStepSize: 0.1
         enabled: root._editable
         visible: root.baseMode === BaseModeDefinition.BaseSurveyIn
-                 && root.settings.surveyInAccuracyLimit.userVisible && root.presentation.surveyAccuracy
+                 && (root.settings.surveyInAccuracyLimit as SettingsFact).userVisible
+                 && root.presentation.surveyAccuracy
     }
 
     FactSlider {
@@ -323,7 +309,8 @@ SettingsGroupLayout {
         majorTickStepSize: 10
         enabled: root._editable
         visible: root.baseMode === BaseModeDefinition.BaseSurveyIn
-                 && root.settings.surveyInMinObservationDuration.userVisible && root.presentation.surveyDuration
+                 && (root.settings.surveyInMinObservationDuration as SettingsFact).userVisible
+                 && root.presentation.surveyDuration
     }
 
     SettingField {
@@ -351,7 +338,7 @@ SettingsGroupLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         visible: root.configuredBase && root.presentation.compactObservations
-                 && root.settings.compactRtcmCorrections.userVisible
+                 && (root.settings.compactRtcmCorrections as SettingsFact).userVisible
         Explanation { text: root.settings.compactRtcmCorrections.shortDescription }
         FactCheckBoxSlider {
             objectName: "rtkCompactRtcm"
@@ -364,7 +351,7 @@ SettingsGroupLayout {
 
     Explanation {
         visible: root.configuredBase && root.presentation.compactObservations
-                 && root.settings.compactRtcmCorrections.userVisible
+                 && (root.settings.compactRtcmCorrections as SettingsFact).userVisible
         text: qsTr("Uses about a third less correction bandwidth, for example on slow telemetry radios. Doppler is omitted and measurements use lower resolution.")
     }
 
@@ -387,7 +374,7 @@ SettingsGroupLayout {
                     || root.baseFacts.currentAccuracy.rawValue < 0 ? qsTr("Accuracy Unavailable")
                   : qsTr("Invalid Base Position")
             enabled: root.baseFacts.canSaveCurrentBasePosition
-            onClicked: root.saveCurrentBasePosition()
+            onClicked: QGroundControl.gpsManager.saveCurrentBasePosition()
         }
     }
 
@@ -400,8 +387,8 @@ SettingsGroupLayout {
         focusPolicy: Qt.StrongFocus
         visible: root.presentation.persistentConfiguration
         enabled: root._editable
-        checked: root.consent.allowed
-        onClicked: root.consent.allowed = checked
+        checked: root._consentAllowed
+        onClicked: root._consentAllowed = checked
         contentItem: QGCLabel {
             text: persistenceCheckbox.text
             color: persistenceCheckbox.textColor
@@ -419,7 +406,7 @@ SettingsGroupLayout {
     RowLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        visible: root.settings.connectOnStartup.userVisible
+        visible: (root.settings.connectOnStartup as SettingsFact).userVisible
         Explanation { text: root.settings.connectOnStartup.shortDescription }
         FactCheckBoxSlider {
             objectName: "rtkConnectOnStartup"

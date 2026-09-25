@@ -30,6 +30,7 @@ struct NTRIPSourceTableController::FetchAttempt
 NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _model(new NTRIPSourceTableModel(this))
+    , _sortedModel(new NTRIPSourceTableSortModel(_model, this))
     , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
 {}
 
@@ -42,14 +43,11 @@ NTRIPSourceTableController::~NTRIPSourceTableController()
 
 QAbstractItemModel* NTRIPSourceTableController::mountpointModel() const
 {
-    return _model;
+    return _sortedModel;
 }
 
 void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, const QGeoCoordinate& sortCoord)
 {
-    if (_deferModelMutation([this, config, sortCoord]() { fetch(config, sortCoord); })) {
-        return;
-    }
     const GPSNotificationQueue::Scope publish(_notifications);
     auto casterConfig = config;
     casterConfig.mountpoint.clear();
@@ -73,8 +71,7 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
 
     if (_model->count() > 0 && _cacheStoredAtUs && sameCaster) {
         const auto nowUs = _scheduler->nowUs();
-        if (MonotonicClock::remaining(*_cacheStoredAtUs, nowUs, std::chrono::milliseconds(kCacheTtlMs)) >
-            std::chrono::microseconds::zero()) {
+        if (MonotonicClock::remaining(*_cacheStoredAtUs, nowUs, kCacheTtl) > std::chrono::microseconds::zero()) {
             const qint64 age = MonotonicClock::ageMilliseconds(*_cacheStoredAtUs, nowUs);
             qCDebug(NTRIPSourceTableControllerLog) << "Source table cache hit, age:" << age << "ms";
             _sortCoord = sortCoord;
@@ -144,7 +141,7 @@ void NTRIPSourceTableController::_startFetch(const GPSRevision::Token& fetch, co
             _completeFetch(fetch, {}, tr("Source table connection was destroyed before completion"));
         }
     });
-    _attempt->timeout.schedule(std::chrono::milliseconds(kFetchTimeoutMs), [this, current]() {
+    _attempt->timeout.schedule(kFetchTimeout, [this, current]() {
         if (current()) {
             _finishFetch(tr("Source table request timed out"));
         }
@@ -209,9 +206,6 @@ void NTRIPSourceTableController::_completeFetch(const GPSRevision::Token& fetch,
 
 void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
 {
-    if (_deferModelMutation([this, table]() { _onSourceTableReceived(table); })) {
-        return;
-    }
     const auto fetch = _fetchRevision.current(this);
     _model->parseSourceTable(table, _sortCoord);
     if (!fetch.isCurrent()) {
@@ -225,9 +219,6 @@ void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
 
 void NTRIPSourceTableController::_onFetchError(const QString& error)
 {
-    if (_deferModelMutation([this, error]() { _onFetchError(error); })) {
-        return;
-    }
     const auto fetch = _fetchRevision.current(this);
     _cacheStoredAtUs.reset();
     _fetchError = error;
@@ -238,24 +229,6 @@ void NTRIPSourceTableController::_onFetchError(const QString& error)
     }
     _notifications.emitSignal(this, &NTRIPSourceTableController::fetchErrorChanged);
     _notifications.emitSignal(this, &NTRIPSourceTableController::fetchStatusChanged);
-}
-
-bool NTRIPSourceTableController::_deferModelMutation(std::function<void()> action)
-{
-    if (!_model->_mutating) {
-        return false;
-    }
-    // A reset observer can replace this fetch. Retire its publication now, but
-    // defer the replacement (including status signals) until the model is stable.
-    QMetaObject::invokeMethod(
-        this,
-        [fetch = _fetchRevision.advance(this), action = std::move(action)]() {
-            if (fetch.isCurrent()) {
-                action();
-            }
-        },
-        Qt::QueuedConnection);
-    return true;
 }
 
 void NTRIPSourceTableController::_abortFetch()

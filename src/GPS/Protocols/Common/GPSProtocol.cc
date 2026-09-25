@@ -18,6 +18,8 @@
 
 QGC_LOGGING_CATEGORY(GPSProtocolLog, "GPS.Driver.Protocols")
 
+using namespace std::chrono_literals;
+
 GPSProtocol::GPSProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     : _satellites(satelliteInfoEnabled ? &_satelliteStorage : nullptr)
     , _io(std::move(io))
@@ -96,10 +98,10 @@ uint64_t GPSProtocol::timeFromUtc(tm& utc, int32_t nsec)
     return 0;
 }
 
-int GPSProtocol::readAndDecode(unsigned timeout)
+int GPSProtocol::readAndDecode(std::chrono::milliseconds timeout)
 {
     uint8_t buffer[GPS_READ_BUFFER_SIZE];
-    const int count = read(buffer, sizeof(buffer), static_cast<int>(timeout));
+    const int count = read(buffer, sizeof(buffer), timeout);
     if (count < 0) {
         return 0;
     }
@@ -108,7 +110,7 @@ int GPSProtocol::readAndDecode(unsigned timeout)
 
 bool GPSProtocol::writeCommand(GPSConfigurationStep step, std::span<const uint8_t> bytes)
 {
-    const Operation operation(*this, static_cast<unsigned>(step.timeout.count()));
+    const Operation operation(*this, step.timeout);
     beginCommandWrite(std::move(step));
     return write(bytes.data(), static_cast<int>(bytes.size()));
 }
@@ -118,12 +120,11 @@ GPSCommandResult GPSProtocol::awaitCommand(const std::function<GPSCommandOutcome
     if (_commandCompleted) {
         return _commandWrite;
     }
-    const Operation operation(*this, remainingMilliseconds(_commandDeadline.untilUs));
+    const Operation operation(*this, remainingUntil(_commandDeadline.untilUs));
     _operationDeadline.untilUs = std::min(_operationDeadline.untilUs, _commandDeadline.untilUs);
     const auto outcome = GPSCommandTransaction::await(
         _operationDeadline.untilUs, [this] { return nowUs(); }, reply,
-        [this] { readAndDecode(remainingMilliseconds(_commandDeadline.untilUs)); },
-        [this] { return ioCommandOutcome(); });
+        [this] { readAndDecode(remainingUntil(_commandDeadline.untilUs)); }, [this] { return ioCommandOutcome(); });
     return completeCommand(outcome);
 }
 
@@ -200,9 +201,8 @@ void GPSProtocol::beginCommandWrite(GPSConfigurationStep step)
     _commandWrite.evidence.command = std::move(step.command);
     _commandWrite.affectedSettings = step.affectedSettings;
     _commandWrite.evidence.required = step.required;
-    _commandDeadline.untilUs =
-        std::min(_operationDeadline.untilUs,
-                 _commandWrite.evidence.startedAtUs + uint64_t(std::max<int64_t>(step.timeout.count(), 0)) * 1000);
+    _commandDeadline.untilUs = std::min(_operationDeadline.untilUs,
+                                        GPSDeadline::after(_commandWrite.evidence.startedAtUs, step.timeout).untilUs);
     _commandCompleted = false;
 }
 
@@ -222,12 +222,12 @@ GPSCommandResult GPSProtocol::completeCommand(GPSCommandOutcome outcome)
     return result;
 }
 
-int GPSProtocol::receiveDecoded(unsigned timeout)
+int GPSProtocol::receiveDecoded(std::chrono::milliseconds timeout)
 {
     const Operation operation(*this, timeout);
     const uint64_t deadline = _operationDeadline.untilUs;
     do {
-        const int handled = readAndDecode(static_cast<unsigned>(remainingMilliseconds(deadline)));
+        const int handled = readAndDecode(remainingUntil(deadline));
         if (handled || hasIOError()) {
             return handled;
         }
@@ -243,7 +243,7 @@ void GPSProtocol::serviceControls()
     _servicingControls = true;
     {
         // This budget belongs to pending receiver commands, independently of the completed read slice.
-        const Operation operation(*this, 5000);
+        const Operation operation(*this, 5000ms);
         servicePendingCommands();
     }
     _servicingControls = false;

@@ -1,4 +1,4 @@
-qt_add_library(QGCMath STATIC QGCMath.cc QGCMath.h CRC32.h)
+qt_add_library(QGCMath STATIC QGCMath.cc QGCMath.h Checksums.h CRC32.h)
 
 target_link_libraries(QGCMath PUBLIC Qt6::Core)
 

@@ -1,5 +1,6 @@
 #include "GPSCorrectionManagerTest.h"
 
+#include <algorithm>
 #include <memory>
 
 #include <QtCore/QCoreApplication>
@@ -8,6 +9,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtNetwork/QNetworkDatagram>
+#include <QtNetwork/QNetworkInterface>
 #include <QtNetwork/QUdpSocket>
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QSignalSpy>
@@ -29,10 +31,11 @@
 #include "SettingsManager.h"
 
 namespace {
+/// Probes the dual-stack wildcard address the UDP input binds, so the port is free on every interface.
 quint16 unusedPort()
 {
     QUdpSocket socket;
-    return socket.bind(QHostAddress::LocalHost, 0) ? socket.localPort() : 0;
+    return socket.bind(QHostAddress::Any, 0) ? socket.localPort() : 0;
 }
 
 void configureUdp(TestFixtures::SettingsFixture& saved, GPSCorrectionSettings* settings, quint16 port)
@@ -410,6 +413,9 @@ void GPSCorrectionManagerTest::_diagnosticsModelUpdatesInPlace()
     // Every row property is a role, so QML delegates bind to typed values.
     QVERIFY(destinationRole >= 0 && queuedRole >= 0);
     QCOMPARE(model.data(model.index(0, 0), destinationRole).toString(), QStringLiteral("a"));
+    QVERIFY(!(model.flags(model.index(0, 0)) & Qt::ItemIsEditable));
+    QVERIFY(!model.setData(model.index(0, 0), QStringLiteral("changed"), destinationRole));
+    QCOMPARE(model.data(model.index(0, 0), destinationRole).toString(), QStringLiteral("a"));
 
     model.setRows({row(QStringLiteral("a"), 1), row(QStringLiteral("b"), 2)});
     QCOMPARE(changed.size(), 1);
@@ -561,6 +567,51 @@ void GPSCorrectionManagerTest::_udpOutputSkipsOwnInput()
     verifyExpectedLogMessage();
     corrections.acceptIngress(source.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     QCOMPARE(udpOutputStats(corrections).queuedBytes, quint64(frame.size()));
+}
+
+void GPSCorrectionManagerTest::_udpOutputSkipsHostTargets_data()
+{
+    QTest::addColumn<QString>("target");
+    QNetworkAddressEntry local;
+    for (const QNetworkInterface& interface : QNetworkInterface::allInterfaces()) {
+        for (const QNetworkAddressEntry& entry : interface.addressEntries()) {
+            if (local.ip().isNull() && entry.ip().protocol() == QAbstractSocket::IPv4Protocol &&
+                !entry.ip().isLoopback() && !entry.broadcast().isNull()) {
+                local = entry;
+            }
+        }
+    }
+    // Rows without a non-loopback IPv4 interface are empty and skipped.
+    const bool hasLocal = !local.ip().isNull();
+    // The IPv4-mapped form of a local address reaches the dual-stack input as the address itself does.
+    QTest::newRow("mapped-local") << (hasLocal ? QStringLiteral("::ffff:") + local.ip().toString() : QString());
+    QTest::newRow("subnet-broadcast") << (hasLocal ? local.broadcast().toString() : QString());
+    QTest::newRow("broadcast") << QStringLiteral("255.255.255.255");
+    QTest::newRow("unspecified-ipv4") << QStringLiteral("0.0.0.0");
+    QTest::newRow("unspecified-ipv6") << QStringLiteral("::");
+}
+
+void GPSCorrectionManagerTest::_udpOutputSkipsHostTargets()
+{
+    QFETCH(QString, target);
+    if (target.isEmpty()) {
+        QSKIP("This host has no non-loopback IPv4 interface");
+    }
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->gpsCorrectionSettings();
+    const quint16 port = unusedPort();
+    QVERIFY(port);
+    configureUdp(saved, settings, port);
+    configureUdpOutput(saved, settings, target, port);
+    GPSCorrectionManager corrections;
+    expectLogMessage("GPS.Corrections.GPSCorrectionManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("own UDP input port")));
+    GPSSettingsBindings::bindCorrections(settings, &corrections);
+    verifyExpectedLogMessage();
+    auto source = corrections.registerSource(GPSCorrectionSource::NTRIP);
+    corrections.acceptIngress(
+        source.event(GPSTestHelpers::buildRtcmFrame(1005, 20), GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    QCOMPARE(udpOutputStats(corrections).queuedBytes, 0ULL);
 }
 
 void GPSCorrectionManagerTest::_udpOutputEndpointChanges_data()

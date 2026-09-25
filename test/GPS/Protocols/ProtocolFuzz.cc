@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstdlib>
 
 #include "Ashtech/AshtechProtocol.h"
@@ -10,6 +11,8 @@
 #include "Support/UnicoreReceiverModel.h"
 #include "UBX/UBXProtocol.h"
 #include "Unicore/UnicoreProtocol.h"
+
+using namespace std::chrono_literals;
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
@@ -87,7 +90,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     QuectelProtocol operationalQuectel(operationalIO(quectelPeer.io()));
     GPSProtocol::GPSConfig survey;
     std::get<GPSBaseStationConfig::SurveyIn>(survey.base.mode).accuracyMeters = 15;
-    std::get<GPSBaseStationConfig::SurveyIn>(survey.base.mode).durationSecs = 60;
+    std::get<GPSBaseStationConfig::SurveyIn>(survey.base.mode).duration = 60s;
     unsigned quectelBaud = 460800;
     if (!operationalQuectel.configure(quectelBaud, fixedMode ? fixed : survey)) {
         std::abort();

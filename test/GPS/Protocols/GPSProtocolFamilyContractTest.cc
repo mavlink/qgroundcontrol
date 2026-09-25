@@ -1,11 +1,12 @@
 #include <array>
-#include <atomic>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <limits>
 #include <memory>
 #include <span>
 #include <stdexcept>
+#include <stop_token>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -27,6 +28,8 @@
 #include "UBX/UBXProtocol.h"
 #include "Unicore/UnicoreProtocol.h"
 #include "UnitTest.h"
+
+using namespace std::chrono_literals;
 
 namespace {
 enum FamilyCapability : uint32_t
@@ -144,17 +147,17 @@ GPSProtocol::GPSConfig validConfig(const ProtocolFamily& family)
         return {};
     }
     if (family.capabilities & SupportsReceiverAveraging) {
-        return {.base = {.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDurationSecs = 60}}};
+        return {.base = {.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDuration = 60s}}};
     }
     if (family.type == GPSType::quectel) {
-        return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 15, .durationSecs = 60}}};
+        return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 15, .duration = 60s}}};
     }
-    return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}}};
+    return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}}};
 }
 
 GPSProtocol::GPSConfig surveyConfig()
 {
-    return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}}};
+    return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}}};
 }
 
 GPSProtocol::GPSConfig fixedConfig()
@@ -197,7 +200,7 @@ std::vector<GPSProtocol::GPSConfig> invalidBaseConfigs()
         add(&GPSBaseStationConfig::SurveyIn::accuracyMeters, value);
     }
     for (int64_t value : std::array<int64_t, 3>{-1, 0, int64_t(UINT32_MAX) + 1}) {
-        add(&GPSBaseStationConfig::SurveyIn::durationSecs, value);
+        add(&GPSBaseStationConfig::SurveyIn::duration, std::chrono::seconds(value));
     }
     valid.base = {};
     invalid.push_back(valid);
@@ -269,13 +272,12 @@ void GPSProtocolFamilyContractTest::_configurationCompletes()
     std::unique_ptr<ScriptedReceiver> receiver;
     GPSProtocolIO io;
     GPSTest::QuectelReceiver quectel(clock);
-    std::atomic_bool stop = false;
     if (family.type == GPSType::quectel) {
         quectel.role = 2;
         io = quectel.io();
     } else {
         model = family.createModel(clock);
-        receiver = std::make_unique<ScriptedReceiver>(stop, model.get());
+        receiver = std::make_unique<ScriptedReceiver>(std::stop_token(), model.get());
         io = receiver->makeIO(makeGPSProtocolTestIO(clock));
     }
     auto protocol = family.createProtocol(std::move(io), position, satellites);
