@@ -23,6 +23,9 @@ private slots:
     void _notificationSupersedesDiscovery_data();
     void _notificationSupersedesDiscovery();
     void _shutdownDuringConnectionTick();
+    void _connectSavedWaitsForReceiver();
+    void _connectSavedKeepsDiscovery_data();
+    void _connectSavedKeepsDiscovery();
 
 private:
     struct Fixture;

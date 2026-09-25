@@ -1,15 +1,18 @@
 #pragma once
 
 #include <chrono>
+#include <functional>
 
 #include <QtCore/QChronoTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "GPSCorrectionSourceRegistration.h"
 #include "GPSNotificationQueue.h"
+#include "GPSRevision.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPConnectionStats.h"
 #include "NTRIPGgaProvider.h"
@@ -72,10 +75,14 @@ public:
         HotReconfigure,       ///< Transport-affecting setting changed while connected; reconnect in place.
     };
 
-    explicit NTRIPManager(QObject* parent = nullptr);
+    /// Position that orders fetched mountpoints by distance; an invalid coordinate keeps the caster's order.
+    using SortPositionProvider = std::function<QGeoCoordinate()>;
+
+    /// Without settings the manager never connects. The settings must outlive the manager.
+    explicit NTRIPManager(NTRIPSettings* settings, QObject* parent = nullptr);
     ~NTRIPManager() override;
 
-    /// Called by GPSManager::init() once SettingsManager is ready and the correction manager is injected.
+    /// Observes and applies the settings; call once the correction manager and providers are injected.
     void init();
 
     ConnectionStatus connectionStatus() const { return _connectionStatus; }
@@ -106,6 +113,8 @@ public:
     void setCorrectionManager(GPSCorrectionManager* manager);
 
     void setGgaPositionProvider(NTRIPGgaProvider::PositionSource source, NTRIPGgaProvider::PositionProvider provider);
+
+    void setSortPositionProvider(SortPositionProvider provider) { _sortPositionProvider = std::move(provider); }
 
     /// Explicit start/retry begins a fresh retry budget; it is a no-op while already active.
     Q_INVOKABLE void startNTRIP();
@@ -182,7 +191,8 @@ private:
     GPSCorrectionSourceRegistration _correctionRegistration;
 
     NTRIPConfiguration _runningConfig;
-    NTRIPSettings* _settings = nullptr;
+    NTRIPSettings* const _settings;
+    SortPositionProvider _sortPositionProvider;
 
     NTRIPSourceTableController _sourceTableController{this};
 
@@ -192,6 +202,6 @@ private:
     int _reconnectAttempts = 0;
     bool _initialized = false;
     bool _shutdown = false;
-    quint64 _stateRevision = 0;
+    GPSRevision _stateRevision;
     GPSNotificationQueue _notifications{this};
 };

@@ -13,6 +13,7 @@
 #include <QtPositioning/QGeoCoordinate>
 
 #include "GPSObservation.h"
+#include "GPSRevision.h"
 
 class NTRIPTransport;
 
@@ -108,5 +109,5 @@ private:
     int _fastRetryCount = 0;
     PositionSource _cachedSource = PositionSource::Auto;
     std::chrono::milliseconds _normalInterval = kDefaultInterval;
-    quint64 _generation = 0;
+    GPSRevision _generation;
 };

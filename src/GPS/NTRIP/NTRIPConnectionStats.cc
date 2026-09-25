@@ -134,15 +134,7 @@ void NTRIPConnectionStats::reset()
     emit messageCountsByIdChanged();
 }
 
-QVariantList NTRIPConnectionStats::messageCountsById() const
+QList<RTCMMessageCount> NTRIPConnectionStats::messageCountsById() const
 {
-    QList<int> ids = _messageCountsById.keys();
-    std::sort(ids.begin(), ids.end());
-
-    QVariantList out;
-    out.reserve(ids.size());
-    for (int id : ids) {
-        out.append(QVariant(QVariantList{id, _messageCountsById.value(id)}));
-    }
-    return out;
+    return rtcmMessageCounts(_messageCountsById);
 }

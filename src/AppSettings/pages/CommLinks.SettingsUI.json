@@ -28,17 +28,6 @@
             ]
         },
         {
-            "component": "NmeaGpsSettings",
-            "sectionName": "NMEA GPS",
-            "keywords": [
-                "nmea",
-                "gps",
-                "serial",
-                "baud rate",
-                "external gps"
-            ]
-        },
-        {
             "heading": "Android Serial",
             "keywords": ["serial", "posix", "uart", "tty", "android"],
             "controls": [

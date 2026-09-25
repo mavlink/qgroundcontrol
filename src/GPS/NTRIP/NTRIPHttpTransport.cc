@@ -68,11 +68,10 @@ NTRIPHttpTransport::~NTRIPHttpTransport()
 
 void NTRIPHttpTransport::start()
 {
-    const QPointer<NTRIPHttpTransport> guard(this);
-    const quint64 attempt = ++_attempt;
+    const auto attempt = _attempt.advance(this);
     _stopTimers();
     _retireSocket();
-    if (!guard || _attempt != attempt) {
+    if (!attempt.isCurrent()) {
         return;
     }
     _stopped = false;
@@ -85,7 +84,7 @@ void NTRIPHttpTransport::start()
 
 void NTRIPHttpTransport::stop()
 {
-    ++_attempt;
+    _attempt.invalidate();
     _stopped = true;
     _stopTimers();
 
@@ -112,14 +111,13 @@ void NTRIPHttpTransport::_retireSocket()
 
 bool NTRIPHttpTransport::_write(const QByteArray& bytes)
 {
-    const QPointer<NTRIPHttpTransport> guard(this);
     const auto socket = _socket;
-    const quint64 attempt = _attempt;
+    const auto attempt = _attempt.current(this);
     if (!socket || _stopped) {
         return false;
     }
     const qint64 accepted = socket->write(bytes);
-    if (!guard || _stopped || _attempt != attempt || !socket || _socket != socket) {
+    if (!attempt.isCurrent() || _stopped || !socket || _socket != socket) {
         return false;
     }
     if (accepted != bytes.size()) {
@@ -140,14 +138,13 @@ void NTRIPHttpTransport::_sendHttpRequest()
         _fail(NTRIPError::InvalidConfig, request.error);
         return;
     }
-    const QPointer<NTRIPHttpTransport> guard(this);
     const auto socket = _socket;
-    const quint64 attempt = _attempt;
+    const auto attempt = _attempt.current(this);
     if (request.credentialsInClear) {
         qCWarning(NTRIPHttpTransportLog) << "Sending credentials without TLS — data is not encrypted";
         emit plaintextCredentialsWarning();
     }
-    if (!guard || _stopped || _attempt != attempt || !socket || _socket != socket || !_write(request.bytes)) {
+    if (!attempt.isCurrent() || _stopped || !socket || _socket != socket || !_write(request.bytes)) {
         return;
     }
     qCDebug(NTRIPHttpTransportLog) << "HTTP request queued for mount:" << _config.mountpoint;
@@ -166,14 +163,13 @@ void NTRIPHttpTransport::_fail(NTRIPError code, const QString& msg, std::chrono:
         _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
         return;
     }
-    const QPointer<NTRIPHttpTransport> guard(this);
     const auto socket = _socket;
-    const quint64 attempt = _attempt;
+    const auto attempt = _attempt.current(this);
     // Abort may synchronously emit disconnected.
     _stopped = true;
     _stopTimers();
     emit error(NTRIPFailure{code, msg, retryAfter});
-    if (guard && _attempt == attempt && socket && _socket == socket) {
+    if (attempt.isCurrent() && socket && _socket == socket) {
         socket->abort();
     }
 }
@@ -195,13 +191,13 @@ void NTRIPHttpTransport::_connect()
     _httpDecoder.reset();
     _reading = false;
     _rtcmDecoder.reset();
-    const quint64 attempt = _attempt;
+    const auto attempt = _attempt.current(this);
 
     if (_config.useTls) {
         QSslSocket* sslSocket = new QSslSocket(this);
         _socket = sslSocket;
         connect(sslSocket, &QSslSocket::sslErrors, this, [this, sslSocket, attempt](const QList<QSslError>& errors) {
-            if (_stopped || _attempt != attempt || _socket != sslSocket) {
+            if (!attempt.isCurrent() || _stopped || _socket != sslSocket) {
                 return;
             }
             QStringList msgs;
@@ -230,9 +226,8 @@ void NTRIPHttpTransport::_connect()
     _socket->setReadBufferSize(65536);
 
     const auto socket = _socket;
-    const QPointer<NTRIPHttpTransport> guard(this);
-    const auto current = [this, guard, socket, attempt]() {
-        return guard && socket && _socket == socket && !_stopped && _attempt == attempt;
+    const auto current = [this, socket, attempt]() {
+        return attempt.isCurrent() && socket && _socket == socket && !_stopped;
     };
     connect(_socket, &QTcpSocket::errorOccurred, this, [this, current](QAbstractSocket::SocketError code) {
         if (!current()) {
@@ -284,8 +279,7 @@ void NTRIPHttpTransport::_connect()
 
 void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtMs)
 {
-    const QPointer<NTRIPHttpTransport> guard(this);
-    const quint64 attempt = _attempt;
+    const auto attempt = _attempt.current(this);
     for (char ch : buffer) {
         if (_stopped) {
             return;
@@ -301,7 +295,7 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtM
                 _validFrameWatchdogTimer.start();
             }
             emit correctionFrameReceived(*result);
-            if (!guard || _stopped || _attempt != attempt) {
+            if (!attempt.isCurrent() || _stopped) {
                 return;
             }
             if (!result->valid) {
@@ -321,11 +315,10 @@ void NTRIPHttpTransport::_readBytes()
     if (_stopped || !_socket || _reading) {
         return;
     }
-    const QPointer<NTRIPHttpTransport> guard(this);
     const auto socket = _socket;
-    const quint64 attempt = _attempt;
-    const auto current = [this, guard, socket, attempt]() {
-        return guard && !_stopped && _attempt == attempt && socket && _socket == socket;
+    const auto attempt = _attempt.current(this);
+    const auto current = [this, socket, attempt]() {
+        return attempt.isCurrent() && !_stopped && socket && _socket == socket;
     };
     _reading = true;
     while (current() && socket->bytesAvailable() > 0) {
@@ -336,7 +329,7 @@ void NTRIPHttpTransport::_readBytes()
         }
         _processHttpBytes(bytes, receivedAtMs);
     }
-    if (guard && _attempt == attempt) {
+    if (attempt.isCurrent()) {
         _reading = false;
         if (current() && socket->state() == QAbstractSocket::UnconnectedState) {
             _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
@@ -353,9 +346,8 @@ void NTRIPHttpTransport::_processHttpBytes(QByteArrayView bytes, qint64 received
 
 void NTRIPHttpTransport::_publishHttpResult(const NTRIPHttpDecoder::Result& result, qint64 receivedAtMs)
 {
-    const QPointer<NTRIPHttpTransport> guard(this);
-    const quint64 attempt = _attempt;
-    const auto current = [this, guard, attempt]() { return guard && !_stopped && _attempt == attempt; };
+    const auto attempt = _attempt.current(this);
+    const auto current = [this, attempt]() { return attempt.isCurrent() && !_stopped; };
     if (result.connected) {
         _connectTimeoutTimer.stop();
         emit connected();
@@ -387,10 +379,9 @@ void NTRIPHttpTransport::_finishResponse()
     if (_reading) {
         return;
     }
-    const QPointer<NTRIPHttpTransport> guard(this);
-    const quint64 attempt = _attempt;
+    const auto attempt = _attempt.current(this);
     _readBytes();
-    if (guard && !_stopped && _attempt == attempt) {
+    if (attempt.isCurrent() && !_stopped) {
         _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
     }
 }

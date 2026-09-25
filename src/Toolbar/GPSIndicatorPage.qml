@@ -149,7 +149,7 @@ ToolIndicatorPage {
                 Layout.minimumWidth: 0
                 receiver: root._receiver
                 showWhenDisconnected: !root._vehicleGps
-                disconnectedText: qsTr("No RTK receiver connected. Expand for settings.")
+                disconnectedText: qsTr("No GNSS receiver connected. Expand for settings.")
             }
 
             GcsPositionStatus {

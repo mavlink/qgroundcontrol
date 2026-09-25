@@ -4,15 +4,16 @@
 #include <functional>
 #include <optional>
 
+#include <QtCore/QList>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
-#include <QtCore/QVariantList>
 
 #include "GPSCorrectionDiagnostics.h"
 #include "GPSCorrectionFrame.h"
 #include "GPSCorrectionLedger.h"
 #include "GPSCorrectionSelector.h"
 #include "GPSCorrectionSourceRegistration.h"
+#include "GPSRevision.h"
 
 /// Selects one correction stream and submits complete frames to injected outputs.
 /// All calls and sink callbacks run on the owning thread. Submission is not receiver acknowledgement.
@@ -91,9 +92,9 @@ public:
 
     const QList<GPSCorrectionEvent>& events() const { return _ledger.events(); }
 
-    QVariantList sourceDiagnostics() const;
-    QVariantList sourceInstanceDiagnostics() const;
-    QVariantList destinationDiagnostics() const;
+    QList<GPSCorrectionSourceDiagnostic> sourceDiagnostics() const;
+    QList<GPSCorrectionStreamDiagnostic> sourceInstanceDiagnostics() const;
+    QList<GPSCorrectionDestinationDiagnostic> destinationDiagnostics() const;
 
     static constexpr qint64 FRESHNESS_TIMEOUT_MS = GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS;
     static constexpr qint64 SWITCH_HOLD_DOWN_MS = GPSCorrectionSelector::SWITCH_HOLD_DOWN_MS;
@@ -120,7 +121,7 @@ private:
     GPSCorrectionLedger _ledger;
     std::array<QString, 4> _configuredInstances;
     QMap<QString, Output> _sinks;
-    quint64 _revision = 0;
+    GPSRevision _revision;
     bool _shutdown = false;
     bool _submitting = false;
 };

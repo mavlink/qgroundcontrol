@@ -73,84 +73,10 @@ void NTRIPMountpoint::updateDistance(const QGeoCoordinate& from)
 // NTRIPSourceTableModel
 // ---------------------------------------------------------------------------
 
-NTRIPSourceTableModel::NTRIPSourceTableModel(QObject* parent) : QAbstractListModel(parent) {}
-
-int NTRIPSourceTableModel::rowCount(const QModelIndex& parent) const
-{
-    return parent.isValid() ? 0 : count();
-}
-
-QVariant NTRIPSourceTableModel::data(const QModelIndex& index, int role) const
-{
-    if (!index.isValid() || index.model() != this || index.column() != 0 || index.row() < 0 ||
-        index.row() >= _mountpoints.size()) {
-        return {};
-    }
-    const NTRIPMountpoint& mp = _mountpoints.at(index.row());
-    switch (static_cast<Roles>(role)) {
-        case MountpointRole:
-            return mp.mountpoint;
-        case IdentifierRole:
-            return mp.identifier;
-        case FormatRole:
-            return mp.format;
-        case FormatDetailsRole:
-            return mp.formatDetails;
-        case CarrierRole:
-            return mp.carrier;
-        case NavSystemRole:
-            return mp.navSystem;
-        case NetworkRole:
-            return mp.network;
-        case CountryRole:
-            return mp.country;
-        case LatitudeRole:
-            return mp.latitude;
-        case LongitudeRole:
-            return mp.longitude;
-        case NmeaRole:
-            return mp.nmea;
-        case SolutionRole:
-            return mp.solution;
-        case GeneratorRole:
-            return mp.generator;
-        case CompressionRole:
-            return mp.compression;
-        case AuthenticationRole:
-            return mp.authentication;
-        case FeeRole:
-            return mp.fee;
-        case BitrateRole:
-            return mp.bitrate;
-        case DistanceKmRole:
-            return mp.distanceKm;
-    }
-    return {};
-}
-
-QHash<int, QByteArray> NTRIPSourceTableModel::roleNames() const
-{
-    return {
-        {MountpointRole, "mountpoint"},
-        {IdentifierRole, "identifier"},
-        {FormatRole, "format"},
-        {FormatDetailsRole, "formatDetails"},
-        {CarrierRole, "carrier"},
-        {NavSystemRole, "navSystem"},
-        {NetworkRole, "network"},
-        {CountryRole, "country"},
-        {LatitudeRole, "latitude"},
-        {LongitudeRole, "longitude"},
-        {NmeaRole, "nmea"},
-        {SolutionRole, "solution"},
-        {GeneratorRole, "generator"},
-        {CompressionRole, "compression"},
-        {AuthenticationRole, "authentication"},
-        {FeeRole, "fee"},
-        {BitrateRole, "bitrate"},
-        {DistanceKmRole, "distanceKm"},
-    };
-}
+// The base only records the address of the rows; it reads them after construction.
+NTRIPSourceTableModel::NTRIPSourceTableModel(QObject* parent)
+    : QRangeModel(&_mountpoints, parent)
+{}
 
 void NTRIPSourceTableModel::parseSourceTable(const QString& raw, const QGeoCoordinate& from)
 {
@@ -190,7 +116,7 @@ void NTRIPSourceTableModel::updateDistances(const QGeoCoordinate& from)
             const double previous = _mountpoints.first().distanceKm;
             _mountpoints.first().updateDistance(from);
             if (previous != _mountpoints.first().distanceKm) {
-                emit dataChanged(index(0), index(0), {DistanceKmRole});
+                emit dataChanged(index(0, 0), index(0, 0), {DistanceKmRole});
             }
             return;
         }

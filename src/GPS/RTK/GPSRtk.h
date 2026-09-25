@@ -7,7 +7,6 @@
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
-#include <QtCore/QVariantMap>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "GPSCorrectionSourceRegistration.h"
@@ -16,7 +15,9 @@
 #include "GPSObservation.h"
 #include "GPSPositionSourceRegistration.h"
 #include "GPSProvider.h"
+#include "GPSReceiverDescriptor.h"
 
+class AutoConnectSettings;
 class GPSRTKFactGroup;
 class GPSCorrectionManager;
 class GPSPositionService;
@@ -47,7 +48,8 @@ class GPSRtk : public QObject
     Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY receiverChanged)
     Q_PROPERTY(QGeoCoordinate basePosition READ basePosition NOTIFY basePositionChanged)
     Q_PROPERTY(bool basePositionFinal READ basePositionFinal NOTIFY basePositionChanged)
-    Q_PROPERTY(QVariantMap activePresentation READ activePresentation NOTIFY receiverChanged)
+    Q_PROPERTY(GPSReceiverPresentation activePresentation READ activePresentation NOTIFY receiverChanged)
+    Q_PROPERTY(ReceiverRole activeRole READ activeRole NOTIFY receiverChanged)
 
     friend class GPSRtkTest;
     friend class RTKConnectionPolicy;
@@ -59,10 +61,21 @@ public:
     {
         Serial = 0,
         Tcp = 1,
+        Udp = 2,
     };
     Q_ENUM(ConnectionType)
 
-    explicit GPSRtk(QObject* parent = nullptr);
+    /// Values of RTKSettings::receiverRole. Only a configured base is written to by QGroundControl.
+    enum ReceiverRole
+    {
+        PositionOnly = 0,
+        Passive = 1,
+        ConfiguredBase = 2,
+    };
+    Q_ENUM(ReceiverRole)
+
+    /// The settings must outlive the receiver.
+    GPSRtk(RTKSettings* settings, AutoConnectSettings* autoConnectSettings, QObject* parent = nullptr);
     ~GPSRtk();
 
 #ifndef QGC_NO_SERIAL_LINK
@@ -75,9 +88,10 @@ public:
     /// Latest receiver solution that passes the consumer's gates; empty without a fresh fix.
     std::optional<GPSObservation> acceptedPositionObservation(GPSObservation::PositionUse use) const;
     /// Synchronous lifecycle observers may stop, replace, or delete this receiver. Superseded attempts return false.
+    /// A passive @a type forwards the receiver's RTCM output unless @a role is PositionOnly.
     bool connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory,
-                         const QString& sourceInstance = {}, uint32_t baudRate = 0,
-                         bool allowPersistentChanges = false);
+                         const QString& sourceInstance = {}, uint32_t baudRate = 0, bool allowPersistentChanges = false,
+                         std::optional<ReceiverRole> role = std::nullopt);
     Q_INVOKABLE bool connectConfiguredGPS(bool allowPersistentChanges = false);
     Q_INVOKABLE void disconnectConfiguredGPS();
     /// Retires immediately and ends retries; the worker retains its transport reservation until cancellation completes.
@@ -113,10 +127,13 @@ public:
     /// basePosition is the fixed or completed survey position rather than a survey in progress.
     bool basePositionFinal() const { return _session.basePosition.has_value(); }
 
-    Q_INVOKABLE QVariantMap capabilitiesForManufacturer(int manufacturer) const;
+    /// Editable settings for a role; configured bases also depend on the manufacturer.
+    Q_INVOKABLE GPSReceiverPresentation capabilitiesFor(int role, int manufacturer) const;
 
     /// Presentation capabilities of the connected receiver family.
-    QVariantMap activePresentation() const;
+    GPSReceiverPresentation activePresentation() const;
+
+    ReceiverRole activeRole() const { return _session.role; }
 
     static std::optional<GPSType> typeForManufacturer(int manufacturer);
     static int manufacturerForType(GPSType type);
@@ -145,6 +162,7 @@ private:
         QString endpoint;
         QString identity;
         int manufacturer = 0;
+        ReceiverRole role = ConfiguredBase;
         int baseMode = -1;
         // Fixed or surveyed antenna position; base receivers then report only a time fix.
         std::optional<std::pair<GPSEllipsoidPosition, double>> basePosition;
@@ -163,9 +181,12 @@ private:
     bool _connectSerialGPS(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges);
 #endif
     bool _connectTcpGPS(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges);
-    bool _connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory, const QString& sourceInstance,
-                          uint32_t baudRate, bool allowPersistentChanges, const QString& serialDevice = {},
-                          const QString& endpoint = {});
+    bool _connectUdpGPS(quint16 port, GPSType type);
+    bool _connectReceiver(GPSType type, ReceiverRole role, GPSProvider::TransportFactory transportFactory,
+                          const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
+                          const QString& serialDevice = {}, const QString& endpoint = {});
+    /// The saved role applies to passive receivers; every other type is a configured base.
+    ReceiverRole _roleFor(GPSType type) const;
     void _disconnect(bool clearError);
     void _endSession(GPSConnectionError error, const QString& detail, bool portRemoved);
     void _retireSession();
@@ -174,6 +195,7 @@ private:
     void _stageDisconnectedFacts();
     void _notifyReceiverChanged();
 
+    RTKSettings* const _settings;
     ReceiverSession _session;
     // Fact setters can still be unwinding after a notification deletes their receiver owner.
     std::shared_ptr<GPSRTKFactGroup> _gpsRtkFactGroup;

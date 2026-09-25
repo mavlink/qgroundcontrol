@@ -10,14 +10,17 @@
 #include "GPSRtk.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
-#include "NMEASourceManager.h"
 #include "NTRIPGgaProvider.h"
 #include "NTRIPManager.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "RTKConnectionPolicy.h"
+#include "RTKSettings.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#ifndef QGC_NO_SERIAL_LINK
+#include "SerialPortManager.h"
+#endif
 #include "VehicleGPSFactGroup.h"
 #include "VehicleLinkManager.h"
 
@@ -63,12 +66,16 @@ PositionResult ggaPosition(const std::optional<GPSObservation>& observation, con
 GPSManager::GPSManager(QObject* parent)
     : QObject(parent)
     , _corrections(new GPSCorrectionManager(this))
-    , _gpsRtk(new GPSRtk(this))
-    , _ntripManager(new NTRIPManager(this))
+    , _gpsRtk(new GPSRtk(SettingsManager::instance()->rtkSettings(), SettingsManager::instance()->autoConnectSettings(),
+                         this))
+    , _ntripManager(new NTRIPManager(SettingsManager::instance()->ntripSettings(), this))
 {
     qCDebug(GPSManagerLog) << this;
     _corrections->rtcmMavlink()->setOutputProvider(createGpsMavlinkOutputProvider());
     _gpsRtk->setCorrectionManager(_corrections);
+#ifndef QGC_NO_SERIAL_LINK
+    _gpsRtk->setSerialPortManager(SerialPortManager::instance());
+#endif
     _ntripManager->setCorrectionManager(_corrections);
 }
 
@@ -83,7 +90,7 @@ GPSManager* GPSManager::instance()
     return _gpsManager();
 }
 
-void GPSManager::_configureGgaProviders()
+void GPSManager::_configureNtripProviders()
 {
     using Source = NTRIPGgaProvider::PositionSource;
     _ntripManager->setGgaPositionProvider(Source::VehicleGPS, []() -> PositionResult {
@@ -103,6 +110,11 @@ void GPSManager::_configureGgaProviders()
         return ggaPosition(_gpsRtk->acceptedPositionObservation(GPSObservation::PositionUse::Gga),
                            QStringLiteral("RTK Receiver"));
     });
+    _ntripManager->setSortPositionProvider([]() {
+        auto* manager = MultiVehicleManager::instance();
+        Vehicle* vehicle = manager ? manager->activeVehicle() : nullptr;
+        return vehicle ? vehicle->coordinate() : QGeoCoordinate();
+    });
     _ntripManager->setGgaPositionProvider(Source::GCSPosition, []() -> PositionResult {
         auto* manager = QGCPositionManager::instance();
         return manager ? ggaPosition(manager->acceptedObservation(GPSObservation::PositionUse::Gga),
@@ -116,12 +128,11 @@ void GPSManager::init()
     if (_connectionTimer || _shutdown) {
         return;
     }
-    _configureGgaProviders();
+    _configureNtripProviders();
     _gpsRtk->setPositionService(QGCPositionManager::instance());
     _corrections->init(SettingsManager::instance()->gpsCorrectionSettings());
     _ntripManager->init();
-    auto* settings = SettingsManager::instance()->autoConnectSettings();
-    _nmeaSources = new NMEASourceManager(settings, QGCPositionManager::instance(), this);
+    _startupConnectPending = SettingsManager::instance()->rtkSettings()->connectOnStartup()->rawValue().toBool();
     _connectionTimer = new QTimer(this);
     _connectionTimer->setInterval(1000);
     connect(_connectionTimer, &QTimer::timeout, this, &GPSManager::_updateConnections);
@@ -132,12 +143,11 @@ void GPSManager::init()
 
 void GPSManager::_updateConnections()
 {
-    if (_shutdown || !_nmeaSources || LinkManager::instance()->connectionsSuspended()) {
+    if (_shutdown || LinkManager::instance()->connectionsSuspended()) {
         return;
     }
-    const QPointer<GPSManager> guard(this);
-    _nmeaSources->update();
-    if (!guard || _shutdown) {
+    if (std::exchange(_startupConnectPending, false)) {
+        _gpsRtk->connectionPolicy()->connectSaved();
         return;
     }
     _gpsRtk->connectionPolicy()->update();
@@ -152,9 +162,6 @@ void GPSManager::shutdown()
     qCDebug(GPSManagerLog) << "Shutting down GPS sources and correction outputs";
     if (_connectionTimer) {
         _connectionTimer->stop();
-    }
-    if (_nmeaSources) {
-        _nmeaSources->stop();
     }
     _gpsRtk->disconnectGPS();
     _ntripManager->shutdown();

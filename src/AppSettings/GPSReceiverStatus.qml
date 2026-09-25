@@ -3,23 +3,24 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.GPS
 
-/// Live RTK receiver status, shared by the GPS indicator and the RTK settings page.
+/// Live GNSS receiver status, shared by the GPS indicator and the receiver settings page.
 SettingsGroupLayout {
     id: root
 
     property var receiver: QGroundControl.gpsManager.gpsRtk
     /// Keep the group visible without a receiver, showing disconnectedText.
     property bool showWhenDisconnected: false
-    property string disconnectedText: qsTr("No RTK receiver connected.")
+    property string disconnectedText: qsTr("No GNSS receiver connected.")
 
     readonly property var _facts: root.receiver.facts
     readonly property bool _connected: root._facts.connected.value
-    readonly property var _presentation: root.receiver.activePresentation
+    readonly property gpsReceiverPresentation _presentation: root.receiver.activePresentation
     readonly property bool _surveyConnected: root.receiver.activeBaseMode === BaseModeDefinition.BaseSurveyIn
     readonly property string _na: qsTr("N/A", "No data to display")
 
-    heading: qsTr("RTK GPS Status")
+    heading: qsTr("GNSS Receiver Status")
     visible: root._connected || root.receiver.hasReceiver || root.receiver.reconnecting || root.showWhenDisconnected
 
     QGCLabel {
@@ -32,7 +33,8 @@ SettingsGroupLayout {
               ? (root.receiver.hasReceiver ? qsTr("Connecting to receiver...")
                  : root.receiver.reconnecting ? qsTr("Receiver connection lost. Reconnecting...")
                  : root.disconnectedText)
-              : root._presentation.passive ? qsTr("Passive RTCM/NMEA input connected")
+              : root.receiver.activeRole === GPSRtk.PositionOnly ? qsTr("Position-only receiver connected")
+              : root.receiver.activeRole === GPSRtk.Passive ? qsTr("Passive RTCM/NMEA input connected")
               : root.receiver.activeBaseMode === BaseModeDefinition.BaseReceiverAveraging
                 ? qsTr("Receiver-managed averaging — no accuracy guarantee")
               : root.receiver.activeBaseMode === BaseModeDefinition.BaseFixed ? qsTr("Fixed base position")

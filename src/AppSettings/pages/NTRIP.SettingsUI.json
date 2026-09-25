@@ -94,13 +94,13 @@
         },
         {
             "component": "GPSReceiverStatus",
-            "sectionName": "RTK GPS Status",
-            "keywords": ["rtk", "base station", "receiver", "status", "fix", "satellites", "jamming", "spoofing"]
+            "sectionName": "GNSS Receiver Status",
+            "keywords": ["rtk", "gnss", "gps", "base station", "receiver", "status", "fix", "satellites", "jamming", "spoofing"]
         },
         {
             "component": "GPSReceiverSettings",
-            "sectionName": "RTK GPS Receiver",
-            "keywords": ["rtk", "base station", "receiver", "survey-in", "fixed position", "u-blox", "septentrio", "serial", "tcp"]
+            "sectionName": "GNSS Receiver",
+            "keywords": ["rtk", "gnss", "gps", "nmea", "external gps", "base station", "receiver", "role", "passive", "position only", "survey-in", "fixed position", "u-blox", "septentrio", "serial", "tcp", "udp", "startup"]
         },
         {
             "component": "CorrectionRoutingSettings",

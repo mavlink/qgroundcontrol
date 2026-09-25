@@ -61,15 +61,18 @@ public:
         emit receiverChanged();
     }
 
-    Q_INVOKABLE QVariantMap capabilitiesForManufacturer(int manufacturer) const
+    Q_INVOKABLE GPSReceiverPresentation capabilitiesFor(int role, int manufacturer) const
     {
-        return gpsReceiverPresentation(manufacturer);
+        return gpsReceiverPresentation(role == GPSRtk::ConfiguredBase ? manufacturer
+                                                                      : GPSRtk::manufacturerForType(GPSType::passive));
     }
 
     Q_INVOKABLE bool connectConfiguredGPS(bool allowPersistentChanges = false)
     {
         permissions.append(allowPersistentChanges);
-        selectedType = GPSRtk::typeForManufacturer(_settings->baseReceiverManufacturers()->rawValue().toInt());
+        selectedType = _settings->receiverRole()->rawValue().toInt() == GPSRtk::ConfiguredBase
+                           ? GPSRtk::typeForManufacturer(_settings->baseReceiverManufacturers()->rawValue().toInt())
+                           : std::optional(GPSType::passive);
         selectedMode = _settings->useFixedBasePosition()->rawValue().toInt();
         fixedPosition = {};
         if (selectedMode == static_cast<int>(BaseModeDefinition::Mode::BaseFixed)) {
@@ -115,8 +118,13 @@ struct SettingsFixture
 
     explicit SettingsFixture(int manufacturer)
     {
+        const bool passive = manufacturer == GPSRtk::manufacturerForType(GPSType::passive);
         saved.setFactValue(autoConnect, false);
-        saved.setFactValue(settings->baseReceiverManufacturers(), manufacturer);
+        saved.setFactValue(settings->receiverRole(), passive ? GPSRtk::Passive : GPSRtk::ConfiguredBase);
+        saved.setFactValue(settings->baseReceiverManufacturers(),
+                           passive ? settings->baseReceiverManufacturers()->rawValue() : QVariant(manufacturer));
+        saved.setFactValue(settings->udpPort(), settings->udpPort()->rawValue());
+        saved.setFactValue(settings->connectOnStartup(), false);
         saved.setFactValue(settings->useFixedBasePosition(), 0);
         saved.setFactValue(settings->serialDevice(), QStringLiteral("/test/receiver"));
         saved.setFactValue(settings->serialBaudRate(), 115200);
@@ -369,6 +377,53 @@ void GPSReceiverSettingsTest::_tcpConnectionFields()
     }
     receiver.setConnected(true);
     QVERIFY(!host->isEnabled() && !port->isEnabled());
+}
+
+void GPSReceiverSettingsTest::_roleSelectsFields()
+{
+    SettingsFixture settings(4);
+    ReceiverSettingsController receiver(settings.settings);
+    GPSRTKFactGroup facts;
+    QQmlEngine engine;
+    QString error;
+    auto panel = createPanel(engine, receiver, settings, facts, error);
+    QVERIFY2(panel, qPrintable(error));
+    auto* role = panel->findChild<QQuickItem*>(QStringLiteral("receiverRole"));
+    auto* manufacturer = panel->findChild<QQuickItem*>(QStringLiteral("rtkManufacturer"));
+    auto* survey = panel->findChild<QQuickItem*>(QStringLiteral("rtkSurveyMode"));
+    auto* udpPort = panel->findChild<QQuickItem*>(QStringLiteral("rtkUdpPort"));
+    auto* udpExplanation = panel->findChild<QQuickItem*>(QStringLiteral("rtkUdpExplanation"));
+    auto* device = panel->findChild<QQuickItem*>(QStringLiteral("rtkSerialDevice"));
+    auto* startup = panel->findChild<QQuickItem*>(QStringLiteral("rtkConnectOnStartup"));
+    auto* connect = panel->findChild<QQuickItem*>(QStringLiteral("rtkConnectButton"));
+    QVERIFY(role && manufacturer && survey && udpPort && udpExplanation && device && startup && connect);
+    QVERIFY(role->isVisible() && manufacturer->isVisible() && survey->isVisible());
+    QVERIFY(startup->isVisible());
+    QVERIFY(connect->isEnabled());
+
+    // A receiver QGroundControl does not configure hides every base setting.
+    settings.settings->receiverRole()->setRawValue(GPSRtk::PositionOnly);
+    QVERIFY(!manufacturer->isVisible());
+    QVERIFY(!survey->isVisible());
+    QVERIFY(device->isVisible());
+    QVERIFY(connect->isEnabled());
+
+    settings.settings->connectionType()->setRawValue(GPSRtk::Udp);
+    QVERIFY(udpPort->isVisible() && udpExplanation->isVisible());
+    QVERIFY(!device->isVisible());
+    QVERIFY(connect->isEnabled());
+    QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
+    QCOMPARE(receiver.selectedType, std::optional(GPSType::passive));
+    receiver.setConnected(false);
+
+    // UDP cannot carry base configuration.
+    settings.settings->receiverRole()->setRawValue(GPSRtk::ConfiguredBase);
+    QVERIFY(udpPort->isVisible());
+    QVERIFY(!connect->isEnabled());
+    QVERIFY(udpExplanation->property("text").toString().contains(QStringLiteral("serial or TCP")));
+    settings.settings->connectionType()->setRawValue(GPSRtk::Serial);
+    QVERIFY(!udpPort->isVisible());
+    QVERIFY(connect->isEnabled());
 }
 
 void GPSReceiverSettingsTest::_compactCorrectionsToggle()
@@ -634,8 +689,10 @@ void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
     QVERIFY(QMetaObject::invokeMethod(baud, "activated", Q_ARG(int, 0)));
     QCOMPARE(settings.settings->serialBaudRate()->rawValue().toInt(), 0);
     QCOMPARE(baud->property("currentText").toString(), QCoreApplication::translate("FactSerialPortSettings", "Auto"));
-    settings.settings->baseReceiverManufacturers()->setRawValue(7);
+    // Passive roles need the receiver's existing rate, so Auto is not offered.
+    settings.settings->receiverRole()->setRawValue(GPSRtk::Passive);
     QVERIFY(baud->property("isCustomBaud").toBool());
+    settings.settings->receiverRole()->setRawValue(GPSRtk::ConfiguredBase);
     settings.settings->baseReceiverManufacturers()->setRawValue(4);
     settings.settings->serialBaudRate()->setRawValue(230400);
     receiver.setConnected(true);

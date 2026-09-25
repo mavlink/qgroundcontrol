@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
+import QGroundControl.GPS
 
 SettingsGroupLayout {
     id: root
@@ -22,9 +23,11 @@ SettingsGroupLayout {
 
     readonly property var _serialPortManager: QGroundControl.serialPortManager
 
+    readonly property int role: settings.receiverRole.rawValue
+    readonly property bool configuredBase: role === GPSRtk.ConfiguredBase
     readonly property int manufacturer: settings.baseReceiverManufacturers.rawValue
     readonly property int baseMode: settings.useFixedBasePosition.rawValue
-    readonly property var presentation: receiver.capabilitiesForManufacturer(manufacturer)
+    readonly property gpsReceiverPresentation presentation: receiver.capabilitiesFor(role, manufacturer)
     readonly property bool modeCompatible: presentation.passive
         || (baseMode === BaseModeDefinition.BaseFixed && presentation.rtkBase)
         || (baseMode === BaseModeDefinition.BaseSurveyIn && presentation.surveyIn)
@@ -32,16 +35,23 @@ SettingsGroupLayout {
     // A pending automatic reconnect keeps the saved connection; stop it before editing.
     readonly property bool _active: receiver.hasReceiver || receiver.reconnecting === true
     readonly property bool _editable: !_active
-    readonly property bool _tcp: !receiver.serialSupported || settings.connectionType.rawValue === GPSRtk.Tcp
+    readonly property int _connection: settings.connectionType.rawValue
+    readonly property bool _udp: _connection === GPSRtk.Udp
+    // Platforms without serial links connect a saved serial selection over TCP.
+    readonly property bool _tcp: !_udp && (!receiver.serialSupported || _connection === GPSRtk.Tcp)
+    readonly property bool _serial: !_udp && !_tcp
+    // UDP only receives, so a receiver QGroundControl configures needs serial or TCP.
+    readonly property bool _connectionSupported: !(configuredBase && _udp)
 
     // Consent covers exactly one receiver configuration; changing any part of it revokes consent.
     readonly property string _consentScope: JSON.stringify([
-        manufacturer, baseMode, settings.connectionType.rawValue, settings.serialDevice.rawValue,
-        settings.serialBaudRate.rawValue, settings.tcpHost.rawValue, settings.tcpPort.rawValue
+        role, manufacturer, baseMode, settings.connectionType.rawValue, settings.serialDevice.rawValue,
+        settings.serialBaudRate.rawValue, settings.tcpHost.rawValue, settings.tcpPort.rawValue,
+        settings.udpPort.rawValue
     ])
 
     implicitWidth: ScreenTools.defaultFontPixelWidth * 56
-    heading: qsTr("RTK GPS Settings")
+    heading: qsTr("GNSS Receiver")
 
     on_ConsentScopeChanged: clearConsent()
     onReceiverChanged: clearConsent()
@@ -113,11 +123,35 @@ SettingsGroupLayout {
         }
     }
 
+    ColumnLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.settings.receiverRole.userVisible
+        Explanation { text: root.settings.receiverRole.shortDescription }
+        FactComboBox {
+            objectName: "receiverRole"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            fact: root.settings.receiverRole
+            indexModel: false
+            enabled: root._editable
+        }
+    }
+
+    Explanation {
+        objectName: "receiverRoleExplanation"
+        text: root.role === GPSRtk.PositionOnly
+              ? qsTr("QGroundControl never configures this receiver. Its NMEA output provides the ground station position; RTCM output is ignored.")
+              : root.role === GPSRtk.Passive
+                ? qsTr("QGroundControl never configures this receiver. Its NMEA output provides the ground station position and its RTCM output is forwarded to vehicles. Configure the receiver's output externally and select its existing baud rate. No survey-in status is inferred.")
+                : qsTr("QGroundControl configures a supported receiver as an RTK base station and forwards its RTCM corrections to vehicles.")
+    }
+
     RowLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        // Auto-connect discovers known serial receivers only.
-        visible: root.receiver.serialSupported && !root._tcp && root.autoConnectFact.userVisible
+        // Auto-connect discovers known serial base receivers only.
+        visible: root.configuredBase && root.receiver.serialSupported && root._serial && root.autoConnectFact.userVisible
         Explanation { text: qsTr("Auto-connect known serial receivers") }
         FactCheckBoxSlider {
             text: ""
@@ -129,7 +163,7 @@ SettingsGroupLayout {
     ColumnLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        visible: root.settings.baseReceiverManufacturers.userVisible
+        visible: root.configuredBase && root.settings.baseReceiverManufacturers.userVisible
         Explanation { text: qsTr("Receiver / settings") }
         FactComboBox {
             objectName: "rtkManufacturer"
@@ -149,15 +183,14 @@ SettingsGroupLayout {
             objectName: "rtkConnectionType"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
-            visible: root.receiver.serialSupported
             fact: root.settings.connectionType
             indexModel: false
             enabled: root._editable
         }
         Explanation {
             objectName: "rtkTcpOnly"
-            visible: !root.receiver.serialSupported
-            text: qsTr("TCP (serial receivers are not supported on this platform)")
+            visible: !root.receiver.serialSupported && root._connection === GPSRtk.Serial
+            text: qsTr("Serial receivers are not supported on this platform, so the receiver connects over TCP.")
         }
     }
 
@@ -180,10 +213,26 @@ SettingsGroupLayout {
         text: qsTr("Connect to a receiver's TCP port or a serial-to-TCP bridge. A bridge must already run the receiver link at 115200 baud; QGroundControl cannot change a bridge's rate.")
     }
 
+    SettingField {
+        objectName: "rtkUdpPort"
+        fact: root.settings.udpPort
+        enabled: root._editable
+        visible: root._udp
+    }
+
+    Explanation {
+        objectName: "rtkUdpExplanation"
+        visible: root._udp
+        text: root._connectionSupported
+              ? qsTr("Listens for NMEA/RTCM datagrams on this local port. The first sender is used until it stops sending.")
+              : qsTr("A configured base needs a serial or TCP connection. UDP only receives data.")
+        color: root._connectionSupported ? QGroundControl.globalPalette.text : QGroundControl.globalPalette.warningText
+    }
+
     FactSerialPortSettings {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        visible: root.receiver.serialSupported && !root._tcp
+        visible: root.receiver.serialSupported && root._serial
         deviceFact: root.settings.serialDevice
         baudFact: root.settings.serialBaudRate
         serialPorts: root.serialPorts
@@ -197,15 +246,10 @@ SettingsGroupLayout {
     }
 
     Explanation {
-        visible: root._editable
+        visible: root._editable && root.configuredBase
         text: !root.presentation.specificReceiver
               ? qsTr("Select a specific receiver type and its connection to connect manually. Auto baud detects the rate of configurable receivers.")
               : qsTr("Connect only the selected receiver. USB adapter identity does not identify its GNSS manufacturer. Manual connections disable auto-connect.")
-    }
-
-    Explanation {
-        visible: root.presentation.passive
-        text: qsTr("Passive input never configures the receiver. Configure RTCM/NMEA output externally and select its existing baud rate. No survey-in status is inferred.")
     }
 
     Explanation {
@@ -309,7 +353,7 @@ SettingsGroupLayout {
     RowLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        visible: root.presentation.compactObservations && !root.presentation.passive
+        visible: root.configuredBase && root.presentation.compactObservations
                  && root.settings.compactRtcmCorrections.userVisible
         Explanation { text: root.settings.compactRtcmCorrections.shortDescription }
         FactCheckBoxSlider {
@@ -322,7 +366,7 @@ SettingsGroupLayout {
     }
 
     Explanation {
-        visible: root.presentation.compactObservations && !root.presentation.passive
+        visible: root.configuredBase && root.presentation.compactObservations
                  && root.settings.compactRtcmCorrections.userVisible
         text: qsTr("Uses about a third less correction bandwidth, for example on slow telemetry radios. Doppler is omitted and measurements use lower resolution.")
     }
@@ -375,6 +419,19 @@ SettingsGroupLayout {
         text: qsTr("For this connection only, allow QGroundControl to write requested base role or base-setting changes to receiver flash and restart it. Changes may remain saved even if reconnecting fails. No factory reset is performed. Permission is cleared after each attempt and is never used by auto-connect. To use the receiver as a rover again, restore its role with Quectel QGNSS or $PQTMCFGRCVRMODE,W,1 followed by $PQTMSAVEPAR.")
     }
 
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: root.settings.connectOnStartup.userVisible
+        Explanation { text: root.settings.connectOnStartup.shortDescription }
+        FactCheckBoxSlider {
+            objectName: "rtkConnectOnStartup"
+            text: ""
+            Accessible.name: root.settings.connectOnStartup.shortDescription
+            fact: root.settings.connectOnStartup
+        }
+    }
+
     QGCButton {
         objectName: "rtkConnectButton"
         Layout.fillWidth: true
@@ -382,7 +439,8 @@ SettingsGroupLayout {
         wrapMode: Text.Wrap
         focusPolicy: Qt.StrongFocus
         text: root._active ? qsTr("Disconnect") : qsTr("Connect")
-        enabled: root._active || (root.presentation.specificReceiver && root.modeCompatible)
+        enabled: root._active
+                 || (root.presentation.specificReceiver && root.modeCompatible && root._connectionSupported)
         onClicked: {
             if (root._active) {
                 root.clearConsent()

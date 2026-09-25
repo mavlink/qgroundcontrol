@@ -8,3 +8,6 @@ add_qgc_test(GPSSatelliteStoreTest LABELS Unit)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSAcceptedStateTest.cc)
 add_qgc_test(GPSAcceptedStateTest LABELS Unit GPS)
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSRevisionTest.cc)
+add_qgc_test(GPSRevisionTest LABELS Unit GPS)

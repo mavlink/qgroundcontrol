@@ -6,6 +6,7 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEvent>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QSemaphore>
 #include <QtCore/QThread>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
@@ -227,9 +228,9 @@ void GPSProviderTest::_transportLifetimeStaysOnWorker()
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::shortMs()));
-    QCOMPARE(trace.constructedOn, &provider);
-    QCOMPARE(trace.openedOn, &provider);
-    QCOMPARE(trace.destroyedOn, &provider);
+    QVERIFY(trace.constructedOn && trace.constructedOn != QThread::currentThread());
+    QCOMPARE(trace.openedOn, trace.constructedOn);
+    QCOMPARE(trace.destroyedOn, trace.constructedOn);
     QVERIFY(trace.factoryAliveDuringDestruction);
     QVERIFY(trace.factoryLifetime.expired());
     QCOMPARE(errors.size(), cancelInOpen ? 0 : 1);
@@ -275,6 +276,46 @@ void GPSProviderTest::_cancelledProviderDoesNotCreateTransport()
     QVERIFY(provider.wait(TestTimeout::shortMs()));
     QVERIFY(!created);
     QVERIFY(errors.isEmpty());
+}
+
+void GPSProviderTest::_workerLifecycle()
+{
+    QSemaphore entered;
+    QSemaphore idle;
+    QThread* sessionThread = nullptr;
+    bool tokenStopped = false;
+    bool interruptionRequested = false;
+    auto provider = std::make_unique<GPSProvider>(
+        [&](const std::atomic_bool& requestStop) {
+            sessionThread = QThread::currentThread();
+            entered.release();
+            while (!requestStop || !QThread::currentThread()->isInterruptionRequested()) {
+                (void) idle.tryAcquire(1, 10);
+            }
+            // A stop request reaches the worker both as the transport token and as a Qt interruption request.
+            tokenStopped = requestStop;
+            interruptionRequested = QThread::currentThread()->isInterruptionRequested();
+            return std::unique_ptr<GPSTransport>{};
+        },
+        GPSType::ublox, GPSReceiverConfig{});
+    QVERIFY(provider->wait(0));
+    QVERIFY(!provider->isRunning());
+    QSignalSpy finished(provider.get(), &GPSProvider::finished);
+    provider->start();
+    provider->start();
+    QVERIFY(entered.tryAcquire(1, TestTimeout::shortMs()));
+    QVERIFY(provider->isRunning());
+    QVERIFY(sessionThread != QThread::currentThread());
+    QCOMPARE(provider->thread(), QThread::currentThread());
+    QVERIFY(!provider->wait(1));
+    provider->stop();
+    QVERIFY(provider->wait(TestTimeout::shortMs()));
+    QVERIFY(tokenStopped);
+    QVERIFY(interruptionRequested);
+    QVERIFY(finished.isEmpty());
+    QTRY_COMPARE_WITH_TIMEOUT(finished.size(), 1, TestTimeout::shortMs());
+    QVERIFY(!provider->isRunning());
+    provider.reset();
 }
 
 UT_REGISTER_TEST(GPSProviderTest, TestLabel::Unit)
@@ -574,9 +615,9 @@ void GPSProviderTest::_cancelledFactoryDoesNotOpenTransport()
     QSignalSpy errors(&provider, &GPSProvider::connectionError);
     provider.start();
     QVERIFY(provider.wait(TestTimeout::shortMs()));
-    QCOMPARE(trace.constructedOn, &provider);
+    QVERIFY(trace.constructedOn && trace.constructedOn != QThread::currentThread());
     QVERIFY(!trace.openedOn);
-    QCOMPARE(trace.destroyedOn, &provider);
+    QCOMPARE(trace.destroyedOn, trace.constructedOn);
     QVERIFY(errors.isEmpty());
 }
 

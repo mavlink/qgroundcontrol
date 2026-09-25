@@ -12,30 +12,6 @@
 QGC_LOGGING_CATEGORY(GPSCorrectionRouterLog, "GPS.Corrections.GPSCorrectionRouter")
 QGC_LOGGING_CATEGORY(GPSCorrectionSelectorLog, "GPS.Corrections.GPSCorrectionSelector")
 
-namespace {
-QVariantMap admissionDiagnostics(const GPSCorrectionLedger::AdmissionCounters& counters, QVariantMap details)
-{
-    details.insert({
-        {QStringLiteral("queuedFrames"), QVariant::fromValue(counters.queuedFrames)},
-        {QStringLiteral("queuedBytes"), QVariant::fromValue(counters.queuedBytes)},
-        {QStringLiteral("droppedFrames"), QVariant::fromValue(counters.droppedFrames)},
-        {QStringLiteral("droppedBytes"), QVariant::fromValue(counters.droppedBytes)},
-    });
-    return details;
-}
-
-/// [messageId, count] pairs in ascending ID order; ID 0 is an unidentified frame.
-QVariantList messageCountDiagnostics(const QMap<int, quint64>& counts)
-{
-    QVariantList result;
-    result.reserve(counts.size());
-    for (auto it = counts.cbegin(); it != counts.cend(); ++it) {
-        result.append(QVariant(QVariantList{it.key(), QVariant::fromValue(it.value())}));
-    }
-    return result;
-}
-}  // namespace
-
 GPSCorrectionRouter::GPSCorrectionRouter(QObject* parent, Clock clock)
     : QObject(parent)
     , _clock(clock ? std::move(clock) : Clock(GPSCorrectionFrame::monotonicNowMs))
@@ -73,57 +49,64 @@ void GPSCorrectionRouter::endSourceSession(GPSCorrectionSource source)
     if (index < 0) {
         return;
     }
-    ++_revision;
+    _revision.invalidate();
     _ledger.endSource(source);
     _selector.retire(source, _clock());
 }
 
-QVariantList GPSCorrectionRouter::sourceDiagnostics() const
+QList<GPSCorrectionSourceDiagnostic> GPSCorrectionRouter::sourceDiagnostics() const
 {
     const qint64 nowMs = _clock();
-    QVariantList result;
+    QList<GPSCorrectionSourceDiagnostic> result;
     const auto& statistics = _ledger.statistics();
+    result.reserve(static_cast<qsizetype>(statistics.size()));
     for (int index = 0; index < static_cast<int>(statistics.size()); ++index) {
         const auto& stats = statistics[index];
         const qint64 age = GPSCorrectionFrame::ageMs(stats.lastValidMs, nowMs);
-        // Freshness is published as a state rather than an age so unchanged diagnostics stay equal.
-        result.append(admissionDiagnostics(
-            stats, {{QStringLiteral("source"), index},
-                    {QStringLiteral("active"), stats.active},
-                    {QStringLiteral("receivedFrames"), QVariant::fromValue(stats.receivedFrames)},
-                    {QStringLiteral("selectedFrames"), QVariant::fromValue(stats.selectedFrames)},
-                    {QStringLiteral("validatedFrames"), QVariant::fromValue(stats.validatedFrames)},
-                    {QStringLiteral("receivedBytesPerSecond"), QVariant::fromValue(stats.receivedBytesPerSecond)},
-                    {QStringLiteral("messageCounts"), messageCountDiagnostics(stats.messageCounts)},
-                    {QStringLiteral("usable"),
-                     stats.active && age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS}}));
+        result.append({
+            .source = index,
+            .active = stats.active,
+            .usable = stats.active && age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS,
+            .receivedFrames = stats.receivedFrames,
+            .validatedFrames = stats.validatedFrames,
+            .selectedFrames = stats.selectedFrames,
+            .receivedBytesPerSecond = stats.receivedBytesPerSecond,
+            .queuedFrames = stats.queuedFrames,
+            .queuedBytes = stats.queuedBytes,
+            .droppedFrames = stats.droppedFrames,
+            .droppedBytes = stats.droppedBytes,
+            .messageCounts = rtcmMessageCounts(stats.messageCounts),
+        });
     }
     return result;
 }
 
-QVariantList GPSCorrectionRouter::sourceInstanceDiagnostics() const
+QList<GPSCorrectionStreamDiagnostic> GPSCorrectionRouter::sourceInstanceDiagnostics() const
 {
     const qint64 nowMs = _clock();
-    QVariantList result;
+    QList<GPSCorrectionStreamDiagnostic> result;
     const auto active = _selector.activeIdentity(nowMs);
     for (const auto& source : _selector.sources()) {
         const qint64 age = GPSCorrectionFrame::ageMs(source.lastRoutableMs, nowMs);
         const bool usable = age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS;
-        const bool selected = usable && source.identity == active;
-        result.append(QVariantMap{{QStringLiteral("source"), static_cast<int>(source.identity.category)},
-                                  {QStringLiteral("instanceId"), source.identity.instance},
-                                  {QStringLiteral("active"), true},
-                                  {QStringLiteral("usable"), usable},
-                                  {QStringLiteral("selected"), selected}});
+        result.append({.source = static_cast<int>(source.identity.category),
+                       .instanceId = source.identity.instance,
+                       .active = true,
+                       .usable = usable,
+                       .selected = usable && source.identity == active});
     }
     return result;
 }
 
-QVariantList GPSCorrectionRouter::destinationDiagnostics() const
+QList<GPSCorrectionDestinationDiagnostic> GPSCorrectionRouter::destinationDiagnostics() const
 {
-    QVariantList result;
+    QList<GPSCorrectionDestinationDiagnostic> result;
     for (const auto& destination : _ledger.destinations()) {
-        result.append(admissionDiagnostics(destination, {{QStringLiteral("destinationId"), destination.id}}));
+        result.append({.destinationId = destination.id,
+                       .queuedFrames = destination.queuedFrames,
+                       .queuedBytes = destination.queuedBytes,
+                       .droppedFrames = destination.droppedFrames,
+                       .droppedBytes = destination.droppedBytes});
     }
     return result;
 }
@@ -135,7 +118,7 @@ void GPSCorrectionRouter::applyConfiguration(const Configuration& configuration)
         configuration == this->configuration()) {
         return;
     }
-    ++_revision;
+    _revision.invalidate();
     _selector.configure(configuration, _clock());
 }
 
@@ -198,14 +181,14 @@ void GPSCorrectionRouter::setOutput(const QString& id, Output output)
         removeSink(id);
         return;
     }
-    ++_revision;
+    _revision.invalidate();
     _sinks.insert(id, std::move(output));
     _ledger.registerOutput(id);
 }
 
 void GPSCorrectionRouter::removeSink(const QString& id)
 {
-    ++_revision;
+    _revision.invalidate();
     _sinks.remove(id);
     _ledger.removeOutput(id);
 }
@@ -279,7 +262,7 @@ bool GPSCorrectionRouter::_sameDestinations(const QSet<QString>* current, const 
 bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected)
 {
     const QPointer<GPSCorrectionRouter> guard(this);
-    const quint64 revision = _revision;
+    const auto configuration = _revision.current(this);
     const auto sinks = _sinks;
     _submitting = true;
     auto finishSubmitting = qScopeGuard([guard] {
@@ -300,7 +283,7 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
         if (!guard) {
             return false;
         }
-        if (!_shutdown && revision == _revision &&
+        if (!_shutdown && configuration.isCurrent() &&
             !_sameDestinations(_ledger.outputDestinations(it.key()), admissions)) {
             QSet<QString> destinations;
             for (const auto& admission : admissions) {
@@ -331,7 +314,7 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
                                    submitted.destinationSession, false);
             }
         }
-        if (_shutdown || revision != _revision) {
+        if (_shutdown || !configuration.isCurrent()) {
             break;
         }
     }
@@ -342,7 +325,7 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
     _ledger.pruneDestinationHistory();
     _submitting = false;
     finishSubmitting.dismiss();
-    if (selected && !_shutdown && revision == _revision) {
+    if (selected && !_shutdown && configuration.isCurrent()) {
         emit frameRouted(frame);
     }
     return selected;
@@ -350,7 +333,7 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
 
 void GPSCorrectionRouter::shutdown()
 {
-    ++_revision;
+    _revision.invalidate();
     _shutdown = true;
     _selector.clear();
     _sinks.clear();

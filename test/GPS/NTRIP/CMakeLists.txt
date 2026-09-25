@@ -30,11 +30,14 @@ add_qgc_test(NTRIPReentrancyTest LABELS Unit GPS)
 add_qgc_test(NTRIPTlsTest LABELS Unit GPS)
 
 # QML_FOREIGN runtime registration can succeed even when tooling sees only opaque stubs.
-if(TARGET QGroundControlModule)
+if(TARGET QGroundControlModule AND TARGET GPSModule)
     get_target_property(_qgc_qml_output_dir ${CMAKE_PROJECT_NAME} QT_QML_MODULE_OUTPUT_DIRECTORY)
     get_target_property(_qgc_qml_typeinfo ${CMAKE_PROJECT_NAME} QT_QML_MODULE_TYPEINFO)
-    add_test(NAME NTRIPQmlMetadata COMMAND Python3::Interpreter "${CMAKE_CURRENT_SOURCE_DIR}/check_qml_metadata.py"
-                                           "${_qgc_qml_output_dir}/${_qgc_qml_typeinfo}"
+    get_target_property(_gps_qml_output_dir GPSModule QT_QML_MODULE_OUTPUT_DIRECTORY)
+    get_target_property(_gps_qml_typeinfo GPSModule QT_QML_MODULE_TYPEINFO)
+    add_test(NAME NTRIPQmlMetadata
+             COMMAND Python3::Interpreter "${CMAKE_CURRENT_SOURCE_DIR}/check_qml_metadata.py"
+                     "${_qgc_qml_output_dir}/${_qgc_qml_typeinfo}" "${_gps_qml_output_dir}/${_gps_qml_typeinfo}"
     )
     add_test(
         NAME NTRIPQmlLint

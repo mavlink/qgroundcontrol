@@ -1,5 +1,5 @@
 add_library(QGCGPSNotifications INTERFACE)
-target_sources(QGCGPSNotifications INTERFACE FILE_SET HEADERS FILES GPSNotificationQueue.h)
+target_sources(QGCGPSNotifications INTERFACE FILE_SET HEADERS FILES GPSNotificationQueue.h GPSRevision.h)
 target_link_libraries(QGCGPSNotifications INTERFACE Qt6::Core)
 
 qt_add_library(QGCGPSCore STATIC GPSObservation.cc GPSSourceHealth.cc GPSSatelliteStore.cc)

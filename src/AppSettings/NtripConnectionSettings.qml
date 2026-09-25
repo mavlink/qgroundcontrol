@@ -3,7 +3,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.GPS.NTRIP
+import QGroundControl.GPS
 
 SettingsGroupLayout {
     id: root

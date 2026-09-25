@@ -96,7 +96,7 @@ void GPSSourceHealthTest::_ageAndRecovery()
 {
     ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
-    health._freshnessTimeoutMs = 100;
+    health.setFreshnessTimeoutMs(100);
     QCOMPARE(health.state(), GPSSourceHealth::State::NoData);
     QCOMPARE(scheduler.pendingCount(), 0);
     const auto before = QDateTime::currentDateTimeUtc();

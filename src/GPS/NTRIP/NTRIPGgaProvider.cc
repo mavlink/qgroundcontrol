@@ -73,13 +73,12 @@ void NTRIPGgaProvider::setPositionProvider(PositionSource source, PositionProvid
 
 void NTRIPGgaProvider::start(NTRIPTransport* transport)
 {
-    const QPointer<NTRIPGgaProvider> guard(this);
-    const quint64 generation = ++_generation;
+    const auto session = _generation.advance(this);
     _transport = transport;
     _fastRetryCount = 0;
     _selectionDiagnostic.clear();
     _clearSource();
-    if (!guard || _generation != generation || !_transport) {
+    if (!session.isCurrent() || !_transport) {
         return;
     }
     _setRetryPhase(RetryPhase::Fast);
@@ -89,7 +88,7 @@ void NTRIPGgaProvider::start(NTRIPTransport* transport)
 
 void NTRIPGgaProvider::stop()
 {
-    ++_generation;
+    _generation.invalidate();
     _timer.stop();
     _transport = nullptr;
     _clearSource();
@@ -115,11 +114,9 @@ void NTRIPGgaProvider::_sendGGA()
     if (!_transport) {
         return;
     }
-    const QPointer<NTRIPGgaProvider> guard(this);
     const auto transport = _transport;
-    const quint64 generation = _generation;
-    const auto current = [this, guard, transport, generation]() {
-        return guard && transport && _transport == transport && _generation == generation;
+    const auto current = [this, transport, session = _generation.current(this)]() {
+        return session.isCurrent() && transport && _transport == transport;
     };
     const auto requested = _cachedSource;
     const auto selection = _getBestPosition(requested);
@@ -184,13 +181,12 @@ NTRIPGgaProvider::SelectedPosition NTRIPGgaProvider::_getBestPosition(PositionSo
         PositionSource::RTKReceiver,
         PositionSource::GCSPosition,
     };
-    const QPointer<const NTRIPGgaProvider> guard(this);
-    const quint64 generation = _generation;
+    const auto session = _generation.current(this);
     for (PositionSource source : kPriority) {
         const auto provider = providers.value(source);
         if (provider) {
             const auto result = provider();
-            if (!guard || _generation != generation) {
+            if (!session.isCurrent()) {
                 return {};
             }
             if (result.isValid()) {

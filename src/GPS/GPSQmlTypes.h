@@ -2,10 +2,10 @@
 
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "GPSCorrectionDiagnosticsModel.h"
+#include "GPSCorrectionDiagnostics.h"
 #include "GPSCorrectionEventModel.h"
 #include "GPSPositionService.h"
-#include "GPSRTKFactGroup.h"
+#include "GPSReceiverDescriptor.h"
 #include "GPSSourceHealth.h"
 #include "NTRIPConnectionStats.h"
 #include "NTRIPSourceTableController.h"
@@ -18,6 +18,14 @@ struct GPSPositionServiceQmlType
     QML_UNCREATABLE("Provided by the position manager")
 };
 
+struct GPSReceiverPresentationQmlType
+{
+    Q_GADGET
+    QML_FOREIGN(GPSReceiverPresentation)
+    QML_VALUE_TYPE(gpsReceiverPresentation)
+    QML_STRUCTURED_VALUE
+};
+
 struct GPSSourceHealthQmlType
 {
     Q_GADGET
@@ -25,18 +33,20 @@ struct GPSSourceHealthQmlType
     QML_ANONYMOUS
 };
 
-struct GPSRTKFactGroupQmlType
+struct RTCMMessageCountQmlType
 {
     Q_GADGET
-    QML_FOREIGN(GPSRTKFactGroup)
-    QML_ANONYMOUS
+    QML_FOREIGN(RTCMMessageCount)
+    QML_VALUE_TYPE(rtcmMessageCount)
+    QML_STRUCTURED_VALUE
 };
 
-struct GPSCorrectionDiagnosticsModelQmlType
+struct GPSCorrectionStreamDiagnosticQmlType
 {
     Q_GADGET
-    QML_FOREIGN(GPSCorrectionDiagnosticsModel)
-    QML_ANONYMOUS
+    QML_FOREIGN(GPSCorrectionStreamDiagnostic)
+    QML_VALUE_TYPE(gpsCorrectionStream)
+    QML_STRUCTURED_VALUE
 };
 
 struct GPSCorrectionEventModelQml

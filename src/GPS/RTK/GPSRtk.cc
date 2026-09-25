@@ -1,6 +1,5 @@
 #include "GPSRtk.h"
 
-#include "AutoConnectSettings.h"
 #include "GPSBaseStationConfig.h"
 #include "GPSCorrectionManager.h"
 #include "GPSPositionService.h"
@@ -14,8 +13,8 @@
 #include "RTCMFramer.h"
 #include "RTKConnectionPolicy.h"
 #include "RTKSettings.h"
-#include "SettingsManager.h"
 #include "TCPGPSTransport.h"
+#include "UDPGPSTransport.h"
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
@@ -30,19 +29,19 @@
 
 QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.RTK.GPSRtk")
 
-GPSRtk::GPSRtk(QObject* parent)
+GPSRtk::GPSRtk(RTKSettings* settings, AutoConnectSettings* autoConnectSettings, QObject* parent)
     : QObject(parent)
+    , _settings(settings)
     , _gpsRtkFactGroup(std::make_shared<GPSRTKFactGroup>())
     , _positionHealth(new GPSSourceHealth(this))
 {
     qCDebug(GPSRtkLog) << this;
-    _connection = new RTKConnectionPolicy(this);
+    _connection = new RTKConnectionPolicy(this, settings, autoConnectSettings);
     connect(_connection, &RTKConnectionPolicy::reconnectingChanged, this, &GPSRtk::_notifyReceiverChanged);
 #ifndef QGC_NO_SERIAL_LINK
     _serialTransportFactory = [](const QString& device, const std::atomic_bool& stop) {
         return std::make_unique<SerialGPSTransport>(device, stop);
     };
-    setSerialPortManager(SerialPortManager::instance());
 #endif
 }
 
@@ -107,7 +106,7 @@ void GPSRtk::_onGPSConnect(const QString& identity)
     _notifyReceiverChanged();
     if (_positionService && !_session.position) {
         const quint64 session = _session.id;
-        auto registration = _positionService->registerPositionSource(GPSPositionService::SelectedSource::Receiver, this,
+        auto registration = _positionService->registerPositionSource(GPSPositionService::SelectedSource::Receiver,
                                                                      _positionHealth, session);
         if (_session.id == session) {
             _session.position = std::move(registration);
@@ -158,7 +157,7 @@ void GPSRtk::_endSession(GPSConnectionError error, const QString& detail, bool p
 
 void GPSRtk::_onGPSSurveyReport(const GPSSurveyReport& status)
 {
-    if (_session.manufacturer == manufacturerForType(GPSType::passive)) {
+    if (_session.role != ConfiguredBase) {
         return;
     }
     const GPSNotificationQueue::Scope publish(_notifications);
@@ -209,6 +208,10 @@ void GPSRtk::setSerialPortManager(SerialPortManager* serialPorts)
 bool GPSRtk::_connectGPS(const QString& device, QStringView gps_type, uint32_t baudRate, bool allowPersistentChanges)
 {
     for (const auto& entry : gpsReceiverDescriptors()) {
+        // Discovery identifies receivers QGroundControl configures; a passive role is always chosen explicitly.
+        if (entry.capabilities.passive) {
+            continue;
+        }
         if (gps_type.contains(QLatin1StringView(entry.detectionKey.data(), entry.detectionKey.size()),
                               Qt::CaseInsensitive)) {
             return _connectSerialGPS(device, entry.type, baudRate, allowPersistentChanges);
@@ -231,7 +234,7 @@ bool GPSRtk::_connectSerialGPS(const QString& device, GPSType type, uint32_t bau
         return false;
     }
     return _connectReceiver(
-        type,
+        type, _roleFor(type),
         [endpoint, reservation, factory = _serialTransportFactory](const std::atomic_bool& requestStop) {
             return factory(endpoint, requestStop);
         },
@@ -244,11 +247,29 @@ bool GPSRtk::_connectTcpGPS(const QString& host, quint16 port, GPSType type, boo
     const QString endpoint = QStringLiteral("%1:%2").arg(host).arg(port);
     // Bridges keep their own serial rate, so drivers use the transport's fixed rate.
     return _connectReceiver(
-        type,
+        type, _roleFor(type),
         [host, port](const std::atomic_bool& requestStop) {
             return std::make_unique<TCPGPSTransport>(host, port, requestStop);
         },
         QStringLiteral("tcp:%1").arg(endpoint), TCPGPSTransport::FIXED_BAUDRATE, allowPersistentChanges, {}, endpoint);
+}
+
+bool GPSRtk::_connectUdpGPS(quint16 port, GPSType type)
+{
+    const QString endpoint = QStringLiteral("UDP port %1").arg(port);
+    return _connectReceiver(
+        type, _roleFor(type),
+        [port](const std::atomic_bool& requestStop) { return std::make_unique<UDPGPSTransport>(port, requestStop); },
+        QStringLiteral("udp:%1").arg(port), UDPGPSTransport::FIXED_BAUDRATE, false, {}, endpoint);
+}
+
+GPSRtk::ReceiverRole GPSRtk::_roleFor(GPSType type) const
+{
+    if (type != GPSType::passive) {
+        return ConfiguredBase;
+    }
+    const auto saved = static_cast<ReceiverRole>(_settings->receiverRole()->rawValue().toInt());
+    return saved == PositionOnly ? PositionOnly : Passive;
 }
 
 bool GPSRtk::serialSupported() const
@@ -274,12 +295,12 @@ int GPSRtk::manufacturerForType(GPSType type)
     return descriptor ? descriptor->manufacturerId : 0;
 }
 
-QVariantMap GPSRtk::capabilitiesForManufacturer(int manufacturer) const
+GPSReceiverPresentation GPSRtk::capabilitiesFor(int role, int manufacturer) const
 {
-    return gpsReceiverPresentation(manufacturer);
+    return gpsReceiverPresentation(role == ConfiguredBase ? manufacturer : manufacturerForType(GPSType::passive));
 }
 
-QVariantMap GPSRtk::activePresentation() const
+GPSReceiverPresentation GPSRtk::activePresentation() const
 {
     return gpsReceiverPresentation(_session.manufacturer);
 }
@@ -373,33 +394,42 @@ QString GPSRtk::_receiverConfig(GPSType type, RTKSettings* settings, uint32_t ba
 }
 
 bool GPSRtk::connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory,
-                             const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges)
+                             const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
+                             std::optional<ReceiverRole> role)
 {
     if (_destroying) {
         return false;
     }
     const GPSNotificationQueue::Scope publish(_notifications);
     _connection->reset();
-    return _connectReceiver(type, std::move(transportFactory), sourceInstance, baudRate, allowPersistentChanges);
+    // Only passive types can take a passive role, and they never configure a base.
+    const ReceiverRole sessionRole = type != GPSType::passive          ? ConfiguredBase
+                                     : role && *role != ConfiguredBase ? *role
+                                                                       : _roleFor(type);
+    return _connectReceiver(type, sessionRole, std::move(transportFactory), sourceInstance, baudRate,
+                            allowPersistentChanges);
 }
 
-bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory,
+bool GPSRtk::_connectReceiver(GPSType type, ReceiverRole role, GPSProvider::TransportFactory transportFactory,
                               const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
                               const QString& serialDevice, const QString& endpoint)
 {
     const GPSNotificationQueue::Scope publish(_notifications);
-    RTKSettings* const settings = SettingsManager::instance()->rtkSettings();
     GPSReceiverConfig config;
-    const QString configError = _receiverConfig(type, settings, baudRate, config, allowPersistentChanges);
+    const QString configError = _receiverConfig(type, _settings, baudRate, config, allowPersistentChanges);
     if (!configError.isEmpty()) {
         _setError(GPSConnectionError::ConfigFailed, configError);
         return false;
     }
     _retireSession();
     _stageDisconnectedFacts();
-    _stageFact(settings->baseReceiverManufacturers(), manufacturerForType(type));
+    if (role == ConfiguredBase) {
+        // Discovery records the family it detected.
+        _stageFact(_settings->baseReceiverManufacturers(), manufacturerForType(type));
+    }
     _setError(GPSConnectionError::None);
-    const QPointer<GPSCorrectionManager> correctionManager = _correctionManager;
+    const bool forwardsCorrections = role != PositionOnly;
+    const QPointer<GPSCorrectionManager> correctionManager = forwardsCorrections ? _correctionManager : nullptr;
     GPSCorrectionSourceRegistration registration;
     if (correctionManager) {
         registration = correctionManager->registerSource(GPSCorrectionSource::LocalReceiver, sourceInstance);
@@ -408,6 +438,7 @@ bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transp
     _retireSession();
     _session.corrections = std::move(registration);
     _session.manufacturer = manufacturerForType(type);
+    _session.role = role;
     _session.baseMode = config.role == GPSReceiverConfig::Role::Passive ? -1
                         : std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode)
                             ? static_cast<int>(BaseModeDefinition::Mode::BaseFixed)
@@ -425,16 +456,17 @@ bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transp
     _session.endpoint = endpoint;
     _session.id = ++_sessionCount;
     _session.provider = new GPSProvider(std::move(transportFactory), type, config, this);
+    _session.provider->setEndsWhenIdle(role == ConfiguredBase);
     const QPointer<GPSProvider> provider = _session.provider;
     (void) connect(
-        provider, &QThread::finished, this,
+        provider, &GPSProvider::finished, this,
         [this, provider]() {
             if (provider && _session.provider == provider) {
                 _endSession(GPSConnectionError::DeviceError, {}, false);
             }
         },
         Qt::QueuedConnection);
-    (void) connect(provider, &QThread::finished, provider, &QObject::deleteLater);
+    (void) connect(provider, &GPSProvider::finished, provider, &QObject::deleteLater);
     const auto token = _session.corrections.token();
     const auto current = [this, provider, token, registered = !correctionManager.isNull()]() {
         return provider && _session.provider == provider && (!registered || token.valid());
@@ -453,9 +485,11 @@ bool GPSRtk::_connectReceiver(GPSType type, GPSProvider::TransportFactory transp
     // Queued callbacks retain the producing session's token.
     (void) connect(
         provider, &GPSProvider::RTCMDataUpdate, this,
-        [correctionManager, token](const QByteArray& data, qint64 receivedAtMs) {
+        [correctionManager, token, forwardsCorrections](const QByteArray& data, qint64 receivedAtMs) {
             if (!correctionManager) {
-                qCWarning(GPSRtkLog) << "Correction manager not ready; dropping" << data.size() << "bytes";
+                if (forwardsCorrections) {
+                    qCWarning(GPSRtkLog) << "Correction manager not ready; dropping" << data.size() << "bytes";
+                }
                 return;
             }
             const bool valid = RTCMFramer::isValidFrame(data);
@@ -496,7 +530,7 @@ void GPSRtk::_retireSession()
     if (provider && !retired.started) {
         delete provider.data();
     }
-    // Started workers own their transport reservation until run() exits; finished() schedules deletion.
+    // Started workers own their transport reservation until the session exits; finished() schedules deletion.
 }
 
 void GPSRtk::disconnectGPS()

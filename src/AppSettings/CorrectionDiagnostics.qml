@@ -5,7 +5,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.GPS.NTRIP
+import QGroundControl.GPS
 
 SettingsGroupLayout {
     id: root
@@ -87,7 +87,7 @@ SettingsGroupLayout {
         Layout.fillWidth: true
         Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
         objectName: "correctionSelectionStatus"
-        text: root.corrections.sourceInstances.some(source => source.selected)
+        text: root.corrections.hasSelectedStream
               ? qsTr("Current correction streams:")
               : qsTr("No fresh stream is selected for vehicles.")
         wrapMode: Text.WordWrap
@@ -97,7 +97,7 @@ SettingsGroupLayout {
         model: root.corrections.sourceInstances
 
         QGCLabel {
-            required property var modelData
+            required property gpsCorrectionStream modelData
 
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
@@ -140,7 +140,14 @@ SettingsGroupLayout {
         ColumnLayout {
             id: sourceRow
 
-            required property var row
+            required property int source
+            required property double receivedBytesPerSecond
+            required property double receivedFrames
+            required property double validatedFrames
+            required property double selectedFrames
+            required property double queuedFrames
+            required property double droppedFrames
+            required property list<rtcmMessageCount> messageCounts
 
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
@@ -148,17 +155,17 @@ SettingsGroupLayout {
 
             QGCLabel {
                 Layout.fillWidth: true
-                objectName: "correctionSource_" + sourceRow.row.source
-                text: qsTr("%1 — received %2; frames: received %3, validated %4, selected %5, queued %6; drop events %7").arg(root.sourceName(sourceRow.row.source)).arg(root.dataRate(sourceRow.row.receivedBytesPerSecond)).arg(sourceRow.row.receivedFrames).arg(sourceRow.row.validatedFrames).arg(sourceRow.row.selectedFrames).arg(sourceRow.row.queuedFrames).arg(sourceRow.row.droppedFrames)
+                objectName: "correctionSource_" + sourceRow.source
+                text: qsTr("%1 — received %2; frames: received %3, validated %4, selected %5, queued %6; drop events %7").arg(root.sourceName(sourceRow.source)).arg(root.dataRate(sourceRow.receivedBytesPerSecond)).arg(sourceRow.receivedFrames).arg(sourceRow.validatedFrames).arg(sourceRow.selectedFrames).arg(sourceRow.queuedFrames).arg(sourceRow.droppedFrames)
                 textFormat: Text.PlainText
                 wrapMode: Text.WordWrap
             }
 
             RTCMMessageChips {
                 Layout.fillWidth: true
-                objectName: "correctionSourceMessages_" + sourceRow.row.source
-                messageCounts: sourceRow.row.messageCounts
-                visible: sourceRow.row.messageCounts.length > 0
+                objectName: "correctionSourceMessages_" + sourceRow.source
+                messageCounts: sourceRow.messageCounts
+                visible: sourceRow.messageCounts.length > 0
             }
         }
     }
@@ -167,12 +174,14 @@ SettingsGroupLayout {
         model: root.corrections.destinations
 
         QGCLabel {
-            required property var row
+            required property string destinationId
+            required property double queuedBytes
+            required property double droppedBytes
 
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
-            objectName: "correctionDestination_" + row.destinationId
-            text: qsTr("%1 — queued %2 B, dropped %3 B").arg(root.destinationName(row.destinationId)).arg(row.queuedBytes).arg(row.droppedBytes)
+            objectName: "correctionDestination_" + destinationId
+            text: qsTr("%1 — queued %2 B, dropped %3 B").arg(root.destinationName(destinationId)).arg(queuedBytes).arg(droppedBytes)
             textFormat: Text.PlainText
             wrapMode: Text.WordWrap
         }

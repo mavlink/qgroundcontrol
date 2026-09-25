@@ -135,7 +135,6 @@ qt_add_qml_module(
               SigningKeyManager.qml
               MockLink.qml
               MockLinkSettings.qml
-              NmeaGpsSettings.qml
               NtripConnectionSettings.qml
               NtripMountpointBrowser.qml
               NtripServerSettings.qml
@@ -146,7 +145,6 @@ qt_add_qml_module(
               PX4LogFileManager.qml
               PX4LogUploadSettings.qml
               QmlTest.qml
-              RemoteIDGpsLocation.qml
               SerialSettings.qml
               SettingsPage.qml
               TcpSettings.qml

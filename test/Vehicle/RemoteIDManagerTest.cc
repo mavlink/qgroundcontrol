@@ -195,7 +195,7 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
     if (error != QGeoPositionInfoSource::NoError) {
         source.fail(static_cast<QGeoPositionInfoSource::Error>(error));
     } else if (status == GPSPositionService::SourceStatus::Stale) {
-        positioning->_currentHealth->setFreshnessTimeoutMs(1);
+        positioning->selectedHealth()->setFreshnessTimeoutMs(1);
     } else {
         fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 101);
         source.publish(fix);
@@ -216,7 +216,7 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
         })(),
         5000);
 
-    positioning->_currentHealth->setFreshnessTimeoutMs(5000);
+    positioning->selectedHealth()->setFreshnessTimeoutMs(5000);
     fix.setTimestamp(QDateTime::currentDateTimeUtc());
     fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
     source.publish(fix);
@@ -278,10 +278,8 @@ void RemoteIDManagerTest::_gpsAltitudePolicy()
         positioning->setSourceMode(savedMode);
     });
     ManualScheduler scheduler;
-    QObject producer;
     GPSSourceHealth health(nullptr, &scheduler);
-    auto registration =
-        positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &producer, &health, 7);
+    auto registration = positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &health, 7);
     positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
     settings->region()->setRawValue(
         int(faa ? RemoteIDSettings::RegionOperation::FAA : RemoteIDSettings::RegionOperation::EU));
@@ -359,11 +357,9 @@ void RemoteIDManagerTest::_liveGpsArrivalBudget()
         positioning->setSourceMode(savedMode);
     });
     ManualScheduler scheduler;
-    QObject producer;
     GPSSourceHealth health(nullptr, &scheduler);
     health.setFreshnessTimeoutMs(60000);
-    auto registration =
-        positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &producer, &health);
+    auto registration = positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &health);
     positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
     settings->region()->setRawValue(int(RemoteIDSettings::RegionOperation::FAA));
     settings->locationType()->setRawValue(RemoteIDManager::LiveGNSS);

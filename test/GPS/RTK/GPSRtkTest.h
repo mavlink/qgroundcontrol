@@ -42,6 +42,8 @@ private slots:
     void _configurationDiagnosticRetained_data();
     void _configurationDiagnosticRetained();
     void _qmlConsentIsOneUse();
+    void _udpPositionOnlyReceiver();
+    void _udpNeedsPassiveRole();
     void _tcpPassiveConnection();
     void _manualConnectionReconnectsAfterLoss();
     void _disconnectStopsReconnect();

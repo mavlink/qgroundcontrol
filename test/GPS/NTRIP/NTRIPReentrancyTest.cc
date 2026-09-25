@@ -1034,7 +1034,7 @@ void NTRIPReentrancyTest::filterConfigurationUpdatesWithoutReconnect()
     QCOMPARE(second.messageId, 1077);
 
     const auto socket = transport._socket;
-    const auto attempt = transport._attempt;
+    const auto attempt = transport._attempt.value();
     const NTRIPRtcmFilterConfig replacement{.whitelist = QStringLiteral("1077")};
     transport.setRtcmWhitelist(replacement.messageIds());
     QCOMPARE(peer->write(frames), frames.size());
@@ -1054,7 +1054,7 @@ void NTRIPReentrancyTest::filterConfigurationUpdatesWithoutReconnect()
     QVERIFY(second.valid && !second.filtered);
     QCOMPARE(transport.config(), connection);
     QCOMPARE(transport._socket, socket);
-    QCOMPARE(transport._attempt, attempt);
+    QCOMPARE(transport._attempt.value(), attempt);
     QCOMPARE(connected.size(), 1);
     QCOMPARE(socket->state(), QAbstractSocket::ConnectedState);
 }
@@ -1347,7 +1347,7 @@ void NTRIPReentrancyTest::sourceTableIdentity()
         QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
         QVERIFY(!controller._activeSocket());
     }
-    const auto revision = controller._fetchRevision;
+    const auto revision = controller._fetchRevision.value();
     controller.fetch(replacement);
     if (sameCaster && cached) {
         QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
@@ -1360,10 +1360,10 @@ void NTRIPReentrancyTest::sourceTableIdentity()
     QVERIFY(active);
     if (sameCaster) {
         QCOMPARE(active, previous);
-        QCOMPARE(controller._fetchRevision, revision);
+        QCOMPARE(controller._fetchRevision.value(), revision);
     } else {
         QVERIFY(active != previous);
-        QVERIFY(controller._fetchRevision > revision);
+        QVERIFY(controller._fetchRevision.value() > revision);
         QVERIFY(!previous || previous->state() == QAbstractSocket::UnconnectedState);
         QVERIFY(!controller._cacheAge.isValid());
     }
@@ -1583,14 +1583,16 @@ void NTRIPReentrancyTest::modelMutationReentry()
     QVERIFY(handled);
     QCOMPARE(model.rowCount(), action == 0 ? 0 : action == 1 ? 1 : 2);
     if (action == 1 || action == 2) {
-        QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP2"));
+        QCOMPARE(model.data(model.index(0, 0), NTRIPSourceTableModel::MountpointRole).toString(),
+                 QStringLiteral("MP2"));
     }
     if (action == 2) {
-        QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::DistanceKmRole).toDouble(), 0.0);
+        QCOMPARE(model.data(model.index(0, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble(), 0.0);
     } else if (action == 3) {
-        QCOMPARE(model.data(model.index(0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP1"));
+        QCOMPARE(model.data(model.index(0, 0), NTRIPSourceTableModel::MountpointRole).toString(),
+                 QStringLiteral("MP1"));
         for (int row = 0; row < model.rowCount(); ++row) {
-            QCOMPARE(model.data(model.index(row), NTRIPSourceTableModel::DistanceKmRole).toDouble(), -1.0);
+            QCOMPARE(model.data(model.index(row, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble(), -1.0);
         }
     }
 }
@@ -1605,10 +1607,10 @@ void NTRIPReentrancyTest::singleMountpointDistanceNotification()
         model.updateDistances(coordinate);
         QCOMPARE(changes.size(), 1);
         const auto change = changes.takeFirst();
-        QCOMPARE(qvariant_cast<QModelIndex>(change[0]), model.index(0));
-        QCOMPARE(qvariant_cast<QModelIndex>(change[1]), model.index(0));
+        QCOMPARE(qvariant_cast<QModelIndex>(change[0]), model.index(0, 0));
+        QCOMPARE(qvariant_cast<QModelIndex>(change[1]), model.index(0, 0));
         QCOMPARE(qvariant_cast<QList<int>>(change[2]), QList<int>{NTRIPSourceTableModel::DistanceKmRole});
-        const double distance = model.data(model.index(0), NTRIPSourceTableModel::DistanceKmRole).toDouble();
+        const double distance = model.data(model.index(0, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble();
         QCOMPARE(distance, coordinate.isValid() ? coordinate.distanceTo(QGeoCoordinate(40, -74)) / 1000 : -1.0);
     }
     QVERIFY(resets.isEmpty());
@@ -1666,7 +1668,7 @@ void NTRIPReentrancyTest::statisticsExpireDuringSilence()
     QVERIFY(!rateChanges.isEmpty());
     QCOMPARE(stats.bytesReceived(), quint64(2048));
     QCOMPARE(stats.messagesReceived(), quint32(1));
-    QCOMPARE(stats.messageCountsById().first().toList().at(1).toUInt(), quint32(1));
+    QCOMPARE(stats.messageCountsById().first().count, quint64(1));
     stats.stop();
     QCOMPARE(stats.bytesReceived(), quint64(2048));
 }

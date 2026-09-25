@@ -12,18 +12,23 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+GPS_MODULE = "QGroundControl.GPS"
+APP_MODULE = "QGC"
 PROPERTIES = {
-    "NTRIPConnectionStats": {
-        "bytesReceived",
-        "messagesReceived",
-        "dataRateBytesPerSec",
-        "correctionAgeSec",
-        "dataStale",
-        "messageCountsById",
-    },
-    "NTRIPSourceTableController": {"fetchStatus", "fetchError", "mountpointModel"},
-    "GPSManager": {"corrections"},
-    "GPSCorrectionManager": {"rtcmMavlink"},
+    "NTRIPConnectionStats": (
+        GPS_MODULE,
+        {
+            "bytesReceived",
+            "messagesReceived",
+            "dataRateBytesPerSec",
+            "correctionAgeSec",
+            "dataStale",
+            "messageCountsById",
+        },
+    ),
+    "NTRIPSourceTableController": (GPS_MODULE, {"fetchStatus", "fetchError", "mountpointModel"}),
+    "GPSManager": (APP_MODULE, {"corrections"}),
+    "GPSCorrectionManager": (APP_MODULE, {"rtcmMavlink"}),
 }
 FETCH_STATUS = ["Idle", "InProgress", "Success", "Error"]
 
@@ -66,10 +71,10 @@ def string_list(block: str, field: str) -> list[str]:
 def check_metadata(text: str) -> list[str]:
     components = named_blocks(text, "Component")
     errors = []
-    for name, properties in PROPERTIES.items():
+    for name, (module, properties) in PROPERTIES.items():
         component = components.get(name, "")
-        if f"QGC/{name} 1.0" not in string_list(component, "exports"):
-            errors.append(f"{name}: missing QGC QML export")
+        if f"{module}/{name} 1.0" not in string_list(component, "exports"):
+            errors.append(f"{name}: missing {module} QML export")
         missing = properties - named_blocks(component, "Property").keys()
         if missing:
             errors.append(f"{name}: missing properties: {', '.join(sorted(missing))}")
@@ -95,12 +100,19 @@ def check_metadata(text: str) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("qmltypes", type=Path, help="Application-generated QGC .qmltypes file")
+    parser.add_argument(
+        "qmltypes",
+        type=Path,
+        nargs="+",
+        help="Generated .qmltypes files of the QGC and GPS modules",
+    )
     args = parser.parse_args()
     try:
-        errors = check_metadata(args.qmltypes.read_text(encoding="utf-8"))
+        errors = check_metadata(
+            "\n".join(path.read_text(encoding="utf-8") for path in args.qmltypes)
+        )
     except (OSError, ValueError) as error:
-        print(f"{args.qmltypes}: {error}", file=sys.stderr)
+        print(error, file=sys.stderr)
         return 1
     if errors:
         print("\n".join(errors), file=sys.stderr)

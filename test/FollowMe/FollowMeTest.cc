@@ -88,10 +88,8 @@ void FollowMeTest::_motionPolicyReports()
     const auto savedMode = positioning->sourceMode();
     const auto restore = qScopeGuard([&]() { positioning->setSourceMode(savedMode); });
     ManualScheduler scheduler;
-    QObject producer;
     GPSSourceHealth health(nullptr, &scheduler);
-    auto registration =
-        positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &producer, &health, 7);
+    auto registration = positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &health, 7);
     positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
     GPSObservation observation;
     observation.sessionId = 7;

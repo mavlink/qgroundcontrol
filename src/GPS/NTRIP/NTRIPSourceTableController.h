@@ -4,7 +4,7 @@
 #include <memory>
 #include <optional>
 
-#include <QtCore/QAbstractListModel>
+#include <QtCore/QAbstractItemModel>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
@@ -12,6 +12,7 @@
 #include <QtPositioning/QGeoCoordinate>
 
 #include "GPSNotificationQueue.h"
+#include "GPSRevision.h"
 #include "NTRIPConfiguration.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableControllerLog)
@@ -28,7 +29,7 @@ class NTRIPSourceTableController : public QObject
     Q_PROPERTY(FetchStatus fetchStatus READ fetchStatus NOTIFY fetchStatusChanged)
     Q_PROPERTY(QString fetchError READ fetchError NOTIFY fetchErrorChanged)
     Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged)
-    Q_PROPERTY(QAbstractListModel* mountpointModel READ mountpointModel NOTIFY mountpointModelChanged)
+    Q_PROPERTY(QAbstractItemModel* mountpointModel READ mountpointModel NOTIFY mountpointModelChanged)
 
 public:
     enum class FetchStatus
@@ -54,7 +55,7 @@ public:
     /// Set while the latest fetch sends caster credentials without TLS.
     QString securityWarning() const { return _securityWarning; }
 
-    QAbstractListModel* mountpointModel() const;
+    QAbstractItemModel* mountpointModel() const;
 
     void fetch(const NTRIPConnectionConfig& config, const QGeoCoordinate& sortCoord = {});
     void cancel();
@@ -79,12 +80,12 @@ private:
 
     void _onSourceTableReceived(const QString& table);
     void _onFetchError(const QString& error);
-    void _completeFetch(quint64 revision, QString table, std::optional<QString> error = std::nullopt);
+    void _completeFetch(const GPSRevision::Token& fetch, QString table, std::optional<QString> error = std::nullopt);
     void _abortFetch();
     QPointer<QTcpSocket> _activeSocket() const;
     QByteArray _activeRequest() const;
-    void _startFetch(quint64 revision, const QByteArray& request);
-    void _readReply(quint64 revision);
+    void _startFetch(const GPSRevision::Token& fetch, const QByteArray& request);
+    void _readReply(const GPSRevision::Token& fetch);
     void _finishFetch(const QString& error = {});
     void _setSecurityWarning(const QString& warning);
     bool _deferModelMutation(std::function<void()> action);
@@ -97,7 +98,7 @@ private:
     QString _fetchError;
     QString _securityWarning;
     QElapsedTimer _cacheAge;
-    quint64 _fetchRevision = 0;
+    GPSRevision _fetchRevision;
 
     NTRIPConnectionConfig _lastFetchConfig;  ///< Mountpoint is excluded from source-table identity.
     GPSNotificationQueue _notifications{this};

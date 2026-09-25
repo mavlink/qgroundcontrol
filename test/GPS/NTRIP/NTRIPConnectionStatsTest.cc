@@ -130,7 +130,7 @@ void NTRIPConnectionStatsTest::testCorrectionAgeAfterMessage()
 
     QCOMPARE(stats.bytesReceived(), quint64(100 * agesMs.size()));
     QCOMPARE(stats.messagesReceived(), quint32(agesMs.size()));
-    QCOMPARE(stats.messageCountsById().first().toList().at(1).toUInt(), quint32(agesMs.size()));
+    QCOMPARE(stats.messageCountsById().first().count, quint64(agesMs.size()));
     QVERIFY(stats.correctionAgeSec() >= expectedAgeMs / 1000.0);
     QVERIFY(stats.correctionAgeSec() < expectedAgeMs / 1000.0 + 1.0);
     QCOMPARE(stats.dataStale(), stale);
@@ -181,20 +181,9 @@ void NTRIPConnectionStatsTest::testMessageCountsByIdSortedAndReset()
     stats.recordMessage(10, 1077);
     stats.recordMessage(10, 0);
 
-    const QVariantList counts = stats.messageCountsById();
-    QCOMPARE(counts.size(), 3);
-
-    const QVariantList unknown = counts.at(0).toList();
-    QCOMPARE(unknown.at(0).toInt(), 0);
-    QCOMPARE(unknown.at(1).toUInt(), quint32(1));
-
-    const QVariantList base = counts.at(1).toList();
-    QCOMPARE(base.at(0).toInt(), 1005);
-    QCOMPARE(base.at(1).toUInt(), quint32(1));
-
-    const QVariantList msm = counts.at(2).toList();
-    QCOMPARE(msm.at(0).toInt(), 1077);
-    QCOMPARE(msm.at(1).toUInt(), quint32(2));
+    // Ascending ID order, with ID 0 counting unidentified frames.
+    const QList<RTCMMessageCount> expected{{0, 1}, {1005, 1}, {1077, 2}};
+    QCOMPARE(stats.messageCountsById(), expected);
 
     stats.reset();
     QVERIFY(stats.messageCountsById().isEmpty());

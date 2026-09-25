@@ -68,7 +68,7 @@ void NTRIPManagerTest::testStopCancelsDeferredSettings()
     saved.setFactValue(settings->ntripServerConnectEnabled(), true);
     saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("127.0.0.1"));
     saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
-    NTRIPManager manager;
+    NTRIPManager manager(settings);
     manager.setTransportForTest(new MockNTRIPTransport(&manager));
     manager.init();
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
@@ -112,8 +112,7 @@ void NTRIPManagerTest::testNewSessionRetryBudget()
     saved.setFactValue(settings->ntripServerConnectEnabled(), action != 3);
     saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("127.0.0.1"));
     saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
-    NTRIPManager manager;
-    manager._settings = settings;
+    NTRIPManager manager(settings);
     manager._reconnectAttempts = action == 2 ? 3 : NTRIPManager::kMaxReconnectAttempts;
     manager._connectionStatus =
         action == 2 ? NTRIPManager::ConnectionStatus::Reconnecting : NTRIPManager::ConnectionStatus::Error;
@@ -153,8 +152,7 @@ void NTRIPManagerTest::testStatusCallbackStopsTransition()
     saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
     saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
     saved.setFactValue(settings->ntripServerConnectEnabled(), true);
-    NTRIPManager manager;
-    manager._settings = settings;
+    NTRIPManager manager(settings);
     auto* transport = new MockNTRIPTransport(&manager);
     transport->autoConnect = false;
     manager.setTransportForTest(transport);
@@ -177,7 +175,7 @@ void NTRIPManagerTest::testStatusCallbackStopsTransition()
 
 void NTRIPManagerTest::testConnectedCallbackStopsTransition()
 {
-    NTRIPManager manager;
+    NTRIPManager manager(nullptr);
     auto* transport = new MockNTRIPTransport(&manager);
     manager._transport = transport;
     manager._connectionStatus = NTRIPManager::ConnectionStatus::Connecting;
@@ -195,7 +193,7 @@ void NTRIPManagerTest::testConnectedCallbackStopsTransition()
 
 void NTRIPManagerTest::testPlaintextCredentialWarningIsVisibleState()
 {
-    NTRIPManager mgr;
+    NTRIPManager mgr(nullptr);
     QSignalSpy warningSpy(&mgr, &NTRIPManager::securityWarningChanged);
 
     QVERIFY(mgr.securityWarning().isEmpty());
@@ -219,7 +217,7 @@ void NTRIPManagerTest::testTerminalStateStopsUdpForwarder()
 {
     QFETCH(NTRIPManager::ConnectionStatus, status);
     GPSCorrectionManager corrections;
-    NTRIPManager mgr;
+    NTRIPManager mgr(nullptr);
     mgr.setCorrectionManager(&corrections);
     QUdpSocket listener;
     QVERIFY(listener.bind(QHostAddress(QHostAddress::LocalHost), 0));
@@ -249,7 +247,7 @@ void NTRIPManagerTest::testTerminalStateStopsUdpForwarder()
 
 void NTRIPManagerTest::testReconnectInitialBackoff()
 {
-    NTRIPManager mgr;
+    NTRIPManager mgr(nullptr);
     QCOMPARE(mgr._reconnectAttempts, 0);
     QVERIFY(!mgr._reconnectTimer.isActive());
     QCOMPARE(mgr._reconnectBackoffMs(), NTRIPManager::kMinReconnectMs);
@@ -257,7 +255,7 @@ void NTRIPManagerTest::testReconnectInitialBackoff()
 
 void NTRIPManagerTest::testReconnectExponentialBackoff()
 {
-    NTRIPManager mgr;
+    NTRIPManager mgr(nullptr);
 
     QCOMPARE(mgr._reconnectBackoffMs(), 1000);
 
@@ -284,7 +282,7 @@ void NTRIPManagerTest::testReconnectExponentialBackoff()
 
 void NTRIPManagerTest::testReconnectMaxBackoff()
 {
-    NTRIPManager mgr;
+    NTRIPManager mgr(nullptr);
     for (int i = 0; i < 20; ++i) {
         mgr._scheduleReconnect();
         mgr._cancelReconnect();
@@ -294,7 +292,7 @@ void NTRIPManagerTest::testReconnectMaxBackoff()
 
 void NTRIPManagerTest::testReconnectCancelStopsTimer()
 {
-    NTRIPManager mgr;
+    NTRIPManager mgr(nullptr);
     mgr._scheduleReconnect();
     QVERIFY(mgr._reconnectTimer.isActive());
     mgr._cancelReconnect();
@@ -303,7 +301,7 @@ void NTRIPManagerTest::testReconnectCancelStopsTimer()
 
 void NTRIPManagerTest::testReconnectResetAttempts()
 {
-    NTRIPManager mgr;
+    NTRIPManager mgr(nullptr);
     mgr._scheduleReconnect();
     mgr._cancelReconnect();
     mgr._scheduleReconnect();
@@ -317,7 +315,7 @@ void NTRIPManagerTest::testReconnectResetAttempts()
 
 void NTRIPManagerTest::testReconnectSignalFires()
 {
-    NTRIPManager mgr;
+    NTRIPManager mgr(nullptr);
     // The timer callback dispatches ReconnectDue; a fresh manager is Disconnected
     // where ReconnectDue has no transition (no-op), so observe the timer instead.
     mgr._scheduleReconnect();
@@ -342,8 +340,7 @@ void NTRIPManagerTest::testDuplicateTransportErrorsScheduleOneRetry()
     saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
     saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
     saved.setFactValue(settings->ntripServerConnectEnabled(), true);
-    NTRIPManager mgr;
-    mgr._settings = settings;
+    NTRIPManager mgr(settings);
     auto* transport = new MockNTRIPTransport(&mgr);
     transport->autoConnect = false;
     mgr.setTransportForTest(transport);
@@ -369,8 +366,7 @@ void NTRIPManagerTest::testRetiredTransportErrorCannotAffectNewSession()
     saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
     saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
     saved.setFactValue(settings->ntripServerConnectEnabled(), true);
-    NTRIPManager mgr;
-    mgr._settings = settings;
+    NTRIPManager mgr(settings);
     auto* first = new MockNTRIPTransport(&mgr);
     first->autoConnect = false;
     mgr.setTransportForTest(first);
@@ -422,8 +418,7 @@ void NTRIPManagerTest::testRetryPolicy()
     saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
     saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
     saved.setFactValue(settings->ntripServerConnectEnabled(), enabled);
-    NTRIPManager manager;
-    manager._settings = settings;
+    NTRIPManager manager(settings);
     auto* transport = new MockNTRIPTransport(&manager);
     transport->autoConnect = false;
     manager.setTransportForTest(transport);
@@ -481,8 +476,7 @@ void NTRIPManagerTest::testHttpRetryAfterReachesManager()
     saved.setFactValue(settings->ntripPassword(), QString());
     saved.setFactValue(settings->ntripUseTls(), false);
     saved.setFactValue(settings->ntripServerConnectEnabled(), true);
-    NTRIPManager manager;
-    manager._settings = settings;
+    NTRIPManager manager(settings);
     manager.startNTRIP();
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::shortMs());
     QTcpSocket* peer = server.nextPendingConnection();
@@ -522,8 +516,7 @@ void NTRIPManagerTest::testRetryPublicationSuperseded()
     saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
     saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
     saved.setFactValue(settings->ntripServerConnectEnabled(), true);
-    NTRIPManager manager;
-    manager._settings = settings;
+    NTRIPManager manager(settings);
     auto* first = new MockNTRIPTransport(&manager);
     manager.setTransportForTest(first);
     manager.startNTRIP();
@@ -565,8 +558,7 @@ void NTRIPManagerTest::testMissingMountpointDoesNotStartTransport()
     auto* settings = SettingsManager::instance()->ntripSettings();
     saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
     saved.setFactValue(settings->ntripMountpoint(), QString());
-    NTRIPManager mgr;
-    mgr._settings = settings;
+    NTRIPManager mgr(settings);
     auto* transport = new MockNTRIPTransport(&mgr);
     mgr.setTransportForTest(transport);
     expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("Select a mountpoint")));
@@ -594,10 +586,10 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     corrections.rtcmMavlink()->setOutputProvider([]() {
         return QList<RTCMMavlink::Output>{{QStringLiteral("test"), 1, [](const GpsRtcmPacket&) { return true; }}};
     });
-    NTRIPManager mgr;
+    NTRIPManager mgr(settings);
     mgr.setCorrectionManager(&corrections);
     QCOMPARE(mgr.metaObject()->indexOfProperty("rtcmMavlink"), -1);
-    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
+    QSignalSpy routed(&corrections.router(), &GPSCorrectionRouter::frameRouted);
     auto* first = new MockNTRIPTransport(&mgr);
     first->autoConnect = false;
     QSignalSpy observed(first, &NTRIPTransport::correctionFrameReceived);
@@ -704,8 +696,7 @@ void NTRIPManagerTest::testSettingsProduceExplicitConfiguration()
     saved.setFactValue(settings->ntripUdpTargetAddress(), expected.udpForward.address);
     saved.setFactValue(settings->ntripUdpTargetPort(), expected.udpForward.port);
 
-    NTRIPManager manager;
-    manager._settings = settings;
+    NTRIPManager manager(settings);
     QCOMPARE(manager._configFromSettings(), expected);
 }
 
@@ -727,7 +718,7 @@ void NTRIPManagerTest::testGgaSettingsUseInjectedProviders()
     saved.setFactValue(settings->ntripServerConnectEnabled(), true);
     saved.setFactValue(settings->ntripGgaPositionSource(), static_cast<int>(Source::VehicleGPS));
     saved.setFactValue(settings->ntripGgaIntervalSec(), 60);
-    NTRIPManager manager;
+    NTRIPManager manager(settings);
     manager.setGgaPositionProvider(Source::VehicleGPS, []() {
         return PositionResult{QGeoCoordinate(47, 8, 500), QStringLiteral("Injected vehicle"),
                               GPSAltitudeDatum::MeanSeaLevel};
@@ -776,7 +767,7 @@ void NTRIPManagerTest::testFactChangesReconfigureTransport()
     saved.setFactValue(settings->ntripUdpTargetAddress(), QStringLiteral("127.0.0.1"));
     saved.setFactValue(settings->ntripUdpTargetPort(), listener.localPort());
     GPSCorrectionManager corrections;
-    NTRIPManager mgr;
+    NTRIPManager mgr(settings);
     mgr.setCorrectionManager(&corrections);
     auto* first = new MockNTRIPTransport(&mgr);
     int stops = 0;
@@ -785,7 +776,7 @@ void NTRIPManagerTest::testFactChangesReconfigureTransport()
     mgr.init();
     QCOMPARE(first->startCount, 1);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
-    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
+    QSignalSpy routed(&corrections.router(), &GPSCorrectionRouter::frameRouted);
     first->simulateRtcmData(GpsTestHelpers::buildRtcmFrame(1005), 1005);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(routed.size(), 1);
@@ -851,13 +842,12 @@ void NTRIPManagerTest::testNtripOnlyUdpForwardingBypassesSelectionOnce()
         {GPSCorrectionManager::RoutingPolicy::Manual, GPSCorrectionSource::LocalReceiver, {}});
     auto local = corrections.registerSource(GPSCorrectionSource::LocalReceiver, QStringLiteral("serial:test"));
     auto udp = corrections.registerSource(GPSCorrectionSource::Udp);
-    NTRIPManager mgr;
+    NTRIPManager mgr(settings);
     mgr.setCorrectionManager(&corrections);
-    mgr._settings = settings;
     auto* transport = new MockNTRIPTransport(&mgr);
     mgr.setTransportForTest(transport);
     mgr.startNTRIP();
-    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
+    QSignalSpy routed(&corrections.router(), &GPSCorrectionRouter::frameRouted);
     const auto localFrame = GpsTestHelpers::buildRtcmFrame(1005);
     const auto udpFrame = GpsTestHelpers::buildRtcmFrame(1077);
     const auto ntripFrame = GpsTestHelpers::buildRtcmFrame(1087);
@@ -870,18 +860,17 @@ void NTRIPManagerTest::testNtripOnlyUdpForwardingBypassesSelectionOnce()
     QCOMPARE(routed.size(), 1);
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(routed[0][0]).source, GPSCorrectionSource::LocalReceiver);
     QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), quint64(localFrame.size()));
-    const auto ntripStats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)].toMap();
-    QCOMPARE(ntripStats.value(QStringLiteral("receivedFrames")).toULongLong(), 1);
-    QCOMPARE(ntripStats.value(QStringLiteral("selectedFrames")).toULongLong(), 0);
-    QVariantMap forwarding;
+    const auto ntripStats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)];
+    QCOMPARE(ntripStats.receivedFrames, 1);
+    QCOMPARE(ntripStats.selectedFrames, 0);
+    GPSCorrectionDestinationDiagnostic forwarding;
     for (const auto& destination : corrections.destinationDiagnostics()) {
-        const auto stats = destination.toMap();
-        if (stats.value(QStringLiteral("destinationId")).toString() == QStringLiteral("ntripUdp")) {
-            forwarding = stats;
+        if (destination.destinationId == QStringLiteral("ntripUdp")) {
+            forwarding = destination;
         }
     }
-    QCOMPARE(forwarding.value(QStringLiteral("queuedBytes")).toULongLong(), quint64(ntripFrame.size()));
-    QCOMPARE(forwarding.value(QStringLiteral("queuedFrames")).toULongLong(), 1);
+    QCOMPARE(forwarding.queuedBytes, quint64(ntripFrame.size()));
+    QCOMPARE(forwarding.queuedFrames, 1);
     QVERIFY(!listener.waitForReadyRead(TestTimeout::shortMs()));
     QVERIFY(!listener.hasPendingDatagrams());
 }
@@ -901,10 +890,9 @@ void NTRIPManagerTest::testTransportDiagnosticsReachManager()
     saved.setFactValue(settings->ntripWhitelist(), QStringLiteral("1005"));
     saved.setFactValue(settings->ntripUdpForwardEnabled(), false);
     GPSCorrectionManager corrections;
-    NTRIPManager mgr;
+    NTRIPManager mgr(settings);
     mgr.setCorrectionManager(&corrections);
-    mgr._settings = settings;
-    QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
+    QSignalSpy routed(&corrections.router(), &GPSCorrectionRouter::frameRouted);
     mgr.startNTRIP();
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::shortMs());
     QTcpSocket* peer = server.nextPendingConnection();
@@ -920,15 +908,13 @@ void NTRIPManagerTest::testTransportDiagnosticsReachManager()
     const QByteArray response = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" +
                                 QByteArray::number(body.size(), 16) + "\r\n" + body + "\r\n";
     QCOMPARE(peer->write(response), response.size());
-    QTRY_COMPARE_WITH_TIMEOUT(corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)]
-                                  .toMap()
-                                  .value(QStringLiteral("receivedFrames"))
-                                  .toULongLong(),
-                              3, TestTimeout::shortMs());
+    QTRY_COMPARE_WITH_TIMEOUT(
+        corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)].receivedFrames, 3,
+        TestTimeout::shortMs());
     verifyExpectedLogMessage();
-    const auto stats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)].toMap();
-    QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), 2);
-    QCOMPARE(stats.value(QStringLiteral("selectedFrames")).toULongLong(), 1);
+    const auto stats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)];
+    QCOMPARE(stats.validatedFrames, 2);
+    QCOMPARE(stats.selectedFrames, 1);
     QCOMPARE(routed.size(), 1);
     QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), quint64(accepted.size()));
     mgr.stopNTRIP();

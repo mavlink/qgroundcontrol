@@ -11,8 +11,7 @@ QGC_LOGGING_CATEGORY(GPSPositionServiceLog, "GPS.PositionManager.GPSPositionServ
 
 namespace {
 using SelectedSource = GPSPositionService::SelectedSource;
-constexpr std::array SOURCE_KINDS = {SelectedSource::Receiver, SelectedSource::Nmea, SelectedSource::Internal,
-                                     SelectedSource::Simulated};
+constexpr std::array SOURCE_KINDS = {SelectedSource::Receiver, SelectedSource::Internal, SelectedSource::Simulated};
 }  // namespace
 
 GPSPositionSourceRegistration::GPSPositionSourceRegistration() = default;
@@ -63,108 +62,78 @@ void GPSPositionSourceRegistration::reset()
 GPSPositionService::SourceBinding::SourceBinding(GPSPositionService* service, SelectedSource sourceKind)
     : owner(service)
     , kind(sourceKind)
-    , fallbackHealth(service, service->_scheduler)
 {}
 
 GPSPositionService::SourceBinding::~SourceBinding()
 {
-    disconnectSource();
+    disconnectNotifications();
+    active = false;
+    // Stopping a backend may re-enter; the adapter guards its own lifetime.
+    adapter.reset();
 }
 
-QObject* GPSPositionService::SourceBinding::source() const
+QGeoPositionInfoSource* GPSPositionService::SourceBinding::backend() const
 {
-    return providedHealth || rawBindingAllowed ? producer.data() : nullptr;
-}
-
-GPSSourceHealth* GPSPositionService::SourceBinding::health()
-{
-    return source() ? (providedHealth ? providedHealth.data() : &fallbackHealth) : nullptr;
+    return adapter ? adapter->backend() : nullptr;
 }
 
 void GPSPositionService::SourceBinding::disconnectNotifications()
 {
     observeHealth(false);
-    for (const auto& connection : connections) {
-        QObject::disconnect(connection);
-    }
-    connections.clear();
+    QObject::disconnect(std::exchange(producerDestroyed, {}));
+    QObject::disconnect(std::exchange(backendDestroyed, {}));
 }
 
-void GPSPositionService::SourceBinding::disconnectSource()
+void GPSPositionService::SourceBinding::bind(GPSSourceHealth* nextProducer,
+                                             std::unique_ptr<GPSPositionBackendAdapter> nextAdapter,
+                                             quint64 nextSession)
 {
-    disconnectNotifications();
-    active = false;
-    const bool stop = std::exchange(updatesStarted, false);
-    if (rawSource && stop) {
-        rawSource->stopUpdates();
-    }
-}
-
-void GPSPositionService::SourceBinding::configure(QObject* nextProducer, GPSSourceHealth* nextHealth,
-                                                  const QString& nextIdentity, bool nextPlatform, quint64 nextSession)
-{
-    if (producer == nextProducer && providedHealth == nextHealth && identity == nextIdentity &&
-        platform == nextPlatform && sessionId == nextSession) {
+    if (!nextAdapter && producer == nextProducer && !adapter && sessionId == nextSession) {
         return;
     }
     const QPointer<GPSPositionService> bindingGuard(owner);
     const quint64 revision = ++generation;
-    const QPointer<QObject> producerGuard(nextProducer);
-    const QPointer<GPSSourceHealth> healthGuard(nextHealth);
-    disconnectSource();
+    const QPointer<GPSSourceHealth> producerGuard(nextProducer);
+    const QPointer<QGeoPositionInfoSource> backendGuard(nextAdapter ? nextAdapter->backend() : nullptr);
+    disconnectNotifications();
+    active = false;
+    producer = nullptr;
+    // Stopping the retired backend may re-enter, rebind this role, or delete the next producer.
+    if (auto retired = std::move(adapter)) {
+        retired->retire();
+    }
     if (!bindingGuard || revision != generation) {
         return;
     }
-    producer = producerGuard;
-    rawSource = qobject_cast<QGeoPositionInfoSource*>(producerGuard.data());
-    providedHealth = healthGuard;
-    identity = nextIdentity;
-    platform = nextPlatform;
+    if (nextAdapter && !backendGuard) {
+        nextAdapter.reset();
+    }
+    adapter = std::move(nextAdapter);
+    producer = adapter ? adapter->health() : producerGuard.data();
     sessionId = nextSession;
-    fallbackHealth.reset();
-    if (!bindingGuard || revision != generation) {
-        return;
-    }
     if (producer) {
-        connections.append(QObject::connect(producer, &QObject::destroyed, owner, [this]() {
+        producerDestroyed = QObject::connect(producer, &QObject::destroyed, owner, [this]() {
+            ++generation;
+            disconnectNotifications();
             producer = nullptr;
-            rawSource = nullptr;
-            disconnectSource();
+            active = false;
             owner->_bindingChanged(kind);
-        }));
-        if (providedHealth) {
-            connections.append(QObject::connect(providedHealth, &QObject::destroyed, owner, [this]() {
-                observeHealth(false);
-                providedHealth = nullptr;
-                active = false;
-                owner->_bindingChanged(kind);
-            }));
-        }
-        observeHealth(true);
-        if (rawSource) {
-            connections.append(QObject::connect(rawSource, &QGeoPositionInfoSource::positionUpdated, owner,
-                                                [this, revision](const QGeoPositionInfo& position) {
-                                                    if (generation == revision && active && !providedHealth) {
-                                                        updatePosition(position);
-                                                    }
-                                                }));
-            connections.append(QObject::connect(rawSource, &QGeoPositionInfoSource::errorOccurred, owner,
-                                                [this, revision](QGeoPositionInfoSource::Error error) {
-                                                    if (generation != revision || !active || providedHealth) {
-                                                        return;
-                                                    }
-                                                    const QPointer<GPSPositionService> errorGuard(owner);
-                                                    const quint64 event = ++backendRevision;
-                                                    owner->_backendError(kind, error);
-                                                    if (errorGuard && generation == revision &&
-                                                        event == backendRevision && active && rawSource &&
-                                                        !providedHealth && error != QGeoPositionInfoSource::NoError &&
-                                                        error != QGeoPositionInfoSource::UpdateTimeoutError) {
-                                                        fallbackHealth.invalidatePosition();
-                                                    }
-                                                }));
-        }
+        });
     }
+    if (adapter) {
+        adapter->setEventHandler([service = owner, role = kind](QGeoPositionInfoSource::Error error) {
+            service->_backendError(role, error);
+        });
+        backendDestroyed = QObject::connect(adapter->backend(), &QObject::destroyed, owner, [this]() {
+            ++generation;
+            disconnectNotifications();
+            producer = nullptr;
+            active = false;
+            adapter.reset();
+            owner->_bindingChanged(kind);
+        });
+    }
+    observeHealth(true);
     owner->_bindingChanged(kind);
 }
 
@@ -174,74 +143,26 @@ void GPSPositionService::SourceBinding::observeHealth(bool observe)
     if (!observed) {
         QObject::disconnect(std::exchange(observationConnection, {}));
     } else if (!observationConnection) {
-        observationConnection = QObject::connect(observed, &GPSSourceHealth::positionChanged, owner, [this]() {
-            if (providedHealth || active) {
-                owner->_sourceObservationChanged(kind);
-            }
-        });
+        observationConnection = QObject::connect(observed, &GPSSourceHealth::positionChanged, owner,
+                                                 [this]() { owner->_sourceObservationChanged(kind); });
     }
 }
 
 void GPSPositionService::SourceBinding::setActive(bool enabled)
 {
-    enabled = enabled && source();
-    if (active == enabled || !producer) {
+    enabled = enabled && producer;
+    if (active == enabled) {
         return;
     }
     active = enabled;
-    ++backendRevision;
-    if (providedHealth || !rawSource) {
-        return;
-    }
-    const QPointer<GPSPositionService> guard(owner);
-    const quint64 revision = generation;
-    if (!enabled) {
-        if (std::exchange(updatesStarted, false)) {
-            rawSource->stopUpdates();
-        }
-        if (guard && revision == generation && !active) {
-            fallbackHealth.reset();
-        }
-        return;
-    }
-    rawSource->setPreferredPositioningMethods(QGeoPositionInfoSource::SatellitePositioningMethods);
-    if (!guard || revision != generation || !rawSource || !active) {
-        return;
-    }
-#if defined(Q_OS_DARWIN) || defined(Q_OS_IOS)
-    if (!platform) {
-        rawSource->setUpdateInterval(0);
-    }
-#else
-    rawSource->setUpdateInterval(updateInterval());
-#endif
-    if (guard && revision == generation && rawSource && active) {
-        updatesStarted = true;
-        rawSource->startUpdates();
+    if (adapter) {
+        adapter->setActive(enabled);
     }
 }
 
 int GPSPositionService::SourceBinding::updateInterval() const
 {
-    return platform && rawSource ? rawSource->minimumUpdateInterval() : 0;
-}
-
-void GPSPositionService::SourceBinding::updatePosition(const QGeoPositionInfo& position)
-{
-    const QPointer<GPSPositionService> guard(owner);
-    const quint64 revision = generation;
-    const quint64 event = ++backendRevision;
-    owner->_backendError(kind, QGeoPositionInfoSource::NoError);
-    if (!guard || revision != generation || event != backendRevision || !active || !rawSource || providedHealth) {
-        return;
-    }
-    GPSObservation observation;
-    observation.position = position;
-    observation.receivedAt = QDateTime::currentDateTimeUtc();
-    observation.monotonicTimestampUs = owner->_scheduler->nowUs();
-    observation.sourceId = identity;
-    observation.sessionId = sessionId;
-    fallbackHealth.updateObservation(observation);
+    return adapter ? adapter->updateInterval() : 0;
 }
 
 GPSPositionService::GPSPositionService(QObject* parent, RuntimeScheduler* scheduler)
@@ -272,7 +193,6 @@ void GPSPositionService::_bindingChanged(SelectedSource kind)
 {
     const GPSNotificationQueue::Scope publish(_notifications);
     _binding(kind).pendingObservation = false;
-    _refreshSourceBindings();
     _selectPositionSource();
 }
 
@@ -306,13 +226,13 @@ void GPSPositionService::_clearPendingObservations()
 
 void GPSPositionService::setInternalPositionSource(QGeoPositionInfoSource* source, SourceStatus status, bool custom)
 {
-    if (!_canBindSource(SelectedSource::Internal, source)) {
+    if (!_canBindBackend(SelectedSource::Internal, source)) {
         return;
     }
     const GPSNotificationQueue::Scope publish(_notifications);
     _usingPluginSource = custom;
     _platformStatus = status;
-    _setBinding(SelectedSource::Internal, source);
+    _bindBackend(SelectedSource::Internal, source, 0);
 }
 
 void GPSPositionService::setInternalPositionStatus(SourceStatus status)
@@ -327,22 +247,38 @@ void GPSPositionService::setInternalPositionStatus(SourceStatus status)
 
 void GPSPositionService::setSimulatedPositionSource(QGeoPositionInfoSource* source)
 {
-    if (_canBindSource(SelectedSource::Simulated, source)) {
-        _setBinding(SelectedSource::Simulated, source);
+    if (_canBindBackend(SelectedSource::Simulated, source)) {
+        _bindBackend(SelectedSource::Simulated, source, 0);
     }
 }
 
-GPSPositionSourceRegistration GPSPositionService::registerPositionSource(SelectedSource kind, QObject* source,
-                                                                         GPSSourceHealth* health, quint64 sessionId)
+GPSPositionSourceRegistration GPSPositionService::registerPositionSource(SelectedSource kind, GPSSourceHealth* producer,
+                                                                         quint64 sessionId)
 {
-    if ((kind != SelectedSource::Receiver && kind != SelectedSource::Nmea) || !source ||
-        (!health && !qobject_cast<QGeoPositionInfoSource*>(source)) || !_canBindSource(kind, source, health)) {
+    if (kind != SelectedSource::Receiver || !producer || !_canBindProducer(producer)) {
         return {};
     }
-    const quint64 token = _binding(kind).token + 1;
-    GPSPositionSourceRegistration registration(this, static_cast<int>(kind), token);
-    _setBinding(kind, source, health, sessionId);
+    auto registration = _register(kind);
+    _bindProducer(kind, producer, sessionId);
     return registration;
+}
+
+GPSPositionSourceRegistration GPSPositionService::registerPositionSource(SelectedSource kind,
+                                                                         QGeoPositionInfoSource* backend,
+                                                                         quint64 sessionId)
+{
+    if (kind != SelectedSource::Receiver || !backend || !_canBindBackend(kind, backend)) {
+        return {};
+    }
+    auto registration = _register(kind);
+    _bindBackend(kind, backend, sessionId);
+    return registration;
+}
+
+GPSPositionSourceRegistration GPSPositionService::_register(SelectedSource kind)
+{
+    // Binding increments the token, so the registration owns the next one.
+    return GPSPositionSourceRegistration(this, static_cast<int>(kind), _binding(kind).token + 1);
 }
 
 void GPSPositionService::_retireRegistration(int kindValue, quint64 token)
@@ -351,45 +287,61 @@ void GPSPositionService::_retireRegistration(int kindValue, quint64 token)
         return;
     }
     const auto kind = static_cast<SelectedSource>(kindValue);
-    if ((kind != SelectedSource::Receiver && kind != SelectedSource::Nmea) || _binding(kind).token != token) {
+    if (kind != SelectedSource::Receiver || _binding(kind).token != token) {
         return;
     }
-    _setBinding(kind, nullptr);
+    _bindProducer(kind, nullptr, 0);
 }
 
-bool GPSPositionService::_canBindSource(SelectedSource kind, QObject* source, GPSSourceHealth* health) const
+bool GPSPositionService::_canBindProducer(const QObject* producer) const
 {
-    if (QThread::currentThread() != thread() || (source && source->thread() != thread()) ||
-        (health && health->thread() != thread())) {
+    return QThread::currentThread() == thread() && (!producer || producer->thread() == thread());
+}
+
+bool GPSPositionService::_canBindBackend(SelectedSource kind, QGeoPositionInfoSource* backend) const
+{
+    if (!_canBindProducer(backend)) {
         return false;
     }
-    if (qobject_cast<QGeoPositionInfoSource*>(source)) {
-        for (const auto other : SOURCE_KINDS) {
-            const auto& binding = _binding(other);
-            if (other != kind && binding.producer == source && (!health || !binding.providedHealth)) {
-                return false;
-            }
+    // Two roles would start and stop the same backend independently.
+    for (const auto other : SOURCE_KINDS) {
+        if (other != kind && backend && _binding(other).backend() == backend) {
+            return false;
         }
     }
     return true;
 }
 
-void GPSPositionService::_setBinding(SelectedSource kind, QObject* source, GPSSourceHealth* health, quint64 sessionId)
+void GPSPositionService::_bindProducer(SelectedSource kind, GPSSourceHealth* producer, quint64 sessionId)
 {
-    if (QThread::currentThread() != thread() || (source && source->thread() != thread()) ||
-        (health && health->thread() != thread())) {
-        qCWarning(GPSPositionServiceLog) << "Position source changes require matching thread affinity";
-        return;
-    }
     const GPSNotificationQueue::Scope publish(_notifications);
     auto& binding = _binding(kind);
     ++binding.token;
+    binding.bind(producer, nullptr, sessionId);
+    _selectPositionSource();
+}
+
+void GPSPositionService::_bindBackend(SelectedSource kind, QGeoPositionInfoSource* backend, quint64 sessionId)
+{
+    const GPSNotificationQueue::Scope publish(_notifications);
+    auto& binding = _binding(kind);
+    ++binding.token;
+    const bool platform = kind == SelectedSource::Internal || kind == SelectedSource::Simulated;
     const QString identity = kind == SelectedSource::Internal
                                  ? (_usingPluginSource ? QStringLiteral("Plugin") : QStringLiteral("Platform"))
                              : kind == SelectedSource::Simulated ? QStringLiteral("Simulated")
                                                                  : QStringLiteral("External GPS");
-    binding.configure(source, source ? health : nullptr, identity,
-                      kind == SelectedSource::Internal || kind == SelectedSource::Simulated, sessionId);
+    // Rebinding the same backend keeps its running adapter and observation.
+    if (backend && binding.adapter && binding.adapter->backend() == backend &&
+        binding.adapter->identity() == identity && binding.sessionId == sessionId) {
+        _selectPositionSource();
+        return;
+    }
+    binding.bind(nullptr,
+                 backend
+                     ? std::make_unique<GPSPositionBackendAdapter>(backend, identity, platform, sessionId, _scheduler)
+                     : nullptr,
+                 sessionId);
     _selectPositionSource();
 }
 
@@ -399,7 +351,8 @@ void GPSPositionService::setSourceMode(SourceMode mode)
         qCWarning(GPSPositionServiceLog) << "Position source changes require matching thread affinity";
         return;
     }
-    if (mode < SourceMode::Automatic || mode > SourceMode::InternalOnly || _sourceMode == mode) {
+    if ((mode != SourceMode::Automatic && mode != SourceMode::ReceiverOnly && mode != SourceMode::InternalOnly) ||
+        _sourceMode == mode) {
         return;
     }
     const GPSNotificationQueue::Scope publish(_notifications);
@@ -412,9 +365,9 @@ void GPSPositionService::setSourceMode(SourceMode mode)
     _notifications.emitSignal(this, &GPSPositionService::sourceModeChanged);
 }
 
-QObject* GPSPositionService::_sourceFor(SelectedSource source) const
+GPSSourceHealth* GPSPositionService::_sourceFor(SelectedSource source) const
 {
-    return _binding(source).source();
+    return _binding(source).health();
 }
 
 void GPSPositionService::_selectPositionSource()
@@ -460,14 +413,12 @@ GPSPositionService::SelectedSource GPSPositionService::_choosePositionSource()
     switch (_sourceMode) {
         case SourceMode::ReceiverOnly:
             return SelectedSource::Receiver;
-        case SourceMode::NmeaOnly:
-            return SelectedSource::Nmea;
         case SourceMode::InternalOnly:
             return internal;
         case SourceMode::Automatic:
             break;
     }
-    const std::array priority = {SelectedSource::Receiver, SelectedSource::Nmea, internal};
+    const std::array priority = {SelectedSource::Receiver, internal};
     const bool currentAvailable =
         std::find(priority.begin(), priority.end(), _selectedKind) != priority.end() && _sourceFor(_selectedKind);
     std::optional<SelectedSource> best;
@@ -504,40 +455,9 @@ GPSPositionService::SelectedSource GPSPositionService::_choosePositionSource()
     return internal;
 }
 
-void GPSPositionService::_refreshSourceBindings()
-{
-    for (const auto kind : SOURCE_KINDS) {
-        auto& binding = _binding(kind);
-        binding.rawBindingAllowed = _canBindSource(kind, binding.producer, binding.providedHealth);
-    }
-    for (const auto kind : SOURCE_KINDS) {
-        auto& binding = _binding(kind);
-        bool observe = binding.health() != nullptr;
-        for (const auto other : SOURCE_KINDS) {
-            if (other == kind) {
-                break;
-            }
-            if (_binding(other).health() == binding.health()) {
-                observe = false;
-                break;
-            }
-        }
-        // Shared health reports once, even when it serves several roles.
-        binding.observeHealth(observe);
-    }
-}
-
 void GPSPositionService::_sourceObservationChanged(SelectedSource kind)
 {
-    auto* health = _binding(kind).health();
-    if (!health) {
-        return;
-    }
-    for (const auto other : SOURCE_KINDS) {
-        if (_binding(other).health() == health) {
-            _binding(other).pendingObservation = true;
-        }
-    }
+    _binding(kind).pendingObservation = true;
     _selectPositionSource();
 }
 
@@ -552,15 +472,18 @@ void GPSPositionService::_updateSourceActivity()
     }
 }
 
+GPSSourceHealth* GPSPositionService::sourceHealth(SelectedSource kind) const
+{
+    return _binding(kind).health();
+}
+
 QString GPSPositionService::selectedSourceName() const
 {
     switch (_selectedSource) {
         case SelectedSource::None:
             return tr("None");
         case SelectedSource::Receiver:
-            return tr("RTK receiver");
-        case SelectedSource::Nmea:
-            return tr("NMEA");
+            return tr("GNSS receiver");
         case SelectedSource::Internal:
             return _usingPluginSource ? tr("Plugin positioning") : tr("Internal positioning");
         case SelectedSource::Simulated:
@@ -594,7 +517,7 @@ QString GPSPositionService::sourceStatusText() const
 
 void GPSPositionService::_updateSelectionStatus()
 {
-    const auto selected = _currentSource ? _selectedKind : SelectedSource::None;
+    const auto selected = _currentHealth ? _selectedKind : SelectedSource::None;
     SourceStatus status = SourceStatus::NoSource;
     if (_currentHealth) {
         switch (_currentHealth->state()) {
@@ -613,7 +536,7 @@ void GPSPositionService::_updateSelectionStatus()
                 status = SourceStatus::InvalidFix;
                 break;
         }
-    } else if (_sourceMode != SourceMode::ReceiverOnly && _sourceMode != SourceMode::NmeaOnly) {
+    } else if (_sourceMode != SourceMode::ReceiverOnly) {
         status = _platformStatus;
     }
     if (selected == SelectedSource::Internal &&
@@ -719,18 +642,16 @@ void GPSPositionService::_clearPosition()
 
 void GPSPositionService::_setPositionSource(SelectedSource source)
 {
-    const QPointer<QObject> nextSource = _sourceFor(source);
-    QPointer<GPSSourceHealth> nextHealth = nextSource ? _binding(source).health() : nullptr;
-    if (!_forceSourceRefresh && _selectedKind == source && _currentSource == nextSource &&
-        _currentHealth == nextHealth && _selectedBindingRevision == _binding(source).generation) {
+    const QPointer<GPSSourceHealth> nextHealth = _sourceFor(source);
+    if (!_forceSourceRefresh && _selectedKind == source && _currentHealth == nextHealth &&
+        _selectedBindingRevision == _binding(source).generation) {
         _updateSourceActivity();
         return;
     }
     qCDebug(GPSPositionServiceLog) << "Ground-station position source changed"
-                                   << "source:" << static_cast<int>(source) << "previous:" << _currentSource
-                                   << "selected:" << nextSource;
+                                   << "source:" << static_cast<int>(source) << "previous:" << _currentHealth
+                                   << "selected:" << nextHealth;
     _forceSourceRefresh = false;
-    _currentSource = nextSource;
     _currentHealth = nextHealth;
     _selectedKind = source;
     _selectedBindingRevision = _binding(source).generation;

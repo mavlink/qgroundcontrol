@@ -8,6 +8,7 @@
 #include <QtCore/QString>
 #include <QtNetwork/QTcpSocket>
 
+#include "GPSRevision.h"
 #include "MonotonicClock.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPHttpCodec.h"
@@ -66,5 +67,5 @@ private:
     NTRIPHttpDecoder _httpDecoder;
     bool _reading = false;
     bool _stopped = false;
-    quint64 _attempt = 0;
+    GPSRevision _attempt;
 };

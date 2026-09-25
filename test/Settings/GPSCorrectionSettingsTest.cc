@@ -23,6 +23,7 @@
 #include "NTRIPSettings.h"
 #include "QmlUITestBase.h"
 #include "RAIIFixtures.h"
+#include "RTCMMessageCount.h"
 #include "SettingsFact.h"
 #include "SettingsManager.h"
 
@@ -304,7 +305,7 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     auto* udpMessages = findItem(QStringLiteral("correctionSourceMessages_3"));
     QVERIFY(udpMessages);
     QTRY_VERIFY_WITH_TIMEOUT(udpMessages->isVisible(), TestTimeout::mediumMs());
-    QCOMPARE(udpMessages->property("messageCounts").toList().value(0).toList().value(0).toInt(), 1005);
+    QCOMPARE(udpMessages->property("messageCounts").value<QList<RTCMMessageCount>>().value(0).messageId, 1005);
     QVERIFY2(
         streamStatus(QStringLiteral("b"))
             .contains(QCoreApplication::translate("CorrectionDiagnostics", "Active; waiting for fresh corrections")),

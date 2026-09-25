@@ -1,6 +1,6 @@
 # ============================================================================
 # Positioning Unit Tests
-# Tests for GCS position source management (NMEA source lifecycle)
+# Tests for GCS position source selection
 # ============================================================================
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE PositionManagerTest.cc PositionManagerTest.h)
@@ -11,5 +11,3 @@ add_qgc_test(PositionManagerTest LABELS Unit)
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSPositionServiceTest.cc GPSPositionServiceTest.h)
 add_qgc_test(GPSPositionServiceTest LABELS Unit)
-
-add_subdirectory(NMEA)

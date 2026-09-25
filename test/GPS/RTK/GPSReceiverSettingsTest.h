@@ -14,6 +14,7 @@ private slots:
     void _reconnectingOffersDisconnect();
     void _rtkBaseMapMarker();
     void _tcpConnectionFields();
+    void _roleSelectsFields();
     void _compactCorrectionsToggle();
     void _consentIsOneUse();
     void _warningWidth_data();

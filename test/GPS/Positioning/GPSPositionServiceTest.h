@@ -9,9 +9,8 @@ private slots:
     void _sourcesShareAcceptance_data();
     void _sourcesShareAcceptance();
     void _registrationReplacementAndSessions();
-    void _sharedProducerRoles();
-    void _sharedHealthLoss_data();
-    void _sharedHealthLoss();
+    void _producerLoss_data();
+    void _producerLoss();
     void _rawSourceSharingRejected_data();
     void _rawSourceSharingRejected();
     void _selectionStatusMatchesPublication_data();

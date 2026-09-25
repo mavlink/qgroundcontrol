@@ -56,7 +56,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     saved.setFactValue(ntripSettings->ntripMountpoint(), QStringLiteral("TEST"));
     saved.setFactValue(ntripSettings->ntripUdpForwardEnabled(), false);
     GPSCorrectionManager corrections;
-    NTRIPManager ntrip;
+    NTRIPManager ntrip(SettingsManager::instance()->ntripSettings());
     auto* stream = new MockNTRIPTransport(&ntrip);
     stream->autoConnect = false;
     ntrip.setTransportForTest(stream);
@@ -125,22 +125,22 @@ void GPSCorrectionManagerTest::_mavlinkDestinationAdmissions()
     auto source = corrections.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
     const auto bytes = GpsTestHelpers::buildRtcmFrame(1077, 500);
     corrections.acceptIngress(source.token().event(bytes, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
-    const auto sourceStats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)].toMap();
-    QCOMPARE(sourceStats.value(QStringLiteral("queuedFrames")).toULongLong(), 1ULL);
-    QCOMPARE(sourceStats.value(QStringLiteral("queuedBytes")).toULongLong(), quint64(bytes.size()));
-    QCOMPARE(sourceStats.value(QStringLiteral("droppedFrames")).toULongLong(), 0ULL);
+    const auto sourceStats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)];
+    QCOMPARE(sourceStats.queuedFrames, 1ULL);
+    QCOMPARE(sourceStats.queuedBytes, quint64(bytes.size()));
+    QCOMPARE(sourceStats.droppedFrames, 0ULL);
     int outputs = 0;
     for (const auto& value : corrections.destinationDiagnostics()) {
-        const auto destination = value.toMap();
-        const auto id = destination.value(QStringLiteral("destinationId")).toString();
+        const auto& destination = value;
+        const auto id = destination.destinationId;
         if (id == QStringLiteral("mavlink/full")) {
             ++outputs;
-            QCOMPARE(destination.value(QStringLiteral("queuedFrames")).toULongLong(), 1ULL);
+            QCOMPARE(destination.queuedFrames, 1ULL);
         } else if (id == QStringLiteral("mavlink/partial")) {
             ++outputs;
-            QCOMPARE(destination.value(QStringLiteral("queuedFrames")).toULongLong(), 0ULL);
-            QCOMPARE(destination.value(QStringLiteral("queuedBytes")).toULongLong(), 180ULL);
-            QCOMPARE(destination.value(QStringLiteral("droppedBytes")).toULongLong(), quint64(bytes.size() - 180));
+            QCOMPARE(destination.queuedFrames, 0ULL);
+            QCOMPARE(destination.queuedBytes, 180ULL);
+            QCOMPARE(destination.droppedBytes, quint64(bytes.size() - 180));
         }
     }
     QCOMPARE(outputs, 2);
@@ -372,11 +372,7 @@ void GPSCorrectionManagerTest::_sourceMessageCounts()
     GPSCorrectionManager corrections;
     auto ntrip = corrections.registerSource(GPSCorrectionSource::Ntrip);
     const auto messageCounts = [&corrections]() {
-        return corrections.sourceDiagnostics()
-            .at(static_cast<int>(GPSCorrectionSource::Ntrip))
-            .toMap()
-            .value(QStringLiteral("messageCounts"))
-            .toList();
+        return corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip)).messageCounts;
     };
     const qint64 now = GPSCorrectionFrame::monotonicNowMs();
     corrections.acceptIngress(ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1077, 20), now, 1077, true));
@@ -384,15 +380,15 @@ void GPSCorrectionManagerTest::_sourceMessageCounts()
     // Validated frames without a caller-supplied ID are identified from the RTCM header.
     corrections.acceptIngress(ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1077, 20), now, 0, true));
     corrections.acceptIngress(ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1230, 20), now, 1230, false));
-    const QVariantList expected{QVariant(QVariantList{1005, 1ULL}), QVariant(QVariantList{1077, 2ULL})};
+    const QList<RTCMMessageCount> expected{{1005, 1}, {1077, 2}};
     QCOMPARE(messageCounts(), expected);
 
     corrections._refreshDiagnostics();
     const auto* model = corrections.sourceModel();
-    const auto row =
-        model->data(model->index(static_cast<int>(GPSCorrectionSource::Ntrip)), GPSCorrectionDiagnosticsModel::RowRole)
-            .toMap();
-    QCOMPARE(row.value(QStringLiteral("messageCounts")).toList(), expected);
+    const int role = model->roleNames().key(QByteArrayLiteral("messageCounts"), -1);
+    QVERIFY(role >= 0);
+    const auto row = model->data(model->index(static_cast<int>(GPSCorrectionSource::Ntrip), 0), role);
+    QCOMPARE(row.value<QList<RTCMMessageCount>>(), expected);
 
     ntrip.reset();
     ntrip = corrections.registerSource(GPSCorrectionSource::Ntrip);
@@ -401,34 +397,38 @@ void GPSCorrectionManagerTest::_sourceMessageCounts()
 
 void GPSCorrectionManagerTest::_diagnosticsModelUpdatesInPlace()
 {
-    GPSCorrectionDiagnosticsModel model(QStringLiteral("id"));
+    GPSCorrectionManager::DestinationModel model;
     QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
     QSignalSpy inserted(&model, &QAbstractItemModel::rowsInserted);
     QSignalSpy removed(&model, &QAbstractItemModel::rowsRemoved);
     QSignalSpy moved(&model, &QAbstractItemModel::rowsMoved);
     QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
     QSignalSpy reset(&model, &QAbstractItemModel::modelReset);
-    const auto row = [](const QString& id, int value) {
-        return QVariant(QVariantMap{{QStringLiteral("id"), id}, {QStringLiteral("value"), value}});
+    const auto row = [](const QString& id, quint64 queuedBytes) {
+        return GPSCorrectionDestinationDiagnostic{.destinationId = id, .queuedBytes = queuedBytes};
     };
     const auto keys = [&model]() {
         QStringList result;
         for (const auto& entry : model.rows()) {
-            result.append(entry.value(QStringLiteral("id")).toString());
+            result.append(entry.destinationId);
         }
         return result;
     };
+    const int destinationRole = model.roleNames().key(QByteArrayLiteral("destinationId"), -1);
+    const int queuedRole = model.roleNames().key(QByteArrayLiteral("queuedBytes"), -1);
 
     model.setRows({row(QStringLiteral("a"), 1), row(QStringLiteral("b"), 1)});
     QCOMPARE(inserted.size(), 1);
     QCOMPARE(model.rowCount(), 2);
-    QCOMPARE(model.roleNames().value(GPSCorrectionDiagnosticsModel::RowRole), QByteArrayLiteral("row"));
+    // Every row property is a role, so QML delegates bind to typed values.
+    QVERIFY(destinationRole >= 0 && queuedRole >= 0);
+    QCOMPARE(model.data(model.index(0, 0), destinationRole).toString(), QStringLiteral("a"));
 
     model.setRows({row(QStringLiteral("a"), 1), row(QStringLiteral("b"), 2)});
     QCOMPARE(changed.size(), 1);
     QCOMPARE(changed.first().at(0).toModelIndex().row(), 1);
     QCOMPARE(changed.first().at(1).toModelIndex().row(), 1);
-    QCOMPARE(model.data(model.index(1)).toMap().value(QStringLiteral("value")).toInt(), 2);
+    QCOMPARE(model.data(model.index(1, 0), queuedRole).toULongLong(), 2ULL);
     QCOMPARE(inserted.size(), 1);
     QCOMPARE(removed.size(), 0);
 
@@ -448,7 +448,7 @@ void GPSCorrectionManagerTest::_diagnosticsModelUpdatesInPlace()
     model.setRows({});
     QCOMPARE(model.rowCount(), 0);
     QCOMPARE(reset.size(), 0);
-    QVERIFY(!model.data(model.index(0)).isValid());
+    QVERIFY(!model.data(model.index(0, 0), queuedRole).isValid());
 }
 
 void GPSCorrectionManagerTest::_sourceSelectionAndSessions()
@@ -456,9 +456,8 @@ void GPSCorrectionManagerTest::_sourceSelectionAndSessions()
     GPSCorrectionManager corrections;
     QSignalSpy routed(&corrections._router, &GPSCorrectionRouter::frameRouted);
     const QByteArray data = GpsTestHelpers::buildRtcmFrame(1005, 20);
-    const auto initial =
-        corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::LocalReceiver)).toMap();
-    QVERIFY(!initial.value(QStringLiteral("active")).toBool());
+    const auto initial = corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::LocalReceiver));
+    QVERIFY(!initial.active);
     corrections.acceptIngress(GPSCorrectionSourceToken().event(data, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     QVERIFY(routed.isEmpty());
     auto local = corrections.registerSource(GPSCorrectionSource::LocalReceiver);
@@ -487,10 +486,10 @@ void GPSCorrectionManagerTest::_sourceSelectionAndSessions()
     frame = ntrip.token().event(data, GPSCorrectionFrame::monotonicNowMs(), 0, true);
     corrections.acceptIngress(frame);
     QCOMPARE(routed.size(), 3);
-    const auto stats = corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap();
-    QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), quint64(1));
-    QCOMPARE(stats.value(QStringLiteral("selectedFrames")).toULongLong(), quint64(1));
-    QVERIFY(stats.value(QStringLiteral("usable")).toBool());
+    const auto stats = corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip));
+    QCOMPARE(stats.validatedFrames, quint64(1));
+    QCOMPARE(stats.selectedFrames, quint64(1));
+    QVERIFY(stats.usable);
 }
 
 void GPSCorrectionManagerTest::_filteredAndExpiredFrames()
@@ -502,22 +501,22 @@ void GPSCorrectionManagerTest::_filteredAndExpiredFrames()
     const auto now = GPSCorrectionFrame::monotonicNowMs();
     auto frame = ntrip.token().event(data, now, 1005, true, true);
     corrections.acceptIngress(frame);
-    auto stats = corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap();
-    QVERIFY(stats.value(QStringLiteral("usable")).toBool());
-    QCOMPARE(stats.value(QStringLiteral("droppedFrames")).toULongLong(), quint64(1));
+    auto stats = corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip));
+    QVERIFY(stats.usable);
+    QCOMPARE(stats.droppedFrames, quint64(1));
     QVERIFY(routed.isEmpty());
     frame = ntrip.token().event(data, now - 6000, 1005, true);
     corrections.acceptIngress(frame);
-    stats = corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap();
+    stats = corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip));
     // Older deliveries cannot expire newer observations.
-    QVERIFY(stats.value(QStringLiteral("usable")).toBool());
-    QCOMPARE(stats.value(QStringLiteral("droppedFrames")).toULongLong(), quint64(2));
+    QVERIFY(stats.usable);
+    QCOMPARE(stats.droppedFrames, quint64(2));
     QVERIFY(routed.isEmpty());
     frame = ntrip.token().event(data, now + 60000, 1005, true);
     corrections.acceptIngress(frame);
-    stats = corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip)).toMap();
-    QCOMPARE(stats.value(QStringLiteral("droppedFrames")).toULongLong(), quint64(3));
-    QCOMPARE(stats.value(QStringLiteral("validatedFrames")).toULongLong(), quint64(2));
+    stats = corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip));
+    QCOMPARE(stats.droppedFrames, quint64(3));
+    QCOMPARE(stats.validatedFrames, quint64(2));
     QVERIFY(routed.isEmpty());
 }
 
@@ -554,10 +553,10 @@ void GPSCorrectionManagerTest::_outputsEnabledAfterLinkHistoryChurn()
     QCOMPARE(udpDestination.readDatagram(received.data(), received.size()), qint64(data.size()));
     QCOMPARE(received, data);
     for (const auto& value : corrections.destinationDiagnostics()) {
-        const auto destination = value.toMap();
-        const auto id = destination.value(QStringLiteral("destinationId")).toString();
+        const auto& destination = value;
+        const auto id = destination.destinationId;
         if (id == QStringLiteral("localReceiver") || id == QStringLiteral("ntripUdp")) {
-            QCOMPARE(destination.value(QStringLiteral("queuedBytes")).toULongLong(), quint64(data.size()));
+            QCOMPARE(destination.queuedBytes, quint64(data.size()));
         }
     }
     QCOMPARE(corrections.destinationDiagnostics().size(), GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 4);
@@ -582,23 +581,22 @@ void GPSCorrectionManagerTest::_ntripUdpOutputIsSourceSpecific()
     QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), quint64(data.size()));
     const auto outputStats = [&]() {
         for (const auto& value : corrections.destinationDiagnostics()) {
-            const auto map = value.toMap();
-            if (map.value(QStringLiteral("destinationId")).toString() == QStringLiteral("ntripUdp")) {
-                return map;
+            if (value.destinationId == QStringLiteral("ntripUdp")) {
+                return value;
             }
         }
-        return QVariantMap();
+        return GPSCorrectionDestinationDiagnostic{};
     };
-    QCOMPARE(outputStats().value(QStringLiteral("queuedBytes")).toULongLong(), quint64(data.size()));
+    QCOMPARE(outputStats().queuedBytes, quint64(data.size()));
     corrections.acceptIngress(ntrip.token().event(data, now, 1005, true, true));
     const auto retired = ntrip.token();
     ntrip.reset();
     corrections.acceptIngress(retired.event(data, now, 1005, true));
-    QCOMPARE(outputStats().value(QStringLiteral("queuedBytes")).toULongLong(), quint64(data.size()));
+    QCOMPARE(outputStats().queuedBytes, quint64(data.size()));
     corrections.configureNtripUdpOutput(false, {}, 0);
     auto next = corrections.registerSource(GPSCorrectionSource::Ntrip);
     corrections.acceptIngress(next.token().event(data, now, 1005, true));
-    QCOMPARE(outputStats().value(QStringLiteral("queuedBytes")).toULongLong(), quint64(data.size()));
+    QCOMPARE(outputStats().queuedBytes, quint64(data.size()));
     corrections.shutdown();
     QVERIFY(!corrections._ntripUdpOutput.isEnabled());
 }
@@ -674,14 +672,14 @@ void GPSCorrectionManagerTest::_sourceTopologyDoesNotNotifyOnCounters()
     const auto frame =
         ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), GPSCorrectionFrame::monotonicNowMs(), 1005, true);
     corrections.acceptIngress(frame);
-    QCOMPARE(corrections.sourceDiagnostics()[2].toMap().value(QStringLiteral("receivedFrames")).toULongLong(), 1ULL);
+    QCOMPARE(corrections.sourceDiagnostics()[2].receivedFrames, 1ULL);
     QCOMPARE(corrections.sourceInstances().size(), 1);
     QCOMPARE(topology.size(), 0);
     QCOMPARE(counters.size(), 0);
     corrections._refreshDiagnostics();
     QCOMPARE(topology.size(), 1);
     corrections.acceptIngress(frame);
-    QCOMPARE(corrections.sourceDiagnostics()[2].toMap().value(QStringLiteral("receivedFrames")).toULongLong(), 2ULL);
+    QCOMPARE(corrections.sourceDiagnostics()[2].receivedFrames, 2ULL);
     corrections._refreshDiagnostics();
     QCOMPARE(topology.size(), 1);
     QCOMPARE(counters.size(), 2);
@@ -719,11 +717,7 @@ void GPSCorrectionManagerTest::_receivedByteRates()
     QSignalSpy counters(corrections.sourceModel(), &QAbstractItemModel::dataChanged);
     auto ntrip = corrections.registerSource(GPSCorrectionSource::Ntrip);
     const auto rate = [&corrections]() {
-        return corrections.sourceDiagnostics()
-            .at(static_cast<int>(GPSCorrectionSource::Ntrip))
-            .toMap()
-            .value(QStringLiteral("receivedBytesPerSecond"))
-            .toULongLong();
+        return corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip)).receivedBytesPerSecond;
     };
     const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
     corrections._router.sampleReceivedByteRates(1000);

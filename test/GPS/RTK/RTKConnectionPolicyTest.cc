@@ -5,7 +5,6 @@
 #include <thread>
 
 #include <QtCore/QScopeGuard>
-#include <QtNetwork/QUdpSocket>
 #include <QtTest/QSignalSpy>
 
 #include "AutoConnectSettings.h"
@@ -13,7 +12,6 @@
 #include "GPSManager.h"
 #include "GPSRtk.h"
 #include "GPSTransport.h"
-#include "NMEASourceManager.h"
 #include "NTRIPManager.h"
 #include "PositionManager.h"
 #include "RTKConnectionPolicy.h"
@@ -22,6 +20,16 @@
 #include "SettingsManager.h"
 
 namespace {
+
+RTKSettings* rtkSettings()
+{
+    return SettingsManager::instance()->rtkSettings();
+}
+
+AutoConnectSettings* autoConnectSettings()
+{
+    return SettingsManager::instance()->autoConnectSettings();
+}
 
 using Port = SerialPortManager::Port;
 
@@ -41,8 +49,7 @@ void saveReceiverSettings(TestFixtures::SettingsFixture& saved, bool autoConnect
     auto* settings = SettingsManager::instance()->autoConnectSettings();
     auto* rtk = SettingsManager::instance()->rtkSettings();
     saved.setFactValue(settings->autoConnectRTKGPS(), autoConnect);
-    saved.setFactValue(settings->nmeaSource(), AutoConnectSettings::NmeaSourceDisabled);
-    saved.setFactValue(settings->autoConnectNmeaPort(), settings->autoConnectNmeaPort()->rawValue());
+    saved.setFactValue(rtk->receiverRole(), GPSRtk::ConfiguredBase);
     saved.setFactValue(rtk->connectionType(), GPSRtk::Serial);
     saved.setFactValue(rtk->baseReceiverManufacturers(), rtk->baseReceiverManufacturers()->rawValue());
     saved.setFactValue(rtk->serialDevice(), rtk->serialDevice()->rawValue());
@@ -66,7 +73,7 @@ struct RTKConnectionPolicyTest::Fixture
 
     explicit Fixture(SerialPortManager::Enumerator enumerator, Open open = Open::Hold)
         : ports(nullptr, std::move(enumerator))
-        , receiver(std::make_unique<GPSRtk>())
+        , receiver(std::make_unique<GPSRtk>(rtkSettings(), autoConnectSettings()))
     {
         receiver->setSerialPortManager(&ports);
         receiver->_serialTransportFactory = [open](const QString&, const std::atomic_bool& stop) {
@@ -155,7 +162,7 @@ void RTKConnectionPolicyTest::_tcpModeSkipsSerialDiscovery()
 void RTKConnectionPolicyTest::_excludedPorts_data()
 {
     QTest::addColumn<QString>("reason");
-    for (const auto* reason : {"bootloader", "busy", "nmea", "single-port", "other-board"}) {
+    for (const auto* reason : {"bootloader", "busy", "passive-role", "single-port", "other-board"}) {
         QTest::newRow(reason) << QString::fromLatin1(reason);
     }
 }
@@ -165,11 +172,10 @@ void RTKConnectionPolicyTest::_excludedPorts()
     QFETCH(QString, reason);
     TestFixtures::SettingsFixture saved;
     saveReceiverSettings(saved);
-    auto* settings = SettingsManager::instance()->autoConnectSettings();
-    if (reason == QStringLiteral("nmea")) {
-        settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceSerial);
+    if (reason == QStringLiteral("passive-role")) {
+        // Discovery configures bases; it never replaces a receiver QGroundControl must not write to.
+        SettingsManager::instance()->rtkSettings()->receiverRole()->setRawValue(GPSRtk::PositionOnly);
     }
-    settings->autoConnectNmeaPort()->setRawValue(QStringLiteral("/test/rtk"));
     Port port = rtkPort();
     port.bootloader = reason == QStringLiteral("bootloader");
     if (reason == QStringLiteral("other-board")) {
@@ -195,7 +201,6 @@ void RTKConnectionPolicyTest::_failedAttemptsBackOffAndRespectReservations()
 {
     TestFixtures::SettingsFixture saved;
     saveReceiverSettings(saved);
-    auto* settings = SettingsManager::instance()->autoConnectSettings();
     Fixture fixture([] { return QList<Port>{rtkPort()}; }, Fixture::Open::Fail);
     auto* policy = fixture.policy();
     auto* receiver = fixture.receiver.get();
@@ -234,9 +239,8 @@ void RTKConnectionPolicyTest::_failedAttemptsBackOffAndRespectReservations()
     }
     failedAttempt();
 
-    // The NMEA input claiming the receiver's port ends auto-connect ownership.
-    settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceSerial);
-    settings->autoConnectNmeaPort()->setRawValue(QStringLiteral("/test/rtk"));
+    // Choosing a passive role ends auto-connect ownership.
+    SettingsManager::instance()->rtkSettings()->receiverRole()->setRawValue(GPSRtk::Passive);
     policy->_retryDeadline.setRemainingTime(0);
     const auto attempts = fixture.sessions();
     policy->update();
@@ -255,7 +259,6 @@ void RTKConnectionPolicyTest::_compositeReceiverSelection_data()
     QTest::newRow("nmea-interface-remains-eligible") << QStringLiteral("nmea-label") << true;
     QTest::newRow("mavlink-sibling") << QStringLiteral("mavlink-sibling") << true;
     QTest::newRow("bootloader-sibling") << QStringLiteral("bootloader") << true;
-    QTest::newRow("explicit-nmea-sibling") << QStringLiteral("nmea-source") << true;
     QTest::newRow("unknown-identities") << QStringLiteral("unknown") << true;
     QTest::newRow("distinct-devices") << QStringLiteral("distinct") << true;
 }
@@ -266,10 +269,6 @@ void RTKConnectionPolicyTest::_compositeReceiverSelection()
     QFETCH(bool, connectSecond);
     TestFixtures::SettingsFixture saved;
     saveReceiverSettings(saved);
-    auto* settings = SettingsManager::instance()->autoConnectSettings();
-    if (scenario == QStringLiteral("nmea-source")) {
-        settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceSerial);
-    }
     Port first = rtkPort(QStringLiteral("/test/receiver-first"));
     first.physicalDeviceId = QStringLiteral("1:2:serial");
     Port second = first;
@@ -287,7 +286,6 @@ void RTKConnectionPolicyTest::_compositeReceiverSelection()
     } else if (scenario == QStringLiteral("distinct")) {
         second.physicalDeviceId = QStringLiteral("1:2:other");
     }
-    settings->autoConnectNmeaPort()->setRawValue(first.systemLocation);
     Fixture fixture([&] { return QList<Port>{first, second}; });
     auto claim = fixture.ports.reservePort(first.systemLocation);
     QVERIFY(claim);
@@ -304,7 +302,6 @@ void RTKConnectionPolicyTest::_genericUsbNeedsExplicitSelection_data()
     QTest::addColumn<int>("manufacturer");
     QTest::newRow("unicore") << 5;
     QTest::newRow("quectel") << 6;
-    QTest::newRow("passive") << 7;
 }
 
 void RTKConnectionPolicyTest::_genericUsbNeedsExplicitSelection()
@@ -354,7 +351,7 @@ void RTKConnectionPolicyTest::_manualRetryWaitsForReturningPort()
     TestFixtures::SettingsFixture saved;
     saveReceiverSettings(saved, false);
     auto* rtk = SettingsManager::instance()->rtkSettings();
-    rtk->baseReceiverManufacturers()->setRawValue(7);
+    rtk->receiverRole()->setRawValue(GPSRtk::Passive);
     rtk->serialDevice()->setRawValue(QStringLiteral("/test/manual"));
     rtk->serialBaudRate()->setRawValue(115200);
     QList<Port> inventory{genericPort(QStringLiteral("/test/manual"))};
@@ -405,14 +402,14 @@ void RTKConnectionPolicyTest::_notificationSupersedesDiscovery()
     QFETCH(QString, action);
     TestFixtures::SettingsFixture saved;
     saveReceiverSettings(saved);
-    auto* settings = SettingsManager::instance()->autoConnectSettings();
-    settings->autoConnectNmeaPort()->setRawValue(QStringLiteral("/test/rtk"));
+    auto* role = SettingsManager::instance()->rtkSettings()->receiverRole();
     Fixture fixture([] { return QList<Port>{rtkPort()}; });
     if (disconnecting) {
         fixture.policy()->update();
         fixture.policy()->update();
         QCOMPARE(fixture.sessions(), 1U);
-        settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceSerial);
+        // A passive role disables discovery, so the next tick retires the discovered receiver.
+        role->setRawValue(GPSRtk::PositionOnly);
     }
     bool notified = false;
     const auto supersede = [&] {
@@ -424,7 +421,7 @@ void RTKConnectionPolicyTest::_notificationSupersedesDiscovery()
         } else if (action == QStringLiteral("stop")) {
             fixture.policy()->stop();
         } else {
-            settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceDisabled);
+            role->setRawValue(GPSRtk::ConfiguredBase);
             fixture.policy()->update();
         }
     };
@@ -451,29 +448,93 @@ void RTKConnectionPolicyTest::_shutdownDuringConnectionTick()
 {
     TestFixtures::SettingsFixture saved;
     saveReceiverSettings(saved);
-    auto* settings = SettingsManager::instance()->autoConnectSettings();
-    settings->nmeaSource()->setRawValue(AutoConnectSettings::NmeaSourceUdp);
-    QUdpSocket spare;
-    QVERIFY(spare.bind(QHostAddress::LocalHost, 0));
-    saved.setFactValue(settings->nmeaUdpPort(), spare.localPort());
-    spare.close();
     auto* applicationCorrections = GPSManager::instance()->corrections();
     const auto restoreCorrections = qScopeGuard(
         [applicationCorrections] { GPSManager::instance()->ntrip()->setCorrectionManager(applicationCorrections); });
     int enumerations = 0;
     SerialPortManager ports(nullptr, [&] {
         ++enumerations;
-        return QList<Port>{};
+        return QList<Port>{rtkPort()};
     });
-    QGCPositionManager position;
     GPSManager manager;
     manager.gpsRtk()->setSerialPortManager(&ports);
-    manager._nmeaSources = new NMEASourceManager(settings, &position, &manager);
-    connect(manager._nmeaSources, &NMEASourceManager::sourceChanged, &manager, &GPSManager::shutdown);
+    connect(&ports, &SerialPortManager::portsEnumerated, &manager, &GPSManager::shutdown);
     manager._updateConnections();
     QVERIFY(manager._shutdown);
-    QVERIFY(!manager._nmeaSources->health());
-    QCOMPARE(enumerations, 0);
+    QVERIFY(!manager.gpsRtk()->hasReceiver());
+    const int seen = enumerations;
     manager._updateConnections();
-    QCOMPARE(enumerations, 0);
+    manager._updateConnections();
+    QCOMPARE(enumerations, seen);
+    QVERIFY(!manager.gpsRtk()->hasReceiver());
+}
+
+void RTKConnectionPolicyTest::_connectSavedWaitsForReceiver()
+{
+    TestFixtures::SettingsFixture saved;
+    // Auto-connect only discovers configured bases, so it does not replace the startup wait here.
+    saveReceiverSettings(saved);
+    auto* rtk = SettingsManager::instance()->rtkSettings();
+    rtk->receiverRole()->setRawValue(GPSRtk::PositionOnly);
+    rtk->serialDevice()->setRawValue(QStringLiteral("/test/startup"));
+    rtk->serialBaudRate()->setRawValue(4800);
+    QList<Port> inventory;
+    Fixture fixture([&] { return inventory; });
+    auto* policy = fixture.policy();
+    auto* receiver = fixture.receiver.get();
+    QSignalSpy changes(receiver, &GPSRtk::receiverChanged);
+    // An absent receiver at startup is awaited like a lost one.
+    policy->connectSaved();
+    QCOMPARE(policy->_owner, Fixture::Owner::Manual);
+    QVERIFY(policy->_established);
+    QVERIFY(policy->_waitingForPort);
+    QVERIFY(receiver->reconnecting());
+    QVERIFY(!changes.isEmpty());
+    QCOMPARE(fixture.sessions(), 0U);
+    inventory.append(genericPort(QStringLiteral("/test/startup")));
+    QTRY_VERIFY_WITH_TIMEOUT(fixture.tick() && fixture.sessions() == 1, TestTimeout::mediumMs());
+    QCOMPARE(receiver->activeEndpoint(), QStringLiteral("/test/startup"));
+    QCOMPARE(receiver->activeRole(), GPSRtk::PositionOnly);
+    QVERIFY(autoConnectSettings()->autoConnectRTKGPS()->rawValue().toBool());
+    receiver->disconnectConfiguredGPS();
+    QVERIFY(!receiver->reconnecting());
+    QCOMPARE(policy->_owner, Fixture::Owner::None);
+}
+
+void RTKConnectionPolicyTest::_connectSavedKeepsDiscovery_data()
+{
+    QTest::addColumn<bool>("present");
+    QTest::newRow("receiver-present") << true;
+    QTest::newRow("receiver-absent") << false;
+}
+
+void RTKConnectionPolicyTest::_connectSavedKeepsDiscovery()
+{
+    QFETCH(bool, present);
+    TestFixtures::SettingsFixture saved;
+    saveReceiverSettings(saved);
+    saved.setFactValue(rtkSettings()->serialDevice(), QStringLiteral("/test/rtk"));
+    Fact* const autoConnect = autoConnectSettings()->autoConnectRTKGPS();
+    QList<Port> inventory;
+    if (present) {
+        inventory.append(rtkPort());
+    }
+    Fixture fixture([&] { return inventory; });
+    auto* policy = fixture.policy();
+    policy->connectSaved();
+    // A startup connection is not a user choice, so auto-connect stays on.
+    QVERIFY(autoConnect->rawValue().toBool());
+    QVERIFY(!fixture.receiver->reconnecting());
+    if (present) {
+        QCOMPARE(fixture.sessions(), 1U);
+        QCOMPARE(policy->_owner, Fixture::Owner::Manual);
+        return;
+    }
+    // Waiting for the saved receiver would suspend discovery.
+    QCOMPARE(fixture.sessions(), 0U);
+    QCOMPARE(policy->_owner, Fixture::Owner::None);
+    inventory.append(rtkPort());
+    QTRY_VERIFY_WITH_TIMEOUT(fixture.tick() && fixture.sessions() == 1, TestTimeout::mediumMs());
+    QCOMPARE(policy->_owner, Fixture::Owner::Auto);
+    QVERIFY(autoConnect->rawValue().toBool());
 }

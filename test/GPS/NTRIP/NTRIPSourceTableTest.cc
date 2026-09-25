@@ -89,7 +89,7 @@ void NTRIPSourceTableTest::_testUpdateDistancesAll()
     QCOMPARE(model.count(), 2);
 
     const auto distanceAt = [&model](int row) {
-        return model.data(model.index(row), NTRIPSourceTableModel::DistanceKmRole).toDouble();
+        return model.data(model.index(row, 0), NTRIPSourceTableModel::DistanceKmRole).toDouble();
     };
 
     QVERIFY(distanceAt(0) < 0.0);
@@ -133,6 +133,33 @@ void NTRIPSourceTableTest::_testTableTerminator()
     QFETCH(QByteArray, body);
     QFETCH(bool, complete);
     QCOMPARE(ntripSourceTableComplete(body), complete);
+}
+
+void NTRIPSourceTableTest::_testRolesAreReadOnlyProperties()
+{
+    NTRIPSourceTableModel model;
+    const auto roles = model.roleNames();
+
+    const struct
+    {
+        int role;
+        const char* name;
+    } expected[] = {
+        {NTRIPSourceTableModel::MountpointRole, "mountpoint"}, {NTRIPSourceTableModel::FormatRole, "format"},
+        {NTRIPSourceTableModel::LatitudeRole, "latitude"},     {NTRIPSourceTableModel::FeeRole, "fee"},
+        {NTRIPSourceTableModel::BitrateRole, "bitrate"},       {NTRIPSourceTableModel::DistanceKmRole, "distanceKm"},
+    };
+
+    for (const auto& [role, name] : expected) {
+        QCOMPARE(roles.value(role), QByteArray(name));
+    }
+    model.parseSourceTable(QStringLiteral("STR;MP1;Id;RTCM 3.2;;2;GPS;Net;DEU;52.00;13.00;1;0;Gen;none;B;N;9600;"));
+    QCOMPARE(model.rowCount(), 1);
+    const auto index = model.index(0, 0);
+    QCOMPARE(model.data(index, NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP1"));
+    QVERIFY(!(model.flags(index) & Qt::ItemIsEditable));
+    QVERIFY(!model.setData(index, QStringLiteral("changed"), NTRIPSourceTableModel::MountpointRole));
+    QCOMPARE(model.data(index, NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP1"));
 }
 
 UT_REGISTER_TEST(NTRIPSourceTableTest, TestLabel::Unit)

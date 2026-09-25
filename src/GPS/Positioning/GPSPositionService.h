@@ -15,6 +15,7 @@
 #include <QtPositioning/QGeoPositionInfoSource>
 
 #include "GPSNotificationQueue.h"
+#include "GPSPositionBackendAdapter.h"
 #include "GPSPositionSourceRegistration.h"
 #include "GPSSourceHealth.h"
 #include "ScheduledTask.h"
@@ -34,10 +35,6 @@ class GPSPositionService : public QObject
                    gcsPositionHorizontalAccuracyChanged)
 
     friend class GPSPositionSourceRegistration;
-    friend class GPSPositionServiceTest;
-    friend class NMEASourceManagerTest;
-    friend class PositionManagerTest;
-    friend class RemoteIDManagerTest;
 
 public:
     /// Values of AutoConnectSettings::gcsPositionSource.
@@ -45,7 +42,6 @@ public:
     {
         Automatic = 0,
         ReceiverOnly = 1,
-        NmeaOnly = 2,
         InternalOnly = 3,
     };
     Q_ENUM(SourceMode)
@@ -54,7 +50,6 @@ public:
     {
         None,
         Receiver,
-        Nmea,
         Internal,
         Simulated,
     };
@@ -108,8 +103,19 @@ public:
 
     int updateInterval() const { return _updateInterval; }
 
-    /// Raw Qt positioning sources require an exclusive binding; shared producers must supply health.
-    GPSPositionSourceRegistration registerPositionSource(SelectedSource kind, QObject* source, GPSSourceHealth* health,
+    /// Health of the producer registered for @a kind, or null when none is.
+    GPSSourceHealth* sourceHealth(SelectedSource kind) const;
+
+    /// Health of the selected producer, or null when no source is selected.
+    GPSSourceHealth* selectedHealth() const { return _currentHealth.data(); }
+
+    /// Every producer publishes observations through a GPSSourceHealth. A receiver producer runs independently of
+    /// selection; its observations must carry @a sessionId when it is nonzero.
+    GPSPositionSourceRegistration registerPositionSource(SelectedSource kind, GPSSourceHealth* producer,
+                                                         quint64 sessionId = 0);
+
+    /// Adapts a Qt positioning backend, which runs only while its role is active. A backend serves one role.
+    GPSPositionSourceRegistration registerPositionSource(SelectedSource kind, QGeoPositionInfoSource* backend,
                                                          quint64 sessionId = 0);
 
 signals:
@@ -130,47 +136,43 @@ private:
     {
         SourceBinding(GPSPositionService* owner, SelectedSource kind);
         ~SourceBinding();
-        void configure(QObject* producer, GPSSourceHealth* health, const QString& identity, bool platform,
-                       quint64 sessionId);
+        /// Binds @a producer, which may be null; a backend adapter, when given, owns that producer.
+        void bind(GPSSourceHealth* producer, std::unique_ptr<GPSPositionBackendAdapter> adapter, quint64 sessionId);
         void disconnectNotifications();
-        void disconnectSource();
         void observeHealth(bool observe);
         void setActive(bool active);
-        void updatePosition(const QGeoPositionInfo& position);
-        QObject* source() const;
-        GPSSourceHealth* health();
+
+        GPSSourceHealth* health() const { return producer.data(); }
+
+        QGeoPositionInfoSource* backend() const;
         int updateInterval() const;
 
         GPSPositionService* owner;
         SelectedSource kind;
         quint64 token = 0;
         bool pendingObservation = false;
-        QPointer<QObject> producer;
-        QPointer<QGeoPositionInfoSource> rawSource;
-        QPointer<GPSSourceHealth> providedHealth;
-        GPSSourceHealth fallbackHealth;
-        QList<QMetaObject::Connection> connections;
+        QPointer<GPSSourceHealth> producer;
+        std::unique_ptr<GPSPositionBackendAdapter> adapter;
+        QMetaObject::Connection producerDestroyed;
+        QMetaObject::Connection backendDestroyed;
         QMetaObject::Connection observationConnection;
-        QString identity;
         quint64 sessionId = 0;
-        bool platform = false;
         bool active = false;
-        bool updatesStarted = false;
-        bool rawBindingAllowed = true;
         quint64 generation = 0;
-        quint64 backendRevision = 0;
     };
 
     SourceBinding& _binding(SelectedSource kind) const { return *_bindings[static_cast<size_t>(kind)]; }
 
     void _retireRegistration(int kind, quint64 token);
-    bool _canBindSource(SelectedSource kind, QObject* source, GPSSourceHealth* health = nullptr) const;
-    void _setBinding(SelectedSource kind, QObject* source, GPSSourceHealth* health = nullptr, quint64 sessionId = 0);
+    bool _canBindProducer(const QObject* producer) const;
+    bool _canBindBackend(SelectedSource kind, QGeoPositionInfoSource* backend) const;
+    void _bindProducer(SelectedSource kind, GPSSourceHealth* producer, quint64 sessionId);
+    void _bindBackend(SelectedSource kind, QGeoPositionInfoSource* backend, quint64 sessionId);
+    GPSPositionSourceRegistration _register(SelectedSource kind);
     void _setPositionSource(SelectedSource source);
     void _selectPositionSource();
     SelectedSource _choosePositionSource();
-    QObject* _sourceFor(SelectedSource source) const;
-    void _refreshSourceBindings();
+    GPSSourceHealth* _sourceFor(SelectedSource source) const;
     void _bindingChanged(SelectedSource kind);
     void _backendError(SelectedSource kind, QGeoPositionInfoSource::Error error);
     void _clearPendingObservations();
@@ -183,7 +185,7 @@ private:
 
     RuntimeScheduler* const _scheduler;
     ScheduledTask _recoveryTask;
-    std::array<std::unique_ptr<SourceBinding>, 5> _bindings;
+    std::array<std::unique_ptr<SourceBinding>, 4> _bindings;
 
     struct Recovery
     {
@@ -222,7 +224,6 @@ private:
     quint64 _selectedBindingRevision = 0;
     quint64 _selectionObservationRevision = 0;
     bool _selectedObservationAuthorized = false;
-    QPointer<QObject> _currentSource;
     // Declared last so bindings stop producing notifications before the queue is destroyed.
     GPSNotificationQueue _notifications{this};
 };

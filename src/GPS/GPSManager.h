@@ -5,7 +5,6 @@
 
 class GPSCorrectionManager;
 class GPSRtk;
-class NMEASourceManager;
 class NTRIPManager;
 class QTimer;
 
@@ -38,13 +37,13 @@ public:
     NTRIPManager* ntrip() const { return _ntripManager; }
 
 private:
-    void _configureGgaProviders();
+    void _configureNtripProviders();
 
     void _updateConnections();
     QTimer* _connectionTimer = nullptr;
-    NMEASourceManager* _nmeaSources = nullptr;
     GPSCorrectionManager* _corrections = nullptr;
     GPSRtk* _gpsRtk = nullptr;
     NTRIPManager* _ntripManager = nullptr;
+    bool _startupConnectPending = false;
     bool _shutdown = false;
 };

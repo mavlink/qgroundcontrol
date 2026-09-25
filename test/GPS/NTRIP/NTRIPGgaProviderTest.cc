@@ -315,10 +315,8 @@ void NTRIPGgaProviderTest::_gcsObservation()
     const auto savedMode = positioning->sourceMode();
     const auto restoreMode = qScopeGuard([&]() { positioning->setSourceMode(savedMode); });
     ManualScheduler scheduler;
-    QObject producer;
     GPSSourceHealth health(nullptr, &scheduler);
-    auto registration =
-        positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &producer, &health);
+    auto registration = positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &health);
     positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
 
     GPSObservation observation;
@@ -378,7 +376,6 @@ void NTRIPGgaProviderTest::_gcsSelectionAndFreshness()
     const auto savedMode = positioning->sourceMode();
     const auto restoreMode = qScopeGuard([&]() { positioning->setSourceMode(savedMode); });
     ManualScheduler scheduler;
-    QObject producer;
     GPSSourceHealth health(nullptr, &scheduler);
     GPSObservation observation;
     observation.receivedAt = QDateTime::currentDateTimeUtc();
@@ -387,8 +384,7 @@ void NTRIPGgaProviderTest::_gcsSelectionAndFreshness()
     observation.altitudeDatum = GPSAltitudeDatum::MeanSeaLevel;
     observation.receiverFixValid = true;
     health.updateObservation(observation);
-    auto registration =
-        positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &producer, &health);
+    auto registration = positioning->registerPositionSource(GPSPositionService::SelectedSource::Receiver, &health);
     positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
 
     auto* manager = GPSManager::instance()->ntrip();
@@ -408,8 +404,8 @@ void NTRIPGgaProviderTest::_gcsSelectionAndFreshness()
     QVERIFY(!positioning->gcsPosition().isValid());
     checkGga(true);
 
-    positioning->setSourceMode(GPSPositionService::SourceMode::NmeaOnly);
-    checkGga(false);
+    // Reselecting a pinned receiver requires an observation made after the selection.
+    positioning->setSourceMode(GPSPositionService::SourceMode::InternalOnly);
     positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
     checkGga(false);
     health.updateObservation(observation);
@@ -440,7 +436,8 @@ void NTRIPGgaProviderTest::_vehicleFixLossAndExpiry()
     auto* positioning = QGCPositionManager::instance();
     const auto savedMode = positioning->sourceMode();
     const auto restoreMode = qScopeGuard([&]() { positioning->setSourceMode(savedMode); });
-    positioning->setSourceMode(GPSPositionService::SourceMode::NmeaOnly);
+    // No receiver is registered, so the pinned GCS position stays unavailable.
+    positioning->setSourceMode(GPSPositionService::SourceMode::ReceiverOnly);
     vehicles->setActiveVehicle(&vehicle);
     QTRY_COMPARE_WITH_TIMEOUT(vehicles->activeVehicle(), &vehicle, TestTimeout::shortMs());
     QVERIFY(receiveMessage(vehicle, gpsMessage(vehicle.id())));

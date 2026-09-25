@@ -542,13 +542,19 @@ void GPSReceiverConfigTest::_presentation()
     QFETCH(bool, specific);
     QFETCH(QStringList, trueKeys);
     QFETCH(QStringList, falseKeys);
-    const QVariantMap presentation = gpsReceiverPresentation(manufacturer);
-    QCOMPARE(presentation.value("specificReceiver").toBool(), specific);
+    const GPSReceiverPresentation& presentation = gpsReceiverPresentation(manufacturer);
+    const auto value = [&presentation](const QString& key) {
+        const auto& metaObject = GPSReceiverPresentation::staticMetaObject;
+        const int index = metaObject.indexOfProperty(qPrintable(key));
+        return index >= 0 && metaObject.property(index).readOnGadget(&presentation).toBool();
+    };
+    QCOMPARE(presentation.specificReceiver, specific);
     for (const auto& key : trueKeys) {
-        QVERIFY2(presentation.value(key).toBool(), qPrintable(key));
+        QVERIFY2(value(key), qPrintable(key));
     }
     for (const auto& key : falseKeys) {
-        QVERIFY2(!presentation.value(key).toBool(), qPrintable(key));
+        QVERIFY2(GPSReceiverPresentation::staticMetaObject.indexOfProperty(qPrintable(key)) >= 0, qPrintable(key));
+        QVERIFY2(!value(key), qPrintable(key));
     }
 }
 

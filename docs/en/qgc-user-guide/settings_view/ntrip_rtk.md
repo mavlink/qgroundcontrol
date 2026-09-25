@@ -53,20 +53,36 @@ GGA requires mean-sea-level altitude. A receiver solution without mean-sea-level
 eligible without a known conversion. Actual fix quality and available DOP/satellite-use metadata are preserved; unknown
 metadata is not replaced with nominal precision values.
 
-## RTK GPS Receiver
+## GNSS Receiver
 
-Connect an RTK base station receiver. The same settings are available from the RTK GPS toolbar
-indicator's expanded page.
+Connect one GNSS receiver: an external NMEA GPS for the ground station position, a receiver whose
+RTCM output QGC forwards, or an RTK base station that QGC configures. The same settings are
+available from the GPS toolbar indicator's expanded page.
 
-- **Receiver / settings** — the receiver family. Select a specific receiver to connect manually.
-- **Receiver connection** — _Serial_ for a receiver on a local port, or _TCP_ for a receiver's
-  network port or a serial-to-TCP bridge. Platforms without serial support offer TCP only.
+- **Receiver role** — how QGC uses the receiver:
+  - _Position only_ — its NMEA output provides the [GCS position](comm_links.md#gcs-position); RTCM
+    output is ignored. QGC never configures the receiver.
+  - _Passive RTCM/NMEA_ — as _Position only_, and its RTCM output is forwarded to vehicles.
+  - _Configured base_ — QGC configures a supported receiver as an RTK base station.
+- **Receiver / settings** (configured base only) — the receiver family. Select a specific receiver
+  to connect manually.
+- **Receiver connection** — _Serial_ for a receiver on a local port, _TCP_ for a receiver's network
+  port or a serial-to-TCP bridge, or _UDP_ to listen for NMEA/RTCM datagrams. UDP only receives
+  data, so a configured base needs serial or TCP. Platforms without serial support connect a serial
+  selection over TCP.
 - **Serial device** and **Baud rate** — the receiver's port. _Auto_ lets QGC detect the rate of
-  receivers it configures; passive input needs the rate already configured on the receiver.
+  receivers it configures; the other roles need the rate already configured on the receiver.
 - **Receiver host** and **Receiver TCP port** — the TCP endpoint. A serial-to-TCP bridge must
   already run the receiver link at 115200 baud, because QGC cannot change a bridge's rate.
-- **Auto-connect known serial receivers** — automatically connect recognized serial RTK receivers.
-  Auto-connect is not used while TCP is selected, and a manual connection turns it off.
+- **Receiver UDP port** — the local port that receives datagrams (default: 14401). The first
+  sender is used until it stops sending for five seconds.
+- **Auto-connect known serial receivers** (configured base only) — automatically connect
+  recognized serial RTK receivers. Auto-connect is not used while TCP or UDP is selected, and a
+  manual connection turns it off.
+- **Connect on startup** — connect the saved receiver when QGC starts and keep retrying until it
+  is available. If auto-connect is also on, a receiver that is missing at startup is left to
+  auto-connect instead. Startup connections never turn auto-connect off or save settings to receiver
+  flash.
 - **Survey-In**, **Specify position**, or **Receiver-managed averaging** — how the base finds its
   position, depending on the receiver. See [RTK GPS](general.md#rtk_gps) for the survey-in and
   fixed-position settings.
@@ -76,13 +92,14 @@ indicator's expanded page.
 - **Allow flash save and restart** (Quectel only) — for one connection, allow QGC to save base
   settings to the receiver and restart it.
 
-After a manual connection has worked once, QGC reconnects automatically if the receiver connection
+A receiver that QGC does not configure stays connected while it is silent; its position simply
+becomes stale. After a manual connection has worked once, QGC reconnects automatically if the receiver connection
 is lost (for example, a dropped TCP bridge or an unplugged cable), retrying with an increasing delay
 of up to 30 seconds. A replugged serial receiver is retried immediately. Press **Disconnect**, change
 the connection settings, or enable auto-connect to stop reconnecting. Automatic attempts never reuse
 flash-save permission.
 
-The **RTK GPS Status** section on this page and the RTK GPS toolbar indicator show the receiver's
+The **GNSS Receiver Status** section on this page and the GPS toolbar indicator show the receiver's
 fix, model and firmware (when the receiver reports them), connection, satellites, and survey-in
 progress. The receiver's own
 position solution is also available as the [GCS position](comm_links.md#gcs-position) and as the

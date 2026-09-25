@@ -10,7 +10,7 @@ qt_add_library(QGCGPSReceiver STATIC GPSReceiverConfig.cc GPSReceiverDescriptor.
 add_library(QGC::GPSReceiver ALIAS QGCGPSReceiver)
 set_target_properties(
     QGCGPSReceiver
-    PROPERTIES AUTOMOC OFF
+    PROPERTIES AUTOMOC ON
                AUTOUIC OFF
                AUTORCC OFF
                POSITION_INDEPENDENT_CODE ON

@@ -9,6 +9,7 @@
 #include <QtPositioning/QGeoPositionInfo>
 
 #include "GPSObservation.h"
+#include "GPSRevision.h"
 #include "ScheduledTask.h"
 
 struct GPSSatelliteObservation;
@@ -26,7 +27,6 @@ class GPSSourceHealth : public QObject
     Q_PROPERTY(int satellitesInViewCount READ satellitesInViewCount NOTIFY satellitesChanged)
     Q_PROPERTY(int satellitesInUseCount READ satellitesInUseCount NOTIFY satellitesChanged)
 
-    friend class GPSSourceHealthTest;
 
 public:
     enum class State
@@ -120,5 +120,5 @@ private:
     SatelliteCounts _satelliteCounts;
     FixSatelliteCount _fixSatellites;
     quint64 _observationRevision = 0;
-    quint64 _revision = 0;
+    GPSRevision _revision;
 };

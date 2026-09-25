@@ -14,6 +14,8 @@ Item {
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property bool   _rtkConnected:  QGroundControl.gpsManager.gpsRtk.facts.connected.value
+    // A position-only receiver supplies no RTK corrections.
+    readonly property bool _positionOnlyReceiver: QGroundControl.gpsManager.gpsRtk.activeRole === GPSRtk.PositionOnly
     readonly property var _rtkFacts: QGroundControl.gpsManager.gpsRtk.facts
     readonly property bool _rtkInterference: _rtkConnected && _rtkFacts.interferenceWarning
 
@@ -33,7 +35,7 @@ Item {
             QGCLabel {
                 id:                     gpsLabel
                 rotation:               90
-                text:                   qsTr("RTK")
+                text:                   control._positionOnlyReceiver ? qsTr("GNSS") : qsTr("RTK")
                 color:                  _rtkInterference ? qgcPal.colorOrange : qgcPal.text
                 anchors.verticalCenter: parent.verticalCenter
                 visible:                _rtkConnected

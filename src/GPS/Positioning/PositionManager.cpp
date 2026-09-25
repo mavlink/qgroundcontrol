@@ -5,7 +5,6 @@
 
 #include "AppMessages.h"
 #include "AutoConnectSettings.h"
-#include "NMEASourceManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
@@ -85,23 +84,4 @@ void QGCPositionManager::_checkPermission()
     } else {
         _handlePermissionStatus(status);
     }
-}
-
-NMEASourceManager* QGCPositionManager::nmeaInput() const
-{
-    return _nmeaInput;
-}
-
-void QGCPositionManager::setNmeaInput(NMEASourceManager* input)
-{
-    if (_destroying || _nmeaInput == input) {
-        return;
-    }
-    QObject::disconnect(_nmeaInputDestroyedConnection);
-    _nmeaInput = input;
-    if (input) {
-        _nmeaInputDestroyedConnection =
-            connect(input, &QObject::destroyed, this, &QGCPositionManager::nmeaInputChanged);
-    }
-    emit nmeaInputChanged();
 }

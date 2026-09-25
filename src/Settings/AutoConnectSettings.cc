@@ -1,8 +1,6 @@
 #include "AutoConnectSettings.h"
 #include "LinkManager.h"
 
-#include <QtCore/QCoreApplication>
-
 DECLARE_SETTINGGROUP(AutoConnect, "AutoConnect")
 {
     // Settings group name was changed from "LinkManager" to "AutoConnect" in v5.0.0
@@ -25,26 +23,12 @@ DECLARE_SETTINGGROUP(AutoConnect, "AutoConnect")
         settings.endGroup();
     }
 
-    // autoConnectNmeaPort used to store a combo label ("Disabled"/"UDP Port"/serial device),
-    // sometimes translated. Migrate it to the nmeaSource enum, leaving only a serial device
-    // name in autoConnectNmeaPort.
+    // The NMEA GPS source (2) became the GNSS receiver's position-only role (1).
+    constexpr int kLegacyNmeaSource = 2;
+    constexpr int kReceiverSource = 1;
     settings.beginGroup(_name);
-    if (!settings.contains(nmeaSourceName) && settings.contains(autoConnectNmeaPortName)) {
-        const QString oldValue = settings.value(autoConnectNmeaPortName).toString();
-        // The legacy combo labels were written translated from two different QML contexts
-        const auto matches = [&oldValue](const char* source) {
-            return (oldValue == QLatin1String(source)) ||
-                   (oldValue == QCoreApplication::translate("NmeaGpsSettings", source)) ||
-                   (oldValue == QCoreApplication::translate("RemoteIDGpsLocation", source));
-        };
-        if (oldValue.isEmpty() || matches("Disabled") || matches("Serial <none available>")) {
-            settings.remove(autoConnectNmeaPortName);
-        } else if (matches("UDP Port")) {
-            settings.setValue(nmeaSourceName, static_cast<int>(NmeaSourceUdp));
-            settings.remove(autoConnectNmeaPortName);
-        } else {
-            settings.setValue(nmeaSourceName, static_cast<int>(NmeaSourceSerial));
-        }
+    if (settings.value(gcsPositionSourceName).toInt() == kLegacyNmeaSource) {
+        settings.setValue(gcsPositionSourceName, kReceiverSource);
     }
     settings.endGroup();
 }
@@ -54,9 +38,6 @@ DECLARE_SETTINGSFACT(AutoConnectSettings, udpListenPort)
 DECLARE_SETTINGSFACT(AutoConnectSettings, udpTargetHostIP)
 DECLARE_SETTINGSFACT(AutoConnectSettings, udpTargetHostPort)
 DECLARE_SETTINGSFACT(AutoConnectSettings, gcsPositionSource)
-DECLARE_SETTINGSFACT(AutoConnectSettings, nmeaUdpPort)
-DECLARE_SETTINGSFACT(AutoConnectSettings, nmeaTcpHost)
-DECLARE_SETTINGSFACT(AutoConnectSettings, nmeaTcpPort)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectPixhawk)
 {
@@ -100,37 +81,4 @@ DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectLibrePilot)
 #endif
     }
     return _autoConnectLibrePilotFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, nmeaSource)
-{
-    if (!_nmeaSourceFact) {
-        _nmeaSourceFact = _createSettingsFact(nmeaSourceName);
-#ifdef Q_OS_IOS
-        _nmeaSourceFact->setUserVisible(false);
-#endif
-    }
-    return _nmeaSourceFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectNmeaPort)
-{
-    if (!_autoConnectNmeaPortFact) {
-        _autoConnectNmeaPortFact = _createSettingsFact(autoConnectNmeaPortName);
-#ifdef Q_OS_IOS
-        _autoConnectNmeaPortFact->setUserVisible(false);
-#endif
-    }
-    return _autoConnectNmeaPortFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectNmeaBaud)
-{
-    if (!_autoConnectNmeaBaudFact) {
-        _autoConnectNmeaBaudFact = _createSettingsFact(autoConnectNmeaBaudName);
-#ifdef Q_OS_IOS
-        _autoConnectNmeaBaudFact->setUserVisible(false);
-#endif
-    }
-    return _autoConnectNmeaBaudFact;
 }

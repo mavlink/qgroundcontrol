@@ -31,7 +31,7 @@ constexpr char kMockNtripManager[] = R"(
             property bool dataStale: false
             property real correctionAgeSec: 0.5
             property int messagesReceived: 1
-            property var messageCountsById: [[1005, 1]]
+            property var messageCountsById: [{ messageId: 1005, count: 1 }]
             property real bytesReceived: 25
             property real dataRateBytesPerSec: 25
         }

@@ -6,14 +6,13 @@
 #include <string_view>
 #include <utility>
 
-#include <QtCore/QBuffer>
 #include <QtCore/QByteArray>
 #include <QtCore/QStringList>
 #include <QtTest/QSignalSpy>
 
 #include "GPSAsciiProtocol.h"
+#include "GPSObservation.h"
 #include "GPSProtocolTestIO.h"
-#include "NMEAPositionSource.h"
 #include "NMEAUtils.h"
 #include "ProtocolTestPackets.h"
 #include "Quectel/QuectelCodec_p.h"
@@ -186,7 +185,6 @@ void GPSAsciiProtocolTest::_positionSourceEquivalence()
         "$GPGST,092750.000,1,1,1,0,3,4,6",
         "$GPVTG,31.66,T,,M,1.08,N,2.0,K",
     };
-    QByteArray wire;
     uint64_t now = 1000000;
     GPSNativePositionReport nativePosition;
     GPSProtocolIO io;
@@ -194,31 +192,22 @@ void GPSAsciiProtocolTest::_positionSourceEquivalence()
     AsciiReceiver receiver(captureGPSReports(std::move(io), nativePosition), false);
     for (const auto& body : bodies) {
         const auto sentence = NMEAUtils::repairChecksum(body);
-        wire += sentence;
         receiver.consume(
             {reinterpret_cast<const uint8_t*>(sentence.constData()), static_cast<size_t>(sentence.size())});
     }
 
-    QBuffer device(&wire);
-    QVERIFY(device.open(QIODevice::ReadOnly));
-    NMEAPositionSource source(&device);
-    QSignalSpy updates(&source, &QGeoPositionInfoSource::positionUpdated);
-    source.requestUpdate(1000);
-    emit device.readyRead();
-    QTRY_COMPARE_WITH_TIMEOUT(updates.size(), 1, TestTimeout::shortMs());
-    const auto observation = source._lastObservation;
-
+    // Passive receivers are the only NMEA position input, so their epoch carries every navigation field.
+    const auto observation = GPSObservation::fromNavigation(nativePosition.navigation, now);
     QCOMPARE(nativePosition.navigation.fixType, GPSPositionReport::FixType::Fix3D);
     QCOMPARE(observation.fixQuality, GPSObservation::FixQuality::Fix3D);
-    QVERIFY(qAbs(nativePosition.navigation.latitudeDegrees - observation.position.coordinate().latitude()) < 1e-9);
-    QVERIFY(qAbs(nativePosition.navigation.longitudeDegrees - observation.position.coordinate().longitude()) < 1e-9);
-    QVERIFY(qAbs(nativePosition.navigation.altitudeMslMeters - observation.position.coordinate().altitude()) < 1e-9);
+    QVERIFY(qAbs(nativePosition.navigation.latitudeDegrees - 53.36133667) < 1e-6);
+    QVERIFY(qAbs(nativePosition.navigation.longitudeDegrees + 6.50562) < 1e-6);
+    QVERIFY(qAbs(nativePosition.navigation.altitudeMslMeters - 61.7) < 1e-9);
+    QCOMPARE(observation.altitudeDatum, GPSAltitudeDatum::MeanSeaLevel);
     QCOMPARE(nativePosition.navigation.satellitesUsed, std::optional<uint8_t>(8));
     QCOMPARE(observation.satellitesUsed, std::optional<int>(8));
     QCOMPARE(nativePosition.navigation.horizontalDop, 1.03f);
     QCOMPARE(nativePosition.navigation.verticalDop, 0.6f);
-    QCOMPARE(observation.horizontalDop, std::optional<double>(1.03));
-    QCOMPARE(observation.verticalDop, std::optional<double>(0.6));
     QCOMPARE(nativePosition.navigation.horizontalAccuracyMeters, 5.0f);
     QCOMPARE(nativePosition.navigation.verticalAccuracyMeters, 6.0f);
     QCOMPARE(observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy), 5.0);

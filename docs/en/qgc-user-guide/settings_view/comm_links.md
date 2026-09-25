@@ -17,21 +17,15 @@ By default, QGC auto-detects and connects to common devices:
 Choose where the ground station position (used for the map, Follow Me, NTRIP GGA, and Remote ID)
 comes from:
 
-- **Automatic** — the connected [RTK receiver](ntrip_rtk.md#rtk-gps-receiver), then the NMEA GPS,
-  then this device's positioning. QGC switches to the next source when the preferred one loses its
-  fix, and switches back after the preferred source has been healthy for five seconds.
-- **RTK receiver**, **NMEA GPS**, or **This device** — use only that source.
+- **Automatic** — the connected [GNSS receiver](ntrip_rtk.md#gnss-receiver), then this device's
+  positioning. QGC switches to this device when the receiver loses its fix, and switches back after
+  the receiver has been healthy for five seconds.
+- **GNSS receiver** or **This device** — use only that source.
 
 The section also shows the source in use, its status, and the current position.
 
-## NMEA GPS
-
-Configure an external NMEA GPS device to provide GCS position:
-
-- **Device** — Disabled, UDP, Serial port, or TCP client
-- **Baudrate** — serial baud rate (with custom baud option)
-- **UDP port** — port for UDP NMEA input (default: 14401)
-- **TCP server host** and **port** — NMEA server for the TCP client
+External NMEA GPS devices are configured as a [GNSS receiver](ntrip_rtk.md#gnss-receiver) with the
+_Position only_ role.
 
 ## Link Management
 

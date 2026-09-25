@@ -21,8 +21,7 @@ add_subdirectory(Receiver)
 add_subdirectory(Driver)
 add_subdirectory(RTK)
 
-# QML registrations belong to the application; the Core library also builds without QML.
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h GPSQmlTypes.h)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h)
 
 target_sources(
     ${CMAKE_PROJECT_NAME}
@@ -36,3 +35,31 @@ target_sources(
             Corrections/RTCMUdpInput.h
 )
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSCorrections QGCGPSRTCM QGCGPSMavlinkPacket QGCNetworkIO)
+
+# ----------------------------------------------------------------------------
+# GPS QML Module
+# QML types of the GPS libraries, which build without QML, and shared GPS components.
+# ----------------------------------------------------------------------------
+qt_add_library(GPSModule STATIC)
+
+qt_add_qml_module(
+    GPSModule
+    URI QGroundControl.GPS
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    SOURCES GPSQmlTypes.h
+    QML_FILES NTRIP/NTRIPConnectionStatus.qml NTRIP/NTRIPMountpointList.qml NTRIP/RTCMMessageChips.qml
+)
+
+target_link_libraries(
+    GPSModule
+    PRIVATE Qt6::Qml
+            QGCGPSCore
+            QGCGPSCorrections
+            QGCGPSNTRIP
+            QGCGPSPositioning
+            QGCGPSReceiver
+            QGCGPSRTCM
+)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GPSModule)

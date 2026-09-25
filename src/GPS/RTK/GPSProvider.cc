@@ -12,7 +12,7 @@ QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.RTK.GPSProvider")
 
 GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
                          QObject* parent)
-    : QThread(parent)
+    : QObject(parent)
     , _transportFactory(std::move(transportFactory))
     , _type(type)
     , _config(config)
@@ -36,7 +36,38 @@ GPSProvider::GPSProvider(TransportFactory transportFactory, GPSType type, const 
     }
 }
 
-void GPSProvider::run()
+GPSProvider::~GPSProvider()
+{
+    // Owners delete a started provider only after finished(); joining here covers direct destruction.
+    stop();
+    (void) wait();
+}
+
+void GPSProvider::start()
+{
+    if (_thread) {
+        return;
+    }
+    _thread.reset(QThread::create([this] { _runSession(); }));
+    _thread->setObjectName(QStringLiteral("GPSProvider"));
+    (void) connect(_thread.get(), &QThread::finished, this, &GPSProvider::finished, Qt::QueuedConnection);
+    _thread->start();
+}
+
+void GPSProvider::stop()
+{
+    _requestStop = true;
+    if (_thread) {
+        _thread->requestInterruption();
+    }
+}
+
+bool GPSProvider::wait(QDeadlineTimer deadline)
+{
+    return !_thread || _thread->wait(deadline);
+}
+
+void GPSProvider::_runSession()
 {
     // Keep factory captures alive until the transport is destroyed, including on early returns.
     auto transportFactory = std::exchange(_transportFactory, {});
@@ -88,8 +119,9 @@ void GPSProvider::run()
 
     usefulDataReceived();
     bool cancelled = false;
-    while (!_requestStop && !transport->fatalError() && !inactivity.hasExpired()) {
-        const auto timeout = static_cast<unsigned>(std::min(qint64(kGPSReceiveTimeout), inactivity.remainingTime()));
+    while (!_requestStop && !transport->fatalError() && (!_endsWhenIdle || !inactivity.hasExpired())) {
+        const auto timeout = static_cast<unsigned>(
+            _endsWhenIdle ? std::min(qint64(kGPSReceiveTimeout), inactivity.remainingTime()) : kGPSReceiveTimeout);
         const auto result = driver.receiveOutcome(timeout);
         if (result.status == GPSReceiveStatus::Data) {
             usefulDataReceived();

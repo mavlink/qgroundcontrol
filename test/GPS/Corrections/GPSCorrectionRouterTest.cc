@@ -35,9 +35,9 @@ void setAdmissionOutput(GPSCorrectionRouter& router, const QString& id, GPSCorre
 QString selectedInstance(const GPSCorrectionRouter& router)
 {
     for (const auto& value : router.sourceInstanceDiagnostics()) {
-        const auto instance = value.toMap();
-        if (instance.value(QStringLiteral("selected")).toBool()) {
-            return instance.value(QStringLiteral("instanceId")).toString();
+        const auto& instance = value;
+        if (instance.selected) {
+            return instance.instanceId;
         }
     }
     return {};
@@ -142,28 +142,28 @@ void GPSCorrectionRouterTest::diagnosticsSampleClockOnce()
     samples = 0;
     const auto sources = router.sourceDiagnostics();
     QCOMPARE(samples, 1);
-    const auto source = sources[2].toMap();
-    QVERIFY(source.value(QStringLiteral("usable")).toBool());
+    const auto source = sources[2];
+    QVERIFY(source.usable);
     const auto instances = router.sourceInstanceDiagnostics();
     QCOMPARE(samples, 2);
     QCOMPARE(instances.size(), 2);
-    const auto instance = instances.first().toMap();
-    QCOMPARE(instance.value(QStringLiteral("instanceId")).toString(), QStringLiteral("caster"));
-    QVERIFY(instance.value(QStringLiteral("selected")).toBool());
-    QVERIFY(!instances.last().toMap().value(QStringLiteral("selected")).toBool());
-    const auto destination = router.destinationDiagnostics().first().toMap();
-    QVERIFY(destination.value(QStringLiteral("queuedBytes")).toULongLong() > 0);
+    const auto instance = instances.first();
+    QCOMPARE(instance.instanceId, QStringLiteral("caster"));
+    QVERIFY(instance.selected);
+    QVERIFY(!instances.last().selected);
+    const auto destination = router.destinationDiagnostics().first();
+    QVERIFY(destination.queuedBytes > 0);
 
     QCOMPARE(samples, 2);
 
     now += GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS;
-    QVERIFY(!router.sourceDiagnostics()[2].toMap().value(QStringLiteral("usable")).toBool());
-    QVERIFY(!router.sourceInstanceDiagnostics().first().toMap().value(QStringLiteral("selected")).toBool());
-    QVERIFY(instance.value(QStringLiteral("selected")).toBool());
+    QVERIFY(!router.sourceDiagnostics()[2].usable);
+    QVERIFY(!router.sourceInstanceDiagnostics().first().selected);
+    QVERIFY(instance.selected);
     now = 99999;
-    const auto future = router.sourceDiagnostics()[2].toMap();
-    QVERIFY(!future.value(QStringLiteral("usable")).toBool());
-    QVERIFY(!router.sourceInstanceDiagnostics().first().toMap().value(QStringLiteral("selected")).toBool());
+    const auto future = router.sourceDiagnostics()[2];
+    QVERIFY(!future.usable);
+    QVERIFY(!router.sourceInstanceDiagnostics().first().selected);
 }
 
 void GPSCorrectionRouterTest::diagnosticsKeepHealthDomainsIndependent()
@@ -176,13 +176,13 @@ void GPSCorrectionRouterTest::diagnosticsKeepHealthDomainsIndependent()
     auto udp = router.registerSource(GPSCorrectionSource::Udp);
     QVERIFY(router.acceptIngress(udp.token().event(QByteArrayLiteral("raw"), now, 0, false)));
     const auto sources = router.sourceDiagnostics();
-    QVERIFY(sources[2].toMap().value(QStringLiteral("usable")).toBool());
-    QVERIFY(!sources[3].toMap().value(QStringLiteral("usable")).toBool());
+    QVERIFY(sources[2].usable);
+    QVERIFY(!sources[3].usable);
     for (const auto& row : router.sourceInstanceDiagnostics()) {
-        const auto instance = row.toMap();
-        const bool isUdp = instance.value(QStringLiteral("source")).toInt() == int(GPSCorrectionSource::Udp);
-        QCOMPARE(instance.value(QStringLiteral("usable")).toBool(), isUdp);
-        QCOMPARE(instance.value(QStringLiteral("selected")).toBool(), isUdp);
+        const auto& instance = row;
+        const bool isUdp = instance.source == int(GPSCorrectionSource::Udp);
+        QCOMPARE(instance.usable, isUdp);
+        QCOMPARE(instance.selected, isUdp);
     }
 }
 
@@ -769,8 +769,8 @@ void GPSCorrectionRouterTest::nonRoutablePeersRemainObserved()
     QCOMPARE(peers.first().lastRoutableMs, qint64(0));
     QCOMPARE(router.statistics()[3].lastValidMs, now - age);
     QCOMPARE(router.activeSource(), GPSCorrectionSource::Unknown);
-    QCOMPARE(router.sourceDiagnostics()[3].toMap().value(QStringLiteral("usable")).toBool(), age == 0);
-    QVERIFY(!router.sourceInstanceDiagnostics().first().toMap().value(QStringLiteral("usable")).toBool());
+    QCOMPARE(router.sourceDiagnostics()[3].usable, age == 0);
+    QVERIFY(!router.sourceInstanceDiagnostics().first().usable);
     QCOMPARE(router.events().last().reason,
              filtered ? GPSCorrectionReason::MessageFiltered : GPSCorrectionReason::Expired);
 }
@@ -800,11 +800,11 @@ void GPSCorrectionRouterTest::sinkResults()
     QCOMPARE(bytes, frameBytes);
     const auto rows = router.sourceInstanceDiagnostics();
     QCOMPARE(rows.size(), 1);
-    QVERIFY(rows.first().toMap().value(QStringLiteral("selected")).toBool());
+    QVERIFY(rows.first().selected);
     now += GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS;
-    const auto expired = router.sourceInstanceDiagnostics().first().toMap();
-    QVERIFY(!expired.value(QStringLiteral("usable")).toBool());
-    QVERIFY(!expired.value(QStringLiteral("selected")).toBool());
+    const auto expired = router.sourceInstanceDiagnostics().first();
+    QVERIFY(!expired.usable);
+    QVERIFY(!expired.selected);
 }
 
 void GPSCorrectionRouterTest::emptyOutputRemovesRegistration_data()

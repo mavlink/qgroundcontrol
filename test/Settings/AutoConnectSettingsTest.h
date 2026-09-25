@@ -1,9 +1,12 @@
 #pragma once
 
+#include <QtCore/QHash>
+#include <QtCore/QString>
 #include <QtCore/QVariant>
 
 #include "UnitTest.h"
 
+/// Settings migrations for the ground-station position source and the unified GNSS receiver input.
 class AutoConnectSettingsTest : public UnitTest
 {
     Q_OBJECT
@@ -12,13 +15,14 @@ private slots:
     void init() override;
     void cleanup() override;
 
-    void _legacyNmeaPortMigration_data();
-    void _legacyNmeaPortMigration();
-    void _nmeaMigrationSkippedWhenSourceAlreadySet();
+    void _nmeaPositionSourceMigration();
+    void _nmeaInputBecomesPositionOnlyReceiver_data();
+    void _nmeaInputBecomesPositionOnlyReceiver();
+    void _nmeaPortLabelBecomesPositionOnlyReceiver_data();
+    void _nmeaPortLabelBecomesPositionOnlyReceiver();
+    void _configuredReceiverKeepsSettings();
+    void _passiveManufacturerBecomesRole();
 
 private:
-    QVariant _savedNmeaSource;
-    QVariant _savedNmeaPort;
-    bool _hadNmeaSource = false;
-    bool _hadNmeaPort = false;
+    QHash<QString, QHash<QString, QVariant>> _savedGroups;
 };

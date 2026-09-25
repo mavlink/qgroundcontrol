@@ -2,7 +2,7 @@ qt_add_library(QGCGPSRTCM STATIC RTCMFrameDecoder.cc)
 add_library(QGC::GPSRTCM ALIAS QGCGPSRTCM)
 set_target_properties(
     QGCGPSRTCM
-    PROPERTIES AUTOMOC OFF
+    PROPERTIES AUTOMOC ON
                AUTOUIC OFF
                AUTORCC OFF
                POSITION_INDEPENDENT_CODE ON
@@ -21,5 +21,6 @@ target_sources(
            RTCMDecodedFrame.h
            RTCMFrameDecoder.h
            RTCMFramer.h
+           RTCMMessageCount.h
            RTCMStreamDecoder.h
 )

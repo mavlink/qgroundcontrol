@@ -1,10 +1,13 @@
 #pragma once
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 #include "FactGroup.h"
 
 class GPSRTKFactGroup : public FactGroup
 {
     Q_OBJECT
+    QML_ANONYMOUS
     Q_PROPERTY(Fact* connected READ connected CONSTANT)
     Q_PROPERTY(Fact* currentDuration READ currentDuration CONSTANT)
     Q_PROPERTY(Fact* currentAccuracy READ currentAccuracy CONSTANT)

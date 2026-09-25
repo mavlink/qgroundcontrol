@@ -1,5 +1,7 @@
 #include "GPSCorrectionManager.h"
 
+#include <algorithm>
+
 #include <QtCore/QScopeGuard>
 #include <QtNetwork/QHostAddress>
 
@@ -127,14 +129,11 @@ void GPSCorrectionManager::_applyUdpInputSettings()
         return;
     }
     const GPSNotificationQueue::Scope publish(_notifications);
-    const QPointer<GPSCorrectionManager> guard(this);
-    const quint64 revision = ++_udpConfigurationRevision;
+    const auto configuration = _udpConfigurationRevision.advance(this);
     const bool enabled = _settings->rtcmUdpInputEnabled()->rawValue().toBool();
     const bool validate = _settings->rtcmUdpValidate()->rawValue().toBool();
     const quint16 port = static_cast<quint16>(_settings->rtcmUdpInputPort()->rawValue().toUInt());
-    const auto current = [this, guard, revision]() {
-        return guard && !_shutdown && _udpConfigurationRevision == revision;
-    };
+    const auto current = [this, configuration]() { return configuration.isCurrent() && !_shutdown; };
     _udpRegistration.reset();
     if (!current()) {
         return;
@@ -211,6 +210,11 @@ void GPSCorrectionManager::setOutput(const QString& id, GPSCorrectionRouter::Out
     const GPSNotificationQueue::Scope publish(_notifications);
     _router.setOutput(id, std::move(output));
     _scheduleSourcesChanged();
+}
+
+bool GPSCorrectionManager::hasSelectedStream() const
+{
+    return std::ranges::any_of(sourceInstances(), &GPSCorrectionStreamDiagnostic::selected);
 }
 
 void GPSCorrectionManager::_refreshDiagnostics()

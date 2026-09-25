@@ -23,6 +23,7 @@ private slots:
     void _missingTransportReportsOpenFailure_data();
     void _missingTransportReportsOpenFailure();
     void _cancelledProviderDoesNotCreateTransport();
+    void _workerLifecycle();
     void _cancelledFactoryDoesNotOpenTransport();
     void _configuredReceiverReportsReadyThenLoss_data();
     void _configuredReceiverReportsReadyThenLoss();
