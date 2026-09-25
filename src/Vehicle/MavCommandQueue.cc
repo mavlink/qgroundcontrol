@@ -410,7 +410,6 @@ void MavCommandQueue::_sendFromList(int index)
     if (commandEntry.useCommandInt) {
         mavlink_command_int_t cmd;
         memset(&cmd, 0, sizeof(cmd));
-        cmd.target_system =     _vehicle->id();
         cmd.target_component =  commandEntry.targetCompId;
         cmd.command =           commandEntry.command;
         cmd.frame =             commandEntry.frame;
@@ -421,15 +420,26 @@ void MavCommandQueue::_sendFromList(int index)
         cmd.x =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam5 : commandEntry.rgParam5 * 1e7;
         cmd.y =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam6 : commandEntry.rgParam6 * 1e7;
         cmd.z =                 commandEntry.rgParam7;
-        mavlink_msg_command_int_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+        mavlink_msg_command_int_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
                                             MAVLinkProtocol::getComponentId(),
                                             sharedLink->mavlinkChannel(),
                                             &msg,
-                                            &cmd);
+                                            _vehicle->id(),
+                                            cmd.target_component,
+                                            cmd.frame,
+                                            cmd.command,
+                                            cmd.current,
+                                            cmd.autocontinue,
+                                            cmd.param1,
+                                            cmd.param2,
+                                            cmd.param3,
+                                            cmd.param4,
+                                            cmd.x,
+                                            cmd.y,
+                                            cmd.z);
     } else {
         mavlink_command_long_t cmd;
         memset(&cmd, 0, sizeof(cmd));
-        cmd.target_system =     _vehicle->id();
         cmd.target_component =  commandEntry.targetCompId;
         cmd.command =           commandEntry.command;
         // MAVLink spec: confirmation increments on each resend.
@@ -441,11 +451,21 @@ void MavCommandQueue::_sendFromList(int index)
         cmd.param5 =            static_cast<float>(commandEntry.rgParam5);
         cmd.param6 =            static_cast<float>(commandEntry.rgParam6);
         cmd.param7 =            commandEntry.rgParam7;
-        mavlink_msg_command_long_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+        mavlink_msg_command_long_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
                                              MAVLinkProtocol::getComponentId(),
                                              sharedLink->mavlinkChannel(),
                                              &msg,
-                                             &cmd);
+                                             _vehicle->id(),
+                                             cmd.target_component,
+                                             cmd.command,
+                                             cmd.confirmation,
+                                             cmd.param1,
+                                             cmd.param2,
+                                             cmd.param3,
+                                             cmd.param4,
+                                             cmd.param5,
+                                             cmd.param6,
+                                             cmd.param7);
     }
 
     _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);

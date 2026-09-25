@@ -115,7 +115,7 @@ QStringList MAVLinkInspectorController::rangeList()
 void MAVLinkInspectorController::_setActiveVehicle(Vehicle *vehicle)
 {
     if (vehicle) {
-        QGCMAVLinkSystem *const system = _findVehicle(static_cast<uint8_t>(vehicle->id()));
+        QGCMAVLinkSystem *const system = _findVehicle(vehicle->id());
         if (system) {
             _activeSystem = system;
         } else {
@@ -128,7 +128,7 @@ void MAVLinkInspectorController::_setActiveVehicle(Vehicle *vehicle)
     emit activeSystemChanged();
 }
 
-QGCMAVLinkSystem *MAVLinkInspectorController::_findVehicle(uint8_t id)
+QGCMAVLinkSystem *MAVLinkInspectorController::_findVehicle(quint32 id)
 {
     for (int i = 0; i < _systems->count(); i++) {
         QGCMAVLinkSystem *const system = qobject_cast<QGCMAVLinkSystem*>(_systems->get(i));
@@ -159,12 +159,12 @@ void MAVLinkInspectorController::_refreshFrequency()
 
 void MAVLinkInspectorController::_vehicleAdded(Vehicle *vehicle)
 {
-    QGCMAVLinkSystem *sys = _findVehicle(static_cast<uint8_t>(vehicle->id()));
+    QGCMAVLinkSystem *sys = _findVehicle(vehicle->id());
 
     if (sys) {
         sys->messages()->clearAndDeleteContents();
     } else {
-        sys = new QGCMAVLinkSystem(static_cast<uint8_t>(vehicle->id()), this);
+        sys = new QGCMAVLinkSystem(vehicle->id(), this);
         _systems->append(sys);
     }
 
@@ -183,7 +183,7 @@ void MAVLinkInspectorController::_vehicleAdded(Vehicle *vehicle)
 
 void MAVLinkInspectorController::_vehicleRemoved(const Vehicle *vehicle)
 {
-    QGCMAVLinkSystem *const system = _findVehicle(static_cast<uint8_t>(vehicle->id()));
+    QGCMAVLinkSystem *const system = _findVehicle(vehicle->id());
     if (!system) {
         return;
     }
@@ -223,7 +223,7 @@ void MAVLinkInspectorController::_receiveMessage(LinkInterface *link, const mavl
     }
 }
 
-void MAVLinkInspectorController::setActiveSystem(int systemId)
+void MAVLinkInspectorController::setActiveSystem(quint32 systemId)
 {
     QGCMAVLinkSystem *const system = _findVehicle(systemId);
     if (system != _activeSystem) {
@@ -243,7 +243,7 @@ void MAVLinkInspectorController::setMessageInterval(int32_t rate) const
         return;
     }
 
-    const uint8_t sysId = _selectedSystemID();
+    const quint32 sysId = _selectedSystemID();
     if (sysId == 0) {
         return;
     }
@@ -267,7 +267,7 @@ void MAVLinkInspectorController::setMessageInterval(int32_t rate) const
     vehicle->setMessageRate(compId, msg->id(), rate);
 }
 
-uint8_t MAVLinkInspectorController::_selectedSystemID() const
+quint32 MAVLinkInspectorController::_selectedSystemID() const
 {
     return (_activeSystem ? _activeSystem->id() : 0);
 }

@@ -21,3 +21,23 @@ To modify the version of MAVLink used by QGC:
   ```cmake
   set(CPM_mavlink_SOURCE "/path/to/your/custom/mavlink")
   ```
+
+## 32-bit system IDs
+
+This branch supports the experimental MAVLink 2 extensions for 32-bit system IDs
+and explicit header targets used by the corresponding ArduPilot and pymavlink branches. Vehicle
+and GCS system IDs use the unsigned range 1–4294967295. Set the GCS ID in MAVLink
+settings or with `--system-id`. Ordinary 8-bit IDs continue to use standard
+MAVLink headers; peers need extension support to communicate with larger IDs.
+
+The CMake build applies `src/MAVLink/mavlink-sysid32.patch` to the pinned MAVLink
+generator. It carries the C support from pymavlink commit
+`1e72acc13315591e8e04dfd7c32080fb21d7650a`. Local MAVLink source overrides must
+provide equivalent generated headers. The libevents patch preserves full-width
+IDs during event requests and destination checks.
+
+Message payload structs keep their existing wire layout. Use generated `pack`
+functions with full-width target IDs, and generated target getters when receiving
+messages. A decoded payload's 8-bit target field cannot represent a wide header
+target. Other system references embedded in payloads, such as gimbal control
+ownership fields, retain their protocol-defined width.

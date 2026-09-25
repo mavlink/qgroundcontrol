@@ -1,9 +1,9 @@
 #pragma once
 
 #include <QtCore/QByteArray>
+#include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QPair>
-#include <QtCore/QSet>
 #include <QtCore/QString>
 
 #include "LinkInterface.h"
@@ -29,7 +29,7 @@ public:
 
     static QString getName() { return QStringLiteral("MAVLink protocol"); }
 
-    int getSystemId() const;
+    quint32 getSystemId() const;
 
     static int getComponentId() { return MAV_COMP_ID_MISSIONPLANNER; }
 
@@ -43,12 +43,12 @@ public:
     void checkForLostLogFiles();
 
 signals:
-    void vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType,
+    void vehicleHeartbeatInfo(LinkInterface* link, quint32 vehicleId, int componentId, int vehicleFirmwareType,
                               int vehicleType);
 
     void messageReceived(LinkInterface* link, const mavlink_message_t& message);
 
-    void mavlinkMessageStatus(int sysid, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss,
+    void mavlinkMessageStatus(quint32 sysid, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss,
                               float lossPercent);
 
 public slots:
@@ -85,9 +85,7 @@ private:
 
     /// Per-(channel, sysid, compid) last sequence ID. Channel-scoped so traffic on link A doesn't perturb expected
     /// sequence on link B (which has independent sequence histories from the same vehicle).
-    uint8_t _lastIndex[MAVLINK_COMM_NUM_BUFFERS][256][256]{};
-
-    QSet<QPair<uint8_t, uint8_t>> _firstMessageSeen[MAVLINK_COMM_NUM_BUFFERS];
+    QHash<QPair<quint32, uint8_t>, uint8_t> _lastIndex[MAVLINK_COMM_NUM_BUFFERS];
     uint64_t _totalReceiveCounter[MAVLINK_COMM_NUM_BUFFERS]{};
     uint64_t _totalLossCounter[MAVLINK_COMM_NUM_BUFFERS]{};
     float _runningLossPercent[MAVLINK_COMM_NUM_BUFFERS]{};

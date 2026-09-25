@@ -17,7 +17,7 @@ class MockLinkFTP : public QObject
     Q_OBJECT
 
 public:
-    MockLinkFTP(uint8_t systemIdServer, uint8_t componentIdServer, MockLink *mockLink);
+    MockLinkFTP(quint32 systemIdServer, uint8_t componentIdServer, MockLink *mockLink);
     ~MockLinkFTP();
 
     /// Sets the list of files returned by the List command. Prepend names with F or D
@@ -142,23 +142,23 @@ signals:
 
 private:
     /// Sends an Ack
-    void _sendAck(uint8_t targetSystemId, uint8_t targetComponentId, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
-    void _sendNak(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::ErrorCode_t error, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
-    void _sendNakErrno(uint8_t targetSystemId, uint8_t targetComponentId, uint8_t nakErrno, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
+    void _sendAck(quint32 targetSystemId, uint8_t targetComponentId, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
+    void _sendNak(quint32 targetSystemId, uint8_t targetComponentId, MavlinkFTP::ErrorCode_t error, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
+    void _sendNakErrno(quint32 targetSystemId, uint8_t targetComponentId, uint8_t nakErrno, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
     /// Emits a Request through the messageReceived signal.
-    void _sendResponse(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _sendResponse(quint32 targetSystemId, uint8_t targetComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     /// Handles List command requests. Only supports root folder paths.
     /// File list returned is set using the setFileList method.
-    void _listCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber, bool withTime);
-    void _openCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _createFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _openFileWOCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _readCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _burstReadCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _removeFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _terminateCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    void _resetCommand(uint8_t senderSystemId, uint8_t senderComponentId, uint16_t seqNumber);
-    void _writeCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _listCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber, bool withTime);
+    void _openCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _createFileCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _openFileWOCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _readCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _burstReadCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _removeFileCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _terminateCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _resetCommand(quint32 senderSystemId, uint8_t senderComponentId, uint16_t seqNumber);
+    void _writeCommand(quint32 senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _finalizeActiveUpload();
     /// Generates the next sequence number given an incoming sequence number. Handles generating
     /// bad sequence numbers when errModeBadSequence is set.
@@ -171,7 +171,7 @@ private:
     /// if request is a string, this ensures it's null-terminated
     static void ensureNullTemination(MavlinkFTP::Request *request);
 
-    const uint8_t _systemIdServer;              ///< System ID for server
+    const quint32 _systemIdServer;              ///< System ID for server
     const uint8_t _componentIdServer;           ///< Component ID for server
     MockLink *_mockLink;                        ///< MockLink to communicate through
 

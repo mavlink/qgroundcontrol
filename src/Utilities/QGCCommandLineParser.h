@@ -31,7 +31,7 @@ struct CommandLineParseResult
     QStringList unknownOptions;
 
     // --- Core options ---
-    std::optional<quint8> systemId;
+    std::optional<quint32> systemId;
     bool clearSettingsOptions = false;
     bool clearCache = false;
     std::optional<QString> loggingOptions;

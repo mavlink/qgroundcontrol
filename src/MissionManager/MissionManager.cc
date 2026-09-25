@@ -41,7 +41,6 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
         mavlink_mission_item_t  missionItem;
 
         memset(&missionItem, 0, sizeof(missionItem));
-        missionItem.target_system =     _vehicle->id();
         missionItem.target_component =  _vehicle->defaultComponentId();
         missionItem.seq =               0;
         missionItem.command =           MAV_CMD_NAV_WAYPOINT;
@@ -56,11 +55,25 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
         missionItem.current =           altChangeOnly ? 3 : 2;
         missionItem.autocontinue =      true;
 
-        mavlink_msg_mission_item_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+        mavlink_msg_mission_item_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
                                              MAVLinkProtocol::getComponentId(),
                                              sharedLink->mavlinkChannel(),
                                              &messageOut,
-                                             &missionItem);
+                                             _vehicle->id(),
+                                             missionItem.target_component,
+                                             missionItem.seq,
+                                             missionItem.frame,
+                                             missionItem.command,
+                                             missionItem.current,
+                                             missionItem.autocontinue,
+                                             missionItem.param1,
+                                             missionItem.param2,
+                                             missionItem.param3,
+                                             missionItem.param4,
+                                             missionItem.x,
+                                             missionItem.y,
+                                             missionItem.z,
+                                             missionItem.mission_type);
 
         _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), messageOut);
     }

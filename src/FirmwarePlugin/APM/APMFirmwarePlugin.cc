@@ -200,7 +200,8 @@ void APMFirmwarePlugin::_handleOutgoingParamSetThreadSafe(Vehicle* /*vehicle*/, 
 
     mavlink_msg_param_set_decode(message, &paramSet);
 
-    if (!_ardupilotComponentMap[paramSet.target_system][paramSet.target_component]) {
+    if (!_ardupilotComponentMap[mavlink_msg_get_target_sysid(message, mavlink_get_msg_entry(message->msgid))]
+                               [paramSet.target_component]) {
         // Message is targetted to non-ArduPilot firmware component, assume it uses current mavlink spec
         return;
     }
@@ -234,13 +235,10 @@ void APMFirmwarePlugin::_handleOutgoingParamSetThreadSafe(Vehicle* /*vehicle*/, 
     }
 
     _adjustOutgoingMavlinkMutex.lock();
-    mavlink_msg_param_set_encode_chan(
-        message->sysid,
-        message->compid,
-        outgoingLink->mavlinkChannel(),
-        message,
-        &paramSet
-    );
+    mavlink_msg_param_set_pack_chan(message->sysid, message->compid, outgoingLink->mavlinkChannel(), message,
+                                    mavlink_msg_get_target_sysid(message, mavlink_get_msg_entry(message->msgid)),
+                                    paramSet.target_component, paramSet.param_id, paramSet.param_value,
+                                    paramSet.param_type);
     _adjustOutgoingMavlinkMutex.unlock();
 }
 
@@ -879,7 +877,6 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle *vehicle, double altitu
 
         (void) memset(&cmd, 0, sizeof(cmd));
 
-        cmd.target_system = static_cast<uint8_t>(vehicle->id());
         cmd.target_component = static_cast<uint8_t>(vehicle->defaultComponentId());
         cmd.coordinate_frame = MAV_FRAME_LOCAL_OFFSET_NED;
         cmd.type_mask = 0xFFF8; // Only x/y/z valid
@@ -887,13 +884,11 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle *vehicle, double altitu
         cmd.y = 0.0f;
         cmd.z = static_cast<float>(-(altitudeChange));
 
-        mavlink_msg_set_position_target_local_ned_encode_chan(
-            static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-            static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-            sharedLink->mavlinkChannel(),
-            &msg,
-            &cmd
-        );
+        mavlink_msg_set_position_target_local_ned_pack_chan(
+            MAVLinkProtocol::instance()->getSystemId(), static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+            sharedLink->mavlinkChannel(), &msg, cmd.time_boot_ms, vehicle->id(), cmd.target_component,
+            cmd.coordinate_frame, cmd.type_mask, cmd.x, cmd.y, cmd.z, cmd.vx, cmd.vy, cmd.vz, cmd.afx, cmd.afy, cmd.afz,
+            cmd.yaw, cmd.yaw_rate);
 
         (void) vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
@@ -1150,13 +1145,9 @@ void APMFirmwarePlugin::_handleRCChannels(Vehicle *vehicle, mavlink_message_t *m
         if (channels.rssi && (channels.rssi != 255)) {
             channels.rssi = static_cast<uint8_t>((static_cast<double>(channels.rssi) / 254.0) * 100.0);
         }
-        mavlink_msg_rc_channels_encode_chan(
-            static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-            static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-            sharedLink->mavlinkChannel(),
-            message,
-            &channels
-        );
+        mavlink_msg_rc_channels_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                            static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+                                            sharedLink->mavlinkChannel(), message, &channels);
     }
 }
 
@@ -1171,13 +1162,9 @@ void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle *vehicle, mavlink_message_t
         if (channels.rssi) {
             channels.rssi = static_cast<uint8_t>((static_cast<double>(channels.rssi) / 255.0) * 100.0);
         }
-        mavlink_msg_rc_channels_raw_encode_chan(
-            static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-            static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-            sharedLink->mavlinkChannel(),
-            message,
-            &channels
-        );
+        mavlink_msg_rc_channels_raw_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+                                                sharedLink->mavlinkChannel(), message, &channels);
     }
 }
 
@@ -1220,13 +1207,9 @@ void APMFirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, const FollowMe::GC
     };
 
     mavlink_message_t message{};
-    (void) mavlink_msg_global_position_int_encode_chan(
-        static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
-        static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
-        sharedLink->mavlinkChannel(),
-        &message,
-        &globalPositionInt
-    );
+    (void) mavlink_msg_global_position_int_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                       static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+                                                       sharedLink->mavlinkChannel(), &message, &globalPositionInt);
     (void) vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
 

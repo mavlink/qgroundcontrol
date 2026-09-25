@@ -16,7 +16,7 @@ class SendMavlinkMessageState : public QGCState
     Q_DISABLE_COPY(SendMavlinkMessageState)
 
 public:
-    using MessageEncoder = std::function<void (uint8_t systemId, uint8_t channel, mavlink_message_t *message)>;
+    using MessageEncoder = std::function<void (quint32 systemId, uint8_t channel, mavlink_message_t *message)>;
 
     /// @param encoder Function which encodes the MAVLink message to send
     /// @param retryCount Number of times to retry sending the message on failure

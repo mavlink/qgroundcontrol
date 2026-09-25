@@ -318,14 +318,14 @@ CommandLineParseResult parseCommandLine()
         const QString systemIdStr = parser.value(systemIdOpt);
         bool ok = false;
         const uint systemId = systemIdStr.toUInt(&ok);
-        if (!ok || (systemId < 1) || (systemId > 255)) {
+        if (!ok || (systemId < 1)) {
             out.statusCode = CommandLineParseResult::Status::Error;
-            out.errorString = QCoreApplication::translate("main", "Invalid System ID (must be 1-255): %1")
+            out.errorString = QCoreApplication::translate("main", "Invalid System ID (must be 1-4294967295): %1")
                 .arg(systemIdStr);
             qCWarning(QGCCommandLineParserLog) << out.errorString.value();
             return out;
         }
-        out.systemId = static_cast<quint8>(systemId);
+        out.systemId = systemId;
         qCDebug(QGCCommandLineParserLog) << "System ID:" << systemId;
     }
 

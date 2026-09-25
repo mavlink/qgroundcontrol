@@ -464,7 +464,7 @@ void FirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, const FollowMe::GCSMo
 
     mavlink_message_t message{};
     mavlink_msg_follow_target_encode_chan(
-        static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+        MAVLinkProtocol::instance()->getSystemId(),
         static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
         sharedLink->mavlinkChannel(),
         &message,

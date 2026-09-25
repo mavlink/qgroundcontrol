@@ -224,7 +224,7 @@ protected slots:
     virtual void    _requestCaptureStatus   ();
     virtual void    _requestStorageInfo     ();
     virtual void    _downloadFinished       ();
-    virtual void    _mavCommandResult       (int vehicleId, int component, int command, int result, int failureCode);
+    virtual void    _mavCommandResult       (quint32 vehicleId, int component, int command, int result, int failureCode);
     virtual void    _dataReady              (QByteArray data);
     virtual void    _streamInfoTimeout      ();
     virtual void    _streamStatusTimeout    ();

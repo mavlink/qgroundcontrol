@@ -178,7 +178,7 @@ bool VehicleSigningController::_sendAndStartRetransmit(const SharedLinkInterface
 bool VehicleSigningController::_sendSetupSigning(const SharedLinkInterfacePtr& sharedLink, QByteArrayView keyView)
 {
     const auto channel = static_cast<mavlink_channel_t>(sharedLink->mavlinkChannel());
-    const mavlink_system_t targetSystem{static_cast<uint8_t>(_vehicle->id()),
+    const mavlink_system_t targetSystem{_vehicle->id(),
                                         static_cast<uint8_t>(_vehicle->defaultComponentId())};
 
     mavlink_message_t msg;
@@ -211,7 +211,7 @@ void VehicleSigningController::enable(const QString& keyName)
     }
 
     // Atomic FSM commit BEFORE wiring/transmit — re-entry rejected without putting bytes on the wire.
-    if (auto fail = _active->tryBeginEnable(static_cast<uint8_t>(_vehicle->id()), keyName, *keyBytes)) {
+    if (auto fail = _active->tryBeginEnable(_vehicle->id(), keyName, *keyBytes)) {
         qgcApp()->showAppMessage(fail->detail);
         emit signingFailed(*fail);
         return;
@@ -238,7 +238,7 @@ void VehicleSigningController::disable()
         return;
     }
 
-    if (auto fail = _active->tryBeginDisable(static_cast<uint8_t>(_vehicle->id()))) {
+    if (auto fail = _active->tryBeginDisable(_vehicle->id())) {
         qgcApp()->showAppMessage(fail->detail);
         emit signingFailed(*fail);
         return;

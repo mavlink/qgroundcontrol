@@ -116,7 +116,7 @@ private:
 
     QVariantList _toolIndicatorList;
     QList<APMCustomMode> _supportedModes;
-    QMap<int /* vehicle id */, QMap<int /* componentId */, bool /* true: component is part of ArduPilot stack */>> _ardupilotComponentMap;
+    QMap<quint32 /* vehicle id */, QMap<int /* componentId */, bool /* true: component is part of ArduPilot stack */>> _ardupilotComponentMap;
 
     QMutex _adjustOutgoingMavlinkMutex;
 

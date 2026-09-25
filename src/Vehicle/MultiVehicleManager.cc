@@ -65,7 +65,7 @@ void MultiVehicleManager::init()
     _initialized = true;
 }
 
-void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType)
+void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, quint32 vehicleId, int componentId, int vehicleFirmwareType, int vehicleType)
 {
     if (componentId != MAV_COMP_ID_AUTOPILOT1) {
         // Don't create vehicles for components other than the autopilot
@@ -298,7 +298,7 @@ void MultiVehicleManager::_sendGCSHeartbeat()
     }
 }
 
-void MultiVehicleManager::selectVehicle(int vehicleId)
+void MultiVehicleManager::selectVehicle(quint32 vehicleId)
 {
     if(!_vehicleSelected(vehicleId)) {
         Vehicle *const vehicle = getVehicleById(vehicleId);
@@ -307,7 +307,7 @@ void MultiVehicleManager::selectVehicle(int vehicleId)
     }
 }
 
-void MultiVehicleManager::deselectVehicle(int vehicleId)
+void MultiVehicleManager::deselectVehicle(quint32 vehicleId)
 {
     for (int i = 0; i < _selectedVehicles->count(); i++) {
         Vehicle *const vehicle = qobject_cast<Vehicle*>(_selectedVehicles->get(i));
@@ -323,7 +323,7 @@ void MultiVehicleManager::deselectAllVehicles()
     _selectedVehicles->clear();
 }
 
-bool MultiVehicleManager::_vehicleSelected(int vehicleId)
+bool MultiVehicleManager::_vehicleSelected(quint32 vehicleId)
 {
     for (int i = 0; i < _selectedVehicles->count(); i++) {
         Vehicle *const vehicle = qobject_cast<Vehicle*>(_selectedVehicles->get(i));
@@ -334,7 +334,7 @@ bool MultiVehicleManager::_vehicleSelected(int vehicleId)
     return false;
 }
 
-Vehicle *MultiVehicleManager::getVehicleById(int vehicleId) const
+Vehicle *MultiVehicleManager::getVehicleById(quint32 vehicleId) const
 {
     for (int i = 0; i < _vehicles->count(); i++) {
         Vehicle *const vehicle = qobject_cast<Vehicle*>(_vehicles->get(i));

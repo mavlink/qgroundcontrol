@@ -157,7 +157,7 @@ QList<MockLink::FlightMode_t> MockLink::_apmSubAvailableFlightModes = {
     { "Surftrak",         0,              21,             true,       true },
 };
 
-MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
+MockLink::MockLink(SharedLinkConfigurationPtr& config, QObject* parent)
     : LinkInterface(config, parent)
     , _mockConfig(qobject_cast<const MockConfiguration*>(_config.get()))
     , _firmwareType(_mockConfig->firmwareType())
@@ -171,33 +171,30 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
     , _stayMavlinkV1(_mockConfig->stayMavlinkV1())
     , _ftpCapability(_mockConfig->ftpCapability())
     , _sendRadioStatusEnabled(_mockConfig->sendRadioStatus())
-    , _vehicleSystemId(_mockConfig->incrementVehicleId() ? _nextVehicleSystemId++ : static_cast<int>(_nextVehicleSystemId))
-    , _vehicleLatitude(_defaultVehicleLatitude + ((_vehicleSystemId - 128) * 0.0001))
-    , _vehicleLongitude(_defaultVehicleLongitude + ((_vehicleSystemId - 128) * 0.0001))
+    , _vehicleSystemId(
+          _mockConfig->systemId()
+              ? _mockConfig->systemId()
+              : (_mockConfig->incrementVehicleId() ? _nextVehicleSystemId++ : static_cast<int>(_nextVehicleSystemId)))
+    , _vehicleLatitude(_defaultVehicleLatitude + ((static_cast<int>(_vehicleSystemId & 0xFF) - 128) * 0.0001))
+    , _vehicleLongitude(_defaultVehicleLongitude + ((static_cast<int>(_vehicleSystemId & 0xFF) - 128) * 0.0001))
     , _boardVendorId(_mockConfig->boardVendorId())
     , _boardProductId(_mockConfig->boardProductId())
     , _missionItemHandler(new MockLinkMissionItemHandler(this))
-    , _mockLinkCamera(_enableCamera ? new MockLinkCamera(this,
-                                                         _mockConfig->cameraCaptureVideo(),
-                                                         _mockConfig->cameraCaptureImage(),
-                                                         _mockConfig->cameraHasModes(),
-                                                         _mockConfig->cameraHasVideoStream(),
-                                                         _mockConfig->cameraCanCaptureImageInVideoMode(),
-                                                         _mockConfig->cameraCanCaptureVideoInImageMode(),
-                                                         _mockConfig->cameraHasBasicZoom(),
-                                                         _mockConfig->cameraHasTrackingPoint(),
-                                                         _mockConfig->cameraHasTrackingRectangle())
-                                    : nullptr)
-    , _mockLinkGimbal(_enableGimbal ? new MockLinkGimbal(this,
-                                                        _mockConfig->gimbalHasRollAxis(),
-                                                        _mockConfig->gimbalHasPitchAxis(),
-                                                        _mockConfig->gimbalHasYawAxis(),
-                                                        _mockConfig->gimbalHasYawFollow(),
-                                                        _mockConfig->gimbalHasYawLock(),
-                                                        _mockConfig->gimbalHasRetract(),
-                                                        _mockConfig->gimbalHasNeutral(),
-                                                        static_cast<uint8_t>(_mockConfig->gimbalDeviceId()))
-                                    : nullptr)
+    , _mockLinkCamera(
+          _enableCamera
+              ? new MockLinkCamera(this, _mockConfig->cameraCaptureVideo(), _mockConfig->cameraCaptureImage(),
+                                   _mockConfig->cameraHasModes(), _mockConfig->cameraHasVideoStream(),
+                                   _mockConfig->cameraCanCaptureImageInVideoMode(),
+                                   _mockConfig->cameraCanCaptureVideoInImageMode(), _mockConfig->cameraHasBasicZoom(),
+                                   _mockConfig->cameraHasTrackingPoint(), _mockConfig->cameraHasTrackingRectangle())
+              : nullptr)
+    , _mockLinkGimbal(_enableGimbal
+                          ? new MockLinkGimbal(this, _mockConfig->gimbalHasRollAxis(),
+                                               _mockConfig->gimbalHasPitchAxis(), _mockConfig->gimbalHasYawAxis(),
+                                               _mockConfig->gimbalHasYawFollow(), _mockConfig->gimbalHasYawLock(),
+                                               _mockConfig->gimbalHasRetract(), _mockConfig->gimbalHasNeutral(),
+                                               static_cast<uint8_t>(_mockConfig->gimbalDeviceId()))
+                          : nullptr)
     , _mockLinkPX4Calibration(new MockLinkPX4Calibration(this))
     , _mockLinkFTP(new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this))
     , _requestedVideoStreamType(_mockConfig->videoStreamTypeEnum())
@@ -272,7 +269,7 @@ bool MockLink::_connect()
         // message from the GCS. Emulate that: outgoing traffic starts as v1.
         // High latency links are exempt: QGC doesn't transmit on them, so the upgrade could never happen.
         // Note: high latency takes precedence over OptionStayMavlinkV1 (the two are not meant to be combined).
-        _mavlinkV2Upgraded = linkConfiguration()->isHighLatency();
+        _mavlinkV2Upgraded = linkConfiguration()->isHighLatency() || _vehicleSystemId > UINT8_MAX;
         mavlink_status_t *const outgoingStatus = mavlink_get_channel_status(_outgoingMavlinkChannel);
         if (_mavlinkV2Upgraded) {
             outgoingStatus->flags &= ~MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
@@ -1316,7 +1313,7 @@ void MockLink::_handleSetupSigning(const mavlink_message_t &msg)
     mavlink_setup_signing_t setupSigning{};
     mavlink_msg_setup_signing_decode(&msg, &setupSigning);
 
-    if (setupSigning.target_system != _vehicleSystemId) {
+    if (mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid)) != _vehicleSystemId) {
         return;
     }
 
@@ -1356,7 +1353,7 @@ void MockLink::_handleSetMode(const mavlink_message_t &msg)
     mavlink_set_mode_t request{};
     mavlink_msg_set_mode_decode(&msg, &request);
 
-    if (request.target_system != _vehicleSystemId) {
+    if (mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid)) != _vehicleSystemId) {
         qCDebug(MockLinkLog) << "Ignoring SET_MODE for system" << request.target_system;
         return;
     }
@@ -1715,7 +1712,7 @@ void MockLink::_handleParamRequestList(const mavlink_message_t &msg)
     mavlink_param_request_list_t request{};
     mavlink_msg_param_request_list_decode(&msg, &request);
 
-    if (request.target_system != _vehicleSystemId) {
+    if (mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid)) != _vehicleSystemId) {
         qCDebug(MockLinkLog) << "Ignoring PARAM_REQUEST_LIST for system" << request.target_system;
         return;
     }
@@ -1858,7 +1855,7 @@ void MockLink::_handleParamSet(const mavlink_message_t &msg)
     mavlink_param_set_t request{};
     mavlink_msg_param_set_decode(&msg, &request);
 
-    if (request.target_system != _vehicleSystemId) {
+    if (mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid)) != _vehicleSystemId) {
         qCDebug(MockLinkLog) << "Ignoring PARAM_SET for system" << request.target_system;
         return;
     }
@@ -1989,7 +1986,7 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
     char paramId[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN + 1]{};
     paramId[0] = 0;
 
-    if (request.target_system != _vehicleSystemId) {
+    if (mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid)) != _vehicleSystemId) {
         qCDebug(MockLinkLog) << "Ignoring PARAM_REQUEST_READ for system" << request.target_system;
         return;
     }
@@ -2974,7 +2971,8 @@ void MockLink::_handleLogErase(const mavlink_message_t &msg)
     mavlink_log_erase_t request{};
     mavlink_msg_log_erase_decode(&msg, &request);
 
-    if ((request.target_system != _vehicleSystemId) || (request.target_component != _vehicleComponentId)) {
+    if ((mavlink_msg_get_target_sysid(&msg, mavlink_get_msg_entry(msg.msgid)) != _vehicleSystemId) ||
+        (request.target_component != _vehicleComponentId)) {
         return;
     }
 

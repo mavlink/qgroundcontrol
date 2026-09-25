@@ -16,8 +16,8 @@ struct EventHandler::Impl
          const QString &profile,
          handle_event_f handleEventCB_,
          send_request_event_message_f sendRequestCB_,
-         uint8_t ourSystemId, uint8_t ourComponentId,
-         uint8_t systemId, uint8_t componentId)
+         quint32 ourSystemId, uint8_t ourComponentId,
+         quint32 systemId, uint8_t componentId)
         : q(q_)
         , timer(q_)
         , handleEventCB(std::move(handleEventCB_))
@@ -114,8 +114,8 @@ EventHandler::EventHandler(QObject *parent,
                            const QString &profile,
                            handle_event_f handleEventCB,
                            send_request_event_message_f sendRequestCB,
-                           uint8_t ourSystemId, uint8_t ourComponentId,
-                           uint8_t systemId, uint8_t componentId)
+                           quint32 ourSystemId, uint8_t ourComponentId,
+                           quint32 systemId, uint8_t componentId)
     : QObject(parent)
     , _impl(std::make_unique<Impl>(this, profile,
                                    std::move(handleEventCB),

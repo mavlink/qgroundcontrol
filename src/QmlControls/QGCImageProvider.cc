@@ -45,7 +45,7 @@ QImage QGCImageProvider::requestImage(const QString &id, QSize *size, const QSiz
     }
 
     bool ok = false;
-    const uint8_t vehicleId = url[0].toUInt(&ok);
+    const quint32 vehicleId = url[0].toUInt(&ok);
     if (!ok) {
         return _dummy;
     }

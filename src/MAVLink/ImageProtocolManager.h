@@ -20,8 +20,8 @@ public:
 
     uint32_t flowImageIndex() const { return _flowImageIndex; }
 
-    bool requestImage(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t &message);
-    void cancelRequest(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t &message);
+    bool requestImage(quint32 system_id, uint8_t component_id, uint8_t chan, mavlink_message_t &message);
+    void cancelRequest(quint32 system_id, uint8_t component_id, uint8_t chan, mavlink_message_t &message);
 
 signals:
     void imageReady(const QImage &image);

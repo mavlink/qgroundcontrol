@@ -30,8 +30,8 @@ public:
                  const QString &profile,
                  handle_event_f handleEventCB,
                  send_request_event_message_f sendRequestCB,
-                 uint8_t ourSystemId, uint8_t ourComponentId,
-                 uint8_t systemId, uint8_t componentId);
+                 quint32 ourSystemId, uint8_t ourComponentId,
+                 quint32 systemId, uint8_t componentId);
     ~EventHandler() override;
 
     void handleEvents(const mavlink_message_t &message);

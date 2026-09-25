@@ -73,7 +73,7 @@ signals:
     void calibrationActiveChanged(void);
 
 private slots:
-    void _handleUASTextMessage(int uasId, int compId, int severity, QString text, const QString &description);
+    void _handleUASTextMessage(quint32 uasId, int compId, int severity, QString text, const QString &description);
     void _handleParametersReset(bool success);
 
 private:

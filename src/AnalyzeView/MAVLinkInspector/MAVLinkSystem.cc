@@ -8,7 +8,7 @@
 
 QGC_LOGGING_CATEGORY(MAVLinkSystemLog, "AnalyzeView.MAVLinkSystem")
 
-QGCMAVLinkSystem::QGCMAVLinkSystem(quint8 id, QObject *parent)
+QGCMAVLinkSystem::QGCMAVLinkSystem(quint32 id, QObject *parent)
     : QObject(parent)
     , _systemID(id)
     , _messages(new QmlObjectListModel(this))

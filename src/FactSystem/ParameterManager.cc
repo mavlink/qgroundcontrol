@@ -305,7 +305,7 @@ QString ParameterManager::_vehicleAndComponentString(int componentId) const
 
 void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramName, FactMetaData::ValueType_t valueType, const QVariant &rawValue)
 {
-    auto paramSetEncoder = [this, componentId, paramName, valueType, rawValue](uint8_t /*systemId*/, uint8_t channel, mavlink_message_t *message) -> void {
+    auto paramSetEncoder = [this, componentId, paramName, valueType, rawValue](quint32 /*systemId*/, uint8_t channel, mavlink_message_t *message) -> void {
         const MAV_PARAM_TYPE paramType = factTypeToMavType(valueType);
 
         mavlink_param_union_t union_value{};
@@ -321,7 +321,7 @@ void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramNam
                     MAVLinkProtocol::getComponentId(),
                     channel,
                     message,
-                    static_cast<uint8_t>(_vehicle->id()),
+                    _vehicle->id(),
                     static_cast<uint8_t>(componentId),
                     paramId,
                     union_value.param_float,
@@ -980,7 +980,7 @@ void ParameterManager::_requestHashCheck(uint8_t componentId)
         MAVLinkProtocol::getComponentId(),
         sharedLink->mavlinkChannel(),
         &msg,
-        static_cast<uint8_t>(_vehicle->id()),
+        _vehicle->id(),
         componentId,
         paramId,
         -1);
@@ -1002,7 +1002,7 @@ void ParameterManager::_sendParamRequestReadIndex(int componentId, int paramInde
                                                     MAVLinkProtocol::getComponentId(),
                                                     sharedLink->mavlinkChannel(),
                                                     &msg,
-                                                    static_cast<uint8_t>(_vehicle->id()),
+                                                    _vehicle->id(),
                                                     static_cast<uint8_t>(componentId),
                                                     paramId,
                                                     static_cast<int16_t>(paramIndex));
@@ -1011,7 +1011,7 @@ void ParameterManager::_sendParamRequestReadIndex(int componentId, int paramInde
 
 void ParameterManager::_mavlinkParamRequestRead(int componentId, const QString &paramName, int paramIndex, bool notifyFailure)
 {
-    auto paramRequestReadEncoder = [this, componentId, paramName, paramIndex](uint8_t /*systemId*/, uint8_t channel, mavlink_message_t *message) -> void {
+    auto paramRequestReadEncoder = [this, componentId, paramName, paramIndex](quint32 /*systemId*/, uint8_t channel, mavlink_message_t *message) -> void {
         char paramId[MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN + 1] = {};
         (void) strncpy(paramId, paramName.toLocal8Bit().constData(), MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN);
 
@@ -1019,7 +1019,7 @@ void ParameterManager::_mavlinkParamRequestRead(int componentId, const QString &
                                                         MAVLinkProtocol::getComponentId(),            // QGC component id
                                                         channel,
                                                         message,
-                                                        static_cast<uint8_t>(_vehicle->id()),
+                                                        _vehicle->id(),
                                                         static_cast<uint8_t>(componentId),
                                                         paramId,
                                                         static_cast<int16_t>(paramIndex));
@@ -1130,7 +1130,7 @@ void ParameterManager::_mavlinkParamRequestRead(int componentId, const QString &
     stateMachine->start();
 }
 
-void ParameterManager::_writeLocalParamCache(int vehicleId, int componentId)
+void ParameterManager::_writeLocalParamCache(quint32 vehicleId, int componentId)
 {
     CacheMapName2ParamTypeVal cacheMap;
 
@@ -1158,12 +1158,12 @@ QDir ParameterManager::parameterCacheDir()
     return QDir(basePath + QDir::separator() + appName + QDir::separator() + QStringLiteral("ParamCache"));
 }
 
-QString ParameterManager::parameterCacheFile(int vehicleId, int componentId)
+QString ParameterManager::parameterCacheFile(quint32 vehicleId, int componentId)
 {
     return parameterCacheDir().filePath(QStringLiteral("%1_%2.v2").arg(vehicleId).arg(componentId));
 }
 
-void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, const QVariant &hashValue)
+void ParameterManager::_tryCacheHashLoad(quint32 vehicleId, int componentId, const QVariant &hashValue)
 {
     qCDebug(ParameterManagerLog) << "Attemping load from cache";
 
@@ -1233,15 +1233,18 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, const Q
             (void) strncpy(p.param_id, "_HASH_CHECK", sizeof(p.param_id));
             union_value.param_uint32 = crc32_value;
             p.param_value = union_value.param_float;
-            p.target_system = static_cast<uint8_t>(_vehicle->id());
             p.target_component = static_cast<uint8_t>(componentId);
 
             mavlink_message_t msg{};
-            (void) mavlink_msg_param_set_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+            (void) mavlink_msg_param_set_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
                                                      MAVLinkProtocol::getComponentId(),
                                                      sharedLink->mavlinkChannel(),
                                                      &msg,
-                                                     &p);
+                                                     _vehicle->id(),
+                                                     p.target_component,
+                                                     p.param_id,
+                                                     p.param_value,
+                                                     p.param_type);
             (void) _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
         }
 

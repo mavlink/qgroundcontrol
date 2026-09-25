@@ -43,7 +43,7 @@ public:
     static QDir parameterCacheDir();
 
     /// @return Location of parameter cache file
-    static QString parameterCacheFile(int vehicleId, int componentId);
+    static QString parameterCacheFile(quint32 vehicleId, int componentId);
 
     void mavlinkMessageReceived(const mavlink_message_t &message);
 
@@ -160,8 +160,8 @@ private:
     /// Single PARAM_REQUEST_READ by index with no ack wait. Used by the initial-load re-read loop, which does its own retries.
     void _sendParamRequestReadIndex(int componentId, int paramIndex);
     void _requestHashCheck(uint8_t componentId);
-    void _writeLocalParamCache(int vehicleId, int componentId);
-    void _tryCacheHashLoad(int vehicleId, int componentId, const QVariant &hashValue);
+    void _writeLocalParamCache(quint32 vehicleId, int componentId);
+    void _tryCacheHashLoad(quint32 vehicleId, int componentId, const QVariant &hashValue);
     void _loadMetaData();
     void _clearMetaData();
     /// Remap a parameter name from the newest firmware version to the version running on the vehicle.

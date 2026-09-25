@@ -180,7 +180,7 @@ void SensorsComponentController::calibrateAirspeed(void)
     _vehicle->startCalibration(QGCMAVLink::CalibrationPX4Airspeed);
 }
 
-void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, int severity, QString text, const QString &description)
+void SensorsComponentController::_handleUASTextMessage(quint32 uasId, int compId, int severity, QString text, const QString &description)
 {
     Q_UNUSED(compId);
     Q_UNUSED(severity);

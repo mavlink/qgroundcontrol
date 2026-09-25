@@ -83,7 +83,7 @@ void createSetupSigning(mavlink_channel_t channel, mavlink_system_t target_syste
                         mavlink_setup_signing_t& setup_signing)
 {
     setup_signing = {};
-    setup_signing.target_system = target_system.sysid;
+    setup_signing.target_system = target_system.sysid > UINT8_MAX ? UINT8_MAX : target_system.sysid;
     setup_signing.target_component = target_system.compid;
 
     if (!keyBytes.isEmpty() && keyBytes.size() >= static_cast<qsizetype>(sizeof(setup_signing.secret_key))) {
@@ -95,7 +95,7 @@ void createSetupSigning(mavlink_channel_t channel, mavlink_system_t target_syste
     }
 }
 
-bool encodeSetupSigning(mavlink_channel_t channel, uint8_t srcSysId, uint8_t srcCompId, mavlink_system_t target_system,
+bool encodeSetupSigning(mavlink_channel_t channel, quint32 srcSysId, uint8_t srcCompId, mavlink_system_t target_system,
                         QByteArrayView keyBytes, mavlink_message_t& message)
 {
     if (!mavlink_get_channel_status(channel)) {
@@ -103,7 +103,8 @@ bool encodeSetupSigning(mavlink_channel_t channel, uint8_t srcSysId, uint8_t src
     }
     mavlink_setup_signing_t payload;
     createSetupSigning(channel, target_system, keyBytes, payload);
-    (void)mavlink_msg_setup_signing_encode_chan(srcSysId, srcCompId, channel, &message, &payload);
+    (void)mavlink_msg_setup_signing_pack_chan(srcSysId, srcCompId, channel, &message, target_system.sysid,
+                                             payload.target_component, payload.secret_key, payload.initial_timestamp);
     return true;
 }
 
@@ -128,20 +129,9 @@ QByteArray serializeUnsignedCopy(const mavlink_message_t& message)
     if (copy.magic == MAVLINK_STX) {
         copy.incompat_flags &= static_cast<uint8_t>(~MAVLINK_IFLAG_SIGNED);
 
-        // Replicates mavlink_finalize_message_buffer; assert fails loudly if libmavlink header layout drifts.
-        static_assert(MAVLINK_CORE_HEADER_LEN == 9, "MAVLink2 core header layout changed — update CRC recomputation");
-        uint8_t header[MAVLINK_CORE_HEADER_LEN];
-        header[0] = copy.len;
-        header[1] = copy.incompat_flags;
-        header[2] = copy.compat_flags;
-        header[3] = copy.seq;
-        header[4] = copy.sysid;
-        header[5] = copy.compid;
-        header[6] = static_cast<uint8_t>(copy.msgid & 0xFF);
-        header[7] = static_cast<uint8_t>((copy.msgid >> 8) & 0xFF);
-        header[8] = static_cast<uint8_t>((copy.msgid >> 16) & 0xFF);
-
-        uint16_t checksum = crc_calculate(header, MAVLINK_CORE_HEADER_LEN);
+        uint8_t header[MAVLINK_MAX_HEADER_LEN];
+        const uint8_t headerLength = mavlink_header_to_send_buffer(header, &copy);
+        uint16_t checksum = crc_calculate(header + 1, headerLength - 1);
         crc_accumulate_buffer(&checksum, _MAV_PAYLOAD(&copy), copy.len);
         crc_accumulate(mavlink_get_crc_extra(&copy), &checksum);
 
@@ -163,14 +153,15 @@ namespace {
 /// they are hashed in. Shared by verify (memcmp) and sign (memcpy) so the two can never diverge on wire layout.
 void _computeSignatureHash(QByteArrayView key, const mavlink_message_t& message, uchar (&hashBuf)[kSigningKeySize])
 {
-    const uint8_t* header = reinterpret_cast<const uint8_t*>(&message.magic);
+    uint8_t header[MAVLINK_MAX_HEADER_LEN];
+    const uint8_t headerLength = mavlink_header_to_send_buffer(header, &message);
     const char* payload = _MAV_PAYLOAD(&message);
     const uint8_t* sig = message.signature;
     const uint8_t crc[2] = {static_cast<uint8_t>(message.checksum & 0xFF), static_cast<uint8_t>(message.checksum >> 8)};
 
     const QByteArrayView parts[] = {
         key.first(kSigningKeySize),
-        QByteArrayView(reinterpret_cast<const char*>(header), MAVLINK_NUM_HEADER_BYTES),
+        QByteArrayView(reinterpret_cast<const char*>(header), headerLength),
         QByteArrayView(payload, message.len),
         QByteArrayView(reinterpret_cast<const char*>(crc), sizeof(crc)),
         QByteArrayView(reinterpret_cast<const char*>(sig), kSignaturePrefixBytes),

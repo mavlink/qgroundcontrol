@@ -13,9 +13,9 @@ public:
     ~QGCImageProvider();
 
     QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) final;
-    void setImage(const QImage &image, uint8_t vehicleId = 0) { _images[vehicleId] = image.flipped(Qt::Vertical); }
+    void setImage(const QImage &image, quint32 vehicleId = 0) { _images[vehicleId] = image.flipped(Qt::Vertical); }
 
 private:
-    QMap<uint8_t, QImage> _images;
+    QMap<quint32, QImage> _images;
     QImage _dummy;
 };

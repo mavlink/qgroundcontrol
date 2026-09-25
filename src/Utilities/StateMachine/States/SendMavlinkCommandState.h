@@ -27,7 +27,7 @@ protected:
     void onWaitEntered() override;
 
 private slots:
-    void _mavCommandResult(int vehicleId, int targetComponent, int command, int ackResult, int failureCode);
+    void _mavCommandResult(quint32 vehicleId, int targetComponent, int command, int ackResult, int failureCode);
 
 private:
     MAV_CMD     _command = MAV_CMD(0);
