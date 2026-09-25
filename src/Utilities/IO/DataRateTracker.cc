@@ -33,6 +33,11 @@ void DataRateTracker::refresh()
 void DataRateTracker::reset()
 {
     _totalBytes = 0;
+    resetRate();
+}
+
+void DataRateTracker::resetRate()
+{
     _windowBytes = 0;
     _currentRate = 0.0;
     _rateUpdated = false;

@@ -1,87 +1,18 @@
 #include <algorithm>
-#include <array>
 #include <chrono>
 #include <cmath>
-#include <cstdint>
 #include <limits>
 #include <optional>
-#include <span>
-#include <type_traits>
-#include <utility>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QTime>
 
-#include "GPSProtocolFeatures.h"
+#include "GPSReceiverCapabilities.h"
 #include "NMEAConstellation.h"
 #include "NMEASatelliteEpoch.h"
 #include "NMEASentence.h"
 #include "NMEAUtils.h"
 #include "UnitTest.h"
-
-#if QGC_GPS_ENABLE_UBX
-#include "UBX/GPSDriverUBX.h"
-#endif
-#if QGC_GPS_ENABLE_ASHTECH
-#include "Ashtech/GPSDriverAshtech.h"
-#endif
-#if QGC_GPS_ENABLE_SBF
-#include "SBF/GPSDriverSBF.h"
-#endif
-#if QGC_GPS_ENABLE_FEMTO
-#include "Femto/GPSDriverFemto.h"
-#endif
-#if QGC_GPS_ENABLE_UNICORE
-#include "Unicore/GPSDriverUnicore.h"
-#endif
-#if QGC_GPS_ENABLE_QUECTEL
-#include "Quectel/GPSDriverQuectel.h"
-#endif
-#if QGC_GPS_ENABLE_PASSIVE
-#include "Passive/GPSDriverPassive.h"
-#endif
-
-namespace {
-template <typename Driver>
-void verifyDriverContract()
-{
-    static_assert(!std::is_copy_constructible_v<Driver>);
-    static_assert(!std::is_copy_assignable_v<Driver>);
-    static_assert(!std::is_move_constructible_v<Driver>);
-    static_assert(!std::is_move_assignable_v<Driver>);
-
-    int operations = 0;
-    GPSProtocolIO io;
-    io.nowUs = [] { return uint64_t{1000000}; };
-    io.read = [&](std::span<uint8_t>, GPSDeadline) {
-        ++operations;
-        return GPSReadResult{};
-    };
-    io.write = [&](std::span<const uint8_t>, GPSDeadline) {
-        ++operations;
-        return GPSWriteResult{};
-    };
-    io.setBaudrate = [&](unsigned) {
-        ++operations;
-        return GPSBaudStatus::Unsupported;
-    };
-    io.wait = [&](std::chrono::microseconds) {
-        ++operations;
-        return false;
-    };
-    GPSNativePositionReport position;
-    GPSNativeSatelliteReport satellites;
-    Driver driver(std::move(io), &position, &satellites);
-    constexpr std::array<uint8_t, 8> noise{0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00};
-    const auto decoded = driver.decode(noise);
-    QCOMPARE(decoded.bytesConsumed, noise.size());
-    QVERIFY(decoded.batch.events.empty());
-    const auto empty = driver.decode({});
-    QCOMPARE(empty.bytesConsumed, size_t{0});
-    QVERIFY(empty.batch.events.empty());
-    QCOMPARE(operations, 0);
-}
-}  // namespace
 
 class GPSProtocolContractsTest : public UnitTest
 {
@@ -89,36 +20,34 @@ class GPSProtocolContractsTest : public UnitTest
 
 private slots:
 
-    void _families()
-    {
-#if QGC_GPS_ENABLE_UBX
-        verifyDriverContract<GPSNativeUBX>();
-#endif
-#if QGC_GPS_ENABLE_ASHTECH
-        verifyDriverContract<GPSNativeAshtech>();
-#endif
-#if QGC_GPS_ENABLE_SBF
-        verifyDriverContract<GPSNativeSBF>();
-#endif
-#if QGC_GPS_ENABLE_FEMTO
-        verifyDriverContract<GPSNativeFemto>();
-#endif
-#if QGC_GPS_ENABLE_UNICORE
-        verifyDriverContract<GPSNativeUnicore>();
-#endif
-#if QGC_GPS_ENABLE_QUECTEL
-        verifyDriverContract<GPSNativeQuectel>();
-#endif
-#if QGC_GPS_ENABLE_PASSIVE
-        verifyDriverContract<GPSNativePassive>();
-#endif
-    }
-
     void _satelliteIds_data();
     void _satelliteIds();
     void _coordinateNumbers_data();
     void _coordinateNumbers();
     void _nmeaWireContract();
+    void _ggaValidity_data();
+    void _ggaValidity();
+    void _navigationStatus_data();
+    void _navigationStatus();
+
+    void _physicalValidationKeepsRoleQualification()
+    {
+        GPSReceiverConfig config;
+        config.role = GPSReceiverConfig::Role::Passive;
+        config.baudRate = 115200;
+        for (auto type : {GPSType::trimble, GPSType::septentrio, GPSType::femto}) {
+            const auto capabilities = gpsReceiverCapabilities(type, config.role);
+            QCOMPARE(gpsValidateReceiverPhysicalConfig(config, capabilities), GPSReceiverConfigError::None);
+            QCOMPARE(gpsValidateReceiverConfig(type, config), GPSReceiverConfigError::UnsupportedRole);
+        }
+        config.role = GPSReceiverConfig::Role::RTKBase;
+        const auto capabilities = gpsReceiverCapabilities(GPSType::ublox, config.role);
+        QCOMPARE(gpsValidateReceiverPhysicalConfig(config, capabilities), GPSReceiverConfigError::InvalidSurveyIn);
+        QCOMPARE(gpsValidateReceiverConfig(GPSType::ublox, config), GPSReceiverConfigError::InvalidSurveyIn);
+        config.base.mode = GPSBaseStationConfig::Fixed{{47, 8, 500}, 1};
+        QCOMPARE(gpsValidateReceiverPhysicalConfig(config, capabilities), GPSReceiverConfigError::None);
+        QCOMPARE(gpsValidateReceiverConfig(GPSType::ublox, config), GPSReceiverConfigError::None);
+    }
 };
 
 void GPSProtocolContractsTest::_satelliteIds_data()
@@ -250,12 +179,78 @@ void GPSProtocolContractsTest::_nmeaWireContract()
                                   [](const auto& system) { return system.constellation == GPSConstellation::GPS; });
     QVERIFY(gps != epoch.end());
     QCOMPARE(gps->inViewTimestampUs, uint64_t{1000});
-    QCOMPARE(gps->satellites.size(), size_t{1});
-    QCOMPARE(gps->satellites.front().id, 1);
+    QCOMPARE(gps->inView, 1);
     assembler.clear();
     QVERIFY(assembler.flush().empty());
 }
 
+void GPSProtocolContractsTest::_ggaValidity_data()
+{
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<bool>("accepted");
+    QTest::addColumn<bool>("coordinates");
+    QTest::newRow("no-fix-empty") << QByteArray("GPGGA,120000,,,,,0,0,,,,,,,") << true << false;
+    QTest::newRow("no-fix-hemispheres") << QByteArray("GPGGA,120000,,N,,E,0,0,,,,,,,") << true << false;
+    QTest::newRow("no-fix-zero-coordinates")
+        << QByteArray("GPGGA,120000,0000.0,N,00000.0,E,0,0,,,,,,,") << true << true;
+    QTest::newRow("fix-without-coordinates") << QByteArray("GPGGA,120000,,,,,1,0,,,,,,,") << false << false;
+    QTest::newRow("invalid-coordinate") << QByteArray("GPGGA,120000,9100.0,N,00000.0,E,0,0,,,,,,,") << false << false;
+    QTest::newRow("invalid-hemisphere") << QByteArray("GPGGA,120000,,Q,,E,0,0,,,,,,,") << false << false;
+}
+
+void GPSProtocolContractsTest::_ggaValidity()
+{
+    QFETCH(QByteArray, body);
+    QFETCH(bool, accepted);
+    QFETCH(bool, coordinates);
+    const auto wire = NMEAUtils::repairChecksum('$' + body);
+    const auto sentence = NMEA::sentence({wire.constData(), static_cast<size_t>(wire.size())});
+    QVERIFY(sentence);
+    const auto fix = NMEA::gga(*sentence);
+    QCOMPARE(fix.has_value(), accepted);
+    if (fix) {
+        QCOMPARE(fix->quality, NMEA::GgaQuality::INVALID);
+        QCOMPARE(fix->satellitesUsed, std::optional<unsigned>(0));
+        QCOMPARE(std::isfinite(fix->latitude) && std::isfinite(fix->longitude), coordinates);
+    }
+}
+
 UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolContractsTest, TestLabel::Unit)
+
+void GPSProtocolContractsTest::_navigationStatus_data()
+{
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<int>("valid");
+    QTest::addColumn<int>("epoch");
+    QTest::newRow("gga-no-fix") << QByteArray("GPGGA,120001,,,,,0,0,,,,,,,") << 0 << 43201000;
+    QTest::newRow("gga-declared-fix") << QByteArray("GPGGA,120001,,,,,1,0,,,,,,,") << 1 << 43201000;
+    QTest::newRow("gga-unknown-quality") << QByteArray("GPGGA,120001,,,,,9,0,,,,,,,") << -1 << -1;
+    QTest::newRow("rmc-valid") << QByteArray("GPRMC,120001,A") << 1 << 43201000;
+    QTest::newRow("rmc-invalid") << QByteArray("GPRMC,120001,V") << 0 << 43201000;
+    QTest::newRow("rmc-invalid-time") << QByteArray("GPRMC,,V") << 0 << -1;
+    QTest::newRow("gll-invalid") << QByteArray("GPGLL,,,,,120001,V") << 0 << 43201000;
+    QTest::newRow("gll-valid") << QByteArray("GPGLL,,,,,120001,A") << 1 << 43201000;
+    QTest::newRow("gsa-invalid") << QByteArray("GPGSA,A,1") << 0 << -1;
+    QTest::newRow("gsa-two-dimensional") << QByteArray("GPGSA,A,2") << 1 << -1;
+    QTest::newRow("gsa-three-dimensional") << QByteArray("GPGSA,A,3") << 1 << -1;
+    QTest::newRow("gsa-unknown") << QByteArray("GPGSA,A,4") << -1 << -1;
+    QTest::newRow("rmc-unknown") << QByteArray("GPRMC,120001,X") << -1 << -1;
+}
+
+void GPSProtocolContractsTest::_navigationStatus()
+{
+    QFETCH(QByteArray, body);
+    QFETCH(int, valid);
+    QFETCH(int, epoch);
+    const auto wire = NMEAUtils::repairChecksum('$' + body);
+    const auto sentence = NMEA::sentence({wire.constData(), static_cast<size_t>(wire.size())});
+    QVERIFY(sentence);
+    const auto status = NMEA::navigationStatus(*sentence);
+    QCOMPARE(status.has_value(), valid >= 0);
+    if (status) {
+        QCOMPARE(status->valid, valid != 0);
+        QCOMPARE(status->utcMilliseconds.value_or(-1), epoch);
+    }
+}
 
 #include "GPSProtocolContractsTest.moc"

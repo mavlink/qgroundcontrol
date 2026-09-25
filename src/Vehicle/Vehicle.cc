@@ -1,83 +1,84 @@
 #include "Vehicle.h"
-#include "Actuators.h"
-#include "BatteryFactGroupListModel.h"
-#include "EscStatusFactGroupListModel.h"
-#include "RadioStatusFactGroup.h"
-#include "TerrainFactGroup.h"
-#include "VehicleClockFactGroup.h"
-#include "VehicleDistanceSensorFactGroup.h"
-#include "VehicleEFIFactGroup.h"
-#include "VehicleEstimatorStatusFactGroup.h"
-#include "VehicleGeneratorFactGroup.h"
-#include "VehicleGPS2FactGroup.h"
-#include "VehicleGPSFactGroup.h"
-#include "VehicleGPSAggregateFactGroup.h"
-#include "VehicleHygrometerFactGroup.h"
-#include "VehicleLocalPositionFactGroup.h"
-#include "VehicleLocalPositionSetpointFactGroup.h"
-#include "VehicleRPMFactGroup.h"
-#include "VehicleSetpointFactGroup.h"
-#include "VehicleTemperatureFactGroup.h"
-#include "VehicleVibrationFactGroup.h"
-#include "VehicleWindFactGroup.h"
-#include "VehicleSupports.h"
+
 #include "ADSBVehicleManager.h"
+#include "APM.h"
+#include "Actuators.h"
+#include "AppMessages.h"
+#include "AppSettings.h"
 #include "AudioOutput.h"
 #include "AutoPilotPlugin.h"
+#include "BatteryFactGroupListModel.h"
 #include "ComponentInformationManager.h"
-#include "MAVLinkEventManager.h"
+#include "EscStatusFactGroupListModel.h"
+#include "FTPManager.h"
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
-#include "FTPManager.h"
+#include "FlyViewSettings.h"
+#include "GPSManager.h"
 #include "GeoFenceManager.h"
+#include "GimbalController.h"
 #include "ImageProtocolManager.h"
 #include "InitialConnectStateMachine.h"
 #include "Joystick.h"
 #include "JoystickManager.h"
 #include "LinkManager.h"
-#include "MavCommandQueue.h"
-#include "MessageIntervalManager.h"
-#include "TerrainQueryCoordinator.h"
+#include "MAVLinkEventManager.h"
 #include "MAVLinkLogManager.h"
 #include "MAVLinkProtocol.h"
+#include "MAVLinkStreamConfig.h"
+#include "MavCommandQueue.h"
+#include "MavlinkSettings.h"
+#include "MessageIntervalManager.h"
 #include "MissionCommandTree.h"
 #include "MissionManager.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "PlanMasterController.h"
 #include "PositionManager.h"
-#include "AppMessages.h"
-#include "QGCMath.h"
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
 #include "QGCCorePlugin.h"
 #include "QGCImageProvider.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMapCircle.h"
+#include "QGCMath.h"
 #include "QGCQGeoCoordinate.h"
+#include "QGCSensors.h"
+#include "QmlObjectListModel.h"
+#include "RadioStatusFactGroup.h"
 #include "RallyPointManager.h"
 #include "RemoteIDManager.h"
 #include "RequestMessageCoordinator.h"
 #include "SettingsManager.h"
-#include "AppSettings.h"
-#include "FlyViewSettings.h"
 #include "StandardModes.h"
+#include "StatusTextHandler.h"
+#include "SysStatusSensorInfo.h"
+#include "TerrainFactGroup.h"
 #include "TerrainProtocolHandler.h"
 #include "TerrainQuery.h"
+#include "TerrainQueryCoordinator.h"
 #include "TrajectoryPoints.h"
+#include "VehicleClockFactGroup.h"
+#include "VehicleDistanceSensorFactGroup.h"
+#include "VehicleEFIFactGroup.h"
+#include "VehicleEstimatorStatusFactGroup.h"
+#include "VehicleGPSAggregateFactGroup.h"
+#include "VehicleGPSFactGroup.h"
+#include "VehicleGeneratorFactGroup.h"
+#include "VehicleHygrometerFactGroup.h"
 #include "VehicleLinkManager.h"
-#include "MAVLinkStreamConfig.h"
-#include "QGCMapCircle.h"
-#include "QmlObjectListModel.h"
-#include "SysStatusSensorInfo.h"
+#include "VehicleLocalPositionFactGroup.h"
+#include "VehicleLocalPositionSetpointFactGroup.h"
 #include "VehicleObjectAvoidance.h"
+#include "VehicleRPMFactGroup.h"
+#include "VehicleSetpointFactGroup.h"
+#include "VehicleSigningController.h"
+#include "VehicleSupports.h"
+#include "VehicleTemperatureFactGroup.h"
+#include "VehicleVibrationFactGroup.h"
+#include "VehicleWindFactGroup.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
-#include "QGCSensors.h"
-#include "StatusTextHandler.h"
-#include "VehicleSigningController.h"
-#include "GimbalController.h"
-#include "MavlinkSettings.h"
-#include "APM.h"
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -237,8 +238,9 @@ void Vehicle::_commonInit(LinkInterface* link)
     connect(this, &Vehicle::vehicleTypeChanged,     this, &Vehicle::inFwdFlightChanged);
     connect(this, &Vehicle::vtolInFwdFlightChanged, this, &Vehicle::inFwdFlightChanged);
 
-    connect(QGCPositionManager::instance(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceHeadingGCS);
-    connect(QGCPositionManager::instance(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateHomepoint);
+    QGCPositionManager* const positionManager = GPSManager::instance()->positionManager();
+    connect(positionManager, &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceHeadingGCS);
+    connect(positionManager, &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateHomepoint);
 
     _missionManager = new MissionManager(this);
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
@@ -309,7 +311,7 @@ void Vehicle::_commonInit(LinkInterface* link)
     connect(QGCCorePlugin::instance(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);
 
     _gpsFactGroup                   = new VehicleGPSFactGroup(this);
-    _gps2FactGroup                  = new VehicleGPS2FactGroup(this);
+    _gps2FactGroup = new VehicleGPSFactGroup(this, nullptr, VehicleGPSFactGroup::ReceiverIndex::Secondary);
     _gpsAggregateFactGroup          = new VehicleGPSAggregateFactGroup(this);
     _windFactGroup                  = new VehicleWindFactGroup(this);
     _vibrationFactGroup             = new VehicleVibrationFactGroup(this);
@@ -875,11 +877,13 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     // ArduPilot sends bogus GLOBAL_POSITION_INT messages with lat/lat 0/0 even when it has no gps signal
     // Apparently, this is in order to transport relative altitude information.
     if (globalPositionInt.lat == 0 && globalPositionInt.lon == 0) {
+        emit positionReported(QGeoCoordinate());
         return;
     }
 
     _globalPositionIntMessageAvailable = true;
     QGeoCoordinate newPosition(globalPositionInt.lat  / (double)1E7, globalPositionInt.lon / (double)1E7, globalPositionInt.alt  / 1000.0);
+    emit positionReported(newPosition);
     if (newPosition != _coordinate) {
         _coordinate = newPosition;
         emit coordinateChanged(_coordinate);
@@ -923,6 +927,7 @@ void Vehicle::_handleHighLatency(mavlink_message_t& message)
     _coordinate.setLatitude(coordinate.latitude);
     _coordinate.setLongitude(coordinate.longitude);
     _coordinate.setAltitude(coordinate.altitude);
+    emit positionReported(_coordinate);
     emit coordinateChanged(_coordinate);
 
     _airSpeedFact.setRawValue((double)highLatency.airspeed / 5.0);
@@ -975,6 +980,7 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _coordinate.setLatitude(highLatency2.latitude  / (double)1E7);
     _coordinate.setLongitude(highLatency2.longitude / (double)1E7);
     _coordinate.setAltitude(highLatency2.altitude);
+    emit positionReported(_coordinate);
     emit coordinateChanged(_coordinate);
 
     _airSpeedFact.setRawValue((double)highLatency2.airspeed / 5.0);
@@ -1065,9 +1071,13 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
 
 bool Vehicle::_apmArmingNotRequired()
 {
-    QString armingRequireParam("ARMING_REQUIRE");
-    return _parameterManager->parameterExists(ParameterManager::defaultComponentId, armingRequireParam) &&
-            _parameterManager->getParameter(ParameterManager::defaultComponentId, armingRequireParam)->rawValue().toInt() == 0;
+    const QString armingRequireParam = QStringLiteral("ARMING_REQUIRE");
+    if (!_parameterManager->parameterExists(ParameterManager::defaultComponentId, armingRequireParam)) {
+        return false;
+    }
+    const Fact* armingRequire =
+        _parameterManager->getParameter(ParameterManager::defaultComponentId, armingRequireParam);
+    return armingRequire && armingRequire->rawValue().toInt() == 0;
 }
 
 void Vehicle::_handleSysStatus(mavlink_message_t& message)
@@ -1410,8 +1420,11 @@ bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t
 int Vehicle::motorCount()
 {
     uint8_t frameType = 0;
-    if (_vehicleType == MAV_TYPE_SUBMARINE) {
-        frameType = parameterManager()->getParameter(_compID, "FRAME_CONFIG")->rawValue().toInt();
+    const QString frameConfigParam = QStringLiteral("FRAME_CONFIG");
+    if (_vehicleType == MAV_TYPE_SUBMARINE && _parameterManager->parameterExists(_compID, frameConfigParam)) {
+        if (const Fact* frameConfig = _parameterManager->getParameter(_compID, frameConfigParam)) {
+            frameType = static_cast<uint8_t>(frameConfig->rawValue().toInt());
+        }
     }
     return QGCMAVLink::motorCount(_vehicleType, frameType);
 }
@@ -2658,7 +2671,7 @@ void Vehicle::_updateMissionItemIndex()
 
 void Vehicle::_updateDistanceHeadingGCS()
 {
-    QGeoCoordinate gcsPosition = QGCPositionManager::instance()->gcsPosition();
+    QGeoCoordinate gcsPosition = GPSManager::instance()->positionManager()->gcsPosition();
     if (coordinate().isValid() && gcsPosition.isValid()) {
         _distanceToGCSFact.setRawValue(coordinate().distanceTo(gcsPosition));
         _headingFromGCSFact.setRawValue(gcsPosition.azimuthTo(coordinate()));
@@ -2673,7 +2686,7 @@ void Vehicle::_updateHomepoint()
     const bool setHomeCmdSupported = firmwarePlugin()->supportedMissionCommands(vehicleClass()).contains(MAV_CMD_DO_SET_HOME);
     const bool updateHomeActivated = SettingsManager::instance()->flyViewSettings()->updateHomePosition()->rawValue().toBool();
     if(setHomeCmdSupported && updateHomeActivated){
-        QGeoCoordinate gcsPosition = QGCPositionManager::instance()->gcsPosition();
+        QGeoCoordinate gcsPosition = GPSManager::instance()->positionManager()->gcsPosition();
         if (coordinate().isValid() && gcsPosition.isValid()) {
             sendMavCommand(defaultComponentId(),
                            MAV_CMD_DO_SET_HOME, false,

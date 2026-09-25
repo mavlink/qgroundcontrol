@@ -8,12 +8,13 @@
 #include <string>
 #include <vector>
 
-#include "Femto/GPSDriverFemto.h"
-#include "GPSProtocolFeatures.h"
+#include "Femto/FemtoProtocol.h"
 #include "GPSProtocolTestIO.h"
+#include "GPSRawAckMatcher.h"
 #include "LittleEndian.h"
+#include "ProtocolTestPackets.h"
 #include "RTCMFramer.h"
-#include "SBF/GPSDriverSBF.h"
+#include "SBF/SBFProtocol.h"
 #include "UnitTest.h"
 
 // Keep checks active in Release, too.
@@ -25,18 +26,41 @@
     } while (0)
 
 namespace {
+int surveyFlags(const GPSDecodedSurvey& report)
+{
+    return (report.survey.valid ? 1 : 0) | (report.survey.active ? 2 : 0);
+}
+
+uint32_t surveyDuration(const GPSDecodedSurvey& report)
+{
+    return static_cast<uint32_t>(report.survey.duration.count());
+}
+
 class Receiver
 {
 public:
+    explicit Receiver(GPSTestClock& testClock)
+        : _clock(testClock)
+    {}
+
     bool septentrio = false;
+    std::string port = "USB1";
     std::string rejected_command;
+    unsigned reject_after = 0;
+    unsigned reject_attempts = UINT_MAX;
+    unsigned matched_commands = 0;
+    bool unterminated_reply = false;
+    bool conflicting_reply = false;
     bool cancel_read = false;
     bool silence_rejected = false;
     size_t read_chunk = 7;
     size_t noise_bytes = 0;
+    std::string interleave_on;
+    std::string interleaved;
     unsigned failed_reads = 0;
     size_t transport_calls = 0;
     std::vector<std::string> commands;
+    QStringList warnings;
 
     bool sent(const std::string& prefix) const
     {
@@ -47,31 +71,32 @@ public:
 private:
     std::string reply;
     bool rejected = false;
+    GPSTestClock& _clock;
 
 public:
     GPSProtocolIO io()
     {
-        auto result = makeGPSProtocolTestIO();
+        auto result = makeGPSProtocolTestIO(_clock, &warnings);
         result.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSReadResult {
             ++transport_calls;
-            const int timeout = deadline.remainingMilliseconds(gps_test_time);
+            const int timeout = deadline.remainingMilliseconds(_clock.nowUs());
             auto* data = bytes.data();
             const int size = static_cast<int>(bytes.size());
             CHECK(timeout >= 0);
-            gps_test_time += 1000;
+            _clock.advanceBy(1000);
             if (rejected && cancel_read) {
                 ++failed_reads;
                 return {GPSReadStatus::Cancelled};
             }
             if (reply.empty()) {
-                gps_test_time += uint64_t(timeout) * 1000 + 1;
+                _clock.advanceBy(uint64_t(timeout) * 1000 + 1);
                 return {GPSReadStatus::TimedOut};
             }
             // Neither protocol guarantees that an ACK fits in one read or includes a NUL terminator.
             const size_t count = std::min({reply.size(), size_t(size), read_chunk});
             memcpy(data, reply.data(), count);
             reply.erase(0, count);
-            gps_test_time += 1000;
+            _clock.advanceBy(1000);
             return {GPSReadStatus::Data, static_cast<int>(count)};
         };
         result.write = [this](std::span<const uint8_t> input, GPSDeadline) -> GPSWriteResult {
@@ -81,14 +106,31 @@ public:
 
             const std::string command(reinterpret_cast<const char*>(data), size);
             commands.push_back(command);
-            rejected = !rejected_command.empty() && command.compare(0, rejected_command.size(), rejected_command) == 0;
+            const bool matches =
+                !rejected_command.empty() && command.compare(0, rejected_command.size(), rejected_command) == 0;
+            if (matches) {
+                ++matched_commands;
+            }
+            rejected = matches && matched_commands > reject_after && matched_commands - reject_after <= reject_attempts;
             if (rejected) {
                 reply = silence_rejected ? std::string{} : septentrio ? "$R? rejected\n" : "<ERROR\r\n";
+                if (conflicting_reply && !silence_rejected) {
+                    reply += septentrio ? "$R: " + command : '<' + command.substr(0, command.find(' ')) + " OK";
+                }
             } else if (septentrio) {
-                reply = command == "\n\r" ? "USB1>" : "$R: " + command;
+                reply = command == "\n\r" ? port + ">" : "$R: " + command;
             } else {
                 reply = '<' + command.substr(0, command.find_first_of(" \r\n")) + " OK";
                 reply.insert(0, noise_bytes, '\0');
+            }
+            if (unterminated_reply) {
+                while (reply.ends_with('\r') || reply.ends_with('\n')) {
+                    reply.pop_back();
+                }
+            }
+            if (!interleave_on.empty() && command.starts_with(interleave_on)) {
+                reply.insert(0, interleaved);
+                interleave_on.clear();
             }
             return {GPSWriteStatus::Completed, size, size};
         };
@@ -100,106 +142,184 @@ public:
     }
 };
 
-static void receiverMode(bool septentrio, GPSProtocol::OutputMode mode, bool fixed,
-                         const std::string& rejected_command = {}, bool cancel_read = false, size_t read_chunk = 7,
-                         size_t noise_bytes = 0)
+static void rawAcknowledgements()
 {
-    gps_test_time = 0;
-    gps_test_warnings.clear();
-    Receiver receiver;
+    for (const auto& patterns : {std::pair{"<LOG OK", "<ERROR"}, std::pair{"$R: set", "$R?"}}) {
+        for (size_t chunk : {1u, 3u, 150u}) {
+            GPSRawAckMatcher matcher(patterns.first, patterns.second);
+            CHECK(matcher.valid());
+            const std::string bytes = std::string(600, '\0') + patterns.first;
+            for (size_t offset = 0; offset < bytes.size(); offset += chunk) {
+                const size_t count = std::min(chunk, bytes.size() - offset);
+                matcher.append({reinterpret_cast<const uint8_t*>(bytes.data() + offset), count});
+            }
+            CHECK(matcher.outcome() == GPSCommandOutcome::Acknowledged);
+        }
+        for (bool negativeFirst : {false, true}) {
+            GPSRawAckMatcher matcher(patterns.first, patterns.second);
+            const std::string bytes = negativeFirst ? std::string(patterns.second) + '\0' + patterns.first
+                                                    : std::string(patterns.first) + '\0' + patterns.second;
+            matcher.append({reinterpret_cast<const uint8_t*>(bytes.data()), bytes.size()});
+            CHECK(matcher.outcome() == GPSCommandOutcome::Rejected);
+        }
+    }
+    GPSRawAckMatcher empty("", "");
+    CHECK(!empty.valid());
+    const std::string overlong(257, 'A');
+    GPSRawAckMatcher oversized(overlong, "");
+    CHECK(!oversized.valid());
+}
+
+static void receiverMode(GPSTestClock& clock, bool septentrio, bool fixed, const std::string& rejected_command = {},
+                         bool cancel_read = false, size_t read_chunk = 7, size_t noise_bytes = 0)
+{
+    clock.reset();
+    Receiver receiver(clock);
     receiver.septentrio = septentrio;
     receiver.rejected_command = rejected_command;
     receiver.cancel_read = cancel_read;
     receiver.read_chunk = read_chunk;
     receiver.noise_bytes = noise_bytes;
-    GPSNativePositionReport position{};
-    GPSNativeSatelliteReport satellites{};
-    std::unique_ptr<GPSBaseProtocol> driver;
+    GPSDecodedPosition position{};
+    GPSDecodedSatellites satellites{};
+    std::unique_ptr<GPSProtocol> driver;
     if (septentrio) {
-#if QGC_GPS_ENABLE_SBF
-        driver = std::make_unique<GPSNativeSBF>(receiver.io(), &position, &satellites);
-#endif
+        driver = std::make_unique<SBFProtocol>(captureGPSReports(receiver.io(), position, &satellites));
     } else {
-#if QGC_GPS_ENABLE_FEMTO
-        driver = std::make_unique<GPSNativeFemto>(receiver.io(), &position, &satellites);
-#endif
+        driver = std::make_unique<FemtoProtocol>(captureGPSReports(receiver.io(), position, &satellites));
     }
     CHECK(driver);
     GPSProtocol::GPSConfig config{};
-    config.base = {.useFixedBase = fixed,
-                   .surveyInAccMeters = 1.25,
-                   .surveyInDurationSecs = 60,
-                   .fixedPosition = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-                   .fixedBaseAccuracyMeters = 1.0f};
-    config.output_mode = mode;
+    config.base = {
+        .mode = fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
+                            .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
+                            .accuracyMeters = 1.0f}}
+                      : GPSBaseStationConfig::Mode{
+                            GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1.25, .durationSecs = 60}}};
     unsigned baudrate = 115200;
-    const int result = driver->configure(baudrate, config);
+    const bool configured = driver->configure(baudrate, config);
     if (!rejected_command.empty()) {
-        CHECK(result < 0);
+        CHECK(!configured);
         CHECK(receiver.sent(rejected_command));
         CHECK(!receiver.sent(septentrio ? "setSBFOutput, Stream1, USB1, PVTGeodetic" : "LOG UAVGPSB"));
         if (cancel_read) {
-            CHECK(gps_test_warnings.empty());
+            CHECK(receiver.warnings.empty());
             CHECK(receiver.failed_reads == 1);
         }
         return;
     }
-    CHECK(result == 0);
-    CHECK(gps_test_warnings.empty());
-    const bool base = mode == GPSProtocol::OutputMode::RTCM;
+    CHECK(configured);
+    CHECK(receiver.warnings.empty());
     if (septentrio) {
-        CHECK(receiver.sent("setPVTMode, Rover, All, auto") == !base);
-        CHECK(receiver.sent("setPVTMode, Static") == base);
-        CHECK(receiver.sent("setDataInOut, USB1, Auto, RTCMv3+SBF") == (mode != GPSProtocol::OutputMode::GPS));
-        CHECK(receiver.sent("setStaticPosGeodetic") == (base && fixed));
+        CHECK(!receiver.sent("setAttitudeOffset, 0.000, 0.000"));
+        CHECK(!receiver.sent("setPVTMode, Rover, All, auto"));
+        CHECK(receiver.sent("setPVTMode, Static"));
+        CHECK(receiver.sent("setDataInOut, USB1, Auto, RTCMv3+SBF"));
+        CHECK(receiver.sent("setStaticPosGeodetic") == fixed);
     } else {
-        CHECK(receiver.sent("POSAVE OFF") == !base);
-        CHECK(receiver.sent("FIX NONE") == !base);
-        CHECK(receiver.sent("LOG UAVGPSB") == !base);
-        CHECK(receiver.sent("FIX POSITION 47.00000000 8.00000000") == (base && fixed));
-        CHECK(receiver.sent("POSAVE ON") == (base && !fixed));
+        CHECK(!receiver.sent("POSAVE OFF"));
+        CHECK(!receiver.sent("FIX NONE"));
+        CHECK(!receiver.sent("LOG UAVGPSB"));
+        CHECK(receiver.sent("FIX POSITION 47.00000000 8.00000000") == fixed);
+        CHECK(receiver.sent("POSAVE ON") == !fixed);
     }
-    config.output_mode = GPSProtocol::OutputMode::RTCM;
     config.base = {};
     const auto calls = receiver.transport_calls;
-    CHECK(driver->configure(baudrate, config) < 0);
+    CHECK(!driver->configure(baudrate, config));
     CHECK(!driver->receiverReady());
     CHECK(receiver.transport_calls == calls);
 }
 
-#if QGC_GPS_ENABLE_SBF
-void sbfRequiredBaseCommands()
+void sbfConfirmationPolicy(GPSTestClock& clock)
+{
+    for (unsigned failures : {0u, 1u, 4u, 5u}) {
+        for (bool firstFails : {false, true}) {
+            Receiver receiver(clock);
+            receiver.septentrio = true;
+            receiver.unterminated_reply = true;
+            receiver.reject_after = firstFails ? 0 : 1;
+            receiver.reject_attempts = failures;
+            const std::string dataIO = "setDataInOut, USB1, Auto, SBF\n";
+            receiver.rejected_command = dataIO;
+            SBFProtocol driver(receiver.io(), false);
+            GPSProtocol::GPSConfig config;
+            config.base.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60};
+            unsigned baud = 115200;
+            const bool success = driver.configure(baud, config);
+            CHECK(success == (firstFails ? failures == 0 : failures < 5));
+            std::vector<std::string> expected{"SSSSSSSSSS\n",
+                                              "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n",
+                                              "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n",
+                                              "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n",
+                                              "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n",
+                                              "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n",
+                                              "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n",
+                                              "\n\r",
+                                              "setSBFOutput, Stream1, USB1, none, off\n",
+                                              dataIO};
+            if (!(firstFails && failures)) {
+                expected.emplace_back("setGeodeticDatum, WGS84\n");
+                expected.insert(expected.end(), std::min(failures + 1, 5u), dataIO);
+                if (success) {
+                    expected.emplace_back("setDataInOut, USB1, Auto, RTCMv3+SBF\n");
+                    expected.emplace_back("setPVTMode, Static, All, auto\n");
+                    expected.emplace_back("setSBFOutput, Stream1, USB1, +PVTGeodetic, msec500\n");
+                }
+            }
+            CHECK(receiver.commands == expected);
+        }
+    }
+    Receiver receiver(clock);
+    receiver.septentrio = true;
+    receiver.rejected_command = "setGeodeticDatum";
+    receiver.conflicting_reply = true;
+    receiver.read_chunk = GPS_READ_BUFFER_SIZE;
+    SBFProtocol driver(receiver.io());
+    unsigned baud = 115200;
+    GPSProtocol::GPSConfig config;
+    config.base.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60};
+    CHECK(!driver.configure(baud, config));
+    CHECK(receiver.commands.back() == "setGeodeticDatum, WGS84\n");
+}
+
+void sbfRequiredBaseCommands(GPSTestClock& clock)
 {
     const std::vector<std::string> fixedCommands = {
-        "setDataInOut, USB1, Auto, RTCMv3+SBF", "setStaticPosGeodetic", "setAntennaOffset",
-        "setReceiverDynamics, Low, Static",     "setPVTMode, Static",   "setSBFOutput, Stream1, USB1, +PVTGeodetic",
+        "setGeodeticDatum, WGS84",
+        "setDataInOut, USB1, Auto, RTCMv3+SBF",
+        "setStaticPosGeodetic",
+        "setAntennaOffset",
+        "setReceiverDynamics, Low, Static",
+        "setPVTMode, Static",
+        "setSBFOutput, Stream1, USB1, +PVTGeodetic",
     };
     for (bool fixed : {false, true}) {
         const auto commands =
             fixed ? fixedCommands
-                  : std::vector<std::string>{"setDataInOut, USB1, Auto, RTCMv3+SBF", "setPVTMode, Static",
-                                             "setSBFOutput, Stream1, USB1, +PVTGeodetic"};
+                  : std::vector<std::string>{"setGeodeticDatum, WGS84", "setDataInOut, USB1, Auto, RTCMv3+SBF",
+                                             "setPVTMode, Static", "setSBFOutput, Stream1, USB1, +PVTGeodetic"};
         for (const auto& command : commands) {
             for (bool silent : {false, true}) {
-                gps_test_time = 0;
-                Receiver receiver;
+                clock.reset();
+                Receiver receiver(clock);
                 receiver.septentrio = true;
                 receiver.rejected_command = command;
                 receiver.silence_rejected = silent;
-                GPSNativePositionReport position;
-                GPSNativeSatelliteReport satellites;
+                GPSDecodedPosition position;
+                GPSDecodedSatellites satellites;
                 std::vector<GPSCommandResult> results;
                 auto io = receiver.io();
                 io.commandFinished = [&](const GPSCommandResult& result) { results.push_back(result); };
-                GPSNativeSBF driver(io, &position, &satellites);
+                SBFProtocol driver(captureGPSReports(io, position, &satellites));
                 GPSProtocol::GPSConfig config{};
-                config.output_mode = GPSProtocol::OutputMode::RTCM;
-                config.base = {.useFixedBase = fixed,
-                               .surveyInAccMeters = 1,
-                               .surveyInDurationSecs = 60,
-                               .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}};
+                config.base = {
+                    .mode =
+                        fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
+                                    .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
+                              : GPSBaseStationConfig::Mode{
+                                    GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}}};
                 unsigned baudrate = 115200;
-                CHECK(driver.configure(baudrate, config) < 0);
+                CHECK(!driver.configure(baudrate, config));
                 CHECK(!driver.receiverReady());
                 CHECK(receiver.sent(command));
                 CHECK(receiver.commands.back().starts_with(command));
@@ -214,32 +334,89 @@ void sbfRequiredBaseCommands()
         }
     }
 }
-#endif
 
-#if QGC_GPS_ENABLE_SBF
-void sbfFrameOwnership()
+void sbfSelectedPortAndPrecision(GPSTestClock& clock)
 {
-    Receiver receiver;
+    for (const auto* port : {"COM1", "USB2", "IP10", "IPS1"}) {
+        Receiver peer(clock);
+        peer.septentrio = true;
+        peer.port = port;
+        GPSDecodedPosition position;
+        SBFProtocol driver(captureGPSReports(peer.io(), position), false);
+        GPSProtocol::GPSConfig config;
+        config.base.mode = GPSBaseStationConfig::Fixed{};
+        std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position = {47.397742491, -8.545593291, 500.125f};
+        unsigned baud = 115200;
+        CHECK(driver.configure(baud, config));
+        CHECK(peer.sent(std::string("setDataInOut, ") + port + ", Auto, RTCMv3+SBF"));
+        CHECK(peer.sent(std::string("setSBFOutput, Stream1, ") + port + ", +PVTGeodetic"));
+        CHECK(peer.sent("setStaticPosGeodetic, Geodetic1, 47.397742491, -8.545593291, 500.1250, WGS84"));
+        CHECK(peer.sent("setCOMSettings") == std::string_view(port).starts_with("COM"));
+    }
+}
+
+void sbfDatumRejection(GPSTestClock& clock)
+{
+    for (uint8_t datum : {19, 31, 250}) {
+        Receiver peer(clock);
+        peer.septentrio = true;
+        GPSDecodedPosition position;
+        std::vector<GPSDecodedSurvey> surveys;
+        auto io = peer.io();
+        io.decoded = [&](const GPSDecodedBatch& batch) {
+            for (const auto& event : batch.events) {
+                if (const auto* report = std::get_if<GPSDecodedSurvey>(&event)) {
+                    surveys.push_back(*report);
+                }
+            }
+        };
+        SBFProtocol driver(captureGPSReports(io, position), false);
+        GPSProtocol::GPSConfig config;
+        config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
+        unsigned baud = 115200;
+        CHECK(driver.configure(baud, config));
+        std::vector<uint8_t> frame(96);
+        (void) LittleEndian::write<uint16_t>(frame, 0, 0x4024);
+        (void) LittleEndian::write<uint16_t>(frame, 4, SBF_ID_PVTGeodetic);
+        (void) LittleEndian::write<uint16_t>(frame, 6, uint16_t(frame.size()));
+        (void) LittleEndian::write<uint16_t>(frame, 12, 2435);
+        frame[14] = 3;
+        frame[73] = datum;
+        (void) LittleEndian::write<double>(frame, 16, 0.5);
+        (void) LittleEndian::write<double>(frame, 24, 1);
+        (void) LittleEndian::write<double>(frame, 32, 500);
+        (void) LittleEndian::write<uint16_t>(frame, 2, crc16(frame.data() + 4, frame.size() - 4));
+        driver.consume(frame);
+        CHECK(driver.ioError() == GPSProtocolError::Protocol);
+        CHECK(driver.ioErrorDetail().contains("datum"));
+        CHECK(!driver.receiverReady());
+        CHECK(surveys.size() == 1 && surveyFlags(surveys.back()) == 0);
+        CHECK(std::isnan(surveys.back().survey.position.latitudeDegrees));
+    }
+}
+
+void sbfFrameOwnership(GPSTestClock& clock)
+{
+    Receiver receiver(clock);
     receiver.septentrio = true;
-    GPSNativePositionReport position;
-    GPSNativeSatelliteReport satellites;
+    GPSDecodedPosition position;
+    GPSDecodedSatellites satellites;
     size_t correctionCount = 0;
     size_t fixCount = 0;
     auto io = receiver.io();
     io.decoded = [&](const GPSDecodedBatch& batch) {
         for (const auto& event : batch.events) {
             correctionCount += std::holds_alternative<GPSRTCMReport>(event);
-            fixCount += std::holds_alternative<GPSNativePositionReport>(event);
+            fixCount += std::holds_alternative<GPSDecodedPosition>(event);
         }
     };
-    GPSNativeSBF driver(io, &position, &satellites);
+    SBFProtocol driver(captureGPSReports(io, position, &satellites));
     GPSProtocol::GPSConfig config{};
-    config.base = {.useFixedBase = true,
-                   .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
-                   .fixedBaseAccuracyMeters = 1};
-    config.output_mode = GPSProtocol::OutputMode::RTCM;
+    config.base = {
+        .mode = GPSBaseStationConfig::Fixed{
+            .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}, .accuracyMeters = 1}};
     unsigned baudrate = 115200;
-    CHECK(driver.configure(baudrate, config) == 0);
+    CHECK(driver.configure(baudrate, config));
     std::vector<uint8_t> correction{0xd3, 0, 2, 0x3e, 0xd0};
     const auto checksum = RTCMFramer::crc24q(correction);
     correction.push_back(checksum >> 16);
@@ -259,36 +436,33 @@ void sbfFrameOwnership()
     (void) LittleEndian::write<uint16_t>(native, 2, crc16(native.data() + 4, native.size() - 4));
     driver.consume(native);
     CHECK(correctionCount == 0);
-    gps_test_time += 200000;
+    clock.advanceBy(200000);
     driver.consume({});
     CHECK(fixCount == 1);
-    CHECK(std::abs(position.latitude_deg - 0.5 * GPS_RAD_TO_DEG) < 1e-6);
+    CHECK(std::abs(position.navigation.latitudeDegrees - 0.5 * GPS_RAD_TO_DEG) < 1e-6);
     driver.consume(correction);
     CHECK(correctionCount == 1);
     CHECK(fixCount == 1);
 }
 
-void sbfSurveyEvidence()
+void sbfSurveyEvidence(GPSTestClock& clock)
 {
-    gps_test_time = 1000000;
-    Receiver receiver;
+    clock.reset(1000000);
+    Receiver receiver(clock);
     receiver.septentrio = true;
-    GPSNativePositionReport position;
-    std::vector<GPSNativeSurveyReport> surveys;
+    GPSDecodedPosition position;
+    std::vector<GPSDecodedSurvey> surveys;
     auto io = receiver.io();
     io.decoded = [&](const GPSDecodedBatch& batch) {
         for (const auto& event : batch.events) {
-            if (const auto* survey = std::get_if<GPSNativeSurveyReport>(&event)) {
+            if (const auto* survey = std::get_if<GPSDecodedSurvey>(&event)) {
                 surveys.push_back(*survey);
             }
         }
     };
-    GPSNativeSBF driver(io, &position);
+    SBFProtocol driver(captureGPSReports(io, position), false);
     GPSProtocol::GPSConfig config{};
-    config.output_mode = GPSProtocol::OutputMode::RTCM;
-    config.base = {.surveyInAccMeters = 1,
-                   .surveyInDurationSecs = 60,
-                   .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}};
+    config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
     unsigned baudrate = 115200;
     uint32_t tow = 0;
     std::vector<uint8_t> frame(94);
@@ -300,7 +474,7 @@ void sbfSurveyEvidence()
     (void) LittleEndian::write<double>(frame, 24, 1);
     (void) LittleEndian::write<double>(frame, 32, 500);
     auto publish = [&](uint8_t mode, uint8_t flags, uint16_t horizontal = 200, uint16_t vertical = 200) {
-        gps_test_time += 1000000;
+        clock.advanceBy(1000000);
         tow += 1000;
         frame[14] = mode;
         (void) LittleEndian::write<uint32_t>(frame, 8, tow);
@@ -310,27 +484,29 @@ void sbfSurveyEvidence()
         surveys.clear();
         driver.consume(frame);
         CHECK(surveys.size() == 1);
-        CHECK(surveys.back().flags == flags);
-        CHECK(!surveys.back().accuracyKnown);
-        CHECK(surveys.back().altitudeDatum == GPSNativeSurveyReport::AltitudeDatum::Ellipsoid);
-        gps_test_time += 200000;
+        CHECK(surveyFlags(surveys.back()) == flags);
+        CHECK(!surveys.back().survey.meanAccuracyMeters.has_value());
+        clock.advanceBy(200000);
         driver.consume({});
         if (horizontal == UINT16_MAX) {
-            CHECK(std::isnan(position.eph));
+            CHECK(std::isnan(position.navigation.horizontalAccuracyMeters));
         } else {
-            CHECK(position.eph == horizontal / 200.0f);
+            CHECK(position.navigation.horizontalAccuracyMeters == horizontal / 200.0f);
         }
         if (vertical == UINT16_MAX) {
-            CHECK(std::isnan(position.epv));
+            CHECK(std::isnan(position.navigation.verticalAccuracyMeters));
         } else {
-            CHECK(position.epv == vertical / 200.0f);
+            CHECK(position.navigation.verticalAccuracyMeters == vertical / 200.0f);
         }
-        return surveys.back().duration;
+        return surveyDuration(surveys.back());
     };
 
     for (bool fixed : {false, true, false}) {
-        config.base.useFixedBase = fixed;
-        CHECK(driver.configure(baudrate, config) == 0);
+        config.base.mode =
+            fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
+                        .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
+                  : GPSBaseStationConfig::Mode{GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
+        CHECK(driver.configure(baudrate, config));
         CHECK(driver.receiverReady());
         // A standalone solution without the determination flag is not a completed fixed base.
         CHECK(publish(1, 0) == 0);
@@ -338,8 +514,8 @@ void sbfSurveyEvidence()
         CHECK(fixed ? progress == 0 : progress > 0);
         const auto completed = publish(3, 1);
         CHECK(fixed ? completed == 0 : completed >= progress);
-        CHECK(std::abs(surveys.back().latitude - 0.5 * GPS_RAD_TO_DEG) < 1e-6);
-        CHECK(surveys.back().altitude == 500);
+        CHECK(std::abs(surveys.back().survey.position.latitudeDegrees - 0.5 * GPS_RAD_TO_DEG) < 1e-6);
+        CHECK(surveys.back().survey.position.altitudeMeters == 500);
         CHECK(publish(3, 1, 0, 0) == completed);
         CHECK(publish(3, 1, UINT16_MAX, UINT16_MAX) == completed);
         CHECK(publish(3, 1, UINT16_MAX, 200) == completed);
@@ -350,7 +526,7 @@ void sbfSurveyEvidence()
         }
         frame[15] = 9;
         CHECK(publish(3, 0) == completed);
-        CHECK(std::isnan(surveys.back().latitude));
+        CHECK(std::isnan(surveys.back().survey.position.latitudeDegrees));
         const auto failedProgress = publish(0x41, fixed ? 0 : 2);
         CHECK(fixed ? failedProgress == 0 : failedProgress > completed);
         frame[15] = 0;
@@ -361,21 +537,119 @@ void sbfSurveyEvidence()
             for (double invalid : {double(NAN), double(INFINITY), -2e10}) {
                 (void) LittleEndian::write<double>(frame, offset, invalid);
                 publish(3, 0);
-                CHECK(std::isnan(surveys.back().latitude));
-                CHECK(std::isnan(surveys.back().longitude));
-                CHECK(std::isnan(surveys.back().altitude));
+                CHECK(std::isnan(surveys.back().survey.position.latitudeDegrees));
+                CHECK(std::isnan(surveys.back().survey.position.longitudeDegrees));
+                CHECK(std::isnan(surveys.back().survey.position.altitudeMeters));
             }
             (void) LittleEndian::write<double>(frame, offset, original);
         }
         publish(3, 1);
     }
-    config.output_mode = GPSProtocol::OutputMode::GPS;
-    CHECK(driver.configure(baudrate, config) == 0);
-    surveys.clear();
-    driver.consume(frame);
-    CHECK(surveys.empty());
 }
-#endif
+
+void baseMixedFraming(GPSTestClock& clock, bool septentrio)
+{
+    Receiver peer(clock);
+    peer.septentrio = septentrio;
+    auto io = peer.io();
+    GPSDecodedPosition position;
+    std::vector<std::vector<uint8_t>> frames;
+    size_t otherReports = 0;
+    io.decoded = [&](const GPSDecodedBatch& batch) {
+        CHECK(batch.events.size() <= GPSDecodedBatch::MAX_EVENTS);
+        for (const auto& event : batch.events) {
+            if (const auto* frame = std::get_if<GPSRTCMReport>(&event)) {
+                frames.emplace_back(frame->bytes.begin(), frame->bytes.begin() + frame->size);
+            } else {
+                ++otherReports;
+            }
+        }
+    };
+    std::unique_ptr<GPSProtocol> driver;
+    if (septentrio) {
+        driver = std::make_unique<SBFProtocol>(captureGPSReports(io, position), false);
+    } else {
+        driver = std::make_unique<FemtoProtocol>(captureGPSReports(io, position), false);
+    }
+    GPSProtocol::GPSConfig config;
+    config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
+    unsigned baud = 115200;
+    CHECK(driver->configure(baud, config));
+    driver->consume({});
+    otherReports = 0;
+    const std::string body = "GPGGA,123519,4807.038,N,01131.000,E,7,08,0.9,545.4,M,46.9,M,,";
+    const auto text = nmeaSentence(body);
+    const auto binary = rtcmPacket({reinterpret_cast<const uint8_t*>(text.data()), text.size()});
+    driver->consume(binary);
+    CHECK(frames == std::vector<std::vector<uint8_t>>{binary});
+    CHECK(otherReports == 0);
+    verifyRTCMRecovery(*driver, frames);
+    CHECK(otherReports == 0);
+}
+
+void configurationDecodesInterleavedTraffic(GPSTestClock& clock)
+{
+    {
+        Receiver peer(clock);
+        peer.interleave_on = "UNLOGALL";
+        peer.interleaved = nmeaSentence("GPGGA,123519,4807.038,N,01131.000,E,7,08,0.9,545.4,M,46.9,M,,");
+        size_t usageReports = 0;
+        std::vector<GPSDecodedSurvey> surveys;
+        auto io = peer.io();
+        io.decoded = [&](const GPSDecodedBatch& batch) {
+            for (const auto& event : batch.events) {
+                usageReports += std::holds_alternative<GPSDecodedSatelliteUsage>(event);
+                if (const auto* survey = std::get_if<GPSDecodedSurvey>(&event)) {
+                    surveys.push_back(*survey);
+                }
+            }
+        };
+        GPSDecodedPosition position;
+        FemtoProtocol driver(captureGPSReports(io, position));
+        GPSProtocol::GPSConfig config;
+        config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
+        unsigned baud = 115200;
+        CHECK(driver.configure(baud, config));
+        CHECK(usageReports == 1);
+        (void) driver.receive(10);
+        // The fixed-quality GGA predates this configuration's survey, so it must not complete it.
+        CHECK(!peer.sent("LOG RTCM"));
+        CHECK(std::none_of(surveys.begin(), surveys.end(), [](const auto& survey) { return survey.survey.valid; }));
+    }
+    {
+        Receiver peer(clock);
+        peer.septentrio = true;
+        std::vector<uint8_t> frame(94);
+        (void) LittleEndian::write<uint16_t>(frame, 0, 0x4024);
+        (void) LittleEndian::write<uint16_t>(frame, 4, SBF_ID_PVTGeodetic);
+        (void) LittleEndian::write<uint16_t>(frame, 6, uint16_t(frame.size()));
+        (void) LittleEndian::write<uint16_t>(frame, 12, 2435);
+        frame[14] = 1;
+        (void) LittleEndian::write<double>(frame, 16, 0.5);
+        (void) LittleEndian::write<double>(frame, 24, 1);
+        (void) LittleEndian::write<double>(frame, 32, 500);
+        (void) LittleEndian::write<uint16_t>(frame, 2, crc16(frame.data() + 4, frame.size() - 4));
+        peer.interleave_on = "setDataInOut";
+        peer.interleaved.assign(frame.begin(), frame.end());
+        size_t fixCount = 0;
+        auto io = peer.io();
+        io.decoded = [&](const GPSDecodedBatch& batch) {
+            for (const auto& event : batch.events) {
+                fixCount += std::holds_alternative<GPSDecodedPosition>(event);
+            }
+        };
+        GPSDecodedPosition position;
+        SBFProtocol driver(captureGPSReports(io, position), false);
+        GPSProtocol::GPSConfig config;
+        config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
+        unsigned baud = 115200;
+        CHECK(driver.configure(baud, config));
+        clock.advanceBy(200000);
+        driver.consume({});
+        CHECK(fixCount == 1);
+        CHECK(std::abs(position.navigation.latitudeDegrees - 0.5 * GPS_RAD_TO_DEG) < 1e-6);
+    }
+}
 
 }  // namespace
 
@@ -390,36 +664,24 @@ private slots:
 
 void GPSProtocolReceiverModesTest::_protocol()
 {
-    gps_test_time = 0;
-    gps_test_warnings.clear();
+    GPSTestClock clock;
     try {
+        rawAcknowledgements();
         for (bool septentrio : {false, true}) {
-            if ((septentrio && !QGC_GPS_ENABLE_SBF) || (!septentrio && !QGC_GPS_ENABLE_FEMTO)) {
-                continue;
-            }
             for (bool fixed : {false, true}) {
-                receiverMode(septentrio, GPSProtocol::OutputMode::GPS, fixed);
-                receiverMode(septentrio, GPSProtocol::OutputMode::RTCM, fixed);
+                receiverMode(clock, septentrio, fixed);
             }
-            const std::vector<std::string> stop_commands = septentrio
-                                                               ? std::vector<std::string>{"setPVTMode, Rover"}
-                                                               : std::vector<std::string>{"POSAVE OFF", "FIX NONE"};
-            for (const auto& command : stop_commands) {
-                for (bool cancel : {false, true}) {
-                    receiverMode(septentrio, GPSProtocol::OutputMode::GPS, true, command, cancel);
-                }
-            }
+            baseMixedFraming(clock, septentrio);
         }
-#if QGC_GPS_ENABLE_SBF
-        sbfRequiredBaseCommands();
-        sbfFrameOwnership();
-        sbfSurveyEvidence();
-#endif
-#if QGC_GPS_ENABLE_FEMTO
-        receiverMode(false, GPSProtocol::OutputMode::GPS, true, {}, false, 1);
-        receiverMode(false, GPSProtocol::OutputMode::GPS, true, {}, false, GPS_READ_BUFFER_SIZE,
-                     2 * GPS_READ_BUFFER_SIZE - 3);
-#endif
+        sbfConfirmationPolicy(clock);
+        sbfRequiredBaseCommands(clock);
+        sbfSelectedPortAndPrecision(clock);
+        sbfDatumRejection(clock);
+        sbfFrameOwnership(clock);
+        sbfSurveyEvidence(clock);
+        configurationDecodesInterleavedTraffic(clock);
+        receiverMode(clock, false, true, {}, false, 1);
+        receiverMode(clock, false, true, {}, false, GPS_READ_BUFFER_SIZE, 2 * GPS_READ_BUFFER_SIZE - 3);
     } catch (const std::exception& error) {
         QFAIL(error.what());
     }

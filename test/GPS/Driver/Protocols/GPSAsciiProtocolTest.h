@@ -14,6 +14,7 @@ private slots:
     void _unassociatedGsa();
     void _boundedFields_data();
     void _boundedFields();
+    void _positionSourceEquivalence();
     void _quectelCodec();
     void _unicoreFailureDetails_data();
     void _unicoreFailureDetails();

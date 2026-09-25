@@ -5,5 +5,8 @@
 
         {{ component }} {
             Layout.fillWidth: true
+{% for name, expr in (properties | default({})).items() %}
+            {{ name }}: {{ expr }}
+{% endfor %}
         }
     }

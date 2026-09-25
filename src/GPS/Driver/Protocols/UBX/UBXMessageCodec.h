@@ -1,11 +1,599 @@
 #pragma once
 
+#include <algorithm>
+#include <array>
 #include <optional>
 #include <span>
 #include <type_traits>
 
+#include "LittleEndian.h"
 #include "UBXMessageSchema.h"
-#include "UBXWire.h"
+
+namespace UBX {
+namespace detail {
+template <typename T>
+T decodeFields(std::span<const uint8_t> bytes, size_t offset = 0);
+}
+
+template <typename T>
+std::array<uint8_t, WIRE_SIZE<T>> encode(const T& value);
+
+template <>
+inline ubx_payload_rx_nav_posllh_t detail::decodeFields<ubx_payload_rx_nav_posllh_t>(std::span<const uint8_t> input,
+                                                                                     size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_posllh_t value{};
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.lon = LittleEndian::read<int32_t>(bytes, 4).value_or(0);
+    value.lat = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
+    value.height = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
+    value.hMSL = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
+    value.hAcc = LittleEndian::read<uint32_t>(bytes, 20).value_or(0);
+    value.vAcc = LittleEndian::read<uint32_t>(bytes, 24).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_dop_t detail::decodeFields<ubx_payload_rx_nav_dop_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_dop_t value{};
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.gDOP = LittleEndian::read<uint16_t>(bytes, 4).value_or(0);
+    value.pDOP = LittleEndian::read<uint16_t>(bytes, 6).value_or(0);
+    value.tDOP = LittleEndian::read<uint16_t>(bytes, 8).value_or(0);
+    value.vDOP = LittleEndian::read<uint16_t>(bytes, 10).value_or(0);
+    value.hDOP = LittleEndian::read<uint16_t>(bytes, 12).value_or(0);
+    value.nDOP = LittleEndian::read<uint16_t>(bytes, 14).value_or(0);
+    value.eDOP = LittleEndian::read<uint16_t>(bytes, 16).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_sol_t detail::decodeFields<ubx_payload_rx_nav_sol_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_sol_t value{};
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.fTOW = LittleEndian::read<int32_t>(bytes, 4).value_or(0);
+    value.week = LittleEndian::read<int16_t>(bytes, 8).value_or(0);
+    value.gpsFix = LittleEndian::read<uint8_t>(bytes, 10).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 11).value_or(0);
+    value.ecefX = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
+    value.ecefY = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
+    value.ecefZ = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
+    value.pAcc = LittleEndian::read<uint32_t>(bytes, 24).value_or(0);
+    value.ecefVX = LittleEndian::read<int32_t>(bytes, 28).value_or(0);
+    value.ecefVY = LittleEndian::read<int32_t>(bytes, 32).value_or(0);
+    value.ecefVZ = LittleEndian::read<int32_t>(bytes, 36).value_or(0);
+    value.sAcc = LittleEndian::read<uint32_t>(bytes, 40).value_or(0);
+    value.pDOP = LittleEndian::read<uint16_t>(bytes, 44).value_or(0);
+    value.reserved1 = LittleEndian::read<uint8_t>(bytes, 46).value_or(0);
+    value.numSV = LittleEndian::read<uint8_t>(bytes, 47).value_or(0);
+    value.reserved2 = LittleEndian::read<uint32_t>(bytes, 48).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_pvt_t detail::decodeFields<ubx_payload_rx_nav_pvt_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_pvt_t value{};
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.year = LittleEndian::read<uint16_t>(bytes, 4).value_or(0);
+    value.month = LittleEndian::read<uint8_t>(bytes, 6).value_or(0);
+    value.day = LittleEndian::read<uint8_t>(bytes, 7).value_or(0);
+    value.hour = LittleEndian::read<uint8_t>(bytes, 8).value_or(0);
+    value.min = LittleEndian::read<uint8_t>(bytes, 9).value_or(0);
+    value.sec = LittleEndian::read<uint8_t>(bytes, 10).value_or(0);
+    value.valid = LittleEndian::read<uint8_t>(bytes, 11).value_or(0);
+    value.tAcc = LittleEndian::read<uint32_t>(bytes, 12).value_or(0);
+    value.nano = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
+    value.fixType = LittleEndian::read<uint8_t>(bytes, 20).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 21).value_or(0);
+    value.reserved1 = LittleEndian::read<uint8_t>(bytes, 22).value_or(0);
+    value.numSV = LittleEndian::read<uint8_t>(bytes, 23).value_or(0);
+    value.lon = LittleEndian::read<int32_t>(bytes, 24).value_or(0);
+    value.lat = LittleEndian::read<int32_t>(bytes, 28).value_or(0);
+    value.height = LittleEndian::read<int32_t>(bytes, 32).value_or(0);
+    value.hMSL = LittleEndian::read<int32_t>(bytes, 36).value_or(0);
+    value.hAcc = LittleEndian::read<uint32_t>(bytes, 40).value_or(0);
+    value.vAcc = LittleEndian::read<uint32_t>(bytes, 44).value_or(0);
+    value.gSpeed = LittleEndian::read<int32_t>(bytes, 60).value_or(0);
+    value.headMot = LittleEndian::read<int32_t>(bytes, 64).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_timeutc_t detail::decodeFields<ubx_payload_rx_nav_timeutc_t>(std::span<const uint8_t> input,
+                                                                                       size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_timeutc_t value{};
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.tAcc = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.nano = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
+    value.year = LittleEndian::read<uint16_t>(bytes, 12).value_or(0);
+    value.month = LittleEndian::read<uint8_t>(bytes, 14).value_or(0);
+    value.day = LittleEndian::read<uint8_t>(bytes, 15).value_or(0);
+    value.hour = LittleEndian::read<uint8_t>(bytes, 16).value_or(0);
+    value.min = LittleEndian::read<uint8_t>(bytes, 17).value_or(0);
+    value.sec = LittleEndian::read<uint8_t>(bytes, 18).value_or(0);
+    value.valid = LittleEndian::read<uint8_t>(bytes, 19).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_svinfo_part1_t detail::decodeFields<ubx_payload_rx_nav_svinfo_part1_t>(
+    std::span<const uint8_t> input, size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_svinfo_part1_t value{};
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.numCh = LittleEndian::read<uint8_t>(bytes, 4).value_or(0);
+    value.globalFlags = LittleEndian::read<uint8_t>(bytes, 5).value_or(0);
+    value.reserved2 = LittleEndian::read<uint16_t>(bytes, 6).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_svinfo_part2_t detail::decodeFields<ubx_payload_rx_nav_svinfo_part2_t>(
+    std::span<const uint8_t> input, size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_svinfo_part2_t value{};
+    value.flags = LittleEndian::read<uint8_t>(bytes, 2).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_sat_part1_t detail::decodeFields<ubx_payload_rx_nav_sat_part1_t>(
+    std::span<const uint8_t> input, size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_sat_part1_t value{};
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.version = LittleEndian::read<uint8_t>(bytes, 4).value_or(0);
+    value.numSvs = LittleEndian::read<uint8_t>(bytes, 5).value_or(0);
+    value.reserved = LittleEndian::read<uint16_t>(bytes, 6).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_sat_part2_t detail::decodeFields<ubx_payload_rx_nav_sat_part2_t>(
+    std::span<const uint8_t> input, size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_sat_part2_t value{};
+    value.gnssId = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.flags = LittleEndian::read<uint32_t>(bytes, 8).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_status_t detail::decodeFields<ubx_payload_rx_nav_status_t>(std::span<const uint8_t> input,
+                                                                                     size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_status_t value{};
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.gpsFix = LittleEndian::read<uint8_t>(bytes, 4).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 5).value_or(0);
+    value.fixStat = LittleEndian::read<uint8_t>(bytes, 6).value_or(0);
+    value.flags2 = LittleEndian::read<uint8_t>(bytes, 7).value_or(0);
+    value.ttff = LittleEndian::read<uint32_t>(bytes, 8).value_or(0);
+    value.msss = LittleEndian::read<uint32_t>(bytes, 12).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_svin_t detail::decodeFields<ubx_payload_rx_nav_svin_t>(std::span<const uint8_t> input,
+                                                                                 size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_svin_t value{};
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    for (size_t i = 0; i < 3; ++i) {
+        value.reserved1[i] = LittleEndian::read<uint8_t>(bytes, 1 + i * 1).value_or(0);
+    }
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.dur = LittleEndian::read<uint32_t>(bytes, 8).value_or(0);
+    value.meanX = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
+    value.meanY = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
+    value.meanZ = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
+    value.meanXHP = LittleEndian::read<int8_t>(bytes, 24).value_or(0);
+    value.meanYHP = LittleEndian::read<int8_t>(bytes, 25).value_or(0);
+    value.meanZHP = LittleEndian::read<int8_t>(bytes, 26).value_or(0);
+    value.reserved2 = LittleEndian::read<int8_t>(bytes, 27).value_or(0);
+    value.meanAcc = LittleEndian::read<uint32_t>(bytes, 28).value_or(0);
+    value.obs = LittleEndian::read<uint32_t>(bytes, 32).value_or(0);
+    value.valid = LittleEndian::read<uint8_t>(bytes, 36).value_or(0);
+    value.active = LittleEndian::read<uint8_t>(bytes, 37).value_or(0);
+    for (size_t i = 0; i < 2; ++i) {
+        value.reserved3[i] = LittleEndian::read<uint8_t>(bytes, 38 + i * 1).value_or(0);
+    }
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_velned_t detail::decodeFields<ubx_payload_rx_nav_velned_t>(std::span<const uint8_t> input,
+                                                                                     size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_velned_t value{};
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 0).value_or(0);
+    value.gSpeed = LittleEndian::read<uint32_t>(bytes, 20).value_or(0);
+    value.heading = LittleEndian::read<int32_t>(bytes, 24).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_mon_hw_ubx6_t detail::decodeFields<ubx_payload_rx_mon_hw_ubx6_t>(std::span<const uint8_t> input,
+                                                                                       size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_mon_hw_ubx6_t value{};
+    value.noisePerMS = LittleEndian::read<uint16_t>(bytes, 16).value_or(0);
+    value.agcCnt = LittleEndian::read<uint16_t>(bytes, 18).value_or(0);
+    value.jamInd = LittleEndian::read<uint8_t>(bytes, 53).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_mon_hw_ubx7_t detail::decodeFields<ubx_payload_rx_mon_hw_ubx7_t>(std::span<const uint8_t> input,
+                                                                                       size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_mon_hw_ubx7_t value{};
+    value.noisePerMS = LittleEndian::read<uint16_t>(bytes, 16).value_or(0);
+    value.agcCnt = LittleEndian::read<uint16_t>(bytes, 18).value_or(0);
+    value.jamInd = LittleEndian::read<uint8_t>(bytes, 45).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_sec_sig_t detail::decodeFields<ubx_payload_rx_sec_sig_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_sec_sig_t value{};
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    value.reserved0 = LittleEndian::read<uint8_t>(bytes, 2).value_or(0);
+    value.jamNumCentFreqs = LittleEndian::read<uint8_t>(bytes, 3).value_or(0);
+    value.jamFlags = LittleEndian::read<uint8_t>(bytes, 4).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_mon_ver_part1_t detail::decodeFields<ubx_payload_rx_mon_ver_part1_t>(
+    std::span<const uint8_t> input, size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_mon_ver_part1_t value{};
+    for (size_t i = 0; i < 30; ++i) {
+        value.swVersion[i] = LittleEndian::read<uint8_t>(bytes, 0 + i * 1).value_or(0);
+    }
+    for (size_t i = 0; i < 10; ++i) {
+        value.hwVersion[i] = LittleEndian::read<uint8_t>(bytes, 30 + i * 1).value_or(0);
+    }
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_mon_ver_part2_t detail::decodeFields<ubx_payload_rx_mon_ver_part2_t>(
+    std::span<const uint8_t> input, size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_mon_ver_part2_t value{};
+    for (size_t i = 0; i < 30; ++i) {
+        value.extension[i] = LittleEndian::read<uint8_t>(bytes, 0 + i * 1).value_or(0);
+    }
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_rxm_rtcm_t detail::decodeFields<ubx_payload_rx_rxm_rtcm_t>(std::span<const uint8_t> input,
+                                                                                 size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_rxm_rtcm_t value{};
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    value.subType = LittleEndian::read<uint16_t>(bytes, 2).value_or(0);
+    value.refStationID = LittleEndian::read<uint16_t>(bytes, 4).value_or(0);
+    value.msgType = LittleEndian::read<uint16_t>(bytes, 6).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_rxm_cor_t detail::decodeFields<ubx_payload_rx_rxm_cor_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_rxm_cor_t value{};
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.ebno = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    for (size_t i = 0; i < 2; ++i) {
+        value.reserved0[i] = LittleEndian::read<uint8_t>(bytes, 2 + i * 1).value_or(0);
+    }
+    value.statusInfo = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.msgType = LittleEndian::read<uint16_t>(bytes, 8).value_or(0);
+    value.msgSubType = LittleEndian::read<uint16_t>(bytes, 10).value_or(0);
+    return value;
+}
+
+template <>
+inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_prt_t>> encode(const ubx_payload_tx_cfg_prt_t& value)
+{
+    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_prt_t>> bytes{};
+    (void) LittleEndian::write(bytes, 0, value.portID);
+    (void) LittleEndian::write(bytes, 1, value.reserved0);
+    (void) LittleEndian::write(bytes, 2, value.txReady);
+    (void) LittleEndian::write(bytes, 4, value.mode);
+    (void) LittleEndian::write(bytes, 8, value.baudRate);
+    (void) LittleEndian::write(bytes, 12, value.inProtoMask);
+    (void) LittleEndian::write(bytes, 14, value.outProtoMask);
+    (void) LittleEndian::write(bytes, 16, value.flags);
+    (void) LittleEndian::write(bytes, 18, value.reserved5);
+    return bytes;
+}
+
+template <>
+inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_rate_t>> encode(const ubx_payload_tx_cfg_rate_t& value)
+{
+    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_rate_t>> bytes{};
+    (void) LittleEndian::write(bytes, 0, value.measRate);
+    (void) LittleEndian::write(bytes, 2, value.navRate);
+    (void) LittleEndian::write(bytes, 4, value.timeRef);
+    return bytes;
+}
+
+template <>
+inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_nav5_t>> encode(const ubx_payload_tx_cfg_nav5_t& value)
+{
+    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_nav5_t>> bytes{};
+    (void) LittleEndian::write(bytes, 0, value.mask);
+    (void) LittleEndian::write(bytes, 2, value.dynModel);
+    (void) LittleEndian::write(bytes, 3, value.fixMode);
+    (void) LittleEndian::write(bytes, 4, value.fixedAlt);
+    (void) LittleEndian::write(bytes, 8, value.fixedAltVar);
+    (void) LittleEndian::write(bytes, 12, value.minElev);
+    (void) LittleEndian::write(bytes, 13, value.drLimit);
+    (void) LittleEndian::write(bytes, 14, value.pDop);
+    (void) LittleEndian::write(bytes, 16, value.tDop);
+    (void) LittleEndian::write(bytes, 18, value.pAcc);
+    (void) LittleEndian::write(bytes, 20, value.tAcc);
+    (void) LittleEndian::write(bytes, 22, value.staticHoldThresh);
+    (void) LittleEndian::write(bytes, 23, value.dgpsTimeOut);
+    (void) LittleEndian::write(bytes, 24, value.cnoThreshNumSVs);
+    (void) LittleEndian::write(bytes, 25, value.cnoThresh);
+    (void) LittleEndian::write(bytes, 26, value.reserved);
+    (void) LittleEndian::write(bytes, 28, value.staticHoldMaxDist);
+    (void) LittleEndian::write(bytes, 30, value.utcStandard);
+    (void) LittleEndian::write(bytes, 31, value.reserved3);
+    (void) LittleEndian::write(bytes, 32, value.reserved4);
+    return bytes;
+}
+
+template <>
+inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_tmode3_t>> encode(const ubx_payload_tx_cfg_tmode3_t& value)
+{
+    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_tmode3_t>> bytes{};
+    (void) LittleEndian::write(bytes, 0, value.version);
+    (void) LittleEndian::write(bytes, 1, value.reserved1);
+    (void) LittleEndian::write(bytes, 2, value.flags);
+    (void) LittleEndian::write(bytes, 4, value.ecefXOrLat);
+    (void) LittleEndian::write(bytes, 8, value.ecefYOrLon);
+    (void) LittleEndian::write(bytes, 12, value.ecefZOrAlt);
+    (void) LittleEndian::write(bytes, 16, value.ecefXOrLatHP);
+    (void) LittleEndian::write(bytes, 17, value.ecefYOrLonHP);
+    (void) LittleEndian::write(bytes, 18, value.ecefZOrAltHP);
+    (void) LittleEndian::write(bytes, 19, value.reserved2);
+    (void) LittleEndian::write(bytes, 20, value.fixedPosAcc);
+    (void) LittleEndian::write(bytes, 24, value.svinMinDur);
+    (void) LittleEndian::write(bytes, 28, value.svinAccLimit);
+    for (size_t i = 0; i < 8; ++i) {
+        (void) LittleEndian::write(bytes, 32 + i * 1, value.reserved3[i]);
+    }
+    return bytes;
+}
+
+template <>
+inline ubx_payload_rx_nav_relposned_t detail::decodeFields<ubx_payload_rx_nav_relposned_t>(
+    std::span<const uint8_t> input, size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_relposned_t value{};
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.reserved0 = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.relPosLength = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
+    value.relPosHeading = LittleEndian::read<int32_t>(bytes, 24).value_or(0);
+    value.relPosHPLength = LittleEndian::read<int8_t>(bytes, 35).value_or(0);
+    value.accHeading = LittleEndian::read<uint32_t>(bytes, 52).value_or(0);
+    value.flags = LittleEndian::read<uint32_t>(bytes, 60).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_daheading_t detail::decodeFields<ubx_payload_rx_nav_daheading_t>(
+    std::span<const uint8_t> input, size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_daheading_t value{};
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    for (size_t i = 0; i < 3; ++i) {
+        value.reserved0[i] = LittleEndian::read<uint8_t>(bytes, 1 + i * 1).value_or(0);
+    }
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.relPosLength = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
+    value.relPosHeading = LittleEndian::read<int32_t>(bytes, 24).value_or(0);
+    value.accHeading = LittleEndian::read<uint32_t>(bytes, 48).value_or(0);
+    value.flags = LittleEndian::read<uint32_t>(bytes, 56).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_nav_hpposllh_t detail::decodeFields<ubx_payload_rx_nav_hpposllh_t>(std::span<const uint8_t> input,
+                                                                                         size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_nav_hpposllh_t value{};
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    for (size_t i = 0; i < 2; ++i) {
+        value.reserved1[i] = LittleEndian::read<uint8_t>(bytes, 1 + i * 1).value_or(0);
+    }
+    value.flags = LittleEndian::read<int8_t>(bytes, 3).value_or(0);
+    value.iTOW = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.lon = LittleEndian::read<int32_t>(bytes, 8).value_or(0);
+    value.lat = LittleEndian::read<int32_t>(bytes, 12).value_or(0);
+    value.height = LittleEndian::read<int32_t>(bytes, 16).value_or(0);
+    value.hMSL = LittleEndian::read<int32_t>(bytes, 20).value_or(0);
+    value.lonHp = LittleEndian::read<int8_t>(bytes, 24).value_or(0);
+    value.latHp = LittleEndian::read<int8_t>(bytes, 25).value_or(0);
+    value.heightHp = LittleEndian::read<int8_t>(bytes, 26).value_or(0);
+    value.hMSLHp = LittleEndian::read<int8_t>(bytes, 27).value_or(0);
+    value.hAcc = LittleEndian::read<uint32_t>(bytes, 28).value_or(0);
+    value.vAcc = LittleEndian::read<uint32_t>(bytes, 32).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_mon_comms_port_t detail::decodeFields<ubx_payload_rx_mon_comms_port_t>(
+    std::span<const uint8_t> input, size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_mon_comms_port_t value{};
+    value.portId = LittleEndian::read<uint16_t>(bytes, 0).value_or(0);
+    value.txPending = LittleEndian::read<uint16_t>(bytes, 2).value_or(0);
+    value.txBytes = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    value.txUsage = LittleEndian::read<uint8_t>(bytes, 8).value_or(0);
+    value.txPeakUsage = LittleEndian::read<uint8_t>(bytes, 9).value_or(0);
+    value.rxPending = LittleEndian::read<uint16_t>(bytes, 10).value_or(0);
+    value.rxBytes = LittleEndian::read<uint32_t>(bytes, 12).value_or(0);
+    value.rxUsage = LittleEndian::read<uint8_t>(bytes, 16).value_or(0);
+    value.rxPeakUsage = LittleEndian::read<uint8_t>(bytes, 17).value_or(0);
+    value.overrunErrs = LittleEndian::read<uint16_t>(bytes, 18).value_or(0);
+    for (size_t i = 0; i < 4; ++i) {
+        value.msgs[i] = LittleEndian::read<uint16_t>(bytes, 20 + i * 2).value_or(0);
+    }
+    for (size_t i = 0; i < 8; ++i) {
+        value.reserved[i] = LittleEndian::read<uint8_t>(bytes, 28 + i * 1).value_or(0);
+    }
+    value.skipped = LittleEndian::read<uint32_t>(bytes, 36).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_mon_comms_t detail::decodeFields<ubx_payload_rx_mon_comms_t>(std::span<const uint8_t> input,
+                                                                                   size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_mon_comms_t value{};
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.nPorts = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    value.txErrors = LittleEndian::read<uint8_t>(bytes, 2).value_or(0);
+    value.reserved = LittleEndian::read<uint8_t>(bytes, 3).value_or(0);
+    for (size_t i = 0; i < 4; ++i) {
+        value.protIds[i] = LittleEndian::read<uint8_t>(bytes, 4 + i * 1).value_or(0);
+    }
+    for (size_t i = 0; i < 8; ++i) {
+        value.ports[i] = detail::decodeFields<ubx_payload_rx_mon_comms_port_t>(bytes, 8 + i * 40);
+    }
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t
+detail::decodeFields<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t>(std::span<const uint8_t> input,
+                                                                             size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t value{};
+    value.blockId = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.flags = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    value.antStatus = LittleEndian::read<uint8_t>(bytes, 2).value_or(0);
+    value.antPower = LittleEndian::read<uint8_t>(bytes, 3).value_or(0);
+    value.postStatus = LittleEndian::read<uint32_t>(bytes, 4).value_or(0);
+    for (size_t i = 0; i < 4; ++i) {
+        value.reserved2[i] = LittleEndian::read<uint8_t>(bytes, 8 + i * 1).value_or(0);
+    }
+    value.noisePerMS = LittleEndian::read<uint16_t>(bytes, 12).value_or(0);
+    value.agcCnt = LittleEndian::read<uint16_t>(bytes, 14).value_or(0);
+    value.jamInd = LittleEndian::read<uint8_t>(bytes, 16).value_or(0);
+    value.ofsI = LittleEndian::read<int8_t>(bytes, 17).value_or(0);
+    value.magI = LittleEndian::read<uint8_t>(bytes, 18).value_or(0);
+    value.ofsQ = LittleEndian::read<int8_t>(bytes, 19).value_or(0);
+    value.magQ = LittleEndian::read<uint8_t>(bytes, 20).value_or(0);
+    for (size_t i = 0; i < 3; ++i) {
+        value.reserved3[i] = LittleEndian::read<uint8_t>(bytes, 21 + i * 1).value_or(0);
+    }
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_mon_rf_t detail::decodeFields<ubx_payload_rx_mon_rf_t>(std::span<const uint8_t> input,
+                                                                             size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_mon_rf_t value{};
+    value.version = LittleEndian::read<uint8_t>(bytes, 0).value_or(0);
+    value.nBlocks = LittleEndian::read<uint8_t>(bytes, 1).value_or(0);
+    for (size_t i = 0; i < 2; ++i) {
+        value.reserved1[i] = LittleEndian::read<uint8_t>(bytes, 2 + i * 1).value_or(0);
+    }
+    for (size_t i = 0; i < 1; ++i) {
+        value.block[i] =
+            detail::decodeFields<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t>(bytes, 4 + i * 24);
+    }
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_ack_ack_t detail::decodeFields<ubx_payload_rx_ack_ack_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_ack_ack_t value{};
+    value.msg = LittleEndian::read<uint16_t>(bytes, 0).value_or(0);
+    return value;
+}
+
+template <>
+inline ubx_payload_rx_ack_nak_t detail::decodeFields<ubx_payload_rx_ack_nak_t>(std::span<const uint8_t> input,
+                                                                               size_t offset)
+{
+    const auto bytes = offset <= input.size() ? input.subspan(offset) : std::span<const uint8_t>{};
+    ubx_payload_rx_ack_nak_t value{};
+    value.msg = LittleEndian::read<uint16_t>(bytes, 0).value_or(0);
+    return value;
+}
+
+template <>
+inline std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_msg_t>> encode(const ubx_payload_tx_cfg_msg_t& value)
+{
+    std::array<uint8_t, UBX::WIRE_SIZE<ubx_payload_tx_cfg_msg_t>> bytes{};
+    (void) LittleEndian::write(bytes, 0, value.msg);
+    (void) LittleEndian::write(bytes, 2, value.rate);
+    return bytes;
+}
+
+template <typename T, size_t N>
+std::array<uint8_t, WIRE_SIZE<T> * N> encode(const T (&values)[N])
+{
+    std::array<uint8_t, WIRE_SIZE<T> * N> bytes{};
+    for (size_t i = 0; i < N; ++i) {
+        const auto block = encode(values[i]);
+        std::copy(block.begin(), block.end(), bytes.begin() + i * WIRE_SIZE<T>);
+    }
+    return bytes;
+}
+}  // namespace UBX
 
 namespace UBX {
 template <typename T>

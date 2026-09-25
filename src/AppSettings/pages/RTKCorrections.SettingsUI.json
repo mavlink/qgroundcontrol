@@ -1,0 +1,99 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "groups": [
+        {
+            "component": "CorrectionsStatus",
+            "properties": {
+                "showNtripStatus": false
+            },
+            "sectionName": "Corrections Status",
+            "keywords": ["corrections", "rtk", "status", "selected stream", "data rate", "ntrip"]
+        },
+        {
+            "component": "NtripConnectionSettings",
+            "sectionName": "NTRIP Connection",
+            "keywords": ["ntrip", "rtk", "connection status", "corrections"]
+        },
+        {
+            "component": "NtripServerSettings",
+            "sectionName": "NTRIP Server",
+            "keywords": ["ntrip server", "rtk", "caster", "host", "port", "username", "password", "tls"]
+        },
+        {
+            "component": "NtripMountpointBrowser",
+            "sectionName": "NTRIP Mountpoint",
+            "keywords": ["mountpoint", "browse", "stream", "source table"]
+        },
+        {
+            "heading": "GGA Position Reporting",
+            "keywords": ["gga", "vrs", "nmea", "position", "network rtk", "ntrip"],
+            "controls": [
+                {
+                    "setting": "ntripSettings.ntripGgaPositionSource"
+                },
+                {
+                    "setting": "ntripSettings.ntripGgaIntervalSec"
+                }
+            ]
+        },
+        {
+            "heading": "NTRIP Message Filter",
+            "keywords": ["rtcm", "whitelist", "message filter", "ntrip"],
+            "controls": [
+                {
+                    "setting": "ntripSettings.ntripWhitelist",
+                    "placeholder": "e.g. 1005,1077,1087"
+                }
+            ]
+        },
+        {
+            "heading": "UDP RTCM Input",
+            "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
+            "keywords": ["udp rtcm", "udp input", "corrections"],
+            "controls": [
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpInputEnabled"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpInputPort",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpInputEnabled.rawValue"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpValidate",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpInputEnabled.rawValue"
+                }
+            ]
+        },
+        {
+            "component": "CorrectionRoutingSettings",
+            "sectionName": "Correction Routing",
+            "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible && (QGroundControl.settingsManager.gpsCorrectionSettings.correctionSource as SettingsFact).userVisible",
+            "keywords": ["corrections", "rtcm", "source", "stream", "routing", "automatic"]
+        },
+        {
+            "heading": "UDP Forwarding",
+            "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
+            "keywords": ["udp forward", "udp output", "relay", "corrections forward", "rtcm"],
+            "controls": [
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpOutputEnabled"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpOutputAddress",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpOutputEnabled.rawValue"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpOutputPort",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpOutputEnabled.rawValue"
+                }
+            ]
+        },
+        {
+            "component": "CorrectionDiagnostics",
+            "sectionName": "Correction Diagnostics",
+            "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
+            "keywords": ["corrections", "rtcm", "diagnostics", "events", "queued", "written", "unconfirmed", "dropped"]
+        }
+    ]
+}

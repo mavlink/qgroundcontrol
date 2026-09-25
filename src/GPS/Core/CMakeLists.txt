@@ -1,34 +1,32 @@
-qt_add_library(QGCGPSCore STATIC GPSObservation.cc GPSSatelliteObservation.cc GPSSourceHealth.cc GPSSatelliteStore.cc)
-add_library(QGC::GPSCore ALIAS QGCGPSCore)
-set_target_properties(QGCGPSCore PROPERTIES AUTOMOC ON)
-target_compile_features(QGCGPSCore PUBLIC cxx_std_20)
+add_library(QGCGPSNotifications STATIC GPSNotificationQueue.cc)
+target_compile_features(QGCGPSNotifications PUBLIC cxx_std_20)
+target_sources(QGCGPSNotifications PUBLIC FILE_SET HEADERS FILES GPSNotificationQueue.h GPSRevision.h)
 target_link_libraries(
-    QGCGPSCore
-    PUBLIC QGCTiming Qt6::Positioning
+    QGCGPSNotifications
+    PUBLIC Qt6::Core
     PRIVATE QGCLoggingCategory
 )
 
-target_sources(
+qt_add_library(QGCGPSCore STATIC GPSObservation.cc GPSSourceHealth.cc)
+add_library(QGC::GPSCore ALIAS QGCGPSCore)
+set_target_properties(QGCGPSCore PROPERTIES AUTOMOC ON)
+target_compile_features(QGCGPSCore PUBLIC cxx_std_20)
+# Receiver reports are needed only to build observations from them.
+target_link_libraries(
     QGCGPSCore
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           GPSAltitudeDatum.h
-           GPSObservation.h
-           GPSSatelliteObservation.h
-           GPSSourceHealth.h
-           GPSSatelliteStore.h
-           GPSSatelliteState.h
-           GPSSurveyInStatus.h
+    PUBLIC QGCGPSNotifications QGCTiming Qt6::Positioning
+    PRIVATE QGCGPSReceiver QGCLoggingCategory
 )
+
+target_sources(QGCGPSCore PUBLIC FILE_SET HEADERS FILES GPSObservation.h GPSSourceHealth.h)
 target_sources(
     QGCGPSCore
     PUBLIC FILE_SET
-           satellite_types
+           fix_quality_types
            TYPE
            HEADERS
            BASE_DIRS
            ..
            FILES
-           ../GPSConstellation.h
+           ../GPSFixQuality.h
 )

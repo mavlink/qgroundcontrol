@@ -21,6 +21,7 @@
 #include "NTRIPTlsPolicy_p.h"
 #include "NTRIPTlsTestFixtures.h"
 #include "RTCMDecodedFrame.h"
+#include "ScriptedNtripCaster.h"
 #include "UnitTest.h"
 
 namespace {
@@ -54,9 +55,12 @@ QByteArray chunk(const QByteArray& bytes)
     return QByteArray::number(bytes.size(), 16) + "\r\n" + bytes + "\r\n";
 }
 
-QByteArray sourceTableResponse(bool chunked = false)
+QByteArray sourceTableResponse(bool chunked = false, bool legacy = false)
 {
     const QByteArray body = "STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\r\nENDSOURCETABLE\r\n";
+    if (legacy) {
+        return "SOURCETABLE 200 OK\r\n\r\n" + body;
+    }
     return chunked ? "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" + chunk(body) + "0\r\n\r\n"
                    : "HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\n\r\n" + body;
 }
@@ -117,8 +121,8 @@ void NTRIPTlsTest::_expectTlsWarnings(bool allowSelfSigned, bool mismatched)
                   allowSelfSigned ? QStringLiteral("Accepting self-signed certificate (user opted in)")
                                   : QStringLiteral("Rejecting self-signed certificate (enable 'Accept self-signed "
                                                    "certificates' to allow)"))));
-    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, selfSigned);
-    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, policy);
+    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, selfSigned);
+    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, policy);
 }
 
 void NTRIPTlsTest::_verifyTlsWarnings()
@@ -205,30 +209,34 @@ void NTRIPTlsTest::certificatePolicy()
     QFETCH(bool, mismatched);
     QFETCH(bool, chunked);
     QFETCH(bool, sourceTable);
-    QSslServer server;
-    server.setSslConfiguration(serverConfiguration(mismatched));
-    QVERIFY(server.listen(QHostAddress::LocalHost));
-    auto configuration = connectionConfig(server);
+    ScriptedNtripCaster caster(ScriptedNtripCaster::Transport::Tls, mismatched
+                                                                        ? ScriptedNtripCaster::Certificate::Mismatched
+                                                                        : ScriptedNtripCaster::Certificate::Loopback);
+    QVERIFY(caster.isListening());
+    auto configuration = caster.connectionConfig();
     QVERIFY(!configuration.allowSelfSignedCerts);
     configuration.allowSelfSignedCerts = allowSelfSigned;
     if (sourceTable) {
         NTRIPSourceTableController controller;
+        _expectTlsWarnings(allowSelfSigned, mismatched);
         controller.fetch(configuration);
         if (!allowSelfSigned || mismatched) {
             QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error,
                                       timeoutMs());
+            _verifyTlsWarnings();
             QVERIFY(!controller.fetchError().isEmpty());
             QCOMPARE(controller.mountpointModel()->rowCount(), 0);
             return;
         }
-        QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), timeoutMs());
-        std::unique_ptr<QSslSocket> peer(qobject_cast<QSslSocket*>(server.nextPendingConnection()));
+        auto* connection = caster.waitForConnection(timeoutMs());
+        QVERIFY(connection && connection->peer);
+        auto* peer = qobject_cast<QSslSocket*>(connection->peer);
         QVERIFY(peer && peer->isEncrypted());
-        QByteArray request;
-        QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).endsWith("\r\n\r\n"), timeoutMs());
+        const QByteArray request = connection->waitForRequest(timeoutMs());
         QVERIFY(request.startsWith("GET / HTTP/1.1\r\n"));
+        _verifyTlsWarnings();
         const QByteArray response = sourceTableResponse(chunked);
-        QCOMPARE(peer->write(response), response.size());
+        QCOMPARE(connection->write(response), response.size());
         QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
                                   timeoutMs());
         QCOMPARE(controller.mountpointModel()->rowCount(), 1);
@@ -261,12 +269,11 @@ void NTRIPTlsTest::certificatePolicy()
         return;
     }
 
-    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), timeoutMs());
-    std::unique_ptr<QSslSocket> peer(qobject_cast<QSslSocket*>(server.nextPendingConnection()));
-    QVERIFY(peer);
-    QVERIFY(peer->isEncrypted());
-    QByteArray request;
-    QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).endsWith("\r\n\r\n"), timeoutMs());
+    auto* connection = caster.waitForConnection(timeoutMs());
+    QVERIFY(connection && connection->peer);
+    auto* peer = qobject_cast<QSslSocket*>(connection->peer);
+    QVERIFY(peer && peer->isEncrypted());
+    const QByteArray request = connection->waitForRequest(timeoutMs());
     QVERIFY(request.startsWith("GET /TEST HTTP/1.1\r\n"));
     _verifyTlsWarnings();
     QVERIFY(connected.isEmpty());
@@ -276,11 +283,11 @@ void NTRIPTlsTest::certificatePolicy()
     const QByteArray second = GpsTestHelpers::buildRtcmFrame(1077);
     const QByteArray response = chunked ? "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" + chunk(first)
                                         : "HTTP/1.1 200 OK\r\nContent-Type: gnss/data\r\n\r\n" + first;
-    QCOMPARE(peer->write(response), response.size());
+    QCOMPARE(connection->write(response), response.size());
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 1, timeoutMs());
     QCOMPARE(connected.size(), 1);
     const QByteArray continuation = chunked ? chunk(second) : second;
-    QCOMPARE(peer->write(continuation), continuation.size());
+    QCOMPARE(connection->write(continuation), continuation.size());
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 2, timeoutMs());
     for (qsizetype index = 0; index < frames.size(); ++index) {
         const auto frame = qvariant_cast<RTCMDecodedFrame>(frames[index][0]);
@@ -291,7 +298,7 @@ void NTRIPTlsTest::certificatePolicy()
     }
     QCOMPARE(connected.size(), 1);
     transport.stop();
-    QTRY_COMPARE_WITH_TIMEOUT(peer->state(), QAbstractSocket::UnconnectedState, timeoutMs());
+    QTRY_COMPARE_WITH_TIMEOUT(connection->peer->state(), QAbstractSocket::UnconnectedState, timeoutMs());
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(errors.isEmpty());
     QVERIFY(plaintext.isEmpty());
@@ -300,38 +307,46 @@ void NTRIPTlsTest::certificatePolicy()
 void NTRIPTlsTest::sourceTablePolicyChanges_data()
 {
     QTest::addColumn<bool>("duringFetch");
-    QTest::newRow("in-flight") << true;
-    QTest::newRow("cached") << false;
+    QTest::addColumn<bool>("legacy");
+    QTest::newRow("http-in-flight") << true << false;
+    QTest::newRow("http-cached") << false << false;
+    QTest::newRow("legacy-in-flight") << true << true;
+    QTest::newRow("legacy-cached") << false << true;
 }
 
 void NTRIPTlsTest::sourceTablePolicyChanges()
 {
     QFETCH(bool, duringFetch);
-    QSslServer server;
-    server.setSslConfiguration(serverConfiguration());
-    QVERIFY(server.listen(QHostAddress::LocalHost));
-    connect(&server, &QSslServer::pendingConnectionAvailable, &server, [&server]() {
-        while (server.hasPendingConnections()) {
-            auto* peer = server.nextPendingConnection();
-            auto respond = [peer, request = QByteArray{}]() mutable {
-                request += peer->readAll();
-                if (request.endsWith("\r\n\r\n")) {
-                    peer->write(sourceTableResponse());
-                    request.clear();
-                }
-            };
-            respond();
-            connect(peer, &QTcpSocket::readyRead, peer, std::move(respond));
-        }
-    });
-    auto configuration = connectionConfig(server);
+    QFETCH(bool, legacy);
+    // The certificate policy is the subject here; the session reports each TLS decision.
+    ignoreLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^(TLS error:|Accepting self-signed|Rejecting self-signed)")));
+    ScriptedNtripCaster caster(ScriptedNtripCaster::Transport::Tls);
+    QVERIFY(caster.isListening());
+    auto configuration = caster.connectionConfig();
     configuration.allowSelfSignedCerts = true;
     NTRIPSourceTableController controller;
+    const auto respond = [&]() {
+        auto* connection = caster.waitForConnection(timeoutMs());
+        QVERIFY(connection && connection->peer);
+        QVERIFY(connection->waitForRequest(timeoutMs()).startsWith("GET / HTTP/1.1"));
+        const QByteArray response = sourceTableResponse(false, legacy);
+        QCOMPARE(connection->write(response), response.size());
+        if (legacy) {
+            connection->disconnectFromHost();
+        }
+    };
     controller.fetch(configuration);
     if (!duringFetch) {
+        respond();
         QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
                                   timeoutMs());
         QCOMPARE(controller.mountpointModel()->rowCount(), 1);
+    } else {
+        auto* connection = caster.waitForConnection(timeoutMs());
+        QVERIFY(connection && connection->peer);
+        QVERIFY(connection->waitForRequest(timeoutMs()).startsWith("GET / HTTP/1.1"));
+        connection->disconnectFromHost();
     }
 
     configuration.allowSelfSignedCerts = false;
@@ -341,6 +356,7 @@ void NTRIPTlsTest::sourceTablePolicyChanges()
 
     configuration.allowSelfSignedCerts = true;
     controller.fetch(configuration);
+    respond();
     QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success, timeoutMs());
     QCOMPARE(controller.mountpointModel()->rowCount(), 1);
 }
@@ -498,10 +514,9 @@ void NTRIPTlsTest::restartRetiresAttempt()
 void NTRIPTlsTest::reconnectFromTlsFailure()
 {
     bool restarted = false;
-    QSslServer server;
-    server.setSslConfiguration(serverConfiguration(true));
-    QVERIFY(server.listen(QHostAddress::LocalHost));
-    auto configuration = connectionConfig(server);
+    ScriptedNtripCaster caster(ScriptedNtripCaster::Transport::Tls, ScriptedNtripCaster::Certificate::Mismatched);
+    QVERIFY(caster.isListening());
+    auto configuration = caster.connectionConfig();
     configuration.allowSelfSignedCerts = true;
     NTRIPHttpTransport transport(configuration, {});
     QSignalSpy connected(&transport, &NTRIPTransport::connected);
@@ -515,29 +530,29 @@ void NTRIPTlsTest::reconnectFromTlsFailure()
         QVERIFY(failure.detail.contains(QSslError(QSslError::HostNameMismatch).errorString()));
         restarted = true;
         _verifyTlsWarnings();
-        server.setSslConfiguration(serverConfiguration());
+        caster.setCertificate(ScriptedNtripCaster::Certificate::Loopback);
         _expectTlsWarnings(true);
         transport.start();
     });
     _expectTlsWarnings(true, true);
     transport.start();
-    QTRY_VERIFY_WITH_TIMEOUT(restarted && server.hasPendingConnections(), timeoutMs());
-    std::unique_ptr<QSslSocket> peer(qobject_cast<QSslSocket*>(server.nextPendingConnection()));
-    QVERIFY(peer);
-    QVERIFY(peer->isEncrypted());
-    QByteArray request;
-    QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).endsWith("\r\n\r\n"), timeoutMs());
+    QTRY_VERIFY_WITH_TIMEOUT(restarted, timeoutMs());
+    auto* connection = caster.waitForConnection(timeoutMs());
+    QVERIFY(connection && connection->peer);
+    auto* peer = qobject_cast<QSslSocket*>(connection->peer);
+    QVERIFY(peer && peer->isEncrypted());
+    const QByteArray request = connection->waitForRequest(timeoutMs());
     _verifyTlsWarnings();
     QVERIFY(connected.isEmpty());
     QCOMPARE(errors.size(), 1);
     const QByteArray expected = GpsTestHelpers::buildRtcmFrame(1005);
     const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n" + expected;
-    QCOMPARE(peer->write(response), response.size());
+    QCOMPARE(connection->write(response), response.size());
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 1, timeoutMs());
     QCOMPARE(qvariant_cast<RTCMDecodedFrame>(frames.first().first()).data, expected);
     QCOMPARE(connected.size(), 1);
     transport.stop();
-    QTRY_COMPARE_WITH_TIMEOUT(peer->state(), QAbstractSocket::UnconnectedState, timeoutMs());
+    QTRY_COMPARE_WITH_TIMEOUT(connection->peer->state(), QAbstractSocket::UnconnectedState, timeoutMs());
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(errors.size(), 1);
 }

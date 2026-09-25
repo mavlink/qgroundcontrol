@@ -9,7 +9,6 @@
 #include "QmlUnitsConversion.h"
 
 class ADSBVehicleManager;
-class GPSRTKFactGroup;
 class GPSManager;
 class LinkManager;
 class MAVLinkSigningKeys;
@@ -17,7 +16,6 @@ class MissionCommandTree;
 class MultiVehicleManager;
 class QGCCorePlugin;
 class QGCMapEngineManager;
-class NTRIPManager;
 class QGCPalette;
 class QGCPositionManager;
 class SettingsManager;
@@ -25,8 +23,6 @@ class VideoManager;
 class QmlObjectListModel;
 
 Q_MOC_INCLUDE("ADSBVehicleManager.h")
-Q_MOC_INCLUDE("NTRIPManager.h")
-Q_MOC_INCLUDE("GPSRTKFactGroup.h")
 Q_MOC_INCLUDE("GPSManager.h")
 Q_MOC_INCLUDE("LinkManager.h")
 Q_MOC_INCLUDE("MAVLinkSigningKeys.h")
@@ -66,15 +62,13 @@ public:
     Q_PROPERTY(QObject* serialPortManager READ serialPortManager CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager     READ    multiVehicleManager     CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager        READ    mapEngineManager        CONSTANT)
-    Q_PROPERTY(QGCPositionManager*  qgcPositionManger       READ    qgcPositionManger       CONSTANT)
+    Q_PROPERTY(QGCPositionManager* positionManager READ positionManager CONSTANT)
     Q_PROPERTY(VideoManager*        videoManager            READ    videoManager            CONSTANT)
     Q_PROPERTY(SettingsManager*     settingsManager         READ    settingsManager         CONSTANT)
     Q_PROPERTY(ADSBVehicleManager*  adsbVehicleManager      READ    adsbVehicleManager      CONSTANT)
-    Q_PROPERTY(NTRIPManager*        ntripManager            READ    ntripManager            CONSTANT)
     Q_PROPERTY(QGCCorePlugin*       corePlugin              READ    corePlugin              CONSTANT)
     Q_PROPERTY(MissionCommandTree*  missionCommandTree      READ    missionCommandTree      CONSTANT)
     Q_PROPERTY(MAVLinkSigningKeys*   mavlinkSigningKeys      READ    mavlinkSigningKeys      CONSTANT)
-    Q_PROPERTY(GPSRTKFactGroup* gpsRtk READ gpsRtkFactGroup CONSTANT)
     Q_PROPERTY(GPSManager* gpsManager READ gpsManager CONSTANT)
     Q_PROPERTY(QGCPalette*          globalPalette           MEMBER  _globalPalette          CONSTANT)   ///< This palette will always return enabled colors
     Q_PROPERTY(QmlUnitsConversion*  unitsConversion         READ    unitsConversion         CONSTANT)
@@ -162,7 +156,7 @@ public:
 
     QGCMapEngineManager* mapEngineManager() { return _mapEngineManager; }
 
-    QGCPositionManager* qgcPositionManger() { return _qgcPositionManager; }
+    QGCPositionManager* positionManager() const;
 
     MissionCommandTree* missionCommandTree() { return _missionCommandTree; }
 
@@ -174,13 +168,11 @@ public:
 
     SettingsManager* settingsManager() { return _settingsManager; }
 
-    GPSRTKFactGroup* gpsRtkFactGroup() { return _gpsRtkFactGroup; }
 
     GPSManager* gpsManager() const;
 
     ADSBVehicleManager* adsbVehicleManager() { return _adsbVehicleManager; }
 
-    NTRIPManager* ntripManager() { return _ntripManager; }
 
     QmlUnitsConversion* unitsConversion() { return &_unitsConversion; }
 
@@ -228,8 +220,6 @@ signals:
 private:
     QGCMapEngineManager*    _mapEngineManager       = nullptr;
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
-    NTRIPManager*           _ntripManager           = nullptr;
-    QGCPositionManager*     _qgcPositionManager     = nullptr;
     MissionCommandTree*     _missionCommandTree     = nullptr;
     MAVLinkSigningKeys*     _mavlinkSigningKeys     = nullptr;
     VideoManager*           _videoManager           = nullptr;
@@ -238,7 +228,6 @@ private:
     SettingsManager*        _settingsManager        = nullptr;
     QGCCorePlugin*          _corePlugin             = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
-    GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;
 
     double                  _flightMapInitialZoom   = 17.0;
     QmlUnitsConversion      _unitsConversion;

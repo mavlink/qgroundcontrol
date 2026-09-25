@@ -4,7 +4,7 @@
 
 class QQuickItem;
 
-/// UI tests for the NTRIP/RTK settings page.
+/// UI tests for the NTRIP sections of the RTK Corrections settings page.
 ///
 /// Navigates to the page through the real settings left-nav and verifies the
 /// enable/disable gating of the hand-written NTRIP controls: the Browse button
@@ -25,6 +25,12 @@ private slots:
     void _testConnectGatedByHost();
     void _testBrowseGatedByHost();
     void _testSelfSignedGatedByTls();
+    void _testErrorActionRetries();
+    void _testConnectionActionIsIdempotent_data();
+    void _testConnectionActionIsIdempotent();
+    void _testMountpointLockedWhileActive();
+    void _testLongStatusWrapsWithinPanel();
+    void _testMountpointButtonsAligned();
 
 private:
     bool _navigateToNtripPage();

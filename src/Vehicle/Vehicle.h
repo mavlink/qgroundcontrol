@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <atomic>
 #include <functional>
 #include <memory>
 
@@ -13,9 +15,6 @@
 #include <QtCore/QVariantList>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-#include <array>
-#include <atomic>
 
 #include "QGCMAVLink.h"
 #include "VehicleFactGroup.h"
@@ -41,7 +40,6 @@ class VehicleDistanceSensorFactGroup;
 class VehicleEFIFactGroup;
 class VehicleEstimatorStatusFactGroup;
 class VehicleGeneratorFactGroup;
-class VehicleGPS2FactGroup;
 class VehicleGPSFactGroup;
 class VehicleGPSAggregateFactGroup;
 class VehicleHygrometerFactGroup;
@@ -414,6 +412,7 @@ public:
     // Property accessors
 
     QGeoCoordinate coordinate() { return _coordinate; }
+
     QGeoCoordinate armedPosition    () { return _armedPosition; }
 
     qreal getInitialGCSPressure() const { return _initialGCSPressure; }
@@ -753,6 +752,9 @@ public slots:
 
 signals:
     void coordinateChanged              (QGeoCoordinate coordinate);
+    /// Emitted for every global position report, including an unchanged position. An invalid coordinate means the
+    /// vehicle reported that it has no position.
+    void positionReported(const QGeoCoordinate& coordinate);
     void mavlinkMessageReceived         (const mavlink_message_t& message);
     void homePositionChanged            (const QGeoCoordinate& homePosition);
     void armedPositionChanged();
@@ -1092,7 +1094,7 @@ public:
 
     VehicleFactGroup*               _vehicleFactGroup;
     VehicleGPSFactGroup*                _gpsFactGroup               = nullptr;
-    VehicleGPS2FactGroup*               _gps2FactGroup              = nullptr;
+    VehicleGPSFactGroup* _gps2FactGroup = nullptr;
     VehicleGPSAggregateFactGroup*       _gpsAggregateFactGroup      = nullptr;
     VehicleWindFactGroup*               _windFactGroup              = nullptr;
     VehicleVibrationFactGroup*          _vibrationFactGroup         = nullptr;

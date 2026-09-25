@@ -4,25 +4,25 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
+#include <QtCore/QHash>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QSettings>
-#include <QtQml/QQmlComponent>
-#include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QSignalSpy>
 
-#include "ColoredSvgImageProvider.h"
 #include "GPS/RTCM/RTCMTestFixtures.h"
 #include "GPSCorrectionManager.h"
 #include "GPSCorrectionRouter.h"
 #include "GPSCorrectionSettings.h"
+#include "GpsQmlTestHelpers.h"
 #include "NTRIPSettings.h"
 #include "QmlUITestBase.h"
 #include "RAIIFixtures.h"
+#include "RTCMMessageCount.h"
 #include "SettingsFact.h"
 #include "SettingsManager.h"
 
@@ -96,8 +96,9 @@ void GPSCorrectionSettingsTest::_metadataPartition()
         return result;
     };
     const QStringList corrections = names(QStringLiteral(":/json/GPSCorrection.SettingsGroup.json"));
-    QCOMPARE(corrections, QStringList({"correctionSource", "correctionSourceInstance", "rtcmUdpInputEnabled",
-                                       "rtcmUdpInputPort", "rtcmUdpValidate"}));
+    QCOMPARE(corrections,
+             QStringList({"correctionSource", "correctionSourceInstance", "rtcmUdpInputEnabled", "rtcmUdpInputPort",
+                          "rtcmUdpOutputAddress", "rtcmUdpOutputEnabled", "rtcmUdpOutputPort", "rtcmUdpValidate"}));
     const QStringList ntrip = names(QStringLiteral(":/json/NTRIP.SettingsGroup.json"));
     QVERIFY(!ntrip.isEmpty());
     NTRIPSettings ntripSettings;
@@ -105,8 +106,45 @@ void GPSCorrectionSettingsTest::_metadataPartition()
         QVERIFY(!ntrip.contains(name));
         QCOMPARE(ntripSettings.metaObject()->indexOfProperty(name.toUtf8().constData()), -1);
     }
-    QVERIFY(ntrip.contains(QStringLiteral("ntripUdpForwardEnabled")));
+    QVERIFY(!ntrip.contains(QStringLiteral("ntripUdpForwardEnabled")));
     QVERIFY(ntrip.contains(QStringLiteral("ntripGgaPositionSource")));
+}
+
+void GPSCorrectionSettingsTest::_udpOutputKeysMigrate()
+{
+    const QStringList keys = {QStringLiteral("ntripUdpForwardEnabled"), QStringLiteral("ntripUdpTargetAddress"),
+                              QStringLiteral("ntripUdpTargetPort"),     QStringLiteral("rtcmUdpOutputEnabled"),
+                              QStringLiteral("rtcmUdpOutputAddress"),   QStringLiteral("rtcmUdpOutputPort")};
+    QSettings storage;
+    storage.beginGroup(QStringLiteral("NTRIP"));
+    QHash<QString, QVariant> original;
+    for (const auto& key : keys) {
+        if (storage.contains(key)) {
+            original.insert(key, storage.value(key));
+        }
+        storage.remove(key);
+    }
+    const auto restore = qScopeGuard([&]() {
+        for (const auto& key : keys) {
+            if (original.contains(key)) {
+                storage.setValue(key, original.value(key));
+            } else {
+                storage.remove(key);
+            }
+        }
+    });
+    storage.setValue(QStringLiteral("ntripUdpForwardEnabled"), true);
+    storage.setValue(QStringLiteral("ntripUdpTargetAddress"), QStringLiteral("192.0.2.10"));
+    storage.setValue(QStringLiteral("ntripUdpTargetPort"), 9000);
+    // A value already saved under the new key wins over the legacy one.
+    storage.setValue(QStringLiteral("rtcmUdpOutputPort"), 9001);
+    const GPSCorrectionSettings corrections;
+    QCOMPARE(storage.value(QStringLiteral("rtcmUdpOutputEnabled")).toBool(), true);
+    QCOMPARE(storage.value(QStringLiteral("rtcmUdpOutputAddress")).toString(), QStringLiteral("192.0.2.10"));
+    QCOMPARE(storage.value(QStringLiteral("rtcmUdpOutputPort")).toInt(), 9001);
+    for (const auto& legacy : keys.first(3)) {
+        QVERIFY(!storage.contains(legacy));
+    }
 }
 
 void GPSCorrectionSettingsTest::_qmlRegistration()
@@ -114,10 +152,8 @@ void GPSCorrectionSettingsTest::_qmlRegistration()
     auto* settings = SettingsManager::instance();
     QVERIFY(settings->gpsCorrectionSettings());
     QCOMPARE(settings->property("gpsCorrectionSettings").value<QObject*>(), settings->gpsCorrectionSettings());
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(R"(
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> object = engine.create(QByteArray(R"(
         import QtQml
         import QGroundControl
         QtObject {
@@ -126,14 +162,10 @@ void GPSCorrectionSettingsTest::_qmlRegistration()
             readonly property SettingsFact sourceFact: corrections.correctionSource as SettingsFact
             readonly property bool sourceVisible: sourceFact.userVisible
             readonly property int automatic: GPSCorrectionSettings.Automatic
-            readonly property int all: GPSCorrectionSettings.All
+            readonly property int udp: GPSCorrectionSettings.Udp
         }
-    )",
-                      QUrl());
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
-    std::unique_ptr<QObject> object(component.create());
-    QVERIFY2(object, qPrintable(component.errorString()));
+    )"));
+    QVERIFY2(object, qPrintable(engine.lastError()));
     QCOMPARE(object->property("corrections").value<QObject*>(), settings->gpsCorrectionSettings());
     QCOMPARE(object->property("port").value<Fact*>(), settings->gpsCorrectionSettings()->rtcmUdpInputPort());
     QCOMPARE(object->property("sourceFact").value<SettingsFact*>(),
@@ -141,14 +173,14 @@ void GPSCorrectionSettingsTest::_qmlRegistration()
     QCOMPARE(object->property("sourceVisible").toBool(),
              settings->gpsCorrectionSettings()->correctionSource()->property("userVisible").toBool());
     QCOMPARE(object->property("automatic").toInt(), int(GPSCorrectionSettings::Automatic));
-    QCOMPARE(object->property("all").toInt(), int(GPSCorrectionSettings::All));
+    QCOMPARE(object->property("udp").toInt(), int(GPSCorrectionSettings::Udp));
 }
 
 void GPSCorrectionSettingsTest::_routingDefaults()
 {
     GPSCorrectionSettings corrections;
     QCOMPARE(corrections.correctionSource()->rawValue().toInt(), int(GPSCorrectionSettings::Automatic));
-    QCOMPARE(corrections.correctionSource()->enumValues(), QVariantList({0U, 1U, 2U, 3U, 4U}));
+    QCOMPARE(corrections.correctionSource()->enumValues(), QVariantList({0U, 1U, 2U, 3U}));
     QVERIFY(corrections.correctionSourceInstance()->rawValue().toString().isEmpty());
 }
 
@@ -162,7 +194,6 @@ void GPSCorrectionSettingsTest::_routingPanel_data()
     QTest::newRow("local") << int(GPSCorrectionSettings::LocalReceiver) << true << true << true;
     QTest::newRow("ntrip") << int(GPSCorrectionSettings::Ntrip) << true << true << true;
     QTest::newRow("udp") << int(GPSCorrectionSettings::Udp) << true << true << true;
-    QTest::newRow("all") << int(GPSCorrectionSettings::All) << false << true << true;
     QTest::newRow("source-hidden") << int(GPSCorrectionSettings::Udp) << true << false << true;
     QTest::newRow("instance-hidden") << int(GPSCorrectionSettings::Udp) << true << true << false;
     QTest::newRow("both-hidden") << int(GPSCorrectionSettings::Udp) << true << false << false;
@@ -191,19 +222,12 @@ void GPSCorrectionSettingsTest::_routingPanel()
     sourceFact->setUserVisible(sourceVisible);
     instanceFact->setUserVisible(instanceVisible);
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    engine.addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
-    QQmlComponent component(&engine);
-    component.setData(R"(
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> panel = engine.create(QByteArray(R"(
         import QGroundControl.AppSettings
         CorrectionRoutingSettings {}
-    )",
-                      QUrl());
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
-    std::unique_ptr<QObject> panel(component.create());
-    QVERIFY2(panel, qPrintable(component.errorString()));
+    )"));
+    QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* sourceControl = panel->findChild<QObject*>(QStringLiteral("correctionSource"));
     auto* streamControl = panel->findChild<QObject*>(QStringLiteral("correctionStream"));
     QVERIFY(sourceControl);
@@ -223,6 +247,7 @@ void GPSCorrectionSettingsTest::_routingPanel()
         QVERIFY(QMetaObject::invokeMethod(sourceControl, "activated", Q_ARG(int, source)));
         QCOMPARE(settings->correctionSourceInstance()->rawValue().toString(),
                  instanceVisible ? QString() : QStringLiteral("offline-stream"));
+        QVERIFY(!streamControl->property("visible").toBool());
     }
 }
 
@@ -240,35 +265,30 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     auto udpListener = corrections.registerSource(GPSCorrectionSource::Udp);
     const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
     const auto receivePeer = [&](const QString& instance, qint64 ageMs = 0) {
-        corrections.acceptIngress(udpListener.token().event(frame, GPSCorrectionFrame::monotonicNowMs() - ageMs, 1005,
-                                                            true, false, GPSCorrectionReason::None, instance));
+        corrections.acceptIngress(udpListener.event(frame, GPSCorrectionFrame::monotonicNowMs() - ageMs, 1005, true,
+                                                    false, GPSCorrectionReason::None, instance));
     };
     const qint64 expiredAgeMs = GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS + 1;
     // Expired observations expose peers without real-time waits.
     receivePeer(QStringLiteral("a"), expiredAgeMs);
     receivePeer(QStringLiteral("b"), expiredAgeMs);
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    engine.addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
-    QQmlComponent component(&engine);
-    component.setData(R"(
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> panel =
+        engine.create(QByteArray(R"(
         import QtQuick.Layouts
         import QGroundControl
         import QGroundControl.AppSettings
+        import QGroundControl.GPS
         ColumnLayout {
             id: root
             property GPSCorrectionManager corrections: QGroundControl.gpsManager.corrections
             CorrectionRoutingSettings { corrections: root.corrections }
             CorrectionDiagnostics { corrections: root.corrections }
         }
-    )",
-                      QUrl());
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
-    std::unique_ptr<QObject> panel(
-        component.createWithInitialProperties({{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}}));
-    QVERIFY2(panel, qPrintable(component.errorString()));
+    )"),
+                      {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}});
+    QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* panelItem = qobject_cast<QQuickItem*>(panel.get());
     QVERIFY(panelItem);
     const auto findItem = [panelItem](const QString& objectName) {
@@ -294,11 +314,17 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
         return row ? row->property("text").toString() : QString();
     };
     QTRY_COMPARE_WITH_TIMEOUT(comboBox->property("count").toInt(), 3, TestTimeout::mediumMs());
+    QVERIFY(streamControl->isVisible());
     QTRY_COMPARE_WITH_TIMEOUT(streamControl->property("currentText").toString(), waitingLabel, TestTimeout::mediumMs());
     QCOMPARE(streamControl->property("currentIndex").toInt(), 2);
     QCOMPARE(streamControl->property("currentValue").toString(), QStringLiteral("b"));
     QCOMPARE(selectionStatus->property("text").toString(), noSelection);
     QTRY_VERIFY_WITH_TIMEOUT(findItem(QStringLiteral("correctionStreamState_3_b")), TestTimeout::mediumMs());
+    QVERIFY(!findItem(QStringLiteral("correctionSourceMessages_2"))->isVisible());
+    auto* udpMessages = findItem(QStringLiteral("correctionSourceMessages_3"));
+    QVERIFY(udpMessages);
+    QTRY_VERIFY_WITH_TIMEOUT(udpMessages->isVisible(), TestTimeout::mediumMs());
+    QCOMPARE(udpMessages->property("messageCounts").value<QList<RTCMMessageCount>>().value(0).messageId, 1005);
     QVERIFY2(
         streamStatus(QStringLiteral("b"))
             .contains(QCoreApplication::translate("CorrectionDiagnostics", "Active; waiting for fresh corrections")),
@@ -381,12 +407,14 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     QTRY_COMPARE_WITH_TIMEOUT(streamControl->property("currentText").toString(),
                               QCoreApplication::translate("CorrectionRoutingSettings", "Automatic within source"),
                               TestTimeout::mediumMs());
+    QVERIFY(!streamControl->isVisible());
     QCOMPARE(selectionChanged.size(), 1);
 
     settings->correctionSourceInstance()->setRawValue(QStringLiteral("external"));
     QTRY_COMPARE_WITH_TIMEOUT(streamControl->property("currentValue").toString(), QStringLiteral("external"),
                               TestTimeout::mediumMs());
     QTRY_COMPARE_WITH_TIMEOUT(comboBox->property("count").toInt(), 2, TestTimeout::mediumMs());
+    QVERIFY(streamControl->isVisible());
     QCOMPARE(streamControl->property("currentText").toString(),
              QCoreApplication::translate("CorrectionRoutingSettings", "Unavailable: %1").arg("external"));
 
@@ -405,6 +433,20 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     QCOMPARE(streamControl->property("currentValue").toString(), QStringLiteral("z"));
     QCOMPARE(settings->correctionSourceInstance()->rawValue().toString(), QStringLiteral("z"));
     QCOMPARE(selectionChanged.size(), 3);
+
+    QVERIFY(comboBox->setProperty("currentIndex", 0));
+    QVERIFY(QMetaObject::invokeMethod(comboBox, "activated", Q_ARG(int, 0)));
+    QVERIFY(settings->correctionSourceInstance()->rawValue().toString().isEmpty());
+    QTRY_COMPARE_WITH_TIMEOUT(comboBox->property("count").toInt(), 4, TestTimeout::mediumMs());
+    QVERIFY(streamControl->isVisible());
+    udpListener.reset();
+    QTRY_VERIFY_WITH_TIMEOUT(!streamControl->isVisible(), TestTimeout::mediumMs());
+    udpListener = corrections.registerSource(GPSCorrectionSource::Udp);
+    receivePeer(QStringLiteral("a"));
+    QTRY_COMPARE_WITH_TIMEOUT(comboBox->property("count").toInt(), 2, TestTimeout::mediumMs());
+    QVERIFY(!streamControl->isVisible());
+    receivePeer(QStringLiteral("b"));
+    QTRY_VERIFY_WITH_TIMEOUT(streamControl->isVisible(), TestTimeout::mediumMs());
 }
 
 UT_REGISTER_TEST(GPSCorrectionSettingsTest, TestLabel::Unit)

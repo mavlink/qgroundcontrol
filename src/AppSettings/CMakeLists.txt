@@ -62,13 +62,14 @@ else()
         ADSBServerSettings.qml
         CommLinksSettings.qml
         FlyViewSettings.qml
+        GNSSReceiverSettings.qml
         GeneralSettings.qml
         LoggingSettings.qml
         MapsSettings.qml
-        NTRIPSettings.qml
         PlanViewSettings.qml
         PX4LogTransferSettings.qml
         RemoteIDSettings.qml
+        RTKCorrectionsSettings.qml
         SettingsPagesModel.qml
         TelemetrySettings.qml
         VideoSettings.qml
@@ -122,8 +123,12 @@ qt_add_qml_module(
               BluetoothSettings.qml
               CorrectionRoutingSettings.qml
               CorrectionDiagnostics.qml
+              CorrectionsStatus.qml
               DebugWindow.qml
               GcsPositionStatus.qml
+              GPSReceiverSerialPort.qml
+              GPSReceiverSettings.qml
+              GPSReceiverStatus.qml
               HelpSettings.qml
               LinkConfigurationManager.qml
               LogReplaySettings.qml
@@ -133,7 +138,6 @@ qt_add_qml_module(
               SigningKeyManager.qml
               MockLink.qml
               MockLinkSettings.qml
-              NmeaGpsSettings.qml
               NtripConnectionSettings.qml
               NtripMountpointBrowser.qml
               NtripServerSettings.qml
@@ -144,7 +148,6 @@ qt_add_qml_module(
               PX4LogFileManager.qml
               PX4LogUploadSettings.qml
               QmlTest.qml
-              RemoteIDGpsLocation.qml
               SerialSettings.qml
               SettingsPage.qml
               TcpSettings.qml

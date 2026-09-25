@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <chrono>
 #include <cstdint>
 #include <limits>
@@ -8,9 +7,9 @@
 
 #include <QtCore/QMetaType>
 
-#include "../GPSConstellation.h"
 #include "GPSEllipsoidPosition.h"
-#include "GPSSatelliteUsageReport.h"
+#include "GPSFixQuality.h"
+#include "MonotonicClock.h"
 
 struct GPSIntegrityReport
 {
@@ -34,6 +33,15 @@ struct GPSIntegrityReport
         NotUsed,
         Used
     };
+    enum class CorrectionProtocol
+    {
+        Unknown,
+        RTCM3,
+        SPARTN,
+        HAS,
+        PMP,
+        QZSSL6,
+    };
 
     static constexpr JammingState jammingStateFromValue(int value)
     {
@@ -56,68 +64,70 @@ struct GPSIntegrityReport
                    : CorrectionUse::Unknown;
     }
 
-    // Receipt of this diagnostic update, not a freshness timestamp for every retained field.
+    struct Jamming
+    {
+        uint64_t timestampUs = 0;
+        JammingState state = JammingState::Unknown;
+    };
+
+    struct Spoofing
+    {
+        uint64_t timestampUs = 0;
+        SpoofingState state = SpoofingState::Unknown;
+    };
+
+    struct RF
+    {
+        uint64_t timestampUs = 0;
+        std::optional<int32_t> noisePerMillisecond = std::nullopt;
+        std::optional<uint16_t> automaticGainControl = std::nullopt;
+        std::optional<int32_t> jammingIndicator = std::nullopt;
+    };
+
+    struct Corrections
+    {
+        uint64_t timestampUs = 0;
+        CorrectionUse use = CorrectionUse::Unknown;
+        std::optional<bool> crcFailed = std::nullopt;
+        CorrectionProtocol protocol = CorrectionProtocol::Unknown;
+    };
+
+    // Receipt of this update; the retained diagnostic groups have independent receipts.
     uint64_t timestampUs = 0;
-    uint64_t jammingTimestampUs = 0;
-    uint64_t spoofingTimestampUs = 0;
-    uint64_t rfTimestampUs = 0;
-    uint64_t correctionTimestampUs = 0;
-    JammingState jamming = JammingState::Unknown;
-    SpoofingState spoofing = SpoofingState::Unknown;
-    CorrectionUse correctionUse = CorrectionUse::Unknown;
-    std::optional<int32_t> noisePerMillisecond = std::nullopt;
-    std::optional<uint16_t> automaticGainControl = std::nullopt;
-    std::optional<int32_t> jammingIndicator = std::nullopt;
-    std::optional<bool> correctionCrcFailed = std::nullopt;
+    Jamming jamming{};
+    Spoofing spoofing{};
+    RF rf{};
+    Corrections corrections{};
+
+    /// Receipt age at which a diagnostic group reverts to unknown.
+    static constexpr std::chrono::microseconds DIAGNOSTIC_MAX_AGE = std::chrono::seconds(5);
 
     /// Project independent diagnostic groups at the consumer's monotonic time.
-    GPSIntegrityReport freshAt(uint64_t nowUs, std::chrono::microseconds maximumAge = std::chrono::seconds(5)) const
+    GPSIntegrityReport freshAt(uint64_t nowUs, std::chrono::microseconds maximumAge = DIAGNOSTIC_MAX_AGE) const
     {
         auto result = *this;
         const auto fresh = [nowUs, maximumAge](uint64_t receipt) {
-            return receipt && receipt <= nowUs && maximumAge.count() > 0 &&
-                   nowUs - receipt < static_cast<uint64_t>(maximumAge.count());
+            return MonotonicClock::remaining(receipt, nowUs, maximumAge) > std::chrono::microseconds::zero();
         };
-        if (!fresh(jammingTimestampUs)) {
-            result.jamming = JammingState::Unknown;
+        if (!fresh(jamming.timestampUs)) {
+            result.jamming.state = JammingState::Unknown;
         }
-        if (!fresh(spoofingTimestampUs)) {
-            result.spoofing = SpoofingState::Unknown;
+        if (!fresh(spoofing.timestampUs)) {
+            result.spoofing.state = SpoofingState::Unknown;
         }
-        if (!fresh(rfTimestampUs)) {
-            result.noisePerMillisecond.reset();
-            result.automaticGainControl.reset();
-            result.jammingIndicator.reset();
+        if (!fresh(rf.timestampUs)) {
+            result.rf = RF{.timestampUs = rf.timestampUs};
         }
-        if (!fresh(correctionTimestampUs)) {
-            result.correctionUse = CorrectionUse::Unknown;
-            result.correctionCrcFailed.reset();
+        if (!fresh(corrections.timestampUs)) {
+            result.corrections = Corrections{.timestampUs = corrections.timestampUs};
         }
         return result;
     }
 };
 
-struct GPSPositionReport
+struct GPSNavigationValues
 {
-    enum class FixType
-    {
-        Unknown,
-        NoFix,
-        Fix2D,
-        Fix3D,
-        Differential,
-        RTKFloat,
-        RTKFixed,
-        Extrapolated = 8
-    };
-
-    static constexpr FixType fixTypeFromValue(int value)
-    {
-        return (value >= static_cast<int>(FixType::Unknown) && value <= static_cast<int>(FixType::RTKFixed)) ||
-                       value == static_cast<int>(FixType::Extrapolated)
-                   ? static_cast<FixType>(value)
-                   : FixType::Unknown;
-    }
+    using FixType = GPSFixQuality;
 
     uint64_t timestampUs = 0;
     uint64_t utcTimeUs = 0;
@@ -136,31 +146,26 @@ struct GPSPositionReport
     float headingRadians = std::numeric_limits<float>::quiet_NaN();
     float headingAccuracyRadians = std::numeric_limits<float>::quiet_NaN();
     std::optional<uint8_t> satellitesUsed = std::nullopt;
-    GPSIntegrityReport integrity;
+};
+
+struct GPSPositionReport
+{
+    using FixType = GPSNavigationValues::FixType;
+
+    GPSNavigationValues navigation{};
+    GPSIntegrityReport integrity{};
 };
 Q_DECLARE_METATYPE(GPSPositionReport)
 Q_DECLARE_METATYPE(GPSPositionReport::FixType)
 
 struct GPSSatelliteReport
 {
-    struct Satellite
-    {
-        uint16_t id = 0;
-        uint16_t prn = 0;
-        std::optional<bool> used = std::nullopt;
-        std::optional<float> elevationDegrees = std::nullopt;
-        std::optional<float> azimuthDegrees = std::nullopt;
-        std::optional<uint8_t> signalStrength = std::nullopt;
-        GPSConstellation constellation = GPSConstellation::Unknown;
-        uint64_t inViewTimestampUs = 0;
-        uint64_t inUseTimestampUs = 0;
-    };
-
-    static constexpr uint16_t MAX_SATELLITES = 128;
-    // Latest accepted view receipt. Zero means no view coverage, not an explicitly empty view.
+    // Latest accepted view receipt. Zero plus absent inView means no view coverage.
     uint64_t timestampUs = 0;
-    uint16_t count = 0;
-    std::array<Satellite, MAX_SATELLITES> satellites{};
+    std::optional<int> inView = std::nullopt;
+    std::optional<int> used = std::nullopt;
+
+    bool operator==(const GPSSatelliteReport&) const = default;
 };
 Q_DECLARE_METATYPE(GPSSatelliteReport)
 
@@ -172,3 +177,4 @@ struct GPSSurveyReport
     bool valid = false;
     bool active = false;
 };
+Q_DECLARE_METATYPE(GPSSurveyReport)

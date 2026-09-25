@@ -22,12 +22,15 @@ void GPSMavlinkOutputTest::_admissionFollowsLinkLifetime()
     auto* vehicle = createMockLinkAndWaitForVehicle();
     QVERIFY(vehicle);
     QTRY_VERIFY_WITH_TIMEOUT(vehicle->isInitialConnectComplete(), TestTimeout::mediumMs());
-    GPSMavlinkOutput output;
-    const auto destinations = output.outputs();
+    auto output = createGpsMavlinkOutputProvider();
+    const auto copiedOutput = output;
+    const auto destinations = copiedOutput();
     QCOMPARE(destinations.size(), 1);
     QVERIFY(!destinations.first().id.isEmpty());
     QVERIFY(destinations.first().session > 0);
-    QCOMPARE(output.outputs().first().session, destinations.first().session);
+    QCOMPARE(output().first().session, destinations.first().session);
+    // An unchanged link topology reuses the published outputs instead of rebuilding them per frame.
+    QVERIFY(output().isSharedWith(destinations));
 
     const GpsRtcmPacket packet{0, QByteArray(RTCMMavlinkPacket::kFragmentLen, 'R')};
     QVERIFY(destinations.first().submit(packet));
@@ -37,17 +40,19 @@ void GPSMavlinkOutputTest::_admissionFollowsLinkLifetime()
     verifyExpectedLogMessage();
 
     disconnectAllLinks();
-    QVERIFY(output.outputs().isEmpty());
+    QVERIFY(output().isEmpty());
     QVERIFY(!destinations.first().submit(packet));
 
     vehicle = createMockLinkAndWaitForVehicle(QStringLiteral("Replacement"));
     QVERIFY(vehicle);
     QTRY_VERIFY_WITH_TIMEOUT(vehicle->isInitialConnectComplete(), TestTimeout::mediumMs());
-    const auto replacement = output.outputs();
+    const auto replacement = output();
     QCOMPARE(replacement.size(), 1);
     QVERIFY(replacement.first().session != destinations.first().session);
     QVERIFY(replacement.first().id != destinations.first().id);
     QVERIFY(!destinations.first().submit(packet));
+    output = {};
+    QCOMPARE(copiedOutput().first().session, replacement.first().session);
 }
 
 void GPSMavlinkOutputTest::_primarySwitchPreservesIdentity()
@@ -73,17 +78,17 @@ void GPSMavlinkOutputTest::_primarySwitchPreservesIdentity()
     QTRY_VERIFY_WITH_TIMEOUT(links->containsLink(first.get()) && links->containsLink(second.get()),
                              TestTimeout::mediumMs());
     QTRY_VERIFY_WITH_TIMEOUT(vehicle->isInitialConnectComplete(), TestTimeout::mediumMs());
-    GPSMavlinkOutput output;
+    const auto output = createGpsMavlinkOutputProvider();
     links->setPrimaryLinkByName(first->linkConfiguration()->name());
-    const auto original = output.outputs();
+    const auto original = output();
     QCOMPARE(original.size(), 1);
     links->setPrimaryLinkByName(second->linkConfiguration()->name());
-    const auto alternate = output.outputs();
+    const auto alternate = output();
     QCOMPARE(alternate.size(), 1);
     QVERIFY(alternate.first().id != original.first().id);
     QVERIFY(first->isConnected());
     links->setPrimaryLinkByName(first->linkConfiguration()->name());
-    const auto restored = output.outputs();
+    const auto restored = output();
     QCOMPARE(restored.size(), 1);
     QCOMPARE(restored.first().id, original.first().id);
     QCOMPARE(restored.first().session, original.first().session);
@@ -130,11 +135,11 @@ void GPSMavlinkOutputTest::_replayExcludedFromLiveAdmissions()
     replayLink->pause();
     QTRY_VERIFY_WITH_TIMEOUT(!replayLink->isPlaying(), TestTimeout::mediumMs());
 
-    GPSMavlinkOutput output;
+    const auto output = createGpsMavlinkOutputProvider();
     RTCMMavlink sender;
-    sender.setOutputProvider([&output]() { return output.outputs(); });
+    sender.setOutputProvider(output);
     const QByteArray payload(360, 'R');
-    QVERIFY(output.outputs().isEmpty());
+    QVERIFY(output().isEmpty());
     QVERIFY(sender.submitToOutputs(payload).isEmpty());
     QCOMPARE(sender.totalBytesSubmitted(), 0ULL);
 
@@ -153,7 +158,7 @@ void GPSMavlinkOutputTest::_replayExcludedFromLiveAdmissions()
     QCOMPARE(vehicles->vehicles()->count(), 2);
     QVERIFY(replay->isConnected());
     QCOMPARE(liveVehicle->vehicleLinkManager()->primaryLink().lock(), live);
-    const auto destinations = output.outputs();
+    const auto destinations = output();
     QCOMPARE(destinations.size(), 1);
     const auto admissions = sender.submitToOutputs(payload);
     QCOMPARE(admissions.size(), 1);
@@ -165,7 +170,7 @@ void GPSMavlinkOutputTest::_replayExcludedFromLiveAdmissions()
 
     replay->disconnect();
     QTRY_COMPARE_WITH_TIMEOUT(vehicles->vehicles()->count(), 1, TestTimeout::mediumMs());
-    const auto liveOnly = output.outputs();
+    const auto liveOnly = output();
     QCOMPARE(liveOnly.size(), 1);
     QCOMPARE(liveOnly.first().id, destinations.first().id);
     QCOMPARE(liveOnly.first().session, destinations.first().session);

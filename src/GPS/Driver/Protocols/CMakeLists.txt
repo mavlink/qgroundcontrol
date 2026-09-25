@@ -18,96 +18,77 @@ if(NOT TARGET QGCGPSTransport)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Transport" "${CMAKE_CURRENT_BINARY_DIR}/Transport")
 endif()
 if(NOT TARGET QGCGPSNMEAProtocol)
-    add_subdirectory(NMEA)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../NMEA" "${CMAKE_CURRENT_BINARY_DIR}/NMEA")
 endif()
 if(NOT TARGET QGCGPSRTCM)
-    add_subdirectory(RTCM)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../RTCM" "${CMAKE_CURRENT_BINARY_DIR}/RTCM")
 endif()
 if(NOT TARGET QGCGPSReceiver)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Receiver" "${CMAKE_CURRENT_BINARY_DIR}/Receiver")
 endif()
 endblock()
 add_subdirectory(Contracts)
-if(NOT QGC_GPS_ENABLE_UBX
-   AND NOT QGC_GPS_ENABLE_ASHTECH
-   AND NOT QGC_GPS_ENABLE_SBF
-   AND NOT QGC_GPS_ENABLE_FEMTO
-   AND NOT QGC_GPS_ENABLE_UNICORE
-   AND NOT QGC_GPS_ENABLE_QUECTEL
-   AND NOT QGC_GPS_ENABLE_PASSIVE
-)
-    message(FATAL_ERROR "At least one GPS receiver family must be enabled")
-endif()
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Geo/GeographicLib.cmake")
 
-qt_add_library(
-    QGCGPSNativeCommon
-    STATIC
-    GPSProtocol.cc
+set(_protocol_headers
     GPSProtocol.h
     GPSProtocolTime.h
-    GPSBaseProtocol.h
-    GPSAsciiProtocol.cc
     GPSAsciiProtocol.h
+    GPSConfigurationSequence.h
+    GPSSurveyClock.h
+    GPSNMEAReport.h
+    Ashtech/AshtechProtocol.h
+    Femto/FemtoMessages.h
+    Femto/FemtoProtocol.h
+    Quectel/QuectelProtocol.h
+    SBF/SBFMessages.h
+    SBF/SBFProtocol.h
+    UBX/UBXConfigurationValues.h
+    UBX/UBXFrameDecoder.h
+    UBX/UBXMessageCodec.h
+    UBX/UBXMessageSchema.h
+    UBX/UBXMessages.h
+    UBX/UBXNavigationEpoch.h
+    UBX/UBXProtocol.h
+    UBX/UBXReceiverController.h
+    UBX/UBXReceiverProfile.h
+    Unicore/UnicoreProtocol.h
 )
-target_sources(
-    QGCGPSNativeCommon
-    PUBLIC FILE_SET
-           HEADERS
-           FILES
-           GPSProtocol.h
-           GPSProtocolTime.h
-           GPSBaseProtocol.h
-           GPSAsciiProtocol.h
-           NMEA/GPSNMEAReport.h
+qt_add_library(
+    QGCGPSProtocols
+    STATIC
+    ${_protocol_headers}
+    GPSProtocol.cc
+    GPSAsciiProtocol.cc
+    Ashtech/AshtechConfiguration.cc
+    Ashtech/AshtechDecoder.cc
+    Femto/FemtoConfiguration.cc
+    Femto/FemtoDecoder.cc
+    Quectel/QuectelCodec_p.h
+    Quectel/QuectelDecoder.cc
+    Quectel/QuectelProtocol.cc
+    SBF/SBFConfiguration.cc
+    SBF/SBFDecoder.cc
+    UBX/UBXConfiguration.cc
+    UBX/UBXConfiguration_p.h
+    UBX/UBXDecoder.cc
+    UBX/UBXLegacyConfiguration.cc
+    UBX/UBXProtocol.cc
+    Unicore/UnicoreProtocol.cc
 )
+add_library(QGC::GPSProtocols ALIAS QGCGPSProtocols)
+target_sources(QGCGPSProtocols PUBLIC FILE_SET HEADERS FILES ${_protocol_headers})
 set_target_properties(
-    QGCGPSNativeCommon
+    QGCGPSProtocols
     PROPERTIES AUTOMOC OFF
                AUTOUIC OFF
                AUTORCC OFF
 )
-target_include_directories(QGCGPSNativeCommon PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-                                                     "${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Math"
+target_include_directories(QGCGPSProtocols PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+                                                  "${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Math"
 )
 target_link_libraries(
-    QGCGPSNativeCommon
-    PUBLIC QGCWire QGCClock QGCGPSNativeContracts QGCGPSNMEAProtocol QGCGPSRTCM
-    PRIVATE GeographicLib::GeographicLib
+    QGCGPSProtocols
+    PUBLIC QGCWire QGCClock QGCGPSProtocolContracts QGCGPSNMEAProtocol QGCGPSRTCM
+    PRIVATE GeographicLib::GeographicLib QGCLoggingCategory
 )
-add_library(QGCGPSNative INTERFACE)
-add_library(QGC::GPSNative ALIAS QGCGPSNative)
-target_link_libraries(QGCGPSNative INTERFACE QGCGPSNativeCommon)
-target_sources(QGCGPSNative INTERFACE FILE_SET HEADERS FILES GPSProtocol.h GPSProtocolTime.h GPSBaseProtocol.h)
-set(_native_targets QGCGPSNativeContracts QGCGPSNativeCommon)
-foreach(
-    family
-    UBX
-    Ashtech
-    SBF
-    Femto
-    Unicore
-    Quectel
-    Passive
-)
-    string(TOUPPER "${family}" option_name)
-    if(QGC_GPS_ENABLE_${option_name})
-        add_subdirectory(${family})
-        target_sources(QGCGPS${family} PUBLIC FILE_SET HEADERS BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}" FILES
-                                              "${family}/GPSDriver${family}.h"
-        )
-        get_target_property(family_sources QGCGPS${family} SOURCES)
-        foreach(source IN LISTS family_sources)
-            if(source MATCHES "\\.h$"
-               AND NOT source MATCHES "(Private|_p)\\.h$"
-               AND NOT IS_ABSOLUTE "${source}"
-            )
-                target_sources(QGCGPS${family} PUBLIC FILE_SET HEADERS FILES "${family}/${source}")
-            endif()
-        endforeach()
-        target_link_libraries(QGCGPSNative INTERFACE QGCGPS${family})
-        target_sources(QGCGPSNative INTERFACE FILE_SET HEADERS FILES "${family}/GPSDriver${family}.h")
-        list(APPEND _native_targets QGCGPS${family})
-    endif()
-endforeach()
-set_property(TARGET QGCGPSNative PROPERTY QGC_GPS_NATIVE_TARGETS "${_native_targets}")

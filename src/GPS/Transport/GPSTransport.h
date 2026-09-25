@@ -8,7 +8,7 @@
 
 #include "GPSTransportResult.h"
 
-/// Byte link the GPS driver reads and writes through (serial, TCP, ...).
+/// Byte link the GPS driver reads and writes through.
 /// Implemented by the owner of the physical connection and consumed by GPSDriver,
 /// keeping the native protocol drivers decoupled from the concrete transport.
 /// Construct, use, and destroy on one owner thread. Blocking socket waits dispatch
@@ -30,29 +30,27 @@ public:
     /// Nonzero when the link cannot follow baud-rate changes (for example, a serial bridge).
     virtual unsigned fixedBaudrate() const { return 0; }
 
+    /// Line rate that TCP and UDP links report. Drivers still program the receiver's serial port with it (UBX CFG-PRT
+    /// sets UART1 to it), so the serial side of a network bridge and its receiver must run at this rate.
+    static constexpr unsigned BRIDGE_BAUDRATE = 115200;
+
     /// A nonpositive timeout polls immediately available input. Failures never carry usable stream bytes.
     virtual GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) = 0;
 
     virtual std::chrono::milliseconds configurationWriteTimeout() const;
 
-    /// Configuration-only entry point: honor the command deadline capped by the transport limit.
-    /// Configuration writes preserve the same progress evidence as correction writes.
-    /// Android serial explicitly overrides this with its synchronous backend; Unsupported never falls back.
-    virtual GPSWriteResult writeConfiguration(const uint8_t* buffer, int length, QDeadlineTimer deadline);
-
-    /// Counts describe transport progress, never receiver acknowledgement. Implementations must honor the deadline.
+    /// Receiver configuration write under the command deadline, capped by configurationWriteTimeout().
+    /// Counts describe transport progress, never receiver acknowledgement.
     /// A failed operation that accepted bytes retires the connection; open a new session before writing again.
-    /// An unsupported implementation rejects without invoking an unbounded writer.
-    virtual GPSWriteResult writeBounded(const uint8_t* buffer, int length, QDeadlineTimer deadline);
-    /// Runtime correction allowance; serial links account for the current wire speed.
-    virtual std::chrono::milliseconds correctionWriteTimeout(int length) const;
-    static std::chrono::milliseconds serialCorrectionWriteTimeout(int length, qint64 baud);
-
+    GPSWriteResult write(const uint8_t* buffer, int length, QDeadlineTimer deadline);
     /// Set the link baud rate. Returns true on success.
     virtual bool setBaudrate(unsigned baudrate) = 0;
 
 protected:
     static constexpr int kCancellationPollMs = 50;
+
+    /// Receives a non-empty valid buffer and an unexpired, capped deadline that implementations must honor.
+    virtual GPSWriteResult writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline) = 0;
 
 private:
     const std::atomic_bool& _requestStop;

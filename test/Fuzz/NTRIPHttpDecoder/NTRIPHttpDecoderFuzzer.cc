@@ -8,7 +8,7 @@
 #include <QtCore/QByteArrayView>
 #include <QtCore/QDateTime>
 
-#include "NTRIPHttpDecoder.h"
+#include "NTRIPHttpCodec.h"
 
 namespace {
 constexpr size_t MAX_INPUT_BYTES = 65536;

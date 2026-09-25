@@ -1,57 +1,26 @@
-/****************************************************************************
- *
- *   Copyright (c) 2012-2018 PX4 Development Team. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name PX4 nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- ****************************************************************************/
-
 #include "GPSProtocol.h"
 
+#include <cstdarg>
 #include <math.h>
 #include <stdlib.h>
 #include <thread>
 #include <time.h>
 
+#include <QtCore/QScopeGuard>
+
 #include "GPSProtocolTime.h"
+#include "GPSRawAckMatcher.h"
+#include "GPSReceiverCapabilities.h"
 #include "GPSReceiverConfig.h"
 #include "MonotonicClock.h"
+#include "QGCLoggingCategory.h"
 #include <GeographicLib/Geocentric.hpp>
 
-/**
- * @file GPSProtocol.cc
- *
- * @author Thomas Gubler <thomasgubler@student.ethz.ch>
- * @author Julian Oes <julian@oes.ch>
- */
+QGC_LOGGING_CATEGORY(GPSProtocolLog, "GPS.Driver.Protocols")
 
-GPSProtocol::GPSProtocol(GPSProtocolIO io)
-    : _io(std::move(io))
+GPSProtocol::GPSProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
+    : _satellites(satelliteInfoEnabled ? &_satelliteStorage : nullptr)
+    , _io(std::move(io))
 {
     if (!_io.nowUs) {
         _io.nowUs = MonotonicClock::nowUs;
@@ -64,27 +33,36 @@ GPSProtocol::GPSProtocol(GPSProtocolIO io)
     }
 }
 
-bool GPSProtocol::validateConfiguration(const GPSConfig& config, bool allowReceiverAveraging,
-                                        bool supportsPersistentChanges) const
+const QLoggingCategory& GPSProtocol::logCategory() const
 {
-    if (config.allowPersistentChanges && !supportsPersistentChanges) {
-        log(GPSProtocolLogLevel::Warning, "Persistent configuration is not supported by this driver");
-        return false;
+    return GPSProtocolLog();
+}
+
+void GPSProtocol::log(GPSProtocolLogLevel level, const char* format, ...) const
+{
+    if (!_io.log) {
+        return;
     }
-    if (config.output_mode != OutputMode::GPS && config.output_mode != OutputMode::RTCM) {
-        log(GPSProtocolLogLevel::Warning, "Invalid receiver output mode");
+    va_list arguments;
+    va_start(arguments, format);
+    const QString message = QString::vasprintf(format, arguments);
+    va_end(arguments);
+    _io.log(logCategory(), level, message);
+}
+
+bool GPSProtocol::validateConfiguration(const GPSConfig& config, ConfigurationSupport support) const
+{
+    const GPSReceiverConfig physical{.role = GPSReceiverConfig::Role::RTKBase,
+                                     .base = config.base,
+                                     .allowPersistentChanges = config.allowPersistentChanges};
+    const GPSReceiverCapabilities supported{.surveyIn = true,
+                                            .receiverAveraging = support.receiverAveraging,
+                                            .persistentConfiguration = support.persistentChanges,
+                                            .compactObservations = support.compactObservations};
+    const auto error = gpsValidateReceiverPhysicalConfig(physical, supported);
+    if (error != GPSReceiverConfigError::None) {
+        log(GPSProtocolLogLevel::Warning, "Invalid receiver physical configuration (%d)", static_cast<int>(error));
         return false;
-    }
-    if (config.output_mode == OutputMode::RTCM) {
-        if (!allowReceiverAveraging && config.base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
-            log(GPSProtocolLogLevel::Warning, "Receiver-managed averaging is not supported by this driver");
-            return false;
-        }
-        const auto error = gpsValidateBaseStationConfig(config.base);
-        if (error != GPSReceiverConfigError::None) {
-            log(GPSProtocolLogLevel::Warning, "Invalid base station configuration (%d)", static_cast<int>(error));
-            return false;
-        }
     }
     return true;
 }
@@ -111,7 +89,7 @@ uint64_t GPSProtocol::timeFromUtc(tm& utc, int32_t nsec)
 {
     const time_t epoch = gpsTimeToEpoch(utc);
 
-    if (epoch > GPS_EPOCH_SECS) {
+    if (epoch > GPS_UTC_PLAUSIBILITY_FLOOR_SECS) {
         return static_cast<uint64_t>(epoch) * 1000000ULL + nsec / 1000;
     }
 
@@ -123,59 +101,108 @@ int GPSProtocol::readAndDecode(unsigned timeout)
     uint8_t buffer[GPS_READ_BUFFER_SIZE];
     const int count = read(buffer, sizeof(buffer), static_cast<int>(timeout));
     if (count < 0) {
-        return count;
+        return 0;
     }
-    const int updates = consume({buffer, static_cast<size_t>(count)});
-    return ioError() ? ioError() : updates;
+    return consume({buffer, static_cast<size_t>(count)});
 }
 
 bool GPSProtocol::writeCommand(GPSConfigurationStep step, std::span<const uint8_t> bytes)
 {
     const Operation operation(*this, static_cast<unsigned>(step.timeout.count()));
-    beginCommandWrite(std::move(step.command), step.affectedSettings, step.required);
-    return write(bytes.data(), static_cast<int>(bytes.size())) == static_cast<int>(bytes.size());
+    beginCommandWrite(std::move(step));
+    return write(bytes.data(), static_cast<int>(bytes.size()));
 }
 
-GPSCommandResult GPSProtocol::awaitCommand(GPSConfigurationStep step, const std::function<GPSCommandOutcome()>& reply)
-{
-    const auto timeout = static_cast<unsigned>(step.timeout.count());
-    return awaitCommand(std::move(step), [this, timeout] { readAndDecode(timeout); }, reply);
-}
-
-GPSCommandResult GPSProtocol::awaitCommand(GPSConfigurationStep step, const std::function<void()>& pump,
-                                           const std::function<GPSCommandOutcome()>& reply)
+GPSCommandResult GPSProtocol::awaitCommand(const std::function<GPSCommandOutcome()>& reply)
 {
     if (_commandCompleted) {
         return _commandWrite;
     }
-    const auto timeout = static_cast<unsigned>(step.timeout.count());
-    const Operation operation(*this, timeout);
-    _operationDeadline.untilUs =
-        std::min(_operationDeadline.untilUs, _commandWrite.evidence.startedAtUs + uint64_t(timeout) * 1000);
-    _commandWrite.evidence.command = std::move(step.command);
-    _commandWrite.evidence.required = step.required;
-    _commandWrite.affectedSettings = step.affectedSettings;
+    const Operation operation(*this, remainingMilliseconds(_commandDeadline.untilUs));
+    _operationDeadline.untilUs = std::min(_operationDeadline.untilUs, _commandDeadline.untilUs);
     const auto outcome = GPSCommandTransaction::await(
-        _operationDeadline.untilUs, [this] { return nowUs(); }, reply, pump,
-        [this] {
-            return ioError() == ReadCancelled ? GPSCommandOutcome::Cancelled
-                   : ioError()                ? GPSCommandOutcome::TransportError
-                                              : GPSCommandOutcome::Pending;
-        });
+        _operationDeadline.untilUs, [this] { return nowUs(); }, reply,
+        [this] { readAndDecode(remainingMilliseconds(_commandDeadline.untilUs)); },
+        [this] { return ioCommandOutcome(); });
     return completeCommand(outcome);
 }
 
-void GPSProtocol::beginCommandWrite(std::string command, GPSReceiverSettingSet settings, bool required)
+GPSCommandResult GPSProtocol::transact(GPSConfigurationStep step, std::string_view wire)
 {
-    if (ioError()) {
+    const auto clearReply = qScopeGuard([this] {
+        _reply.reset();
+        _rawReply = nullptr;
+        _replyMatcher = {};
+    });
+    if (hasIOError()) {
+        GPSCommandResult failed;
+        failed.evidence.command = std::move(step.command);
+        failed.evidence.required = step.required;
+        failed.evidence.outcome = ioCommandOutcome();
+        return failed;
+    }
+    _reply = GPSCommandOutcome::Pending;
+    if (!writeCommand(std::move(step), {reinterpret_cast<const uint8_t*>(wire.data()), wire.size()})) {
+        return completeCommand(hasIOError() ? ioCommandOutcome() : GPSCommandOutcome::TransportError);
+    }
+    return awaitCommand([this] { return _reply.value_or(GPSCommandOutcome::Pending); });
+}
+
+GPSCommandResult GPSProtocol::transact(GPSConfigurationStep step, std::string_view wire, GPSRawAckMatcher& reply)
+{
+    _rawReply = &reply;
+    return transact(std::move(step), wire);
+}
+
+GPSCommandResult GPSProtocol::transact(GPSConfigurationStep step, std::string_view wire, GPSReplyMatcher reply)
+{
+    _replyMatcher = std::move(reply);
+    return transact(std::move(step), wire);
+}
+
+GPSConfigurationSequence::Result GPSProtocol::runSequence(const GPSConfigurationSequence& sequence)
+{
+    for (size_t index = 0; index < sequence.steps.size(); ++index) {
+        if (const auto* command = std::get_if<GPSConfigurationSequence::Command>(&sequence.steps[index])) {
+            GPSCommandResult result;
+            for (unsigned attempt = 0; attempt < std::max(command->attempts, 1U); ++attempt) {
+                if (const auto* raw = std::get_if<GPSConfigurationSequence::RawReply>(&command->reply)) {
+                    GPSRawAckMatcher matcher(raw->accepted, raw->rejected);
+                    result = transact(command->step, command->wire, matcher);
+                } else {
+                    result = transact(command->step, command->wire, std::get<GPSReplyMatcher>(command->reply));
+                }
+                if (result.succeeded() || hasIOError()) {
+                    break;
+                }
+            }
+            if (!result.succeeded() && (command->step.required || hasIOError())) {
+                return {.failedStep = index, .failedLabel = command->step.command, .outcome = result.evidence.outcome};
+            }
+            continue;
+        }
+        const auto& custom = std::get<GPSConfigurationSequence::Custom>(sequence.steps[index]);
+        if ((!custom.run() && custom.required) || hasIOError()) {
+            return {.failedStep = index, .failedLabel = custom.label, .outcome = ioCommandOutcome()};
+        }
+    }
+    return {};
+}
+
+void GPSProtocol::beginCommandWrite(GPSConfigurationStep step)
+{
+    if (hasIOError()) {
         return;
     }
     failCommandWrite(GPSCommandOutcome::Written);
     _commandWrite = {};
     _commandWrite.evidence.startedAtUs = nowUs();
-    _commandWrite.evidence.command = std::move(command);
-    _commandWrite.affectedSettings = settings;
-    _commandWrite.evidence.required = required;
+    _commandWrite.evidence.command = std::move(step.command);
+    _commandWrite.affectedSettings = step.affectedSettings;
+    _commandWrite.evidence.required = step.required;
+    _commandDeadline.untilUs =
+        std::min(_operationDeadline.untilUs,
+                 _commandWrite.evidence.startedAtUs + uint64_t(std::max<int64_t>(step.timeout.count(), 0)) * 1000);
     _commandCompleted = false;
 }
 
@@ -201,16 +228,16 @@ int GPSProtocol::receiveDecoded(unsigned timeout)
     const uint64_t deadline = _operationDeadline.untilUs;
     do {
         const int handled = readAndDecode(static_cast<unsigned>(remainingMilliseconds(deadline)));
-        if (handled) {
+        if (handled || hasIOError()) {
             return handled;
         }
     } while (nowUs() < deadline);
-    return -1;
+    return 0;
 }
 
 void GPSProtocol::serviceControls()
 {
-    if (_servicingControls || ioError()) {
+    if (_servicingControls || hasIOError()) {
         return;
     }
     _servicingControls = true;
@@ -232,13 +259,11 @@ GPSDecodeResult GPSProtocol::decode(std::span<const uint8_t> bytes)
         const int updates = decodeByte(bytes[consumed++]);
         if (updates > 0) {
             _decoded.updates |= updates;
-            if ((updates & 1) && positionReport()) {
-                _decoded.events.emplace_back(*positionReport());
-            }
-            if ((updates & 2) && satelliteReport()) {
-                _decoded.events.emplace_back(*satelliteReport());
-            }
         }
+    }
+    if (_rawReply) {
+        _rawReply->append(bytes.first(consumed));
+        resolveReply(_rawReply->outcome());
     }
     GPSDecodeResult result{consumed, std::move(_decoded)};
     _decoded = {};

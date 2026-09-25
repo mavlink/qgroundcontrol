@@ -31,10 +31,18 @@ class RTKSettings : public SettingsGroup
 public:
     RTKSettings(QObject* parent = nullptr);
     DEFINE_SETTING_NAME_GROUP()
+    DEFINE_SETTINGFACT(receiverRole)
     DEFINE_SETTINGFACT(baseReceiverManufacturers)
     DEFINE_SETTINGFACT(surveyInAccuracyLimit)
     DEFINE_SETTINGFACT(surveyInMinObservationDuration)
     DEFINE_SETTINGFACT(receiverAveragingDuration)
+    DEFINE_SETTINGFACT(connectionType)
+    DEFINE_SETTINGFACT(tcpHost)
+    DEFINE_SETTINGFACT(tcpPort)
+    DEFINE_SETTINGFACT(udpPort)
+    DEFINE_SETTINGFACT(connectOnStartup)
+    DEFINE_SETTINGFACT(autoConnect)
+    DEFINE_SETTINGFACT(gcsPositionSource)
     DEFINE_SETTINGFACT(serialDevice)
     DEFINE_SETTINGFACT(serialBaudRate)
     DEFINE_SETTINGFACT(useFixedBasePosition)
@@ -42,4 +50,5 @@ public:
     DEFINE_SETTINGFACT(fixedBasePositionLongitude)
     DEFINE_SETTINGFACT(fixedBasePositionAltitude)
     DEFINE_SETTINGFACT(fixedBasePositionAccuracy)
+    DEFINE_SETTINGFACT(compactRtcmCorrections)
 };

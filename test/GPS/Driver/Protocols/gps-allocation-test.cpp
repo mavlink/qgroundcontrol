@@ -2,7 +2,7 @@
 #include <fstream>
 
 #include "AllocationTracker.h"
-#include "UBX/GPSDriverUBX.h"
+#include "UBX/UBXProtocol.h"
 #include "UnitTest.h"
 
 class GPSProtocolAllocationTest : public UnitTest
@@ -22,26 +22,24 @@ void GPSProtocolAllocationTest::_runtimeDelivery()
              "Cannot read the independent NAV-PVT fixture");
     uint64_t now = 1000000;
     std::size_t positions = 0;
-    GPSNativeUBX* receiver = nullptr;
+    UBXProtocol* receiver = nullptr;
     bool injectNested = false;
     bool nestedSnapshotValid = true;
     GPSProtocolIO io;
     io.nowUs = [&] { return now; };
     io.decoded = [&](const GPSDecodedBatch& batch) {
         for (const auto& event : batch.events) {
-            positions += std::holds_alternative<GPSNativePositionReport>(event);
-            if (const auto* report = std::get_if<GPSNativePositionReport>(&event); report && injectNested) {
+            positions += std::holds_alternative<GPSDecodedPosition>(event);
+            if (const auto* report = std::get_if<GPSDecodedPosition>(&event); report && injectNested) {
                 injectNested = false;
-                const auto timestamp = report->timestamp;
+                const auto timestamp = report->navigation.timestampUs;
                 now += 200000;
                 receiver->consume(frame);
-                nestedSnapshotValid = report->timestamp == timestamp;
+                nestedSnapshotValid = report->navigation.timestampUs == timestamp;
             }
         }
     };
-    GPSNativePositionReport position;
-    GPSNativeSatelliteReport satellites;
-    GPSNativeUBX driver(io, &position, &satellites);
+    UBXProtocol driver(io);
     receiver = &driver;
     driver.setDecodeContext({.navigation = true, .useNavPvt = true});
     driver.consume(frame);
@@ -63,8 +61,8 @@ void GPSProtocolAllocationTest::_runtimeDelivery()
     now += 200000;
     driver.consume(frame);
     QCOMPARE(owned.batch.events.size(), size_t{1});
-    QVERIFY(std::holds_alternative<GPSNativePositionReport>(owned.batch.events.front()));
-    QCOMPARE(std::get<GPSNativePositionReport>(owned.batch.events.front()).timestamp, timestamp);
+    QVERIFY(std::holds_alternative<GPSDecodedPosition>(owned.batch.events.front()));
+    QCOMPARE(std::get<GPSDecodedPosition>(owned.batch.events.front()).navigation.timestampUs, timestamp);
     const auto beforeNested = positions;
     injectNested = true;
     driver.consume(frame);

@@ -1,18 +1,23 @@
 #include <algorithm>
+#include <array>
+#include <atomic>
+#include <chrono>
 #include <cmath>
-#include <cstdio>
-#include <deque>
 #include <iterator>
 #include <limits>
-#include <map>
+#include <optional>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "GPSProtocolTestIO.h"
-#include "UBX/GPSDriverUBX.h"
+#include "ProtocolTestPackets.h"
+#include "Support/ScriptedReceiver.h"
+#include "Support/UBXReceiverModel.h"
 #include "UBX/UBXMessageCodec.h"
+#include "UBX/UBXProtocol.h"
 #include "UnitTest.h"
 
 // Keep checks active in Release, too.
@@ -26,661 +31,180 @@
 namespace {
 using Bytes = std::vector<uint8_t>;
 
-static uint32_t littleEndian(const Bytes& bytes, size_t offset, size_t width)
-{
-    CHECK(offset + width <= bytes.size());
-    uint32_t value = 0;
+using SurveyReply = UBXReceiverModel::SurveyReply;
 
-    for (size_t i = 0; i < width; ++i) {
-        value |= uint32_t(bytes[offset + i]) << (8 * i);
-    }
-
-    return value;
-}
-
-static Bytes packet(uint16_t message, const Bytes& payload)
-{
-    Bytes bytes{
-        0xb5, 0x62, uint8_t(message), uint8_t(message >> 8), uint8_t(payload.size()), uint8_t(payload.size() >> 8)};
-    bytes.insert(bytes.end(), payload.begin(), payload.end());
-    uint8_t a = 0, b = 0;
-
-    for (size_t i = 2; i < bytes.size(); ++i) {
-        a += bytes[i];
-        b += a;
-    }
-
-    bytes.push_back(a);
-    bytes.push_back(b);
-    return bytes;
-}
-
-enum class SurveyReply
-{
-    stopped,
-    active,
-    valid,
-    silent,
-    bad_checksum,
-    bad_length
-};
-
-class Receiver
+class ProtocolReceiver final : public UBXReceiverModel
 {
 public:
-    GPSNativeIntegrityReport integrity;
-    unsigned integrityCount = 0;
-
-    int readback_mode = 0;
-    unsigned readback_requests = 0;
-    std::vector<SurveyReply> replies{SurveyReply::stopped};
-    bool reject_disable = false;
-    bool reject_constellations = false;
-    bool timeout_constellations = false;
-    bool timeout_constellation_retry = false;
-    unsigned constellation_requests = 0;
-    unsigned transport_operations = 0;
-    uint16_t legacy_measurement_interval = 0;
-    uint8_t legacy_dynamic_model = 0;
-    uint32_t legacy_fixed_accuracy = 0;
-    unsigned legacy_constellation_requests = 0;
-    bool legacy = false;
-    std::string module = "ZED-F9P";
-    std::string hardware;
-    std::string protocol;
-    unsigned receiverBaud = 0;
-    unsigned hostBaud = 0;
-    bool usb = false;
-    bool loseBaudAck = false;
-    bool ignoreBaudChange = false;
-    bool corruptIdentity = false;
-    bool silencePortConfiguration = false;
-    bool rejectAfterBaudChange = false;
-    bool nakAfterBaudChange = false;
-    bool lateBaudAckDelivered = false;
-    unsigned configurationWrites = 0;
-    unsigned unidentifiedWrites = 0;
-    std::vector<unsigned> identityBauds;
-    std::vector<unsigned> hostBauds;
-    bool reject_start = false;
-    bool fail_poll_write = false;
-    int poll_read_error = 0;
-    QString poll_read_detail = QStringLiteral("Receiver link lost: Gerät");
-    unsigned failed_reads = 0;
-    size_t read_chunk = 7;  // Exercise packet fragmentation through the real parser.
-    unsigned comms_polls = 0;
-    bool fail_comms_write = false;
-    unsigned polls = 0;
-    unsigned starts = 0;
-    unsigned status_callbacks = 0;
-    unsigned rtcm_enables = 0;
-    std::vector<uint32_t> modes;
-    std::map<uint32_t, uint32_t> start_settings;
-    std::map<uint32_t, uint32_t> current_settings;
-    std::map<uint16_t, uint8_t> message_rates;
-    uint64_t disabled_at = 0;
-    uint64_t started_at = 0;
-
-    void survey(SurveyReply reply)
+    explicit ProtocolReceiver(GPSTestClock& testClock)
+        : UBXReceiverModel(UBXReceiverModel::Receiver::F9P, testClock)
+        , _transport(_stop, *this)
     {
-        if (reply == SurveyReply::silent) {
-            return;
-        }
-
-        // NAV-SVIN has a 40-byte payload: validity at offset 36, active at 37.
-        Bytes payload(40, 0);
-        payload[36] = reply == SurveyReply::valid;
-        payload[37] = reply == SurveyReply::active;
-
-        if (reply == SurveyReply::bad_length) {
-            payload.push_back(0);
-        }
-
-        Bytes bytes = packet(UBX_MSG_NAV_SVIN, payload);
-
-        if (reply == SurveyReply::bad_checksum) {
-            bytes.back() ^= 0xff;
-        }
-
-        queue(bytes);
+        _configure();
+        _transport.setModel(this);
     }
 
-    void bufferWarning(bool valid_checksum = true)
-    {
-        const std::string warning = "txbuf alloc";
-        Bytes bytes = packet(UBX_MSG_INF_ERROR, Bytes(warning.begin(), warning.end()));
-
-        if (!valid_checksum) {
-            bytes.back() ^= 0xff;
-        }
-
-        queue(bytes);
-    }
-
-    void queue(const Bytes& bytes) { incoming.insert(incoming.end(), bytes.begin(), bytes.end()); }
-
-private:
-    Bytes outgoing;
-    std::deque<uint8_t> incoming;
-    Bytes heldBaudAck;
-    bool identityDelivered = false;
-
-    void process(const Bytes& bytes)
-    {
-        const auto message = uint16_t(littleEndian(bytes, 2, 2));
-        const Bytes payload(bytes.begin() + 6, bytes.end() - 2);
-        CHECK(bytes == packet(message, payload));  // Validate outgoing framing/checksum.
-        if (message == UBX_MSG_MON_VER) {
-            identityBauds.push_back(hostBaud);
-        }
-        if ((message & 0xff) == UBX_CLASS_CFG && message != UBX_MSG_CFG_VALGET &&
-            !(message == UBX_MSG_CFG_TMODE3 && payload.empty())) {
-            ++configurationWrites;
-            unidentifiedWrites += !identityDelivered;
-        }
-        if (receiverBaud && !usb && hostBaud != receiverBaud) {
-            return;
-        }
-
-        if (message == UBX_MSG_MON_COMMS) {
-            CHECK(payload.empty());
-            ++comms_polls;
-            return;
-        }
-        if (message == UBX_MSG_CFG_TMODE3 && payload.empty()) {
-            ++readback_requests;
-            if (readback_mode == 1) {
-                return;
-            }
-            if (readback_mode == 2) {
-                queue(packet(UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
-                return;
-            }
-            Bytes response(40, 0);
-            response[0] = readback_mode == 3 ? 1 : 0;
-            response[2] = modes.empty() ? 0 : modes.back();
-            queue(packet(message, response));
-            return;
-        }
-        if (message == UBX_MSG_CFG_VALGET) {
-            ++readback_requests;
-            CHECK(payload.size() >= 4 && payload.size() <= 40 && (payload.size() - 4) % 4 == 0);
-            CHECK(payload[0] == 0 && payload[1] == 0 && payload[2] == 0 && payload[3] == 0);
-            if (readback_mode == 1) {
-                return;
-            }
-            if (readback_mode == 2) {
-                queue(packet(UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
-                return;
-            }
-            Bytes response{1, uint8_t(readback_mode == 3 ? 1 : 0), 0, 0};
-            for (size_t offset = 4; offset < payload.size(); offset += 4) {
-                const uint32_t key = littleEndian(payload, offset, 4);
-                const auto found = current_settings.find(key);
-                const uint32_t value = found == current_settings.end() ? 0 : found->second;
-                response.insert(response.end(), payload.begin() + offset, payload.begin() + offset + 4);
-                const unsigned code = key >> 28;
-                const unsigned width = code <= 2 ? 1 : 1u << (code - 2);
-                for (unsigned byte = 0; byte < width; ++byte) {
-                    response.push_back(uint8_t(value >> (8 * byte)));
-                }
-            }
-            if (readback_mode == 4) {
-                const Bytes duplicate(response.begin() + 4, response.begin() + 9);
-                response.insert(response.end(), duplicate.begin(), duplicate.end());
-            } else if (readback_mode == 5) {
-                response.pop_back();
-            }
-            Bytes message_bytes = packet(message, response);
-            if (readback_mode == 6) {
-                message_bytes.back() ^= 1;
-            }
-            queue(message_bytes);
-            return;
-        }
-
-        if (message == UBX_MSG_MON_VER) {
-            CHECK(payload.empty());
-            Bytes version(70, 0);
-            memcpy(version.data(), "HPG 1.32", 8);
-            const std::string hardwareVersion = hardware.empty() ? (legacy                 ? "00080000"
-                                                                    : module == "ZED-X20P" ? "000B0000"
-                                                                                           : "00190000")
-                                                                 : hardware;
-            CHECK(hardwareVersion.size() == 8);
-            memcpy(version.data() + 30, hardwareVersion.data(), 8);
-            const std::string identity = "MOD=" + module;
-            CHECK(identity.size() < 30);
-            memcpy(version.data() + 40, identity.c_str(), identity.size());
-            if (!protocol.empty()) {
-                const std::string extension = "PROTVER=" + protocol;
-                CHECK(extension.size() < 30);
-                version.resize(100);
-                std::copy(extension.begin(), extension.end(), version.begin() + 70);
-            }
-            auto response = packet(message, version);
-            if (corruptIdentity) {
-                response.back() ^= 1;
-            } else {
-                identityDelivered = true;
-            }
-            queue(response);
-            return;
-        }
-
-        if (message == UBX_MSG_NAV_SVIN) {
-            CHECK(payload.empty());
-            CHECK(!modes.empty() && modes.back() == 0);
-            ++polls;
-            survey(replies.at(std::min<size_t>(polls - 1, replies.size() - 1)));
-            return;
-        }
-
-        if (legacy) {
-            if (message == UBX_MSG_CFG_RATE) {
-                legacy_measurement_interval = littleEndian(payload, 0, 2);
-            }
-            if (message == UBX_MSG_CFG_NAV5) {
-                legacy_dynamic_model = payload.at(2);
-            }
-            if (message == UBX_MSG_CFG_GNSS) {
-                ++legacy_constellation_requests;
-            }
-            if (message == UBX_MSG_CFG_PRT) {
-                CHECK(payload.size() == 40);
-                CHECK(payload[0] == UBX_TX_CFG_PRT_PORTID && payload[20] == UBX_TX_CFG_PRT_PORTID_USB);
-                const auto rate = littleEndian(payload, 8, 4);
-                CHECK(rate == littleEndian(payload, 28, 4));
-                if (receiverBaud && rate != receiverBaud) {
-                    receiverBaud = rate;
-                    if (loseBaudAck) {
-                        return;
-                    }
-                }
-            }
-            if (message == UBX_MSG_CFG_MSG) {
-                message_rates[uint16_t(littleEndian(payload, 0, 2))] = payload.at(2);
-            }
-
-            bool reject = message == UBX_MSG_CFG_VALSET;
-
-            if (message == UBX_MSG_CFG_MSG && littleEndian(payload, 0, 2) == UBX_MSG_RTCM3_1005 && payload.at(2) > 0) {
-                ++rtcm_enables;
-            }
-
-            if (message == UBX_MSG_CFG_TMODE3) {
-                const uint32_t mode = littleEndian(payload, 2, 2);
-                modes.push_back(mode);
-                legacy_fixed_accuracy = littleEndian(payload, 20, 4);
-                disabled_at = gps_test_time;
-                reject = reject_disable && mode == 0;
-            }
-
-            queue(packet(reject ? UBX_MSG_ACK_NAK : UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
-            return;
-        }
-
-        CHECK(message == UBX_MSG_CFG_VALSET);
-        CHECK(payload.size() >= 4);
-        if (silencePortConfiguration) {
-            return;
-        }
-        std::map<uint32_t, uint32_t> settings;
-
-        for (size_t i = 4; i < payload.size();) {
-            const uint32_t key = littleEndian(payload, i, 4);
-            // Host connections must leave the receiver's I2C protocol configuration alone.
-            CHECK((key & 0xffff0000u) != 0x10710000u);
-            CHECK((key & 0xffff0000u) != 0x10720000u);
-            i += 4;
-            const unsigned size_code = (key >> 28) & 7;
-            CHECK(size_code >= 1 && size_code <= 4);
-            const size_t width = size_code <= 2 ? 1 : size_code == 3 ? 2 : 4;
-            settings[key] = littleEndian(payload, i, width);
-            i += width;
-        }
-        if (!heldBaudAck.empty()) {
-            queue(heldBaudAck);
-            heldBaudAck.clear();
-            lateBaudAckDelivered = true;
-            if (rejectAfterBaudChange) {
-                return;
-            }
-            if (nakAfterBaudChange) {
-                queue(packet(UBX_MSG_ACK_NAK, {uint8_t(message), uint8_t(message >> 8)}));
-            }
-        }
-
-        if (settings.count(UBX_CFG_KEY_SIGNAL_GPS_ENA)) {
-            ++constellation_requests;
-            if (timeout_constellations || (timeout_constellation_retry && constellation_requests == 2)) {
-                return;
-            }
-        }
-        bool reject = reject_constellations && settings.count(UBX_CFG_KEY_SIGNAL_GPS_ENA);
-        const auto mode = settings.find(UBX_CFG_KEY_TMODE_MODE);
-
-        if (mode != settings.end()) {
-            modes.push_back(mode->second);
-
-            if (mode->second == 0) {
-                disabled_at = gps_test_time;
-                reject = reject_disable;
-            } else if (mode->second == 1) {
-                ++starts;
-                started_at = gps_test_time;
-                start_settings = settings;
-                reject = reject_start;
-            }
-        }
-
-        if (settings[UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1005_I2C + 1] == 1) {
-            ++rtcm_enables;
-        }
-
-        // M9 SPG has RTCM input, but no RTCM output protocol keys. Unknown keys
-        // reject the entire VALSET, even when the requested value is zero.
-        if (module == "NEO-M9N" && (settings.count(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X) ||
-                                    settings.count(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X))) {
-            reject = true;
-        }
-
-        if (!reject) {
-            for (const auto& setting : settings) {
-                current_settings[setting.first] = setting.second;
-            }
-        }
-        if (const auto rate = settings.find(UBX_CFG_KEY_CFG_UART1_BAUDRATE);
-            rate != settings.end() && receiverBaud && rate->second != receiverBaud) {
-            if (!ignoreBaudChange) {
-                receiverBaud = rate->second;
-            } else {
-                current_settings[rate->first] = receiverBaud;
-            }
-            if (loseBaudAck) {
-                heldBaudAck = packet(UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)});
-                return;
-            }
-        }
-
-        queue(packet(reject ? UBX_MSG_ACK_NAK : UBX_MSG_ACK_ACK, {uint8_t(message), uint8_t(message >> 8)}));
-    }
-
-public:
     GPSProtocolIO io()
     {
-        auto result = makeGPSProtocolTestIO();
-        result.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSReadResult {
-            ++transport_operations;
-            const int timeout = deadline.remainingMilliseconds(gps_test_time);
-            auto* data = bytes.data();
-            const int size = static_cast<int>(bytes.size());
-            CHECK(timeout >= 0);
-
-            if (polls > 0 && poll_read_error < 0) {
-                ++failed_reads;
-                gps_test_time += 1000;
-                return {poll_read_error == GPSProtocol::ReadCancelled ? GPSReadStatus::Cancelled : GPSReadStatus::Error,
-                        0, poll_read_detail};
-            }
-
-            if (incoming.empty()) {
-                // The driver's deadlines use strict comparisons; move past the timeout.
-                gps_test_time += uint64_t(timeout) * 1000 + 1;
-                return {GPSReadStatus::TimedOut};
-            }
-
-            gps_test_time += 1000;
-            const size_t count = std::min({incoming.size(), size_t(size), read_chunk});
-
-            for (size_t i = 0; i < count; ++i) {
-                static_cast<uint8_t*>(data)[i] = incoming.front();
-                incoming.pop_front();
-            }
-
-            return {GPSReadStatus::Data, static_cast<int>(count)};
-        };
-        result.write = [this](std::span<const uint8_t> input, GPSDeadline) -> GPSWriteResult {
-            ++transport_operations;
-            const auto* data = input.data();
-            const int size = static_cast<int>(input.size());
-
-            const auto* bytes = static_cast<const uint8_t*>(data);
-
-            if (fail_comms_write && outgoing.empty() && size >= 4 && bytes[2] == 0x0a && bytes[3] == 0x36) {
-                ++comms_polls;
-                return {GPSWriteStatus::Unsupported};
-            }
-
-            if (fail_poll_write && outgoing.empty() && size >= 4 && bytes[2] == 0x01 && bytes[3] == 0x3b) {
-                return {GPSWriteStatus::Unsupported};
-            }
-
-            outgoing.insert(outgoing.end(), bytes, bytes + size);
-
-            if (outgoing.size() >= 6 && outgoing.size() == littleEndian(outgoing, 4, 2) + 8) {
-                const Bytes complete = std::move(outgoing);
-                outgoing.clear();
-                process(complete);
-            }
-
-            return {GPSWriteStatus::Completed, size, size};
-        };
-        result.setBaudrate = [this](unsigned rate) {
-            ++transport_operations;
-            hostBaud = rate;
-            hostBauds.push_back(rate);
-            return GPSBaudStatus::Configured;
-        };
+        _configure();
+        _transport.clearReplies();
+        _transport.clearCommands();
+        _transport.setWriteHandler([this](const QByteArray& bytes, const ScriptedReceiver::WriteContext&) {
+            return interceptLowLevelWrite(bytes);
+        });
+        auto result = makeGPSProtocolTestIO(clock(), &warnings);
         result.wait = [this](std::chrono::microseconds delay) {
-            ++transport_operations;
-            gps_test_time += delay.count();
+            ++transportOperations;
+            clock().advanceBy(delay.count());
             return true;
         };
         result.decoded = [this](const GPSDecodedBatch& batch) {
             for (const auto& event : batch.events) {
-                if (const auto* report = std::get_if<GPSNativeIntegrityReport>(&event)) {
+                if (const auto* report = std::get_if<GPSIntegrityReport>(&event)) {
                     integrity = *report;
                     ++integrityCount;
                 }
             }
             for (const auto& event : batch.events) {
-                if (std::holds_alternative<GPSNativeSurveyReport>(event)) {
-                    ++status_callbacks;
+                if (std::holds_alternative<GPSDecodedSurvey>(event)) {
+                    ++statusCallbacks;
                 }
             }
         };
-        return result;
+        auto scripted = _transport.makeIO(std::move(result));
+        auto read = std::move(scripted.read);
+        scripted.read = [this, read = std::move(read)](std::span<uint8_t> bytes, GPSDeadline deadline) mutable {
+            const auto readResult = read(bytes, deadline);
+            if (readResult.status == GPSReadStatus::TimedOut) {
+                clock().advanceTo(deadline.untilUs + 1);
+            } else {
+                clock().advanceBy(1000);
+            }
+            return readResult;
+        };
+        return scripted;
     }
+
+    void resetState()
+    {
+        UBXReceiverModel::operator=(UBXReceiverModel(UBXReceiverModel::Receiver::F9P, clock()));
+        _configure();
+        _transport.setModel(this);
+    }
+
+    QStringList warnings;
+
+private:
+    void _configure() { lowLevelProtocolBehavior = true; }
+
+    std::atomic_bool _stop{false};
+    ScriptedReceiver _transport;
 };
 
 struct Fixture
 {
-    Receiver receiver;
-    GPSNativePositionReport position{};
-    GPSNativeUBX driver;
+    ProtocolReceiver receiver;
+    GPSDecodedPosition position{};
+    UBXProtocol driver;
     GPSBaseStationConfig base;
 
-    Fixture()
-        : driver(receiver.io(), &position, nullptr)
+    explicit Fixture(GPSTestClock& clock, bool satelliteInfo = false)
+        : receiver(clock)
+        , driver(captureGPSReports(receiver.io(), position), satelliteInfo)
     {
-        gps_test_time = 0;
-        gps_test_warnings.clear();
-        base.surveyInAccMeters = 1.25;
-        base.surveyInDurationSecs = 60;
+        clock.reset();
+        receiver.warnings.clear();
+        std::get<GPSBaseStationConfig::SurveyIn>(base.mode).accuracyMeters = 1.25;
+        std::get<GPSBaseStationConfig::SurveyIn>(base.mode).durationSecs = 60;
     }
 
-    int configure(GPSProtocol::OutputMode output = GPSProtocol::OutputMode::RTCM)
+    bool configure()
     {
         unsigned baudrate = 115200;
         GPSProtocol::GPSConfig config{};
-        config.output_mode = output;
         config.base = base;
         return driver.configure(baudrate, config);
     }
 
-    void success(unsigned expected_polls)
+    void success(unsigned expectedSurveyPolls)
     {
-        CHECK(configure() == 0);
+        CHECK(configure());
         CHECK(driver.receiverReady());
         CHECK(receiver.modes == std::vector<uint32_t>({0, 1}));
-        CHECK(receiver.polls == expected_polls);
+        CHECK(receiver.surveyPolls == expectedSurveyPolls);
         CHECK(receiver.starts == 1);
-        CHECK(receiver.start_settings.at(UBX_CFG_KEY_TMODE_SVIN_MIN_DUR) == 60);
-        CHECK(receiver.start_settings.at(UBX_CFG_KEY_TMODE_SVIN_ACC_LIMIT) == 12500);
-        CHECK(receiver.start_settings.at(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C + 1) == 5);
-        CHECK(receiver.start_settings.at(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C + 3) == 5);
-        CHECK(receiver.status_callbacks == 0);
-        CHECK(receiver.rtcm_enables == 0);
+        CHECK(receiver.startSettings.at(UBX_CFG_KEY_TMODE_SVIN_MIN_DUR) == 60);
+        CHECK(receiver.startSettings.at(UBX_CFG_KEY_TMODE_SVIN_ACC_LIMIT) == 12500);
+        CHECK(receiver.startSettings.at(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C + 1) == 5);
+        CHECK(receiver.startSettings.at(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C + 3) == 5);
+        CHECK(receiver.statusCallbacks == 0);
+        CHECK(receiver.rtcmEnables == 0);
     }
 
     void timeout()
     {
-        CHECK(configure() < 0);
+        CHECK(!configure());
         CHECK(!driver.receiverReady());
         CHECK(receiver.modes == std::vector<uint32_t>({0}));
         CHECK(receiver.starts == 0);
-        CHECK(receiver.polls > 1 && receiver.polls <= 31);
-        CHECK(gps_test_time - receiver.disabled_at >= 3000000);
-        CHECK(gps_test_time - receiver.disabled_at < 3300000);
-        CHECK(receiver.status_callbacks == 0);
-        CHECK(receiver.rtcm_enables == 0);
+        CHECK(receiver.surveyPolls > 1 && receiver.surveyPolls <= 31);
+        CHECK(receiver.clock().nowUs() - receiver.disabledAt >= 3000000);
+        CHECK(receiver.clock().nowUs() - receiver.disabledAt < 3300000);
+        CHECK(receiver.statusCallbacks == 0);
+        CHECK(receiver.rtcmEnables == 0);
     }
 
-    void readFailure(int error)
+    void readFailure(GPSProtocolError error)
     {
-        receiver.poll_read_error = error;
-        CHECK(configure() < 0);
+        receiver.pollReadError = error;
+        CHECK(!configure());
         CHECK(!driver.receiverReady());
-        CHECK(receiver.failed_reads == 1);
-        CHECK(receiver.polls == 1);
+        CHECK(receiver.failedReads == 1);
+        CHECK(receiver.surveyPolls == 1);
         CHECK(receiver.modes == std::vector<uint32_t>({0}));
         CHECK(receiver.starts == 0);
-        CHECK(receiver.status_callbacks == 0);
-        CHECK(receiver.rtcm_enables == 0);
-        CHECK(gps_test_time - receiver.disabled_at < 100000);
+        CHECK(receiver.statusCallbacks == 0);
+        CHECK(receiver.rtcmEnables == 0);
+        CHECK(receiver.clock().nowUs() - receiver.disabledAt < 100000);
 
-        const auto warnings = gps_test_warnings;
-        if (error == GPSProtocol::ReadCancelled) {
+        const auto warnings = receiver.warnings;
+        if (error == GPSProtocolError::Cancelled) {
             CHECK(warnings.empty());
         } else {
-            CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1, code %2): %3")
+            CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1): %2")
                                               .arg(static_cast<int>(GPSReadStatus::Error))
-                                              .arg(-EIO)
-                                              .arg(receiver.poll_read_detail)});
+                                              .arg(receiver.pollReadDetail)});
         }
-        CHECK(driver.ioErrorDetail() == receiver.poll_read_detail);
-        CHECK(driver.receive(10) < 0);
-        CHECK(receiver.failed_reads == 1);
-        CHECK(gps_test_warnings == warnings);
+        CHECK(driver.ioError() == error);
+        CHECK(driver.ioErrorDetail() == receiver.pollReadDetail);
+        CHECK(driver.receive(10) == 0);
+        CHECK(receiver.failedReads == 1);
+        CHECK(receiver.warnings == warnings);
     }
 };
 
-static void receiveFailureLogging()
+static void receiveFailureLogging(GPSTestClock& clock)
 {
-    for (const int error : {GPSProtocol::ReadCancelled, -EIO}) {
-        Fixture f;
-        CHECK(f.configure() == 0);
-        f.receiver.poll_read_error = error;
-        gps_test_warnings.clear();
-        CHECK(f.driver.receive(10) == error);
-        CHECK(f.driver.ioErrorDetail() == f.receiver.poll_read_detail);
-        const auto warnings = gps_test_warnings;
-        if (error == GPSProtocol::ReadCancelled) {
+    for (const GPSProtocolError error : {GPSProtocolError::Cancelled, GPSProtocolError::Transport}) {
+        Fixture f(clock);
+        CHECK(f.configure());
+        f.receiver.pollReadError = error;
+        f.receiver.warnings.clear();
+        CHECK(f.driver.receive(10) == 0);
+        CHECK(f.driver.ioError() == error);
+        CHECK(f.driver.ioErrorDetail() == f.receiver.pollReadDetail);
+        const auto warnings = f.receiver.warnings;
+        if (error == GPSProtocolError::Cancelled) {
             CHECK(warnings.empty());
         } else {
-            CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1, code %2): %3")
+            CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1): %2")
                                               .arg(static_cast<int>(GPSReadStatus::Error))
-                                              .arg(-EIO)
-                                              .arg(f.receiver.poll_read_detail)});
+                                              .arg(f.receiver.pollReadDetail)});
         }
-        CHECK(f.driver.receive(10) == error);
-        CHECK(f.receiver.failed_reads == 1);
-        CHECK(gps_test_warnings == warnings);
-    }
-}
-
-static void positionMode(bool legacy, bool base_capable)
-{
-    Fixture f;
-    f.receiver.legacy = legacy;
-    f.receiver.module = legacy ? (base_capable ? "NEO-M8P" : "NEO-M8N") : (base_capable ? "ZED-F9P" : "NEO-M9N");
-
-    f.receiver.replies = {SurveyReply::active, SurveyReply::valid, SurveyReply::stopped};
-    if (base_capable) {
-        // Model settings left behind by a previous base session.
-        f.receiver.current_settings[UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X] = 1;
-        f.receiver.current_settings[UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X] = 1;
-        f.receiver.current_settings[UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C + 1] = 5;
-        f.receiver.current_settings[UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C + 3] = 5;
-        f.receiver.message_rates[UBX_MSG_NAV_SVIN] = 5;
-    }
-    // A configured fixed base must not be re-applied when selecting GPS output.
-    f.base = {.useFixedBase = true,
-              .fixedPosition = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-              .fixedBaseAccuracyMeters = 1.0f};
-    CHECK(f.configure(GPSProtocol::OutputMode::GPS) == 0);
-    CHECK(f.driver.receiverReady());
-    CHECK(f.receiver.modes == (base_capable ? std::vector<uint32_t>{0} : std::vector<uint32_t>{}));
-    CHECK(f.receiver.polls == 0);
-    CHECK(f.receiver.readback_requests == (base_capable ? 1u : 0u));
-    CHECK(f.receiver.starts == 0);
-    CHECK(f.receiver.rtcm_enables == 0);
-    CHECK(f.receiver.status_callbacks == 0);
-    CHECK(gps_test_warnings.empty());
-    if (base_capable) {
-        if (legacy) {
-            CHECK(f.receiver.message_rates.at(UBX_MSG_NAV_SVIN) == 0);
-        } else {
-            CHECK(f.receiver.current_settings.at(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C + 1) == 0);
-            CHECK(f.receiver.current_settings.at(UBX_CFG_KEY_MSGOUT_UBX_NAV_SVIN_I2C + 3) == 0);
-        }
-    }
-    if (!legacy && base_capable) {
-        CHECK(f.receiver.current_settings.at(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X) == 0);
-        CHECK(f.receiver.current_settings.at(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X) == 0);
-
-    } else if (!legacy) {
-        CHECK(f.receiver.current_settings.count(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X) == 0);
-        CHECK(f.receiver.current_settings.count(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X) == 0);
-    }
-
-    Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
-    pvt[20] = 3;
-    pvt[21] = 1;
-    pvt[23] = 12;
-    const auto store = [&](size_t offset, uint32_t value) {
-        for (size_t i = 0; i < 4; ++i) {
-            pvt[offset + i] = uint8_t(value >> (8 * i));
-        }
-    };
-    store(24, 100000000);
-    store(28, 200000000);
-    store(40, 800);
-    f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
-    CHECK(f.driver.receive(500) & 1);
-    CHECK(f.position.fix_type == GPSPositionReport::FixType::Fix3D);
-    CHECK(f.position.latitude_deg == 20.0);
-    CHECK(f.position.longitude_deg == 10.0);
-    CHECK(f.position.satellites_used == 12);
-}
-
-static void positionModeFailure()
-{
-    for (bool legacy : {false, true}) {
-        for (int failure = 0; failure < (legacy ? 4 : 7); ++failure) {
-            Fixture f;
-            f.receiver.legacy = legacy;
-            f.receiver.module = legacy ? "NEO-M8P" : "ZED-F9P";
-            f.receiver.reject_disable = failure == 0;
-            f.receiver.readback_mode = failure;
-            CHECK(f.configure(GPSProtocol::OutputMode::GPS) < 0);
-            CHECK(!f.driver.receiverReady());
-            CHECK(f.receiver.modes == std::vector<uint32_t>{0});
-            CHECK(f.receiver.starts == 0 && f.receiver.rtcm_enables == 0);
-            CHECK(f.receiver.status_callbacks == 0);
-            CHECK(gps_test_warnings.empty());
-        }
+        CHECK(f.driver.receive(10) == 0);
+        CHECK(f.driver.ioError() == error);
+        CHECK(f.receiver.failedReads == 1);
+        CHECK(f.receiver.warnings == warnings);
     }
 }
 
@@ -708,240 +232,177 @@ static Bytes commsPayload()
     return payload;
 }
 
-static void integrityReceipts()
+static void integrityReceipts(GPSTestClock& clock)
 {
-    Fixture f;
-    CHECK(f.configure(GPSProtocol::OutputMode::GPS) == 0);
+    Fixture f(clock);
+    CHECK(f.configure());
     // This test inspects individual decoder mutations; epoch assembly has separate coverage.
     f.driver.setDecodeContext({.navigation = true});
     Bytes mon_rf(UBX::WIRE_SIZE<ubx_payload_rx_mon_rf_t>, 0);
     mon_rf[1] = 1;
     mon_rf[5] = 3;
-    f.receiver.queue(packet(UBX_MSG_MON_RF, mon_rf));
+    f.receiver.queueBytes(ubxFrame(UBX_MSG_MON_RF, mon_rf));
     f.driver.receive(100);
     CHECK(f.receiver.integrityCount == 1);
-    CHECK(f.position.timestamp == 0);
-    CHECK(f.receiver.integrity.jamming_state == GPSIntegrityReport::JammingState::Critical);
-    const auto rf_stamp = f.receiver.integrity.jamming_state_timestamp;
+    CHECK(f.position.navigation.timestampUs == 0);
+    CHECK(f.receiver.integrity.jamming.state == GPSIntegrityReport::JammingState::Critical);
+    const auto rf_stamp = f.receiver.integrity.jamming.timestampUs;
     CHECK(rf_stamp != 0);
 
     Bytes nav_status(UBX::WIRE_SIZE<ubx_payload_rx_nav_status_t>, 0);
     nav_status[7] = 1 << UBX_RX_NAV_STATUS_SPOOFDETSTATE_SHIFT;
-    f.receiver.queue(packet(UBX_MSG_NAV_STATUS, nav_status));
+    f.receiver.queueBytes(ubxFrame(UBX_MSG_NAV_STATUS, nav_status));
     f.driver.receive(100);
-    const auto spoof_stamp = f.receiver.integrity.spoofing_state_timestamp;
+    const auto spoof_stamp = f.receiver.integrity.spoofing.timestampUs;
     CHECK(spoof_stamp != 0);
-    CHECK(f.receiver.integrity.jamming_state_timestamp == rf_stamp);
+    CHECK(f.receiver.integrity.jamming.timestampUs == rf_stamp);
 
     Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
     pvt[20] = 3;
     pvt[21] = 1;
     for (int i = 0; i < 10; ++i) {
-        gps_test_time += 1000000;
-        f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
+        clock.advanceBy(1000000);
+        f.receiver.queueBytes(ubxFrame(UBX_MSG_NAV_PVT, pvt));
         CHECK(f.driver.receive(100) & 1);
-        CHECK(f.position.timestamp > rf_stamp);
-        CHECK(f.receiver.integrity.jamming_state_timestamp == rf_stamp);
-        CHECK(f.receiver.integrity.spoofing_state_timestamp == spoof_stamp);
+        CHECK(f.position.navigation.timestampUs > rf_stamp);
+        CHECK(f.receiver.integrity.jamming.timestampUs == rf_stamp);
+        CHECK(f.receiver.integrity.spoofing.timestampUs == spoof_stamp);
     }
-    Bytes corrupt = packet(UBX_MSG_MON_RF, mon_rf);
+    Bytes corrupt = ubxFrame(UBX_MSG_MON_RF, mon_rf);
     corrupt.back() ^= 0xff;
-    f.receiver.queue(corrupt);
+    f.receiver.queueBytes(corrupt);
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.jamming_state_timestamp == rf_stamp);
-    f.receiver.queue(packet(UBX_MSG_MON_RF, mon_rf));
+    CHECK(f.receiver.integrity.jamming.timestampUs == rf_stamp);
+    f.receiver.queueBytes(ubxFrame(UBX_MSG_MON_RF, mon_rf));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.jamming_state == GPSIntegrityReport::JammingState::Critical);
-    CHECK(f.receiver.integrity.jamming_state_timestamp > rf_stamp);
+    CHECK(f.receiver.integrity.jamming.state == GPSIntegrityReport::JammingState::Critical);
+    CHECK(f.receiver.integrity.jamming.timestampUs > rf_stamp);
 
     Bytes sec_sig(4, 0);
     sec_sig[0] = 2;
     sec_sig[1] = 1 | (3 << 1);
-    f.receiver.queue(packet(UBX_MSG_SEC_SIG, sec_sig));
+    f.receiver.queueBytes(ubxFrame(UBX_MSG_SEC_SIG, sec_sig));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.jamming_state == GPSIntegrityReport::JammingState::Critical);
-    const auto sec_stamp = f.receiver.integrity.jamming_state_timestamp;
-    gps_test_time += 6000000;
-    f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
+    CHECK(f.receiver.integrity.jamming.state == GPSIntegrityReport::JammingState::Critical);
+    const auto sec_stamp = f.receiver.integrity.jamming.timestampUs;
+    clock.advanceBy(6000000);
+    f.receiver.queueBytes(ubxFrame(UBX_MSG_NAV_PVT, pvt));
     CHECK(f.driver.receive(100) & 1);
-    CHECK(f.receiver.integrity.jamming_state_timestamp == sec_stamp);
-    f.receiver.queue(packet(UBX_MSG_SEC_SIG, sec_sig));
+    CHECK(f.receiver.integrity.jamming.timestampUs == sec_stamp);
+    f.receiver.queueBytes(ubxFrame(UBX_MSG_SEC_SIG, sec_sig));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.jamming_state == GPSIntegrityReport::JammingState::Critical);
-    CHECK(f.receiver.integrity.jamming_state_timestamp > sec_stamp);
+    CHECK(f.receiver.integrity.jamming.state == GPSIntegrityReport::JammingState::Critical);
+    CHECK(f.receiver.integrity.jamming.timestampUs > sec_stamp);
 
     Bytes rtcm(UBX::WIRE_SIZE<ubx_payload_rx_rxm_rtcm_t>, 0);
     rtcm[1] = 2 << UBX_RX_RXM_RTCM_MSGUSED_SHIFT;
-    f.receiver.queue(packet(UBX_MSG_RXM_RTCM, rtcm));
+    f.receiver.queueBytes(ubxFrame(UBX_MSG_RXM_RTCM, rtcm));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.corrections_msg_used == GPSIntegrityReport::CorrectionUse::Used);
-    const auto correction_stamp = f.receiver.integrity.corrections_timestamp;
+    CHECK(f.receiver.integrity.corrections.use == GPSIntegrityReport::CorrectionUse::Used);
+    const auto correction_stamp = f.receiver.integrity.corrections.timestampUs;
     CHECK(correction_stamp != 0);
-    gps_test_time += 6000000;
-    f.receiver.queue(packet(UBX_MSG_NAV_PVT, pvt));
+    clock.advanceBy(6000000);
+    f.receiver.queueBytes(ubxFrame(UBX_MSG_NAV_PVT, pvt));
     CHECK(f.driver.receive(100) & 1);
-    CHECK(f.receiver.integrity.corrections_timestamp == correction_stamp);
+    CHECK(f.receiver.integrity.corrections.timestampUs == correction_stamp);
     Bytes cor(UBX::WIRE_SIZE<ubx_payload_rx_rxm_cor_t>, 0);
     cor[0] = 1;
     cor[4] = 29;
     cor[5] = 1;  // msgUsed=2 in statusInfo bits 8..7.
-    f.receiver.queue(packet(UBX_MSG_RXM_COR, cor));
+    f.receiver.queueBytes(ubxFrame(UBX_MSG_RXM_COR, cor));
     f.driver.receive(100);
-    CHECK(f.receiver.integrity.corrections_protocol == GPSNativeIntegrityReport::CORRECTIONS_PROTOCOL_PMP);
-    CHECK(f.receiver.integrity.corrections_msg_used == GPSIntegrityReport::CorrectionUse::Used);
-    CHECK(f.receiver.integrity.corrections_timestamp > correction_stamp);
+    CHECK(f.receiver.integrity.corrections.protocol == GPSIntegrityReport::CorrectionProtocol::PMP);
+    CHECK(f.receiver.integrity.corrections.use == GPSIntegrityReport::CorrectionUse::Used);
+    CHECK(f.receiver.integrity.corrections.timestampUs > correction_stamp);
 }
 
-static void commsDiagnostics()
+static void commsDiagnostics(GPSTestClock& clock)
 {
-    Fixture f;
-    const Bytes reply = packet(UBX_MSG_MON_COMMS, commsPayload());
-    f.receiver.queue(reply);
+    Fixture f(clock);
+    const Bytes reply = ubxFrame(UBX_MSG_MON_COMMS, commsPayload());
+    f.receiver.queueBytes(reply);
     f.driver.receive(100);
-    CHECK(gps_test_warnings.empty());
-    CHECK(f.receiver.comms_polls == 0);
-    f.receiver.bufferWarning();
+    CHECK(f.receiver.warnings.empty());
+    CHECK(f.receiver.commsPolls == 0);
+    f.receiver.queueBufferWarning();
     f.driver.receive(100);
-    CHECK(f.receiver.comms_polls == 1);
-    CHECK(gps_test_warnings == QStringList{"ubx msg: txbuf alloc"});
-    gps_test_warnings.clear();
-    f.receiver.queue(reply);
-    CHECK(f.driver.receive(100) < 0);  // Diagnostic traffic alone is not a position update.
+    CHECK(f.receiver.commsPolls == 1);
+    CHECK(f.receiver.warnings == QStringList{"ubx msg: txbuf alloc"});
+    f.receiver.warnings.clear();
+    f.receiver.queueBytes(reply);
+    CHECK((f.driver.receive(100) & GPSDecodedBatch::POSITION_UPDATE) ==
+          0);  // Diagnostic traffic alone is not a position update.
     const QStringList expected{"MON-COMMS after txbuf: txErrors=0x02 ports=2 (snapshot after warning)",
                                "MON-COMMS USB port=0x0300 txPending=11800 txUsage=100% txPeakUsage=101% "
                                "rxPending=12 rxUsage=3% overrunErrs=4 skipped=123456",
                                "MON-COMMS UART2 port=0x0201 txPending=0 txUsage=0% txPeakUsage=108% "
                                "rxPending=0 rxUsage=0% overrunErrs=0 skipped=0"};
-    CHECK(gps_test_warnings == expected);
-    gps_test_warnings.clear();
-    f.receiver.queue(reply);
+    CHECK(f.receiver.warnings == expected);
+    f.receiver.warnings.clear();
+    f.receiver.queueBytes(reply);
     f.driver.receive(100);
-    CHECK(gps_test_warnings.empty());
+    CHECK(f.receiver.warnings.empty());
 }
 
-static void invalidCommsDiagnostics()
+static void invalidCommsDiagnostics(GPSTestClock& clock)
 {
     Bytes payload = commsPayload();
-    Bytes corrupt = packet(UBX_MSG_MON_COMMS, payload);
+    Bytes corrupt = ubxFrame(UBX_MSG_MON_COMMS, payload);
     corrupt.back() ^= 0xff;
-    std::vector<Bytes> invalid{corrupt, packet(UBX_MSG_MON_COMMS, Bytes(7, 0)), packet(UBX_MSG_MON_COMMS, Bytes(87, 0)),
-                               packet(UBX_MSG_MON_COMMS, Bytes(368, 0))};
+    std::vector<Bytes> invalid{corrupt, ubxFrame(UBX_MSG_MON_COMMS, Bytes(7, 0)),
+                               ubxFrame(UBX_MSG_MON_COMMS, Bytes(87, 0)), ubxFrame(UBX_MSG_MON_COMMS, Bytes(368, 0))};
     payload[0] = 1;
-    invalid.push_back(packet(UBX_MSG_MON_COMMS, payload));
+    invalid.push_back(ubxFrame(UBX_MSG_MON_COMMS, payload));
     payload[0] = 0;
     payload[1] = 3;
-    invalid.push_back(packet(UBX_MSG_MON_COMMS, payload));
+    invalid.push_back(ubxFrame(UBX_MSG_MON_COMMS, payload));
     payload[1] = 255;
-    invalid.push_back(packet(UBX_MSG_MON_COMMS, payload));
+    invalid.push_back(ubxFrame(UBX_MSG_MON_COMMS, payload));
 
     for (const auto& reply : invalid) {
-        Fixture f;
-        f.receiver.bufferWarning();
+        Fixture f(clock);
+        f.receiver.queueBufferWarning();
         f.driver.receive(100);
-        gps_test_warnings.clear();
-        f.receiver.queue(reply);
+        f.receiver.warnings.clear();
+        f.receiver.queueBytes(reply);
         f.driver.receive(100);
-        CHECK(gps_test_warnings.empty());
+        CHECK(f.receiver.warnings.empty());
         // Malformed input must not consume the pending reply or lose framing.
-        f.receiver.queue(packet(UBX_MSG_MON_COMMS, Bytes(8, 0)));
+        f.receiver.queueBytes(ubxFrame(UBX_MSG_MON_COMMS, Bytes(8, 0)));
         f.driver.receive(100);
-        CHECK(gps_test_warnings ==
+        CHECK(f.receiver.warnings ==
               QStringList{"MON-COMMS after txbuf: txErrors=0x00 ports=0 (snapshot after warning)"});
     }
 }
 
-static void expiredCommsDiagnostics()
+static void expiredCommsDiagnostics(GPSTestClock& clock)
 {
-    Fixture f;
-    f.receiver.bufferWarning();
+    Fixture f(clock);
+    f.receiver.queueBufferWarning();
     f.driver.receive(100);
-    CHECK(f.receiver.comms_polls == 1);
-    gps_test_warnings.clear();
-    gps_test_time += 2000000;
-    f.receiver.queue(packet(UBX_MSG_MON_COMMS, commsPayload()));
+    CHECK(f.receiver.commsPolls == 1);
+    f.receiver.warnings.clear();
+    clock.advanceBy(2000000);
+    f.receiver.queueBytes(ubxFrame(UBX_MSG_MON_COMMS, commsPayload()));
     f.driver.receive(100);
-    CHECK(gps_test_warnings.empty());
+    CHECK(f.receiver.warnings.empty());
     // Expiration must allow a later warning to obtain a fresh snapshot.
-    gps_test_time += 5000000;
-    f.receiver.bufferWarning();
+    clock.advanceBy(5000000);
+    f.receiver.queueBufferWarning();
     f.driver.receive(100);
-    CHECK(f.receiver.comms_polls == 2);
-    gps_test_warnings.clear();
-    f.receiver.queue(packet(UBX_MSG_MON_COMMS, Bytes(8, 0)));
+    CHECK(f.receiver.commsPolls == 2);
+    f.receiver.warnings.clear();
+    f.receiver.queueBytes(ubxFrame(UBX_MSG_MON_COMMS, Bytes(8, 0)));
     f.driver.receive(100);
-    CHECK(gps_test_warnings.size() == 1);
+    CHECK(f.receiver.warnings.size() == 1);
 }
 
-static void receiverSettings()
-{
-    for (int scenario = 0; scenario < 6; ++scenario) {
-        gps_test_time = 0;
-        gps_test_warnings.clear();
-        Receiver receiver;
-        receiver.legacy = scenario == 2;
-        receiver.module = receiver.legacy ? "NEO-M8P" : scenario == 1 ? "NEO-M9N" : "ZED-F9P";
-        receiver.reject_constellations = scenario == 3 || scenario == 5;
-        receiver.timeout_constellations = scenario == 4;
-        receiver.timeout_constellation_retry = scenario == 5;
-        GPSNativePositionReport position{};
-        std::map<GPSReceiverSetting, std::vector<GPSCommandOutcome>> outcomes;
-        auto io = receiver.io();
-        io.commandFinished = [&](const GPSCommandResult& command) {
-            for (auto setting : {GPSReceiverSetting::DynamicModel, GPSReceiverSetting::OutputRateHz,
-                                 GPSReceiverSetting::ConstellationMask}) {
-                if (command.affectedSettings.contains(setting)) {
-                    outcomes[setting].push_back(command.evidence.outcome);
-                }
-            }
-        };
-        GPSNativeUBX driver(io, &position, nullptr);
-        GPSProtocol::GPSConfig config{};
-        config.dynamicModel = 4;
-        config.output_mode = GPSProtocol::OutputMode::GPS;
-        config.gnss_systems = static_cast<GPSProtocol::GNSSSystemsMask>(5);
-        unsigned baudrate = 115200;
-        CHECK((driver.configure(baudrate, config) == 0) == (scenario < 4));
-        if (scenario >= 3) {
-            CHECK(outcomes.at(GPSReceiverSetting::DynamicModel).back() == GPSCommandOutcome::Acknowledged);
-            CHECK(outcomes.at(GPSReceiverSetting::OutputRateHz).back() == GPSCommandOutcome::Acknowledged);
-            const auto& constellationOutcomes = outcomes.at(GPSReceiverSetting::ConstellationMask);
-            const auto expected = scenario == 3 ? GPSCommandOutcome::Rejected : GPSCommandOutcome::TimedOut;
-            CHECK(std::find(constellationOutcomes.begin(), constellationOutcomes.end(), expected) !=
-                  constellationOutcomes.end());
-        }
-        if (scenario < 2) {
-            CHECK(receiver.current_settings.at(UBX_CFG_KEY_NAVSPG_DYNMODEL) == 4);
-            CHECK(receiver.current_settings.at(UBX_CFG_KEY_RATE_MEAS) == (scenario == 1 ? 125 : 200));
-            CHECK(receiver.current_settings.at(UBX_CFG_KEY_SIGNAL_GPS_ENA) == 1);
-            CHECK(receiver.current_settings.at(UBX_CFG_KEY_SIGNAL_GAL_ENA) == 1);
-            CHECK(receiver.current_settings.at(UBX_CFG_KEY_SIGNAL_BDS_ENA) == 0);
-            CHECK(gps_test_warnings.empty());
-        } else if (scenario >= 4) {
-            CHECK(!driver.receiverReady());
-            CHECK(receiver.constellation_requests == (scenario == 4 ? 1 : 2));
-            CHECK(receiver.current_settings.count(UBX_CFG_KEY_SIGNAL_SBAS_ENA) == 0);
-        } else {
-            CHECK(driver.receiverReady());
-            if (receiver.legacy) {
-                CHECK(receiver.legacy_measurement_interval == 200);
-                CHECK(receiver.legacy_dynamic_model == 4);
-                CHECK(receiver.legacy_constellation_requests == 1);
-            } else {
-                CHECK(receiver.current_settings.count(UBX_CFG_KEY_SIGNAL_GPS_ENA) == 0);
-                CHECK(receiver.current_settings.count(UBX_CFG_KEY_SIGNAL_GAL_ENA) == 0);
-                CHECK(receiver.current_settings.at(UBX_CFG_KEY_SIGNAL_SBAS_ENA) == 0);
-            }
-        }
-    }
-}
-
-static void invalidConfiguration()
+static void invalidConfiguration(GPSTestClock& clock)
 {
     using Config = GPSProtocol::GPSConfig;
-    const Config fixed{.base = {.useFixedBase = true,
-                                .fixedPosition = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
-                                .fixedBaseAccuracyMeters = 1},
-                       .output_mode = GPSProtocol::OutputMode::RTCM};
+    const Config fixed{.base = {.mode = GPSBaseStationConfig::Fixed{
+                                    .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
+                                    .accuracyMeters = 1}}};
     const auto nan = std::numeric_limits<double>::quiet_NaN();
     const auto infinity = std::numeric_limits<float>::infinity();
     std::vector<Config> invalid;
@@ -950,109 +411,183 @@ static void invalidConfiguration()
         mutate(config.base);
         invalid.push_back(config);
     };
-    addFixed([](auto& base) { base = {.useFixedBase = true}; });
+    addFixed([](auto& base) { base = {.mode = GPSBaseStationConfig::Fixed{}}; });
     for (double value : {nan, double(infinity), 91.0, -91.0}) {
-        addFixed([&](auto& base) { base.fixedPosition.latitudeDegrees = value; });
+        addFixed(
+            [&](auto& base) { std::get<GPSBaseStationConfig::Fixed>(base.mode).position.latitudeDegrees = value; });
     }
     for (double value : {nan, double(infinity), 181.0, -181.0}) {
-        addFixed([&](auto& base) { base.fixedPosition.longitudeDegrees = value; });
+        addFixed(
+            [&](auto& base) { std::get<GPSBaseStationConfig::Fixed>(base.mode).position.longitudeDegrees = value; });
     }
     for (float value : {float(nan), infinity, 21474838.0f, -21474838.0f}) {
-        addFixed([&](auto& base) { base.fixedPosition.altitudeMeters = value; });
+        addFixed([&](auto& base) { std::get<GPSBaseStationConfig::Fixed>(base.mode).position.altitudeMeters = value; });
     }
     for (float value : {float(nan), infinity, -1.0f, std::nextafter(429496.71875f, infinity)}) {
-        addFixed([&](auto& base) { base.fixedBaseAccuracyMeters = value; });
+        addFixed([&](auto& base) { std::get<GPSBaseStationConfig::Fixed>(base.mode).accuracyMeters = value; });
     }
     for (double accuracy : {nan, double(infinity), 0.0, -1.0, 429496.7296}) {
-        invalid.push_back({.base = {.surveyInAccMeters = accuracy, .surveyInDurationSecs = 60},
-                           .output_mode = GPSProtocol::OutputMode::RTCM});
+        invalid.push_back(
+            {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = accuracy, .durationSecs = 60}}});
     }
     for (int64_t duration : {int64_t(0), int64_t(-1), int64_t(UINT32_MAX) + 1}) {
-        invalid.push_back({.base = {.surveyInAccMeters = 1, .surveyInDurationSecs = duration},
-                           .output_mode = GPSProtocol::OutputMode::RTCM});
+        invalid.push_back(
+            {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = duration}}});
     }
-    invalid.push_back({.output_mode = static_cast<GPSProtocol::OutputMode>(99)});
     for (const auto& config : invalid) {
         for (bool wasReady : {false, true}) {
-            Fixture f;
+            Fixture f(clock);
             if (wasReady) {
-                CHECK(f.configure() == 0);
+                CHECK(f.configure());
                 CHECK(f.driver.receiverReady());
             }
-            f.receiver.transport_operations = 0;
-            gps_test_warnings.clear();
+            f.receiver.transportOperations = 0;
+            f.receiver.warnings.clear();
             unsigned baudrate = 115200;
-            CHECK(f.driver.configure(baudrate, config) < 0);
-            CHECK(f.receiver.transport_operations == 0);
+            CHECK(!f.driver.configure(baudrate, config));
+            CHECK(f.receiver.transportOperations == 0);
             CHECK(!f.driver.receiverReady());
-            CHECK(f.driver.ioError() == 0);
+            CHECK(!f.driver.hasIOError());
             CHECK(baudrate == 115200);
-            CHECK(gps_test_warnings.size() == 1);
+            CHECK(f.receiver.warnings.size() == 1);
         }
     }
 
     for (bool legacy : {false, true}) {
-        Fixture f;
+        Fixture f(clock);
         f.receiver.legacy = legacy;
         f.receiver.module = legacy ? "NEO-M8P" : "ZED-F9P";
         f.base = fixed.base;
-        f.base.fixedBaseAccuracyMeters = 429496.71875f;
-        CHECK(f.configure() == 0);
+        std::get<GPSBaseStationConfig::Fixed>(f.base.mode).accuracyMeters = 429496.71875f;
+        CHECK(f.configure());
         CHECK(f.driver.receiverReady());
-        CHECK((legacy ? f.receiver.legacy_fixed_accuracy
-                      : f.receiver.current_settings.at(UBX_CFG_KEY_TMODE_FIXED_POS_ACC)) == 4294967040u);
+        CHECK((legacy ? f.receiver.legacyFixedAccuracy
+                      : f.receiver.currentSettings.at(UBX_CFG_KEY_TMODE_FIXED_POS_ACC)) == 4294967040u);
     }
-    Fixture position;
-    position.base = {.useFixedBase = true};
-    CHECK(position.configure(GPSProtocol::OutputMode::GPS) == 0);
+
+    // Compact bases send MSM4 and switch off MSM7 left over from an earlier session, and vice versa.
+    constexpr std::array<std::pair<uint32_t, uint16_t>, 4> msm7{{
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1077_I2C, UBX_MSG_RTCM3_1077},
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1087_I2C, UBX_MSG_RTCM3_1087},
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1097_I2C, UBX_MSG_RTCM3_1097},
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1127_I2C, UBX_MSG_RTCM3_1127},
+    }};
+    constexpr std::array<std::pair<uint32_t, uint16_t>, 4> msm4{{
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1074_I2C, UBX_MSG_RTCM3_1074},
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1084_I2C, UBX_MSG_RTCM3_1084},
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1094_I2C, UBX_MSG_RTCM3_1094},
+        {UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1124_I2C, UBX_MSG_RTCM3_1124},
+    }};
+    for (bool legacy : {false, true}) {
+        for (bool compact : {false, true}) {
+            Fixture f(clock, true);
+            f.receiver.legacy = legacy;
+            f.receiver.module = legacy ? "NEO-M8P" : "ZED-F9P";
+            f.base = fixed.base;
+            f.base.compactObservations = compact;
+            CHECK(f.configure());
+            CHECK(f.driver.receiverReady());
+            const auto rate = [&](const std::pair<uint32_t, uint16_t>& message) -> unsigned {
+                // UART1 follows the I2C key.
+                return legacy ? f.receiver.messageRates.at(message.second)
+                              : f.receiver.currentSettings.at(message.first + 1);
+            };
+            for (const auto& message : msm7) {
+                CHECK(rate(message) == (compact ? 0u : 1u));
+            }
+            for (const auto& message : msm4) {
+                CHECK(rate(message) == (compact ? 1u : 0u));
+            }
+            // The 1 Hz base rate keeps satellite reports within their freshness window.
+            CHECK(rate({UBX_CFG_KEY_MSGOUT_UBX_NAV_SAT_I2C, UBX_MSG_NAV_SVINFO}) == 2u);
+        }
+    }
 }
 
-static void explicitNoFix()
+static void explicitNoFix(GPSTestClock& clock)
 {
-    Receiver receiver;
-    GPSNativePositionReport position;
-    GPSNativeUBX driver(receiver.io(), &position, nullptr);
-    CHECK(position.fix_type == GPSPositionReport::FixType::Unknown);
+    ProtocolReceiver receiver(clock);
+    GPSProtocolTestProbe<UBXProtocol> driver(receiver.io(), false);
+    const auto& position = driver.workingPosition();
+    CHECK(position.navigation.fixType == GPSPositionReport::FixType::Unknown);
     driver.setDecodeContext({.navigation = true});
     Bytes payload(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
     payload[20] = 3;
     for (const uint8_t flags : std::array<uint8_t, 4>{0, 2, 0x40, 0x80}) {
         payload[21] = UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK;
-        CHECK(driver.decode(packet(UBX_MSG_NAV_PVT, payload)).batch.events.size() == 1);
-        CHECK(position.fix_type == GPSPositionReport::FixType::Fix3D);
+        const auto valid = driver.decode(ubxFrame(UBX_MSG_NAV_PVT, payload));
+        CHECK(valid.batch.events.size() == 1);
+        CHECK(std::get<GPSDecodedPosition>(valid.batch.events.front()).navigation.fixType ==
+              GPSPositionReport::FixType::Fix3D);
+        CHECK(position.navigation.fixType == GPSPositionReport::FixType::Fix3D);
         payload[21] = flags;
-        const auto decoded = driver.decode(packet(UBX_MSG_NAV_PVT, payload));
+        const auto decoded = driver.decode(ubxFrame(UBX_MSG_NAV_PVT, payload));
         CHECK(decoded.batch.events.size() == 1);
-        CHECK(std::get<GPSNativePositionReport>(decoded.batch.events.front()).fix_type ==
+        CHECK(std::get<GPSDecodedPosition>(decoded.batch.events.front()).navigation.fixType ==
               GPSPositionReport::FixType::NoFix);
-        CHECK(!position.vel_ned_valid);
+        CHECK(!std::get<GPSDecodedPosition>(decoded.batch.events.front()).velocityValid);
+        CHECK(!position.velocityValid);
     }
 }
 
-static void baudDiscovery()
+static void outOfRangeCoordinates(GPSTestClock& clock)
+{
+    ProtocolReceiver receiver(clock);
+    GPSProtocolTestProbe<UBXProtocol> driver(receiver.io(), false);
+    const auto& position = driver.workingPosition();
+    driver.setDecodeContext({.navigation = true});
+    Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
+    pvt[20] = 3;
+    pvt[21] = UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK;
+    const auto decodePvt = [&](int32_t longitude, int32_t latitude) {
+        (void) LittleEndian::write<int32_t>(pvt, 24, longitude);
+        (void) LittleEndian::write<int32_t>(pvt, 28, latitude);
+        (void) driver.decode(ubxFrame(UBX_MSG_NAV_PVT, pvt));
+    };
+    decodePvt(-1800000000, 900000000);
+    CHECK(position.navigation.latitudeDegrees == 90 && position.navigation.longitudeDegrees == -180);
+    decodePvt(80000000, 900000001);
+    CHECK(std::isnan(position.navigation.latitudeDegrees));
+    CHECK(position.navigation.longitudeDegrees == 8);
+    decodePvt(-1800000001, 470000000);
+    CHECK(position.navigation.latitudeDegrees == 47);
+    CHECK(std::isnan(position.navigation.longitudeDegrees));
+
+    driver.setDecodeContext({.navigation = true, .useNavPvt = false});
+    Bytes posllh(UBX::WIRE_SIZE<ubx_payload_rx_nav_posllh_t>, 0);
+    (void) LittleEndian::write<int32_t>(posllh, 4, (std::numeric_limits<int32_t>::max)());
+    (void) LittleEndian::write<int32_t>(posllh, 8, (std::numeric_limits<int32_t>::min)());
+    (void) driver.decode(ubxFrame(UBX_MSG_NAV_POSLLH, posllh));
+    CHECK(std::isnan(position.navigation.latitudeDegrees));
+    CHECK(std::isnan(position.navigation.longitudeDegrees));
+}
+
+static void baudDiscovery(GPSTestClock& clock)
 {
     for (const unsigned initialBaud : {9600U, 115200U}) {
         for (const bool fixed : {false, true}) {
             for (const bool usb : {false, true}) {
                 for (const bool loseAck : {false, true}) {
-                    gps_test_time = 1000000;
-                    Receiver receiver;
+                    clock.reset(1000000);
+                    ProtocolReceiver receiver(clock);
                     receiver.receiverBaud = initialBaud;
                     receiver.usb = usb;
                     receiver.loseBaudAck = loseAck;
                     receiver.protocol = "27.31";
-                    GPSNativePositionReport position;
-                    GPSNativeUBX driver(receiver.io(), &position, nullptr);
+                    GPSDecodedPosition position;
+                    UBXProtocol driver(captureGPSReports(receiver.io(), position), false);
                     GPSProtocol::GPSConfig config{};
+                    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+                    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
                     unsigned baud = fixed ? initialBaud : 0;
-                    CHECK(driver.configure(baud, config) == 0);
+                    CHECK(driver.configure(baud, config));
                     CHECK(driver.receiverReady());
                     CHECK(receiver.unidentifiedWrites == 0);
                     CHECK(baud == (fixed ? initialBaud : 115200));
                     CHECK(receiver.receiverBaud == baud);
                     CHECK(receiver.hostBaud == baud);
-                    CHECK(receiver.current_settings.at(UBX_CFG_KEY_NAVSPG_DYNMODEL) == 0);
-                    CHECK(receiver.current_settings.at(UBX_CFG_KEY_RATE_MEAS) == 200);
+                    CHECK(receiver.currentSettings.at(UBX_CFG_KEY_NAVSPG_DYNMODEL) == 2);
+                    CHECK(receiver.currentSettings.at(UBX_CFG_KEY_RATE_MEAS) == 200);
                     if (fixed) {
                         CHECK(receiver.hostBauds == std::vector<unsigned>{initialBaud});
                     } else if (!usb) {
@@ -1062,39 +597,18 @@ static void baudDiscovery()
                         CHECK(receiver.identityBauds.size() >= probes.size());
                         CHECK(std::equal(probes.begin(), probes.end(), receiver.identityBauds.begin()));
                     }
-                    CHECK(gps_test_time < 15000000);
+                    CHECK(clock.nowUs() < 15000000);
                 }
             }
         }
     }
-    for (const bool oldReceiver : {false, true}) {
-        for (const bool loseAck : {false, true}) {
-            gps_test_time = 1000000;
-            Receiver receiver;
-            receiver.legacy = true;
-            receiver.module = oldReceiver ? "u-blox6" : "NEO-M8N";
-            receiver.hardware = oldReceiver ? "00040007" : "00080000";
-            receiver.protocol = oldReceiver ? "" : "15.00";
-            receiver.receiverBaud = 9600;
-            receiver.loseBaudAck = loseAck;
-            GPSNativePositionReport position;
-            GPSNativeUBX driver(receiver.io(), &position, nullptr);
-            unsigned baud = 0;
-            CHECK(driver.configure(baud, {}) == 0);
-            CHECK(receiver.unidentifiedWrites == 0);
-            CHECK(baud == (oldReceiver ? 38400U : 115200U));
-            CHECK(receiver.receiverBaud == baud);
-            CHECK(receiver.legacy_measurement_interval == 200);
-            CHECK(receiver.current_settings.empty());
-        }
-    }
 }
 
-static void discoveryFailures()
+static void discoveryFailures(GPSTestClock& clock)
 {
     for (unsigned scenario = 0; scenario < 10; ++scenario) {
-        gps_test_time = 1000000;
-        Receiver receiver;
+        clock.reset(1000000);
+        ProtocolReceiver receiver(clock);
         receiver.receiverBaud = 9600;
         receiver.hardware = scenario == 0 ? "UNKN0WN!" : "00190000";
         receiver.protocol = scenario == 1 ? "invalid" : "27.31";
@@ -1105,17 +619,16 @@ static void discoveryFailures()
         receiver.usb = scenario == 5;
         receiver.rejectAfterBaudChange = scenario == 6;
         receiver.nakAfterBaudChange = scenario == 8;
-        receiver.readback_mode = scenario == 9 ? 1 : 0;
+        receiver.readbackReply =
+            scenario == 9 ? UBXReceiverModel::ReadbackReply::Timeout : UBXReceiverModel::ReadbackReply::Value;
         receiver.module = scenario == 7 ? "NEO-M9N" : "ZED-F9P";
-        GPSNativePositionReport position;
-        GPSNativeUBX driver(receiver.io(), &position, nullptr);
+        GPSDecodedPosition position;
+        UBXProtocol driver(captureGPSReports(receiver.io(), position), false);
         GPSProtocol::GPSConfig config{};
-        if (scenario == 7) {
-            config.output_mode = GPSProtocol::OutputMode::RTCM;
-            config.base = {.surveyInAccMeters = 1, .surveyInDurationSecs = 60};
-        }
+        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
         unsigned baud = 0;
-        CHECK(driver.configure(baud, config) < 0);
+        CHECK(!driver.configure(baud, config));
         CHECK(!driver.receiverReady());
         CHECK(receiver.unidentifiedWrites == 0);
         if (scenario < 3 || scenario == 7) {
@@ -1124,16 +637,16 @@ static void discoveryFailures()
             CHECK(receiver.configurationWrites == 1);
         } else if (scenario == 6) {
             CHECK(receiver.lateBaudAckDelivered);
-            CHECK(receiver.current_settings.count(UBX_CFG_KEY_CFG_USBOUTPROT_UBX) == 0);
+            CHECK(receiver.currentSettings.count(UBX_CFG_KEY_CFG_USBOUTPROT_UBX) == 0);
         } else if (scenario == 8) {
             CHECK(receiver.lateBaudAckDelivered);
-            CHECK(receiver.current_settings.at(UBX_CFG_KEY_CFG_USBOUTPROT_UBX) == 1);
+            CHECK(receiver.currentSettings.at(UBX_CFG_KEY_CFG_USBOUTPROT_UBX) == 1);
         }
-        CHECK(gps_test_time < 20000000);
+        CHECK(clock.nowUs() < 20000000);
     }
 }
 
-static void navigationFixFlags()
+static void navigationFixFlags(GPSTestClock& clock)
 {
     using Fix = GPSPositionReport::FixType;
     constexpr std::array<Fix, 8> FIX_3D{Fix::Fix3D,    Fix::Differential, Fix::RTKFloat, Fix::RTKFloat,
@@ -1151,9 +664,9 @@ static void navigationFixFlags()
                 }
                 std::array<unsigned, 3> order{0, 1, 2};
                 do {
-                    gps_test_time = 1000000;
-                    GPSNativePositionReport position;
-                    GPSNativeUBX driver(makeGPSProtocolTestIO(), &position, nullptr);
+                    clock.reset(1000000);
+                    GPSDecodedPosition position;
+                    UBXProtocol driver(captureGPSReports(makeGPSProtocolTestIO(clock), position), false);
                     driver.setDecodeContext({.navigation = true, .useNavPvt = !legacy, .assembleEpochs = true});
                     Bytes pvt(92);
                     (void) LittleEndian::write<uint32_t>(pvt, 0, 1000);
@@ -1163,7 +676,7 @@ static void navigationFixFlags()
                     (void) LittleEndian::write<int32_t>(pvt, 28, 470000000);
                     (void) LittleEndian::write<int32_t>(pvt, 60, 12000);
                     if (!legacy) {
-                        CHECK(driver.decode(packet(UBX_MSG_NAV_PVT, pvt)).batch.events.empty());
+                        CHECK(driver.decode(ubxFrame(UBX_MSG_NAV_PVT, pvt)).batch.events.empty());
                     } else {
                         std::array<Bytes, 3> payloads{Bytes(28), Bytes(52), Bytes(36)};
                         constexpr std::array<uint16_t, 3> MESSAGES{UBX_MSG_NAV_POSLLH, UBX_MSG_NAV_SOL,
@@ -1177,67 +690,72 @@ static void navigationFixFlags()
                         payloads[1][11] = static_cast<uint8_t>(flags);
                         (void) LittleEndian::write<uint32_t>(payloads[2], 20, 1200);
                         for (const unsigned index : order) {
-                            CHECK(driver.decode(packet(MESSAGES[index], payloads[index])).batch.events.empty());
+                            CHECK(driver.decode(ubxFrame(MESSAGES[index], payloads[index])).batch.events.empty());
                         }
                     }
                     Bytes end(4);
                     (void) LittleEndian::write<uint32_t>(end, 0, 1000);
-                    const auto decoded = driver.decode(packet(UBX::NAV_EOE, end));
+                    const auto decoded = driver.decode(ubxFrame(UBX::NAV_EOE, end));
                     CHECK(decoded.batch.events.size() == 1);
-                    const auto& fix = std::get<GPSNativePositionReport>(decoded.batch.events.front());
-                    CHECK(fix.fix_type == expected);
-                    CHECK(fix.vel_ned_valid == (expected != Fix::NoFix && expected != Fix::Unknown));
-                    CHECK(fix.latitude_deg == 47 && fix.longitude_deg == 8);
-                    CHECK(std::abs(fix.vel_m_s - 12) < 1e-5f);
+                    const auto& fix = std::get<GPSDecodedPosition>(decoded.batch.events.front());
+                    CHECK(fix.navigation.fixType == expected);
+                    CHECK(fix.velocityValid == (expected != Fix::NoFix && expected != Fix::Unknown));
+                    CHECK(fix.navigation.latitudeDegrees == 47 && fix.navigation.longitudeDegrees == 8);
+                    CHECK(std::abs(fix.navigation.speedMetersPerSecond - 12) < 1e-5f);
                 } while (legacy && std::next_permutation(order.begin(), order.end()));
             }
         }
     }
 }
 
-static void transactionalFrames()
+static void transactionalFrames(GPSTestClock& clock)
 {
-    Receiver receiver;
-    GPSNativePositionReport position{};
-    GPSNativeSatelliteReport satellites{};
-    GPSNativeUBX driver(receiver.io(), &position, &satellites);
+    ProtocolReceiver receiver(clock);
+    GPSProtocolTestProbe<UBXProtocol> driver(receiver.io());
+    const auto& satellites = driver.workingSatellites();
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config{};
-    config.output_mode = GPSProtocol::OutputMode::GPS;
-    CHECK(driver.configure(baud, config) == 0);
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+    CHECK(driver.configure(baud, config));
     Bytes payload(20, 0);
     payload[4] = 1;
     payload[5] = 1;
     payload[8] = 0;
     payload[9] = 17;
     payload[10] = 35;
-    const auto valid = packet(UBX_MSG_NAV_SAT, payload);
+    const auto valid = ubxFrame(UBX_MSG_NAV_SAT, payload);
     payload[9] = 23;
-    auto corrupt = packet(UBX_MSG_NAV_SAT, payload);
+    auto corrupt = ubxFrame(UBX_MSG_NAV_SAT, payload);
     corrupt.back() ^= 1;
     Bytes joined = valid;
     joined.insert(joined.end(), corrupt.begin(), corrupt.end());
     auto decoded = driver.decode(joined);
     CHECK(decoded.bytesConsumed == joined.size());
     CHECK(decoded.batch.events.size() == 1);
-    CHECK(std::get<GPSNativeSatelliteReport>(decoded.batch.events[0]).entries[0].id == 17);
-    CHECK(satellites.entries[0].id == 17);
+    CHECK(std::get<GPSDecodedSatellites>(decoded.batch.events[0]).constellations[0].inView == 1);
+    CHECK(satellites.constellations[0].inView == 1);
     CHECK(driver.decode(std::span(valid).first(valid.size() - 1)).batch.events.empty());
-    CHECK(satellites.entries[0].id == 17);
+    CHECK(satellites.constellations[0].inView == 1);
     CHECK(driver.decode(std::span(valid).last(1)).batch.events.size() == 1);
     payload[5] = 2;  // A valid checksum cannot make an incomplete counted payload valid.
-    CHECK(driver.decode(packet(UBX_MSG_NAV_SAT, payload)).batch.events.empty());
-    CHECK(satellites.entries[0].id == 17);
-    CHECK(driver.decode(packet(UBX_MSG_NAV_SAT, Bytes(7, 0))).batch.events.empty());
-    CHECK(satellites.entries[0].id == 17);
-    CHECK(std::get<GPSNativeSatelliteReport>(decoded.batch.events[0]).entries[0].id == 17);
-    CHECK(driver.decode(packet(UBX_MSG_NAV_SAT, Bytes{0, 0, 0, 0, 1, 0, 0, 0})).batch.events.size() == 1);
-    CHECK(satellites.count == 0);
+    CHECK(driver.decode(ubxFrame(UBX_MSG_NAV_SAT, payload)).batch.events.empty());
+    CHECK(satellites.constellations[0].inView == 1);
+    CHECK(driver.decode(ubxFrame(UBX_MSG_NAV_SAT, Bytes(7, 0))).batch.events.empty());
+    CHECK(satellites.constellations[0].inView == 1);
+    CHECK(std::get<GPSDecodedSatellites>(decoded.batch.events[0]).constellations[0].inView == 1);
+    const auto empty = driver.decode(ubxFrame(UBX_MSG_NAV_SAT, Bytes{0, 0, 0, 0, 1, 0, 0, 0}));
+    CHECK(empty.batch.events.size() == 1);
+    CHECK(std::get<GPSDecodedSatellites>(empty.batch.events.front()).constellations[0].inView == 0);
+    CHECK(satellites.constellations[0].inView == 0);
+    UBXProtocol withoutSatellites(receiver.io(), false);
+    withoutSatellites.setDecodeContext({.navigation = true});
+    CHECK(withoutSatellites.decode(valid).batch.events.empty());
     const std::string originalModel = driver.modelName();
     Bytes version(70, 0);
     const std::string module = "MOD=NEO-M9N";
     std::copy(module.begin(), module.end(), version.begin() + 40);
-    auto badVersion = packet(UBX_MSG_MON_VER, version);
+    auto badVersion = ubxFrame(UBX_MSG_MON_VER, version);
     badVersion.back() ^= 1;
     CHECK(driver.decode(badVersion).batch.events.empty());
     CHECK(driver.modelName() == originalModel);
@@ -1245,8 +763,10 @@ static void transactionalFrames()
     Bytes baseVersion(40, 0);
     const std::string firmware = "SPG 4.04";
     std::copy(firmware.begin(), firmware.end(), baseVersion.begin());
-    CHECK(driver.decode(packet(UBX_MSG_MON_VER, baseVersion)).batch.events.empty());
+    CHECK(driver.decode(ubxFrame(UBX_MSG_MON_VER, baseVersion)).batch.events.empty());
     CHECK(driver.firmwareVersion() == firmware);
+    const std::string model = driver.modelName();
+    CHECK(driver.receiverIdentity() == (model.empty() ? firmware : model + ' ' + firmware));
 
     Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
     pvt[20] = 3;
@@ -1255,7 +775,7 @@ static void transactionalFrames()
     Bytes epochs;
     for (uint8_t index = 1; index <= 20; ++index) {
         pvt[23] = index;
-        const auto frame = packet(UBX_MSG_NAV_PVT, pvt);
+        const auto frame = ubxFrame(UBX_MSG_NAV_PVT, pvt);
         epochs.insert(epochs.end(), frame.begin(), frame.end());
     }
     size_t offset = 0;
@@ -1266,7 +786,7 @@ static void transactionalFrames()
         CHECK(batch.batch.events.size() <= GPSDecodedBatch::MAX_EVENTS);
         offset += batch.bytesConsumed;
         for (const auto& event : batch.batch.events) {
-            CHECK(std::get<GPSNativePositionReport>(event).satellites_used == ++count);
+            CHECK(std::get<GPSDecodedPosition>(event).navigation.satellitesUsed == ++count);
         }
     }
     CHECK(count == 20);
@@ -1275,19 +795,31 @@ static void transactionalFrames()
     const auto crc = RTCMFramer::crc24q(correction);
     correction.insert(correction.end(), {uint8_t(crc >> 16), uint8_t(crc >> 8), uint8_t(crc)});
     std::copy(correction.begin(), correction.end(), pvt.begin() + 40);
-    const auto embedded = driver.decode(packet(UBX_MSG_NAV_PVT, pvt));
+    const auto embedded = driver.decode(ubxFrame(UBX_MSG_NAV_PVT, pvt));
     CHECK(embedded.batch.events.size() == 1);
-    CHECK(std::holds_alternative<GPSNativePositionReport>(embedded.batch.events.front()));
+    CHECK(std::holds_alternative<GPSDecodedPosition>(embedded.batch.events.front()));
     const auto standalone = driver.decode(correction);
     CHECK(standalone.batch.events.size() == 1);
     CHECK(std::holds_alternative<GPSRTCMReport>(standalone.batch.events.front()));
+    std::vector<std::vector<uint8_t>> recovered;
+    auto io = makeGPSProtocolTestIO(clock);
+    io.decoded = [&](const GPSDecodedBatch& batch) {
+        CHECK(batch.events.size() <= GPSDecodedBatch::MAX_EVENTS);
+        for (const auto& event : batch.events) {
+            const auto& report = std::get<GPSRTCMReport>(event);
+            recovered.emplace_back(report.bytes.begin(), report.bytes.begin() + report.size);
+        }
+    };
+    UBXProtocol recoveryDriver(io, false);
+    recoveryDriver.setDecodeContext({.corrections = true});
+    verifyRTCMRecovery(recoveryDriver, recovered);
 }
 
-static void controlDeadline()
+static void controlDeadline(GPSTestClock& clock)
 {
-    Receiver receiver;
-    GPSNativePositionReport position{};
-    gps_test_time = 1000000;
+    ProtocolReceiver receiver(clock);
+    GPSDecodedPosition position{};
+    clock.reset(1000000);
     auto io = receiver.io();
     const auto read = io.read;
     const auto write = io.write;
@@ -1296,7 +828,7 @@ static void controlDeadline()
     io.read = [&](auto bytes, GPSDeadline deadline) {
         const auto result = read(bytes, deadline);
         if (expireRead && result.status == GPSReadStatus::Data) {
-            gps_test_time = deadline.untilUs;
+            clock.advanceTo(deadline.untilUs);
             expireRead = false;
             verifyWrite = true;
         }
@@ -1304,42 +836,87 @@ static void controlDeadline()
     };
     io.write = [&](auto bytes, GPSDeadline deadline) {
         if (verifyWrite) {
-            CHECK(deadline.remainingMilliseconds(gps_test_time) > 0);
+            CHECK(deadline.remainingMilliseconds(clock.nowUs()) > 0);
         }
         return write(bytes, deadline);
     };
-    GPSNativeUBX driver(io, &position, nullptr);
+    UBXProtocol driver(captureGPSReports(io, position), false);
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config{};
-    config.output_mode = GPSProtocol::OutputMode::GPS;
-    CHECK(driver.configure(baud, config) == 0);
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+    CHECK(driver.configure(baud, config));
     driver.receive(10);  // Drain the configuration responses before the timed warning.
-    receiver.read_chunk = GPS_READ_BUFFER_SIZE;
-    receiver.bufferWarning();
+    receiver.readChunk = GPS_READ_BUFFER_SIZE;
+    receiver.queueBufferWarning();
     expireRead = true;
     driver.receive(10);
     CHECK(verifyWrite);
-    CHECK(receiver.comms_polls == 1);
-    CHECK(driver.ioError() == 0);
+    CHECK(receiver.commsPolls == 1);
+    CHECK(!driver.hasIOError());
 }
 
-static void reentrantPayload()
+static void identificationWriteBudget(GPSTestClock& clock)
 {
-    Receiver receiver;
-    GPSNativePositionReport position{};
+    for (bool expireWrite : {false, true}) {
+        clock.reset(1000000);
+        std::vector<uint64_t> writeDeadlines;
+        std::vector<GPSCommandResult> completions;
+        uint64_t replyDeadline = 0;
+        auto io = makeGPSProtocolTestIO(clock);
+        io.read = [&](std::span<uint8_t>, GPSDeadline deadline) {
+            if (!writeDeadlines.empty()) {
+                replyDeadline = deadline.untilUs;
+            }
+            clock.advanceTo(deadline.untilUs);
+            return GPSReadResult{GPSReadStatus::TimedOut};
+        };
+        io.write = [&](std::span<const uint8_t> bytes, GPSDeadline deadline) {
+            if (clock.nowUs() >= deadline.untilUs) {
+                return GPSWriteResult{GPSWriteStatus::TimedOut};
+            }
+            CHECK(deadline.remainingMilliseconds(clock.nowUs()) <= 250);
+            writeDeadlines.push_back(deadline.untilUs);
+            clock.advanceTo(expireWrite ? deadline.untilUs : clock.nowUs() + 40000);
+            return GPSWriteResult{GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())};
+        };
+        io.commandFinished = [&](const GPSCommandResult& result) { completions.push_back(result); };
+        UBXProtocol driver(std::move(io), false);
+        unsigned baud = 115200;
+        GPSProtocol::GPSConfig config;
+        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+        CHECK(!driver.configure(baud, config));
+        CHECK(completions.size() == 1);
+        const auto& evidence = completions.front().evidence;
+        CHECK(evidence.command == std::to_string(UBX_MSG_MON_VER));
+        CHECK(evidence.startedAtUs == 1020000);
+        CHECK(writeDeadlines == std::vector<uint64_t>(expireWrite ? 1 : 2, evidence.startedAtUs + 250000));
+        CHECK(evidence.acceptedBytes == (expireWrite ? 6 : 8));
+        CHECK(evidence.writtenBytes == evidence.acceptedBytes && evidence.uncertainBytes == 0);
+        CHECK(evidence.outcome == (expireWrite ? GPSCommandOutcome::TransportError : GPSCommandOutcome::TimedOut));
+        CHECK(replyDeadline == (expireWrite ? 0 : evidence.startedAtUs + 2000000));
+        CHECK(evidence.finishedAtUs == evidence.startedAtUs + (expireWrite ? 250000 : 2000000));
+    }
+}
+
+static void reentrantPayload(GPSTestClock& clock)
+{
+    ProtocolReceiver receiver(clock);
+    GPSDecodedPosition position{};
     auto io = receiver.io();
-    GPSNativeUBX* active = nullptr;
+    UBXProtocol* active = nullptr;
     bool reentered = false;
     QStringList warnings;
     Bytes correction{0xd3, 0, 2, 0x3e, 0xd0};
     const auto crc = RTCMFramer::crc24q(correction);
     correction.insert(correction.end(), {uint8_t(crc >> 16), uint8_t(crc >> 8), uint8_t(crc)});
-    io.log = [&](GPSProtocolLogLevel, QStringView message) {
+    io.log = [&](const QLoggingCategory&, GPSProtocolLogLevel, QStringView message) {
         warnings.push_back(message.toString());
         if (!reentered && message == u"ubx msg: txbuf alloc") {
             reentered = true;
             active->setDecodeContext({.navigation = true, .corrections = true});
-            for (auto byte : packet(UBX_MSG_INF_WARNING, Bytes{'o', 'k'})) {
+            for (auto byte : ubxFrame(UBX_MSG_INF_WARNING, Bytes{'o', 'k'})) {
                 active->decodeByte(byte);
             }
             for (auto byte : std::span(correction).first(4)) {
@@ -1347,26 +924,26 @@ static void reentrantPayload()
             }
         }
     };
-    GPSNativeUBX driver(std::move(io), &position, nullptr);
+    UBXProtocol driver(captureGPSReports(std::move(io), position), false);
     active = &driver;
     driver.setDecodeContext({.navigation = true, .corrections = true});
     const std::string warning = "txbuf alloc";
-    CHECK(driver.decode(packet(UBX_MSG_INF_WARNING, Bytes(warning.begin(), warning.end()))).batch.events.empty());
+    CHECK(driver.decode(ubxFrame(UBX_MSG_INF_WARNING, Bytes(warning.begin(), warning.end()))).batch.events.empty());
     CHECK(reentered);
     CHECK(warnings == (QStringList{"ubx msg: txbuf alloc", "ubx msg: ok"}));
     const auto decoded = driver.decode(std::span(correction).subspan(4));
     CHECK(decoded.batch.events.size() == 1);
     CHECK(std::holds_alternative<GPSRTCMReport>(decoded.batch.events.front()));
-    CHECK(receiver.transport_operations == 0);
+    CHECK(receiver.transportOperations == 0);
     driver.receive(1);
-    CHECK(receiver.comms_polls == 1);
+    CHECK(receiver.commsPolls == 1);
 }
 
-static void isolatedFrameAndControl()
+static void isolatedFrameAndControl(GPSTestClock& clock)
 {
     UBX::FrameDecoder decoder;
     const Bytes payload = {0x06, 0x24};
-    const auto bytes = packet(UBX_MSG_ACK_ACK, payload);
+    const auto bytes = ubxFrame(UBX_MSG_ACK_ACK, payload);
     std::optional<UBX::Frame> frame;
     for (size_t index = 0; index < bytes.size(); ++index) {
         frame = decoder.consume(bytes[index]);
@@ -1382,7 +959,7 @@ static void isolatedFrameAndControl()
     }
     CHECK(decoder.idle());
     CHECK(retained.payload[0] == 6);
-    const auto longFrame = packet(UBX_MSG_INF_NOTICE, Bytes(4096, 0xa5));
+    const auto longFrame = ubxFrame(UBX_MSG_INF_NOTICE, Bytes(4096, 0xa5));
     for (auto byte : longFrame) {
         frame = decoder.consume(byte);
     }
@@ -1401,6 +978,23 @@ static void isolatedFrameAndControl()
         frame = decoder.consume(byte);
     }
     CHECK(frame && frame->message == UBX_MSG_ACK_ACK && frame->length == 2);
+
+    Bytes pvt(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 0);
+    pvt[20] = 3;
+    pvt[21] = UBX_RX_NAV_PVT_FLAGS_GNSSFIXOK;
+    const auto validUbx = ubxFrame(UBX_MSG_NAV_PVT, pvt);
+    const auto validRtcm = rtcmPacket(std::array<uint8_t, 2>{0x3e, 0xd0});
+    Bytes stream{0xb5, 0x62, 0x01, 0x07, 0x01, 0x10};
+    stream.insert(stream.end(), validUbx.begin(), validUbx.end());
+    stream.insert(stream.end(), validRtcm.begin(), validRtcm.end());
+    UBXProtocol receiver(makeGPSProtocolTestIO(clock), false);
+    receiver.setDecodeContext({.navigation = true, .corrections = true});
+    const auto recovered = receiver.decode(stream);
+    CHECK(recovered.bytesConsumed == stream.size());
+    CHECK(recovered.batch.events.size() == 2);
+    CHECK(std::holds_alternative<GPSDecodedPosition>(recovered.batch.events[0]));
+    CHECK(std::holds_alternative<GPSRTCMReport>(recovered.batch.events[1]));
+    CHECK(!receiver.hasIOError());
 
     for (size_t prefix = 1; prefix <= 4; ++prefix) {
         decoder.reset();
@@ -1434,20 +1028,18 @@ static void isolatedFrameAndControl()
     controller.beginReadback(keys);
     UBX::ConfigurationValues values;
     values.count = 2;
-    values.keys[0] = values.keys[1] = keys[0];
+    values.values[0].key = values.values[1].key = keys[0];
     controller.accept(values);
     CHECK(!controller.readbackReady());
-    values.keys[0] = keys[1];
-    values.keys[1] = keys[0];
-    values.values[0] = 200;
-    values.values[1] = 4;
+    values.values[0] = {.key = keys[1], .value = 200};
+    values.values[1] = {.key = keys[0], .value = 4};
     controller.accept(values);
     CHECK(controller.readbackReady());
-    CHECK(controller.readback().values[0] == 4 && controller.readback().values[1] == 200);
+    CHECK(controller.readback().values[0].value == 4 && controller.readback().values[1].value == 200);
     CHECK(!UBX::decodeConfigurationValues(Bytes{1, 0, 0, 0, 1}));
 }
 
-static void checkedWireCodecs()
+static void checkedWireCodecs(GPSTestClock&)
 {
     const auto fixed = []<typename T>() {
         using Codec = UBX::MessageCodec<T>;
@@ -1475,6 +1067,16 @@ static void checkedWireCodecs()
     fixed.operator()<ubx_payload_rx_rxm_rtcm_t>();
     fixed.operator()<ubx_payload_rx_mon_hw_ubx6_t>();
     fixed.operator()<ubx_payload_rx_mon_hw_ubx7_t>();
+    const auto hardware = []<typename T>(size_t jammingOffset) {
+        Bytes payload(UBX::WIRE_SIZE<T>, 0xa5);
+        CHECK(LittleEndian::write<uint16_t>(payload, 16, 0x1234));
+        CHECK(LittleEndian::write<uint16_t>(payload, 18, 0x5678));
+        payload[jammingOffset] = 77;
+        const auto decoded = UBX::MessageCodec<T>::decode(payload);
+        CHECK(decoded && decoded->noisePerMS == 0x1234 && decoded->agcCnt == 0x5678 && decoded->jamInd == 77);
+    };
+    hardware.operator()<ubx_payload_rx_mon_hw_ubx6_t>(53);
+    hardware.operator()<ubx_payload_rx_mon_hw_ubx7_t>(45);
     CHECK(UBX::MessageCodec<ubx_payload_rx_nav_pvt_t>::decode(Bytes(84)));
 
     Bytes rf(28, 0);
@@ -1496,6 +1098,75 @@ static void checkedWireCodecs()
     CHECK(!UBX::MessageCodec<ubx_payload_rx_nav_sat_part2_t>::block(Bytes(12), 1));
     const auto ack = UBX::MessageCodec<ubx_payload_rx_ack_ack_t>::decode(Bytes{6, 0x24});
     CHECK(ack && ack->msg == UBX_MSG_CFG_NAV5);
+
+    for (const auto [key, value] : std::array<UBX::ConfigurationValue, 5>{
+             {{0x50000001, 0}, {0x10000001, 2}, {0x20000001, 256}, {0x30000001, 65536}, {0x00000001, 0}}}) {
+        UBX::CheckedValsetBatch<32> batch;
+        CHECK(batch.append(0x20000001, 1));
+        const auto previousSize = batch.size;
+        CHECK(!batch.append(key, value));
+        CHECK(!batch.append(0x20000002, 2));
+        CHECK(batch.size == previousSize && batch.payload().empty());
+    }
+    UBX::CheckedValsetBatch<28> batch;
+    CHECK(batch.payload().empty());
+    CHECK(batch.append(0x10000001, 1));
+    CHECK(batch.append(0x20000002, 255));
+    CHECK(batch.append(0x30000003, 65535));
+    CHECK(batch.append(0x40000004, UINT32_MAX));
+    CHECK(batch.size == batch.bytes.size());
+    auto values = batch.bytes;
+    CHECK(!UBX::decodeConfigurationValues(values));  // VALSET headers cannot masquerade as VALGET.
+    values[0] = 1;
+    values[1] = 0;
+    const auto decoded = UBX::decodeConfigurationValues(values);
+    CHECK(decoded && decoded->count == 4);
+    CHECK(decoded->values[0].value == 1 && decoded->values[1].value == 255 && decoded->values[2].value == 65535 &&
+          decoded->values[3].value == UINT32_MAX);
+    for (size_t length = 1; length < values.size(); ++length) {
+        if (length != 4 && length != 9 && length != 14 && length != 20) {
+            CHECK(!UBX::decodeConfigurationValues(std::span(values).first(length)));
+        }
+    }
+    values[8] = 2;
+    CHECK(!UBX::decodeConfigurationValues(values));
+    CHECK(!batch.append(0x20000005, 0));
+    CHECK(batch.payload().empty());
+    batch = {};
+    CHECK(batch.append(0x20000005, 0));
+    CHECK(!batch.payload().empty());
+}
+
+static void optionalCommandWriteEvidence(GPSTestClock& clock)
+{
+    for (const auto key : {UBX_CFG_KEY_CFG_UART1INPROT_SPARTN, UBX_CFG_KEY_ODO_USE_ODO}) {
+        for (const auto failure : {GPSWriteStatus::Error, GPSWriteStatus::Cancelled}) {
+            ProtocolReceiver receiver(clock);
+            receiver.failValsetKey = key;
+            receiver.valsetWriteFailure = failure;
+            std::vector<GPSCommandResult> completions;
+            auto io = receiver.io();
+            io.commandFinished = [&](const GPSCommandResult& result) { completions.push_back(result); };
+            UBXProtocol driver(std::move(io), false);
+            GPSProtocol::GPSConfig config;
+            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+            std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+            unsigned baud = 115200;
+            CHECK(!driver.configure(baud, config));
+            CHECK(!completions.empty());
+            const auto& result = completions.back();
+            CHECK(result.evidence.command == std::to_string(UBX_MSG_CFG_VALSET));
+            CHECK(!result.evidence.required);
+            CHECK(result.evidence.outcome == (failure == GPSWriteStatus::Cancelled
+                                                  ? GPSCommandOutcome::Cancelled
+                                                  : GPSCommandOutcome::TransportError));
+            CHECK(result.evidence.acceptedBytes == 9 && result.evidence.writtenBytes == 7);
+            CHECK(result.evidence.uncertainBytes == 2);
+            const auto count = completions.size();
+            driver.finishConfigurationEvidence();
+            CHECK(completions.size() == count);
+        }
+    }
 }
 
 const auto& testCases()
@@ -1503,20 +1174,17 @@ const auto& testCases()
     static const struct
     {
         const char* name;
-        void (*run)();
+        void (*run)(GPSTestClock&);
     } cases[] = {
         {"isolated-frame-control", isolatedFrameAndControl},
         {"checked-wire-codecs", checkedWireCodecs},
-        {"position-f9p", [] { positionMode(false, true); }},
-        {"receiver-settings", receiverSettings},
+        {"optional-command-write-evidence", optionalCommandWriteEvidence},
         {"native-configuration-validation", invalidConfiguration},
         {"integrity-original-receipts", integrityReceipts},
-        {"position-m9n", [] { positionMode(false, false); }},
-        {"position-m8p", [] { positionMode(true, true); }},
-        {"position-m8n", [] { positionMode(true, false); }},
-        {"position-stop-failures", [] { positionModeFailure(); }},
         {"control-deadline", controlDeadline},
+        {"identification-write-budget", identificationWriteBudget},
         {"explicit-no-fix", explicitNoFix},
+        {"out-of-range-coordinates", outOfRangeCoordinates},
         {"read-only-baud-discovery", baudDiscovery},
         {"discovery-failures-and-late-acks", discoveryFailures},
         {"navigation-fix-flags-and-ordering", navigationFixFlags},
@@ -1527,170 +1195,165 @@ const auto& testCases()
         {"comms-malformed-replies", invalidCommsDiagnostics},
         {"comms-expired-reply", expiredCommsDiagnostics},
         {"buffer-warning-rate-limit",
-         [] {
-             Fixture f;
-             f.receiver.bufferWarning(false);
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.queueBufferWarning(false);
              f.driver.receive(100);
-             CHECK(f.receiver.comms_polls == 0);
-             f.receiver.bufferWarning();
+             CHECK(f.receiver.commsPolls == 0);
+             f.receiver.queueBufferWarning();
              f.driver.receive(100);
-             CHECK(f.receiver.comms_polls == 1);
-             f.receiver.bufferWarning();
+             CHECK(f.receiver.commsPolls == 1);
+             f.receiver.queueBufferWarning();
              f.driver.receive(100);
-             CHECK(f.receiver.comms_polls == 1);
-             gps_test_time += 5000000;
-             f.receiver.bufferWarning();
+             CHECK(f.receiver.commsPolls == 1);
+             clock.advanceBy(5000000);
+             f.receiver.queueBufferWarning();
              f.driver.receive(100);
-             CHECK(f.receiver.comms_polls == 2);
+             CHECK(f.receiver.commsPolls == 2);
          }},
         {"buffer-poll-failure-rate-limit",
-         [] {
-             Fixture f;
-             f.receiver.fail_comms_write = true;
-             f.receiver.bufferWarning();
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.failCommsWrite = true;
+             f.receiver.queueBufferWarning();
              f.driver.receive(100);
-             f.receiver.bufferWarning();
+             f.receiver.queueBufferWarning();
              f.driver.receive(100);
-             CHECK(f.receiver.comms_polls == 1);
-             gps_test_time += 5000000;
-             f.receiver.fail_comms_write = false;
-             f.receiver.bufferWarning();
+             CHECK(f.receiver.commsPolls == 1);
+             clock.advanceBy(5000000);
+             f.receiver.failCommsWrite = false;
+             f.receiver.queueBufferWarning();
              f.driver.receive(100);
-             CHECK(f.receiver.comms_polls == 2);
+             CHECK(f.receiver.commsPolls == 2);
          }},
         {"already-stopped",
-         [] {
-             Fixture f;
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
              f.success(1);
          }},
         {"poll-read-failure",
-         [] {
-             Fixture f;
-             f.readFailure(-1);
-         }},
-        {"poll-read-errno",
-         [] {
-             Fixture f;
-             f.readFailure(-EIO);
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.readFailure(GPSProtocolError::Transport);
          }},
         {"poll-read-cancelled",
-         [] {
-             Fixture f;
-             f.readFailure(GPSProtocol::ReadCancelled);
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.readFailure(GPSProtocolError::Cancelled);
          }},
         {"silent-then-stopped",
-         [] {
-             Fixture f;
-             f.receiver.replies = {SurveyReply::silent, SurveyReply::stopped};
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.surveyReplies = {SurveyReply::Silent, SurveyReply::Stopped};
              f.success(2);
          }},
         {"delayed-stop",
-         [] {
-             Fixture f;
-             f.receiver.replies = {SurveyReply::active, SurveyReply::active, SurveyReply::stopped};
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.surveyReplies = {SurveyReply::Active, SurveyReply::Active, SurveyReply::Stopped};
              f.success(3);
-             CHECK(f.receiver.started_at - f.receiver.disabled_at >= 200000);
+             CHECK(f.receiver.startedAt - f.receiver.disabledAt >= 200000);
          }},
         {"completed-survey-is-not-stopped",
-         [] {
-             Fixture f;
-             f.receiver.replies = {SurveyReply::valid, SurveyReply::stopped};
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.surveyReplies = {SurveyReply::Valid, SurveyReply::Stopped};
              f.success(2);
          }},
         {"bad-checksum-is-not-confirmation",
-         [] {
-             Fixture f;
-             f.receiver.replies = {SurveyReply::bad_checksum, SurveyReply::stopped};
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.surveyReplies = {SurveyReply::BadChecksum, SurveyReply::Stopped};
              f.success(2);
          }},
         {"bad-length-is-not-confirmation",
-         [] {
-             Fixture f;
-             f.receiver.replies = {SurveyReply::bad_length, SurveyReply::stopped};
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.surveyReplies = {SurveyReply::BadLength, SurveyReply::Stopped};
              f.success(2);
          }},
         {"active-timeout",
-         [] {
-             Fixture f;
-             f.receiver.replies = {SurveyReply::active};
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.surveyReplies = {SurveyReply::Active};
              f.timeout();
          }},
         {"valid-timeout",
-         [] {
-             Fixture f;
-             f.receiver.replies = {SurveyReply::valid};
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.surveyReplies = {SurveyReply::Valid};
              f.timeout();
          }},
         {"silent-timeout",
-         [] {
-             Fixture f;
-             f.receiver.replies = {SurveyReply::silent};
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.surveyReplies = {SurveyReply::Silent};
              f.timeout();
          }},
         {"reconfigure-does-not-reuse-stop-confirmation",
-         [] {
-             Fixture f;
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
              f.success(1);
-             f.receiver = Receiver{};
-             f.receiver.replies = {SurveyReply::silent};
+             f.receiver.resetState();
+             f.receiver.surveyReplies = {SurveyReply::Silent};
              f.timeout();
          }},
         {"disable-nak",
-         [] {
-             Fixture f;
-             f.receiver.reject_disable = true;
-             CHECK(f.configure() < 0);
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.rejectDisable = true;
+             CHECK(!f.configure());
              CHECK(!f.driver.receiverReady());
              CHECK(f.receiver.modes == std::vector<uint32_t>({0}));
-             CHECK(f.receiver.polls == 0 && f.receiver.starts == 0);
+             CHECK(f.receiver.surveyPolls == 0 && f.receiver.starts == 0);
          }},
         {"start-nak",
-         [] {
-             Fixture f;
-             f.receiver.reject_start = true;
-             CHECK(f.configure() < 0);
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.rejectStart = true;
+             CHECK(!f.configure());
              CHECK(!f.driver.receiverReady());
              CHECK(f.receiver.modes == std::vector<uint32_t>({0, 1}));
-             CHECK(f.receiver.polls == 1 && f.receiver.starts == 1);
+             CHECK(f.receiver.surveyPolls == 1 && f.receiver.starts == 1);
          }},
         {"poll-write-failure",
-         [] {
-             Fixture f;
-             f.receiver.fail_poll_write = true;
-             CHECK(f.configure() < 0);
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.receiver.failPollWrite = true;
+             CHECK(!f.configure());
              CHECK(!f.driver.receiverReady());
              CHECK(f.receiver.modes == std::vector<uint32_t>({0}));
              CHECK(f.receiver.starts == 0);
          }},
         {"configured-status-callback",
-         [] {
-             Fixture f;
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
              f.success(1);
-             f.receiver.survey(SurveyReply::active);
+             f.receiver.queueSurveyReply(SurveyReply::Active);
              f.driver.receive(100);
-             CHECK(f.receiver.status_callbacks == 1);
+             CHECK(f.receiver.statusCallbacks == 1);
          }},
         {"configured-survey-activates-rtcm",
-         [] {
-             Fixture f;
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
              f.success(1);
-             f.receiver.survey(SurveyReply::valid);
+             f.receiver.queueSurveyReply(SurveyReply::Valid);
              f.driver.receive(100);
-             CHECK(f.receiver.status_callbacks == 1);
-             CHECK(f.receiver.rtcm_enables == 1);
-             CHECK(f.driver.ioError() == 0);
+             CHECK(f.receiver.statusCallbacks == 1);
+             CHECK(f.receiver.rtcmEnables == 1);
+             CHECK(!f.driver.hasIOError());
          }},
         {"fixed-base-does-not-poll",
-         [] {
-             Fixture f;
-             f.base = {.useFixedBase = true,
-                       .fixedPosition = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-                       .fixedBaseAccuracyMeters = 1.0f};
-             CHECK(f.configure() == 0);
+         [](GPSTestClock& clock) {
+             Fixture f(clock);
+             f.base = {.mode = GPSBaseStationConfig::Fixed{
+                           .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
+                           .accuracyMeters = 1.0f}};
+             CHECK(f.configure());
              CHECK(f.driver.receiverReady());
              CHECK(f.receiver.modes == std::vector<uint32_t>({2}));
-             CHECK(f.receiver.polls == 0 && f.receiver.starts == 0);
-             CHECK(f.receiver.rtcm_enables == 1);
+             CHECK(f.receiver.surveyPolls == 0 && f.receiver.starts == 0);
+             CHECK(f.receiver.rtcmEnables == 1);
          }},
     };
 
@@ -1720,10 +1383,9 @@ void GPSProtocolUbxTest::_cases_data()
 void GPSProtocolUbxTest::_cases()
 {
     QFETCH(int, index);
-    gps_test_time = 0;
-    gps_test_warnings.clear();
+    GPSTestClock clock;
     try {
-        testCases()[index].run();
+        testCases()[index].run(clock);
     } catch (const std::exception& error) {
         QFAIL(error.what());
     }

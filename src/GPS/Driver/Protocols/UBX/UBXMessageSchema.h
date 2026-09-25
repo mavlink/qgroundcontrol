@@ -1,6 +1,9 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
+#include <cstdlib>
+#include <limits>
 #include <span>
 
 #include "UBXMessages.h"
@@ -11,6 +14,24 @@ inline constexpr size_t MON_HW_DEPRECATED_SIZE = 56;
 inline constexpr uint16_t NAV_EOE = 0x6101;
 inline constexpr uint32_t NAV_EOE_MSGOUT_I2C = 0x2091015f;
 inline constexpr double DEGREES_PER_COORDINATE = 1e-7;
+
+/// Converts a 1e-7 degree coordinate; values beyond +/-@a limitDegrees come from a corrupt or
+/// uninitialised solution and are reported as unavailable (NaN).
+inline double coordinateDegrees(int32_t value, int64_t limitDegrees)
+{
+    return std::llabs(value) <= limitDegrees * 10'000'000 ? value * DEGREES_PER_COORDINATE
+                                                          : std::numeric_limits<double>::quiet_NaN();
+}
+
+inline double latitudeDegrees(int32_t value)
+{
+    return coordinateDegrees(value, 90);
+}
+
+inline double longitudeDegrees(int32_t value)
+{
+    return coordinateDegrees(value, 180);
+}
 inline constexpr float DOP_PER_UNIT = 0.01f;
 
 struct MessageSchema
@@ -62,9 +83,9 @@ constexpr const MessageSchema* messageSchema(uint16_t message)
     return nullptr;
 }
 
-inline bool validPayload(uint16_t message, std::span<const uint8_t> payload)
+/// @param schema messageSchema(message), passed by callers that also need the schema.
+inline bool validPayload(uint16_t message, std::span<const uint8_t> payload, const MessageSchema* schema)
 {
-    const auto* schema = messageSchema(message);
     if (!schema) {
         return true;
     }
@@ -93,6 +114,11 @@ inline bool validPayload(uint16_t message, std::span<const uint8_t> payload)
         return payload[0] == 1;
     }
     return true;
+}
+
+inline bool validPayload(uint16_t message, std::span<const uint8_t> payload)
+{
+    return validPayload(message, payload, messageSchema(message));
 }
 
 static_assert(UBX::WIRE_SIZE<ubx_payload_rx_nav_pvt_t> == 92);

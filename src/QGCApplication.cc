@@ -28,9 +28,7 @@
 #include "MAVLinkProtocol.h"
 #include "MavlinkSettings.h"
 #include "MultiVehicleManager.h"
-#include "NTRIPManager.h"
 #include "ParameterManager.h"
-#include "PositionManager.h"
 #include "QGCCommandLineParser.h"
 #include "QGCCorePlugin.h"
 #include "QGCFileDownload.h"
@@ -304,10 +302,8 @@ void QGCApplication::_initForNormalAppBoot()
     AudioOutput::instance()->init(SettingsManager::instance()->appSettings()->audioVolume(),
                                   SettingsManager::instance()->appSettings()->audioMuted());
     FollowMe::instance()->init();
-    QGCPositionManager::instance()->init();
     LinkManager::instance()->init();
     GPSManager::instance()->init();
-    NTRIPManager::instance()->init();
     VideoManager::instance()->init(mainRootWindow());
 
     // Set the window icon now that custom plugin has a chance to override it

@@ -235,6 +235,40 @@ qint64 QSerialPortPrivate::_posixWrite(const char* data, qint64 maxSize, int tim
     return totalWritten;
 }
 
+qint64 QSerialPortPrivate::_posixWriteWithProgress(const char* data, qint64 maxSize, int timeoutMs)
+{
+    qint64 totalWritten = 0;
+    // Match the USB backend: zero waits without limit.
+    const QDeadlineTimer deadline =
+        timeoutMs == 0 ? QDeadlineTimer(QDeadlineTimer::Forever) : QDeadlineTimer(timeoutMs);
+
+    while (totalWritten < maxSize) {
+        const ssize_t written = ::write(descriptor, data + totalWritten, static_cast<size_t>(maxSize - totalWritten));
+        if (written > 0) {
+            totalWritten += written;
+            continue;
+        }
+
+        if ((written < 0) && (errno != EAGAIN) && (errno != EWOULDBLOCK) && (errno != EINTR)) {
+            qCWarning(AndroidSerialPortLog) << "Write error on" << systemLocation << ":" << strerror(errno);
+            // Report bytes already sent; the next write reports the error.
+            return totalWritten > 0 ? totalWritten : -1;
+        }
+
+        if (deadline.hasExpired()) {
+            // A short count is a timeout, not an error.
+            qCDebug(AndroidSerialPortLog) << "Write timeout on" << systemLocation << "after" << totalWritten << "bytes";
+            return totalWritten;
+        }
+
+        struct pollfd pfd = {descriptor, POLLOUT, 0};
+        const int pollTimeout = deadline.isForever() ? -1 : static_cast<int>(qMax<qint64>(0, deadline.remainingTime()));
+        (void) ::poll(&pfd, 1, pollTimeout);
+    }
+
+    return totalWritten;
+}
+
 bool QSerialPortPrivate::_posixApplyPortSettings(qint32 baudRate, QSerialPort::DataBits dataBits_,
                                                  QSerialPort::StopBits stopBits_, QSerialPort::Parity parity_,
                                                  QSerialPort::FlowControl flowControl_)

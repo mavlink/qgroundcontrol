@@ -12,18 +12,26 @@ private slots:
 
     void testInitialStateIsDisconnected();
     void testStopFromIdleIsNoop();
+    void testStopCancelsDeferredSettings_data();
+    void testStopCancelsDeferredSettings();
+    void testNewSessionRetryBudget_data();
+    void testNewSessionRetryBudget();
     void testPlaintextCredentialWarningIsVisibleState();
-    void testTerminalStateStopsUdpForwarder_data();
-    void testTerminalStateStopsUdpForwarder();
+    void testConfigurationDebugRedactsCredentials();
 
     // Reconnect backoff (migrated from NTRIPReconnectPolicyTest after the policy
-    // was inlined into NTRIPManager). Driven through the friend test seam.
+    // was inlined into NTRIPManager). Driven through public state and ManualScheduler.
     void testReconnectInitialBackoff();
     void testReconnectExponentialBackoff();
     void testReconnectMaxBackoff();
     void testReconnectCancelStopsTimer();
     void testReconnectResetAttempts();
     void testReconnectSignalFires();
+    void testReconnectWaitsForNetworkAtFailure();
+    void testReconnectWaitsWhenNetworkLostDuringBackoff();
+    void testLoopbackCasterBypassesNetworkGate_data();
+    void testLoopbackCasterBypassesNetworkGate();
+    void testWaitingStatusObserverCanStopManager();
     void testDuplicateTransportErrorsScheduleOneRetry();
     void testRetiredTransportErrorCannotAffectNewSession();
     void testRetryPolicy_data();
@@ -34,12 +42,10 @@ private slots:
     void testRetryPublicationSuperseded();
     void testMissingMountpointDoesNotStartTransport();
     void testCorrectionIngressKeepsSessionAndIdentity();
-    void testSettingsProduceExplicitConfiguration();
     void testGgaSettingsUseInjectedProviders();
     void testFactChangesReconfigureTransport_data();
     void testFactChangesReconfigureTransport();
-    void testNtripOnlyUdpForwardingBypassesSelectionOnce();
     void testTransportDiagnosticsReachManager();
     void testStatusCallbackStopsTransition();
-    void testCasterCallbackStopsTransition();
+    void testConnectedCallbackStopsTransition();
 };

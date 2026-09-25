@@ -14,6 +14,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QMap>
 #include <QtCore/QSaveFile>
 #include <QtCore/QTextStream>
 #include <QtCore/QtEndian>
@@ -22,9 +23,10 @@
 #include "GPSEvidenceTransport.h"
 #include "GPSReceiverCapabilities.h"
 #include "MonotonicClock.h"
-#include "ScriptedUBXReceiver.h"
+#include "RTCMFramer.h"
+#include "Support/ScriptedReceiver.h"
+#include "Support/UBXReceiverModel.h"
 #include "TCPGPSTransport.h"
-#include "UDPGPSTransport.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
 #endif
@@ -42,7 +44,6 @@ struct Options
     QString action;
     QString transport;
     QString device;
-    QString host;
     QString model;
     QString surveyState;
     QString fault;
@@ -53,8 +54,6 @@ struct Options
     int observeMs = 1000;
     int cancelAfterMs = 50;
     int timeoutMs = 15000;
-    quint16 port = 0;
-    quint16 localPort = 0;
 };
 
 QString saveEvidence(const QJsonObject& report, const QString& path)
@@ -103,27 +102,33 @@ QJsonObject requestedConfig(const GPSReceiverConfig& config)
 {
     QJsonObject result{{"role", config.role == GPSReceiverConfig::Role::RTKBase   ? "base"
                                 : config.role == GPSReceiverConfig::Role::Passive ? "passive"
-                                                                                  : "position"},
+                                                                                  : "invalid"},
                        {"baud_rate", static_cast<qint64>(config.baudRate)},
-                       {"allow_persistent_changes", config.allowPersistentChanges},
-                       {"constellation_mask", static_cast<qint64>(config.constellationMask)}};
+                       {"allow_persistent_changes", config.allowPersistentChanges}};
     if (config.role == GPSReceiverConfig::Role::RTKBase) {
-        if (config.base.useFixedBase) {
+        result.insert("compact_observations", config.base.compactObservations);
+        if (std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode)) {
             result.insert("base_mode", "fixed");
-            result.insert("latitude_deg", config.base.fixedPosition.latitudeDegrees);
-            result.insert("longitude_deg", config.base.fixedPosition.longitudeDegrees);
-            result.insert("ellipsoid_altitude_m", config.base.fixedPosition.altitudeMeters);
-        } else if (config.base.surveyMode == GPSBaseStationConfig::SurveyMode::ReceiverManaged) {
+            result.insert("latitude_deg",
+                          std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position.latitudeDegrees);
+            result.insert("longitude_deg",
+                          std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position.longitudeDegrees);
+            result.insert("ellipsoid_altitude_m",
+                          std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position.altitudeMeters);
+        } else if (std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode)) {
             result.insert("base_mode", "receiver-averaging");
-            result.insert("averaging_maximum_s", static_cast<qint64>(config.base.receiverAveragingDurationSecs));
+            result.insert("averaging_maximum_s",
+                          static_cast<qint64>(
+                              std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDurationSecs));
             result.insert("survey_accuracy_m", QJsonValue::Null);
         } else {
             result.insert("base_mode", "survey");
-            result.insert("survey_duration_s", static_cast<qint64>(config.base.surveyInDurationSecs));
-            result.insert("survey_accuracy_m", config.base.surveyInAccMeters);
+            result.insert("survey_duration_s",
+                          static_cast<qint64>(std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs));
+            result.insert("survey_accuracy_m",
+                          std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters);
         }
     }
-    result.insert("dynamic_model", config.dynamicModel ? QJsonValue(*config.dynamicModel) : QJsonValue::Null);
     return result;
 }
 
@@ -132,7 +137,6 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     options.action = parser.value("action");
     options.transport = parser.value("transport");
     options.device = parser.value("device");
-    options.host = parser.value("host");
     options.model = parser.value("model");
     options.surveyState = parser.value("survey-state");
     options.fault = parser.value("fault");
@@ -143,11 +147,10 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
         return "--output requires a nonempty path";
     }
     const QString role = parser.value("role");
-    if (!QStringList{"plan", "configure", "role-cycle", "suite", "cancel"}.contains(options.action) ||
-        !QStringList{"scripted", "serial", "tcp", "udp"}.contains(options.transport) ||
+    if (!QStringList{"plan", "configure", "suite", "cancel"}.contains(options.action) ||
+        !QStringList{"scripted", "serial", "tcp"}.contains(options.transport) ||
         !QStringList{"ublox", "trimble", "septentrio", "femto", "unicore", "quectel", "passive"}.contains(family) ||
-        !QStringList{"base", "position", "passive"}.contains(role) ||
-        !QStringList{"f9p", "m8p"}.contains(options.model) ||
+        !QStringList{"base", "passive"}.contains(role) || !QStringList{"f9p", "m8p"}.contains(options.model) ||
         !QStringList{"fresh", "retained", "none"}.contains(options.surveyState) ||
         !QStringList{"none", "nak", "wrong-readback", "cancel", "rtcm-nak", "rtcm-nak-cancel"}.contains(
             options.fault)) {
@@ -171,14 +174,7 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     }
     options.config.role = role == "base"      ? GPSReceiverConfig::Role::RTKBase
                           : role == "passive" ? GPSReceiverConfig::Role::Passive
-                                              : GPSReceiverConfig::Role::Position;
-    const bool roleCycle = options.action == "role-cycle" || options.action == "suite";
-    if (!gpsReceiverCapabilities(options.family, options.config.role).position && (roleCycle || role == "position")) {
-        return "This receiver does not support Position or base -> Position -> base cycles";
-    }
-    if (roleCycle && role != "base") {
-        return "Role cycles must begin with --role base";
-    }
+                                              : static_cast<GPSReceiverConfig::Role>(-1);
     if (options.transport == "scripted" && options.family != GPSType::ublox) {
         return "The scripted peer supports UBX only";
     }
@@ -206,11 +202,12 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
         // Role and base changes can require multiple receiver restarts within the driver's 45-second budget.
         options.timeoutMs = 60000;
     }
-    options.port = static_cast<quint16>(integer("port", 0, 65535));
-    options.localPort = static_cast<quint16>(integer("local-port", 0, 65535));
     options.config.baudRate = static_cast<uint32_t>(integer("baud", 0, 4000000));
     options.config.allowPersistentChanges = parser.isSet("allow-save");
-    options.config.constellationMask = static_cast<uint32_t>(integer("constellations", 0, 31));
+    options.config.base.compactObservations = parser.isSet("compact-rtcm");
+    if (options.config.base.compactObservations && options.config.role != GPSReceiverConfig::Role::RTKBase) {
+        return "--compact-rtcm requires --role base";
+    }
     const QString baseMode = parser.value("base-mode");
     if (!QStringList{"survey", "fixed", "receiver-averaging"}.contains(baseMode)) {
         return "Unsupported base mode";
@@ -229,28 +226,29 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
                 valid = valid && parser.isSet(name) && ok && std::isfinite(value);
                 return value;
             };
-            options.config.base.useFixedBase = true;
-            options.config.base.fixedPosition = {.latitudeDegrees = coordinate("latitude"),
-                                                 .longitudeDegrees = coordinate("longitude"),
-                                                 .altitudeMeters = static_cast<float>(coordinate("altitude"))};
+            options.config.base.mode = GPSBaseStationConfig::Fixed{};
+            std::get<GPSBaseStationConfig::Fixed>(options.config.base.mode).position = {
+                .latitudeDegrees = coordinate("latitude"),
+                .longitudeDegrees = coordinate("longitude"),
+                .altitudeMeters = static_cast<float>(coordinate("altitude"))};
         } else if (baseMode == "receiver-averaging") {
-            options.config.base.surveyMode = GPSBaseStationConfig::SurveyMode::ReceiverManaged;
-            options.config.base.receiverAveragingDurationSecs =
+            options.config.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
+            std::get<GPSBaseStationConfig::ReceiverAveraging>(options.config.base.mode).maximumDurationSecs =
                 static_cast<uint32_t>(integer("averaging-duration", 1, 3600));
         } else {
-            options.config.base.surveyInDurationSecs = integer("survey-duration", 1, 86400);
+            std::get<GPSBaseStationConfig::SurveyIn>(options.config.base.mode).durationSecs =
+                integer("survey-duration", 1, 86400);
             bool accuracyValid = false;
-            options.config.base.surveyInAccMeters = parser.value("survey-accuracy").toDouble(&accuracyValid);
-            valid = valid && accuracyValid && std::isfinite(options.config.base.surveyInAccMeters) &&
-                    options.config.base.surveyInAccMeters > 0;
+            std::get<GPSBaseStationConfig::SurveyIn>(options.config.base.mode).accuracyMeters =
+                parser.value("survey-accuracy").toDouble(&accuracyValid);
+            valid = valid && accuracyValid &&
+                    std::isfinite(std::get<GPSBaseStationConfig::SurveyIn>(options.config.base.mode).accuracyMeters) &&
+                    std::get<GPSBaseStationConfig::SurveyIn>(options.config.base.mode).accuracyMeters > 0;
         }
     } else if (parser.isSet("base-mode") || parser.isSet("survey-duration") || parser.isSet("survey-accuracy") ||
                parser.isSet("averaging-duration") || parser.isSet("latitude") || parser.isSet("longitude") ||
                parser.isSet("altitude")) {
         return "Base options require --role base";
-    }
-    if (parser.isSet("dynamic-model")) {
-        options.config.dynamicModel = integer("dynamic-model", 0, 8);
     }
     if (!valid || gpsValidateReceiverConfig(options.family, options.config) != GPSReceiverConfigError::None) {
         return "Invalid receiver configuration or numeric option";
@@ -258,14 +256,19 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     if (options.transport == "serial" && options.device.isEmpty()) {
         return "--device is required for serial";
     }
+    if (options.transport == "tcp") {
+        const auto separator = options.device.lastIndexOf(':');
+        bool portValid = false;
+        const uint port = separator > 0 ? options.device.mid(separator + 1).toUInt(&portValid) : 0;
+        if (!portValid || port == 0 || port > 65535) {
+            return "--device must be host:port for tcp";
+        }
+    }
 #ifdef QGC_NO_SERIAL_LINK
     if (options.transport == "serial") {
         return "Serial transport is disabled in this build";
     }
 #endif
-    if ((options.transport == "tcp" || options.transport == "udp") && (options.host.isEmpty() || options.port == 0)) {
-        return "An explicit --host and nonzero --port are required for network transports";
-    }
     if (options.action != "plan" && options.transport != "scripted" && !parser.isSet("allow-reconfigure")) {
         return "Physical operations require --allow-reconfigure; no device was opened";
     }
@@ -317,21 +320,20 @@ QJsonObject configurationEvidence(const GPSDriver& driver)
 
 std::unique_ptr<GPSTransport> physicalTransport(const Options& options, const std::atomic_bool& stop)
 {
+    if (options.transport == "tcp") {
+        const auto separator = options.device.lastIndexOf(':');
+        return std::make_unique<TCPGPSTransport>(
+            options.device.left(separator), static_cast<quint16>(options.device.mid(separator + 1).toUInt()), stop);
+    }
 #ifndef QGC_NO_SERIAL_LINK
     if (options.transport == "serial") {
         return std::make_unique<SerialGPSTransport>(options.device, stop);
     }
 #endif
-    if (options.transport == "tcp") {
-        return std::make_unique<TCPGPSTransport>(options.host, options.port, stop);
-    }
-    if (options.transport == "udp") {
-        return std::make_unique<UDPGPSTransport>(options.host, options.port, stop, options.localPort);
-    }
     return {};
 }
 
-void injectMeasurements(ScriptedUBXReceiver& receiver, const Options& options, const GPSReceiverConfig& config,
+void injectMeasurements(UBXReceiverModel& receiver, const Options& options, const GPSReceiverConfig& config,
                         bool cancellation = false)
 {
     const bool rejectActivation = options.fault == "rtcm-nak" || (cancellation && options.fault == "rtcm-nak-cancel");
@@ -379,10 +381,7 @@ int run(const Options& options)
             "script",
             QJsonObject{{"model", options.model}, {"survey_state", options.surveyState}, {"fault", options.fault}});
     } else {
-        report.insert("endpoint", QJsonObject{{"device", options.device},
-                                              {"host", options.host},
-                                              {"port", options.port},
-                                              {"local_port", options.localPort}});
+        report.insert("endpoint", QJsonObject{{"device", options.device}, {"transport", options.transport}});
     }
     report.insert("outcome", "running");
     if (!options.outputPath.isEmpty()) {
@@ -418,26 +417,27 @@ int run(const Options& options)
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     });
-    std::unique_ptr<ScriptedUBXReceiver> receiver;
+    GPSTestClock scriptedClock;
+    std::unique_ptr<UBXReceiverModel> receiver;
+    std::unique_ptr<ScriptedReceiver> scriptedTransport;
     std::unique_ptr<GPSTransport> physical;
     if (scripted) {
-        receiver = std::make_unique<ScriptedUBXReceiver>(
-            options.model == "f9p" ? ScriptedUBXReceiver::Model::F9P : ScriptedUBXReceiver::Model::M8PBase, stop);
+        receiver = std::make_unique<UBXReceiverModel>(
+            options.model == "f9p" ? UBXReceiverModel::Receiver::F9P : UBXReceiverModel::Receiver::M8PBase,
+            scriptedClock);
+        scriptedTransport = std::make_unique<ScriptedReceiver>(stop, *receiver);
         if (options.fault == "nak") {
-            receiver->disableReply = ScriptedUBXReceiver::DisableReply::Nak;
+            receiver->disableReply = UBXReceiverModel::DisableReply::Nak;
         } else if (options.fault == "wrong-readback") {
-            receiver->readbackReply = ScriptedUBXReceiver::ReadbackReply::WrongValue;
+            receiver->readbackReply = UBXReceiverModel::ReadbackReply::WrongValue;
         } else if (options.fault == "cancel") {
-            receiver->disableReply = ScriptedUBXReceiver::DisableReply::Cancelled;
+            receiver->disableReply = UBXReceiverModel::DisableReply::Cancelled;
         }
     } else {
         physical = physicalTransport(options, stop);
     }
 
     QStringList stages{"configured"};
-    if (options.action == "role-cycle" || options.action == "suite") {
-        stages = {"base_initial", "position", "base_return"};
-    }
     if (options.action == "suite") {
         stages.append("reconnected_base");
     }
@@ -454,7 +454,7 @@ int run(const Options& options)
             physical.reset();
             physical = physicalTransport(options, stop);
         }
-        GPSTransport& transport = scripted ? static_cast<GPSTransport&>(*receiver) : *physical;
+        GPSTransport& transport = scripted ? static_cast<GPSTransport&>(*scriptedTransport) : *physical;
         GPSEvidenceTransport evidence(transport, stop);
         QJsonObject stage{{"name", name}};
         QJsonArray checks;
@@ -476,30 +476,33 @@ int run(const Options& options)
             }
         }
         GPSReceiverConfig config = options.config;
-        if (name == "position") {
-            config.role = GPSReceiverConfig::Role::Position;
-        }
         stage.insert("requested", requestedConfig(config));
         QJsonArray surveys;
         QJsonObject lastPosition;
         int positions = 0;
         int satellites = 0;
-        int satelliteUsage = 0;
         int correctionFrames = 0;
+        QMap<int, int> correctionMessages;
+        QMap<int, qint64> correctionBytes;
         QElapsedTimer elapsed;
         elapsed.start();
         GPSDriverSinks sinks;
         sinks.onPosition = [&](const GPSPositionReport& position) {
             ++positions;
-            lastPosition = {{"fix_type", static_cast<int>(position.fixType)},
-                            {"latitude_deg", position.latitudeDegrees},
-                            {"longitude_deg", position.longitudeDegrees},
-                            {"ellipsoid_altitude_m", position.altitudeEllipsoidMeters},
-                            {"horizontal_accuracy_m", position.horizontalAccuracyMeters}};
+            const auto& navigation = position.navigation;
+            lastPosition = {{"fix_type", static_cast<int>(navigation.fixType)},
+                            {"latitude_deg", navigation.latitudeDegrees},
+                            {"longitude_deg", navigation.longitudeDegrees},
+                            {"ellipsoid_altitude_m", navigation.altitudeEllipsoidMeters},
+                            {"horizontal_accuracy_m", navigation.horizontalAccuracyMeters}};
         };
         sinks.onSatelliteInfo = [&](const GPSSatelliteReport&) { ++satellites; };
-        sinks.onSatelliteUsage = [&](const GPSSatelliteUsageReport&) { ++satelliteUsage; };
-        sinks.onRTCM = [&](std::span<const uint8_t>) { ++correctionFrames; };
+        sinks.onRTCM = [&](std::span<const uint8_t> frame) {
+            ++correctionFrames;
+            const int messageId = RTCMFramer::frameMessageId(frame);
+            ++correctionMessages[messageId];
+            correctionBytes[messageId] += static_cast<qint64>(frame.size());
+        };
         sinks.onSurveyIn = [&](const GPSSurveyReport& survey) {
             const bool prior = survey.duration.count() > elapsed.elapsed() / 1000 + 2;
             QString observation = "indeterminate";
@@ -531,8 +534,13 @@ int run(const Options& options)
             stage.insert("position_messages", positions);
             stage.insert("last_position", lastPosition);
             stage.insert("satellite_messages", satellites);
-            stage.insert("satellite_usage_messages", satelliteUsage);
             stage.insert("correction_frames", correctionFrames);
+            QJsonObject messages;
+            for (auto it = correctionMessages.cbegin(); it != correctionMessages.cend(); ++it) {
+                messages.insert(QString::number(it.key()),
+                                QJsonObject{{"frames", it.value()}, {"bytes", correctionBytes.value(it.key())}});
+            }
+            stage.insert("correction_messages", messages);
             stage.insert("survey_observations", surveys);
             stage.insert("wire_evidence", evidence.evidence());
             if (options.family == GPSType::ublox) {
@@ -565,7 +573,7 @@ int run(const Options& options)
                                        : result.status == GPSReceiveStatus::TransportError ? "terminal_transport_error"
                                                                                            : "not_configured";
                 checks.append(check("receive_outcome", "failed", detail));
-                stage.insert("receive_error_code", result.errorCode);
+                stage.insert("receive_error_detail", result.detail);
                 stage.insert("transport_healthy_at_receive_failure", !evidence.fatalError());
                 return true;
             };
@@ -642,7 +650,8 @@ int run(const Options& options)
             }
             checks.append(check("position_observation", positions > 0 ? "passed" : "inconclusive",
                                 "Decoded position messages observed; does not certify fix quality"));
-            if (config.role == GPSReceiverConfig::Role::RTKBase && !config.base.useFixedBase) {
+            if (config.role == GPSReceiverConfig::Role::RTKBase &&
+                !std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode)) {
                 checks.append(check("survey_observation", surveys.isEmpty() ? "inconclusive" : "passed",
                                     "Freshness is reported separately; retained completion is not a fresh survey"));
                 checks.append(check("fresh_survey", "inconclusive",
@@ -681,7 +690,7 @@ int run(const Options& options)
                   QJsonArray{"No survey restart or full requested-settings verification inferred.",
                              "No radio correction delivery, antenna accuracy, or physical power-cycle "
                              "validation.",
-                             "Last requested receiver role/settings may remain active; no implicit rollback."});
+                             "Last requested receiver base settings may remain active; no implicit rollback."});
     return output(report, failed ? 1 : 3, options.outputPath);
 }
 }  // namespace
@@ -695,18 +704,16 @@ int main(int argc, char* argv[])
         "Opt-in native GPS receiver validation. Default action prints a plan and opens nothing.");
     parser.addHelpOption();
     parser.addOptions({
-        {{"a", "action"}, "plan|configure|role-cycle|suite|cancel", "action", "plan"},
-        {"transport", "scripted|serial|tcp|udp", "transport", "scripted"},
+        {{"a", "action"}, "plan|configure|suite|cancel", "action", "plan"},
+        {"transport", "scripted|serial|tcp", "transport", "scripted"},
         {"family", "ublox|trimble|septentrio|femto|unicore|quectel|passive", "family", "ublox"},
-        {"role", "base|position|passive", "role", "base"},
+        {"role", "base|passive", "role", "base"},
         {"allow-reconfigure", "Authorize physical receiver writes and role changes"},
         {"allow-save", "Explicitly permit LG290P settings to be saved to flash and the receiver restarted"},
+        {"compact-rtcm", "Request compact MSM4 instead of MSM7 RTCM observations from a supporting base"},
         {"output", "New JSON evidence path (atomic progress snapshots; never overwrites a previous run)", "path"},
-        {"device", "Explicit serial device path", "path"},
+        {"device", "Explicit serial device path, or host:port for tcp", "path"},
         {"baud", "Serial baud rate (0 for managed detection; passive requires an explicit rate)", "baud", "0"},
-        {"host", "Explicit TCP/UDP peer host", "host"},
-        {"port", "TCP/UDP peer port", "port", "0"},
-        {"local-port", "UDP local port (0 allocates one)", "port", "0"},
         {"survey-duration", "Requested survey minimum seconds", "seconds", "60"},
         {"survey-accuracy", "Requested survey accuracy limit, metres", "metres", "2"},
         {"base-mode", "survey|fixed|receiver-averaging", "mode", "survey"},
@@ -715,8 +722,6 @@ int main(int argc, char* argv[])
         {"latitude", "Fixed base latitude, degrees", "degrees"},
         {"longitude", "Fixed base longitude, degrees", "degrees"},
         {"altitude", "Fixed base ellipsoid altitude, metres", "metres"},
-        {"constellations", "Requested mask (0 retains defaults)", "mask", "0"},
-        {"dynamic-model", "Requested UBX dynamic model (single Position configuration only)", "model"},
         {"observe-ms", "Per-stage observation window", "milliseconds", "1000"},
         {"timeout-ms", "Cancellation deadline for each open/configure operation", "milliseconds", "15000"},
         {"cancel-after-ms", "Delay before requesting blocked-receive cancellation", "milliseconds", "50"},

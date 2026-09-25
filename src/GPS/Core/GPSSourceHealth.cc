@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <chrono>
 
-#include "GPSSatelliteObservation.h"
 #include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 #include "QtRuntimeScheduler.h"
@@ -14,51 +13,33 @@ GPSSourceHealth::GPSSourceHealth(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _positionTask(_scheduler, this)
-    , _fixSatellitesTask(_scheduler, this)
 {
     qCDebug(GPSSourceHealthLog) << this;
-    if (_scheduler->thread() != thread()) {
-        qCWarning(GPSSourceHealthLog) << "Scheduler must share the store thread";
-        _scheduler = nullptr;
-        return;
-    }
-    connect(_scheduler, &QObject::destroyed, this, [this]() {
-        _scheduler = nullptr;
-        reset();
-    });
 }
 
 GPSSourceHealth::~GPSSourceHealth()
 {
     qCDebug(GPSSourceHealthLog) << this;
-    if (_scheduler) {
-        _scheduler->disconnect(this);
-    }
 }
 
 qint64 GPSSourceHealth::_age(quint64 timestampUs) const
 {
-    return _scheduler ? MonotonicClock::ageMilliseconds(timestampUs, _scheduler->nowUs()) : -1;
+    return MonotonicClock::ageMilliseconds(timestampUs, _scheduler->nowUs());
 }
 
 double GPSSourceHealth::horizontalAccuracy() const
 {
-    return usable() ? _observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy) : qQNaN();
+    return usable() ? _position.observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy) : qQNaN();
 }
 
 std::optional<GPSObservation> GPSSourceHealth::acceptedObservation(
     GPSObservation::PositionUse use, std::optional<std::chrono::milliseconds> maximumAge) const
 {
-    if (_positionInvalidated ||
-        _remaining(_observation.monotonicTimestampUs, maximumAge) == std::chrono::microseconds::zero()) {
+    if (_position.invalidated ||
+        _remaining(_position.observation.monotonicTimestampUs, maximumAge) == std::chrono::microseconds::zero()) {
         return std::nullopt;
     }
-    auto accepted = _observation.projected(use);
-    if (accepted) {
-        const int used = satellitesInUseCount();
-        accepted->satellitesUsed = used >= 0 ? std::optional<int>(used) : std::nullopt;
-    }
-    return accepted;
+    return _position.observation.projected(use);
 }
 
 std::chrono::microseconds GPSSourceHealth::_remaining(quint64 timestampUs,
@@ -66,41 +47,24 @@ std::chrono::microseconds GPSSourceHealth::_remaining(quint64 timestampUs,
 {
     const auto sourceLifetime = std::chrono::milliseconds(_freshnessTimeoutMs);
     const auto lifetime = maximumAge ? std::min(sourceLifetime, *maximumAge) : sourceLifetime;
-    return _scheduler && lifetime > std::chrono::milliseconds::zero()
+    return lifetime > std::chrono::milliseconds::zero()
                ? MonotonicClock::remaining(timestampUs, _scheduler->nowUs(), lifetime)
                : std::chrono::microseconds::zero();
 }
 
 void GPSSourceHealth::updateObservation(const GPSObservation& observation)
 {
-    const QPointer<GPSSourceHealth> guard(this);
-    const State previousState = _state;
-    const quint64 revision = ++_revision;
+    const State previousState = state();
+    const auto update = _revision.advance(this);
     ++_observationRevision;
     _positionTask.cancel();
-    _observation = observation;
-    const qint64 ageMs = _age(observation.monotonicTimestampUs);
+    _position.observation = observation;
     // Temporal rejection lasts until the next observation.
-    _positionInvalidated = ageMs < 0;
-    if (ageMs < 0) {
-        _state = State::Invalid;
-    } else if (ageMs >= _freshnessTimeoutMs) {
-        _state = State::Stale;
-    } else {
-        _state = _observation.usable() ? State::Usable : State::Invalid;
-    }
+    _position.invalidated = _age(observation.monotonicTimestampUs) < 0;
+    _position.state = _updatedPositionState();
     _schedulePositionExpiry();
-    const int previousUsed = satellitesInUseCount();
-    const bool validFix = observation.position.isValid() && observation.receiverFixValid.value_or(true) &&
-                          observation.fixQuality != GPSObservation::FixQuality::NoFix;
-    _fixSatellitesInUseCount = validFix ? observation.satellitesUsed.value_or(-1) : -1;
-    _fixSatellitesTimestampUs = observation.monotonicTimestampUs;
-    _scheduleFixSatelliteExpiry();
     _logStateChange(previousState);
-    if (previousUsed != satellitesInUseCount()) {
-        emit satellitesChanged();
-    }
-    if (!guard || revision != _revision) {
+    if (!update.isCurrent()) {
         return;
     }
     emit positionChanged();
@@ -109,13 +73,12 @@ void GPSSourceHealth::updateObservation(const GPSObservation& observation)
 void GPSSourceHealth::_schedulePositionExpiry()
 {
     _positionTask.cancel();
-    const auto remaining = _remaining(_observation.monotonicTimestampUs);
+    const auto remaining = _remaining(_position.observation.monotonicTimestampUs);
     if (remaining == std::chrono::microseconds::zero()) {
         return;
     }
-    const quint64 revision = _revision;
-    _positionTask.schedule(remaining, [this, revision]() {
-        if (_revision == revision) {
+    _positionTask.schedule(remaining, [this, position = _revision.current(this)]() {
+        if (position.isCurrent()) {
             _setState(State::Stale);
         }
     });
@@ -123,16 +86,16 @@ void GPSSourceHealth::_schedulePositionExpiry()
 
 void GPSSourceHealth::_logStateChange(State previous) const
 {
-    if (previous != _state) {
-        qCDebug(GPSSourceHealthLog) << this << "Position health changed:" << previous << "->" << _state;
+    if (previous != state()) {
+        qCDebug(GPSSourceHealthLog) << this << "Position health changed:" << previous << "->" << state();
     }
 }
 
 void GPSSourceHealth::_setState(State state)
 {
-    if (_state != state) {
-        const State previous = _state;
-        _state = state;
+    if (_position.state != state) {
+        const State previous = _position.state;
+        _position.state = state;
         _logStateChange(previous);
         emit positionChanged();
     }
@@ -140,28 +103,25 @@ void GPSSourceHealth::_setState(State state)
 
 void GPSSourceHealth::invalidatePosition()
 {
-    _positionInvalidated = true;
-    ++_revision;
+    _position.invalidated = true;
+    _revision.invalidate();
     _schedulePositionExpiry();
-    if (_state == State::Invalid) {
+    if (state() == State::Invalid) {
         emit positionChanged();
     } else {
-        _setState(_age(_observation.monotonicTimestampUs) >= _freshnessTimeoutMs ? State::Stale : State::Invalid);
+        _setState(_age(_position.observation.monotonicTimestampUs) >= _freshnessTimeoutMs ? State::Stale
+                                                                                          : State::Invalid);
     }
 }
 
 void GPSSourceHealth::reset()
 {
-    const QPointer<GPSSourceHealth> guard(this);
-    const State previousState = _state;
-    const quint64 revision = ++_revision;
+    const State previousState = state();
+    const auto update = _revision.advance(this);
     _positionTask.cancel();
-    _observation = {};
-    _positionInvalidated = true;
-    _state = State::NoData;
+    _position = {};
     _logStateChange(previousState);
-    clearSatellites();
-    if (guard && revision == _revision) {
+    if (update.isCurrent()) {
         emit positionChanged();
     }
 }
@@ -169,66 +129,27 @@ void GPSSourceHealth::reset()
 void GPSSourceHealth::setFreshnessTimeoutMs(int timeoutMs)
 {
     _freshnessTimeoutMs = std::max(1, timeoutMs);
-    if (_state == State::NoData) {
+    if (state() == State::NoData) {
         return;
     }
-    const State previousState = _state;
-    const QPointer<GPSSourceHealth> guard(this);
-    const quint64 revision = ++_revision;
-    const int previousUsed = satellitesInUseCount();
-    const qint64 ageMs = _age(_observation.monotonicTimestampUs);
-    if (ageMs < 0) {
-        _state = State::Invalid;
-    } else if (ageMs >= _freshnessTimeoutMs) {
-        _state = State::Stale;
-    } else if (!_positionInvalidated) {
-        _state = _observation.usable() ? State::Usable : State::Invalid;
-    }
+    const State previousState = state();
+    const auto update = _revision.advance(this);
+    _position.state = _updatedPositionState();
     _schedulePositionExpiry();
-    _scheduleFixSatelliteExpiry();
     _logStateChange(previousState);
-    if (previousUsed != satellitesInUseCount()) {
-        emit satellitesChanged();
-    }
-    if (guard && revision == _revision) {
+    if (update.isCurrent()) {
         emit positionChanged();
     }
 }
 
-void GPSSourceHealth::_scheduleFixSatelliteExpiry()
+GPSSourceHealth::State GPSSourceHealth::_updatedPositionState() const
 {
-    _fixSatellitesTask.cancel();
-    const auto remaining = _remaining(_fixSatellitesTimestampUs);
-    if (remaining == std::chrono::microseconds::zero()) {
-        _fixSatellitesInUseCount = -1;
+    const qint64 ageMs = _age(_position.observation.monotonicTimestampUs);
+    if (ageMs < 0) {
+        return State::Invalid;
     }
-    if (_fixSatellitesInUseCount >= 0) {
-        _fixSatellitesTask.schedule(remaining, [this]() {
-            const int previous = satellitesInUseCount();
-            _fixSatellitesInUseCount = -1;
-            if (previous != satellitesInUseCount()) {
-                emit satellitesChanged();
-            }
-        });
+    if (ageMs >= _freshnessTimeoutMs) {
+        return State::Stale;
     }
-}
-
-void GPSSourceHealth::clearSatellites()
-{
-    _fixSatellitesTask.cancel();
-    _fixSatellitesTimestampUs = 0;
-    if (_satellitesInViewCount != -1 || satellitesInUseCount() != -1) {
-        _satellitesInViewCount = -1;
-        _satellitesInUseCount = -1;
-        _fixSatellitesInUseCount = -1;
-        emit satellitesChanged();
-    }
-}
-
-void GPSSourceHealth::applySatelliteObservation(const GPSSatelliteObservation& observation)
-{
-    // The observation store owns report expiry; the fix's independent GGA count retains its own deadline.
-    _satellitesInViewCount = observation.satellitesInViewCount();
-    _satellitesInUseCount = observation.satellitesInUseCount();
-    emit satellitesChanged();
+    return _position.invalidated ? state() : (_position.observation.usable() ? State::Usable : State::Invalid);
 }

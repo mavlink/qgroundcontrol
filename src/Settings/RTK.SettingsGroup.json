@@ -3,13 +3,91 @@
     "fileType": "FactMetaData",
     "QGC.MetaData.Facts": [
         {
+            "name": "receiverRole",
+            "shortDesc": "Receiver role",
+            "longDesc": "Position only uses the receiver's NMEA output for the ground station position. Passive also forwards the receiver's RTCM output to vehicles. Neither configures the receiver. Configured base sets up a supported receiver as an RTK base station.",
+            "type": "uint8",
+            "enumStrings": "Position only,Passive RTCM/NMEA,Configured base",
+            "enumValues": "0,1,2",
+            "default": 2,
+            "label": "Receiver role"
+        },
+        {
             "name": "baseReceiverManufacturers",
             "shortDesc": "GPS manufacturers for settings",
             "type": "uint8",
-            "enumStrings": "All,Trimble,Septentrio,Femtomes,UBlox,Unicore UM980/UM982,Quectel LG290P,Passive RTCM/NMEA",
-            "enumValues": "0,1,2,3,4,5,6,7",
+            "enumStrings": "All,Trimble,Septentrio,Femtomes,UBlox,Unicore UM980/UM982,Quectel LG290P",
+            "enumValues": "0,1,2,3,4,5,6",
             "default": 1,
             "label": "GPS manufacturers for settings"
+        },
+        {
+            "name": "connectionType",
+            "shortDesc": "Receiver connection",
+            "longDesc": "Serial connects a receiver on a local port. TCP connects a receiver's network port or a serial-to-TCP bridge. UDP listens for NMEA/RTCM datagrams from a receiver QGroundControl does not configure.",
+            "type": "uint8",
+            "enumStrings": "Serial,TCP,UDP",
+            "enumValues": "0,1,2",
+            "default": 0,
+            "label": "Receiver connection"
+        },
+        {
+            "name": "tcpHost",
+            "shortDesc": "Receiver host",
+            "longDesc": "Host name or address of the receiver or serial-to-TCP bridge.",
+            "type": "string",
+            "default": "",
+            "label": "Receiver host"
+        },
+        {
+            "name": "tcpPort",
+            "shortDesc": "Receiver TCP port",
+            "longDesc": "TCP port of the receiver or serial-to-TCP bridge.",
+            "type": "uint32",
+            "default": 0,
+            "min": 0,
+            "max": 65535,
+            "decimalPlaces": 0,
+            "label": "Receiver TCP port"
+        },
+        {
+            "name": "udpPort",
+            "shortDesc": "Receiver UDP port",
+            "longDesc": "Local UDP port that receives the receiver's NMEA/RTCM datagrams. The first sender is used until it stops sending.",
+            "type": "uint32",
+            "default": 14401,
+            "min": 1,
+            "max": 65535,
+            "decimalPlaces": 0,
+            "label": "Receiver UDP port"
+        },
+        {
+            "name": "connectOnStartup",
+            "shortDesc": "Connect on startup",
+            "longDesc": "Connect the saved receiver when QGroundControl starts, and keep reconnecting while it is unavailable. With auto-connect on, a receiver missing at startup is left to auto-connect. Startup connections never turn auto-connect off or save settings to receiver flash.",
+            "type": "bool",
+            "default": false,
+            "label": "Connect on startup"
+        },
+        {
+            "name": "autoConnect",
+            "shortDesc": "Automatically connect to RTK GPS receivers detected on USB.",
+            "longDesc": "If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.",
+            "type": "bool",
+            "default": true,
+            "label": "Automatically connect to an RTK GPS",
+            "keywords": "auto connect,rtk gps"
+        },
+        {
+            "name": "gcsPositionSource",
+            "shortDesc": "GCS position source",
+            "longDesc": "Source of the ground station position. Automatic uses the connected GNSS receiver, then this device, and switches when the preferred source loses its fix.",
+            "type": "uint32",
+            "enumStrings": "Automatic,GNSS receiver,This device",
+            "enumValues": "0,1,3",
+            "default": 0,
+            "label": "GCS position source",
+            "keywords": "gcs position,ground station position,gps,gnss,rtk,nmea,location"
         },
         {
             "name": "serialDevice",
@@ -22,10 +100,10 @@
         {
             "name": "serialBaudRate",
             "shortDesc": "Baud rate",
-            "longDesc": "Serial rate for an explicitly selected receiver. Passive input requires the rate already configured on the receiver.",
+            "longDesc": "Serial rate for an explicitly selected receiver. Auto (0) lets configurable receivers detect the rate; passive input requires the rate already configured on the receiver.",
             "type": "uint32",
             "default": 115200,
-            "min": 1200,
+            "min": 0,
             "max": 4000000,
             "decimalPlaces": 0,
             "label": "Baud rate"
@@ -120,6 +198,14 @@
             "units": "m",
             "decimalPlaces": 2,
             "label": "Base Position Accuracy"
+        },
+        {
+            "name": "compactRtcmCorrections",
+            "shortDesc": "Compact RTCM corrections (MSM4)",
+            "longDesc": "Send MSM4 instead of MSM7 observation messages from base receivers that support it. Uses about a third less correction bandwidth, useful on slow telemetry links, but omits Doppler and uses lower measurement resolution.",
+            "type": "bool",
+            "default": false,
+            "label": "Compact RTCM corrections (MSM4)"
         }
     ]
 }

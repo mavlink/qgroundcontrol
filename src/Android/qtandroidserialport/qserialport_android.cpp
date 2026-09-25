@@ -1,8 +1,11 @@
+#include <algorithm>
+#include <iterator>
+#include <limits>
+#include <utility>
+
 #include <QtCore/QMetaObject>
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
-
-#include <iterator>
 
 #include "QGCLoggingCategory.h"
 #include "qserialport_p.h"
@@ -296,6 +299,9 @@ void QSerialPortPrivate::_scheduleReadyRead()
 
 bool QSerialPortPrivate::waitForReadyRead(int msecs)
 {
+    // Desktop QSerialPort also sends pending writes while waiting for input.
+    (void) _writeDataOneShot(msecs);
+
     if (AndroidSerial::usePosixSerial()) {
         return _posixWaitForReadyRead(msecs);
     }
@@ -335,46 +341,87 @@ bool QSerialPortPrivate::waitForReadyRead(int msecs)
 
 bool QSerialPortPrivate::waitForBytesWritten(int msecs)
 {
-    const bool result = _writeDataOneShot(msecs);
-    if (!result) {
-        qCWarning(AndroidSerialPortLog) << "Timeout while waiting for bytes written on device ID" << _deviceId;
-        setError(QSerialPortErrorInfo(QSerialPort::TimeoutError,
-                                      QSerialPort::tr("Timeout while waiting for bytes written")));
+    if (writeBuffer.isEmpty()) {
+        return false;
     }
 
-    return result;
+    return _writeDataOneShot(msecs);
+}
+
+int QSerialPortPrivate::_writeTimeoutMs(const QDeadlineTimer& deadline)
+{
+    // The USB backend treats zero as unbounded, so an expired deadline still gets a minimal attempt.
+    if (deadline.isForever()) {
+        return 0;
+    }
+    return static_cast<int>(std::clamp<qint64>(deadline.remainingTime(), 1, std::numeric_limits<int>::max()));
 }
 
 bool QSerialPortPrivate::_writeDataOneShot(int msecs)
 {
+    Q_Q(QSerialPort);
+
     if (writeBuffer.isEmpty()) {
         return true;
     }
 
-    qint64 pendingBytesWritten = 0;
-
+    const QDeadlineTimer deadline(msecs);
+    qint64 written = 0;
+    bool complete = true;
     while (!writeBuffer.isEmpty()) {
-        const char* dataPtr = writeBuffer.readPointer();
-        const qint64 dataSize = writeBuffer.nextDataBlockSize();
-
-        const qint64 written = _writeToPort(dataPtr, dataSize, msecs);
-        if (written < 0) {
-            qCWarning(AndroidSerialPortLog) << "Failed to write data one shot on device ID" << _deviceId;
-            setError(QSerialPortErrorInfo(QSerialPort::WriteError, QSerialPort::tr("Failed to write data one shot")));
-            return false;
+        const qint64 blockSize = writeBuffer.nextDataBlockSize();
+        const qint64 result = _writeToPortWithProgress(writeBuffer.readPointer(), blockSize, _writeTimeoutMs(deadline));
+        if (result < 0) {
+            complete = false;
+            break;
         }
 
-        writeBuffer.free(written);
-        pendingBytesWritten += written;
+        writeBuffer.free(result);
+        written += result;
+        if (result < blockSize) {
+            qCDebug(AndroidSerialPortLog)
+                << "Write timed out on device ID" << _deviceId << "after" << written << "bytes";
+            setError(QSerialPortErrorInfo(QSerialPort::TimeoutError, QSerialPort::tr("Timeout while writing data")));
+            complete = false;
+            break;
+        }
     }
 
-    const bool result = (pendingBytesWritten > 0);
-    if (result) {
-        Q_Q(QSerialPort);
-        emit q->bytesWritten(pendingBytesWritten);
+    if (written > 0) {
+        emit q->bytesWritten(written);
     }
 
-    return result;
+    return complete;
+}
+
+void QSerialPortPrivate::_scheduleWrite()
+{
+    Q_Q(QSerialPort);
+
+    if (std::exchange(_writePending, true)) {
+        return;
+    }
+
+    QPointer<QSerialPort> guard(q);
+    QMetaObject::invokeMethod(
+        q,
+        [this, guard]() {
+            if (!guard) {
+                return;
+            }
+            _writePending = false;
+            if (!guard->isOpen() || writeBuffer.isEmpty()) {
+                return;
+            }
+
+            const qint64 pending = writeBuffer.size();
+            (void) _writeDataOneShot();
+            // Keep draining while the backend makes progress; errors wait for the next write or wait call.
+            if (guard && guard->isOpen() && !writeBuffer.isEmpty() && writeBuffer.size() < pending) {
+                _scheduleWrite();
+            }
+        },
+        Qt::QueuedConnection);
 }
 
 qint64 QSerialPortPrivate::_writeToPort(const char* data, qint64 maxSize, int timeout, bool async)
@@ -394,6 +441,19 @@ qint64 QSerialPortPrivate::_writeToPort(const char* data, qint64 maxSize, int ti
     return result;
 }
 
+qint64 QSerialPortPrivate::_writeToPortWithProgress(const char* data, qint64 maxSize, int timeout)
+{
+    const qint64 result = AndroidSerial::usePosixSerial()
+                              ? _posixWriteWithProgress(data, maxSize, timeout)
+                              : AndroidSerial::writeWithProgress(_deviceId, data, static_cast<int>(maxSize), timeout);
+    if (result < 0) {
+        qCWarning(AndroidSerialPortLog) << "Failed to write to port" << systemLocation;
+        setError(QSerialPortErrorInfo(QSerialPort::WriteError, QSerialPort::tr("Failed to write to port")));
+    }
+
+    return (std::min) (result, maxSize);
+}
+
 qint64 QSerialPortPrivate::writeData(const char* data, qint64 maxSize)
 {
     if (!data || (maxSize <= 0)) {
@@ -402,18 +462,16 @@ qint64 QSerialPortPrivate::writeData(const char* data, qint64 maxSize)
         return -1;
     }
 
-    return _writeToPort(data, maxSize);
+    // Like desktop QSerialPort, writes are buffered and sent from the owner's event loop,
+    // waitForBytesWritten(), waitForReadyRead(), flush() or close().
+    writeBuffer.append(data, maxSize);
+    _scheduleWrite();
+    return maxSize;
 }
 
 bool QSerialPortPrivate::flush()
 {
-    const bool result = _writeDataOneShot();
-    if (!result) {
-        qCWarning(AndroidSerialPortLog) << "Flush operation failed for device ID" << _deviceId;
-        setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QSerialPort::tr("Failed to flush")));
-    }
-
-    return result;
+    return _writeDataOneShot();
 }
 
 bool QSerialPortPrivate::clear(QSerialPort::Directions directions)

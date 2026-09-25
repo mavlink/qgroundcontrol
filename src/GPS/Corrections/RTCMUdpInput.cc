@@ -29,9 +29,8 @@ RTCMUdpInput::~RTCMUdpInput()
 bool RTCMUdpInput::start()
 {
     const QPointer<RTCMUdpInput> guard(this);
-    const quint64 revision = _lifecycleRevision + 1;
-    stop();
-    if (!guard || _lifecycleRevision != revision) {
+    const auto operation = _stop();
+    if (!operation.isCurrent()) {
         return false;
     }
     const QPointer<QUdpSocket> socket = new QUdpSocket(this);
@@ -46,8 +45,8 @@ bool RTCMUdpInput::start()
         return false;
     }
     connect(socket, &QUdpSocket::readyRead, this, &RTCMUdpInput::_readDatagrams);
-    connect(socket, &QAbstractSocket::errorOccurred, this, [this, guard, socket, revision]() {
-        if (guard && socket && socket == _socket && revision == _lifecycleRevision) {
+    connect(socket, &QAbstractSocket::errorOccurred, this, [this, socket, operation]() {
+        if (operation.isCurrent() && socket && socket == _socket) {
             qCWarning(RTCMUdpInputLog) << "UDP socket error on port" << _port << ":" << socket->errorString();
         }
     });
@@ -55,14 +54,14 @@ bool RTCMUdpInput::start()
     if (_port == 0) {
         _port = socket->localPort();
         emit portChanged();
-        if (!guard || _lifecycleRevision != revision) {
+        if (!operation.isCurrent()) {
             return false;
         }
     }
 
     _running = true;
     emit runningChanged();
-    if (!guard || _lifecycleRevision != revision) {
+    if (!operation.isCurrent()) {
         return false;
     }
     rollback.dismiss();
@@ -72,8 +71,12 @@ bool RTCMUdpInput::start()
 
 void RTCMUdpInput::stop()
 {
-    const QPointer<RTCMUdpInput> guard(this);
-    const quint64 revision = _resetStream();
+    (void) _stop();
+}
+
+GPSRevision::Token RTCMUdpInput::_stop()
+{
+    const auto operation = _resetStream();
     const bool wasRunning = std::exchange(_running, false);
     const QPointer<QUdpSocket> socket = std::exchange(_socket, nullptr);
     if (socket) {
@@ -82,10 +85,11 @@ void RTCMUdpInput::stop()
             socket->deleteLater();
         }
     }
-    if (guard && revision == _lifecycleRevision && wasRunning) {
+    if (operation.isCurrent() && wasRunning) {
         qCDebug(RTCMUdpInputLog) << "Stopped listening on UDP port" << _port;
         emit runningChanged();
     }
+    return operation;
 }
 
 void RTCMUdpInput::setPort(quint16 port)
@@ -93,34 +97,28 @@ void RTCMUdpInput::setPort(quint16 port)
     configure(port, _validateRtcm);
 }
 
-void RTCMUdpInput::setValidation(bool validate)
-{
-    configure(_port, validate);
-}
-
 void RTCMUdpInput::configure(quint16 port, bool validate)
 {
     if (_port == port && _validateRtcm == validate) {
         return;
     }
-    const QPointer<RTCMUdpInput> guard(this);
-    const quint64 revision = _resetStream();
+    const auto operation = _resetStream();
     const bool portHasChanged = _port != port;
     _port = port;
     _validateRtcm = validate;
     if (portHasChanged) {
         emit portChanged();
     }
-    if (guard && revision == _lifecycleRevision && _running) {
+    if (operation.isCurrent() && _running) {
         start();
     }
 }
 
-quint64 RTCMUdpInput::_resetStream()
+GPSRevision::Token RTCMUdpInput::_resetStream()
 {
     _drainScheduled = false;
     _peerParsers.clear();
-    return ++_lifecycleRevision;
+    return _lifecycle.advance(this);
 }
 
 void RTCMUdpInput::_readDatagrams()
@@ -130,7 +128,7 @@ void RTCMUdpInput::_readDatagrams()
     }
     const QPointer<RTCMUdpInput> guard(this);
     const QPointer<QUdpSocket> socket = _socket;
-    const quint64 revision = _lifecycleRevision;
+    const auto operation = _lifecycle.current(this);
     _readingDatagrams = true;
     const auto finishReading = qScopeGuard([guard]() {
         if (guard) {
@@ -138,8 +136,8 @@ void RTCMUdpInput::_readDatagrams()
             guard->_scheduleRead();
         }
     });
-    const auto current = [this, guard, socket, revision]() {
-        return guard && socket && socket == _socket && revision == _lifecycleRevision && _running;
+    const auto current = [this, socket, operation]() {
+        return operation.isCurrent() && socket && socket == _socket && _running;
     };
     UdpDrainBudget budget;
     while (current() && socket->hasPendingDatagrams() && budget.available()) {
@@ -165,26 +163,23 @@ void RTCMUdpInput::_readDatagrams()
         const auto peer = _parserForPeer(datagram.senderAddress(), datagram.senderPort());
         int framesFound = 0;
         int framesDropped = 0;
-        for (const char ch : data) {
-            for (auto decoded = peer->decoder.addByte(static_cast<uint8_t>(ch), receivedAtMs); decoded;
-                 decoded = peer->decoder.nextFrame()) {
-                const GPSCorrectionFrame frame = {GPSCorrectionSource::Udp, 0,
-                                                  decoded->receivedAtMs,    decoded->data,
-                                                  decoded->messageId,       decoded->valid,
-                                                  decoded->filtered,        instance};
-                if (decoded->valid) {
-                    ++framesFound;
-                    ++_validFrames;
-                    emit frameReceived(frame);
-                } else {
-                    ++framesDropped;
-                    ++_invalidFrames;
-                    emit frameRejected(frame, GPSCorrectionReason::InvalidFrame);
-                }
-                if (!current()) {
-                    return;
-                }
+        const bool delivered = peer->decoder.feed(data, receivedAtMs, [&](const RTCMDecodedFrame& decoded) {
+            const GPSCorrectionFrame frame = {
+                GPSCorrectionSource::Udp, 0,       decoded.receivedAtMs, decoded.data, decoded.messageId, decoded.valid,
+                decoded.filtered,         instance};
+            if (decoded.valid) {
+                ++framesFound;
+                ++_validFrames;
+                emit frameReceived(frame);
+            } else {
+                ++framesDropped;
+                ++_invalidFrames;
+                emit frameRejected(frame, GPSCorrectionReason::InvalidFrame);
             }
+            return current();
+        });
+        if (!delivered) {
+            return;
         }
 
         if (framesDropped > 0) {
@@ -210,11 +205,10 @@ void RTCMUdpInput::_scheduleRead()
     if (_running && _socket && _socket->hasPendingDatagrams() && !_drainScheduled) {
         _drainScheduled = true;
         const QPointer<QUdpSocket> socket = _socket;
-        const quint64 revision = _lifecycleRevision;
         QMetaObject::invokeMethod(
             this,
-            [this, socket, revision]() {
-                if (socket && socket == _socket && revision == _lifecycleRevision) {
+            [this, socket, operation = _lifecycle.current(this)]() {
+                if (operation.isCurrent() && socket && socket == _socket) {
                     _drainScheduled = false;
                     _readDatagrams();
                 }
@@ -227,7 +221,7 @@ std::shared_ptr<RTCMUdpInput::PeerParser> RTCMUdpInput::_parserForPeer(const QHo
 {
     const qint64 now = GPSCorrectionFrame::monotonicNowMs();
     for (auto it = _peerParsers.begin(); it != _peerParsers.end();) {
-        if (now - it.value()->lastReceivedMs >= PEER_IDLE_TIMEOUT_MS) {
+        if (GPSCorrectionFrame::ageMs(it.value()->lastReceivedMs, now) >= PEER_IDLE_TIMEOUT_MS) {
             it = _peerParsers.erase(it);
         } else {
             ++it;

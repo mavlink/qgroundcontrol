@@ -4,9 +4,10 @@ import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
+import QGroundControl.AppSettings
 import QGroundControl.Controls
 
-// Used with a connected vehicle and as the standalone receiver indicator.
+// Drawer of the GPS indicator: vehicle GPS, GNSS receiver, corrections, and GCS position.
 ToolIndicatorPage {
     id: root
     showExpand: true
@@ -15,10 +16,7 @@ ToolIndicatorPage {
     property string valueNA: qsTr("–.––", "No data to display")
     property var rtkSettings: QGroundControl.settingsManager.rtkSettings
     readonly property var _receiver: QGroundControl.gpsManager.gpsRtk
-    readonly property bool _rtkConnected: QGroundControl.gpsRtk.connected.value
-    readonly property var _activePresentation: _receiver.capabilitiesForManufacturer(_receiver.activeManufacturer)
-    readonly property var _serialPortManager: QGroundControl.serialPortManager
-    readonly property bool _averagingConnected: _receiver.activeBaseMode === BaseModeDefinition.BaseReceiverAveraging
+    readonly property bool _vehicleGps: !!activeVehicle && !!activeVehicle.gps && activeVehicle.gps.telemetryAvailable
     readonly property real _preferredStatusWidth: ScreenTools.defaultFontPixelWidth * 36
     readonly property real _preferredSettingsWidth: ScreenTools.defaultFontPixelWidth * 56
     property real availableWidth: drawer && drawer.parent
@@ -27,8 +25,9 @@ ToolIndicatorPage {
                                     ? root.Window.window.width - ScreenTools.defaultFontPixelHeight * 4
                                     : _preferredStatusWidth + _preferredSettingsWidth + spacing * 2 + 1
     readonly property bool _compact: availableWidth < _preferredStatusWidth + _preferredSettingsWidth + spacing * 2 + 1
-    readonly property real _settingsWidth: Math.max(0, Math.min(_preferredSettingsWidth,
-        availableWidth - (_compact ? 0 : _preferredStatusWidth) - spacing * 2 - 1))
+    // Settings stay usable, rather than collapsing, on windows narrower than the reserved margins.
+    readonly property real _settingsWidth: Math.max(ScreenTools.defaultFontPixelWidth * 30,
+        Math.min(_preferredSettingsWidth, availableWidth - (_compact ? 0 : _preferredStatusWidth) - spacing * 2 - 1))
     property alias _allowPersistentChanges: connectionConsent.allowed
     property var _settingsPanel: null
 
@@ -57,6 +56,39 @@ ToolIndicatorPage {
         property bool allowed: false
     }
 
+    // Resilience states 0 and 255 mean the receiver does not know, so only reported states are listed.
+    component ResilienceGroup: SettingsGroupLayout {
+        id: group
+
+        required property var facts
+        readonly property bool jammingReported: !!facts && facts.jammingState.value > 0 && facts.jammingState.value < 255
+        readonly property bool spoofingReported: !!facts && facts.spoofingState.value > 0
+                                                 && facts.spoofingState.value < 255
+        readonly property bool authenticationReported: !!facts && facts.authenticationState.value > 0
+                                                       && facts.authenticationState.value < 255
+        readonly property bool reported: jammingReported || spoofingReported || authenticationReported
+
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: reported
+
+        LabelledLabel {
+            label: qsTr("Jamming")
+            labelText: group.jammingReported ? group.facts.jammingState.enumStringValue : ""
+            visible: group.jammingReported
+        }
+        LabelledLabel {
+            label: qsTr("Spoofing")
+            labelText: group.spoofingReported ? group.facts.spoofingState.enumStringValue : ""
+            visible: group.spoofingReported
+        }
+        LabelledLabel {
+            label: qsTr("Authentication")
+            labelText: group.authenticationReported ? group.facts.authenticationState.enumStringValue : ""
+            visible: group.authenticationReported
+        }
+    }
+
     contentComponent: Component {
         ColumnLayout {
             // On narrow screens the expanded view replaces status instead of requiring horizontal scrolling.
@@ -68,7 +100,7 @@ ToolIndicatorPage {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 heading: qsTr("Vehicle GPS Status")
-                visible: root.activeVehicle
+                visible: root._vehicleGps
 
                 LabelledLabel {
                     label: qsTr("Satellites")
@@ -79,12 +111,60 @@ ToolIndicatorPage {
                     labelText: root.activeVehicle ? root.activeVehicle.gps.lock.enumStringValue : root.na
                 }
                 LabelledLabel {
+                    objectName: "vehicleGpsHdop"
                     label: qsTr("HDOP")
                     labelText: root.activeVehicle ? root.activeVehicle.gps.hdop.valueString : root.valueNA
                 }
                 LabelledLabel {
+                    objectName: "vehicleGpsVdop"
                     label: qsTr("VDOP")
                     labelText: root.activeVehicle ? root.activeVehicle.gps.vdop.valueString : root.valueNA
+                }
+                LabelledLabel {
+                    objectName: "vehicleGpsHorizontalAccuracy"
+                    label: qsTr("Horizontal accuracy")
+                    visible: root.activeVehicle
+                             && Number.isFinite(root.activeVehicle.gps.horizontalAccuracy.value)
+                             && root.activeVehicle.gps.horizontalAccuracy.value >= 0
+                    labelText: root.activeVehicle
+                               ? qsTr("%1 %2").arg(root.activeVehicle.gps.horizontalAccuracy.valueString)
+                                             .arg(root.activeVehicle.gps.horizontalAccuracy.units)
+                               : root.valueNA
+                }
+                LabelledLabel {
+                    objectName: "vehicleGpsVerticalAccuracy"
+                    label: qsTr("Vertical accuracy")
+                    visible: root.activeVehicle
+                             && Number.isFinite(root.activeVehicle.gps.verticalAccuracy.value)
+                             && root.activeVehicle.gps.verticalAccuracy.value >= 0
+                    labelText: root.activeVehicle
+                               ? qsTr("%1 %2").arg(root.activeVehicle.gps.verticalAccuracy.valueString)
+                                             .arg(root.activeVehicle.gps.verticalAccuracy.units)
+                               : root.valueNA
+                }
+                LabelledLabel {
+                    objectName: "vehicleGpsRtkBaseline"
+                    label: qsTr("RTK baseline")
+                    visible: root.activeVehicle && Number.isFinite(root.activeVehicle.gps.rtkBaseline.value)
+                    labelText: root.activeVehicle
+                               ? qsTr("%1 %2").arg(root.activeVehicle.gps.rtkBaseline.valueString)
+                                             .arg(root.activeVehicle.gps.rtkBaseline.units)
+                               : root.valueNA
+                }
+                LabelledLabel {
+                    objectName: "vehicleGpsRtkRate"
+                    label: qsTr("RTK correction rate")
+                    visible: root.activeVehicle && Number.isFinite(root.activeVehicle.gps.rtkRate.value)
+                    labelText: root.activeVehicle
+                               ? qsTr("%1 %2").arg(root.activeVehicle.gps.rtkRate.valueString)
+                                             .arg(root.activeVehicle.gps.rtkRate.units)
+                               : root.valueNA
+                }
+                LabelledLabel {
+                    objectName: "vehicleGpsRtkSatellites"
+                    label: qsTr("RTK satellites")
+                    visible: root.activeVehicle && root.activeVehicle.gps.rtkSatellites.value >= 0
+                    labelText: root.activeVehicle ? root.activeVehicle.gps.rtkSatellites.valueString : root.na
                 }
                 LabelledLabel {
                     label: qsTr("Course Over Ground")
@@ -97,52 +177,50 @@ ToolIndicatorPage {
                 }
             }
 
-            SettingsGroupLayout {
+            ResilienceGroup {
+                objectName: "gpsResilienceStatus"
+                heading: qsTr("GPS Resilience Status")
+                facts: root.activeVehicle ? root.activeVehicle.gpsAggregate : null
+            }
+
+            // Per-receiver details repeat the summary unless both receivers report.
+            ResilienceGroup {
+                id: gps1Resilience
+                objectName: "gps1Resilience"
+                heading: qsTr("GPS 1 Details")
+                facts: root.activeVehicle ? root.activeVehicle.gps : null
+                visible: gps1Resilience.reported && gps2Resilience.reported
+            }
+
+            ResilienceGroup {
+                id: gps2Resilience
+                objectName: "gps2Resilience"
+                heading: qsTr("GPS 2 Details")
+                facts: root.activeVehicle ? root.activeVehicle.gps2 : null
+                visible: gps1Resilience.reported && gps2Resilience.reported
+            }
+
+            GPSReceiverStatus {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
-                heading: qsTr("RTK GPS Status")
-                visible: root._rtkConnected || root._receiver.hasReceiver || !root.activeVehicle
+                receiver: root._receiver
+                showWhenDisconnected: !root._vehicleGps
+                disconnectedText: qsTr("No GNSS receiver connected. Expand for settings.")
+            }
 
-                QGCLabel {
-                    objectName: "rtkReceiverStatus"
-                    Layout.fillWidth: true
-                    Layout.minimumWidth: 0
-                    Layout.preferredWidth: 0
-                    wrapMode: Text.Wrap
-                    text: !root._rtkConnected
-                          ? (root._receiver.hasReceiver ? qsTr("Connecting to receiver...")
-                                                       : qsTr("No RTK receiver connected. Expand for settings."))
-                          : root._activePresentation.passive ? qsTr("Passive RTCM/NMEA input connected")
-                          : root._averagingConnected ? qsTr("Receiver-managed averaging — no accuracy guarantee")
-                          : QGroundControl.gpsRtk.active.value ? qsTr("Survey-in Active") : qsTr("Receiver connected")
-                }
-                LabelledLabel {
-                    objectName: "rtkSatellitesInView"
-                    visible: root._rtkConnected
-                    label: qsTr("Satellites in View")
-                    labelText: QGroundControl.gpsRtk.numSatellites.rawValue < 0
-                               ? root.na : QGroundControl.gpsRtk.numSatellites.valueString
-                }
-                LabelledLabel {
-                    objectName: "rtkSatellitesUsed"
-                    visible: root._rtkConnected
-                    label: qsTr("Satellites Used")
-                    labelText: QGroundControl.gpsRtk.numSatellitesUsed.rawValue < 0
-                               ? root.na : QGroundControl.gpsRtk.numSatellitesUsed.valueString
-                }
-                LabelledLabel {
-                    label: root._activePresentation.acceptedObservationTime ? qsTr("Accepted observation time") : qsTr("Duration")
-                    visible: root._rtkConnected && root._activePresentation.reportsSurveyDuration
-                             && !root._averagingConnected
-                    //: %1 is Survey-In duration in seconds
-                    labelText: qsTr("%1 s").arg(QGroundControl.gpsRtk.currentDuration.value)
-                }
-                LabelledLabel {
-                    label: QGroundControl.gpsRtk.valid.value ? qsTr("Accuracy") : qsTr("Current Accuracy")
-                    labelText: QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.gpsRtk.currentAccuracy.units
-                    visible: root._rtkConnected && !root._activePresentation.passive && !root._averagingConnected
-                             && QGroundControl.gpsRtk.currentAccuracy.value > 0
-                }
+            CorrectionsStatus {
+                objectName: "gpsIndicatorCorrections"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                showWhenInactive: false
+            }
+
+            GcsPositionStatus {
+                objectName: "gpsIndicatorGcsPosition"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                sourceEditable: false
+                showCoordinates: false
             }
 
             QGCLabel {
@@ -169,11 +247,8 @@ ToolIndicatorPage {
                 Layout.minimumWidth: 0
                 receiver: root._receiver
                 settings: root.rtkSettings
-                baseFacts: QGroundControl.gpsRtk
-                autoConnectFact: QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
-                serialPorts: root._serialPortManager ? root._serialPortManager.serialPorts : []
-                serialBaudRates: root._serialPortManager ? root._serialPortManager.serialBaudRates : []
                 consent: connectionConsent
+                showErrorMessage: false
                 Component.onCompleted: root._settingsPanel = settingsPanel
                 Component.onDestruction: root._settingsPanel = null
             }

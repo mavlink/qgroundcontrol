@@ -2,8 +2,9 @@
 
 #include <chrono>
 #include <functional>
+#include <optional>
 
-#include <QtCore/QChronoTimer>
+#include <QtCore/QDebug>
 #include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -11,29 +12,34 @@
 #include <QtCore/qnumeric.h>
 #include <QtPositioning/QGeoCoordinate>
 
-#include "../Core/GPSAltitudeDatum.h"
+#include "GPSObservation.h"
+#include "GPSRevision.h"
+#include "ScheduledTask.h"
 
 class NTRIPTransport;
+class RuntimeScheduler;
 
 struct PositionResult
 {
     QGeoCoordinate coordinate;
     QString source;
     GPSAltitudeDatum altitudeDatum = GPSAltitudeDatum::Unknown;
+    GPSObservation::FixQuality fixQuality = GPSObservation::FixQuality::Unknown;
+    std::optional<int> satellitesUsed = std::nullopt;
+    std::optional<double> horizontalDop = std::nullopt;
 
     /// GGA needs MSL altitude. Providers must convert ellipsoid height using
     /// known geoid separation before explicitly declaring it MeanSeaLevel.
     bool isValid() const
     {
-        return coordinate.isValid() && qIsFinite(coordinate.altitude()) &&
-               altitudeDatum == GPSAltitudeDatum::MeanSeaLevel;
+        return fixQuality != GPSObservation::FixQuality::NoFix && coordinate.isValid() &&
+               qIsFinite(coordinate.altitude()) && altitudeDatum == GPSAltitudeDatum::MeanSeaLevel;
     }
 };
 
 class NTRIPGgaProvider : public QObject
 {
     Q_OBJECT
-    friend class NTRIPReentrancyTest;
 
 public:
     enum class PositionSource
@@ -41,7 +47,7 @@ public:
         Auto = 0,
         VehicleGPS = 1,
         VehicleEKF = 2,
-        RTKBase = 3,
+        RTKReceiver = 3,
         GCSPosition = 4
     };
     Q_ENUM(PositionSource)
@@ -61,7 +67,7 @@ public:
         bool operator==(const Configuration&) const = default;
     };
 
-    explicit NTRIPGgaProvider(QObject* parent = nullptr);
+    explicit NTRIPGgaProvider(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
 
     void configure(const Configuration& configuration);
 
@@ -89,6 +95,8 @@ private:
     };
 
     void _sendGGA();
+    void _scheduleNextGGA();
+    std::chrono::milliseconds _currentInterval() const;
     void _setRetryPhase(RetryPhase phase);
     void _clearSource();
 
@@ -96,7 +104,8 @@ private:
     void _updateSelectionDiagnostic(PositionSource requested, const SelectedPosition& selection);
 
     QPointer<NTRIPTransport> _transport;
-    QChronoTimer _timer;
+    RuntimeScheduler* const _scheduler;
+    ScheduledTask _ggaTask;
     QString _source;
     QString _selectionDiagnostic;
     QHash<PositionSource, PositionProvider> _providers;
@@ -104,5 +113,7 @@ private:
     int _fastRetryCount = 0;
     PositionSource _cachedSource = PositionSource::Auto;
     std::chrono::milliseconds _normalInterval = kDefaultInterval;
-    quint64 _generation = 0;
+    GPSRevision _generation;
 };
+
+QDebug operator<<(QDebug debug, const NTRIPGgaProvider::Configuration& configuration);

@@ -8,57 +8,40 @@
 
 #include "GPSCorrectionDiagnostics.h"
 
-/// Bounded accounting of admission and terminal delivery evidence, independent of routing policy.
+/// Bounded accounting of admission evidence, independent of routing policy.
 class GPSCorrectionLedger
 {
 public:
     using Clock = std::function<qint64()>;
 
-    struct Statistics
+    struct AdmissionCounters
+    {
+        quint64 queuedFrames = 0;
+        quint64 queuedBytes = 0;
+        /// Loss/rejection events, not unique frames; may overlap admitted bytes.
+        quint64 droppedFrames = 0;
+        quint64 droppedBytes = 0;
+    };
+
+    struct Statistics : AdmissionCounters
     {
         quint64 session = 1;
         bool active = false;
         quint64 receivedBytes = 0;
         quint64 validatedFrames = 0;
-        quint64 filteredFrames = 0;
-        quint64 submittedBytes = 0;
         qint64 lastValidMs = 0;
         quint64 receivedFrames = 0;
-        quint64 validatedBytes = 0;
         quint64 selectedFrames = 0;
-        quint64 selectedBytes = 0;
-        quint64 queuedFrames = 0;
-        quint64 queuedBytes = 0;
-        quint64 writtenFrames = 0;
-        quint64 writtenBytes = 0;
-        quint64 transportAcceptedBytes = 0;
-        /// Loss/rejection events, not unique frames.
-        /// Global selection rejection can coexist with scoped admission.
-        quint64 droppedFrames = 0;
-        /// Rejected/lost bytes across paths; may overlap admitted bytes.
-        quint64 droppedBytes = 0;
-        quint64 unconfirmedFrames = 0;
-        quint64 unconfirmedBytes = 0;
+        quint64 receivedBytesPerSecond = 0;
+        quint64 sampledReceivedBytes = 0;
+        /// Validated frames by RTCM message ID; IDs are 12-bit, so the map is naturally bounded.
+        QMap<int, quint64> messageCounts;
     };
 
-    struct Destination
+    struct Destination : AdmissionCounters
     {
         QString id;
-        bool reportsWrites = false;
         quint64 session = 0;
-        quint64 queuedFrames = 0;
-        quint64 queuedBytes = 0;
-        quint64 writtenFrames = 0;
-        quint64 writtenBytes = 0;
-        quint64 transportAcceptedBytes = 0;
-        /// Admission and terminal loss/rejection events, not unique delivery identities.
-        quint64 droppedFrames = 0;
-        /// Accumulates rejected admission bytes and subsequent terminal losses.
-        quint64 droppedBytes = 0;
-        quint64 pendingFrames = 0;
-        quint64 pendingBytes = 0;
-        quint64 unconfirmedFrames = 0;
-        quint64 unconfirmedBytes = 0;
         qint64 lastActivityMs = 0;
     };
 
@@ -73,52 +56,43 @@ public:
 
     const QList<GPSCorrectionEvent>& events() const { return _events; }
 
+    /// Samples received bytes per source; callers provide the sampling cadence.
+    void sampleReceivedByteRates(qint64 nowMs);
     void received(const GPSCorrectionFrame& frame);
     void validated(const GPSCorrectionFrame& frame);
-    void filtered(const GPSCorrectionFrame& frame);
     void selected(const GPSCorrectionFrame& frame);
     void queued(const GPSCorrectionFrame& frame, quint64 bytes, bool complete);
-    void registerOutput(const QString& id, bool reportsWrites);
-    void removeOutput(const QString& id, quint64 excludedDeliveryId = 0);
+    void registerOutput(const QString& id);
+    void updateOutputDestinations(const QString& id, const QSet<QString>& destinations);
 
-    bool admissionAvailable() const { return _pendingDeliveries.size() < MAX_PENDING_DELIVERIES; }
+    /// Destinations last reported by output @a id, or null when it is not registered.
+    const QSet<QString>* outputDestinations(const QString& id) const
+    {
+        const auto it = _outputDestinations.constFind(id);
+        return it == _outputDestinations.cend() ? nullptr : &it.value();
+    }
 
-    bool admitted(const GPSCorrectionFrame& frame, const QString& outputId, const QString& destination, quint64 session,
-                  quint64 bytes, bool complete, bool reportsWrites);
-    bool recordDelivery(const GPSCorrectionDelivery& delivery);
-    /// Exclude in-flight admissions until synchronous evidence is recorded.
-    void invalidateDestination(const QString& id, quint64 session, quint64 excludedDeliveryId = 0);
-    void invalidateDelivery(quint64 deliveryId, const QString& outputId = {});
+    void removeOutput(const QString& id);
+
+    bool admitted(const GPSCorrectionFrame& frame, const QString& destination, quint64 session, quint64 bytes,
+                  bool complete);
     void recordEvent(const GPSCorrectionFrame& frame, GPSCorrectionStage stage, GPSCorrectionReason reason,
                      quint64 bytes, const QString& destination = {}, quint64 destinationSession = 0);
     void recordDrop(const GPSCorrectionFrame& frame, GPSCorrectionReason reason, quint64 bytes,
                     const QString& destination = {}, quint64 destinationSession = 0, bool creditSource = true);
     void pruneDestinationHistory();
-    void shutdown(quint64 excludedDeliveryId = 0);
+    void shutdown();
     static constexpr qsizetype MAX_EVENTS = GPS_CORRECTION_MAX_EVENTS;
-    static constexpr qsizetype MAX_PENDING_DELIVERIES = 128;
     static constexpr qsizetype MAX_DESTINATION_HISTORY = 16;
 
 private:
     Statistics* _currentStatistics(const GPSCorrectionFrame& frame);
-    template <typename Predicate>
-    void _invalidatePending(Predicate matches);
-
-    struct PendingDelivery
-    {
-        GPSCorrectionFrame frame;
-        QString destination;
-        quint64 destinationSession = 0;
-        quint64 queuedBytes = 0;
-        QString outputId;
-        bool complete = false;
-    };
 
     Clock _clock;
     std::array<Statistics, 4> _statistics;
-    QSet<QString> _outputs;
+    QMap<QString, QSet<QString>> _outputDestinations;
     QMap<QString, Destination> _destinations;
-    QMap<QString, PendingDelivery> _pendingDeliveries;
     QList<GPSCorrectionEvent> _events;
     quint64 _nextEvent = 0;
+    qint64 _rateSampleMs = 0;
 };

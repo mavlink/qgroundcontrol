@@ -1,42 +1,8 @@
-/****************************************************************************
- *
- *   Copyright (c) 2012-2023 PX4 Development Team. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name PX4 nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- ****************************************************************************/
-
 #pragma once
 #include <cstddef>
 #include <cstdint>
 
 #define UBX_CONFIG_TIMEOUT 250      // ms, timeout for waiting ACK
-#define UBX_GNSS_RESET_TIME 500000  // us, GNSS subsystem reset after a constellation change
 #define UBX_PACKET_TIMEOUT 8        // ms, if now data during this delay assume that full update received
 
 // Bound configuration batches independently of received message sizes.
@@ -87,7 +53,6 @@
 #define UBX_ID_CFG_RATE 0x08    // deprecated in protocol version >= 27 -> use CFG_VALSET
 #define UBX_ID_CFG_NAV5 0x24    // deprecated in protocol version >= 27 -> use CFG_VALSET
 #define UBX_ID_CFG_TMODE3 0x71  // deprecated in protocol version >= 27 -> use CFG_VALSET
-#define UBX_ID_CFG_GNSS 0x3E
 #define UBX_ID_CFG_VALSET 0x8A
 #define UBX_ID_CFG_VALGET 0x8B
 #define UBX_ID_MON_COMMS 0x36
@@ -98,11 +63,15 @@
 
 /* UBX ID for RTCM3 output messages */
 /* Minimal messages for RTK: 1005, 1077 + (1087 or 1127) */
-/* Reduced message size using MSM4: 1005, 1074 + (1084 or 1124)  */
+/* Compact messages using MSM4: 1005, 1074 + (1084 or 1124) */
 #define UBX_ID_RTCM3_1005 0x05 /**< Stationary RTK reference station ARP */
+#define UBX_ID_RTCM3_1074 0x4A /**< GPS MSM4 */
 #define UBX_ID_RTCM3_1077 0x4D /**< GPS MSM7 */
+#define UBX_ID_RTCM3_1084 0x54 /**< GLONASS MSM4 */
 #define UBX_ID_RTCM3_1087 0x57 /**< GLONASS MSM7 */
+#define UBX_ID_RTCM3_1094 0x5E /**< Galileo MSM4 */
 #define UBX_ID_RTCM3_1097 0x61 /**< Galileo MSM7 */
+#define UBX_ID_RTCM3_1124 0x7C /**< BeiDou MSM4 */
 #define UBX_ID_RTCM3_1127 0x7F /**< BeiDou MSM7 */
 #define UBX_ID_RTCM3_1230 0xE6 /**< GLONASS code-phase biases */
 
@@ -136,7 +105,6 @@
 #define UBX_MSG_CFG_RATE ((UBX_CLASS_CFG) | UBX_ID_CFG_RATE << 8)
 #define UBX_MSG_CFG_NAV5 ((UBX_CLASS_CFG) | UBX_ID_CFG_NAV5 << 8)
 #define UBX_MSG_CFG_TMODE3 ((UBX_CLASS_CFG) | UBX_ID_CFG_TMODE3 << 8)
-#define UBX_MSG_CFG_GNSS ((UBX_CLASS_CFG) | UBX_ID_CFG_GNSS << 8)
 #define UBX_MSG_CFG_VALGET ((UBX_CLASS_CFG) | UBX_ID_CFG_VALGET << 8)
 #define UBX_MSG_CFG_VALSET ((UBX_CLASS_CFG) | UBX_ID_CFG_VALSET << 8)
 #define UBX_MSG_MON_COMMS ((UBX_CLASS_MON) | UBX_ID_MON_COMMS << 8)
@@ -145,9 +113,13 @@
 #define UBX_MSG_MON_RF ((UBX_CLASS_MON) | UBX_ID_MON_RF << 8)
 #define UBX_MSG_SEC_SIG ((UBX_CLASS_SEC) | UBX_ID_SEC_SIG << 8)
 #define UBX_MSG_RTCM3_1005 ((UBX_CLASS_RTCM3) | UBX_ID_RTCM3_1005 << 8)
+#define UBX_MSG_RTCM3_1074 ((UBX_CLASS_RTCM3) | UBX_ID_RTCM3_1074 << 8)
 #define UBX_MSG_RTCM3_1077 ((UBX_CLASS_RTCM3) | UBX_ID_RTCM3_1077 << 8)
+#define UBX_MSG_RTCM3_1084 ((UBX_CLASS_RTCM3) | UBX_ID_RTCM3_1084 << 8)
 #define UBX_MSG_RTCM3_1087 ((UBX_CLASS_RTCM3) | UBX_ID_RTCM3_1087 << 8)
+#define UBX_MSG_RTCM3_1094 ((UBX_CLASS_RTCM3) | UBX_ID_RTCM3_1094 << 8)
 #define UBX_MSG_RTCM3_1097 ((UBX_CLASS_RTCM3) | UBX_ID_RTCM3_1097 << 8)
+#define UBX_MSG_RTCM3_1124 ((UBX_CLASS_RTCM3) | UBX_ID_RTCM3_1124 << 8)
 #define UBX_MSG_RTCM3_1127 ((UBX_CLASS_RTCM3) | UBX_ID_RTCM3_1127 << 8)
 #define UBX_MSG_RTCM3_1230 ((UBX_CLASS_RTCM3) | UBX_ID_RTCM3_1230 << 8)
 
@@ -216,20 +188,6 @@
 
 /* TX CFG-GNSS message contents
  */
-#define UBX_TX_CFG_GNSS_GNSSID_GPS 0                /**< gnssId of GPS */
-#define UBX_TX_CFG_GNSS_GNSSID_SBAS 1               /**< gnssId of SBAS */
-#define UBX_TX_CFG_GNSS_GNSSID_GALILEO 2            /**< gnssId of Galileo */
-#define UBX_TX_CFG_GNSS_GNSSID_BEIDOU 3             /**< gnssId of BeiDou */
-#define UBX_TX_CFG_GNSS_GNSSID_IMES 4               /**< gnssId of IMES */
-#define UBX_TX_CFG_GNSS_GNSSID_QZSS 5               /**< gnssId of QZSS */
-#define UBX_TX_CFG_GNSS_GNSSID_GLONASS 6            /**< gnssId of GLONASS */
-#define UBX_TX_CFG_GNSS_FLAGS_ENABLE 0x00000001     /**< Enable this GNSS system */
-#define UBX_TX_CFG_GNSS_FLAGS_GPS_L1CA 0x00010000   /**< GPS: Use L1C/A Signal */
-#define UBX_TX_CFG_GNSS_FLAGS_SBAS_L1CA 0x00010000  /**< SBAS: Use L1C/A Signal */
-#define UBX_TX_CFG_GNSS_FLAGS_GALILEO_E1 0x00010000 /**< Galileo: Use E1 Signal */
-#define UBX_TX_CFG_GNSS_FLAGS_BEIDOU_B1I 0x00010000 /**< BeiDou: Use B1I Signal */
-#define UBX_TX_CFG_GNSS_FLAGS_QZSS_L1CA 0x00010000  /**< QZSS: Use L1C/A Signal */
-#define UBX_TX_CFG_GNSS_FLAGS_GLONASS_L1 0x00010000 /**< GLONASS: Use L1 Signal */
 
 /* Key ID's for CFG-VAL{GET,SET,DEL} */
 
@@ -302,37 +260,17 @@
 #define UBX_CFG_KEY_MSGOUT_UBX_RXM_RTCM_I2C 0x20910268
 #define UBX_CFG_KEY_MSGOUT_UBX_RXM_COR_I2C 0x209106b6
 #define UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1005_I2C 0x209102bd
+#define UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1074_I2C 0x2091035e
 #define UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1077_I2C 0x209102cc
+#define UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1084_I2C 0x20910363
 #define UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1087_I2C 0x209102d1
+#define UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1094_I2C 0x20910368
 #define UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1097_I2C 0x20910318
+#define UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1124_I2C 0x2091036d
 #define UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1127_I2C 0x209102d6
 #define UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1230_I2C 0x20910303
 #define UBX_CFG_KEY_MSGOUT_UBX_NAV_TIMEGPS_I2C 0x20910047
 
-#define UBX_CFG_KEY_SIGNAL_GPS_ENA 0x1031001f            /**< GPS enable */
-#define UBX_CFG_KEY_SIGNAL_GPS_L2C_ENA 0x10310003        /**< GPS L2C (only on u-blox F9 platform products) */
-#define UBX_CFG_KEY_SIGNAL_GPS_L5_ENA 0x10310004         /**< GPS L5 (only on u-blox F9-15B) */
-#define UBX_CFG_KEY_SIGNAL_SBAS_ENA 0x10310020           /**< SBAS enable */
-#define UBX_CFG_KEY_SIGNAL_SBAS_L1CA_ENA 0x10310005      /**< SBAS L1C/A */
-#define UBX_CFG_KEY_SIGNAL_GAL_ENA 0x10310021            /**< Galileo enable */
-#define UBX_CFG_KEY_SIGNAL_GAL_E5B_ENA 0x1031000a        /**< Galileo E5b (only on u-blox F9 platform products) */
-#define UBX_CFG_KEY_SIGNAL_GAL_E5A_ENA 0x10310009        /**< Galileo E5a (only on u-blox F9-15B) */
-#define UBX_CFG_KEY_SIGNAL_GAL_E6_ENA 0x1031000b         /**< Galileo E6 (only on u-blox F9-15B and X20) */
-#define UBX_CFG_KEY_SIGNAL_BDS_ENA 0x10310022            /**< BeiDou Enable */
-#define UBX_CFG_KEY_SIGNAL_BDS_B1C_ENA 0x1031000f        /**< BeiDou B1C (only on u-blox F9-15B) */
-#define UBX_CFG_KEY_SIGNAL_BDS_B2A_ENA 0x10310028        /**< BeiDou B2a  (only on u-blox F9-15B) */
-#define UBX_CFG_KEY_SIGNAL_BDS_B2_ENA 0x1031000e         /**< BeiDou B2I (only on u-blox F9 platform products) */
-#define UBX_CFG_KEY_SIGNAL_BDS_B3_ENA 0x10310010         /**< BeiDou B3I (only on u-blox F9-15B) */
-#define UBX_CFG_KEY_SIGNAL_QZSS_ENA 0x10310024           /**< QZSS enable */
-#define UBX_CFG_KEY_SIGNAL_QZSS_L1CA_ENA 0x10310012      /**< QZSS L1C/A */
-#define UBX_CFG_KEY_SIGNAL_QZSS_L1S_ENA 0x10310014       /**< QZSS L1S */
-#define UBX_CFG_KEY_SIGNAL_QZSS_L5_ENA 0x10310017        /**< QZSS L5 (only on u-blox F9-15B) */
-#define UBX_CFG_KEY_SIGNAL_QZSS_L2C_ENA 0x10310015       /**< QZSS L2C (only on u-blox F9 platform products) */
-#define UBX_CFG_KEY_SIGNAL_GLO_ENA 0x10310025            /**< GLONASS enable */
-#define UBX_CFG_KEY_SIGNAL_GLO_L1_ENA 0x10310018         /**< GLONASS L1 */
-#define UBX_CFG_KEY_SIGNAL_GLO_L2_ENA 0x1031001a         /**< GLONASS L2 (only on u-blox F9 platform products) */
-#define UBX_CFG_KEY_SIGNAL_NAVIC_ENA 0x10310026          /**< NavIC enable (only on u-blox F9-15B)*/
-#define UBX_CFG_KEY_SIGNAL_NAVIC_L5_ENA 0x1031001d       /**< NavIC L5 (only on u-blox F9-15B) */
 
 #define UBX_CFG_KEY_SIGNAL_L5_HEALTH_OVERRIDE 0x10320001 /**< GPS L5 health override value */
 
@@ -344,15 +282,6 @@
 #include "RTCMFramer.h"
 
 /*** u-blox protocol binary message and payload definitions ***/
-
-/* General: Header */
-typedef struct
-{
-    uint8_t sync1;
-    uint8_t sync2;
-    uint16_t msg;
-    uint16_t length;
-} ubx_header_t;
 
 /* General: Checksum */
 typedef struct
@@ -433,18 +362,8 @@ typedef struct
     int32_t hMSL;     /**< Height above mean sea level [mm] */
     uint32_t hAcc;    /**< Horizontal accuracy estimate [mm] */
     uint32_t vAcc;    /**< Vertical accuracy estimate [mm] */
-    int32_t velN;     /**< NED north velocity [mm/s]*/
-    int32_t velE;     /**< NED east velocity [mm/s]*/
-    int32_t velD;     /**< NED down velocity [mm/s]*/
     int32_t gSpeed;   /**< Ground Speed (2-D) [mm/s] */
     int32_t headMot;  /**< Heading of motion (2-D) [1e-5 deg] */
-    uint32_t sAcc;    /**< Speed accuracy estimate [mm/s] */
-    uint32_t headAcc; /**< Heading accuracy estimate (motion and vehicle) [1e-5 deg] */
-    uint16_t pDOP;    /**< Position DOP [0.01] */
-    uint16_t reserved2;
-    uint32_t reserved3;
-    int32_t headVeh;    /**< (ubx8+ only) Heading of vehicle (2-D) [1e-5 deg] */
-    uint32_t reserved4; /**< (ubx8+ only) */
 } ubx_payload_rx_nav_pvt_t;
 
 /* Rx NAV-TIMEUTC */
@@ -474,14 +393,7 @@ typedef struct
 /* Rx NAV-SVINFO Part 2 (repeated) */
 typedef struct
 {
-    uint8_t chn;     /**< Channel number, 255 for SVs not assigned to a channel */
-    uint8_t svid;    /**< Satellite ID */
-    uint8_t flags;   /**< svUsed, diffCorr, orbitAvail, orbitEph, unhealthy, orbitAlm, orbitAop, smoothed */
-    uint8_t quality; /**< 0: no signal, 1: search, 2: aquited, 3: unusable, 5-7: locked */
-    uint8_t cno;     /**< Carrier to Noise Ratio (Signal Strength) [dbHz] */
-    int8_t elev;     /**< Elevation [deg] */
-    int16_t azim;    /**< Azimuth [deg] */
-    int32_t prRes;   /**< Pseudo range residual [cm] */
+    uint8_t flags; /**< svUsed, diffCorr, orbitAvail, orbitEph, unhealthy, orbitAlm, orbitAop, smoothed */
 } ubx_payload_rx_nav_svinfo_part2_t;
 
 /* Rx NAV-SAT Part 1 */
@@ -497,11 +409,6 @@ typedef struct
 typedef struct
 {
     uint8_t gnssId; /**< GNSS identifier */
-    uint8_t svId;   /**< Satellite ID */
-    uint8_t cno;    /**< Carrier to Noise Ratio (Signal Strength) [dbHz] */
-    int8_t elev;    /**< Elevation [deg] range: +/-90 */
-    int16_t azim;   /**< Azimuth [deg] range: 0-360 */
-    int16_t prRes;  /**< Pseudo range residual [0.1 m] */
     uint32_t flags; /**< bits 2..0 qualityInd, bit 3 svUsed, bits 5..4 health, bit 6 diffCorr, bit 7 smoothed */
 } ubx_payload_rx_nav_sat_part2_t;
 
@@ -542,58 +449,24 @@ typedef struct
 typedef struct
 {
     uint32_t iTOW;   /**< GPS Time of Week [ms] */
-    int32_t velN;    /**< North velocity component [cm/s]*/
-    int32_t velE;    /**< East velocity component [cm/s]*/
-    int32_t velD;    /**< Down velocity component [cm/s]*/
-    uint32_t speed;  /**< Speed (3-D) [cm/s] */
     uint32_t gSpeed; /**< Ground speed (2-D) [cm/s] */
     int32_t heading; /**< Heading of motion 2-D [1e-5 deg] */
-    uint32_t sAcc;   /**< Speed accuracy estimate [cm/s] */
-    uint32_t cAcc;   /**< Course / Heading accuracy estimate [1e-5 deg] */
 } ubx_payload_rx_nav_velned_t;
 
 /* Rx MON-HW (ubx6) */
 typedef struct
 {
-    uint32_t pinSel;
-    uint32_t pinBank;
-    uint32_t pinDir;
-    uint32_t pinVal;
     uint16_t noisePerMS;
     uint16_t agcCnt;
-    uint8_t aStatus;
-    uint8_t aPower;
-    uint8_t flags;
-    uint8_t reserved1;
-    uint32_t usedMask;
-    uint8_t VP[25];
     uint8_t jamInd;
-    uint16_t reserved3;
-    uint32_t pinIrq;
-    uint32_t pullH;
-    uint32_t pullL;
 } ubx_payload_rx_mon_hw_ubx6_t;
 
 /* Rx MON-HW (ubx7+) */
 typedef struct
 {
-    uint32_t pinSel;
-    uint32_t pinBank;
-    uint32_t pinDir;
-    uint32_t pinVal;
     uint16_t noisePerMS;
     uint16_t agcCnt;
-    uint8_t aStatus;
-    uint8_t aPower;
-    uint8_t flags;
-    uint8_t reserved1;
-    uint32_t usedMask;
-    uint8_t VP[17];
     uint8_t jamInd;
-    uint16_t reserved3;
-    uint32_t pinIrq;
-    uint32_t pullH;
-    uint32_t pullL;
 } ubx_payload_rx_mon_hw_ubx7_t;
 
 /* Rx MON-RF (replaces MON-HW, protocol 27+) */
@@ -716,15 +589,6 @@ typedef struct
     uint16_t timeRef;  /**< Alignment to reference time: 0 = UTC time, 1 = GPS time */
 } ubx_payload_tx_cfg_rate_t;
 
-/* Tx CFG-VALSET (protocol version 27+) */
-typedef struct
-{
-    uint8_t version; /**< Message version, set to 0 */
-    uint8_t layers;  /**< The layers where the configuration should be applied (@see UBX_CFG_LAYER_*) */
-    uint8_t reserved1[2];
-    uint8_t cfgData; /**< configuration data (key and value pairs, max 64) */
-} ubx_payload_tx_cfg_valset_t;
-
 /* Tx CFG-NAV5 */
 typedef struct
 {
@@ -787,48 +651,16 @@ typedef struct
     uint8_t reserved3[8];
 } ubx_payload_tx_cfg_tmode3_t;
 
-typedef struct
-{
-    uint8_t msgVer;          /**< Message version (expected 0x00) */
-    uint8_t numTrkChHw;      /**< Number of tracking channels available (read only) */
-    uint8_t numTrkChUse;     /**< Number of tracking channels to use (0xFF for numTrkChHw) */
-    uint8_t numConfigBlocks; /**< Count of repeated blocks */
-
-    struct ubx_payload_tx_cgf_gnss_block_t
-    {
-        uint8_t gnssId;   /**< GNSS ID */
-        uint8_t resTrkCh; /**< Number of reseved (minimum) tracking channels */
-        uint8_t maxTrkCh; /**< Maximum number or tracking channels */
-        uint8_t reserved1;
-        uint32_t flags;   /**< Bitfield flags (see UBX_TX_CFG_GNSS_FLAGS_*) */
-    };
-
-    ubx_payload_tx_cgf_gnss_block_t block[7]; /**< GPS, SBAS, Galileo, BeiDou, IMES 0-8, QZSS, GLONASS */
-} ubx_payload_tx_cfg_gnss_t;
-
 /* NAV RELPOSNED (protocol version 27+) */
 typedef struct
 {
     uint8_t version;       /**< message version (expected 0x01) */
     uint8_t reserved0;
-    uint16_t refStationId; /**< Reference station ID. Must be in the range 0..4095 */
     uint32_t iTOW;         /**< [ms] GPS time of week of the navigation epoch */
-    int32_t relPosN;       /**< [cm] North component of relative position vector */
-    int32_t relPosE;       /**< [cm] East component of relative position vector */
-    int32_t relPosD;       /**< [cm] Down component of relative position vector */
     int32_t relPosLength;  /**< [cm] Length of the relative position vector */
     int32_t relPosHeading; /**< [1e-5 deg] Heading of the relative position vector */
-    uint32_t reserved1;
-    int8_t relPosHPN;      /**< [0.1 mm] High-precision North component of relative position vector */
-    int8_t relPosHPE;      /**< [0.1 mm] High-precision East component of relative position vector */
-    int8_t relPosHPD;      /**< [0.1 mm] High-precision Down component of relative position vector */
     int8_t relPosHPLength; /**< [0.1 mm] High-precision component of the length of the relative position vector */
-    uint32_t accN;         /**< [0.1 mm] Accuracy of relative position North component */
-    uint32_t accE;         /**< [0.1 mm] Accuracy of relative position East component */
-    uint32_t accD;         /**< [0.1 mm] Accuracy of relative position Down component */
-    uint32_t accLength;    /**< [0.1 mm] Accuracy of the length of the relative position vector */
     uint32_t accHeading;   /**< [1e-5 deg] Accuracy of the heading of the relative position vector */
-    uint32_t reserved2;
     uint32_t flags;
 } ubx_payload_rx_nav_relposned_t;
 
@@ -838,18 +670,9 @@ typedef struct
     uint8_t version;       /**< message version (expected 0x02) */
     uint8_t reserved0[3];
     uint32_t iTOW;         /**< [ms] GPS time of week of the navigation epoch */
-    int32_t relPosN;       /**< [mm] North component of the vector from antenna 1 to antenna 2 */
-    int32_t relPosE;       /**< [mm] East component of the vector from antenna 1 to antenna 2 */
-    int32_t relPosD;       /**< [mm] Down component of the vector from antenna 1 to antenna 2 */
     int32_t relPosLength;  /**< [mm] Length of the vector from antenna 1 to antenna 2 */
     int32_t relPosHeading; /**< [1e-5 deg] Heading of the vector from antenna 1 to antenna 2 */
-    uint8_t reserved1[4];
-    uint32_t accN;         /**< [mm] Accuracy of the relative position North component */
-    uint32_t accE;         /**< [mm] Accuracy of the relative position East component */
-    uint32_t accD;         /**< [mm] Accuracy of the relative position Down component */
-    uint32_t accLength;    /**< [mm] Accuracy of the length of the relative position vector */
     uint32_t accHeading;   /**< [1e-5 deg] Accuracy of the heading of the relative position vector */
-    uint8_t reserved2[4];
     uint32_t flags;
 } ubx_payload_rx_nav_daheading_t;
 
@@ -904,20 +727,6 @@ typedef struct
 
 /*** END OF u-blox protocol binary message and payload definitions ***/
 
-/* Decoder state */
-typedef enum
-{
-    UBX_DECODE_SYNC1 = 0,
-    UBX_DECODE_SYNC2,
-    UBX_DECODE_CLASS,
-    UBX_DECODE_ID,
-    UBX_DECODE_LENGTH1,
-    UBX_DECODE_LENGTH2,
-    UBX_DECODE_PAYLOAD,
-    UBX_DECODE_CHKSUM1,
-    UBX_DECODE_CHKSUM2,
-} ubx_decode_state_t;
-
 /* Rx message state */
 typedef enum
 {
@@ -927,20 +736,9 @@ typedef enum
     UBX_RXMSG_ERROR_LENGTH
 } ubx_rxmsg_state_t;
 
-/* ACK state */
-typedef enum
-{
-    UBX_ACK_IDLE = 0,
-    UBX_ACK_WAITING,
-    UBX_ACK_GOT_ACK,
-    UBX_ACK_GOT_NAK
-} ubx_ack_state_t;
-
 namespace UBX {
 template <typename T>
 inline constexpr size_t WIRE_SIZE = 0;
-template <>
-inline constexpr size_t WIRE_SIZE<ubx_header_t> = 6;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_checksum_t> = 2;
 template <>
@@ -992,15 +790,11 @@ inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_prt_t> = 20;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_rate_t> = 6;
 template <>
-inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_valset_t> = 5;
-template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_nav5_t> = 36;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_msg_t> = 3;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_tmode3_t> = 40;
-template <>
-inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_gnss_t> = 60;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_rx_nav_relposned_t> = 64;
 template <>
@@ -1011,8 +805,6 @@ template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_comms_port_t> = 40;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_comms_t> = 328;
-template <>
-inline constexpr size_t WIRE_SIZE<ubx_payload_tx_cfg_gnss_t::ubx_payload_tx_cgf_gnss_block_t> = 8;
 template <>
 inline constexpr size_t WIRE_SIZE<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t> = 24;
 }  // namespace UBX

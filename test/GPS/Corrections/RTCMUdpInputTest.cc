@@ -46,7 +46,7 @@ void RTCMUdpInputTest::_testSocketErrors()
     QFETCH(bool, restart);
     qRegisterMetaType<QAbstractSocket::SocketError>();
     RTCMUdpInput input(0);
-    input.setValidation(true);
+    input.configure(input.port(), true);
     QVERIFY(input.start());
     const QPointer<QUdpSocket> socket = input.findChild<QUdpSocket*>();
     QVERIFY(socket);
@@ -152,7 +152,7 @@ void RTCMUdpInputTest::_testPassthroughWithoutValidation()
     const QByteArray payload = QByteArrayLiteral("not-rtcm-at-all");
     QVERIFY(sendDatagram(input.port(), payload));
 
-    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, TestTimeout::mediumMs());
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, payload);
 }
 
@@ -197,7 +197,7 @@ void RTCMUdpInputTest::_testStartupPortReplacement()
 void RTCMUdpInputTest::_testValidationResetsStream()
 {
     RTCMUdpInput input(0);
-    input.setValidation(true);
+    input.configure(input.port(), true);
     QVERIFY(input.start());
     QSignalSpy frames(&input, &RTCMUdpInput::frameReceived);
     QUdpSocket sender;
@@ -207,13 +207,13 @@ void RTCMUdpInputTest::_testValidationResetsStream()
     QVERIFY(QMetaObject::invokeMethod(&input, "_readDatagrams", Qt::DirectConnection));
     QVERIFY(frames.isEmpty());
 
-    input.setValidation(false);
+    input.configure(input.port(), false);
     const auto raw = QByteArrayLiteral("raw");
     QCOMPARE(sender.writeDatagram(raw, QHostAddress::LocalHost, input.port()), raw.size());
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 1, TestTimeout::mediumMs());
     QVERIFY(!qvariant_cast<GPSCorrectionFrame>(frames.first().first()).validated);
 
-    input.setValidation(true);
+    input.configure(input.port(), true);
     const auto tailAndFrame = frame.sliced(5) + frame;
     QCOMPARE(sender.writeDatagram(tailAndFrame, QHostAddress::LocalHost, input.port()), tailAndFrame.size());
     QTRY_COMPARE_WITH_TIMEOUT(frames.size(), 2, TestTimeout::mediumMs());
@@ -224,7 +224,7 @@ void RTCMUdpInputTest::_testValidationResetsStream()
 void RTCMUdpInputTest::_testReentrantDrainPreservesOrder()
 {
     RTCMUdpInput input(0);
-    input.setValidation(true);
+    input.configure(input.port(), true);
     QVERIFY(input.start());
     QSignalSpy frames(&input, &RTCMUdpInput::frameReceived);
     bool reentered = false;
@@ -262,7 +262,7 @@ void RTCMUdpInputTest::_testDrainInterruption()
     QFETCH(int, action);
     QPointer<RTCMUdpInput> input = new RTCMUdpInput(0);
     const auto cleanup = qScopeGuard([&]() { delete input.data(); });
-    input->setValidation(true);
+    input->configure(input->port(), true);
     QVERIFY(input->start());
     QSignalSpy frames(input, &RTCMUdpInput::frameReceived);
     bool interrupted = false;
@@ -282,8 +282,8 @@ void RTCMUdpInputTest::_testDrainInterruption()
                 delete input.data();
                 break;
             case 3:
-                input->setValidation(false);
-                input->setValidation(true);
+                input->configure(input->port(), false);
+                input->configure(input->port(), true);
                 break;
         }
     });
@@ -306,7 +306,7 @@ void RTCMUdpInputTest::_testDrainInterruption()
 void RTCMUdpInputTest::_testEmitsOneSignalPerFrame()
 {
     RTCMUdpInput input(0);
-    input.setValidation(true);
+    input.configure(input.port(), true);
     QVERIFY(input.start());
     QSignalSpy spy(&input, &RTCMUdpInput::frameReceived);
 
@@ -317,7 +317,7 @@ void RTCMUdpInputTest::_testEmitsOneSignalPerFrame()
     const QByteArray garbage = QByteArrayLiteral("\x01\x02\x03");
     QVERIFY(sendDatagram(input.port(), garbage + frame1 + frame2));
 
-    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 2, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 2, TestTimeout::mediumMs());
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, frame1);
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(1).at(0)).data, frame2);
 }
@@ -325,7 +325,7 @@ void RTCMUdpInputTest::_testEmitsOneSignalPerFrame()
 void RTCMUdpInputTest::_testDropsBadCrcFrame()
 {
     RTCMUdpInput input(0);
-    input.setValidation(true);
+    input.configure(input.port(), true);
     QVERIFY(input.start());
     QSignalSpy spy(&input, &RTCMUdpInput::frameReceived);
     QSignalSpy rejected(&input, &RTCMUdpInput::frameRejected);
@@ -339,7 +339,7 @@ void RTCMUdpInputTest::_testDropsBadCrcFrame()
                      QRegularExpression(QStringLiteral("Dropped 1 RTCM frame")));
     QVERIFY(sendDatagram(input.port(), frame1 + corrupted + frame2));
 
-    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 2, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 2, TestTimeout::mediumMs());
     verifyExpectedLogMessage();
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, frame1);
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(1).at(0)).data, frame2);
@@ -353,7 +353,7 @@ void RTCMUdpInputTest::_testDropsBadCrcFrame()
 void RTCMUdpInputTest::_testFrameSplitAcrossDatagrams()
 {
     RTCMUdpInput input(0);
-    input.setValidation(true);
+    input.configure(input.port(), true);
     QVERIFY(input.start());
     QSignalSpy spy(&input, &RTCMUdpInput::frameReceived);
 
@@ -365,14 +365,14 @@ void RTCMUdpInputTest::_testFrameSplitAcrossDatagrams()
     QCOMPARE(sender.writeDatagram(frame.left(split), QHostAddress::LocalHost, input.port()), split);
     QCOMPARE(sender.writeDatagram(frame.mid(split), QHostAddress::LocalHost, input.port()), frame.size() - split);
 
-    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(spy.count(), 1, TestTimeout::mediumMs());
     QCOMPARE(qvariant_cast<GPSCorrectionFrame>(spy.at(0).at(0)).data, frame);
 }
 
 void RTCMUdpInputTest::_testRecoversBufferedFrames()
 {
     RTCMUdpInput input(0);
-    input.setValidation(true);
+    input.configure(input.port(), true);
     QVERIFY(input.start());
     QSignalSpy frames(&input, &RTCMUdpInput::frameReceived);
     QSignalSpy rejected(&input, &RTCMUdpInput::frameRejected);
@@ -406,7 +406,7 @@ void RTCMUdpInputTest::_testRecoversBufferedFrames()
 void RTCMUdpInputTest::_testInterleavedSenders()
 {
     RTCMUdpInput input(0);
-    input.setValidation(true);
+    input.configure(input.port(), true);
     QVERIFY(input.start());
     QSignalSpy frames(&input, &RTCMUdpInput::frameReceived);
     QSignalSpy envelopes(&input, &RTCMUdpInput::frameReceived);
@@ -435,7 +435,7 @@ void RTCMUdpInputTest::_testInterleavedSenders()
 void RTCMUdpInputTest::_testBurstYieldsBetweenDrains()
 {
     RTCMUdpInput input(0);
-    input.setValidation(true);
+    input.configure(input.port(), true);
     QVERIFY(input.start());
     QSignalSpy frames(&input, &RTCMUdpInput::frameReceived);
     QUdpSocket sender;

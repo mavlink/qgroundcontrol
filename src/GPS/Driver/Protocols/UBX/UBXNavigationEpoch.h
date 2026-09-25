@@ -3,7 +3,7 @@
 #include <array>
 #include <optional>
 
-#include "GPSNativePositionReport.h"
+#include "GPSDecodedBatch.h"
 
 /// Two receiver epochs tolerate reordered navigation messages without mixing their fields.
 class UBXNavigationEpoch
@@ -16,7 +16,7 @@ public:
     {
         uint32_t tow = 0;
         uint64_t receipt = 0;
-        GPSNativePositionReport position;
+        GPSDecodedPosition position;
         bool positionValid = false;
         bool velocityValid = false;
         bool highPrecision = false;
@@ -88,7 +88,7 @@ private:
     void finish(std::optional<Epoch>& epoch, Publish publish)
     {
         if (epoch->positionValid && epoch->velocityValid && (!_lastPublished || newer(epoch->tow, *_lastPublished))) {
-            epoch->position.timestamp = epoch->receipt;
+            epoch->position.navigation.timestampUs = epoch->receipt;
             publish(epoch->position);
         }
         if (!_lastPublished || newer(epoch->tow, *_lastPublished)) {

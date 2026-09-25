@@ -110,22 +110,16 @@
         },
         {
             "component": "GcsPositionStatus",
+            "properties": {
+                "sourceEditable": false
+            },
             "sectionName": "GCS Position",
             "keywords": [
                 "latitude",
                 "longitude",
                 "hdop",
-                "gcs position"
-            ]
-        },
-        {
-            "component": "RemoteIDGpsLocation",
-            "sectionName": "GPS Location",
-            "keywords": [
-                "gps",
-                "nmea",
-                "hdop",
-                "position"
+                "gcs position",
+                "position source"
             ]
         },
         {

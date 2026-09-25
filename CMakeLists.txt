@@ -425,6 +425,8 @@ qt_add_qml_module(
     VERSION 1.0
     RESOURCE_PREFIX /qml
     IMPORTS QtQuick QtQuick.Controls QtQuick.Dialogs QtQuick.Layouts
+    # Application types expose GPS library types registered by the GPS module.
+    DEPENDENCIES QGroundControl.GPS
 )
 
 # ----------------------------------------------------------------------------

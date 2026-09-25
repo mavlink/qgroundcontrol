@@ -57,7 +57,7 @@ void SerialGPSTransportTest::_testWriteAbortsWhenStopRequested()
     stop = true;
 
     const uint8_t payload[4] = {1, 2, 3, 4};
-    QCOMPARE(transport.writeConfiguration(payload, sizeof(payload), QDeadlineTimer(TestTimeout::shortMs())).status,
+    QCOMPARE(transport.write(payload, sizeof(payload), QDeadlineTimer(TestTimeout::shortMs())).status,
              GPSWriteStatus::Cancelled);
 }
 
@@ -92,7 +92,7 @@ void SerialGPSTransportTest::_testCancelPendingOperation()
     elapsed.start();
     uint8_t byte = 0;
     if (write) {
-        const auto result = transport.writeBounded(
+        const auto result = transport.write(
             reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
             infiniteDeadline ? QDeadlineTimer(QDeadlineTimer::Forever) : QDeadlineTimer(TestTimeout::longMs()));
         QCOMPARE(result.status, GPSWriteStatus::Cancelled);
@@ -122,8 +122,8 @@ void SerialGPSTransportTest::_testPendingWriteDeadline()
     const QByteArray payload(4 * 1024 * 1024, 'x');
     QElapsedTimer elapsed;
     elapsed.start();
-    const auto result = transport.writeBounded(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
-                                               QDeadlineTimer(100));
+    const auto result =
+        transport.write(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(), QDeadlineTimer(100));
     QCOMPARE(result.status, GPSWriteStatus::TimedOut);
     QVERIFY(result.acceptedBytes < payload.size());
     QVERIFY(result.acceptedBytes > 0);
@@ -134,49 +134,14 @@ void SerialGPSTransportTest::_testPendingWriteDeadline()
     QVERIFY(!stop.load());
     QVERIFY(elapsed.elapsed() < TestTimeout::shortMs());
     QVERIFY(transport.fatalError());
-    QCOMPARE(transport.writeBounded(reinterpret_cast<const uint8_t*>(payload.constData()), 1, QDeadlineTimer(100))
-                 .acceptedBytes,
-             0);
+    QCOMPARE(
+        transport.write(reinterpret_cast<const uint8_t*>(payload.constData()), 1, QDeadlineTimer(100)).acceptedBytes,
+        0);
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     const uint8_t next = 42;
-    QCOMPARE(transport.writeConfiguration(&next, 1, QDeadlineTimer(TestTimeout::shortMs())).status,
-             GPSWriteStatus::Completed);
+    QCOMPARE(transport.write(&next, 1, QDeadlineTimer(TestTimeout::shortMs())).status, GPSWriteStatus::Completed);
 #else
     QSKIP("A stalled serial write requires a Linux pseudo-terminal");
-#endif
-}
-
-void SerialGPSTransportTest::_testLowBaudCorrectionAllowance_data()
-{
-    QTest::addColumn<unsigned>("baud");
-    QTest::addColumn<int>("minimumWireMs");
-    QTest::newRow("9600-max-rtcm") << 9600u << 1072;
-    QTest::newRow("38400-max-rtcm") << 38400u << 268;
-}
-
-void SerialGPSTransportTest::_testLowBaudCorrectionAllowance()
-{
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-    QFETCH(unsigned, baud);
-    QFETCH(int, minimumWireMs);
-    QFile master;
-    const QString slave = openPseudoTerminal(master);
-    QVERIFY(!slave.isEmpty());
-    std::atomic_bool stop = false;
-    SerialGPSTransport transport(slave, stop);
-    QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
-    QVERIFY(transport.setBaudrate(baud));
-    const QByteArray payload(1029, 'x');
-    const auto allowance = transport.correctionWriteTimeout(payload.size());
-    QVERIFY(allowance.count() >= minimumWireMs + 100);
-    QVERIFY(allowance.count() <= 3000);
-    const auto result = transport.writeBounded(reinterpret_cast<const uint8_t*>(payload.constData()), payload.size(),
-                                               QDeadlineTimer(allowance));
-    QCOMPARE(result.status, GPSWriteStatus::Completed);
-    QCOMPARE(result.writtenBytes, payload.size());
-    QCOMPARE(result.uncertainBytes(), 0);
-#else
-    QSKIP("Serial baud policy coverage requires a Linux pseudo-terminal");
 #endif
 }
 
@@ -215,8 +180,7 @@ void SerialGPSTransportTest::_inputBudgetEndsStream()
     QCOMPARE(result.bytesRead, 0);
     QVERIFY(!result.detail.isEmpty());
     QCOMPARE(transport.read(bytes, sizeof(bytes), 0).status, GPSReadStatus::Overflow);
-    QCOMPARE(transport.writeConfiguration(bytes, sizeof(bytes), QDeadlineTimer(TestTimeout::shortMs())).acceptedBytes,
-             0);
+    QCOMPARE(transport.write(bytes, sizeof(bytes), QDeadlineTimer(TestTimeout::shortMs())).acceptedBytes, 0);
 #else
     QSKIP("Serial ingress budget coverage requires a Linux pseudo-terminal");
 #endif
@@ -234,8 +198,8 @@ void SerialGPSTransportTest::_consecutiveWrites()
     QByteArray expected;
     for (int size : {1, 127, 3, 512, 17, 1029, 2}) {
         const QByteArray payload(size, char(size));
-        const auto result = transport.writeConfiguration(reinterpret_cast<const uint8_t*>(payload.constData()), size,
-                                                         QDeadlineTimer(TestTimeout::shortMs()));
+        const auto result = transport.write(reinterpret_cast<const uint8_t*>(payload.constData()), size,
+                                            QDeadlineTimer(TestTimeout::shortMs()));
         QCOMPARE(result.status, GPSWriteStatus::Completed);
         QCOMPARE(result.acceptedBytes, size);
         QCOMPARE(result.writtenBytes, size);

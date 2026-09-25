@@ -1,23 +1,22 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.GPS.NTRIP
+import QGroundControl.GPS
 
 SettingsGroupLayout {
     id: root
 
     Layout.fillWidth:   true
-    heading:            qsTr("Mountpoint")
+    heading:            qsTr("NTRIP Mountpoint")
     visible:            _ntrip.ntripMountpoint.userVisible
 
     QGCPalette { id: qgcPal }
 
     property var  _ntrip:       QGroundControl.settingsManager.ntripSettings
-    property var  _ntripMgr:    QGroundControl.ntripManager
+    property var  _ntripMgr:    QGroundControl.gpsManager.ntrip
     property bool _isActive:    _ntrip.ntripServerConnectEnabled.rawValue
     property bool _hasHost:     _ntrip.ntripServerHostAddress.rawValue !== ""
     property real _textFieldWidth: ScreenTools.defaultFontPixelWidth * 30
@@ -52,7 +51,21 @@ SettingsGroupLayout {
     }
 
     QGCLabel {
+        objectName:         "ntripSourceTableSecurityWarning"
         Layout.fillWidth:   true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 0
+        visible:            text !== ""
+        text:               root._ntripMgr.sourceTableController.securityWarning
+        textFormat:         Text.PlainText
+        color:              qgcPal.colorOrange
+        wrapMode:           Text.WordWrap
+    }
+
+    QGCLabel {
+        Layout.fillWidth:   true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 0
         visible:            root._ntripMgr.sourceTableController.fetchStatus === NTRIPSourceTableController.Error
         text:               root._ntripMgr.sourceTableController.fetchError
         color:              qgcPal.colorRed
@@ -60,7 +73,9 @@ SettingsGroupLayout {
     }
 
     NTRIPMountpointList {
+        objectName:             "ntripMountpointList"
         Layout.fillWidth:       true
+        enabled:                !root._isActive
         visible:                root._ntripMgr.sourceTableController.mountpointModel && root._ntripMgr.sourceTableController.mountpointModel.count > 0
         model:                  root._ntripMgr.sourceTableController.mountpointModel
         selectedMountpoint:     root._ntrip.ntripMountpoint.rawValue

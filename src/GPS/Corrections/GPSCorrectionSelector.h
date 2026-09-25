@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include <QtCore/QDebug>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -18,8 +19,7 @@ public:
     enum class Policy
     {
         Automatic,
-        Manual,
-        All
+        Manual
     };
     Q_ENUM(Policy)
 
@@ -59,11 +59,12 @@ public:
     void retire(GPSCorrectionSource source, qint64 now);
     void clear();
     bool selected(const GPSCorrectionFrame& frame, qint64 now) const;
+    std::optional<SourceIdentity> activeIdentity(qint64 now) const;
     GPSCorrectionSource activeSource(qint64 now) const;
-    QString activeInstance(qint64 now) const;
 
     QList<Source> sources() const { return _sources.values(); }
 
+    /// Frame age at which it is dropped as Expired and its source stops being eligible for selection.
     static constexpr qint64 FRESHNESS_TIMEOUT_MS = 5000;
     static constexpr qint64 SWITCH_HOLD_DOWN_MS = 2000;
     static constexpr qsizetype MAX_SOURCE_INSTANCES = 64;
@@ -78,3 +79,5 @@ private:
     std::optional<SourceIdentity> _candidate = std::nullopt;
     qint64 _candidateSinceMs = 0;
 };
+
+QDebug operator<<(QDebug debug, const GPSCorrectionSelector::Configuration& configuration);

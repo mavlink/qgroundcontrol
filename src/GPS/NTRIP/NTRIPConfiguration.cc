@@ -3,6 +3,39 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
 
+namespace {
+QString redactedPasswordState(const QString& password)
+{
+    return password.isEmpty() ? QStringLiteral("<empty>") : QStringLiteral("<set>");
+}
+}  // namespace
+
+QDebug operator<<(QDebug debug, const NTRIPConnectionConfig& configuration)
+{
+    const QDebugStateSaver saver(debug);
+    debug.nospace().noquote() << "NTRIPConnectionConfig(host=" << configuration.host << ", port=" << configuration.port
+                              << ", username=" << configuration.username
+                              << ", password=" << redactedPasswordState(configuration.password)
+                              << ", mountpoint=" << configuration.mountpoint << ", useTls=" << configuration.useTls
+                              << ", allowSelfSignedCerts=" << configuration.allowSelfSignedCerts << ')';
+    return debug;
+}
+
+QDebug operator<<(QDebug debug, const NTRIPRtcmFilterConfig& configuration)
+{
+    const QDebugStateSaver saver(debug);
+    debug.nospace().noquote() << "NTRIPRtcmFilterConfig(whitelist=" << configuration.whitelist << ')';
+    return debug;
+}
+
+QDebug operator<<(QDebug debug, const NTRIPConfiguration& configuration)
+{
+    const QDebugStateSaver saver(debug);
+    debug.nospace().noquote() << "NTRIPConfiguration(connection=" << configuration.connection
+                              << ", filter=" << configuration.filter << ')';
+    return debug;
+}
+
 QString NTRIPConnectionConfig::validationError() const
 {
     const auto tr = [](const char* s) { return QCoreApplication::translate("NTRIPConnectionConfig", s); };

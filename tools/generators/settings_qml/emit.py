@@ -233,6 +233,7 @@ def generate_page_qml(
                 _env.get_template("group_component.qml.j2").render(
                     visible=visible_expr,
                     component=grp.component,
+                    properties=grp.properties,
                 )
             )
             continue

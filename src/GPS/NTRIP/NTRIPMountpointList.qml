@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 
@@ -48,8 +50,10 @@ QGCListView {
             anchors.verticalCenter: parent.verticalCenter
             anchors.margins: ScreenTools.defaultFontPixelWidth
 
+            // The filling details label lets this column take the free space, keeping buttons right-aligned.
             ColumnLayout {
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 spacing: 0
 
                 RowLayout {
@@ -57,6 +61,7 @@ QGCListView {
 
                     QGCLabel {
                         text:       entry.mountpoint
+                        textFormat: Text.PlainText
                         font.bold:  true
                         color:      entry.mountpoint === root.selectedMountpoint
                                         ? qgcPal.buttonHighlightText : qgcPal.text
@@ -70,14 +75,21 @@ QGCListView {
                 }
 
                 QGCLabel {
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    elide: Text.ElideRight
+                    textFormat: Text.PlainText
                     text: {
-                        var parts = []
+                        const parts = []
                         if (entry.format) parts.push(entry.format)
                         if (entry.navSystem) parts.push(entry.navSystem)
                         if (entry.country) parts.push(entry.country)
-                        if (entry.bitrate > 0) parts.push(entry.bitrate + " bps")
-                        if (entry.distanceKm >= 0) parts.push(entry.distanceKm.toFixed(1) + " km")
-                        return parts.join(" · ")
+                        //: Mountpoint bitrate in bits per second
+                        if (entry.bitrate > 0) parts.push(qsTr("%1 bps").arg(entry.bitrate))
+                        //: Distance to the mountpoint in kilometers
+                        if (entry.distanceKm >= 0) parts.push(qsTr("%1 km").arg(entry.distanceKm.toFixed(1)))
+                        //: Separator between mountpoint details
+                        return parts.join(qsTr(" · "))
                     }
                     font.pointSize: ScreenTools.smallFontPointSize
                     color:  entry.mountpoint === root.selectedMountpoint

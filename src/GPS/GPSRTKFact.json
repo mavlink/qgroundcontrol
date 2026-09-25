@@ -1,0 +1,105 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "connected",
+    "shortDesc": "Connected",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "currentAccuracy",
+    "shortDesc": "Current Survey-In Accuracy",
+    "longDesc": "Receiver-reported base position accuracy. Unavailable accuracy is not inferred from a valid fix and cannot be saved as fixed-base accuracy.",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m",
+    "default":          null
+},
+{
+    "name":             "currentLatitude",
+    "shortDesc": "Current Survey-In Latitude",
+    "type":             "double",
+    "decimalPlaces":    7,
+    "default":          null
+},
+{
+    "name":             "currentLongitude",
+    "shortDesc": "Current Survey-In Longitude",
+    "type":             "double",
+    "decimalPlaces":    7,
+    "default":          null
+},
+{
+    "name":             "currentAltitude",
+    "shortDesc": "Current Survey-In Altitude",
+    "longDesc": "Base position altitude above the WGS84 ellipsoid, not mean sea level.",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "currentDuration",
+    "shortDesc": "Current Survey-In Duration",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "s",
+    "default":          0
+},
+{
+    "name":             "valid",
+    "shortDesc": "Survey-In Valid",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "active",
+    "shortDesc": "Survey-In Active",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "numSatellites",
+    "shortDesc": "Satellites in View",
+    "longDesc": "Satellites in the latest complete observation snapshot, or -1 when unavailable.",
+    "type":             "int32",
+    "default":          -1
+},
+{
+    "name":             "numSatellitesUsed",
+    "shortDesc": "Satellites Used in Solution",
+    "longDesc": "Receiver-reported usage count or an exact count from known satellite usage flags; -1 when unavailable.",
+    "type":             "int32",
+    "default":          -1
+},
+{
+    "name":             "fixType",
+    "shortDesc": "Receiver Fix",
+    "longDesc": "Latest fix reported by the receiver. Unknown when the receiver family does not report position in its current role.",
+    "type":             "uint32",
+    "enumStrings":      "Unknown,No Fix,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Extrapolated",
+    "enumValues":       "0,1,2,3,4,5,6,8",
+    "default":          0
+},
+{
+    "name":             "jammingState",
+    "shortDesc": "Receiver Jamming",
+    "longDesc": "Interference state reported by the RTK receiver. Unknown when the receiver does not report it or the report is stale.",
+    "type":             "uint8",
+    "enumStrings":      "Unknown,OK,Warning,Critical",
+    "enumValues":       "0,1,2,3",
+    "default":          0
+},
+{
+    "name":             "spoofingState",
+    "shortDesc": "Receiver Spoofing",
+    "longDesc": "Spoofing detection state reported by the RTK receiver. Unknown when the receiver does not report it or the report is stale.",
+    "type":             "uint8",
+    "enumStrings":      "Unknown,None,Indicated,Multiple indications",
+    "enumValues":       "0,1,2,3",
+    "default":          0
+}
+]
+}
