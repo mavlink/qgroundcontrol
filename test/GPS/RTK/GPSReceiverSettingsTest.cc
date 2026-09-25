@@ -27,13 +27,10 @@
 class IndicatorReceiver : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(GPSRTKFactGroup* facts READ facts CONSTANT)
     Q_PROPERTY(int activeRole MEMBER activeRole CONSTANT)
 
 public:
     IndicatorReceiver() { factGroup.setLiveUpdates(true); }
-
-    GPSRTKFactGroup* facts() { return &factGroup; }
 
     GPSRTKFactGroup factGroup;
     int activeRole = GPSRtk::PositionOnly;
@@ -584,9 +581,8 @@ void GPSReceiverSettingsTest::_disconnectedPage()
 {
     QFETCH(int, width);
     SettingsFixture settings(4);
-    auto* receiver = GPSManager::instance()->gpsRtk();
-    QVERIFY(!receiver->hasReceiver());
-    auto* facts = receiver->gpsRtkFactGroup();
+    QVERIFY(!GPSManager::instance()->gpsRtk()->hasReceiver());
+    auto* facts = GPSManager::instance()->gpsRtkFacts();
     settings.saved.setFactValue(facts->connected(), false);
     settings.saved.setFactValue(facts->active(), false);
     settings.saved.setFactValue(facts->numSatellites(), 12);
@@ -844,6 +840,7 @@ void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGps()
                       {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                        {QStringLiteral("_activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))},
                        {QStringLiteral("_receiver"), QVariant::fromValue(&receiver)},
+                       {QStringLiteral("_rtkFacts"), QVariant::fromValue(&receiver.factGroup)},
                        {QStringLiteral("_correctionState"), correctionState}});
     QVERIFY2(indicator, qPrintable(engine.lastError()));
     QVERIFY(indicator->property("showIndicator").toBool());

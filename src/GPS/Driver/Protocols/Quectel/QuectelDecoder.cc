@@ -2,9 +2,9 @@
 #include <cmath>
 #include <limits>
 
-#include "GPSDriverQuectel.h"
 #include "NMEAFields.h"
 #include "QuectelCodec_p.h"
+#include "QuectelProtocol.h"
 
 namespace {
 constexpr uint64_t STATUS_MAX_AGE_US = 5000000;
@@ -14,15 +14,13 @@ using QuectelCodec::Fields;
 using QuectelCodec::number;
 }  // namespace
 
-int GPSNativeQuectel::handleReceiverLine(std::string_view line)
+int QuectelProtocol::handleReceiverLine(std::string_view line)
 {
     const auto body = QuectelCodec::checkedBody(line);
     if (body.empty()) {
         return 0;
     }
-    if (_replyHandler && replyPending()) {
-        resolveReply(_replyHandler(body));
-    }
+    offerReply(body);
     if (_expectingBoot && body.starts_with("PQTMSRR,") && QuectelCodec::rejected(Fields(body), "PQTMSRR")) {
         _restartRejected = true;
     }
@@ -49,36 +47,36 @@ int GPSNativeQuectel::handleReceiverLine(std::string_view line)
     return 0;
 }
 
-int GPSNativeQuectel::decodeByte(uint8_t byte)
+int QuectelProtocol::decodeByte(uint8_t byte)
 {
     _expireSurvey();
     return GPSAsciiProtocol::decodeByte(byte);
 }
 
-void GPSNativeQuectel::flushDecoded()
+void QuectelProtocol::flushDecoded()
 {
     _expireSurvey();
     GPSAsciiProtocol::flushDecoded();
 }
 
-void GPSNativeQuectel::_revokeSurvey()
+void QuectelProtocol::_revokeSurvey()
 {
     setRTCMEnabled(false);
     if (_survey.report) {
         _survey.report.reset();
-        GPSNativeSurveyReport report{};
+        GPSDecodedSurvey report{};
         publishSurvey(report);
     }
 }
 
-void GPSNativeQuectel::_expireSurvey()
+void QuectelProtocol::_expireSurvey()
 {
     if (_survey.report && (hasIOError() || nowUs() - _survey.report->timestamp > STATUS_MAX_AGE_US)) {
         _revokeSurvey();
     }
 }
 
-void GPSNativeQuectel::_publishSurvey()
+void QuectelProtocol::_publishSurvey()
 {
     _expireSurvey();
     if (_survey.phase == SurveyPhase::Monitoring && _survey.report) {
@@ -88,7 +86,7 @@ void GPSNativeQuectel::_publishSurvey()
     }
 }
 
-bool GPSNativeQuectel::_handleSurvey(std::string_view body)
+bool QuectelProtocol::_handleSurvey(std::string_view body)
 {
     const Fields reply(body);
     unsigned version = 0;
@@ -141,7 +139,7 @@ bool GPSNativeQuectel::_handleSurvey(std::string_view body)
     // A one-observation survey can finish before any progress notification is sent.
     const bool valid = validity == 2 && (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ||
                                          observations >= configuredCount);
-    GPSNativeSurveyReport report{};
+    GPSDecodedSurvey report{};
     // Fixed mode's MeanAcc=0 describes supplied coordinates, not measured position uncertainty.
     if (!std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) && validity != 0 && observations != 0 &&
         coordinatesKnown) {
@@ -161,7 +159,7 @@ bool GPSNativeQuectel::_handleSurvey(std::string_view body)
     return true;
 }
 
-int GPSNativeQuectel::receive(unsigned timeout)
+int QuectelProtocol::receive(unsigned timeout)
 {
     _expireSurvey();
     // Re-evaluate stale status before each transport read, even when one caller gives a large timeout.

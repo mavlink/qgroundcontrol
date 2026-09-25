@@ -8,15 +8,17 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QThread>
 
+#include "GPSTestClock.h"
 #include "Protocols/ProtocolTestPackets.h"
 #include "Support/ScriptedReceiver.h"
-#ifdef QGC_GPS_TEST_CLOCK
-#include "GPSProtocolTestIO.h"
-#endif
 
 class SBFReceiverModel : public ScriptedReceiver::Model
 {
 public:
+    explicit SBFReceiverModel(GPSTestClock& clock)
+        : _clock(clock)
+    {}
+
     static QByteArray pvt(uint8_t used, uint32_t tow)
     {
         std::vector<uint8_t> payload(82);
@@ -58,15 +60,10 @@ private:
 
     void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline) override
     {
-#ifdef QGC_GPS_TEST_CLOCK
-        onTransportReadWait(receiver, deadline.remainingMilliseconds(gps_test_time));
+        onTransportReadWait(receiver, deadline.remainingMilliseconds(_clock.nowUs()));
         if (!receiver.hasQueuedReadData()) {
-            gps_test_time = deadline.untilUs + 1;
+            _clock.advanceTo(deadline.untilUs + 1);
         }
-#else
-        Q_UNUSED(receiver)
-        Q_UNUSED(deadline)
-#endif
     }
 
     static QByteArray block(uint16_t id, int length, uint32_t tow)
@@ -79,4 +76,6 @@ private:
         const auto bytes = sbfBlock(id, std::span<const uint8_t>(payload.data(), payload.size()), tow, 2300);
         return QByteArray(reinterpret_cast<const char*>(bytes.data()), static_cast<qsizetype>(bytes.size()));
     }
+
+    GPSTestClock& _clock;
 };

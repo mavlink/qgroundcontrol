@@ -9,6 +9,7 @@
 
 #include "GPSEllipsoidPosition.h"
 #include "GPSFixQuality.h"
+#include "MonotonicClock.h"
 
 struct GPSIntegrityReport
 {
@@ -98,13 +99,15 @@ struct GPSIntegrityReport
     RF rf{};
     Corrections corrections{};
 
+    /// Receipt age at which a diagnostic group reverts to unknown.
+    static constexpr std::chrono::microseconds DIAGNOSTIC_MAX_AGE = std::chrono::seconds(5);
+
     /// Project independent diagnostic groups at the consumer's monotonic time.
-    GPSIntegrityReport freshAt(uint64_t nowUs, std::chrono::microseconds maximumAge = std::chrono::seconds(5)) const
+    GPSIntegrityReport freshAt(uint64_t nowUs, std::chrono::microseconds maximumAge = DIAGNOSTIC_MAX_AGE) const
     {
         auto result = *this;
         const auto fresh = [nowUs, maximumAge](uint64_t receipt) {
-            return receipt && receipt <= nowUs && maximumAge.count() > 0 &&
-                   nowUs - receipt < static_cast<uint64_t>(maximumAge.count());
+            return MonotonicClock::remaining(receipt, nowUs, maximumAge) > std::chrono::microseconds::zero();
         };
         if (!fresh(jamming.timestampUs)) {
             result.jamming.state = JammingState::Unknown;

@@ -8,7 +8,7 @@
 #include "GPSNMEAReport.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSNativePassiveLog, "GPS.Driver.Protocols.Passive")
+QGC_LOGGING_CATEGORY(PassiveProtocolLog, "GPS.Driver.Protocols.Passive")
 
 GPSAsciiProtocol::GPSAsciiProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     : GPSAsciiProtocol(std::move(io), satelliteInfoEnabled, Navigation::StandardNMEA)
@@ -94,11 +94,9 @@ int GPSAsciiProtocol::_handleNmea(std::string_view line)
         _position = {};
         _position.navigation.timestampUs = now;
         _position.navigation.fixType = GPSPositionReport::FixType::NoFix;
-        std::optional<int> used = update->epoch.satellitesUsed && *update->epoch.satellitesUsed < UINT8_MAX
-                                      ? std::optional<int>(static_cast<int>(*update->epoch.satellitesUsed))
-                                      : std::nullopt;
+        const auto used = gpsSatellitesUsed(update->epoch.satellitesUsed);
         if (used) {
-            _position.navigation.satellitesUsed = static_cast<uint8_t>(*used);
+            _position.navigation.satellitesUsed = used;
         }
         publishSatelliteUsage(used);
         updates |= GPSDecodedBatch::POSITION_UPDATE;
@@ -155,12 +153,12 @@ void GPSAsciiProtocol::_drainRTCM()
     drainRTCM(_rtcm, _rtcmEnabled);
 }
 
-const QLoggingCategory& GPSNativePassive::logCategory() const
+const QLoggingCategory& PassiveProtocol::logCategory() const
 {
-    return GPSNativePassiveLog();
+    return PassiveProtocolLog();
 }
 
-bool GPSNativePassive::configure(unsigned& baud, const GPSConfig& config)
+bool PassiveProtocol::configure(unsigned& baud, const GPSConfig& config)
 {
     _configured = false;
     resetIOError();

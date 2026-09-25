@@ -5,7 +5,7 @@
 
 #include "LittleEndian.h"
 #include "RTCMFramer.h"
-#include "SBF/GPSDriverSBF.h"
+#include "SBF/SBFProtocol.h"
 
 namespace {
 constexpr double DNU = 100000.0;
@@ -78,7 +78,7 @@ sbf_buf_t decodeBlock(std::span<const uint8_t> bytes)
 }
 }  // namespace
 
-int GPSNativeSBF::parseChar(const uint8_t b)
+int SBFProtocol::parseChar(const uint8_t b)
 {
     int ret = 0;
 
@@ -143,7 +143,7 @@ int GPSNativeSBF::parseChar(const uint8_t b)
     return ret;
 }
 
-int GPSNativeSBF::payloadRxAdd(const uint8_t b)
+int SBFProtocol::payloadRxAdd(const uint8_t b)
 {
     int ret = 0;
     _wire[_rx_payload_index++] = b;
@@ -170,7 +170,7 @@ uint16_t crc16(const uint8_t* data_p, uint32_t length)
     return crc;
 }
 
-int GPSNativeSBF::payloadRxDone()
+int SBFProtocol::payloadRxDone()
 {
     _buf = decodeBlock(std::span<const uint8_t>(_wire).first(_rx_payload_index));
     if (_buf.length < 14 || _buf.length > _rx_payload_index || _buf.crc16 != crc16(_wire.data() + 4, _buf.length - 4)) {
@@ -213,7 +213,7 @@ int GPSNativeSBF::payloadRxDone()
     return GPSDecodedBatch::PROTOCOL_ACTIVITY;
 }
 
-bool GPSNativeSBF::applyPvtGeodetic(const sbf_payload_pvt_geodetic_t& pvt, GPSNativePositionReport& position)
+bool SBFProtocol::applyPvtGeodetic(const sbf_payload_pvt_geodetic_t& pvt, GPSDecodedPosition& position)
 {
     position.navigation.fixType = fixType(pvt.mode_type);
     if (pvt.error != 0) {
@@ -233,10 +233,10 @@ bool GPSNativeSBF::applyPvtGeodetic(const sbf_payload_pvt_geodetic_t& pvt, GPSNa
         position.navigation.fixType = GPSPositionReport::FixType::NoFix;
     }
 
-    const bool satellitesKnown = pvt.nr_sv < 255;  // 255 = do not use value
-    position.navigation.satellitesUsed = satellitesKnown ? pvt.nr_sv : UINT8_MAX;
+    const auto satellitesUsed = gpsSatellitesUsed(pvt.nr_sv);  // 255 = do not use value
+    position.navigation.satellitesUsed = satellitesUsed.value_or(UINT8_MAX);
     if (_satellites) {
-        publishSatelliteUsage(satellitesKnown ? std::optional<int>(pvt.nr_sv) : std::nullopt);
+        publishSatelliteUsage(satellitesUsed);
     }
 
     position.navigation.latitudeDegrees = pvt.latitude * GPS_RAD_TO_DEG;
@@ -261,8 +261,8 @@ bool GPSNativeSBF::applyPvtGeodetic(const sbf_payload_pvt_geodetic_t& pvt, GPSNa
     return coordinatesValid;
 }
 
-void GPSNativeSBF::publishSurveyStatus(const sbf_payload_pvt_geodetic_t& pvt, const GPSNativePositionReport& position,
-                                       bool coordinatesValid)
+void SBFProtocol::publishSurveyStatus(const sbf_payload_pvt_geodetic_t& pvt, const GPSDecodedPosition& position,
+                                      bool coordinatesValid)
 {
     // Mode bit 6 means automatic base determination is still in progress, not completed.
     // Septentrio PolaRx5TR 5.5.0 Reference Guide, SBF Mode definition (p. 382).
@@ -283,7 +283,7 @@ void GPSNativeSBF::publishSurveyStatus(const sbf_payload_pvt_geodetic_t& pvt, co
     publishSurvey(active, valid, _surveyClock.duration(), surveyPosition);
 }
 
-GPSNativeSBF::NavigationEpoch* GPSNativeSBF::navigationEpoch(uint64_t receiverTimeMs)
+SBFProtocol::NavigationEpoch* SBFProtocol::navigationEpoch(uint64_t receiverTimeMs)
 {
     flushDecoded();
     if (_lastPublishedEpoch && receiverTimeMs <= *_lastPublishedEpoch) {
@@ -309,7 +309,7 @@ GPSNativeSBF::NavigationEpoch* GPSNativeSBF::navigationEpoch(uint64_t receiverTi
     return &**slot;
 }
 
-void GPSNativeSBF::finishEpoch(std::optional<NavigationEpoch>& epoch)
+void SBFProtocol::finishEpoch(std::optional<NavigationEpoch>& epoch)
 {
     if (epoch->hasPosition && (!_lastPublishedEpoch || epoch->receiverTimeMs > *_lastPublishedEpoch)) {
         epoch->position.navigation.timestampUs = epoch->receiptUs;
@@ -321,7 +321,7 @@ void GPSNativeSBF::finishEpoch(std::optional<NavigationEpoch>& epoch)
     epoch.reset();
 }
 
-void GPSNativeSBF::flushDecoded()
+void SBFProtocol::flushDecoded()
 {
     if (_rtcm_parsing) {
         drainRTCM(*_rtcm_parsing);
@@ -337,24 +337,24 @@ void GPSNativeSBF::flushDecoded()
     }
 }
 
-void GPSNativeSBF::decodeInit()
+void SBFProtocol::decodeInit()
 {
     _decode_state = SBF_DECODE_SYNC1;
     _rx_payload_index = 0;
 }
 
-int GPSNativeSBF::decodeByte(uint8_t byte)
+int SBFProtocol::decodeByte(uint8_t byte)
 {
     return parseChar(byte);
 }
 
-GPSNativeSBF::GPSNativeSBF(GPSProtocolIO io, bool satelliteInfoEnabled)
+SBFProtocol::SBFProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     : GPSProtocol(std::move(io), satelliteInfoEnabled)
 {
     decodeInit();
 }
 
-int GPSNativeSBF::receive(unsigned timeout)
+int SBFProtocol::receive(unsigned timeout)
 {
     return _configured && !hasIOError() ? receiveDecoded(timeout) : 0;
 }

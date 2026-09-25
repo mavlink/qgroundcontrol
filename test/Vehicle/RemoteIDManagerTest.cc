@@ -2,6 +2,7 @@
 
 #include <QtCore/QScopeGuard>
 
+#include "GPSManager.h"
 #include "GpsTestHelpers.h"
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
@@ -154,7 +155,7 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
 
     auto* settings = SettingsManager::instance()->remoteIDSettings();
     auto* manager = vehicle()->remoteIDManager();
-    auto* positioning = QGCPositionManager::instance();
+    auto* positioning = GPSManager::instance()->positionManager();
     PositionSource source;
     const auto savedMode = positioning->sourceMode();
     const auto restore = qScopeGuard([&]() {
@@ -265,7 +266,7 @@ void RemoteIDManagerTest::_gpsAltitudePolicy()
     QFETCH(GPSAltitudeDatum, datum);
     auto* settings = SettingsManager::instance()->remoteIDSettings();
     auto* manager = vehicle()->remoteIDManager();
-    auto* positioning = QGCPositionManager::instance();
+    auto* positioning = GPSManager::instance()->positionManager();
     const auto savedMode = positioning->sourceMode();
     const auto savedLatitude = settings->latitudeFixed()->rawValue();
     const auto savedLongitude = settings->longitudeFixed()->rawValue();
@@ -350,7 +351,7 @@ void RemoteIDManagerTest::_liveGpsArrivalBudget()
     QFETCH(int, utcJumpSeconds);
     auto* settings = SettingsManager::instance()->remoteIDSettings();
     auto* manager = vehicle()->remoteIDManager();
-    auto* positioning = QGCPositionManager::instance();
+    auto* positioning = GPSManager::instance()->positionManager();
     const auto savedMode = positioning->sourceMode();
     const auto restore = qScopeGuard([&]() {
         settings->locationType()->setRawValue(_savedLocationType);

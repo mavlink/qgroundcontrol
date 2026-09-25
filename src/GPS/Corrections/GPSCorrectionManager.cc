@@ -13,6 +13,22 @@
 
 QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.Corrections.GPSCorrectionManager")
 
+QDebug operator<<(QDebug debug, const GPSCorrectionManager::UdpInputConfiguration& configuration)
+{
+    const QDebugStateSaver saver(debug);
+    debug.nospace().noquote() << "GPSCorrectionManager::UdpInputConfiguration(enabled=" << configuration.enabled
+                              << ", port=" << configuration.port << ", validate=" << configuration.validate << ')';
+    return debug;
+}
+
+QDebug operator<<(QDebug debug, const GPSCorrectionManager::UdpOutputConfiguration& configuration)
+{
+    const QDebugStateSaver saver(debug);
+    debug.nospace().noquote() << "GPSCorrectionManager::UdpOutputConfiguration(enabled=" << configuration.enabled
+                              << ", address=" << configuration.address << ", port=" << configuration.port << ')';
+    return debug;
+}
+
 GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
@@ -56,6 +72,7 @@ void GPSCorrectionManager::setUdpOutputConfiguration(const UdpOutputConfiguratio
         return;
     }
     _udpOutputConfiguration = configuration;
+    qCDebug(GPSCorrectionManagerLog) << "UDP correction output configuration applied:" << configuration;
     _applyUdpOutput();
 }
 
@@ -100,6 +117,7 @@ void GPSCorrectionManager::setUdpInputConfiguration(const UdpInputConfiguration&
         return;
     }
     _udpInputConfiguration = input;
+    qCDebug(GPSCorrectionManagerLog) << "UDP correction input configuration applied:" << input;
     const GPSNotificationQueue::Scope publish(_notifications);
     _applyUdpOutput();
     const auto configuration = _udpConfigurationRevision.advance(this);
@@ -123,12 +141,12 @@ void GPSCorrectionManager::setUdpInputConfiguration(const UdpInputConfiguration&
         return;
     }
     _udpRegistration = std::move(registration);
-    const auto token = _udpRegistration.token();
+    const auto udp = _udpRegistration.weak();
     connect(&_udpInput, &RTCMUdpInput::frameReceived, this,
-            [this, token](const GPSCorrectionFrame& frame) { acceptIngress(token.event(frame)); });
+            [this, udp](const GPSCorrectionFrame& frame) { acceptIngress(udp.event(frame)); });
     connect(&_udpInput, &RTCMUdpInput::frameRejected, this,
-            [this, token](const GPSCorrectionFrame& frame, GPSCorrectionReason reason) {
-                acceptIngress(token.event(frame, reason));
+            [this, udp](const GPSCorrectionFrame& frame, GPSCorrectionReason reason) {
+                acceptIngress(udp.event(frame, reason));
             });
     const bool started = _udpInput.start();
     if (current() && !started) {
@@ -139,7 +157,11 @@ void GPSCorrectionManager::setUdpInputConfiguration(const UdpInputConfiguration&
 void GPSCorrectionManager::applyRoutingConfiguration(const RoutingConfiguration& configuration)
 {
     const GPSNotificationQueue::Scope publish(_notifications);
+    const RoutingConfiguration previous = _router.configuration();
     _router.applyConfiguration(configuration);
+    if (_router.configuration() != previous) {
+        qCDebug(GPSCorrectionManagerLog) << "Correction routing configuration applied:" << _router.configuration();
+    }
     _scheduleSourcesChanged();
 }
 

@@ -30,64 +30,65 @@ endblock()
 add_subdirectory(Contracts)
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Geo/GeographicLib.cmake")
 
-set(_native_headers
+set(_protocol_headers
     GPSProtocol.h
     GPSProtocolTime.h
     GPSAsciiProtocol.h
+    GPSConfigurationSequence.h
     GPSSurveyClock.h
     GPSNMEAReport.h
-    Ashtech/GPSDriverAshtech.h
+    Ashtech/AshtechProtocol.h
     Femto/FemtoMessages.h
-    Femto/GPSDriverFemto.h
-    Quectel/GPSDriverQuectel.h
-    SBF/GPSDriverSBF.h
+    Femto/FemtoProtocol.h
+    Quectel/QuectelProtocol.h
     SBF/SBFMessages.h
-    UBX/GPSDriverUBX.h
+    SBF/SBFProtocol.h
     UBX/UBXConfigurationValues.h
     UBX/UBXFrameDecoder.h
     UBX/UBXMessageCodec.h
     UBX/UBXMessageSchema.h
     UBX/UBXMessages.h
     UBX/UBXNavigationEpoch.h
+    UBX/UBXProtocol.h
     UBX/UBXReceiverController.h
     UBX/UBXReceiverProfile.h
-    Unicore/GPSDriverUnicore.h
+    Unicore/UnicoreProtocol.h
 )
 qt_add_library(
-    QGCGPSNative
+    QGCGPSProtocols
     STATIC
-    ${_native_headers}
+    ${_protocol_headers}
     GPSProtocol.cc
     GPSAsciiProtocol.cc
     Ashtech/AshtechConfiguration.cc
     Ashtech/AshtechDecoder.cc
     Femto/FemtoConfiguration.cc
     Femto/FemtoDecoder.cc
-    Quectel/GPSDriverQuectel.cc
     Quectel/QuectelCodec_p.h
     Quectel/QuectelDecoder.cc
+    Quectel/QuectelProtocol.cc
     SBF/SBFConfiguration.cc
     SBF/SBFDecoder.cc
-    UBX/GPSDriverUBX.cc
     UBX/UBXConfiguration.cc
     UBX/UBXConfiguration_p.h
     UBX/UBXDecoder.cc
     UBX/UBXLegacyConfiguration.cc
-    Unicore/GPSDriverUnicore.cc
+    UBX/UBXProtocol.cc
+    Unicore/UnicoreProtocol.cc
 )
-add_library(QGC::GPSNative ALIAS QGCGPSNative)
-target_sources(QGCGPSNative PUBLIC FILE_SET HEADERS FILES ${_native_headers})
+add_library(QGC::GPSProtocols ALIAS QGCGPSProtocols)
+target_sources(QGCGPSProtocols PUBLIC FILE_SET HEADERS FILES ${_protocol_headers})
 set_target_properties(
-    QGCGPSNative
+    QGCGPSProtocols
     PROPERTIES AUTOMOC OFF
                AUTOUIC OFF
                AUTORCC OFF
 )
-target_include_directories(QGCGPSNative PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-                                               "${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Math"
+target_include_directories(QGCGPSProtocols PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+                                                  "${CMAKE_CURRENT_SOURCE_DIR}/../../../Utilities/Math"
 )
 target_link_libraries(
-    QGCGPSNative
-    PUBLIC QGCWire QGCClock QGCGPSNativeContracts QGCGPSNMEAProtocol QGCGPSRTCM
+    QGCGPSProtocols
+    PUBLIC QGCWire QGCClock QGCGPSProtocolContracts QGCGPSNMEAProtocol QGCGPSRTCM
     PRIVATE GeographicLib::GeographicLib QGCLoggingCategory
 )

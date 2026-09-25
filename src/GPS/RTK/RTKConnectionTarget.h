@@ -8,7 +8,7 @@
 #include "GPSProvider.h"
 
 class GPSNotificationQueue;
-class SerialPortManager;
+class GPSSerialPorts;
 
 /// The receiver operations RTKConnectionPolicy drives. The implementation runs the receiver sessions; the policy
 /// only decides when to connect. Connections return false when they fail or are superseded.
@@ -22,7 +22,7 @@ public:
     virtual bool connectTcp(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges) = 0;
     virtual bool connectUdp(quint16 port, GPSType type) = 0;
 #ifndef QGC_NO_SERIAL_LINK
-    virtual SerialPortManager* serialPorts() const = 0;
+    virtual GPSSerialPorts* serialPorts() const = 0;
     virtual bool connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges) = 0;
     /// Connects a discovered port, identifying the receiver family from its board name.
     virtual bool connectDiscovered(const QString& device, QStringView boardName) = 0;

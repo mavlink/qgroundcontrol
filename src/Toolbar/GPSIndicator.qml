@@ -3,6 +3,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.GPS
 
 // Vehicle GPS status, or the GNSS receiver's while the vehicle reports no GPS, plus correction and resilience state.
 Item {
@@ -16,8 +17,8 @@ Item {
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property bool _vehicleGps: !!_activeVehicle && !!_activeVehicle.gps && _activeVehicle.gps.telemetryAvailable
     property var    _receiver:      QGroundControl.gpsManager.gpsRtk
-    property bool   _rtkConnected:  _receiver.facts.connected.value
-    readonly property var _rtkFacts: _receiver.facts
+    property var    _rtkFacts:      QGroundControl.gpsManager.gpsRtkFacts
+    property bool   _rtkConnected:  _rtkFacts.connected.value
     readonly property bool _rtkInterference: _rtkConnected && _rtkFacts.interferenceWarning
     readonly property int _receiverSatellites: _rtkFacts.numSatellitesUsed.rawValue
     readonly property string _receiverDetail: {

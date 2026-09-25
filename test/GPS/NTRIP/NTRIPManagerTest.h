@@ -17,6 +17,7 @@ private slots:
     void testNewSessionRetryBudget_data();
     void testNewSessionRetryBudget();
     void testPlaintextCredentialWarningIsVisibleState();
+    void testConfigurationDebugRedactsCredentials();
 
     // Reconnect backoff (migrated from NTRIPReconnectPolicyTest after the policy
     // was inlined into NTRIPManager). Driven through public state and ManualScheduler.
@@ -26,6 +27,11 @@ private slots:
     void testReconnectCancelStopsTimer();
     void testReconnectResetAttempts();
     void testReconnectSignalFires();
+    void testReconnectWaitsForNetworkAtFailure();
+    void testReconnectWaitsWhenNetworkLostDuringBackoff();
+    void testLoopbackCasterBypassesNetworkGate_data();
+    void testLoopbackCasterBypassesNetworkGate();
+    void testWaitingStatusObserverCanStopManager();
     void testDuplicateTransportErrorsScheduleOneRetry();
     void testRetiredTransportErrorCannotAffectNewSession();
     void testRetryPolicy_data();

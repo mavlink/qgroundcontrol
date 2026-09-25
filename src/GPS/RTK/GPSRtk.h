@@ -1,18 +1,22 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <utility>
 
+#include <QtCore/QDebug>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
-#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "GPSCorrectionSourceRegistration.h"
+#include "GPSDriverReports.h"
 #include "GPSEllipsoidPosition.h"
+#include "GPSFixQuality.h"
 #include "GPSNotificationQueue.h"
 #include "GPSObservation.h"
 #include "GPSPositionSourceRegistration.h"
@@ -20,26 +24,20 @@
 #include "GPSReceiverDescriptor.h"
 #include "RTKConnectionTarget.h"
 
-class GPSRTKFactGroup;
 class GPSCorrectionManager;
 class GPSPositionService;
+class GPSSerialPorts;
 class GPSSourceHealth;
-class Fact;
 class RuntimeScheduler;
 class RTKConnectionPolicy;
-class SerialPortManager;
 
-/// Runs the local RTK receiver session and publishes its Facts, corrections, and position.
-/// Operations update state first; Facts, receiverChanged, and errorMessageChanged are published once
+/// Runs the local RTK receiver session and publishes its status, corrections, and position.
+/// Operations update state first; statusChanged, receiverChanged, and errorMessageChanged are published once
 /// the outermost operation finishes, so observers never run inside an operation in progress.
 class GPSRtk : public QObject, private RTKConnectionTarget
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("Managed by GPSManager")
-    Q_MOC_INCLUDE("GPSRTKFactGroup.h")
 
-    Q_PROPERTY(GPSRTKFactGroup* facts READ gpsRtkFactGroup CONSTANT)
     Q_PROPERTY(bool hasReceiver READ hasReceiver NOTIFY receiverChanged)
     Q_PROPERTY(bool serialSupported READ serialSupported CONSTANT)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
@@ -97,6 +95,26 @@ public:
         bool operator==(const Configuration&) const = default;
     };
 
+    /// The receiver's reported state; the defaults describe no receiver. Unavailable values are NaN or -1.
+    struct Status
+    {
+        /// The session's receiver finished configuration.
+        bool connected = false;
+        // Survey-in progress of a configured base.
+        std::chrono::seconds currentDuration{0};
+        double currentAccuracy = std::numeric_limits<double>::quiet_NaN();
+        double currentLatitude = std::numeric_limits<double>::quiet_NaN();
+        double currentLongitude = std::numeric_limits<double>::quiet_NaN();
+        float currentAltitude = std::numeric_limits<float>::quiet_NaN();
+        bool valid = false;
+        bool active = false;
+        int numSatellites = -1;
+        int numSatellitesUsed = -1;
+        GPSFixQuality fixType = GPSFixQuality::Unknown;
+        GPSIntegrityReport::JammingState jammingState = GPSIntegrityReport::JammingState::Unknown;
+        GPSIntegrityReport::SpoofingState spoofingState = GPSIntegrityReport::SpoofingState::Unknown;
+    };
+
     explicit GPSRtk(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~GPSRtk();
 
@@ -110,7 +128,8 @@ public:
     const Configuration& configuration() const { return _configuration; }
 
 #ifndef QGC_NO_SERIAL_LINK
-    void setSerialPortManager(SerialPortManager* serialPorts);
+    /// Inject before connecting; the caller retains ownership.
+    void setSerialPorts(GPSSerialPorts* serialPorts);
 #endif
     /// Inject before connecting; the caller retains ownership.
     void setCorrectionManager(GPSCorrectionManager* manager);
@@ -118,7 +137,8 @@ public:
     void setPositionService(GPSPositionService* service);
     /// Latest receiver solution that passes the consumer's gates; empty without a fresh fix.
     std::optional<GPSObservation> acceptedPositionObservation(GPSObservation::PositionUse use) const;
-    /// Synchronous lifecycle observers may stop, replace, or delete this receiver. Superseded attempts return false.
+    /// Lifecycle observers may stop or replace this receiver, and delete it only with deleteLater().
+    /// Superseded attempts return false.
     /// A passive @a type forwards the receiver's RTCM output unless @a role is PositionOnly.
     bool connectReceiver(GPSType type, GPSProvider::TransportFactory transportFactory,
                          const QString& sourceInstance = {}, uint32_t baudRate = 0, bool allowPersistentChanges = false,
@@ -163,9 +183,11 @@ public:
     static std::optional<GPSType> typeForManufacturer(int manufacturer);
     static int manufacturerForType(GPSType type);
 
-    GPSRTKFactGroup* gpsRtkFactGroup() const { return _gpsRtkFactGroup.get(); }
+    const Status& status() const { return _status; }
 
 signals:
+    /// Coalesced per operation; status() holds the published state.
+    void statusChanged();
     void receiverChanged();
     void errorMessageChanged();
     void autoConnectDisabled();
@@ -209,7 +231,7 @@ private:
     bool connectTcp(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges) override;
     bool connectUdp(quint16 port, GPSType type) override;
 #ifndef QGC_NO_SERIAL_LINK
-    SerialPortManager* serialPorts() const override;
+    GPSSerialPorts* serialPorts() const override;
     bool connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges) override;
     bool connectDiscovered(const QString& device, QStringView boardName) override;
 #endif
@@ -223,16 +245,15 @@ private:
     void _endSession(GPSConnectionError error, const QString& detail, bool portRemoved);
     void _retireSession();
     void _setError(GPSConnectionError error, const QString& message = {});
-    void _stageFact(Fact* fact, const QVariant& value);
-    void _stageDisconnectedFacts();
+    void _publishStatus();
+    void _resetStatus();
     /// Clears the receiver's fix, satellites, and integrity once it stops reporting position.
-    void _stageStaleSolution();
+    void _clearStaleSolution();
     void _notifyReceiverChanged();
 
     Configuration _configuration;
     ReceiverSession _session;
-    // Fact setters can still be unwinding after a notification deletes their receiver owner.
-    std::shared_ptr<GPSRTKFactGroup> _gpsRtkFactGroup;
+    Status _status;
     GPSNotificationQueue _notifications{this};
     QPointer<GPSCorrectionManager> _correctionManager;
     QPointer<GPSPositionService> _positionService;
@@ -244,8 +265,10 @@ private:
     ProviderFactory _providerFactory;
     bool _destroying = false;
 #ifndef QGC_NO_SERIAL_LINK
-    QPointer<SerialPortManager> _serialPorts;
+    QPointer<GPSSerialPorts> _serialPorts;
     QMetaObject::Connection _portEnumerationConnection;
     std::function<std::unique_ptr<GPSTransport>(const QString&, const std::atomic_bool&)> _serialTransportFactory;
 #endif
 };
+
+QDebug operator<<(QDebug debug, const GPSRtk::Configuration& configuration);

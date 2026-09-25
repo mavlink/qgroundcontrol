@@ -14,6 +14,7 @@
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
 #include "FlyViewSettings.h"
+#include "GPSManager.h"
 #include "GeoFenceManager.h"
 #include "GimbalController.h"
 #include "ImageProtocolManager.h"
@@ -237,8 +238,9 @@ void Vehicle::_commonInit(LinkInterface* link)
     connect(this, &Vehicle::vehicleTypeChanged,     this, &Vehicle::inFwdFlightChanged);
     connect(this, &Vehicle::vtolInFwdFlightChanged, this, &Vehicle::inFwdFlightChanged);
 
-    connect(QGCPositionManager::instance(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceHeadingGCS);
-    connect(QGCPositionManager::instance(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateHomepoint);
+    QGCPositionManager* const positionManager = GPSManager::instance()->positionManager();
+    connect(positionManager, &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceHeadingGCS);
+    connect(positionManager, &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateHomepoint);
 
     _missionManager = new MissionManager(this);
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
@@ -2669,7 +2671,7 @@ void Vehicle::_updateMissionItemIndex()
 
 void Vehicle::_updateDistanceHeadingGCS()
 {
-    QGeoCoordinate gcsPosition = QGCPositionManager::instance()->gcsPosition();
+    QGeoCoordinate gcsPosition = GPSManager::instance()->positionManager()->gcsPosition();
     if (coordinate().isValid() && gcsPosition.isValid()) {
         _distanceToGCSFact.setRawValue(coordinate().distanceTo(gcsPosition));
         _headingFromGCSFact.setRawValue(gcsPosition.azimuthTo(coordinate()));
@@ -2684,7 +2686,7 @@ void Vehicle::_updateHomepoint()
     const bool setHomeCmdSupported = firmwarePlugin()->supportedMissionCommands(vehicleClass()).contains(MAV_CMD_DO_SET_HOME);
     const bool updateHomeActivated = SettingsManager::instance()->flyViewSettings()->updateHomePosition()->rawValue().toBool();
     if(setHomeCmdSupported && updateHomeActivated){
-        QGeoCoordinate gcsPosition = QGCPositionManager::instance()->gcsPosition();
+        QGeoCoordinate gcsPosition = GPSManager::instance()->positionManager()->gcsPosition();
         if (coordinate().isValid() && gcsPosition.isValid()) {
             sendMavCommand(defaultComponentId(),
                            MAV_CMD_DO_SET_HOME, false,

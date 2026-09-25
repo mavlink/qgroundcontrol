@@ -20,27 +20,26 @@
 namespace {
 struct Receiver
 {
-    uint64_t clock = 1000000;
+    GPSTestClock clock{1000000};
     int writes = 0;
     int reads = 0;
     unsigned baud = 0;
     GPSReadStatus readStatus = GPSReadStatus::TimedOut;
     GPSBaudStatus baudStatus = GPSBaudStatus::Configured;
     std::vector<GPSDecodedEvent> events;
-    GPSNativePositionReport position;
-    GPSNativeSatelliteReport satellites;
+    GPSDecodedPosition position;
+    GPSDecodedSatellites satellites;
 
     GPSProtocolIO io()
     {
-        auto io = makeGPSProtocolTestIO();
-        io.nowUs = [&] { return clock; };
+        auto io = makeGPSProtocolTestIO(clock);
         io.write = [&](std::span<const uint8_t> bytes, GPSDeadline) {
             ++writes;
             return GPSWriteResult{GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())};
         };
         io.read = [&](std::span<uint8_t>, GPSDeadline deadline) {
             ++reads;
-            clock = deadline.untilUs;
+            clock.advanceTo(deadline.untilUs);
             return GPSReadResult{readStatus};
         };
         io.setBaudrate = [&](unsigned value) {
@@ -67,7 +66,7 @@ struct Receiver
     }
 };
 
-void feed(GPSNativePassive& driver, std::string_view text)
+void feed(PassiveProtocol& driver, std::string_view text)
 {
     driver.consume({reinterpret_cast<const uint8_t*>(text.data()), text.size()});
 }
@@ -75,7 +74,7 @@ void feed(GPSNativePassive& driver, std::string_view text)
 void configuration()
 {
     Receiver receiver;
-    GPSNativePassive driver(receiver.io());
+    PassiveProtocol driver(receiver.io());
     GPSProtocol::GPSConfig config;
     unsigned baud = 0;
     CHECK(!driver.configure(baud, config));
@@ -106,31 +105,31 @@ void configuration()
 void navigation()
 {
     Receiver receiver;
-    GPSNativePassive driver(receiver.io());
+    PassiveProtocol driver(receiver.io());
     const auto gga = nmeaSentence("GNGGA,123519,4807.038,N,01131.000,E,4,00,0.9,0.0,M,,M,,");
     const auto gst = nmeaSentence("GNGST,123519,0,0,0,0,0.3,0.4,0.6");
     feed(driver, gst);
-    CHECK(receiver.reports<GPSNativePositionReport>().empty());
+    CHECK(receiver.reports<GPSDecodedPosition>().empty());
     for (const char byte : gga) {
         feed(driver, std::string_view(&byte, 1));
     }
-    const auto fixes = receiver.reports<GPSNativePositionReport>();
+    const auto fixes = receiver.reports<GPSDecodedPosition>();
     CHECK(fixes.size() == 1);
     CHECK(fixes[0].navigation.fixType == GPSPositionReport::FixType::RTKFixed);
     CHECK(std::abs(fixes[0].navigation.latitudeDegrees - 48.1173) < 1e-8);
     CHECK(fixes[0].navigation.altitudeMslMeters == 0);
     CHECK(std::isnan(fixes[0].navigation.altitudeEllipsoidMeters));
     CHECK(std::abs(fixes[0].navigation.horizontalAccuracyMeters - 0.5) < 1e-6);
-    CHECK(receiver.reports<GPSNativeSatelliteUsageReport>().back().usedCount == 0);
+    CHECK(receiver.reports<GPSDecodedSatelliteUsage>().back().usedCount == 0);
     receiver.events.clear();
-    receiver.clock += 1000000;
+    receiver.clock.advanceBy(1000000);
     feed(driver, nmeaSentence("GNGGA,123520,4807.038,N,01131.000,E,1,,0.9,1.0,M,2.0,M,,"));
-    CHECK(std::isnan(receiver.reports<GPSNativePositionReport>().back().navigation.horizontalAccuracyMeters));
-    CHECK(!receiver.reports<GPSNativeSatelliteUsageReport>().back().usedCount);
+    CHECK(std::isnan(receiver.reports<GPSDecodedPosition>().back().navigation.horizontalAccuracyMeters));
+    CHECK(!receiver.reports<GPSDecodedSatelliteUsage>().back().usedCount);
     const auto positionTime = receiver.position.navigation.timestampUs;
-    receiver.clock += 1000;
+    receiver.clock.advanceBy(1000);
     feed(driver, nmeaSentence("GNGST,123520,0,0,0,0,0.6,0.8,1.0"));
-    CHECK(receiver.reports<GPSNativePositionReport>().size() == 2);
+    CHECK(receiver.reports<GPSDecodedPosition>().size() == 2);
     CHECK(receiver.position.navigation.timestampUs == positionTime);
     CHECK(std::abs(receiver.position.navigation.horizontalAccuracyMeters - 1.0) < 1e-6);
     receiver.events.clear();
@@ -138,17 +137,17 @@ void navigation()
     corrupt[10] ^= 1;
     feed(driver, corrupt);
     feed(driver, gga.substr(0, 8) + "\r" + gga.substr(8));
-    CHECK(receiver.reports<GPSNativePositionReport>().empty());
+    CHECK(receiver.reports<GPSDecodedPosition>().empty());
     feed(driver, nmeaSentence("GNGGA,123521,,,,,0,00,0.9,,M,,M,,"));
-    CHECK(receiver.reports<GPSNativePositionReport>().size() == 1);
+    CHECK(receiver.reports<GPSDecodedPosition>().size() == 1);
     CHECK(receiver.position.navigation.fixType == GPSPositionReport::FixType::NoFix);
     CHECK(std::isnan(receiver.position.navigation.latitudeDegrees) &&
           std::isnan(receiver.position.navigation.longitudeDegrees));
-    CHECK(receiver.reports<GPSNativeSatelliteUsageReport>().back().usedCount == 0);
+    CHECK(receiver.reports<GPSDecodedSatelliteUsage>().back().usedCount == 0);
     receiver.events.clear();
     feed(driver, std::string(10000, 'A') + "\n" + gga);
-    CHECK(receiver.reports<GPSNativePositionReport>().size() == 1);
-    CHECK(receiver.reports<GPSNativeSurveyReport>().empty());
+    CHECK(receiver.reports<GPSDecodedPosition>().size() == 1);
+    CHECK(receiver.reports<GPSDecodedSurvey>().empty());
     CHECK(receiver.writes == 0 && receiver.reads == 0 && receiver.baud == 0);
 
     for (const auto* body :
@@ -156,7 +155,7 @@ void navigation()
         feed(driver, gga);
         receiver.events.clear();
         feed(driver, nmeaSentence(body));
-        const auto invalid = receiver.reports<GPSNativePositionReport>();
+        const auto invalid = receiver.reports<GPSDecodedPosition>();
         CHECK(invalid.size() == 1 && invalid.front().navigation.fixType == GPSPositionReport::FixType::NoFix);
         CHECK(std::isnan(invalid.front().navigation.latitudeDegrees) &&
               std::isnan(invalid.front().navigation.horizontalAccuracyMeters));
@@ -171,10 +170,10 @@ void corrections()
     const auto binary = rtcmPacket(payload);
     for (size_t split = 0; split <= binary.size(); ++split) {
         Receiver receiver;
-        GPSNativePassive driver(receiver.io(), false);
+        PassiveProtocol driver(receiver.io(), false);
         driver.consume(std::span(binary).first(split));
         driver.consume(std::span(binary).subspan(split));
-        CHECK(receiver.reports<GPSNativePositionReport>().empty());
+        CHECK(receiver.reports<GPSDecodedPosition>().empty());
         CHECK(receiver.reports<GPSRTCMReport>().size() == 1);
         const auto correction = receiver.reports<GPSRTCMReport>().front();
         CHECK(correction.size == binary.size());
@@ -182,13 +181,13 @@ void corrections()
         CHECK(receiver.writes == 0 && receiver.reads == 0);
     }
     Receiver receiver;
-    GPSNativePassive driver(receiver.io(), false);
+    PassiveProtocol driver(receiver.io(), false);
     auto corrupt = binary;
     corrupt.back() ^= 1;
     driver.consume(corrupt);
     CHECK(receiver.reports<GPSRTCMReport>().empty());
     feed(driver, text);
-    CHECK(receiver.reports<GPSNativePositionReport>().size() == 1);
+    CHECK(receiver.reports<GPSDecodedPosition>().size() == 1);
 
     const auto inner = rtcmPacket(std::array<uint8_t, 2>{0x3e, 0xd0});
     payload.clear();
@@ -208,33 +207,33 @@ void corrections()
 void satellites()
 {
     Receiver receiver;
-    GPSNativePassive driver(receiver.io());
+    PassiveProtocol driver(receiver.io());
     feed(driver, nmeaSentence("GPGSV,2,1,05,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60"));
-    CHECK(receiver.reports<GPSNativeSatelliteReport>().empty());
+    CHECK(receiver.reports<GPSDecodedSatellites>().empty());
     feed(driver, nmeaSentence("GPGSV,2,2,05,05,50,60,70"));
-    CHECK(receiver.reports<GPSNativeSatelliteReport>().empty());
-    receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+    CHECK(receiver.reports<GPSDecodedSatellites>().empty());
+    receiver.clock.advanceBy(NMEA::SatelliteAssembler::IDLE_TIMEOUT_US);
     driver.consume({});
-    const auto reports = receiver.reports<GPSNativeSatelliteReport>();
+    const auto reports = receiver.reports<GPSDecodedSatellites>();
     CHECK(reports.size() == 2);
     CHECK(reports[0].constellations[0].constellation == GPSConstellation::GPS);
     CHECK(reports[0].constellations[0].inView == 5);
-    CHECK(receiver.reports<GPSNativePositionReport>().empty());
+    CHECK(receiver.reports<GPSDecodedPosition>().empty());
     CHECK(receiver.writes == 0);
 }
 
 void satelliteEpochBoundaries()
 {
     Receiver receiver;
-    GPSNativePassive driver(receiver.io());
+    PassiveProtocol driver(receiver.io());
     const auto send = [&](const char* body) { feed(driver, nmeaSentence(body)); };
     send("GPGSV,2,1,05,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60,1");
     send("GLGSV,1,1,01,65,10,20,30,1");
     send("GPGSV,2,2,05,05,50,60,70,1");
     send("GPGSV,1,1,01,07,10,20,45,7");
-    CHECK(receiver.reports<GPSNativeSatelliteReport>().empty());
+    CHECK(receiver.reports<GPSDecodedSatellites>().empty());
     send("GNRMC,120001.00,V,,,,,,,090926,,,N");
-    auto reports = receiver.reports<GPSNativeSatelliteReport>();
+    auto reports = receiver.reports<GPSDecodedSatellites>();
     CHECK(reports.size() == 3);
     CHECK(reports[0].constellations[0].constellation == GPSConstellation::GPS &&
           reports[0].constellations[0].inView == 6);
@@ -243,9 +242,9 @@ void satelliteEpochBoundaries()
     CHECK(reports[0].constellations[0].inViewTimestampUs == 1000000);
     receiver.events.clear();
     feed(driver, nmeaSentence("GPGSA,A,3,01,,,,,,,,,,,,1.0,0.8,0.6"));
-    receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+    receiver.clock.advanceBy(NMEA::SatelliteAssembler::IDLE_TIMEOUT_US);
     driver.consume({});
-    reports = receiver.reports<GPSNativeSatelliteReport>();
+    reports = receiver.reports<GPSDecodedSatellites>();
     CHECK(reports.size() == 2);
     CHECK(reports[0].constellations[0].inViewTimestampUs == 0);
     CHECK(reports[0].constellations[0].inUse == 1);
@@ -254,19 +253,19 @@ void satelliteEpochBoundaries()
     receiver.events.clear();
     send("GPGSV,2,1,05,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60");
     send("GLGSV,1,1,01,66,10,20,30");
-    receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+    receiver.clock.advanceBy(NMEA::SatelliteAssembler::IDLE_TIMEOUT_US);
     driver.consume({});
-    reports = receiver.reports<GPSNativeSatelliteReport>();
+    reports = receiver.reports<GPSDecodedSatellites>();
     CHECK(reports.size() == 1 && reports[0].constellations[0].constellation == GPSConstellation::GLONASS);
     receiver.events.clear();
     send("GPGSV,2,2,05,05,50,60,70");
-    receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+    receiver.clock.advanceBy(NMEA::SatelliteAssembler::IDLE_TIMEOUT_US);
     driver.consume({});
     CHECK(receiver.events.empty());
     send("GPGSV,1,1,00");
-    receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+    receiver.clock.advanceBy(NMEA::SatelliteAssembler::IDLE_TIMEOUT_US);
     driver.consume({});
-    reports = receiver.reports<GPSNativeSatelliteReport>();
+    reports = receiver.reports<GPSDecodedSatellites>();
     CHECK(reports.size() == 2 && reports[0].constellations[0].inView == 0);
 
     receiver.events.clear();
@@ -276,26 +275,26 @@ void satelliteEpochBoundaries()
                                  "GBGSV,1,1,01,01,10,20,30", "GQGSV,1,1,01,01,10,20,30", "GIGSV,1,1,01,01,10,20,30"}) {
             send(body);
         }
-        receiver.clock += NMEA::SatelliteAssembler::IDLE_TIMEOUT_US;
+        receiver.clock.advanceBy(NMEA::SatelliteAssembler::IDLE_TIMEOUT_US);
         driver.consume({});
         driver.consume({});
     }
-    CHECK(receiver.reports<GPSNativeSatelliteReport>().size() == 21);
+    CHECK(receiver.reports<GPSDecodedSatellites>().size() == 21);
 }
 
 void satelliteBatchDeadline()
 {
     Receiver receiver;
-    GPSNativePassive driver(receiver.io());
+    PassiveProtocol driver(receiver.io());
     feed(driver, nmeaSentence("GLGSV,1,1,01,65,10,20,30"));
     for (int page = 1; page <= 10; ++page) {
         feed(driver,
              nmeaSentence("GPGSV,64," + std::to_string(page) + ",256,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60"));
-        receiver.clock += 100000;
+        receiver.clock.advanceBy(100000);
     }
-    CHECK(receiver.reports<GPSNativeSatelliteReport>().empty());
+    CHECK(receiver.reports<GPSDecodedSatellites>().empty());
     driver.consume({});
-    const auto reports = receiver.reports<GPSNativeSatelliteReport>();
+    const auto reports = receiver.reports<GPSDecodedSatellites>();
     CHECK(reports.size() == 1);
     CHECK(reports[0].constellations[0].constellation == GPSConstellation::GLONASS);
     CHECK(reports[0].constellations[0].inViewTimestampUs == 1000000);
@@ -313,8 +312,6 @@ private slots:
 
 void GPSProtocolPassiveTest::_protocol()
 {
-    gps_test_time = 0;
-    gps_test_warnings.clear();
     try {
         configuration();
         navigation();

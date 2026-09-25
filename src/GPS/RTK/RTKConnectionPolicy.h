@@ -13,6 +13,19 @@
 
 class RuntimeScheduler;
 
+/// What the policy does after a receiver session ends; the receiver words the user message.
+enum class RTKSessionOutcome
+{
+    /// Nothing to announce; the receiver's own message for the error applies.
+    None,
+    /// An auto-connected receiver was unplugged; discovery connects it again when it returns.
+    Unplugged,
+    /// A manual receiver was unplugged; it reconnects when its port returns.
+    WaitingForPort,
+    /// A manual connection was lost; a retry is scheduled.
+    Retrying,
+};
+
 /// Decides when the receiver connects: user and startup connections from the saved settings, serial
 /// auto-discovery of known base receivers, and retries after a connection is lost. The target runs the sessions.
 class RTKConnectionPolicy : public QObject
@@ -46,8 +59,7 @@ public:
     bool retryPending() const;
 
     void receiverReady();
-    /// Returns the user message for a lost session, or empty when the receiver's default applies.
-    QString sessionEnded(GPSConnectionError error, const QString& detail, bool portRemoved);
+    [[nodiscard]] RTKSessionOutcome sessionEnded(bool portRemoved);
 
 signals:
     void reconnectingChanged();

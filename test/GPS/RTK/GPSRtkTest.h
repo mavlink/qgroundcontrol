@@ -26,6 +26,7 @@ private slots:
     void _currentBaseSaveValidity_data();
     void _currentBaseSaveValidity();
     void _logsFixTransitionsWithoutCoordinates();
+    void _configurationDebugRedactsFixedBaseCoordinates();
     void _manufacturerIds_data();
     void _manufacturerIds();
     void _runtimeSettingsDoNotRequireAppRestart_data();
@@ -41,10 +42,10 @@ private slots:
     void _configurationDiagnosticRetained();
     void _rtkSettingsBinding();
     void _udpPositionOnlyReceiver();
+    void _silentReceiverClearsSolution();
 #ifndef QGC_NO_SERIAL_LINK
     void _serialReservationSurvivesDelayedStop();
     void _manualPassiveBaudPreserved_data();
     void _manualPassiveBaudPreserved();
-    void _silentReceiverClearsSolution();
 #endif
 };

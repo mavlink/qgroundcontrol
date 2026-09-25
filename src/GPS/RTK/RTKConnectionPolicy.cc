@@ -10,7 +10,7 @@
 #include "QGCLoggingCategory.h"
 #include "QtRuntimeScheduler.h"
 #ifndef QGC_NO_SERIAL_LINK
-#include "SerialPortManager.h"
+#include "GPSSerialPorts.h"
 #endif
 
 QGC_LOGGING_CATEGORY(RTKConnectionPolicyLog, "GPS.RTK.RTKConnectionPolicy")
@@ -154,34 +154,32 @@ void RTKConnectionPolicy::receiverReady()
     _retryDelayMs = kInitialRetryDelayMs;
 }
 
-QString RTKConnectionPolicy::sessionEnded(GPSConnectionError error, const QString& detail, bool portRemoved)
+RTKSessionOutcome RTKConnectionPolicy::sessionEnded(bool portRemoved)
 {
     switch (_owner) {
         case Owner::None:
-            return {};
+            return RTKSessionOutcome::None;
         case Owner::Auto:
             if (portRemoved) {
                 // Discovery connects the receiver again when it returns.
                 reset();
-                return tr("Receiver unplugged.");
+                return RTKSessionOutcome::Unplugged;
             }
             _scheduleRetry();
-            return {};
+            return RTKSessionOutcome::None;
         case Owner::Manual:
             if (!_established) {
                 reset();
-                return {};
+                return RTKSessionOutcome::None;
             }
             if (portRemoved) {
                 _waitingForPort = true;
-                return tr("Receiver unplugged. Reconnecting when it is plugged back in.");
+                return RTKSessionOutcome::WaitingForPort;
             }
             _scheduleRetry();
-            return error == GPSConnectionError::ConfigFailed && !detail.isEmpty()
-                       ? tr("Receiver configuration failed: %1. Reconnecting automatically.").arg(detail)
-                       : tr("Receiver connection lost. Reconnecting automatically.");
+            return RTKSessionOutcome::Retrying;
     }
-    return {};
+    return RTKSessionOutcome::None;
 }
 
 void RTKConnectionPolicy::_scheduleRetry()
@@ -213,7 +211,7 @@ void RTKConnectionPolicy::update()
         return;
     }
     const auto operation = _revision.current(this);
-    const auto ports = serialPorts->availablePorts();
+    const auto ports = serialPorts->ports();
     if (!operation.isCurrent() || !_waitingForPort) {
         return;
     }
@@ -289,7 +287,7 @@ bool RTKConnectionPolicy::_connectConfigured(bool allowPersistentChanges, bool u
     const auto baud = _configuration.serialBaudRate;
     if (!tcp) {
         auto* serialPorts = _receiver.serialPorts();
-        const auto ports = serialPorts ? serialPorts->availablePorts() : QList<SerialPortManager::Port>{};
+        const auto ports = serialPorts ? serialPorts->ports() : QList<GPSSerialPorts::Port>{};
         if (!operation.isCurrent()) {
             return false;
         }
@@ -345,7 +343,7 @@ void RTKConnectionPolicy::_updateAutoConnection()
         return;
     }
     const auto operation = _revision.advance(this);
-    const auto ports = serialPorts->availablePorts();
+    const auto ports = serialPorts->ports();
     if (!operation.isCurrent() || _owner == Owner::Manual) {
         return;
     }
@@ -367,7 +365,7 @@ void RTKConnectionPolicy::_updateAutoConnection()
     if (_receiver.hasReceiver()) {
         return;
     }
-    const auto connectPort = [this](const SerialPortManager::Port& port) {
+    const auto connectPort = [this](const GPSSerialPorts::Port& port) {
         const auto attempt = _revision.current(this);
         _owner = Owner::Auto;
         _autoPort = port.systemLocation;
@@ -383,9 +381,8 @@ void RTKConnectionPolicy::_updateAutoConnection()
             return;
         }
         for (const auto& port : ports) {
-            if (port.systemLocation == _autoPort && !port.bootloader &&
-                port.boardType == QGCSerialPortInfo::BoardTypeRTKGPS &&
-                serialPorts->canReservePort(port.systemLocation)) {
+            if (port.systemLocation == _autoPort && !port.bootloader && port.rtkReceiver &&
+                serialPorts->canReserve(port.systemLocation)) {
                 connectPort(port);
                 break;
             }
@@ -394,7 +391,7 @@ void RTKConnectionPolicy::_updateAutoConnection()
     }
     QSet<QString> seenDevices;
     for (const auto& port : ports) {
-        if (port.boardType != QGCSerialPortInfo::BoardTypeRTKGPS || port.bootloader) {
+        if (!port.rtkReceiver || port.bootloader) {
             _waitingPorts.remove(port.systemLocation);
             continue;
         }
@@ -404,7 +401,7 @@ void RTKConnectionPolicy::_updateAutoConnection()
             seenDevices.insert(port.physicalDeviceId);
         }
         if ((duplicate && !port.description.contains(QStringLiteral("NMEA"))) ||
-            !serialPorts->canReservePort(port.systemLocation)) {
+            !serialPorts->canReserve(port.systemLocation)) {
             _waitingPorts.remove(port.systemLocation);
             continue;
         }

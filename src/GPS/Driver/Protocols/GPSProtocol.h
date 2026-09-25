@@ -14,6 +14,7 @@
 #include <QtCore/QString>
 
 #include "GPSBaseStationConfig.h"
+#include "GPSConfigurationSequence.h"
 #include "GPSDecodedBatch.h"
 #include "GPSEllipsoidPosition.h"
 #include "GPSProtocolIO.h"
@@ -156,6 +157,12 @@ protected:
     /// As above, and also resolves the reply from raw received bytes for replies that need not be complete frames.
     GPSCommandResult transact(GPSConfigurationStep step, std::string_view wire, GPSRawAckMatcher& reply);
 
+    /// As above, and also resolves the reply with @a reply from each reply the decoder passes to offerReply().
+    GPSCommandResult transact(GPSConfigurationStep step, std::string_view wire, GPSReplyMatcher reply);
+
+    /// Runs @a sequence in order until a required step fails or I/O fails; failed attempts retry up to their count.
+    GPSConfigurationSequence::Result runSequence(const GPSConfigurationSequence& sequence);
+
     /// True while a transact() reply is outstanding and unresolved.
     bool replyPending() const { return _reply == GPSCommandOutcome::Pending; }
 
@@ -164,6 +171,14 @@ protected:
     {
         if (replyPending()) {
             _reply = outcome;
+        }
+    }
+
+    /// Passes one decoded reply to the outstanding transact() matcher, if any.
+    void offerReply(std::string_view reply)
+    {
+        if (_replyMatcher && replyPending()) {
+            resolveReply(_replyMatcher(reply));
         }
     }
 
@@ -340,13 +355,13 @@ protected:
         _decoded.updates |= GPSDecodedBatch::PROTOCOL_ACTIVITY;
     }
 
-    void publishSatellites(const GPSNativeSatelliteReport& report)
+    void publishSatellites(const GPSDecodedSatellites& report)
     {
         _decoded.updates |= GPSDecodedBatch::SATELLITES_UPDATE;
         _decoded.events.emplace_back(report);
     }
 
-    void publishPosition(const GPSNativePositionReport& report)
+    void publishPosition(const GPSDecodedPosition& report)
     {
         _decoded.updates |= GPSDecodedBatch::POSITION_UPDATE;
         _decoded.events.emplace_back(report);
@@ -355,10 +370,10 @@ protected:
     void publishSatelliteUsage(std::optional<int> count)
     {
         _decoded.updates |= GPSDecodedBatch::SATELLITES_UPDATE;
-        _decoded.events.emplace_back(GPSNativeSatelliteUsageReport{nowUs(), count});
+        _decoded.events.emplace_back(GPSDecodedSatelliteUsage{nowUs(), count});
     }
 
-    void publishSurvey(GPSNativeSurveyReport& status)
+    void publishSurvey(GPSDecodedSurvey& status)
     {
         status.timestamp = nowUs();
         _decoded.events.emplace_back(status);
@@ -368,7 +383,7 @@ protected:
     void publishSurvey(bool active, bool valid, std::chrono::seconds duration,
                        const GPSEllipsoidPosition& position = {})
     {
-        GPSNativeSurveyReport status{};
+        GPSDecodedSurvey status{};
         status.survey.position = position;
         status.survey.duration = duration;
         status.survey.valid = valid;
@@ -421,9 +436,9 @@ protected:
     static GPSEllipsoidPosition fromEcef(const EcefMeters& position);
 
     GPSBaseStationConfig _baseConfig;
-    GPSNativePositionReport _position;
-    GPSNativeSatelliteReport _satelliteStorage;
-    GPSNativeSatelliteReport* const _satellites;
+    GPSDecodedPosition _position;
+    GPSDecodedSatellites _satelliteStorage;
+    GPSDecodedSatellites* const _satellites;
     bool _commandCompleted = true;
     GPSCommandResult _commandWrite;
     GPSDeadline _commandDeadline;
@@ -435,5 +450,6 @@ protected:
     GPSDeadline _operationDeadline;
     std::optional<GPSCommandOutcome> _reply;
     GPSRawAckMatcher* _rawReply = nullptr;
+    GPSReplyMatcher _replyMatcher;
     bool _servicingControls = false;
 };

@@ -1,4 +1,4 @@
-#include "GPSDriverQuectel.h"
+#include "QuectelProtocol.h"
 
 #include <algorithm>
 #include <cmath>
@@ -7,12 +7,10 @@
 #include <sstream>
 #include <utility>
 
-#include <QtCore/QScopeGuard>
-
 #include "QGCLoggingCategory.h"
 #include "QuectelCodec_p.h"
 
-QGC_LOGGING_CATEGORY(GPSNativeQuectelLog, "GPS.Driver.Protocols.Quectel")
+QGC_LOGGING_CATEGORY(QuectelProtocolLog, "GPS.Driver.Protocols.Quectel")
 
 namespace {
 // Quectel LG290P(03)&LGx80P(03) GNSS Protocol Specification V1.1:
@@ -29,25 +27,23 @@ using QuectelCodec::readback;
 using QuectelCodec::rejected;
 }  // namespace
 
-const QLoggingCategory& GPSNativeQuectel::logCategory() const
+const QLoggingCategory& QuectelProtocol::logCategory() const
 {
-    return GPSNativeQuectelLog();
+    return QuectelProtocolLog();
 }
 
-GPSNativeQuectel::GPSNativeQuectel(GPSProtocolIO io, bool satelliteInfoEnabled)
+QuectelProtocol::QuectelProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     : GPSAsciiProtocol(std::move(io), satelliteInfoEnabled)
 {
     setRTCMEnabled(false);
 }
 
-GPSCommandResult GPSNativeQuectel::_transact(const std::string& command, ReplyHandler handler, unsigned timeoutMs)
+GPSCommandResult QuectelProtocol::_transact(const std::string& command, GPSReplyMatcher reply, unsigned timeoutMs)
 {
-    _replyHandler = std::move(handler);
-    const auto clearReply = qScopeGuard([this] { _replyHandler = {}; });
-    return transact({command, std::chrono::milliseconds(timeoutMs)}, frame(command));
+    return transact({command, std::chrono::milliseconds(timeoutMs)}, frame(command), std::move(reply));
 }
 
-GPSCommandResult GPSNativeQuectel::_acknowledgement(const std::string& command, unsigned timeoutMs)
+GPSCommandResult QuectelProtocol::_acknowledgement(const std::string& command, unsigned timeoutMs)
 {
     const std::string name = command.substr(0, command.find(','));
     return _transact(
@@ -62,12 +58,12 @@ GPSCommandResult GPSNativeQuectel::_acknowledgement(const std::string& command, 
         timeoutMs);
 }
 
-bool GPSNativeQuectel::_acknowledge(const std::string& command, unsigned timeoutMs)
+bool QuectelProtocol::_acknowledge(const std::string& command, unsigned timeoutMs)
 {
     return _acknowledgement(command, timeoutMs).evidence.outcome == GPSCommandOutcome::Acknowledged;
 }
 
-bool GPSNativeQuectel::_identify(unsigned timeoutMs)
+bool QuectelProtocol::_identify(unsigned timeoutMs)
 {
     return _transact(
                "PQTMVERNO",
@@ -89,7 +85,7 @@ bool GPSNativeQuectel::_identify(unsigned timeoutMs)
                .evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-bool GPSNativeQuectel::_verifyRole(bool requireMatch)
+bool QuectelProtocol::_verifyRole(bool requireMatch)
 {
     return _transact("PQTMCFGRCVRMODE,R", [this, requireMatch](std::string_view body) {
                const Fields reply(body);
@@ -103,7 +99,7 @@ bool GPSNativeQuectel::_verifyRole(bool requireMatch)
            }).evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-bool GPSNativeQuectel::_verifyBase(bool requireMatch)
+bool QuectelProtocol::_verifyBase(bool requireMatch)
 {
     _baseMatches = false;
     if (_transact("PQTMCFGFIXRATE,R", [](std::string_view body) {
@@ -154,7 +150,7 @@ bool GPSNativeQuectel::_verifyBase(bool requireMatch)
            }).evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-std::string GPSNativeQuectel::_baseCommand() const
+std::string QuectelProtocol::_baseCommand() const
 {
     std::ostringstream command;
     command.imbue(std::locale::classic());
@@ -172,7 +168,7 @@ std::string GPSNativeQuectel::_baseCommand() const
     return command.str();
 }
 
-bool GPSNativeQuectel::_saveConfiguration()
+bool QuectelProtocol::_saveConfiguration()
 {
     const auto result = _acknowledgement("PQTMSAVEPAR", 5000);
     const bool saved = result.evidence.outcome == GPSCommandOutcome::Acknowledged;
@@ -187,7 +183,7 @@ bool GPSNativeQuectel::_saveConfiguration()
     return saved;
 }
 
-bool GPSNativeQuectel::_setMessageRate(std::string_view name, unsigned rate, std::string_view version)
+bool QuectelProtocol::_setMessageRate(std::string_view name, unsigned rate, std::string_view version)
 {
     std::string suffix;
     if (!version.empty()) {
@@ -219,7 +215,7 @@ bool GPSNativeQuectel::_setMessageRate(std::string_view name, unsigned rate, std
            }).evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-bool GPSNativeQuectel::_restart(bool requireRoleMatch)
+bool QuectelProtocol::_restart(bool requireRoleMatch)
 {
     _revokeSurvey();
     _survey.phase = SurveyPhase::AwaitingBoot;
@@ -256,7 +252,7 @@ bool GPSNativeQuectel::_restart(bool requireRoleMatch)
     return false;
 }
 
-bool GPSNativeQuectel::_fail(const char* reason)
+bool QuectelProtocol::_fail(const char* reason)
 {
     _configured = false;
     _survey.phase = SurveyPhase::Off;
@@ -282,7 +278,7 @@ bool GPSNativeQuectel::_fail(const char* reason)
     return false;
 }
 
-bool GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
+bool QuectelProtocol::configure(unsigned& baud, const GPSConfig& config)
 {
     resetIOError();
     _configured = false;

@@ -57,9 +57,6 @@ void GPSProvider::start()
 void GPSProvider::stop()
 {
     _requestStop = true;
-    if (_thread) {
-        _thread->requestInterruption();
-    }
 }
 
 bool GPSProvider::wait(QDeadlineTimer deadline)

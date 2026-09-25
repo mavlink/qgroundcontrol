@@ -3,12 +3,12 @@
 #include <chrono>
 #include <functional>
 
+#include <QtCore/QDebug>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtPositioning/QGeoCoordinate>
 
-#include "GPSCorrectionSourceRegistration.h"
 #include "GPSNotificationQueue.h"
 #include "GPSRevision.h"
 #include "NTRIPConfiguration.h"
@@ -22,13 +22,16 @@
 Q_DECLARE_LOGGING_CATEGORY(NTRIPManagerLog)
 
 class GPSCorrectionManager;
+class NTRIPNetworkMonitor;
+class NTRIPStreamSession;
 class RuntimeScheduler;
 
 /// Manages the NTRIP caster connection lifecycle as an explicit event-driven
 /// state machine. All connection state changes flow through `_dispatch()` and
 /// the transition table in NTRIPManager.cc — there is no second, internal
-/// state enum. Entry actions own per-state side effects (start/tear down
-/// transport, schedule reconnect, toggle GGA/stats).
+/// state enum. Entry actions own per-state side effects: each Connecting entry
+/// opens a new NTRIPStreamSession for the connection's resources, teardown
+/// retires it, and the manager schedules reconnects.
 class NTRIPManager : public QObject
 {
     Q_OBJECT
@@ -70,6 +73,7 @@ public:
         ReconnectGaveUp,      ///< NTRIPReconnectPolicy fired gaveUp().
         HotReconfigure,       ///< Transport-affecting setting changed while connected; reconnect in place.
     };
+    Q_ENUM(Event)
 
     /// Position that orders fetched mountpoints by distance; an invalid coordinate keeps the caster's order.
     using SortPositionProvider = std::function<QGeoCoordinate()>;
@@ -119,6 +123,8 @@ public:
 
     /// Inject before init(); the caller retains ownership.
     void setCorrectionManager(GPSCorrectionManager* manager);
+    /// Inject before init(); the caller retains ownership.
+    void setNetworkMonitor(NTRIPNetworkMonitor* monitor);
 
     void setGgaPositionProvider(NTRIPGgaProvider::PositionSource source, NTRIPGgaProvider::PositionProvider provider);
 
@@ -151,14 +157,15 @@ private:
     /// actions observe the new state. Change signals are delivered after the outermost operation.
     void _enterState(ConnectionStatus to, const QString& detail, std::chrono::milliseconds retryAfter = {});
 
-    /// Per-state side effects (start transport, tear down, schedule reconnect, etc.).
+    /// Per-state side effects (open or retire the stream session, schedule reconnect, etc.).
     void _onEnterState(ConnectionStatus from, ConnectionStatus to, std::chrono::milliseconds retryAfter);
 
     /// Default user-visible message for a state. Callers may override via detail.
     static QString _defaultMessageFor(ConnectionStatus state);
 
-    void _startTransport();
-    void _teardownTransport();
+    /// Makes a new session current, closes the previous one's transport, then validates and opens the new one.
+    void _openSession();
+    /// Stops and retires the current session; false when a re-entrant transition superseded the stop.
     bool _stopStreaming();
 
     // Reconnect backoff (inlined; was NTRIPReconnectPolicy). The single-shot
@@ -171,6 +178,10 @@ private:
     void _scheduleReconnect(std::chrono::milliseconds retryAfter = {});
 
     void _cancelReconnect();
+
+    bool _shouldWaitForNetwork() const;
+    bool _casterIsLoopback() const;
+    void _waitForNetwork();
 
     void _resetReconnectAttempts() { _reconnectAttempts = 0; }
 
@@ -200,12 +211,13 @@ private:
     QString _securityWarning;
 
     QPointer<NTRIPTransport> _injectedTransport;
-    QPointer<NTRIPTransport> _transport;
+    QPointer<NTRIPStreamSession> _session;
 
     QPointer<GPSCorrectionManager> _correctionManager;
-    GPSCorrectionSourceRegistration _correctionRegistration;
+    QPointer<NTRIPNetworkMonitor> _networkMonitor;
+    QMetaObject::Connection _networkConnection;
 
-    // Latest supplied configuration, and the one the running transport uses.
+    // Latest supplied configuration, and the one the current session uses.
     Configuration _configuration;
     NTRIPConfiguration _runningConfig;
     SortPositionProvider _sortPositionProvider;
@@ -215,8 +227,11 @@ private:
     static constexpr std::chrono::milliseconds kSettingsDebounceMs{250};
     std::chrono::milliseconds _pendingReconnectDelay{};
     int _reconnectAttempts = 0;
+    bool _waitingForNetwork = false;
     bool _initialized = false;
     bool _shutdown = false;
     GPSRevision _stateRevision;
     GPSNotificationQueue _notifications{this};
 };
+
+QDebug operator<<(QDebug debug, const NTRIPManager::Configuration& configuration);

@@ -30,6 +30,10 @@ public:
     /// Nonzero when the link cannot follow baud-rate changes (for example, a serial bridge).
     virtual unsigned fixedBaudrate() const { return 0; }
 
+    /// Line rate that TCP and UDP links report. Drivers still program the receiver's serial port with it (UBX CFG-PRT
+    /// sets UART1 to it), so the serial side of a network bridge and its receiver must run at this rate.
+    static constexpr unsigned BRIDGE_BAUDRATE = 115200;
+
     /// A nonpositive timeout polls immediately available input. Failures never carry usable stream bytes.
     virtual GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) = 0;
 

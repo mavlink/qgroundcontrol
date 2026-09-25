@@ -9,6 +9,9 @@
 #include "MonotonicClock.h"
 
 // Unknown identifies legacy unclassified input; routing policy is selected separately.
+namespace GPSCorrectionSources {
+Q_NAMESPACE
+
 enum class GPSCorrectionSource
 {
     Unknown,
@@ -16,6 +19,11 @@ enum class GPSCorrectionSource
     Ntrip,
     Udp
 };
+Q_ENUM_NS(GPSCorrectionSource)
+
+}  // namespace GPSCorrectionSources
+
+using GPSCorrectionSource = GPSCorrectionSources::GPSCorrectionSource;
 Q_DECLARE_METATYPE(GPSCorrectionSource)
 
 struct GPSCorrectionFrame

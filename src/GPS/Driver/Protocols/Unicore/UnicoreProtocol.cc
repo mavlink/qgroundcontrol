@@ -1,4 +1,4 @@
-#include "GPSDriverUnicore.h"
+#include "UnicoreProtocol.h"
 
 #include <algorithm>
 #include <cmath>
@@ -9,7 +9,7 @@
 #include "CRC32.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSNativeUnicoreLog, "GPS.Driver.Protocols.Unicore")
+QGC_LOGGING_CATEGORY(UnicoreProtocolLog, "GPS.Driver.Protocols.Unicore")
 
 // Independent implementation of Unicore N4 Commands and Logs Reference Book, EN R1.6:
 // https://en.unicore.com/uploads/file/Unicore%20Reference%20Commands%20Manual%20For%20N4%20High%20Precision%20Products_V2_EN_R1.6.pdf
@@ -74,18 +74,18 @@ bool supportedFirmware(std::string_view model, std::string_view firmware)
 }
 }  // namespace
 
-const QLoggingCategory& GPSNativeUnicore::logCategory() const
+const QLoggingCategory& UnicoreProtocol::logCategory() const
 {
-    return GPSNativeUnicoreLog();
+    return UnicoreProtocolLog();
 }
 
-GPSNativeUnicore::GPSNativeUnicore(GPSProtocolIO io, bool satelliteInfoEnabled)
+UnicoreProtocol::UnicoreProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     : GPSAsciiProtocol(std::move(io), satelliteInfoEnabled)
 {
     setRTCMEnabled(false);
 }
 
-bool GPSNativeUnicore::_execute(std::string command, Reply reply)
+bool UnicoreProtocol::_execute(std::string command, Reply reply)
 {
     _command = {.text = std::move(command), .expected = reply};
     _configurationDetail.clear();
@@ -116,7 +116,7 @@ bool GPSNativeUnicore::_execute(std::string command, Reply reply)
     return true;
 }
 
-bool GPSNativeUnicore::_identify(unsigned& baud)
+bool UnicoreProtocol::_identify(unsigned& baud)
 {
     constexpr std::array<unsigned, 8> BAUD_RATES{115200, 230400, 460800, 921600, 57600, 38400, 19200, 9600};
     const auto speedFailure = [](unsigned rate) {
@@ -142,7 +142,7 @@ bool GPSNativeUnicore::_identify(unsigned& baud)
     return true;
 }
 
-bool GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
+bool UnicoreProtocol::configure(unsigned& baud, const GPSConfig& config)
 {
     const bool wasBase = _base;
     _ready = false;
@@ -225,7 +225,7 @@ bool GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)
     return true;
 }
 
-bool GPSNativeUnicore::_configurationFailed(const QString& reason)
+bool UnicoreProtocol::_configurationFailed(const QString& reason)
 {
     if (!reason.isEmpty()) {
         _configurationDetail = reason;
@@ -244,7 +244,7 @@ bool GPSNativeUnicore::_configurationFailed(const QString& reason)
     return false;
 }
 
-void GPSNativeUnicore::_handleVersion(std::string_view body)
+void UnicoreProtocol::_handleVersion(std::string_view body)
 {
     std::array<std::string_view, 6> fields{};
     if (NMEA::splitFields(body, fields) != fields.size()) {
@@ -273,7 +273,7 @@ void GPSNativeUnicore::_handleVersion(std::string_view body)
     }
 }
 
-void GPSNativeUnicore::_handleMode(std::string_view body)
+void UnicoreProtocol::_handleMode(std::string_view body)
 {
     const auto mode = body.substr(0, body.find(','));
     const auto starts = [&](std::string_view name) {
@@ -289,7 +289,7 @@ void GPSNativeUnicore::_handleMode(std::string_view body)
     }
 }
 
-void GPSNativeUnicore::_handlePosition(std::string_view body)
+void UnicoreProtocol::_handlePosition(std::string_view body)
 {
     if (!_monitorBase) {
         return;
@@ -328,9 +328,9 @@ void GPSNativeUnicore::_handlePosition(std::string_view body)
     _publishBase(_baseValid, _averaging && !_baseValid);
 }
 
-void GPSNativeUnicore::_publishBase(bool valid, bool active)
+void UnicoreProtocol::_publishBase(bool valid, bool active)
 {
-    GPSNativeSurveyReport report{};
+    GPSDecodedSurvey report{};
     report.survey.valid = valid;
     report.survey.active = active;
     if (valid) {
@@ -341,7 +341,7 @@ void GPSNativeUnicore::_publishBase(bool valid, bool active)
     publishSurvey(report);
 }
 
-void GPSNativeUnicore::_invalidateBase()
+void UnicoreProtocol::_invalidateBase()
 {
     _baseValid = false;
     _monitorBase = false;
@@ -353,31 +353,31 @@ void GPSNativeUnicore::_invalidateBase()
     controlFailed();
 }
 
-void GPSNativeUnicore::_expireBase()
+void UnicoreProtocol::_expireBase()
 {
     if (_ready && (hasIOError() || (_baseValid && nowUs() - _lastBaseStatus > BASE_STATUS_TIMEOUT_US))) {
         _invalidateBase();
     }
 }
 
-int GPSNativeUnicore::decodeByte(uint8_t byte)
+int UnicoreProtocol::decodeByte(uint8_t byte)
 {
     _expireBase();
     return GPSAsciiProtocol::decodeByte(byte);
 }
 
-void GPSNativeUnicore::flushDecoded()
+void UnicoreProtocol::flushDecoded()
 {
     _expireBase();
     GPSAsciiProtocol::flushDecoded();
 }
 
-void GPSNativeUnicore::servicePendingCommands()
+void UnicoreProtocol::servicePendingCommands()
 {
     _expireBase();
 }
 
-int GPSNativeUnicore::handleReceiverLine(std::string_view line)
+int UnicoreProtocol::handleReceiverLine(std::string_view line)
 {
     if (line.starts_with("$command,")) {
         if (!replyPending() || !validChecksum(line, false)) {
@@ -442,7 +442,7 @@ int GPSNativeUnicore::handleReceiverLine(std::string_view line)
     return GPSDecodedBatch::PROTOCOL_ACTIVITY;
 }
 
-std::string GPSNativeUnicore::receiverIdentity() const
+std::string UnicoreProtocol::receiverIdentity() const
 {
     return _model.empty() || _firmware.empty() ? _model + _firmware : _model + ' ' + _firmware;
 }

@@ -6,14 +6,16 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
 
+#include "GPSTestClock.h"
 #include "Support/ScriptedReceiver.h"
-#ifdef QGC_GPS_TEST_CLOCK
-#include "GPSProtocolTestIO.h"
-#endif
 
 class FemtoReceiverModel : public ScriptedReceiver::Model
 {
 public:
+    explicit FemtoReceiverModel(GPSTestClock& clock)
+        : _clock(clock)
+    {}
+
     QString idleReadDetail = QStringLiteral("Scripted receiver connection lost");
     bool failIdleReads = false;
 
@@ -40,18 +42,11 @@ private:
 
     void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline) override
     {
-#ifdef QGC_GPS_TEST_CLOCK
-        const uint64_t now = gps_test_time;
-#else
-        const uint64_t now = 0;
-#endif
-        onTransportReadWait(receiver, deadline.remainingMilliseconds(now));
-#ifdef QGC_GPS_TEST_CLOCK
+        onTransportReadWait(receiver, deadline.remainingMilliseconds(_clock.nowUs()));
         if (!receiver.hasQueuedReadData()) {
-            gps_test_time = deadline.untilUs + 1;
+            _clock.advanceTo(deadline.untilUs + 1);
         }
-#else
-        Q_UNUSED(deadline)
-#endif
     }
+
+    GPSTestClock& _clock;
 };

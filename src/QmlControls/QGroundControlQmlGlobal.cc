@@ -42,7 +42,6 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject* parent)
     : QObject(parent)
     , _mapEngineManager(QGCMapEngineManager::instance())
     , _adsbVehicleManager(ADSBVehicleManager::instance())
-    , _positionManager(QGCPositionManager::instance())
     , _missionCommandTree(MissionCommandTree::instance())
     , _mavlinkSigningKeys(MAVLinkSigningKeys::instance())
     , _videoManager(VideoManager::instance())
@@ -90,6 +89,11 @@ QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
 GPSManager* QGroundControlQmlGlobal::gpsManager() const
 {
     return GPSManager::instance();
+}
+
+QGCPositionManager* QGroundControlQmlGlobal::positionManager() const
+{
+    return GPSManager::instance()->positionManager();
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)

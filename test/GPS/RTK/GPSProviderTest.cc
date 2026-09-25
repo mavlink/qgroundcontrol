@@ -281,17 +281,14 @@ void GPSProviderTest::_workerLifecycle()
     QSemaphore idle;
     QThread* sessionThread = nullptr;
     bool tokenStopped = false;
-    bool interruptionRequested = false;
     auto provider = std::make_unique<GPSProvider>(
         [&](const std::atomic_bool& requestStop) {
             sessionThread = QThread::currentThread();
             entered.release();
-            while (!requestStop || !QThread::currentThread()->isInterruptionRequested()) {
+            while (!requestStop) {
                 (void) idle.tryAcquire(1, 10);
             }
-            // A stop request reaches the worker both as the transport token and as a Qt interruption request.
             tokenStopped = requestStop;
-            interruptionRequested = QThread::currentThread()->isInterruptionRequested();
             return std::unique_ptr<GPSTransport>{};
         },
         GPSType::ublox, GPSReceiverConfig{});
@@ -308,7 +305,6 @@ void GPSProviderTest::_workerLifecycle()
     provider->stop();
     QVERIFY(provider->wait(TestTimeout::shortMs()));
     QVERIFY(tokenStopped);
-    QVERIFY(interruptionRequested);
     QVERIFY(finished.isEmpty());
     QTRY_COMPARE_WITH_TIMEOUT(finished.size(), 1, TestTimeout::shortMs());
     QVERIFY(!provider->isRunning());
@@ -329,7 +325,8 @@ public:
     }
 
 private:
-    FemtoReceiverModel _model;
+    GPSTestClock _clock;
+    FemtoReceiverModel _model{_clock};
 };
 
 class ExpiringSatelliteTransport : public ScriptedReceiver
@@ -486,7 +483,8 @@ void GPSProviderTest::_ancillaryTraffic_data()
 void GPSProviderTest::_ancillaryTraffic()
 {
     QFETCH(bool, sendUsage);
-    auto model = std::make_shared<SBFReceiverModel>();
+    GPSTestClock clock;
+    auto model = std::make_shared<SBFReceiverModel>(clock);
     SBFReceiverModel* peer = model.get();
     QElapsedTimer streamingTime;
     GPSProvider provider(

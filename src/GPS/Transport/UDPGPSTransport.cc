@@ -113,5 +113,5 @@ GPSWriteResult UDPGPSTransport::writeData(const uint8_t*, int, QDeadlineTimer)
 
 bool UDPGPSTransport::setBaudrate(unsigned baudrate)
 {
-    return !isCancelled() && !fatalError() && baudrate == FIXED_BAUDRATE;
+    return !isCancelled() && !fatalError() && baudrate == fixedBaudrate();
 }

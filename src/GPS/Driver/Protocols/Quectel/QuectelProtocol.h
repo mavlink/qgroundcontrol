@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -11,10 +10,10 @@
 /// LG290P(03), independently implemented from Quectel's GNSS Protocol Specification V1.1.
 /// Role/base changes require explicit per-connection permission to save and restart.
 /// Without permission, externally saved matching settings are required.
-class GPSNativeQuectel final : public GPSAsciiProtocol
+class QuectelProtocol final : public GPSAsciiProtocol
 {
 public:
-    explicit GPSNativeQuectel(GPSProtocolIO io, bool satelliteInfoEnabled = true);
+    explicit QuectelProtocol(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
     bool configure(unsigned& baud, const GPSConfig& config) override;
 
@@ -39,9 +38,7 @@ private:
         Monitoring,
     };
 
-    using ReplyHandler = std::function<GPSCommandOutcome(std::string_view)>;
-
-    GPSCommandResult _transact(const std::string& command, ReplyHandler handler, unsigned timeoutMs = 1000);
+    GPSCommandResult _transact(const std::string& command, GPSReplyMatcher reply, unsigned timeoutMs = 1000);
     GPSCommandResult _acknowledgement(const std::string& command, unsigned timeoutMs = 1000);
     bool _acknowledge(const std::string& command, unsigned timeoutMs = 1000);
     bool _identify(unsigned timeoutMs = 1000);
@@ -61,11 +58,10 @@ private:
     {
         std::string restartCommand;
         std::optional<unsigned> lastTow = std::nullopt;
-        std::optional<GPSNativeSurveyReport> report = std::nullopt;
+        std::optional<GPSDecodedSurvey> report = std::nullopt;
         SurveyPhase phase = SurveyPhase::Off;
     };
 
-    ReplyHandler _replyHandler;
     SurveySession _survey;
     std::string _firmware;
     EcefMeters _fixedECEF;

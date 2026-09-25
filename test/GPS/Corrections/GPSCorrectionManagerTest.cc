@@ -96,7 +96,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     settings->correctionSource()->setRawValue(GPSCorrectionSettings::LocalReceiver);
     GPSSettingsBindings::bindCorrections(settings, &corrections);
     auto local = corrections.registerSource(GPSCorrectionSource::LocalReceiver);
-    const auto localToken = local.token();
+    const auto localSource = local.weak();
     auto* forwarder = corrections.rtcmMavlink();
     QCOMPARE(forwarder->parent(), &corrections);
     QList<uint8_t> sequences;
@@ -110,7 +110,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     });
     const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1077, 500);
     quint64 expected = 0;
-    corrections.acceptIngress(localToken.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
+    corrections.acceptIngress(localSource.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
     expected += frame.size();
     QCOMPARE(forwarder->totalBytesSent(), expected);
     settings->correctionSource()->setRawValue(GPSCorrectionSettings::Udp);
@@ -125,7 +125,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     QTRY_COMPARE_WITH_TIMEOUT(forwarder->totalBytesSent(), expected, TestTimeout::mediumMs());
     ntrip.stopNTRIP();
     settings->correctionSource()->setRawValue(GPSCorrectionSettings::LocalReceiver);
-    corrections.acceptIngress(localToken.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
+    corrections.acceptIngress(localSource.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
     expected += frame.size();
     QCOMPARE(forwarder->totalBytesSent(), expected);
     settings->correctionSource()->setRawValue(GPSCorrectionSettings::Udp);
@@ -139,7 +139,7 @@ void GPSCorrectionManagerTest::_sourcesShareForwarder()
     corrections.shutdown();
     QUdpSocket released;
     QVERIFY(released.bind(QHostAddress::AnyIPv4, port, QUdpSocket::DontShareAddress));
-    corrections.acceptIngress(localToken.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
+    corrections.acceptIngress(localSource.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
     QCOMPARE(forwarder->totalBytesSent(), expected);
 }
 
@@ -154,7 +154,7 @@ void GPSCorrectionManagerTest::_mavlinkDestinationAdmissions()
     });
     auto source = corrections.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
     const auto bytes = GpsTestHelpers::buildRtcmFrame(1077, 500);
-    corrections.acceptIngress(source.token().event(bytes, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
+    corrections.acceptIngress(source.event(bytes, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
     const auto sourceStats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)];
     QCOMPARE(sourceStats.queuedFrames, 1ULL);
     QCOMPARE(sourceStats.queuedBytes, quint64(bytes.size()));
@@ -208,7 +208,7 @@ void GPSCorrectionManagerTest::_udpSettingsAndShutdown()
     QVERIFY(disabledPort.bind(QHostAddress::AnyIPv4, nextPort, QUdpSocket::DontShareAddress));
     // Other sources remain available when UDP input is disabled.
     auto ntrip = corrections.registerSource(GPSCorrectionSource::Ntrip);
-    corrections.acceptIngress(ntrip.token().event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections.acceptIngress(ntrip.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     expected += frame.size();
     QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), expected);
     disabledPort.close();
@@ -265,7 +265,7 @@ void GPSCorrectionManagerTest::_settingsOwnRouting()
     QCOMPARE(corrections.selectedSource(), GPSCorrectionSource::Ntrip);
     auto source = corrections.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
     const auto bytes = GpsTestHelpers::buildRtcmFrame(1005, 20);
-    const auto ingress = source.token().event(bytes, GPSCorrectionFrame::monotonicNowMs(), 1005, true);
+    const auto ingress = source.event(bytes, GPSCorrectionFrame::monotonicNowMs(), 1005, true);
     corrections.acceptIngress(ingress);
     QVERIFY(routed.isEmpty());
     settings->correctionSourceInstance()->setRawValue(QStringLiteral("caster"));
@@ -320,7 +320,7 @@ void GPSCorrectionManagerTest::_shutdownDuringAdmission()
     });
     auto source = corrections->registerSource(GPSCorrectionSource::Ntrip);
     const auto bytes = GpsTestHelpers::buildRtcmFrame(1077, 500);
-    corrections->acceptIngress(source.token().event(bytes, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
+    corrections->acceptIngress(source.event(bytes, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
     QCOMPARE(packetCalls, retireFromProvider ? 0 : 1);
     QCOMPARE(laterCalls, 0);
     QCOMPARE(corrections.isNull(), destroy);
@@ -345,12 +345,12 @@ void GPSCorrectionManagerTest::_qmlForwarderAvailableBeforeInit()
         import QGroundControl
         QtObject {
             readonly property var forwarder: QGroundControl.gpsManager.corrections.rtcmMavlink
-            readonly property var baseFacts: QGroundControl.gpsManager.gpsRtk.facts
+            readonly property var baseFacts: QGroundControl.gpsManager.gpsRtkFacts
         }
     )"));
     QVERIFY2(root, qPrintable(engine.lastError()));
     QCOMPARE(root->property("forwarder").value<RTCMMavlink*>(), GPSManager::instance()->corrections()->rtcmMavlink());
-    QCOMPARE(root->property("baseFacts").value<FactGroup*>(), GPSManager::instance()->gpsRtk()->gpsRtkFactGroup());
+    QCOMPARE(root->property("baseFacts").value<FactGroup*>(), GPSManager::instance()->gpsRtkFacts());
 }
 
 void GPSCorrectionManagerTest::_sourceMessageCounts()
@@ -362,11 +362,11 @@ void GPSCorrectionManagerTest::_sourceMessageCounts()
         return corrections.sourceDiagnostics().at(static_cast<int>(GPSCorrectionSource::Ntrip)).messageCounts;
     };
     const qint64 now = GPSCorrectionFrame::monotonicNowMs();
-    corrections.acceptIngress(ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1077, 20), now, 1077, true));
-    corrections.acceptIngress(ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true));
+    corrections.acceptIngress(ntrip.event(GpsTestHelpers::buildRtcmFrame(1077, 20), now, 1077, true));
+    corrections.acceptIngress(ntrip.event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true));
     // Validated frames without a caller-supplied ID are identified from the RTCM header.
-    corrections.acceptIngress(ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1077, 20), now, 0, true));
-    corrections.acceptIngress(ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1230, 20), now, 1230, false));
+    corrections.acceptIngress(ntrip.event(GpsTestHelpers::buildRtcmFrame(1077, 20), now, 0, true));
+    corrections.acceptIngress(ntrip.event(GpsTestHelpers::buildRtcmFrame(1230, 20), now, 1230, false));
     const QList<RTCMMessageCount> expected{{1005, 1}, {1077, 2}};
     QCOMPARE(messageCounts(), expected);
 
@@ -454,7 +454,7 @@ void GPSCorrectionManagerTest::_outputsEnabledAfterLinkHistoryChurn()
     });
     for (int index = 0; index < GPSCorrectionRouter::MAX_DESTINATION_HISTORY * 2; ++index) {
         ++linkSession;
-        corrections.acceptIngress(source.token().event(data, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+        corrections.acceptIngress(source.event(data, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     }
     QCOMPARE(corrections.destinationDiagnostics().size(), GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 2);
 
@@ -469,7 +469,7 @@ void GPSCorrectionManagerTest::_outputsEnabledAfterLinkHistoryChurn()
     QVERIFY(udpDestination.bind(QHostAddress::LocalHost, 0));
     configureUdpOutput(saved, settings, QStringLiteral("127.0.0.1"), udpDestination.localPort());
     GPSSettingsBindings::bindCorrections(settings, &corrections);
-    corrections.acceptIngress(source.token().event(data, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections.acceptIngress(source.event(data, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     QCOMPARE(receiverFrame.data, data);
     QTRY_VERIFY_WITH_TIMEOUT(udpDestination.hasPendingDatagrams(), TestTimeout::mediumMs());
     QByteArray received(data.size(), Qt::Uninitialized);
@@ -507,21 +507,21 @@ void GPSCorrectionManagerTest::_udpOutputForwardsSelectedStream()
     };
 
     // Automatic routing prefers the local base, so UDP forwards the same stream as vehicles receive.
-    corrections.acceptIngress(local.token().event(localData, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
-    corrections.acceptIngress(ntrip.token().event(ntripData, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
+    corrections.acceptIngress(local.event(localData, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections.acceptIngress(ntrip.event(ntripData, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
     QCOMPARE(receive(), localData);
     QCOMPARE(udpOutputStats(corrections).queuedBytes, quint64(localData.size()));
 
     settings->correctionSource()->setRawValue(GPSCorrectionSettings::Ntrip);
-    corrections.acceptIngress(ntrip.token().event(ntripData, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
+    corrections.acceptIngress(ntrip.event(ntripData, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
     QCOMPARE(receive(), ntripData);
     const quint64 forwarded = localData.size() + ntripData.size();
     QCOMPARE(udpOutputStats(corrections).queuedBytes, forwarded);
 
     // Filtered messages are not forwarded, and disabling the output stops forwarding.
-    corrections.acceptIngress(ntrip.token().event(ntripData, GPSCorrectionFrame::monotonicNowMs(), 1077, true, true));
+    corrections.acceptIngress(ntrip.event(ntripData, GPSCorrectionFrame::monotonicNowMs(), 1077, true, true));
     settings->rtcmUdpOutputEnabled()->setRawValue(false);
-    corrections.acceptIngress(ntrip.token().event(ntripData, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
+    corrections.acceptIngress(ntrip.event(ntripData, GPSCorrectionFrame::monotonicNowMs(), 1077, true));
     QCOMPARE(udpOutputStats(corrections).queuedBytes, forwarded);
     QVERIFY(!destination.waitForReadyRead(TestTimeout::shortMs()));
 }
@@ -541,14 +541,14 @@ void GPSCorrectionManagerTest::_udpOutputSkipsOwnInput()
     verifyExpectedLogMessage();
     auto source = corrections.registerSource(GPSCorrectionSource::Ntrip);
     const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
-    corrections.acceptIngress(source.token().event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections.acceptIngress(source.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     QCOMPARE(udpOutputStats(corrections).queuedBytes, 0ULL);
 
     // Disabling the input removes the loop, so forwarding starts.
     settings->rtcmUdpInputEnabled()->setRawValue(false);
     QUdpSocket destination;
     QVERIFY(destination.bind(QHostAddress::LocalHost, port, QUdpSocket::DontShareAddress));
-    corrections.acceptIngress(source.token().event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections.acceptIngress(source.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     QTRY_VERIFY_WITH_TIMEOUT(destination.hasPendingDatagrams(), TestTimeout::mediumMs());
     QCOMPARE(destination.receiveDatagram().data(), frame);
     QCOMPARE(udpOutputStats(corrections).queuedBytes, quint64(frame.size()));
@@ -559,7 +559,7 @@ void GPSCorrectionManagerTest::_udpOutputSkipsOwnInput()
                      QRegularExpression(QStringLiteral("own UDP input port")));
     settings->rtcmUdpInputEnabled()->setRawValue(true);
     verifyExpectedLogMessage();
-    corrections.acceptIngress(source.token().event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections.acceptIngress(source.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     QCOMPARE(udpOutputStats(corrections).queuedBytes, quint64(frame.size()));
 }
 
@@ -596,7 +596,7 @@ void GPSCorrectionManagerTest::_udpOutputEndpointChanges()
     GPSSettingsBindings::bindCorrections(settings, &corrections);
     auto source = corrections.registerSource(GPSCorrectionSource::Ntrip);
     const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
-    corrections.acceptIngress(source.token().event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections.acceptIngress(source.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     const quint64 initialForwarded = udpOutputStats(corrections).queuedBytes;
     QCOMPARE(initialForwarded, quint64(frame.size()));
 
@@ -609,7 +609,7 @@ void GPSCorrectionManagerTest::_udpOutputEndpointChanges()
     if (!expectedEnabled) {
         verifyExpectedLogMessage();
     }
-    corrections.acceptIngress(source.token().event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections.acceptIngress(source.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     QCOMPARE(udpOutputStats(corrections).queuedBytes,
              initialForwarded + (expectedEnabled ? quint64(frame.size()) : 0ULL));
 }
@@ -622,7 +622,7 @@ void GPSCorrectionManagerTest::_sourceTopologyDoesNotNotifyOnCounters()
     QSignalSpy counters(corrections.sourceModel(), &QAbstractItemModel::dataChanged);
     auto ntrip = corrections.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster/mount"));
     const auto frame =
-        ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), GPSCorrectionFrame::monotonicNowMs(), 1005, true);
+        ntrip.event(GpsTestHelpers::buildRtcmFrame(1005, 20), GPSCorrectionFrame::monotonicNowMs(), 1005, true);
     corrections.acceptIngress(frame);
     QCOMPARE(corrections.sourceDiagnostics()[2].receivedFrames, 1ULL);
     QCOMPARE(corrections.sourceInstances().size(), 1);
@@ -651,8 +651,8 @@ void GPSCorrectionManagerTest::_diagnosticsNotifyOnlyOnChange()
     QSignalSpy counters(corrections.sourceModel(), &QAbstractItemModel::dataChanged);
     QSignalSpy destinations(corrections.destinationModel(), &QAbstractItemModel::dataChanged);
     auto ntrip = corrections.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster/mount"));
-    corrections.acceptIngress(ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20),
-                                                  GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections.acceptIngress(
+        ntrip.event(GpsTestHelpers::buildRtcmFrame(1005, 20), GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     QVERIFY(advanceDiagnostics(scheduler));
     QCOMPARE(topology.size(), 1);
     QCOMPARE(counters.size(), 1);
@@ -669,8 +669,8 @@ void GPSCorrectionManagerTest::_healthSampleObserverCanShutDown()
     ManualScheduler scheduler;
     GPSCorrectionManager corrections(nullptr, &scheduler);
     auto ntrip = corrections.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster/mount"));
-    corrections.acceptIngress(ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20),
-                                                  GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections.acceptIngress(
+        ntrip.event(GpsTestHelpers::buildRtcmFrame(1005, 20), GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     QVERIFY(advanceDiagnostics(scheduler));
     ntrip.reset();
     // The next health sample publishes the removed source to an observer that shuts the manager down.
@@ -705,7 +705,7 @@ void GPSCorrectionManagerTest::_correctionsStatusShowsSelectedStream()
     auto ntrip = corrections.registerSource(GPSCorrectionSource::Ntrip, instance);
     const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
     QVERIFY(advanceHealthSample(scheduler));
-    corrections.acceptIngress(ntrip.token().event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
+    corrections.acceptIngress(ntrip.event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
     QVERIFY(advanceHealthSample(scheduler));
     QCOMPARE(corrections.selectedStream().source, static_cast<int>(GPSCorrectionSource::Ntrip));
     QCOMPARE(corrections.selectedBytesPerSecond(), quint64(frame.size()));

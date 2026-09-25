@@ -6,12 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "Femto/GPSDriverFemto.h"
+#include "Femto/FemtoProtocol.h"
 #include "NMEAFields.h"
 #include "NMEASentence.h"
 #include "RTCMFramer.h"
 
-int GPSNativeFemto::handleMessage(int len)
+int FemtoProtocol::handleMessage(int len)
 {
     const uint16_t messageid = _femto_msg.messageId;
 
@@ -43,7 +43,7 @@ int GPSNativeFemto::handleMessage(int len)
     return 0;
 }
 
-int GPSNativeFemto::parseChar(uint8_t temp)
+int FemtoProtocol::parseChar(uint8_t temp)
 {
     int iRet = 0;
 
@@ -65,12 +65,12 @@ int GPSNativeFemto::parseChar(uint8_t temp)
     return iRet;
 }
 
-void GPSNativeFemto::decodeInit()
+void FemtoProtocol::decodeInit()
 {
     _nmeaFramer.reset();
 }
 
-int GPSNativeFemto::decodeByte(uint8_t byte)
+int FemtoProtocol::decodeByte(uint8_t byte)
 {
     const int length = parseChar(byte);
     const int result = length > 0 ? handleMessage(length) : 0;
@@ -83,27 +83,27 @@ int GPSNativeFemto::decodeByte(uint8_t byte)
     return result;
 }
 
-void GPSNativeFemto::flushDecoded()
+void FemtoProtocol::flushDecoded()
 {
     if (_rtcm_parsing) {
         drainRTCM(*_rtcm_parsing);
     }
 }
 
-GPSNativeFemto::GPSNativeFemto(GPSProtocolIO io, bool satelliteInfoEnabled)
+FemtoProtocol::FemtoProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     : GPSProtocol(std::move(io), satelliteInfoEnabled)
 {
     decodeInit();
 }
 
-int GPSNativeFemto::receive(unsigned timeout)
+int FemtoProtocol::receive(unsigned timeout)
 {
     const int result = receiveDecoded(timeout);
     serviceControls();
     return result;
 }
 
-void GPSNativeFemto::servicePendingCommands()
+void FemtoProtocol::servicePendingCommands()
 {
     if (_rtcmActivationPending) {
         _rtcmActivationPending = false;

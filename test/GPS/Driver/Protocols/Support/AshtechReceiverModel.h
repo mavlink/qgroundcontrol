@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "../ProtocolTestPackets.h"
-#include "Ashtech/GPSDriverAshtech.h"
+#include "Ashtech/AshtechProtocol.h"
 #include "GPSProtocolTestIO.h"
 #include "Support/ScriptedReceiver.h"
 
@@ -30,23 +30,25 @@ inline QByteArray ashtechPacket(std::string_view body)
 class AshtechReceiverModel : public ScriptedReceiver::Model
 {
 public:
-    AshtechReceiverModel()
-        : scripted(stop, *this)
+    explicit AshtechReceiverModel(GPSTestClock& testClock)
+        : clock(testClock)
+        , scripted(stop, *this)
         , driver(captureGPSReports(io(), position), false)
     {}
 
     std::vector<std::string> commands;
     std::vector<GPSCommandResult> results;
-    std::vector<GPSNativeSurveyReport> surveys;
+    std::vector<GPSDecodedSurvey> surveys;
     std::vector<std::vector<uint8_t>> corrections;
     std::string surveyReply{ASHTECH_SURVEY_STARTED};
     std::string failedCommand;
     bool silentFailure = false;
-    GPSNativePositionReport position;
+    GPSDecodedPosition position;
     size_t transportCalls = 0;
+    GPSTestClock& clock;
     std::atomic_bool stop{false};
     ScriptedReceiver scripted;
-    GPSNativeAshtech driver;
+    AshtechProtocol driver;
 
     std::optional<QByteArray> takeCommand(QByteArray& pending) override
     {
@@ -64,7 +66,7 @@ public:
         if (receiver.hasQueuedReadData()) {
             return;
         }
-        gps_test_time += uint64_t(deadline.remainingMilliseconds(gps_test_time)) * 1000 + 1;
+        clock.advanceBy(uint64_t(deadline.remainingMilliseconds(clock.nowUs())) * 1000 + 1);
     }
 
     GPSWriteResult handleCommand(ScriptedReceiver& receiver, const QByteArray& bytes,
@@ -96,7 +98,7 @@ public:
 
     GPSProtocolIO io()
     {
-        auto io = makeGPSProtocolTestIO();
+        auto io = makeGPSProtocolTestIO(clock);
         scripted.clearReplies();
         scripted.clearCommands();
         scripted.setReadHandler([this](uint8_t*, int, int) -> std::optional<GPSReadResult> {
@@ -110,7 +112,7 @@ public:
         io.commandFinished = [this](const GPSCommandResult& result) { results.push_back(result); };
         io.decoded = [this](const GPSDecodedBatch& batch) {
             for (const auto& event : batch.events) {
-                if (const auto* survey = std::get_if<GPSNativeSurveyReport>(&event)) {
+                if (const auto* survey = std::get_if<GPSDecodedSurvey>(&event)) {
                     surveys.push_back(*survey);
                 } else if (const auto* frame = std::get_if<GPSRTCMReport>(&event)) {
                     corrections.emplace_back(frame->bytes.begin(), frame->bytes.begin() + frame->size);

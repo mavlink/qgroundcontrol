@@ -3,7 +3,9 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactGroup.h"
+#include "GPSRtk.h"
 
+/// Facts of the local receiver's status for QML, mirrored from GPSRtk::statusChanged.
 class GPSRTKFactGroup : public FactGroup
 {
     Q_OBJECT
@@ -25,7 +27,8 @@ class GPSRTKFactGroup : public FactGroup
     Q_PROPERTY(bool interferenceWarning READ interferenceWarning NOTIFY interferenceWarningChanged)
 
 public:
-    explicit GPSRTKFactGroup(QObject* parent = nullptr);
+    /// Follows @a receiver's status when one is given.
+    explicit GPSRTKFactGroup(const GPSRtk* receiver = nullptr, QObject* parent = nullptr);
     ~GPSRTKFactGroup();
 
     Fact* connected() { return &_connectedFact; }
@@ -65,6 +68,9 @@ signals:
     void interferenceWarningChanged();
 
 private:
+    // By value: a Fact observer may reconfigure the receiver while the Facts update; each pass mirrors one status.
+    void _mirror(GPSRtk::Status status);
+
     Fact _connectedFact = Fact(0, QStringLiteral("connected"), FactMetaData::valueTypeBool);
     Fact _currentDurationFact = Fact(0, QStringLiteral("currentDuration"), FactMetaData::valueTypeDouble);
     Fact _currentAccuracyFact = Fact(0, QStringLiteral("currentAccuracy"), FactMetaData::valueTypeDouble);

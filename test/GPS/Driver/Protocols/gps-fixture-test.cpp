@@ -13,9 +13,9 @@
 #include "NMEASentence.h"
 #include "ProtocolTestPackets.h"
 #include "RTCMFramer.h"
-#include "SBF/GPSDriverSBF.h"
-#include "UBX/GPSDriverUBX.h"
+#include "SBF/SBFProtocol.h"
 #include "UBX/UBXMessageSchema.h"
+#include "UBX/UBXProtocol.h"
 #include "UnitTest.h"
 #include "fixtures/GPSFixtureExpectations.h"
 
@@ -34,9 +34,9 @@ std::vector<uint8_t> fixture(const char* name)
     return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
 }
 
-GPSProtocolIO noDevice()
+GPSProtocolIO noDevice(GPSTestClock& clock)
 {
-    auto io = makeGPSProtocolTestIO();
+    auto io = makeGPSProtocolTestIO(clock);
     io.read = [](std::span<uint8_t>, GPSDeadline) -> GPSReadResult { throw std::runtime_error("decoder read device"); };
     io.write = [](std::span<const uint8_t>, GPSDeadline) -> GPSWriteResult {
         throw std::runtime_error("decoder wrote device");
@@ -106,13 +106,13 @@ void independentNmeaFields()
     }
 }
 
-void independentIntegrityAndUtc()
+void independentIntegrityAndUtc(GPSTestClock& clock)
 {
     const auto integrityBytes = fixture("synthetic-integrity.ubx");
     const auto utcBytes = fixture("synthetic-timeutc.ubx");
     for (const size_t chunkSize : {1u, 7u, 256u}) {
-        gps_test_time += 1000000;
-        GPSProtocolTestProbe<GPSNativeUBX> ubx(noDevice(), false);
+        clock.advanceBy(1000000);
+        GPSProtocolTestProbe<UBXProtocol> ubx(noDevice(clock), false);
         const auto& position = ubx.workingPosition();
         ubx.setDecodeContext({.navigation = true, .useNavPvt = false});
         for (const auto& expected : GPSFixture::integrity) {
@@ -170,9 +170,9 @@ void independentIntegrityAndUtc()
     }
 }
 
-void relativeUtcUnavailable()
+void relativeUtcUnavailable(GPSTestClock& clock)
 {
-    GPSProtocolTestProbe<GPSNativeUBX> ubx(noDevice(), false);
+    GPSProtocolTestProbe<UBXProtocol> ubx(noDevice(clock), false);
     ubx.setDecodeContext({.navigation = true});
     ubx.consume(fixture("nav-pvt.ubx"));
     CHECK(ubx.workingPosition().navigation.utcTimeUs != 0);
@@ -187,21 +187,21 @@ void relativeUtcUnavailable()
     }
 }
 
-void navigationEpochs()
+void navigationEpochs(GPSTestClock& clock)
 {
     for (bool before : {false, true}) {
-        GPSNativePositionReport position{};
-        GPSNativeSatelliteReport satellites{};
-        std::vector<GPSNativePositionReport> observations;
-        auto io = noDevice();
+        GPSDecodedPosition position{};
+        GPSDecodedSatellites satellites{};
+        std::vector<GPSDecodedPosition> observations;
+        auto io = noDevice(clock);
         io.decoded = [&](const GPSDecodedBatch& batch) {
             for (const auto& event : batch.events) {
-                if (const auto* fix = std::get_if<GPSNativePositionReport>(&event)) {
+                if (const auto* fix = std::get_if<GPSDecodedPosition>(&event)) {
                     observations.push_back(*fix);
                 }
             }
         };
-        GPSNativeUBX ubx(captureGPSReports(std::move(io), position, &satellites));
+        UBXProtocol ubx(captureGPSReports(std::move(io), position, &satellites));
         ubx.setDecodeContext({.navigation = true, .assembleEpochs = true});
         const auto pvt = timed(fixture("nav-pvt.ubx"), UBXNavigationEpoch::WEEK_MS - 1000);
         const auto dop = timed(fixture("nav-dop.ubx"), UBXNavigationEpoch::WEEK_MS - 1000);
@@ -218,7 +218,7 @@ void navigationEpochs()
         ubx.consume(endEpoch(UBXNavigationEpoch::WEEK_MS - 1000));
         CHECK(observations.size() == 1);
         ubx.consume(timed(pvt, 0));
-        gps_test_time += UBXNavigationEpoch::MAX_AGE_US;
+        clock.advanceBy(UBXNavigationEpoch::MAX_AGE_US);
         ubx.consume({});
         CHECK(observations.size() == 2);
         CHECK(std::isnan(observations.back().navigation.horizontalDop));
@@ -237,14 +237,14 @@ void navigationEpochs()
         CHECK(std::abs(observations.back().navigation.horizontalDop - 0.58) < 1e-6);
         // Metadata-only epochs never manufacture a position.
         ubx.consume(timed(dop, 3000));
-        gps_test_time += UBXNavigationEpoch::MAX_AGE_US;
+        clock.advanceBy(UBXNavigationEpoch::MAX_AGE_US);
         ubx.consume({});
         CHECK(observations.size() == 4);
         auto fixed = timed(pvt, 4000);
         fixed[6 + 21] = 0x81;
         ubxChecksum(fixed);
         ubx.consume(fixed);
-        gps_test_time += UBXNavigationEpoch::MAX_AGE_US;
+        clock.advanceBy(UBXNavigationEpoch::MAX_AGE_US);
         ubx.consume({});
         CHECK(observations.size() == 5);
         CHECK(observations.back().navigation.fixType == GPSPositionReport::FixType::RTKFixed);
@@ -252,22 +252,22 @@ void navigationEpochs()
     }
 }
 
-void independentSbfValidity()
+void independentSbfValidity(GPSTestClock& clock)
 {
     for (const auto& expected : GPSFixture::sbfEpochs) {
         for (const size_t chunkSize : {1u, 11u, 512u}) {
-            gps_test_time += 1000000;
-            GPSNativePositionReport position{};
+            clock.advanceBy(1000000);
+            GPSDecodedPosition position{};
             unsigned observations = 0;
-            auto io = noDevice();
+            auto io = noDevice(clock);
             io.decoded = [&](const GPSDecodedBatch& batch) {
                 for (const auto& event : batch.events) {
-                    if (std::holds_alternative<GPSNativePositionReport>(event)) {
+                    if (std::holds_alternative<GPSDecodedPosition>(event)) {
                         ++observations;
                     }
                 }
             };
-            GPSNativeSBF sbf(captureGPSReports(std::move(io), position), false);
+            SBFProtocol sbf(captureGPSReports(std::move(io), position), false);
             const auto bytes = fixture(expected.filename);
             auto remaining = std::span(bytes);
             while (!remaining.empty()) {
@@ -276,7 +276,7 @@ void independentSbfValidity()
                 remaining = remaining.subspan(count);
             }
             CHECK(observations == 0);
-            gps_test_time += 200000;
+            clock.advanceBy(200000);
             sbf.consume({});
             CHECK(observations == 1);
             CHECK(position.navigation.utcTimeUs == 0);
@@ -307,13 +307,13 @@ void independentSbfValidity()
             CHECK(position.navigation.fixType == fix);
         }
     }
-    GPSNativePositionReport position{};
-    GPSNativeSBF sbf(captureGPSReports(noDevice(), position), false);
+    GPSDecodedPosition position{};
+    SBFProtocol sbf(captureGPSReports(noDevice(clock), position), false);
     const auto invalidTimes = fixture("synthetic-invalid-time.sbf");
     for (const auto& expected : GPSFixture::invalidSbfTimes) {
         CHECK(expected.week == UINT16_MAX || expected.tow >= 604800000);
         sbf.consume(std::span(invalidTimes).subspan(expected.offset, expected.size));
-        gps_test_time += 200000;
+        clock.advanceBy(200000);
         CHECK(sbf.decode({}).batch.events.empty());
         CHECK(position.navigation.timestampUs == 0);
     }
@@ -321,24 +321,24 @@ void independentSbfValidity()
     auto corrupt = valid;
     corrupt[2] ^= 1;  // Reject the PVT CRC; remaining metadata must not manufacture a fix.
     sbf.consume(corrupt);
-    gps_test_time += 200000;
+    clock.advanceBy(200000);
     CHECK(sbf.decode({}).batch.events.empty());
     CHECK(position.navigation.timestampUs == 0);
 
-    GPSNativeSBF recovered(captureGPSReports(noDevice(), position), false);
+    SBFProtocol recovered(captureGPSReports(noDevice(clock), position), false);
     recovered.consume(invalidTimes);
     recovered.consume(valid);
-    gps_test_time += 200000;
+    clock.advanceBy(200000);
     recovered.consume({});
     CHECK(position.navigation.timestampUs != 0);
     CHECK(matches(position.navigation.latitudeDegrees, GPSFixture::sbfEpochs[0].latitude, 1e-9));
 }
 
-void independentSequences()
+void independentSequences(GPSTestClock& clock)
 {
-    GPSNativePositionReport position{};
-    GPSNativeSatelliteReport satellites{};
-    GPSNativeUBX ubx(captureGPSReports(noDevice(), position, &satellites));
+    GPSDecodedPosition position{};
+    GPSDecodedSatellites satellites{};
+    UBXProtocol ubx(captureGPSReports(noDevice(clock), position, &satellites));
     ubx.setDecodeContext({.navigation = true});
     const auto navigation = fixture("navigation.ubx");
     size_t offset = 0;
@@ -392,17 +392,17 @@ void independentSequences()
     CHECK(std::abs(gga->altitude - GPSFixture::ggaAltitude) < 1e-6);
     CHECK(gga->satellitesUsed == GPSFixture::ggaSatellites);
 
-    GPSNativeSBF sbf(captureGPSReports(noDevice(), position, &satellites));
+    SBFProtocol sbf(captureGPSReports(noDevice(clock), position, &satellites));
     for (auto byte : fixture("geodetic.sbf")) {
         sbf.consume({&byte, 1});
     }
-    gps_test_time += 200000;
+    clock.advanceBy(200000);
     sbf.consume({});
     CHECK(position.velocityValid);
     // Attitude blocks for a different epoch must not create another position.
     const auto previousTimestamp = position.navigation.timestampUs;
     sbf.consume(fixture("attitude.sbf"));
-    gps_test_time += 200000;
+    clock.advanceBy(200000);
     sbf.consume({});
     CHECK(position.navigation.timestampUs == previousTimestamp);
     CHECK(std::isnan(position.navigation.headingRadians));
@@ -440,18 +440,17 @@ private slots:
 
 void GPSProtocolFixtureTest::_protocol()
 {
-    gps_test_time = 0;
-    gps_test_warnings.clear();
+    GPSTestClock clock;
     try {
         scalarWireValues();
         independentNmeaFields();
-        independentSbfValidity();
-        independentSequences();
-        GPSNativePositionReport position{};
-        GPSNativeSatelliteReport satellites{};
-        independentIntegrityAndUtc();
-        relativeUtcUnavailable();
-        navigationEpochs();
+        independentSbfValidity(clock);
+        independentSequences(clock);
+        GPSDecodedPosition position{};
+        GPSDecodedSatellites satellites{};
+        independentIntegrityAndUtc(clock);
+        relativeUtcUnavailable(clock);
+        navigationEpochs(clock);
         CHECK(!UBX::receiverProfile(UBX::Board::u_blox9).rtcmOutput);
         CHECK(UBX::receiverProfile(UBX::Board::u_blox9_F9P_L1L2).rtcmOutput);
         CHECK(!UBX::receiverProfile(UBX::Board::u_blox10).usb);
@@ -463,7 +462,7 @@ void GPSProtocolFixtureTest::_protocol()
             std::vector<uint8_t> longPayload(schema.maximum + 1);
             CHECK(!UBX::validPayload(schema.message, longPayload));
         }
-        GPSNativeUBX ubx(captureGPSReports(noDevice(), position, &satellites));
+        UBXProtocol ubx(captureGPSReports(noDevice(clock), position, &satellites));
         ubx.setDecodeContext({.navigation = true});
         std::vector<uint8_t> relative(72);
         relative[0] = 0xb5;
@@ -508,12 +507,12 @@ void GPSProtocolFixtureTest::_protocol()
         CHECK(std::abs(position.navigation.longitudeDegrees + 2.056673696) < 1e-9);
         CHECK(std::abs(position.navigation.altitudeMslMeters - 233.5227) < 1e-6);
         CHECK(std::abs(position.navigation.horizontalAccuracyMeters - 0.335) < 1e-6);
-        GPSNativeSBF sbf(captureGPSReports(noDevice(), position, &satellites));
+        SBFProtocol sbf(captureGPSReports(noDevice(clock), position, &satellites));
         const auto geodetic = fixture("pvt-geodetic.sbf");
         for (auto byte : geodetic) {
             sbf.consume({&byte, 1});
         }
-        gps_test_time += 200000;
+        clock.advanceBy(200000);
         sbf.consume({});
         CHECK(std::abs(position.navigation.latitudeDegrees - 0.9310293523340808 * 180 / M_PI) < 1e-8);
         CHECK(std::abs(position.navigation.longitudeDegrees + 0.03921206770879602 * 180 / M_PI) < 1e-8);

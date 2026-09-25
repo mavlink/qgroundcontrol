@@ -183,6 +183,27 @@ void PositionManagerTest::_sourceSettingSelectsMode()
     QCOMPARE(modes.size(), 2);
 }
 
+void PositionManagerTest::_shutdownReleasesSources()
+{
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(SettingsManager::instance()->rtkSettings()->gcsPositionSource(),
+                       static_cast<int>(GPSPositionService::SourceMode::Automatic));
+    ManualScheduler scheduler;
+    QGCPositionManager manager(nullptr, &scheduler);
+    manager.init();
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+    QCOMPARE(manager.selectedSource(), GPSPositionService::SelectedSource::Simulated);
+    QVERIFY(manager.gcsPosition().isValid());
+
+    manager.shutdown();
+    QCOMPARE(manager.selectedSource(), GPSPositionService::SelectedSource::None);
+    QVERIFY(!manager.gcsPosition().isValid());
+    manager.init();
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(10)));
+    QCOMPARE(manager.selectedSource(), GPSPositionService::SelectedSource::None);
+    QVERIFY(!manager.acceptedObservation());
+}
+
 void PositionManagerTest::_simulatedHomeSelection_data()
 {
     QTest::addColumn<bool>("latestAlreadyValid");

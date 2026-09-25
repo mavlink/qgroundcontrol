@@ -564,9 +564,17 @@ void GPSPositionServiceTest::_notificationsCanSwitchOrDelete()
     QVERIFY(!service->gcsPosition().isValid());
     internal.publish(fix(scheduler).position);
     QVERIFY(service->gcsPosition().isValid());
-    connect(service.get(), &GPSPositionService::gcsPositionChanged, &observer, [&]() { service.reset(); });
+    QPointer<GPSPositionService> deleted;
+    connect(service.get(), &GPSPositionService::gcsPositionChanged, &observer, [&]() {
+        if (service) {
+            deleted = service.release();
+            deleted->deleteLater();
+        }
+    });
     service->setInternalPositionSource(nullptr, Status::NoSource);
     QVERIFY(!service);
+    QVERIFY(deleted);
+    QTRY_VERIFY_WITH_TIMEOUT(!deleted, TestTimeout::shortMs());
 }
 
 void GPSPositionServiceTest::_backendStatus()

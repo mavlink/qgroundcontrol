@@ -5,8 +5,8 @@
 
 #include <QtTest/QTest>
 
+#include "GPSDecodedData_p.h"
 #include "GPSFixQuality.h"
-#include "GPSNativeData_p.h"
 #include "GPSProtocol.h"
 #include "UnitTest.h"
 
@@ -29,7 +29,7 @@ struct CoordinateConversions : GPSProtocol
 
 }  // namespace
 
-class GPSNativeDataTest : public UnitTest
+class GPSDecodedDataTest : public UnitTest
 {
     Q_OBJECT
 
@@ -59,7 +59,7 @@ private slots:
     void _surveyProjection();
 };
 
-void GPSNativeDataTest::_ellipsoidEcefConversion_data()
+void GPSDecodedDataTest::_ellipsoidEcefConversion_data()
 {
     QTest::addColumn<GPSEllipsoidPosition>("position");
     QTest::addColumn<double>("x");
@@ -75,7 +75,7 @@ void GPSNativeDataTest::_ellipsoidEcefConversion_data()
     QTest::newRow("unknown") << GPSEllipsoidPosition{} << qQNaN() << qQNaN() << qQNaN();
 }
 
-void GPSNativeDataTest::_ellipsoidEcefConversion()
+void GPSDecodedDataTest::_ellipsoidEcefConversion()
 {
     QFETCH(GPSEllipsoidPosition, position);
     QFETCH(double, x);
@@ -102,9 +102,9 @@ void GPSNativeDataTest::_ellipsoidEcefConversion()
     QVERIFY(std::abs(restored.altitudeMeters - position.altitudeMeters) < 0.00001f);
 }
 
-void GPSNativeDataTest::_unreportedPosition()
+void GPSDecodedDataTest::_unreportedPosition()
 {
-    const auto report = GPSNativeData::position({}, {});
+    const auto report = GPSDecodedData::position({}, {});
     QCOMPARE(report.navigation.timestampUs, uint64_t{0});
     QCOMPARE(report.navigation.utcTimeUs, uint64_t{0});
     QCOMPARE(report.navigation.fixType, GPSPositionReport::FixType::Unknown);
@@ -131,7 +131,7 @@ void GPSNativeDataTest::_unreportedPosition()
     QVERIFY(!report.integrity.corrections.crcFailed.has_value());
 }
 
-void GPSNativeDataTest::_positionValues_data()
+void GPSDecodedDataTest::_positionValues_data()
 {
     QTest::addColumn<uint64_t>("timestamp");
     QTest::addColumn<uint64_t>("utcTime");
@@ -150,7 +150,7 @@ void GPSNativeDataTest::_positionValues_data()
     QTest::newRow("ellipsoid-only") << uint64_t{123} << uint64_t{456} << 47.5 << 8.2 << unknown << 7.5 << 1.25f;
 }
 
-void GPSNativeDataTest::_positionValues()
+void GPSDecodedDataTest::_positionValues()
 {
     QFETCH(uint64_t, timestamp);
     QFETCH(uint64_t, utcTime);
@@ -159,7 +159,7 @@ void GPSNativeDataTest::_positionValues()
     QFETCH(double, altitudeMsl);
     QFETCH(double, altitudeEllipsoid);
     QFETCH(float, quality);
-    GPSNativePositionReport source;
+    GPSDecodedPosition source;
     source.navigation.timestampUs = timestamp;
     source.navigation.utcTimeUs = utcTime;
     source.navigation.latitudeDegrees = latitude;
@@ -174,7 +174,7 @@ void GPSNativeDataTest::_positionValues()
     source.navigation.headingAccuracyRadians = quality * 6;
     GPSIntegrityReport diagnostic;
     diagnostic.timestampUs = 4'294'967'299;
-    const auto report = GPSNativeData::position(source, diagnostic);
+    const auto report = GPSDecodedData::position(source, diagnostic);
     QCOMPARE(report.navigation.timestampUs, timestamp);
     QCOMPARE(report.navigation.utcTimeUs, utcTime);
     QCOMPARE(report.navigation.latitudeDegrees, latitude);
@@ -198,7 +198,7 @@ void GPSNativeDataTest::_positionValues()
     QCOMPARE(report.integrity.timestampUs, diagnostic.timestampUs);
 }
 
-void GPSNativeDataTest::_velocityValidity_data()
+void GPSDecodedDataTest::_velocityValidity_data()
 {
     QTest::addColumn<GPSPositionReport::FixType>("fix");
     QTest::addColumn<bool>("valid");
@@ -211,18 +211,18 @@ void GPSNativeDataTest::_velocityValidity_data()
     QTest::newRow("stationary-north") << GPSPositionReport::FixType::Fix3D << true << 0.0f << 0.0f;
 }
 
-void GPSNativeDataTest::_velocityValidity()
+void GPSDecodedDataTest::_velocityValidity()
 {
     QFETCH(GPSPositionReport::FixType, fix);
     QFETCH(bool, valid);
     QFETCH(float, speed);
     QFETCH(float, course);
-    GPSNativePositionReport source;
+    GPSDecodedPosition source;
     source.navigation.fixType = fix;
     source.velocityValid = valid;
     source.navigation.speedMetersPerSecond = speed;
     source.navigation.courseRadians = course;
-    const auto report = GPSNativeData::position(source, {});
+    const auto report = GPSDecodedData::position(source, {});
     if (valid) {
         QCOMPARE(report.navigation.speedMetersPerSecond, speed);
         QCOMPARE(report.navigation.courseRadians, course);
@@ -232,7 +232,7 @@ void GPSNativeDataTest::_velocityValidity()
     }
 }
 
-void GPSNativeDataTest::_fixTypes_data()
+void GPSDecodedDataTest::_fixTypes_data()
 {
     QTest::addColumn<int>("native");
     QTest::addColumn<GPSPositionReport::FixType>("expected");
@@ -252,17 +252,17 @@ void GPSNativeDataTest::_fixTypes_data()
     QTest::newRow("out-of-byte-range") << 256 << Fix::Unknown;
 }
 
-void GPSNativeDataTest::_fixTypes()
+void GPSDecodedDataTest::_fixTypes()
 {
     QFETCH(int, native);
     QFETCH(GPSPositionReport::FixType, expected);
-    GPSNativePositionReport source;
+    GPSDecodedPosition source;
     QCOMPARE(gpsFixQualityFromValue(native), expected);
     source.navigation.fixType = static_cast<GPSPositionReport::FixType>(native);
-    QCOMPARE(GPSNativeData::position(source, {}).navigation.fixType, expected);
+    QCOMPARE(GPSDecodedData::position(source, {}).navigation.fixType, expected);
 }
 
-void GPSNativeDataTest::_integrityStates_data()
+void GPSDecodedDataTest::_integrityStates_data()
 {
     QTest::addColumn<int>("native");
     QTest::addColumn<GPSIntegrityReport::JammingState>("jamming");
@@ -281,7 +281,7 @@ void GPSNativeDataTest::_integrityStates_data()
     QTest::newRow("out-of-byte-range") << 256 << Jamming::Unknown << Spoofing::Unknown << Use::Unknown;
 }
 
-void GPSNativeDataTest::_integrityStates()
+void GPSDecodedDataTest::_integrityStates()
 {
     QFETCH(int, native);
     QFETCH(GPSIntegrityReport::JammingState, jamming);
@@ -297,13 +297,13 @@ void GPSNativeDataTest::_integrityStates()
     diagnostic.jamming.timestampUs = 100;
     diagnostic.spoofing.timestampUs = 100;
     diagnostic.corrections.timestampUs = 100;
-    const auto integrity = GPSNativeData::position({.navigation = {.timestampUs = 100}}, diagnostic).integrity;
+    const auto integrity = GPSDecodedData::position({.navigation = {.timestampUs = 100}}, diagnostic).integrity;
     QCOMPARE(integrity.jamming.state, jamming);
     QCOMPARE(integrity.spoofing.state, spoofing);
     QCOMPARE(integrity.corrections.use, correctionUse);
 }
 
-void GPSNativeDataTest::_integrityReceipts()
+void GPSDecodedDataTest::_integrityReceipts()
 {
     GPSIntegrityReport diagnostic;
     diagnostic.timestampUs = 7'000'000;
@@ -317,7 +317,7 @@ void GPSNativeDataTest::_integrityReceipts()
     diagnostic.corrections.crcFailed = false;
     diagnostic.corrections.use = GPSIntegrityReport::CorrectionUse::Used;
     diagnostic.corrections.protocol = GPSIntegrityReport::CorrectionProtocol::RTCM3;
-    const auto report = GPSNativeData::position({.navigation = {.timestampUs = 7'000'000}}, diagnostic);
+    const auto report = GPSDecodedData::position({.navigation = {.timestampUs = 7'000'000}}, diagnostic);
     QCOMPARE(report.integrity.jamming.state, GPSIntegrityReport::JammingState::Unknown);
     QCOMPARE(report.integrity.jamming.timestampUs, uint64_t{1'000'000});
     QCOMPARE(report.integrity.spoofing.state, GPSIntegrityReport::SpoofingState::Indicated);
@@ -327,11 +327,11 @@ void GPSNativeDataTest::_integrityReceipts()
     QCOMPARE(report.integrity.corrections.crcFailed, std::optional<bool>{false});
     QCOMPARE(report.integrity.corrections.protocol, GPSIntegrityReport::CorrectionProtocol::RTCM3);
     QCOMPARE(report.integrity.corrections.timestampUs, uint64_t{6'000'000});
-    const auto earlierEpoch = GPSNativeData::position({.navigation = {.timestampUs = 6'500'000}}, diagnostic);
+    const auto earlierEpoch = GPSDecodedData::position({.navigation = {.timestampUs = 6'500'000}}, diagnostic);
     QCOMPARE(earlierEpoch.integrity.spoofing.state, GPSIntegrityReport::SpoofingState::Indicated);
     QCOMPARE(earlierEpoch.integrity.jamming.state, GPSIntegrityReport::JammingState::Unknown);
     const auto delayedPublication =
-        GPSNativeData::position({.navigation = {.timestampUs = 6'500'000}}, diagnostic, 8'000'000);
+        GPSDecodedData::position({.navigation = {.timestampUs = 6'500'000}}, diagnostic, 8'000'000);
     QVERIFY(!delayedPublication.integrity.rf.noisePerMillisecond);
     QCOMPARE(delayedPublication.integrity.spoofing.state, GPSIntegrityReport::SpoofingState::Indicated);
     QCOMPARE(delayedPublication.integrity.rf.timestampUs, uint64_t{3'000'000});
@@ -348,7 +348,7 @@ void GPSNativeDataTest::_integrityReceipts()
     QCOMPARE(future.corrections.use, GPSIntegrityReport::CorrectionUse::Used);
 }
 
-void GPSNativeDataTest::_optionalValues_data()
+void GPSDecodedDataTest::_optionalValues_data()
 {
     QTest::addColumn<uint8_t>("satellites");
     QTest::addColumn<GPSIntegrityReport>("diagnostic");
@@ -371,16 +371,16 @@ void GPSNativeDataTest::_optionalValues_data()
         << uint8_t{255} << GPSIntegrityReport{.corrections = {.use = GPSIntegrityReport::CorrectionUse::Used}};
 }
 
-void GPSNativeDataTest::_optionalValues()
+void GPSDecodedDataTest::_optionalValues()
 {
     QFETCH(uint8_t, satellites);
     QFETCH(GPSIntegrityReport, diagnostic);
-    GPSNativePositionReport source;
+    GPSDecodedPosition source;
     source.navigation.timestampUs = 100;
     diagnostic.rf.timestampUs = 100;
     diagnostic.corrections.timestampUs = 100;
     source.navigation.satellitesUsed = satellites;
-    const auto report = GPSNativeData::position(source, diagnostic);
+    const auto report = GPSDecodedData::position(source, diagnostic);
     QCOMPARE(report.navigation.satellitesUsed.has_value(), satellites != 255);
     if (satellites != 255) {
         QCOMPARE(*report.navigation.satellitesUsed, satellites);
@@ -391,11 +391,11 @@ void GPSNativeDataTest::_optionalValues()
     QCOMPARE(report.integrity.corrections.crcFailed, diagnostic.corrections.crcFailed);
 }
 
-void GPSNativeDataTest::_satelliteCounts_data()
+void GPSDecodedDataTest::_satelliteCounts_data()
 {
     QTest::addColumn<int>("nativeCount");
     QTest::addColumn<int>("expectedCount");
-    constexpr int LIMIT = GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES;
+    constexpr int LIMIT = GPSDecodedSatellites::SAT_INFO_MAX_SATELLITES;
     QTest::newRow("empty") << 0 << 0;
     QTest::newRow("one") << 1 << 1;
     QTest::newRow("limit") << LIMIT << LIMIT;
@@ -403,28 +403,28 @@ void GPSNativeDataTest::_satelliteCounts_data()
     QTest::newRow("negative") << -1 << 0;
 }
 
-void GPSNativeDataTest::_satelliteCounts()
+void GPSDecodedDataTest::_satelliteCounts()
 {
     QFETCH(int, nativeCount);
     QFETCH(int, expectedCount);
-    GPSNativeSatelliteReport source;
+    GPSDecodedSatellites source;
     auto* system = source.ensureConstellation(GPSConstellation::Unknown);
     QVERIFY(system);
     system->inViewTimestampUs = 4'294'967'297;
     system->inView = nativeCount;
     system->inUseTimestampUs = system->inViewTimestampUs;
     system->inUse = nativeCount;
-    GPSNativeData::SatelliteSnapshot snapshot;
+    GPSDecodedData::SatelliteSnapshot snapshot;
     const auto report = snapshot.update(source);
     QCOMPARE(report.timestampUs, system->inViewTimestampUs);
     QCOMPARE(report.inView, std::optional<int>{expectedCount});
     QCOMPARE(report.used, std::optional<int>{expectedCount});
 }
 
-void GPSNativeDataTest::_satelliteSnapshotScopes()
+void GPSDecodedDataTest::_satelliteSnapshotScopes()
 {
-    GPSNativeData::SatelliteSnapshot snapshot;
-    GPSNativeSatelliteReport whole;
+    GPSDecodedData::SatelliteSnapshot snapshot;
+    GPSDecodedSatellites whole;
     auto* gps = whole.ensureConstellation(GPSConstellation::GPS);
     QVERIFY(gps);
     gps->inViewTimestampUs = 100;
@@ -444,7 +444,7 @@ void GPSNativeDataTest::_satelliteSnapshotScopes()
     QCOMPARE(report.inView, std::optional<int>{3});
     QVERIFY(!report.used);
 
-    GPSNativeSatelliteReport scoped;
+    GPSDecodedSatellites scoped;
     scoped.fullSnapshot = false;
     glonass = scoped.ensureConstellation(GPSConstellation::GLONASS);
     QVERIFY(glonass);
@@ -491,18 +491,18 @@ void GPSNativeDataTest::_satelliteSnapshotScopes()
     QCOMPARE(report.used, std::optional<int>{0});
 }
 
-void GPSNativeDataTest::_satelliteSnapshotBounds()
+void GPSDecodedDataTest::_satelliteSnapshotBounds()
 {
-    GPSNativeData::SatelliteSnapshot snapshot;
-    GPSNativeSatelliteReport full;
+    GPSDecodedData::SatelliteSnapshot snapshot;
+    GPSDecodedSatellites full;
     auto* gps = full.ensureConstellation(GPSConstellation::GPS);
     QVERIFY(gps);
     gps->inViewTimestampUs = 4'294'967'296;
-    gps->inView = GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES;
+    gps->inView = GPSDecodedSatellites::SAT_INFO_MAX_SATELLITES;
     gps->inUseTimestampUs = gps->inViewTimestampUs;
-    gps->inUse = GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES;
-    QCOMPARE(snapshot.update(full).inView, std::optional<int>{int(GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES)});
-    GPSNativeSatelliteReport extra;
+    gps->inUse = GPSDecodedSatellites::SAT_INFO_MAX_SATELLITES;
+    QCOMPARE(snapshot.update(full).inView, std::optional<int>{int(GPSDecodedSatellites::SAT_INFO_MAX_SATELLITES)});
+    GPSDecodedSatellites extra;
     extra.fullSnapshot = false;
     auto* galileo = extra.ensureConstellation(GPSConstellation::Galileo);
     QVERIFY(galileo);
@@ -511,7 +511,7 @@ void GPSNativeDataTest::_satelliteSnapshotBounds()
     galileo->inUseTimestampUs = galileo->inViewTimestampUs;
     galileo->inUse = 1;
     const auto report = snapshot.update(extra);
-    QCOMPARE(report.inView, std::optional<int>{int(GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES) + 1});
+    QCOMPARE(report.inView, std::optional<int>{int(GPSDecodedSatellites::SAT_INFO_MAX_SATELLITES) + 1});
     QCOMPARE(report.timestampUs, galileo->inViewTimestampUs);
     full = {};
     auto* emptyGps = full.ensureConstellation(GPSConstellation::GPS);
@@ -520,10 +520,10 @@ void GPSNativeDataTest::_satelliteSnapshotBounds()
     QCOMPARE(snapshot.update(full).inView, std::optional<int>{0});
 }
 
-void GPSNativeDataTest::_satelliteSnapshotExpiry()
+void GPSDecodedDataTest::_satelliteSnapshotExpiry()
 {
-    GPSNativeData::SatelliteSnapshot state;
-    GPSNativeSatelliteReport gps;
+    GPSDecodedData::SatelliteSnapshot state;
+    GPSDecodedSatellites gps;
     gps.fullSnapshot = false;
     auto* gpsGroup = gps.ensureConstellation(GPSConstellation::GPS);
     QVERIFY(gpsGroup);
@@ -532,7 +532,7 @@ void GPSNativeDataTest::_satelliteSnapshotExpiry()
     gpsGroup->inUseTimestampUs = 1'000'000;
     gpsGroup->inUse = 0;
     state.update(gps);
-    GPSNativeSatelliteReport glonass;
+    GPSDecodedSatellites glonass;
     glonass.fullSnapshot = false;
     auto* glonassGroup = glonass.ensureConstellation(GPSConstellation::GLONASS);
     QVERIFY(glonassGroup);
@@ -557,13 +557,13 @@ void GPSNativeDataTest::_satelliteSnapshotExpiry()
     QCOMPARE(snapshot.inView, std::optional<int>{2});
     QVERIFY(!snapshot.used);
 
-    GPSNativeSatelliteReport usage;
+    GPSDecodedSatellites usage;
     usage.fullSnapshot = false;
     auto* usageGroup = usage.ensureConstellation(GPSConstellation::GPS);
     QVERIFY(usageGroup);
     usageGroup->inUseTimestampUs = 7'000'000;
     usageGroup->inUse = 1;
-    GPSNativeData::SatelliteSnapshot usageOnly;
+    GPSDecodedData::SatelliteSnapshot usageOnly;
     const auto unavailableView = usageOnly.update(usage);
     QCOMPARE(unavailableView.timestampUs, uint64_t{0});
     QVERIFY(!unavailableView.inView);
@@ -594,14 +594,14 @@ void GPSNativeDataTest::_satelliteSnapshotExpiry()
     QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + 5'000'001));
 }
 
-void GPSNativeDataTest::_satelliteUsageCombination()
+void GPSDecodedDataTest::_satelliteUsageCombination()
 {
-    GPSNativeData::SatelliteSnapshot snapshot;
-    auto countOnly = snapshot.update(GPSNativeSatelliteUsageReport{.timestampUs = 100, .usedCount = 12});
+    GPSDecodedData::SatelliteSnapshot snapshot;
+    auto countOnly = snapshot.update(GPSDecodedSatelliteUsage{.timestampUs = 100, .usedCount = 12});
     QVERIFY(!countOnly.inView);
     QCOMPARE(countOnly.used, std::optional<int>{12});
 
-    GPSNativeSatelliteReport view;
+    GPSDecodedSatellites view;
     auto* gps = view.ensureConstellation(GPSConstellation::GPS);
     QVERIFY(gps);
     gps->inViewTimestampUs = 200;
@@ -617,11 +617,11 @@ void GPSNativeDataTest::_satelliteUsageCombination()
     QCOMPARE(report.inView, std::optional<int>{4});
     QCOMPARE(report.used, std::optional<int>{2});
 
-    countOnly = snapshot.update(GPSNativeSatelliteUsageReport{.timestampUs = 400, .usedCount = 7});
+    countOnly = snapshot.update(GPSDecodedSatelliteUsage{.timestampUs = 400, .usedCount = 7});
     QCOMPARE(countOnly.inView, std::optional<int>{4});
     QCOMPARE(countOnly.used, std::optional<int>{7});
 
-    countOnly = snapshot.update(GPSNativeSatelliteUsageReport{.timestampUs = 500});
+    countOnly = snapshot.update(GPSDecodedSatelliteUsage{.timestampUs = 500});
     QCOMPARE(countOnly.inView, std::optional<int>{4});
     QVERIFY(!countOnly.used);
 
@@ -634,14 +634,14 @@ void GPSNativeDataTest::_satelliteUsageCombination()
     QCOMPARE(report.used, std::optional<int>{0});
 }
 
-void GPSNativeDataTest::_satelliteUsageExpiryFallback()
+void GPSDecodedDataTest::_satelliteUsageExpiryFallback()
 {
-    GPSNativeData::SatelliteSnapshot snapshot;
-    auto countOnly = snapshot.update(GPSNativeSatelliteUsageReport{.timestampUs = 500'000, .usedCount = 9});
+    GPSDecodedData::SatelliteSnapshot snapshot;
+    auto countOnly = snapshot.update(GPSDecodedSatelliteUsage{.timestampUs = 500'000, .usedCount = 9});
     QVERIFY(!countOnly.inView);
     QCOMPARE(countOnly.used, std::optional<int>{9});
 
-    GPSNativeSatelliteReport view;
+    GPSDecodedSatellites view;
     auto* gps = view.ensureConstellation(GPSConstellation::GPS);
     QVERIFY(gps);
     gps->inViewTimestampUs = 1'000'000;
@@ -657,7 +657,7 @@ void GPSNativeDataTest::_satelliteUsageExpiryFallback()
     QCOMPARE(expired->used, std::optional<int>{9});
 }
 
-void GPSNativeDataTest::_surveyProjection_data()
+void GPSDecodedDataTest::_surveyProjection_data()
 {
     QTest::addColumn<bool>("altitudeKnown");
     QTest::addColumn<bool>("accuracyKnown");
@@ -673,7 +673,7 @@ void GPSNativeDataTest::_surveyProjection_data()
                                        << true << false;
 }
 
-void GPSNativeDataTest::_surveyProjection()
+void GPSDecodedDataTest::_surveyProjection()
 {
     QFETCH(bool, altitudeKnown);
     QFETCH(bool, accuracyKnown);
@@ -681,7 +681,7 @@ void GPSNativeDataTest::_surveyProjection()
     QFETCH(uint32_t, duration);
     QFETCH(bool, valid);
     QFETCH(bool, active);
-    GPSNativeSurveyReport source;
+    GPSDecodedSurvey source;
     source.survey.position.latitudeDegrees = -47.123456789;
     source.survey.position.longitudeDegrees = 179.987654321;
     if (altitudeKnown) {
@@ -712,6 +712,6 @@ void GPSNativeDataTest::_surveyProjection()
     QCOMPARE(report.active, active);
 }
 
-UT_REGISTER_TEST(GPSNativeDataTest, TestLabel::Unit)
+UT_REGISTER_TEST(GPSDecodedDataTest, TestLabel::Unit)
 
-#include "GPSNativeDataTest.moc"
+#include "GPSDecodedDataTest.moc"

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <functional>
 #include <map>
 #include <optional>
 #include <span>
@@ -13,6 +12,7 @@
 #include <QtCore/QList>
 #include <QtCore/QString>
 
+#include "GPSTestClock.h"
 #include "Support/ScriptedReceiver.h"
 
 /// Stateful UBX model: receiver configuration survives transport sessions.
@@ -74,7 +74,7 @@ public:
         Cancelled
     };
 
-    explicit UBXReceiverModel(Receiver receiver);
+    UBXReceiverModel(Receiver receiver, GPSTestClock& clock);
 
     void queueFrame(uint8_t messageClass, uint8_t messageId, const QByteArray& payload);
     void queueFrame(uint16_t message, std::span<const uint8_t> payload);
@@ -90,6 +90,8 @@ public:
     bool readError() const { return _readError; }
 
     bool modern() const { return _modern; }
+
+    GPSTestClock& clock() const { return *_clock; }
 
     bool lowLevelProtocolBehavior = false;
     bool wireValid = true;
@@ -159,7 +161,6 @@ public:
     uint64_t startedAt = 0;
     GPSIntegrityReport integrity;
     unsigned integrityCount = 0;
-    std::function<uint64_t()> nowUs;
     int disableCommands = 0;
     int disableAcksRead = 0;
     int timeModeReads = 0;
@@ -197,8 +198,8 @@ private:
     static QByteArray _frame(uint16_t message, std::span<const uint8_t> payload);
     void _queueResponse(ScriptedReceiver& receiver, const Response& response);
     QByteArray _lowLevelIdentityPayload();
-    uint64_t _nowUs() const;
 
+    GPSTestClock* _clock;
     ScriptedReceiver* _receiver = nullptr;
     bool _modern = false;
     bool _supportsTimeMode = true;

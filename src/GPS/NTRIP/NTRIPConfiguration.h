@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QDebug>
 #include <QtCore/QString>
 #include <QtCore/QVector>
 
@@ -33,3 +34,7 @@ struct NTRIPConfiguration
     NTRIPRtcmFilterConfig filter;
     bool operator==(const NTRIPConfiguration&) const = default;
 };
+
+QDebug operator<<(QDebug debug, const NTRIPConnectionConfig& configuration);
+QDebug operator<<(QDebug debug, const NTRIPRtcmFilterConfig& configuration);
+QDebug operator<<(QDebug debug, const NTRIPConfiguration& configuration);

@@ -10,8 +10,9 @@
 
 #include "GPSManager.h"
 #include "GPSNotificationQueue.h"
-#include "GPSRTKFactGroup.h"
 #include "GPSRtk.h"
+#include "GPSSerialPortManagerAdapter.h"
+#include "GPSTransport.h"
 #include "ManualScheduler.h"
 #include "NTRIPManager.h"
 #include "PositionManager.h"
@@ -20,7 +21,6 @@
 #include "RTKSettings.h"
 #include "ScriptedProvider.h"
 #include "SerialPortManager.h"
-#include "TCPGPSTransport.h"
 
 namespace {
 using Port = SerialPortManager::Port;
@@ -153,7 +153,7 @@ public:
         return record({.kind = ConnectCall::Kind::Tcp,
                        .endpoint = QStringLiteral("%1:%2").arg(host).arg(port),
                        .type = type,
-                       .baudRate = TCPGPSTransport::FIXED_BAUDRATE,
+                       .baudRate = GPSTransport::BRIDGE_BAUDRATE,
                        .allowPersistentChanges = allowPersistentChanges});
     }
 
@@ -167,7 +167,7 @@ public:
     }
 
 #ifndef QGC_NO_SERIAL_LINK
-    SerialPortManager* serialPorts() const override { return const_cast<SerialPortManager*>(&ports); }
+    GPSSerialPorts* serialPorts() const override { return &serialPortAdapter; }
 
     bool connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges) override
     {
@@ -207,7 +207,8 @@ public:
 
     QObject owner;
     GPSNotificationQueue queue{&owner};
-    mutable SerialPortManager ports;
+    SerialPortManager ports;
+    mutable GPSSerialPortManagerAdapter serialPortAdapter{&ports};
     QList<ConnectCall> calls;
     QStringList discoveredBoardNames;
     QStringList errorMessages;
@@ -251,7 +252,7 @@ void RTKConnectionPolicyTest::_manualRetryDrivesTarget()
     QSignalSpy autoDisabled(&harness.policy, &RTKConnectionPolicy::autoConnectDisabled);
     const QString expected = QStringLiteral("tcp:rtk.test:2101:%1:%2:%3")
                                  .arg(static_cast<int>(GPSType::passive))
-                                 .arg(TCPGPSTransport::FIXED_BAUDRATE)
+                                 .arg(GPSTransport::BRIDGE_BAUDRATE)
                                  .arg(false);
 
     QVERIFY(harness.policy.connectConfigured(false));
@@ -262,7 +263,7 @@ void RTKConnectionPolicyTest::_manualRetryDrivesTarget()
     QSignalSpy reconnecting(&harness.policy, &RTKConnectionPolicy::reconnectingChanged);
     harness.target.connected = false;
     harness.target.acceptConnections = false;
-    QVERIFY(!harness.policy.sessionEnded(GPSConnectionError::DeviceError, {}, false).isEmpty());
+    QCOMPARE(harness.policy.sessionEnded(false), RTKSessionOutcome::Retrying);
     QVERIFY(harness.policy.reconnecting());
     harness.policy.update();
     QCOMPARE(harness.target.calls.size(), 1);
@@ -347,6 +348,9 @@ void RTKConnectionPolicyTest::_autoDiscoveryWaitsReconnectsAndDisables()
     QVERIFY(harness.target.connected);
     harness.policy.update();
     QCOMPARE(harness.target.calls.size(), 1);
+    harness.target.connected = false;
+    QCOMPARE(harness.policy.sessionEnded(false), RTKSessionOutcome::None);
+    QVERIFY(harness.policy.retryPending());
 
     inventory.clear();
     QTRY_VERIFY_WITH_TIMEOUT(([&] {
@@ -364,13 +368,22 @@ void RTKConnectionPolicyTest::_autoDiscoveryWaitsReconnectsAndDisables()
     harness.policy.update();
     QCOMPARE(harness.target.calls.size(), 2);
 
+    // An unplugged receiver is left to discovery instead of a retry.
+    harness.target.connected = false;
+    QCOMPARE(harness.policy.sessionEnded(true), RTKSessionOutcome::Unplugged);
+    QVERIFY(!harness.policy.retryPending());
+    harness.policy.update();
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(6)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 3);
+
     configuration.autoConnect = false;
     harness.policy.setConfiguration(configuration);
     harness.policy.update();
     QCOMPARE(harness.target.disconnects, 2);
     QVERIFY(!harness.target.connected);
     harness.policy.update();
-    QCOMPARE(harness.target.calls.size(), 2);
+    QCOMPARE(harness.target.calls.size(), 3);
 }
 
 void RTKConnectionPolicyTest::_tcpModeSkipsSerialDiscovery()
@@ -591,7 +604,7 @@ void RTKConnectionPolicyTest::_manualRetryWaitsForReturningPort()
 
     inventory.clear();
     harness.target.connected = false;
-    QVERIFY(harness.policy.sessionEnded(GPSConnectionError::DeviceError, {}, true).contains(QStringLiteral("plugged")));
+    QCOMPARE(harness.policy.sessionEnded(true), RTKSessionOutcome::WaitingForPort);
     QVERIFY(harness.policy.reconnecting());
     QTRY_VERIFY_WITH_TIMEOUT(harness.target.ports.availablePorts().isEmpty(), TestTimeout::mediumMs());
     QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(30)));
@@ -624,7 +637,7 @@ void RTKConnectionPolicyTest::_configurationChangeCancelsManualRetry()
     QVERIFY(harness.policy.connectConfigured(false));
     harness.policy.receiverReady();
     harness.target.connected = false;
-    QVERIFY(!harness.policy.sessionEnded(GPSConnectionError::DeviceError, {}, false).isEmpty());
+    QCOMPARE(harness.policy.sessionEnded(false), RTKSessionOutcome::Retrying);
     QVERIFY(harness.policy.reconnecting());
     QVERIFY(harness.policy.retryPending());
 
@@ -708,9 +721,10 @@ void RTKConnectionPolicyTest::_shutdownDuringConnectionTick()
         ++enumerations;
         return QList<Port>{rtkPort()};
     });
+    GPSSerialPortManagerAdapter serialPorts(&ports);
     GPSManager manager;
     manager.gpsRtk()->setConfiguration(serialConfiguration(true));
-    manager.gpsRtk()->setSerialPortManager(&ports);
+    manager.gpsRtk()->setSerialPorts(&serialPorts);
     connect(&ports, &SerialPortManager::portsEnumerated, &manager, &GPSManager::shutdown);
     manager._updateConnections();
     QVERIFY(manager._shutdown);
@@ -734,13 +748,14 @@ void RTKConnectionPolicyTest::_manualRetryRecreatesGpsRtkSession()
     QCOMPARE(providers.count(), 1);
     auto* first = providers.current();
     QVERIFY(first);
-    QCOMPARE(first->capturedConfig().baudRate, TCPGPSTransport::FIXED_BAUDRATE);
+    QCOMPARE(first->capturedConfig().baudRate, GPSTransport::BRIDGE_BAUDRATE);
     QVERIFY(!first->capturedConfig().allowPersistentChanges);
     first->ready();
     QVERIFY(receiver.connected());
     QVERIFY(!receiver.reconnecting());
 
     first->fail(GPSConnectionError::DeviceError);
+    QCOMPARE(receiver.errorMessage(), GPSRtk::tr("Receiver connection lost. Reconnecting automatically."));
     QVERIFY(receiver.reconnecting());
     QVERIFY(!receiver.hasReceiver());
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
@@ -763,13 +778,15 @@ void RTKConnectionPolicyTest::_serialPolicyIntegrationUsesSelectedPort()
          QStringLiteral("USB serial")},
     };
     SerialPortManager ports(nullptr, [&] { return inventory; });
-    GPSRtk receiver;
+    ManualScheduler scheduler;
+    GPSRtk receiver(nullptr, &scheduler);
     ScriptedProviderFactory providers;
     receiver.setProviderFactory(providers.providerFactory());
     auto configuration = serialConfiguration(true);
     configuration.serialDevice = QStringLiteral("/test/selected");
     receiver.setConfiguration(configuration);
-    receiver.setSerialPortManager(&ports);
+    GPSSerialPortManagerAdapter serialPorts(&ports);
+    receiver.setSerialPorts(&serialPorts);
     QSignalSpy autoDisabled(&receiver, &GPSRtk::autoConnectDisabled);
 
     QVERIFY(receiver.connectConfiguredGPS());
@@ -789,12 +806,12 @@ void RTKConnectionPolicyTest::_serialPolicyIntegrationUsesSelectedPort()
     provider->survey(survey);
     QVERIFY(receiver.connected());
     QCOMPARE(receiver.receiverIdentity(), QStringLiteral("ZED-F9P HPG 1.32"));
-    QVERIFY(receiver.gpsRtkFactGroup()->active()->rawValue().toBool());
-    QVERIFY(receiver.gpsRtkFactGroup()->valid()->rawValue().toBool());
+    QVERIFY(receiver.status().active);
+    QVERIFY(receiver.status().valid);
 
     inventory.removeLast();
     emit ports.portsEnumerated({QStringLiteral("/test/unselected")});
-    QVERIFY(receiver.errorMessage().contains(QStringLiteral("plugged back in")));
+    QCOMPARE(receiver.errorMessage(), GPSRtk::tr("Receiver unplugged. Reconnecting when it is plugged back in."));
     QVERIFY(receiver.reconnecting());
     QVERIFY(!receiver.hasReceiver());
     provider->finish();
@@ -808,6 +825,26 @@ void RTKConnectionPolicyTest::_serialPolicyIntegrationUsesSelectedPort()
                              TestTimeout::mediumMs());
     QCOMPARE(receiver.activeEndpoint(), QStringLiteral("/test/selected"));
     receiver.disconnectConfiguredGPS();
+    QVERIFY(!receiver.reconnecting());
+
+    // Discovery owns the next session, so unplugging that receiver leaves its return to discovery.
+    inventory.append(rtkPort(QStringLiteral("/test/discovered")));
+    QTRY_VERIFY_WITH_TIMEOUT(([&] {
+                                 receiver.connectionPolicy()->update();
+                                 const bool advanced = scheduler.advanceBy(std::chrono::seconds(6));
+                                 receiver.connectionPolicy()->update();
+                                 return advanced && providers.count() == 3;
+                             })(),
+                             TestTimeout::mediumMs());
+    QCOMPARE(receiver.activeEndpoint(), QStringLiteral("/test/discovered"));
+    emit ports.portsEnumerated({QStringLiteral("/test/unselected")});
+    QCOMPARE(receiver.errorMessage(), GPSRtk::tr("Receiver unplugged."));
+    QVERIFY(!receiver.reconnecting());
+
+    // A connection the policy does not own leaves the next step to the user.
+    QVERIFY(receiver.connectSerial(QStringLiteral("/test/unselected"), GPSType::ublox, 115200, false));
+    emit ports.portsEnumerated({});
+    QCOMPARE(receiver.errorMessage(), GPSRtk::tr("Receiver unplugged. Select a device and reconnect."));
     QVERIFY(!receiver.reconnecting());
 #else
     QSKIP("Manual serial connection requires serial support");

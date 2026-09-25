@@ -57,7 +57,7 @@ private:
 };
 
 /// Read-only receiver input; setting the local serial baud rate never sends a receiver command.
-class GPSNativePassive : public GPSAsciiProtocol
+class PassiveProtocol : public GPSAsciiProtocol
 {
 public:
     using GPSAsciiProtocol::GPSAsciiProtocol;

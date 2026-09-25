@@ -6,7 +6,7 @@
 
 #include "NMEASentence.h"
 #include "RTCMFramer.h"
-#include "UBX/GPSDriverUBX.h"
+#include "UBX/UBXProtocol.h"
 #include "UBXMessageCodec.h"
 
 namespace {
@@ -65,14 +65,13 @@ tm utcFields(const Time& time)
 
 /// Fixed-size satellite blocks follow the header; a truncated block ends the report at the preceding entry.
 template <typename Header, typename Block, typename Count, typename Assign>
-void decodeSatelliteBlocks(std::span<const uint8_t> payload, GPSNativeSatelliteReport& report, Count count,
-                           Assign assign)
+void decodeSatelliteBlocks(std::span<const uint8_t> payload, GPSDecodedSatellites& report, Count count, Assign assign)
 {
     const auto header = UBX::MessageCodec<Header>::block(payload);
     if (!header) {
         return;
     }
-    const auto satelliteCount = std::min<size_t>(count(*header), GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES);
+    const auto satelliteCount = std::min<size_t>(count(*header), GPSDecodedSatellites::SAT_INFO_MAX_SATELLITES);
     if (satelliteCount == 0) {
         (void) report.ensureConstellation(GPSConstellation::Unknown);
     }
@@ -87,7 +86,7 @@ void decodeSatelliteBlocks(std::span<const uint8_t> payload, GPSNativeSatelliteR
 }
 }  // namespace
 
-int GPSNativeUBX::parseChar(uint8_t byte)
+int UBXProtocol::parseChar(uint8_t byte)
 {
     if (_rtcm_parsing && _frameDecoder.idle() && _rtcm_parsing->ownsByte(byte)) {
         _rtcm_parsing->addByte(byte);
@@ -105,7 +104,7 @@ int GPSNativeUBX::parseChar(uint8_t byte)
     return decodeValidatedPayload(frame->message, std::span(frame->payload).first(frame->length));
 }
 
-bool GPSNativeUBX::payloadRxInit(uint16_t message, std::span<const uint8_t> payload)
+bool UBXProtocol::payloadRxInit(uint16_t message, std::span<const uint8_t> payload)
 {
     auto state = UBX_RXMSG_HANDLE;
 
@@ -217,7 +216,7 @@ bool GPSNativeUBX::payloadRxInit(uint16_t message, std::span<const uint8_t> payl
     return state == UBX_RXMSG_HANDLE;
 }
 
-void GPSNativeUBX::decodeNavSat(std::span<const uint8_t> payload)
+void UBXProtocol::decodeNavSat(std::span<const uint8_t> payload)
 {
     constexpr GPSConstellation systems[] = {
         GPSConstellation::GPS,     GPSConstellation::SBAS, GPSConstellation::Galileo, GPSConstellation::BeiDou,
@@ -225,32 +224,19 @@ void GPSNativeUBX::decodeNavSat(std::span<const uint8_t> payload)
     decodeSatelliteBlocks<ubx_payload_rx_nav_sat_part1_t, ubx_payload_rx_nav_sat_part2_t>(
         payload, *_satellites, [](const auto& header) { return header.numSvs; },
         [&systems](auto& report, const auto& wire) {
-            const auto constellation =
-                wire.gnssId < std::size(systems) ? systems[wire.gnssId] : GPSConstellation::Unknown;
-            auto* system = report.ensureConstellation(constellation);
-            if (!system) {
-                return;
-            }
-            ++system->inView;
-            system->inUse = system->inUse.value_or(0) + ((wire.flags & 8) != 0 ? 1 : 0);
+            report.addSatellite(wire.gnssId < std::size(systems) ? systems[wire.gnssId] : GPSConstellation::Unknown,
+                                (wire.flags & 8) != 0);
         });
 }
 
-void GPSNativeUBX::decodeNavSvinfo(std::span<const uint8_t> payload)
+void UBXProtocol::decodeNavSvinfo(std::span<const uint8_t> payload)
 {
     decodeSatelliteBlocks<ubx_payload_rx_nav_svinfo_part1_t, ubx_payload_rx_nav_svinfo_part2_t>(
         payload, *_satellites, [](const auto& header) { return header.numCh; },
-        [](auto& report, const auto& wire) {
-            auto* system = report.ensureConstellation(GPSConstellation::Unknown);
-            if (!system) {
-                return;
-            }
-            ++system->inView;
-            system->inUse = system->inUse.value_or(0) + ((wire.flags & 1) != 0 ? 1 : 0);
-        });
+        [](auto& report, const auto& wire) { report.addSatellite(GPSConstellation::Unknown, (wire.flags & 1) != 0); });
 }
 
-void GPSNativeUBX::decodeMonVer(std::span<const uint8_t> payload)
+void UBXProtocol::decodeMonVer(std::span<const uint8_t> payload)
 {
     _identity = {};
     auto decoded_payload_rx_mon_ver_part1 = UBX::MessageCodec<ubx_payload_rx_mon_ver_part1_t>::block(payload);
@@ -369,7 +355,7 @@ void GPSNativeUBX::decodeMonVer(std::span<const uint8_t> payload)
     }
 }
 
-int GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, GPSNativePositionReport& position)
+int UBXProtocol::payloadRxDone(uint16_t message, std::span<const uint8_t> payload, GPSDecodedPosition& position)
 {
     switch (message) {
         case UBX_MSG_NAV_PVT:
@@ -414,7 +400,7 @@ int GPSNativeUBX::payloadRxDone(uint16_t message, std::span<const uint8_t> paylo
     }
 }
 
-int GPSNativeUBX::decodeNavPvt(std::span<const uint8_t> payload, GPSNativePositionReport& position)
+int UBXProtocol::decodeNavPvt(std::span<const uint8_t> payload, GPSDecodedPosition& position)
 {
     const auto decoded = UBX::MessageCodec<ubx_payload_rx_nav_pvt_t>::decode(payload);
     if (!decoded) {
@@ -449,8 +435,7 @@ int GPSNativeUBX::decodeNavPvt(std::span<const uint8_t> payload, GPSNativePositi
     return 1;
 }
 
-int GPSNativeUBX::decodeNavigation(uint16_t message, std::span<const uint8_t> payload,
-                                   GPSNativePositionReport& position)
+int UBXProtocol::decodeNavigation(uint16_t message, std::span<const uint8_t> payload, GPSDecodedPosition& position)
 {
     switch (message) {
         case UBX_MSG_NAV_POSLLH: {
@@ -531,7 +516,7 @@ int GPSNativeUBX::decodeNavigation(uint16_t message, std::span<const uint8_t> pa
     }
 }
 
-int GPSNativeUBX::decodeHeading(uint16_t message, std::span<const uint8_t> payload, GPSNativePositionReport& position)
+int UBXProtocol::decodeHeading(uint16_t message, std::span<const uint8_t> payload, GPSDecodedPosition& position)
 {
     struct Heading
     {
@@ -566,7 +551,7 @@ int GPSNativeUBX::decodeHeading(uint16_t message, std::span<const uint8_t> paylo
     return 1;
 }
 
-int GPSNativeUBX::decodeSurveyIn(std::span<const uint8_t> payload)
+int UBXProtocol::decodeSurveyIn(std::span<const uint8_t> payload)
 {
     const auto decoded = UBX::MessageCodec<ubx_payload_rx_nav_svin_t>::decode(payload);
     if (!decoded) {
@@ -578,7 +563,7 @@ int GPSNativeUBX::decodeSurveyIn(std::span<const uint8_t> payload)
         return 1;
     }
 
-    GPSNativeSurveyReport status{};
+    GPSDecodedSurvey status{};
     status.survey.position = fromEcef({
         .x = (static_cast<double>(svin.meanX) + static_cast<double>(svin.meanXHP) * 0.01) * 0.01,
         .y = (static_cast<double>(svin.meanY) + static_cast<double>(svin.meanYHP) * 0.01) * 0.01,
@@ -596,7 +581,7 @@ int GPSNativeUBX::decodeSurveyIn(std::span<const uint8_t> payload)
     return 1;
 }
 
-int GPSNativeUBX::decodeIntegrity(uint16_t message, std::span<const uint8_t> payload)
+int UBXProtocol::decodeIntegrity(uint16_t message, std::span<const uint8_t> payload)
 {
     switch (message) {
         case UBX_MSG_NAV_STATUS: {
@@ -732,7 +717,7 @@ int GPSNativeUBX::decodeIntegrity(uint16_t message, std::span<const uint8_t> pay
     }
 }
 
-int GPSNativeUBX::decodeControl(uint16_t message, std::span<const uint8_t> payload)
+int UBXProtocol::decodeControl(uint16_t message, std::span<const uint8_t> payload)
 {
     switch (message) {
         case UBX_MSG_INF_ERROR:
@@ -775,7 +760,7 @@ int GPSNativeUBX::decodeControl(uint16_t message, std::span<const uint8_t> paylo
     }
 }
 
-void GPSNativeUBX::logCommsDiagnostics(std::span<const uint8_t> payload)
+void UBXProtocol::logCommsDiagnostics(std::span<const uint8_t> payload)
 {
     if (_comms.deadlineUs == 0 || nowUs() > _comms.deadlineUs) {
         return;
@@ -829,12 +814,12 @@ void GPSNativeUBX::logCommsDiagnostics(std::span<const uint8_t> payload)
     }
 }
 
-void GPSNativeUBX::decodeInit()
+void UBXProtocol::decodeInit()
 {
     _frameDecoder.reset();
 }
 
-float GPSNativeUBX::relPosHeadingToYaw(int32_t heading) const
+float UBXProtocol::relPosHeadingToYaw(int32_t heading) const
 {
     float heading_rad = heading * GPS_DEG_TO_RAD * 1e-5f;
 
@@ -849,7 +834,7 @@ float GPSNativeUBX::relPosHeadingToYaw(int32_t heading) const
     return heading_rad;
 }
 
-void GPSNativeUBX::calcChecksum(const uint8_t* buffer, const uint16_t length, ubx_checksum_t* checksum)
+void UBXProtocol::calcChecksum(const uint8_t* buffer, const uint16_t length, ubx_checksum_t* checksum)
 {
     for (uint16_t i = 0; i < length; i++) {
         checksum->ck_a = checksum->ck_a + buffer[i];
@@ -857,7 +842,7 @@ void GPSNativeUBX::calcChecksum(const uint8_t* buffer, const uint16_t length, ub
     }
 }
 
-int GPSNativeUBX::decodeValidatedPayload(uint16_t message, std::span<const uint8_t> payload)
+int UBXProtocol::decodeValidatedPayload(uint16_t message, std::span<const uint8_t> payload)
 {
     const auto* schema = UBX::messageSchema(message);
     if (!UBX::validPayload(message, payload, schema)) {
@@ -930,7 +915,7 @@ int GPSNativeUBX::decodeValidatedPayload(uint16_t message, std::span<const uint8
     return updates;
 }
 
-int GPSNativeUBX::decodeByte(uint8_t byte)
+int UBXProtocol::decodeByte(uint8_t byte)
 {
     return parseChar(byte);
 }

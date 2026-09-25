@@ -7,32 +7,32 @@
 #include <string.h>
 
 #include "CRC32.h"
-#include "Femto/GPSDriverFemto.h"
+#include "Femto/FemtoProtocol.h"
 #include "GPSRawAckMatcher.h"
 #include "NMEAFields.h"
 #include "NMEASentence.h"
 #include "QGCLoggingCategory.h"
 #include "RTCMFramer.h"
 
-QGC_LOGGING_CATEGORY(GPSNativeFemtoLog, "GPS.Driver.Protocols.Femto")
+QGC_LOGGING_CATEGORY(FemtoProtocolLog, "GPS.Driver.Protocols.Femto")
 
 namespace {
 constexpr unsigned FEMTO_RESPONSE_TIMEOUT = 200;
 }
 
-const QLoggingCategory& GPSNativeFemto::logCategory() const
+const QLoggingCategory& FemtoProtocol::logCategory() const
 {
-    return GPSNativeFemtoLog();
+    return FemtoProtocolLog();
 }
 
-bool GPSNativeFemto::writeAckedCommandFemto(const char* command, const char* reply)
+bool FemtoProtocol::writeAckedCommandFemto(const char* command, const char* reply)
 {
     GPSRawAckMatcher matcher(reply, "<ERROR");
     const GPSConfigurationStep step{command, std::chrono::milliseconds(FEMTO_RESPONSE_TIMEOUT)};
     return transact(step, command, matcher).evidence.outcome == GPSCommandOutcome::Acknowledged;
 }
 
-bool GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
+bool FemtoProtocol::configure(unsigned& baudrate, const GPSConfig& config)
 {
     _configure_done = false;
     resetIOError();
@@ -78,7 +78,7 @@ bool GPSNativeFemto::configure(unsigned& baudrate, const GPSConfig& config)
     return !hasIOError();
 }
 
-void GPSNativeFemto::activateCorrectionOutput()
+void FemtoProtocol::activateCorrectionOutput()
 {
     if (_correction_output_activated) {
         return;
@@ -109,7 +109,7 @@ void GPSNativeFemto::activateCorrectionOutput()
     }
 }
 
-void GPSNativeFemto::activateRTCMOutput()
+void FemtoProtocol::activateRTCMOutput()
 {
     if (!writeAckedCommandFemto("LOG RTCM 1\r\n", "<LOG OK")) {
         controlFailed();

@@ -85,15 +85,18 @@ struct QuectelReceiver : public ScriptedReceiver::Model
     std::map<std::string, std::string> savedRates;
     std::vector<std::string> commands;
     std::vector<GPSCommandResult> outcomes;
-    std::vector<GPSNativeSurveyReport> surveys;
+    std::vector<GPSDecodedSurvey> surveys;
     size_t corrections = 0;
     size_t positions = 0;
-    ReceiverEventQueue events{gps_test_time};
+    QStringList warnings;
+    GPSTestClock& clock;
+    ReceiverEventQueue events{clock};
     std::atomic_bool stop{false};
     ScriptedReceiver scripted;
 
-    QuectelReceiver()
-        : scripted(stop, *this)
+    explicit QuectelReceiver(GPSTestClock& testClock)
+        : clock(testClock)
+        , scripted(stop, *this)
     {}
 
     bool sent(std::string_view prefix) const
@@ -104,7 +107,7 @@ struct QuectelReceiver : public ScriptedReceiver::Model
 
     unsigned tow() const
     {
-        return static_cast<unsigned>((initialTow + (gps_test_time - startedUs) / 1000) % 604800000);
+        return static_cast<unsigned>((initialTow + (clock.nowUs() - startedUs) / 1000) % 604800000);
     }
 
     void save()
@@ -198,9 +201,9 @@ struct QuectelReceiver : public ScriptedReceiver::Model
 
     void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline) override
     {
-        events.advanceTo((std::min) (gps_test_time + 1000, deadline.untilUs));
+        events.advanceTo((std::min) (clock.nowUs() + 1000, deadline.untilUs));
         flushQueued(receiver);
-        while (!receiver.hasQueuedReadData() && gps_test_time < deadline.untilUs) {
+        while (!receiver.hasQueuedReadData() && clock.nowUs() < deadline.untilUs) {
             events.advanceToNext(deadline.untilUs);
             flushQueued(receiver);
         }
@@ -288,15 +291,15 @@ struct QuectelReceiver : public ScriptedReceiver::Model
 
     GPSProtocolIO io()
     {
-        startedUs = gps_test_time;
+        startedUs = clock.nowUs();
         activeRole = savedRole = role;
         activeBase = savedBase = base;
         savedRates = rates;
-        auto result = makeGPSProtocolTestIO();
+        auto result = makeGPSProtocolTestIO(clock, &warnings);
         scripted.clearReplies();
         scripted.clearCommands();
         result.wait = [this](std::chrono::microseconds delay) {
-            events.advanceTo(gps_test_time + delay.count());
+            events.advanceTo(clock.nowUs() + delay.count());
             return !(failed && fault == Fault::Cancel);
         };
         scripted.setReadHandler([this](uint8_t*, int, int) -> std::optional<GPSReadResult> {
@@ -311,11 +314,11 @@ struct QuectelReceiver : public ScriptedReceiver::Model
                 throw std::runtime_error("Quectel decoded batch overflow");
             }
             for (const auto& event : batch.events) {
-                if (const auto* survey = std::get_if<GPSNativeSurveyReport>(&event)) {
+                if (const auto* survey = std::get_if<GPSDecodedSurvey>(&event)) {
                     surveys.push_back(*survey);
                 }
                 corrections += std::holds_alternative<GPSRTCMReport>(event);
-                positions += std::holds_alternative<GPSNativePositionReport>(event);
+                positions += std::holds_alternative<GPSDecodedPosition>(event);
             }
         };
         return scripted.makeIO(std::move(result));

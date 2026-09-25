@@ -1,4 +1,4 @@
-#include "UBX/GPSDriverUBX.h"
+#include "UBX/UBXProtocol.h"
 #include "UBXConfiguration_p.h"
 #include "UBXMessageCodec.h"
 
@@ -12,7 +12,7 @@ constexpr uint16_t RTCM_MSM4_OBSERVATION_MESSAGES[] = {UBX_MSG_RTCM3_1074, UBX_M
                                                        UBX_MSG_RTCM3_1124};
 }  // namespace
 
-bool GPSNativeUBX::configureDevicePreV27()
+bool UBXProtocol::configureDevicePreV27()
 {
     ubx_payload_tx_cfg_nav5_t payload_tx_cfg_nav5{};
     ubx_payload_tx_cfg_rate_t payload_tx_cfg_rate{};
@@ -98,7 +98,7 @@ bool GPSNativeUBX::configureDevicePreV27()
     return true;
 }
 
-bool GPSNativeUBX::restartSurveyInPreV27()
+bool UBXProtocol::restartSurveyInPreV27()
 {
     ubx_payload_tx_cfg_tmode3_t payload_tx_cfg_tmode3{};
 
@@ -166,7 +166,7 @@ bool GPSNativeUBX::restartSurveyInPreV27()
     return true;
 }
 
-bool GPSNativeUBX::activateRTCMOutputPreV27()
+bool UBXProtocol::activateRTCMOutputPreV27()
 {
     ubx_payload_tx_cfg_rate_t payload_tx_cfg_rate{};
     payload_tx_cfg_rate.measRate = 1000;
@@ -194,7 +194,7 @@ bool GPSNativeUBX::activateRTCMOutputPreV27()
            configureMessageRate(observations[3], 1);
 }
 
-bool GPSNativeUBX::configureMessageRate(const uint16_t msg, const uint8_t rate, bool required)
+bool UBXProtocol::configureMessageRate(const uint16_t msg, const uint8_t rate, bool required)
 {
     if (_identity.protocol27) {
         // configureMessageRate() should not be called if _identity.protocol27 is true.
@@ -211,7 +211,7 @@ bool GPSNativeUBX::configureMessageRate(const uint16_t msg, const uint8_t rate, 
                        {{}, std::chrono::milliseconds(UBX_CONFIG_TIMEOUT), {}, required});
 }
 
-bool GPSNativeUBX::configureMessageRateAndAck(uint16_t msg, uint8_t rate, bool report_ack_error)
+bool UBXProtocol::configureMessageRateAndAck(uint16_t msg, uint8_t rate, bool report_ack_error)
 {
     if (!configureMessageRate(msg, rate, report_ack_error)) {
         return false;

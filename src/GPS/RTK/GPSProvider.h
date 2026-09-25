@@ -18,6 +18,9 @@
 
 class GPSTransport;
 
+namespace GPSConnectionErrors {
+Q_NAMESPACE
+
 enum class GPSConnectionError
 {
     None = 0,
@@ -25,6 +28,11 @@ enum class GPSConnectionError
     ConfigFailed = 2,
     DeviceError = 3,
 };
+Q_ENUM_NS(GPSConnectionError)
+
+}  // namespace GPSConnectionErrors
+
+using GPSConnectionError = GPSConnectionErrors::GPSConnectionError;
 Q_DECLARE_METATYPE(GPSConnectionError)
 
 /// One receiver session hosted on a dedicated worker thread. The provider lives on its creator's thread;

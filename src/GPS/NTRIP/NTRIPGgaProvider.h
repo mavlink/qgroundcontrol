@@ -4,6 +4,7 @@
 #include <functional>
 #include <optional>
 
+#include <QtCore/QDebug>
 #include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -114,3 +115,5 @@ private:
     std::chrono::milliseconds _normalInterval = kDefaultInterval;
     GPSRevision _generation;
 };
+
+QDebug operator<<(QDebug debug, const NTRIPGgaProvider::Configuration& configuration);

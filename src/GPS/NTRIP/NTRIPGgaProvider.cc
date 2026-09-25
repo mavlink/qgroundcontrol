@@ -52,6 +52,14 @@ unsigned ggaQuality(GPSObservation::FixQuality quality)
 }
 }  // namespace
 
+QDebug operator<<(QDebug debug, const NTRIPGgaProvider::Configuration& configuration)
+{
+    const QDebugStateSaver saver(debug);
+    debug.nospace().noquote() << "NTRIPGgaProvider::Configuration(source=" << configuration.source
+                              << ", intervalMs=" << configuration.interval.count() << ')';
+    return debug;
+}
+
 NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))

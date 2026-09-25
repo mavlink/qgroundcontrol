@@ -4,16 +4,15 @@
 #include "GPSDriverReports.h"
 #include "GPSSatelliteState.h"
 
-namespace GPSNativeData {
-GPSPositionReport position(const GPSNativePositionReport& source, const GPSIntegrityReport& diagnostic,
-                           uint64_t nowUs = 0);
+namespace GPSDecodedData {
+GPSPositionReport position(const GPSDecodedPosition& source, const GPSIntegrityReport& diagnostic, uint64_t nowUs = 0);
 
 /// Projection state only; native epoch assembly remains owned by the protocol.
 class SatelliteSnapshot
 {
 public:
-    GPSSatelliteReport update(const GPSNativeSatelliteReport& source, uint64_t nowUs = 0);
-    GPSSatelliteReport update(const GPSNativeSatelliteUsageReport& source, uint64_t nowUs = 0);
+    GPSSatelliteReport update(const GPSDecodedSatellites& source, uint64_t nowUs = 0);
+    GPSSatelliteReport update(const GPSDecodedSatelliteUsage& source, uint64_t nowUs = 0);
     /// Poll on receive turns, including turns with position/correction traffic but no satellite report.
     std::optional<GPSSatelliteReport> expire(uint64_t nowUs);
 
@@ -39,4 +38,4 @@ private:
     uint64_t _latestReceiptUs = 0;
     bool _countOnlyUsageIsLatest = false;
 };
-}  // namespace GPSNativeData
+}  // namespace GPSDecodedData

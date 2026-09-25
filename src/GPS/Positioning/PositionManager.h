@@ -15,13 +15,15 @@ public:
     explicit QGCPositionManager(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~QGCPositionManager() override;
 
-    static QGCPositionManager* instance();
     void init();
+    /// Releases the position sources and stops following the source setting; init() does not restart them.
+    void shutdown();
 
 private:
     void _setupPositionSources();
     void _handlePermissionStatus(Qt::PermissionStatus permissionStatus);
     void _checkPermission();
     QMetaObject::Connection _sourceSettingConnection;
+    bool _shutdown = false;
     bool _destroying = false;
 };

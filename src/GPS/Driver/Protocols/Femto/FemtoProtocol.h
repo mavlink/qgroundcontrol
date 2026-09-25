@@ -8,11 +8,11 @@
 #include "NMEAFramer.h"
 #include "RTCMFramer.h"
 
-class GPSNativeFemto : public GPSProtocol
+class FemtoProtocol : public GPSProtocol
 {
 public:
-    explicit GPSNativeFemto(GPSProtocolIO io, bool satelliteInfoEnabled = true);
-    ~GPSNativeFemto() override = default;
+    explicit FemtoProtocol(GPSProtocolIO io, bool satelliteInfoEnabled = true);
+    ~FemtoProtocol() override = default;
 
     bool receiverReady() const override { return _configure_done; }
 

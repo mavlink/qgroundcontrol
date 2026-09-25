@@ -5,6 +5,7 @@
 
 #include <QtCore/QDateTime>
 
+#include "MonotonicClock.h"
 #include "NTRIPHttpCodec.h"
 #include "NTRIPHttpSession.h"
 #include "NTRIPSourceTable.h"
@@ -72,8 +73,9 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
 
     if (_model->count() > 0 && _cacheStoredAtUs && sameCaster) {
         const auto nowUs = _scheduler->nowUs();
-        if (nowUs >= *_cacheStoredAtUs && nowUs - *_cacheStoredAtUs < static_cast<quint64>(kCacheTtlMs) * 1000) {
-            const qint64 age = static_cast<qint64>((nowUs - *_cacheStoredAtUs) / 1000);
+        if (MonotonicClock::remaining(*_cacheStoredAtUs, nowUs, std::chrono::milliseconds(kCacheTtlMs)) >
+            std::chrono::microseconds::zero()) {
+            const qint64 age = MonotonicClock::ageMilliseconds(*_cacheStoredAtUs, nowUs);
             qCDebug(NTRIPSourceTableControllerLog) << "Source table cache hit, age:" << age << "ms";
             _sortCoord = sortCoord;
             _model->updateDistances(_sortCoord);

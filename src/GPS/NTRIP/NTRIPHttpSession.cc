@@ -46,7 +46,7 @@ void NTRIPHttpSession::_attach(QTcpSocket* socket, bool allowSelfSignedCerts)
             return;
         }
         const QString message = _socket->errorString();
-        qCWarning(NTRIPHttpSessionLog) << "Socket error code:" << static_cast<int>(code) << "msg:" << message;
+        qCWarning(NTRIPHttpSessionLog) << "Socket error code:" << code << "msg:" << message;
         _fail(NTRIPError::SocketError, message);
     });
     connect(socket, &QTcpSocket::readyRead, this, &NTRIPHttpSession::_read);

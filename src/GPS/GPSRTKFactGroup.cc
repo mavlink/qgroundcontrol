@@ -9,7 +9,7 @@
 
 QGC_LOGGING_CATEGORY(GPSRTKFactGroupLog, "GPS.RTK.GPSRTKFactGroup")
 
-GPSRTKFactGroup::GPSRTKFactGroup(QObject *parent)
+GPSRTKFactGroup::GPSRTKFactGroup(const GPSRtk* receiver, QObject* parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/GPSRTKFact.json"), parent)
 {
     // qCDebug(GPSRTKFactGroupLog) << Q_FUNC_INFO << this;
@@ -35,11 +35,38 @@ GPSRTKFactGroup::GPSRTKFactGroup(QObject *parent)
     for (Fact* fact : {&_jammingStateFact, &_spoofingStateFact}) {
         connect(fact, &Fact::rawValueChanged, this, &GPSRTKFactGroup::interferenceWarningChanged);
     }
+    if (receiver) {
+        _mirror(receiver->status());
+        connect(receiver, &GPSRtk::statusChanged, this, [this, receiver]() { _mirror(receiver->status()); });
+    }
 }
 
 GPSRTKFactGroup::~GPSRTKFactGroup()
 {
     // qCDebug(GPSRTKFactGroupLog) << Q_FUNC_INFO << this;
+}
+
+void GPSRTKFactGroup::_mirror(GPSRtk::Status status)
+{
+    const auto update = [](Fact* fact, const QVariant& value) {
+        // Unavailable values stay NaN; rewriting NaN would report a change, as NaN never equals itself.
+        if (!std::isnan(value.toDouble()) || !std::isnan(fact->rawValue().toDouble())) {
+            fact->setRawValue(value);
+        }
+    };
+    update(&_connectedFact, status.connected);
+    update(&_currentDurationFact, static_cast<qint64>(status.currentDuration.count()));
+    update(&_currentAccuracyFact, status.currentAccuracy);
+    update(&_currentLatitudeFact, status.currentLatitude);
+    update(&_currentLongitudeFact, status.currentLongitude);
+    update(&_currentAltitudeFact, status.currentAltitude);
+    update(&_validFact, status.valid);
+    update(&_activeFact, status.active);
+    update(&_numSatellitesFact, status.numSatellites);
+    update(&_numSatellitesUsedFact, status.numSatellitesUsed);
+    update(&_fixTypeFact, static_cast<int>(status.fixType));
+    update(&_jammingStateFact, static_cast<int>(status.jammingState));
+    update(&_spoofingStateFact, static_cast<int>(status.spoofingState));
 }
 
 bool GPSRTKFactGroup::interferenceWarning() const

@@ -1,36 +1,3 @@
-/****************************************************************************
- *
- *   Copyright (c) 2012-2023 PX4 Development Team. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name PX4 nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- ****************************************************************************/
-
 #include <cmath>
 #include <string.h>
 
@@ -39,7 +6,7 @@
 #include "LittleEndian.h"
 #include "NMEASentence.h"
 #include "RTCMFramer.h"
-#include "UBX/GPSDriverUBX.h"
+#include "UBX/UBXProtocol.h"
 #include "UBXConfiguration_p.h"
 #include "UBXMessageCodec.h"
 #include "UBXMessageSchema.h"
@@ -63,7 +30,7 @@ constexpr uint32_t RTCM_MSM4_OBSERVATIONS_MSGOUT_I2C[] = {
     UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1094_I2C, UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1124_I2C};
 }  // namespace
 
-GPSNativeUBX::BaseStationCapability GPSNativeUBX::baseStationCapability() const
+UBXProtocol::BaseStationCapability UBXProtocol::baseStationCapability() const
 {
     if (_identity.board == Board::u_blox8) {
         return _identity.isM8p
@@ -76,7 +43,7 @@ GPSNativeUBX::BaseStationCapability GPSNativeUBX::baseStationCapability() const
                                          : BaseStationCapability::Unknown;
 }
 
-bool GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
+bool UBXProtocol::configure(unsigned& baudrate, const GPSConfig& config)
 {
     _baseConfig = config.base;
     resetIOError();
@@ -208,7 +175,7 @@ bool GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
     return true;
 }
 
-bool GPSNativeUBX::configureDevice()
+bool UBXProtocol::configureDevice()
 {
     // There is no RTCM or USB interface on M10
     if (UBX::receiverProfile(_identity.board).usb) {
@@ -436,12 +403,12 @@ bool GPSNativeUBX::configureDevice()
     return true;
 }
 
-void GPSNativeUBX::initCfgValset()
+void UBXProtocol::initCfgValset()
 {
     _valset = {};
 }
 
-bool GPSNativeUBX::sendCfgValset(bool required, unsigned timeout)
+bool UBXProtocol::sendCfgValset(bool required, unsigned timeout)
 {
     const auto payload = _valset.payload();
     if (payload.empty() || (_valsetAckAmbiguous && !_controller.configurationReadbackRequired())) {
@@ -454,7 +421,7 @@ bool GPSNativeUBX::sendCfgValset(bool required, unsigned timeout)
                        {{}, std::chrono::milliseconds(timeout), _valset.settings, required});
 }
 
-GPSCommandResult GPSNativeUBX::sendCfgValsetAcked(bool required)
+GPSCommandResult UBXProtocol::sendCfgValsetAcked(bool required)
 {
     if (!sendCfgValset(required)) {
         return completeCommand(ioError() == GPSProtocolError::Cancelled ? GPSCommandOutcome::Cancelled
@@ -464,7 +431,7 @@ GPSCommandResult GPSNativeUBX::sendCfgValsetAcked(bool required)
     return waitForAck(UBX_MSG_CFG_VALSET);
 }
 
-bool GPSNativeUBX::cfgValsetRaw(uint32_t key_id, uint32_t value)
+bool UBXProtocol::cfgValsetRaw(uint32_t key_id, uint32_t value)
 {
     if ((key_id == UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X || key_id == UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X) &&
         !UBX::receiverProfile(_identity.board).rtcmOutput) {
@@ -480,7 +447,7 @@ bool GPSNativeUBX::cfgValsetRaw(uint32_t key_id, uint32_t value)
     return true;
 }
 
-bool GPSNativeUBX::cfgValsetPort(uint32_t key_id, uint8_t value)
+bool UBXProtocol::cfgValsetPort(uint32_t key_id, uint8_t value)
 {
     for (const auto port : UBX::OUTPUT_PORTS) {
         if ((!port.requiresUsb || UBX::receiverProfile(_identity.board).usb) &&
@@ -492,7 +459,7 @@ bool GPSNativeUBX::cfgValsetPort(uint32_t key_id, uint8_t value)
     return true;
 }
 
-bool GPSNativeUBX::cfgValset(std::span<const CfgValsetItem> items)
+bool UBXProtocol::cfgValset(std::span<const CfgValsetItem> items)
 {
     for (const auto& item : items) {
         if (!cfgValsetRaw(item.key, item.value)) {
@@ -503,7 +470,7 @@ bool GPSNativeUBX::cfgValset(std::span<const CfgValsetItem> items)
     return true;
 }
 
-bool GPSNativeUBX::cfgValset(std::span<const uint32_t> keys, uint8_t value)
+bool UBXProtocol::cfgValset(std::span<const uint32_t> keys, uint8_t value)
 {
     for (const auto key : keys) {
         if (!cfgValsetRaw(key, value)) {
@@ -514,7 +481,7 @@ bool GPSNativeUBX::cfgValset(std::span<const uint32_t> keys, uint8_t value)
     return true;
 }
 
-bool GPSNativeUBX::cfgValsetPort(std::span<const uint32_t> keys, uint8_t value)
+bool UBXProtocol::cfgValsetPort(std::span<const uint32_t> keys, uint8_t value)
 {
     for (const auto key : keys) {
         if (!cfgValsetPort(key, value)) {
@@ -525,7 +492,7 @@ bool GPSNativeUBX::cfgValsetPort(std::span<const uint32_t> keys, uint8_t value)
     return true;
 }
 
-bool GPSNativeUBX::disableTimeMode()
+bool UBXProtocol::disableTimeMode()
 {
     if (_identity.timeModeUnsupported) {
         return true;
@@ -560,7 +527,7 @@ bool GPSNativeUBX::disableTimeMode()
     return result.evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-bool GPSNativeUBX::verifyConfigValue(uint32_t key, uint8_t value)
+bool UBXProtocol::verifyConfigValue(uint32_t key, uint8_t value)
 {
     const std::array keys{key};
     _controller.beginReadback(keys);
@@ -582,7 +549,7 @@ bool GPSNativeUBX::verifyConfigValue(uint32_t key, uint8_t value)
     return result.evidence.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-bool GPSNativeUBX::waitForSurveyStop()
+bool UBXProtocol::waitForSurveyStop()
 {
     _survey_in_stopped = false;
     const uint64_t stop_deadline = nowUs() + 3000000;
@@ -614,7 +581,7 @@ bool GPSNativeUBX::waitForSurveyStop()
     return true;
 }
 
-bool GPSNativeUBX::restartSurveyIn()
+bool UBXProtocol::restartSurveyIn()
 {
     if (!_identity.protocol27) {
         return restartSurveyInPreV27();
@@ -670,7 +637,7 @@ bool GPSNativeUBX::restartSurveyIn()
     return true;
 }
 
-GPSCommandResult GPSNativeUBX::waitForAck(uint16_t msg)
+GPSCommandResult UBXProtocol::waitForAck(uint16_t msg)
 {
     const Operation operation(*this, remainingMilliseconds(_commandDeadline.untilUs));
     _operationDeadline.untilUs = std::min(_operationDeadline.untilUs, _commandDeadline.untilUs);
@@ -689,7 +656,7 @@ GPSCommandResult GPSNativeUBX::waitForAck(uint16_t msg)
     return result;
 }
 
-GPSCommandResult GPSNativeUBX::verifyCfgValset(GPSConfigurationStep step)
+GPSCommandResult UBXProtocol::verifyCfgValset(GPSConfigurationStep step)
 {
     const Operation operation(*this, static_cast<unsigned>(step.timeout.count()));
     UBX::ConfigurationValueCursor cursor(std::span<const uint8_t>(_valset.bytes).subspan(4, _valset.size - 4));
@@ -732,7 +699,7 @@ GPSCommandResult GPSNativeUBX::verifyCfgValset(GPSConfigurationStep step)
     return result;
 }
 
-void GPSNativeUBX::requestCommsDiagnostics()
+void UBXProtocol::requestCommsDiagnostics()
 {
     const uint64_t now = nowUs();
 
@@ -745,7 +712,7 @@ void GPSNativeUBX::requestCommsDiagnostics()
     _comms.deadlineUs = sendMessage(UBX_MSG_MON_COMMS, nullptr, 0) ? now + 2000000 : 0;
 }
 
-bool GPSNativeUBX::activateRTCMOutput()
+bool UBXProtocol::activateRTCMOutput()
 {
     if (!_identity.protocol27) {
         return activateRTCMOutputPreV27();
@@ -764,7 +731,7 @@ bool GPSNativeUBX::activateRTCMOutput()
     return sendCfgValset(false) && waitForAck(UBX_MSG_CFG_VALSET).succeeded();
 }
 
-bool GPSNativeUBX::sendMessage(uint16_t msg, const uint8_t* payload, uint16_t length, GPSConfigurationStep step)
+bool UBXProtocol::sendMessage(uint16_t msg, const uint8_t* payload, uint16_t length, GPSConfigurationStep step)
 {
     if (msg == UBX_MSG_CFG_RATE) {
         step.affectedSettings.add(GPSReceiverSetting::OutputRateHz);

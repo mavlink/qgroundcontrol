@@ -183,7 +183,8 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
 void GPSDriverTest::_nativeIntegrityProvenance()
 {
     std::atomic_bool stop = false;
-    UBXReceiverModel receiver(UBXReceiverModel::Receiver::F9P);
+    GPSTestClock clock;
+    UBXReceiverModel receiver(UBXReceiverModel::Receiver::F9P, clock);
     ScriptedReceiver transport(stop, receiver);
     std::vector<GPSPositionReport> positions;
     GPSDriverSinks sinks;
@@ -319,7 +320,8 @@ void GPSDriverTest::_receiveOutcomes()
 
 void GPSDriverTest::_sbfSatelliteUsage()
 {
-    SBFReceiverModel receiver;
+    GPSTestClock clock;
+    SBFReceiverModel receiver(clock);
     ScriptedReceiver transport(neverStop, &receiver);
     std::vector<GPSSatelliteReport> reports;
     GPSDriverSinks sinks;
@@ -347,7 +349,8 @@ void GPSDriverTest::_sbfSatelliteUsage()
 void GPSDriverTest::_rtcmActivationRejected()
 {
     std::atomic_bool stop = false;
-    UBXReceiverModel receiver(UBXReceiverModel::Receiver::F9P);
+    GPSTestClock clock;
+    UBXReceiverModel receiver(UBXReceiverModel::Receiver::F9P, clock);
     ScriptedReceiver transport(stop, receiver);
     GPSDriver driver(GPSType::ublox, transport,
                      {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .durationSecs = 1}}}, {});
@@ -538,7 +541,8 @@ void GPSDriverTest::_freshSurveyAndEvidence()
     QFETCH(UBXReceiverModel::Receiver, model);
     QFETCH(bool, stuck);
     std::atomic_bool stop{false};
-    UBXReceiverModel receiver(model);
+    GPSTestClock clock;
+    UBXReceiverModel receiver(model, clock);
     ScriptedReceiver transport(stop, receiver);
     receiver.timeMode = 1;
     receiver.retainedSurveyDuration = 329000;
@@ -604,7 +608,8 @@ void GPSDriverTest::_ubloxRoleTransition()
     QFETCH(float, fixedAccuracyMeters);
     QFETCH(quint32, fixedAccuracyUnits);
     std::atomic_bool stopRequested{false};
-    UBXReceiverModel receiver(model);
+    GPSTestClock clock;
+    UBXReceiverModel receiver(model, clock);
     ScriptedReceiver transport(stopRequested, receiver);
     receiver.corruptVersionReplies = corruptVersion;
     {
@@ -640,7 +645,8 @@ void GPSDriverTest::_ubloxBaseRoleDefaults()
 {
     QFETCH(UBXReceiverModel::Receiver, model);
     std::atomic_bool stopRequested{false};
-    UBXReceiverModel receiver(model);
+    GPSTestClock clock;
+    UBXReceiverModel receiver(model, clock);
     ScriptedReceiver transport(stopRequested, receiver);
     const GPSReceiverConfig config{
         .base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2.0, .durationSecs = 180}}};

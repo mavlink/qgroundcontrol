@@ -1,4 +1,4 @@
-#include "UBX/GPSDriverUBX.h"
+#include "UBX/UBXProtocol.h"
 
 #include <cmath>
 #include <string.h>
@@ -7,22 +7,22 @@
 #include "QGCLoggingCategory.h"
 #include "RTCMFramer.h"
 
-QGC_LOGGING_CATEGORY(GPSNativeUBXLog, "GPS.Driver.Protocols.UBX")
+QGC_LOGGING_CATEGORY(UBXProtocolLog, "GPS.Driver.Protocols.UBX")
 
-const QLoggingCategory& GPSNativeUBX::logCategory() const
+const QLoggingCategory& UBXProtocol::logCategory() const
 {
-    return GPSNativeUBXLog();
+    return UBXProtocolLog();
 }
 
-GPSNativeUBX::GPSNativeUBX(GPSProtocolIO io, bool satelliteInfoEnabled)
+UBXProtocol::UBXProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     : GPSProtocol(std::move(io), satelliteInfoEnabled)
 {
     decodeInit();
 }
 
-GPSNativeUBX::~GPSNativeUBX() {}
+UBXProtocol::~UBXProtocol() {}
 
-std::string GPSNativeUBX::receiverIdentity() const
+std::string UBXProtocol::receiverIdentity() const
 {
     const std::string model(_identity.modelName, strnlen(_identity.modelName, sizeof(_identity.modelName)));
     const std::string firmware(_identity.firmwareVersion,
@@ -30,14 +30,14 @@ std::string GPSNativeUBX::receiverIdentity() const
     return model.empty() || firmware.empty() ? model + firmware : model + ' ' + firmware;
 }
 
-int GPSNativeUBX::receive(unsigned timeout)
+int UBXProtocol::receive(unsigned timeout)
 {
     const int result = receiveInternal(timeout);
     serviceControls();
     return result;
 }
 
-int GPSNativeUBX::receiveInternal(unsigned timeout)
+int UBXProtocol::receiveInternal(unsigned timeout)
 {
     const Operation operation(*this, timeout);
     if (hasIOError()) {
@@ -91,7 +91,7 @@ int GPSNativeUBX::receiveInternal(unsigned timeout)
     }
 }
 
-void GPSNativeUBX::servicePendingCommands()
+void UBXProtocol::servicePendingCommands()
 {
     if (_comms.pending) {
         _comms.pending = false;
@@ -149,7 +149,7 @@ void GPSNativeUBX::servicePendingCommands()
     }
 }
 
-void GPSNativeUBX::setDecodeContext(DecodeContext context)
+void UBXProtocol::setDecodeContext(DecodeContext context)
 {
     _decodeContext = context;
     _navigationEpochs = {};
@@ -161,13 +161,13 @@ void GPSNativeUBX::setDecodeContext(DecodeContext context)
     decodeInit();
 }
 
-void GPSNativeUBX::publishEpoch(const GPSNativePositionReport& report)
+void UBXProtocol::publishEpoch(const GPSDecodedPosition& report)
 {
     _position = report;
     publishPosition(report);
 }
 
-void GPSNativeUBX::flushDecoded()
+void UBXProtocol::flushDecoded()
 {
     if (_rtcm_parsing) {
         drainRTCM(*_rtcm_parsing);

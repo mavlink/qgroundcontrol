@@ -95,7 +95,7 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
     std::array<double, 3> coordinates{-2160489.0276, 4383620.1006, 4084738.1110};
     std::vector<std::string> commands;
     std::vector<GPSCommandResult> results;
-    std::vector<GPSNativeSurveyReport> surveys;
+    std::vector<GPSDecodedSurvey> surveys;
     size_t rtcmCount = 0;
     size_t calls = 0;
     size_t chunk = 7;
@@ -116,12 +116,15 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
     std::string queued;
     unsigned availableBaud = 115200;
     unsigned hostBaud = 0;
-    ReceiverEventQueue events{gps_test_time};
+    QStringList warnings;
+    GPSTestClock& clock;
+    ReceiverEventQueue events{clock};
     std::atomic_bool stop{false};
     ScriptedReceiver scripted;
 
-    UnicoreReceiver()
-        : scripted(stop, *this)
+    explicit UnicoreReceiver(GPSTestClock& testClock)
+        : clock(testClock)
+        , scripted(stop, *this)
     {}
 
     bool sent(std::string_view prefix) const
@@ -134,7 +137,7 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
     {
         auto result = coordinates;
         result[0] += positionMismatch ? 10 : 0;
-        const uint64_t elapsed = initialTow + (gps_test_time - startedUs) / 1000;
+        const uint64_t elapsed = initialTow + (clock.nowUs() - startedUs) / 1000;
         return unicorePosition(positionType, result, elapsed % 604800000, initialWeek + elapsed / 604800000);
     }
 
@@ -178,9 +181,9 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
 
     void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline) override
     {
-        events.advanceTo((std::min) (gps_test_time + 100, deadline.untilUs));
+        events.advanceTo((std::min) (clock.nowUs() + 100, deadline.untilUs));
         flushQueued(receiver);
-        while (!receiver.hasQueuedReadData() && gps_test_time < deadline.untilUs) {
+        while (!receiver.hasQueuedReadData() && clock.nowUs() < deadline.untilUs) {
             events.advanceToNext(deadline.untilUs);
             flushQueued(receiver);
         }
@@ -205,7 +208,7 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
     {
         const std::string wire(input.constData(), static_cast<size_t>(input.size()));
         if (!wire.ends_with("\r\n") ||
-            (context.hasProtocolDeadline && context.protocolDeadline.untilUs <= gps_test_time)) {
+            (context.hasProtocolDeadline && context.protocolDeadline.untilUs <= clock.nowUs())) {
             throw std::runtime_error("Invalid Unicore command framing/deadline");
         }
         const auto command = wire.substr(0, wire.size() - 2);
@@ -287,8 +290,8 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
 
     GPSProtocolIO io()
     {
-        startedUs = gps_test_time;
-        auto io = makeGPSProtocolTestIO();
+        startedUs = clock.nowUs();
+        auto io = makeGPSProtocolTestIO(clock, &warnings);
         scripted.clearReplies();
         scripted.clearCommands();
         io.decoded = [this](const GPSDecodedBatch& batch) {
@@ -296,7 +299,7 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
                 throw std::runtime_error("Unicore decoded batch overflow");
             }
             for (const auto& event : batch.events) {
-                if (const auto* survey = std::get_if<GPSNativeSurveyReport>(&event)) {
+                if (const auto* survey = std::get_if<GPSDecodedSurvey>(&event)) {
                     surveys.push_back(*survey);
                 }
                 rtcmCount += std::holds_alternative<GPSRTCMReport>(event);
@@ -304,7 +307,7 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
         };
         io.commandFinished = [this](const GPSCommandResult& result) { results.push_back(result); };
         io.wait = [this](std::chrono::microseconds delay) {
-            events.advanceTo(gps_test_time + delay.count());
+            events.advanceTo(clock.nowUs() + delay.count());
             return !cancel;
         };
         scripted.setReadHandler([this](uint8_t*, int, int) -> std::optional<GPSReadResult> {

@@ -1,26 +1,24 @@
 #include <cstdlib>
 
-#include "Ashtech/GPSDriverAshtech.h"
-#include "Femto/GPSDriverFemto.h"
+#include "Ashtech/AshtechProtocol.h"
+#include "Femto/FemtoProtocol.h"
 #include "GPSAsciiProtocol.h"
 #include "GPSProtocolTestIO.h"
-#include "Quectel/GPSDriverQuectel.h"
-#include "SBF/GPSDriverSBF.h"
+#include "Quectel/QuectelProtocol.h"
+#include "SBF/SBFProtocol.h"
 #include "Support/QuectelReceiverModel.h"
 #include "Support/UnicoreReceiverModel.h"
-#include "UBX/GPSDriverUBX.h"
-#include "Unicore/GPSDriverUnicore.h"
+#include "UBX/UBXProtocol.h"
+#include "Unicore/UnicoreProtocol.h"
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    gps_test_warnings.clear();
-    gps_test_time = 1000000;
+    GPSTestClock clock(1000000);
     GPSProtocolIO io;
     io.read = [](auto, auto) -> GPSReadResult { std::abort(); };
     io.write = [](auto, auto) -> GPSWriteResult { std::abort(); };
     io.setBaudrate = [](auto) -> GPSBaudStatus { std::abort(); };
-    uint64_t& clock = gps_test_time;
-    io.nowUs = [&clock] { return clock; };
+    io.nowUs = [&clock] { return clock.nowUs(); };
     bool decoding = false;
     const auto operationalIO = [&decoding](GPSProtocolIO services) {
         services.read = [&, read = services.read](auto bytes, auto deadline) {
@@ -61,32 +59,32 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     std::get<GPSBaseStationConfig::Fixed>(fixed.base.mode).position = {
         .latitudeDegrees = 0, .longitudeDegrees = 90, .altitudeMeters = 100};
     const bool fixedMode = size != 0 && (data[0] & 1);
-    GPSNativeUBX ubx(io);
-    GPSNativeUBX operationalUbx(io);
+    UBXProtocol ubx(io);
+    UBXProtocol operationalUbx(io);
     operationalUbx.setDecodeContext({true, true, true});
-    GPSNativeUBX epochUbx(io);
+    UBXProtocol epochUbx(io);
     epochUbx.setDecodeContext({true, true, true, true});
-    GPSNativeAshtech ashtech(io);
-    GPSNativeSBF sbf(io);
-    GPSNativeFemto femto(io);
-    GPSNativeUnicore unicore(io);
-    GPSTest::UnicoreReceiver unicorePeer;
+    AshtechProtocol ashtech(io);
+    SBFProtocol sbf(io);
+    FemtoProtocol femto(io);
+    UnicoreProtocol unicore(io);
+    GPSTest::UnicoreReceiver unicorePeer(clock);
     unicorePeer.chunk = GPS_READ_BUFFER_SIZE;
-    GPSNativeUnicore operationalUnicore(operationalIO(unicorePeer.io()));
+    UnicoreProtocol operationalUnicore(operationalIO(unicorePeer.io()));
     GPSProtocol::GPSConfig averaging;
     averaging.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
     unsigned unicoreBaud = 115200;
     if (!operationalUnicore.configure(unicoreBaud, fixedMode ? fixed : averaging)) {
         std::abort();
     }
-    GPSNativeQuectel quectel(io);
-    GPSTest::QuectelReceiver quectelPeer;
+    QuectelProtocol quectel(io);
+    GPSTest::QuectelReceiver quectelPeer(clock);
     quectelPeer.role = 2;
     quectelPeer.chunk = GPS_READ_BUFFER_SIZE;
     if (fixedMode) {
         quectelPeer.base = "2,0,0,0.0000,6378237.0000,0.0000,0";
     }
-    GPSNativeQuectel operationalQuectel(operationalIO(quectelPeer.io()));
+    QuectelProtocol operationalQuectel(operationalIO(quectelPeer.io()));
     GPSProtocol::GPSConfig survey;
     std::get<GPSBaseStationConfig::SurveyIn>(survey.base.mode).accuracyMeters = 15;
     std::get<GPSBaseStationConfig::SurveyIn>(survey.base.mode).durationSecs = 60;
@@ -94,7 +92,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     if (!operationalQuectel.configure(quectelBaud, fixedMode ? fixed : survey)) {
         std::abort();
     }
-    GPSNativePassive passive(io);
+    PassiveProtocol passive(io);
     GPSProtocol* protocols[] = {
         &ubx,     &operationalUbx,     &epochUbx,
         &ashtech,
@@ -105,9 +103,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         &passive,
     };
     decoding = true;
-    const auto startedAt = clock;
+    const auto startedAt = clock.nowUs();
     for (GPSProtocol* protocol : protocols) {
-        clock = startedAt;
+        clock.reset(startedAt);
         const size_t split = size ? data[0] % (size + 1) : 0;
         for (auto bytes :
              {std::span<const uint8_t>(data, split), std::span<const uint8_t>(data + split, size - split)}) {
@@ -119,7 +117,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
                 bytes = bytes.subspan(result.bytesConsumed);
             } while (!bytes.empty());
         }
-        clock += 5000001;
+        clock.advanceBy(5000001);
         if (protocol->decode({}).batch.events.size() > GPSDecodedBatch::MAX_EVENTS) {
             std::abort();
         }

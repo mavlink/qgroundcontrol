@@ -10,22 +10,22 @@
 #include <utility>
 #include <vector>
 
-#include "Ashtech/GPSDriverAshtech.h"
+#include "Ashtech/AshtechProtocol.h"
 #include "Driver/Support/FemtoReceiverModel.h"
 #include "Driver/Support/SBFReceiverModel.h"
 #include "Driver/Support/ScriptedReceiver.h"
 #include "Driver/Support/UBXReceiverModel.h"
-#include "Femto/GPSDriverFemto.h"
+#include "Femto/FemtoProtocol.h"
 #include "GPSAsciiProtocol.h"
 #include "GPSDriver.h"
 #include "GPSProtocolTestIO.h"
-#include "Quectel/GPSDriverQuectel.h"
-#include "SBF/GPSDriverSBF.h"
+#include "Quectel/QuectelProtocol.h"
+#include "SBF/SBFProtocol.h"
 #include "Support/AshtechReceiverModel.h"
 #include "Support/QuectelReceiverModel.h"
 #include "Support/UnicoreReceiverModel.h"
-#include "UBX/GPSDriverUBX.h"
-#include "Unicore/GPSDriverUnicore.h"
+#include "UBX/UBXProtocol.h"
+#include "Unicore/UnicoreProtocol.h"
 #include "UnitTest.h"
 
 namespace {
@@ -38,17 +38,16 @@ enum FamilyCapability : uint32_t
     PassiveNmea = 1 << 4,
 };
 
-using ProtocolFactory = std::unique_ptr<GPSProtocol> (*)(GPSProtocolIO, GPSNativePositionReport&,
-                                                         GPSNativeSatelliteReport&);
-using ModelFactory = std::unique_ptr<ScriptedReceiver::Model> (*)();
+using ProtocolFactory = std::unique_ptr<GPSProtocol> (*)(GPSProtocolIO, GPSDecodedPosition&, GPSDecodedSatellites&);
+using ModelFactory = std::unique_ptr<ScriptedReceiver::Model> (*)(GPSTestClock&);
 
 class PassiveNmeaReceiverModel final : public ScriptedReceiver::Model
 {
 };
 
 template <typename Driver>
-std::unique_ptr<GPSProtocol> makeProtocol(GPSProtocolIO io, GPSNativePositionReport& position,
-                                          GPSNativeSatelliteReport& satellites)
+std::unique_ptr<GPSProtocol> makeProtocol(GPSProtocolIO io, GPSDecodedPosition& position,
+                                          GPSDecodedSatellites& satellites)
 {
     static_assert(!std::is_copy_constructible_v<Driver>);
     static_assert(!std::is_copy_assignable_v<Driver>);
@@ -58,8 +57,8 @@ std::unique_ptr<GPSProtocol> makeProtocol(GPSProtocolIO io, GPSNativePositionRep
 }
 
 template <typename Driver>
-std::unique_ptr<GPSProtocol> makeQuietProtocol(GPSProtocolIO io, GPSNativePositionReport& position,
-                                               GPSNativeSatelliteReport& satellites)
+std::unique_ptr<GPSProtocol> makeQuietProtocol(GPSProtocolIO io, GPSDecodedPosition& position,
+                                               GPSDecodedSatellites& satellites)
 {
     static_assert(!std::is_copy_constructible_v<Driver>);
     static_assert(!std::is_copy_assignable_v<Driver>);
@@ -69,37 +68,37 @@ std::unique_ptr<GPSProtocol> makeQuietProtocol(GPSProtocolIO io, GPSNativePositi
     return std::make_unique<Driver>(captureGPSReports(std::move(io), position), false);
 }
 
-std::unique_ptr<ScriptedReceiver::Model> makeUbxModel()
+std::unique_ptr<ScriptedReceiver::Model> makeUbxModel(GPSTestClock& clock)
 {
-    return std::make_unique<UBXReceiverModel>(UBXReceiverModel::Receiver::F9P);
+    return std::make_unique<UBXReceiverModel>(UBXReceiverModel::Receiver::F9P, clock);
 }
 
-std::unique_ptr<ScriptedReceiver::Model> makeSbfModel()
+std::unique_ptr<ScriptedReceiver::Model> makeSbfModel(GPSTestClock& clock)
 {
-    return std::make_unique<SBFReceiverModel>();
+    return std::make_unique<SBFReceiverModel>(clock);
 }
 
-std::unique_ptr<ScriptedReceiver::Model> makeUnicoreModel()
+std::unique_ptr<ScriptedReceiver::Model> makeUnicoreModel(GPSTestClock& clock)
 {
-    return std::make_unique<GPSTest::UnicoreReceiver>();
+    return std::make_unique<GPSTest::UnicoreReceiver>(clock);
 }
 
-std::unique_ptr<ScriptedReceiver::Model> makeQuectelModel()
+std::unique_ptr<ScriptedReceiver::Model> makeQuectelModel(GPSTestClock& clock)
 {
-    return std::make_unique<GPSTest::QuectelReceiver>();
+    return std::make_unique<GPSTest::QuectelReceiver>(clock);
 }
 
-std::unique_ptr<ScriptedReceiver::Model> makeAshtechModel()
+std::unique_ptr<ScriptedReceiver::Model> makeAshtechModel(GPSTestClock& clock)
 {
-    return std::make_unique<GPSTest::AshtechReceiverModel>();
+    return std::make_unique<GPSTest::AshtechReceiverModel>(clock);
 }
 
-std::unique_ptr<ScriptedReceiver::Model> makeFemtoModel()
+std::unique_ptr<ScriptedReceiver::Model> makeFemtoModel(GPSTestClock& clock)
 {
-    return std::make_unique<FemtoReceiverModel>();
+    return std::make_unique<FemtoReceiverModel>(clock);
 }
 
-std::unique_ptr<ScriptedReceiver::Model> makePassiveModel()
+std::unique_ptr<ScriptedReceiver::Model> makePassiveModel(GPSTestClock&)
 {
     return std::make_unique<PassiveNmeaReceiverModel>();
 }
@@ -114,23 +113,23 @@ struct ProtocolFamily
 };
 
 const std::array<ProtocolFamily, 7> kFamilies{{
-    {"UBX", GPSType::ublox, &makeProtocol<GPSNativeUBX>, &makeUbxModel,
+    {"UBX", GPSType::ublox, &makeProtocol<UBXProtocol>, &makeUbxModel,
      SupportsSurvey | SupportsFixedBase | SupportsBaudDetection},
-    {"SBF", GPSType::septentrio, &makeProtocol<GPSNativeSBF>, &makeSbfModel, SupportsSurvey | SupportsFixedBase},
-    {"Unicore", GPSType::unicore, &makeProtocol<GPSNativeUnicore>, &makeUnicoreModel,
+    {"SBF", GPSType::septentrio, &makeProtocol<SBFProtocol>, &makeSbfModel, SupportsSurvey | SupportsFixedBase},
+    {"Unicore", GPSType::unicore, &makeProtocol<UnicoreProtocol>, &makeUnicoreModel,
      SupportsFixedBase | SupportsReceiverAveraging | SupportsBaudDetection},
-    {"Quectel", GPSType::quectel, &makeProtocol<GPSNativeQuectel>, &makeQuectelModel,
+    {"Quectel", GPSType::quectel, &makeProtocol<QuectelProtocol>, &makeQuectelModel,
      SupportsSurvey | SupportsFixedBase | SupportsBaudDetection},
-    {"Ashtech", GPSType::trimble, &makeQuietProtocol<GPSNativeAshtech>, &makeAshtechModel,
+    {"Ashtech", GPSType::trimble, &makeQuietProtocol<AshtechProtocol>, &makeAshtechModel,
      SupportsSurvey | SupportsFixedBase | SupportsBaudDetection},
-    {"Femto", GPSType::femto, &makeProtocol<GPSNativeFemto>, &makeFemtoModel,
+    {"Femto", GPSType::femto, &makeProtocol<FemtoProtocol>, &makeFemtoModel,
      SupportsSurvey | SupportsFixedBase | SupportsBaudDetection},
-    {"Passive NMEA", GPSType::passive, &makeProtocol<GPSNativePassive>, &makePassiveModel, PassiveNmea},
+    {"Passive NMEA", GPSType::passive, &makeProtocol<PassiveProtocol>, &makePassiveModel, PassiveNmea},
 }};
 
-GPSProtocolIO noDevice()
+GPSProtocolIO noDevice(GPSTestClock& clock)
 {
-    auto io = makeGPSProtocolTestIO();
+    auto io = makeGPSProtocolTestIO(clock);
     io.read = [](std::span<uint8_t>, GPSDeadline) -> GPSReadResult { throw std::runtime_error("decoder read device"); };
     io.write = [](std::span<const uint8_t>, GPSDeadline) -> GPSWriteResult {
         throw std::runtime_error("decoder wrote device");
@@ -238,9 +237,10 @@ void GPSProtocolFamilyContractTest::_decodeIsPure()
 {
     QFETCH(int, familyIndex);
     const auto& family = kFamilies[static_cast<size_t>(familyIndex)];
-    GPSNativePositionReport position{};
-    GPSNativeSatelliteReport satellites{};
-    auto protocol = family.createProtocol(noDevice(), position, satellites);
+    GPSTestClock clock;
+    GPSDecodedPosition position{};
+    GPSDecodedSatellites satellites{};
+    auto protocol = family.createProtocol(noDevice(clock), position, satellites);
     constexpr std::array<uint8_t, 8> noise{0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00};
     for (size_t split = 0; split <= noise.size(); ++split) {
         const auto first = protocol->decode(std::span(noise).first(split));
@@ -261,23 +261,22 @@ void GPSProtocolFamilyContractTest::_configurationCompletes_data()
 void GPSProtocolFamilyContractTest::_configurationCompletes()
 {
     QFETCH(int, familyIndex);
-    gps_test_time = 0;
-    gps_test_warnings.clear();
     const auto& family = kFamilies[static_cast<size_t>(familyIndex)];
-    GPSNativePositionReport position{};
-    GPSNativeSatelliteReport satellites{};
+    GPSTestClock clock;
+    GPSDecodedPosition position{};
+    GPSDecodedSatellites satellites{};
     std::unique_ptr<ScriptedReceiver::Model> model;
     std::unique_ptr<ScriptedReceiver> receiver;
     GPSProtocolIO io;
-    GPSTest::QuectelReceiver quectel;
+    GPSTest::QuectelReceiver quectel(clock);
     std::atomic_bool stop = false;
     if (family.type == GPSType::quectel) {
         quectel.role = 2;
         io = quectel.io();
     } else {
-        model = family.createModel();
+        model = family.createModel(clock);
         receiver = std::make_unique<ScriptedReceiver>(stop, model.get());
-        io = receiver->makeIO(makeGPSProtocolTestIO());
+        io = receiver->makeIO(makeGPSProtocolTestIO(clock));
     }
     auto protocol = family.createProtocol(std::move(io), position, satellites);
     unsigned baud = (family.capabilities & PassiveNmea) ? 115200 : 0;
@@ -298,11 +297,11 @@ void GPSProtocolFamilyContractTest::_invalidBaseConfiguration()
     if ((family.capabilities & (SupportsSurvey | SupportsFixedBase)) != (SupportsSurvey | SupportsFixedBase)) {
         QSKIP("Family does not support both generic survey-in and fixed-base configuration");
     }
+    GPSTestClock clock;
     for (const auto& config : invalidBaseConfigs()) {
-        gps_test_warnings.clear();
-        GPSNativePositionReport position{};
-        GPSNativeSatelliteReport satellites{};
-        auto protocol = family.createProtocol(noDevice(), position, satellites);
+        GPSDecodedPosition position{};
+        GPSDecodedSatellites satellites{};
+        auto protocol = family.createProtocol(noDevice(clock), position, satellites);
         unsigned baud = 9600;
         QVERIFY2(!protocol->configure(baud, config), family.name);
         QVERIFY(!protocol->receiverReady());
@@ -322,9 +321,10 @@ void GPSProtocolFamilyContractTest::_unsupportedSurveyMode()
     if (family.capabilities & SupportsSurvey) {
         QSKIP("Family supports survey-in");
     }
-    GPSNativePositionReport position{};
-    GPSNativeSatelliteReport satellites{};
-    auto protocol = family.createProtocol(noDevice(), position, satellites);
+    GPSTestClock clock;
+    GPSDecodedPosition position{};
+    GPSDecodedSatellites satellites{};
+    auto protocol = family.createProtocol(noDevice(clock), position, satellites);
     unsigned baud = (family.capabilities & PassiveNmea) ? 115200 : 0;
     QVERIFY2(!protocol->configure(baud, surveyConfig()), family.name);
     QVERIFY(!protocol->receiverReady());

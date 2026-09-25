@@ -1,10 +1,12 @@
 #include "GPSRtkTest.h"
 
 #include <chrono>
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <utility>
 
+#include <QtCore/QDebug>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
 #include <QtCore/QPointer>
@@ -17,6 +19,7 @@
 #include "BlockedTransportGate.h"
 #include "Driver/Support/ScriptedReceiver.h"
 #include "GPSCorrectionManager.h"
+#include "GPSManager.h"
 #include "GPSPositionService.h"
 #include "GPSRTKFactGroup.h"
 #include "GPSRtk.h"
@@ -31,6 +34,7 @@
 #include "RTKSettings.h"
 #include "ScriptedProvider.h"
 #ifndef QGC_NO_SERIAL_LINK
+#include "GPSSerialPortManagerAdapter.h"
 #include "SerialPortManager.h"
 #endif
 
@@ -68,6 +72,7 @@ GPSRtk::Configuration fixedConfiguration(int manufacturer = GPSRtk::manufacturer
     return configuration;
 }
 
+#ifndef QGC_NO_SERIAL_LINK
 GPSRtk::Configuration serialConfiguration(int manufacturer, const QString& device, uint32_t baudRate)
 {
     auto configuration = receiverConfiguration(manufacturer);
@@ -76,6 +81,7 @@ GPSRtk::Configuration serialConfiguration(int manufacturer, const QString& devic
     configuration.serialBaudRate = baudRate;
     return configuration;
 }
+#endif
 
 struct ScriptedRtkReceiver
 {
@@ -171,16 +177,15 @@ void GPSRtkTest::_snapshotUsageEvidence()
     QVERIFY(receiver.connectReceiver(GPSType::ublox, {}));
     auto* provider = harness.providers.current();
     QVERIFY(provider);
-    auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
-    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
-    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
+    QCOMPARE(receiver.status().numSatellites, -1);
+    QCOMPARE(receiver.status().numSatellitesUsed, -1);
     provider->satellites(snapshot);
-    QCOMPARE(facts->numSatellites()->rawValue().toInt(), expectedInView);
-    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), expectedUsage);
+    QCOMPARE(receiver.status().numSatellites, expectedInView);
+    QCOMPARE(receiver.status().numSatellitesUsed, expectedUsage);
 
     receiver.disconnectGPS();
-    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
-    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
+    QCOMPARE(receiver.status().numSatellites, -1);
+    QCOMPARE(receiver.status().numSatellitesUsed, -1);
 }
 
 void GPSRtkTest::_logsFixTransitionsWithoutCoordinates()
@@ -218,6 +223,25 @@ void GPSRtkTest::_logsFixTransitionsWithoutCoordinates()
     }
 }
 
+void GPSRtkTest::_configurationDebugRedactsFixedBaseCoordinates()
+{
+    auto configuration = fixedConfiguration();
+    configuration.fixedBasePositionLatitude = 12.3456789;
+    configuration.fixedBasePositionLongitude = 98.7654321;
+    configuration.fixedBasePositionAltitude = 543.21f;
+
+    QString output;
+    {
+        QDebug debug(&output);
+        debug << configuration;
+    }
+
+    QVERIFY(output.contains(QStringLiteral("baseMode=1")));
+    QVERIFY(!output.contains(QStringLiteral("12.345")));
+    QVERIFY(!output.contains(QStringLiteral("98.765")));
+    QVERIFY(!output.contains(QStringLiteral("543.21")));
+}
+
 UT_REGISTER_TEST(GPSRtkTest, TestLabel::Unit)
 
 void GPSRtkTest::_silentReceiverClearsSolution()
@@ -228,7 +252,7 @@ void GPSRtkTest::_silentReceiverClearsSolution()
     QVERIFY(receiver.connectReceiver(GPSType::ublox, {}));
     auto* provider = harness.providers.current();
     QVERIFY(provider);
-    auto* facts = receiver.gpsRtkFactGroup();
+    const auto& status = receiver.status();
     GPSSatelliteReport satellites;
     satellites.inView = 12;
     satellites.used = 9;
@@ -236,27 +260,35 @@ void GPSRtkTest::_silentReceiverClearsSolution()
     auto report = fixReport(GPSFixQuality::Fix3D);
     report.integrity.jamming.state = GPSIntegrityReport::JammingState::Warning;
     provider->position(report);
-    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), 9);
-    QCOMPARE(facts->fixType()->rawValue().toInt(), static_cast<int>(GPSFixQuality::Fix3D));
-    QVERIFY(facts->jammingState()->rawValue().toInt() > 0);
+    QCOMPARE(status.numSatellitesUsed, 9);
+    QCOMPARE(status.fixType, GPSFixQuality::Fix3D);
+    QCOMPARE(status.jammingState, GPSIntegrityReport::JammingState::Warning);
 
     // Passive and position-only links stay connected while silent; their last solution must not linger.
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(6)));
-    QCOMPARE(facts->fixType()->rawValue().toInt(), 0);
-    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
-    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
-    QCOMPARE(facts->jammingState()->rawValue().toInt(), 0);
+    QCOMPARE(status.fixType, GPSFixQuality::Unknown);
+    QCOMPARE(status.numSatellites, -1);
+    QCOMPARE(status.numSatellitesUsed, -1);
+    QCOMPARE(status.jammingState, GPSIntegrityReport::JammingState::Unknown);
 }
 
 void GPSRtkTest::_testCoreAvailableWithoutReceiver()
 {
     GPSRtk rtk;
     QVERIFY(!rtk.connected());
-    auto* facts = qobject_cast<GPSRTKFactGroup*>(rtk.gpsRtkFactGroup());
-    QVERIFY(facts);
-    QVERIFY(!facts->connected()->rawValue().toBool());
     QVERIFY(QFile::exists(QStringLiteral(":/json/Vehicle/GPSRTKFact.json")));
-    QCOMPARE(rtk.property("facts").value<GPSRTKFactGroup*>(), facts);
+    GPSRTKFactGroup facts(&rtk);
+    // The status without a receiver is what the Fact metadata declares as the default.
+    for (const QString& name : facts.factNames()) {
+        const Fact* fact = facts.getFact(name);
+        const QVariant value = fact->rawValue();
+        const QVariant expected = fact->rawDefaultValue();
+        QVERIFY2(value == expected || (std::isnan(value.toDouble()) && std::isnan(expected.toDouble())),
+                 qPrintable(name));
+    }
+    auto* manager = GPSManager::instance();
+    QVERIFY(manager->gpsRtkFacts());
+    QCOMPARE(manager->property("gpsRtkFacts").value<GPSRTKFactGroup*>(), manager->gpsRtkFacts());
     QCOMPARE(QGroundControlQmlGlobal::staticMetaObject.indexOfProperty("gpsRtk"), -1);
 }
 
@@ -302,8 +334,8 @@ void GPSRtkTest::_notificationsFollowCompletedConnection_data()
 {
     QTest::addColumn<QString>("phase");
     QTest::addColumn<QString>("action");
-    for (const QString& phase :
-         {QStringLiteral("manufacturer"), QStringLiteral("error-message"), QStringLiteral("receiver")}) {
+    for (const QString& phase : {QStringLiteral("manufacturer"), QStringLiteral("error-message"),
+                                 QStringLiteral("receiver"), QStringLiteral("status")}) {
         for (const QString& action :
              {QStringLiteral("replace"), QStringLiteral("disconnect"), QStringLiteral("delete")}) {
             QTest::newRow(qPrintable(phase + '-' + action)) << phase << action;
@@ -322,6 +354,7 @@ void GPSRtkTest::_notificationsFollowCompletedConnection()
     receiver->_setError(GPSConnectionError::OpenFailed, QStringLiteral("previous failure"));
     QPointer<GPSProvider> first;
     QPointer<GPSProvider> replacement;
+    QPointer<GPSRtk> deleted;
     bool handled = false;
     QObject observer;
     const auto cleanup = qScopeGuard([&] {
@@ -335,6 +368,7 @@ void GPSRtkTest::_notificationsFollowCompletedConnection()
                 provider->stop();
             }
         }
+        delete deleted.data();
         firstGate->release.release();
         replacementGate->release.release();
         if (receiver) {
@@ -358,8 +392,11 @@ void GPSRtkTest::_notificationsFollowCompletedConnection()
         QVERIFY(first);
         QVERIFY(firstGate->entered.tryAcquire(1, TestTimeout::mediumMs()));
         if (action == QStringLiteral("delete")) {
-            receiver.reset();
-        } else if (action == QStringLiteral("disconnect")) {
+            deleted = receiver.release();
+            deleted->deleteLater();
+            return;
+        }
+        if (action == QStringLiteral("disconnect")) {
             receiver->disconnectGPS();
         } else {
             QVERIFY(receiver->connectReceiver(GPSType::passive, blockedTransportFactory(replacementGate),
@@ -375,13 +412,17 @@ void GPSRtkTest::_notificationsFollowCompletedConnection()
         connect(receiver.get(), &GPSRtk::baseManufacturerDetected, &observer, supersede);
     } else if (phase == QStringLiteral("error-message")) {
         connect(receiver.get(), &GPSRtk::errorMessageChanged, &observer, supersede);
+    } else if (phase == QStringLiteral("status")) {
+        connect(receiver.get(), &GPSRtk::statusChanged, &observer, supersede);
     } else {
         connect(receiver.get(), &GPSRtk::receiverChanged, &observer, supersede);
     }
     QVERIFY(receiver->connectReceiver(GPSType::ublox, blockedTransportFactory(firstGate)));
     QVERIFY(handled);
     if (action == QStringLiteral("delete")) {
-        QVERIFY(!receiver);
+        QVERIFY(deleted && deleted->hasReceiver());
+        QTRY_VERIFY_WITH_TIMEOUT(!deleted, TestTimeout::shortMs());
+        QVERIFY(first && !first->parent());
     } else if (action == QStringLiteral("replace")) {
         QVERIFY(receiver->hasReceiver());
         QCOMPARE(receiver->findChild<GPSProvider*>(), replacement);
@@ -416,6 +457,7 @@ void GPSRtkTest::_factNotificationRetiresSession()
     auto receiver = std::make_unique<GPSRtk>();
     receiver->setConfiguration(receiverConfiguration());
     QPointer<GPSProvider> replacement;
+    QPointer<GPSRtk> deleted;
     bool handled = false;
     QObject observer;
     QVERIFY(receiver->connectReceiver(GPSType::ublox, blockedTransportFactory(gate)));
@@ -427,6 +469,7 @@ void GPSRtkTest::_factNotificationRetiresSession()
                 provider->stop();
             }
         }
+        delete deleted.data();
         gate->release.release();
         replacementGate->release.release();
         if (receiver) {
@@ -439,20 +482,21 @@ void GPSRtkTest::_factNotificationRetiresSession()
         }
     });
     QVERIFY(gate->entered.tryAcquire(1, TestTimeout::mediumMs()));
-    auto* facts = receiver->gpsRtkFactGroup();
+    GPSRTKFactGroup facts(receiver.get());
     if (report == QStringLiteral("disconnect")) {
         receiver->_onGPSConnect();
     }
-    Fact* trigger = report == QStringLiteral("survey")       ? facts->currentDuration()
-                    : report == QStringLiteral("satellites") ? facts->numSatellites()
-                    : report == QStringLiteral("fix")        ? facts->fixType()
-                                                             : facts->connected();
+    Fact* trigger = report == QStringLiteral("survey")       ? facts.currentDuration()
+                    : report == QStringLiteral("satellites") ? facts.numSatellites()
+                    : report == QStringLiteral("fix")        ? facts.fixType()
+                                                             : facts.connected();
     connect(trigger, &Fact::rawValueChanged, &observer, [&] {
         if (std::exchange(handled, true)) {
             return;
         }
         if (action == QStringLiteral("delete")) {
-            receiver.reset();
+            deleted = receiver.release();
+            deleted->deleteLater();
         } else if (action == QStringLiteral("disconnect")) {
             receiver->disconnectGPS();
         } else {
@@ -483,12 +527,18 @@ void GPSRtkTest::_factNotificationRetiresSession()
         receiver->_positionUpdate(fixReport(GPSFixQuality::Fix3D));
     }
     QVERIFY(handled);
+    if (action == QStringLiteral("delete")) {
+        QVERIFY(deleted);
+        QTRY_VERIFY_WITH_TIMEOUT(!deleted, TestTimeout::shortMs());
+    }
     QVERIFY(first && !first->parent());
     if (receiver) {
         QCOMPARE(receiver->hasReceiver(), action == QStringLiteral("replace"));
         QVERIFY(!receiver->connected());
-        QVERIFY(!receiver->gpsRtkFactGroup()->valid()->rawValue().toBool());
-        QCOMPARE(receiver->gpsRtkFactGroup()->numSatellitesUsed()->rawValue().toInt(), -1);
+        QVERIFY(!receiver->status().valid);
+        QCOMPARE(receiver->status().numSatellitesUsed, -1);
+        QVERIFY(!facts.valid()->rawValue().toBool());
+        QCOMPARE(facts.numSatellitesUsed()->rawValue().toInt(), -1);
         if (replacement) {
             QVERIFY(receiver->errorMessage().isEmpty());
             QCOMPARE(receiver->activeManufacturer(), 7);
@@ -500,8 +550,8 @@ void GPSRtkTest::_failedOpenNeverConnects()
 {
     GPSRtk receiver;
     receiver.setConfiguration(receiverConfiguration());
-    auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
-    QSignalSpy connected(facts->connected(), &Fact::rawValueChanged);
+    GPSRTKFactGroup facts(&receiver);
+    QSignalSpy connected(facts.connected(), &Fact::rawValueChanged);
     expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport")));
     receiver.connectReceiver(GPSType::ublox, {});
@@ -535,7 +585,7 @@ void GPSRtkTest::_receiverPublishesGcsPosition()
     QCOMPARE(positions.selectedSource(), GPSPositionService::SelectedSource::Receiver);
     QCOMPARE(positions.gcsPosition().latitude(), 47.25);
     QCOMPARE(positions.gcsPositionHorizontalAccuracy(), qreal(0.02f));
-    QCOMPARE(receiver.gpsRtkFactGroup()->fixType()->rawValue().toInt(), static_cast<int>(GPSFixQuality::RTKFixed));
+    QCOMPARE(receiver.status().fixType, GPSFixQuality::RTKFixed);
 
     receiver.disconnectGPS();
     QVERIFY(!positions.gcsPosition().isValid());
@@ -574,7 +624,7 @@ void GPSRtkTest::_fixedBasePositionIsGcsPosition()
     const auto gga = receiver.acceptedPositionObservation(GPSObservation::PositionUse::Gga);
     QVERIFY(gga);
     QVERIFY(gga->altitudeDatum != GPSAltitudeDatum::MeanSeaLevel);
-    QCOMPARE(receiver.gpsRtkFactGroup()->fixType()->rawValue().toInt(), static_cast<int>(GPSFixQuality::NoFix));
+    QCOMPARE(receiver.status().fixType, GPSFixQuality::NoFix);
     receiver.disconnectGPS();
     QVERIFY(!positions.gcsPosition().isValid());
 }
@@ -586,32 +636,32 @@ void GPSRtkTest::_receiverIntegrityFacts()
     QVERIFY(receiver.connectReceiver(GPSType::ublox, {}));
     auto* provider = harness.providers.current();
     QVERIFY(provider);
-    auto* facts = receiver.gpsRtkFactGroup();
+    GPSRTKFactGroup facts(&receiver);
     GPSPositionReport report = fixReport(GPSFixQuality::Fix3D);
     report.integrity.jamming.state = GPSIntegrityReport::JammingState::Warning;
     report.integrity.spoofing.state = GPSIntegrityReport::SpoofingState::Indicated;
     provider->position(report);
-    QCOMPARE(facts->jammingState()->rawValue().toInt(), 2);
-    QCOMPARE(facts->spoofingState()->rawValue().toInt(), 2);
-    QCOMPARE(facts->jammingState()->enumStringValue(), QStringLiteral("Warning"));
-    QVERIFY(facts->interferenceWarning());
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 2);
+    QCOMPARE(facts.spoofingState()->rawValue().toInt(), 2);
+    QCOMPARE(facts.jammingState()->enumStringValue(), QStringLiteral("Warning"));
+    QVERIFY(facts.interferenceWarning());
     report.integrity = {};
     provider->position(report);
-    QCOMPARE(facts->jammingState()->rawValue().toInt(), 0);
-    QVERIFY(!facts->interferenceWarning());
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 0);
+    QVERIFY(!facts.interferenceWarning());
     report.integrity.jamming.state = GPSIntegrityReport::JammingState::Ok;
     report.integrity.spoofing.state = GPSIntegrityReport::SpoofingState::None;
     provider->position(report);
-    QVERIFY(!facts->interferenceWarning());
-    QSignalSpy interference(facts, &GPSRTKFactGroup::interferenceWarningChanged);
+    QVERIFY(!facts.interferenceWarning());
+    QSignalSpy interference(&facts, &GPSRTKFactGroup::interferenceWarningChanged);
     report.integrity.jamming.state = GPSIntegrityReport::JammingState::Critical;
     provider->position(report);
-    QVERIFY(facts->interferenceWarning());
+    QVERIFY(facts.interferenceWarning());
     QVERIFY(!interference.isEmpty());
     receiver.disconnectGPS();
-    QCOMPARE(facts->jammingState()->rawValue().toInt(), 0);
-    QCOMPARE(facts->spoofingState()->rawValue().toInt(), 0);
-    QVERIFY(!facts->interferenceWarning());
+    QCOMPARE(facts.jammingState()->rawValue().toInt(), 0);
+    QCOMPARE(facts.spoofingState()->rawValue().toInt(), 0);
+    QVERIFY(!facts.interferenceWarning());
 }
 
 void GPSRtkTest::_surveyedBasePositionIsGcsPosition()
@@ -675,7 +725,7 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QTRY_VERIFY_WITH_TIMEOUT(firstGate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> first = receiver.findChild<GPSProvider*>();
     QVERIFY(first);
-    auto* facts = qobject_cast<GPSRTKFactGroup*>(receiver.gpsRtkFactGroup());
+    const auto& status = receiver.status();
     QVERIFY(!receiver.connected());
     emit first->receiverReady();
     GPSSurveyReport survey{};
@@ -691,14 +741,14 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     satellites.used = 7;
     emit first->satelliteInfoUpdate(satellites);
     QTRY_VERIFY_WITH_TIMEOUT(receiver.connected(), TestTimeout::shortMs());
-    QVERIFY(facts->valid()->rawValue().toBool());
-    QCOMPARE(facts->currentLatitude()->rawValue().toDouble(), 47.0);
-    QCOMPARE(facts->currentLongitude()->rawValue().toDouble(), 8.0);
-    QCOMPARE(facts->currentAltitude()->rawValue().toDouble(), 500.0);
-    QCOMPARE(facts->currentAccuracy()->rawValue().toDouble(), 1.5);
-    QCOMPARE(facts->currentDuration()->rawValue().toLongLong(), 4294967295LL);
-    QCOMPARE(facts->numSatellites()->rawValue().toInt(), 2);
-    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), 7);
+    QVERIFY(status.valid);
+    QCOMPARE(status.currentLatitude, 47.0);
+    QCOMPARE(status.currentLongitude, 8.0);
+    QCOMPARE(status.currentAltitude, 500.0f);
+    QCOMPARE(status.currentAccuracy, 1.5);
+    QCOMPARE(status.currentDuration.count(), 4294967295LL);
+    QCOMPARE(status.numSatellites, 2);
+    QCOMPARE(status.numSatellitesUsed, 7);
     const auto frame = GpsTestHelpers::buildRtcmFrame(1005);
     emit first->RTCMDataUpdate(frame, GPSCorrectionFrame::monotonicNowMs());
     QTRY_COMPARE_WITH_TIMEOUT(routed.size(), 1, TestTimeout::shortMs());
@@ -721,17 +771,17 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     emit first->connectionError(GPSConnectionError::DeviceError);
     receiver.connectReceiver(GPSType::ublox, blockedTransportFactory(secondGate), QStringLiteral("serial:test-base"));
     QVERIFY(!receiver.connected());
-    QVERIFY(!facts->valid()->rawValue().toBool());
-    QVERIFY(!facts->active()->rawValue().toBool());
-    QVERIFY(qIsNaN(facts->currentLatitude()->rawValue().toDouble()));
-    QVERIFY(qIsNaN(facts->currentAccuracy()->rawValue().toDouble()));
-    QCOMPARE(facts->currentDuration()->rawValue().toInt(), 0);
-    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
-    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
+    QVERIFY(!status.valid);
+    QVERIFY(!status.active);
+    QVERIFY(qIsNaN(status.currentLatitude));
+    QVERIFY(qIsNaN(status.currentAccuracy));
+    QCOMPARE(status.currentDuration.count(), 0);
+    QCOMPARE(status.numSatellites, -1);
+    QCOMPARE(status.numSatellitesUsed, -1);
     QTRY_VERIFY_WITH_TIMEOUT(secondGate->entered.available() > 0, TestTimeout::mediumMs());
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(!receiver.connected());
-    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
+    QCOMPARE(status.numSatellitesUsed, -1);
     QVERIFY(receiver.errorMessage().isEmpty());
     QCOMPARE(rtcm->totalBytesSent(), bytesBefore);
     auto* activeProvider = receiver.findChild<GPSProvider*>();
@@ -763,9 +813,9 @@ void GPSRtkTest::_retiredWorkerCannotUpdateReplacement()
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     verifyExpectedLogMessage();
     QVERIFY(!receiver.connected());
-    QCOMPARE(facts->currentDuration()->rawValue().toLongLong(), 0);
-    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
-    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
+    QCOMPARE(status.currentDuration.count(), 0);
+    QCOMPARE(status.numSatellites, -1);
+    QCOMPARE(status.numSatellitesUsed, -1);
     QVERIFY(corrections.sourceInstances().isEmpty());
     QCOMPARE(routed.size(), 2);
     QCOMPARE(rtcm->totalBytesSent(), bytesBefore + frame.size());
@@ -1089,10 +1139,11 @@ void GPSRtkTest::_invalidReceiverSettings()
 void GPSRtkTest::_serialReservationSurvivesDelayedStop()
 {
     SerialPortManager ports(nullptr, [] { return QList<SerialPortManager::Port>{}; });
+    GPSSerialPortManagerAdapter serialPorts(&ports);
     auto gate = std::make_shared<BlockedTransportGate>();
     GPSRtk receiver;
     receiver.setConfiguration(receiverConfiguration(kPassiveManufacturer));
-    receiver.setSerialPortManager(&ports);
+    receiver.setSerialPorts(&serialPorts);
     receiver._serialTransportFactory = [gate](const QString&, const std::atomic_bool& stop) {
         return blockedTransportFactory(gate)(stop);
     };
@@ -1167,10 +1218,11 @@ void GPSRtkTest::_manualPassiveBaudPreserved()
         return QList<SerialPortManager::Port>{
             {QStringLiteral("/test/passive"), QStringLiteral("passive"), QGCSerialPortInfo::BoardTypeUnknown, {}}};
     });
+    GPSSerialPortManagerAdapter serialPorts(&ports);
     auto state = std::make_shared<PassiveTransportState>();
     GPSRtk receiver;
     receiver.setConfiguration(serialConfiguration(kPassiveManufacturer, QStringLiteral("/test/passive"), baud));
-    receiver.setSerialPortManager(&ports);
+    receiver.setSerialPorts(&serialPorts);
     receiver._serialTransportFactory = [state](const QString&, const std::atomic_bool& stop) {
         return makePassiveTestTransport(stop, state);
     };
@@ -1180,8 +1232,8 @@ void GPSRtkTest::_manualPassiveBaudPreserved()
     QCOMPARE(state->baud.load(), baud);
     QCOMPARE(state->baudChanges.load(), 1U);
     QCOMPARE(state->writes.load(), 0U);
-    QVERIFY(!receiver.gpsRtkFactGroup()->active()->rawValue().toBool());
-    QVERIFY(!receiver.gpsRtkFactGroup()->valid()->rawValue().toBool());
+    QVERIFY(!receiver.status().active);
+    QVERIFY(!receiver.status().valid);
     QVERIFY(ports.isPortReserved(QStringLiteral("/test/passive")));
     state->releaseRead.release();
     receiver.disconnectConfiguredGPS();
@@ -1219,36 +1271,65 @@ void GPSRtkTest::_persistentConsentMapping()
 
 void GPSRtkTest::_configurationDiagnosticRetained_data()
 {
+    QTest::addColumn<QString>("session");
     QTest::addColumn<QString>("detail");
-    QTest::newRow("provisioning-mismatch") << QStringLiteral("Requested base settings differ from receiver readback.");
-    QTest::newRow("possibly-persisted") << QStringLiteral("Settings may have been saved, but reconnect failed.");
-    QTest::newRow("empty-fallback") << QString();
+    QTest::addColumn<QString>("expected");
+
+    const struct
+    {
+        const char* name;
+        QString detail;
+    } cases[] = {{"provisioning-mismatch", QStringLiteral("Requested base settings differ from receiver readback.")},
+                 {"possibly-persisted", QStringLiteral("Settings may have been saved, but reconnect failed.")},
+                 {"empty-fallback", QString()}};
+
+    for (const auto& [name, detail] : cases) {
+        const QString reported =
+            detail.isEmpty()
+                ? GPSRtk::tr("Receiver configuration failed. Check the receiver type, baud rate, and base mode.")
+                : GPSRtk::tr("Receiver configuration failed: %1").arg(detail);
+        // Only a manual connection that reached the receiver once is retried.
+        const QString retried =
+            detail.isEmpty() ? GPSRtk::tr("Receiver connection lost. Reconnecting automatically.")
+                             : GPSRtk::tr("Receiver configuration failed: %1. Reconnecting automatically.").arg(detail);
+        QTest::addRow("direct-%s", name) << QStringLiteral("direct") << detail << reported;
+        QTest::addRow("first-attempt-%s", name) << QStringLiteral("first-attempt") << detail << reported;
+        QTest::addRow("reconnecting-%s", name) << QStringLiteral("reconnecting") << detail << retried;
+    }
 }
 
 void GPSRtkTest::_configurationDiagnosticRetained()
 {
+    QFETCH(QString, session);
     QFETCH(QString, detail);
+    QFETCH(QString, expected);
+    const bool direct = session == QStringLiteral("direct");
+    const bool reconnecting = session == QStringLiteral("reconnecting");
     ScriptedRtkReceiver harness;
     auto& receiver = harness.receiver;
-    receiver.setConfiguration(receiverConfiguration(GPSRtk::manufacturerForType(GPSType::quectel)));
-    QVERIFY(receiver.connectReceiver(GPSType::quectel, {}, {}, 115200, true));
+    auto configuration = receiverConfiguration(GPSRtk::manufacturerForType(GPSType::quectel));
+    if (!direct) {
+        configuration.connectionType = GPSRtk::Tcp;
+        configuration.tcpHost = QStringLiteral("rtk.test");
+        configuration.tcpPort = 2101;
+    }
+    receiver.setConfiguration(configuration);
+    QVERIFY(direct ? receiver.connectReceiver(GPSType::quectel, {}, {}, 115200, true)
+                   : receiver.connectConfiguredGPS(true));
     auto* provider = harness.providers.current();
     QVERIFY(provider);
+    if (reconnecting) {
+        provider->ready();
+    }
     receiver._setError(GPSConnectionError::ConfigFailed, QStringLiteral("An earlier configuration error"));
     QSignalSpy messages(&receiver, &GPSRtk::errorMessageChanged);
     expectLogMessage("GPS.RTK.GPSRtk", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("GPS receiver did not accept configuration")));
+                     QRegularExpression(reconnecting ? QStringLiteral("GPS receiver session ended")
+                                                     : QStringLiteral("GPS receiver did not accept configuration")));
     provider->fail(GPSConnectionError::ConfigFailed, detail);
     verifyExpectedLogMessage();
     QCOMPARE(messages.size(), 1);
     QVERIFY(!receiver.connected());
-    QVERIFY(!receiver.errorMessage().isEmpty());
-    if (!detail.isEmpty()) {
-        QVERIFY(receiver.errorMessage().contains(detail));
-    } else {
-        QCOMPARE(receiver.errorMessage(),
-                 GPSRtk::tr("Receiver configuration failed. Check the receiver type, baud rate, and base mode."));
-    }
-    const QString message = receiver.errorMessage();
-    QCOMPARE(receiver.errorMessage(), message);
+    QCOMPARE(receiver.reconnecting(), reconnecting);
+    QCOMPARE(receiver.errorMessage(), expected);
 }

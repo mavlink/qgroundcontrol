@@ -649,8 +649,7 @@ void GPSPositionService::_setPositionSource(SelectedSource source)
         return;
     }
     qCDebug(GPSPositionServiceLog) << "Ground-station position source changed"
-                                   << "source:" << static_cast<int>(source) << "previous:" << _currentHealth
-                                   << "selected:" << nextHealth;
+                                   << "source:" << source << "previous:" << _currentHealth << "selected:" << nextHealth;
     _forceSourceRefresh = false;
     _currentHealth = nextHealth;
     _selectedKind = source;

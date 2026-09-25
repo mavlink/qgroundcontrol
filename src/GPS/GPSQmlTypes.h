@@ -7,6 +7,7 @@
 #include "GPSCorrectionManager.h"
 #include "GPSPositionService.h"
 #include "GPSReceiverDescriptor.h"
+#include "GPSRtk.h"
 #include "GPSSourceHealth.h"
 #include "NTRIPConnectionStats.h"
 #include "NTRIPManager.h"
@@ -27,6 +28,14 @@ struct GPSReceiverPresentationQmlType
     QML_FOREIGN(GPSReceiverPresentation)
     QML_VALUE_TYPE(gpsReceiverPresentation)
     QML_STRUCTURED_VALUE
+};
+
+struct GPSRtkQmlType
+{
+    Q_GADGET
+    QML_FOREIGN(GPSRtk)
+    QML_NAMED_ELEMENT(GPSRtk)
+    QML_UNCREATABLE("Managed by GPSManager")
 };
 
 struct GPSSourceHealthQmlType

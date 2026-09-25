@@ -12,6 +12,14 @@
 QGC_LOGGING_CATEGORY(GPSCorrectionRouterLog, "GPS.Corrections.GPSCorrectionRouter")
 QGC_LOGGING_CATEGORY(GPSCorrectionSelectorLog, "GPS.Corrections.GPSCorrectionSelector")
 
+QDebug operator<<(QDebug debug, const GPSCorrectionSelector::Configuration& configuration)
+{
+    const QDebugStateSaver saver(debug);
+    debug.nospace().noquote() << "GPSCorrectionSelector::Configuration(policy=" << configuration.policy
+                              << ", source=" << configuration.source << ", instance=" << configuration.instance << ')';
+    return debug;
+}
+
 GPSCorrectionRouter::GPSCorrectionRouter(QObject* parent, Clock clock)
     : QObject(parent)
     , _clock(clock ? std::move(clock) : Clock(GPSCorrectionFrame::monotonicNowMs))
@@ -29,18 +37,6 @@ int GPSCorrectionRouter::_sourceIndex(GPSCorrectionSource source)
 {
     const int index = static_cast<int>(source);
     return index >= 0 && index < 4 ? index : -1;
-}
-
-quint64 GPSCorrectionRouter::beginSourceSession(GPSCorrectionSource source, const QString& instance)
-{
-    const int index = _sourceIndex(source);
-    if (index < 0 || _shutdown) {
-        return 0;
-    }
-    endSourceSession(source);
-    const quint64 session = _ledger.beginSource(source);
-    _configuredInstances[index] = instance;
-    return session;
 }
 
 void GPSCorrectionRouter::endSourceSession(GPSCorrectionSource source)
@@ -66,7 +62,7 @@ QList<GPSCorrectionSourceDiagnostic> GPSCorrectionRouter::sourceDiagnostics() co
         result.append({
             .source = index,
             .active = stats.active,
-            .usable = stats.active && age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS,
+            .usable = stats.active && age >= 0 && age < FRESHNESS_TIMEOUT_MS,
             .receivedFrames = stats.receivedFrames,
             .validatedFrames = stats.validatedFrames,
             .selectedFrames = stats.selectedFrames,
@@ -88,7 +84,7 @@ QList<GPSCorrectionStreamDiagnostic> GPSCorrectionRouter::sourceInstanceDiagnost
     const auto active = _selector.activeIdentity(nowMs);
     for (const auto& source : _selector.sources()) {
         const qint64 age = GPSCorrectionFrame::ageMs(source.lastRoutableMs, nowMs);
-        const bool usable = age >= 0 && age < GPSCorrectionSelector::FRESHNESS_TIMEOUT_MS;
+        const bool usable = age >= 0 && age < FRESHNESS_TIMEOUT_MS;
         result.append({.source = static_cast<int>(source.identity.category),
                        .instanceId = source.identity.instance,
                        .active = true,
@@ -124,23 +120,25 @@ void GPSCorrectionRouter::applyConfiguration(const Configuration& configuration)
 
 GPSCorrectionSourceRegistration GPSCorrectionRouter::registerSource(GPSCorrectionSource source, const QString& instance)
 {
-    const quint64 session = beginSourceSession(source, instance);
-    return session ? GPSCorrectionSourceRegistration(GPSCorrectionSourceToken(this, source, session, instance))
-                   : GPSCorrectionSourceRegistration();
+    if (_sourceIndex(source) < 0 || _shutdown) {
+        return {};
+    }
+    endSourceSession(source);
+    return GPSCorrectionSourceRegistration({this, source, _ledger.beginSource(source), instance});
 }
 
-bool GPSCorrectionRouter::isCurrentSource(GPSCorrectionSource source, quint64 session, const QString& instance) const
+bool GPSCorrectionRouter::_isCurrent(const GPSCorrectionSourceRegistration::Weak& source) const
 {
-    const int index = _sourceIndex(source);
-    return !_shutdown && index > 0 && session && _ledger.statistics()[index].active &&
-           _ledger.statistics()[index].session == session && _configuredInstances[index] == instance;
+    // The ledger's per-category session is the only record of which registration generation is current.
+    const int index = _sourceIndex(source._source);
+    return source._router == this && !_shutdown && index > 0 && _ledger.statistics()[index].active &&
+           _ledger.statistics()[index].session == source._generation;
 }
 
 bool GPSCorrectionRouter::acceptIngress(const GPSCorrectionIngress& ingress)
 {
-    const auto& token = ingress.token();
-    if (!token.belongsTo(this) || !token.valid() ||
-        (!token.instance().isEmpty() && ingress.frame().sourceInstance != token.instance())) {
+    const auto& source = ingress._source;
+    if (!_isCurrent(source) || (!source._instance.isEmpty() && ingress.frame().sourceInstance != source._instance)) {
         return false;
     }
     auto frame = ingress.frame();

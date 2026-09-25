@@ -16,7 +16,7 @@
 #include "QGCLoggingCategory.h"
 #include <GeographicLib/Geocentric.hpp>
 
-QGC_LOGGING_CATEGORY(GPSNativeDriversLog, "GPS.Driver.Protocols")
+QGC_LOGGING_CATEGORY(GPSProtocolLog, "GPS.Driver.Protocols")
 
 GPSProtocol::GPSProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     : _satellites(satelliteInfoEnabled ? &_satelliteStorage : nullptr)
@@ -35,7 +35,7 @@ GPSProtocol::GPSProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
 
 const QLoggingCategory& GPSProtocol::logCategory() const
 {
-    return GPSNativeDriversLog();
+    return GPSProtocolLog();
 }
 
 void GPSProtocol::log(GPSProtocolLogLevel level, const char* format, ...) const
@@ -132,6 +132,7 @@ GPSCommandResult GPSProtocol::transact(GPSConfigurationStep step, std::string_vi
     const auto clearReply = qScopeGuard([this] {
         _reply.reset();
         _rawReply = nullptr;
+        _replyMatcher = {};
     });
     if (hasIOError()) {
         GPSCommandResult failed;
@@ -151,6 +152,41 @@ GPSCommandResult GPSProtocol::transact(GPSConfigurationStep step, std::string_vi
 {
     _rawReply = &reply;
     return transact(std::move(step), wire);
+}
+
+GPSCommandResult GPSProtocol::transact(GPSConfigurationStep step, std::string_view wire, GPSReplyMatcher reply)
+{
+    _replyMatcher = std::move(reply);
+    return transact(std::move(step), wire);
+}
+
+GPSConfigurationSequence::Result GPSProtocol::runSequence(const GPSConfigurationSequence& sequence)
+{
+    for (size_t index = 0; index < sequence.steps.size(); ++index) {
+        if (const auto* command = std::get_if<GPSConfigurationSequence::Command>(&sequence.steps[index])) {
+            GPSCommandResult result;
+            for (unsigned attempt = 0; attempt < std::max(command->attempts, 1U); ++attempt) {
+                if (const auto* raw = std::get_if<GPSConfigurationSequence::RawReply>(&command->reply)) {
+                    GPSRawAckMatcher matcher(raw->accepted, raw->rejected);
+                    result = transact(command->step, command->wire, matcher);
+                } else {
+                    result = transact(command->step, command->wire, std::get<GPSReplyMatcher>(command->reply));
+                }
+                if (result.succeeded() || hasIOError()) {
+                    break;
+                }
+            }
+            if (!result.succeeded() && (command->step.required || hasIOError())) {
+                return {.failedStep = index, .failedLabel = command->step.command, .outcome = result.evidence.outcome};
+            }
+            continue;
+        }
+        const auto& custom = std::get<GPSConfigurationSequence::Custom>(sequence.steps[index]);
+        if ((!custom.run() && custom.required) || hasIOError()) {
+            return {.failedStep = index, .failedLabel = custom.label, .outcome = ioCommandOutcome()};
+        }
+    }
+    return {};
 }
 
 void GPSProtocol::beginCommandWrite(GPSConfigurationStep step)

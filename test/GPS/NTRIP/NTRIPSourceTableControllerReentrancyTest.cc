@@ -376,20 +376,28 @@ void NTRIPSourceTableControllerTest::fetchNotificationReentry()
 {
     QFETCH(bool, destroy);
     auto controller = std::make_unique<NTRIPSourceTableController>();
+    QPointer<NTRIPSourceTableController> deleted;
     connect(controller.get(), &NTRIPSourceTableController::fetchStatusChanged, this, [&]() {
-        if (controller->fetchStatus() == NTRIPSourceTableController::FetchStatus::InProgress) {
-            if (destroy) {
-                controller.reset();
-            } else {
-                controller->fetch({});
-            }
+        if (!controller || controller->fetchStatus() != NTRIPSourceTableController::FetchStatus::InProgress) {
+            return;
+        }
+        if (destroy) {
+            deleted = controller.release();
+            deleted->deleteLater();
+        } else {
+            controller->fetch({});
         }
     });
     controller->fetch(config());
-    if (!destroy) {
-        QCOMPARE(controller->fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
-        QVERIFY(!controller->_activeSession());
+    if (destroy) {
+        QVERIFY(deleted);
+        const QPointer<NTRIPHttpSession> session = deleted->_activeSession();
+        QVERIFY(session);
+        QTRY_VERIFY_WITH_TIMEOUT(!deleted && !session, TestTimeout::shortMs());
+        return;
     }
+    QCOMPARE(controller->fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
+    QVERIFY(!controller->_activeSession());
 }
 
 void NTRIPSourceTableControllerTest::modelResetReentry_data()

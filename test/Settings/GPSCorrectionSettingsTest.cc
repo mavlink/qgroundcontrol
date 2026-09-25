@@ -265,8 +265,8 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     auto udpListener = corrections.registerSource(GPSCorrectionSource::Udp);
     const QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
     const auto receivePeer = [&](const QString& instance, qint64 ageMs = 0) {
-        corrections.acceptIngress(udpListener.token().event(frame, GPSCorrectionFrame::monotonicNowMs() - ageMs, 1005,
-                                                            true, false, GPSCorrectionReason::None, instance));
+        corrections.acceptIngress(udpListener.event(frame, GPSCorrectionFrame::monotonicNowMs() - ageMs, 1005, true,
+                                                    false, GPSCorrectionReason::None, instance));
     };
     const qint64 expiredAgeMs = GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS + 1;
     // Expired observations expose peers without real-time waits.

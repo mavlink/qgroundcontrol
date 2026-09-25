@@ -9,9 +9,6 @@
 
 #include "../../../../src/GPS/Driver/Protocols/UBX/UBXMessages.h"
 #include "Protocols/ProtocolTestPackets.h"
-#ifdef QGC_GPS_TEST_CLOCK
-#include "GPSProtocolTestIO.h"
-#endif
 
 namespace {
 constexpr uint8_t CFG_CLASS = 0x06;
@@ -54,7 +51,8 @@ void appendLittleEndian(QByteArray& bytes, uint32_t value, unsigned width)
 }
 }  // namespace
 
-UBXReceiverModel::UBXReceiverModel(Receiver model)
+UBXReceiverModel::UBXReceiverModel(Receiver model, GPSTestClock& clock)
+    : _clock(&clock)
 {
     QByteArray hardwareVersion = "00080000";
     QByteArray firmware = "HPG 1.40";
@@ -257,11 +255,7 @@ void UBXReceiverModel::onTransportReadWait(ScriptedReceiver& receiver, int timeo
 void UBXReceiverModel::onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline)
 {
     Q_UNUSED(receiver)
-#ifdef QGC_GPS_TEST_CLOCK
-    gps_test_time = deadline.untilUs + 1;
-#else
-    Q_UNUSED(deadline)
-#endif
+    _clock->advanceTo(deadline.untilUs + 1);
 }
 
 int UBXReceiverModel::readChunkSize(const ScriptedReceiver& receiver, int requested, int available) const
@@ -300,11 +294,6 @@ QByteArray UBXReceiverModel::_frame(uint16_t message, std::span<const uint8_t> p
 {
     const auto frame = ubxFrame(message, payload);
     return QByteArray(reinterpret_cast<const char*>(frame.data()), static_cast<qsizetype>(frame.size()));
-}
-
-uint64_t UBXReceiverModel::_nowUs() const
-{
-    return nowUs ? nowUs() : 0;
 }
 
 QByteArray UBXReceiverModel::_lowLevelIdentityPayload()
@@ -474,7 +463,7 @@ bool UBXReceiverModel::_handleLegacyFrame(ScriptedReceiver& receiver, uint16_t m
         const uint32_t mode = littleEndian(payload, 2, 2);
         modes.push_back(mode);
         legacyFixedAccuracy = littleEndian(payload, 20, 4);
-        disabledAt = _nowUs();
+        disabledAt = _clock->nowUs();
         reject = rejectDisable && mode == 0;
     }
 
@@ -721,11 +710,11 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
     if (const auto mode = settings.find(UBX_CFG_KEY_TMODE_MODE); mode != settings.end()) {
         modes.push_back(mode->second);
         if (mode->second == 0) {
-            disabledAt = _nowUs();
+            disabledAt = _clock->nowUs();
             reject = rejectDisable;
         } else if (mode->second == 1) {
             ++starts;
-            startedAt = _nowUs();
+            startedAt = _clock->nowUs();
             startSettings = settings;
             reject = rejectStart;
         }

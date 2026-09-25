@@ -19,7 +19,6 @@ class UDPGPSTransport : public GPSTransport
     friend class UDPGPSTransportTest;
 
 public:
-    static constexpr unsigned FIXED_BAUDRATE = 115200;
     static constexpr qsizetype kMaxBufferedBytes = 64 * 1024;
     static constexpr int kPeerIdleTimeoutMs = 5000;
 
@@ -29,8 +28,8 @@ public:
     GPSOpenResult open() override;
     bool fatalError() const override;
 
-    /// Datagrams carry no line rate; drivers see the nominal rate.
-    unsigned fixedBaudrate() const override { return FIXED_BAUDRATE; }
+    /// Datagrams carry no line rate; drivers see the bridge rate.
+    unsigned fixedBaudrate() const override { return BRIDGE_BAUDRATE; }
 
     GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
     bool setBaudrate(unsigned baudrate) override;

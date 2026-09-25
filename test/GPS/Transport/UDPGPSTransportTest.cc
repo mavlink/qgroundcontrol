@@ -82,8 +82,8 @@ void UDPGPSTransportTest::_receiveOnlyLink()
     std::atomic_bool stop = false;
     UDPGPSTransport transport(0, stop);
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
-    QCOMPARE(transport.fixedBaudrate(), UDPGPSTransport::FIXED_BAUDRATE);
-    QVERIFY(transport.setBaudrate(UDPGPSTransport::FIXED_BAUDRATE));
+    QCOMPARE(transport.fixedBaudrate(), GPSTransport::BRIDGE_BAUDRATE);
+    QVERIFY(transport.setBaudrate(GPSTransport::BRIDGE_BAUDRATE));
     QVERIFY(!transport.setBaudrate(9600));
     const uint8_t command[] = {'$', 'P'};
     const auto written = transport.write(command, sizeof(command), QDeadlineTimer(100));

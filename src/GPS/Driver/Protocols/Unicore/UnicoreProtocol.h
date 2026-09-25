@@ -12,10 +12,10 @@
 /// Native N4 ASCII controller for UM980/UM982, R4.10 firmware with the documented base modes.
 /// Averaging has a maximum time, not an accuracy target; completion requires receiver FIXEDPOS evidence.
 /// Commands affect the current port and are never saved to flash by this controller. Not hardware-qualified.
-class GPSNativeUnicore final : public GPSAsciiProtocol
+class UnicoreProtocol final : public GPSAsciiProtocol
 {
 public:
-    explicit GPSNativeUnicore(GPSProtocolIO io, bool satelliteInfoEnabled = true);
+    explicit UnicoreProtocol(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
     bool configure(unsigned& baud, const GPSConfig& config) override;
 

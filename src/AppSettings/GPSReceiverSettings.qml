@@ -13,7 +13,7 @@ SettingsGroupLayout {
 
     property var receiver: QGroundControl.gpsManager.gpsRtk
     property var settings: QGroundControl.settingsManager.rtkSettings
-    property var baseFacts: receiver.facts
+    property var baseFacts: QGroundControl.gpsManager.gpsRtkFacts
     property var autoConnectFact: settings.autoConnect
     property var serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
     property var serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []

@@ -221,7 +221,7 @@ std::shared_ptr<RTCMUdpInput::PeerParser> RTCMUdpInput::_parserForPeer(const QHo
 {
     const qint64 now = GPSCorrectionFrame::monotonicNowMs();
     for (auto it = _peerParsers.begin(); it != _peerParsers.end();) {
-        if (now - it.value()->lastReceivedMs >= PEER_IDLE_TIMEOUT_MS) {
+        if (GPSCorrectionFrame::ageMs(it.value()->lastReceivedMs, now) >= PEER_IDLE_TIMEOUT_MS) {
             it = _peerParsers.erase(it);
         } else {
             ++it;

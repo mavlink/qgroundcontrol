@@ -13,7 +13,10 @@
 class GPSSatelliteState
 {
 public:
-    explicit GPSSatelliteState(int freshnessTimeoutMs = 5000)
+    /// Receipt age at which a constellation's view or usage count is retired.
+    static constexpr int FRESHNESS_TIMEOUT_MS = 5000;
+
+    explicit GPSSatelliteState(int freshnessTimeoutMs = FRESHNESS_TIMEOUT_MS)
         : _freshnessTimeoutMs(std::max(1, freshnessTimeoutMs))
     {}
 

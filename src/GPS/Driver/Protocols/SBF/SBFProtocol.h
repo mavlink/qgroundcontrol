@@ -5,12 +5,12 @@
 #include "RTCMFramer.h"
 #include "SBFMessages.h"
 
-class GPSNativeSBF : public GPSProtocol
+class SBFProtocol : public GPSProtocol
 {
 public:
-    explicit GPSNativeSBF(GPSProtocolIO io, bool satelliteInfoEnabled = true);
+    explicit SBFProtocol(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
-    ~GPSNativeSBF() override = default;
+    ~SBFProtocol() override = default;
 
     bool receiverReady() const override { return _configured; }
 
@@ -30,7 +30,7 @@ private:
     {
         uint64_t receiverTimeMs = 0;
         uint64_t receiptUs = 0;
-        GPSNativePositionReport position;
+        GPSDecodedPosition position;
         bool hasPosition = false;
     };
 
@@ -54,8 +54,8 @@ private:
     int payloadRxDone();
 
     /// Fills @a position from one PVTGeodetic block. @return whether its coordinates are usable.
-    bool applyPvtGeodetic(const sbf_payload_pvt_geodetic_t& pvt, GPSNativePositionReport& position);
-    void publishSurveyStatus(const sbf_payload_pvt_geodetic_t& pvt, const GPSNativePositionReport& position,
+    bool applyPvtGeodetic(const sbf_payload_pvt_geodetic_t& pvt, GPSDecodedPosition& position);
+    void publishSurveyStatus(const sbf_payload_pvt_geodetic_t& pvt, const GPSDecodedPosition& position,
                              bool coordinatesValid);
 
     /**
@@ -66,9 +66,8 @@ private:
     /// @return true when every byte was written.
     bool sendMessage(const char* msg);
 
-    /// Sends a command and waits for the receiver to echo it as "$R: <command>".
-    /// @return true when acknowledged; false after a rejection ("$R?"), timeout, or I/O failure.
-    bool sendMessageAndWaitForAck(const char* msg, bool required = true);
+    /// Prompts the receiver and reads the connection descriptor it answers with, such as "USB1>".
+    bool detectPort(char (&com_port)[5]);
 
     bool _configured{false};
     sbf_decode_state_t _decode_state{SBF_DECODE_SYNC1};

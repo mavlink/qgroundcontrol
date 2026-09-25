@@ -10,13 +10,18 @@
 #include <QtCore/QPointer>
 
 /// Holds an owner's notifications until its outermost operation returns, so observers never run
-/// inside an operation that is still changing state. Observers may re-enter or delete the owner
-/// while notifications are delivered; delivery stops once the owner is gone.
+/// inside an operation that is still changing state.
+///
+/// Lifetime rule: an observer of these notifications may reconfigure, stop or restart the owner
+/// synchronously, but must not delete it; it uses deleteLater(). Owner code relies on this once
+/// delivery returns. A synchronous deletion still stops delivery safely, but is reported as a warning.
 class GPSNotificationQueue
 {
 public:
-    explicit GPSNotificationQueue(QObject* owner)
+    template <typename Owner>
+    explicit GPSNotificationQueue(Owner* owner)
         : _owner(owner)
+        , _ownerClass(Owner::staticMetaObject.className())
     {}
 
     Q_DISABLE_COPY_MOVE(GPSNotificationQueue)
@@ -83,25 +88,12 @@ public:
     }
 
 private:
-    void _deliver()
-    {
-        if (_delivering) {
-            return;
-        }
-        const QPointer<QObject> owner(_owner);
-        _delivering = true;
-        while (!_pending.empty()) {
-            auto notification = std::move(_pending.front().second);
-            _pending.erase(_pending.begin());
-            notification();
-            if (!owner) {
-                return;
-            }
-        }
-        _delivering = false;
-    }
+    /// Stops once an observer deletes the owner, and reports that violation of the lifetime rule.
+    void _deliver();
 
     QObject* const _owner;
+    // Static meta-object data stays valid after the owner is gone.
+    const char* const _ownerClass;
     std::vector<std::pair<quintptr, std::function<void()>>> _pending;
     int _depth = 0;
     bool _delivering = false;

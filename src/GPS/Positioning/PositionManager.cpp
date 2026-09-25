@@ -1,6 +1,7 @@
 #include "PositionManager.h"
 
-#include <QtCore/QApplicationStatic>
+#include <utility>
+
 #include <QtCore/QPermissions>
 
 #include "AppMessages.h"
@@ -11,7 +12,6 @@
 #include "SimulatedPosition.h"
 
 QGC_LOGGING_CATEGORY(QGCPositionManagerLog, "GPS.PositionManager.QGCPositionManager")
-Q_APPLICATION_STATIC(QGCPositionManager, _positionManager);
 
 QGCPositionManager::QGCPositionManager(QObject* parent, RuntimeScheduler* scheduler)
     : GPSPositionService(parent, scheduler)
@@ -26,13 +26,11 @@ QGCPositionManager::~QGCPositionManager()
     blockSignals(true);
 }
 
-QGCPositionManager* QGCPositionManager::instance()
-{
-    return _positionManager();
-}
-
 void QGCPositionManager::init()
 {
+    if (_shutdown) {
+        return;
+    }
     if (!_sourceSettingConnection) {
         Fact* const sourceSetting = SettingsManager::instance()->rtkSettings()->gcsPositionSource();
         const auto applySource = [this, sourceSetting]() {
@@ -48,6 +46,17 @@ void QGCPositionManager::init()
     }
 }
 
+void QGCPositionManager::shutdown()
+{
+    if (std::exchange(_shutdown, true)) {
+        return;
+    }
+    qCDebug(QGCPositionManagerLog) << "Releasing position sources";
+    QObject::disconnect(_sourceSettingConnection);
+    setSimulatedPositionSource(nullptr);
+    setInternalPositionSource(nullptr, SourceStatus::NoSource);
+}
+
 void QGCPositionManager::_setupPositionSources()
 {
     auto* platformSource = QGCCorePlugin::instance()->createPositionSource(this);
@@ -61,6 +70,9 @@ void QGCPositionManager::_setupPositionSources()
 
 void QGCPositionManager::_handlePermissionStatus(Qt::PermissionStatus permissionStatus)
 {
+    if (_shutdown) {
+        return;
+    }
     if (permissionStatus == Qt::PermissionStatus::Granted) {
         _setupPositionSources();
     } else {

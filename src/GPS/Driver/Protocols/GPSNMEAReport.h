@@ -10,7 +10,7 @@
 #include "NMEASatelliteEpoch.h"
 #include "NMEASentence.h"
 
-inline void applyNMEAGGA(GPSNativePositionReport& report, const NMEA::GGA& fix, uint64_t receivedAtUs)
+inline void applyNMEAGGA(GPSDecodedPosition& report, const NMEA::GGA& fix, uint64_t receivedAtUs)
 {
     report.navigation.latitudeDegrees = fix.latitude;
     report.navigation.longitudeDegrees = fix.longitude;
@@ -23,7 +23,7 @@ inline void applyNMEAGGA(GPSNativePositionReport& report, const NMEA::GGA& fix, 
     report.velocityValid = false;
 }
 
-inline void applyNMEANavigationEpoch(GPSNativePositionReport& report, const NMEA::NavigationEpoch& epoch)
+inline void applyNMEANavigationEpoch(GPSDecodedPosition& report, const NMEA::NavigationEpoch& epoch)
 {
     report.navigation.latitudeDegrees = epoch.latitude;
     report.navigation.longitudeDegrees = epoch.longitude;
@@ -34,17 +34,15 @@ inline void applyNMEANavigationEpoch(GPSNativePositionReport& report, const NMEA
     report.navigation.verticalDop = static_cast<float>(epoch.verticalDop.value_or(NAN));
     report.navigation.horizontalAccuracyMeters = static_cast<float>(epoch.horizontalAccuracyMeters.value_or(NAN));
     report.navigation.verticalAccuracyMeters = static_cast<float>(epoch.verticalAccuracyMeters.value_or(NAN));
-    report.navigation.satellitesUsed = epoch.satellitesUsed && *epoch.satellitesUsed < UINT8_MAX
-                                           ? std::optional<uint8_t>(static_cast<uint8_t>(*epoch.satellitesUsed))
-                                           : std::nullopt;
+    report.navigation.satellitesUsed = gpsSatellitesUsed(epoch.satellitesUsed);
     report.navigation.fixType = epoch.fixQuality;
     report.navigation.timestampUs = epoch.positionReceivedAtUs;
     report.velocityValid = false;
 }
 
-inline GPSNativeSatelliteReport gpsNMEASatelliteReport(const NMEA::SatelliteSystem& system)
+inline GPSDecodedSatellites gpsNMEASatelliteReport(const NMEA::SatelliteSystem& system)
 {
-    GPSNativeSatelliteReport report;
+    GPSDecodedSatellites report;
     report.fullSnapshot = false;
     auto* constellation = report.ensureConstellation(system.constellation);
     if (!constellation) {

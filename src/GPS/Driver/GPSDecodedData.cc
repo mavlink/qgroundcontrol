@@ -1,11 +1,11 @@
 #include <algorithm>
 #include <cmath>
 
+#include "GPSDecodedData_p.h"
 #include "GPSFixQuality.h"
-#include "GPSNativeData_p.h"
 
-namespace GPSNativeData {
-GPSPositionReport position(const GPSNativePositionReport& source, const GPSIntegrityReport& diagnostic, uint64_t nowUs)
+namespace GPSDecodedData {
+GPSPositionReport position(const GPSDecodedPosition& source, const GPSIntegrityReport& diagnostic, uint64_t nowUs)
 {
     GPSPositionReport result{.navigation = source.navigation, .integrity = diagnostic};
     auto& navigation = result.navigation;
@@ -27,7 +27,7 @@ GPSPositionReport position(const GPSNativePositionReport& source, const GPSInteg
     return result;
 }
 
-GPSSatelliteReport SatelliteSnapshot::update(const GPSNativeSatelliteReport& source, uint64_t nowUs)
+GPSSatelliteReport SatelliteSnapshot::update(const GPSDecodedSatellites& source, uint64_t nowUs)
 {
     GPSSatelliteObservation observation;
     observation.updateMode = source.fullSnapshot ? GPSSatelliteObservation::UpdateMode::FullSnapshot
@@ -38,10 +38,10 @@ GPSSatelliteReport SatelliteSnapshot::update(const GPSNativeSatelliteReport& sou
         auto& system = observation.constellations.emplaceBack();
         system.constellation = native.constellation;
         system.view = {native.inViewTimestampUs,
-                       std::clamp(native.inView, 0, int(GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES))};
+                       std::clamp(native.inView, 0, int(GPSDecodedSatellites::SAT_INFO_MAX_SATELLITES))};
         system.usage = {native.inUseTimestampUs,
                         native.inUse ? std::optional<int>(std::clamp(
-                                           *native.inUse, 0, int(GPSNativeSatelliteReport::SAT_INFO_MAX_SATELLITES)))
+                                           *native.inUse, 0, int(GPSDecodedSatellites::SAT_INFO_MAX_SATELLITES)))
                                      : std::nullopt};
         observation.monotonicTimestampUs = std::max({static_cast<uint64_t>(observation.monotonicTimestampUs),
                                                      native.inViewTimestampUs, native.inUseTimestampUs});
@@ -51,7 +51,7 @@ GPSSatelliteReport SatelliteSnapshot::update(const GPSNativeSatelliteReport& sou
     return _snapshot(_latestReceiptUs, UsageSelection::ViewThenCountOnly);
 }
 
-GPSSatelliteReport SatelliteSnapshot::update(const GPSNativeSatelliteUsageReport& source, uint64_t nowUs)
+GPSSatelliteReport SatelliteSnapshot::update(const GPSDecodedSatelliteUsage& source, uint64_t nowUs)
 {
     const uint64_t receipt = nowUs ? nowUs : source.timestampUs;
     _countOnlyUsage = source.usedCount;
@@ -121,4 +121,4 @@ GPSSatelliteReport SatelliteSnapshot::_snapshot(uint64_t nowUs, UsageSelection u
     }
     return projection.report;
 }
-}  // namespace GPSNativeData
+}  // namespace GPSDecodedData

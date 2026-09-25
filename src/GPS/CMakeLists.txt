@@ -21,12 +21,33 @@ add_subdirectory(Receiver)
 add_subdirectory(Driver)
 add_subdirectory(RTK)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h GPSSettingsBindings.cc GPSSettingsBindings.h)
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE GPSCorrectionStatus.cc
+            GPSCorrectionStatus.h
+            GPSGgaSources.cc
+            GPSGgaSources.h
+            GPSManager.cc
+            GPSManager.h
+            GPSRTKFactGroup.cc
+            GPSRTKFactGroup.h
+            GPSSettingsBindings.cc
+            GPSSettingsBindings.h
+)
+if(NOT QGC_NO_SERIAL_LINK)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSSerialPortManagerAdapter.cc GPSSerialPortManagerAdapter.h)
+endif()
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE Corrections/MAVLink/GPSMavlinkOutput.cc
                                              Corrections/MAVLink/GPSMavlinkOutput.h
 )
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSCorrectionService QGCGPSRTCM QGCGPSMavlinkPacket)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSCorrectionService QGCGPSRTCM QGCGPSRTCMMavlink)
+
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} json_gps_drivers
+    PREFIX "/json/Vehicle"
+    FILES GPSRTKFact.json
+)
 
 qt_add_resources(
     ${CMAKE_PROJECT_NAME} gps_qmlimages
@@ -64,6 +85,7 @@ target_link_libraries(
             QGCGPSPositioning
             QGCGPSReceiver
             QGCGPSRTCM
+            QGCGPSRTK
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GPSModule)

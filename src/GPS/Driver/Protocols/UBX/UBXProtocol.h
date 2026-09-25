@@ -7,12 +7,12 @@
 #include "UBXReceiverController.h"
 #include "UBXReceiverProfile.h"
 
-class GPSNativeUBX : public GPSProtocol
+class UBXProtocol : public GPSProtocol
 {
 public:
-    explicit GPSNativeUBX(GPSProtocolIO io, bool satelliteInfoEnabled = true);
+    explicit UBXProtocol(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
-    virtual ~GPSNativeUBX();
+    virtual ~UBXProtocol();
 
     bool configure(unsigned& baudrate, const GPSConfig& config) override;
 
@@ -190,10 +190,10 @@ private:
     void decodeNavSvinfo(std::span<const uint8_t> payload);
 
     /** Decode a handled payload into the working reports: 0 unhandled, 1 handled, 2 satellite information. */
-    int payloadRxDone(uint16_t message, std::span<const uint8_t> payload, GPSNativePositionReport& position);
-    int decodeNavPvt(std::span<const uint8_t> payload, GPSNativePositionReport& position);
-    int decodeNavigation(uint16_t message, std::span<const uint8_t> payload, GPSNativePositionReport& position);
-    int decodeHeading(uint16_t message, std::span<const uint8_t> payload, GPSNativePositionReport& position);
+    int payloadRxDone(uint16_t message, std::span<const uint8_t> payload, GPSDecodedPosition& position);
+    int decodeNavPvt(std::span<const uint8_t> payload, GPSDecodedPosition& position);
+    int decodeNavigation(uint16_t message, std::span<const uint8_t> payload, GPSDecodedPosition& position);
+    int decodeHeading(uint16_t message, std::span<const uint8_t> payload, GPSDecodedPosition& position);
     int decodeSurveyIn(std::span<const uint8_t> payload);
     int decodeIntegrity(uint16_t message, std::span<const uint8_t> payload);
     int decodeControl(uint16_t message, std::span<const uint8_t> payload);
@@ -224,7 +224,7 @@ private:
 
     int decodeValidatedPayload(uint16_t message, std::span<const uint8_t> payload);
     void flushDecoded() override;
-    void publishEpoch(const GPSNativePositionReport& report);
+    void publishEpoch(const GPSDecodedPosition& report);
     UBXNavigationEpoch _navigationEpochs;
     DecodeContext _decodeContext;
     bool _epochHasHighPrecision = false;
@@ -264,7 +264,7 @@ private:
     bool _survey_in_stopped{false};
     bool _got_posllh{false};
     bool _got_velned{false};
-    bool _got_sec_sig{false};             ///< SEC-SIG jammingState supersedes deprecated MON-RF flags
+    bool _got_sec_sig{false};  ///< SEC-SIG jammingState supersedes deprecated MON-RF flags
 
     std::optional<RTCMStreamDecoder> _rtcm_parsing;
 };

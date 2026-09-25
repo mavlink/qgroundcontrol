@@ -18,7 +18,7 @@
 #include "Quectel/QuectelCodec_p.h"
 #include "Support/AsciiProtocolTestReceiver.h"
 #include "Support/UnicoreReceiverModel.h"
-#include "Unicore/GPSDriverUnicore.h"
+#include "Unicore/UnicoreProtocol.h"
 
 namespace {
 using AsciiReceiver = GPSTest::AsciiProtocolTestReceiver;
@@ -59,13 +59,13 @@ void GPSAsciiProtocolTest::_vdopEpoch()
     QFETCH(quint64, elapsedUs);
     QFETCH(bool, retained);
     uint64_t now = 1000000;
-    GPSNativePositionReport position;
-    std::optional<GPSNativePositionReport> published;
+    GPSDecodedPosition position;
+    std::optional<GPSDecodedPosition> published;
     GPSProtocolIO io;
     io.nowUs = [&now] { return now; };
     io.decoded = [&published](const GPSDecodedBatch& batch) {
         for (const auto& event : batch.events) {
-            if (const auto* report = std::get_if<GPSNativePositionReport>(&event)) {
+            if (const auto* report = std::get_if<GPSDecodedPosition>(&event)) {
                 published = *report;
             }
         }
@@ -98,7 +98,7 @@ void GPSAsciiProtocolTest::_vdopEpoch()
 void GPSAsciiProtocolTest::_vdopReceiptIsNotRenewed()
 {
     uint64_t now = 1000000;
-    GPSNativePositionReport position;
+    GPSDecodedPosition position;
     GPSProtocolIO io;
     io.nowUs = [&now] { return now; };
     AsciiReceiver receiver(captureGPSReports(std::move(io), position), false);
@@ -128,7 +128,7 @@ void GPSAsciiProtocolTest::_unassociatedGsa()
 {
     QFETCH(qint64, ageUs);
     uint64_t now = 1000000;
-    GPSNativePositionReport position;
+    GPSDecodedPosition position;
     GPSProtocolIO io;
     io.nowUs = [&now] { return now; };
     AsciiReceiver receiver(captureGPSReports(std::move(io), position), false);
@@ -177,7 +177,7 @@ void GPSAsciiProtocolTest::_positionSourceEquivalence()
         "$GPVTG,31.66,T,,M,1.08,N,2.0,K",
     };
     uint64_t now = 1000000;
-    GPSNativePositionReport nativePosition;
+    GPSDecodedPosition nativePosition;
     GPSProtocolIO io;
     io.nowUs = [&now] { return now; };
     AsciiReceiver receiver(captureGPSReports(std::move(io), nativePosition), false);
@@ -253,12 +253,11 @@ void GPSAsciiProtocolTest::_unicoreFailureDetails()
 {
     QFETCH(int, fault);
     QFETCH(QString, expected);
-    gps_test_time = 0;
-    gps_test_warnings.clear();
-    GPSTest::UnicoreReceiver peer;
+    GPSTestClock clock;
+    GPSTest::UnicoreReceiver peer(clock);
     peer.fault = static_cast<GPSTest::UnicoreReceiver::Fault>(fault);
     peer.faultCommand = "UNLOG";
-    GPSNativeUnicore receiver(peer.io(), false);
+    UnicoreProtocol receiver(peer.io(), false);
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config;
     config.base.mode = GPSBaseStationConfig::ReceiverAveraging{1};
@@ -269,7 +268,7 @@ void GPSAsciiProtocolTest::_unicoreFailureDetails()
     if (peer.fault == GPSTest::UnicoreReceiver::Fault::Cancel) {
         QCOMPARE(receiver.ioError(), GPSProtocolError::Cancelled);
         QVERIFY(receiver.ioErrorDetail().isEmpty());
-        QVERIFY(gps_test_warnings.empty());
+        QVERIFY(peer.warnings.empty());
         QCOMPARE(peer.results.back().evidence.outcome, GPSCommandOutcome::Cancelled);
     } else {
         QVERIFY2(receiver.ioErrorDetail().contains(expected), qPrintable(receiver.ioErrorDetail()));
@@ -281,12 +280,11 @@ void GPSAsciiProtocolTest::_unicoreFailureDetails()
 
 void GPSAsciiProtocolTest::_unicoreUnsupportedDetails()
 {
-    gps_test_time = 0;
-    gps_test_warnings.clear();
-    GPSTest::UnicoreReceiver peer;
+    GPSTestClock clock;
+    GPSTest::UnicoreReceiver peer(clock);
     peer.version = GPSTest::unicoreNative("VERSIONA",
                                           "\"UM982\",\"R5.00Build20000\",\"auth\",\"serial\",\"efuse\",\"2024/08/08\"");
-    GPSNativeUnicore receiver(peer.io(), false);
+    UnicoreProtocol receiver(peer.io(), false);
     unsigned baud = 115200;
     GPSProtocol::GPSConfig config;
     config.base.mode = GPSBaseStationConfig::ReceiverAveraging{1};

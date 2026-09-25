@@ -16,7 +16,7 @@ public:
     {
         uint32_t tow = 0;
         uint64_t receipt = 0;
-        GPSNativePositionReport position;
+        GPSDecodedPosition position;
         bool positionValid = false;
         bool velocityValid = false;
         bool highPrecision = false;

@@ -2,6 +2,7 @@
 
 #include <optional>
 
+#include <QtCore/QDebug>
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -138,3 +139,6 @@ private:
     bool _shutdown = false;
     GPSNotificationQueue _notifications{this};
 };
+
+QDebug operator<<(QDebug debug, const GPSCorrectionManager::UdpInputConfiguration& configuration);
+QDebug operator<<(QDebug debug, const GPSCorrectionManager::UdpOutputConfiguration& configuration);

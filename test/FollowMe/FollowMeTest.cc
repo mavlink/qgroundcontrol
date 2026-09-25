@@ -7,6 +7,7 @@
 #include "AppSettings.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "FollowMe.h"
+#include "GPSManager.h"
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "MultiVehicleManager.h"
@@ -23,7 +24,7 @@ void FollowMeTest::_testFollowMe()
     ignoreLogMessage("Vehicle.Vehicle", QtWarningMsg,
                      QRegularExpression("setFlightMode failed"));
     FollowMe::instance()->init();
-    QGCPositionManager::instance()->init();
+    GPSManager::instance()->positionManager()->init();
     _connectMockLinkNoInitialConnectSequence();
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
@@ -84,7 +85,7 @@ void FollowMeTest::_motionPolicyReports()
                                  TestTimeout::mediumMs());
     }
     const uint32_t messageId = ardupilot ? MAVLINK_MSG_ID_GLOBAL_POSITION_INT : MAVLINK_MSG_ID_FOLLOW_TARGET;
-    auto* positioning = QGCPositionManager::instance();
+    auto* positioning = GPSManager::instance()->positionManager();
     const auto savedMode = positioning->sourceMode();
     const auto restore = qScopeGuard([&]() { positioning->setSourceMode(savedMode); });
     ManualScheduler scheduler;

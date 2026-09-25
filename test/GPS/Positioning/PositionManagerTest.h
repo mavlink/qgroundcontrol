@@ -15,6 +15,7 @@ private slots:
     void _simulatedPosition();
     void _facadeUsesInjectedScheduler();
     void _sourceSettingSelectsMode();
+    void _shutdownReleasesSources();
     void _simulatedHomeSelection_data();
     void _simulatedHomeSelection();
 };

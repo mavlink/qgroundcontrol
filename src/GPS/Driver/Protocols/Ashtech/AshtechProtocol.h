@@ -8,12 +8,12 @@
 #include "NMEAMetadata.h"
 
 /// Ashtech/Trimble proprietary commands and $PASHR,POS positions over the shared NMEA/RTCM stream.
-class GPSNativeAshtech : public GPSAsciiProtocol
+class AshtechProtocol : public GPSAsciiProtocol
 {
 public:
-    explicit GPSNativeAshtech(GPSProtocolIO io, bool satelliteInfoEnabled = true);
+    explicit AshtechProtocol(GPSProtocolIO io, bool satelliteInfoEnabled = true);
 
-    ~GPSNativeAshtech() override = default;
+    ~AshtechProtocol() override = default;
 
     bool configure(unsigned& baudrate, const GPSConfig& config) override;
 
@@ -31,7 +31,6 @@ private:
     void _handleHeading(std::string_view message);
     std::optional<int> _handlePosition(std::string_view message, const NMEA::Sentence& sentence);
     std::optional<int> _handleAccuracy(const NMEA::Sentence& sentence);
-    void _handleCommandReply(std::string_view message);
     std::optional<int> _handleSurveyReceipt(const NMEA::Sentence& sentence);
     void _updateSurveyDuration();
     void flushDecoded() override;
@@ -46,14 +45,6 @@ private:
         other
     };
 
-    enum class NMEACommand
-    {
-        Acked,   // Command that returns a (N)Ack
-        PRT,     // port config
-        RID,     // board identification
-        RECEIPT  // survey receipt
-    };
-
     /**
      * enable output of correction output
      */
@@ -66,10 +57,20 @@ private:
      */
     void receiveWait(unsigned timeout_min);
 
-    /// Writes @a command, normalized to one CR/LF-terminated line, and waits for @a reply or a NAK.
-    bool sendCommand(std::string_view command, NMEACommand reply = NMEACommand::Acked);
+    /// Reply matchers. A NAK rejects any command; $PASHS settings are acknowledged by an ACK, queries by their
+    /// $PASHR reply, and the survey receipt by the receipt decoder.
+    static GPSCommandOutcome rejection(std::string_view reply);
+    static GPSCommandOutcome acknowledgement(std::string_view reply);
+    GPSCommandOutcome portReply(std::string_view reply);
+    GPSCommandOutcome boardReply(std::string_view reply);
 
-    bool _awaitingReply(NMEACommand reply) const { return replyPending() && _waiting_for_command == reply; }
+    /// @a text normalized to one CR/LF-terminated command line.
+    GPSConfigurationSequence::Command command(std::string_view text, GPSReplyMatcher reply = acknowledgement,
+                                              bool required = true) const;
+
+    bool sendCommand(std::string_view text, GPSReplyMatcher reply = acknowledgement);
+
+    bool _awaitingReceipt() const { return _awaitingSurveyReceipt && replyPending(); }
 
     bool _correction_output_activated{false};
     bool _configure_done{false};
@@ -87,10 +88,9 @@ private:
     static constexpr uint64_t METADATA_MAX_AGE_US = 5000000;
 
     GPSSurveyClock _surveyClock;
+    bool _awaitingSurveyReceipt = false;
     bool _surveyReceiptRequested = false;
     std::optional<uint64_t> _surveyReceiptStartUtc;
 
     AshtechBoard _board{AshtechBoard::other}; /**< board we are connected to */
-
-    NMEACommand _waiting_for_command{NMEACommand::Acked};
 };

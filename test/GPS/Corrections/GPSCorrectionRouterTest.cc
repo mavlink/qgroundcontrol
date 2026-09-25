@@ -23,8 +23,8 @@ GPSCorrectionFrame frame(GPSCorrectionSource source, quint64 session, qint64 now
 
 GPSCorrectionIngress ingress(const GPSCorrectionSourceRegistration& source, qint64 now, const QString& instance = {})
 {
-    return source.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true, false,
-                                GPSCorrectionReason::None, instance);
+    return source.event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true, false, GPSCorrectionReason::None,
+                        instance);
 }
 
 void setAdmissionOutput(GPSCorrectionRouter& router, const QString& id, GPSCorrectionRouter::Sink submit)
@@ -61,10 +61,10 @@ void GPSCorrectionRouterTest::decodedIngressPreservesEvidence()
     GPSCorrectionRouter router(nullptr, [] { return now; });
     auto registration = router.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
     RTCMDecodedFrame decoded{GpsTestHelpers::buildRtcmFrame(1005), 1005, now - 10, valid, filtered};
-    const auto input = registration.token().event(decoded);
+    const auto input = registration.event(decoded);
     QCOMPARE(input.frame().source, GPSCorrectionSource::Ntrip);
     QCOMPARE(input.frame().sourceInstance, QStringLiteral("caster"));
-    QCOMPARE(input.frame().session, registration.token().session());
+    QCOMPARE(input.frame().session, registration.generation());
     QCOMPARE(input.frame().receivedAtMs, decoded.receivedAtMs);
     QCOMPARE(input.frame().data, decoded.data);
     QCOMPARE(input.rejection(), valid ? GPSCorrectionReason::None : GPSCorrectionReason::InvalidFrame);
@@ -131,7 +131,7 @@ void GPSCorrectionRouterTest::destinationHistoryDoesNotLimitOutputs()
             return quint64(submitted.data.size());
         });
     }
-    QVERIFY(router.acceptIngress(source.token().event(data, now, 1005, true)));
+    QVERIFY(router.acceptIngress(source.event(data, now, 1005, true)));
     QCOMPARE(submissions, outputCount);
     QCOMPARE(router.destinations().size(), outputCount);
     for (const auto& destination : router.destinations()) {
@@ -144,7 +144,7 @@ void GPSCorrectionRouterTest::destinationHistoryDoesNotLimitOutputs()
 
     setAdmissionOutput(router, QStringLiteral("receiver"),
                        [&](const GPSCorrectionFrame& submitted) { return quint64(submitted.data.size()); });
-    QVERIFY(router.acceptIngress(source.token().event(data, ++now, 1005, true)));
+    QVERIFY(router.acceptIngress(source.event(data, ++now, 1005, true)));
     router.setOutput(QStringLiteral("vehicles"), {.admit = [&](const GPSCorrectionFrame& submitted) {
                          return QList<GPSCorrectionRouter::Admission>{
                              {QString::number(now),
@@ -152,7 +152,7 @@ void GPSCorrectionRouterTest::destinationHistoryDoesNotLimitOutputs()
                               true}};
                      }});
     for (int index = 0; index < outputCount; ++index) {
-        QVERIFY(router.acceptIngress(source.token().event(data, ++now, 1005, true)));
+        QVERIFY(router.acceptIngress(source.event(data, ++now, 1005, true)));
         QVERIFY(router.destinations().size() <= GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 3);
     }
     const auto destinations = router.destinations();
@@ -168,7 +168,7 @@ void GPSCorrectionRouterTest::atomicConfigurationAndReplacement()
     qint64 now = 100000;
     GPSCorrectionRouter router(nullptr, [&]() { return now; });
     auto source = router.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
-    const auto update = source.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true);
+    const auto update = source.event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true);
     QVERIFY(router.acceptIngress(update));
     const GPSCorrectionRouter::Configuration requested{GPSCorrectionRouter::Policy::Manual, GPSCorrectionSource::Udp,
                                                        QStringLiteral("peer")};
@@ -183,7 +183,7 @@ void GPSCorrectionRouterTest::atomicConfigurationAndReplacement()
     QPointer<GPSCorrectionRouter> destroyed = new GPSCorrectionRouter;
     auto registration = destroyed->registerSource(GPSCorrectionSource::Ntrip);
     delete destroyed.data();
-    QVERIFY(!registration.token().valid());
+    QVERIFY(!registration.valid());
 }
 
 void GPSCorrectionRouterTest::scopedSourceIdentity()
@@ -193,27 +193,27 @@ void GPSCorrectionRouterTest::scopedSourceIdentity()
     GPSCorrectionRouter other(nullptr, [&]() { return now; });
     const auto bytes = GpsTestHelpers::buildRtcmFrame(1005, 20);
     auto original = router.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
-    const auto old = original.token();
+    const auto old = original.weak();
     auto replacement = router.registerSource(GPSCorrectionSource::Ntrip, QStringLiteral("caster"));
     original.reset();
-    QVERIFY(replacement.token().valid());
+    QVERIFY(replacement.valid());
     QVERIFY(!old.valid());
     const auto receivedBefore = router.statistics()[2].receivedFrames;
     QVERIFY(!router.acceptIngress(old.event(bytes, now, 1005, true)));
     QVERIFY(!router.acceptIngress(old.event(bytes, now, 1005, false, false, GPSCorrectionReason::InvalidFrame)));
     QCOMPARE(router.statistics()[2].receivedFrames, receivedBefore);
-    QVERIFY(!other.acceptIngress(replacement.token().event(bytes, now, 1005, true)));
-    QVERIFY(!router.acceptIngress(replacement.token().event(bytes, now, 1005, true, false, GPSCorrectionReason::None,
-                                                            QStringLiteral("imposter"))));
-    QVERIFY(router.acceptIngress(replacement.token().event(bytes, now, 1005, true)));
+    QVERIFY(!other.acceptIngress(replacement.event(bytes, now, 1005, true)));
+    QVERIFY(!router.acceptIngress(
+        replacement.event(bytes, now, 1005, true, false, GPSCorrectionReason::None, QStringLiteral("imposter"))));
+    QVERIFY(router.acceptIngress(replacement.event(bytes, now, 1005, true)));
     auto udp = router.registerSource(GPSCorrectionSource::Udp);
     router.applyConfiguration({GPSCorrectionRouter::Policy::Manual, GPSCorrectionSource::Udp, QStringLiteral("peer")});
     QVERIFY(router.acceptIngress(
-        udp.token().event(bytes, now, 1005, true, false, GPSCorrectionReason::None, QStringLiteral("peer"))));
-    const auto token = udp.token();
+        udp.event(bytes, now, 1005, true, false, GPSCorrectionReason::None, QStringLiteral("peer"))));
+    const auto retired = udp.weak();
     udp.reset();
-    QVERIFY(!token.valid());
-    QVERIFY(!router.acceptIngress(token.event(bytes, now, 1005, true)));
+    QVERIFY(!retired.valid());
+    QVERIFY(!router.acceptIngress(retired.event(bytes, now, 1005, true)));
 }
 
 void GPSCorrectionRouterTest::rawInputRequiresUdp_data()
@@ -232,16 +232,16 @@ void GPSCorrectionRouterTest::rawInputRequiresUdp()
     auto udp = router.registerSource(GPSCorrectionSource::Udp);
     auto source =
         category == GPSCorrectionSource::Udp ? GPSCorrectionSourceRegistration{} : router.registerSource(category);
-    const auto token = category == GPSCorrectionSource::Udp ? udp.token() : source.token();
+    const auto raw = category == GPSCorrectionSource::Udp ? udp.weak() : source.weak();
     int submissions = 0;
     setAdmissionOutput(router, QStringLiteral("capture"), [&](const GPSCorrectionFrame& received) {
         ++submissions;
         return quint64(received.data.size());
     });
-    QVERIFY(router.acceptIngress(udp.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true)));
+    QVERIFY(router.acceptIngress(udp.event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true)));
     const bool rawAllowed = category == GPSCorrectionSource::Udp;
     for (int index = 0; index < 2; ++index) {
-        QCOMPARE(router.acceptIngress(token.event(QByteArrayLiteral("bad"), now, 0, false)), rawAllowed);
+        QCOMPARE(router.acceptIngress(raw.event(QByteArrayLiteral("bad"), now, 0, false)), rawAllowed);
         QCOMPARE(router.activeSource(), GPSCorrectionSource::Udp);
         now += GPSCorrectionRouter::SWITCH_HOLD_DOWN_MS;
     }
@@ -298,7 +298,7 @@ void GPSCorrectionRouterTest::outputRetirementDuringAdmission()
                                                           {quint64(received.data.size()), 8, GPSCorrectionReason::None},
                                                           true}};
         }});
-    QVERIFY(router.acceptIngress(source.token().event(bytes, now, 1005, true)));
+    QVERIFY(router.acceptIngress(source.event(bytes, now, 1005, true)));
     bool earlierFound = false;
     bool laterFound = false;
     for (const auto& destination : router.destinations()) {
@@ -379,7 +379,7 @@ void GPSCorrectionRouterTest::partialAdmissionCompletion()
                          return QList<GPSCorrectionRouter::Admission>{
                              {QStringLiteral("receiver"), {queued, 7, GPSCorrectionReason::None}, admissionComplete}};
                      }});
-    QVERIFY(router.acceptIngress(source.token().event(bytes, now, 1005, true)));
+    QVERIFY(router.acceptIngress(source.event(bytes, now, 1005, true)));
     const bool complete = admissionComplete && queued == size;
     const auto& stats = router.statistics()[2];
     QCOMPARE(stats.queuedFrames, quint64(complete));
@@ -418,7 +418,7 @@ void GPSCorrectionRouterTest::claimedValidatedIngressRequiresCrc()
     auto source = router.registerSource(category);
     auto bytes = GpsTestHelpers::buildRtcmFrame(1005, 20);
     bytes[bytes.size() - 1] ^= 1;
-    QVERIFY(!router.acceptIngress(source.token().event(bytes, now, 1005, true)));
+    QVERIFY(!router.acceptIngress(source.event(bytes, now, 1005, true)));
     const auto& stats = router.statistics().at(static_cast<int>(category));
     QCOMPARE(stats.receivedFrames, 1ULL);
     QCOMPARE(stats.validatedFrames, 0ULL);
@@ -436,20 +436,21 @@ void GPSCorrectionRouterTest::registrationMoveAssignment()
     GPSCorrectionRouter router(nullptr, [] { return now; });
     auto first = router.registerSource(GPSCorrectionSource::Ntrip);
     auto second = router.registerSource(GPSCorrectionSource::Udp);
-    const auto retained = first.token();
-    const auto retired = second.token();
+    const auto retained = first.weak();
+    const auto retired = second.weak();
     QVERIFY(router.acceptIngress(ingress(second, now)));
     second = std::move(first);
-    QCOMPARE(second.token().source(), GPSCorrectionSource::Ntrip);
-    QVERIFY(!first.token().valid());
-    QVERIFY(second.token().valid());
+    QCOMPARE(second.source(), GPSCorrectionSource::Ntrip);
+    QCOMPARE(second.generation(), retained.generation());
+    QVERIFY(!first.valid());
+    QVERIFY(second.valid());
     QVERIFY(retained.valid());
     QVERIFY(!retired.valid());
     first.reset();
     QVERIFY(retained.valid());
     GPSCorrectionSourceRegistration moved(std::move(second));
-    QVERIFY(!second.token().valid());
-    QVERIFY(moved.token().valid());
+    QVERIFY(!second.valid());
+    QVERIFY(moved.valid());
     moved.reset();
     QVERIFY(!retained.valid());
 }
@@ -468,7 +469,7 @@ void GPSCorrectionRouterTest::fanoutAdmissionAccounting()
                  true},
                 {QStringLiteral("mavlink/2"), {180, 2, GPSCorrectionReason::DestinationUnavailable}, false}};
         }});
-    QVERIFY(router.acceptIngress(source.token().event(bytes, now, 1077, true)));
+    QVERIFY(router.acceptIngress(source.event(bytes, now, 1077, true)));
     const auto& stats = router.statistics()[2];
     QCOMPARE(stats.receivedFrames, 1ULL);
     QCOMPARE(stats.queuedFrames, 1ULL);
@@ -507,7 +508,7 @@ void GPSCorrectionRouterTest::liveFanoutDestinationsSurviveHistoryChurn()
         }});
     const auto frame = GpsTestHelpers::buildRtcmFrame(1005, 20);
     for (int iteration = 1; iteration <= 3; ++iteration) {
-        QVERIFY(router.acceptIngress(source.token().event(frame, ++now, 1005, true)));
+        QVERIFY(router.acceptIngress(source.event(frame, ++now, 1005, true)));
         QCOMPARE(router.destinations().size(), destinations + 1);
         for (const auto& destination : router.destinations()) {
             if (destination.id != QStringLiteral("mavlink")) {
@@ -517,7 +518,7 @@ void GPSCorrectionRouterTest::liveFanoutDestinationsSurviveHistoryChurn()
         }
     }
     destinations = 0;
-    QVERIFY(router.acceptIngress(source.token().event(frame, ++now, 1005, true)));
+    QVERIFY(router.acceptIngress(source.event(frame, ++now, 1005, true)));
     QCOMPARE(router.destinations().size(), GPSCorrectionRouter::MAX_DESTINATION_HISTORY + 1);
 }
 
@@ -534,7 +535,7 @@ void GPSCorrectionRouterTest::retiredDuringAdmissionPreservesEvidence()
     qint64 now = 100000;
     GPSCorrectionRouter router(nullptr, [&]() { return now; });
     auto source = router.registerSource(GPSCorrectionSource::Ntrip);
-    const quint64 originalSession = source.token().session();
+    const quint64 originalSession = source.generation();
     const auto bytes = GpsTestHelpers::buildRtcmFrame(1005, 20);
     router.setOutput(QStringLiteral("mavlink"), {.admit = [&](const GPSCorrectionFrame& frame) {
                          source.reset();
@@ -546,8 +547,8 @@ void GPSCorrectionRouterTest::retiredDuringAdmissionPreservesEvidence()
                               {static_cast<quint64>(frame.data.size()), 1, GPSCorrectionReason::None},
                               true}};
                      }});
-    router.acceptIngress(source.token().event(bytes, now, 1005, true));
-    QCOMPARE(source.token().valid(), replace);
+    router.acceptIngress(source.event(bytes, now, 1005, true));
+    QCOMPARE(source.valid(), replace);
     const auto destinations = router.destinations();
     const auto admitted = std::find_if(destinations.cbegin(), destinations.cend(), [](const auto& destination) {
         return destination.id == QStringLiteral("mavlink/old");
@@ -555,7 +556,7 @@ void GPSCorrectionRouterTest::retiredDuringAdmissionPreservesEvidence()
     QVERIFY(admitted != destinations.cend());
     QCOMPARE(admitted->queuedBytes, quint64(bytes.size()));
     if (replace) {
-        QVERIFY(source.token().session() != originalSession);
+        QVERIFY(source.generation() != originalSession);
         QCOMPARE(router.statistics()[2].queuedBytes, 0ULL);
     }
 }
@@ -633,8 +634,7 @@ void GPSCorrectionRouterTest::sessionAndReceiptValidation()
     QVERIFY(!router.acceptIngress(ingress(registration, now, QStringLiteral("one"))));
     QVERIFY(!router.acceptIngress(ingress(registration, now + 1)));
     QVERIFY(!router.acceptIngress(ingress(registration, now - GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS)));
-    QVERIFY(!router.acceptIngress(
-        registration.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true, true)));
+    QVERIFY(!router.acceptIngress(registration.event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true, true)));
     QVERIFY(selectedInstance(router).isEmpty());
     QVERIFY(router.acceptIngress(ingress(registration, now)));
     const auto& stats = router.statistics().at(static_cast<int>(GPSCorrectionSource::Ntrip));
@@ -689,8 +689,8 @@ void GPSCorrectionRouterTest::nonRoutablePeersRemainObserved()
     GPSCorrectionRouter router(nullptr, [] { return now; });
     auto source = router.registerSource(GPSCorrectionSource::Udp);
     const QString instance = QStringLiteral("peer/#2");
-    const auto update = source.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), now - age, 1005, true, filtered,
-                                             GPSCorrectionReason::None, instance);
+    const auto update = source.event(GpsTestHelpers::buildRtcmFrame(1005, 20), now - age, 1005, true, filtered,
+                                     GPSCorrectionReason::None, instance);
     QVERIFY(!router.acceptIngress(update));
     const auto peers = router.sources();
     QCOMPARE(peers.size(), 1);
@@ -858,8 +858,8 @@ void GPSCorrectionRouterTest::diagnosticStagesStayDistinct()
                                queueAccepted ? GPSCorrectionReason::None : GPSCorrectionReason::DestinationUnavailable},
                               true}};
                      }});
-    const auto update = source.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, validated, filtered,
-                                             GPSCorrectionReason::None, QStringLiteral("peer"));
+    const auto update = source.event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, validated, filtered,
+                                     GPSCorrectionReason::None, QStringLiteral("peer"));
     QCOMPARE(router.acceptIngress(update), !filtered);
     QCOMPARE(admitted.data, filtered ? QByteArray() : update.frame().data);
     QCOMPARE(router.activeSource(), filtered ? GPSCorrectionSource::Unknown : GPSCorrectionSource::Udp);
@@ -882,7 +882,7 @@ void GPSCorrectionRouterTest::diagnosticStagesStayDistinct()
     QCOMPARE(last.reason, filtered        ? GPSCorrectionReason::MessageFiltered
                           : queueAccepted ? GPSCorrectionReason::None
                                           : GPSCorrectionReason::DestinationUnavailable);
-    QCOMPARE(last.sourceSession, source.token().session());
+    QCOMPARE(last.sourceSession, source.generation());
     QCOMPARE(last.sourceInstance, QStringLiteral("peer"));
 }
 
@@ -924,8 +924,8 @@ void GPSCorrectionRouterTest::rejectedCandidateHasNoValidatedCredit()
     qint64 now = 100000;
     GPSCorrectionRouter router(nullptr, [&now]() { return now; });
     auto source = router.registerSource(GPSCorrectionSource::Udp);
-    const auto rejected = source.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, false, false,
-                                               GPSCorrectionReason::InvalidFrame, QStringLiteral("peer"));
+    const auto rejected = source.event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, false, false,
+                                       GPSCorrectionReason::InvalidFrame, QStringLiteral("peer"));
     QVERIFY(!router.acceptIngress(rejected));
     const auto& stats = router.statistics().at(static_cast<int>(GPSCorrectionSource::Udp));
     QCOMPARE(stats.receivedFrames, quint64(1));

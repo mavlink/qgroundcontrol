@@ -3,7 +3,7 @@
 #include <ctime>
 #include <math.h>
 
-#include "Ashtech/GPSDriverAshtech.h"
+#include "Ashtech/AshtechProtocol.h"
 #include "GPSFixQuality.h"
 #include "GPSNMEAReport.h"
 #include "NMEAFields.h"
@@ -63,7 +63,7 @@ std::optional<uint64_t> receiptUtc(std::string_view date, std::string_view time)
 }
 }  // namespace
 
-int GPSNativeAshtech::handleReceiverLine(std::string_view message)
+int AshtechProtocol::handleReceiverLine(std::string_view message)
 {
     const auto sentence = NMEA::sentence(message);
     if (!sentence || message.size() < 7) {
@@ -86,7 +86,7 @@ int GPSNativeAshtech::handleReceiverLine(std::string_view message)
     } else if (message.starts_with("$PASHR,RECEIPT,")) {
         updates = _handleSurveyReceipt(*sentence);
     } else {
-        _handleCommandReply(message);
+        offerReply(message);
     }
     // A rejected sentence does not advance the survey-in duration.
     if (!updates) {
@@ -96,7 +96,7 @@ int GPSNativeAshtech::handleReceiverLine(std::string_view message)
     return *updates;
 }
 
-std::optional<int> GPSNativeAshtech::_handleTime(std::string_view message)
+std::optional<int> AshtechProtocol::_handleTime(std::string_view message)
 {
     /*
     UTC day, month, and year, and local time zone offset
@@ -156,7 +156,7 @@ std::optional<int> GPSNativeAshtech::_handleTime(std::string_view message)
     return 0;
 }
 
-std::optional<int> GPSNativeAshtech::_handleGGA(const NMEA::Sentence& sentence)
+std::optional<int> AshtechProtocol::_handleGGA(const NMEA::Sentence& sentence)
 {
     const auto fix = NMEA::gga(sentence);
     if (!fix) {
@@ -167,7 +167,7 @@ std::optional<int> GPSNativeAshtech::_handleGGA(const NMEA::Sentence& sentence)
     return GPSDecodedBatch::POSITION_UPDATE;
 }
 
-void GPSNativeAshtech::_handleHeading(std::string_view message)
+void AshtechProtocol::_handleHeading(std::string_view message)
 {
     /*
     Heading message
@@ -191,7 +191,7 @@ void GPSNativeAshtech::_handleHeading(std::string_view message)
     }
 }
 
-std::optional<int> GPSNativeAshtech::_handlePosition(std::string_view message, const NMEA::Sentence& sentence)
+std::optional<int> AshtechProtocol::_handlePosition(std::string_view message, const NMEA::Sentence& sentence)
 {
     /*
     Example
@@ -318,7 +318,7 @@ std::optional<int> GPSNativeAshtech::_handlePosition(std::string_view message, c
     return GPSDecodedBatch::POSITION_UPDATE;
 }
 
-std::optional<int> GPSNativeAshtech::_handleAccuracy(const NMEA::Sentence& sentence)
+std::optional<int> AshtechProtocol::_handleAccuracy(const NMEA::Sentence& sentence)
 {
     const auto error = NMEA::gst(sentence);
     if (!error) {
@@ -335,28 +335,35 @@ std::optional<int> GPSNativeAshtech::_handleAccuracy(const NMEA::Sentence& sente
     return 0;
 }
 
-void GPSNativeAshtech::_handleCommandReply(std::string_view message)
+GPSCommandOutcome AshtechProtocol::rejection(std::string_view reply)
 {
-    if (message.starts_with("$PASHR,NAK*")) {
-        resolveReply(GPSCommandOutcome::Rejected);
-    } else if (message.starts_with("$PASHR,ACK*")) {
-        if (_awaitingReply(NMEACommand::Acked)) {
-            resolveReply(GPSCommandOutcome::Acknowledged);
-        }
-    } else if (message.starts_with("$PASHR,PRT,") && std::count(message.begin(), message.end(), ',') == 3) {
-        if (_awaitingReply(NMEACommand::PRT)) {
-            resolveReply(GPSCommandOutcome::Acknowledged);
-            _port = message[11];
-        }
-    } else if (message.starts_with("$PASHR,RID,")) {
-        if (_awaitingReply(NMEACommand::RID)) {
-            resolveReply(GPSCommandOutcome::Acknowledged);
-            _board = message.substr(11).starts_with("MB2") ? AshtechBoard::trimble_mb_two : AshtechBoard::other;
-        }
-    }
+    return reply.starts_with("$PASHR,NAK*") ? GPSCommandOutcome::Rejected : GPSCommandOutcome::Pending;
 }
 
-std::optional<int> GPSNativeAshtech::_handleSurveyReceipt(const NMEA::Sentence& sentence)
+GPSCommandOutcome AshtechProtocol::acknowledgement(std::string_view reply)
+{
+    return reply.starts_with("$PASHR,ACK*") ? GPSCommandOutcome::Acknowledged : rejection(reply);
+}
+
+GPSCommandOutcome AshtechProtocol::portReply(std::string_view reply)
+{
+    if (!reply.starts_with("$PASHR,PRT,") || std::count(reply.begin(), reply.end(), ',') != 3) {
+        return rejection(reply);
+    }
+    _port = reply[11];
+    return GPSCommandOutcome::Acknowledged;
+}
+
+GPSCommandOutcome AshtechProtocol::boardReply(std::string_view reply)
+{
+    if (!reply.starts_with("$PASHR,RID,")) {
+        return rejection(reply);
+    }
+    _board = reply.substr(11).starts_with("MB2") ? AshtechBoard::trimble_mb_two : AshtechBoard::other;
+    return GPSCommandOutcome::Acknowledged;
+}
+
+std::optional<int> AshtechProtocol::_handleSurveyReceipt(const NMEA::Sentence& sentence)
 {
     if (sentence.count < 9) {
         return std::nullopt;
@@ -406,7 +413,7 @@ std::optional<int> GPSNativeAshtech::_handleSurveyReceipt(const NMEA::Sentence& 
         return std::nullopt;
     }
     if (started) {
-        if (!_awaitingReply(NMEACommand::RECEIPT) || _surveyReceiptStartUtc) {
+        if (!_awaitingReceipt() || _surveyReceiptStartUtc) {
             return std::nullopt;
         }
         if (_utcReference && NMEA::freshAt(_last_timestamp_time, nowUs(), METADATA_MAX_AGE_US) &&
@@ -422,7 +429,7 @@ std::optional<int> GPSNativeAshtech::_handleSurveyReceipt(const NMEA::Sentence& 
         _surveyReceiptRequested = false;
         _surveyReceiptStartUtc.reset();
     }
-    if (_awaitingReply(NMEACommand::RECEIPT)) {
+    if (_awaitingReceipt()) {
         resolveReply(failed ? GPSCommandOutcome::Rejected : GPSCommandOutcome::Acknowledged);
     }
     if (!started) {
@@ -435,20 +442,20 @@ std::optional<int> GPSNativeAshtech::_handleSurveyReceipt(const NMEA::Sentence& 
     return 0;
 }
 
-void GPSNativeAshtech::_updateSurveyDuration()
+void AshtechProtocol::_updateSurveyDuration()
 {
     if (_surveyClock.update(nowUs())) {
         publishSurvey(true, false, _surveyClock.duration());
     }
 }
 
-void GPSNativeAshtech::flushDecoded()
+void AshtechProtocol::flushDecoded()
 {
     _expireMetadata();
     GPSAsciiProtocol::flushDecoded();
 }
 
-void GPSNativeAshtech::_expireMetadata()
+void AshtechProtocol::_expireMetadata()
 {
     const auto now = nowUs();
     if (!_headingTimestamp || !NMEA::freshAt(_headingTimestamp, now, METADATA_MAX_AGE_US)) {
@@ -464,7 +471,7 @@ void GPSNativeAshtech::_expireMetadata()
     }
 }
 
-void GPSNativeAshtech::_applyMetadata(std::optional<int> time)
+void AshtechProtocol::_applyMetadata(std::optional<int> time)
 {
     _expireMetadata();
     const auto now = nowUs();
@@ -476,13 +483,13 @@ void GPSNativeAshtech::_applyMetadata(std::optional<int> time)
         NMEA::utcAtTimeOfDay(_utcReference, _last_timestamp_time, time, now, METADATA_MAX_AGE_US);
 }
 
-GPSNativeAshtech::GPSNativeAshtech(GPSProtocolIO io, bool satelliteInfoEnabled)
+AshtechProtocol::AshtechProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
     : GPSAsciiProtocol(std::move(io), satelliteInfoEnabled, Navigation::ReceiverSpecific)
 {
     setRTCMEnabled(false);
 }
 
-void GPSNativeAshtech::receiveWait(unsigned timeout_min)
+void AshtechProtocol::receiveWait(unsigned timeout_min)
 {
     uint64_t time_started = nowUs();
 
@@ -494,7 +501,7 @@ void GPSNativeAshtech::receiveWait(unsigned timeout_min)
     }
 }
 
-void GPSNativeAshtech::servicePendingCommands()
+void AshtechProtocol::servicePendingCommands()
 {
     if (_correctionSetupPending) {
         _correctionSetupPending = false;

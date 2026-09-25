@@ -156,7 +156,7 @@ public:
 
     QGCMapEngineManager* mapEngineManager() { return _mapEngineManager; }
 
-    QGCPositionManager* positionManager() { return _positionManager; }
+    QGCPositionManager* positionManager() const;
 
     MissionCommandTree* missionCommandTree() { return _missionCommandTree; }
 
@@ -220,7 +220,6 @@ signals:
 private:
     QGCMapEngineManager*    _mapEngineManager       = nullptr;
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
-    QGCPositionManager* _positionManager = nullptr;
     MissionCommandTree*     _missionCommandTree     = nullptr;
     MAVLinkSigningKeys*     _mavlinkSigningKeys     = nullptr;
     VideoManager*           _videoManager           = nullptr;

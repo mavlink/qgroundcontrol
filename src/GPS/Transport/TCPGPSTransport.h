@@ -11,7 +11,7 @@
 class QTcpSocket;
 
 /// Owns a TCP socket on the receiver worker. Cancellation is checked during every wait.
-/// Serial-to-TCP bridges and their receivers must already run the link at 115200 baud.
+/// Serial-to-TCP bridges and their receivers must already run the link at BRIDGE_BAUDRATE.
 class TCPGPSTransport : public GPSTransport
 {
     friend class TCPGPSTransportTest;
@@ -26,13 +26,11 @@ public:
     GPSOpenResult open() override;
     bool fatalError() const override;
 
-    unsigned fixedBaudrate() const override { return FIXED_BAUDRATE; }
+    unsigned fixedBaudrate() const override { return BRIDGE_BAUDRATE; }
 
     GPSReadResult read(uint8_t* buffer, int length, int timeoutMs) override;
     std::chrono::milliseconds configurationWriteTimeout() const override;
     bool setBaudrate(unsigned baudrate) override;
-
-    static constexpr unsigned FIXED_BAUDRATE = 115200;
 
 protected:
     GPSWriteResult writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;

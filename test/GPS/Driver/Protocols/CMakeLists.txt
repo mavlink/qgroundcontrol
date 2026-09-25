@@ -2,7 +2,7 @@ get_filename_component(QGC_GPS_PROTOCOL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/
                        ABSOLUTE
 )
 add_library(QGCGPSProtocolTestRuntime INTERFACE)
-target_link_libraries(QGCGPSProtocolTestRuntime INTERFACE QGCGPSNative)
+target_link_libraries(QGCGPSProtocolTestRuntime INTERFACE QGCGPSProtocols)
 target_include_directories(
     QGCGPSProtocolTestRuntime
     INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/.." "${QGC_GPS_PROTOCOL_SOURCE_DIR}/../../Corrections"
@@ -10,14 +10,9 @@ target_include_directories(
 )
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSProtocolTestRuntime)
 
-# Register an application test without leaking its injected-clock definition into other suites.
+# Protocol suites reuse file-local helper names (CHECK, noDevice, ...), so each stays out of unity batches.
 function(qgc_add_protocol_test name source)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
-    set_property(
-        SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/${source}" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
-        APPEND
-        PROPERTY COMPILE_DEFINITIONS QGC_GPS_TEST_CLOCK
-    )
     set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/${source}" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
                                 PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
     )
@@ -55,6 +50,7 @@ foreach(timezone IN ITEMS EST5EDT JST-9)
 endforeach()
 qgc_add_protocol_test(GPSProtocolContractsTest GPSProtocolContractsTest.cc)
 qgc_add_protocol_test(GPSProtocolFamilyContractTest GPSProtocolFamilyContractTest.cc)
+qgc_add_protocol_test(GPSConfigurationSequenceTest GPSConfigurationSequenceTest.cc)
 qgc_add_protocol_test(GPSProtocolUbxTest gps-ubx-test.cpp)
 qgc_add_protocol_test(GPSProtocolAllocationTest gps-allocation-test.cpp)
 set_property(
@@ -85,23 +81,22 @@ if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
             FATAL_ERROR "QGC_BUILD_GPS_PROTOCOL_FUZZER requires a Clang driver with libFuzzer and sanitizer runtimes"
         )
     endif()
-    foreach(native_target QGCGPSNative QGCGPSNativeContracts QGCGPSNMEAProtocol QGCGPSReceiver QGCGPSTransport
-                          QGCGPSRTCM
+    foreach(protocol_target QGCGPSProtocols QGCGPSProtocolContracts QGCGPSNMEAProtocol QGCGPSReceiver QGCGPSTransport
+                            QGCGPSRTCM
     )
-        get_target_property(native_type ${native_target} TYPE)
-        if(native_type STREQUAL "INTERFACE_LIBRARY")
+        get_target_property(protocol_type ${protocol_target} TYPE)
+        if(protocol_type STREQUAL "INTERFACE_LIBRARY")
             set(_sanitizer_scope INTERFACE)
         else()
             set(_sanitizer_scope PUBLIC)
         endif()
-        target_compile_options(${native_target} ${_sanitizer_scope} -fsanitize=fuzzer-no-link,address,undefined
+        target_compile_options(${protocol_target} ${_sanitizer_scope} -fsanitize=fuzzer-no-link,address,undefined
                                -fno-omit-frame-pointer
         )
-        target_link_options(${native_target} INTERFACE -fsanitize=address,undefined)
+        target_link_options(${protocol_target} INTERFACE -fsanitize=address,undefined)
     endforeach()
     add_executable(QGCGPSProtocolFuzz ProtocolFuzz.cc)
     target_link_libraries(QGCGPSProtocolFuzz PRIVATE QGCGPSProtocolTestRuntime)
-    target_compile_definitions(QGCGPSProtocolFuzz PRIVATE QGC_GPS_TEST_CLOCK)
     set_target_properties(
         QGCGPSProtocolFuzz
         PROPERTIES AUTOMOC OFF

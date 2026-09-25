@@ -22,6 +22,7 @@ class GPSCorrectionRouter : public QObject
     Q_OBJECT
 
     friend class GPSCorrectionSourceRegistration;
+    friend class GPSCorrectionSourceRegistration::Weak;
 
 public:
     using Policy = GPSCorrectionSelector::Policy;
@@ -65,7 +66,6 @@ public:
     Configuration configuration() const { return _selector.configuration(); }
 
     GPSCorrectionSourceRegistration registerSource(GPSCorrectionSource source, const QString& instance = {});
-    bool isCurrentSource(GPSCorrectionSource source, quint64 session, const QString& instance) const;
     /// Returns whether the frame was selected and offered to the outputs, not whether they admitted it.
     bool acceptIngress(const GPSCorrectionIngress& ingress);
 
@@ -105,7 +105,7 @@ signals:
     void frameRouted(const GPSCorrectionFrame& frame);
 
 private:
-    quint64 beginSourceSession(GPSCorrectionSource source, const QString& instance = {});
+    bool _isCurrent(const GPSCorrectionSourceRegistration::Weak& source) const;
     void endSourceSession(GPSCorrectionSource source);
     bool acceptFrame(GPSCorrectionFrame frame);
     void recordRejectedFrame(GPSCorrectionFrame frame, GPSCorrectionReason reason);
@@ -117,7 +117,6 @@ private:
     Clock _clock;
     GPSCorrectionSelector _selector;
     GPSCorrectionLedger _ledger;
-    std::array<QString, 4> _configuredInstances;
     QMap<QString, Output> _sinks;
     GPSRevision _revision;
     bool _shutdown = false;

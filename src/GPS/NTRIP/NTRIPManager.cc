@@ -5,12 +5,14 @@
 #include <utility>
 
 #include <QtCore/QCoreApplication>
-#include <QtCore/QUrl>
 #include <QtCore/QtMath>
+#include <QtNetwork/QHostAddress>
 
 #include "GPSCorrectionManager.h"
 #include "NTRIPError.h"
 #include "NTRIPHttpTransport.h"
+#include "NTRIPNetworkMonitor.h"
+#include "NTRIPStreamSession.h"
 #include "QGCLoggingCategory.h"
 #include "QtRuntimeScheduler.h"
 
@@ -84,6 +86,14 @@ bool isRetryable(NTRIPError error)
 
 }  // namespace
 
+QDebug operator<<(QDebug debug, const NTRIPManager::Configuration& configuration)
+{
+    const QDebugStateSaver saver(debug);
+    debug.nospace().noquote() << "NTRIPManager::Configuration(enabled=" << configuration.enabled
+                              << ", stream=" << configuration.stream << ", gga=" << configuration.gga << ')';
+    return debug;
+}
+
 // -----------------------------------------------------------------------------
 // Lifecycle
 // -----------------------------------------------------------------------------
@@ -120,12 +130,38 @@ void NTRIPManager::setCorrectionManager(GPSCorrectionManager* manager)
     if (_correctionManager == manager) {
         return;
     }
-    if (_initialized || _transport) {
+    if (_initialized || _session) {
         qCWarning(NTRIPManagerLog) << "Inject the correction manager before initializing NTRIP";
         return;
     }
-    _correctionRegistration.reset();
     _correctionManager = manager;
+}
+
+void NTRIPManager::setNetworkMonitor(NTRIPNetworkMonitor* monitor)
+{
+    if (_networkMonitor == monitor) {
+        return;
+    }
+    if (_initialized || _session) {
+        qCWarning(NTRIPManagerLog) << "Inject the network monitor before initializing NTRIP";
+        return;
+    }
+    QObject::disconnect(_networkConnection);
+    _networkMonitor = monitor;
+    if (!_networkMonitor) {
+        return;
+    }
+    _networkConnection = connect(_networkMonitor, &NTRIPNetworkMonitor::networkChanged, this, [this](bool available) {
+        if (!available || _shutdown || _connectionStatus != ConnectionStatus::Reconnecting || !_waitingForNetwork) {
+            return;
+        }
+        const GPSNotificationQueue::Scope publish(_notifications);
+        const auto state = _stateRevision.current(this);
+        _waitingForNetwork = false;
+        if (state.isCurrent()) {
+            _dispatch(Event::ReconnectDue);
+        }
+    });
 }
 
 void NTRIPManager::init()
@@ -148,6 +184,7 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
     const bool streamChanged =
         configuration.enabled != _configuration.enabled || configuration.stream != _configuration.stream;
     _configuration = configuration;
+    qCDebug(NTRIPManagerLog) << "NTRIP configuration applied:" << _configuration;
     if (!_initialized) {
         return;
     }
@@ -162,7 +199,7 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
 void NTRIPManager::setGgaPositionProvider(NTRIPGgaProvider::PositionSource source,
                                           NTRIPGgaProvider::PositionProvider provider)
 {
-    if (_initialized || _transport) {
+    if (_initialized || _session) {
         qCWarning(NTRIPManagerLog) << "Inject GGA position providers before initializing NTRIP";
         return;
     }
@@ -213,11 +250,8 @@ void NTRIPManager::shutdown()
     }
     _shutdown = true;
     const GPSNotificationQueue::Scope publish(_notifications);
-    const QPointer<NTRIPManager> guard(this);
     _sourceTableController.cancel();
-    if (guard) {
-        stopNTRIP();
-    }
+    stopNTRIP();
 }
 
 void NTRIPManager::fetchMountpoints()
@@ -242,8 +276,7 @@ bool NTRIPManager::_dispatch(Event ev, const QString& detail, std::chrono::milli
             return true;
         }
     }
-    qCDebug(NTRIPManagerLog) << "NTRIP event" << static_cast<int>(ev) << "ignored in state"
-                             << static_cast<int>(_connectionStatus);
+    qCDebug(NTRIPManagerLog) << "NTRIP event" << ev << "ignored in state" << _connectionStatus;
     return false;
 }
 
@@ -253,9 +286,12 @@ void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail, std::
     const ConnectionStatus from = _connectionStatus;
     const bool stateChanged = (from != to);
     const QString msg = detail.isEmpty() ? _defaultMessageFor(to) : detail;
+    if (stateChanged) {
+        _waitingForNetwork = false;
+    }
 
     // Commit state + message before running entry actions so that a recursive
-    // _dispatch() from inside an entry action (e.g. _startTransport → ConfigInvalid)
+    // _dispatch() from inside an entry action (e.g. _openSession → ConfigInvalid)
     // observes the already-committed state, not the stale caller value.
     _connectionStatus = to;
     const bool msgChanged = (_statusMessage != msg);
@@ -264,7 +300,7 @@ void NTRIPManager::_enterState(ConnectionStatus to, const QString& detail, std::
     }
 
     if (stateChanged) {
-        qCDebug(NTRIPManagerLog) << "NTRIP state" << static_cast<int>(from) << "→" << static_cast<int>(to) << msg;
+        qCDebug(NTRIPManagerLog) << "NTRIP state" << from << "→" << to << msg;
         _notifications.emitSignal(this, &NTRIPManager::connectionStatusChanged);
     }
     if (msgChanged) {
@@ -295,7 +331,6 @@ QString NTRIPManager::_defaultMessageFor(ConnectionStatus state)
 
 void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to, std::chrono::milliseconds retryAfter)
 {
-    const auto state = _stateRevision.current(this);
     switch (to) {
         case ConnectionStatus::Disconnected:
         case ConnectionStatus::Error:
@@ -310,17 +345,13 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to,
         case ConnectionStatus::Connecting:
             _cancelReconnect();
             _setSecurityWarning({});
-            _teardownTransport();
-            if (state.isCurrent()) {
-                _startTransport();
-            }
+            _openSession();
             break;
 
         case ConnectionStatus::Connected:
             _resetReconnectAttempts();
-            _ggaProvider.start(_transport);
-            if (state.isCurrent()) {
-                _stats.start();
+            if (_session) {
+                _session->startStreaming();
             }
             break;
 
@@ -338,31 +369,17 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to,
 
 bool NTRIPManager::_stopStreaming()
 {
-    const auto state = _stateRevision.current(this);
-    _teardownTransport();
-    if (!state.isCurrent()) {
+    // The session stays current while it stops, so a re-entrant transition stops or replaces this same session.
+    const QPointer<NTRIPStreamSession> session = _session;
+    if (!session) {
+        return true;
+    }
+    if (!session->stop()) {
         return false;
     }
-    _ggaProvider.stop();
-    if (!state.isCurrent()) {
-        return false;
-    }
-    _stats.stop();
-    return state.isCurrent();
-}
-
-void NTRIPManager::_teardownTransport()
-{
-    const auto transport = std::exchange(_transport, {});
-    _correctionRegistration.reset();
-    if (!transport) {
-        return;
-    }
-    transport->disconnect(this);
-    transport->stop();
-    if (transport) {
-        transport->deleteLater();
-    }
+    _session = nullptr;
+    session->deleteLater();
+    return true;
 }
 
 int NTRIPManager::_reconnectBackoffMs(std::chrono::milliseconds retryAfter) const
@@ -374,6 +391,11 @@ int NTRIPManager::_reconnectBackoffMs(std::chrono::milliseconds retryAfter) cons
 
 void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
 {
+    if (_shouldWaitForNetwork()) {
+        _waitForNetwork();
+        return;
+    }
+
     // Backoff uses the pre-increment attempt count: attempt #1 waits kMinReconnectMs,
     // #2 waits 2x, etc. Increment, then check the ceiling.
     const auto backoff = std::chrono::milliseconds{_reconnectBackoffMs(retryAfter)};
@@ -384,7 +406,15 @@ void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
     }
     _pendingReconnectDelay = backoff;
     _reconnectTask.schedule(backoff, [this]() {
+        const GPSNotificationQueue::Scope publish(_notifications);
         _pendingReconnectDelay = {};
+        if (_shouldWaitForNetwork()) {
+            if (_reconnectAttempts > 0) {
+                --_reconnectAttempts;
+            }
+            _waitForNetwork();
+            return;
+        }
         _dispatch(Event::ReconnectDue);
     });
 }
@@ -393,11 +423,58 @@ void NTRIPManager::_cancelReconnect()
 {
     _reconnectTask.cancel();
     _pendingReconnectDelay = {};
+    _waitingForNetwork = false;
 }
 
-void NTRIPManager::_startTransport()
+bool NTRIPManager::_shouldWaitForNetwork() const
 {
-    const auto state = _stateRevision.current(this);
+    return _networkMonitor && !_networkMonitor->hasNetwork() && !_casterIsLoopback();
+}
+
+bool NTRIPManager::_casterIsLoopback() const
+{
+    const QString host = _configuration.stream.connection.host.trimmed();
+    if (host.compare(QStringLiteral("localhost"), Qt::CaseInsensitive) == 0) {
+        return true;
+    }
+
+    QHostAddress address;
+    return address.setAddress(host) && address.isLoopback();
+}
+
+void NTRIPManager::_waitForNetwork()
+{
+    _pendingReconnectDelay = {};
+    _waitingForNetwork = true;
+    const QString msg = tr("Waiting for network");
+    if (_statusMessage == msg) {
+        return;
+    }
+    _statusMessage = msg;
+    _notifications.emitSignal(this, &NTRIPManager::statusMessageChanged);
+}
+
+void NTRIPManager::_openSession()
+{
+    // The replacement is current before the previous transport stops, so a transition from inside that stop
+    // retires it and the stale entry action ends here.
+    const QPointer<NTRIPStreamSession> session = new NTRIPStreamSession(_ggaProvider, _stats, this);
+    connect(session, &NTRIPStreamSession::connected, this, [this]() { _dispatch(Event::TransportConnected); });
+    connect(session, &NTRIPStreamSession::failed, this, &NTRIPManager::_onTransportError);
+    connect(session, &NTRIPStreamSession::rtcmReceived, this, &NTRIPManager::_rtcmDataReceived);
+    connect(session, &NTRIPStreamSession::plaintextCredentialsWarning, this,
+            &NTRIPManager::_onPlaintextCredentialsWarning);
+
+    if (const QPointer<NTRIPStreamSession> previous = std::exchange(_session, session)) {
+        previous->closeTransport();
+        if (previous) {
+            previous->deleteLater();
+        }
+    }
+    if (!session || _session != session) {
+        return;
+    }
+
     if (_shutdown) {
         _dispatch(Event::ConfigInvalid, tr("NTRIP is shut down"));
         return;
@@ -413,7 +490,7 @@ void NTRIPManager::_startTransport()
         return;
     }
 
-    qCDebug(NTRIPManagerLog) << "startTransport: host=" << connection.host << " port=" << connection.port
+    qCDebug(NTRIPManagerLog) << "Starting NTRIP transport: host=" << connection.host << " port=" << connection.port
                              << " mount=" << connection.mountpoint;
 
     // Replace the generic "Connecting..." with a host-specific message.
@@ -423,76 +500,13 @@ void NTRIPManager::_startTransport()
         _notifications.emitSignal(this, &NTRIPManager::statusMessageChanged);
     }
 
-    _stats.reset();
-    if (!state.isCurrent()) {
-        return;
-    }
     _runningConfig = config;
-
-    if (_injectedTransport) {
-        _transport = _injectedTransport;
-        _injectedTransport = nullptr;
-    } else {
-        _transport = new NTRIPHttpTransport(config.connection, config.filter, this, _scheduler);
-    }
-
-    const QPointer<NTRIPTransport> transport = _transport;
-    const QPointer<GPSCorrectionManager> correctionManager = _correctionManager;
-    if (correctionManager) {
-        QUrl endpoint;
-        endpoint.setScheme(connection.useTls ? QStringLiteral("ntrips") : QStringLiteral("ntrip"));
-        endpoint.setHost(connection.host);
-        endpoint.setPort(connection.port);
-        endpoint.setPath(QLatin1Char('/') + connection.mountpoint);
-        auto registration =
-            correctionManager->registerSource(GPSCorrectionSource::Ntrip, endpoint.toString(QUrl::FullyEncoded));
-        if (!state.isCurrent() || !transport || _transport != transport) {
-            return;
+    session->open(connection, _correctionManager, [this, config]() -> NTRIPTransport* {
+        if (_injectedTransport) {
+            return std::exchange(_injectedTransport, {}).data();
         }
-        _correctionRegistration = std::move(registration);
-    }
-    const auto token = _correctionRegistration.token();
-    const auto current = [this, guard = QPointer<NTRIPManager>(this), transport, token,
-                          registered = !correctionManager.isNull()]() {
-        return guard && transport && _transport == transport && (!registered || token.valid());
-    };
-    // Error handling may retire the emitting transport.
-    connect(
-        _transport, &NTRIPTransport::error, this,
-        [this, transport](const NTRIPFailure& failure) {
-            if (transport && _transport == transport) {
-                _onTransportError(failure);
-            }
-        },
-        Qt::QueuedConnection);
-
-    // Handshake state must precede subsequently queued errors.
-    connect(_transport, &NTRIPTransport::connected, this, [this, current]() {
-        if (current()) {
-            _dispatch(Event::TransportConnected);
-        }
+        return new NTRIPHttpTransport(config.connection, config.filter, this, _scheduler);
     });
-
-    connect(
-        _transport, &NTRIPTransport::correctionFrameReceived, this,
-        [this, current, correctionManager, token](const RTCMDecodedFrame& frame) {
-            if (correctionManager) {
-                correctionManager->acceptIngress(token.event(frame));
-            }
-            if (current() && frame.valid && !frame.filtered) {
-                _rtcmDataReceived(frame);
-            }
-        },
-        Qt::QueuedConnection);
-
-    connect(_transport, &NTRIPTransport::plaintextCredentialsWarning, this, [this, transport]() {
-        if (transport && _transport == transport) {
-            _onPlaintextCredentialsWarning();
-        }
-    });
-
-    _transport->start();
-    qCDebug(NTRIPManagerLog) << "NTRIP transport started";
 }
 
 // -----------------------------------------------------------------------------
@@ -506,7 +520,7 @@ void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
     if (_connectionStatus != ConnectionStatus::Connecting && _connectionStatus != ConnectionStatus::Connected) {
         return;
     }
-    qCWarning(NTRIPManagerLog) << "NTRIP error:" << static_cast<int>(code) << detail;
+    qCWarning(NTRIPManagerLog) << "NTRIP error:" << code << detail;
 
     if (_isEnabled() && isRetryable(code)) {
         const int backoffMs = _reconnectBackoffMs(failure.retryAfter);
@@ -535,11 +549,6 @@ void NTRIPManager::_setSecurityWarning(const QString& warning)
 
 void NTRIPManager::_rtcmDataReceived(const RTCMDecodedFrame& frame)
 {
-    const auto state = _stateRevision.current(this);
-    _stats.recordMessage(frame.data.size(), frame.messageId, frame.receivedAtMs);
-    if (!state.isCurrent()) {
-        return;
-    }
     if (!_correctionManager) {
         qCWarning(NTRIPManagerLog) << "Correction manager not ready; dropping" << frame.data.size() << "bytes";
     }
@@ -580,9 +589,9 @@ void NTRIPManager::_applyConfiguration()
         return;
     }
 
-    if (newConfig.filter != _runningConfig.filter && _transport) {
+    if (newConfig.filter != _runningConfig.filter && _session && _session->hasTransport()) {
         qCDebug(NTRIPManagerLog) << "NTRIP RTCM whitelist changed, applying to live parser";
-        _transport->setRtcmWhitelist(newConfig.filter.messageIds());
+        _session->setRtcmWhitelist(newConfig.filter.messageIds());
     }
     if (state.isCurrent()) {
         _runningConfig = newConfig;

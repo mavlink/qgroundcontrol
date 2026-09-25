@@ -4,6 +4,7 @@
 #include <utility>
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDebug>
 #include <QtCore/QEvent>
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
@@ -15,6 +16,7 @@
 #include "MockNTRIPTransport.h"
 #include "MonotonicClock.h"
 #include "NTRIPManager.h"
+#include "NTRIPNetworkMonitor.h"
 #include "RTCMDecodedFrame.h"
 #include "ScriptedNtripCaster.h"
 
@@ -49,6 +51,28 @@ void deliverPostedEvents()
 {
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
 }
+
+class FakeNetworkMonitor : public NTRIPNetworkMonitor
+{
+public:
+    explicit FakeNetworkMonitor(bool hasNetwork)
+        : _hasNetwork(hasNetwork)
+    {}
+
+    bool hasNetwork() const override { return _hasNetwork; }
+
+    void setHasNetwork(bool hasNetwork)
+    {
+        if (_hasNetwork == hasNetwork) {
+            return;
+        }
+        _hasNetwork = hasNetwork;
+        emit networkChanged(_hasNetwork);
+    }
+
+private:
+    bool _hasNetwork = true;
+};
 }  // namespace
 
 void NTRIPManagerTest::cleanup()
@@ -241,6 +265,23 @@ void NTRIPManagerTest::testPlaintextCredentialWarningIsVisibleState()
     QCOMPARE(warningSpy.count(), 1);
 }
 
+void NTRIPManagerTest::testConfigurationDebugRedactsCredentials()
+{
+    auto configuration = testConfiguration();
+    configuration.stream.connection.username = QStringLiteral("private-user");
+    configuration.stream.connection.password = QStringLiteral("private-password");
+
+    QString output;
+    {
+        QDebug debug(&output);
+        debug << configuration;
+    }
+
+    QVERIFY(output.contains(QStringLiteral("private-user")));
+    QVERIFY(output.contains(QStringLiteral("password=<set>")));
+    QVERIFY(!output.contains(QStringLiteral("private-password")));
+}
+
 // ---------------------------------------------------------------------------
 // Reconnect backoff (migrated from NTRIPReconnectPolicyTest)
 // ---------------------------------------------------------------------------
@@ -370,6 +411,140 @@ void NTRIPManagerTest::testReconnectSignalFires()
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
     QCOMPARE(retry->startCount, 1);
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
+}
+
+void NTRIPManagerTest::testReconnectWaitsForNetworkAtFailure()
+{
+    ManualScheduler scheduler;
+    FakeNetworkMonitor network(false);
+    NTRIPManager manager(nullptr, &scheduler);
+    manager.setNetworkMonitor(&network);
+    auto* transport = injectTransport(manager);
+    initialize(manager);
+    QCOMPARE(transport->startCount, 1);
+
+    constexpr int OfflineFailures = 105;
+    for (int i = 0; i < OfflineFailures; ++i) {
+        expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("NTRIP error:.*offline")));
+        transport->simulateError(NTRIPError::SocketError, QStringLiteral("offline"));
+        deliverPostedEvents();
+        verifyExpectedLogMessage();
+        QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+        QCOMPARE(manager.statusMessage(), QStringLiteral("Waiting for network"));
+        auto* blockedRetry = injectTransport(manager);
+        QVERIFY(scheduler.advanceBy(std::chrono::minutes(5)));
+        QCOMPARE(blockedRetry->startCount, 0);
+        network.setHasNetwork(true);
+        QCOMPARE(blockedRetry->startCount, 1);
+        QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
+        network.setHasNetwork(false);
+        transport = blockedRetry;
+    }
+
+    network.setHasNetwork(true);
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("NTRIP error:.*retry budget")));
+    transport->simulateError(NTRIPError::SocketError, QStringLiteral("retry budget"));
+    deliverPostedEvents();
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+    QVERIFY(manager.statusMessage().contains(QStringLiteral("1s")));
+    auto* retry = injectTransport(manager);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(999)));
+    QCOMPARE(retry->startCount, 0);
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+    QCOMPARE(retry->startCount, 1);
+}
+
+void NTRIPManagerTest::testReconnectWaitsWhenNetworkLostDuringBackoff()
+{
+    ManualScheduler scheduler;
+    FakeNetworkMonitor network(true);
+    NTRIPManager manager(nullptr, &scheduler);
+    manager.setNetworkMonitor(&network);
+    auto* transport = injectTransport(manager);
+    initialize(manager);
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("NTRIP error:.*backoff")));
+    transport->simulateError(NTRIPError::SocketError, QStringLiteral("backoff"));
+    deliverPostedEvents();
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+    auto* retry = injectTransport(manager);
+    network.setHasNetwork(false);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+    QCOMPARE(retry->startCount, 0);
+    QCOMPARE(manager.statusMessage(), QStringLiteral("Waiting for network"));
+    network.setHasNetwork(true);
+    QCOMPARE(retry->startCount, 1);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("NTRIP error:.*after wait")));
+    retry->simulateError(NTRIPError::SocketError, QStringLiteral("after wait"));
+    deliverPostedEvents();
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+    QVERIFY(manager.statusMessage().contains(QStringLiteral("1s")));
+}
+
+void NTRIPManagerTest::testLoopbackCasterBypassesNetworkGate_data()
+{
+    QTest::addColumn<QString>("host");
+    QTest::newRow("localhost") << QStringLiteral("localhost");
+    QTest::newRow("ipv4-loopback") << QStringLiteral("127.1.2.3");
+    QTest::newRow("ipv6-loopback") << QStringLiteral("::1");
+}
+
+void NTRIPManagerTest::testLoopbackCasterBypassesNetworkGate()
+{
+    QFETCH(QString, host);
+    ManualScheduler scheduler;
+    FakeNetworkMonitor network(false);
+    NTRIPManager manager(nullptr, &scheduler);
+    manager.setNetworkMonitor(&network);
+    auto configuration = testConfiguration();
+    configuration.stream.connection.host = host;
+    auto* transport = injectTransport(manager);
+    initialize(manager, configuration);
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("NTRIP error:.*loopback")));
+    transport->simulateError(NTRIPError::SocketError, QStringLiteral("loopback"));
+    deliverPostedEvents();
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+    QVERIFY(!manager.statusMessage().contains(QStringLiteral("Waiting for network")));
+    auto* retry = injectTransport(manager);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+    QCOMPARE(retry->startCount, 1);
+}
+
+void NTRIPManagerTest::testWaitingStatusObserverCanStopManager()
+{
+    ManualScheduler scheduler;
+    FakeNetworkMonitor network(false);
+    NTRIPManager manager(nullptr, &scheduler);
+    manager.setNetworkMonitor(&network);
+    auto* transport = injectTransport(manager);
+    initialize(manager);
+    bool stoppedFromStatus = false;
+    connect(&manager, &NTRIPManager::statusMessageChanged, this, [&]() {
+        if (manager.statusMessage() == QStringLiteral("Waiting for network")) {
+            stoppedFromStatus = true;
+            manager.stopNTRIP();
+        }
+    });
+
+    expectLogMessage("GPS.NTRIP.NTRIPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("NTRIP error:.*observer")));
+    transport->simulateError(NTRIPError::SocketError, QStringLiteral("observer"));
+    deliverPostedEvents();
+    verifyExpectedLogMessage();
+    QVERIFY(stoppedFromStatus);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
+    auto* retry = injectTransport(manager);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+    QCOMPARE(retry->startCount, 0);
 }
 
 UT_REGISTER_TEST(NTRIPManagerTest, TestLabel::Unit)

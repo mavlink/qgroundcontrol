@@ -417,12 +417,14 @@ int run(const Options& options)
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     });
+    GPSTestClock scriptedClock;
     std::unique_ptr<UBXReceiverModel> receiver;
     std::unique_ptr<ScriptedReceiver> scriptedTransport;
     std::unique_ptr<GPSTransport> physical;
     if (scripted) {
-        receiver = std::make_unique<UBXReceiverModel>(options.model == "f9p" ? UBXReceiverModel::Receiver::F9P
-                                                                             : UBXReceiverModel::Receiver::M8PBase);
+        receiver = std::make_unique<UBXReceiverModel>(
+            options.model == "f9p" ? UBXReceiverModel::Receiver::F9P : UBXReceiverModel::Receiver::M8PBase,
+            scriptedClock);
         scriptedTransport = std::make_unique<ScriptedReceiver>(stop, *receiver);
         if (options.fault == "nak") {
             receiver->disableReply = UBXReceiverModel::DisableReply::Nak;

@@ -56,6 +56,7 @@ signals:
 private:
     void _updateDataStale(qint64 nowMs);
 
+    /// UI indicator only, measured from the last receipt or stream start; routing freshness is separate.
     static constexpr std::chrono::milliseconds kStaleThreshold{5000};
 
     DataRateTracker _rateTracker;

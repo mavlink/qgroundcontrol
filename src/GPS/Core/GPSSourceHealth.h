@@ -35,6 +35,7 @@ public:
     explicit GPSSourceHealth(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~GPSSourceHealth() override;
 
+    /// Default position age at which health becomes Stale and the position stops being usable.
     static constexpr int FRESHNESS_TIMEOUT_MS = 5000;
 
     int freshnessTimeoutMs() const { return _freshnessTimeoutMs; }

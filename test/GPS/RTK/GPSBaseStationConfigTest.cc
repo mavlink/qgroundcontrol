@@ -17,7 +17,7 @@ private slots:
 
     void _currentBaseMetadata()
     {
-        QFile file(QFINDTESTDATA("../../../src/GPS/RTK/GPSRTKFact.json"));
+        QFile file(QStringLiteral(":/json/Vehicle/GPSRTKFact.json"));
         QVERIFY(file.open(QIODevice::ReadOnly));
         const auto document = QJsonDocument::fromJson(file.readAll());
         QVERIFY(document.isObject());
