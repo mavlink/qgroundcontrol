@@ -325,11 +325,6 @@ Item {
                 }
             }
 
-            RTKBaseMapItem {
-                map: editorMap
-                z: QGroundControl.zOrderMapItems
-            }
-
             MissionItemIndicatorGroup {
                 id: _missionItemIndicatorGroup
 

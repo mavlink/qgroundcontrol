@@ -1,0 +1,21 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "groups": [
+        {
+            "component": "GPSReceiverStatus",
+            "sectionName": "GNSS Receiver Status",
+            "keywords": ["rtk", "gnss", "gps", "base station", "receiver", "status", "fix", "satellites", "jamming", "spoofing"]
+        },
+        {
+            "component": "GPSReceiverSettings",
+            "sectionName": "GNSS Receiver",
+            "keywords": ["rtk", "gnss", "gps", "nmea", "external gps", "base station", "receiver", "role", "passive", "position only", "survey-in", "fixed position", "u-blox", "septentrio", "serial", "tcp", "udp", "startup", "auto connect"]
+        },
+        {
+            "component": "GcsPositionStatus",
+            "sectionName": "GCS Position",
+            "keywords": ["gcs position", "ground station position", "position source", "internal gps", "this device", "nmea", "gps"]
+        }
+    ]
+}

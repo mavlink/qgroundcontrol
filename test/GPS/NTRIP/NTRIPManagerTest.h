@@ -17,8 +17,6 @@ private slots:
     void testNewSessionRetryBudget_data();
     void testNewSessionRetryBudget();
     void testPlaintextCredentialWarningIsVisibleState();
-    void testTerminalStateStopsUdpForwarder_data();
-    void testTerminalStateStopsUdpForwarder();
 
     // Reconnect backoff (migrated from NTRIPReconnectPolicyTest after the policy
     // was inlined into NTRIPManager). Driven through the friend test seam.
@@ -42,7 +40,6 @@ private slots:
     void testGgaSettingsUseInjectedProviders();
     void testFactChangesReconfigureTransport_data();
     void testFactChangesReconfigureTransport();
-    void testNtripOnlyUdpForwardingBypassesSelectionOnce();
     void testTransportDiagnosticsReachManager();
     void testStatusCallbackStopsTransition();
     void testConnectedCallbackStopsTransition();

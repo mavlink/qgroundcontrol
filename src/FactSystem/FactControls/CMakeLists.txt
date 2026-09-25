@@ -16,7 +16,6 @@ qt_add_qml_module(
               FactCheckBoxSlider.qml
               FactComboBox.qml
               FactLabel.qml
-              FactSerialPortSettings.qml
               FactTextField.qml
               FactTextFieldGrid.qml
               FactTextFieldSlider.qml

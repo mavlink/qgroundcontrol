@@ -42,7 +42,7 @@ SettingsGroupLayout {
     }
 
     heading: qsTr("Correction Routing")
-    headingDescription: qsTr("Selects streams for vehicle links only. NTRIP UDP forwarding uses the NTRIP stream independently.")
+    headingDescription: qsTr("Selects the stream sent to vehicles. UDP forwarding sends the same stream.")
     objectName: "correctionRoutingSettings"
     visible: root._settings.userVisible && root._sourceFact && root._sourceFact.userVisible
 

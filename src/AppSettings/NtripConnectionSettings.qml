@@ -9,7 +9,7 @@ SettingsGroupLayout {
     id: root
 
     Layout.fillWidth:   true
-    heading:            qsTr("Connection")
+    heading:            qsTr("NTRIP Connection")
     visible:            _ntrip.userVisible
 
     property var  _ntrip:    QGroundControl.settingsManager.ntripSettings

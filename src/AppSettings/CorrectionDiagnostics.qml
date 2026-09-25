@@ -13,8 +13,8 @@ SettingsGroupLayout {
     property GPSCorrectionManager corrections: QGroundControl.gpsManager.corrections
 
     function destinationName(destinationId: string): string {
-        if (destinationId === "ntripUdp")
-            return qsTr("NTRIP UDP output");
+        if (destinationId === "udpOutput")
+            return qsTr("UDP forwarding");
         if (destinationId === "mavlink")
             return qsTr("Vehicles");
         if (destinationId.startsWith("mavlink/"))
@@ -41,26 +41,6 @@ SettingsGroupLayout {
         default:
             return qsTr("Unknown");
         }
-    }
-
-    function sourceName(source) {
-        switch (source) {
-        case GPSCorrectionSettings.LocalReceiver:
-            return qsTr("Local base station");
-        case GPSCorrectionSettings.Ntrip:
-            return qsTr("NTRIP");
-        case GPSCorrectionSettings.Udp:
-            return qsTr("UDP");
-        default:
-            return qsTr("Unclassified");
-        }
-    }
-
-    function dataRate(bytesPerSecond) {
-        //: Data rate in bytes per second
-        if (bytesPerSecond < 1024) return qsTr("%1 B/s").arg(bytesPerSecond)
-        //: Data rate in kilobytes per second
-        return qsTr("%1 KB/s").arg((bytesPerSecond / 1024).toFixed(1))
     }
 
     function stageName(stage) {
@@ -112,7 +92,7 @@ SettingsGroupLayout {
                     status = qsTr("Active; waiting for fresh corrections");
                 else
                     status = qsTr("Unavailable");
-                return qsTr("%1 — %2: %3").arg(root.sourceName(modelData.source))
+                return qsTr("%1 — %2: %3").arg(root.corrections.sourceName(modelData.source))
                                          .arg(modelData.instanceId || qsTr("Default stream")).arg(status);
             }
             textFormat: Text.PlainText
@@ -156,7 +136,7 @@ SettingsGroupLayout {
             QGCLabel {
                 Layout.fillWidth: true
                 objectName: "correctionSource_" + sourceRow.source
-                text: qsTr("%1 — received %2; frames: received %3, validated %4, selected %5, queued %6; drop events %7").arg(root.sourceName(sourceRow.source)).arg(root.dataRate(sourceRow.receivedBytesPerSecond)).arg(sourceRow.receivedFrames).arg(sourceRow.validatedFrames).arg(sourceRow.selectedFrames).arg(sourceRow.queuedFrames).arg(sourceRow.droppedFrames)
+                text: qsTr("%1 — received %2; frames: received %3, validated %4, selected %5, queued %6; drop events %7").arg(root.corrections.sourceName(sourceRow.source)).arg(GPSFormat.dataRate(sourceRow.receivedBytesPerSecond)).arg(sourceRow.receivedFrames).arg(sourceRow.validatedFrames).arg(sourceRow.selectedFrames).arg(sourceRow.queuedFrames).arg(sourceRow.droppedFrames)
                 textFormat: Text.PlainText
                 wrapMode: Text.WordWrap
             }
@@ -219,7 +199,7 @@ SettingsGroupLayout {
                 required property double sourceSession
                 required property int stage
 
-                text: qsTr("%1. %2 — %3, %4 B%5\nSource: %6 (session %7); destination: %8 (session %9)").arg(eventSequence).arg(root.sourceName(source)).arg(root.stageName(stage)).arg(bytes).arg(reason === GPSCorrectionEventModel.None ? "" : qsTr(" — %1").arg(root.reasonName(reason))).arg(sourceInstance || root.sourceName(source)).arg(sourceSession).arg(root.destinationName(destinationId)).arg(destinationSession)
+                text: qsTr("%1. %2 — %3, %4 B%5\nSource: %6 (session %7); destination: %8 (session %9)").arg(eventSequence).arg(root.corrections.sourceName(source)).arg(root.stageName(stage)).arg(bytes).arg(reason === GPSCorrectionEventModel.None ? "" : qsTr(" — %1").arg(root.reasonName(reason))).arg(sourceInstance || root.corrections.sourceName(source)).arg(sourceSession).arg(root.destinationName(destinationId)).arg(destinationSession)
                 textFormat: Text.PlainText
                 width: ListView.view.width
                 wrapMode: Text.WordWrap

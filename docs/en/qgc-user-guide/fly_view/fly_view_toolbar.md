@@ -50,24 +50,37 @@ The Vehicle Messages indicator dropdown shows you messages which come from the v
 ### GPS / RTK GPS <img src="../../../assets/fly/toolbar/gps_indicator.png" alt="GPS / RTK GPS indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 
 The GPS/RTK GPS indicator shows satellite and GNSS status in the toolbar, and the dropdown provides additional GPS details.
+The expanded page provides the [GNSS Receiver](../settings_view/gnss_receiver.md#gnss-receiver) settings.
 
-With an active vehicle, the indicator shows vehicle GPS information (for example, satellite count and HDOP), and the expanded page provides access to RTK-related settings.
+When the vehicle reports GPS, the indicator shows its satellite count and HDOP. Otherwise it shows the connected GNSS
+receiver's satellites used and its fix (for example _3D_ or _Float_), or _Survey_ or _Base_ for a base station. The
+icon is dimmed until a satellite count is available.
 
-When there is no active vehicle, or the active vehicle does not report GPS, the indicator shows RTK receiver status so you can still monitor the correction link.
+The _RTK_ label appears while a correction source is active: vehicles receive fresh corrections, NTRIP is enabled, UDP
+RTCM input is enabled, or a base or passive receiver is connected. It turns orange when an active source is not
+delivering fresh corrections, for example while NTRIP reconnects or a base is still surveying. A position-only receiver
+without corrections shows _GNSS_ instead.
 
-The dropdown also shows the [GCS position](../settings_view/comm_links.md#gcs-position) source in use and its status.
+The dropdown shows the correction source and stream vehicles receive, its data rate, and the NTRIP connection state
+while a correction source is active, and the [GCS position](../settings_view/gnss_receiver.md#gcs-position) source in
+use and its status.
 
 When the vehicle reports RTK status (`GPS_RTK`), the dropdown also shows the RTK baseline (distance from the base), the
 correction rate, and the satellites used in the RTK solution. For a connected RTK receiver it shows the receiver's
 jamming and spoofing state when the receiver reports them; the toolbar's _RTK_ label turns orange for jamming warnings
 or any spoofing indication.
 
-A connected RTK base station is marked on the Fly and Plan maps. The marker shows the fixed or completed survey-in
+A connected RTK base station is marked on the Fly map. The marker shows the fixed or completed survey-in
 position, or the survey-in position so far (labelled _surveying_).
 
-### GPS Resilience
+When the vehicle reports GPS resilience telemetry, the indicator adds resilience icons:
 
-The GPS Resilience indicator appears when the vehicle reports GPS resilience telemetry (authentication, spoofing, or jamming state). The dropdown provides summary status and per-GPS details when available.
+- A shield shows the authentication state: yellow while initializing, green when OK, red on error, and grey when
+  disabled.
+- An interference icon shows the worst spoofing or jamming state: green when none is detected, orange when mitigated,
+  and red while ongoing.
+
+The dropdown then lists the resilience states, with separate GPS 1 and GPS 2 details when both receivers report them.
 
 ### Battery <img src="../../../assets/fly/toolbar/battery_indicator.png" alt="Battery indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 

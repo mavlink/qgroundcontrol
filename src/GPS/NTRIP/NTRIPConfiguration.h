@@ -27,18 +27,9 @@ struct NTRIPRtcmFilterConfig
     QVector<int> messageIds() const;
 };
 
-struct NTRIPUdpForwardConfig
-{
-    bool enabled = false;
-    QString address;
-    quint16 port = 0;
-    bool operator==(const NTRIPUdpForwardConfig&) const = default;
-};
-
 struct NTRIPConfiguration
 {
     NTRIPConnectionConfig connection;
     NTRIPRtcmFilterConfig filter;
-    NTRIPUdpForwardConfig udpForward;
     bool operator==(const NTRIPConfiguration&) const = default;
 };

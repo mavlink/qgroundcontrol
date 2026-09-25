@@ -7,7 +7,7 @@ import QGroundControl
 import QGroundControl.AppSettings
 import QGroundControl.Controls
 
-// Used with a connected vehicle and as the standalone receiver indicator.
+// Drawer of the GPS indicator: vehicle GPS, GNSS receiver, corrections, and GCS position.
 ToolIndicatorPage {
     id: root
     showExpand: true
@@ -54,6 +54,39 @@ ToolIndicatorPage {
     QtObject {
         id: connectionConsent
         property bool allowed: false
+    }
+
+    // Resilience states 0 and 255 mean the receiver does not know, so only reported states are listed.
+    component ResilienceGroup: SettingsGroupLayout {
+        id: group
+
+        required property var facts
+        readonly property bool jammingReported: !!facts && facts.jammingState.value > 0 && facts.jammingState.value < 255
+        readonly property bool spoofingReported: !!facts && facts.spoofingState.value > 0
+                                                 && facts.spoofingState.value < 255
+        readonly property bool authenticationReported: !!facts && facts.authenticationState.value > 0
+                                                       && facts.authenticationState.value < 255
+        readonly property bool reported: jammingReported || spoofingReported || authenticationReported
+
+        Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        visible: reported
+
+        LabelledLabel {
+            label: qsTr("Jamming")
+            labelText: group.jammingReported ? group.facts.jammingState.enumStringValue : ""
+            visible: group.jammingReported
+        }
+        LabelledLabel {
+            label: qsTr("Spoofing")
+            labelText: group.spoofingReported ? group.facts.spoofingState.enumStringValue : ""
+            visible: group.spoofingReported
+        }
+        LabelledLabel {
+            label: qsTr("Authentication")
+            labelText: group.authenticationReported ? group.facts.authenticationState.enumStringValue : ""
+            visible: group.authenticationReported
+        }
     }
 
     contentComponent: Component {
@@ -144,12 +177,42 @@ ToolIndicatorPage {
                 }
             }
 
+            ResilienceGroup {
+                objectName: "gpsResilienceStatus"
+                heading: qsTr("GPS Resilience Status")
+                facts: root.activeVehicle ? root.activeVehicle.gpsAggregate : null
+            }
+
+            // Per-receiver details repeat the summary unless both receivers report.
+            ResilienceGroup {
+                id: gps1Resilience
+                objectName: "gps1Resilience"
+                heading: qsTr("GPS 1 Details")
+                facts: root.activeVehicle ? root.activeVehicle.gps : null
+                visible: gps1Resilience.reported && gps2Resilience.reported
+            }
+
+            ResilienceGroup {
+                id: gps2Resilience
+                objectName: "gps2Resilience"
+                heading: qsTr("GPS 2 Details")
+                facts: root.activeVehicle ? root.activeVehicle.gps2 : null
+                visible: gps1Resilience.reported && gps2Resilience.reported
+            }
+
             GPSReceiverStatus {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 receiver: root._receiver
                 showWhenDisconnected: !root._vehicleGps
                 disconnectedText: qsTr("No GNSS receiver connected. Expand for settings.")
+            }
+
+            CorrectionsStatus {
+                objectName: "gpsIndicatorCorrections"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                showWhenInactive: false
             }
 
             GcsPositionStatus {

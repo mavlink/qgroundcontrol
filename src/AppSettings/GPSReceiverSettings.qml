@@ -229,7 +229,7 @@ SettingsGroupLayout {
         color: root._connectionSupported ? QGroundControl.globalPalette.text : QGroundControl.globalPalette.warningText
     }
 
-    FactSerialPortSettings {
+    GPSReceiverSerialPort {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         visible: root.receiver.serialSupported && root._serial
@@ -240,9 +240,6 @@ SettingsGroupLayout {
         minimumBaud: 1200
         allowAutoBaud: !root.presentation.passive
         editable: root._editable
-        deviceObjectName: "rtkSerialDevice"
-        baudObjectName: "rtkSerialBaudRate"
-        customBaudObjectName: "rtkCustomBaudRate"
     }
 
     Explanation {

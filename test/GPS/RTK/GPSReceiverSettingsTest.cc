@@ -29,6 +29,23 @@
 #include "SettingsManager.h"
 #include "Vehicle.h"
 #include "VehicleGPSFactGroup.h"
+#include "development/mavlink_msg_gnss_integrity.h"
+
+/// The receiver state the GPS toolbar indicator reads, without a receiver session.
+class IndicatorReceiver : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(GPSRTKFactGroup* facts READ facts CONSTANT)
+    Q_PROPERTY(int activeRole MEMBER activeRole CONSTANT)
+
+public:
+    IndicatorReceiver() { factGroup.setLiveUpdates(true); }
+
+    GPSRTKFactGroup* facts() { return &factGroup; }
+
+    GPSRTKFactGroup factGroup;
+    int activeRole = GPSRtk::PositionOnly;
+};
 
 /// Records the QML command boundary without opening a device or configuring hardware.
 class ReceiverSettingsController : public QObject
@@ -688,7 +705,7 @@ void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
     QCOMPARE(settings.settings->serialBaudRate()->rawValue().toInt(), 250000);
     QVERIFY(QMetaObject::invokeMethod(baud, "activated", Q_ARG(int, 0)));
     QCOMPARE(settings.settings->serialBaudRate()->rawValue().toInt(), 0);
-    QCOMPARE(baud->property("currentText").toString(), QCoreApplication::translate("FactSerialPortSettings", "Auto"));
+    QCOMPARE(baud->property("currentText").toString(), QCoreApplication::translate("GPSReceiverSerialPort", "Auto"));
     // Passive roles need the receiver's existing rate, so Auto is not offered.
     settings.settings->receiverRole()->setRawValue(GPSRtk::Passive);
     QVERIFY(baud->property("isCustomBaud").toBool());
@@ -729,11 +746,11 @@ void GPSReceiverSettingsTest::_resilienceUnknownStates()
     QQuickWindow window;
     QQmlEngine engine;
     configureEngine(engine);
-    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSResilienceIndicator.qml")));
+    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSIndicator.qml")));
     QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
     std::unique_ptr<QObject> indicator(component.createWithInitialProperties(
         {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
-         {QStringLiteral("_activeVehicle"), QVariant::fromValue(aggregate.get())},
+         {QStringLiteral("_activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))},
          {QStringLiteral("_gpsAggregate"), QVariant::fromValue(aggregate.get())}}));
     QVERIFY2(indicator, qPrintable(component.errorString()));
     const int expected = qMax(spoofing == 255 ? 0 : spoofing, jamming == 255 ? 0 : jamming);
@@ -832,6 +849,110 @@ void GPSReceiverSettingsTest::_vehicleAccuracyFacts()
     QVERIFY(page->setProperty("activeVehicle", QVariant::fromValue(static_cast<Vehicle*>(nullptr))));
     QVERIFY(!horizontal->property("visible").toBool());
     QVERIFY(!vertical->property("visible").toBool());
+}
+
+void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGps_data()
+{
+    QTest::addColumn<int>("role");
+    QTest::addColumn<int>("fixType");
+    QTest::addColumn<bool>("surveying");
+    QTest::addColumn<QString>("label");
+    QTest::addColumn<QString>("detail");
+    QTest::newRow("position-only") << int(GPSRtk::PositionOnly) << 3 << false << "GNSS" << "3D";
+    QTest::newRow("passive-float") << int(GPSRtk::Passive) << 5 << false << "RTK" << "Float";
+    QTest::newRow("base-surveying") << int(GPSRtk::ConfiguredBase) << 0 << true << "RTK" << "Survey";
+    QTest::newRow("base-fixed") << int(GPSRtk::ConfiguredBase) << 0 << false << "RTK" << "Base";
+}
+
+void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGps()
+{
+    QFETCH(int, role);
+    QFETCH(int, fixType);
+    QFETCH(bool, surveying);
+    QFETCH(QString, label);
+    QFETCH(QString, detail);
+    IndicatorReceiver receiver;
+    receiver.activeRole = role;
+    auto& facts = receiver.factGroup;
+    facts.fixType()->setRawValue(fixType);
+    facts.numSatellitesUsed()->setRawValue(9);
+    facts.active()->setRawValue(surveying);
+    QQuickWindow window;
+    QQmlEngine engine;
+    configureEngine(engine);
+    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSIndicator.qml")));
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    std::unique_ptr<QObject> indicator(component.createWithInitialProperties(
+        {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+         {QStringLiteral("_activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))},
+         {QStringLiteral("_receiver"), QVariant::fromValue(&receiver)}}));
+    QVERIFY2(indicator, qPrintable(component.errorString()));
+    QVERIFY(indicator->property("showIndicator").toBool());
+    auto* rtkLabel = indicator->findChild<QObject*>(QStringLiteral("gpsCorrectionsLabel"));
+    auto* satellites = indicator->findChild<QObject*>(QStringLiteral("gpsSatelliteCount"));
+    auto* detailLabel = indicator->findChild<QObject*>(QStringLiteral("gpsDetail"));
+    QVERIFY(rtkLabel && satellites && detailLabel);
+    QVERIFY(!rtkLabel->property("visible").toBool());
+    QVERIFY(!satellites->property("visible").toBool());
+
+    facts.connected()->setRawValue(true);
+    QVERIFY(rtkLabel->property("visible").toBool());
+    QCOMPARE(rtkLabel->property("text").toString(), label);
+    QVERIFY(satellites->property("visible").toBool());
+    QCOMPARE(satellites->property("text").toString(), QStringLiteral("9"));
+    QCOMPARE(detailLabel->property("text").toString(), detail);
+    // Only receivers that supply corrections expect them; none arrive here, so the label warns.
+    QCOMPARE(indicator->property("_correctionsExpected").toBool(), role != GPSRtk::PositionOnly);
+    QVERIFY(!indicator->property("_correctionsFresh").toBool());
+}
+
+void GPSReceiverSettingsTest::_resiliencePageGroups()
+{
+    Vehicle vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    auto* gps1 = qobject_cast<VehicleGPSFactGroup*>(vehicle.gpsFactGroup());
+    auto* gps2 = qobject_cast<VehicleGPSFactGroup*>(vehicle.gps2FactGroup());
+    QVERIFY(gps1 && gps2);
+    for (FactGroup* group : {vehicle.gpsFactGroup(), vehicle.gps2FactGroup(), vehicle.gpsAggregateFactGroup()}) {
+        group->setLiveUpdates(true);
+    }
+    const auto integrity = [&vehicle](VehicleGPSFactGroup* gps, uint8_t id, uint8_t spoofing, uint8_t jamming) {
+        mavlink_gnss_integrity_t report{};
+        report.id = id;
+        report.spoofing_state = spoofing;
+        report.jamming_state = jamming;
+        report.authentication_state = 0;
+        mavlink_message_t message{};
+        mavlink_msg_gnss_integrity_encode(1, 1, &message, &report);
+        gps->handleMessage(&vehicle, message);
+    };
+    QQuickWindow window;
+    window.resize(640, 800);
+    QQmlEngine engine;
+    configureEngine(engine);
+    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSIndicatorPage.qml")));
+    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
+    std::unique_ptr<QObject> page(
+        component.createWithInitialProperties({{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                                               {QStringLiteral("activeVehicle"), QVariant::fromValue(&vehicle)},
+                                               {QStringLiteral("availableWidth"), 640}}));
+    QVERIFY2(page, qPrintable(component.errorString()));
+    auto* summary = page->findChild<QObject*>(QStringLiteral("gpsResilienceStatus"));
+    auto* first = page->findChild<QObject*>(QStringLiteral("gps1Resilience"));
+    auto* second = page->findChild<QObject*>(QStringLiteral("gps2Resilience"));
+    QVERIFY(summary && first && second);
+    QVERIFY(!summary->property("visible").toBool());
+
+    // With one receiver reporting, its details would repeat the summary.
+    integrity(gps1, 0, 1, 3);
+    QTRY_VERIFY_WITH_TIMEOUT(summary->property("visible").toBool(), TestTimeout::shortMs());
+    QVERIFY(first->property("reported").toBool());
+    QVERIFY(!first->property("visible").toBool());
+    QVERIFY(!second->property("visible").toBool());
+
+    integrity(gps2, 1, 2, 1);
+    QTRY_VERIFY_WITH_TIMEOUT(second->property("visible").toBool(), TestTimeout::shortMs());
+    QVERIFY(first->property("visible").toBool());
+    QVERIFY(summary->property("visible").toBool());
 }
 
 UT_REGISTER_TEST(GPSReceiverSettingsTest, TestLabel::Unit)

@@ -5,9 +5,7 @@
 
 #include <QtCore/QChronoTimer>
 #include <QtCore/QRegularExpression>
-#include <QtNetwork/QNetworkDatagram>
 #include <QtNetwork/QTcpServer>
-#include <QtNetwork/QUdpSocket>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -204,41 +202,6 @@ void NTRIPManagerTest::testPlaintextCredentialWarningIsVisibleState()
 
     mgr._onPlaintextCredentialsWarning();
     QCOMPARE(warningSpy.count(), 1);
-}
-
-void NTRIPManagerTest::testTerminalStateStopsUdpForwarder_data()
-{
-    QTest::addColumn<NTRIPManager::ConnectionStatus>("status");
-    QTest::newRow("disconnected") << NTRIPManager::ConnectionStatus::Disconnected;
-    QTest::newRow("error") << NTRIPManager::ConnectionStatus::Error;
-}
-
-void NTRIPManagerTest::testTerminalStateStopsUdpForwarder()
-{
-    QFETCH(NTRIPManager::ConnectionStatus, status);
-    GPSCorrectionManager corrections;
-    NTRIPManager mgr(nullptr);
-    mgr.setCorrectionManager(&corrections);
-    QUdpSocket listener;
-    QVERIFY(listener.bind(QHostAddress(QHostAddress::LocalHost), 0));
-
-    NTRIPUdpForwardConfig config;
-    config.enabled = true;
-    config.address = QStringLiteral("127.0.0.1");
-    config.port = listener.localPort();
-
-    mgr._applyUdpForwarderConfig(config);
-    auto source = corrections.registerSource(GPSCorrectionSource::Ntrip);
-    const auto frame = GpsTestHelpers::buildRtcmFrame(1005);
-    corrections.acceptIngress(source.token().event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
-    QTRY_VERIFY_WITH_TIMEOUT(listener.hasPendingDatagrams(), TestTimeout::shortMs());
-    QCOMPARE(listener.receiveDatagram().data(), frame);
-
-    mgr._enterState(status, QStringLiteral("session ended"));
-    QCOMPARE(mgr.connectionStatus(), status);
-    corrections.acceptIngress(source.token().event(frame, GPSCorrectionFrame::monotonicNowMs(), 1005, true));
-    QVERIFY(!listener.waitForReadyRead(TestTimeout::shortMs()));
-    QVERIFY(!listener.hasPendingDatagrams());
 }
 
 // ---------------------------------------------------------------------------
@@ -581,7 +544,6 @@ void NTRIPManagerTest::testCorrectionIngressKeepsSessionAndIdentity()
     saved.setFactValue(settings->ntripUsername(), QStringLiteral("private-user"));
     saved.setFactValue(settings->ntripPassword(), QStringLiteral("private-password"));
     saved.setFactValue(settings->ntripUseTls(), true);
-    saved.setFactValue(settings->ntripUdpForwardEnabled(), false);
     GPSCorrectionManager corrections;
     corrections.rtcmMavlink()->setOutputProvider([]() {
         return QList<RTCMMavlink::Output>{{QStringLiteral("test"), 1, [](const GpsRtcmPacket&) { return true; }}};
@@ -674,16 +636,14 @@ void NTRIPManagerTest::testSettingsProduceExplicitConfiguration()
     auto* settings = SettingsManager::instance()->ntripSettings();
     saved.setFactValue(settings->ntripServerConnectEnabled(), false);
 
-    const NTRIPConfiguration expected{
-        .connection = {.host = QStringLiteral("caster.example.com"),
-                       .port = 443,
-                       .username = QStringLiteral("user"),
-                       .password = QStringLiteral("pass"),
-                       .mountpoint = QStringLiteral("MOUNT"),
-                       .useTls = true,
-                       .allowSelfSignedCerts = true},
-        .filter = {.whitelist = QStringLiteral("1005,1077")},
-        .udpForward = {.enabled = true, .address = QStringLiteral("127.0.0.1"), .port = 3001}};
+    const NTRIPConfiguration expected{.connection = {.host = QStringLiteral("caster.example.com"),
+                                                     .port = 443,
+                                                     .username = QStringLiteral("user"),
+                                                     .password = QStringLiteral("pass"),
+                                                     .mountpoint = QStringLiteral("MOUNT"),
+                                                     .useTls = true,
+                                                     .allowSelfSignedCerts = true},
+                                      .filter = {.whitelist = QStringLiteral("1005,1077")}};
     saved.setFactValue(settings->ntripServerHostAddress(), expected.connection.host);
     saved.setFactValue(settings->ntripServerPort(), expected.connection.port);
     saved.setFactValue(settings->ntripUsername(), expected.connection.username);
@@ -692,9 +652,6 @@ void NTRIPManagerTest::testSettingsProduceExplicitConfiguration()
     saved.setFactValue(settings->ntripUseTls(), expected.connection.useTls);
     saved.setFactValue(settings->ntripAllowSelfSignedCerts(), expected.connection.allowSelfSignedCerts);
     saved.setFactValue(settings->ntripWhitelist(), expected.filter.whitelist);
-    saved.setFactValue(settings->ntripUdpForwardEnabled(), expected.udpForward.enabled);
-    saved.setFactValue(settings->ntripUdpTargetAddress(), expected.udpForward.address);
-    saved.setFactValue(settings->ntripUdpTargetPort(), expected.udpForward.port);
 
     NTRIPManager manager(settings);
     QCOMPARE(manager._configFromSettings(), expected);
@@ -704,7 +661,6 @@ void NTRIPManagerTest::testFactChangesReconfigureTransport_data()
 {
     QTest::addColumn<QString>("setting");
     QTest::newRow("cold-whitelist") << QStringLiteral("whitelist");
-    QTest::newRow("warm-udp-output") << QStringLiteral("udp");
     QTest::newRow("hot-mountpoint") << QStringLiteral("mountpoint");
 }
 
@@ -751,8 +707,6 @@ void NTRIPManagerTest::testGgaSettingsUseInjectedProviders()
 void NTRIPManagerTest::testFactChangesReconfigureTransport()
 {
     QFETCH(QString, setting);
-    QUdpSocket listener;
-    QVERIFY(listener.bind(QHostAddress(QHostAddress::LocalHost), 0));
     TestFixtures::SettingsFixture saved;
     auto* settings = SettingsManager::instance()->ntripSettings();
     saved.setFactValue(settings->ntripServerConnectEnabled(), true);
@@ -763,9 +717,6 @@ void NTRIPManagerTest::testFactChangesReconfigureTransport()
     saved.setFactValue(settings->ntripPassword(), QString());
     saved.setFactValue(settings->ntripUseTls(), false);
     saved.setFactValue(settings->ntripWhitelist(), QStringLiteral("1005"));
-    saved.setFactValue(settings->ntripUdpForwardEnabled(), false);
-    saved.setFactValue(settings->ntripUdpTargetAddress(), QStringLiteral("127.0.0.1"));
-    saved.setFactValue(settings->ntripUdpTargetPort(), listener.localPort());
     GPSCorrectionManager corrections;
     NTRIPManager mgr(settings);
     mgr.setCorrectionManager(&corrections);
@@ -788,10 +739,8 @@ void NTRIPManagerTest::testFactChangesReconfigureTransport()
     const bool reconnect = setting == QStringLiteral("mountpoint");
     if (reconnect) {
         settings->ntripMountpoint()->setRawValue(QStringLiteral("REPLACEMENT"));
-    } else if (setting == QStringLiteral("whitelist")) {
-        settings->ntripWhitelist()->setRawValue(QStringLiteral("1077"));
     } else {
-        settings->ntripUdpForwardEnabled()->setRawValue(true);
+        settings->ntripWhitelist()->setRawValue(QStringLiteral("1077"));
     }
     QVERIFY_SIGNAL_WAIT(settingsApplied, TestTimeout::shortMs());
     QCOMPARE(second->startCount, reconnect ? 1 : 0);
@@ -813,66 +762,12 @@ void NTRIPManagerTest::testFactChangesReconfigureTransport()
     QCOMPARE(current.sourceInstance,
              reconnect ? QStringLiteral("ntrip://caster.example.com:2101/REPLACEMENT") : original.sourceInstance);
     QCOMPARE(current.receivedAtMs, receivedAtMs);
-    if (setting == QStringLiteral("udp")) {
-        QTRY_VERIFY_WITH_TIMEOUT(listener.hasPendingDatagrams(), TestTimeout::shortMs());
-        QCOMPARE(listener.receiveDatagram().data(), frame);
-        QVERIFY(!listener.hasPendingDatagrams());
-    }
 
     settingsApplied.clear();
     settings->ntripServerConnectEnabled()->setRawValue(false);
     QVERIFY_SIGNAL_WAIT(settingsApplied, TestTimeout::shortMs());
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
     QVERIFY(corrections.sourceInstances().isEmpty());
-}
-
-void NTRIPManagerTest::testNtripOnlyUdpForwardingBypassesSelectionOnce()
-{
-    QUdpSocket listener;
-    QVERIFY(listener.bind(QHostAddress(QHostAddress::LocalHost), 0));
-    TestFixtures::SettingsFixture saved;
-    auto* settings = SettingsManager::instance()->ntripSettings();
-    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
-    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
-    saved.setFactValue(settings->ntripUdpForwardEnabled(), true);
-    saved.setFactValue(settings->ntripUdpTargetAddress(), QStringLiteral("127.0.0.1"));
-    saved.setFactValue(settings->ntripUdpTargetPort(), listener.localPort());
-    GPSCorrectionManager corrections;
-    corrections.applyRoutingConfiguration(
-        {GPSCorrectionManager::RoutingPolicy::Manual, GPSCorrectionSource::LocalReceiver, {}});
-    auto local = corrections.registerSource(GPSCorrectionSource::LocalReceiver, QStringLiteral("serial:test"));
-    auto udp = corrections.registerSource(GPSCorrectionSource::Udp);
-    NTRIPManager mgr(settings);
-    mgr.setCorrectionManager(&corrections);
-    auto* transport = new MockNTRIPTransport(&mgr);
-    mgr.setTransportForTest(transport);
-    mgr.startNTRIP();
-    QSignalSpy routed(&corrections.router(), &GPSCorrectionRouter::frameRouted);
-    const auto localFrame = GpsTestHelpers::buildRtcmFrame(1005);
-    const auto udpFrame = GpsTestHelpers::buildRtcmFrame(1077);
-    const auto ntripFrame = GpsTestHelpers::buildRtcmFrame(1087);
-    const qint64 now = GPSCorrectionFrame::monotonicNowMs();
-    corrections.acceptIngress(local.token().event(localFrame, now, 1005, true));
-    corrections.acceptIngress(udp.token().event(udpFrame, now, 1077, true));
-    transport->simulateRtcmData(ntripFrame, 1087);
-    QTRY_VERIFY_WITH_TIMEOUT(listener.hasPendingDatagrams(), TestTimeout::shortMs());
-    QCOMPARE(listener.receiveDatagram().data(), ntripFrame);
-    QCOMPARE(routed.size(), 1);
-    QCOMPARE(qvariant_cast<GPSCorrectionFrame>(routed[0][0]).source, GPSCorrectionSource::LocalReceiver);
-    QCOMPARE(corrections.rtcmMavlink()->totalBytesSent(), quint64(localFrame.size()));
-    const auto ntripStats = corrections.sourceDiagnostics()[static_cast<int>(GPSCorrectionSource::Ntrip)];
-    QCOMPARE(ntripStats.receivedFrames, 1);
-    QCOMPARE(ntripStats.selectedFrames, 0);
-    GPSCorrectionDestinationDiagnostic forwarding;
-    for (const auto& destination : corrections.destinationDiagnostics()) {
-        if (destination.destinationId == QStringLiteral("ntripUdp")) {
-            forwarding = destination;
-        }
-    }
-    QCOMPARE(forwarding.queuedBytes, quint64(ntripFrame.size()));
-    QCOMPARE(forwarding.queuedFrames, 1);
-    QVERIFY(!listener.waitForReadyRead(TestTimeout::shortMs()));
-    QVERIFY(!listener.hasPendingDatagrams());
 }
 
 void NTRIPManagerTest::testTransportDiagnosticsReachManager()
@@ -888,7 +783,6 @@ void NTRIPManagerTest::testTransportDiagnosticsReachManager()
     saved.setFactValue(settings->ntripPassword(), QString());
     saved.setFactValue(settings->ntripUseTls(), false);
     saved.setFactValue(settings->ntripWhitelist(), QStringLiteral("1005"));
-    saved.setFactValue(settings->ntripUdpForwardEnabled(), false);
     GPSCorrectionManager corrections;
     NTRIPManager mgr(settings);
     mgr.setCorrectionManager(&corrections);

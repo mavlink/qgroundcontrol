@@ -42,13 +42,15 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSCorrections QGCGPSRTCM
 # ----------------------------------------------------------------------------
 qt_add_library(GPSModule STATIC)
 
+set_source_files_properties(GPSFormat.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+
 qt_add_qml_module(
     GPSModule
     URI QGroundControl.GPS
     VERSION 1.0
     RESOURCE_PREFIX /qml
     SOURCES GPSQmlTypes.h
-    QML_FILES NTRIP/NTRIPConnectionStatus.qml NTRIP/NTRIPMountpointList.qml NTRIP/RTCMMessageChips.qml
+    QML_FILES GPSFormat.qml NTRIP/NTRIPConnectionStatus.qml NTRIP/NTRIPMountpointList.qml NTRIP/RTCMMessageChips.qml
 )
 
 target_link_libraries(

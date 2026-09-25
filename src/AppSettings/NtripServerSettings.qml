@@ -8,7 +8,7 @@ import QGroundControl.FactControls
 
 SettingsGroupLayout {
     Layout.fillWidth:   true
-    heading:            qsTr("Server")
+    heading:            qsTr("NTRIP Server")
     visible:            _ntrip.ntripServerHostAddress.userVisible || _ntrip.ntripServerPort.userVisible ||
                         _ntrip.ntripUsername.userVisible || _ntrip.ntripPassword.userVisible
 

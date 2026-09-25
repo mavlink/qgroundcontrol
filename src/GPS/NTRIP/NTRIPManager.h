@@ -91,7 +91,6 @@ public:
 
     QString securityWarning() const { return _securityWarning; }
 
-
     QString ggaSource() const { return _ggaProvider.currentSource(); }
 
     NTRIPSourceTableController* sourceTableController() { return &_sourceTableController; }
@@ -167,7 +166,6 @@ private:
     bool _reconnectExhausted() const { return _reconnectAttempts >= kMaxReconnectAttempts; }
 
     /// Reconfigure the manager-owned NTRIP sink without restarting transport.
-    void _applyUdpForwarderConfig(const NTRIPUdpForwardConfig& config);
 
     void _onTransportError(const NTRIPFailure& failure);
     void _onPlaintextCredentialsWarning();

@@ -18,7 +18,7 @@
 
 class GPSCorrectionSettings;
 
-/// Owns the shared MAVLink sequence domain and UDP correction input for all GPS sources.
+/// Owns the shared MAVLink sequence domain and the UDP correction input and output for all GPS sources.
 class GPSCorrectionManager : public QObject
 {
     Q_OBJECT
@@ -28,6 +28,8 @@ class GPSCorrectionManager : public QObject
     Q_PROPERTY(QAbstractItemModel* sources READ sourceModel CONSTANT)
     Q_PROPERTY(QList<GPSCorrectionStreamDiagnostic> sourceInstances READ sourceInstances NOTIFY sourceInstancesChanged)
     Q_PROPERTY(bool hasSelectedStream READ hasSelectedStream NOTIFY sourceInstancesChanged)
+    Q_PROPERTY(GPSCorrectionStreamDiagnostic selectedStream READ selectedStream NOTIFY sourceInstancesChanged)
+    Q_PROPERTY(quint64 selectedBytesPerSecond READ selectedBytesPerSecond NOTIFY selectedBytesPerSecondChanged)
     Q_PROPERTY(GPSCorrectionEventModel* events READ events CONSTANT)
     Q_PROPERTY(QAbstractItemModel* destinations READ destinationModel CONSTANT)
 
@@ -44,7 +46,6 @@ public:
 
     void init(GPSCorrectionSettings* settings);
     void shutdown();
-    void configureNtripUdpOutput(bool enabled, const QString& address, quint16 port);
 
     RTCMMavlink* rtcmMavlink() { return &_rtcmMavlink; }
 
@@ -79,12 +80,22 @@ public:
     /// Whether a fresh stream is selected for vehicles.
     bool hasSelectedStream() const;
 
+    /// The fresh stream selected for vehicles, or a stream with an Unknown source when none is.
+    GPSCorrectionStreamDiagnostic selectedStream() const;
+
+    /// Received rate of the selected stream's source category.
+    quint64 selectedBytesPerSecond() const { return _selectedBytesPerSecond; }
+
+    Q_INVOKABLE static QString sourceName(int source);
+
 signals:
     void sourceInstancesChanged();
+    void selectedBytesPerSecondChanged();
 
 private:
     void _applyRoutingSettings();
     void _applyUdpInputSettings();
+    void _applyUdpOutputSettings();
 
     void _scheduleSourcesChanged();
     void _refreshDiagnostics();
@@ -98,10 +109,11 @@ private:
     RTCMMavlink _rtcmMavlink;
     RTCMUdpInput _udpInput;
     GPSCorrectionSourceRegistration _udpRegistration;
-    UdpForwarder _ntripUdpOutput{this};
+    UdpForwarder _udpOutput{this};
     QPointer<GPSCorrectionSettings> _settings;
     // Last published instances; notifications fire only when the list changes.
     QList<GPSCorrectionStreamDiagnostic> _sourceInstances;
+    quint64 _selectedBytesPerSecond = 0;
     GPSRevision _udpConfigurationRevision;
     int _ingressDepth = 0;
     bool _finalDiagnosticsPending = false;

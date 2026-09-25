@@ -157,9 +157,6 @@ void NTRIPManager::init()
             _settings->ntripWhitelist(),
             _settings->ntripUseTls(),
             _settings->ntripAllowSelfSignedCerts(),
-            _settings->ntripUdpForwardEnabled(),
-            _settings->ntripUdpTargetAddress(),
-            _settings->ntripUdpTargetPort(),
         };
         for (const auto* fact : facts) {
             if (fact) {
@@ -210,10 +207,6 @@ NTRIPConfiguration NTRIPManager::_configFromSettings() const
     connection.allowSelfSignedCerts =
         read(_settings->ntripAllowSelfSignedCerts(), connection.allowSelfSignedCerts).toBool();
     config.filter.whitelist = read(_settings->ntripWhitelist(), config.filter.whitelist).toString();
-    auto& udpForward = config.udpForward;
-    udpForward.enabled = read(_settings->ntripUdpForwardEnabled(), udpForward.enabled).toBool();
-    udpForward.address = read(_settings->ntripUdpTargetAddress(), udpForward.address).toString();
-    udpForward.port = static_cast<quint16>(read(_settings->ntripUdpTargetPort(), udpForward.port).toUInt());
     return config;
 }
 
@@ -350,10 +343,6 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to,
             if (!_stopStreaming()) {
                 return;
             }
-            _applyUdpForwarderConfig({});
-            if (!state.isCurrent()) {
-                return;
-            }
             _setSecurityWarning({});
             _runningConfig = {};
             break;
@@ -380,7 +369,6 @@ void NTRIPManager::_onEnterState(ConnectionStatus /*from*/, ConnectionStatus to,
                 _scheduleReconnect(retryAfter);
             }
             break;
-
     }
 }
 
@@ -448,11 +436,6 @@ void NTRIPManager::_startTransport()
 
     const NTRIPConfiguration config = _configFromSettings();
     const auto& connection = config.connection;
-
-    _applyUdpForwarderConfig(config.udpForward);
-    if (!state.isCurrent()) {
-        return;
-    }
 
     if (const QString err = connection.streamValidationError(); !err.isEmpty()) {
         qCWarning(NTRIPManagerLog) << "NTRIP config invalid:" << err << "host=" << connection.host
@@ -634,26 +617,11 @@ void NTRIPManager::_onSettingChanged()
         return;
     }
 
-    if (newConfig.udpForward != _runningConfig.udpForward) {
-        qCDebug(NTRIPManagerLog) << "NTRIP UDP forward settings changed, reconfiguring in place";
-        _applyUdpForwarderConfig(newConfig.udpForward);
-    }
-    if (!state.isCurrent()) {
-        return;
-    }
-
     if (newConfig.filter != _runningConfig.filter && _transport) {
         qCDebug(NTRIPManagerLog) << "NTRIP RTCM whitelist changed, applying to live parser";
         _transport->setRtcmWhitelist(newConfig.filter.messageIds());
     }
     if (state.isCurrent()) {
         _runningConfig = newConfig;
-    }
-}
-
-void NTRIPManager::_applyUdpForwarderConfig(const NTRIPUdpForwardConfig& config)
-{
-    if (_correctionManager) {
-        _correctionManager->configureNtripUdpOutput(config.enabled, config.address, config.port);
     }
 }

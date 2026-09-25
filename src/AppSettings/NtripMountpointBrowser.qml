@@ -10,7 +10,7 @@ SettingsGroupLayout {
     id: root
 
     Layout.fillWidth:   true
-    heading:            qsTr("Mountpoint")
+    heading:            qsTr("NTRIP Mountpoint")
     visible:            _ntrip.ntripMountpoint.userVisible
 
     QGCPalette { id: qgcPal }

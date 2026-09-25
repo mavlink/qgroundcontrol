@@ -157,19 +157,16 @@ bool GPSCorrectionRouter::acceptIngress(const GPSCorrectionIngress& ingress)
     return acceptFrame(frame);
 }
 
-GPSCorrectionRouter::Output GPSCorrectionRouter::admissionOnlyOutput(const QString& id, GPSCorrectionSource scope,
-                                                                     Sink sink)
+GPSCorrectionRouter::Output GPSCorrectionRouter::admissionOnlyOutput(const QString& id, Sink sink)
 {
     if (!sink) {
         return {};
     }
-    return {scope, [id, sink = std::move(sink)](const GPSCorrectionFrame& frame) {
-                const quint64 queued = sink(frame);
-                return QList<Admission>{
-                    {id,
-                     {queued, 0, queued ? GPSCorrectionReason::None : GPSCorrectionReason::DestinationUnavailable},
-                     true}};
-            }};
+    return {[id, sink = std::move(sink)](const GPSCorrectionFrame& frame) {
+        const quint64 queued = sink(frame);
+        return QList<Admission>{
+            {id, {queued, 0, queued ? GPSCorrectionReason::None : GPSCorrectionReason::DestinationUnavailable}, true}};
+    }};
 }
 
 void GPSCorrectionRouter::setOutput(const QString& id, Output output)
@@ -227,13 +224,12 @@ bool GPSCorrectionRouter::acceptFrame(GPSCorrectionFrame frame)
                            frame.data.size());
         return false;
     }
-    const bool selected = _selector.selected(frame, now);
-    if (!selected) {
+    if (!_selector.selected(frame, now)) {
         _ledger.recordDrop(frame, GPSCorrectionReason::NotSelected, frame.data.size());
-    } else {
-        _ledger.selected(frame);
+        return false;
     }
-    return _submit(frame, selected);
+    _ledger.selected(frame);
+    return _submit(frame);
 }
 
 bool GPSCorrectionRouter::_sameDestinations(const QSet<QString>* current, const QList<Admission>& admissions)
@@ -259,7 +255,7 @@ bool GPSCorrectionRouter::_sameDestinations(const QSet<QString>* current, const 
     return distinct == current->size();
 }
 
-bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected)
+bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame)
 {
     const QPointer<GPSCorrectionRouter> guard(this);
     const auto configuration = _revision.current(this);
@@ -275,9 +271,6 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
     bool attempted = false;
     GPSCorrectionReason submissionFailure = GPSCorrectionReason::DestinationUnavailable;
     for (auto it = sinks.cbegin(); it != sinks.cend(); ++it) {
-        if (it->scope == GPSCorrectionSource::Unknown ? !selected : it->scope != frame.source) {
-            continue;
-        }
         attempted = true;
         const QList<Admission> admissions = it->admit(frame);
         if (!guard) {
@@ -325,10 +318,10 @@ bool GPSCorrectionRouter::_submit(const GPSCorrectionFrame& frame, bool selected
     _ledger.pruneDestinationHistory();
     _submitting = false;
     finishSubmitting.dismiss();
-    if (selected && !_shutdown && configuration.isCurrent()) {
+    if (!_shutdown && configuration.isCurrent()) {
         emit frameRouted(frame);
     }
-    return selected;
+    return true;
 }
 
 void GPSCorrectionRouter::shutdown()

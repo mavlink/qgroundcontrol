@@ -110,6 +110,9 @@
         },
         {
             "component": "GcsPositionStatus",
+            "properties": {
+                "sourceEditable": false
+            },
             "sectionName": "GCS Position",
             "keywords": [
                 "latitude",

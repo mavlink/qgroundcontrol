@@ -49,13 +49,13 @@ public:
     using Statistics = GPSCorrectionLedger::Statistics;
     using Destination = GPSCorrectionLedger::Destination;
     using Source = GPSCorrectionSelector::Source;
+
     struct Output
     {
-        GPSCorrectionSource scope = GPSCorrectionSource::Unknown;
         FanoutSink admit;
     };
 
-    static Output admissionOnlyOutput(const QString& id, GPSCorrectionSource scope, Sink sink);
+    static Output admissionOnlyOutput(const QString& id, Sink sink);
 
     explicit GPSCorrectionRouter(QObject* parent = nullptr, Clock clock = {});
     ~GPSCorrectionRouter() override;
@@ -66,8 +66,7 @@ public:
 
     GPSCorrectionSourceRegistration registerSource(GPSCorrectionSource source, const QString& instance = {});
     bool isCurrentSource(GPSCorrectionSource source, quint64 session, const QString& instance) const;
-    /// Returns global selection, not output admission.
-    /// Scoped outputs may admit ingress even when false.
+    /// Returns whether the frame was selected and offered to the outputs, not whether they admitted it.
     bool acceptIngress(const GPSCorrectionIngress& ingress);
 
     Policy policy() const { return configuration().policy; }
@@ -76,8 +75,7 @@ public:
 
     GPSCorrectionSource activeSource() const { return _selector.activeSource(_clock()); }
 
-    /// Configures output admission atomically. Scoped outputs bypass global selection, but retain filtering and
-    /// freshness checks.
+    /// Configures output admission atomically. Every output receives the selected stream.
     void setOutput(const QString& id, Output output);
     void removeSink(const QString& id);
     void shutdown();
@@ -114,7 +112,7 @@ private:
 
     static int _sourceIndex(GPSCorrectionSource source);
     static bool _sameDestinations(const QSet<QString>* current, const QList<Admission>& admissions);
-    bool _submit(const GPSCorrectionFrame& frame, bool selected);
+    bool _submit(const GPSCorrectionFrame& frame);
 
     Clock _clock;
     GPSCorrectionSelector _selector;

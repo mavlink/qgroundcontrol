@@ -1,7 +1,7 @@
 # General Settings (Settings View)
 
 The general settings (**SettingsView > General Settings**) are the main place for application-level configuration.
-Settable values include: display units, autoconnection devices, video display and storage, RTK GPS, brand image, and other miscellaneous settings.
+Settable values include: display units, autoconnection devices, video display and storage, brand image, and other miscellaneous settings.
 
 ::: info
 Values are settable even if no vehicle is connected. Settings that require a vehicle restart are indicated in the UI.
@@ -99,7 +99,8 @@ Settings include:
 - **PX4 Flow:** Autoconnect to PX4Flow device
 - **LibrePilot:** Autoconnect to Libre Pilot autopilot
 - **UDP:** Autoconnect to UDP
-- **RTK GPS:** Autoconnect to RTK GPS device
+
+RTK base receivers are auto-connected from the [GNSS Receiver](gnss_receiver.md#gnss-receiver) settings.
 
 ### Ground Station Location {#nmea_gps}
 
@@ -108,7 +109,7 @@ It may also use the GPS as a location source for _Follow Me Mode_ - currently su
 
 You can also connect an external GNSS receiver that outputs ASCII NMEA (this is normally the case)
 over a serial port, a TCP server, or a UDP port. Configure it in the
-[GNSS Receiver](ntrip_rtk.md#gnss-receiver) settings with the _Position only_ role, or with the
+[GNSS Receiver](gnss_receiver.md#gnss-receiver) settings with the _Position only_ role, or with the
 _Passive RTCM/NMEA_ role when the receiver also sends RTCM corrections that should be forwarded to
 vehicles. Enable **Connect on startup** to connect it whenever QGC starts.
 
@@ -116,14 +117,14 @@ vehicles. Enable **Connect on startup** to connect it whenever QGC starts.
 A higher quality external GPS system may be useful even if the ground station has internal GPS support.
 :::
 
-The [GCS Position](comm_links.md#gcs-position) setting chooses between the GNSS receiver and internal
+The [GCS Position](gnss_receiver.md#gcs-position) setting chooses between the GNSS receiver and internal
 positioning, or picks the best available source automatically.
 
 Connection status is separate from position quality. An occupied UDP port, inaccessible serial
 device, or port reserved by another connection is reported even before a GPS fix is available.
 
 ::: tip
-To troubleshoot serial GPS problems: Disable RTK GPS [auto connection](#auto_connect), close _QGroundControl_, reconnect your GPS, and open QGC.
+To troubleshoot serial GPS problems: disable the GNSS receiver's auto-connect, close _QGroundControl_, reconnect your GPS, and open QGC.
 :::
 
 Horizontal accuracy is an estimated distance in meters; it is not HDOP, which is dimensionless.
@@ -132,43 +133,6 @@ it using MSL altitude and geoid separation. If the datum or conversion is unavai
 not send MSL altitude as ellipsoid altitude. FAA configurations requiring operator altitude report
 the live position as unavailable; configurations permitting horizontal-only reporting send an
 unknown altitude.
-
-## RTK GPS {#rtk_gps}
-
-This section allows you to specify the RTK GPS "Survey-in" settings, to save and reuse the result of a Survey-In operation, or to directly enter any other known position for the base station.
-
-::: info
-The _Survey-In_ process is a startup procedure required by RTK GPS systems to get an accurate estimate of the base station position.
-The process takes measurements over time, leading to increasing position accuracy.
-Survey controls depend on the receiver. U-blox supports an accuracy target and a minimum elapsed
-observation duration. Quectel duration counts accepted observations and its accuracy setting filters
-observations. Unicore uses receiver-managed averaging with a maximum duration, not a minimum
-duration or an accuracy guarantee. Receivers without implemented duration control do not expose it.
-For more information see [RTK GPS](https://docs.px4.io/en/advanced_features/rtk-gps.html) (PX4 docs) and [GPS- How it works](http://ardupilot.org/copter/docs/common-gps-how-it-works.html#rtk-corrections) (ArduPilot docs).
-:::
-
-::: tip
-In order to save and reuse a base position (because Survey-In is time consuming!) perform Survey-In once, select _Use Specified Base Position_ and press **Save Current Base Position** to copy in the values for the last survey.
-The values will then persist across QGC reboots until they are changed.
-:::
-
-The settings are:
-
-- Perform Survey-In
-  - **Survey-in accuracy (U-blox only):** The minimum position accuracy for the RTK Survey-In process to complete.
-  - **Observation duration:** Receiver-specific elapsed time, accepted-observation time, or maximum averaging time.
-- Use Specified Base Position
-  - **Base Position Latitude:** Latitude of fixed RTK base station.
-  - **Base Position Longitude:** Longitude of fixed RTK base station.
-  - **Base Position Alt (WGS84):** Altitude of fixed RTK base station.
-  - **Base Position Accuracy:** Accuracy of base station position information.
-  - **Save Current Base Position** (button): Press to copy settings from the last Survey-In operation to the _Use Specified Base Position_ fields above.
-
-Fixed-base altitude is ellipsoid height, not height above mean sea level. Use WGS84 coordinates
-and retain sufficient decimal precision for the required RTK accuracy.
-Receiver settings that require persistent writes or a restart need explicit consent; connecting
-does not imply permission to change persistent configuration.
-Corrected positions whose datum cannot be established are rejected rather than assumed to be WGS84.
 
 ## ADSB Server {#adsb_server}
 

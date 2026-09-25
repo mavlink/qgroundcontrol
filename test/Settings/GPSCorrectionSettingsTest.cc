@@ -4,6 +4,7 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
+#include <QtCore/QHash>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
@@ -97,8 +98,9 @@ void GPSCorrectionSettingsTest::_metadataPartition()
         return result;
     };
     const QStringList corrections = names(QStringLiteral(":/json/GPSCorrection.SettingsGroup.json"));
-    QCOMPARE(corrections, QStringList({"correctionSource", "correctionSourceInstance", "rtcmUdpInputEnabled",
-                                       "rtcmUdpInputPort", "rtcmUdpValidate"}));
+    QCOMPARE(corrections,
+             QStringList({"correctionSource", "correctionSourceInstance", "rtcmUdpInputEnabled", "rtcmUdpInputPort",
+                          "rtcmUdpOutputAddress", "rtcmUdpOutputEnabled", "rtcmUdpOutputPort", "rtcmUdpValidate"}));
     const QStringList ntrip = names(QStringLiteral(":/json/NTRIP.SettingsGroup.json"));
     QVERIFY(!ntrip.isEmpty());
     NTRIPSettings ntripSettings;
@@ -106,8 +108,45 @@ void GPSCorrectionSettingsTest::_metadataPartition()
         QVERIFY(!ntrip.contains(name));
         QCOMPARE(ntripSettings.metaObject()->indexOfProperty(name.toUtf8().constData()), -1);
     }
-    QVERIFY(ntrip.contains(QStringLiteral("ntripUdpForwardEnabled")));
+    QVERIFY(!ntrip.contains(QStringLiteral("ntripUdpForwardEnabled")));
     QVERIFY(ntrip.contains(QStringLiteral("ntripGgaPositionSource")));
+}
+
+void GPSCorrectionSettingsTest::_udpOutputKeysMigrate()
+{
+    const QStringList keys = {QStringLiteral("ntripUdpForwardEnabled"), QStringLiteral("ntripUdpTargetAddress"),
+                              QStringLiteral("ntripUdpTargetPort"),     QStringLiteral("rtcmUdpOutputEnabled"),
+                              QStringLiteral("rtcmUdpOutputAddress"),   QStringLiteral("rtcmUdpOutputPort")};
+    QSettings storage;
+    storage.beginGroup(QStringLiteral("NTRIP"));
+    QHash<QString, QVariant> original;
+    for (const auto& key : keys) {
+        if (storage.contains(key)) {
+            original.insert(key, storage.value(key));
+        }
+        storage.remove(key);
+    }
+    const auto restore = qScopeGuard([&]() {
+        for (const auto& key : keys) {
+            if (original.contains(key)) {
+                storage.setValue(key, original.value(key));
+            } else {
+                storage.remove(key);
+            }
+        }
+    });
+    storage.setValue(QStringLiteral("ntripUdpForwardEnabled"), true);
+    storage.setValue(QStringLiteral("ntripUdpTargetAddress"), QStringLiteral("192.0.2.10"));
+    storage.setValue(QStringLiteral("ntripUdpTargetPort"), 9000);
+    // A value already saved under the new key wins over the legacy one.
+    storage.setValue(QStringLiteral("rtcmUdpOutputPort"), 9001);
+    const GPSCorrectionSettings corrections;
+    QCOMPARE(storage.value(QStringLiteral("rtcmUdpOutputEnabled")).toBool(), true);
+    QCOMPARE(storage.value(QStringLiteral("rtcmUdpOutputAddress")).toString(), QStringLiteral("192.0.2.10"));
+    QCOMPARE(storage.value(QStringLiteral("rtcmUdpOutputPort")).toInt(), 9001);
+    for (const auto& legacy : keys.first(3)) {
+        QVERIFY(!storage.contains(legacy));
+    }
 }
 
 void GPSCorrectionSettingsTest::_qmlRegistration()

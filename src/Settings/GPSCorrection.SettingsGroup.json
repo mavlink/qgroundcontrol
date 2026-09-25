@@ -5,7 +5,7 @@
         {
             "name": "correctionSource",
             "shortDesc": "Vehicle correction source",
-            "longDesc": "Automatic selects one fresh stream for vehicles, preferring the local base station, then NTRIP, then UDP. Manual selection never falls back to another source category. NTRIP UDP forwarding is independent.",
+            "longDesc": "Automatic selects one fresh stream for vehicles, preferring the local base station, then NTRIP, then UDP. Manual selection never falls back to another source category. UDP forwarding sends the same stream.",
             "type": "uint8",
             "enumStrings": "Automatic,Local base station,NTRIP,UDP",
             "enumValues": "0,1,2,3",
@@ -46,6 +46,30 @@
             "type": "bool",
             "default": true,
             "label": "UDP RTCM enable validation"
+        },
+        {
+            "name": "rtcmUdpOutputEnabled",
+            "shortDesc": "Forward the correction stream selected for vehicles to another application over UDP.",
+            "type": "bool",
+            "default": false,
+            "label": "Forward corrections over UDP",
+            "keywords": "udp forward,relay,corrections forward"
+        },
+        {
+            "name": "rtcmUdpOutputAddress",
+            "shortDesc": "IP address that receives the forwarded corrections.",
+            "type": "string",
+            "default": "",
+            "label": "UDP output address",
+            "keywords": "udp forward,relay"
+        },
+        {
+            "name": "rtcmUdpOutputPort",
+            "shortDesc": "Port that receives the forwarded corrections.",
+            "type": "uint16",
+            "default": 0,
+            "label": "UDP output port",
+            "keywords": "udp forward,relay"
         }
     ]
 }

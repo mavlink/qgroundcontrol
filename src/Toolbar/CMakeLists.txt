@@ -17,7 +17,6 @@ qt_add_qml_module(
               GimbalIndicator.qml
               GPSIndicator.qml
               GPSIndicatorPage.qml
-              GPSResilienceIndicator.qml
               JoystickIndicator.qml
               MainStatusIndicator.qml
               MainStatusIndicatorOfflinePage.qml
@@ -28,11 +27,9 @@ qt_add_qml_module(
               RCRSSIIndicator.qml
               RemoteIDIndicator.qml
               RemoteIDIndicatorPage.qml
-              RTKGPSIndicator.qml
               SelectViewDropdown.qml
               SignalStrength.qml
               TelemetryRSSIIndicator.qml
-              VehicleGPSIndicator.qml
               VehicleMessageList.qml
     NO_PLUGIN
 )

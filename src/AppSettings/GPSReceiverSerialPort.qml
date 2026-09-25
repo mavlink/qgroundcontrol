@@ -5,7 +5,9 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.FactControls
 
+/// Serial device and baud rate of the GNSS receiver.
 ColumnLayout {
     id: root
 
@@ -18,9 +20,6 @@ ColumnLayout {
     /// Offers rate 0 as "Auto" for consumers that can detect the baud rate.
     property bool allowAutoBaud: false
     property bool editable: true
-    property string deviceObjectName: "serialDevice"
-    property string baudObjectName: "serialBaudRate"
-    property string customBaudObjectName: "customSerialBaudRate"
 
     readonly property string _device: String(deviceFact.rawValue)
     readonly property var _devices: {
@@ -45,7 +44,7 @@ ColumnLayout {
         text: qsTr("Serial device")
     }
     QGCComboBox {
-        objectName: root.deviceObjectName
+        objectName: "rtkSerialDevice"
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         enabled: root.editable && root.serialPorts.length > 0
@@ -64,7 +63,7 @@ ColumnLayout {
         text: qsTr("Baud rate")
     }
     QGCComboBox {
-        objectName: root.baudObjectName
+        objectName: "rtkSerialBaudRate"
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         enabled: root.editable
@@ -84,7 +83,7 @@ ColumnLayout {
         text: qsTr("Custom baud rate")
     }
     FactTextField {
-        objectName: root.customBaudObjectName
+        objectName: "rtkCustomBaudRate"
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         visible: root.customBaud

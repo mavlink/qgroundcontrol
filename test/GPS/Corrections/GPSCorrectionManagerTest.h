@@ -10,9 +10,10 @@ private slots:
     void _sourcesShareForwarder();
     void _mavlinkDestinationAdmissions();
     void _outputsEnabledAfterLinkHistoryChurn();
-    void _ntripUdpOutputIsSourceSpecific();
-    void _ntripUdpOutputEndpointChanges_data();
-    void _ntripUdpOutputEndpointChanges();
+    void _udpOutputForwardsSelectedStream();
+    void _udpOutputSkipsOwnInput();
+    void _udpOutputEndpointChanges_data();
+    void _udpOutputEndpointChanges();
     void _sourceTopologyDoesNotNotifyOnCounters();
     void _diagnosticsNotifyOnlyOnChange();
     void _receivedByteRates();
@@ -28,4 +29,5 @@ private slots:
     void _shutdownDuringAdmission_data();
     void _shutdownDuringAdmission();
     void _qmlForwarderAvailableBeforeInit();
+    void _correctionsStatusShowsSelectedStream();
 };

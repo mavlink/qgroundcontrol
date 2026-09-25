@@ -10,22 +10,9 @@ By default, QGC auto-detects and connects to common devices:
 - **SiK Radio** — auto-connect SiK telemetry radios
 - **LibrePilot** — auto-connect LibrePilot controllers
 - **UDP** — auto-connect via UDP broadcast
-- **RTK GPS** — auto-connect RTK GPS base stations
 
-## GCS Position
-
-Choose where the ground station position (used for the map, Follow Me, NTRIP GGA, and Remote ID)
-comes from:
-
-- **Automatic** — the connected [GNSS receiver](ntrip_rtk.md#gnss-receiver), then this device's
-  positioning. QGC switches to this device when the receiver loses its fix, and switches back after
-  the receiver has been healthy for five seconds.
-- **GNSS receiver** or **This device** — use only that source.
-
-The section also shows the source in use, its status, and the current position.
-
-External NMEA GPS devices are configured as a [GNSS receiver](ntrip_rtk.md#gnss-receiver) with the
-_Position only_ role.
+RTK base receivers are auto-connected from the [GNSS Receiver](gnss_receiver.md#gnss-receiver)
+settings, which also choose the [GCS position](gnss_receiver.md#gcs-position) source.
 
 ## Link Management
 

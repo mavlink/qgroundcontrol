@@ -26,10 +26,9 @@ GPSCorrectionIngress ingress(const GPSCorrectionSourceRegistration& source, qint
                                 GPSCorrectionReason::None, instance);
 }
 
-void setAdmissionOutput(GPSCorrectionRouter& router, const QString& id, GPSCorrectionRouter::Sink submit,
-                        GPSCorrectionSource scope = GPSCorrectionSource::Unknown)
+void setAdmissionOutput(GPSCorrectionRouter& router, const QString& id, GPSCorrectionRouter::Sink submit)
 {
-    router.setOutput(id, GPSCorrectionRouter::admissionOnlyOutput(id, scope, std::move(submit)));
+    router.setOutput(id, GPSCorrectionRouter::admissionOnlyOutput(id, std::move(submit)));
 }
 
 QString selectedInstance(const GPSCorrectionRouter& router)
@@ -82,9 +81,6 @@ private slots:
     void diagnosticStagesStayDistinct();
     void boundedDiagnosticsAndEventHistory();
     void rejectedCandidateHasNoValidatedCredit();
-    void sourceSpecificSinkPreservesNtripForwarding();
-    void scopedAdmissionAccounting_data();
-    void scopedAdmissionAccounting();
     void eventHistoryUsesIncrementalRows();
     void eventHistoryAllowsReentrantUpdates();
     void decodedIngressPreservesEvidence_data();
@@ -829,8 +825,7 @@ void GPSCorrectionRouterTest::emptyOutputRemovesRegistration()
     const auto update = ingress(source, now);
     QVERIFY(router.acceptIngress(update));
     QCOMPARE(router.destinations().first().queuedBytes, quint64(update.frame().data.size()));
-    router.setOutput(id, emptySink ? GPSCorrectionRouter::admissionOnlyOutput(id, GPSCorrectionSource::Unknown, {})
-                                   : GPSCorrectionRouter::Output{});
+    router.setOutput(id, emptySink ? GPSCorrectionRouter::admissionOnlyOutput(id, {}) : GPSCorrectionRouter::Output{});
     QVERIFY(router.acceptIngress(update));
     QCOMPARE(submissions, 1);
 }
@@ -1004,108 +999,6 @@ void GPSCorrectionRouterTest::rejectedCandidateHasNoValidatedCredit()
     QCOMPARE(stats.droppedBytes, quint64(rejected.frame().data.size()));
     QCOMPARE(router.events().last().reason, GPSCorrectionReason::InvalidFrame);
     QVERIFY(router.sources().isEmpty());
-}
-
-void GPSCorrectionRouterTest::sourceSpecificSinkPreservesNtripForwarding()
-{
-    qint64 now = 100000;
-    GPSCorrectionRouter router(nullptr, [&]() { return now; });
-    auto ntrip = router.registerSource(GPSCorrectionSource::Ntrip);
-    auto local = router.registerSource(GPSCorrectionSource::LocalReceiver);
-    QList<GPSCorrectionFrame> selected;
-    QList<GPSCorrectionFrame> forwarded;
-    setAdmissionOutput(router, QStringLiteral("selected"), [&](const GPSCorrectionFrame& value) {
-        selected.append(value);
-        return value.data.size();
-    });
-    setAdmissionOutput(
-        router, QStringLiteral("ntripUdp"),
-        [&](const GPSCorrectionFrame& value) {
-            forwarded.append(value);
-            return value.data.size();
-        },
-        GPSCorrectionSource::Ntrip);
-    QVERIFY(router.acceptIngress(ingress(local, now)));
-    QVERIFY(!router.acceptIngress(ingress(ntrip, now)));
-    QCOMPARE(selected.size(), 1);
-    QCOMPARE(forwarded.size(), 1);
-    QCOMPARE(forwarded.first().source, GPSCorrectionSource::Ntrip);
-    QVERIFY(
-        !router.acceptIngress(ntrip.token().event(GpsTestHelpers::buildRtcmFrame(1005, 20), now, 1005, true, true)));
-    const auto expired = ingress(ntrip, now);
-    now += GPSCorrectionRouter::FRESHNESS_TIMEOUT_MS;
-    QVERIFY(!router.acceptIngress(expired));
-    QCOMPARE(forwarded.size(), 1);
-    router.removeSink(QStringLiteral("ntripUdp"));
-    router.acceptIngress(ingress(ntrip, now));
-    QCOMPARE(forwarded.size(), 1);
-}
-
-void GPSCorrectionRouterTest::scopedAdmissionAccounting_data()
-{
-    QTest::addColumn<bool>("globallySelected");
-    QTest::addColumn<bool>("scopedAdmitted");
-    QTest::addColumn<quint64>("sourceDropEvents");
-    QTest::newRow("unselected-scoped-admitted") << false << true << quint64(1);
-    QTest::newRow("unselected-scoped-rejected") << false << false << quint64(2);
-    QTest::newRow("selected-scoped-admitted") << true << true << quint64(0);
-    QTest::newRow("selected-all-rejected") << true << false << quint64(1);
-}
-
-void GPSCorrectionRouterTest::scopedAdmissionAccounting()
-{
-    QFETCH(bool, globallySelected);
-    QFETCH(bool, scopedAdmitted);
-    QFETCH(quint64, sourceDropEvents);
-    constexpr qint64 now = 100000;
-    GPSCorrectionRouter router(nullptr, [] { return now; });
-    auto source = router.registerSource(GPSCorrectionSource::Ntrip);
-    router.applyConfiguration({GPSCorrectionRouter::Policy::Manual,
-                               globallySelected ? GPSCorrectionSource::Ntrip : GPSCorrectionSource::LocalReceiver,
-                               {}});
-    setAdmissionOutput(router, QStringLiteral("global"), [](const GPSCorrectionFrame&) { return quint64(0); });
-    setAdmissionOutput(
-        router, QStringLiteral("ntripUdp"),
-        [scopedAdmitted](const GPSCorrectionFrame& frame) { return scopedAdmitted ? quint64(frame.data.size()) : 0; },
-        GPSCorrectionSource::Ntrip);
-    const auto update = ingress(source, now);
-    const quint64 size = update.frame().data.size();
-    QCOMPARE(router.acceptIngress(update), globallySelected);
-    const auto& stats = router.statistics()[2];
-    QCOMPARE(stats.receivedFrames, 1ULL);
-    QCOMPARE(stats.receivedBytes, size);
-    QCOMPARE(stats.selectedFrames, quint64(globallySelected));
-    QCOMPARE(stats.queuedFrames, quint64(scopedAdmitted));
-    QCOMPARE(stats.queuedBytes, scopedAdmitted ? size : 0);
-    QCOMPARE(stats.droppedFrames, sourceDropEvents);
-    QCOMPARE(stats.droppedBytes, size * sourceDropEvents);
-    const auto destinations = router.destinations();
-    const auto scoped = std::find_if(destinations.cbegin(), destinations.cend(), [](const auto& destination) {
-        return destination.id == QStringLiteral("ntripUdp");
-    });
-    QVERIFY(scoped != destinations.cend());
-    QCOMPARE(scoped->queuedFrames, quint64(scopedAdmitted));
-    QCOMPARE(scoped->queuedBytes, scopedAdmitted ? size : 0);
-    QCOMPARE(scoped->droppedFrames, quint64(!scopedAdmitted));
-    QCOMPARE(scoped->droppedBytes, scopedAdmitted ? 0 : size);
-    int selectionRejections = 0;
-    int scopedRejections = 0;
-    for (const auto& event : router.events()) {
-        if (event.stage != GPSCorrectionStage::Dropped) {
-            continue;
-        }
-        if (event.reason == GPSCorrectionReason::NotSelected) {
-            ++selectionRejections;
-            QVERIFY(event.destinationId.isEmpty());
-            QCOMPARE(event.bytes, size);
-        } else if (event.destinationId == QStringLiteral("ntripUdp")) {
-            ++scopedRejections;
-            QCOMPARE(event.reason, GPSCorrectionReason::DestinationUnavailable);
-            QCOMPARE(event.bytes, size);
-        }
-    }
-    QCOMPARE(selectionRejections, int(!globallySelected));
-    QCOMPARE(scopedRejections, int(!scopedAdmitted));
 }
 
 void GPSCorrectionRouterTest::eventHistoryUsesIncrementalRows()

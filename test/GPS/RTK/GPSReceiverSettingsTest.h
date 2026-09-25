@@ -26,6 +26,9 @@ private slots:
     void _serialSelectionTracksFacts();
     void _resilienceUnknownStates_data();
     void _resilienceUnknownStates();
+    void _indicatorShowsReceiverWithoutVehicleGps_data();
+    void _indicatorShowsReceiverWithoutVehicleGps();
+    void _resiliencePageGroups();
     void _horizontalAccuracyLabel();
     void _vehicleAccuracyFacts();
 };

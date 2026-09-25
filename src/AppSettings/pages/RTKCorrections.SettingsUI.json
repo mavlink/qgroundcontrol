@@ -3,37 +3,24 @@
     "fileType": "SettingsUI",
     "groups": [
         {
+            "component": "CorrectionsStatus",
+            "sectionName": "Corrections Status",
+            "keywords": ["corrections", "rtk", "status", "selected stream", "data rate", "ntrip"]
+        },
+        {
             "component": "NtripConnectionSettings",
-            "sectionName": "Connection",
-            "keywords": [
-                "ntrip",
-                "rtk",
-                "connection status",
-                "corrections"
-            ]
+            "sectionName": "NTRIP Connection",
+            "keywords": ["ntrip", "rtk", "connection status", "corrections"]
         },
         {
             "component": "NtripServerSettings",
-            "sectionName": "Server Settings",
-            "keywords": [
-                "ntrip server",
-                "rtk",
-                "caster",
-                "host",
-                "port",
-                "username",
-                "password",
-                "mountpoint"
-            ]
+            "sectionName": "NTRIP Server",
+            "keywords": ["ntrip server", "rtk", "caster", "host", "port", "username", "password", "tls"]
         },
         {
             "component": "NtripMountpointBrowser",
-            "sectionName": "Mountpoint Browser",
-            "keywords": [
-                "mountpoint",
-                "browse",
-                "stream"
-            ]
+            "sectionName": "NTRIP Mountpoint",
+            "keywords": ["mountpoint", "browse", "stream", "source table"]
         },
         {
             "heading": "GGA Position Reporting",
@@ -48,7 +35,7 @@
             ]
         },
         {
-            "heading": "Options",
+            "heading": "NTRIP Message Filter",
             "keywords": ["rtcm", "whitelist", "message filter", "ntrip"],
             "controls": [
                 {
@@ -58,26 +45,9 @@
             ]
         },
         {
-            "heading": "NTRIP UDP Forwarding",
-            "keywords": ["udp forward", "relay", "corrections forward", "rtcm"],
-            "controls": [
-                {
-                    "setting": "ntripSettings.ntripUdpForwardEnabled"
-                },
-                {
-                    "setting": "ntripSettings.ntripUdpTargetAddress",
-                    "enableWhen": "QGroundControl.settingsManager.ntripSettings.ntripUdpForwardEnabled.rawValue"
-                },
-                {
-                    "setting": "ntripSettings.ntripUdpTargetPort",
-                    "enableWhen": "QGroundControl.settingsManager.ntripSettings.ntripUdpForwardEnabled.rawValue"
-                }
-            ]
-        },
-        {
             "heading": "UDP RTCM Input",
             "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
-            "keywords": ["udp rtcm"],
+            "keywords": ["udp rtcm", "udp input", "corrections"],
             "controls": [
                 {
                     "setting": "gpsCorrectionSettings.rtcmUdpInputEnabled"
@@ -93,20 +63,28 @@
             ]
         },
         {
-            "component": "GPSReceiverStatus",
-            "sectionName": "GNSS Receiver Status",
-            "keywords": ["rtk", "gnss", "gps", "base station", "receiver", "status", "fix", "satellites", "jamming", "spoofing"]
-        },
-        {
-            "component": "GPSReceiverSettings",
-            "sectionName": "GNSS Receiver",
-            "keywords": ["rtk", "gnss", "gps", "nmea", "external gps", "base station", "receiver", "role", "passive", "position only", "survey-in", "fixed position", "u-blox", "septentrio", "serial", "tcp", "udp", "startup"]
-        },
-        {
             "component": "CorrectionRoutingSettings",
             "sectionName": "Correction Routing",
             "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible && (QGroundControl.settingsManager.gpsCorrectionSettings.correctionSource as SettingsFact).userVisible",
             "keywords": ["corrections", "rtcm", "source", "stream", "routing", "automatic"]
+        },
+        {
+            "heading": "UDP Forwarding",
+            "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
+            "keywords": ["udp forward", "udp output", "relay", "corrections forward", "rtcm"],
+            "controls": [
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpOutputEnabled"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpOutputAddress",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpOutputEnabled.rawValue"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.rtcmUdpOutputPort",
+                    "enableWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpOutputEnabled.rawValue"
+                }
+            ]
         },
         {
             "component": "CorrectionDiagnostics",

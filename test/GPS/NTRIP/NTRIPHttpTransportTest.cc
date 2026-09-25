@@ -152,28 +152,18 @@ void NTRIPHttpTransportTest::testConfigurationDomainsCompareIndependently()
     baseline.connection.mountpoint = QStringLiteral("MOUNT1");
     baseline.connection.useTls = true;
     baseline.filter.whitelist = QStringLiteral("1005,1077");
-    baseline.udpForward = {.enabled = true, .address = QStringLiteral("127.0.0.1"), .port = 3000};
 
     auto changed = baseline;
     QCOMPARE(changed, baseline);
     changed.connection.host = QStringLiteral("other.example.com");
     QVERIFY(changed != baseline);
     QVERIFY(changed.connection != baseline.connection);
-    QCOMPARE(changed.udpForward, baseline.udpForward);
-    QCOMPARE(changed.filter, baseline.filter);
-
-    changed = baseline;
-    changed.udpForward.port = 3001;
-    QVERIFY(changed != baseline);
-    QCOMPARE(changed.connection, baseline.connection);
-    QVERIFY(changed.udpForward != baseline.udpForward);
     QCOMPARE(changed.filter, baseline.filter);
 
     changed = baseline;
     changed.filter.whitelist = QStringLiteral("1005");
     QVERIFY(changed != baseline);
     QCOMPARE(changed.connection, baseline.connection);
-    QCOMPARE(changed.udpForward, baseline.udpForward);
     QVERIFY(changed.filter != baseline.filter);
 }
 
