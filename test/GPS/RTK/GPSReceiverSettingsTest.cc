@@ -2,20 +2,11 @@
 
 #include <memory>
 
-#include <QtCore/QDir>
-#include <QtCore/QFileInfo>
-#include <QtCore/QScopeGuard>
-#include <QtCore/QThread>
-#include <QtPositioning/QGeoCoordinate>
-#include <QtQml/QQmlComponent>
-#include <QtQml/QQmlEngine>
 #include <QtQml/QQmlExpression>
 #include <QtQml/QQmlPropertyMap>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 
-#include "AutoConnectSettings.h"
-#include "ColoredSvgImageProvider.h"
 #include "Fact.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSManager.h"
@@ -23,7 +14,8 @@
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverDescriptor.h"
 #include "GPSRtk.h"
-#include "GPSTransport.h"
+#include "GpsMavlinkTestHelpers.h"
+#include "GpsQmlTestHelpers.h"
 #include "MAVLinkLib.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
@@ -131,7 +123,7 @@ struct SettingsFixture
 {
     TestFixtures::SettingsFixture saved;
     RTKSettings* settings = SettingsManager::instance()->rtkSettings();
-    Fact* autoConnect = SettingsManager::instance()->autoConnectSettings()->autoConnectRTKGPS();
+    Fact* autoConnect = settings->autoConnect();
 
     explicit SettingsFixture(int manufacturer)
     {
@@ -156,20 +148,6 @@ struct SettingsFixture
     }
 };
 
-QUrl sourceUrl(const QString& filename)
-{
-    return QUrl::fromLocalFile(
-        QFileInfo(QString::fromUtf8(__FILE__)).dir().filePath(QStringLiteral("../../../src/Toolbar/") + filename));
-}
-
-void configureEngine(QQmlEngine& engine)
-{
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    if (!engine.imageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId))) {
-        engine.addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
-    }
-}
-
 void setSurvey(GPSRTKFactGroup& facts)
 {
     facts.currentLatitude()->setRawValue(47.123456789);
@@ -180,24 +158,19 @@ void setSurvey(GPSRTKFactGroup& facts)
     facts.connected()->setRawValue(true);
 }
 
-std::unique_ptr<QObject> createPanel(QQmlEngine& engine, ReceiverSettingsController& receiver,
+std::unique_ptr<QObject> createPanel(GpsTestHelpers::QmlEngine& engine, ReceiverSettingsController& receiver,
                                      SettingsFixture& settings, GPSRTKFactGroup& facts, QString& error)
 {
-    configureEngine(engine);
-    QQmlComponent component(&engine, sourceUrl(QStringLiteral("../AppSettings/GPSReceiverSettings.qml")));
-    if (!QTest::qWaitFor([&]() { return !component.isLoading(); }, TestTimeout::mediumMs())) {
-        error = QStringLiteral("Receiver settings component did not finish loading");
-        return {};
-    }
-    std::unique_ptr<QObject> result(component.createWithInitialProperties(
+    auto panel = engine.create(
+        GpsTestHelpers::sourceQmlUrl(QStringLiteral("AppSettings/GPSReceiverSettings.qml")),
         {{QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
          {QStringLiteral("settings"), QVariant::fromValue(settings.settings)},
          {QStringLiteral("baseFacts"), QVariant::fromValue(&facts)},
          {QStringLiteral("autoConnectFact"), QVariant::fromValue(settings.autoConnect)},
          {QStringLiteral("serialPorts"), QStringList{QStringLiteral("/test/receiver")}},
-         {QStringLiteral("serialBaudRates"), QStringList{QStringLiteral("115200"), QStringLiteral("230400")}}}));
-    error = component.errorString();
-    return result;
+         {QStringLiteral("serialBaudRates"), QStringList{QStringLiteral("115200"), QStringLiteral("230400")}}});
+    error = engine.lastError();
+    return panel;
 }
 
 bool invokeBool(QObject* root, const QString& expression, bool& result)
@@ -221,7 +194,7 @@ void GPSReceiverSettingsTest::_surveySaveWorkflow()
     SettingsFixture settings(manufacturer);
     ReceiverSettingsController receiver(settings.settings);
     GPSRTKFactGroup facts;
-    QQmlEngine engine;
+    GpsTestHelpers::QmlEngine engine;
     QString error;
     auto panel = createPanel(engine, receiver, settings, facts, error);
     QVERIFY2(panel, qPrintable(error));
@@ -292,7 +265,7 @@ void GPSReceiverSettingsTest::_unavailablePositionCannotBeSaved()
     GPSRTKFactGroup facts;
     setSurvey(facts);
     facts.property(field.toUtf8().constData()).value<Fact*>()->setRawValue(value);
-    QQmlEngine engine;
+    GpsTestHelpers::QmlEngine engine;
     QString error;
     auto panel = createPanel(engine, receiver, settings, facts, error);
     QVERIFY2(panel, qPrintable(error));
@@ -305,47 +278,12 @@ void GPSReceiverSettingsTest::_unavailablePositionCannotBeSaved()
     QCOMPARE(settings.settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.0);
 }
 
-void GPSReceiverSettingsTest::_rtkBaseMapMarker()
-{
-    TestFixtures::SettingsFixture saved;
-    auto* settings = SettingsManager::instance()->rtkSettings();
-    saved.setFactValue(settings->baseReceiverManufacturers(), settings->baseReceiverManufacturers()->rawValue());
-    saved.setFactValue(settings->useFixedBasePosition(), static_cast<int>(BaseModeDefinition::Mode::BaseFixed));
-    saved.setFactValue(settings->fixedBasePositionLatitude(), 47.5);
-    saved.setFactValue(settings->fixedBasePositionLongitude(), 8.25);
-    saved.setFactValue(settings->fixedBasePositionAccuracy(), 0.5);
-    auto* receiver = GPSManager::instance()->gpsRtk();
-    const auto retire = qScopeGuard([receiver]() { receiver->disconnectGPS(); });
-    QQmlEngine engine;
-    configureEngine(engine);
-    QQmlComponent component(&engine, sourceUrl(QStringLiteral("../FlightMap/MapItems/RTKBaseMapItem.qml")));
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    std::unique_ptr<QQmlPropertyMap> map(QQmlPropertyMap::create());
-    map->insert(QStringLiteral("isSatelliteMap"), false);
-    std::unique_ptr<QObject> marker(
-        component.createWithInitialProperties({{QStringLiteral("map"), QVariant::fromValue(map.get())}}));
-    QVERIFY2(marker, qPrintable(component.errorString()));
-    // Map items stay hidden outside a map, so check the bound position that drives visibility.
-    QVERIFY(!marker->property("coordinate").value<QGeoCoordinate>().isValid());
-    QVERIFY(receiver->connectReceiver(GPSType::ublox, [](const std::atomic_bool& stop) {
-        while (!stop.load()) {
-            QThread::msleep(1);
-        }
-        return std::unique_ptr<GPSTransport>{};
-    }));
-    QCOMPARE(marker->property("coordinate").value<QGeoCoordinate>(), QGeoCoordinate(47.5, 8.25));
-    QVERIFY(marker->property("_final").toBool());
-    QVERIFY(marker->findChild<QObject*>(QStringLiteral("rtkBaseMarker")));
-    receiver->disconnectGPS();
-    QVERIFY(!marker->property("coordinate").value<QGeoCoordinate>().isValid());
-}
-
 void GPSReceiverSettingsTest::_reconnectingOffersDisconnect()
 {
     SettingsFixture settings(4);
     ReceiverSettingsController receiver(settings.settings);
     GPSRTKFactGroup facts;
-    QQmlEngine engine;
+    GpsTestHelpers::QmlEngine engine;
     QString error;
     auto panel = createPanel(engine, receiver, settings, facts, error);
     QVERIFY2(panel, qPrintable(error));
@@ -368,7 +306,7 @@ void GPSReceiverSettingsTest::_tcpConnectionFields()
     SettingsFixture settings(4);
     ReceiverSettingsController receiver(settings.settings);
     GPSRTKFactGroup facts;
-    QQmlEngine engine;
+    GpsTestHelpers::QmlEngine engine;
     QString error;
     auto panel = createPanel(engine, receiver, settings, facts, error);
     QVERIFY2(panel, qPrintable(error));
@@ -401,7 +339,7 @@ void GPSReceiverSettingsTest::_roleSelectsFields()
     SettingsFixture settings(4);
     ReceiverSettingsController receiver(settings.settings);
     GPSRTKFactGroup facts;
-    QQmlEngine engine;
+    GpsTestHelpers::QmlEngine engine;
     QString error;
     auto panel = createPanel(engine, receiver, settings, facts, error);
     QVERIFY2(panel, qPrintable(error));
@@ -448,7 +386,7 @@ void GPSReceiverSettingsTest::_compactCorrectionsToggle()
     SettingsFixture settings(4);
     ReceiverSettingsController receiver(settings.settings);
     GPSRTKFactGroup facts;
-    QQmlEngine engine;
+    GpsTestHelpers::QmlEngine engine;
     QString error;
     auto panel = createPanel(engine, receiver, settings, facts, error);
     QVERIFY2(panel, qPrintable(error));
@@ -474,7 +412,7 @@ void GPSReceiverSettingsTest::_consentIsOneUse()
     ReceiverSettingsController receiver(settings.settings);
     receiver.connectSucceeds = false;
     GPSRTKFactGroup facts;
-    QQmlEngine engine;
+    GpsTestHelpers::QmlEngine engine;
     QString error;
     auto panel = createPanel(engine, receiver, settings, facts, error);
     QVERIFY2(panel, qPrintable(error));
@@ -516,6 +454,42 @@ void GPSReceiverSettingsTest::_consentIsOneUse()
     QVERIFY(!panel->findChild<QObject*>(QStringLiteral("rtkPersistentChangesCheckBox"))->property("checked").toBool());
 }
 
+void GPSReceiverSettingsTest::_indicatorConsentTracksSettings()
+{
+    SettingsFixture settings(6);
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> page =
+        engine.create(GpsTestHelpers::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicatorPage.qml")),
+                      {{QStringLiteral("expanded"), true}});
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    auto* consent = page->findChild<QObject*>(QStringLiteral("rtkPersistentChangesCheckBox"));
+    QVERIFY(consent);
+    if (!consent->property("visible").toBool()) {
+        QSKIP("Persistent receiver settings require serial support");
+    }
+    QVERIFY(!consent->property("checked").toBool());
+    QVERIFY(QMetaObject::invokeMethod(consent, "click"));
+    QVERIFY(consent->property("checked").toBool());
+    settings.settings->serialDevice()->setRawValue(QStringLiteral("/test/other"));
+    QVERIFY(!consent->property("checked").toBool());
+    QVERIFY(QMetaObject::invokeMethod(consent, "click"));
+    settings.settings->useFixedBasePosition()->setRawValue(1);
+    QVERIFY(!consent->property("checked").toBool());
+    QVERIFY(QMetaObject::invokeMethod(consent, "click"));
+    settings.settings->baseReceiverManufacturers()->setRawValue(5);
+    QVERIFY(!consent->property("checked").toBool());
+    QVERIFY(!consent->property("visible").toBool());
+
+    settings.settings->baseReceiverManufacturers()->setRawValue(6);
+    QVERIFY(QMetaObject::invokeMethod(consent, "click"));
+    page = engine.create(GpsTestHelpers::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicatorPage.qml")),
+                         {{QStringLiteral("expanded"), true}});
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    consent = page->findChild<QObject*>(QStringLiteral("rtkPersistentChangesCheckBox"));
+    QVERIFY(consent);
+    QVERIFY(!consent->property("checked").toBool());
+}
+
 void GPSReceiverSettingsTest::_warningWidth_data()
 {
     QTest::addColumn<int>("width");
@@ -535,7 +509,7 @@ void GPSReceiverSettingsTest::_warningWidth()
     GPSRTKFactGroup facts;
     QQuickWindow window;
     window.resize(width, 800);
-    QQmlEngine engine;
+    GpsTestHelpers::QmlEngine engine;
     QString error;
     auto panel = createPanel(engine, receiver, settings, facts, error);
     QVERIFY2(panel, qPrintable(error));
@@ -583,13 +557,11 @@ void GPSReceiverSettingsTest::_pageWidth()
     SettingsFixture settings(6);
     QQuickWindow window;
     window.resize(width, 800);
-    QQmlEngine engine;
-    configureEngine(engine);
-    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSIndicatorPage.qml")));
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    std::unique_ptr<QObject> page(component.createWithInitialProperties(
-        {{QStringLiteral("availableWidth"), width}, {QStringLiteral("expanded"), true}}));
-    QVERIFY2(page, qPrintable(component.errorString()));
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> page =
+        engine.create(GpsTestHelpers::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicatorPage.qml")),
+                      {{QStringLiteral("availableWidth"), width}, {QStringLiteral("expanded"), true}});
+    QVERIFY2(page, qPrintable(engine.lastError()));
     auto* item = qobject_cast<QQuickItem*>(page.get());
     QVERIFY(item);
     item->setParentItem(window.contentItem());
@@ -622,14 +594,12 @@ void GPSReceiverSettingsTest::_disconnectedPage()
 
     QQuickWindow window;
     window.resize(width, 800);
-    QQmlEngine engine;
-    configureEngine(engine);
-    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSIndicatorPage.qml")));
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    std::unique_ptr<QObject> page(component.createWithInitialProperties(
-        {{QStringLiteral("availableWidth"), width},
-         {QStringLiteral("activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))}}));
-    QVERIFY2(page, qPrintable(component.errorString()));
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> page =
+        engine.create(GpsTestHelpers::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicatorPage.qml")),
+                      {{QStringLiteral("availableWidth"), width},
+                       {QStringLiteral("activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))}});
+    QVERIFY2(page, qPrintable(engine.lastError()));
     auto* item = qobject_cast<QQuickItem*>(page.get());
     QVERIFY(item);
     item->setParentItem(window.contentItem());
@@ -677,7 +647,7 @@ void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
     SettingsFixture settings(4);
     ReceiverSettingsController receiver(settings.settings);
     GPSRTKFactGroup facts;
-    QQmlEngine engine;
+    GpsTestHelpers::QmlEngine engine;
     QString error;
     auto panel = createPanel(engine, receiver, settings, facts, error);
     QVERIFY2(panel, qPrintable(error));
@@ -744,15 +714,13 @@ void GPSReceiverSettingsTest::_resilienceUnknownStates()
     aggregate->insert(QStringLiteral("jammingState"), QVariant::fromValue(&jammingFact));
     aggregate->insert(QStringLiteral("authenticationState"), QVariant::fromValue(&authenticationFact));
     QQuickWindow window;
-    QQmlEngine engine;
-    configureEngine(engine);
-    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSIndicator.qml")));
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    std::unique_ptr<QObject> indicator(component.createWithInitialProperties(
-        {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
-         {QStringLiteral("_activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))},
-         {QStringLiteral("_gpsAggregate"), QVariant::fromValue(aggregate.get())}}));
-    QVERIFY2(indicator, qPrintable(component.errorString()));
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> indicator =
+        engine.create(GpsTestHelpers::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicator.qml")),
+                      {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                       {QStringLiteral("_activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))},
+                       {QStringLiteral("_gpsAggregate"), QVariant::fromValue(aggregate.get())}});
+    QVERIFY2(indicator, qPrintable(engine.lastError()));
     const int expected = qMax(spoofing == 255 ? 0 : spoofing, jamming == 255 ? 0 : jamming);
     QCOMPARE(indicator->property("_interferenceState").toInt(), expected);
     auto* icon = indicator->findChild<QObject*>(QStringLiteral("gpsInterferenceIcon"));
@@ -765,17 +733,11 @@ void GPSReceiverSettingsTest::_resilienceUnknownStates()
 
 void GPSReceiverSettingsTest::_horizontalAccuracyLabel()
 {
-    QQmlEngine engine;
-    configureEngine(engine);
-    const QUrl url =
-        QUrl::fromLocalFile(QFileInfo(QString::fromUtf8(__FILE__))
-                                .dir()
-                                .filePath(QStringLiteral("../../../src/AppSettings/GcsPositionStatus.qml")));
-    QQmlComponent component(&engine, url);
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    std::unique_ptr<QObject> panel(
-        component.createWithInitialProperties({{QStringLiteral("_horizontalAccuracy"), 5.1}}));
-    QVERIFY2(panel, qPrintable(component.errorString()));
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> panel =
+        engine.create(GpsTestHelpers::sourceQmlUrl(QStringLiteral("AppSettings/GcsPositionStatus.qml")),
+                      {{QStringLiteral("_horizontalAccuracy"), 5.1}});
+    QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* accuracy = panel->findChild<QObject*>(QStringLiteral("gcsHorizontalAccuracy"));
     QVERIFY(accuracy);
     QCOMPARE(accuracy->property("label").toString(), QStringLiteral("Horizontal accuracy"));
@@ -793,15 +755,11 @@ void GPSReceiverSettingsTest::_vehicleAccuracyFacts()
     QVERIFY(gps);
     gps->setLiveUpdates(true);
     // The page shows vehicle GPS status only once the vehicle reports GPS telemetry.
-    mavlink_gps_raw_int_t raw{};
-    raw.fix_type = GPS_FIX_TYPE_3D_FIX;
-    raw.eph = UINT16_MAX;
-    raw.epv = UINT16_MAX;
-    raw.cog = UINT16_MAX;
-    raw.satellites_visible = 10;
-    mavlink_message_t message{};
-    mavlink_msg_gps_raw_int_encode(1, 1, &message, &raw);
-    gps->handleMessage(&vehicle, message);
+    gps->handleMessage(&vehicle, GpsTestHelpers::gpsRawMessage({.fixType = GPS_FIX_TYPE_3D_FIX,
+                                                                .eph = UINT16_MAX,
+                                                                .epv = UINT16_MAX,
+                                                                .cog = UINT16_MAX,
+                                                                .satellitesVisible = 10}));
     QVERIFY(gps->telemetryAvailable());
     gps->hdop()->setRawValue(0.8);
     gps->vdop()->setRawValue(1.2);
@@ -809,15 +767,13 @@ void GPSReceiverSettingsTest::_vehicleAccuracyFacts()
     gps->verticalAccuracy()->setRawValue(4.5);
     QQuickWindow window;
     window.resize(640, 800);
-    QQmlEngine engine;
-    configureEngine(engine);
-    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSIndicatorPage.qml")));
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    std::unique_ptr<QObject> page(
-        component.createWithInitialProperties({{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
-                                               {QStringLiteral("activeVehicle"), QVariant::fromValue(&vehicle)},
-                                               {QStringLiteral("availableWidth"), 640}}));
-    QVERIFY2(page, qPrintable(component.errorString()));
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> page =
+        engine.create(GpsTestHelpers::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicatorPage.qml")),
+                      {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                       {QStringLiteral("activeVehicle"), QVariant::fromValue(&vehicle)},
+                       {QStringLiteral("availableWidth"), 640}});
+    QVERIFY2(page, qPrintable(engine.lastError()));
     window.show();
     QVERIFY(QTest::qWaitForWindowExposed(&window, TestTimeout::mediumMs()));
     auto* hdop = page->findChild<QObject*>(QStringLiteral("vehicleGpsHdop"));
@@ -882,16 +838,14 @@ void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGps()
     facts.numSatellitesUsed()->setRawValue(9);
     facts.active()->setRawValue(surveying);
     QQuickWindow window;
-    QQmlEngine engine;
-    configureEngine(engine);
-    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSIndicator.qml")));
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    std::unique_ptr<QObject> indicator(component.createWithInitialProperties(
-        {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
-         {QStringLiteral("_activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))},
-         {QStringLiteral("_receiver"), QVariant::fromValue(&receiver)},
-         {QStringLiteral("_correctionState"), correctionState}}));
-    QVERIFY2(indicator, qPrintable(component.errorString()));
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> indicator =
+        engine.create(GpsTestHelpers::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicator.qml")),
+                      {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                       {QStringLiteral("_activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))},
+                       {QStringLiteral("_receiver"), QVariant::fromValue(&receiver)},
+                       {QStringLiteral("_correctionState"), correctionState}});
+    QVERIFY2(indicator, qPrintable(engine.lastError()));
     QVERIFY(indicator->property("showIndicator").toBool());
     auto* rtkLabel = indicator->findChild<QObject*>(QStringLiteral("gpsCorrectionsLabel"));
     auto* satellites = indicator->findChild<QObject*>(QStringLiteral("gpsSatelliteCount"));
@@ -929,15 +883,13 @@ void GPSReceiverSettingsTest::_resiliencePageGroups()
     };
     QQuickWindow window;
     window.resize(640, 800);
-    QQmlEngine engine;
-    configureEngine(engine);
-    QQmlComponent component(&engine, sourceUrl(QStringLiteral("GPSIndicatorPage.qml")));
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    std::unique_ptr<QObject> page(
-        component.createWithInitialProperties({{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
-                                               {QStringLiteral("activeVehicle"), QVariant::fromValue(&vehicle)},
-                                               {QStringLiteral("availableWidth"), 640}}));
-    QVERIFY2(page, qPrintable(component.errorString()));
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> page =
+        engine.create(GpsTestHelpers::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicatorPage.qml")),
+                      {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                       {QStringLiteral("activeVehicle"), QVariant::fromValue(&vehicle)},
+                       {QStringLiteral("availableWidth"), 640}});
+    QVERIFY2(page, qPrintable(engine.lastError()));
     auto* summary = page->findChild<QObject*>(QStringLiteral("gpsResilienceStatus"));
     auto* first = page->findChild<QObject*>(QStringLiteral("gps1Resilience"));
     auto* second = page->findChild<QObject*>(QStringLiteral("gps2Resilience"));

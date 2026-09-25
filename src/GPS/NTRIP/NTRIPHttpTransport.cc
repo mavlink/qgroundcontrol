@@ -10,17 +10,19 @@
 #include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIP.NTRIPHttpTransport")
 
 NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, const NTRIPRtcmFilterConfig& filter,
-                                       QObject* parent)
+                                       QObject* parent, RuntimeScheduler* scheduler)
     : NTRIPTransport(parent)
     , _config(config)
-    , _connectTimeoutTimer(this)
-    , _dataWatchdogTimer(this)
-    , _validFrameWatchdogTimer(this)
-    , _errorBodyTimer(this)
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
+    , _connectTimeoutTask(_scheduler, this)
+    , _dataWatchdogTask(_scheduler, this)
+    , _validFrameWatchdogTask(_scheduler, this)
+    , _errorBodyTask(_scheduler, this)
 {
     const QVector<int> whitelist = filter.messageIds();
     _rtcmDecoder.setWhitelist(whitelist);
@@ -28,34 +30,6 @@ NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, cons
     if (whitelist.empty()) {
         qCDebug(NTRIPHttpTransportLog) << "Message filter empty; all RTCM message IDs will be forwarded.";
     }
-
-    _connectTimeoutTimer.setSingleShot(true);
-    _connectTimeoutTimer.setInterval(kConnectTimeout);
-    _connectTimeoutTimer.callOnTimeout(this, [this]() {
-        qCWarning(NTRIPHttpTransportLog) << "Connection timeout";
-        _fail(NTRIPError::ConnectionTimeout, tr("Connection timeout"));
-    });
-
-    _dataWatchdogTimer.setSingleShot(true);
-    _dataWatchdogTimer.setInterval(kDataWatchdog);
-    _dataWatchdogTimer.callOnTimeout(this, [this]() {
-        const auto secs = std::chrono::duration_cast<std::chrono::seconds>(kDataWatchdog).count();
-        qCWarning(NTRIPHttpTransportLog) << "No data received for" << secs << "seconds";
-        _fail(NTRIPError::DataWatchdog, tr("No data received for %1 seconds").arg(secs));
-    });
-
-    _validFrameWatchdogTimer.setSingleShot(true);
-    _validFrameWatchdogTimer.setInterval(kDataWatchdog);
-    _validFrameWatchdogTimer.callOnTimeout(
-        this, [this]() { _fail(NTRIPError::DataWatchdog, tr("No valid RTCM corrections received")); });
-
-    _errorBodyTimer.setSingleShot(true);
-    _errorBodyTimer.setInterval(kErrorBodyTimeout);
-    _errorBodyTimer.callOnTimeout(this, [this]() {
-        if (!_stopped) {
-            _finishResponse();
-        }
-    });
 }
 
 NTRIPHttpTransport::~NTRIPHttpTransport()
@@ -90,10 +64,47 @@ void NTRIPHttpTransport::stop()
 
 void NTRIPHttpTransport::_stopTimers()
 {
-    _connectTimeoutTimer.stop();
-    _dataWatchdogTimer.stop();
-    _validFrameWatchdogTimer.stop();
-    _errorBodyTimer.stop();
+    _connectTimeoutTask.cancel();
+    _dataWatchdogTask.cancel();
+    _validFrameWatchdogTask.cancel();
+    _errorBodyTask.cancel();
+}
+
+qint64 NTRIPHttpTransport::_nowMs() const
+{
+    return _scheduler->nowMs();
+}
+
+void NTRIPHttpTransport::_startConnectTimeout()
+{
+    _connectTimeoutTask.schedule(kConnectTimeout, [this]() {
+        qCWarning(NTRIPHttpTransportLog) << "Connection timeout";
+        _fail(NTRIPError::ConnectionTimeout, tr("Connection timeout"));
+    });
+}
+
+void NTRIPHttpTransport::_startDataWatchdog()
+{
+    _dataWatchdogTask.schedule(kDataWatchdog, [this]() {
+        const auto secs = std::chrono::duration_cast<std::chrono::seconds>(kDataWatchdog).count();
+        qCWarning(NTRIPHttpTransportLog) << "No data received for" << secs << "seconds";
+        _fail(NTRIPError::DataWatchdog, tr("No data received for %1 seconds").arg(secs));
+    });
+}
+
+void NTRIPHttpTransport::_startValidFrameWatchdog()
+{
+    _validFrameWatchdogTask.schedule(
+        kDataWatchdog, [this]() { _fail(NTRIPError::DataWatchdog, tr("No valid RTCM corrections received")); });
+}
+
+void NTRIPHttpTransport::_startErrorBodyTimeout()
+{
+    _errorBodyTask.schedule(kErrorBodyTimeout, [this]() {
+        if (!_stopped) {
+            _finishResponse();
+        }
+    });
 }
 
 void NTRIPHttpTransport::_retireSession()
@@ -150,7 +161,7 @@ void NTRIPHttpTransport::_fail(NTRIPError code, const QString& msg, std::chrono:
         return;
     }
     if (_httpDecoder.awaitingErrorBody()) {
-        _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
+        _publishHttpResult(_httpDecoder.finish(), _nowMs());
         return;
     }
     const auto session = _session;
@@ -202,10 +213,10 @@ void NTRIPHttpTransport::_connect()
     });
     connect(session, &NTRIPHttpSession::closed, this, [this, current]() {
         if (current()) {
-            _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
+            _publishHttpResult(_httpDecoder.finish(), _nowMs());
         }
     });
-    _connectTimeoutTimer.start();
+    _startConnectTimeout();
     session->open(_config);
 }
 
@@ -218,7 +229,7 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtM
     _rtcmDecoder.feed(buffer, receivedAtMs, [this, &attempt](const RTCMDecodedFrame& frame) {
         if (frame.valid) {
             // Whitelisting is a routing policy, not evidence of a broken caster stream.
-            _validFrameWatchdogTimer.start();
+            _startValidFrameWatchdog();
         }
         emit correctionFrameReceived(frame);
         if (!attempt.isCurrent() || _stopped) {
@@ -247,16 +258,16 @@ void NTRIPHttpTransport::_publishHttpResult(const NTRIPHttpDecoder::Result& resu
     const auto attempt = _attempt.current(this);
     const auto current = [this, attempt]() { return attempt.isCurrent() && !_stopped; };
     if (result.connected) {
-        _connectTimeoutTimer.stop();
+        _connectTimeoutTask.cancel();
         emit connected();
         if (!current()) {
             return;
         }
-        _dataWatchdogTimer.start();
-        _validFrameWatchdogTimer.start();
+        _startDataWatchdog();
+        _startValidFrameWatchdog();
     }
     if (!result.body.isEmpty()) {
-        _dataWatchdogTimer.start();
+        _startDataWatchdog();
         _parseRtcm(result.body, receivedAtMs);
         if (!current()) {
             return;
@@ -266,9 +277,9 @@ void NTRIPHttpTransport::_publishHttpResult(const NTRIPHttpDecoder::Result& resu
         _fail(result.failure->code, result.failure->detail, result.failure->retryAfter);
     } else if (result.complete) {
         _fail(NTRIPError::ServerDisconnected, tr("NTRIP correction stream ended"));
-    } else if (result.awaitingErrorBody && !_errorBodyTimer.isActive()) {
-        _connectTimeoutTimer.stop();
-        _errorBodyTimer.start();
+    } else if (result.awaitingErrorBody && !_errorBodyTask.active()) {
+        _connectTimeoutTask.cancel();
+        _startErrorBodyTimeout();
     }
 }
 
@@ -276,7 +287,7 @@ void NTRIPHttpTransport::_finishResponse()
 {
     // A delivery in progress publishes the rest of the error body first.
     if (!_stopped && !(_session && _session->reading())) {
-        _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
+        _publishHttpResult(_httpDecoder.finish(), _nowMs());
     }
 }
 

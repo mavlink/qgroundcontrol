@@ -42,10 +42,11 @@ public:
     ~GPSProvider() override;
 
     /// Starts the session once; later calls are ignored.
-    void start();
+    // Virtual so GPSRtk tests can inject a provider that emits scripted signals without a worker thread.
+    virtual void start();
 
     /// Requests cooperative cancellation; blocking transport calls observe it within their polling interval.
-    void stop();
+    virtual void stop();
 
     bool isRunning() const { return _thread && _thread->isRunning(); }
 
@@ -55,7 +56,7 @@ public:
     bool wait(int timeoutMs) { return wait(QDeadlineTimer(timeoutMs)); }
 
     /// Configured receivers must keep producing data; passive links stay open while the receiver is silent.
-    void setEndsWhenIdle(bool endsWhenIdle) { _endsWhenIdle = endsWhenIdle; }
+    virtual void setEndsWhenIdle(bool endsWhenIdle) { _endsWhenIdle = endsWhenIdle; }
 
     bool endsWhenIdle() const { return _endsWhenIdle; }
 

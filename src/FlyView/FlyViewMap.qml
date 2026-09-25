@@ -235,11 +235,6 @@ FlightMap {
             z:              QGroundControl.zOrderVehicles
         }
     }
-    RTKBaseMapItem {
-        map: _root
-        z: QGroundControl.zOrderMapItems
-    }
-
     // Add ADSB vehicles to the map
     MapItemView {
         model: QGroundControl.adsbVehicleManager.adsbVehicles

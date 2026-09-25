@@ -21,7 +21,6 @@ class NTRIPHttpSession : public QObject
 {
     Q_OBJECT
     friend class NTRIPHttpTransportTest;
-    friend class NTRIPReentrancyTest;
 
 public:
     static constexpr qint64 kReadBufferBytes = 64 * 1024;

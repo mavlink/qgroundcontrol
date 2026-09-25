@@ -1,38 +1,28 @@
 #include "RTKConnectionPolicyTest.h"
 
-#include <atomic>
-#include <memory>
-#include <thread>
+#include <functional>
+#include <optional>
+#include <utility>
 
+#include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
 #include <QtTest/QSignalSpy>
 
-#include "AutoConnectSettings.h"
-#include "Fixtures/RAIIFixtures.h"
 #include "GPSManager.h"
 #include "GPSNotificationQueue.h"
+#include "GPSRTKFactGroup.h"
 #include "GPSRtk.h"
-#include "GPSTransport.h"
+#include "ManualScheduler.h"
 #include "NTRIPManager.h"
 #include "PositionManager.h"
 #include "RTKConnectionPolicy.h"
 #include "RTKConnectionTarget.h"
 #include "RTKSettings.h"
+#include "ScriptedProvider.h"
 #include "SerialPortManager.h"
-#include "SettingsManager.h"
+#include "TCPGPSTransport.h"
 
 namespace {
-
-RTKSettings* rtkSettings()
-{
-    return SettingsManager::instance()->rtkSettings();
-}
-
-AutoConnectSettings* autoConnectSettings()
-{
-    return SettingsManager::instance()->autoConnectSettings();
-}
-
 using Port = SerialPortManager::Port;
 
 Port rtkPort(const QString& location = QStringLiteral("/test/rtk"))
@@ -46,106 +36,207 @@ Port genericPort(const QString& location)
     return {location, location.section(QLatin1Char('/'), -1), QGCSerialPortInfo::BoardTypeUnknown, {}};
 }
 
-void saveReceiverSettings(TestFixtures::SettingsFixture& saved, bool autoConnect = true)
+GPSRtk::Configuration serialConfiguration(bool autoConnect = true)
 {
-    auto* settings = SettingsManager::instance()->autoConnectSettings();
-    auto* rtk = SettingsManager::instance()->rtkSettings();
-    saved.setFactValue(settings->autoConnectRTKGPS(), autoConnect);
-    saved.setFactValue(rtk->receiverRole(), GPSRtk::ConfiguredBase);
-    saved.setFactValue(rtk->connectionType(), GPSRtk::Serial);
-    saved.setFactValue(rtk->baseReceiverManufacturers(), rtk->baseReceiverManufacturers()->rawValue());
-    saved.setFactValue(rtk->serialDevice(), rtk->serialDevice()->rawValue());
-    saved.setFactValue(rtk->serialBaudRate(), rtk->serialBaudRate()->rawValue());
+    GPSRtk::Configuration configuration;
+    configuration.autoConnect = autoConnect;
+    configuration.receiverRole = GPSRtk::ConfiguredBase;
+    configuration.connectionType = GPSRtk::Serial;
+    configuration.baseReceiverManufacturer = GPSRtk::manufacturerForType(GPSType::ublox);
+    configuration.serialDevice = QStringLiteral("/test/rtk");
+    configuration.serialBaudRate = 115200;
+    configuration.baseMode = static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn);
+    return configuration;
 }
 
-/// Records the policy's receiver operations without running sessions.
+GPSRtk::Configuration passiveSerialConfiguration(bool autoConnect = false)
+{
+    auto configuration = serialConfiguration(autoConnect);
+    configuration.receiverRole = GPSRtk::Passive;
+    configuration.serialDevice = QStringLiteral("/test/manual");
+    return configuration;
+}
+
+GPSRtk::Configuration tcpConfiguration(bool autoConnect = false)
+{
+    auto configuration = serialConfiguration(autoConnect);
+    configuration.receiverRole = GPSRtk::Passive;
+    configuration.connectionType = GPSRtk::Tcp;
+    configuration.tcpHost = QStringLiteral("rtk.test");
+    configuration.tcpPort = 2101;
+    return configuration;
+}
+
+struct ConnectCall
+{
+    enum class Kind
+    {
+        Tcp,
+        Udp,
+        Serial,
+        Discovered,
+    };
+
+    Kind kind = Kind::Tcp;
+    QString endpoint;
+    GPSType type = GPSType::ublox;
+    uint32_t baudRate = 0;
+    bool allowPersistentChanges = false;
+};
+
+QString callSummary(const ConnectCall& call)
+{
+    const auto prefix = [kind = call.kind] {
+        switch (kind) {
+            case ConnectCall::Kind::Tcp:
+                return QStringLiteral("tcp");
+            case ConnectCall::Kind::Udp:
+                return QStringLiteral("udp");
+            case ConnectCall::Kind::Serial:
+                return QStringLiteral("serial");
+            case ConnectCall::Kind::Discovered:
+                return QStringLiteral("discovered");
+        }
+        return QString();
+    }();
+    return QStringLiteral("%1:%2:%3:%4:%5")
+        .arg(prefix, call.endpoint)
+        .arg(static_cast<int>(call.type))
+        .arg(call.baudRate)
+        .arg(call.allowPersistentChanges);
+}
+
+QStringList callSummaries(const QList<ConnectCall>& calls)
+{
+    QStringList summaries;
+    summaries.reserve(calls.size());
+    for (const auto& call : calls) {
+        summaries.append(callSummary(call));
+    }
+    return summaries;
+}
+
 class FakeConnectionTarget final : public RTKConnectionTarget
 {
 public:
+    explicit FakeConnectionTarget(SerialPortManager::Enumerator enumerator = [] { return QList<Port>{}; })
+        : ports(nullptr, std::move(enumerator))
+    {}
+
     bool hasReceiver() const override { return connected; }
 
     GPSConnectionError connectionError() const override { return error; }
 
-    void setConnectionError(GPSConnectionError value, const QString&) override { error = value; }
+    void setConnectionError(GPSConnectionError value, const QString& message) override
+    {
+        error = value;
+        errorMessage = message;
+        errorMessages.append(message);
+    }
 
     void disconnectReceiver(bool clearError) override
     {
         ++disconnects;
+        disconnectClearError.append(clearError);
         connected = false;
         if (clearError) {
             error = GPSConnectionError::None;
+            errorMessage.clear();
+        }
+        if (onDisconnect) {
+            onDisconnect();
         }
     }
 
-    bool connectTcp(const QString& host, quint16 port, GPSType type, bool) override
+    bool connectTcp(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges) override
     {
-        tcpAttempts.append(QStringLiteral("%1:%2:%3").arg(host).arg(port).arg(static_cast<int>(type)));
+        return record({.kind = ConnectCall::Kind::Tcp,
+                       .endpoint = QStringLiteral("%1:%2").arg(host).arg(port),
+                       .type = type,
+                       .baudRate = TCPGPSTransport::FIXED_BAUDRATE,
+                       .allowPersistentChanges = allowPersistentChanges});
+    }
+
+    bool connectUdp(quint16 port, GPSType type) override
+    {
+        return record({.kind = ConnectCall::Kind::Udp,
+                       .endpoint = QString::number(port),
+                       .type = type,
+                       .baudRate = 0,
+                       .allowPersistentChanges = false});
+    }
+
+#ifndef QGC_NO_SERIAL_LINK
+    SerialPortManager* serialPorts() const override { return const_cast<SerialPortManager*>(&ports); }
+
+    bool connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges) override
+    {
+        return record({.kind = ConnectCall::Kind::Serial,
+                       .endpoint = device,
+                       .type = type,
+                       .baudRate = baudRate,
+                       .allowPersistentChanges = allowPersistentChanges});
+    }
+
+    bool connectDiscovered(const QString& device, QStringView boardName) override
+    {
+        discoveredBoardNames.append(boardName.toString());
+        return record({.kind = ConnectCall::Kind::Discovered,
+                       .endpoint = device,
+                       .type = GPSType::ublox,
+                       .baudRate = 0,
+                       .allowPersistentChanges = false});
+    }
+#endif
+
+    GPSNotificationQueue& notifications() override { return queue; }
+
+    bool record(const ConnectCall& call)
+    {
+        calls.append(call);
+        if (onConnect) {
+            onConnect();
+        }
         connected = acceptConnections;
         error = connected ? GPSConnectionError::None : GPSConnectionError::OpenFailed;
+        if (!connected) {
+            errorMessage = QStringLiteral("connect failed");
+        }
         return connected;
     }
 
-    bool connectUdp(quint16, GPSType) override { return false; }
-#ifndef QGC_NO_SERIAL_LINK
-    SerialPortManager* serialPorts() const override { return nullptr; }
-
-    bool connectSerial(const QString&, GPSType, uint32_t, bool) override { return false; }
-
-    bool connectDiscovered(const QString&, QStringView) override { return false; }
-#endif
-    GPSNotificationQueue& notifications() override { return queue; }
-
     QObject owner;
     GPSNotificationQueue queue{&owner};
-    QStringList tcpAttempts;
+    mutable SerialPortManager ports;
+    QList<ConnectCall> calls;
+    QStringList discoveredBoardNames;
+    QStringList errorMessages;
+    QList<bool> disconnectClearError;
+    QString errorMessage;
     GPSConnectionError error = GPSConnectionError::None;
     int disconnects = 0;
     bool connected = false;
     bool acceptConnections = true;
+    std::function<void()> onConnect;
+    std::function<void()> onDisconnect;
 };
 
-}  // namespace
-
-/// A receiver whose serial transport never opens real hardware.
-struct RTKConnectionPolicyTest::Fixture
+struct PolicyHarness
 {
-    using Owner = RTKConnectionPolicy::Owner;
-
-    enum class Open
+    explicit PolicyHarness(
+        const GPSRtk::Configuration& configuration,
+        SerialPortManager::Enumerator enumerator = [] { return QList<Port>{}; })
+        : target(std::move(enumerator))
+        , policy(target, nullptr, &scheduler)
     {
-        // The session stays up until it is retired.
-        Hold,
-        // The transport fails to open, so the session ends by itself.
-        Fail,
-    };
-
-    explicit Fixture(SerialPortManager::Enumerator enumerator, Open open = Open::Hold)
-        : ports(nullptr, std::move(enumerator))
-        , receiver(std::make_unique<GPSRtk>(rtkSettings(), autoConnectSettings()))
-    {
-        receiver->setSerialPortManager(&ports);
-        receiver->_serialTransportFactory = [open](const QString&, const std::atomic_bool& stop) {
-            while (open == Open::Hold && !stop.load()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }
-            return std::unique_ptr<GPSTransport>{};
-        };
-        policy()->_connectDelayMs = 0;
+        policy.setConfiguration(configuration);
     }
 
-    RTKConnectionPolicy* policy() const { return receiver->connectionPolicy(); }
-
-    quint64 sessions() const { return receiver->_sessionCount; }
-
-    bool tick()
-    {
-        policy()->update();
-        return true;
-    }
-
-    SerialPortManager ports;
-    std::unique_ptr<GPSRtk> receiver;
+    FakeConnectionTarget target;
+    ManualScheduler scheduler;
+    RTKConnectionPolicy policy;
 };
+}  // namespace
 
 void RTKConnectionPolicyTest::init()
 {
@@ -154,57 +245,150 @@ void RTKConnectionPolicyTest::init()
                      QRegularExpression(QStringLiteral("Failed to open GPS receiver transport|session ended")));
 }
 
-void RTKConnectionPolicyTest::_discoveryUnplugAndDisable()
+void RTKConnectionPolicyTest::_manualRetryDrivesTarget()
 {
-    TestFixtures::SettingsFixture saved;
-    saveReceiverSettings(saved);
+    PolicyHarness harness(tcpConfiguration());
+    QSignalSpy autoDisabled(&harness.policy, &RTKConnectionPolicy::autoConnectDisabled);
+    const QString expected = QStringLiteral("tcp:rtk.test:2101:%1:%2:%3")
+                                 .arg(static_cast<int>(GPSType::passive))
+                                 .arg(TCPGPSTransport::FIXED_BAUDRATE)
+                                 .arg(false);
+
+    QVERIFY(harness.policy.connectConfigured(false));
+    QCOMPARE(callSummaries(harness.target.calls), QStringList{expected});
+    QCOMPARE(autoDisabled.size(), 1);
+    harness.policy.receiverReady();
+
+    QSignalSpy reconnecting(&harness.policy, &RTKConnectionPolicy::reconnectingChanged);
+    harness.target.connected = false;
+    harness.target.acceptConnections = false;
+    QVERIFY(!harness.policy.sessionEnded(GPSConnectionError::DeviceError, {}, false).isEmpty());
+    QVERIFY(harness.policy.reconnecting());
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 1);
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(1)));
+    harness.policy.update();
+    QCOMPARE(callSummaries(harness.target.calls), (QStringList{expected, expected}));
+    QVERIFY(harness.policy.reconnecting());
+    QVERIFY(harness.policy.retryPending());
+
+    harness.policy.disconnectConfigured();
+    QCOMPARE(harness.target.disconnects, 1);
+    QVERIFY(!harness.policy.reconnecting());
+    QCOMPARE(reconnecting.size(), 1);
+}
+
+void RTKConnectionPolicyTest::_connectConfiguredValidationErrors_data()
+{
+    QTest::addColumn<QString>("reason");
+    for (const auto* reason :
+         {"unknown-manufacturer", "already-connected", "tcp-host", "tcp-port", "udp-port", "base-over-udp",
+          "serial-empty", "serial-missing", "serial-bootloader", "invalid-baud", "passive-auto-baud"}) {
+        QTest::newRow(reason) << QString::fromLatin1(reason);
+    }
+}
+
+void RTKConnectionPolicyTest::_connectConfiguredValidationErrors()
+{
+    QFETCH(QString, reason);
+    auto configuration = serialConfiguration(false);
     QList<Port> inventory{rtkPort()};
-    Fixture fixture([&]() { return inventory; });
-    auto* policy = fixture.policy();
-    policy->update();
-    QCOMPARE(fixture.sessions(), 0U);
-    policy->update();
-    QCOMPARE(fixture.sessions(), 1U);
-    QCOMPARE(fixture.receiver->activeEndpoint(), QStringLiteral("/test/rtk"));
-    QCOMPARE(policy->_owner, Fixture::Owner::Auto);
-    policy->update();
-    QCOMPARE(fixture.sessions(), 1U);
+    if (reason == QStringLiteral("unknown-manufacturer")) {
+        configuration.baseReceiverManufacturer = 0;
+    } else if (reason == QStringLiteral("tcp-host")) {
+        configuration = tcpConfiguration(false);
+        configuration.tcpHost.clear();
+    } else if (reason == QStringLiteral("tcp-port")) {
+        configuration = tcpConfiguration(false);
+        configuration.tcpPort = 0;
+    } else if (reason == QStringLiteral("udp-port")) {
+        configuration.receiverRole = GPSRtk::Passive;
+        configuration.connectionType = GPSRtk::Udp;
+        configuration.udpPort = 0;
+    } else if (reason == QStringLiteral("base-over-udp")) {
+        configuration.connectionType = GPSRtk::Udp;
+        configuration.udpPort = 14401;
+    } else if (reason == QStringLiteral("serial-empty")) {
+        configuration.serialDevice.clear();
+    } else if (reason == QStringLiteral("serial-missing")) {
+        inventory.clear();
+    } else if (reason == QStringLiteral("serial-bootloader")) {
+        inventory.first().bootloader = true;
+    } else if (reason == QStringLiteral("invalid-baud")) {
+        configuration.serialBaudRate = 1000;
+    } else if (reason == QStringLiteral("passive-auto-baud")) {
+        configuration = passiveSerialConfiguration(false);
+        configuration.serialBaudRate = 0;
+        inventory = {genericPort(configuration.serialDevice)};
+    }
+    PolicyHarness harness(configuration, [&] { return inventory; });
+    if (reason == QStringLiteral("already-connected")) {
+        harness.target.connected = true;
+    }
+    QSignalSpy autoDisabled(&harness.policy, &RTKConnectionPolicy::autoConnectDisabled);
+
+    QVERIFY(!harness.policy.connectConfigured(false));
+    QVERIFY(!harness.target.errorMessage.isEmpty());
+    QVERIFY(harness.target.calls.isEmpty());
+    QCOMPARE(autoDisabled.size(), 0);
+}
+
+void RTKConnectionPolicyTest::_autoDiscoveryWaitsReconnectsAndDisables()
+{
+    QList<Port> inventory{rtkPort()};
+    auto configuration = serialConfiguration(true);
+    PolicyHarness harness(configuration, [&] { return inventory; });
+
+    harness.policy.update();
+    QVERIFY(harness.target.calls.isEmpty());
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(6)));
+    harness.policy.update();
+    QCOMPARE(callSummaries(harness.target.calls), QStringList{QStringLiteral("discovered:/test/rtk:0:0:0")});
+    QVERIFY(harness.target.connected);
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 1);
 
     inventory.clear();
-    QTRY_VERIFY_WITH_TIMEOUT(fixture.tick() && !fixture.receiver->hasReceiver(), TestTimeout::mediumMs());
-    QCOMPARE(policy->_owner, Fixture::Owner::None);
-    QVERIFY(fixture.receiver->errorMessage().contains(QStringLiteral("unplugged")));
+    QTRY_VERIFY_WITH_TIMEOUT(([&] {
+                                 harness.policy.update();
+                                 return harness.target.disconnects == 1;
+                             })(),
+                             TestTimeout::mediumMs());
+    QCOMPARE(harness.target.disconnects, 1);
+    QVERIFY(!harness.target.connected);
+    QVERIFY(!harness.policy.retryPending());
     inventory.append(rtkPort());
-    QTRY_VERIFY_WITH_TIMEOUT(fixture.tick() && fixture.sessions() == 2, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(!harness.target.ports.availablePorts().isEmpty(), TestTimeout::mediumMs());
+    harness.policy.update();
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(6)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 2);
 
-    SettingsManager::instance()->autoConnectSettings()->autoConnectRTKGPS()->setRawValue(false);
-    policy->update();
-    QVERIFY(!fixture.receiver->hasReceiver());
-    QCOMPARE(policy->_owner, Fixture::Owner::None);
-    policy->update();
-    QCOMPARE(fixture.sessions(), 2U);
+    configuration.autoConnect = false;
+    harness.policy.setConfiguration(configuration);
+    harness.policy.update();
+    QCOMPARE(harness.target.disconnects, 2);
+    QVERIFY(!harness.target.connected);
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 2);
 }
 
 void RTKConnectionPolicyTest::_tcpModeSkipsSerialDiscovery()
 {
-    TestFixtures::SettingsFixture saved;
-    saveReceiverSettings(saved);
-    auto* connectionType = SettingsManager::instance()->rtkSettings()->connectionType();
-    Fixture fixture([] { return QList<Port>{rtkPort()}; });
-    auto* policy = fixture.policy();
-    policy->update();
-    policy->update();
-    QCOMPARE(fixture.sessions(), 1U);
-    connectionType->setRawValue(GPSRtk::Tcp);
-    policy->update();
-    QVERIFY(!fixture.receiver->hasReceiver());
-    policy->update();
-    policy->update();
-    QCOMPARE(fixture.sessions(), 1U);
-    connectionType->setRawValue(GPSRtk::Serial);
-    policy->update();
-    policy->update();
-    QCOMPARE(fixture.sessions(), 2U);
+    auto configuration = tcpConfiguration(true);
+    QList<Port> inventory{rtkPort()};
+    PolicyHarness harness(configuration, [&] { return inventory; });
+    harness.policy.update();
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(6)));
+    harness.policy.update();
+    QVERIFY(harness.target.calls.isEmpty());
+
+    configuration = serialConfiguration(true);
+    harness.policy.setConfiguration(configuration);
+    harness.policy.update();
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(6)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 1);
 }
 
 void RTKConnectionPolicyTest::_excludedPorts_data()
@@ -218,122 +402,83 @@ void RTKConnectionPolicyTest::_excludedPorts_data()
 void RTKConnectionPolicyTest::_excludedPorts()
 {
     QFETCH(QString, reason);
-    TestFixtures::SettingsFixture saved;
-    saveReceiverSettings(saved);
+    auto configuration = serialConfiguration(true);
     if (reason == QStringLiteral("passive-role")) {
-        // Discovery configures bases; it never replaces a receiver QGroundControl must not write to.
-        SettingsManager::instance()->rtkSettings()->receiverRole()->setRawValue(GPSRtk::PositionOnly);
+        configuration.receiverRole = GPSRtk::PositionOnly;
     }
     Port port = rtkPort();
     port.bootloader = reason == QStringLiteral("bootloader");
     if (reason == QStringLiteral("other-board")) {
         port.boardType = QGCSerialPortInfo::BoardTypePixhawk;
     }
-    Fixture fixture([&]() { return QList<Port>{port}; });
-    (void) fixture.ports.availablePorts();
+    PolicyHarness harness(configuration, [&] { return QList<Port>{port}; });
+    (void) harness.target.ports.availablePorts();
     SerialPortManager::ReservationPtr reservation;
     if (reason == QStringLiteral("busy")) {
-        reservation = fixture.ports.reservePort(port.systemLocation);
+        reservation = harness.target.ports.reservePort(port.systemLocation);
     } else if (reason == QStringLiteral("single-port")) {
-        fixture.ports.setSinglePortOnly(true);
-        reservation = fixture.ports.reservePort(QStringLiteral("/test/mavlink"));
+        harness.target.ports.setSinglePortOnly(true);
+        reservation = harness.target.ports.reservePort(QStringLiteral("/test/mavlink"));
     }
-    fixture.policy()->update();
-    fixture.policy()->update();
-    QCOMPARE(fixture.sessions(), 0U);
+    harness.policy.update();
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(6)));
+    harness.policy.update();
+    QVERIFY(harness.target.calls.isEmpty());
 }
 
-void RTKConnectionPolicyTest::_manualRetryDrivesTarget()
+void RTKConnectionPolicyTest::_autoRetryBacksOffAndRespectsReservations()
 {
-    TestFixtures::SettingsFixture saved;
-    saveReceiverSettings(saved);
-    auto* rtk = rtkSettings();
-    saved.setFactValue(rtk->connectionType(), GPSRtk::Tcp);
-    saved.setFactValue(rtk->tcpHost(), QStringLiteral("rtk.test"));
-    saved.setFactValue(rtk->tcpPort(), 2101);
-    saved.setFactValue(rtk->baseReceiverManufacturers(), GPSRtk::manufacturerForType(GPSType::ublox));
-    FakeConnectionTarget target;
-    RTKConnectionPolicy policy(target, rtk, autoConnectSettings());
-    const QString expected = QStringLiteral("rtk.test:2101:%1").arg(static_cast<int>(GPSType::ublox));
-
-    QVERIFY(policy.connectConfigured(false));
-    QCOMPARE(target.tcpAttempts, QStringList{expected});
-    QVERIFY(!autoConnectSettings()->autoConnectRTKGPS()->rawValue().toBool());
-    policy.receiverReady();
-
-    QSignalSpy reconnecting(&policy, &RTKConnectionPolicy::reconnectingChanged);
-    target.connected = false;
-    target.acceptConnections = false;
-    QVERIFY(!policy.sessionEnded(GPSConnectionError::DeviceError, {}, false).isEmpty());
-    QVERIFY(policy.reconnecting());
-    policy.update();
-    QCOMPARE(target.tcpAttempts.size(), 1);
-    policy._retryDeadline = QDeadlineTimer(0);
-    policy.update();
-    QCOMPARE(target.tcpAttempts, (QStringList{expected, expected}));
-    QVERIFY(policy.reconnecting());
-    QVERIFY(!policy._retryDeadline.isForever());
-
-    policy.disconnectConfigured();
-    QCOMPARE(target.disconnects, 1);
-    QVERIFY(!policy.reconnecting());
-    QCOMPARE(reconnecting.size(), 1);
-}
-
-UT_REGISTER_TEST(RTKConnectionPolicyTest, TestLabel::Unit)
-
-void RTKConnectionPolicyTest::_failedAttemptsBackOffAndRespectReservations()
-{
-    TestFixtures::SettingsFixture saved;
-    saveReceiverSettings(saved);
-    Fixture fixture([] { return QList<Port>{rtkPort()}; }, Fixture::Open::Fail);
-    auto* policy = fixture.policy();
-    auto* receiver = fixture.receiver.get();
-    const auto failedAttempt = [&]() {
-        QTRY_VERIFY_WITH_TIMEOUT(!receiver->hasReceiver(), TestTimeout::mediumMs());
-        QVERIFY(!policy->_retryDeadline.isForever());
-        QCOMPARE(policy->_owner, Fixture::Owner::Auto);
+    QList<Port> inventory{rtkPort()};
+    PolicyHarness harness(serialConfiguration(true), [&] { return inventory; });
+    harness.target.acceptConnections = false;
+    const auto failedAttempt = [&] {
+        QVERIFY(!harness.target.connected);
+        QVERIFY(harness.policy.retryPending());
     };
-    policy->update();
-    policy->update();
-    QCOMPARE(fixture.sessions(), 1U);
-    failedAttempt();
-    QCOMPARE(policy->_retryDelayMs, 2000);
-    policy->update();
-    QCOMPARE(fixture.sessions(), 1U);
-    QTRY_VERIFY_WITH_TIMEOUT(fixture.tick() && fixture.sessions() == 2, TestTimeout::mediumMs());
-    failedAttempt();
-    QCOMPARE(policy->_retryDelayMs, 4000);
 
-    // A failed worker releases its port once it exits; a claim held elsewhere blocks retries.
-    SerialPortManager::ReservationPtr claim;
-    QTRY_VERIFY_WITH_TIMEOUT((claim = fixture.ports.reservePort(QStringLiteral("/test/rtk"))) != nullptr,
-                             TestTimeout::mediumMs());
-    policy->_retryDeadline.setRemainingTime(0);
-    policy->update();
-    QCOMPARE(fixture.sessions(), 2U);
+    harness.policy.update();
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(6)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 1);
+    failedAttempt();
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::milliseconds(999)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 1);
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::milliseconds(1)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 2);
+    failedAttempt();
+
+    auto claim = harness.target.ports.reservePort(QStringLiteral("/test/rtk"));
+    QVERIFY(claim);
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::milliseconds(1999)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 2);
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::milliseconds(1)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 2);
     claim.reset();
-    policy->update();
-    QCOMPARE(fixture.sessions(), 3U);
-    for (const int delay : {8000, 16000, 30000, 30000}) {
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 3);
+    for (const int delay : {4000, 8000, 16000, 30000, 30'000}) {
         failedAttempt();
-        QCOMPARE(policy->_retryDelayMs, delay);
-        policy->_retryDeadline.setRemainingTime(0);
-        const auto attempts = fixture.sessions();
-        QTRY_VERIFY_WITH_TIMEOUT(fixture.tick() && fixture.sessions() == attempts + 1, TestTimeout::mediumMs());
+        QVERIFY(harness.scheduler.advanceBy(std::chrono::milliseconds(delay - 1)));
+        harness.policy.update();
+        const auto beforeDue = harness.target.calls.size();
+        QVERIFY(harness.scheduler.advanceBy(std::chrono::milliseconds(1)));
+        harness.policy.update();
+        QCOMPARE(harness.target.calls.size(), beforeDue + 1);
     }
     failedAttempt();
 
-    // Choosing a passive role ends auto-connect ownership.
-    SettingsManager::instance()->rtkSettings()->receiverRole()->setRawValue(GPSRtk::Passive);
-    policy->_retryDeadline.setRemainingTime(0);
-    const auto attempts = fixture.sessions();
-    policy->update();
-    QCOMPARE(fixture.sessions(), attempts);
-    QCOMPARE(policy->_owner, Fixture::Owner::None);
-    QVERIFY(policy->_autoPort.isEmpty());
-    QCOMPARE(policy->_retryDelayMs, 1000);
-    QVERIFY(policy->_retryDeadline.isForever());
+    auto configuration = serialConfiguration(true);
+    configuration.receiverRole = GPSRtk::Passive;
+    harness.policy.setConfiguration(configuration);
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(30)));
+    const auto attempts = harness.target.calls.size();
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), attempts);
+    QVERIFY(!harness.policy.retryPending());
 }
 
 void RTKConnectionPolicyTest::_compositeReceiverSelection_data()
@@ -352,8 +497,6 @@ void RTKConnectionPolicyTest::_compositeReceiverSelection()
 {
     QFETCH(QString, scenario);
     QFETCH(bool, connectSecond);
-    TestFixtures::SettingsFixture saved;
-    saveReceiverSettings(saved);
     Port first = rtkPort(QStringLiteral("/test/receiver-first"));
     first.physicalDeviceId = QStringLiteral("1:2:serial");
     Port second = first;
@@ -371,14 +514,15 @@ void RTKConnectionPolicyTest::_compositeReceiverSelection()
     } else if (scenario == QStringLiteral("distinct")) {
         second.physicalDeviceId = QStringLiteral("1:2:other");
     }
-    Fixture fixture([&] { return QList<Port>{first, second}; });
-    auto claim = fixture.ports.reservePort(first.systemLocation);
+    PolicyHarness harness(serialConfiguration(true), [&] { return QList<Port>{first, second}; });
+    auto claim = harness.target.ports.reservePort(first.systemLocation);
     QVERIFY(claim);
-    fixture.policy()->update();
-    fixture.policy()->update();
-    QCOMPARE(fixture.sessions(), connectSecond ? 1U : 0U);
+    harness.policy.update();
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(6)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), connectSecond ? 1 : 0);
     if (connectSecond) {
-        QCOMPARE(fixture.receiver->activeEndpoint(), second.systemLocation);
+        QCOMPARE(harness.target.calls.constFirst().endpoint, second.systemLocation);
     }
 }
 
@@ -392,198 +536,133 @@ void RTKConnectionPolicyTest::_genericUsbNeedsExplicitSelection_data()
 void RTKConnectionPolicyTest::_genericUsbNeedsExplicitSelection()
 {
     QFETCH(int, manufacturer);
-    TestFixtures::SettingsFixture saved;
-    saveReceiverSettings(saved);
-    auto* rtkSettings = SettingsManager::instance()->rtkSettings();
-    rtkSettings->baseReceiverManufacturers()->setRawValue(manufacturer);
-    rtkSettings->serialDevice()->setRawValue(QStringLiteral("/test/ch340"));
+    auto configuration = serialConfiguration(true);
+    configuration.baseReceiverManufacturer = manufacturer;
+    configuration.serialDevice = QStringLiteral("/test/ch340");
     const QList<Port> inventory{genericPort(QStringLiteral("/test/ch340")), genericPort(QStringLiteral("/test/ftdi")),
                                 rtkPort(QStringLiteral("/test/known"))};
-    Fixture fixture([&] { return inventory; });
-    fixture.policy()->update();
-    fixture.policy()->update();
-    QCOMPARE(fixture.sessions(), 1U);
-    QCOMPARE(fixture.receiver->activeEndpoint(), QStringLiteral("/test/known"));
-    QVERIFY(fixture.ports.canReservePort(QStringLiteral("/test/ch340")));
-    QVERIFY(fixture.ports.canReservePort(QStringLiteral("/test/ftdi")));
+    PolicyHarness harness(configuration, [&] { return inventory; });
+    harness.policy.update();
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(6)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 1);
+    QCOMPARE(harness.target.calls.constFirst().endpoint, QStringLiteral("/test/known"));
+    QVERIFY(harness.target.ports.canReservePort(QStringLiteral("/test/ch340")));
+    QVERIFY(harness.target.ports.canReservePort(QStringLiteral("/test/ftdi")));
 }
 
 void RTKConnectionPolicyTest::_manualConnectionRetiresAutoOwnership()
 {
-    TestFixtures::SettingsFixture saved;
-    saveReceiverSettings(saved);
-    auto* settings = SettingsManager::instance()->autoConnectSettings();
-    Fixture fixture([] { return QList<Port>{rtkPort(QStringLiteral("/test/known"))}; });
-    auto* policy = fixture.policy();
-    policy->update();
-    policy->update();
-    QCOMPARE(fixture.sessions(), 1U);
-    fixture.receiver->disconnectConfiguredGPS();
-    QVERIFY(!fixture.receiver->hasReceiver());
-    QVERIFY(!settings->autoConnectRTKGPS()->rawValue().toBool());
-    QCOMPARE(policy->_owner, Fixture::Owner::None);
-    policy->update();
-    policy->stop();
-    QCOMPARE(fixture.sessions(), 1U);
-    settings->autoConnectRTKGPS()->setRawValue(true);
-    policy->update();
-    policy->update();
-    QCOMPARE(fixture.sessions(), 2U);
+    auto configuration = serialConfiguration(true);
+    PolicyHarness harness(configuration, [] { return QList<Port>{rtkPort(QStringLiteral("/test/known"))}; });
+    connect(&harness.policy, &RTKConnectionPolicy::autoConnectDisabled, &harness.policy, [&] {
+        configuration.autoConnect = false;
+        harness.policy.setConfiguration(configuration);
+    });
+    harness.policy.update();
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(6)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 1);
+
+    QSignalSpy autoDisabled(&harness.policy, &RTKConnectionPolicy::autoConnectDisabled);
+    harness.policy.disconnectConfigured();
+    QVERIFY(!harness.target.connected);
+    QCOMPARE(autoDisabled.size(), 1);
+    QVERIFY(!harness.policy.reconnecting());
+    harness.policy.update();
+    harness.policy.stop();
+    QCOMPARE(harness.target.calls.size(), 1);
+
+    configuration = serialConfiguration(true);
+    harness.policy.setConfiguration(configuration);
+    harness.policy.update();
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(6)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 2);
 }
 
 void RTKConnectionPolicyTest::_manualRetryWaitsForReturningPort()
 {
-    TestFixtures::SettingsFixture saved;
-    saveReceiverSettings(saved, false);
-    auto* rtk = SettingsManager::instance()->rtkSettings();
-    rtk->receiverRole()->setRawValue(GPSRtk::Passive);
-    rtk->serialDevice()->setRawValue(QStringLiteral("/test/manual"));
-    rtk->serialBaudRate()->setRawValue(115200);
+    auto configuration = passiveSerialConfiguration(false);
     QList<Port> inventory{genericPort(QStringLiteral("/test/manual"))};
-    Fixture fixture([&] { return inventory; });
-    auto* policy = fixture.policy();
-    auto* receiver = fixture.receiver.get();
-    QVERIFY(receiver->connectConfiguredGPS());
-    QCOMPARE(policy->_owner, Fixture::Owner::Manual);
-    emit receiver->_session.provider->receiverReady();
-    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
-    QVERIFY(policy->_established);
+    PolicyHarness harness(configuration, [&] { return inventory; });
+    QVERIFY(harness.policy.connectConfigured(false));
+    harness.policy.receiverReady();
 
     inventory.clear();
-    QTRY_VERIFY_WITH_TIMEOUT(fixture.ports.availablePorts().isEmpty() && !receiver->hasReceiver(),
-                             TestTimeout::mediumMs());
-    QVERIFY(receiver->reconnecting());
-    QVERIFY(policy->_waitingForPort);
-    QVERIFY(receiver->errorMessage().contains(QStringLiteral("plugged back in")));
-    policy->_retryDeadline.setRemainingTime(0);
-    policy->update();
-    QCOMPARE(fixture.sessions(), 1U);
+    harness.target.connected = false;
+    QVERIFY(harness.policy.sessionEnded(GPSConnectionError::DeviceError, {}, true).contains(QStringLiteral("plugged")));
+    QVERIFY(harness.policy.reconnecting());
+    QTRY_VERIFY_WITH_TIMEOUT(harness.target.ports.availablePorts().isEmpty(), TestTimeout::mediumMs());
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(30)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 1);
 
     inventory.append(genericPort(QStringLiteral("/test/manual")));
-    QTRY_VERIFY_WITH_TIMEOUT(fixture.tick() && fixture.sessions() == 2, TestTimeout::mediumMs());
-    QCOMPARE(receiver->activeEndpoint(), QStringLiteral("/test/manual"));
-    QVERIFY(!policy->_waitingForPort);
-    QCOMPARE(policy->_owner, Fixture::Owner::Manual);
-    receiver->disconnectConfiguredGPS();
-    QVERIFY(!receiver->reconnecting());
-    QCOMPARE(policy->_owner, Fixture::Owner::None);
+    QTRY_VERIFY_WITH_TIMEOUT(!harness.target.ports.availablePorts().isEmpty(), TestTimeout::mediumMs());
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 2);
+    QCOMPARE(harness.target.calls.constLast().endpoint, QStringLiteral("/test/manual"));
+    QVERIFY(harness.target.connected);
+    harness.policy.disconnectConfigured();
+    QVERIFY(!harness.policy.reconnecting());
+    QVERIFY(!harness.policy.retryPending());
 }
 
-void RTKConnectionPolicyTest::_notificationSupersedesDiscovery_data()
+void RTKConnectionPolicyTest::_configurationChangeCancelsManualRetry_data()
 {
-    QTest::addColumn<bool>("disconnecting");
-    QTest::addColumn<QString>("action");
-    for (const bool disconnecting : {false, true}) {
-        for (const auto* action : {"delete", "stop", "update"}) {
-            const QByteArray name = QByteArray(disconnecting ? "disconnect-" : "enumeration-") + action;
-            QTest::newRow(name.constData()) << disconnecting << QString::fromLatin1(action);
-        }
-    }
+    QTest::addColumn<QString>("change");
+    QTest::newRow("connection") << QStringLiteral("connection");
+    QTest::newRow("auto-connect") << QStringLiteral("auto-connect");
 }
 
-void RTKConnectionPolicyTest::_notificationSupersedesDiscovery()
+void RTKConnectionPolicyTest::_configurationChangeCancelsManualRetry()
 {
-    QFETCH(bool, disconnecting);
-    QFETCH(QString, action);
-    TestFixtures::SettingsFixture saved;
-    saveReceiverSettings(saved);
-    auto* role = SettingsManager::instance()->rtkSettings()->receiverRole();
-    Fixture fixture([] { return QList<Port>{rtkPort()}; });
-    if (disconnecting) {
-        fixture.policy()->update();
-        fixture.policy()->update();
-        QCOMPARE(fixture.sessions(), 1U);
-        // A passive role disables discovery, so the next tick retires the discovered receiver.
-        role->setRawValue(GPSRtk::PositionOnly);
-    }
-    bool notified = false;
-    const auto supersede = [&] {
-        if (std::exchange(notified, true)) {
-            return;
-        }
-        if (action == QStringLiteral("delete")) {
-            fixture.receiver.reset();
-        } else if (action == QStringLiteral("stop")) {
-            fixture.policy()->stop();
-        } else {
-            role->setRawValue(GPSRtk::ConfiguredBase);
-            fixture.policy()->update();
-        }
-    };
-    const auto notification = disconnecting
-                                  ? connect(fixture.receiver.get(), &GPSRtk::receiverChanged, this, supersede)
-                                  : connect(&fixture.ports, &SerialPortManager::portsEnumerated, this, supersede);
-    fixture.policy()->update();
-    disconnect(notification);
-    QVERIFY(notified);
-    if (action == QStringLiteral("delete")) {
-        QVERIFY(!fixture.receiver);
-        return;
-    }
-    QCOMPARE(fixture.sessions(), disconnecting ? 1U : 0U);
-    if (action == QStringLiteral("stop")) {
-        QVERIFY(fixture.policy()->_waitingPorts.isEmpty());
+    QFETCH(QString, change);
+    auto configuration = tcpConfiguration(false);
+    PolicyHarness harness(configuration);
+    QVERIFY(harness.policy.connectConfigured(false));
+    harness.policy.receiverReady();
+    harness.target.connected = false;
+    QVERIFY(!harness.policy.sessionEnded(GPSConnectionError::DeviceError, {}, false).isEmpty());
+    QVERIFY(harness.policy.reconnecting());
+    QVERIFY(harness.policy.retryPending());
+
+    if (change == QStringLiteral("connection")) {
+        ++configuration.tcpPort;
     } else {
-        const quint64 expected = disconnecting ? 2 : 1;
-        QTRY_VERIFY_WITH_TIMEOUT(fixture.tick() && fixture.sessions() == expected, TestTimeout::mediumMs());
+        configuration.autoConnect = true;
     }
-}
-
-void RTKConnectionPolicyTest::_shutdownDuringConnectionTick()
-{
-    TestFixtures::SettingsFixture saved;
-    saveReceiverSettings(saved);
-    auto* applicationCorrections = GPSManager::instance()->corrections();
-    const auto restoreCorrections = qScopeGuard(
-        [applicationCorrections] { GPSManager::instance()->ntrip()->setCorrectionManager(applicationCorrections); });
-    int enumerations = 0;
-    SerialPortManager ports(nullptr, [&] {
-        ++enumerations;
-        return QList<Port>{rtkPort()};
-    });
-    GPSManager manager;
-    manager.gpsRtk()->setSerialPortManager(&ports);
-    connect(&ports, &SerialPortManager::portsEnumerated, &manager, &GPSManager::shutdown);
-    manager._updateConnections();
-    QVERIFY(manager._shutdown);
-    QVERIFY(!manager.gpsRtk()->hasReceiver());
-    const int seen = enumerations;
-    manager._updateConnections();
-    manager._updateConnections();
-    QCOMPARE(enumerations, seen);
-    QVERIFY(!manager.gpsRtk()->hasReceiver());
+    harness.policy.setConfiguration(configuration);
+    QVERIFY(!harness.policy.reconnecting());
+    QVERIFY(!harness.policy.retryPending());
+    QVERIFY(!harness.target.connected);
 }
 
 void RTKConnectionPolicyTest::_connectSavedWaitsForReceiver()
 {
-    TestFixtures::SettingsFixture saved;
-    // Auto-connect only discovers configured bases, so it does not replace the startup wait here.
-    saveReceiverSettings(saved);
-    auto* rtk = SettingsManager::instance()->rtkSettings();
-    rtk->receiverRole()->setRawValue(GPSRtk::PositionOnly);
-    rtk->serialDevice()->setRawValue(QStringLiteral("/test/startup"));
-    rtk->serialBaudRate()->setRawValue(4800);
+    auto configuration = passiveSerialConfiguration(false);
+    configuration.serialDevice = QStringLiteral("/test/startup");
+    configuration.serialBaudRate = 4800;
     QList<Port> inventory;
-    Fixture fixture([&] { return inventory; });
-    auto* policy = fixture.policy();
-    auto* receiver = fixture.receiver.get();
-    QSignalSpy changes(receiver, &GPSRtk::receiverChanged);
-    // An absent receiver at startup is awaited like a lost one.
-    policy->connectSaved();
-    QCOMPARE(policy->_owner, Fixture::Owner::Manual);
-    QVERIFY(policy->_established);
-    QVERIFY(policy->_waitingForPort);
-    QVERIFY(receiver->reconnecting());
-    QVERIFY(!changes.isEmpty());
-    QCOMPARE(fixture.sessions(), 0U);
+    PolicyHarness harness(configuration, [&] { return inventory; });
+    QSignalSpy changes(&harness.policy, &RTKConnectionPolicy::reconnectingChanged);
+
+    harness.policy.connectSaved();
+    QVERIFY(harness.policy.reconnecting());
+    QCOMPARE(changes.size(), 1);
+    QVERIFY(harness.target.calls.isEmpty());
     inventory.append(genericPort(QStringLiteral("/test/startup")));
-    QTRY_VERIFY_WITH_TIMEOUT(fixture.tick() && fixture.sessions() == 1, TestTimeout::mediumMs());
-    QCOMPARE(receiver->activeEndpoint(), QStringLiteral("/test/startup"));
-    QCOMPARE(receiver->activeRole(), GPSRtk::PositionOnly);
-    QVERIFY(autoConnectSettings()->autoConnectRTKGPS()->rawValue().toBool());
-    receiver->disconnectConfiguredGPS();
-    QVERIFY(!receiver->reconnecting());
-    QCOMPARE(policy->_owner, Fixture::Owner::None);
+    QTRY_VERIFY_WITH_TIMEOUT(([&] {
+                                 harness.policy.update();
+                                 return harness.target.calls.size() == 1;
+                             })(),
+                             TestTimeout::mediumMs());
+    QCOMPARE(harness.target.calls.constFirst().endpoint, QStringLiteral("/test/startup"));
+    QCOMPARE(harness.target.calls.constFirst().type, GPSType::passive);
+    harness.policy.disconnectConfigured();
+    QVERIFY(!harness.policy.reconnecting());
+    QVERIFY(!harness.policy.retryPending());
 }
 
 void RTKConnectionPolicyTest::_connectSavedKeepsDiscovery_data()
@@ -596,30 +675,143 @@ void RTKConnectionPolicyTest::_connectSavedKeepsDiscovery_data()
 void RTKConnectionPolicyTest::_connectSavedKeepsDiscovery()
 {
     QFETCH(bool, present);
-    TestFixtures::SettingsFixture saved;
-    saveReceiverSettings(saved);
-    saved.setFactValue(rtkSettings()->serialDevice(), QStringLiteral("/test/rtk"));
-    Fact* const autoConnect = autoConnectSettings()->autoConnectRTKGPS();
     QList<Port> inventory;
     if (present) {
         inventory.append(rtkPort());
     }
-    Fixture fixture([&] { return inventory; });
-    auto* policy = fixture.policy();
-    policy->connectSaved();
-    // A startup connection is not a user choice, so auto-connect stays on.
-    QVERIFY(autoConnect->rawValue().toBool());
-    QVERIFY(!fixture.receiver->reconnecting());
+    PolicyHarness harness(serialConfiguration(true), [&] { return inventory; });
+    harness.policy.connectSaved();
+    QVERIFY(!harness.policy.reconnecting());
     if (present) {
-        QCOMPARE(fixture.sessions(), 1U);
-        QCOMPARE(policy->_owner, Fixture::Owner::Manual);
+        QCOMPARE(harness.target.calls.size(), 1);
+        QVERIFY(harness.target.connected);
         return;
     }
-    // Waiting for the saved receiver would suspend discovery.
-    QCOMPARE(fixture.sessions(), 0U);
-    QCOMPARE(policy->_owner, Fixture::Owner::None);
+    QCOMPARE(harness.target.calls.size(), 0);
+    QVERIFY(!harness.target.connected);
     inventory.append(rtkPort());
-    QTRY_VERIFY_WITH_TIMEOUT(fixture.tick() && fixture.sessions() == 1, TestTimeout::mediumMs());
-    QCOMPARE(policy->_owner, Fixture::Owner::Auto);
-    QVERIFY(autoConnect->rawValue().toBool());
+    QTRY_VERIFY_WITH_TIMEOUT(!harness.target.ports.availablePorts().isEmpty(), TestTimeout::mediumMs());
+    harness.policy.update();
+    QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(6)));
+    harness.policy.update();
+    QCOMPARE(harness.target.calls.size(), 1);
+    QVERIFY(harness.target.connected);
 }
+
+void RTKConnectionPolicyTest::_shutdownDuringConnectionTick()
+{
+    auto* applicationCorrections = GPSManager::instance()->corrections();
+    const auto restoreCorrections = qScopeGuard(
+        [applicationCorrections] { GPSManager::instance()->ntrip()->setCorrectionManager(applicationCorrections); });
+    int enumerations = 0;
+    SerialPortManager ports(nullptr, [&] {
+        ++enumerations;
+        return QList<Port>{rtkPort()};
+    });
+    GPSManager manager;
+    manager.gpsRtk()->setConfiguration(serialConfiguration(true));
+    manager.gpsRtk()->setSerialPortManager(&ports);
+    connect(&ports, &SerialPortManager::portsEnumerated, &manager, &GPSManager::shutdown);
+    manager._updateConnections();
+    QVERIFY(manager._shutdown);
+    QVERIFY(!manager.gpsRtk()->hasReceiver());
+    const int seen = enumerations;
+    manager._updateConnections();
+    manager._updateConnections();
+    QCOMPARE(enumerations, seen);
+    QVERIFY(!manager.gpsRtk()->hasReceiver());
+}
+
+void RTKConnectionPolicyTest::_manualRetryRecreatesGpsRtkSession()
+{
+    ManualScheduler scheduler;
+    GPSRtk receiver(nullptr, &scheduler);
+    ScriptedProviderFactory providers;
+    receiver.setProviderFactory(providers.providerFactory());
+    receiver.setConfiguration(tcpConfiguration(false));
+
+    QVERIFY(receiver.connectConfiguredGPS(false));
+    QCOMPARE(providers.count(), 1);
+    auto* first = providers.current();
+    QVERIFY(first);
+    QCOMPARE(first->capturedConfig().baudRate, TCPGPSTransport::FIXED_BAUDRATE);
+    QVERIFY(!first->capturedConfig().allowPersistentChanges);
+    first->ready();
+    QVERIFY(receiver.connected());
+    QVERIFY(!receiver.reconnecting());
+
+    first->fail(GPSConnectionError::DeviceError);
+    QVERIFY(receiver.reconnecting());
+    QVERIFY(!receiver.hasReceiver());
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+    receiver.connectionPolicy()->update();
+    QCOMPARE(providers.count(), 2);
+    auto* retry = providers.current();
+    QVERIFY(retry);
+    QVERIFY(!retry->capturedConfig().allowPersistentChanges);
+    retry->ready();
+    QVERIFY(receiver.connected());
+    QVERIFY(!receiver.reconnecting());
+}
+
+void RTKConnectionPolicyTest::_serialPolicyIntegrationUsesSelectedPort()
+{
+#ifndef QGC_NO_SERIAL_LINK
+    QList<Port> inventory{
+        genericPort(QStringLiteral("/test/unselected")),
+        {QStringLiteral("/test/selected"), QStringLiteral("selected"), QGCSerialPortInfo::BoardTypeUnknown,
+         QStringLiteral("USB serial")},
+    };
+    SerialPortManager ports(nullptr, [&] { return inventory; });
+    GPSRtk receiver;
+    ScriptedProviderFactory providers;
+    receiver.setProviderFactory(providers.providerFactory());
+    auto configuration = serialConfiguration(true);
+    configuration.serialDevice = QStringLiteral("/test/selected");
+    receiver.setConfiguration(configuration);
+    receiver.setSerialPortManager(&ports);
+    QSignalSpy autoDisabled(&receiver, &GPSRtk::autoConnectDisabled);
+
+    QVERIFY(receiver.connectConfiguredGPS());
+    QCOMPARE(autoDisabled.size(), 1);
+    QCOMPARE(providers.count(), 1);
+    QCOMPARE(receiver.activeEndpoint(), QStringLiteral("/test/selected"));
+    QVERIFY(ports.isPortReserved(QStringLiteral("/test/selected")));
+    QVERIFY(!ports.isPortReserved(QStringLiteral("/test/unselected")));
+    auto* provider = providers.current();
+    QVERIFY(provider);
+    QPointer<ScriptedProvider> firstProvider = provider;
+    QCOMPARE(provider->capturedConfig().baudRate, 115200U);
+    provider->ready(QStringLiteral("ZED-F9P HPG 1.32"));
+    GPSSurveyReport survey;
+    survey.active = true;
+    survey.valid = true;
+    provider->survey(survey);
+    QVERIFY(receiver.connected());
+    QCOMPARE(receiver.receiverIdentity(), QStringLiteral("ZED-F9P HPG 1.32"));
+    QVERIFY(receiver.gpsRtkFactGroup()->active()->rawValue().toBool());
+    QVERIFY(receiver.gpsRtkFactGroup()->valid()->rawValue().toBool());
+
+    inventory.removeLast();
+    emit ports.portsEnumerated({QStringLiteral("/test/unselected")});
+    QVERIFY(receiver.errorMessage().contains(QStringLiteral("plugged back in")));
+    QVERIFY(receiver.reconnecting());
+    QVERIFY(!receiver.hasReceiver());
+    provider->finish();
+    QTRY_VERIFY_WITH_TIMEOUT(firstProvider.isNull(), TestTimeout::mediumMs());
+    inventory.append({QStringLiteral("/test/selected"), QStringLiteral("selected"), QGCSerialPortInfo::BoardTypeUnknown,
+                      QStringLiteral("USB serial")});
+    QTRY_VERIFY_WITH_TIMEOUT(([&] {
+                                 receiver.connectionPolicy()->update();
+                                 return providers.count() == 2;
+                             })(),
+                             TestTimeout::mediumMs());
+    QCOMPARE(receiver.activeEndpoint(), QStringLiteral("/test/selected"));
+    receiver.disconnectConfiguredGPS();
+    QVERIFY(!receiver.reconnecting());
+#else
+    QSKIP("Manual serial connection requires serial support");
+#endif
+}
+
+UT_REGISTER_TEST(RTKConnectionPolicyTest, TestLabel::Unit)

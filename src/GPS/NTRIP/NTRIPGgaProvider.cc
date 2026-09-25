@@ -6,6 +6,7 @@
 #include "NMEAUtils.h"
 #include "NTRIPTransport.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(NTRIPGgaProviderLog, "GPS.NTRIP.NTRIPGgaProvider")
 
@@ -51,18 +52,19 @@ unsigned ggaQuality(GPSObservation::FixQuality quality)
 }
 }  // namespace
 
-NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent) : QObject(parent)
-{
-    _timer.setInterval(_normalInterval);
-    connect(&_timer, &QChronoTimer::timeout, this, &NTRIPGgaProvider::_sendGGA);
-}
+NTRIPGgaProvider::NTRIPGgaProvider(QObject* parent, RuntimeScheduler* scheduler)
+    : QObject(parent)
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
+    , _ggaTask(_scheduler, this)
+{}
 
 void NTRIPGgaProvider::configure(const Configuration& configuration)
 {
     _cachedSource = configuration.source;
+    const auto previousInterval = _normalInterval;
     _normalInterval = configuration.interval.count() > 0 ? configuration.interval : kDefaultInterval;
-    if (_retryPhase == RetryPhase::Normal && _timer.interval() != _normalInterval) {
-        _timer.setInterval(_normalInterval);
+    if (_retryPhase == RetryPhase::Normal && previousInterval != _normalInterval && _transport) {
+        _scheduleNextGGA();
     }
 }
 
@@ -82,22 +84,47 @@ void NTRIPGgaProvider::start(NTRIPTransport* transport)
         return;
     }
     _setRetryPhase(RetryPhase::Fast);
-    _timer.start();
     _sendGGA();
+    if (session.isCurrent() && _transport == transport) {
+        _scheduleNextGGA();
+    }
 }
 
 void NTRIPGgaProvider::stop()
 {
     _generation.invalidate();
-    _timer.stop();
+    _ggaTask.cancel();
     _transport = nullptr;
     _clearSource();
+}
+
+void NTRIPGgaProvider::_scheduleNextGGA()
+{
+    _ggaTask.cancel();
+    const auto transport = _transport;
+    const auto session = _generation.current(this);
+    if (!transport) {
+        return;
+    }
+    _ggaTask.schedule(_currentInterval(), [this, transport, session]() {
+        if (!session.isCurrent() || !transport || _transport != transport) {
+            return;
+        }
+        _sendGGA();
+        if (session.isCurrent() && transport && _transport == transport) {
+            _scheduleNextGGA();
+        }
+    });
+}
+
+std::chrono::milliseconds NTRIPGgaProvider::_currentInterval() const
+{
+    return _retryPhase == RetryPhase::Fast ? kFastRetryInterval : _normalInterval;
 }
 
 void NTRIPGgaProvider::_setRetryPhase(RetryPhase phase)
 {
     _retryPhase = phase;
-    _timer.setInterval(phase == RetryPhase::Fast ? kFastRetryInterval : _normalInterval);
 }
 
 void NTRIPGgaProvider::_clearSource()

@@ -2,6 +2,7 @@
 
 #include <QtTest/QTest>
 
+#include "GpsMavlinkTestHelpers.h"
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "UnitTest.h"
@@ -12,30 +13,19 @@ namespace {
 
 mavlink_message_t gpsMessage(bool secondary, uint16_t yaw, uint8_t fixType)
 {
-    const auto fill = [yaw, fixType](auto& raw) {
-        raw.lat = 470000000;
-        raw.lon = 80000000;
-        raw.alt = 123456;
-        raw.eph = 120;
-        raw.epv = 240;
-        raw.h_acc = 3500;
-        raw.v_acc = 6000;
-        raw.cog = 9000;
-        raw.satellites_visible = 18;
-        raw.yaw = yaw;
-        raw.fix_type = fixType;
-    };
-    mavlink_message_t message{};
-    if (secondary) {
-        mavlink_gps2_raw_t raw{};
-        fill(raw);
-        mavlink_msg_gps2_raw_encode(1, 1, &message, &raw);
-    } else {
-        mavlink_gps_raw_int_t raw{};
-        fill(raw);
-        mavlink_msg_gps_raw_int_encode(1, 1, &message, &raw);
-    }
-    return message;
+    using GpsTestHelpers::GpsReceiver;
+    return GpsTestHelpers::gpsRawMessage({.latitudeE7 = 470000000,
+                                          .longitudeE7 = 80000000,
+                                          .altitudeMm = 123456,
+                                          .fixType = fixType,
+                                          .eph = 120,
+                                          .epv = 240,
+                                          .cog = 9000,
+                                          .satellitesVisible = 18,
+                                          .yaw = yaw,
+                                          .horizontalAccuracyMm = 3500,
+                                          .verticalAccuracyMm = 6000},
+                                         secondary ? GpsReceiver::Secondary : GpsReceiver::Primary);
 }
 
 mavlink_message_t rtkMessage(bool secondary)

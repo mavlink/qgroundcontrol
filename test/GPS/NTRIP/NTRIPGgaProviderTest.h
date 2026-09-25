@@ -7,17 +7,27 @@ class NTRIPGgaProviderTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void initTestCase() override;
-    void cleanup() override;
     void testSourceClearedOnStopAndFreshStart();
     void _invalidProviderAltitude_data();
     void _invalidProviderAltitude();
     void testRTKReceiverProvider();
-    void _activeVehicleAndCommunicationLoss();
-    void _vehicleFixLossAndExpiry();
     void _providerMetadata_data();
     void _providerMetadata();
     void _gcsObservation_data();
     void _gcsObservation();
-    void _gcsSelectionAndFreshness();
+    void ggaAltitudeDatum_data();
+    void ggaAltitudeDatum();
+    void ggaSourceSelection();
+    void ggaSelectionDiagnostics();
+    void ggaDiagnosticRetiresProvider_data();
+    void ggaDiagnosticRetiresProvider();
+    void ggaSourceChangesPreserveCadence();
+    void ggaIntervalChangesRestartCadence_data();
+    void ggaIntervalChangesRestartCadence();
+    void ggaConfigurationPreservesFastRetry();
+    void ggaCallbackStopsProvider();
+
+private:
+    void _expectDebugMessage(const char* category, const QString& message);
+    void _verifyDebugMessage();
 };

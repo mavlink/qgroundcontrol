@@ -9,6 +9,17 @@
 #include "UDPGPSTransport.h"
 
 namespace {
+quint16 reserveUdpPort()
+{
+    QUdpSocket reservation;
+    if (!reservation.bind(QHostAddress::LocalHost, 0)) {
+        return 0;
+    }
+    const quint16 port = reservation.localPort();
+    reservation.close();
+    return port;
+}
+
 QByteArray readAll(UDPGPSTransport& transport, int timeoutMs)
 {
     std::array<uint8_t, 256> buffer{};
@@ -27,10 +38,11 @@ QByteArray readAll(UDPGPSTransport& transport, int timeoutMs)
 void UDPGPSTransportTest::_receivesSelectedSender()
 {
     std::atomic_bool stop = false;
-    UDPGPSTransport transport(0, stop);
+    const quint16 port = reserveUdpPort();
+    QVERIFY(port != 0);
+    UDPGPSTransport transport(port, stop);
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     QVERIFY(!transport.fatalError());
-    const quint16 port = transport._socket->localPort();
     QUdpSocket first;
     QUdpSocket second;
     QVERIFY(first.bind(QHostAddress::LocalHost, 0));
@@ -47,9 +59,10 @@ void UDPGPSTransportTest::_receivesSelectedSender()
 void UDPGPSTransportTest::_idleSenderIsReplaced()
 {
     std::atomic_bool stop = false;
-    UDPGPSTransport transport(0, stop, 50);
+    const quint16 port = reserveUdpPort();
+    QVERIFY(port != 0);
+    UDPGPSTransport transport(port, stop, 50);
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
-    const quint16 port = transport._socket->localPort();
     QUdpSocket first;
     QUdpSocket second;
     QVERIFY(first.bind(QHostAddress::LocalHost, 0));

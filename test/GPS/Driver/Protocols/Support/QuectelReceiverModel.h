@@ -2,16 +2,20 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "GPSProtocolTestIO.h"
 #include "ReceiverEventQueue.h"
+#include "Support/ScriptedReceiver.h"
 
 namespace GPSTest {
 
@@ -34,7 +38,7 @@ inline std::string quectelSentence(std::string_view body)
     return '$' + std::string(body) + tail.data();
 }
 
-struct QuectelReceiver
+struct QuectelReceiver : public ScriptedReceiver::Model
 {
     enum class Fault
     {
@@ -85,6 +89,12 @@ struct QuectelReceiver
     size_t corrections = 0;
     size_t positions = 0;
     ReceiverEventQueue events{gps_test_time};
+    std::atomic_bool stop{false};
+    ScriptedReceiver scripted;
+
+    QuectelReceiver()
+        : scripted(stop, *this)
+    {}
 
     bool sent(std::string_view prefix) const
     {
@@ -168,6 +178,114 @@ struct QuectelReceiver
         events.schedule(1000000, [this, generation] { navigationTick(generation); });
     }
 
+    std::optional<QByteArray> takeCommand(QByteArray& pending) override
+    {
+        const int end = pending.indexOf("\r\n");
+        if (end < 0) {
+            return std::nullopt;
+        }
+        const QByteArray command = pending.first(end + 2);
+        pending.remove(0, end + 2);
+        return command;
+    }
+
+    void flushQueued(ScriptedReceiver& receiver)
+    {
+        if (!queued.empty()) {
+            receiver.queueReply(QByteArray::fromStdString(std::exchange(queued, {})));
+        }
+    }
+
+    void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline) override
+    {
+        events.advanceTo((std::min) (gps_test_time + 1000, deadline.untilUs));
+        flushQueued(receiver);
+        while (!receiver.hasQueuedReadData() && gps_test_time < deadline.untilUs) {
+            events.advanceToNext(deadline.untilUs);
+            flushQueued(receiver);
+        }
+    }
+
+    int readChunkSize(const ScriptedReceiver& receiver, int requested, int available) const override
+    {
+        Q_UNUSED(receiver)
+        return static_cast<int>((std::min) ({size_t(requested), size_t(available), chunk}));
+    }
+
+    GPSWriteResult handleCommand(ScriptedReceiver& receiver, const QByteArray& input,
+                                 const ScriptedReceiver::WriteContext&) override
+    {
+        const std::string wire(input.constData(), static_cast<size_t>(input.size()));
+        const auto command = wire.substr(1, wire.size() - 6);
+        if (quectelSentence(command) != wire) {
+            throw std::runtime_error("Invalid Quectel command framing");
+        }
+        commands.push_back(command);
+        const auto name = command.substr(0, command.find(','));
+        const bool injectFailure = !failure.empty() && command.starts_with(failure) && saves >= failAfterSaves &&
+                                   ++failureMatches == failureOccurrence;
+        if (injectFailure) {
+            failed = true;
+            if (fault == Fault::Partial) {
+                return {GPSWriteStatus::TimedOut, static_cast<int>(input.size()), 4};
+            }
+            if (fault == Fault::Cancel || fault == Fault::Silent) {
+                if (command == "PQTMSAVEPAR") {
+                    save();
+                }
+                return {GPSWriteStatus::Completed, static_cast<int>(input.size()), static_cast<int>(input.size())};
+            }
+            if (fault == Fault::Reject) {
+                events.schedule(responseDelayUs, [this, name] { queued += quectelSentence(name + ",ERROR,2"); });
+                return {GPSWriteStatus::Completed, static_cast<int>(input.size()), static_cast<int>(input.size())};
+            }
+        }
+        std::string reply;
+        if (command == "PQTMVERNO") {
+            if (!restarting && (!silentAfterReset || !sent("PQTMSRR"))) {
+                reply = identity;
+            }
+        } else if (command == "PQTMCFGRCVRMODE,R") {
+            reply = quectelSentence("PQTMCFGRCVRMODE,OK," + std::to_string(role));
+        } else if (command == "PQTMCFGRCVRMODE,W,1" || command == "PQTMCFGRCVRMODE,W,2") {
+            role = command.back() - '0';  // Readback is staged; activeRole changes only at boot.
+            reply = "$PQTMCFGRCVRMODE,OK*64\r\n";
+        } else if (command == "PQTMCFGFIXRATE,R") {
+            reply = "$PQTMCFGFIXRATE,OK,1000*0A\r\n";
+        } else if (command == "PQTMCFGSVIN,R") {
+            reply = quectelSentence("PQTMCFGSVIN,OK," + base);
+        } else if (command.starts_with("PQTMCFGSVIN,W,")) {
+            base = command.substr(std::string("PQTMCFGSVIN,W,").size());
+            restartSurvey = true;
+            reply = "$PQTMCFGSVIN,OK*70\r\n";
+        } else if (command == "PQTMSAVEPAR") {
+            save();
+            reply = "$PQTMSAVEPAR,OK*72\r\n";
+        } else if (command == "PQTMSRR") {
+            restarting = true;
+            if (!injectFailure || fault != Fault::Checksum) {
+                events.schedule(bootDelayUs, [this] { boot(); });
+            }
+        } else if (command.starts_with("PQTMCFGMSGRATE,W,")) {
+            const auto values = command.substr(std::string("PQTMCFGMSGRATE,W,").size());
+            rates[values.substr(0, values.find(','))] = values;
+            reply = "$PQTMCFGMSGRATE,OK*29\r\n";
+        } else if (command.starts_with("PQTMCFGMSGRATE,R,")) {
+            const auto values = command.substr(std::string("PQTMCFGMSGRATE,R,").size());
+            reply = quectelSentence("PQTMCFGMSGRATE,OK," + rates.at(values.substr(0, values.find(','))));
+        } else {
+            throw std::runtime_error("Unexpected command: " + command);
+        }
+        if (injectFailure && fault == Fault::Readback) {
+            reply = wrongReadback.empty() ? quectelSentence(name + ",OK,GGA,0") : wrongReadback;
+        } else if (injectFailure && fault == Fault::Checksum && !reply.empty()) {
+            reply[reply.size() - 4] = reply[reply.size() - 4] == '0' ? '1' : '0';
+        }
+        events.schedule(responseDelayUs, [this, reply] { queued += reply; });
+        Q_UNUSED(receiver)
+        return {GPSWriteStatus::Completed, static_cast<int>(input.size()), static_cast<int>(input.size())};
+    }
+
     GPSProtocolIO io()
     {
         startedUs = gps_test_time;
@@ -175,96 +293,18 @@ struct QuectelReceiver
         activeBase = savedBase = base;
         savedRates = rates;
         auto result = makeGPSProtocolTestIO();
+        scripted.clearReplies();
+        scripted.clearCommands();
         result.wait = [this](std::chrono::microseconds delay) {
             events.advanceTo(gps_test_time + delay.count());
             return !(failed && fault == Fault::Cancel);
         };
-        result.read = [this](std::span<uint8_t> output, GPSDeadline deadline) -> GPSReadResult {
-            events.advanceTo((std::min) (gps_test_time + 1000, deadline.untilUs));
+        scripted.setReadHandler([this](uint8_t*, int, int) -> std::optional<GPSReadResult> {
             if (failed && fault == Fault::Cancel) {
-                return {GPSReadStatus::Cancelled};
+                return std::optional<GPSReadResult>{GPSReadResult{GPSReadStatus::Cancelled}};
             }
-            while (queued.empty() && gps_test_time < deadline.untilUs) {
-                events.advanceToNext(deadline.untilUs);
-            }
-            if (queued.empty()) {
-                return {GPSReadStatus::TimedOut};
-            }
-            const auto count = (std::min) ({queued.size(), output.size(), chunk});
-            std::memcpy(output.data(), queued.data(), count);
-            queued.erase(0, count);
-            return {GPSReadStatus::Data, static_cast<int>(count)};
-        };
-        result.write = [this](std::span<const uint8_t> input, GPSDeadline) -> GPSWriteResult {
-            const std::string wire(reinterpret_cast<const char*>(input.data()), input.size());
-            const auto command = wire.substr(1, wire.size() - 6);
-            if (quectelSentence(command) != wire) {
-                throw std::runtime_error("Invalid Quectel command framing");
-            }
-            commands.push_back(command);
-            const auto name = command.substr(0, command.find(','));
-            const bool injectFailure = !failure.empty() && command.starts_with(failure) && saves >= failAfterSaves &&
-                                       ++failureMatches == failureOccurrence;
-            if (injectFailure) {
-                failed = true;
-                if (fault == Fault::Partial) {
-                    return {GPSWriteStatus::TimedOut, static_cast<int>(input.size()), 4};
-                }
-                if (fault == Fault::Cancel || fault == Fault::Silent) {
-                    if (command == "PQTMSAVEPAR") {
-                        save();
-                    }
-                    return {GPSWriteStatus::Completed, static_cast<int>(input.size()), static_cast<int>(input.size())};
-                }
-                if (fault == Fault::Reject) {
-                    events.schedule(responseDelayUs, [this, name] { queued += quectelSentence(name + ",ERROR,2"); });
-                    return {GPSWriteStatus::Completed, static_cast<int>(input.size()), static_cast<int>(input.size())};
-                }
-            }
-            std::string reply;
-            if (command == "PQTMVERNO") {
-                if (!restarting && (!silentAfterReset || !sent("PQTMSRR"))) {
-                    reply = identity;
-                }
-            } else if (command == "PQTMCFGRCVRMODE,R") {
-                reply = quectelSentence("PQTMCFGRCVRMODE,OK," + std::to_string(role));
-            } else if (command == "PQTMCFGRCVRMODE,W,1" || command == "PQTMCFGRCVRMODE,W,2") {
-                role = command.back() - '0';  // Readback is staged; activeRole changes only at boot.
-                reply = "$PQTMCFGRCVRMODE,OK*64\r\n";
-            } else if (command == "PQTMCFGFIXRATE,R") {
-                reply = "$PQTMCFGFIXRATE,OK,1000*0A\r\n";
-            } else if (command == "PQTMCFGSVIN,R") {
-                reply = quectelSentence("PQTMCFGSVIN,OK," + base);
-            } else if (command.starts_with("PQTMCFGSVIN,W,")) {
-                base = command.substr(std::string("PQTMCFGSVIN,W,").size());
-                restartSurvey = true;
-                reply = "$PQTMCFGSVIN,OK*70\r\n";
-            } else if (command == "PQTMSAVEPAR") {
-                save();
-                reply = "$PQTMSAVEPAR,OK*72\r\n";
-            } else if (command == "PQTMSRR") {
-                restarting = true;
-                if (!injectFailure || fault != Fault::Checksum) {
-                    events.schedule(bootDelayUs, [this] { boot(); });
-                }
-            } else if (command.starts_with("PQTMCFGMSGRATE,W,")) {
-                const auto values = command.substr(std::string("PQTMCFGMSGRATE,W,").size());
-                rates[values.substr(0, values.find(','))] = values;
-                reply = "$PQTMCFGMSGRATE,OK*29\r\n";
-            } else if (command.starts_with("PQTMCFGMSGRATE,R,")) {
-                const auto values = command.substr(std::string("PQTMCFGMSGRATE,R,").size());
-                reply = quectelSentence("PQTMCFGMSGRATE,OK," + rates.at(values.substr(0, values.find(','))));
-            } else {
-                throw std::runtime_error("Unexpected command: " + command);
-            }
-            if (injectFailure && fault == Fault::Readback) {
-                reply = wrongReadback.empty() ? quectelSentence(name + ",OK,GGA,0") : wrongReadback;
-            } else if (injectFailure && fault == Fault::Checksum && !reply.empty()) {
-                reply[reply.size() - 4] = reply[reply.size() - 4] == '0' ? '1' : '0';
-            }
-            events.schedule(responseDelayUs, [this, reply] { queued += reply; });
-            return {GPSWriteStatus::Completed, static_cast<int>(input.size()), static_cast<int>(input.size())};
-        };
+            return std::nullopt;
+        });
         result.commandFinished = [this](const GPSCommandResult& outcome) { outcomes.push_back(outcome); };
         result.decoded = [this](const GPSDecodedBatch& batch) {
             if (batch.events.size() > GPSDecodedBatch::MAX_EVENTS) {
@@ -278,7 +318,7 @@ struct QuectelReceiver
                 positions += std::holds_alternative<GPSNativePositionReport>(event);
             }
         };
-        return result;
+        return scripted.makeIO(std::move(result));
     }
 };
 

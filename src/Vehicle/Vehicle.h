@@ -16,7 +16,6 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "GPSObservation.h"
 #include "QGCMAVLink.h"
 #include "VehicleFactGroup.h"
 #include "VehicleSigningController.h"  // Q_PROPERTY needs the full QObject type for moc/QML metatype registration
@@ -34,7 +33,6 @@ class AutoPilotPlugin;
 class BatteryFactGroupListModel;
 class EscStatusFactGroupListModel;
 class GimbalController;
-class GPSSourceHealth;
 class RadioStatusFactGroup;
 class TerrainFactGroup;
 class VehicleClockFactGroup;
@@ -110,7 +108,6 @@ class Vehicle : public VehicleFactGroup, public VehicleTypes
     friend class SendMavCommandWithSignallingTest;  // Unit test
     friend class SendMavCommandWithHandlerTest;     // Unit test
     friend class RequestMessageTest;                // Unit test
-    friend class NTRIPGgaProviderTest;
     friend class RetryableRequestMessageStateTest;  // Unit test
 #endif
     friend class GimbalController;                  // Allow GimbalController to call _addFactGroup
@@ -416,7 +413,6 @@ public:
 
     QGeoCoordinate coordinate() { return _coordinate; }
 
-    std::optional<GPSObservation> acceptedPositionObservation() const;
     QGeoCoordinate armedPosition    () { return _armedPosition; }
 
     qreal getInitialGCSPressure() const { return _initialGCSPressure; }
@@ -756,6 +752,9 @@ public slots:
 
 signals:
     void coordinateChanged              (QGeoCoordinate coordinate);
+    /// Emitted for every global position report, including an unchanged position. An invalid coordinate means the
+    /// vehicle reported that it has no position.
+    void positionReported(const QGeoCoordinate& coordinate);
     void mavlinkMessageReceived         (const mavlink_message_t& message);
     void homePositionChanged            (const QGeoCoordinate& homePosition);
     void armedPositionChanged();
@@ -878,7 +877,6 @@ private:
     void _handleCommandAck              (mavlink_message_t& message);
     void _handleGpsRawInt               (mavlink_message_t& message);
     void _handleGlobalPositionInt       (mavlink_message_t& message);
-    void _updatePositionObservation(const QGeoCoordinate& coordinate);
     void _handleHighLatency             (mavlink_message_t& message);
     void _handleHighLatency2            (mavlink_message_t& message);
     void _handleOrbitExecutionStatus    (const mavlink_message_t& message);
@@ -938,7 +936,6 @@ private:
     bool _isActiveVehicle = false;
 
     QGeoCoordinate  _coordinate;
-    GPSSourceHealth* _positionHealth = nullptr;
     QGeoCoordinate  _homePosition;
     QGeoCoordinate  _armedPosition;
 

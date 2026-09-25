@@ -1,6 +1,8 @@
 #include "GPSProviderTest.h"
 
 #include <cmath>
+#include <memory>
+#include <optional>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
@@ -11,12 +13,13 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
 
+#include "Driver/Support/FemtoReceiverModel.h"
+#include "Driver/Support/SBFReceiverModel.h"
+#include "Driver/Support/ScriptedReceiver.h"
 #include "GPSDriver.h"
 #include "GPSProvider.h"
 #include "GPSReceiverConfig.h"
 #include "NMEAUtils.h"
-#include "ScriptedGPSTransport.h"
-#include "ScriptedSBFReceiver.h"
 #include "UnitTest.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
@@ -156,42 +159,36 @@ struct TransportTrace
     bool factoryAliveDuringDestruction = false;
 };
 
-class TestTransport : public ScriptedGPSTransport
+class TestTransport : public ScriptedReceiver
 {
 public:
     TestTransport(const std::atomic_bool& requestStop, TransportTrace& trace, std::function<void()> stop,
                   bool openResult, bool cancelInOpen)
-        : ScriptedGPSTransport(requestStop)
+        : ScriptedReceiver(requestStop)
         , _trace(trace)
         , _stop(stop)
         , _openResult(openResult)
         , _cancelInOpen(cancelInOpen)
     {
         _trace.constructedOn = QThread::currentThread();
+        setOpenHandler([this] {
+            _trace.openedOn = QThread::currentThread();
+            if (_cancelInOpen) {
+                _stop();
+            }
+            return GPSOpenResult{_openResult ? GPSOpenStatus::Opened : GPSOpenStatus::Error};
+        });
+        setReadHandler(
+            [](uint8_t*, int, int) -> std::optional<GPSReadResult> { return GPSReadResult{GPSReadStatus::Error}; });
+        setWriteHandler([](const QByteArray&, const ScriptedReceiver::WriteContext&) {
+            return std::optional<GPSWriteResult>{GPSWriteResult{GPSWriteStatus::Error}};
+        });
     }
 
     ~TestTransport() override
     {
         _trace.destroyedOn = QThread::currentThread();
         _trace.factoryAliveDuringDestruction = !_trace.factoryLifetime.expired();
-    }
-
-protected:
-    std::optional<GPSOpenResult> handleOpen() override
-    {
-        _trace.openedOn = QThread::currentThread();
-        // Stop before receiver configuration; this test exercises transport ownership only.
-        if (_cancelInOpen) {
-            _stop();
-        }
-        return GPSOpenResult{_openResult ? GPSOpenStatus::Opened : GPSOpenStatus::Error};
-    }
-
-    std::optional<GPSReadResult> handleRead(uint8_t*, int, int) override { return GPSReadResult{GPSReadStatus::Error}; }
-
-    std::optional<GPSWriteResult> handleWrite(const QByteArray&, QDeadlineTimer) override
-    {
-        return GPSWriteResult{GPSWriteStatus::Error};
     }
 
 private:
@@ -321,70 +318,56 @@ void GPSProviderTest::_workerLifecycle()
 UT_REGISTER_TEST(GPSProviderTest, TestLabel::Unit)
 
 namespace {
-class FemtoAckTransport : public ScriptedGPSTransport
+class FemtoAckTransport : public ScriptedReceiver
 {
 public:
     explicit FemtoAckTransport(const std::atomic_bool& stop)
-        : ScriptedGPSTransport(stop)
-    {}
-
-protected:
-    std::optional<GPSReadResult> handleRead(uint8_t* bytes, int size, int) override
+        : ScriptedReceiver(stop)
     {
-        if (!hasQueuedReadData()) {
-            return GPSReadResult{GPSReadStatus::Error, 0, QStringLiteral("Scripted receiver connection lost")};
-        }
-        return readQueued(bytes, size);
+        _model.failIdleReads = true;
+        setModel(&_model);
     }
 
-    std::optional<GPSWriteResult> handleWrite(const QByteArray& command, QDeadlineTimer) override
-    {
-        QByteArray reply = '<' + command.split(' ').first().trimmed() + " OK";
-        reply.append(char(0));
-        clearReadQueue();
-        queueReadChunk(reply);
-        const int size = command.size();
-        return GPSWriteResult{GPSWriteStatus::Completed, size, size};
-    }
+private:
+    FemtoReceiverModel _model;
 };
 
-class ExpiringSatelliteTransport : public ScriptedGPSTransport
+class ExpiringSatelliteTransport : public ScriptedReceiver
 {
 public:
     static constexpr int POSITION_AT_MS = 2000;
 
     ExpiringSatelliteTransport(const std::atomic_bool& stop, std::atomic<qint64>& lastPositionAtMs)
-        : ScriptedGPSTransport(stop)
+        : ScriptedReceiver(stop)
         , _lastPositionAtMs(lastPositionAtMs)
-    {}
+    {
+        setReadHandler([this](uint8_t*, int, int timeoutMs) -> std::optional<GPSReadResult> {
+            if (!hasQueuedReadData() && timeoutMs > 0) {
+                const qint64 untilPosition =
+                    _sentPosition ? timeoutMs : qMax(qint64{0}, POSITION_AT_MS - _elapsed.elapsed());
+                QThread::msleep(static_cast<unsigned long>(qMin(qint64{timeoutMs}, untilPosition)));
+            }
+            if (isCancelled()) {
+                return GPSReadResult{GPSReadStatus::Cancelled};
+            }
+            if (!_sentPosition && _elapsed.elapsed() >= POSITION_AT_MS) {
+                _sentPosition = true;
+                queueReply(position());
+                _lastPositionAtMs = _elapsed.elapsed();
+            }
+            return std::nullopt;
+        });
+    }
 
     GPSOpenResult open() override
     {
+        const auto result = ScriptedReceiver::open();
         _elapsed.start();
         _sentPosition = false;
-        clearReadQueue();
-        queueReadChunk("$GPGSV,1,1,01,01,10,20,30*79\r\n" + position());
+        clearReplies();
+        queueReply("$GPGSV,1,1,01,01,10,20,30*79\r\n" + position());
         _lastPositionAtMs = 0;
-        return ScriptedGPSTransport::open();
-    }
-
-protected:
-    std::optional<GPSReadResult> handleRead(uint8_t* bytes, int size, int timeoutMs) override
-    {
-        if (!hasQueuedReadData() && timeoutMs > 0) {
-            const qint64 untilPosition =
-                _sentPosition ? timeoutMs : qMax(qint64{0}, POSITION_AT_MS - _elapsed.elapsed());
-            QThread::msleep(static_cast<unsigned long>(qMin(qint64{timeoutMs}, untilPosition)));
-        }
-        if (isCancelled()) {
-            return GPSReadResult{GPSReadStatus::Cancelled};
-        }
-        if (!_sentPosition && _elapsed.elapsed() >= POSITION_AT_MS) {
-            _sentPosition = true;
-            queueReadChunk(position());
-            _lastPositionAtMs = _elapsed.elapsed();
-        }
-        return readQueued(bytes, size);
+        return result;
     }
 
 private:
@@ -395,32 +378,30 @@ private:
     std::atomic<qint64>& _lastPositionAtMs;
 };
 
-class FixSequenceTransport : public ScriptedGPSTransport
+class FixSequenceTransport : public ScriptedReceiver
 {
 public:
     explicit FixSequenceTransport(const std::atomic_bool& stop)
-        : ScriptedGPSTransport(stop)
-    {}
+        : ScriptedReceiver(stop)
+    {
+        setReadHandler([this](uint8_t*, int, int) -> std::optional<GPSReadResult> {
+            if (!hasQueuedReadData()) {
+                return GPSReadResult{GPSReadStatus::Cancelled};
+            }
+            return std::nullopt;
+        });
+    }
 
     GPSOpenResult open() override
     {
-        clearReadQueue();
+        const auto result = ScriptedReceiver::open();
         QByteArray pending;
         for (const int quality : {0, 0, 1, 1, 4, 4, 0}) {
             pending += NMEAUtils::repairChecksum("$GPGGA,123519,4807.038,N,01131.000,E," + QByteArray::number(quality) +
                                                  ",08,0.9,545.4,M,46.9,M,,");
         }
-        queueReadChunk(pending);
-        return ScriptedGPSTransport::open();
-    }
-
-protected:
-    std::optional<GPSReadResult> handleRead(uint8_t* bytes, int size, int) override
-    {
-        if (!hasQueuedReadData()) {
-            return GPSReadResult{GPSReadStatus::Cancelled};
-        }
-        return readQueued(bytes, size);
+        queueReply(pending);
+        return result;
     }
 };
 }  // namespace
@@ -505,14 +486,13 @@ void GPSProviderTest::_ancillaryTraffic_data()
 void GPSProviderTest::_ancillaryTraffic()
 {
     QFETCH(bool, sendUsage);
-    ScriptedSBFReceiver* peer = nullptr;
+    auto model = std::make_shared<SBFReceiverModel>();
+    SBFReceiverModel* peer = model.get();
     QElapsedTimer streamingTime;
     GPSProvider provider(
-        [&](const std::atomic_bool& stop) {
-            auto transport = std::make_unique<ScriptedSBFReceiver>(stop);
-            transport->sendUsage = sendUsage;
-            peer = transport.get();
-            return transport;
+        [model, sendUsage](const std::atomic_bool& stop) {
+            model->sendUsage = sendUsage;
+            return std::make_unique<ScriptedReceiver>(stop, model.get());
         },
         GPSType::septentrio,
         {.base = {.mode = GPSBaseStationConfig::Fixed{

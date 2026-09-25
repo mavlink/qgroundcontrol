@@ -1,5 +1,7 @@
 #include "NTRIPSourceTableControllerTest.h"
 
+#include <chrono>
+
 #include <QtCore/QAbstractItemModel>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QUrl>
@@ -15,10 +17,12 @@
 #include <QtTest/QTest>
 
 #include "LocalHttpTestServer.h"
+#include "ManualScheduler.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPSettings.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
+#include "ScriptedNtripCaster.h"
 #include "SettingsManager.h"
 
 static NTRIPConnectionConfig casterConfig(const QString& host, int port = 2101)
@@ -212,27 +216,10 @@ void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges()
         QSKIP("No TLS backend available");
     }
 
-    const QSslCertificate cert(kTestServerCertPem, QSsl::Pem);
-    QVERIFY(!cert.isNull());
-    const QSslKey key(kTestServerKeyPem, QSsl::Rsa, QSsl::Pem);
-    QVERIFY(!key.isNull());
+    ScriptedNtripCaster caster(ScriptedNtripCaster::Transport::Tls);
+    QVERIFY(caster.isListening());
 
-    QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
-    sslConfig.setLocalCertificate(cert);
-    sslConfig.setPrivateKey(key);
-
-    QHttpServer httpServer;
-    QSslServer server;
-    server.setSslConfiguration(sslConfig);
-    QVERIFY(server.listen(QHostAddress::LocalHost));
-
-    httpServer.route("/", []() { return QHttpServerResponse("text/plain", kValidTable.toUtf8()); });
-    QVERIFY(httpServer.bind(&server));
-
-    NTRIPConnectionConfig config;
-    config.host = QStringLiteral("127.0.0.1");
-    config.port = server.serverPort();
-    config.useTls = true;
+    NTRIPConnectionConfig config = caster.connectionConfig(QString());
     config.allowSelfSignedCerts = true;
 
     // The certificate policy is the subject here; the session reports each TLS decision.
@@ -240,11 +227,26 @@ void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges()
                      QRegularExpression(QStringLiteral("^(TLS error:|Accepting self-signed|Rejecting self-signed)")));
     NTRIPSourceTableController ctrl;
     ctrl.fetch(config);
+    const auto respond = [&]() {
+        auto* connection = caster.waitForConnection();
+        QVERIFY(connection && connection->peer);
+        QVERIFY(connection->waitForRequest().startsWith("GET / HTTP/1.1"));
+        const QByteArray body = kValidTable.toUtf8();
+        const QByteArray response =
+            "HTTP/1.1 200 OK\r\nContent-Length: " + QByteArray::number(body.size()) + "\r\n\r\n" + body;
+        QCOMPARE(connection->write(response), response.size());
+    };
 
     if (!duringFetch) {
+        respond();
         QTRY_COMPARE_WITH_TIMEOUT(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
                                   TestTimeout::mediumMs());
         QCOMPARE(ctrl.mountpointModel()->rowCount(), 1);
+    } else {
+        auto* connection = caster.waitForConnection();
+        QVERIFY(connection && connection->peer);
+        QVERIFY(connection->waitForRequest().startsWith("GET / HTTP/1.1"));
+        connection->disconnectFromHost();
     }
     config.allowSelfSignedCerts = false;
     ctrl.fetch(config);
@@ -254,6 +256,7 @@ void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges()
 
     config.allowSelfSignedCerts = true;
     ctrl.fetch(config);
+    respond();
     QTRY_VERIFY_WITH_TIMEOUT(ctrl.fetchStatus() != NTRIPSourceTableController::FetchStatus::InProgress,
                              TestTimeout::mediumMs());
     QVERIFY2(ctrl.fetchStatus() == NTRIPSourceTableController::FetchStatus::Success, qPrintable(ctrl.fetchError()));
@@ -262,7 +265,8 @@ void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges()
 
 void NTRIPSourceTableControllerTest::testCacheTtlPreventsFetch()
 {
-    NTRIPSourceTableController ctrl;
+    ManualScheduler scheduler;
+    NTRIPSourceTableController ctrl(nullptr, &scheduler);
 
     ctrl.fetch(casterConfig(QStringLiteral("caster.example.com")));
     QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
@@ -278,6 +282,10 @@ void NTRIPSourceTableControllerTest::testCacheTtlPreventsFetch()
 
     QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
     QVERIFY(statusSpy.count() >= 1);
+
+    QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(NTRIPSourceTableController::kCacheTtlMs + 1)));
+    ctrl.fetch(casterConfig(QStringLiteral("caster.example.com")));
+    QCOMPARE(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
 }
 
 void NTRIPSourceTableControllerTest::testConfigChangeInvalidatesCache()

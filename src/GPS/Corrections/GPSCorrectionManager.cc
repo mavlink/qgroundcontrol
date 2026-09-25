@@ -1,6 +1,7 @@
 #include "GPSCorrectionManager.h"
 
 #include <algorithm>
+#include <chrono>
 #include <utility>
 
 #include <QtCore/QScopeGuard>
@@ -8,15 +9,17 @@
 #include <QtNetwork/QNetworkInterface>
 
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.Corrections.GPSCorrectionManager")
 
-GPSCorrectionManager::GPSCorrectionManager(QObject* parent)
+GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
+    , _diagnosticsTask(_scheduler, this)
+    , _healthTask(_scheduler, this)
     , _router(this)
     , _eventModel(this)
-    , _diagnosticsTimer(this)
-    , _healthTimer(this)
     , _rtcmMavlink(this)
     , _udpInput(0, this)
 {
@@ -35,15 +38,7 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent)
                           }
                           return results;
                       }});
-    _diagnosticsTimer.setSingleShot(true);
-    _diagnosticsTimer.setInterval(100);
-    connect(&_diagnosticsTimer, &QTimer::timeout, this, &GPSCorrectionManager::_refreshDiagnostics);
-    _healthTimer.setInterval(1000);
-    connect(&_healthTimer, &QTimer::timeout, this, [this]() {
-        _router.sampleReceivedByteRates(GPSCorrectionFrame::monotonicNowMs());
-        _refreshDiagnostics();
-    });
-    _healthTimer.start();
+    _scheduleHealthSample();
     _sourceModel.setRows(_router.sourceDiagnostics());
     _destinationModel.setRows(_router.destinationDiagnostics());
 }
@@ -255,9 +250,22 @@ void GPSCorrectionManager::_scheduleSourcesChanged()
             _finalDiagnosticsPending = false;
             QMetaObject::invokeMethod(this, &GPSCorrectionManager::_refreshDiagnostics, Qt::QueuedConnection);
         }
-    } else if (!_diagnosticsTimer.isActive()) {
-        _diagnosticsTimer.start();
+    } else if (!_diagnosticsTask.active()) {
+        _diagnosticsTask.schedule(std::chrono::milliseconds(100), [this]() { _refreshDiagnostics(); });
     }
+}
+
+void GPSCorrectionManager::_scheduleHealthSample()
+{
+    _healthTask.schedule(std::chrono::milliseconds(1000), [this]() {
+        if (_shutdown) {
+            return;
+        }
+        // Re-arm first: refresh observers may shut down or delete the manager, which cancels the next sample.
+        _scheduleHealthSample();
+        _router.sampleReceivedByteRates(_scheduler->nowMs());
+        _refreshDiagnostics();
+    });
 }
 
 void GPSCorrectionManager::shutdown()
@@ -269,8 +277,8 @@ void GPSCorrectionManager::shutdown()
     const QPointer<GPSCorrectionManager> guard(this);
     _shutdown = true;
     _finalDiagnosticsPending = true;
-    _healthTimer.stop();
-    _diagnosticsTimer.stop();
+    _healthTask.cancel();
+    _diagnosticsTask.cancel();
     _rtcmMavlink.setOutputProvider({});
     if (!guard) {
         return;

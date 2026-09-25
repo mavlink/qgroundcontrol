@@ -32,9 +32,11 @@ Configure drone Remote ID broadcast settings to comply with FAA or EU regulation
 
 ## GCS Position
 
-Shows the GCS position source in use, its status, and the current latitude, longitude, and
-horizontal accuracy. The source and an external GNSS receiver used for the live position are
-configured on the [GNSS Receiver](gnss_receiver.md) page.
+Read-only display of current GCS latitude, longitude, and HDOP.
+
+## GPS Location
+
+Configure an external NMEA GPS device for GCS position (device, baudrate, port selection).
 
 ## EU Vehicle Info (EU region only)
 

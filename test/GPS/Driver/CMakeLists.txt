@@ -10,8 +10,20 @@ option(QGC_BUILD_GPS_HARDWARE_TESTS "Build the GPS receiver qualification runner
 
 add_subdirectory(Protocols)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverTest.cc GPSDriverTest.h GPSDriverReentrancyTest.cc
-                                             GPSNativeDataTest.cc ScriptedUBXReceiver.cc
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE GPSDriverTest.cc
+            GPSDriverTest.h
+            GPSDriverReentrancyTest.cc
+            GPSNativeDataTest.cc
+            Support/SBFReceiverModel.h
+            Support/ScriptedReceiver.cc
+            Support/UBXReceiverModel.cc
+)
+set_property(
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Support/UBXReceiverModel.cc" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS QGC_GPS_TEST_CLOCK
 )
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSNative)
 add_qgc_test(GPSDriverTest LABELS Unit GPS TIMEOUT 240)

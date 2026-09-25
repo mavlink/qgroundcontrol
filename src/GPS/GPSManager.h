@@ -6,12 +6,15 @@
 class Fact;
 class GPSCorrectionManager;
 class GPSRtk;
+class GPSSourceHealth;
 class NTRIPManager;
 class QTimer;
+class Vehicle;
 
 class GPSManager : public QObject
 {
     Q_OBJECT
+    friend class GPSManagerTest;
     friend class RTKConnectionPolicyTest;
     QML_ELEMENT
     QML_UNCREATABLE("")
@@ -59,6 +62,8 @@ private:
     void _updateCorrectionState();
 
     void _configureNtripProviders();
+    /// Tracks the active vehicle's position reports for the Vehicle EKF GGA source.
+    void _trackActiveVehicle(Vehicle* vehicle);
 
     void _updateConnections();
     QTimer* _connectionTimer = nullptr;
@@ -66,6 +71,8 @@ private:
     GPSRtk* _gpsRtk = nullptr;
     NTRIPManager* _ntripManager = nullptr;
     Fact* const _udpInputEnabled;
+    GPSSourceHealth* const _vehiclePositionHealth;
+    QMetaObject::Connection _vehiclePositionConnection;
     CorrectionState _correctionState = CorrectionState::Inactive;
     bool _startupConnectPending = false;
     bool _shutdown = false;

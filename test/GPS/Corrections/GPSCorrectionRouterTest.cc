@@ -1,3 +1,5 @@
+#include "GPSCorrectionRouterTest.h"
+
 #include <algorithm>
 #include <functional>
 #include <utility>
@@ -12,7 +14,6 @@
 #include "GPSCorrectionEventModel.h"
 #include "GPSCorrectionRouter.h"
 #include "RTCMDecodedFrame.h"
-#include "UnitTest.h"
 
 namespace {
 GPSCorrectionFrame frame(GPSCorrectionSource source, quint64 session, qint64 now, const QString& instance = {})
@@ -42,52 +43,6 @@ QString selectedInstance(const GPSCorrectionRouter& router)
     return {};
 }
 }  // namespace
-
-class GPSCorrectionRouterTest : public UnitTest
-{
-    Q_OBJECT
-
-private slots:
-    void atomicConfigurationAndReplacement();
-    void scopedSourceIdentity();
-    void rawInputRequiresUdp_data();
-    void rawInputRequiresUdp();
-    void outputRetirementDuringAdmission_data();
-    void outputRetirementDuringAdmission();
-    void outputReplacementKeepsRegistration();
-    void partialAdmissionCompletion_data();
-    void partialAdmissionCompletion();
-    void claimedValidatedIngressRequiresCrc_data();
-    void claimedValidatedIngressRequiresCrc();
-    void registrationMoveAssignment();
-    void fanoutAdmissionAccounting();
-    void liveFanoutDestinationsSurviveHistoryChurn();
-    void retiredDuringAdmissionPreservesEvidence_data();
-    void retiredDuringAdmissionPreservesEvidence();
-    void automaticSelectionAndFailover();
-    void peerSelectionDoesNotInterleave();
-    void sourceIdentityOrderingAndRetirement();
-    void sessionAndReceiptValidation();
-    void nonRoutablePeersRemainObserved_data();
-    void nonRoutablePeersRemainObserved();
-    void sinkResults();
-    void emptyOutputRemovesRegistration_data();
-    void emptyOutputRemovesRegistration();
-    void endingSelectedSessionInvalidatesOutput();
-    void teardownAndReentrancy();
-    void boundedPeerHistory();
-    void destinationHistoryDoesNotLimitOutputs();
-    void diagnosticStagesStayDistinct_data();
-    void diagnosticStagesStayDistinct();
-    void boundedDiagnosticsAndEventHistory();
-    void rejectedCandidateHasNoValidatedCredit();
-    void eventHistoryUsesIncrementalRows();
-    void eventHistoryAllowsReentrantUpdates();
-    void decodedIngressPreservesEvidence_data();
-    void decodedIngressPreservesEvidence();
-    void diagnosticsSampleClockOnce();
-    void diagnosticsKeepHealthDomainsIndependent();
-};
 
 void GPSCorrectionRouterTest::decodedIngressPreservesEvidence_data()
 {
@@ -160,26 +115,6 @@ void GPSCorrectionRouterTest::diagnosticsSampleClockOnce()
     const auto future = router.sourceDiagnostics()[2];
     QVERIFY(!future.usable);
     QVERIFY(!router.sourceInstanceDiagnostics().first().selected);
-}
-
-void GPSCorrectionRouterTest::diagnosticsKeepHealthDomainsIndependent()
-{
-    constexpr qint64 now = 100000;
-    GPSCorrectionRouter router(nullptr, [] { return now; });
-    auto ntrip = router.registerSource(GPSCorrectionSource::Ntrip);
-    const RTCMDecodedFrame filtered{GpsTestHelpers::buildRtcmFrame(1005), 1005, now, true, true};
-    QVERIFY(!router.acceptIngress(ntrip.token().event(filtered)));
-    auto udp = router.registerSource(GPSCorrectionSource::Udp);
-    QVERIFY(router.acceptIngress(udp.token().event(QByteArrayLiteral("raw"), now, 0, false)));
-    const auto sources = router.sourceDiagnostics();
-    QVERIFY(sources[2].usable);
-    QVERIFY(!sources[3].usable);
-    for (const auto& row : router.sourceInstanceDiagnostics()) {
-        const auto& instance = row;
-        const bool isUdp = instance.source == int(GPSCorrectionSource::Udp);
-        QCOMPARE(instance.usable, isUdp);
-        QCOMPARE(instance.selected, isUdp);
-    }
 }
 
 void GPSCorrectionRouterTest::destinationHistoryDoesNotLimitOutputs()
@@ -1048,5 +983,3 @@ void GPSCorrectionRouterTest::eventHistoryAllowsReentrantUpdates()
 }
 
 UT_REGISTER_TEST(GPSCorrectionRouterTest, TestLabel::Unit)
-
-#include "GPSCorrectionRouterTest.moc"

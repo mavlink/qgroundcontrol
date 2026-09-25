@@ -12,7 +12,6 @@
 #include "QGCLoggingCategory.h"
 #include "RTCMFramer.h"
 #include "RTKConnectionPolicy.h"
-#include "RTKSettings.h"
 #include "TCPGPSTransport.h"
 #include "UDPGPSTransport.h"
 
@@ -29,11 +28,10 @@
 
 QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.RTK.GPSRtk")
 
-GPSRtk::GPSRtk(RTKSettings* settings, AutoConnectSettings* autoConnectSettings, QObject* parent)
+GPSRtk::GPSRtk(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
-    , _settings(settings)
     , _gpsRtkFactGroup(std::make_shared<GPSRTKFactGroup>())
-    , _positionHealth(new GPSSourceHealth(this))
+    , _positionHealth(new GPSSourceHealth(this, scheduler))
 {
     qCDebug(GPSRtkLog) << this;
     // A silent receiver stays connected, so its last solution must not remain on display.
@@ -42,13 +40,46 @@ GPSRtk::GPSRtk(RTKSettings* settings, AutoConnectSettings* autoConnectSettings, 
             _stageStaleSolution();
         }
     });
-    _connection = new RTKConnectionPolicy(*this, settings, autoConnectSettings, this);
+    _connection = new RTKConnectionPolicy(*this, this, scheduler);
     connect(_connection, &RTKConnectionPolicy::reconnectingChanged, this, &GPSRtk::_notifyReceiverChanged);
+    connect(_connection, &RTKConnectionPolicy::autoConnectDisabled, this, &GPSRtk::autoConnectDisabled);
+    _providerFactory = [](GPSProvider::TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
+                          QObject* providerParent) {
+        return new GPSProvider(std::move(transportFactory), type, config, providerParent);
+    };
 #ifndef QGC_NO_SERIAL_LINK
     _serialTransportFactory = [](const QString& device, const std::atomic_bool& stop) {
         return std::make_unique<SerialGPSTransport>(device, stop);
     };
 #endif
+}
+
+void GPSRtk::setConfiguration(const Configuration& configuration)
+{
+    if (_configuration == configuration) {
+        return;
+    }
+    _configuration = configuration;
+    _connection->setConfiguration(configuration);
+}
+
+void GPSRtk::setProviderFactory(ProviderFactory factory)
+{
+    if (_destroying) {
+        return;
+    }
+    if (hasReceiver()) {
+        qCWarning(GPSRtkLog) << "Inject the provider factory before connecting a receiver";
+        return;
+    }
+    if (factory) {
+        _providerFactory = std::move(factory);
+        return;
+    }
+    _providerFactory = [](GPSProvider::TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
+                          QObject* parent) {
+        return new GPSProvider(std::move(transportFactory), type, config, parent);
+    };
 }
 
 GPSRtk::~GPSRtk()
@@ -102,12 +133,6 @@ void GPSRtk::_setError(GPSConnectionError error, const QString& message)
     if (std::exchange(_errorMessage, message) != message) {
         _notifications.emitSignal(this, &GPSRtk::errorMessageChanged);
     }
-}
-
-QGeoCoordinate GPSRtk::basePosition() const
-{
-    const auto position = _session.basePosition ? std::optional(_session.basePosition->first) : _session.surveyPosition;
-    return position ? QGeoCoordinate(position->latitudeDegrees, position->longitudeDegrees) : QGeoCoordinate();
 }
 
 void GPSRtk::_onGPSConnect(const QString& identity)
@@ -178,20 +203,14 @@ void GPSRtk::_onGPSSurveyReport(const GPSSurveyReport& status)
         return;
     }
     const GPSNotificationQueue::Scope publish(_notifications);
-    if (_session.baseMode != static_cast<int>(BaseModeDefinition::Mode::BaseFixed)) {
-        const auto previous = basePosition();
-        const bool wasFinal = basePositionFinal();
+    if (_session.baseMode != 1) {
         const bool located = qIsFinite(status.position.latitudeDegrees) && qIsFinite(status.position.longitudeDegrees);
         const double accuracy =
             status.meanAccuracyMeters.value_or(_session.surveyAccuracyLimitMeters.value_or(qQNaN()));
-        _session.surveyPosition = located ? std::optional(status.position) : std::nullopt;
         if (status.valid && located && qIsFinite(accuracy)) {
             _session.basePosition = std::pair(status.position, accuracy);
         } else {
             _session.basePosition.reset();
-        }
-        if (basePosition() != previous || basePositionFinal() != wasFinal) {
-            _notifications.emitSignal(this, &GPSRtk::basePositionChanged);
         }
     }
     auto& facts = *_gpsRtkFactGroup;
@@ -290,8 +309,7 @@ GPSRtk::ReceiverRole GPSRtk::_roleFor(GPSType type) const
     if (type != GPSType::passive) {
         return ConfiguredBase;
     }
-    const auto saved = static_cast<ReceiverRole>(_settings->receiverRole()->rawValue().toInt());
-    return saved == PositionOnly ? PositionOnly : Passive;
+    return _configuration.receiverRole == PositionOnly ? PositionOnly : Passive;
 }
 
 bool GPSRtk::serialSupported() const
@@ -379,39 +397,39 @@ void GPSRtk::setCorrectionManager(GPSCorrectionManager* manager)
     _correctionManager = manager;
 }
 
-QString GPSRtk::_receiverConfig(GPSType type, RTKSettings* settings, uint32_t baudRate, GPSReceiverConfig& config,
-                                bool allowPersistentChanges)
+QString GPSRtk::_receiverConfig(GPSType type, const Configuration& configuration, uint32_t baudRate,
+                                GPSReceiverConfig& config, bool allowPersistentChanges)
 {
     config = GPSReceiverConfig{.baudRate = baudRate, .allowPersistentChanges = allowPersistentChanges};
     if (type == GPSType::passive) {
         config.role = GPSReceiverConfig::Role::Passive;
         return gpsReceiverConfigError(type, config);
     }
-    switch (static_cast<BaseModeDefinition::Mode>(settings->useFixedBasePosition()->rawValue().toInt())) {
-        case BaseModeDefinition::Mode::BaseFixed:
+    switch (configuration.baseMode) {
+        case 1:
             config.base.mode = GPSBaseStationConfig::Fixed{
-                .position = {.latitudeDegrees = settings->fixedBasePositionLatitude()->rawValue().toDouble(),
-                             .longitudeDegrees = settings->fixedBasePositionLongitude()->rawValue().toDouble(),
-                             .altitudeMeters = settings->fixedBasePositionAltitude()->rawValue().toFloat()},
-                .accuracyMeters = settings->fixedBasePositionAccuracy()->rawValue().toFloat(),
+                .position = {.latitudeDegrees = configuration.fixedBasePositionLatitude,
+                             .longitudeDegrees = configuration.fixedBasePositionLongitude,
+                             .altitudeMeters = configuration.fixedBasePositionAltitude},
+                .accuracyMeters = configuration.fixedBasePositionAccuracy,
             };
             break;
-        case BaseModeDefinition::Mode::BaseSurveyIn:
+        case 0:
             config.base.mode = GPSBaseStationConfig::SurveyIn{
-                .accuracyMeters = settings->surveyInAccuracyLimit()->rawValue().toDouble(),
-                .durationSecs = settings->surveyInMinObservationDuration()->rawValue().toLongLong(),
+                .accuracyMeters = configuration.surveyInAccuracyLimit,
+                .durationSecs = configuration.surveyInMinObservationDuration,
             };
             break;
-        case BaseModeDefinition::Mode::BaseReceiverAveraging:
-            config.base.mode = GPSBaseStationConfig::ReceiverAveraging{
-                .maximumDurationSecs = settings->receiverAveragingDuration()->rawValue().toUInt()};
+        case 2:
+            config.base.mode =
+                GPSBaseStationConfig::ReceiverAveraging{.maximumDurationSecs = configuration.receiverAveragingDuration};
             break;
         default:
             return tr("Select a supported base mode.");
     }
     // The option is hidden for receivers that cannot send MSM4, so it never blocks their connection.
-    config.base.compactObservations = settings->compactRtcmCorrections()->rawValue().toBool() &&
-                                      gpsReceiverCapabilities(type, config.role).compactObservations;
+    config.base.compactObservations =
+        configuration.compactRtcmCorrections && gpsReceiverCapabilities(type, config.role).compactObservations;
     return gpsReceiverConfigError(type, config);
 }
 
@@ -438,7 +456,7 @@ bool GPSRtk::_connectReceiver(GPSType type, ReceiverRole role, GPSProvider::Tran
 {
     const GPSNotificationQueue::Scope publish(_notifications);
     GPSReceiverConfig config;
-    const QString configError = _receiverConfig(type, _settings, baudRate, config, allowPersistentChanges);
+    const QString configError = _receiverConfig(type, _configuration, baudRate, config, allowPersistentChanges);
     if (!configError.isEmpty()) {
         _setError(GPSConnectionError::ConfigFailed, configError);
         return false;
@@ -447,7 +465,7 @@ bool GPSRtk::_connectReceiver(GPSType type, ReceiverRole role, GPSProvider::Tran
     _stageDisconnectedFacts();
     if (role == ConfiguredBase) {
         // Discovery records the family it detected.
-        _stageFact(_settings->baseReceiverManufacturers(), manufacturerForType(type));
+        _notifications.emitSignal(this, &GPSRtk::baseManufacturerDetected, manufacturerForType(type));
     }
     _setError(GPSConnectionError::None);
     const bool forwardsCorrections = role != PositionOnly;
@@ -461,15 +479,12 @@ bool GPSRtk::_connectReceiver(GPSType type, ReceiverRole role, GPSProvider::Tran
     _session.corrections = std::move(registration);
     _session.manufacturer = manufacturerForType(type);
     _session.role = role;
-    _session.baseMode = config.role == GPSReceiverConfig::Role::Passive ? -1
-                        : std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode)
-                            ? static_cast<int>(BaseModeDefinition::Mode::BaseFixed)
-                        : std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode)
-                            ? static_cast<int>(BaseModeDefinition::Mode::BaseReceiverAveraging)
-                            : static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn);
+    _session.baseMode = config.role == GPSReceiverConfig::Role::Passive                                     ? -1
+                        : std::holds_alternative<GPSBaseStationConfig::Fixed>(config.base.mode)             ? 1
+                        : std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode) ? 2
+                                                                                                            : 0;
     if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.base.mode)) {
         _session.basePosition = std::pair(fixed->position, static_cast<double>(fixed->accuracyMeters));
-        _notifications.emitSignal(this, &GPSRtk::basePositionChanged);
     } else if (const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&config.base.mode);
                survey && config.role != GPSReceiverConfig::Role::Passive) {
         _session.surveyAccuracyLimitMeters = survey->accuracyMeters;
@@ -477,7 +492,12 @@ bool GPSRtk::_connectReceiver(GPSType type, ReceiverRole role, GPSProvider::Tran
     _session.serialDevice = serialDevice;
     _session.endpoint = endpoint;
     _session.id = ++_sessionCount;
-    _session.provider = new GPSProvider(std::move(transportFactory), type, config, this);
+    _session.provider = _providerFactory(std::move(transportFactory), type, config, this);
+    if (!_session.provider) {
+        _retireSession();
+        _setError(GPSConnectionError::OpenFailed, tr("Failed to create the receiver session."));
+        return false;
+    }
     _session.provider->setEndsWhenIdle(role == ConfiguredBase);
     const QPointer<GPSProvider> provider = _session.provider;
     (void) connect(
@@ -537,9 +557,6 @@ void GPSRtk::_retireSession()
 {
     auto retired = std::move(_session);
     _session = {};
-    if (retired.basePosition || retired.surveyPosition) {
-        _notifications.emitSignal(this, &GPSRtk::basePositionChanged);
-    }
     const auto provider = retired.provider;
     if (provider) {
         // Retirement callbacks may delete this owner; the worker must already be independent.

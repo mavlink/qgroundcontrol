@@ -37,7 +37,7 @@ class GPSPositionService : public QObject
     friend class GPSPositionSourceRegistration;
 
 public:
-    /// Values of AutoConnectSettings::gcsPositionSource.
+    /// Values of RTKSettings::gcsPositionSource.
     enum class SourceMode
     {
         Automatic = 0,

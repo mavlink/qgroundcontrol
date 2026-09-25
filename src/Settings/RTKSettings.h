@@ -41,6 +41,8 @@ public:
     DEFINE_SETTINGFACT(tcpPort)
     DEFINE_SETTINGFACT(udpPort)
     DEFINE_SETTINGFACT(connectOnStartup)
+    DEFINE_SETTINGFACT(autoConnect)
+    DEFINE_SETTINGFACT(gcsPositionSource)
     DEFINE_SETTINGFACT(serialDevice)
     DEFINE_SETTINGFACT(serialBaudRate)
     DEFINE_SETTINGFACT(useFixedBasePosition)

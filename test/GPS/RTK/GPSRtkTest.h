@@ -19,8 +19,6 @@ private slots:
     void _notificationsFollowCompletedConnection();
     void _factNotificationRetiresSession_data();
     void _factNotificationRetiresSession();
-    void _settingNotificationFollowsConnection_data();
-    void _settingNotificationFollowsConnection();
     void _receiverFramesAreValidated_data();
     void _receiverFramesAreValidated();
     void _snapshotUsageEvidence_data();
@@ -41,19 +39,9 @@ private slots:
     void _persistentConsentMapping();
     void _configurationDiagnosticRetained_data();
     void _configurationDiagnosticRetained();
-    void _qmlConsentIsOneUse();
+    void _rtkSettingsBinding();
     void _udpPositionOnlyReceiver();
-    void _udpNeedsPassiveRole();
-    void _tcpPassiveConnection();
-    void _manualConnectionReconnectsAfterLoss();
-    void _disconnectStopsReconnect();
-    void _tcpConnectionErrors_data();
-    void _tcpConnectionErrors();
 #ifndef QGC_NO_SERIAL_LINK
-    void _explicitSerialSelectionAndDisconnect_data();
-    void _explicitSerialSelectionAndDisconnect();
-    void _manualSerialErrors_data();
-    void _manualSerialErrors();
     void _serialReservationSurvivesDelayedStop();
     void _manualPassiveBaudPreserved_data();
     void _manualPassiveBaudPreserved();

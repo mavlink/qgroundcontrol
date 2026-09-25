@@ -6,12 +6,12 @@
 #include <QtQml/QQmlEngine>
 #include <QtTest/QSignalSpy>
 
-#include "AutoConnectSettings.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "LogManager.h"
 #include "ManualScheduler.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategoryManager.h"
+#include "RTKSettings.h"
 #include "SettingsManager.h"
 #include "SimulatedPosition.h"
 #include "Vehicle.h"
@@ -163,7 +163,7 @@ void PositionManagerTest::_sourceSettingSelectsMode()
 {
     using Mode = GPSPositionService::SourceMode;
     TestFixtures::SettingsFixture saved;
-    Fact* const setting = SettingsManager::instance()->autoConnectSettings()->gcsPositionSource();
+    Fact* const setting = SettingsManager::instance()->rtkSettings()->gcsPositionSource();
     saved.setFactValue(setting, static_cast<int>(Mode::ReceiverOnly));
     ManualScheduler scheduler;
     QGCPositionManager manager(nullptr, &scheduler);

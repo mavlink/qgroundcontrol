@@ -58,6 +58,17 @@ DECLARE_SETTINGGROUP(RTK, "RTK")
                                     !settings.value(tcpHostName).toString().trimmed().isEmpty();
     settings.endGroup();
 
+    // Receiver auto-connect moved here from the AutoConnect group.
+    settings.beginGroup(AutoConnectSettings::settingsGroup);
+    const QVariant autoConnect = settings.value(QStringLiteral("autoConnectRTKGPS"));
+    settings.remove(QStringLiteral("autoConnectRTKGPS"));
+    settings.endGroup();
+    settings.beginGroup(settingsGroup);
+    if (autoConnect.isValid() && !settings.contains(autoConnectName)) {
+        settings.setValue(autoConnectName, autoConnect);
+    }
+    settings.endGroup();
+
     // The separate NMEA GPS input became the position-only receiver role. A configured receiver keeps its settings.
     settings.beginGroup(AutoConnectSettings::settingsGroup);
     const QVariant nmeaPort = settings.value(QStringLiteral("autoConnectNmeaPort"));
@@ -106,6 +117,19 @@ DECLARE_SETTINGSFACT(RTKSettings, tcpHost)
 DECLARE_SETTINGSFACT(RTKSettings, tcpPort)
 DECLARE_SETTINGSFACT(RTKSettings, udpPort)
 DECLARE_SETTINGSFACT(RTKSettings, connectOnStartup)
+DECLARE_SETTINGSFACT(RTKSettings, gcsPositionSource)
+
+DECLARE_SETTINGSFACT_NO_FUNC(RTKSettings, autoConnect)
+{
+    if (!_autoConnectFact) {
+        _autoConnectFact = _createSettingsFact(autoConnectName);
+#ifdef Q_OS_IOS
+        _autoConnectFact->setUserVisible(false);
+#endif
+    }
+    return _autoConnectFact;
+}
+
 DECLARE_SETTINGSFACT(RTKSettings, serialDevice)
 DECLARE_SETTINGSFACT(RTKSettings, serialBaudRate)
 DECLARE_SETTINGSFACT(RTKSettings, useFixedBasePosition)

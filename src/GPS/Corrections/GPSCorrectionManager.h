@@ -5,7 +5,6 @@
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
-#include <QtCore/QTimer>
 
 #include "GPSCorrectionDiagnosticsModel.h"
 #include "GPSCorrectionEventModel.h"
@@ -15,7 +14,10 @@
 #include "GPSRevision.h"
 #include "RTCMMavlink.h"
 #include "RTCMUdpInput.h"
+#include "ScheduledTask.h"
 #include "UdpForwarder.h"
+
+class RuntimeScheduler;
 
 /// Owns the shared MAVLink sequence domain and the UDP correction input and output for all GPS sources.
 class GPSCorrectionManager : public QObject
@@ -29,8 +31,6 @@ class GPSCorrectionManager : public QObject
     Q_PROPERTY(quint64 selectedBytesPerSecond READ selectedBytesPerSecond NOTIFY selectedBytesPerSecondChanged)
     Q_PROPERTY(GPSCorrectionEventModel* events READ events CONSTANT)
     Q_PROPERTY(QAbstractItemModel* destinations READ destinationModel CONSTANT)
-
-    friend class GPSCorrectionManagerTest;
 
 public:
     using RoutingPolicy = GPSCorrectionRouter::Policy;
@@ -55,7 +55,7 @@ public:
 
     using DestinationModel = GPSCorrectionDiagnosticsModel<GPSCorrectionDestinationDiagnostic>;
 
-    explicit GPSCorrectionManager(QObject* parent = nullptr);
+    explicit GPSCorrectionManager(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~GPSCorrectionManager() override;
 
     void shutdown();
@@ -113,14 +113,16 @@ private:
     void _applyUdpOutput();
 
     void _scheduleSourcesChanged();
+    void _scheduleHealthSample();
     void _refreshDiagnostics();
 
+    RuntimeScheduler* const _scheduler;
+    ScheduledTask _diagnosticsTask;
+    ScheduledTask _healthTask;
     GPSCorrectionRouter _router;
     GPSCorrectionEventModel _eventModel;
     SourceModel _sourceModel{this};
     DestinationModel _destinationModel{this};
-    QTimer _diagnosticsTimer;
-    QTimer _healthTimer;
     RTCMMavlink _rtcmMavlink;
     RTCMUdpInput _udpInput;
     GPSCorrectionSourceRegistration _udpRegistration;

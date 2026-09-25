@@ -4,7 +4,6 @@
 #include <functional>
 #include <optional>
 
-#include <QtCore/QChronoTimer>
 #include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -14,8 +13,10 @@
 
 #include "GPSObservation.h"
 #include "GPSRevision.h"
+#include "ScheduledTask.h"
 
 class NTRIPTransport;
+class RuntimeScheduler;
 
 struct PositionResult
 {
@@ -38,7 +39,6 @@ struct PositionResult
 class NTRIPGgaProvider : public QObject
 {
     Q_OBJECT
-    friend class NTRIPReentrancyTest;
 
 public:
     enum class PositionSource
@@ -66,7 +66,7 @@ public:
         bool operator==(const Configuration&) const = default;
     };
 
-    explicit NTRIPGgaProvider(QObject* parent = nullptr);
+    explicit NTRIPGgaProvider(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
 
     void configure(const Configuration& configuration);
 
@@ -94,6 +94,8 @@ private:
     };
 
     void _sendGGA();
+    void _scheduleNextGGA();
+    std::chrono::milliseconds _currentInterval() const;
     void _setRetryPhase(RetryPhase phase);
     void _clearSource();
 
@@ -101,7 +103,8 @@ private:
     void _updateSelectionDiagnostic(PositionSource requested, const SelectedPosition& selection);
 
     QPointer<NTRIPTransport> _transport;
-    QChronoTimer _timer;
+    RuntimeScheduler* const _scheduler;
+    ScheduledTask _ggaTask;
     QString _source;
     QString _selectionDiagnostic;
     QHash<PositionSource, PositionProvider> _providers;

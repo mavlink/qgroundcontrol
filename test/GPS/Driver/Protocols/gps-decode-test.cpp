@@ -17,6 +17,7 @@
 #include "NMEASentence.h"
 #include "ProtocolTestPackets.h"
 #include "SBF/GPSDriverSBF.h"
+#include "Support/AshtechReceiverModel.h"
 #include "UnitTest.h"
 
 #define CHECK(condition)                                                                                 \
@@ -169,107 +170,9 @@ void absoluteDeadline()
     CHECK(now == 1010000);
 }
 
-constexpr std::string_view ASHTECH_SURVEY_STARTED = "PASHR,RECEIPT,POS,AVG,STARTED,INTERVAL,100,114502.56,28.12.2011";
-constexpr std::string_view ASHTECH_SURVEY_FINISHED =
-    "PASHR,RECEIPT,POS,AVG,100,FINISHED,114642.81,28.12.2011,5542.5178481,N,03739.2954994,E,176.334,OK,CONTINUOUS,100."
-    "20";
-constexpr std::string_view ASHTECH_SURVEY_FAILED = "PASHR,RECEIPT,POS,AVG,100,FINISHED,124628.01,28.12.2011,ERR";
-
-class AshtechReceiver
-{
-public:
-    std::vector<std::string> commands;
-    std::vector<GPSCommandResult> results;
-    std::vector<GPSNativeSurveyReport> surveys;
-    std::vector<std::vector<uint8_t>> corrections;
-    std::string surveyReply{ASHTECH_SURVEY_STARTED};
-    std::string failedCommand;
-    bool silentFailure = false;
-    std::vector<uint8_t> reply;
-    GPSNativePositionReport position;
-    size_t transportCalls = 0;
-    GPSNativeAshtech driver;
-
-    AshtechReceiver()
-        : driver(captureGPSReports(io(), position), false)
-    {}
-
-    GPSProtocolIO io()
-    {
-        auto io = makeGPSProtocolTestIO();
-        io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) {
-            ++transportCalls;
-            if (reply.empty()) {
-                gps_test_time += uint64_t(deadline.remainingMilliseconds(gps_test_time)) * 1000 + 1;
-                return GPSReadResult{GPSReadStatus::TimedOut};
-            }
-            const size_t count = std::min(bytes.size(), reply.size());
-            std::copy_n(reply.begin(), count, bytes.begin());
-            reply.erase(reply.begin(), reply.begin() + count);
-            ++gps_test_time;
-            return GPSReadResult{GPSReadStatus::Data, int(count)};
-        };
-
-        io.write = [this](std::span<const uint8_t> bytes, GPSDeadline) {
-            ++transportCalls;
-            const std::string command(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-            commands.push_back(command);
-            if (!command.ends_with("\r\n")) {
-                reply.clear();
-                return GPSWriteResult{GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())};
-            }
-            if (command == failedCommand) {
-                reply = silentFailure ? std::vector<uint8_t>{} : nmeaPacket("PASHR,NAK");
-            } else if (command.starts_with("$PASHQ,PRT")) {
-                reply = nmeaPacket("PASHR,PRT,A,115200");
-            } else if (command.starts_with("$PASHQ,RID")) {
-                reply = nmeaPacket("PASHR,RID,MB2");
-            } else if (command.starts_with("$PASHS,POS,AVG")) {
-                reply = nmeaPacket(surveyReply);
-            } else {
-                reply = nmeaPacket("PASHR,ACK");
-            }
-            return GPSWriteResult{GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())};
-        };
-        io.setBaudrate = [this](unsigned) {
-            ++transportCalls;
-            return GPSBaudStatus::Configured;
-        };
-        io.commandFinished = [this](const GPSCommandResult& result) { results.push_back(result); };
-        io.decoded = [this](const GPSDecodedBatch& batch) {
-            for (const auto& event : batch.events) {
-                if (const auto* survey = std::get_if<GPSNativeSurveyReport>(&event)) {
-                    surveys.push_back(*survey);
-                } else if (const auto* frame = std::get_if<GPSRTCMReport>(&event)) {
-                    corrections.emplace_back(frame->bytes.begin(), frame->bytes.begin() + frame->size);
-                }
-            }
-        };
-        return io;
-    }
-
-    void configure(bool fixed = false)
-    {
-        GPSProtocol::GPSConfig config{};
-        config.base = {
-            .mode = fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
-                                .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
-                          : GPSBaseStationConfig::Mode{
-                                GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 100}}};
-        unsigned baudrate = 115200;
-        CHECK(driver.configure(baudrate, config));
-        CHECK(driver.receiverReady());
-        driver.consume({});
-        surveys.clear();
-    }
-
-    bool startSurvey()
-    {
-        driver.consume(nmeaPacket("PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,"));
-        (void) driver.receive(1);
-        return !driver.hasIOError();
-    }
-};
+using AshtechReceiver = GPSTest::AshtechReceiverModel;
+using GPSTest::ASHTECH_SURVEY_FAILED;
+using GPSTest::ASHTECH_SURVEY_FINISHED;
 
 int surveyFlags(const GPSNativeSurveyReport& report)
 {
@@ -552,62 +455,6 @@ void ashtechMixedFramingAndFixedCommand()
     CHECK(fixed != receiver.commands.end() && fixed->ends_with(",PC1\r\n"));
 }
 
-void invalidFamilyConfiguration()
-{
-    using Config = GPSProtocol::GPSConfig;
-    Config valid{};
-    valid.base = {
-        .mode = GPSBaseStationConfig::Fixed{
-            .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}, .accuracyMeters = 1}};
-    std::vector<Config> invalid;
-    auto add = [&]<class Mode, class Value>(Value Mode::* member, auto value) {
-        Config config = valid;
-        std::get<Mode>(config.base.mode).*member = value;
-        invalid.push_back(config);
-    };
-    const auto addPosition = [&](auto member, auto value) {
-        Config config = valid;
-        std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position.*member = value;
-        invalid.push_back(config);
-    };
-    for (auto member : {&GPSEllipsoidPosition::latitudeDegrees, &GPSEllipsoidPosition::longitudeDegrees}) {
-        for (double value : std::array<double, 5>{NAN, INFINITY, -INFINITY, 181.0, -181.0}) {
-            addPosition(member, value);
-        }
-    }
-    addPosition(&GPSEllipsoidPosition::latitudeDegrees, 90.01);
-    for (float value : {NAN, INFINITY, -INFINITY, std::numeric_limits<float>::max()}) {
-        addPosition(&GPSEllipsoidPosition::altitudeMeters, value);
-        add(&GPSBaseStationConfig::Fixed::accuracyMeters, value);
-    }
-    add(&GPSBaseStationConfig::Fixed::accuracyMeters, -1.0f);
-    valid.base = {.mode = GPSBaseStationConfig::Fixed{}};
-    invalid.push_back(valid);
-    valid.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .durationSecs = 60}};
-    for (double value : std::array<double, 5>{NAN, INFINITY, -1.0, 0.0, std::numeric_limits<double>::max()}) {
-        add(&GPSBaseStationConfig::SurveyIn::accuracyMeters, value);
-    }
-    for (int64_t value : std::array<int64_t, 3>{-1, 0, int64_t(UINT32_MAX) + 1}) {
-        add(&GPSBaseStationConfig::SurveyIn::durationSecs, value);
-    }
-    valid.base = {};
-    invalid.push_back(valid);
-
-    for (const auto& config : invalid) {
-        GPSNativePositionReport position{};
-        std::vector<std::unique_ptr<GPSProtocol>> drivers;
-        drivers.push_back(std::make_unique<GPSNativeAshtech>(captureGPSReports(noDevice(), position), false));
-        drivers.push_back(std::make_unique<GPSNativeSBF>(captureGPSReports(noDevice(), position), false));
-        drivers.push_back(std::make_unique<GPSNativeFemto>(captureGPSReports(noDevice(), position), false));
-        for (const auto& driver : drivers) {
-            unsigned baudrate = 9600;
-            CHECK(!driver->configure(baudrate, config));
-            CHECK(!driver->receiverReady());
-            CHECK(baudrate == 9600);
-        }
-    }
-}
-
 void sbfEpochMetadata()
 {
     GPSNativePositionReport position;
@@ -734,7 +581,6 @@ void GPSProtocolDecodeTest::_protocol()
     try {
         tinyReads();
         absoluteDeadline();
-        invalidFamilyConfiguration();
         nmeaFixQualities();
         malformedMessages();
         sbfEpochMetadata();

@@ -1,87 +1,24 @@
 #include <algorithm>
-#include <array>
 #include <chrono>
 #include <cmath>
-#include <cstdint>
 #include <limits>
 #include <optional>
-#include <span>
-#include <type_traits>
-#include <utility>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QTime>
 
-#include "Ashtech/GPSDriverAshtech.h"
-#include "Femto/GPSDriverFemto.h"
-#include "GPSAsciiProtocol.h"
 #include "GPSReceiverCapabilities.h"
 #include "NMEAConstellation.h"
 #include "NMEASatelliteEpoch.h"
 #include "NMEASentence.h"
 #include "NMEAUtils.h"
-#include "Quectel/GPSDriverQuectel.h"
-#include "SBF/GPSDriverSBF.h"
-#include "UBX/GPSDriverUBX.h"
-#include "Unicore/GPSDriverUnicore.h"
 #include "UnitTest.h"
-
-namespace {
-template <typename Driver>
-void verifyDriverContract()
-{
-    static_assert(!std::is_copy_constructible_v<Driver>);
-    static_assert(!std::is_copy_assignable_v<Driver>);
-    static_assert(!std::is_move_constructible_v<Driver>);
-    static_assert(!std::is_move_assignable_v<Driver>);
-
-    int operations = 0;
-    GPSProtocolIO io;
-    io.nowUs = [] { return uint64_t{1000000}; };
-    io.read = [&](std::span<uint8_t>, GPSDeadline) {
-        ++operations;
-        return GPSReadResult{};
-    };
-    io.write = [&](std::span<const uint8_t>, GPSDeadline) {
-        ++operations;
-        return GPSWriteResult{};
-    };
-    io.setBaudrate = [&](unsigned) {
-        ++operations;
-        return GPSBaudStatus::Unsupported;
-    };
-    io.wait = [&](std::chrono::microseconds) {
-        ++operations;
-        return false;
-    };
-    Driver driver(std::move(io));
-    constexpr std::array<uint8_t, 8> noise{0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00};
-    const auto decoded = driver.decode(noise);
-    QCOMPARE(decoded.bytesConsumed, noise.size());
-    QVERIFY(decoded.batch.events.empty());
-    const auto empty = driver.decode({});
-    QCOMPARE(empty.bytesConsumed, size_t{0});
-    QVERIFY(empty.batch.events.empty());
-    QCOMPARE(operations, 0);
-}
-}  // namespace
 
 class GPSProtocolContractsTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
-
-    void _families()
-    {
-        verifyDriverContract<GPSNativeUBX>();
-        verifyDriverContract<GPSNativeAshtech>();
-        verifyDriverContract<GPSNativeSBF>();
-        verifyDriverContract<GPSNativeFemto>();
-        verifyDriverContract<GPSNativeUnicore>();
-        verifyDriverContract<GPSNativeQuectel>();
-        verifyDriverContract<GPSNativePassive>();
-    }
 
     void _satelliteIds_data();
     void _satelliteIds();

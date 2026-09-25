@@ -6,8 +6,8 @@
 
 #include "UnitTest.h"
 
-/// Settings migrations for the ground-station position source and the unified GNSS receiver input.
-class AutoConnectSettingsTest : public UnitTest
+/// Migrations of earlier receiver settings, including those once kept in the AutoConnect group.
+class RTKSettingsTest : public UnitTest
 {
     Q_OBJECT
 
@@ -15,7 +15,7 @@ private slots:
     void init() override;
     void cleanup() override;
 
-    void _nmeaPositionSourceMigration();
+    void _autoConnectMigration();
     void _nmeaInputBecomesPositionOnlyReceiver_data();
     void _nmeaInputBecomesPositionOnlyReceiver();
     void _nmeaPortLabelBecomesPositionOnlyReceiver_data();

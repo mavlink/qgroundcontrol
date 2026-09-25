@@ -1,29 +1,35 @@
 #include "NTRIPSourceTableController.h"
 
+#include <chrono>
 #include <utility>
 
 #include <QtCore/QDateTime>
-#include <QtCore/QTimer>
 
 #include "NTRIPHttpCodec.h"
 #include "NTRIPHttpSession.h"
 #include "NTRIPSourceTable.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(NTRIPSourceTableControllerLog, "GPS.NTRIP.NTRIPSourceTableController")
 
 struct NTRIPSourceTableController::FetchAttempt
 {
+    FetchAttempt(RuntimeScheduler* scheduler, QObject* context)
+        : timeout(scheduler, context)
+    {}
+
     QPointer<NTRIPHttpSession> session;
-    QTimer timeout;
+    ScheduledTask timeout;
     NTRIPHttpDecoder decoder{NTRIPHttpDecoder::Purpose::SourceTable};
     QByteArray request;
     QByteArray body;
 };
 
-NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent)
+NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _model(new NTRIPSourceTableModel(this))
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
 {}
 
 NTRIPSourceTableController::~NTRIPSourceTableController()
@@ -64,8 +70,10 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
         return;
     }
 
-    if (_model->count() > 0 && _cacheAge.isValid() && sameCaster) {
-        if (const qint64 age = _cacheAge.elapsed(); age < kCacheTtlMs) {
+    if (_model->count() > 0 && _cacheStoredAtUs && sameCaster) {
+        const auto nowUs = _scheduler->nowUs();
+        if (nowUs >= *_cacheStoredAtUs && nowUs - *_cacheStoredAtUs < static_cast<quint64>(kCacheTtlMs) * 1000) {
+            const qint64 age = static_cast<qint64>((nowUs - *_cacheStoredAtUs) / 1000);
             qCDebug(NTRIPSourceTableControllerLog) << "Source table cache hit, age:" << age << "ms";
             _sortCoord = sortCoord;
             _model->updateDistances(_sortCoord);
@@ -78,7 +86,7 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
         }
     }
 
-    _cacheAge.invalidate();
+    _cacheStoredAtUs.reset();
     _sortCoord = sortCoord;
     _lastFetchConfig = casterConfig;
     _fetchStatus = FetchStatus::InProgress;
@@ -103,7 +111,7 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
 
 void NTRIPSourceTableController::_startFetch(const GPSRevision::Token& fetch, const QByteArray& request)
 {
-    _attempt = std::make_unique<FetchAttempt>();
+    _attempt = std::make_unique<FetchAttempt>(_scheduler, this);
     _attempt->request = request;
     auto* session = new NTRIPHttpSession(this);
     _attempt->session = session;
@@ -134,13 +142,11 @@ void NTRIPSourceTableController::_startFetch(const GPSRevision::Token& fetch, co
             _completeFetch(fetch, {}, tr("Source table connection was destroyed before completion"));
         }
     });
-    _attempt->timeout.setSingleShot(true);
-    connect(&_attempt->timeout, &QTimer::timeout, this, [this, current]() {
+    _attempt->timeout.schedule(std::chrono::milliseconds(kFetchTimeoutMs), [this, current]() {
         if (current()) {
             _finishFetch(tr("Source table request timed out"));
         }
     });
-    _attempt->timeout.start(kFetchTimeoutMs);
     session->open(_lastFetchConfig);
 }
 
@@ -209,7 +215,7 @@ void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
     if (!fetch.isCurrent()) {
         return;
     }
-    _cacheAge.start();
+    _cacheStoredAtUs = _scheduler->nowUs();
     _fetchStatus = FetchStatus::Success;
     _notifications.emitSignal(this, &NTRIPSourceTableController::fetchStatusChanged);
     _notifications.emitSignal(this, &NTRIPSourceTableController::mountpointModelChanged);
@@ -221,7 +227,7 @@ void NTRIPSourceTableController::_onFetchError(const QString& error)
         return;
     }
     const auto fetch = _fetchRevision.current(this);
-    _cacheAge.invalidate();
+    _cacheStoredAtUs.reset();
     _fetchError = error;
     _fetchStatus = FetchStatus::Error;
     _model->clear();
@@ -257,7 +263,7 @@ void NTRIPSourceTableController::_abortFetch()
     if (!attempt) {
         return;
     }
-    attempt->timeout.stop();
+    attempt->timeout.cancel();
     if (const auto session = attempt->session) {
         session->retire();
     }

@@ -8,8 +8,8 @@
 #include <QtCore/QFile>
 #include <QtTest/QTest>
 
+#include "Driver/Support/ScriptedReceiver.h"
 #include "GPSStreamWrite_p.h"
-#include "ScriptedGPSTransport.h"
 #include "UnitTest.h"
 
 static_assert(std::is_enum_v<GPSOpenStatus>);
@@ -51,27 +51,13 @@ protected:
     }
 };
 
-class StreamWriteTransport : public ScriptedGPSTransport
+void configureStreamWriteTransport(ScriptedReceiver& transport)
 {
-public:
-    explicit StreamWriteTransport(const std::atomic_bool& stop)
-        : ScriptedGPSTransport(stop)
-    {}
-
-    bool failed = false;
-
-    bool fatalError() const override { return failed; }
-
-protected:
-    std::optional<GPSOpenResult> handleOpen() override { return GPSOpenResult{GPSOpenStatus::Unsupported}; }
-
-    std::optional<GPSReadResult> handleRead(uint8_t*, int, int) override
-    {
-        return GPSReadResult{GPSReadStatus::Closed};
-    }
-
-    std::optional<bool> handleBaudrate(unsigned) override { return false; }
-};
+    transport.setOpenResult(GPSOpenResult{GPSOpenStatus::Unsupported});
+    transport.setReadHandler(
+        [](uint8_t*, int, int) -> std::optional<GPSReadResult> { return GPSReadResult{GPSReadStatus::Closed}; });
+    transport.setBaudrateResult(false);
+}
 
 }  // namespace
 
@@ -84,7 +70,8 @@ private slots:
     void _defaultWriteContract()
     {
         std::atomic_bool stop = false;
-        StreamWriteTransport transport(stop);
+        ScriptedReceiver transport(stop);
+        configureStreamWriteTransport(transport);
         const uint8_t byte = 1;
         QCOMPARE(transport.write(&byte, 1, QDeadlineTimer(transport.configurationWriteTimeout())).status,
                  GPSWriteStatus::Unsupported);
@@ -148,7 +135,8 @@ private slots:
         QFETCH(int, retirements);
 
         std::atomic_bool stop = false;
-        StreamWriteTransport transport(stop);
+        ScriptedReceiver transport(stop);
+        configureStreamWriteTransport(transport);
         StreamWriteDevice device;
         device.rejectWrite = rejectWrite;
         QVERIFY(device.open(QIODevice::WriteOnly));
@@ -164,7 +152,7 @@ private slots:
                 device.pendingBytes -= drained;
                 confirmed += drained;
                 if (status == GPSWriteStatus::Error) {
-                    transport.failed = true;
+                    transport.setFatalError(true);
                 } else if (status == GPSWriteStatus::Cancelled) {
                     stop = true;
                 } else if (status == GPSWriteStatus::TimedOut) {
@@ -175,7 +163,7 @@ private slots:
             [&](int) { return confirmed; }, [&]() { return detail; },
             [&]() {
                 ++retirementCount;
-                transport.failed = true;
+                transport.setFatalError(true);
                 device.pendingBytes = 0;
                 device.close();
                 detail = QStringLiteral("connection retired");

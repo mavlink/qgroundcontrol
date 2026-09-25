@@ -19,7 +19,7 @@ private slots:
     void testPlaintextCredentialWarningIsVisibleState();
 
     // Reconnect backoff (migrated from NTRIPReconnectPolicyTest after the policy
-    // was inlined into NTRIPManager). Driven through the friend test seam.
+    // was inlined into NTRIPManager). Driven through public state and ManualScheduler.
     void testReconnectInitialBackoff();
     void testReconnectExponentialBackoff();
     void testReconnectMaxBackoff();
@@ -36,7 +36,6 @@ private slots:
     void testRetryPublicationSuperseded();
     void testMissingMountpointDoesNotStartTransport();
     void testCorrectionIngressKeepsSessionAndIdentity();
-    void testSettingsProduceExplicitConfiguration();
     void testGgaSettingsUseInjectedProviders();
     void testFactChangesReconfigureTransport_data();
     void testFactChangesReconfigureTransport();

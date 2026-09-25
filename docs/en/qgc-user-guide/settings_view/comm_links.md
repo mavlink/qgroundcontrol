@@ -10,9 +10,15 @@ By default, QGC auto-detects and connects to common devices:
 - **SiK Radio** — auto-connect SiK telemetry radios
 - **LibrePilot** — auto-connect LibrePilot controllers
 - **UDP** — auto-connect via UDP broadcast
+- **RTK GPS** — auto-connect RTK GPS base stations
 
-RTK base receivers are auto-connected from the [GNSS Receiver](gnss_receiver.md#gnss-receiver)
-settings, which also choose the [GCS position](gnss_receiver.md#gcs-position) source.
+## NMEA GPS
+
+Configure an external NMEA GPS device to provide GCS position (used for RTK and Remote ID):
+
+- **Device** — Disabled, UDP, or Serial port
+- **Baudrate** — serial baud rate (with custom baud option)
+- **UDP port** — port for UDP NMEA input (default: 14401)
 
 ## Link Management
 

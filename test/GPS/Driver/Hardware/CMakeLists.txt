@@ -19,8 +19,11 @@ if(NOT TARGET QGCGPSDriver OR NOT TARGET QGCGPSReceiverTransports)
     message(FATAL_ERROR "GPS hardware runner requires QGCGPSDriver and QGCGPSReceiverTransports")
 endif()
 
-add_executable(QGCGPSHardwareRunner GPSHardwareRunner.cc GPSEvidenceTransport.cc GPSEvidenceTransport.h
-                                    "${CMAKE_CURRENT_SOURCE_DIR}/../ScriptedUBXReceiver.cc"
+add_executable(
+    QGCGPSHardwareRunner
+    GPSHardwareRunner.cc GPSEvidenceTransport.cc GPSEvidenceTransport.h
+    "${CMAKE_CURRENT_SOURCE_DIR}/../Support/ScriptedReceiver.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../Support/UBXReceiverModel.cc"
 )
 target_compile_features(QGCGPSHardwareRunner PRIVATE cxx_std_20)
 target_include_directories(QGCGPSHardwareRunner PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")

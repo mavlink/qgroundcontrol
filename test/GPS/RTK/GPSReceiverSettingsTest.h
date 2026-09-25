@@ -12,11 +12,11 @@ private slots:
     void _unavailablePositionCannotBeSaved_data();
     void _unavailablePositionCannotBeSaved();
     void _reconnectingOffersDisconnect();
-    void _rtkBaseMapMarker();
     void _tcpConnectionFields();
     void _roleSelectsFields();
     void _compactCorrectionsToggle();
     void _consentIsOneUse();
+    void _indicatorConsentTracksSettings();
     void _warningWidth_data();
     void _warningWidth();
     void _pageWidth_data();

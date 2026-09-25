@@ -3,7 +3,6 @@
 #include <chrono>
 #include <functional>
 
-#include <QtCore/QChronoTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -18,10 +17,12 @@
 #include "NTRIPSourceTableController.h"
 #include "NTRIPTransport.h"
 #include "RTCMDecodedFrame.h"
+#include "ScheduledTask.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPManagerLog)
 
 class GPSCorrectionManager;
+class RuntimeScheduler;
 
 /// Manages the NTRIP caster connection lifecycle as an explicit event-driven
 /// state machine. All connection state changes flow through `_dispatch()` and
@@ -31,7 +32,6 @@ class GPSCorrectionManager;
 class NTRIPManager : public QObject
 {
     Q_OBJECT
-    friend class NTRIPManagerTest;
     Q_MOC_INCLUDE("NTRIPConnectionStats.h")
     Q_MOC_INCLUDE("NTRIPSourceTableController.h")
     Q_PROPERTY(ConnectionStatus connectionStatus READ connectionStatus NOTIFY connectionStatusChanged)
@@ -83,7 +83,7 @@ public:
         bool operator==(const Configuration&) const = default;
     };
 
-    explicit NTRIPManager(QObject* parent = nullptr);
+    explicit NTRIPManager(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~NTRIPManager() override;
 
     /// Applies the configuration; call once the correction manager and providers are injected.
@@ -170,7 +170,7 @@ private:
 
     void _scheduleReconnect(std::chrono::milliseconds retryAfter = {});
 
-    void _cancelReconnect() { _reconnectTimer.stop(); }
+    void _cancelReconnect();
 
     void _resetReconnectAttempts() { _reconnectAttempts = 0; }
 
@@ -189,7 +189,10 @@ private:
 
     bool _isEnabled() const { return _configuration.enabled; }
 
-    NTRIPGgaProvider _ggaProvider{this};
+    RuntimeScheduler* const _scheduler;
+    ScheduledTask _settingsDebounceTask;
+    ScheduledTask _reconnectTask;
+    NTRIPGgaProvider _ggaProvider;
     NTRIPConnectionStats _stats{this};
 
     ConnectionStatus _connectionStatus = ConnectionStatus::Disconnected;
@@ -207,11 +210,10 @@ private:
     NTRIPConfiguration _runningConfig;
     SortPositionProvider _sortPositionProvider;
 
-    NTRIPSourceTableController _sourceTableController{this};
+    NTRIPSourceTableController _sourceTableController;
 
     static constexpr std::chrono::milliseconds kSettingsDebounceMs{250};
-    QChronoTimer _settingsDebounceTimer{this};
-    QChronoTimer _reconnectTimer{this};
+    std::chrono::milliseconds _pendingReconnectDelay{};
     int _reconnectAttempts = 0;
     bool _initialized = false;
     bool _shutdown = false;

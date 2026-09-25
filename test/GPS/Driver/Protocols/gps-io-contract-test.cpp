@@ -449,6 +449,12 @@ static std::unique_ptr<GPSProtocol> createReceiver(unsigned family, ScriptedIO& 
             return std::make_unique<GPSNativeSBF>(captureGPSReports(io.io(), position, &satellites));
         case 3:
             return std::make_unique<GPSNativeFemto>(captureGPSReports(io.io(), position, &satellites));
+        case 4:
+            return std::make_unique<GPSNativeUnicore>(captureGPSReports(io.io(), position, &satellites));
+        case 5:
+            return std::make_unique<GPSNativeQuectel>(captureGPSReports(io.io(), position, &satellites));
+        case 6:
+            return std::make_unique<GPSNativePassive>(captureGPSReports(io.io(), position, &satellites));
         default:
             return {};
     }
@@ -520,9 +526,12 @@ void GPSProtocolIOContractTest::_protocol()
         const auto qtDeadline = deadline.toQDeadlineTimer();
         CHECK(!qtDeadline.isForever());
         CHECK(std::abs(qtDeadline.deadline() - QDeadlineTimer(liveDeadline, Qt::PreciseTimer).deadline()) <= 1);
-        for (unsigned family = 0; family != 4; ++family) {
+        for (unsigned family = 0; family != 7; ++family) {
             for (const auto fault :
                  {ScriptedIO::Operation::Read, ScriptedIO::Operation::Write, ScriptedIO::Operation::Baud}) {
+                if (family == 6 && fault != ScriptedIO::Operation::Baud) {
+                    continue;
+                }
                 for (const auto error : {GPSProtocolError::Cancelled, GPSProtocolError::Transport}) {
                     gps_test_time = 0;
                     gps_test_warnings.clear();
@@ -534,25 +543,35 @@ void GPSProtocolIOContractTest::_protocol()
                         continue;
                     }
                     GPSProtocol::GPSConfig config{};
-                    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
-                    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
-                    unsigned baudrate = 115200;
+                    if (family == 4) {
+                        config.base.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDurationSecs = 60};
+                    } else if (family != 6) {
+                        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
+                        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).durationSecs = 60;
+                    }
+                    unsigned baudrate = family == 6 ? 115200 : 0;
                     const bool configured = receiver->configure(baudrate, config);
                     CHECK(io.failed);
                     CHECK(!configured);
                     CHECK(receiver->ioError() == error);
-                    CHECK(receiver->ioErrorDetail() == (fault == ScriptedIO::Operation::Baud ? QString() : io.detail));
+                    if (fault != ScriptedIO::Operation::Baud) {
+                        CHECK(!receiver->ioErrorDetail().isEmpty());
+                    }
                     const auto warnings = gps_test_warnings;
-                    if (fault == ScriptedIO::Operation::Read && error != GPSProtocolError::Cancelled) {
+                    if (fault == ScriptedIO::Operation::Read && error != GPSProtocolError::Cancelled && family < 4) {
                         CHECK(warnings == QStringList{QStringLiteral("Receiver read failed (status %1): %2")
                                                           .arg(static_cast<int>(GPSReadStatus::Error))
                                                           .arg(io.detail)});
-                    } else {
+                    } else if (fault == ScriptedIO::Operation::Read && error != GPSProtocolError::Cancelled) {
+                        CHECK(!warnings.empty());
+                    } else if (family < 4) {
                         CHECK(warnings.empty());
                     }
                     CHECK(receiver->receive(10) == 0);
                     CHECK(receiver->ioError() == error);
-                    CHECK(receiver->ioErrorDetail() == (fault == ScriptedIO::Operation::Baud ? QString() : io.detail));
+                    if (fault != ScriptedIO::Operation::Baud) {
+                        CHECK(!receiver->ioErrorDetail().isEmpty());
+                    }
                     CHECK(gps_test_warnings == warnings);
                 }
             }

@@ -2,18 +2,22 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstdio>
 #include <cstring>
 #include <iomanip>
 #include <locale>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "GPSProtocolTestIO.h"
 #include "ReceiverEventQueue.h"
+#include "Support/ScriptedReceiver.h"
 
 namespace GPSTest {
 
@@ -69,7 +73,7 @@ inline std::string unicorePosition(std::string_view type, const std::array<doubl
     return unicoreNative("BESTNAVXYZA", body.str(), tow, week);
 }
 
-struct UnicoreReceiver
+struct UnicoreReceiver : public ScriptedReceiver::Model
 {
     enum class Fault
     {
@@ -113,6 +117,12 @@ struct UnicoreReceiver
     unsigned availableBaud = 115200;
     unsigned hostBaud = 0;
     ReceiverEventQueue events{gps_test_time};
+    std::atomic_bool stop{false};
+    ScriptedReceiver scripted;
+
+    UnicoreReceiver()
+        : scripted(stop, *this)
+    {}
 
     bool sent(std::string_view prefix) const
     {
@@ -148,10 +158,139 @@ struct UnicoreReceiver
         queued += version;
     }
 
+    std::optional<QByteArray> takeCommand(QByteArray& pending) override
+    {
+        const int end = pending.indexOf("\r\n");
+        if (end < 0) {
+            return std::nullopt;
+        }
+        const QByteArray command = pending.first(end + 2);
+        pending.remove(0, end + 2);
+        return command;
+    }
+
+    void flushQueued(ScriptedReceiver& receiver)
+    {
+        if (!queued.empty()) {
+            receiver.queueReply(QByteArray::fromStdString(std::exchange(queued, {})));
+        }
+    }
+
+    void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline) override
+    {
+        events.advanceTo((std::min) (gps_test_time + 100, deadline.untilUs));
+        flushQueued(receiver);
+        while (!receiver.hasQueuedReadData() && gps_test_time < deadline.untilUs) {
+            events.advanceToNext(deadline.untilUs);
+            flushQueued(receiver);
+        }
+    }
+
+    int readChunkSize(const ScriptedReceiver& receiver, int requested, int available) const override
+    {
+        Q_UNUSED(receiver)
+        return static_cast<int>((std::min) ({size_t(requested), size_t(available), chunk}));
+    }
+
+    std::optional<bool> handleBaudrate(ScriptedReceiver& receiver, unsigned baud) override
+    {
+        Q_UNUSED(receiver)
+        ++calls;
+        hostBaud = baud;
+        return true;
+    }
+
+    GPSWriteResult handleCommand(ScriptedReceiver& receiver, const QByteArray& input,
+                                 const ScriptedReceiver::WriteContext& context) override
+    {
+        const std::string wire(input.constData(), static_cast<size_t>(input.size()));
+        if (!wire.ends_with("\r\n") ||
+            (context.hasProtocolDeadline && context.protocolDeadline.untilUs <= gps_test_time)) {
+            throw std::runtime_error("Invalid Unicore command framing/deadline");
+        }
+        const auto command = wire.substr(0, wire.size() - 2);
+        commands.push_back(command);
+        const int length = static_cast<int>(input.size());
+        const bool fail = !faultCommand.empty() && command.starts_with(faultCommand);
+        if (fail && fault == Fault::WriteError) {
+            return {GPSWriteStatus::Error, 0, 0, QStringLiteral("Unicore test write failure")};
+        }
+        if (fail && fault == Fault::ShortWrite) {
+            return {GPSWriteStatus::Completed, length - 1, length - 1};
+        }
+        if (fail && fault == Fault::Cancel) {
+            cancel = true;
+        }
+        if ((fail && (fault == Fault::Silence || fault == Fault::Cancel)) || hostBaud != availableBaud) {
+            return {GPSWriteStatus::Completed, length, length};
+        }
+        const auto ack = unicoreChecked("$command," + command + ",response: OK", false);
+        std::string reply;
+        if (fail && fault == Fault::Reject) {
+            reply = unicoreChecked("$command," + command + ",response: PARSING FAILD NO MATCHING FUNC", false);
+        } else if (fail && fault == Fault::WrongAck) {
+            reply = unicoreChecked("$command," + command + " OTHER,response: OK", false);
+        } else if (fail && fault == Fault::Corrupt) {
+            reply = ack;
+            reply[reply.find('*') + 1] = 'Z';
+        } else if (command == "VERSIONA") {
+            reply = ack + version;
+        } else if (command == "UNLOG") {
+            statusEnabled = false;
+            reply = "$command,unlog,response: OK*21\r\n";
+        } else if (command == "MODE") {
+            reply = ack;
+            if (!omitModeReadback) {
+                reply += modeMismatch                  ? unicoreNative("MODE", "MODE HEADING2,")
+                         : role == "MODE ROVER SURVEY" ? std::string(UNICORE_MODE_ROVER)
+                                                       : unicoreNative("MODE", role + ',');
+            }
+        } else if (command.starts_with("MODE ")) {
+            const auto generation = ++modeGeneration;
+            if (command == "MODE ROVER") {
+                role = "MODE ROVER SURVEY";
+                positionType = "SINGLE";
+            } else if (command.starts_with("MODE BASE TIME ")) {
+                role = "MODE BASE TIME";
+                positionType = "SINGLE";
+                const auto duration = std::stoul(command.substr(15));
+                events.schedule(duration * 1000000ULL, [this, generation] {
+                    if (generation == modeGeneration && allowAveragingCompletion) {
+                        positionType = "FIXEDPOS";
+                    }
+                });
+            } else {
+                role = "MODE BASE";
+                positionType = "FIXEDPOS";
+                std::istringstream values(command.substr(10));
+                values.imbue(std::locale::classic());
+                values >> coordinates[0] >> coordinates[1] >> coordinates[2];
+                if (values.fail()) {
+                    throw std::runtime_error("Malformed fixed-base command");
+                }
+            }
+            reply = ack;
+        } else if (command == "BESTNAVXYZA 1") {
+            statusEnabled = true;
+            const auto generation = modeGeneration;
+            events.schedule(1000000, [this, generation] { navigationTick(generation); });
+            reply = ack;
+        } else if (command == "BESTNAVXYZA") {
+            reply = ack + (omitPositionReadback ? "" : position());
+        } else {
+            reply = ack;
+        }
+        events.schedule(responseDelayUs, [this, reply] { queued += reply; });
+        Q_UNUSED(receiver)
+        return {GPSWriteStatus::Completed, length, length};
+    }
+
     GPSProtocolIO io()
     {
         startedUs = gps_test_time;
         auto io = makeGPSProtocolTestIO();
+        scripted.clearReplies();
+        scripted.clearCommands();
         io.decoded = [this](const GPSDecodedBatch& batch) {
             if (batch.events.size() > GPSDecodedBatch::MAX_EVENTS) {
                 throw std::runtime_error("Unicore decoded batch overflow");
@@ -164,117 +303,22 @@ struct UnicoreReceiver
             }
         };
         io.commandFinished = [this](const GPSCommandResult& result) { results.push_back(result); };
-        io.setBaudrate = [this](unsigned baud) {
-            ++calls;
-            hostBaud = baud;
-            return GPSBaudStatus::Configured;
-        };
         io.wait = [this](std::chrono::microseconds delay) {
             events.advanceTo(gps_test_time + delay.count());
             return !cancel;
         };
-        io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) -> GPSReadResult {
+        scripted.setReadHandler([this](uint8_t*, int, int) -> std::optional<GPSReadResult> {
             ++calls;
-            events.advanceTo((std::min) (gps_test_time + 100, deadline.untilUs));
             if (cancel) {
-                return {GPSReadStatus::Cancelled};
+                return std::optional<GPSReadResult>{GPSReadResult{GPSReadStatus::Cancelled}};
             }
             if (readError) {
-                return {GPSReadStatus::Error, 0, QStringLiteral("Unicore test disconnect")};
+                return std::optional<GPSReadResult>{
+                    GPSReadResult{GPSReadStatus::Error, 0, QStringLiteral("Unicore test disconnect")}};
             }
-            while (queued.empty() && gps_test_time < deadline.untilUs) {
-                events.advanceToNext(deadline.untilUs);
-            }
-            if (queued.empty()) {
-                return {GPSReadStatus::TimedOut};
-            }
-            const auto count = (std::min) ({queued.size(), bytes.size(), chunk});
-            std::memcpy(bytes.data(), queued.data(), count);
-            queued.erase(0, count);
-            return {GPSReadStatus::Data, static_cast<int>(count)};
-        };
-        io.write = [this](std::span<const uint8_t> bytes, GPSDeadline deadline) -> GPSWriteResult {
-            ++calls;
-            const std::string wire(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-            if (!wire.ends_with("\r\n") || deadline.untilUs <= gps_test_time) {
-                throw std::runtime_error("Invalid Unicore command framing/deadline");
-            }
-            const auto command = wire.substr(0, wire.size() - 2);
-            commands.push_back(command);
-            const int length = static_cast<int>(bytes.size());
-            const bool fail = !faultCommand.empty() && command.starts_with(faultCommand);
-            if (fail && fault == Fault::WriteError) {
-                return {GPSWriteStatus::Error, 0, 0, QStringLiteral("Unicore test write failure")};
-            }
-            if (fail && fault == Fault::ShortWrite) {
-                return {GPSWriteStatus::Completed, length - 1, length - 1};
-            }
-            if (fail && fault == Fault::Cancel) {
-                cancel = true;
-            }
-            if ((fail && (fault == Fault::Silence || fault == Fault::Cancel)) || hostBaud != availableBaud) {
-                return {GPSWriteStatus::Completed, length, length};
-            }
-            const auto ack = unicoreChecked("$command," + command + ",response: OK", false);
-            std::string reply;
-            if (fail && fault == Fault::Reject) {
-                reply = unicoreChecked("$command," + command + ",response: PARSING FAILD NO MATCHING FUNC", false);
-            } else if (fail && fault == Fault::WrongAck) {
-                reply = unicoreChecked("$command," + command + " OTHER,response: OK", false);
-            } else if (fail && fault == Fault::Corrupt) {
-                reply = ack;
-                reply[reply.find('*') + 1] = 'Z';
-            } else if (command == "VERSIONA") {
-                reply = ack + version;
-            } else if (command == "UNLOG") {
-                statusEnabled = false;
-                reply = "$command,unlog,response: OK*21\r\n";
-            } else if (command == "MODE") {
-                reply = ack;
-                if (!omitModeReadback) {
-                    reply += modeMismatch                  ? unicoreNative("MODE", "MODE HEADING2,")
-                             : role == "MODE ROVER SURVEY" ? std::string(UNICORE_MODE_ROVER)
-                                                           : unicoreNative("MODE", role + ',');
-                }
-            } else if (command.starts_with("MODE ")) {
-                const auto generation = ++modeGeneration;
-                if (command == "MODE ROVER") {
-                    role = "MODE ROVER SURVEY";
-                    positionType = "SINGLE";
-                } else if (command.starts_with("MODE BASE TIME ")) {
-                    role = "MODE BASE TIME";
-                    positionType = "SINGLE";
-                    const auto duration = std::stoul(command.substr(15));
-                    events.schedule(duration * 1000000ULL, [this, generation] {
-                        if (generation == modeGeneration && allowAveragingCompletion) {
-                            positionType = "FIXEDPOS";
-                        }
-                    });
-                } else {
-                    role = "MODE BASE";
-                    positionType = "FIXEDPOS";
-                    std::istringstream values(command.substr(10));
-                    values.imbue(std::locale::classic());
-                    values >> coordinates[0] >> coordinates[1] >> coordinates[2];
-                    if (values.fail()) {
-                        throw std::runtime_error("Malformed fixed-base command");
-                    }
-                }
-                reply = ack;
-            } else if (command == "BESTNAVXYZA 1") {
-                statusEnabled = true;
-                const auto generation = modeGeneration;
-                events.schedule(1000000, [this, generation] { navigationTick(generation); });
-                reply = ack;
-            } else if (command == "BESTNAVXYZA") {
-                reply = ack + (omitPositionReadback ? "" : position());
-            } else {
-                reply = ack;
-            }
-            events.schedule(responseDelayUs, [this, reply] { queued += reply; });
-            return {GPSWriteStatus::Completed, length, length};
-        };
-        return io;
+            return std::nullopt;
+        });
+        return scripted.makeIO(std::move(io));
     }
 };
 

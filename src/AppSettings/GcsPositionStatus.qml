@@ -22,7 +22,7 @@ SettingsGroupLayout {
         Layout.fillWidth: true
         visible: root.sourceEditable
         label: qsTr("Source")
-        fact: QGroundControl.settingsManager.autoConnectSettings.gcsPositionSource
+        fact: QGroundControl.settingsManager.rtkSettings.gcsPositionSource
     }
 
     LabelledLabel {

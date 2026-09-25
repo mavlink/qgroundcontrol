@@ -5,7 +5,6 @@
 #include <optional>
 
 #include <QtCore/QAbstractItemModel>
-#include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -14,12 +13,14 @@
 #include "GPSNotificationQueue.h"
 #include "GPSRevision.h"
 #include "NTRIPConfiguration.h"
+#include "ScheduledTask.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableControllerLog)
 
 class NTRIPHttpSession;
 class NTRIPSourceTableModel;
 class NTRIPSourceTableControllerTest;
+class RuntimeScheduler;
 
 /// Fetches caster source tables over the same HTTP request builder and decoder as the correction
 /// stream, so HTTP/1.x and NTRIP v1 "SOURCETABLE 200 OK" responses share one path.
@@ -45,7 +46,7 @@ public:
     static constexpr int kFetchTimeoutMs = 10000;
     static constexpr qint64 kMaxSourceTableBytes = 8 * 1024 * 1024;
 
-    explicit NTRIPSourceTableController(QObject* parent = nullptr);
+    explicit NTRIPSourceTableController(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~NTRIPSourceTableController() override;
 
     FetchStatus fetchStatus() const { return _fetchStatus; }
@@ -72,7 +73,6 @@ signals:
 
 private:
     friend class NTRIPSourceTableControllerTest;
-    friend class NTRIPReentrancyTest;
 
     /// Test seam: drive the reply-processing paths without a live network reply.
     void injectSourceTableForTest(const QString& table);
@@ -93,11 +93,12 @@ private:
     NTRIPSourceTableModel* _model = nullptr;
     struct FetchAttempt;
     std::unique_ptr<FetchAttempt> _attempt;
+    RuntimeScheduler* const _scheduler;
     QGeoCoordinate _sortCoord;
     FetchStatus _fetchStatus = FetchStatus::Idle;
     QString _fetchError;
     QString _securityWarning;
-    QElapsedTimer _cacheAge;
+    std::optional<quint64> _cacheStoredAtUs;
     GPSRevision _fetchRevision;
 
     NTRIPConnectionConfig _lastFetchConfig;  ///< Mountpoint is excluded from source-table identity.

@@ -2,6 +2,8 @@
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE MockNTRIPTransport.h
+            NTRIPTestSupport.h
+            ScriptedNtripCaster.h
             NTRIPManagerTest.cc
             NTRIPManagerTest.h
             NTRIPSourceTableTest.cc
@@ -9,26 +11,28 @@ target_sources(
             NTRIPHttpSessionTest.cc
             NTRIPHttpTransportTest.cc
             NTRIPHttpTransportTest.h
+            NTRIPHttpTransportReentrancyTest.cc
             NTRIPConnectionStatsTest.cc
             NTRIPConnectionStatsTest.h
+            NTRIPConnectionStatsReentrancyTest.cc
             NTRIPGgaProviderTest.cc
             NTRIPGgaProviderTest.h
+            NTRIPGgaProviderReentrancyTest.cc
             NTRIPSourceTableControllerTest.cc
             NTRIPSourceTableControllerTest.h
-            NTRIPReentrancyTest.cc
+            NTRIPSourceTableControllerReentrancyTest.cc
             NTRIPTlsTest.cc
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_qgc_test(NTRIPManagerTest LABELS Unit)
-add_qgc_test(NTRIPSourceTableTest LABELS Unit)
+add_qgc_test(NTRIPManagerTest LABELS Unit GPS)
+add_qgc_test(NTRIPSourceTableTest LABELS Unit GPS)
 add_qgc_test(NTRIPHttpSessionTest LABELS Unit GPS)
-add_qgc_test(NTRIPHttpTransportTest LABELS Unit)
-add_qgc_test(NTRIPConnectionStatsTest LABELS Unit)
-add_qgc_test(NTRIPGgaProviderTest LABELS Unit)
-add_qgc_test(NTRIPSourceTableControllerTest LABELS Unit)
-add_qgc_test(NTRIPReentrancyTest LABELS Unit GPS)
+add_qgc_test(NTRIPHttpTransportTest LABELS Unit GPS)
+add_qgc_test(NTRIPConnectionStatsTest LABELS Unit GPS)
+add_qgc_test(NTRIPGgaProviderTest LABELS Unit GPS)
+add_qgc_test(NTRIPSourceTableControllerTest LABELS Unit GPS)
 add_qgc_test(NTRIPTlsTest LABELS Unit GPS)
 
 # QML_FOREIGN runtime registration can succeed even when tooling sees only opaque stubs.

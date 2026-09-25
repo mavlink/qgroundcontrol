@@ -12,6 +12,7 @@
 #include "NTRIPError.h"
 #include "NTRIPHttpTransport.h"
 #include "QGCLoggingCategory.h"
+#include "QtRuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(NTRIPManagerLog, "GPS.NTRIP.NTRIPManager")
 
@@ -87,23 +88,21 @@ bool isRetryable(NTRIPError error)
 // Lifecycle
 // -----------------------------------------------------------------------------
 
-NTRIPManager::NTRIPManager(QObject* parent)
+NTRIPManager::NTRIPManager(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
+    , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
+    , _settingsDebounceTask(_scheduler, this)
+    , _reconnectTask(_scheduler, this)
+    , _ggaProvider(this, _scheduler)
+    , _sourceTableController(this, _scheduler)
 {
     qCDebug(NTRIPManagerLog) << "NTRIPManager created";
-
-    _settingsDebounceTimer.setSingleShot(true);
-    _settingsDebounceTimer.setInterval(kSettingsDebounceMs);
-    connect(&_settingsDebounceTimer, &QChronoTimer::timeout, this, &NTRIPManager::_applyConfiguration);
 
     connect(&_ggaProvider, &NTRIPGgaProvider::sourceChanged, this,
             [this]() { _notifications.emitSignal(this, &NTRIPManager::ggaSourceChanged); });
 
     connect(&_sourceTableController, &NTRIPSourceTableController::mountpointSelected, this,
             &NTRIPManager::mountpointChosen);
-
-    _reconnectTimer.setSingleShot(true);
-    _reconnectTimer.callOnTimeout(this, [this]() { _dispatch(Event::ReconnectDue); });
 
     // DirectConnection: queued slot may not dispatch before destruction during quit.
     connect(qApp, &QCoreApplication::aboutToQuit, this, &NTRIPManager::stopNTRIP, Qt::DirectConnection);
@@ -156,7 +155,7 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
         _ggaProvider.configure(configuration.gga);
     }
     if (streamChanged) {
-        _settingsDebounceTimer.start();
+        _settingsDebounceTask.schedule(kSettingsDebounceMs, [this]() { _applyConfiguration(); });
     }
 }
 
@@ -180,7 +179,7 @@ void NTRIPManager::startNTRIP()
         _connectionStatus == ConnectionStatus::Connected) {
         return;
     }
-    _settingsDebounceTimer.stop();
+    _settingsDebounceTask.cancel();
     _cancelReconnect();
     _resetReconnectAttempts();
     _dispatch(Event::StartRequested);
@@ -188,7 +187,7 @@ void NTRIPManager::startNTRIP()
 
 void NTRIPManager::stopNTRIP()
 {
-    _settingsDebounceTimer.stop();
+    _settingsDebounceTask.cancel();
     _cancelReconnect();
     _dispatch(Event::StopRequested);
 }
@@ -383,8 +382,17 @@ void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
         _dispatch(Event::ReconnectGaveUp, tr("Gave up after %1 reconnect attempts").arg(kMaxReconnectAttempts));
         return;
     }
-    _reconnectTimer.setInterval(backoff);
-    _reconnectTimer.start();
+    _pendingReconnectDelay = backoff;
+    _reconnectTask.schedule(backoff, [this]() {
+        _pendingReconnectDelay = {};
+        _dispatch(Event::ReconnectDue);
+    });
+}
+
+void NTRIPManager::_cancelReconnect()
+{
+    _reconnectTask.cancel();
+    _pendingReconnectDelay = {};
 }
 
 void NTRIPManager::_startTransport()
@@ -425,7 +433,7 @@ void NTRIPManager::_startTransport()
         _transport = _injectedTransport;
         _injectedTransport = nullptr;
     } else {
-        _transport = new NTRIPHttpTransport(config.connection, config.filter, this);
+        _transport = new NTRIPHttpTransport(config.connection, config.filter, this, _scheduler);
     }
 
     const QPointer<NTRIPTransport> transport = _transport;

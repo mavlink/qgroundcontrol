@@ -4,8 +4,10 @@
 
 #include "Fact.h"
 #include "GPSCorrectionSettings.h"
+#include "GPSRtk.h"
 #include "NTRIPSettings.h"
 #include "QGCLoggingCategory.h"
+#include "RTKSettings.h"
 
 QGC_LOGGING_CATEGORY(GPSSettingsBindingsLog, "GPS.GPSSettingsBindings")
 
@@ -75,6 +77,30 @@ NTRIPManager::Configuration ntripConfiguration(NTRIPSettings* settings)
     return configuration;
 }
 
+GPSRtk::Configuration rtkConfiguration(RTKSettings* settings)
+{
+    GPSRtk::Configuration configuration;
+    configuration.receiverRole = static_cast<GPSRtk::ReceiverRole>(settings->receiverRole()->rawValue().toInt());
+    configuration.baseReceiverManufacturer = settings->baseReceiverManufacturers()->rawValue().toInt();
+    configuration.connectionType = static_cast<GPSRtk::ConnectionType>(settings->connectionType()->rawValue().toInt());
+    configuration.tcpHost = settings->tcpHost()->rawValue().toString();
+    configuration.tcpPort = settings->tcpPort()->rawValue().toUInt();
+    configuration.udpPort = settings->udpPort()->rawValue().toUInt();
+    configuration.serialDevice = settings->serialDevice()->rawValue().toString();
+    configuration.serialBaudRate = settings->serialBaudRate()->rawValue().toUInt();
+    configuration.baseMode = settings->useFixedBasePosition()->rawValue().toInt();
+    configuration.fixedBasePositionLatitude = settings->fixedBasePositionLatitude()->rawValue().toDouble();
+    configuration.fixedBasePositionLongitude = settings->fixedBasePositionLongitude()->rawValue().toDouble();
+    configuration.fixedBasePositionAltitude = settings->fixedBasePositionAltitude()->rawValue().toFloat();
+    configuration.fixedBasePositionAccuracy = settings->fixedBasePositionAccuracy()->rawValue().toFloat();
+    configuration.surveyInAccuracyLimit = settings->surveyInAccuracyLimit()->rawValue().toDouble();
+    configuration.surveyInMinObservationDuration = settings->surveyInMinObservationDuration()->rawValue().toLongLong();
+    configuration.receiverAveragingDuration = settings->receiverAveragingDuration()->rawValue().toUInt();
+    configuration.compactRtcmCorrections = settings->compactRtcmCorrections()->rawValue().toBool();
+    configuration.autoConnect = settings->autoConnect()->rawValue().toBool();
+    return configuration;
+}
+
 void bindCorrections(GPSCorrectionSettings* settings, GPSCorrectionManager* corrections)
 {
     if (!settings || !corrections) {
@@ -131,6 +157,43 @@ void bindNtrip(NTRIPSettings* settings, NTRIPManager* ntrip)
                      [settings](const QString& mountpoint) { settings->ntripMountpoint()->setRawValue(mountpoint); });
     QObject::connect(ntrip, &NTRIPManager::enableRequested, ntrip,
                      [settings]() { settings->ntripServerConnectEnabled()->setRawValue(true); });
+    apply();
+}
+
+void bindRtk(RTKSettings* settings, GPSRtk* rtk)
+{
+    if (!settings || !rtk) {
+        return;
+    }
+    const auto apply = [settings, rtk]() { rtk->setConfiguration(rtkConfiguration(settings)); };
+    const Fact* facts[] = {
+        settings->receiverRole(),
+        settings->baseReceiverManufacturers(),
+        settings->surveyInAccuracyLimit(),
+        settings->surveyInMinObservationDuration(),
+        settings->receiverAveragingDuration(),
+        settings->connectionType(),
+        settings->tcpHost(),
+        settings->tcpPort(),
+        settings->udpPort(),
+        settings->autoConnect(),
+        settings->serialDevice(),
+        settings->serialBaudRate(),
+        settings->useFixedBasePosition(),
+        settings->fixedBasePositionLatitude(),
+        settings->fixedBasePositionLongitude(),
+        settings->fixedBasePositionAltitude(),
+        settings->fixedBasePositionAccuracy(),
+        settings->compactRtcmCorrections(),
+    };
+    for (const Fact* fact : facts) {
+        QObject::connect(fact, &Fact::rawValueChanged, rtk, apply);
+    }
+    QObject::connect(rtk, &GPSRtk::autoConnectDisabled, rtk,
+                     [settings]() { settings->autoConnect()->setRawValue(false); });
+    QObject::connect(rtk, &GPSRtk::baseManufacturerDetected, rtk, [settings](int manufacturer) {
+        settings->baseReceiverManufacturers()->setRawValue(manufacturer);
+    });
     apply();
 }
 

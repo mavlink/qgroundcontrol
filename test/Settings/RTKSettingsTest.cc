@@ -1,4 +1,4 @@
-#include "AutoConnectSettingsTest.h"
+#include "RTKSettingsTest.h"
 
 #include <QtCore/QSettings>
 
@@ -35,7 +35,7 @@ QVariant stored(const char* group, const char* key)
 }
 }  // namespace
 
-void AutoConnectSettingsTest::init()
+void RTKSettingsTest::init()
 {
     UnitTest::init();
     for (const auto* group : {AutoConnectSettings::settingsGroup, RTKSettings::settingsGroup}) {
@@ -45,7 +45,7 @@ void AutoConnectSettingsTest::init()
     }
 }
 
-void AutoConnectSettingsTest::cleanup()
+void RTKSettingsTest::cleanup()
 {
     for (auto it = _savedGroups.cbegin(); it != _savedGroups.cend(); ++it) {
         writeGroup(it.key(), it.value());
@@ -57,18 +57,23 @@ void AutoConnectSettingsTest::cleanup()
 // Migrations run in the constructors. SettingsFacts ignore QSettings under unit tests,
 // so these assertions read the raw stored values rather than the facts.
 
-void AutoConnectSettingsTest::_nmeaPositionSourceMigration()
+void RTKSettingsTest::_autoConnectMigration()
 {
-    writeGroup(QLatin1String(AutoConnectSettings::settingsGroup), {{QStringLiteral("gcsPositionSource"), 2}});
-    const AutoConnectSettings autoConnect;
-    QCOMPARE(stored(AutoConnectSettings::settingsGroup, "gcsPositionSource").toInt(), 1);
+    writeGroup(QLatin1String(AutoConnectSettings::settingsGroup), {{QStringLiteral("autoConnectRTKGPS"), false}});
+    const RTKSettings rtk;
+    QVERIFY(stored(RTKSettings::settingsGroup, "autoConnect").isValid());
+    QVERIFY(!stored(RTKSettings::settingsGroup, "autoConnect").toBool());
+    QVERIFY(readGroup(QLatin1String(AutoConnectSettings::settingsGroup)).isEmpty());
 
-    writeGroup(QLatin1String(AutoConnectSettings::settingsGroup), {{QStringLiteral("gcsPositionSource"), 3}});
-    const AutoConnectSettings unchanged;
-    QCOMPARE(stored(AutoConnectSettings::settingsGroup, "gcsPositionSource").toInt(), 3);
+    // A value already in the receiver settings is kept.
+    writeGroup(QLatin1String(AutoConnectSettings::settingsGroup), {{QStringLiteral("autoConnectRTKGPS"), false}});
+    writeGroup(QLatin1String(RTKSettings::settingsGroup), {{QStringLiteral("autoConnect"), true}});
+    const RTKSettings kept;
+    QVERIFY(stored(RTKSettings::settingsGroup, "autoConnect").toBool());
+    QVERIFY(readGroup(QLatin1String(AutoConnectSettings::settingsGroup)).isEmpty());
 }
 
-void AutoConnectSettingsTest::_nmeaInputBecomesPositionOnlyReceiver_data()
+void RTKSettingsTest::_nmeaInputBecomesPositionOnlyReceiver_data()
 {
     QTest::addColumn<int>("source");
     QTest::addColumn<int>("connection");
@@ -77,7 +82,7 @@ void AutoConnectSettingsTest::_nmeaInputBecomesPositionOnlyReceiver_data()
     QTest::newRow("tcp") << 3 << 1;
 }
 
-void AutoConnectSettingsTest::_nmeaInputBecomesPositionOnlyReceiver()
+void RTKSettingsTest::_nmeaInputBecomesPositionOnlyReceiver()
 {
     QFETCH(int, source);
     QFETCH(int, connection);
@@ -110,7 +115,7 @@ void AutoConnectSettingsTest::_nmeaInputBecomesPositionOnlyReceiver()
     QCOMPARE(stored(RTKSettings::settingsGroup, "connectionType").toInt(), connection);
 }
 
-void AutoConnectSettingsTest::_nmeaPortLabelBecomesPositionOnlyReceiver_data()
+void RTKSettingsTest::_nmeaPortLabelBecomesPositionOnlyReceiver_data()
 {
     QTest::addColumn<QString>("port");
     QTest::addColumn<int>("connection");
@@ -120,7 +125,7 @@ void AutoConnectSettingsTest::_nmeaPortLabelBecomesPositionOnlyReceiver_data()
     QTest::newRow("no-serial-label") << QStringLiteral("Serial <none available>") << -1;
 }
 
-void AutoConnectSettingsTest::_nmeaPortLabelBecomesPositionOnlyReceiver()
+void RTKSettingsTest::_nmeaPortLabelBecomesPositionOnlyReceiver()
 {
     QFETCH(QString, port);
     QFETCH(int, connection);
@@ -147,7 +152,7 @@ void AutoConnectSettingsTest::_nmeaPortLabelBecomesPositionOnlyReceiver()
     }
 }
 
-void AutoConnectSettingsTest::_configuredReceiverKeepsSettings()
+void RTKSettingsTest::_configuredReceiverKeepsSettings()
 {
     writeGroup(QLatin1String(RTKSettings::settingsGroup),
                {{QStringLiteral("serialDevice"), QStringLiteral("/dev/ttyBase")},
@@ -162,7 +167,7 @@ void AutoConnectSettingsTest::_configuredReceiverKeepsSettings()
     QVERIFY(readGroup(QLatin1String(AutoConnectSettings::settingsGroup)).isEmpty());
 }
 
-void AutoConnectSettingsTest::_passiveManufacturerBecomesRole()
+void RTKSettingsTest::_passiveManufacturerBecomesRole()
 {
     writeGroup(QLatin1String(RTKSettings::settingsGroup), {{QStringLiteral("baseReceiverManufacturers"), 7}});
     const RTKSettings rtk;
@@ -170,4 +175,4 @@ void AutoConnectSettingsTest::_passiveManufacturerBecomesRole()
     QVERIFY(!stored(RTKSettings::settingsGroup, "baseReceiverManufacturers").isValid());
 }
 
-UT_REGISTER_TEST(AutoConnectSettingsTest, TestLabel::Unit)
+UT_REGISTER_TEST(RTKSettingsTest, TestLabel::Unit)

@@ -24,7 +24,8 @@
 #include "GPSReceiverCapabilities.h"
 #include "MonotonicClock.h"
 #include "RTCMFramer.h"
-#include "ScriptedUBXReceiver.h"
+#include "Support/ScriptedReceiver.h"
+#include "Support/UBXReceiverModel.h"
 #include "TCPGPSTransport.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
@@ -332,7 +333,7 @@ std::unique_ptr<GPSTransport> physicalTransport(const Options& options, const st
     return {};
 }
 
-void injectMeasurements(ScriptedUBXReceiver& receiver, const Options& options, const GPSReceiverConfig& config,
+void injectMeasurements(UBXReceiverModel& receiver, const Options& options, const GPSReceiverConfig& config,
                         bool cancellation = false)
 {
     const bool rejectActivation = options.fault == "rtcm-nak" || (cancellation && options.fault == "rtcm-nak-cancel");
@@ -416,17 +417,19 @@ int run(const Options& options)
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     });
-    std::unique_ptr<ScriptedUBXReceiver> receiver;
+    std::unique_ptr<UBXReceiverModel> receiver;
+    std::unique_ptr<ScriptedReceiver> scriptedTransport;
     std::unique_ptr<GPSTransport> physical;
     if (scripted) {
-        receiver = std::make_unique<ScriptedUBXReceiver>(
-            options.model == "f9p" ? ScriptedUBXReceiver::Model::F9P : ScriptedUBXReceiver::Model::M8PBase, stop);
+        receiver = std::make_unique<UBXReceiverModel>(options.model == "f9p" ? UBXReceiverModel::Receiver::F9P
+                                                                             : UBXReceiverModel::Receiver::M8PBase);
+        scriptedTransport = std::make_unique<ScriptedReceiver>(stop, *receiver);
         if (options.fault == "nak") {
-            receiver->disableReply = ScriptedUBXReceiver::DisableReply::Nak;
+            receiver->disableReply = UBXReceiverModel::DisableReply::Nak;
         } else if (options.fault == "wrong-readback") {
-            receiver->readbackReply = ScriptedUBXReceiver::ReadbackReply::WrongValue;
+            receiver->readbackReply = UBXReceiverModel::ReadbackReply::WrongValue;
         } else if (options.fault == "cancel") {
-            receiver->disableReply = ScriptedUBXReceiver::DisableReply::Cancelled;
+            receiver->disableReply = UBXReceiverModel::DisableReply::Cancelled;
         }
     } else {
         physical = physicalTransport(options, stop);
@@ -449,7 +452,7 @@ int run(const Options& options)
             physical.reset();
             physical = physicalTransport(options, stop);
         }
-        GPSTransport& transport = scripted ? static_cast<GPSTransport&>(*receiver) : *physical;
+        GPSTransport& transport = scripted ? static_cast<GPSTransport&>(*scriptedTransport) : *physical;
         GPSEvidenceTransport evidence(transport, stop);
         QJsonObject stage{{"name", name}};
         QJsonArray checks;

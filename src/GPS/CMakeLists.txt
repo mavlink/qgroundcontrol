@@ -28,6 +28,14 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE Corrections/MAVLink/GPSMavlinkOutpu
 )
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSCorrectionService QGCGPSRTCM QGCGPSMavlinkPacket)
 
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} gps_qmlimages
+    PREFIX "/qmlimages"
+    BASE "${CMAKE_CURRENT_SOURCE_DIR}/Images"
+    FILES "${CMAKE_CURRENT_SOURCE_DIR}/Images/Gps.svg" "${CMAKE_CURRENT_SOURCE_DIR}/Images/GpsAuthentication.svg"
+          "${CMAKE_CURRENT_SOURCE_DIR}/Images/GpsInterference.svg" "${CMAKE_CURRENT_SOURCE_DIR}/Images/RTK.svg"
+)
+
 # ----------------------------------------------------------------------------
 # GPS QML Module
 # QML types of the GPS libraries, which build without QML, and shared GPS components.

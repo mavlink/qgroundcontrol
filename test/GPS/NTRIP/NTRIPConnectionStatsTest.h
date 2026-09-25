@@ -19,4 +19,5 @@ private slots:
     void testInvalidReceiptTimestamp();
     void testMessageCountsByIdSortedAndReset();
     void testDataStaleAfterNoRecentMessages();
+    void statisticsExpireDuringSilence();
 };

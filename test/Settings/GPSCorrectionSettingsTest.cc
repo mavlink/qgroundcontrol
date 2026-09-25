@@ -11,16 +11,14 @@
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QSettings>
-#include <QtQml/QQmlComponent>
-#include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QSignalSpy>
 
-#include "ColoredSvgImageProvider.h"
 #include "GPS/RTCM/RTCMTestFixtures.h"
 #include "GPSCorrectionManager.h"
 #include "GPSCorrectionRouter.h"
 #include "GPSCorrectionSettings.h"
+#include "GpsQmlTestHelpers.h"
 #include "NTRIPSettings.h"
 #include "QmlUITestBase.h"
 #include "RAIIFixtures.h"
@@ -154,10 +152,8 @@ void GPSCorrectionSettingsTest::_qmlRegistration()
     auto* settings = SettingsManager::instance();
     QVERIFY(settings->gpsCorrectionSettings());
     QCOMPARE(settings->property("gpsCorrectionSettings").value<QObject*>(), settings->gpsCorrectionSettings());
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    QQmlComponent component(&engine);
-    component.setData(R"(
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> object = engine.create(QByteArray(R"(
         import QtQml
         import QGroundControl
         QtObject {
@@ -168,12 +164,8 @@ void GPSCorrectionSettingsTest::_qmlRegistration()
             readonly property int automatic: GPSCorrectionSettings.Automatic
             readonly property int udp: GPSCorrectionSettings.Udp
         }
-    )",
-                      QUrl());
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
-    std::unique_ptr<QObject> object(component.create());
-    QVERIFY2(object, qPrintable(component.errorString()));
+    )"));
+    QVERIFY2(object, qPrintable(engine.lastError()));
     QCOMPARE(object->property("corrections").value<QObject*>(), settings->gpsCorrectionSettings());
     QCOMPARE(object->property("port").value<Fact*>(), settings->gpsCorrectionSettings()->rtcmUdpInputPort());
     QCOMPARE(object->property("sourceFact").value<SettingsFact*>(),
@@ -230,19 +222,12 @@ void GPSCorrectionSettingsTest::_routingPanel()
     sourceFact->setUserVisible(sourceVisible);
     instanceFact->setUserVisible(instanceVisible);
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    engine.addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
-    QQmlComponent component(&engine);
-    component.setData(R"(
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> panel = engine.create(QByteArray(R"(
         import QGroundControl.AppSettings
         CorrectionRoutingSettings {}
-    )",
-                      QUrl());
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
-    std::unique_ptr<QObject> panel(component.create());
-    QVERIFY2(panel, qPrintable(component.errorString()));
+    )"));
+    QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* sourceControl = panel->findChild<QObject*>(QStringLiteral("correctionSource"));
     auto* streamControl = panel->findChild<QObject*>(QStringLiteral("correctionStream"));
     QVERIFY(sourceControl);
@@ -288,11 +273,9 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     receivePeer(QStringLiteral("a"), expiredAgeMs);
     receivePeer(QStringLiteral("b"), expiredAgeMs);
 
-    QQmlEngine engine;
-    engine.addImportPath(QStringLiteral("qrc:/qml"));
-    engine.addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
-    QQmlComponent component(&engine);
-    component.setData(R"(
+    GpsTestHelpers::QmlEngine engine;
+    std::unique_ptr<QObject> panel =
+        engine.create(QByteArray(R"(
         import QtQuick.Layouts
         import QGroundControl
         import QGroundControl.AppSettings
@@ -303,13 +286,9 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
             CorrectionRoutingSettings { corrections: root.corrections }
             CorrectionDiagnostics { corrections: root.corrections }
         }
-    )",
-                      QUrl());
-    QTRY_VERIFY_WITH_TIMEOUT(!component.isLoading(), TestTimeout::mediumMs());
-    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
-    std::unique_ptr<QObject> panel(
-        component.createWithInitialProperties({{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}}));
-    QVERIFY2(panel, qPrintable(component.errorString()));
+    )"),
+                      {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}});
+    QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* panelItem = qobject_cast<QQuickItem*>(panel.get());
     QVERIFY(panelItem);
     const auto findItem = [panelItem](const QString& objectName) {

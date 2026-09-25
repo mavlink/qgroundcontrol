@@ -4,9 +4,9 @@
 #include <QtCore/QPermissions>
 
 #include "AppMessages.h"
-#include "AutoConnectSettings.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
+#include "RTKSettings.h"
 #include "SettingsManager.h"
 #include "SimulatedPosition.h"
 
@@ -34,7 +34,7 @@ QGCPositionManager* QGCPositionManager::instance()
 void QGCPositionManager::init()
 {
     if (!_sourceSettingConnection) {
-        Fact* const sourceSetting = SettingsManager::instance()->autoConnectSettings()->gcsPositionSource();
+        Fact* const sourceSetting = SettingsManager::instance()->rtkSettings()->gcsPositionSource();
         const auto applySource = [this, sourceSetting]() {
             setSourceMode(static_cast<SourceMode>(sourceSetting->rawValue().toInt()));
         };

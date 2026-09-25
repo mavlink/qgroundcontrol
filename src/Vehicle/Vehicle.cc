@@ -14,7 +14,6 @@
 #include "FirmwarePlugin.h"
 #include "FirmwarePluginManager.h"
 #include "FlyViewSettings.h"
-#include "GPSSourceHealth.h"
 #include "GeoFenceManager.h"
 #include "GimbalController.h"
 #include "ImageProtocolManager.h"
@@ -31,7 +30,6 @@
 #include "MessageIntervalManager.h"
 #include "MissionCommandTree.h"
 #include "MissionManager.h"
-#include "MonotonicClock.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
 #include "PlanMasterController.h"
@@ -313,7 +311,6 @@ void Vehicle::_commonInit(LinkInterface* link)
     _gpsFactGroup                   = new VehicleGPSFactGroup(this);
     _gps2FactGroup = new VehicleGPSFactGroup(this, nullptr, VehicleGPSFactGroup::ReceiverIndex::Secondary);
     _gpsAggregateFactGroup          = new VehicleGPSAggregateFactGroup(this);
-    _positionHealth = new GPSSourceHealth(this);
     _windFactGroup                  = new VehicleWindFactGroup(this);
     _vibrationFactGroup             = new VehicleVibrationFactGroup(this);
     _temperatureFactGroup           = new VehicleTemperatureFactGroup(this);
@@ -861,23 +858,6 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
 }
 
 // TODO: VehicleFactGroup
-std::optional<GPSObservation> Vehicle::acceptedPositionObservation() const
-{
-    return _positionHealth ? _positionHealth->acceptedObservation(GPSObservation::PositionUse::Gga) : std::nullopt;
-}
-
-void Vehicle::_updatePositionObservation(const QGeoCoordinate& coordinate)
-{
-    GPSObservation observation;
-    observation.receivedAt = QDateTime::currentDateTimeUtc();
-    observation.monotonicTimestampUs = MonotonicClock::nowUs();
-    observation.position = QGeoPositionInfo(coordinate, observation.receivedAt);
-    observation.altitudeDatum = GPSAltitudeDatum::MeanSeaLevel;
-    observation.fixQuality = GPSObservation::FixQuality::Extrapolated;
-    observation.sourceId = QStringLiteral("vehicle/%1/ekf").arg(id());
-    _positionHealth->updateObservation(observation);
-}
-
 void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
 {
     if (message.compid != _defaultComponentId) {
@@ -895,13 +875,13 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     // ArduPilot sends bogus GLOBAL_POSITION_INT messages with lat/lat 0/0 even when it has no gps signal
     // Apparently, this is in order to transport relative altitude information.
     if (globalPositionInt.lat == 0 && globalPositionInt.lon == 0) {
-        _positionHealth->invalidatePosition();
+        emit positionReported(QGeoCoordinate());
         return;
     }
 
     _globalPositionIntMessageAvailable = true;
     QGeoCoordinate newPosition(globalPositionInt.lat  / (double)1E7, globalPositionInt.lon / (double)1E7, globalPositionInt.alt  / 1000.0);
-    _updatePositionObservation(newPosition);
+    emit positionReported(newPosition);
     if (newPosition != _coordinate) {
         _coordinate = newPosition;
         emit coordinateChanged(_coordinate);
@@ -945,7 +925,7 @@ void Vehicle::_handleHighLatency(mavlink_message_t& message)
     _coordinate.setLatitude(coordinate.latitude);
     _coordinate.setLongitude(coordinate.longitude);
     _coordinate.setAltitude(coordinate.altitude);
-    _updatePositionObservation(_coordinate);
+    emit positionReported(_coordinate);
     emit coordinateChanged(_coordinate);
 
     _airSpeedFact.setRawValue((double)highLatency.airspeed / 5.0);
@@ -998,7 +978,7 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _coordinate.setLatitude(highLatency2.latitude  / (double)1E7);
     _coordinate.setLongitude(highLatency2.longitude / (double)1E7);
     _coordinate.setAltitude(highLatency2.altitude);
-    _updatePositionObservation(_coordinate);
+    emit positionReported(_coordinate);
     emit coordinateChanged(_coordinate);
 
     _airSpeedFact.setRawValue((double)highLatency2.airspeed / 5.0);

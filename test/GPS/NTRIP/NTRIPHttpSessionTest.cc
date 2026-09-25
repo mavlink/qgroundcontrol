@@ -2,14 +2,13 @@
 
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
-#include <QtNetwork/QHostAddress>
-#include <QtNetwork/QTcpServer>
 #include <QtNetwork/QTcpSocket>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "NTRIPConfiguration.h"
 #include "NTRIPHttpSession.h"
+#include "ScriptedNtripCaster.h"
 #include "UnitTest.h"
 
 namespace {
@@ -35,8 +34,8 @@ private slots:
 
 void NTRIPHttpSessionTest::responseEndsWithClosed()
 {
-    QTcpServer server;
-    QVERIFY(server.listen(QHostAddress::LocalHost));
+    ScriptedNtripCaster caster;
+    QVERIFY(caster.isListening());
     NTRIPHttpSession session;
     QByteArray received;
     QStringList events;
@@ -54,16 +53,15 @@ void NTRIPHttpSessionTest::responseEndsWithClosed()
         QVERIFY(!session.isConnected());
     });
     QSignalSpy failed(&session, &NTRIPHttpSession::failed);
-    session.open(localConfig(server.serverPort()));
+    session.open(localConfig(caster.port()));
     session.open(localConfig(1));
 
-    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
-    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
-    QByteArray request;
-    QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).endsWith("\r\n\r\n"), TestTimeout::mediumMs());
+    auto* connection = caster.waitForConnection();
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest().endsWith("\r\n\r\n"));
     const QByteArray response(3 * NTRIPHttpSession::kReadChunkBytes + 7, 'x');
-    QCOMPARE(peer->write(response), response.size());
-    peer->disconnectFromHost();
+    QCOMPARE(connection->write(response), response.size());
+    connection->disconnectFromHost();
 
     QTRY_COMPARE_WITH_TIMEOUT(events.size(), 2, TestTimeout::mediumMs());
     QCOMPARE(events, (QStringList{QStringLiteral("established"), QStringLiteral("closed:%1").arg(response.size())}));
@@ -74,10 +72,10 @@ void NTRIPHttpSessionTest::responseEndsWithClosed()
 
 void NTRIPHttpSessionTest::refusedConnectionFailsOnce()
 {
-    QTcpServer server;
-    QVERIFY(server.listen(QHostAddress::LocalHost));
-    const quint16 port = server.serverPort();
-    server.close();
+    ScriptedNtripCaster caster;
+    QVERIFY(caster.isListening());
+    const quint16 port = caster.port();
+    caster.close();
     ignoreLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, QRegularExpression(QStringLiteral("^Socket error")));
     NTRIPHttpSession session;
     QSignalSpy established(&session, &NTRIPHttpSession::established);
@@ -95,19 +93,19 @@ void NTRIPHttpSessionTest::refusedConnectionFailsOnce()
 
 void NTRIPHttpSessionTest::abortIsSilent()
 {
-    QTcpServer server;
-    QVERIFY(server.listen(QHostAddress::LocalHost));
+    ScriptedNtripCaster caster;
+    QVERIFY(caster.isListening());
     NTRIPHttpSession session;
     QSignalSpy established(&session, &NTRIPHttpSession::established);
     QSignalSpy failed(&session, &NTRIPHttpSession::failed);
     QSignalSpy closed(&session, &NTRIPHttpSession::closed);
-    session.open(localConfig(server.serverPort()));
+    session.open(localConfig(caster.port()));
     QTRY_COMPARE_WITH_TIMEOUT(established.size(), 1, TestTimeout::mediumMs());
-    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
-    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    auto* connection = caster.waitForConnection();
+    QVERIFY(connection && connection->peer);
     session.abort();
     QVERIFY(!session.isConnected());
-    QTRY_COMPARE_WITH_TIMEOUT(peer->state(), QAbstractSocket::UnconnectedState, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(connection->peer->state(), QAbstractSocket::UnconnectedState, TestTimeout::mediumMs());
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QVERIFY(failed.isEmpty());
     QVERIFY(closed.isEmpty());
@@ -115,8 +113,8 @@ void NTRIPHttpSessionTest::abortIsSilent()
 
 void NTRIPHttpSessionTest::retireFromDeliveryDetachesOwner()
 {
-    QTcpServer server;
-    QVERIFY(server.listen(QHostAddress::LocalHost));
+    ScriptedNtripCaster caster;
+    QVERIFY(caster.isListening());
     auto owner = std::make_unique<QObject>();
     QPointer<NTRIPHttpSession> session = new NTRIPHttpSession(owner.get());
     int deliveries = 0;
@@ -130,12 +128,12 @@ void NTRIPHttpSessionTest::retireFromDeliveryDetachesOwner()
         // Deleting the owner must not delete the retired session during its delivery.
         owner.reset();
     });
-    session->open(localConfig(server.serverPort()));
-    QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::mediumMs());
-    std::unique_ptr<QTcpSocket> peer(server.nextPendingConnection());
+    session->open(localConfig(caster.port()));
+    auto* connection = caster.waitForConnection();
+    QVERIFY(connection && connection->peer);
     const QByteArray response(2 * NTRIPHttpSession::kReadChunkBytes, 'x');
-    QCOMPARE(peer->write(response), response.size());
-    peer->disconnectFromHost();
+    QCOMPARE(connection->write(response), response.size());
+    connection->disconnectFromHost();
     QTRY_COMPARE_WITH_TIMEOUT(deliveries, 1, TestTimeout::mediumMs());
     QVERIFY(detached);
     QVERIFY(!owner);

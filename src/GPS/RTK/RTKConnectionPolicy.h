@@ -1,18 +1,17 @@
 #pragma once
 
-#include <QtCore/QDeadlineTimer>
-#include <QtCore/QElapsedTimer>
+#include <optional>
+
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
 #include "GPSProvider.h"
 #include "GPSRevision.h"
+#include "GPSRtk.h"
 #include "RTKConnectionTarget.h"
 
-class AutoConnectSettings;
-class Fact;
-class RTKSettings;
+class RuntimeScheduler;
 
 /// Decides when the receiver connects: user and startup connections from the saved settings, serial
 /// auto-discovery of known base receivers, and retries after a connection is lost. The target runs the sessions.
@@ -20,12 +19,12 @@ class RTKConnectionPolicy : public QObject
 {
     Q_OBJECT
     friend class GPSRtkTest;
-    friend class RTKConnectionPolicyTest;
 
 public:
-    /// The receiver and settings must outlive the policy.
-    RTKConnectionPolicy(RTKConnectionTarget& receiver, RTKSettings* settings, AutoConnectSettings* autoConnectSettings,
-                        QObject* parent = nullptr);
+    explicit RTKConnectionPolicy(RTKConnectionTarget& receiver, QObject* parent = nullptr,
+                                 RuntimeScheduler* scheduler = nullptr);
+
+    void setConfiguration(const GPSRtk::Configuration& configuration);
 
     /// Connects from the saved settings and turns auto-connect off. Flash-save consent is one-use.
     bool connectConfigured(bool allowPersistentChanges);
@@ -44,6 +43,7 @@ public:
 
     /// A manual connection was lost and a retry is pending.
     bool reconnecting() const;
+    bool retryPending() const;
 
     void receiverReady();
     /// Returns the user message for a lost session, or empty when the receiver's default applies.
@@ -51,6 +51,7 @@ public:
 
 signals:
     void reconnectingChanged();
+    void autoConnectDisabled();
 
 private:
     enum class Owner
@@ -70,21 +71,21 @@ private:
     void _updateAutoConnection();
 
     RTKConnectionTarget& _receiver;
-    RTKSettings* const _settings;
-    Fact* const _autoConnect;
+    RuntimeScheduler* const _scheduler;
+    GPSRtk::Configuration _configuration;
     Owner _owner = Owner::None;
     // A manual connection that reached the receiver once is retried after a loss.
     bool _established = false;
     bool _waitingForPort = false;
     QString _autoPort;
-    QMap<QString, QElapsedTimer> _waitingPorts;
-    QDeadlineTimer _retryDeadline = QDeadlineTimer::Forever;
+    QMap<QString, quint64> _waitingPorts;
+    std::optional<quint64> _retryDeadlineUs;
     int _retryDelayMs = kInitialRetryDelayMs;
     GPSRevision _revision;
 #ifdef Q_OS_WIN
-    int _connectDelayMs = 6000;
+    static constexpr int kConnectDelayMs = 6000;
 #else
-    int _connectDelayMs = 1000;
+    static constexpr int kConnectDelayMs = 1000;
 #endif
 
     static constexpr int kInitialRetryDelayMs = 1000;

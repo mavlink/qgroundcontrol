@@ -34,11 +34,8 @@ Use the **search bar** at the top of the settings sidebar to find any setting by
 **[Maps](maps.md)**
 <br>Map provider selection, offline tile management, API tokens, custom tile servers, and cache settings.
 
-**[GNSS Receiver](gnss_receiver.md)**
-<br>Connect a GNSS receiver or RTK base station and choose the ground station position source.
-
-**[RTK Corrections](rtk_corrections.md)**
-<br>Configure NTRIP and UDP correction sources, correction routing, and UDP forwarding to other applications.
+**[NTRIP / RTK](ntrip_rtk.md)**
+<br>Configure the built-in NTRIP client for streaming RTK correction data to the vehicle.
 
 **[PX4 Log Transfer](px4_log_transfer.md)**
 <br>Configure PX4 log download and upload settings.

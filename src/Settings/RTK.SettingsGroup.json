@@ -70,6 +70,26 @@
             "label": "Connect on startup"
         },
         {
+            "name": "autoConnect",
+            "shortDesc": "Automatically connect to RTK GPS receivers detected on USB.",
+            "longDesc": "If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.",
+            "type": "bool",
+            "default": true,
+            "label": "Automatically connect to an RTK GPS",
+            "keywords": "auto connect,rtk gps"
+        },
+        {
+            "name": "gcsPositionSource",
+            "shortDesc": "GCS position source",
+            "longDesc": "Source of the ground station position. Automatic uses the connected GNSS receiver, then this device, and switches when the preferred source loses its fix.",
+            "type": "uint32",
+            "enumStrings": "Automatic,GNSS receiver,This device",
+            "enumValues": "0,1,3",
+            "default": 0,
+            "label": "GCS position source",
+            "keywords": "gcs position,ground station position,gps,gnss,rtk,nmea,location"
+        },
+        {
             "name": "serialDevice",
             "shortDesc": "Serial device",
             "longDesc": "Explicitly selected receiver port. Generic USB serial adapters are not automatically identified as GNSS receivers.",

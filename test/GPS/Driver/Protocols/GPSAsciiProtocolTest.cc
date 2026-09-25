@@ -16,21 +16,12 @@
 #include "NMEAUtils.h"
 #include "ProtocolTestPackets.h"
 #include "Quectel/QuectelCodec_p.h"
+#include "Support/AsciiProtocolTestReceiver.h"
 #include "Support/UnicoreReceiverModel.h"
 #include "Unicore/GPSDriverUnicore.h"
 
 namespace {
-class AsciiReceiver final : public GPSAsciiProtocol
-{
-public:
-    using GPSAsciiProtocol::GPSAsciiProtocol;
-
-    bool configure(unsigned&, const GPSConfig&) override
-    {
-        resetStream();
-        return true;
-    }
-};
+using AsciiReceiver = GPSTest::AsciiProtocolTestReceiver;
 
 void feed(GPSProtocol& receiver, const QByteArray& body)
 {

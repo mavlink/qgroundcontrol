@@ -13,7 +13,9 @@
 #include "GPSObservation.h"
 #include "GPSRtk.h"
 #include "GPSSettingsBindings.h"
+#include "GPSSourceHealth.h"
 #include "LinkManager.h"
+#include "MonotonicClock.h"
 #include "MultiVehicleManager.h"
 #include "NTRIPGgaProvider.h"
 #include "NTRIPManager.h"
@@ -66,15 +68,27 @@ PositionResult ggaPosition(const std::optional<GPSObservation>& observation, con
     return result;
 }
 
+GPSObservation vehicleEstimate(const QGeoCoordinate& coordinate, const QString& sourceId)
+{
+    GPSObservation observation;
+    observation.receivedAt = QDateTime::currentDateTimeUtc();
+    observation.monotonicTimestampUs = MonotonicClock::nowUs();
+    observation.position = QGeoPositionInfo(coordinate, observation.receivedAt);
+    observation.altitudeDatum = GPSAltitudeDatum::MeanSeaLevel;
+    observation.fixQuality = GPSObservation::FixQuality::Extrapolated;
+    observation.sourceId = sourceId;
+    return observation;
+}
+
 }  // namespace
 
 GPSManager::GPSManager(QObject* parent)
     : QObject(parent)
     , _corrections(new GPSCorrectionManager(this))
-    , _gpsRtk(new GPSRtk(SettingsManager::instance()->rtkSettings(), SettingsManager::instance()->autoConnectSettings(),
-                         this))
+    , _gpsRtk(new GPSRtk(this))
     , _ntripManager(new NTRIPManager(this))
     , _udpInputEnabled(SettingsManager::instance()->gpsCorrectionSettings()->rtcmUdpInputEnabled())
+    , _vehiclePositionHealth(new GPSSourceHealth(this))
 {
     qCDebug(GPSManagerLog) << this;
     _corrections->rtcmMavlink()->setOutputProvider(createGpsMavlinkOutputProvider());
@@ -128,10 +142,12 @@ void GPSManager::_configureNtripProviders()
         const auto* gps = qobject_cast<VehicleGPSFactGroup*>(vehicle->gpsFactGroup());
         return gps ? ggaPosition(gps->acceptedObservation(), QStringLiteral("Vehicle GPS")) : PositionResult{};
     });
-    _ntripManager->setGgaPositionProvider(Source::VehicleEKF, []() -> PositionResult {
-        Vehicle* vehicle = activeVehicleForGga();
-        return vehicle ? ggaPosition(vehicle->acceptedPositionObservation(), QStringLiteral("Vehicle EKF"))
-                       : PositionResult{};
+    _ntripManager->setGgaPositionProvider(Source::VehicleEKF, [this]() -> PositionResult {
+        // The tracked estimates are the active vehicle's; activeVehicleForGga still gates on its link.
+        return activeVehicleForGga()
+                   ? ggaPosition(_vehiclePositionHealth->acceptedObservation(GPSObservation::PositionUse::Gga),
+                                 QStringLiteral("Vehicle EKF"))
+                   : PositionResult{};
     });
     _ntripManager->setGgaPositionProvider(Source::RTKReceiver, [this]() -> PositionResult {
         return ggaPosition(_gpsRtk->acceptedPositionObservation(GPSObservation::PositionUse::Gga),
@@ -150,13 +166,36 @@ void GPSManager::_configureNtripProviders()
     });
 }
 
+void GPSManager::_trackActiveVehicle(Vehicle* vehicle)
+{
+    QObject::disconnect(_vehiclePositionConnection);
+    _vehiclePositionHealth->reset();
+    if (!vehicle) {
+        return;
+    }
+    _vehiclePositionConnection = connect(
+        vehicle, &Vehicle::positionReported, this,
+        [this, sourceId = QStringLiteral("vehicle/%1/ekf").arg(vehicle->id())](const QGeoCoordinate& coordinate) {
+            if (coordinate.isValid()) {
+                _vehiclePositionHealth->updateObservation(vehicleEstimate(coordinate, sourceId));
+            } else {
+                _vehiclePositionHealth->invalidatePosition();
+            }
+        });
+}
+
 void GPSManager::init()
 {
     if (_connectionTimer || _shutdown) {
         return;
     }
     _configureNtripProviders();
+    if (auto* vehicles = MultiVehicleManager::instance()) {
+        connect(vehicles, &MultiVehicleManager::activeVehicleChanged, this, &GPSManager::_trackActiveVehicle);
+        _trackActiveVehicle(vehicles->activeVehicle());
+    }
     _gpsRtk->setPositionService(QGCPositionManager::instance());
+    GPSSettingsBindings::bindRtk(SettingsManager::instance()->rtkSettings(), _gpsRtk);
     GPSSettingsBindings::bindCorrections(SettingsManager::instance()->gpsCorrectionSettings(), _corrections);
     GPSSettingsBindings::bindNtrip(SettingsManager::instance()->ntripSettings(), _ntripManager);
     _ntripManager->init();

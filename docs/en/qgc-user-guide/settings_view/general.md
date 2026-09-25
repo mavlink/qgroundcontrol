@@ -1,7 +1,7 @@
 # General Settings (Settings View)
 
 The general settings (**SettingsView > General Settings**) are the main place for application-level configuration.
-Settable values include: display units, autoconnection devices, video display and storage, brand image, and other miscellaneous settings.
+Settable values include: display units, autoconnection devices, video display and storage, RTK GPS, brand image, and other miscellaneous settings.
 
 ::: info
 Values are settable even if no vehicle is connected. Settings that require a vehicle restart are indicated in the UI.
@@ -99,40 +99,64 @@ Settings include:
 - **PX4 Flow:** Autoconnect to PX4Flow device
 - **LibrePilot:** Autoconnect to Libre Pilot autopilot
 - **UDP:** Autoconnect to UDP
+- **RTK GPS:** Autoconnect to RTK GPS device
+- **NMEA GPS Device:** Autoconnect to an external GPS device to get ground station position ([see below](#nmea_gps))
 
-RTK base receivers are auto-connected from the [GNSS Receiver](gnss_receiver.md#gnss-receiver) settings.
-
-### Ground Station Location {#nmea_gps}
+### Ground Station Location (NMEA GPS Device) {#nmea_gps}
 
 _QGroundControl_ will automatically use an internal GPS to display its own location on the map with a purple `Q` icon (if the GPS provides a heading, this will be also indicated by the icon).
 It may also use the GPS as a location source for _Follow Me Mode_ - currently supported on [PX4 Multicopters only](https://docs.px4.io/en/flight_modes/follow_me.html).
 
-You can also connect an external GNSS receiver that outputs ASCII NMEA (this is normally the case)
-over a serial port, a TCP server, or a UDP port. Configure it in the
-[GNSS Receiver](gnss_receiver.md#gnss-receiver) settings with the _Position only_ role, or with the
-_Passive RTCM/NMEA_ role when the receiver also sends RTCM corrections that should be forwarded to
-vehicles. Enable **Connect on startup** to connect it whenever QGC starts.
+You can also configure QGC to connect to an external GPS device via a serial or UDP port.
+The GPS device must support the ASCII NMEA format - this is normally the case.
 
 ::: tip
 A higher quality external GPS system may be useful even if the ground station has internal GPS support.
 :::
 
-The [GCS Position](gnss_receiver.md#gcs-position) setting chooses between the GNSS receiver and internal
-positioning, or picks the best available source automatically.
+Use the _NMEA GPS Device_ drop-down selector to manually select the GPS device and other options:
 
-Connection status is separate from position quality. An occupied UDP port, inaccessible serial
-device, or port reserved by another connection is reported even before a GPS fix is available.
+- USB connection:
 
-::: tip
-To troubleshoot serial GPS problems: disable the GNSS receiver's auto-connect, close _QGroundControl_, reconnect your GPS, and open QGC.
+  - **NMEA GPS Device:** _Serial_
+  - **NMEA GPS Baudrate**: The baudrate for the serial port
+
+  :::tip
+  To troubleshoot serial GPS problems: Disable RTK GPS [auto connection](#auto_connect), close _QGroundControl_, reconnect your GPS, and open QGC.
+  :::
+
+- Network connection:
+
+  - **NMEA GPS Device:** _UDP Port_.
+  - **NMEA Stream UDP Port**: The UDP port on which QGC will listen for NMEA data (QGC binds the port as a server)
+
+## RTK GPS {#rtk_gps}
+
+This section allows you to specify the RTK GPS "Survey-in" settings, to save and reuse the result of a Survey-In operation, or to directly enter any other known position for the base station.
+
+::: info
+The _Survey-In_ process is a startup procedure required by RTK GPS systems to get an accurate estimate of the base station position.
+The process takes measurements over time, leading to increasing position accuracy.
+Both of the setting conditions must met for the Survey-in process to complete.
+For more information see [RTK GPS](https://docs.px4.io/en/advanced_features/rtk-gps.html) (PX4 docs) and [GPS- How it works](http://ardupilot.org/copter/docs/common-gps-how-it-works.html#rtk-corrections) (ArduPilot docs).
 :::
 
-Horizontal accuracy is an estimated distance in meters; it is not HDOP, which is dimensionless.
-For live Remote ID, operator altitude must be WGS84 ellipsoid altitude. NMEA sources can provide
-it using MSL altitude and geoid separation. If the datum or conversion is unavailable, QGC does
-not send MSL altitude as ellipsoid altitude. FAA configurations requiring operator altitude report
-the live position as unavailable; configurations permitting horizontal-only reporting send an
-unknown altitude.
+::: tip
+In order to save and reuse a base position (because Survey-In is time consuming!) perform Survey-In once, select _Use Specified Base Position_ and press **Save Current Base Position** to copy in the values for the last survey.
+The values will then persist across QGC reboots until they are changed.
+:::
+
+The settings are:
+
+- Perform Survey-In
+  - **Survey-in accuracy (U-blox only):** The minimum position accuracy for the RTK Survey-In process to complete.
+  - **Minimum observation duration:** The minimum time that will be taken for the RTK Survey-in process.
+- Use Specified Base Position
+  - **Base Position Latitude:** Latitude of fixed RTK base station.
+  - **Base Position Longitude:** Longitude of fixed RTK base station.
+  - **Base Position Alt (WGS84):** Altitude of fixed RTK base station.
+  - **Base Position Accuracy:** Accuracy of base station position information.
+  - **Save Current Base Position** (button): Press to copy settings from the last Survey-In operation to the _Use Specified Base Position_ fields above.
 
 ## ADSB Server {#adsb_server}
 

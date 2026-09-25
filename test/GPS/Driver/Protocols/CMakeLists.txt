@@ -54,6 +54,7 @@ foreach(timezone IN ITEMS EST5EDT JST-9)
     )
 endforeach()
 qgc_add_protocol_test(GPSProtocolContractsTest GPSProtocolContractsTest.cc)
+qgc_add_protocol_test(GPSProtocolFamilyContractTest GPSProtocolFamilyContractTest.cc)
 qgc_add_protocol_test(GPSProtocolUbxTest gps-ubx-test.cpp)
 qgc_add_protocol_test(GPSProtocolAllocationTest gps-allocation-test.cpp)
 set_property(
