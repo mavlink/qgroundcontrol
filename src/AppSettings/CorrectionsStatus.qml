@@ -12,13 +12,16 @@ SettingsGroupLayout {
 
     property GPSCorrectionManager corrections: QGroundControl.gpsManager.corrections
     property NTRIPManager ntrip: QGroundControl.gpsManager.ntrip
+    property int correctionState: QGroundControl.gpsManager.correctionState
     /// Keep the group visible while no correction source is configured.
     property bool showWhenInactive: true
+    /// Pages that show the NTRIP connection in their own section hide it here.
+    property bool showNtripStatus: true
 
     readonly property gpsCorrectionStream _selected: root.corrections.selectedStream
     readonly property int _ntripStatus: root.ntrip.connectionStatus
-    readonly property bool _ntripActive: root._ntripStatus !== NTRIPManager.Disconnected
-    readonly property bool _active: root._ntripActive || root.corrections.sourceInstances.length > 0
+    readonly property bool _ntripActive: root.showNtripStatus && root._ntripStatus !== NTRIPManager.Disconnected
+    readonly property bool _active: root.correctionState !== GPSManager.Inactive
 
     heading: qsTr("Corrections")
     visible: root.showWhenInactive || root._active
@@ -73,7 +76,7 @@ SettingsGroupLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         Layout.preferredWidth: 0
-        visible: root._ntripStatus === NTRIPManager.Error && root.ntrip.statusMessage.length > 0
+        visible: root._ntripActive && root._ntripStatus === NTRIPManager.Error && root.ntrip.statusMessage.length > 0
         text: root.ntrip.statusMessage
         textFormat: Text.PlainText
         wrapMode: Text.Wrap

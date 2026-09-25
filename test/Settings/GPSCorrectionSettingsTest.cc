@@ -296,6 +296,7 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
         import QtQuick.Layouts
         import QGroundControl
         import QGroundControl.AppSettings
+        import QGroundControl.GPS
         ColumnLayout {
             id: root
             property GPSCorrectionManager corrections: QGroundControl.gpsManager.corrections

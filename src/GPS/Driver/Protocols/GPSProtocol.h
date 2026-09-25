@@ -260,6 +260,47 @@ protected:
         return false;
     }
 
+    enum class BaudProbe
+    {
+        Found,
+        TryNext,
+        /// The receiver answered but is not usable, so no other rate is tried.
+        Stop,
+    };
+
+    struct BaudDetection
+    {
+        bool found = false;
+        /// The rate that was found, or the last rate attempted.
+        unsigned baud = 0;
+        /// The link could not be set to the last rate attempted.
+        bool linkFailed = false;
+    };
+
+    /// Tries each of @a candidates, or only @a baud when it is nonzero, until @a probe finds the receiver at the rate
+    /// passed to it. A link failure, a Stop result, or an I/O error ends the search.
+    template <typename Probe>
+    BaudDetection detectBaud(std::span<const unsigned> candidates, unsigned baud, Probe&& probe)
+    {
+        BaudDetection result{.baud = baud};
+        for (const unsigned candidate : candidates) {
+            result.baud = baud ? baud : candidate;
+            if (!setBaudrate(result.baud)) {
+                result.linkFailed = true;
+                return result;
+            }
+            const BaudProbe outcome = probe(result.baud);
+            if (outcome == BaudProbe::Found) {
+                result.found = true;
+                return result;
+            }
+            if (outcome == BaudProbe::Stop || baud || hasIOError()) {
+                return result;
+            }
+        }
+        return result;
+    }
+
     // A new configuration attempt starts a new I/O transaction. After a terminal
     // error, no command may be written until the caller explicitly retries.
     void resetIOError()

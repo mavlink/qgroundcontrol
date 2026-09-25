@@ -3,6 +3,7 @@
 #include <array>
 #include <optional>
 
+#include <QtCore/QByteArrayView>
 #include <QtCore/QSet>
 #include <QtCore/QVector>
 
@@ -19,6 +20,21 @@ public:
     /// Drain after addByte() returns a result, before feeding more bytes.
     std::optional<RTCMDecodedFrame> nextFrame();
     void reset();
+
+    /// Frames @a bytes, delivering each completed frame. A delivery that returns false, because it ended the
+    /// stream or retired its owner, stops framing at once; feed() then returns false.
+    template <typename Deliver>
+    bool feed(QByteArrayView bytes, qint64 receivedAtMs, Deliver&& deliver)
+    {
+        for (const char byte : bytes) {
+            for (auto frame = addByte(static_cast<uint8_t>(byte), receivedAtMs); frame; frame = nextFrame()) {
+                if (!deliver(*frame)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
     void setWhitelist(const QVector<int>& ids) { _whitelist = QSet<int>(ids.begin(), ids.end()); }
 

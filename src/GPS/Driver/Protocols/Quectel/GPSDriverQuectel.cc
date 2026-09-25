@@ -307,26 +307,22 @@ bool GPSNativeQuectel::configure(unsigned& baud, const GPSConfig& config)
     if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode)) {
         _fixedECEF = toEcef(std::get<GPSBaseStationConfig::Fixed>(_baseConfig.mode).position);
     }
-    bool identified = false;
-    const std::array<unsigned, 6> candidates{460800, 115200, 230400, 921600, 57600, 9600};
-    for (const unsigned candidate : candidates) {
-        const unsigned selected = baud == 0 ? candidate : baud;
-        if (!setBaudrate(selected)) {
-            return _fail("Cannot configure LG290P host serial speed");
-        }
+    constexpr std::array<unsigned, 6> candidates{460800, 115200, 230400, 921600, 57600, 9600};
+    const auto detection = detectBaud(candidates, baud, [this](unsigned) {
         resetStream();
         if (_identify()) {
-            baud = selected;
-            identified = true;
-            break;
+            return BaudProbe::Found;
         }
-        if (hasIOError() || !_firmware.empty() || baud != 0) {
-            break;
-        }
+        // Firmware that answered but is not an LG290P(03) answers the same at every rate.
+        return _firmware.empty() ? BaudProbe::TryNext : BaudProbe::Stop;
+    });
+    if (detection.linkFailed) {
+        return _fail("Cannot configure LG290P host serial speed");
     }
-    if (!identified) {
+    if (!detection.found) {
         return _fail("No verified LG290P(03) identity; receiver configuration was not changed");
     }
+    baud = detection.baud;
     log(GPSProtocolLogLevel::Debug, "Quectel receiver firmware: %s", _firmware.c_str());
     if (!_verifyRole(false)) {
         return _fail("LG290P receiver role query failed; no role change was attempted");

@@ -12,8 +12,6 @@
 #include "GPSRevision.h"
 #include "ScheduledTask.h"
 
-struct GPSSatelliteObservation;
-
 /// Session health is independent of transport readiness and RTK survey-in validity.
 class GPSSourceHealth : public QObject
 {
@@ -23,10 +21,6 @@ class GPSSourceHealth : public QObject
     Q_PROPERTY(QGeoCoordinate coordinate READ coordinate NOTIFY positionChanged)
     Q_PROPERTY(double horizontalAccuracy READ horizontalAccuracy NOTIFY positionChanged)
     Q_PROPERTY(QDateTime receivedAt READ receivedAt NOTIFY positionChanged)
-
-    Q_PROPERTY(int satellitesInViewCount READ satellitesInViewCount NOTIFY satellitesChanged)
-    Q_PROPERTY(int satellitesInUseCount READ satellitesInUseCount NOTIFY satellitesChanged)
-
 
 public:
     enum class State
@@ -65,22 +59,12 @@ public:
 
     QDateTime receivedAt() const { return _position.observation.receivedAt; }
 
-    int satellitesInViewCount() const { return _satelliteCounts.inView; }
-
-    int satellitesInUseCount() const
-    {
-        return _fixSatellites.count >= 0 ? _fixSatellites.count : _satelliteCounts.inUse;
-    }
-
     void updateObservation(const GPSObservation& observation);
     void invalidatePosition();
     void reset();
-    void applySatelliteObservation(const GPSSatelliteObservation& observation);
-    void clearSatellites();
 
 signals:
     void positionChanged();
-    void satellitesChanged();
 
 private:
     void _logStateChange(State previous) const;
@@ -91,8 +75,6 @@ private:
     std::chrono::microseconds _remaining(quint64 timestampUs,
                                          std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
 
-    void _scheduleFixSatelliteExpiry();
-
     struct PositionState
     {
         GPSObservation observation;
@@ -100,25 +82,10 @@ private:
         bool invalidated = true;
     };
 
-    struct SatelliteCounts
-    {
-        int inView = -1;
-        int inUse = -1;
-    };
-
-    struct FixSatelliteCount
-    {
-        int count = -1;
-        quint64 receivedAtUs = 0;
-    };
-
     int _freshnessTimeoutMs = FRESHNESS_TIMEOUT_MS;
     PositionState _position;
     RuntimeScheduler* const _scheduler;
     ScheduledTask _positionTask;
-    ScheduledTask _fixSatellitesTask;
-    SatelliteCounts _satelliteCounts;
-    FixSatelliteCount _fixSatellites;
     quint64 _observationRevision = 0;
     GPSRevision _revision;
 };

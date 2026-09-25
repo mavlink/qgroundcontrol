@@ -853,15 +853,18 @@ void GPSReceiverSettingsTest::_vehicleAccuracyFacts()
 
 void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGps_data()
 {
+    using State = GPSManager::CorrectionState;
     QTest::addColumn<int>("role");
     QTest::addColumn<int>("fixType");
     QTest::addColumn<bool>("surveying");
+    QTest::addColumn<int>("correctionState");
     QTest::addColumn<QString>("label");
     QTest::addColumn<QString>("detail");
-    QTest::newRow("position-only") << int(GPSRtk::PositionOnly) << 3 << false << "GNSS" << "3D";
-    QTest::newRow("passive-float") << int(GPSRtk::Passive) << 5 << false << "RTK" << "Float";
-    QTest::newRow("base-surveying") << int(GPSRtk::ConfiguredBase) << 0 << true << "RTK" << "Survey";
-    QTest::newRow("base-fixed") << int(GPSRtk::ConfiguredBase) << 0 << false << "RTK" << "Base";
+    QTest::newRow("position-only") << int(GPSRtk::PositionOnly) << 3 << false << int(State::Inactive) << "GNSS" << "3D";
+    QTest::newRow("passive-float") << int(GPSRtk::Passive) << 5 << false << int(State::Waiting) << "RTK" << "Float";
+    QTest::newRow("base-surveying") << int(GPSRtk::ConfiguredBase) << 0 << true << int(State::Waiting) << "RTK"
+                                    << "Survey";
+    QTest::newRow("base-fixed") << int(GPSRtk::ConfiguredBase) << 0 << false << int(State::Fresh) << "RTK" << "Base";
 }
 
 void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGps()
@@ -869,6 +872,7 @@ void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGps()
     QFETCH(int, role);
     QFETCH(int, fixType);
     QFETCH(bool, surveying);
+    QFETCH(int, correctionState);
     QFETCH(QString, label);
     QFETCH(QString, detail);
     IndicatorReceiver receiver;
@@ -885,14 +889,15 @@ void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGps()
     std::unique_ptr<QObject> indicator(component.createWithInitialProperties(
         {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
          {QStringLiteral("_activeVehicle"), QVariant::fromValue(static_cast<QObject*>(nullptr))},
-         {QStringLiteral("_receiver"), QVariant::fromValue(&receiver)}}));
+         {QStringLiteral("_receiver"), QVariant::fromValue(&receiver)},
+         {QStringLiteral("_correctionState"), correctionState}}));
     QVERIFY2(indicator, qPrintable(component.errorString()));
     QVERIFY(indicator->property("showIndicator").toBool());
     auto* rtkLabel = indicator->findChild<QObject*>(QStringLiteral("gpsCorrectionsLabel"));
     auto* satellites = indicator->findChild<QObject*>(QStringLiteral("gpsSatelliteCount"));
     auto* detailLabel = indicator->findChild<QObject*>(QStringLiteral("gpsDetail"));
     QVERIFY(rtkLabel && satellites && detailLabel);
-    QVERIFY(!rtkLabel->property("visible").toBool());
+    QCOMPARE(rtkLabel->property("visible").toBool(), correctionState != int(GPSManager::CorrectionState::Inactive));
     QVERIFY(!satellites->property("visible").toBool());
 
     facts.connected()->setRawValue(true);
@@ -901,9 +906,6 @@ void GPSReceiverSettingsTest::_indicatorShowsReceiverWithoutVehicleGps()
     QVERIFY(satellites->property("visible").toBool());
     QCOMPARE(satellites->property("text").toString(), QStringLiteral("9"));
     QCOMPARE(detailLabel->property("text").toString(), detail);
-    // Only receivers that supply corrections expect them; none arrive here, so the label warns.
-    QCOMPARE(indicator->property("_correctionsExpected").toBool(), role != GPSRtk::PositionOnly);
-    QVERIFY(!indicator->property("_correctionsFresh").toBool());
 }
 
 void GPSReceiverSettingsTest::_resiliencePageGroups()

@@ -120,8 +120,8 @@ void NTRIPTlsTest::_expectTlsWarnings(bool allowSelfSigned, bool mismatched)
                   allowSelfSigned ? QStringLiteral("Accepting self-signed certificate (user opted in)")
                                   : QStringLiteral("Rejecting self-signed certificate (enable 'Accept self-signed "
                                                    "certificates' to allow)"))));
-    expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg, selfSigned);
-    expectLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg, policy);
+    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, selfSigned);
+    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, policy);
 }
 
 void NTRIPTlsTest::_verifyTlsWarnings()
@@ -216,10 +216,12 @@ void NTRIPTlsTest::certificatePolicy()
     configuration.allowSelfSignedCerts = allowSelfSigned;
     if (sourceTable) {
         NTRIPSourceTableController controller;
+        _expectTlsWarnings(allowSelfSigned, mismatched);
         controller.fetch(configuration);
         if (!allowSelfSigned || mismatched) {
             QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error,
                                       timeoutMs());
+            _verifyTlsWarnings();
             QVERIFY(!controller.fetchError().isEmpty());
             QCOMPARE(controller.mountpointModel()->rowCount(), 0);
             return;
@@ -230,6 +232,7 @@ void NTRIPTlsTest::certificatePolicy()
         QByteArray request;
         QTRY_VERIFY_WITH_TIMEOUT((request += peer->readAll()).endsWith("\r\n\r\n"), timeoutMs());
         QVERIFY(request.startsWith("GET / HTTP/1.1\r\n"));
+        _verifyTlsWarnings();
         const QByteArray response = sourceTableResponse(chunked);
         QCOMPARE(peer->write(response), response.size());
         QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
@@ -314,6 +317,9 @@ void NTRIPTlsTest::sourceTablePolicyChanges()
 {
     QFETCH(bool, duringFetch);
     QFETCH(bool, legacy);
+    // The certificate policy is the subject here; the session reports each TLS decision.
+    ignoreLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^(TLS error:|Accepting self-signed|Rejecting self-signed)")));
     QSslServer server;
     server.setSslConfiguration(serverConfiguration());
     QVERIFY(server.listen(QHostAddress::LocalHost));

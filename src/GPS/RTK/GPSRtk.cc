@@ -36,7 +36,13 @@ GPSRtk::GPSRtk(RTKSettings* settings, AutoConnectSettings* autoConnectSettings, 
     , _positionHealth(new GPSSourceHealth(this))
 {
     qCDebug(GPSRtkLog) << this;
-    _connection = new RTKConnectionPolicy(this, settings, autoConnectSettings);
+    // A silent receiver stays connected, so its last solution must not remain on display.
+    connect(_positionHealth, &GPSSourceHealth::positionChanged, this, [this]() {
+        if (_positionHealth->state() == GPSSourceHealth::State::Stale) {
+            _stageStaleSolution();
+        }
+    });
+    _connection = new RTKConnectionPolicy(*this, settings, autoConnectSettings, this);
     connect(_connection, &RTKConnectionPolicy::reconnectingChanged, this, &GPSRtk::_notifyReceiverChanged);
 #ifndef QGC_NO_SERIAL_LINK
     _serialTransportFactory = [](const QString& device, const std::atomic_bool& stop) {
@@ -70,6 +76,17 @@ void GPSRtk::_stageDisconnectedFacts()
          {facts.connected(), facts.valid(), facts.active(), facts.currentDuration(), facts.currentAccuracy(),
           facts.currentLatitude(), facts.currentLongitude(), facts.currentAltitude(), facts.numSatellites(),
           facts.numSatellitesUsed(), facts.fixType(), facts.jammingState(), facts.spoofingState()}) {
+        _stageFact(fact, fact->rawDefaultValue());
+    }
+}
+
+void GPSRtk::_stageStaleSolution()
+{
+    const GPSNotificationQueue::Scope publish(_notifications);
+    _session.fixType.reset();
+    auto& facts = *_gpsRtkFactGroup;
+    for (Fact* fact : {facts.numSatellites(), facts.numSatellitesUsed(), facts.fixType(), facts.jammingState(),
+                       facts.spoofingState()}) {
         _stageFact(fact, fact->rawDefaultValue());
     }
 }
@@ -205,23 +222,28 @@ void GPSRtk::setSerialPortManager(SerialPortManager* serialPorts)
     }
 }
 
-bool GPSRtk::_connectGPS(const QString& device, QStringView gps_type, uint32_t baudRate, bool allowPersistentChanges)
+SerialPortManager* GPSRtk::serialPorts() const
+{
+    return _serialPorts.data();
+}
+
+bool GPSRtk::connectDiscovered(const QString& device, QStringView boardName)
 {
     for (const auto& entry : gpsReceiverDescriptors()) {
         // Discovery identifies receivers QGroundControl configures; a passive role is always chosen explicitly.
         if (entry.capabilities.passive) {
             continue;
         }
-        if (gps_type.contains(QLatin1StringView(entry.detectionKey.data(), entry.detectionKey.size()),
-                              Qt::CaseInsensitive)) {
-            return _connectSerialGPS(device, entry.type, baudRate, allowPersistentChanges);
+        if (boardName.contains(QLatin1StringView(entry.detectionKey.data(), entry.detectionKey.size()),
+                               Qt::CaseInsensitive)) {
+            return connectSerial(device, entry.type, 0, false);
         }
     }
     _setError(GPSConnectionError::ConfigFailed, tr("Select a specific receiver type before connecting."));
     return false;
 }
 
-bool GPSRtk::_connectSerialGPS(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges)
+bool GPSRtk::connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges)
 {
     const QString endpoint = device.trimmed();
     if (endpoint.isEmpty() || !_serialPorts) {
@@ -242,7 +264,7 @@ bool GPSRtk::_connectSerialGPS(const QString& device, GPSType type, uint32_t bau
 }
 #endif
 
-bool GPSRtk::_connectTcpGPS(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges)
+bool GPSRtk::connectTcp(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges)
 {
     const QString endpoint = QStringLiteral("%1:%2").arg(host).arg(port);
     // Bridges keep their own serial rate, so drivers use the transport's fixed rate.
@@ -254,7 +276,7 @@ bool GPSRtk::_connectTcpGPS(const QString& host, quint16 port, GPSType type, boo
         QStringLiteral("tcp:%1").arg(endpoint), TCPGPSTransport::FIXED_BAUDRATE, allowPersistentChanges, {}, endpoint);
 }
 
-bool GPSRtk::_connectUdpGPS(quint16 port, GPSType type)
+bool GPSRtk::connectUdp(quint16 port, GPSType type)
 {
     const QString endpoint = QStringLiteral("UDP port %1").arg(port);
     return _connectReceiver(
@@ -540,10 +562,10 @@ void GPSRtk::disconnectGPS()
     }
     const GPSNotificationQueue::Scope publish(_notifications);
     _connection->reset();
-    _disconnect(false);
+    disconnectReceiver(false);
 }
 
-void GPSRtk::_disconnect(bool clearError)
+void GPSRtk::disconnectReceiver(bool clearError)
 {
     const GPSNotificationQueue::Scope publish(_notifications);
     _retireSession();

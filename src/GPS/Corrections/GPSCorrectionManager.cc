@@ -7,7 +7,6 @@
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QNetworkInterface>
 
-#include "GPSCorrectionSettings.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.Corrections.GPSCorrectionManager")
@@ -56,17 +55,31 @@ GPSCorrectionManager::~GPSCorrectionManager()
     shutdown();
 }
 
-void GPSCorrectionManager::_applyUdpOutputSettings()
+void GPSCorrectionManager::setUdpOutputConfiguration(const UdpOutputConfiguration& configuration)
 {
-    if (!_settings || _shutdown) {
+    if (_shutdown || configuration == _udpOutputConfiguration) {
+        return;
+    }
+    _udpOutputConfiguration = configuration;
+    _applyUdpOutput();
+}
+
+void GPSCorrectionManager::_applyUdpOutput()
+{
+    if (!_udpOutputConfiguration || _shutdown) {
         return;
     }
     const QString id = QStringLiteral("udpOutput");
     const GPSNotificationQueue::Scope publish(_notifications);
-    const bool enabled = _settings->rtcmUdpOutputEnabled()->rawValue().toBool();
-    const QString address = _settings->rtcmUdpOutputAddress()->rawValue().toString().trimmed();
-    const auto port = static_cast<quint16>(_settings->rtcmUdpOutputPort()->rawValue().toUInt());
-    if (enabled && _udpOutput.isEnabled() && _udpOutput.address() == QHostAddress(address).toString() &&
+    const bool enabled = _udpOutputConfiguration->enabled;
+    const QString address = _udpOutputConfiguration->address.trimmed();
+    const quint16 port = _udpOutputConfiguration->port;
+    const QHostAddress target(address);
+    // Forwarding to this host's own UDP input would feed the selected stream back into itself.
+    const bool loops = _udpInputConfiguration && _udpInputConfiguration->enabled &&
+                       port == _udpInputConfiguration->port &&
+                       (target.isLoopback() || QNetworkInterface::allAddresses().contains(target));
+    if (enabled && !loops && _udpOutput.isEnabled() && _udpOutput.address() == target.toString() &&
         _udpOutput.port() == port) {
         return;
     }
@@ -75,11 +88,7 @@ void GPSCorrectionManager::_applyUdpOutputSettings()
     if (!enabled) {
         return;
     }
-    // Forwarding to this host's own UDP input would feed the selected stream back into itself.
-    const QHostAddress target(address);
-    if (_settings->rtcmUdpInputEnabled()->rawValue().toBool() &&
-        port == _settings->rtcmUdpInputPort()->rawValue().toUInt() &&
-        (target.isLoopback() || QNetworkInterface::allAddresses().contains(target))) {
+    if (loops) {
         qCWarning(GPSCorrectionManagerLog) << "Not forwarding corrections to this host's own UDP input port" << port;
         return;
     }
@@ -90,69 +99,16 @@ void GPSCorrectionManager::_applyUdpOutputSettings()
     }
 }
 
-void GPSCorrectionManager::init(GPSCorrectionSettings* settings)
+void GPSCorrectionManager::setUdpInputConfiguration(const UdpInputConfiguration& input)
 {
-    if (_settings || !settings || _shutdown) {
+    if (_shutdown || input == _udpInputConfiguration) {
         return;
     }
-    _settings = settings;
+    _udpInputConfiguration = input;
     const GPSNotificationQueue::Scope publish(_notifications);
-    for (const Fact* fact : {settings->correctionSource(), settings->correctionSourceInstance()}) {
-        connect(fact, &Fact::rawValueChanged, this, &GPSCorrectionManager::_applyRoutingSettings);
-    }
-    for (const Fact* fact :
-         {settings->rtcmUdpInputEnabled(), settings->rtcmUdpInputPort(), settings->rtcmUdpValidate()}) {
-        connect(fact, &Fact::rawValueChanged, this, &GPSCorrectionManager::_applyUdpInputSettings);
-    }
-    for (const Fact* fact :
-         {settings->rtcmUdpOutputEnabled(), settings->rtcmUdpOutputAddress(), settings->rtcmUdpOutputPort(),
-          settings->rtcmUdpInputEnabled(), settings->rtcmUdpInputPort()}) {
-        connect(fact, &Fact::rawValueChanged, this, &GPSCorrectionManager::_applyUdpOutputSettings);
-    }
-    _applyRoutingSettings();
-    _applyUdpInputSettings();
-    _applyUdpOutputSettings();
-}
-
-void GPSCorrectionManager::_applyRoutingSettings()
-{
-    if (!_settings || _shutdown) {
-        return;
-    }
-    RoutingConfiguration configuration;
-    configuration.instance = _settings->correctionSourceInstance()->rawValue().toString();
-    switch (_settings->correctionSource()->rawValue().toInt()) {
-        case GPSCorrectionSettings::LocalReceiver:
-            configuration.source = GPSCorrectionSource::LocalReceiver;
-            configuration.policy = RoutingPolicy::Manual;
-            break;
-        case GPSCorrectionSettings::Ntrip:
-            configuration.source = GPSCorrectionSource::Ntrip;
-            configuration.policy = RoutingPolicy::Manual;
-            break;
-        case GPSCorrectionSettings::Udp:
-            configuration.source = GPSCorrectionSource::Udp;
-            configuration.policy = RoutingPolicy::Manual;
-            break;
-        case GPSCorrectionSettings::Automatic:
-            break;
-        default:
-            qCWarning(GPSCorrectionManagerLog) << "Invalid correction source; using automatic selection";
-            break;
-    }
-    applyRoutingConfiguration(configuration);
-}
-
-void GPSCorrectionManager::_applyUdpInputSettings()
-{
-    if (!_settings || _shutdown) {
-        return;
-    }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    _applyUdpOutput();
     const auto configuration = _udpConfigurationRevision.advance(this);
-    const bool enabled = _settings->rtcmUdpInputEnabled()->rawValue().toBool();
-    const bool validate = _settings->rtcmUdpValidate()->rawValue().toBool();
-    const quint16 port = static_cast<quint16>(_settings->rtcmUdpInputPort()->rawValue().toUInt());
+    const bool enabled = input.enabled;
     const auto current = [this, configuration]() { return configuration.isCurrent() && !_shutdown; };
     _udpRegistration.reset();
     if (!current()) {
@@ -163,7 +119,7 @@ void GPSCorrectionManager::_applyUdpInputSettings()
         return;
     }
     disconnect(&_udpInput, nullptr, this, nullptr);
-    _udpInput.configure(port, validate);
+    _udpInput.configure(input.port, input.validate);
     if (!current() || !enabled) {
         return;
     }

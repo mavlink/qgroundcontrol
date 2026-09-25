@@ -3,6 +3,7 @@
 #include <cstring>
 #include <limits>
 #include <optional>
+#include <string>
 #include <utility>
 
 #include <QtCore/QByteArray>
@@ -13,6 +14,7 @@
 #include "../RTK/ScriptedSBFReceiver.h"
 #include "GPSBaseStationConfig.h"
 #include "GPSDriver.h"
+#include "GPSReceiverDescriptor.h"
 #include "Protocols/ProtocolTestPackets.h"
 #include "ScriptedGPSTransport.h"
 #include "ScriptedUBXReceiver.h"
@@ -390,6 +392,15 @@ void GPSDriverTest::_configurationDeadline()
         QCOMPARE(driver.configurationEvidence().back().writtenBytes, 6);
         QCOMPARE(driver.configurationEvidence().back().uncertainBytes, 0);
     }
+}
+
+void GPSDriverTest::_everyReceiverHasProtocol()
+{
+    // Receivers the settings offer must have a protocol; the two tables live in separate libraries.
+    for (const auto& descriptor : gpsReceiverDescriptors()) {
+        QVERIFY2(GPSDriver::supportsType(descriptor.type), std::string(descriptor.detectionKey).c_str());
+    }
+    QVERIFY(!GPSDriver::supportsType(static_cast<GPSType>(-1)));
 }
 
 void GPSDriverTest::_femtoConfigurationSurvey()

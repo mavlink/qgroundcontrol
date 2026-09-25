@@ -22,6 +22,7 @@ namespace {
 constexpr char kMockNtripManager[] = R"(
     import QtQml
     import QGroundControl
+    import QGroundControl.GPS
     QtObject {
         property int connectionStatus: NTRIPManager.Error
         property string statusMessage: "Connection failed"

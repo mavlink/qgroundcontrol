@@ -119,20 +119,27 @@ bool GPSNativeUnicore::_execute(std::string command, Reply reply)
 bool GPSNativeUnicore::_identify(unsigned& baud)
 {
     constexpr std::array<unsigned, 8> BAUD_RATES{115200, 230400, 460800, 921600, 57600, 38400, 19200, 9600};
-    for (const auto candidate : BAUD_RATES) {
-        const unsigned rate = baud ? baud : candidate;
+    const auto speedFailure = [](unsigned rate) {
+        return QStringLiteral("Cannot configure Unicore host serial speed %1").arg(rate);
+    };
+    const auto detection = detectBaud(BAUD_RATES, baud, [this, &speedFailure](unsigned rate) {
         resetStream();
-        _configurationDetail = QStringLiteral("Cannot configure Unicore host serial speed %1").arg(rate);
-        if (setBaudrate(rate) && _execute("VERSIONA", Reply::Version)) {
-            baud = rate;
-            log(GPSProtocolLogLevel::Debug, "Unicore %s firmware %s", _model.c_str(), _firmware.c_str());
-            return true;
+        _configurationDetail = speedFailure(rate);
+        if (_execute("VERSIONA", Reply::Version)) {
+            return BaudProbe::Found;
         }
-        if (baud || hasIOError() || !_model.empty()) {
-            return false;
+        // A receiver that reported its model answered at this rate.
+        return _model.empty() ? BaudProbe::TryNext : BaudProbe::Stop;
+    });
+    if (!detection.found) {
+        if (detection.linkFailed) {
+            _configurationDetail = speedFailure(detection.baud);
         }
+        return false;
     }
-    return false;
+    baud = detection.baud;
+    log(GPSProtocolLogLevel::Debug, "Unicore %s firmware %s", _model.c_str(), _firmware.c_str());
+    return true;
 }
 
 bool GPSNativeUnicore::configure(unsigned& baud, const GPSConfig& config)

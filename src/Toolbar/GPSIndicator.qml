@@ -17,8 +17,6 @@ Item {
     readonly property bool _vehicleGps: !!_activeVehicle && !!_activeVehicle.gps && _activeVehicle.gps.telemetryAvailable
     property var    _receiver:      QGroundControl.gpsManager.gpsRtk
     property bool   _rtkConnected:  _receiver.facts.connected.value
-    // A position-only receiver supplies no RTK corrections.
-    readonly property bool _positionOnlyReceiver: _receiver.activeRole === GPSRtk.PositionOnly
     readonly property var _rtkFacts: _receiver.facts
     readonly property bool _rtkInterference: _rtkConnected && _rtkFacts.interferenceWarning
     readonly property int _receiverSatellites: _rtkFacts.numSatellitesUsed.rawValue
@@ -37,12 +35,8 @@ Item {
         default: return ""
         }
     }
-    readonly property bool _correctionsFresh: QGroundControl.gpsManager.corrections.hasSelectedStream
-    // A configured correction source, such as NTRIP reconnecting or a base still surveying, that may not deliver.
-    readonly property bool _correctionsExpected: QGroundControl.gpsManager.ntrip.connectionStatus !== NTRIPManager.Disconnected
-                                                 || QGroundControl.settingsManager.gpsCorrectionSettings.rtcmUdpInputEnabled.rawValue
-                                                 || (_rtkConnected && !_positionOnlyReceiver)
-    readonly property bool _showRtk: _correctionsFresh || _correctionsExpected
+    property int    _correctionState: QGroundControl.gpsManager.correctionState
+    readonly property bool _showRtk: _correctionState !== GPSManager.Inactive
     property var    _gpsAggregate:  _activeVehicle ? _activeVehicle.gpsAggregate : null
     // Resilience states 0 and 255 mean the vehicle does not know.
     readonly property int _authenticationState: {
@@ -90,7 +84,7 @@ Item {
                 objectName:             "gpsCorrectionsLabel"
                 rotation:               90
                 text:                   control._showRtk ? qsTr("RTK") : qsTr("GNSS")
-                color:                  control._rtkInterference || (control._correctionsExpected && !control._correctionsFresh)
+                color:                  control._rtkInterference || control._correctionState === GPSManager.Waiting
                                         ? qgcPal.colorOrange : qgcPal.text
                 anchors.verticalCenter: parent.verticalCenter
                 visible:                control._rtkConnected || control._showRtk

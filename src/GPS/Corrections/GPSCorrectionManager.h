@@ -1,10 +1,11 @@
 #pragma once
 
+#include <optional>
+
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QTimer>
-#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "GPSCorrectionDiagnosticsModel.h"
 #include "GPSCorrectionEventModel.h"
@@ -16,14 +17,10 @@
 #include "RTCMUdpInput.h"
 #include "UdpForwarder.h"
 
-class GPSCorrectionSettings;
-
 /// Owns the shared MAVLink sequence domain and the UDP correction input and output for all GPS sources.
 class GPSCorrectionManager : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
     Q_PROPERTY(RTCMMavlink* rtcmMavlink READ rtcmMavlink CONSTANT)
     Q_PROPERTY(QAbstractItemModel* sources READ sourceModel CONSTANT)
     Q_PROPERTY(QList<GPSCorrectionStreamDiagnostic> sourceInstances READ sourceInstances NOTIFY sourceInstancesChanged)
@@ -39,17 +36,37 @@ public:
     using RoutingPolicy = GPSCorrectionRouter::Policy;
     using RoutingConfiguration = GPSCorrectionRouter::Configuration;
     using SourceModel = GPSCorrectionDiagnosticsModel<GPSCorrectionSourceDiagnostic>;
+
+    struct UdpInputConfiguration
+    {
+        bool enabled = false;
+        quint16 port = 0;
+        bool validate = true;
+        bool operator==(const UdpInputConfiguration&) const = default;
+    };
+
+    struct UdpOutputConfiguration
+    {
+        bool enabled = false;
+        QString address{};
+        quint16 port = 0;
+        bool operator==(const UdpOutputConfiguration&) const = default;
+    };
+
     using DestinationModel = GPSCorrectionDiagnosticsModel<GPSCorrectionDestinationDiagnostic>;
 
     explicit GPSCorrectionManager(QObject* parent = nullptr);
     ~GPSCorrectionManager() override;
 
-    void init(GPSCorrectionSettings* settings);
     void shutdown();
 
     RTCMMavlink* rtcmMavlink() { return &_rtcmMavlink; }
 
     void applyRoutingConfiguration(const RoutingConfiguration& configuration);
+    /// Listens for RTCM on a UDP port as the Udp source; unchanged configurations are ignored.
+    void setUdpInputConfiguration(const UdpInputConfiguration& configuration);
+    /// Forwards the selected stream to a UDP peer; unchanged configurations are ignored.
+    void setUdpOutputConfiguration(const UdpOutputConfiguration& configuration);
     GPSCorrectionSourceRegistration registerSource(GPSCorrectionSource source, const QString& instance = {});
     void acceptIngress(const GPSCorrectionIngress& ingress);
 
@@ -93,9 +110,7 @@ signals:
     void selectedBytesPerSecondChanged();
 
 private:
-    void _applyRoutingSettings();
-    void _applyUdpInputSettings();
-    void _applyUdpOutputSettings();
+    void _applyUdpOutput();
 
     void _scheduleSourcesChanged();
     void _refreshDiagnostics();
@@ -110,7 +125,8 @@ private:
     RTCMUdpInput _udpInput;
     GPSCorrectionSourceRegistration _udpRegistration;
     UdpForwarder _udpOutput{this};
-    QPointer<GPSCorrectionSettings> _settings;
+    std::optional<UdpInputConfiguration> _udpInputConfiguration;
+    std::optional<UdpOutputConfiguration> _udpOutputConfiguration;
     // Last published instances; notifications fire only when the list changes.
     QList<GPSCorrectionStreamDiagnostic> _sourceInstances;
     quint64 _selectedBytesPerSecond = 0;

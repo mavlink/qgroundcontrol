@@ -16,6 +16,7 @@
 #include "GPSPositionSourceRegistration.h"
 #include "GPSProvider.h"
 #include "GPSReceiverDescriptor.h"
+#include "RTKConnectionTarget.h"
 
 class AutoConnectSettings;
 class GPSRTKFactGroup;
@@ -30,7 +31,7 @@ class RTKSettings;
 /// Runs the local RTK receiver session and publishes its Facts, corrections, and position.
 /// Operations update state first; Facts, receiverChanged, and errorMessageChanged are published once
 /// the outermost operation finishes, so observers never run inside an operation in progress.
-class GPSRtk : public QObject
+class GPSRtk : public QObject, private RTKConnectionTarget
 {
     Q_OBJECT
     QML_ELEMENT
@@ -52,7 +53,6 @@ class GPSRtk : public QObject
     Q_PROPERTY(ReceiverRole activeRole READ activeRole NOTIFY receiverChanged)
 
     friend class GPSRtkTest;
-    friend class RTKConnectionPolicy;
     friend class RTKConnectionPolicyTest;
 
 public:
@@ -103,7 +103,7 @@ public:
     /// The current session's receiver finished configuration.
     bool connected() const { return _session.ready; }
 
-    bool hasReceiver() const { return !_session.provider.isNull(); }
+    bool hasReceiver() const override { return !_session.provider.isNull(); }
 
     bool serialSupported() const;
 
@@ -175,24 +175,33 @@ private:
 
     static QString _receiverConfig(GPSType type, RTKSettings* settings, uint32_t baudRate, GPSReceiverConfig& config,
                                    bool allowPersistentChanges = false);
+
+    GPSConnectionError connectionError() const override { return _connectionError; }
+
+    void setConnectionError(GPSConnectionError error, const QString& message) override { _setError(error, message); }
+
+    void disconnectReceiver(bool clearError) override;
+    bool connectTcp(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges) override;
+    bool connectUdp(quint16 port, GPSType type) override;
 #ifndef QGC_NO_SERIAL_LINK
-    bool _connectGPS(const QString& device, QStringView gps_type, uint32_t baudRate = 0,
-                     bool allowPersistentChanges = false);
-    bool _connectSerialGPS(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges);
+    SerialPortManager* serialPorts() const override;
+    bool connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges) override;
+    bool connectDiscovered(const QString& device, QStringView boardName) override;
 #endif
-    bool _connectTcpGPS(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges);
-    bool _connectUdpGPS(quint16 port, GPSType type);
+    GPSNotificationQueue& notifications() override { return _notifications; }
+
     bool _connectReceiver(GPSType type, ReceiverRole role, GPSProvider::TransportFactory transportFactory,
                           const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
                           const QString& serialDevice = {}, const QString& endpoint = {});
     /// The saved role applies to passive receivers; every other type is a configured base.
     ReceiverRole _roleFor(GPSType type) const;
-    void _disconnect(bool clearError);
     void _endSession(GPSConnectionError error, const QString& detail, bool portRemoved);
     void _retireSession();
     void _setError(GPSConnectionError error, const QString& message = {});
     void _stageFact(Fact* fact, const QVariant& value);
     void _stageDisconnectedFacts();
+    /// Clears the receiver's fix, satellites, and integrity once it stops reporting position.
+    void _stageStaleSolution();
     void _notifyReceiverChanged();
 
     RTKSettings* const _settings;

@@ -5,13 +5,10 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QPointer>
-#include <QtNetwork/QSslError>
-#include <QtNetwork/QSslSocket>
 
 #include "NMEAUtils.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
-#include "NTRIPTlsPolicy_p.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIP.NTRIPHttpTransport")
@@ -70,7 +67,7 @@ void NTRIPHttpTransport::start()
 {
     const auto attempt = _attempt.advance(this);
     _stopTimers();
-    _retireSocket();
+    _retireSession();
     if (!attempt.isCurrent()) {
         return;
     }
@@ -88,7 +85,7 @@ void NTRIPHttpTransport::stop()
     _stopped = true;
     _stopTimers();
 
-    _retireSocket();
+    _retireSession();
 }
 
 void NTRIPHttpTransport::_stopTimers()
@@ -99,28 +96,25 @@ void NTRIPHttpTransport::_stopTimers()
     _errorBodyTimer.stop();
 }
 
-void NTRIPHttpTransport::_retireSocket()
+void NTRIPHttpTransport::_retireSession()
 {
-    const auto socket = std::exchange(_socket, {});
-    if (socket) {
-        socket->disconnect(this);
-        socket->deleteLater();
-        socket->abort();
+    if (const auto session = std::exchange(_session, {})) {
+        session->retire();
     }
 }
 
 bool NTRIPHttpTransport::_write(const QByteArray& bytes)
 {
-    const auto socket = _socket;
+    const auto session = _session;
     const auto attempt = _attempt.current(this);
-    if (!socket || _stopped) {
+    if (!session || _stopped) {
         return false;
     }
-    const qint64 accepted = socket->write(bytes);
-    if (!attempt.isCurrent() || _stopped || !socket || _socket != socket) {
+    const bool accepted = session->write(bytes);
+    if (!attempt.isCurrent() || _stopped || !session || _session != session) {
         return false;
     }
-    if (accepted != bytes.size()) {
+    if (!accepted) {
         _fail(NTRIPError::SocketError, tr("Socket did not accept the complete NTRIP write"));
         return false;
     }
@@ -129,7 +123,7 @@ bool NTRIPHttpTransport::_write(const QByteArray& bytes)
 
 void NTRIPHttpTransport::_sendHttpRequest()
 {
-    if (!_socket || _stopped) {
+    if (!_session || _stopped) {
         return;
     }
 
@@ -138,20 +132,16 @@ void NTRIPHttpTransport::_sendHttpRequest()
         _fail(NTRIPError::InvalidConfig, request.error);
         return;
     }
-    const auto socket = _socket;
+    const auto session = _session;
     const auto attempt = _attempt.current(this);
     if (request.credentialsInClear) {
         qCWarning(NTRIPHttpTransportLog) << "Sending credentials without TLS — data is not encrypted";
         emit plaintextCredentialsWarning();
     }
-    if (!attempt.isCurrent() || _stopped || !socket || _socket != socket || !_write(request.bytes)) {
+    if (!attempt.isCurrent() || _stopped || !session || _session != session || !_write(request.bytes)) {
         return;
     }
     qCDebug(NTRIPHttpTransportLog) << "HTTP request queued for mount:" << _config.mountpoint;
-
-    qCDebug(NTRIPHttpTransportLog) << "Socket connected"
-                                   << "local" << _socket->localAddress().toString() << ":" << _socket->localPort()
-                                   << "-> peer" << _socket->peerAddress().toString() << ":" << _socket->peerPort();
 }
 
 void NTRIPHttpTransport::_fail(NTRIPError code, const QString& msg, std::chrono::milliseconds retryAfter)
@@ -163,14 +153,14 @@ void NTRIPHttpTransport::_fail(NTRIPError code, const QString& msg, std::chrono:
         _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
         return;
     }
-    const auto socket = _socket;
+    const auto session = _session;
     const auto attempt = _attempt.current(this);
     // Abort may synchronously emit disconnected.
     _stopped = true;
     _stopTimers();
     emit error(NTRIPFailure{code, msg, retryAfter});
-    if (attempt.isCurrent() && socket && _socket == socket) {
-        socket->abort();
+    if (attempt.isCurrent() && session && _session == session) {
+        session->abort();
     }
 }
 
@@ -179,162 +169,70 @@ void NTRIPHttpTransport::_connect()
     if (_stopped) {
         return;
     }
-
-    if (_socket) {
-        qCWarning(NTRIPHttpTransportLog) << "Socket already exists, aborting connect";
+    if (_session) {
+        qCWarning(NTRIPHttpTransportLog) << "Session already exists, aborting connect";
         return;
     }
-
-    qCDebug(NTRIPHttpTransportLog) << "connectToHost" << _config.host << ":" << _config.port
-                                   << " mount=" << _config.mountpoint;
+    qCDebug(NTRIPHttpTransportLog) << "Connecting to mount" << _config.mountpoint;
 
     _httpDecoder.reset();
-    _reading = false;
     _rtcmDecoder.reset();
     const auto attempt = _attempt.current(this);
-
-    if (_config.useTls) {
-        QSslSocket* sslSocket = new QSslSocket(this);
-        _socket = sslSocket;
-        connect(sslSocket, &QSslSocket::sslErrors, this, [this, sslSocket, attempt](const QList<QSslError>& errors) {
-            if (!attempt.isCurrent() || _stopped || _socket != sslSocket) {
-                return;
-            }
-            QStringList msgs;
-            for (const QSslError& e : errors) {
-                qCWarning(NTRIPHttpTransportLog) << "TLS error:" << e.errorString();
-                msgs.append(e.errorString());
-            }
-            if (!NTRIPTlsPolicy::isSelfSignedOnly(errors)) {
-                _fail(NTRIPError::SslError, msgs.join(QStringLiteral("; ")));
-            } else if (_config.allowSelfSignedCerts) {
-                qCWarning(NTRIPHttpTransportLog) << "Accepting self-signed certificate (user opted in)";
-                // Only ignore the specific self-signed errors; all other SSL errors remain fatal.
-                sslSocket->ignoreSslErrors(errors);
-            } else {
-                qCWarning(NTRIPHttpTransportLog)
-                    << "Rejecting self-signed certificate (enable 'Accept self-signed certificates' to allow)";
-                _fail(NTRIPError::SslError, tr("Self-signed certificate rejected. Enable 'Accept self-signed "
-                                               "certificates' in NTRIP settings to allow."));
-            }
-        });
-    } else {
-        _socket = new QTcpSocket(this);
-    }
-    _socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
-    _socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
-    _socket->setReadBufferSize(65536);
-
-    const auto socket = _socket;
-    const auto current = [this, socket, attempt]() {
-        return attempt.isCurrent() && socket && _socket == socket && !_stopped;
+    auto* session = new NTRIPHttpSession(this);
+    _session = session;
+    const QPointer<NTRIPHttpSession> guard(session);
+    const auto current = [this, guard, attempt]() {
+        return attempt.isCurrent() && guard && _session == guard && !_stopped;
     };
-    connect(_socket, &QTcpSocket::errorOccurred, this, [this, current](QAbstractSocket::SocketError code) {
-        if (!current()) {
-            return;
-        }
-        // disconnected drains remaining data before deciding whether framing completed.
-        if (code == QAbstractSocket::RemoteHostClosedError) {
-            return;
-        }
-        _connectTimeoutTimer.stop();
-
-        const QString msg = _socket->errorString();
-
-        qCWarning(NTRIPHttpTransportLog) << "Socket error code:" << int(code) << " msg:" << msg;
-        _fail(NTRIPError::SocketError, msg);
-    });
-
-    connect(_socket, &QTcpSocket::disconnected, this, [this, current]() {
-        if (!current()) {
-            return;
-        }
-        _finishResponse();
-    });
-
-    connect(_socket, &QTcpSocket::readyRead, this, [this, current]() {
+    connect(session, &NTRIPHttpSession::established, this, [this, current]() {
         if (current()) {
-            _readBytes();
+            _sendHttpRequest();
         }
     });
-
+    connect(session, &NTRIPHttpSession::bytesReceived, this,
+            [this, current](const QByteArray& bytes, qint64 receivedAtMs) {
+                if (current()) {
+                    _processHttpBytes(bytes, receivedAtMs);
+                }
+            });
+    connect(session, &NTRIPHttpSession::failed, this, [this, current](NTRIPError code, const QString& message) {
+        if (current()) {
+            _fail(code, message);
+        }
+    });
+    connect(session, &NTRIPHttpSession::closed, this, [this, current]() {
+        if (current()) {
+            _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
+        }
+    });
     _connectTimeoutTimer.start();
-    if (_config.useTls) {
-        QSslSocket* sslSocket = qobject_cast<QSslSocket*>(_socket.data());
-        connect(sslSocket, &QSslSocket::encrypted, this, [this, current]() {
-            if (current()) {
-                _sendHttpRequest();
-            }
-        });
-        sslSocket->connectToHostEncrypted(_config.host, static_cast<quint16>(_config.port));
-    } else {
-        connect(_socket, &QTcpSocket::connected, this, [this, current]() {
-            if (current()) {
-                _sendHttpRequest();
-            }
-        });
-        _socket->connectToHost(_config.host, static_cast<quint16>(_config.port));
-    }
+    session->open(_config);
 }
 
 void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtMs)
 {
-    const auto attempt = _attempt.current(this);
-    for (char ch : buffer) {
-        if (_stopped) {
-            return;
-        }
-        const uint8_t byte = static_cast<uint8_t>(static_cast<unsigned char>(ch));
-        auto result = _rtcmDecoder.addByte(byte, receivedAtMs);
-        while (result) {
-            if (_stopped) {
-                return;
-            }
-            if (result->valid) {
-                // Whitelisting is a routing policy, not evidence of a broken caster stream.
-                _validFrameWatchdogTimer.start();
-            }
-            emit correctionFrameReceived(*result);
-            if (!attempt.isCurrent() || _stopped) {
-                return;
-            }
-            if (!result->valid) {
-                qCWarning(NTRIPHttpTransportLog) << "Invalid RTCM frame, dropping message id" << result->messageId;
-            } else if (!result->filtered) {
-                qCDebug(NTRIPHttpTransportLog) << "RTCM packet id" << result->messageId << "len" << result->data.size();
-            } else {
-                qCDebug(NTRIPHttpTransportLog) << "Ignoring RTCM" << result->messageId;
-            }
-            result = _rtcmDecoder.nextFrame();
-        }
-    }
-}
-
-void NTRIPHttpTransport::_readBytes()
-{
-    if (_stopped || !_socket || _reading) {
+    if (_stopped) {
         return;
     }
-    const auto socket = _socket;
     const auto attempt = _attempt.current(this);
-    const auto current = [this, socket, attempt]() {
-        return attempt.isCurrent() && !_stopped && socket && _socket == socket;
-    };
-    _reading = true;
-    while (current() && socket->bytesAvailable() > 0) {
-        const qint64 receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
-        const QByteArray bytes = socket->read(16384);
-        if (!current() || bytes.isEmpty()) {
-            break;
+    _rtcmDecoder.feed(buffer, receivedAtMs, [this, &attempt](const RTCMDecodedFrame& frame) {
+        if (frame.valid) {
+            // Whitelisting is a routing policy, not evidence of a broken caster stream.
+            _validFrameWatchdogTimer.start();
         }
-        _processHttpBytes(bytes, receivedAtMs);
-    }
-    if (attempt.isCurrent()) {
-        _reading = false;
-        if (current() && socket->state() == QAbstractSocket::UnconnectedState) {
-            _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
+        emit correctionFrameReceived(frame);
+        if (!attempt.isCurrent() || _stopped) {
+            return false;
         }
-    }
+        if (!frame.valid) {
+            qCWarning(NTRIPHttpTransportLog) << "Invalid RTCM frame, dropping message id" << frame.messageId;
+        } else if (!frame.filtered) {
+            qCDebug(NTRIPHttpTransportLog) << "RTCM packet id" << frame.messageId << "len" << frame.data.size();
+        } else {
+            qCDebug(NTRIPHttpTransportLog) << "Ignoring RTCM" << frame.messageId;
+        }
+        return true;
+    });
 }
 
 void NTRIPHttpTransport::_processHttpBytes(QByteArrayView bytes, qint64 receivedAtMs, const QDateTime& utcNow)
@@ -376,12 +274,8 @@ void NTRIPHttpTransport::_publishHttpResult(const NTRIPHttpDecoder::Result& resu
 
 void NTRIPHttpTransport::_finishResponse()
 {
-    if (_reading) {
-        return;
-    }
-    const auto attempt = _attempt.current(this);
-    _readBytes();
-    if (attempt.isCurrent() && !_stopped) {
+    // A delivery in progress publishes the rest of the error body first.
+    if (!_stopped && !(_session && _session->reading())) {
         _publishHttpResult(_httpDecoder.finish(), static_cast<qint64>(MonotonicClock::nowUs() / 1000));
     }
 }
@@ -392,7 +286,7 @@ void NTRIPHttpTransport::sendNMEA(const QByteArray& nmea)
         return;
     }
 
-    if (!_socket || _socket->state() != QAbstractSocket::ConnectedState) {
+    if (!_session || !_session->isConnected()) {
         return;
     }
 

@@ -10,11 +10,13 @@
 #include "AutoConnectSettings.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSManager.h"
+#include "GPSNotificationQueue.h"
 #include "GPSRtk.h"
 #include "GPSTransport.h"
 #include "NTRIPManager.h"
 #include "PositionManager.h"
 #include "RTKConnectionPolicy.h"
+#include "RTKConnectionTarget.h"
 #include "RTKSettings.h"
 #include "SerialPortManager.h"
 #include "SettingsManager.h"
@@ -55,6 +57,52 @@ void saveReceiverSettings(TestFixtures::SettingsFixture& saved, bool autoConnect
     saved.setFactValue(rtk->serialDevice(), rtk->serialDevice()->rawValue());
     saved.setFactValue(rtk->serialBaudRate(), rtk->serialBaudRate()->rawValue());
 }
+
+/// Records the policy's receiver operations without running sessions.
+class FakeConnectionTarget final : public RTKConnectionTarget
+{
+public:
+    bool hasReceiver() const override { return connected; }
+
+    GPSConnectionError connectionError() const override { return error; }
+
+    void setConnectionError(GPSConnectionError value, const QString&) override { error = value; }
+
+    void disconnectReceiver(bool clearError) override
+    {
+        ++disconnects;
+        connected = false;
+        if (clearError) {
+            error = GPSConnectionError::None;
+        }
+    }
+
+    bool connectTcp(const QString& host, quint16 port, GPSType type, bool) override
+    {
+        tcpAttempts.append(QStringLiteral("%1:%2:%3").arg(host).arg(port).arg(static_cast<int>(type)));
+        connected = acceptConnections;
+        error = connected ? GPSConnectionError::None : GPSConnectionError::OpenFailed;
+        return connected;
+    }
+
+    bool connectUdp(quint16, GPSType) override { return false; }
+#ifndef QGC_NO_SERIAL_LINK
+    SerialPortManager* serialPorts() const override { return nullptr; }
+
+    bool connectSerial(const QString&, GPSType, uint32_t, bool) override { return false; }
+
+    bool connectDiscovered(const QString&, QStringView) override { return false; }
+#endif
+    GPSNotificationQueue& notifications() override { return queue; }
+
+    QObject owner;
+    GPSNotificationQueue queue{&owner};
+    QStringList tcpAttempts;
+    GPSConnectionError error = GPSConnectionError::None;
+    int disconnects = 0;
+    bool connected = false;
+    bool acceptConnections = true;
+};
 
 }  // namespace
 
@@ -193,6 +241,43 @@ void RTKConnectionPolicyTest::_excludedPorts()
     fixture.policy()->update();
     fixture.policy()->update();
     QCOMPARE(fixture.sessions(), 0U);
+}
+
+void RTKConnectionPolicyTest::_manualRetryDrivesTarget()
+{
+    TestFixtures::SettingsFixture saved;
+    saveReceiverSettings(saved);
+    auto* rtk = rtkSettings();
+    saved.setFactValue(rtk->connectionType(), GPSRtk::Tcp);
+    saved.setFactValue(rtk->tcpHost(), QStringLiteral("rtk.test"));
+    saved.setFactValue(rtk->tcpPort(), 2101);
+    saved.setFactValue(rtk->baseReceiverManufacturers(), GPSRtk::manufacturerForType(GPSType::ublox));
+    FakeConnectionTarget target;
+    RTKConnectionPolicy policy(target, rtk, autoConnectSettings());
+    const QString expected = QStringLiteral("rtk.test:2101:%1").arg(static_cast<int>(GPSType::ublox));
+
+    QVERIFY(policy.connectConfigured(false));
+    QCOMPARE(target.tcpAttempts, QStringList{expected});
+    QVERIFY(!autoConnectSettings()->autoConnectRTKGPS()->rawValue().toBool());
+    policy.receiverReady();
+
+    QSignalSpy reconnecting(&policy, &RTKConnectionPolicy::reconnectingChanged);
+    target.connected = false;
+    target.acceptConnections = false;
+    QVERIFY(!policy.sessionEnded(GPSConnectionError::DeviceError, {}, false).isEmpty());
+    QVERIFY(policy.reconnecting());
+    policy.update();
+    QCOMPARE(target.tcpAttempts.size(), 1);
+    policy._retryDeadline = QDeadlineTimer(0);
+    policy.update();
+    QCOMPARE(target.tcpAttempts, (QStringList{expected, expected}));
+    QVERIFY(policy.reconnecting());
+    QVERIFY(!policy._retryDeadline.isForever());
+
+    policy.disconnectConfigured();
+    QCOMPARE(target.disconnects, 1);
+    QVERIFY(!policy.reconnecting());
+    QCOMPARE(reconnecting.size(), 1);
 }
 
 UT_REGISTER_TEST(RTKConnectionPolicyTest, TestLabel::Unit)

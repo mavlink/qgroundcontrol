@@ -1,13 +1,18 @@
 #include "GPSManager.h"
 
+#include <utility>
+
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
 #include "AppMessages.h"
+#include "Fact.h"
 #include "GPSCorrectionManager.h"
+#include "GPSCorrectionSettings.h"
 #include "GPSMavlinkOutput.h"
 #include "GPSObservation.h"
 #include "GPSRtk.h"
+#include "GPSSettingsBindings.h"
 #include "LinkManager.h"
 #include "MultiVehicleManager.h"
 #include "NTRIPGgaProvider.h"
@@ -68,7 +73,8 @@ GPSManager::GPSManager(QObject* parent)
     , _corrections(new GPSCorrectionManager(this))
     , _gpsRtk(new GPSRtk(SettingsManager::instance()->rtkSettings(), SettingsManager::instance()->autoConnectSettings(),
                          this))
-    , _ntripManager(new NTRIPManager(SettingsManager::instance()->ntripSettings(), this))
+    , _ntripManager(new NTRIPManager(this))
+    , _udpInputEnabled(SettingsManager::instance()->gpsCorrectionSettings()->rtcmUdpInputEnabled())
 {
     qCDebug(GPSManagerLog) << this;
     _corrections->rtcmMavlink()->setOutputProvider(createGpsMavlinkOutputProvider());
@@ -77,6 +83,27 @@ GPSManager::GPSManager(QObject* parent)
     _gpsRtk->setSerialPortManager(SerialPortManager::instance());
 #endif
     _ntripManager->setCorrectionManager(_corrections);
+    connect(_corrections, &GPSCorrectionManager::sourceInstancesChanged, this, &GPSManager::_updateCorrectionState);
+    connect(_ntripManager, &NTRIPManager::connectionStatusChanged, this, &GPSManager::_updateCorrectionState);
+    connect(_gpsRtk, &GPSRtk::receiverChanged, this, &GPSManager::_updateCorrectionState);
+    connect(_udpInputEnabled, &Fact::rawValueChanged, this, &GPSManager::_updateCorrectionState);
+    _updateCorrectionState();
+}
+
+void GPSManager::_updateCorrectionState()
+{
+    auto state = CorrectionState::Inactive;
+    if (_corrections->hasSelectedStream()) {
+        state = CorrectionState::Fresh;
+    } else if (_ntripManager->connectionStatus() != NTRIPManager::ConnectionStatus::Disconnected ||
+               _udpInputEnabled->rawValue().toBool() ||
+               (_gpsRtk->hasReceiver() && _gpsRtk->activeRole() != GPSRtk::PositionOnly) ||
+               !_corrections->sourceInstances().isEmpty()) {
+        state = CorrectionState::Waiting;
+    }
+    if (std::exchange(_correctionState, state) != state) {
+        emit correctionStateChanged();
+    }
 }
 
 GPSManager::~GPSManager()
@@ -130,7 +157,8 @@ void GPSManager::init()
     }
     _configureNtripProviders();
     _gpsRtk->setPositionService(QGCPositionManager::instance());
-    _corrections->init(SettingsManager::instance()->gpsCorrectionSettings());
+    GPSSettingsBindings::bindCorrections(SettingsManager::instance()->gpsCorrectionSettings(), _corrections);
+    GPSSettingsBindings::bindNtrip(SettingsManager::instance()->ntripSettings(), _ntripManager);
     _ntripManager->init();
     _startupConnectPending = SettingsManager::instance()->rtkSettings()->connectOnStartup()->rawValue().toBool();
     _connectionTimer = new QTimer(this);

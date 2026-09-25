@@ -4,19 +4,17 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QTimer>
-#include <QtNetwork/QSslError>
-#include <QtNetwork/QSslSocket>
 
 #include "NTRIPHttpCodec.h"
+#include "NTRIPHttpSession.h"
 #include "NTRIPSourceTable.h"
-#include "NTRIPTlsPolicy_p.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(NTRIPSourceTableControllerLog, "GPS.NTRIP.NTRIPSourceTableController")
 
 struct NTRIPSourceTableController::FetchAttempt
 {
-    QPointer<QTcpSocket> socket;
+    QPointer<NTRIPHttpSession> session;
     QTimer timeout;
     NTRIPHttpDecoder decoder{NTRIPHttpDecoder::Purpose::SourceTable};
     QByteArray request;
@@ -31,7 +29,7 @@ NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent)
 NTRIPSourceTableController::~NTRIPSourceTableController()
 {
     _notifications.close();
-    // Detach the socket before child cleanup so its callbacks cannot reach a destroyed controller.
+    // Detach the session before child cleanup so its callbacks cannot reach a destroyed controller.
     _abortFetch();
 }
 
@@ -51,7 +49,7 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
     const bool sameCaster = casterConfig == _lastFetchConfig;
     const QString invalid = config.validationError();
 
-    if (invalid.isEmpty() && _activeSocket() && _fetchStatus == FetchStatus::InProgress && sameCaster) {
+    if (invalid.isEmpty() && _activeSession() && _fetchStatus == FetchStatus::InProgress && sameCaster) {
         _sortCoord = sortCoord;
         return;
     }
@@ -97,7 +95,7 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
     _setSecurityWarning(request.credentialsInClear ? tr("Credentials are being sent without TLS encryption.")
                                                    : QString());
     _startFetch(fetch, request.bytes);
-    if (fetch.isCurrent() && _activeSocket()) {
+    if (fetch.isCurrent() && _activeSession()) {
         _notifications.emitSignal(this, &NTRIPSourceTableController::fetchErrorChanged);
         _notifications.emitSignal(this, &NTRIPSourceTableController::fetchStatusChanged);
     }
@@ -107,37 +105,31 @@ void NTRIPSourceTableController::_startFetch(const GPSRevision::Token& fetch, co
 {
     _attempt = std::make_unique<FetchAttempt>();
     _attempt->request = request;
-    QTcpSocket* socket = _lastFetchConfig.useTls ? new QSslSocket(this) : new QTcpSocket(this);
-    _attempt->socket = socket;
-    socket->setReadBufferSize(64 * 1024);
-    const QPointer<QTcpSocket> socketGuard(socket);
-    const auto current = [this, socketGuard, fetch]() {
-        return fetch.isCurrent() && socketGuard && _activeSocket() == socketGuard;
-    };
-    const auto sendRequest = [this, current]() {
-        if (current() && _activeSocket()->write(_attempt->request) != _attempt->request.size() && current()) {
+    auto* session = new NTRIPHttpSession(this);
+    _attempt->session = session;
+    const QPointer<NTRIPHttpSession> guard(session);
+    const auto current = [this, guard, fetch]() { return fetch.isCurrent() && guard && _activeSession() == guard; };
+    connect(session, &NTRIPHttpSession::established, this, [this, current]() {
+        if (current() && !_activeSession()->write(_attempt->request) && current()) {
             _finishFetch(tr("Failed to send source table request"));
         }
-    };
-    connect(socket, &QTcpSocket::readyRead, this, [this, current, fetch]() {
+    });
+    connect(session, &NTRIPHttpSession::bytesReceived, this, [this, current](const QByteArray& bytes) {
         if (current()) {
-            _readReply(fetch);
+            _readReply(bytes);
         }
     });
-    connect(socket, &QTcpSocket::errorOccurred, this, [this, current](QAbstractSocket::SocketError error) {
-        if (current() && error != QAbstractSocket::RemoteHostClosedError) {
-            _finishFetch(_activeSocket()->errorString());
-        }
-    });
-    connect(socket, &QTcpSocket::disconnected, this, [this, current, fetch]() {
+    connect(session, &NTRIPHttpSession::failed, this, [this, current](NTRIPError, const QString& message) {
         if (current()) {
-            _readReply(fetch);
-            if (current()) {
-                _finishFetch(tr("Response does not contain a valid source table"));
-            }
+            _finishFetch(message);
         }
     });
-    connect(socket, &QObject::destroyed, this, [this, fetch, attempt = _attempt.get()]() {
+    connect(session, &NTRIPHttpSession::closed, this, [this, current]() {
+        if (current()) {
+            _finishFetch(tr("Response does not contain a valid source table"));
+        }
+    });
+    connect(session, &QObject::destroyed, this, [this, fetch, attempt = _attempt.get()]() {
         if (fetch.isCurrent() && _attempt.get() == attempt) {
             _completeFetch(fetch, {}, tr("Source table connection was destroyed before completion"));
         }
@@ -149,54 +141,31 @@ void NTRIPSourceTableController::_startFetch(const GPSRevision::Token& fetch, co
         }
     });
     _attempt->timeout.start(kFetchTimeoutMs);
-    if (auto* sslSocket = qobject_cast<QSslSocket*>(socket)) {
-        connect(sslSocket, &QSslSocket::sslErrors, this,
-                [this, current, sslSocket,
-                 allowSelfSigned = _lastFetchConfig.allowSelfSignedCerts](const QList<QSslError>& errors) {
-                    if (!current()) {
-                        return;
-                    }
-                    if (allowSelfSigned && NTRIPTlsPolicy::isSelfSignedOnly(errors)) {
-                        sslSocket->ignoreSslErrors(errors);
-                    } else {
-                        _finishFetch(tr("Source table TLS certificate validation failed"));
-                    }
-                });
-        connect(sslSocket, &QSslSocket::encrypted, this, sendRequest);
-        sslSocket->connectToHostEncrypted(_lastFetchConfig.host, static_cast<quint16>(_lastFetchConfig.port));
-    } else {
-        connect(socket, &QTcpSocket::connected, this, sendRequest);
-        socket->connectToHost(_lastFetchConfig.host, static_cast<quint16>(_lastFetchConfig.port));
-    }
+    session->open(_lastFetchConfig);
 }
 
-void NTRIPSourceTableController::_readReply(const GPSRevision::Token& fetch)
+void NTRIPSourceTableController::_readReply(const QByteArray& bytes)
 {
-    while (_activeSocket() && fetch.isCurrent() && _activeSocket()->bytesAvailable() > 0) {
-        const auto result = _attempt->decoder.feed(_activeSocket()->read(16384), QDateTime::currentDateTimeUtc());
-        if (result.failure) {
-            _finishFetch(result.failure->detail);
-            return;
-        }
-        if (_attempt->body.size() + result.body.size() >= kMaxSourceTableBytes) {
-            _finishFetch(tr("Source table too large (exceeds %1 MB)").arg(kMaxSourceTableBytes / (1024 * 1024)));
-            return;
-        }
-        _attempt->body += result.body;
-        if (ntripSourceTableComplete(_attempt->body)) {
-            _finishFetch();
-            return;
-        }
-        if (result.complete) {
-            _finishFetch(tr("Response does not contain a valid source table"));
-            return;
-        }
+    const auto result = _attempt->decoder.feed(bytes, QDateTime::currentDateTimeUtc());
+    if (result.failure) {
+        _finishFetch(result.failure->detail);
+        return;
+    }
+    if (_attempt->body.size() + result.body.size() >= kMaxSourceTableBytes) {
+        _finishFetch(tr("Source table too large (exceeds %1 MB)").arg(kMaxSourceTableBytes / (1024 * 1024)));
+        return;
+    }
+    _attempt->body += result.body;
+    if (ntripSourceTableComplete(_attempt->body)) {
+        _finishFetch();
+    } else if (result.complete) {
+        _finishFetch(tr("Response does not contain a valid source table"));
     }
 }
 
 void NTRIPSourceTableController::_finishFetch(const QString& error)
 {
-    if (!_activeSocket()) {
+    if (!_activeSession()) {
         return;
     }
     _completeFetch(_fetchRevision.current(this), QString::fromUtf8(_attempt->body),
@@ -289,20 +258,14 @@ void NTRIPSourceTableController::_abortFetch()
         return;
     }
     attempt->timeout.stop();
-    const auto socket = attempt->socket;
-    if (!socket) {
-        return;
+    if (const auto session = attempt->session) {
+        session->retire();
     }
-    socket->disconnect(this);
-    // Abort observers may delete the controller while the socket is still unwinding.
-    socket->setParent(nullptr);
-    socket->deleteLater();
-    socket->abort();
 }
 
-QPointer<QTcpSocket> NTRIPSourceTableController::_activeSocket() const
+QPointer<NTRIPHttpSession> NTRIPSourceTableController::_activeSession() const
 {
-    return _attempt ? _attempt->socket : QPointer<QTcpSocket>();
+    return _attempt ? _attempt->session : QPointer<NTRIPHttpSession>();
 }
 
 QByteArray NTRIPSourceTableController::_activeRequest() const

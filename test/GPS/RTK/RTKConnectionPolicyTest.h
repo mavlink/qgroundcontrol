@@ -26,6 +26,7 @@ private slots:
     void _connectSavedWaitsForReceiver();
     void _connectSavedKeepsDiscovery_data();
     void _connectSavedKeepsDiscovery();
+    void _manualRetryDrivesTarget();
 
 private:
     struct Fixture;

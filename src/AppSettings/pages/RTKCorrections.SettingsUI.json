@@ -4,6 +4,9 @@
     "groups": [
         {
             "component": "CorrectionsStatus",
+            "properties": {
+                "showNtripStatus": false
+            },
             "sectionName": "Corrections Status",
             "keywords": ["corrections", "rtk", "status", "selected stream", "data rate", "ntrip"]
         },

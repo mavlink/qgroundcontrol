@@ -7,6 +7,7 @@ class GPSDriverTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _everyReceiverHasProtocol();
     void _femtoConfigurationSurvey();
     void _ashtechFixedSurvey();
     void _ashtechSatelliteSnapshots();

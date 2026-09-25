@@ -55,6 +55,11 @@ auto findProtocolFactory(GPSType type)
 }
 }  // namespace
 
+bool GPSDriver::supportsType(GPSType type)
+{
+    return findProtocolFactory(type) != PROTOCOL_FACTORIES.end();
+}
+
 struct GPSDriver::State
 {
     GPSIntegrityReport integrity;

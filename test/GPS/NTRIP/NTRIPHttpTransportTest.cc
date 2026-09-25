@@ -18,6 +18,7 @@
 #include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
 #include "NTRIPHttpCodec.h"
+#include "NTRIPHttpSession.h"
 #include "NTRIPHttpTransport.h"
 #include "RTCMDecodedFrame.h"
 
@@ -193,8 +194,8 @@ void NTRIPHttpTransportTest::testTlsFatalErrorEmitsSingleError()
     cfg.allowSelfSignedCerts = false;
     cfg.mountpoint = QStringLiteral("TEST");
 
-    ignoreLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("TLS error:")));
-    ignoreLogMessage("GPS.NTRIP.NTRIPHttpTransport", QtWarningMsg,
+    ignoreLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, QRegularExpression(QStringLiteral("TLS error:")));
+    ignoreLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Rejecting self-signed certificate")));
 
     NTRIPHttpTransport transport(cfg, {});
@@ -585,13 +586,14 @@ void NTRIPHttpTransportTest::_testBuildRequestRejectsInvalidConfig()
     QVERIFY(!request.credentialsInClear);
 
     NTRIPHttpTransport transport(config, {});
-    transport._socket = new QTcpSocket(&transport);
+    transport._session = new NTRIPHttpSession(&transport);
+    transport._session->_attach(new QTcpSocket(&transport));
     QSignalSpy errors(&transport, &NTRIPTransport::error);
     QSignalSpy credentialsWarning(&transport, &NTRIPTransport::plaintextCredentialsWarning);
     transport._sendHttpRequest();
     QCOMPARE(errors.size(), 1);
     QCOMPARE(qvariant_cast<NTRIPFailure>(errors.first().first()).code, NTRIPError::InvalidConfig);
-    QCOMPARE(transport._socket->bytesToWrite(), 0);
+    QCOMPARE(transport._session->_socket->bytesToWrite(), 0);
     QVERIFY(credentialsWarning.isEmpty());
 }
 
@@ -612,7 +614,7 @@ void NTRIPHttpTransportTest::testStreamingRequiresMountpoint()
         QCOMPARE(errors.size(), 1);
         QCOMPARE(qvariant_cast<NTRIPFailure>(errors.first().first()).code, NTRIPError::InvalidConfig);
         QVERIFY(connected.isEmpty());
-        QVERIFY(!transport._socket);
+        QVERIFY(!transport._session);
     }
 }
 
@@ -676,7 +678,7 @@ void NTRIPHttpTransportTest::testHandshakeTimeoutClosesSocket()
     transport._connectTimeoutTimer.start();
     QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
     QCOMPARE(qvariant_cast<NTRIPFailure>(errors.first().first()).code, NTRIPError::ConnectionTimeout);
-    QCOMPARE(transport._socket->state(), QAbstractSocket::UnconnectedState);
+    QCOMPARE(transport._session->_socket->state(), QAbstractSocket::UnconnectedState);
     QVERIFY(!transport._dataWatchdogTimer.isActive());
     QVERIFY(connected.isEmpty());
     verifyExpectedLogMessage();
@@ -698,7 +700,7 @@ void NTRIPHttpTransportTest::testRemoteCloseEmitsSingleError()
     QVERIFY(peer);
     peer->disconnectFromHost();
     QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
-    QCOMPARE(transport._socket->state(), QAbstractSocket::UnconnectedState);
+    QCOMPARE(transport._session->_socket->state(), QAbstractSocket::UnconnectedState);
     QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
     QCOMPARE(errors.size(), 1);
     const auto failure = qvariant_cast<NTRIPFailure>(errors.first().first());

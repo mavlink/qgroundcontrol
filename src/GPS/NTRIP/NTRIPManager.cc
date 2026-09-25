@@ -8,11 +8,9 @@
 #include <QtCore/QUrl>
 #include <QtCore/QtMath>
 
-#include "Fact.h"
 #include "GPSCorrectionManager.h"
 #include "NTRIPError.h"
 #include "NTRIPHttpTransport.h"
-#include "NTRIPSettings.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(NTRIPManagerLog, "GPS.NTRIP.NTRIPManager")
@@ -89,25 +87,20 @@ bool isRetryable(NTRIPError error)
 // Lifecycle
 // -----------------------------------------------------------------------------
 
-NTRIPManager::NTRIPManager(NTRIPSettings* settings, QObject* parent)
+NTRIPManager::NTRIPManager(QObject* parent)
     : QObject(parent)
-    , _settings(settings)
 {
     qCDebug(NTRIPManagerLog) << "NTRIPManager created";
 
     _settingsDebounceTimer.setSingleShot(true);
     _settingsDebounceTimer.setInterval(kSettingsDebounceMs);
-    connect(&_settingsDebounceTimer, &QChronoTimer::timeout, this, &NTRIPManager::_onSettingChanged);
+    connect(&_settingsDebounceTimer, &QChronoTimer::timeout, this, &NTRIPManager::_applyConfiguration);
 
     connect(&_ggaProvider, &NTRIPGgaProvider::sourceChanged, this,
             [this]() { _notifications.emitSignal(this, &NTRIPManager::ggaSourceChanged); });
 
     connect(&_sourceTableController, &NTRIPSourceTableController::mountpointSelected, this,
-            [this](const QString& mountpoint) {
-                if (_settings && _settings->ntripMountpoint()) {
-                    _settings->ntripMountpoint()->setRawValue(mountpoint);
-                }
-            });
+            &NTRIPManager::mountpointChosen);
 
     _reconnectTimer.setSingleShot(true);
     _reconnectTimer.callOnTimeout(this, [this]() { _dispatch(Event::ReconnectDue); });
@@ -143,43 +136,27 @@ void NTRIPManager::init()
         return;
     }
     _initialized = true;
+    _ggaProvider.configure(_configuration.gga);
+    _applyConfiguration();
+}
 
-    if (!_settings) {
-        qCCritical(NTRIPManagerLog) << "init: NTRIPSettings unavailable";
-    } else {
-        const Fact* facts[] = {
-            _settings->ntripServerConnectEnabled(),
-            _settings->ntripServerHostAddress(),
-            _settings->ntripServerPort(),
-            _settings->ntripUsername(),
-            _settings->ntripPassword(),
-            _settings->ntripMountpoint(),
-            _settings->ntripWhitelist(),
-            _settings->ntripUseTls(),
-            _settings->ntripAllowSelfSignedCerts(),
-        };
-        for (const auto* fact : facts) {
-            if (fact) {
-                connect(fact, &Fact::rawValueChanged, this, [this]() {
-                    if (!_shutdown) {
-                        _settingsDebounceTimer.start();
-                    }
-                });
-            }
-        }
-        const auto configureGga = [this]() {
-            _ggaProvider.configure(
-                {static_cast<NTRIPGgaProvider::PositionSource>(
-                     _settings->ntripGgaPositionSource()->rawValue().toUInt()),
-                 std::chrono::milliseconds(_settings->ntripGgaIntervalSec()->rawValue().toUInt() * qint64(1000))});
-        };
-        configureGga();
-        connect(_settings->ntripGgaPositionSource(), &Fact::rawValueChanged, this, configureGga);
-        connect(_settings->ntripGgaIntervalSec(), &Fact::rawValueChanged, this, configureGga);
+void NTRIPManager::setConfiguration(const Configuration& configuration)
+{
+    if (_shutdown || configuration == _configuration) {
+        return;
     }
-
-    if (_settings) {
-        _onSettingChanged();
+    const bool ggaChanged = configuration.gga != _configuration.gga;
+    const bool streamChanged =
+        configuration.enabled != _configuration.enabled || configuration.stream != _configuration.stream;
+    _configuration = configuration;
+    if (!_initialized) {
+        return;
+    }
+    if (ggaChanged) {
+        _ggaProvider.configure(configuration.gga);
+    }
+    if (streamChanged) {
+        _settingsDebounceTimer.start();
     }
 }
 
@@ -191,23 +168,6 @@ void NTRIPManager::setGgaPositionProvider(NTRIPGgaProvider::PositionSource sourc
         return;
     }
     _ggaProvider.setPositionProvider(source, std::move(provider));
-}
-
-NTRIPConfiguration NTRIPManager::_configFromSettings() const
-{
-    const auto read = [](Fact* fact, const QVariant& fallback) { return fact ? fact->rawValue() : fallback; };
-    NTRIPConfiguration config;
-    auto& connection = config.connection;
-    connection.host = read(_settings->ntripServerHostAddress(), connection.host).toString();
-    connection.port = read(_settings->ntripServerPort(), connection.port).toInt();
-    connection.username = read(_settings->ntripUsername(), connection.username).toString();
-    connection.password = read(_settings->ntripPassword(), connection.password).toString();
-    connection.mountpoint = read(_settings->ntripMountpoint(), connection.mountpoint).toString();
-    connection.useTls = read(_settings->ntripUseTls(), connection.useTls).toBool();
-    connection.allowSelfSignedCerts =
-        read(_settings->ntripAllowSelfSignedCerts(), connection.allowSelfSignedCerts).toBool();
-    config.filter.whitelist = read(_settings->ntripWhitelist(), config.filter.whitelist).toString();
-    return config;
 }
 
 // -----------------------------------------------------------------------------
@@ -235,12 +195,13 @@ void NTRIPManager::stopNTRIP()
 
 void NTRIPManager::retryNTRIP()
 {
-    if (_shutdown || !_settings || _connectionStatus != ConnectionStatus::Error) {
+    if (_shutdown || _connectionStatus != ConnectionStatus::Error) {
         return;
     }
     const GPSNotificationQueue::Scope publish(_notifications);
     const auto state = _stateRevision.current(this);
-    _settings->ntripServerConnectEnabled()->setRawValue(true);
+    _configuration.enabled = true;
+    emit enableRequested();
     if (state.isCurrent()) {
         startNTRIP();
     }
@@ -262,11 +223,11 @@ void NTRIPManager::shutdown()
 
 void NTRIPManager::fetchMountpoints()
 {
-    if (!_settings || _shutdown) {
+    if (_shutdown) {
         return;
     }
     const QGeoCoordinate sortCoord = _sortPositionProvider ? _sortPositionProvider() : QGeoCoordinate();
-    _sourceTableController.fetch(_configFromSettings().connection, sortCoord);
+    _sourceTableController.fetch(_configuration.stream.connection, sortCoord);
 }
 
 // -----------------------------------------------------------------------------
@@ -429,12 +390,12 @@ void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
 void NTRIPManager::_startTransport()
 {
     const auto state = _stateRevision.current(this);
-    if (!_settings || _shutdown) {
-        _dispatch(Event::ConfigInvalid, tr("Settings unavailable"));
+    if (_shutdown) {
+        _dispatch(Event::ConfigInvalid, tr("NTRIP is shut down"));
         return;
     }
 
-    const NTRIPConfiguration config = _configFromSettings();
+    const NTRIPConfiguration config = _configuration.stream;
     const auto& connection = config.connection;
 
     if (const QString err = connection.streamValidationError(); !err.isEmpty()) {
@@ -579,17 +540,11 @@ void NTRIPManager::_rtcmDataReceived(const RTCMDecodedFrame& frame)
     }
 }
 
-bool NTRIPManager::_isEnabled() const
-{
-    return _settings && _settings->ntripServerConnectEnabled() &&
-           _settings->ntripServerConnectEnabled()->rawValue().toBool();
-}
-
-void NTRIPManager::_onSettingChanged()
+void NTRIPManager::_applyConfiguration()
 {
     const GPSNotificationQueue::Scope publish(_notifications);
     const auto state = _stateRevision.current(this);
-    if (!_settings || _shutdown) {
+    if (_shutdown) {
         return;
     }
 
@@ -609,7 +564,7 @@ void NTRIPManager::_onSettingChanged()
         return;
     }
 
-    const NTRIPConfiguration newConfig = _configFromSettings();
+    const NTRIPConfiguration newConfig = _configuration.stream;
 
     if (newConfig.connection != _runningConfig.connection) {
         qCDebug(NTRIPManagerLog) << "NTRIP transport-affecting setting changed, reconnecting";

@@ -57,5 +57,6 @@ private slots:
     void _serialReservationSurvivesDelayedStop();
     void _manualPassiveBaudPreserved_data();
     void _manualPassiveBaudPreserved();
+    void _silentReceiverClearsSolution();
 #endif
 };

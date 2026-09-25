@@ -163,26 +163,23 @@ void RTCMUdpInput::_readDatagrams()
         const auto peer = _parserForPeer(datagram.senderAddress(), datagram.senderPort());
         int framesFound = 0;
         int framesDropped = 0;
-        for (const char ch : data) {
-            for (auto decoded = peer->decoder.addByte(static_cast<uint8_t>(ch), receivedAtMs); decoded;
-                 decoded = peer->decoder.nextFrame()) {
-                const GPSCorrectionFrame frame = {GPSCorrectionSource::Udp, 0,
-                                                  decoded->receivedAtMs,    decoded->data,
-                                                  decoded->messageId,       decoded->valid,
-                                                  decoded->filtered,        instance};
-                if (decoded->valid) {
-                    ++framesFound;
-                    ++_validFrames;
-                    emit frameReceived(frame);
-                } else {
-                    ++framesDropped;
-                    ++_invalidFrames;
-                    emit frameRejected(frame, GPSCorrectionReason::InvalidFrame);
-                }
-                if (!current()) {
-                    return;
-                }
+        const bool delivered = peer->decoder.feed(data, receivedAtMs, [&](const RTCMDecodedFrame& decoded) {
+            const GPSCorrectionFrame frame = {
+                GPSCorrectionSource::Udp, 0,       decoded.receivedAtMs, decoded.data, decoded.messageId, decoded.valid,
+                decoded.filtered,         instance};
+            if (decoded.valid) {
+                ++framesFound;
+                ++_validFrames;
+                emit frameReceived(frame);
+            } else {
+                ++framesDropped;
+                ++_invalidFrames;
+                emit frameRejected(frame, GPSCorrectionReason::InvalidFrame);
             }
+            return current();
+        });
+        if (!delivered) {
+            return;
         }
 
         if (framesDropped > 0) {

@@ -22,6 +22,7 @@
 #include "NTRIPConnectionStats.h"
 #include "NTRIPGgaProvider.h"
 #include "NTRIPHttpCodec.h"
+#include "NTRIPHttpSession.h"
 #include "NTRIPHttpTransport.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
@@ -162,7 +163,7 @@ private slots:
     void abortCallbackSupersedesReplacement();
     void socketAbortCallbackRetiresAttempt_data();
     void socketAbortCallbackRetiresAttempt();
-    void deletedSocketPublishesError();
+    void deletedSessionPublishesError();
     void fetchNotificationReentry_data();
     void fetchNotificationReentry();
     void modelResetReentry_data();
@@ -219,8 +220,9 @@ void NTRIPReentrancyTest::warningRetiresAttempt()
         ++writes;
         return size;
     };
-    transport->_socket = socket;
-    QPointer<QTcpSocket> retired = socket;
+    transport->_session = new NTRIPHttpSession(transport.get());
+    transport->_session->_attach(socket);
+    QPointer<NTRIPHttpSession> retired = transport->_session;
     int notifications = 0;
     connect(transport.get(), &NTRIPTransport::plaintextCredentialsWarning, this, [&]() {
         ++notifications;
@@ -243,8 +245,8 @@ void NTRIPReentrancyTest::warningRetiresAttempt()
     QCOMPARE(notifications, 1);
     QCOMPARE(writes, 0);
     if (action == 2) {
-        QVERIFY(transport->_socket);
-        QVERIFY(transport->_socket != retired);
+        QVERIFY(transport->_session);
+        QVERIFY(transport->_session != retired);
         QVERIFY(transport->_connectTimeoutTimer.isActive());
     }
 }
@@ -293,7 +295,8 @@ void NTRIPReentrancyTest::writeAdmissionFailure()
     NTRIPHttpTransport transport(config(), {});
     auto* socket = new WriteSocket(&transport);
     socket->admit = [accepted](qint64) { return accepted; };
-    transport._socket = socket;
+    transport._session = new NTRIPHttpSession(&transport);
+    transport._session->_attach(socket);
     QSignalSpy errors(&transport, &NTRIPTransport::error);
     if (nmea) {
         QVERIFY(!transport._write(QByteArrayLiteral("$GPGGA")));
@@ -326,8 +329,10 @@ void NTRIPReentrancyTest::handshakeRetiresAttempt()
     QFETCH(bool, chunked);
     QFETCH(int, action);
     auto transport = std::make_unique<NTRIPHttpTransport>(config(), NTRIPRtcmFilterConfig{});
-    transport->_socket = new QTcpSocket(transport.get());
-    transport->_socket->open(QIODevice::ReadOnly);
+    auto* socket = new QTcpSocket(transport.get());
+    socket->open(QIODevice::ReadOnly);
+    transport->_session = new NTRIPHttpSession(transport.get());
+    transport->_session->_attach(socket);
     const auto frame = GpsTestHelpers::buildRtcmFrame(1005);
     const QByteArray response =
         chunked ? "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" + QByteArray::number(frame.size(), 16) +
@@ -372,8 +377,9 @@ void NTRIPReentrancyTest::failureCanRestart()
     configuration.port = server.serverPort();
     int failures = 0;
     auto transport = std::make_unique<NTRIPHttpTransport>(configuration, NTRIPRtcmFilterConfig{});
-    transport->_socket = new QTcpSocket(transport.get());
-    const auto previous = transport->_socket;
+    transport->_session = new NTRIPHttpSession(transport.get());
+    transport->_session->_attach(new QTcpSocket(transport.get()));
+    const auto previous = transport->_session;
     connect(transport.get(), &NTRIPTransport::error, this, [&]() {
         ++failures;
         if (action == 0) {
@@ -389,13 +395,13 @@ void NTRIPReentrancyTest::failureCanRestart()
                                  123);
     QTRY_COMPARE_WITH_TIMEOUT(failures, 1, TestTimeout::mediumMs());
     if (action == 2) {
-        QVERIFY(transport->_socket);
-        QVERIFY(transport->_socket != previous);
+        QVERIFY(transport->_session);
+        QVERIFY(transport->_session != previous);
         QVERIFY(!transport->_stopped);
         QVERIFY(transport->_connectTimeoutTimer.isActive());
     } else if (action == 0) {
         QVERIFY(transport->_stopped);
-        QVERIFY(!transport->_socket);
+        QVERIFY(!transport->_session);
     } else {
         QVERIFY(!transport);
     }
@@ -1033,7 +1039,7 @@ void NTRIPReentrancyTest::filterConfigurationUpdatesWithoutReconnect()
     QCOMPARE(first.messageId, 1005);
     QCOMPARE(second.messageId, 1077);
 
-    const auto socket = transport._socket;
+    const auto session = transport._session;
     const auto attempt = transport._attempt.value();
     const NTRIPRtcmFilterConfig replacement{.whitelist = QStringLiteral("1077")};
     transport.setRtcmWhitelist(replacement.messageIds());
@@ -1053,22 +1059,22 @@ void NTRIPReentrancyTest::filterConfigurationUpdatesWithoutReconnect()
     QVERIFY(first.valid && !first.filtered);
     QVERIFY(second.valid && !second.filtered);
     QCOMPARE(transport.config(), connection);
-    QCOMPARE(transport._socket, socket);
+    QCOMPARE(transport._session, session);
     QCOMPARE(transport._attempt.value(), attempt);
     QCOMPARE(connected.size(), 1);
-    QCOMPARE(socket->state(), QAbstractSocket::ConnectedState);
+    QVERIFY(session->isConnected());
 }
 
 void NTRIPReentrancyTest::invalidFetchRetiresPendingFetch()
 {
     NTRIPSourceTableController controller;
     controller.fetch(config());
-    const auto previous = controller._activeSocket();
+    const auto previous = controller._activeSession();
     QVERIFY(previous);
     controller.fetch({});
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
-    QVERIFY(!controller._activeSocket());
-    QCOMPARE(previous->state(), QAbstractSocket::UnconnectedState);
+    QVERIFY(!controller._activeSession());
+    QCOMPARE(previous->_socket->state(), QAbstractSocket::UnconnectedState);
     controller._finishFetch();
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
     QCOMPARE(controller.mountpointModel()->rowCount(), 0);
@@ -1103,20 +1109,20 @@ void NTRIPReentrancyTest::sourceTableSuccessAndCache()
     QCOMPARE(distanceAt(0), -1.0);
     controller.fetch(configuration, QGeoCoordinate(40, -74));
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
-    QVERIFY(!controller._activeSocket());
+    QVERIFY(!controller._activeSession());
     QVERIFY(controller._cacheAge.isValid());
     QCOMPARE(distanceAt(0), 0.0);
     QVERIFY(distanceAt(1) > 1000);
     QCOMPARE(model->data(model->index(0, 0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP1"));
 
     controller.fetch(configuration, QGeoCoordinate(52, 13));
-    QVERIFY(!controller._activeSocket());
+    QVERIFY(!controller._activeSession());
     QCOMPARE(distanceAt(0), 0.0);
     QVERIFY(distanceAt(1) > 1000);
     QCOMPARE(model->data(model->index(0, 0), NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP2"));
 
     controller.fetch(configuration);
-    QVERIFY(!controller._activeSocket());
+    QVERIFY(!controller._activeSession());
     QCOMPARE(distanceAt(0), -1.0);
     QCOMPARE(distanceAt(1), -1.0);
 
@@ -1208,7 +1214,7 @@ void NTRIPReentrancyTest::v1SourceTable()
     controller.fetch(configuration);
     if (cancel) {
         QTRY_COMPARE_WITH_TIMEOUT(requests, 1, TestTimeout::mediumMs());
-        QVERIFY(!controller._activeSocket());
+        QVERIFY(!controller._activeSession());
         QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Idle);
         QCOMPARE(controller.mountpointModel()->rowCount(), 0);
     } else {
@@ -1219,7 +1225,7 @@ void NTRIPReentrancyTest::v1SourceTable()
         QCOMPARE(controller.mountpointModel()->rowCount(), 1);
         controller.fetch(configuration);
         QCOMPARE(requests, 1);
-        QVERIFY(!controller._activeSocket());
+        QVERIFY(!controller._activeSession());
     }
 }
 
@@ -1338,25 +1344,25 @@ void NTRIPReentrancyTest::sourceTableIdentity()
                      QRegularExpression(QStringLiteral("credentials without TLS")));
     NTRIPSourceTableController controller;
     controller.fetch(initial);
-    const auto previous = controller._activeSocket();
+    const auto previous = controller._activeSession();
     QVERIFY(previous);
     if (cached) {
         controller.injectSourceTableForTest(
             QStringLiteral("STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\r\n"
                            "ENDSOURCETABLE\r\n"));
         QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
-        QVERIFY(!controller._activeSocket());
+        QVERIFY(!controller._activeSession());
     }
     const auto revision = controller._fetchRevision.value();
     controller.fetch(replacement);
     if (sameCaster && cached) {
         QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success);
-        QVERIFY(!controller._activeSocket());
+        QVERIFY(!controller._activeSession());
         QCOMPARE(controller.mountpointModel()->rowCount(), 1);
         return;
     }
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
-    const auto active = controller._activeSocket();
+    const auto active = controller._activeSession();
     QVERIFY(active);
     if (sameCaster) {
         QCOMPARE(active, previous);
@@ -1364,7 +1370,7 @@ void NTRIPReentrancyTest::sourceTableIdentity()
     } else {
         QVERIFY(active != previous);
         QVERIFY(controller._fetchRevision.value() > revision);
-        QVERIFY(!previous || previous->state() == QAbstractSocket::UnconnectedState);
+        QVERIFY(!previous || previous->_socket->state() == QAbstractSocket::UnconnectedState);
         QVERIFY(!controller._cacheAge.isValid());
     }
     const QByteArray authorization =
@@ -1372,24 +1378,24 @@ void NTRIPReentrancyTest::sourceTableIdentity()
         "\r\n";
     QVERIFY(controller._activeRequest().contains(authorization));
     QCOMPARE(controller._lastFetchConfig.port, replacement.port);
-    QCOMPARE(qobject_cast<QSslSocket*>(active.data()) != nullptr, replacement.useTls);
+    QCOMPARE(qobject_cast<QSslSocket*>(active->_socket.data()) != nullptr, replacement.useTls);
 }
 
 void NTRIPReentrancyTest::abortCallbackSupersedesReplacement()
 {
     NTRIPSourceTableController controller;
     controller.fetch(config());
-    const auto previous = controller._activeSocket();
+    const auto previous = controller._activeSession();
     auto replacement = config();
     replacement.port = 2102;
-    connect(previous, &QAbstractSocket::stateChanged, this, [&](QAbstractSocket::SocketState state) {
+    connect(previous->_socket, &QAbstractSocket::stateChanged, this, [&](QAbstractSocket::SocketState state) {
         if (state == QAbstractSocket::UnconnectedState) {
             controller.fetch(replacement);
         }
     });
     controller.fetch({});
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
-    QVERIFY(controller._activeSocket() && controller._activeSocket() != previous);
+    QVERIFY(controller._activeSession() && controller._activeSession() != previous);
     QCOMPARE(controller._lastFetchConfig.port, 2102);
 }
 
@@ -1409,7 +1415,7 @@ void NTRIPReentrancyTest::socketAbortCallbackRetiresAttempt()
     configuration.port = server.serverPort();
     auto controller = std::make_unique<NTRIPSourceTableController>();
     controller->fetch(configuration);
-    const auto socket = controller->_activeSocket();
+    const QPointer<QTcpSocket> socket = controller->_activeSession()->_socket;
     QVERIFY(socket);
     QTRY_COMPARE_WITH_TIMEOUT(socket->state(), QAbstractSocket::ConnectedState, TestTimeout::shortMs());
     int callbacks = 0;
@@ -1428,17 +1434,17 @@ void NTRIPReentrancyTest::socketAbortCallbackRetiresAttempt()
         QTRY_VERIFY_WITH_TIMEOUT(!socket, TestTimeout::shortMs());
     } else {
         QCOMPARE(controller->fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
-        QVERIFY(controller->_activeSocket() && controller->_activeSocket() != socket);
+        QVERIFY(controller->_activeSession() && controller->_activeSession()->_socket != socket);
         QVERIFY(controller->fetchError().isEmpty());
     }
 }
 
-void NTRIPReentrancyTest::deletedSocketPublishesError()
+void NTRIPReentrancyTest::deletedSessionPublishesError()
 {
     NTRIPSourceTableController controller;
     controller.fetch(config());
-    delete controller._activeSocket().data();
-    QVERIFY(!controller._activeSocket());
+    delete controller._activeSession().data();
+    QVERIFY(!controller._activeSession());
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
     QVERIFY(!controller.fetchError().isEmpty());
 }
@@ -1466,7 +1472,7 @@ void NTRIPReentrancyTest::fetchNotificationReentry()
     controller->fetch(config());
     if (!destroy) {
         QCOMPARE(controller->fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
-        QVERIFY(!controller->_activeSocket());
+        QVERIFY(!controller->_activeSession());
     }
 }
 

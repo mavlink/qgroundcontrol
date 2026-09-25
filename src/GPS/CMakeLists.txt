@@ -21,20 +21,12 @@ add_subdirectory(Receiver)
 add_subdirectory(Driver)
 add_subdirectory(RTK)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h GPSSettingsBindings.cc GPSSettingsBindings.h)
 
-target_sources(
-    ${CMAKE_PROJECT_NAME}
-    PRIVATE Corrections/GPSCorrectionManager.cc
-            Corrections/GPSCorrectionManager.h
-            Corrections/MAVLink/GPSMavlinkOutput.cc
-            Corrections/MAVLink/GPSMavlinkOutput.h
-            Corrections/MAVLink/RTCMMavlink.cc
-            Corrections/MAVLink/RTCMMavlink.h
-            Corrections/RTCMUdpInput.cc
-            Corrections/RTCMUdpInput.h
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE Corrections/MAVLink/GPSMavlinkOutput.cc
+                                             Corrections/MAVLink/GPSMavlinkOutput.h
 )
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSCorrections QGCGPSRTCM QGCGPSMavlinkPacket QGCNetworkIO)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSCorrectionService QGCGPSRTCM QGCGPSMavlinkPacket)
 
 # ----------------------------------------------------------------------------
 # GPS QML Module
@@ -58,7 +50,9 @@ target_link_libraries(
     PRIVATE Qt6::Qml
             QGCGPSCore
             QGCGPSCorrections
+            QGCGPSCorrectionService
             QGCGPSNTRIP
+            QGCGPSNTRIPService
             QGCGPSPositioning
             QGCGPSReceiver
             QGCGPSRTCM

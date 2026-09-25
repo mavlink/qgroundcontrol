@@ -6,6 +6,7 @@
 #include <QtCore/QSet>
 
 #include "AutoConnectSettings.h"
+#include "GPSNotificationQueue.h"
 #include "GPSReceiverConfig.h"
 #include "GPSRtk.h"
 #include "QGCLoggingCategory.h"
@@ -34,9 +35,9 @@ GPSRtk::ReceiverRole selectedRole(RTKSettings* settings)
 }
 }  // namespace
 
-RTKConnectionPolicy::RTKConnectionPolicy(GPSRtk* receiver, RTKSettings* settings,
-                                         AutoConnectSettings* autoConnectSettings)
-    : QObject(receiver)
+RTKConnectionPolicy::RTKConnectionPolicy(RTKConnectionTarget& receiver, RTKSettings* settings,
+                                         AutoConnectSettings* autoConnectSettings, QObject* parent)
+    : QObject(parent)
     , _receiver(receiver)
     , _settings(settings)
     , _autoConnect(autoConnectSettings->autoConnectRTKGPS())
@@ -46,7 +47,7 @@ RTKConnectionPolicy::RTKConnectionPolicy(GPSRtk* receiver, RTKSettings* settings
                        settings->udpPort(), settings->serialDevice(), settings->serialBaudRate(),
                        settings->baseReceiverManufacturers(), settings->useFixedBasePosition()}) {
         connect(fact, &Fact::rawValueChanged, this, [this]() {
-            if (_owner == Owner::Manual && !_receiver->hasReceiver()) {
+            if (_owner == Owner::Manual && !_receiver.hasReceiver()) {
                 reset();
             }
         });
@@ -60,7 +61,7 @@ RTKConnectionPolicy::RTKConnectionPolicy(GPSRtk* receiver, RTKSettings* settings
 
 bool RTKConnectionPolicy::reconnecting() const
 {
-    return _owner == Owner::Manual && _established && !_receiver->hasReceiver();
+    return _owner == Owner::Manual && _established && !_receiver.hasReceiver();
 }
 
 void RTKConnectionPolicy::reset()
@@ -82,7 +83,7 @@ void RTKConnectionPolicy::reset()
 
 bool RTKConnectionPolicy::connectConfigured(bool allowPersistentChanges)
 {
-    const GPSNotificationQueue::Scope publish(_receiver->_notifications);
+    const GPSNotificationQueue::Scope publish(_receiver.notifications());
     reset();
     const auto operation = _revision.current(this);
     if (!_connectConfigured(allowPersistentChanges, true) || !operation.isCurrent()) {
@@ -94,7 +95,7 @@ bool RTKConnectionPolicy::connectConfigured(bool allowPersistentChanges)
 
 void RTKConnectionPolicy::connectSaved()
 {
-    const GPSNotificationQueue::Scope publish(_receiver->_notifications);
+    const GPSNotificationQueue::Scope publish(_receiver.notifications());
     reset();
     if (_autoConnectEnabled()) {
         // Waiting for the saved receiver would suspend discovery, so only a receiver present now is connected.
@@ -113,19 +114,19 @@ void RTKConnectionPolicy::connectSaved()
 
 void RTKConnectionPolicy::disconnectConfigured()
 {
-    const GPSNotificationQueue::Scope publish(_receiver->_notifications);
+    const GPSNotificationQueue::Scope publish(_receiver.notifications());
     reset();
-    _receiver->_stageFact(_autoConnect, false);
-    _receiver->_disconnect(true);
+    _disableAutoConnect();
+    _receiver.disconnectReceiver(true);
 }
 
 void RTKConnectionPolicy::stop()
 {
-    const GPSNotificationQueue::Scope publish(_receiver->_notifications);
+    const GPSNotificationQueue::Scope publish(_receiver.notifications());
     const bool autoSession = _owner == Owner::Auto;
     reset();
     if (autoSession) {
-        _receiver->_disconnect(false);
+        _receiver.disconnectReceiver(false);
     }
 }
 
@@ -178,12 +179,12 @@ void RTKConnectionPolicy::_scheduleRetry()
 
 void RTKConnectionPolicy::update()
 {
-    const GPSNotificationQueue::Scope publish(_receiver->_notifications);
+    const GPSNotificationQueue::Scope publish(_receiver.notifications());
     if (_owner != Owner::Manual) {
         _updateAutoConnection();
         return;
     }
-    if (!_established || _receiver->hasReceiver()) {
+    if (!_established || _receiver.hasReceiver()) {
         return;
     }
     if (!_waitingForPort) {
@@ -193,7 +194,7 @@ void RTKConnectionPolicy::update()
         return;
     }
 #ifndef QGC_NO_SERIAL_LINK
-    auto* serialPorts = _receiver->_serialPorts.data();
+    auto* serialPorts = _receiver.serialPorts();
     if (!serialPorts) {
         return;
     }
@@ -221,7 +222,7 @@ void RTKConnectionPolicy::_retryManual()
         return;
     }
     _waitingForPort = selectedConnection(_settings) == GPSRtk::Serial &&
-                      _receiver->_connectionError == GPSConnectionError::OpenFailed;
+                      _receiver.connectionError() == GPSConnectionError::OpenFailed;
     _scheduleRetry();
 }
 
@@ -233,13 +234,13 @@ bool RTKConnectionPolicy::_connectConfigured(bool allowPersistentChanges, bool u
                           ? GPSRtk::typeForManufacturer(_settings->baseReceiverManufacturers()->rawValue().toInt())
                           : std::optional(GPSType::passive);
     if (!type) {
-        _receiver->_setError(GPSConnectionError::ConfigFailed,
-                             tr("Select a specific receiver type before connecting."));
+        _receiver.setConnectionError(GPSConnectionError::ConfigFailed,
+                                     tr("Select a specific receiver type before connecting."));
         return false;
     }
-    if (_receiver->hasReceiver()) {
-        _receiver->_setError(GPSConnectionError::OpenFailed,
-                             tr("Disconnect the current receiver before connecting another."));
+    if (_receiver.hasReceiver()) {
+        _receiver.setConnectionError(GPSConnectionError::OpenFailed,
+                                     tr("Disconnect the current receiver before connecting another."));
         return false;
     }
     const auto connection = selectedConnection(_settings);
@@ -247,31 +248,33 @@ bool RTKConnectionPolicy::_connectConfigured(bool allowPersistentChanges, bool u
     const QString host = _settings->tcpHost()->rawValue().toString().trimmed();
     const uint tcpPort = _settings->tcpPort()->rawValue().toUInt();
     if (tcp && (host.isEmpty() || tcpPort == 0 || tcpPort > 65535)) {
-        _receiver->_setError(GPSConnectionError::OpenFailed, tr("Enter the receiver's TCP host and port."));
+        _receiver.setConnectionError(GPSConnectionError::OpenFailed, tr("Enter the receiver's TCP host and port."));
         return false;
     }
     if (connection == GPSRtk::Udp) {
         const uint udpPort = _settings->udpPort()->rawValue().toUInt();
         if (role == GPSRtk::ConfiguredBase) {
-            _receiver->_setError(GPSConnectionError::ConfigFailed,
-                                 tr("A configured base needs a serial or TCP connection. UDP only receives data."));
+            _receiver.setConnectionError(
+                GPSConnectionError::ConfigFailed,
+                tr("A configured base needs a serial or TCP connection. UDP only receives data."));
             return false;
         }
         if (udpPort == 0 || udpPort > 65535) {
-            _receiver->_setError(GPSConnectionError::OpenFailed, tr("Enter the UDP port that receives the data."));
+            _receiver.setConnectionError(GPSConnectionError::OpenFailed,
+                                         tr("Enter the UDP port that receives the data."));
             return false;
         }
         if (userRequested) {
-            _receiver->_stageFact(_autoConnect, false);
+            _disableAutoConnect();
         }
-        return _receiver->_connectUdpGPS(static_cast<quint16>(udpPort), *type);
+        return _receiver.connectUdp(static_cast<quint16>(udpPort), *type);
     }
 #ifndef QGC_NO_SERIAL_LINK
     const QString device = _settings->serialDevice()->rawValue().toString().trimmed();
     // Zero asks configurable receivers to detect the rate.
     const auto baud = _settings->serialBaudRate()->rawValue().toULongLong();
     if (!tcp) {
-        auto* serialPorts = _receiver->_serialPorts.data();
+        auto* serialPorts = _receiver.serialPorts();
         const auto ports = serialPorts ? serialPorts->availablePorts() : QList<SerialPortManager::Port>{};
         if (!operation.isCurrent()) {
             return false;
@@ -279,28 +282,34 @@ bool RTKConnectionPolicy::_connectConfigured(bool allowPersistentChanges, bool u
         const auto port = std::find_if(ports.cbegin(), ports.cend(),
                                        [&device](const auto& candidate) { return candidate.systemLocation == device; });
         if (device.isEmpty() || port == ports.cend() || port->bootloader) {
-            _receiver->_setError(GPSConnectionError::OpenFailed,
-                                 tr("Select an available serial device that is not a bootloader."));
+            _receiver.setConnectionError(GPSConnectionError::OpenFailed,
+                                         tr("Select an available serial device that is not a bootloader."));
             return false;
         }
         if ((baud != 0 && (baud < 1200 || baud > 4000000)) || (baud == 0 && *type == GPSType::passive)) {
-            _receiver->_setError(GPSConnectionError::ConfigFailed,
-                                 gpsReceiverConfigErrorText(GPSReceiverConfigError::InvalidBaudRate));
+            _receiver.setConnectionError(GPSConnectionError::ConfigFailed,
+                                         gpsReceiverConfigErrorText(GPSReceiverConfigError::InvalidBaudRate));
             return false;
         }
     }
 #endif
     if (userRequested) {
-        _receiver->_stageFact(_autoConnect, false);
+        _disableAutoConnect();
     }
     if (tcp) {
-        return _receiver->_connectTcpGPS(host, static_cast<quint16>(tcpPort), *type, allowPersistentChanges);
+        return _receiver.connectTcp(host, static_cast<quint16>(tcpPort), *type, allowPersistentChanges);
     }
 #ifndef QGC_NO_SERIAL_LINK
-    return _receiver->_connectSerialGPS(device, *type, static_cast<uint32_t>(baud), allowPersistentChanges);
+    return _receiver.connectSerial(device, *type, static_cast<uint32_t>(baud), allowPersistentChanges);
 #else
     return false;
 #endif
+}
+
+void RTKConnectionPolicy::_disableAutoConnect()
+{
+    _receiver.notifications().post(reinterpret_cast<quintptr>(_autoConnect),
+                                   [fact = _autoConnect]() { fact->setRawValue(false); });
 }
 
 bool RTKConnectionPolicy::_autoConnectEnabled() const
@@ -317,7 +326,7 @@ bool RTKConnectionPolicy::_autoConnectEnabled() const
 void RTKConnectionPolicy::_updateAutoConnection()
 {
 #ifndef QGC_NO_SERIAL_LINK
-    auto* serialPorts = _receiver->_serialPorts.data();
+    auto* serialPorts = _receiver.serialPorts();
     if (!serialPorts || !_autoConnectEnabled()) {
         stop();
         return;
@@ -342,7 +351,7 @@ void RTKConnectionPolicy::_updateAutoConnection()
     for (auto it = _waitingPorts.begin(); it != _waitingPorts.end();) {
         it = !present.contains(it.key()) ? _waitingPorts.erase(it) : std::next(it);
     }
-    if (_receiver->hasReceiver()) {
+    if (_receiver.hasReceiver()) {
         return;
     }
     const auto connectPort = [this](const SerialPortManager::Port& port) {
@@ -351,8 +360,8 @@ void RTKConnectionPolicy::_updateAutoConnection()
         _autoPort = port.systemLocation;
         _waitingPorts.clear();
         _retryDeadline = QDeadlineTimer::Forever;
-        if (!_receiver->_connectGPS(port.systemLocation, port.boardName) && attempt.isCurrent() &&
-            !_receiver->hasReceiver()) {
+        if (!_receiver.connectDiscovered(port.systemLocation, port.boardName) && attempt.isCurrent() &&
+            !_receiver.hasReceiver()) {
             _scheduleRetry();
         }
     };

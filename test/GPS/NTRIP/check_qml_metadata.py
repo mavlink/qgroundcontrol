@@ -28,7 +28,8 @@ PROPERTIES = {
     ),
     "NTRIPSourceTableController": (GPS_MODULE, {"fetchStatus", "fetchError", "mountpointModel"}),
     "GPSManager": (APP_MODULE, {"corrections"}),
-    "GPSCorrectionManager": (APP_MODULE, {"rtcmMavlink"}),
+    "GPSCorrectionManager": (GPS_MODULE, {"rtcmMavlink"}),
+    "NTRIPManager": (GPS_MODULE, {"connectionStatus", "connectionStats", "sourceTableController"}),
 }
 FETCH_STATUS = ["Idle", "InProgress", "Success", "Error"]
 

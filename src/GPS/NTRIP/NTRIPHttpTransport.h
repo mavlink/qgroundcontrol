@@ -6,12 +6,12 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
-#include <QtNetwork/QTcpSocket>
 
 #include "GPSRevision.h"
 #include "MonotonicClock.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPHttpCodec.h"
+#include "NTRIPHttpSession.h"
 #include "NTRIPTransport.h"
 #include "RTCMFrameDecoder.h"
 
@@ -43,11 +43,10 @@ public:
 private:
     void _connect();
     void _fail(NTRIPError code, const QString& msg, std::chrono::milliseconds retryAfter = {});
-    void _retireSocket();
+    void _retireSession();
     void _stopTimers();
     bool _write(const QByteArray& bytes);
     void _sendHttpRequest();
-    void _readBytes();
     void _processHttpBytes(QByteArrayView bytes, qint64 receivedAtMs,
                            const QDateTime& utcNow = QDateTime::currentDateTimeUtc());
     void _publishHttpResult(const NTRIPHttpDecoder::Result& result, qint64 receivedAtMs);
@@ -57,7 +56,7 @@ private:
 
     NTRIPConnectionConfig _config;
 
-    QPointer<QTcpSocket> _socket;
+    QPointer<NTRIPHttpSession> _session;
     QChronoTimer _connectTimeoutTimer;
     QChronoTimer _dataWatchdogTimer;
     QChronoTimer _validFrameWatchdogTimer;
@@ -65,7 +64,6 @@ private:
 
     RTCMFrameDecoder _rtcmDecoder;
     NTRIPHttpDecoder _httpDecoder;
-    bool _reading = false;
     bool _stopped = false;
     GPSRevision _attempt;
 };

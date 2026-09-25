@@ -17,9 +17,9 @@
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableControllerLog)
 
+class NTRIPHttpSession;
 class NTRIPSourceTableModel;
 class NTRIPSourceTableControllerTest;
-class QTcpSocket;
 
 /// Fetches caster source tables over the same HTTP request builder and decoder as the correction
 /// stream, so HTTP/1.x and NTRIP v1 "SOURCETABLE 200 OK" responses share one path.
@@ -82,10 +82,10 @@ private:
     void _onFetchError(const QString& error);
     void _completeFetch(const GPSRevision::Token& fetch, QString table, std::optional<QString> error = std::nullopt);
     void _abortFetch();
-    QPointer<QTcpSocket> _activeSocket() const;
+    QPointer<NTRIPHttpSession> _activeSession() const;
     QByteArray _activeRequest() const;
     void _startFetch(const GPSRevision::Token& fetch, const QByteArray& request);
-    void _readReply(const GPSRevision::Token& fetch);
+    void _readReply(const QByteArray& bytes);
     void _finishFetch(const QString& error = {});
     void _setSecurityWarning(const QString& warning);
     bool _deferModelMutation(std::function<void()> action);

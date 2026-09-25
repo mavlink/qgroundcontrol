@@ -19,3 +19,6 @@ add_subdirectory(RTK)
 add_subdirectory(Transport)
 
 add_subdirectory(Core)
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManagerTest.cc)
+add_qgc_test(GPSManagerTest LABELS Unit GPS)

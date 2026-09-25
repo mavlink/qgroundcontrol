@@ -29,6 +29,7 @@ qt_add_library(
     STATIC
     NTRIPConnectionStats.cc
     NTRIPGgaProvider.cc
+    NTRIPHttpSession.cc
     NTRIPHttpTransport.cc
     NTRIPSourceTableController.cc
     NTRIPSourceTable.cc
@@ -49,6 +50,7 @@ target_sources(
            NTRIPTransport.h
            NTRIPConnectionStats.h
            NTRIPGgaProvider.h
+           NTRIPHttpSession.h
            NTRIPHttpTransport.h
            NTRIPSourceTableController.h
            NTRIPSourceTable.h
@@ -58,5 +60,14 @@ if(NOT TARGET ${CMAKE_PROJECT_NAME})
     return()
 endif()
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE NTRIPManager.cc NTRIPManager.h)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSNTRIP)
+qt_add_library(QGCGPSNTRIPService STATIC NTRIPManager.cc)
+add_library(QGC::GPSNTRIPService ALIAS QGCGPSNTRIPService)
+set_target_properties(QGCGPSNTRIPService PROPERTIES AUTOMOC ON)
+target_link_libraries(
+    QGCGPSNTRIPService
+    PUBLIC QGCGPSNTRIP QGCGPSCorrections
+    PRIVATE QGCGPSCorrectionService QGCLoggingCategory
+)
+target_sources(QGCGPSNTRIPService PUBLIC FILE_SET HEADERS FILES NTRIPManager.h)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSNTRIPService)

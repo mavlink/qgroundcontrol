@@ -3,6 +3,7 @@
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+class Fact;
 class GPSCorrectionManager;
 class GPSRtk;
 class NTRIPManager;
@@ -20,8 +21,21 @@ class GPSManager : public QObject
     Q_PROPERTY(GPSCorrectionManager* corrections READ corrections CONSTANT)
     Q_PROPERTY(GPSRtk* gpsRtk READ gpsRtk CONSTANT)
     Q_PROPERTY(NTRIPManager* ntrip READ ntrip CONSTANT)
+    Q_PROPERTY(CorrectionState correctionState READ correctionState NOTIFY correctionStateChanged)
 
 public:
+    /// Whether vehicles receive RTK corrections, across NTRIP, UDP input, and the local receiver.
+    enum class CorrectionState
+    {
+        /// No correction source is enabled or connected.
+        Inactive,
+        /// A source is enabled or connected, but no fresh stream is selected for vehicles.
+        Waiting,
+        /// A fresh stream is selected for vehicles.
+        Fresh,
+    };
+    Q_ENUM(CorrectionState)
+
     GPSManager(QObject* parent = nullptr);
     ~GPSManager();
 
@@ -36,7 +50,14 @@ public:
 
     NTRIPManager* ntrip() const { return _ntripManager; }
 
+    CorrectionState correctionState() const { return _correctionState; }
+
+signals:
+    void correctionStateChanged();
+
 private:
+    void _updateCorrectionState();
+
     void _configureNtripProviders();
 
     void _updateConnections();
@@ -44,6 +65,8 @@ private:
     GPSCorrectionManager* _corrections = nullptr;
     GPSRtk* _gpsRtk = nullptr;
     NTRIPManager* _ntripManager = nullptr;
+    Fact* const _udpInputEnabled;
+    CorrectionState _correctionState = CorrectionState::Inactive;
     bool _startupConnectPending = false;
     bool _shutdown = false;
 };

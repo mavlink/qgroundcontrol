@@ -226,9 +226,7 @@ void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges()
     server.setSslConfiguration(sslConfig);
     QVERIFY(server.listen(QHostAddress::LocalHost));
 
-    httpServer.route("/", []() {
-        return QHttpServerResponse("text/plain", kValidTable.toUtf8());
-    });
+    httpServer.route("/", []() { return QHttpServerResponse("text/plain", kValidTable.toUtf8()); });
     QVERIFY(httpServer.bind(&server));
 
     NTRIPConnectionConfig config;
@@ -237,6 +235,9 @@ void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges()
     config.useTls = true;
     config.allowSelfSignedCerts = true;
 
+    // The certificate policy is the subject here; the session reports each TLS decision.
+    ignoreLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^(TLS error:|Accepting self-signed|Rejecting self-signed)")));
     NTRIPSourceTableController ctrl;
     ctrl.fetch(config);
 
@@ -255,8 +256,7 @@ void NTRIPSourceTableControllerTest::testFetchCertificatePolicyChanges()
     ctrl.fetch(config);
     QTRY_VERIFY_WITH_TIMEOUT(ctrl.fetchStatus() != NTRIPSourceTableController::FetchStatus::InProgress,
                              TestTimeout::mediumMs());
-    QVERIFY2(ctrl.fetchStatus() == NTRIPSourceTableController::FetchStatus::Success,
-             qPrintable(ctrl.fetchError()));
+    QVERIFY2(ctrl.fetchStatus() == NTRIPSourceTableController::FetchStatus::Success, qPrintable(ctrl.fetchError()));
     QCOMPARE(ctrl.mountpointModel()->rowCount(), 1);
 }
 

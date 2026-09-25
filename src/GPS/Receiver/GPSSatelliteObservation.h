@@ -3,8 +3,6 @@
 #include <optional>
 
 #include <QtCore/QList>
-#include <QtCore/QMetaType>
-#include <QtCore/QString>
 
 #include "GPSConstellation.h"
 
@@ -36,12 +34,8 @@ struct GPSSatelliteObservation
         ConstellationDelta  // Omission preserves previously accepted state.
     };
     quint64 monotonicTimestampUs = 0;
-    quint64 sessionId = 0;
     QList<GPSSatelliteConstellation> constellations = {};
-    quint64 revision = 0;  // Orders publications independently of receiver timestamps.
-    QString sourceId = {};
     UpdateMode updateMode = UpdateMode::FullSnapshot;
     int satellitesInViewCount() const;
     int satellitesInUseCount() const;
 };
-Q_DECLARE_METATYPE(GPSSatelliteObservation)

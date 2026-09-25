@@ -103,30 +103,20 @@ bool GPSNativeUBX::configure(unsigned& baudrate, const GPSConfig& config)
                waitForAck(UBX_MSG_MON_VER).succeeded();
     };
     constexpr unsigned BAUD_RATES[] = {38400, 57600, 9600, 115200, 230400, 460800, 921600};
-    unsigned detectedBaud = 0;
-    for (const unsigned candidate : BAUD_RATES) {
-        const unsigned selected = auto_baudrate ? candidate : baudrate;
-        if (!setBaudrate(selected)) {
-            return false;
-        }
+    const auto detection = detectBaud(BAUD_RATES, baudrate, [this, &identify](unsigned) {
         decodeInit();
         receiveInternal(20);
         decodeInit();
         if (hasIOError()) {
-            return false;
+            return BaudProbe::Stop;
         }
-        if (identify()) {
-            detectedBaud = selected;
-            break;
-        }
-        if (hasIOError() || !auto_baudrate) {
-            return false;
-        }
-    }
+        return identify() ? BaudProbe::Found : BaudProbe::TryNext;
+    });
     // Discovery only polls identity: silence or an unsupported identity must not change receiver settings.
-    if (!detectedBaud || _identity.board == Board::unknown) {
+    if (!detection.found || _identity.board == Board::unknown) {
         return false;
     }
+    const unsigned detectedBaud = detection.baud;
     if (baseStationCapability() == BaseStationCapability::Unsupported) {
         return false;
     }

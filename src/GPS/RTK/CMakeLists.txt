@@ -11,6 +11,7 @@ target_sources(
             GPSRTKFactGroup.h
             RTKConnectionPolicy.cc
             RTKConnectionPolicy.h
+            RTKConnectionTarget.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

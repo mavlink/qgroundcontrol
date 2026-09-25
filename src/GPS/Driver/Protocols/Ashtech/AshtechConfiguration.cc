@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -91,30 +92,20 @@ bool GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
      * $PASHQ for querying
      * $PASHR for a response
      */
-    const unsigned baudrates_to_try[] = {9600, 38400, 19200, 57600, 115200};
-    bool success = false;
-
-    unsigned test_baudrate;
-
-    for (unsigned int baud_i = 0; !success && baud_i < sizeof(baudrates_to_try) / sizeof(baudrates_to_try[0]);
-         baud_i++) {
-        test_baudrate = baudrates_to_try[baud_i];
-
-        if (baudrate > 0 && baudrate != test_baudrate) {
-            continue;  // skip to next baudrate
-        }
-
-        setBaudrate(test_baudrate);
-
-        for (int run = 0; run < 2; ++run) {  // try several times
+    constexpr unsigned baudrates_to_try[] = {9600, 38400, 19200, 57600, 115200};
+    // A configured rate is used only when it is one of the rates Ashtech receivers are probed at.
+    if (baudrate > 0 && std::ranges::find(baudrates_to_try, baudrate) == std::ranges::end(baudrates_to_try)) {
+        return false;
+    }
+    const auto detection = detectBaud(baudrates_to_try, baudrate, [this](unsigned) {
+        for (int run = 0; run < 2; ++run) {
             if (sendCommand(PORT_CONFIG_QUERY, NMEACommand::PRT)) {
-                success = true;
-                break;
+                return BaudProbe::Found;
             }
         }
-    }
-
-    if (!success) {
+        return BaudProbe::TryNext;
+    });
+    if (!detection.found) {
         return false;
     }
 
@@ -122,7 +113,7 @@ bool GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
     // if it's different from the current one.
     const unsigned desired_baudrate = 115200;  // changing this requires also changing the SPD command
 
-    baudrate = test_baudrate;
+    baudrate = detection.baud;
 
     if (baudrate != desired_baudrate) {
         baudrate = desired_baudrate;
@@ -136,8 +127,7 @@ bool GPSNativeAshtech::configure(unsigned& baudrate, const GPSConfig& config)
         resetStream();
         setBaudrate(baudrate);
 
-        success = false;
-
+        bool success = false;
         for (int run = 0; run < 10; ++run) {
             // We ask for the port config again. If we get a reply, we know that the changed settings work.
             if (sendCommand(PORT_CONFIG_QUERY, NMEACommand::PRT)) {

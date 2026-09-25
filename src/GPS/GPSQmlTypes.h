@@ -4,11 +4,14 @@
 
 #include "GPSCorrectionDiagnostics.h"
 #include "GPSCorrectionEventModel.h"
+#include "GPSCorrectionManager.h"
 #include "GPSPositionService.h"
 #include "GPSReceiverDescriptor.h"
 #include "GPSSourceHealth.h"
 #include "NTRIPConnectionStats.h"
+#include "NTRIPManager.h"
 #include "NTRIPSourceTableController.h"
+#include "RTCMMavlink.h"
 
 struct GPSPositionServiceQmlType
 {
@@ -71,4 +74,27 @@ struct NTRIPSourceTableControllerQmlType
     QML_FOREIGN(NTRIPSourceTableController)
     QML_NAMED_ELEMENT(NTRIPSourceTableController)
     QML_UNCREATABLE("")
+};
+
+struct GPSCorrectionManagerQmlType
+{
+    Q_GADGET
+    QML_FOREIGN(GPSCorrectionManager)
+    QML_NAMED_ELEMENT(GPSCorrectionManager)
+    QML_UNCREATABLE("Provided by the GPS manager")
+};
+
+struct RTCMMavlinkQmlType
+{
+    Q_GADGET
+    QML_FOREIGN(RTCMMavlink)
+    QML_ANONYMOUS
+};
+
+struct NTRIPManagerQmlType
+{
+    Q_GADGET
+    QML_FOREIGN(NTRIPManager)
+    QML_NAMED_ELEMENT(NTRIPManager)
+    QML_UNCREATABLE("Provided by the GPS manager")
 };

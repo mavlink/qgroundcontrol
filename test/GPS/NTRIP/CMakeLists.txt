@@ -6,6 +6,7 @@ target_sources(
             NTRIPManagerTest.h
             NTRIPSourceTableTest.cc
             NTRIPSourceTableTest.h
+            NTRIPHttpSessionTest.cc
             NTRIPHttpTransportTest.cc
             NTRIPHttpTransportTest.h
             NTRIPConnectionStatsTest.cc
@@ -22,6 +23,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 add_qgc_test(NTRIPManagerTest LABELS Unit)
 add_qgc_test(NTRIPSourceTableTest LABELS Unit)
+add_qgc_test(NTRIPHttpSessionTest LABELS Unit GPS)
 add_qgc_test(NTRIPHttpTransportTest LABELS Unit)
 add_qgc_test(NTRIPConnectionStatsTest LABELS Unit)
 add_qgc_test(NTRIPGgaProviderTest LABELS Unit)

@@ -195,6 +195,32 @@ void GPSRtkTest::_logsFixTransitionsWithoutCoordinates()
 
 UT_REGISTER_TEST(GPSRtkTest, TestLabel::Unit)
 
+void GPSRtkTest::_silentReceiverClearsSolution()
+{
+    GPSRtk receiver(rtkSettings(), autoConnectSettings());
+    receiver._positionHealth->setFreshnessTimeoutMs(100);
+    auto* facts = receiver.gpsRtkFactGroup();
+    GPSSatelliteReport satellites;
+    satellites.inView = 12;
+    satellites.used = 9;
+    receiver._satelliteInfoUpdate(satellites);
+    auto report = fixReport(GPSFixQuality::Fix3D);
+    report.integrity.jamming.state = GPSIntegrityReport::JammingState::Warning;
+    receiver._positionUpdate(report);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), 9);
+    QCOMPARE(facts->fixType()->rawValue().toInt(), static_cast<int>(GPSFixQuality::Fix3D));
+    QVERIFY(facts->jammingState()->rawValue().toInt() > 0);
+
+    // Passive and position-only links stay connected while silent; their last solution must not linger.
+    QTRY_COMPARE_WITH_TIMEOUT(facts->fixType()->rawValue().toInt(), 0, TestTimeout::mediumMs());
+    QCOMPARE(facts->numSatellites()->rawValue().toInt(), -1);
+    QCOMPARE(facts->numSatellitesUsed()->rawValue().toInt(), -1);
+    QCOMPARE(facts->jammingState()->rawValue().toInt(), 0);
+
+    receiver._positionUpdate(report);
+    QCOMPARE(facts->fixType()->rawValue().toInt(), static_cast<int>(GPSFixQuality::Fix3D));
+}
+
 void GPSRtkTest::_testCoreAvailableWithoutReceiver()
 {
     GPSRtk rtk(rtkSettings(), autoConnectSettings());
@@ -1450,7 +1476,7 @@ void GPSRtkTest::_manualSerialErrors()
     } else {
         QVERIFY(ports.canReservePort(port.systemLocation));
     }
-    QVERIFY(!receiver._connectGPS(port.systemLocation, QStringLiteral("USB serial"), 115200));
+    QVERIFY(!receiver.connectDiscovered(port.systemLocation, u"USB serial"));
     QVERIFY(!opened);
 }
 
@@ -1466,7 +1492,7 @@ void GPSRtkTest::_serialReservationSurvivesDelayedStop()
         return blockedFactory(gate)(stop);
     };
     const auto releaseWorker = qScopeGuard([&] { gate->release.release(); });
-    QVERIFY(receiver._connectSerialGPS(QStringLiteral("/test/selected"), GPSType::passive, 115200, false));
+    QVERIFY(receiver.connectSerial(QStringLiteral("/test/selected"), GPSType::passive, 115200, false));
     QTRY_VERIFY_WITH_TIMEOUT(gate->entered.available() > 0, TestTimeout::mediumMs());
     QPointer<GPSProvider> provider = receiver._session.provider;
     emit provider->receiverReady();

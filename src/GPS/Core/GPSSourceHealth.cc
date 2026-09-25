@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <chrono>
 
-#include "GPSSatelliteObservation.h"
 #include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 #include "QtRuntimeScheduler.h"
@@ -14,7 +13,6 @@ GPSSourceHealth::GPSSourceHealth(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _scheduler(scheduler ? scheduler : new QtRuntimeScheduler(this))
     , _positionTask(_scheduler, this)
-    , _fixSatellitesTask(_scheduler, this)
 {
     qCDebug(GPSSourceHealthLog) << this;
 }
@@ -41,12 +39,7 @@ std::optional<GPSObservation> GPSSourceHealth::acceptedObservation(
         _remaining(_position.observation.monotonicTimestampUs, maximumAge) == std::chrono::microseconds::zero()) {
         return std::nullopt;
     }
-    auto accepted = _position.observation.projected(use);
-    if (accepted) {
-        const int used = satellitesInUseCount();
-        accepted->satellitesUsed = used >= 0 ? std::optional<int>(used) : std::nullopt;
-    }
-    return accepted;
+    return _position.observation.projected(use);
 }
 
 std::chrono::microseconds GPSSourceHealth::_remaining(quint64 timestampUs,
@@ -70,14 +63,7 @@ void GPSSourceHealth::updateObservation(const GPSObservation& observation)
     _position.invalidated = _age(observation.monotonicTimestampUs) < 0;
     _position.state = _updatedPositionState();
     _schedulePositionExpiry();
-    const int previousUsed = satellitesInUseCount();
-    _fixSatellites = {observation.hasNavigationSolution() ? observation.satellitesUsed.value_or(-1) : -1,
-                      observation.monotonicTimestampUs};
-    _scheduleFixSatelliteExpiry();
     _logStateChange(previousState);
-    if (previousUsed != satellitesInUseCount()) {
-        emit satellitesChanged();
-    }
     if (!update.isCurrent()) {
         return;
     }
@@ -135,7 +121,6 @@ void GPSSourceHealth::reset()
     _positionTask.cancel();
     _position = {};
     _logStateChange(previousState);
-    clearSatellites();
     if (update.isCurrent()) {
         emit positionChanged();
     }
@@ -149,56 +134,11 @@ void GPSSourceHealth::setFreshnessTimeoutMs(int timeoutMs)
     }
     const State previousState = state();
     const auto update = _revision.advance(this);
-    const int previousUsed = satellitesInUseCount();
     _position.state = _updatedPositionState();
     _schedulePositionExpiry();
-    _scheduleFixSatelliteExpiry();
     _logStateChange(previousState);
-    if (previousUsed != satellitesInUseCount()) {
-        emit satellitesChanged();
-    }
     if (update.isCurrent()) {
         emit positionChanged();
-    }
-}
-
-void GPSSourceHealth::_scheduleFixSatelliteExpiry()
-{
-    _fixSatellitesTask.cancel();
-    const auto remaining = _remaining(_fixSatellites.receivedAtUs);
-    if (remaining == std::chrono::microseconds::zero()) {
-        _fixSatellites.count = -1;
-    }
-    if (_fixSatellites.count >= 0) {
-        _fixSatellitesTask.schedule(remaining, [this]() {
-            const int previous = satellitesInUseCount();
-            _fixSatellites.count = -1;
-            if (previous != satellitesInUseCount()) {
-                emit satellitesChanged();
-            }
-        });
-    }
-}
-
-void GPSSourceHealth::clearSatellites()
-{
-    _fixSatellitesTask.cancel();
-    const bool changed = _satelliteCounts.inView != -1 || satellitesInUseCount() != -1;
-    _satelliteCounts = {};
-    _fixSatellites = {};
-    if (changed) {
-        emit satellitesChanged();
-    }
-}
-
-void GPSSourceHealth::applySatelliteObservation(const GPSSatelliteObservation& observation)
-{
-    // The observation store owns report expiry; the fix's independent GGA count retains its own deadline.
-    const int previousInView = satellitesInViewCount();
-    const int previousInUse = satellitesInUseCount();
-    _satelliteCounts = {observation.satellitesInViewCount(), observation.satellitesInUseCount()};
-    if (previousInView != satellitesInViewCount() || previousInUse != satellitesInUseCount()) {
-        emit satellitesChanged();
     }
 }
 

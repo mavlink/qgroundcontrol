@@ -8,14 +8,14 @@
 
 #include "GPSProvider.h"
 #include "GPSRevision.h"
+#include "RTKConnectionTarget.h"
 
 class AutoConnectSettings;
 class Fact;
-class GPSRtk;
 class RTKSettings;
 
 /// Decides when the receiver connects: user and startup connections from the saved settings, serial
-/// auto-discovery of known base receivers, and retries after a connection is lost. GPSRtk runs the sessions.
+/// auto-discovery of known base receivers, and retries after a connection is lost. The target runs the sessions.
 class RTKConnectionPolicy : public QObject
 {
     Q_OBJECT
@@ -23,8 +23,9 @@ class RTKConnectionPolicy : public QObject
     friend class RTKConnectionPolicyTest;
 
 public:
-    /// The settings must outlive the policy.
-    RTKConnectionPolicy(GPSRtk* receiver, RTKSettings* settings, AutoConnectSettings* autoConnectSettings);
+    /// The receiver and settings must outlive the policy.
+    RTKConnectionPolicy(RTKConnectionTarget& receiver, RTKSettings* settings, AutoConnectSettings* autoConnectSettings,
+                        QObject* parent = nullptr);
 
     /// Connects from the saved settings and turns auto-connect off. Flash-save consent is one-use.
     bool connectConfigured(bool allowPersistentChanges);
@@ -63,10 +64,12 @@ private:
     bool _connectConfigured(bool allowPersistentChanges, bool userRequested);
     void _retryManual();
     void _scheduleRetry();
+    /// Published with the receiver's notifications, after the current operation.
+    void _disableAutoConnect();
     bool _autoConnectEnabled() const;
     void _updateAutoConnection();
 
-    GPSRtk* const _receiver;
+    RTKConnectionTarget& _receiver;
     RTKSettings* const _settings;
     Fact* const _autoConnect;
     Owner _owner = Owner::None;

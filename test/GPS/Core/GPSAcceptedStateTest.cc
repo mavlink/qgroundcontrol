@@ -8,7 +8,6 @@
 
 #include "GPSDriverReports.h"
 #include "GPSObservation.h"
-#include "GPSSatelliteStore.h"
 #include "GPSSourceHealth.h"
 #include "ManualScheduler.h"
 #include "MonotonicClock.h"
@@ -24,7 +23,6 @@ private slots:
     void _remoteIdDatum_data();
     void _remoteIdDatum();
     void _ggaDoesNotRequireAccuracy();
-    void _independentSatelliteExpiry();
     void _freshnessReconfiguration_data();
     void _freshnessReconfiguration();
     void _futureReceiptRemainsRejected_data();
@@ -32,8 +30,6 @@ private slots:
     void _maximumAge_data();
     void _maximumAge();
     void _receiptDeadlineBoundaries();
-    void _satelliteNormalization_data();
-    void _satelliteNormalization();
     void _surveyReportRetainsUnits();
     void _navigationObservation();
 };
@@ -183,37 +179,20 @@ void GPSAcceptedStateTest::_remoteIdDatum()
     QCOMPARE(observation.altitudeDatum, datum);
 }
 
-void GPSAcceptedStateTest::_independentSatelliteExpiry()
-{
-    ManualScheduler scheduler;
-    GPSSourceHealth health(nullptr, &scheduler);
-    GPSObservation observation;
-    observation.monotonicTimestampUs = scheduler.nowUs();
-    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8), QDateTime::currentDateTimeUtc());
-    observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1.0);
-    observation.satellitesUsed = 12;
-    health.updateObservation(observation);
-    QCOMPARE(health.acceptedObservation()->satellitesUsed, std::optional<int>(12));
-    health.clearSatellites();
-    QVERIFY(health.acceptedObservation());
-    QVERIFY(!health.acceptedObservation()->satellitesUsed);
-    QCOMPARE(health.observation().satellitesUsed, std::optional<int>(12));
-}
-
 void GPSAcceptedStateTest::_freshnessReconfiguration_data()
 {
-    QTest::addColumn<bool>("clearCount");
+    QTest::addColumn<bool>("invalidate");
     QTest::addColumn<int>("timeoutMs");
-    QTest::newRow("cleared-same") << true << 5000;
-    QTest::newRow("cleared-shorter") << true << 2000;
-    QTest::newRow("cleared-longer") << true << 10000;
-    QTest::newRow("invalid-position-shorter") << false << 2000;
-    QTest::newRow("invalid-position-longer") << false << 10000;
+    QTest::newRow("same") << false << 5000;
+    QTest::newRow("shorter") << false << 2000;
+    QTest::newRow("longer") << false << 10000;
+    QTest::newRow("invalid-position-shorter") << true << 2000;
+    QTest::newRow("invalid-position-longer") << true << 10000;
 }
 
 void GPSAcceptedStateTest::_freshnessReconfiguration()
 {
-    QFETCH(bool, clearCount);
+    QFETCH(bool, invalidate);
     QFETCH(int, timeoutMs);
     ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
@@ -223,22 +202,22 @@ void GPSAcceptedStateTest::_freshnessReconfiguration()
     observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1.0);
     observation.satellitesUsed = 12;
     health.updateObservation(observation);
-    if (clearCount) {
-        health.clearSatellites();
-    } else {
+    if (invalidate) {
         health.invalidatePosition();
     }
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
     health.setFreshnessTimeoutMs(timeoutMs);
-    QCOMPARE(health.satellitesInUseCount(), clearCount ? -1 : 12);
-    QCOMPARE(health.observation().satellitesUsed, std::optional<int>(12));
+    QCOMPARE(bool(health.acceptedObservation()), !invalidate);
+    if (!invalidate) {
+        QCOMPARE(health.acceptedObservation()->satellitesUsed, std::optional<int>(12));
+    }
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(timeoutMs - 1001)));
-    QCOMPARE(health.satellitesInUseCount(), clearCount ? -1 : 12);
+    QCOMPARE(bool(health.acceptedObservation()), !invalidate);
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
-    QCOMPARE(health.satellitesInUseCount(), -1);
     QVERIFY(!health.acceptedObservation());
+    QCOMPARE(health.state(), GPSSourceHealth::State::Stale);
     health.setFreshnessTimeoutMs(timeoutMs * 2);
-    QCOMPARE(health.satellitesInUseCount(), -1);
+    QCOMPARE(health.observation().satellitesUsed, std::optional<int>(12));
 }
 
 void GPSAcceptedStateTest::_futureReceiptRemainsRejected_data()
@@ -273,7 +252,6 @@ void GPSAcceptedStateTest::_futureReceiptRemainsRejected()
         health.setFreshnessTimeoutMs(timeoutMs);
         QVERIFY(!health.acceptedObservation(use));
         QCOMPARE(health.state(), GPSSourceHealth::State::Invalid);
-        QCOMPARE(health.satellitesInUseCount(), -1);
     }
     observation.monotonicTimestampUs = scheduler.nowUs();
     health.updateObservation(observation);
@@ -318,55 +296,6 @@ void GPSAcceptedStateTest::_maximumAge()
     observation.monotonicTimestampUs = scheduler.nowUs();
     health.updateObservation(observation);
     QVERIFY(health.acceptedObservation(Use::RemoteID, 5000ms));
-}
-
-void GPSAcceptedStateTest::_satelliteNormalization_data()
-{
-    QTest::addColumn<bool>("empty");
-    QTest::addColumn<bool>("unknownUsage");
-    QTest::newRow("empty") << true << false;
-    QTest::newRow("known") << false << false;
-    QTest::newRow("partly-unknown") << false << true;
-}
-
-void GPSAcceptedStateTest::_satelliteNormalization()
-{
-    QFETCH(bool, empty);
-    QFETCH(bool, unknownUsage);
-    ManualScheduler scheduler;
-    GPSSatelliteStore store(nullptr, 1000, &scheduler);
-    store.beginSession(QStringLiteral("receiver"), 1);
-    GPSSatelliteObservation report;
-    report.sessionId = 1;
-    report.monotonicTimestampUs = scheduler.nowUs();
-    using Constellation = GPSConstellation;
-    const auto receipt = report.monotonicTimestampUs;
-    if (empty) {
-        report.constellations = {{Constellation::Unknown, {receipt, 0}, {receipt, 0}}};
-    } else {
-        report.constellations = {
-            {Constellation::GPS, {receipt, 1}, {receipt, 0}},
-            {Constellation::Galileo,
-             {receipt, 1},
-             {unknownUsage ? 0 : receipt, unknownUsage ? std::nullopt : std::optional<int>(1)}},
-        };
-    }
-    store.updateObservation(report);
-    const auto actual = store.observation();
-    QCOMPARE(actual.satellitesInViewCount(), empty ? 0 : 2);
-    QCOMPARE(actual.satellitesInUseCount(), empty || unknownUsage ? 0 : 1);
-    QCOMPARE(actual.constellations.size(), report.constellations.size());
-    for (qsizetype index = 0; index < actual.constellations.size(); ++index) {
-        const auto& accepted = actual.constellations[index];
-        const auto& input = report.constellations[index];
-        QCOMPARE(accepted.view.receivedAtUs, input.view.receivedAtUs);
-        QCOMPARE(accepted.view.count, input.view.count);
-        QCOMPARE(accepted.usage.receivedAtUs, input.usage.receivedAtUs);
-        QCOMPARE(accepted.usage.count, input.usage.count);
-    }
-    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
-    QCOMPARE(store.observation().satellitesInViewCount(), -1);
-    QCOMPARE(store.observation().satellitesInUseCount(), -1);
 }
 
 void GPSAcceptedStateTest::_surveyReportRetainsUnits()

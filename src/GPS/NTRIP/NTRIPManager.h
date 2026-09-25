@@ -8,7 +8,6 @@
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtPositioning/QGeoCoordinate>
-#include <QtQmlIntegration/QtQmlIntegration>
 
 #include "GPSCorrectionSourceRegistration.h"
 #include "GPSNotificationQueue.h"
@@ -22,7 +21,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPManagerLog)
 
-class NTRIPSettings;
 class GPSCorrectionManager;
 
 /// Manages the NTRIP caster connection lifecycle as an explicit event-driven
@@ -34,8 +32,6 @@ class NTRIPManager : public QObject
 {
     Q_OBJECT
     friend class NTRIPManagerTest;
-    QML_ELEMENT
-    QML_UNCREATABLE("")
     Q_MOC_INCLUDE("NTRIPConnectionStats.h")
     Q_MOC_INCLUDE("NTRIPSourceTableController.h")
     Q_PROPERTY(ConnectionStatus connectionStatus READ connectionStatus NOTIFY connectionStatusChanged)
@@ -78,12 +74,25 @@ public:
     /// Position that orders fetched mountpoints by distance; an invalid coordinate keeps the caster's order.
     using SortPositionProvider = std::function<QGeoCoordinate()>;
 
-    /// Without settings the manager never connects. The settings must outlive the manager.
-    explicit NTRIPManager(NTRIPSettings* settings, QObject* parent = nullptr);
+    /// The NTRIP settings as values; the application's settings binding supplies them.
+    struct Configuration
+    {
+        bool enabled = false;
+        NTRIPConfiguration stream;
+        NTRIPGgaProvider::Configuration gga;
+        bool operator==(const Configuration&) const = default;
+    };
+
+    explicit NTRIPManager(QObject* parent = nullptr);
     ~NTRIPManager() override;
 
-    /// Observes and applies the settings; call once the correction manager and providers are injected.
+    /// Applies the configuration; call once the correction manager and providers are injected.
     void init();
+    /// Before init() the configuration is only stored. After it, stream changes apply after a short debounce, so
+    /// editing a field does not reconnect per keystroke, and GGA changes apply at once.
+    void setConfiguration(const Configuration& configuration);
+
+    const Configuration& configuration() const { return _configuration; }
 
     ConnectionStatus connectionStatus() const { return _connectionStatus; }
 
@@ -128,6 +137,10 @@ signals:
     void statusMessageChanged();
     void securityWarningChanged();
     void ggaSourceChanged();
+    /// The user chose a mountpoint from the source table; the settings should store it.
+    void mountpointChosen(const QString& mountpoint);
+    /// Retrying after an error turns the saved connection on.
+    void enableRequested();
 
 private:
     /// Dispatch an event. Returns true if a transition was found and taken.
@@ -171,9 +184,10 @@ private:
     void _onPlaintextCredentialsWarning();
     void _setSecurityWarning(const QString& warning);
     void _rtcmDataReceived(const RTCMDecodedFrame& frame);
-    void _onSettingChanged();
-    NTRIPConfiguration _configFromSettings() const;
-    bool _isEnabled() const;
+    /// Brings the connection in line with the latest configuration.
+    void _applyConfiguration();
+
+    bool _isEnabled() const { return _configuration.enabled; }
 
     NTRIPGgaProvider _ggaProvider{this};
     NTRIPConnectionStats _stats{this};
@@ -188,8 +202,9 @@ private:
     QPointer<GPSCorrectionManager> _correctionManager;
     GPSCorrectionSourceRegistration _correctionRegistration;
 
+    // Latest supplied configuration, and the one the running transport uses.
+    Configuration _configuration;
     NTRIPConfiguration _runningConfig;
-    NTRIPSettings* const _settings;
     SortPositionProvider _sortPositionProvider;
 
     NTRIPSourceTableController _sourceTableController{this};

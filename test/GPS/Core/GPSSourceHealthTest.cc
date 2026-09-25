@@ -5,7 +5,6 @@
 #include <QtCore/QScopeGuard>
 #include <QtTest/QSignalSpy>
 
-#include "GPSSatelliteObservation.h"
 #include "GPSSourceHealth.h"
 #include "LogManager.h"
 #include "ManualScheduler.h"
@@ -32,17 +31,6 @@ GPSObservation observation(const QGeoPositionInfo& position, const RuntimeSchedu
     return result;
 }
 
-GPSSatelliteObservation satellites(int inView, int inUse)
-{
-    GPSSatelliteObservation result;
-    auto& system = result.constellations.emplaceBack();
-    system.constellation = GPSConstellation::GPS;
-    system.view.receivedAtUs = 1;
-    system.view.count = inView;
-    system.usage.receivedAtUs = 1;
-    system.usage.count = inUse;
-    return result;
-}
 }  // namespace
 
 void GPSSourceHealthTest::_normalizesObservation_data()
@@ -279,22 +267,4 @@ void GPSSourceHealthTest::_invalidatedPositionTimeout()
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
     health.setFreshnessTimeoutMs(1000);
     QCOMPARE(health.state(), GPSSourceHealth::State::Stale);
-}
-
-void GPSSourceHealthTest::_satelliteCountsNotifyOnlyOnChange()
-{
-    ManualScheduler scheduler;
-    GPSSourceHealth health(nullptr, &scheduler);
-    QSignalSpy changes(&health, &GPSSourceHealth::satellitesChanged);
-
-    health.applySatelliteObservation(satellites(8, 5));
-    QCOMPARE(changes.count(), 1);
-    health.applySatelliteObservation(satellites(8, 5));
-    QCOMPARE(changes.count(), 1);
-    health.applySatelliteObservation(satellites(8, 6));
-    QCOMPARE(changes.count(), 2);
-    QCOMPARE(health.satellitesInViewCount(), 8);
-    QCOMPARE(health.satellitesInUseCount(), 6);
-    health.applySatelliteObservation(satellites(9, 6));
-    QCOMPARE(changes.count(), 3);
 }
