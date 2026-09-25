@@ -273,18 +273,40 @@ ParameterMetaData* PX4FirmwarePlugin::_createParameterMetaData()
     return new PX4ParameterMetaData(this);
 }
 
+namespace {
+
+/// Sends MAV_CMD_DO_REPOSITION that switches to Hold and keeps the current latitude/longitude,
+/// changing only yaw (radians) and/or AMSL altitude (NAN: no change). Sent as COMMAND_INT when
+/// supported. With no ackHandlerInfo, errors are shown to the user.
+void sendRepositionKeepLatLon(Vehicle* vehicle, float yaw, float amslAltitude,
+                              const Vehicle::MavCmdAckHandlerInfo_t* ackHandlerInfo = nullptr)
+{
+    const int compId = vehicle->defaultComponentId();
+    const float groundSpeed = -1.0f;  // no change
+    const float flags = MAV_DO_REPOSITION_FLAGS_CHANGE_MODE;
+
+    if (vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+        if (ackHandlerInfo) {
+            vehicle->sendMavCommandIntWithHandler(ackHandlerInfo, compId, MAV_CMD_DO_REPOSITION, MAV_FRAME_GLOBAL,
+                                                  groundSpeed, flags, 0.0f, yaw, NAN, NAN, amslAltitude);
+        } else {
+            vehicle->sendMavCommandInt(compId, MAV_CMD_DO_REPOSITION, MAV_FRAME_GLOBAL, true /* showError */,
+                                       groundSpeed, flags, 0.0f, yaw, NAN, NAN, amslAltitude);
+        }
+    } else if (ackHandlerInfo) {
+        vehicle->sendMavCommandWithHandler(ackHandlerInfo, compId, MAV_CMD_DO_REPOSITION, groundSpeed, flags, 0.0f, yaw,
+                                           NAN, NAN, amslAltitude);
+    } else {
+        vehicle->sendMavCommand(compId, MAV_CMD_DO_REPOSITION, true /* showError */, groundSpeed, flags, 0.0f, yaw, NAN,
+                                NAN, amslAltitude);
+    }
+}
+
+}  // namespace
+
 void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle) const
 {
-    vehicle->sendMavCommand(vehicle->defaultComponentId(),
-                            MAV_CMD_DO_REPOSITION,
-                            true,   // show error if failed
-                            -1.0f,
-                            MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
-                            0.0f,
-                            NAN,
-                            NAN,
-                            NAN,
-                            NAN);
+    sendRepositionKeepLatLon(vehicle, NAN, NAN);
 }
 
 void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL) const
@@ -467,15 +489,7 @@ void PX4FirmwarePlugin::_changeAltAfterPause(void* resultHandlerData, bool pause
     PauseVehicleThenChangeAltData_t* pData = static_cast<PauseVehicleThenChangeAltData_t*>(resultHandlerData);
 
     if (pauseSucceeded) {
-        pData->vehicle->sendMavCommand(
-                    pData->vehicle->defaultComponentId(),
-                    MAV_CMD_DO_REPOSITION,
-                    true,                                   // show error is fails
-                    -1.0f,                                  // Don't change groundspeed
-                    MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
-                    0.0f,                                   // Reserved
-                    qQNaN(), qQNaN(), qQNaN(),              // No change to yaw, lat, lon
-                    static_cast<float>(pData->newAMSLAlt));
+        sendRepositionKeepLatLon(pData->vehicle, NAN, static_cast<float>(pData->newAMSLAlt));
     } else {
         QGC::showAppMessage(tr("Unable to pause vehicle."));
     }
@@ -507,14 +521,7 @@ void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
         handlerInfo.resultHandler       = _pauseVehicleThenChangeAltResultHandler;
         handlerInfo.resultHandlerData   = resultData;
 
-        vehicle->sendMavCommandWithHandler(
-                    &handlerInfo,
-                    vehicle->defaultComponentId(),
-                    MAV_CMD_DO_REPOSITION,
-                    -1.0f,                                  // Don't change groundspeed
-                    MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
-                    0.0f,                                   // Reserved
-                    qQNaN(), qQNaN(), qQNaN(), qQNaN());    // No change to yaw, lat, lon, alt
+        sendRepositionKeepLatLon(vehicle, NAN, NAN, &handlerInfo);
     } else {
         _changeAltAfterPause(resultData, true /* pauseSucceeded */);
     }
@@ -557,16 +564,7 @@ void PX4FirmwarePlugin::guidedModeChangeHeading(Vehicle* vehicle, const QGeoCoor
 
     const float radians = qDegreesToRadians(vehicle->coordinate().azimuthTo(headingCoord));
 
-    vehicle->sendMavCommand(
-        vehicle->defaultComponentId(),
-        MAV_CMD_DO_REPOSITION,
-        true,
-        -1.0f,                                  // no change in ground speed
-        MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,    // switch to guided mode
-        0.0f,                                   // reserved
-        radians,                                // change heading
-        NAN, NAN, NAN                           // no change lat, lon, alt
-    );
+    sendRepositionKeepLatLon(vehicle, radians, NAN);
 }
 
 bool PX4FirmwarePlugin::guidedModeROI(Vehicle* vehicle, const QGeoCoordinate& roiCenterCoord, double relativeAltitudeMeters) const
