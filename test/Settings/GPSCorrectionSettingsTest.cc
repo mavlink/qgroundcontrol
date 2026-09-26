@@ -238,7 +238,7 @@ void GPSCorrectionSettingsTest::_routingPanel()
              manual && sourceVisible && instanceVisible && settings->userVisible());
     QTRY_COMPARE_WITH_TIMEOUT(
         streamControl->property("currentText").toString(),
-        QCoreApplication::translate("CorrectionRoutingSettings", "Unavailable: %1").arg("offline-stream"),
+        QCoreApplication::translate("GPSCorrectionManager", "Unavailable: %1").arg("offline-stream"),
         TestTimeout::mediumMs());
     QCOMPARE(streamControl->property("currentValue").toString(), QStringLiteral("offline-stream"));
     QVERIFY(!panel->findChild<QObject*>(QStringLiteral("injectLocalReceiver")));
@@ -304,9 +304,8 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     QCOMPARE(streamControl->property("valueRole").toString(), QStringLiteral("instanceId"));
 
     const QString waitingLabel =
-        QCoreApplication::translate("CorrectionRoutingSettings", "No fresh corrections: %1").arg("b");
-    const QString unavailableLabel =
-        QCoreApplication::translate("CorrectionRoutingSettings", "Unavailable: %1").arg("b");
+        QCoreApplication::translate("GPSCorrectionManager", "No fresh corrections: %1").arg("b");
+    const QString unavailableLabel = QCoreApplication::translate("GPSCorrectionManager", "Unavailable: %1").arg("b");
     const QString noSelection =
         QCoreApplication::translate("CorrectionDiagnostics", "No fresh stream is selected for vehicles.");
     const auto streamStatus = [&](const QString& instance) {
@@ -405,7 +404,7 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     QVERIFY(settings->correctionSourceInstance()->rawValue().toString().isEmpty());
     QTRY_COMPARE_WITH_TIMEOUT(comboBox->property("count").toInt(), 1, TestTimeout::mediumMs());
     QTRY_COMPARE_WITH_TIMEOUT(streamControl->property("currentText").toString(),
-                              QCoreApplication::translate("CorrectionRoutingSettings", "Automatic within source"),
+                              QCoreApplication::translate("GPSCorrectionManager", "Automatic within source"),
                               TestTimeout::mediumMs());
     QVERIFY(!streamControl->isVisible());
     QCOMPARE(selectionChanged.size(), 1);
@@ -416,7 +415,7 @@ void GPSCorrectionSettingsTest::_routingPanelTracksStreams()
     QTRY_COMPARE_WITH_TIMEOUT(comboBox->property("count").toInt(), 2, TestTimeout::mediumMs());
     QVERIFY(streamControl->isVisible());
     QCOMPARE(streamControl->property("currentText").toString(),
-             QCoreApplication::translate("CorrectionRoutingSettings", "Unavailable: %1").arg("external"));
+             QCoreApplication::translate("GPSCorrectionManager", "Unavailable: %1").arg("external"));
 
     udpListener = corrections.registerSource(GPSCorrectionSource::Udp);
     receivePeer(QStringLiteral("external"));

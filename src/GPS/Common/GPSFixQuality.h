@@ -1,5 +1,10 @@
 #pragma once
 
+#include <QtCore/QObject>
+
+namespace GPSFixQualities {
+Q_NAMESPACE
+
 enum class GPSFixQuality
 {
     Unknown = 0,
@@ -11,6 +16,11 @@ enum class GPSFixQuality
     RTKFixed = 6,
     Extrapolated = 8,
 };
+Q_ENUM_NS(GPSFixQuality)
+
+}  // namespace GPSFixQualities
+
+using GPSFixQuality = GPSFixQualities::GPSFixQuality;
 
 [[nodiscard]] constexpr GPSFixQuality gpsFixQualityFromValue(int value)
 {

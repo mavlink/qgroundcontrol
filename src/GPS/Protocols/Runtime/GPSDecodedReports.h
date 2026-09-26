@@ -5,7 +5,7 @@
 #include <optional>
 
 #include "GPSConstellation.h"
-#include "GPSDriverReports.h"
+#include "GPSReceiverReports.h"
 
 /// Decoded navigation plus whether the producer accepted its velocity solution.
 struct GPSDecodedPosition

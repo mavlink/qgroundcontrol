@@ -10,9 +10,9 @@
 #include <QtCore/QPointer>
 #include <QtPositioning/QGeoCoordinate>
 
-#include "GPSNotificationQueue.h"
-#include "GPSRevision.h"
 #include "NTRIPConfiguration.h"
+#include "NotificationQueue.h"
+#include "OperationRevision.h"
 #include "ScheduledTask.h"
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableControllerLog)
@@ -81,11 +81,12 @@ private:
 
     void _onSourceTableReceived(const QString& table);
     void _onFetchError(const QString& error);
-    void _completeFetch(const GPSRevision::Token& fetch, QString table, std::optional<QString> error = std::nullopt);
+    void _completeFetch(const OperationRevision::Token& fetch, QString table,
+                        std::optional<QString> error = std::nullopt);
     void _abortFetch();
     QPointer<NTRIPHttpSession> _activeSession() const;
     QByteArray _activeRequest() const;
-    void _startFetch(const GPSRevision::Token& fetch, const QByteArray& request);
+    void _startFetch(const OperationRevision::Token& fetch, const QByteArray& request);
     void _readReply(const QByteArray& bytes);
     void _finishFetch(const QString& error = {});
     void _setSecurityWarning(const QString& warning);
@@ -100,8 +101,8 @@ private:
     QString _fetchError;
     QString _securityWarning;
     std::optional<quint64> _cacheStoredAtUs;
-    GPSRevision _fetchRevision;
+    OperationRevision _fetchRevision;
 
     NTRIPConnectionConfig _lastFetchConfig;  ///< Mountpoint is excluded from source-table identity.
-    GPSNotificationQueue _notifications{this};
+    NotificationQueue _notifications{this};
 };

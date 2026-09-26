@@ -11,6 +11,7 @@
 
 #include <algorithm>
 
+#include "GPSResilienceState.h"
 #include "MonotonicClock.h"
 #include "QtRuntimeScheduler.h"
 #include "VehicleGPSFactGroup.h"
@@ -29,6 +30,31 @@ VehicleGPSAggregateFactGroup::VehicleGPSAggregateFactGroup(QObject* parent, Runt
     _jammingStateFact.setRawValue(255);
     _authenticationStateFact.setRawValue(255);
     _isStaleFact.setRawValue(true);
+
+    for (Fact* fact : {&_jammingStateFact, &_spoofingStateFact, &_authenticationStateFact}) {
+        (void) connect(fact, &Fact::rawValueChanged, this, &VehicleGPSAggregateFactGroup::resilienceChanged);
+    }
+}
+
+bool VehicleGPSAggregateFactGroup::jammingReported() const
+{
+    return GPSResilienceState::reported(_jammingStateFact.rawValue().toInt());
+}
+
+bool VehicleGPSAggregateFactGroup::spoofingReported() const
+{
+    return GPSResilienceState::reported(_spoofingStateFact.rawValue().toInt());
+}
+
+bool VehicleGPSAggregateFactGroup::authenticationReported() const
+{
+    return GPSResilienceState::reported(_authenticationStateFact.rawValue().toInt());
+}
+
+int VehicleGPSAggregateFactGroup::interferenceState() const
+{
+    return GPSResilienceState::interference(_spoofingStateFact.rawValue().toInt(),
+                                            _jammingStateFact.rawValue().toInt());
 }
 
 VehicleGPSAggregateFactGroup::~VehicleGPSAggregateFactGroup()

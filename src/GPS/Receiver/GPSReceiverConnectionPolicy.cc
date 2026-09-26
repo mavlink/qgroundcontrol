@@ -5,8 +5,8 @@
 
 #include <QtCore/QSet>
 
-#include "GPSNotificationQueue.h"
 #include "GPSReceiverConfig.h"
+#include "NotificationQueue.h"
 #include "QGCLoggingCategory.h"
 #include "QtRuntimeScheduler.h"
 #ifndef QGC_NO_SERIAL_LINK
@@ -16,16 +16,6 @@
 QGC_LOGGING_CATEGORY(GPSReceiverConnectionPolicyLog, "GPS.Receiver.GPSReceiverConnectionPolicy")
 
 namespace {
-GPSReceiver::ConnectionType selectedConnection(const GPSReceiver::Configuration& configuration)
-{
-    const auto saved = configuration.connectionType;
-#ifdef QGC_NO_SERIAL_LINK
-    return saved == GPSReceiver::Udp ? GPSReceiver::Udp : GPSReceiver::Tcp;
-#else
-    return saved == GPSReceiver::Tcp || saved == GPSReceiver::Udp ? saved : GPSReceiver::Serial;
-#endif
-}
-
 GPSReceiver::ReceiverRole selectedRole(const GPSReceiver::Configuration& configuration)
 {
     const auto saved = configuration.receiverRole;
@@ -98,7 +88,7 @@ void GPSReceiverConnectionPolicy::reset()
 
 bool GPSReceiverConnectionPolicy::connectConfigured(bool allowPersistentChanges)
 {
-    const GPSNotificationQueue::Scope publish(_receiver.notifications());
+    const NotificationQueue::Scope publish(_receiver.notifications());
     reset();
     const auto operation = _revision.current(this);
     if (!_connectConfigured(allowPersistentChanges, true) || !operation.isCurrent()) {
@@ -110,7 +100,7 @@ bool GPSReceiverConnectionPolicy::connectConfigured(bool allowPersistentChanges)
 
 void GPSReceiverConnectionPolicy::connectSaved()
 {
-    const GPSNotificationQueue::Scope publish(_receiver.notifications());
+    const NotificationQueue::Scope publish(_receiver.notifications());
     reset();
     if (_autoConnectEnabled()) {
         // Waiting for the saved receiver would suspend discovery, so only a receiver present now is connected.
@@ -129,7 +119,7 @@ void GPSReceiverConnectionPolicy::connectSaved()
 
 void GPSReceiverConnectionPolicy::disconnectConfigured()
 {
-    const GPSNotificationQueue::Scope publish(_receiver.notifications());
+    const NotificationQueue::Scope publish(_receiver.notifications());
     reset();
     _disableAutoConnect();
     _receiver.disconnectReceiver(true);
@@ -137,7 +127,7 @@ void GPSReceiverConnectionPolicy::disconnectConfigured()
 
 void GPSReceiverConnectionPolicy::stop()
 {
-    const GPSNotificationQueue::Scope publish(_receiver.notifications());
+    const NotificationQueue::Scope publish(_receiver.notifications());
     const bool autoSession = _owner == Owner::Auto;
     reset();
     if (autoSession) {
@@ -192,7 +182,7 @@ void GPSReceiverConnectionPolicy::_scheduleRetry()
 
 void GPSReceiverConnectionPolicy::update()
 {
-    const GPSNotificationQueue::Scope publish(_receiver.notifications());
+    const NotificationQueue::Scope publish(_receiver.notifications());
     if (_owner != Owner::Manual) {
         _updateAutoConnection();
         return;
@@ -234,7 +224,7 @@ void GPSReceiverConnectionPolicy::_retryManual()
     if (_connectConfigured(false, false) || !operation.isCurrent()) {
         return;
     }
-    _waitingForPort = selectedConnection(_configuration) == GPSReceiver::Serial &&
+    _waitingForPort = GPSReceiver::connectionTypeFor(_configuration) == GPSReceiver::Serial &&
                       _receiver.connectionError() == GPSConnectionError::OpenFailed;
     _scheduleRetry();
 }
@@ -255,7 +245,7 @@ bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges
                                      tr("Disconnect the current receiver before connecting another."));
         return false;
     }
-    const auto connection = selectedConnection(_configuration);
+    const auto connection = GPSReceiver::connectionTypeFor(_configuration);
     const bool tcp = connection == GPSReceiver::Tcp;
     const QString host = _configuration.tcpHost.trimmed();
     const uint tcpPort = _configuration.tcpPort;
@@ -329,7 +319,7 @@ bool GPSReceiverConnectionPolicy::_autoConnectEnabled() const
     return false;
 #else
     // Discovery configures known base receivers; it would replace a network or passive receiver.
-    return _configuration.autoConnect && selectedConnection(_configuration) == GPSReceiver::Serial &&
+    return _configuration.autoConnect && GPSReceiver::connectionTypeFor(_configuration) == GPSReceiver::Serial &&
            selectedRole(_configuration) == GPSReceiver::ConfiguredBase;
 #endif
 }

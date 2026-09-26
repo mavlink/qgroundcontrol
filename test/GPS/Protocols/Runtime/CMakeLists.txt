@@ -3,9 +3,11 @@ foreach(
     suite
     GPSCommandChannelTest
     GPSCommandSequenceTest
+    GPSDecodedDataTest
     GPSNMEAStreamTest
     GPSProtocolRuntimeTest
     GPSReceiverDetectorTest
+    GPSSatelliteStateTest
     GPSStreamDemuxTest
     GPSTaskTest
 )

@@ -30,32 +30,18 @@ ToolIndicatorPage {
     readonly property real _settingsWidth: Math.max(ScreenTools.defaultFontPixelWidth * 30,
         Math.min(_preferredSettingsWidth, availableWidth - (_compact ? 0 : _preferredStatusWidth) - spacing * 2 - 1))
     function errorText(): string {
-        if (!activeVehicle) {
-            return qsTr("Disconnected")
-        }
-        switch (activeVehicle.gps.systemErrors.value) {
-        case 1: return qsTr("Incoming correction")
-        case 2: return qsTr("Configuration")
-        case 4: return qsTr("Software")
-        case 8: return qsTr("Antenna")
-        case 16: return qsTr("Event congestion")
-        case 32: return qsTr("CPU overload")
-        case 64: return qsTr("Output congestion")
-        default: return qsTr("Multiple errors")
-        }
+        return activeVehicle ? activeVehicle.gps.systemErrorText : qsTr("Disconnected")
     }
 
-    // Resilience states 0 and 255 mean the receiver does not know, so only reported states are listed.
+    // Only states the receiver reports are listed.
     component ResilienceGroup: SettingsGroupLayout {
         id: group
 
         // Vehicle GPS groups are exposed as FactGroup, which lacks their resilience Facts.
         required property var facts
-        readonly property bool jammingReported: !!facts && facts.jammingState.value > 0 && facts.jammingState.value < 255
-        readonly property bool spoofingReported: !!facts && facts.spoofingState.value > 0
-                                                 && facts.spoofingState.value < 255
-        readonly property bool authenticationReported: !!facts && facts.authenticationState.value > 0
-                                                       && facts.authenticationState.value < 255
+        readonly property bool jammingReported: !!facts && facts.jammingReported
+        readonly property bool spoofingReported: !!facts && facts.spoofingReported
+        readonly property bool authenticationReported: !!facts && facts.authenticationReported
         readonly property bool reported: jammingReported || spoofingReported || authenticationReported
 
         Layout.fillWidth: true

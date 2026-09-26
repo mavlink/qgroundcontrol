@@ -7,8 +7,8 @@
 #include <QtCore/QString>
 #include <QtPositioning/QGeoPositionInfoSource>
 
-#include "GPSRevision.h"
 #include "GPSSourceHealth.h"
+#include "OperationRevision.h"
 
 class RuntimeScheduler;
 
@@ -56,7 +56,7 @@ private:
     QList<QMetaObject::Connection> _connections;
     QString _identity;
     quint64 _sessionId = 0;
-    GPSRevision _eventRevision;
+    OperationRevision _eventRevision;
     bool _platform = false;
     bool _active = false;
     bool _updatesStarted = false;

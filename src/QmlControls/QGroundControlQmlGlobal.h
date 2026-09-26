@@ -118,6 +118,9 @@ public:
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 
+    /// Byte size with a locale-aware unit, as QGC::bigSizeToString().
+    Q_INVOKABLE static QString bigSizeToString(quint64 size);
+
     Q_INVOKABLE QString altitudeFrameExtraUnits(AltitudeFrame altFrame);        ///< String shown in the FactTextField.extraUnits ui
     Q_INVOKABLE QString altitudeFrameShortDescription(AltitudeFrame altFrame);  ///< String shown when a user needs to select an altitude frame
 

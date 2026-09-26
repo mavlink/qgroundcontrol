@@ -6,7 +6,7 @@
 
 #include "GPSProvider.h"
 
-class GPSNotificationQueue;
+class NotificationQueue;
 class GPSSerialPorts;
 
 /// The receiver operations GPSReceiverConnectionPolicy drives. The implementation runs the receiver sessions; the
@@ -25,7 +25,7 @@ public:
     virtual bool connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges) = 0;
 #endif
     /// Receiver notifications are published once the outermost operation using this queue finishes.
-    virtual GPSNotificationQueue& notifications() = 0;
+    virtual NotificationQueue& notifications() = 0;
 
 protected:
     ~GPSReceiverConnectionTarget() = default;

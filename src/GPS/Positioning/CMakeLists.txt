@@ -18,7 +18,7 @@ set_target_properties(QGCGPSPositioning PROPERTIES AUTOMOC ON)
 target_compile_features(QGCGPSPositioning PUBLIC cxx_std_20)
 target_link_libraries(
     QGCGPSPositioning
-    PUBLIC QGCGPSCommon QGCGPSSupport QGCTiming Qt6::Positioning
+    PUBLIC QGCGPSCommon QGCReentrancy QGCTiming Qt6::Positioning
     PRIVATE QGCLoggingCategory
 )
 target_sources(

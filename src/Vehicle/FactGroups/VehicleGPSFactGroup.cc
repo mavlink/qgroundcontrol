@@ -4,6 +4,7 @@
 
 #include <QtPositioning/QGeoCoordinate>
 
+#include "GPSResilienceState.h"
 #include "GPSSourceHealth.h"
 #include "MAVLinkLib.h"
 #include "QGCGeo.h"
@@ -66,6 +67,11 @@ VehicleGPSFactGroup::VehicleGPSFactGroup(QObject* parent, RuntimeScheduler* sche
     _addFact(&_rtkBaselineFact);
     _addFact(&_rtkRateFact);
     _addFact(&_rtkSatellitesFact);
+
+    (void) connect(&_systemErrorsFact, &Fact::rawValueChanged, this, &VehicleGPSFactGroup::systemErrorTextChanged);
+    for (Fact* fact : {&_jammingStateFact, &_spoofingStateFact, &_authenticationStateFact}) {
+        (void) connect(fact, &Fact::rawValueChanged, this, &VehicleGPSFactGroup::resilienceChanged);
+    }
 
     _latFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _lonFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
@@ -274,4 +280,46 @@ void VehicleGPSFactGroup::_clearRtkStatus()
     _rtkBaselineFact.setRawValue(qQNaN());
     _rtkRateFact.setRawValue(qQNaN());
     _rtkSatellitesFact.setRawValue(-1);
+}
+
+QString VehicleGPSFactGroup::systemErrorText() const
+{
+    // MAVLink GPS_SYSTEM_ERROR_FLAGS.
+    static constexpr const char* ERROR_NAMES[] = {
+        QT_TR_NOOP("Incoming correction"),
+        QT_TR_NOOP("Configuration"),
+        QT_TR_NOOP("Software"),
+        QT_TR_NOOP("Antenna"),
+        QT_TR_NOOP("Event congestion"),
+        QT_TR_NOOP("CPU overload"),
+        QT_TR_NOOP("Output congestion"),
+    };
+    const quint32 errors = _systemErrorsFact.rawValue().toUInt();
+    QStringList names;
+    quint32 known = 0;
+    for (quint32 bit = 0; bit < std::size(ERROR_NAMES); ++bit) {
+        known |= 1u << bit;
+        if (errors & (1u << bit)) {
+            names.append(tr(ERROR_NAMES[bit]));
+        }
+    }
+    if (errors & ~known) {
+        names.append(tr("Other (0x%1)").arg(errors & ~known, 0, 16));
+    }
+    return names.join(QStringLiteral(", "));
+}
+
+bool VehicleGPSFactGroup::jammingReported() const
+{
+    return GPSResilienceState::reported(_jammingStateFact.rawValue().toInt());
+}
+
+bool VehicleGPSFactGroup::spoofingReported() const
+{
+    return GPSResilienceState::reported(_spoofingStateFact.rawValue().toInt());
+}
+
+bool VehicleGPSFactGroup::authenticationReported() const
+{
+    return GPSResilienceState::reported(_authenticationStateFact.rawValue().toInt());
 }

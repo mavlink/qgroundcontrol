@@ -48,7 +48,7 @@ QAbstractItemModel* NTRIPSourceTableController::mountpointModel() const
 
 void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, const QGeoCoordinate& sortCoord)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     auto casterConfig = config;
     casterConfig.mountpoint.clear();
     const bool sameCaster = casterConfig == _lastFetchConfig;
@@ -108,7 +108,7 @@ void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, cons
     }
 }
 
-void NTRIPSourceTableController::_startFetch(const GPSRevision::Token& fetch, const QByteArray& request)
+void NTRIPSourceTableController::_startFetch(const OperationRevision::Token& fetch, const QByteArray& request)
 {
     _attempt = std::make_unique<FetchAttempt>(_scheduler, this);
     _attempt->request = request;
@@ -186,13 +186,13 @@ void NTRIPSourceTableController::_setSecurityWarning(const QString& warning)
     _notifications.emitSignal(this, &NTRIPSourceTableController::securityWarningChanged);
 }
 
-void NTRIPSourceTableController::_completeFetch(const GPSRevision::Token& fetch, QString table,
+void NTRIPSourceTableController::_completeFetch(const OperationRevision::Token& fetch, QString table,
                                                 std::optional<QString> error)
 {
     if (!fetch.isCurrent()) {
         return;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _abortFetch();
     if (!fetch.isCurrent()) {
         return;

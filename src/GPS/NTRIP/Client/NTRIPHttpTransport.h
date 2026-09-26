@@ -6,12 +6,12 @@
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 
-#include "GPSRevision.h"
 #include "MonotonicClock.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPHttpCodec.h"
 #include "NTRIPHttpSession.h"
 #include "NTRIPTransport.h"
+#include "OperationRevision.h"
 #include "RTCMFrameDecoder.h"
 #include "ScheduledTask.h"
 
@@ -72,5 +72,5 @@ private:
     RTCMFrameDecoder _rtcmDecoder;
     NTRIPHttpDecoder _httpDecoder;
     bool _stopped = false;
-    GPSRevision _attempt;
+    OperationRevision _attempt;
 };

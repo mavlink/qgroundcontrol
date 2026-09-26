@@ -15,22 +15,22 @@
 /// Lifetime rule: an observer of these notifications may reconfigure, stop or restart the owner
 /// synchronously, but must not delete it; it uses deleteLater(). Owner code relies on this once
 /// delivery returns. A synchronous deletion still stops delivery safely, but is reported as a warning.
-class GPSNotificationQueue
+class NotificationQueue
 {
 public:
     template <typename Owner>
-    explicit GPSNotificationQueue(Owner* owner)
+    explicit NotificationQueue(Owner* owner)
         : _owner(owner)
         , _ownerClass(Owner::staticMetaObject.className())
     {}
 
-    Q_DISABLE_COPY_MOVE(GPSNotificationQueue)
+    Q_DISABLE_COPY_MOVE(NotificationQueue)
 
     /// Marks an operation; the outermost scope delivers what the operation queued.
     class Scope
     {
     public:
-        explicit Scope(GPSNotificationQueue& queue)
+        explicit Scope(NotificationQueue& queue)
             : _owner(queue._owner)
             , _queue(&queue)
         {
@@ -48,7 +48,7 @@ public:
 
     private:
         QPointer<QObject> _owner;
-        GPSNotificationQueue* _queue;
+        NotificationQueue* _queue;
     };
 
     /// Replaces a pending notification with the same nonzero key in place; key zero is never coalesced.

@@ -774,4 +774,55 @@ void GPSCorrectionManagerTest::_correctionsStatusShowsSelectedStream()
     QCOMPARE(source->property("labelText").toString(), QStringLiteral("None"));
 }
 
+void GPSCorrectionManagerTest::_destinationNames_data()
+{
+    QTest::addColumn<QString>("destination");
+    QTest::addColumn<QString>("expected");
+    QTest::newRow("udp") << QStringLiteral("udpOutput") << GPSCorrectionManager::tr("UDP forwarding");
+    QTest::newRow("vehicles") << QStringLiteral("mavlink") << GPSCorrectionManager::tr("Vehicles");
+    QTest::newRow("vehicle-link") << QStringLiteral("mavlink/7")
+                                  << GPSCorrectionManager::tr("Vehicle link %1").arg(QStringLiteral("7"));
+    QTest::newRow("unselected") << QString() << GPSCorrectionManager::tr("Unselected");
+    QTest::newRow("other") << QStringLiteral("custom") << QStringLiteral("custom");
+}
+
+void GPSCorrectionManagerTest::_destinationNames()
+{
+    QFETCH(QString, destination);
+    QFETCH(QString, expected);
+    QCOMPARE(GPSCorrectionManager::destinationName(destination), expected);
+}
+
+void GPSCorrectionManagerTest::_streamChoices()
+{
+    const int udp = static_cast<int>(GPSCorrectionSource::Udp);
+    const int ntrip = static_cast<int>(GPSCorrectionSource::NTRIP);
+    const QList<GPSCorrectionStreamDiagnostic> instances{
+        {.source = udp, .instanceId = QStringLiteral("a"), .usable = true},
+        {.source = udp, .instanceId = QStringLiteral("b")},
+        {.source = udp, .instanceId = QStringLiteral("a"), .usable = true},
+        {.source = ntrip, .instanceId = QStringLiteral("caster/mount"), .usable = true},
+    };
+    QCOMPARE(GPSCorrectionManager::streamCount(instances, udp), 2);
+    QCOMPARE(GPSCorrectionManager::streamCount(instances, ntrip), 1);
+
+    const auto labels = [](const QVariantList& choices) {
+        QStringList result;
+        for (const QVariant& choice : choices) {
+            const QVariantMap entry = choice.toMap();
+            result.append(entry.value(QStringLiteral("instanceId")).toString() + u'=' +
+                          entry.value(QStringLiteral("label")).toString());
+        }
+        return result;
+    };
+    const QString automatic = GPSCorrectionManager::tr("Automatic within source");
+    QCOMPARE(labels(GPSCorrectionManager::streamChoices(instances, udp, QString())),
+             (QStringList{u'=' + automatic, QStringLiteral("a=a"),
+                          QStringLiteral("b=") + GPSCorrectionManager::tr("No fresh corrections: %1").arg(u'b')}));
+    // A pinned stream that is no longer registered stays selectable, marked unavailable.
+    QCOMPARE(labels(GPSCorrectionManager::streamChoices(instances, ntrip, QStringLiteral("old"))),
+             (QStringList{u'=' + automatic, QStringLiteral("caster/mount=caster/mount"),
+                          QStringLiteral("old=") + GPSCorrectionManager::tr("Unavailable: %1").arg(u"old")}));
+}
+
 UT_REGISTER_TEST(GPSCorrectionManagerTest, TestLabel::Unit)

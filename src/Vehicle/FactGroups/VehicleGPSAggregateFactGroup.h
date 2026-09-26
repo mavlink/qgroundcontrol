@@ -27,6 +27,11 @@ class VehicleGPSAggregateFactGroup : public FactGroup
     Q_PROPERTY(Fact* jammingState        READ jammingState        CONSTANT)
     Q_PROPERTY(Fact* authenticationState READ authenticationState CONSTANT)
     Q_PROPERTY(Fact* isStale             READ isStale             CONSTANT)
+    Q_PROPERTY(bool jammingReported READ jammingReported NOTIFY resilienceChanged)
+    Q_PROPERTY(bool spoofingReported READ spoofingReported NOTIFY resilienceChanged)
+    Q_PROPERTY(bool authenticationReported READ authenticationReported NOTIFY resilienceChanged)
+    /// The worse of the reported spoofing and jamming states, or 0 when neither is reported.
+    Q_PROPERTY(int interferenceState READ interferenceState NOTIFY resilienceChanged)
 public:
     enum AuthState {
         AUTH_UNKNOWN = 0,
@@ -45,9 +50,17 @@ public:
     Fact* authenticationState() { return &_authenticationStateFact; }
     Fact* isStale()             { return &_isStaleFact; }
 
+    bool jammingReported() const;
+    bool spoofingReported() const;
+    bool authenticationReported() const;
+    int interferenceState() const;
+
     /// Bind and refresh without extending either receiver's original integrity lifetime.
     void updateFromGps(VehicleGPSFactGroup* gps1, VehicleGPSFactGroup* gps2);
     void bindToGps(VehicleGPSFactGroup* gps1, VehicleGPSFactGroup* gps2);
+
+signals:
+    void resilienceChanged();
 
 private:
     void _updateAggregates();

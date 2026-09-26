@@ -12,16 +12,6 @@ SettingsGroupLayout {
 
     property GPSCorrectionManager corrections: QGroundControl.gpsManager.corrections
 
-    function destinationName(destinationId: string): string {
-        if (destinationId === "udpOutput")
-            return qsTr("UDP forwarding");
-        if (destinationId === "mavlink")
-            return qsTr("Vehicles");
-        if (destinationId.startsWith("mavlink/"))
-            return qsTr("Vehicle link %1").arg(destinationId.slice(8));
-        return destinationId || qsTr("Unselected");
-    }
-
     function reasonName(reason: int): string {
         switch (reason) {
         case GPSCorrectionEventModel.None:
@@ -161,7 +151,7 @@ SettingsGroupLayout {
             Layout.fillWidth: true
             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 50
             objectName: "correctionDestination_" + destinationId
-            text: qsTr("%1 — queued %2 B, dropped %3 B").arg(root.destinationName(destinationId)).arg(queuedBytes).arg(droppedBytes)
+            text: qsTr("%1 — queued %2 B, dropped %3 B").arg(root.corrections.destinationName(destinationId)).arg(queuedBytes).arg(droppedBytes)
             textFormat: Text.PlainText
             wrapMode: Text.WordWrap
         }
@@ -199,7 +189,7 @@ SettingsGroupLayout {
                 required property double sourceSession
                 required property int stage
 
-                text: qsTr("%1. %2 — %3, %4 B%5\nSource: %6 (session %7); destination: %8 (session %9)").arg(eventSequence).arg(root.corrections.sourceName(source)).arg(root.stageName(stage)).arg(bytes).arg(reason === GPSCorrectionEventModel.None ? "" : qsTr(" — %1").arg(root.reasonName(reason))).arg(sourceInstance || root.corrections.sourceName(source)).arg(sourceSession).arg(root.destinationName(destinationId)).arg(destinationSession)
+                text: qsTr("%1. %2 — %3, %4 B%5\nSource: %6 (session %7); destination: %8 (session %9)").arg(eventSequence).arg(root.corrections.sourceName(source)).arg(root.stageName(stage)).arg(bytes).arg(reason === GPSCorrectionEventModel.None ? "" : qsTr(" — %1").arg(root.reasonName(reason))).arg(sourceInstance || root.corrections.sourceName(source)).arg(sourceSession).arg(root.corrections.destinationName(destinationId)).arg(destinationSession)
                 textFormat: Text.PlainText
                 width: ListView.view.width
                 wrapMode: Text.WordWrap

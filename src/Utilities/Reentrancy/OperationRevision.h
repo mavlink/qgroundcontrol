@@ -7,11 +7,11 @@
 /// Counts an owner's operations so work that calls out to observers can tell whether it is still
 /// current afterwards: an observer may delete the owner or start a newer operation. The revision
 /// must be a member of its owner.
-class GPSRevision
+class OperationRevision
 {
 public:
-    GPSRevision() = default;
-    Q_DISABLE_COPY_MOVE(GPSRevision)
+    OperationRevision() = default;
+    Q_DISABLE_COPY_MOVE(OperationRevision)
 
     /// One operation's view of the revision, cheap to copy into callbacks.
     class Token
@@ -23,16 +23,16 @@ public:
         quint64 value() const { return _value; }
 
     private:
-        friend class GPSRevision;
+        friend class OperationRevision;
 
-        Token(const QObject* owner, const GPSRevision* revision)
+        Token(const QObject* owner, const OperationRevision* revision)
             : _owner(owner)
             , _revision(revision)
             , _value(revision->_value)
         {}
 
         QPointer<const QObject> _owner;
-        const GPSRevision* _revision;
+        const OperationRevision* _revision;
         quint64 _value;
     };
 

@@ -6,7 +6,7 @@
 #include <QtCore/QEvent>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
-#include <QtQml/QQmlPropertyMap>
+#include <QtCore/QScopeGuard>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 
@@ -24,6 +24,7 @@
 #include "ScriptedProvider.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleGPSAggregateFactGroup.h"
 #include "VehicleGPSFactGroup.h"
 #include "development/mavlink_msg_gnss_integrity.h"
 #ifndef QGC_NO_SERIAL_LINK
@@ -517,6 +518,18 @@ void GPSReceiverSettingsTest::_consentIsOneUse()
 void GPSReceiverSettingsTest::_indicatorConsentTracksSettings()
 {
     SettingsFixture settings(6);
+    // The page shows the application's receiver, which the application binds to the settings at startup.
+    GPSReceiver* const receiver = GPSManager::instance()->gpsRtk();
+    const GPSReceiver::Configuration unbound = receiver->configuration();
+    const auto restore = qScopeGuard([receiver, unbound] { receiver->setConfiguration(unbound); });
+    QObject binding;
+    const auto apply = [receiver, &settings] {
+        receiver->setConfiguration(GPSSettingsBindings::rtkConfiguration(settings.settings));
+    };
+    for (Fact* fact : GPSSettingsBindings::boundFacts(settings.settings)) {
+        (void) connect(fact, &Fact::rawValueChanged, &binding, apply);
+    }
+    apply();
     GPSTestHelpers::QmlEngine engine;
     std::unique_ptr<QObject> page =
         engine.create(GPSTestHelpers::sourceQmlUrl(QStringLiteral("Toolbar/GPSIndicatorPage.qml")),
@@ -765,16 +778,10 @@ void GPSReceiverSettingsTest::_resilienceUnknownStates()
 {
     QFETCH(int, spoofing);
     QFETCH(int, jamming);
-    Fact spoofingFact(0, QStringLiteral("spoofing"), FactMetaData::valueTypeUint8);
-    Fact jammingFact(0, QStringLiteral("jamming"), FactMetaData::valueTypeUint8);
-    Fact authenticationFact(0, QStringLiteral("authentication"), FactMetaData::valueTypeUint8);
-    spoofingFact.setRawValue(spoofing);
-    jammingFact.setRawValue(jamming);
-    authenticationFact.setRawValue(255);
-    std::unique_ptr<QQmlPropertyMap> aggregate(QQmlPropertyMap::create());
-    aggregate->insert(QStringLiteral("spoofingState"), QVariant::fromValue(&spoofingFact));
-    aggregate->insert(QStringLiteral("jammingState"), QVariant::fromValue(&jammingFact));
-    aggregate->insert(QStringLiteral("authenticationState"), QVariant::fromValue(&authenticationFact));
+    auto aggregate = std::make_unique<VehicleGPSAggregateFactGroup>();
+    aggregate->spoofingState()->setRawValue(spoofing);
+    aggregate->jammingState()->setRawValue(jamming);
+    aggregate->authenticationState()->setRawValue(255);
     QQuickWindow window;
     GPSTestHelpers::QmlEngine engine;
     std::unique_ptr<QObject> indicator =

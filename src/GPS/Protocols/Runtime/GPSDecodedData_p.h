@@ -1,7 +1,7 @@
 #pragma once
 
 #include "GPSDecodedReports.h"
-#include "GPSDriverReports.h"
+#include "GPSReceiverReports.h"
 #include "GPSSatelliteState.h"
 
 namespace GPSDecodedData {

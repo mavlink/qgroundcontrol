@@ -10,13 +10,13 @@
 #include <QtPositioning/QGeoCoordinate>
 
 #include "ExponentialBackoff.h"
-#include "GPSNotificationQueue.h"
-#include "GPSRevision.h"
 #include "NTRIPConfiguration.h"
 #include "NTRIPConnectionStats.h"
 #include "NTRIPGgaProvider.h"
 #include "NTRIPSourceTableController.h"
 #include "NTRIPTransport.h"
+#include "NotificationQueue.h"
+#include "OperationRevision.h"
 #include "RTCMDecodedFrame.h"
 #include "ScheduledTask.h"
 
@@ -227,8 +227,8 @@ private:
     bool _waitingForNetwork = false;
     bool _initialized = false;
     bool _shutdown = false;
-    GPSRevision _stateRevision;
-    GPSNotificationQueue _notifications{this};
+    OperationRevision _stateRevision;
+    NotificationQueue _notifications{this};
 };
 
 QDebug operator<<(QDebug debug, const NTRIPManager::Configuration& configuration);

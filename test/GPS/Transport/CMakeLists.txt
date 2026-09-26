@@ -1,3 +1,6 @@
+add_subdirectory(Support)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSTestTransports)
+
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSStreamTransportTest.cc)
 add_qgc_test(GPSStreamTransportTest LABELS Unit GPS)
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSTransportContractTest.cc)

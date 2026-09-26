@@ -4,7 +4,6 @@
 # ============================================================================
 
 add_subdirectory(Common)
-add_subdirectory(Support)
 add_subdirectory(Transport)
 add_subdirectory(NMEA)
 add_subdirectory(Positioning)
@@ -15,7 +14,6 @@ add_subdirectory(NTRIP)
 
 add_subdirectory(ReceiverConfig)
 add_subdirectory(Protocols)
-add_subdirectory(Driver)
 add_subdirectory(Receiver)
 
 add_subdirectory(Qml)

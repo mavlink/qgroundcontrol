@@ -12,13 +12,13 @@
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 
-#include "GPSDriverReports.h"
 #include "GPSFixQuality.h"
-#include "GPSNotificationQueue.h"
 #include "GPSObservation.h"
 #include "GPSProvider.h"
 #include "GPSReceiverConnectionTarget.h"
 #include "GPSReceiverDescriptor.h"
+#include "GPSReceiverReports.h"
+#include "NotificationQueue.h"
 
 struct GPSBaseStationSettings;
 class GPSCorrectionManager;
@@ -47,6 +47,11 @@ class GPSReceiver : public QObject, private GPSReceiverConnectionTarget
     Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY receiverChanged FINAL)
     Q_PROPERTY(GPSReceiverPresentation activePresentation READ activePresentation NOTIFY receiverChanged FINAL)
     Q_PROPERTY(ReceiverRole activeRole READ activeRole NOTIFY receiverChanged FINAL)
+    /// The one-use permission to write receiver flash, for the configuration currently selected.
+    Q_PROPERTY(bool persistentChangesAllowed READ persistentChangesAllowed WRITE setPersistentChangesAllowed NOTIFY
+                   persistentChangesAllowedChanged FINAL)
+    Q_PROPERTY(ConnectionType effectiveConnectionType READ effectiveConnectionType NOTIFY configurationChanged FINAL)
+    Q_PROPERTY(bool connectionSupported READ connectionSupported NOTIFY configurationChanged FINAL)
 
     friend class GPSReceiverTest;
     friend class GPSReceiverConnectionPolicyTest;
@@ -148,6 +153,8 @@ public:
                          const QString& sourceInstance = {}, uint32_t baudRate = 0, bool allowPersistentChanges = false,
                          std::optional<ReceiverRole> role = std::nullopt);
     Q_INVOKABLE bool connectConfiguredGPS(bool allowPersistentChanges = false);
+    /// Connects the configured receiver, spending the persistent-change permission on this attempt.
+    Q_INVOKABLE bool connectSelectedReceiver();
     Q_INVOKABLE void disconnectConfiguredGPS();
     /// Retires immediately and ends retries; the worker retains its transport reservation until cancellation completes.
     void disconnectGPS();
@@ -187,6 +194,19 @@ public:
 
     ReceiverRole activeRole() const;
 
+    bool persistentChangesAllowed() const { return _persistentChangesAllowed; }
+
+    /// Granting permission only lasts until the configuration changes, a session starts or ends, or it is used.
+    void setPersistentChangesAllowed(bool allowed);
+
+    /// The connection a saved configuration uses; builds without serial links connect a serial selection over TCP.
+    [[nodiscard]] static ConnectionType connectionTypeFor(const Configuration& configuration);
+
+    ConnectionType effectiveConnectionType() const { return connectionTypeFor(_configuration); }
+
+    /// UDP only receives, so a receiver QGroundControl configures needs serial or TCP.
+    bool connectionSupported() const;
+
     [[nodiscard]] static std::optional<GPSType> typeForManufacturer(int manufacturer);
     [[nodiscard]] static int manufacturerForType(GPSType type);
 
@@ -198,6 +218,8 @@ signals:
     void receiverChanged();
     void errorMessageChanged();
     void autoConnectDisabled();
+    void configurationChanged();
+    void persistentChangesAllowedChanged();
 
 private slots:
     void _satelliteInfoUpdate(const GPSSatelliteReport& msg);
@@ -218,7 +240,7 @@ private:
     GPSSerialPorts* serialPorts() const override;
     bool connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges) override;
 #endif
-    GPSNotificationQueue& notifications() override { return _notifications; }
+    NotificationQueue& notifications() override { return _notifications; }
 
     bool _connectReceiver(GPSType type, ReceiverRole role, GPSProvider::TransportFactory transportFactory,
                           const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
@@ -239,7 +261,7 @@ private:
     GPSReceiverSession* _session = nullptr;
     Status _status;
     std::optional<int> _reportedFixType;
-    GPSNotificationQueue _notifications{this};
+    NotificationQueue _notifications{this};
     QPointer<GPSCorrectionManager> _correctionManager;
     QPointer<GPSPositionService> _positionService;
     GPSSourceHealth* const _positionHealth;
@@ -249,6 +271,7 @@ private:
     GPSReceiverConnectionPolicy* _connection = nullptr;
     ProviderFactory _providerFactory;
     bool _destroying = false;
+    bool _persistentChangesAllowed = false;
 #ifndef QGC_NO_SERIAL_LINK
     QPointer<GPSSerialPorts> _serialPorts;
     QMetaObject::Connection _portEnumerationConnection;

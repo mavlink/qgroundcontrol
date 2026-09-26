@@ -12,11 +12,11 @@
 #include <QtTest/QTest>
 
 #include "GPSBaseStationSettings.h"
-#include "GPSDriverReports.h"
 #include "GPSEllipsoidPosition.h"
 #include "GPSReceiverCapabilities.h"
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverDescriptor.h"
+#include "GPSReceiverReports.h"
 #include "UnitTest.h"
 
 using namespace std::chrono_literals;

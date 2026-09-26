@@ -258,4 +258,29 @@ void VehicleGPSAggregateFactGroupTest::_reentrantRebind()
     QCOMPARE(scheduler.pendingCount(), 0);
 }
 
+void VehicleGPSAggregateFactGroupTest::_interferenceState_data()
+{
+    QTest::addColumn<int>("spoofing");
+    QTest::addColumn<int>("jamming");
+    QTest::addColumn<int>("expected");
+    QTest::newRow("unknown") << 255 << 0 << 0;
+    QTest::newRow("jamming-only") << 255 << 2 << 2;
+    QTest::newRow("worse-wins") << 3 << 1 << 3;
+    QTest::newRow("both-clear") << 1 << 1 << 1;
+}
+
+void VehicleGPSAggregateFactGroupTest::_interferenceState()
+{
+    QFETCH(int, spoofing);
+    QFETCH(int, jamming);
+    QFETCH(int, expected);
+    VehicleGPSAggregateFactGroup aggregate;
+    aggregate.spoofingState()->setRawValue(spoofing);
+    aggregate.jammingState()->setRawValue(jamming);
+    QCOMPARE(aggregate.interferenceState(), expected);
+    QCOMPARE(aggregate.property("interferenceState").toInt(), expected);
+    QCOMPARE(aggregate.jammingReported(), jamming > 0 && jamming < 255);
+    QCOMPARE(aggregate.spoofingReported(), spoofing > 0 && spoofing < 255);
+}
+
 UT_REGISTER_TEST(VehicleGPSAggregateFactGroupTest, TestLabel::Unit)

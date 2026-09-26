@@ -14,11 +14,11 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/ReceiverConfig" ReceiverConfig)
     add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Transport" Transport)
     add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Protocols" Protocols)
-    add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Driver" Driver)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Transport/Support" TestTransports)
 endif()
 
-if(NOT TARGET QGCGPSDriver OR NOT TARGET QGCGPSReceiverTransports)
-    message(FATAL_ERROR "GPS hardware runner requires QGCGPSDriver and QGCGPSReceiverTransports")
+if(NOT TARGET QGCGPSProtocols OR NOT TARGET QGCGPSReceiverTransports)
+    message(FATAL_ERROR "GPS hardware runner requires QGCGPSProtocols and QGCGPSReceiverTransports")
 endif()
 
 add_executable(
@@ -29,8 +29,8 @@ add_executable(
 )
 target_compile_features(QGCGPSHardwareRunner PRIVATE cxx_std_20)
 target_include_directories(QGCGPSHardwareRunner PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-target_link_libraries(QGCGPSHardwareRunner PRIVATE QGCGPSDriver QGCGPSProtocolContracts QGCGPSProtocols
-                                                   QGCGPSReceiverTransports QGCGPSRTCM QGC::Clock
+target_link_libraries(QGCGPSHardwareRunner PRIVATE QGCGPSProtocols QGCGPSReceiverTransports QGCGPSRTCM
+                                                   QGCGPSTestTransports QGC::Clock
 )
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)

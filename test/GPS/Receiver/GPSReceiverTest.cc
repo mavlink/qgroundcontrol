@@ -340,6 +340,111 @@ void GPSReceiverTest::_rtkSettingsBinding()
              GPSReceiver::manufacturerForType(GPSType::quectel));
 }
 
+void GPSReceiverTest::_persistentConsentScope()
+{
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    auto configuration = receiverConfiguration(GPSReceiver::manufacturerForType(GPSType::quectel));
+    receiver.setConfiguration(configuration);
+    QSignalSpy changed(&receiver, &GPSReceiver::persistentChangesAllowedChanged);
+    receiver.setPersistentChangesAllowed(true);
+    QVERIFY(receiver.persistentChangesAllowed());
+    QCOMPARE(changed.size(), 1);
+
+    // Settings outside the connection and base selection keep the permission.
+    configuration.surveyInAccuracyLimit = 5.;
+    receiver.setConfiguration(configuration);
+    QVERIFY(receiver.persistentChangesAllowed());
+
+    configuration.serialDevice = QStringLiteral("/test/other");
+    receiver.setConfiguration(configuration);
+    QVERIFY(!receiver.persistentChangesAllowed());
+    QCOMPARE(changed.size(), 2);
+
+    receiver.setPersistentChangesAllowed(true);
+    configuration.baseMode = static_cast<int>(BaseModeDefinition::Mode::BaseFixed);
+    receiver.setConfiguration(configuration);
+    QVERIFY(!receiver.persistentChangesAllowed());
+}
+
+void GPSReceiverTest::_persistentConsentIsSpentOnConnect_data()
+{
+    QTest::addColumn<int>("manufacturer");
+    QTest::addColumn<bool>("granted");
+    QTest::addColumn<bool>("expected");
+    const int quectel = GPSReceiver::manufacturerForType(GPSType::quectel);
+    const int ublox = GPSReceiver::manufacturerForType(GPSType::ublox);
+    QTest::newRow("quectel-granted") << quectel << true << true;
+    QTest::newRow("quectel-withheld") << quectel << false << false;
+    // Families that cannot save settings never receive the permission.
+    QTest::newRow("ublox-granted") << ublox << true << false;
+}
+
+void GPSReceiverTest::_persistentConsentIsSpentOnConnect()
+{
+    QFETCH(int, manufacturer);
+    QFETCH(bool, granted);
+    QFETCH(bool, expected);
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    auto configuration = receiverConfiguration(manufacturer);
+    configuration.connectionType = GPSReceiver::Tcp;
+    configuration.tcpHost = QStringLiteral("rtk.example");
+    configuration.tcpPort = 2101;
+    receiver.setConfiguration(configuration);
+    receiver.setPersistentChangesAllowed(granted);
+
+    QVERIFY(receiver.connectSelectedReceiver());
+    QVERIFY(harness.providers.current());
+    QCOMPARE(harness.providers.current()->capturedConfig().allowPersistentChanges, expected);
+    QVERIFY(!receiver.persistentChangesAllowed());
+
+    // A session change or disconnect withdraws a permission granted while connected.
+    receiver.setPersistentChangesAllowed(true);
+    receiver.disconnectConfiguredGPS();
+    QVERIFY(!receiver.persistentChangesAllowed());
+}
+
+void GPSReceiverTest::_effectiveConnection_data()
+{
+    QTest::addColumn<int>("role");
+    QTest::addColumn<int>("saved");
+    QTest::addColumn<int>("effective");
+    QTest::addColumn<bool>("supported");
+#ifdef QGC_NO_SERIAL_LINK
+    const int serial = GPSReceiver::Tcp;
+#else
+    const int serial = GPSReceiver::Serial;
+#endif
+    QTest::newRow("base-serial") << int(GPSReceiver::ConfiguredBase) << int(GPSReceiver::Serial) << serial << true;
+    QTest::newRow("base-tcp") << int(GPSReceiver::ConfiguredBase) << int(GPSReceiver::Tcp) << int(GPSReceiver::Tcp)
+                              << true;
+    QTest::newRow("base-udp") << int(GPSReceiver::ConfiguredBase) << int(GPSReceiver::Udp) << int(GPSReceiver::Udp)
+                              << false;
+    QTest::newRow("position-udp") << int(GPSReceiver::PositionOnly) << int(GPSReceiver::Udp) << int(GPSReceiver::Udp)
+                                  << true;
+    QTest::newRow("unknown-type") << int(GPSReceiver::ConfiguredBase) << 7 << serial << true;
+}
+
+void GPSReceiverTest::_effectiveConnection()
+{
+    QFETCH(int, role);
+    QFETCH(int, saved);
+    QFETCH(int, effective);
+    QFETCH(bool, supported);
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    QSignalSpy changed(&receiver, &GPSReceiver::configurationChanged);
+    auto configuration = receiverConfiguration();
+    configuration.receiverRole = static_cast<GPSReceiver::ReceiverRole>(role);
+    configuration.connectionType = static_cast<GPSReceiver::ConnectionType>(saved);
+    receiver.setConfiguration(configuration);
+    QCOMPARE(int(receiver.effectiveConnectionType()), effective);
+    QCOMPARE(receiver.connectionSupported(), supported);
+    QCOMPARE(receiver.property("effectiveConnectionType").toInt(), effective);
+    QVERIFY(changed.size() <= 1);
+}
+
 void GPSReceiverTest::_automaticConnection()
 {
     RTKSettings settings;

@@ -33,15 +33,6 @@ ColumnLayout {
 
     readonly property real _dataWarningLimitBytes: 50 * 1024 * 1024  // 50 MB
 
-    function _formatDataSize(bytes: real): string {
-        //: Data size in bytes
-        if (bytes < 1024) return qsTr("%1 B").arg(bytes)
-        //: Data size in kilobytes
-        if (bytes < 1048576) return qsTr("%1 KB").arg((bytes / 1024).toFixed(1))
-        //: Data size in megabytes
-        return qsTr("%1 MB").arg((bytes / 1048576).toFixed(1))
-    }
-
     spacing: ScreenTools.defaultFontPixelHeight / 2
 
     QGCPalette { id: qgcPal }
@@ -155,7 +146,7 @@ ColumnLayout {
     LabelledLabel {
         label:     qsTr("Data Received")
         //: %1 is the total data size, %2 is the current data rate
-        labelText: root._stats ? qsTr("%1 (%2)").arg(root._formatDataSize(root._stats.bytesReceived))
+        labelText: root._stats ? qsTr("%1 (%2)").arg(QGroundControl.bigSizeToString(root._stats.bytesReceived))
                                                .arg(GPSFormat.dataRate(root._stats.dataRateBytesPerSec))
                                : root._valueNA
         visible:   root._connected
@@ -163,7 +154,7 @@ ColumnLayout {
     }
 
     QGCLabel {
-        text:           qsTr("Warning: Data usage: %1 — consider connection costs").arg(root._stats ? root._formatDataSize(root._stats.bytesReceived) : "")
+        text:           qsTr("Warning: Data usage: %1 — consider connection costs").arg(root._stats ? QGroundControl.bigSizeToString(root._stats.bytesReceived) : "")
         wrapMode:       Text.WordWrap
         color:          qgcPal.warningText
         font.pointSize: ScreenTools.smallFontPointSize
@@ -176,7 +167,7 @@ ColumnLayout {
 
     LabelledLabel {
         label:     qsTr("Queued to vehicle links (any source)")
-        labelText: root.corrections ? root._formatDataSize(root.corrections.rtcmMavlink.totalBytesSubmitted)
+        labelText: root.corrections ? QGroundControl.bigSizeToString(root.corrections.rtcmMavlink.totalBytesSubmitted)
                                     : root._valueNA
         visible:   root._connected
                    && root.corrections && root.corrections.rtcmMavlink.totalBytesSubmitted > 0

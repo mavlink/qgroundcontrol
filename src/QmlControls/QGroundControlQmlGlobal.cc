@@ -1,22 +1,23 @@
 #include "QGroundControlQmlGlobal.h"
 
-#include "QGCCorePlugin.h"
-#include "LinkManager.h"
-#include "MAVLinkProtocol.h"
-#include "FirmwarePluginManager.h"
-#include "AppSettings.h"
-#include "FlightMapSettings.h"
-#include "SettingsManager.h"
-#include "PositionManager.h"
-#include "QGCMapEngineManager.h"
 #include "ADSBVehicleManager.h"
+#include "AppSettings.h"
 #include "AudioOutput.h"
+#include "FirmwarePluginManager.h"
+#include "FlightMapSettings.h"
+#include "GPSManager.h"
+#include "LinkManager.h"
+#include "LoggingCategoryModel.h"
+#include "MAVLinkProtocol.h"
 #include "MAVLinkSigningKeys.h"
 #include "MissionCommandTree.h"
-#include "VideoManager.h"
 #include "MultiVehicleManager.h"
-#include "LoggingCategoryModel.h"
-#include "GPSManager.h"
+#include "PositionManager.h"
+#include "QGCCorePlugin.h"
+#include "QGCFormat.h"
+#include "QGCMapEngineManager.h"
+#include "SettingsManager.h"
+#include "VideoManager.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 #endif
@@ -253,6 +254,11 @@ bool QGroundControlQmlGlobal::px4ProFirmwareSupported()
 bool QGroundControlQmlGlobal::apmFirmwareSupported()
 {
     return FirmwarePluginManager::instance()->firmwareClassSupported(QGCMAVLink::FirmwareClassArduPilot);
+}
+
+QString QGroundControlQmlGlobal::bigSizeToString(quint64 size)
+{
+    return QGC::bigSizeToString(size);
 }
 
 bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPointF line2A, QPointF line2B)

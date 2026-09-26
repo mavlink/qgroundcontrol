@@ -11,7 +11,7 @@ target_sources(
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 # The tests script receivers through the driver and open real receiver transports, which QGCGPSReceiver keeps private.
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSDriver QGCGPSReceiverTransports)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSProtocols QGCGPSReceiverTransports)
 
 add_qgc_test(GPSProviderTest LABELS Unit GPS)
 add_qgc_test(GPSBaseStationConfigTest LABELS Unit GPS Receiver)

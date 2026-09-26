@@ -8,6 +8,9 @@ class GPSCorrectionManagerTest : public UnitTest
 
 private slots:
     void _sourcesShareForwarder();
+    void _destinationNames_data();
+    void _destinationNames();
+    void _streamChoices();
     void _mavlinkDestinationAdmissions();
     void _outputsEnabledAfterLinkHistoryChurn();
     void _udpOutputForwardsSelectedStream();

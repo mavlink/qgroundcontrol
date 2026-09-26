@@ -7,8 +7,8 @@
 #include <QtCore/QVector>
 
 #include "GPSCorrectionSourceRegistration.h"
-#include "GPSRevision.h"
 #include "NTRIPError.h"
+#include "OperationRevision.h"
 #include "RTCMDecodedFrame.h"
 
 class GPSCorrectionManager;
@@ -68,5 +68,5 @@ private:
     QPointer<NTRIPTransport> _transport;
     GPSCorrectionSourceRegistration _registration;
     bool _registered = false;
-    GPSRevision _revision;
+    OperationRevision _revision;
 };

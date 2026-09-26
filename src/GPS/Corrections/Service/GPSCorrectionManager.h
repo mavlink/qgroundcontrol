@@ -6,13 +6,14 @@
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
+#include <QtCore/QVariantList>
 
 #include "GPSCorrectionDiagnosticsModel.h"
 #include "GPSCorrectionEventModel.h"
 #include "GPSCorrectionFrame.h"
 #include "GPSCorrectionRouter.h"
-#include "GPSNotificationQueue.h"
-#include "GPSRevision.h"
+#include "NotificationQueue.h"
+#include "OperationRevision.h"
 #include "RTCMMAVLink.h"
 #include "RTCMUdpInput.h"
 #include "ScheduledTask.h"
@@ -107,6 +108,17 @@ public:
 
     Q_INVOKABLE static QString sourceName(int source);
 
+    /// Display name of a correction destination, such as UDP forwarding or one vehicle link.
+    Q_INVOKABLE static QString destinationName(const QString& destinationId);
+
+    /// Registered streams of @a source, each counted once.
+    Q_INVOKABLE static int streamCount(const QList<GPSCorrectionStreamDiagnostic>& instances, int source);
+
+    /// The streams routing can pin for @a source: automatic selection within the source, each registered stream of
+    /// it, and a saved @a selectedInstance that is no longer registered. Each entry has an instanceId and a label.
+    Q_INVOKABLE static QVariantList streamChoices(const QList<GPSCorrectionStreamDiagnostic>& instances, int source,
+                                                  const QString& selectedInstance);
+
 signals:
     void sourceInstancesChanged();
     void selectedBytesPerSecondChanged();
@@ -134,11 +146,11 @@ private:
     // Last published instances; notifications fire only when the list changes.
     QList<GPSCorrectionStreamDiagnostic> _sourceInstances;
     quint64 _selectedBytesPerSecond = 0;
-    GPSRevision _udpConfigurationRevision;
+    OperationRevision _udpConfigurationRevision;
     int _ingressDepth = 0;
     bool _finalDiagnosticsPending = false;
     bool _shutdown = false;
-    GPSNotificationQueue _notifications{this};
+    NotificationQueue _notifications{this};
 };
 
 QDebug operator<<(QDebug debug, const GPSCorrectionManager::UdpInputConfiguration& configuration);

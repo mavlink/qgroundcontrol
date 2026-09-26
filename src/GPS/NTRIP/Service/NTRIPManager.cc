@@ -154,7 +154,7 @@ void NTRIPManager::setNetworkMonitor(NTRIPNetworkMonitor* monitor)
         if (!available || _shutdown || _connectionStatus != ConnectionStatus::Reconnecting || !_waitingForNetwork) {
             return;
         }
-        const GPSNotificationQueue::Scope publish(_notifications);
+        const NotificationQueue::Scope publish(_notifications);
         const auto state = _stateRevision.current(this);
         _waitingForNetwork = false;
         if (state.isCurrent()) {
@@ -237,7 +237,7 @@ void NTRIPManager::retryNTRIP()
     if (_shutdown || _connectionStatus != ConnectionStatus::Error) {
         return;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     const auto state = _stateRevision.current(this);
     _configuration.enabled = true;
     emit enableRequested();
@@ -252,7 +252,7 @@ void NTRIPManager::shutdown()
         return;
     }
     _shutdown = true;
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _sourceTableController.cancel();
     stopNTRIP();
 }
@@ -272,7 +272,7 @@ void NTRIPManager::fetchMountpoints()
 
 bool NTRIPManager::_dispatch(Event ev, const QString& detail, std::chrono::milliseconds retryAfter)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     for (const auto& row : kTransitions) {
         if (row.from == _connectionStatus && row.event == ev) {
             _enterState(row.to, detail, retryAfter);
@@ -400,7 +400,7 @@ void NTRIPManager::_scheduleReconnect(std::chrono::milliseconds retryAfter)
     }
     _pendingReconnectDelay = backoff;
     _reconnectTask.schedule(backoff, [this, beforeAttempt]() {
-        const GPSNotificationQueue::Scope publish(_notifications);
+        const NotificationQueue::Scope publish(_notifications);
         _pendingReconnectDelay = {};
         if (_shouldWaitForNetwork()) {
             // The attempt never ran, so the next one keeps its delay.
@@ -570,7 +570,7 @@ void NTRIPManager::_rtcmDataReceived(const RTCMDecodedFrame& frame)
 
 void NTRIPManager::_applyConfiguration()
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     const auto state = _stateRevision.current(this);
     if (_shutdown) {
         return;

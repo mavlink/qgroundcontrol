@@ -12,8 +12,8 @@
 #include <QtCore/QString>
 #include <QtCore/QThread>
 
-#include "GPSDriverReports.h"
 #include "GPSReceiverConfig.h"
+#include "GPSReceiverReports.h"
 #include "GPSType.h"
 
 class GPSTransport;

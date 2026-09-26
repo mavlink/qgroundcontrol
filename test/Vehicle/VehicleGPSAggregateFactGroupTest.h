@@ -7,6 +7,8 @@ class VehicleGPSAggregateFactGroupTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void _interferenceState_data();
+    void _interferenceState();
     void _independentExpiry_data();
     void _independentExpiry();
     void _freshAuthenticationPrecedence_data();

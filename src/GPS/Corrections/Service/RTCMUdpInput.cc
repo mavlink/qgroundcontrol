@@ -85,7 +85,7 @@ void RTCMUdpInput::stop()
     (void) _stop();
 }
 
-GPSRevision::Token RTCMUdpInput::_stop()
+OperationRevision::Token RTCMUdpInput::_stop()
 {
     const auto operation = _resetStream();
     const bool wasRunning = std::exchange(_running, false);
@@ -125,7 +125,7 @@ void RTCMUdpInput::configure(quint16 port, bool validate)
     }
 }
 
-GPSRevision::Token RTCMUdpInput::_resetStream()
+OperationRevision::Token RTCMUdpInput::_resetStream()
 {
     _drainScheduled = false;
     _peerParsers.clear();

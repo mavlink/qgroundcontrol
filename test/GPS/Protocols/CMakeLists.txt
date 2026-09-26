@@ -97,6 +97,24 @@ qgc_add_protocol_test(GPSProtocolQuectelTest gps-quectel-test.cpp)
 qgc_add_protocol_test(GPSProtocolPassiveTest gps-passive-test.cpp)
 add_subdirectory(Runtime)
 
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSDriverTest.cc GPSDriverTest.h GPSDriverReentrancyTest.cc)
+add_qgc_test(GPSDriverTest LABELS Unit GPS TIMEOUT 240)
+add_qgc_test(GPSDriverReentrancyTest LABELS Unit GPS)
+
+# Linux test builds, including CI, keep the receiver qualification runner compiling and exercised.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(_qgc_gps_hardware_tests_default ON)
+else()
+    set(_qgc_gps_hardware_tests_default OFF)
+endif()
+option(QGC_BUILD_GPS_HARDWARE_TESTS "Build the GPS receiver qualification runner and its scripted test"
+       ${_qgc_gps_hardware_tests_default}
+)
+# The runner opens a physical receiver only when invoked manually; its CTest uses a scripted receiver.
+if(QGC_BUILD_GPS_HARDWARE_TESTS)
+    add_subdirectory(Hardware)
+endif()
+
 option(QGC_BUILD_GPS_PROTOCOL_FUZZER "Build the native protocol libFuzzer harness" OFF)
 if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
     if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR MSVC)
@@ -104,16 +122,7 @@ if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
             FATAL_ERROR "QGC_BUILD_GPS_PROTOCOL_FUZZER requires a Clang driver with libFuzzer and sanitizer runtimes"
         )
     endif()
-    foreach(
-        protocol_target
-        QGCGPSProtocols
-        QGCGPSProtocolContracts
-        QGCGPSCommon
-        QGCGPSNMEAProtocol
-        QGCGPSReceiverConfig
-        QGCGPSTransport
-        QGCGPSRTCM
-    )
+    foreach(protocol_target QGCGPSProtocols QGCGPSCommon QGCGPSNMEA QGCGPSReceiverConfig QGCGPSTransport QGCGPSRTCM)
         get_target_property(protocol_type ${protocol_target} TYPE)
         if(protocol_type STREQUAL "INTERFACE_LIBRARY")
             set(_sanitizer_scope INTERFACE)

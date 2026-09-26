@@ -113,7 +113,6 @@ const GPSReceiverFamily FAMILY{
     .name = QLatin1StringView("Unicore"),
     .logCategory = &UnicoreProtocolLog,
     .stream = GPSNMEAStream::STREAM,
-    .support = {.receiverAveraging = true},
     .baudCandidates = Plan::BAUD_RATES,
     .create = &gpsCreateProtocol<UnicoreProtocol>,
     .signature = &signature,

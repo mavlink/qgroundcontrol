@@ -76,14 +76,56 @@ GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler)
 #endif
 }
 
+namespace {
+/// The settings a persistent-change permission was granted for.
+bool consentScopeChanged(const GPSReceiver::Configuration& before, const GPSReceiver::Configuration& after)
+{
+    return before.receiverRole != after.receiverRole ||
+           before.baseReceiverManufacturer != after.baseReceiverManufacturer || before.baseMode != after.baseMode ||
+           before.connectionType != after.connectionType || before.serialDevice != after.serialDevice ||
+           before.serialBaudRate != after.serialBaudRate || before.tcpHost != after.tcpHost ||
+           before.tcpPort != after.tcpPort || before.udpPort != after.udpPort;
+}
+}  // namespace
+
 void GPSReceiver::setConfiguration(const Configuration& configuration)
 {
     if (_configuration == configuration) {
         return;
     }
+    const NotificationQueue::Scope publish(_notifications);
+    if (consentScopeChanged(_configuration, configuration)) {
+        setPersistentChangesAllowed(false);
+    }
     _configuration = configuration;
     qCDebug(GPSReceiverLog) << "Receiver configuration applied:" << _configuration;
     _connection->setConfiguration(configuration);
+    _notifications.emitSignal(this, &GPSReceiver::configurationChanged);
+}
+
+void GPSReceiver::setPersistentChangesAllowed(bool allowed)
+{
+    if (_destroying || _persistentChangesAllowed == allowed) {
+        return;
+    }
+    const NotificationQueue::Scope publish(_notifications);
+    _persistentChangesAllowed = allowed;
+    _notifications.emitSignal(this, &GPSReceiver::persistentChangesAllowedChanged);
+}
+
+GPSReceiver::ConnectionType GPSReceiver::connectionTypeFor(const Configuration& configuration)
+{
+    const auto saved = configuration.connectionType;
+#ifdef QGC_NO_SERIAL_LINK
+    return saved == Udp ? Udp : Tcp;
+#else
+    return saved == Tcp || saved == Udp ? saved : Serial;
+#endif
+}
+
+bool GPSReceiver::connectionSupported() const
+{
+    return _configuration.receiverRole != ConfiguredBase || effectiveConnectionType() != Udp;
 }
 
 void GPSReceiver::setProviderFactory(ProviderFactory factory)
@@ -122,7 +164,7 @@ void GPSReceiver::_resetStatus()
 
 void GPSReceiver::_clearStaleSolution()
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _reportedFixType.reset();
     const Status none;
     _status.numSatellites = none.numSatellites;
@@ -135,6 +177,7 @@ void GPSReceiver::_clearStaleSolution()
 
 void GPSReceiver::_notifyReceiverChanged()
 {
+    setPersistentChangesAllowed(false);
     _notifications.emitSignal(this, &GPSReceiver::receiverChanged);
 }
 
@@ -148,7 +191,7 @@ void GPSReceiver::_setError(GPSConnectionError error, const QString& message)
 
 void GPSReceiver::_onGPSConnect()
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _setError(GPSConnectionError::None);
     _connection->receiverReady();
     _status.connected = true;
@@ -161,7 +204,7 @@ void GPSReceiver::_onGPSConnect()
 
 void GPSReceiver::_onReceiverDetected(GPSType type)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _status.detectedType = type;
     _publishStatus();
     _notifyReceiverChanged();
@@ -169,7 +212,7 @@ void GPSReceiver::_onReceiverDetected(GPSType type)
 
 void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, bool portRemoved)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     // The family an Automatic session detected, else the selected one.
     const auto* family = _session ? gpsReceiverDescriptorForManufacturer(_session->manufacturer()) : nullptr;
     _retireSession();
@@ -240,7 +283,7 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, b
 
 void GPSReceiver::_onGPSSurveyReport(const GPSSurveyReport& status)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _status.currentDuration = status.duration;
     _status.currentAccuracy = status.meanAccuracyMeters.value_or(qQNaN());
     _status.currentLatitude = status.position.latitudeDegrees;
@@ -402,8 +445,21 @@ bool GPSReceiver::connectConfiguredGPS(bool allowPersistentChanges)
     if (_destroying) {
         return false;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     return _connection->connectConfigured(allowPersistentChanges);
+}
+
+bool GPSReceiver::connectSelectedReceiver()
+{
+    if (_destroying) {
+        return false;
+    }
+    const NotificationQueue::Scope publish(_notifications);
+    const bool allowed =
+        _persistentChangesAllowed &&
+        capabilitiesFor(_configuration.receiverRole, _configuration.baseReceiverManufacturer).persistentConfiguration;
+    setPersistentChangesAllowed(false);
+    return connectConfiguredGPS(allowed);
 }
 
 void GPSReceiver::disconnectConfiguredGPS()
@@ -411,7 +467,8 @@ void GPSReceiver::disconnectConfiguredGPS()
     if (_destroying) {
         return;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
+    setPersistentChangesAllowed(false);
     _connection->disconnectConfigured();
 }
 
@@ -456,7 +513,7 @@ bool GPSReceiver::connectReceiver(GPSType type, GPSProvider::TransportFactory tr
     if (_destroying) {
         return false;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _connection->reset();
     // Only passive types can take a passive role, and they never configure a base.
     const ReceiverRole sessionRole = type != GPSType::passive          ? ConfiguredBase
@@ -470,7 +527,7 @@ bool GPSReceiver::_connectReceiver(GPSType type, ReceiverRole role, GPSProvider:
                                    const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
                                    const QString& serialDevice, const QString& endpoint)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     QString configError;
     GPSReceiverConfig config = gpsReceiverConfigFor(_configuration.baseStationSettings(), type, baudRate,
                                                     allowPersistentChanges, &configError);
@@ -520,14 +577,14 @@ void GPSReceiver::disconnectGPS()
     if (_destroying) {
         return;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _connection->reset();
     disconnectReceiver(false);
 }
 
 void GPSReceiver::disconnectReceiver(bool clearError)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _retireSession();
     _resetStatus();
     _notifyReceiverChanged();
@@ -538,7 +595,7 @@ void GPSReceiver::disconnectReceiver(bool clearError)
 
 void GPSReceiver::_satelliteInfoUpdate(const GPSSatelliteReport& msg)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     const int inView = msg.inView.value_or(-1);
     const int used = msg.used.value_or(-1);
     qCDebug(GPSReceiverLog) << QStringLiteral("%1 in view, %2 used")
@@ -551,7 +608,7 @@ void GPSReceiver::_satelliteInfoUpdate(const GPSSatelliteReport& msg)
 
 void GPSReceiver::_positionUpdate(const GPSPositionReport& report)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     const auto fixType = static_cast<int>(report.navigation.fixType);
     if (std::exchange(_reportedFixType, fixType) != fixType) {
         qCDebug(GPSReceiverLog) << "Receiver fix changed:" << fixType;

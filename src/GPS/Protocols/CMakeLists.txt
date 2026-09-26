@@ -13,14 +13,14 @@ if(NOT TARGET QGCClock)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Timing/Clock" "${CMAKE_CURRENT_BINARY_DIR}/Clock")
 endif()
 block(SCOPE_FOR VARIABLES)
-set(QGC_GPS_COMPONENTS_ENABLED NMEAProtocol RTCM ReceiverConfig Transport)
+set(QGC_GPS_COMPONENTS_ENABLED NMEA RTCM ReceiverConfig Transport)
 if(NOT TARGET QGCGPSCommon)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Common" "${CMAKE_CURRENT_BINARY_DIR}/Common")
 endif()
 if(NOT TARGET QGCGPSTransport)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Transport" "${CMAKE_CURRENT_BINARY_DIR}/Transport")
 endif()
-if(NOT TARGET QGCGPSNMEAProtocol)
+if(NOT TARGET QGCGPSNMEA)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../NMEA" "${CMAKE_CURRENT_BINARY_DIR}/NMEA")
 endif()
 if(NOT TARGET QGCGPSRTCM)
@@ -30,17 +30,21 @@ if(NOT TARGET QGCGPSReceiverConfig)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../ReceiverConfig" "${CMAKE_CURRENT_BINARY_DIR}/ReceiverConfig")
 endif()
 endblock()
-add_subdirectory(Contracts)
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Geo/GeographicLib.cmake")
 
-# QGCGPSProtocols is one library: Runtime/ holds the coroutine protocol runtime, Common/ the family
-# table and shared family components, and each family folder (Ashtech, Femto, Passive, Quectel, SBF, UBX, Unicore) is
-# a source subfolder of it, not a separate target.
+# QGCGPSProtocols is one library. The root holds GPSDriver, its public API types and the family table; Runtime/ the
+# coroutine protocol runtime and report assembly; Common/ shared family components; and each family folder (Ashtech,
+# Femto, Passive, Quectel, SBF, UBX, Unicore) is a source subfolder of it, not a separate target.
 set(_protocol_headers
+    GPSConfigurationEvidence.h
+    GPSDriver.h
+    GPSProtocolError.h
+    GPSReceiveUpdates.h
+    GPSReceiverFamilies.h
+    GPSReceiverSettingId.h
     Common/GPSASCIILog.h
     Common/GPSCommandText.h
     Common/GPSProtocolTime.h
-    Common/GPSReceiverFamilies.h
     Common/GPSSurveyClock.h
     Common/GPSNMEAReport.h
     Common/GPSNMEAStream.h
@@ -68,15 +72,21 @@ set(_protocol_headers
     Unicore/UnicoreFamily.h
     Runtime/GPSCommandChannel.h
     Runtime/GPSCommandSequence.h
+    Runtime/GPSCommandTransaction.h
+    Runtime/GPSDeadline.h
+    Runtime/GPSDecodedReports.h
     Runtime/GPSEventSink.h
     Runtime/GPSFamilyProtocol.h
     Runtime/GPSFrame.h
     Runtime/GPSProtocolEvent.h
     Runtime/GPSProtocolMath.h
     Runtime/GPSProtocolRuntime.h
+    Runtime/GPSRawAckMatcher.h
     Runtime/GPSReceiverDetector.h
     Runtime/GPSReceiverFamily.h
     Runtime/GPSRuntimeIO.h
+    Runtime/GPSSatelliteObservation.h
+    Runtime/GPSSatelliteState.h
     Runtime/GPSStreamDemux.h
     Runtime/GPSTask.h
 )
@@ -84,9 +94,10 @@ qt_add_library(
     QGCGPSProtocols
     STATIC
     ${_protocol_headers}
+    GPSDriver.cc
+    GPSReceiverFamilies.cc
     Common/GPSCommandText.cc
     Common/GPSNMEAStream.cc
-    Common/GPSReceiverFamilies.cc
     Ashtech/AshtechConfigurator.cc
     Ashtech/AshtechDecoder.cc
     Ashtech/AshtechFamily.cc
@@ -126,9 +137,12 @@ qt_add_library(
     Unicore/UnicorePlan.cc
     Unicore/UnicorePlan.h
     Runtime/GPSCommandChannel.cc
+    Runtime/GPSDecodedData.cc
+    Runtime/GPSDecodedData_p.h
     Runtime/GPSProtocolMath.cc
     Runtime/GPSProtocolRuntime.cc
     Runtime/GPSReceiverDetector.cc
+    Runtime/GPSSatelliteObservation.cc
     Runtime/GPSStreamDemux.cc
 )
 add_library(QGC::GPSProtocols ALIAS QGCGPSProtocols)
@@ -148,9 +162,9 @@ target_link_libraries(
     PUBLIC QGCWire
            QGCClock
            QGCGPSCommon
-           QGCGPSProtocolContracts
-           QGCGPSNMEAProtocol
+           QGCGPSNMEA
            QGCGPSReceiverConfig
            QGCGPSRTCM
+           QGCGPSTransport
     PRIVATE GeographicLib::GeographicLib QGCLoggingCategory
 )

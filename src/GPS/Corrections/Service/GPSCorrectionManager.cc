@@ -101,7 +101,7 @@ void GPSCorrectionManager::_applyUdpOutput()
         return;
     }
     const QString id = QStringLiteral("udpOutput");
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     const bool enabled = _udpOutputConfiguration->enabled;
     const QString address = _udpOutputConfiguration->address.trimmed();
     const quint16 port = _udpOutputConfiguration->port;
@@ -136,7 +136,7 @@ void GPSCorrectionManager::setUdpInputConfiguration(const UdpInputConfiguration&
     }
     _udpInputConfiguration = input;
     qCDebug(GPSCorrectionManagerLog) << "UDP correction input configuration applied:" << input;
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _applyUdpOutput();
     const auto configuration = _udpConfigurationRevision.advance(this);
     const bool enabled = input.enabled;
@@ -174,7 +174,7 @@ void GPSCorrectionManager::setUdpInputConfiguration(const UdpInputConfiguration&
 
 void GPSCorrectionManager::applyRoutingConfiguration(const RoutingConfiguration& configuration)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     const RoutingConfiguration previous = _router.configuration();
     _router.applyConfiguration(configuration);
     if (_router.configuration() != previous) {
@@ -186,7 +186,7 @@ void GPSCorrectionManager::applyRoutingConfiguration(const RoutingConfiguration&
 GPSCorrectionSourceRegistration GPSCorrectionManager::registerSource(GPSCorrectionSource source,
                                                                      const QString& instance)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     auto registration = _router.registerSource(source, instance);
     _scheduleSourcesChanged();
     return registration;
@@ -194,7 +194,7 @@ GPSCorrectionSourceRegistration GPSCorrectionManager::registerSource(GPSCorrecti
 
 void GPSCorrectionManager::acceptIngress(const GPSCorrectionIngress& ingress)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     const QPointer<GPSCorrectionManager> guard(this);
     ++_ingressDepth;
     const auto finishIngress = qScopeGuard([guard]() {
@@ -208,7 +208,7 @@ void GPSCorrectionManager::acceptIngress(const GPSCorrectionIngress& ingress)
 
 void GPSCorrectionManager::removeSink(const QString& id)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _router.removeSink(id);
     _scheduleSourcesChanged();
 }
@@ -218,7 +218,7 @@ void GPSCorrectionManager::setOutput(const QString& id, GPSCorrectionRouter::Out
     if (_shutdown) {
         return;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _router.setOutput(id, std::move(output));
     _scheduleSourcesChanged();
 }
@@ -250,9 +250,67 @@ QString GPSCorrectionManager::sourceName(int source)
     return tr("Unclassified");
 }
 
+QString GPSCorrectionManager::destinationName(const QString& destinationId)
+{
+    static constexpr QLatin1StringView VEHICLE_LINK_PREFIX{"mavlink/"};
+    if (destinationId == QLatin1StringView("udpOutput")) {
+        return tr("UDP forwarding");
+    }
+    if (destinationId == QLatin1StringView("mavlink")) {
+        return tr("Vehicles");
+    }
+    if (destinationId.startsWith(VEHICLE_LINK_PREFIX)) {
+        return tr("Vehicle link %1").arg(destinationId.sliced(VEHICLE_LINK_PREFIX.size()));
+    }
+    return destinationId.isEmpty() ? tr("Unselected") : destinationId;
+}
+
+namespace {
+QList<GPSCorrectionStreamDiagnostic> distinctStreams(const QList<GPSCorrectionStreamDiagnostic>& instances, int source)
+{
+    QList<GPSCorrectionStreamDiagnostic> streams;
+    for (const auto& instance : instances) {
+        const auto listed = [&instance](const GPSCorrectionStreamDiagnostic& stream) {
+            return stream.instanceId == instance.instanceId;
+        };
+        if (instance.source == source && std::ranges::none_of(streams, listed)) {
+            streams.append(instance);
+        }
+    }
+    return streams;
+}
+
+QVariantMap streamChoice(const QString& instanceId, const QString& label)
+{
+    return {{QStringLiteral("instanceId"), instanceId}, {QStringLiteral("label"), label}};
+}
+}  // namespace
+
+int GPSCorrectionManager::streamCount(const QList<GPSCorrectionStreamDiagnostic>& instances, int source)
+{
+    return static_cast<int>(distinctStreams(instances, source).size());
+}
+
+QVariantList GPSCorrectionManager::streamChoices(const QList<GPSCorrectionStreamDiagnostic>& instances, int source,
+                                                 const QString& selectedInstance)
+{
+    QVariantList choices{streamChoice({}, tr("Automatic within source"))};
+    bool selectedListed = selectedInstance.isEmpty();
+    for (const auto& stream : distinctStreams(instances, source)) {
+        choices.append(streamChoice(stream.instanceId, stream.usable
+                                                           ? stream.instanceId
+                                                           : tr("No fresh corrections: %1").arg(stream.instanceId)));
+        selectedListed |= stream.instanceId == selectedInstance;
+    }
+    if (!selectedListed) {
+        choices.append(streamChoice(selectedInstance, tr("Unavailable: %1").arg(selectedInstance)));
+    }
+    return choices;
+}
+
 void GPSCorrectionManager::_refreshDiagnostics()
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     const QPointer<GPSCorrectionManager> guard(this);
     // Model reset observers run synchronously.
     _eventModel.setEvents(_router.events());
@@ -313,7 +371,7 @@ void GPSCorrectionManager::shutdown()
     if (_shutdown) {
         return;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     const QPointer<GPSCorrectionManager> guard(this);
     _shutdown = true;
     _finalDiagnosticsPending = true;

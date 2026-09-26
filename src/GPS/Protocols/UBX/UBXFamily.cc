@@ -116,7 +116,6 @@ const GPSReceiverFamily FAMILY{
     .name = QLatin1StringView("u-blox"),
     .logCategory = &UBXProtocolLog,
     .stream = {.framers = GPSFrameKind::UBX | GPSFrameKind::RTCM3, .enabled = GPSFrameKind::UBX},
-    .support = {.compactObservations = true},
     .baudCandidates = Plan::BAUD_RATES,
     .create = &gpsCreateProtocol<UBXFamilyProtocol>,
     .signature = &signature,

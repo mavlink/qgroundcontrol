@@ -10,6 +10,7 @@
 #include "GPSRawAckMatcher.h"
 #include "GPSReceiverCapabilities.h"
 #include "GPSReceiverConfig.h"
+#include "GPSReceiverDescriptor.h"
 #include "QGCLoggingCategory.h"
 
 GPSDeadlineScope::GPSDeadlineScope(GPSCommandChannel& channel, std::chrono::milliseconds timeout)
@@ -491,14 +492,13 @@ GPSLogCategory GPSCommandChannel::logCategory() const
 
 bool GPSCommandChannel::validateConfiguration(const GPSConfig& config) const
 {
-    const auto& support = _runtime.family().support;
+    const auto* descriptor = gpsReceiverDescriptor(_runtime.family().type);
+    GPSReceiverCapabilities supported = descriptor ? descriptor->capabilities : GPSReceiverCapabilities{};
+    // Each configurator reports the base modes its receiver lacks, with its own diagnostic.
+    supported.surveyIn = true;
     const GPSReceiverConfig physical{.role = GPSReceiverConfig::Role::RTKBase,
                                      .base = config.base,
                                      .allowPersistentChanges = config.allowPersistentChanges};
-    const GPSReceiverCapabilities supported{.surveyIn = true,
-                                            .receiverAveraging = support.receiverAveraging,
-                                            .persistentConfiguration = support.persistentChanges,
-                                            .compactObservations = support.compactObservations};
     const auto error = gpsValidateReceiverPhysicalConfig(physical, supported);
     if (error != GPSReceiverConfigError::None) {
         qCWarning(logCategory()).noquote()

@@ -7,7 +7,7 @@
 #include "QGCLoggingCategory.h"
 #include "QtRuntimeScheduler.h"
 
-QGC_LOGGING_CATEGORY(GPSSourceHealthLog, "GPS.Core.GPSSourceHealth")
+QGC_LOGGING_CATEGORY(GPSSourceHealthLog, "GPS.PositionManager.GPSSourceHealth")
 
 GPSSourceHealth::GPSSourceHealth(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)

@@ -28,31 +28,22 @@ Item {
             return _rtkFacts.active.value ? qsTr("Survey", "Base survey-in in progress") : qsTr("Base")
         }
         switch (_rtkFacts.fixType.rawValue) {
-        case 1: return qsTr("No fix")
-        case 2: return qsTr("2D")
-        case 3: return qsTr("3D")
-        case 4: return qsTr("DGPS")
-        case 5: return qsTr("Float", "RTK float fix")
-        case 6: return qsTr("Fixed", "RTK fixed fix")
-        case 8: return qsTr("DR", "Dead reckoning (extrapolated) fix")
+        case GPSFixQuality.NoFix: return qsTr("No fix")
+        case GPSFixQuality.Fix2D: return qsTr("2D")
+        case GPSFixQuality.Fix3D: return qsTr("3D")
+        case GPSFixQuality.Differential: return qsTr("DGPS")
+        case GPSFixQuality.RTKFloat: return qsTr("Float", "RTK float fix")
+        case GPSFixQuality.RTKFixed: return qsTr("Fixed", "RTK fixed fix")
+        case GPSFixQuality.Extrapolated: return qsTr("DR", "Dead reckoning (extrapolated) fix")
         default: return ""
         }
     }
     property int    _correctionState: QGroundControl.gpsManager.correctionState
     readonly property bool _showRtk: _correctionState !== GPSManager.Inactive
     property var    _gpsAggregate:  _activeVehicle ? _activeVehicle.gpsAggregate : null
-    // Resilience states 0 and 255 mean the vehicle does not know.
-    readonly property int _authenticationState: {
-        const value = _gpsAggregate ? _gpsAggregate.authenticationState.value : 0
-        return value > 0 && value < 255 ? value : 0
-    }
-    readonly property int _interferenceState: {
-        if (!_gpsAggregate) return 0
-        const spoofing = _gpsAggregate.spoofingState.value
-        const jamming = _gpsAggregate.jammingState.value
-        return Math.max(spoofing > 0 && spoofing < 255 ? spoofing : 0,
-                        jamming > 0 && jamming < 255 ? jamming : 0)
-    }
+    readonly property int _authenticationState: _gpsAggregate && _gpsAggregate.authenticationReported
+                                                ? _gpsAggregate.authenticationState.value : 0
+    readonly property int _interferenceState: _gpsAggregate ? _gpsAggregate.interferenceState : 0
     readonly property color _authenticationColor: {
         switch (_authenticationState) {
         case 1: return qgcPal.colorYellow   // Initializing

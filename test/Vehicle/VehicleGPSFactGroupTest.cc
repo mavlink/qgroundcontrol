@@ -1,5 +1,6 @@
 #include <memory>
 
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "GPSMAVLinkTestHelpers.h"
@@ -72,6 +73,9 @@ private slots:
     void _receiverDispatch();
     void _rtkStatus_data();
     void _rtkStatus();
+    void _systemErrorText_data();
+    void _systemErrorText();
+    void _resilienceReported();
 };
 
 void VehicleGPSFactGroupTest::_rawNormalization_data()
@@ -207,6 +211,49 @@ void VehicleGPSFactGroupTest::_receiverDispatch()
     gps->handleMessage(nullptr, message);
     QCOMPARE(gps->jammingState()->rawValue().toInt(), 3);
     QCOMPARE(gps->gnssIntegrityTimestampUs(), scheduler.nowUs());
+}
+
+void VehicleGPSFactGroupTest::_systemErrorText_data()
+{
+    QTest::addColumn<quint32>("errors");
+    QTest::addColumn<QString>("expected");
+    QTest::newRow("none") << 0u << QString();
+    QTest::newRow("antenna") << 8u << VehicleGPSFactGroup::tr("Antenna");
+    // Several errors are listed together rather than collapsed.
+    QTest::newRow("combined") << (1u | 32u)
+                              << VehicleGPSFactGroup::tr("Incoming correction") + QStringLiteral(", ") +
+                                     VehicleGPSFactGroup::tr("CPU overload");
+    QTest::newRow("unknown-bit") << 0x100u << VehicleGPSFactGroup::tr("Other (0x%1)").arg(QStringLiteral("100"));
+}
+
+void VehicleGPSFactGroupTest::_systemErrorText()
+{
+    QFETCH(quint32, errors);
+    QFETCH(QString, expected);
+    VehicleGPSFactGroup gps;
+    QSignalSpy changed(&gps, &VehicleGPSFactGroup::systemErrorTextChanged);
+    gps.systemErrors()->setRawValue(errors);
+    QCOMPARE(gps.systemErrorText(), expected);
+    QCOMPARE(gps.property("systemErrorText").toString(), expected);
+    QCOMPARE(changed.size(), errors ? 1 : 0);
+}
+
+void VehicleGPSFactGroupTest::_resilienceReported()
+{
+    VehicleGPSFactGroup gps;
+    QSignalSpy changed(&gps, &VehicleGPSFactGroup::resilienceChanged);
+    // 0 and 255 mean the receiver does not know.
+    for (const int unknown : {0, 255}) {
+        gps.jammingState()->setRawValue(unknown);
+        QVERIFY(!gps.jammingReported());
+    }
+    gps.jammingState()->setRawValue(2);
+    QVERIFY(gps.jammingReported());
+    gps.spoofingState()->setRawValue(1);
+    QVERIFY(gps.spoofingReported());
+    gps.authenticationState()->setRawValue(255);
+    QVERIFY(!gps.authenticationReported());
+    QVERIFY(changed.size() >= 3);
 }
 
 UT_REGISTER_TEST(VehicleGPSFactGroupTest, TestLabel::Unit)

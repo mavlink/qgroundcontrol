@@ -13,7 +13,7 @@
 #include <QtPositioning/QGeoCoordinate>
 
 #include "GPSObservation.h"
-#include "GPSRevision.h"
+#include "OperationRevision.h"
 #include "ScheduledTask.h"
 
 class NTRIPTransport;
@@ -113,7 +113,7 @@ private:
     int _fastRetryCount = 0;
     PositionSource _cachedSource = PositionSource::Auto;
     std::chrono::milliseconds _normalInterval = kDefaultInterval;
-    GPSRevision _generation;
+    OperationRevision _generation;
 };
 
 QDebug operator<<(QDebug debug, const NTRIPGgaProvider::Configuration& configuration);

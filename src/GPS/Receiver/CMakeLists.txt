@@ -17,8 +17,8 @@ set_target_properties(QGCGPSReceiver PROPERTIES AUTOMOC ON)
 target_compile_features(QGCGPSReceiver PUBLIC cxx_std_20)
 target_link_libraries(
     QGCGPSReceiver
-    PUBLIC QGCGPSCommon QGCGPSCorrections QGCGPSPositioning QGCGPSReceiverConfig QGCGPSSupport QGCGPSTransport
-    PRIVATE QGCGPSCorrectionService QGCGPSDriver QGCGPSReceiverTransports QGCGPSRTCM QGCLoggingCategory QGCTiming
+    PUBLIC QGCGPSCommon QGCGPSCorrections QGCGPSPositioning QGCGPSReceiverConfig QGCReentrancy QGCGPSTransport
+    PRIVATE QGCGPSCorrectionService QGCGPSProtocols QGCGPSReceiverTransports QGCGPSRTCM QGCLoggingCategory QGCTiming
 )
 target_sources(
     QGCGPSReceiver

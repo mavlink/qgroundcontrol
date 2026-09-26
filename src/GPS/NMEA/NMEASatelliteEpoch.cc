@@ -68,12 +68,12 @@ std::optional<GSV> gsv(const Sentence& input)
     const int entries = std::min(GSV_SATELLITES_PER_PAGE, *count - (*message - 1) * GSV_SATELLITES_PER_PAGE);
     const size_t end = GSV_FIRST_SATELLITE_FIELD + entries * GSV_SATELLITE_FIELDS;
     const size_t fields = input.count - GSV_FIRST_SATELLITE_FIELD;
-    const size_t slots = fields / GSV_SATELLITE_FIELDS;
+    const size_t satelliteSlots = fields / GSV_SATELLITE_FIELDS;
     const size_t trailingFields = fields % GSV_SATELLITE_FIELDS;
-    if (slots < static_cast<size_t>(entries) || slots > GSV_SATELLITES_PER_PAGE || trailingFields > 1)
+    if (satelliteSlots < static_cast<size_t>(entries) || satelliteSlots > GSV_SATELLITES_PER_PAGE || trailingFields > 1)
         return {};
-    const size_t signalIndex = GSV_FIRST_SATELLITE_FIELD + slots * GSV_SATELLITE_FIELDS;
-    // Some receivers retain all four satellite slots on short or empty pages.
+    const size_t signalIndex = GSV_FIRST_SATELLITE_FIELD + satelliteSlots * GSV_SATELLITE_FIELDS;
+    // Some receivers retain all four satellite satelliteSlots on short or empty pages.
     for (size_t index = end; index < signalIndex; ++index) {
         if (!f[index].empty())
             return {};

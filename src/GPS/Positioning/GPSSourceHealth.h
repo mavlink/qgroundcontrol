@@ -9,7 +9,7 @@
 #include <QtPositioning/QGeoPositionInfo>
 
 #include "GPSObservation.h"
-#include "GPSRevision.h"
+#include "OperationRevision.h"
 #include "ScheduledTask.h"
 
 /// Session health is independent of transport readiness and RTK survey-in validity.
@@ -87,5 +87,5 @@ private:
     RuntimeScheduler* const _scheduler;
     ScheduledTask _positionTask;
     quint64 _observationRevision = 0;
-    GPSRevision _revision;
+    OperationRevision _revision;
 };

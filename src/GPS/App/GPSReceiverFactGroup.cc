@@ -3,8 +3,8 @@
 #include <cmath>
 #include <limits>
 
-#include "GPSDriverReports.h"
 #include "GPSReceiverConfig.h"
+#include "GPSReceiverReports.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSReceiverFactGroupLog, "GPS.Receiver.GPSReceiverFactGroup")

@@ -14,10 +14,10 @@
 #include <QtPositioning/QGeoPositionInfo>
 #include <QtPositioning/QGeoPositionInfoSource>
 
-#include "GPSNotificationQueue.h"
 #include "GPSPositionBackendAdapter.h"
 #include "GPSPositionSourceRegistration.h"
 #include "GPSSourceHealth.h"
+#include "NotificationQueue.h"
 #include "ScheduledTask.h"
 
 class GPSPositionService : public QObject
@@ -222,5 +222,5 @@ private:
     quint64 _selectionObservationRevision = 0;
     bool _selectedObservationAuthorized = false;
     // Declared last so bindings stop producing notifications before the queue is destroyed.
-    GPSNotificationQueue _notifications{this};
+    NotificationQueue _notifications{this};
 };

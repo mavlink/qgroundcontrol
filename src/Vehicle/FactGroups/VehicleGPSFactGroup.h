@@ -36,6 +36,10 @@ class VehicleGPSFactGroup : public FactGroup
     Q_PROPERTY(Fact* rtkBaseline READ rtkBaseline CONSTANT)
     Q_PROPERTY(Fact* rtkRate READ rtkRate CONSTANT)
     Q_PROPERTY(Fact* rtkSatellites READ rtkSatellites CONSTANT)
+    Q_PROPERTY(QString systemErrorText READ systemErrorText NOTIFY systemErrorTextChanged)
+    Q_PROPERTY(bool jammingReported READ jammingReported NOTIFY resilienceChanged)
+    Q_PROPERTY(bool spoofingReported READ spoofingReported NOTIFY resilienceChanged)
+    Q_PROPERTY(bool authenticationReported READ authenticationReported NOTIFY resilienceChanged)
 
 public:
     enum class ReceiverIndex
@@ -76,6 +80,13 @@ public:
 
     Fact* rtkSatellites() { return &_rtkSatellitesFact; }
 
+    /// The receiver's reported system errors, comma separated; empty when there are none.
+    QString systemErrorText() const;
+
+    bool jammingReported() const;
+    bool spoofingReported() const;
+    bool authenticationReported() const;
+
     static constexpr std::chrono::seconds RTK_STATUS_TIMEOUT{5};
 
     /// Receipt time in the scheduler's monotonic clock domain; zero until an integrity report arrives.
@@ -88,6 +99,8 @@ public:
 
 signals:
     void gnssIntegrityReceived();
+    void systemErrorTextChanged();
+    void resilienceChanged();
 
 private:
     void _handleGpsRaw(const mavlink_message_t& message);

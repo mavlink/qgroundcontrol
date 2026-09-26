@@ -23,9 +23,6 @@ SettingsGroupLayout {
 
     // SerialPortManager is absent from builds without serial links, so the C++ exposes it as QObject.
     readonly property var _serialPortManager: QGroundControl.serialPortManager
-    // The user's one-use permission to write receiver flash, for the configuration currently shown.
-    property bool _consentAllowed: false
-
     readonly property int role: settings.receiverRole.rawValue
     readonly property bool configuredBase: role === GPSReceiver.ConfiguredBase
     readonly property int manufacturer: settings.baseReceiverManufacturers.rawValue
@@ -39,35 +36,23 @@ SettingsGroupLayout {
     readonly property bool _active: receiver.hasReceiver || receiver.reconnecting
     readonly property bool _editable: !_active
     readonly property int _connection: settings.connectionType.rawValue
-    readonly property bool _udp: _connection === GPSReceiver.Udp
-    // Platforms without serial links connect a saved serial selection over TCP.
-    readonly property bool _tcp: !_udp && (!receiver.serialSupported || _connection === GPSReceiver.Tcp)
-    readonly property bool _serial: !_udp && !_tcp
-    // UDP only receives, so a receiver QGroundControl configures needs serial or TCP.
-    readonly property bool _connectionSupported: !(configuredBase && _udp)
-
-    // Consent covers exactly one receiver configuration; changing any part of it revokes consent.
-    readonly property string _consentScope: JSON.stringify([
-        role, manufacturer, baseMode, settings.connectionType.rawValue, settings.serialDevice.rawValue,
-        settings.serialBaudRate.rawValue, settings.tcpHost.rawValue, settings.tcpPort.rawValue,
-        settings.udpPort.rawValue
-    ])
+    readonly property bool _udp: receiver.effectiveConnectionType === GPSReceiver.Udp
+    readonly property bool _tcp: receiver.effectiveConnectionType === GPSReceiver.Tcp
+    readonly property bool _serial: receiver.effectiveConnectionType === GPSReceiver.Serial
+    readonly property bool _connectionSupported: receiver.connectionSupported
 
     implicitWidth: ScreenTools.defaultFontPixelWidth * 56
     heading: qsTr("GNSS Receiver")
 
-    on_ConsentScopeChanged: clearConsent()
-    onReceiverChanged: clearConsent()
-    onSettingsChanged: clearConsent()
-
-    function clearConsent() {
-        _consentAllowed = false
+    // The permission is for the configuration shown here, so leaving the page withdraws it.
+    Component.onDestruction: {
+        if (receiver) {
+            receiver.persistentChangesAllowed = false
+        }
     }
 
     function connectSelectedReceiver(): bool {
-        const allowPersistentChanges = presentation.persistentConfiguration && _consentAllowed
-        clearConsent()
-        return receiver.connectConfiguredGPS(allowPersistentChanges)
+        return receiver.connectSelectedReceiver()
     }
 
     component Explanation: QGCLabel {
@@ -400,8 +385,8 @@ SettingsGroupLayout {
         focusPolicy: Qt.StrongFocus
         visible: root.presentation.persistentConfiguration
         enabled: root._editable
-        checked: root._consentAllowed
-        onClicked: root._consentAllowed = checked
+        checked: root.receiver.persistentChangesAllowed
+        onClicked: root.receiver.persistentChangesAllowed = checked
         contentItem: QGCLabel {
             text: persistenceCheckbox.text
             color: persistenceCheckbox.textColor
@@ -443,7 +428,6 @@ SettingsGroupLayout {
                      && root._connectionSupported)
         onClicked: {
             if (root._active) {
-                root.clearConsent()
                 root.receiver.disconnectConfiguredGPS()
             } else {
                 root.connectSelectedReceiver()
@@ -455,10 +439,5 @@ SettingsGroupLayout {
         objectName: "rtkErrorMessage"
         visible: root.showErrorMessage && text.length > 0
         text: root.receiver.errorMessage || ""
-    }
-
-    Connections {
-        target: root.receiver
-        function onReceiverChanged() { root.clearConsent() }
     }
 }

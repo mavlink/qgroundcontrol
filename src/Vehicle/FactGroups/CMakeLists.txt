@@ -25,6 +25,7 @@ target_sources(
             VehicleGeneratorFactGroup.h
             VehicleFactGroup.cc
             VehicleFactGroup.h
+            GPSResilienceState.h
             VehicleGPSFactGroup.cc
             VehicleGPSFactGroup.h
             VehicleGPSAggregateFactGroup.cc

@@ -5,8 +5,8 @@
 
 #include <QtCore/QCoreApplication>
 
-#include "GPSDriverReports.h"
 #include "GPSReceiverCapabilities.h"
+#include "GPSReceiverReports.h"
 
 void GPSBaseStationState::applySurvey(const GPSSurveyReport& report)
 {

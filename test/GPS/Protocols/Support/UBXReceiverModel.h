@@ -14,8 +14,8 @@
 #include <QtCore/QList>
 #include <QtCore/QString>
 
-#include "GPSDriverReports.h"
 #include "GPSProtocolError.h"
+#include "GPSReceiverReports.h"
 #include "GPSTestClock.h"
 #include "ScriptedReceiver.h"
 

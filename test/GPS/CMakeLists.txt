@@ -14,12 +14,10 @@ add_subdirectory(Positioning)
 add_subdirectory(RTCM)
 add_subdirectory(Corrections)
 add_subdirectory(Protocols)
-add_subdirectory(Driver)
 add_subdirectory(Receiver)
 add_subdirectory(ReceiverConfig)
 add_subdirectory(Transport)
 
-add_subdirectory(Support)
 add_subdirectory(App)
 
 # Every GPS suite carries the GPS label so `ctest -L GPS` selects all of them. Reading another directory's test

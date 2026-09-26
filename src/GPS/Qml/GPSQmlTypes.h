@@ -5,6 +5,7 @@
 #include "GPSCorrectionDiagnostics.h"
 #include "GPSCorrectionEventModel.h"
 #include "GPSCorrectionManager.h"
+#include "GPSFixQuality.h"
 #include "GPSPositionService.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverDescriptor.h"
@@ -116,3 +117,10 @@ struct NTRIPManagerQmlType
     QML_NAMED_ELEMENT(NTRIPManager)
     QML_UNCREATABLE("Provided by the GPS manager")
 };
+
+// Registers GPSFixQuality's values as a namespace, so QML names fix types instead of numbers.
+namespace GPSFixQualityForeign {
+Q_NAMESPACE
+QML_NAMED_ELEMENT(GPSFixQuality)
+QML_FOREIGN_NAMESPACE(GPSFixQualities)
+}  // namespace GPSFixQualityForeign

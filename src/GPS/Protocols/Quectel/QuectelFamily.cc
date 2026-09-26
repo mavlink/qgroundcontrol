@@ -104,7 +104,6 @@ const GPSReceiverFamily FAMILY{
     .name = QLatin1StringView("Quectel"),
     .logCategory = &QuectelProtocolLog,
     .stream = GPSNMEAStream::STREAM,
-    .support = {.persistentChanges = true},
     .baudCandidates = Plan::BAUD_RATES,
     .create = &gpsCreateProtocol<QuectelProtocol>,
     .signature = &signature,

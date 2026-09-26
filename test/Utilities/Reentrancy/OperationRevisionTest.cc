@@ -3,19 +3,19 @@
 #include <QtCore/QObject>
 #include <QtTest/QTest>
 
-#include "GPSRevision.h"
+#include "OperationRevision.h"
 #include "UnitTest.h"
 
 namespace {
 
 struct Owner : QObject
 {
-    GPSRevision revision;
+    OperationRevision revision;
 };
 
 }  // namespace
 
-class GPSRevisionTest : public UnitTest
+class OperationRevisionTest : public UnitTest
 {
     Q_OBJECT
 
@@ -24,7 +24,7 @@ private slots:
     void _ownerDeletionEndsOperation();
 };
 
-void GPSRevisionTest::_newerOperationSupersedes()
+void OperationRevisionTest::_newerOperationSupersedes()
 {
     Owner owner;
     const auto first = owner.revision.current(&owner);
@@ -42,7 +42,7 @@ void GPSRevisionTest::_newerOperationSupersedes()
     QCOMPARE(owner.revision.value(), second.value() + 1);
 }
 
-void GPSRevisionTest::_ownerDeletionEndsOperation()
+void OperationRevisionTest::_ownerDeletionEndsOperation()
 {
     auto owner = std::make_unique<Owner>();
     const auto operation = owner->revision.advance(owner.get());
@@ -53,6 +53,6 @@ void GPSRevisionTest::_ownerDeletionEndsOperation()
     QVERIFY(!copy.isCurrent());
 }
 
-UT_REGISTER_TEST(GPSRevisionTest, TestLabel::Unit)
+UT_REGISTER_TEST(OperationRevisionTest, TestLabel::Unit)
 
-#include "GPSRevisionTest.moc"
+#include "OperationRevisionTest.moc"

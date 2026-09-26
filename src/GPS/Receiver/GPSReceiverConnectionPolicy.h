@@ -11,7 +11,7 @@
 #include "GPSProvider.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverConnectionTarget.h"
-#include "GPSRevision.h"
+#include "OperationRevision.h"
 
 class RuntimeScheduler;
 
@@ -99,7 +99,7 @@ private:
     QMap<QString, quint64> _waitingPorts;
     std::optional<quint64> _retryDeadlineUs;
     ExponentialBackoff _retryBackoff{std::chrono::seconds(1), 2, std::chrono::seconds(30)};
-    GPSRevision _revision;
+    OperationRevision _revision;
 #ifdef Q_OS_WIN
     static constexpr std::chrono::milliseconds kConnectDelay{6000};
 #else

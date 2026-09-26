@@ -45,8 +45,8 @@
 
 #include "GPSConfigurationEvidence.h"
 #include "GPSConstellation.h"
-#include "GPSDriverReports.h"
 #include "GPSReceiverConfig.h"
+#include "GPSReceiverReports.h"
 #include "GPSTransportResult.h"
 #include "GPSType.h"
 

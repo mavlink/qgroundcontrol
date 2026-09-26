@@ -191,14 +191,14 @@ GPSPositionService::~GPSPositionService()
 
 void GPSPositionService::_bindingChanged(SelectedSource kind)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _binding(kind).pendingObservation = false;
     _selectPositionSource();
 }
 
 void GPSPositionService::_backendError(SelectedSource kind, QGeoPositionInfoSource::Error error)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     if (kind == SelectedSource::Internal) {
         if (error == QGeoPositionInfoSource::AccessError) {
             _platformStatus = SourceStatus::PermissionDenied;
@@ -229,7 +229,7 @@ void GPSPositionService::setInternalPositionSource(QGeoPositionInfoSource* sourc
     if (!_canBindBackend(SelectedSource::Internal, source)) {
         return;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _usingPluginSource = custom;
     _platformStatus = status;
     _bindBackend(SelectedSource::Internal, source, 0);
@@ -240,7 +240,7 @@ void GPSPositionService::setInternalPositionStatus(SourceStatus status)
     if (QThread::currentThread() != thread()) {
         return;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _platformStatus = status;
     _selectPositionSource();
 }
@@ -314,7 +314,7 @@ bool GPSPositionService::_canBindBackend(SelectedSource kind, QGeoPositionInfoSo
 
 void GPSPositionService::_bindProducer(SelectedSource kind, GPSSourceHealth* producer, quint64 sessionId)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     auto& binding = _binding(kind);
     ++binding.token;
     binding.bind(producer, nullptr, sessionId);
@@ -323,7 +323,7 @@ void GPSPositionService::_bindProducer(SelectedSource kind, GPSSourceHealth* pro
 
 void GPSPositionService::_bindBackend(SelectedSource kind, QGeoPositionInfoSource* backend, quint64 sessionId)
 {
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     auto& binding = _binding(kind);
     ++binding.token;
     const bool platform = kind == SelectedSource::Internal || kind == SelectedSource::Simulated;
@@ -355,7 +355,7 @@ void GPSPositionService::setSourceMode(SourceMode mode)
         _sourceMode == mode) {
         return;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _sourceMode = mode;
     _clearPendingObservations();
     _forceSourceRefresh = true;
@@ -379,7 +379,7 @@ void GPSPositionService::_selectPositionSource()
     if (_selectingSource) {
         return;
     }
-    const GPSNotificationQueue::Scope publish(_notifications);
+    const NotificationQueue::Scope publish(_notifications);
     _selectingSource = true;
     // Source activity changes can synchronously report positions that request another selection.
     do {

@@ -1,10 +1,10 @@
-#include "GPSNotificationQueue.h"
+#include "NotificationQueue.h"
 
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSNotificationQueueLog, "GPS.Core.GPSNotificationQueue")
+QGC_LOGGING_CATEGORY(NotificationQueueLog, "Utilities.NotificationQueue")
 
-void GPSNotificationQueue::_deliver()
+void NotificationQueue::_deliver()
 {
     if (_delivering) {
         return;
@@ -18,7 +18,7 @@ void GPSNotificationQueue::_deliver()
         _pending.erase(_pending.begin());
         notification();
         if (!owner) {
-            qCWarning(GPSNotificationQueueLog)
+            qCWarning(NotificationQueueLog)
                 << ownerClass << "was deleted by its own change notification; observers must use deleteLater()";
             return;
         }

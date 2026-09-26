@@ -7,8 +7,8 @@
 
 #include <QtTest/QTest>
 
-#include "GPSDriverReports.h"
 #include "GPSObservation.h"
+#include "GPSReceiverReports.h"
 #include "GPSSourceHealth.h"
 #include "ManualScheduler.h"
 #include "MonotonicClock.h"

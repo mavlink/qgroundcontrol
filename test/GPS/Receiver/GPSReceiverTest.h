@@ -39,6 +39,11 @@ private slots:
     void _configurationDiagnosticRetained();
     void _rtkSettingsBinding();
     void _automaticConnection();
+    void _persistentConsentScope();
+    void _persistentConsentIsSpentOnConnect_data();
+    void _persistentConsentIsSpentOnConnect();
+    void _effectiveConnection_data();
+    void _effectiveConnection();
     void _udpPositionOnlyReceiver();
     void _silentReceiverClearsSolution();
 #ifndef QGC_NO_SERIAL_LINK

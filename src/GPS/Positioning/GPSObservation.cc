@@ -6,8 +6,8 @@
 #include <QtCore/QTimeZone>
 #include <QtCore/QtMath>
 
-#include "GPSDriverReports.h"
 #include "GPSEllipsoidPosition.h"
+#include "GPSReceiverReports.h"
 
 GPSObservation GPSObservation::fromNavigation(const GPSNavigationValues& navigation, quint64 receivedAtUs)
 {

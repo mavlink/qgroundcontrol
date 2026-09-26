@@ -13,7 +13,7 @@
 #include "GPSCorrectionLedger.h"
 #include "GPSCorrectionSelector.h"
 #include "GPSCorrectionSourceRegistration.h"
-#include "GPSRevision.h"
+#include "OperationRevision.h"
 
 /// Selects one correction stream and submits complete frames to injected outputs.
 /// All calls and sink callbacks run on the owning thread. Submission is not receiver acknowledgement.
@@ -118,7 +118,7 @@ private:
     GPSCorrectionSelector _selector;
     GPSCorrectionLedger _ledger;
     QMap<QString, Output> _sinks;
-    GPSRevision _revision;
+    OperationRevision _revision;
     bool _shutdown = false;
     bool _submitting = false;
 };

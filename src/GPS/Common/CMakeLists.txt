@@ -25,7 +25,7 @@ target_sources(
            HEADERS
            FILES
            GPSConstellation.h
-           GPSDriverReports.h
+           GPSReceiverReports.h
            GPSEllipsoidPosition.h
            GPSFixQuality.h
            GPSType.h

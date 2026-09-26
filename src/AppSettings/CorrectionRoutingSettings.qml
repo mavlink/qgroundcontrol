@@ -19,28 +19,9 @@ SettingsGroupLayout {
     readonly property SettingsFact _sourceFact: root._settings.correctionSource as SettingsFact
     readonly property SettingsFact _instanceFact: root._settings.correctionSourceInstance as SettingsFact
     readonly property int _source: root._settings.correctionSource.rawValue
-    readonly property var _sourceStreams: {
-        const streams = [];
-        for (const source of root.corrections.sourceInstances) {
-            if (source.source === root._source && !streams.some(stream => stream.instanceId === source.instanceId)) {
-                streams.push({
-                    instanceId: source.instanceId,
-                    label: source.usable ? source.instanceId : qsTr("No fresh corrections: %1").arg(source.instanceId)
-                });
-            }
-        }
-        return streams;
-    }
-    readonly property var _streams: {
-        const streams = [{ instanceId: "", label: qsTr("Automatic within source") }].concat(root._sourceStreams);
-        if (!streams.some(stream => stream.instanceId === root._selectedInstance)) {
-            streams.push({
-                instanceId: root._selectedInstance,
-                label: qsTr("Unavailable: %1").arg(root._selectedInstance)
-            });
-        }
-        return streams;
-    }
+    readonly property int _streamCount: root.corrections.streamCount(root.corrections.sourceInstances, root._source)
+    readonly property var _streams: root.corrections.streamChoices(root.corrections.sourceInstances, root._source,
+                                                                   root._selectedInstance)
 
     heading: qsTr("Correction Routing")
     headingDescription: qsTr("Selects the stream sent to vehicles. UDP forwarding sends the same stream.")
@@ -83,7 +64,7 @@ SettingsGroupLayout {
         textRole: "label"
         valueRole: "instanceId"
         visible: root._manual && root._instanceFact && root._instanceFact.userVisible
-                 && (root._sourceStreams.length > 1 || root._selectedInstance !== "")
+                 && (root._streamCount > 1 || root._selectedInstance !== "")
 
         onActivated: index => {
             if (index >= 0 && index < root._streams.length) {

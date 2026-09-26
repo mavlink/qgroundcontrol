@@ -8,12 +8,12 @@
 
 #include "GPSBaseStationSettings.h"
 #include "GPSCorrectionSourceRegistration.h"
-#include "GPSDriverReports.h"
 #include "GPSObservation.h"
 #include "GPSPositionSourceRegistration.h"
 #include "GPSProvider.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverConfig.h"
+#include "GPSReceiverReports.h"
 
 class GPSCorrectionManager;
 class GPSPositionService;

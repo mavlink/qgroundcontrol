@@ -37,28 +37,20 @@ struct GPSConfig
     unsigned detectedBaud = 0;
 };
 
-/// Optional base-station requests a family implements beyond survey-in and fixed positions.
-struct GPSConfigurationSupport
-{
-    bool receiverAveraging = false;
-    bool persistentChanges = false;
-    bool compactObservations = false;
-};
-
 struct GPSFamilyOptions
 {
     bool satelliteInfoEnabled = true;
 };
 
 /// Static description of one receiver family. Each family defines one descriptor, which the family table
-/// (Common/GPSReceiverFamilies.cc) lists for type lookup.
+/// (GPSReceiverFamilies.cc) lists for type lookup. Its base-station capabilities come from the family's
+/// GPSReceiverDescriptor.
 struct GPSReceiverFamily
 {
     GPSType type = GPSType::passive;
     QLatin1StringView name{};
     GPSLogCategory logCategory = nullptr;
     GPSStreamConfig stream{};
-    GPSConfigurationSupport support{};
     /// Baud rates the family probes, in probing order; empty when it needs an explicit rate.
     std::span<const unsigned> baudCandidates{};
     /// Rate passed to configure() when none is selected; zero requests detection.

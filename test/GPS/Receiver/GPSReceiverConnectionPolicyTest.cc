@@ -9,7 +9,6 @@
 #include <QtTest/QSignalSpy>
 
 #include "GPSManager.h"
-#include "GPSNotificationQueue.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverConnectionPolicy.h"
 #include "GPSReceiverConnectionTarget.h"
@@ -17,6 +16,7 @@
 #include "GPSTransport.h"
 #include "ManualScheduler.h"
 #include "NTRIPManager.h"
+#include "NotificationQueue.h"
 #include "PositionManager.h"
 #include "RTKSettings.h"
 #include "ScriptedProvider.h"
@@ -176,7 +176,7 @@ public:
     }
 #endif
 
-    GPSNotificationQueue& notifications() override { return queue; }
+    NotificationQueue& notifications() override { return queue; }
 
     bool record(const ConnectCall& call)
     {
@@ -193,7 +193,7 @@ public:
     }
 
     QObject owner;
-    GPSNotificationQueue queue{&owner};
+    NotificationQueue queue{&owner};
     SerialPortManager ports;
     mutable GPSSerialPortManagerAdapter serialPortAdapter{&ports};
     QList<ConnectCall> calls;
