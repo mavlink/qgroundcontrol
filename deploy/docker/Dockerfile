@@ -9,7 +9,7 @@
 # ---------- base: shared bootstrap for every variant ----------
 # Digest-pinned for reproducibility (re-resolve via `docker buildx imagetools
 # inspect` when bumping); BASE_REF/SETUP_BASE overridden for non-Ubuntu distros.
-ARG BASE_REF=ubuntu:24.04@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54
+ARG BASE_REF=ubuntu:24.04@sha256:008173c23f95b170204355c12626cb5a965d779a7e1283b09e9cffbb1bf33ca3
 FROM ${BASE_REF} AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -41,7 +41,7 @@ RUN if [ -n "${CC_PIN}" ]; then \
     fi
 
 # Locked Python environment for generators, Qt installation, and build tools.
-COPY --from=ghcr.io/astral-sh/uv:0.11.12 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.19 /uv /usr/local/bin/uv
 COPY tools/pyproject.toml tools/uv.lock /opt/qgc-tools/
 RUN UV_PROJECT_ENVIRONMENT=/opt/qgc-venv uv sync \
         --project /opt/qgc-tools --python python3 \
