@@ -1,0 +1,8 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden passive/persistent
+about Passive input makes no persistent changes
+request type=passive role=passive mode=survey-in accuracy=0.0000m duration=0s compact=0 persistent=1 baud=115200
+stream-step 1 bytes=326 duration=1000ms
+stream-step 2 bytes=0 duration=6000ms
+configure
+  refused "This driver does not support persistent receiver configuration"

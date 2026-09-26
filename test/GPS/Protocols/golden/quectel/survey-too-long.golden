@@ -1,0 +1,13 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden quectel/survey-too-long
+about Survey-in beyond 24 hours is not supported
+request type=quectel role=rtk-base mode=survey-in accuracy=15.0000m duration=90000s compact=0 persistent=0 baud=0
+stream-step 1 bytes=0 duration=12000ms
+stream-step 2 bytes=25 duration=2000ms
+configure
+  result configured=0 baud=0->0 failure=protocol ready=0 elapsed=0ms
+  identity ""
+  error "Unsupported LG290P configuration: use native 1 Hz observation count (maximum 86400) and 3D position accuracy threshold (maximum 1000 m), not receiver-managed survey"
+  wire
+  evidence
+  events

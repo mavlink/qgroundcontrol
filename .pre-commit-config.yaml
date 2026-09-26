@@ -324,4 +324,12 @@ repos:
         exclude: ^(build/|libs/|test/)
         pass_filenames: true
 
+      - id: coroutine-short-circuit-check
+        name: Check for co_await in short-circuit operands
+        entry: python3 tools/analyzers/coroutine_short_circuit_check.py
+        language: system
+        types: [c++]
+        files: ^(src|test)/GPS/
+        pass_filenames: true
+
 exclude: ^build/

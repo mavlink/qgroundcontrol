@@ -20,8 +20,6 @@ public:
 
     void start() override
     {
-        _started = true;
-        _stopped = false;
         startCount++;
 
         if (autoConnect) {
@@ -31,8 +29,6 @@ public:
 
     void stop() override
     {
-        _started = false;
-        _stopped = true;
         stopCount++;
         const auto callback = onStop;
         if (callback) {
@@ -67,20 +63,10 @@ public:
 
     void simulatePlaintextWarning() { emit plaintextCredentialsWarning(); }
 
-    // --- Test inspection ---
-
-    bool isStarted() const { return _started; }
-
-    bool isStopped() const { return _stopped; }
-
     bool autoConnect = true;
     int startCount = 0;
     int stopCount = 0;
     std::function<void()> onStop;
     QVector<QByteArray> sentNmea;
     QVector<int> lastWhitelist;
-
-private:
-    bool _started = false;
-    bool _stopped = false;
 };

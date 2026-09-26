@@ -4,10 +4,10 @@
 
 #include "Fact.h"
 #include "GPSCorrectionManager.h"
-#include "GPSRTK.h"
+#include "GPSReceiver.h"
 #include "NTRIPManager.h"
 
-GPSCorrectionStatus::GPSCorrectionStatus(GPSCorrectionManager* corrections, NTRIPManager* ntrip, GPSRTK* rtk,
+GPSCorrectionStatus::GPSCorrectionStatus(GPSCorrectionManager* corrections, NTRIPManager* ntrip, GPSReceiver* rtk,
                                          Fact* udpInputEnabled, QObject* parent)
     : QObject(parent)
     , _corrections(corrections)
@@ -23,7 +23,7 @@ GPSCorrectionStatus::GPSCorrectionStatus(GPSCorrectionManager* corrections, NTRI
         (void) connect(_ntrip, &NTRIPManager::connectionStatusChanged, this, &GPSCorrectionStatus::_update);
     }
     if (_rtk) {
-        (void) connect(_rtk, &GPSRTK::receiverChanged, this, &GPSCorrectionStatus::_update);
+        (void) connect(_rtk, &GPSReceiver::receiverChanged, this, &GPSCorrectionStatus::_update);
     }
     if (_udpInputEnabled) {
         (void) connect(_udpInputEnabled, &Fact::rawValueChanged, this, &GPSCorrectionStatus::_update);
@@ -39,7 +39,7 @@ void GPSCorrectionStatus::_update()
         state = State::Fresh;
     } else if ((_ntrip && _ntrip->connectionStatus() != NTRIPManager::ConnectionStatus::Disconnected) ||
                (_udpInputEnabled && _udpInputEnabled->rawValue().toBool()) ||
-               (_rtk && _rtk->hasReceiver() && _rtk->activeRole() != GPSRTK::PositionOnly) ||
+               (_rtk && _rtk->hasReceiver() && _rtk->activeRole() != GPSReceiver::PositionOnly) ||
                (_corrections && !_corrections->sourceInstances().isEmpty())) {
         state = State::Waiting;
     }

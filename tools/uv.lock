@@ -1574,6 +1574,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pynmeagps"
+version = "1.1.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/24/9a/05afc81fafe4c853a8009dc301d20f7bf3911c24697bf20d36e217439f7a/pynmeagps-1.1.7.tar.gz", hash = "sha256:e2ba7e03c197d9888e1093ea8a2eeb60edce5e6c72a121d540b13197ca1944ae", size = 100187, upload-time = "2026-08-10T17:19:47.088Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e2/5b/8301c52ca580d3045b6fb87e81af73185f37da976096d80b034d9a3a3975/pynmeagps-1.1.7-py3-none-any.whl", hash = "sha256:632bd75b05def5ad2d5ed02ad239ce7cfd11a115dc51f95e35461072bf557d3d", size = 64686, upload-time = "2026-08-10T17:19:45.775Z" },
+]
+
+[[package]]
 name = "pyppmd"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1655,6 +1664,31 @@ wheels = [
 ]
 
 [[package]]
+name = "pyrtcm"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pynmeagps" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f0/25/5be83be621241871d9ea8f802ed3058d1d874b8c12d2d222437e683bf817/pyrtcm-1.2.0.tar.gz", hash = "sha256:3880a900292aeed6e3d053a68c20c6f183cabe0bd9ad65e74c2a08f4848cc5cc", size = 101095, upload-time = "2026-07-14T07:02:08.735Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/87/aff12fa74cde78c4eb1a622fdb0f7f059c7f6861711b23bb26adc7c0b1c9/pyrtcm-1.2.0-py3-none-any.whl", hash = "sha256:a76514d4c3189b9a1b3c77fed8bad73f69e76f1797b3536fdf42b8dee6bff7d1", size = 43171, upload-time = "2026-07-14T07:02:07.404Z" },
+]
+
+[[package]]
+name = "pysbf2"
+version = "1.0.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pynmeagps" },
+    { name = "pyrtcm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/83/a8/f8c0a1f935f213ebc9058e53dd3f216da66d48b65bbe3af2518d81d649ff/pysbf2-1.0.5.tar.gz", hash = "sha256:35c768ba5077dcef2911e3588b922c708a3420b41cfedcfec8f865ab34bee76f", size = 71524, upload-time = "2026-09-14T08:55:00.097Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/35/85/3d4bb40b5f540cb078c5eb10838dbd758896f441ed35263bb6747ceb5768/pysbf2-1.0.5-py3-none-any.whl", hash = "sha256:9b5468c95412367dfd9c008c152f24b77c07de7313c67605ec78520bed0741c4", size = 35133, upload-time = "2026-09-14T08:54:58.953Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1683,6 +1717,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/48/60/e88788207d81e46362cfbef0d4aaf4c0f49efc3c12d4c3fa3f542c34ebec/python_discovery-1.3.1.tar.gz", hash = "sha256:62f6db28064c9613e7ca76cb3f00c38c839a07c31c00dfe7ed0986493d2150a6", size = 68011, upload-time = "2026-05-12T20:53:36.336Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/6f/a05a317a66fee0aad270011461f1a63a453ed12471249f172f7d2e2bc7b4/python_discovery-1.3.1-py3-none-any.whl", hash = "sha256:ed188687ebb3b82c01a17cd5ac62fc94d9f6487a7f1a0f9dfe89753fec91039c", size = 33185, upload-time = "2026-05-12T20:53:34.969Z" },
+]
+
+[[package]]
+name = "pyubx2"
+version = "1.3.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pynmeagps" },
+    { name = "pyrtcm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/af/26/ad283c7ff98321a8dd291b096eb2b829fb9cfee610a3dec84b58de04199e/pyubx2-1.3.7.tar.gz", hash = "sha256:5b4716564a64307532e5929d786b57eac44465891c9a34722430d9c314a6015f", size = 179845, upload-time = "2026-09-24T09:16:12.321Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/83/92/66421baefb0a6fdfa262c747a090f7d277e6022a72b518264ee7d0de759d/pyubx2-1.3.7-py3-none-any.whl", hash = "sha256:2cd10ae0d180c1bfc674497b1eb5816d536dc5eb302c051c8c6d09e9904f9c4f", size = 78800, upload-time = "2026-09-24T09:16:10.781Z" },
 ]
 
 [[package]]
@@ -1815,6 +1862,18 @@ dev = [
     { name = "rust-just" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
+gps-defs = [
+    { name = "clang-format" },
+    { name = "defusedxml" },
+    { name = "fastcrc" },
+    { name = "httpx" },
+    { name = "jinja2" },
+    { name = "lxml" },
+    { name = "packaging" },
+    { name = "pysbf2" },
+    { name = "pyubx2" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
+]
 lint = [
     { name = "clang-format" },
     { name = "defusedxml" },
@@ -1928,6 +1987,18 @@ dev = [
     { name = "pyyaml", specifier = ">=6" },
     { name = "ruff", specifier = "==0.16.5" },
     { name = "rust-just", specifier = ">=1.55.1" },
+    { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0" },
+]
+gps-defs = [
+    { name = "clang-format", specifier = "==23.1.0" },
+    { name = "defusedxml", specifier = ">=0.7.1" },
+    { name = "fastcrc", specifier = ">=0.3" },
+    { name = "httpx", specifier = ">=0.28" },
+    { name = "jinja2", specifier = ">=3.1" },
+    { name = "lxml", specifier = ">=5" },
+    { name = "packaging", specifier = ">=24" },
+    { name = "pysbf2", specifier = "==1.0.5" },
+    { name = "pyubx2", specifier = "==1.3.7" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0" },
 ]
 lint = [

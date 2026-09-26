@@ -1,0 +1,77 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden septentrio/survey-rejected
+about Receiver rejects survey-in (base mode)
+request type=septentrio role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+stream-step 1 bytes=268 duration=1000ms
+stream-step 2 bytes=25 duration=1000ms
+stream-step 3 bytes=0 duration=6000ms
+configure
+  result configured=0 baud=0->115200 failure=none ready=0 elapsed=0ms
+  identity ""
+  error "Receiver configuration failed"
+  wire
+    baud 115200 configured
+    write - 11
+      535353535353535353530a
+      text "SSSSSSSSSS\n"
+    write "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c434f4d312c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c434f4d322c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c555342312c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c555342322c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c555342332c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c555342342c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n"
+    write - 2
+      0a0d
+      text "\n\r"
+    write "setSBFOutput, Stream1, USB1, none, off\n" 39
+      7365745342464f75747075742c2053747265616d312c20555342312c206e6f6e
+      652c206f66660a
+      text "setSBFOutput, Stream1, USB1, none, off\n"
+    write "setDataInOut, USB1, Auto, SBF\n" 30
+      73657444617461496e4f75742c20555342312c204175746f2c205342460a
+      text "setDataInOut, USB1, Auto, SBF\n"
+    write "setGeodeticDatum, WGS84\n" 24
+      73657447656f6465746963446174756d2c2057475338340a
+      text "setGeodeticDatum, WGS84\n"
+    write "setDataInOut, USB1, Auto, SBF\n" 30
+      73657444617461496e4f75742c20555342312c204175746f2c205342460a
+      text "setDataInOut, USB1, Auto, SBF\n"
+    write "setDataInOut, USB1, Auto, RTCMv3+SBF\n" 37
+      73657444617461496e4f75742c20555342312c204175746f2c205254434d7633
+      2b5342460a
+      text "setDataInOut, USB1, Auto, RTCMv3+SBF\n"
+    write "setPVTMode, Static, All, auto\n" 30
+      7365745056544d6f64652c205374617469632c20416c6c2c206175746f0a
+      text "setPVTMode, Static, All, auto\n"
+  evidence
+    "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setSBFOutput, Stream1, USB1, none, off\n" acknowledged required accepted=39 written=39 uncertain=0 elapsed=0ms
+    "setDataInOut, USB1, Auto, SBF\n" acknowledged required accepted=30 written=30 uncertain=0 elapsed=0ms
+    "setGeodeticDatum, WGS84\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+    "setDataInOut, USB1, Auto, SBF\n" acknowledged required accepted=30 written=30 uncertain=0 elapsed=0ms
+    "setDataInOut, USB1, Auto, RTCMv3+SBF\n" acknowledged required accepted=37 written=37 uncertain=0 elapsed=0ms
+    "setPVTMode, Static, All, auto\n" rejected required accepted=30 written=30 uncertain=0 elapsed=0ms
+  events

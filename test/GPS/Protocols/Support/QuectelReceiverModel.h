@@ -13,7 +13,9 @@
 #include <utility>
 #include <vector>
 
-#include "GPSProtocolTestIO.h"
+#include "GPSEventSink.h"
+#include "GPSRuntimeIO.h"
+#include "GPSTestClock.h"
 #include "ReceiverEventQueue.h"
 #include "ScriptedReceiver.h"
 
@@ -88,7 +90,6 @@ struct QuectelReceiver : public ScriptedReceiver::Model
     std::vector<GPSDecodedSurvey> surveys;
     size_t corrections = 0;
     size_t positions = 0;
-    QStringList warnings;
     GPSTestClock& clock;
     ReceiverEventQueue events{clock};
     std::stop_source stop;
@@ -289,39 +290,49 @@ struct QuectelReceiver : public ScriptedReceiver::Model
         return {GPSWriteStatus::Completed, static_cast<int>(input.size()), static_cast<int>(input.size())};
     }
 
-    GPSProtocolIO io()
+    /// The receiver's link and clock services, for GPSProtocolRuntime. The configured role and base are active and
+    /// saved at connection time; waits run receiver events, and a cancel fault fails waits and reads.
+    GPSRuntimeIO io()
     {
         startedUs = clock.nowUs();
         activeRole = savedRole = role;
         activeBase = savedBase = base;
         savedRates = rates;
-        auto result = makeGPSProtocolTestIO(clock, &warnings);
         scripted.clearReplies();
         scripted.clearCommands();
-        result.wait = [this](std::chrono::microseconds delay) {
-            events.advanceTo(clock.nowUs() + delay.count());
-            return !(failed && fault == Fault::Cancel);
-        };
         scripted.setReadHandler([this](uint8_t*, int, std::chrono::milliseconds) -> std::optional<GPSReadResult> {
             if (failed && fault == Fault::Cancel) {
                 return std::optional<GPSReadResult>{GPSReadResult{GPSReadStatus::Cancelled}};
             }
             return std::nullopt;
         });
-        result.commandFinished = [this](const GPSCommandResult& outcome) { outcomes.push_back(outcome); };
-        result.decoded = [this](const GPSDecodedBatch& batch) {
-            if (batch.events.size() > GPSDecodedBatch::MAX_EVENTS) {
+        GPSRuntimeIO io;
+        io.nowUs = [this] { return clock.nowUs(); };
+        io.wait = [this](std::chrono::microseconds delay) {
+            events.advanceTo(clock.nowUs() + delay.count());
+            return !(failed && fault == Fault::Cancel);
+        };
+        return scripted.makeIO(std::move(io));
+    }
+
+    /// Records survey reports, RTCM3 frames, positions and command results.
+    GPSRuntimeObserver observer()
+    {
+        GPSRuntimeObserver observer;
+        observer.commandFinished = [this](const GPSCommandResult& outcome) { outcomes.push_back(outcome); };
+        observer.decoded = [this](const GPSEventBatch& batch) {
+            if (batch.events.size() > GPSEventSink::MAX_EVENTS) {
                 throw std::runtime_error("Quectel decoded batch overflow");
             }
             for (const auto& event : batch.events) {
                 if (const auto* survey = std::get_if<GPSDecodedSurvey>(&event)) {
                     surveys.push_back(*survey);
                 }
-                corrections += std::holds_alternative<GPSRTCMReport>(event);
+                corrections += std::holds_alternative<GPSRTCMFrame>(event);
                 positions += std::holds_alternative<GPSDecodedPosition>(event);
             }
         };
-        return scripted.makeIO(std::move(result));
+        return observer;
     }
 };
 

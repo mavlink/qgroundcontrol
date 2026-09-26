@@ -1,0 +1,82 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden decode/femto
+decoder type=femto role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=0 persistent=0 baud=0
+file corpus/femto-0.bin bytes=32
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/femto-160.bin bytes=192
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/femto-2.bin bytes=34
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/femto-600.bin bytes=632
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/gga.nmea bytes=88
+  chunks 1 7 whole
+    configured=1
+    events
+      usage used=6 receipt=1
+    expired
+file corpus/gsv.nmea bytes=30
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/synthetic-gga.nmea bytes=398
+  chunks 1 7 whole
+    configured=1
+    events
+      usage used=0 receipt=1
+      usage used=- receipt=1
+      usage used=12 receipt=1
+      usage used=8 receipt=1
+      usage used=0 receipt=1
+      usage used=- receipt=1
+    expired
+file corpus/synthetic-gst.nmea bytes=145
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/zda-overflow.nmea bytes=33
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/zda.nmea bytes=38
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file fixtures/gga.nmea bytes=73
+  chunks 1 7 whole
+    configured=1
+    events
+      usage used=6 receipt=1
+    expired
+file fixtures/synthetic-gga.nmea bytes=398
+  chunks 1 7 whole
+    configured=1
+    events
+      usage used=0 receipt=1
+      usage used=- receipt=1
+      usage used=12 receipt=1
+      usage used=8 receipt=1
+      usage used=0 receipt=1
+      usage used=- receipt=1
+    expired
+file fixtures/synthetic-gst.nmea bytes=145
+  chunks 1 7 whole
+    configured=1
+    events
+    expired

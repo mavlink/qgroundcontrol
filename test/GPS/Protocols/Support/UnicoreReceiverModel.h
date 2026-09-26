@@ -15,7 +15,9 @@
 #include <utility>
 #include <vector>
 
-#include "GPSProtocolTestIO.h"
+#include "GPSEventSink.h"
+#include "GPSRuntimeIO.h"
+#include "GPSTestClock.h"
 #include "ReceiverEventQueue.h"
 #include "ScriptedReceiver.h"
 
@@ -116,7 +118,6 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
     std::string queued;
     unsigned availableBaud = 115200;
     unsigned hostBaud = 0;
-    QStringList warnings;
     GPSTestClock& clock;
     ReceiverEventQueue events{clock};
     std::stop_source stop;
@@ -288,28 +289,13 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
         return {GPSWriteStatus::Completed, length, length};
     }
 
-    GPSProtocolIO io()
+    /// The receiver's link and clock services, for GPSProtocolRuntime: waits run receiver events, and the cancel and
+    /// readError flags fail waits and reads.
+    GPSRuntimeIO io()
     {
         startedUs = clock.nowUs();
-        auto io = makeGPSProtocolTestIO(clock, &warnings);
         scripted.clearReplies();
         scripted.clearCommands();
-        io.decoded = [this](const GPSDecodedBatch& batch) {
-            if (batch.events.size() > GPSDecodedBatch::MAX_EVENTS) {
-                throw std::runtime_error("Unicore decoded batch overflow");
-            }
-            for (const auto& event : batch.events) {
-                if (const auto* survey = std::get_if<GPSDecodedSurvey>(&event)) {
-                    surveys.push_back(*survey);
-                }
-                rtcmCount += std::holds_alternative<GPSRTCMReport>(event);
-            }
-        };
-        io.commandFinished = [this](const GPSCommandResult& result) { results.push_back(result); };
-        io.wait = [this](std::chrono::microseconds delay) {
-            events.advanceTo(clock.nowUs() + delay.count());
-            return !cancel;
-        };
         scripted.setReadHandler([this](uint8_t*, int, std::chrono::milliseconds) -> std::optional<GPSReadResult> {
             ++calls;
             if (cancel) {
@@ -321,7 +307,32 @@ struct UnicoreReceiver : public ScriptedReceiver::Model
             }
             return std::nullopt;
         });
+        GPSRuntimeIO io;
+        io.nowUs = [this] { return clock.nowUs(); };
+        io.wait = [this](std::chrono::microseconds delay) {
+            events.advanceTo(clock.nowUs() + delay.count());
+            return !cancel;
+        };
         return scripted.makeIO(std::move(io));
+    }
+
+    /// Records survey reports, RTCM3 frames and command results.
+    GPSRuntimeObserver observer()
+    {
+        GPSRuntimeObserver observer;
+        observer.decoded = [this](const GPSEventBatch& batch) {
+            if (batch.events.size() > GPSEventSink::MAX_EVENTS) {
+                throw std::runtime_error("Unicore decoded batch overflow");
+            }
+            for (const auto& event : batch.events) {
+                if (const auto* survey = std::get_if<GPSDecodedSurvey>(&event)) {
+                    surveys.push_back(*survey);
+                }
+                rtcmCount += std::holds_alternative<GPSRTCMFrame>(event);
+            }
+        };
+        observer.commandFinished = [this](const GPSCommandResult& result) { results.push_back(result); };
+        return observer;
     }
 };
 

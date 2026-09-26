@@ -1,0 +1,24 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden passive/baud-9600
+about NMEA and RTCM input at 9600
+request type=passive role=passive mode=survey-in accuracy=0.0000m duration=0s compact=0 persistent=0 baud=9600
+stream-step 1 bytes=326 duration=1000ms
+stream-step 2 bytes=0 duration=6000ms
+configure
+  result configured=1 baud=9600->9600 failure=none ready=1 elapsed=0ms
+  identity ""
+  error ""
+  wire
+    baud 9600 configured
+  evidence
+  events
+stream
+  result failure=none ready=1
+  wire
+  evidence
+  events
+    usage used=6 receipt=1
+    position fix=differential lat=37.39109795 lon=-122.03782631 msl=18.8930 ellipsoid=-6.7760 hacc=nan vacc=nan hdop=1.200 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=6 utc=0 velocity=0 receipt=1
+    rtcm type=1005 size=25 fnv=f8e3bb62
+    satellites full=0 gps:view=1/1,use=-/0
+    satellites full=0 sbas:view=0/1,use=-/0

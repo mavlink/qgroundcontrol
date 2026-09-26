@@ -1,0 +1,28 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden femto/fixed-rejected
+about Receiver rejects the fixed position (base mode)
+request type=femto role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=0 persistent=0 baud=0
+stream-step 1 bytes=78 duration=1000ms
+stream-step 2 bytes=78 duration=1000ms
+stream-step 3 bytes=25 duration=1000ms
+configure
+  result configured=0 baud=0->115200 failure=protocol ready=0 elapsed=0ms
+  identity ""
+  error "Receiver configuration failed"
+  wire
+    baud 115200 configured
+    write "UNLOGALL THISPORT\r\n" 19
+      554e4c4f47414c4c2054484953504f52540d0a
+      text "UNLOGALL THISPORT\r\n"
+    write "VERSION\r\n" 9
+      56455253494f4e0d0a
+      text "VERSION\r\n"
+    write "FIX POSITION (fixed position)" 47
+      46495820504f534954494f4e2034372e303030303030303020382e3030303030
+      303030203530302e30303030300d0a
+      text "FIX POSITION 47.00000000 8.00000000 500.00000\r\n"
+  evidence
+    "UNLOGALL THISPORT\r\n" acknowledged required accepted=19 written=19 uncertain=0 elapsed=0ms
+    "VERSION\r\n" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "FIX POSITION (fixed position)" rejected required accepted=47 written=47 uncertain=0 elapsed=0ms
+  events

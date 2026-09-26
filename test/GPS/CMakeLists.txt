@@ -3,9 +3,7 @@
 # Tests for GPS/GNSS positioning and RTK corrections
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSMAVLinkTestHelpers.h GPSQmlTestHelpers.h GPSTestHelpers.h
-                                             SequentialTestDevice.h
-)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSMAVLinkTestHelpers.h GPSQmlTestHelpers.h GPSTestHelpers.h)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -18,7 +16,7 @@ add_subdirectory(Corrections)
 add_subdirectory(Protocols)
 add_subdirectory(Driver)
 add_subdirectory(Receiver)
-add_subdirectory(RTK)
+add_subdirectory(ReceiverConfig)
 add_subdirectory(Transport)
 
 add_subdirectory(Support)

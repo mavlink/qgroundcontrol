@@ -1,0 +1,39 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden ublox/wire-discovery-identity-timeout
+about Identity replies are always corrupt
+request type=ublox role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure
+  result configured=0 baud=0->0 failure=none ready=0 elapsed=14140ms
+  identity ""
+  error "Receiver configuration failed"
+  wire
+    baud 38400 configured
+    write "1034" 8
+      b5620a0400000e34
+    baud 57600 configured
+    write "1034" 8
+      b5620a0400000e34
+    baud 9600 configured
+    write "1034" 8
+      b5620a0400000e34
+    baud 115200 configured
+    write "1034" 8
+      b5620a0400000e34
+    baud 230400 configured
+    write "1034" 8
+      b5620a0400000e34
+    baud 460800 configured
+    write "1034" 8
+      b5620a0400000e34
+    baud 921600 configured
+    write "1034" 8
+      b5620a0400000e34
+  evidence
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+  events

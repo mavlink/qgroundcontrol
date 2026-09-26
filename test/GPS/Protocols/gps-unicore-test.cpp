@@ -11,9 +11,11 @@
 #include <vector>
 
 #include "Checksums.h"
-#include "Support/GPSProtocolTestIO.h"
+#include "GPSProtocolRuntime.h"
+#include "Support/GPSProtocolLogCapture.h"
+#include "Support/GPSRuntimeTestIO.h"
 #include "Support/UnicoreReceiverModel.h"
-#include "Unicore/UnicoreProtocol.h"
+#include "Unicore/UnicoreFamily.h"
 #include "UnitTest.h"
 
 using namespace std::chrono_literals;
@@ -99,7 +101,7 @@ std::vector<uint8_t> correction(std::string_view payload = "\x43\x20")
     return bytes;
 }
 
-void consume(UnicoreProtocol& driver, std::string_view line, size_t chunk = 5)
+void consume(GPSProtocolRuntime& driver, std::string_view line, size_t chunk = 5)
 {
     while (!line.empty()) {
         const auto count = std::min(chunk, line.size());
@@ -110,9 +112,11 @@ void consume(UnicoreProtocol& driver, std::string_view line, size_t chunk = 5)
 
 using Receiver = GPSTest::UnicoreReceiver;
 
-GPSProtocol::GPSConfig baseConfig(bool fixed)
+constexpr GPSFamilyOptions NO_SATELLITES{.satelliteInfoEnabled = false};
+
+GPSConfig baseConfig(bool fixed)
 {
-    GPSProtocol::GPSConfig config{};
+    GPSConfig config{};
     config.base.mode = fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
                                    .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
                              : GPSBaseStationConfig::Mode{GPSBaseStationConfig::ReceiverAveraging{}};
@@ -134,15 +138,12 @@ void identityAndRole(GPSTestClock& clock)
             if (baud == 0) {
                 receiver.availableBaud = 460800;
             }
-            GPSDecodedPosition positionReport;
-            UnicoreProtocol driver(captureGPSReports(receiver.io(), positionReport), false);
+            GPSProtocolRuntime driver(Unicore::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
             unsigned rate = baud;
-            CHECK(driver.configure(rate, baseConfig(false)));
+            CHECK(driver.configure(baseConfig(false), rate));
             CHECK(driver.receiverReady());
             CHECK(rate == receiver.availableBaud);
-            CHECK(driver.model() == model);
-            CHECK(driver.firmware() == "R4.10Build15434");
-            CHECK(driver.receiverIdentity() == std::string(model) + " R4.10Build15434");
+            CHECK(driver.identity() == QLatin1StringView(model) + QStringLiteral(" R4.10Build15434"));
             const auto mutation = std::find(receiver.commands.begin(), receiver.commands.end(), "UNLOG");
             CHECK(mutation != receiver.commands.end());
             CHECK(std::all_of(receiver.commands.begin(), mutation,
@@ -175,16 +176,16 @@ void rejectBeforeMutation(GPSTestClock& clock)
         clock.reset();
         Receiver receiver(clock);
         receiver.version = native("VERSIONA", body);
-        UnicoreProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Unicore::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned rate = 115200;
-        CHECK(!driver.configure(rate, baseConfig(false)));
+        CHECK(!driver.configure(baseConfig(false), rate));
         CHECK(!driver.receiverReady());
         CHECK(receiver.commands == std::vector<std::string>{"VERSIONA"});
     }
     for (unsigned variant = 0; variant < 3; ++variant) {
         clock.reset();
         Receiver receiver(clock);
-        UnicoreProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Unicore::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         auto config = baseConfig(false);
         if (variant == 0) {
             config.base.mode = GPSBaseStationConfig::SurveyIn{};
@@ -196,7 +197,7 @@ void rejectBeforeMutation(GPSTestClock& clock)
             std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDuration = 0s;
         }
         unsigned rate = 115200;
-        CHECK(!driver.configure(rate, config));
+        CHECK(!driver.configure(config, rate));
         CHECK(receiver.calls == 0);
         CHECK(!driver.receiverReady());
     }
@@ -206,9 +207,9 @@ void fixedBaseAndTransition(GPSTestClock& clock)
 {
     clock.reset();
     Receiver receiver(clock);
-    UnicoreProtocol driver(receiver.io(), false);
+    GPSProtocolRuntime driver(Unicore::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
     unsigned rate = 115200;
-    CHECK(driver.configure(rate, baseConfig(true)));
+    CHECK(driver.configure(baseConfig(true), rate));
     CHECK(driver.receiverReady());
     CHECK(receiver.sent("MODE BASE 4315616."));
     CHECK(receiver.sent("BESTNAVXYZA") && receiver.sent("RTCM1005 1") && receiver.sent("RTCM1124 1"));
@@ -235,7 +236,7 @@ void fixedBaseAndTransition(GPSTestClock& clock)
     corrupt.back() ^= 1;
     driver.consume(corrupt);
     CHECK(receiver.rtcmCount == 1);
-    CHECK(driver.configure(rate, baseConfig(false)));
+    CHECK(driver.configure(baseConfig(false), rate));
     CHECK(driver.receiverReady() && receiver.role == "MODE BASE TIME");
     driver.consume(frame);
     CHECK(receiver.rtcmCount == 1);
@@ -245,9 +246,9 @@ void averagingEvidenceAndRestart(GPSTestClock& clock)
 {
     clock.reset();
     Receiver receiver(clock);
-    UnicoreProtocol driver(receiver.io(), false);
+    GPSProtocolRuntime driver(Unicore::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
     unsigned rate = 115200;
-    CHECK(driver.configure(rate, baseConfig(false)));
+    CHECK(driver.configure(baseConfig(false), rate));
     CHECK(receiver.sent("MODE BASE TIME 60 0"));
     CHECK(surveyFlags(receiver.surveys.back()) == 2);
     CHECK(std::isnan(receiver.surveys.back().survey.position.latitudeDegrees));
@@ -286,7 +287,7 @@ void averagingEvidenceAndRestart(GPSTestClock& clock)
     consume(driver, position("FIXEDPOS", receiver.coordinates));
     driver.consume(correction());
     CHECK(receiver.rtcmCount == 1);
-    CHECK(driver.configure(rate, baseConfig(false)));
+    CHECK(driver.configure(baseConfig(false), rate));
     CHECK(surveyFlags(receiver.surveys.back()) == 2);
     CHECK(std::count(receiver.commands.begin(), receiver.commands.end(), "MODE BASE TIME 60 0") == 2);
     driver.consume(correction());
@@ -306,9 +307,10 @@ void commandFailures(GPSTestClock& clock)
             Receiver receiver(clock);
             receiver.fault = fault;
             receiver.faultCommand = command;
-            UnicoreProtocol driver(receiver.io(), false);
+            const GPSProtocolLogCapture log;
+            GPSProtocolRuntime driver(Unicore::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
             unsigned rate = 115200;
-            CHECK(!driver.configure(rate, baseConfig(false)));
+            CHECK(!driver.configure(baseConfig(false), rate));
             CHECK(!driver.receiverReady());
             CHECK(receiver.commands.back().starts_with(command));
             CHECK(!receiver.results.empty());
@@ -320,11 +322,11 @@ void commandFailures(GPSTestClock& clock)
             CHECK(receiver.results.back().evidence.outcome == expected);
             CHECK(receiver.results.back().evidence.required);
             if (fault == Receiver::Fault::Cancel) {
-                CHECK(driver.ioError() == GPSProtocolError::Cancelled);
-                CHECK(receiver.warnings.empty());
+                CHECK(driver.error() == GPSProtocolError::Cancelled);
+                CHECK(log.warnings().isEmpty());
             }
             if (fault == Receiver::Fault::WriteError) {
-                CHECK(driver.ioErrorDetail() == QStringLiteral("Unicore test write failure"));
+                CHECK(driver.errorDetail() == QStringLiteral("Unicore test write failure"));
             }
             if (fault == Receiver::Fault::ShortWrite) {
                 CHECK(receiver.results.back().evidence.writtenBytes > 0);
@@ -353,9 +355,9 @@ void readbackFailures(GPSTestClock& clock)
         } else if (variant == 5) {
             receiver.omitModeReadback = true;
         }
-        UnicoreProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Unicore::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned rate = 115200;
-        CHECK(!driver.configure(rate, baseConfig(true)));
+        CHECK(!driver.configure(baseConfig(true), rate));
         CHECK(!driver.receiverReady());
         CHECK(receiver.results.back().evidence.outcome ==
               (variant < 2 ? GPSCommandOutcome::Rejected : GPSCommandOutcome::TimedOut));
@@ -373,9 +375,9 @@ void corruptStatusAndExpiry(GPSTestClock& clock)
     for (unsigned variant = 0; variant < 6; ++variant) {
         clock.reset();
         Receiver receiver(clock);
-        UnicoreProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Unicore::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned rate = 115200;
-        CHECK(driver.configure(rate, baseConfig(false)));
+        CHECK(driver.configure(baseConfig(false), rate));
         std::string data = position("FIXEDPOS", receiver.coordinates);
         if (variant == 0) {
             data[data.find('*') + 1] = 'Z';
@@ -412,9 +414,9 @@ void restartAndReadErrors(GPSTestClock& clock)
     for (unsigned variant = 0; variant < 4; ++variant) {
         clock.reset();
         Receiver receiver(clock);
-        UnicoreProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Unicore::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned rate = 115200;
-        CHECK(driver.configure(rate, baseConfig(true)));
+        CHECK(driver.configure(baseConfig(true), rate));
         if (variant == 0) {
             consume(driver, VERSION);
         } else if (variant == 1) {
@@ -423,9 +425,9 @@ void restartAndReadErrors(GPSTestClock& clock)
             consume(driver, position("FIXEDPOS", receiver.coordinates, 1000));
         } else {
             receiver.readError = true;
-            CHECK(driver.receive(100ms) == 0);
-            CHECK(driver.ioError() == GPSProtocolError::Transport);
-            CHECK(driver.ioErrorDetail() == QStringLiteral("Unicore test disconnect"));
+            CHECK(driver.receive(100ms) == GPSReceiveUpdates{});
+            CHECK(driver.error() == GPSProtocolError::Transport);
+            CHECK(driver.errorDetail() == QStringLiteral("Unicore test disconnect"));
         }
         CHECK(!driver.receiverReady());
         driver.consume(correction());
@@ -439,9 +441,9 @@ void measurementFreshnessAndRollover(GPSTestClock& clock)
     for (const bool rollover : {false, true}) {
         clock.reset();
         Receiver receiver(clock);
-        UnicoreProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Unicore::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned baud = 115200;
-        CHECK(driver.configure(baud, baseConfig(false)));
+        CHECK(driver.configure(baseConfig(false), baud));
         const auto complete = GPSTest::unicorePosition("FIXEDPOS", receiver.coordinates, 604799000, 2326);
         consume(driver, complete, 1);
         CHECK(surveyFlags(receiver.surveys.back()) == 1);
@@ -486,11 +488,11 @@ void scheduledAveragingAndBoot(GPSTestClock& clock)
         Receiver receiver(clock);
         receiver.chunk = chunk;
         receiver.initialTow = 604798000;
-        UnicoreProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Unicore::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         auto config = baseConfig(false);
         std::get<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode).maximumDuration = 1s;
         unsigned baud = 115200;
-        CHECK(driver.configure(baud, config));
+        CHECK(driver.configure(config, baud));
         const auto commands = receiver.commands.size();
         for (unsigned slices = 0; clock.nowUs() < 2500000; ++slices) {
             CHECK(slices < 100);
@@ -524,10 +526,14 @@ class GPSProtocolUnicoreTest : public UnitTest
 private slots:
 
     void _protocol();
+    void _failureDetails_data();
+    void _failureDetails();
+    void _unsupportedDetails();
 };
 
 void GPSProtocolUnicoreTest::_protocol()
 {
+    const GPSProtocolLogCapture log;
     GPSTestClock clock;
     try {
         identityAndRole(clock);
@@ -543,6 +549,69 @@ void GPSProtocolUnicoreTest::_protocol()
     } catch (const std::exception& error) {
         QFAIL(error.what());
     }
+}
+
+void GPSProtocolUnicoreTest::_failureDetails_data()
+{
+    QTest::addColumn<int>("fault");
+    QTest::addColumn<QString>("expected");
+    using Fault = Receiver::Fault;
+    QTest::newRow("rejected") << int(Fault::Reject) << QStringLiteral("Unicore command 'UNLOG' was rejected");
+    QTest::newRow("timeout") << int(Fault::Silence) << QStringLiteral("Unicore command 'UNLOG' timed out");
+    QTest::newRow("transport") << int(Fault::WriteError) << QStringLiteral("Unicore test write failure");
+    QTest::newRow("cancelled") << int(Fault::Cancel) << QString();
+}
+
+void GPSProtocolUnicoreTest::_failureDetails()
+{
+    QFETCH(int, fault);
+    QFETCH(QString, expected);
+    const GPSProtocolLogCapture log;
+    GPSTestClock clock;
+    Receiver peer(clock);
+    peer.fault = static_cast<Receiver::Fault>(fault);
+    peer.faultCommand = "UNLOG";
+    GPSProtocolRuntime receiver(Unicore::FAMILY, peer.io(), peer.observer(), NO_SATELLITES);
+    unsigned baud = 115200;
+    GPSConfig config;
+    config.base.mode = GPSBaseStationConfig::ReceiverAveraging{1s};
+    QVERIFY(!receiver.configure(config, baud));
+    QVERIFY(!receiver.receiverReady());
+    QVERIFY(!peer.results.empty());
+    QCOMPARE(peer.results.back().evidence.command, std::string("UNLOG"));
+    if (peer.fault == Receiver::Fault::Cancel) {
+        QCOMPARE(receiver.error(), GPSProtocolError::Cancelled);
+        QVERIFY(receiver.errorDetail().isEmpty());
+        QVERIFY(log.warnings().isEmpty());
+        QCOMPARE(peer.results.back().evidence.outcome, GPSCommandOutcome::Cancelled);
+    } else {
+        QVERIFY2(receiver.errorDetail().contains(expected), qPrintable(receiver.errorDetail()));
+        if (peer.fault == Receiver::Fault::WriteError) {
+            QCOMPARE(receiver.errorDetail(), expected);
+        }
+    }
+}
+
+void GPSProtocolUnicoreTest::_unsupportedDetails()
+{
+    const GPSProtocolLogCapture log;
+    GPSTestClock clock;
+    Receiver peer(clock);
+    peer.version = GPSTest::unicoreNative("VERSIONA",
+                                          "\"UM982\",\"R5.00Build20000\",\"auth\",\"serial\",\"efuse\",\"2024/08/08\"");
+    GPSProtocolRuntime receiver(Unicore::FAMILY, peer.io(), peer.observer(), NO_SATELLITES);
+    unsigned baud = 115200;
+    GPSConfig config;
+    config.base.mode = GPSBaseStationConfig::ReceiverAveraging{1s};
+    QVERIFY(!receiver.configure(config, baud));
+    QVERIFY(receiver.errorDetail().contains("Unsupported Unicore receiver"));
+    QVERIFY(receiver.errorDetail().contains("R5.00Build20000"));
+    QVERIFY(receiver.errorDetail().contains("R4.10Build7650"));
+    QCOMPARE(peer.commands.size(), size_t(1));
+    peer.version = GPSTest::UNICORE_VERSION;
+    QVERIFY(receiver.configure(config, baud));
+    QVERIFY(receiver.errorDetail().isEmpty());
+    QVERIFY(receiver.receiverReady());
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolUnicoreTest, TestLabel::Unit)

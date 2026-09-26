@@ -12,7 +12,6 @@ class RTCMMAVLink : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(quint64 totalBytesSent READ totalBytesSent NOTIFY bandwidthChanged FINAL)
-    Q_PROPERTY(double bandwidthKBps READ bandwidthKBps NOTIFY bandwidthChanged FINAL)
     Q_PROPERTY(quint64 totalBytesSubmitted READ totalBytesSubmitted NOTIFY deliveryStatsChanged FINAL)
 
 public:
@@ -39,8 +38,6 @@ public:
     ~RTCMMAVLink() override;
 
     quint64 totalBytesSent() const { return _rateTracker.totalBytes(); }
-
-    double bandwidthKBps() const { return _rateTracker.kBps(); }
 
     quint64 totalBytesSubmitted() const { return _submittedBytes; }
 

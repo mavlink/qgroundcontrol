@@ -1,15 +1,21 @@
+#include "Ashtech/AshtechDecoder.h"
+
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <ctime>
-#include <math.h>
 
-#include "Ashtech/AshtechProtocol.h"
+#include "GPSEventSink.h"
+#include "GPSFamilyProtocol.h"
 #include "GPSFixQuality.h"
 #include "GPSNMEAReport.h"
+#include "GPSProtocolMath.h"
 #include "NMEAFields.h"
-#include "NMEASentence.h"
+
+namespace Ashtech {
 
 namespace {
+
 struct ZdaFields
 {
     double time = 0.0;
@@ -61,42 +67,95 @@ std::optional<uint64_t> receiptUtc(std::string_view date, std::string_view time)
                                                                  std::chrono::milliseconds(*milliseconds))
         .count();
 }
+
 }  // namespace
 
-int AshtechProtocol::handleReceiverLine(std::string_view message)
+Decoder::Decoder(bool satelliteInfoEnabled)
+    : _nmea(GPSNMEAStream::Navigation::ReceiverSpecific, satelliteInfoEnabled)
+{
+    _nmea.setRTCMEnabled(false);
+}
+
+void Decoder::reset(GPSStreamDemux& stream)
+{
+    _session = {};
+    _receiverPositions = false;
+    _utcReceivedUs = 0;
+    _utcReference = 0;
+    _headingReceivedUs = 0;
+    _positionEpoch = {};
+    _accuracyReceipt = {};
+    _accuracy = {};
+    requestSurveyReceipts(false);
+    _nmea.setRTCMEnabled(false);
+    _nmea.reset(stream);
+}
+
+GPSReceiveUpdates Decoder::onFrame(const GPSFrame& frame, GPSDecodeContext& context)
+{
+    if (frame.kind == GPSFrameKind::RTCM3) {
+        return _nmea.decodeRTCM(frame, context);
+    }
+    if (frame.kind != GPSFrameKind::ASCIILine) {
+        return {};
+    }
+    GPSReceiveUpdates updates = _nmea.decodeStandard(frame.text(), context);
+    // A rejected sentence does not advance the survey-in duration.
+    if (const auto vendor = _decodeVendor(frame.text(), context)) {
+        updates |= *vendor;
+        if (_session.surveyClock.update(context.nowUs())) {
+            context.sink().publishSurvey(true, false, _session.surveyClock.duration());
+        }
+    }
+    return _nmea.finishLine(updates, context);
+}
+
+void Decoder::flush(GPSDecodeContext& context)
+{
+    _expireMetadata(context.nowUs());
+    _nmea.flush(context);
+}
+
+void Decoder::requestSurveyReceipts(bool requested)
+{
+    _surveyReceiptRequested = requested;
+    _surveyReceiptStartUtc.reset();
+}
+
+std::optional<GPSReceiveUpdates> Decoder::_decodeVendor(std::string_view message, GPSDecodeContext& context)
 {
     const auto sentence = NMEA::sentence(message);
     if (!sentence || message.size() < 7) {
-        return 0;
+        return std::nullopt;
     }
 
+    const uint64_t now = context.nowUs();
     const auto commas = std::count(message.begin(), message.end(), ',');
     const auto type = message.substr(3, 3);
-    std::optional<int> updates = 0;
     if (type == "ZDA" && commas == 6) {
-        updates = _handleTime(message);
-    } else if (type == "GGA" && commas == 14 && !_got_pashr_pos_message) {
-        updates = _handleGGA(*sentence);
-    } else if (message.starts_with("$GPHDT,") && commas == 2) {
-        _handleHeading(message);
-    } else if (message.starts_with("$PASHR,POS,") && commas == 18) {
-        updates = _handlePosition(message, *sentence);
-    } else if (type == "GST" && commas == 8) {
-        updates = _handleAccuracy(*sentence);
-    } else if (message.starts_with("$PASHR,RECEIPT,")) {
-        updates = _handleSurveyReceipt(*sentence);
-    } else {
-        offerReply(message);
+        return _handleTime(message, now);
     }
-    // A rejected sentence does not advance the survey-in duration.
-    if (!updates) {
-        return 0;
+    if (type == "GGA" && commas == 14 && !_receiverPositions) {
+        return _handleGGA(*sentence, now);
     }
-    _updateSurveyDuration();
-    return *updates;
+    if (message.starts_with("$GPHDT,") && commas == 2) {
+        _handleHeading(message, now);
+        return GPSReceiveUpdates{};
+    }
+    if (message.starts_with("$PASHR,POS,") && commas == 18) {
+        return _handlePosition(message, *sentence, now);
+    }
+    if (type == "GST" && commas == 8) {
+        return _handleAccuracy(*sentence, now);
+    }
+    if (message.starts_with("$PASHR,RECEIPT,")) {
+        return _handleSurveyReceipt(*sentence, context);
+    }
+    context.offerReply(message);
+    return GPSReceiveUpdates{};
 }
 
-std::optional<int> AshtechProtocol::_handleTime(std::string_view message)
+std::optional<GPSReceiveUpdates> Decoder::_handleTime(std::string_view message, uint64_t nowUs)
 {
     /*
     UTC day, month, and year, and local time zone offset
@@ -134,40 +193,40 @@ std::optional<int> AshtechProtocol::_handleTime(std::string_view message)
         data.month > 12 || data.day < 1 || data.day > 31) {
         return std::nullopt;
     }
-    int ashtech_hour = static_cast<int>(data.time / 10000);
-    int ashtech_minute = static_cast<int>((data.time - ashtech_hour * 10000) / 100);
-    double ashtech_sec = static_cast<double>(data.time - ashtech_hour * 10000 - ashtech_minute * 100);
-    if (ashtech_minute > 59 || ashtech_sec >= 60.0) {
+    const int hour = static_cast<int>(data.time / 10000);
+    const int minute = static_cast<int>((data.time - hour * 10000) / 100);
+    const double seconds = static_cast<double>(data.time - hour * 10000 - minute * 100);
+    if (minute > 59 || seconds >= 60.0) {
         return std::nullopt;
     }
-    uint64_t usecs = static_cast<uint64_t>((ashtech_sec - static_cast<uint64_t>(ashtech_sec)) * 1000000);
+    const auto micros = static_cast<uint64_t>((seconds - static_cast<uint64_t>(seconds)) * 1000000);
 
     tm timeinfo{};
     timeinfo.tm_year = data.year - 1900;
     timeinfo.tm_mon = data.month - 1;
     timeinfo.tm_mday = data.day;
-    timeinfo.tm_hour = ashtech_hour;
-    timeinfo.tm_min = ashtech_minute;
-    timeinfo.tm_sec = int(ashtech_sec);
-    _utcReference = timeFromUtc(timeinfo, usecs * 1000);
-    _position.navigation.utcTimeUs = _utcReference;
+    timeinfo.tm_hour = hour;
+    timeinfo.tm_min = minute;
+    timeinfo.tm_sec = static_cast<int>(seconds);
+    _utcReference = GPSProtocolMath::utcMicroseconds(timeinfo, static_cast<int32_t>(micros * 1000));
+    _nmea.position().navigation.utcTimeUs = _utcReference;
 
-    _last_timestamp_time = nowUs();
-    return 0;
+    _utcReceivedUs = nowUs;
+    return GPSReceiveUpdates{};
 }
 
-std::optional<int> AshtechProtocol::_handleGGA(const NMEA::Sentence& sentence)
+std::optional<GPSReceiveUpdates> Decoder::_handleGGA(const NMEA::Sentence& sentence, uint64_t nowUs)
 {
     const auto fix = NMEA::gga(sentence);
     if (!fix) {
         return std::nullopt;
     }
-    applyNMEAGGA(_position, *fix, nowUs());
-    _applyMetadata(NMEA::utcMilliseconds(sentence.fields[NMEA::Field::UTC_TIME]));
-    return GPSDecodedBatch::POSITION_UPDATE;
+    applyNMEAGGA(_nmea.position(), *fix, nowUs);
+    _applyMetadata(NMEA::utcMilliseconds(sentence.fields[NMEA::Field::UTC_TIME]), nowUs);
+    return GPSReceiveUpdate::Position;
 }
 
-void AshtechProtocol::_handleHeading(std::string_view message)
+void Decoder::_handleHeading(std::string_view message, uint64_t nowUs)
 {
     /*
     Heading message
@@ -180,18 +239,19 @@ void AshtechProtocol::_handleHeading(std::string_view message)
     float heading = 0.f;
 
     if (NMEAFields::Cursor(message.substr(7)).read(heading)) {
-        heading *= GPS_PI / 180.0f;  // deg to rad, now in range [0, 2pi]
+        heading *= GPSProtocolMath::DEG_TO_RAD;  // now in range [0, 2pi]
 
-        if (heading > GPS_PI) {
-            heading -= 2.f * GPS_PI;  // final range is [-pi, pi]
+        if (heading > GPSProtocolMath::PI) {
+            heading -= 2.f * GPSProtocolMath::PI;  // final range is [-pi, pi]
         }
 
-        _position.navigation.headingRadians = heading;
-        _headingTimestamp = nowUs();
+        _nmea.position().navigation.headingRadians = heading;
+        _headingReceivedUs = nowUs;
     }
 }
 
-std::optional<int> AshtechProtocol::_handlePosition(std::string_view message, const NMEA::Sentence& sentence)
+std::optional<GPSReceiveUpdates> Decoder::_handlePosition(std::string_view message, const NMEA::Sentence& sentence,
+                                                          uint64_t nowUs)
 {
     /*
     Example
@@ -225,9 +285,7 @@ std::optional<int> AshtechProtocol::_handlePosition(std::string_view message, co
         */
     NMEAFields::Cursor bufptr(message.substr(11));
 
-    /*
-     * Ashtech would return empty space as coordinate (lat, lon or alt) if it doesn't have a fix yet
-     */
+    // Ashtech reports an empty coordinate (latitude, longitude or altitude) until it has a fix.
     int coordinatesFound = 0;
     PashrPositionFields data;
     bufptr.read(data.quality);
@@ -273,97 +331,68 @@ std::optional<int> AshtechProtocol::_handlePosition(std::string_view message, co
         data.longitude = -data.longitude;
     }
 
-    _position.navigation.latitudeDegrees = NMEA::degreesFromDegreesMinutes(data.latitude);
-    _position.navigation.longitudeDegrees = NMEA::degreesFromDegreesMinutes(data.longitude);
-    _position.navigation.altitudeEllipsoidMeters = data.altitude;
-    _position.navigation.altitudeMslMeters = NAN;
-    _position.navigation.horizontalDop = static_cast<float>(data.horizontalDop);
-    _position.navigation.verticalDop = static_cast<float>(data.verticalDop);
+    auto& navigation = _nmea.position().navigation;
+    navigation.latitudeDegrees = NMEA::degreesFromDegreesMinutes(data.latitude);
+    navigation.longitudeDegrees = NMEA::degreesFromDegreesMinutes(data.longitude);
+    navigation.altitudeEllipsoidMeters = data.altitude;
+    navigation.altitudeMslMeters = NAN;
+    navigation.horizontalDop = static_cast<float>(data.horizontalDop);
+    navigation.verticalDop = static_cast<float>(data.verticalDop);
 
     if (coordinatesFound < 3) {
-        _position.navigation.fixType = GPSPositionReport::FixType::NoFix;
+        navigation.fixType = GPSPositionReport::FixType::NoFix;
 
     } else {
         if (data.quality == 9 || data.quality == 10) {  // SBAS differential or BeiDou differential
-            _position.navigation.fixType = GPSPositionReport::FixType::Differential;
+            navigation.fixType = GPSPositionReport::FixType::Differential;
 
         } else if (data.quality == 12 || data.quality == 22) {  // RTK float or RTK float dithered
-            _position.navigation.fixType = GPSPositionReport::FixType::RTKFloat;
+            navigation.fixType = GPSPositionReport::FixType::RTKFloat;
 
         } else if (data.quality == 13 || data.quality == 23) {  // RTK fixed or RTK fixed dithered
-            _position.navigation.fixType = GPSPositionReport::FixType::RTKFixed;
+            navigation.fixType = GPSPositionReport::FixType::RTKFixed;
 
         } else {
-            _position.navigation.fixType = gpsFixQualityFromValue(3 + data.quality);
+            navigation.fixType = gpsFixQualityFromValue(3 + data.quality);
         }
 
-        _got_pashr_pos_message = true;
-        // we got a valid position, activate correction output if needed
-        if (_configure_done && _board == AshtechBoard::trimble_mb_two && !_correction_output_activated) {
-            _correctionSetupPending = true;
+        _receiverPositions = true;
+        // The first valid position sets up a configured MB-Two as a base station.
+        if (_session.configured && _session.board == Board::MBTwo && !_session.correctionOutputActive) {
+            _session.correctionSetupPending = true;
         }
     }
 
-    _position.navigation.timestampUs = nowUs();
-    _applyMetadata(NMEA::utcMilliseconds(sentence.fields[4]));
-    _position.navigation.satellitesUsed = static_cast<uint8_t>(data.satellites);
+    navigation.timestampUs = nowUs;
+    _applyMetadata(NMEA::utcMilliseconds(sentence.fields[4]), nowUs);
+    navigation.satellitesUsed = static_cast<uint8_t>(data.satellites);
 
-    float track_rad = static_cast<float>(data.trackDegrees) * GPS_PI / 180.0f;
-
-    float velocity_ms = static_cast<float>(data.groundSpeedKnots) / 1.9438445f; /** knots to m/s */
-    _position.navigation.speedMetersPerSecond = velocity_ms;                    /** GPS ground speed (m/s) */
-    _position.navigation.courseRadians =
-        track_rad;                  /** Course over ground (NOT heading, but direction of movement) in rad, -PI..PI */
-    _position.velocityValid = true; /** Flag to indicate if NED speed is valid */
-    return GPSDecodedBatch::POSITION_UPDATE;
+    navigation.speedMetersPerSecond = static_cast<float>(data.groundSpeedKnots) / 1.9438445f;
+    // Course over ground (the direction of movement, not the heading).
+    navigation.courseRadians = static_cast<float>(data.trackDegrees) * GPSProtocolMath::PI / 180.0f;
+    _nmea.position().velocityValid = true;
+    return GPSReceiveUpdate::Position;
 }
 
-std::optional<int> AshtechProtocol::_handleAccuracy(const NMEA::Sentence& sentence)
+std::optional<GPSReceiveUpdates> Decoder::_handleAccuracy(const NMEA::Sentence& sentence, uint64_t nowUs)
 {
     const auto error = NMEA::gst(sentence);
     if (!error) {
         return std::nullopt;
     }
     _accuracy = *error;
-    _accuracyReceipt = {NMEA::utcMilliseconds(sentence.fields[NMEA::Field::UTC_TIME]), nowUs()};
+    _accuracyReceipt = {NMEA::utcMilliseconds(sentence.fields[NMEA::Field::UTC_TIME]), nowUs};
     if (_positionEpoch.matches(_accuracyReceipt, METADATA_MAX_AGE)) {
-        _expireMetadata();
-        _position.navigation.horizontalAccuracyMeters = _accuracy.horizontalAccuracy;
-        _position.navigation.verticalAccuracyMeters = _accuracy.verticalAccuracy;
-        return GPSDecodedBatch::POSITION_UPDATE;
+        _expireMetadata(nowUs);
+        _nmea.position().navigation.horizontalAccuracyMeters = _accuracy.horizontalAccuracy;
+        _nmea.position().navigation.verticalAccuracyMeters = _accuracy.verticalAccuracy;
+        return GPSReceiveUpdate::Position;
     }
-    return 0;
+    return GPSReceiveUpdates{};
 }
 
-GPSCommandOutcome AshtechProtocol::rejection(std::string_view reply)
-{
-    return reply.starts_with("$PASHR,NAK*") ? GPSCommandOutcome::Rejected : GPSCommandOutcome::Pending;
-}
-
-GPSCommandOutcome AshtechProtocol::acknowledgement(std::string_view reply)
-{
-    return reply.starts_with("$PASHR,ACK*") ? GPSCommandOutcome::Acknowledged : rejection(reply);
-}
-
-GPSCommandOutcome AshtechProtocol::portReply(std::string_view reply)
-{
-    if (!reply.starts_with("$PASHR,PRT,") || std::count(reply.begin(), reply.end(), ',') != 3) {
-        return rejection(reply);
-    }
-    _port = reply[11];
-    return GPSCommandOutcome::Acknowledged;
-}
-
-GPSCommandOutcome AshtechProtocol::boardReply(std::string_view reply)
-{
-    if (!reply.starts_with("$PASHR,RID,")) {
-        return rejection(reply);
-    }
-    _board = reply.substr(11).starts_with("MB2") ? AshtechBoard::trimble_mb_two : AshtechBoard::other;
-    return GPSCommandOutcome::Acknowledged;
-}
-
-std::optional<int> AshtechProtocol::_handleSurveyReceipt(const NMEA::Sentence& sentence)
+std::optional<GPSReceiveUpdates> Decoder::_handleSurveyReceipt(const NMEA::Sentence& sentence,
+                                                               GPSDecodeContext& context)
 {
     if (sentence.count < 9) {
         return std::nullopt;
@@ -405,18 +434,20 @@ std::optional<int> AshtechProtocol::_handleSurveyReceipt(const NMEA::Sentence& s
         }
     }
 
-    if (!_configure_done || std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseConfig.mode) ||
-        _board != AshtechBoard::trimble_mb_two || !_surveyReceiptRequested) {
+    const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&_session.base.mode);
+    if (!_session.configured || !survey || _session.board != Board::MBTwo || !_surveyReceiptRequested) {
         return std::nullopt;
     }
-    if (*interval != std::get<GPSBaseStationConfig::SurveyIn>(_baseConfig.mode).duration.count()) {
+    if (*interval != survey->duration.count()) {
         return std::nullopt;
     }
+    const uint64_t now = context.nowUs();
+    const bool awaitingReceipt = _session.awaitingSurveyReceipt && context.replyPending();
     if (started) {
-        if (!_awaitingReceipt() || _surveyReceiptStartUtc) {
+        if (!awaitingReceipt || _surveyReceiptStartUtc) {
             return std::nullopt;
         }
-        if (_utcReference && NMEA::freshAt(_last_timestamp_time, nowUs(), METADATA_MAX_AGE) &&
+        if (_utcReference && NMEA::freshAt(_utcReceivedUs, now, METADATA_MAX_AGE) &&
             (*receiptTime < _utcReference ||
              std::chrono::microseconds(*receiptTime - _utcReference) > METADATA_MAX_AGE)) {
             return std::nullopt;
@@ -427,89 +458,46 @@ std::optional<int> AshtechProtocol::_handleSurveyReceipt(const NMEA::Sentence& s
             (!failed && *receiptTime - *_surveyReceiptStartUtc < uint64_t(*interval) * 1000000)) {
             return std::nullopt;
         }
-        _surveyReceiptRequested = false;
-        _surveyReceiptStartUtc.reset();
+        requestSurveyReceipts(false);
     }
-    if (_awaitingReceipt()) {
-        resolveReply(failed ? GPSCommandOutcome::Rejected : GPSCommandOutcome::Acknowledged);
+    if (awaitingReceipt) {
+        context.resolveReply(failed ? GPSCommandOutcome::Rejected : GPSCommandOutcome::Acknowledged);
     }
     if (!started) {
-        _surveyClock.stop(nowUs());
+        _session.surveyClock.stop(now);
         // The survey receipt's height is validated but not reported.
-        publishSurvey(false, !failed, _surveyClock.duration(),
-                      {.latitudeDegrees = latitude, .longitudeDegrees = longitude});
-        _rtcmActivationPending = !failed;
+        context.sink().publishSurvey(false, !failed, _session.surveyClock.duration(),
+                                     {.latitudeDegrees = latitude, .longitudeDegrees = longitude});
+        _session.rtcmActivationPending = !failed;
     }
-    return 0;
+    return GPSReceiveUpdates{};
 }
 
-void AshtechProtocol::_updateSurveyDuration()
+void Decoder::_expireMetadata(uint64_t nowUs)
 {
-    if (_surveyClock.update(nowUs())) {
-        publishSurvey(true, false, _surveyClock.duration());
+    auto& navigation = _nmea.position().navigation;
+    if (!_headingReceivedUs || !NMEA::freshAt(_headingReceivedUs, nowUs, METADATA_MAX_AGE)) {
+        navigation.headingRadians = NAN;
+        navigation.headingAccuracyRadians = NAN;
     }
-}
-
-void AshtechProtocol::flushDecoded()
-{
-    _expireMetadata();
-    GPSAsciiProtocol::flushDecoded();
-}
-
-void AshtechProtocol::_expireMetadata()
-{
-    const auto now = nowUs();
-    if (!_headingTimestamp || !NMEA::freshAt(_headingTimestamp, now, METADATA_MAX_AGE)) {
-        _position.navigation.headingRadians = NAN;
-        _position.navigation.headingAccuracyRadians = NAN;
+    if (!_accuracyReceipt.time || !NMEA::freshAt(_accuracyReceipt.receivedAtUs, nowUs, METADATA_MAX_AGE)) {
+        navigation.horizontalAccuracyMeters = NAN;
+        navigation.verticalAccuracyMeters = NAN;
     }
-    if (!_accuracyReceipt.time || !NMEA::freshAt(_accuracyReceipt.receivedAtUs, now, METADATA_MAX_AGE)) {
-        _position.navigation.horizontalAccuracyMeters = NAN;
-        _position.navigation.verticalAccuracyMeters = NAN;
-    }
-    if (!_utcReference || !NMEA::freshAt(_last_timestamp_time, now, METADATA_MAX_AGE)) {
-        _position.navigation.utcTimeUs = 0;
+    if (!_utcReference || !NMEA::freshAt(_utcReceivedUs, nowUs, METADATA_MAX_AGE)) {
+        navigation.utcTimeUs = 0;
     }
 }
 
-void AshtechProtocol::_applyMetadata(std::optional<int> time)
+void Decoder::_applyMetadata(std::optional<int> time, uint64_t nowUs)
 {
-    _expireMetadata();
-    const auto now = nowUs();
-    _positionEpoch = {time, now};
+    _expireMetadata(nowUs);
+    _positionEpoch = {time, nowUs};
     const bool matches = _accuracyReceipt.matches(_positionEpoch, METADATA_MAX_AGE);
-    _position.navigation.horizontalAccuracyMeters = matches ? _accuracy.horizontalAccuracy : NAN;
-    _position.navigation.verticalAccuracyMeters = matches ? _accuracy.verticalAccuracy : NAN;
-    _position.navigation.utcTimeUs =
-        NMEA::utcAtTimeOfDay(_utcReference, _last_timestamp_time, time, now, METADATA_MAX_AGE);
+    auto& navigation = _nmea.position().navigation;
+    navigation.horizontalAccuracyMeters = matches ? _accuracy.horizontalAccuracy : NAN;
+    navigation.verticalAccuracyMeters = matches ? _accuracy.verticalAccuracy : NAN;
+    navigation.utcTimeUs = NMEA::utcAtTimeOfDay(_utcReference, _utcReceivedUs, time, nowUs, METADATA_MAX_AGE);
 }
 
-AshtechProtocol::AshtechProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
-    : GPSAsciiProtocol(std::move(io), satelliteInfoEnabled, Navigation::ReceiverSpecific)
-{
-    setRTCMEnabled(false);
-}
-
-void AshtechProtocol::receiveWait(std::chrono::milliseconds timeout)
-{
-    const uint64_t until = GPSDeadline::after(nowUs(), timeout).untilUs;
-
-    while (nowUs() < until) {
-        receive(timeout);
-        if (hasIOError()) {
-            return;
-        }
-    }
-}
-
-void AshtechProtocol::servicePendingCommands()
-{
-    if (_correctionSetupPending) {
-        _correctionSetupPending = false;
-        activateCorrectionOutput();
-    }
-    if (_rtcmActivationPending) {
-        _rtcmActivationPending = false;
-        activateRTCMOutput();
-    }
-}
+}  // namespace Ashtech

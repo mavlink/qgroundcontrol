@@ -8,7 +8,7 @@
 
 #include "GPSObservation.h"
 #include "GPSPositionService.h"
-#include "GPSRTK.h"
+#include "GPSReceiver.h"
 #include "GPSSourceHealth.h"
 #include "MonotonicClock.h"
 #include "MultiVehicleManager.h"
@@ -65,7 +65,7 @@ GPSObservation vehicleEstimate(const QGeoCoordinate& coordinate, const QString& 
 
 }  // namespace
 
-GPSGgaSources::GPSGgaSources(NTRIPManager* ntrip, GPSRTK* rtk, GPSPositionService* groundStation, QObject* parent)
+GPSGgaSources::GPSGgaSources(NTRIPManager* ntrip, GPSReceiver* rtk, GPSPositionService* groundStation, QObject* parent)
     : QObject(parent)
     , _ntrip(ntrip)
     , _rtk(rtk)

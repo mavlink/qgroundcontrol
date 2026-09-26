@@ -1,0 +1,30 @@
+{{ attribution }}
+#pragma once
+
+#include <cstdint>
+
+namespace UBX {
+
+/// A message class and id. value() is the two header bytes as one little-endian word, as UBXFrameDecoder
+/// reports a frame's message.
+struct MessageId
+{
+    uint8_t cls;
+    uint8_t id;
+
+    [[nodiscard]] constexpr uint16_t value() const { return static_cast<uint16_t>(cls | (id << 8)); }
+};
+
+}  // namespace UBX
+
+namespace UBX::MsgClass {
+{% for cls in defs.classes %}
+inline constexpr uint8_t {{ cls.constant }} = {{ cls.value | hex(2) }};
+{% endfor %}
+}  // namespace UBX::MsgClass
+
+namespace UBX::Msg {
+{% for message in defs.messages %}
+inline constexpr MessageId {{ message.constant }}{MsgClass::{{ message.class_constant }}, {{ message.id | hex(2) }}};
+{% endfor %}
+}  // namespace UBX::Msg

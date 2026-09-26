@@ -1,0 +1,82 @@
+{{ attribution }}
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <type_traits>
+
+namespace UBX {
+
+/// Value size in bytes from bits 28-30 of a configuration key id, or 0 for a reserved size.
+[[nodiscard]] constexpr size_t cfgKeyValueBytes(uint32_t keyId)
+{
+    switch ((keyId >> 28) & 0x7) {
+        case 1:  // A one-bit value still occupies a byte.
+        case 2:
+            return 1;
+        case 3:
+            return 2;
+        case 4:
+            return 4;
+        case 5:
+            return 8;
+        default:
+            return 0;
+    }
+}
+
+/// A configuration key whose value is written and read as T.
+template <typename T>
+struct CfgKey
+{
+    static_assert(std::is_arithmetic_v<T>);
+    using ValueType = T;
+
+    uint32_t id;
+};
+
+/// Builds every key below, so each one checks its value type against the size bits of its id.
+template <typename T, uint32_t Id>
+[[nodiscard]] consteval CfgKey<T> cfgKey()
+{
+    static_assert(cfgKeyValueBytes(Id) == sizeof(T), "the value type size must match the key id size bits");
+    return {Id};
+}
+
+/// A port's CFG-MSGOUT key is the family's I2C key id plus the port's offset.
+enum class MsgOutPort : uint32_t
+{
+{% for port in defs.ports %}
+    {{ port.name }} = {{ port.offset }},
+{% endfor %}
+};
+
+/// A CFG-MSGOUT output rate key family, named by its I2C key.
+struct MsgOutKey
+{
+    CfgKey<uint8_t> i2c;
+
+    [[nodiscard]] constexpr CfgKey<uint8_t> port(MsgOutPort port) const
+    {
+        return {i2c.id + static_cast<uint32_t>(port)};
+    }
+};
+
+}  // namespace UBX
+
+// Each key is followed by its pyubx2 type.
+namespace UBX::Cfg {
+{% for key in defs.keys %}
+{% if key.kept %}
+// QGC keeps {{ key.type }} against the pyubx2 type; see manifest.toml.
+{% endif %}
+inline constexpr auto {{ key.constant }} = cfgKey<{{ key.type }}, {{ key.id | hex(8) }}>();  // {{ key.upstream_type }}
+{% endfor %}
+
+{% for family in defs.msgout %}
+inline constexpr MsgOutKey {{ family.constant }}{cfgKey<uint8_t, {{ family.i2c_id | hex(8) }}>()};
+{% for port, port_id in family.port_ids %}
+static_assert({{ family.constant }}.port(MsgOutPort::{{ port }}).id == {{ port_id | hex(8) }});
+{% endfor %}
+{% endfor %}
+}  // namespace UBX::Cfg

@@ -1,0 +1,45 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden ublox/wire-discovery-rejected-after-baud-change
+about Late ACK arrives, then the next command is dropped
+request type=ublox role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure
+  result configured=0 baud=0->115200 failure=none ready=0 elapsed=4310ms
+  identity "ZED-F9P HPG 1.32"
+  error "Receiver configuration failed"
+  wire
+    baud 38400 configured
+    write "1034" 8
+      b5620a0400000e34
+    baud 57600 configured
+    write "1034" 8
+      b5620a0400000e34
+    baud 9600 configured
+    write "1034" 8
+      b5620a0400000e34
+    write "35334" 47
+      b562068a27000001000002005220010300522000040052200001007310010200
+      731000010074100102007410002edb
+    write "35334" 20
+      b562068a0c00000100000100524000c20100f3a5
+    baud 115200 configured
+    write "1034" 8
+      b5620a0400000e34
+    write "UBX-CFG-VALSET readback" 16
+      b562068b080000000000010052402c79
+    write "35334" 52
+      b562068a2c000001000004007310000100771001040077100002007710000100
+      7810010200781000040074100104007810010b08
+    write "UBX-CFG-VALSET readback" 44
+      b562068b24000000000004007310010077100400771002007710010078100200
+      78100400741004007810ff81
+  evidence
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+    "1034" acknowledged required accepted=8 written=8 uncertain=0 elapsed=0ms
+    "35334" acknowledged required accepted=47 written=47 uncertain=0 elapsed=0ms
+    "35334" timed-out optional accepted=20 written=20 uncertain=0 elapsed=250ms
+    "1034" acknowledged required accepted=8 written=8 uncertain=0 elapsed=0ms
+    "UBX-CFG-VALSET readback" readback-verified required accepted=16 written=16 uncertain=0 elapsed=0ms
+    "35334" written required accepted=52 written=52 uncertain=0 elapsed=0ms
+    "UBX-CFG-VALSET readback" rejected required accepted=44 written=44 uncertain=0 elapsed=0ms
+  events

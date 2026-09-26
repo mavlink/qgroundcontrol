@@ -1,8 +1,15 @@
+#include "Unicore/UnicoreDecoder.h"
+
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <variant>
 
 #include "CRC32.h"
-#include "UnicoreProtocol.h"
+#include "GPSEventSink.h"
+#include "GPSFamilyProtocol.h"
+#include "GPSFrame.h"
+#include "NMEASentence.h"
 
 // Independent implementation of Unicore N4 Commands and Logs Reference Book, EN R1.6:
 // https://en.unicore.com/uploads/file/Unicore%20Reference%20Commands%20Manual%20For%20N4%20High%20Precision%20Products_V2_EN_R1.6.pdf
@@ -65,9 +72,188 @@ bool supportedFirmware(std::string_view model, std::string_view firmware)
     // N4 R1.6 section 3.6 explicitly gives these minimum builds for the rover modes.
     return build && ((model == "UM980" && *build >= 7923) || (model == "UM982" && *build >= 7650));
 }
+
+bool modeReadback(Unicore::Plan::Reply reply)
+{
+    using Unicore::Plan::Reply;
+    return reply == Reply::RoverMode || reply == Reply::AveragingMode || reply == Reply::FixedMode;
+}
+
+QByteArray bytes(std::string_view text)
+{
+    return {text.data(), static_cast<qsizetype>(text.size())};
+}
+
 }  // namespace
 
-void UnicoreProtocol::_handleVersion(std::string_view body)
+namespace Unicore {
+
+Decoder::Decoder(bool satelliteInfoEnabled)
+    : _nmea(GPSNMEAStream::Navigation::StandardNMEA, satelliteInfoEnabled)
+{
+    _nmea.setRTCMEnabled(false);
+}
+
+QString Decoder::identity() const
+{
+    return QString::fromUtf8(_model.isEmpty() || _firmware.isEmpty() ? _model + _firmware : _model + ' ' + _firmware);
+}
+
+void Decoder::startSession(GPSStreamDemux& stream, GPSDecodeContext& context, bool averaging)
+{
+    _ready = false;
+    _monitorBase = false;
+    _baseValid = false;
+    _lastBaseEpoch.reset();
+    _averaging = averaging;
+    _nmea.setRTCMEnabled(false);
+    _nmea.reset(stream);
+    _model.clear();
+    _firmware.clear();
+    _rejection.clear();
+    _publishBase(context, false, false);
+}
+
+void Decoder::expect(const Plan::Command& command)
+{
+    _command = command;
+    _rejection.clear();
+    if (modeReadback(command.reply)) {
+        _expectedMode = command.reply;
+    }
+}
+
+void Decoder::monitorBase(GPSDecodeContext& context)
+{
+    _monitorBase = true;
+    _publishBase(context, false, _averaging);
+}
+
+void Decoder::finishSession()
+{
+    _ready = true;
+    _nmea.setRTCMEnabled(_baseValid);
+}
+
+void Decoder::armDecodeOnly(const GPSBaseStationConfig::Mode& mode)
+{
+    const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&mode);
+    _averaging = !fixed;
+    _expectedMode = fixed ? Plan::Reply::FixedMode : Plan::Reply::AveragingMode;
+    if (fixed) {
+        _fixedECEF = GPSProtocolMath::toEcef(fixed->position);
+    }
+    _monitorBase = true;
+    _ready = true;
+}
+
+void Decoder::failSession(GPSDecodeContext& context)
+{
+    if (_monitorBase) {
+        _publishBase(context, false, false);
+    }
+    _ready = false;
+    _monitorBase = false;
+    _baseValid = false;
+    _nmea.setRTCMEnabled(false);
+}
+
+GPSReceiveUpdates Decoder::onFrame(const GPSFrame& frame, GPSDecodeContext& context)
+{
+    if (frame.kind == GPSFrameKind::RTCM3) {
+        return _nmea.decodeRTCM(frame, context);
+    }
+    if (frame.kind != GPSFrameKind::ASCIILine) {
+        return {};
+    }
+    GPSReceiveUpdates updates = _nmea.decodeStandard(frame.text(), context);
+    updates |= _decodeLine(frame.text(), context);
+    return _nmea.finishLine(updates, context);
+}
+
+void Decoder::flush(GPSDecodeContext& context)
+{
+    _expireBase(context);
+    _nmea.flush(context);
+}
+
+bool Decoder::_awaiting(GPSDecodeContext& context, Plan::Reply reply) const
+{
+    return context.replyPending() && _command.reply == reply;
+}
+
+GPSReceiveUpdates Decoder::_decodeAcknowledgement(std::string_view line, GPSDecodeContext& context)
+{
+    if (!context.replyPending() || !validChecksum(line, false)) {
+        return {};
+    }
+    const auto response = line.find(",response: ", 9);
+    const std::string_view command(_command.text.constData(), static_cast<size_t>(_command.text.size()));
+    if (response == std::string_view::npos || !equalCommand(line.substr(9, response - 9), command)) {
+        return {};
+    }
+    const auto status = line.substr(response + 11, line.find('*') - response - 11);
+    if (status != "OK") {
+        context.resolveReply(GPSCommandOutcome::Rejected);
+    } else if (_command.reply == Plan::Reply::Acknowledgement) {
+        context.resolveReply(GPSCommandOutcome::Acknowledged);
+    }
+    return GPSReceiveUpdate::Activity;
+}
+
+GPSReceiveUpdates Decoder::_decodeLine(std::string_view line, GPSDecodeContext& context)
+{
+    if (line.starts_with("$command,")) {
+        return _decodeAcknowledgement(line, context);
+    }
+    if (!line.starts_with('#')) {
+        return {};
+    }
+    const auto comma = line.find(',');
+    const auto name = line.substr(1, comma - 1);
+    if (name != "VERSIONA" && name != "MODE" && name != "BESTNAVXYZA") {
+        return {};
+    }
+    if (!validChecksum(line, name != "MODE")) {
+        return {};
+    }
+    const auto semicolon = line.find(';');
+    if (semicolon == std::string_view::npos || semicolon >= line.find('*')) {
+        return {};
+    }
+    std::array<std::string_view, 10> header{};
+    if (NMEA::splitFields(line.substr(1, semicolon - 1), header) != header.size()) {
+        return {};
+    }
+    const auto body = line.substr(semicolon + 1, line.find('*') - semicolon - 1);
+    if (name == "VERSIONA") {
+        _handleVersion(body, context);
+    } else if (name == "MODE") {
+        _handleMode(body, context);
+    } else {
+        if (!_monitorBase) {
+            return GPSReceiveUpdate::Activity;
+        }
+        const auto week = NMEA::number<uint16_t>(header[4]);
+        const auto milliseconds = NMEA::number<uint32_t>(header[5]);
+        if (header[2] != "GPS" || header[3] != "FINE" || !week || !milliseconds || *milliseconds >= 604800000) {
+            return {};
+        }
+        const uint64_t epoch = uint64_t(*week) * 604800000 + *milliseconds;
+        if (_lastBaseEpoch && epoch < *_lastBaseEpoch) {
+            _invalidateBase(context);
+            return GPSReceiveUpdate::Activity;
+        }
+        if (_lastBaseEpoch && epoch == *_lastBaseEpoch) {
+            return GPSReceiveUpdate::Activity;
+        }
+        _lastBaseEpoch = epoch;
+        _handlePosition(body, context);
+    }
+    return GPSReceiveUpdate::Activity;
+}
+
+void Decoder::_handleVersion(std::string_view body, GPSDecodeContext& context)
 {
     std::array<std::string_view, 6> fields{};
     if (NMEA::splitFields(body, fields) != fields.size()) {
@@ -78,41 +264,40 @@ void UnicoreProtocol::_handleVersion(std::string_view body)
     if (model.empty() || model.size() > 32 || firmware.empty() || firmware.size() > 32) {
         return;
     }
-    if (_awaitingReply(Reply::Version)) {
-        _model = model;
-        _firmware = firmware;
+    if (_awaiting(context, Plan::Reply::Version)) {
+        _model = bytes(model);
+        _firmware = bytes(firmware);
         const bool supported = supportedFirmware(model, firmware);
-        resolveReply(supported ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected);
+        context.resolveReply(supported ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected);
         if (!supported) {
-            _configurationDetail =
-                QStringLiteral(
-                    "Unsupported Unicore receiver '%1' firmware '%2'; requires UM980 R4.10Build7923+ "
-                    "or UM982 R4.10Build7650+")
-                    .arg(QString::fromStdString(_model), QString::fromStdString(_firmware));
+            _rejection = QStringLiteral(
+                             "Unsupported Unicore receiver '%1' firmware '%2'; requires UM980 R4.10Build7923+ "
+                             "or UM982 R4.10Build7650+")
+                             .arg(QString::fromUtf8(_model), QString::fromUtf8(_firmware));
         }
     } else if (_ready) {
         // An unsolicited identity report can indicate a reboot; never retain old base validity.
-        _invalidateBase();
+        _invalidateBase(context);
     }
 }
 
-void UnicoreProtocol::_handleMode(std::string_view body)
+void Decoder::_handleMode(std::string_view body, GPSDecodeContext& context)
 {
     const auto mode = body.substr(0, body.find(','));
     const auto starts = [&](std::string_view name) {
         return mode == name || (mode.starts_with(name) && mode.size() > name.size() && mode[name.size()] == ' ');
     };
-    const bool matches = _expectedMode == Mode::Rover           ? starts("MODE ROVER")
-                         : _expectedMode == Mode::AveragingBase ? starts("MODE BASE TIME")
-                                                                : mode == "MODE BASE";
-    if (_awaitingReply(Reply::Mode)) {
-        resolveReply(matches ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected);
+    const bool matches = _expectedMode == Plan::Reply::RoverMode       ? starts("MODE ROVER")
+                         : _expectedMode == Plan::Reply::AveragingMode ? starts("MODE BASE TIME")
+                                                                       : mode == "MODE BASE";
+    if (context.replyPending() && modeReadback(_command.reply)) {
+        context.resolveReply(matches ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected);
     } else if (_ready && !matches) {
-        _invalidateBase();
+        _invalidateBase(context);
     }
 }
 
-void UnicoreProtocol::_handlePosition(std::string_view body)
+void Decoder::_handlePosition(std::string_view body, GPSDecodeContext& context)
 {
     if (!_monitorBase) {
         return;
@@ -127,140 +312,57 @@ void UnicoreProtocol::_handlePosition(std::string_view body)
     if (!x || !y || !z) {
         return;
     }
-    const EcefMeters coordinates{*x, *y, *z};
-    const auto samePosition = [](const EcefMeters& left, const EcefMeters& right) {
+    const GPSProtocolMath::Ecef coordinates{*x, *y, *z};
+    const auto samePosition = [](const GPSProtocolMath::Ecef& left, const GPSProtocolMath::Ecef& right) {
         // ECEF command/readback values have four decimal places; this is not survey accuracy.
         return std::hypot(left.x - right.x, left.y - right.y, left.z - right.z) < 0.02;
     };
     const auto radius = std::hypot(*x, *y, *z);
     const bool fixed = fields[0] == "SOL_COMPUTED" && fields[1] == "FIXEDPOS" && radius > 6000000 && radius < 7000000;
     const bool matches = _averaging || samePosition(coordinates, _fixedECEF);
-    if (fixed && _awaitingReply(Reply::FixedPosition)) {
-        resolveReply(matches ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected);
+    if (fixed && _awaiting(context, Plan::Reply::FixedPosition)) {
+        context.resolveReply(matches ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected);
     }
     if (_ready && _baseValid && (!fixed || !matches || !samePosition(coordinates, _baseECEF))) {
-        _invalidateBase();
+        _invalidateBase(context);
         return;
     }
-    _lastBaseStatus = nowUs();
+    _lastBaseStatus = context.nowUs();
     _baseValid = fixed && matches;
     if (_baseValid) {
         _baseECEF = coordinates;
     }
-    setRTCMEnabled(_ready && _baseValid);
-    _publishBase(_baseValid, _averaging && !_baseValid);
+    _nmea.setRTCMEnabled(_ready && _baseValid);
+    _publishBase(context, _baseValid, _averaging && !_baseValid);
 }
 
-void UnicoreProtocol::_publishBase(bool valid, bool active)
+void Decoder::_publishBase(GPSDecodeContext& context, bool valid, bool active)
 {
     GPSDecodedSurvey report{};
     report.survey.valid = valid;
     report.survey.active = active;
     if (valid) {
-        const auto position = fromEcef(_baseECEF);
-        report.survey.position = position;
+        report.survey.position = GPSProtocolMath::fromEcef(_baseECEF);
     }
     // BESTNAV's instantaneous sigmas and BASEPOS monitoring are not averaging accuracy or elapsed time.
-    publishSurvey(report);
+    context.sink().publishSurvey(report);
 }
 
-void UnicoreProtocol::_invalidateBase()
+void Decoder::_invalidateBase(GPSDecodeContext& context)
 {
     _baseValid = false;
     _monitorBase = false;
     _ready = false;
-    setRTCMEnabled(false);
-    if (_base) {
-        _publishBase(false, false);
-    }
-    controlFailed();
+    _nmea.setRTCMEnabled(false);
+    _publishBase(context, false, false);
+    context.failControl();
 }
 
-void UnicoreProtocol::_expireBase()
+void Decoder::_expireBase(GPSDecodeContext& context)
 {
-    if (_ready && (hasIOError() || (_baseValid && nowUs() - _lastBaseStatus > BASE_STATUS_TIMEOUT_US))) {
-        _invalidateBase();
+    if (_ready && (context.failed() || (_baseValid && context.nowUs() - _lastBaseStatus > BASE_STATUS_TIMEOUT_US))) {
+        _invalidateBase(context);
     }
 }
 
-int UnicoreProtocol::decodeByte(uint8_t byte)
-{
-    _expireBase();
-    return GPSAsciiProtocol::decodeByte(byte);
-}
-
-void UnicoreProtocol::flushDecoded()
-{
-    _expireBase();
-    GPSAsciiProtocol::flushDecoded();
-}
-
-void UnicoreProtocol::servicePendingCommands()
-{
-    _expireBase();
-}
-
-int UnicoreProtocol::handleReceiverLine(std::string_view line)
-{
-    if (line.starts_with("$command,")) {
-        if (!replyPending() || !validChecksum(line, false)) {
-            return 0;
-        }
-        const auto response = line.find(",response: ", 9);
-        if (response == std::string_view::npos || !equalCommand(line.substr(9, response - 9), _command.text)) {
-            return 0;
-        }
-        const auto status = line.substr(response + 11, line.find('*') - response - 11);
-        if (status != "OK") {
-            resolveReply(GPSCommandOutcome::Rejected);
-        } else if (_command.expected == Reply::Acknowledgment) {
-            resolveReply(GPSCommandOutcome::Acknowledged);
-        }
-        return GPSDecodedBatch::PROTOCOL_ACTIVITY;
-    }
-    if (!line.starts_with('#')) {
-        return 0;
-    }
-    const auto comma = line.find(',');
-    const auto name = line.substr(1, comma - 1);
-    if (name != "VERSIONA" && name != "MODE" && name != "BESTNAVXYZA") {
-        return 0;
-    }
-    if (!validChecksum(line, name != "MODE")) {
-        return 0;
-    }
-    const auto semicolon = line.find(';');
-    if (semicolon == std::string_view::npos || semicolon >= line.find('*')) {
-        return 0;
-    }
-    std::array<std::string_view, 10> header{};
-    if (NMEA::splitFields(line.substr(1, semicolon - 1), header) != header.size()) {
-        return 0;
-    }
-    const auto body = line.substr(semicolon + 1, line.find('*') - semicolon - 1);
-    if (name == "VERSIONA") {
-        _handleVersion(body);
-    } else if (name == "MODE") {
-        _handleMode(body);
-    } else {
-        if (!_monitorBase) {
-            return GPSDecodedBatch::PROTOCOL_ACTIVITY;
-        }
-        const auto week = NMEA::number<uint16_t>(header[4]);
-        const auto milliseconds = NMEA::number<uint32_t>(header[5]);
-        if (header[2] != "GPS" || header[3] != "FINE" || !week || !milliseconds || *milliseconds >= 604800000) {
-            return 0;
-        }
-        const uint64_t epoch = uint64_t(*week) * 604800000 + *milliseconds;
-        if (_lastBaseEpoch && epoch < *_lastBaseEpoch) {
-            _invalidateBase();
-            return GPSDecodedBatch::PROTOCOL_ACTIVITY;
-        }
-        if (_lastBaseEpoch && epoch == *_lastBaseEpoch) {
-            return GPSDecodedBatch::PROTOCOL_ACTIVITY;
-        }
-        _lastBaseEpoch = epoch;
-        _handlePosition(body);
-    }
-    return GPSDecodedBatch::PROTOCOL_ACTIVITY;
-}
+}  // namespace Unicore

@@ -7,24 +7,13 @@
 
 #include "GPSDecodedData_p.h"
 #include "GPSFixQuality.h"
-#include "GPSProtocol.h"
+#include "GPSProtocolMath.h"
 #include "UnitTest.h"
 
 static_assert(std::is_same_v<decltype(GPSNavigationValues::fixType), GPSPositionReport::FixType>);
 static_assert(std::is_same_v<decltype(GPSIntegrityReport::Jamming::state), GPSIntegrityReport::JammingState>);
 static_assert(std::is_same_v<decltype(GPSIntegrityReport::Spoofing::state), GPSIntegrityReport::SpoofingState>);
 static_assert(std::is_same_v<decltype(GPSIntegrityReport::Corrections::use), GPSIntegrityReport::CorrectionUse>);
-
-namespace {
-
-struct CoordinateConversions : GPSProtocol
-{
-    using GPSProtocol::EcefMeters;
-    using GPSProtocol::fromEcef;
-    using GPSProtocol::toEcef;
-};
-
-}  // namespace
 
 class GPSDecodedDataTest : public UnitTest
 {
@@ -78,8 +67,8 @@ void GPSDecodedDataTest::_ellipsoidEcefConversion()
     QFETCH(double, x);
     QFETCH(double, y);
     QFETCH(double, z);
-    const auto ecef = CoordinateConversions::toEcef(position);
-    const auto restored = CoordinateConversions::fromEcef(ecef);
+    const auto ecef = GPSProtocolMath::toEcef(position);
+    const auto restored = GPSProtocolMath::fromEcef(ecef);
     if (std::isnan(x)) {
         QVERIFY(std::isnan(ecef.x));
         QVERIFY(std::isnan(ecef.y));

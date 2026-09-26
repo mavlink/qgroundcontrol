@@ -21,7 +21,8 @@ private slots:
     void _nmeaPortLabelBecomesPositionOnlyReceiver_data();
     void _nmeaPortLabelBecomesPositionOnlyReceiver();
     void _configuredReceiverKeepsSettings();
-    void _passiveManufacturerBecomesRole();
+    void _manufacturerMigration_data();
+    void _manufacturerMigration();
 
 private:
     QHash<QString, QHash<QString, QVariant>> _savedGroups;

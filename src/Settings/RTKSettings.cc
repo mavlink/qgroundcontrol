@@ -35,6 +35,7 @@ enum Role
 {
     PositionOnly = 0,
     Passive = 1,
+    ConfiguredBase = 2,
 };
 
 enum Connection
@@ -49,9 +50,12 @@ DECLARE_SETTINGGROUP(RTK, "RTK")
 {
     QSettings settings;
     settings.beginGroup(settingsGroup);
-    if (!settings.contains(receiverRoleName) &&
-        settings.value(baseReceiverManufacturersName).toInt() == kLegacyPassiveManufacturer) {
-        settings.setValue(receiverRoleName, Passive);
+    // Before receivers had roles, the manufacturer only filtered the settings shown and auto-connect chose the family
+    // by board name, so a saved value falls back to Automatic. The stored role marks the migration done, keeping a
+    // manufacturer chosen later with the default role.
+    if (!settings.contains(receiverRoleName)) {
+        const bool passive = settings.value(baseReceiverManufacturersName).toInt() == kLegacyPassiveManufacturer;
+        settings.setValue(receiverRoleName, passive ? Passive : ConfiguredBase);
         settings.remove(baseReceiverManufacturersName);
     }
     const bool receiverConfigured = !settings.value(serialDeviceName).toString().trimmed().isEmpty() ||

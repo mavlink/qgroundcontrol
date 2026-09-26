@@ -146,13 +146,6 @@ public:
         }
     }
 
-    void disconnectPeer() const
-    {
-        if (Connection* connection = latestConnection()) {
-            connection->disconnectFromHost();
-        }
-    }
-
     void close()
     {
         if (_server) {

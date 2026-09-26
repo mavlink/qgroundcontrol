@@ -1,0 +1,19 @@
+# GPSCommandChannel transcript, recorded from the pre-runtime command base while it ran side by side with the
+# channel and matched it exactly. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+result configured=1 baud=0 clock=1062000 error=0 reads=4 detail=""
+write \xb5b\x06\x8a\x03\x00\x01\x02\x03\x99\x7f
+write \xb5b\x06\x8a\x01\x00\x04\x95M
+write \xb5b\x06\x08\x00\x00\x0e0
+write \xb5b\x06\x04\x01\x00\x09\x14:
+note 1
+note VALSET 1 outcome=2 1000000-1004000 accepted=11 written=11 uncertain=0 required=1 rate=0
+note 1
+note VALSET 2 outcome=4 1004000-1008000 accepted=9 written=9 uncertain=0 required=1 rate=0
+note 1
+note RATE outcome=4 1008000-1012000 accepted=8 written=8 uncertain=0 required=1 rate=1
+note 1
+note LATE outcome=5 1012000-1062000 accepted=9 written=9 uncertain=0 required=1 rate=0
+evidence VALSET 1 outcome=2 1000000-1004000 accepted=11 written=11 uncertain=0 required=1 rate=0
+evidence VALSET 2 outcome=4 1004000-1008000 accepted=9 written=9 uncertain=0 required=1 rate=0
+evidence RATE outcome=4 1008000-1012000 accepted=8 written=8 uncertain=0 required=1 rate=1
+evidence LATE outcome=5 1012000-1062000 accepted=9 written=9 uncertain=0 required=1 rate=0

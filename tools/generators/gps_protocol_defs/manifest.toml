@@ -1,0 +1,167 @@
+# The protocol definitions QGC uses, with the values QGC uses today. Generation fails when an entry
+# is missing from the pinned pyubx2/pysbf2 databases or disagrees with them. An entry that keeps
+# QGC's value against upstream sets upstream-type to the upstream value it was reviewed against,
+# so any later upstream change fails again.
+
+[ubx]
+# Ports whose CFG-MSGOUT keys QGC writes, besides the I2C key that names each family.
+msgout-ports = ["UART1", "USB"]
+
+# pyubx2 message name = [class, id].
+[ubx.messages]
+NAV-POSLLH = [0x01, 0x02]
+NAV-STATUS = [0x01, 0x03]
+NAV-DOP = [0x01, 0x04]
+NAV-SOL = [0x01, 0x06]
+NAV-PVT = [0x01, 0x07]
+NAV-VELNED = [0x01, 0x12]
+NAV-HPPOSLLH = [0x01, 0x14]
+NAV-TIMEGPS = [0x01, 0x20]
+NAV-TIMEUTC = [0x01, 0x21]
+NAV-SVINFO = [0x01, 0x30]
+NAV-SAT = [0x01, 0x35]
+NAV-SVIN = [0x01, 0x3b]
+NAV-RELPOSNED = [0x01, 0x3c]
+NAV-DAHEADING = [0x01, 0x45]
+NAV-EOE = [0x01, 0x61]
+RXM-SFRBX = [0x02, 0x13]
+RXM-RAWX = [0x02, 0x15]
+RXM-RTCM = [0x02, 0x32]
+RXM-COR = [0x02, 0x34]
+INF-ERROR = [0x04, 0x00]
+INF-WARNING = [0x04, 0x01]
+INF-NOTICE = [0x04, 0x02]
+INF-DEBUG = [0x04, 0x04]
+ACK-NAK = [0x05, 0x00]
+ACK-ACK = [0x05, 0x01]
+CFG-PRT = [0x06, 0x00]
+CFG-MSG = [0x06, 0x01]
+CFG-RATE = [0x06, 0x08]
+CFG-NAV5 = [0x06, 0x24]
+CFG-TMODE3 = [0x06, 0x71]
+CFG-VALSET = [0x06, 0x8a]
+CFG-VALGET = [0x06, 0x8b]
+MON-VER = [0x0a, 0x04]
+MON-HW = [0x0a, 0x09]
+MON-COMMS = [0x0a, 0x36]
+MON-RF = [0x0a, 0x38]
+SEC-SIG = [0x27, 0x09]
+RTCM3-1005 = [0xf5, 0x05]
+RTCM3-1074 = [0xf5, 0x4a]
+RTCM3-1077 = [0xf5, 0x4d]
+RTCM3-1084 = [0xf5, 0x54]
+RTCM3-1087 = [0xf5, 0x57]
+RTCM3-1094 = [0xf5, 0x5e]
+RTCM3-1097 = [0xf5, 0x61]
+RTCM3-1124 = [0xf5, 0x7c]
+RTCM3-1127 = [0xf5, 0x7f]
+RTCM3-1230 = [0xf5, 0xe6]
+
+# pyubx2 configuration key = its id and the C++ type QGC writes.
+[ubx.keys]
+CFG_ITFM_ENABLE = { id = 0x1041000d, type = "uint8_t" }
+CFG_NAVCOR_ENABLE_GAL_HAS = { id = 0x100d0002, type = "uint8_t" }
+CFG_NAVCOR_ENABLE_HOST = { id = 0x100d0001, type = "uint8_t" }
+CFG_NAVHPG_DGNSSMODE = { id = 0x20140011, type = "uint8_t" }
+# pyubx2 notes this key is undocumented (taken from u-center 2). QGC only writes 0, so keeping its
+# signed type does not change the wire bytes.
+CFG_NAVSPG_DAHEADING_OFFSET = { id = 0x401100e4, type = "int32_t", upstream-type = "U004" }
+CFG_NAVSPG_DYNMODEL = { id = 0x20110021, type = "uint8_t" }
+CFG_NAVSPG_FIXMODE = { id = 0x20110011, type = "uint8_t" }
+CFG_NAVSPG_UTCSTANDARD = { id = 0x2011001c, type = "uint8_t" }
+CFG_ODO_OUTLPCOG = { id = 0x10220004, type = "uint8_t" }
+CFG_ODO_OUTLPVEL = { id = 0x10220003, type = "uint8_t" }
+CFG_ODO_USE_COG = { id = 0x10220002, type = "uint8_t" }
+CFG_ODO_USE_ODO = { id = 0x10220001, type = "uint8_t" }
+CFG_RATE_MEAS = { id = 0x30210001, type = "uint16_t" }
+CFG_RATE_NAV = { id = 0x30210002, type = "uint16_t" }
+CFG_RATE_TIMEREF = { id = 0x20210003, type = "uint8_t" }
+CFG_SEC_JAMDET_SENSITIVITY_HI = { id = 0x10f60051, type = "uint8_t" }
+CFG_SIGNAL_HEALTH_L5 = { id = 0x10320001, type = "uint8_t" }
+CFG_TMODE_FIXED_POS_ACC = { id = 0x4003000f, type = "uint32_t" }
+CFG_TMODE_HEIGHT = { id = 0x4003000b, type = "int32_t" }
+CFG_TMODE_HEIGHT_HP = { id = 0x2003000e, type = "int8_t" }
+CFG_TMODE_LAT = { id = 0x40030009, type = "int32_t" }
+CFG_TMODE_LAT_HP = { id = 0x2003000c, type = "int8_t" }
+CFG_TMODE_LON = { id = 0x4003000a, type = "int32_t" }
+CFG_TMODE_LON_HP = { id = 0x2003000d, type = "int8_t" }
+CFG_TMODE_MODE = { id = 0x20030001, type = "uint8_t" }
+CFG_TMODE_POS_TYPE = { id = 0x20030002, type = "uint8_t" }
+CFG_TMODE_SVIN_ACC_LIMIT = { id = 0x40030011, type = "uint32_t" }
+CFG_TMODE_SVIN_MIN_DUR = { id = 0x40030010, type = "uint32_t" }
+CFG_UART1INPROT_NMEA = { id = 0x10730002, type = "uint8_t" }
+CFG_UART1INPROT_RTCM3X = { id = 0x10730004, type = "uint8_t" }
+CFG_UART1INPROT_SPARTN = { id = 0x10730005, type = "uint8_t" }
+CFG_UART1INPROT_UBX = { id = 0x10730001, type = "uint8_t" }
+CFG_UART1OUTPROT_NMEA = { id = 0x10740002, type = "uint8_t" }
+CFG_UART1OUTPROT_RTCM3X = { id = 0x10740004, type = "uint8_t" }
+CFG_UART1OUTPROT_UBX = { id = 0x10740001, type = "uint8_t" }
+CFG_UART1_BAUDRATE = { id = 0x40520001, type = "uint32_t" }
+CFG_UART1_DATABITS = { id = 0x20520003, type = "uint8_t" }
+CFG_UART1_PARITY = { id = 0x20520004, type = "uint8_t" }
+CFG_UART1_STOPBITS = { id = 0x20520002, type = "uint8_t" }
+CFG_USBINPROT_NMEA = { id = 0x10770002, type = "uint8_t" }
+CFG_USBINPROT_RTCM3X = { id = 0x10770004, type = "uint8_t" }
+CFG_USBINPROT_SPARTN = { id = 0x10770005, type = "uint8_t" }
+CFG_USBINPROT_UBX = { id = 0x10770001, type = "uint8_t" }
+CFG_USBOUTPROT_NMEA = { id = 0x10780002, type = "uint8_t" }
+CFG_USBOUTPROT_RTCM3X = { id = 0x10780004, type = "uint8_t" }
+CFG_USBOUTPROT_UBX = { id = 0x10780001, type = "uint8_t" }
+
+# pyubx2 CFG-MSGOUT key family (the key name without its port suffix) = its I2C key id.
+[ubx.msgout]
+CFG_MSGOUT_RTCM_3X_TYPE1005 = 0x209102bd
+CFG_MSGOUT_RTCM_3X_TYPE1074 = 0x2091035e
+CFG_MSGOUT_RTCM_3X_TYPE1077 = 0x209102cc
+CFG_MSGOUT_RTCM_3X_TYPE1084 = 0x20910363
+CFG_MSGOUT_RTCM_3X_TYPE1087 = 0x209102d1
+CFG_MSGOUT_RTCM_3X_TYPE1094 = 0x20910368
+CFG_MSGOUT_RTCM_3X_TYPE1097 = 0x20910318
+CFG_MSGOUT_RTCM_3X_TYPE1124 = 0x2091036d
+CFG_MSGOUT_RTCM_3X_TYPE1127 = 0x209102d6
+CFG_MSGOUT_RTCM_3X_TYPE1230 = 0x20910303
+CFG_MSGOUT_UBX_MON_RF = 0x20910359
+CFG_MSGOUT_UBX_NAV_DAHEADING = 0x209103df
+CFG_MSGOUT_UBX_NAV_DOP = 0x20910038
+CFG_MSGOUT_UBX_NAV_EOE = 0x2091015f
+CFG_MSGOUT_UBX_NAV_HPPOSLLH = 0x20910033
+CFG_MSGOUT_UBX_NAV_PVT = 0x20910006
+CFG_MSGOUT_UBX_NAV_RELPOSNED = 0x2091008d
+CFG_MSGOUT_UBX_NAV_SAT = 0x20910015
+CFG_MSGOUT_UBX_NAV_STATUS = 0x2091001a
+CFG_MSGOUT_UBX_NAV_SVIN = 0x20910088
+CFG_MSGOUT_UBX_NAV_TIMEGPS = 0x20910047
+CFG_MSGOUT_UBX_RXM_COR = 0x209106b6
+CFG_MSGOUT_UBX_RXM_RAWX = 0x209102a4
+CFG_MSGOUT_UBX_RXM_RTCM = 0x20910268
+CFG_MSGOUT_UBX_RXM_SFRBX = 0x20910231
+CFG_MSGOUT_UBX_SEC_SIG = 0x20910634
+
+# pysbf2 block = its block id. Fields map the pysbf2 field name to the C++ member, the type QGC
+# decodes and the offset from the block's first sync byte; only the fields QGC reads are listed.
+[sbf.blocks.PVTGeodetic]
+id = 4007
+
+[sbf.blocks.PVTGeodetic.fields]
+TOW = { member = "tow", type = "uint32_t", offset = 8 }
+WNc = { member = "wnc", type = "uint16_t", offset = 12 }
+Mode = { member = "mode", type = "uint8_t", offset = 14 }
+Error = { member = "error", type = "uint8_t", offset = 15 }
+Latitude = { member = "latitude", type = "double", offset = 16 }
+Longitude = { member = "longitude", type = "double", offset = 24 }
+Height = { member = "height", type = "double", offset = 32 }
+Undulation = { member = "undulation", type = "float", offset = 40 }
+Vn = { member = "vn", type = "float", offset = 44 }
+Ve = { member = "ve", type = "float", offset = 48 }
+Vu = { member = "vu", type = "float", offset = 52 }
+COG = { member = "cog", type = "float", offset = 56 }
+Datum = { member = "datum", type = "uint8_t", offset = 73 }
+NrSV = { member = "nrSV", type = "uint8_t", offset = 74 }
+HAccuracy = { member = "hAccuracy", type = "uint16_t", offset = 90 }
+VAccuracy = { member = "vAccuracy", type = "uint16_t", offset = 92 }
+
+# Bitfield subfield QGC reads = the accessor to generate and the mask QGC applies.
+[sbf.blocks.PVTGeodetic.bits.Mode]
+Type = { accessor = "modeType", mask = 0x0f }
+AutoSet = { accessor = "modeAutoSet", mask = 0x40 }
+2D = { accessor = "mode2D", mask = 0x80 }

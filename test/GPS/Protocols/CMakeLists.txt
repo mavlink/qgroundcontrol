@@ -7,8 +7,9 @@ target_include_directories(QGCGPSProtocolTestRuntime
 )
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSProtocolTestRuntime)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE Support/SBFReceiverModel.h Support/ScriptedReceiver.cc
-                                             Support/UBXReceiverModel.cc
+target_sources(${CMAKE_PROJECT_NAME}
+               PRIVATE Support/DetectionReceiver.h Support/SBFReceiverModel.h Support/ScriptedReceiver.cc
+                       Support/ScriptedReceiverRuntimeIO.cc Support/UBXReceiverModel.cc
 )
 
 # Protocol suites reuse file-local helper names (CHECK, noDevice, ...), so each stays out of unity batches.
@@ -51,7 +52,6 @@ foreach(timezone IN ITEMS EST5EDT JST-9)
 endforeach()
 qgc_add_protocol_test(GPSProtocolContractsTest GPSProtocolContractsTest.cc)
 qgc_add_protocol_test(GPSProtocolFamilyContractTest GPSProtocolFamilyContractTest.cc)
-qgc_add_protocol_test(GPSConfigurationSequenceTest GPSConfigurationSequenceTest.cc)
 qgc_add_protocol_test(GPSProtocolUbxTest gps-ubx-test.cpp)
 qgc_add_protocol_test(GPSProtocolAllocationTest gps-allocation-test.cpp)
 set_property(
@@ -60,20 +60,42 @@ set_property(
     PROPERTY COMPILE_DEFINITIONS GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
 )
 qgc_add_protocol_test(GPSProtocolReceiverModesTest gps-receiver-mode-test.cpp)
-qgc_add_protocol_test(GPSProtocolIOContractTest gps-io-contract-test.cpp)
+qgc_add_protocol_test(GPSProtocolAshtechTest gps-ashtech-test.cpp)
+qgc_add_protocol_test(GPSRuntimeIOContractTest gps-io-contract-test.cpp)
 qgc_add_protocol_test(GPSProtocolDecodeTest gps-decode-test.cpp)
 qgc_add_protocol_test(GPSProtocolFixtureTest gps-fixture-test.cpp)
-qgc_add_protocol_test(GPSAsciiProtocolTest GPSAsciiProtocolTest.cc)
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSAsciiProtocolTest.h)
+qgc_add_protocol_test(GeneratedDefinitionsTest GeneratedDefinitionsTest.cc)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GeneratedDefinitionsTest.h)
+set_property(
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/GeneratedDefinitionsTest.cc" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS GPS_PROTOCOL_CORPUS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/corpus"
+)
 set_property(
     SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/gps-fixture-test.cpp" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
     APPEND
     PROPERTY COMPILE_DEFINITIONS GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
 )
-foreach(family Unicore Quectel Passive)
-    string(TOLOWER "${family}" source_name)
-    qgc_add_protocol_test(GPSProtocol${family}Test "gps-${source_name}-test.cpp")
-endforeach()
+qgc_add_protocol_test(GPSProtocolSBFTest gps-sbf-test.cpp)
+set_property(
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/gps-sbf-test.cpp" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+)
+qgc_add_protocol_test(GPSGoldenTranscriptTest GPSGoldenTranscriptTest.cc)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSGoldenTranscriptTest.h Support/GoldenTranscript.cc
+                                             Support/GoldenTranscript.h
+)
+set_property(
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/GPSGoldenTranscriptTest.cc" TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS GPS_GOLDEN_DIR="${CMAKE_CURRENT_SOURCE_DIR}/golden"
+             GPS_CORPUS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/corpus" GPS_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
+)
+qgc_add_protocol_test(GPSProtocolUnicoreTest gps-unicore-test.cpp)
+qgc_add_protocol_test(GPSProtocolQuectelTest gps-quectel-test.cpp)
+qgc_add_protocol_test(GPSProtocolPassiveTest gps-passive-test.cpp)
+add_subdirectory(Runtime)
 
 option(QGC_BUILD_GPS_PROTOCOL_FUZZER "Build the native protocol libFuzzer harness" OFF)
 if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
@@ -88,7 +110,7 @@ if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
         QGCGPSProtocolContracts
         QGCGPSCommon
         QGCGPSNMEAProtocol
-        QGCGPSReceiver
+        QGCGPSReceiverConfig
         QGCGPSTransport
         QGCGPSRTCM
     )
@@ -103,7 +125,7 @@ if(QGC_BUILD_GPS_PROTOCOL_FUZZER)
         )
         target_link_options(${protocol_target} INTERFACE -fsanitize=address,undefined)
     endforeach()
-    add_executable(QGCGPSProtocolFuzz ProtocolFuzz.cc Support/ScriptedReceiver.cc)
+    add_executable(QGCGPSProtocolFuzz ProtocolFuzz.cc Support/ScriptedReceiver.cc Support/ScriptedReceiverRuntimeIO.cc)
     target_link_libraries(QGCGPSProtocolFuzz PRIVATE QGCGPSProtocolTestRuntime)
     set_target_properties(
         QGCGPSProtocolFuzz

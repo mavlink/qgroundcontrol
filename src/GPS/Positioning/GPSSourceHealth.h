@@ -38,8 +38,6 @@ public:
     /// Default position age at which health becomes Stale and the position stops being usable.
     static constexpr std::chrono::milliseconds FRESHNESS_TIMEOUT{5000};
 
-    std::chrono::milliseconds freshnessTimeout() const { return _freshnessTimeout; }
-
     void setFreshnessTimeout(std::chrono::milliseconds timeout);
 
     State state() const { return _position.state; }

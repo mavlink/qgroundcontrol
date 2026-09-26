@@ -1,0 +1,17 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden decode/quectel-fixed
+decoder type=quectel role=rtk-base mode=fixed lat=0.00000000 lon=90.00000000 alt=100.0000 accuracy=0.00000m compact=0 persistent=0 baud=0
+file corpus/synthetic-quectel-base.nmea bytes=456
+  chunks 1 7 whole
+    configured=1
+    events
+      survey active=0 valid=1 duration=0s accuracy=- lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+      survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+    expired
+file corpus/synthetic-quectel-fixed.nmea bytes=151
+  chunks 1 7 whole
+    configured=1
+    events
+      survey active=0 valid=1 duration=0s accuracy=- lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+      survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+    expired

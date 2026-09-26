@@ -1,0 +1,9 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden ublox/profile-f9p-passive-role
+about Passive input is not a u-blox role
+request type=ublox role=passive mode=survey-in accuracy=2.0000m duration=180s compact=0 persistent=0 baud=0
+stream-step 1 bytes=272 duration=1500ms
+stream-step 2 bytes=160 duration=1500ms
+stream-step 3 bytes=25 duration=3000ms
+configure
+  refused "This receiver does not support the requested role"

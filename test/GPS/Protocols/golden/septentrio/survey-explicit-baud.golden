@@ -1,0 +1,91 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden septentrio/survey-explicit-baud
+about Explicit 230400 request; the driver selects its own rate
+request type=septentrio role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=230400
+stream-step 1 bytes=268 duration=1000ms
+stream-step 2 bytes=25 duration=1000ms
+stream-step 3 bytes=0 duration=6000ms
+configure
+  result configured=1 baud=230400->115200 failure=none ready=1 elapsed=0ms
+  identity ""
+  error ""
+  wire
+    baud 115200 configured
+    write - 11
+      535353535353535353530a
+      text "SSSSSSSSSS\n"
+    write "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c434f4d312c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c434f4d322c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c555342312c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c555342322c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c555342332c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c555342342c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n"
+    write - 2
+      0a0d
+      text "\n\r"
+    write "setSBFOutput, Stream1, USB1, none, off\n" 39
+      7365745342464f75747075742c2053747265616d312c20555342312c206e6f6e
+      652c206f66660a
+      text "setSBFOutput, Stream1, USB1, none, off\n"
+    write "setDataInOut, USB1, Auto, SBF\n" 30
+      73657444617461496e4f75742c20555342312c204175746f2c205342460a
+      text "setDataInOut, USB1, Auto, SBF\n"
+    write "setGeodeticDatum, WGS84\n" 24
+      73657447656f6465746963446174756d2c2057475338340a
+      text "setGeodeticDatum, WGS84\n"
+    write "setDataInOut, USB1, Auto, SBF\n" 30
+      73657444617461496e4f75742c20555342312c204175746f2c205342460a
+      text "setDataInOut, USB1, Auto, SBF\n"
+    write "setDataInOut, USB1, Auto, RTCMv3+SBF\n" 37
+      73657444617461496e4f75742c20555342312c204175746f2c205254434d7633
+      2b5342460a
+      text "setDataInOut, USB1, Auto, RTCMv3+SBF\n"
+    write "setPVTMode, Static, All, auto\n" 30
+      7365745056544d6f64652c205374617469632c20416c6c2c206175746f0a
+      text "setPVTMode, Static, All, auto\n"
+    write "setSBFOutput, Stream1, USB1, +PVTGeodetic, msec500\n" 51
+      7365745342464f75747075742c2053747265616d312c20555342312c202b5056
+      5447656f64657469632c206d7365633530300a
+      text "setSBFOutput, Stream1, USB1, +PVTGeodetic, msec500\n"
+  evidence
+    "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setSBFOutput, Stream1, USB1, none, off\n" acknowledged required accepted=39 written=39 uncertain=0 elapsed=0ms
+    "setDataInOut, USB1, Auto, SBF\n" acknowledged required accepted=30 written=30 uncertain=0 elapsed=0ms
+    "setGeodeticDatum, WGS84\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+    "setDataInOut, USB1, Auto, SBF\n" acknowledged required accepted=30 written=30 uncertain=0 elapsed=0ms
+    "setDataInOut, USB1, Auto, RTCMv3+SBF\n" acknowledged required accepted=37 written=37 uncertain=0 elapsed=0ms
+    "setPVTMode, Static, All, auto\n" acknowledged required accepted=30 written=30 uncertain=0 elapsed=0ms
+    "setSBFOutput, Stream1, USB1, +PVTGeodetic, msec500\n" acknowledged required accepted=51 written=51 uncertain=0 elapsed=0ms
+  events
+stream
+  result failure=none ready=1
+  wire
+  evidence
+  events
+    usage used=17 receipt=1
+    survey active=0 valid=0 duration=0s accuracy=- lat=7.16197244 lon=-14.32394488 alt=123.5000 receipt=1
+    position fix=rtk-fixed lat=7.16197244 lon=-14.32394488 msl=135.7500 ellipsoid=123.5000 hacc=0.6000 vacc=1.7000 hdop=nan vdop=nan speed=5.0000 course=4.712389 heading=nan headingacc=nan used=17 utc=0 velocity=1 receipt=1
+    rtcm type=1005 size=25 fnv=f8e3bb62

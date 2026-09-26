@@ -138,7 +138,10 @@ void RTKSettingsTest::_nmeaPortLabelBecomesPositionOnlyReceiver()
     const RTKSettings rtk;
     QVERIFY(readGroup(QLatin1String(AutoConnectSettings::settingsGroup)).isEmpty());
     if (connection < 0) {
-        QVERIFY(readGroup(QLatin1String(RTKSettings::settingsGroup)).isEmpty());
+        // Only the migration's default role is stored; no receiver input was configured.
+        QCOMPARE(readGroup(QLatin1String(RTKSettings::settingsGroup)).keys(),
+                 QList<QString>{QStringLiteral("receiverRole")});
+        QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), 2);
         return;
     }
     QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), 0);
@@ -155,24 +158,52 @@ void RTKSettingsTest::_nmeaPortLabelBecomesPositionOnlyReceiver()
 void RTKSettingsTest::_configuredReceiverKeepsSettings()
 {
     writeGroup(QLatin1String(RTKSettings::settingsGroup),
-               {{QStringLiteral("serialDevice"), QStringLiteral("/dev/ttyBase")},
-                {QStringLiteral("baseReceiverManufacturers"), 4}});
+               {{QStringLiteral("serialDevice"), QStringLiteral("/dev/ttyBase")}});
     writeGroup(
         QLatin1String(AutoConnectSettings::settingsGroup),
         {{QStringLiteral("nmeaSource"), 2}, {QStringLiteral("autoConnectNmeaPort"), QStringLiteral("/dev/ttyNMEA")}});
     const RTKSettings rtk;
     QCOMPARE(stored(RTKSettings::settingsGroup, "serialDevice").toString(), QStringLiteral("/dev/ttyBase"));
-    QCOMPARE(stored(RTKSettings::settingsGroup, "baseReceiverManufacturers").toInt(), 4);
-    QVERIFY(!stored(RTKSettings::settingsGroup, "receiverRole").isValid());
+    QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), 2);
     QVERIFY(readGroup(QLatin1String(AutoConnectSettings::settingsGroup)).isEmpty());
 }
 
-void RTKSettingsTest::_passiveManufacturerBecomesRole()
+void RTKSettingsTest::_manufacturerMigration_data()
 {
-    writeGroup(QLatin1String(RTKSettings::settingsGroup), {{QStringLiteral("baseReceiverManufacturers"), 7}});
-    const RTKSettings rtk;
-    QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), 1);
-    QVERIFY(!stored(RTKSettings::settingsGroup, "baseReceiverManufacturers").isValid());
+    QTest::addColumn<QVariant>("role");
+    QTest::addColumn<int>("manufacturer");
+    QTest::addColumn<int>("migratedRole");
+    QTest::addColumn<int>("migratedManufacturer");
+    // A profile without a role predates roles: its manufacturer was a settings-view filter, never the receiver family.
+    QTest::newRow("legacy-view-filter") << QVariant() << 1 << 2 << 0;
+    QTest::newRow("legacy-passive") << QVariant() << 7 << 1 << 0;
+    QTest::newRow("modern") << QVariant(2) << 6 << 2 << 6;
+}
+
+void RTKSettingsTest::_manufacturerMigration()
+{
+    QFETCH(QVariant, role);
+    QFETCH(int, manufacturer);
+    QFETCH(int, migratedRole);
+    QFETCH(int, migratedManufacturer);
+    QHash<QString, QVariant> values{{QStringLiteral("baseReceiverManufacturers"), manufacturer}};
+    if (role.isValid()) {
+        values.insert(QStringLiteral("receiverRole"), role);
+    }
+    writeGroup(QLatin1String(RTKSettings::settingsGroup), values);
+    RTKSettings rtk;
+    QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), migratedRole);
+    // As a SettingsFact resolves it outside unit tests: the stored value, else the default.
+    const QVariant saved = stored(RTKSettings::settingsGroup, "baseReceiverManufacturers");
+    QCOMPARE(saved.isValid() ? saved.toInt() : rtk.baseReceiverManufacturers()->rawDefaultValue().toInt(),
+             migratedManufacturer);
+
+    // The migration runs once: a manufacturer chosen afterwards with the stored role is kept.
+    QSettings().setValue(QStringLiteral("%1/baseReceiverManufacturers").arg(QLatin1String(RTKSettings::settingsGroup)),
+                         5);
+    const RTKSettings again;
+    QCOMPARE(stored(RTKSettings::settingsGroup, "baseReceiverManufacturers").toInt(), 5);
+    QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), migratedRole);
 }
 
 UT_REGISTER_TEST(RTKSettingsTest, TestLabel::Unit)

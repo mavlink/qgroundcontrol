@@ -1,0 +1,170 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden quectel/auto-baud-115200
+about Detects a receiver at 115200
+request type=quectel role=rtk-base mode=survey-in accuracy=15.0000m duration=10s compact=0 persistent=0 baud=0
+stream-step 1 bytes=0 duration=12000ms
+stream-step 2 bytes=25 duration=2000ms
+configure
+  result configured=1 baud=0->115200 failure=none ready=1 elapsed=1223ms
+  identity "LG290P03AANR01A03S"
+  error ""
+  wire
+    baud 460800 configured
+    write "PQTMVERNO" 15
+      245051544d5645524e4f2a35380d0a
+      text "$PQTMVERNO*58\r\n"
+    baud 115200 configured
+    write "PQTMVERNO" 15
+      245051544d5645524e4f2a35380d0a
+      text "$PQTMVERNO*58\r\n"
+    write "PQTMCFGRCVRMODE,R" 23
+      245051544d434647524356524d4f44452c522a33320d0a
+      text "$PQTMCFGRCVRMODE,R*32\r\n"
+    write "PQTMCFGFIXRATE,R" 22
+      245051544d434647464958524154452c522a37310d0a
+      text "$PQTMCFGFIXRATE,R*71\r\n"
+    write "PQTMCFGSVIN,R" 19
+      245051544d4346475356494e2c522a32360d0a
+      text "$PQTMCFGSVIN,R*26\r\n"
+    write "PQTMCFGSVIN,W (survey restart)" 54
+      245051544d4346475356494e2c572c312c31302c31352e302c302e303030302c
+      302e303030302c302e303030302c302e302a31350d0a
+      text "$PQTMCFGSVIN,W,1,10,15.0,0.0000,0.0000,0.0000,0.0*15\r\n"
+    write "PQTMSRR" 13
+      245051544d5352522a34420d0a
+      text "$PQTMSRR*4B\r\n"
+    write "PQTMVERNO" 15
+      245051544d5645524e4f2a35380d0a
+      text "$PQTMVERNO*58\r\n"
+    write "PQTMCFGRCVRMODE,R" 23
+      245051544d434647524356524d4f44452c522a33320d0a
+      text "$PQTMCFGRCVRMODE,R*32\r\n"
+    write "PQTMCFGFIXRATE,R" 22
+      245051544d434647464958524154452c522a37310d0a
+      text "$PQTMCFGFIXRATE,R*71\r\n"
+    write "PQTMCFGSVIN,R" 19
+      245051544d4346475356494e2c522a32360d0a
+      text "$PQTMCFGSVIN,R*26\r\n"
+    write "PQTMCFGMSGRATE,W,PQTMSVINSTATUS,1,1" 41
+      245051544d4346474d5347524154452c572c5051544d5356494e535441545553
+      2c312c312a35380d0a
+      text "$PQTMCFGMSGRATE,W,PQTMSVINSTATUS,1,1*58\r\n"
+    write "PQTMCFGMSGRATE,R,PQTMSVINSTATUS,1" 39
+      245051544d4346474d5347524154452c522c5051544d5356494e535441545553
+      2c312a34300d0a
+      text "$PQTMCFGMSGRATE,R,PQTMSVINSTATUS,1*40\r\n"
+    write "PQTMCFGMSGRATE,W,RTCM3-1005,1" 35
+      245051544d4346474d5347524154452c572c5254434d332d313030352c312a35
+      390d0a
+      text "$PQTMCFGMSGRATE,W,RTCM3-1005,1*59\r\n"
+    write "PQTMCFGMSGRATE,R,RTCM3-1005" 33
+      245051544d4346474d5347524154452c522c5254434d332d313030352a34310d
+      0a
+      text "$PQTMCFGMSGRATE,R,RTCM3-1005*41\r\n"
+    write "PQTMCFGMSGRATE,W,RTCM3-107X,1,0" 37
+      245051544d4346474d5347524154452c572c5254434d332d313037582c312c30
+      2a32460d0a
+      text "$PQTMCFGMSGRATE,W,RTCM3-107X,1,0*2F\r\n"
+    write "PQTMCFGMSGRATE,R,RTCM3-107X,0" 35
+      245051544d4346474d5347524154452c522c5254434d332d313037582c302a33
+      370d0a
+      text "$PQTMCFGMSGRATE,R,RTCM3-107X,0*37\r\n"
+    write "PQTMCFGMSGRATE,W,GGA,1" 28
+      245051544d4346474d5347524154452c572c4747412c312a30410d0a
+      text "$PQTMCFGMSGRATE,W,GGA,1*0A\r\n"
+    write "PQTMCFGMSGRATE,R,GGA" 26
+      245051544d4346474d5347524154452c522c4747412a31320d0a
+      text "$PQTMCFGMSGRATE,R,GGA*12\r\n"
+    write "PQTMCFGMSGRATE,W,GST,1" 28
+      245051544d4346474d5347524154452c572c4753542c312a30420d0a
+      text "$PQTMCFGMSGRATE,W,GST,1*0B\r\n"
+    write "PQTMCFGMSGRATE,R,GST" 26
+      245051544d4346474d5347524154452c522c4753542a31330d0a
+      text "$PQTMCFGMSGRATE,R,GST*13\r\n"
+    write "PQTMCFGMSGRATE,W,GSA,1" 28
+      245051544d4346474d5347524154452c572c4753412c312a31450d0a
+      text "$PQTMCFGMSGRATE,W,GSA,1*1E\r\n"
+    write "PQTMCFGMSGRATE,R,GSA" 26
+      245051544d4346474d5347524154452c522c4753412a30360d0a
+      text "$PQTMCFGMSGRATE,R,GSA*06\r\n"
+    write "PQTMCFGMSGRATE,W,GSV,1" 28
+      245051544d4346474d5347524154452c572c4753562c312a30390d0a
+      text "$PQTMCFGMSGRATE,W,GSV,1*09\r\n"
+    write "PQTMCFGMSGRATE,R,GSV" 26
+      245051544d4346474d5347524154452c522c4753562a31310d0a
+      text "$PQTMCFGMSGRATE,R,GSV*11\r\n"
+  evidence
+    "PQTMVERNO" timed-out required accepted=15 written=15 uncertain=0 elapsed=1000ms
+    "PQTMVERNO" readback-verified required accepted=15 written=15 uncertain=0 elapsed=1ms
+    "PQTMCFGRCVRMODE,R" readback-verified required accepted=23 written=23 uncertain=0 elapsed=1ms
+    "PQTMCFGFIXRATE,R" readback-verified required accepted=22 written=22 uncertain=0 elapsed=1ms
+    "PQTMCFGSVIN,R" readback-verified required accepted=19 written=19 uncertain=0 elapsed=1ms
+    "PQTMCFGSVIN,W (survey restart)" acknowledged required accepted=54 written=54 uncertain=0 elapsed=1ms
+    "PQTMSRR" written required accepted=13 written=13 uncertain=0 elapsed=0ms
+    "PQTMVERNO" readback-verified required accepted=15 written=15 uncertain=0 elapsed=1ms
+    "PQTMCFGRCVRMODE,R" readback-verified required accepted=23 written=23 uncertain=0 elapsed=1ms
+    "PQTMCFGFIXRATE,R" readback-verified required accepted=22 written=22 uncertain=0 elapsed=1ms
+    "PQTMCFGSVIN,R" readback-verified required accepted=19 written=19 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,W,PQTMSVINSTATUS,1,1" acknowledged required accepted=41 written=41 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,R,PQTMSVINSTATUS,1" readback-verified required accepted=39 written=39 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,W,RTCM3-1005,1" acknowledged required accepted=35 written=35 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,R,RTCM3-1005" readback-verified required accepted=33 written=33 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,W,RTCM3-107X,1,0" acknowledged required accepted=37 written=37 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,R,RTCM3-107X,0" readback-verified required accepted=35 written=35 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,W,GGA,1" acknowledged required accepted=28 written=28 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,R,GGA" readback-verified required accepted=26 written=26 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,W,GST,1" acknowledged required accepted=28 written=28 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,R,GST" readback-verified required accepted=26 written=26 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,W,GSA,1" acknowledged required accepted=28 written=28 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,R,GSA" readback-verified required accepted=26 written=26 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,W,GSV,1" acknowledged required accepted=28 written=28 uncertain=0 elapsed=1ms
+    "PQTMCFGMSGRATE,R,GSV" readback-verified required accepted=26 written=26 uncertain=0 elapsed=1ms
+  events
+stream
+  result failure=none ready=1
+  wire
+  evidence
+  events
+    survey active=1 valid=0 duration=1s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    survey active=1 valid=0 duration=2s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    survey active=1 valid=0 duration=3s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    survey active=1 valid=0 duration=4s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    survey active=1 valid=0 duration=5s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    survey active=1 valid=0 duration=6s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    survey active=1 valid=0 duration=7s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    survey active=1 valid=0 duration=8s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    survey active=1 valid=0 duration=9s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    survey active=0 valid=1 duration=10s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    survey active=0 valid=1 duration=10s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    survey active=0 valid=1 duration=10s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    survey active=0 valid=1 duration=10s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1
+    rtcm type=1005 size=25 fnv=f8e3bb62
+    survey active=0 valid=1 duration=10s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    usage used=8 receipt=1
+    position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=8 utc=0 velocity=0 receipt=1

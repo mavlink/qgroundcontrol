@@ -1,0 +1,122 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden decode/ublox-legacy
+decoder type=ublox role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=0 persistent=0 baud=115200
+file corpus/synthetic-integrity.ubx bytes=116
+  chunks 1 7 whole
+    configured=1
+    events
+      integrity receipt=1 jamming=unknown/0 spoofing=indicated/1 rf=noise:-,agc:-,indicator:-/0 corrections=unknown,crc-failed:-,unknown/0
+      integrity receipt=1 jamming=warning/1 spoofing=indicated/1 rf=noise:1234,agc:5678,indicator:91/1 corrections=unknown,crc-failed:-,unknown/0
+      integrity receipt=1 jamming=warning/1 spoofing=indicated/1 rf=noise:1234,agc:5678,indicator:91/1 corrections=used,crc-failed:0,rtcm3/1
+      integrity receipt=1 jamming=warning/1 spoofing=indicated/1 rf=noise:1234,agc:5678,indicator:91/1 corrections=not-used,crc-failed:1,rtcm3/1
+    expired
+file corpus/synthetic-timeutc.ubx bytes=84
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/ubx-comms.bin bytes=16
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/ubx-sat.bin bytes=28
+  chunks 1 7 whole
+    configured=1
+    events
+      satellites full=1 gps:view=1/1,use=1/1
+    expired
+file corpus/ubx-version.bin bytes=78
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/ubx-warning.bin bytes=19
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/upstream-nav-dop.ubx bytes=26
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/upstream-nav-hpposllh.ubx bytes=44
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file corpus/upstream-nav-pvt.ubx bytes=100
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+      position fix=differential lat=53.45072280 lon=-2.24028550 msl=42.7010 ellipsoid=91.1840 hacc=1.4910 vacc=2.0650 hdop=nan vdop=nan speed=0.0080 course=0.000000 heading=nan headingacc=nan used=26 utc=1638617698999639 velocity=1 receipt=1
+file corpus/upstream-nav-sat.ubx bytes=532
+  chunks 1 7 whole
+    configured=1
+    events
+      satellites full=1 gps:view=13/1,use=8/1 sbas:view=2/1,use=0/1 galileo:view=10/1,use=7/1 beidou:view=9/1,use=5/1 glonass:view=9/1,use=6/1
+    expired
+file fixtures/mixed.gps bytes=1227
+  chunks 1 7 whole
+    configured=1
+    events
+      rtcm type=1005 size=25 fnv=10f31c27
+      rtcm type=4072 size=68 fnv=7e7e465c
+      rtcm type=1077 size=275 fnv=cd768728
+      rtcm type=1087 size=201 fnv=8e7a608a
+      rtcm type=1097 size=151 fnv=b3c8e5d2
+      rtcm type=1127 size=275 fnv=bd1fa343
+      rtcm type=1230 size=10 fnv=204e816a
+    expired
+      position fix=none lat=32.06583250 lon=34.77381900 msl=54.6420 ellipsoid=72.1340 hacc=0.6850 vacc=0.4840 hdop=nan vdop=nan speed=0.0000 course=5.063867 heading=nan headingacc=nan used=31 utc=1644309719000360 velocity=0 receipt=1
+file fixtures/nav-dop.ubx bytes=26
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file fixtures/nav-hpposllh.ubx bytes=44
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file fixtures/nav-pvt.ubx bytes=100
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+      position fix=differential lat=53.45072280 lon=-2.24028550 msl=42.7010 ellipsoid=91.1840 hacc=1.4910 vacc=2.0650 hdop=nan vdop=nan speed=0.0080 course=0.000000 heading=nan headingacc=nan used=26 utc=1638617698999639 velocity=1 receipt=1
+file fixtures/nav-sat.ubx bytes=532
+  chunks 1 7 whole
+    configured=1
+    events
+      satellites full=1 gps:view=13/1,use=8/1 sbas:view=2/1,use=0/1 galileo:view=10/1,use=7/1 beidou:view=9/1,use=5/1 glonass:view=9/1,use=6/1
+    expired
+file fixtures/navigation.ubx bytes=2900
+  chunks 1 7 whole
+    configured=1
+    events
+      satellites full=1 gps:view=13/1,use=8/1 sbas:view=2/1,use=0/1 galileo:view=10/1,use=7/1 beidou:view=9/1,use=5/1 glonass:view=9/1,use=6/1
+      integrity receipt=1 jamming=unknown/0 spoofing=none/1 rf=noise:-,agc:-,indicator:-/0 corrections=unknown,crc-failed:-,unknown/0
+      position fix=differential lat=53.45072280 lon=-2.24028550 msl=42.7010 ellipsoid=91.1840 hacc=1.4910 vacc=2.0650 hdop=0.580 vdop=0.830 speed=0.0080 course=0.000000 heading=nan headingacc=nan used=26 utc=1638617698999639 velocity=1 receipt=1
+    expired
+file fixtures/relative.ubx bytes=72
+  chunks 1 7 whole
+    configured=1
+    events
+    expired
+file fixtures/synthetic-integrity.ubx bytes=116
+  chunks 1 7 whole
+    configured=1
+    events
+      integrity receipt=1 jamming=unknown/0 spoofing=indicated/1 rf=noise:-,agc:-,indicator:-/0 corrections=unknown,crc-failed:-,unknown/0
+      integrity receipt=1 jamming=warning/1 spoofing=indicated/1 rf=noise:1234,agc:5678,indicator:91/1 corrections=unknown,crc-failed:-,unknown/0
+      integrity receipt=1 jamming=warning/1 spoofing=indicated/1 rf=noise:1234,agc:5678,indicator:91/1 corrections=used,crc-failed:0,rtcm3/1
+      integrity receipt=1 jamming=warning/1 spoofing=indicated/1 rf=noise:1234,agc:5678,indicator:91/1 corrections=not-used,crc-failed:1,rtcm3/1
+    expired
+file fixtures/synthetic-timeutc.ubx bytes=84
+  chunks 1 7 whole
+    configured=1
+    events
+    expired

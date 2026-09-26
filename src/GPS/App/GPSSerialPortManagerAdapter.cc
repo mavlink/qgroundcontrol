@@ -21,7 +21,6 @@ QList<GPSSerialPorts::Port> GPSSerialPortManagerAdapter::ports()
     ports.reserve(available.size());
     for (const auto& port : available) {
         ports.append({.systemLocation = port.systemLocation,
-                      .boardName = port.boardName,
                       .description = port.description,
                       .physicalDeviceId = port.physicalDeviceId,
                       .rtkReceiver = port.boardType == QGCSerialPortInfo::BoardTypeRTKGPS,

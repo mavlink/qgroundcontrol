@@ -2,7 +2,9 @@
 #include <fstream>
 
 #include "AllocationTracker.h"
-#include "UBX/UBXProtocol.h"
+#include "GPSProtocolRuntime.h"
+#include "UBX/UBXDecoder.h"
+#include "UBX/UBXFamily.h"
 #include "UnitTest.h"
 
 class GPSProtocolAllocationTest : public UnitTest
@@ -22,12 +24,13 @@ void GPSProtocolAllocationTest::_runtimeDelivery()
              "Cannot read the independent NAV-PVT fixture");
     uint64_t now = 1000000;
     std::size_t positions = 0;
-    UBXProtocol* receiver = nullptr;
+    GPSProtocolRuntime* receiver = nullptr;
     bool injectNested = false;
     bool nestedSnapshotValid = true;
-    GPSProtocolIO io;
+    GPSRuntimeIO io;
     io.nowUs = [&] { return now; };
-    io.decoded = [&](const GPSDecodedBatch& batch) {
+    GPSRuntimeObserver observer;
+    observer.decoded = [&](const GPSEventBatch& batch) {
         for (const auto& event : batch.events) {
             positions += std::holds_alternative<GPSDecodedPosition>(event);
             if (const auto* report = std::get_if<GPSDecodedPosition>(&event); report && injectNested) {
@@ -39,9 +42,9 @@ void GPSProtocolAllocationTest::_runtimeDelivery()
             }
         }
     };
-    UBXProtocol driver(io);
+    GPSProtocolRuntime driver(UBX::FAMILY, std::move(io), std::move(observer));
     receiver = &driver;
-    driver.setDecodeContext({.navigation = true, .useNavPvt = true});
+    UBX::decoder(driver.protocol()).setMode({.navigation = true, .useNavPvt = true}, driver.stream());
     driver.consume(frame);
     positions = 0;
     constexpr std::size_t ITERATIONS = 1000;

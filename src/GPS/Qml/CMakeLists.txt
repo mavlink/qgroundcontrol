@@ -29,8 +29,8 @@ target_link_libraries(
             QGCGPSNTRIPService
             QGCGPSPositioning
             QGCGPSReceiver
+            QGCGPSReceiverConfig
             QGCGPSRTCM
-            QGCGPSRTK
 )
 
 qt_add_resources(

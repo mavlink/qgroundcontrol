@@ -1,0 +1,18 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden ublox/profile-f9r-survey
+about Receiver profile without base support
+request type=ublox role=rtk-base mode=survey-in accuracy=2.0000m duration=180s compact=0 persistent=0 baud=0
+stream-step 1 bytes=272 duration=1500ms
+stream-step 2 bytes=160 duration=1500ms
+stream-step 3 bytes=25 duration=3000ms
+configure
+  result configured=0 baud=115200->115200 failure=none ready=0 elapsed=20ms
+  identity "ZED-F9R HPS 1.30"
+  error "Receiver configuration failed"
+  wire
+    baud 115200 configured
+    write "1034" 8
+      b5620a0400000e34
+  evidence
+    "1034" acknowledged required accepted=8 written=8 uncertain=0 elapsed=0ms
+  events

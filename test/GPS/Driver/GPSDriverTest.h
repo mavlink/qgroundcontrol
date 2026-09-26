@@ -34,4 +34,9 @@ private slots:
     void _nativeConfigurationRejectedBeforeIo_data();
     void _nativeConfigurationRejectedBeforeIo();
     void _passiveInput();
+    void _automaticDetection_data();
+    void _automaticDetection();
+    void _automaticDetectionCancelled();
+    void _mismatchHint_data();
+    void _mismatchHint();
 };

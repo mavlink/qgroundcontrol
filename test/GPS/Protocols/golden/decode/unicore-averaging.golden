@@ -1,0 +1,18 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden decode/unicore-averaging
+decoder type=unicore role=rtk-base mode=averaging maximum=60s compact=0 persistent=0 baud=0
+file corpus/synthetic-unicore-averaging.ascii bytes=190
+  chunks 1 7 whole
+    configured=1
+    events
+      survey active=0 valid=1 duration=0s accuracy=- lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    expired
+      survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+file corpus/synthetic-unicore-base.ascii bytes=754
+  chunks 1 7 whole
+    configured=1
+    events
+      survey active=0 valid=1 duration=0s accuracy=- lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+      survey active=0 valid=1 duration=0s accuracy=- lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+      survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+    expired

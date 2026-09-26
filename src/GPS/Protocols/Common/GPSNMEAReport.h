@@ -5,7 +5,7 @@
 #include <limits>
 #include <optional>
 
-#include "GPSDecodedBatch.h"
+#include "GPSDecodedReports.h"
 #include "NMEANavigationEpoch.h"
 #include "NMEASatelliteEpoch.h"
 #include "NMEASentence.h"

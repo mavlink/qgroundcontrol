@@ -11,8 +11,10 @@
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QList>
 
-#include "GPSProtocolIO.h"
+#include "GPSDeadline.h"
 #include "GPSTransport.h"
+
+struct GPSRuntimeIO;
 
 class ScriptedReceiver : public GPSTransport
 {
@@ -21,7 +23,6 @@ public:
     {
         QDeadlineTimer transportDeadline;
         GPSDeadline protocolDeadline;
-        bool hasTransportDeadline = false;
         bool hasProtocolDeadline = false;
     };
 
@@ -32,7 +33,6 @@ public:
         int maxChunkSize = 0;
         int delayMs = 0;
         bool drop = false;
-        bool garble = false;
         bool coalesce = false;
         std::function<void()> onConsumed;
     };
@@ -70,7 +70,8 @@ public:
 
     GPSReadResult read(uint8_t* buffer, int length, std::chrono::milliseconds timeout) override;
 
-    GPSProtocolIO makeIO(GPSProtocolIO io);
+    /// Runtime services over this receiver: read, write and setBaudrate replace those of @a io, which keeps its clock.
+    GPSRuntimeIO makeIO(GPSRuntimeIO io);
 
     void setModel(Model* model);
 
@@ -114,11 +115,7 @@ public:
 
     bool hasQueuedReadData() const { return !_readSteps.empty(); }
 
-    GPSReadResult readQueued(uint8_t* buffer, int length);
-
     void failNextRead(GPSReadResult result) { _nextReadResult = std::move(result); }
-
-    void failNextWrite(GPSWriteResult result) { _nextWriteResult = std::move(result); }
 
     void cancel();
 
@@ -131,8 +128,6 @@ public:
     const QList<QByteArray>& commands() const { return _commands; }
 
     void clearCommands() { _commands.clear(); }
-
-    QByteArray takePendingWrites();
 
 protected:
     GPSWriteResult writeData(const uint8_t* buffer, int length, QDeadlineTimer deadline) override;
@@ -159,7 +154,6 @@ private:
     std::optional<GPSOpenResult> _openResult;
     std::optional<bool> _baudrateResult;
     std::optional<GPSReadResult> _nextReadResult;
-    std::optional<GPSWriteResult> _nextWriteResult;
     std::function<std::optional<GPSOpenResult>()> _openHandler;
     std::function<std::optional<GPSReadResult>(uint8_t*, int, std::chrono::milliseconds)> _readHandler;
     std::function<std::optional<GPSWriteResult>(const QByteArray&, const WriteContext&)> _writeHandler;

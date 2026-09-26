@@ -1,29 +1,32 @@
 #include <chrono>
 #include <cstdlib>
+#include <memory>
+#include <vector>
 
-#include "Ashtech/AshtechProtocol.h"
-#include "Femto/FemtoProtocol.h"
-#include "GPSAsciiProtocol.h"
-#include "Quectel/QuectelProtocol.h"
-#include "SBF/SBFProtocol.h"
-#include "Support/GPSProtocolTestIO.h"
+#include "GPSCommandChannel.h"
+#include "GPSEventSink.h"
+#include "GPSProtocolRuntime.h"
+#include "GPSReceiverFamilies.h"
+#include "Quectel/QuectelFamily.h"
+#include "Support/GPSTestClock.h"
 #include "Support/QuectelReceiverModel.h"
 #include "Support/UnicoreReceiverModel.h"
-#include "UBX/UBXProtocol.h"
-#include "Unicore/UnicoreProtocol.h"
+#include "UBX/UBXDecoder.h"
+#include "UBX/UBXFamily.h"
+#include "Unicore/UnicoreFamily.h"
 
 using namespace std::chrono_literals;
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     GPSTestClock clock(1000000);
-    GPSProtocolIO io;
+    GPSRuntimeIO io;
     io.read = [](auto, auto) -> GPSReadResult { std::abort(); };
     io.write = [](auto, auto) -> GPSWriteResult { std::abort(); };
     io.setBaudrate = [](auto) -> GPSBaudStatus { std::abort(); };
     io.nowUs = [&clock] { return clock.nowUs(); };
     bool decoding = false;
-    const auto operationalIO = [&decoding](GPSProtocolIO services) {
+    const auto operationalIO = [&decoding](GPSRuntimeIO services) {
         services.read = [&, read = services.read](auto bytes, auto deadline) {
             if (decoding) {
                 std::abort();
@@ -48,75 +51,79 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
             }
             return wait(duration);
         };
-        services.commandFinished = {};
-        services.decoded = [](const GPSDecodedBatch& batch) {
-            if (batch.events.size() > GPSDecodedBatch::MAX_EVENTS) {
-                std::abort();
-            }
-        };
-        services.log = {};
         return services;
     };
-    GPSProtocol::GPSConfig fixed;
+    GPSRuntimeObserver operational;
+    operational.decoded = [](const GPSEventBatch& batch) {
+        if (batch.events.size() > GPSEventSink::MAX_EVENTS) {
+            std::abort();
+        }
+    };
+    GPSConfig fixed;
     fixed.base.mode = GPSBaseStationConfig::Fixed{};
     std::get<GPSBaseStationConfig::Fixed>(fixed.base.mode).position = {
         .latitudeDegrees = 0, .longitudeDegrees = 90, .altitudeMeters = 100};
     const bool fixedMode = size != 0 && (data[0] & 1);
-    UBXProtocol ubx(io);
-    UBXProtocol operationalUbx(io);
-    operationalUbx.setDecodeContext({true, true, true});
-    UBXProtocol epochUbx(io);
-    epochUbx.setDecodeContext({true, true, true, true});
-    AshtechProtocol ashtech(io);
-    SBFProtocol sbf(io);
-    FemtoProtocol femto(io);
-    UnicoreProtocol unicore(io);
+    std::vector<std::unique_ptr<GPSProtocolRuntime>> ubx;
+    for (const bool assembleEpochs : {false, true}) {
+        auto runtime = std::make_unique<GPSProtocolRuntime>(UBX::FAMILY, io);
+        UBX::decoder(runtime->protocol())
+            .setMode({.navigation = true, .useNavPvt = true, .corrections = true, .assembleEpochs = assembleEpochs},
+                     runtime->stream());
+        ubx.push_back(std::move(runtime));
+    }
     GPSTest::UnicoreReceiver unicorePeer(clock);
-    unicorePeer.chunk = GPS_READ_BUFFER_SIZE;
-    UnicoreProtocol operationalUnicore(operationalIO(unicorePeer.io()));
-    GPSProtocol::GPSConfig averaging;
+    unicorePeer.chunk = GPSCommandChannel::READ_CHUNK_SIZE;
+    auto operationalUnicore =
+        std::make_unique<GPSProtocolRuntime>(Unicore::FAMILY, operationalIO(unicorePeer.io()), operational);
+    GPSConfig averaging;
     averaging.base.mode = GPSBaseStationConfig::ReceiverAveraging{};
     unsigned unicoreBaud = 115200;
-    if (!operationalUnicore.configure(unicoreBaud, fixedMode ? fixed : averaging)) {
+    if (!operationalUnicore->configure(fixedMode ? fixed : averaging, unicoreBaud)) {
         std::abort();
     }
-    QuectelProtocol quectel(io);
     GPSTest::QuectelReceiver quectelPeer(clock);
     quectelPeer.role = 2;
-    quectelPeer.chunk = GPS_READ_BUFFER_SIZE;
+    quectelPeer.chunk = GPSCommandChannel::READ_CHUNK_SIZE;
     if (fixedMode) {
         quectelPeer.base = "2,0,0,0.0000,6378237.0000,0.0000,0";
     }
-    QuectelProtocol operationalQuectel(operationalIO(quectelPeer.io()));
-    GPSProtocol::GPSConfig survey;
+    auto operationalQuectel =
+        std::make_unique<GPSProtocolRuntime>(Quectel::FAMILY, operationalIO(quectelPeer.io()), operational);
+    GPSConfig survey;
     std::get<GPSBaseStationConfig::SurveyIn>(survey.base.mode).accuracyMeters = 15;
     std::get<GPSBaseStationConfig::SurveyIn>(survey.base.mode).duration = 60s;
     unsigned quectelBaud = 460800;
-    if (!operationalQuectel.configure(quectelBaud, fixedMode ? fixed : survey)) {
+    if (!operationalQuectel->configure(fixedMode ? fixed : survey, quectelBaud)) {
         std::abort();
     }
-    PassiveProtocol passive(io);
-    GPSProtocol* protocols[] = {
-        &ubx,     &operationalUbx,     &epochUbx, &ashtech, &sbf, &femto, &unicore, &operationalUnicore,
-        &quectel, &operationalQuectel, &passive,
-    };
+    // Every family freshly created, then the operational runtimes.
+    std::vector<std::unique_ptr<GPSProtocolRuntime>> runtimes;
+    for (const auto* family : gpsReceiverFamilies()) {
+        runtimes.push_back(std::make_unique<GPSProtocolRuntime>(*family, io));
+    }
+    for (auto& runtime : ubx) {
+        runtimes.push_back(std::move(runtime));
+    }
+    runtimes.push_back(std::move(operationalUnicore));
+    runtimes.push_back(std::move(operationalQuectel));
     decoding = true;
     const auto startedAt = clock.nowUs();
-    for (GPSProtocol* protocol : protocols) {
+    for (const auto& runtime : runtimes) {
         clock.reset(startedAt);
         const size_t split = size ? data[0] % (size + 1) : 0;
         for (auto bytes :
              {std::span<const uint8_t>(data, split), std::span<const uint8_t>(data + split, size - split)}) {
             do {
-                auto result = protocol->decode(bytes);
-                if (result.batch.events.size() > GPSDecodedBatch::MAX_EVENTS) {
+                const auto result = runtime->decode(bytes);
+                if (result.batch.events.size() > GPSEventSink::MAX_EVENTS) {
                     std::abort();
                 }
                 bytes = bytes.subspan(result.bytesConsumed);
             } while (!bytes.empty());
         }
         clock.advanceBy(5000001);
-        if (protocol->decode({}).batch.events.size() > GPSDecodedBatch::MAX_EVENTS) {
+        if (runtime->decode({}).batch.events.size() > GPSEventSink::MAX_EVENTS) {
             std::abort();
         }
     }

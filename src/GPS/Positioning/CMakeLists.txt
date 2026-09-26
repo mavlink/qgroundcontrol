@@ -1,10 +1,17 @@
 # ============================================================================
 # Positioning Module
-# GPS observations, source health, and GCS position source selection policy
+# GPS observations, source health, GCS position source selection policy, and the platform and simulated sources
 # ============================================================================
 
-qt_add_library(QGCGPSPositioning STATIC GPSObservation.cc GPSPositionBackendAdapter.cc GPSPositionService.cc
-               GPSSourceHealth.cc
+qt_add_library(
+    QGCGPSPositioning
+    STATIC
+    GPSObservation.cc
+    GPSPositionBackendAdapter.cc
+    GPSPositionService.cc
+    GPSSourceHealth.cc
+    PositionManager.cc
+    SimulatedPosition.cc
 )
 add_library(QGC::GPSPositioning ALIAS QGCGPSPositioning)
 set_target_properties(QGCGPSPositioning PROPERTIES AUTOMOC ON)
@@ -24,4 +31,6 @@ target_sources(
            GPSPositionService.h
            GPSPositionSourceRegistration.h
            GPSSourceHealth.h
+           PositionManager.h
+           SimulatedPosition.h
 )

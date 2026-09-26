@@ -13,10 +13,10 @@ add_subdirectory(RTCM)
 add_subdirectory(Corrections)
 add_subdirectory(NTRIP)
 
-add_subdirectory(Receiver)
+add_subdirectory(ReceiverConfig)
 add_subdirectory(Protocols)
 add_subdirectory(Driver)
-add_subdirectory(RTK)
+add_subdirectory(Receiver)
 
 add_subdirectory(Qml)
 add_subdirectory(App)

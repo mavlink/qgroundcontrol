@@ -1,0 +1,90 @@
+{{ attribution }}
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <tuple>
+
+#include "WireFields.h"
+
+/// Offsets count from a block's first sync byte, so a whole block decodes directly. Each layout ends
+/// at the last field QGC reads, which is the shortest block QGC can decode.
+namespace SBF {
+
+inline constexpr uint8_t SYNC1 = {{ defs.sbf_sync[0] | hex(2) }};
+inline constexpr uint8_t SYNC2 = {{ defs.sbf_sync[1] | hex(2) }};
+
+/// Starts every block. The CRC covers id through the end of the block; length counts the whole block.
+struct BlockHeader
+{
+    uint16_t sync;
+    uint16_t crc;
+    uint16_t id;
+    uint16_t length;
+
+    /// Bits 0-12 of the id; bits 13-15 are the block revision.
+    [[nodiscard]] constexpr uint16_t number() const { return static_cast<uint16_t>(id & 0x1fff); }
+};
+
+}  // namespace SBF
+
+namespace SBF::BlockId {
+{% for block in defs.blocks %}
+inline constexpr uint16_t {{ block.constant }} = {{ block.id }};
+{% endfor %}
+}  // namespace SBF::BlockId
+
+namespace SBF {
+{% for block in defs.blocks %}
+
+struct {{ block.name }}
+{
+{% for field in block.fields %}
+    {{ field.type }} {{ field.member }};
+{% endfor %}
+{% for field in block.fields %}
+{% for bits in field.bits %}
+
+{% if bits.type == "bool" %}
+    [[nodiscard]] constexpr bool {{ bits.accessor }}() const { return ({{ field.member }} & {{ bits.mask | hex(2) }}) != 0; }
+{% elif bits.shift == 0 %}
+    [[nodiscard]] constexpr {{ bits.type }} {{ bits.accessor }}() const { return static_cast<{{ bits.type }}>({{ field.member }} & {{ bits.mask | hex(2) }}); }
+{% else %}
+    [[nodiscard]] constexpr {{ bits.type }} {{ bits.accessor }}() const { return static_cast<{{ bits.type }}>(({{ field.member }} & {{ bits.mask | hex(2) }}) >> {{ bits.shift }}); }
+{% endif %}
+{% endfor %}
+{% endfor %}
+};
+{% endfor %}
+
+}  // namespace SBF
+
+namespace Wire {
+template <>
+struct Layout<SBF::BlockHeader>
+{
+    using T = SBF::BlockHeader;
+    static constexpr size_t SIZE = 8;
+    static constexpr auto FIELDS =
+        std::tuple{Field<&T::sync, 0>{}, Field<&T::crc, 2>{}, Field<&T::id, 4>{}, Field<&T::length, 6>{}};
+};
+{% for block in defs.blocks %}
+
+template <>
+struct Layout<SBF::{{ block.name }}>
+{
+    using T = SBF::{{ block.name }};
+    static constexpr size_t SIZE = {{ block.size }};
+    static constexpr auto FIELDS = std::tuple{
+{% for field in block.fields %}
+        Field<&T::{{ field.member }}, {{ field.offset }}>{}{{ "," if not loop.last }}
+{% endfor %}
+    };
+};
+{% endfor %}
+}  // namespace Wire
+
+static_assert(Wire::VALID_LAYOUT<SBF::BlockHeader>);
+{% for block in defs.blocks %}
+static_assert(Wire::VALID_LAYOUT<SBF::{{ block.name }}>);
+{% endfor %}

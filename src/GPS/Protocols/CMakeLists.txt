@@ -13,7 +13,7 @@ if(NOT TARGET QGCClock)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Timing/Clock" "${CMAKE_CURRENT_BINARY_DIR}/Clock")
 endif()
 block(SCOPE_FOR VARIABLES)
-set(QGC_GPS_COMPONENTS_ENABLED NMEAProtocol RTCM Receiver Transport)
+set(QGC_GPS_COMPONENTS_ENABLED NMEAProtocol RTCM ReceiverConfig Transport)
 if(NOT TARGET QGCGPSCommon)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Common" "${CMAKE_CURRENT_BINARY_DIR}/Common")
 endif()
@@ -26,63 +26,110 @@ endif()
 if(NOT TARGET QGCGPSRTCM)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../RTCM" "${CMAKE_CURRENT_BINARY_DIR}/RTCM")
 endif()
-if(NOT TARGET QGCGPSReceiver)
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../Receiver" "${CMAKE_CURRENT_BINARY_DIR}/Receiver")
+if(NOT TARGET QGCGPSReceiverConfig)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../ReceiverConfig" "${CMAKE_CURRENT_BINARY_DIR}/ReceiverConfig")
 endif()
 endblock()
 add_subdirectory(Contracts)
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Geo/GeographicLib.cmake")
 
-# QGCGPSProtocols is one library: Common/ holds the shared protocol base and each family folder
-# (Ashtech, Femto, Quectel, SBF, UBX, Unicore) is a source subfolder of it, not a separate target.
+# QGCGPSProtocols is one library: Runtime/ holds the coroutine protocol runtime, Common/ the family
+# table and shared family components, and each family folder (Ashtech, Femto, Passive, Quectel, SBF, UBX, Unicore) is
+# a source subfolder of it, not a separate target.
 set(_protocol_headers
-    Common/GPSProtocol.h
+    Common/GPSASCIILog.h
+    Common/GPSCommandText.h
     Common/GPSProtocolTime.h
-    Common/GPSAsciiProtocol.h
-    Common/GPSConfigurationSequence.h
+    Common/GPSReceiverFamilies.h
     Common/GPSSurveyClock.h
     Common/GPSNMEAReport.h
-    Ashtech/AshtechProtocol.h
-    Femto/FemtoMessages.h
-    Femto/FemtoProtocol.h
-    Quectel/QuectelProtocol.h
-    SBF/SBFMessages.h
-    SBF/SBFProtocol.h
+    Common/GPSNMEAStream.h
+    Ashtech/AshtechConfigurator.h
+    Ashtech/AshtechDecoder.h
+    Ashtech/AshtechFamily.h
+    Femto/FemtoConfigurator.h
+    Femto/FemtoDecoder.h
+    Femto/FemtoFamily.h
+    Passive/PassiveFamily.h
+    Quectel/QuectelFamily.h
+    SBF/Generated/SBFBlocks.h
+    SBF/SBFFamily.h
+    UBX/Generated/UBXConfigKeys.h
+    UBX/Generated/UBXMessageIds.h
     UBX/UBXConfigurationValues.h
+    UBX/UBXDecoder.h
+    UBX/UBXFamily.h
     UBX/UBXFrameDecoder.h
-    UBX/UBXMessageCodec.h
     UBX/UBXMessageSchema.h
-    UBX/UBXMessages.h
     UBX/UBXNavigationEpoch.h
-    UBX/UBXProtocol.h
+    UBX/UBXPlan.h
     UBX/UBXReceiverController.h
     UBX/UBXReceiverProfile.h
-    Unicore/UnicoreProtocol.h
+    Unicore/UnicoreFamily.h
+    Runtime/GPSCommandChannel.h
+    Runtime/GPSCommandSequence.h
+    Runtime/GPSEventSink.h
+    Runtime/GPSFamilyProtocol.h
+    Runtime/GPSFrame.h
+    Runtime/GPSProtocolEvent.h
+    Runtime/GPSProtocolMath.h
+    Runtime/GPSProtocolRuntime.h
+    Runtime/GPSReceiverDetector.h
+    Runtime/GPSReceiverFamily.h
+    Runtime/GPSRuntimeIO.h
+    Runtime/GPSStreamDemux.h
+    Runtime/GPSTask.h
 )
 qt_add_library(
     QGCGPSProtocols
     STATIC
     ${_protocol_headers}
-    Common/GPSProtocol.cc
-    Common/GPSAsciiProtocol.cc
-    Ashtech/AshtechConfiguration.cc
+    Common/GPSCommandText.cc
+    Common/GPSNMEAStream.cc
+    Common/GPSReceiverFamilies.cc
+    Ashtech/AshtechConfigurator.cc
     Ashtech/AshtechDecoder.cc
-    Femto/FemtoConfiguration.cc
+    Ashtech/AshtechFamily.cc
+    Ashtech/AshtechPlan.cc
+    Ashtech/AshtechPlan.h
+    Femto/FemtoConfigurator.cc
     Femto/FemtoDecoder.cc
+    Femto/FemtoFamily.cc
+    Femto/FemtoPlan.cc
+    Femto/FemtoPlan.h
+    Passive/PassiveFamily.cc
     Quectel/QuectelCodec_p.h
-    Quectel/QuectelConfiguration.cc
+    Quectel/QuectelConfigurator.cc
+    Quectel/QuectelConfigurator.h
     Quectel/QuectelDecoder.cc
-    Quectel/QuectelProtocol.cc
-    SBF/SBFConfiguration.cc
+    Quectel/QuectelDecoder.h
+    Quectel/QuectelFamily.cc
+    Quectel/QuectelPlan.cc
+    Quectel/QuectelPlan.h
+    SBF/SBFConfigurator.cc
+    SBF/SBFConfigurator.h
     SBF/SBFDecoder.cc
-    UBX/UBXConfiguration.cc
-    UBX/UBXConfiguration_p.h
+    SBF/SBFDecoder.h
+    SBF/SBFFamily.cc
+    SBF/SBFPlan.cc
+    SBF/SBFPlan.h
+    UBX/UBXConfigurator.cc
+    UBX/UBXConfigurator.h
     UBX/UBXDecoder.cc
-    UBX/UBXLegacyConfiguration.cc
-    UBX/UBXProtocol.cc
-    Unicore/UnicoreConfiguration.cc
+    UBX/UBXFamily.cc
+    UBX/UBXPlan.cc
+    Unicore/UnicoreConfigurator.cc
+    Unicore/UnicoreConfigurator.h
     Unicore/UnicoreDecoder.cc
-    Unicore/UnicoreProtocol.cc
+    Unicore/UnicoreDecoder.h
+    Unicore/UnicoreFamily.cc
+    Unicore/UnicorePlan.cc
+    Unicore/UnicorePlan.h
+    Runtime/GPSCommandChannel.cc
+    Runtime/GPSProtocolMath.cc
+    Runtime/GPSProtocolRuntime.cc
+    Runtime/GPSReceiverDetector.cc
+    Runtime/GPSStreamDemux.cc
 )
 add_library(QGC::GPSProtocols ALIAS QGCGPSProtocols)
 target_sources(QGCGPSProtocols PUBLIC FILE_SET HEADERS FILES ${_protocol_headers})
@@ -92,8 +139,9 @@ set_target_properties(
                AUTOUIC OFF
                AUTORCC OFF
 )
-target_include_directories(QGCGPSProtocols PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Common
-                                                  "${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Math"
+target_include_directories(
+    QGCGPSProtocols PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/Common
+                           ${CMAKE_CURRENT_SOURCE_DIR}/Runtime "${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities/Math"
 )
 target_link_libraries(
     QGCGPSProtocols
@@ -102,7 +150,7 @@ target_link_libraries(
            QGCGPSCommon
            QGCGPSProtocolContracts
            QGCGPSNMEAProtocol
-           QGCGPSReceiver
+           QGCGPSReceiverConfig
            QGCGPSRTCM
     PRIVATE GeographicLib::GeographicLib QGCLoggingCategory
 )

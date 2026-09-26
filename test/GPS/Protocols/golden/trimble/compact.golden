@@ -1,0 +1,9 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden trimble/compact
+about MSM4 corrections are not supported
+request type=trimble role=rtk-base mode=survey-in accuracy=1.0000m duration=100s compact=1 persistent=0 baud=0
+stream-step 1 bytes=172 duration=1000ms
+stream-step 2 bytes=121 duration=1000ms
+stream-step 3 bytes=25 duration=1000ms
+configure
+  refused "This receiver cannot send compact (MSM4) RTCM corrections"

@@ -1,0 +1,29 @@
+# GPSCommandChannel transcript, recorded from the pre-runtime command base while it ran side by side with the
+# channel and matched it exactly. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+result configured=1 baud=0 clock=1152000 error=0 reads=5 detail=""
+write A\r\n
+write B\r\n
+write C\r\n
+write D\r\n
+write E\r\n
+note A outcome=2 1000000-1001000 accepted=3 written=3 uncertain=0 required=1 rate=0
+note B outcome=4 1001000-1002000 accepted=3 written=3 uncertain=0 required=1 rate=1
+note C outcome=5 1002000-1102000 accepted=3 written=3 uncertain=0 required=0 rate=0
+note D outcome=2 1102000-1122000 accepted=3 written=3 uncertain=0 required=1 rate=0
+note E outcome=2 1122000-1152000 accepted=3 written=3 uncertain=0 required=1 rate=0
+evidence A outcome=2 1000000-1001000 accepted=3 written=3 uncertain=0 required=1 rate=0
+evidence B outcome=4 1001000-1002000 accepted=3 written=3 uncertain=0 required=1 rate=1
+evidence C outcome=5 1002000-1102000 accepted=3 written=3 uncertain=0 required=0 rate=0
+evidence D outcome=2 1102000-1122000 accepted=3 written=3 uncertain=0 required=1 rate=0
+evidence E outcome=2 1122000-1152000 accepted=3 written=3 uncertain=0 required=1 rate=0
+configuration A outcome=2 1000000-1001000 accepted=3 written=3 uncertain=0 required=1
+configuration B outcome=4 1001000-1002000 accepted=3 written=3 uncertain=0 required=1
+configuration C outcome=5 1002000-1102000 accepted=3 written=3 uncertain=0 required=0
+configuration D outcome=2 1102000-1122000 accepted=3 written=3 uncertain=0 required=1
+configuration E outcome=2 1122000-1152000 accepted=3 written=3 uncertain=0 required=1
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=4
+decoded batch updates=0
+decoded batch updates=0

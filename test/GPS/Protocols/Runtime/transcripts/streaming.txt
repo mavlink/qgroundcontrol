@@ -1,0 +1,56 @@
+# GPSCommandChannel transcript, recorded from the pre-runtime command base while it ran side by side with the
+# channel and matched it exactly. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+result configured=1 baud=0 clock=2000000 error=0 reads=14 detail=""
+write A\r\n
+write DIAG\r\n
+note A outcome=2 1000000-1001000 accepted=3 written=3 uncertain=0 required=1 rate=0
+note receive 7
+note receive 0
+note receive 4
+note DIAG outcome=2 1260000-1290000 accepted=6 written=6 uncertain=0 required=1 rate=0
+note receive 7
+note receive 0
+note receive 0
+note receive 0
+note receive 0
+note receive 0
+note receive 0
+note receive 4
+note receive 0
+evidence A outcome=2 1000000-1001000 accepted=3 written=3 uncertain=0 required=1 rate=0
+evidence DIAG outcome=2 1260000-1290000 accepted=6 written=6 uncertain=0 required=1 rate=0
+configuration A outcome=2 1000000-1001000 accepted=3 written=3 uncertain=0 required=1
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=7
+decoded usage t=1050000 used=8
+decoded position t=1050000 utc=0 fix=3 lat=48.117299999999993 lon=11.516666666666667 msl=545.39999999999998 ell=592.29999999999995 hacc=nan vacc=nan hdop=0.89999997615814209 vdop=nan speed=nan course=nan heading=nan headingAcc=nan used=8 velocity=0
+decoded rtcm d300063ed0010203047d7045
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=4
+decoded batch updates=0
+decoded batch updates=7
+decoded usage t=1260000 used=8
+decoded position t=1260000 utc=0 fix=3 lat=48.117299999999993 lon=11.516666666666667 msl=545.39999999999998 ell=592.29999999999995 hacc=nan vacc=nan hdop=0.89999997615814209 vdop=nan speed=nan course=nan heading=nan headingAcc=nan used=8 velocity=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=4
+decoded rtcm d300063ed0010203047d7045
+decoded rtcm d300063ed0010203047d7045
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0

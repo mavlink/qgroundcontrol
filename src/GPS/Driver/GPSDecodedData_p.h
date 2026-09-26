@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GPSDecodedBatch.h"
+#include "GPSDecodedReports.h"
 #include "GPSDriverReports.h"
 #include "GPSSatelliteState.h"
 

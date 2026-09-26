@@ -58,7 +58,6 @@ struct NavigationEpoch
     std::optional<double> speedMetersPerSecond;
     std::optional<double> courseDegrees;
 
-    [[nodiscard]] bool hasCoordinate() const;
     [[nodiscard]] std::optional<double> altitudeEllipsoidMeters() const;
 };
 

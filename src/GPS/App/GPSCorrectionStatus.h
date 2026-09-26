@@ -7,7 +7,7 @@
 
 class Fact;
 class GPSCorrectionManager;
-class GPSRTK;
+class GPSReceiver;
 class NTRIPManager;
 
 /// Derives GPSManager::CorrectionState from the correction router, NTRIP, the UDP input setting and the receiver.
@@ -16,7 +16,7 @@ class GPSCorrectionStatus : public QObject
     Q_OBJECT
 
 public:
-    GPSCorrectionStatus(GPSCorrectionManager* corrections, NTRIPManager* ntrip, GPSRTK* rtk, Fact* udpInputEnabled,
+    GPSCorrectionStatus(GPSCorrectionManager* corrections, NTRIPManager* ntrip, GPSReceiver* rtk, Fact* udpInputEnabled,
                         QObject* parent = nullptr);
 
     GPSManager::CorrectionState state() const { return _state; }
@@ -30,7 +30,7 @@ private:
     // The inputs are siblings of this object and may be destroyed first.
     QPointer<GPSCorrectionManager> _corrections;
     QPointer<NTRIPManager> _ntrip;
-    QPointer<GPSRTK> _rtk;
+    QPointer<GPSReceiver> _rtk;
     QPointer<Fact> _udpInputEnabled;
     GPSManager::CorrectionState _state = GPSManager::CorrectionState::Inactive;
 };

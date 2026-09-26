@@ -1,0 +1,47 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden quectel/base-write-rejected
+about Receiver rejects the fixed position (base mode)
+request type=quectel role=rtk-base mode=fixed lat=0.00000000 lon=90.00000000 alt=100.0000 accuracy=0.00000m compact=0 persistent=1 baud=0
+stream-step 1 bytes=0 duration=12000ms
+stream-step 2 bytes=25 duration=2000ms
+configure
+  result configured=0 baud=0->460800 failure=protocol ready=0 elapsed=207ms
+  identity "LG290P03AANR01A03S"
+  error "LG290P base change was rejected or its readback did not match"
+  wire
+    baud 460800 configured
+    write "PQTMVERNO" 15
+      245051544d5645524e4f2a35380d0a
+      text "$PQTMVERNO*58\r\n"
+    write "PQTMCFGRCVRMODE,R" 23
+      245051544d434647524356524d4f44452c522a33320d0a
+      text "$PQTMCFGRCVRMODE,R*32\r\n"
+    write "PQTMSRR" 13
+      245051544d5352522a34420d0a
+      text "$PQTMSRR*4B\r\n"
+    write "PQTMVERNO" 15
+      245051544d5645524e4f2a35380d0a
+      text "$PQTMVERNO*58\r\n"
+    write "PQTMCFGRCVRMODE,R" 23
+      245051544d434647524356524d4f44452c522a33320d0a
+      text "$PQTMCFGRCVRMODE,R*32\r\n"
+    write "PQTMCFGFIXRATE,R" 22
+      245051544d434647464958524154452c522a37310d0a
+      text "$PQTMCFGFIXRATE,R*71\r\n"
+    write "PQTMCFGSVIN,R" 19
+      245051544d4346475356494e2c522a32360d0a
+      text "$PQTMCFGSVIN,R*26\r\n"
+    write "PQTMCFGSVIN,W (fixed position)" 54
+      245051544d4346475356494e2c572c322c302c302c302e303030302c36333738
+      3233372e303030302c302e303030302c302a31460d0a
+      text "$PQTMCFGSVIN,W,2,0,0,0.0000,6378237.0000,0.0000,0*1F\r\n"
+  evidence
+    "PQTMVERNO" readback-verified required accepted=15 written=15 uncertain=0 elapsed=1ms
+    "PQTMCFGRCVRMODE,R" readback-verified required accepted=23 written=23 uncertain=0 elapsed=1ms
+    "PQTMSRR" written required accepted=13 written=13 uncertain=0 elapsed=0ms
+    "PQTMVERNO" readback-verified required accepted=15 written=15 uncertain=0 elapsed=1ms
+    "PQTMCFGRCVRMODE,R" readback-verified required accepted=23 written=23 uncertain=0 elapsed=1ms
+    "PQTMCFGFIXRATE,R" readback-verified required accepted=22 written=22 uncertain=0 elapsed=1ms
+    "PQTMCFGSVIN,R" readback-verified required accepted=19 written=19 uncertain=0 elapsed=1ms
+    "PQTMCFGSVIN,W (fixed position)" rejected required accepted=54 written=54 uncertain=0 elapsed=1ms
+  events

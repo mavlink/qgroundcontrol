@@ -1,0 +1,36 @@
+#pragma once
+
+#include <chrono>
+
+#include <QtCore/QByteArray>
+#include <QtCore/QByteArrayView>
+
+#include "GPSBaseStationConfig.h"
+#include "GPSCommandSequence.h"
+
+/// Septentrio base-station configuration as command lists, in the order the receiver gets them. The receiver echoes an
+/// accepted command as "$R: <command>" and answers a rejected one with "$R?"; each attempt waits up to one second.
+/// Commands address the connection descriptor the receiver reported, such as USB1, COM1 or IP10.
+namespace SBF::Plan {
+
+/// The link rate, set on the host side first and on serial connections of the receiver.
+inline constexpr unsigned BAUD_RATE = 115200;
+
+/// Forces the connection back to command input, whatever it was set to accept.
+inline constexpr QByteArrayView FORCE_COMMAND_INPUT("SSSSSSSSSS\n");
+
+/// Asks for the command prompt, which starts with the connection descriptor, such as "USB1>".
+inline constexpr QByteArrayView PROMPT("\n\r");
+inline constexpr std::chrono::milliseconds PROMPT_TIMEOUT{1000};
+
+/// Stops correction output on every connection, so the prompt can be read. Receivers without some of these
+/// connections reject them, so each is optional.
+[[nodiscard]] GPSCommandSequence silenceCorrectionOutput();
+
+/// Clears the SBF output of @a port, sets its rate on a serial port, and selects SBF and the WGS84 datum.
+[[nodiscard]] GPSCommandSequence port(QByteArrayView port);
+
+/// Streams RTCM3 corrections and the PVTGeodetic survey status over @a port in the mode @a base selects.
+[[nodiscard]] GPSCommandSequence base(QByteArrayView port, const GPSBaseStationConfig& base);
+
+}  // namespace SBF::Plan

@@ -1,5 +1,6 @@
 #include "GPSManager.h"
 
+#include <memory>
 #include <utility>
 
 #include <QtCore/QApplicationStatic>
@@ -11,17 +12,21 @@
 #include "GPSCorrectionStatus.h"
 #include "GPSGgaSources.h"
 #include "GPSMAVLinkOutput.h"
-#include "GPSRTK.h"
-#include "GPSRTKFactGroup.h"
+#include "GPSReceiver.h"
+#include "GPSReceiverConnectionPolicy.h"
+#include "GPSReceiverFactGroup.h"
 #include "GPSSettingsBindings.h"
 #include "LinkManager.h"
+#include "MultiVehicleManager.h"
 #include "NTRIPManager.h"
 #include "NTRIPNetworkMonitor.h"
 #include "PositionManager.h"
+#include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
-#include "RTKConnectionPolicy.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
+#include "SimulatedPosition.h"
+#include "Vehicle.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "GPSSerialPortManagerAdapter.h"
 #include "SerialPortManager.h"
@@ -34,8 +39,8 @@ Q_APPLICATION_STATIC(GPSManager, _gpsManager);
 GPSManager::GPSManager(QObject* parent)
     : QObject(parent)
     , _corrections(new GPSCorrectionManager(this))
-    , _gpsRtk(new GPSRTK(this))
-    , _gpsRtkFacts(new GPSRTKFactGroup(_gpsRtk, this))
+    , _gpsRtk(new GPSReceiver(this))
+    , _gpsRtkFacts(new GPSReceiverFactGroup(_gpsRtk, this))
     , _ntripManager(new NTRIPManager(this))
     , _ntripNetworkMonitor(new QtNTRIPNetworkMonitor(this))
     , _positionManager(new PositionManager(this))
@@ -45,6 +50,11 @@ GPSManager::GPSManager(QObject* parent)
     , _ggaSources(new GPSGgaSources(_ntripManager, _gpsRtk, _positionManager, this))
 {
     qCDebug(GPSManagerLog) << this;
+    _positionManager->setPlatformSourceFactory(
+        [](QObject* sourceParent) { return QGCCorePlugin::instance()->createPositionSource(sourceParent); });
+    _positionManager->setSimulated(QGC::runningUnitTests());
+    connect(_positionManager, &PositionManager::simulatedPositionCreated, this,
+            [](SimulatedPosition* simulated) { _followVehicleHome(MultiVehicleManager::instance(), simulated); });
     _corrections->rtcmMavlink()->setOutputProvider(createGPSMAVLinkOutputProvider());
     _gpsRtk->setCorrectionManager(_corrections);
 #ifndef QGC_NO_SERIAL_LINK
@@ -94,6 +104,7 @@ void GPSManager::init()
     if (_connectionTimer || _shutdown) {
         return;
     }
+    GPSSettingsBindings::bindPosition(SettingsManager::instance()->rtkSettings(), _positionManager);
     _positionManager->init();
     _ggaSources->init();
     _gpsRtk->setPositionService(_positionManager);
@@ -108,6 +119,38 @@ void GPSManager::init()
     if (!QGC::runningUnitTests()) {
         _connectionTimer->start();
     }
+}
+
+void GPSManager::_followVehicleHome(MultiVehicleManager* vehicles, SimulatedPosition* simulated)
+{
+    struct HomeFollow
+    {
+        QMetaObject::Connection homeChanged;
+        // Invalidates the pending home connection of a vehicle that is no longer followed.
+        quint64 revision = 0;
+    };
+
+    const auto follow = std::make_shared<HomeFollow>();
+    connect(vehicles, &MultiVehicleManager::vehicleAdded, simulated, [simulated, follow](Vehicle* vehicle) {
+        if (!vehicle) {
+            return;
+        }
+        disconnect(std::exchange(follow->homeChanged, {}));
+        const quint64 revision = ++follow->revision;
+        if (vehicle->homePosition().isValid()) {
+            simulated->setReferencePosition(vehicle->homePosition());
+            return;
+        }
+        follow->homeChanged = connect(vehicle, &Vehicle::homePositionChanged, simulated,
+                                      [simulated, follow, revision](const QGeoCoordinate& homePosition) {
+                                          if (revision != follow->revision || !homePosition.isValid()) {
+                                              return;
+                                          }
+                                          ++follow->revision;
+                                          simulated->setReferencePosition(homePosition);
+                                          disconnect(std::exchange(follow->homeChanged, {}));
+                                      });
+    });
 }
 
 void GPSManager::_updateConnections()

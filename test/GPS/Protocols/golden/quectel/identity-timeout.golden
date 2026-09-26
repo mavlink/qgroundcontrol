@@ -1,0 +1,43 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden quectel/identity-timeout
+about Receiver never answers the identity query
+request type=quectel role=rtk-base mode=survey-in accuracy=15.0000m duration=10s compact=0 persistent=0 baud=0
+stream-step 1 bytes=0 duration=12000ms
+stream-step 2 bytes=25 duration=2000ms
+configure
+  result configured=0 baud=0->0 failure=protocol ready=0 elapsed=6000ms
+  identity ""
+  error "No verified LG290P(03) identity; receiver configuration was not changed"
+  wire
+    baud 460800 configured
+    write "PQTMVERNO" 15
+      245051544d5645524e4f2a35380d0a
+      text "$PQTMVERNO*58\r\n"
+    baud 115200 configured
+    write "PQTMVERNO" 15
+      245051544d5645524e4f2a35380d0a
+      text "$PQTMVERNO*58\r\n"
+    baud 230400 configured
+    write "PQTMVERNO" 15
+      245051544d5645524e4f2a35380d0a
+      text "$PQTMVERNO*58\r\n"
+    baud 921600 configured
+    write "PQTMVERNO" 15
+      245051544d5645524e4f2a35380d0a
+      text "$PQTMVERNO*58\r\n"
+    baud 57600 configured
+    write "PQTMVERNO" 15
+      245051544d5645524e4f2a35380d0a
+      text "$PQTMVERNO*58\r\n"
+    baud 9600 configured
+    write "PQTMVERNO" 15
+      245051544d5645524e4f2a35380d0a
+      text "$PQTMVERNO*58\r\n"
+  evidence
+    "PQTMVERNO" timed-out required accepted=15 written=15 uncertain=0 elapsed=1000ms
+    "PQTMVERNO" timed-out required accepted=15 written=15 uncertain=0 elapsed=1000ms
+    "PQTMVERNO" timed-out required accepted=15 written=15 uncertain=0 elapsed=1000ms
+    "PQTMVERNO" timed-out required accepted=15 written=15 uncertain=0 elapsed=1000ms
+    "PQTMVERNO" timed-out required accepted=15 written=15 uncertain=0 elapsed=1000ms
+    "PQTMVERNO" timed-out required accepted=15 written=15 uncertain=0 elapsed=1000ms
+  events

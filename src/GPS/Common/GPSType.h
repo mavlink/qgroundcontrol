@@ -15,6 +15,8 @@ enum class GPSType
     unicore = 4,
     quectel = 5,
     passive = 6,
+    /// No receiver's own type: a configured base whose family is detected on every connect.
+    automatic = 7,
 };
 Q_ENUM_NS(GPSType)
 

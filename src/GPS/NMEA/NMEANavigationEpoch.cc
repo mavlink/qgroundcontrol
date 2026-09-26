@@ -29,11 +29,6 @@ std::optional<double> nonnegativeNumber(std::string_view field)
 
 namespace NMEA {
 
-bool NavigationEpoch::hasCoordinate() const
-{
-    return std::isfinite(latitude) && std::isfinite(longitude);
-}
-
 std::optional<double> NavigationEpoch::altitudeEllipsoidMeters() const
 {
     return altitudeMslMeters && geoidSeparationMeters

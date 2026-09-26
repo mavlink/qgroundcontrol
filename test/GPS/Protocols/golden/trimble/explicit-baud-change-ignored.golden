@@ -1,0 +1,64 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden trimble/explicit-baud-change-ignored
+about Receiver at 38400 ignores the speed command
+request type=trimble role=rtk-base mode=survey-in accuracy=1.0000m duration=100s compact=0 persistent=0 baud=38400
+stream-step 1 bytes=172 duration=1000ms
+stream-step 2 bytes=121 duration=1000ms
+stream-step 3 bytes=25 duration=1000ms
+configure
+  result configured=0 baud=38400->115200 failure=none ready=0 elapsed=2200ms
+  identity ""
+  error "Receiver configuration failed"
+  wire
+    baud 38400 configured
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHS,SPD,A,9\r\n" 16
+      2450415348532c5350442c412c390d0a
+      text "$PASHS,SPD,A,9\r\n"
+    baud 115200 configured
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+  evidence
+    "$PASHQ,PRT\r\n" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "$PASHS,SPD,A,9\r\n" written required accepted=16 written=16 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+  events

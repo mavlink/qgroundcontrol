@@ -1,8 +1,10 @@
 #pragma once
 
 #include <array>
-#include <string>
 #include <string_view>
+
+#include <QtCore/QByteArray>
+#include <QtCore/QByteArrayView>
 
 #include "GPSCommandTransaction.h"
 #include "NMEASentence.h"
@@ -53,9 +55,12 @@ bool number(std::string_view text, T& result)
     return true;
 }
 
-[[nodiscard]] std::string frame(std::string_view body);
+/// @a body as one "$<body>*hh\r\n" sentence.
+[[nodiscard]] QByteArray frame(QByteArrayView body);
 [[nodiscard]] std::string_view checkedBody(std::string_view line);
 [[nodiscard]] bool rejected(const Fields& reply, std::string_view command);
-GPSCommandOutcome readback(const Fields& reply, std::string_view command, bool matches);
+/// "<command>,OK" acknowledges and "<command>,ERROR,<code>" rejects a setting.
+[[nodiscard]] GPSCommandOutcome acknowledgement(const Fields& reply, std::string_view command);
+[[nodiscard]] GPSCommandOutcome readback(const Fields& reply, std::string_view command, bool matches);
 
 }  // namespace QuectelCodec

@@ -1,0 +1,8 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden quectel/averaging
+about Receiver averaging is not supported
+request type=quectel role=rtk-base mode=averaging maximum=60s compact=0 persistent=0 baud=0
+stream-step 1 bytes=0 duration=12000ms
+stream-step 2 bytes=25 duration=2000ms
+configure
+  refused "This receiver does not support the selected base mode"

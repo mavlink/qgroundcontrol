@@ -1,0 +1,53 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden unicore/fixed-rejected
+about Receiver rejects the fixed base
+request type=unicore role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=0 persistent=0 baud=0
+stream-step 1 bytes=135 duration=2000ms
+stream-step 2 bytes=39 duration=5000ms
+stream-step 3 bytes=25 duration=2000ms
+configure
+  result configured=0 baud=0->115200 failure=none ready=0 elapsed=1ms
+  identity "UM982 R4.10Build15434"
+  error "Unicore command 'MODE BASE (fixed position)' was rejected or its readback did not match"
+  wire
+    baud 115200 configured
+    write "VERSIONA" 10
+      56455253494f4e410d0a
+      text "VERSIONA\r\n"
+    write "UNLOG" 7
+      554e4c4f470d0a
+      text "UNLOG\r\n"
+    write "MODE ROVER" 12
+      4d4f444520524f5645520d0a
+      text "MODE ROVER\r\n"
+    write "MODE" 6
+      4d4f44450d0a
+      text "MODE\r\n"
+    write "GPGGA 1" 9
+      475047474120310d0a
+      text "GPGGA 1\r\n"
+    write "GPGST 1" 9
+      475047535420310d0a
+      text "GPGST 1\r\n"
+    write "GPGSV 1" 9
+      475047535620310d0a
+      text "GPGSV 1\r\n"
+    write "GPGSA 1" 9
+      475047534120310d0a
+      text "GPGSA 1\r\n"
+    write "MODE BASE (fixed position)" 49
+      4d4f4445204241534520343331353631362e36373236203630363532302e3336
+      393420343634323133302e343635370d0a
+      text "MODE BASE 4315616.6726 606520.3694 4642130.4657\r\n"
+  evidence
+    "VERSIONA" readback-verified required accepted=10 written=10 uncertain=0 elapsed=0ms
+    "UNLOG" acknowledged required accepted=7 written=7 uncertain=0 elapsed=0ms
+    "MODE ROVER" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "MODE" readback-verified required accepted=6 written=6 uncertain=0 elapsed=0ms
+    "GPGGA 1" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "GPGST 1" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "GPGSV 1" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "GPGSA 1" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "MODE BASE (fixed position)" rejected required accepted=49 written=49 uncertain=0 elapsed=0ms
+  events
+    survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1

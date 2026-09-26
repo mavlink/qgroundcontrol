@@ -16,7 +16,7 @@ ToolIndicatorPage {
     property string na: qsTr("N/A", "No data to display")
     property string valueNA: qsTr("–.––", "No data to display")
     property RTKSettings rtkSettings: QGroundControl.settingsManager.rtkSettings
-    readonly property GPSRTK _receiver: QGroundControl.gpsManager.gpsRtk
+    readonly property GPSReceiver _receiver: QGroundControl.gpsManager.gpsRtk
     readonly property bool _vehicleGps: !!activeVehicle && !!activeVehicle.gps && activeVehicle.gps.telemetryAvailable
     readonly property real _preferredStatusWidth: ScreenTools.defaultFontPixelWidth * 36
     readonly property real _preferredSettingsWidth: ScreenTools.defaultFontPixelWidth * 56

@@ -1,0 +1,23 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden ublox/wire-discovery-unknown-hardware
+about Identity reports unknown hardware
+request type=ublox role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure
+  result configured=0 baud=0->0 failure=none ready=0 elapsed=4060ms
+  identity "ZED-F9P HPG 1.32"
+  error "Receiver configuration failed"
+  wire
+    baud 38400 configured
+    write "1034" 8
+      b5620a0400000e34
+    baud 57600 configured
+    write "1034" 8
+      b5620a0400000e34
+    baud 9600 configured
+    write "1034" 8
+      b5620a0400000e34
+  evidence
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+    "1034" acknowledged required accepted=8 written=8 uncertain=0 elapsed=0ms
+  events

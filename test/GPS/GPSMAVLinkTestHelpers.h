@@ -2,10 +2,7 @@
 
 #include <cstdint>
 
-#include <QtCore/QMetaObject>
-
 #include "MAVLinkLib.h"
-#include "Vehicle.h"
 
 namespace GPSTestHelpers {
 
@@ -61,25 +58,6 @@ inline mavlink_message_t gpsRawMessage(const GPSRawFields& fields,
         mavlink_msg_gps_raw_int_encode(systemId, componentId, &message, &raw);
     }
     return message;
-}
-
-inline mavlink_message_t globalPositionMessage(int32_t latitudeE7, int32_t longitudeE7, int32_t altitudeMm,
-                                               uint8_t systemId = 1, uint8_t componentId = 1)
-{
-    mavlink_global_position_int_t global{};
-    global.lat = latitudeE7;
-    global.lon = longitudeE7;
-    global.alt = altitudeMm;
-    mavlink_message_t message{};
-    mavlink_msg_global_position_int_encode(systemId, componentId, &message, &global);
-    return message;
-}
-
-/// Delivers a message as the vehicle's link would.
-inline bool deliverToVehicle(Vehicle& vehicle, const mavlink_message_t& message)
-{
-    return QMetaObject::invokeMethod(&vehicle, "_mavlinkMessageReceived", Qt::DirectConnection,
-                                     Q_ARG(LinkInterface*, nullptr), Q_ARG(mavlink_message_t, message));
 }
 
 }  // namespace GPSTestHelpers

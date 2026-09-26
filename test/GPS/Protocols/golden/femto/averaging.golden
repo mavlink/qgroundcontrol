@@ -1,0 +1,9 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden femto/averaging
+about Receiver averaging is not supported
+request type=femto role=rtk-base mode=averaging maximum=60s compact=0 persistent=0 baud=0
+stream-step 1 bytes=78 duration=1000ms
+stream-step 2 bytes=78 duration=1000ms
+stream-step 3 bytes=25 duration=1000ms
+configure
+  refused "This receiver does not support the selected base mode"

@@ -10,15 +10,18 @@
 #include "GPSCorrectionStatus.h"
 #include "GPSGgaSources.h"
 #include "GPSManager.h"
-#include "GPSRTK.h"
+#include "GPSReceiver.h"
 #include "GPSSettingsBindings.h"
 #include "GPSSourceHealth.h"
 #include "GPSTestHelpers.h"
+#include "ManualScheduler.h"
+#include "MultiVehicleManager.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
 #include "PositionManager.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
+#include "SimulatedPosition.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
 
@@ -30,6 +33,8 @@ private slots:
     void _correctionStatus();
     void _correctionStateFacade();
     void _positionManagerLifecycle();
+    void _simulatedPositionFollowsVehicleHome_data();
+    void _simulatedPositionFollowsVehicleHome();
     void _vehicleEstimateTracking();
     void _ntripSettingsBinding();
     void _settingsBindingsCoverEveryFact_data();
@@ -41,7 +46,7 @@ void GPSManagerTest::_correctionStatus()
     using State = GPSManager::CorrectionState;
     GPSCorrectionManager corrections;
     NTRIPManager ntrip;
-    GPSRTK rtk;
+    GPSReceiver rtk;
     Fact udpInputEnabled(0, QStringLiteral("udpInputEnabled"), FactMetaData::valueTypeBool);
     udpInputEnabled.setRawValue(false);
     GPSCorrectionStatus status(&corrections, &ntrip, &rtk, &udpInputEnabled);
@@ -86,14 +91,69 @@ void GPSManagerTest::_positionManagerLifecycle()
     saved.setFactValue(sourceSetting, static_cast<int>(Mode::InternalOnly));
     GPSManager manager;
     PositionManager* const positions = manager.positionManager();
+    QSignalSpy simulated(positions, &PositionManager::simulatedPositionCreated);
     QCOMPARE(positions->sourceMode(), Mode::Automatic);
 
     manager.init();
     QCOMPARE(positions->sourceMode(), Mode::InternalOnly);
+    QCOMPARE(simulated.size(), 1);
+    sourceSetting->setRawValue(static_cast<int>(Mode::ReceiverOnly));
+    QCOMPARE(positions->sourceMode(), Mode::ReceiverOnly);
 
     manager.shutdown();
     sourceSetting->setRawValue(static_cast<int>(Mode::Automatic));
-    QCOMPARE(positions->sourceMode(), Mode::InternalOnly);
+    QCOMPARE(positions->sourceMode(), Mode::ReceiverOnly);
+}
+
+void GPSManagerTest::_simulatedPositionFollowsVehicleHome_data()
+{
+    QTest::addColumn<bool>("latestAlreadyValid");
+    QTest::addColumn<bool>("oldestFirst");
+    QTest::newRow("pending-oldest-first") << false << true;
+    QTest::newRow("pending-newest-first") << false << false;
+    QTest::newRow("valid-oldest-first") << true << true;
+    QTest::newRow("valid-newest-first") << true << false;
+}
+
+void GPSManagerTest::_simulatedPositionFollowsVehicleHome()
+{
+    QFETCH(bool, latestAlreadyValid);
+    QFETCH(bool, oldestFirst);
+    ManualScheduler scheduler;
+    SimulatedPosition source(nullptr, &scheduler);
+    MultiVehicleManager vehicles;
+    GPSManager::_followVehicleHome(&vehicles, &source);
+    Vehicle first(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    Vehicle second(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    Vehicle latest(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    QGeoCoordinate latestHome(48, 9, 550);
+    if (latestAlreadyValid) {
+        latest._setHomePosition(latestHome);
+    }
+    const auto origin = source.lastKnownPosition(false).coordinate();
+    for (auto* vehicle : {&first, &second, &latest}) {
+        emit vehicles.vehicleAdded(vehicle);
+    }
+    const auto updateOlderHomes = [&]() {
+        QGeoCoordinate firstHome(46, 7, 450);
+        QGeoCoordinate secondHome(47, 8, 500);
+        first._setHomePosition(firstHome);
+        second._setHomePosition(secondHome);
+    };
+    if (oldestFirst) {
+        updateOlderHomes();
+        QCOMPARE(source.lastKnownPosition(false).coordinate(), latestAlreadyValid ? latestHome : origin);
+    }
+    latest._setHomePosition(latestHome);
+    QCOMPARE(source.lastKnownPosition(false).coordinate(), latestHome);
+    if (!oldestFirst) {
+        updateOlderHomes();
+    }
+    QGeoCoordinate changedHome(49, 10, 600);
+    for (auto* vehicle : {&first, &second, &latest}) {
+        vehicle->_setHomePosition(changedHome);
+        QCOMPARE(source.lastKnownPosition(false).coordinate(), latestHome);
+    }
 }
 
 void GPSManagerTest::_vehicleEstimateTracking()
@@ -189,8 +249,6 @@ void GPSManagerTest::_settingsBindingsCoverEveryFact_data()
                          << QStringList{
                                 // GPSManager reads it once at startup.
                                 QStringLiteral("connectOnStartup"),
-                                // PositionManager selects the GCS position source from it.
-                                QStringLiteral("gcsPositionSource"),
                             };
     QTest::newRow("NTRIP") << static_cast<SettingsGroup*>(settings->ntripSettings())
                            << GPSSettingsBindings::boundFacts(settings->ntripSettings()) << QStringList{};

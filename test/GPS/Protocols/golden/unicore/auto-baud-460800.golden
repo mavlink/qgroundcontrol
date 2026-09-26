@@ -1,0 +1,115 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden unicore/auto-baud-460800
+about Detects a receiver at 460800
+request type=unicore role=rtk-base mode=averaging maximum=5s compact=0 persistent=0 baud=0
+stream-step 1 bytes=135 duration=2000ms
+stream-step 2 bytes=39 duration=5000ms
+stream-step 3 bytes=25 duration=2000ms
+configure
+  result configured=1 baud=0->460800 failure=none ready=1 elapsed=3002ms
+  identity "UM982 R4.10Build15434"
+  error ""
+  wire
+    baud 115200 configured
+    write "VERSIONA" 10
+      56455253494f4e410d0a
+      text "VERSIONA\r\n"
+    baud 230400 configured
+    write "VERSIONA" 10
+      56455253494f4e410d0a
+      text "VERSIONA\r\n"
+    baud 460800 configured
+    write "VERSIONA" 10
+      56455253494f4e410d0a
+      text "VERSIONA\r\n"
+    write "UNLOG" 7
+      554e4c4f470d0a
+      text "UNLOG\r\n"
+    write "MODE ROVER" 12
+      4d4f444520524f5645520d0a
+      text "MODE ROVER\r\n"
+    write "MODE" 6
+      4d4f44450d0a
+      text "MODE\r\n"
+    write "GPGGA 1" 9
+      475047474120310d0a
+      text "GPGGA 1\r\n"
+    write "GPGST 1" 9
+      475047535420310d0a
+      text "GPGST 1\r\n"
+    write "GPGSV 1" 9
+      475047535620310d0a
+      text "GPGSV 1\r\n"
+    write "GPGSA 1" 9
+      475047534120310d0a
+      text "GPGSA 1\r\n"
+    write "MODE BASE TIME 5 0" 20
+      4d4f444520424153452054494d45203520300d0a
+      text "MODE BASE TIME 5 0\r\n"
+    write "MODE" 6
+      4d4f44450d0a
+      text "MODE\r\n"
+    write "BESTNAVXYZA 1" 15
+      424553544e415658595a4120310d0a
+      text "BESTNAVXYZA 1\r\n"
+    write "RTCM1005 1" 12
+      5254434d3130303520310d0a
+      text "RTCM1005 1\r\n"
+    write "RTCM1033 10" 13
+      5254434d313033332031300d0a
+      text "RTCM1033 10\r\n"
+    write "RTCM1074 1" 12
+      5254434d3130373420310d0a
+      text "RTCM1074 1\r\n"
+    write "RTCM1084 1" 12
+      5254434d3130383420310d0a
+      text "RTCM1084 1\r\n"
+    write "RTCM1094 1" 12
+      5254434d3130393420310d0a
+      text "RTCM1094 1\r\n"
+    write "RTCM1124 1" 12
+      5254434d3131323420310d0a
+      text "RTCM1124 1\r\n"
+  evidence
+    "VERSIONA" timed-out required accepted=10 written=10 uncertain=0 elapsed=1500ms
+    "VERSIONA" timed-out required accepted=10 written=10 uncertain=0 elapsed=1500ms
+    "VERSIONA" readback-verified required accepted=10 written=10 uncertain=0 elapsed=0ms
+    "UNLOG" acknowledged required accepted=7 written=7 uncertain=0 elapsed=0ms
+    "MODE ROVER" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "MODE" readback-verified required accepted=6 written=6 uncertain=0 elapsed=0ms
+    "GPGGA 1" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "GPGST 1" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "GPGSV 1" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "GPGSA 1" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "MODE BASE TIME 5 0" acknowledged required accepted=20 written=20 uncertain=0 elapsed=0ms
+    "MODE" readback-verified required accepted=6 written=6 uncertain=0 elapsed=0ms
+    "BESTNAVXYZA 1" acknowledged required accepted=15 written=15 uncertain=0 elapsed=0ms
+    "RTCM1005 1" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "RTCM1033 10" acknowledged required accepted=13 written=13 uncertain=0 elapsed=0ms
+    "RTCM1074 1" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "RTCM1084 1" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "RTCM1094 1" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "RTCM1124 1" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+  events
+    survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+    survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+stream
+  result failure=none ready=1
+  wire
+  evidence
+  events
+    usage used=12 receipt=1
+    position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan heading=nan headingacc=nan used=12 utc=0 velocity=0 receipt=1
+    satellites full=0 gps:view=3/1,use=-/0
+    satellites full=0 sbas:view=0/1,use=-/0
+    survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+    survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+    survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+    survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+    survey active=0 valid=1 duration=0s accuracy=- lat=40.07899408 lon=116.23661281 alt=58.0041 receipt=1
+    survey active=0 valid=1 duration=0s accuracy=- lat=40.07899408 lon=116.23661281 alt=58.0041 receipt=1
+    survey active=0 valid=1 duration=0s accuracy=- lat=40.07899408 lon=116.23661281 alt=58.0041 receipt=1
+    survey active=0 valid=1 duration=0s accuracy=- lat=40.07899408 lon=116.23661281 alt=58.0041 receipt=1
+    rtcm type=1005 size=25 fnv=f8e3bb62
+    survey active=0 valid=1 duration=0s accuracy=- lat=40.07899408 lon=116.23661281 alt=58.0041 receipt=1
+    survey active=0 valid=1 duration=0s accuracy=- lat=40.07899408 lon=116.23661281 alt=58.0041 receipt=1

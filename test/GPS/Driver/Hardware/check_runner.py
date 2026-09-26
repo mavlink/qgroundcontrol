@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import json
+import re
 import signal
 import subprocess
 import sys
 import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 def run(binary: str, arguments: list[str], expected: int) -> dict:
@@ -33,6 +38,97 @@ def run(binary: str, arguments: list[str], expected: int) -> dict:
         assert report["backend"] == "native"
         assert report["receive_outcome_semantics"] == "typed_native"
     return report
+
+
+def numbers(value: object) -> Iterator[float]:
+    if isinstance(value, dict):
+        for item in cast("dict[str, object]", value).values():
+            yield from numbers(item)
+    elif isinstance(value, list):
+        for item in cast("list[object]", value):
+            yield from numbers(item)
+    elif isinstance(value, (int, float)) and not isinstance(value, bool):
+        yield float(value)
+
+
+def check_record_and_replay(binary: str) -> None:
+    corpus = Path(__file__).resolve().parents[2] / "Protocols" / "corpus"
+    replay = ["--action", "configure"]
+    passive = [*replay, "--family", "passive", "--role", "passive", "--baud", "115200"]
+    with TemporaryDirectory(prefix="gps-record-", dir=Path.cwd()) as directory:
+        report = run(
+            binary,
+            [
+                "--action",
+                "configure",
+                "--observe-ms",
+                "20",
+                "--record",
+                str(Path(directory) / "GPS"),
+            ],
+            3,
+        )
+        assert len(report["recordings"]) == 1, report
+        received = Path(report["recordings"][0]["received"])
+        sent = Path(report["recordings"][0]["sent"])
+        assert re.fullmatch(r"gps-ublox-\d{8}-\d{6}-rx\.ubx", received.name), received
+        assert sent.name == received.name.replace("-rx.ubx", "-tx.bin"), sent
+        assert b"\xb5\x62" in received.read_bytes() and sent.read_bytes().startswith(b"\xb5\x62")
+        # The passive decoder ignores UBX frames; the u-blox decoder reads the recorded fix and survey.
+        report = run(binary, ["--replay", str(received), *passive], 0)
+        assert report["outcome"] == "replayed" and report["replay"]["complete"], report
+        assert report["replay"]["bytes"] == received.stat().st_size
+        assert report["positions"]["messages"] == 0, report
+        report = run(binary, ["--replay", str(received), *replay, "--family", "ublox"], 0)
+        assert report["outcome"] == "replayed" and report["replay"]["decode_only"], report
+        assert report["positions"]["fix_types"]["3d"] > 0, report
+        assert report["survey"]["messages"] > 0 and "active" in report["survey"], report
+        assert "requested" not in report, report
+        # The scripted fix is at 47.3, 8.5.
+        assert not {47.3, 8.5} & set(numbers(report)), report
+
+    ublox = corpus / "upstream-nav-pvt.ubx"
+    report = run(binary, ["--replay", str(ublox), *replay, "--family", "ublox"], 0)
+    assert report["outcome"] == "replayed" and report["replay"]["bytes"] == ublox.stat().st_size
+    positions = report["positions"]
+    assert positions["messages"] == 1 and len(positions["fix_types"]) == 1, report
+    assert "latitude" not in json.dumps(report) and "longitude" not in json.dumps(report), report
+
+    # Base status decodes as configuring the requested base leaves the decoder, as the decode goldens show.
+    quectel = corpus / "synthetic-quectel-base.nmea"
+    report = run(binary, ["--replay", str(quectel), *replay, "--family", "quectel"], 0)
+    assert report["survey"]["messages"] == 4 and not report["survey"]["valid"], report
+    unicore = corpus / "synthetic-unicore-base.ascii"
+    fixed = ["--base-mode", "fixed", "--latitude", "0", "--longitude", "90", "--altitude", "100"]
+    report = run(binary, ["--replay", str(unicore), *replay, "--family", "unicore", *fixed], 0)
+    assert report["survey"]["messages"] == 3 and not report["survey"]["valid"], report
+    assert "latitude" not in json.dumps(report) and "longitude" not in json.dumps(report), report
+    # Unicore cannot run the requested survey-in; Femto times its survey from the configuration.
+    report = run(binary, ["--replay", str(unicore), *replay, "--family", "unicore"], 0)
+    assert report["survey"] == "unsupported" and report["outcome"] == "replayed", report
+    femto = corpus / "femto-600.bin"
+    report = run(binary, ["--replay", str(femto), *replay, "--family", "femto"], 0)
+    assert report["survey"] == "unsupported", report
+
+    capture = corpus / "synthetic-gga.nmea"
+    report = run(binary, ["--replay", str(capture), *passive], 0)
+    assert report["evidence_origin"] == "recording" and report["outcome"] == "replayed", report
+    assert (
+        report["positions"]["messages"] > 0 and report["positions"]["fix_types"]["rtk-fixed"] == 1
+    )
+    # Summaries only: no coordinate field, and none of the synthetic fixes' coordinates.
+    assert "latitude" not in json.dumps(report) and "longitude" not in json.dumps(report), report
+    assert not {12.5, -12.5, 45.25, -45.25} & set(numbers(report)), report
+    paced = run(binary, ["--replay", str(capture), "--replay-baud", "38400", *passive], 0)
+    assert paced["replay"]["elapsed_ms"] >= capture.stat().st_size * 10 * 1000 // 38400 - 1, paced
+    report = run(binary, ["--replay", str(corpus / "missing.nmea"), *passive], 1)
+    assert report["outcome"] == "failed" and "positions" not in report
+
+    run(binary, ["--replay", str(capture), "--transport", "tcp", *passive], 2)
+    run(binary, ["--replay", str(capture), "--record", "recordings", *passive], 2)
+    run(binary, ["--replay", str(capture), "--fault", "nak", *replay], 2)
+    run(binary, ["--replay", str(capture), "--action", "suite", *passive[2:]], 2)
+    run(binary, ["--replay-baud", "9600"], 2)
 
 
 def main() -> None:
@@ -273,7 +369,8 @@ def main() -> None:
         assert checks["receive_cancellation"]["status"] == (
             "not_run" if fault == "rtcm-nak" else "failed"
         ), stage
-    print("Native GPS runner safety, survey provenance and failure contracts passed")
+    check_record_and_replay(binary)
+    print("Native GPS runner safety, survey provenance, failure and record/replay contracts passed")
 
 
 if __name__ == "__main__":

@@ -19,11 +19,9 @@
 #include "LocalHttpTestServer.h"
 #include "ManualScheduler.h"
 #include "NTRIPConfiguration.h"
-#include "NTRIPSettings.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
 #include "ScriptedNTRIPCaster.h"
-#include "SettingsManager.h"
 
 static NTRIPConnectionConfig casterConfig(const QString& host, int port = 2101)
 {

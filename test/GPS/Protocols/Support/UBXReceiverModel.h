@@ -1,6 +1,8 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
+#include <deque>
 #include <map>
 #include <optional>
 #include <span>
@@ -12,6 +14,8 @@
 #include <QtCore/QList>
 #include <QtCore/QString>
 
+#include "GPSDriverReports.h"
+#include "GPSProtocolError.h"
 #include "GPSTestClock.h"
 #include "ScriptedReceiver.h"
 
@@ -50,8 +54,7 @@ public:
         CorruptAck,
         WriteError,
         ReadError,
-        Cancelled,
-        AckWithoutChange
+        Cancelled
     };
     enum class ReadbackReply
     {
@@ -72,6 +75,13 @@ public:
         WriteError,
         ReadError,
         Cancelled
+    };
+    enum class RateAck
+    {
+        OnTime,
+        Late,     ///< After the host's timeout, ahead of the reply to the next command.
+        Lost,     ///< The rate is applied, but its reply is lost.
+        Ignored,  ///< Neither applied nor answered.
     };
 
     UBXReceiverModel(Receiver receiver, GPSTestClock& clock);
@@ -96,18 +106,36 @@ public:
     bool lowLevelProtocolBehavior = false;
     bool wireValid = true;
     bool corruptVersionReplies = false;
+    /// The reply to CFG-SEC-JAMDET arrives late: after the host's timeout, ahead of the next reply.
     bool delayOptionalAck = false;
+    /// The late reply is a NAK, as from firmware without CFG-SEC-JAMDET, which also rejects its readback.
+    bool delayOptionalNak = false;
     bool staleDisableAck = false;
-    bool staleSbasAck = false;
     bool coalesceReplies = false;
+    /// Rejects RTCM activation: the VALSET with the 1 Hz base rate, or on older profiles that CFG-RATE and each RTCM
+    /// CFG-MSG rate.
     bool rejectRtcmActivation = false;
+    /// Pre-protocol-27 wire receivers reject CFG-MSG rates and polls of these messages, as firmware without them does.
+    std::vector<uint16_t> unsupportedMessages;
+    /// Pre-protocol-27 wire receivers answer the CFG-MSG rate of this message as rateAck says.
+    uint16_t rateAckMessage = 0;
+    RateAck rateAck = RateAck::OnTime;
+    /// Pre-protocol-27 wire receivers answer a CFG-MSG poll with the rates and an ACK, or not at all.
+    bool silentRatePoll = false;
+    /// The ACK or NAK that ends a CFG-MSG poll arrives this long after the poll, in order with other replies.
+    std::chrono::microseconds ratePollAckDelay{0};
+    /// Replies arrive this long after their command, in order, as from a slow M8.
+    std::chrono::microseconds replyDelay{0};
+    unsigned ratePolls = 0;
+    /// Protocol 27+ wire receivers NAK a CFG-VALSET or CFG-VALGET with one of these keys, as firmware without them
+    /// does (F9 before HPG 1.50 has no CFG-SEC-JAMDET).
+    std::vector<uint32_t> unsupportedKeys;
+    /// The NAK of a CFG-VALSET with an unsupported key is lost.
+    bool loseUnsupportedNak = false;
     DisableReply disableReply = DisableReply::Ack;
-    DisableReply sbasReply = DisableReply::Ack;
     ReadbackReply readbackReply = ReadbackReply::Value;
     quint32 faultReadbackKey = 0;
     unsigned timeMode = 0;
-    unsigned sbasEnabled = 0;
-    unsigned sbasL1caEnabled = 0;
     unsigned navigationModel = 0;
     unsigned surveyDuration = 0;
     unsigned surveyAccuracy = 0;
@@ -121,8 +149,6 @@ public:
     bool rejectDisable = false;
     bool rejectStart = false;
     unsigned transportOperations = 0;
-    uint16_t legacyMeasurementInterval = 0;
-    uint8_t legacyDynamicModel = 0;
     uint32_t legacyFixedAccuracy = 0;
     bool legacy = false;
     std::string module = "ZED-F9P";
@@ -162,20 +188,21 @@ public:
     GPSIntegrityReport integrity;
     unsigned integrityCount = 0;
     int disableCommands = 0;
-    int disableAcksRead = 0;
     int timeModeReads = 0;
-    int sbasCommands = 0;
-    int sbasReads = 0;
     int optionalAckDelays = 0;
     int resetCommands = 0;
     int failedReads = 0;
-    QByteArray lastDisablePayload;
 
 private:
     struct Response
     {
         QByteArray bytes;
-        bool disableAck = false;
+    };
+
+    struct DelayedResponse
+    {
+        uint64_t atUs;
+        Response response;
     };
 
     void reset(ScriptedReceiver& receiver) override;
@@ -191,12 +218,18 @@ private:
     bool _handleLowLevelFrame(ScriptedReceiver& receiver, const QByteArray& frame);
     bool _handleLegacyFrame(ScriptedReceiver& receiver, uint16_t message, const QByteArray& payload);
     QHash<quint32, quint64> _valsetValues(const QByteArray& payload);
-    bool _replyToSetting(ScriptedReceiver& receiver, uint8_t messageId, DisableReply reply, bool disable = false);
+    bool _replyToSetting(ScriptedReceiver& receiver, uint8_t messageId, DisableReply reply);
     bool _replyToReadback(ScriptedReceiver& receiver, uint8_t messageId, QByteArray payload, quint32 key);
-    void _queueAck(ScriptedReceiver& receiver, uint8_t messageId, bool accepted, bool disableAck = false);
+    bool _replyToRatePoll(ScriptedReceiver& receiver, uint16_t output);
+    void _queueAck(ScriptedReceiver& receiver, uint8_t messageId, bool accepted,
+                   std::chrono::microseconds delay = std::chrono::microseconds::zero());
     static QByteArray _frame(uint8_t messageClass, uint8_t messageId, const QByteArray& payload);
     static QByteArray _frame(uint16_t message, std::span<const uint8_t> payload);
-    void _queueResponse(ScriptedReceiver& receiver, const Response& response);
+    /// Queues @a response to arrive after @a delay or replyDelay, whichever is longer, and after earlier replies.
+    void _queueResponse(ScriptedReceiver& receiver, const Response& response,
+                        std::chrono::microseconds delay = std::chrono::microseconds::zero());
+    /// Delivers the delayed replies due by now.
+    void _deliverDelayed(ScriptedReceiver& receiver);
     QByteArray _lowLevelIdentityPayload();
 
     GPSTestClock* _clock;
@@ -207,7 +240,9 @@ private:
     QByteArray _version;
     QList<Response> _incoming;
     bool _delayNextValsetAck = false;
-    std::optional<Response> _heldValsetAck;
+    /// Queued ahead of the next response.
+    std::optional<Response> _heldReply;
+    std::deque<DelayedResponse> _delayed;
     QByteArray _heldBaudAck;
     QByteArray _partialWriteProbe;
     bool _identityDelivered = false;

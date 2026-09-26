@@ -1,0 +1,22 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden quectel/rover-role
+about Rover role without consent to change it
+request type=quectel role=rtk-base mode=survey-in accuracy=15.0000m duration=10s compact=0 persistent=0 baud=0
+stream-step 1 bytes=0 duration=12000ms
+stream-step 2 bytes=25 duration=2000ms
+configure
+  result configured=0 baud=0->460800 failure=consent-required ready=0 elapsed=2ms
+  identity "LG290P03AANR01A03S"
+  error "LG290P role mismatch: save the requested base role externally, reboot and reconnect. Alternatively, explicitly allow persistent changes for this connection"
+  wire
+    baud 460800 configured
+    write "PQTMVERNO" 15
+      245051544d5645524e4f2a35380d0a
+      text "$PQTMVERNO*58\r\n"
+    write "PQTMCFGRCVRMODE,R" 23
+      245051544d434647524356524d4f44452c522a33320d0a
+      text "$PQTMCFGRCVRMODE,R*32\r\n"
+  evidence
+    "PQTMVERNO" readback-verified required accepted=15 written=15 uncertain=0 elapsed=1ms
+    "PQTMCFGRCVRMODE,R" readback-verified required accepted=23 written=23 uncertain=0 elapsed=1ms
+  events

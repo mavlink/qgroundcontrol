@@ -4,351 +4,607 @@
 #include <cstdint>
 #include <cstdlib>
 #include <limits>
+#include <optional>
 #include <span>
 #include <tuple>
+#include <type_traits>
 
-#include "UBXMessages.h"
+#include "UBX/Generated/UBXMessageIds.h"
 #include "WireFields.h"
 
-// Wire offsets and sizes, checked by Wire::VALID_LAYOUT when a record is decoded or encoded.
+/// UBX payload records with the fields QGC reads or writes. Records of decoded messages carry their message ID;
+/// bytes without a field are skipped on decode and zero on encode.
+namespace UBX {
+
+struct NavPosllh
+{
+    static constexpr MessageId ID = Msg::NAV_POSLLH;
+    int32_t lon;     ///< 1e-7 deg
+    int32_t lat;     ///< 1e-7 deg
+    int32_t height;  ///< mm above the ellipsoid
+    int32_t hMSL;    ///< mm above mean sea level
+    uint32_t hAcc;   ///< mm
+    uint32_t vAcc;   ///< mm
+};
+
+struct NavHpposllh
+{
+    static constexpr MessageId ID = Msg::NAV_HPPOSLLH;
+    int8_t flags;  ///< invalidLlh
+    int32_t lon;
+    int32_t lat;
+    int32_t height;
+    int32_t hMSL;
+    int8_t lonHp;     ///< 1e-9 deg
+    int8_t latHp;     ///< 1e-9 deg
+    int8_t heightHp;  ///< 0.1 mm
+    int8_t hMSLHp;    ///< 0.1 mm
+    uint32_t hAcc;    ///< 0.1 mm
+    uint32_t vAcc;    ///< 0.1 mm
+};
+
+struct NavDop
+{
+    static constexpr MessageId ID = Msg::NAV_DOP;
+    uint16_t vDOP;  ///< 0.01
+    uint16_t hDOP;  ///< 0.01
+};
+
+struct NavSol
+{
+    static constexpr MessageId ID = Msg::NAV_SOL;
+    uint8_t gpsFix;
+    uint8_t flags;
+    uint8_t numSV;
+};
+
+struct NavPvt
+{
+    static constexpr MessageId ID = Msg::NAV_PVT;
+    uint16_t year;
+    uint8_t month;
+    uint8_t day;
+    uint8_t hour;
+    uint8_t min;
+    uint8_t sec;
+    uint8_t valid;  ///< validDate, validTime, fullyResolved
+    int32_t nano;
+    uint8_t fixType;
+    uint8_t flags;  ///< gnssFixOK, diffSoln, carrSoln in bits 7..6
+    uint8_t numSV;
+    int32_t lon;
+    int32_t lat;
+    int32_t height;
+    int32_t hMSL;
+    uint32_t hAcc;
+    uint32_t vAcc;
+    int32_t gSpeed;   ///< mm/s
+    int32_t headMot;  ///< 1e-5 deg
+};
+
+struct NavTimeUtc
+{
+    static constexpr MessageId ID = Msg::NAV_TIMEUTC;
+    int32_t nano;
+    uint16_t year;
+    uint8_t month;
+    uint8_t day;
+    uint8_t hour;
+    uint8_t min;
+    uint8_t sec;
+    uint8_t valid;  ///< validUTC in bit 2
+};
+
+struct NavVelned
+{
+    static constexpr MessageId ID = Msg::NAV_VELNED;
+    uint32_t gSpeed;  ///< cm/s
+    int32_t heading;  ///< 1e-5 deg
+};
+
+struct NavStatus
+{
+    static constexpr MessageId ID = Msg::NAV_STATUS;
+    uint8_t flags2;  ///< spoofDetState in bits 4..3
+};
+
+struct NavSvin
+{
+    static constexpr MessageId ID = Msg::NAV_SVIN;
+    uint32_t dur;
+    int32_t meanX;  ///< cm
+    int32_t meanY;
+    int32_t meanZ;
+    int8_t meanXHP;  ///< 0.1 mm
+    int8_t meanYHP;
+    int8_t meanZHP;
+    uint32_t meanAcc;  ///< 0.1 mm
+    uint8_t valid;
+    uint8_t active;
+};
+
+struct NavRelposned
+{
+    static constexpr MessageId ID = Msg::NAV_RELPOSNED;
+    int32_t relPosLength;   ///< cm
+    int32_t relPosHeading;  ///< 1e-5 deg
+    int8_t relPosHPLength;  ///< 0.1 mm
+    uint32_t accHeading;    ///< 1e-5 deg
+    uint32_t flags;
+};
+
+struct NavDaheading
+{
+    static constexpr MessageId ID = Msg::NAV_DAHEADING;
+    int32_t relPosLength;   ///< mm
+    int32_t relPosHeading;  ///< 1e-5 deg
+    uint32_t accHeading;    ///< 1e-5 deg
+    uint32_t flags;
+};
+
+struct NavSat
+{
+    uint8_t numSvs;
+};
+
+struct NavSatSatellite
+{
+    uint8_t gnssId;
+    uint32_t flags;  ///< svUsed in bit 3
+};
+
+struct NavSvinfo
+{
+    uint8_t numCh;
+};
+
+struct NavSvinfoChannel
+{
+    uint8_t flags;  ///< svUsed in bit 0
+};
+
+/// MON-HW of u-blox 6.
+struct MonHw6
+{
+    static constexpr MessageId ID = Msg::MON_HW;
+    uint16_t noisePerMS;
+    uint16_t agcCnt;
+    uint8_t jamInd;
+};
+
+/// MON-HW of u-blox 7 and later; protocol 27 deprecates it for MON-RF.
+struct MonHw7
+{
+    static constexpr MessageId ID = Msg::MON_HW;
+    uint16_t noisePerMS;
+    uint16_t agcCnt;
+    uint8_t jamInd;
+};
+
+struct MonRfBlock
+{
+    uint8_t flags;  ///< jammingState in bits 1..0
+    uint16_t noisePerMS;
+    uint16_t agcCnt;
+    uint8_t jamInd;
+};
+
+/// MON-RF with its first RF block; F9P reports two blocks and X20 three.
+struct MonRf
+{
+    static constexpr MessageId ID = Msg::MON_RF;
+    MonRfBlock block;
+};
+
+/// SEC-SIG header: v2 and v3 flags, or v1 jamFlags; the per-band groups that follow are not read.
+struct SecSig
+{
+    static constexpr MessageId ID = Msg::SEC_SIG;
+    uint8_t version;
+    uint8_t flags;
+    uint8_t jamFlags;
+};
+
+struct MonVer
+{
+    uint8_t swVersion[30];
+    uint8_t hwVersion[10];
+};
+
+struct MonVerExtension
+{
+    uint8_t extension[30];
+};
+
+struct RxmRtcm
+{
+    static constexpr MessageId ID = Msg::RXM_RTCM;
+    uint8_t flags;  ///< crcFailed in bit 0, msgUsed in bits 2..1
+};
+
+struct RxmCor
+{
+    static constexpr MessageId ID = Msg::RXM_COR;
+    uint32_t statusInfo;  ///< protocol, errStatus and msgUsed
+};
+
+/// ACK-ACK and ACK-NAK.
+struct Ack
+{
+    static constexpr MessageId ID = Msg::ACK_ACK;
+    uint16_t msg;
+};
+
+inline constexpr uint8_t MON_COMMS_MAX_PORTS = 8;
+
+struct MonCommsPort
+{
+    uint16_t portId;
+    uint16_t txPending;
+    uint8_t txUsage;
+    uint8_t txPeakUsage;
+    uint16_t rxPending;
+    uint8_t rxUsage;
+    uint16_t overrunErrs;
+    uint32_t skipped;
+};
+
+struct MonComms
+{
+    static constexpr MessageId ID = Msg::MON_COMMS;
+    uint8_t version;
+    uint8_t nPorts;
+    uint8_t txErrors;
+    MonCommsPort ports[MON_COMMS_MAX_PORTS];
+};
+
+struct CfgPrt
+{
+    uint8_t portID = 0;
+    uint32_t mode = 0;
+    uint32_t baudRate = 0;
+    uint16_t inProtoMask = 0;
+    uint16_t outProtoMask = 0;
+};
+
+struct CfgRate
+{
+    uint16_t measRate = 0;  ///< ms
+    uint16_t navRate = 0;   ///< measurement cycles
+    uint16_t timeRef = 0;   ///< 0 UTC, 1 GPS time
+};
+
+struct CfgNav5
+{
+    uint16_t mask = 0;
+    uint8_t dynModel = 0;
+    uint8_t fixMode = 0;
+};
+
+struct CfgMsg
+{
+    uint16_t msg = 0;
+    uint8_t rate = 0;
+};
+
+/// A CFG-MSG poll reply: the message's output rate on each I/O port.
+struct CfgMsgRates
+{
+    static constexpr MessageId ID = Msg::CFG_MSG;
+    uint16_t msg;
+    uint8_t rates[6];
+};
+
+struct CfgTmode3
+{
+    uint16_t flags = 0;  ///< mode in bits 7..0, lla in bit 8
+    int32_t ecefXOrLat = 0;
+    int32_t ecefYOrLon = 0;
+    int32_t ecefZOrAlt = 0;
+    int8_t ecefXOrLatHP = 0;
+    int8_t ecefYOrLonHP = 0;
+    int8_t ecefZOrAltHP = 0;
+    uint32_t fixedPosAcc = 0;
+    uint32_t svinMinDur = 0;
+    uint32_t svinAccLimit = 0;
+};
+
+}  // namespace UBX
+
 namespace Wire {
 template <>
-struct Layout<ubx_payload_rx_nav_posllh_t>
+struct Layout<UBX::NavPosllh>
 {
-    using T = ubx_payload_rx_nav_posllh_t;
+    using T = UBX::NavPosllh;
     static constexpr size_t SIZE = 28;
-    static constexpr auto FIELDS =
-        std::tuple{Field<&T::iTOW, 0>{},  Field<&T::lon, 4>{},   Field<&T::lat, 8>{},  Field<&T::height, 12>{},
-                   Field<&T::hMSL, 16>{}, Field<&T::hAcc, 20>{}, Field<&T::vAcc, 24>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::lon, 4>{},   Field<&T::lat, 8>{},   Field<&T::height, 12>{},
+                                              Field<&T::hMSL, 16>{}, Field<&T::hAcc, 20>{}, Field<&T::vAcc, 24>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_nav_dop_t>
+struct Layout<UBX::NavHpposllh>
 {
-    using T = ubx_payload_rx_nav_dop_t;
+    using T = UBX::NavHpposllh;
+    static constexpr size_t SIZE = 36;
+    static constexpr auto FIELDS =
+        std::tuple{Field<&T::flags, 3>{},   Field<&T::lon, 8>{},    Field<&T::lat, 12>{},   Field<&T::height, 16>{},
+                   Field<&T::hMSL, 20>{},   Field<&T::lonHp, 24>{}, Field<&T::latHp, 25>{}, Field<&T::heightHp, 26>{},
+                   Field<&T::hMSLHp, 27>{}, Field<&T::hAcc, 28>{},  Field<&T::vAcc, 32>{}};
+};
+
+template <>
+struct Layout<UBX::NavDop>
+{
+    using T = UBX::NavDop;
     static constexpr size_t SIZE = 18;
-    static constexpr auto FIELDS =
-        std::tuple{Field<&T::iTOW, 0>{},  Field<&T::gDOP, 4>{},  Field<&T::pDOP, 6>{},  Field<&T::tDOP, 8>{},
-                   Field<&T::vDOP, 10>{}, Field<&T::hDOP, 12>{}, Field<&T::nDOP, 14>{}, Field<&T::eDOP, 16>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::vDOP, 10>{}, Field<&T::hDOP, 12>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_nav_sol_t>
+struct Layout<UBX::NavSol>
 {
-    using T = ubx_payload_rx_nav_sol_t;
+    using T = UBX::NavSol;
     static constexpr size_t SIZE = 52;
-    static constexpr auto FIELDS = std::tuple{
-        Field<&T::iTOW, 0>{},      Field<&T::fTOW, 4>{},    Field<&T::week, 8>{},       Field<&T::gpsFix, 10>{},
-        Field<&T::flags, 11>{},    Field<&T::ecefX, 12>{},  Field<&T::ecefY, 16>{},     Field<&T::ecefZ, 20>{},
-        Field<&T::pAcc, 24>{},     Field<&T::ecefVX, 28>{}, Field<&T::ecefVY, 32>{},    Field<&T::ecefVZ, 36>{},
-        Field<&T::sAcc, 40>{},     Field<&T::pDOP, 44>{},   Field<&T::reserved1, 46>{}, Field<&T::numSV, 47>{},
-        Field<&T::reserved2, 48>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::gpsFix, 10>{}, Field<&T::flags, 11>{}, Field<&T::numSV, 47>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_nav_pvt_t>
+struct Layout<UBX::NavPvt>
 {
-    using T = ubx_payload_rx_nav_pvt_t;
+    using T = UBX::NavPvt;
     static constexpr size_t SIZE = 92;
-    static constexpr auto FIELDS = std::tuple{
-        Field<&T::iTOW, 0>{},       Field<&T::year, 4>{},    Field<&T::month, 6>{},    Field<&T::day, 7>{},
-        Field<&T::hour, 8>{},       Field<&T::min, 9>{},     Field<&T::sec, 10>{},     Field<&T::valid, 11>{},
-        Field<&T::tAcc, 12>{},      Field<&T::nano, 16>{},   Field<&T::fixType, 20>{}, Field<&T::flags, 21>{},
-        Field<&T::reserved1, 22>{}, Field<&T::numSV, 23>{},  Field<&T::lon, 24>{},     Field<&T::lat, 28>{},
-        Field<&T::height, 32>{},    Field<&T::hMSL, 36>{},   Field<&T::hAcc, 40>{},    Field<&T::vAcc, 44>{},
-        Field<&T::gSpeed, 60>{},    Field<&T::headMot, 64>{}};
+    static constexpr auto FIELDS =
+        std::tuple{Field<&T::year, 4>{},     Field<&T::month, 6>{},   Field<&T::day, 7>{},     Field<&T::hour, 8>{},
+                   Field<&T::min, 9>{},      Field<&T::sec, 10>{},    Field<&T::valid, 11>{},  Field<&T::nano, 16>{},
+                   Field<&T::fixType, 20>{}, Field<&T::flags, 21>{},  Field<&T::numSV, 23>{},  Field<&T::lon, 24>{},
+                   Field<&T::lat, 28>{},     Field<&T::height, 32>{}, Field<&T::hMSL, 36>{},   Field<&T::hAcc, 40>{},
+                   Field<&T::vAcc, 44>{},    Field<&T::gSpeed, 60>{}, Field<&T::headMot, 64>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_nav_timeutc_t>
+struct Layout<UBX::NavTimeUtc>
 {
-    using T = ubx_payload_rx_nav_timeutc_t;
+    using T = UBX::NavTimeUtc;
     static constexpr size_t SIZE = 20;
     static constexpr auto FIELDS =
-        std::tuple{Field<&T::iTOW, 0>{},   Field<&T::tAcc, 4>{},  Field<&T::nano, 8>{},  Field<&T::year, 12>{},
-                   Field<&T::month, 14>{}, Field<&T::day, 15>{},  Field<&T::hour, 16>{}, Field<&T::min, 17>{},
-                   Field<&T::sec, 18>{},   Field<&T::valid, 19>{}};
+        std::tuple{Field<&T::nano, 8>{},  Field<&T::year, 12>{}, Field<&T::month, 14>{}, Field<&T::day, 15>{},
+                   Field<&T::hour, 16>{}, Field<&T::min, 17>{},  Field<&T::sec, 18>{},   Field<&T::valid, 19>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_nav_svinfo_part1_t>
+struct Layout<UBX::NavVelned>
 {
-    using T = ubx_payload_rx_nav_svinfo_part1_t;
-    static constexpr size_t SIZE = 8;
+    using T = UBX::NavVelned;
+    static constexpr size_t SIZE = 36;
+    static constexpr auto FIELDS = std::tuple{Field<&T::gSpeed, 20>{}, Field<&T::heading, 24>{}};
+};
+
+template <>
+struct Layout<UBX::NavStatus>
+{
+    using T = UBX::NavStatus;
+    static constexpr size_t SIZE = 16;
+    static constexpr auto FIELDS = std::tuple{Field<&T::flags2, 7>{}};
+};
+
+template <>
+struct Layout<UBX::NavSvin>
+{
+    using T = UBX::NavSvin;
+    static constexpr size_t SIZE = 40;
+    static constexpr auto FIELDS = std::tuple{
+        Field<&T::dur, 8>{},      Field<&T::meanX, 12>{},   Field<&T::meanY, 16>{},   Field<&T::meanZ, 20>{},
+        Field<&T::meanXHP, 24>{}, Field<&T::meanYHP, 25>{}, Field<&T::meanZHP, 26>{}, Field<&T::meanAcc, 28>{},
+        Field<&T::valid, 36>{},   Field<&T::active, 37>{}};
+};
+
+template <>
+struct Layout<UBX::NavRelposned>
+{
+    using T = UBX::NavRelposned;
+    static constexpr size_t SIZE = 64;
     static constexpr auto FIELDS =
-        std::tuple{Field<&T::iTOW, 0>{}, Field<&T::numCh, 4>{}, Field<&T::globalFlags, 5>{}, Field<&T::reserved2, 6>{}};
+        std::tuple{Field<&T::relPosLength, 20>{}, Field<&T::relPosHeading, 24>{}, Field<&T::relPosHPLength, 35>{},
+                   Field<&T::accHeading, 52>{}, Field<&T::flags, 60>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_nav_svinfo_part2_t>
+struct Layout<UBX::NavDaheading>
 {
-    using T = ubx_payload_rx_nav_svinfo_part2_t;
-    static constexpr size_t SIZE = 12;
-    static constexpr auto FIELDS = std::tuple{Field<&T::flags, 2>{}};
+    using T = UBX::NavDaheading;
+    static constexpr size_t SIZE = 60;
+    static constexpr auto FIELDS = std::tuple{Field<&T::relPosLength, 20>{}, Field<&T::relPosHeading, 24>{},
+                                              Field<&T::accHeading, 48>{}, Field<&T::flags, 56>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_nav_sat_part1_t>
+struct Layout<UBX::NavSat>
 {
-    using T = ubx_payload_rx_nav_sat_part1_t;
+    using T = UBX::NavSat;
     static constexpr size_t SIZE = 8;
-    static constexpr auto FIELDS =
-        std::tuple{Field<&T::iTOW, 0>{}, Field<&T::version, 4>{}, Field<&T::numSvs, 5>{}, Field<&T::reserved, 6>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::numSvs, 5>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_nav_sat_part2_t>
+struct Layout<UBX::NavSatSatellite>
 {
-    using T = ubx_payload_rx_nav_sat_part2_t;
+    using T = UBX::NavSatSatellite;
     static constexpr size_t SIZE = 12;
     static constexpr auto FIELDS = std::tuple{Field<&T::gnssId, 0>{}, Field<&T::flags, 8>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_nav_status_t>
+struct Layout<UBX::NavSvinfo>
 {
-    using T = ubx_payload_rx_nav_status_t;
-    static constexpr size_t SIZE = 16;
-    static constexpr auto FIELDS =
-        std::tuple{Field<&T::iTOW, 0>{},   Field<&T::gpsFix, 4>{}, Field<&T::flags, 5>{}, Field<&T::fixStat, 6>{},
-                   Field<&T::flags2, 7>{}, Field<&T::ttff, 8>{},   Field<&T::msss, 12>{}};
+    using T = UBX::NavSvinfo;
+    static constexpr size_t SIZE = 8;
+    static constexpr auto FIELDS = std::tuple{Field<&T::numCh, 4>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_nav_svin_t>
+struct Layout<UBX::NavSvinfoChannel>
 {
-    using T = ubx_payload_rx_nav_svin_t;
-    static constexpr size_t SIZE = 40;
-    static constexpr auto FIELDS = std::tuple{
-        Field<&T::version, 0>{},  Field<&T::reserved1, 1>{}, Field<&T::iTOW, 4>{},       Field<&T::dur, 8>{},
-        Field<&T::meanX, 12>{},   Field<&T::meanY, 16>{},    Field<&T::meanZ, 20>{},     Field<&T::meanXHP, 24>{},
-        Field<&T::meanYHP, 25>{}, Field<&T::meanZHP, 26>{},  Field<&T::reserved2, 27>{}, Field<&T::meanAcc, 28>{},
-        Field<&T::obs, 32>{},     Field<&T::valid, 36>{},    Field<&T::active, 37>{},    Field<&T::reserved3, 38>{}};
+    using T = UBX::NavSvinfoChannel;
+    static constexpr size_t SIZE = 12;
+    static constexpr auto FIELDS = std::tuple{Field<&T::flags, 2>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_nav_velned_t>
+struct Layout<UBX::MonHw6>
 {
-    using T = ubx_payload_rx_nav_velned_t;
-    static constexpr size_t SIZE = 36;
-    static constexpr auto FIELDS = std::tuple{Field<&T::iTOW, 0>{}, Field<&T::gSpeed, 20>{}, Field<&T::heading, 24>{}};
-};
-
-template <>
-struct Layout<ubx_payload_rx_mon_hw_ubx6_t>
-{
-    using T = ubx_payload_rx_mon_hw_ubx6_t;
+    using T = UBX::MonHw6;
     static constexpr size_t SIZE = 68;
     static constexpr auto FIELDS =
         std::tuple{Field<&T::noisePerMS, 16>{}, Field<&T::agcCnt, 18>{}, Field<&T::jamInd, 53>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_mon_hw_ubx7_t>
+struct Layout<UBX::MonHw7>
 {
-    using T = ubx_payload_rx_mon_hw_ubx7_t;
+    using T = UBX::MonHw7;
     static constexpr size_t SIZE = 60;
     static constexpr auto FIELDS =
         std::tuple{Field<&T::noisePerMS, 16>{}, Field<&T::agcCnt, 18>{}, Field<&T::jamInd, 45>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t>
+struct Layout<UBX::MonRfBlock>
 {
-    using T = ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t;
+    using T = UBX::MonRfBlock;
     static constexpr size_t SIZE = 24;
-    static constexpr auto FIELDS = std::tuple{
-        Field<&T::blockId, 0>{},    Field<&T::flags, 1>{},     Field<&T::antStatus, 2>{},   Field<&T::antPower, 3>{},
-        Field<&T::postStatus, 4>{}, Field<&T::reserved2, 8>{}, Field<&T::noisePerMS, 12>{}, Field<&T::agcCnt, 14>{},
-        Field<&T::jamInd, 16>{},    Field<&T::ofsI, 17>{},     Field<&T::magI, 18>{},       Field<&T::ofsQ, 19>{},
-        Field<&T::magQ, 20>{},      Field<&T::reserved3, 21>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::flags, 1>{}, Field<&T::noisePerMS, 12>{},
+                                              Field<&T::agcCnt, 14>{}, Field<&T::jamInd, 16>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_mon_rf_t>
+struct Layout<UBX::MonRf>
 {
-    using T = ubx_payload_rx_mon_rf_t;
+    using T = UBX::MonRf;
     static constexpr size_t SIZE = 28;
-    static constexpr auto FIELDS =
-        std::tuple{Field<&T::version, 0>{}, Field<&T::nBlocks, 1>{}, Field<&T::reserved1, 2>{}, Field<&T::block, 4>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::block, 4>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_sec_sig_t>
+struct Layout<UBX::SecSig>
 {
-    using T = ubx_payload_rx_sec_sig_t;
+    using T = UBX::SecSig;
     static constexpr size_t SIZE = 5;
-    static constexpr auto FIELDS = std::tuple{Field<&T::version, 0>{}, Field<&T::flags, 1>{}, Field<&T::reserved0, 2>{},
-                                              Field<&T::jamNumCentFreqs, 3>{}, Field<&T::jamFlags, 4>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::version, 0>{}, Field<&T::flags, 1>{}, Field<&T::jamFlags, 4>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_mon_ver_part1_t>
+struct Layout<UBX::MonVer>
 {
-    using T = ubx_payload_rx_mon_ver_part1_t;
+    using T = UBX::MonVer;
     static constexpr size_t SIZE = 40;
     static constexpr auto FIELDS = std::tuple{Field<&T::swVersion, 0>{}, Field<&T::hwVersion, 30>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_mon_ver_part2_t>
+struct Layout<UBX::MonVerExtension>
 {
-    using T = ubx_payload_rx_mon_ver_part2_t;
+    using T = UBX::MonVerExtension;
     static constexpr size_t SIZE = 30;
     static constexpr auto FIELDS = std::tuple{Field<&T::extension, 0>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_rxm_rtcm_t>
+struct Layout<UBX::RxmRtcm>
 {
-    using T = ubx_payload_rx_rxm_rtcm_t;
+    using T = UBX::RxmRtcm;
     static constexpr size_t SIZE = 8;
-    static constexpr auto FIELDS = std::tuple{Field<&T::version, 0>{}, Field<&T::flags, 1>{}, Field<&T::subType, 2>{},
-                                              Field<&T::refStationID, 4>{}, Field<&T::msgType, 6>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::flags, 1>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_rxm_cor_t>
+struct Layout<UBX::RxmCor>
 {
-    using T = ubx_payload_rx_rxm_cor_t;
+    using T = UBX::RxmCor;
     static constexpr size_t SIZE = 12;
-    static constexpr auto FIELDS =
-        std::tuple{Field<&T::version, 0>{},    Field<&T::ebno, 1>{},    Field<&T::reserved0, 2>{},
-                   Field<&T::statusInfo, 4>{}, Field<&T::msgType, 8>{}, Field<&T::msgSubType, 10>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::statusInfo, 4>{}};
 };
 
 template <>
-struct Layout<ubx_payload_rx_ack_ack_t>
+struct Layout<UBX::Ack>
 {
-    using T = ubx_payload_rx_ack_ack_t;
+    using T = UBX::Ack;
     static constexpr size_t SIZE = 2;
     static constexpr auto FIELDS = std::tuple{Field<&T::msg, 0>{}};
 };
 
 template <>
-struct Layout<ubx_payload_tx_cfg_prt_t>
+struct Layout<UBX::MonCommsPort>
 {
-    using T = ubx_payload_tx_cfg_prt_t;
-    static constexpr size_t SIZE = 20;
+    using T = UBX::MonCommsPort;
+    static constexpr size_t SIZE = 40;
     static constexpr auto FIELDS =
-        std::tuple{Field<&T::portID, 0>{},        Field<&T::reserved0, 1>{}, Field<&T::txReady, 2>{},
-                   Field<&T::mode, 4>{},          Field<&T::baudRate, 8>{},  Field<&T::inProtoMask, 12>{},
-                   Field<&T::outProtoMask, 14>{}, Field<&T::flags, 16>{},    Field<&T::reserved5, 18>{}};
+        std::tuple{Field<&T::portId, 0>{},       Field<&T::txPending, 2>{},  Field<&T::txUsage, 8>{},
+                   Field<&T::txPeakUsage, 9>{},  Field<&T::rxPending, 10>{}, Field<&T::rxUsage, 16>{},
+                   Field<&T::overrunErrs, 18>{}, Field<&T::skipped, 36>{}};
 };
 
 template <>
-struct Layout<ubx_payload_tx_cfg_rate_t>
+struct Layout<UBX::MonComms>
 {
-    using T = ubx_payload_tx_cfg_rate_t;
+    using T = UBX::MonComms;
+    static constexpr size_t SIZE = 328;
+    static constexpr auto FIELDS =
+        std::tuple{Field<&T::version, 0>{}, Field<&T::nPorts, 1>{}, Field<&T::txErrors, 2>{}, Field<&T::ports, 8>{}};
+};
+
+template <>
+struct Layout<UBX::CfgPrt>
+{
+    using T = UBX::CfgPrt;
+    static constexpr size_t SIZE = 20;
+    static constexpr auto FIELDS = std::tuple{Field<&T::portID, 0>{}, Field<&T::mode, 4>{}, Field<&T::baudRate, 8>{},
+                                              Field<&T::inProtoMask, 12>{}, Field<&T::outProtoMask, 14>{}};
+};
+
+template <>
+struct Layout<UBX::CfgRate>
+{
+    using T = UBX::CfgRate;
     static constexpr size_t SIZE = 6;
     static constexpr auto FIELDS =
         std::tuple{Field<&T::measRate, 0>{}, Field<&T::navRate, 2>{}, Field<&T::timeRef, 4>{}};
 };
 
 template <>
-struct Layout<ubx_payload_tx_cfg_nav5_t>
+struct Layout<UBX::CfgNav5>
 {
-    using T = ubx_payload_tx_cfg_nav5_t;
+    using T = UBX::CfgNav5;
     static constexpr size_t SIZE = 36;
-    static constexpr auto FIELDS = std::tuple{Field<&T::mask, 0>{},
-                                              Field<&T::dynModel, 2>{},
-                                              Field<&T::fixMode, 3>{},
-                                              Field<&T::fixedAlt, 4>{},
-                                              Field<&T::fixedAltVar, 8>{},
-                                              Field<&T::minElev, 12>{},
-                                              Field<&T::drLimit, 13>{},
-                                              Field<&T::pDop, 14>{},
-                                              Field<&T::tDop, 16>{},
-                                              Field<&T::pAcc, 18>{},
-                                              Field<&T::tAcc, 20>{},
-                                              Field<&T::staticHoldThresh, 22>{},
-                                              Field<&T::dgpsTimeOut, 23>{},
-                                              Field<&T::cnoThreshNumSVs, 24>{},
-                                              Field<&T::cnoThresh, 25>{},
-                                              Field<&T::reserved, 26>{},
-                                              Field<&T::staticHoldMaxDist, 28>{},
-                                              Field<&T::utcStandard, 30>{},
-                                              Field<&T::reserved3, 31>{},
-                                              Field<&T::reserved4, 32>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::mask, 0>{}, Field<&T::dynModel, 2>{}, Field<&T::fixMode, 3>{}};
 };
 
 template <>
-struct Layout<ubx_payload_tx_cfg_msg_t>
+struct Layout<UBX::CfgMsg>
 {
-    using T = ubx_payload_tx_cfg_msg_t;
+    using T = UBX::CfgMsg;
     static constexpr size_t SIZE = 3;
     static constexpr auto FIELDS = std::tuple{Field<&T::msg, 0>{}, Field<&T::rate, 2>{}};
 };
 
 template <>
-struct Layout<ubx_payload_tx_cfg_tmode3_t>
+struct Layout<UBX::CfgMsgRates>
 {
-    using T = ubx_payload_tx_cfg_tmode3_t;
+    using T = UBX::CfgMsgRates;
+    static constexpr size_t SIZE = 8;
+    static constexpr auto FIELDS = std::tuple{Field<&T::msg, 0>{}, Field<&T::rates, 2>{}};
+};
+
+template <>
+struct Layout<UBX::CfgTmode3>
+{
+    using T = UBX::CfgTmode3;
     static constexpr size_t SIZE = 40;
     static constexpr auto FIELDS =
-        std::tuple{Field<&T::version, 0>{},       Field<&T::reserved1, 1>{},     Field<&T::flags, 2>{},
-                   Field<&T::ecefXOrLat, 4>{},    Field<&T::ecefYOrLon, 8>{},    Field<&T::ecefZOrAlt, 12>{},
-                   Field<&T::ecefXOrLatHP, 16>{}, Field<&T::ecefYOrLonHP, 17>{}, Field<&T::ecefZOrAltHP, 18>{},
-                   Field<&T::reserved2, 19>{},    Field<&T::fixedPosAcc, 20>{},  Field<&T::svinMinDur, 24>{},
-                   Field<&T::svinAccLimit, 28>{}, Field<&T::reserved3, 32>{}};
+        std::tuple{Field<&T::flags, 2>{},         Field<&T::ecefXOrLat, 4>{},    Field<&T::ecefYOrLon, 8>{},
+                   Field<&T::ecefZOrAlt, 12>{},   Field<&T::ecefXOrLatHP, 16>{}, Field<&T::ecefYOrLonHP, 17>{},
+                   Field<&T::ecefZOrAltHP, 18>{}, Field<&T::fixedPosAcc, 20>{},  Field<&T::svinMinDur, 24>{},
+                   Field<&T::svinAccLimit, 28>{}};
 };
-
-template <>
-struct Layout<ubx_payload_rx_nav_relposned_t>
-{
-    using T = ubx_payload_rx_nav_relposned_t;
-    static constexpr size_t SIZE = 64;
-    static constexpr auto FIELDS =
-        std::tuple{Field<&T::version, 0>{},       Field<&T::reserved0, 1>{},      Field<&T::iTOW, 4>{},
-                   Field<&T::relPosLength, 20>{}, Field<&T::relPosHeading, 24>{}, Field<&T::relPosHPLength, 35>{},
-                   Field<&T::accHeading, 52>{},   Field<&T::flags, 60>{}};
-};
-
-template <>
-struct Layout<ubx_payload_rx_nav_daheading_t>
-{
-    using T = ubx_payload_rx_nav_daheading_t;
-    static constexpr size_t SIZE = 60;
-    static constexpr auto FIELDS =
-        std::tuple{Field<&T::version, 0>{},       Field<&T::reserved0, 1>{},      Field<&T::iTOW, 4>{},
-                   Field<&T::relPosLength, 20>{}, Field<&T::relPosHeading, 24>{}, Field<&T::accHeading, 48>{},
-                   Field<&T::flags, 56>{}};
-};
-
-template <>
-struct Layout<ubx_payload_rx_nav_hpposllh_t>
-{
-    using T = ubx_payload_rx_nav_hpposllh_t;
-    static constexpr size_t SIZE = 36;
-    static constexpr auto FIELDS = std::tuple{
-        Field<&T::version, 0>{}, Field<&T::reserved1, 1>{}, Field<&T::flags, 3>{},     Field<&T::iTOW, 4>{},
-        Field<&T::lon, 8>{},     Field<&T::lat, 12>{},      Field<&T::height, 16>{},   Field<&T::hMSL, 20>{},
-        Field<&T::lonHp, 24>{},  Field<&T::latHp, 25>{},    Field<&T::heightHp, 26>{}, Field<&T::hMSLHp, 27>{},
-        Field<&T::hAcc, 28>{},   Field<&T::vAcc, 32>{}};
-};
-
-template <>
-struct Layout<ubx_payload_rx_mon_comms_port_t>
-{
-    using T = ubx_payload_rx_mon_comms_port_t;
-    static constexpr size_t SIZE = 40;
-    static constexpr auto FIELDS = std::tuple{
-        Field<&T::portId, 0>{},       Field<&T::txPending, 2>{},    Field<&T::txBytes, 4>{},  Field<&T::txUsage, 8>{},
-        Field<&T::txPeakUsage, 9>{},  Field<&T::rxPending, 10>{},   Field<&T::rxBytes, 12>{}, Field<&T::rxUsage, 16>{},
-        Field<&T::rxPeakUsage, 17>{}, Field<&T::overrunErrs, 18>{}, Field<&T::msgs, 20>{},    Field<&T::reserved, 28>{},
-        Field<&T::skipped, 36>{}};
-};
-
-template <>
-struct Layout<ubx_payload_rx_mon_comms_t>
-{
-    using T = ubx_payload_rx_mon_comms_t;
-    static constexpr size_t SIZE = 328;
-    static constexpr auto FIELDS =
-        std::tuple{Field<&T::version, 0>{},  Field<&T::nPorts, 1>{},  Field<&T::txErrors, 2>{},
-                   Field<&T::reserved, 3>{}, Field<&T::protIds, 4>{}, Field<&T::ports, 8>{}};
-};
-
 }  // namespace Wire
 
 namespace UBX {
@@ -357,9 +613,8 @@ inline constexpr size_t WIRE_SIZE = Wire::SIZE<T>;
 
 inline constexpr size_t MAX_CONTROL_PAYLOAD_SIZE = 328;
 inline constexpr size_t MON_HW_DEPRECATED_SIZE = 56;
-inline constexpr uint16_t NAV_EOE = 0x6101;
-inline constexpr uint32_t NAV_EOE_MSGOUT_I2C = 0x2091015f;
 inline constexpr double DEGREES_PER_COORDINATE = 1e-7;
+inline constexpr float DOP_PER_UNIT = 0.01f;
 
 /// Converts a 1e-7 degree coordinate; values beyond +/-@a limitDegrees come from a corrupt or
 /// uninitialised solution and are reported as unavailable (NaN).
@@ -379,8 +634,8 @@ inline constexpr double DEGREES_PER_COORDINATE = 1e-7;
     return coordinateDegrees(value, 180);
 }
 
-inline constexpr float DOP_PER_UNIT = 0.01f;
-
+/// Payload sizes a message may have: minimum plus a multiple of stride, up to maximum. towOffset locates the GPS time
+/// of week of navigation messages that belong to an epoch, or is -1.
 struct MessageSchema
 {
     uint16_t message;
@@ -391,47 +646,45 @@ struct MessageSchema
 };
 
 template <typename T>
-[[nodiscard]] constexpr MessageSchema fixedSchema(uint16_t message, int towOffset = -1)
+[[nodiscard]] constexpr MessageSchema fixedSchema(int towOffset = -1)
 {
-    return {message, WIRE_SIZE<T>, WIRE_SIZE<T>, 1, towOffset};
+    return {T::ID.value(), WIRE_SIZE<T>, WIRE_SIZE<T>, 1, towOffset};
 }
 
 template <typename Header, typename Block>
-[[nodiscard]] constexpr MessageSchema repeatedSchema(uint16_t message, size_t maximumBlocks)
+[[nodiscard]] constexpr MessageSchema repeatedSchema(MessageId message, size_t maximumBlocks)
 {
-    return {message, WIRE_SIZE<Header>, WIRE_SIZE<Header> + WIRE_SIZE<Block> * maximumBlocks, WIRE_SIZE<Block>, -1};
+    return {message.value(), WIRE_SIZE<Header>, WIRE_SIZE<Header> + WIRE_SIZE<Block> * maximumBlocks, WIRE_SIZE<Block>,
+            -1};
 }
 
 inline constexpr std::array MESSAGE_SCHEMAS = {
-    MessageSchema{UBX_MSG_NAV_PVT, 84, WIRE_SIZE<ubx_payload_rx_nav_pvt_t>, 8, 0},
-    fixedSchema<ubx_payload_rx_nav_posllh_t>(UBX_MSG_NAV_POSLLH, 0),
-    fixedSchema<ubx_payload_rx_nav_hpposllh_t>(UBX_MSG_NAV_HPPOSLLH, 4),
-    fixedSchema<ubx_payload_rx_nav_sol_t>(UBX_MSG_NAV_SOL, 0),
-    fixedSchema<ubx_payload_rx_nav_status_t>(UBX_MSG_NAV_STATUS),
-    fixedSchema<ubx_payload_rx_nav_dop_t>(UBX_MSG_NAV_DOP, 0),
-    fixedSchema<ubx_payload_rx_nav_relposned_t>(UBX_MSG_NAV_RELPOSNED, 4),
-    fixedSchema<ubx_payload_rx_nav_daheading_t>(UBX_MSG_NAV_DAHEADING, 4),
-    fixedSchema<ubx_payload_rx_nav_timeutc_t>(UBX_MSG_NAV_TIMEUTC, 0),
-    fixedSchema<ubx_payload_rx_nav_velned_t>(UBX_MSG_NAV_VELNED, 0),
-    fixedSchema<ubx_payload_rx_nav_svin_t>(UBX_MSG_NAV_SVIN),
-    MessageSchema{NAV_EOE, 4, 4, 1, 0},
-    repeatedSchema<ubx_payload_rx_nav_sat_part1_t, ubx_payload_rx_nav_sat_part2_t>(UBX_MSG_NAV_SAT, 255),
-    repeatedSchema<ubx_payload_rx_nav_svinfo_part1_t, ubx_payload_rx_nav_svinfo_part2_t>(UBX_MSG_NAV_SVINFO, 255),
-    MessageSchema{UBX_MSG_MON_VER, WIRE_SIZE<ubx_payload_rx_mon_ver_part1_t>, 4090,
-                  WIRE_SIZE<ubx_payload_rx_mon_ver_part2_t>, -1},
-    MessageSchema{UBX_MSG_MON_HW, MON_HW_DEPRECATED_SIZE, WIRE_SIZE<ubx_payload_rx_mon_hw_ubx6_t>, 4, -1},
-    // The decoded record holds the first of up to 255 RF blocks.
-    repeatedSchema<ubx_payload_rx_mon_rf_t, ubx_payload_rx_mon_rf_t::ubx_payload_rx_mon_rf_block_t>(UBX_MSG_MON_RF,
-                                                                                                    254),
-    MessageSchema{UBX_MSG_MON_COMMS, 8, WIRE_SIZE<ubx_payload_rx_mon_comms_t>,
-                  WIRE_SIZE<ubx_payload_rx_mon_comms_port_t>, -1},
-    MessageSchema{UBX_MSG_SEC_SIG, 4, 4096, 1, -1},
-    fixedSchema<ubx_payload_rx_rxm_rtcm_t>(UBX_MSG_RXM_RTCM),
-    fixedSchema<ubx_payload_rx_rxm_cor_t>(UBX_MSG_RXM_COR),
-    fixedSchema<ubx_payload_rx_ack_ack_t>(UBX_MSG_ACK_ACK),
-    fixedSchema<ubx_payload_rx_ack_ack_t>(UBX_MSG_ACK_NAK),
-    MessageSchema{UBX_MSG_CFG_VALGET, 4, MAX_CONTROL_PAYLOAD_SIZE, 1, -1},
-    fixedSchema<ubx_payload_tx_cfg_tmode3_t>(UBX_MSG_CFG_TMODE3),
+    MessageSchema{Msg::NAV_PVT.value(), 84, WIRE_SIZE<NavPvt>, 8, 0},
+    fixedSchema<NavPosllh>(0),
+    fixedSchema<NavHpposllh>(4),
+    fixedSchema<NavSol>(0),
+    fixedSchema<NavStatus>(),
+    fixedSchema<NavDop>(0),
+    fixedSchema<NavRelposned>(4),
+    fixedSchema<NavDaheading>(4),
+    fixedSchema<NavTimeUtc>(0),
+    fixedSchema<NavVelned>(0),
+    fixedSchema<NavSvin>(),
+    MessageSchema{Msg::NAV_EOE.value(), 4, 4, 1, 0},
+    repeatedSchema<NavSat, NavSatSatellite>(Msg::NAV_SAT, 255),
+    repeatedSchema<NavSvinfo, NavSvinfoChannel>(Msg::NAV_SVINFO, 255),
+    MessageSchema{Msg::MON_VER.value(), WIRE_SIZE<MonVer>, 4090, WIRE_SIZE<MonVerExtension>, -1},
+    MessageSchema{Msg::MON_HW.value(), MON_HW_DEPRECATED_SIZE, WIRE_SIZE<MonHw6>, 4, -1},
+    repeatedSchema<MonRf, MonRfBlock>(Msg::MON_RF, 254),
+    MessageSchema{Msg::MON_COMMS.value(), 8, WIRE_SIZE<MonComms>, WIRE_SIZE<MonCommsPort>, -1},
+    MessageSchema{Msg::SEC_SIG.value(), 4, 4096, 1, -1},
+    fixedSchema<RxmRtcm>(),
+    fixedSchema<RxmCor>(),
+    fixedSchema<Ack>(),
+    MessageSchema{Msg::ACK_NAK.value(), WIRE_SIZE<Ack>, WIRE_SIZE<Ack>, 1, -1},
+    MessageSchema{Msg::CFG_VALGET.value(), 4, MAX_CONTROL_PAYLOAD_SIZE, 1, -1},
+    fixedSchema<CfgMsgRates>(),
+    MessageSchema{Msg::CFG_TMODE3.value(), WIRE_SIZE<CfgTmode3>, WIRE_SIZE<CfgTmode3>, 1, -1},
 };
 
 [[nodiscard]] constexpr const MessageSchema* messageSchema(uint16_t message)
@@ -454,34 +707,64 @@ inline constexpr std::array MESSAGE_SCHEMAS = {
         (payload.size() - schema->minimum) % schema->stride != 0) {
         return false;
     }
-    if (message == UBX_MSG_NAV_SAT || message == UBX_MSG_NAV_SVINFO) {
-        return payload.size() ==
-                   schema->minimum + schema->stride * size_t(payload[message == UBX_MSG_NAV_SAT ? 5 : 4]) &&
-               (message != UBX_MSG_NAV_SAT || payload[4] == 1);
+    switch (message) {
+        case Msg::NAV_SAT.value():
+            return payload.size() == schema->minimum + schema->stride * size_t(payload[5]) && payload[4] == 1;
+        case Msg::NAV_SVINFO.value():
+            return payload.size() == schema->minimum + schema->stride * size_t(payload[4]);
+        case Msg::MON_HW.value():
+            return payload.size() == MON_HW_DEPRECATED_SIZE || payload.size() == WIRE_SIZE<MonHw7> ||
+                   payload.size() == WIRE_SIZE<MonHw6>;
+        case Msg::MON_RF.value():
+            return payload[0] == 0 && payload[1] > 0 &&
+                   payload.size() == schema->minimum + schema->stride * (size_t(payload[1]) - 1);
+        case Msg::MON_COMMS.value():
+            return payload[0] == 0 && payload.size() == schema->minimum + schema->stride * size_t(payload[1]);
+        case Msg::SEC_SIG.value():
+            return payload[0] == 1
+                       ? payload.size() >= 5
+                       : (payload[0] == 2 || payload[0] == 3) && payload.size() == 4 + 4 * size_t(payload[3]);
+        case Msg::RXM_COR.value():
+            return payload[0] == 1;
+        default:
+            return true;
     }
-    if (message == UBX_MSG_MON_HW) {
-        return payload.size() == MON_HW_DEPRECATED_SIZE || payload.size() == WIRE_SIZE<ubx_payload_rx_mon_hw_ubx7_t> ||
-               payload.size() == WIRE_SIZE<ubx_payload_rx_mon_hw_ubx6_t>;
-    }
-    if (message == UBX_MSG_MON_RF) {
-        return payload[0] == 0 && payload[1] > 0 &&
-               payload.size() == schema->minimum + schema->stride * (size_t(payload[1]) - 1);
-    }
-    if (message == UBX_MSG_MON_COMMS) {
-        return payload[0] == 0 && payload.size() == schema->minimum + schema->stride * size_t(payload[1]);
-    }
-    if (message == UBX_MSG_SEC_SIG) {
-        return payload[0] == 1 ? payload.size() >= 5
-                               : (payload[0] == 2 || payload[0] == 3) && payload.size() == 4 + 4 * size_t(payload[3]);
-    }
-    if (message == UBX_MSG_RXM_COR) {
-        return payload[0] == 1;
-    }
-    return true;
 }
 
 [[nodiscard]] inline bool validPayload(uint16_t message, std::span<const uint8_t> payload)
 {
     return validPayload(message, payload, messageSchema(message));
 }
+
+/// Decodes records after checking the payload against its message schema, or, for records without a message ID
+/// such as repeated blocks, against the record size.
+template <Wire::Record T>
+struct MessageCodec
+{
+    [[nodiscard]] static std::optional<T> decode(std::span<const uint8_t> bytes)
+    {
+        if constexpr (requires { T::ID; }) {
+            if (!validPayload(T::ID.value(), bytes)) {
+                return std::nullopt;
+            }
+            // MON-HW layouts share one message; the size selects the layout.
+            if constexpr (std::is_same_v<T, MonHw6> || std::is_same_v<T, MonHw7>) {
+                if (bytes.size() != WIRE_SIZE<T>) {
+                    return std::nullopt;
+                }
+            }
+        } else if (bytes.size() != WIRE_SIZE<T>) {
+            return std::nullopt;
+        }
+        return Wire::decode<T>(bytes);
+    }
+
+    [[nodiscard]] static std::optional<T> block(std::span<const uint8_t> bytes, size_t offset = 0)
+    {
+        if (offset > bytes.size() || WIRE_SIZE<T> > bytes.size() - offset) {
+            return std::nullopt;
+        }
+        return decode(bytes.subspan(offset, WIRE_SIZE<T>));
+    }
+};
 }  // namespace UBX

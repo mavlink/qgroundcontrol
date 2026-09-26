@@ -1,0 +1,15 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden ublox/wire-m10
+about MAX-M10S cannot be a base
+request type=ublox role=rtk-base mode=survey-in accuracy=1.2500m duration=60s compact=0 persistent=0 baud=115200
+configure
+  result configured=0 baud=115200->115200 failure=none ready=0 elapsed=20ms
+  identity "MAX-M10S HPG 1.32"
+  error "Receiver configuration failed"
+  wire
+    baud 115200 configured
+    write "1034" 8
+      b5620a0400000e34
+  evidence
+    "1034" acknowledged required accepted=8 written=8 uncertain=0 elapsed=0ms
+  events

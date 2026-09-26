@@ -1,0 +1,113 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden automatic/unicore-115200
+about Unicore answers the Femtomes version query in its own words
+request type=automatic role=rtk-base mode=averaging maximum=5s compact=0 persistent=0 baud=0
+configure
+  result configured=1 baud=0->115200 failure=none ready=1 elapsed=4802ms
+  identity "UM982 R4.10Build15434"
+  detected type=unicore baud=115200 evidence="Unicore command replies"
+  error ""
+  wire
+    baud 115200 configured
+    write "1034" 8
+      b5620a0400000e34
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "\n\r" 2
+      0a0d
+      text "\n\r"
+    write "VERSION\r\n" 9
+      56455253494f4e0d0a
+      text "VERSION\r\n"
+    write "VERSION\r\n" 9
+      56455253494f4e0d0a
+      text "VERSION\r\n"
+    baud 115200 configured
+    write "VERSIONA" 10
+      56455253494f4e410d0a
+      text "VERSIONA\r\n"
+    write "UNLOG" 7
+      554e4c4f470d0a
+      text "UNLOG\r\n"
+    write "MODE ROVER" 12
+      4d4f444520524f5645520d0a
+      text "MODE ROVER\r\n"
+    write "MODE" 6
+      4d4f44450d0a
+      text "MODE\r\n"
+    write "GPGGA 1" 9
+      475047474120310d0a
+      text "GPGGA 1\r\n"
+    write "GPGST 1" 9
+      475047535420310d0a
+      text "GPGST 1\r\n"
+    write "GPGSV 1" 9
+      475047535620310d0a
+      text "GPGSV 1\r\n"
+    write "GPGSA 1" 9
+      475047534120310d0a
+      text "GPGSA 1\r\n"
+    write "MODE BASE TIME 5 0" 20
+      4d4f444520424153452054494d45203520300d0a
+      text "MODE BASE TIME 5 0\r\n"
+    write "MODE" 6
+      4d4f44450d0a
+      text "MODE\r\n"
+    write "BESTNAVXYZA 1" 15
+      424553544e415658595a4120310d0a
+      text "BESTNAVXYZA 1\r\n"
+    write "RTCM1005 1" 12
+      5254434d3130303520310d0a
+      text "RTCM1005 1\r\n"
+    write "RTCM1033 10" 13
+      5254434d313033332031300d0a
+      text "RTCM1033 10\r\n"
+    write "RTCM1074 1" 12
+      5254434d3130373420310d0a
+      text "RTCM1074 1\r\n"
+    write "RTCM1084 1" 12
+      5254434d3130383420310d0a
+      text "RTCM1084 1\r\n"
+    write "RTCM1094 1" 12
+      5254434d3130393420310d0a
+      text "RTCM1094 1\r\n"
+    write "RTCM1124 1" 12
+      5254434d3131323420310d0a
+      text "RTCM1124 1\r\n"
+  evidence
+    "Listen at 115200 baud" timed-out optional accepted=0 written=0 uncertain=0 elapsed=1000ms
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "\n\r" timed-out required accepted=2 written=2 uncertain=0 elapsed=1000ms
+    "VERSION\r\n" timed-out required accepted=9 written=9 uncertain=0 elapsed=200ms
+    "VERSION\r\n" timed-out required accepted=9 written=9 uncertain=0 elapsed=200ms
+    "VERSIONA" readback-verified required accepted=10 written=10 uncertain=0 elapsed=0ms
+    "UNLOG" acknowledged required accepted=7 written=7 uncertain=0 elapsed=0ms
+    "MODE ROVER" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "MODE" readback-verified required accepted=6 written=6 uncertain=0 elapsed=0ms
+    "GPGGA 1" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "GPGST 1" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "GPGSV 1" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "GPGSA 1" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "MODE BASE TIME 5 0" acknowledged required accepted=20 written=20 uncertain=0 elapsed=0ms
+    "MODE" readback-verified required accepted=6 written=6 uncertain=0 elapsed=0ms
+    "BESTNAVXYZA 1" acknowledged required accepted=15 written=15 uncertain=0 elapsed=0ms
+    "RTCM1005 1" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "RTCM1033 10" acknowledged required accepted=13 written=13 uncertain=0 elapsed=0ms
+    "RTCM1074 1" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "RTCM1084 1" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "RTCM1094 1" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "RTCM1124 1" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+  events
+    survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+    survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+stream
+  result failure=none ready=1
+  wire
+  evidence
+  events

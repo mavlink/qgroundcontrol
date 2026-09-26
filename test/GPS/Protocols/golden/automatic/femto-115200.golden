@@ -1,0 +1,56 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden automatic/femto-115200
+about Femtomes answers the version query at 115200
+request type=automatic role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+configure
+  result configured=1 baud=0->115200 failure=none ready=1 elapsed=4400ms
+  identity ""
+  detected type=femto baud=115200 evidence="identity query"
+  error ""
+  wire
+    baud 115200 configured
+    write "1034" 8
+      b5620a0400000e34
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "\n\r" 2
+      0a0d
+      text "\n\r"
+    write "VERSION\r\n" 9
+      56455253494f4e0d0a
+      text "VERSION\r\n"
+    baud 115200 configured
+    write "UNLOGALL THISPORT\r\n" 19
+      554e4c4f47414c4c2054484953504f52540d0a
+      text "UNLOGALL THISPORT\r\n"
+    write "VERSION\r\n" 9
+      56455253494f4e0d0a
+      text "VERSION\r\n"
+    write "POSAVE ON \r\n" 12
+      504f53415645204f4e200d0a
+      text "POSAVE ON \r\n"
+    write "LOG GPGGA 1 \r\n" 14
+      4c4f472047504747412031200d0a
+      text "LOG GPGGA 1 \r\n"
+  evidence
+    "Listen at 115200 baud" timed-out optional accepted=0 written=0 uncertain=0 elapsed=1000ms
+    "1034" timed-out required accepted=8 written=8 uncertain=0 elapsed=2000ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" timed-out required accepted=12 written=12 uncertain=0 elapsed=200ms
+    "\n\r" timed-out required accepted=2 written=2 uncertain=0 elapsed=1000ms
+    "VERSION\r\n" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "UNLOGALL THISPORT\r\n" acknowledged required accepted=19 written=19 uncertain=0 elapsed=0ms
+    "VERSION\r\n" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "POSAVE ON \r\n" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "LOG GPGGA 1 \r\n" acknowledged required accepted=14 written=14 uncertain=0 elapsed=0ms
+  events
+    survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+stream
+  result failure=none ready=1
+  wire
+  evidence
+  events

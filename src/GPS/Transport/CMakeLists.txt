@@ -1,12 +1,13 @@
 qt_add_library(QGCGPSTransport STATIC GPSTransport.cc)
 add_library(QGC::GPSTransport ALIAS QGCGPSTransport)
+set_target_properties(QGCGPSTransport PROPERTIES AUTOMOC ON)
 target_compile_features(QGCGPSTransport PUBLIC cxx_std_20)
 target_link_libraries(
     QGCGPSTransport
     PUBLIC Qt6::Core
     PRIVATE QGCLoggingCategory
 )
-target_sources(QGCGPSTransport PUBLIC FILE_SET HEADERS FILES GPSTransport.h GPSTransportResult.h)
+target_sources(QGCGPSTransport PUBLIC FILE_SET HEADERS FILES GPSSerialPorts.h GPSTransport.h GPSTransportResult.h)
 
 # libc++ before LLVM 20 (including Android NDK r27 and r28) keeps <stop_token> behind -fexperimental-library.
 # Its stop_token is header-only there, so the flag is needed only to compile and libc++experimental is not linked.
@@ -49,10 +50,12 @@ if(NOT DEFINED QGC_GPS_COMPONENTS_ENABLED OR "ReceiverTransports" IN_LIST QGC_GP
     qt_add_library(
         QGCGPSReceiverTransports
         STATIC
+        GPSRecordingTransport.cc
         GPSSocketWait.cc
         GPSSocketWait_p.h
         GPSStreamRead_p.h
         GPSStreamWrite_p.h
+        ReplayGPSTransport.cc
         TCPGPSTransport.cc
         UDPGPSTransport.cc
     )
@@ -60,10 +63,19 @@ if(NOT DEFINED QGC_GPS_COMPONENTS_ENABLED OR "ReceiverTransports" IN_LIST QGC_GP
     target_compile_features(QGCGPSReceiverTransports PUBLIC cxx_std_20)
     target_link_libraries(
         QGCGPSReceiverTransports
-        PUBLIC QGCGPSTransport Qt6::Network
+        PUBLIC QGCGPSCommon QGCGPSTransport Qt6::Network
         PRIVATE QGCLoggingCategory
     )
-    target_sources(QGCGPSReceiverTransports PUBLIC FILE_SET HEADERS FILES TCPGPSTransport.h UDPGPSTransport.h)
+    target_sources(
+        QGCGPSReceiverTransports
+        PUBLIC FILE_SET
+               HEADERS
+               FILES
+               GPSRecordingTransport.h
+               ReplayGPSTransport.h
+               TCPGPSTransport.h
+               UDPGPSTransport.h
+    )
     if(NOT QGC_NO_SERIAL_LINK)
         target_sources(QGCGPSReceiverTransports PRIVATE SerialGPSTransport.cc)
         target_sources(QGCGPSReceiverTransports PUBLIC FILE_SET HEADERS FILES SerialGPSTransport.h)

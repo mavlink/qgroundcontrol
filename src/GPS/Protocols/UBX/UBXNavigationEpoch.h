@@ -4,7 +4,7 @@
 #include <chrono>
 #include <optional>
 
-#include "GPSDecodedBatch.h"
+#include "GPSDecodedReports.h"
 
 /// Two receiver epochs tolerate reordered navigation messages without mixing their fields.
 class UBXNavigationEpoch

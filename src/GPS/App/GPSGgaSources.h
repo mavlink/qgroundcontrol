@@ -4,18 +4,18 @@
 #include <QtCore/QPointer>
 
 class GPSPositionService;
-class GPSRTK;
+class GPSReceiver;
 class GPSSourceHealth;
 class NTRIPManager;
 class Vehicle;
 
-/// Supplies NTRIP's GGA and caster-sort positions from the active vehicle, the RTK receiver and the ground station.
+/// Supplies NTRIP's GGA and caster-sort positions from the active vehicle, the local receiver and the ground station.
 class GPSGgaSources : public QObject
 {
     Q_OBJECT
 
 public:
-    GPSGgaSources(NTRIPManager* ntrip, GPSRTK* rtk, GPSPositionService* groundStation, QObject* parent = nullptr);
+    GPSGgaSources(NTRIPManager* ntrip, GPSReceiver* rtk, GPSPositionService* groundStation, QObject* parent = nullptr);
 
     /// Installs the NTRIP position providers, which must precede NTRIPManager::init(), and follows
     /// MultiVehicleManager's active vehicle.
@@ -28,7 +28,7 @@ public:
 
 private:
     QPointer<NTRIPManager> _ntrip;
-    QPointer<GPSRTK> _rtk;
+    QPointer<GPSReceiver> _rtk;
     QPointer<GPSPositionService> _groundStation;
     GPSSourceHealth* const _vehicleEstimateHealth;
     QMetaObject::Connection _vehiclePositionConnection;

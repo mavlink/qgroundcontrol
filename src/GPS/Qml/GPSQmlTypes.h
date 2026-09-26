@@ -6,12 +6,13 @@
 #include "GPSCorrectionEventModel.h"
 #include "GPSCorrectionManager.h"
 #include "GPSPositionService.h"
-#include "GPSRTK.h"
+#include "GPSReceiver.h"
 #include "GPSReceiverDescriptor.h"
 #include "GPSSourceHealth.h"
 #include "NTRIPConnectionStats.h"
 #include "NTRIPManager.h"
 #include "NTRIPSourceTableController.h"
+#include "PositionManager.h"
 #include "RTCMMAVLink.h"
 
 struct GPSPositionServiceQmlType
@@ -22,6 +23,14 @@ struct GPSPositionServiceQmlType
     QML_UNCREATABLE("Provided by the position manager")
 };
 
+struct PositionManagerQmlType
+{
+    Q_GADGET
+    QML_FOREIGN(PositionManager)
+    QML_NAMED_ELEMENT(PositionManager)
+    QML_UNCREATABLE("Created by QGroundControl")
+};
+
 struct GPSReceiverPresentationQmlType
 {
     Q_GADGET
@@ -30,11 +39,11 @@ struct GPSReceiverPresentationQmlType
     QML_STRUCTURED_VALUE
 };
 
-struct GPSRTKQmlType
+struct GPSReceiverQmlType
 {
     Q_GADGET
-    QML_FOREIGN(GPSRTK)
-    QML_NAMED_ELEMENT(GPSRTK)
+    QML_FOREIGN(GPSReceiver)
+    QML_NAMED_ELEMENT(GPSReceiver)
     QML_UNCREATABLE("Managed by GPSManager")
 };
 

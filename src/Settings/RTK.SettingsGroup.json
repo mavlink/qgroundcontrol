@@ -14,12 +14,13 @@
         },
         {
             "name": "baseReceiverManufacturers",
-            "shortDesc": "GPS manufacturers for settings",
+            "shortDesc": "Receiver manufacturer",
+            "longDesc": "Automatic identifies the receiver family on every connection: QGroundControl listens to the receiver's output and sends read-only identification queries at each supported baud rate, then configures the family it found. Until then the settings of every supported receiver are shown. Select a manufacturer to configure only that receiver family.",
             "type": "uint8",
-            "enumStrings": "All,Trimble,Septentrio,Femtomes,UBlox,Unicore UM980/UM982,Quectel LG290P",
+            "enumStrings": "Automatic,Trimble,Septentrio,Femtomes,UBlox,Unicore UM980/UM982,Quectel LG290P",
             "enumValues": "0,1,2,3,4,5,6",
-            "default": 1,
-            "label": "GPS manufacturers for settings"
+            "default": 0,
+            "label": "Receiver manufacturer"
         },
         {
             "name": "connectionType",

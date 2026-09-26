@@ -18,13 +18,13 @@ Item {
     // Vehicle exposes its GPS groups as FactGroup, which lacks their GPS Facts, so the vehicle stays untyped.
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property bool _vehicleGps: !!_activeVehicle && !!_activeVehicle.gps && _activeVehicle.gps.telemetryAvailable
-    property GPSRTK _receiver:      QGroundControl.gpsManager.gpsRtk
-    property GPSRTKFactGroup _rtkFacts: QGroundControl.gpsManager.gpsRtkFacts
+    property GPSReceiver _receiver:      QGroundControl.gpsManager.gpsRtk
+    property GPSReceiverFactGroup _rtkFacts: QGroundControl.gpsManager.gpsRtkFacts
     property bool   _rtkConnected:  _rtkFacts.connected.value
     readonly property bool _rtkInterference: _rtkConnected && _rtkFacts.interferenceWarning
     readonly property int _receiverSatellites: _rtkFacts.numSatellitesUsed.rawValue
     readonly property string _receiverDetail: {
-        if (_receiver.activeRole === GPSRTK.ConfiguredBase) {
+        if (_receiver.activeRole === GPSReceiver.ConfiguredBase) {
             return _rtkFacts.active.value ? qsTr("Survey", "Base survey-in in progress") : qsTr("Base")
         }
         switch (_rtkFacts.fixType.rawValue) {

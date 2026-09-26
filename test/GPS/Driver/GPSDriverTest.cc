@@ -32,6 +32,7 @@ static_assert(static_cast<int>(GPSType::femto) == 3);
 static_assert(static_cast<int>(GPSType::unicore) == 4);
 static_assert(static_cast<int>(GPSType::quectel) == 5);
 static_assert(static_cast<int>(GPSType::passive) == 6);
+static_assert(static_cast<int>(GPSType::automatic) == 7);
 
 const std::stop_token neverStop{};
 
@@ -166,7 +167,7 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
     // The empty SBAS scope must not clear GPS; its unchanged counts are not republished.
     QCOMPARE(snapshots.size(), size_t(1));
     QCOMPARE(snapshots[0].inView, std::optional<int>{1});
-    QCOMPARE(feed("GLGSV,1,1,01,65,20,30,40").updates, GPSReceiveResult::SATELLITES_UPDATE);
+    QCOMPARE(feed("GLGSV,1,1,01,65,20,30,40").updates, GPSReceiveUpdates(GPSReceiveUpdate::Satellites));
     QCOMPARE(snapshots.back().inView, std::optional<int>{2});
     QCOMPARE(feed("GPGSV,1,1,02,01,10,20,30,33,15,25,35").status, GPSReceiveStatus::Data);
     QCOMPARE(snapshots.back().inView, std::optional<int>{3});
@@ -259,7 +260,7 @@ void GPSDriverTest::_femtoSatelliteUsage()
         transport.scriptedRead = nmeaFrame("GPGGA,123519,4807.038,N,01131.000,E,1," + count + ",0.9,545.4,M,46.9,M,,");
         const auto result = driver.receiveOutcome(20ms);
         QCOMPARE(result.status, GPSReceiveStatus::Data);
-        QCOMPARE(result.updates & GPSReceiveResult::SATELLITES_UPDATE, GPSReceiveResult::SATELLITES_UPDATE);
+        QVERIFY(result.updates.testFlag(GPSReceiveUpdate::Satellites));
     }
     QCOMPARE(reports.size(), size_t(3));
     QVERIFY(!reports[0].inView);
@@ -335,7 +336,7 @@ void GPSDriverTest::_sbfSatelliteUsage()
         receiver.reply = SBFReceiverModel::pvt(used, ++tow);
         const auto result = driver.receiveOutcome(20ms);
         QCOMPARE(result.status, GPSReceiveStatus::Data);
-        QCOMPARE(result.updates & GPSReceiveResult::SATELLITES_UPDATE, GPSReceiveResult::SATELLITES_UPDATE);
+        QVERIFY(result.updates.testFlag(GPSReceiveUpdate::Satellites));
     }
     QCOMPARE(reports.size(), size_t(3));
     QVERIFY(!reports[0].inView);
@@ -414,7 +415,7 @@ void GPSDriverTest::_everyReceiverHasProtocol()
 {
     // Receivers the settings offer must have a protocol; the two tables live in separate libraries.
     for (const auto& descriptor : gpsReceiverDescriptors()) {
-        QVERIFY2(GPSDriver::supportsType(descriptor.type), std::string(descriptor.detectionKey).c_str());
+        QVERIFY2(GPSDriver::supportsType(descriptor.type), std::string(descriptor.name).c_str());
     }
     QVERIFY(!GPSDriver::supportsType(static_cast<GPSType>(-1)));
 }
@@ -825,3 +826,148 @@ void GPSDriverTest::_passiveInput()
 }
 
 UT_REGISTER_TEST(GPSDriverTest, TestLabel::Unit)
+
+namespace {
+
+/// A receiver that shows its family at once: u-blox with a queued NAV-PVT frame, Septentrio streaming SBF blocks.
+struct AutomaticLink
+{
+    explicit AutomaticLink(GPSType type)
+        : ublox(UBXReceiverModel::Receiver::F9P, clock)
+        , septentrio(clock)
+        , transport(stop, type == GPSType::ublox ? static_cast<ScriptedReceiver::Model&>(ublox) : septentrio)
+    {
+        transport.setFixedBaudrate(115200);
+        if (type == GPSType::ublox) {
+            ublox.queueFrame(0x01, 0x07, QByteArray(92, '\0'));
+        } else {
+            septentrio.streaming = true;
+        }
+    }
+
+    GPSTestClock clock;
+    UBXReceiverModel ublox;
+    SBFReceiverModel septentrio;
+    std::stop_source stop;
+    ScriptedReceiver transport;
+};
+
+}  // namespace
+
+void GPSDriverTest::_automaticDetection_data()
+{
+    QTest::addColumn<GPSType>("detected");
+    QTest::addColumn<GPSReceiverConfig>("config");
+    QTest::addColumn<QString>("error");
+    QTest::addColumn<QString>("warning");
+
+    const GPSBaseStationConfig survey{.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .duration = 180s}};
+    const GPSBaseStationConfig averaging{.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDuration = 60s}};
+    QTest::newRow("ublox") << GPSType::ublox << GPSReceiverConfig{.base = survey} << QString() << QString();
+    // Consent is a permission: a family without persistent configuration ignores it.
+    QTest::newRow("ublox-ignores-consent")
+        << GPSType::ublox << GPSReceiverConfig{.base = survey, .allowPersistentChanges = true} << QString()
+        << QString();
+    GPSBaseStationConfig compact = survey;
+    compact.compactObservations = true;
+    QTest::newRow("septentrio-compact-falls-back") << GPSType::septentrio << GPSReceiverConfig{.base = compact}
+                                                   << QString() << QStringLiteral("cannot send compact");
+    QTest::newRow("septentrio-averaging-unsupported")
+        << GPSType::septentrio << GPSReceiverConfig{.base = averaging}
+        << QStringLiteral("Detected Septentrio receiver does not support receiver-managed averaging")
+        << QStringLiteral("does not support receiver-managed averaging");
+}
+
+void GPSDriverTest::_automaticDetection()
+{
+    QFETCH(GPSType, detected);
+    QFETCH(GPSReceiverConfig, config);
+    QFETCH(QString, error);
+    QFETCH(QString, warning);
+    AutomaticLink link(detected);
+    QList<GPSType> reported;
+    GPSDriverSinks sinks;
+    sinks.onReceiverDetected = [&](GPSType type) {
+        reported.append(type);
+        link.septentrio.streaming = false;
+    };
+    GPSDriver driver(GPSType::automatic, link.transport, config, sinks);
+    if (!warning.isEmpty()) {
+        expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression(warning));
+    }
+    QCOMPARE(driver.configure(), error.isEmpty());
+    if (!warning.isEmpty()) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(driver.configurationError(), error);
+    QCOMPARE(reported, QList<GPSType>{detected});
+    QCOMPARE(driver.detectedType(), std::optional(detected));
+    const auto& evidence = driver.configurationEvidence();
+    QVERIFY(!evidence.empty());
+    QCOMPARE(evidence.front().command, std::string("Listen at 115200 baud"));
+    QCOMPARE(evidence.front().outcome, GPSConfigurationOutcome::Acknowledged);
+    if (!error.isEmpty()) {
+        // An unsupported request fails before any receiver command.
+        QCOMPARE(evidence.size(), size_t(1));
+        QVERIFY(link.transport.commands().isEmpty());
+    }
+}
+
+void GPSDriverTest::_automaticDetectionCancelled()
+{
+    AutomaticLink link(GPSType::ublox);
+    link.stop.request_stop();
+    int reported = 0;
+    GPSDriverSinks sinks;
+    sinks.onReceiverDetected = [&](GPSType) { ++reported; };
+    GPSDriver driver(GPSType::automatic, link.transport,
+                     {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .duration = 180s}}}, sinks);
+    expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression("Receiver detection failed"));
+    QVERIFY(!driver.configure());
+    verifyExpectedLogMessage();
+    QCOMPARE(driver.configurationError(), QStringLiteral("Receiver detection cancelled"));
+    QCOMPARE(reported, 0);
+    QVERIFY(!driver.detectedType());
+    QVERIFY(link.transport.commands().isEmpty());
+}
+
+void GPSDriverTest::_mismatchHint_data()
+{
+    QTest::addColumn<GPSType>("type");
+    QTest::addColumn<GPSType>("receiver");
+    QTest::addColumn<QString>("error");
+
+    QTest::newRow("trimble-on-ublox")
+        << GPSType::trimble << GPSType::ublox
+        << QStringLiteral("Receiver configuration failed. UBX frames were received; this looks like a u-blox receiver");
+    QTest::newRow("femto-on-septentrio")
+        << GPSType::femto << GPSType::septentrio
+        << QStringLiteral(
+               "Receiver configuration failed. Septentrio command replies were received; this looks like a Septentrio "
+               "receiver");
+    QTest::newRow("ublox-on-ublox") << GPSType::ublox << GPSType::ublox << QString();
+}
+
+void GPSDriverTest::_mismatchHint()
+{
+    QFETCH(GPSType, type);
+    QFETCH(GPSType, receiver);
+    QFETCH(QString, error);
+    AutomaticLink link(receiver);
+    link.septentrio.streaming = false;
+    const GPSReceiverConfig config{
+        .base = {.mode = GPSBaseStationConfig::Fixed{
+                     .position = {.latitudeDegrees = 47.123, .longitudeDegrees = 8.456, .altitudeMeters = 500}}}};
+    GPSDriver driver(type, link.transport, config, {});
+    if (!error.isEmpty()) {
+        expectLogMessage("GPS.Driver.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
+    }
+    QCOMPARE(driver.configure(), error.isEmpty());
+    if (!error.isEmpty()) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(driver.configurationError(), error);
+    QVERIFY(!driver.configurationError().contains(QStringLiteral("47.123")));
+    QVERIFY(!driver.configurationNeedsConsent());
+    QVERIFY(!driver.detectedType());
+}

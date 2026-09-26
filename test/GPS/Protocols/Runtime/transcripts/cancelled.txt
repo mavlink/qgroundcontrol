@@ -1,0 +1,4 @@
+# GPSCommandChannel transcript, recorded from the pre-runtime command base while it ran side by side with the
+# channel and matched it exactly. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+result configured=0 baud=0 clock=1010000 error=1 reads=0 detail=""
+note A outcome=6 0-0 accepted=0 written=0 uncertain=0 required=1 rate=0

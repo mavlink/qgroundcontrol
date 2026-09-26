@@ -6,9 +6,18 @@
 
 #include "GPSReceiverSettingId.h"
 #include "LittleEndian.h"
-#include "UBXReceiverProfile.h"
+#include "UBX/Generated/UBXConfigKeys.h"
 
+/// CFG-VALSET and CFG-VALGET key/value encoding.
 namespace UBX {
+
+/// Value width in bytes of @a key; 0 for reserved sizes and for 8-byte values, which QGC never reads or writes.
+[[nodiscard]] constexpr unsigned configurationValueBytes(uint32_t key)
+{
+    const size_t width = cfgKeyValueBytes(key);
+    return width <= sizeof(uint32_t) ? static_cast<unsigned>(width) : 0;
+}
+
 struct ConfigurationValue
 {
     uint32_t key;
@@ -57,7 +66,33 @@ private:
     bool _valid = true;
 };
 
-/// An append error invalidates the entire batch, including previously appended entries.
+/// The values of one CFG-VALGET poll or response; one poll reads at most nine keys.
+struct ConfigurationValues
+{
+    std::array<ConfigurationValue, 9> values{};
+    size_t count = 0;
+};
+
+/// Decodes a CFG-VALGET response (version 1, RAM layer) of at most nine values.
+[[nodiscard]] inline std::optional<ConfigurationValues> decodeConfigurationValues(std::span<const uint8_t> payload)
+{
+    if (payload.size() < 4 || payload[0] != 1 || payload[1] || payload[2] || payload[3]) {
+        return std::nullopt;
+    }
+    ConfigurationValues result;
+    ConfigurationValueCursor cursor(payload.subspan(4));
+    while (!cursor.empty()) {
+        const auto entry = cursor.next();
+        if (!entry || result.count == result.values.size()) {
+            return std::nullopt;
+        }
+        result.values[result.count++] = *entry;
+    }
+    return result;
+}
+
+/// A CFG-VALSET payload for the RAM layer. An append error invalidates the entire batch, including previously
+/// appended entries.
 template <size_t Capacity>
 struct CheckedValsetBatch
 {
@@ -73,6 +108,9 @@ struct CheckedValsetBatch
     {
         return valid && size > 4 ? std::span<const uint8_t>(bytes).first(size) : std::span<const uint8_t>{};
     }
+
+    /// The appended key/value entries, without the header.
+    std::span<const uint8_t> entries() const { return std::span<const uint8_t>(bytes).subspan(4, size - 4); }
 
     bool append(uint32_t key, uint32_t value)
     {

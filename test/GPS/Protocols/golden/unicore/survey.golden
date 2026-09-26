@@ -1,0 +1,9 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden unicore/survey
+about Accuracy-controlled survey-in is not supported
+request type=unicore role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+stream-step 1 bytes=135 duration=2000ms
+stream-step 2 bytes=39 duration=5000ms
+stream-step 3 bytes=25 duration=2000ms
+configure
+  refused "This receiver does not support the selected base mode"

@@ -91,6 +91,20 @@ if (!vehicle) {
 vehicle->doSomething();  // OK - analyzer sees the check above
 ```
 
+## Coroutine Short-Circuit Analyzer
+
+GCC 13 and 16 evaluate a `co_await` nested in an operand of `&&`, `||` or `?:` even when the operator
+short-circuits (`(flag && !co_await t()) || x` runs `t()` when `flag` is false); Clang is correct. The GPS
+protocol runtime therefore allows `co_await` only in its own statement or as a whole initializer, return value or
+argument. The analyzer flags any `co_await` inside an operand of `&&`, `||`, `and`, `or` or `?:`, looking outward
+through enclosing parentheses and calls; operators inside the awaited expression (`co_await f(a && b)`) are fine.
+
+```bash
+python3 tools/analyzers/coroutine_short_circuit_check.py src/GPS test/GPS
+```
+
+The `coroutine-short-circuit-check` pre-commit hook runs it on `src/GPS/` and `test/GPS/`.
+
 ## Shared Utilities
 
 The analyzers use shared patterns from `tools/common/`:

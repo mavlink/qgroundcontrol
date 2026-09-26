@@ -1,0 +1,51 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden septentrio/port-detection-timeout
+about Receiver never answers the port prompt
+request type=septentrio role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+stream-step 1 bytes=268 duration=1000ms
+stream-step 2 bytes=25 duration=1000ms
+stream-step 3 bytes=0 duration=6000ms
+configure
+  result configured=0 baud=0->115200 failure=none ready=0 elapsed=1000ms
+  identity ""
+  error "Receiver configuration failed"
+  wire
+    baud 115200 configured
+    write - 11
+      535353535353535353530a
+      text "SSSSSSSSSS\n"
+    write "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c434f4d312c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c434f4d322c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c555342312c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c555342322c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c555342332c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n"
+    write "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n" 40
+      73657444617461496e4f75742c555342342c2c2d5254434d76332d5254434d76
+      322d434d5276320a
+      text "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n"
+    write - 2
+      0a0d
+      text "\n\r"
+  evidence
+    "setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,COM2,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,USB1,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,USB2,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,USB3,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+    "setDataInOut,USB4,,-RTCMv3-RTCMv2-CMRv2\n" acknowledged optional accepted=40 written=40 uncertain=0 elapsed=0ms
+  events

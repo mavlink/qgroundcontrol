@@ -1,0 +1,23 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden trimble/port-query-nak
+about Receiver rejects the port query
+request type=trimble role=rtk-base mode=survey-in accuracy=1.0000m duration=100s compact=0 persistent=0 baud=0
+stream-step 1 bytes=172 duration=1000ms
+stream-step 2 bytes=121 duration=1000ms
+stream-step 3 bytes=25 duration=1000ms
+configure
+  result configured=0 baud=115200->115200 failure=none ready=0 elapsed=0ms
+  identity ""
+  error "Receiver configuration failed"
+  wire
+    baud 115200 configured
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+  evidence
+    "$PASHQ,PRT\r\n" rejected required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "$PASHQ,PRT\r\n" rejected required accepted=12 written=12 uncertain=0 elapsed=0ms
+  events

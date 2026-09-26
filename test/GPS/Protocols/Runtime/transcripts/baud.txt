@@ -1,0 +1,28 @@
+# GPSCommandChannel transcript, recorded from the pre-runtime command base while it ran side by side with the
+# channel and matched it exactly. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+result configured=1 baud=115200 clock=1151000 error=0 reads=4 detail=""
+baud 9600
+baud 38400
+baud 115200
+baud 38400
+baud 57600
+write PING\r\n
+write PING\r\n
+write PING\r\n
+write PING\r\n
+note baud found=1 rate=115200 linkFailed=0
+note baud found=0 rate=38400 linkFailed=0
+note baud found=0 rate=57600 linkFailed=1
+evidence PING outcome=5 1000000-1050000 accepted=6 written=6 uncertain=0 required=1 rate=0
+evidence PING outcome=5 1050000-1100000 accepted=6 written=6 uncertain=0 required=1 rate=0
+evidence PING outcome=2 1100000-1101000 accepted=6 written=6 uncertain=0 required=1 rate=0
+evidence PING outcome=5 1101000-1151000 accepted=6 written=6 uncertain=0 required=1 rate=0
+configuration PING outcome=5 1000000-1050000 accepted=6 written=6 uncertain=0 required=1
+configuration PING outcome=5 1050000-1100000 accepted=6 written=6 uncertain=0 required=1
+configuration PING outcome=2 1100000-1101000 accepted=6 written=6 uncertain=0 required=1
+configuration PING outcome=5 1101000-1151000 accepted=6 written=6 uncertain=0 required=1
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0
+decoded batch updates=0

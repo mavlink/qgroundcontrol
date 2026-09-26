@@ -11,10 +11,10 @@ import QGroundControl.GPS
 SettingsGroupLayout {
     id: root
 
-    property GPSRTK receiver: QGroundControl.gpsManager.gpsRtk
+    property GPSReceiver receiver: QGroundControl.gpsManager.gpsRtk
     // Saving the base position writes GPSManager's receiver Facts to the application's settings, the defaults here.
     property RTKSettings settings: QGroundControl.settingsManager.rtkSettings
-    property GPSRTKFactGroup baseFacts: QGroundControl.gpsManager.gpsRtkFacts
+    property GPSReceiverFactGroup baseFacts: QGroundControl.gpsManager.gpsRtkFacts
     property SettingsFact autoConnectFact: settings.autoConnect as SettingsFact
     property list<string> serialPorts: _serialPortManager ? _serialPortManager.serialPorts : []
     property list<string> serialBaudRates: _serialPortManager ? _serialPortManager.serialBaudRates : []
@@ -27,7 +27,7 @@ SettingsGroupLayout {
     property bool _consentAllowed: false
 
     readonly property int role: settings.receiverRole.rawValue
-    readonly property bool configuredBase: role === GPSRTK.ConfiguredBase
+    readonly property bool configuredBase: role === GPSReceiver.ConfiguredBase
     readonly property int manufacturer: settings.baseReceiverManufacturers.rawValue
     readonly property int baseMode: settings.useFixedBasePosition.rawValue
     readonly property gpsReceiverPresentation presentation: receiver.capabilitiesFor(role, manufacturer)
@@ -39,9 +39,9 @@ SettingsGroupLayout {
     readonly property bool _active: receiver.hasReceiver || receiver.reconnecting
     readonly property bool _editable: !_active
     readonly property int _connection: settings.connectionType.rawValue
-    readonly property bool _udp: _connection === GPSRTK.Udp
+    readonly property bool _udp: _connection === GPSReceiver.Udp
     // Platforms without serial links connect a saved serial selection over TCP.
-    readonly property bool _tcp: !_udp && (!receiver.serialSupported || _connection === GPSRTK.Tcp)
+    readonly property bool _tcp: !_udp && (!receiver.serialSupported || _connection === GPSReceiver.Tcp)
     readonly property bool _serial: !_udp && !_tcp
     // UDP only receives, so a receiver QGroundControl configures needs serial or TCP.
     readonly property bool _connectionSupported: !(configuredBase && _udp)
@@ -125,9 +125,9 @@ SettingsGroupLayout {
 
     Explanation {
         objectName: "receiverRoleExplanation"
-        text: root.role === GPSRTK.PositionOnly
+        text: root.role === GPSReceiver.PositionOnly
               ? qsTr("QGroundControl never configures this receiver. Its NMEA output provides the ground station position; RTCM output is ignored.")
-              : root.role === GPSRTK.Passive
+              : root.role === GPSReceiver.Passive
                 ? qsTr("QGroundControl never configures this receiver. Its NMEA output provides the ground station position and its RTCM output is forwarded to vehicles. Configure the receiver's output externally and select its existing baud rate. No survey-in status is inferred.")
                 : qsTr("QGroundControl configures a supported receiver as an RTK base station and forwards its RTCM corrections to vehicles.")
     }
@@ -157,6 +157,11 @@ SettingsGroupLayout {
             fact: root.settings.baseReceiverManufacturers
             enabled: root._editable
         }
+        Explanation {
+            objectName: "rtkAutomaticExplanation"
+            visible: root.presentation.automatic
+            text: qsTr("QGroundControl identifies the receiver each time it connects, by listening to its output and sending read-only identification queries. Until then the settings of every supported receiver are shown.")
+        }
     }
 
     ColumnLayout {
@@ -174,7 +179,7 @@ SettingsGroupLayout {
         }
         Explanation {
             objectName: "rtkTcpOnly"
-            visible: !root.receiver.serialSupported && root._connection === GPSRTK.Serial
+            visible: !root.receiver.serialSupported && root._connection === GPSReceiver.Serial
             text: qsTr("Serial receivers are not supported on this platform, so the receiver connects over TCP.")
         }
     }
@@ -229,20 +234,27 @@ SettingsGroupLayout {
 
     Explanation {
         visible: root._editable && root.configuredBase
-        text: !root.presentation.specificReceiver
-              ? qsTr("Select a specific receiver type and its connection to connect manually. Auto baud detects the rate of configurable receivers.")
-              : qsTr("Connect only the selected receiver. USB adapter identity does not identify its GNSS manufacturer. Manual connections disable auto-connect.")
+        text: root.presentation.automatic
+              ? qsTr("If the identified receiver does not support the selected base mode, connecting fails and names the receiver. Auto baud tries every rate the supported receivers use. Manual connections disable auto-connect.")
+              : !root.presentation.specificReceiver
+                ? qsTr("Select a receiver type and its connection to connect manually. Auto baud detects the rate of configurable receivers.")
+                : qsTr("Connect only the selected receiver; auto-connect configures it too. A USB adapter's identity only decides which ports auto-connect tries, not the GNSS manufacturer. Manual connections disable auto-connect.")
     }
 
     Explanation {
         objectName: "rtkPersistentConfigurationWarning"
         visible: root.presentation.restartOnConnect
-        text: qsTr("Without permission to save, Quectel role and base settings must already match settings saved externally. The receiver restarts on connection. Survey-in counts accepted 1 Hz observations; its accuracy limit filters each observation and does not guarantee final position accuracy.")
+        text: root.presentation.automatic
+              ? qsTr("If a Quectel receiver is identified: without permission to save, its role and base settings must already match settings saved externally. It restarts on connection. Survey-in counts accepted 1 Hz observations; its accuracy limit filters each observation and does not guarantee final position accuracy.")
+              : qsTr("Without permission to save, Quectel role and base settings must already match settings saved externally. The receiver restarts on connection. Survey-in counts accepted 1 Hz observations; its accuracy limit filters each observation and does not guarantee final position accuracy.")
     }
 
     Explanation {
+        objectName: "rtkSurveySavesPosition"
         visible: root.presentation.surveyMaySavePosition && root.baseMode === BaseModeDefinition.BaseSurveyIn
-        text: qsTr("The Quectel receiver may automatically store the completed survey position in its own memory.")
+        text: root.presentation.automatic
+              ? qsTr("If a Quectel receiver is identified, it may automatically store the completed survey position in its own memory.")
+              : qsTr("The Quectel receiver may automatically store the completed survey position in its own memory.")
     }
 
     ColumnLayout {
@@ -383,7 +395,8 @@ SettingsGroupLayout {
         objectName: "rtkPersistentChangesCheckBox"
         Layout.fillWidth: true
         Layout.minimumWidth: 0
-        text: qsTr("Allow flash save and restart")
+        text: root.presentation.automatic ? qsTr("Allow flash save and restart if a Quectel receiver is identified")
+                                          : qsTr("Allow flash save and restart")
         focusPolicy: Qt.StrongFocus
         visible: root.presentation.persistentConfiguration
         enabled: root._editable
@@ -400,7 +413,9 @@ SettingsGroupLayout {
     Explanation {
         objectName: "rtkPersistentConsentWarning"
         visible: root.presentation.persistentConfiguration
-        text: qsTr("For this connection only, allow QGroundControl to write requested base role or base-setting changes to receiver flash and restart it. Changes may remain saved even if reconnecting fails. No factory reset is performed. Permission is cleared after each attempt and is never used by auto-connect. To use the receiver as a rover again, restore its role with Quectel QGNSS or $PQTMCFGRCVRMODE,W,1 followed by $PQTMSAVEPAR.")
+        text: root.presentation.automatic
+              ? qsTr("Applies only if a Quectel receiver is identified. For this connection only, allow QGroundControl to write requested base role or base-setting changes to receiver flash and restart it. Changes may remain saved even if reconnecting fails. No factory reset is performed. Permission is cleared after each attempt and is never used by auto-connect. To use the receiver as a rover again, restore its role with Quectel QGNSS or $PQTMCFGRCVRMODE,W,1 followed by $PQTMSAVEPAR.")
+              : qsTr("For this connection only, allow QGroundControl to write requested base role or base-setting changes to receiver flash and restart it. Changes may remain saved even if reconnecting fails. No factory reset is performed. Permission is cleared after each attempt and is never used by auto-connect. To use the receiver as a rover again, restore its role with Quectel QGNSS or $PQTMCFGRCVRMODE,W,1 followed by $PQTMSAVEPAR.")
     }
 
     RowLayout {
@@ -424,7 +439,8 @@ SettingsGroupLayout {
         focusPolicy: Qt.StrongFocus
         text: root._active ? qsTr("Disconnect") : qsTr("Connect")
         enabled: root._active
-                 || (root.presentation.specificReceiver && root.modeCompatible && root._connectionSupported)
+                 || ((root.presentation.specificReceiver || root.presentation.automatic) && root.modeCompatible
+                     && root._connectionSupported)
         onClicked: {
             if (root._active) {
                 root.clearConsent()

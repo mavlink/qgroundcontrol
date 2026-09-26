@@ -1,0 +1,14 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden trimble/explicit-baud-unsupported
+about Explicit 4800 is not an Ashtech probe rate
+request type=trimble role=rtk-base mode=survey-in accuracy=1.0000m duration=100s compact=0 persistent=0 baud=4800
+stream-step 1 bytes=172 duration=1000ms
+stream-step 2 bytes=121 duration=1000ms
+stream-step 3 bytes=25 duration=1000ms
+configure
+  result configured=0 baud=4800->4800 failure=none ready=0 elapsed=0ms
+  identity ""
+  error "Receiver configuration failed"
+  wire
+  evidence
+  events

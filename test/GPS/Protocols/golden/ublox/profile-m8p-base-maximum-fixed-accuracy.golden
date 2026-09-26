@@ -1,0 +1,152 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden ublox/profile-m8p-base-maximum-fixed-accuracy
+about M8P fixed base at the largest accuracy value
+request type=ublox role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=429496.71875m compact=0 persistent=0 baud=0
+stream-step 1 bytes=272 duration=1500ms
+stream-step 2 bytes=160 duration=1500ms
+stream-step 3 bytes=25 duration=3000ms
+configure
+  result configured=1 baud=115200->115200 failure=none ready=1 elapsed=20ms
+  identity "NEO-M8P-2 HPG 1.40"
+  error ""
+  wire
+    baud 115200 configured
+    write "1034" 8
+      b5620a0400000e34
+    write "6" 48
+      b5620600280001000000d008000000c20100010021000000000003000000d008
+      000000c201000100210000000000ac0c
+    write "2054" 14
+      b56206080600c80001000000dd68
+    write "9222" 44
+      b562062424000500020200000000000000000000000000000000000000000000
+      0000000000000000000057fe
+    write "262" 11
+      b562060103000107011351
+    write "262" 11
+      b562060103000103010f49
+    write "262" 11
+      b56206010300010401104b
+    write "262" 11
+      b5620601030001300540a7
+    write "262" 11
+      b562060103000a09011e70
+    write "262" 11
+      b56206010300f505000428
+    write "262" 11
+      b56206010300f5e600e5ea
+    write "262" 11
+      b56206010300f54d004cb8
+    write "262" 11
+      b56206010300f5570056cc
+    write "262" 11
+      b56206010300f5610060e0
+    write "262" 11
+      b56206010300f57f007e1c
+    write "262" 11
+      b56206010300f54a0049b2
+    write "262" 11
+      b56206010300f5540053c6
+    write "262" 11
+      b56206010300f55e005dda
+    write "262" 11
+      b56206010300f57c007b16
+    write "28934" 48
+      b562067128000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000009f93
+    write "UBX-CFG-TMODE3 disabled readback" 8
+      b56206710000776b
+    write "28934" 48
+      b562067128000000020180a1031c00b4c40450c300000000000000ffffff0000
+      00000000000000000000000000006e5c
+    write "2054" 14
+      b56206080600e803010000000037
+    write "262" 11
+      b56206010300013b0046b8
+    write "262" 11
+      b562060103000130023da4
+    write "262" 11
+      b56206010300f50505092d
+    write "262" 11
+      b56206010300f54d014db9
+    write "262" 11
+      b56206010300f5570157cd
+    write "262" 11
+      b56206010300f5e601e6eb
+    write "262" 11
+      b56206010300f5610161e1
+    write "262" 11
+      b56206010300f57f017f1d
+  evidence
+    "1034" acknowledged required accepted=8 written=8 uncertain=0 elapsed=0ms
+    "6" acknowledged required accepted=48 written=48 uncertain=0 elapsed=0ms
+    "2054" acknowledged required accepted=14 written=14 uncertain=0 elapsed=0ms
+    "9222" acknowledged required accepted=44 written=44 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" written required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" written required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" written required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" written required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" written required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" written required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" written required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" written required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" written required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" written required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "28934" acknowledged required accepted=48 written=48 uncertain=0 elapsed=0ms
+    "UBX-CFG-TMODE3 disabled readback" readback-verified required accepted=8 written=8 uncertain=0 elapsed=0ms
+    "28934" acknowledged required accepted=48 written=48 uncertain=0 elapsed=0ms
+    "2054" acknowledged required accepted=14 written=14 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+  events
+stream
+  result failure=none ready=1
+  wire
+    write "2054" 14
+      b56206080600e803010000000037
+    write "262" 11
+      b56206010300013b0046b8
+    write "262" 11
+      b562060103000130023da4
+    write "262" 11
+      b56206010300f50505092d
+    write "262" 11
+      b56206010300f54d014db9
+    write "262" 11
+      b56206010300f5570157cd
+    write "262" 11
+      b56206010300f5e601e6eb
+    write "262" 11
+      b56206010300f5610161e1
+    write "262" 11
+      b56206010300f57f017f1d
+  evidence
+    "2054" acknowledged required accepted=14 written=14 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+    "262" acknowledged required accepted=11 written=11 uncertain=0 elapsed=0ms
+  events
+    survey active=1 valid=0 duration=30s accuracy=2.5000 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    satellites full=1 gps:view=2/1,use=1/1 glonass:view=1/1,use=1/1
+    position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 heading=nan headingacc=nan used=12 utc=1704164646000000 velocity=1 receipt=1
+    integrity receipt=1 jamming=critical/1 spoofing=unknown/0 rf=noise:87,agc:5432,indicator:12/1 corrections=unknown,crc-failed:-,unknown/0
+    integrity receipt=1 jamming=critical/1 spoofing=indicated/1 rf=noise:87,agc:5432,indicator:12/1 corrections=unknown,crc-failed:-,unknown/0
+    survey active=0 valid=1 duration=181s accuracy=2.5000 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 heading=nan headingacc=nan used=12 utc=1704164647000000 velocity=1 receipt=1
+    rtcm type=1005 size=25 fnv=f8e3bb62

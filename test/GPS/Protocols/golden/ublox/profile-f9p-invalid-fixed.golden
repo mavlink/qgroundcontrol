@@ -1,0 +1,9 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden ublox/profile-f9p-invalid-fixed
+about Fixed base without a position
+request type=ublox role=rtk-base mode=fixed lat=nan lon=nan alt=nan accuracy=0.00000m compact=0 persistent=0 baud=0
+stream-step 1 bytes=272 duration=1500ms
+stream-step 2 bytes=160 duration=1500ms
+stream-step 3 bytes=25 duration=3000ms
+configure
+  refused "Enter a valid fixed base position and accuracy"

@@ -86,7 +86,7 @@ tools/
 │   ├── profile.py           # Profiling (valgrind, perf)
 │   ├── qt6.natvis           # Visual Studio debugger visualizers
 │   └── valgrind.supp        # Valgrind suppressions
-├── generators/                # Build-time code generation (mavlink enums, config/settings QML)
+├── generators/                # Code generation (mavlink enums, config/settings QML, GPS protocol definitions)
 ├── schemas/                   # JSON schemas for editor validation
 ├── setup/                     # Environment setup scripts
 ├── simulation/                # Vehicle simulators
@@ -316,6 +316,25 @@ python3 ./tools/generate_docs.py --clean  # Clean generated docs
 
 Requires: `doxygen`, `graphviz`
 
+### generators/gps_protocol_defs
+
+Regenerate the checked-in UBX and SBF protocol definition headers
+(`src/GPS/Protocols/UBX/Generated/`, `src/GPS/Protocols/SBF/Generated/`) from the pinned
+BSD-3-Clause [pyubx2](https://github.com/semuconsulting/pyubx2) and
+[pysbf2](https://github.com/semuconsulting/pysbf2) databases. It runs on demand, not at build time.
+Only the messages, configuration keys and SBF blocks listed in
+`generators/gps_protocol_defs/manifest.toml` are generated. The manifest also records the values QGC
+uses today, and generation fails, listing each problem, when an entry is missing upstream or
+disagrees with it.
+
+```bash
+uv run --frozen --directory tools --group gps-defs python -m generators.gps_protocol_defs          # Write the headers
+uv run --frozen --directory tools --group gps-defs python -m generators.gps_protocol_defs --check  # Fail if they are stale
+```
+
+The `gps-defs` group pins pyubx2, pysbf2 and clang-format, so the output is reproducible. After
+upgrading a pin, regenerate and commit the headers. Tests: `tools/tests/test_gps_protocol_defs.py`.
+
 ## Setup Scripts
 
 Scripts in `setup/` help configure development environments. They read configuration from
@@ -338,7 +357,7 @@ Scripts in `setup/` help configure development environments. They read configura
 | `read_config.py`                          | All                   | Read `.github/build-config.json` (Python, cross-platform)                     |
 
 `install_python.py` installs dependency groups defined in `tools/pyproject.toml`:
-`scripts`, `precommit`, `test`, `ci`, `qt`, `coverage`, `build`, `dev` (default), `lint`, `all`.
+`scripts`, `precommit`, `test`, `ci`, `qt`, `coverage`, `build`, `dev` (default), `lint`, `gps-defs`, `all`.
 Groups compose smaller profiles: `dev` includes the build, Qt, lint, test, and pre-commit tools.
 
 All Python dependencies are resolved in `tools/uv.lock`. Setup requires uv and uses

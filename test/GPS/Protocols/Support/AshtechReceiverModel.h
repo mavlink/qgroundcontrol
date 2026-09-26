@@ -7,8 +7,9 @@
 #include <string>
 #include <vector>
 
-#include "Ashtech/AshtechProtocol.h"
-#include "GPSProtocolTestIO.h"
+#include "Ashtech/AshtechFamily.h"
+#include "GPSProtocolRuntime.h"
+#include "GPSRuntimeTestIO.h"
 #include "ProtocolTestPackets.h"
 #include "ScriptedReceiver.h"
 
@@ -33,7 +34,7 @@ public:
     explicit AshtechReceiverModel(GPSTestClock& testClock)
         : clock(testClock)
         , scripted(stop, *this)
-        , driver(captureGPSReports(io(), position), false)
+        , driver(Ashtech::FAMILY, io(), observer(), {.satelliteInfoEnabled = false})
     {}
 
     std::vector<std::string> commands;
@@ -48,7 +49,7 @@ public:
     GPSTestClock& clock;
     std::stop_source stop;
     ScriptedReceiver scripted;
-    AshtechProtocol driver;
+    GPSProtocolRuntime driver;
 
     std::optional<QByteArray> takeCommand(QByteArray& pending) override
     {
@@ -97,56 +98,63 @@ public:
         return {GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())};
     }
 
-    GPSProtocolIO io()
+    GPSRuntimeIO io()
     {
-        auto io = makeGPSProtocolTestIO(clock);
         scripted.clearReplies();
         scripted.clearCommands();
         scripted.setReadHandler([this](uint8_t*, int, std::chrono::milliseconds) -> std::optional<GPSReadResult> {
             ++transportCalls;
             return std::nullopt;
         });
-        io.setBaudrate = [this](unsigned) {
-            ++transportCalls;
-            return GPSBaudStatus::Configured;
-        };
-        io.commandFinished = [this](const GPSCommandResult& result) { results.push_back(result); };
-        io.decoded = [this](const GPSDecodedBatch& batch) {
+        auto io = scripted.makeIO({});
+        const auto services = makeGPSRuntimeTestIO(clock);
+        io.nowUs = services.nowUs;
+        io.wait = services.wait;
+        return io;
+    }
+
+    GPSRuntimeObserver observer()
+    {
+        GPSRuntimeObserver result;
+        result.commandFinished = [this](const GPSCommandResult& command) { results.push_back(command); };
+        result.decoded = [this](const GPSEventBatch& batch) {
             for (const auto& event : batch.events) {
-                if (const auto* survey = std::get_if<GPSDecodedSurvey>(&event)) {
+                if (const auto* report = std::get_if<GPSDecodedPosition>(&event)) {
+                    position = *report;
+                } else if (const auto* survey = std::get_if<GPSDecodedSurvey>(&event)) {
                     surveys.push_back(*survey);
-                } else if (const auto* frame = std::get_if<GPSRTCMReport>(&event)) {
-                    corrections.emplace_back(frame->bytes.begin(), frame->bytes.begin() + frame->size);
+                } else if (const auto* frame = std::get_if<GPSRTCMFrame>(&event)) {
+                    corrections.emplace_back(frame->bytes.begin(), frame->bytes.end());
                 }
             }
         };
-        return scripted.makeIO(std::move(io));
+        return result;
     }
 
     void configure(bool fixed = false)
     {
-        GPSProtocol::GPSConfig config{};
+        GPSConfig config{};
         config.base = {
             .mode = fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
                                 .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
                           : GPSBaseStationConfig::Mode{GPSBaseStationConfig::SurveyIn{
                                 .accuracyMeters = 1, .duration = std::chrono::seconds{100}}}};
         unsigned baudrate = 115200;
-        if (!driver.configure(baudrate, config)) {
+        if (!driver.configure(config, baudrate)) {
             throw std::runtime_error("Ashtech test receiver failed to configure");
         }
         if (!driver.receiverReady()) {
             throw std::runtime_error("Ashtech test receiver did not become ready");
         }
-        driver.consume({});
+        (void) driver.consume({});
         surveys.clear();
     }
 
     bool startSurvey()
     {
-        driver.consume(nmeaPacket("PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,"));
+        (void) driver.consume(nmeaPacket("PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,"));
         (void) driver.receive(std::chrono::milliseconds{1});
-        return !driver.hasIOError();
+        return driver.error() == GPSProtocolError::None;
     }
 };
 

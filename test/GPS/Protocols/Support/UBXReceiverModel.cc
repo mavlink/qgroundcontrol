@@ -3,15 +3,19 @@
 #include <algorithm>
 #include <chrono>
 #include <cstring>
+#include <utility>
 
 #include <QtCore/QThread>
 #include <QtCore/QtEndian>
 
-#include "../../../../src/GPS/Protocols/UBX/UBXMessages.h"
+#include "../../../../src/GPS/Protocols/UBX/Generated/UBXConfigKeys.h"
+#include "../../../../src/GPS/Protocols/UBX/Generated/UBXMessageIds.h"
 #include "ProtocolTestPackets.h"
 
 namespace {
 constexpr uint8_t CFG_CLASS = 0x06;
+constexpr uint8_t PORT_UART1 = 1;
+constexpr uint8_t PORT_USB = 3;
 constexpr uint8_t CFG_TMODE3 = 0x71;
 constexpr uint8_t CFG_VALSET = 0x8a;
 constexpr uint8_t CFG_VALGET = 0x8b;
@@ -20,8 +24,6 @@ constexpr uint32_t TMODE_FIXED_POS_ACC = 0x4003000f;
 constexpr uint32_t TMODE_SVIN_MIN_DUR = 0x40030010;
 constexpr uint32_t TMODE_SVIN_ACC_LIMIT = 0x40030011;
 constexpr uint32_t NAVSPG_DYNMODEL = 0x20110021;
-constexpr uint32_t SIGNAL_SBAS_ENA = 0x10310020;
-constexpr uint32_t SIGNAL_SBAS_L1CA_ENA = 0x10310005;
 constexpr uint32_t SEC_JAMDET_SENSITIVITY_HI = 0x10f60051;
 
 QByteArray padded(const QByteArray& text, qsizetype size)
@@ -154,9 +156,9 @@ void UBXReceiverModel::queueSurveyReply(SurveyReply reply)
         payload.append('\0');
     }
 
-    QByteArray bytes =
-        _frame(UBX_MSG_NAV_SVIN, std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(payload.constData()),
-                                                          static_cast<size_t>(payload.size())));
+    QByteArray bytes = _frame(UBX::Msg::NAV_SVIN.value(),
+                              std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(payload.constData()),
+                                                       static_cast<size_t>(payload.size())));
     if (reply == SurveyReply::BadChecksum) {
         bytes.back() ^= 0xff;
     }
@@ -166,9 +168,9 @@ void UBXReceiverModel::queueSurveyReply(SurveyReply reply)
 void UBXReceiverModel::queueBufferWarning(bool validChecksum)
 {
     const QByteArray warning = "txbuf alloc";
-    QByteArray bytes =
-        _frame(UBX_MSG_INF_ERROR, std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(warning.constData()),
-                                                           static_cast<size_t>(warning.size())));
+    QByteArray bytes = _frame(UBX::Msg::INF_ERROR.value(),
+                              std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(warning.constData()),
+                                                       static_cast<size_t>(warning.size())));
     if (!validChecksum) {
         bytes.back() ^= 0xff;
     }
@@ -183,18 +185,18 @@ std::optional<GPSWriteResult> UBXReceiverModel::interceptLowLevelWrite(const QBy
 
     ++transportOperations;
     if (failCommsWrite && _partialWriteProbe.isEmpty() && bytes.size() >= 4 &&
-        static_cast<uint8_t>(bytes[2]) == uint8_t(UBX_MSG_MON_COMMS) &&
-        static_cast<uint8_t>(bytes[3]) == uint8_t(UBX_MSG_MON_COMMS >> 8)) {
+        static_cast<uint8_t>(bytes[2]) == uint8_t(UBX::Msg::MON_COMMS.value()) &&
+        static_cast<uint8_t>(bytes[3]) == uint8_t(UBX::Msg::MON_COMMS.value() >> 8)) {
         ++commsPolls;
         return GPSWriteResult{GPSWriteStatus::Unsupported};
     }
     if (failPollWrite && _partialWriteProbe.isEmpty() && bytes.size() >= 4 &&
-        static_cast<uint8_t>(bytes[2]) == uint8_t(UBX_MSG_NAV_SVIN) &&
-        static_cast<uint8_t>(bytes[3]) == uint8_t(UBX_MSG_NAV_SVIN >> 8)) {
+        static_cast<uint8_t>(bytes[2]) == uint8_t(UBX::Msg::NAV_SVIN.value()) &&
+        static_cast<uint8_t>(bytes[3]) == uint8_t(UBX::Msg::NAV_SVIN.value() >> 8)) {
         return GPSWriteResult{GPSWriteStatus::Unsupported};
     }
     if (failValsetKey != 0 && _partialWriteProbe.size() == 6 &&
-        littleEndian(_partialWriteProbe, 2, 2) == UBX_MSG_CFG_VALSET && bytes.size() >= 4) {
+        littleEndian(_partialWriteProbe, 2, 2) == UBX::Msg::CFG_VALSET.value() && bytes.size() >= 4) {
         qsizetype offset = 4;
         while (offset + 4 <= bytes.size()) {
             const uint32_t key = littleEndian(bytes, offset, 4);
@@ -228,6 +230,7 @@ void UBXReceiverModel::reset(ScriptedReceiver& receiver)
 {
     _receiver = &receiver;
     _partialWriteProbe.clear();
+    _delayed.clear();
     _identityDelivered = false;
     receiver.setFixedBaudrate(115200);
     receiver.setFatalError(_readError);
@@ -255,7 +258,11 @@ void UBXReceiverModel::onTransportReadWait(ScriptedReceiver& receiver, std::chro
 
 void UBXReceiverModel::onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline)
 {
-    Q_UNUSED(receiver)
+    if (!_delayed.empty() && _delayed.front().atUs <= deadline.untilUs) {
+        _clock->advanceTo(_delayed.front().atUs);
+        _deliverDelayed(receiver);
+        return;
+    }
     _clock->advanceTo(deadline.untilUs + 1);
 }
 
@@ -274,13 +281,28 @@ bool UBXReceiverModel::coalesceReads(const ScriptedReceiver& receiver) const
     return coalesceReplies;
 }
 
-void UBXReceiverModel::_queueResponse(ScriptedReceiver& receiver, const Response& response)
+void UBXReceiverModel::_queueResponse(ScriptedReceiver& receiver, const Response& response,
+                                      std::chrono::microseconds delay)
 {
-    ScriptedReceiver::ReadOptions options;
-    if (response.disableAck) {
-        options.onConsumed = [this] { ++disableAcksRead; };
+    if (_heldReply) {
+        const Response held = *std::exchange(_heldReply, std::nullopt);
+        _queueResponse(receiver, held);
     }
-    receiver.queueReply(response.bytes, std::move(options));
+    delay = std::max(delay, replyDelay);
+    if (delay > std::chrono::microseconds::zero() || !_delayed.empty()) {
+        const uint64_t due = _clock->nowUs() + static_cast<uint64_t>(delay.count());
+        _delayed.push_back({_delayed.empty() ? due : std::max(due, _delayed.back().atUs), response});
+        return;
+    }
+    receiver.queueReply(response.bytes);
+}
+
+void UBXReceiverModel::_deliverDelayed(ScriptedReceiver& receiver)
+{
+    while (!_delayed.empty() && _delayed.front().atUs <= _clock->nowUs()) {
+        receiver.queueReply(_delayed.front().response.bytes);
+        _delayed.pop_front();
+    }
 }
 
 QByteArray UBXReceiverModel::_frame(uint8_t messageClass, uint8_t messageId, const QByteArray& payload)
@@ -328,21 +350,19 @@ QByteArray UBXReceiverModel::_lowLevelIdentityPayload()
     return version;
 }
 
-void UBXReceiverModel::_queueAck(ScriptedReceiver& receiver, uint8_t messageId, bool accepted, bool disableAck)
+void UBXReceiverModel::_queueAck(ScriptedReceiver& receiver, uint8_t messageId, bool accepted,
+                                 std::chrono::microseconds delay)
 {
     QByteArray payload;
     payload.append(static_cast<char>(CFG_CLASS));
     payload.append(static_cast<char>(messageId));
-    Response response{_frame(0x05, accepted ? 0x01 : 0x00, payload), disableAck};
+    Response response{_frame(0x05, accepted ? 0x01 : 0x00, payload)};
     if (messageId == CFG_VALSET && _delayNextValsetAck) {
-        _heldValsetAck = response;
+        _heldReply = response;
         _delayNextValsetAck = false;
         ++optionalAckDelays;
-    } else if (messageId == CFG_VALSET && _heldValsetAck) {
-        _queueResponse(receiver, *_heldValsetAck);
-        _heldValsetAck = response;
     } else {
-        _queueResponse(receiver, response);
+        _queueResponse(receiver, response, delay);
     }
 }
 
@@ -422,17 +442,16 @@ QHash<quint32, quint64> UBXReceiverModel::_valsetValues(const QByteArray& payloa
 
 bool UBXReceiverModel::_handleLegacyFrame(ScriptedReceiver& receiver, uint16_t message, const QByteArray& payload)
 {
-    if (message == UBX_MSG_CFG_RATE) {
-        legacyMeasurementInterval = littleEndian(payload, 0, 2);
-    } else if (message == UBX_MSG_CFG_NAV5) {
+    bool unsupported = false;
+    RateAck rateFault = RateAck::OnTime;
+    if (message == UBX::Msg::CFG_NAV5.value()) {
         if (payload.size() <= 2) {
             wireValid = false;
             return false;
         }
-        legacyDynamicModel = static_cast<uint8_t>(payload[2]);
-    } else if (message == UBX_MSG_CFG_PRT) {
-        if (payload.size() != 40 || static_cast<uint8_t>(payload[0]) != UBX_TX_CFG_PRT_PORTID ||
-            static_cast<uint8_t>(payload[20]) != UBX_TX_CFG_PRT_PORTID_USB) {
+    } else if (message == UBX::Msg::CFG_PRT.value()) {
+        if (payload.size() != 40 || static_cast<uint8_t>(payload[0]) != PORT_UART1 ||
+            static_cast<uint8_t>(payload[20]) != PORT_USB) {
             wireValid = false;
             return false;
         }
@@ -447,20 +466,34 @@ bool UBXReceiverModel::_handleLegacyFrame(ScriptedReceiver& receiver, uint16_t m
                 return true;
             }
         }
-    } else if (message == UBX_MSG_CFG_MSG) {
-        if (payload.size() <= 2) {
+    } else if (message == UBX::Msg::CFG_MSG.value()) {
+        if (payload.size() == 2) {
+            return _replyToRatePoll(receiver, static_cast<uint16_t>(littleEndian(payload, 0, 2)));
+        }
+        if (payload.size() != 3) {
             wireValid = false;
             return false;
         }
-        messageRates[static_cast<uint16_t>(littleEndian(payload, 0, 2))] = static_cast<uint8_t>(payload[2]);
+        const auto output = static_cast<uint16_t>(littleEndian(payload, 0, 2));
+        if (output == rateAckMessage) {
+            rateFault = rateAck;
+        }
+        if (rateFault == RateAck::Ignored) {
+            return true;
+        }
+        unsupported = std::ranges::find(unsupportedMessages, output) != unsupportedMessages.end();
+        if (!unsupported) {
+            messageRates[output] = static_cast<uint8_t>(payload[2]);
+        }
     }
 
-    bool reject = message == UBX_MSG_CFG_VALSET;
-    if (message == UBX_MSG_CFG_MSG && littleEndian(payload, 0, 2) == UBX_MSG_RTCM3_1005 && payload.size() > 2 &&
+    bool reject = message == UBX::Msg::CFG_VALSET.value() || unsupported;
+    if (!unsupported && message == UBX::Msg::CFG_MSG.value() &&
+        littleEndian(payload, 0, 2) == UBX::Msg::RTCM3_1005.value() && payload.size() > 2 &&
         static_cast<uint8_t>(payload[2]) > 0) {
         ++rtcmEnables;
     }
-    if (message == UBX_MSG_CFG_TMODE3) {
+    if (message == UBX::Msg::CFG_TMODE3.value()) {
         const uint32_t mode = littleEndian(payload, 2, 2);
         modes.push_back(mode);
         legacyFixedAccuracy = littleEndian(payload, 20, 4);
@@ -471,10 +504,34 @@ bool UBXReceiverModel::_handleLegacyFrame(ScriptedReceiver& receiver, uint16_t m
     QByteArray ackPayload;
     ackPayload.append(static_cast<char>(message & 0xff));
     ackPayload.append(static_cast<char>(message >> 8));
-    _queueResponse(receiver,
-                   Response{_frame(reject ? UBX_MSG_ACK_NAK : UBX_MSG_ACK_ACK,
-                                   std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(ackPayload.constData()),
-                                                            static_cast<size_t>(ackPayload.size())))});
+    const Response ack{_frame(reject ? UBX::Msg::ACK_NAK.value() : UBX::Msg::ACK_ACK.value(),
+                              std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(ackPayload.constData()),
+                                                       static_cast<size_t>(ackPayload.size())))};
+    if (rateFault == RateAck::Late) {
+        _heldReply = ack;
+    } else if (rateFault != RateAck::Lost) {
+        _queueResponse(receiver, ack);
+    }
+    return true;
+}
+
+bool UBXReceiverModel::_replyToRatePoll(ScriptedReceiver& receiver, uint16_t output)
+{
+    ++ratePolls;
+    if (silentRatePoll) {
+        return true;
+    }
+    const bool unsupported = std::ranges::find(unsupportedMessages, output) != unsupportedMessages.end();
+    if (!unsupported) {
+        // The rate a CFG-MSG sets applies to the port the command arrived on.
+        QByteArray rates(8, '\0');
+        rates[0] = static_cast<char>(output & 0xff);
+        rates[1] = static_cast<char>(output >> 8);
+        const auto rate = messageRates.find(output);
+        rates[2 + (usb ? PORT_USB : PORT_UART1)] = static_cast<char>(rate == messageRates.end() ? 0 : rate->second);
+        _queueResponse(receiver, Response{_frame(CFG_CLASS, 0x01, rates)});
+    }
+    _queueAck(receiver, 0x01, !unsupported, ratePollAckDelay);
     return true;
 }
 
@@ -494,11 +551,12 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
         return false;
     }
 
-    if (message == UBX_MSG_MON_VER) {
+    if (message == UBX::Msg::MON_VER.value()) {
         identityBauds.push_back(hostBaud);
     }
-    if ((message & 0xff) == UBX_CLASS_CFG && message != UBX_MSG_CFG_VALGET &&
-        !(message == UBX_MSG_CFG_TMODE3 && payload.isEmpty())) {
+    if ((message & 0xff) == UBX::MsgClass::CFG && message != UBX::Msg::CFG_VALGET.value() &&
+        !(message == UBX::Msg::CFG_TMODE3.value() && payload.isEmpty()) &&
+        !(message == UBX::Msg::CFG_MSG.value() && payload.size() == 2)) {
         ++configurationWrites;
         unidentifiedWrites += !_identityDelivered;
     }
@@ -506,7 +564,7 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
         return true;
     }
 
-    if (message == UBX_MSG_MON_COMMS) {
+    if (message == UBX::Msg::MON_COMMS.value()) {
         if (!payload.isEmpty()) {
             wireValid = false;
             return false;
@@ -514,16 +572,16 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
         ++commsPolls;
         return true;
     }
-    if (message == UBX_MSG_CFG_TMODE3 && payload.isEmpty()) {
+    if (message == UBX::Msg::CFG_TMODE3.value() && payload.isEmpty()) {
         ++readbackRequests;
         switch (readbackReply) {
             case ReadbackReply::Timeout:
                 return true;
             case ReadbackReply::AckOnly:
-                _queueAck(receiver, UBX_ID_CFG_TMODE3, true);
+                _queueAck(receiver, UBX::Msg::CFG_TMODE3.id, true);
                 return true;
             case ReadbackReply::Nak:
-                _queueAck(receiver, UBX_ID_CFG_TMODE3, false);
+                _queueAck(receiver, UBX::Msg::CFG_TMODE3.id, false);
                 return true;
             case ReadbackReply::WriteError:
                 return false;
@@ -540,9 +598,9 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
         QByteArray response(40, '\0');
         response[0] = static_cast<char>(readbackReply == ReadbackReply::WrongLayer);
         response[2] = static_cast<char>(modes.empty() ? 0 : modes.back());
-        QByteArray bytes =
-            _frame(UBX_MSG_CFG_TMODE3, std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(response.constData()),
-                                                                static_cast<size_t>(response.size())));
+        QByteArray bytes = _frame(UBX::Msg::CFG_TMODE3.value(),
+                                  std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(response.constData()),
+                                                           static_cast<size_t>(response.size())));
         if (readbackReply == ReadbackReply::Corrupt) {
             bytes.back() ^= 0x01;
         } else if (readbackReply == ReadbackReply::Truncated) {
@@ -551,7 +609,7 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
         _queueResponse(receiver, Response{bytes});
         return true;
     }
-    if (message == UBX_MSG_CFG_VALGET) {
+    if (message == UBX::Msg::CFG_VALGET.value()) {
         ++readbackRequests;
         if (payload.size() < 8 || payload.size() > 40 || ((payload.size() - 4) % 4) != 0 ||
             payload.first(4) != QByteArray(4, '\0')) {
@@ -562,10 +620,10 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
             case ReadbackReply::Timeout:
                 return true;
             case ReadbackReply::AckOnly:
-                _queueAck(receiver, UBX_ID_CFG_VALGET, true);
+                _queueAck(receiver, UBX::Msg::CFG_VALGET.id, true);
                 return true;
             case ReadbackReply::Nak:
-                _queueAck(receiver, UBX_ID_CFG_VALGET, false);
+                _queueAck(receiver, UBX::Msg::CFG_VALGET.id, false);
                 return true;
             case ReadbackReply::WriteError:
                 return false;
@@ -578,6 +636,12 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
                 return true;
             default:
                 break;
+        }
+        for (qsizetype offset = 4; offset < payload.size(); offset += 4) {
+            if (std::ranges::find(unsupportedKeys, littleEndian(payload, offset, 4)) != unsupportedKeys.end()) {
+                _queueAck(receiver, UBX::Msg::CFG_VALGET.id, false);
+                return true;
+            }
         }
         QByteArray response;
         response.append(char{1});
@@ -612,7 +676,7 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
         }
         uint16_t responseMessage = message;
         if (readbackReply == ReadbackReply::WrongMessage) {
-            responseMessage = UBX_MSG_CFG_TMODE3;
+            responseMessage = UBX::Msg::CFG_TMODE3.value();
         }
         QByteArray bytes =
             _frame(responseMessage, std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(response.constData()),
@@ -624,15 +688,15 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
         return true;
     }
 
-    if (message == UBX_MSG_MON_VER) {
+    if (message == UBX::Msg::MON_VER.value()) {
         if (!payload.isEmpty()) {
             wireValid = false;
             return false;
         }
         const QByteArray identity = _lowLevelIdentityPayload();
-        QByteArray response =
-            _frame(UBX_MSG_MON_VER, std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(identity.constData()),
-                                                             static_cast<size_t>(identity.size())));
+        QByteArray response = _frame(UBX::Msg::MON_VER.value(),
+                                     std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(identity.constData()),
+                                                              static_cast<size_t>(identity.size())));
         if (corruptIdentity) {
             response.back() ^= 0x01;
         } else {
@@ -642,7 +706,7 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
         return true;
     }
 
-    if (message == UBX_MSG_NAV_SVIN) {
+    if (message == UBX::Msg::NAV_SVIN.value()) {
         if (!payload.isEmpty() || modes.empty() || modes.back() != 0) {
             wireValid = false;
             return false;
@@ -659,7 +723,7 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
         return _handleLegacyFrame(receiver, message, payload);
     }
 
-    if (message != UBX_MSG_CFG_VALSET || payload.size() < 4) {
+    if (message != UBX::Msg::CFG_VALSET.value() || payload.size() < 4) {
         wireValid = false;
         return false;
     }
@@ -701,14 +765,21 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
             ackPayload.append(static_cast<char>(message & 0xff));
             ackPayload.append(static_cast<char>(message >> 8));
             _queueResponse(
-                receiver, Response{_frame(UBX_MSG_ACK_NAK, std::span<const uint8_t>(
-                                                               reinterpret_cast<const uint8_t*>(ackPayload.constData()),
-                                                               static_cast<size_t>(ackPayload.size())))});
+                receiver,
+                Response{_frame(UBX::Msg::ACK_NAK.value(),
+                                std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(ackPayload.constData()),
+                                                         static_cast<size_t>(ackPayload.size())))});
         }
     }
 
-    bool reject = false;
-    if (const auto mode = settings.find(UBX_CFG_KEY_TMODE_MODE); mode != settings.end()) {
+    const bool unsupported = std::ranges::any_of(settings, [this](const auto& setting) {
+        return std::ranges::find(unsupportedKeys, setting.first) != unsupportedKeys.end();
+    });
+    if (unsupported && loseUnsupportedNak) {
+        return true;
+    }
+    bool reject = unsupported;
+    if (const auto mode = settings.find(UBX::Cfg::TMODE_MODE.id); mode != settings.end()) {
         modes.push_back(mode->second);
         if (mode->second == 0) {
             disabledAt = _clock->nowUs();
@@ -720,12 +791,12 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
             reject = rejectStart;
         }
     }
-    if (const auto messageRate = settings.find(UBX_CFG_KEY_MSGOUT_RTCM_3X_TYPE1005_I2C + 1);
+    if (const auto messageRate = settings.find(UBX::Cfg::MSGOUT_RTCM_3X_TYPE1005.port(UBX::MsgOutPort::UART1).id);
         messageRate != settings.end() && messageRate->second == 1) {
         ++rtcmEnables;
     }
-    if (module == "NEO-M9N" && (settings.contains(UBX_CFG_KEY_CFG_UART1OUTPROT_RTCM3X) ||
-                                settings.contains(UBX_CFG_KEY_CFG_USBOUTPROT_RTCM3X))) {
+    if (module == "NEO-M9N" &&
+        (settings.contains(UBX::Cfg::UART1OUTPROT_RTCM3X.id) || settings.contains(UBX::Cfg::USBOUTPROT_RTCM3X.id))) {
         reject = true;
     }
     if (!reject) {
@@ -733,7 +804,7 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
             currentSettings[setting.first] = setting.second;
         }
     }
-    if (const auto rate = settings.find(UBX_CFG_KEY_CFG_UART1_BAUDRATE);
+    if (const auto rate = settings.find(UBX::Cfg::UART1_BAUDRATE.id);
         rate != settings.end() && receiverBaud != 0 && rate->second != receiverBaud) {
         if (!ignoreBaudChange) {
             receiverBaud = rate->second;
@@ -744,7 +815,7 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
             QByteArray ackPayload;
             ackPayload.append(static_cast<char>(message & 0xff));
             ackPayload.append(static_cast<char>(message >> 8));
-            _heldBaudAck = _frame(UBX_MSG_ACK_ACK,
+            _heldBaudAck = _frame(UBX::Msg::ACK_ACK.value(),
                                   std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(ackPayload.constData()),
                                                            static_cast<size_t>(ackPayload.size())));
             return true;
@@ -755,7 +826,7 @@ bool UBXReceiverModel::_handleLowLevelFrame(ScriptedReceiver& receiver, const QB
     ackPayload.append(static_cast<char>(message & 0xff));
     ackPayload.append(static_cast<char>(message >> 8));
     _queueResponse(receiver,
-                   Response{_frame(reject ? UBX_MSG_ACK_NAK : UBX_MSG_ACK_ACK,
+                   Response{_frame(reject ? UBX::Msg::ACK_NAK.value() : UBX::Msg::ACK_ACK.value(),
                                    std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(ackPayload.constData()),
                                                             static_cast<size_t>(ackPayload.size())))});
     return true;
@@ -815,9 +886,12 @@ bool UBXReceiverModel::_handleFrame(ScriptedReceiver& receiver, const QByteArray
         if (key == TMODE_MODE) {
             response.append(static_cast<char>(timeMode));
             ++timeModeReads;
-        } else if (key == SIGNAL_SBAS_ENA || key == SIGNAL_SBAS_L1CA_ENA) {
-            response.append(static_cast<char>(key == SIGNAL_SBAS_ENA ? sbasEnabled : sbasL1caEnabled));
-            ++sbasReads;
+        } else if (key == SEC_JAMDET_SENSITIVITY_HI && delayOptionalNak) {
+            _queueAck(receiver, messageId, false);
+            return true;
+        } else if (const auto setting = currentSettings.find(key);
+                   key == SEC_JAMDET_SENSITIVITY_HI && setting != currentSettings.end()) {
+            response.append(static_cast<char>(setting->second));
         } else {
             wireValid = false;
             return false;
@@ -843,20 +917,13 @@ bool UBXReceiverModel::_handleFrame(ScriptedReceiver& receiver, const QByteArray
         }
         if (values.contains(SEC_JAMDET_SENSITIVITY_HI) && delayOptionalAck) {
             _delayNextValsetAck = true;
+            if (delayOptionalNak) {
+                _queueAck(receiver, messageId, false);
+                return true;
+            }
         }
-        if (values.contains(SIGNAL_SBAS_ENA)) {
-            ++sbasCommands;
-            if (staleSbasAck) {
-                _queueAck(receiver, messageId, true);
-            }
-            if (sbasReply == DisableReply::Ack || sbasReply == DisableReply::Timeout ||
-                sbasReply == DisableReply::WrongAck || sbasReply == DisableReply::CorruptAck) {
-                sbasEnabled = static_cast<unsigned>(values.value(SIGNAL_SBAS_ENA));
-                if (values.contains(SIGNAL_SBAS_L1CA_ENA)) {
-                    sbasL1caEnabled = static_cast<unsigned>(values.value(SIGNAL_SBAS_L1CA_ENA));
-                }
-            }
-            return _replyToSetting(receiver, messageId, sbasReply);
+        if (values.contains(SEC_JAMDET_SENSITIVITY_HI)) {
+            currentSettings[SEC_JAMDET_SENSITIVITY_HI] = static_cast<uint32_t>(values.value(SEC_JAMDET_SENSITIVITY_HI));
         }
     } else if (messageId == CFG_TMODE3 && payload.size() == 40) {
         mode = qFromLittleEndian<quint16>(payload.constData() + 2) & 0xff;
@@ -871,13 +938,17 @@ bool UBXReceiverModel::_handleFrame(ScriptedReceiver& receiver, const QByteArray
         _queueAck(receiver, messageId, false);
         return true;
     }
+    if (rejectRtcmActivation && messageId == 0x01 && payload.size() == 3 &&
+        static_cast<uint8_t>(payload[0]) == UBX::MsgClass::RTCM3 && payload[2] != 0) {
+        _queueAck(receiver, messageId, false);
+        return true;
+    }
     if (!mode) {
         _queueAck(receiver, messageId, true);
         return true;
     }
     if (*mode == 0) {
         ++disableCommands;
-        lastDisablePayload = payload;
         if (staleDisableAck) {
             _queueAck(receiver, messageId, true);
         }
@@ -898,10 +969,10 @@ bool UBXReceiverModel::_handleFrame(ScriptedReceiver& receiver, const QByteArray
             retainedSurveyDuration = 0;
         }
     }
-    return _replyToSetting(receiver, messageId, disableReply, true);
+    return _replyToSetting(receiver, messageId, disableReply);
 }
 
-bool UBXReceiverModel::_replyToSetting(ScriptedReceiver& receiver, uint8_t messageId, DisableReply reply, bool disable)
+bool UBXReceiverModel::_replyToSetting(ScriptedReceiver& receiver, uint8_t messageId, DisableReply reply)
 {
     if (reply == DisableReply::WriteError) {
         return false;
@@ -931,11 +1002,11 @@ bool UBXReceiverModel::_replyToSetting(ScriptedReceiver& receiver, uint8_t messa
         QByteArray payload;
         payload.append(static_cast<char>(CFG_CLASS));
         payload.append(static_cast<char>(messageId));
-        Response response{_frame(0x05, 0x01, payload), false};
+        Response response{_frame(0x05, 0x01, payload)};
         response.bytes.back() ^= 0x01;
         _queueResponse(receiver, response);
     } else {
-        _queueAck(receiver, messageId, true, disable);
+        _queueAck(receiver, messageId, true);
     }
     return true;
 }

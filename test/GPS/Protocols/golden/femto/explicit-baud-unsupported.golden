@@ -1,0 +1,14 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden femto/explicit-baud-unsupported
+about Explicit 9600 is not supported
+request type=femto role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=9600
+stream-step 1 bytes=78 duration=1000ms
+stream-step 2 bytes=78 duration=1000ms
+stream-step 3 bytes=25 duration=1000ms
+configure
+  result configured=0 baud=9600->9600 failure=none ready=0 elapsed=0ms
+  identity ""
+  error "Receiver configuration failed"
+  wire
+  evidence
+  events

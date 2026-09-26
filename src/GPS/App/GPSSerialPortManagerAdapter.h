@@ -6,7 +6,7 @@
 
 class SerialPortManager;
 
-/// Serves the RTK receiver from the application's serial port manager, sharing its reservations.
+/// Serves the GPS receiver from the application's serial port manager, sharing its reservations.
 class GPSSerialPortManagerAdapter : public GPSSerialPorts
 {
     Q_OBJECT

@@ -149,7 +149,7 @@ void GPSDriverReentrancyTest::_recursiveReceive()
     verifyExpectedLogMessage();
     QVERIFY(nestedResult);
     QCOMPARE(nestedResult->status, GPSReceiveStatus::Busy);
-    QCOMPARE(nestedResult->updates, 0);
+    QCOMPARE(nestedResult->updates, GPSReceiveUpdates{});
     QVERIFY(!nestedResult->terminal());
     QVERIFY(!nestedResult->detail.isEmpty());
     QCOMPARE(transport.reads, 1);
@@ -239,7 +239,7 @@ void GPSDriverReentrancyTest::_satelliteExpiry()
     QVERIFY(!latest.inView);
     QCOMPARE(result.status, positionTraffic ? GPSReceiveStatus::Data : GPSReceiveStatus::Idle);
     if (!positionTraffic) {
-        QCOMPARE(result.updates, 0);
+        QCOMPARE(result.updates, GPSReceiveUpdates{});
     }
     transport.incoming.clear();
     QCOMPARE(driver.receiveOutcome(0ms).status, GPSReceiveStatus::Idle);

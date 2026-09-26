@@ -148,6 +148,11 @@ The values will then persist across QGC reboots until they are changed.
 
 The settings are:
 
+- **Receiver / settings:** The receiver family QGroundControl configures as a base station.
+  _Automatic_, the default, identifies the receiver each time it connects: QGroundControl listens to its output and sends read-only identification queries at each baud rate the supported receivers use.
+  Until then the settings of every supported receiver are shown, and connecting reports a base mode the identified receiver does not support.
+  Select a manufacturer to configure only that receiver family.
+  A manufacturer saved by a version without receiver roles only filtered the settings shown, so it resets to _Automatic_.
 - Perform Survey-In
   - **Survey-in accuracy (U-blox only):** The minimum position accuracy for the RTK Survey-In process to complete.
   - **Minimum observation duration:** The minimum time that will be taken for the RTK Survey-in process.

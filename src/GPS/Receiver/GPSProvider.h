@@ -1,0 +1,100 @@
+#pragma once
+
+#include <chrono>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <stop_token>
+
+#include <QtCore/QByteArray>
+#include <QtCore/QDeadlineTimer>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QThread>
+
+#include "GPSDriverReports.h"
+#include "GPSReceiverConfig.h"
+#include "GPSType.h"
+
+class GPSTransport;
+
+namespace GPSConnectionErrors {
+Q_NAMESPACE
+
+enum class GPSConnectionError
+{
+    None = 0,
+    OpenFailed = 1,
+    ConfigFailed = 2,
+    DeviceError = 3,
+    /// Configuration needs persistent receiver changes the connection did not allow.
+    ConsentRequired = 4,
+};
+Q_ENUM_NS(GPSConnectionError)
+
+}  // namespace GPSConnectionErrors
+
+using GPSConnectionError = GPSConnectionErrors::GPSConnectionError;
+
+/// One receiver session hosted on a dedicated worker thread. The provider lives on its creator's thread;
+/// only the session body runs on the worker, which it owns and joins before destruction.
+class GPSProvider : public QObject
+{
+    Q_OBJECT
+
+public:
+    /// Consumed on the worker thread, so transport construction, I/O and destruction share that thread.
+    using TransportFactory = std::function<std::unique_ptr<GPSTransport>(std::stop_token)>;
+
+    GPSProvider(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
+                QObject* parent = nullptr);
+    ~GPSProvider() override;
+
+    /// Starts the session once; later calls are ignored.
+    // Virtual so GPSReceiver tests can inject a provider that emits scripted signals without a worker thread.
+    virtual void start();
+
+    /// Requests cooperative cancellation. Network waits wake at once; serial waits observe it within their polling
+    /// interval.
+    virtual void stop();
+
+    bool isRunning() const { return _thread && _thread->isRunning(); }
+
+    /// Waits for the worker to exit; returns true at once when the session never started.
+    bool wait(QDeadlineTimer deadline = QDeadlineTimer(QDeadlineTimer::Forever));
+
+    /// Configured receivers must keep producing data; passive links stay open while the receiver is silent.
+    virtual void setEndsWhenIdle(bool endsWhenIdle) { _endsWhenIdle = endsWhenIdle; }
+
+    bool endsWhenIdle() const { return _endsWhenIdle; }
+
+    const GPSReceiverConfig& config() const { return _config; }
+
+    /// Longest wait for one read before the session re-checks cancellation.
+    static constexpr std::chrono::milliseconds kGPSReceiveTimeout{1200};
+    /// A receiver that ends when idle ends after this long without useful data.
+    static constexpr std::chrono::milliseconds kUsefulDataTimeout = 3 * kGPSReceiveTimeout;
+
+signals:
+    void satelliteInfoUpdate(const GPSSatelliteReport& message);
+    void positionUpdate(const GPSPositionReport& report);
+    void RTCMDataUpdate(const QByteArray& message, qint64 receivedAtMs);
+    void surveyInStatus(const GPSSurveyReport& report);
+    void connectionError(GPSConnectionError error, const QString& detail = {});
+    /// The family a GPSType::automatic session detected, before it configures the receiver.
+    void receiverDetected(GPSType type);
+    /// identity is the receiver model and firmware, or empty when the family does not report them.
+    void receiverReady(const QString& identity = {});
+    /// Delivered on the provider's thread after the session body has returned.
+    void finished();
+
+private:
+    void _runSession();
+
+    std::unique_ptr<QThread> _thread;
+    TransportFactory _transportFactory;
+    GPSType _type;
+    std::stop_source _stopSource;
+    bool _endsWhenIdle = true;
+    GPSReceiverConfig _config{};
+};

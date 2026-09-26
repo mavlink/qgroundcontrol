@@ -1,0 +1,49 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden femto/unlog-nak-once
+about First UNLOGALL rejected; the second round succeeds
+request type=femto role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
+stream-step 1 bytes=78 duration=1000ms
+stream-step 2 bytes=78 duration=1000ms
+stream-step 3 bytes=25 duration=1000ms
+configure
+  result configured=1 baud=0->115200 failure=none ready=1 elapsed=0ms
+  identity ""
+  error ""
+  wire
+    baud 115200 configured
+    write "UNLOGALL THISPORT\r\n" 19
+      554e4c4f47414c4c2054484953504f52540d0a
+      text "UNLOGALL THISPORT\r\n"
+    write "UNLOGALL THISPORT\r\n" 19
+      554e4c4f47414c4c2054484953504f52540d0a
+      text "UNLOGALL THISPORT\r\n"
+    write "VERSION\r\n" 9
+      56455253494f4e0d0a
+      text "VERSION\r\n"
+    write "POSAVE ON \r\n" 12
+      504f53415645204f4e200d0a
+      text "POSAVE ON \r\n"
+    write "LOG GPGGA 1 \r\n" 14
+      4c4f472047504747412031200d0a
+      text "LOG GPGGA 1 \r\n"
+  evidence
+    "UNLOGALL THISPORT\r\n" rejected required accepted=19 written=19 uncertain=0 elapsed=0ms
+    "UNLOGALL THISPORT\r\n" acknowledged required accepted=19 written=19 uncertain=0 elapsed=0ms
+    "VERSION\r\n" acknowledged required accepted=9 written=9 uncertain=0 elapsed=0ms
+    "POSAVE ON \r\n" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "LOG GPGGA 1 \r\n" acknowledged required accepted=14 written=14 uncertain=0 elapsed=0ms
+  events
+    survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+stream
+  result failure=none ready=1
+  wire
+    write "LOG RTCM 1\r\n" 12
+      4c4f47205254434d20310d0a
+      text "LOG RTCM 1\r\n"
+  evidence
+    "LOG RTCM 1\r\n" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+  events
+    usage used=12 receipt=1
+    survey active=0 valid=1 duration=1s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
+    usage used=12 receipt=1
+    rtcm type=1005 size=25 fnv=f8e3bb62

@@ -11,9 +11,12 @@
 #include <vector>
 
 #include "Checksums.h"
-#include "Quectel/QuectelProtocol.h"
+#include "GPSProtocolRuntime.h"
+#include "Quectel/QuectelCodec_p.h"
+#include "Quectel/QuectelFamily.h"
 #include "RTCMFramer.h"
-#include "Support/GPSProtocolTestIO.h"
+#include "Support/GPSProtocolLogCapture.h"
+#include "Support/GPSRuntimeTestIO.h"
 #include "Support/ProtocolTestPackets.h"
 #include "Support/QuectelReceiverModel.h"
 #include "UnitTest.h"
@@ -41,15 +44,17 @@ constexpr std::array<uint8_t, 25> CORRECTION{0xD3, 0x00, 0x13, 0x3E, 0xD1, 0x22,
 
 using Receiver = GPSTest::QuectelReceiver;
 
-GPSProtocol::GPSConfig surveyConfig()
+constexpr GPSFamilyOptions NO_SATELLITES{.satelliteInfoEnabled = false};
+
+GPSConfig surveyConfig()
 {
-    GPSProtocol::GPSConfig config;
+    GPSConfig config;
     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 60s;
     std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 15;
     return config;
 }
 
-GPSProtocol::GPSConfig fixedConfig()
+GPSConfig fixedConfig()
 {
     auto config = surveyConfig();
     config.base.mode = GPSBaseStationConfig::Fixed{};
@@ -58,7 +63,7 @@ GPSProtocol::GPSConfig fixedConfig()
     return config;
 }
 
-void feed(QuectelProtocol& driver, std::string_view line, size_t chunk = 3)
+void feed(GPSProtocolRuntime& driver, std::string_view line, size_t chunk = 3)
 {
     while (!line.empty()) {
         const auto size = std::min(line.size(), chunk);
@@ -88,6 +93,20 @@ uint32_t surveyDuration(const GPSDecodedSurvey& report)
     return static_cast<uint32_t>(report.survey.duration.count());
 }
 
+/// @a observer, also keeping the latest position in @a position.
+GPSRuntimeObserver capturePosition(GPSRuntimeObserver observer, GPSDecodedPosition& position)
+{
+    observer.decoded = [&position, decoded = std::move(observer.decoded)](const GPSEventBatch& batch) {
+        for (const auto& event : batch.events) {
+            if (const auto* report = std::get_if<GPSDecodedPosition>(&event)) {
+                position = *report;
+            }
+        }
+        decoded(batch);
+    };
+    return observer;
+}
+
 uint32_t surveyMeanAccuracyMillimeters(const GPSDecodedSurvey& report)
 {
     return report.survey.meanAccuracyMeters
@@ -102,7 +121,7 @@ std::string surveyStatus(unsigned tow, unsigned validity, unsigned observations,
                         ",-2005559.8481,5411823.1873,2706139.3995,1.8075");
 }
 
-void receiveUntil(QuectelProtocol& driver, const GPSTestClock& clock, uint64_t deadline)
+void receiveUntil(GPSProtocolRuntime& driver, const GPSTestClock& clock, uint64_t deadline)
 {
     unsigned slices = 0;
     while (clock.nowUs() < deadline) {
@@ -126,10 +145,11 @@ void positionAndEvidence(GPSTestClock& clock)
     Receiver receiver(clock);
     receiver.role = 2;
     GPSDecodedPosition position{};
-    QuectelProtocol driver(captureGPSReports(receiver.io(), position), false);
+    GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), capturePosition(receiver.observer(), position),
+                              NO_SATELLITES);
     unsigned baud = 0;
     CHECK(!driver.receiverReady());
-    CHECK(driver.configure(baud, surveyConfig()));
+    CHECK(driver.configure(surveyConfig(), baud));
     CHECK(baud == 460800);
     CHECK(driver.receiverReady());
     CHECK(receiver.commands[0] == "PQTMVERNO");
@@ -167,17 +187,17 @@ void identityAndRoleSafety(GPSTestClock& clock)
         clock.reset();
         Receiver receiver(clock);
         receiver.identity = identity;
-        QuectelProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned baud = 460800;
-        CHECK(!driver.configure(baud, surveyConfig()));
+        CHECK(!driver.configure(surveyConfig(), baud));
         CHECK(receiver.commands.size() == 1);
         CHECK(!driver.receiverReady());
     }
     Receiver receiver(clock);
     receiver.role = 1;
-    QuectelProtocol driver(receiver.io(), false);
+    GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
     unsigned baud = 460800;
-    CHECK(!driver.configure(baud, surveyConfig()));
+    CHECK(!driver.configure(surveyConfig(), baud));
     CHECK(receiver.commands.size() == 2);
     CHECK(!driver.receiverReady());
     noPersistence(receiver);
@@ -188,9 +208,9 @@ void fixedECEF(GPSTestClock& clock)
     Receiver receiver(clock);
     receiver.role = 2;
     receiver.base = "2,0,0.0,0.0000,6378237.0000,0.0000,0.0";
-    QuectelProtocol driver(receiver.io(), false);
+    GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
     unsigned baud = 460800;
-    CHECK(driver.configure(baud, fixedConfig()));
+    CHECK(driver.configure(fixedConfig(), baud));
     CHECK(receiver.sent("PQTMSRR"));
     CHECK(!receiver.sent("PQTMCFGSVIN,W"));
     driver.consume(CORRECTION);
@@ -225,9 +245,9 @@ void surveyLifecycle(GPSTestClock& clock)
     Receiver receiver(clock);
     receiver.role = 2;
     receiver.queued = surveyStatus(291263000, 2, 60);
-    QuectelProtocol driver(receiver.io(), false);
+    GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
     unsigned baud = 460800;
-    CHECK(driver.configure(baud, surveyConfig()));
+    CHECK(driver.configure(surveyConfig(), baud));
     CHECK(receiver.sent("PQTMCFGSVIN,W,1,60,15.0,0.0000,0.0000,0.0000,0.0"));
     CHECK(receiver.sent("PQTMCFGMSGRATE,W,PQTMSVINSTATUS,1,1"));
     CHECK(receiver.sent("PQTMCFGMSGRATE,R,RTCM3-107X,0"));
@@ -244,7 +264,7 @@ void surveyLifecycle(GPSTestClock& clock)
     CHECK(!receiver.surveys.back().survey.meanAccuracyMeters.has_value());
     receiver.chunk = 1;
     receiver.queued = PROGRESS;
-    CHECK(driver.receive(1000ms) & GPSDecodedBatch::PROTOCOL_ACTIVITY);
+    CHECK(driver.receive(1000ms).testFlag(GPSReceiveUpdate::Activity));
     CHECK(surveyFlags(receiver.surveys.back()) == 2);
     CHECK(surveyDuration(receiver.surveys.back()) == 1);
     CHECK(receiver.surveys.back().survey.meanAccuracyMeters.has_value());
@@ -306,9 +326,9 @@ void numericStatusFields(GPSTestClock& clock)
         Receiver receiver(clock);
         receiver.role = 2;
         receiver.periodicStatus = false;
-        QuectelProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned baud = 460800;
-        CHECK(driver.configure(baud, surveyConfig()));
+        CHECK(driver.configure(surveyConfig(), baud));
         feed(driver, nmeaSentence("PQTMSVINSTATUS,1,291324000,2,,11,60,60,6.378137e6,-0.0,0.0000,1.25e-1"));
         CHECK(!receiver.surveys.empty());
         CHECK(surveyFlags(receiver.surveys.back()) == 1);
@@ -327,9 +347,10 @@ void malformedAndMixedFraming(GPSTestClock& clock)
     Receiver receiver(clock);
     receiver.role = 2;
     GPSDecodedPosition position{};
-    QuectelProtocol driver(captureGPSReports(receiver.io(), position), false);
+    GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), capturePosition(receiver.observer(), position),
+                              NO_SATELLITES);
     unsigned baud = 460800;
-    CHECK(driver.configure(baud, surveyConfig()));
+    CHECK(driver.configure(surveyConfig(), baud));
     const auto writes = receiver.commands.size();
     for (const auto& line : {std::string("$PQTMSVINSTATUS,1,1000,2,,11,60,60,6378137,0,0,1*00\r\n"),
                              nmeaSentence("PQTMSVINSTATUS,2,1000,2,,11,60,60,6378137,0,0,1"),
@@ -384,9 +405,9 @@ void scheduledShortSurvey(GPSTestClock& clock)
             }
             bool savedBaseVerified = false;
             uint64_t savedBaseVerifiedAt = 0;
-            auto io = receiver.io();
-            const auto captureCommand = io.commandFinished;
-            io.commandFinished = [&](const GPSCommandResult& result) {
+            auto observer = receiver.observer();
+            const auto captureCommand = observer.commandFinished;
+            observer.commandFinished = [&](const GPSCommandResult& result) {
                 captureCommand(result);
                 if (receiver.sent("PQTMSRR") && result.evidence.command == "PQTMCFGSVIN,R" &&
                     result.evidence.outcome == GPSCommandOutcome::ReadbackVerified) {
@@ -394,8 +415,8 @@ void scheduledShortSurvey(GPSTestClock& clock)
                     savedBaseVerifiedAt = clock.nowUs();
                 }
             };
-            const auto captureDecoded = io.decoded;
-            io.decoded = [&](const GPSDecodedBatch& batch) {
+            const auto captureDecoded = observer.decoded;
+            observer.decoded = [&](const GPSEventBatch& batch) {
                 for (const auto& event : batch.events) {
                     if (const auto* report = std::get_if<GPSDecodedSurvey>(&event);
                         report && surveyFlags(*report) == 1) {
@@ -404,11 +425,11 @@ void scheduledShortSurvey(GPSTestClock& clock)
                 }
                 captureDecoded(batch);
             };
-            QuectelProtocol driver(std::move(io), false);
+            GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), std::move(observer), NO_SATELLITES);
             auto config = surveyConfig();
             std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 1s;
             unsigned baud = 460800;
-            CHECK(driver.configure(baud, config));
+            CHECK(driver.configure(config, baud));
             CHECK(savedBaseVerified);
             CHECK(receiver.nativeStoredSurvey);
             CHECK(surveyFlags(receiver.surveys.back()) == 1);
@@ -441,9 +462,9 @@ void measurementOrderAndRollover(GPSTestClock& clock)
     Receiver receiver(clock);
     receiver.role = 2;
     receiver.periodicStatus = false;
-    QuectelProtocol driver(receiver.io(), false);
+    GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
     unsigned baud = 460800;
-    CHECK(driver.configure(baud, surveyConfig()));
+    CHECK(driver.configure(surveyConfig(), baud));
     const auto complete = surveyStatus(604799000, 2, 60);
     feed(driver, complete);
     CHECK(surveyFlags(receiver.surveys.back()) == 1);
@@ -484,15 +505,15 @@ void cancellationRevokesPublishedState(GPSTestClock& clock)
     clock.reset();
     Receiver receiver(clock);
     receiver.role = 2;
-    QuectelProtocol driver(receiver.io(), false);
+    GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
     unsigned baud = 460800;
-    CHECK(driver.configure(baud, surveyConfig()));
+    CHECK(driver.configure(surveyConfig(), baud));
     feed(driver, COMPLETE);
     CHECK(surveyFlags(receiver.surveys.back()) == 1);
     receiver.failed = true;
     receiver.fault = Receiver::Fault::Cancel;
-    CHECK(driver.receive(1000ms) == 0);
-    CHECK(driver.ioError() == GPSProtocolError::Cancelled);
+    CHECK(driver.receive(1000ms) == GPSReceiveUpdates{});
+    CHECK(driver.error() == GPSProtocolError::Cancelled);
     CHECK(!driver.receiverReady());
     revoked(receiver.surveys.back());
     feed(driver, surveyStatus(291324000, 2, 60));
@@ -510,9 +531,10 @@ void transactionFailures(GPSTestClock& clock)
         receiver.role = 2;
         receiver.failure = fault == Receiver::Fault::Readback ? "PQTMCFGMSGRATE,R,GGA" : "PQTMCFGMSGRATE,W,GGA";
         receiver.fault = fault;
-        QuectelProtocol driver(receiver.io(), false);
+        const GPSProtocolLogCapture log;
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned baud = 460800;
-        CHECK(!driver.configure(baud, surveyConfig()));
+        CHECK(!driver.configure(surveyConfig(), baud));
         CHECK(!driver.receiverReady());
         CHECK(receiver.sent(receiver.failure));
         CHECK(!receiver.sent("PQTMCFGMSGRATE,W,GST"));
@@ -522,7 +544,7 @@ void transactionFailures(GPSTestClock& clock)
                : fault == Receiver::Fault::Silent || fault == Receiver::Fault::Checksum ? GPSCommandOutcome::TimedOut
                                                                                         : GPSCommandOutcome::Rejected));
         if (fault == Receiver::Fault::Cancel) {
-            CHECK(receiver.warnings.empty());
+            CHECK(log.warnings().isEmpty());
         }
         if (fault == Receiver::Fault::Partial) {
             CHECK(receiver.outcomes.back().evidence.writtenBytes == 4);
@@ -541,9 +563,9 @@ void restartAndConfigurationSafety(GPSTestClock& clock)
         receiver.role = 2;
         receiver.silentAfterReset = silence;
         receiver.roleAfterReset = silence ? 0 : 1;
-        QuectelProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned baud = 460800;
-        CHECK(!driver.configure(baud, surveyConfig()));
+        CHECK(!driver.configure(surveyConfig(), baud));
         CHECK(receiver.sent("PQTMSRR"));
         CHECK(!receiver.sent("PQTMCFGMSGRATE,W"));
         CHECK(!driver.receiverReady());
@@ -555,9 +577,9 @@ void restartAndConfigurationSafety(GPSTestClock& clock)
         Receiver receiver(clock);
         receiver.failure = "PQTMSRR";
         receiver.fault = fault;
-        QuectelProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned baud = 460800;
-        CHECK(!driver.configure(baud, {}));
+        CHECK(!driver.configure({}, baud));
         CHECK(!driver.receiverReady());
         CHECK(!receiver.sent("PQTMCFGMSGRATE,W"));
         CHECK(clock.nowUs() < 12000000);
@@ -566,23 +588,23 @@ void restartAndConfigurationSafety(GPSTestClock& clock)
         Receiver receiver(clock);
         receiver.role = 2;
         receiver.base = base;
-        QuectelProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned baud = 460800;
-        CHECK(!driver.configure(baud, surveyConfig()));
+        CHECK(!driver.configure(surveyConfig(), baud));
         CHECK(!receiver.sent("PQTMCFGSVIN,W"));
         CHECK(!receiver.sent("PQTMSRR"));
     }
     {
         Receiver receiver(clock);
         receiver.roleAfterReset = 2;  // An unsaved rover selection must not pass for an active rover.
-        QuectelProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned baud = 460800;
-        CHECK(!driver.configure(baud, {}));
+        CHECK(!driver.configure({}, baud));
         CHECK(!driver.receiverReady());
         CHECK(!receiver.sent("PQTMCFGMSGRATE,W"));
     }
     Receiver receiver(clock);
-    QuectelProtocol driver(receiver.io(), false);
+    GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
     unsigned baud = 460800;
     for (unsigned variation = 0; variation < 3; ++variation) {
         auto config = surveyConfig();
@@ -593,7 +615,7 @@ void restartAndConfigurationSafety(GPSTestClock& clock)
         } else {
             std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1000.01;
         }
-        CHECK(!driver.configure(baud, config));
+        CHECK(!driver.configure(config, baud));
         CHECK(receiver.commands.empty());
     }
 }
@@ -610,9 +632,10 @@ void requiredBaseCommands(GPSTestClock& clock)
             receiver.role = 2;
             receiver.failure = command;
             receiver.fault = fault;
-            QuectelProtocol driver(receiver.io(), false);
+            const GPSProtocolLogCapture log;
+            GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
             unsigned baud = 460800;
-            CHECK(!driver.configure(baud, surveyConfig()));
+            CHECK(!driver.configure(surveyConfig(), baud));
             CHECK(receiver.commands.back().starts_with(command));
             CHECK(!driver.receiverReady());
             CHECK(receiver.outcomes.back().evidence.outcome ==
@@ -620,7 +643,7 @@ void requiredBaseCommands(GPSTestClock& clock)
                    : fault == Receiver::Fault::Silent ? GPSCommandOutcome::TimedOut
                                                       : GPSCommandOutcome::Cancelled));
             if (fault == Receiver::Fault::Cancel) {
-                CHECK(receiver.warnings.empty());
+                CHECK(log.warnings().isEmpty());
             }
             noPersistence(receiver);
         }
@@ -631,9 +654,9 @@ void roleTransition(GPSTestClock& clock)
 {
     Receiver receiver(clock);
     receiver.role = 2;
-    QuectelProtocol driver(receiver.io(), false);
+    GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
     unsigned baud = 460800;
-    CHECK(driver.configure(baud, surveyConfig()));
+    CHECK(driver.configure(surveyConfig(), baud));
     feed(driver, PROGRESS);
     feed(driver, COMPLETE);
     driver.consume(CORRECTION);
@@ -649,11 +672,11 @@ void managedChanges(GPSTestClock& clock)
         clock.reset();
         Receiver receiver(clock);
         receiver.base = "0,0,0,0,0,0,0";
-        QuectelProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         auto config = fixed ? fixedConfig() : surveyConfig();
         config.allowPersistentChanges = true;
         unsigned baud = 460800;
-        CHECK(driver.configure(baud, config));
+        CHECK(driver.configure(config, baud));
         CHECK(driver.receiverReady());
         CHECK(receiver.commands[0] == "PQTMVERNO");
         CHECK(receiver.commands[1] == "PQTMCFGRCVRMODE,R");
@@ -693,17 +716,17 @@ void managedBaseValuesAndNoUnnecessarySaves(GPSTestClock& clock)
         Receiver receiver(clock);
         receiver.role = 2;
         receiver.base = distanceSupported ? "1,60,15,0,0,0,2.5" : "0,0,0,0,0,0";
-        QuectelProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         auto config = surveyConfig();
         config.allowPersistentChanges = true;
         std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 3600s;
         std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1.25;
         unsigned baud = 460800;
-        CHECK(driver.configure(baud, config));
+        CHECK(driver.configure(config, baud));
         CHECK(receiver.saves == 1);
         CHECK(!receiver.sent("PQTMCFGRCVRMODE,W"));
         CHECK(receiver.savedBase == (distanceSupported ? "1,3600,1.250000000,0,0,0,0" : "1,3600,1.250000000,0,0,0"));
-        CHECK(driver.configure(baud, config));
+        CHECK(driver.configure(config, baud));
         CHECK(receiver.saves == 1);
     }
     for (const auto configType : {1, 2}) {
@@ -714,9 +737,9 @@ void managedBaseValuesAndNoUnnecessarySaves(GPSTestClock& clock)
         }
         auto config = configType == 1 ? surveyConfig() : fixedConfig();
         config.allowPersistentChanges = true;
-        QuectelProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         unsigned baud = 460800;
-        CHECK(driver.configure(baud, config));
+        CHECK(driver.configure(config, baud));
         CHECK(receiver.saves == 0);
         noPersistence(receiver);
     }
@@ -724,9 +747,9 @@ void managedBaseValuesAndNoUnnecessarySaves(GPSTestClock& clock)
     receiver.identity = nmeaSentence("PQTMVERNO,LG580P03AANR01A03S,2024/04/30,10:53:07");
     auto config = fixedConfig();
     config.allowPersistentChanges = true;
-    QuectelProtocol driver(receiver.io(), false);
+    GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
     unsigned baud = 460800;
-    CHECK(!driver.configure(baud, config));
+    CHECK(!driver.configure(config, baud));
     CHECK(receiver.commands == std::vector<std::string>{"PQTMVERNO"});
 }
 
@@ -742,11 +765,12 @@ void managedFailures(GPSTestClock& clock)
             receiver.failure = command;
             receiver.failAfterSaves = std::string_view(command) == "PQTMSRR" ? 1 : 0;
             receiver.fault = fault;
-            QuectelProtocol driver(receiver.io(), false);
+            const GPSProtocolLogCapture log;
+            GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
             auto config = fixedConfig();
             config.allowPersistentChanges = true;
             unsigned baud = 460800;
-            CHECK(!driver.configure(baud, config));
+            CHECK(!driver.configure(config, baud));
             CHECK(!driver.receiverReady());
             CHECK(!receiver.sent("PQTMCFGMSGRATE,W"));
             CHECK(receiver.sent(command));
@@ -755,26 +779,26 @@ void managedFailures(GPSTestClock& clock)
             CHECK(clock.nowUs() < 15000000);
             if (std::string_view(command) == "PQTMSRR") {
                 CHECK(receiver.savedRole == 2);
-                CHECK(driver.ioErrorDetail().contains("flash save was acknowledged"));
-                CHECK(driver.ioErrorDetail().contains("no rollback"));
-                CHECK(!receiver.warnings.empty());
+                CHECK(driver.errorDetail().contains("flash save was acknowledged"));
+                CHECK(driver.errorDetail().contains("no rollback"));
+                CHECK(!log.warnings().isEmpty());
                 if (fault == Receiver::Fault::Reject) {
-                    CHECK(driver.ioErrorDetail().contains("rejected PQTMSRR"));
+                    CHECK(driver.errorDetail().contains("rejected PQTMSRR"));
                 }
                 CHECK(std::any_of(receiver.outcomes.begin(), receiver.outcomes.end(), [](const auto& result) {
                     return result.evidence.command == "PQTMSAVEPAR" &&
                            result.evidence.outcome == GPSCommandOutcome::Acknowledged;
                 }));
             } else if (std::string_view(command) == "PQTMSAVEPAR" && fault != Receiver::Fault::Reject) {
-                CHECK(driver.ioErrorDetail().contains("flash save may"));
-                CHECK(driver.ioErrorDetail().contains("no rollback"));
-                CHECK(!receiver.warnings.empty());
+                CHECK(driver.errorDetail().contains("flash save may"));
+                CHECK(driver.errorDetail().contains("no rollback"));
+                CHECK(!log.warnings().isEmpty());
                 CHECK(std::count(receiver.commands.begin(), receiver.commands.end(), "PQTMSRR") == 1);
                 CHECK(receiver.commands.back() == "PQTMSAVEPAR");
             } else {
                 CHECK(receiver.saves == 0);
                 if (fault == Receiver::Fault::Cancel) {
-                    CHECK(receiver.warnings.empty());
+                    CHECK(log.warnings().isEmpty());
                 }
             }
         }
@@ -794,18 +818,18 @@ void managedReadbackFailures(GPSTestClock& clock)
             receiver.fault = Receiver::Fault::Readback;
             receiver.wrongReadback = roleReadback ? nmeaSentence("PQTMCFGRCVRMODE,OK,1")
                                                   : nmeaSentence("PQTMCFGSVIN,OK,2,0,0,1,6378237,0,0");
-            QuectelProtocol driver(receiver.io(), false);
+            GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
             auto config = fixedConfig();
             config.allowPersistentChanges = true;
             unsigned baud = 460800;
-            CHECK(!driver.configure(baud, config));
+            CHECK(!driver.configure(config, baud));
             CHECK(!driver.receiverReady());
             CHECK(receiver.outcomes.back().evidence.outcome == GPSCommandOutcome::Rejected);
             CHECK(receiver.saves == (afterSave ? 1 : 0));
             CHECK(!receiver.sent("PQTMCFGMSGRATE,W"));
             if (afterSave) {
-                CHECK(driver.ioErrorDetail().contains("flash save was acknowledged"));
-                CHECK(driver.ioErrorDetail().contains("no rollback"));
+                CHECK(driver.errorDetail().contains("flash save was acknowledged"));
+                CHECK(driver.errorDetail().contains("no rollback"));
             }
         }
     }
@@ -819,11 +843,11 @@ void managedPersistenceScope(GPSTestClock& clock)
         receiver.base = "0,0,0,0,0,0,0";
         receiver.rates["RMC"] = "RMC,7";
         receiver.rates["GGA"] = "GGA,2";
-        QuectelProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         auto config = fixedConfig();
         config.allowPersistentChanges = true;
         unsigned baud = 460800;
-        CHECK(driver.configure(baud, config));
+        CHECK(driver.configure(config, baud));
         CHECK(receiver.saves == 1);
         CHECK(receiver.savedRates.at("RMC") == "RMC,7");
         CHECK(receiver.rates.at("RMC") == "RMC,7");
@@ -834,29 +858,29 @@ void managedPersistenceScope(GPSTestClock& clock)
         Receiver receiver(clock);
         receiver.failure = "PQTMCFGSVIN,W";
         receiver.failAfterSaves = 1;
-        QuectelProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         auto config = fixedConfig();
         config.allowPersistentChanges = true;
         unsigned baud = 460800;
-        CHECK(!driver.configure(baud, config));
+        CHECK(!driver.configure(config, baud));
         CHECK(receiver.savedRole == 2);
         CHECK(receiver.savedBase == "1,60,15.0,0.0000,0.0000,0.0000,0.0");
         CHECK(receiver.saves == 1);
-        CHECK(driver.ioErrorDetail().contains("flash save was acknowledged"));
-        CHECK(driver.ioErrorDetail().contains("no rollback"));
+        CHECK(driver.errorDetail().contains("flash save was acknowledged"));
+        CHECK(driver.errorDetail().contains("no rollback"));
     }
     for (const auto& [latitude, expected] : {std::pair{90.0, "2,0,0,0.0000,0.0000,6356752.3142,0"},
                                              std::pair{45.0, "2,0,0,3194419.1451,3194419.1451,4487348.4089,0"}}) {
         Receiver receiver(clock);
         receiver.role = 2;
         receiver.base = "0,0,0,0,0,0,0";
-        QuectelProtocol driver(receiver.io(), false);
+        GPSProtocolRuntime driver(Quectel::FAMILY, receiver.io(), receiver.observer(), NO_SATELLITES);
         auto config = fixedConfig();
         config.allowPersistentChanges = true;
         std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position = {
             .latitudeDegrees = latitude, .longitudeDegrees = 45, .altitudeMeters = 0};
         unsigned baud = 460800;
-        CHECK(driver.configure(baud, config));
+        CHECK(driver.configure(config, baud));
         CHECK(receiver.savedBase == expected);
     }
 }
@@ -869,10 +893,12 @@ class GPSProtocolQuectelTest : public UnitTest
 private slots:
 
     void _protocol();
+    void _codec();
 };
 
 void GPSProtocolQuectelTest::_protocol()
 {
+    const GPSProtocolLogCapture log;
     GPSTestClock clock;
     try {
         positionAndEvidence(clock);
@@ -895,6 +921,39 @@ void GPSProtocolQuectelTest::_protocol()
         managedPersistenceScope(clock);
     } catch (const std::exception& exception) {
         QFAIL(exception.what());
+    }
+}
+
+void GPSProtocolQuectelTest::_codec()
+{
+    const QByteArray body("PQTMCFGMSGRATE,OK,GGA,1,");
+    const QByteArray wire =
+        QByteArray::fromStdString(nmeaSentence({body.constData(), static_cast<size_t>(body.size())}));
+    const std::string_view bodyView(body.constData(), body.size());
+    QCOMPARE(QuectelCodec::frame(body), wire);
+    const std::string_view line(wire.constData(), wire.size() - 2);
+    QCOMPARE(QuectelCodec::checkedBody(line), bodyView);
+    auto corrupted = wire;
+    corrupted[3] ^= 1;
+    QVERIFY(QuectelCodec::checkedBody({corrupted.constData(), static_cast<size_t>(corrupted.size())}).empty());
+    QVERIFY(QuectelCodec::checkedBody("$PQTMCFGMSGRATE,OK,GGA,1,*+1").empty());
+    QuectelCodec::Fields fields(bodyView);
+    QCOMPARE(fields.size(), size_t(5));
+    QVERIFY(fields.back().empty());
+    fields.pop_back();
+    QCOMPARE(fields.size(), size_t(4));
+    QCOMPARE(fields[2], std::string_view("GGA"));
+    QCOMPARE(QuectelCodec::readback(fields, "PQTMCFGMSGRATE", true), GPSCommandOutcome::ReadbackVerified);
+    const QuectelCodec::Fields overflow("PQTMCFGMSGRATE,OK,GGA,1,2,3,4,5,6,7,8,9,10");
+    QVERIFY(overflow.overflowed());
+    QCOMPARE(QuectelCodec::readback(overflow, "PQTMCFGMSGRATE", true), GPSCommandOutcome::Rejected);
+    QCOMPARE(QuectelCodec::readback(overflow, "PQTMCFGSVIN", true), GPSCommandOutcome::Pending);
+    double value = 42;
+    QVERIFY(QuectelCodec::number("1.25e-1", value));
+    QCOMPARE(value, 0.125);
+    for (const auto invalid : {"+1", " 1", "1 ", "1junk", "nan", "inf", "1e9999"}) {
+        QVERIFY(!QuectelCodec::number(invalid, value));
+        QCOMPARE(value, 0.125);
     }
 }
 

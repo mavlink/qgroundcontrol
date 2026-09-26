@@ -19,7 +19,8 @@ using RoutingConfig = GPSCorrectionManager::RoutingConfiguration;
 using UdpInputConfig = GPSCorrectionManager::UdpInputConfiguration;
 using UdpOutputConfig = GPSCorrectionManager::UdpOutputConfiguration;
 using NTRIPConfig = NTRIPManager::Configuration;
-using RTKConfig = GPSRTK::Configuration;
+using ReceiverConfig = GPSReceiver::Configuration;
+using PositionConfig = PositionManager::Configuration;
 
 /// One setting: the Fact it is read from and how its raw value is stored in the configuration.
 template <typename Settings, typename Configuration>
@@ -119,31 +120,35 @@ constexpr Binding<NTRIPSettings, NTRIPConfig> kNTRIPBindings[] = {
      }},
 };
 
-constexpr Binding<RTKSettings, RTKConfig> kRTKBindings[] = {
-    {&RTKSettings::receiverRole, assign<&RTKConfig::receiverRole>},
-    {&RTKSettings::baseReceiverManufacturers, assign<&RTKConfig::baseReceiverManufacturer>},
-    {&RTKSettings::connectionType, assign<&RTKConfig::connectionType>},
-    {&RTKSettings::tcpHost, assign<&RTKConfig::tcpHost>},
-    {&RTKSettings::tcpPort, assign<&RTKConfig::tcpPort>},
-    {&RTKSettings::udpPort, assign<&RTKConfig::udpPort>},
-    {&RTKSettings::serialDevice, assign<&RTKConfig::serialDevice>},
-    {&RTKSettings::serialBaudRate, assign<&RTKConfig::serialBaudRate>},
-    {&RTKSettings::useFixedBasePosition, assign<&RTKConfig::baseMode>},
-    {&RTKSettings::fixedBasePositionLatitude, assign<&RTKConfig::fixedBasePositionLatitude>},
-    {&RTKSettings::fixedBasePositionLongitude, assign<&RTKConfig::fixedBasePositionLongitude>},
-    {&RTKSettings::fixedBasePositionAltitude, assign<&RTKConfig::fixedBasePositionAltitude>},
-    {&RTKSettings::fixedBasePositionAccuracy, assign<&RTKConfig::fixedBasePositionAccuracy>},
-    {&RTKSettings::surveyInAccuracyLimit, assign<&RTKConfig::surveyInAccuracyLimit>},
+constexpr Binding<RTKSettings, ReceiverConfig> kReceiverBindings[] = {
+    {&RTKSettings::receiverRole, assign<&ReceiverConfig::receiverRole>},
+    {&RTKSettings::baseReceiverManufacturers, assign<&ReceiverConfig::baseReceiverManufacturer>},
+    {&RTKSettings::connectionType, assign<&ReceiverConfig::connectionType>},
+    {&RTKSettings::tcpHost, assign<&ReceiverConfig::tcpHost>},
+    {&RTKSettings::tcpPort, assign<&ReceiverConfig::tcpPort>},
+    {&RTKSettings::udpPort, assign<&ReceiverConfig::udpPort>},
+    {&RTKSettings::serialDevice, assign<&ReceiverConfig::serialDevice>},
+    {&RTKSettings::serialBaudRate, assign<&ReceiverConfig::serialBaudRate>},
+    {&RTKSettings::useFixedBasePosition, assign<&ReceiverConfig::baseMode>},
+    {&RTKSettings::fixedBasePositionLatitude, assign<&ReceiverConfig::fixedBasePositionLatitude>},
+    {&RTKSettings::fixedBasePositionLongitude, assign<&ReceiverConfig::fixedBasePositionLongitude>},
+    {&RTKSettings::fixedBasePositionAltitude, assign<&ReceiverConfig::fixedBasePositionAltitude>},
+    {&RTKSettings::fixedBasePositionAccuracy, assign<&ReceiverConfig::fixedBasePositionAccuracy>},
+    {&RTKSettings::surveyInAccuracyLimit, assign<&ReceiverConfig::surveyInAccuracyLimit>},
     {&RTKSettings::surveyInMinObservationDuration,
-     [](RTKConfig& configuration, const QVariant& rawValue) {
+     [](ReceiverConfig& configuration, const QVariant& rawValue) {
          configuration.surveyInMinObservationDuration = std::chrono::seconds(rawValue.value<int64_t>());
      }},
     {&RTKSettings::receiverAveragingDuration,
-     [](RTKConfig& configuration, const QVariant& rawValue) {
+     [](ReceiverConfig& configuration, const QVariant& rawValue) {
          configuration.receiverAveragingDuration = std::chrono::seconds(rawValue.value<uint32_t>());
      }},
-    {&RTKSettings::compactRtcmCorrections, assign<&RTKConfig::compactRtcmCorrections>},
-    {&RTKSettings::autoConnect, assign<&RTKConfig::autoConnect>},
+    {&RTKSettings::compactRtcmCorrections, assign<&ReceiverConfig::compactRtcmCorrections>},
+    {&RTKSettings::autoConnect, assign<&ReceiverConfig::autoConnect>},
+};
+
+constexpr Binding<RTKSettings, PositionConfig> kPositionBindings[] = {
+    {&RTKSettings::gcsPositionSource, assign<&PositionConfig::sourceMode>},
 };
 
 template <typename Settings, typename Configuration, std::size_t N>
@@ -198,9 +203,14 @@ NTRIPManager::Configuration ntripConfiguration(NTRIPSettings* settings)
     return build(settings, kNTRIPBindings);
 }
 
-GPSRTK::Configuration rtkConfiguration(RTKSettings* settings)
+GPSReceiver::Configuration rtkConfiguration(RTKSettings* settings)
 {
-    return build(settings, kRTKBindings);
+    return build(settings, kReceiverBindings);
+}
+
+PositionManager::Configuration positionConfiguration(RTKSettings* settings)
+{
+    return build(settings, kPositionBindings);
 }
 
 QList<Fact*> boundFacts(GPSCorrectionSettings* settings)
@@ -215,7 +225,7 @@ QList<Fact*> boundFacts(NTRIPSettings* settings)
 
 QList<Fact*> boundFacts(RTKSettings* settings)
 {
-    return facts(settings, kRTKBindings);
+    return facts(settings, kReceiverBindings) + facts(settings, kPositionBindings);
 }
 
 void bindCorrections(GPSCorrectionSettings* settings, GPSCorrectionManager* corrections)
@@ -256,18 +266,25 @@ void bindNtrip(NTRIPSettings* settings, NTRIPManager* ntrip)
     apply();
 }
 
-void bindRtk(RTKSettings* settings, GPSRTK* rtk)
+void bindRtk(RTKSettings* settings, GPSReceiver* rtk)
 {
     if (!settings || !rtk) {
         return;
     }
     const auto apply = [settings, rtk]() { rtk->setConfiguration(rtkConfiguration(settings)); };
-    watch(settings, kRTKBindings, rtk, apply);
-    QObject::connect(rtk, &GPSRTK::autoConnectDisabled, rtk,
+    watch(settings, kReceiverBindings, rtk, apply);
+    QObject::connect(rtk, &GPSReceiver::autoConnectDisabled, rtk,
                      [settings]() { settings->autoConnect()->setRawValue(false); });
-    QObject::connect(rtk, &GPSRTK::baseManufacturerDetected, rtk, [settings](int manufacturer) {
-        settings->baseReceiverManufacturers()->setRawValue(manufacturer);
-    });
+    apply();
+}
+
+void bindPosition(RTKSettings* settings, PositionManager* positions)
+{
+    if (!settings || !positions) {
+        return;
+    }
+    const auto apply = [settings, positions]() { positions->setConfiguration(positionConfiguration(settings)); };
+    watch(settings, kPositionBindings, positions, apply);
     apply();
 }
 

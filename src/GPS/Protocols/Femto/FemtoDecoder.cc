@@ -1,112 +1,56 @@
-#include <cmath>
-#include <cstddef>
-#include <ctime>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "Femto/FemtoDecoder.h"
 
-#include "Femto/FemtoProtocol.h"
-#include "NMEAFields.h"
+#include <optional>
+#include <string_view>
+
+#include "GPSEventSink.h"
+#include "GPSFamilyProtocol.h"
 #include "NMEASentence.h"
-#include "RTCMFramer.h"
 
-int FemtoProtocol::handleMessage(int len)
+namespace Femto {
+
+namespace {
+
+/// GGA fix quality of a position the receiver holds fixed: position averaging finished.
+constexpr unsigned AVERAGED_POSITION_QUALITY = 7;
+
+}  // namespace
+
+GPSReceiveUpdates Decoder::onFrame(const GPSFrame& frame, GPSDecodeContext& context)
 {
-    const uint16_t messageid = _femto_msg.messageId;
-
-    if (messageid == FEMTO_MSG_ID_GPGGA && len >= 6 &&
-        (memcmp(_femto_msg.data + 3, "GGA,", 3) == 0)) { /**< GPGGA only used in base station, for survey-in */
-        const auto parsed = NMEA::sentence({reinterpret_cast<const char*>(_femto_msg.data), static_cast<size_t>(len)});
-        const auto fix = parsed ? NMEA::gga(*parsed) : std::nullopt;
+    if (frame.kind == GPSFrameKind::RTCM3) {
+        context.sink().publishRTCM(frame.bytes);
+        return {};
+    }
+    if (frame.kind != GPSFrameKind::NMEASentence) {
+        return {};
+    }
+    const std::string_view text = frame.text();
+    if (text.size() >= 6 && text.substr(3, 3) == "GGA") {
+        const auto sentence = NMEA::sentence(text);
+        const auto fix = sentence ? NMEA::gga(*sentence) : std::nullopt;
         if (!fix) {
-            return 0;
+            return {};
         }
         // Only a survey started by this configuration may complete it; earlier GGA output is stale.
-        if (!_correction_output_activated && _surveyClock.running() && fix->quality == 7) {
-            _surveyClock.stop(nowUs());
-            publishSurvey(false, true, _surveyClock.duration(),
-                          {.latitudeDegrees = fix->latitude,
-                           .longitudeDegrees = fix->longitude,
-                           .altitudeMeters = static_cast<float>(fix->altitude + fix->geoidSeparation)});
-            _rtcmActivationPending = true;
+        if (!_session.correctionOutputActive && _session.surveyClock.running() &&
+            fix->quality == AVERAGED_POSITION_QUALITY) {
+            _session.surveyClock.stop(context.nowUs());
+            context.sink().publishSurvey(false, true, _session.surveyClock.duration(),
+                                         {.latitudeDegrees = fix->latitude,
+                                          .longitudeDegrees = fix->longitude,
+                                          .altitudeMeters = static_cast<float>(fix->altitude + fix->geoidSeparation)});
+            _session.rtcmActivationPending = true;
         }
-        if (_satellites) {
-            publishSatelliteUsage(fix->satellitesUsed);
-        }
-    }
-
-    if (_surveyClock.update(nowUs())) {
-        publishSurvey(true, false, _surveyClock.duration());
-    }
-
-    return 0;
-}
-
-int FemtoProtocol::parseChar(uint8_t temp)
-{
-    int iRet = 0;
-
-    if (_rtcm_parsing && _rtcm_parsing->ownsByte(temp)) {
-        _nmeaFramer.reset();
-        _rtcm_parsing->addByte(temp);
-        drainRTCM(*_rtcm_parsing);
-        return 0;
-    }
-
-    iRet = static_cast<int>(_nmeaFramer.addByte(temp));
-    if (iRet > 0) {
-        _femto_msg.messageId = FEMTO_MSG_ID_GPGGA;
-        if (_rtcm_parsing) {
-            _rtcm_parsing->reset();
+        if (_satelliteInfo) {
+            context.sink().publishSatelliteUsage(fix->satellitesUsed);
         }
     }
 
-    return iRet;
-}
-
-void FemtoProtocol::decodeInit()
-{
-    _nmeaFramer.reset();
-}
-
-int FemtoProtocol::decodeByte(uint8_t byte)
-{
-    const int length = parseChar(byte);
-    const int result = length > 0 ? handleMessage(length) : 0;
-    if (result & GPSDecodedBatch::POSITION_UPDATE) {
-        publishPosition(_position);
+    if (_session.surveyClock.update(context.nowUs())) {
+        context.sink().publishSurvey(true, false, _session.surveyClock.duration());
     }
-    if ((result & GPSDecodedBatch::SATELLITES_UPDATE) && _satellites) {
-        publishSatellites(*_satellites);
-    }
-    return result;
+    return {};
 }
 
-void FemtoProtocol::flushDecoded()
-{
-    if (_rtcm_parsing) {
-        drainRTCM(*_rtcm_parsing);
-    }
-}
-
-FemtoProtocol::FemtoProtocol(GPSProtocolIO io, bool satelliteInfoEnabled)
-    : GPSProtocol(std::move(io), satelliteInfoEnabled)
-{
-    decodeInit();
-}
-
-int FemtoProtocol::receive(std::chrono::milliseconds timeout)
-{
-    const int result = receiveDecoded(timeout);
-    serviceControls();
-    return result;
-}
-
-void FemtoProtocol::servicePendingCommands()
-{
-    if (_rtcmActivationPending) {
-        _rtcmActivationPending = false;
-        activateRTCMOutput();
-    }
-}
+}  // namespace Femto

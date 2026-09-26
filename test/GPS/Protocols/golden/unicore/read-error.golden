@@ -1,0 +1,20 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden unicore/read-error
+about Transport read fails
+request type=unicore role=rtk-base mode=averaging maximum=5s compact=0 persistent=0 baud=0
+stream-step 1 bytes=135 duration=2000ms
+stream-step 2 bytes=39 duration=5000ms
+stream-step 3 bytes=25 duration=2000ms
+configure
+  result configured=0 baud=0->0 failure=transport ready=0 elapsed=0ms
+  identity ""
+  error "Unicore test disconnect"
+  wire
+    baud 115200 configured
+    write "VERSIONA" 10
+      56455253494f4e410d0a
+      text "VERSIONA\r\n"
+  evidence
+    "VERSIONA" transport-error required accepted=10 written=10 uncertain=0 elapsed=0ms
+  events
+    survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1

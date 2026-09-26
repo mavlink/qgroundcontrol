@@ -11,7 +11,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     endif()
     add_subdirectory("${QGC_SOURCE_ROOT}/src/Utilities/Logging/Category" LoggingCategory)
     add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Common" Common)
-    add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Receiver" Receiver)
+    add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/ReceiverConfig" ReceiverConfig)
     add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Transport" Transport)
     add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Protocols" Protocols)
     add_subdirectory("${QGC_SOURCE_ROOT}/src/GPS/Driver" Driver)
@@ -29,8 +29,8 @@ add_executable(
 )
 target_compile_features(QGCGPSHardwareRunner PRIVATE cxx_std_20)
 target_include_directories(QGCGPSHardwareRunner PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-target_link_libraries(QGCGPSHardwareRunner PRIVATE QGCGPSDriver QGCGPSProtocolContracts QGCGPSReceiverTransports
-                                                   QGCGPSRTCM QGC::Clock
+target_link_libraries(QGCGPSHardwareRunner PRIVATE QGCGPSDriver QGCGPSProtocolContracts QGCGPSProtocols
+                                                   QGCGPSReceiverTransports QGCGPSRTCM QGC::Clock
 )
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)

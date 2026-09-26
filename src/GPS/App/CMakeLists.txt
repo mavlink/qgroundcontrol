@@ -13,16 +13,12 @@ target_sources(
             GPSManager.h
             GPSMAVLinkOutput.cc
             GPSMAVLinkOutput.h
-            GPSRTKFactGroup.cc
-            GPSRTKFactGroup.h
+            GPSReceiverFactGroup.cc
+            GPSReceiverFactGroup.h
             GPSSettingsBindings.cc
             GPSSettingsBindings.h
-            PositionManager.cc
-            PositionManager.h
-            SimulatedPosition.cc
-            SimulatedPosition.h
 )
-# The GPS/RTK core and network correction sources do not require serial support.
+# The GPS receiver core and network correction sources do not require serial support.
 if(NOT QGC_NO_SERIAL_LINK)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSSerialPortManagerAdapter.cc GPSSerialPortManagerAdapter.h)
 endif()
@@ -35,5 +31,5 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core QGCGPSCommon QGCGP
 qt_add_resources(
     ${CMAKE_PROJECT_NAME} json_gps_drivers
     PREFIX "/json/Vehicle"
-    FILES GPSRTKFact.json
+    FILES GPSReceiverFact.json
 )

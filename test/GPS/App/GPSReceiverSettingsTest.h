@@ -14,6 +14,8 @@ private slots:
     void _reconnectingOffersDisconnect();
     void _tcpConnectionFields();
     void _roleSelectsFields();
+    void _automaticManufacturer();
+    void _automaticOffersQuectelConsent();
     void _compactCorrectionsToggle();
     void _consentIsOneUse();
     void _indicatorConsentTracksSettings();

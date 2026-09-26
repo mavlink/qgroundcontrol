@@ -1,0 +1,14 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden passive/baud-unsupported
+about Transport cannot change its baud
+request type=passive role=passive mode=survey-in accuracy=0.0000m duration=0s compact=0 persistent=0 baud=115200
+stream-step 1 bytes=326 duration=1000ms
+stream-step 2 bytes=0 duration=6000ms
+configure
+  result configured=0 baud=115200->115200 failure=none ready=0 elapsed=0ms
+  identity ""
+  error "Receiver configuration failed"
+  wire
+    baud 115200 unsupported
+  evidence
+  events

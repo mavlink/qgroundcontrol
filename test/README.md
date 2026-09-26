@@ -342,6 +342,23 @@ Use `PortableTest` and `QGC_REGISTER_PORTABLE_TEST` for these suites. Full appli
 builds use the existing UnitTest harness; standalone executables use Qt Test with warnings
 failing tests. Keep application-dependent fixtures in the full harness.
 
+## GPS protocol golden transcripts
+
+`GPSGoldenTranscriptTest` pins the native GPS receiver protocols on a virtual clock. For each
+scenario it records host-to-receiver bytes, baud changes, configuration evidence, identity and
+decoded events. It also records the events decoded from every file in `test/GPS/Protocols/corpus/`
+and `fixtures/` at several chunk sizes. The expected transcripts live in
+`test/GPS/Protocols/golden/`, and `Support/GoldenTranscript.h` documents the driver seam. The suite also checks
+that a decoder armed without I/O for a recording replay (`GPSProtocolRuntime::armDecodeOnly()`) decodes those
+files as the configured decoder does.
+
+A mismatch prints a diff hunk. Rewrite the goldens only for a deliberate, justified behaviour
+change, then review the diff:
+
+```bash
+QGC_GPS_GOLDEN_UPDATE=1 ctest --test-dir build -R GPSGoldenTranscriptTest
+```
+
 ## MultiSignalSpy
 
 ```cpp

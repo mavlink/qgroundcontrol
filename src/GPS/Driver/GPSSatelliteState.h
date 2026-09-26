@@ -38,8 +38,6 @@ public:
         _freshnessTimeout = std::max(std::chrono::milliseconds{1}, value);
     }
 
-    std::chrono::milliseconds freshnessTimeout() const { return _freshnessTimeout; }
-
     void updateObservation(const GPSSatelliteObservation& observation, quint64 nowUs)
     {
         _expire(nowUs);

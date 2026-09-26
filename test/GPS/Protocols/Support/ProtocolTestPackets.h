@@ -8,7 +8,6 @@
 #include <string_view>
 #include <vector>
 
-#include "../../../../src/GPS/Protocols/SBF/SBFMessages.h"
 #include "../../../../src/Utilities/Math/Checksums.h"
 #include "../../../../src/Utilities/Parsing/Wire/LittleEndian.h"
 
@@ -137,17 +136,4 @@ void verifyRTCMRecovery(Driver& driver, std::vector<std::vector<uint8_t>>& frame
     if (frames != std::vector(20, frame)) {
         throw std::runtime_error("RTCM bounded recovery drain failed");
     }
-}
-
-inline std::vector<uint8_t> bytes(const sbf_payload_pvt_geodetic_t& v)
-{
-    std::vector<uint8_t> b(80);
-    b[0] = v.mode;
-    (void) LittleEndian::write<double>(b, 2, v.latitude);
-    (void) LittleEndian::write<double>(b, 10, v.longitude);
-    (void) LittleEndian::write<double>(b, 18, v.height);
-    (void) LittleEndian::write<float>(b, 42, v.cog);
-    b[60] = v.nr_sv;
-    (void) LittleEndian::write<uint16_t>(b, 76, v.h_accuracy);
-    return b;
 }

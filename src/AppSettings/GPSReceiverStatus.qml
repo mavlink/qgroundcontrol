@@ -11,9 +11,9 @@ import QGroundControl.GPS
 SettingsGroupLayout {
     id: root
 
-    property GPSRTK receiver: QGroundControl.gpsManager.gpsRtk
+    property GPSReceiver receiver: QGroundControl.gpsManager.gpsRtk
     /// The receiver's status Facts.
-    property GPSRTKFactGroup facts: QGroundControl.gpsManager.gpsRtkFacts
+    property GPSReceiverFactGroup facts: QGroundControl.gpsManager.gpsRtkFacts
     /// Keep the group visible without a receiver, showing disconnectedText.
     property bool showWhenDisconnected: false
     property string disconnectedText: qsTr("No GNSS receiver connected.")
@@ -33,15 +33,25 @@ SettingsGroupLayout {
         Layout.preferredWidth: 0
         wrapMode: Text.Wrap
         text: !root._connected
-              ? (root.receiver.hasReceiver ? qsTr("Connecting to receiver...")
+              ? (root.receiver.hasReceiver
+                 ? (root._presentation.automatic ? qsTr("Identifying receiver...") : qsTr("Connecting to receiver..."))
                  : root.receiver.reconnecting ? qsTr("Receiver connection lost. Reconnecting...")
                  : root.disconnectedText)
-              : root.receiver.activeRole === GPSRTK.PositionOnly ? qsTr("Position-only receiver connected")
-              : root.receiver.activeRole === GPSRTK.Passive ? qsTr("Passive RTCM/NMEA input connected")
+              : root.receiver.activeRole === GPSReceiver.PositionOnly ? qsTr("Position-only receiver connected")
+              : root.receiver.activeRole === GPSReceiver.Passive ? qsTr("Passive RTCM/NMEA input connected")
               : root.receiver.activeBaseMode === BaseModeDefinition.BaseReceiverAveraging
                 ? qsTr("Receiver-managed averaging — no accuracy guarantee")
               : root.receiver.activeBaseMode === BaseModeDefinition.BaseFixed ? qsTr("Fixed base position")
               : root.facts.active.value ? qsTr("Survey-in Active") : qsTr("Receiver connected")
+    }
+
+    LabelledLabel {
+        objectName: "rtkDetectedReceiver"
+        Layout.fillWidth: true
+        visible: root.receiver.hasReceiver && root.receiver.detectedReceiver.length > 0
+        label: qsTr("Detected")
+        labelText: root.receiver.detectedReceiver
+        labelTextFormat: Text.PlainText
     }
 
     LabelledLabel {

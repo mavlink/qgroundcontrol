@@ -1,0 +1,146 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden trimble/explicit-baud-change
+about Receiver at 38400 follows the speed command to 115200
+request type=trimble role=rtk-base mode=survey-in accuracy=1.0000m duration=100s compact=0 persistent=0 baud=38400
+stream-step 1 bytes=172 duration=1000ms
+stream-step 2 bytes=121 duration=1000ms
+stream-step 3 bytes=25 duration=1000ms
+configure
+  result configured=1 baud=38400->115200 failure=none ready=1 elapsed=200ms
+  identity ""
+  error ""
+  wire
+    baud 38400 configured
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHS,SPD,A,9\r\n" 16
+      2450415348532c5350442c412c390d0a
+      text "$PASHS,SPD,A,9\r\n"
+    baud 115200 configured
+    write "$PASHQ,PRT\r\n" 12
+      2450415348512c5052540d0a
+      text "$PASHQ,PRT\r\n"
+    write "$PASHQ,RID\r\n" 12
+      2450415348512c5249440d0a
+      text "$PASHQ,RID\r\n"
+    write "$PASHS,POP,20\r\n" 15
+      2450415348532c504f502c32300d0a
+      text "$PASHS,POP,20\r\n"
+    write "$PASHS,SNS,SOL\r\n" 16
+      2450415348532c534e532c534f4c0d0a
+      text "$PASHS,SNS,SOL\r\n"
+    write "$PASHS,NME,ALL,A,OFF\r\n" 22
+      2450415348532c4e4d452c414c4c2c412c4f46460d0a
+      text "$PASHS,NME,ALL,A,OFF\r\n"
+    write "$PASHS,ATM,ALL,A,OFF\r\n" 22
+      2450415348532c41544d2c414c4c2c412c4f46460d0a
+      text "$PASHS,ATM,ALL,A,OFF\r\n"
+    write "$PASHS,OUT,A,ON\r\n" 17
+      2450415348532c4f55542c412c4f4e0d0a
+      text "$PASHS,OUT,A,ON\r\n"
+    write "$PASHS,NME,ZDA,A,ON,3\r\n" 23
+      2450415348532c4e4d452c5a44412c412c4f4e2c330d0a
+      text "$PASHS,NME,ZDA,A,ON,3\r\n"
+    write "$PASHS,NME,GST,A,ON,3\r\n" 23
+      2450415348532c4e4d452c4753542c412c4f4e2c330d0a
+      text "$PASHS,NME,GST,A,ON,3\r\n"
+    write "$PASHS,NME,POS,A,ON,0.05\r\n" 26
+      2450415348532c4e4d452c504f532c412c4f4e2c302e30350d0a
+      text "$PASHS,NME,POS,A,ON,0.05\r\n"
+    write "$PASHS,NME,GSV,A,ON,1\r\n" 23
+      2450415348532c4e4d452c4753562c412c4f4e2c310d0a
+      text "$PASHS,NME,GSV,A,ON,1\r\n"
+  evidence
+    "$PASHQ,PRT\r\n" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "$PASHS,SPD,A,9\r\n" written required accepted=16 written=16 uncertain=0 elapsed=200ms
+    "$PASHQ,PRT\r\n" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "$PASHQ,RID\r\n" acknowledged required accepted=12 written=12 uncertain=0 elapsed=0ms
+    "$PASHS,POP,20\r\n" acknowledged optional accepted=15 written=15 uncertain=0 elapsed=0ms
+    "$PASHS,SNS,SOL\r\n" acknowledged optional accepted=16 written=16 uncertain=0 elapsed=0ms
+    "$PASHS,NME,ALL,A,OFF\r\n" acknowledged optional accepted=22 written=22 uncertain=0 elapsed=0ms
+    "$PASHS,ATM,ALL,A,OFF\r\n" acknowledged optional accepted=22 written=22 uncertain=0 elapsed=0ms
+    "$PASHS,OUT,A,ON\r\n" acknowledged optional accepted=17 written=17 uncertain=0 elapsed=0ms
+    "$PASHS,NME,ZDA,A,ON,3\r\n" acknowledged optional accepted=23 written=23 uncertain=0 elapsed=0ms
+    "$PASHS,NME,GST,A,ON,3\r\n" acknowledged optional accepted=23 written=23 uncertain=0 elapsed=0ms
+    "$PASHS,NME,POS,A,ON,0.05\r\n" acknowledged optional accepted=26 written=26 uncertain=0 elapsed=0ms
+    "$PASHS,NME,GSV,A,ON,1\r\n" acknowledged optional accepted=23 written=23 uncertain=0 elapsed=0ms
+  events
+    survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+stream
+  result failure=none ready=1
+  wire
+    write "$PASHS,POS,AVG,100\r\n" 20
+      2450415348532c504f532c4156472c3130300d0a
+      text "$PASHS,POS,AVG,100\r\n"
+    write "$PASHS,ANP,OWN,TRM55971.00\r\n" 28
+      2450415348532c414e502c4f574e2c54524d35353937312e30300d0a
+      text "$PASHS,ANP,OWN,TRM55971.00\r\n"
+    write "$PASHS,STI,0001\r\n" 17
+      2450415348532c5354492c303030310d0a
+      text "$PASHS,STI,0001\r\n"
+    write "$PASHS,NME,POS,A,ON,0.2\r\n" 25
+      2450415348532c4e4d452c504f532c412c4f4e2c302e320d0a
+      text "$PASHS,NME,POS,A,ON,0.2\r\n"
+    write "$PASHS,RT3,1074,A,ON,1\r\n" 24
+      2450415348532c5254332c313037342c412c4f4e2c310d0a
+      text "$PASHS,RT3,1074,A,ON,1\r\n"
+    write "$PASHS,RT3,1084,A,ON,1\r\n" 24
+      2450415348532c5254332c313038342c412c4f4e2c310d0a
+      text "$PASHS,RT3,1084,A,ON,1\r\n"
+    write "$PASHS,RT3,1094,A,ON,1\r\n" 24
+      2450415348532c5254332c313039342c412c4f4e2c310d0a
+      text "$PASHS,RT3,1094,A,ON,1\r\n"
+    write "$PASHS,RT3,1114,A,ON,1\r\n" 24
+      2450415348532c5254332c313131342c412c4f4e2c310d0a
+      text "$PASHS,RT3,1114,A,ON,1\r\n"
+    write "$PASHS,RT3,1124,A,ON,1\r\n" 24
+      2450415348532c5254332c313132342c412c4f4e2c310d0a
+      text "$PASHS,RT3,1124,A,ON,1\r\n"
+    write "$PASHS,RT3,1006,A,ON,1\r\n" 24
+      2450415348532c5254332c313030362c412c4f4e2c310d0a
+      text "$PASHS,RT3,1006,A,ON,1\r\n"
+    write "$PASHS,RT3,1033,A,ON,31\r\n" 25
+      2450415348532c5254332c313033332c412c4f4e2c33310d0a
+      text "$PASHS,RT3,1033,A,ON,31\r\n"
+    write "$PASHS,RT3,1013,A,ON,1\r\n" 24
+      2450415348532c5254332c313031332c412c4f4e2c310d0a
+      text "$PASHS,RT3,1013,A,ON,1\r\n"
+    write "$PASHS,RT3,1029,A,ON,1\r\n" 24
+      2450415348532c5254332c313032392c412c4f4e2c310d0a
+      text "$PASHS,RT3,1029,A,ON,1\r\n"
+    write "$PASHS,RT3,1230,A,ON\r\n" 22
+      2450415348532c5254332c313233302c412c4f4e0d0a
+      text "$PASHS,RT3,1230,A,ON\r\n"
+    write "$PASHS,RT3,1005,A,ON,1\r\n" 24
+      2450415348532c5254332c313030352c412c4f4e2c310d0a
+      text "$PASHS,RT3,1005,A,ON,1\r\n"
+    write "$PASHS,RT3,1077,A,ON,1\r\n" 24
+      2450415348532c5254332c313037372c412c4f4e2c310d0a
+      text "$PASHS,RT3,1077,A,ON,1\r\n"
+    write "$PASHS,RT3,1087,A,ON,1\r\n" 24
+      2450415348532c5254332c313038372c412c4f4e2c310d0a
+      text "$PASHS,RT3,1087,A,ON,1\r\n"
+  evidence
+    "$PASHS,POS,AVG,100\r\n" acknowledged required accepted=20 written=20 uncertain=0 elapsed=0ms
+    "$PASHS,ANP,OWN,TRM55971.00\r\n" acknowledged required accepted=28 written=28 uncertain=0 elapsed=0ms
+    "$PASHS,STI,0001\r\n" acknowledged required accepted=17 written=17 uncertain=0 elapsed=0ms
+    "$PASHS,NME,POS,A,ON,0.2\r\n" acknowledged required accepted=25 written=25 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1074,A,ON,1\r\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1084,A,ON,1\r\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1094,A,ON,1\r\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1114,A,ON,1\r\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1124,A,ON,1\r\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1006,A,ON,1\r\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1033,A,ON,31\r\n" acknowledged required accepted=25 written=25 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1013,A,ON,1\r\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1029,A,ON,1\r\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1230,A,ON\r\n" acknowledged required accepted=22 written=22 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1005,A,ON,1\r\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1077,A,ON,1\r\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+    "$PASHS,RT3,1087,A,ON,1\r\n" acknowledged required accepted=24 written=24 uncertain=0 elapsed=0ms
+  events
+    position fix=rtk-float lat=47.00000000 lon=8.00000000 msl=nan ellipsoid=500.0000 hacc=0.6403 vacc=0.9000 hdop=1.000 vdop=1.000 speed=5.1444 course=1.570796 heading=nan headingacc=nan used=12 utc=1325072701000000 velocity=1 receipt=1
+    survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+    survey active=0 valid=1 duration=1s accuracy=- lat=55.70863080 lon=37.65492499 alt=nan receipt=1
+    rtcm type=1005 size=25 fnv=f8e3bb62

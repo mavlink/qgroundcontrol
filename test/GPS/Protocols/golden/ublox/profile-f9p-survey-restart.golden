@@ -1,0 +1,99 @@
+# Pinned native GPS protocol behaviour. Rewrite only for a justified change (QGC_GPS_GOLDEN_UPDATE=1).
+golden ublox/profile-f9p-survey-restart
+about F9P left surveying by an earlier session
+request type=ublox role=rtk-base mode=survey-in accuracy=2.0000m duration=180s compact=0 persistent=0 baud=0
+stream-step 1 bytes=272 duration=1500ms
+stream-step 2 bytes=160 duration=1500ms
+stream-step 3 bytes=25 duration=3000ms
+configure
+  result configured=1 baud=115200->115200 failure=none ready=1 elapsed=20ms
+  identity "ZED-F9P HPG 1.32"
+  error ""
+  wire
+    baud 115200 configured
+    write "1034" 8
+      b5620a0400000e34
+    write "35334" 47
+      b562068a27000001000002005220010300522000040052200001007310010200
+      731000010074100102007410002edb
+    write "35334" 52
+      b562068a2c000001000004007310000100771001040077100002007710000100
+      7810010200781000040074100104007810010b08
+    write "35334" 22
+      b562068a0e000001000005007310000500771000b35b
+    write "35334" 44
+      b562068a24000001000011001120031c00112003210011200201002130c80002
+      002130010003002120005053
+    write "35334" 32
+      b562068a18000001000001002210000200221000030022100004002210007b15
+    write "35334" 17
+      b562068a0900000100001100142003e205
+    write "35334" 17
+      b562068a0900000100005100f61000f1c8
+    write "35334" 82
+      b562068a4a000001000007009120010900912001340091200136009120018e00
+      912000900091200039009120013b00912001160091200a180091200a1b009120
+      011d009120015a039120015c03912001d5d1
+    write "35334" 22
+      b562068a0e000001000060019120016201912001c79c
+    write "35334" 22
+      b562068a0e0000010000b706912001b9069120017ff6
+    write "35334" 22
+      b562068a0e0000010000350691200137069120017b58
+    write "35334" 42
+      b562068a22000001000048009120004a0091200032029120003402912000a502
+      912000a70291200025fb
+    write "35334" 112
+      b562068a680000010000be02912000c002912000cd02912000cf02912000d202
+      912000d4029120000403912000060391200019039120001b03912000d7029120
+      00d9029120005f0391200061039120006403912000660391200069039120006b
+      039120006e039120007003912000eb56
+    write "35334" 17
+      b562068a0900000100000100032000be7f
+    write "UBX-CFG-VALGET 537067521" 16
+      b562068b08000000000001000320bdbb
+    write "UBX-NAV-SVIN stopped" 8
+      b562013b00003cb5
+    write "35334" 43
+      b562068a230000010000010003200110000340b400000011000340204e000089
+      009120058b00912005222f
+  evidence
+    "1034" acknowledged required accepted=8 written=8 uncertain=0 elapsed=0ms
+    "35334" acknowledged required accepted=47 written=47 uncertain=0 elapsed=0ms
+    "35334" acknowledged required accepted=52 written=52 uncertain=0 elapsed=0ms
+    "35334" acknowledged optional accepted=22 written=22 uncertain=0 elapsed=0ms
+    "35334" acknowledged required accepted=44 written=44 uncertain=0 elapsed=0ms
+    "35334" acknowledged optional accepted=32 written=32 uncertain=0 elapsed=0ms
+    "35334" acknowledged optional accepted=17 written=17 uncertain=0 elapsed=0ms
+    "35334" acknowledged optional accepted=17 written=17 uncertain=0 elapsed=0ms
+    "35334" acknowledged required accepted=82 written=82 uncertain=0 elapsed=0ms
+    "35334" acknowledged optional accepted=22 written=22 uncertain=0 elapsed=0ms
+    "35334" acknowledged optional accepted=22 written=22 uncertain=0 elapsed=0ms
+    "35334" acknowledged optional accepted=22 written=22 uncertain=0 elapsed=0ms
+    "35334" acknowledged optional accepted=42 written=42 uncertain=0 elapsed=0ms
+    "35334" acknowledged optional accepted=112 written=112 uncertain=0 elapsed=0ms
+    "35334" acknowledged required accepted=17 written=17 uncertain=0 elapsed=0ms
+    "UBX-CFG-VALGET 537067521" readback-verified required accepted=16 written=16 uncertain=0 elapsed=0ms
+    "UBX-NAV-SVIN stopped" readback-verified required accepted=8 written=8 uncertain=0 elapsed=0ms
+    "35334" acknowledged required accepted=43 written=43 uncertain=0 elapsed=0ms
+  events
+stream
+  result failure=none ready=1
+  wire
+    write "35334" 138
+      b562068a82000001000001002130e803be02912001c002912001cd02912001cf
+      02912001d202912001d4029120010403912001060391200119039120011b0391
+      2001d702912001d9029120015f03912000610391200064039120006603912000
+      69039120006b039120006e03912000700391200089009120008b009120001600
+      91200218009120025860
+  evidence
+    "35334" acknowledged optional accepted=138 written=138 uncertain=0 elapsed=0ms
+  events
+    survey active=1 valid=0 duration=30s accuracy=2.5000 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    satellites full=1 gps:view=2/1,use=1/1 glonass:view=1/1,use=1/1
+    position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 heading=nan headingacc=nan used=12 utc=1704164646000000 velocity=1 receipt=1
+    integrity receipt=1 jamming=critical/1 spoofing=unknown/0 rf=noise:87,agc:5432,indicator:12/1 corrections=unknown,crc-failed:-,unknown/0
+    integrity receipt=1 jamming=critical/1 spoofing=indicated/1 rf=noise:87,agc:5432,indicator:12/1 corrections=unknown,crc-failed:-,unknown/0
+    survey active=0 valid=1 duration=181s accuracy=2.5000 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
+    position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 heading=nan headingacc=nan used=12 utc=1704164647000000 velocity=1 receipt=1
+    rtcm type=1005 size=25 fnv=f8e3bb62
