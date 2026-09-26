@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QFile>
 #include <QtCore/QHash>
@@ -26,7 +28,7 @@ public:
 
     /// Describes a simulated onboard log file served from the @MAV_LOG virtual directory.
     struct LogFile {
-        QString name;       ///< File name, e.g. "log_1.ulg"
+        QString name;       ///< File name, e.g. "log_1.ulg", or "<subdir>/log_1.ulg" to serve it from a subdirectory
         int size = 0;       ///< File size in bytes
         uint32_t mtime = 0; ///< Modification time (seconds since UNIX epoch UTC)
     };
@@ -113,6 +115,12 @@ public:
     /// server Naks it with kErrUnknownCommand so the client fallback to kCmdListDirectory can be tested.
     void setListDirectoryWithTimeSupported(bool supported) { _listDirectoryWithTimeSupported = supported; }
 
+    /// When true, kCmdListDirectoryWithTime directory entries under @MAV_LOG carry "\t0\t<mtime>", as MAVSDK sends.
+    void setLogDirEntriesWithTime(bool enabled) { _logDirEntriesWithTime = enabled; }
+
+    /// When true, @MAV_LOG listings start with "D." and "D.." entries, as ArduPilot sends.
+    void setLogDirDotEntries(bool enabled) { _logDirDotEntries = enabled; }
+
     /// Array of failure modes you can cycle through for testing. By looping through this array you can avoid
     /// hardcoding the specific error modes in your unit test. This way when new error modes are added your unit test
     /// code may not need to be modified.
@@ -147,8 +155,7 @@ private:
     void _sendNakErrno(uint8_t targetSystemId, uint8_t targetComponentId, uint8_t nakErrno, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
     /// Emits a Request through the messageReceived signal.
     void _sendResponse(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
-    /// Handles List command requests. Only supports root folder paths.
-    /// File list returned is set using the setFileList method.
+    /// Handles List command requests for the root path and the @MAV_LOG virtual log directory tree.
     void _listCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber, bool withTime);
     void _openCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _createFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
@@ -166,6 +173,8 @@ private:
     static QString _createTestTempFile(int size);
     QString _generateParamPck(bool withDefaults);
     QString _logFileTempPath(const QString &name);
+    /// Entries for a directory under @MAV_LOG (empty subdir = @MAV_LOG itself), nullopt if it doesn't exist.
+    std::optional<QStringList> _logDirectoryEntries(const QString& subdir, bool withTime) const;
     static QByteArray _generateLogFileContents(const QString &name, int size);
 
     /// if request is a string, this ensures it's null-terminated
@@ -180,6 +189,8 @@ private:
     int _burstReadDelayMs = 0;                  ///< Per-burst delay to simulate a slow link
     ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
     bool _listDirectoryWithTimeSupported = true; ///< Whether the server implements kCmdListDirectoryWithTime
+    bool _logDirEntriesWithTime = false;  ///< @MAV_LOG directory entries carry "\t0\t<mtime>" when listed with time
+    bool _logDirDotEntries = false;       ///< @MAV_LOG listings include "D." and "D.." entries
     bool _paramPckEnabled = true;               ///< Serve @PARAM/param.pck; false NAKs errno ENOENT
     bool _singleSessionEnforced = false;
     bool _ignoreResetSessions = false;

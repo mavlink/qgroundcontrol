@@ -53,8 +53,9 @@ void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId
         return;
     }
 
-    // We support the root path and the @MAV_LOG virtual log directory
+    // We support the root path and the @MAV_LOG virtual log directory tree
     const QString path = reinterpret_cast<char*>(&request->data[0]);
+    const QString logPrefix = QStringLiteral("@MAV_LOG/");
     QStringList entries;
     if (path.isEmpty() || path == QStringLiteral("/")) {
         // Default mock listing: 6 fixed entries
@@ -65,14 +66,15 @@ void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId
             }
             entries.append(entry);
         }
-    } else if ((path == QStringLiteral("@MAV_LOG")) || (path == QStringLiteral("@MAV_LOG/"))) {
-        for (const LogFile &logFile : std::as_const(_logFiles)) {
-            QString entry = QStringLiteral("F%1\t%2").arg(logFile.name).arg(logFile.size);
-            if (withTime) {
-                entry += QStringLiteral("\t%1").arg(logFile.mtime);
-            }
-            entries.append(entry);
+    } else if ((path == QStringLiteral("@MAV_LOG")) || path.startsWith(logPrefix)) {
+        const QString subdir = path.mid(logPrefix.length());
+        const std::optional<QStringList> logEntries = _logDirectoryEntries(subdir, withTime);
+        if (!logEntries) {
+            qCDebug(MockLinkFTPLog) << "list of unknown @MAV_LOG directory:" << path;
+            _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, listOpCode);
+            return;
         }
+        entries = *logEntries;
     } else {
         _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, listOpCode);
         return;
@@ -769,6 +771,55 @@ QString MockLinkFTP::_logFileTempPath(const QString &name)
     }
 
     return QString();
+}
+
+std::optional<QStringList> MockLinkFTP::_logDirectoryEntries(const QString& subdir, bool withTime) const
+{
+    const auto dirEntry = [this, withTime](const QString& name) {
+        QString entry = QStringLiteral("D") + name;
+        if (withTime && _logDirEntriesWithTime) {
+            entry += QStringLiteral("\t0\t%1").arg(kMockModificationTime);
+        }
+        return entry;
+    };
+
+    QStringList entries;
+    if (_logDirDotEntries) {
+        entries.append(dirEntry(QStringLiteral(".")));
+        entries.append(dirEntry(QStringLiteral("..")));
+    }
+
+    const QString prefix = subdir.isEmpty() ? QString() : (subdir + QLatin1Char('/'));
+    bool found = subdir.isEmpty();
+    QStringList childDirs;
+    for (const LogFile& logFile : _logFiles) {
+        if (!logFile.name.startsWith(prefix)) {
+            continue;
+        }
+        found = true;
+
+        const QString relativeName = logFile.name.mid(prefix.length());
+        const qsizetype slashIdx = relativeName.indexOf(QLatin1Char('/'));
+        if (slashIdx >= 0) {
+            const QString childDir = relativeName.left(slashIdx);
+            if (!childDirs.contains(childDir)) {
+                childDirs.append(childDir);
+                entries.append(dirEntry(childDir));
+            }
+            continue;
+        }
+
+        QString entry = QStringLiteral("F%1\t%2").arg(relativeName).arg(logFile.size);
+        if (withTime) {
+            entry += QStringLiteral("\t%1").arg(logFile.mtime);
+        }
+        entries.append(entry);
+    }
+
+    if (!found) {
+        return std::nullopt;
+    }
+    return entries;
 }
 
 QString MockLinkFTP::_generateParamPck(bool withDefaults)
