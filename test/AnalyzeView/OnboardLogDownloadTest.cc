@@ -292,6 +292,57 @@ void OnboardLogFtpDownloadTest::_ftpListAndDownloadTest()
     QCOMPARE(file.readAll(), _mockLink->mockLinkFTP()->logFileContents(QStringLiteral("log_1.ulg")));
 }
 
+void OnboardLogFtpDownloadTest::_ftpListSubdirTest_data()
+{
+    QTest::addColumn<bool>("dirEntriesWithTime");
+    QTest::addColumn<bool>("dotEntries");
+
+    QTest::newRow("bare dir entries") << false << false;
+    QTest::newRow("dir entries with time") << true << false;
+    QTest::newRow("dot entries") << false << true;
+}
+
+void OnboardLogFtpDownloadTest::_ftpListSubdirTest()
+{
+    QFETCH(bool, dirEntriesWithTime);
+    QFETCH(bool, dotEntries);
+
+    _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionFtpCapability);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    MockLinkFTP* const mockLinkFTP = _mockLink->mockLinkFTP();
+    mockLinkFTP->setLogFiles({
+        {QStringLiteral("log_1.ulg"), 5000, 1700000000},
+        {QStringLiteral("2026-09-26/10_00_00.ulg"), 12345, 1700086400},
+    });
+    mockLinkFTP->setLogDirEntriesWithTime(dirEntriesWithTime);
+    mockLinkFTP->setLogDirDotEntries(dotEntries);
+
+    OnboardLogController* const controller = new OnboardLogController(this);
+    MultiSignalSpy* multiSpy = new MultiSignalSpy(this);
+    QVERIFY(multiSpy->init(controller));
+
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+
+    // A mis-parsed or "."/".." subdirectory listing would NAK and fall back to messages
+    QCOMPARE(controller->transport(), QStringLiteral("ftp"));
+
+    QmlObjectListModel* const model = controller->_getModel();
+    QVERIFY(model);
+    QStringList ftpPaths;
+    for (int i = 0; i < model->count(); i++) {
+        ftpPaths.append(model->value<QGCOnboardLogEntry*>(i)->ftpPath());
+    }
+    ftpPaths.sort();
+    const QStringList expectedPaths = {
+        QStringLiteral("@MAV_LOG/2026-09-26/10_00_00.ulg"),
+        QStringLiteral("@MAV_LOG/log_1.ulg"),
+    };
+    QCOMPARE(ftpPaths, expectedPaths);
+}
+
 void OnboardLogFtpDownloadTest::_ftpListNoTimeFallbackTest()
 {
     _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionFtpCapability);

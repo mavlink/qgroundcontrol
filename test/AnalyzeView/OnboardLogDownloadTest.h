@@ -27,6 +27,8 @@ class OnboardLogFtpDownloadTest : public VehicleTestManualConnect
 
 private slots:
     void _ftpListAndDownloadTest();
+    void _ftpListSubdirTest_data();
+    void _ftpListSubdirTest();
     void _ftpListNoTimeFallbackTest();
     void _messagesZeroByteLogTest();
     void _ftpCancelListNoFallbackTest();
