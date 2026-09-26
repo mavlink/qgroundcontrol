@@ -210,8 +210,8 @@ qt_add_resources(QGroundControlControlsModule qmlcontrols_resources
     FILES
         "${CMAKE_SOURCE_DIR}/resources/ArrowRight.svg"
         "${CMAKE_SOURCE_DIR}/resources/buttonRight.svg"
-        "${CMAKE_SOURCE_DIR}/resources/chevron-down.svg"
-        "${CMAKE_SOURCE_DIR}/resources/chevron-up.svg"
+        "${CMAKE_SOURCE_DIR}/resources/chevron-double-down.svg"
+        "${CMAKE_SOURCE_DIR}/resources/chevron-double-up.svg"
         "${CMAKE_SOURCE_DIR}/resources/clockwise-arrow.svg"
         "${CMAKE_SOURCE_DIR}/resources/counter-clockwise-arrow.svg"
         "${CMAKE_SOURCE_DIR}/resources/JoystickBezelLight.png"

@@ -310,8 +310,7 @@ AnalyzePage {
                                     if (_altChart.visible) _altChart.setSharedCursor(t)
                                 }
                                 onZoomApplied: (minX, maxX) => {
-                                    _mapTab._sharedZoomMinX = minX
-                                    _mapTab._sharedZoomMaxX = maxX
+                                    _mapTab._setSharedZoom(minX, maxX)
                                     if (_altChart.visible) _altChart.setSharedZoom(minX, maxX)
                                 }
                             }
@@ -338,6 +337,7 @@ AnalyzePage {
                     readonly property bool _hasPath: _pathLen >= 2
                     readonly property string _altFieldName: _hasPath ? logParser.gpsAltitudeFieldName() : ""
                     readonly property bool _hasAltField: _altFieldName.length > 0
+                    readonly property bool _showAltChart: _hasAltField && _hasPath
 
                     // Shared cursor state (driven by altitude chart, displayed on map)
                     property bool _markerVisible: false
@@ -350,6 +350,16 @@ AnalyzePage {
                     property real _sharedCursorT: NaN
                     property real _sharedZoomMinX: NaN
                     property real _sharedZoomMaxX: NaN
+
+                    function _setSharedZoom(minX, maxX) {
+                        _sharedZoomMinX = minX
+                        _sharedZoomMaxX = maxX
+                        // Mirror LogViewerBaseChart._applyZoomInternal, which recenters an out-of-range cursor
+                        if (!isNaN(_sharedCursorT) && (_sharedCursorT < minX || _sharedCursorT > maxX)) {
+                            _sharedCursorT = (minX + maxX) / 2
+                            _markerCoord = logParser.gpsCoordAt(_sharedCursorT)
+                        }
+                    }
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -439,26 +449,18 @@ AnalyzePage {
                                 text: qsTr("Load a log file to view the flight path")
                                 font.italic: true
                             }
-                        }
-
-                        // ---- Altitude chart header (collapse/expand toggle) ----
-                        RowLayout {
-                            Layout.fillWidth: true
-                            visible: _mapTab._hasAltField && _mapTab._hasPath
-                            spacing: ScreenTools.defaultFontPixelWidth * 0.5
-
-                            QGCLabel {
-                                Layout.fillWidth: true
-                                text: qsTr("Altitude")
-                            }
 
                             QGCButton {
-                                id: _altChartToggle
-                                iconSource: _mapTab._altChartCollapsed ? "/res/chevron-up.svg" : "/res/chevron-down.svg"
+                                anchors.margins: ScreenTools.defaultFontPixelWidth
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                scale: 0.75
+                                transformOrigin: Item.BottomRight
+                                visible: _mapTab._showAltChart
+                                iconSource: _mapTab._altChartCollapsed ? "/res/chevron-double-up.svg" : "/res/chevron-double-down.svg"
                                 Accessible.name: _mapTab._altChartCollapsed ? qsTr("Expand altitude chart") : qsTr("Collapse altitude chart")
                                 ToolTip.text: Accessible.name
                                 ToolTip.visible: hovered
-                                focusPolicy: Qt.StrongFocus
                                 onClicked: _mapTab._altChartCollapsed = !_mapTab._altChartCollapsed
                             }
                         }
@@ -468,7 +470,7 @@ AnalyzePage {
                             id: _altChart
                             Layout.fillWidth: true
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 14
-                            visible: _mapTab._hasAltField && _mapTab._hasPath && !_mapTab._altChartCollapsed
+                            visible: _mapTab._showAltChart && !_mapTab._altChartCollapsed
                             logParser: logParser
                             altFieldName: _mapTab._altFieldName
                             xAxisShowLocalTime: _xAxisShowLocalTime
@@ -483,8 +485,7 @@ AnalyzePage {
                                 _mapTab._markerVisible = false
                             }
                             onZoomApplied: (minX, maxX) => {
-                                _mapTab._sharedZoomMinX = minX
-                                _mapTab._sharedZoomMaxX = maxX
+                                _mapTab._setSharedZoom(minX, maxX)
                                 logViewerChart.setSharedZoom(minX, maxX)
                             }
                         }
@@ -493,9 +494,15 @@ AnalyzePage {
                         Connections {
                             target: _altChart
                             function onVisibleChanged() {
-                                if (!_altChart.visible) return
-                                if (!isNaN(_mapTab._sharedZoomMinX)) _altChart.setSharedZoom(_mapTab._sharedZoomMinX, _mapTab._sharedZoomMaxX)
-                                if (!isNaN(_mapTab._sharedCursorT)) _altChart.setSharedCursor(_mapTab._sharedCursorT)
+                                if (!_altChart.visible) {
+                                    return
+                                }
+                                if (!isNaN(_mapTab._sharedZoomMinX)) {
+                                    _altChart.setSharedZoom(_mapTab._sharedZoomMinX, _mapTab._sharedZoomMaxX)
+                                }
+                                if (!isNaN(_mapTab._sharedCursorT)) {
+                                    _altChart.setSharedCursor(_mapTab._sharedCursorT)
+                                }
                             }
                         }
                     }
