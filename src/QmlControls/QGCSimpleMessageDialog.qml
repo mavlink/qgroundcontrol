@@ -26,6 +26,8 @@ QGCPopupDialog {
             id:                     label
             Layout.preferredWidth:  Math.max(mainWindow.width / (ScreenTools.isMobile ? 2 : 3), headerMinWidth)
             wrapMode:               Text.WordWrap
+            linkColor:              color
+            onLinkActivated:        (link) => Qt.openUrlExternally(link)
         }
     }
 }

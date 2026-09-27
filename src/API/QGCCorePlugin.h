@@ -49,6 +49,7 @@ class QGCCorePlugin : public QObject
     Q_PROPERTY(const QGCOptions *options                READ options                                                        CONSTANT)
     Q_PROPERTY(const QmlObjectListModel *customMapItems READ customMapItems                                                 CONSTANT)
     Q_PROPERTY(QString showAdvancedUIMessage            READ showAdvancedUIMessage                                          CONSTANT)
+    Q_PROPERTY(QString stableDownloadUrl                READ stableDownloadUrl                                              CONSTANT)
     Q_PROPERTY(QVariantList analyzePages                READ analyzePages                                                   CONSTANT)
     Q_PROPERTY(QVariantList toolBarIndicators           READ toolBarIndicators                                              CONSTANT)
 
@@ -160,9 +161,9 @@ public:
     virtual QString stableVersionCheckFileUrl() const { return QStringLiteral("https://s3-us-west-2.amazonaws.com/qgroundcontrol/latest/QGC.version.txt"); }
 #endif
 
-    /// Returns the user visible url to show user where to download new stable builds from.
+    /// Returns the full URL (including scheme) opened by the Update button and the new version dialog link.
     /// Custom builds must override to provide their own location.
-    virtual QString stableDownloadLocation() const { return QStringLiteral("qgroundcontrol.com"); }
+    virtual QString stableDownloadUrl() const { return QStringLiteral("https://qgroundcontrol.com"); }
 
     /// Returns the complex mission items to display in the Plan UI.
     /// Each entry in the list is a QVariantMap with keys:

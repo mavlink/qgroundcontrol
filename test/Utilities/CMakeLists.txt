@@ -16,16 +16,18 @@ add_subdirectory(StateMachine)
 add_subdirectory(Timing)
 add_subdirectory(Standalone)
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        DataRateTrackerTest.cc
-        DataRateTrackerTest.h
-        QGCCommandLineParserTest.cc
-        QGCCommandLineParserTest.h
-        QGCMathTest.cc
-        QGCMathTest.h
-        SecureMemoryTest.cc
-        SecureMemoryTest.h
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE DataRateTrackerTest.cc
+            DataRateTrackerTest.h
+            QGCCommandLineParserTest.cc
+            QGCCommandLineParserTest.h
+            QGCMathTest.cc
+            QGCMathTest.h
+            QGCVersionCheckTest.cc
+            QGCVersionCheckTest.h
+            SecureMemoryTest.cc
+            SecureMemoryTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -33,13 +35,14 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # ----------------------------------------------------------------------------
 # Test Data Resources
 # ----------------------------------------------------------------------------
-qt_add_resources(${CMAKE_PROJECT_NAME} "UtilitiesTest_res"
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} "UtilitiesTest_res"
     PREFIX "/unittest"
-    FILES
-        arducopter.apj
+    FILES arducopter.apj
 )
 
 add_qgc_test(DataRateTrackerTest LABELS Unit Utilities)
 add_qgc_test(QGCCommandLineParserTest LABELS Unit Utilities)
 add_qgc_test(QGCMathTest LABELS Unit Utilities)
+add_qgc_test(QGCVersionCheckTest LABELS Unit Utilities)
 add_qgc_test(SecureMemoryTest LABELS Unit Utilities)

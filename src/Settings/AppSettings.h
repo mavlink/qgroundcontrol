@@ -53,6 +53,7 @@ public:
     DEFINE_SETTINGFACT(clearSettingsNextBoot)
     DEFINE_SETTINGFACT(disableAllPersistence)
     DEFINE_SETTINGFACT(firstRunPromptIdsShown)
+    DEFINE_SETTINGFACT(lastNotifiedStableVersion)
     DEFINE_SETTINGFACT(favoriteParameters)
     DEFINE_SETTINGFACT(showAppLogTimestampAsElapsedTime)
 
