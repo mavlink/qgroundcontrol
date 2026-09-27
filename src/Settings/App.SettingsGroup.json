@@ -375,6 +375,13 @@
             "label": "Comma separated list of first run prompt ids which have already been shown."
         },
         {
+            "name": "lastNotifiedStableVersion",
+            "shortDesc": "Newest stable version the user has already been notified about.",
+            "type": "string",
+            "default": "",
+            "label": "Newest stable version the user has already been notified about."
+        },
+        {
             "name": "favoriteParameters",
             "shortDesc": "Comma separated list of favorite parameter names.",
             "type": "string",

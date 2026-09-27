@@ -213,6 +213,7 @@ DECLARE_SETTINGSFACT(AppSettings, followTarget)
 DECLARE_SETTINGSFACT(AppSettings, clearSettingsNextBoot)
 DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
 DECLARE_SETTINGSFACT(AppSettings, firstRunPromptIdsShown)
+DECLARE_SETTINGSFACT(AppSettings, lastNotifiedStableVersion)
 DECLARE_SETTINGSFACT(AppSettings, favoriteParameters)
 DECLARE_SETTINGSFACT(AppSettings, showAppLogTimestampAsElapsedTime)
 

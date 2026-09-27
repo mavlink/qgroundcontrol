@@ -120,8 +120,6 @@ public slots:
 private slots:
     /// Called when the delay timer fires to show the missing parameters warning
     void _missingParamsDisplay();
-    void _qgcCurrentStableVersionDownloadComplete(bool success, const QString &localFile, const QString &errorMsg);
-    static bool _parseVersionText(const QString &versionString, int &majorVersion, int &minorVersion, int &buildVersion);
     void _showDelayedAppMessages();
 
 private:
@@ -135,7 +133,6 @@ private:
     void _initForNormalAppBoot();
 
     QObject *_rootQmlObject();
-    void _checkForNewVersion();
     bool _rebootMessageDebounced();
 
     bool _runningUnitTests = false;
@@ -152,9 +149,6 @@ private:
 
     QQmlApplicationEngine *_qmlAppEngine = nullptr;
     bool _settingsUpgraded = false;    ///< true: Settings format has been upgrade to new version
-    int _majorVersion = 0;
-    int _minorVersion = 0;
-    int _buildVersion = 0;
     QQuickWindow *_mainRootWindow = nullptr;
     QTranslator _qgcTranslatorSourceCode;           ///< translations for source code C++/Qml
     QTranslator _qgcTranslatorQtLibs;               ///< tranlsations for Qt libraries
