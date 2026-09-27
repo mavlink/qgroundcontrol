@@ -123,4 +123,3 @@ In overview:
 
 7. Switch to the other controllers and repeat the process.
    Screenshots of the tuning pages are shown below.
-

@@ -37,4 +37,3 @@ Additional output about the process will be shown next to the button as it runs.
 :::warning
 This procedure still requires that the motors are connected to the _correct outputs_ as shown in the frame view!
 :::
-

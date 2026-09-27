@@ -20,4 +20,3 @@ The selection list on the top left is used to change the source of the telemetry
 By default this is the vehicle, but you can use the selector to choose a particular sensor type.
 
 The selection list on the top right is used to select a particular telemetry value for the vehicle or sensor.
-

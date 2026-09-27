@@ -55,7 +55,7 @@ To configure a joystick:
 ## Advanced Options
 
 Some additional Options are available at the **Advanced** tab.
-These options may be useful for specific, unsual setups, for increasing sensibility, and for handling noisy joysticks.
+These options may be useful for specific, unusual setups, for increasing sensibility, and for handling noisy joysticks.
 
 ### Throttle Options
 
@@ -133,19 +133,26 @@ To make the controller work wirelessly under Linux the [jstest-gtk](https://jste
 The steps are:
 
 1. 安装 _jst-gtk_：
-   ```
+
+   ```bash
    Install _jstest-gtk_: `sudo apt install jstest-gtk`
    ```
+
 2. 安装 _ds4drv_:：
-   ```
+
+   ```bash
    Install _ds4drv_: `sudo pip install ds4drv`
    ```
+
 3. Run ds4drv `sudo ds4drv`
-   ```
+
+   ```bash
    sudo ds4drv
    ```
+
 4. Hold **Share** button and then **PS** button until controller LED starts blinking rapidly.
    The _ds4drv_ should then detect a new device.
+
 5. Last of all, you should check the controller setup by running the _jstest-gtk_ utility.
 
 ### FrSky Taranis XD9 plus
@@ -175,7 +182,7 @@ For another radio, the first command above can be found by using the [jstest sof
 jstest-sdl -l
 ```
 
-**Take care of the channels remapping you need to do between a2, a3 and other if needed**
+Take care of the channels remapping you need to do between a2, a3 and other if needed.
 
 ### Logitech Gamepad F310
 

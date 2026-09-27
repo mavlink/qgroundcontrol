@@ -29,4 +29,3 @@ To select the frame type for Sub:
 3. Make sure that all **green** thrusters have **clockwise** propellers and all **blue** thrusters have **counter-clockwise** propellers (or vice-versa).
 
    - You can also click **Load Vehicle Default Parameters** to load default parameter set for ArduSub.
-

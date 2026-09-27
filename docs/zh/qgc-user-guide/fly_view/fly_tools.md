@@ -8,9 +8,7 @@ Safety-critical actions (takeoff, land, RTL, etc.) require confirmation before t
 
 飞行前自动核对表可以用来进行标准检查，检查车辆配置正确，可以安全飞行。
 
-查看核对表， 首先通过导航到 [应用设置 > 常规> 飞行视图](../settings_view/general.md) 并选择 **使用预览列表** 复选框来启用工具。
-然后工具将被添加到 _飞行工具_。
-按下它以打开检查清单：
+查看核对表， 首先通过导航到 [应用设置 > 常规> 飞行视图](../settings_view/general.md) 并选择 **使用预览列表** 复选框来启用工具。然后工具将被添加到 _飞行工具_。按下它以打开检查清单：
 
 完成每项测试后，在用户界面上选择该项，将其标记为已完成。
 
@@ -45,9 +43,7 @@ Safety-critical actions (takeoff, land, RTL, etc.) require confirmation before t
 2. [Confirm](#confirmation) the action.
 
 :::info
-飞行器通常返回 “Home点”（起飞）位置并着陆。
-这种行为取决于载具类型和配置。
-例如，集结点或飞行任务着陆可能被用作替代返回目标。
+飞行器通常返回 “Home点”（起飞）位置并着陆。这种行为取决于载具类型和配置。例如，集结点或飞行任务着陆可能被用作替代返回目标。
 :::
 
 ## 更改高度 {#change_altitude}

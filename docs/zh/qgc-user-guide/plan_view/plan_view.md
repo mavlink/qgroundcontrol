@@ -4,7 +4,7 @@
 If missions fail to upload or download, see [Plan Upload/Download Failures](../troubleshooting/plan_upload_download.md). For mission resume issues, see [Resume Mission Failures](../troubleshooting/resume_mission.md).
 :::
 
-_计划视图_ 用于为你的载具规 划自动化任务_ 并上传到载具。 一旦任务已 [规划](#plan_mission) 并被送往载具，您将切换到[飞行视图](../fly_view/fly_view.md) 来执行任务。
+_计划视图_ 用于为你的载具规 划自动化任务_ 并上传到载具。一旦任务已 [规划](#plan_mission) 并被送往载具，您将切换到[飞行视图](../fly_view/fly_view.md) 来执行任务。
 
 It is also used to configure the [GeoFence](plan_geofence.md) and [Rally Points](plan_rally_points.md) if these are supported by the firmware.
 
@@ -53,6 +53,9 @@ The plan tools are a vertical tool strip on the left side of the map, used for a
 ### Takeoff
 
 Inserts a takeoff command into the mission. This tool is available for all vehicle types except rovers.
+
+For PX4 VTOL vehicles, choose **VTOL takeoff** to climb and transition to fixed-wing flight, or
+**Multicopter takeoff** to remain in multicopter mode. The VTOL takeoff remains the default choice.
 
 ### Pattern
 

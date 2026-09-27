@@ -14,14 +14,14 @@ PX4 Pro 和 ArduPilot 使用不同的参数集，但它们都是按照本节描�
 
 参数按组编排。 Select a group of parameters to view by clicking on the buttons to the left.
 
-您也可以在 _搜索_ 字段中输入一个词来搜索参数。 这将向您显示包含输入子字符串的所有参数名称和描述列表(按 **清除** 重置搜索)。
+您也可以在 _搜索_ 字段中输入一个词来搜索参数。这将向您显示包含输入子字符串的所有参数名称和描述列表(按 **清除** 重置搜索)。
 
 ## Changing a Parameter
 
 To change the value of a parameter click on the parameter row in a group or search list. This will open a side dialog in which you can update the value (this dialog also provides additional detailed information about the parameter - including whether a reboot is required for the change to take effect).
 
 :::info
-当您点击 **保存** 时，参数会自动静默地上传到连接的载具。 对于不同的参数，你可能需要重启飞控才能使改变的参数生效。
+当您点击 **保存** 时，参数会自动静默地上传到连接的载具。对于不同的参数，你可能需要重启飞控才能使改变的参数生效。
 :::
 
 ## 工具
@@ -34,6 +34,6 @@ To change the value of a parameter click on the parameter row in a group or sear
 
 **从文件中载入/保存到文件** <br>从现有文件中载入参数或将当前参数设置保存到文件。
 
-**清除遥控器（RC）与参数关联** <br> 这将清除遥控器（RC）控制与参数之间的所有关联。 更多信息见：[无线电配置 > 参数调谐通道](../setup_view/radio.md#param-tuning-channels-px4)。
+**清除遥控器（RC）与参数关联** <br> 这将清除遥控器（RC）控制与参数之间的所有关联。更多信息见：[无线电配置 > 参数调谐通道](../setup_view/radio.md#param-tuning-channels-px4)。
 
 **重启载具** <br>重启载具(更改一些参数后需要)。

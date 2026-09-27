@@ -55,7 +55,7 @@ ArduPilot 기체에서 지원됩니다. 매개변수 설정은 필요하지 않�
 ## Advanced Options
 
 **고급** 탭에서 몇 가지 추가 옵션을 사용할 수 있습니다.
-이러한 옵션은 특이하고 비정상적인 설정, 감도 증가 및 시끄러운 조이스틱 처리에 유용합니다.
+These options may be useful for specific, unusual setups, for increasing sensibility, and for handling noisy joysticks.
 
 ### 스로틀 옵션
 
@@ -133,19 +133,26 @@ ArduPilot 기체에서 지원됩니다. 매개변수 설정은 필요하지 않�
 과정은 다음과 같습니다:
 
 1. _QGroundContro&#x6C;_&#xC744; 실행후, 기체를 연결합니다.
-   ```
+
+   ```bash
    _jstest-gtk_ 설치: `sudo apt install jstest-gtk`
    ```
+
 2. 매개변수의 검색 및 설정 방법은 [매개변수](../setup_view/parameters.md)를 참고하십시오.
-   ```
+
+   ```bash
    _ds4drv_ 설치: `sudo pip install ds4drv`
    ```
+
 3. ds4drv 실행 `sudo ds4drv`
-   ```
+
+   ```bash
    엑스포
    ```
+
 4. 컨트롤러 LED가 빠르게 깜박이기 시작할 때까지 **공유** 버튼을 누른 다음 **PS** 버튼을 길게 누릅니다.
    그다음에는 _ds4dr&#x76;_&#xAC00; 새 기기를 감지하여야 합니다.
+
 5. 마지막으로 _jstest-gtk_ 유틸리티를 실행하여 컨트롤러 설정을 확인합니다.
 
 ### FrSky 타라니스 XD9 플러스
@@ -175,7 +182,7 @@ For another radio, the first command above can be found by using the [jstest sof
 jstest-sdl -l
 ```
 
-**Take care of the channels remapping you need to do between a2, a3 and other if needed**
+Take care of the channels remapping you need to do between a2, a3 and other if needed.
 
 ### 로지텍 게임패드 F310
 

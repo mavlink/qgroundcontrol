@@ -35,12 +35,12 @@ Tarama oluşturmak için:
    Yeşil bölge, yapıyı kaplayacak şekilde düzenlenmelidir.
 
    - Haritadaki opak köşeleri yapının kenarlarına sürükleyin (yukarıda leylak rengi daire içine alınmış köşeler).
-   - Yapının kapladığı alan basit bir kareden fazlaysa, yeni bir köşe noktası oluşturmak için köşeler arasındaki yarı saydam dairelere tıklayabilirsiniz.
+   - If the structure footprint is more than a simple square you can click the semi-transparent circles between the vertices to create a new vertex.
 
-3. Ayrıca merkezdeki "daire"ye (kırmızı ile işaretlenmiş) tıklayarak ve açılır menüden _Circle_ 'ı seçerek dairesel bir alana geçebilirsiniz.
+3. You can also change to a circular footprint by clicking on the central "vertex" (marked in red) and selecting _Circle_ in the popup menu.
 
    - Açılır menüden çokgen alana geri dönebilir ve taramanın yarıçapını ve/veya konumunu değiştirebilirsiniz.
-   - Çemberin merkezini konumlandırmak için merkezdeki daireyi sürükleyin.
+   - Drag the central vertex to position the centre of the circle.
 
 4. Geri kalan düzenlemeler, ekranın sağındaki _Structure Scan_ editörü kullanılarak halledilir.
    İlk olarak manuel tarama, belirli bir kamera kullanarak tarama veya özel bir kamera tanımı kullanarak tarama seçeneklerinden hangisini istediğinizi seçin.
@@ -61,7 +61,7 @@ Kullanıcı her zaman aşağıdaki ayarları yapılandırabilir:
   - Araç, taramayı tamamladıktan sonra bu irtifaya yükselecek ve ardından bir sonraki hedef noktaya geçecektir.
 - \*\*Scan Bottom Alt:\*\*Yapının tabanı etrafındaki engellerden kaçınmak için bu ayarı kullanın.
   Bu ayar, yapının altını yerden yukarıda olacak şekilde ayarlar ve bu nedenle ilk tarama uçuşu yolunun yüksekliği (en alt katmanın yüksekliği) tarama istatistiklerinde _Bottom Layer Alt_ olarak gösterilir.
-- **Rotate Entry Point:** Başlangıç/bitiş noktasını uçuş yolundaki bir sonraki köşeye/konuma taşıyın.
+- **Rotate Entry Point:** Move the start/finish point to the next vertex/position on the flight path.
 
 Kalan ayarlar _camera mode_'a bağlıdır:
 

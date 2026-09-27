@@ -14,4 +14,3 @@ To enable the virtual joysticks:
 2. Open the **Application Settings**
 3. Make sure you're on the **General** tab
 4. Check the **Virtual joystick** box
-

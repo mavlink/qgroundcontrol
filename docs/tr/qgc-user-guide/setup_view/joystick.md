@@ -55,7 +55,7 @@ Joystick'i ayarlamak için:
 ## Gelişmiş Seçenekler
 
 Bazı ek Seçenekler \*\* Advanced \*\* sekmesinde mevcuttur.
-Bu seçenekler, duyarlılığı artırmak için belirli alışılmadık kurulumlarda ve sıkıntılı joystickleri kullanmak için yararlı olabilir.
+These options may be useful for specific, unusual setups, for increasing sensibility, and for handling noisy joysticks.
 
 ### Gaz Kolu Seçenekleri
 
@@ -133,19 +133,26 @@ Kontrolcünün Linux altında kablosuz olarak çalışmasını sağlamak için [
 Adımlar şunlardır:
 
 1. <span></span>
-   ```
+
+   ```bash
    jstest-gtk \* 'yi yükleyin: `sudo apt install jstest-gtk`
    ```
+
 2. Bu, gaz kolunun yaylı olduğu kurulumlar için kullanışlıdır, çünkü kullanıcı çubuğu bırakarak gazı istenen seviyede tutabilir.
-   ```
+
+   ```bash
    ds4drv \* yükleyin: `sudo pip install ds4drv`
    ```
+
 3. Ds4drv'yi çalıştırın `sudo ds4drv`
-   ```
+
+   ```bash
    <span></span>
    ```
+
 4. Kontrolcünün LED'i hızla yanıp sönmeye başlayana kadar \*\* Share \*\* düğmesini ve sonra \*\* PS \*\* düğmesini basılı tutun.
    Daha sonra _ ds4drv _ yeni bir aygıt algılamalıdır.
+
 5. Son olarak, _ jstest-gtk _ yardımcı programını çalıştırarak denetleyici kurulumunu kontrol etmelisiniz.
 
 ### FrSky Taranis XD9 plus
@@ -175,7 +182,7 @@ For another radio, the first command above can be found by using the [jstest sof
 jstest-sdl -l
 ```
 
-**Take care of the channels remapping you need to do between a2, a3 and other if needed**
+Take care of the channels remapping you need to do between a2, a3 and other if needed.
 
 ### Logitech Gamepad F310
 
