@@ -13,6 +13,12 @@ namespace {
 bool deliver(UdpIODevice& device, const QByteArray& data, bool expectReady = true)
 {
     QUdpSocket sender;
+    // macOS defaults UDP send buffers to 9216 bytes, rejecting the larger test datagrams.
+    // Bind first: Qt ignores socket options set before the socket exists.
+    if (!sender.bind(QHostAddress::LocalHost, 0)) {
+        return false;
+    }
+    sender.setSocketOption(QAbstractSocket::SendBufferSizeSocketOption, 128 * 1024);
     QSignalSpy ready(&device, &QIODevice::readyRead);
     return sender.writeDatagram(data, QHostAddress::LocalHost, device.localPort()) == data.size() &&
            (expectReady ? ready.wait(TestTimeout::mediumMs()) : !ready.wait(TestTimeout::shortMs()));
@@ -470,7 +476,13 @@ void UdpIODeviceTest::_peerReplacementClearsBuffers()
     QCOMPARE(replaced.size(), 1);
     QCOMPARE(replaced.first().at(0).toString(), previous);
     QCOMPARE(replaced.first().at(1).toString(), device.selectedPeer());
-    QCOMPARE(device.readAll(), readMode == 4 ? QByteArray("new\nlater\n") : QByteArray("new\n"));
+    QByteArray received = device.readAll();
+    // Loopback delivery is asynchronous on macOS: "later" may land on the next drain
+    if ((readMode == 4) && !received.endsWith("later\n")) {
+        QVERIFY(ready.wait(TestTimeout::shortMs()));
+        received += device.readAll();
+    }
+    QCOMPARE(received, readMode == 4 ? QByteArray("new\nlater\n") : QByteArray("new\n"));
     QCOMPARE(device.isTextModeEnabled(), readMode == 3);
 }
 

@@ -16,7 +16,8 @@ UdpIODevice::UdpIODevice(QObject* parent) : QIODevice(parent), _socket(this)
 {
     qCDebug(UdpIODeviceLog) << this;
 
-    connect(&_socket, &QUdpSocket::readyRead, this, &UdpIODevice::_readAvailableData);
+    // Queued: handlers may delete this device, which must not happen inside the socket's own readyRead emission
+    connect(&_socket, &QUdpSocket::readyRead, this, &UdpIODevice::_readAvailableData, Qt::QueuedConnection);
     connect(&_socket, &QUdpSocket::errorOccurred, this, [this]() { setErrorString(_socket.errorString()); });
 }
 
