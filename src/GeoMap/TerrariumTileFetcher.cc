@@ -9,11 +9,13 @@
 
 #include "TerrariumTileFetcher.h"
 
+#include <memory>
+#include <utility>
+
+#include <QtCore/QVarLengthArray>
 #include <QtGui/QImage>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
-
-#include <memory>
 
 #include "BilinearUV.h"
 #include "ElevationMapProvider.h"
@@ -111,6 +113,32 @@ TileMath::TileKey fetchKeyFor(const TileMath::TileKey& key)
     return TileMath::TileKey{key.x >> shift, key.y >> shift, TerrariumTileFetcher::kMaxTileZoom};
 }
 
+/// kAnchorZoom ancestors of a fetched tile and of its 8 neighbors, own first:
+/// a tile on an anchor boundary shares edges with patches the neighboring
+/// anchor backs. Empty when the tile is already that coarse.
+QVarLengthArray<TileMath::TileKey, 4> anchorKeysFor(const TileMath::TileKey& fetchKey)
+{
+    QVarLengthArray<TileMath::TileKey, 4> anchors;
+    if (fetchKey.zoom <= TerrariumTileFetcher::kAnchorZoom) {
+        return anchors;
+    }
+    const int shift = fetchKey.zoom - TerrariumTileFetcher::kAnchorZoom;
+    anchors.append(TileMath::TileKey{fetchKey.x >> shift, fetchKey.y >> shift, TerrariumTileFetcher::kAnchorZoom});
+    for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+            const TileMath::TileKey neighbor{fetchKey.x + dx, fetchKey.y + dy, fetchKey.zoom};
+            if (!TileMath::isValidKey(neighbor)) {
+                continue;
+            }
+            const TileMath::TileKey anchor{neighbor.x >> shift, neighbor.y >> shift, TerrariumTileFetcher::kAnchorZoom};
+            if (!anchors.contains(anchor)) {
+                anchors.append(anchor);
+            }
+        }
+    }
+    return anchors;
+}
+
 }  // namespace
 
 TerrariumTileFetcher::TerrariumTileFetcher(QObject* parent, QNetworkAccessManager* networkManager)
@@ -183,8 +211,14 @@ bool TerrariumTileFetcher::requestTile(const TileMath::TileKey& key)
     }
 
     const TileMath::TileKey fetchKey = fetchKeyFor(key);
-    if (_heightField->hasTile(fetchKey) || _fieldRequests.contains(fetchKey)) {
+    if (_heightField->hasTile(fetchKey) || _fieldRequests.contains(fetchKey) || _held.contains(fetchKey)) {
         return true;
+    }
+
+    // Anchors first: their fetches queue ahead, and _insertIntoField holds this tile until they land.
+    // An anchor that fails to start stops blocking, as a failed fetch does in _failAll.
+    for (const TileMath::TileKey& anchor : anchorKeysFor(fetchKey)) {
+        (void) requestTile(anchor);
     }
 
     const bool inFlight = _fetchInFlight(fetchKey);
@@ -341,7 +375,7 @@ void TerrariumTileFetcher::_deliverAll(const TileMath::TileKey& fetchKey, const 
 {
     const bool forField = _fieldRequests.remove(fetchKey) && _heightField;
     if (forField) {
-        _heightField->insertTile(fetchKey, gridFromImage(image));
+        _insertIntoField(fetchKey, gridFromImage(image));
     }
 
     const QList<int> requestIds = _waiters.take(fetchKey);
@@ -359,6 +393,12 @@ void TerrariumTileFetcher::_failAll(const TileMath::TileKey& fetchKey, const QSt
     // A failed tile inserts nothing: the field keeps its current estimate, and
     // clearing the in-flight key lets a later request retry
     _fieldRequests.remove(fetchKey);
+    // Better fine data with a cliff risk than none at all
+    const int released = _releaseHeld(fetchKey);
+    if (released > 0) {
+        qCDebug(GeoMapTerrariumTileFetcherLog)
+            << "anchor" << fetchKey << "failed, released" << released << "held tiles";
+    }
 
     const QList<int> requestIds = _waiters.take(fetchKey);
     if (_shouldWarnFailure()) {
@@ -382,6 +422,42 @@ bool TerrariumTileFetcher::_shouldWarnFailure()
     }
     _failureWarnTimer.restart();
     return true;
+}
+
+void TerrariumTileFetcher::_insertIntoField(const TileMath::TileKey& fetchKey, ElevationTilePyramid::Grid grid)
+{
+    QSet<TileMath::TileKey> missingAnchors;
+    for (const TileMath::TileKey& anchor : anchorKeysFor(fetchKey)) {
+        if (!_heightField->hasTile(anchor) && _fieldRequests.contains(anchor)) {
+            missingAnchors.insert(anchor);
+        }
+    }
+    if (!missingAnchors.isEmpty()) {
+        qCDebug(GeoMapTerrariumTileFetcherVerboseLog)
+            << "holding tile" << fetchKey << "until anchors" << missingAnchors;
+        _held.insert(fetchKey, HeldTile{std::move(grid), std::move(missingAnchors)});
+        return;
+    }
+    _heightField->insertTile(fetchKey, std::move(grid));
+    (void) _releaseHeld(fetchKey);
+}
+
+int TerrariumTileFetcher::_releaseHeld(const TileMath::TileKey& anchor)
+{
+    QList<std::pair<TileMath::TileKey, ElevationTilePyramid::Grid>> ready;
+    for (auto it = _held.begin(); it != _held.end();) {
+        if (it->anchors.remove(anchor) && it->anchors.isEmpty()) {
+            ready.append({it.key(), std::move(it->grid)});
+            it = _held.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    // Inserted after the walk: regionChanged handlers may re-enter requestTile
+    for (auto& [key, grid] : ready) {
+        _heightField->insertTile(key, std::move(grid));
+    }
+    return int(ready.count());
 }
 
 void TerrariumTileFetcher::_deliver(int requestId, const QImage& image)

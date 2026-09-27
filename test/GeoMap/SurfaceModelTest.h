@@ -29,5 +29,10 @@ private slots:
     void _cameraGroundTileResidentOverFlatTerrain();
     void _edgeLodDeltasMatchResidentNeighbors();
     void _edgeDeltasNotifiedOnNeighborChurn();
+    void _pinsPatchBackingTiles_data();
     void _pinsPatchBackingTiles();
+    void _cliffMonitorFollowsSetting();
+    void _renderedHeightFollowsMesh();
+    void _renderedHeightFollowsStitchedEdges();
+    void _surfaceHeightsNotifiedOnPatchChurn();
 };

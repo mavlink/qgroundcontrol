@@ -9,14 +9,16 @@
 
 #pragma once
 
+#include <optional>
+
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QObject>
+#include <QtCore/QPointF>
 #include <QtCore/QRectF>
 #include <QtCore/QSet>
 #include <QtCore/QVarLengthArray>
-
-#include <optional>
 
 #include "TileMath.h"
 
@@ -80,6 +82,9 @@ public:
         /// Kept until the downstream covered/ready plumbing is removed (step 8).
         bool ready = true;
         bool covered = false;  ///< always false (see ready)
+        float edgeStep = 0.0f;   ///< cliff monitor: largest in-patch edge step (m); 0 while off
+        QPointF edgeStepAt;      ///< world position of edgeStep
+        bool edgeCliff = false;  ///< cliff monitor: edgeStep is steep enough to log as a cliff
     };
 
     /// Recompute the active patch set from the current camera state. Called
@@ -95,6 +100,11 @@ public:
 
     /// Single-patch lookup; std::nullopt when the key is not resident
     std::optional<Patch> patch(const TileMath::TileKey& key) const;
+
+    /// Height of the rendered surface at a world point (true meters): the drawn
+    /// mesh (triangles, stitched edges) of the finest resident patch covering
+    /// it, so items sit on what is drawn. std::nullopt where no patch renders.
+    std::optional<double> renderedHeightAt(const QPointF& world) const;
 
     /// How many LOD levels coarser the resident neighbor across each edge
     /// renders, as {north, south, west, east} for PatchGeometry stitching.
@@ -143,6 +153,9 @@ signals:
     /// must re-pull edgeLodDeltas (heights are unchanged)
     void patchEdgeDeltasChanged(const TileMath::TileKey& key);
     void patchRemoved(const TileMath::TileKey& key);
+    /// renderedHeightAt answers (or the field beyond the patches) may have
+    /// changed: patches re-meshed, added, or removed
+    void surfaceHeightsChanged();
 
 private slots:
     void _fieldRegionChanged(const QRectF& worldRect);
@@ -150,9 +163,19 @@ private slots:
 private:
     struct PatchData
     {
-        QList<float> heights;    ///< cached field samples; refreshed on add and regionChanged
-        float maxHeight = 0.0f;  ///< cached vertex max so _maxTerrainZ is O(patches) not O(vertices)
+        QList<float> heights;      ///< cached field samples; refreshed on add and regionChanged
+        float maxHeight = 0.0f;    ///< cached vertex max so _maxTerrainZ is O(patches) not O(vertices)
+        qint64 cliffSinceMs = -1;  ///< cliff monitor: when the current edge cliff appeared; -1 = none
+        float edgeStep = 0.0f;     ///< cliff monitor: see Patch::edgeStep
+        QPointF edgeStepAt;
+        bool edgeCliff = false;
     };
+
+    /// Cliff monitor threshold: in-patch edge steps steeper than this rise over one
+    /// cell's run (~27°) are logged; gentler ones read as slopes, not cliffs
+    static constexpr double kCliffLogSlope = 0.5;
+
+    void _samplePatch(const TileMath::TileKey& key, PatchData& data);
 
     double _projectedPixels(const TileMath::TileKey& key, const QPointF& cameraGround, double cameraHeight) const;
     QList<TileMath::TileKey> _desiredPatches(const QRectF& visible, const QPointF& cameraGround,
@@ -184,4 +207,5 @@ private:
     bool _addsDeferred = false;      ///< the last pass hit the add cap; a follow-up pass is queued
     bool _removalsDeferred = false;  ///< the last pass hit the removal cap; a follow-up pass is queued
     double _culledTerrainZ = 0.0;    ///< terrain-top height assumed by the last cull (scene units)
+    QElapsedTimer _cliffClock;
 };

@@ -87,7 +87,8 @@ double HeightField::heightAt(const QPointF& world) const
     return PatchSampler::heightAtUV(*view.grid, u, v);
 }
 
-QList<float> HeightField::samplePatch(const TileMath::TileKey& key, int gridSize) const
+QList<float> HeightField::samplePatch(const TileMath::TileKey& key, int gridSize,
+                                      PatchSampler::EdgeStep* edgeStep) const
 {
     if ((gridSize < 1) || (gridSize > kMaxGridSize) || !TileMath::isValidKey(key)) {
         qCWarning(GeoMapHeightFieldLog) << "samplePatch rejected: key" << key << "gridSize" << gridSize;
@@ -103,5 +104,7 @@ QList<float> HeightField::samplePatch(const TileMath::TileKey& key, int gridSize
     // the same stored tile no matter which patch asks. Positions are exact
     // dyadic values, so coincident vertices compute bit-identical UVs and
     // sample bit-identical heights: meshes never crack where data exists.
-    return PatchSampler(_pyramid, key, gridSize).sample();
+    // Interior vertices absorb any mismatch between the two so it ramps in
+    // across the patch instead of forming a cliff one cell inside the edge.
+    return PatchSampler(_pyramid, key, gridSize, edgeStep).sample();
 }

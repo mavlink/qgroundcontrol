@@ -1,11 +1,12 @@
 #include "PatchGeometry.h"
 
-#include <QtGui/QVector3D>
-
 #include <algorithm>
 #include <bit>
 
+#include <QtGui/QVector3D>
+
 #include "HeightField.h"
+#include "PatchMesh.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GeoMapPatchGeometryLog, "GeoMap.PatchGeometry")
@@ -142,59 +143,9 @@ void PatchGeometry::setEdgeLodDeltas(const QList<int>& deltas)
     setEdgeLodDeltas(deltas[0], deltas[1], deltas[2], deltas[3]);
 }
 
-float PatchGeometry::_rawHeightAt(int row, int col) const
-{
-    const int verticesPerEdge = _gridSize + 1;
-    if (_heights.count() != (verticesPerEdge * verticesPerEdge)) {
-        return 0.0f;  // missing or mismatched grid renders flat
-    }
-    return _heights.at((row * verticesPerEdge) + col);
-}
-
 float PatchGeometry::_heightAt(int row, int col) const
 {
-    const int r = std::clamp(row, 0, _gridSize);
-    const int c = std::clamp(col, 0, _gridSize);
-
-    // T-junction fix: on an edge with a coarser neighbor, non-coincident
-    // vertices are collapsed onto the segment between the coincident ones.
-    // The coincident vertices need no correction: HeightField::samplePatch's
-    // canonical boundary resolution makes them bit-identical to the coarse
-    // neighbor's rendered edge (plain setHeights callers must provide heights
-    // with the same property). A corner on two constrained edges takes the
-    // first match (N,S,W,E precedence); skirts hide the residual three-LOD
-    // corner mismatch.
-    Edge edge = kNorth;
-    bool matched = false;
-    bool alongCol = false;  // lerp runs along the edge direction
-    if ((r == 0) && (_lodDelta[kNorth] > 0)) {
-        edge = kNorth;
-        alongCol = true;
-        matched = true;
-    } else if ((r == _gridSize) && (_lodDelta[kSouth] > 0)) {
-        edge = kSouth;
-        alongCol = true;
-        matched = true;
-    } else if ((c == 0) && (_lodDelta[kWest] > 0)) {
-        edge = kWest;
-        matched = true;
-    } else if ((c == _gridSize) && (_lodDelta[kEast] > 0)) {
-        edge = kEast;
-        matched = true;
-    }
-    if (matched) {
-        const int step = 1 << _lodDelta[edge];
-        const int idx = alongCol ? c : r;
-        const int base = (idx / step) * step;
-        if (idx == base) {
-            return _rawHeightAt(r, c);
-        }
-        const float t = float(idx - base) / step;
-        const float a = alongCol ? _rawHeightAt(r, base) : _rawHeightAt(base, c);
-        const float b = alongCol ? _rawHeightAt(r, base + step) : _rawHeightAt(base + step, c);
-        return a + ((b - a) * t);
-    }
-    return _rawHeightAt(r, c);
+    return PatchMesh::vertexHeight(_heights, _gridSize, _lodDelta, row, col);
 }
 
 void PatchGeometry::_rebuild()

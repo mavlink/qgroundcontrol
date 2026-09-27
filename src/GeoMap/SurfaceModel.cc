@@ -1,24 +1,31 @@
 #include "SurfaceModel.h"
 
-#include <QtCore/QElapsedTimer>
-#include <QtCore/QSet>
-#include <QtCore/QTimer>
-#include <QtCore/QVarLengthArray>
-#include <QtCore/QtMath>
-#include <queue>
-
 #include <algorithm>
 #include <cmath>
 #include <utility>
 #include <vector>
 
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QSet>
+#include <QtCore/QString>
+#include <QtCore/QTimer>
+#include <QtCore/QVarLengthArray>
+#include <QtCore/QtMath>
+#include <QtPositioning/QGeoCoordinate>
+#include <queue>
+
+#include "Fact.h"
+#include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
 #include "HeightField.h"
 #include "HeightSource.h"
+#include "PatchMesh.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(GeoMapSurfaceModelLog, "GeoMap.SurfaceModel")
 QGC_LOGGING_CATEGORY(GeoMapSurfaceModelVerboseLog, "GeoMap.SurfaceModel.Verbose")
+QGC_LOGGING_CATEGORY(GeoMapSurfaceModelCliffsLog, "GeoMap.SurfaceModel.Cliffs")
 
 namespace {
 
@@ -50,14 +57,31 @@ float maxHeightOf(const QList<float>& heights)
     return maxHeight;
 }
 
+/// Edge of a boundary vertex; the cliff metric never reports corners
+QString boundaryLabel(int row, int col, int gridSize)
+{
+    const QChar edge = (row == 0)          ? QLatin1Char('N')
+                       : (row == gridSize) ? QLatin1Char('S')
+                       : (col == 0)        ? QLatin1Char('W')
+                                           : QLatin1Char('E');
+    return edge + QStringLiteral(" edge");
+}
+
 }  // namespace
 
 SurfaceModel::SurfaceModel(GeoMapCamera* camera, HeightSource* heightSource, HeightField* field, QObject* parent)
     : QObject(parent), _camera(camera), _heightSource(heightSource), _field(field)
 {
     qRegisterMetaType<TileMath::TileKey>();
+    _cliffClock.start();
 
     connect(_field, &HeightField::regionChanged, this, &SurfaceModel::_fieldRegionChanged);
+    // Resident patches pick up (or drop) monitor state now, not on their next data change
+    connect(SettingsManager::instance()->flyViewSettings()->geoMapDebugUI(), &Fact::rawValueChanged, this, [this]() {
+        for (auto it = _patches.begin(); it != _patches.end(); ++it) {
+            _samplePatch(it.key(), it.value());
+        }
+    });
 
     // Coalesce: camera signals fire per input event (up to 120/s during a
     // gesture); one queued pass per event-loop iteration bounds the cost
@@ -117,6 +141,7 @@ void SurfaceModel::update()
 
     if ((added.adds > 0) || (removals > 0)) {
         _repinAncestors();
+        emit surfaceHeightsChanged();
     }
 
     // The caps guarantee every deferred pass makes progress, so follow-ups
@@ -156,8 +181,7 @@ SurfaceModel::AddResult SurfaceModel::_addDesiredPatches(const QList<TileMath::T
             continue;
         }
         PatchData data;
-        data.heights = _field->samplePatch(key, kGridSize);
-        data.maxHeight = maxHeightOf(data.heights);
+        _samplePatch(key, data);
         _patches.insert(key, std::move(data));
         churnRects.append(patchRect(key));
         _heightSource->requestTile(key);
@@ -211,6 +235,10 @@ int SurfaceModel::_removeStalePatches(const QList<TileMath::TileKey>& desired,
             continue;
         }
         const TileMath::TileKey removedKey = it.key();
+        if (it.value().cliffSinceMs >= 0) {
+            qCWarning(GeoMapSurfaceModelCliffsLog) << "cliff removed with patch" << removedKey << "after"
+                                                   << (_cliffClock.elapsed() - it.value().cliffSinceMs) << "ms";
+        }
         it = _patches.erase(it);
         churnRects.append(patchRect(removedKey));
         emit patchRemoved(removedKey);
@@ -233,20 +261,32 @@ void SurfaceModel::_notifyEdgeChurn(const QVarLengthArray<QRectF, 8>& churnRects
     }
 }
 
-/// Pin every resident patch's key and its full ancestor chain: whatever tile
-/// the field resolves a patch sample to is in that chain, and an eviction
-/// there would silently coarsen a rendered mesh
+/// Pin every resident patch's key, its 8 neighbors' keys, and all their
+/// ancestor chains: boundary vertices resolve into neighbor cells and the
+/// interior blends toward them, so an eviction anywhere there would silently
+/// change a rendered mesh
 void SurfaceModel::_repinAncestors()
 {
     QSet<TileMath::TileKey> pinned;
-    for (auto it = _patches.cbegin(); it != _patches.cend(); ++it) {
-        TileMath::TileKey key = it.key();
-        while (true) {
+    const auto pinChain = [&pinned](TileMath::TileKey key) {
+        // A pinned key already has its whole chain pinned
+        while (!pinned.contains(key)) {
             pinned.insert(key);
             if (key.zoom == TileMath::kMinZoom) {
-                break;
+                return;
             }
             key = TileMath::TileKey{key.x >> 1, key.y >> 1, key.zoom - 1};
+        }
+    };
+    for (auto it = _patches.cbegin(); it != _patches.cend(); ++it) {
+        const TileMath::TileKey key = it.key();
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                const TileMath::TileKey neighbor{key.x + dx, key.y + dy, key.zoom};
+                if (TileMath::isValidKey(neighbor)) {
+                    pinChain(neighbor);
+                }
+            }
         }
     }
     _field->setPinnedKeys(std::move(pinned));
@@ -267,7 +307,8 @@ QList<SurfaceModel::Patch> SurfaceModel::patches() const
     QList<Patch> result;
     result.reserve(_patches.count());
     for (auto it = _patches.cbegin(); it != _patches.cend(); ++it) {
-        result.append(Patch{it.key(), it.value().heights, true, false});
+        result.append(Patch{it.key(), it.value().heights, true, false, it.value().edgeStep, it.value().edgeStepAt,
+                            it.value().edgeCliff});
     }
     return result;
 }
@@ -278,7 +319,53 @@ std::optional<SurfaceModel::Patch> SurfaceModel::patch(const TileMath::TileKey& 
     if (it == _patches.cend()) {
         return std::nullopt;
     }
-    return Patch{key, it.value().heights, true, false};
+    return Patch{
+        key, it.value().heights, true, false, it.value().edgeStep, it.value().edgeStepAt, it.value().edgeCliff};
+}
+
+std::optional<double> SurfaceModel::renderedHeightAt(const QPointF& world) const
+{
+    // Finest first: a patch retiring behind resident replacements still overlaps them
+    for (int zoom = TileMath::kMaxZoom; zoom >= TileMath::kMinZoom; zoom--) {
+        const TileMath::TileKey owner = TileMath::tileForWorld(world, zoom);
+        const QRectF ownerRect = patchRect(owner);
+        // A point on a tile boundary maps to the east/south tile, but the west/north one draws it too
+        const double onEdge = ownerRect.width() * 1e-9;
+        const int westSteps = ((world.x() - ownerRect.left()) <= onEdge) ? 1 : 0;
+        const int northSteps = ((ownerRect.bottom() - world.y()) <= onEdge) ? 1 : 0;
+        TileMath::TileKey key = owner;
+        auto it = _patches.cend();
+        for (int dy = 0; (dy <= northSteps) && (it == _patches.cend()); dy++) {
+            for (int dx = 0; (dx <= westSteps) && (it == _patches.cend()); dx++) {
+                key = TileMath::TileKey{owner.x - dx, owner.y - dy, zoom};
+                it = TileMath::isValidKey(key) ? _patches.constFind(key) : _patches.cend();
+            }
+        }
+        if (it == _patches.cend()) {
+            continue;
+        }
+        const QRectF rect = patchRect(key);
+        const double cell = rect.width() / kGridSize;
+        // Row 0 is the north (max y) edge
+        const double col = (world.x() - rect.left()) / cell;
+        const double row = ((rect.top() + rect.height()) - world.y()) / cell;
+        // Stitching moves only edge vertices: interior cells skip the neighbor lookups
+        PatchMesh::LodDeltas deltas{};
+        if (row < 1.0) {
+            deltas[0] = _edgeDelta(key, 0, -1);
+        }
+        if (row >= (kGridSize - 1)) {
+            deltas[1] = _edgeDelta(key, 0, 1);
+        }
+        if (col < 1.0) {
+            deltas[2] = _edgeDelta(key, -1, 0);
+        }
+        if (col >= (kGridSize - 1)) {
+            deltas[3] = _edgeDelta(key, 1, 0);
+        }
+        return PatchMesh::surfaceHeight(it->heights, kGridSize, deltas, row, col);
+    }
+    return std::nullopt;
 }
 
 QList<int> SurfaceModel::edgeLodDeltas(const TileMath::TileKey& key) const
@@ -474,18 +561,56 @@ void SurfaceModel::_fieldRegionChanged(const QRectF& worldRect)
         if (!patchTouchesRegion(it.key(), worldRect)) {
             continue;
         }
-        PatchData& data = it.value();
-        data.heights = _field->samplePatch(it.key(), kGridSize);
-        data.maxHeight = maxHeightOf(data.heights);
+        _samplePatch(it.key(), it.value());
         emit patchMeshChanged(it.key());
         remeshed++;
     }
     qCDebug(GeoMapSurfaceModelVerboseLog)
         << "regionChanged" << worldRect << "re-meshed" << remeshed << "of" << _patches.count() << "patches";
+    // Emitted even with nothing re-meshed: heights beyond the patches come from the field
+    emit surfaceHeightsChanged();
 
     // Terrain taller than the last cull assumed may be visible below/behind
     // the camera: re-cull terrain-aware
     if (_maxTerrainZ() > (_culledTerrainZ + kRecullHeightMargin)) {
         _scheduleUpdate();
+    }
+}
+
+void SurfaceModel::_samplePatch(const TileMath::TileKey& key, PatchData& data)
+{
+    const bool monitorCliffs = SettingsManager::instance()->flyViewSettings()->geoMapDebugUI()->rawValue().toBool();
+    PatchSampler::EdgeStep edgeStep;
+    data.heights = _field->samplePatch(key, kGridSize, monitorCliffs ? &edgeStep : nullptr);
+    data.maxHeight = maxHeightOf(data.heights);
+    data.edgeStep = edgeStep.step;
+    data.edgeCliff = false;
+    if (!monitorCliffs) {
+        data.cliffSinceMs = -1;
+        return;
+    }
+    const QRectF rect = patchRect(key);
+    const double cell = rect.width() / kGridSize;
+    data.edgeStepAt =
+        QPointF(rect.left() + (edgeStep.col * cell), (rect.top() + rect.height()) - (edgeStep.row * cell));
+    const QGeoCoordinate stepAt = TileMath::worldToGeo(data.edgeStepAt);
+    // Mercator meters overstate ground distance by 1/cos(latitude)
+    const double groundCell = cell * std::cos(qDegreesToRadians(stepAt.latitude()));
+
+    const bool cliff = edgeStep.step >= (kCliffLogSlope * groundCell);
+    data.edgeCliff = cliff;
+    if (cliff && (data.cliffSinceMs < 0)) {
+        data.cliffSinceMs = _cliffClock.elapsed();
+        const QString interiorSource = (edgeStep.ownZoom < 0) ? QStringLiteral("no elevation data (flat 0 m)")
+                                                              : QStringLiteral("z%1 tile").arg(edgeStep.ownZoom);
+        qCWarning(GeoMapSurfaceModelCliffsLog).noquote()
+            << "cliff appeared: patch" << key << boundaryLabel(edgeStep.row, edgeStep.col, kGridSize) << "step"
+            << edgeStep.step << "m over a" << qRound(groundCell) << "m cell"
+            << "at" << stepAt << "| patch interior:" << interiorSource
+            << QStringLiteral("| edge vertex: z%1 tile").arg(edgeStep.boundaryZoom);
+    } else if (!cliff && (data.cliffSinceMs >= 0)) {
+        qCWarning(GeoMapSurfaceModelCliffsLog)
+            << "cliff cleared: patch" << key << "after" << (_cliffClock.elapsed() - data.cliffSinceMs) << "ms";
+        data.cliffSinceMs = -1;
     }
 }

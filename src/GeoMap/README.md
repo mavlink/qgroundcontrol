@@ -32,7 +32,11 @@ encoded as "terrarium" PNGs, addressed exactly like map tiles (z/x/y, available 
 zoom 15; requests above z15 are satisfied from the z15 ancestor, so imagery keeps
 refining past the elevation ceiling). `TerrariumTileFetcher` fetches them
 cache-first: it checks QGC's shared tile database, falls back to the network on a
-miss, and stores fetched tiles back into the cache.
+miss, and stores fetched tiles back into the cache. Every tile finer than z10 also
+fetches the z10 ancestors of itself and its neighbors, and is held back until they
+are in the field, so fine data doesn't land next to a region with no data at all
+(which would render at 0 m and draw a cliff). A failed anchor stops holding it back:
+fine data with a cliff risk beats no fine data.
 
 Decoded tiles land in the `HeightField`, which presents **one continuous
 heightfield**: it can answer "how high is the ground here?" for *any* position —
@@ -42,7 +46,13 @@ be meshed immediately with the best current estimate; when better data arrives t
 affected patches are re-meshed. There is never a hole in the terrain, only
 temporarily-coarser terrain. Internally the `HeightField` keeps its tiles in an
 `ElevationTilePyramid`, an in-memory LRU working set that resolves ancestor lookups
-and pins tiles backing on-screen patches against eviction.
+and pins tiles backing on-screen patches (and their neighbors) against eviction.
+
+Patch edge vertices are resolved by position, so neighboring patches sample
+bit-identical edge heights and never crack. Where an edge takes different data than
+the patch's own (a neighbor's finer tile, say), the difference is blended across the
+patch interior instead of dropping in the last cell, so it reads as a slope rather
+than a cliff until both sides have the same data.
 
 `TerrariumTileFetcher` implements the abstract `HeightSource` interface, which also
 has synthetic implementations: `FlatHeightSource` (z = 0 everywhere, used when
@@ -88,7 +98,10 @@ Each patch renders as a `Model` combining:
 
 `SurfaceAnalysis` is a diagnostic pass over the live patch set (coverage holes,
 boundary seams, camera-below-surface), invoked via
-`SurfacePatchModel::analyzeSurface()`.
+`SurfacePatchModel::analyzeSurface()`. With the GeoMap debug UI on, `SurfaceModel`
+also warns (`GeoMap.SurfaceModel.Cliffs`) each time an in-patch edge step steeper
+than half a mesh cell appears, clears, or leaves with its patch. Steps near patch
+corners are ignored: a corner resolved to other data leaves a small expected notch.
 
 ## Scene and camera
 
@@ -137,7 +150,7 @@ DEM and GPS altitudes disagree.
 ## Coordinate systems
 
 | Space | Definition | Where conversion happens |
-|---|---|---|
+| --- | --- | --- |
 | **Geodetic** | `QGeoCoordinate` (WGS84 lat/lon/alt AMSL) | `TileMath::geoToWorld` / `worldToGeo` |
 | **World** | Web Mercator (EPSG:3857) meters; x east, y north, z up | `TileMath` only — the single conversion point |
 | **Tile** | Slippy z/x/y (`TileMath::TileKey`), (0,0) NW | `TileMath::tileForWorld` / `tileMinCorner` |

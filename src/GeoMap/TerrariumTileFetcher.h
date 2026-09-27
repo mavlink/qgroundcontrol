@@ -14,6 +14,7 @@
 #include <QtCore/QRectF>
 #include <QtCore/QSet>
 
+#include "ElevationTilePyramid.h"
 #include "HeightSource.h"
 
 class HeightField;
@@ -48,6 +49,11 @@ public:
     /// Highest zoom the terrarium dataset serves (deeper patches sample the ancestor)
     static constexpr int kMaxTileZoom = 15;
 
+    /// Coarse ancestor zoom fetched alongside every finer tile, for the tile and
+    /// its neighbors; finer tiles wait for all of them so no region ever has fine
+    /// data next to no data at all (a cliff to 0 m). A failed anchor stops blocking.
+    static constexpr int kAnchorZoom = 10;
+
     /// Largest supported patch grid (matches PatchGeometry::kMaxGridSize)
     static constexpr int kMaxGridSize = 256;
 
@@ -55,9 +61,9 @@ public:
     void cancelRequest(int requestId) final;
 
     /// Ensures the attached field holds this tile (clamped to the z15 ancestor
-    /// above kMaxTileZoom). Returns false when no field is attached, the key is
-    /// invalid, or the fetch could not start; true when the tile is already
-    /// held, already in flight, or a fetch was started.
+    /// above kMaxTileZoom), plus the kAnchorZoom ancestors of it and its neighbors. Returns false when no
+    /// field is attached, the key is invalid, or the fetch could not start; true
+    /// when the tile is already held, already in flight, or a fetch was started.
     bool requestTile(const TileMath::TileKey& key) override;
 
     int pendingCount() const { return _pending.count(); }
@@ -74,6 +80,16 @@ private:
         int gridSize = 0;
     };
 
+    struct HeldTile
+    {
+        ElevationTilePyramid::Grid grid;
+        QSet<TileMath::TileKey> anchors;  ///< anchors still in flight
+    };
+
+    void _insertIntoField(const TileMath::TileKey& fetchKey, ElevationTilePyramid::Grid grid);
+    /// Drops \a anchor from every held tile's wait set and inserts the tiles
+    /// left waiting on nothing; returns how many were released
+    int _releaseHeld(const TileMath::TileKey& anchor);
     void _failAsync(int requestId);
     bool _fetchInFlight(const TileMath::TileKey& fetchKey) const;
     bool _startFetch(const TileMath::TileKey& fetchKey);
@@ -91,6 +107,7 @@ private:
     QHash<int, PendingRequest> _pending;
     QHash<TileMath::TileKey, QList<int>> _waiters;            ///< request ids sharing the in-flight fetch of a tile
     QSet<TileMath::TileKey> _fieldRequests;                   ///< tiles awaiting delivery into the field
+    QHash<TileMath::TileKey, HeldTile> _held;                 ///< delivered finer tiles waiting on their anchors
     QHash<TileMath::TileKey, QNetworkReply*> _activeReplies;  ///< in-flight network fetches by tile
     TileMath::TileKey _lastFetchKey;
     QElapsedTimer _failureWarnTimer;                          ///< restarted on each emitted failure warning

@@ -16,6 +16,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "ElevationTilePyramid.h"
+#include "PatchSampler.h"
 #include "TileMath.h"
 
 /// The one continuous terrain heightfield of the drape design: best-estimate
@@ -65,7 +66,9 @@ public:
     /// patch's own backing view, so coincident vertices of neighboring
     /// patches sample bit-identical heights even across different backing
     /// tiles — patch edges never crack where data exists.
-    QList<float> samplePatch(const TileMath::TileKey& key, int gridSize) const;
+    /// \a edgeStep, when set, receives the resulting in-patch step (see PatchSampler::EdgeStep).
+    QList<float> samplePatch(const TileMath::TileKey& key, int gridSize,
+                             PatchSampler::EdgeStep* edgeStep = nullptr) const;
 
     int tileCount() const { return _pyramid.tileCount(); }
 

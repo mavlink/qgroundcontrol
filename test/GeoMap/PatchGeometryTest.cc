@@ -1,14 +1,17 @@
 #include "PatchGeometryTest.h"
 
+#include <array>
+#include <cmath>
+#include <cstring>
+#include <memory>
+#include <optional>
+
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
-#include <array>
-#include <cstring>
-#include <memory>
-
 #include "HeightField.h"
 #include "PatchGeometry.h"
+#include "PatchMesh.h"
 
 namespace {
 
@@ -422,6 +425,62 @@ void PatchGeometryTest::_stitchedNorthEdgeLiesOnCoarseRenderedRow()
 
     // Sanity: the shared line carries real data, not the flat root
     QCOMPARE_NE(fineNorthZ(0), 0.0f);
+}
+
+void PatchGeometryTest::_surfaceHeightMatchesDrawnTriangles_data()
+{
+    QTest::addColumn<double>("row");
+    QTest::addColumn<double>("col");
+
+    QTest::newRow("cell's NW triangle") << 1.2 << 1.3;
+    QTest::newRow("cell's SE triangle") << 1.8 << 1.7;
+    QTest::newRow("on a cell diagonal") << 2.25 << 1.75;
+    QTest::newRow("cell touching a stitched edge") << 1.4 << 3.8;
+    QTest::newRow("on a stitched edge") << 1.0 << 4.0;
+}
+
+void PatchGeometryTest::_surfaceHeightMatchesDrawnTriangles()
+{
+    QFETCH(double, row);
+    QFETCH(double, col);
+
+    // Twisted cells (the two diagonals disagree) and a stitched east edge
+    QList<float> heights;
+    for (int r = 0; r <= kGrid; r++) {
+        for (int c = 0; c <= kGrid; c++) {
+            heights.append(float((r * c * 10) + (r * r * 3) + (c * c * 2)));
+        }
+    }
+    const PatchMesh::LodDeltas deltas{0, 0, 0, 1};
+    PatchGeometry geometry;
+    geometry.setGridSize(kGrid);
+    geometry.setSpan(kSpan);
+    geometry.setHeights(heights);
+    geometry.setEdgeLodDeltas(deltas[0], deltas[1], deltas[2], deltas[3]);
+
+    // Interpolate the drawn triangle containing the point
+    const double step = kSpan / kGrid;
+    const double x = (-kSpan / 2.0) + (col * step);
+    const double y = (kSpan / 2.0) - (row * step);
+    const QByteArray vertexData = geometry.vertexData();
+    const QByteArray indexData = geometry.indexData();
+    const quint32* indices = reinterpret_cast<const quint32*>(indexData.constData());
+    std::optional<double> drawn;
+    for (int triangle = 0; (triangle < (kGrid * kGrid * 2)) && !drawn; triangle++) {
+        const auto a = vertexAt(vertexData, int(indices[(triangle * 3) + 0]));
+        const auto b = vertexAt(vertexData, int(indices[(triangle * 3) + 1]));
+        const auto c = vertexAt(vertexData, int(indices[(triangle * 3) + 2]));
+        const double det = ((b[1] - c[1]) * (a[0] - c[0])) + ((c[0] - b[0]) * (a[1] - c[1]));
+        const double wa = (((b[1] - c[1]) * (x - c[0])) + ((c[0] - b[0]) * (y - c[1]))) / det;
+        const double wb = (((c[1] - a[1]) * (x - c[0])) + ((a[0] - c[0]) * (y - c[1]))) / det;
+        const double wc = 1.0 - wa - wb;
+        constexpr double kInside = -1e-9;
+        if ((wa >= kInside) && (wb >= kInside) && (wc >= kInside)) {
+            drawn = (wa * a[2]) + (wb * b[2]) + (wc * c[2]);
+        }
+    }
+    QVERIFY(drawn);
+    QCOMPARE_LT(std::abs(PatchMesh::surfaceHeight(heights, kGrid, deltas, row, col) - *drawn), 1e-3);
 }
 
 void PatchGeometryTest::_stitchAppliesToAllFourEdges()

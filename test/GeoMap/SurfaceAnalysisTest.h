@@ -29,5 +29,6 @@ private slots:
     void _cameraCheckSkippedWithoutScale();
     void _cameraCheckSkippedWithoutHeight();
     void _nonFiniteHeights();
+    void _inPatchEdgeStepsAboveThresholdReported();
     void _reportText();
 };

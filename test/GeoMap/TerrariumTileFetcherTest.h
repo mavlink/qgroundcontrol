@@ -32,4 +32,6 @@ private slots:
     void _tileFetchFailureLeavesFieldIntact();
     void _fieldRequestKeepsFetchAliveAfterCancel();
     void _tileRequestGuards();
+    void _fineTileHeldUntilAnchorsArrive_data();
+    void _fineTileHeldUntilAnchorsArrive();
 };
